@@ -68,22 +68,36 @@
     const id='may-back-'+(++gradN);
     s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
   }
+  function choiceShape(count,index,selected){
+    if(count===3){const left=selected<0?true:0<selected,right=selected<0?false:1<selected;
+      return [left?'12,0 36,0 44,24 12,24 0,12':'12,0 44,0 36,24 12,24 0,12',
+        `${left?0:8},0 ${right?40:48},0 ${right?48:40},24 ${left?8:0},24`,
+        right?'0,0 32,0 44,12 32,24 8,24':'8,0 32,0 44,12 32,24 0,24'][index];}
+    const rev=selected===1;
+    return index===0?(rev?'12,0 56,0 64,24 12,24 0,12':'12,0 64,0 56,24 12,24 0,12'):(rev?'0,0 52,0 64,12 52,24 8,24':'8,0 52,0 64,12 52,24 0,24');
+  }
   function parts(b){
-    const halves=[...b.querySelectorAll(':scope > .gz-half')];
-    if(b.classList.contains('may-segments')){
-      const mirror=b.classList.contains('may-mirror-three');b.style.setProperty('--may-parts',halves.length);
-      halves.forEach((h,i)=>{let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');s.setAttribute('viewBox','0 0 '+(mirror?(i===1?48:44):100)+' 24');s.setAttribute('preserveAspectRatio','none');
-        const points=mirror?['12,0 36,0 44,24 12,24 0,12','0,0 48,0 40,24 8,24','8,0 32,0 44,12 32,24 0,24'][i]:i===0?'12,1 99,1 99,23 12,23 1,12':i===halves.length-1?'1,1 88,1 99,12 88,23 1,23':'1,1 99,1 99,23 1,23';
-        const side=mirror?['M12 0L0 12 12 24','M0 0L8 24M48 0L40 24','M32 0L44 12 32 24'][i]:i===0?'M12 1L1 12 12 23':i===halves.length-1?'M88 1L99 12 88 23':'M1 1V23';
-        shape(s,'polygon',{points});shape(s,'path',{class:'may-half-side',d:side});h.append(s);}
-        set(h,'aria-pressed',String(h.classList.contains('gz-on')));keyboard(h);
-      });return;
-    }
-    if(halves.length!==2||b.id==='lg')return;
-    b.classList.add('may-standard-pair');
-    const exclusive=b.closest('[data-id="horr"]')&&(halves.every(h=>h.dataset.n)||halves.every(h=>h.dataset.v)||/Ход лево-право/.test(halves[0].title));
-    const rev=!!exclusive&&halves[1].classList.contains('gz-on')&&!halves[0].classList.contains('gz-on');b.classList.toggle('may-standard-reverse',rev);
-    halves.forEach((h,i)=>{let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');s.setAttribute('viewBox','0 0 64 24');h.append(s);}const p=i===0?(rev?'12,0 64,0 56,24 12,24 0,12':'12,0 56,0 64,24 12,24 0,12'):(rev?'8,0 52,0 64,12 52,24 0,24':'0,0 52,0 64,12 52,24 8,24');if(s.dataset.p!==p){s.dataset.p=p;s.replaceChildren();shape(s,'polygon',{points:p});}if(!s.querySelector('.may-half-side'))shape(s,'path',{class:'may-half-side',d:i===0?'M12 0L0 12 12 24':'M52 0L64 12 52 24'});set(h,'aria-pressed',String(h.classList.contains('gz-on')));keyboard(h);});
+    const halves=[...b.querySelectorAll(':scope > .gz-half')],seg=b.classList.contains('may-segments');
+    if(b.id==='lg'||b.classList.contains('gz-tri')||halves.length<2)return;
+    b.classList.toggle('may-parts-multi',!seg&&halves.length>2);
+    const exclusive=seg||b.closest('[data-id="horr"]')&&(halves.every(h=>h.dataset.n)||halves.every(h=>h.dataset.v)||/Ход лево-право/.test(halves[0].title));
+    const independent=!exclusive&&!b.classList.contains('gz-wl'),selected=halves.findIndex(h=>h.classList.contains('gz-on'));
+    b.classList.toggle('may-independent-pair',independent&&halves.length===2);b.classList.toggle('may-choice-three',seg&&halves.length===3);b.classList.toggle('may-choice-two',seg&&halves.length===2);
+    if(halves.length===2)b.classList.add('may-standard-pair');b.style.setProperty('--may-parts',halves.length);
+    halves.forEach((h,i)=>{
+      h.dataset.mayPart=String(i);
+      const triple=seg&&halves.length===3,choice=exclusive&&halves.length<=3,separate=independent;
+      const w=triple?(i===1?48:44):separate?120/halves.length:halves.length===2?64:120/halves.length;
+      let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');h.append(s);}s.setAttribute('viewBox','0 0 '+w+' 24');s.setAttribute('preserveAspectRatio','none');
+      const face=`M${i===0?12:6} 0H${i===halves.length-1?w-12:w-6}L${w} 12 ${i===halves.length-1?w-12:w-6} 24H${i===0?12:6}L0 12Z`;
+      const points=choice?choiceShape(halves.length,i,selected):i===0?`12,0 ${w},0 ${w},24 12,24 0,12`:i===halves.length-1?`0,0 ${w-12},0 ${w},12 ${w-12},24 0,24`:`0,0 ${w},0 ${w},24 0,24`;
+      const signature=separate?face:points;
+      if(s.dataset.p!==signature){s.dataset.p=signature;s.replaceChildren();shape(s,separate?'path':'polygon',separate?{class:'may-half-face',d:face}:{points});
+        const side=separate?(i===0?'M12 0L0 12 12 24':'M6 0L0 12 6 24')+(i===halves.length-1?`M${w-12} 0L${w} 12 ${w-12} 24`:`M${w-6} 0L${w} 12 ${w-6} 24`):i===0?'M12 0L0 12 12 24':i===halves.length-1?`M${w-12} 0L${w} 12 ${w-12} 24`:'M0 0V24';shape(s,'path',{class:'may-half-side',d:side});}
+      if(separate)h.style.setProperty('clip-path',`path('${face}')`,'important');
+      if(choice)h.style.setProperty('clip-path','polygon('+points.split(' ').map(p=>p.split(',').map(n=>n+'px').join(' ')).join(',')+')','important');
+      set(h,'aria-pressed',String(h.classList.contains('gz-on')));keyboard(h);
+    });
     if(b.classList.contains('gz-wl')&&!halves[1].querySelector('.may-colour-swatch')){const dot=document.createElement('span');dot.className='may-colour-swatch';dot.setAttribute('aria-hidden','true');halves[1].append(dot);}
   }
   function keyboard(b){if(b.dataset.mayStandardKey||b.getAttribute('role')==='button'&&b.tabIndex>=0)return;b.dataset.mayStandardKey='1';b.tabIndex=0;set(b,'role','button');b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();b.click();}});}
@@ -186,7 +200,7 @@
     for(const list of ladders){list.classList.add('may-standard-list');if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
     standardObserver?.observe(document.body,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class','disabled','aria-pressed','style']});
   }
-  document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
+  document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half,.may-segments .gz-half,.may-parts-multi .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
   // v0.451 (В11, КНП-018): кнопка или половина, выключенная щелчком мыши, не показывает рамку наведения, пока указатель не уйдёт (кнопки пересоздаются — узнаём по подписи)
   {
     let quiet=null;const SEL='.may-standard,.gz-half';

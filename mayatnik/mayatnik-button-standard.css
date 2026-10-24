@@ -119,9 +119,9 @@ header #paintTools.pt-grid>.gz-group.gz-open{z-index:60!important}
 .may-control-mini.may-mini-has-icon>.may-mini-glyph{display:none!important}
 .may-control-mini :is(.gz-half,.palette-half).may-mini-has-icon>.may-mini-glyph{display:none!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-control-mini.may-control-mini.may-control-mini.may-control-pair>:is(.gz-half,.palette-half),
-#paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini>.palette-half{position:relative!important;visibility:visible!important;display:flex!important;flex:0 0 17px!important;width:17px!important;min-width:17px!important;max-width:17px!important;height:24px!important;padding:0!important;margin:0!important;gap:0!important;font-size:0!important;clip-path:polygon(100% 0,100% 100%,0 50%)!important}
+#paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini>.palette-half{position:relative!important;visibility:visible!important;display:flex!important;flex:0 0 17px!important;width:17px!important;min-width:17px!important;max-width:17px!important;height:24px!important;padding:0!important;margin:0!important;gap:0!important;font-size:0!important;clip-path:polygon(0 0,100% 0,100% 100%)!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-control-mini.may-control-mini.may-control-mini.may-control-pair>:is(.gz-half,.palette-half)~:is(.gz-half,.palette-half),
-#paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini>.palette-half~.palette-half{clip-path:polygon(0 0,100% 50%,0 100%)!important}
+#paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini>.palette-half~.palette-half{clip-path:polygon(0 0,100% 0,0 100%)!important}
 .may-control-mini.may-control-pair>.may-standard-outline,.may-control-mini :is(.gz-half,.palette-half)>.may-half-outline{display:none!important}
 .may-control-mini :is(.gz-half,.palette-half)>:not(i):not(.gz-ic):not(.may-mini-glyph):not(.may-mini-half-outline):not(input){visibility:hidden!important}
 .may-mini-half-outline{position:absolute!important;inset:0;width:17px;height:24px;pointer-events:none;z-index:4;overflow:visible}
@@ -149,7 +149,7 @@ body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair
 .may-segments>.gz-half::before,.may-segments>.gz-half::after{display:none!important}
 .may-segments>.gz-half>.may-half-outline{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:var(--may-outline);stroke-width:var(--may-stroke);pointer-events:none}
 .may-segments>.gz-half>.may-half-outline polygon{vector-effect:non-scaling-stroke}
-.may-segments>.gz-half.gz-on{--may-outline:var(--c)!important;--may-stroke:2px!important}
+.may-segments>.gz-half.gz-on{z-index:1;--may-outline:var(--c)!important;--may-stroke:2px!important}
 .may-segments>.gz-half:is(:hover,:focus-visible){--may-outline:var(--c)!important}
 .may-segments>.gz-half:active{--may-stroke:3px!important}
 
@@ -158,13 +158,13 @@ body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair
 /* One diamond, retaining the live About and Help buttons as its two halves. */
 #mayCorner #mayInfoDiamond{display:flex;width:48px;height:24px;flex:0 0 48px;gap:0;--c:#80aee8}
 #mayCorner #mayInfoDiamond>button.gz-hx{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:24px!important;min-height:24px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;color:#dfe6f5;font-size:11px!important;cursor:pointer;box-shadow:none!important}
-#mayCorner #mayInfoDiamond>#mayAbout{clip-path:polygon(100% 0,100% 100%,0 50%)!important}
-#mayCorner #mayInfoDiamond>#mayHelp{clip-path:polygon(0 0,100% 50%,0 100%)!important}
+#mayCorner #mayInfoDiamond>#mayAbout{clip-path:polygon(0 0,100% 0,100% 100%)!important}
+#mayCorner #mayInfoDiamond>#mayHelp{clip-path:polygon(0 0,100% 0,0 100%)!important}
 #mayInfoDiamond>button::before,#mayInfoDiamond>button::after{display:none!important}
 #mayInfoDiamond>button>svg{position:absolute;inset:0;width:24px;height:24px;fill:#1b2430;stroke:#52688c;stroke-width:1px;pointer-events:none}
 #mayInfoDiamond>button>span{position:relative;pointer-events:none}
-#mayInfoDiamond>#mayAbout>span{transform:translateX(3px)}
-#mayInfoDiamond>#mayHelp>span{transform:translateX(-3px)}
+#mayInfoDiamond>#mayAbout>span{transform:translate(4px,-4px)}
+#mayInfoDiamond>#mayHelp>span{transform:translate(-4px,-4px)}
 #mayInfoDiamond>button:is(:hover,:focus-visible)>svg{stroke:var(--c)}
 #mayInfoDiamond>button[aria-pressed=true]>svg{stroke:var(--c);stroke-width:2px}
 #mayInfoDiamond>button:active>svg{stroke:var(--c);stroke-width:3px}
@@ -211,3 +211,34 @@ body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-pin{right:14px!imp
 body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-nm{left:26px;right:26px}
 body.mayatnik-menu-ready :is(.pt-pin,.gz-pin){color:var(--c,#7cbcff)!important;filter:none!important}
 body.mayatnik-menu-ready :is(.pt-pin,.gz-pin) svg{fill:currentColor}
+
+/* v0.509: uppercase group captions use their group outline colour. */
+body.mayatnik-menu-ready :is(.may-group-title,.gz-head>.gz-nm,.may-list-heading){text-transform:uppercase}
+body.mayatnik-menu-ready :is(.pt-l>.may-group-title,.gz-head>.gz-nm){color:var(--c)!important}
+
+@media(min-width:601px){
+  body.mayatnik-menu-ready #paintTools>.may-docked{position:fixed!important;left:var(--may-dock-x)!important;top:var(--may-dock-y)!important;bottom:auto!important;transform:none!important;margin:0!important}
+  body.mayatnik-menu-ready #paintTools>.may-dock-drag{z-index:2147483643!important;pointer-events:none!important}
+}
+
+.may-merged-source{display:none!important}
+.may-half-outline .may-half-face{fill:none;stroke:var(--may-outline);stroke-width:calc(2 * var(--may-stroke))}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-independent-pair>.gz-half{flex:0 0 60px!important;width:60px!important;min-width:60px!important;margin:0!important;clip-path:path('M12 0H54L60 12 54 24H12L0 12Z')!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-independent-pair>.gz-half[data-may-part="1"]{clip-path:path('M6 0H48L60 12 48 24H6L0 12Z')!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-choice-two>.gz-half{flex:0 0 64px!important;width:64px!important;min-width:64px!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-choice-two>.gz-half[data-may-part="1"]{margin-left:-8px!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-choice-three>.gz-half{flex:0 0 44px!important;width:44px!important;min-width:44px!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-choice-three>.gz-half[data-may-part="1"]{flex-basis:48px!important;width:48px!important;min-width:48px!important;margin-left:-8px!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-choice-three>.gz-half[data-may-part="2"]{margin-left:-8px!important}
+.may-independent-pair>.gz-half:is(:hover,:focus-visible):not(.gz-on,.on,[aria-pressed=true],:active,.may-standard-held)>.may-half-outline>.may-half-face{stroke:#394657!important;stroke-width:2px!important}
+
+/* Each independent portion owns its hover, press and selected outline. */
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-parts-multi{display:flex!important;padding:0!important;gap:0!important}
+.may-parts-multi>.may-standard-outline,.may-parts-multi>.gz-pm{display:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-parts-multi>.gz-half{--may-outline:#394657;--may-stroke:1px;position:relative!important;display:flex;align-items:center;justify-content:center;flex:0 0 calc(120px / var(--may-parts))!important;width:calc(120px / var(--may-parts))!important;min-width:0!important;height:24px;margin:0!important;padding:0 2px!important;overflow:hidden;background:transparent!important;color:#dfe6f5!important;isolation:isolate}
+.may-parts-multi>.gz-half::before,.may-parts-multi>.gz-half::after{display:none!important}
+.may-parts-multi>.gz-half:is(:hover,:focus-visible){--may-outline:var(--c)!important}
+.may-parts-multi>.gz-half.gz-on{--may-outline:var(--c)!important;--may-stroke:2px!important}
+:is(.may-parts-multi,.may-segments)>.gz-half:is(:active,.may-standard-held){--may-outline:var(--c)!important;--may-stroke:3px!important}
+.may-parts-multi>.gz-half:is(:hover,:focus-visible):not(.gz-on,.on,[aria-pressed=true],:active,.may-standard-held)>.may-half-outline>.may-half-face{stroke:#394657!important;stroke-width:2px!important}
+.may-parts-multi>.gz-half:is(:hover,:focus-visible):not(.gz-on,.on,[aria-pressed=true],:active,.may-standard-held)>.may-half-outline>.may-half-side{display:block}

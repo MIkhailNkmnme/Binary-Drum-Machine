@@ -1,4 +1,4 @@
-/* Маятник v0.508 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.509 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -283,7 +283,7 @@
   };
   // v0.037: неактивные кнопки в рейке не показываются (как на других страницах); соты пересобираются без них.
   const relayout = () => { for (const soty of [...rail.el.querySelectorAll('.gz-soty'), ...railR.querySelectorAll('.gz-soty'), ...tools.querySelectorAll(':scope > .gz-group .gz-soty')]) {   // v0.232: и группы рейки, поднятые в шапку
-    const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('gz-off-dis'));
+    const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('gz-off-dis')&&!b.classList.contains('may-merged-source'));
     const top = tools.contains(soty), key = (top ? 'u' : '') + shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;   // top — в шапке (v0.232)
     cells.forEach(b => { b.style.display = shown.includes(b) ? '' : 'none'; });
     // v0.072: справа («Шаблоны») кнопки в одну строку, без сдвига сот.
@@ -566,6 +566,7 @@
     const rest = [...gView.children]; if (rest.length) { const s = document.createElement('div'); s.className = 'pt-sec'; s.style.setProperty('--s', '#7cbcff'); s.append(...rest); cols[0].append(s); }   // новая кнопка без темы — в конец «Вида»
     cols[0].classList.add('pt-colv'); gView.append(cols[0]); gMir.append(cols[1]); gView.classList.add('pt-cols'); gMir.classList.add('pt-cols'); }   // v0.238: левый столбец — «Вид», правый — «Зеркала»
   const gAreas = ptGroup('Площади');
+  gAreas.parentElement.dataset.k='Площади';gAreas.parentElement.classList.add('may-measure-group');gAreas.parentElement.querySelector('.may-group-title').textContent='МЕРИТЬ';
   gAreas.parentElement.style.setProperty('--c', '#b48cff');
   for (const n of ['sawFull', 'sectors', 'areas', 'areaFreeze', 'ovlStep', 'ovlPos', 'ovlH0', 'ovlFreeze', 'ovlAlpha', 'ovlOriginal', 'ovlCenter', 'ovlReset', 'lineMeasures']) { const b = tools.querySelector('[data-n=' + n + ']'); if (b) gAreas.append(b); }
   // v0.490 (МАЯ-019): группа — только клиент реестра; настройки не пересчитывают поле и не меняют исходные пиксели.
@@ -850,7 +851,7 @@
     // v0.506: both original actions share one split diamond at every viewport width.
     const infoDiamond=document.createElement('div');infoDiamond.id='mayInfoDiamond';infoDiamond.dataset.noMini='';$('mayCorner').append(infoDiamond);
     infoDiamond.append($('mayAbout'),$('mayHelp'));
-    for(const [id,label,title,points] of [['mayAbout','i','Что такое маятник','23,1 23,23 1,12'],['mayHelp','?','Подсказки к кнопкам и координаты','1,1 23,12 1,23']]){const b=$(id);b.className='gz-hx';b.title=title;b.setAttribute('aria-label',title);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="'+points+'"/></svg><span>'+label+'</span>';}
+    for(const [id,label,title,points] of [['mayAbout','i','Что такое маятник','1,1 23,1 23,23'],['mayHelp','?','Подсказки к кнопкам и координаты','1,1 23,1 1,23']]){const b=$(id);b.className='gz-hx';b.title=title;b.setAttribute('aria-label',title);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="'+points+'"/></svg><span>'+label+'</span>';}
     narrow.addEventListener('change', () => shut());
     // v0.163: (getClientRects, а не offsetParent: у fixed-списка на телефоне он null) рамка списка — зубцами по бокам (ряд 24 px, как кнопки), высота — целым числом рядов; рисунок — SVG фоном, тот же контур — clip-path
     // v0.447: the scoped SVG adapter draws the silhouette from real control bounds.
@@ -970,7 +971,7 @@
       queueMicrotask(() => { window.mayBotPlace = placeBot; });   // v0.406: зовёт сдвиг связки нижней полосы (playPlace)
       const saveBotX = () => { try { localStorage.setItem('mayatnik-botx', JSON.stringify(botX)); } catch (_) {} };
       const placeBot = () => { const bar = footerBar, R = bar.getClientRects().length ? bar.getBoundingClientRect() : null;udPlace();
-        const list = []; for (const el of items()) { if(el===ud)continue;if (d?.on && d.el === el) continue; if (!isBot(el) || narrow.matches || !R) { if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; } continue; } list.push(el); }
+        const list = []; for (const el of items()) { if(el===ud||el.classList.contains('may-docked'))continue;if (d?.on && d.el === el) continue; if (!isBot(el) || narrow.matches || !R) { if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; } continue; } list.push(el); }
         if (!R || !list.length) return;
         const busyX = [ud.getBoundingClientRect()].filter(r=>r.width).map(r => [r.left - 6, r.right + 6]);
         let def = R.left + 8; const want = el => { const v = +botX[idOf(el)]; return Number.isFinite(v) ? v : def; };
@@ -1020,7 +1021,7 @@
         if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==head)head.append(frameBar);shown = new Map(); sig = '';placeBot(); alignOpen(); syncRailFlyouts(); window.mayButtonStandardRefresh?.(); return; }
         if(frameBar.parentElement!==tools)tools.append(frameBar);
         tools.classList.add('pt-grid'); head.classList.add('may-grid'); if (!tools.getClientRects().length) return;   // дзен — шапки нет
-        const B = room(), occ = [], at = el => gw?.[idOf(el)], held = d?.on && d.el, vis = all.filter(el => el.getClientRects().length && el !== held && !isBot(el));
+        const B = room(), occ = [], at = el => gw?.[idOf(el)], held = d?.on && d.el, vis = all.filter(el => el.getClientRects().length && el !== held && !isBot(el) && !el.classList.contains('may-docked'));
         shown = new Map();
         const put = (el, [c], w) => { (occ[0] ||= []).push([c * SX, c * SX + w]); shown.set(el, [c, 0, w]); el.style.left = Math.round(c * SX) + 'px'; el.style.top = '0px'; };
         if(vis.includes(frameBar)){framePlace(false);put(frameBar,[parseFloat(frameBar.style.left)/SX,0],frameBar.offsetWidth);}
@@ -1107,9 +1108,13 @@
           localStorage.setItem('mayatnik-dd-single-row-v461', '1');
         } catch (_) {}
       };
-      grid = { relayout, tick: () => { if (!narrow.matches && !d?.on && !rd) { repairSavedRows(); if (sigOf() !== sig) relayout(); } },
+      let dock=null;
+      grid = { relayout, tick: () => { dock?.refresh(); if (!narrow.matches && !d?.on && !rd) { repairSavedRows(); if (sigOf() !== sig) relayout(); } },
         touch: k => { if (gw && ok(gw[k])) { gw[k][2] = topT() + 1; saveGrid(); } relayout(); } };   // правый щелчок (ромб ↔ название): тот, кого меняли, остаётся на месте, соседи уступают
-      narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick); }
+      narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick);
+      // v0.509: capture group dragging before the legacy rail/free-bottom handlers.
+      dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,
+        excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{relayout();reopen();}}); }
     // v0.209: «правой кнопкой по кнопке — свернуть кнопку в ромб со значком и сдвинуть все остальные на освободившееся место»:
     // правый щелчок по названию группы полосы — оно сворачивается в ромб со значком (соседи встают вплотную), ещё раз — разворачивается.
     // Список при этом открывается как прежде; свёрнутые — в памяти браузера (mayatnik-dd-mini).
@@ -1136,7 +1141,7 @@
   // v0.191: столбец — общий из grozd (ZerkGrozd.listHover; им же — списки рейки «Ход», «Поле», «Поиск», «Серии», «Область» и хаба);
   // здесь — кнопки полосы и кнопки рейки «по кругу» (Зеркало, Аниматрица).
   { const after = () => { rail.refresh(); placeTools(); };
-    const mountSegments=(b,options)=>{b.classList.add('may-segments','gz-pair');if(b.dataset.n==='fixLow')b.classList.add('may-mirror-three');b.replaceChildren();const nodes=options().map((o,i)=>{const part=document.createElement('span');part.className='gz-half';part.textContent=({Левая:'Лев',Правая:'Прав',копия:'Коп.'})[o.name]||o.name;part.title=b.dataset.n==='fixLow'?'Зеркало ↓ — '+o.name+'. Выбрать эту сторону; повторный щелчок по выбранной части — выключить.':b.title+' — '+o.name;b.append(part);return part;});
+    const mountSegments=(b,options)=>{b.classList.add('may-segments','gz-pair');if(b.dataset.n==='fixLow')b.classList.add('may-mirror-three');b.replaceChildren();const nodes=options().map((o,i)=>{const part=document.createElement('span');part.className='gz-half';part.textContent=b.dataset.n==='mirOp'?['Zrk','Xr','And'][i]:({Левая:'Лев',Правая:'Прав',копия:'Коп.'})[o.name]||o.name;part.title=b.dataset.n==='fixLow'?'Зеркало ↓ — '+o.name+'. Выбрать эту сторону; повторный щелчок по выбранной части — выключить.':b.title+' — '+o.name;b.append(part);return part;});
       b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const i=nodes.indexOf(e.target.closest('.gz-half'));if(i>=0)options()[i].pick();after();},true);
       toolSync.push(()=>options().forEach((o,i)=>{nodes[i].classList.toggle('gz-on',!!o.on);nodes[i].setAttribute('aria-pressed',String(!!o.on));}));};
     const reg = (b, options) => { if(b&&['fixLow','mirOp'].includes(b.dataset.n)){mountSegments(b,options);return;} if (b) ZerkGrozd.listHover(b, { options, after, color: () => getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff',
@@ -1174,7 +1179,7 @@
         reg(cell, () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); } }
   // One centre control; keep the retained source inputs and their handlers.
   { const one=railSourceButtons.get('midOneOn'),zero=railSourceButtons.get('midZeroOn');if(one&&zero){
-    zero.style.setProperty('display','none','important');one.classList.remove('gz-pair','gz-split','gz-bs','gz-wl');one.classList.add('may-center-control');one.replaceChildren();one.title='Центр: 0 и 1 включаются независимо; цветные круги меняют их цвета; Центр включает или выключает оба';
+    zero.classList.add('may-merged-source');zero.style.setProperty('display','none','important');one.classList.remove('gz-pair','gz-split','gz-bs','gz-wl');one.classList.add('may-center-control');one.replaceChildren();one.title='Центр: 0 и 1 включаются независимо; цветные круги меняют их цвета; Центр включает или выключает оба';
     const part=(cls,text,title,run)=>{const n=document.createElement('span');n.className=cls;n.dataset.noMini='';n.textContent=text;n.title=title;n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label',title);n.addEventListener('click',e=>{e.stopPropagation();run(n);rail.refresh();placeTools();});n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();n.click();}});one.append(n);return n;};
     const c0=picker($('midZeroColour')),c1=picker($('midOneColour'));
     const sw0=part('may-center-swatch','','Цвет центра 0',c0),bit0=part('may-center-bit','0','Включить или выключить центр 0',()=>$('midZeroOn').click());
