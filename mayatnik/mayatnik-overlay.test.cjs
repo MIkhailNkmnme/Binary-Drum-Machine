@@ -19,19 +19,19 @@ function canvas(w=0,h=0,rect){
     }};c.getContext=()=>g;return c;
 }
 function env({saved,ready=true,gpu=false,dpr=2,rect,templates=false}={}){
-  const queue=new Map(),appended=[],saves=[],events=[];let rid=20;
+  const queue=new Map(),appended=[],saves=[],events=[],listeners={};let rid=20;
   const cv=canvas(8,8,rect),gpuCv=canvas(8,8),pixels=Uint32Array.from({length:64},(_,i)=>i%7===0?0:(0xff000000|i*0x010307)>>>0);
   pixels[1]=0xff000000;const pic=data(8,8,pixels);cv.pixels.fill(AXIS); // decorated CPU canvas
-  const wrap={clientWidth:4,clientHeight:4,clientLeft:1,clientTop:1,getBoundingClientRect:()=>({left:10,top:20}),addEventListener(){}};
+  const wrap={clientWidth:4,clientHeight:4,clientLeft:1,clientTop:1,getBoundingClientRect:()=>({left:10,top:20}),addEventListener(type,fn){listeners[type]=fn;}};
   const ctx=vm.createContext({st:{rows:256,ovl:saved},ovlFrozen:null,zWant:0,f:{get val(){throw Error('no new bits');}},geo:{anchor:3},VX:0,VH:256,
     img:pic,present:{clean:{pic}},cv,gpuCv,gpuBig:gpu?{}:null,gpuRaf:gpu?7:0,wrap,k:7,sessionReady:ready,
     templateCanvas:{hidden:!templates},templateItems:templates?[{view:{visible:true}}]:[],
     paintTemplate(g,x,y,s,contentOnly){assert.equal(contentOnly,true);events.push('template-content');const t=canvas(8,8);t.pixels[10]=0xff00aa33;g.drawImage(t,0,0,4,4);},
     layout(){},scale:()=>.5,DPR:()=>dpr,rombP:()=>-1,gpuRender(){events.push('render');gpuCv.pixels.set(pixels);},
-    cancelAnimationFrame(id){events.push('cancel:'+id);queue.delete(id);},requestAnimationFrame(fn){const id=++rid;queue.set(id,fn);return id;},addEventListener(){},
+    cancelAnimationFrame(id){events.push('cancel:'+id);queue.delete(id);},requestAnimationFrame(fn){const id=++rid;queue.set(id,fn);return id;},addEventListener(type,fn){listeners[type]=fn;},
     save(){saves.push(JSON.parse(JSON.stringify(ctx.st.ovl)));},document:{body:{classList:{contains:()=>false},append:c=>appended.push(c)},createElement:tag=>{assert.equal(tag,'canvas');return canvas();},querySelectorAll(){throw Error('service layer capture forbidden');}}
   });ctx.window=ctx;vm.runInContext(source,ctx);
-  return {ctx,cv,wrap,pixels,events,saves,appended,queue,api:ctx.mayOvl,snapshot:()=>vm.runInContext('ovlSource',ctx),draw:()=>ctx.ovlDraw(),flush(){while(queue.size){const[id,fn]=queue.entries().next().value;queue.delete(id);fn();}}};
+  return {ctx,cv,wrap,pixels,events,saves,appended,queue,listeners,api:ctx.mayOvl,snapshot:()=>vm.runInContext('ovlSource',ctx),draw:()=>ctx.ovlDraw(),flush(){while(queue.size){const[id,fn]=queue.entries().next().value;queue.delete(id);fn();}}};
 }
 test('raw CPU preserves actual colors, zeros and emptiness; ignores decorated cv and service canvases',()=>{
   const e=env();e.api.step();const S=e.snapshot(),c=S.layers[0].c;assert.deepEqual(c.pixels,e.pixels);assert.ok(!c.pixels.includes(AXIS));assert.equal(c.pixels[0],0);assert.equal(c.pixels[1],0xff000000);
@@ -251,4 +251,58 @@ test('menu distinguishes magnetic linkage from exact matching; real sync highlig
   e.api.original();sync[0]();assert.equal(button.classes.on,true);assert.equal(button['aria-pressed'],'true');assert.match(button.title,/Сетка совмещена/);
   e.ctx.ovlOriginalZoom(4);sync[0]();assert.equal(button.classes.on,false);assert.equal(e.api.get().linked,true);
   e.api.reset();sync[0]();assert.equal(button.disabled,true);assert.equal(button.classes.on,false);
+});
+
+test('unfrozen overlay starts at 50%; real menu cycles whole-layer visibility including zero without changing source',()=>{
+  const e=env(),menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8'),buttons={},sync=[];
+  const context=vm.createContext({document:{createElement:()=>({})},window:{mayOvl:e.api},placeTools(){},toolSync:sync,
+    ptBtn(n,kind,src,onclick){const label={textContent:''};return buttons[n]={dataset:{},onclick,classList:{toggle(){}},querySelector:()=>label,label,setAttribute(k,v){this[k]=v;}};}});
+  vm.runInContext(menu.slice(menu.indexOf('    const ovp ='),menu.indexOf('    // v0.270:')),context);
+  e.api.step();const c=e.appended[0],S=e.snapshot(),pixels=S.layers[0].c.pixels.slice(),field=e.ctx.f,frame=e.ctx.k;
+  assert.equal(c.style.opacity,'0.5');assert.equal(e.api.get().fixed,false);
+  for(const alpha of [75,100,0,25,50]){
+    buttons.ovlAlpha.onclick();sync[0]();assert.equal(e.api.get().alpha,alpha);assert.equal(c.style.opacity,String(alpha/100));
+    assert.equal(buttons.ovlAlpha.label.textContent,'Видимость '+alpha+'%');assert.equal(buttons.ovlAlpha['aria-label'],buttons.ovlAlpha.title);
+    assert.match(buttons.ovlAlpha.title,/до и после фиксации/);assert.match(buttons.ovlAlpha.title,/0 → 25 → 50 → 75 → 100/);
+    assert.equal(e.snapshot(),S);assert.deepEqual(S.layers[0].c.pixels,pixels);assert.equal(e.ctx.f,field);assert.equal(e.ctx.k,frame);
+  }
+  assert.equal(e.appended.length,1);assert.ok(c.calls.every(call=>call.alpha===1),'RGB/source pixels are combined at full alpha before the CSS layer');
+});
+
+test('every alpha survives step/position, freeze, redraw, scroll/resize, unfreeze and fresh F5 restore',()=>{
+  for(const alpha of [0,25,50,75,100]){
+    const e=env({saved:{alpha}});e.api.step();const c=e.appended[0],S=e.snapshot(),pixels=S.layers[0].c.pixels.slice(),field=e.ctx.f;
+    e.api.step();e.api.pos();assert.equal(c.style.opacity,String(alpha/100));
+    e.api.freeze();assert.equal(e.api.get().fixed,true);assert.equal(e.api.get().linked,true);
+    e.draw();e.listeners.scroll();e.listeners.resize();e.flush();assert.equal(c.style.opacity,String(alpha/100));assert.equal(e.api.get().linked,true);
+    assert.deepEqual(S.layers[0].c.pixels,pixels);e.api.freeze();assert.equal(e.api.get().fixed,false);assert.equal(c.style.opacity,String(alpha/100));
+    e.listeners.resize();e.flush();assert.equal(c.style.opacity,String(alpha/100));assert.equal(e.ctx.f,field);
+    const fresh=env({saved:JSON.parse(JSON.stringify(e.ctx.st.ovl))});fresh.draw();fresh.flush();
+    assert.equal(fresh.api.get().alpha,alpha);assert.equal(fresh.appended[0].style.opacity,String(alpha/100));assert.equal(fresh.api.get().fixed,false);
+    e.api.reset();assert.equal(c.style.display,'none');assert.equal(e.api.get().alpha,alpha);assert.equal(e.ctx.f,field);e.api.step();assert.equal(c.style.opacity,String(alpha/100));
+  }
+});
+
+test('visibility clamps invalid endpoints while preserving valid zero; changing opacity at 0 keeps magnet and fixed bitmap',()=>{
+  for(const [value,want]of [[-12,0],[0,0],[132,100],[undefined,50],[NaN,50]])assert.equal(env({saved:{alpha:value}}).api.get().alpha,want);
+  const e=magneticEnv(),c=e.appended[0],bitmap=c.pixels.slice(),F=e.ctx.ovlFrozen;
+  for(const alpha of [75,100,0,25,50]){e.api.opacity();assert.equal(c.style.opacity,String(alpha/100));assert.equal(e.ctx.ovlFrozen,F);assert.equal(e.api.get().linked,true);assert.deepEqual(c.pixels,bitmap);}
+});
+
+test('GIF compositor applies whole-layer alpha once: two different colors mix at 0/25/50/75/100%, zero never becomes opaque',()=>{
+  const gif=html.slice(html.indexOf('  function gifViewFrame('),html.indexOf("  $('bGif').onclick=")),over=[200,40,80],under=[20,100,220];
+  const e=env({saved:{pos:'RGB'}});e.api.step(); // RGB: multiple copies still produce one composited canvas
+  assert.equal(e.api.get().pos,'RGB');const overlay=e.appended[0];
+  const result={width:4,height:4};let current,pixel,draws;
+  const g={globalAlpha:1,setTransform(){},fillRect(){pixel=[0,0,0];},drawImage(c){const color=c===overlay?over:under;pixel=pixel.map((p,i)=>color[i]*this.globalAlpha+p*(1-this.globalAlpha));draws.push({c,alpha:this.globalAlpha});}};
+  result.getContext=()=>g;const base=canvas(4,4);const context=vm.createContext({wrap:e.wrap,cv:base,gpuBig:null,GIF_LAYERS:'.may-ovl',getComputedStyle:c=>({display:'',visibility:'visible',opacity:c===overlay?overlay.style.opacity:'1'}),document:{querySelectorAll:()=>[overlay]}});
+  base.tagName=overlay.tagName='CANVAS';vm.runInContext(gif,context);
+  for(const alpha of [75,100,0,25,50]){
+    e.api.opacity();draws=[];context.gifViewFrame(result,4,4);current=alpha/100;
+    assert.deepEqual(pixel,under.map((p,i)=>over[i]*current+p*(1-current)));assert.equal(draws.filter(d=>d.c===overlay).length,alpha===0?0:1);
+    assert.equal(g.globalAlpha,1);assert.ok(overlay.calls.every(call=>call.alpha===1));
+  }
+  // GPU's direct put() call also honors zero independently of shown() filtering.
+  context.gpuBig={};context.gpuCv=overlay;context.gpuRaf=0;context.gpuRender=()=>{};
+  overlay.style.opacity='0';draws=[];context.gifViewFrame(result,4,4);assert.equal(draws[0].alpha,0);assert.deepEqual(pixel,[0,0,0]);
 });
