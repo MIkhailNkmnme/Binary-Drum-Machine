@@ -1,18 +1,15 @@
 /* Маятник v0.490: родная группа Слои, общие кнопки/пары; новые стили только для нативных полей. */
 #paintTools .pt-layers .may-layer-colour{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:0;top:24px}
 body.mayatnik-menu-ready #paintTools .pt-layers .may-layer-value.may-standard{padding:0!important;gap:0!important}
-#paintTools .pt-layers .may-layer-value>.gz-a{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 20px;width:20px;height:24px;padding:0;border:0;background:var(--c);color:var(--c);font-size:0;cursor:pointer;z-index:4}
-#paintTools .pt-layers .may-layer-value>.gz-a:first-child{clip-path:polygon(12px 0,20px 0,8px 12px,20px 24px,12px 24px,0 12px)}
-#paintTools .pt-layers .may-layer-value>.gz-a:last-child{clip-path:polygon(0 0,8px 0,20px 12px,8px 24px,0 24px,12px 12px)}
-#paintTools .pt-layers .may-layer-value>.gz-mid{position:relative;display:flex;align-items:center;gap:2px;flex:1;min-width:0;height:24px;color:inherit}
 #paintTools .pt-layers .may-layer-axis{flex:none;font:11px 'Segoe UI',sans-serif}
 #paintTools .pt-layers .may-layer-value input[type=number]{width:100%;min-width:0;height:24px;padding:0;border:0;background:transparent;color:inherit;font:11px 'Segoe UI',sans-serif;text-align:center;-moz-appearance:textfield;user-select:text!important;-webkit-user-select:text!important}
 #paintTools .pt-layers :is(input,button):focus-visible{outline:1px solid var(--c);outline-offset:-2px}
 #paintTools .pt-layers .may-layer-value input[type=number]::-webkit-inner-spin-button{appearance:none}
-#paintTools .pt-layers .may-layer-opacity input[type=range]{appearance:none;position:absolute;inset:0;width:100%!important;max-width:none;height:24px;margin:0;padding:0;background:transparent;cursor:pointer}
+#paintTools .pt-layers .may-layer-opacity input[type=range]{appearance:none;position:absolute;inset:0 8px;width:calc(100% - 16px)!important;max-width:none;height:24px;margin:0;padding:0;background:transparent;cursor:pointer}
 #paintTools .pt-layers .may-layer-opacity input[type=range]::-webkit-slider-runnable-track{height:1px;background:repeating-linear-gradient(90deg,var(--c) 0 2px,transparent 2px 4px)}
 #paintTools .pt-layers .may-layer-opacity input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:16px;margin-top:-8px;background:var(--c);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 #paintTools .pt-layers .may-layer-opacity output{position:relative;margin:auto;padding:0 2px;background:var(--may-surface,#1b2430);font:11px 'Segoe UI',sans-serif;pointer-events:none;z-index:2}
 #paintTools .pt-layers :is(button,input):disabled{opacity:.3;cursor:default}
 #paintTools .pt-layers .may-layer-pair .gz-half{min-width:0;gap:2px}
 .may-layer-options{display:flex!important;flex-direction:column!important;grid-auto-flow:row!important;width:120px!important;min-width:120px;max-width:120px!important;gap:2px!important}
+#paintTools .pt-layers .zcf-control :is(input,button):focus-visible{outline:0}

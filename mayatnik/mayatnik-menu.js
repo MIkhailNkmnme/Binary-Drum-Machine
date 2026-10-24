@@ -1,4 +1,4 @@
-/* Маятник v0.515 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.516 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -601,7 +601,7 @@
         let repeated=false,timer=0;b.onclick=event=>{if(!repeated||!event?.detail)step();repeated=false;};
         b.addEventListener('pointerdown',event=>{if(event.button!==0||b.disabled)return;repeated=false;clearTimeout(timer);const again=()=>{repeated=true;step();timer=setTimeout(again,80);};timer=setTimeout(again,350);
           const stop=()=>clearTimeout(timer);addEventListener('pointerup',stop,{once:true});addEventListener('pointercancel',stop,{once:true});});return b;});
-      box.append(arrows[0],mid,arrows[1]);row.append(box);return {box,input,arrows,output};
+      box.append(arrows[0],mid,arrows[1]);ZerkControlFrame.attach(box,arrows[0],mid,arrows[1]);row.append(box);return {box,input,arrows,output};
     };
     const opacity=valueControl('opacity','Видимость выбранного слоя, от 0 до 100 процентов','range'),x=valueControl('x','Сдвиг выбранного слоя X, CSS px','number'),y=valueControl('y','Сдвиг выбранного слоя Y, CSS px','number');
     const center=command('layerCenter','axes','По вертикальной оси оригинала: центрировать выбранное наложение или фиксацию только по X. Y и масштаб сохраняются.',()=>{const layer=current();if(layer?.centerable)api.center(layer.id);});row.append(center);

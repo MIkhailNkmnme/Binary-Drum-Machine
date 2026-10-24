@@ -1,0 +1,16 @@
+/* v1. One 120×24 surface: left / value / right. X joints have their own neutral contour. */
+.zcf-control{--zcf-base:#394657;--zcf-surface:var(--may-surface,#1b2430)}
+.zcf-control>.zcf-side,.zcf-control>.zcf-middle{position:relative!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;height:24px!important;min-height:24px;border:0;border-radius:0;margin:0!important;background:var(--zcf-surface)!important;color:#dfe6f5;--zcf-outline:var(--zcf-base);--zcf-stroke:2px;overflow:hidden}
+.zcf-control>.zcf-side{flex:0 0 24px!important;width:24px!important;min-width:24px!important;padding:0!important;z-index:4;cursor:pointer;font:15px/1 'Segoe UI',sans-serif!important;text-shadow:none!important}
+.zcf-control>.zcf-left{clip-path:polygon(12px 0,18px 0,24px 12px,18px 24px,12px 24px,0 12px)!important}
+.zcf-control>.zcf-right{clip-path:polygon(6px 0,12px 0,24px 12px,12px 24px,6px 24px,0 12px)!important}
+.zcf-control>.zcf-middle{flex:0 0 72px!important;width:72px!important;min-width:72px!important;padding:0 8px!important;gap:2px;clip-path:polygon(6px 0,66px 0,72px 12px,66px 24px,6px 24px,0 12px)!important}
+.zcf-control>.zcf-side:is(:hover,:focus-visible):not(:disabled),.zcf-control>.zcf-middle:is(:hover,:focus-within){--zcf-outline:var(--c,#7cbcff);outline:0}
+.zcf-control>.zcf-side:is(:active,.zcf-held):not(:disabled){--zcf-outline:var(--c,#7cbcff);--zcf-stroke:4px}
+.zcf-control>.zcf-side:disabled{cursor:default;opacity:.4}
+.zcf-control .zcf-outline{position:absolute;inset:0;width:100%;height:24px;z-index:5;pointer-events:none}
+.zcf-control .zcf-outline path{fill:none;stroke:var(--zcf-outline);stroke-width:var(--zcf-stroke);stroke-linecap:butt;stroke-linejoin:miter}
+.zcf-control>.zcf-joints{position:absolute!important;inset:0;width:100%;height:24px;z-index:6;pointer-events:none}
+.zcf-control>.zcf-joints path{fill:none;stroke:var(--c,#7cbcff);stroke-width:2px;stroke-linecap:butt}
+.zcf-control>.may-standard-outline{display:none!important}
+.zcf-control>.zcf-side::before,.zcf-control>.zcf-side::after{display:none!important}

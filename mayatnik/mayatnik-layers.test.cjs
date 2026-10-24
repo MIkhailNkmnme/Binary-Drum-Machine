@@ -49,7 +49,7 @@ test('render frames do not send menu notifications; readiness transition does, i
 const support=fs.readFileSync(path.join(__dirname,'mayatnik-overlay.test.cjs'),'utf8'),box=vm.createContext({require,__dirname,console});
 vm.runInContext(support.slice(0,support.indexOf("test('raw CPU"))+support.slice(support.indexOf('function originalLayout('),support.indexOf("test('freeze pins"))+'\nglobalThis.helpers={env,originalLayout};',box);
 function adapter(options={}){
-  const e=box.helpers.env(),C=e.ctx;box.helpers.originalLayout(e,{initialScale:.3,dpr:1.25,quantized:true,...options});
+  const e=box.helpers.env(),C=e.ctx;C.MAX_ZOOM=Number(html.match(/const MAX_ZOOM\s*=\s*(\d+)/)[1]);box.helpers.originalLayout(e,{initialScale:.3,dpr:1.25,quantized:true,...options});
   C.document.createElement=tag=>tag==='canvas'?canvas():{style:{},append(){}};C.MayatnikLayers=Layers;C.CHISTO=false;C.URL_ON=false;C.localStorage={getItem:()=>null,setItem(){}};C.queueDigits=()=>{};
   vm.runInContext(html.slice(html.indexOf('  if(window.MayatnikLayers){'),html.indexOf('  function areaFreezeDraw()')),C);
   e.cv.pixels.set(e.pixels);C.layerOriginalBase(e.cv);return e;

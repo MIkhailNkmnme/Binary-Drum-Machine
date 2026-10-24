@@ -7,10 +7,11 @@ class Element {
   constructor(tag='div'){this.tagName=tag.toUpperCase();this.children=[];this.dataset={};this.attributes={};this.handlers={};this.value='';this.disabled=false;this.isConnected=true;this.style={setProperty(k,v){this[k]=v;}};this.className='';}
   set className(v){this.classes=new Set(v.split(/\s+/).filter(Boolean));}
   get className(){return [...this.classes].join(' ');}
-  get classList(){const self=this;return {add(...a){a.forEach(x=>self.classes.add(x));},toggle(k,v){if(v??!self.classes.has(k))self.classes.add(k);else self.classes.delete(k);},contains:k=>self.classes.has(k)};}
+  get classList(){const self=this;return {add(...a){a.forEach(x=>self.classes.add(x));},toggle(k,v){if(v??!self.classes.has(k))self.classes.add(k);else self.classes.delete(k);},remove:(...a)=>a.forEach(x=>self.classes.delete(x)),contains:k=>self.classes.has(k)};}
   append(...nodes){for(const n of nodes){if(n.parentElement)n.parentElement.children=n.parentElement.children.filter(e=>e!==n);this.children.push(n);n.parentElement=this;}}
   replaceChildren(...nodes){this.children.forEach(n=>n.parentElement=null);this.children=[];this.append(...nodes);}
   querySelector(selector){return this.children.find(n=>selector==='i'?n.tagName==='I':n.classes.has(selector.slice(1)))||this.children.map(n=>n.querySelector(selector)).find(Boolean)||null;}
+  querySelectorAll(selector){if(selector===':scope > .gz-hx')return this.children.filter(n=>n.classList.contains('gz-hx'));return [];}
   setAttribute(k,v){this.attributes[k]=String(v);}
   getAttribute(k){return this.attributes[k]??null;}
   toggleAttribute(k,on){if(on)this.setAttribute(k,'');else delete this.attributes[k];}
@@ -21,7 +22,7 @@ class Element {
   getBoundingClientRect(){return {left:20,top:50,right:140,bottom:74,width:120,height:24};}
 }
 function setup(){
-  const calls=[],listeners=new Set(),events={},groups=[],timers=new Map(),document={activeElement:null,createElement:tag=>new Element(tag)};let tid=0;
+  const calls=[],listeners=new Set(),events={},groups=[],timers=new Map(),document={activeElement:null,createElement:tag=>new Element(tag),createElementNS:(ns,tag)=>Object.assign(new Element(tag),{namespaceURI:ns}),addEventListener(type,fn){this.events??={};this.events[type]=fn;},removeEventListener(type){delete this.events?.[type];}};let tid=0;
   let layers=[{id:'original',name:'Оригинал',kind:'original',removable:false},{id:'overlay',name:'Наложение',kind:'overlay',removable:false},{id:'template:7',name:'Мой особенный шаблон',kind:'template',removable:false}].map((d,i)=>({...d,visible:true,opacity:100,tint:null,x:0,y:0,order:i})),selected='overlay';
   const emit=()=>[...listeners].forEach(fn=>fn());
   const api={list:()=>layers.map(d=>({...d})),selected:()=>selected,get:(id=selected)=>layers.find(d=>d.id===id)||null,
@@ -33,10 +34,11 @@ function setup(){
     remove(id){calls.push(['remove',id]);layers=layers.filter(d=>d.id!==id);selected=layers[0]?.id;emit();},
     reset(id){calls.push(['reset',id]);Object.assign(this.get(id),{visible:true,opacity:100,tint:null,x:0,y:0});emit();},
     subscribe(fn){listeners.add(fn);return ()=>listeners.delete(fn);}};
-  const ctx=vm.createContext({document,ptNames:{},api,innerWidth:800,innerHeight:600,hideListUnder(){},
+  const ctx=vm.createContext({document,ptNames:{},api,innerWidth:800,innerHeight:600,hideListUnder(){},decorateListHeading(){},
     ptGroup(name){const group=new Element(),head=new Element('button'),row=new Element();head.textContent=name;group.append(head,row);groups.push(group);return row;},
     ptBtn(n,kind,src,onclick){const b=new Element('button');b.dataset.n=n;b.dataset.miIcon=kind;b.onclick=onclick;b.append(new Element('i'));return b;},
     ZerkGrozd:{listHover(owner,options){owner.gzList=options;}},addEventListener(type,fn){events[type]=fn;},setTimeout(fn,delay){timers.set(++tid,{fn,delay});return tid;},clearTimeout(id){timers.delete(id);}});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../_js/control-frame.js'),'utf8'),ctx);
   vm.runInContext(code+'\ninstallLayersMenu(api);',ctx);
   const group=groups[0],all=()=>{const out=[];const visit=e=>{out.push(e);e.children.forEach(visit);};visit(group);return out;},button=n=>all().find(e=>e.dataset.n===n),input=key=>all().find(e=>e.id==='mayLayer-'+key);
   return {api,calls,emit,events,listeners,timers,group,all,button,input,document,ctx,tick(){const [id,t]=timers.entries().next().value;timers.delete(id);t.fn();return t.delay;}};
@@ -45,7 +47,7 @@ function setup(){
 test('real installer creates one ordinary group and nested list; selection preserves user template labels and follows structure changes',()=>{
   const e=setup(),choose=e.button('layerSelect');assert.equal(e.group.dataset.k,'Слои');assert.equal(e.group.children[0].textContent,'Слои');
   assert.equal(choose.getAttribute('aria-haspopup'),'true');const list=new Element();choose.gzList.placed(list,choose);
-  assert.equal(list.children.length,3);assert.equal(list.style.flexDirection,'column');assert.equal(list.style.width,'120px');assert.ok(+list.style.left.slice(0,-2)>=146);
+  assert.equal(list.children.length,3); // Popup geometry is exercised by the real controller in menu-portal tests.
   const template=list.children.find(b=>b.dataset.layerId==='template:7');assert.equal(template.querySelector('.gz-nm').textContent,'Мой особенный шаблон');assert.equal(template.querySelector('.gz-nm').getAttribute('data-user-label'),'');template.click();
   assert.equal(e.api.selected(),'template:7');assert.equal(choose.querySelector('.gz-nm').textContent,'Мой особенный шаблон');assert.equal(choose.querySelector('.gz-nm').getAttribute('data-user-label'),'');
   e.button('layerCapture').click();assert.equal(list.children.length,4);assert.equal(e.api.selected(),'snapshot:1');assert.equal(list.children.filter(b=>b.classList.contains('gz-on')).length,1);
@@ -103,4 +105,13 @@ test('real Площади button По оси is inserted, migrated and calls may
   for(const name of placement.slice(placement.indexOf('.after(')+7,-2).split(',').map(x=>x.trim()))e[name]={dataset:{n:name}};
   vm.runInContext(block+'\n'+placement+'\n'+migration,e);const button=areas.find(b=>b.dataset.n==='ovlCenter');assert.ok(button);sync[0]();assert.equal(button.disabled,true);button.onclick();assert.equal(centers,0);
   centerable=true;sync[0]();assert.equal(button.disabled,false);button.onclick();assert.equal(centers,1);assert.equal(layouts,2);assert.equal(button['aria-label'],button.title);
+});
+
+test('only the three layer values use separate left/middle/right outlines and fixed X joints; original inputs still work',()=>{
+ const e=setup();for(const key of ['opacity','x','y']){const box=e.button('layer-'+key),input=e.input(key),[left,middle,right,joints]=box.children;
+  assert.ok(box.classList.contains('zcf-control'));assert.equal(input.parentElement,middle);assert.equal(joints.classList.contains('zcf-joints'),true);assert.equal(joints.children[0].getAttribute('d'),'M18 0L30 24M30 0L18 24M90 0L102 24M102 0L90 24');
+  for(const n of [left,middle,right])assert.equal(n.children.filter(c=>c.classList.contains('zcf-outline')).length,1);
+  const before=e.api.get()[key];right.fire('pointerdown',{button:0});assert.equal(right.classList.contains('zcf-held'),true);e.document.events.pointerup();assert.equal(right.classList.contains('zcf-held'),false);right.click();assert.equal(e.api.get()[key],key==='opacity'?Math.min(100,before+1):before+1);
+  const prior=box.children.slice();e.ctx.ZerkControlFrame.attach(box,left,middle,right);assert.deepEqual(box.children,prior);
+ }assert.equal(e.all().filter(n=>n.classList.contains('zcf-control')).length,3);
 });
