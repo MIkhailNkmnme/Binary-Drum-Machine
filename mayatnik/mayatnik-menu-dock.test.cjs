@@ -16,15 +16,16 @@ test('saved coordinates accept only four strips and nonnegative integer slots',(
 function fixture(saved={}){
  const events=new Map(),docEvents=new Map(),frames=[],store=new Map(Object.entries(saved));let width=1000;
  const listen=(map)=>(type,fn)=>{if(!map.has(type))map.set(type,[]);map.get(type).push(fn);};
- class El{constructor(box={left:0,top:0,width:120,height:24}){this.box=box;this.children=[];this.dataset={};this.attrs={};const set=new Set();this.classList={add:(...v)=>v.forEach(x=>set.add(x)),remove:(...v)=>v.forEach(x=>set.delete(x)),contains:x=>set.has(x),toggle:(x,on)=>on?set.add(x):set.delete(x)};this.style={setProperty:(k,v)=>this.style[k]=v};this.offsetWidth=box.width;}
+ class El{constructor(box={left:0,top:0,width:120,height:24}){this.box=box;this.children=[];this.dataset={};this.attrs={};const set=new Set();this.classList={add:(...v)=>v.forEach(x=>set.add(x)),remove:(...v)=>v.forEach(x=>set.delete(x)),contains:x=>set.has(x),toggle:(x,on)=>on?set.add(x):set.delete(x)};this.style={getPropertyValue:k=>this.style[k]||'',setProperty:(k,v)=>this.style[k]=v};this.scrollTop=0;this.events={};this.offsetWidth=box.width;}
+  addEventListener(t,fn){this.events[t]=fn;}
   getBoundingClientRect(){return {...this.box,right:this.box.left+this.box.width,bottom:this.box.top+this.box.height};}getClientRects(){return [this.box];}setAttribute(k,v){this.attrs[k]=v;}append(n){this.children.push(n);n.parentElement=this;}replaceChildren(){this.children=[];}querySelector(){return this.hd;}closest(s){return s.includes('.pt-l')?this:null;}}
  const body=new El(),rail=new El({left:8,top:60,width:120,height:650}),tools=new El({left:160,top:8,width:830,height:42}),header=new El({left:0,top:0,width:1000,height:50}),footer=new El({left:0,top:752,width:1000,height:32});
  const gs=[0,1].map(i=>{const g=new El();g.id='g'+i;g.hd=new El({left:8,top:62+i*26,width:120,height:24});g.parentElement=rail;return g;});
- const ctx={module:{exports:{}},globalThis:null,document:{body,createElementNS:()=>new El(),addEventListener:listen(docEvents)},localStorage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)},addEventListener:listen(events),requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},setTimeout:()=>0,get innerWidth(){return width;}};ctx.globalThis=ctx;
+ const ctx={module:{exports:{}},globalThis:null,document:{body,createElement:()=>new El(),createElementNS:()=>new El(),addEventListener:listen(docEvents)},localStorage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)},addEventListener:listen(events),requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},setTimeout:()=>0,get innerWidth(){return width;}};ctx.globalThis=ctx;
  vm.runInNewContext(fs.readFileSync(require.resolve('./mayatnik-menu-dock.js'),'utf8'),ctx);
  const dock=ctx.module.exports.mount({groups:()=>gs,idOf:g=>g.id,header,tools,footer,rail,rightEdge:()=>width,moveToTools:g=>tools.append(g),onLayout:()=>{}});frames.splice(0).forEach(fn=>fn());
  const event=(type,props={},doc=false)=>{const e={type,button:0,pointerId:1,preventDefault(){},stopImmediatePropagation(){},...props};for(const fn of (doc?docEvents:events).get(type)||[])fn(e);};
- return {gs,dock,store,event,resize(w){width=w;event('resize');}};
+ return {gs,dock,store,event,body,flush(){frames.splice(0).forEach(fn=>fn());},resize(w){width=w;event('resize');}};
 }
 test('real controller snaps drag to right strip and persists slot, never raw pixels',()=>{
  const f=fixture();f.event('pointerdown',{target:f.gs[0].hd,clientX:68,clientY:74},true);f.event('pointermove',{clientX:936,clientY:270});f.event('pointerup',{clientX:936,clientY:270});
@@ -64,4 +65,14 @@ test('production part adapter ignores interleaved labels, preserves independent 
   if(!exclusive){assert.equal(b.classList.contains('may-parts-multi'),true);for(const h of hs){assert.ok(!/[QCA]/.test(h.style['clip-path']));assert.equal(h.querySelector('.may-half-outline').children[0].kind,'path');}}
   else assert.deepEqual(hs.map(h=>h.querySelector('.may-half-outline').attrs.viewBox),['0 0 44 24','0 0 48 24','0 0 44 24']);
  }
+});
+
+test('open side groups push following headers by grid steps and collapsing restores base positions',()=>{
+ const closed=D.stackPositions([{index:0,y:58,height:24},{index:1,y:84,height:24}],58,500);assert.deepEqual(closed.rows.map(r=>r.screenY),[58,84]);
+ const open=D.stackPositions([{index:0,y:58,height:286},{index:1,y:84,height:132}],58,500);assert.deepEqual(open.rows.map(r=>r.screenY),[58,370]);assert.equal(open.maxScroll,4);assert.equal(D.stackPositions([{index:0,y:58,height:24},{index:1,y:84,height:24}],58,500,200).offset,0);
+});
+test('side column scroll exposes lower groups without changing saved grid slots; closed height resets scroll',()=>{
+ const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})}),saved=f.store.get('mayatnik-menu-dock-v509');f.gs[0].box.height=780;f.dock.refresh();assert.equal(f.gs[1].style['--may-dock-y'],'864px');
+ const bar=f.body.children.find(n=>n.dataset.edge==='left');assert.equal(bar.style.display,'block');bar.scrollTop=100;bar.events.scroll();f.flush();assert.equal(f.gs[1].style['--may-dock-y'],'764px');assert.equal(f.gs[0].style['--may-side-clip-top'],'100px');let stopped=false;f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:999,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(stopped,true);assert.equal(f.gs[1].style['--may-dock-y'],'726px');assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);
+ f.gs[0].box.height=24;f.dock.refresh();assert.equal(bar.style.display,'none');assert.equal(bar.scrollTop,0);assert.equal(f.gs[1].style['--may-dock-y'],'84px');
 });

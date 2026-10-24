@@ -251,3 +251,15 @@ body.mayatnik-menu-ready .gz-group>.gz-head>.gz-ar{display:none!important}
 .may-option-diamond>.may-view-swatch:last-of-type{left:auto;right:5px}
 .may-diamond-options>.may-list-heading{background:transparent;border-bottom:0}
 .mayatnik-menu-ready .gz-hx.gz-lst.may-list-left>.may-list-inner-arrow{left:4px;right:auto;transform:scaleX(-1)}
+
+/* v0.518: side groups expand in their column; headers below move by grid steps. */
+@media(min-width:601px){
+ body.mayatnik-menu-ready header #paintTools.pt-grid>.may-docked.may-dock-side{display:block!important;width:120px!important;height:auto!important;clip-path:inset(var(--may-side-clip-top,0px) -8px var(--may-side-clip-bottom,0px) -8px)}
+ body.mayatnik-menu-ready header #paintTools.pt-grid>.may-dock-side>:is(.pt-r,.may-rail-list){position:relative!important;left:0!important;right:auto!important;top:auto!important;bottom:auto!important;width:120px!important;min-width:120px!important;max-height:none!important;overflow:visible!important}
+}
+.may-menu-side-scroll{position:fixed;display:none;width:14px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#72839c #0d1117;z-index:2147483640;outline:none}
+.may-menu-side-scroll>div{width:1px;pointer-events:none}
+.may-menu-side-scroll:focus-visible{outline:1px solid #7cbcff}
+body.may-zen>.may-menu-side-scroll{display:none!important}
+
+@media(min-width:601px){body.mayatnik-menu-ready header #paintTools.pt-grid>.may-docked.may-dock-side.may-dock-drag{clip-path:none}}

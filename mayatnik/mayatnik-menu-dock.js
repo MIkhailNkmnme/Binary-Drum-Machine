@@ -14,6 +14,11 @@
   function nearest(list,x,y,preferred){let best=null,score=Infinity;for(const p of list){const d=Math.hypot(p.x+WIDTH/2-x,p.y+HEIGHT/2-y)+(preferred&&p.edge!==preferred?1e5:0);if(d<score){score=d;best=p;}}return best;}
   function read(value){const result={};if(!value||typeof value!=='object'||Array.isArray(value))return result;
     for(const [key,p] of Object.entries(value))if(p&&['top','bottom','left','right'].includes(p.edge)&&Number.isInteger(p.index)&&p.index>=0)result[key]={edge:p.edge,index:p.index};return result;}
+  function stackPositions(items,start,end,scroll=0){
+    let cursor=start,last=start;const rows=[...items].sort((a,b)=>a.index-b.index).map(item=>{const height=Math.max(HEIGHT,item.height),top=Math.max(item.y,cursor);cursor=top+Math.ceil((height+2)/DY)*DY;last=top+height+2;return {...item,top,height};});
+    const maxScroll=Math.max(0,last-end),offset=Math.max(0,Math.min(maxScroll,scroll));
+    return {rows:rows.map(row=>({...row,screenY:row.top-offset})),height:last-start,maxScroll,offset};
+  }
   function mount({groups,idOf,header,tools,footer,rail,rightEdge,moveToTools,onLayout,excluded=[]}){
     const key='mayatnik-menu-dock-v509';let state={};try{state=read(JSON.parse(localStorage.getItem(key)||'{}'));}catch(_){}
     const heads=new Map(),placed=new Map();let drag=null,geometry='',ready=false,gridSignature='',gridNodes=[],activeSlot=null;
@@ -25,15 +30,38 @@
     const rect=el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};};
     const obstacles=()=>excluded.filter(e=>e?.getClientRects().length).map(rect);
     const available=skip=>slots(bounds()).filter(s=>!obstacles().some(r=>overlap(s,r))&&![...placed].some(([g,p])=>g!==skip&&overlap(s,p)));
-    const apply=(g,p)=>{const hd=heads.get(g),w=hd.offsetWidth||WIDTH;g.classList.add('may-docked');g.classList.toggle('may-dock-bottom',p.edge==='bottom');g.dataset.dockEdge=p.edge;
+    const apply=(g,p)=>{const hd=heads.get(g),w=hd.offsetWidth||WIDTH;g.classList.add('may-docked');g.classList.toggle('may-dock-bottom',p.edge==='bottom');g.classList.toggle('may-dock-side',p.edge==='left'||p.edge==='right');g.dataset.dockEdge=p.edge;
       g.classList.toggle('pt-bot',p.edge==='bottom');g.style.bottom='';g.style.setProperty('--may-dock-x',(p.x+(WIDTH-w)/2)+'px');g.style.setProperty('--may-dock-y',p.y+'px');placed.set(g,p);};
-    const layout=()=>{if(innerWidth<=600){for(const g of heads.keys())g.classList.remove('may-docked','may-dock-bottom');placed.clear();geometry='';onLayout();return;}
-      const B=bounds(),signature=JSON.stringify(B)+'|'+[...heads.values()].map(h=>h.getClientRects().length?h.offsetWidth:0).join(',');if(drag||ready&&signature===geometry)return;geometry=signature;
+    const sides={};let stackFrame=0;
+    const queueStack=()=>{if(!stackFrame)stackFrame=requestAnimationFrame(()=>{stackFrame=0;stackSides();});};
+    for(const edge of ['left','right']){
+      const bar=document.createElement('div'),space=document.createElement('div');bar.className='may-menu-side-scroll';bar.dataset.edge=edge;bar.tabIndex=0;bar.setAttribute('role','region');bar.setAttribute('aria-label',edge==='left'?'Прокрутка левой колонки меню':'Прокрутка правой колонки меню');bar.append(space);document.body.append(bar);bar.addEventListener('scroll',queueStack);sides[edge]={bar,space,max:0,signature:''};
+    }
+    const setStyle=(node,key,value)=>{if(node.style[key]!==value)node.style[key]=value;};
+    const setVar=(node,key,value)=>{if(node.style.getPropertyValue(key)!==value)node.style.setProperty(key,value);};
+    function stackSides(){
+      if(drag)return;
+      if(innerWidth<=600){for(const side of Object.values(sides)){side.bar.style.display='none';side.signature='';}return;}
+      const B=bounds(),end=B.bottomY-4,height=Math.max(HEIGHT,end-B.sideY);
+      for(const edge of ['left','right']){
+        const side=sides[edge],items=[...placed].filter(([g,p])=>p.edge===edge&&heads.get(g).getClientRects().length).map(([g,p])=>({g,index:p.index,y:p.y,height:g.getBoundingClientRect().height}));
+        const stack=stackPositions(items,B.sideY,end,side.bar.scrollTop||0),signature=JSON.stringify([B.sideY,end,B.left,B.right,stack.offset,stack.rows.map(r=>[idOf(r.g),r.top,r.height])]);
+        side.max=stack.maxScroll;if(signature===side.signature)continue;side.signature=signature;
+        setStyle(side.bar,'display',stack.maxScroll?'block':'none');setStyle(side.bar,'top',B.sideY+'px');setStyle(side.bar,'height',height+'px');setStyle(side.bar,'left',(edge==='left'?B.left+WIDTH+2:B.right-WIDTH-16)+'px');setStyle(side.space,'height',Math.max(height,stack.height)+'px');
+        if(side.bar.scrollTop!==stack.offset)side.bar.scrollTop=stack.offset;
+        for(const row of stack.rows){setVar(row.g,'--may-dock-y',row.screenY+'px');setVar(row.g,'--may-side-clip-top',Math.max(0,B.sideY-row.screenY)+'px');setVar(row.g,'--may-side-clip-bottom',Math.max(0,row.screenY+row.height-end)+'px');}
+      }
+    }
+    const sideOf=target=>{const g=target?.closest?.('.may-dock-side');return g&&placed.has(g)?sides[placed.get(g).edge]:null;};
+    document.addEventListener('wheel',e=>{if(innerWidth<=600||drag||e.ctrlKey)return;const side=sideOf(e.target);if(!side?.max)return;const delta=e.deltaY*(e.deltaMode===1?DY:e.deltaMode===2?parseFloat(side.bar.style.height):1);side.bar.scrollTop=Math.max(0,Math.min(side.max,side.bar.scrollTop+delta));e.preventDefault();e.stopImmediatePropagation();queueStack();},{capture:true,passive:false});
+    document.addEventListener('focusin',e=>{const side=sideOf(e.target);if(!side?.max)return;const B=bounds(),r=e.target.getBoundingClientRect(),delta=r.top<B.sideY?r.top-B.sideY:r.bottom>B.bottomY-4?r.bottom-(B.bottomY-4):0;if(delta){side.bar.scrollTop=Math.max(0,Math.min(side.max,side.bar.scrollTop+delta));queueStack();}});
+    const layout=()=>{if(innerWidth<=600){for(const g of heads.keys())g.classList.remove('may-docked','may-dock-bottom','may-dock-side');placed.clear();geometry='';onLayout();stackSides();return;}
+      const B=bounds(),signature=JSON.stringify(B)+'|'+[...heads.values()].map(h=>h.getClientRects().length?h.offsetWidth:0).join(',');if(drag)return;if(ready&&signature===geometry){stackSides();return;}geometry=signature;
       const previous=new Map(placed);placed.clear();
       for(const [g,hd] of heads){if(!hd.getClientRects().length)continue;const saved=state[idOf(g)],r=rect(hd),prior=previous.get(g),side=saved?.edge||prior?.edge||(g.parentElement===rail?'left':g.classList.contains('pt-bot')?'bottom':'top');
         const free=available(g),p=free.find(p=>p.edge===saved?.edge&&p.index===saved.index)||nearest(free,prior?prior.x+WIDTH/2:r.x+r.w/2,prior?prior.y+HEIGHT/2:r.y+r.h/2,side);
         if(!p)continue;moveToTools(g);apply(g,p);if(!saved)state[idOf(g)]={edge:p.edge,index:p.index};}
-      ready=true;save();onLayout();};
+      ready=true;save();onLayout();for(const side of Object.values(sides))side.signature='';stackSides();};
     const show=(free,chosen)=>{const signature=free.map(p=>[p.edge,p.index,p.x,p.y].join(':')).join('|');overlay.style.display='';
       if(signature!==gridSignature){gridSignature=signature;overlay.replaceChildren();gridNodes=[];activeSlot=null;
         for(const p of free){const path=document.createElementNS(ns,'path');path.setAttribute('d',`M${p.x+12} ${p.y}H${p.x+108}L${p.x+120} ${p.y+12}L${p.x+108} ${p.y+24}H${p.x+12}L${p.x} ${p.y+12}Z`);path.setAttribute('fill','none');path.setAttribute('stroke','#72839c');path.setAttribute('stroke-width','1');path.setAttribute('stroke-dasharray','3 3');overlay.append(path);gridNodes.push(path);}}
@@ -52,8 +80,9 @@
       const p=!cancel&&d.chosen?d.chosen:placed.get(d.g);if(p){apply(d.g,p);if(!cancel){state[idOf(d.g)]={edge:p.edge,index:p.index};save();}}geometry='';layout();};
     addEventListener('pointerup',e=>end(e),true);addEventListener('pointercancel',e=>end(e,true),true);addEventListener('keydown',e=>{if(e.key==='Escape'&&drag){e.preventDefault();end(e,true);}},true);addEventListener('blur',e=>end(e,true));
     for(const g of groups()){const hd=g.querySelector(':scope > .pt-l,:scope > .gz-head')||(g.id==='mayCorner'?g:null);if(hd)heads.set(g,hd);}
+    if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(queueStack);for(const g of heads.keys())observer.observe(g);}
     addEventListener('resize',layout);requestAnimationFrame(layout);
     return {refresh:layout};
   }
-  return {WIDTH,HEIGHT,DX,DY,slots,nearest,overlap,read,mount};
+  return {WIDTH,HEIGHT,DX,DY,slots,nearest,overlap,read,stackPositions,mount};
 });
