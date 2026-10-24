@@ -446,11 +446,7 @@ header #paintTools.pt-dd .pt-r>.pt-cw{padding:0 4px;height:24px}
   header #paintTools.pt-dd .pt-r>.pt-b.gz-hx{--gz-n:10px}
 }
 /* v0.165: закреп у названия группы, как в рейке: закреплённый список не закрывается */
-header #paintTools.pt-dd .pt-pin{display:flex;align-items:center;justify-content:center;width:12px;height:14px;margin-left:2px;opacity:.35;cursor:pointer;color:#dfe6f5}
-header #paintTools.pt-dd .pt-pin:hover{opacity:.8}
-header #paintTools.pt-dd .pt-pinned>.pt-l .pt-pin{opacity:1;color:var(--c);filter:brightness(1.6)}
-header #paintTools.pt-dd .pt-pinned>.pt-l .pt-pin{color:#fff}
-@media (max-width:600px){header #paintTools.pt-dd .pt-pin{display:none}}
+@media (max-width:600px){body.mayatnik-menu-ready .zgh-pin{display:none!important}}
 /* v0.165: «Шаблоны» — группой полоски: кнопки рейки и список шаблонов вплотную к рамке, как остальные */
 header #paintTools.pt-dd .pt-lib .pt-r{--gz-bg:#121a30;--gz-h:24px;--gz-n:9px;--gz-txt:#dfe6f5;--gz-mut:#8592ad;color:#dfe6f5;font:12px/1.2 'Segoe UI',sans-serif;min-width:200px}
 header #paintTools.pt-dd .pt-lib .pt-r>.gz-hx{position:relative!important;width:100%;left:auto;top:auto;box-sizing:border-box}
@@ -533,13 +529,10 @@ header #paintTools .pt-b.gz-hx.on::before{inset:1.5px}
 #paintTools .pt-r > .lg{box-sizing:border-box;width:100%;padding:5px 12px;flex-wrap:wrap;gap:4px 10px;color:#c7d3e6;border:1px solid color-mix(in srgb,var(--c,#7cbcff) 35%,transparent);border-radius:4px}   /* v0.200: подсветка в «Виде» */
 #paintTools .pt-r > .lg:hover{background:color-mix(in srgb,var(--c,#7cbcff) 18%,transparent)}
 /* v0.209: свёрнутое в ромб название группы полосы — только значок; соседи встают вплотную */
-#paintTools .pt-l .pt-ico{display:none}
 header #paintTools.pt-dd .pt-mini>.pt-l{font-size:0;gap:0;width:34px!important;min-width:0!important;padding:0;justify-content:center;
   clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 header #paintTools.pt-dd .pt-mini>.pt-l::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 header #paintTools.pt-dd .pt-mini>.pt-l::after,header #paintTools.pt-dd .pt-mini>.pt-l .pt-pin{display:none}
-header #paintTools.pt-dd .pt-mini>.pt-l .pt-ico{display:block;font-size:13px;line-height:1;color:var(--c)}
-header #paintTools.pt-dd .pt-mini.pt-open>.pt-l .pt-ico,header #paintTools.pt-dd .pt-mini.pt-has-on>.pt-l .pt-ico{color:#fff}
 /* v0.225: «двигать кнопки вверху в любое место в сетке, но чтоб не перекрывались» — полоса свободной раскладкой (mayatnik-menu.js, mayatnik-dd-grid):
    места — absolute по сетке шапки, высота полосы — по рядам (шапка растёт вниз, поле — под ней); заголовок — у верха, по середине первого ряда (26 px);
    пока тянут — ряды сетки бледными полосами и место, куда встанет, пунктиром. На телефоне (≤ 600 px) классов нет — полоса как была */
@@ -609,12 +602,9 @@ body.may-raildrag #mayatnikRail{z-index:45}
    кнопки и шапки группы тёмная кайма 3 px (по контуру шестиугольников, просветы между кнопками закрыты), как у столбца вариантов (v0.233) */
 #mayatnikRail .gz-rail,#mayatnikRailR .gz-rail{filter:drop-shadow(3px 0 0 #05070d) drop-shadow(-3px 0 0 #05070d) drop-shadow(0 3px 0 #05070d) drop-shadow(0 -3px 0 #05070d)}
 /* v0.255: шапка группы рейки, свёрнутая правым щелчком, — ромб со значком (.gz-mini, значок .gz-mico) */
-.gz-head .gz-mico{display:none}
 .gz-group.gz-mini>.gz-head{width:34px!important;min-width:0!important;padding:0;justify-content:center;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .gz-group.gz-mini>.gz-head::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .gz-group.gz-mini>.gz-head>.gz-nm,.gz-group.gz-mini>.gz-head>.gz-hr{display:none}
-.gz-group.gz-mini>.gz-head>.gz-mico{display:block;position:relative;z-index:1;font-size:13px;line-height:1;color:var(--c)}
-.gz-group.gz-mini.gz-open>.gz-head>.gz-mico{color:#fff}
 /* v0.256: «убери этот значок» — бипирамида-логотип у названия не показывается */
 .may-logo{display:none!important}
 /* v0.260: «тут всё сузь в ширину стандартной кнопки, позволяет размер»: список «Вида» / «Зеркал» был широким из-за строки цветов «1 · 0 · стал 1 · стал 0» —

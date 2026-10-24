@@ -1,6 +1,6 @@
 /* Маятник v0.495 — scoped surfaces, contours and compact controls, КНОПКИ v31. */
 body.mayatnik-menu-ready{--may-surface:#1b2430}   /* v0.455, В07 v23: ровный фон кнопок без градиента */
-:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard{--may-outline:#394657;--may-stroke:1px;--gz-w:120px;--gz-h:24px;--gz-n:12px;box-sizing:border-box!important;position:relative;isolation:isolate;display:flex;align-items:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex-shrink:0;margin:0!important;padding:0 12px!important;border:0!important;border-radius:0!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--may-surface)!important;color:#dfe6f5!important;filter:none!important;box-shadow:none!important;outline:0!important;text-shadow:none!important;font:12px/1.2 'Segoe UI',sans-serif!important;letter-spacing:0;white-space:nowrap;overflow:hidden;gap:4px}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard{--may-outline:#394657;--may-stroke:1px;--gz-w:120px;--gz-h:24px;--gz-n:12px;box-sizing:border-box!important;position:relative;isolation:isolate;display:flex;align-items:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex-shrink:0;margin:0!important;padding:0 12px!important;border:0!important;border-radius:0!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--may-surface)!important;color:#dfe6f5!important;filter:none!important;box-shadow:none!important;outline:0!important;text-shadow:none!important;font:var(--button-font,12px/1.2 'Segoe UI',sans-serif)!important;letter-spacing:var(--button-letter-spacing,0);white-space:nowrap;overflow:hidden;gap:4px}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::before,:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::after{display:none!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard *{text-shadow:none!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard:is(:hover,:focus-visible){--may-outline:var(--c,#7cbcff)}
@@ -75,8 +75,6 @@ body.mayatnik-menu-ready #paintTools #lg{background:var(--may-surface)!important
 body.mayatnik-menu-ready #mayRhombs{gap:2px;right:8px}
 body.mayatnik-menu-ready #mayRhombs .may-standard{justify-content:center;white-space:nowrap;animation:none!important;opacity:1!important}
 body.mayatnik-menu-ready #mayCorner{gap:2px}
-body.mayatnik-menu-ready #paintTools.pt-dd .pt-pin{position:relative;z-index:5;flex:none}
-body.mayatnik-menu-ready #paintTools.pt-dd .pt-l{justify-content:space-between}
 @media(max-width:600px){body.mayatnik-menu-ready #paintTools.pt-dd .pt-r{left:auto;max-height:60dvh;overflow-y:auto;overflow-x:hidden}body.mayatnik-menu-ready #mayCorner{display:flex;flex-direction:column;align-items:flex-start}}
 
 @media(max-width:600px){body.mayatnik-menu-ready header #paintTools.pt-dd{display:flex!important;flex-wrap:wrap!important;align-items:flex-start;gap:2px!important;overflow:visible!important;height:auto!important}body.mayatnik-menu-ready header #paintTools.pt-dd>.pt-g{flex:none;margin:0!important}body.mayatnik-menu-ready #mayCorner{flex:none;width:120px}}
@@ -183,11 +181,6 @@ body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments.may-mirror-three>.gz-half:nth-child(1){clip-path:polygon(12px 0,36px 0,44px 24px,12px 24px,0 12px)!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments.may-mirror-three>.gz-half:nth-child(2){flex-basis:48px!important;width:48px!important;min-width:48px!important;margin-left:-8px!important;clip-path:polygon(0 0,48px 0,40px 24px,8px 24px)!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments.may-mirror-three>.gz-half:nth-child(3){margin-left:-8px!important;clip-path:polygon(8px 0,32px 0,44px 12px,32px 24px,0 24px)!important}
-/* Center group titles independently of pins and arrows. */
-body.mayatnik-menu-ready :is(#paintTools,#mayatnikRail,#mayatnikRailR) :is(.pt-l,.gz-head).may-standard.may-standard{justify-content:center!important;font-family:'Trebuchet MS','Segoe UI',sans-serif!important;font-size:12px!important;font-weight:700!important;letter-spacing:.2px}
-body.mayatnik-menu-ready .pt-g:not(.pt-mini)>.pt-l>.may-group-title,body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-nm{position:absolute;left:20px;right:20px;top:0;height:24px;line-height:24px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}
-body.mayatnik-menu-ready .pt-g:not(.pt-mini)>.pt-l>.pt-pin,body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-pin{position:absolute!important;right:8px!important;top:5px!important;margin:0!important;z-index:6}
-body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-ar{position:absolute;right:3px}
 
 /* A colour circle is inside the shared button surface, without its own outline. */
 .may-standard-pair.gz-wl>.may-standard-outline{display:block}
@@ -207,14 +200,9 @@ body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-ar{position:absolu
 
 .may-segments>.may-standard-outline{display:none}
 
-body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-pin{right:14px!important}
-body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-nm{left:26px;right:26px}
-body.mayatnik-menu-ready :is(.pt-pin,.gz-pin){color:var(--c,#7cbcff)!important;filter:none!important}
-body.mayatnik-menu-ready :is(.pt-pin,.gz-pin) svg{fill:currentColor}
 
 /* v0.509: uppercase group captions use their group outline colour. */
-body.mayatnik-menu-ready :is(.may-group-title,.gz-head>.gz-nm,.may-list-heading){text-transform:uppercase}
-body.mayatnik-menu-ready :is(.pt-l>.may-group-title,.gz-head>.gz-nm){color:var(--c)!important}
+body.mayatnik-menu-ready .may-list-heading{text-transform:uppercase}
 
 @media(min-width:601px){
   body.mayatnik-menu-ready #paintTools>.may-docked{position:fixed!important;left:var(--may-dock-x)!important;top:var(--may-dock-y)!important;bottom:auto!important;transform:none!important;margin:0!important}
@@ -245,8 +233,6 @@ body.mayatnik-menu-ready :is(.pt-l>.may-group-title,.gz-head>.gz-nm){color:var(-
 
 /* v0.512: group headers have no disclosure arrow; keep its source node for grozd state. */
 body.mayatnik-menu-ready .gz-group>.gz-head>.gz-ar{display:none!important}
-body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-pin{right:8px!important}
-body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-nm{left:20px;right:20px}
 /* A bottom slot anchors the header. The popup must not enlarge/reverse the fixed group. */
 @media(min-width:601px){
   body.mayatnik-menu-ready header #paintTools.pt-grid>.gz-group.may-docked.pt-bot{display:block!important;height:24px!important}
