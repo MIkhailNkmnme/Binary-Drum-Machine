@@ -4705,43 +4705,86 @@ function rmbTextLayout(txt){   // → строки поля: 7 рядов бук
   return {rows:[z, ...rows, z], letters};
 }
 function rmbTextRows(txt){ return rmbTextLayout(txt).rows; }
-// Count the current rendered 1-triangles inside the original character columns.
-function rmbLetterCounts(rows, layout, values){
+// Count source bit cells inside each letter's tight bounding rectangle.
+function rmbLetterCounts(rows, layout){
   const width = layout.rows[0].length;
   if (!rows.length || rows.some(row => row.length !== width)) return null;
-  const entries = layout.letters.map((letter, index) => ({...letter, index:index + 1, ones:0, triangles:0}));
-  const outside = {label:"Вне букв", ones:0, triangles:0}, total = {label:"Итого", ones:0, triangles:0};
-  const owner = Array(width).fill(outside);
-  for (const entry of entries) for (let col=entry.start;col<entry.end;col++) owner[col]=entry;
-  for (const row of rows) for (let col=0;col<row.length;col++) if (row[col]==="1") { owner[col].ones++; total.ones++; }
-  for (const row of values) for (let k=0;k<row.length;k++) if (row[k]===1) { (owner[k>>1] || outside).triangles++; total.triangles++; }
-  for (const entry of [...entries,outside,total]) entry.rhombi = entry.triangles / 2;
-  return {entries,outside,total};
+  const entries = layout.letters.map((letter, index) => {
+    let left=letter.end,right=-1,top=rows.length,bottom=-1,ones=0;
+    for(let row=0;row<rows.length;row++) for(let col=letter.start;col<letter.end;col++) if(rows[row][col]==="1"){
+      ones++;left=Math.min(left,col);right=Math.max(right,col);top=Math.min(top,row);bottom=Math.max(bottom,row);
+    }
+    const w=ones?right-left+1:0,h=ones?bottom-top+1:0,rhombi=w*h;
+    return {...letter,index:index+1,ones,zeros:rhombi-ones,rhombi,width:w,height:h,left,right,top,bottom};
+  });
+  const total=entries.reduce((sum,e)=>{sum.ones+=e.ones;sum.zeros+=e.zeros;sum.rhombi+=e.rhombi;return sum;},{label:"Итого",ones:0,zeros:0,rhombi:0});
+  return {entries,total};
 }
-let rmbStatsCache = null;
+function rmbHighlightCells(rows, counts, selection){
+  if(!counts || !selection)return [];
+  const cells=[];
+  for(const entry of counts.entries){
+    if(selection.index && entry.index!==selection.index)continue;
+    if(!entry.ones)continue;
+    for(let row=entry.top;row<=entry.bottom;row++)for(let col=entry.left;col<=entry.right;col++){
+      const one=rows[row]?.[col]==="1";
+      if(selection.kind==="ones"&&!one || selection.kind==="zeros"&&one)continue;
+      cells.push([row,col]);
+    }
+  }
+  return cells;
+}
+function rmbHighlightPolygon(row,col,{hs,u0,rm,tw,ox,oy}){
+  const half=tw/2,h=tw*Math.sqrt(3)/2,x=ox+(hs[row]+2*col)*half,y=oy+row*h,up=(u0&1)===0;
+  if(rm)return up?[[x+half,y],[x+tw+half,y],[x+tw,y+h],[x,y+h]]:[[x,y],[x+tw,y],[x+tw+half,y+h],[x+half,y+h]];
+  return up?[[x,y+h],[x+tw,y+h],[x+half,y]]:[[x,y],[x+tw,y],[x+half,y+h]];
+}
+let rmbStatsCache = null, rmbCountHighlight = null;
+function rmbCountHighlightSet(selection){
+  if(rmbCountHighlight?.index===selection?.index && rmbCountHighlight?.kind===selection?.kind)return;
+  rmbCountHighlight=selection;renderRmb();
+}
+function rmbCountCell(node,entry,kind){
+  node.className=(node.className||"")+" rmb-count-value";node.tabIndex=0;
+  node.onpointerenter=node.onfocus=()=>rmbCountHighlightSet({index:entry.index||0,kind});
+  node.onpointerleave=node.onblur=()=>rmbCountHighlightSet(null);
+}
 function rmbTextStats(){
   const box = $("rmbTextStats"); if (!box) return;
   const text = String(Z.rmbText || "");
-  if (!text) { box.hidden=true; rmbStatsCache=null; return; }
-  const mode = rmbSt().cell;
-  if (rmbStatsCache?.text === text && rmbStatsCache.values === rmbVals && rmbStatsCache.mode === mode) { box.hidden=false; return; }
+  if (!text) { box.hidden=true; rmbStatsCache=null;rmbCountHighlight=null;return; }
+  if (rmbStatsCache?.text === text && rmbStatsCache.values === rmbVals) { box.hidden=false; return; }
   const layout = rmbStatsCache?.text === text ? rmbStatsCache.layout : rmbTextLayout(text);
-  const counts = rmbLetterCounts(Z.rows,layout,rmbVals);
-  rmbStatsCache = {text,values:rmbVals,mode,layout}; box.hidden=false; box.replaceChildren();
+  const counts = rmbLetterCounts(Z.rows,layout);
+  rmbStatsCache = {text,values:rmbVals,layout,counts};rmbCountHighlight=null;box.hidden=false;box.replaceChildren();
   const note = document.createElement("div"); note.className="rmb-count-note";
-  note.textContent = counts ? "Буквы «"+text+"» · 1 — единицы поля · △ — треугольники · ◇ "+(mode==="rmb" ? "— ромбы" : "— площадь в ромбах (△ ÷ 2)") : "Ширина строк изменилась: наберите текст через Аа, чтобы задать области букв заново.";
+  note.textContent = counts ? "Буквы «"+text+"» · ◇ = 1 + 0 = ширина × высота · без промежутков" : "Ширина строк изменилась: наберите текст через Аа, чтобы задать области букв заново.";
   box.append(note); if (!counts) return;
   const table=document.createElement("table"), head=document.createElement("thead"), body=document.createElement("tbody");
-  const entries=[...counts.entries,...(counts.outside.ones || counts.outside.triangles ? [counts.outside]:[]),counts.total];
-  const numbers=document.createElement("tr"), header=document.createElement("tr");
-  for (const label of ["№",...entries.map(e=>e.index || "")]) { const th=document.createElement("th");th.textContent=String(label);th.scope="col";numbers.append(th); }
+  const entries=[...counts.entries,counts.total];
+  const numbers=document.createElement("tr"), header=document.createElement("tr"), numberLabel=document.createElement("th");
+  numberLabel.textContent="№";numberLabel.scope="row";numbers.append(numberLabel);
+  for(const entry of entries){const th=document.createElement("th");th.textContent=String(entry.index||"");th.scope="col";if(entry.index)rmbCountCell(th,entry,"rhombi");numbers.append(th);}
   const name=document.createElement("th");name.textContent="Буква";name.scope="row";header.append(name);
   for(const entry of entries){const th=document.createElement("th");th.textContent=entry.label===" "?"␣":entry.label;th.scope="col";
     if(entry.index){th.className="rmb-count-letter";if(entry.label===" ")th.title="Пробел";}header.append(th);}
   head.append(numbers,header);
-  for (const [label,key] of [["1","ones"],["△","triangles"],["◇","rhombi"]]) { const row=document.createElement("tr"), th=document.createElement("th");th.textContent=label;th.scope="row";if(key==="ones")th.title="Единицы в исходных строках поля";row.append(th);
-    for(const entry of entries){const td=document.createElement("td");td.textContent=String(entry[key]).replace(".",",");row.append(td);}body.append(row); }
+  for (const [label,key] of [["1","ones"],["0","zeros"],["Всего ◇","rhombi"]]) { const row=document.createElement("tr"), th=document.createElement("th");th.textContent=label;th.scope="row";row.append(th);
+    for(const entry of entries){const td=document.createElement("td");td.textContent=String(entry[key]);
+      td.title=entry.index?entry.width+" × "+entry.height+" = "+entry.rhombi+" ромбов; наведите для подсветки":"Сумма по буквам, без межбуквенных промежутков; наведите для подсветки";
+      rmbCountCell(td,entry,key);row.append(td);}body.append(row); }
   table.append(head,body);box.append(table);
+}
+function rmbDrawCountHighlight(g,geometry){
+  const cells=rmbHighlightCells(Z.rows,rmbStatsCache?.counts,rmbCountHighlight);if(!cells.length)return;
+  const path=new Path2D();
+  for(const [row,col] of cells){
+    if(row>=geometry.M)continue;
+    const points=rmbHighlightPolygon(row,col,geometry);
+    if(points.every(p=>p[0]<0)||points.every(p=>p[0]>geometry.Wc)||points.every(p=>p[1]<0)||points.every(p=>p[1]>geometry.Hc))continue;
+    path.moveTo(...points[0]);for(const point of points.slice(1))path.lineTo(...point);path.closePath();
+  }
+  g.save();g.globalAlpha=1;g.fillStyle="rgba(255,230,102,.3)";g.strokeStyle="#fff4a3";g.lineWidth=1.5;g.lineJoin="miter";g.fill(path);g.stroke(path);g.restore();
 }
 function rmbType(){
   if (rowsLocked()) return;
@@ -4854,7 +4897,7 @@ function rmbPairs(M, hs, upK, rm, pri){
 const rmbFace = (up, c) => !c ? 3 : up ? (c === 1 ? 2 : c === 2 ? 0 : 1) : (c === 2 ? 2 : c === 1 ? 0 : 1);   // 0 «/», 1 «◆», 2 «\», 3 без пары
 function renderRmb(){
   rmbWire();
-  if (!winOpen("w-rmb")) { rmbCur = null; return; }   // свёрнуто — не считаем; след начнётся заново, когда окно откроют
+  if (!winOpen("w-rmb")) { rmbCur = null;rmbCountHighlight=null;return; }   // свёрнуто — не считаем; след начнётся заново, когда окно откроют
   const R = Z.rows, r = rmbSt(), M = Math.min(R.length, 4096);
   let fresh = false, rowsChanged = false;
   const AN = r.wave === "mir" && rmbW.used ? { on: !!rmbW.on, row: rmbW.h, pass: rmbW.pass } : typeof window.zzAnim === "function" ? window.zzAnim() : null;   // v0.795: часы возраста и ⇣ — от той волны, что идёт
@@ -4964,6 +5007,7 @@ function renderRmb(){
   if (UL) { g.strokeStyle = "#ff4d4d"; g.lineWidth = Math.max(0.8, tw * 0.05); g.stroke(UL); }
   if (digs) { g.font = `700 ${Math.round(tw * 0.42)}px ${coneCss("--ff", "monospace")}`; g.textAlign = "center"; g.textBaseline = "middle";
     for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && !digs[q + 2] ? "#fff7d6" : "#05070b"; g.fillText(String(digs[q + 2]), digs[q], digs[q + 1]); } g.textAlign = "left"; }
+  rmbDrawCountHighlight(g,{hs,u0,rm,tw,ox:r.ox,oy:r.oy,M,Wc,Hc});
 }
 function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
   const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
