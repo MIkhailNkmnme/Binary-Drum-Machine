@@ -267,7 +267,7 @@ function snapshot(){
 }
 function undoState(){
   syncLane();
-  return { rows: Z.rows.slice(), cur: Z.cur, lane: Z.lane, lanes: Array.isArray(Z.lanes) ? Z.lanes.map(l => l.slice()) : null,
+  return { rows: Z.rows.slice(), rmbText: Z.rmbText || "", cur: Z.cur, lane: Z.lane, lanes: Array.isArray(Z.lanes) ? Z.lanes.map(l => l.slice()) : null,
            laneCount: Z.laneCount, axisPos: Array.isArray(Z.axisPos) ? Z.axisPos.slice() : [],   // v0.022: и поля, и оси
            lanesHid: hidCopy() };   // v0.112: и строки за границей — иначе ↩ задвоил бы спрятанные
 }
@@ -278,6 +278,7 @@ function undoUi(){ const u = document.getElementById("bUndo"), r = document.getE
    повтор — обратно в undoStack; любая новая правка (undoPush) повторы стирает. */
 const redoStack = [];
 function undoApply(u){
+  if (Object.prototype.hasOwnProperty.call(u,"rmbText")) Z.rmbText = u.rmbText;
   if (u.laneCount) { Z.laneCount = u.laneCount; Z.axisPos = u.axisPos; const lc = document.getElementById("laneCount"); if (lc) lc.value = String(Z.laneCount); }
   if (u.lanes) { Z.lanes = u.lanes; Z.lane = Math.max(0, Math.min(Z.laneCount - 1, u.lane | 0)); Z.rows = Z.lanes[Z.lane]; }
   else Z.rows = u.rows;
@@ -4689,7 +4690,7 @@ const RMB_FONT = (() => {
   for (const k in same) F[k] = F[same[k]];
   return F;
 })();
-function rmbTextRows(txt){   // → строки поля: 7 рядов букв + по строке нулей сверху и снизу, по столбцу нулей по краям
+function rmbTextLayout(txt){   // → строки поля: 7 рядов букв + по строке нулей сверху и снизу, по столбцу нулей по краям
   /* v0.810, по снимку «ZAZERKALIUS» — «между I лишние пробелы справа, слева»: шрифт пропорциональный — у буквы срезаются пустые крайние столбцы
      (у «I», «1», знаков), между буквами — ровно один столбец; пробел (вся клетка пустая) остаётся пробелом */
   const trim = (g) => { const w = g[0].length, empty = (x) => g.every(r => r[x] === "."); let a = 0, b = w - 1;
@@ -4699,14 +4700,51 @@ function rmbTextRows(txt){   // → строки поля: 7 рядов букв
     while (g.length < 9) g.push(".".repeat(w)); return g; });
   const H = gl.some(g => g[7].includes("#") || g[8].includes("#")) ? 9 : 7, rows = [];
   for (let r = 0; r < H; r++) rows.push("0" + gl.map(g => g[r].replace(/#/g, "1").replace(/\./g, "0")).join("0") + "0");
-  const z = "0".repeat(rows[0].length); return [z, ...rows, z];
+  const z = "0".repeat(rows[0].length); let start = 1;
+  const letters = [...String(txt)].map((label, i) => { const width = gl[i][0].length, entry = {label, start, end:start + width}; start += width + 1; return entry; });
+  return {rows:[z, ...rows, z], letters};
+}
+function rmbTextRows(txt){ return rmbTextLayout(txt).rows; }
+// Count the current rendered 1-triangles inside the original character columns.
+function rmbLetterCounts(rows, layout, values){
+  const width = layout.rows[0].length;
+  if (!rows.length || rows.some(row => row.length !== width)) return null;
+  const entries = layout.letters.map((letter, index) => ({...letter, index:index + 1, triangles:0}));
+  const outside = {label:"Вне букв", triangles:0}, total = {label:"Итого", triangles:0};
+  const owner = Array(width).fill(outside);
+  for (const entry of entries) for (let col=entry.start;col<entry.end;col++) owner[col]=entry;
+  for (const row of values) for (let k=0;k<row.length;k++) if (row[k]===1) { (owner[k>>1] || outside).triangles++; total.triangles++; }
+  for (const entry of [...entries,outside,total]) entry.rhombi = entry.triangles / 2;
+  return {entries,outside,total};
+}
+let rmbStatsCache = null;
+function rmbTextStats(){
+  const box = $("rmbTextStats"); if (!box) return;
+  const text = String(Z.rmbText || "");
+  if (!text) { box.hidden=true; rmbStatsCache=null; return; }
+  const mode = rmbSt().cell;
+  if (rmbStatsCache?.text === text && rmbStatsCache.values === rmbVals && rmbStatsCache.mode === mode) { box.hidden=false; return; }
+  const layout = rmbStatsCache?.text === text ? rmbStatsCache.layout : rmbTextLayout(text);
+  const counts = rmbLetterCounts(Z.rows,layout,rmbVals);
+  rmbStatsCache = {text,values:rmbVals,mode,layout}; box.hidden=false; box.replaceChildren();
+  const note = document.createElement("div"); note.className="rmb-count-note";
+  note.textContent = counts ? "Единицы по областям букв «"+text+"» · △ — треугольники · ◇ "+(mode==="rmb" ? "— ромбы" : "— площадь в ромбах (△ ÷ 2)") : "Ширина строк изменилась: наберите текст через Аа, чтобы задать области букв заново.";
+  box.append(note); if (!counts) return;
+  const table=document.createElement("table"), head=document.createElement("thead"), body=document.createElement("tbody");
+  const entries=[...counts.entries,...(counts.outside.triangles?[counts.outside]:[]),counts.total];
+  const header=document.createElement("tr");
+  for (const label of ["Буква",...entries.map(e=>e.index ? e.index+" · "+(e.label===" "?"пробел":e.label):e.label)]) { const th=document.createElement("th");th.textContent=label;th.scope="col";header.append(th); }
+  head.append(header);
+  for (const [label,key] of [["△","triangles"],["◇","rhombi"]]) { const row=document.createElement("tr"), th=document.createElement("th");th.textContent=label;th.scope="row";row.append(th);
+    for(const entry of entries){const td=document.createElement("td");td.textContent=String(entry[key]).replace(".",",");row.append(td);}body.append(row); }
+  table.append(head,body);box.append(table);
 }
 function rmbType(){
   if (rowsLocked()) return;
   const t = prompt("Аа — текст в строки (латиница, кириллица, цифры, заглавные и строчные; ↩ вернёт прежние строки):", Z.rmbText || "Zazerkalius");
   if (t === null || !t.trim()) return;
-  Z.rmbText = t.trim(); const R = rmbTextRows(Z.rmbText);
-  snapshot(); Z.rows.splice(0, Z.rows.length, ...R); Z.cur = 0; rowSel.clear();
+  snapshot(); Z.rmbText = t.trim(); const R = rmbTextRows(Z.rmbText);
+  Z.rows.splice(0, Z.rows.length, ...R); Z.cur = 0; rowSel.clear();
   const r = rmbSt(); r.cell = "rmb"; r.al = "zz"; r.num = false; rmbFit();
   renderAll(); save(); say(`Аа «${Z.rmbText}» — ${R.length} строк по ${R[0].length} бит, ◇ бит ёлочкой. ↩ вернёт прежние строки.`);
 }
@@ -4814,14 +4852,14 @@ function renderRmb(){
   rmbWire();
   if (!winOpen("w-rmb")) { rmbCur = null; return; }   // свёрнуто — не считаем; след начнётся заново, когда окно откроют
   const R = Z.rows, r = rmbSt(), M = Math.min(R.length, 4096);
-  let fresh = false;
+  let fresh = false, rowsChanged = false;
   const AN = r.wave === "mir" && rmbW.used ? { on: !!rmbW.on, row: rmbW.h, pass: rmbW.pass } : typeof window.zzAnim === "function" ? window.zzAnim() : null;   // v0.795: часы возраста и ⇣ — от той волны, что идёт
-  if (!rmbCur || rmbCur.length !== R.length || rmbCur.some((s, i) => s !== R[i])) { fresh = !!rmbCur; rmbCur = R.slice(); rmbFrame++;
+  if (!rmbCur || rmbCur.length !== R.length || rmbCur.some((s, i) => s !== R[i])) { rowsChanged = true; fresh = !!rmbCur; rmbCur = R.slice(); rmbFrame++;
     const t = AN ? AN.pass + AN.row / Math.max(1, M) : null;   // часы в проходах волны: идут вперёд всегда (⤺ и правки руками — на шаг)
     rmbClock += t !== null && rmbLastA !== null && t > rmbLastA ? t - rmbLastA : 1 / Math.max(1, M); rmbLastA = t; }
   const rm = r.cell === "rmb", { hs, ok, u0, base } = rmbLayout(R, M, r.al, r.cell), key = r.al + r.cell + base;
   /* значения клеток: 1 / 0, 9 — ▼ без ▲ над ним; ▼ — инверсия ▲ над ним по месту в сетке (ряд не на сетке ряда выше — по номеру, как в «▲▼») */
-  if (fresh || rmbKey !== key || rmbVals.length !== M) {
+  if (rowsChanged || rmbKey !== key || rmbVals.length !== M) {
     const NV = [];
     for (let i = 0; i < M; i++) {
       const s = R[i] || "", n = s.length, v = new Uint8Array(Math.max(0, rm ? 2 * n : 2 * n - 1)), ps = i ? R[i - 1] || "" : "";
@@ -4841,7 +4879,7 @@ function renderRmb(){
   }
   const upK = (k) => ((k + u0) & 1) === 0, cube = !!r.cube;
   if (cube && (rmbPairOf !== rmbVals || rmbPairKey !== key + r.cpri)) { rmbPair = rmbPairs(M, hs, upK, rm, r.cpri); rmbPairOf = rmbVals; rmbPairKey = key + r.cpri; }
-  rmbUi();
+  rmbUi(); rmbTextStats();
   const cv = $("rmbCv"); if (!cv) return;
   const dpr = window.devicePixelRatio || 1, Wc = cv.clientWidth, Hc = cv.clientHeight; if (Wc < 10 || Hc < 10) return;
   if (cv.width !== Math.round(Wc * dpr) || cv.height !== Math.round(Hc * dpr)) { cv.width = Math.round(Wc * dpr); cv.height = Math.round(Hc * dpr); }
