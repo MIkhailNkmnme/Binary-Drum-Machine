@@ -77,3 +77,28 @@ test('opening a closed window rebuilds rendered values after field edits',()=>{
  const c=vm.createContext({rmbWire(){},winOpen:()=>true,Z:{rows:['1']},rmbSt:()=>({al:'c',cell:'rmb'}),rmbW:{},window:{},rmbCur:null,rmbFrame:0,rmbClock:0,rmbLastA:null,rmbKey:'crmb0',rmbVals:[new Uint8Array([0,0])],rmbHeat:[],rmbAge:[],rmbLayout:()=>({hs:[0],ok:[true],u0:0,base:0})});
  vm.runInContext(source.slice(a,b)+'return rmbVals;}',c);assert.deepEqual(Array.from(c.renderRmb()[0]),[1,1]);
 });
+
+test('black letter border cancels interior grid edges and encloses its whole area',()=>{
+ const c=api(),e={ones:1,left:0,top:0,bottom:1,width:2};
+ const edges=plain(c.rmbLetterBorderEdges([e],[0,1],1));assert.equal(edges.length,12);
+ assert.ok(!edges.some(([a,b])=>a[1]===1&&b[1]===1));
+ assert.deepEqual(plain(c.rmbLetterBorderEdges([{...e,ones:0}],[0,1],1)),[]);
+});
+
+test('adding text preserves existing cells, separates rows and counts every text block',()=>{
+ const c=api(),old=plain(c.rmbTextRows('I'));old[0]='01000';const saved=old.slice();
+ const added=c.rmbAppendText(old,[{text:'I',row:0,col:0}],'WW');
+ assert.deepEqual(old,saved);for(let i=0;i<old.length;i++)assert.equal(added.rows[i].slice(0,old[i].length),old[i]);
+ assert.ok(added.width>old[0].length);assert.equal(added.blocks[1].row,old.length+1);assert.equal(added.rows[old.length],'0'.repeat(added.width));
+ const layout=c.rmbDocumentLayout(added.blocks,added.width,added.rows.length),n=c.rmbLetterCounts(added.rows,layout);
+ assert.equal(n.entries.length,3);assert.equal(n.entries[0].ones,12);assert.equal(n.entries[1].ones,n.entries[2].ones);
+ const word=c.rmbTextLayout('WW'),expected=c.rmbLetterCounts(word.rows,word);assert.equal(n.entries[1].ones,expected.entries[0].ones);
+});
+test('undo of added text restores all old rows, text regions and shifted manual axes',()=>{
+ let saved;const c=api({Z:{rmbText:'I',rmb:{al:'l',num:true,axes:[{id:1,a:[0,0],b:[1,1]}]}},rowsLocked:()=>false,prompt:()=> 'WW',rowSel:{clear(){}},rmbFit(){},renderAll(){},save(){},say(){},syncLane(){},hidCopy:()=>({}),document:{getElementById:()=>null}});
+ c.rmbSt=()=>c.Z.rmb;c.Z.rows=plain(c.rmbTextRows('I'));c.Z.cur=0;const old=plain(c.Z.rows);
+ vm.runInContext(source.slice(source.indexOf('function undoState(){'),source.indexOf('function undoPush(')),c);
+ c.snapshot=()=>saved=c.undoState();vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.ok(c.Z.rows.length>old.length);assert.ok(c.Z.rmb.axes[0].a[0]<0);assert.equal(c.Z.rmbTextBlocks.length,2);assert.equal(c.Z.rmb.al,'l');assert.equal(c.Z.rmb.num,true);
+ vm.runInContext(source.slice(source.indexOf('function undoApply(u){'),source.indexOf('/* v0.643,',source.indexOf('function undoApply(u){'))),c);c.undoApply(saved);
+ assert.deepEqual(plain(c.Z.rows),old);assert.equal(c.Z.rmbText,'I');assert.deepEqual(plain(c.Z.rmbTextBlocks),[]);assert.equal(c.Z.rmbTextFieldWidth,null);assert.deepEqual(plain(c.Z.rmb.axes),[{id:1,a:[0,0],b:[1,1]}]);
+});

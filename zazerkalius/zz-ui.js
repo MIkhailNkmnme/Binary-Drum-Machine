@@ -267,7 +267,7 @@ function snapshot(){
 }
 function undoState(){
   syncLane();
-  return { rows: Z.rows.slice(), rmbText: Z.rmbText || "", cur: Z.cur, lane: Z.lane, lanes: Array.isArray(Z.lanes) ? Z.lanes.map(l => l.slice()) : null,
+  return { rows: Z.rows.slice(), rmbText: Z.rmbText || "", rmbTextBlocks:(Z.rmbTextBlocks||[]).map(b=>({...b})), rmbTextFieldWidth:Z.rmbTextFieldWidth||null, rmbAxes:(Z.rmb?.axes||[]).map(a=>({...a,a:a.a.slice(),b:a.b.slice()})), cur: Z.cur, lane: Z.lane, lanes: Array.isArray(Z.lanes) ? Z.lanes.map(l => l.slice()) : null,
            laneCount: Z.laneCount, axisPos: Array.isArray(Z.axisPos) ? Z.axisPos.slice() : [],   // v0.022: и поля, и оси
            lanesHid: hidCopy() };   // v0.112: и строки за границей — иначе ↩ задвоил бы спрятанные
 }
@@ -278,7 +278,9 @@ function undoUi(){ const u = document.getElementById("bUndo"), r = document.getE
    повтор — обратно в undoStack; любая новая правка (undoPush) повторы стирает. */
 const redoStack = [];
 function undoApply(u){
-  if (Object.prototype.hasOwnProperty.call(u,"rmbText")) Z.rmbText = u.rmbText;
+  if (Object.prototype.hasOwnProperty.call(u,"rmbText")) {Z.rmbText=u.rmbText;if(!Object.prototype.hasOwnProperty.call(u,"rmbTextBlocks")){Z.rmbTextBlocks=[];Z.rmbTextFieldWidth=null;}}
+  if (Object.prototype.hasOwnProperty.call(u,"rmbAxes")) rmbSt().axes=(u.rmbAxes||[]).map(a=>({...a,a:a.a.slice(),b:a.b.slice()}));
+  if (Object.prototype.hasOwnProperty.call(u,"rmbTextBlocks")) {Z.rmbTextBlocks=(u.rmbTextBlocks||[]).map(b=>({...b}));Z.rmbTextFieldWidth=u.rmbTextFieldWidth||null;}
   if (u.laneCount) { Z.laneCount = u.laneCount; Z.axisPos = u.axisPos; const lc = document.getElementById("laneCount"); if (lc) lc.value = String(Z.laneCount); }
   if (u.lanes) { Z.lanes = u.lanes; Z.lane = Math.max(0, Math.min(Z.laneCount - 1, u.lane | 0)); Z.rows = Z.lanes[Z.lane]; }
   else Z.rows = u.rows;
@@ -4705,13 +4707,30 @@ function rmbTextLayout(txt){   // → строки поля: 7 рядов бук
   return {rows:[z, ...rows, z], letters};
 }
 function rmbTextRows(txt){ return rmbTextLayout(txt).rows; }
+function rmbTextBlocks(){
+  const blocks=Array.isArray(Z.rmbTextBlocks)?Z.rmbTextBlocks.filter(b=>typeof b.text==="string"&&Number.isInteger(b.row)&&b.row>=0&&Number.isInteger(b.col)&&b.col>=0):[];
+  return blocks.length?blocks:(Z.rmbText?[{text:String(Z.rmbText),row:0,col:0}]:[]);
+}
+function rmbDocumentLayout(blocks,width,rowCount){
+  const letters=[];
+  for(let i=0;i<blocks.length;i++){
+    const block=blocks[i],font=rmbTextLayout(block.text),next=blocks.slice(i+1).find(b=>b.row>block.row);
+    for(const letter of font.letters)letters.push({...letter,start:letter.start+block.col,end:letter.end+block.col,rowStart:block.row,rowEnd:next?next.row:rowCount});
+  }
+  return {width,letters};
+}
+function rmbAppendText(rows,blocks,text){
+  const font=rmbTextRows(text),width=Math.max(font[0].length,...rows.map(row=>row.length)),row=rows.length?rows.length+1:0;
+  const result=rows.map(s=>s.padEnd(width,"0"));if(rows.length)result.push("0".repeat(width));result.push(...font.map(s=>s.padEnd(width,"0")));
+  return {rows:result,width,blocks:[...blocks.map(b=>({...b})),{text,row,col:0}]};
+}
 // Count source bit cells inside each letter's tight bounding rectangle.
 function rmbLetterCounts(rows, layout){
-  const width = layout.rows[0].length;
+  const width = layout.width ?? layout.rows[0].length;
   if (!rows.length || rows.some(row => row.length !== width)) return null;
   const entries = layout.letters.map((letter, index) => {
     let left=letter.end,right=-1,top=rows.length,bottom=-1,ones=0;
-    for(let row=0;row<rows.length;row++) for(let col=letter.start;col<letter.end;col++) if(rows[row][col]==="1"){
+    for(let row=letter.rowStart||0;row<Math.min(rows.length,letter.rowEnd??rows.length);row++) for(let col=letter.start;col<letter.end;col++) if(rows[row][col]==="1"){
       ones++;left=Math.min(left,col);right=Math.max(right,col);top=Math.min(top,row);bottom=Math.max(bottom,row);
     }
     const w=ones?right-left+1:0,h=ones?bottom-top+1:0,rhombi=w*h;
@@ -4751,14 +4770,15 @@ function rmbCountCell(node,entry,kind){
 }
 function rmbTextStats(){
   const box = $("rmbTextStats"); if (!box) return;
-  const text = String(Z.rmbText || "");
+  const blocks=rmbTextBlocks(),text=blocks.map(b=>b.text).join(" · "),identity=JSON.stringify(blocks)+"/"+Z.rows.length+"/"+(Z.rmbTextFieldWidth||"");
   if (!text) { box.hidden=true; rmbStatsCache=null;rmbCountHighlight=null;return; }
-  if (rmbStatsCache?.text === text && rmbStatsCache.values === rmbVals) { box.hidden=false; return; }
-  const layout = rmbStatsCache?.text === text ? rmbStatsCache.layout : rmbTextLayout(text);
+  if (rmbStatsCache?.identity === identity && rmbStatsCache.values === rmbVals) { box.hidden=false; return; }
+  const width=Z.rmbTextFieldWidth||rmbTextRows(blocks[0].text)[0].length;
+  const layout=rmbStatsCache?.identity===identity?rmbStatsCache.layout:rmbDocumentLayout(blocks,width,Z.rows.length);
   const counts = rmbLetterCounts(Z.rows,layout);
-  rmbStatsCache = {text,values:rmbVals,layout,counts};rmbCountHighlight=null;box.hidden=false;box.replaceChildren();
+  rmbStatsCache = {text,identity,values:rmbVals,layout,counts};rmbCountHighlight=null;box.hidden=false;box.replaceChildren();
   const note = document.createElement("div"); note.className="rmb-count-note";
-  note.textContent = counts ? "Буквы «"+text+"» · ◇ = 1 + 0 = ширина × высота · без промежутков" : "Ширина строк изменилась: наберите текст через Аа, чтобы задать области букв заново.";
+  note.textContent = counts ? "Буквы «"+text+"» · ◇ = 1 + 0 = ширина × высота · без промежутков" : "Ширина строк изменилась: прежняя разметка букв не соответствует полю.";
   box.append(note); if (!counts) return;
   const table=document.createElement("table"), head=document.createElement("thead"), body=document.createElement("tbody");
   const entries=[...counts.entries,counts.total];
@@ -4775,6 +4795,43 @@ function rmbTextStats(){
       rmbCountCell(td,entry,key);row.append(td);}body.append(row); }
   table.append(head,body);box.append(table);
 }
+function rmbLetterBorderEdges(entries,hs,u0){
+  const result=[];
+  for(const entry of entries){
+    if(!entry.ones)continue;
+    const edges=new Map(),add=(a,b)=>{const ka=a.join(","),kb=b.join(","),key=ka<kb?ka+"/"+kb:kb+"/"+ka;if(edges.has(key))edges.delete(key);else edges.set(key,[a,b]);};
+    for(let row=entry.top;row<=entry.bottom&&row<hs.length;row++){
+      const x=hs[row]+2*entry.left,top=x+((u0&1)?0:1),bottom=x+((u0&1)?1:0),span=2*entry.width;
+      for(let j=0;j<span;j++){add([top+j,row],[top+j+1,row]);add([bottom+j,row+1],[bottom+j+1,row+1]);}
+      add([top,row],[bottom,row+1]);add([top+span,row],[bottom+span,row+1]);
+    }
+    result.push(...edges.values());
+  }
+  return result;
+}
+function rmbDrawLetterBorders(g,{hs,u0,rm,tw,ox,oy}){
+  if(!rm||!rmbStatsCache?.counts)return;
+  const edges=rmbLetterBorderEdges(rmbStatsCache.counts.entries,hs,u0);if(!edges.length)return;
+  const path=new Path2D(),h=tw*Math.sqrt(3)/2;
+  for(const [a,b] of edges){path.moveTo(ox+a[0]*tw/2,oy+a[1]*h);path.lineTo(ox+b[0]*tw/2,oy+b[1]*h);}
+  g.save();g.globalAlpha=1;g.lineWidth=2;g.strokeStyle="#000000";g.lineJoin="miter";g.stroke(path);g.restore();
+}
+let rmbEditor = null, rmbAxisTool = null;
+function rmbEditorWire(cv){
+  if(rmbEditor||!window.ZZRmbEditor)return;
+  const common={rows:()=>Z.rows,locked:rowsLocked,message:say,
+    geometry:()=>{const r=rmbSt();if(!r.s)rmbFit();const {hs,u0}=rmbLayout(Z.rows,Math.min(Z.rows.length,4096),r.al,r.cell);return {hs,u0,rm:true,tw:r.s,ox:r.ox,oy:r.oy};},
+    polygon:rmbHighlightPolygon,redraw:renderRmb,save,
+    pan:(x,y)=>{const r=rmbSt();r.ox=x;r.oy=y;renderRmb();},
+    commit:rows=>{snapshot();Z.rows.splice(0,Z.rows.length,...rows);renderAll();save();}
+  };
+  if(window.ZZRmbAxis)rmbAxisTool=window.ZZRmbAxis.mount(cv,{...common,
+    enabled:()=>!!rmbSt().axisMode&&rmbSt().cell==="rmb",
+    axes:()=>Array.isArray(rmbSt().axes)?rmbSt().axes.filter(a=>window.ZZRmbAxis.basis(a)):[],
+    setAxes:axes=>{rmbSt().axes=axes;}
+  });
+  rmbEditor=window.ZZRmbEditor.mount(cv,{...common,enabled:()=>!!(rmbSt().edit||rmbSt().axisMode)&&rmbSt().cell==="rmb"});
+}
 function rmbDrawCountHighlight(g,geometry){
   const cells=rmbHighlightCells(Z.rows,rmbStatsCache?.counts,rmbCountHighlight);if(!cells.length)return;
   const path=new Path2D();
@@ -4788,12 +4845,17 @@ function rmbDrawCountHighlight(g,geometry){
 }
 function rmbType(){
   if (rowsLocked()) return;
-  const t = prompt("Аа — текст в строки (латиница, кириллица, цифры, заглавные и строчные; ↩ вернёт прежние строки):", Z.rmbText || "Zazerkalius");
-  if (t === null || !t.trim()) return;
-  snapshot(); Z.rmbText = t.trim(); const R = rmbTextRows(Z.rmbText);
-  Z.rows.splice(0, Z.rows.length, ...R); Z.cur = 0; rowSel.clear();
-  const r = rmbSt(); r.cell = "rmb"; r.al = "zz"; r.num = false; rmbFit();
-  renderAll(); save(); say(`Аа «${Z.rmbText}» — ${R.length} строк по ${R[0].length} бит, ◇ бит ёлочкой. ↩ вернёт прежние строки.`);
+  const t=prompt("Аа — добавить текст ниже существующего поля (латиница, кириллица, цифры). Старые ромбы останутся; выделяйте и удаляйте их в Правке:",Z.rmbText||"Zazerkalius");
+  if(t===null||!t.trim())return;
+  let blocks=rmbTextBlocks();
+  if(!Z.rmbTextBlocks?.length&&blocks.length){const width=rmbTextRows(blocks[0].text)[0].length;if(Z.rows.some(row=>row.length!==width))blocks=[];}
+  const added=rmbAppendText(Z.rows,blocks,t.trim());if(added.rows.length>4096){say("Текст не добавлен: поле Ромбоидов показывает не более 4096 строк.");return;}
+  const oldWidth=Math.max(0,...Z.rows.map(row=>row.length));
+  snapshot();Z.rmbText=t.trim();Z.rmbTextBlocks=added.blocks;Z.rmbTextFieldWidth=added.width;
+  if(added.width!==oldWidth&&Array.isArray(rmbSt().axes)){const dx=(oldWidth-added.width)/2;rmbSt().axes=rmbSt().axes.map(a=>({...a,a:[a.a[0]+dx,a.a[1]],b:[a.b[0]+dx,a.b[1]]}));}
+  Z.rows.splice(0,Z.rows.length,...added.rows);Z.cur=added.blocks.at(-1).row;rowSel.clear();
+  const r=rmbSt();r.cell="rmb";rmbFit();
+  renderAll();save();say(`Добавлено «${Z.rmbText}». Старое поле сохранено; Правка: рамка / Shift — выделить, Ctrl+A — всё, Delete — стереть. ↩ отменит добавление.`);
 }
 function rmbFit(){
   const cv = $("rmbCv"); if (!cv) return; const r = rmbSt(), R = Z.rows, M = Math.min(R.length, 4096); if (!M) return;
@@ -4806,6 +4868,14 @@ function rmbFit(){
 }
 function rmbUi(){
   const r = rmbSt(), q = (s) => document.querySelectorAll("#w-rmb " + s);
+  {const edit=!!r.edit&&r.cell==="rmb",axis=!!r.axisMode&&r.cell==="rmb",hint=$("rmbEditHint");
+    for(const [id,on] of [["bRmbEdit",edit],["bRmbAxis",axis]]){const b=$(id);if(b){b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));}}
+    if(hint){hint.hidden=!edit&&!axis;hint.textContent=axis?"Проведите ось · концы — угол и длина · линия — перенос · выберите направление отражения · пробел — вид":"0 → щелчок → 1 · тащить — перенос · Ctrl — копия · Shift / рамка — выделить · Delete — стереть · пробел + тащить — вид";}
+    $("rmbCv")?.classList.toggle("rmb-editing",edit||axis);const tools=$("rmbAxisTools");if(tools)tools.hidden=!axis;
+    const selected=rmbAxisTool?.selected(),basis=selected&&window.ZZRmbAxis?.basis(selected);
+    for(const [id,from,to] of [["bRmbAxisPos",basis?.positive||"Право",basis?.negative||"Лево"],["bRmbAxisNeg",basis?.negative||"Лево",basis?.positive||"Право"]]){const b=$(id);if(b){b.textContent=from+" → "+to;b.disabled=!selected;b.title="Отразить "+from.toLowerCase()+" → "+to.toLowerCase()+" в клетки поля; нули тоже копируются. ↩ отменяет действие.";}}
+    const limit=$("bRmbAxisLimit"),del=$("bRmbAxisDel");if(limit){limit.textContent=selected?.segment?"Отрезок":"Вся ось";limit.disabled=!selected;}if(del)del.disabled=!selected;
+  }
   q("button[data-ral]").forEach(b => b.classList.toggle("on", b.dataset.ral === r.al));
   const L = { each: "▵ каждый", rmb: "◇ ромбы", grp: "⬡ группы", none: "без границ" }, G = { "": "👓", chg: "👓 изм.", age: "👓 возраст", pair: "👓 пары" };
   { const b = $("bRmbCube"), c = $("bRmbCPri"); if (b) { b.classList.toggle("on", !!r.cube); b.title = "🧊 Кубы: треугольники склеиваются в ромбы с равным соседом — три направления ромба = три грани кубика (светлая «/», средняя «◆», тёмная «\\»); без пары — бледный с красной обводкой" + (r.cube ? `\nСейчас: ромбов ${rmbPairStat.n}, без пары ${rmbPairStat.bad} (из них ${rmbPairStat.ex} неизбежно — ▲ и ▼ не поровну)` : ""); }
@@ -4824,7 +4894,12 @@ function rmbUi(){
 }
 function rmbWire(){
   const W = $("w-rmb"), cv = $("rmbCv"); if (!W || !cv || cv._wired) return; cv._wired = 1;
+  rmbEditorWire(cv);
   const re = () => { rmbUi(); save(); renderRmb(); };
+  $("bRmbEdit").onclick=()=>{const r=rmbSt();r.edit=!(r.edit&&r.cell==="rmb");r.axisMode=false;rmbAxisTool?.cancel();rmbEditor?.clear();if(r.edit){r.cell="rmb";if(rmbW.on)rmbWStop();if($("bAnimPlay").classList.contains("on"))$("bAnimPlay").click();rmbFit();cv.focus({preventScroll:true});}re();};
+  $("bRmbAxis").onclick=()=>{const r=rmbSt();r.axisMode=!(r.axisMode&&r.cell==="rmb");r.edit=false;rmbEditor?.clear();rmbAxisTool?.cancel();if(r.axisMode){if(r.cell!=="rmb"){r.cell="rmb";rmbFit();}if(rmbW.on)rmbWStop();if($("bAnimPlay").classList.contains("on"))$("bAnimPlay").click();cv.focus({preventScroll:true});}re();};
+  $("bRmbAxisPos").onclick=()=>rmbAxisTool?.apply("positive");$("bRmbAxisNeg").onclick=()=>rmbAxisTool?.apply("negative");
+  $("bRmbAxisLimit").onclick=()=>rmbAxisTool?.toggleSegment();$("bRmbAxisDel").onclick=()=>rmbAxisTool?.remove();
   W.querySelectorAll("button[data-ral]").forEach(b => b.onclick = () => { rmbSt().al = b.dataset.ral; re(); });
   $("bRmbLn").onclick = () => { const r = rmbSt(), o = ["each", "rmb", "grp", "none"]; r.ln = o[(o.indexOf(r.ln) + 1) % o.length]; re(); };
   $("bRmbGl").onclick = () => { const r = rmbSt(), o = ["", "chg", "age", "pair"]; r.gl = o[(o.indexOf(r.gl) + 1) % o.length]; re(); };
@@ -5007,7 +5082,8 @@ function renderRmb(){
   if (UL) { g.strokeStyle = "#ff4d4d"; g.lineWidth = Math.max(0.8, tw * 0.05); g.stroke(UL); }
   if (digs) { g.font = `700 ${Math.round(tw * 0.42)}px ${coneCss("--ff", "monospace")}`; g.textAlign = "center"; g.textBaseline = "middle";
     for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && !digs[q + 2] ? "#fff7d6" : "#05070b"; g.fillText(String(digs[q + 2]), digs[q], digs[q + 1]); } g.textAlign = "left"; }
-  rmbDrawCountHighlight(g,{hs,u0,rm,tw,ox:r.ox,oy:r.oy,M,Wc,Hc});
+  const editGeometry={hs,u0,rm,tw,ox:r.ox,oy:r.oy,M,Wc,Hc};
+  rmbDrawLetterBorders(g,editGeometry);rmbDrawCountHighlight(g,editGeometry);rmbEditor?.paint(g,editGeometry);if(rm)rmbAxisTool?.paint(g,editGeometry);
 }
 function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
   const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
