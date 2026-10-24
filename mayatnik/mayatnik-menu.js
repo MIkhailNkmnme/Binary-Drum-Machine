@@ -1,4 +1,4 @@
-/* Маятник v0.513 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.514 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -380,7 +380,7 @@
     const fold = (n, k, tipT) => { const fp = document.createElement('button'); fp.title = n; const bf = ptBtn(n === 'Загиб' ? 'fixFold' : 'fixFoldV', 'mirror', fp, () => { const Z = window.mayFixMirror; Z?.setFold(Z.fold() === k ? 0 : k); placeTools(); });
       toolSync.push(() => { const on = window.mayFixMirror?.fold() === k; bf.classList.toggle('on', on); bf.title = tipT + ' · ' + (on ? 'вкл' : 'выкл'); }); return bf; };
     const bf = fold('Загиб', 1, 'Загиб: то, что «Зеркало ↑» вынесло за стороны поля, отражается ещё раз — через левую или правую сторону — внутрь');
-    const bv = fold('ЗагибВерт', 2, 'ЗагибВерт: то, что «Зеркало ↑» вынесло за поле, отражается внутрь через вертикали — в точках, где диагонали зеркала встречают стороны поля');
+    const bv = fold('Загиб Верт', 2, 'Загиб вертикальный: то, что «Зеркало ↑» вынесло за поле, отражается внутрь через вертикали — в точках, где диагонали зеркала встречают стороны поля');
     // v0.214: «Сдвиг кадром» — тянуть центр вверх-вниз значит листать кадры
     const kp = document.createElement('button'); kp.title = 'Кадр'; const bk = ptBtn('fixDragK', 'steps', kp, () => { const K = window.mayFixDragK; K?.set(!K.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixDragK?.get(); bk.classList.toggle('on', on); bk.title = 'Сдвиг кадром: тянешь зелёную горизонталь вверх-вниз — меняется кадр, точка встречи «Застыло» идёт за мышью (выкл — сдвиг центра на том же кадре) · ' + (on ? 'вкл' : 'выкл'); });
@@ -522,7 +522,7 @@
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   {const e=$('bGif'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bGif';const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'record');b.append(mark);b.onclick=()=>e.click();toolSync.push(()=>{b.title=tip(e);b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');});tools.querySelector('[data-n="bRec"]').parentElement.append(b);}
-  const ptNames = { lineMeasures:'Размеры', fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'ЗагибВерт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', rowCount:'Биты в строках', fixCross:'Точка встречи', sawFull:'Пила полная', rowLab:'Подписи', vtxFlash:'Вспышка', heat:'Тепло',   // v0.329: «Вид» — стандартной ширины, названия короче
+  const ptNames = { lineMeasures:'Размеры', fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'Загиб Верт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', rowCount:'Биты в строках', fixCross:'Точка встречи', sawFull:'Пила полная', rowLab:'Подписи', vtxFlash:'Вспышка', heat:'Тепло',   // v0.329: «Вид» — стандартной ширины, названия короче
     sectors:'Секторы', areas:'Площади', areaFreeze:'Заморозка', ovlStep:'Наложение', ovlPos:'Сдвиг G', ovlH0:'Шаг 8', ovlReset:'Сброс налож.', ovlFreeze:'Фиксировать', ovlAlpha:'Видимость 50%', ovlOriginal:'Оригинал', ovlCenter:'По оси', saw:'Пила', fixLock:'Замок ↔', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', clrPaint:'Окраска', clrMirrors:'Зеркала', clrSel:'Выделение', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', bPaintMeet:'Точка', bPaintAxis:'ТочкаОсь', bThirds:'Трети', bTriTop:'▼ ← верх', meetGrow:'Рост', meetCol:'Цвет', bFillGrow:'Рост', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Своя ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
@@ -622,9 +622,7 @@
     };
     ZerkGrozd.listHover(choose,{options:()=>api.list().map(layer=>({name:layer.name,on:layer.id===api.selected(),pick:()=>api.select(layer.id)})),color:()=>'#73e4a5',host:()=>group,
       placement:'below',placed(list,owner){openList=list;choose.setAttribute('aria-expanded','true');list.classList.add('may-layer-options');fillList(list);hideListUnder(list,owner);
-        const r=row.getBoundingClientRect(),h=Math.max(24,Math.min(api.list().length*26+24,Math.max(50,innerHeight-28))),left=r.right+126<=innerWidth-4?r.right+6:Math.max(4,r.left-126);
-        Object.assign(list.style,{display:'flex',flexDirection:'column',width:'120px',maxWidth:'120px',gridTemplateRows:'none',left:left+'px',top:Math.max(14,Math.min(owner.getBoundingClientRect().top,innerHeight-h-14))+'px',maxHeight:h+'px'});
-        list.style.setProperty('overflow-y',api.list().length*26+24>h?'auto':'visible','important');},closed(){openList=null;listSignature='';choose.setAttribute('aria-expanded','false');}});
+},closed(){openList=null;listSignature='';choose.setAttribute('aria-expanded','false');}});
     const sync=()=>{
       const layer=current(),layers=api.list(),index=layer?layers.findIndex(item=>item.id===layer.id):-1;
       choose.disabled=!layers.length;for(const b of [visible,tint,native,capture,reset])b.disabled=!layer;
@@ -1219,18 +1217,29 @@
     if(!heading){heading=document.createElement('div');heading.className='may-list-heading';heading.setAttribute('role','heading');heading.setAttribute('aria-level','3');list.append(heading);}
     if(heading.textContent!==title)heading.textContent=title;list.classList.add('may-titled-list');list.setAttribute('aria-label',title);
   }
+  function listLayout(owner,count){
+    const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
+    const r=owner.getBoundingClientRect(),c=column.getBoundingClientRect();
+    return window.MayatnikMenuOptions.layout(count??owner.gzList.options().length,r,c.width?c:r,popupRight(),innerHeight);
+  }
+  function setListSide(owner,side){if(owner.dataset.listSide!==side){owner.dataset.listSide=side;owner.classList.toggle('may-list-left',side==='left');}}
+  function syncListButton(owner){
+    if(!window.MayatnikMenuOptions)return;
+    window.MayatnikMenuOptions.syncOwner(owner);
+    if(owner.getClientRects().length)setListSide(owner,listLayout(owner).side);
+  }
   let activeList=null;
   // v0.497: only the popup escapes group stacking contexts; its owner stays in place.
   function popupContains(group, target) {
     const list=activeList?.group===group && activeList.list;
     return !!(list?.isConnected && (target ? list.contains(target) : list.matches(':hover')));
   }
-  const clearListUnder = () => {const group=activeList?.group;activeList=null;group?._popupLeave?.();document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
+  const clearListUnder = () => {window.MayatnikMenuOptions?.restore(activeList?.owner);const group=activeList?.group;activeList=null;group?._popupLeave?.();document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
   // v0.482: «дрожание всех списков»: grozd пристраивает открытый список каждые 400 мс и зовёт эту функцию; прежде она снимала затемнение со всех,
   // мерила колонку (браузер успевал применить снятие) и ставила заново — переход opacity .12s заставлял кнопки под списком вспыхивать на каждом такте.
   // Теперь затемнение меняется только у тех, кому его надо снять или добавить.
   const hideListUnder = (list, owner) => {
-    decorateViewPalette(list,owner);decorateListHeading(list,owner);
+    decorateViewPalette(list,owner);decorateListHeading(list,owner);window.MayatnikMenuOptions?.decorate(list,owner);
     const group = owner.closest('.pt-g, .gz-group, .may-hp-pop');
     if(list.parentNode!==document.body){
       // Shared grozd has already copied owner font/variables and installed option handlers.
@@ -1242,6 +1251,12 @@
     }
     const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
+    if(window.MayatnikMenuOptions){
+      const g=listLayout(owner,list.querySelectorAll(':scope > .gz-hx').length);setListSide(owner,g.side);
+      Object.assign(list.style,{width:g.width+'px',gridTemplateRows:`repeat(${g.rows},48px)`,gridAutoColumns:'48px',top:g.top+'px',left:g.left+'px',maxHeight:g.maxHeight+'px',maxWidth:Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px'});
+      list.style.setProperty('width',g.width+'px','important');list.style.setProperty('max-width',Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px','important');
+      list.style.setProperty('overflow-y',g.scroll?'auto':'visible','important');list.style.setProperty('overflow-x',g.scroll?'hidden':'visible','important');
+    }else{
     // v0.481: окончательная геометрия списка задаётся здесь; адаптер контура её больше не сдвигает своим таймером.
     const count=list.querySelectorAll(':scope > .gz-hx').length,maxRows=Math.max(1,Math.floor((innerHeight-54)/26)),space=Math.max(innerWidth-c.right-6,c.left-6),maxCols=Math.max(1,Math.floor((space+6)/126)),cols=Math.min(maxCols,Math.ceil(count/Math.min(7,maxRows))),rows=Math.ceil(count/cols),width=cols*126-6;
     Object.assign(list.style,{width:width+'px',gridTemplateRows:`repeat(${rows},24px)`,gridAutoColumns:'120px',top:Math.max(14,Math.min(owner.getBoundingClientRect().top,innerHeight-Math.min(rows,maxRows)*26-38))+'px',maxHeight:(maxRows*26+24)+'px'});
@@ -1250,10 +1265,12 @@
     const right=c.right+6,left=c.left-width-6;
     const x=right+width<=innerWidth-4?right:left>=4?left:Math.max(4,Math.min(right,innerWidth-width-4));
     list.style.left=x+'px';list.style.maxWidth=Math.min(width,Math.max(24,innerWidth-x-4))+'px';
-    activeList={list,group};scheduleGroups();
+    }
+    activeList={list,group,owner};scheduleGroups();
   };
   for (const b of document.querySelectorAll('.gz-lst')) if (b.gzList) {
-    nameListButton(b);
+    nameListButton(b);syncListButton(b);
+    b.addEventListener('pointerenter',()=>syncListButton(b),true);
     if(b.dataset.n==='layerSelect'){const closed=b.gzList.closed;b.gzList.closed=(...args)=>{closed?.(...args);clearListUnder();};}
     else Object.assign(b.gzList, {placement:'right', placed:hideListUnder, closed:clearListUnder});
     // v0.446: an inset, shorter chevron complements the existing right edge.
@@ -1263,6 +1280,8 @@
       const line=document.createElementNS(arrow.namespaceURI,'path');line.setAttribute('d','M1 1L7 8L1 15');arrow.append(line);b.append(arrow);
     }
   }
+  const syncLists=()=>{for(const b of document.querySelectorAll('.gz-lst'))if(b.gzList)syncListButton(b);};
+  toolSync.push(syncLists);addEventListener('resize',syncLists);
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';
@@ -1479,13 +1498,15 @@
   // v0.438: сокращаем только отображение; ключи раскладки, исходные элементы и данные не меняются.
   for(const group of tools.querySelectorAll('.pt-g'))if(!group.dataset.k)group.dataset.k=group.querySelector('.pt-l')?.firstChild?.textContent.trim()||'';
   const shortCaption = text => text.replace(/[а-яё]+/giu, word => {
-    const compact=word.replace(/(?<=[бвгджзйклмнпрстфхцчшщ])[аеёиоуыэюя](?=[бвгджзйклмнпрстфхцчшщ])/giu,'');
+    if(word==='Верт')return word; // Explicit caption approved by the user: «Згибъ Верт».
+    let vowels=(word.match(/[аеёиоуыэюя]/giu)||[]).length;
+    const compact=word.replace(/(?<=[бвгджзйклмнпрстфхцчшщ])[аеёиоуыэюя](?=[бвгджзйклмнпрстфхцчшщ])/giu,v=>vowels>1?(vowels--,''):v);
     return /[бвгджзйклмнпрстфхцчшщ]$/iu.test(compact) ? compact+(word!=='С'&&word===word.toLocaleUpperCase('ru')?'Ъ':'ъ') : compact;
   });
   const captionSources=new WeakMap(),captionAria=new WeakSet();
   const captionOwner=node=>{
     const parent=node.parentElement;
-    if(!parent||parent.closest('.bar,script,style,textarea,select,input,.template-entry>.gz-nm,[data-user-label]'))return null;
+    if(!parent||parent.closest('.bar,script,style,textarea,select,input,.template-entry>.gz-nm,.may-option-symbol,[data-user-label]'))return null;
     return parent.closest('button,[role="button"],.gz-hx,.pt-l,.may-hp-h,.pt-t3,.pt-half');
   };
   const captionsIn=root=>{

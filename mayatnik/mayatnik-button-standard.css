@@ -252,3 +252,16 @@ body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-nm{left:20px;right
   body.mayatnik-menu-ready header #paintTools.pt-grid>.gz-group.may-docked.pt-bot{display:block!important;height:24px!important}
   body.mayatnik-menu-ready header #paintTools.pt-grid>.gz-group.may-docked.pt-bot>.may-rail-list{position:absolute!important;left:0!important;top:auto!important;bottom:calc(100% + 2px)!important}
 }
+
+/* v0.514: icon options; list title above, option caption in the owner. */
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-diamond-options{display:grid!important;grid-auto-flow:column;justify-content:center;gap:2px 6px!important;padding:26px 0 14px!important;box-sizing:border-box!important;background:#0e1116!important;isolation:isolate}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-option-diamond{width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;min-height:48px!important;max-height:48px!important;padding:0!important;justify-content:center;gap:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
+.may-option-diamond>.gz-nm,.may-option-diamond>.gz-v{display:none!important}
+.may-option-diamond>.gz-ic{display:block!important;flex:0 0 18px;width:18px!important;height:18px!important;margin:0!important}
+.may-option-diamond.may-option-fallback>.gz-ic{display:none!important}
+.may-option-symbol{display:block;font-size:16px;font-weight:600;line-height:1;pointer-events:none}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-option-diamond>.may-standard-outline polygon{stroke-dasharray:none!important;stroke-dashoffset:0!important}
+.may-option-diamond>.may-view-swatch{position:absolute;left:5px;top:20px;width:8px;height:8px;min-width:0;z-index:4}
+.may-option-diamond>.may-view-swatch:last-of-type{left:auto;right:5px}
+.may-diamond-options>.may-list-heading{background:transparent;border-bottom:0}
+.mayatnik-menu-ready .gz-hx.gz-lst.may-list-left>.may-list-inner-arrow{left:4px;right:auto;transform:scaleX(-1)}

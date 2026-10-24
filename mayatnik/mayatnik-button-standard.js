@@ -10,7 +10,7 @@
     let s=b.querySelector(':scope > .may-standard-outline');
     if(!s){s=svg('may-standard-outline');shape(s,'polygon',{points:polygon});b.append(s);}
     if(b.matches('.gz-wl,.may-center-control')&&!s.querySelector('.may-half-side'))shape(s,'path',{class:'may-half-side',d:'M12 0L0 12 12 24M108 0L120 12 108 24'});
-    const mini=b.classList.contains('may-standard-mini')||b.classList.contains('may-control-mini');set(s,'viewBox',mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',mini?'17,0 34,12 17,24 0,12':polygon);
+    const mini=b.classList.contains('may-standard-mini')||b.classList.contains('may-control-mini');const diamond=b.classList.contains('may-option-diamond');set(s,'viewBox',diamond?'0 0 48 48':mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',diamond?'24,0 48,24 24,48 0,24':mini?'17,0 34,12 17,24 0,12':polygon);
   }
   function roof(b,mini,up=false){
     let s=b.querySelector(':scope > .may-standard-roof');if(!s){s=svg('may-standard-roof');b.append(s);}
@@ -24,6 +24,11 @@
     let s=host.querySelector(':scope > .may-standard-contours');if(!s){s=svg('may-standard-contours');
       // grozd synchronizes option states by child index. Decoration must follow every option.
       if(host.classList.contains('gz-ladder'))host.append(s);else host.prepend(s);
+    }
+    if(host.classList.contains('may-diamond-options')){
+      const r=host.getBoundingClientRect(),w=r.width,h=Math.max(r.height,host.scrollHeight||0),sig='diamonds:'+w+':'+h;
+      if(s.dataset.sig!==sig){s.dataset.sig=sig;s.innerHTML=`<path class="cap" d="M1 13 L13 1 H${w-13} L${w-1} 13 M1 ${h-13} L13 ${h-1} H${w-13} L${w-1} ${h-13}"/>`;}
+      return false;
     }
     const base=host.getBoundingClientRect(),cols=new Map();
     const add=(b,head)=>{const r=b.getBoundingClientRect();if(!r.width||!r.height)return false;const x=Math.round(r.left-base.left+host.scrollLeft),y=Math.round(r.top-base.top+host.scrollTop);let k=[...cols.keys()].find(c=>Math.abs(c-x)<30);if(k===undefined){if(head)return false;k=x;cols.set(k,[]);}cols.get(k).push({x,y,w:r.width,h:r.height,head:!!head});return true;};

@@ -22,12 +22,13 @@ class Node{
  get offsetWidth(){return parseFloat(this.style.width)||120} get offsetHeight(){return this.children.length*26}
  setAttribute(k,v){this[k]=v}
 }
-function fixture(){
+function fixture(diamonds=false){
  const body=new Node('body');body.root=true;const doc=new Node();doc.body=body;doc.documentElement=new Node();doc.createElement=t=>new Node(t);doc.querySelectorAll=s=>body.querySelectorAll(s);
  let now=0,id=0;const timers=new Map(),win=new Node();
  const ctx={document:doc,window:{},innerWidth:800,innerHeight:600,getComputedStyle:b=>({font:'12px Consolas',getPropertyValue:k=>b.style.getPropertyValue(k)}),
   setTimeout(f,ms){timers.set(++id,{at:now+ms,f});return id},clearTimeout(i){timers.delete(i)},addEventListener:win.addEventListener.bind(win),removeEventListener(){},scheduleGroups(){},decorateViewPalette(){},decorateListHeading(){},performance:{now:()=>now}};
- vm.createContext(ctx);
+ ctx.popupRight=()=>ctx.innerWidth;vm.createContext(ctx);
+ if(diamonds){vm.runInContext(fs.readFileSync(path.join(__dirname,'mayatnik-menu-options.js'),'utf8'),ctx);ctx.window.MayatnikMenuOptions=ctx.MayatnikMenuOptions;vm.runInContext(menu.slice(menu.indexOf('  function nameListButton('),menu.indexOf('  let activeList=null;')),ctx);}
  // Execute only the real shared list controller, not rail/adopt or any page application.
  const start=grozd.indexOf("  const NS ="),end=grozd.indexOf('  const PIN =');
  vm.runInContext(grozd.slice(start,end)+';window.ZerkGrozd={listHover};globalThis.sync=ladderSync;globalThis.sharedClose=closeLadder;',ctx);
@@ -88,10 +89,17 @@ test('production SVG contour cannot shift any selected option during real shared
  list.children[1].emit('click');assert.equal(selected,1);assert.equal(list.children[1].classList.contains('gz-on'),true);
 });
 
-test('real dropdown headings follow all options and cannot shift their active state; owner caption remains fixed',()=>{
- const f=fixture();f.owner.dataset.n='fontCycle';const old=new Node('span');old.className='gz-nm';old.textContent='Consolas';f.owner.append(old);
- vm.runInContext(menu.slice(menu.indexOf('  function nameListButton('),menu.indexOf('  let activeList=null;')),f.ctx);
- f.ctx.nameListButton(f.owner);assert.equal(f.owner.querySelector('.may-list-label').textContent,'Шрифт');old.textContent='Times';f.ctx.nameListButton(f.owner);assert.equal(f.owner.querySelector('.may-list-label').textContent,'Шрифт');
- let selected=0;f.bind(f.owner,{options:()=>['A','B','C'].map((name,i)=>({name,on:i===selected,pick:()=>selected=i}))});f.reopen();const list=f.list;assert.equal(list.children.at(-1).classList.contains('may-list-heading'),true);assert.equal(list.children.at(-1).textContent,'Шрифт');
- for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.deepEqual(list.querySelectorAll(':scope > .gz-hx').map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}assert.equal(list.children.filter(n=>n.classList.contains('may-list-heading')).length,1);list.children[1].emit('click');assert.equal(selected,1);
+test('diamond dropdown previews in owner, keeps title above, restores selection and preserves real option indexes',()=>{
+ const f=fixture(true);f.owner.dataset.n='fontCycle';const old=new Node('span');old.className='gz-nm';old.textContent='Consolas';f.owner.append(old);
+ f.ctx.nameListButton(f.owner);let selected=0;
+ f.bind(f.owner,{options:()=>['A','B','C'].map((name,i)=>({name,on:i===selected,pick:()=>selected=i}))});
+ f.column.rect={left:650,right:770,width:120,top:50};f.owner.rect=f.column.rect;f.ctx.syncListButton(f.owner);
+ assert.equal(f.owner.dataset.listSide,'left');const label=f.owner.querySelector('.may-list-label');assert.equal(label.textContent,'A');
+ f.reopen();const list=f.list,rows=list.querySelectorAll(':scope > .gz-hx'),heading=list.querySelector('.may-list-heading');
+ assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(3,48px)');
+ assert.ok(rows.every(row=>row.classList.contains('may-option-diamond')));assert.equal(list.children.at(-1),heading);
+ rows[2].emit('pointerenter');assert.equal(label.textContent,'C');f.ctx.sync();assert.equal(label.textContent,'C');rows[2].emit('pointerleave');assert.equal(label.textContent,'A');
+ for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.equal(label.textContent,['A','B','C'][i]);assert.deepEqual(rows.map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}
+ rows[1].emit('click');assert.equal(selected,1);assert.equal(label.textContent,'B');rows[0].emit('pointerenter');assert.equal(label.textContent,'A');f.ctx.sharedClose();assert.equal(label.textContent,'B');assert.equal(f.owner.dataset.listTitle,'Шрифт');
+ assert.equal(list.children.filter(n=>n.classList.contains('may-list-heading')).length,1);assert.equal(list.children.length,4);
 });

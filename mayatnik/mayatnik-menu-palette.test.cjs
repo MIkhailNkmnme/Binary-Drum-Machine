@@ -15,7 +15,7 @@ test('actual mode palettes select first, edit only selected mode, reuse pickers 
  const before=ids.map(id=>sources[id].value);assert.deepEqual(before,ids.map((id,i)=>'#'+String(i+1).repeat(6)));sources.lgOverOne.value='#abcdef';ctx.decorateViewPalette(list,owner);assert.equal(col[0].style.backgroundColor,'#abcdef');assert.equal(created,6);
 });
 test('captions use Съ with lowercase hard sign and retain uppercase words elsewhere',()=>{
- const a=menu.indexOf('  const shortCaption ='),b=menu.indexOf('  const captionSources=',a),c={};vm.createContext(c);vm.runInContext(menu.slice(a,b)+';globalThis.short=shortCaption;',c);assert.equal(c.short('С нуля'),'Съ нля');assert.equal(c.short('С засечками'),'Съ зсчкми');assert.equal(c.short('ЦЕНТР'),'ЦНТРЪ');assert.equal(c.short('Съ нля'),'Съ нля');
+ const a=menu.indexOf('  const shortCaption ='),b=menu.indexOf('  const captionSources=',a),c={};vm.createContext(c);vm.runInContext(menu.slice(a,b)+';globalThis.short=shortCaption;',c);assert.equal(c.short('С нуля'),'Съ нля');assert.equal(c.short('С засечками'),'Съ зсчкми');assert.equal(c.short('ЦЕНТР'),'ЦЕНТРЪ');assert.equal(c.short('Съ нля'),'Съ нля');
 });
 
 test('combined centre uses independent live toggles and both retained colour inputs',()=>{
@@ -23,4 +23,11 @@ test('combined centre uses independent live toggles and both retained colour inp
  const one=new Item(),zero=new Item(),sources={midOneOn:{checked:true,click(){this.checked=!this.checked}},midZeroOn:{checked:false,click(){this.checked=!this.checked}},midOneColour:{value:'#ff7f27'},midZeroColour:{value:'#4f9bff'}};let picks=[];const sync=[];
  const c={railSourceButtons:new Map([['midOneOn',one],['midZeroOn',zero]]),$:id=>sources[id],document:{createElement:()=>new Item()},picker:source=>()=>picks.push(source),toolSync:sync,rail:{refresh(){}},placeTools:()=>sync.forEach(f=>f())};vm.createContext(c);const a=menu.indexOf('  // One centre control;'),b=menu.indexOf('  // v0.441: варианты',a);vm.runInContext(menu.slice(a,b),c);c.placeTools();
  assert.equal(zero.style.display,'none');assert.deepEqual(one.children.map(n=>n.textContent),['','0','Центр','1','']);one.children[1].click();assert.equal(sources.midZeroOn.checked,true);assert.equal(sources.midOneOn.checked,true);one.children[2].click();assert.equal(sources.midZeroOn.checked,false);assert.equal(sources.midOneOn.checked,false);one.children[3].click();assert.equal(sources.midOneOn.checked,true);assert.equal(sources.midZeroOn.checked,false);one.children[0].click();one.children[4].click();assert.deepEqual(picks,[sources.midZeroColour,sources.midOneColour]);assert.equal(sources.midZeroColour.value,'#4f9bff');
+});
+
+test('short words retain at least one original vowel; explicit fold caption has a space',()=>{
+ const a=menu.indexOf('  const shortCaption ='),b=menu.indexOf('  const captionSources=',a),c={};vm.createContext(c);vm.runInContext(menu.slice(a,b)+';globalThis.short=shortCaption;',c);
+ for(const [full,short] of [['Загиб Верт','Згибъ Верт'],['Цвет','Цветъ'],['Шрифт','Шрифтъ'],['Вниз','Внизъ'],['Пуск','Пускъ'],['Повтор','Пвторъ'],['Ширина','Шрна'],['Заливка','Злвка'],['ЦЕНТР','ЦЕНТРЪ']]){assert.equal(c.short(full),short);assert.equal(c.short(short),short);}
+ for(const word of ['Слой','Центр','Ряд','Загиб','Выбор','Шрифт','Вверх','Сброс','Вниз','Сохранить','Отменить','Верт'])assert.match(c.short(word),/[аеёиоуыэюя]/iu);
+ assert.match(menu,/fixFoldV:'Загиб Верт'/);assert.match(menu,/fold\('Загиб Верт', 2/);
 });
