@@ -935,3 +935,9 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 /* v0.500: «Цифра 1 | 0», «Клетка 1 | 0» — название по центру, кружки по краям; название щелчки пропускает к половинам. */
 .gz-pair.gz-split.gz-cpair .gz-pm{pointer-events:none;font-size:11px;font-weight:600}
 #paintTools .gz-pair.gz-cpair .gz-half .pt-dot{order:0;margin:0}
+/* v0.502: переключатель [Ось | 0 | 1 | −1] — части без своей заливки и косых срезов пары, как «Стык» Хаба: выбранная — ромб (gz-tri в grozd.css). */
+#paintTools .gz-pair.gz-tri .gz-half{background:transparent!important;clip-path:none!important}
+/* v0.502: «Цифра 1 | 0» — кружки у краёв кнопки. */
+#paintTools .gz-pair.gz-cpair .gz-half.gz-h0{justify-content:flex-start!important;padding:0 0 0 17px!important}
+#paintTools .gz-pair.gz-cpair .gz-half.gz-h1{justify-content:flex-end!important;padding:0 17px 0 0!important}
+#paintTools .gz-pair.gz-tri .gz-half.gz-on::before{inset:auto!important;left:50%!important;top:50%!important;width:22px!important;height:18px!important;margin:-9px 0 0 -11px!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:var(--c)!important}

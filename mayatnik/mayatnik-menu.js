@@ -1,4 +1,4 @@
-/* Маятник v0.501 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.502 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -726,7 +726,9 @@
         toolSync.push(() => { const on = src.classList.contains('on'); sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = src.title; }); });
       parts[0].before(b); for (const p of parts) p.style.display = 'none'; } }
   // v0.500: «эти в 2 кнопки» — «Цифра 1 | 0» и «Клетка 1 | 0»: название по центру, по краям кружки цвета единиц и нулей (щелчок — палитра).
-  for (const [nm, one, zero] of [['Цифра', 'digitOneColour', 'digitZeroColour'], ['Клетка', 'bitOneColour', 'bitZeroColour']]) {
+  // v0.502: «Клетка 1 | 0» снята — те же цвета, что левая половина палитры поля (#lg); прежние кнопки спрятаны.
+  for (const n of ['c_bitOneColour', 'c_bitZeroColour']) { const e = tools.querySelector('[data-n="' + n + '"]'); if (e) e.style.display = 'none'; }
+  for (const [nm, one, zero] of [['Цифра', 'digitOneColour', 'digitZeroColour']]) {
     const s1 = tools.querySelector('[data-n="c_' + one + '"]'), s0 = tools.querySelector('[data-n="c_' + zero + '"]'); if (!s1 || !s0) continue;
     const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-split gz-mid gz-cpair'; b.dataset.n = 'c2_' + one;
     const pm = document.createElement('span'); pm.className = 'gz-pm'; pm.textContent = nm; b.append(pm);
