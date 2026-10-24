@@ -1,4 +1,4 @@
-/* Маятник v0.485 — scoped surfaces, contours and compact controls, КНОПКИ v27. */
+/* Маятник v0.495 — scoped surfaces, contours and compact controls, КНОПКИ v31. */
 body.mayatnik-menu-ready{--may-surface:#1b2430}   /* v0.455, В07 v23: ровный фон кнопок без градиента */
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard{--may-outline:#394657;--may-stroke:1px;--gz-w:120px;--gz-h:24px;--gz-n:12px;box-sizing:border-box!important;position:relative;isolation:isolate;display:flex;align-items:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex-shrink:0;margin:0!important;padding:0 12px!important;border:0!important;border-radius:0!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--may-surface)!important;color:#dfe6f5!important;filter:none!important;box-shadow:none!important;outline:0!important;text-shadow:none!important;font:12px/1.2 'Segoe UI',sans-serif!important;letter-spacing:0;white-space:nowrap;overflow:hidden;gap:4px}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::before,:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::after{display:none!important}
@@ -43,7 +43,7 @@ body.mayatnik-menu-ready #mayatnikRail .gz-group>.may-rail-list{position:relativ
 body.mayatnik-menu-ready #mayatnikRail .gz-group.gz-open>.may-rail-list{display:flex!important}
 body.mayatnik-menu-ready #mayatnikRail .gz-group.gz-mini.gz-open>.may-rail-list{margin-top:12px!important}
 .may-group-backdrop{display:none!important}
-:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list{padding:0!important;margin:0!important;background:none!important;clip-path:none!important;filter:none!important;isolation:isolate;overflow:visible!important}
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list{padding:0!important;margin:0!important;background:#0e1116!important;clip-path:none!important;filter:none!important;isolation:isolate;overflow:visible!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair{padding:0!important;gap:0!important}
 .may-standard-pair>.may-standard-outline{display:none}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-half{--may-outline:#394657;--may-stroke:1px;position:relative!important;display:flex;align-items:center;justify-content:center;flex:0 0 64px!important;width:64px!important;min-width:64px!important;height:24px;margin:0!important;padding:0 5px!important;background:transparent!important;clip-path:polygon(12px 0,56px 0,64px 24px,12px 24px,0 12px)!important;color:#dfe6f5!important;overflow:hidden;font-size:11px!important;isolation:isolate}
@@ -103,15 +103,16 @@ header #paintTools.pt-grid>.gz-group.gz-open{z-index:60!important}
 #paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini{--gz-w:34px;width:34px!important;min-width:34px!important;max-width:34px!important;flex:0 0 34px!important;height:24px!important;min-height:24px!important;max-height:24px!important;padding:0!important;gap:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;font-size:0!important;justify-content:center}
 .may-mini-glyph{display:none}
 .may-control-mini>.may-mini-glyph,.may-control-mini :is(.gz-half,.palette-half)>.may-mini-glyph{display:flex!important;position:absolute!important;inset:0;align-items:center;justify-content:center;visibility:visible!important;pointer-events:none;z-index:3;font:11px/1 'Segoe UI',sans-serif!important;color:var(--c,#dfe6f5)}
-.may-control-mini>:not(svg):not(.gz-half):not(.palette-half):not(.may-mini-glyph){visibility:hidden!important}
+.may-control-mini>:not(svg):not(i):not(.gz-ic):not(.gz-half):not(.palette-half):not(.may-mini-glyph){visibility:hidden!important}
 .may-control-mini>i,.may-control-mini>.gz-ic{visibility:visible!important;position:absolute!important;left:50%;top:50%;transform:translate(-50%,-50%);margin:0!important;z-index:4}
-.may-control-mini:has(>i,>.gz-ic)>.may-mini-glyph{display:none!important}
+.may-control-mini.may-mini-has-icon>.may-mini-glyph{display:none!important}
+.may-control-mini :is(.gz-half,.palette-half).may-mini-has-icon>.may-mini-glyph{display:none!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-control-mini.may-control-mini.may-control-mini.may-control-pair>:is(.gz-half,.palette-half),
 #paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini>.palette-half{position:relative!important;visibility:visible!important;display:flex!important;flex:0 0 17px!important;width:17px!important;min-width:17px!important;max-width:17px!important;height:24px!important;padding:0!important;margin:0!important;gap:0!important;font-size:0!important;clip-path:polygon(100% 0,100% 100%,0 50%)!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-control-mini.may-control-mini.may-control-mini.may-control-pair>:is(.gz-half,.palette-half)~:is(.gz-half,.palette-half),
 #paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini>.palette-half~.palette-half{clip-path:polygon(0 0,100% 50%,0 100%)!important}
 .may-control-mini.may-control-pair>.may-standard-outline,.may-control-mini :is(.gz-half,.palette-half)>.may-half-outline{display:none!important}
-.may-control-mini :is(.gz-half,.palette-half)>:not(.may-mini-glyph):not(.may-mini-half-outline):not(input){visibility:hidden!important}
+.may-control-mini :is(.gz-half,.palette-half)>:not(i):not(.gz-ic):not(.may-mini-glyph):not(.may-mini-half-outline):not(input){visibility:hidden!important}
 .may-mini-half-outline{position:absolute!important;inset:0;width:17px;height:24px;pointer-events:none;z-index:4;overflow:visible}
 .may-mini-half-outline polygon{fill:none;stroke:var(--may-outline,#394657);stroke-width:calc(2 * var(--may-stroke,1px))}
 .may-control-mini :is(.gz-half,.palette-half):is(:hover,:focus-visible){--may-outline:var(--c,#7cbcff)}
@@ -125,3 +126,7 @@ body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .pt-r>.gz-control:has(
 body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair .gz-half{gap:2px;justify-content:center;opacity:1;border-radius:0}
 body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair .gz-half:disabled{opacity:.3;cursor:default}
 body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair .gz-nm{min-width:0;overflow:hidden;text-overflow:ellipsis}
+
+/* The retained source icon remains visible in a compact control. */
+.may-control-mini.may-mini-has-icon>:is(i,.gz-ic),
+.may-control-mini :is(.gz-half,.palette-half).may-mini-has-icon>:is(i,.gz-ic){display:block!important;visibility:visible!important;position:absolute!important;left:50%;top:50%;transform:translate(-50%,-50%)!important;margin:0!important;z-index:4;width:13px!important;height:13px!important;font-size:13px!important;line-height:13px!important}

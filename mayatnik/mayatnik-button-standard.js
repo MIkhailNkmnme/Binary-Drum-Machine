@@ -1,4 +1,4 @@
-/* Маятник v0.485 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
+/* Маятник v0.495 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -99,6 +99,11 @@
     return 'group:'+owner+':parent:'+(parent.id||parent.className)+':slot:'+peers.indexOf(b);
   }
   function miniGlyph(b){
+    const hasIcon=[...b.querySelectorAll(':scope > i,:scope > .gz-ic')].some(i=>{
+      const c=getComputedStyle(i),image=v=>!!v&&v!=='none';
+      return !!i.textContent.trim()||image(c.backgroundImage)||image(c.maskImage)||image(c.webkitMaskImage)||!!i.querySelector('svg,img');
+    });
+    b.classList.toggle('may-mini-has-icon',hasIcon);
     let g=b.querySelector(':scope > .may-mini-glyph');if(!g){g=document.createElement('span');g.className='may-mini-glyph';g.setAttribute('aria-hidden','true');b.append(g);}
     const text=[...b.childNodes].filter(n=>n!==g&&!n.matches?.('svg')).map(n=>n.textContent||'').join('').trim();
     g.textContent=(text.match(/[←→↶↷+−−×÷=?!⏺◎▶◀▲▼\d]/u)||[])[0]||[...(b.getAttribute('aria-label')||b.title||text||'◆')][0];

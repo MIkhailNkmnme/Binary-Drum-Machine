@@ -1,4 +1,4 @@
-/* Маятник v0.491 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.495 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -1037,20 +1037,17 @@
         reg(cell, () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); } }
   // v0.441: варианты сбоку от столбца; перекрытые элементы чужой группы скрываются по одному (v0.452).
   let activeList=null;
-  const clearListUnder = () => {activeList=null;document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
+  function popupOwner(group) {
+    for(const el of document.querySelectorAll('.may-popup-owner'))if(el!==group)el.classList.remove('may-popup-owner');
+    group?.classList.add('may-popup-owner');
+  }
+  const clearListUnder = () => {popupOwner(null);activeList=null;document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
   // v0.482: «дрожание всех списков»: grozd пристраивает открытый список каждые 400 мс и зовёт эту функцию; прежде она снимала затемнение со всех,
   // мерила колонку (браузер успевал применить снятие) и ставила заново — переход opacity .12s заставлял кнопки под списком вспыхивать на каждом такте.
   // Теперь затемнение меняется только у тех, кому его надо снять или добавить.
   const hideListUnder = (list, owner) => {
-    document.querySelectorAll('.may-list-hidden').forEach(el => el.classList.remove('may-list-hidden'));
-    const group = owner.closest('.pt-g, .gz-group, .may-hp-pop'), want = new Set();
-    const underWant = el => { for (let p = el.parentElement; p && p !== group; p = p.parentElement) if (want.has(p)) return true; return false; };
-    if (group) for (const el of group.querySelectorAll('.pt-b, .gz-hx, .gz-control')) {
-      if (el === owner || el.contains(owner) || owner.contains(el) || el.closest('.gz-ladder') || el.matches('.gz-head') || underWant(el)) continue;
-      want.add(el);
-    }
-    document.querySelectorAll('.may-list-dim').forEach(el => { if (!want.has(el)) el.classList.remove('may-list-dim'); });
-    for (const el of want) el.classList.add('may-list-dim');
+    const group = owner.closest('.pt-g, .gz-group, .may-hp-pop');
+    popupOwner(group);
     const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
     // v0.481: окончательная геометрия списка задаётся здесь; адаптер контура её больше не сдвигает своим таймером.
