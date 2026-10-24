@@ -918,3 +918,7 @@ body.may-zen #mayFooterBar{display:none!important}
 body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .pt-r>.gz-hx{left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;flex-shrink:0}
 /* v0.497: body portal is independent of every header/rail/group stacking context. */
 body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-index:2147483645!important;background:#0e1116!important;pointer-events:auto!important}
+/* v0.498: Дзен, Видео и GIF — такие же ромбы, как + и −, но своим цветом. */
+#mayRhombs #mayRhZen,#mayRhombs #mayRhRec,#mayRhombs #mayRhGif,#mayRhombs #mayRhZen:hover,#mayRhombs #mayRhRec:hover,#mayRhombs #mayRhGif:hover{color:#73e4a5}
+#mayRhombs #mayRhZen[aria-pressed=true]{color:#ffd166}
+#mayRhombs #mayRhRec.on{color:#ff4d5e}
