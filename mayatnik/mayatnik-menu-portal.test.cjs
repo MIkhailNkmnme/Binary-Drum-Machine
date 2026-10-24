@@ -6,7 +6,7 @@ class Classes{
  contains(x){return this.s.has(x)} toggle(x,v){if(v===undefined)v=!this.contains(x);v?this.add(x):this.remove(x)}
 }
 class Node{
- constructor(tag='div'){this.tagName=tag;this.children=[];this.classList=new Classes();this.listeners={};this.style={setProperty(k,v,p){this[k]=v;this[k+'Priority']=p||''},getPropertyValue(k){return this[k]||''}};this.rect={left:20,right:140,top:50,bottom:74,width:120,height:24};this.hover=false;this.hidden=false;this.appends=0;}
+ constructor(tag='div'){this.tagName=tag;this.dataset={};this.children=[];this.classList=new Classes();this.listeners={};this.style={setProperty(k,v,p){this[k]=v;this[k+'Priority']=p||''},getPropertyValue(k){return this[k]||''}};this.rect={left:20,right:140,top:50,bottom:74,width:120,height:24};this.hover=false;this.hidden=false;this.appends=0;}
  set className(s){this.classList=new Classes();this.classList.add(...s.split(' '))}
  get parentElement(){return this.parentNode} get isConnected(){return !!(this.root||this.parentNode?.isConnected)}
  append(...xs){for(const x of xs){x.remove();x.parentNode=this;this.children.push(x);this.appends++}}
@@ -16,6 +16,7 @@ class Node{
  matches(s){if(s===':hover')return this.hover;return s.split(',').some(q=>q.trim().startsWith('.')&&this.classList.contains(q.trim().slice(1)))}
  closest(s){return this.matches(s)?this:this.parentNode?.closest(s)||null}
  contains(x){return x===this||this.children.some(c=>c.contains(x))}
+ querySelector(s){if(s.startsWith(':scope > '))return this.children.find(x=>x.matches(s.slice(9)))||null;return this.querySelectorAll(s)[0]||null}
  querySelectorAll(s){if(s===':scope > .gz-hx')return this.children.filter(x=>x.matches('.gz-hx'));return this.children.flatMap(x=>[...(x.matches(s)?[x]:[]),...x.querySelectorAll(s)])}
  getBoundingClientRect(){return this.rect} getClientRects(){return this.hidden||this.closest('.test-hidden')?[]:[this.rect]}
  get offsetWidth(){return parseFloat(this.style.width)||120} get offsetHeight(){return this.children.length*26}
@@ -25,7 +26,7 @@ function fixture(){
  const body=new Node('body');body.root=true;const doc=new Node();doc.body=body;doc.documentElement=new Node();doc.createElement=t=>new Node(t);doc.querySelectorAll=s=>body.querySelectorAll(s);
  let now=0,id=0;const timers=new Map(),win=new Node();
  const ctx={document:doc,window:{},innerWidth:800,innerHeight:600,getComputedStyle:b=>({font:'12px Consolas',getPropertyValue:k=>b.style.getPropertyValue(k)}),
-  setTimeout(f,ms){timers.set(++id,{at:now+ms,f});return id},clearTimeout(i){timers.delete(i)},addEventListener:win.addEventListener.bind(win),removeEventListener(){},scheduleGroups(){},decorateViewPalette(){},performance:{now:()=>now}};
+  setTimeout(f,ms){timers.set(++id,{at:now+ms,f});return id},clearTimeout(i){timers.delete(i)},addEventListener:win.addEventListener.bind(win),removeEventListener(){},scheduleGroups(){},decorateViewPalette(){},decorateListHeading(){},performance:{now:()=>now}};
  vm.createContext(ctx);
  // Execute only the real shared list controller, not rail/adopt or any page application.
  const start=grozd.indexOf("  const NS ="),end=grozd.indexOf('  const PIN =');
@@ -85,4 +86,12 @@ test('production SVG contour cannot shift any selected option during real shared
  assert.equal(list.children.at(-1).tagName,'svg');
  for(let i=0;i<4;i++){selected=i;f.ctx.sync();assert.deepEqual(list.querySelectorAll(':scope > .gz-hx').map(n=>n.classList.contains('gz-on')),[0,1,2,3].map(j=>i===j));}
  list.children[1].emit('click');assert.equal(selected,1);assert.equal(list.children[1].classList.contains('gz-on'),true);
+});
+
+test('real dropdown headings follow all options and cannot shift their active state; owner caption remains fixed',()=>{
+ const f=fixture();f.owner.dataset.n='fontCycle';const old=new Node('span');old.className='gz-nm';old.textContent='Consolas';f.owner.append(old);
+ vm.runInContext(menu.slice(menu.indexOf('  function nameListButton('),menu.indexOf('  let activeList=null;')),f.ctx);
+ f.ctx.nameListButton(f.owner);assert.equal(f.owner.querySelector('.may-list-label').textContent,'Шрифт');old.textContent='Times';f.ctx.nameListButton(f.owner);assert.equal(f.owner.querySelector('.may-list-label').textContent,'Шрифт');
+ let selected=0;f.bind(f.owner,{options:()=>['A','B','C'].map((name,i)=>({name,on:i===selected,pick:()=>selected=i}))});f.reopen();const list=f.list;assert.equal(list.children.at(-1).classList.contains('may-list-heading'),true);assert.equal(list.children.at(-1).textContent,'Шрифт');
+ for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.deepEqual(list.querySelectorAll(':scope > .gz-hx').map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}assert.equal(list.children.filter(n=>n.classList.contains('may-list-heading')).length,1);list.children[1].emit('click');assert.equal(selected,1);
 });

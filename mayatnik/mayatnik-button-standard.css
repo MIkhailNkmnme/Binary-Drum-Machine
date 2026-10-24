@@ -156,15 +156,58 @@ body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair
 .may-overlap-shade{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:20;fill:#000;opacity:.42}
 
 /* One diamond, retaining the live About and Help buttons as its two halves. */
-#mayCorner #mayInfoDiamond{display:flex;width:48px;height:48px;flex:0 0 48px;gap:0;--c:#80aee8}
-#mayCorner #mayInfoDiamond>button.gz-hx{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:48px!important;min-height:48px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;color:#dfe6f5;font-size:11px!important;cursor:pointer;box-shadow:none!important}
+#mayCorner #mayInfoDiamond{display:flex;width:48px;height:24px;flex:0 0 48px;gap:0;--c:#80aee8}
+#mayCorner #mayInfoDiamond>button.gz-hx{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:24px!important;min-height:24px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;color:#dfe6f5;font-size:11px!important;cursor:pointer;box-shadow:none!important}
 #mayCorner #mayInfoDiamond>#mayAbout{clip-path:polygon(100% 0,100% 100%,0 50%)!important}
 #mayCorner #mayInfoDiamond>#mayHelp{clip-path:polygon(0 0,100% 50%,0 100%)!important}
 #mayInfoDiamond>button::before,#mayInfoDiamond>button::after{display:none!important}
-#mayInfoDiamond>button>svg{position:absolute;inset:0;width:24px;height:48px;fill:#1b2430;stroke:#52688c;stroke-width:1px;pointer-events:none}
+#mayInfoDiamond>button>svg{position:absolute;inset:0;width:24px;height:24px;fill:#1b2430;stroke:#52688c;stroke-width:1px;pointer-events:none}
 #mayInfoDiamond>button>span{position:relative;pointer-events:none}
 #mayInfoDiamond>#mayAbout>span{transform:translateX(3px)}
 #mayInfoDiamond>#mayHelp>span{transform:translateX(-3px)}
 #mayInfoDiamond>button:is(:hover,:focus-visible)>svg{stroke:var(--c)}
 #mayInfoDiamond>button[aria-pressed=true]>svg{stroke:var(--c);stroke-width:2px}
 #mayInfoDiamond>button:active>svg{stroke:var(--c);stroke-width:3px}
+
+/* Stable dropdown captions; the live value remains in its source control. */
+.may-named-list>.gz-nm,.may-named-list>.gz-v{display:none!important}
+.may-named-list>.may-list-label{display:block;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;text-align:left;white-space:nowrap}
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-titled-list,.gz-ladder.may-titled-list{box-sizing:border-box!important;padding-top:26px!important}
+.may-list-heading{position:absolute;left:0;right:0;top:0;height:24px;line-height:24px;padding:0 10px;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font:700 12px/24px 'Trebuchet MS','Segoe UI',sans-serif;color:var(--c,#7cbcff);background:#0e1116;border-bottom:1px solid #394657;z-index:5}
+/* Hover illuminates side edges only. Selection and pressing keep their full outline. */
+.may-half-side{display:none;fill:none;stroke:var(--c,#7cbcff);stroke-width:2px;vector-effect:non-scaling-stroke}
+:is(.may-standard-pair,.may-segments)>.gz-half:is(:hover,:focus-visible):not(.gz-on,.on,[aria-pressed=true],:active,.may-standard-held)>.may-half-outline>polygon{stroke:#394657!important;stroke-width:2px!important}
+:is(.may-standard-pair,.may-segments)>.gz-half:is(:hover,:focus-visible):not(.gz-on,.on,[aria-pressed=true],:active,.may-standard-held)>.may-half-outline>.may-half-side{display:block}
+/* Left \ Both / Right: shared slanted borders, total width 120px. */
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments.may-mirror-three>.gz-half{flex:0 0 44px!important;width:44px!important;min-width:44px!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments.may-mirror-three>.gz-half:nth-child(1){clip-path:polygon(12px 0,36px 0,44px 24px,12px 24px,0 12px)!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments.may-mirror-three>.gz-half:nth-child(2){flex-basis:48px!important;width:48px!important;min-width:48px!important;margin-left:-8px!important;clip-path:polygon(0 0,48px 0,40px 24px,8px 24px)!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments.may-mirror-three>.gz-half:nth-child(3){margin-left:-8px!important;clip-path:polygon(8px 0,32px 0,44px 12px,32px 24px,0 24px)!important}
+/* Center group titles independently of pins and arrows. */
+body.mayatnik-menu-ready :is(#paintTools,#mayatnikRail,#mayatnikRailR) :is(.pt-l,.gz-head).may-standard.may-standard{justify-content:center!important;font-family:'Trebuchet MS','Segoe UI',sans-serif!important;font-size:12px!important;font-weight:700!important;letter-spacing:.2px}
+body.mayatnik-menu-ready .pt-g:not(.pt-mini)>.pt-l>.may-group-title,body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-nm{position:absolute;left:20px;right:20px;top:0;height:24px;line-height:24px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}
+body.mayatnik-menu-ready .pt-g:not(.pt-mini)>.pt-l>.pt-pin,body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-pin{position:absolute!important;right:8px!important;top:5px!important;margin:0!important;z-index:6}
+body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-ar{position:absolute;right:3px}
+
+/* A colour circle is inside the shared button surface, without its own outline. */
+.may-standard-pair.gz-wl>.may-standard-outline{display:block}
+.may-standard-pair.gz-wl>.gz-half>.may-half-outline{display:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair.gz-wl>.gz-half{clip-path:none!important;margin:0!important;padding:0!important;flex:0 0 88px!important;width:88px!important;min-width:88px!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair.gz-wl>.gz-h1{flex-basis:32px!important;width:32px!important;min-width:32px!important}
+.may-standard-pair.gz-wl:has(>.gz-half.gz-on){--may-outline:var(--c)!important;--may-stroke:2px!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-center-control{gap:3px!important;padding:0 12px!important}
+.may-center-control>.may-center-swatch{flex:0 0 12px;width:12px;height:12px;border-radius:50%;cursor:pointer;box-shadow:none!important}
+.may-center-control>.may-center-bit{position:relative;flex:0 0 12px;text-align:center;cursor:pointer;font-size:11px}
+.may-center-control>.may-center-bit.gz-on{color:var(--c);font-weight:700;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.may-center-control>.may-center-label{flex:1;min-width:0;text-align:center;cursor:pointer;font-size:10px;overflow:hidden}
+.may-center-control>span:focus-visible{outline:1px solid var(--c);outline-offset:1px}
+
+:is(.gz-wl,.may-center-control):is(:hover,:focus-visible):not(.gz-on,.on,[aria-pressed=true],:active,.gz-press):not(:has(>.gz-half.gz-on))>.may-standard-outline>polygon{stroke:#394657!important;stroke-width:2px!important}
+:is(.gz-wl,.may-center-control):is(:hover,:focus-visible):not(.gz-on,.on,[aria-pressed=true],:active,.gz-press):not(:has(>.gz-half.gz-on))>.may-standard-outline>.may-half-side{display:block}
+
+.may-segments>.may-standard-outline{display:none}
+
+body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-pin{right:14px!important}
+body.mayatnik-menu-ready .gz-group:not(.gz-mini)>.gz-head>.gz-nm{left:26px;right:26px}
+body.mayatnik-menu-ready :is(.pt-pin,.gz-pin){color:var(--c,#7cbcff)!important;filter:none!important}
+body.mayatnik-menu-ready :is(.pt-pin,.gz-pin) svg{fill:currentColor}

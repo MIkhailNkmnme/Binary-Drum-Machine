@@ -9,6 +9,7 @@
   function outline(b){
     let s=b.querySelector(':scope > .may-standard-outline');
     if(!s){s=svg('may-standard-outline');shape(s,'polygon',{points:polygon});b.append(s);}
+    if(b.matches('.gz-wl,.may-center-control')&&!s.querySelector('.may-half-side'))shape(s,'path',{class:'may-half-side',d:'M12 0L0 12 12 24M108 0L120 12 108 24'});
     const mini=b.classList.contains('may-standard-mini')||b.classList.contains('may-control-mini');set(s,'viewBox',mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',mini?'17,0 34,12 17,24 0,12':polygon);
   }
   function roof(b,mini,up=false){
@@ -69,12 +70,20 @@
   }
   function parts(b){
     const halves=[...b.querySelectorAll(':scope > .gz-half')];
-    if(b.classList.contains('may-segments')){b.style.setProperty('--may-parts',halves.length);halves.forEach((h,i)=>{let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');s.setAttribute('viewBox','0 0 100 24');s.setAttribute('preserveAspectRatio','none');shape(s,'polygon',{points:i===0?'12,1 99,1 99,23 12,23 1,12':i===halves.length-1?'1,1 88,1 99,12 88,23 1,23':'1,1 99,1 99,23 1,23'});h.append(s);}set(h,'aria-pressed',String(h.classList.contains('gz-on')));keyboard(h);});return;}
+    if(b.classList.contains('may-segments')){
+      const mirror=b.classList.contains('may-mirror-three');b.style.setProperty('--may-parts',halves.length);
+      halves.forEach((h,i)=>{let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');s.setAttribute('viewBox','0 0 '+(mirror?(i===1?48:44):100)+' 24');s.setAttribute('preserveAspectRatio','none');
+        const points=mirror?['12,0 36,0 44,24 12,24 0,12','0,0 48,0 40,24 8,24','8,0 32,0 44,12 32,24 0,24'][i]:i===0?'12,1 99,1 99,23 12,23 1,12':i===halves.length-1?'1,1 88,1 99,12 88,23 1,23':'1,1 99,1 99,23 1,23';
+        const side=mirror?['M12 0L0 12 12 24','M0 0L8 24M48 0L40 24','M32 0L44 12 32 24'][i]:i===0?'M12 1L1 12 12 23':i===halves.length-1?'M88 1L99 12 88 23':'M1 1V23';
+        shape(s,'polygon',{points});shape(s,'path',{class:'may-half-side',d:side});h.append(s);}
+        set(h,'aria-pressed',String(h.classList.contains('gz-on')));keyboard(h);
+      });return;
+    }
     if(halves.length!==2||b.id==='lg')return;
     b.classList.add('may-standard-pair');
     const exclusive=b.closest('[data-id="horr"]')&&(halves.every(h=>h.dataset.n)||halves.every(h=>h.dataset.v)||/Ход лево-право/.test(halves[0].title));
     const rev=!!exclusive&&halves[1].classList.contains('gz-on')&&!halves[0].classList.contains('gz-on');b.classList.toggle('may-standard-reverse',rev);
-    halves.forEach((h,i)=>{let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');s.setAttribute('viewBox','0 0 64 24');h.append(s);}const p=i===0?(rev?'12,0 64,0 56,24 12,24 0,12':'12,0 56,0 64,24 12,24 0,12'):(rev?'8,0 52,0 64,12 52,24 0,24':'0,0 52,0 64,12 52,24 8,24');if(s.dataset.p!==p){s.dataset.p=p;s.replaceChildren();shape(s,'polygon',{points:p});}set(h,'aria-pressed',String(h.classList.contains('gz-on')));keyboard(h);});
+    halves.forEach((h,i)=>{let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');s.setAttribute('viewBox','0 0 64 24');h.append(s);}const p=i===0?(rev?'12,0 64,0 56,24 12,24 0,12':'12,0 56,0 64,24 12,24 0,12'):(rev?'8,0 52,0 64,12 52,24 0,24':'0,0 52,0 64,12 52,24 8,24');if(s.dataset.p!==p){s.dataset.p=p;s.replaceChildren();shape(s,'polygon',{points:p});}if(!s.querySelector('.may-half-side'))shape(s,'path',{class:'may-half-side',d:i===0?'M12 0L0 12 12 24':'M52 0L64 12 52 24'});set(h,'aria-pressed',String(h.classList.contains('gz-on')));keyboard(h);});
     if(b.classList.contains('gz-wl')&&!halves[1].querySelector('.may-colour-swatch')){const dot=document.createElement('span');dot.className='may-colour-swatch';dot.setAttribute('aria-hidden','true');halves[1].append(dot);}
   }
   function keyboard(b){if(b.dataset.mayStandardKey||b.getAttribute('role')==='button'&&b.tabIndex>=0)return;b.dataset.mayStandardKey='1';b.tabIndex=0;set(b,'role','button');b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();b.click();}});}
