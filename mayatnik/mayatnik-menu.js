@@ -1,9 +1,10 @@
-/* Маятник v0.503 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.505 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id), source = document.querySelector('.bar');
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
+  const popupRight=()=>{const panel=$('mayatnikTemplatePanel');if(window.MayatnikTemplatePanel?.isOpen()&&panel){const left=panel.getBoundingClientRect().left;if(left>0)return left;}return innerWidth;};
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
   const name = e => ({zFit:'Шрна по Оси',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
@@ -27,6 +28,9 @@
       options: [...e.options].map(o => ({ v: o.value, name: names?.[o.value] || o.textContent })),
       set: v => { e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); } };
   };
+  const segments = (title, options) => ({type:'pair',cls:'may-segments',name:title,tip:title,mid:'',parts:options.map(o=>({label:o.name,tip:title+' — '+o.name,on:o.on,click:o.pick}))});
+  const selectSegments = (id,names) => {const e=$(id);return segments(tip(e),[...e.options].map(o=>({name:names?.[o.value]||o.textContent,on:()=>e.value===o.value,pick:()=>{e.value=o.value;e.dispatchEvent(new Event('change',{bubbles:true}));}})));};
+  const ringSegments = (id,names) => {const e=$(id),now=()=>e.textContent.split(': ')[1];return {...segments(tip(e),names.map(name=>({name,on:()=>now()===name,pick:()=>{for(let n=0;n<names.length&&now()!==name;n++)e.click();}}))),src:id};};
   const control = id => {
     const e = $(id), node = e.closest('label') || e;
     if (id === 'speed') {
@@ -85,8 +89,8 @@
         arrows: ['−1', '+1'], thumb: { label: () => $('bPlay').getAttribute('aria-pressed') === 'true' ? '❚❚' : '▶', click: () => $('bPlay').click() } } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
-      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), button('bBlackMirror', 'mirror'), button('bAnimHl', 'eye'),
-      select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),num('ochkiLength',{name:'От бит',slider:false}) ] },
+      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
+      selectSegments('ochkiMode',{diag:'Диаг.',row:'Ряды'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),num('ochkiLength',{name:'От бит',slider:false}) ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
       button('zLock', 'pin'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4') ] },
@@ -611,7 +615,7 @@
         for(const layer of layers){const b=command('layerSelect','grid4','Выбрать слой: '+layer.name,()=>api.select(layer.id));b.dataset.layerId=layer.id;caption(b,layer.name);
           if(layer.kind==='template')b.querySelector('.gz-nm').setAttribute('data-user-label','');list.append(b);}
       }
-      for(const b of list.children){const on=b.dataset.layerId===api.selected();b.classList.toggle('gz-on',on);b.setAttribute('aria-pressed',String(on));}
+      for(const b of list.querySelectorAll(':scope > .gz-hx')){const on=b.dataset.layerId===api.selected();b.classList.toggle('gz-on',on);b.setAttribute('aria-pressed',String(on));}
     };
     ZerkGrozd.listHover(choose,{options:()=>api.list().map(layer=>({name:layer.name,on:layer.id===api.selected(),pick:()=>api.select(layer.id)})),color:()=>'#73e4a5',host:()=>group,
       placement:'below',placed(list,owner){openList=list;choose.setAttribute('aria-expanded','true');list.classList.add('may-layer-options');fillList(list);hideListUnder(list,owner);
@@ -860,8 +864,8 @@
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
       r.style.minWidth = narrow.matches ? '' : (g.querySelector('.pt-l').offsetWidth + 4) + 'px'; requestAnimationFrame(() => zig(r));
       // v0.460: фиксированный мобильный список привязан к своему заголовку, а не к левому краю окна.
-      if (narrow.matches || !g.classList.contains('pt-bot')) { const h = g.querySelector('.pt-l').getBoundingClientRect(); r.style.left = Math.max(4, Math.min(h.left, innerWidth - r.offsetWidth - 4)) + 'px'; r.style.top = (h.bottom + 2) + 'px'; return; }
-      const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
+      if (narrow.matches || !g.classList.contains('pt-bot')) { const h = g.querySelector('.pt-l').getBoundingClientRect(); r.style.left = Math.max(4, Math.min(h.left, popupRight() - r.offsetWidth - 4)) + 'px'; r.style.top = (h.bottom + 2) + 'px'; return; }
+      const b = r.getBoundingClientRect(); if (b.right > popupRight() - 4) r.style.left = Math.min(0, popupRight() - 4 - b.right) + 'px'; };
     // Списки стоят под своей шапкой; соседние раскрытые группы не сдвигают их вбок.
     const alignOpen = () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) place(g); };
     const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g); requestAnimationFrame(() => requestAnimationFrame(alignOpen)); };
@@ -889,6 +893,19 @@
       udL.append(half('bFillUndo', '↶', 'Отм.'), sep, ax, half('bFillRedo', '↷', 'Повт.')); }
     for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
+      if(g.classList.contains('pt-lib')&&window.MayatnikTemplatePanel){
+        g.classList.add('pt-btn');g.classList.remove('pt-open','pt-pinned');
+        l.classList.add('gz-hx');l.id='bTemplatePanel';l.setAttribute('aria-controls','mayatnikTemplatePanel');l.removeAttribute('aria-haspopup');
+        // Keep all live handlers, including controls moved from the old rail, in the panel.
+        for(const b of row.querySelectorAll('[data-n="bFillUndo"],[data-n="bFillRedo"],[data-may-source="bFillUndo"],[data-may-source="bFillRedo"]'))(b.closest('.gz-pair')||b).remove();
+        for(const b of row.querySelectorAll('.gz-pair'))if(/Отм/.test(b.textContent)&&/Повт/.test(b.textContent))b.remove();
+        row.querySelector('#templateLibraryChoices')?.closest('.gz-control')?.style.setProperty('display','none','important');
+        window.MayatnikTemplatePanel.attachControls(row);
+        const sync=()=>{const on=String(window.MayatnikTemplatePanel.isOpen());l.setAttribute('aria-expanded',on);l.setAttribute('aria-pressed',on);};
+        l.onclick=()=>{window.MayatnikTemplatePanel.toggle();sync();};
+        l.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();l.click();}};
+        addEventListener('mayatnik-template-panel-change',sync);sync();continue;
+      }
       const pin = document.createElement('span'); pin.className = 'pt-pin'; pin.title = 'Закрепить: список не закрывается';
       pin.innerHTML = '<svg viewBox="0 0 16 16" width="11" height="11"><path d="M10.5 1.5l4 4-1.6.4-2.6 2.6.3 3.2-1.4 1.4-2.5-2.5-4 4-.7-.7 4-4L3.5 7.4l1.4-1.4 3.2.3 2.6-2.6z" fill="currentColor"/></svg>';
       pin.addEventListener('pointerdown', e => e.stopPropagation());
@@ -1115,7 +1132,10 @@
   // v0.191: столбец — общий из grozd (ZerkGrozd.listHover; им же — списки рейки «Ход», «Поле», «Поиск», «Серии», «Область» и хаба);
   // здесь — кнопки полосы и кнопки рейки «по кругу» (Зеркало, Аниматрица).
   { const after = () => { rail.refresh(); placeTools(); };
-    const reg = (b, options) => { if (b) ZerkGrozd.listHover(b, { options, after, color: () => getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff',
+    const mountSegments=(b,options)=>{b.classList.add('may-segments','gz-pair');b.replaceChildren();const nodes=options().map((o,i)=>{const part=document.createElement('span');part.className='gz-half';part.textContent=({Левая:'Лев',Правая:'Прав',копия:'Коп.'})[o.name]||o.name;part.title=b.title+' — '+o.name;b.append(part);return part;});
+      b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const i=nodes.indexOf(e.target.closest('.gz-half'));if(i>=0)options()[i].pick();after();},true);
+      toolSync.push(()=>options().forEach((o,i)=>{nodes[i].classList.toggle('gz-on',!!o.on);nodes[i].setAttribute('aria-pressed',String(!!o.on));}));};
+    const reg = (b, options) => { if(b&&['fixLow','mirOp'].includes(b.dataset.n)){mountSegments(b,options);return;} if (b) ZerkGrozd.listHover(b, { options, after, color: () => getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff',
       host: () => b.closest('.pt-g') || document.body, col: () => b.closest('.pt-col, .pt-r, .gz-rail, .gz-soty, .gz-wide') }); };   // v0.226: в «Виде» — правее своего столбца; v0.232: в группе рейки, поднятой в шапку, — правее её списка
     const fromSelect = (sel, nameOf = o => o.textContent, iconOf = null) => () => [...sel.options].map(o => ({ name: nameOf(o), icon: iconOf?.(o), on: o.value === sel.value,
       pick: () => { if (sel.value === o.value) return; sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } }));
@@ -1132,14 +1152,43 @@
       reg(tools.querySelector('[data-n="noband"]'), () => ['Полосы', 'Без полос', 'До треуг.'].map((name, i) => ({ name, on: mode() === i,
         pick: () => { for (let n = 0; n < 3 && mode() !== i; n++) e.dispatchEvent(new Event('change')); } }))); }
     // рейка: кнопки «по кругу» — кнопка находится по месту пункта в группе, как подсказки выше
-    const ring = { bBlackMirror: ['выкл', 'краска', 'всё'], bAnimHl: ['выкл', 'столб', 'всё'] };
+    const ring = {}; // These modes are now segmented controls, without hover lists.
     for (const g of groups) { const box = rail.el.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
       const wide = t => ['value', 'list', 'control', 'vpair'].includes(t), a = g.items.filter(i => !wide(i.type)), ca = box.querySelectorAll('.gz-soty > .gz-hx');
-      a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i];if (it.src === 'zSnap' && cell && window.mayZSnap) { const Z = window.mayZSnap;   // v0.201: кратный ×2…×10 — столбцом
-          reg(cell, () => [{ name: 'Плавно', on: !Z.on(), pick: () => Z.set(0) }, ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map(b => ({ name: 'Кратный ×' + b, on: Z.on() && Z.base() === b, pick: () => Z.set(b) }))]); } });
+      a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i];if (it.src === 'zSnap' && cell && window.mayZSnap) {
+          const Z=window.mayZSnap,current=()=>Z.on()?Z.base():1;
+          cell.classList.add('may-snap-control');cell.replaceChildren();
+          const label=document.createElement('span');label.className='gz-nm';label.textContent='Кратность';cell.append(label);
+          const parts=[['1','Плавный масштаб',()=>Z.set(0)],['◀','Уменьшить кратность на 1',()=>Z.set(Math.max(1,current()-1))],['','Текущая кратность',null],['▶','Увеличить кратность на 1',()=>Z.set(Math.min(10,current()+1))]];
+          const nodes=parts.map(([text,title,act])=>{const p=document.createElement('span');p.className='may-snap-part';p.textContent=text;p.title=title;if(act){p.tabIndex=0;p.setAttribute('role','button');p.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();act();rail.refresh();placeTools();}});}cell.append(p);return p;});
+          cell.prepend(nodes[1]);
+          // Stop the old whole-button toggle; the live source is retained for state and pins.
+          cell.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const i=nodes.indexOf(e.target.closest('.may-snap-part'));parts[i]?.[2]?.();rail.refresh();placeTools();},true);
+          toolSync.push(()=>{const value=String(current());if(nodes[2].textContent!==value)nodes[2].textContent=value;nodes[0].classList.toggle('gz-on',current()===1);nodes[2].classList.toggle('gz-on',current()>1);cell.title='Кратность масштаба: '+value+' · 1 — плавно; 2–10 — степени основания · стрелки меняют на 1';});
+        } });
       a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i],names = ring[it.src], e = $(it.src); if (!names || !cell || !e) return; const now = () => e.textContent.split(': ')[1];
         reg(cell, () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); } }
   // v0.441: варианты сбоку от столбца; перекрытые элементы чужой группы скрываются по одному (v0.452).
+  const viewPaletteSources={col:['lgOverOne','lgOverZero'],bits:['lgBitZero','lgBitOne'],digits:['digitZeroColour','digitOneColour'],digitsOnly:['digitZeroColour','digitOneColour']},viewPalettePickers=new Map();
+  $('lg').style.setProperty('display','none','important');
+  tools.querySelector('[data-n="c2_digitOneColour"]')?.style.setProperty('display','none','important');
+  function decorateViewPalette(list,owner){
+    if(owner.dataset.n!=='viewCycle')return;
+    const options=[...$('view').options];
+    list.querySelectorAll(':scope > .gz-hx').forEach((row,i)=>{
+      const mode=options[i]?.value,ids=viewPaletteSources[mode];if(!ids)return;
+      if(!row.classList.contains('may-view-palette')){
+        row.classList.add('may-view-palette');row.querySelector('.gz-ic')?.style.setProperty('display','none','important');
+        ids.forEach((id,j)=>{const src=$(id),dot=document.createElement('button');dot.type='button';dot.className='may-view-swatch';dot.dataset.noMini='';dot.dataset.source=id;dot.title=src.title||src.getAttribute('aria-label');dot.setAttribute('aria-label',dot.title);
+          if(!viewPalettePickers.has(id))viewPalettePickers.set(id,picker(src));
+          dot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();});
+          dot.addEventListener('click',e=>{e.stopPropagation();if($('view').value!==mode){$('view').value=mode;$('view').dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();return;}viewPalettePickers.get(id)(dot);});
+          if(j)row.append(dot);else row.prepend(dot);
+        });
+      }
+      for(const dot of row.querySelectorAll('.may-view-swatch')){const colour=$(dot.dataset.source).value;if(dot.dataset.colour!==colour){dot.dataset.colour=colour;dot.style.backgroundColor=colour;}}
+    });
+  }
   let activeList=null;
   // v0.497: only the popup escapes group stacking contexts; its owner stays in place.
   function popupContains(group, target) {
@@ -1151,6 +1200,7 @@
   // мерила колонку (браузер успевал применить снятие) и ставила заново — переход opacity .12s заставлял кнопки под списком вспыхивать на каждом такте.
   // Теперь затемнение меняется только у тех, кому его надо снять или добавить.
   const hideListUnder = (list, owner) => {
+    decorateViewPalette(list,owner);
     const group = owner.closest('.pt-g, .gz-group, .may-hp-pop');
     if(list.parentNode!==document.body){
       // Shared grozd has already copied owner font/variables and installed option handlers.
@@ -1325,49 +1375,24 @@
     const content=polygons.join('');if(svg._shape!==content){svg.innerHTML=content;svg._shape=content;}
     svg.setAttribute('width',String(Math.ceil(width)));svg.setAttribute('height',String(Math.ceil(height)));
   }
+  function overlapRegions(lower,upper){const regions=[];for(const a of lower)for(const b of upper){const left=Math.max(a.left,b.left),top=Math.max(a.top,b.top),right=Math.min(a.right,b.right),bottom=Math.min(a.bottom,b.bottom);if(right>left&&bottom>top)regions.push({left,top,width:right-left,height:bottom-top});}return regions;}
   function syncGroupOverlap() {
-    groupFrame = 0;
-    // v0.453, Р06 v21: «убери скрытие перекрывающихся» — ничего не прячем, только снимаем прежние следы
-    for (const el of document.querySelectorAll('.may-el-covered')) { el.classList.remove('may-el-covered'); if (el.dataset.mayCovInert === '1') { el.inert = false; delete el.dataset.mayCovInert; } }
-    for (const b of document.querySelectorAll('.may-group-backdrop,.may-standard-contours,.may-closed-back,.may-standard-roof')) if (b.style.clipPath) b.style.clipPath = '';
-    return; const groups = [...document.querySelectorAll(groupSelector)], entries = [];
-    for (const group of groups) {
-      const open = group.matches('.pt-open, .gz-open');
-      if (open && groupOpen.get(group) === false) groupRanks.set(group, ++groupRank);
-      groupOpen.set(group,open); if (group.matches('.gz-group')) groupBackdrop(group,open);
-      const head = group.querySelector(':scope > .pt-l, :scope > .gz-head');
-      if (!head?.getClientRects().length) { group.classList.remove('may-group-covered'); continue; }
-      const rects = [head.getBoundingClientRect()];
-      if (open) {
-        const list = group.querySelector(':scope > .pt-r, :scope > .may-rail-list');
-        if (list && getComputedStyle(list).display !== 'contents' && list.getClientRects().length) rects.push(list.getBoundingClientRect());
-        else for (const cell of group.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')) if(cell.getClientRects().length)rects.push(cell.getBoundingClientRect());
-      }
-      const listOwner=activeList?.list.isConnected&&activeList.group===group;
-      if(listOwner)rects.push(activeList.list.getBoundingClientRect());
-      entries.push({group,open,rects,listOwner,rank:groupRanks.get(group)||0,index:entries.length});
+    groupFrame=0;
+    const entries=[];
+    for(const group of document.querySelectorAll(groupSelector)){
+      const open=group.matches('.pt-open,.gz-open');if(open&&groupOpen.get(group)===false)groupRanks.set(group,++groupRank);groupOpen.set(group,open);
+      const cells=[...group.querySelectorAll('.pt-l,.gz-head,.pt-b,.gz-hx,.gz-control')].filter(e=>e.getClientRects().length&&!e.parentElement.closest('.pt-b,.gz-hx'));
+      const rects=cells.map(e=>e.getBoundingClientRect());if(activeList?.group===group&&activeList.list.isConnected)rects.push(activeList.list.getBoundingClientRect());
+      entries.push({group,open,rects,rank:groupRanks.get(group)||0,listOwner:activeList?.group===group});
     }
-    entries.sort((a,b)=>Number(!!b.listOwner)-Number(!!a.listOwner)||Number(b.open)-Number(a.open)||b.rank-a.rank||a.rects[0].top-b.rects[0].top||b.index-a.index);
-    // v0.452 (КНП-020, Р06/Р07): перекрытые элементы чужой группы скрываются по одному (шапка, кнопки), остальное остаётся на месте; сохранённая раскладка не меняется
-    const visible=[],hidden=new Set(),BACK='.may-group-backdrop,.may-standard-contours,.may-closed-back,.may-standard-roof';
+    entries.sort((a,b)=>Number(!!b.listOwner)-Number(!!a.listOwner)||Number(b.open)-Number(a.open)||b.rank-a.rank);
+    const above=[];
     for(const entry of entries){
-      const group=entry.group,head=group.querySelector(':scope > .pt-l, :scope > .gz-head');group.classList.remove('may-group-covered');
-      const cover=[];for(const above of visible)if(above.open)cover.push(...above.rects);
-      const els=head?.getClientRects().length?[head]:[];
-      if(els.length&&entry.open)for(const el of group.querySelectorAll('.pt-b, .gz-hx, .gz-control'))if(el!==head&&!head.contains(el)&&el.getClientRects().length)els.push(el);
-      let free=0;
-      for(const el of els){const r=el.getBoundingClientRect();if(cover.some(c=>overlaps(c,r))){hidden.add(el);}else free++;}
-      for(const back of group.querySelectorAll(BACK)){
-        const br=back.getBoundingClientRect(),holes=cover.filter(c=>overlaps(c,br));
-        if(!holes.length){if(back.style.clipPath)back.style.clipPath='';continue;}
-        const M=4000;let d='M'+(-M)+' '+(-M)+'H'+M+'V'+M+'H'+(-M)+'Z';
-        for(const c of holes)d+='M'+(c.left-br.left)+' '+(c.top-br.top)+'h'+c.width+'v'+c.height+'h'+(-c.width)+'Z';
-        back.style.clipPath="path(evenodd,'"+d+"')";
-      }
-      if(free||!els.length)visible.push(entry);
+      const group=entry.group,base=group.getBoundingClientRect(),regions=overlapRegions(entry.rects,above),content=regions.map(r=>'<rect x="'+(r.left-base.left)+'" y="'+(r.top-base.top)+'" width="'+r.width+'" height="'+r.height+'"/>').join('');
+      let shade=group.querySelector(':scope > .may-overlap-shade');
+      if(!content)shade?.remove();else{if(!shade){shade=document.createElementNS('http://www.w3.org/2000/svg','svg');shade.classList.add('may-overlap-shade');shade.setAttribute('aria-hidden','true');group.append(shade);}if(shade._shape!==content){shade.innerHTML=content;shade._shape=content;}}
+      if(entry.open)above.push(...entry.rects);
     }
-    for(const el of document.querySelectorAll('.may-el-covered'))if(!hidden.has(el)){el.classList.remove('may-el-covered');if(el.dataset.mayCovInert==='1'){el.inert=false;delete el.dataset.mayCovInert;}}
-    for(const el of hidden){el.classList.add('may-el-covered');if(!el.inert){el.inert=true;el.dataset.mayCovInert='1';}}
   }
   const scheduleGroups = () => { if(!groupFrame)groupFrame=requestAnimationFrame(syncGroupOverlap); };
   for (const host of [tools,rail.el]) {
@@ -1424,7 +1449,7 @@
   for(const group of tools.querySelectorAll('.pt-g'))if(!group.dataset.k)group.dataset.k=group.querySelector('.pt-l')?.firstChild?.textContent.trim()||'';
   const shortCaption = text => text.replace(/[а-яё]+/giu, word => {
     const compact=word.replace(/(?<=[бвгджзйклмнпрстфхцчшщ])[аеёиоуыэюя](?=[бвгджзйклмнпрстфхцчшщ])/giu,'');
-    return /[бвгджзйклмнпрстфхцчшщ]$/iu.test(compact) ? compact+(word===word.toLocaleUpperCase('ru')?'Ъ':'ъ') : compact;
+    return /[бвгджзйклмнпрстфхцчшщ]$/iu.test(compact) ? compact+(word!=='С'&&word===word.toLocaleUpperCase('ru')?'Ъ':'ъ') : compact;
   });
   const captionSources=new WeakMap(),captionAria=new WeakSet();
   const captionOwner=node=>{

@@ -16,9 +16,10 @@ test('library offsets override actual grozd inline coordinates; rows remain in f
  for(const key of ['left','top','right','bottom'])assert.equal(declarations[key],'auto!important');
  assert.match(menu,/row\.append\(\.\.\.lib\.querySelectorAll\('\.gz-soty > \.gz-hx'\)/);
 });
-test('popup layering leaves overlap disabling inactive and supplies opaque hit surface',()=>{
+test('popup layering keeps controls enabled and supplies opaque hit surface',()=>{
  const overlap=menu.slice(menu.indexOf('  function syncGroupOverlap()'),menu.indexOf('  const scheduleGroups'));
- assert.ok(overlap.indexOf('return;')<overlap.indexOf('const groups ='));
+ assert.ok(!/inert\s*=|may-el-covered|display\s*=|visibility\s*=/.test(overlap));
+ assert.ok(overlap.includes('overlapRegions(entry.rects,above)'));
  const callback=menu.slice(menu.indexOf('  const hideListUnder'),menu.indexOf('  for (const b of document.querySelectorAll(\'.gz-lst\')'));
  assert.ok(!/want\.add|may-list-dim|inert\s*=/.test(callback));
  const css=read('mayatnik-menu.css');assert.ok(!css.includes('may-popup-owner'));assert.match(css,/\.gz-ladder\.may-popup-portal\{position:fixed!important;z-index:2147483645!important;background:#0e1116!important;pointer-events:auto!important/);

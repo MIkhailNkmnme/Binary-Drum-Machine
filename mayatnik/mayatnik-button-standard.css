@@ -16,6 +16,17 @@ body.mayatnik-menu-ready{--may-surface:#1b2430}   /* v0.455, В07 v23: ровн�
 .may-standard:is(:active,.gz-press)>.may-standard-roof{display:none}
 .may-standard:is(:active,.gz-press)>.may-standard-outline{display:block}
 .may-standard-contours{position:absolute!important;left:0;top:0;width:100%;height:24px;z-index:-2;pointer-events:none;overflow:visible}
+/* Кратность: единый контрол, 1 — плавно; стрелки меняют основание на один. */
+:is(body.mayatnik-menu-ready,#paintTools) .may-snap-control.may-standard.may-standard.may-standard{padding:0 8px!important;gap:0!important}
+.may-snap-control>.gz-nm{flex:1;min-width:0;font-size:10px;overflow:hidden}
+.may-snap-control>.may-snap-part{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 16px;height:24px;font-size:10px;cursor:pointer}
+.may-snap-control>.may-snap-part.gz-on::before{content:'';position:absolute;inset:3px -1px;z-index:-1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--c)}
+.may-snap-control>.may-snap-part.gz-on{color:#10141c}
+.may-snap-control>.may-snap-part:focus-visible{outline:1px solid var(--c);outline-offset:-2px}
+/* Each mode owns its two round colour samples; the old separate palettes are hidden. */
+.may-view-palette>.gz-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.may-view-swatch{position:relative;display:block;flex:0 0 12px;width:12px;height:12px;padding:0;margin:0;border:1px solid #738397;border-radius:50%;cursor:pointer;outline:none}
+.may-view-swatch:focus-visible{outline:2px solid var(--c);outline-offset:1px}
 /* v0.462: служебный SVG не получает старый отступ 12 px для элементов списка без .gz-hx. */
 body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>.may-standard-contours{margin:0!important}
 /* v0.463: нижняя группа — единый столбец над заголовком, без скобки на их стыке. */
@@ -130,3 +141,16 @@ body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair
 /* The retained source icon remains visible in a compact control. */
 .may-control-mini.may-mini-has-icon>:is(i,.gz-ic),
 .may-control-mini :is(.gz-half,.palette-half).may-mini-has-icon>:is(i,.gz-ic){display:block!important;visibility:visible!important;position:absolute!important;left:50%;top:50%;transform:translate(-50%,-50%)!important;margin:0!important;z-index:4;width:13px!important;height:13px!important;font-size:13px!important;line-height:13px!important}
+
+/* One control, two to four independently selectable sections. */
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments{display:flex!important;padding:0!important;gap:0!important}
+.may-segments>.gz-pm{display:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-segments>.gz-half{--may-outline:#394657;--may-stroke:1px;position:relative;display:flex;align-items:center;justify-content:center;flex:1 1 0!important;width:0!important;min-width:0!important;height:24px;padding:0 2px!important;margin:0!important;overflow:hidden;background:transparent!important;clip-path:none!important;font-size:10px!important;color:#dfe6f5!important}
+.may-segments>.gz-half::before,.may-segments>.gz-half::after{display:none!important}
+.may-segments>.gz-half>.may-half-outline{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:var(--may-outline);stroke-width:var(--may-stroke);pointer-events:none}
+.may-segments>.gz-half>.may-half-outline polygon{vector-effect:non-scaling-stroke}
+.may-segments>.gz-half.gz-on{--may-outline:var(--c)!important;--may-stroke:2px!important}
+.may-segments>.gz-half:is(:hover,:focus-visible){--may-outline:var(--c)!important}
+.may-segments>.gz-half:active{--may-stroke:3px!important}
+
+.may-overlap-shade{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:20;fill:#000;opacity:.42}

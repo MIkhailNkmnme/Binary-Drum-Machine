@@ -20,7 +20,10 @@
   let gradN=0;
   // v0.449: одна подложка на столбец — радиальный градиент #32393f → #000, зубцы по бокам (острие +2 px, впадина 6 px внутрь), верхняя и нижняя скобки в этом же слое
   function contour(host,cells,side,headEl,upward=false){
-    let s=host.querySelector(':scope > .may-standard-contours');if(!s){s=svg('may-standard-contours');host.prepend(s);}
+    let s=host.querySelector(':scope > .may-standard-contours');if(!s){s=svg('may-standard-contours');
+      // grozd synchronizes option states by child index. Decoration must follow every option.
+      if(host.classList.contains('gz-ladder'))host.append(s);else host.prepend(s);
+    }
     const base=host.getBoundingClientRect(),cols=new Map();
     const add=(b,head)=>{const r=b.getBoundingClientRect();if(!r.width||!r.height)return false;const x=Math.round(r.left-base.left+host.scrollLeft),y=Math.round(r.top-base.top+host.scrollTop);let k=[...cols.keys()].find(c=>Math.abs(c-x)<30);if(k===undefined){if(head)return false;k=x;cols.set(k,[]);}cols.get(k).push({x,y,w:r.width,h:r.height,head:!!head});return true;};
     for(const b of cells)add(b,false);
@@ -65,7 +68,9 @@
     s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
   }
   function parts(b){
-    const halves=[...b.querySelectorAll(':scope > .gz-half')];if(halves.length!==2||b.id==='lg')return;
+    const halves=[...b.querySelectorAll(':scope > .gz-half')];
+    if(b.classList.contains('may-segments')){b.style.setProperty('--may-parts',halves.length);halves.forEach((h,i)=>{let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');s.setAttribute('viewBox','0 0 100 24');s.setAttribute('preserveAspectRatio','none');shape(s,'polygon',{points:i===0?'12,1 99,1 99,23 12,23 1,12':i===halves.length-1?'1,1 88,1 99,12 88,23 1,23':'1,1 99,1 99,23 1,23'});h.append(s);}set(h,'aria-pressed',String(h.classList.contains('gz-on')));keyboard(h);});return;}
+    if(halves.length!==2||b.id==='lg')return;
     b.classList.add('may-standard-pair');
     const exclusive=b.closest('[data-id="horr"]')&&(halves.every(h=>h.dataset.n)||halves.every(h=>h.dataset.v)||/Ход лево-право/.test(halves[0].title));
     const rev=!!exclusive&&halves[1].classList.contains('gz-on')&&!halves[0].classList.contains('gz-on');b.classList.toggle('may-standard-reverse',rev);
@@ -83,6 +88,7 @@
   const controlSelector='button,.gz-hx,[role="button"]', MINI_KEY='mayatnik-control-mini-v464';
   let controlMinis=new Set();try{const a=JSON.parse(localStorage.getItem(MINI_KEY)||'[]');if(Array.isArray(a))controlMinis=new Set(a.filter(k=>typeof k==='string'));}catch(_){}
   function controlTarget(el){
+    if(el?.closest?.('[data-no-mini]'))return null;
     let b=el?.closest?.(controlSelector);if(!b)return null;
     const pair=b.closest('.gz-pair');if(pair)b=pair;
     if(b.matches('.pt-l,.gz-head,#mayAbout,.gz-pin,.pt-pin,.gz-a,.gz-a2,.may-bb-play,.may-bb-rs,.gz-sl,.gz-sl2,.zz-pult,.may-slide,.gz-control')||b.closest('.bar,.gz-tip,[role="tooltip"],.pt-btn')||b.matches('input,select,textarea')||b.closest('.gz-control')&&!b.matches('button,.gz-hx'))return null;
@@ -106,7 +112,8 @@
     b.classList.toggle('may-mini-has-icon',hasIcon);
     let g=b.querySelector(':scope > .may-mini-glyph');if(!g){g=document.createElement('span');g.className='may-mini-glyph';g.setAttribute('aria-hidden','true');b.append(g);}
     const text=[...b.childNodes].filter(n=>n!==g&&!n.matches?.('svg')).map(n=>n.textContent||'').join('').trim();
-    g.textContent=(text.match(/[←→↶↷+−−×÷=?!⏺◎▶◀▲▼\d]/u)||[])[0]||[...(b.getAttribute('aria-label')||b.title||text||'◆')][0];
+    const glyph=(text.match(/[←→↶↷+−−×÷=?!⏺◎▶◀▲▼\d]/u)||[])[0]||[...(b.getAttribute('aria-label')||b.title||text||'◆')][0];
+    if(g.textContent!==glyph)g.textContent=glyph;
   }
   function compactControl(b,on){
     const was=b.classList.contains('may-control-mini');
@@ -119,7 +126,7 @@
     if(halves.length===2){b.classList.add('may-control-pair');halves.forEach((h,i)=>{miniGlyph(h);let s=h.querySelector(':scope > .may-mini-half-outline');if(!s){s=svg('may-mini-half-outline');s.setAttribute('viewBox','0 0 17 24');shape(s,'polygon',{points:i?'0,0 17,12 0,24':'17,0 17,24 0,12'});h.append(s);}});}else miniGlyph(b);
   }
   function syncControlMinis(){
-    for(const el of document.querySelectorAll(controlSelector)){const b=controlTarget(el);if(!b||b!==el)continue;const k=controlKey(b);if(k)compactControl(b,controlMinis.has(k));}
+    for(const el of document.querySelectorAll(':is('+controlSelector+'):not([data-no-mini], [data-no-mini] *)')){const b=controlTarget(el);if(!b||b!==el)continue;const k=controlKey(b);if(k)compactControl(b,controlMinis.has(k));}
   }
   document.addEventListener('contextmenu',e=>{const b=controlTarget(e.target);if(!b||!b.getClientRects().length)return;const k=controlKey(b);if(!k)return;e.preventDefault();e.stopImmediatePropagation();if(controlMinis.has(k))controlMinis.delete(k);else controlMinis.add(k);try{localStorage.setItem(MINI_KEY,JSON.stringify([...controlMinis]));}catch(_){}compactControl(b,controlMinis.has(k));refresh();dispatchEvent(new Event('resize'));},true);
   function libraryRows(){
@@ -136,14 +143,15 @@
     }
   }
   function refresh(){
+    standardObserver?.disconnect();
     libraryRows();
     tintIcons();
     const ladders=[...document.querySelectorAll('.gz-ladder')];
     document.querySelectorAll('.may-options-owner').forEach(b=>{if(!ladders.some(l=>l.owner===b)){b.classList.remove('may-options-owner','may-standard-open');b.querySelector('.may-standard-roof')?.remove();}});
-    document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,.gz-ladder .gz-hx').forEach(b=>{
+    document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,.gz-ladder .gz-hx,#mayatnikTemplatePanel .pt-r .gz-hx').forEach(b=>{
       if(b.closest('.pt-btn')||b.closest('#mayBottomBar')&&!b.classList.contains('gz-head'))return;
       if(b.querySelector('#templateLibraryChoices'))return;   // v0.471: список шаблонов — не кнопка; кнопки — его записи (иначе список сжимался в одну строку 24 px и вылезал вверх)
-      b.classList.add('may-standard');outline(b);parts(b);if(b.closest('.gz-ladder'))keyboard(b);
+      if(!b.classList.contains('may-standard'))b.classList.add('may-standard');outline(b);parts(b);if(b.closest('.gz-ladder')){keyboard(b);set(b,'aria-pressed',String(b.classList.contains('gz-on')));}
       const mini=b.matches('.gz-head')&&b.closest('.gz-mini')||b.matches('.pt-l')&&b.closest('.pt-mini')||b.id==='mayAbout'&&b.classList.contains('pt-mini');b.classList.toggle('may-standard-mini',!!mini);
     });
     syncControlMinis();
@@ -167,6 +175,7 @@
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }
     for(const list of ladders){list.classList.add('may-standard-list');if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
+    standardObserver?.observe(document.body,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class','disabled','aria-pressed','style']});
   }
   document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
   // v0.451 (В11, КНП-018): кнопка или половина, выключенная щелчком мыши, не показывает рамку наведения, пока указатель не уйдёт (кнопки пересоздаются — узнаём по подписи)
@@ -185,5 +194,15 @@
     document.addEventListener('pointermove',e=>{if(!quiet)return;const b=hov(e.target);if(!b||id(b)!==quiet){quiet=null;document.body.classList.remove('may-quiet-hover');}});
   }
   window.mayButtonStandardRefresh=refresh;
-  addEventListener('resize',refresh);document.addEventListener('click',()=>requestAnimationFrame(refresh));setInterval(refresh,200);refresh();
+  let refreshFrame=0;
+  const requestRefresh=()=>{if(!refreshFrame)refreshFrame=requestAnimationFrame(()=>{refreshFrame=0;refresh();});};
+  addEventListener('resize',requestRefresh);document.addEventListener('click',requestRefresh);document.addEventListener('change',requestRefresh);
+  // Decorative SVG updates do not trigger another pass. Stable menu polling also stays a no-op.
+  var standardObserver=new MutationObserver(records=>{if(records.some(r=>{
+    const t=r.target.nodeType===3?r.target.parentElement:r.target;
+    if(!t||t.closest?.('svg,[data-no-mini]')||!t.closest?.('#paintTools,#mayatnikRail,.gz-ladder,#mayatnikTemplatePanel'))return false;
+    if(r.type==='attributes')return r.oldValue!==t.getAttribute(r.attributeName);
+    return [...r.addedNodes,...r.removedNodes].some(n=>n.nodeType!==1||n.namespaceURI!==NS);
+  }))requestRefresh();});
+  refresh();
 })();

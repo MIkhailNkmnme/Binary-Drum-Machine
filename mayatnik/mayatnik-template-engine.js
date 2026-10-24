@@ -1,0 +1,64 @@
+(function(root){
+  'use strict';
+  function create(host){
+    const listeners=new Set(),patternCache=new WeakMap(),results=[];
+    let serial=0,selection=null,libraryStamp=[],scopeKey=null,filterSerial=0,filterPending=Promise.resolve(),visibleIds=host.scope?new Set():null,state={selectedId:null,count:0,busy:false,message:'',filtering:false};
+    function emit(){for(const fn of listeners)fn({...state});}
+    function patternsFor(entry){let patterns=patternCache.get(entry.shape);if(!patterns){patterns=[];for(const part of entry.shape.parts){const p=root.MayatnikTemplateMatcher.compile(part,entry.shape.rk||1);if(!patterns.some(q=>q.width===p.width&&q.height===p.height&&q.data.every((v,i)=>v===p.data[i])))patterns.push(p);}patternCache.set(entry.shape,patterns);}return patterns;}
+    async function filter(items,run){
+      visibleIds=new Set();state.filtering=true;emit();
+      try{const field=await host.field();if(run!==filterSerial)return;
+        for(const entry of items){if(run!==filterSerial||!host.current(field))return;
+          const exists=host.visibleInstances?.(entry.id)||((await root.MayatnikTemplateMatcher.find(field,patternsFor(entry),{existsOnly:true,cancelled:()=>run!==filterSerial||!host.current(field)})).count>0);
+          if(exists){visibleIds.add(entry.id);emit();}
+        }
+      }catch(e){if(run===filterSerial&&e.name!=='AbortError')state.message=e.message;}
+      finally{if(run===filterSerial){state.filtering=false;emit();}}
+    }
+    function refresh(){const items=host.entries(),key=host.scope?.(),active=host.filterActive?.()!==false;
+      const changed=items.length!==libraryStamp.length||!items.every((t,i)=>{const p=libraryStamp[i];return t.id===p.id&&t.name===p.name&&t.shape===p.shape;});
+      if(changed)libraryStamp=items.map(t=>({id:t.id,name:t.name,shape:t.shape}));
+      if(host.scope){if(!active){if(state.filtering){filterSerial++;state.filtering=false;scopeKey=null;}if(changed)scopeKey=null;return;}if(changed||scopeKey!==key){scopeKey=key;filterPending=filter(items.slice(),++filterSerial);}return;}
+      if(changed)emit();
+    }
+    function clear(message=''){serial++;selection=null;state={...state,count:0,busy:false,message};host.redrawSelection();emit();}
+    async function select(id){
+      const entry=host.entries().find(t=>t.id===id);if(!entry)return state;
+      const run=++serial;selection=null;state={...state,selectedId:id,count:0,busy:true,message:'Поиск в текущих строках…'};emit();
+      host.choose(id);host.stop();host.redrawSelection();
+      try{
+        const field=await host.field();if(run!==serial)return state;
+        const patterns=patternsFor(entry);
+        let found=results.find(r=>r.field===field&&r.patterns===patterns)?.found;
+        if(!found){found=await root.MayatnikTemplateMatcher.find(field,patterns,{cancelled:()=>run!==serial||!host.current(field)});results.push({field,patterns,found});while(results.length>3)results.shift();}
+        if(run!==serial)return state;
+        const instances=host.instances(id);
+        selection={...found,instances,field};state={...state,selectedId:id,count:found.count+instances.length,busy:false,message:`Найдено: ${found.count} · отдельных копий: ${instances.length}`};
+        if(!state.count){selection=null;state.message='В текущих строках этого шаблона нет';}
+        host.redrawSelection();emit();
+      }catch(e){if(run!==serial)return state;selection=null;state={...state,busy:false,count:0,message:e.name==='AbortError'?'Поле изменилось — выберите шаблон снова':e.message};host.redrawSelection();emit();}
+      return {...state};
+    }
+    async function edit(kind,value){
+      if(state.busy||!selection)return false;
+      if(!host.current(selection.field)){clear('Поле изменилось — выберите шаблон снова');return false;}
+      if(kind==='colour'&&!/^#[0-9a-f]{6}$/i.test(value))return false;
+      state.busy=true;emit();const run=++serial;
+      try{await host.edit(selection,kind,value,()=>run!==serial);if(run!==serial)return false;
+        if(kind==='delete'){selection=null;state.count=0;}else selection.field=await host.field(false);
+        state.message=kind==='delete'?'Выделенные фигуры удалены с поля':'Цвет всех выделенных фигур изменён';
+        host.redrawSelection();return true;
+      }catch(e){state.message=e.message;return false;}finally{if(run===serial){state.busy=false;emit();}}
+    }
+    return {
+      list:()=>host.entries().filter(t=>!visibleIds||visibleIds.has(t.id)).map(t=>({id:t.id,name:t.name,hex:t.shape.hex,parts:t.shape.parts,previewKey:t.shape,builtin:String(t.id).startsWith('standard:')})),allIds:()=>host.entries().map(t=>t.id),whenFiltered:()=>filterPending,
+      select,colour:hex=>edit('colour',hex),removeMatches:()=>edit('delete'),
+      action:(id,action,value)=>host.action(id,action,value),getControls:()=>null,
+      getState:()=>({...state}),subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
+      recordExternal:(before,after,apply)=>host.recordExternal(before,after,apply),
+      getSelection:()=>selection,clear,refresh,
+      changed(){if(selection&&!host.current(selection.field))clear('Поле изменилось — выберите шаблон снова');else emit();}
+    };
+  }
+  const api={create};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateEngine=api;
+})(typeof window==='object'?window:globalThis);

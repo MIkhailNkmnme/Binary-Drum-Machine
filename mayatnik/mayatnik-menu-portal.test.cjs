@@ -1,5 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8'),grozd=fs.readFileSync(path.join(__dirname,'../_js/grozd.js'),'utf8');
+const standard=fs.readFileSync(path.join(__dirname,'mayatnik-button-standard.js'),'utf8');
 class Classes{
  constructor(){this.s=new Set()} add(...xs){xs.forEach(x=>this.s.add(x))} remove(...xs){xs.forEach(x=>this.s.delete(x))}
  contains(x){return this.s.has(x)} toggle(x,v){if(v===undefined)v=!this.contains(x);v?this.add(x):this.remove(x)}
@@ -24,7 +25,7 @@ function fixture(){
  const body=new Node('body');body.root=true;const doc=new Node();doc.body=body;doc.documentElement=new Node();doc.createElement=t=>new Node(t);doc.querySelectorAll=s=>body.querySelectorAll(s);
  let now=0,id=0;const timers=new Map(),win=new Node();
  const ctx={document:doc,window:{},innerWidth:800,innerHeight:600,getComputedStyle:b=>({font:'12px Consolas',getPropertyValue:k=>b.style.getPropertyValue(k)}),
-  setTimeout(f,ms){timers.set(++id,{at:now+ms,f});return id},clearTimeout(i){timers.delete(i)},addEventListener:win.addEventListener.bind(win),removeEventListener(){},scheduleGroups(){},performance:{now:()=>now}};
+  setTimeout(f,ms){timers.set(++id,{at:now+ms,f});return id},clearTimeout(i){timers.delete(i)},addEventListener:win.addEventListener.bind(win),removeEventListener(){},scheduleGroups(){},decorateViewPalette(){},performance:{now:()=>now}};
  vm.createContext(ctx);
  // Execute only the real shared list controller, not rail/adopt or any page application.
  const start=grozd.indexOf("  const NS ="),end=grozd.indexOf('  const PIN =');
@@ -72,4 +73,16 @@ test('layer chooser keeps custom placed/closed callbacks and live options after 
  f.reopen();const list=f.list,initialPlaced=placed;for(let i=0;i<3;i++){f.tick(400);f.ctx.sync()}
  assert.equal(f.list,list);assert.equal(list.parentNode,f.body);assert.equal(placed,initialPlaced+3);list.children[1].emit('click');assert.equal(f.picks,1);
  f.doc.emit('pointerdown',{target:f.body});assert.equal(closed,1);assert.equal(f.list,undefined);
+});
+
+test('production SVG contour cannot shift any selected option during real shared list synchronization',()=>{
+ const f=fixture();let selected=2;f.bind(f.owner,{options:()=>['Выкл','Левая','Правая','Обе'].map((name,i)=>({name,on:i===selected,pick:()=>selected=i}))});f.reopen();const list=f.list;
+ list.querySelector=s=>list.children.find(n=>n.classList.contains('may-standard-contours'))||null;
+ list.prepend=n=>{n.remove();n.parentNode=list;list.children.unshift(n)};
+ list.scrollLeft=list.scrollTop=0;
+ const c={getComputedStyle:()=>({overflowY:'visible'}),gradN:0,svg(cls){const n=new Node('svg');n.className=cls;n.dataset={};n.replaceChildren=()=>{n.children=[]};return n;},list,cells:list.querySelectorAll(':scope > .gz-hx')};vm.createContext(c);
+ const a=standard.indexOf('  function contour('),b=standard.indexOf('  // v0.449: подложка закрытой',a);vm.runInContext(standard.slice(a,b)+';contour(list,cells,true);',c);
+ assert.equal(list.children.at(-1).tagName,'svg');
+ for(let i=0;i<4;i++){selected=i;f.ctx.sync();assert.deepEqual(list.querySelectorAll(':scope > .gz-hx').map(n=>n.classList.contains('gz-on')),[0,1,2,3].map(j=>i===j));}
+ list.children[1].emit('click');assert.equal(selected,1);assert.equal(list.children[1].classList.contains('gz-on'),true);
 });
