@@ -4703,7 +4703,7 @@ function rmbDocumentLayout(blocks,width,rowCount){
   const letters=[];
   for(let i=0;i<blocks.length;i++){
     const block=blocks[i],font=rmbTextLayout(block.text),next=blocks.slice(i+1).find(b=>b.row>block.row);
-    for(const letter of font.letters)letters.push({...letter,start:letter.start+block.col,end:letter.end+block.col,rowStart:block.row,rowEnd:next?next.row:rowCount});
+    for(const [letterIndex,letter] of font.letters.entries()){if(block.deleted?.includes(letterIndex))continue;letters.push({...letter,blockIndex:i,letterIndex,letterKey:i+"/"+letterIndex,start:letter.start+block.col,end:letter.end+block.col,rowStart:block.row,rowEnd:next?next.row:rowCount});}
   }
   return {width,letters};
 }
@@ -4748,6 +4748,29 @@ function rmbHighlightPolygon(row,col,{hs,u0,rm,tw,ox,oy}){
 }
 
 let rmbStatsCache = null, rmbCountHighlight = null;
+const rmbSelectedLetters=new Set();let rmbLetterSelectionState=null;
+function rmbActiveText(blocks){return blocks.map(b=>[...b.text].filter((_,i)=>!b.deleted?.includes(i)).join("")).filter(Boolean).join(" · ");}
+function rmbLetterPick(entry){
+  if(rmbSelectedLetters.has(entry.letterKey))rmbSelectedLetters.delete(entry.letterKey);else rmbSelectedLetters.add(entry.letterKey);
+  rmbStatsCache=null;rmbCountHighlight=null;renderRmb();$("rmbTextStats")?.focus?.({preventScroll:true});
+}
+function rmbLetterDelete(all=false){
+  const counts=rmbStatsCache?.counts,entries=counts?.entries.filter(e=>all||rmbSelectedLetters.has(e.letterKey));
+  if(!entries?.length||gridsLocked())return;
+  rmbWStop();gridsSnapshot();
+  const state=gridsState(),rows=state.rows.slice(),blocks=rmbTextBlocks().map(b=>({...b,deleted:[...(b.deleted||[])]}));
+  for(const entry of entries){
+    const block=blocks[entry.blockIndex];if(!block.deleted.includes(entry.letterIndex))block.deleted.push(entry.letterIndex);
+    for(let row=entry.rowStart;row<Math.min(rows.length,entry.rowEnd);row++){
+      const start=Math.max(0,entry.start),end=Math.min(rows[row].length,entry.end);
+      if(end>start)rows[row]=rows[row].slice(0,start)+"0".repeat(end-start)+rows[row].slice(end);
+    }
+  }
+  window.ZZGrids.reconcile(state,rows);state.textBlocks=blocks;state.text=rmbActiveText(blocks);
+  rmbSelectedLetters.clear();rmbCountHighlight=null;rmbStatsCache=null;rmbEditor?.clear();renderRmb();save();
+  const box=$("rmbTextStats");(box?.hidden?$("rmbCv"):box)?.focus?.({preventScroll:true});
+}
+
 function rmbCountHighlightSet(selection){
   if(rmbCountHighlight?.index===selection?.index && rmbCountHighlight?.kind===selection?.kind)return;
   rmbCountHighlight=selection;
@@ -4765,13 +4788,17 @@ function rmbCountCell(node,entry,kind){
 }
 function rmbTextStats(){
   const box = $("rmbTextStats"); if (!box) return;
-  const blocks=rmbTextBlocks(),text=blocks.map(b=>b.text).join(" · "),identity=JSON.stringify(blocks)+"/"+gridsState().rows.length+"/"+(gridsState().textWidth||"")+"/"+rmbSt().cell;
-  if (!text) { box.hidden=true; rmbStatsCache=null;rmbCountHighlight=null;return; }
-  if (rmbStatsCache?.identity === identity && rmbStatsCache.values === rmbVals) { box.hidden=false; return; }
+  const state=gridsState();if(rmbLetterSelectionState!==state){rmbSelectedLetters.clear();rmbLetterSelectionState=state;}
+  const blocks=rmbTextBlocks(),text=rmbActiveText(blocks),identity=JSON.stringify(blocks)+"/"+gridsState().rows.length+"/"+(gridsState().textWidth||"")+"/"+rmbSt().cell;
+  if (!text) { box.hidden=true; rmbStatsCache=null;rmbCountHighlight=null;rmbSelectedLetters.clear();return; }
+  if (rmbStatsCache?.identity === identity && rmbStatsCache.values === rmbVals) { box.hidden=!!rmbStatsCache.counts&&!rmbStatsCache.counts.total.ones; return; }
   const width=gridsState().textWidth||rmbTextRows(blocks[0].text)[0].length;
   const layout=rmbStatsCache?.identity===identity?rmbStatsCache.layout:rmbDocumentLayout(blocks,width,gridsState().rows.length);
   const counts = rmbLetterCounts(gridsState().rows,layout);
   rmbStatsCache = {text,identity,values:rmbVals,layout,counts};rmbCountHighlight=null;box.hidden=false;box.replaceChildren();
+  if(counts&&!counts.total.ones){box.hidden=true;rmbSelectedLetters.clear();return;}
+  box.tabIndex=0;
+  box.onkeydown=e=>{if(e.isComposing)return;if(e.key==="Delete"){e.preventDefault();e.stopPropagation();if(!e.repeat)rmbLetterDelete();}else if(e.key==="Escape"){e.preventDefault();e.stopPropagation();rmbSelectedLetters.clear();rmbStatsCache=null;renderRmb();}};
   const note = document.createElement("div"); note.className="rmb-count-note";
   note.textContent = counts ? "Буквы «"+text+"» · ◇ = 1 + 0 = ширина × высота · без промежутков" : "Ширина строк изменилась: прежняя разметка букв не соответствует полю.";
   box.append(note); if (!counts) return;
@@ -4782,13 +4809,22 @@ function rmbTextStats(){
   for(const entry of entries){const th=document.createElement("th");th.textContent=String(entry.index||"");th.scope="col";if(entry.index)rmbCountCell(th,entry,"rhombi");numbers.append(th);}
   const name=document.createElement("th");name.textContent="Буква";name.scope="row";header.append(name);
   for(const entry of entries){const th=document.createElement("th");th.textContent=entry.label===" "?"␣":entry.label;th.scope="col";
-    if(entry.index){th.className="rmb-count-letter";if(entry.label===" ")th.title="Пробел";}header.append(th);}
+    if(entry.index){
+      const picked=rmbSelectedLetters.has(entry.letterKey);th.className="rmb-count-letter"+(picked?" rmb-letter-picked":"");th.tabIndex=0;th.setAttribute("role","button");th.setAttribute("aria-pressed",String(picked));
+      th.title="Буква «"+entry.label+"»: щелчок — выбрать или снять; Delete — удалить выбранные буквы с поля";
+      th.onclick=()=>rmbLetterPick(entry);th.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();rmbLetterPick(entry);}};
+    }header.append(th);}
   head.append(numbers,header);
   for (const [label,key] of [["1","ones"],["0","zeros"],["Всего "+shape,"rhombi"]]) { const row=document.createElement("tr"), th=document.createElement("th");th.textContent=label;th.scope="row";row.append(th);
     for(const entry of entries){const td=document.createElement("td");td.textContent=String(entry[key]);
       td.title=entry.index?entry.width+" × "+entry.height+" = "+entry.rhombi+" ромбов; наведите для подсветки":"Сумма по буквам, без межбуквенных промежутков; наведите для подсветки";
       rmbCountCell(td,entry,key);row.append(td);}body.append(row); }
   table.append(head,body);box.append(table);
+  const actions=document.createElement("div");actions.className="tools lpw rmb-letter-actions";
+  for(const [label,all,title] of [["×",false,"Удалить выбранные буквы с поля (Delete)"],["× Все",true,"Удалить все буквы с поля; отмена вернёт их"]]){
+    const button=document.createElement("button");button.textContent=label;button.title=title;button.setAttribute("aria-label",title);button.disabled=!!state.locked||(!all&&!rmbSelectedLetters.size);button.onclick=()=>rmbLetterDelete(all);actions.append(button);
+  }
+  box.append(actions);
 }
 function rmbLetterBorderEdges(entries,hs,u0){
   const result=[];
@@ -4847,7 +4883,9 @@ function rmbEditorWire(cv){
   rmbEditor=window.ZZRmbEditor.mount(cv,{...common,options:()=>({multi:!!rmbSt().touchMulti,copy:!!rmbSt().touchCopy}),enabled:()=>!!(rmbSt().edit||rmbSt().axisMode)});
 }
 function rmbDrawCountHighlight(g,geometry){
-  const cells=rmbHighlightCells(gridsState().rows,rmbStatsCache?.counts,rmbCountHighlight);if(!cells.length)return;
+  const rows=gridsState().rows,counts=rmbStatsCache?.counts,cells=rmbHighlightCells(rows,counts,rmbCountHighlight),seen=new Set(cells.map(p=>p.join(",")));
+  for(const entry of counts?.entries||[])if(rmbSelectedLetters.has(entry.letterKey))for(const cell of rmbHighlightCells(rows,counts,{index:entry.index,kind:"rhombi"})){const key=cell.join(",");if(!seen.has(key)){seen.add(key);cells.push(cell);}}
+  if(!cells.length)return;
   const path=new Path2D();
   for(const [row,col] of cells){
     if(row>=geometry.M)continue;

@@ -49,7 +49,7 @@ test('highlight geometry follows row alignment, orientation, pan and zoom',()=>{
  assert.equal(c.rmbHighlightPolygon(0,1,{...g,rm:false}).length,3);
  const scaled=c.rmbHighlightPolygon(0,1,{...g,tw:20,ox:14,oy:22});assert.deepEqual(plain(scaled),plain(c.rmbHighlightPolygon(0,1,g)).map(p=>p.map(x=>x*2)));
 });
-class El{constructor(){this.children=[];this.hidden=false;this.textContent='';this.replaces=0;}append(...n){this.children.push(...n);}replaceChildren(){this.children=[];this.replaces++;}}
+class El{constructor(){this.children=[];this.hidden=false;this.textContent='';this.replaces=0;}append(...n){this.children.push(...n);}replaceChildren(){this.children=[];this.replaces++;}setAttribute(k,v){(this.attrs??={})[k]=v;}focus(){this.focused=true;}}
 test('touch on a count pins its highlight through leave and blur, and a second tap clears it',()=>{
  const c=api({document:{},renderRmb(){}}),node=new El();c.rmbCountCell(node,{index:2},'zeros');
  node.onpointerenter({pointerType:'touch'});assert.equal(vm.runInContext('rmbCountHighlight',c),null);
@@ -65,7 +65,7 @@ test('table shows 1 / 0 / total, hover and focus select cells, edits refresh wit
  assert.deepEqual(body.children.map(r=>r.children[0].textContent),['1','0','Всего ◇']);
  const zero=body.children[1].children[1];zero.onpointerenter();assert.deepEqual(plain(vm.runInContext('rmbCountHighlight',c)),{index:1,kind:'zeros'});assert.equal(renders,1);
  zero.onpointerleave();assert.equal(vm.runInContext('rmbCountHighlight',c),null);zero.onfocus();zero.onblur();assert.equal(vm.runInContext('rmbCountHighlight',c),null);
- c.rmbTextStats();assert.equal(box.replaces,1);c.gridsState().rows=c.gridsState().rows.map(r=>r.replaceAll('1','0'));c.rmbVals=bits(c.gridsState().rows);c.rmbTextStats();assert.equal(box.replaces,2);assert.equal(box.children[1].children[1].children[2].children[1].textContent,'0');
+ c.rmbTextStats();assert.equal(box.replaces,1);c.gridsState().rows=c.gridsState().rows.map(r=>r.replaceAll('1','0'));c.rmbVals=bits(c.gridsState().rows);c.rmbTextStats();assert.equal(box.replaces,2);assert.equal(box.hidden,true);
  c.gridsState().text='';c.rmbTextStats();assert.equal(box.hidden,true);
 });
 test('overlay draws selected cells without changing field data',()=>{
@@ -108,4 +108,27 @@ test('grid text undo restores its own rows, labels and axes without touching ord
  c.rmbSt=()=>c.Z.rmb;c.Z.rows=plain(c.rmbTextRows('I'));c.Z.cur=0;Object.assign(c.gridsState(),{rows:c.Z.rows.slice(),text:'I'});const ordinary=plain(c.Z.rows),old=plain(c.gridsState().rows);
  c.gridsSnapshot=()=>saved=c.gridsSnap();vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.ok(c.gridsState().rows.length>old.length);assert.ok(c.Z.rmb.axes[0].a[0]<0);assert.equal(c.gridsState().textBlocks.length,2);
  c.gridsApply(saved);assert.deepEqual(plain(c.gridsState().rows),old);assert.deepEqual(plain(c.Z.rows),ordinary);assert.equal(c.gridsState().text,'I');assert.deepEqual(plain(c.Z.rmb.axes),[{id:1,a:[0,0],b:[1,1]}]);
+});
+
+test('letter selection deletes only chosen occurrences, preserves positions and can undo everything',()=>{
+ const box=new El(),G=require('./zz-grids.js'),snapshots=[];let c;
+ c=api({Z:{rows:['101'],rmb:{cell:'rmb',axes:[]}},$:()=>box,document:{createElement:()=>new El()},window:{ZZGrids:G},rmbEditor:{clear(){}},rmbWStop(){},save(){},say(){},undoPush:v=>snapshots.push(plain(v)),renderRmb(){c.rmbVals=bits(c.gridsState().rows);c.rmbTextStats();}});
+ const st=c.gridsState(),font=c.rmbTextLayout('III');Object.assign(st,{rows:plain(font.rows),text:'III',textBlocks:[{text:'III',row:0,col:0}],textWidth:font.rows[0].length,colors:{'1,1':'red'},groups:{'1,1':{symbol:'x'}}});
+ // A hand-made cell in the left margin must survive even Delete All Letters.
+ st.rows[0]='1'+st.rows[0].slice(1);const before=plain(st);c.renderRmb();
+ let header=box.children[1].children[0].children[1];header.children[1].onclick();assert.equal(box.focused,true);header=box.children[1].children[0].children[1];assert.equal(header.children[1].attrs['aria-pressed'],'true');
+ header.children[3].onclick();box.onkeydown({key:'Delete',preventDefault(){},stopPropagation(){}});
+ assert.equal(snapshots.length,1);assert.deepEqual(plain(c.Z.rows),['101']);assert.equal(st.text,'I');assert.deepEqual(plain(st.textBlocks[0].deleted),[0,2]);assert.deepEqual(plain(st.colors),{});assert.deepEqual(plain(st.groups),{});
+ const remaining=c.rmbDocumentLayout(c.rmbTextBlocks(),st.textWidth,st.rows.length).letters;assert.equal(remaining.length,1);assert.equal(remaining[0].start,font.letters[1].start);assert.equal(remaining[0].letterIndex,1);
+ assert.equal(box.hidden,false);box.children[2].children[1].onclick();assert.equal(box.hidden,true);assert.equal(st.rows[0][0],'1');assert.equal(st.rows.reduce((n,r)=>n+[...r].filter(x=>x==='1').length,0),1);assert.equal(snapshots.length,2);
+ c.gridsApply(snapshots[0].grids);assert.deepEqual(plain(c.gridsState()),before);assert.equal(box.hidden,false);assert.deepEqual(plain(c.Z.rows),['101']);
+});
+test('letter deletion respects lock, repeated Delete and independently positioned text blocks',()=>{
+ const box=new El(),G=require('./zz-grids.js');let c,steps=0;
+ c=api({Z:{rows:['111'],rmb:{cell:'rmb',axes:[]}},$:()=>box,document:{createElement:()=>new El()},window:{ZZGrids:G},rmbEditor:{clear(){}},rmbWStop(){},save(){},say(){},undoPush(){steps++;},renderRmb(){c.rmbVals=bits(c.gridsState().rows);c.rmbTextStats();}});
+ const f=c.rmbTextRows('I'),added=c.rmbAppendText(plain(f),[{text:'I',row:0,col:0}],'I'),st=c.gridsState();Object.assign(st,{rows:plain(added.rows),text:'I',textBlocks:plain(added.blocks),textWidth:added.width});c.renderRmb();
+ box.children[1].children[0].children[1].children[2].onclick();const before=plain(st.rows);st.locked=true;c.rmbLetterDelete();assert.deepEqual(plain(st.rows),before);assert.equal(steps,0);st.locked=false;
+ box.onkeydown({key:'Delete',repeat:true,preventDefault(){},stopPropagation(){}});assert.equal(steps,0);
+ box.onkeydown({key:'Delete',preventDefault(){},stopPropagation(){}});assert.equal(steps,1);assert.deepEqual(plain(st.rows.slice(0,f.length)),plain(f));assert.ok(st.rows.slice(added.blocks[1].row).every(r=>!r.includes('1')));assert.equal(st.text,'I');
+ const fresh=c.rmbAppendText(st.rows,c.rmbTextBlocks(),'W'),layout=c.rmbDocumentLayout(fresh.blocks,fresh.width,fresh.rows.length);assert.deepEqual(plain(layout.letters.map(e=>e.label)),['I','W']);
 });
