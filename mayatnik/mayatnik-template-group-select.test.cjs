@@ -24,3 +24,5 @@ test('left click selects on release and cannot drag; right button drags only sel
 test('disabled selection lets left drag pan; right click never extracts a template',()=>{const a=gestures(false);a.down(0);assert.ok(a.c.pan);assert.equal(a.c.templatePickTap,null);assert.equal(a.hits,0);const b=gestures(false);b.down(2);assert.equal(b.c.templateDragging,null);assert.equal(b.hits,0);
  const start=html.indexOf("  wrap.addEventListener('contextmenu',e=>{"),end=html.indexOf("  // v0.309:",start);assert.doesNotMatch(html.slice(start,end),/takeColourAt|selectTemplate/);
 });
+
+test('plain right click without dragging cannot apply the mirror line',()=>{const a=html.indexOf('    if(templateDragging?.id===e.pointerId){const drag=templateDragging'),b=html.indexOf('    const tap =',a);assert.ok(a>0);assert.doesNotMatch(html.slice(a,b),/mirrorAcrossLine/);});

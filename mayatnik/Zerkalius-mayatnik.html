@@ -269,7 +269,7 @@ body.may-fold-active #cvGpu{opacity:0}
     <button id="bTemplateFall" aria-pressed="false" data-mi-short="Спуск ↓↓" title="Спуск: все шаблоны на поле спускаются вниз по строке за шаг, каждый своим «Инверт-следом», если он включён. Шаблон идёт, пока под ним застывшие биты (больше не изменятся), и останавливается, где начинаются ещё меняющиеся, или у низа поля. Один проход, без повтора. Ещё раз — стоп">Спуск ↓↓</button>
     <button id="bTemplateAxisUnlock" disabled aria-pressed="false" title="Разблокировать ось: мышью двигать свободно влево-вправо и вверх-вниз. Выключено — двигать только вдоль видимой вертикальной оси">Свободная ось</button>
     <button id="bTemplateReset" disabled title="Вернуть высоту 100%, сдвиг 0 и непрозрачность 50%">Сброс шабл.</button>
-    <button id="bTemplateMove" aria-pressed="false" disabled title="Тянуть фигуру: без клавиш — вверх-вниз, исходное место инвертируется один раз; Shift — пропорциональный размер от центра; Alt — свободный перенос без следа">Двигать</button>
+    <button id="bTemplateMove" aria-pressed="false" disabled title="Тянуть выбранную фигуру правой кнопкой: без клавиш — вверх-вниз, исходное место инвертируется один раз; Shift — пропорциональный размер от центра; Alt — свободный перенос без следа">Двигать</button>
     <button id="bTemplateTransfer" aria-pressed="false" disabled title="Переносить фигуру свободно без следа: снять её исходную заливку, сохранив биты узора. Shift — изменить размер">Без следа</button>
     <button id="bTemplatePaint" disabled title="Закрасить выбранным цветом только биты внутри цветного силуэта шаблона. Клики чередуют белые 1 и чёрные 0; пустой фон пропускается">Под ним: 1</button>
     <button id="bTemplateReturn" disabled title="Вернуть к исходному месту и размеру; следующий клик — обратно. Работает и когда шаблон за краем">Туда / назад</button>
@@ -4951,7 +4951,7 @@ body.may-fold-active #cvGpu{opacity:0}
     if(axisDrag?.id===e.pointerId){axisDrag=null;actSet('axis');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);save();if(mirrorLive){cancelAnimationFrame(mirrorFrame);mirrorFrame=0;mirrorApply(true);}return;}
     if(lineDrag?.id===e.pointerId){lineDrag=null;actSet('mirLine');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
     if(templateDragging?.id===e.pointerId){const drag=templateDragging;templateDragging=null;if(drag.moved){libraryIfOutside(drag.wasOut);actSet('tpl');}   // v0.112
-    if(drag.mirrorEdge&&!drag.moved)mirrorTemplate(drag.mirrorEdge,true);else if(!drag.moved&&!drag.duplicate&&mirrorLine&&e.type==='pointerup')mirrorAcrossLine();finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
+    if(drag.mirrorEdge&&!drag.moved&&e.type==='pointerup')mirrorTemplate(drag.mirrorEdge,true);finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
     const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
     const midTap = e.type === 'pointerup' && e.button === 1 && pan && !pan.moved && !pinch && pts.size === 1;   // v0.097: щелчок колёсиком без сдвига — дзен
     if (pan && pan.moved && !pinch && pts.size === 1) actSet('pan');   // v0.265
