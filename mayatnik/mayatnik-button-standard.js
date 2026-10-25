@@ -30,14 +30,27 @@
       for(const cell of cells){const b=cell.getBoundingClientRect();if(!b.width||!b.height)continue;diamonds.push({x:b.left-r.left+host.scrollLeft+b.width/2,y:b.top-r.top+host.scrollTop+b.height/2,r:b.width/2+2});}
       const sig='chain:'+JSON.stringify([w,h,diamonds]);if(s.dataset.sig!==sig){s.dataset.sig=sig;s.replaceChildren();
         if(diamonds.length){
-          // Union envelope of touching expanded diamonds; no rectangular body behind the chain.
-          const levels=[...new Set(diamonds.flatMap(d=>[d.y-d.r,d.y,d.y+d.r]))].sort((a,b)=>a-b),left=[],right=[];
-          for(const y of levels){const active=diamonds.filter(d=>Math.abs(y-d.y)<=d.r+.001);if(!active.length)continue;
-            left.push([Math.min(...active.map(d=>d.x-d.r+Math.abs(y-d.y))),y]);right.push([Math.max(...active.map(d=>d.x+d.r-Math.abs(y-d.y))),y]);}
-          shape(s,'polygon',{class:'may-diamond-back',points:[...right,...left.reverse()].map(p=>p.join(',')).join(' '),fill:'#0e1116'});
-          const last=diamonds.reduce((a,b)=>a.y>b.y?a:b),bottom=last.y+last.r,lo=Math.max(1,Math.min(...diamonds.map(d=>d.x-d.r))),hi=Math.min(w-1,Math.max(...diamonds.map(d=>d.x+d.r))),end=Math.min(h-1,bottom+11);
-          shape(s,'polygon',{class:'may-diamond-back',points:`${last.x},${bottom-2} ${hi},${end-12} ${hi-12},${end} ${lo+12},${end} ${lo},${end-12}`,fill:'#0e1116'});
-          shape(s,'path',{class:'cap',d:`M${lo} ${end-12} L${lo+12} ${end} H${hi-12} L${hi} ${end-12}`});
+          // Connected components keep separate columns separate. Include every
+          // crossing of boundary edges, not just the diamond tips: otherwise
+          // the envelope cuts across the small concave corners between links.
+          const pending=new Set(diamonds),components=[];
+          while(pending.size){const component=[pending.values().next().value];pending.delete(component[0]);for(let i=0;i<component.length;i++)for(const d of pending)if(Math.abs(d.x-component[i].x)+Math.abs(d.y-component[i].y)<=d.r+component[i].r+.001){component.push(d);pending.delete(d);}components.push(component);}
+          const edge=(d,y,right)=>d.x+(right?1:-1)*(d.r-Math.abs(y-d.y));
+          for(const component of components){
+            const levels=new Set(component.flatMap(d=>[d.y-d.r,d.y,d.y+d.r]));
+            for(let i=0;i<component.length;i++)for(let j=i+1;j<component.length;j++){
+              const a=component[i],b=component[j],lo=Math.max(a.y-a.r,b.y-b.r),hi=Math.min(a.y+a.r,b.y+b.r);if(hi<=lo)continue;
+              const cuts=[...new Set([lo,hi,a.y,b.y].filter(y=>y>=lo&&y<=hi))].sort((x,y)=>x-y);
+              for(let k=1;k<cuts.length;k++)for(const right of [false,true]){const y0=cuts[k-1],y1=cuts[k],v0=edge(a,y0,right)-edge(b,y0,right),v1=edge(a,y1,right)-edge(b,y1,right);if(v0*v1<0)levels.add(y0+(y1-y0)*v0/(v0-v1));}
+            }
+            const left=[],right=[];for(const y of [...levels].sort((a,b)=>a-b)){const active=component.filter(d=>Math.abs(y-d.y)<=d.r+.001);if(!active.length)continue;left.push([Math.min(...active.map(d=>edge(d,y,false))),y]);right.push([Math.max(...active.map(d=>edge(d,y,true))),y]);}
+            const points=[...right,...left.reverse()].filter((p,i,all)=>!i||Math.abs(p[0]-all[i-1][0])+Math.abs(p[1]-all[i-1][1])>.001);
+            if(points.length>1&&points[0][0]===points.at(-1)[0]&&points[0][1]===points.at(-1)[1])points.pop();
+            shape(s,'polygon',{class:'may-diamond-back', 'data-part':'body',points:points.map(p=>p.join(',')).join(' '),fill:'#0e1116'});
+          }
+          // The final V follows the last diamond itself; no widening footer spur.
+          const last=diamonds.reduce((a,b)=>a.y>b.y?a:b);
+          shape(s,'path',{class:'cap',d:`M${last.x-last.r} ${last.y} L${last.x} ${last.y+last.r} L${last.x+last.r} ${last.y}`});
         }
         shape(s,'polygon',{class:'may-diamond-back',points:`1,13 13,1 ${w-13},1 ${w-1},13 ${w-1},24 1,24`,fill:'#0e1116'});
         shape(s,'path',{class:'cap',d:`M1 13 L13 1 H${w-13} L${w-1} 13`});

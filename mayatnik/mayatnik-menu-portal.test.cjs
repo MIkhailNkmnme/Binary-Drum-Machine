@@ -97,7 +97,7 @@ test('diamond dropdown previews in owner, keeps title above, restores selection 
  f.column.rect={left:650,right:770,width:120,top:50};f.owner.rect=f.column.rect;f.ctx.syncListButton(f.owner);
  assert.equal(f.owner.dataset.listSide,'left');const label=f.owner.querySelector('.may-list-label');assert.equal(label.textContent,'A');
  f.reopen();const list=f.list,rows=list.querySelectorAll(':scope > .gz-hx'),heading=list.querySelector('.may-list-heading');
- assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(2,26px) 48px');
+ assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(2,24px) 48px');
  assert.ok(rows.every(row=>row.classList.contains('may-option-diamond')));assert.equal(list.children.at(-1),heading);
  rows[2].emit('pointerenter');assert.equal(label.textContent,'C');f.ctx.sync();assert.equal(label.textContent,'C');rows[2].emit('pointerleave');assert.equal(label.textContent,'A');
  for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.equal(label.textContent,['A','B','C'][i]);assert.deepEqual(rows.map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}

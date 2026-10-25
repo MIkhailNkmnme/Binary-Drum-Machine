@@ -1,16 +1,16 @@
 /* Icon diamonds with stable list titles and a preview caption in the owner. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikMenuOptions=api;})(globalThis,function(){
   'use strict';
-  const SIZE=48,STEP=26,SINGLE_STEP=50,HEADER=26,FOOT=14,hovered=new WeakMap();
-  // Alternating 26 px horizontal/vertical offsets leave disjoint diamond hit regions.
+  const SIZE=48,STEP=24,SINGLE_STEP=48,HEADER=26,FOOT=14,hovered=new WeakMap();
+  // Alternating half-size offsets join diamond edges without overlapping their hit interiors.
   function slot(index,cols=2){return {row:index+1,column:cols===1?1:index%2+1};}
   function geometry(count,cols=2){count=Math.max(1,Math.floor(Number(count)||1));cols=count>1&&cols===2?2:1;const step=cols===2?STEP:SINGLE_STEP;
     return {count,cols,rows:count,step,chainWidth:cols===2?SIZE+STEP:SIZE,chainHeight:SIZE+(count-1)*step,gridTemplateColumns:cols===2?STEP+'px '+SIZE+'px':SIZE+'px',gridTemplateRows:(count>1?'repeat('+(count-1)+','+step+'px) ':'')+SIZE+'px'};
   }
   function layout(count,owner,column,right,height){
-    const width=Math.min(120,Math.max(48,right-8)),maxHeight=Math.max(HEADER+FOOT+SIZE,Math.floor(height-28));let g=geometry(count,width>=78?2:1);
+    const width=Math.min(120,Math.max(48,right-8)),maxHeight=Math.max(HEADER+FOOT+SIZE,Math.floor(height-28));let g=geometry(count,width>=76?2:1);
     // Reserve a conventional scrollbar gutter before choosing the two-chain layout.
-    if(g.cols===2&&g.chainHeight+HEADER+FOOT>maxHeight&&width<94)g=geometry(count,1);
+    if(g.cols===2&&g.chainHeight+HEADER+FOOT>maxHeight&&width<92)g=geometry(count,1);
     const contentHeight=g.chainHeight+HEADER+FOOT,h=Math.min(contentHeight,maxHeight);
     const side=column.right+6+width<=right-4?'right':column.left-width-6>=4?'left':right-column.right>=column.left?'right':'left';
     const x=side==='right'?column.right+6:column.left-width-6;
