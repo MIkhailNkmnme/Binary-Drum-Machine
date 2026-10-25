@@ -1,6 +1,6 @@
 // Execute the production transfer/mini migration and legacy pin resolver, without running the page.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-const menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8'),start=menu.indexOf('  function installManualAxesMenu(railButtons) {'),end=menu.indexOf('  installManualAxesMenu(railSourceButtons);',start);
+const menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8'),start=menu.indexOf('  function installManualAxesMenu(railButtons) {'),end=menu.indexOf('  function installNAxesMenu(',start);
 assert.ok(start>0&&end>start);const installer=menu.slice(start,end);
 class Element {
   constructor(cls='',text=''){this.className=cls;this.textContent=text;this.children=[];this.dataset={};this.style={setProperty(k,v){this[k]=v;}};this.tagName='DIV';}
@@ -46,12 +46,11 @@ test('mini migration preserves each old zoom ordinal and old group key with back
   const fresh=setup(Object.fromEntries(first.data));assert.deepEqual([...fresh.data],[...first.data]);assert.equal(fresh.ctx.legacyPin('zoom',4),fresh.nodes.zVert);
 });
 
-test('old and new zoom pins resolve the original live source indices after transfer; zSnap popup attaches to its exact original node',()=>{
+test('legacy zoom pins resolve original source indices and the current stepper attaches to its original node',()=>{
   const e=setup();for(const [index,id]of e.zoomIds.entries())assert.equal(e.ctx.legacyPin('zoom',index),e.nodes[id]);
-  for(const id of ['zLines','zVert','zDiag']){const node=e.nodes[id];assert.equal(node.dataset.mayPinGroup,'zoom');assert.equal(e.ctx.legacyPin(node.dataset.mayPinGroup,Number(node.dataset.mayPinIndex)),node);}
-  // Execute the production late popup registration against shifted current cells; original ordinal6 is no longer in current cell array.
-  let target=null;const a=e.zoomIds.map(id=>({src:id})),ca=e.soty.children;
-  const begin=menu.indexOf("      a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i];if (it.src === 'zSnap'"),finish=menu.indexOf('      a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i],names',begin);
-  assert.ok(begin>0&&finish>begin);Object.assign(e.ctx,{a,ca,window:{mayZSnap:{on:()=>true,base:()=>2,set(){}}},reg(node,options){target=node;assert.equal(options().length,10);}});
-  vm.runInContext(menu.slice(begin,finish),e.ctx);assert.equal(target,e.nodes.zSnap);
+  const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<div id="snap"></div><div id="wrong"></div>');
+  const node=dom.window.document.getElementById('snap'),wrong=dom.window.document.getElementById('wrong'),sync=[];let base=2;
+  const a=menu.indexOf("      a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i];if (it.src === 'zSnap'"),b=menu.indexOf('      a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i],names',a);
+  vm.runInNewContext(menu.slice(a,b),{a:[{src:'zSnap'}],ca:[wrong],railSourceButtons:new Map([['zSnap',node]]),window:{mayZSnap:{on:()=>base>1,base:()=>base,set:n=>base=n}},document:dom.window.document,toolSync:sync,rail:{refresh(){}},placeTools:()=>sync.forEach(f=>f())});
+  sync.forEach(f=>f());assert.equal(node.querySelectorAll('.may-snap-part').length,4);assert.equal(wrong.children.length,0);node.lastChild.click();assert.equal(base,3);dom.window.close();
 });

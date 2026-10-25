@@ -132,3 +132,30 @@ test('last side slot keeps native scrollbar extent equal to computed range',()=>
  f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:1000,deltaMode:0},true);f.flush();
  assert.equal(bar.scrollTop,parseFloat(bar.children[0].style.height)-parseFloat(bar.style.height));assert.equal(bar.scrollTop,4);
 });
+
+test('side scrollbar chrome is hidden without disabling the native scrolling region',()=>{
+ const css=fs.readFileSync(require.resolve('./mayatnik-button-standard.css'),'utf8'),rule=css.match(/\.may-menu-side-scroll\{([^}]+)\}/)[1];
+ assert.match(rule,/overflow-y:auto/);assert.match(rule,/scrollbar-width:none/);assert.doesNotMatch(rule,/scrollbar-width:thin|scrollbar-color/);assert.match(css,/\.may-menu-side-scroll::-webkit-scrollbar\{display:none;width:0;height:0\}/);
+ for(const edge of ['left','right']){const saved={g0:{edge,index:0},g1:{edge,index:1}},f=fixture({'mayatnik-menu-dock-v509':JSON.stringify(saved)});f.gs[0].box.height=780;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge===edge),before=f.gs[1].style['--may-dock-y'];
+  f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:80,deltaMode:0},true);f.flush();assert.equal(bar.scrollTop,80);assert.notEqual(f.gs[1].style['--may-dock-y'],before);
+ }
+});
+
+test('side group bottom bracket and its stroke fit inside reserved layout height',()=>{
+ const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<div id="host"><button></button><button></button></div>'),doc=dom.window.document,host=doc.getElementById('host'),cells=[...host.querySelectorAll('button')];
+ const src=fs.readFileSync(require.resolve('./mayatnik-button-standard.js'),'utf8'),code=src.slice(src.indexOf('  let gradN='),src.indexOf('  // v0.449: подложка закрытой'));
+ const top=100,lastBottom=50,padding=14;host.getBoundingClientRect=()=>({left:10,top,width:120,height:lastBottom+padding});host.scrollTop=host.scrollLeft=0;
+ cells.forEach((b,i)=>b.getBoundingClientRect=()=>({left:10,top:top+i*26,width:120,height:24}));
+ const ctx={svg:cls=>{const n=doc.createElementNS('http://www.w3.org/2000/svg','svg');n.setAttribute('class',cls);return n;},getComputedStyle:()=>({overflowY:'visible'})};vm.runInNewContext(code,ctx);ctx.contour(host,cells,false,null,false);
+ const caps=[...host.querySelectorAll('.cap')],bottom=caps.at(-1).getAttribute('d').match(/L12 ([\d.]+)/);assert.equal(+bottom[1],lastBottom+12);assert.ok(+bottom[1]+1<host.getBoundingClientRect().height,'2px stroke stays inside padded host');
+ const css=fs.readFileSync(require.resolve('./mayatnik-button-standard.css'),'utf8');assert.match(css,/\.may-menu-side-stack\.may-dock-side>[^}]+padding-bottom:14px!important;box-sizing:content-box!important/);
+ const stack=D.stackPositions([{index:0,y:58,height:24+lastBottom+padding}],58,110,1000),row=stack.rows[0];assert.ok(row.screenY+24+lastBottom+12+1<=110,'scroll to bottom exposes the complete bracket');dom.window.close();
+});
+
+test('standard adapter delegates side scroll to dock and preserves ordinary top list scrolling',()=>{
+ const src=fs.readFileSync(require.resolve('./mayatnik-button-standard.js'),'utf8'),start=src.indexOf("        if(host.classList.contains('pt-r'))"),code=src.slice(start,src.indexOf('        // may-rail-list',start));
+ for(const sideStack of [true,false]){const styles={};const host={classList:{contains:()=>true},style:{removeProperty:k=>delete styles[k],setProperty:(k,v)=>styles[k]=v},getBoundingClientRect:()=>({top:100}),scrollHeight:1000};
+  const g={matches:()=>sideStack,classList:{contains:()=>false}},ctx={host,g,head:{getBoundingClientRect:()=>({top:80})},innerWidth:1000,innerHeight:700};vm.runInNewContext(code,ctx);
+  assert.equal(host.style.maxHeight,sideStack?'none':'586px');assert.equal(host.style.overflowY,sideStack?'visible':'auto');assert.equal(styles['padding-bottom'],sideStack?undefined:'14px');
+ }
+});

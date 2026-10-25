@@ -676,7 +676,31 @@
     }}catch(_){}
     return row;
   }
-  installManualAxesMenu(railSourceButtons);
+  function installNAxesMenu(row,api){
+    if(!row||!api||row.querySelector('[data-n="nAxesToggle"]'))return;
+    Object.assign(ptNames,{nAxesToggle:'N-ось',nAxesRemove:'Удалить N-оси'});
+    const describe=(node,text)=>{node.title=text;node.setAttribute('aria-label',text);};
+    const command=(id,kind,help,run)=>{const source=document.createElement('button');source.title=help;
+      const b=ptBtn(id,kind,source,()=>{if(!b.disabled){run();sync();}});b.classList.add('gz-hx');b.querySelector('i')?.classList.add('gz-ic');
+      const label=document.createElement('span');label.className='gz-nm';label.textContent=ptNames[id];b.append(label);describe(b,help);return b;};
+    const toggle=command('nAxesToggle','axes','N-ось: щелчок по биту добавляет центральную ось и по N осей с каждой стороны до концов выбранной строки. Прежние наборы сохраняются.',()=>api.toggle());
+    const box=document.createElement('div');box.className='gz-hx gz-control gz-val may-layer-value may-standard';box.dataset.n='nAxesCount';
+    describe(box,'Число осей N с каждой стороны центральной: от 1 до 64, включая концы строки. Меняет выбранный набор и число осей для следующего набора.');
+    const input=document.createElement('input');input.type='number';input.min='1';input.max='64';input.step='1';input.id='mayNAxesCount';input.value='3';input.setAttribute('aria-label',box.title);
+    const mid=document.createElement('label');mid.className='gz-mid';mid.htmlFor=input.id;const tag=document.createElement('span');tag.className='may-layer-axis';tag.textContent='N';mid.append(tag,input);
+    const change=value=>{const n=Number(value);if(!Number.isFinite(n))return;api.setN(Math.max(1,Math.min(64,Math.round(n))));sync();};
+    input.addEventListener('change',()=>{if(input.value.trim())change(input.value);else sync();});
+    const arrows=[-1,1].map(delta=>{const b=document.createElement('button');b.type='button';b.className='gz-a';b.textContent=delta<0?'‹':'›';describe(b,delta<0?'Уменьшить число осей на 1':'Увеличить число осей на 1');b.onclick=()=>change((Number(api.get().n)||3)+delta);return b;});
+    box.append(arrows[0],mid,arrows[1]);ZerkControlFrame.attach(box,arrows[0],mid,arrows[1],{input});
+    const remove=command('nAxesRemove','cross','Удалить выбранный набор N-осей. Остальные наборы сохраняются.',()=>api.removeSelected());
+    row.append(toggle,box,remove);
+    function sync(){const state=api.get()||{},on=!!state.enabled;toggle.classList.toggle('on',on);toggle.classList.toggle('gz-on',on);toggle.setAttribute('aria-pressed',String(on));
+      input.value=String(Math.max(1,Math.min(64,Math.round(Number(state.n)||3))));remove.disabled=state.selectedId==null;
+      remove.classList.toggle('gz-off-dis',remove.disabled);remove.setAttribute('aria-disabled',String(remove.disabled));}
+    const unsubscribe=api.subscribe?.(sync);addEventListener('pagehide',()=>unsubscribe?.(),{once:true});toolSync.push(sync);sync();
+  }
+  const manualAxesRow=installManualAxesMenu(railSourceButtons);
+  installNAxesMenu(manualAxesRow,window.mayNAxes);
   // v0.496: очистка доступна только в «Очистке»; прежние номера закрепов Раскраски остаются адресами тех же команд.
   function removePaintClearDuplicates(railButtons) {
     const box=railButtons.get('bPaintNew')?.closest('.gz-group');if(!box)return;

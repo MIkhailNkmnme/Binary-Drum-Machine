@@ -21,7 +21,7 @@
     if(data.length!==N)throw Error('Размер поля не совпадает');
     const cancelled=options.cancelled||(()=>false),yieldTask=options.yieldTask||pause;
     const clock=options.now||(()=>performance.now()),budget=options.budgetMs??8;
-    let operations=0,yields=0,count=0,selectedCount=0,sliceStart=clock(),maxSliceMs=0;
+    let operations=0,yields=0,count=0,selectedCount=0,firstMatch=null,sliceStart=clock(),maxSliceMs=0;
     const due=()=>{if(cancelled())throw abort();return clock()-sliceStart>=budget;};
     const checkpoint=async()=>{maxSliceMs=Math.max(maxSliceMs,clock()-sliceStart);yields++;await yieldTask();sliceStart=clock();if(cancelled())throw abort();};
     for(let pi=0;pi<patterns.length;pi++){
@@ -36,6 +36,7 @@
           if(++operations>=8192){operations=0;if(due())await checkpoint();}
         }
         if(match){
+          if(!firstMatch)firstMatch={x,y,width:pw,height:ph,patternIndex:pi};
           if(options.existsOnly)return {count:1,yields,maxSliceMs:Math.max(maxSliceMs,clock()-sliceStart)};
           count++;
           for(const offset of ones){const q=start+offset;if(!selected[q]){selected[q]=1;selectedCount++;}
@@ -46,7 +47,7 @@
     }
     if(cancelled())throw abort();
     maxSliceMs=Math.max(maxSliceMs,clock()-sliceStart);
-    return {count,selectedCount,selected,width:W,height:H,yields,maxSliceMs};
+    return {count,selectedCount,selected,first:firstMatch,width:W,height:H,yields,maxSliceMs};
   }
   const api={compile,find,abort};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateMatcher=api;
 })(typeof window==='object'?window:globalThis);

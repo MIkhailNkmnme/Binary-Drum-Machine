@@ -38,6 +38,7 @@
         selection={...found,instances,field};state={...state,selectedId:id,count:found.count+instances.length,busy:false,message:`Найдено: ${found.count} · отдельных копий: ${instances.length}`};
         if(!state.count){selection=null;state.message='В текущих строках этого шаблона нет';}
         host.redrawSelection();emit();
+        if(selection)host.focus?.({id,instances:[...instances],first:found.first||null,field});
       }catch(e){if(run!==serial)return state;selection=null;state={...state,busy:false,count:0,message:e.name==='AbortError'?'Поле изменилось — выберите шаблон снова':e.message};host.redrawSelection();emit();}
       return {...state};
     }
