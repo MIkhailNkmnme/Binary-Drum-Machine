@@ -16,7 +16,11 @@
     },true);
     cv.addEventListener('pointermove',e=>{
       if(e.pointerType!=='touch'||!points.has(e.pointerId))return;points.set(e.pointerId,point(e));if(!active)return;consume(e);
-      if(points.size>=2)cfg.setView(transform(start,frame([...points.values()].slice(0,2)),view));
+      if(points.size>=2){const current=frame([...points.values()].slice(0,2));
+        // Optional gesture metadata lets hosts quantize scale around the real midpoint.
+        // The first argument retains the legacy smooth transform for existing callers.
+        cfg.setView(transform(start,current,view),{start:{...start},current,view:{...view}});
+      }
     },true);
     const end=e=>{
       if(e.pointerType!=='touch'||!points.has(e.pointerId))return;

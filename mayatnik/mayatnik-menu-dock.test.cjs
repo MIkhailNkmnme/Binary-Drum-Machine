@@ -25,7 +25,7 @@ function fixture(saved={},options={}){
  vm.runInNewContext(fs.readFileSync(require.resolve('./mayatnik-menu-dock.js'),'utf8'),ctx);
  const dock=ctx.module.exports.mount({groups:()=>gs,idOf:g=>g.id,header,tools,footer,rail,rightEdge:()=>width,moveToTools:g=>tools.append(g),onLayout:()=>{},...options});frames.splice(0).forEach(fn=>fn());
  const event=(type,props={},doc=false)=>{const e={type,button:0,pointerId:1,preventDefault(){},stopImmediatePropagation(){},...props};for(const fn of (doc?docEvents:events).get(type)||[])fn(e);};
- return {gs,dock,store,event,body,rail,flush(){frames.splice(0).forEach(fn=>fn());},resize(w){width=w;event('resize');}};
+ return {gs,dock,store,event,body,rail,footer,flush(){frames.splice(0).forEach(fn=>fn());},resize(w){width=w;event('resize');}};
 }
 test('real controller snaps drag to right strip and persists slot, never raw pixels',()=>{
  const f=fixture();f.event('pointerdown',{target:f.gs[0].hd,clientX:68,clientY:74},true);f.event('pointermove',{clientX:936,clientY:270});f.event('pointerup',{clientX:936,clientY:270});
@@ -77,6 +77,18 @@ test('side column scroll exposes lower groups without changing saved grid slots;
  f.gs[0].box.height=24;f.dock.refresh();assert.equal(bar.style.display,'none');assert.equal(bar.scrollTop,0);assert.equal(f.gs[1].style['--may-dock-y'],'84px');
 });
 
+test('low right groups get a scrollbar beside occupied slots, not through empty space above',()=>{
+ const saved={g0:{edge:'right',index:18},g1:{edge:'right',index:19}},f=fixture({'mayatnik-menu-dock-v509':JSON.stringify(saved)}),before=f.store.get('mayatnik-menu-dock-v509');
+ f.gs[0].box.height=400;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='right');
+ assert.equal(bar.style.top,'526px');assert.equal(bar.style.height,'226px');assert.equal(bar.style.left,'860px','bar remains left of the 876px right column');
+ assert.equal(bar.children[0].style.height,'442px');assert.equal(bar.style.display,'block');
+ f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:1000,deltaMode:0},true);f.flush();
+ assert.equal(bar.scrollTop,216);assert.equal(f.gs[0].style['--may-side-clip-top'],'216px');assert.equal(f.gs[1].style['--may-dock-y'],'726px');
+ f.event('focusin',{target:{closest:()=>f.gs[0],getBoundingClientRect:()=>({top:510,bottom:534})}},true);f.flush();assert.equal(bar.scrollTop,200,'keyboard focus uses the same occupied viewport');
+ assert.equal(f.store.get('mayatnik-menu-dock-v509'),before);
+ f.gs[0].box.height=24;f.dock.refresh();assert.equal(bar.style.display,'none');assert.equal(bar.scrollTop,0);assert.equal(f.gs[0].style['--may-dock-y'],'526px');assert.equal(f.gs[1].style['--may-dock-y'],'552px');
+});
+
 test('standalone key isolates persistence and default edge only affects unplaced groups',()=>{
  const old=JSON.stringify({g0:{edge:'left',index:4}}),key='setka-menu-dock-v1';
  const f=fixture({'mayatnik-menu-dock-v509':old},{storageKey:key,defaultEdge:'top',stackSides:false});
@@ -110,4 +122,13 @@ test('leftEdge keeps the left dock at the viewport edge when the rail starts aft
  const previous=fixture();previous.rail.box.left=280;previous.dock.refresh();assert.equal(previous.gs[0].style['--may-dock-x'],'280px');
  for(const leftEdge of [()=>NaN,()=>Infinity,null,4]){const g=fixture({},{leftEdge});assert.equal(g.gs[0].style['--may-dock-x'],'8px');}
  assert.equal(fixture({},{leftEdge:()=>-10}).gs[0].style['--may-dock-x'],'4px');
+});
+
+
+test('last side slot keeps native scrollbar extent equal to computed range',()=>{
+ const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'right',index:26},g1:{edge:'left',index:0}})});
+ f.footer.box.top=756;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='right');
+ assert.equal(bar.style.top,'734px');assert.equal(bar.style.height,'22px');assert.equal(bar.children[0].style.height,'26px');
+ f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:1000,deltaMode:0},true);f.flush();
+ assert.equal(bar.scrollTop,parseFloat(bar.children[0].style.height)-parseFloat(bar.style.height));assert.equal(bar.scrollTop,4);
 });

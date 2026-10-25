@@ -111,9 +111,10 @@ test('square and ring UI geometry fits, renders and edits the same unchanged bin
  const Shapes=require('./zz-grid-shapes.js'),rows=['101','01011','10'],before=rows.slice();
  class P{moveTo(){}lineTo(){}closePath(){}arc(){}}
  const st={rows:rows.slice(),align:'center',cur:1},Z={rmb:{cell:'square',al:'zz'}};
- const ctx=vm.createContext({Z,gridsState:()=>st,window:{ZZGridShapes:Shapes},$:()=>({clientWidth:640,clientHeight:400}),Path2D:P,coneCss:(a,b)=>b,rmbFrame:1,rmbClock:1,rmbHeat:[],rmbAge:[],RMB_AGE:[[2,'red']]});
+ const ctx=vm.createContext({Z,gridsState:()=>st,window:{ZZGridShapes:Shapes,ZerkGridParity:require('../_js/grid-parity.js')},$:()=>({clientWidth:640,clientHeight:400}),Path2D:P,coneCss:(a,b)=>b,rmbFrame:1,rmbClock:1,rmbHeat:[],rmbAge:[],RMB_AGE:[[2,'red']]});
  vm.runInContext(source.slice(source.indexOf('function rmbSt(){'),source.indexOf('/* v0.795,',source.indexOf('function rmbSt(){'))),ctx);
  vm.runInContext(source.slice(source.indexOf('function rmbFit(){'),source.indexOf('function rmbUi(){')),ctx);
+ vm.runInContext(source.slice(source.indexOf('function rmbVisible('),source.indexOf('function rmbHighlightPolygon(')),ctx);
  vm.runInContext(source.slice(source.indexOf('function rmbRenderShapes('),source.indexOf('function renderRmb(){')),ctx);
  for(const cell of ['square','ring']){
   Z.rmb.cell=cell;ctx.rmbFit();const r=Z.rmb,{hs,u0}=ctx.rmbLayout(rows,rows.length,r.al,cell),geo={hs,u0,cell,rows,tw:r.s,ox:r.ox,oy:r.oy,M:rows.length,Wc:640,Hc:400};

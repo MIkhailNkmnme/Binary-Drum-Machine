@@ -1,0 +1,14 @@
+/* Body portal: no layout changes to source inputs, swatches or menu groups. */
+.may-colour-auto.gz-ladder{position:fixed;z-index:2147483646;display:flex;flex-direction:column;gap:2px;width:max-content;padding:2px;margin:0;--gz-w:120px;--gz-h:24px;--gz-n:10px;--gz-bg:#1b2430;background:#0e1116;border:0;border-radius:0;box-shadow:none;filter:none;overflow:visible;user-select:none;-webkit-user-select:none}
+.may-colour-auto[hidden],.may-colour-auto-menu[hidden]{display:none!important}
+.may-colour-auto .gz-hx{width:120px;max-width:100%;height:24px;flex:none;border-radius:0;justify-content:center;padding:0 10px;background:transparent!important;filter:none!important;text-shadow:none!important;--auto-border:0px}
+.may-colour-auto .gz-hx::before{inset:var(--auto-border);background:var(--gz-bg)!important;z-index:0;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%)}
+.may-colour-auto .gz-hx::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--c);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);pointer-events:none}
+.may-colour-auto .gz-hx:hover:not(.gz-on)::after,.may-colour-auto .gz-hx:focus-visible:not(.gz-on)::after{z-index:1;clip-path:polygon(0 50%,10px 0,11px 0,1px 50%,11px 100%,10px 100%,0 50%,100% 50%,calc(100% - 10px) 0,calc(100% - 11px) 0,calc(100% - 1px) 50%,calc(100% - 11px) 100%,calc(100% - 10px) 100%,100% 50%)}
+.may-colour-auto .gz-hx.gz-on{background:var(--c)!important;--auto-border:2px}
+.may-colour-auto .gz-hx:active{background:var(--c)!important;--auto-border:3px}
+.may-colour-auto .gz-hx:focus-visible{outline:none}
+.may-colour-auto .gz-hx>*{z-index:2;pointer-events:none}
+.may-colour-auto .may-colour-auto-mini{width:52px;align-self:flex-start}
+.may-colour-auto-menu{position:fixed;display:flex;flex-direction:column;gap:2px;width:120px;padding:2px;box-sizing:content-box;background:#0e1116;overflow:auto;border-radius:0;box-shadow:none}
+@media (pointer:coarse){.may-colour-auto{--gz-h:30px}.may-colour-auto .gz-hx{height:30px}}

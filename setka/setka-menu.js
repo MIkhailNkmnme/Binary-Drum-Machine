@@ -29,9 +29,14 @@
     const fire = e => { e.dispatchEvent(new Event('input', {bubbles:true})); e.dispatchEvent(new Event('change', {bubbles:true})); };
     const request = () => { if (!pending) pending = requestAnimationFrame(() => { pending = 0; refresh(); }); };
     const proxy = e => {
+      const pairHost=e.closest('[data-setka-pair]');
+      if(pairHost&&pairHost.querySelector('button')!==e)return null;
       const binding = {source:e, key:'setka-' + bindings.length};
       bindings.push(binding);
       const base = {name:label(e), tip:tip(e), pan:binding.key, col:0, disabled:()=>inactive(e)};
+      if(pairHost){const parts=[...pairHost.querySelectorAll('button')];binding.parts=parts;
+        return {...base,type:'pair',cls:'gz-split gz-bs setka-parity-pair',name:pairHost.dataset.setkaPair,mid:'',tip:pairHost.getAttribute('aria-label'),parts:parts.map(p=>({label:label(p),tip:tip(p),on:()=>p.getAttribute('aria-pressed')==='true',click:()=>{p.click();request();}}))};
+      }
       if (e.tagName === 'BUTTON') return {...base, type:'toggle', nameNow:()=>label(e),
         on:()=>e.matches('.on,[aria-pressed="true"]'), click:()=>{if(!inactive(e)){e.click();request();}}};
       if (e.tagName === 'SELECT') {
@@ -55,13 +60,14 @@
     const groups=[...source.querySelectorAll('.grids-toolgroup')].map(g=>({
       id:g.dataset.gridGroup,title:g.querySelector('.grids-toolheading').textContent.trim(),
       color:g.style.getPropertyValue('--grid-group-color').trim() || '#71c5ff',
-      items:[...g.querySelectorAll('button,input,select,textarea')].filter(e=>e.id!=='bRmbSettings').map(proxy)
+      items:g.dataset.gridGroup==='scale'&&window.setkaScale?window.setkaScale.menuItems(proxy):[...g.querySelectorAll('button,input,select,textarea')].filter(e=>e.id!=='bRmbSettings').map(proxy).filter(Boolean)
     }));
     rail=ZerkGrozd.rail(host,{key:'setka',groups,oneCol:true,onToggle:request,
       headerFactory:g=>ZerkGroupHeader.create({title:g.title,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'})});
     for(const binding of bindings){
       binding.node=rail.el.querySelector('[data-pan="'+binding.key+'"]');
-      binding.node.dataset.source=binding.source.id || binding.key;
+      if(binding.parts)binding.parts.forEach((p,i)=>{const half=binding.node.querySelector('.gz-h'+i);half.dataset.source=p.id;half.title=tip(p);half.setAttribute('aria-label',tip(p));});
+      else binding.node.dataset.source=binding.source.id || binding.key;
       binding.node.title=tip(binding.source);
       binding.node.addEventListener('click',e=>{if(inactive(binding.source)){e.preventDefault();e.stopImmediatePropagation();}},true);
       if(binding.node.gzList){binding.node.gzList.col=()=>binding.node.closest('.setka-menu-body');delete binding.node.gzList.placement;}
@@ -72,15 +78,18 @@
       for(const b of bindings)if(b.node.closest('.gz-group')===group)body.append(b.node);
       group.querySelectorAll(':scope > .gz-soty,:scope > .gz-wide').forEach(e=>e.remove());group.append(body);
     }
+    window.setkaScale?.decorate(rail);
     function refresh(){
       if(refreshing)return;refreshing=true;
       try{
         for(const b of lists)b.item.options=[...b.source.options].filter(o=>!o.hidden).map(o=>({v:o.value,name:o.textContent}));
         rail.refresh();
+        window.setkaScale?.sync();
         for(const b of bindings){
           const e=b.source,n=b.node,off=inactive(e);n.hidden=hidden(e);n.classList.toggle('gz-off-dis',off);
           n.setAttribute('aria-disabled',String(off));n.title=tip(e);n.setAttribute('aria-label',tip(e));
-          if(n.getAttribute('role')==='button')n.setAttribute('aria-pressed',String(e.matches('.on,[aria-pressed="true"]')));
+          if(b.parts)b.parts.forEach((p,i)=>n.querySelector('.gz-h'+i).setAttribute('aria-pressed',p.getAttribute('aria-pressed')));
+          if(!b.parts&&n.getAttribute('role')==='button')n.setAttribute('aria-pressed',String(e.matches('.on,[aria-pressed="true"]')));
           if(b.field){b.field.disabled=off;if(document.activeElement!==b.field)b.field.value=e.value;b.field.checked=e.checked;}
           const color=n.querySelector('input[type=color]');if(color)color.disabled=off;
         }

@@ -5,7 +5,7 @@ const source=fs.readFileSync(path.join(__dirname,'../setka/setka-engine.js'),'ut
 const functions=source.slice(source.indexOf('const RMB_FONT ='),source.indexOf('function rmbType(){'));
 const plain=value=>JSON.parse(JSON.stringify(value));
 const bits=rows=>rows.map(row=>Uint8Array.from([...row].flatMap(c=>[+c,+c])));
-function api(extra={}){const c=vm.createContext({rmbSt:()=>({cell:"rmb"}),...extra});vm.runInContext(functions,c);return c;}
+function api(extra={}){const c=vm.createContext({window:{ZerkGridParity:require('../_js/grid-parity.js')},rmbSt:()=>({cell:"rmb"}),...extra});vm.runInContext(functions,c);return c;}
 test('per-letter bounding area equals ones plus zeros; repeated letters stay separate',()=>{
  const c=api(),layout=c.rmbTextLayout('II'),n=c.rmbLetterCounts(layout.rows,layout);
  assert.deepEqual(plain(n.entries.map(e=>[e.width,e.height,e.ones,e.zeros,e.rhombi])),[[3,7,11,10,21],[3,7,11,10,21]]);
@@ -75,6 +75,8 @@ test('overlay draws selected cells without changing field data',()=>{
  vm.runInContext('rmbStatsCache={counts:rmbLetterCounts(Z.rows,rmbTextLayout("I"))};rmbCountHighlight={index:1,kind:"zeros"};',c);
  const before=JSON.stringify(c.Z.rows);let fill,stroke;const g={save(){},restore(){},fill(p){fill=p.paths;},stroke(p){stroke=p.paths;}};
  c.rmbDrawCountHighlight(g,{hs:[0,0,0,0,0],u0:0,rm:true,tw:10,ox:0,oy:0,M:5,Wc:100,Hc:100});assert.equal(fill,5);assert.equal(stroke,5);assert.equal(JSON.stringify(c.Z.rows),before);
+ c.Z.rmb={parity:{rowsOdd:false}};c.rmbDrawCountHighlight(g,{hs:[0,0,0,0,0],u0:0,rm:true,tw:10,ox:0,oy:0,M:5,Wc:100,Hc:100});assert.equal(fill,2);assert.equal(stroke,2);
+ c.Z.rmb.parity={cellsEven:false};c.rmbDrawCountHighlight(g,{hs:[0,0,0,0,0],u0:0,rm:true,tw:10,ox:0,oy:0,M:5,Wc:100,Hc:100});assert.equal(fill,4);assert.equal(stroke,4);assert.equal(JSON.stringify(c.Z.rows),before);
 });
 test('typing modifies only independent grid data and snapshots the previous text',()=>{
  const c=api({Z:{rmbText:'I',rows:['0']},prompt:()=> 'II',rmbSt:()=>({}),rmbFit(){},renderRmb(){},save(){},say(){}});let old;

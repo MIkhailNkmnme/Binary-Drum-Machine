@@ -15,14 +15,14 @@
  }
  function scene(s){baseline(s);const out=clone(s);delete out.scenes;delete out.scene;delete out.legacyImported;return out;}
  function shiftRows(s,index,remove,add,addBase){const base=baseline(s).slice(),next=s.rows.slice();next.splice(index,remove,...add);base.splice(index,remove,...(addBase||add.map(row=>'0'.repeat(row.length))));for(const name of ['colors','groups']){const map={};for(const [k,v] of Object.entries(s[name])){const [r,c]=k.split(',').map(Number);if(r>=index&&r<index+remove)continue;map[key(r>=index?r+add.length-remove:r,c)]=v;}s[name]=map;}s.rows=next.length?next:['0'];s.rowsBase=next.length?base:['0'];s.textBlocks=[];s.text='';s.textWidth=null;s.cur=Math.max(0,Math.min(s.rows.length-1,index));}
- function component(s,cell,polygon,neighbors){
-  if(!cell||s.rows[cell[0]]?.[cell[1]]!=='1')return [];
+ function component(s,cell,polygon,neighbors,visible=()=>true){
+  if(!cell||!visible(...cell)||s.rows[cell[0]]?.[cell[1]]!=='1')return [];
   if(neighbors?.(...cell)){
     const color=s.colors[key(...cell)]||'',seen=new Set([key(...cell)]),queue=[cell];
-    for(let i=0;i<queue.length;i++)for(const p of neighbors(...queue[i])||[]){const k=key(...p);if(!seen.has(k)&&s.rows[p[0]]?.[p[1]]==='1'&&(s.colors[k]||'')===color){seen.add(k);queue.push(p);}}return queue;
+    for(let i=0;i<queue.length;i++)for(const p of neighbors(...queue[i])||[]){const k=key(...p);if(!seen.has(k)&&visible(...p)&&s.rows[p[0]]?.[p[1]]==='1'&&(s.colors[k]||'')===color){seen.add(k);queue.push(p);}}return queue;
   }
   const color=s.colors[key(...cell)]||'',edges=new Map(),cells=new Map(),edgeKey=(a,b)=>{a=a.map(x=>Math.round(x*1e7)).join(',');b=b.map(x=>Math.round(x*1e7)).join(',');return a<b?a+'/'+b:b+'/'+a;};
-  for(let r=0;r<s.rows.length;r++)for(let c=0;c<s.rows[r].length;c++){if(s.rows[r][c]!=='1'||(s.colors[key(r,c)]||'')!==color)continue;const p=polygon(r,c),k=key(r,c),es=p.map((a,i)=>edgeKey(a,p[(i+1)%p.length]));cells.set(k,es);for(const e of es){if(!edges.has(e))edges.set(e,[]);edges.get(e).push(k);}}
+  for(let r=0;r<s.rows.length;r++)for(let c=0;c<s.rows[r].length;c++){if(!visible(r,c)||s.rows[r][c]!=='1'||(s.colors[key(r,c)]||'')!==color)continue;const p=polygon(r,c),k=key(r,c),es=p.map((a,i)=>edgeKey(a,p[(i+1)%p.length]));cells.set(k,es);for(const e of es){if(!edges.has(e))edges.set(e,[]);edges.get(e).push(k);}}
   const seen=new Set([key(...cell)]),queue=[key(...cell)];for(let i=0;i<queue.length;i++)for(const e of cells.get(queue[i])||[])for(const k of edges.get(e))if(!seen.has(k)){seen.add(k);queue.push(k);}return queue.map(k=>k.split(',').map(Number));
  }
  function legacyScene(item,base){
@@ -41,7 +41,7 @@
  function cancel(){if(!gesture)return;const s=cfg.state(),before=gesture.before;Object.assign(s,clone(before));gesture=null;redraw();}
  function mount(cv,config){if(canvas)return;canvas=cv;cfg=config;const $=id=>document.getElementById(id),s=()=>cfg.state();
   const xy=e=>{const b=cv.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top];};
-  const hit=e=>cfg.hit(s().rows,cfg.geometry(),...xy(e));
+  const hit=e=>{const p=cfg.hit(s().rows,cfg.geometry(),...xy(e));return p&&(!cfg.visible||cfg.visible(...p))?p:null;};
   const poly=(r,c)=>cfg.polygon(r,c,cfg.geometry());
   const consume=e=>{e.preventDefault();e.stopImmediatePropagation();};
   const put=e=>{const cell=hit(e);if(!cell)return;const state=s(),tool=state.tool,points=poly(...cell),p=xy(e),g=cfg.geometry();
@@ -51,7 +51,7 @@
    if(tool==='line'){let best,dist=Infinity;for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length],dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy))),d=Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy);if(d<dist){dist=d;best=[nodeKey(a),nodeKey(b)].sort().join('|');}}if(gesture.visited.has(best))return;gesture.visited.add(best);if(gesture.erase)delete state.lines[best];else state.lines[best]={color:state.color,size:state.stroke};}
   };
   cv.addEventListener('pointerdown',e=>{if(!s().tool||!['brush','erase','group','dot','line'].includes(s().tool)||e.button>2)return;consume(e);if(cfg.locked())return;cfg.stop?.();cv.focus({preventScroll:true});
-   if(s().tool==='group'){selection=component(s(),hit(e),poly,cfg.neighbors);cfg.editor()?.setSelection(selection);s().tool='';cfg.view().edit=true;cfg.message('Группа выделена: тяните для переноса; Копия — для копирования.');redraw();return;}
+   if(s().tool==='group'){selection=component(s(),hit(e),poly,cfg.neighbors,cfg.visible);cfg.editor()?.setSelection(selection);s().tool='';cfg.view().edit=true;cfg.message('Группа выделена: тяните для переноса; Копия — для копирования.');redraw();return;}
    gesture={before:clone(s()),visited:new Set(),erase:e.button===2};cv.setPointerCapture(e.pointerId);put(e);redraw();
   },true);
   cv.addEventListener('pointermove',e=>{if(!gesture)return;consume(e);put(e);redraw();},true);
@@ -123,9 +123,9 @@
   const identity=JSON.stringify(s.scenes.map(x=>x.name))+'/'+s.scene;if(identity!==sceneKey){sceneKey=identity;const select=$('gridsScenes');select.replaceChildren();const first=document.createElement('option');first.value=-1;first.textContent='Сцны';select.append(first);s.scenes.forEach((x,i)=>{const opt=document.createElement('option');opt.value=i;opt.textContent=x.name;select.append(opt);});select.value=s.scene??-1;}
  }
  function paint(ctx,g){if(!cfg)return;const s=cfg.state(),P=(r,c)=>cfg.polygon(r,c,g),path=points=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();},symbols=new Map();ctx.save();
-  for(const [k,color] of Object.entries(s.colors||{})){const [r,c]=k.split(',').map(Number);if(!own(s,r,c)||s.rows[r][c]!=='1'||r>=g.M)continue;path(P(r,c));ctx.fillStyle=color;ctx.fill();if(!s.groups[k]&&cfg.view().ln==='each'){ctx.strokeStyle=cfg.view().lc||'rgba(5,7,11,.45)';ctx.lineWidth=1;ctx.stroke();}}
+  for(const [k,color] of Object.entries(s.colors||{})){const [r,c]=k.split(',').map(Number);if(!own(s,r,c)||s.rows[r][c]!=='1'||r>=g.M||(cfg.visible&&!cfg.visible(r,c)))continue;path(P(r,c));ctx.fillStyle=color;ctx.fill();if(!s.groups[k]&&cfg.view().ln==='each'){ctx.strokeStyle=cfg.view().lc||'rgba(5,7,11,.45)';ctx.lineWidth=1;ctx.stroke();}}
   const outlines=new Map();
-  for(const [k,style] of Object.entries(s.groups||{})){const [r,c]=k.split(',').map(Number);if(!own(s,r,c)||s.rows[r][c]!=='1'||r>=g.M)continue;const p=P(r,c),id=style.id||k;
+  for(const [k,style] of Object.entries(s.groups||{})){const [r,c]=k.split(',').map(Number);if(!own(s,r,c)||s.rows[r][c]!=='1'||r>=g.M||(cfg.visible&&!cfg.visible(r,c)))continue;const p=P(r,c),id=style.id||k;
    if(!outlines.has(id))outlines.set(id,{edges:new Map(),style});const outline=outlines.get(id);
    p.forEach((a,i)=>{const b=p[(i+1)%p.length],ka=a.map(x=>Math.round(x*1e6)).join(','),kb=b.map(x=>Math.round(x*1e6)).join(','),edge=ka<kb?ka+'/'+kb:kb+'/'+ka;if(outline.edges.has(edge)&&!style.inner)outline.edges.delete(edge);else outline.edges.set(edge,[a,b]);});
    if(style.symbol){const item=symbols.get(id)||{text:style.symbol,x:0,y:0,n:0};item.x+=p.reduce((sum,q)=>sum+q[0],0)/p.length;item.y+=p.reduce((sum,q)=>sum+q[1],0)/p.length;item.n++;symbols.set(id,item);}}

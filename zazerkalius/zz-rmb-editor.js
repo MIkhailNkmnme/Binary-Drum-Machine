@@ -41,9 +41,11 @@
     cv.tabIndex=0;cv.setAttribute('aria-label','Ромбоиды: поле; в Правке щёлкните пустую клетку, чтобы создать ромб');
     const enabled=()=>cfg.enabled(),redraw=()=>cfg.redraw(),consume=e=>{e.preventDefault();e.stopImmediatePropagation();};
     const xy=e=>{const b=cv.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top];};
-    const at=(e,clamp=false)=>hit(cfg.rows(),cfg.geometry(),...xy(e),clamp);
-    function sync(){const rows=cfg.rows();if(!same(known,rows)){selected=[];drag=null;known=rows.slice();}if(!enabled()){selected=[];drag=null;space=false;}}
+    const visible=p=>!cfg.visible||cfg.visible(...p);
+    const at=(e,clamp=false)=>{const p=hit(cfg.rows(),cfg.geometry(),...xy(e),clamp);return p&&visible(p)?p:null;};
+    function sync(){const rows=cfg.rows();selected=selected.filter(visible);if(!same(known,rows)){selected=[];drag=null;known=rows.slice();}if(!enabled()){selected=[];drag=null;space=false;}}
     function commit(result){
+      if(result.selection?.some(p=>!visible(p))){cfg.message('Скрытые клетки недоступны для правки.');redraw();return false;}
       if(!result.ok){cfg.message('Перенос выходит за границы поля.');return false;}
       if(cfg.locked())return false;
       if(result.changed){known=result.rows.slice();selected=result.selection;cfg.commit(result.rows,result);}else{selected=result.selection;redraw();}
@@ -61,9 +63,9 @@
         else commit(apply(cfg.rows(),[d.cell],{create:true}));return;
       }
       if(!same(d.rows,cfg.rows())){selected=[];cfg.message('Поле изменилось во время жеста — повторите правку.');redraw();return;}
-      if(d.kind==='move'&&d.moved){commit(apply(d.rows,d.cells,{dr:d.dr,dc:d.dc,copy:d.copy}));return;}
+      if(d.kind==='move'&&d.moved){if(!d.invalid)commit(apply(d.rows,d.cells,{dr:d.dr,dc:d.dc,copy:d.copy}));else redraw();return;}
       if(d.kind==='box'){
-        if(d.moved){selected=unique([...d.base,...rectangle(d.rows,d.anchor,d.end)]);redraw();}
+        if(d.moved){selected=unique([...d.base,...rectangle(d.rows,d.anchor,d.end)]).filter(visible);redraw();}
         else if(!d.add)commit(apply(d.rows,[d.anchor],{create:true}));
         return;
       }
@@ -90,7 +92,7 @@
       if(drag.kind==='pan'){cv.style.cursor='grabbing';cfg.pan(drag.ox+x-drag.x,drag.oy+y-drag.y);return;}
       if(Math.abs(x-drag.x)+Math.abs(y-drag.y)>3)drag.moved=true;
       if(drag.kind==='view'){if(drag.moved){cv.style.cursor='grabbing';cfg.pan(drag.ox+x-drag.x,drag.oy+y-drag.y);}return;}
-      const cell=at(e,true);if(!cell)return;
+      const cell=at(e,true);drag.invalid=!!cfg.visible&&!cell;if(!cell){redraw();return;}
       if(drag.kind==='move'){drag.dr=cell[0]-drag.anchor[0];drag.dc=cell[1]-drag.anchor[1];drag.copy=e.ctrlKey||e.metaKey||!!cfg.options?.().copy;cv.style.cursor=drag.copy?'copy':'grabbing';}
       else drag.end=cell;redraw();
     },true);
@@ -124,11 +126,11 @@
       if(drag?.kind==='box'&&drag.moved){cells=unique([...drag.base,...rectangle(drag.rows,drag.anchor,drag.end)]);fill=true;}
       if(drag?.kind==='move'&&drag.moved){cells=drag.cells.map(([r,c])=>[r+drag.dr,c+drag.dc]);color=cells.every(p=>inside(cfg.rows(),p))?'#ffffff':'#ff6b6b';fill=true;}
       if(!cells.length)return;const path=new Path2D();
-      for(const [r,c] of cells){if(!inside(cfg.rows(),[r,c])||r>=geometry.M)continue;const points=cfg.polygon(r,c,geometry);path.moveTo(...points[0]);for(const p of points.slice(1))path.lineTo(...p);path.closePath();}
+      for(const [r,c] of cells){if(!inside(cfg.rows(),[r,c])||r>=geometry.M||!visible([r,c]))continue;const points=cfg.polygon(r,c,geometry);path.moveTo(...points[0]);for(const p of points.slice(1))path.lineTo(...p);path.closePath();}
       g.save();g.strokeStyle=color;g.lineWidth=2;g.lineJoin='miter';if(fill){g.globalAlpha=.25;g.fillStyle=color;g.fill(path);}g.globalAlpha=1;g.stroke(path);g.restore();
     }
-    function selectAll(){selected=[];for(let r=0;r<cfg.rows().length;r++)for(let c=0;c<cfg.rows()[r].length;c++)if(cfg.rows()[r][c]==='1')selected.push([r,c]);redraw();}
-    return {paint,sync,selectAll,setSelection(cells){selected=unique(cells).filter(p=>inside(cfg.rows(),p));redraw();},erase(){commit(apply(cfg.rows(),selected,{erase:true}));},cancelGesture(){if(drag)finish(true);space=false;},clear(){selected=[];drag=null;space=false;known=cfg.rows().slice();},selection:()=>selected.map(p=>p.slice())};
+    function selectAll(){selected=[];for(let r=0;r<cfg.rows().length;r++)for(let c=0;c<cfg.rows()[r].length;c++)if(cfg.rows()[r][c]==='1'&&visible([r,c]))selected.push([r,c]);redraw();}
+    return {paint,sync,selectAll,setSelection(cells){selected=unique(cells).filter(p=>inside(cfg.rows(),p)&&visible(p));redraw();},erase(){commit(apply(cfg.rows(),selected,{erase:true}));},cancelGesture(){if(drag)finish(true);space=false;},clear(){selected=[];drag=null;space=false;known=cfg.rows().slice();},selection:()=>selected.map(p=>p.slice())};
   }
   return {inside,hit,rectangle,apply,mount};
 });

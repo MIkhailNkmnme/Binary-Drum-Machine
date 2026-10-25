@@ -265,3 +265,6 @@ body.mayatnik-menu-ready .gz-group>.gz-head>.gz-ar{display:none!important}
 body.may-zen>.may-menu-side-scroll{display:none!important}
 
 @media(min-width:601px){body.mayatnik-menu-ready header #paintTools.pt-grid>.may-docked.may-dock-side.may-dock-drag,body.mayatnik-menu-ready .may-menu-side-stack.may-docked.may-dock-side.may-dock-drag{clip-path:none}}
+
+/* Frame/row count already sits below the transport thumb. */
+#mayFieldCaption{display:none!important}

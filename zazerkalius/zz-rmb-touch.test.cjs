@@ -6,6 +6,17 @@ test('pinch anchors the world point under the midpoint and clamps scale',()=>{
  assert.equal(T.transform(start,{...current,distance:10000},{s:20,ox:0,oy:0}).s,160);
  assert.equal(T.transform(start,{...current,distance:.1},{s:20,ox:0,oy:0}).s,2);
 });
+test('setView receives optional baseline and current midpoint without changing its legacy transform',()=>{
+ const events={};let proposal,meta,view={s:20,ox:5,oy:10};
+ const cv={getBoundingClientRect:()=>({left:0,top:0}),addEventListener:(t,f)=>(events[t]??=[]).push(f),setPointerCapture(){},releasePointerCapture(){}};
+ T.mount(cv,{view:()=>view,setView:(v,g)=>{proposal=v;meta=g;},save(){},cancel(){}});
+ const fire=(type,id,x,y)=>{for(const fn of events[type]||[])fn({pointerType:'touch',pointerId:id,clientX:x,clientY:y,preventDefault(){},stopImmediatePropagation(){}});};
+ fire('pointerdown',1,10,20);fire('pointerdown',2,30,20);fire('pointermove',2,70,20);
+ assert.deepEqual(meta,{start:{x:20,y:20,distance:20},current:{x:40,y:20,distance:60},view:{s:20,ox:5,oy:10}});
+ assert.deepEqual(proposal,T.transform(meta.start,meta.current,meta.view));
+ // Host mutations of metadata must not corrupt the next event's baseline.
+ meta.start.x=999;meta.view.ox=999;fire('pointermove',2,70,20);assert.equal(meta.start.x,20);assert.equal(meta.view.ox,5);
+});
 function fixture(mode='edit'){
  let rows=['010100','000000','000000'],axes=[],view={s:20,ox:0,oy:0},commits=0,saves=0,cancels=0;const events={},options={};
  const cv={style:{},setAttribute(){},focus(){},setPointerCapture(){},releasePointerCapture(){},getBoundingClientRect:()=>({left:13,top:17}),addEventListener:(t,f)=>(events[t]??=[]).push(f)};

@@ -61,7 +61,7 @@
   const pair = (a, b, la, lb, o = {}) => ({ type: 'pair', cls: 'gz-split gz-bs' + (o.cls ? ' ' + o.cls : ''), name: o.name || la + ' · ' + lb, mid: '', tip: o.tip || (a.tip + ' · ' + b.tip),
     ...(o.dis ? { disabled: o.dis } : {}), parts: [{ label: la, tip: a.tip, on: a.on, click: a.click, ...(a.open ? { open: a.open, ink: a.ink } : {}) }, { label: lb, tip: b.tip, on: b.on, click: b.click, ...(b.open ? { open: b.open, ink: b.ink } : {}) }] });
   const withColour = (id, colId, label) => { const t = tgl(id), src = $(colId), open = picker(src);
-    return {...pair(t, { tip: 'Цвет', on: t.on, open, ink: () => src.value }, label, '●', { cls: 'gz-wl', name: label, tip: t.tip + ' · справа — цвет' }),src:id}; };
+    return {...pair(t, { tip: 'Цвет', on: t.on, open, ink: () => src.value }, label, '●', { cls: 'gz-wl', name: label, tip: t.tip + ' · справа — цвет' }),src:id,colourSource:colId}; };
   const both = (x, y) => () => x.dis() && y.dis();
   const rowsMax = () => Math.max(8, +$('rows').value || 512);
   const groups = [
@@ -82,7 +82,7 @@
       { ...num('speed', { name: 'Анимация', tip: 'Скорость анимации', fmt: v => '×' + v, zero: 1 }), name: 'Анимация',   // «Анимация» — включатель внутри своего ползунка скорости
         head: { label: '▶ Анимация', on: () => $('bPlay').getAttribute('aria-pressed') === 'true', click: () => $('bPlay').click() } },
       num('frameT', { name: 'Кадр, с', tip: 'Сколько длится каждый кадр анимации · шаг 0,05 с · двойной щелчок — 0 (как успевает экран)', fmt: v => v ? String(+(v * .05).toFixed(2)).replace('.', ',') + ' с / кадр' : 'кадр — без паузы', zero: 0 }),   // v0.263
-      { ...num('frame', { name: 'Кадр', fmt: v => String(v), zero: 0 }), tip: 'Кадр = вершина · −N / +N — на столько вершин, какая скорость анимации (×N; в паре — пар) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — к любой · двойной щелчок — 0',
+      { ...num('frame', { name: 'Кадр', fmt: v => v+' \\ '+($('frame').dataset.rows||$('rows').value), zero: 0 }), tip: 'Кадр = вершина · −N / +N — на столько вершин, какая скорость анимации (×N; в паре — пар) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — к любой · двойной щелчок — 0',
         // v0.317: «если ставлю ×2 — в стрелках кадра также пиши +2»: стрелки шагают на скорость анимации (подписи −N / +N обновляет toolSync ниже)
         step: d => { if (window.mayThirds?.on() && Math.abs(d) !== 2) { window.mayThirds.step(Math.sign(d)); return; }   // v0.318: «Трети»
           const e = $('frame'), N = Math.abs(d) === 2 ? Math.max(1, Math.round(((+e.max || 0) - (+e.min || 0)) / 20)) : Math.max(1, +$('speed').value || 1), v = Math.max(+e.min || 0, Math.min(+e.max, +e.value + Math.sign(d) * N)); if (String(v) !== e.value) { e.value = String(v); fire(e); } },
@@ -103,7 +103,7 @@
       check('symTriangles','tri'),button('bTriangleAxes','tri'),num('symTriangleRows',{name:'Высота ≥',tip:'Высота тотемов: строк от',slider:false}),
       { type: 'vpair', name: 'Строк', tip: 'Длина оси: строк от · до', parts: [{ ...num('symRowsMin', { slider: false }), name: 'строк ≥' }, { ...num('symRowsMax', { slider: false, inf: true, fromInf: () => +$('symRowsMin').value || 2 }), name: '≤' }] },
       { type: 'vpair', name: 'Бит', tip: 'Ширина оси: бит от · до', parts: [{ ...num('symBitsMin', { slider: false }), name: 'бит ≥' }, { ...num('symBitsMax', { slider: false, inf: true, fromInf: () => +$('symBitsMin').value || 2 }), name: '≤' }] }, button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
-    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintNew','reset'),withColour('bFill','fillColour','Заливка'),button('bAutoVertical','line'),button('bStolb','swap'),button('bPaintMid','line'),withColour('midOneOn','midOneColour','Центр 1'),withColour('midZeroOn','midZeroColour','Центр 0'),check('midWide','line'),button('bAutoAll','steps'),button('bFillGrow','plus'),check('fillMirror','mirror'),select('fillArea','grid4'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
+    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintNew','reset'),withColour('bFill','fillColour','Заливка'),withColour('bAutoVertical','verticalFillColour','Столбы'),withColour('bStolb','stolbFillColour','Проход'),button('bPaintMid','line'),withColour('midOneOn','midOneColour','Центр 1'),withColour('midZeroOn','midZeroColour','Центр 0'),check('midWide','line'),button('bAutoAll','steps'),button('bFillGrow','plus'),check('fillMirror','mirror'),select('fillArea','grid4'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
     { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',slider:false,zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50})] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
@@ -142,7 +142,7 @@
   for (const g of groups) { const box = rail.el.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
     const wide = t => ['value', 'list', 'control', 'vpair'].includes(t), a = g.items.filter(i => !wide(i.type)), b = g.items.filter(i => wide(i.type));
     const ca = box.querySelectorAll('.gz-soty > .gz-hx'), cb = box.querySelectorAll('.gz-wide > .gz-hx');
-    a.forEach((it, i) => { if(ca[i]&&it.src)railSourceButtons.set(it.src,ca[i]);if (ca[i] && (it.tip || it.name)) ca[i].title = it.tip || it.name; }); b.forEach((it, i) => { if(cb[i]&&it.type==='list')cb[i].dataset.listTitle=it.name; if (cb[i] && it.type !== 'control' && it.type !== 'vpair' && (it.tip || it.name)) cb[i].title = it.tip || it.name; }); }
+    a.forEach((it, i) => { if(ca[i]&&it.src)railSourceButtons.set(it.src,ca[i]);if(ca[i]&&it.colourSource&&['fillColour','verticalFillColour','stolbFillColour','midZeroColour','midOneColour'].includes(it.colourSource)){const dot=ca[i].querySelector('.gz-h1');if(dot){dot.classList.add('may-auto-ink');window.MayatnikColourAuto?.adaptPalette(dot,it.colourSource,()=>$(it.colourSource).value,null,{paint:false});}}if (ca[i] && (it.tip || it.name)) ca[i].title = it.tip || it.name; }); b.forEach((it, i) => { if(cb[i]&&it.type==='list')cb[i].dataset.listTitle=it.name; if (cb[i] && it.type !== 'control' && it.type !== 'vpair' && (it.tip || it.name)) cb[i].title = it.tip || it.name; }); }
   // v0.327: «внизу сделай полосу для меню и в центр перемести» — полоса во всю ширину под полем, в её центре — ползунок «кадр» из «Поля»
   const bbCells = {};   // v0.355: ползунки «Поля», что уходят в список «Хорр»
   { const bar = document.createElement('div'); bar.id = 'mayBottomBar'; document.body.append(bar);
@@ -555,11 +555,18 @@
     const sb = ptBtn('sizeCtl', 'plus', sz, () => szSet(1)); sb.oncontextmenu = ev => { ev.preventDefault(); szSet(-1); }; sb.addEventListener('wheel', ev => { ev.preventDefault(); szSet(ev.deltaY < 0 ? 1 : -1); }, { passive: false });
     toolSync.push(() => { const t = 'Цифры ' + sz.value + ' %'; sb.title = 'Размер цифр в клетке · щелчок — больше, правый — меньше, колесо'; const nm = sb.querySelector('.gz-nm'); if (nm && nm.textContent !== t) nm.textContent = t; }); gView.append(done(sb));
   }
+  // Independent view switches: neither half turns its neighbour off.
+  for(const [id,title,prefix,keys]of [['parityCells','Клетки','Кл',['cellsEven','cellsOdd']],['parityRows','Строки','Стр',['rowsEven','rowsOdd']]]){
+    const row=document.createElement('div');row.className='gz-hx gz-pair gz-split may-segments may-independent-selector';row.dataset.n=id;row.setAttribute('role','group');row.setAttribute('aria-label',title+' — чётные и нечётные');row.title=title+' — видимость чётных и нечётных независимо; исходные биты сохраняются';
+    const parts=keys.map((key,i)=>{const part=document.createElement('span');part.className='gz-half gz-h'+i;part.textContent=prefix+' '+['Чёт','Нечёт'][i];part.title=title+' — '+['чётные','нечётные'][i]+'. Показать или скрыть независимо.';part.setAttribute('role','button');part.tabIndex=0;part.setAttribute('aria-label',part.title);
+      part.addEventListener('click',e=>{e.stopPropagation();const api=window.mayParity;if(api)api.set(key,api.get()[key]===false);rail.refresh();placeTools();});part.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();part.click();}});row.append(part);return part;});
+    toolSync.push(()=>{const value=window.mayParity?.get()||{};parts.forEach((part,i)=>{const on=value[keys[i]]!==false;part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));});});gView.append(row);
+  }
   // v0.226: «и эту раздели в 2, отдели фоном или вложенностью, сделай по темам» — список «Вида» в два столбца (.pt-col), в них блоки по темам
   // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.
   // У блока поля 2 px сверху и снизу и нет зазора между блоками — шаг рядов (кнопка + зазор 4 px) тот же, зубцы рамки (zig) — против остриёв кнопок.
   { const VIEW_COLS = [
-      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat']],
+      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'parityCells', 'parityRows', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
       [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'lineMeasures', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
@@ -1187,6 +1194,7 @@
     const sw0=part('may-center-swatch','','Цвет центра 0',c0),bit0=part('may-center-bit','0','Включить или выключить центр 0',()=>$('midZeroOn').click());
     const label=part('may-center-label','Центр','Включить или выключить оба бита центра',()=>{const on=!($('midZeroOn').checked&&$('midOneOn').checked);for(const id of ['midZeroOn','midOneOn'])if($(id).checked!==on)$(id).click();});
     const bit1=part('may-center-bit','1','Включить или выключить центр 1',()=>$('midOneOn').click()),sw1=part('may-center-swatch','','Цвет центра 1',c1);
+    for(const [dot,id]of [[sw0,'midZeroColour'],[sw1,'midOneColour']])window.MayatnikColourAuto?.adaptPalette(dot,id,()=>$(id).value);
     one.addEventListener('click',e=>{if(e.target===one)label.click();});
     toolSync.push(()=>{for(const [n,id]of [[bit0,'midZeroOn'],[bit1,'midOneOn']]){n.classList.toggle('gz-on',$(id).checked);n.setAttribute('aria-pressed',String($(id).checked));}for(const [n,id]of [[sw0,'midZeroColour'],[sw1,'midOneColour']])if(n.dataset.colour!==$(id).value){n.dataset.colour=$(id).value;n.style.backgroundColor=$(id).value;}one.classList.toggle('gz-on',$('midZeroOn').checked||$('midOneOn').checked);});
   }}
@@ -1235,6 +1243,7 @@
   let activeList=null;
   // v0.497: only the popup escapes group stacking contexts; its owner stays in place.
   function popupContains(group, target) {
+    if(window.MayatnikColourAuto?.contains(group,target))return true;
     const list=activeList?.group===group && activeList.list;
     return !!(list?.isConnected && (target ? list.contains(target) : list.matches(':hover')));
   }

@@ -8,6 +8,7 @@ let rmbCur = null, rmbVals = [], rmbHeat = [], rmbAge = [], rmbFrame = 0, rmbKey
    бледнее. Цифры — только при крупном наезде (на общем плане они превращались в зернистость); «⇣ за волной» — вид сам едет за строкой волны */
 const RMB_AGE = [[0.5, "#ff3b3b"], [1, "#ff8a3d"], [2, "#ffd166"], [4, "#9be564"], [8, "#22d3ee"], [16, "#5b7cfa"]];
 function rmbSt(){ if (!Z.rmb || typeof Z.rmb !== "object") Z.rmb = {}; const r = Z.rmb;
+  if(!r.parity||typeof r.parity!=="object")r.parity={};
   if (!["c", "zz", "l", "r"].includes(r.al)) r.al = "zz"; if (!["each", "rmb", "grp", "none"].includes(r.ln)) r.ln = "each";
   if (!["", "chg", "age", "pair"].includes(r.gl)) r.gl = ""; if (!["tri","rmb","square","ring"].includes(r.cell)) r.cell = "tri"; r.wave = "mir"; if (!["l", "d", "r"].includes(r.cpri)) r.cpri = "l"; return r; }
 function rmbLayout(R, M, al, cell){   /* → hs — начало каждого ряда в полуклетках, ok — лежит ли ряд на сетке ряда выше, u0 — первый треугольник ряда ▼ (1)
@@ -205,6 +206,7 @@ function rmbHighlightCells(rows, counts, selection){
   }
   return cells;
 }
+function rmbVisible(row,col){return window.ZerkGridParity.visible(row,col,Z.rmb?.parity);}
 function rmbHighlightPolygon(row,col,geometry){
   if(geometry.cell==="square"||geometry.cell==="ring")return window.ZZGridShapes.polygon(row,col,geometry);
   const {hs,u0,rm,tw,ox,oy}=geometry;
@@ -337,7 +339,7 @@ function gridsApply(value){rmbWStop();Z.grids=JSON.parse(JSON.stringify(value.da
 const rmbIsMobile=()=>!!window.matchMedia?.("(max-width:760px), (pointer:coarse) and (max-width:1100px)").matches;
 function rmbEditorWire(cv){
   if(rmbEditor||!window.ZZRmbEditor)return;
-  const common={rows:()=>gridsState().rows,locked:gridsLocked,message:say,
+  const common={rows:()=>gridsState().rows,locked:gridsLocked,message:say,visible:rmbVisible,visibilityKey:()=>JSON.stringify(rmbSt().parity),
     geometry:()=>{const r=rmbSt();if(!r.s)rmbFit();const {hs,u0}=rmbLayout(gridsState().rows,Math.min(gridsState().rows.length,4096),r.al,r.cell);return {hs,u0,rm:r.cell==="rmb",cell:r.cell,rows:gridsState().rows,tw:r.s,ox:r.ox,oy:r.oy};},
     polygon:rmbHighlightPolygon,redraw:renderRmb,save,
     pan:(x,y)=>{const r=rmbSt();r.ox=x;r.oy=y;renderRmb();},
@@ -345,10 +347,10 @@ function rmbEditorWire(cv){
   };
   if(window.ZZRmbTouch)rmbTouch=window.ZZRmbTouch.mount(cv,{
     view:()=>{const r=rmbSt();if(!r.s)rmbFit();return {s:r.s,ox:r.ox,oy:r.oy};},
-    setView:v=>{Object.assign(rmbSt(),v);renderRmb();},save,
+    setView:(v,gesture)=>{if(window.setkaScale&&gesture)return window.setkaScale.gesture(gesture);if(window.setkaScale?.locked())return;Object.assign(rmbSt(),v);renderRmb();},save,
     cancel:()=>{rmbEditor?.cancelGesture();rmbAxisTool?.cancel();cv._rmbCancelPan?.();window.ZZGrids?.cancel();}
   });
-  window.ZZGrids?.mount(cv,{state:gridsState,geometry:common.geometry,polygon:rmbHighlightPolygon,hit:window.ZZRmbEditor.hit,
+  window.ZZGrids?.mount(cv,{state:gridsState,geometry:common.geometry,polygon:rmbHighlightPolygon,hit:window.ZZRmbEditor.hit,visible:rmbVisible,
     snapshot:gridsSnapshot,locked:gridsLocked,redraw:renderRmb,save,message:say,view:rmbSt,fit:rmbFit,stop:rmbWStop,
     neighbors:(row,col)=>{const g=common.geometry();return window.ZZGridShapes?.supported(g)?window.ZZGridShapes.neighbors(gridsState().rows,g,row,col):null;},importRows:()=>setkaSourceRows(),editor:()=>rmbEditor,axis:()=>rmbAxisTool,legacy:()=>({scenes:Z.triScenes||[],cells:Z.triCells||{},dots:Z.triDots||{},lines:Z.triLines||{}})});
   if(window.ZZRmbAxis)rmbAxisTool=window.ZZRmbAxis.mount(cv,{...common,
@@ -365,7 +367,7 @@ function rmbDrawCountHighlight(g,geometry){
   if(!cells.length)return;
   const path=new Path2D();
   for(const [row,col] of cells){
-    if(row>=geometry.M)continue;
+    if(row>=geometry.M||!rmbVisible(row,col))continue;
     const points=rmbHighlightPolygon(row,col,geometry);
     if(points.every(p=>p[0]<0)||points.every(p=>p[0]>geometry.Wc)||points.every(p=>p[1]<0)||points.every(p=>p[1]>geometry.Hc))continue;
     path.moveTo(...points[0]);for(const point of points.slice(1))path.lineTo(...point);path.closePath();
@@ -388,6 +390,7 @@ function rmbType(){
 }
 function rmbFit(){
   const cv = $("rmbCv"); if (!cv) return; const r = rmbSt(), R = gridsState().rows, M = Math.min(R.length, 4096); if (!M) return;
+  if(r.s>0&&window.setkaScale?.locked())return;
   const { hs } = rmbLayout(R, M, r.al, r.cell);
   if(r.cell==="square"||r.cell==="ring"){
     const bounds=window.ZZGridShapes.bounds(R,{hs,cell:r.cell}),W=cv.clientWidth||300,H=cv.clientHeight||200,pad=12;
@@ -403,6 +406,7 @@ function rmbFit(){
 }
 function rmbUi(){
   const r = rmbSt(), q = (s) => document.querySelectorAll("#w-rmb " + s);
+  q("button[data-grid-parity]").forEach(b=>{const on=r.parity[b.dataset.gridParity]!==false;b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));});
   {rmbEditor?.sync();const edit=!!r.edit,axis=!!r.axisMode,hint=$("rmbEditHint");
     for(const [id,on] of [["bRmbEdit",edit],["bRmbAxis",axis]]){const b=$(id);if(b){b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));}}
     if(hint){hint.hidden=!edit&&!axis;hint.textContent=rmbIsMobile()?(axis?"Ось — предпросмотр · Применить зеркала — записать биты · два пальца — вид":"Касание — выбрать / создать · тянуть поле — сдвиг · выбранное — перенос · два пальца — масштаб"):axis?"Shift + протяжка — ось и её правка · обычная протяжка — всё поле · направление — предпросмотр · Применить зеркала — записать биты · пробел — вид":"Тянуть — всё поле · Shift — инструмент / выделение · Ctrl — копия · щелчок 0 → 1 · Delete — стереть";}
@@ -440,6 +444,8 @@ function rmbWire(){
     pan:(x,y)=>{Object.assign(rmbSt(),{ox:x,oy:y,fol:false});renderRmb();},save});
   rmbEditorWire(cv);
   const re = () => { rmbUi(); save(); renderRmb(); };
+  if(window.SetkaScale){window.setkaScale=window.SetkaScale.mount({canvas:cv,view:rmbSt,rows:()=>gridsState().rows,layout:rmbLayout,save,render:()=>renderRmb(),fit:rmbFit,refresh:()=>window.setkaMenuRefresh?.()});window.setkaScale.sourceControls($("gridsToolbar"));}
+  W.querySelectorAll("button[data-grid-parity]").forEach(b=>b.onclick=()=>{window.ZZGrids?.cancel();rmbEditor?.clear();rmbAxisTool?.cancel();rmbSt().parity[b.dataset.gridParity]=rmbSt().parity[b.dataset.gridParity]===false;rmbCountHighlight=null;re();});
   $("bRmbEdit").onclick=()=>{const r=rmbSt();gridsState().tool="";r.edit=!r.edit;r.axisMode=false;rmbAxisTool?.cancel();rmbEditor?.clear();if(r.edit){if(rmbW.on)rmbWStop();rmbFit();cv.focus({preventScroll:true});}re();};
   $("bRmbAxis").onclick=()=>{const r=rmbSt();gridsState().tool="";r.axisMode=!r.axisMode;r.edit=false;rmbEditor?.clear();rmbAxisTool?.cancel();if(r.axisMode){if(rmbW.on)rmbWStop();cv.focus({preventScroll:true});}re();};
   $("bRmbAxisPos").onclick=()=>rmbAxisTool?.preview("positive");$("bRmbAxisNeg").onclick=()=>rmbAxisTool?.preview("negative");
@@ -475,7 +481,7 @@ function rmbWire(){
   $("bRmbWXor").onclick = () => { const r = rmbSt(); r.wxor = !r.wxor; re(); };
   if (window.ResizeObserver) new ResizeObserver(() => { if (winOpen("w-rmb")) renderRmb(); }).observe(cv);
   // колесо — наезд к мыши, тянешь — сдвиг, щелчок — текущая строка, двойной — вписать
-  cv.addEventListener("wheel", (e) => { e.preventDefault(); const r = rmbSt(); if (!r.s) rmbFit();
+  cv.addEventListener("wheel", (e) => { if(window.setkaScale)return window.setkaScale.wheel(e);e.preventDefault(); const r = rmbSt(); if (!r.s) rmbFit();
     const k = Math.pow(1.0015, -e.deltaY), s = Math.max(2, Math.min(160, r.s * k)), f = s / r.s, mx = e.offsetX, my = e.offsetY;
     r.ox = mx - (mx - r.ox) * f; r.oy = my - (my - r.oy) * f; r.s = s; renderRmb(); clearTimeout(cv._sv); cv._sv = setTimeout(save, 400); }, { passive: false });
   let dr = null;cv._rmbCancelPan=()=>{dr=null;cv.style.cursor="";};
@@ -502,14 +508,14 @@ function rmbPairs(M, hs, upK, rm, pri){
   const ord = pri === "d" ? "DLR" : pri === "r" ? "RDL" : "LDR";
   for (let i = 0; i < M; i++) { const v = rmbVals[i]; if (!v) continue;
     for (let k = 0; k < v.length; k++) {
-      const a = v[k]; if (a === 9 || PR[i][k]) continue;
+      const a = v[k]; if (a === 9 || PR[i][k] || !rmbVisible(i,rm?k>>1:k)) continue;
       if (rm) { if (!(k & 1) && k + 1 < v.length && v[k + 1] !== 9) { PR[i][k] = 2; PR[i][k + 1] = 1; n++; } continue; }
       if (!upK(k)) continue;
       for (const c of ord) {
-        if (c === "L") { if (k > 0 && !PR[i][k - 1] && v[k - 1] === a) { PR[i][k] = 1; PR[i][k - 1] = 2; n++; break; } }
-        else if (c === "R") { if (k + 1 < v.length && !PR[i][k + 1] && v[k + 1] === a) { PR[i][k] = 2; PR[i][k + 1] = 1; n++; break; } }
+        if (c === "L") { if (k > 0 && !PR[i][k - 1] && rmbVisible(i,k-1) && v[k - 1] === a) { PR[i][k] = 1; PR[i][k - 1] = 2; n++; break; } }
+        else if (c === "R") { if (k + 1 < v.length && !PR[i][k + 1] && rmbVisible(i,k+1) && v[k + 1] === a) { PR[i][k] = 2; PR[i][k + 1] = 1; n++; break; } }
         else if (i + 1 < M) { const w = rmbVals[i + 1], kk = hs[i] + k - hs[i + 1];
-          if (w && kk >= 0 && kk < w.length && !upK(kk) && !PR[i + 1][kk] && w[kk] === a) { PR[i][k] = 4; PR[i + 1][kk] = 3; n++; break; } }
+          if (w && kk >= 0 && kk < w.length && !upK(kk) && !PR[i + 1][kk] && rmbVisible(i+1,kk) && w[kk] === a) { PR[i][k] = 4; PR[i + 1][kk] = 3; n++; break; } }
       }
     }
   }
@@ -542,6 +548,7 @@ function rmbRenderShapes(g,geo,r,c0,c1){
   for(let row=first;row<=last;row++){
     const value=rows[row],start=cell==="square"?Math.max(0,Math.floor(-ox/tw-hs[row]/2)):0,end=cell==="square"?Math.min(value.length,Math.ceil((Wc-ox)/tw-hs[row]/2)):value.length;
     for(let col=start;col<end;col++){
+      if(!rmbVisible(row,col))continue;
       const p=shapes.polygon(row,col,geo);if(!p.length||p.every(v=>v[0]<0)||p.every(v=>v[0]>Wc)||p.every(v=>v[1]<0)||p.every(v=>v[1]>Hc))continue;
       const one=value[col]==='1';let color=one?c1:c0;
       if(r.gl==="chg"){const age=rmbFrame-(rmbHeat[row]?.[col]??-1e9);if(age<Math.max(1,M))color=one?"#ffd166":"#b8860b";}
@@ -586,13 +593,14 @@ function renderRmb(){
     rmbVals = NV; rmbKey = key; if (rmbHeat.length > M) rmbHeat.length = M; if (rmbAge.length > M) rmbAge.length = M;
   }
   const upK = (k) => ((k + u0) & 1) === 0, cube = !!r.cube&&r.cell!=="square"&&r.cell!=="ring";
-  if (cube && (rmbPairOf !== rmbVals || rmbPairKey !== key + r.cpri)) { rmbPair = rmbPairs(M, hs, upK, rm, r.cpri); rmbPairOf = rmbVals; rmbPairKey = key + r.cpri; }
+  if (cube && (rmbPairOf !== rmbVals || rmbPairKey !== key + r.cpri + JSON.stringify(r.parity))) { rmbPair = rmbPairs(M, hs, upK, rm, r.cpri); rmbPairOf = rmbVals; rmbPairKey = key + r.cpri + JSON.stringify(r.parity); }
   rmbUi(); rmbTextStats(); window.ZZGrids?.sync();
   const cv = $("rmbCv"); if (!cv) return;
   const dpr = window.devicePixelRatio || 1, Wc = cv.clientWidth, Hc = cv.clientHeight; if (Wc < 10 || Hc < 10) return;
   if (cv.width !== Math.round(Wc * dpr) || cv.height !== Math.round(Hc * dpr)) { cv.width = Math.round(Wc * dpr); cv.height = Math.round(Hc * dpr); }
   const mobileSize=rmbIsMobile()?Wc+"x"+Hc:null;if(mobileSize&&cv._rmbMobileSize!==mobileSize)rmbFit();cv._rmbMobileSize=mobileSize;
   if (!r.s) rmbFit();
+  window.setkaScale?.hold();
   if (r.fol && AN && AN.on && r.cell!=="ring") r.oy = Hc * 0.4 - Math.min(AN.row, M - 1) * r.s * (r.cell==="square"?1:0.8660254);   // ⇣ за волной: строка волны — на 2/5 высоты окна
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
   const tw = r.s, hw = tw / 2, h = tw * 0.8660254, X = (p) => r.ox + p * hw, Y = (i) => r.oy + i * h;
@@ -603,7 +611,7 @@ function renderRmb(){
   if(r.cell==="square"||r.cell==="ring"){
     const geometry={hs,u0,rm:false,cell:r.cell,rows:R,tw,ox:r.ox,oy:r.oy,M,Wc,Hc};
     rmbRenderShapes(g,geometry,r,c0,c1);
-    window.ZZGrids?.paint(g,geometry);rmbAxisTool?.paintPreview(g,geometry);rmbDrawLetterBorders(g,geometry);rmbDrawCountHighlight(g,geometry);rmbEditor?.paint(g,geometry);rmbAxisTool?.paint(g,geometry);return;
+    rmbPaintOverlays(g,geometry);return;
   }
   // Grid follows the very same hs/u0 coordinates as the cells in every inclination.
   if(r.out&&M&&window.ZZRmbGrid){const grid=new Path2D();
@@ -612,12 +620,12 @@ function renderRmb(){
     g.strokeStyle="rgba(160,170,190,.16)";g.lineWidth=1;g.stroke(grid);
   }
   const i0 = Math.max(0, Math.floor(-r.oy / h) - 1), i1 = Math.min(M - 1, Math.ceil((Hc - r.oy) / h) + 1);
-  if (gridsState().cur >= i0 && gridsState().cur <= i1) { g.fillStyle = coneCss("--acc", "#b98cf0"); g.globalAlpha = 0.12; g.fillRect(0, Y(gridsState().cur), Wc, h); g.globalAlpha = 1; }
+  if (!window.ZerkGridParity.active(r.parity)&&gridsState().cur >= i0 && gridsState().cur <= i1) { g.fillStyle = coneCss("--acc", "#b98cf0"); g.globalAlpha = 0.12; g.fillRect(0, Y(gridsState().cur), Wc, h); g.globalAlpha = 1; }
   const P = { u1: new Path2D(), u0: new Path2D(), d1: new Path2D(), d0: new Path2D(), e: new Path2D() }, HT = [0, 1, 2, 3].map(() => [new Path2D(), new Path2D()]);
   const L = new Path2D(), TL = Math.max(1, M), gm = r.gl, lm = r.ln, digs = r.num && tw >= (rm ? 18 : 22) ? [] : null;   // v0.794: цифры — только крупно
   const AG = gm === "age" ? RMB_AGE.map(() => [new Path2D(), new Path2D()]) : null;
   const CB = cube ? [0, 1, 2, 3].map(() => [new Path2D(), new Path2D()]) : null, UL = cube ? new Path2D() : null;
-  const val = (i, p) => { if (i < 0 || i >= M) return -1; const v = rmbVals[i], k = p - hs[i]; return v && k >= 0 && k < v.length ? (v[k] === 9 ? -1 : v[k]) : -1; };
+  const val = (i, p) => { if (i < 0 || i >= M) return -1; const v = rmbVals[i], k = p - hs[i]; return v && k >= 0 && k < v.length && rmbVisible(i,rm?k>>1:k) ? (v[k] === 9 ? -1 : v[k]) : -1; };
   const isDn = (i, p) => i >= 0 && i < M && !upK(p - hs[i]);
   const rid = (i, p) => { const k = p - hs[i]; return i * 1e7 + (rm ? k >> 1 : upK(k) ? p : p + 1); };   // ромб: «◇ бит» — бит, «▲ бит» — ▼ с ▲ справа
   const ln = (x1, y1, x2, y2) => { L.moveTo(x1, y1); L.lineTo(x2, y2); };
@@ -627,6 +635,7 @@ function renderRmb(){
     const kA = Math.max(0, Math.floor(-r.ox / hw - hs[i]) - 2), kB = Math.min(v.length - 1, Math.ceil((Wc - r.ox) / hw - hs[i]) + 1), yt = Y(i), yb = yt + h;
     const H = rmbHeat[i], AA = rmbAge[i], PC = cube && rmbPair ? rmbPair[i] : null;
     for (let k = kA; k <= kB; k++) {
+      if(!rmbVisible(i,rm?k>>1:k))continue;
       const p = hs[i] + k, up = upK(k), x = X(p), a = v[k];
       if (a === 9) { P.e.moveTo(x, yt); P.e.lineTo(x + tw, yt); P.e.lineTo(x + hw, yb); P.e.closePath(); continue; }
       let ab = -1; if (AG && AA && AA[k] > -1e8) { const ag = rmbClock - AA[k]; ab = RMB_AGE.findIndex(e => ag < e[0]); }
@@ -652,7 +661,7 @@ function renderRmb(){
       }
       if (digs) { if (!rm) digs.push(x + hw, up ? yb - h * 0.3 : yt + h * 0.32, a, b >= 0); else if (!(k & 1)) digs.push(x + tw * 0.75, yt + h / 2, a, b >= 0); }
     }
-    if (r.num && h >= 8) { g.fillStyle = c0; g.font = `${Math.min(12, Math.max(7, h * 0.6))}px ${coneCss("--ff", "monospace")}`; g.textAlign = "right"; g.textBaseline = "middle"; g.fillText(String(i + 1), X(hs[i]) - 3, yt + h / 2); g.textAlign = "left"; }
+    if (r.num && h >= 8 && (rmbVisible(i,0)||v.length>(rm?2:1)&&rmbVisible(i,1))) { g.fillStyle = c0; g.font = `${Math.min(12, Math.max(7, h * 0.6))}px ${coneCss("--ff", "monospace")}`; g.textAlign = "right"; g.textBaseline = "middle"; g.fillText(String(i + 1), X(hs[i]) - 3, yt + h / 2); g.textAlign = "left"; }
   }
   const fill = (p, col, al) => { g.globalAlpha = al; g.fillStyle = col; g.fill(p); };
   const dA = rm ? 0.8 : 0.62;   // ▼ бледнее ▲ (у «◇ бит» — чуть: половинки одного бита)
@@ -676,5 +685,25 @@ function renderRmb(){
   if (digs) { g.font = `700 ${Math.round(tw * 0.42)}px ${coneCss("--ff", "monospace")}`; g.textAlign = "center"; g.textBaseline = "middle";
     for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && !digs[q + 2] ? "#fff7d6" : "#05070b"; g.fillText(String(digs[q + 2]), digs[q], digs[q + 1]); } g.textAlign = "left"; }
   const editGeometry={hs,u0,rm,tw,ox:r.ox,oy:r.oy,M,Wc,Hc};
-  window.ZZGrids?.paint(g,editGeometry);rmbAxisTool?.paintPreview(g,editGeometry);rmbDrawLetterBorders(g,editGeometry);rmbDrawCountHighlight(g,editGeometry);rmbEditor?.paint(g,editGeometry);rmbAxisTool?.paint(g,editGeometry);
+  rmbPaintOverlays(g,editGeometry);
+}
+function rmbPaintOverlays(g,geometry){
+  g.save();
+  if(window.ZerkGridParity.active(rmbSt().parity)){
+    const path=new Path2D(),rows=gridsState().rows,{tw,ox,oy,Wc,Hc,hs,rm}=geometry,cell=rmbSt().cell;
+    const h=cell==='square'?tw:tw*Math.sqrt(3)/2,near=Math.hypot(Math.max(0,-ox,ox-Wc),Math.max(0,-oy,oy-Hc))/tw,far=Math.max(Math.hypot(ox,oy),Math.hypot(Wc-ox,oy),Math.hypot(ox,Hc-oy),Math.hypot(Wc-ox,Hc-oy))/tw;
+    const first=Math.max(0,Math.floor(cell==='ring'?near:-oy/h)-1),last=Math.min(geometry.M-1,Math.ceil(cell==='ring'?far:(Hc-oy)/h)+1);
+    for(let row=first;row<=last;row++){
+      const step=cell==='tri'?tw/2:tw,left=ox+hs[row]*tw/2;
+      const firstCol=cell==='ring'?0:Math.max(0,Math.floor(-left/step)-2),lastCol=cell==='ring'?rows[row].length:Math.min(rows[row].length,Math.ceil((Wc-left)/step)+2);
+      for(let col=firstCol;col<lastCol;col++){
+      if(!rmbVisible(row,col))continue;const p=rmbHighlightPolygon(row,col,geometry);
+      if(!p.length||p.every(q=>q[0]<0)||p.every(q=>q[0]>geometry.Wc)||p.every(q=>q[1]<0)||p.every(q=>q[1]>geometry.Hc))continue;
+      path.moveTo(...p[0]);for(const q of p.slice(1))path.lineTo(...q);path.closePath();
+    }
+    }
+    g.clip(path);
+  }
+  window.ZZGrids?.paint(g,geometry);rmbAxisTool?.paintPreview(g,geometry);rmbDrawLetterBorders(g,geometry);rmbDrawCountHighlight(g,geometry);rmbEditor?.paint(g,geometry);
+  g.restore();rmbAxisTool?.paint(g,geometry);
 }

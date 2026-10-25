@@ -9,23 +9,24 @@
     return {dx:dx/length,dy:dy/length,nx,ny,length,positive:vertical?'Право':'Низ',negative:vertical?'Лево':'Верх'};
   }
   function reflected(point,axis){const b=basis(axis);if(!b)return point.slice();const d=(point[0]-axis.a[0])*b.nx+(point[1]-axis.a[1])*b.ny;return [point[0]-2*d*b.nx,point[1]-2*d*b.ny];}
-  function reflectRows(rows,g,axis,side='positive'){
+  function reflectRows(rows,g,axis,side='positive',visible){
     const b=basis(axis);if(!b)return {ok:false,changed:false,rows};const next=rows.slice(),copies=[],sign=side==='negative'?-1:1,world={...g,rows,tw:1,ox:0,oy:0};
     for(let r=0;r<rows.length&&(Shapes?.supported(g)||r<g.hs.length);r++){
       const row=rows[r].split('');
       for(let c=0;c<row.length;c++){
+        if(visible&&!visible(r,c))continue;
         const p=Shapes?.supported(g)?Shapes.center(r,c,world):g.rm===false?[g.hs[r]/2+c/2+.5,(r+(((c+g.u0)&1)?1/3:2/3))*K]:[g.hs[r]/2+c+.75,(r+.5)*K],x=p[0]-axis.a[0],y=p[1]-axis.a[1],distance=x*b.nx+y*b.ny;
         if(distance*sign>=-1e-8)continue;
         const along=x*b.dx+y*b.dy;if(axis.segment&&(along<0||along>b.length))continue;
-        const q=reflected(p,axis),source=Editor.hit(rows,world,q[0],q[1]);row[c]=source?rows[source[0]][source[1]]:'0';copies.push([source,[r,c]]);
+        const q=reflected(p,axis),source=Editor.hit(rows,world,q[0],q[1]);if(source&&visible&&!visible(...source))continue;row[c]=source?rows[source[0]][source[1]]:'0';copies.push([source,[r,c]]);
       }
       next[r]=row.join('');
     }
     return {ok:true,rows:next,copies,changed:next.some((s,i)=>s!==rows[i])};
   }
-  function reflectSequence(rows,g,axes){
+  function reflectSequence(rows,g,axes,visible){
     let next=rows;const origins=new Map(),key=p=>p.join(','),touched=new Map();
-    for(const axis of axes){if(axis.preview===false||!basis(axis))continue;const result=reflectRows(next,g,axis,axis.side||'positive'),before=new Map(origins);
+    for(const axis of axes){if(axis.preview===false||!basis(axis))continue;const result=reflectRows(next,g,axis,axis.side||'positive',visible),before=new Map(origins);
       for(const [source,target] of result.copies){const original=source?(before.has(key(source))?before.get(key(source)):source):null;origins.set(key(target),original);touched.set(key(target),target);}
       next=result.rows;
     }
@@ -48,12 +49,13 @@
     const selected=()=>cfg.axes().find(a=>a.id===selectedId)||null;
     const consume=e=>{e.preventDefault();e.stopImmediatePropagation();};
     const world=e=>{const box=cv.getBoundingClientRect(),g=cfg.geometry();return [(e.clientX-box.left-g.ox)/g.tw,(e.clientY-box.top-g.oy)/g.tw];};
+    const hiddenAt=e=>{if(!cfg.visible)return false;const p=world(e),cell=Editor.hit(cfg.rows(),{...cfg.geometry(),tw:1,ox:0,oy:0},...p);return cell&&!cfg.visible(...cell);};
     const snap=p=>snapVertex(cfg.rows(),cfg.geometry(),p);
     function finish(cancel,e){const d=drag;drag=null;if(!d)return;if(e)try{cv.releasePointerCapture(e.pointerId);}catch(_){}
       if(!cancel&&basis(d.preview)){const exists=cfg.axes().some(a=>a.id===d.preview.id),axes=cfg.axes().map(a=>a.id===d.preview.id?d.preview:a);if(!exists)axes.push(d.preview);selectedId=d.preview.id;cfg.setAxes(axes);cfg.save();}cfg.redraw();
     }
     cv.addEventListener('pointerdown',e=>{
-      if(!cfg.enabled()||e.button!==0||space)return;consume(e);cv.focus({preventScroll:true});touchHandles=e.pointerType==='touch';const p=world(e),tol=(touchHandles?22:9)/cfg.geometry().tw;
+      if(!cfg.enabled()||e.button!==0||space||hiddenAt(e))return;consume(e);cv.focus({preventScroll:true});touchHandles=e.pointerType==='touch';const p=world(e),tol=(touchHandles?22:9)/cfg.geometry().tw;
       let found=null,part='line';
       for(const axis of [...cfg.axes()].reverse()){
         const da=Math.hypot(p[0]-axis.a[0],p[1]-axis.a[1]),db=Math.hypot(p[0]-axis.b[0],p[1]-axis.b[1]);
@@ -66,7 +68,7 @@
       cv.setPointerCapture(e.pointerId);cfg.redraw();
     },true);
     cv.addEventListener('pointermove',e=>{
-      if(!drag)return;consume(e);const p=snap(world(e));if(!p)return;
+      if(!drag||hiddenAt(e))return;consume(e);const p=snap(world(e));if(!p)return;
       if(drag.part==='line'){const d=[p[0]-drag.anchor[0],p[1]-drag.anchor[1]];drag.preview.a=drag.original.a.map((x,i)=>x+d[i]);drag.preview.b=drag.original.b.map((x,i)=>x+d[i]);}
       else drag.preview[drag.part]=p;drag.preview.preview=true;cfg.redraw();
     },true);
@@ -85,13 +87,13 @@
     function preview(side){const axis=selected();if(!axis)return;cfg.setAxes(cfg.axes().map(a=>a===axis?{...a,side,preview:true}:a));cfg.save();cfg.redraw();}
     function activeAxes(){const axes=cfg.axes().map(a=>drag&&a.id===drag.preview.id?drag.preview:a);if(drag&&!axes.some(a=>a.id===drag.preview.id))axes.push(drag.preview);return axes;}
     function pending(){return activeAxes().some(a=>a.preview!==false&&basis(a));}
-    function previewResult(){const rows=cfg.rows(),g=cfg.geometry(),axes=activeAxes(),identity=rows.join('/')+'|'+JSON.stringify([g.hs,g.u0,g.rm,g.cell,rows.map(row=>row.length),axes]);
-      if(previewCache?.identity!==identity)previewCache={identity,result:reflectSequence(rows,g,axes)};return previewCache.result;}
+    function previewResult(){const rows=cfg.rows(),g=cfg.geometry(),axes=activeAxes(),identity=rows.join('/')+'|'+JSON.stringify([g.hs,g.u0,g.rm,g.cell,rows.map(row=>row.length),axes,cfg.visibilityKey?.()]);
+      if(previewCache?.identity!==identity)previewCache={identity,result:reflectSequence(rows,g,axes,cfg.visible)};return previewCache.result;}
     function apply(){if(drag)return;if(!pending()){cfg.message('Нет зеркал для применения.');return;}if(cfg.locked())return;
       const result=previewResult();if(result.copies.length)cfg.commit(result.rows,result);
       cfg.setAxes(cfg.axes().map(a=>({...a,preview:false})));previewCache=null;cfg.save();cfg.redraw();}
     function paintPreview(g,geometry){if(!pending()||!cfg.polygon)return;const result=previewResult();g.save();g.globalAlpha=1;
-      for(const [source,[r,c]] of result.copies){const points=cfg.polygon(r,c,geometry);if(points.every(p=>p[0]<0)||points.every(p=>p[0]>geometry.Wc)||points.every(p=>p[1]<0)||points.every(p=>p[1]>geometry.Hc))continue;
+      for(const [source,[r,c]] of result.copies){if(cfg.visible&&!cfg.visible(r,c))continue;const points=cfg.polygon(r,c,geometry);if(points.every(p=>p[0]<0)||points.every(p=>p[0]>geometry.Wc)||points.every(p=>p[1]<0)||points.every(p=>p[1]>geometry.Hc))continue;
         g.beginPath();points.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();const bit=result.rows[r][c];g.fillStyle=cfg.color?cfg.color(source,bit):(bit==='1'?'#ffd166':'#7d8699');g.fill();g.strokeStyle='rgba(255,191,105,.5)';g.lineWidth=.7;g.stroke();
       }g.restore();}
     function paint(g,geometry){

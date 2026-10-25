@@ -107,6 +107,7 @@ fn unpack(@builtin(global_invocation_id) g: vec3<u32>) {
 @group(0) @binding(5) var<storage, read_write> pic: array<u32>;
 @group(0) @binding(6) var<storage, read> pic2: array<u32>;
 fn pm2(x: i32) -> i32 { return ((x % 2) + 2) % 2; }
+fn parityShown(r: i32, fc: i32) -> bool { return P[28 + pm2(r + fc)] != 0 && P[30 + pm2(r + 1)] != 0; }
 fn jr(x: f32) -> i32 { return i32(floor(x + 0.5)); }
 fn raw(r: i32, fc: i32) -> i32 {
   if (r < 0 || r >= P[3] || fc < 0 || fc >= P[23]) { return -1; }
@@ -121,6 +122,7 @@ fn triFill(r: i32, fc: i32) -> bool {
 }
 fn shown(r: i32, c: i32) -> i32 {
   let fc = c + P[1];
+  if (!parityShown(r, fc)) { return -1; }
   if (outZone(r, fc) && !(P[10] == 2 && triFill(r, fc))) { return -1; }
   return raw(r, fc);
 }
@@ -224,6 +226,7 @@ fn lowAt(Y: i32, C: i32, o: i32) {
 fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
   let VW = P[2]; let VH = P[3]; let o = i32(g.x + g.y * 65535u * 64u); if (o >= VW * VH) { return; }
   let Y = o / VW; let C = o % VW; let kind = Q[0]; let m = Q[1];
+  if (!parityShown(Y, C + P[1])) { pic[o] = u32(P[22]); return; }
   if (kind == 1) { fixAt(Y, C, o); return; }
   if (kind == 2) { lowAt(Y, C, o); return; }
   if (kind == 3) {
@@ -384,6 +387,7 @@ fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return 
         P[0] = WW; P[1] = o.VX; P[2] = o.VW; P[3] = o.VH; P[4] = o.tint | 0; P[5] = o.lo | 0; P[6] = o.hi | 0; P[7] = o.k | 0; P[8] = o.filled ? 1 : 0; P[9] = anchor;
         P[10] = o.nb2 ? 2 : 0; P[11] = zl ? zl.length / 2 : 0; for (let i = 0; i < 4; i++) P[12 + i] = Number.isFinite(sd[i]) ? sd[i] : (i % 2 ? -1e9 : 1e9);
         for (let i = 0; i < 6; i++) P[16 + i] = o.T[i] | 0; P[22] = o.empty | 0; P[23] = W; P[24] = o.mirCol | 0; P[25] = o.mirOp | 0; P[26] = (o.bitC || [0, 0])[0] | 0; P[27] = (o.bitC || [0, 0])[1] | 0;
+        for(const [i,key]of ['cellsEven','cellsOdd','rowsEven','rowsOdd'].entries())P[28+i]=o.parity?.[key]===false?0:1;
         device.queue.writeBuffer(PBuf, 0, P); if (zl) device.queue.writeBuffer(zBuf, 0, zl);
         if (passes.length) { const q = new Int32Array(qN * slot / 4); passes.forEach((r, i) => q.set(r.slice(0, Q_INTS), i * slot / 4)); device.queue.writeBuffer(qBuf, 0, q); }
         if (!picBind) picBind = device.createBindGroup({ layout: picLayout, entries: [

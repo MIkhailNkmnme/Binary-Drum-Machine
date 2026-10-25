@@ -6,12 +6,13 @@ for(const location of ['jsdom',process.env.SETKA_JSDOM,path.join(process.env.TEM
 }
 if(!JSDOM)throw new Error('Startup checks require jsdom. Install it outside the repo and set SETKA_JSDOM to that package directory.');
 const old={rows:['111','010','101'],grids:{rows:['10','01'],cur:0,align:'center',text:'',textBlocks:[],colors:{},groups:{},dots:{},lines:{},scenes:[],tool:'',version:1},rmb:{cell:'tri',al:'zz',ln:'each',out:true}};
-function boot(savedDock){
+function boot(savedDock,ownState){
   const errors=[],console=new VirtualConsole();console.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync(path.join(__dirname,'Zerkalius-setka.html'),'utf8');
   const dom=new JSDOM(html,{url:'http://setka.test/setka/Zerkalius-setka.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:console});
   const w=dom.window,ctx=dom.getInternalVMContext(),frames=new Map();let frame=0;
   w.localStorage.setItem('zazerkalius_v1',JSON.stringify(old));
+  if(ownState)w.localStorage.setItem('zerklus_setka_v1',JSON.stringify(ownState));
   if(savedDock)w.localStorage.setItem('setka-menu-dock-v1',JSON.stringify(savedDock));
   Object.defineProperties(w,{innerWidth:{value:1280,writable:true},innerHeight:{value:800,writable:true}});
   const rect=(left,top,width,height)=>({left,top,width,height,right:left+width,bottom:top+height,x:left,y:top});
@@ -48,9 +49,9 @@ function boot(savedDock){
 }
 test('real standalone scripts start; every live toolbar control has one proxy; no legacy settings proxy',()=>{
  const app=boot();try{const {w}=app,source=w.document.getElementById('gridsToolbar');assert.equal(source.hidden,true);
-  assert.equal(w.document.querySelectorAll('#mayatnikRail .gz-group').length,6);
+  assert.equal(w.document.querySelectorAll('#mayatnikRail .gz-group').length,7);
   const controls=[...source.querySelectorAll('button,input,select,textarea')].filter(e=>e.id!=='bRmbSettings');
-  assert.equal(w.document.querySelectorAll('#mayatnikRail [data-pan]').length,controls.length);
+  assert.equal(w.document.querySelectorAll('#mayatnikRail [data-pan]').length,controls.length-source.querySelectorAll('[data-setka-pair]').length);
   for(const control of controls.filter(e=>e.id))assert.ok(app.proxy(control.id),control.id);
   assert.equal(app.proxy('bRmbSettings'),null);
   for(const id of ['pageUndo','pageRedo','pageHelp','gridsRowsLock','gridsRowAdd'])assert.ok(w.document.getElementById(id).classList.contains('gz-hx'),id);
@@ -199,5 +200,63 @@ test('plain mouse drag moves every bit even with brush, erase, edit selection or
   fire('pointerdown',110,110,{shiftKey:true});fire('pointerup',110,110,{shiftKey:true});app.flush();assert.equal(app.run('gridsState().rows[0]'),'11','modified gesture still paints');
   const before=app.run('JSON.stringify(gridsState().rows)');fire('pointerdown',110,110);fire('pointermove',170,170);fire('pointercancel',170,170);app.flush();
   assert.equal(app.run('rmbSt().ox'),100);assert.equal(app.run('rmbSt().oy'),100);assert.equal(app.run('JSON.stringify(gridsState().rows)'),before);
+ }finally{app.dom.window.close();}
+});
+
+
+test('parity pairs stay independent, persist, and filter actual cell drawing in all four modes',()=>{
+ const app=boot();try{const {w}=app;
+  app.run("Object.assign(gridsState(),{rows:['11','11'],colors:{},groups:{},text:'',textBlocks:[]});Object.assign(rmbSt(),{s:30,ox:300,oy:200,out:false,num:false,sh:false,edit:false,axisMode:false,axes:[],parity:{}});");
+  w.Path2D=class{constructor(){this.moves=0;}moveTo(){this.moves++;}lineTo(){}closePath(){}arc(){}rect(){}addPath(){}};
+  const g=w.document.getElementById('rmbCv').getContext('2d');let moves=0,clips=0;g.fill=p=>{moves+=p?.moves||0;};g.clip=()=>clips++;
+  const render=()=>{moves=0;clips=0;app.run('renderRmb()');return moves;};
+  for(const mode of ['tri','rmb','square','ring']){
+   app.run("rmbSt().cell='"+mode+"';rmbSt().parity={};");const all=render();assert.ok(all>0,mode);
+   app.run('rmbSt().parity.cellsEven=false;');assert.equal(render(),all/2,mode+' checkerboard halves');assert.equal(clips,1);
+   app.run('rmbSt().parity.cellsOdd=false;');assert.equal(render(),0,mode+' both lattices hidden');
+   app.run('rmbSt().parity={rowsOdd:false};');assert.ok(render()>0,mode+' row2 remains');app.run('rmbSt().parity.rowsEven=false;');assert.equal(render(),0,mode+' both row sets hidden');
+  }
+  app.run('rmbSt().parity={};renderRmb();');app.flush();const original=app.run('JSON.stringify(gridsState().rows)');
+  app.proxy('gridCellsEven').click();app.proxy('gridRowsOdd').click();app.flush();
+  assert.equal(app.run('rmbVisible(0,1)'),false);assert.equal(app.run('rmbVisible(1,0)'),true);assert.equal(app.run('rmbVisible(1,1)'),false);
+  for(const [id,on]of [['gridCellsEven',false],['gridCellsOdd',true],['gridRowsEven',true],['gridRowsOdd',false]])assert.equal(app.proxy(id).getAttribute('aria-pressed'),String(on),id);
+  assert.equal(app.run('JSON.stringify(gridsState().rows)'),original);
+  const saved=JSON.parse(w.localStorage.getItem('zerklus_setka_v1')),next=boot(null,saved);try{assert.equal(next.run('rmbSt().parity.cellsEven'),false);assert.equal(next.run('rmbSt().parity.rowsOdd'),false);assert.equal(next.run('JSON.stringify(gridsState().rows)'),original);}finally{next.dom.window.close();}
+ }finally{app.dom.window.close();}
+});
+
+test('scale menu centers the field, anchors both edges, blocks fit and wheel, and restores its saved controls',()=>{
+ const app=boot();try{const {w}=app,cv=w.document.getElementById('rmbCv');
+  app.run("Object.assign(rmbSt(),{s:30,ox:160,oy:120,fol:false});renderRmb();");
+  const start=app.run('rmbSt().s');app.proxy('setkaScaleAxis').click();app.flush();assert.equal(app.run('rmbSt().ox'),400);assert.equal(app.run('rmbSt().s'),start);
+  const pair=app.proxy('setkaScaleTop').closest('.setka-scale-edges'),joint=pair.querySelector('.zcf-pair-switch');assert.ok(joint);
+  app.proxy('setkaScaleTop').click();app.flush();assert.equal(app.run('rmbSt().oy'),10);assert.equal(app.run('rmbSt().scalePrefs.bottom'),false);
+  joint.click();app.flush();assert.equal(joint.getAttribute('aria-pressed'),'true');assert.equal(app.run('rmbSt().scalePrefs.bottom'),true);
+  cv.dispatchEvent(new w.WheelEvent('wheel',{deltaY:-200,bubbles:true,cancelable:true}));app.run('rmbFit();');app.flush();assert.equal(app.run('rmbSt().s'),start);
+  joint.click();app.proxy('setkaScaleLock').click();app.flush();app.run('rmbFit();');cv.dispatchEvent(new w.WheelEvent('wheel',{deltaY:200,bubbles:true,cancelable:true}));assert.equal(app.run('rmbSt().s'),start);
+  const touch=(type,id,x)=>{const e=new w.MouseEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:100});Object.defineProperties(e,{pointerId:{value:id},pointerType:{value:'touch'}});cv.dispatchEvent(e);};
+  touch('pointerdown',1,100);touch('pointerdown',2,200);touch('pointermove',2,350);touch('pointerup',1,100);touch('pointerup',2,350);app.flush();assert.equal(app.run('rmbSt().s'),start,'block includes pinch');
+  const stepper=app.proxy('setkaScaleBase'),parts=stepper.querySelectorAll('.may-snap-part');parts[3].click();app.flush();assert.equal(app.run('rmbSt().scalePrefs.base'),3);assert.equal(parts[2].textContent,'3');parts[1].click();app.flush();assert.equal(app.run('rmbSt().scalePrefs.base'),1);
+  const saved=JSON.parse(w.localStorage.getItem('zerklus_setka_v1')),next=boot({scale:{edge:'right',index:3,pinned:true}},saved);try{
+   assert.equal(next.run('rmbSt().scalePrefs.axis'),true);assert.equal(next.run('rmbSt().scalePrefs.lock'),true);assert.equal(next.run('rmbSt().scalePrefs.base'),1);assert.equal(next.run('rmbSt().s'),start);
+   assert.equal(next.proxy('setkaScaleAxis').getAttribute('aria-pressed'),'true');assert.equal(next.proxy('setkaScaleLock').getAttribute('aria-pressed'),'true');assert.equal(next.w.document.querySelector('[data-id="scale"]').dataset.dockEdge,'right');
+  }finally{next.dom.window.close();}
+ }finally{app.dom.window.close();}
+});
+
+test('hidden cells reject brush, selection, keyboard movement and mirror writes in all modes',()=>{
+ const app=boot();try{const {w}=app,cv=w.document.getElementById('rmbCv');
+  const fire=(type,p)=>{const e=new w.MouseEvent(type,{bubbles:true,button:0,clientX:p[0],clientY:p[1],shiftKey:true});Object.defineProperties(e,{pointerId:{value:1},pointerType:{value:'mouse'}});cv.dispatchEvent(e);};
+  const point=(r,c)=>JSON.parse(app.run(`JSON.stringify((()=>{const v=rmbSt(),rows=gridsState().rows,g={...rmbLayout(rows,rows.length,v.al,v.cell),cell:v.cell,rm:v.cell==='rmb',rows,tw:v.s,ox:v.ox,oy:v.oy};if(v.cell==='ring'||v.cell==='square'){const p=ZZGridShapes.center(${r},${c},g);return [g.ox+p[0]*g.tw,g.oy+p[1]*g.tw];}const p=rmbHighlightPolygon(${r},${c},g);return [p.reduce((s,v)=>s+v[0],0)/p.length,p.reduce((s,v)=>s+v[1],0)/p.length];})())`));
+  for(const mode of ['tri','rmb','square','ring']){
+   app.run(`Object.assign(gridsState(),{rows:['00','00'],colors:{},groups:{},tool:'brush'});Object.assign(rmbSt(),{cell:'${mode}',s:40,ox:300,oy:200,parity:{cellsEven:false},axisMode:false,edit:false});renderRmb();`);
+   const hidden=point(0,0),shown=point(0,1);fire('pointerdown',hidden);fire('pointerup',hidden);assert.equal(app.run("gridsState().rows.join('/')"),'00/00',mode+' hidden brush');
+   fire('pointerdown',shown);fire('pointerup',shown);assert.equal(app.run('gridsState().rows[0]'),'01',mode+' visible brush');
+   app.run("gridsState().tool='';gridsState().rows=['11','11'];rmbSt().edit=true;renderRmb();rmbEditor.selectAll();");assert.equal(app.run('JSON.stringify(rmbEditor.selection())'),'[[0,1],[1,0]]',mode+' select all only visible');
+   app.run('rmbEditor.erase()');assert.equal(app.run("gridsState().rows.join('/')"),'10/01',mode+' erase keeps hidden bits');
+  }
+  app.run("Object.assign(gridsState(),{rows:['01'],colors:{},groups:{},tool:''});Object.assign(rmbSt(),{cell:'square',parity:{cellsEven:false},edit:true,axisMode:false});renderRmb();rmbEditor.setSelection([[0,1]]);");
+  cv.dispatchEvent(new w.KeyboardEvent('keydown',{bubbles:true,key:'ArrowLeft'}));assert.equal(app.run('gridsState().rows[0]'),'01','keyboard cannot move into hidden cell');
+  app.run("rmbSt().axes=[{id:1,a:[0,0],b:[0,1],side:'positive',preview:true}];rmbSt().axisMode=true;rmbSt().edit=false;renderRmb();rmbAxisTool.apply();");assert.equal(app.run('gridsState().rows[0]'),'01','mirror does not overwrite hidden destination');
  }finally{app.dom.window.close();}
 });
