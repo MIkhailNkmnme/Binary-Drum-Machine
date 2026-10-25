@@ -95,14 +95,35 @@
         }
       }
     }
+    const segmentKey=s=>[s.dir,s.p,s.axis,s.t0,s.t1].join('|');
+    // Reflect the complete axis segment in x=anchor, in cell-centre coordinates.
+    // Horizontal and diagonal runs reverse their longitudinal order. Equal
+    // heights alone are not enough: both endpoints and the lattice must match.
+    function mirrorGroups(segs,anchor=0) {
+      const byKey=new Map(),groups=new Map(),centre=2*anchor;
+      for(const s of segs)byKey.set(segmentKey(s),s);
+      for(const s of segs){
+        const key=segmentKey(s);if(groups.has(key))continue;
+        const reflected=s.dir==='v'?{...s,axis:centre-s.axis}:
+          s.dir==='h'?{...s,t0:centre-s.t1,t1:centre-s.t0}:
+          {...s,dir:s.dir==='d'?'u':'d',axis:centre-s.axis,t0:centre-s.t1,t1:centre-s.t0};
+        const peerKey=segmentKey(reflected),peer=byKey.get(peerKey);
+        const segments=peer&&peer!==s?[s,peer]:[s];
+        const representative=peer&&peerKey<key?peer:s;
+        const group={segments,colour:representative.colour};
+        groups.set(key,group);if(peer)groups.set(peerKey,group);
+      }
+      return groups;
+    }
     // Range additions on each normal slice avoid repainting every bit for every
     // overlapping axis. Overlaps blend their axis colours instead of hiding bits.
     function highlights(field,segs,anchor=0) {
       const {W,H}=field,N=W*H,outR=new Float32Array(N),outG=new Float32Array(N),outB=new Float32Array(N),outN=new Int32Array(N);
       const dr=new Float32Array(N),dg=new Float32Array(N),db=new Float32Array(N),dn=new Int32Array(N);
+      const groups=mirrorGroups(segs,anchor);
       for(const dir of ['v','h','d','u'])for(const p of new Set(segs.filter(s=>s.dir===dir).map(s=>s.p))) {
         dr.fill(0);dg.fill(0);db.fill(0);dn.fill(0);
-        for(const s of segs){if(s.dir!==dir||s.p!==p)continue;const [r,g,b]=s.colour;
+        for(const s of segs){if(s.dir!==dir||s.p!==p)continue;const [r,g,b]=groups.get(segmentKey(s)).colour;
           for(let i=0;i<s.widths.length;i++){
             const a=span(s,i,anchor),q=a.y*W+a.x,ex=a.x+a.n*a.dx,ey=a.y+a.n*a.dy;
             dr[q]+=r;dg[q]+=g;db[q]+=b;dn[q]++;
@@ -166,7 +187,7 @@
       }
       return new Float32Array(packed);
     }
-    return {find,point,span,eachPair,highlights,triangles};
+    return {find,point,span,eachPair,segmentKey,mirrorGroups,highlights,triangles};
   }
   const api=createSymmetry();
   api.createWorker=()=>{
