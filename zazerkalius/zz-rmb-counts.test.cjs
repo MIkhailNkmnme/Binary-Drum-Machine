@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-const source=fs.readFileSync(path.join(__dirname,'zz-ui.js'),'utf8');
+const source=fs.readFileSync(path.join(__dirname,'../setka/setka-engine.js'),'utf8');
 const functions=source.slice(source.indexOf('const RMB_FONT ='),source.indexOf('function rmbType(){'));
 const plain=value=>JSON.parse(JSON.stringify(value));
 const bits=rows=>rows.map(row=>Uint8Array.from([...row].flatMap(c=>[+c,+c])));

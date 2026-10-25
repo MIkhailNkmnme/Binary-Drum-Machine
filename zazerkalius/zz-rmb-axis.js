@@ -1,5 +1,5 @@
 /* Manual mirror axes v4. Preview is separate from committing reflected bits. */
-(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./zz-rmb-editor.js'):root.ZZRmbEditor);if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZRmbAxis=api;})(globalThis,function(Editor){
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./zz-rmb-editor.js'):root.ZZRmbEditor,typeof module==='object'&&module.exports?require('./zz-grid-shapes.js'):root.ZZGridShapes);if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZRmbAxis=api;})(globalThis,function(Editor,Shapes){
   'use strict';const K=Math.sqrt(3)/2;
   function basis(axis){
     if(!axis||!Array.isArray(axis.a)||!Array.isArray(axis.b)||axis.a.length!==2||axis.b.length!==2||![...axis.a,...axis.b].every(Number.isFinite))return null;
@@ -10,11 +10,11 @@
   }
   function reflected(point,axis){const b=basis(axis);if(!b)return point.slice();const d=(point[0]-axis.a[0])*b.nx+(point[1]-axis.a[1])*b.ny;return [point[0]-2*d*b.nx,point[1]-2*d*b.ny];}
   function reflectRows(rows,g,axis,side='positive'){
-    const b=basis(axis);if(!b)return {ok:false,changed:false,rows};const next=rows.slice(),copies=[],sign=side==='negative'?-1:1,world={...g,tw:1,ox:0,oy:0};
-    for(let r=0;r<rows.length&&r<g.hs.length;r++){
+    const b=basis(axis);if(!b)return {ok:false,changed:false,rows};const next=rows.slice(),copies=[],sign=side==='negative'?-1:1,world={...g,rows,tw:1,ox:0,oy:0};
+    for(let r=0;r<rows.length&&(Shapes?.supported(g)||r<g.hs.length);r++){
       const row=rows[r].split('');
       for(let c=0;c<row.length;c++){
-        const p=g.rm===false?[g.hs[r]/2+c/2+.5,(r+(((c+g.u0)&1)?1/3:2/3))*K]:[g.hs[r]/2+c+.75,(r+.5)*K],x=p[0]-axis.a[0],y=p[1]-axis.a[1],distance=x*b.nx+y*b.ny;
+        const p=Shapes?.supported(g)?Shapes.center(r,c,world):g.rm===false?[g.hs[r]/2+c/2+.5,(r+(((c+g.u0)&1)?1/3:2/3))*K]:[g.hs[r]/2+c+.75,(r+.5)*K],x=p[0]-axis.a[0],y=p[1]-axis.a[1],distance=x*b.nx+y*b.ny;
         if(distance*sign>=-1e-8)continue;
         const along=x*b.dx+y*b.dy;if(axis.segment&&(along<0||along>b.length))continue;
         const q=reflected(p,axis),source=Editor.hit(rows,world,q[0],q[1]);row[c]=source?rows[source[0]][source[1]]:'0';copies.push([source,[r,c]]);
@@ -32,6 +32,7 @@
     return {ok:true,rows:next,copies:[...touched].map(([k,target])=>[origins.get(k),target]),changed:next.some((row,i)=>row!==rows[i])};
   }
   function snapVertex(rows,g,p){
+    if(Shapes?.supported(g))return Shapes.snapVertex(rows,g,p);
     let best=null,distance=Infinity;const r0=Math.floor(p[1]/K),candidates=new Set([r0-1,r0,r0+1].map(r=>Math.max(0,Math.min(rows.length-1,r))));
     for(const r of candidates){if(!rows[r]?.length||g.hs[r]===undefined)continue;const c0=Math.floor((p[0]-g.hs[r]/2)*(g.rm===false?2:1));
       for(const raw of [c0-2,c0-1,c0,c0+1]){const c=Math.max(0,Math.min(rows[r].length-1,raw)),x=g.hs[r]/2+c*(g.rm===false?.5:1),y=r*K;
@@ -84,7 +85,7 @@
     function preview(side){const axis=selected();if(!axis)return;cfg.setAxes(cfg.axes().map(a=>a===axis?{...a,side,preview:true}:a));cfg.save();cfg.redraw();}
     function activeAxes(){const axes=cfg.axes().map(a=>drag&&a.id===drag.preview.id?drag.preview:a);if(drag&&!axes.some(a=>a.id===drag.preview.id))axes.push(drag.preview);return axes;}
     function pending(){return activeAxes().some(a=>a.preview!==false&&basis(a));}
-    function previewResult(){const rows=cfg.rows(),g=cfg.geometry(),axes=activeAxes(),identity=rows.join('/')+'|'+JSON.stringify([g.hs,g.u0,g.rm,axes]);
+    function previewResult(){const rows=cfg.rows(),g=cfg.geometry(),axes=activeAxes(),identity=rows.join('/')+'|'+JSON.stringify([g.hs,g.u0,g.rm,g.cell,rows.map(row=>row.length),axes]);
       if(previewCache?.identity!==identity)previewCache={identity,result:reflectSequence(rows,g,axes)};return previewCache.result;}
     function apply(){if(drag)return;if(!pending()){cfg.message('Нет зеркал для применения.');return;}if(cfg.locked())return;
       const result=previewResult();if(result.copies.length)cfg.commit(result.rows,result);

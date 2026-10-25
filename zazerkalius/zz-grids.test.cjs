@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const G=require('./zz-grids.js'),E=require('./zz-rmb-editor.js'),A=require('./zz-rmb-axis.js');
-const source=fs.readFileSync(__dirname+'/zz-ui.js','utf8'),plain=x=>JSON.parse(JSON.stringify(x));
+const source=fs.readFileSync(__dirname+'/../setka/setka-engine.js','utf8')+fs.readFileSync(__dirname+'/zz-ui.js','utf8'),plain=x=>JSON.parse(JSON.stringify(x));
 const state=()=>({rows:['0100','0000'],cur:0,colors:{'0,1':'#ffd166'},groups:{},dots:{},lines:{},scenes:[],text:'',textBlocks:[]});
 function context(){const Z={rows:['0100','0000'],cur:1,rmb:{axes:[]},rowsAlign:'left',rowLock:true};const c=vm.createContext({Z,window:{ZZGrids:G,ZZRmbAxis:A},renderRmb(){},save(){},say(){},rmbWStop(){},rmbEditor:null,rmbSt:()=>Z.rmb,undoPush(){}});vm.runInContext(source.slice(source.indexOf('function gridsState(){'),source.indexOf('const rmbIsMobile=')),c);return c;}
 test('new grid starts independently; saved grid content survives reload',()=>{
@@ -49,9 +49,9 @@ test('the local mirror wave and its reset preserve ordinary rows and restore gri
  c.rmbWHome();assert.deepEqual(plain(c.gridsState()),before);assert.deepEqual(plain(c.Z.rows),original);
 });
 test('source wiring has no shared-row animation or row write in the grid implementation',()=>{
- const region=source.slice(source.indexOf('function rmbSt()'),source.indexOf('function bipyGeo('));const withoutMigration=region.replace('importRows:()=>Z.rows.slice(),','');
+ const region=fs.readFileSync(__dirname+'/../setka/setka-engine.js','utf8');const withoutMigration=region;
  assert.doesNotMatch(withoutMigration,/\bZ\.rows\b|bAnimPlay|bAnimStep|bAnimHome|rowsLocked\(/);assert.match(region,/gridsSnapshot/);assert.match(source,/top\.grids/);
- const html=fs.readFileSync(__dirname+'/Zerkalius-zazerkalius.html','utf8');assert.match(html,/id="w-rmb" data-title="Сетки"/);assert.match(html,/id="gridsRowsPane"/);assert.doesNotMatch(html,/data-grid-view/);
+ const html=fs.readFileSync(__dirname+'/../setka/Zerkalius-setka.html','utf8');assert.match(html,/id="w-rmb" data-title="Сетки"/);assert.match(html,/id="gridsRowsPane"/);assert.doesNotMatch(html,/data-grid-view/);
 });
 test('real controller brushes, cancels a gesture, edits own rows and restores scenes',()=>{
  class Element{
@@ -105,4 +105,32 @@ test('unhandled grid keys cannot delete, select or navigate ordinary rows',()=>{
  handler(event('Delete',false,{defaultPrevented:true}));assert.deepEqual(calls,[]);
  handler(event('z',true,{ctrlKey:true}));assert.deepEqual(calls,['undo']);calls.length=0;
  handler(event('Delete',false));assert.deepEqual(calls,['lane']);c.axSel=-1;handler(event('Delete',false));assert.deepEqual(calls,['lane','rows']);
+});
+
+test('square and ring UI geometry fits, renders and edits the same unchanged binary cells',()=>{
+ const Shapes=require('./zz-grid-shapes.js'),rows=['101','01011','10'],before=rows.slice();
+ class P{moveTo(){}lineTo(){}closePath(){}arc(){}}
+ const st={rows:rows.slice(),align:'center',cur:1},Z={rmb:{cell:'square',al:'zz'}};
+ const ctx=vm.createContext({Z,gridsState:()=>st,window:{ZZGridShapes:Shapes},$:()=>({clientWidth:640,clientHeight:400}),Path2D:P,coneCss:(a,b)=>b,rmbFrame:1,rmbClock:1,rmbHeat:[],rmbAge:[],RMB_AGE:[[2,'red']]});
+ vm.runInContext(source.slice(source.indexOf('function rmbSt(){'),source.indexOf('/* v0.795,',source.indexOf('function rmbSt(){'))),ctx);
+ vm.runInContext(source.slice(source.indexOf('function rmbFit(){'),source.indexOf('function rmbUi(){')),ctx);
+ vm.runInContext(source.slice(source.indexOf('function rmbRenderShapes('),source.indexOf('function renderRmb(){')),ctx);
+ for(const cell of ['square','ring']){
+  Z.rmb.cell=cell;ctx.rmbFit();const r=Z.rmb,{hs,u0}=ctx.rmbLayout(rows,rows.length,r.al,cell),geo={hs,u0,cell,rows,tw:r.s,ox:r.ox,oy:r.oy,M:rows.length,Wc:640,Hc:400};
+  assert.ok(r.s>0&&Number.isFinite(r.ox)&&Number.isFinite(r.oy));
+  for(let i=0;i<rows.length;i++)for(let j=0;j<rows[i].length;j++){
+   const q=Shapes.center(i,j,geo);assert.deepEqual(E.hit(rows,geo,r.ox+q[0]*r.s,r.oy+q[1]*r.s),[i,j]);
+   for(const p of Shapes.polygon(i,j,geo)){assert.ok(p[0]>=0&&p[0]<=640);assert.ok(p[1]>=0&&p[1]<=400);}
+  }
+  let fills=0,strokes=0;const g={save(){},restore(){},fill(){fills++;},stroke(){strokes++;},fillText(){}};
+  ctx.rmbRenderShapes(g,geo,{...r,out:true,ln:'each',num:true,sh:true},'#777','#fd0');assert.ok(fills>=2&&strokes>=2);assert.deepEqual(rows,before);assert.deepEqual(st.rows,before);
+  const filled={rows:['111','11111'],colors:{}};assert.equal(G.component(filled,[0,0],()=>[],(i,j)=>Shapes.neighbors(filled.rows,{cell,hs:[0,0]},i,j)).length,8);
+ }
+});
+test('ring mirror wave copies matching angular sectors into outer rows only',()=>{
+ const c=context();c.rmbUi=()=>{};c.cancelAnimationFrame=()=>{};c.Z.rmb={cell:'ring',al:'c',whz:1};const ordinary=plain(c.Z.rows),st=c.gridsState();st.rows=['10','0000','0000'];st.colors={'0,0':'red'};
+ vm.runInContext(source.slice(source.indexOf('function rmbLayout('),source.indexOf('/* v0.795,',source.indexOf('function rmbLayout('))),c);
+ vm.runInContext(source.slice(source.indexOf('const rmbW ='),source.indexOf('const RMB_WMASK =')),c);
+ c.rmbWStep();assert.deepEqual(plain(st.rows),['10','1100','0000']);assert.equal(st.colors['1,0'],'red');assert.equal(st.colors['1,1'],'red');assert.deepEqual(plain(c.Z.rows),ordinary);
+ c.rmbWHome();assert.deepEqual(plain(c.gridsState().rows),['10','0000','0000']);
 });

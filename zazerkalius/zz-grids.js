@@ -12,8 +12,12 @@
  }
  function scene(s){const out=clone(s);delete out.scenes;delete out.scene;delete out.legacyImported;return out;}
  function shiftRows(s,index,remove,add){const next=s.rows.slice();next.splice(index,remove,...add);for(const name of ['colors','groups']){const map={};for(const [k,v] of Object.entries(s[name])){const [r,c]=k.split(',').map(Number);if(r>=index&&r<index+remove)continue;map[key(r>=index?r+add.length-remove:r,c)]=v;}s[name]=map;}s.rows=next.length?next:['0'];s.textBlocks=[];s.text='';s.textWidth=null;s.cur=Math.max(0,Math.min(s.rows.length-1,index));}
- function component(s,cell,polygon){
+ function component(s,cell,polygon,neighbors){
   if(!cell||s.rows[cell[0]]?.[cell[1]]!=='1')return [];
+  if(neighbors?.(...cell)){
+    const color=s.colors[key(...cell)]||'',seen=new Set([key(...cell)]),queue=[cell];
+    for(let i=0;i<queue.length;i++)for(const p of neighbors(...queue[i])||[]){const k=key(...p);if(!seen.has(k)&&s.rows[p[0]]?.[p[1]]==='1'&&(s.colors[k]||'')===color){seen.add(k);queue.push(p);}}return queue;
+  }
   const color=s.colors[key(...cell)]||'',edges=new Map(),cells=new Map(),edgeKey=(a,b)=>{a=a.map(x=>Math.round(x*1e7)).join(',');b=b.map(x=>Math.round(x*1e7)).join(',');return a<b?a+'/'+b:b+'/'+a;};
   for(let r=0;r<s.rows.length;r++)for(let c=0;c<s.rows[r].length;c++){if(s.rows[r][c]!=='1'||(s.colors[key(r,c)]||'')!==color)continue;const p=polygon(r,c),k=key(r,c),es=p.map((a,i)=>edgeKey(a,p[(i+1)%p.length]));cells.set(k,es);for(const e of es){if(!edges.has(e))edges.set(e,[]);edges.get(e).push(k);}}
   const seen=new Set([key(...cell)]),queue=[key(...cell)];for(let i=0;i<queue.length;i++)for(const e of cells.get(queue[i])||[])for(const k of edges.get(e))if(!seen.has(k)){seen.add(k);queue.push(k);}return queue.map(k=>k.split(',').map(Number));
@@ -44,7 +48,7 @@
    if(tool==='line'){let best,dist=Infinity;for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length],dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy))),d=Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy);if(d<dist){dist=d;best=[nodeKey(a),nodeKey(b)].sort().join('|');}}if(gesture.visited.has(best))return;gesture.visited.add(best);if(gesture.erase)delete state.lines[best];else state.lines[best]={color:state.color,size:state.stroke};}
   };
   cv.addEventListener('pointerdown',e=>{if(!s().tool||!['brush','erase','group','dot','line'].includes(s().tool)||e.button>2)return;consume(e);if(cfg.locked())return;cfg.stop?.();cv.focus({preventScroll:true});
-   if(s().tool==='group'){selection=component(s(),hit(e),poly);cfg.editor()?.setSelection(selection);s().tool='';cfg.view().edit=true;cfg.message('Группа выделена: тяните для переноса; Копия — для копирования.');redraw();return;}
+   if(s().tool==='group'){selection=component(s(),hit(e),poly,cfg.neighbors);cfg.editor()?.setSelection(selection);s().tool='';cfg.view().edit=true;cfg.message('Группа выделена: тяните для переноса; Копия — для копирования.');redraw();return;}
    gesture={before:clone(s()),visited:new Set(),erase:e.button===2};cv.setPointerCapture(e.pointerId);put(e);redraw();
   },true);
   cv.addEventListener('pointermove',e=>{if(!gesture)return;consume(e);put(e);redraw();},true);

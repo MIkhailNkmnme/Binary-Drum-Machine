@@ -1,0 +1,111 @@
+<!-- Сетки — v0.001. Самостоятельный редактор: треугольники, ромбы, квадраты, кольца из центра; меню и закрепы Маятника. -->
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Сетки — v0.001</title><link rel="stylesheet" href="../_js/grozd.css?v=50"><link rel="stylesheet" href="../_js/group-header.css?v=1"><link rel="stylesheet" href="../_js/control-frame.css?v=2"><link rel="stylesheet" href="../mayatnik/mayatnik-button-standard.css?v=518"><link rel="stylesheet" href="../zazerkalius/zz-grids.css?v=5"><link rel="stylesheet" href="setka.css?v=1"><link rel="stylesheet" href="setka-menu.css?v=1"></head><body class="mayatnik-menu-ready">
+<header class="setka-title"><a href="../index.html">← Хаб</a><h1>СЕТКИ</h1><span>v0.001</span><button id="pageUndo" title="Отменить последнее действие">↶</button><button id="pageRedo" title="Повторить отменённое действие">↷</button><button id="pageHelp" title="Описание работы Сеток">?</button><output id="setkaStatus" aria-live="polite"></output></header>
+<nav id="mayatnikRail" aria-label="Меню сетки"></nav>
+<main><section class="win" id="w-rmb" data-title="Сетки">
+      <div class="whint"><p><b>Сетки</b> — самостоятельное поле: свои строки справа, треугольные, ромбовые, квадратные клетки или кольца из центра, кисть, ластик, группы, точки, линии, текст, сцены и зеркальные оси. Цветная клетка = 1, пустая = 0. Правка строк и рисунка двусторонняя. Сохранённые «Строки» Зазеркалиуса не изменяются; кнопка «Из Строк» очищает сетку и импортирует их независимую копию.</p><p>«Группа» выбирает связанные клетки одного цвета; затем тяните их в «Правке», включите «Копия» для копирования. Цвет, обводка, внутренняя сетка и символ задаются выделению. Точки и линии ставятся по вершинам и рёбрам; правая кнопка стирает их. Зеркальные оси сначала показывают предварительное отражение: направление, положение и длина не меняют биты. «Применить зеркала» записывает результат всех осей по порядку их создания одним шагом отмены. После применения повторного отражения поверх результата нет; перемещение оси или выбор направления снова включает предпросмотр. Свои сцены сохраняют поле, оформление, оси и вид. «Старые сцены» добавляет прежнюю цветную сетку в список, сохраняя исходники.</p><p>Справа можно изменить двоичную строку, добавить, скопировать или удалить строку, добавить бит. Замок относится только к этому полю. Отмена относится только к сетке. Два пальца двигают и масштабируют поле; касание числа таблицы закрепляет подсветку. Щелчок по букве таблицы выбирает или снимает её, можно выбрать несколько; Delete удаляет выбранные буквы с поля, «× Все» удаляет все буквы. После удаления всех букв таблица скрывается; отмена возвращает поле.</p></div>
+      <div class="wbody">
+        <div class="grids-workspace"><div class="grids-canvas-area">
+        <div id="gridsToolbar" aria-label="Инструменты сетки по группам">
+<div class="grids-toolgroup" data-grid-group="draw" style="--grid-group-color:#ffd166" role="group" aria-labelledby="gridsToolsHeading"><div class="grids-toolheading" id="gridsToolsHeading">КИСТЬ</div><div class="tools lpw" id="gridsTools">
+<button data-grid-tool="brush" title="Кисть: закрасить клетку в 1" aria-label="Кисть: закрасить клетку в 1">Кисть</button>
+<button data-grid-tool="erase" title="Ластик: стереть клетку в 0" aria-label="Ластик: стереть клетку в 0">Лстикъ</button>
+<button data-grid-tool="group" title="Выбрать связанную группу одного цвета; тянуть для переноса" aria-label="Выбрать связанную группу одного цвета; тянуть для переноса">Грппа</button>
+<button data-grid-tool="dot" title="Точка в вершине сетки" aria-label="Точка в вершине сетки">Тчка</button>
+<button data-grid-tool="line" title="Линия вдоль ребра клетки" aria-label="Линия вдоль ребра клетки">Лния</button>
+<label title="Цвет кисти, точек, линий и выбранной группы">Цветъ <input id="gridsColor" type="color" value="#ffd166"></label>
+<label title="Размер точки и толщина линии">↔ <input id="gridsStroke" type="number" min="1" max="20" value="2"></label>
+</div></div>
+<div class="grids-toolgroup" data-grid-group="edit" style="--grid-group-color:#bf91ff" role="group" aria-labelledby="rmbMainToolsHeading"><div class="grids-toolheading" id="rmbMainToolsHeading">ПРАВКА</div><div class="tools lpw" id="rmbMainTools">
+<button id="gridsRecolor" title="Перекрасить выделенные клетки" aria-label="Перекрасить выделенные клетки">Цветъ</button>
+<button id="gridsOutline" title="Обводка выбранной группы текущим цветом" aria-label="Обводка выбранной группы текущим цветом">□</button>
+<button id="gridsInner" title="Включить или выключить внутренние границы выбранной группы" aria-label="Включить или выключить внутренние границы выбранной группы">▦</button>
+<button id="gridsSymbol" title="Символ выбранной группы" aria-label="Символ выбранной группы">Аа</button>
+<button id="bRmbType" title="Аа — добавить текст ниже существующего поля. Старые ромбы сохраняются. Правка: рамка / Shift — выделить, Ctrl+A — всё, Delete — стереть. ↩ отменит добавление" aria-label="Аа — добавить текст ниже существующего поля. Старые ромбы сохраняются. Правка: рамка / Shift — выделить, Ctrl+A — всё, Delete — стереть. ↩ отменит добавление">Аа</button>
+<button id="bRmbEdit" aria-pressed="false" title="Правка ромбов: щелчок по 0 создаёт 1; тащите поле — сдвиг вида, тащите выбранные ромбы — перенос, Ctrl + тащить — копия; Shift + тащить — рамка выделения; Delete — стереть; Ctrl+A — всё; Ctrl+C/V — копировать/вставить; пробел или средняя кнопка + тащить — вид поля" aria-label="Правка ромбов: щелчок по 0 создаёт 1; тащите поле — сдвиг вида, тащите выбранные ромбы — перенос, Ctrl + тащить — копия; Shift + тащить — рамка выделения; Delete — стереть; Ctrl+A — всё; Ctrl+C/V — копировать/вставить; пробел или средняя кнопка + тащить — вид поля">Првка</button>
+<button id="bRmbAxis" aria-pressed="false" title="Ручная зеркальная ось: сначала предпросмотр; биты меняет только «Применить зеркала»" aria-label="Ручная зеркальная ось: сначала предпросмотр; биты меняет только «Применить зеркала»">Ось</button>
+<span id="rmbAxisTools" hidden><button id="bRmbAxisPos" disabled>Прво→Лво</button><button id="bRmbAxisNeg" disabled>Лво→Прво</button><button id="bRmbAxisApply" title="Записать предварительный результат всех зеркал в биты и цвета сетки одним шагом отмены" aria-label="Записать предварительный результат всех зеркал в биты и цвета сетки одним шагом отмены">✓ Зркло</button><button id="bRmbAxisLimit" disabled title="Вся ось — отражать всю сторону; Отрезок — только полосу вдоль длины линии" aria-label="Вся ось — отражать всю сторону; Отрезок — только полосу вдоль длины линии">Вся ось</button><button id="bRmbAxisDel" disabled title="Удалить выбранную ось; уже отражённые клетки остаются, их отменяет ↩" aria-label="Удалить выбранную ось; уже отражённые клетки остаются, их отменяет ↩">− Ось</button></span>
+<button id="bRmbSettings" aria-expanded="false" aria-controls="rmbPaintTools rmbWaveTools" title="Показать или свернуть настройки вида, цвета и волны" aria-label="Показать или свернуть настройки вида, цвета и волны">Нстрйки</button>
+</div></div>
+<div class="grids-toolgroup" data-grid-group="grid" style="--grid-group-color:#71c5ff" role="group" aria-labelledby="rmbGridToolsHeading"><div class="grids-toolheading" id="rmbGridToolsHeading">СЕТКА</div><div class="tools lpw" id="rmbGridTools">
+<button data-ral="c" title="Ряды по центру: равные строки — столбиками (сетка не смыкается)" aria-label="Ряды по центру: равные строки — столбиками (сетка не смыкается)">центръ</button>
+<button data-ral="zz" title="Ёлочка: ряд, который по центру ломает сетку, — на полклетки то влево, то вправо" aria-label="Ёлочка: ряд, который по центру ломает сетку, — на полклетки то влево, то вправо">ёлчка</button>
+<button data-ral="l" title="Вбок влево: такой ряд — на полклетки левее предыдущего" aria-label="Вбок влево: такой ряд — на полклетки левее предыдущего">← вбокъ</button>
+<button data-ral="r" title="Вбок вправо: такой ряд — на полклетки правее предыдущего" aria-label="Вбок вправо: такой ряд — на полклетки правее предыдущего">вбокъ →</button>
+<button id="bRmbCell" data-labels="△|◇|□|◎" title="Режим сетки: треугольники → ромбы → квадраты → кольца из центра. В кольцах каждая строка — кольцо, каждый бит — сектор; данные сохраняются." aria-label="Режим сетки: треугольники, ромбы, квадраты, кольца">△</button>
+<button id="bRmbCube" title="🧊 Кубы" aria-label="🧊 Кубы">🧊</button>
+<button id="bRmbCPri" data-labels="спрва \|спрва ◆|спрва /" hidden title="🧊 С какой пары начинает каждый ▲, по кругу: сперва «\» (▼ слева), сперва «◆» (▼ снизу), сперва «/» (▼ справа) — от этого зависит, какие ромбы сложатся" aria-label="🧊 С какой пары начинает каждый ▲, по кругу: сперва «\» (▼ слева), сперва «◆» (▼ снизу), сперва «/» (▼ справа) — от этого зависит, какие ромбы сложатся">спрва \</button>
+</div></div>
+<div class="grids-toolgroup" data-grid-group="view" style="--grid-group-color:#66e6c1" role="group" aria-labelledby="rmbPaintToolsHeading"><div class="grids-toolheading" id="rmbPaintToolsHeading">ВИД</div><div class="tools lpw" id="rmbPaintTools">
+<button id="bRmbLn" data-labels="▵ кждыйъ|◇ рмбы|⬡ грппы|безъ грницъ" title="Границы, по кругу: ▵ каждый треугольник · ◇ ромбы (▼ с ▲ справа) · ⬡ группы (между разными битами) · без границ" aria-label="Границы, по кругу: ▵ каждый треугольник · ◇ ромбы (▼ с ▲ справа) · ⬡ группы (между разными битами) · без границ">▵ кждыйъ</button>
+<button id="bRmbNum" title="№ — цифры бит (когда треугольник крупнее 14 px) и номера строк" aria-label="№ — цифры бит (когда треугольник крупнее 14 px) и номера строк">№</button>
+<button id="bRmbSh" title="Тени: единицы отбрасывают тень на нули" aria-label="Тени: единицы отбрасывают тень на нули">тни</button>
+<button id="bRmbOut" title="▦ Сетка на всё окно — бледными линиями" aria-label="▦ Сетка на всё окно — бледными линиями">▦</button>
+<button id="bRmbFit" title="⤢ Вписать весь ковёр в окно (или двойной щелчок по нему)" aria-label="⤢ Вписать весь ковёр в окно (или двойной щелчок по нему)">⤢</button>
+<label class="dim" title="Фон">фонъ <input id="rmbBg" type="color"></label>
+<label class="dim" title="Цвет единиц">1 <input id="rmbC1" type="color"></label>
+<label class="dim" title="Цвет нулей">0 <input id="rmbC0" type="color"></label>
+<label class="dim" title="Цвет границ">□ <input id="rmbLnC" type="color"></label>
+<button id="bRmbDef" title="Цвета — как были (по теме страницы)" aria-label="Цвета — как были (по теме страницы)">↺</button>
+<button id="bRmbGl" data-labels="👓|👓 измъ.|👓 взрастъ|👓 пры" title="👓 по кругу: изм. — золотом клетки, поменявшиеся последним изменением строк (шаг Аниматрицы, ◇ сдвиг, правка), след остывает за T картин · возраст — цветом, сколько проходов волны клетка не менялась: красная — только что, оранжевая, жёлтая, зелёная, голубая, синяя — до 16 проходов, дольше — своим цветом (застыла) · пары — ▲, не равная ▼ слева · выкл." aria-label="👓 по кругу: изм. — золотом клетки, поменявшиеся последним изменением строк (шаг Аниматрицы, ◇ сдвиг, правка), след остывает за T картин · возраст — цветом, сколько проходов волны клетка не менялась: красная — только что, оранжевая, жёлтая, зелёная, голубая, синяя — до 16 проходов, дольше — своим цветом (застыла) · пары — ▲, не равная ▼ слева · выкл.">👓</button>
+</div></div>
+<div class="grids-toolgroup" data-grid-group="wave" style="--grid-group-color:#f2a4d9" role="group" aria-labelledby="rmbWaveToolsHeading"><div class="grids-toolheading" id="rmbWaveToolsHeading">ВОЛНА</div><div class="tools lpw" id="rmbWaveTools">
+<button id="bRmbPlay" data-labels="▶|⏸" title="▶ Волна Аниматрицы (та же, что в поле); ещё раз — пауза" aria-label="▶ Волна Аниматрицы (та же, что в поле); ещё раз — пауза">▶</button>
+<button id="bRmbStep" title="▷| Один шаг волны" aria-label="▷| Один шаг волны">▷|</button>
+<button id="bRmbHome" title="⤺ Все биты — какие были до первой волны" aria-label="⤺ Все биты — какие были до первой волны">⤺</button>
+<button id="bRmbFol" title="⇣ За волной: пока идёт волна, вид сам едет вниз за строкой, которую она переписывает" aria-label="⇣ За волной: пока идёт волна, вид сам едет вниз за строкой, которую она переписывает">⇣</button>
+<select id="rmbWave" title="Зеркальная волна самостоятельного поля сетки: горизонт идёт вниз, отражая верхние клетки под него">
+            <option value="mir">⇕ зркло</option>
+          </select>
+<span id="rmbWOpt" hidden>
+            <button id="bRmbWInv" title="¬ Зеркало с инверсией: отражённый бит пишется наоборот" aria-label="¬ Зеркало с инверсией: отражённый бит пишется наоборот">¬</button>
+            <select id="rmbWHz" title="Горизонт за шаг сдвигается на столько строк">
+              <option value="1">Шагъ 1</option><option value="2">Шагъ 2</option><option value="4">Шагъ 4</option><option value="8">Шагъ 8</option><option value="16">Шагъ 16</option>
+            </select>
+            <select id="rmbWMask" title="Какие биты строки под горизонтом переписывает зеркало (счёт слева, с 1): все; чётные (2-й, 4-й…); чётные группы — вторая, четвёртая… по 2, 4, 8, 16 бит">
+              <option value="0">Все</option><option value="1">Чётъ</option><option value="2">Чётъ ×2</option><option value="4">Чётъ ×4</option><option value="8">Чётъ ×8</option><option value="16">Чётъ ×16</option>
+            </select>
+            <button id="bRmbWXor" title="⊕ Не заменять бит отражением, а XOR со старым" aria-label="⊕ Не заменять бит отражением, а XOR со старым">⊕</button>
+            <label class="dim" title="Скорость: шагов горизонта в секунду, от 0,5 до 5000">⚡ <input id="rmbWSp" type="range" min="0" max="100" step="1" style="width:90px;vertical-align:middle"></label>
+          </span>
+</div></div>
+<div class="grids-toolgroup" data-grid-group="scene" style="--grid-group-color:#ffb779" role="group" aria-labelledby="gridsSceneToolsHeading"><div class="grids-toolheading" id="gridsSceneToolsHeading">СЦЕНЫ</div><div class="tools lpw" id="gridsSceneTools">
+<button id="gridsSceneNew" title="Сохранить всё поле новой сценой" aria-label="Сохранить всё поле новой сценой">+ Сцна</button>
+<button id="gridsSceneSave" title="Обновить выбранную сцену" aria-label="Обновить выбранную сцену">↓</button>
+<select id="gridsScenes" title="Открыть сохранённую сцену"></select>
+<button id="gridsSceneDelete" title="Удалить выбранную сцену" aria-label="Удалить выбранную сцену">− Сцна</button>
+<button id="gridsExport" title="Копировать все сцены в буфер JSON" aria-label="Копировать все сцены в буфер JSON">⧉</button>
+<button id="gridsLegacy" title="Добавить старую цветную сетку и её сцены в список сцен, не заменяя текущее поле" aria-label="Добавить старую цветную сетку и её сцены в список сцен, не заменяя текущее поле">Архивъ</button>
+<button id="gridsClear" title="Очистить самостоятельное поле сетки; можно отменить" aria-label="Очистить самостоятельное поле сетки; можно отменить">× Всё</button>
+</div></div>
+</div>
+        <div id="rmbEditHint" hidden>0 → щелчок → 1 · тащить — перенос · Ctrl — копия · Shift / рамка — выделить · Delete — стереть · пробел + тащить — вид</div>
+        <div class="tools lpw" id="rmbTouchActions" aria-label="Действия с ромбами без клавиатуры"><span id="rmbTouchEdit" hidden>
+          <button id="bRmbMulti" aria-pressed="false" title="Выбор нескольких: касание добавляет или снимает ромб, протяжка добавляет рамку к выбору" aria-label="Выбор нескольких: касание добавляет или снимает ромб, протяжка добавляет рамку к выбору">Выборъ</button><button id="bRmbCopy" aria-pressed="false" title="Копия при перетаскивании выделенных ромбов; выключите для переноса" aria-label="Копия при перетаскивании выделенных ромбов; выключите для переноса">Кпия</button><button id="bRmbErase" title="Стереть выделенные единицы в нули" aria-label="Стереть выделенные единицы в нули">×</button><button id="bRmbAll" title="Выделить все единичные ромбы" aria-label="Выделить все единичные ромбы">Все</button><button id="bRmbNone" title="Снять выделение ромбов" aria-label="Снять выделение ромбов">∅</button></span><button id="bRmbUndo" title="Отменить последнее действие" aria-label="Отменить последнее действие">↶</button><button id="bRmbRedo" title="Повторить отменённое действие" aria-label="Повторить отменённое действие">↷</button>
+        </div>
+        <div id="rmbTextStats" hidden role="region" aria-label="Единицы, нули и площадь букв в ромбах"></div>
+        <canvas id="rmbCv"></canvas>
+        </div><aside id="gridsRowsPane" aria-label="Собственные строки сетки">
+          <div class="grids-rows-head">СТРОКИ СЕТКИ <button id="gridsRowsLock" title="Запереть или открыть собственные строки сетки" aria-label="Запереть или открыть собственные строки сетки">🔓</button></div>
+          <div class="tools lpw"><button id="gridsRowsImport" title="Очистить текущее поле сетки и импортировать копию Строк. Отмена вернёт прежнее поле. Исходные Строки независимы" aria-label="Очистить текущее поле сетки и импортировать копию Строк. Отмена вернёт прежнее поле. Исходные Строки независимы">↓ Стрки</button><button id="gridsRowAdd" title="Добавить пустую строку после выбранной" aria-label="Добавить пустую строку после выбранной">+ Стрка</button><button id="gridsRowCopy" title="Дублировать выбранную строку" aria-label="Дублировать выбранную строку">⧉</button><button id="gridsRowDelete" title="Удалить выбранную строку" aria-label="Удалить выбранную строку">− Стрка</button><button id="gridsColAdd" title="Добавить столбец нулей справа" aria-label="Добавить столбец нулей справа">+ Битъ</button></div>
+          <div id="gridsRowsList"></div><div id="gridsRowsInfo"></div>
+        </aside></div>
+
+      </div>
+    </section></main><script src="../_js/menu-icons.js?v=20"></script>
+<script src="../_js/group-header.js?v=1"></script>
+<script src="../_js/control-frame.js?v=2"></script>
+<script src="../_js/grozd.js?v=52"></script>
+<script src="../zazerkalius/zz-grid-shapes.js?v=1"></script>
+<script src="../zazerkalius/zz-rmb-grid.js?v=1"></script>
+<script src="../zazerkalius/zz-rmb-touch.js?v=1"></script>
+<script src="../zazerkalius/zz-rmb-editor.js?v=5"></script>
+<script src="../zazerkalius/zz-rmb-axis.js?v=5"></script>
+<script src="../zazerkalius/zz-grids.js?v=6"></script>
+<script src="setka-state.js?v=1"></script>
+<script src="setka-runtime.js?v=1"></script>
+<script src="setka-engine.js?v=1"></script>
+<script src="setka-menu.js?v=1"></script>
+<script src="../mayatnik/mayatnik-button-standard.js?v=517"></script>
+<script src="setka-start.js?v=1"></script>
+</body></html>

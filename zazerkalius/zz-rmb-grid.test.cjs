@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-const G=require('./zz-rmb-grid.js'),s=fs.readFileSync(path.join(__dirname,'zz-ui.js'),'utf8');
+const G=require('./zz-rmb-grid.js'),s=fs.readFileSync(path.join(__dirname,'../setka/setka-engine.js'),'utf8');
 const ctx=vm.createContext({Z:{rowsAlign:'center'}});ctx.gridsState=()=>({align:ctx.Z.rowsAlign});vm.runInContext(s.slice(s.indexOf('function rmbLayout('),s.indexOf('/* v0.795,',s.indexOf('function rmbLayout('))),ctx);
 function covered(a,b,segments){
  const cross=(p,q,x)=>Math.abs((q[0]-p[0])*(x[1]-p[1])-(q[1]-p[1])*(x[0]-p[0]));

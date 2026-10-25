@@ -1,5 +1,5 @@
 /* Rhomboid field editor v3: edits source bits, one shared undo step per gesture. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZRmbEditor=api;})(globalThis,function(){
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./zz-grid-shapes.js'):root.ZZGridShapes);if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZRmbEditor=api;})(globalThis,function(Shapes){
   'use strict';
   const key=([r,c])=>r+','+c;
   const inside=(rows,[r,c])=>Number.isInteger(r)&&Number.isInteger(c)&&r>=0&&r<rows.length&&c>=0&&c<rows[r].length;
@@ -7,6 +7,7 @@
   const gridFloor=n=>{const nearest=Math.round(n);return Math.floor(Math.abs(n-nearest)<=32*Number.EPSILON*Math.max(1,Math.abs(n))?nearest:n);};
   const same=(a,b)=>a.length===b.length&&a.every((s,i)=>s===b[i]);
   function hit(rows,g,x,y,clamp=false){
+    if(Shapes?.supported(g))return Shapes.hit(rows,g,x,y,clamp);
     if(!rows.length||!(g.tw>0))return null;
     const h=g.tw*Math.sqrt(3)/2;let row=gridFloor((y-g.oy)/h);
     if(clamp)row=Math.max(0,Math.min(rows.length-1,row));
