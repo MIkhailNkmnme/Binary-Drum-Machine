@@ -80,7 +80,7 @@
       if(!d.on)return;swallow=e.type==='pointerup';setTimeout(()=>{swallow=false;},0);
       const p=!cancel&&d.chosen?d.chosen:placed.get(d.g);if(p){apply(d.g,p);if(!cancel){state[idOf(d.g)]={edge:p.edge,index:p.index};save();}}geometry='';layout();};
     addEventListener('pointerup',e=>end(e),true);addEventListener('pointercancel',e=>end(e,true),true);addEventListener('keydown',e=>{if(e.key==='Escape'&&drag){e.preventDefault();end(e,true);}},true);addEventListener('blur',e=>end(e,true));
-    for(const g of groups()){const hd=g.querySelector(':scope > .pt-l,:scope > .gz-head')||(g.id==='mayCorner'?g:null);if(hd)heads.set(g,hd);}
+    for(const g of groups()){const hd=g.querySelector(':scope > .pt-l,:scope > .gz-head')||(g.id==='mayCorner'?g:null);if(hd){heads.set(g,hd);g.classList.toggle('may-menu-side-stack',useSideStack);}}
     if(useSideStack&&typeof ResizeObserver==='function'){const observer=new ResizeObserver(queueStack);for(const g of heads.keys())observer.observe(g);}
     addEventListener('resize',layout);requestAnimationFrame(layout);
     return {refresh:layout};

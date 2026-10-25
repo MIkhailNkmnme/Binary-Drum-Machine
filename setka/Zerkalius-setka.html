@@ -1,6 +1,6 @@
-<!-- Сетки — v0.006. Самостоятельный редактор: треугольники, ромбы, квадраты, кольца из центра; меню и закрепы Маятника. -->
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Сетки — v0.006</title><link rel="stylesheet" href="../_js/grozd.css?v=50"><link rel="stylesheet" href="../_js/group-header.css?v=1"><link rel="stylesheet" href="../_js/control-frame.css?v=2"><link rel="stylesheet" href="../mayatnik/mayatnik-button-standard.css?v=518"><link rel="stylesheet" href="../zazerkalius/zz-grids.css?v=6"><link rel="stylesheet" href="setka.css?v=1"><link rel="stylesheet" href="setka-menu.css?v=6"></head><body class="mayatnik-menu-ready">
-<header class="setka-title"><a href="../index.html">← Хаб</a><h1>СЕТКИ</h1><span>v0.006</span><button id="pageHelp" title="Описание работы Сеток">?</button><nav id="mayatnikRail" aria-label="Меню сетки"></nav><output id="setkaStatus" aria-live="polite"></output></header>
+<!-- Сетки — v0.007. Самостоятельный редактор: треугольники, ромбы, квадраты, кольца из центра; меню и закрепы Маятника. -->
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Сетки — v0.007</title><link rel="stylesheet" href="../_js/grozd.css?v=50"><link rel="stylesheet" href="../_js/group-header.css?v=1"><link rel="stylesheet" href="../_js/control-frame.css?v=2"><link rel="stylesheet" href="../mayatnik/mayatnik-button-standard.css?v=519"><link rel="stylesheet" href="../zazerkalius/zz-grids.css?v=6"><link rel="stylesheet" href="setka.css?v=7"><link rel="stylesheet" href="setka-menu.css?v=7"></head><body class="mayatnik-menu-ready">
+<header class="setka-title"><a href="../index.html">← Хаб</a><h1>СЕТКИ</h1><span>v0.007</span><button id="pageHelp" title="Описание работы Сеток">?</button><nav id="mayatnikRail" aria-label="Меню сетки"></nav><output id="setkaStatus" aria-live="polite"></output></header>
 <div id="setkaFooter"><div class="setka-history" role="group" aria-label="История сетки"><button id="pageUndo" title="Отменить последнее действие">↶</button><button id="pageRedo" title="Повторить отменённое действие">↷</button></div></div>
 <main><section class="win" id="w-rmb" data-title="Сетки">
       <div class="whint"><p><b>Сетки</b> — самостоятельное поле: свои строки справа, треугольные, ромбовые, квадратные клетки или кольца из центра, кисть, ластик, группы, точки, линии, текст, сцены и зеркальные оси. Цветная клетка = 1, пустая = 0. Правка строк и рисунка двусторонняя. «Послед» и «Серп» заменяют поле шаблоном из Хаба с возможностью отмены. Строки сетки независимы.</p><p>«Группа» выбирает связанные клетки одного цвета; затем тяните их с Alt в «Правке», включите «Копия» для копирования. Цвет, обводка, внутренняя сетка и символ задаются выделению. Обычная протяжка мышью перемещает всё поле, даже при активном инструменте. Для протяжки инструментом удерживайте Shift; Ctrl сохраняет копирование выделения. Точки и линии ставятся по вершинам и рёбрам; правая кнопка стирает их. Зеркальные оси сначала показывают предварительное отражение: направление, положение и длина не меняют биты. «Применить зеркала» записывает результат всех осей по порядку их создания одним шагом отмены. После применения повторного отражения поверх результата нет; перемещение оси или выбор направления снова включает предпросмотр. Свои сцены сохраняют поле, оформление, оси и вид. «Старые сцены» добавляет прежнюю цветную сетку в список, сохраняя исходники.</p><p>Справа можно изменить двоичную строку, добавить, скопировать или удалить строку, добавить бит. Замок относится только к этому полю. Отмена относится только к сетке. Два пальца двигают и масштабируют поле; касание числа таблицы закрепляет подсветку. Щелчок по букве таблицы выбирает или снимает её, можно выбрать несколько; Delete удаляет выбранные буквы с поля, «× Все» удаляет все буквы. После удаления всех букв таблица скрывается; отмена возвращает поле.</p></div>
@@ -106,9 +106,10 @@
 <script src="../_js/initial-rows.js?v=1"></script>
 <script src="setka-runtime.js?v=6"></script>
 <script src="setka-pan.js?v=6"></script>
-<script src="setka-engine.js?v=6"></script>
-<script src="../mayatnik/mayatnik-menu-dock.js?v=2"></script>
-<script src="setka-menu.js?v=6"></script>
+<script src="setka-engine.js?v=7"></script>
+<script src="../mayatnik/mayatnik-menu-dock.js?v=3"></script>
+<script src="setka-menu.js?v=7"></script>
 <script src="../mayatnik/mayatnik-button-standard.js?v=517"></script>
-<script src="setka-start.js?v=6"></script>
+<script src="setka-start.js?v=7"></script>
+<script src="setka-rows-resize.js?v=7"></script>
 </body></html>

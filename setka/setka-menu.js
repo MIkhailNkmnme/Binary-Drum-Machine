@@ -10,6 +10,7 @@
     const placePopups = () => {
       for(const group of rail.el.querySelectorAll(':scope > .gz-group')){
         const body=group.querySelector('.setka-menu-body');if(!body||!group.classList.contains('gz-open'))continue;
+        if(group.classList.contains('may-dock-side')){for(const name of ['left','top','max-height'])body.style.removeProperty(name);continue;}
         const h=group.querySelector('.gz-head').getBoundingClientRect(),edge=group.dataset.dockEdge||'top';
         const width=120,gap=3,below=innerHeight-h.bottom-8,above=h.top-8;
         let x=h.left,y=h.bottom+gap,max=below;
@@ -95,7 +96,7 @@
     window.setkaMenuRefresh=request;
     source.hidden=true;
     document.body.classList.add('mayatnik-menu-ready','setka-menu-ready');
-    dock=window.MayatnikMenuDock?.mount({storageKey:'setka-menu-dock-v1',defaultEdge:'top',stackSides:false,
+    dock=window.MayatnikMenuDock?.mount({storageKey:'setka-menu-dock-v1',defaultEdge:'top',
       groups:()=>[...rail.el.querySelectorAll(':scope > .gz-group')],idOf:g=>g.dataset.id,
       header:document.querySelector('.setka-title'),tools:host,footer:document.getElementById('setkaFooter'),rail:rail.el,leftEdge:()=>4,rightEdge:()=>innerWidth,
       moveToTools:()=>{},onLayout:()=>{placePopups();window.mayButtonStandardRefresh?.();}});

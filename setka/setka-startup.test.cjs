@@ -20,8 +20,8 @@ function boot(savedDock){
     if(this.matches('.setka-title'))return rect(0,0,1280,36);
     if(this.id==='mayatnikRail'||this.matches('#mayatnikRail>.gz-rail'))return rect(280,5,996,26);
     if(this.id==='setkaFooter')return rect(4,772,1272,28);
-    if(this.matches('#mayatnikRail .gz-group'))return rect(parseFloat(this.style.getPropertyValue('--may-dock-x'))||280,parseFloat(this.style.getPropertyValue('--may-dock-y'))||5,120,24);
-    if(this.matches('#mayatnikRail .gz-head'))return this.parentElement.getBoundingClientRect();
+    if(this.matches('#mayatnikRail .gz-group'))return rect(parseFloat(this.style.getPropertyValue('--may-dock-x'))||280,parseFloat(this.style.getPropertyValue('--may-dock-y'))||5,120,24+(this.matches('.may-menu-side-stack.may-dock-side.gz-open')?(this.querySelector('.setka-menu-body')?.scrollHeight||0):0));
+    if(this.matches('#mayatnikRail .gz-head')){const r=this.parentElement.getBoundingClientRect();return rect(r.left,r.top,120,24);}
     return nativeRect.call(this);
   };
   const nativeRects=w.HTMLElement.prototype.getClientRects;
@@ -79,7 +79,7 @@ test('popup rules override shared in-flow menu styles and coordinates remain vie
   for(const file of ['../mayatnik/mayatnik-button-standard.css','setka-menu.css']){const s=w.document.createElement('style');s.textContent=fs.readFileSync(path.resolve(__dirname,file),'utf8');w.document.head.append(s);}
   for(const id of ['edit','grid','view']){const g=w.document.querySelector('[data-id="'+id+'"]');g.classList.add('gz-open');const list=g.querySelector('.setka-menu-body');Object.defineProperty(list,'scrollHeight',{value:220});}
   w.setkaMenuRefresh();app.flush();
-  for(const id of ['edit','grid','view']){const g=w.document.querySelector('[data-id="'+id+'"]'),list=g.querySelector('.setka-menu-body');assert.equal(w.getComputedStyle(list).position,'fixed');assert.equal(w.getComputedStyle(g).height,'24px');assert.equal(list.style.getPropertyPriority('left'),'important');assert.equal(list.style.getPropertyPriority('top'),'important');}
+  for(const id of ['edit','grid','view']){const g=w.document.querySelector('[data-id="'+id+'"]'),list=g.querySelector('.setka-menu-body');if(id==='edit'){assert.equal(w.getComputedStyle(list).position,'fixed');assert.equal(w.getComputedStyle(g).height,'24px');assert.equal(list.style.getPropertyPriority('left'),'important');assert.equal(list.style.getPropertyPriority('top'),'important');}else{assert.equal(w.getComputedStyle(list).position,'relative');assert.equal(w.getComputedStyle(g).height,'auto');assert.equal(list.style.left,'');assert.equal(list.style.top,'');}}
   const bottom=w.document.querySelector('[data-id="edit"]'),left=w.document.querySelector('[data-id="grid"]');
   // Supply real relative button rectangles to the shared contour builder: its upper
   // cap must remain inside the scrolling popup, rather than being clipped at -10px.
@@ -91,15 +91,32 @@ test('popup rules override shared in-flow menu styles and coordinates remain vie
   const cap=box.querySelector('.may-standard-contours .cap');assert.ok(cap,'shared closing cap exists');
   const coords=cap.getAttribute('d').match(/-?\d+(?:\.\d+)?/g).map(Number);assert.ok(coords.every(n=>n>=0),'upper cap stays inside scroll clip');
   assert.ok(parseFloat(bottom.querySelector('.setka-menu-body').style.top)<bottom.getBoundingClientRect().top);
-  assert.equal(parseFloat(left.querySelector('.setka-menu-body').style.left),left.getBoundingClientRect().left);
-  assert.ok(parseFloat(left.querySelector('.setka-menu-body').style.top)>left.getBoundingClientRect().bottom);
-  const right=w.document.querySelector('[data-id="view"]');assert.equal(parseFloat(right.querySelector('.setka-menu-body').style.left),right.getBoundingClientRect().left);assert.ok(parseFloat(right.querySelector('.setka-menu-body').style.top)>right.getBoundingClientRect().bottom);
+  assert.ok(left.classList.contains('may-menu-side-stack'));
+  const right=w.document.querySelector('[data-id="view"]');assert.ok(right.classList.contains('may-menu-side-stack'));
  }finally{app.dom.window.close();}
 });
 test('proxy mode button renders all four grid modes without modifying rows',()=>{
  const app=boot();try{const rows=app.run('JSON.stringify(gridsState().rows)'),seen=[];
   for(let i=0;i<4;i++){seen.push(app.run('rmbSt().cell'));app.proxy('bRmbCell').click();app.flush();assert.equal(app.run('JSON.stringify(gridsState().rows)'),rows);}
   assert.deepEqual(seen,['tri','rmb','square','ring']);
+ }finally{app.dom.window.close();}
+});
+
+test('shared side stack pushes following groups, scrolls overflow and restores saved slots',()=>{
+ const app=boot({edit:{edge:'left',index:0},grid:{edge:'left',index:1},view:{edge:'right',index:0},draw:{edge:'right',index:1}});
+ try{const {w}=app,saved=w.localStorage.getItem('setka-menu-dock-v1');
+  for(const [edge,first,next] of [['left','edit','grid'],['right','view','draw']]){
+   const group=w.document.querySelector('[data-id="'+first+'"]'),lower=w.document.querySelector('[data-id="'+next+'"]'),body=group.querySelector('.setka-menu-body');
+   group.classList.remove('gz-open');w.setkaMenuRefresh();app.flush();const original=lower.getBoundingClientRect().top;
+   Object.defineProperty(body,'scrollHeight',{configurable:true,value:780});group.classList.add('gz-open');w.setkaMenuRefresh();app.flush();
+   assert.ok(lower.getBoundingClientRect().top>=group.getBoundingClientRect().bottom,'opened group pushes following header');
+   const bar=w.document.querySelector('.may-menu-side-scroll[data-edge="'+edge+'"]');assert.equal(bar.style.display,'block');
+   body.dispatchEvent(new w.WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:1000}));app.flush();
+   assert.ok(bar.scrollTop>0);assert.ok(lower.getBoundingClientRect().bottom<=770,'scroll exposes last header');
+   assert.equal(w.localStorage.getItem('setka-menu-dock-v1'),saved,'temporary push/scroll must not rewrite slots');
+   group.classList.remove('gz-open');w.setkaMenuRefresh();app.flush();assert.equal(lower.getBoundingClientRect().top,original);assert.equal(bar.scrollTop,0);assert.equal(bar.style.display,'none');
+  }
+  app.run("rmbSt().bg='#123456';renderRmb();");assert.equal(w.document.documentElement.style.getPropertyValue('--bg'),'#123456');
  }finally{app.dom.window.close();}
 });
 
@@ -150,6 +167,17 @@ test('dynamic letter actions use shared buttons and retain deletion handlers',()
   const buttons=[...stats.querySelectorAll('button')];assert.ok(buttons.length>=2);assert.ok(buttons.every(b=>b.classList.contains('gz-hx')));
   assert.equal(stats.querySelectorAll('th.gz-hx,td.gz-hx').length,0,'numeric table cells keep their existing form');
   const erase=buttons.find(b=>/все|всё/i.test(b.title));assert.ok(erase);erase.click();app.flush();assert.equal(stats.hidden,true);
+ }finally{app.dom.window.close();}
+});
+
+test('help floats above the field, stays open inside and closes outside or on Escape',()=>{
+ const app=boot();try{const {w}=app,button=w.document.getElementById('pageHelp'),panel=w.document.getElementById('setkaHelpPanel'),root=w.document.getElementById('w-rmb');
+  const style=w.document.createElement('style');style.textContent=fs.readFileSync(path.join(__dirname,'setka-menu.css'),'utf8');w.document.head.append(style);
+  const before=app.run('JSON.stringify(rmbSt())');button.click();assert.equal(button.getAttribute('aria-expanded'),'true');assert.equal(w.getComputedStyle(panel).position,'fixed');
+  panel.querySelector('p').click();assert.ok(root.classList.contains('setka-help'));
+  w.document.getElementById('rmbCv').click();assert.equal(root.classList.contains('setka-help'),false);assert.equal(button.getAttribute('aria-expanded'),'false');
+  button.click();panel.dispatchEvent(new w.KeyboardEvent('keydown',{bubbles:true,key:'Escape'}));assert.equal(root.classList.contains('setka-help'),false);
+  assert.equal(app.run('JSON.stringify(rmbSt())'),before);
  }finally{app.dom.window.close();}
 });
 

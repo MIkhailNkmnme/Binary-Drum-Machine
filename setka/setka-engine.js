@@ -597,7 +597,9 @@ function renderRmb(){
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
   const tw = r.s, hw = tw / 2, h = tw * 0.8660254, X = (p) => r.ox + p * hw, Y = (i) => r.oy + i * h;
   const c1 = r.c1 || coneCss("--b1", "#22d3ee"), c0 = r.c0 || coneCss("--b0", "#7d8699");
-  g.fillStyle = r.bg || coneCss("--panel2", "#141a24"); g.fillRect(0, 0, Wc, Hc);
+  const background = r.bg || coneCss("--panel2", "#141a24");
+  if(document.documentElement.style.getPropertyValue("--bg")!==background)document.documentElement.style.setProperty("--bg",background);
+  g.fillStyle = background; g.fillRect(0, 0, Wc, Hc);
   if(r.cell==="square"||r.cell==="ring"){
     const geometry={hs,u0,rm:false,cell:r.cell,rows:R,tw,ox:r.ox,oy:r.oy,M,Wc,Hc};
     rmbRenderShapes(g,geometry,r,c0,c1);

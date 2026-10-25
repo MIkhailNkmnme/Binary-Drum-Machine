@@ -10,3 +10,17 @@ main{flex:1;min-height:0;display:flex;width:100%;padding:6px}#w-rmb{position:rel
 #rmbTextStats{flex:none;max-height:30vh;overflow:auto;font:14px/1.2 Consolas,monospace;margin-bottom:4px}#rmbTextStats table{border-collapse:collapse;font-weight:600}#rmbTextStats th,#rmbTextStats td{border:1px solid var(--line);padding:4px 10px;text-align:center}#rmbTextStats .rmb-count-letter{font-size:18px;color:#ffe066}#rmbTextStats .rmb-count-value{cursor:crosshair}#rmbTextStats .rmb-count-selected{outline:2px solid #ffe066;outline-offset:-2px}.rmb-count-note{font-size:12px;margin:3px 0}
 #rmbTouchActions,#bRmbSettings{display:none!important}#gridsRowsPane{max-height:100%}#gridsRowsList{max-height:none}#gridsRowsPane .tools{gap:2px;margin:3px 0}.grids-rows-head{font-size:12px}
 @media(max-width:760px){html,body{overflow:auto;min-height:100%;height:auto}main{min-height:80vh}#w-rmb .wbody{min-height:70vh}#w-rmb .grids-workspace{flex-direction:column}#w-rmb .grids-canvas-area{min-height:55vh}#w-rmb #rmbCv{height:48vh!important;min-height:220px}#gridsRowsPane{width:100%;max-width:none;flex-basis:240px}#gridsRowsList{height:200px}#rmbTextStats{max-height:220px}#rmbTextStats th,#rmbTextStats td{min-width:36px;padding:6px}#w-rmb #rmbTouchActions{display:flex!important;flex-wrap:wrap;gap:3px}#rmbTouchEdit:not([hidden]){display:contents}.setka-title output{max-width:40%;font-size:10px}}
+/* The left separator resizes only the rows pane; collapsed mode retains row selection. */
+#gridsRowsPane.setka-rows-resizable{position:relative;flex:0 0 var(--setka-rows-width,260px);width:var(--setka-rows-width,260px);min-width:64px;max-width:none}
+.setka-rows-resize{position:absolute;left:-5px;top:0;bottom:0;width:10px;z-index:10;cursor:col-resize;touch-action:none;user-select:none}
+.setka-rows-resize::after{content:'';position:absolute;left:4px;top:0;bottom:0;width:2px;background:transparent}
+.setka-rows-resize:hover::after,.setka-rows-resize:focus-visible::after,.setka-resizing-rows .setka-rows-resize::after{background:var(--acc)}
+.setka-rows-resize:focus-visible{outline:none}
+body.setka-resizing-rows,body.setka-resizing-rows *{cursor:col-resize!important;user-select:none!important}
+#gridsRowsPane.setka-rows-collapsed>.grids-rows-head,#gridsRowsPane.setka-rows-collapsed>.tools,#gridsRowsPane.setka-rows-collapsed>#gridsRowsInfo,#gridsRowsPane.setka-rows-collapsed .grids-row-editor{display:none!important}
+#gridsRowsPane.setka-rows-collapsed .grids-row{grid-template-columns:minmax(0,1fr)}
+#gridsRowsPane.setka-rows-collapsed #gridsRowsList{overflow-x:hidden;scrollbar-width:thin}
+@media(max-width:760px),(pointer:coarse) and (max-width:1100px){
+ #gridsRowsPane.setka-rows-resizable{flex:0 0 auto;width:100%;min-width:0;max-width:100%}
+ #gridsRowsPane .setka-rows-resize{display:none}
+}
