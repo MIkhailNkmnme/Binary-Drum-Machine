@@ -13,7 +13,7 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 #mayatnikTemplatePanel button,#mayatnikTemplatePanel summary{font:inherit;color:inherit;text-shadow:none!important;cursor:pointer;user-select:none;-webkit-user-select:none}
 #mayatnikTemplatePanel .mtp-heading{display:flex;align-items:center;gap:2px;flex:none;min-height:26px}
 #mayatnikTemplatePanel .mtp-heading strong{flex:1;font-size:14px;min-width:0}
-#mayatnikTemplatePanel .mtp-command,#mayatnikTemplatePanel .mtp-path,#mayatnikTemplatePanel .mtp-more>summary,#mayatnikTemplatePanel .mtp-controls>summary{--gz-w:120px;--gz-h:24px;position:relative;display:flex;align-items:center;justify-content:center;flex:none;width:120px;height:24px;margin:0;padding:0 10px;border:0;border-radius:0;background:#1b2430;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);box-shadow:none!important;outline:none;line-height:24px}
+#mayatnikTemplatePanel .mtp-command,#mayatnikTemplatePanel .mtp-path,#mayatnikTemplatePanel .mtp-more>summary{--gz-w:120px;--gz-h:24px;position:relative;display:flex;align-items:center;justify-content:center;flex:none;width:120px;height:24px;margin:0;padding:0 10px;border:0;border-radius:0;background:#1b2430;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);box-shadow:none!important;outline:none;line-height:24px}
 #mayatnikTemplatePanel .mtp-command::after,#mayatnikTemplatePanel .mtp-path::after,#mayatnikTemplatePanel summary::after{content:"";pointer-events:none;position:absolute;inset:0;background:var(--mtp-accent);clip-path:polygon(10px 0,11px 1px,2px 50%,11px calc(100% - 1px),10px 100%,0 50%,10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,calc(100% - 11px) calc(100% - 1px),calc(100% - 2px) 50%,calc(100% - 11px) 1px,calc(100% - 10px) 0);opacity:0}
 #mayatnikTemplatePanel .mtp-command:hover::after,#mayatnikTemplatePanel .mtp-command:focus-visible::after,#mayatnikTemplatePanel .mtp-path:hover::after,#mayatnikTemplatePanel .mtp-path:focus-visible::after,#mayatnikTemplatePanel summary:hover::after,#mayatnikTemplatePanel summary:focus-visible::after{opacity:1}
 #mayatnikTemplatePanel .mtp-command:active::after,#mayatnikTemplatePanel .mtp-path:active::after{opacity:1;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%,10px 0,11px 3px,4px 50%,11px calc(100% - 3px),calc(100% - 11px) calc(100% - 3px),calc(100% - 4px) 50%,calc(100% - 11px) 3px,11px 3px)}
@@ -53,12 +53,7 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 #mayatnikTemplatePanel .mtp-folder .mtp-card-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
 #mayatnikTemplatePanel .mtp-drop{outline:2px dashed var(--mtp-accent);outline-offset:-2px}
 #mayatnikTemplatePanel .mtp-empty{grid-column:1/-1;margin:12px 2px;color:#aebdcd;font-size:12px}
-#mayatnikTemplatePanel .mtp-controls{flex:none;border-top:1px solid #334052;padding-top:2px}
-#mayatnikTemplatePanel .mtp-live-controls{max-width:100%;overflow:visible}
-#mayatnikTemplatePanel .mtp-source-controls{display:flex!important;position:static!important;inset:auto!important;transform:none!important;flex-flow:row wrap!important;align-items:flex-start!important;align-content:flex-start!important;gap:2px!important;max-height:none!important;max-width:100%!important;width:auto!important;min-width:0!important;padding:2px!important;overflow:visible!important;background:#0e1116!important;opacity:1!important;visibility:visible!important}
-#mayatnikTemplatePanel .mtp-source-controls>*{position:relative!important;inset:auto!important;transform:none!important;margin:0!important;flex-shrink:0}
 #mayatnikTemplatePanel #templateLibraryChoices,#mayatnikTemplatePanel #templateLibraryCurrent{display:none!important}
-#mayatnikTemplatePanel .mtp-source-controls>[hidden]{display:none!important}
 #mayatnikTemplatePanel button:disabled,#mayatnikTemplatePanel input:disabled{opacity:.45;cursor:default}
 @media(max-width:600px){#mayatnikTemplatePanel .mtp-card-actions{grid-template-columns:repeat(3,minmax(0,1fr))}#mayatnikTemplatePanel .mtp-card-actions>.mtp-command,#mayatnikTemplatePanel .mtp-more>summary{min-height:28px;height:28px}}
 

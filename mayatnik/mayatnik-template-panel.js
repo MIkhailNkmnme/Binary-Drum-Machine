@@ -3,7 +3,7 @@
   'use strict';
   if(!root.document)return;
   const doc=root.document,OPEN_KEY='mayatnik-template-panel-open',WIDTH_KEY='mayatnik-template-panel-width',TAB_KEY='mayatnik-library-tab';
-  let panel,grid,crumbs,status,controls,engine,unsubscribe,store,current='',open=false,scheduled=false,libraryKey='',renderKey='',dragged=null;
+  let panel,grid,crumbs,status,engine,unsubscribe,store,current='',open=false,scheduled=false,libraryKey='',renderKey='',dragged=null;
   const cards=new Map(),previews=new Map(),metricsCache=new WeakMap();let observer;
   const identities=new WeakMap();let identityCounter=0;
   const metricTasks=new Map();let metricTimer=0,metricActive=null;
@@ -91,8 +91,7 @@
     grid=doc.createElement('div');grid.className='mtp-grid';grid.dataset.noMini='';grid.setAttribute('aria-label','Шаблоны и папки — перетащите для группировки');
     grid.addEventListener('dragover',e=>{if(dragged){e.preventDefault();e.dataTransfer.dropEffect='move';}});
     grid.addEventListener('drop',e=>{if(e.target===grid&&dragged){e.preventDefault();organise(()=>store.move(dragged.kind,dragged.id,current));dragged=null;}});
-    const detail=doc.createElement('details');detail.className='mtp-controls';const summary=doc.createElement('summary');summary.dataset.noMini='';summary.textContent='⋯';summary.title='Прежние команды шаблонов';summary.setAttribute('aria-label',summary.title);controls=doc.createElement('div');controls.className='mtp-live-controls';detail.append(summary,controls);
-    templatePane.append(crumbs,actions,status,grid,detail);panel.append(head,tabs,...sections.map(s=>s[2]));doc.body.append(panel);makeResizer(storage);
+    templatePane.append(crumbs,actions,status,grid);panel.append(head,tabs,...sections.map(s=>s[2]));doc.body.append(panel);makeResizer(storage);
     if(root.IntersectionObserver)observer=new root.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const card=entry.target;observer.unobserve(card);drawPreview(card);queueMetrics(card);}}, {root:panel,rootMargin:'160px'});
     else panel.addEventListener('scroll',queueVisibleMetrics,{passive:true});
     panel.addEventListener('dragend',()=>{dragged=null;panel.querySelectorAll('.mtp-drop').forEach(n=>n.classList.remove('mtp-drop'));});
@@ -213,7 +212,7 @@
     if(persist)try{root.localStorage.setItem(OPEN_KEY,open?'1':'0');}catch(_){}
     engine?.refresh();if(open){if(activeTab!=='templates')renderCapture(captureLibraries.get(activeTab));else render();}if(changed){root.dispatchEvent(new CustomEvent('mayatnik-template-panel-change',{detail:{open}}));root.dispatchEvent(new Event('resize'));}
   }
-  root.MayatnikTemplatePanel={toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,attachControls(element){make();if(element&&element!==controls&&!controls.contains(element)){element.classList.add('mtp-source-controls');controls.append(element);}}};
+  root.MayatnikTemplatePanel={toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind};
   root.addEventListener('may-template-library-ready',()=>{make();bind(root.mayTemplateLibrary);});
   for(const library of captureLibraries.values())root.addEventListener(library.key==='views'?'may-view-library-ready':'may-frame-library-ready',()=>{make();bindCapture(library,root[library.apiName]);});
   root.addEventListener('may-template-saved',e=>{make();bind(root.mayTemplateLibrary);if(!engine)return;store.reconcile(engine.allIds());const id=String(e.detail?.id||'');current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';renderKey='';selectTab('templates');setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});});

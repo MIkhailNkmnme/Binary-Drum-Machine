@@ -104,7 +104,7 @@
       { type: 'vpair', name: 'Строк', tip: 'Длина оси: строк от · до', parts: [{ ...num('symRowsMin', { slider: false }), name: 'строк ≥' }, { ...num('symRowsMax', { slider: false, inf: true, fromInf: () => +$('symRowsMin').value || 2 }), name: '≤' }] },
       { type: 'vpair', name: 'Бит', tip: 'Ширина оси: бит от · до', parts: [{ ...num('symBitsMin', { slider: false }), name: 'бит ≥' }, { ...num('symBitsMax', { slider: false, inf: true, fromInf: () => +$('symBitsMin').value || 2 }), name: '≤' }] }, button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
     { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintNew','reset'),withColour('bFill','fillColour','Заливка'),withColour('bAutoVertical','verticalFillColour','Столбы'),withColour('bStolb','stolbFillColour','Проход'),button('bPaintMid','line'),withColour('midOneOn','midOneColour','Центр 1'),withColour('midZeroOn','midZeroColour','Центр 0'),check('midWide','line'),button('bAutoAll','steps'),button('bFillGrow','plus'),check('fillMirror','mirror'),select('fillArea','grid4'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
-    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',slider:false,zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50})] },
+    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',slider:false,zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50}),button('bTemplatePick','corners'),{...selectSegments('templatePickMode'),src:'templatePickMode'}] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
       button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
@@ -855,6 +855,7 @@
     if (selected) { row.prepend(...selected.querySelector('.pt-r').children); selected.remove(); }
     row.parentElement.dataset.k = 'Шаблоны';
     mergeTemplateRail(row,railSourceButtons);
+    row.prepend(...['bTemplatePick','templatePickMode'].map(id=>railSourceButtons.get(id)).filter(Boolean));
     railR.style.setProperty('display', 'none', 'important'); }
   // v0.485: библиотека сохраняет своё место. Если сохранён только старый «Шаблон», наследуем его раскладку; исходные ключи остаются в резервной копии.
   try {
@@ -959,21 +960,20 @@
     for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
       if(g.classList.contains('pt-lib')&&window.MayatnikTemplatePanel){
-        g.classList.add('pt-btn');g.classList.remove('pt-open','pt-pinned');
-        l.classList.add('gz-hx');l.id='bTemplatePanel';l.setAttribute('aria-controls','mayatnikTemplatePanel');l.removeAttribute('aria-haspopup');
-        // Keep all live handlers, including controls moved from the old rail, in the panel.
+        // Keep live commands in the standard movable group; the library has a separate launcher.
         for(const b of row.querySelectorAll('[data-n="bFillUndo"],[data-n="bFillRedo"],[data-may-source="bFillUndo"],[data-may-source="bFillRedo"]'))(b.closest('.gz-pair')||b).remove();
         for(const b of row.querySelectorAll('.gz-pair'))if(/Отм/.test(b.textContent)&&/Повт/.test(b.textContent))b.remove();
         row.querySelector('#templateLibraryChoices')?.closest('.gz-control')?.style.setProperty('display','none','important');
-        window.MayatnikTemplatePanel.attachControls(row);
-        g.id='mayTemplateLauncher';g.setAttribute('data-no-mini','');document.body.append(g);
-        l.className='pt-l';l.title='Шаблоны';l.setAttribute('aria-label','Шаблоны');
-        l.innerHTML='<svg class="may-template-diamond" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 1L47 24 24 47 1 24Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg>';
+        const launcher=document.createElement('div'), launch=document.createElement('button');
+        launcher.id='mayTemplateLauncher';launcher.setAttribute('data-no-mini','');
+        launch.type='button';launch.id='bTemplatePanel';launch.setAttribute('aria-controls','mayatnikTemplatePanel');
+        launcher.append(launch);document.body.append(launcher);
+        launch.className='pt-l';launch.title='Библиотека';launch.setAttribute('aria-label','Библиотека');
+        launch.innerHTML='<svg class="may-template-diamond" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 1L47 24 24 47 1 24Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg>';
 
-        const sync=()=>{const on=String(window.MayatnikTemplatePanel.isOpen());l.setAttribute('aria-expanded',on);l.setAttribute('aria-pressed',on);};
-        l.onclick=()=>{window.MayatnikTemplatePanel.toggle();sync();};
-        l.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();l.click();}};
-        addEventListener('mayatnik-template-panel-change',sync);sync();continue;
+        const sync=()=>{const on=String(window.MayatnikTemplatePanel.isOpen());launch.setAttribute('aria-expanded',on);launch.setAttribute('aria-pressed',on);};
+        launch.onclick=()=>{window.MayatnikTemplatePanel.toggle();sync();};
+        addEventListener('mayatnik-template-panel-change',sync);sync();
       }
       const pin = ZerkGroupHeader.parts(l).pin;
       pin.addEventListener('click', e => { e.stopPropagation(); const k = keyOf(g); folds.delete(k); if (pins.has(k)) pins.delete(k); else pins.add(k);

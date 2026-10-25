@@ -12,9 +12,9 @@ function boot(width=1200,saved,setup){
  const key=(key,shiftKey=false)=>handle.dispatchEvent(new w.KeyboardEvent('keydown',{key,shiftKey,bubbles:true,cancelable:true}));
  w.MayatnikTemplatePanel.setOpen(true);flush();return {dom,w,panel,handle,flush,value,fire,key};
 }
-test('default panel is half viewport; source controls, four card columns and common layout width remain intact',()=>{
+test('default panel is half viewport; separate source controls, four card columns and common layout width remain intact',()=>{
  const a=boot();try{assert.equal(a.value(),600);assert.equal(a.handle.hidden,false);assert.equal(a.handle.getAttribute('role'),'separator');assert.equal(a.handle.getAttribute('aria-orientation'),'vertical');
-  const source=a.w.document.getElementById('source');a.w.MayatnikTemplatePanel.attachControls(source);assert.ok(a.panel.contains(source));
+  const source=a.w.document.getElementById('source');assert.ok(!a.panel.contains(source));assert.equal(a.panel.querySelector('.mtp-controls'),null);
   const css=fs.readFileSync(path.join(__dirname,'mayatnik-template-panel.css'),'utf8');assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);assert.match(css,/#cellInkBar\{left:calc\(\(100vw - var\(--may-template-panel-width\)\)\/2\)/);assert.doesNotMatch(css,/37\.5vw|75vw|25vw|--may-template-panel-width:100vw/);
  }finally{a.dom.window.close();}
 });
