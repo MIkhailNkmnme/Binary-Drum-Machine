@@ -9,7 +9,8 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 #mayCorner{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:2px}
 #mayCorner #mayZen{margin-left:0}
 #mayCorner #mayHelp{justify-content:center}
-.mayatnik-menu-ready #mayHideAxes:not([hidden]){display:inline-flex;--c:#ff87cf;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif}
+/* The symmetry group owns this action; keep the source button for its handler/state. */
+.mayatnik-menu-ready #mayHideAxes{display:none!important}
 #mayHideAxes[hidden]{display:none}
 #symAxes{position:fixed;pointer-events:none;margin:0;background:transparent;z-index:3}
 #symAxes[hidden]{display:none}

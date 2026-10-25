@@ -1,6 +1,8 @@
 /* Only the field projection is painted; the viewport never owns a full copy of
    the potentially huge source raster. Seam controls have their own hit zones. */
-.mcsv-canvas{position:fixed;pointer-events:none;z-index:12;image-rendering:pixelated}
+/* Selection alone paints only a translucent mark. Override the page's black
+   canvas background so the original CPU/GPU field remains visible underneath. */
+.mcsv-canvas{position:fixed;pointer-events:none;z-index:12;image-rendering:pixelated;background:transparent;margin:0}
 .mcsv-canvas[hidden]{display:none}
 .mcsv-seams{position:fixed;inset:0;pointer-events:none;z-index:13}
 .mcsv-selecting{cursor:crosshair;user-select:none;-webkit-user-select:none}

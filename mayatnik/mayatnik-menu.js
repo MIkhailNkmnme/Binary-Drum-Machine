@@ -1439,11 +1439,11 @@
   // v0.454 (Р02): слева заголовки остаются на месте, кнопки группы — одним столбцом вниз под шапкой, остальное сдвигается.
   function syncRailFlyouts() {
     for (const box of document.querySelectorAll('#mayatnikRail .gz-group, #paintTools > .gz-group')) {
-      const left = !!box.closest('#mayatnikRail'); let list = box.querySelector(':scope > .may-rail-list');
+      const left = !!box.closest('#mayatnikRail'), sideStack = box.matches('.may-menu-side-stack.may-dock-side'); let list = box.querySelector(':scope > .may-rail-list');
       if (!list) { list = document.createElement('div'); list.className = 'may-rail-list';
         list.append(...box.querySelectorAll(':scope > .gz-soty, :scope > .gz-wide')); box.append(list); }
       if (!list) continue;
-      if (!left || innerWidth <= 600) {
+      if ((!left && !sideStack) || innerWidth <= 600) {
         list.removeAttribute('style');
         if (box.classList.contains('gz-open')) {
           const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(), up = box.classList.contains('pt-bot');
@@ -1463,7 +1463,8 @@
       list.removeAttribute('style');
       const head = box.querySelector(':scope > .gz-head'); head.setAttribute('aria-expanded', String(box.classList.contains('gz-open')));
       if (!box.classList.contains('gz-open')) continue;
-      // v0.454 (Р02): список — столбец в потоке под шапкой, вбок не раскрывается; сдвиг остального даёт сама рейка, высоту ограничивает прокрутка рейки
+      // Side docks also keep the list in flow. Floating !important viewport coordinates
+      // would offset its relative box and put every control outside the dock's clip.
       for (const key of ['left', 'top', 'width', 'maxWidth', 'gridTemplateRows', 'gridAutoColumns']) if (list.style[key]) list.style[key] = '';
     }
     pushStrip();

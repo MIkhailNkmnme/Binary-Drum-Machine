@@ -3,6 +3,16 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const Model=require('./mayatnik-cell-selection.js');
 const View=require('./mayatnik-cell-selection-view.js');
+test('selection overlay overrides the global black canvas background',()=>{
+  const fs=require('node:fs');
+  const css=fs.readFileSync(require.resolve('./mayatnik-cell-selection-view.css'),'utf8');
+  const rule=/\.mcsv-canvas\s*\{([^}]+)\}/.exec(css);
+  assert.ok(rule,'overlay has its own canvas rule');
+  assert.match(rule[1],/background\s*:\s*transparent\s*[;}]/,
+    'selection-only pixels must compose over CPU and GPU originals');
+  assert.match(rule[1],/margin\s*:\s*0\s*(?:;|$)/,
+    'the global canvas auto margin must not offset a fixed overlay');
+});
 function source(cols=10,rows=10){return {cols,rows,canvas:{width:cols*4,height:rows*4},rect:{left:10,top:20,width:cols*10,height:rows*10},clipRect:{left:0,top:0,width:500,height:500}};}
 const viewport={left:0,top:0,width:500,height:500};
 test('unhidden field keeps exact source rectangle and original coordinates',()=>{
@@ -59,6 +69,39 @@ function mockContext(){
     clearRect(...args){calls.push(['clearRect',...args]);},getImageData(x,y,w,h){calls.push(['getImageData',x,y,w,h]);return {data:new Uint8ClampedArray([255,255,255,127])};},
     putImageData(...args){calls.push(['putImageData',...args]);}};
 }
+function mountedView(src,model){
+  const ctx=mockContext();ctx.fillRect=(...args)=>ctx.calls.push(['fillRect',...args]);
+  ctx.strokeRect=(...args)=>ctx.calls.push(['strokeRect',...args]);
+  const nodes=[];
+  function element(){return {style:{},classList:{toggle(){},remove(){}},setAttribute(){},addEventListener(){},removeEventListener(){},
+    appendChild(){},remove(){},getContext(){return ctx;}};}
+  const win={innerWidth:500,innerHeight:500,devicePixelRatio:1,addEventListener(){},removeEventListener(){}};
+  const doc={defaultView:win,body:{appendChild(n){nodes.push(n);}},createElement:element,addEventListener(){},removeEventListener(){}};
+  const host=element();host.ownerDocument=doc;
+  return {view:View.mount({host,model,getSource:()=>src}),ctx,overlay:nodes[0]};
+}
+for(const gpu of [false,true])test((gpu?'GPU adapter':'CPU canvas')+' stays under a selection-only overlay and paints after collapse',()=>{
+  const src=source(),model=Model.create({rows:10,cols:10});
+  const gpuCalls=[];src.baseVisible=false;
+  src.layers=[gpu?{drawTile(ctx,t){gpuCalls.push(t);ctx.drawImage('GPU tile',t.dx,t.dy,t.dw,t.dh);}}:{canvas:src.canvas,rect:src.rect}];
+  const {view,ctx,overlay}=mountedView(src,model);
+  assert.equal(overlay.hidden,true);
+  view.setMode('rows');assert.equal(overlay.hidden,true,'activating mode does not cover originals');
+  view.pointerDown({button:0,pointerId:1,clientX:30,clientY:45});
+  view.pointerUp({pointerId:1,clientX:30,clientY:65});
+  assert.equal(overlay.hidden,false);
+  assert.equal(ctx.calls.filter(c=>c[0]==='drawImage').length,0,'selection does not replace CPU or GPU originals');
+  assert.equal(ctx.calls.filter(c=>c[0]==='strokeRect').length>0,true);
+  assert.deepEqual(model.hiddenRows,[],'selection alone never hides rows');
+  ctx.calls.length=0;
+  assert.equal(view.hide('rows'),true);
+  assert.ok(ctx.calls.some(c=>c[0]==='drawImage'),'collapsed projection paints the original source');
+  if(gpu)assert.ok(gpuCalls.length,'collapsed GPU source is routed through its tile painter');
+  assert.deepEqual(model.hiddenRows,[[2,4]]);
+  view.revealAll();model.clear();view.render();
+  assert.equal(overlay.hidden,true,'revealing and clearing returns to originals');
+  view.destroy();
+});
 test('custom tile painter is clipped to every destination piece with layer opacity',()=>{
   const ctx=mockContext(),src=source(),pieces=[{dx:1,dy:2,dw:3,dh:4},{dx:8,dy:9,dw:2,dh:6}],seen=[];
   View.drawLayer(ctx,src,pieces,{opacity:.4,drawTile(c,t,s){seen.push([c.globalAlpha,t,s]);assert.equal(c.calls.at(-1)[0],'clip');}});
