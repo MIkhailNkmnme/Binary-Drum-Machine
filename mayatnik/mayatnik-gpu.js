@@ -123,8 +123,12 @@ fn triFill(r: i32, fc: i32) -> bool {
 fn shown(r: i32, c: i32) -> i32 {
   let fc = c + P[1];
   if (!parityShown(r, fc)) { return -1; }
-  if (outZone(r, fc) && !(P[10] == 2 && triFill(r, fc))) { return -1; }
+  if (outZone(r, fc) && !((P[10] & 2) != 0 && triFill(r, fc))) { return -1; }
   return raw(r, fc);
+}
+fn semantic(colour: u32, bit: i32) -> u32 {
+  if ((P[10] & 4) == 0) { return colour; }
+  return (colour & 0xffffffu) | (u32(bit + 253) << 24u);
 }
 fn cnt(lo0: i32, hi0: i32, p: i32) -> i32 {
   let lo = max(lo0, 1); let hi = min(hi0, P[7]); if (lo > hi) { return 0; }
@@ -150,9 +154,9 @@ fn tintOf(r: i32, c: i32, v: i32) -> i32 {
 fn base(@builtin(global_invocation_id) g: vec3<u32>) {
   let VW = P[2]; let i = i32(g.x + g.y * 65535u * 64u); if (i >= VW * P[3]) { return; }
   let y = i / VW; let c = i % VW; let v = shown(y, c);
-  if (v < 0) { pic[i] = u32(P[22]); return; }
+  if (v < 0) { pic[i] = semantic(u32(P[22]), -1); return; }
   var t = 0; if (P[4] != 0) { t = tintOf(y, c + P[1] - P[9], v); }
-  pic[i] = u32(P[16 + v * 3 + t]);
+  pic[i] = semantic(u32(P[16 + v * 3 + t]), v);
 }
 fn fam(u: u32) -> i32 {
   let r = i32(u & 255u); let gr = i32((u >> 8u) & 255u); let b = i32((u >> 16u) & 255u);
@@ -168,8 +172,8 @@ fn pxBit(u: u32) -> i32 { let k = fam(u); if (k == 1 || k == 4) { return 1; } if
 fn put(o: i32, v: u32) -> bool {
   let mc = P[24]; if (mc != 0 && fam(v) != mc) { return false; }
   let op = P[25];
-  if (op != 0) { let s = pxBit(v); let t = pxBit(pic2[o]); if (s < 0 || t < 0) { return false; } pic[o] = u32(P[26 + select(s & t, s ^ t, op == 1)]); return true; }
-  pic[o] = v | 0xff000000u; return true;
+  if (op != 0) { let s = pxBit(v); let t = pxBit(pic2[o]); if (s < 0 || t < 0) { return false; } let bit=select(s & t, s ^ t, op == 1); pic[o] = semantic(u32(P[26 + bit]),bit); return true; }
+  pic[o] = select(v | 0xff000000u, v, (P[10] & 4) != 0); return true;
 }
 fn fixAt(Y: i32, C: i32, o: i32) {
   let m = Q[1]; let wide = (Q[2] & 1) != 0; let rot = (Q[2] & 2) != 0; let down = (Q[2] & 4) != 0; let VW = P[2]; let VH = P[3];
@@ -190,7 +194,7 @@ fn fixAt(Y: i32, C: i32, o: i32) {
     let xcL = fx + fr0; let xcR = fx + (1.0 - fr0);
     if (m == 8) { xc = select(xcR, xcL, f32(C) < x); } else if (m == 9) { xc = select(xcL, xcR, f32(C) < x); }
     let mc = P[24]; if (mc != 0 && fam(v) != mc) { continue; }
-    if (m == 4 || m == 5) { let a = shown(Y, C); let b = shown(fr, sc); if (a < 0 || b < 0) { continue; } pic[o] = u32(P[26 + select(a & b, a ^ b, m == 4)]); return; }
+    if (m == 4 || m == 5) { let a = shown(Y, C); let b = shown(fr, sc); if (a < 0 || b < 0) { continue; } let bit=select(a & b, a ^ b, m == 4); pic[o] = semantic(u32(P[26 + bit]),bit); return; }
     if (m > 1 && pm2(Y + sc - i32(floor(xc))) != select(0, 1, m == 3)) { continue; }
     if (put(o, v)) { return; }
   }
@@ -226,7 +230,7 @@ fn lowAt(Y: i32, C: i32, o: i32) {
 fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
   let VW = P[2]; let VH = P[3]; let o = i32(g.x + g.y * 65535u * 64u); if (o >= VW * VH) { return; }
   let Y = o / VW; let C = o % VW; let kind = Q[0]; let m = Q[1];
-  if (!parityShown(Y, C + P[1])) { pic[o] = u32(P[22]); return; }
+  if (!parityShown(Y, C + P[1])) { pic[o] = semantic(u32(P[22]),-1); return; }
   if (kind == 1) { fixAt(Y, C, o); return; }
   if (kind == 2) { lowAt(Y, C, o); return; }
   if (kind == 3) {
@@ -252,14 +256,43 @@ fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
 
   // Картинка на экран: пиксель холста — среднее цветов клеток окна под ним (до 32 × 32 выборок), при увеличении — клетка под серединой
   const RENDER_WGSL = /* wgsl */`
-struct R { x0: f32, y0: f32, step: f32, _a: u32, VX: i32, VW: i32, VH: i32, _b: u32 }
+struct R { x0: f32, y0: f32, step: f32, contours: u32, VX: i32, VW: i32, VH: i32, pixelRatio: f32,
+  cx0:f32, cy0:f32, cw:i32, ch:i32, mapped:u32, pad0:u32, pad1:u32, pad2:u32 }
 @group(0) @binding(0) var<uniform> u: R;
 @group(0) @binding(1) var<storage, read> pic: array<u32>;
+@group(0) @binding(2) var<storage, read> axes: array<i32>;
 @vertex fn vs(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
   let x = f32((i << 1u) & 2u) * 2.0 - 1.0; let y = f32(i & 2u) * 2.0 - 1.0; return vec4<f32>(x, y, 0.0, 1.0);
 }
 fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return vec3<f32>(f32(p & 255u), f32((p >> 8u) & 255u), f32((p >> 16u) & 255u)) / 255.0; }
+fn kind(r:i32,c:i32) -> i32 {
+  if(r<0 || r>=u.ch || c<0 || c>=u.cw){return -1;}
+  var sr=r;var sc=c;if(u.mapped!=0u){sc=axes[c]-u.VX;sr=axes[u.cw+r];}
+  let tag=i32(pic[sr*u.VW+sc]>>24u);return select(-1,tag-253,tag>=251&&tag<=254);
+}
+fn boundary(a:i32,b:i32)->bool {return a>=-1&&b>=-1&&a!=b&&(a>=0||b>=0);}
+fn sampledKind(row:i32,col:i32,step:f32)->i32 {
+  let span=vec2<f32>(f32(u.cw),f32(u.ch))/step;
+  if(row<0||col<0||col>=i32(ceil(span.x))||row>=i32(ceil(span.y))){return -1;}
+  let centre=(vec2<f32>(f32(col),f32(row))+min(vec2<f32>(f32(col+1),f32(row+1)),span))*0.5;
+  return kind(min(u.ch-1,i32(floor(centre.y*step))),min(u.cw-1,i32(floor(centre.x*step))));
+}
+fn contour(pos:vec2<f32>) -> bool {
+  let step=u.step*u.pixelRatio;
+  let fx=u.cx0+pos.x*u.step;let fy=u.cy0+pos.y*u.step;
+  let c=i32(floor(fx));let r=i32(floor(fy));let a=kind(r,c);
+  if(step<=1.0){let dx=fract(fx);let dy=fract(fy);
+    return (dx<=step&&boundary(a,kind(r,c-1)))||(1.0-dx<=step&&boundary(a,kind(r,c+1)))||(dy<=step&&boundary(a,kind(r-1,c)))||(1.0-dy<=step&&boundary(a,kind(r+1,c)));
+  }
+  // Minification follows the bounded screen-pixel sampling used by the CPU.
+  let q=vec2<f32>(fx/step,fy/step);let col=i32(floor(q.x));let row=i32(floor(q.y));
+  let span=vec2<f32>(f32(u.cw),f32(u.ch))/step;let v=sampledKind(row,col,step);
+  let x0=min(f32(col),span.x);let x1=min(f32(col+1),span.x);let y0=min(f32(row),span.y);let y1=min(f32(row+1),span.y);
+  let vertical=q.y>=max(0.0,y0)&&q.y<=min(span.y,y1);let horizontal=q.x>=max(0.0,x0)&&q.x<=min(span.x,x1);
+  return (vertical&&((abs(q.x-x0)<=1.0&&boundary(v,sampledKind(row,col-1,step)))||(abs(q.x-x1)<=1.0&&boundary(v,sampledKind(row,col+1,step)))))||(horizontal&&((abs(q.y-y0)<=1.0&&boundary(v,sampledKind(row-1,col,step)))||(abs(q.y-y1)<=1.0&&boundary(v,sampledKind(row+1,col,step)))));
+}
 @fragment fn fs(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
+  if(u.contours!=0u&&contour(pos.xy)){return vec4<f32>(1.0,233.0/255.0,105.0/255.0,1.0);}
   let fx = u.x0 + floor(pos.x) * u.step; let fy = u.y0 + floor(pos.y) * u.step;
   var c0: i32; var c1: i32; var r0: i32; var r1: i32;
   if (u.step < 1.0) { c0 = i32(floor(fx + u.step * 0.5)); c1 = c0 + 1; r0 = i32(floor(fy + u.step * 0.5)); r1 = r0 + 1; }
@@ -311,7 +344,8 @@ fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return 
       const pBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       const bitsBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
       const hasBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
-      const uBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+      const uBuf = device.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+      let axesBuf=device.createBuffer({size:4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST}),axesCapacity=1,axesCols=null,axesRows=null;
       const PBuf = device.createBuffer({ size: 32 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       let tBuf = null, apBuf = null, bind = null, tCap = 0, apCap = 0, renderBind = null, dead = false;
       let pic = null, pic2 = null, picN = 0, zBuf = null, zCap = 0, qBuf = null, qCap = 0, picBind = null, win = null;
@@ -385,7 +419,7 @@ fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return 
         if (!qBuf || qN > qCap) { qBuf?.destroy(); qCap = Math.max(qN, 8); qBuf = device.createBuffer({ size: qCap * slot, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }); picBind = null; }
         const P = new Int32Array(32), sd = o.sides || [1e9, -1e9, 1e9, -1e9];
         P[0] = WW; P[1] = o.VX; P[2] = o.VW; P[3] = o.VH; P[4] = o.tint | 0; P[5] = o.lo | 0; P[6] = o.hi | 0; P[7] = o.k | 0; P[8] = o.filled ? 1 : 0; P[9] = anchor;
-        P[10] = o.nb2 ? 2 : 0; P[11] = zl ? zl.length / 2 : 0; for (let i = 0; i < 4; i++) P[12 + i] = Number.isFinite(sd[i]) ? sd[i] : (i % 2 ? -1e9 : 1e9);
+        P[10] = (o.nb2 ? 2 : 0)|(o.contours?4:0); P[11] = zl ? zl.length / 2 : 0; for (let i = 0; i < 4; i++) P[12 + i] = Number.isFinite(sd[i]) ? sd[i] : (i % 2 ? -1e9 : 1e9);
         for (let i = 0; i < 6; i++) P[16 + i] = o.T[i] | 0; P[22] = o.empty | 0; P[23] = W; P[24] = o.mirCol | 0; P[25] = o.mirOp | 0; P[26] = (o.bitC || [0, 0])[0] | 0; P[27] = (o.bitC || [0, 0])[1] | 0;
         for(const [i,key]of ['cellsEven','cellsOdd','rowsEven','rowsOdd'].entries())P[28+i]=o.parity?.[key]===false?0:1;
         device.queue.writeBuffer(PBuf, 0, P); if (zl) device.queue.writeBuffer(zBuf, 0, zl);
@@ -397,32 +431,44 @@ fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return 
         let pass = enc.beginComputePass(); pass.setPipeline(pipeBase); pass.setBindGroup(0, picBind, [0]); pass.dispatchWorkgroups(gx, gy); pass.end();
         passes.forEach((r, i) => { enc.copyBufferToBuffer(pic, 0, pic2, 0, n * 4);
           pass = enc.beginComputePass(); pass.setPipeline(pipeMir); pass.setBindGroup(0, picBind, [i * slot]); pass.dispatchWorkgroups(gx, gy); pass.end(); });
-        device.queue.submit([enc.finish()]); win = { VX: o.VX, VW: o.VW, VH: o.VH };
+        device.queue.submit([enc.finish()]); win = { VX: o.VX, VW: o.VW, VH: o.VH,contours:!!o.contours };
         return true;
       }
       // Готовая картинка окна (с краской, посчитанной страницей) → видеокарта; размер — как у последней picture()
-      function writePic(px) { if (dead || !pic || px.length !== picN) return false; device.queue.writeBuffer(pic, 0, px); return true; }
+      function writePic(px,kinds) { if (dead || !pic || px.length !== picN) return false;
+        if(win?.contours){if(!kinds||kinds.length!==px.length)return false;const tagged=new Uint32Array(px.length);for(let i=0;i<px.length;i++)tagged[i]=(px[i]&0xffffff)|((kinds[i]+253)<<24);device.queue.writeBuffer(pic,0,tagged);}
+        else device.queue.writeBuffer(pic, 0, px);return true; }
       // Картинка окна → Uint32Array (проверка против img страницы)
       async function readPic() {
         if (!pic || !picN) return null;
+        const contours=win?.contours;
         const rb = device.createBuffer({ size: picN * 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ }), enc = device.createCommandEncoder();
         enc.copyBufferToBuffer(pic, 0, rb, 0, picN * 4); device.queue.submit([enc.finish()]);
-        await rb.mapAsync(GPUMapMode.READ); const out = new Uint32Array(rb.getMappedRange().slice(0)); rb.unmap(); rb.destroy(); return out;
+        await rb.mapAsync(GPUMapMode.READ); const out = new Uint32Array(rb.getMappedRange().slice(0)); rb.unmap(); rb.destroy();
+        if(contours){const kinds=new Int8Array(out.length);for(let i=0;i<out.length;i++){const tag=out[i]>>>24;kinds[i]=tag>=251&&tag<=254?tag-253:-1;out[i]=(out[i]|0xff000000)>>>0;}out.contourBits=kinds;}return out;
       }
       // На холст (GPUCanvasContext, уже configure) — последняя picture(): o = { x0, y0, step — клеток окна на пиксель холста }
       function render(context, o) {
         if (dead || !pic || !win) return;
-        const ub = new ArrayBuffer(32), f = new Float32Array(ub), i = new Int32Array(ub);
-        f[0] = o.x0; f[1] = o.y0; f[2] = o.step; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;
+        const ub = new ArrayBuffer(64), f = new Float32Array(ub), i = new Int32Array(ub),p=o.contourProjection;
+        f[0] = o.x0; f[1] = o.y0; f[2] = o.step;i[3]=o.contours&&win.contours?1:0; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;f[7]=o.pixelRatio||1;
+        f[8]=p?p.x0:o.x0-win.VX;f[9]=p?p.y0:o.y0;i[10]=p?p.cols.length:win.VW;i[11]=p?p.rows.length:win.VH;i[12]=p?1:0;
+        // Projection changes only the semantic neighbour lookup. The tile's
+        // colour sampling remains in original coordinates, without readback.
+        if(p&&(axesCols!==p.cols||axesRows!==p.rows)){
+          const data=new Int32Array(p.cols.length+p.rows.length);data.set(p.cols);data.set(p.rows,p.cols.length);
+          if(data.length>axesCapacity){axesBuf.destroy();axesCapacity=data.length;axesBuf=device.createBuffer({size:axesCapacity*4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});renderBind=null;}
+          if(data.length)device.queue.writeBuffer(axesBuf,0,data);axesCols=p.cols;axesRows=p.rows;
+        }
         device.queue.writeBuffer(uBuf, 0, ub);
         if (!renderBind) renderBind = device.createBindGroup({ layout: pipeRender.getBindGroupLayout(0), entries: [
-          { binding: 0, resource: { buffer: uBuf } }, { binding: 1, resource: { buffer: pic } }] });
+          { binding: 0, resource: { buffer: uBuf } }, { binding: 1, resource: { buffer: pic } },{binding:2,resource:{buffer:axesBuf}}] });
         const enc = device.createCommandEncoder(), pass = enc.beginRenderPass({ colorAttachments: [{ view: context.getCurrentTexture().createView(), loadOp: 'clear', clearValue: { r: 0, g: 0, b: 0, a: 0 }, storeOp: 'store' }] });
         pass.setPipeline(pipeRender); pass.setBindGroup(0, renderBind); pass.draw(3); pass.end(); device.queue.submit([enc.finish()]);
       }
       reset();
       return { W, H, WW, anchor, reset, run, write, read, picture, readPic, writePic, render, done: () => device.queue.onSubmittedWorkDone(),
-        destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf]) x?.destroy(); } };
+        destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту
     function attach(canvas) { const ctx = canvas.getContext('webgpu'); ctx.configure({ device, format, alphaMode: 'premultiplied' }); return ctx; }
