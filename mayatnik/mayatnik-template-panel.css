@@ -104,3 +104,13 @@ html.may-library-detached .mtp-resize{display:none!important}
 html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayLibraryConnection{position:fixed;inset:0;z-index:2147483647;padding:24px;background:#0e1116;color:#dfe6f5;font:16px/1.5 system-ui,sans-serif}
 #mayLibraryConnection[hidden]{display:none}
+
+/* The library layout switch uses the same 48 px diamonds as field controls. */
+#mayatnikTemplatePanel .mtp-layout-diamond{width:48px;height:48px;padding:0;line-height:1;background:transparent;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#mayatnikTemplatePanel .mtp-layout-diamond::after{display:none}
+#mayatnikTemplatePanel .mtp-layout-diamond svg{width:48px;height:48px;pointer-events:none}
+#mayatnikTemplatePanel .mtp-layout-edge{fill:#1b2430;stroke:#6d597f;stroke-width:1}
+#mayatnikTemplatePanel .mtp-layout-icon{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:miter;stroke-linecap:square}
+#mayatnikTemplatePanel .mtp-layout-diamond:is(:hover,:focus-visible) .mtp-layout-edge{stroke:var(--mtp-accent)}
+#mayatnikTemplatePanel .mtp-layout-diamond[aria-pressed=true] .mtp-layout-edge{stroke:var(--mtp-accent);stroke-width:2}
+#mayatnikTemplatePanel .mtp-layout-diamond:active .mtp-layout-edge{stroke:var(--mtp-accent);stroke-width:3}
