@@ -69,10 +69,10 @@
    if(cfg.locked())return;
    const rows=(cfg.importRows?.()||[]).slice();
    if(!rows.length||rows.some(row=>typeof row!=='string'||!/^[01]{1,4096}$/.test(row))){cfg.message('Импорт: нужны строки из 0 и 1, до 4096 бит в строке.');return;}
-   const st=s(),empty=st.rows.length===1&&st.rows[0]==='0'&&!Object.keys(st.colors).length&&!Object.keys(st.dots).length&&!Object.keys(st.lines).length&&!st.text;
-   if(rows.length+(empty?0:st.rows.length)>4096){cfg.message('Импорт превышает максимум 4096 строк сетки.');return;}
-   change(st=>{const start=empty?0:st.rows.length;if(empty)st.rows=rows;else st.rows.push(...rows);st.cur=start;cfg.editor()?.clear();cfg.fit();});
-   cfg.message('Строки скопированы в сетку. Дальнейшие изменения независимы.');
+   if(rows.length>4096){cfg.message('Импорт превышает максимум 4096 строк сетки.');return;}
+   cancel();cfg.axis()?.cancel();
+   change(st=>{Object.assign(st,{rows,cur:0,colors:{},groups:{},dots:{},lines:{},text:'',textBlocks:[],textWidth:null,scene:-1});cfg.view().axes=[];selection=[];cfg.editor()?.clear();$('gridsRowsList').scrollTop=0;cfg.fit();});
+   cfg.message('Сетка очищена и заменена копией Строк. Отмена вернёт прежнее поле.');
   };
   $('gridsRowAdd').onclick=()=>{if(s().rows.length>=4096){cfg.message('Максимум 4096 строк сетки.');return;}change(st=>shiftRows(st,st.cur+1,0,['0'.repeat(st.rows[st.cur]?.length||32)]));};
   $('gridsRowCopy').onclick=()=>change(st=>{const r=st.cur,row=st.rows[r];shiftRows(st,r+1,0,[row]);for(const name of ['colors','groups'])for(let c=0;c<row.length;c++){const v=st[name][key(r,c)];if(v!==undefined)st[name][key(r+1,c)]=clone(v);}});

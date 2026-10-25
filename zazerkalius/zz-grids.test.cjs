@@ -84,8 +84,12 @@ test('real controller brushes, cancels a gesture, edits own rows and restores sc
  Object.assign(s,clone(snapshots.at(-1)));assert.equal(s.rows[1],'1111');assert.equal(s.colors['1,0'],'#fff');
  input.dataset.row='0';list.onkeydown(event());list.onkeydown(event());assert.deepEqual(clone(s.rows),['0']);
  before=snapshots.length;ids.gridsRowsImport.onclick();assert.deepEqual(clone(s.rows),['10','01']);assert.equal(snapshots.length,before+1);assert.notEqual(s.rows,originalRows);
- s.rows[0]='00';assert.deepEqual(originalRows,['10','01']);ids.gridsRowsImport.onclick();assert.deepEqual(clone(s.rows),['00','01','10','01']);
- originalRows[0]='11';assert.equal(s.rows[2],'10');ids.gridsRowsLock.onclick();before=snapshots.length;ids.gridsRowsImport.onclick();assert.equal(s.rows.length,4);assert.equal(snapshots.length,before);
+ s.rows[0]='00';assert.deepEqual(originalRows,['10','01']);
+ Object.assign(s,{colors:{'1,1':'red'},groups:{'1,1':{symbol:'A'}},dots:{a:{}},lines:{b:{}},text:'A',textBlocks:[{text:'A'}],textWidth:3});view.axes=[{id:1}];list.scrollTop=200;
+ before=snapshots.length;ids.gridsRowsImport.onclick();assert.deepEqual(clone(s.rows),['10','01']);assert.equal(snapshots.length,before+1);assert.equal(snapshots.at(-1).colors['1,1'],'red');assert.equal(snapshots.at(-1).text,'A');
+ for(const name of ['colors','groups','dots','lines'])assert.deepEqual(clone(s[name]),{});
+ assert.equal(s.text,'');assert.deepEqual(clone(s.textBlocks),[]);assert.equal(s.textWidth,null);assert.deepEqual(clone(view.axes),[]);assert.equal(list.scrollTop,0);
+ originalRows[0]='11';assert.equal(s.rows[0],'10');ids.gridsRowsLock.onclick();before=snapshots.length;ids.gridsRowsImport.onclick();assert.equal(s.rows.length,2);assert.equal(snapshots.length,before);
 
 
 });
