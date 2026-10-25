@@ -903,7 +903,9 @@
     const ochki=rail.el.querySelector('.gz-group[data-id="ochki"]')||tools.querySelector('.gz-group[data-id="ochki"]');if(ochki&&!manualLegacyCells.has('ochki'))manualLegacyCells.set('ochki',[...ochki.querySelectorAll('.gz-soty > .gz-hx')]);
     const legacy=manualLegacyCells.get('mirrors')||[];
     if(legacy[0]){legacy[0].dataset.n='mayMirAxis';legacy[0].dataset.mayPinGroup='mirrors';legacy[0].dataset.mayPinIndex='0';}
-    if(legacy[1]){legacy[1].dataset.n='mayContour';legacy[1].dataset.mayPinGroup='mirrors';legacy[1].dataset.mayPinIndex='1';gView.append(legacy[1]);}
+    if(legacy[1]){legacy[1].dataset.n='mayContour';legacy[1].dataset.mayPinGroup='mirrors';legacy[1].dataset.mayPinIndex='1';
+      // The source leaves grozd's positioned honeycomb for the normal view column.
+      legacy[1].style.removeProperty('left');legacy[1].style.removeProperty('top');gView.append(legacy[1]);}
     // Mark the original two-half template mirror, which previously had no source ID.
     const templateFlip=[...tools.querySelectorAll('.gz-pair')].find(b=>b.title==='Отразить шаблон ↔ · ↕');
     const folds=ptGroup('Свёртки');folds.parentElement.dataset.k='Свёртки';folds.parentElement.style.setProperty('--c','#73e4a5');
