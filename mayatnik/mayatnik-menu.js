@@ -1556,16 +1556,11 @@
   setInterval(() => { rail.refresh(); relayout(); placeTools(); placePins(); }, 200);
   // v0.438: сокращаем только отображение; ключи раскладки, исходные элементы и данные не меняются.
   for(const group of tools.querySelectorAll('.pt-g'))if(!group.dataset.k)group.dataset.k=group.querySelector('.pt-l')?.firstChild?.textContent.trim()||'';
-  const shortCaption = text => text.replace(/[а-яё]+/giu, word => {
-    if(word==='Верт')return word; // Explicit caption approved by the user: «Згибъ Верт».
-    let vowels=(word.match(/[аеёиоуыэюя]/giu)||[]).length;
-    const compact=word.replace(/(?<=[бвгджзйклмнпрстфхцчшщ])[аеёиоуыэюя](?=[бвгджзйклмнпрстфхцчшщ])/giu,v=>vowels>1?(vowels--,''):v);
-    return /[бвгджзйклмнпрстфхцчшщ]$/iu.test(compact) ? compact+(word!=='С'&&word===word.toLocaleUpperCase('ru')?'Ъ':'ъ') : compact;
-  });
+  const shortCaption = window.HubButtonText.shortCaption;
   const captionSources=new WeakMap(),captionAria=new WeakSet();
   const captionOwner=node=>{
     const parent=node.parentElement;
-    if(!parent||parent.closest('.bar,script,style,textarea,select,input,.template-entry>.gz-nm,.may-option-symbol,[data-user-label]'))return null;
+    if(!parent||parent.closest('.bar,script,style,textarea,select,input,svg,canvas,.gz-ic,.gz-mico,.zgh-icon,.zgh-arrow,.pt-ico,.pt-ud-g,.template-entry>.gz-nm,.may-option-symbol,[data-user-label],[contenteditable]'))return null;
     return parent.closest('button,[role="button"],.gz-hx,.pt-l,.may-hp-h,.pt-t3,.pt-half');
   };
   const captionsIn=root=>{
@@ -1580,7 +1575,7 @@
     for(const owner of owners){
       if(owner.hasAttribute('aria-label')&&!captionAria.has(owner))continue;
       const walker=document.createTreeWalker(owner,NodeFilter.SHOW_TEXT),parts=[];
-      while(walker.nextNode())parts.push(captionSources.get(walker.currentNode)?.full||walker.currentNode.data);
+      while(walker.nextNode())if(captionOwner(walker.currentNode)===owner)parts.push(captionSources.get(walker.currentNode)?.full||walker.currentNode.data);
       const full=parts.join('').trim();if(full){owner.setAttribute('aria-label',full);captionAria.add(owner);if(!owner.title)owner.title=full;}
     }
   };

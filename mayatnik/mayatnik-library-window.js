@@ -16,8 +16,10 @@
   for(const type of ['may-template-saved','may-template-library-ready','may-view-library-ready','may-frame-library-ready','may-layers-ready','may-settings-library-ready','may-backup-ready']){
     const listener=e=>root.dispatchEvent(new root.CustomEvent(type,{detail:e.detail}));source.addEventListener(type,listener);listeners.push([type,listener]);
   }
-  const ready=()=>root.queueMicrotask(()=>root.MayatnikTemplatePanel?.openTab('templates'));
-  if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
+  const ready=()=>root.queueMicrotask(()=>root.MayatnikTemplatePanel?.openTab(new URL(root.location.href).searchParams.get('tab')||'templates'));
+  // This bridge is deferred before the panel script: "interactive" is still
+  // too early. DOMContentLoaded waits for both deferred scripts to finish.
+  if(doc.readyState!=='complete')doc.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
   timer=root.setInterval(()=>{try{if(source.closed||source.mayTemplateLibrary!==api)disconnected('Маятник закрыт или перезагружен. Откройте Библиотеку заново из его окна.');}catch(_){disconnected('Связь с Маятником потеряна. Откройте Библиотеку заново из его окна.');}},1000);
   root.addEventListener('pagehide',()=>{root.clearInterval(timer);saveObserver?.disconnect();for(const [type,listener]of listeners)try{source.removeEventListener(type,listener);}catch(_){}},{once:true});
 })(window);

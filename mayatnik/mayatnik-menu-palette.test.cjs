@@ -1,5 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8');
+const HubButtonText=require('../_js/hub-button-text.js');
 class El{
  constructor(cls=''){this.children=[];this.dataset={};this.events={};this.style={setProperty(k,v){this[k]=v}};this.s=new Set(cls.split(' '));this.classList={contains:x=>this.s.has(x),add:x=>this.s.add(x)};}
  set className(s){this.s=new Set(s.split(' '))}append(x){this.children.push(x)}prepend(x){this.children.unshift(x)}setAttribute(k,v){this[k]=v}getAttribute(k){return this[k]}addEventListener(k,f){this.events[k]=f}dispatchEvent(e){this.events[e.type]?.(e)}querySelector(){return new El()}querySelectorAll(s){return this.children.filter(x=>x.s.has(s.includes('gz-hx')?'gz-hx':'may-view-swatch'))}
@@ -15,7 +16,7 @@ test('actual mode palettes select first, edit only selected mode, reuse pickers 
  const before=ids.map(id=>sources[id].value);assert.deepEqual(before,ids.map((id,i)=>'#'+String(i+1).repeat(6)));sources.lgOverOne.value='#abcdef';ctx.decorateViewPalette(list,owner);assert.equal(col[0].style.backgroundColor,'#abcdef');assert.equal(created,6);
 });
 test('captions use Съ with lowercase hard sign and retain uppercase words elsewhere',()=>{
- const a=menu.indexOf('  const shortCaption ='),b=menu.indexOf('  const captionSources=',a),c={};vm.createContext(c);vm.runInContext(menu.slice(a,b)+';globalThis.short=shortCaption;',c);assert.equal(c.short('С нуля'),'Съ нля');assert.equal(c.short('С засечками'),'Съ зсчкми');assert.equal(c.short('ЦЕНТР'),'ЦЕНТРЪ');assert.equal(c.short('Съ нля'),'Съ нля');
+ const a=menu.indexOf('  const shortCaption ='),b=menu.indexOf('  const captionSources=',a),c={window:{HubButtonText}};vm.createContext(c);vm.runInContext(menu.slice(a,b)+';globalThis.short=shortCaption;',c);assert.equal(c.short('С нуля'),'Съ нля');assert.equal(c.short('С засечками'),'Съ зсчкми');assert.equal(c.short('ЦЕНТР'),'ЦЕНТРЪ');assert.equal(c.short('Съ нля'),'Съ нля');
 });
 
 test('combined centre uses independent live toggles and both retained colour inputs',()=>{
@@ -27,8 +28,20 @@ test('combined centre uses independent live toggles and both retained colour inp
 });
 
 test('short words retain at least one original vowel; explicit fold caption has a space',()=>{
- const a=menu.indexOf('  const shortCaption ='),b=menu.indexOf('  const captionSources=',a),c={};vm.createContext(c);vm.runInContext(menu.slice(a,b)+';globalThis.short=shortCaption;',c);
- for(const [full,short] of [['Загиб Верт','Згибъ Верт'],['Цвет','Цветъ'],['Шрифт','Шрифтъ'],['Вниз','Внизъ'],['Пуск','Пускъ'],['Повтор','Пвторъ'],['Ширина','Шрна'],['Заливка','Злвка'],['ЦЕНТР','ЦЕНТРЪ']]){assert.equal(c.short(full),short);assert.equal(c.short(short),short);}
+ const a=menu.indexOf('  const shortCaption ='),b=menu.indexOf('  const captionSources=',a),c={window:{HubButtonText}};vm.createContext(c);vm.runInContext(menu.slice(a,b)+';globalThis.short=shortCaption;',c);
+ for(const [full,short] of [['Загиб Верт','Згибъ Верт'],['Цвет','Цветъ'],['Шрифт','Шрифтъ'],['Вниз','Внизъ'],['Пуск','Пускъ'],['Повтор','Пвторъ'],['Ширина','Ширн'],['Заливка','Зливк'],['ЦЕНТР','ЦЕНТРЪ']])assert.equal(c.short(full),short);
  for(const word of ['Слой','Центр','Ряд','Загиб','Выбор','Шрифт','Вверх','Сброс','Вниз','Сохранить','Отменить','Верт'])assert.match(c.short(word),/[аеёиоуыэюя]/iu);
  assert.match(menu,/fixFoldV:'Загиб Верт'/);assert.match(menu,/fold\('Загиб Верт', 2/);
+});
+test('header glyphs remain unchanged and stay out of generated accessible captions',()=>{
+ const start=menu.indexOf('  const shortCaption ='),end=menu.indexOf('  captionsIn(document.body);',start);
+ const context={window:{HubButtonText},Node:{TEXT_NODE:3},NodeFilter:{SHOW_TEXT:4},document:{createTreeWalker(root){let i=0;return {nextNode(){const node=root.nodes[i++];if(!node)return false;this.currentNode=node;return true;}};}}};
+ vm.createContext(context);vm.runInContext(menu.slice(start,end)+';globalThis.applyCaptions=captionsIn;',context);
+ for(const iconClass of ['gz-ic','gz-mico','zgh-icon','pt-ico','pt-ud-g']){
+  const attrs={},owner={title:'',hasAttribute:key=>key in attrs,setAttribute:(key,value)=>{attrs[key]=value;}};
+  const parent=classes=>({closest(selector){return selector.split(',').some(part=>classes.includes(part.slice(1)))?this:selector.startsWith('button,')?owner:null;}});
+  const label={nodeType:3,data:'Слои',parentElement:parent(['zgh-title'])},glyph={nodeType:3,data:'С',parentElement:parent([iconClass])};owner.nodes=[label,glyph];
+  context.applyCaptions(owner);assert.equal(glyph.data,'С',iconClass);assert.equal(attrs['aria-label'],'Слои',iconClass);assert.equal(owner.title,'Слои',iconClass);
+  context.applyCaptions(owner);assert.equal(glyph.data,'С',iconClass);
+ }
 });

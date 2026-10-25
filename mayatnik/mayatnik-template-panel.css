@@ -114,3 +114,57 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayatnikTemplatePanel .mtp-layout-diamond:is(:hover,:focus-visible) .mtp-layout-edge{stroke:var(--mtp-accent)}
 #mayatnikTemplatePanel .mtp-layout-diamond[aria-pressed=true] .mtp-layout-edge{stroke:var(--mtp-accent);stroke-width:2}
 #mayatnikTemplatePanel .mtp-layout-diamond:active .mtp-layout-edge{stroke:var(--mtp-accent);stroke-width:3}
+/* Explorer shell: one navigation tree and shared commands for every library. */
+#mayatnikTemplatePanel{container-type:inline-size;overflow-x:hidden}
+#mayatnikTemplatePanel .mtp-workspace{display:grid;grid-template-columns:132px minmax(0,1fr);gap:6px;flex:1;min-height:0;min-width:0}
+#mayatnikTemplatePanel .mtp-main{display:flex;flex-direction:column;gap:4px;min-width:0}
+#mayatnikTemplatePanel .mtp-heading>[data-library-window]{width:88px}
+#mayatnikTemplatePanel .mtp-navigation{min-width:0;border-right:1px solid #334052;padding-right:4px}
+#mayatnikTemplatePanel .mtp-navigation>summary{display:flex;margin-bottom:4px;max-width:100%}
+#mayatnikTemplatePanel .mtp-tabs{flex-direction:column}
+#mayatnikTemplatePanel .mtp-tabs .mtp-command{width:100%;max-width:120px}
+#mayatnikTemplatePanel .mtp-folder-tree{display:flex;flex-direction:column;gap:2px;margin-top:8px;min-width:0}
+#mayatnikTemplatePanel .mtp-folder-tree .mtp-command{width:100%;justify-content:flex-start;padding-left:calc(10px + min(var(--mtp-depth),3)*8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mayatnikTemplatePanel .mtp-location{display:flex;align-items:center;gap:4px;min-width:0}
+#mayatnikTemplatePanel .mtp-location .mtp-command{width:78px}
+#mayatnikTemplatePanel .mtp-address{flex:1;min-width:0;overflow-wrap:anywhere;color:#c4b1e2}
+#mayatnikTemplatePanel .mtp-section-commands{display:flex;flex-wrap:wrap;gap:2px}
+#mayatnikTemplatePanel .mtp-viewbar{display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap;min-width:0}
+#mayatnikTemplatePanel .mtp-search{min-width:0;width:150px;flex:1;max-width:240px;height:28px;padding:3px 6px;border:1px solid #526075;border-radius:0;background:#1b2430;color:inherit;font:inherit;user-select:text}
+#mayatnikTemplatePanel .mtp-file{position:relative;max-width:100%}
+#mayatnikTemplatePanel .mtp-file-commands{position:absolute;top:26px;left:0;z-index:10;display:flex;flex-direction:column;gap:2px;padding:4px;background:#0e1116;border:1px solid #334052}
+#mayatnikTemplatePanel .mtp-file-commands .mtp-command{width:160px;max-width:100%}
+#mayatnikTemplatePanel .mtp-crumbs,#mayatnikTemplatePanel .mtp-pane>[data-frame-save],#mayatnikTemplatePanel .mtp-pane>[data-view-save],#mayatnikTemplatePanel .mtp-pane>[data-settings-save],#mayatnikTemplatePanel .mtp-selection>[data-library-save]{display:none}
+#mayatnikTemplatePanel .mtp-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,120px),1fr))}
+#mayatnikTemplatePanel .mtp-layer-row{grid-template-columns:minmax(0,1fr) 35px 28px;gap:2px;min-width:0}
+#mayatnikTemplatePanel[data-layout=list] .mtp-list-head{grid-template-columns:minmax(0,1fr) 90px 236px;min-width:0}
+#mayatnikTemplatePanel[data-layout=list] [data-template-id]{grid-template-columns:32px minmax(0,1fr) 90px 236px;min-width:0}
+#mayatnikTemplatePanel[data-layout=list] .mtp-folder,#mayatnikTemplatePanel[data-layout=list] .mtp-capture-card{grid-template-columns:minmax(0,1fr) 80px 100px;min-width:0}
+@container(max-width:700px){
+ #mayatnikTemplatePanel[data-layout=list] .mtp-list-head{display:none}
+ #mayatnikTemplatePanel[data-layout=list] [data-template-id]{grid-template-columns:32px minmax(0,1fr);height:auto;min-height:36px}
+ #mayatnikTemplatePanel[data-layout=list] [data-template-id] .mtp-metrics{grid-column:2;grid-row:2;height:auto;flex-direction:row;gap:4px}
+ #mayatnikTemplatePanel[data-layout=list] [data-template-id] .mtp-card-actions{grid-column:1/-1;grid-row:3;display:flex;flex-wrap:wrap;justify-self:start;height:auto}
+ #mayatnikTemplatePanel[data-layout=list] .mtp-folder,#mayatnikTemplatePanel[data-layout=list] .mtp-capture-card{grid-template-columns:minmax(0,1fr);height:auto}
+ #mayatnikTemplatePanel[data-layout=list] .mtp-folder .mtp-card-actions,#mayatnikTemplatePanel[data-layout=list] .mtp-capture-card .mtp-card-actions{grid-column:1;justify-self:start}
+}
+@container(max-width:430px){
+ #mayatnikTemplatePanel .mtp-workspace{display:flex;flex-direction:column}
+ #mayatnikTemplatePanel .mtp-navigation{border-right:0;border-bottom:1px solid #334052;padding:0 0 4px;max-height:160px;overflow:auto;flex:none}
+ #mayatnikTemplatePanel .mtp-navigation>summary{display:flex}
+ #mayatnikTemplatePanel .mtp-navigation .mtp-tabs{flex-direction:row;margin-top:2px}
+ #mayatnikTemplatePanel .mtp-navigation .mtp-tabs .mtp-command{width:calc(50% - 1px);max-width:120px;min-width:0}
+ #mayatnikTemplatePanel .mtp-folder-tree{margin-top:4px}
+ #mayatnikTemplatePanel .mtp-folder-tree .mtp-command{max-width:100%}
+ #mayatnikTemplatePanel .mtp-section-commands .mtp-command{width:calc(50% - 1px);font-size:10px;padding:0 5px;overflow:hidden;white-space:nowrap}
+ #mayatnikTemplatePanel .mtp-location{align-items:flex-start;flex-wrap:wrap}
+ #mayatnikTemplatePanel .mtp-address{flex-basis:100%}
+ #mayatnikTemplatePanel .mtp-search{flex-basis:100%;max-width:none;width:100%}
+ #mayatnikTemplatePanel .mtp-file-commands{max-width:calc(100cqw - 12px)}
+}
+
+@container(max-width:300px){
+ #mayatnikTemplatePanel .mtp-heading{flex-wrap:wrap}
+ #mayatnikTemplatePanel .mtp-heading strong{flex-basis:100%}
+}
+#mayatnikTemplatePanel .mtp-section-commands .mtp-command{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
