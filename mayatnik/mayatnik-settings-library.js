@@ -3,7 +3,7 @@
   'use strict';
   const KEY='settings-library-v1';
   const STATE_KEYS=('speed outline sym symBits symRowsMin symRowsMax symBitsMin symBitsMax symV symH symD symPlainV symPlainH symPlainD symTriangles symTriangleRows frozen ochki ochkiMode ochkiInv ochkiRev ochkiPattern ochkiLength bitOneColour bitZeroColour overOneColour overZeroColour digitOneColour digitZeroColour digitFont digitSize geomCenter fixLines blackMirror animHl fillArea fillGrow paintMeet paintAxis paintMid midOneOn midZeroOn midWide midOneColour midZeroColour verticalFillColour stolbFillColour triTop thirds zsnap zbase zLock zoom zMid ztop zBot linesOn contour mirCol mirOp rowLab heat sectors areas fixWide fixLow fixLowOut fixMirror fixFold fixRot fixHor fixCross fixAxis fixDown fixDragK sawFull saw lineMeasures').split(' ');
-  const TOOL_KEYS=['fillMode','autoVertical','axisPicking','axisLineMode','rulerMode','mirrorLine','mirrorAxis','templatePickEnabled','templatePickMode'];
+  const TOOL_KEYS=['fillMode','autoVertical','axisPicking','axisLineMode','rulerMode','mirrorLine','mirrorAxis','templatePickEnabled','templatePickMode','templateDragEnabled'];
   const clone=value=>JSON.parse(JSON.stringify(value));
   function pick(state,tools={},controls={},colourAuto={}){
     const values={};for(const key of STATE_KEYS){const v=state[key];values[key]=v===undefined?null:v;}
@@ -14,7 +14,7 @@
   function validate(value){
     if(!value||value.version!==1||!value.state||!value.tools||!value.parity||!/^#[0-9a-f]{6}$/i.test(value.controls?.fillColour))throw Error('Повреждён набор настроек');
     for(const k of STATE_KEYS){const v=value.state[k];if(v!==null&&typeof v!=='boolean'&&typeof v!=='string'&&!(typeof v==='number'&&Number.isFinite(v)))throw Error('Некорректная настройка: '+k);}
-    for(const k of TOOL_KEYS){const v=value.tools[k];if(k==='autoVertical'?![0,1,2].includes(v):k==='templatePickMode'?!['one','add'].includes(v):typeof v!=='boolean')throw Error('Некорректный режим: '+k);}
+    for(const k of TOOL_KEYS){const v=k==='templateDragEnabled'&&value.tools[k]===undefined?false:value.tools[k];if(k==='autoVertical'?![0,1,2].includes(v):k==='templatePickMode'?!['one','add'].includes(v):typeof v!=='boolean')throw Error('Некорректный режим: '+k);}
     return pick(value.state,value.tools,value.controls,value.colourAuto);
   }
   function normalized(value){const next=validate(value);for(const k in next.parity)next.parity[k]=value.parity[k]!==false;return next;}

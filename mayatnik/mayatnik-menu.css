@@ -935,3 +935,14 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 /* v0.510: centre hover is a hand; an actual captured centre drag is a grip. */
 #wrap.may-center-hover,#wrap.may-center-hover canvas{cursor:grab!important}
 #wrap.may-center-drag,#wrap.may-center-drag canvas{cursor:grabbing!important}
+
+/* МАЯ-061: a mobile header strip keeps its height; its menus float over the field. */
+@media(max-width:600px){
+  body.mayatnik-menu-ready #mayatnikSidebar{height:36px;min-height:36px;max-height:36px;overflow:visible;z-index:10}
+  body.mayatnik-menu-ready.mayatnik-menu-closed #mayatnikSidebar{height:0;min-height:0;max-height:0}
+  body.mayatnik-menu-ready #mayatnikSidebar #mayatnikRail{flex:none;height:36px;min-height:36px;max-height:36px;padding:6px 8px;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}
+  body.mayatnik-menu-ready #mayatnikSidebar #mayatnikRail>.gz-rail{display:flex;flex-direction:row;align-items:flex-start;width:max-content;min-width:100%;height:24px;gap:6px!important}
+  body.mayatnik-menu-ready #mayatnikSidebar #mayatnikRail .gz-group{flex:none;height:24px}
+  body.mayatnik-menu-ready #mayatnikSidebar #mayatnikRail .gz-group>.may-rail-list{position:fixed!important;z-index:50;width:120px!important;max-height:60dvh;padding:2px 0 14px!important;margin:0!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;touch-action:pan-y}
+  body.mayatnik-menu-ready #mayatnikSidebar #mayatnikRail .gz-group.gz-mini.gz-open>.may-rail-list{margin-top:0!important}
+}

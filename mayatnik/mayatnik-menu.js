@@ -7,7 +7,7 @@
   const popupRight=()=>{const panel=$('mayatnikTemplatePanel');if(window.MayatnikTemplatePanel?.isOpen()&&panel){const left=panel.getBoundingClientRect().left;if(left>0)return left;}return innerWidth;};
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({zFit:'Шрна по Оси',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
@@ -104,7 +104,7 @@
       { type: 'vpair', name: 'Строк', tip: 'Длина оси: строк от · до', parts: [{ ...num('symRowsMin', { slider: false }), name: 'строк ≥' }, { ...num('symRowsMax', { slider: false, inf: true, fromInf: () => +$('symRowsMin').value || 2 }), name: '≤' }] },
       { type: 'vpair', name: 'Бит', tip: 'Ширина оси: бит от · до', parts: [{ ...num('symBitsMin', { slider: false }), name: 'бит ≥' }, { ...num('symBitsMax', { slider: false, inf: true, fromInf: () => +$('symBitsMin').value || 2 }), name: '≤' }] }, button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
     { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintNew','reset'),withColour('bFill','fillColour','Заливка'),withColour('bAutoVertical','verticalFillColour','Столбы'),withColour('bStolb','stolbFillColour','Проход'),button('bPaintMid','line'),withColour('midOneOn','midOneColour','Центр 1'),withColour('midZeroOn','midZeroColour','Центр 0'),check('midWide','line'),button('bAutoAll','steps'),button('bFillGrow','plus'),check('fillMirror','mirror'),select('fillArea','grid4'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
-    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',slider:false,zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50}),button('bTemplatePick','corners'),{...selectSegments('templatePickMode'),src:'templatePickMode'}] },
+    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',slider:false,zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50}),button('bTemplatePick','corners'),{...selectSegments('templatePickMode'),src:'templatePickMode'},button('bTemplateDrag','move')] },
     {id:'gifscale',title:'Гиф-Масштаб',color:'#73e4a5',items:[button('bGifScale','record'),button('bGifScaleView','eye'),select('gifScaleSequence','steps'),select('gifScaleMethod','grid4'),num('gifScaleDelay',{name:'Пауза, мс',fmt:v=>v+' мс',zero:200}),button('bGifScaleInfo','help')]},
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
@@ -843,7 +843,7 @@
     if (selected) { row.prepend(...selected.querySelector('.pt-r').children); selected.remove(); }
     row.parentElement.dataset.k = 'Шаблоны';
     mergeTemplateRail(row,railSourceButtons);
-    row.prepend(...['bTemplatePick','templatePickMode'].map(id=>railSourceButtons.get(id)).filter(Boolean));
+    row.prepend(...['bTemplatePick','bTemplateDrag','templatePickMode'].map(id=>railSourceButtons.get(id)).filter(Boolean));
     railR.style.setProperty('display', 'none', 'important'); }
   // v0.485: библиотека сохраняет своё место. Если сохранён только старый «Шаблон», наследуем его раскладку; исходные ключи остаются в резервной копии.
   try {
@@ -1409,12 +1409,12 @@
       if (!list) { list = document.createElement('div'); list.className = 'may-rail-list';
         list.append(...box.querySelectorAll(':scope > .gz-soty, :scope > .gz-wide')); box.append(list); }
       if (!list) continue;
-      if (!left) {
+      if (!left || innerWidth <= 600) {
         list.removeAttribute('style');
         if (box.classList.contains('gz-open')) {
           const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(), up = box.classList.contains('pt-bot');
           const max = Math.max(24, up ? h.top - 14 : innerHeight - h.bottom - 16);
-          if (!up) Object.assign(list.style, { left: Math.max(4, Math.min(h.left, innerWidth - 124)) + 'px', top: (h.bottom + 2) + 'px' });
+          if (!up) { list.style.setProperty('left', Math.max(4, Math.min(h.left, innerWidth - 124)) + 'px', 'important'); list.style.setProperty('top', (h.bottom + 2) + 'px', 'important'); }
           list.style.maxHeight = max + 'px';
           // v0.464: внешняя скобка не обрезается overflow:auto у короткого списка;
           // у длинного списка для неё есть место внутри прокручиваемого содержимого.
@@ -1423,8 +1423,10 @@
           list.style.overflowX = scroll ? 'hidden' : 'visible';
           if (scroll) list.style.setProperty(up ? 'padding-top' : 'padding-bottom', '14px', 'important');
         }
+        if (left) box.querySelector(':scope > .gz-head').setAttribute('aria-expanded', String(box.classList.contains('gz-open')));
         continue;
       }
+      list.removeAttribute('style');
       const head = box.querySelector(':scope > .gz-head'); head.setAttribute('aria-expanded', String(box.classList.contains('gz-open')));
       if (!box.classList.contains('gz-open')) continue;
       // v0.454 (Р02): список — столбец в потоке под шапкой, вбок не раскрывается; сдвиг остального даёт сама рейка, высоту ограничивает прокрутка рейки
