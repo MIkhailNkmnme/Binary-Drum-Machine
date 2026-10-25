@@ -4,7 +4,7 @@ body.setka-menu-ready #mayatnikRail{display:block;position:relative;grid-area:au
 body.setka-menu-ready #mayatnikRail .gz-rail{display:grid;flex-direction:row;grid-template-columns:repeat(6,minmax(0,1fr));align-items:start;gap:6px;width:100%;pointer-events:auto}
 body.setka-menu-ready #mayatnikRail .gz-group{--gz-w:120px;position:relative;justify-self:center;min-width:0;width:var(--gz-w);max-width:100%;pointer-events:auto}
 body.setka-menu-ready #mayatnikRail .gz-head{width:100%;min-width:0}
-body.setka-menu-ready #mayatnikRail .setka-menu-body{display:none;position:absolute;inset:calc(var(--gz-h) + 3px) 0 auto;box-sizing:border-box;width:var(--gz-w);max-width:100%;min-width:0;max-height:calc(100dvh - 110px);overflow:auto;padding:2px 0 13px;margin:0;background:#0d1119;scrollbar-width:thin;pointer-events:auto}
+body.setka-menu-ready #mayatnikRail .setka-menu-body{display:none;position:absolute;inset:calc(var(--gz-h) + 3px) 0 auto;box-sizing:border-box;width:var(--gz-w);max-width:100%;min-width:0;max-height:calc(100dvh - 110px);overflow:auto;padding:2px 0 13px;margin:0;background:transparent;isolation:isolate;scrollbar-width:thin;pointer-events:auto}
 body.setka-menu-ready #mayatnikRail .gz-open>.setka-menu-body{display:flex;flex-direction:column;gap:3px}
 body.setka-menu-ready #mayatnikRail .setka-menu-body>.gz-hx{position:relative;left:auto!important;top:auto!important;width:100%;min-height:var(--gz-h);flex:none;margin:0}
 body.setka-menu-ready #mayatnikRail .setka-menu-body>[hidden]{display:none!important}
