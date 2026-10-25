@@ -4887,19 +4887,19 @@ function rmbUi(){
     if(hint){hint.hidden=!edit&&!axis;hint.textContent=rmbIsMobile()?(axis?"Ось — предпросмотр · Применить зеркала — записать биты · два пальца — вид":"Касание 0 создаёт 1 · тащите ромбы · два пальца — масштаб и сдвиг"):axis?"Проведите ось · концы — угол и длина · линия — перенос · направление — предпросмотр · Применить зеркала — записать биты · пробел — вид":"0 → щелчок → 1 · тащить — перенос · Ctrl — копия · Shift / рамка — выделить · Delete — стереть · пробел + тащить — вид";}
     $("rmbCv")?.classList.toggle("rmb-editing",edit||axis);const tools=$("rmbAxisTools");if(tools)tools.hidden=!axis;
     const selected=rmbAxisTool?.selected(),basis=selected&&window.ZZRmbAxis?.basis(selected);
-    for(const [id,from,to] of [["bRmbAxisPos",basis?.positive||"Право",basis?.negative||"Лево"],["bRmbAxisNeg",basis?.negative||"Лево",basis?.positive||"Право"]]){const b=$(id);if(b){b.textContent=from+" → "+to;b.disabled=!selected;b.classList.toggle("on",!!selected&&selected.preview!==false&&(selected.side||"positive")===(id==="bRmbAxisPos"?"positive":"negative"));b.title="Предпросмотр "+from.toLowerCase()+" → "+to.toLowerCase()+"; биты изменятся только кнопкой «Применить зеркала».";}}
+    for(const [id,from,to] of [["bRmbAxisPos",basis?.positive||"Право",basis?.negative||"Лево"],["bRmbAxisNeg",basis?.negative||"Лево",basis?.positive||"Право"]]){const b=$(id);if(b){b.textContent=({Право:"Прво",Лево:"Лво",Верх:"Верхъ",Низ:"Низъ"}[from]||from)+"→"+({Право:"Прво",Лево:"Лво",Верх:"Верхъ",Низ:"Низъ"}[to]||to);b.disabled=!selected;b.classList.toggle("on",!!selected&&selected.preview!==false&&(selected.side||"positive")===(id==="bRmbAxisPos"?"positive":"negative"));b.title="Предпросмотр "+from.toLowerCase()+" → "+to.toLowerCase()+"; биты изменятся только кнопкой «Применить зеркала».";b.setAttribute("aria-label",b.title);}}
     const apply=$("bRmbAxisApply");if(apply)apply.disabled=!rmbAxisTool?.pending();
-    const limit=$("bRmbAxisLimit"),del=$("bRmbAxisDel");if(limit){limit.textContent=selected?.segment?"Отрезок":"Вся ось";limit.disabled=!selected;}if(del)del.disabled=!selected;
+    const limit=$("bRmbAxisLimit"),del=$("bRmbAxisDel");if(limit){limit.textContent=selected?.segment?"Отрзокъ":"Вся ось";limit.disabled=!selected;}if(del)del.disabled=!selected;
     const actionBox=$("rmbTouchEdit");if(actionBox)actionBox.hidden=!edit;
     for(const [id,on] of [["bRmbMulti",!!r.touchMulti],["bRmbCopy",!!r.touchCopy]]){const button=$(id);if(button){button.classList.toggle("on",on);button.setAttribute("aria-pressed",String(on));}}
     const count=rmbEditor?.selection().length||0;for(const id of ["bRmbErase","bRmbNone"]){const button=$(id);if(button)button.disabled=!count;}
     if($("bRmbUndo"))$("bRmbUndo").disabled=!undoStack.length;if($("bRmbRedo"))$("bRmbRedo").disabled=!redoStack.length;
   }
   q("button[data-ral]").forEach(b => b.classList.toggle("on", b.dataset.ral === r.al));
-  const L = { each: "▵ каждый", rmb: "◇ ромбы", grp: "⬡ группы", none: "без границ" }, G = { "": "👓", chg: "👓 изм.", age: "👓 возраст", pair: "👓 пары" };
+  const L = { each: "▵ кждыйъ", rmb: "◇ рмбы", grp: "⬡ грппы", none: "безъ грницъ" }, G = { "": "👓", chg: "👓 измъ.", age: "👓 взрастъ", pair: "👓 пры" };
   { const b = $("bRmbCube"), c = $("bRmbCPri"); if (b) { b.classList.toggle("on", !!r.cube); b.title = "🧊 Кубы: треугольники склеиваются в ромбы с равным соседом — три направления ромба = три грани кубика (светлая «/», средняя «◆», тёмная «\\»); без пары — бледный с красной обводкой" + (r.cube ? `\nСейчас: ромбов ${rmbPairStat.n}, без пары ${rmbPairStat.bad} (из них ${rmbPairStat.ex} неизбежно — ▲ и ▼ не поровну)` : ""); }
-    if (c) { c.hidden = !r.cube; const t = { l: "сперва \\", d: "сперва ◆", r: "сперва /" }[r.cpri]; if (c.textContent !== t) c.textContent = t; } }
-  { const b = $("bRmbCell"); if (b) { const t = r.cell === "rmb" ? "◇ бит" : "▲ бит"; if (b.textContent !== t) b.textContent = t; b.classList.toggle("on", r.cell === "rmb"); } }
+    if (c) { c.hidden = !r.cube; const t = { l: "спрва \\", d: "спрва ◆", r: "спрва /" }[r.cpri]; if (c.textContent !== t) c.textContent = t; } }
+  { const b = $("bRmbCell"); if (b) { const t = r.cell === "rmb" ? "◇ битъ" : "▲ битъ"; if (b.textContent !== t) b.textContent = t; b.classList.toggle("on", r.cell === "rmb"); } }
   const bl = $("bRmbLn"); if (bl && bl.textContent !== L[r.ln]) bl.textContent = L[r.ln];
   const bg = $("bRmbGl"); if (bg) { if (bg.textContent !== G[r.gl]) bg.textContent = G[r.gl]; bg.classList.toggle("on", !!r.gl); }
   [["bRmbNum", r.num], ["bRmbSh", r.sh], ["bRmbOut", r.out], ["bRmbFol", r.fol]].forEach(([id, v]) => { const b = $(id); if (b) b.classList.toggle("on", !!v); });
@@ -15110,19 +15110,20 @@ function lpTools(col, vis){
     const flat = (els) => els.flatMap(el => el.tagName === "SPAN" && !el.classList.contains("zerk-range-wrap") && getComputedStyle(el).display === "contents" ? flat([...el.children]) : [el]);   // v0.798: растворённая обёртка (display: contents) — её кнопки в общей цепочке
     const its = flat([...bar.children]).filter(el => vis(el) && (el.tagName === "BUTTON" || el.tagName === "SELECT" || el.tagName === "LABEL"));
     its.forEach((b, i) => {
+      const compact=!!bar.closest("#w-rmb")&&(parseFloat(getComputedStyle(b).height)||24)<=24,step=compact?Math.min(parseFloat(getComputedStyle(b).height)||24,TZC_H)/Math.sqrt(3):sd;
       b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
       let tw = 0;
       /* v0.799, по снимку «👓 возраст» — «не меняй ширину кнопок»: кнопка, чья надпись меняется по кругу (data-labels — все надписи через «|»), и список —
          шириной по самой длинной надписи, а не по нынешней: переключение не двигает соседей */
       const mt = (txt) => { const c = lpTools._c || (lpTools._c = document.createElement("canvas").getContext("2d")); c.font = getComputedStyle(b).font; return c.measureText(txt).width; };
-      if (b.tagName === "SELECT") { tw = Math.max(0, ...[...b.options].map(o => [...o.text].length * 7 + 14)); }
+      if (b.tagName === "SELECT") { tw = Math.max(0, ...[...b.options].map(o => compact?mt(o.text)+12:[...o.text].length*7+14)); if(compact&&b.id==="gridsScenes")tw=Math.min(tw,110); }
       else if (b.dataset && b.dataset.labels) { tw = Math.max(...b.dataset.labels.split("|").map(mt)); }
-      else if (b.tagName === "LABEL" && b.querySelector("input[type=range]")) { const txt = [...b.childNodes].filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName === "SPAN" && !n.classList.contains("zerk-range-wrap"))).map(n => n.textContent).join("").trim(); tw = [...txt].length * 7 + 120; }
-      else if (b.tagName === "LABEL" && b.querySelector("input[type=color]")) { tw = [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join("").length * 7.5 + 32; }   // v0.798: подпись + образец цвета 22 px
+      else if (b.tagName === "LABEL" && b.querySelector("input[type=range]")) { const txt = [...b.childNodes].filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName === "SPAN" && !n.classList.contains("zerk-range-wrap"))).map(n => n.textContent).join("").trim(); tw = [...txt].length * 7 + (compact?90:120); }
+      else if (b.tagName === "LABEL" && b.querySelector("input[type=color]")) { tw = [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join("").length * (compact?6:7.5) + (compact?22:32); }   // v0.798: подпись + образец цвета 22 px
       else { const rg = document.createRange(); rg.selectNodeContents(b); tw = rg.getBoundingClientRect().width; if (b.tagName === "LABEL") tw -= 16; }
       b._gcol0 = tzLnBg() || (b.tagName === "BUTTON" ? bc : "") || col; b._gcol = (b.dataset && b.dataset.gcol) || b._gcol0; b._tzar = ""; b._tzfix = true;   // v0.791: data-gcol — свой цвет обводки (▲▼ по режиму)
       b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
-      b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + 10) / sd));
+      b._tzn = b._tzn0 = Math.max(compact?2:([...b.textContent.trim()].length <= 2 ? 2 : 3), Math.ceil((tw + (compact?6:10)) / step));
       tzGeo(b);
     });
     its.forEach((b, i) => { if (i && b._tzm && Math.abs(b.offsetTop - its[i - 1].offsetTop) > 4) { b._tzm = 0; b._tzL = TZ_TIP; tzGeo(b); } });

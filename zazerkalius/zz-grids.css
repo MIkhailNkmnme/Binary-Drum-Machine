@@ -32,3 +32,12 @@
 body:not(.solo) #w-tri:not(:has(#triBind:not([hidden]))){display:none!important}
 
 #w-rmb #rmbCv.rmb-editing{cursor:crosshair}
+
+/* Compact grid toolbar; geometry is still produced by the shared lpTools/tzGeo. */
+@media(min-width:761px) and (pointer:fine){
+ #w-rmb .tools.lpw{gap:2px!important;row-gap:2px!important;margin-bottom:2px}
+ #w-rmb .tools.lpw :is(button,select,label){height:20px!important;min-height:20px!important;font-size:11px!important;line-height:18px!important}
+ #w-rmb .tools.lpw :is(button,select,label).tz.tz.tz{padding-left:calc(var(--t) + 1px)!important;padding-right:calc(var(--t) + 1px)!important}
+ #w-rmb .tools.lpw input[type=color]{width:18px!important;height:16px!important;padding:0;flex-basis:18px!important}
+ #w-rmb .tools.lpw input[type=number]{width:28px;height:18px;font-size:11px;padding:0 2px}
+}
