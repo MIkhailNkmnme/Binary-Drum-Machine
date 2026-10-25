@@ -10,13 +10,13 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 #mayatnikTemplatePanel{--mtp-accent:#b48cff;position:fixed;inset:0 0 0 auto;width:var(--may-template-panel-width);height:100vh;height:100dvh;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;z-index:2147483639;background:#0e1116;color:#dfe6f5;border-left:2px solid #334052;padding:6px;display:flex;flex-direction:column;gap:4px;font:12px/1.35 system-ui,sans-serif;scrollbar-width:thin;user-select:none}
 #mayatnikTemplatePanel[hidden]{display:none!important}
 #mayatnikTemplatePanel *{box-sizing:border-box}
-:is(#mayatnikTemplatePanel,#mayBackupDialog) button,#mayatnikTemplatePanel summary{font:inherit;color:inherit;text-shadow:none!important;cursor:pointer;user-select:none;-webkit-user-select:none}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) button,#mayatnikTemplatePanel summary{font:inherit;color:inherit;text-shadow:none!important;cursor:pointer;user-select:none;-webkit-user-select:none}
 #mayatnikTemplatePanel .mtp-heading{display:flex;align-items:center;gap:2px;flex:none;min-height:26px}
 #mayatnikTemplatePanel .mtp-heading strong{flex:1;font-size:14px;min-width:0}
-:is(#mayatnikTemplatePanel,#mayBackupDialog) .mtp-command,#mayatnikTemplatePanel .mtp-path,#mayatnikTemplatePanel .mtp-more>summary{--gz-w:120px;--gz-h:24px;position:relative;display:flex;align-items:center;justify-content:center;flex:none;width:120px;height:24px;margin:0;padding:0 10px;border:0;border-radius:0;background:#1b2430;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);box-shadow:none!important;outline:none;line-height:24px}
-:is(#mayatnikTemplatePanel,#mayBackupDialog) .mtp-command::after,#mayatnikTemplatePanel .mtp-path::after,#mayatnikTemplatePanel summary::after{content:"";pointer-events:none;position:absolute;inset:0;background:var(--mtp-accent);clip-path:polygon(10px 0,11px 1px,2px 50%,11px calc(100% - 1px),10px 100%,0 50%,10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,calc(100% - 11px) calc(100% - 1px),calc(100% - 2px) 50%,calc(100% - 11px) 1px,calc(100% - 10px) 0);opacity:0}
-:is(#mayatnikTemplatePanel,#mayBackupDialog) .mtp-command:hover::after,:is(#mayatnikTemplatePanel,#mayBackupDialog) .mtp-command:focus-visible::after,#mayatnikTemplatePanel .mtp-path:hover::after,#mayatnikTemplatePanel .mtp-path:focus-visible::after,#mayatnikTemplatePanel summary:hover::after,#mayatnikTemplatePanel summary:focus-visible::after{opacity:1}
-:is(#mayatnikTemplatePanel,#mayBackupDialog) .mtp-command:active::after,#mayatnikTemplatePanel .mtp-path:active::after{opacity:1;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%,10px 0,11px 3px,4px 50%,11px calc(100% - 3px),calc(100% - 11px) calc(100% - 3px),calc(100% - 4px) 50%,calc(100% - 11px) 3px,11px 3px)}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command,#mayatnikTemplatePanel .mtp-path,#mayatnikTemplatePanel .mtp-more>summary{--gz-w:120px;--gz-h:24px;position:relative;display:flex;align-items:center;justify-content:center;flex:none;width:120px;height:24px;margin:0;padding:0 10px;border:0;border-radius:0;background:#1b2430;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);box-shadow:none!important;outline:none;line-height:24px}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command::after,#mayatnikTemplatePanel .mtp-path::after,#mayatnikTemplatePanel summary::after{content:"";pointer-events:none;position:absolute;inset:0;background:var(--mtp-accent);clip-path:polygon(10px 0,11px 1px,2px 50%,11px calc(100% - 1px),10px 100%,0 50%,10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,calc(100% - 11px) calc(100% - 1px),calc(100% - 2px) 50%,calc(100% - 11px) 1px,calc(100% - 10px) 0);opacity:0}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command:hover::after,:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command:focus-visible::after,#mayatnikTemplatePanel .mtp-path:hover::after,#mayatnikTemplatePanel .mtp-path:focus-visible::after,#mayatnikTemplatePanel summary:hover::after,#mayatnikTemplatePanel summary:focus-visible::after{opacity:1}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command:active::after,#mayatnikTemplatePanel .mtp-path:active::after{opacity:1;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%,10px 0,11px 3px,4px 50%,11px calc(100% - 3px),calc(100% - 11px) calc(100% - 3px),calc(100% - 4px) 50%,calc(100% - 11px) 3px,11px 3px)}
 #mayatnikTemplatePanel .mtp-heading>.mtp-command{width:40px}
 #mayatnikTemplatePanel .mtp-crumbs{display:flex;flex-wrap:wrap;gap:2px;flex:none}
 #mayatnikTemplatePanel .mtp-path{width:auto;max-width:100%;min-width:32px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 12px}
@@ -54,7 +54,7 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 #mayatnikTemplatePanel .mtp-drop{outline:2px dashed var(--mtp-accent);outline-offset:-2px}
 #mayatnikTemplatePanel .mtp-empty{grid-column:1/-1;margin:12px 2px;color:#aebdcd;font-size:12px}
 #mayatnikTemplatePanel #templateLibraryChoices,#mayatnikTemplatePanel #templateLibraryCurrent{display:none!important}
-:is(#mayatnikTemplatePanel,#mayBackupDialog) button:disabled,#mayatnikTemplatePanel input:disabled{opacity:.45;cursor:default}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) button:disabled,#mayatnikTemplatePanel input:disabled{opacity:.45;cursor:default}
 @media(max-width:600px){#mayatnikTemplatePanel .mtp-card-actions{grid-template-columns:repeat(3,minmax(0,1fr))}#mayatnikTemplatePanel .mtp-card-actions>.mtp-command,#mayatnikTemplatePanel .mtp-more>summary{min-height:28px;height:28px}}
 
 /* Fixed field-corner launcher, outside every movable menu group. */
@@ -68,7 +68,7 @@ body.may-template-panel-open #mayTemplateLauncher{right:calc(var(--may-template-
 #mayTemplateLauncher>.pt-l:active .may-template-diamond{stroke:var(--c);stroke-width:3px}
 /* Shared library layouts: one set of cards/actions, persistent presentation only. */
 #mayatnikTemplatePanel .mtp-layout{display:flex;gap:2px;flex:none}
-:is(#mayatnikTemplatePanel,#mayBackupDialog) .mtp-command[aria-pressed=true]::after{opacity:1}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command[aria-pressed=true]::after{opacity:1}
 #mayatnikTemplatePanel .mtp-list-head,#mayatnikTemplatePanel .mtp-capture-metrics{display:none}
 #mayatnikTemplatePanel .mtp-template-pane [data-template-id] .mtp-card-actions{grid-template-columns:repeat(4,minmax(0,1fr))}
 #mayatnikTemplatePanel[data-layout=list] .mtp-grid{grid-template-columns:minmax(0,1fr);row-gap:2px}

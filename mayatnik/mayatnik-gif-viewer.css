@@ -1,0 +1,6 @@
+#mayGifDialog{box-sizing:border-box;width:min(1100px,calc(100vw - 24px));max-width:calc(100vw - 24px);height:min(850px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);padding:10px;border:1px solid #73e4a5;border-radius:0;background:#0e1116;color:#dfe6f5;--mtp-accent:#73e4a5}
+#mayGifDialog::backdrop{background:#000b}
+#mayGifDialog .may-gif-head{display:flex;align-items:center;gap:4px;height:32px;font:12px system-ui,sans-serif}
+#mayGifDialog strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mayGifDialog img{display:block;width:100%;height:calc(100% - 36px);object-fit:contain;image-rendering:pixelated;background:#080b10}
+@media(max-width:480px){#mayGifDialog .mtp-command{width:84px}}
