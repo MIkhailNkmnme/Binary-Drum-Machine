@@ -63,7 +63,7 @@
       binding.node.dataset.source=binding.source.id || binding.key;
       binding.node.title=tip(binding.source);
       binding.node.addEventListener('click',e=>{if(inactive(binding.source)){e.preventDefault();e.stopImmediatePropagation();}},true);
-      if(binding.node.gzList){binding.node.gzList.col=()=>binding.node;binding.node.gzList.placement='below';}
+      if(binding.node.gzList){binding.node.gzList.col=()=>binding.node.closest('.setka-menu-body');delete binding.node.gzList.placement;}
     }
     // Keep original order in one scrollable column, including controls originally in the wide container.
     for(const group of rail.el.querySelectorAll(':scope > .gz-group')){

@@ -14,6 +14,13 @@
 #gridsRowsList .grids-row>button{font:12px monospace;border:0;padding:0;background:none;color:var(--dim);height:26px}
 #gridsRowsList input{width:100%;min-width:0;box-sizing:border-box;font:inherit;letter-spacing:1px;height:26px;border:0;background:transparent;color:var(--txt);padding:0 4px;border-radius:0}
 #gridsRowsList input:focus{outline:1px solid var(--acc)}
+#gridsRowsList .grids-row-editor{position:relative;min-width:0;height:100%;overflow:hidden}
+#gridsRowsList .grids-row-ink{position:absolute;inset:0;display:flex;align-items:center;overflow:hidden;padding:0 4px;pointer-events:none;color:var(--txt);font:inherit;letter-spacing:1px;white-space:pre}
+#gridsRowsList .grids-row-bits{display:block;flex:none;white-space:pre;transform-origin:left center}
+#gridsRowsList .grids-bit-changed{color:var(--gold,#ffd166);text-decoration:underline;text-underline-offset:3px}
+#gridsRowsList .grids-row-editor input{position:relative;color:transparent;caret-color:var(--txt);-webkit-text-fill-color:transparent;opacity:1}
+#gridsRowsList .grids-row-editor:focus-within .grids-row-ink{visibility:hidden}
+#gridsRowsList .grids-row-editor input:focus{color:var(--txt);-webkit-text-fill-color:var(--txt)}
 #gridsRowsInfo{font:12px monospace;padding:5px;color:var(--dim)}
 #gridsRowsLock.on{color:var(--gold)}
 #w-rmb #gridsToolbar{order:-2}

@@ -405,7 +405,7 @@ function rmbUi(){
   const r = rmbSt(), q = (s) => document.querySelectorAll("#w-rmb " + s);
   {rmbEditor?.sync();const edit=!!r.edit,axis=!!r.axisMode,hint=$("rmbEditHint");
     for(const [id,on] of [["bRmbEdit",edit],["bRmbAxis",axis]]){const b=$(id);if(b){b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));}}
-    if(hint){hint.hidden=!edit&&!axis;hint.textContent=rmbIsMobile()?(axis?"Ось — предпросмотр · Применить зеркала — записать биты · два пальца — вид":"Касание — выбрать / создать · тянуть поле — сдвиг · выбранное — перенос · два пальца — масштаб"):axis?"Проведите ось · концы — угол и длина · линия — перенос · направление — предпросмотр · Применить зеркала — записать биты · пробел — вид":"Тянуть поле — сдвиг · выбранные ромбы — перенос · щелчок 0 → 1 · Shift + тащить — рамка · Ctrl — копия · Delete — стереть";}
+    if(hint){hint.hidden=!edit&&!axis;hint.textContent=rmbIsMobile()?(axis?"Ось — предпросмотр · Применить зеркала — записать биты · два пальца — вид":"Касание — выбрать / создать · тянуть поле — сдвиг · выбранное — перенос · два пальца — масштаб"):axis?"Shift + протяжка — ось и её правка · обычная протяжка — всё поле · направление — предпросмотр · Применить зеркала — записать биты · пробел — вид":"Тянуть — всё поле · Shift — инструмент / выделение · Ctrl — копия · щелчок 0 → 1 · Delete — стереть";}
     $("rmbCv")?.classList.toggle("rmb-editing",edit||axis);const tools=$("rmbAxisTools");if(tools)tools.hidden=!axis;
     const selected=rmbAxisTool?.selected(),basis=selected&&window.ZZRmbAxis?.basis(selected);
     for(const [id,from,to] of [["bRmbAxisPos",basis?.positive||"Право",basis?.negative||"Лево"],["bRmbAxisNeg",basis?.negative||"Лево",basis?.positive||"Право"]]){const b=$(id);if(b){b.textContent=({Право:"Прво",Лево:"Лво",Верх:"Верхъ",Низ:"Низъ"}[from]||from)+"→"+({Право:"Прво",Лево:"Лво",Верх:"Верхъ",Низ:"Низъ"}[to]||to);b.disabled=!selected;b.classList.toggle("on",!!selected&&selected.preview!==false&&(selected.side||"positive")===(id==="bRmbAxisPos"?"positive":"negative"));b.title="Предпросмотр "+from.toLowerCase()+" → "+to.toLowerCase()+"; биты изменятся только кнопкой «Применить зеркала».";b.setAttribute("aria-label",b.title);}}
@@ -435,6 +435,9 @@ function rmbUi(){
 function rmbWire(){
   const W = $("w-rmb"), cv = $("rmbCv"); if (!W || !cv || cv._wired) return; cv._wired = 1;
   cv.tabIndex=0;cv.addEventListener("pointerdown",()=>cv.focus({preventScroll:true}),true);
+  window.setkaPanMount?.(cv,{view:()=>{if(!rmbSt().s)rmbFit();return rmbSt();},
+    cancelTools:()=>{window.ZZGrids?.cancel();rmbEditor?.cancelGesture();rmbAxisTool?.cancel();cv._rmbCancelPan?.();},
+    pan:(x,y)=>{Object.assign(rmbSt(),{ox:x,oy:y,fol:false});renderRmb();},save});
   rmbEditorWire(cv);
   const re = () => { rmbUi(); save(); renderRmb(); };
   $("bRmbEdit").onclick=()=>{const r=rmbSt();gridsState().tool="";r.edit=!r.edit;r.axisMode=false;rmbAxisTool?.cancel();rmbEditor?.clear();if(r.edit){if(rmbW.on)rmbWStop();rmbFit();cv.focus({preventScroll:true});}re();};

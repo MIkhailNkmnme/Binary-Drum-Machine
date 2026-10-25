@@ -2,16 +2,19 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZGrids=api;})(globalThis,function(){
  'use strict';const clone=v=>JSON.parse(JSON.stringify(v)),key=(r,c)=>r+','+c;
  const own=(s,r,c)=>r>=0&&r<s.rows.length&&c>=0&&c<s.rows[r].length;
- function write(s,r,c,color){if(!own(s,r,c))return false;const bit=color?'1':'0',k=key(r,c),changed=s.rows[r][c]!==bit||s.colors[k]!==color;
+ function baseline(s,reset=false){if(reset||!Array.isArray(s.rowsBase))s.rowsBase=s.rows.slice();return s.rowsBase;}
+ function rowBits(s,r){const base=baseline(s)[r]||'';return [...s.rows[r]].map((bit,c)=>({bit,changed:bit!==(base[c]??'0'),color:bit==='1'?(s.colors?.[key(r,c)]||''):''}));}
+ function write(s,r,c,color){if(!own(s,r,c))return false;baseline(s);const bit=color?'1':'0',k=key(r,c),changed=s.rows[r][c]!==bit||s.colors[k]!==color;
   s.rows[r]=s.rows[r].slice(0,c)+bit+s.rows[r].slice(c+1);if(color)s.colors[k]=color;else delete s.colors[k];delete s.groups[k];return changed;}
  function reconcile(s,rows,op){
+  baseline(s);
   if(op?.moves){for(const name of ['colors','groups']){const before={...s[name]};if(!op.copy)for(const [from] of op.moves)delete s[name][key(...from)];for(const [from,to] of op.moves){const v=before[key(...from)];if(v!==undefined)s[name][key(...to)]=clone(v);else delete s[name][key(...to)];}}}
   if(op?.copies){for(const name of ['colors','groups']){const before={...s[name]};for(const [from,to] of op.copies){const v=from&&before[key(...from)];if(v!==undefined&&v!==null)s[name][key(...to)]=clone(v);else delete s[name][key(...to)];}}}
   s.rows.splice(0,s.rows.length,...rows);for(const name of ['colors','groups'])for(const k of Object.keys(s[name])){const [r,c]=k.split(',').map(Number);if(!own(s,r,c)||s.rows[r][c]!=='1')delete s[name][k];}
   s.cur=Math.max(0,Math.min(s.rows.length-1,s.cur||0));
  }
- function scene(s){const out=clone(s);delete out.scenes;delete out.scene;delete out.legacyImported;return out;}
- function shiftRows(s,index,remove,add){const next=s.rows.slice();next.splice(index,remove,...add);for(const name of ['colors','groups']){const map={};for(const [k,v] of Object.entries(s[name])){const [r,c]=k.split(',').map(Number);if(r>=index&&r<index+remove)continue;map[key(r>=index?r+add.length-remove:r,c)]=v;}s[name]=map;}s.rows=next.length?next:['0'];s.textBlocks=[];s.text='';s.textWidth=null;s.cur=Math.max(0,Math.min(s.rows.length-1,index));}
+ function scene(s){baseline(s);const out=clone(s);delete out.scenes;delete out.scene;delete out.legacyImported;return out;}
+ function shiftRows(s,index,remove,add,addBase){const base=baseline(s).slice(),next=s.rows.slice();next.splice(index,remove,...add);base.splice(index,remove,...(addBase||add.map(row=>'0'.repeat(row.length))));for(const name of ['colors','groups']){const map={};for(const [k,v] of Object.entries(s[name])){const [r,c]=k.split(',').map(Number);if(r>=index&&r<index+remove)continue;map[key(r>=index?r+add.length-remove:r,c)]=v;}s[name]=map;}s.rows=next.length?next:['0'];s.rowsBase=next.length?base:['0'];s.textBlocks=[];s.text='';s.textWidth=null;s.cur=Math.max(0,Math.min(s.rows.length-1,index));}
  function component(s,cell,polygon,neighbors){
   if(!cell||s.rows[cell[0]]?.[cell[1]]!=='1')return [];
   if(neighbors?.(...cell)){
@@ -30,9 +33,9 @@
   const node=k=>{const [r,c]=k.split('_').map(Number);return [(c-N+2)/2,r*Math.sqrt(3)/2].map(x=>Math.round(x*1e8)/1e8).join(',');};
   for(const [k,value] of Object.entries(item.d||{})){const v=Array.isArray(value)?value:[value,3];data.dots[node(k)]={color:palette[v[0]]||'#ffd166',size:v[1]||3};}
   for(const [k,value] of Object.entries(item.l||{})){const v=Array.isArray(value)?value:[value,2];data.lines[k.split('|').map(node).sort().join('|')]={color:palette[v[0]]||'#ffd166',size:v[1]||2};}
-  return data;
+  baseline(data,true);return data;
  }
- let cfg,canvas,gesture=null,selection=[],rowsKey='',sceneKey='';
+ let cfg,canvas,gesture=null,selection=[],rowsKey='',sceneKey='',rowInputs=[];
  function redraw(){cfg.redraw();}
  function change(fn){if(cfg.locked())return;cfg.stop?.();cfg.snapshot();fn(cfg.state());redraw();cfg.save();}
  function cancel(){if(!gesture)return;const s=cfg.state(),before=gesture.before;Object.assign(s,clone(before));gesture=null;redraw();}
@@ -64,7 +67,7 @@
   $('gridsClear').onclick=()=>change(st=>{st.rows=st.rows.map(r=>'0'.repeat(r.length));st.colors={};st.groups={};st.dots={};st.lines={};});
   $('gridsSceneNew').onclick=()=>{const state=s();state.scenes.push({name:'Сцена '+(state.scenes.length+1),data:scene(state),view:clone(cfg.view())});state.scene=state.scenes.length-1;cfg.save();sync();};
   $('gridsSceneSave').onclick=()=>{if(!s().scenes[s().scene])return $('gridsSceneNew').click();s().scenes[s().scene]={name:s().scenes[s().scene].name,data:scene(s()),view:clone(cfg.view())};cfg.save();sync();};
-  $('gridsScenes').onchange=e=>{const index=+e.target.value,item=s().scenes[index];if(!item)return;change(st=>{const scenes=st.scenes;Object.assign(st,clone(item.data),{scenes,scene:index});if(item.view)Object.assign(cfg.view(),clone(item.view));cfg.editor()?.clear();cfg.fit();});};
+  $('gridsScenes').onchange=e=>{const index=+e.target.value,item=s().scenes[index];if(!item)return;change(st=>{const scenes=st.scenes;Object.assign(st,clone(item.data),{scenes,scene:index,rowsBase:clone(item.data.rowsBase||item.data.rows)});if(item.view)Object.assign(cfg.view(),clone(item.view));cfg.editor()?.clear();cfg.fit();});};
   $('gridsSceneDelete').onclick=()=>{if(!s().scenes[s().scene])return;change(st=>{st.scenes.splice(st.scene,1);st.scene=-1;});};
   $('gridsExport').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify({format:'zerklus-grids-v1',scenes:s().scenes,current:scene(s())},null,2));cfg.message('Сцены скопированы.');}catch(_){cfg.message('Буфер недоступен. Разрешите доступ к буферу в браузере.');}};
   $('gridsLegacy').onclick=()=>{if(s().legacyImported){cfg.message('Старые сцены уже добавлены.');return;}const old=cfg.legacy(),list=[{c:old.cells,d:old.dots,l:old.lines},...old.scenes];change(st=>{list.forEach((item,i)=>{if(!Object.keys(item.c||{}).length&&!Object.keys(item.d||{}).length&&!Object.keys(item.l||{}).length)return;st.scenes.push({name:i?'Старая сцена '+i:'Старая сетка',data:legacyScene(item,st),view:{...clone(cfg.view()),cell:'tri',al:'zz',axes:[]}});});st.legacyImported=true;});};
@@ -75,11 +78,11 @@
    if(!rows.length||rows.some(row=>typeof row!=='string'||!/^[01]{1,4096}$/.test(row))){cfg.message('Импорт: нужны строки из 0 и 1, до 4096 бит в строке.');return;}
    if(rows.length>4096){cfg.message('Импорт превышает максимум 4096 строк сетки.');return;}
    cancel();cfg.axis()?.cancel();
-   change(st=>{Object.assign(st,{rows,cur:0,colors:{},groups:{},dots:{},lines:{},text:'',textBlocks:[],textWidth:null,scene:-1});cfg.view().axes=[];selection=[];cfg.editor()?.clear();$('gridsRowsList').scrollTop=0;cfg.fit();});
+   change(st=>{Object.assign(st,{rows,rowsBase:rows.slice(),cur:0,colors:{},groups:{},dots:{},lines:{},text:'',textBlocks:[],textWidth:null,scene:-1});cfg.view().axes=[];selection=[];cfg.editor()?.clear();$('gridsRowsList').scrollTop=0;cfg.fit();});
    cfg.message('Сетка очищена и заменена копией Строк. Отмена вернёт прежнее поле.');
   };
   $('gridsRowAdd').onclick=()=>{if(s().rows.length>=4096){cfg.message('Максимум 4096 строк сетки.');return;}change(st=>shiftRows(st,st.cur+1,0,['0'.repeat(st.rows[st.cur]?.length||32)]));};
-  $('gridsRowCopy').onclick=()=>change(st=>{const r=st.cur,row=st.rows[r];shiftRows(st,r+1,0,[row]);for(const name of ['colors','groups'])for(let c=0;c<row.length;c++){const v=st[name][key(r,c)];if(v!==undefined)st[name][key(r+1,c)]=clone(v);}});
+  $('gridsRowCopy').onclick=()=>change(st=>{const r=st.cur,row=st.rows[r],base=baseline(st)[r]||'0'.repeat(row.length);shiftRows(st,r+1,0,[row],[base]);for(const name of ['colors','groups'])for(let c=0;c<row.length;c++){const v=st[name][key(r,c)];if(v!==undefined)st[name][key(r+1,c)]=clone(v);}});
   $('gridsRowDelete').onclick=()=>change(st=>shiftRows(st,st.cur,1,[]));
   $('gridsColAdd').onclick=()=>{if(s().rows.some(r=>r.length>=4096)){cfg.message('Максимум 4096 бит в строке.');return;}change(st=>{st.rows=st.rows.map(row=>row+'0');st.textWidth=st.rows[0].length;});};
   const list=$('gridsRowsList');list.onscroll=()=>{if(list.contains(document.activeElement)&&document.activeElement.matches('input'))document.activeElement.blur();renderRows(true);};
@@ -100,10 +103,18 @@
   };
   sync();
  }
- function renderRows(force=false){if(!cfg)return;const list=document.getElementById('gridsRowsList'),s=cfg.state(),mobile=matchMedia('(max-width:760px), (pointer:coarse) and (max-width:1100px)').matches,height=mobile?36:26,start=Math.max(0,Math.floor(list.scrollTop/height)-3),end=Math.min(s.rows.length,start+Math.ceil((list.clientHeight||260)/height)+7),identity=start+':'+end+':'+s.cur+':'+s.locked+':'+s.rows.slice(start,end).join('/');
+ function renderRows(force=false){if(!cfg)return;const list=document.getElementById('gridsRowsList'),s=cfg.state(),mobile=matchMedia('(max-width:760px), (pointer:coarse) and (max-width:1100px)').matches,height=mobile?36:26,start=Math.max(0,Math.floor(list.scrollTop/height)-3),end=Math.min(s.rows.length,start+Math.ceil((list.clientHeight||260)/height)+7),base=baseline(s),colors=Object.entries(s.colors||{}).filter(([k])=>{const r=+k.split(',')[0];return r>=start&&r<end;}),identity=JSON.stringify([start,end,s.cur,s.locked,s.rows.slice(start,end),base.slice(start,end),colors]);
   if(identity===rowsKey&&!force)return;if(list.contains(document.activeElement)&&document.activeElement.matches('input'))return;rowsKey=identity;
-  const fragment=document.createDocumentFragment(),spacer=h=>{const d=document.createElement('div');d.style.height=h+'px';fragment.append(d);};spacer(start*height);
-  for(let r=start;r<end;r++){const row=document.createElement('div');row.className='grids-row'+(r===s.cur?' current':'');row.dataset.row=r;const no=document.createElement('button');no.textContent=r+1;no.title='Выбрать строку '+(r+1);no.dataset.row=r;const input=document.createElement('input');input.value=s.rows[r];input.dataset.row=r;input.setAttribute('aria-label','Строка сетки '+(r+1));input.inputMode='numeric';input.spellcheck=false;input.disabled=!!s.locked;row.append(no,input);fragment.append(row);}spacer((s.rows.length-end)*height);list.replaceChildren(fragment);
+  const scroll=new Map(rowInputs.map(({input})=>[+input.dataset.row,input.scrollLeft])),nextInputs=[],fragment=document.createDocumentFragment(),spacer=h=>{const d=document.createElement('div');d.style.height=h+'px';fragment.append(d);};spacer(start*height);
+  for(let r=start;r<end;r++){
+   const row=document.createElement('div');row.className='grids-row'+(r===s.cur?' current':'');row.dataset.row=r;
+   const no=document.createElement('button');no.textContent=r+1;no.title='Выбрать строку '+(r+1);no.dataset.row=r;
+   const editor=document.createElement('div'),ink=document.createElement('div'),bits=document.createElement('span');editor.className='grids-row-editor';ink.className='grids-row-ink';bits.className='grids-row-bits';ink.setAttribute('aria-hidden','true');
+   for(const cell of rowBits(s,r)){const bit=document.createElement('span');bit.textContent=cell.bit;bit.className=(cell.changed?'grids-bit-changed ':'')+(cell.color?'grids-bit-colored':'');if(cell.color)bit.style.color=cell.color;bits.append(bit);}ink.append(bits);
+   const input=document.createElement('input');input.value=s.rows[r];input.dataset.row=r;input.setAttribute('aria-label','Строка сетки '+(r+1));input.inputMode='numeric';input.spellcheck=false;input.disabled=!!s.locked;
+   input.addEventListener('scroll',()=>{bits.style.transform='translateX('+(-input.scrollLeft)+'px)';});nextInputs.push({input,bits});editor.append(ink,input);row.append(no,editor);fragment.append(row);
+  }spacer((s.rows.length-end)*height);list.replaceChildren(fragment);
+  rowInputs=nextInputs;for(const {input,bits} of rowInputs){input.scrollLeft=scroll.get(+input.dataset.row)||0;bits.style.transform='translateX('+(-input.scrollLeft)+'px)';}
  }
  function sync(){if(!cfg)return;const s=cfg.state();s.colors||={};s.groups||={};s.dots||={};s.lines||={};s.scenes||=[];s.color||='#ffd166';s.stroke||=2;const $=id=>document.getElementById(id);
   renderRows();$('gridsRowsInfo').textContent=s.rows.length+' строк · '+Math.max(0,...s.rows.map(r=>r.length))+' бит';$('gridsRowsLock').textContent=s.locked?'🔒':'🔓';$('gridsRowsLock').classList.toggle('on',!!s.locked);
@@ -124,5 +135,5 @@
   for(const [k,v] of Object.entries(s.lines||{})){const [a,b]=k.split('|').map(xy);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.strokeStyle=v.color;ctx.lineWidth=v.size;ctx.stroke();}
   for(const [k,v] of Object.entries(s.dots||{})){const [x,y]=xy(k);ctx.beginPath();ctx.arc(x,y,Math.max(2,v.size),0,Math.PI*2);ctx.fillStyle=v.color;ctx.fill();}ctx.restore();
  }
- return {mount,sync,paint,cancel,reconcile,write,shiftRows,scene,component,legacyScene};
+ return {mount,sync,paint,cancel,reconcile,write,shiftRows,scene,component,legacyScene,baseline,rowBits};
 });

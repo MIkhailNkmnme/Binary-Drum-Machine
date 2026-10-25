@@ -29,6 +29,8 @@ body.setka-menu-ready #mayatnikRail .may-docked{position:fixed!important;left:va
 body.setka-menu-ready #mayatnikRail .may-dock-drag{z-index:2147483643!important;pointer-events:none!important}
 body.setka-menu-ready #mayatnikRail .gz-group.may-dock-drag>.setka-menu-body{display:none!important}
 #setkaFooter{position:fixed;bottom:0;left:4px;right:4px;height:28px;pointer-events:none}
+.setka-history{position:fixed;bottom:2px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:110;pointer-events:auto}
+body.setka-menu-ready .setka-history .setka-direct{--c:#ffd166;width:58px;height:24px;min-height:24px}
 body.setka-menu-ready .setka-title output{position:fixed;bottom:2px;left:136px;max-width:calc(100% - 272px);margin:0;pointer-events:none;z-index:1;background:var(--bg)}
 @media(max-width:600px){
  body.setka-menu-ready #mayatnikRail{overflow-x:auto;scrollbar-width:none}

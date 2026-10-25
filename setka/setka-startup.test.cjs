@@ -102,17 +102,36 @@ test('proxy mode button renders all four grid modes without modifying rows',()=>
   assert.deepEqual(seen,['tri','rmb','square','ring']);
  }finally{app.dom.window.close();}
 });
-test('import replaces only standalone cells, edits/undo/save leave source rows intact',()=>{
+
+test('scene dropdown opens beside its whole group on either edge; history lives at bottom',()=>{
+ const app=boot();try{const {w}=app,scene=app.proxy('gridsScenes'),body=scene.closest('.setka-menu-body');
+  assert.equal(scene.gzList.col(),body);assert.equal(scene.gzList.placement,undefined);
+  Object.defineProperty(w.HTMLElement.prototype,'offsetWidth',{configurable:true,get(){return this.classList.contains('gz-ladder')?120:0;}});
+  Object.defineProperty(w.HTMLElement.prototype,'offsetHeight',{configurable:true,get(){return this.classList.contains('gz-ladder')?104:0;}});
+  for(const left of [4,1156]){
+   body.getBoundingClientRect=()=>({left,right:left+120,top:50,bottom:450,width:120,height:400});
+   scene.getBoundingClientRect=()=>({left:left+4,right:left+116,top:120,bottom:144,width:112,height:24});
+   scene.getClientRects=()=>[scene.getBoundingClientRect()];scene.click();app.flush();
+   const list=w.document.querySelector('.gz-ladder');assert.ok(list);const x=parseFloat(list.style.left);
+   assert.ok(x>=left+124||x+120<=left-4,'dropdown must not overlap its parent column');
+   assert.ok(x>=4&&x+120<=1276,'dropdown stays in viewport');
+   scene.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+  }
+  for(const id of ['pageUndo','pageRedo']){assert.ok(w.document.getElementById(id).closest('#setkaFooter'));assert.equal(w.document.querySelector('.setka-title #'+id),null);}
+  assert.equal(w.document.getElementById('setkaFooter').hasAttribute('aria-hidden'),false);
+ }finally{app.dom.window.close();}
+});
+test('Hub templates replace only standalone cells, edits/undo/save leave source rows intact',()=>{
  const app=boot();try{const {w}=app,original=w.localStorage.getItem('zazerkalius_v1');
   app.run("gridsState().colors={'0,0':'#ff0000'};gridsState().dots={'0,0':{color:'#ff0000',size:2}};");
-  w.document.getElementById('gridsRowsImport').click();app.flush();
-  assert.equal(app.run('JSON.stringify(gridsState().rows)'),JSON.stringify(old.rows));
+  w.document.getElementById('gridsTemplateBase').click();app.flush();const expected=app.run('JSON.stringify(ZZ_INITIAL_ROWS.filter((_,i)=>i!==1))');assert.deepEqual(JSON.parse(expected).slice(0,5),['1','11','111','1000','10101']);
+  assert.equal(app.run('JSON.stringify(gridsState().rows)'),expected);
   assert.equal(app.run('Object.keys(gridsState().colors).length'),0);assert.equal(app.run('Object.keys(gridsState().dots).length'),0);
   app.proxy('gridsClear').click();app.flush();assert.equal(app.run('gridsState().rows.some(row=>row.includes("1"))'),false);
-  w.document.getElementById('pageUndo').click();app.flush();assert.equal(app.run('JSON.stringify(gridsState().rows)'),JSON.stringify(old.rows));
+  w.document.getElementById('pageUndo').click();app.flush();assert.equal(app.run('JSON.stringify(gridsState().rows)'),expected);
   assert.equal(w.localStorage.getItem('zazerkalius_v1'),original);
   assert.equal(app.run('Z.rows'),undefined);
-  assert.deepEqual(JSON.parse(w.localStorage.getItem('zerklus_setka_v1')).grids.rows,old.rows);
+  assert.equal(JSON.stringify(JSON.parse(w.localStorage.getItem('zerklus_setka_v1')).grids.rows),expected);w.document.getElementById('gridsTemplateSerp').click();app.flush();assert.deepEqual(JSON.parse(app.run('JSON.stringify(gridsState().rows.slice(0,5))')),['1','11','101','1111','10001']);assert.equal(w.document.getElementById('gridsRowsImport').hidden,true);
  }finally{app.dom.window.close();}
 });
 test('dynamic scene choices and native field proxies update live sources, visibility and disabled states',()=>{
@@ -131,5 +150,26 @@ test('dynamic letter actions use shared buttons and retain deletion handlers',()
   const buttons=[...stats.querySelectorAll('button')];assert.ok(buttons.length>=2);assert.ok(buttons.every(b=>b.classList.contains('gz-hx')));
   assert.equal(stats.querySelectorAll('th.gz-hx,td.gz-hx').length,0,'numeric table cells keep their existing form');
   const erase=buttons.find(b=>/все|всё/i.test(b.title));assert.ok(erase);erase.click();app.flush();assert.equal(stats.hidden,true);
+ }finally{app.dom.window.close();}
+});
+
+test('plain mouse drag moves every bit even with brush, erase, edit selection or axis active',()=>{
+ const app=boot();try{const {w}=app,cv=w.document.getElementById('rmbCv');
+  const fire=(type,x,y,extra={})=>{const e=new w.MouseEvent(type,{bubbles:true,button:0,clientX:x,clientY:y,...extra});Object.defineProperties(e,{pointerId:{value:1},pointerType:{value:'mouse'}});cv.dispatchEvent(e);};
+  for(const mode of ['view','brush','erase','edit','axis']){
+   app.run("gridsState().tool='';Object.assign(rmbSt(),{edit:false,axisMode:false,cell:'square',s:20,ox:100,oy:100});renderRmb();");
+   if(mode==='brush'||mode==='erase')app.run("gridsState().tool='"+mode+"';");
+   if(mode==='edit')app.run("rmbSt().edit=true;rmbEditor.setSelection([[0,0]]);");
+   if(mode==='axis')app.run('rmbSt().axisMode=true;');
+   const before=app.run('JSON.stringify(gridsState().rows)'),history=app.run('undoStack.length');
+   const point=JSON.parse(app.run("JSON.stringify((()=>{const r=rmbSt(),rows=gridsState().rows,g={...rmbLayout(rows,rows.length,r.al,r.cell),rows,cell:r.cell,tw:r.s,ox:r.ox,oy:r.oy},p=rmbHighlightPolygon(0,0,g);return [p.reduce((s,v)=>s+v[0],0)/p.length,p.reduce((s,v)=>s+v[1],0)/p.length];})())"));
+   const [x,y]=point;fire('pointerdown',x,y);fire('pointermove',x+40,y+25);fire('pointerup',x+40,y+25);app.flush();
+   assert.equal(app.run('rmbSt().ox'),140,mode);assert.equal(app.run('rmbSt().oy'),125,mode);
+   assert.equal(app.run('JSON.stringify(gridsState().rows)'),before,mode+' must not paint or move cells');assert.equal(app.run('undoStack.length'),history);
+  }
+  app.run("gridsState().tool='brush';rmbSt().axisMode=false;Object.assign(rmbSt(),{s:20,ox:100,oy:100});renderRmb();");
+  fire('pointerdown',110,110,{shiftKey:true});fire('pointerup',110,110,{shiftKey:true});app.flush();assert.equal(app.run('gridsState().rows[0]'),'11','modified gesture still paints');
+  const before=app.run('JSON.stringify(gridsState().rows)');fire('pointerdown',110,110);fire('pointermove',170,170);fire('pointercancel',170,170);app.flush();
+  assert.equal(app.run('rmbSt().ox'),100);assert.equal(app.run('rmbSt().oy'),100);assert.equal(app.run('JSON.stringify(gridsState().rows)'),before);
  }finally{app.dom.window.close();}
 });
