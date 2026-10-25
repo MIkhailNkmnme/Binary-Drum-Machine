@@ -3,9 +3,9 @@ const G=require('./zz-grids.js'),E=require('./zz-rmb-editor.js'),A=require('./zz
 const source=fs.readFileSync(__dirname+'/zz-ui.js','utf8'),plain=x=>JSON.parse(JSON.stringify(x));
 const state=()=>({rows:['0100','0000'],cur:0,colors:{'0,1':'#ffd166'},groups:{},dots:{},lines:{},scenes:[],text:'',textBlocks:[]});
 function context(){const Z={rows:['0100','0000'],cur:1,rmb:{axes:[]},rowsAlign:'left',rowLock:true};const c=vm.createContext({Z,window:{ZZGrids:G,ZZRmbAxis:A},renderRmb(){},save(){},say(){},rmbWStop(){},rmbEditor:null,rmbSt:()=>Z.rmb,undoPush(){}});vm.runInContext(source.slice(source.indexOf('function gridsState(){'),source.indexOf('const rmbIsMobile=')),c);return c;}
-test('migration copies current rows once; both directions are independent',()=>{
- const c=context(),s=c.gridsState();assert.notEqual(s.rows,c.Z.rows);assert.equal(s.align,'left');c.Z.rows[0]='1111';assert.equal(s.rows[0],'0100');G.write(s,1,2,'#f00');assert.equal(c.Z.rows[1],'0000');assert.equal(c.gridsLocked(),false);
- const saved=JSON.parse(JSON.stringify(c.Z));c.Z=saved;assert.equal(c.gridsState().rows[1],'0010');
+test('new grid starts independently; saved grid content survives reload',()=>{
+ const c=context(),s=c.gridsState();assert.deepEqual(plain(s.rows),['0']);assert.equal(s.align,'center');c.Z.rows[0]='1111';assert.equal(s.rows[0],'0');G.write(s,0,0,'#f00');assert.equal(c.Z.rows[0],'1111');assert.equal(c.gridsLocked(),false);
+ const saved=JSON.parse(JSON.stringify(c.Z));c.Z=saved;assert.equal(c.gridsState().rows[0],'1');
 });
 test('brush and erase update the same bits read by the right-hand matrix',()=>{
  const s=state();assert.ok(G.write(s,1,2,'#ff0000'));assert.equal(s.rows[1],'0010');assert.equal(s.colors['1,2'],'#ff0000');G.write(s,1,2,null);assert.equal(s.rows[1],'0000');assert.equal(s.colors['1,2'],undefined);assert.equal(G.write(s,9,9,'#fff'),false);
@@ -49,7 +49,7 @@ test('the local mirror wave and its reset preserve ordinary rows and restore gri
  c.rmbWHome();assert.deepEqual(plain(c.gridsState()),before);assert.deepEqual(plain(c.Z.rows),original);
 });
 test('source wiring has no shared-row animation or row write in the grid implementation',()=>{
- const region=source.slice(source.indexOf('function rmbSt()'),source.indexOf('function bipyGeo('));const withoutMigration=region.replace(/function gridsState\(\)\{[\s\S]*?\n\}/,'');
+ const region=source.slice(source.indexOf('function rmbSt()'),source.indexOf('function bipyGeo('));const withoutMigration=region.replace('importRows:()=>Z.rows.slice(),','');
  assert.doesNotMatch(withoutMigration,/\bZ\.rows\b|bAnimPlay|bAnimStep|bAnimHome|rowsLocked\(/);assert.match(region,/gridsSnapshot/);assert.match(source,/top\.grids/);
  const html=fs.readFileSync(__dirname+'/Zerkalius-zazerkalius.html','utf8');assert.match(html,/id="w-rmb" data-title="Сетки"/);assert.match(html,/id="gridsRowsPane"/);assert.doesNotMatch(html,/data-grid-view/);
 });
@@ -61,11 +61,11 @@ test('real controller brushes, cancels a gesture, edits own rows and restores sc
   addEventListener(t,f){(this.events[t]??=[]).push(f);}getBoundingClientRect(){return {left:0,top:0};}
  }
  const ids={},tools=['brush','erase','group','dot','line'].map(tool=>{const b=new Element('button');b.dataset.gridTool=tool;return b;});
- let s=state(),view={cell:'rmb',ln:'each'},snapshots=[],saved=0;
+ let s=state(),view={cell:'rmb',ln:'each'},snapshots=[],saved=0;const originalRows=['10','01'];
  const document={activeElement:null,getElementById:id=>ids[id]??=new Element(id==='gridsScenes'?'select':'div'),querySelectorAll:()=>tools,createElement:tag=>new Element(tag),createDocumentFragment:()=>new Element()};
  const ctx=vm.createContext({document,matchMedia:()=>({matches:false}),setTimeout:f=>f(),prompt:()=>'',navigator:{clipboard:{writeText:async()=>{}}}});vm.runInContext(fs.readFileSync(__dirname+'/zz-grids.js','utf8'),ctx);
  const cv=new Element('canvas'),api=ctx.ZZGrids,g={hs:[0,1],u0:1,rm:true,tw:20,ox:0,oy:0};
- const cfg={state:()=>s,view:()=>view,geometry:()=>g,hit:E.hit,polygon:(r,c)=>{const x=(g.hs[r]/2+c)*20,y=r*20*Math.sqrt(3)/2;return [[x,y],[x+20,y],[x+30,y+20*Math.sqrt(3)/2],[x+10,y+20*Math.sqrt(3)/2]];},snapshot:before=>snapshots.push(clone(before||s)),locked:()=>!!s.locked,redraw(){api.sync();},save(){saved++;},message(){},editor:()=>({selection:()=>[],clear(){},setSelection(){}}),axis:()=>({cancel(){}}),fit(){},legacy:()=>({scenes:[],cells:{},dots:{},lines:{}})};
+ const cfg={importRows:()=>originalRows,state:()=>s,view:()=>view,geometry:()=>g,hit:E.hit,polygon:(r,c)=>{const x=(g.hs[r]/2+c)*20,y=r*20*Math.sqrt(3)/2;return [[x,y],[x+20,y],[x+30,y+20*Math.sqrt(3)/2],[x+10,y+20*Math.sqrt(3)/2]];},snapshot:before=>snapshots.push(clone(before||s)),locked:()=>!!s.locked,redraw(){api.sync();},save(){saved++;},message(){},editor:()=>({selection:()=>[],clear(){},setSelection(){}}),axis:()=>({cancel(){}}),fit(){},legacy:()=>({scenes:[],cells:{},dots:{},lines:{}})};
  function clone(x){return JSON.parse(JSON.stringify(x));}
  function fire(type,x,y){const e={button:0,pointerId:1,clientX:x,clientY:y,preventDefault(){},stopImmediatePropagation(){this.stopped=true;}};for(const fn of cv.events[type]||[]){fn(e);if(e.stopped)break;}}
  api.mount(cv,cfg);tools[0].onclick();fire('pointerdown',55,9);fire('pointerup',55,9);assert.equal(s.rows[0],'0110');assert.equal(snapshots.length,1);assert.equal(snapshots[0].rows[0],'0100');
@@ -83,5 +83,22 @@ test('real controller brushes, cancels a gesture, edits own rows and restores sc
  // Restoring the recorded undo snapshot restores the removed row and its color.
  Object.assign(s,clone(snapshots.at(-1)));assert.equal(s.rows[1],'1111');assert.equal(s.colors['1,0'],'#fff');
  input.dataset.row='0';list.onkeydown(event());list.onkeydown(event());assert.deepEqual(clone(s.rows),['0']);
+ before=snapshots.length;ids.gridsRowsImport.onclick();assert.deepEqual(clone(s.rows),['10','01']);assert.equal(snapshots.length,before+1);assert.notEqual(s.rows,originalRows);
+ s.rows[0]='00';assert.deepEqual(originalRows,['10','01']);ids.gridsRowsImport.onclick();assert.deepEqual(clone(s.rows),['00','01','10','01']);
+ originalRows[0]='11';assert.equal(s.rows[2],'10');ids.gridsRowsLock.onclick();before=snapshots.length;ids.gridsRowsImport.onclick();assert.equal(s.rows.length,4);assert.equal(snapshots.length,before);
 
+
+});
+
+test('unhandled grid keys cannot delete, select or navigate ordinary rows',()=>{
+ const start=source.indexOf('// v0.012: Del/Backspace'),end=source.indexOf('\n  renderAll();',start),calls=[];let handler;
+ const c=vm.createContext({document:{body:{classList:{contains:()=>false,add(){}}},addEventListener:(type,fn)=>handler=fn},window:{},Z:{rows:['1','10'],cur:1,laneCount:2,laneView:'over'},axSel:1,
+  undo:()=>calls.push('undo'),redo:()=>calls.push('redo'),deleteLane:()=>calls.push('lane'),deleteSelection:()=>calls.push('rows'),renderRows:()=>calls.push('render'),renderAll:()=>calls.push('renderAll'),save(){},say(){},clearTextSel(){},rowSel:new Set(),switchLane:()=>calls.push('switch')});
+ vm.runInContext(source.slice(start,end),c);
+ const event=(key,grid=true,extra={})=>({key,target:{closest:selector=>grid&&selector==='#w-rmb'},preventDefault(){},...extra});
+ for(const key of ['Delete','Backspace','Escape','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'])handler(event(key));
+ handler(event('a',true,{ctrlKey:true}));assert.deepEqual(calls,[]);assert.deepEqual(plain(c.Z.rows),['1','10']);assert.equal(c.Z.cur,1);
+ handler(event('Delete',false,{defaultPrevented:true}));assert.deepEqual(calls,[]);
+ handler(event('z',true,{ctrlKey:true}));assert.deepEqual(calls,['undo']);calls.length=0;
+ handler(event('Delete',false));assert.deepEqual(calls,['lane']);c.axSel=-1;handler(event('Delete',false));assert.deepEqual(calls,['lane','rows']);
 });

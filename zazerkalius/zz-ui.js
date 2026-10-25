@@ -4813,7 +4813,7 @@ function rmbDrawLetterBorders(g,{hs,u0,rm,tw,ox,oy}){
 }
 let rmbEditor = null, rmbAxisTool = null, rmbTouch = null;
 function gridsState(){
-  if(!Z.grids){Z.grids={rows:Z.rows.slice(),cur:Z.cur||0,align:Z.rowsAlign||"center",text:Z.rmbText||"",textBlocks:JSON.parse(JSON.stringify(Z.rmbTextBlocks||[])),textWidth:Z.rmbTextFieldWidth||null,colors:{},dots:{},lines:{},groups:{},scenes:[],tool:"",version:1};}
+  if(!Z.grids){Z.grids={rows:["0"],cur:0,align:"center",text:"",textBlocks:[],textWidth:null,colors:{},dots:{},lines:{},groups:{},scenes:[],tool:"",version:1};}
   return Z.grids;
 }
 function gridsLocked(){if(!gridsState().locked)return false;say("Строки сетки заперты — откройте их замок.");return true;}
@@ -4837,7 +4837,7 @@ function rmbEditorWire(cv){
   });
   window.ZZGrids?.mount(cv,{state:gridsState,geometry:common.geometry,polygon:rmbHighlightPolygon,hit:window.ZZRmbEditor.hit,
     snapshot:gridsSnapshot,locked:gridsLocked,redraw:renderRmb,save,message:say,view:rmbSt,fit:rmbFit,stop:rmbWStop,
-    editor:()=>rmbEditor,axis:()=>rmbAxisTool,legacy:()=>({scenes:Z.triScenes||[],cells:Z.triCells||{},dots:Z.triDots||{},lines:Z.triLines||{}})});
+    importRows:()=>Z.rows.slice(),editor:()=>rmbEditor,axis:()=>rmbAxisTool,legacy:()=>({scenes:Z.triScenes||[],cells:Z.triCells||{},dots:Z.triDots||{},lines:Z.triLines||{}})});
   if(window.ZZRmbAxis)rmbAxisTool=window.ZZRmbAxis.mount(cv,{...common,
     enabled:()=>!!rmbSt().axisMode,
     color:(source,bit)=>bit==="1"?(source&&gridsState().colors[source.join(",")]||rmbSt().c1||coneCss("--b1","#22d3ee")):(rmbSt().c0||coneCss("--b0","#7d8699")),
@@ -4913,6 +4913,7 @@ function rmbUi(){
 }
 function rmbWire(){
   const W = $("w-rmb"), cv = $("rmbCv"); if (!W || !cv || cv._wired) return; cv._wired = 1;
+  cv.tabIndex=0;cv.addEventListener("pointerdown",()=>cv.focus({preventScroll:true}),true);
   rmbEditorWire(cv);
   const re = () => { rmbUi(); save(); renderRmb(); };
   $("bRmbEdit").onclick=()=>{const r=rmbSt();gridsState().tool="";r.edit=!r.edit;r.axisMode=false;rmbAxisTool?.cancel();rmbEditor?.clear();if(r.edit){if(rmbW.on)rmbWStop();rmbFit();cv.focus({preventScroll:true});}re();};
@@ -16715,7 +16716,7 @@ function init(){
   });
   document.addEventListener("keydown", (e) => {   // v0.254: F2 / Enter — править текущую строку на месте
     if ((e.key !== "F2" && e.key !== "Enter") || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || rowEditing >= 0) return;
-    const t = e.target; if (t && (t.closest("input, textarea, select, button, [contenteditable]") )) return;
+    const t = e.target; if (t && (t.closest("#w-rmb, input, textarea, select, button, [contenteditable]") )) return;
     if (document.body.classList.contains("zen") || !(Z.cur < Z.rows.length)) return;
     if (Z.laneCount > 1 && Z.laneView === "over") return;
     e.preventDefault(); editRowInPlace(Z.cur);
@@ -16725,7 +16726,7 @@ function init(){
   const rowUnselect = () => { rowSel.clear(); rowSelAnchor = -1; clearTextSel(); document.body.classList.add("nocur"); renderRows(); renderCone(); };
   // v0.309: нажатие по конусу больше не зажигает подсветку текущего (v0.107) — одиночный щелчок там снимает выделение
   // $("coneCv") pointerdown → nocur снят — убрано;   // v0.107: щелчок по кольцам — подсветка текущего снова   // v0.106: действие со строками — подсветка текущей снова видна
-  document.addEventListener("keydown", (e) => { if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "PageUp" || e.key === "PageDown" || e.key === "Home" || e.key === "End") document.body.classList.remove("nocur"); }, true);
+  document.addEventListener("keydown", (e) => { if(e.target?.closest?.("#w-rmb"))return; if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "PageUp" || e.key === "PageDown" || e.key === "Home" || e.key === "End") document.body.classList.remove("nocur"); }, true);
   $("rowList").onclick = (e) => {
     if (rowEditing >= 0) return;
     delAtEnd = false;   // v0.021
@@ -18053,6 +18054,7 @@ function init(){
   // Клавиши: ↑/↓ — по строкам, Ctrl+Z — отмена (не в полях ввода).
   // v0.012: Del/Backspace — удалить выделенное, Ctrl+A — выделить все строки, Esc — снять выделение.
   document.addEventListener("keydown", (e) => {
+    if(e.defaultPrevented||e.isComposing)return;
     const t = e.target;
     if (e.key === "Escape" && document.body.classList.contains("zen")) { e.preventDefault(); zenSet(false); return; }   // v0.105: выйти из дзена
     if (document.body.classList.contains("zerk-zen") && window.zzZerkaliusKey?.(e)) return;
@@ -18068,6 +18070,8 @@ function init(){
     else if (t && t.closest && t.closest("input, select, textarea")) return;
     if ((e.ctrlKey || e.metaKey) && (e.key === "y" || e.key === "н" || (e.shiftKey && (e.key === "Z" || e.key === "Я" || e.code === "KeyZ")))) { e.preventDefault(); redo(); return; }   // v0.158: ↪
     if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "я")) { e.preventDefault(); undo(); return; }
+    // Grid keys must never fall through to the independent ordinary rows.
+    if(t?.closest?.("#w-rmb"))return;
     if ((e.key === "Delete" || e.key === "Backspace") && axSel >= 0 && Z.laneCount > 1 && Z.laneView === "over") { e.preventDefault(); deleteLane(axSel); return; }   // v0.022
     if (e.key === "Escape" && axSel >= 0) { axSel = -1; renderRows(); say("Выделение оси снято."); return; }
     if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelection(); return; }

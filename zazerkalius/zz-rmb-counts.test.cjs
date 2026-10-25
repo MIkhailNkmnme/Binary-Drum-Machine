@@ -60,7 +60,7 @@ test('touch on a count pins its highlight through leave and blur, and a second t
 });
 test('table shows 1 / 0 / total, hover and focus select cells, edits refresh without pan rebuilds',()=>{
  const box=new El();let renders=0;const c=api({Z:{rmbText:'II'},$:()=>box,document:{createElement:()=>new El()},renderRmb(){renders++;}});
- c.Z.rows=plain(c.rmbTextRows('II'));c.rmbVals=bits(c.Z.rows);c.rmbTextStats();assert.equal(box.hidden,false);assert.equal(box.replaces,1);
+ c.Z.rows=plain(c.rmbTextRows('II'));Object.assign(c.gridsState(),{rows:c.Z.rows.slice(),text:'II'});c.rmbVals=bits(c.Z.rows);c.rmbTextStats();assert.equal(box.hidden,false);assert.equal(box.replaces,1);
  const table=box.children[1],head=table.children[0],body=table.children[1];assert.equal(head.children[0].children[1].textContent,'1');assert.equal(head.children[1].children[1].textContent,'I');assert.equal(head.children[1].children[1].className,'rmb-count-letter');
  assert.deepEqual(body.children.map(r=>r.children[0].textContent),['1','0','Всего ◇']);
  const zero=body.children[1].children[1];zero.onpointerenter();assert.deepEqual(plain(vm.runInContext('rmbCountHighlight',c)),{index:1,kind:'zeros'});assert.equal(renders,1);
@@ -71,13 +71,14 @@ test('table shows 1 / 0 / total, hover and focus select cells, edits refresh wit
 test('overlay draws selected cells without changing field data',()=>{
  class P{constructor(){this.paths=0;}moveTo(){this.paths++;}lineTo(){}closePath(){}}
  const c=api({Z:{rows:['00000','01010','00000','01010','00000']},Path2D:P});
+ c.gridsState().rows=c.Z.rows.slice();
  vm.runInContext('rmbStatsCache={counts:rmbLetterCounts(Z.rows,rmbTextLayout("I"))};rmbCountHighlight={index:1,kind:"zeros"};',c);
  const before=JSON.stringify(c.Z.rows);let fill,stroke;const g={save(){},restore(){},fill(p){fill=p.paths;},stroke(p){stroke=p.paths;}};
  c.rmbDrawCountHighlight(g,{hs:[0,0,0,0,0],u0:0,rm:true,tw:10,ox:0,oy:0,M:5,Wc:100,Hc:100});assert.equal(fill,5);assert.equal(stroke,5);assert.equal(JSON.stringify(c.Z.rows),before);
 });
 test('typing modifies only independent grid data and snapshots the previous text',()=>{
  const c=api({Z:{rmbText:'I',rows:['0']},prompt:()=> 'II',rmbSt:()=>({}),rmbFit(){},renderRmb(){},save(){},say(){}});let old;
- c.gridsSnapshot=()=>{old=c.gridsState().text;};vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.equal(old,'I');assert.equal(c.gridsState().text,'II');assert.deepEqual(plain(c.Z.rows),['0']);assert.equal(c.Z.rmbText,'I');
+ c.gridsState().text='I';c.gridsSnapshot=()=>{old=c.gridsState().text;};vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.equal(old,'I');assert.equal(c.gridsState().text,'II');assert.deepEqual(plain(c.Z.rows),['0']);assert.equal(c.Z.rmbText,'I');
 });
 
 test('opening a closed window rebuilds rendered values after field edits',()=>{
@@ -104,7 +105,7 @@ test('adding text preserves existing cells, separates rows and counts every text
 });
 test('grid text undo restores its own rows, labels and axes without touching ordinary rows',()=>{
  let saved;const c=api({Z:{rmbText:'I',rmb:{al:'l',num:true,axes:[{id:1,a:[0,0],b:[1,1]}]}},prompt:()=> 'WW',rmbFit(){},renderRmb(){},save(){},say(){},rmbWStop(){}});
- c.rmbSt=()=>c.Z.rmb;c.Z.rows=plain(c.rmbTextRows('I'));c.Z.cur=0;const ordinary=plain(c.Z.rows),old=plain(c.gridsState().rows);
+ c.rmbSt=()=>c.Z.rmb;c.Z.rows=plain(c.rmbTextRows('I'));c.Z.cur=0;Object.assign(c.gridsState(),{rows:c.Z.rows.slice(),text:'I'});const ordinary=plain(c.Z.rows),old=plain(c.gridsState().rows);
  c.gridsSnapshot=()=>saved=c.gridsSnap();vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.ok(c.gridsState().rows.length>old.length);assert.ok(c.Z.rmb.axes[0].a[0]<0);assert.equal(c.gridsState().textBlocks.length,2);
  c.gridsApply(saved);assert.deepEqual(plain(c.gridsState().rows),old);assert.deepEqual(plain(c.Z.rows),ordinary);assert.equal(c.gridsState().text,'I');assert.deepEqual(plain(c.Z.rmb.axes),[{id:1,a:[0,0],b:[1,1]}]);
 });
