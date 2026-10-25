@@ -13,6 +13,7 @@ class Node{
  remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(x=>x!==this);this.parentNode=null}}
  addEventListener(t,f){(this.listeners[t]??=[]).push(f)}
  emit(t,e={}){e={target:this,pointerType:'mouse',button:0,stopPropagation(){},...e};for(const f of this.listeners[t]||[])f(e)}
+ click(){this.emit('click')}
  matches(s){if(s===':hover')return this.hover;return s.split(',').some(q=>q.trim().startsWith('.')&&this.classList.contains(q.trim().slice(1)))}
  closest(s){return this.matches(s)?this:this.parentNode?.closest(s)||null}
  contains(x){return x===this||this.children.some(c=>c.contains(x))}
@@ -96,10 +97,39 @@ test('diamond dropdown previews in owner, keeps title above, restores selection 
  f.column.rect={left:650,right:770,width:120,top:50};f.owner.rect=f.column.rect;f.ctx.syncListButton(f.owner);
  assert.equal(f.owner.dataset.listSide,'left');const label=f.owner.querySelector('.may-list-label');assert.equal(label.textContent,'A');
  f.reopen();const list=f.list,rows=list.querySelectorAll(':scope > .gz-hx'),heading=list.querySelector('.may-list-heading');
- assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(3,48px)');
+ assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(2,48px)');
  assert.ok(rows.every(row=>row.classList.contains('may-option-diamond')));assert.equal(list.children.at(-1),heading);
  rows[2].emit('pointerenter');assert.equal(label.textContent,'C');f.ctx.sync();assert.equal(label.textContent,'C');rows[2].emit('pointerleave');assert.equal(label.textContent,'A');
  for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.equal(label.textContent,['A','B','C'][i]);assert.deepEqual(rows.map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}
  rows[1].emit('click');assert.equal(selected,1);assert.equal(label.textContent,'B');rows[0].emit('pointerenter');assert.equal(label.textContent,'A');f.ctx.sharedClose();assert.equal(label.textContent,'B');assert.equal(f.owner.dataset.listTitle,'Шрифт');
  assert.equal(list.children.filter(n=>n.classList.contains('may-list-heading')).length,1);assert.equal(list.children.length,4);
+});
+
+test('owner click cycles every native select through its live change route; hover only opens',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'Zerkalius-mayatnik.html'),'utf8');
+ const ids=[...menu.matchAll(/\bselect\('([^']+)'/g)].map(m=>m[1]);assert.deepEqual(ids,['fillArea','gifScaleSequence','gifScaleMethod']);
+ for(const id of ids){
+  const f=fixture(true),text=html.match(new RegExp('<select[^>]*id="'+id+'"[^>]*>([\\s\\S]*?)</select>'))[1];
+  const options=[...text.matchAll(/<option\b([^>]*)>([^<]*)<\/option>/g)].map(m=>({value:m[1].match(/value="([^"]*)"/)[1],textContent:m[2]}));
+  let saved=options[0].value,changes=0;
+  const source={options,value:saved,dispatchEvent(e){assert.equal(e.type,'change');saved=this.value;changes++;}};
+  Object.assign(f.ctx,{$:key=>{assert.equal(key,id);return source},name:()=>id,icon:()=>new Node('span'),tip:()=>id,Event:class{constructor(type){this.type=type}}});
+  vm.runInContext(menu.slice(menu.indexOf('  const select ='),menu.indexOf('  const segments ='))+';globalThis.nativeList=select('+JSON.stringify(id)+');',f.ctx);
+  const it=f.ctx.nativeList;
+  f.bind(f.owner,{cycleOnClick:true,options:()=>it.options.map(o=>({name:o.name,on:o.v===it.get(),pick:()=>it.set(o.v)}))});
+  f.reopen();assert.equal(changes,0,id+' hover');
+  for(let i=1;i<=options.length;i++){f.owner.click();assert.equal(saved,options[i%options.length].value,id+' owner '+i);assert.equal(changes,i);}
+  const rows=f.list.querySelectorAll(':scope > .gz-hx');
+  rows.forEach((row,i)=>{row.click();assert.equal(saved,options[i].value,id+' option '+i);assert.equal(row['aria-pressed'],'true');});
+ }
+ assert.match(menu,/if\(b.classList.contains\('gz-list'\)\)b.gzList.cycleOnClick=true/);
+});
+
+test('option clicks resolve current records and decoration never shifts selected indexes; keyboard picks once',()=>{
+ const f=fixture(true);let revision=0,selected=0,picks=[];
+ f.bind(f.owner,{options:()=>{const captured=revision;return ['A','B','C'].map((name,i)=>({name,on:i===selected,pick:()=>{picks.push(captured);selected=i}}));}});
+ f.reopen();const list=f.list,rows=list.querySelectorAll(':scope > .gz-hx');
+ const decoration=new Node('svg');decoration.parentNode=list;list.children.unshift(decoration);
+ revision=1;rows[2].click();assert.deepEqual(picks,[1]);assert.equal(rows[2]['aria-pressed'],'true');assert.equal(rows[1]['aria-pressed'],'false');assert.equal(decoration.classList.contains('gz-on'),false);
+ rows[1].emit('keydown',{key:'Enter',preventDefault(){}});assert.equal(selected,1);assert.deepEqual(picks,[1,1]);
 });

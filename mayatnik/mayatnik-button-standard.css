@@ -240,7 +240,7 @@ body.mayatnik-menu-ready .gz-group>.gz-head>.gz-ar{display:none!important}
 }
 
 /* v0.514: icon options; list title above, option caption in the owner. */
-:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-diamond-options{display:grid!important;grid-auto-flow:column;justify-content:center;gap:2px 6px!important;padding:26px 0 14px!important;box-sizing:border-box!important;background:transparent!important;isolation:isolate}
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-diamond-options{display:grid!important;grid-auto-flow:row;justify-content:center;align-content:start;gap:2px 6px!important;padding:26px 0 14px!important;box-sizing:border-box!important;background:transparent!important;isolation:isolate}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-option-diamond{width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;min-height:48px!important;max-height:48px!important;padding:0!important;justify-content:center;gap:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
 .may-option-diamond>.gz-nm,.may-option-diamond>.gz-v{display:none!important}
 .may-option-diamond>.gz-ic{display:block!important;flex:0 0 18px;width:18px!important;height:18px!important;margin:0!important}

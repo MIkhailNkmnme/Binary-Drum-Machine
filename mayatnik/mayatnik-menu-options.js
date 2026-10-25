@@ -2,10 +2,11 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikMenuOptions=api;})(globalThis,function(){
   'use strict';
   const SIZE=48,STEP=50,HEADER=26,FOOT=14,hovered=new WeakMap();
+  // Two down on the right, two down on the left, then the next pair of rows.
+  function slot(index,cols=2){return cols===1?{row:index+1,column:1}:{row:Math.floor(index/4)*2+index%2+1,column:Math.floor(index/2)%2?1:2};}
   function layout(count,owner,column,right,height){
     count=Math.max(1,count);const maxRows=Math.max(1,Math.floor((height-28-HEADER-FOOT+2)/STEP));
-    const space=Math.max(right-column.right-6,column.left-6),maxCols=Math.max(1,Math.floor((space+6)/54));
-    const cols=Math.min(maxCols,Math.ceil(count/Math.min(7,maxRows))),rows=Math.ceil(count/cols),width=Math.max(120,cols*54-6),h=Math.min(rows,maxRows)*STEP-2+HEADER+FOOT;
+    const width=Math.min(120,Math.max(48,right-8)),cols=count>2&&width>=110?2:1,rows=cols===1?count:Math.floor((count-1)/4)*2+Math.min(2,(count-1)%4+1),h=Math.min(rows,maxRows)*STEP-2+HEADER+FOOT;
     const side=column.right+6+width<=right-4?'right':column.left-width-6>=4?'left':right-column.right>=column.left?'right':'left';
     const x=side==='right'?column.right+6:column.left-width-6;
     return {side,rows,cols,width,left:Math.max(4,Math.min(x,right-width-4)),top:Math.max(14,Math.min(owner.top,height-h-14)),maxHeight:maxRows*STEP-2+HEADER+FOOT,scroll:rows>maxRows};
@@ -27,6 +28,7 @@
   function decorate(list,owner){
     list.classList.add('may-diamond-options');const opts=options(owner),rows=[...list.querySelectorAll(':scope > .gz-hx')];
     rows.forEach((row,index)=>{const name=String(opts[index]?.name||row.title||row.querySelector('.gz-nm')?.textContent||index+1);
+      const cell=slot(index,+list.dataset.optionColumns||(rows.length>2?2:1));row.style.gridRow=String(cell.row);row.style.gridColumn=String(cell.column);
       row.classList.add('may-option-diamond');row.dataset.noMini='';row.setAttribute('aria-label',name);row.title=name;
       if(!row.dataset.mayOptionReady){row.dataset.mayOptionReady='1';row.setAttribute('role','button');row.setAttribute('tabindex','0');
         row.addEventListener('keydown',e=>{if(e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();row.click();}});
@@ -45,5 +47,5 @@
     if(!list.dataset.mayOptionReady){list.dataset.mayOptionReady='1';list.addEventListener('pointerleave',()=>restore(owner));}
     syncOwner(owner);
   }
-  return {SIZE,STEP,layout,decorate,caption,syncOwner,restore,glyph};
+  return {SIZE,STEP,slot,layout,decorate,caption,syncOwner,restore,glyph};
 });

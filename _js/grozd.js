@@ -60,11 +60,12 @@
   // пока столбец открыт, другая кнопка забирает его, только если мышь на ней задержалась (280 мс).
   // o: { options() → [{ name, icon, on, pick() }], color() — цвет, after() — после выбора, host() — куда класть столбец (body),
   //      col() — столбец кнопки: лесенка правее его правого края (иначе — правее самой кнопки),
-  //      placement: 'below' — список под кнопкой; placed(list, owner), closed(list, owner) — необязательные обработчики }
+  //      placement: 'below' — список под кнопкой; placed(list, owner), closed(list, owner) — необязательные обработчики;
+  //      cycleOnClick: true — click advances one option; hover only opens (opt-in for owners without a source click handler) }
   const ladLater = () => { clearTimeout(ladT); ladT = setTimeout(closeLadder, 250); };
   function ladderSync() { if (!ladder) return; const b = ladder.owner, o = b.gzList; if (!b.isConnected || !b.getClientRects().length) { closeLadder(); return; }
     const placement = typeof o.placement === 'function' ? o.placement(b) : o.placement;
-    const opts = o.options(); [...ladder.children].forEach((x, i) => x.classList.toggle('gz-on', !!opts[i]?.on));
+    const opts = o.options(); [...ladder.querySelectorAll(':scope > .gz-hx')].forEach((x, i) => { const on=!!opts[i]?.on; x.classList.toggle('gz-on', on); x.setAttribute('aria-pressed', String(on)); });
     const r = b.getBoundingClientRect();
     if (placement === 'below' || placement === 'right') {
       const style = getComputedStyle(b);
@@ -89,15 +90,15 @@
     ladder.style.left = Math.round(Math.max(4, x)) + 'px'; ladder.style.top = Math.round(Math.max(4, Math.min(innerHeight - h - 4, r.top))) + 'px'; }
   function openLadder(b) { clearTimeout(ladT); clearTimeout(swT); swB = null; if (ladder && ladder.owner === b) { ladderSync(); return; }
     closeLadder(); const o = b.gzList; ladder = el('div', 'gz-ladder'); ladder.addEventListener('pointerdown', pressMark); ladder.owner = b; ladder.style.setProperty('--c', o.color?.() || '#5aa9ff');
-    for (const x of o.options()) { const ob = el('div', 'gz-hx'); ob.title = x.name; ob.append(icon(x.icon || '·'), el('span', 'gz-nm', x.name));
-      ob.addEventListener('click', e => { e.stopPropagation(); x.pick(); o.after?.(); ladderSync(); }); ladder.append(ob); }
+    o.options().forEach((x, index) => { const ob = el('div', 'gz-hx'); ob.title = x.name; ob.append(icon(x.icon || '·'), el('span', 'gz-nm', x.name));
+      ob.addEventListener('click', e => { e.stopPropagation(); b.gzList.options()[index]?.pick(); b.gzList.after?.(); ladderSync(); }); ladder.append(ob); });
     ladder.addEventListener('pointerenter', () => { clearTimeout(ladT); clearTimeout(swT); swB = null; }); ladder.addEventListener('pointerleave', ladLater);
     (o.host?.() || document.body).append(ladder); ladderSync(); if (!o.placement) dimUnder(b); }
   function listHover(b, o) { b.gzList = o; b.classList.add('gz-lst');
     b.addEventListener('pointerenter', e => { if (e.pointerType === 'touch') return; clearTimeout(ladT); clearTimeout(swT); swB = null;
       if (!ladder || ladder.owner === b) { openLadder(b); return; } swB = b; swT = setTimeout(() => { swB = null; openLadder(b); }, 280); });
     b.addEventListener('pointerleave', () => { if (swB === b) { clearTimeout(swT); swB = null; } if (ladder) ladLater(); });
-    b.addEventListener('click', () => openLadder(b)); }
+    b.addEventListener('click', () => { if (o.cycleOnClick) { const opts=o.options(); if(opts.length){const current=opts.findIndex(x=>x.on);opts[(current+1)%opts.length].pick();o.after?.();} } openLadder(b); }); }
 
   const PIN = '<svg viewBox="0 0 16 16" width="11" height="11"><path d="M10.5 1.5l4 4-1.6.4-2.6 2.6.3 3.2-1.4 1.4-2.5-2.5-4 4-.7-.7 4-4L3.5 7.4l1.4-1.4 3.2.3 2.6-2.6z" fill="currentColor"/></svg>';
   function rail(host, cfg) {

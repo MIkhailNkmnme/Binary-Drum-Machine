@@ -1288,7 +1288,7 @@
   // мерила колонку (браузер успевал применить снятие) и ставила заново — переход opacity .12s заставлял кнопки под списком вспыхивать на каждом такте.
   // Теперь затемнение меняется только у тех, кому его надо снять или добавить.
   const hideListUnder = (list, owner) => {
-    decorateViewPalette(list,owner);decorateListHeading(list,owner);window.MayatnikMenuOptions?.decorate(list,owner);
+    decorateViewPalette(list,owner);decorateListHeading(list,owner);
     const group = owner.closest('.pt-g, .gz-group, .may-hp-pop');
     if(list.parentNode!==document.body){
       // Shared grozd has already copied owner font/variables and installed option handlers.
@@ -1302,6 +1302,7 @@
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
     if(window.MayatnikMenuOptions){
       const g=listLayout(owner,list.querySelectorAll(':scope > .gz-hx').length);setListSide(owner,g.side);
+      list.dataset.optionColumns=String(g.cols);window.MayatnikMenuOptions.decorate(list,owner);
       Object.assign(list.style,{width:g.width+'px',gridTemplateRows:`repeat(${g.rows},48px)`,gridAutoColumns:'48px',top:g.top+'px',left:g.left+'px',maxHeight:g.maxHeight+'px',maxWidth:Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px'});
       list.style.setProperty('width',g.width+'px','important');list.style.setProperty('max-width',Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px','important');
       list.style.setProperty('overflow-y',g.scroll?'auto':'visible','important');list.style.setProperty('overflow-x',g.scroll?'hidden':'visible','important');
@@ -1318,6 +1319,8 @@
     activeList={list,group,owner};scheduleGroups();
   };
   for (const b of document.querySelectorAll('.gz-lst')) if (b.gzList) {
+    // Native rail lists have no source click handler; tool buttons already cycle themselves.
+    if(b.classList.contains('gz-list'))b.gzList.cycleOnClick=true;
     nameListButton(b);syncListButton(b);
     b.addEventListener('pointerenter',()=>syncListButton(b),true);
     if(b.dataset.n==='layerSelect'){const closed=b.gzList.closed;b.gzList.closed=(...args)=>{closed?.(...args);clearListUnder();};}
