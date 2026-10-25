@@ -61,7 +61,7 @@ test('existence scan returns early without allocating a full selection mask',asy
 });
 
 test('Delete removes just the selected field copy; common undo/redo restores it without touching the library',()=>{
- const c=actualHistory();c.templateLocks=null;c.colourTemplate=c.templateItems[0];c.selectTemplate=t=>{c.colourTemplate=t;};
+ const c=actualHistory();c.templateLocks=null;c.colourTemplate=c.templateItems[0];c.templatePickedIds=new Set();c.pickedTemplates=()=>c.colourTemplate?[c.colourTemplate]:[];c.selectTemplate=t=>{c.colourTemplate=t;};
  c.templateItems.push({...c.templateItems[0],id:'second'});const library=c.templateLibrary[0],data=c.f.val.slice();
  vm.runInContext(html.slice(html.indexOf('  function removeSelectedTemplate('),html.indexOf("  $('bTemplateRemove').onclick=")),c);
  assert.equal(c.removeSelectedTemplate(),true);assert.deepEqual(c.templateItems.map(t=>t.id),['second']);assert.equal(c.colourTemplate,null);assert.equal(c.removeSelectedTemplate(),false);assert.equal(c.templateLibrary[0],library);assert.deepEqual(c.f.val,data);
@@ -73,5 +73,6 @@ test('production Delete hotkey respects text editing, composition and active dra
  const event=editing=>({key:'Delete',target:{closest:()=>editing},preventDefault(){this.defaultPrevented=true;}});
  handler(event(false));assert.equal(deletes,1);handler(event(true));assert.equal(deletes,1);handler({...event(false),isComposing:true});assert.equal(deletes,1);
  c.templateDragging={};handler(event(false));assert.equal(deletes,1);
- const hit=html.slice(html.indexOf('if(hit){axisSelected=0;'),html.indexOf('      if(part){',html.indexOf('if(hit){axisSelected=0;')));assert.ok(hit.includes('wrap.focus({preventScroll:true})'));assert.ok(hit.includes('selectTemplate(hit.item,false)'));
+ const hit=html.slice(html.indexOf('if(hit){axisSelected=0;'),html.indexOf('      if(part){',html.indexOf('if(hit){axisSelected=0;')));assert.ok(hit.includes('wrap.focus({preventScroll:true})'));assert.ok(hit.includes('selectTemplate(hit.item,false,false,true)'));
 });
+test('hidden in-range copies stay listed and visibility does not insert or discard the library entry',async()=>{const f=fixture();let visible=true;f.host.scope=()=> 'field';f.host.listedInstances=()=>true;f.host.visibleInstances=()=>visible;f.host.visibility=()=>({placed:1,visible});f.host.action=()=>{visible=!visible;};const api=Engine.create(f.host);api.refresh();await api.whenFiltered();assert.equal(api.list().length,1);await api.action('a','visible');await api.whenFiltered();assert.equal(api.visibility('a').visible,false);assert.equal(api.list()[0].id,'a');assert.equal(f.inserts,0);await api.action('a','visible');assert.equal(api.visibility('a').visible,true);});

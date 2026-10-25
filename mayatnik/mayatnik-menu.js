@@ -598,7 +598,7 @@
     const pair=(left,right)=>{const p=document.createElement('div');p.className='gz-hx gz-pair gz-split may-layer-pair';p.dataset.n=left.dataset.n+'-'+right.dataset.n;
       for(const [i,b]of [left,right].entries()){b.className='gz-half gz-h'+i;p.append(b);}return p;};
     const choose=command('layerSelect','grid4','Выбрать содержательный слой: оригинал, наложение, фиксацию или шаблон.',()=>{});
-    choose.onclick=null;choose.setAttribute('aria-haspopup','true');choose.setAttribute('aria-expanded','false');row.append(choose);
+    choose.onclick=()=>window.MayatnikTemplatePanel?.openTab('layers');choose.setAttribute('aria-controls','mayLayerPane');row.append(choose);
     const visible=command('layerVisible','eye','Показать или скрыть выбранный слой без изменения его исходника.',()=>{const layer=current();if(layer)change({visible:!layer.visible});});row.append(visible);
     const colour=document.createElement('input');colour.type='color';colour.className='may-layer-colour';colour.tabIndex=-1;colour.setAttribute('aria-label','Цвет выбранного слоя');
     colour.addEventListener('input',()=>change({tint:colour.value}));
@@ -626,34 +626,21 @@
     const capture=command('layerCapture','copy','Снимок-копия выбранного слоя: новая самостоятельная фиксация в текущем сеансе.',()=>{const layer=current();if(layer)api.capture(layer.id);});
     const remove=command('layerRemove','cross','Удалить выбранную допустимую копию. Оригинал, наложение и шаблоны не удаляются.',()=>{const layer=current();if(layer?.removable)api.remove(layer.id);});row.append(pair(capture,remove));
     const reset=command('layerReset','reset','Сброс выбранного слоя: родные цвета, видимость 100%, X=0, Y=0 и показать. Остальные слои не меняются.',()=>{const layer=current();if(layer)api.reset(layer.id);});row.append(reset);
-    let openList=null,listSignature='';
-    const fillList=list=>{
-      const layers=api.list(),signature=JSON.stringify(layers.map(layer=>[layer.id,layer.name,layer.kind]));
-      if(signature!==listSignature||!list.children.length){listSignature=signature;list.replaceChildren();
-        for(const layer of layers){const b=command('layerSelect','grid4','Выбрать слой: '+layer.name,()=>api.select(layer.id));b.dataset.layerId=layer.id;caption(b,layer.name);
-          if(layer.kind==='template')b.querySelector('.gz-nm').setAttribute('data-user-label','');list.append(b);}
-      }
-      for(const b of list.querySelectorAll(':scope > .gz-hx')){const on=b.dataset.layerId===api.selected();b.classList.toggle('gz-on',on);b.setAttribute('aria-pressed',String(on));}
-      decorateListHeading(list,choose);
-    };
-    ZerkGrozd.listHover(choose,{options:()=>api.list().map(layer=>({name:layer.name,on:layer.id===api.selected(),pick:()=>api.select(layer.id)})),color:()=>'#73e4a5',host:()=>group,
-      placement:'below',placed(list,owner){openList=list;choose.setAttribute('aria-expanded','true');list.classList.add('may-layer-options');fillList(list);hideListUnder(list,owner);
-},closed(){openList=null;listSignature='';choose.setAttribute('aria-expanded','false');}});
     const sync=()=>{
       const layer=current(),layers=api.list(),index=layer?layers.findIndex(item=>item.id===layer.id):-1;
       choose.disabled=!layers.length;for(const b of [visible,tint,native,capture,reset])b.disabled=!layer;
       back.disabled=!layer||index<=0;front.disabled=!layer||index>=layers.length-1;remove.disabled=!layer?.removable;capture.disabled=!layer||layer.capturable===false;colour.disabled=!layer;
       center.disabled=!layer?.centerable;
-      const selectedName=layer?.name||'Нет слоёв',label=choose.querySelector('.gz-nm');label.toggleAttribute('data-user-label',layer?.kind==='template');caption(choose,selectedName);describe(choose,'Выбранный слой: '+selectedName+'. Открыть список слоёв.');
+      const selectedName=layer?.name||'Нет слоёв',label=choose.querySelector('.gz-nm');label.toggleAttribute('data-user-label',layer?.kind==='template');caption(choose,selectedName);describe(choose,'Выбранный слой: '+selectedName+'. Открыть Слои в Библиотеке.');
       visible.classList.toggle('gz-on',!!layer?.visible);visible.setAttribute('aria-pressed',String(!!layer?.visible));caption(visible,layer?.visible?'Виден':'Скрыт');
       tint.classList.toggle('gz-on',!!layer?.tint);native.classList.toggle('gz-on',!!layer&&!layer.tint);tint.setAttribute('aria-pressed',String(!!layer?.tint));native.setAttribute('aria-pressed',String(!!layer&&!layer.tint));
       for(const [key,control]of [['opacity',opacity],['x',x],['y',y]]){control.input.disabled=!layer;for(const arrow of control.arrows)arrow.disabled=!layer;
         if(document.activeElement!==control.input)control.input.value=String(layer?.[key]??(key==='opacity'?100:0));if(control.output)control.output.textContent=(layer?.opacity??100)+'%';control.frame.sync();}
-      if(openList?.isConnected)fillList(openList);
     };
     const unsubscribe=api.subscribe(sync);addEventListener('pagehide',()=>unsubscribe?.(),{once:true});sync();
   }
   installLayersMenu(window.mayLayers);
+  window.dispatchEvent(new Event('may-layers-ready'));
   // v0.491 (МАЯ-021): собираем существующие входы ручных инструментов, оставляя экранные ручки и окно Сгиба на прежних местах.
   function installManualAxesMenu(railButtons) {
     const row=ptGroup('Ручные оси');row.parentElement.dataset.k='Ручные оси';row.parentElement.style.setProperty('--c','#ffcf73');
@@ -1460,7 +1447,7 @@
   }
   // v0.437: цельная зубчатая подложка включает и нижние ползунки; скрытие не меняет раскладку и закрепы.
   const groupSelector = '#paintTools > .pt-g, #paintTools > .gz-group, #mayatnikRail .gz-group';
-  const groupRanks = new WeakMap(), groupOpen = new WeakMap(); let groupRank = 0, groupFrame = 0;
+  const groupRanks = new WeakMap(), groupOpen = new WeakMap(); let groupRank = 0, groupFrame = 0, groupHover=null;
   const overlaps = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
   function groupBackdrop(group, open) {
     const host = group.closest('#mayatnikRail') ? group.querySelector(':scope > .may-rail-list') : group;
@@ -1490,6 +1477,7 @@
   function overlapRegions(lower,upper){const regions=[];for(const a of lower)for(const b of upper){const left=Math.max(a.left,b.left),top=Math.max(a.top,b.top),right=Math.min(a.right,b.right),bottom=Math.min(a.bottom,b.bottom);if(right>left&&bottom>top)regions.push({left,top,width:right-left,height:bottom-top});}return regions;}
   function syncGroupOverlap() {
     groupFrame=0;
+    if(groupHover?.active()){document.querySelectorAll('.may-overlap-shade').forEach(shade=>shade.remove());return;}
     const entries=[];
     for(const group of document.querySelectorAll(groupSelector)){
       const open=group.matches('.pt-open,.gz-open');if(open&&groupOpen.get(group)===false)groupRanks.set(group,++groupRank);groupOpen.set(group,open);
@@ -1507,6 +1495,9 @@
     }
   }
   const scheduleGroups = () => { if(!groupFrame)groupFrame=requestAnimationFrame(syncGroupOverlap); };
+  groupHover=window.ZerkMenuGroupFocus?.mount({groups:()=>document.querySelectorAll(groupSelector),
+    ownerOf:target=>activeList?.list.contains(target)?activeList.group:target.closest(groupSelector),
+    onChange:group=>{if(group)groupRanks.set(group,++groupRank);scheduleGroups();}});
   for (const host of [tools,rail.el]) {
     for(const event of ['pointerdown','focusin'])host.addEventListener(event,e=>{const group=e.target.closest('.pt-g, .gz-group');if(group){groupRanks.set(group,++groupRank);scheduleGroups();}},true);
     new MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.pt-g, .gz-group') && /\b(?:pt-open|gz-open)\b/.test(r.oldValue||'')!==r.target.matches('.pt-open, .gz-open')))scheduleGroups();}).observe(host,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});

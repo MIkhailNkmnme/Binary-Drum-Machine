@@ -7,11 +7,11 @@
     function patternsFor(entry){let patterns=patternCache.get(entry.shape);if(!patterns){patterns=[];for(const part of entry.shape.parts){const p=root.MayatnikTemplateMatcher.compile(part,entry.shape.rk||1);if(!patterns.some(q=>q.width===p.width&&q.height===p.height&&q.data.every((v,i)=>v===p.data[i])))patterns.push(p);}patternCache.set(entry.shape,patterns);}return patterns;}
     async function filter(items,run){
       // Placed figures are already known to exist; show them before a full-field scan.
-      visibleIds=new Set(items.filter(entry=>host.visibleInstances?.(entry.id)).map(entry=>entry.id));state.filtering=true;emit();
+      visibleIds=new Set(items.filter(entry=>(host.listedInstances||host.visibleInstances)?.(entry.id)).map(entry=>entry.id));state.filtering=true;emit();
       const missing=items.filter(entry=>!visibleIds.has(entry.id));
       try{if(!missing.length)return;const field=await host.field();if(run!==filterSerial)return;
         for(const entry of missing){if(run!==filterSerial)return;if(!host.current(field)){scopeKey=null;return;}
-          const exists=host.visibleInstances?.(entry.id)||((await root.MayatnikTemplateMatcher.find(field,patternsFor(entry),{existsOnly:true,cancelled:()=>run!==filterSerial||!host.current(field)})).count>0);
+          const exists=(host.listedInstances||host.visibleInstances)?.(entry.id)||((await root.MayatnikTemplateMatcher.find(field,patternsFor(entry),{existsOnly:true,cancelled:()=>run!==filterSerial||!host.current(field)})).count>0);
           if(exists){visibleIds.add(entry.id);emit();}
         }
       }catch(e){if(run===filterSerial){if(e.name==='AbortError')scopeKey=null;else state.message=e.message;}}
@@ -56,7 +56,8 @@
     return {
       list:()=>host.entries().filter(t=>!visibleIds||visibleIds.has(t.id)).map(t=>({id:t.id,name:t.name,hex:t.shape.hex,parts:t.shape.parts,previewKey:t.shape,builtin:String(t.id).startsWith('standard:')})),allIds:()=>host.entries().map(t=>t.id),whenFiltered:()=>filterPending,
       select,colour:hex=>edit('colour',hex),removeMatches:()=>edit('delete'),
-      action:(id,action,value)=>host.action(id,action,value),getControls:()=>null,
+      async action(id,action,value){const result=await host.action(id,action,value);if(action==='visible'||action==='skip-selection'){clear();if(action==='visible'){scopeKey=null;refresh();}emit();}return result;},
+      visibility:id=>host.visibility?.(id)||{placed:0,visible:false,skipSelection:false},getControls:()=>null,
       getState:()=>({...state}),subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
       recordExternal:(before,after,apply)=>host.recordExternal(before,after,apply),
       getSelection:()=>selection,clear,refresh,

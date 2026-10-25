@@ -66,3 +66,25 @@ body.may-template-panel-open #mayTemplateLauncher{right:calc(var(--may-template-
 #mayTemplateLauncher>.pt-l:is(:hover,:focus-visible) .may-template-diamond{stroke:var(--c)}
 #mayTemplateLauncher>.pt-l[aria-pressed=true] .may-template-diamond{stroke:var(--c);stroke-width:2px}
 #mayTemplateLauncher>.pt-l:active .may-template-diamond{stroke:var(--c);stroke-width:3px}
+/* Shared library layouts: one set of cards/actions, persistent presentation only. */
+#mayatnikTemplatePanel .mtp-layout{display:flex;gap:2px;flex:none}
+#mayatnikTemplatePanel .mtp-command[aria-pressed=true]::after{opacity:1}
+#mayatnikTemplatePanel .mtp-list-head,#mayatnikTemplatePanel .mtp-capture-metrics{display:none}
+#mayatnikTemplatePanel .mtp-template-pane [data-template-id] .mtp-card-actions{grid-template-columns:repeat(4,minmax(0,1fr))}
+#mayatnikTemplatePanel[data-layout=list] .mtp-grid{grid-template-columns:minmax(0,1fr)}
+#mayatnikTemplatePanel[data-layout=list] .mtp-list-head{display:grid;grid-template-columns:minmax(110px,1fr) 110px 196px;gap:4px;min-width:430px;color:var(--mtp-accent)}
+#mayatnikTemplatePanel[data-layout=list] [data-template-id]{display:grid;grid-template-columns:minmax(110px,1fr) 110px 196px;gap:4px;min-width:430px;align-items:center}
+#mayatnikTemplatePanel[data-layout=list] [data-template-id] .mtp-preview{grid-column:1;grid-row:1;aspect-ratio:auto;height:36px;background:#1b2430}
+#mayatnikTemplatePanel[data-layout=list] [data-template-id] .mtp-name{grid-column:1;grid-row:1;z-index:1;height:auto;font-size:12px;padding:0 6px;background:transparent}
+#mayatnikTemplatePanel[data-layout=list] .mtp-image{display:none}
+#mayatnikTemplatePanel[data-layout=list] [data-template-id] .mtp-metrics{grid-column:2;grid-row:1;font-size:11px;background:transparent}
+#mayatnikTemplatePanel[data-layout=list] [data-template-id] .mtp-card-actions{grid-column:3;grid-row:1;grid-template-columns:repeat(7,minmax(0,1fr));margin:0}
+#mayatnikTemplatePanel[data-layout=list] .mtp-folder,#mayatnikTemplatePanel[data-layout=list] .mtp-capture-card{display:grid;grid-template-columns:minmax(110px,1fr) 110px 100px;gap:4px;min-width:330px;align-items:center}
+#mayatnikTemplatePanel[data-layout=list] .mtp-folder .mtp-preview,#mayatnikTemplatePanel[data-layout=list] .mtp-capture-card .mtp-preview{aspect-ratio:auto;height:36px;font-size:12px;padding:3px}
+#mayatnikTemplatePanel[data-layout=list] .mtp-folder .mtp-name,#mayatnikTemplatePanel[data-layout=list] .mtp-capture-card .mtp-name{position:static;font-size:12px;background:transparent}
+#mayatnikTemplatePanel[data-layout=list] .mtp-capture-metrics{display:block;font-size:11px}
+#mayatnikTemplatePanel[data-layout=list] .mtp-folder .mtp-card-actions{grid-column:3}
+#mayatnikTemplatePanel .mtp-layer-list{display:flex;flex-direction:column;gap:3px;--mtp-accent:#73e4a5}
+#mayatnikTemplatePanel .mtp-layer-row{display:grid;grid-template-columns:minmax(100px,1fr) 45px 36px;gap:4px;align-items:center}
+#mayatnikTemplatePanel .mtp-layer-row .mtp-command{width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mayatnikTemplatePanel .mtp-layer-opacity{text-align:right;color:#b7c5d7}
