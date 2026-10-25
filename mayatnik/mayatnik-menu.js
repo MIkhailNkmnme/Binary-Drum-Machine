@@ -114,6 +114,7 @@
   groups.push({id:'horr',title:'Хорр',color:'#73e4a5',items:[]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
   const railSourceButtons=new Map(),manualLegacyCells=new Map();
+  {const group=rail.el.querySelector('.gz-group[data-id="mirrors"]');if(group)manualLegacyCells.set('mirrors',[...group.querySelectorAll('.gz-soty > .gz-hx')]);}
   // v0.439: «Верх / Вниз» — одна стандартная кнопка, два независимых включателя.
   for(const [index,id] of ['zTop','zFitH'].entries()){
     const half=rail.el.querySelector('.may-zoom-edges .gz-h'+index),src=$(id);
@@ -321,10 +322,10 @@
     b.oncontextmenu = ev => { ev.preventDefault(); if (e.matches('[aria-pressed="true"]') || (e.type === 'checkbox' && e.checked)) e.click(); };
     toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' ? ' · сейчас: ' + e.textContent : ''); if (['bPaintMeet','bPaintAxis','bThirds','bTriTop'].includes(id)) b.setAttribute('aria-label', b.title); b.disabled = e.disabled;
       if (id === 'bPaintMeet' || id === 'bPaintAxis' || id === 'bTriTop') { const nm = b.querySelector('.gz-nm'); if (nm && nm.textContent !== e.dataset.miShort) nm.textContent = e.dataset.miShort; }   // v0.315: «Точка 1 / 0»
-      b.classList.toggle('on', e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"]')); });
+      const on=e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"]');b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on)); });
     // v0.121: «Симметрия» — включить и выключить оси симметрии (выключает и выбор оси с конусом, как «Скрыть оси»).
     if (id === 'sym') { const hide = $('mayHideAxes'); b.onclick = b.oncontextmenu = ev => { ev?.preventDefault?.(); if (!hide.hidden || e.checked) hide.click(); else if (ev.type === 'click') e.click(); };
-      toolSync.push(() => { b.title = !hide.hidden || e.checked ? 'Оси симметрии видны · щелчок — скрыть' : 'Показать оси симметрии'; b.classList.toggle('on', !hide.hidden || e.checked); }); }
+      toolSync.push(() => { const on=!hide.hidden||e.checked;b.title = on ? 'Оси симметрии видны · щелчок — скрыть' : 'Показать оси симметрии'; b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on)); }); }
     groupOf[id].append(b);
   }
   // v0.176: «верхняя полоса — по логике хаба»: цвет — ● внутри своей кнопки (щелчок по ● — палитра), сырых полей нет
@@ -701,6 +702,29 @@
   }
   const manualAxesRow=installManualAxesMenu(railSourceButtons);
   installNAxesMenu(manualAxesRow,window.mayNAxes);
+  function reconcileAxisMenus(rail,definitions,axisRow,manualRow){
+    const box=rail.el.querySelector('.gz-group[data-id="mirrors"]'),definition=definitions.find(g=>g.id==='mirrors');if(!box||!definition)return;
+    const narrow=manualLegacyCells.get('mirrors')||[...box.querySelectorAll('.gz-soty > .gz-hx')],wide=[...box.querySelectorAll('.gz-wide > .gz-hx')];
+    const keys=['mayMirAxis','mayContour','sym','symV','symH','symD','symBits','symTriangles','bTriangleAxes','symTriangleRows','symRowsRange','symBitsRange','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear'];
+    const manual=new Set(['bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear']),moves=[];let ni=0,wi=0;
+    definition.items.forEach((item,index)=>{const isWide=['value','list','control','vpair'].includes(item.type),slot=isWide?wi++:ni++,original=(isWide?wide:narrow)[slot],id=keys[index];
+      if(!original||index<2)return;const row=manual.has(id)?manualRow:axisRow;if(!row)return;
+      const target=row.querySelector('[data-n="'+id+'"]')||original,group=manual.has(id)?'Ручные оси':'Оси';
+      const before=original.dataset.n?'group:mirrors:data:'+original.dataset.n:'group:mirrors:parent:'+(original.parentElement?.id||original.parentElement?.className|| (isWide?'gz-wide':'gz-soty'))+':slot:'+slot;
+      target.dataset.n=id;
+      if(target===original){row.append(target);target.style.left=target.style.top='';}else original.remove();
+      if(!isWide){narrow[slot]=target;target.dataset.mayPinGroup='mirrors';target.dataset.mayPinIndex=String(slot);}
+      moves.push([before,'group:'+group+':data:'+id]);
+      moves.push(['group:mirrors:parent:'+(isWide?'gz-wide':'gz-soty')+':slot:'+slot,'group:'+group+':data:'+id]);
+      if(manual.has(id))moves.push(['group:Оси:data:'+id,'group:Ручные оси:data:'+id]);
+      // Manual commands may also have an older second proxy in the Оси row.
+      if(manual.has(id))for(const duplicate of axisRow.querySelectorAll('[data-n="'+id+'"]'))if(duplicate!==target)duplicate.remove();
+    });
+    manualLegacyCells.set('mirrors',narrow);
+    try{const key='mayatnik-control-mini-v464',raw=localStorage.getItem(key),saved=JSON.parse(raw||'[]');if(Array.isArray(saved)){const merged=new Set(saved);for(const [from,to]of moves)if(merged.has(from))merged.add(to);
+      if(merged.size!==saved.length){if(!localStorage.getItem('mayatnik-axes-mini-before-v042'))localStorage.setItem('mayatnik-axes-mini-before-v042',raw);localStorage.setItem(key,JSON.stringify([...merged]));}}}catch(_){}
+  }
+  reconcileAxisMenus(rail,groups,gAxis,manualAxesRow);
   // v0.496: очистка доступна только в «Очистке»; прежние номера закрепов Раскраски остаются адресами тех же команд.
   function removePaintClearDuplicates(railButtons) {
     const box=railButtons.get('bPaintNew')?.closest('.gz-group');if(!box)return;
@@ -1512,7 +1536,8 @@
   }
   function placePins() { const r = $('wrap').getBoundingClientRect();
     for (const p of pins) { if (!p.el) continue; p.el.style.left = (r.left + p.x) + 'px'; p.el.style.top = (r.top + p.y) + 'px';
-      if (p.src) { p.el.classList.toggle('gz-on', p.src.classList.contains('gz-on')); p.el.classList.toggle('gz-off-dis', p.src.classList.contains('gz-off-dis'));
+      if (p.src) { const on=p.src.matches('.on,.gz-on,[aria-pressed="true"]'),off=p.src.disabled||p.src.matches('.gz-off-dis,[aria-disabled="true"]');
+        p.el.classList.toggle('gz-on',on);p.el.classList.toggle('on',on);p.el.classList.toggle('gz-off-dis',off);p.el.disabled=!!off;p.el.setAttribute('aria-pressed',String(on));p.el.setAttribute('aria-disabled',String(!!off));
         const n = p.src.querySelector('.gz-nm'), m = p.el.querySelector('.gz-nm'); if (n && m && m.textContent !== n.textContent) m.textContent = n.textContent; } } }
   pins = pins.filter(p => makePin(p)); placePins();
   let suppressClick = false;
