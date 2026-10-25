@@ -9,12 +9,12 @@ test('available viewport clips the open library panel and pan is view-only at un
  const available=Focus.viewport({left:10,top:20,right:1000,bottom:620},{left:600});assert.equal(available.width,590);
  const target={x:20,y:50,width:40,height:20},old={...target};assert.deepEqual(Focus.panDelta(target,available),{x:-265,y:-260});assert.deepEqual(target,old);assert.equal(Focus.panDelta(null,available),null);
 });
-test('scroll margins center edge and off-canvas copies without requiring negative or out-of-range scroll',()=>{
+test('scroll margins centre horizontally; only lower targets centre vertically',()=>{
  const available={width:600,height:400},canvas={width:1000,height:800},padding={left:16,right:16,top:12,bottom:12};
  for(const target of [{x:0,y:0,width:10,height:10},{x:990,y:790,width:10,height:10},{x:-300,y:-200,width:30,height:20},{x:1300,y:1200,width:30,height:20}]){
   const p=Focus.scrollPlan(target,canvas,available,padding),m=p.margins;
   assert.ok(p.scrollLeft>=0&&p.scrollTop>=0);assert.ok(p.scrollLeft<=padding.left+m.left+canvas.width+m.right+padding.right-available.width+1e-9);assert.ok(p.scrollTop<=padding.top+m.top+canvas.height+m.bottom+padding.bottom-available.height+1e-9);
-  assert.equal(padding.left+m.left+target.x+target.width/2-p.scrollLeft,300);assert.equal(padding.top+m.top+target.y+target.height/2-p.scrollTop,200);
+  assert.equal(padding.left+m.left+target.x+target.width/2-p.scrollLeft,300);if(p.horizontalOnly){assert.equal(m.top,0);assert.equal(p.scrollTop,0);}else assert.equal(padding.top+m.top+target.y+target.height/2-p.scrollTop,200);
  }
 });
 test('engine focuses first exact occurrence and placed-copy IDs, after selection; no matches does nothing',async()=>{
@@ -25,4 +25,12 @@ test('engine focuses first exact occurrence and placed-copy IDs, after selection
 });
 test('a cancelled selection never pans the view',async()=>{let resolve,focused=0;const entry={id:'a',shape:{parts:[{width:1,height:1,data:[1]}]}};
  const api=Engine.create({entries:()=>[entry],field:()=>new Promise(r=>resolve=r),current:()=>true,instances:()=>[],choose(){},stop(){},redrawSelection(){},focus:()=>focused++});const pending=api.select('a');api.clear();resolve({width:1,height:1,data:Int8Array.of(1)});await pending;assert.equal(focused,0);
+});
+
+test('upper templates preserve scroll instead of lowering the first-row horizon; old focus padding is removed',()=>{
+ const target={x:20,y:0,width:10,height:20},canvas={width:1000,height:2000},available={width:600,height:800},padding={left:16,right:16,top:12,bottom:12};
+ const p=Focus.scrollPlan(target,canvas,available,padding,{scrollTop:175,margins:{top:0,bottom:0}});assert.equal(p.horizontalOnly,true);assert.equal(p.scrollTop,175);assert.equal(p.margins.top,0);assert.equal(padding.left+p.margins.left+25-p.scrollLeft,300);
+ const old=Focus.scrollPlan(target,canvas,available,padding,{scrollTop:0,margins:{top:378,bottom:0}});assert.equal(old.margins.top,0);assert.equal(old.scrollTop,0);
+ const oldScrolled=Focus.scrollPlan(target,canvas,available,padding,{scrollTop:550,margins:{top:378,bottom:0}});assert.equal(oldScrolled.scrollTop,172);
+ const lower=Focus.scrollPlan({...target,y:900},canvas,available,padding,{scrollTop:175});assert.equal(lower.horizontalOnly,undefined);assert.equal(lower.scrollTop,522);
 });
