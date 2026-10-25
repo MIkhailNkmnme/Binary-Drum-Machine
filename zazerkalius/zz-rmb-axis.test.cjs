@@ -68,3 +68,25 @@ test('touch chooses the nearest endpoint where the larger handle hit areas overl
  f.fire('pointerdown',{...f.at(1.85,0),pointerType:'touch'});f.fire('pointermove',{...f.at(3,0),pointerType:'touch'});f.fire('pointerup',{...f.at(3,0),pointerType:'touch'});
  assert.deepEqual(f.api.selected().a,a);assert.deepEqual(f.api.selected().b,[3,0]);assert.equal(f.commits(),0);
 });
+test('axis placement and direction preview leave bits untouched until Apply',()=>{
+ const f=fixture(),before=f.rows().slice();f.line([2,0],[2,2*K]);assert.equal(f.api.pending(),true);
+ f.api.preview('negative');assert.equal(f.commits(),0);assert.deepEqual(f.rows(),before);assert.deepEqual(f.api.previewResult().rows,['1001','1001','1001','1001']);
+ f.api.preview('positive');const preview=f.api.previewResult().rows.slice();assert.equal(f.commits(),0);
+ f.api.apply();assert.deepEqual(f.rows(),preview);assert.equal(f.commits(),1);assert.equal(f.api.pending(),false);assert.deepEqual(f.api.previewResult().rows,preview);
+ f.api.apply();assert.equal(f.commits(),1);
+});
+test('moving, limiting and removing an axis updates only the preview',()=>{
+ const f=fixture();f.line([2,0],[2,2*K]);f.api.toggleSegment();const before=f.rows().slice();
+ f.fire('pointerdown',f.at(2,0));f.fire('pointermove',f.at(3,0));f.fire('pointerup',f.at(3,0));assert.deepEqual(f.rows(),before);assert.equal(f.commits(),0);
+ f.api.remove();assert.equal(f.api.pending(),false);assert.deepEqual(f.api.previewResult().rows,before);
+});
+test('multiple mirrors compose original-cell color references and apply in one commit',()=>{
+ const f=fixture();f.line([2,0],[2,2*K]);f.line([0,3*K],[4,3*K]);const before=f.rows().slice(),g=geometry;
+ const first=A.reflectRows(before,g,f.axes()[0],'positive'),second=A.reflectRows(first.rows,g,f.axes()[1],'positive'),result=f.api.previewResult();assert.deepEqual(result.rows,second.rows);
+ for(const [origin,target] of result.copies)assert.equal(result.rows[target[0]][target[1]],origin?before[origin[0]][origin[1]]:'0');
+ f.api.apply();assert.equal(f.commits(),1);assert.deepEqual(f.rows(),result.rows);assert.equal(f.api.pending(),false);
+});
+test('locked grid permits preview but blocks applying mirrors',()=>{
+ const f=fixture();f.line([2,0],[2,2*K]);f.lock(true);f.api.preview('negative');assert.equal(f.api.selected().side,'negative');f.api.apply();assert.equal(f.commits(),0);assert.equal(f.api.pending(),true);
+ f.lock(false);f.api.apply();assert.equal(f.commits(),1);
+});

@@ -8,11 +8,11 @@
 #gridsRowsPane{flex:0 0 260px;min-width:150px;max-width:45%;display:flex;flex-direction:column;min-height:0;border-left:1px solid var(--line);padding-left:6px;background:var(--bg)}
 .grids-rows-head{display:flex;align-items:center;justify-content:space-between;color:var(--acc);font-weight:700;letter-spacing:.05em}
 #gridsRowsPane .tools{display:flex;flex-wrap:wrap;gap:3px}
-#gridsRowsList{overflow:auto;flex:1 1 auto;min-height:140px;max-height:75vh;font:16px/26px var(--ff,Consolas,monospace)}
+#gridsRowsList{overflow:auto;flex:1 1 auto;min-height:140px;max-height:75vh;font:13px/26px var(--ff,Consolas,monospace)}
 #gridsRowsList .grids-row{display:grid;grid-template-columns:38px minmax(0,1fr);height:26px;align-items:center}
 #gridsRowsList .grids-row.current{background:color-mix(in srgb,var(--acc) 22%,transparent)}
 #gridsRowsList .grids-row>button{font:12px monospace;border:0;padding:0;background:none;color:var(--dim);height:26px}
-#gridsRowsList input{width:100%;min-width:0;box-sizing:border-box;font:inherit;letter-spacing:2px;height:26px;border:0;background:transparent;color:var(--txt);padding:0 4px;border-radius:0}
+#gridsRowsList input{width:100%;min-width:0;box-sizing:border-box;font:inherit;letter-spacing:1px;height:26px;border:0;background:transparent;color:var(--txt);padding:0 4px;border-radius:0}
 #gridsRowsList input:focus{outline:1px solid var(--acc)}
 #gridsRowsInfo{font:12px monospace;padding:5px;color:var(--dim)}
 #gridsRowsLock.on{color:var(--gold)}

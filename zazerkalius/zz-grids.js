@@ -73,7 +73,18 @@
   list.onchange=e=>{const i=+e.target.dataset.row;if(!Number.isInteger(i)||!e.target.matches('input'))return;const value=e.target.value.replace(/\s/g,'');if(!/^[01]{1,4096}$/.test(value)){e.target.value=s().rows[i];cfg.message('Строка сетки: от 1 до 4096 символов 0 или 1.');return;}if(value===s().rows[i])return;if(cfg.locked()){e.target.value=s().rows[i];return;}change(st=>{const rows=st.rows.slice();rows[i]=value;reconcile(st,rows);});};
   list.onclick=e=>{const row=e.target.closest('[data-row]');if(!row)return;s().cur=+row.dataset.row;redraw();cfg.save();};
   list.addEventListener('focusout',()=>setTimeout(()=>renderRows(true),0));
-  list.onkeydown=e=>{if(e.key==='Enter'&&e.target.matches('input')){e.target.blur();}};
+  list.tabIndex=0;
+  list.title='Delete — удалить выбранную строку; Backspace — удалить символ при вводе.';
+  list.onkeydown=e=>{
+   if(e.key==='Delete'&&!e.isComposing&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!e.shiftKey){
+    consume(e);if(e.repeat||cfg.locked())return;
+    const row=e.target.closest('[data-row]'),index=row?Number(row.dataset.row):s().cur;
+    if(!Number.isInteger(index)||index<0||index>=s().rows.length)return;
+    if(e.target.matches('input')){e.target.value=s().rows[index];e.target.blur();}
+    change(st=>shiftRows(st,index,1,[]));renderRows(true);list.focus({preventScroll:true});return;
+   }
+   if(e.key==='Enter'&&e.target.matches('input'))e.target.blur();
+  };
   sync();
  }
  function renderRows(force=false){if(!cfg)return;const list=document.getElementById('gridsRowsList'),s=cfg.state(),mobile=matchMedia('(max-width:760px), (pointer:coarse) and (max-width:1100px)').matches,height=mobile?36:26,start=Math.max(0,Math.floor(list.scrollTop/height)-3),end=Math.min(s.rows.length,start+Math.ceil((list.clientHeight||260)/height)+7),identity=start+':'+end+':'+s.cur+':'+s.locked+':'+s.rows.slice(start,end).join('/');

@@ -73,4 +73,15 @@ test('real controller brushes, cancels a gesture, edits own rows and restores sc
  const input=new Element('input');input.dataset.row='1';input.value='1111';ids.gridsRowsList.onchange({target:input});assert.equal(s.rows[1],'1111');assert.equal(snapshots.length,2);
  ids.gridsSceneNew.onclick();ids.gridsClear.onclick();assert.equal(s.rows[1],'0000');ids.gridsScenes.onchange({target:{value:'0'}});assert.equal(s.rows[1],'1111');
  ids.gridsRowsLock.onclick();input.value='0000';ids.gridsRowsList.onchange({target:input});assert.equal(s.rows[1],'1111');assert.equal(input.value,'1111');assert.ok(saved>0);
+ const list=ids.gridsRowsList;input.closest=()=>input;
+ const event=extra=>({key:'Delete',target:input,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra});
+ let before=snapshots.length,e=event();list.onkeydown(e);assert.equal(s.rows.length,2);assert.equal(snapshots.length,before);assert.ok(e.prevented&&e.stopped);
+ ids.gridsRowsLock.onclick();
+ for(const extra of [{repeat:true},{isComposing:true},{ctrlKey:true},{key:'Backspace'}]){list.onkeydown(event(extra));assert.equal(s.rows.length,2);}
+ s.colors['1,0']='#fff';input.value='000';input.blur=()=>{list.onchange({target:input});};list.focus=()=>{list.focused=true;};
+ e=event();list.onkeydown(e);assert.deepEqual(clone(s.rows),['0110']);assert.equal(snapshots.length,before+1);assert.deepEqual(snapshots.at(-1).rows,['0110','1111']);assert.equal(s.colors['1,0'],undefined);assert.equal(input.value,'1111');assert.ok(list.focused);
+ // Restoring the recorded undo snapshot restores the removed row and its color.
+ Object.assign(s,clone(snapshots.at(-1)));assert.equal(s.rows[1],'1111');assert.equal(s.colors['1,0'],'#fff');
+ input.dataset.row='0';list.onkeydown(event());list.onkeydown(event());assert.deepEqual(clone(s.rows),['0']);
+
 });

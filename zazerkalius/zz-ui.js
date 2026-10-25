@@ -4840,6 +4840,7 @@ function rmbEditorWire(cv){
     editor:()=>rmbEditor,axis:()=>rmbAxisTool,legacy:()=>({scenes:Z.triScenes||[],cells:Z.triCells||{},dots:Z.triDots||{},lines:Z.triLines||{}})});
   if(window.ZZRmbAxis)rmbAxisTool=window.ZZRmbAxis.mount(cv,{...common,
     enabled:()=>!!rmbSt().axisMode,
+    color:(source,bit)=>bit==="1"?(source&&gridsState().colors[source.join(",")]||rmbSt().c1||coneCss("--b1","#22d3ee")):(rmbSt().c0||coneCss("--b0","#7d8699")),
     axes:()=>Array.isArray(rmbSt().axes)?rmbSt().axes.filter(a=>window.ZZRmbAxis.basis(a)):[],
     setAxes:axes=>{rmbSt().axes=axes;}
   });
@@ -4883,10 +4884,11 @@ function rmbUi(){
   const r = rmbSt(), q = (s) => document.querySelectorAll("#w-rmb " + s);
   {rmbEditor?.sync();const edit=!!r.edit,axis=!!r.axisMode,hint=$("rmbEditHint");
     for(const [id,on] of [["bRmbEdit",edit],["bRmbAxis",axis]]){const b=$(id);if(b){b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));}}
-    if(hint){hint.hidden=!edit&&!axis;hint.textContent=rmbIsMobile()?(axis?"Ось — одним пальцем · два пальца — масштаб и сдвиг":"Касание 0 создаёт 1 · тащите ромбы · два пальца — масштаб и сдвиг"):axis?"Проведите ось · концы — угол и длина · линия — перенос · выберите направление отражения · пробел — вид":"0 → щелчок → 1 · тащить — перенос · Ctrl — копия · Shift / рамка — выделить · Delete — стереть · пробел + тащить — вид";}
+    if(hint){hint.hidden=!edit&&!axis;hint.textContent=rmbIsMobile()?(axis?"Ось — предпросмотр · Применить зеркала — записать биты · два пальца — вид":"Касание 0 создаёт 1 · тащите ромбы · два пальца — масштаб и сдвиг"):axis?"Проведите ось · концы — угол и длина · линия — перенос · направление — предпросмотр · Применить зеркала — записать биты · пробел — вид":"0 → щелчок → 1 · тащить — перенос · Ctrl — копия · Shift / рамка — выделить · Delete — стереть · пробел + тащить — вид";}
     $("rmbCv")?.classList.toggle("rmb-editing",edit||axis);const tools=$("rmbAxisTools");if(tools)tools.hidden=!axis;
     const selected=rmbAxisTool?.selected(),basis=selected&&window.ZZRmbAxis?.basis(selected);
-    for(const [id,from,to] of [["bRmbAxisPos",basis?.positive||"Право",basis?.negative||"Лево"],["bRmbAxisNeg",basis?.negative||"Лево",basis?.positive||"Право"]]){const b=$(id);if(b){b.textContent=from+" → "+to;b.disabled=!selected;b.title="Отразить "+from.toLowerCase()+" → "+to.toLowerCase()+" в клетки поля; нули тоже копируются. ↩ отменяет действие.";}}
+    for(const [id,from,to] of [["bRmbAxisPos",basis?.positive||"Право",basis?.negative||"Лево"],["bRmbAxisNeg",basis?.negative||"Лево",basis?.positive||"Право"]]){const b=$(id);if(b){b.textContent=from+" → "+to;b.disabled=!selected;b.classList.toggle("on",!!selected&&selected.preview!==false&&(selected.side||"positive")===(id==="bRmbAxisPos"?"positive":"negative"));b.title="Предпросмотр "+from.toLowerCase()+" → "+to.toLowerCase()+"; биты изменятся только кнопкой «Применить зеркала».";}}
+    const apply=$("bRmbAxisApply");if(apply)apply.disabled=!rmbAxisTool?.pending();
     const limit=$("bRmbAxisLimit"),del=$("bRmbAxisDel");if(limit){limit.textContent=selected?.segment?"Отрезок":"Вся ось";limit.disabled=!selected;}if(del)del.disabled=!selected;
     const actionBox=$("rmbTouchEdit");if(actionBox)actionBox.hidden=!edit;
     for(const [id,on] of [["bRmbMulti",!!r.touchMulti],["bRmbCopy",!!r.touchCopy]]){const button=$(id);if(button){button.classList.toggle("on",on);button.setAttribute("aria-pressed",String(on));}}
@@ -4915,7 +4917,8 @@ function rmbWire(){
   const re = () => { rmbUi(); save(); renderRmb(); };
   $("bRmbEdit").onclick=()=>{const r=rmbSt();gridsState().tool="";r.edit=!r.edit;r.axisMode=false;rmbAxisTool?.cancel();rmbEditor?.clear();if(r.edit){if(rmbW.on)rmbWStop();rmbFit();cv.focus({preventScroll:true});}re();};
   $("bRmbAxis").onclick=()=>{const r=rmbSt();gridsState().tool="";r.axisMode=!r.axisMode;r.edit=false;rmbEditor?.clear();rmbAxisTool?.cancel();if(r.axisMode){if(rmbW.on)rmbWStop();cv.focus({preventScroll:true});}re();};
-  $("bRmbAxisPos").onclick=()=>rmbAxisTool?.apply("positive");$("bRmbAxisNeg").onclick=()=>rmbAxisTool?.apply("negative");
+  $("bRmbAxisPos").onclick=()=>rmbAxisTool?.preview("positive");$("bRmbAxisNeg").onclick=()=>rmbAxisTool?.preview("negative");
+  $("bRmbAxisApply").onclick=()=>rmbAxisTool?.apply();
   $("bRmbAxisLimit").onclick=()=>rmbAxisTool?.toggleSegment();$("bRmbAxisDel").onclick=()=>rmbAxisTool?.remove();
   $("bRmbSettings").onclick=()=>{const open=W.classList.toggle("rmb-settings-open");$("bRmbSettings").setAttribute("aria-expanded",String(open));};
   $("bRmbMulti").onclick=()=>{rmbSt().touchMulti=!rmbSt().touchMulti;re();};$("bRmbCopy").onclick=()=>{rmbSt().touchCopy=!rmbSt().touchCopy;re();};
@@ -5102,7 +5105,7 @@ function renderRmb(){
   if (digs) { g.font = `700 ${Math.round(tw * 0.42)}px ${coneCss("--ff", "monospace")}`; g.textAlign = "center"; g.textBaseline = "middle";
     for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && !digs[q + 2] ? "#fff7d6" : "#05070b"; g.fillText(String(digs[q + 2]), digs[q], digs[q + 1]); } g.textAlign = "left"; }
   const editGeometry={hs,u0,rm,tw,ox:r.ox,oy:r.oy,M,Wc,Hc};
-  window.ZZGrids?.paint(g,editGeometry);rmbDrawLetterBorders(g,editGeometry);rmbDrawCountHighlight(g,editGeometry);rmbEditor?.paint(g,editGeometry);rmbAxisTool?.paint(g,editGeometry);
+  window.ZZGrids?.paint(g,editGeometry);rmbAxisTool?.paintPreview(g,editGeometry);rmbDrawLetterBorders(g,editGeometry);rmbDrawCountHighlight(g,editGeometry);rmbEditor?.paint(g,editGeometry);rmbAxisTool?.paint(g,editGeometry);
 }
 function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
   const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
