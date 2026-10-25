@@ -16,7 +16,7 @@
 #gridsRowsList input:focus{outline:1px solid var(--acc)}
 #gridsRowsInfo{font:12px monospace;padding:5px;color:var(--dim)}
 #gridsRowsLock.on{color:var(--gold)}
-#w-rmb #gridsTools{order:-2}
+#w-rmb #gridsToolbar{order:-2}
 @media(max-width:760px),(pointer:coarse) and (max-width:1100px){
  #w-rmb .grids-workspace{height:auto;flex-direction:column}
  #w-rmb .grids-canvas-area{flex:0 0 auto}
@@ -25,7 +25,7 @@
  #gridsRowsList{height:220px;max-height:220px}
  #gridsRowsPane button{min-height:36px}
  #gridsRowsList .grids-row,#gridsRowsList .grids-row>button,#gridsRowsList input{height:36px;min-height:36px}
- #w-rmb:not(.rmb-settings-open) #gridsTools>:not([data-grid-tool]):not(:has(#gridsColor)){display:none!important}
+
  #w-rmb #gridsTools button,#w-rmb #gridsTools label{min-height:44px!important}
 }
 
@@ -47,3 +47,17 @@ body:not(.solo) #w-tri:not(:has(#triBind:not([hidden]))){display:none!important}
 #rmbTextStats:focus{outline:none}
 #rmbTextStats .rmb-count-letter:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
 #rmbTextStats .rmb-letter-actions{margin-top:3px}
+
+/* Equal-width tool groups fill the grid panel; controls keep shared angular geometry. */
+#gridsToolbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%;min-width:0;flex:0 0 auto;margin-bottom:4px;container-type:inline-size}
+#gridsToolbar .grids-toolgroup{min-width:0;padding:3px 6px 4px;border-top:1px solid var(--grid-group-color);border-bottom:1px solid var(--line);background:var(--panel);clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px),0 5px)}
+#gridsToolbar .grids-toolheading{text-align:center;color:var(--grid-group-color);font:700 11px/16px Consolas,monospace;letter-spacing:.07em;user-select:none}
+#gridsToolbar .tools.lpw{display:flex;flex-wrap:wrap;align-content:flex-start;align-items:center;justify-content:center;min-width:0;width:100%;margin:2px 0 0;--gon:var(--grid-group-color)}
+@container (max-width:640px){#gridsToolbar .grids-toolgroup{grid-column:span 3}}
+@media(max-width:760px),(pointer:coarse) and (max-width:1100px){
+ #gridsToolbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #gridsToolbar .grids-toolgroup{grid-column:auto}
+ #gridsToolbar .grids-toolheading{font-size:12px;line-height:20px}
+ #w-rmb:not(.rmb-settings-open) #gridsToolbar [data-grid-group]:not([data-grid-group=draw]):not([data-grid-group=edit]){display:none}
+}
+@media(max-width:480px){#gridsToolbar{grid-template-columns:minmax(0,1fr)}}

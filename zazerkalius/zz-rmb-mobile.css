@@ -12,8 +12,6 @@
   #w-rmb .tools input[type=range]{min-height:32px;max-width:100%}
   #w-rmb .tools input[type=color]{width:28px!important;height:28px!important;flex-basis:28px!important}
   #rmbMainTools{order:0}
-  #w-rmb:not(.rmb-settings-open) #rmbMainTools>:not(#bRmbType):not(#bRmbEdit):not(#bRmbAxis):not(#rmbAxisTools):not(#bRmbFit):not(#bRmbSettings){display:none!important}
-  #w-rmb:not(.rmb-settings-open) :is(#rmbPaintTools,#rmbWaveTools){display:none!important}
   #bRmbSettings{display:inline-flex!important}
   #rmbEditHint{order:1;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
   #w-rmb .wbody>#rmbCv{order:2;flex:0 0 auto!important;width:100%!important;max-width:100%;height:clamp(220px,48vh,520px)!important;height:clamp(220px,48svh,520px)!important;min-height:220px!important;touch-action:none}
