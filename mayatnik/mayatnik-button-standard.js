@@ -26,8 +26,18 @@
       if(host.classList.contains('gz-ladder'))host.append(s);else host.prepend(s);
     }
     if(host.classList.contains('may-diamond-options')){
-      const r=host.getBoundingClientRect(),w=r.width,h=Math.max(r.height,host.scrollHeight||0),sig='diamonds:'+w+':'+h;
-      if(s.dataset.sig!==sig){s.dataset.sig=sig;s.innerHTML=`<path class="cap" d="M1 13 L13 1 H${w-13} L${w-1} 13 M1 ${h-13} L13 ${h-1} H${w-13} L${w-1} ${h-13}"/>`;}
+      const r=host.getBoundingClientRect(),w=r.width,h=Math.max(r.height,host.scrollHeight||0),columns=new Map();
+      for(const cell of cells){const b=cell.getBoundingClientRect();if(!b.width||!b.height)continue;const x=Math.round(b.left-r.left+host.scrollLeft),y=Math.round(b.top-r.top+host.scrollTop);if(!columns.has(x))columns.set(x,[]);columns.get(x).push({x,y,w:b.width,h:b.height});}
+      const cols=[...columns.values()].sort((a,b)=>a[0].x-b[0].x);for(const col of cols)col.sort((a,b)=>a.y-b.y);
+      const sig='diamonds:'+JSON.stringify([w,h,cols]);if(s.dataset.sig!==sig){s.dataset.sig=sig;s.replaceChildren();
+        cols.forEach((col,index)=>{const first=col[0],left=index?first.x-3:1,right=index+1<cols.length?first.x+first.w+3:w-1;
+          const R=[[right,13]],L=[[left,13]];
+          col.forEach((b,i)=>{R.push([b.x+b.w+2,b.y+b.h/2]);L.push([b.x-2,b.y+b.h/2]);if(i+1<col.length){const mid=(b.y+b.h+col[i+1].y)/2;R.push([b.x+b.w/2+2,mid]);L.push([b.x+b.w/2-2,mid]);}});
+          R.push([right,h-13],[Math.min(right,w-13),h-1]);L.push([left,h-13],[Math.max(left,13),h-1]);
+          const points=[[Math.max(left,13),1],[Math.min(right,w-13),1],...R,...L.reverse()];shape(s,'polygon',{class:'may-diamond-back',points:points.map(p=>p.join(',')).join(' '),fill:'#0e1116'});
+        });
+        shape(s,'path',{class:'cap',d:`M1 13 L13 1 H${w-13} L${w-1} 13 M1 ${h-13} L13 ${h-1} H${w-13} L${w-1} ${h-13}`});
+      }
       return false;
     }
     const base=host.getBoundingClientRect(),cols=new Map();
