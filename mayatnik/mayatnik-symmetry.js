@@ -1,4 +1,4 @@
-/* Exact symmetry on the two checkerboard lattices. Independent of drawing/zoom.
+/* Exact symmetry on the full grid (p=-1) and two checkerboard lattices. Independent of drawing/zoom.
    Bits are counted per side, excluding a bit on the axis. Rows are consecutive
    transverse slices (columns for horizontal axes, diagonals for diagonal axes).
    Upper bounds filter maximal runs/radii; zero means no upper bound. */
@@ -27,17 +27,18 @@
     }
     // A normal slice: origin, step, length, and its longitudinal coordinate t.
     function lines(W, H, anchor, dir, p, visit) {
+      const plain=p===-1,step=plain?1:2;
       if (dir === 'v') for (let y=0;y<H;y++) {
-        const x=parity(anchor+p+y); visit(x,y,2,0,Math.max(0,Math.ceil((W-x)/2)),y);
+        const x=plain?0:parity(anchor+p+y); visit(x,y,step,0,Math.max(0,Math.ceil((W-x)/step)),y);
       }
       else if (dir === 'h') for (let x=0;x<W;x++) {
-        const y=parity(x-anchor-p); visit(x,y,0,2,Math.max(0,Math.ceil((H-y)/2)),x);
+        const y=plain?0:parity(x-anchor-p); visit(x,y,0,step,Math.max(0,Math.ceil((H-y)/step)),x);
       }
-      else if (dir === 'd') for (let q=parity(anchor+p);q<W+H-1;q+=2) {
+      else if (dir === 'd') for (let q=plain?0:parity(anchor+p);q<W+H-1;q+=step) {
         const x=Math.max(0,q-H+1),y=q-x; visit(x,y,1,-1,Math.min(W-1,q)-x+1,q);
       }
       else for (let d=-(H-1);d<W;d++) {
-        if(parity(d-anchor)!==p)continue;
+        if(!plain&&parity(d-anchor)!==p)continue;
         const x=Math.max(0,d),y=x-d;visit(x,y,1,1,Math.min(W-x,H-y),d);
       }
     }
@@ -55,7 +56,8 @@
       const minBits=Math.max(1,opts.minBits||2), maxBits=opts.maxBits||Infinity;
       const minRows=Math.max(1,opts.minRows||2), maxRows=opts.maxRows||Infinity;
       const segs=[];
-      for(const dir of opts.directions||['v','h','d','u'])for(let p=0;p<2;p++) {
+      const scans=(opts.directions||['v','h','d','u']).flatMap(dir=>[0,1].map(p=>({dir,p}))).concat((opts.plainDirections||[]).map(dir=>({dir,p:-1})));
+      for(const {dir,p} of scans) {
         const active=new Map();let seq=0;
         const finish=s=>{if(s.widths.length>=minRows&&s.widths.length<=maxRows){s.colour=colour(dir,s.axis,p);segs.push(s);}};
         lines(W,H,anchor,dir,p,(x,y,dx,dy,n,t)=>{
@@ -76,9 +78,9 @@
       return segs;
     }
     function span(s,i,anchor) {
-      const t=s.t0+i*(s.dir==='v'||s.dir==='h'?1:2),[x,y]=point(s.dir,s.axis,t);
-      const dx=s.dir==='v'?2:s.dir==='h'?0:1,dy=s.dir==='v'?0:s.dir==='h'?2:s.dir==='d'?-1:1;
-      const through=Number.isInteger(x)&&Number.isInteger(y)&&parity(x-y-anchor)===s.p;
+      const t=s.t0+i*(s.dir==='v'||s.dir==='h'||s.p===-1?1:2),[x,y]=point(s.dir,s.axis,t);
+      const step=s.p===-1?1:2,dx=s.dir==='v'?step:s.dir==='h'?0:1,dy=s.dir==='v'?0:s.dir==='h'?step:s.dir==='d'?-1:1;
+      const through=Number.isInteger(x)&&Number.isInteger(y)&&(s.p===-1||parity(x-y-anchor)===s.p);
       const d=s.widths[i]-(through?0:.5);
       return {x:x-d*dx,y:y-d*dy,dx,dy,n:2*s.widths[i]+(through?1:0)};
     }
@@ -87,7 +89,7 @@
     function highlights(field,segs,anchor=0) {
       const {W,H}=field,N=W*H,outR=new Float32Array(N),outG=new Float32Array(N),outB=new Float32Array(N),outN=new Int32Array(N);
       const dr=new Float32Array(N),dg=new Float32Array(N),db=new Float32Array(N),dn=new Int32Array(N);
-      for(const dir of ['v','h','d','u'])for(let p=0;p<2;p++) {
+      for(const dir of ['v','h','d','u'])for(const p of new Set(segs.filter(s=>s.dir===dir).map(s=>s.p))) {
         dr.fill(0);dg.fill(0);db.fill(0);dn.fill(0);
         for(const s of segs){if(s.dir!==dir||s.p!==p)continue;const [r,g,b]=s.colour;
           for(let i=0;i<s.widths.length;i++){
@@ -117,7 +119,7 @@
         const radii=new Float64Array(n);
         for(let i=0;i<n;i++){
           const a=span(sg,i,anchor);
-          radii[i]=(a.n-1)/2*(sg.dir==='v'||sg.dir==='h'?2:1);
+          const straight=sg.dir==='v'||sg.dir==='h';radii[i]=(a.n-1)/2*(straight?(sg.p===-1?1:2):(sg.p===-1?2:1));
         }
         for(const reverse of [false,true]) {
           let size=1;while(size<n)size*=2;
@@ -143,8 +145,8 @@
             if(!peak||height<minRows)continue;
             const end=i+height-1;
             const ai=reverse?n-1-i:i,bi=reverse?n-1-end:end;
-            const step=sg.dir==='v'||sg.dir==='h'?1:2;
-            const a=point(sg.dir,sg.axis,sg.t0+ai*step),b=point(sg.dir,sg.axis,sg.t0+bi*step),h=end-i;
+            const straight=sg.dir==='v'||sg.dir==='h',step=straight||sg.p===-1?1:2;
+            const a=point(sg.dir,sg.axis,sg.t0+ai*step),b=point(sg.dir,sg.axis,sg.t0+bi*step),h=(end-i)*(straight?1:step/2);
             const dx=sg.dir==='v'?h:sg.dir==='h'?0:h,dy=sg.dir==='v'?0:sg.dir==='h'?h:sg.dir==='d'?-h:h;
             const c=colour(sg.dir,sg.axis+ai*.381966+(reverse?19:0),sg.p);
             packed.push(a[0],a[1],b[0]-dx,b[1]-dy,b[0]+dx,b[1]+dy,...c,sg.p);
