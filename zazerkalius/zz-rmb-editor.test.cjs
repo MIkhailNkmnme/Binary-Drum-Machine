@@ -21,11 +21,11 @@ test('out-of-bounds moves and pastes are rejected atomically, never clipped',()=
 test('marquee chooses only filled cells, with reversed drag and ragged rows supported',()=>{
  assert.deepEqual(E.rectangle(['0101','11','001'],[2,3],[0,1]),[[0,1],[0,3],[1,1],[2,2]]);
 });
-function fixture(initial=['010000','000000','000000']){
+function fixture(initial=['010000','000000','000000'],options={}){
  let rows=initial.slice(),locked=false,enabled=true,commits=0,saves=0,draws=0;const snapshots=[],events={},messages=[];
  const g={hs:[0,0,0],tw:20,ox:0,oy:0,u0:1};
  const cv={style:{},setAttribute(){},focus(){},setPointerCapture(){},releasePointerCapture(){},getBoundingClientRect:()=>({left:0,top:0}),addEventListener:(t,f)=>(events[t]??=[]).push(f)};
- const api=E.mount(cv,{rows:()=>rows,enabled:()=>enabled,locked:()=>locked,geometry:()=>g,redraw:()=>draws++,save:()=>saves++,message:m=>messages.push(m),pan:(x,y)=>{g.ox=x;g.oy=y;},commit:n=>{snapshots.push(rows);rows=n;commits++;},polygon(){return [];}});
+ const api=E.mount(cv,{options:()=>options,rows:()=>rows,enabled:()=>enabled,locked:()=>locked,geometry:()=>g,redraw:()=>draws++,save:()=>saves++,message:m=>messages.push(m),pan:(x,y)=>{g.ox=x;g.oy=y;},commit:n=>{snapshots.push(rows);rows=n;commits++;},polygon(){return [];}});
  function fire(t,data={}){const e={button:0,pointerId:1,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...data};for(const f of events[t]||[]){f(e);if(e.stopped)break;}return e;}
  const at=(r,c,extra={})=>({clientX:g.ox+c*20+15,clientY:g.oy+(r+.5)*20*Math.sqrt(3)/2,...extra});
  const click=(r,c,extra={})=>{fire('pointerdown',at(r,c,extra));fire('pointerup',at(r,c,extra));};
@@ -52,3 +52,17 @@ test('locked rows and disabled editor prevent edits; Space drag pans without his
 });
 
 test('Ctrl+A selects all filled rhombs and Delete clears them in one history step',()=>{const f=fixture(['010100','100001','000000']);f.fire('keydown',{key:'a',ctrlKey:true});assert.equal(f.api.selection().length,4);f.fire('keydown',{key:'Delete'});assert.deepEqual(f.rows(),['000000','000000','000000']);assert.equal(f.commits(),1);});
+
+test('plain drag pans unselected cells and background without changing bits; click still selects/creates',()=>{
+ const f=fixture(undefined,{panUnselected:true}),before=f.rows().slice(),a=f.at(0,1);
+ f.fire('pointerdown',a);f.fire('pointermove',{clientX:a.clientX+40,clientY:a.clientY+25});f.fire('pointerup',a);
+ assert.equal(f.g.ox,40);assert.ok(Math.abs(f.g.oy-25)<1e-10);assert.deepEqual(f.rows(),before);assert.equal(f.commits(),0);assert.equal(f.saves(),1);
+ f.click(0,1);assert.deepEqual(f.api.selection(),[[0,1]]);f.fire('pointerdown',f.at(0,1));f.fire('pointermove',f.at(1,2));f.fire('pointerup',f.at(1,2));assert.equal(f.rows()[1],'001000');assert.equal(f.commits(),1);
+ f.click(2,3);assert.equal(f.rows()[2],'000100');assert.equal(f.commits(),2);
+ f.fire('pointerdown',{clientX:-50,clientY:-50});f.fire('pointermove',{clientX:-30,clientY:-20});f.fire('pointercancel');assert.equal(f.g.ox,40);assert.ok(Math.abs(f.g.oy-25)<1e-10);assert.equal(f.commits(),2);
+});
+test('pan works while locked, Shift retains selection frame and Ctrl retains direct copy',()=>{
+ const f=fixture(undefined,{panUnselected:true});f.lock(true);const a=f.at(1,2);f.fire('pointerdown',a);f.fire('pointermove',{clientX:a.clientX+10,clientY:a.clientY+20});f.fire('pointerup');assert.equal(f.g.ox,10);assert.ok(Math.abs(f.g.oy-20)<1e-10);assert.equal(f.commits(),0);
+ f.lock(false);f.fire('pointerdown',f.at(0,0,{shiftKey:true}));f.fire('pointermove',f.at(1,3,{shiftKey:true}));f.fire('pointerup');assert.deepEqual(f.api.selection(),[[0,1]]);
+ f.api.clear();f.fire('pointerdown',f.at(0,1,{ctrlKey:true}));f.fire('pointermove',f.at(1,2,{ctrlKey:true}));f.fire('pointerup');assert.equal(f.rows()[0],'010000');assert.equal(f.rows()[1],'001000');assert.equal(f.commits(),1);
+});
