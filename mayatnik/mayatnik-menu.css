@@ -738,7 +738,7 @@ header #paintTools .pt-b.gz-hx.gz-pair:not(.on):not(:hover){background:color-mix
 body.may-zen #mayRhombs{bottom:10px}
 /* v0.387: «Зеркала» (и «Вид»): «выровняй отступы, убери скролл внизу; границы какие-то лишние» — все кнопки столбца шириной в столбец, отступы одни,
    без прокрутки вбок; черты между блоками сняты; «Точка | Сдвиг | Застыло» не шире столбца */
-header #paintTools.pt-dd .pt-view .pt-r{overflow-x:clip!important}   /* v0.500: clip, не hidden — hidden делал список прокручиваемым (overflow-y: auto), и заголовок выпадал из рамки группы */
+header #paintTools.pt-dd .pt-view .pt-r{overflow-x:visible!important}   /* The shared SVG includes the 2px teeth and facing group seams outside the 120px control box. */
 header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col{width:156px;max-width:156px;overflow:hidden}
 header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col.pt-colv{width:126px;max-width:126px}
 header #paintTools.pt-dd .pt-view .pt-sec>.gz-hx,header #paintTools.pt-dd .pt-view .pt-sec>.pt-b{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box;margin:0!important}

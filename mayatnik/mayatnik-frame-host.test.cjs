@@ -49,8 +49,15 @@ test('same-geometry frames replace locked paint and chess colours rather than in
  a.replay=[{x:2,y:3,v:1,mirror:true}];c.restoreFrameEffects(a);assert.equal(c.colReplay.length,1);assert.equal(c.colReplay[0].f,c.f);assert.equal(c.colReplay[0].x,2);assert.equal(c.colReplay[0].mirror,true);
  for(const part of [1,2]){a.third={k:2,part,prev:{px:new Uint32Array([0xff010203])}};a.lastShown={k:2,px:new Uint32Array([0xff040506])};c.restoreFrameEffects(a);assert.equal(c.third.part,part);assert.equal(c.third.prev.px[0],0xff010203);assert.equal(c.lastShown.px[0],0xff040506);}
 });
-test('Views retain old view capture while whole frames carry an explicit kind and use separate namespace',async()=>{
- const f=fixture(),view=await f.c.captureLibraryView(),frame=await f.c.captureLibraryFrame();assert.equal(view.kind,'view');assert.match(view.name,/^Вид /);assert.equal((await Work.decode(view.blob)).data.libraryKind,'view');assert.equal(frame.kind,'frame');assert.equal((await Work.decode(frame.blob)).data.libraryKind,'frame');assert.match(html,/namespace:'whole-frames',kind:'frame'/);assert.match(html,/window\.mayViewLibrary=MayatnikFrameLibrary\.create\(\{storage:MayatnikPaintCache,kind:'view'/);
+test('unified Frames and the compatibility capture use full thumbnail with saved zoom and viewport',async()=>{
+ const f=fixture();f.current.st.zoom=7.25;f.c.frameHostSnapshot=()=>({version:1,controls:{},layers:[],state:{},viewport:{left:123,top:456}});
+ for(const capture of [f.c.captureLibraryView,f.c.captureLibraryFrame]){const frame=await capture(),data=(await Work.decode(frame.blob)).data;assert.equal(frame.kind,'frame');assert.equal(frame.previewKind,'whole');assert.match(frame.name,/^Кадр /);assert.equal(frame.thumbnail,'data:image/png;base64,whole');assert.equal(data.libraryKind,'frame');assert.equal(data.st.zoom,7.25);assert.deepEqual(data.frameHost.viewport,{left:123,top:456});}
+ assert.match(html,/namespaces:\['whole-frames','frame'\]/);assert.match(html,/window\.mayViewLibrary=window\.mayFrameLibrary/);
+});
+
+test('opening old Views and whole Frames preserves saved camera instead of fitting the full thumbnail',async()=>{
+ for(const kind of ['view','frame',undefined]){const f=fixture(),data=work();data.libraryKind=kind;data.frameBounds={left:0,top:0,width:15,height:8};data.st.zoom=9.5;data.frameHost={version:1,controls:{},layers:[],state:{},viewport:{left:211,top:388}};f.c.fitLibraryFrame=()=>{throw Error('must not fit');};
+ await f.c.restoreLibraryFrame(await Work.encode(data));assert.equal(f.restoreCalls[0].st.zoom,9.5);assert.deepEqual(f.restoreCalls[0].frameHost.viewport,{left:211,top:388});assert.equal(f.writes[1].st.zoom,9.5);assert.deepEqual(f.writes[1].frameHost.viewport,{left:211,top:388});}
 });
 test('real canvas attached by restore cannot poison the immutable work written to latest',async()=>{
  const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<canvas></canvas>'),canvas=dom.window.document.querySelector('canvas');canvas.clonePoison=()=>{};

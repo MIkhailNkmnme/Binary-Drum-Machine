@@ -30,3 +30,14 @@ test('normal fractional positions tolerate at most half a CSS pixel beyond the g
  assert.ok(ctx.groupGapGeometry(silhouette(.3),silhouette(126.7)));
  assert.equal(ctx.groupGapGeometry(silhouette(.3),silhouette(126.9)),null);
 });
+
+test('close buttons still fill the notches when their 2px backing tips overlap',()=>{
+ for(const dx of [120,122,123.4]){const a=silhouette(),b=silhouette(dx),g=ctx.groupGapGeometry(a,b);assert.ok(g,'button step '+dx);const mid=dx/2+60;assert.ok(g.leftPoints.some(([x,y])=>x===116&&y===25));assert.ok(g.rightPoints.some(([x,y])=>x===dx+4&&y===25));assert.ok(g.leftPoints.every(([x])=>x<=mid));assert.ok(g.rightPoints.every(([x])=>x>=mid));assert.equal(ctx.groupGapGeometry(a,silhouette(119.9)),null,'overlapping button boxes are excluded');}
+});
+test('close staggered tips retain only the shared clipped vertical span',()=>{
+ const a=silhouette(),b=silhouette(122,9);a.top=18;b.bottom=41;const g=ctx.groupGapGeometry(a,b);assert.ok(g);for(const [,y]of [...g.leftPoints,...g.rightPoints])assert.ok(y>=18&&y<=41);
+});
+
+test('View group keeps the shared teeth and seam SVG visible beyond the control width',()=>{
+ const css=fs.readFileSync(__dirname+'/mayatnik-menu.css','utf8');assert.match(css,/header #paintTools\.pt-dd \.pt-view \.pt-r\{overflow-x:visible!important\}/);assert.doesNotMatch(css,/\.pt-view \.pt-r\{overflow-x:clip/);
+});

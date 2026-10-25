@@ -32,3 +32,8 @@ test('blocked popup leaves the source library visible with a retry notice',()=>{
   assert.equal(w.MayatnikTemplatePanel.isOpen(),true);assert.equal(w.document.querySelector('[data-window-notice]').hidden,false);
  }finally{w.close();}
 });
+
+test('legacy views URL opens the same unified frames pane in the popup',async()=>{const source=windowDom(),popup=windowDom(),s=source.window,w=popup.window;try{
+ s.eval(folders);const store=s.MayatnikTemplateFolders.create(s.localStorage);s.MayatnikTemplatePanel={getFolderStore:()=>store};s.mayTemplateLibrary={list:()=>[],allIds:()=>[],getState:()=>({}),subscribe:()=>()=>{},refresh(){}};s.mayFrameLibrary={ready:Promise.resolve(),list:()=>[{id:'legacy',name:'Старый вид',thumbnail:'data:image/png;base64,AA=='}],getState:()=>({}),subscribe:()=>()=>{}};s.mayViewLibrary={};w.history.replaceState(null,'','?tab=views');Object.defineProperty(w,'opener',{value:s});w.eval(folders);w.eval(script);w.eval(panel);w.document.dispatchEvent(new w.Event('DOMContentLoaded'));await new Promise(r=>setTimeout(r,25));
+ assert.equal(w.mayFrameLibrary,s.mayFrameLibrary);assert.equal(w.mayViewLibrary,undefined);assert.equal(w.document.querySelector('[data-library-tab=views]'),null);assert.equal(w.document.querySelector('.mtp-view-pane'),null);assert.equal(w.document.querySelector('[data-library-tab=frames]').getAttribute('aria-selected'),'true');assert.equal(w.document.querySelector('.mtp-frame-pane').hidden,false);assert.equal(w.document.querySelector('[data-frame-id=legacy] .mtp-name').textContent,'Старый вид');assert.equal(w.localStorage.getItem('mayatnik-library-tab'),'frames');
+ }finally{w.close();s.close();}});

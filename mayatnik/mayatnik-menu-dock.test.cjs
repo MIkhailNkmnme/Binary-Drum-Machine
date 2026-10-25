@@ -114,6 +114,23 @@ test('side wheel leaves sliders, editable fields, cycle controls and nested scro
  }
 });
 
+test('wheel over field gaps routes the entire occupied side column before the canvas handler',()=>{
+ for(const edge of ['left','right']){const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge,index:0},g1:{edge,index:1}})});f.gs[0].box.height=780;f.dock.refresh();
+  const bar=f.body.children.find(n=>n.dataset.edge===edge),x=edge==='left'?68:936,wrap={id:'wrap',scrollHeight:2000,clientHeight:700,closest:s=>s==='#wrap'?wrap:null};let stopped=false;
+  f.event('wheel',{target:wrap,clientX:x,clientY:200,deltaY:60,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(bar.scrollTop,60);assert.equal(stopped,true);
+  for(const [clientX,clientY]of [[x,57],[x,781],[edge==='left'?131:873,200]]){stopped=false;f.event('wheel',{target:wrap,clientX,clientY,deltaY:10,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(bar.scrollTop,60);assert.equal(stopped,false,'outside column stays with canvas');}
+  f.resize(500);f.event('wheel',{target:wrap,clientX:x,clientY:200,deltaY:60,deltaMode:0},true);f.flush();assert.equal(bar.scrollTop,60,'mobile never uses fixed column gap routing');
+ }
+});
+
+test('gap routing leaves overlays and nonoverflowing columns alone',()=>{
+ const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})}),bar=f.body.children.find(n=>n.dataset.edge==='left'),wrap={id:'wrap',closest:s=>s==='#wrap'?wrap:null};
+ let stopped=false;const wheel=target=>f.event('wheel',{target,clientX:68,clientY:200,deltaY:60,deltaMode:0,preventDefault(){stopped=true;}},true);
+ wheel(wrap);f.flush();assert.equal(stopped,false);assert.equal(bar.scrollTop,0);
+ f.gs[0].box.height=780;f.dock.refresh();wheel({closest:()=>null});f.flush();assert.equal(stopped,false);assert.equal(bar.scrollTop,0,'library/popup over the column keeps its wheel');
+ bar.getClientRects=()=>[];wheel(wrap);f.flush();assert.equal(stopped,false);assert.equal(bar.scrollTop,0,'hidden menu, including Zen, leaves canvas wheel alone');
+});
+
 test('low right groups get a scrollbar beside occupied slots, not through empty space above',()=>{
  const saved={g0:{edge:'right',index:18},g1:{edge:'right',index:19}},f=fixture({'mayatnik-menu-dock-v509':JSON.stringify(saved)}),before=f.store.get('mayatnik-menu-dock-v509');
  f.gs[0].box.height=400;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='right');

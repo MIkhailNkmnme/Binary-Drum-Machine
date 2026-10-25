@@ -55,3 +55,50 @@ test('old frame records remain Views while whole Frames use an independent names
  const again=L.create({...f.host,namespace:'whole-frames'});await again.ready;assert.equal(again.list()[0].id,whole);await again.open(whole);assert.equal(f.restores.length,1);
  assert.throws(()=>L.create({...f.host,namespace:'bad/key'}),/namespace/);
 });
+
+function unionFixture(){
+ const record={id:'same:legacy',name:'View',thumbnail:'cropped',frame:3,rows:128,createdAt:100};
+ const map=new Map([[L.INDEX_KEY,{version:1,items:[record]}],[L.ITEM_PREFIX+record.id,new Blob(['view'])],['whole-frames-library-v1',{version:1,items:[{...record,name:'Frame',thumbnail:'whole'}]}],['whole-frames-library-item:'+record.id,new Blob(['frame'])]]),f=fixture(map);
+ const capture=f.host.capture;f.host.capture=async()=>({...await capture(),previewKind:'whole'});
+ const union=()=>L.create({...f.host,namespace:'whole-frames',namespaces:['whole-frames','frame'],kind:'frame'});
+ return {...f,union};
+}
+
+test('federated Frames preserve colliding IDs and exact payloads without migration writes',async()=>{
+ const f=unionFixture(),api=f.union();await api.ready;
+ assert.deepEqual(api.list().map(x=>[x.id,x.previewKind]),[['whole-frames:same:legacy','whole'],['frame:same:legacy','view']]);
+ assert.equal(f.calls.filter(c=>c[0]==='write').length,0);
+ await api.open('frame:same:legacy');await api.download('whole-frames:same:legacy');
+ assert.deepEqual(f.restores,['view']);assert.deepEqual(f.downloads,[['frame','Frame']]);
+ await api.rename('frame:same:legacy','Renamed view');assert.equal(f.map.get(L.INDEX_KEY).items[0].name,'Renamed view');assert.equal(f.map.get('whole-frames-library-v1').items[0].name,'Frame');
+ await api.remove('frame:same:legacy');const again=f.union();await again.ready;
+ assert.deepEqual(again.list().map(x=>x.id),['whole-frames:same:legacy']);assert.equal(f.map.get(L.ITEM_PREFIX+'same:legacy'),null);
+ const id=await again.save('New');assert.ok(id.startsWith('whole-frames:'));assert.equal(f.map.get(L.INDEX_KEY).items.length,0);assert.equal(f.map.get('whole-frames-library-v1').items.length,2);
+});
+
+test('failed federated writes preserve both sources, and deleted orphan blobs never reappear',async()=>{
+ const f=unionFixture(),api=f.union();await api.ready;f.fail((op,key)=>op==='write'&&key===L.INDEX_KEY);
+ await assert.rejects(api.remove('frame:same:legacy'),/quota/);await assert.rejects(api.rename('frame:same:legacy','Lost'),/quota/);assert.equal(api.list().length,2);
+ f.fail((op,key)=>op==='write'&&key==='whole-frames-library-v1');await assert.rejects(api.save('Lost'),/quota/);
+ const reload=f.union();await reload.ready;assert.equal(reload.list().length,2);assert.equal([...f.map].filter(([k,v])=>k.startsWith('whole-frames-library-item:')&&v).length,1);
+ f.fail((op,key)=>op==='write'&&key.startsWith(L.ITEM_PREFIX));await api.remove('frame:same:legacy');assert.match(api.getState().message,/не удалось очистить/);
+ const deleted=f.union();await deleted.ready;assert.deepEqual(deleted.list().map(x=>x.id),['whole-frames:same:legacy']);assert.ok(f.map.get(L.ITEM_PREFIX+'same:legacy'));
+});
+
+test('failed source load forbids writes to the valid half of the unified library',async()=>{
+ const f=unionFixture();f.map.set(L.INDEX_KEY,{version:1,items:[{id:'broken'}]});const api=f.union();await assert.rejects(api.ready);assert.deepEqual(api.list(),[]);await assert.rejects(api.save());assert.equal(f.calls.filter(c=>c[0]==='write').length,0);
+});
+
+test('legacy previews refresh only after successful real open; thumbnail write failure does not undo open',async()=>{
+ const f=unionFixture();let previews=0;f.host.refreshThumbnail=()=>{previews++;return {thumbnail:'complete'};};const api=f.union();await api.ready;assert.equal(previews,0);
+ f.fail((op,key)=>op==='write'&&key===L.INDEX_KEY);await api.open('frame:same:legacy');assert.equal(api.getState().selectedId,'frame:same:legacy');assert.match(api.getState().message,/эскиз не удалось сохранить/);assert.equal(api.list()[1].previewKind,'view');assert.equal(f.restores.length,1);
+ f.fail(()=>false);await api.open('frame:same:legacy');assert.equal(api.list()[1].thumbnail,'complete');assert.equal(api.list()[1].previewKind,'whole');assert.equal(f.map.get(L.INDEX_KEY).items[0].previewKind,'whole');assert.equal(await f.map.get(L.ITEM_PREFIX+'same:legacy').text(),'view');
+ await api.open('frame:same:legacy');assert.equal(previews,2,'finished thumbnail is not regenerated on every open');
+ const reload=f.union();await reload.ready;assert.equal(reload.list()[1].previewKind,'whole');
+});
+
+test('old and unified libraries survive portable backup round trip with source IDs intact',async()=>{
+ const codec=require('./mayatnik-backup-codec.js'),f=unionFixture(),api=f.union();await api.ready;await api.rename('frame:same:legacy','Portable');await api.save('New');
+ const encoded=await codec.encode({entries:[...f.map].map(([key,value])=>({key,value})),local:[]}),decoded=(await codec.decode(encoded)).snapshot;
+ const restored=fixture(new Map(decoded.entries.map(e=>[e.key,e.value]))),union=L.create({...restored.host,namespace:'whole-frames',namespaces:['whole-frames','frame']});await union.ready;assert.deepEqual(union.list(),api.list());await union.open('frame:same:legacy');assert.deepEqual(restored.restores,['view']);
+});

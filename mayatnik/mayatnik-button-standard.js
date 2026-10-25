@@ -100,16 +100,17 @@
     const id='may-back-'+(++gradN);
     s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
   }
-  // DX126 - button120 - the two 2px backing tips = a 2px close gap.
+  // Each backing tip extends 2px beyond its button. At close spacing the
+  // tips can overlap while the notches still leave an empty facing gap.
   // Return only the empty facing sides; each owner draws its own half.
   function groupGapGeometry(a,b){
     const bounds=p=>({left:Math.min(...p.points.map(q=>q[0])),right:Math.max(...p.points.map(q=>q[0])),top:Math.max(p.top,Math.min(...p.points.map(q=>q[1]))),bottom:Math.min(p.bottom,Math.max(...p.points.map(q=>q[1])))});
     let A=bounds(a),B=bounds(b);if(A.left>B.left){[a,b]=[b,a];[A,B]=[B,A];}
     const gap=B.left-A.right,top=Math.max(A.top,B.top),bottom=Math.min(A.bottom,B.bottom);
-    if(gap<0||gap>2.5||bottom<=top)return null;
+    if(gap < -4||gap>2.5||bottom<=top)return null;
     const edge=(p,y,right)=>{const xs=[];p.forEach((q,i)=>{const n=p[(i+1)%p.length];if(y<Math.min(q[1],n[1])||y>Math.max(q[1],n[1]))return;if(q[1]===n[1])xs.push(q[0],n[0]);else xs.push(q[0]+(y-q[1])*(n[0]-q[0])/(n[1]-q[1]));});return right?Math.max(...xs):Math.min(...xs);};
     const levels=[...new Set([top,bottom,...a.points.map(q=>q[1]),...b.points.map(q=>q[1])].filter(y=>y>=top&&y<=bottom))].sort((x,y)=>x-y),mid=(A.right+B.left)/2;
-    const left=levels.map(y=>[edge(a.points,y,true),y]),right=levels.map(y=>[edge(b.points,y,false),y]);
+    const left=levels.map(y=>[Math.min(mid,edge(a.points,y,true)),y]),right=levels.map(y=>[Math.max(mid,edge(b.points,y,false)),y]);
     return {left:a,right:b,leftPoints:[...left,[mid,bottom],[mid,top]],rightPoints:[[mid,top],[mid,bottom],...right.reverse()]};
   }
   function groupGaps(){

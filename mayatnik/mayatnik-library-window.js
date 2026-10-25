@@ -7,16 +7,16 @@
   try{
     source=root.opener;api=source&&!source.closed&&source.mayTemplateLibrary;
     if(!api||!source.MayatnikTemplatePanel)throw Error('source');
-    root.mayTemplateLibrary=api;root.mayViewLibrary=source.mayViewLibrary;root.mayFrameLibrary=source.mayFrameLibrary;root.mayLayers=source.mayLayers;root.maySettingsLibrary=source.maySettingsLibrary;root.mayBackup=source.mayBackup;root.maySequences=source.maySequences;root.MayatnikSequences=source.MayatnikSequences;
+    root.mayTemplateLibrary=api;root.mayFrameLibrary=source.mayFrameLibrary;root.mayLayers=source.mayLayers;root.maySettingsLibrary=source.maySettingsLibrary;root.mayBackup=source.mayBackup;root.maySequences=source.maySequences;root.MayatnikSequences=source.MayatnikSequences;
     root.MayatnikTemplateFolderStore=source.MayatnikTemplatePanel.getFolderStore();
   }catch(_){disconnected('Откройте это окно кнопкой «Окно» в Библиотеке работающего Маятника.');return;}
   const proxy=doc.getElementById('bTemplateSave'),original=source.document.getElementById('bTemplateSave');
   const syncSave=()=>{proxy.disabled=!original||original.disabled;};syncSave();proxy.onclick=()=>{if(!proxy.disabled)original.click();};
   if(original){saveObserver=new root.MutationObserver(syncSave);saveObserver.observe(original,{attributes:true,attributeFilter:['disabled']});}
-  for(const type of ['may-template-saved','may-template-library-ready','may-view-library-ready','may-frame-library-ready','may-layers-ready','may-settings-library-ready','may-backup-ready']){
+  for(const type of ['may-template-saved','may-template-library-ready','may-frame-library-ready','may-layers-ready','may-settings-library-ready','may-backup-ready']){
     const listener=e=>root.dispatchEvent(new root.CustomEvent(type,{detail:e.detail}));source.addEventListener(type,listener);listeners.push([type,listener]);
   }
-  const ready=()=>root.queueMicrotask(()=>root.MayatnikTemplatePanel?.openTab(new URL(root.location.href).searchParams.get('tab')||'templates'));
+  const ready=()=>root.queueMicrotask(()=>{const tab=new URL(root.location.href).searchParams.get('tab')||'templates';root.MayatnikTemplatePanel?.openTab(tab==='views'?'frames':tab);});
   // This bridge is deferred before the panel script: "interactive" is still
   // too early. DOMContentLoaded waits for both deferred scripts to finish.
   if(doc.readyState!=='complete')doc.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
