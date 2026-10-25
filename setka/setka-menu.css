@@ -36,3 +36,6 @@ body.setka-menu-ready .setka-title output{position:fixed;bottom:2px;left:136px;m
  body.setka-menu-ready #mayatnikRail .gz-group{--gz-h:30px}
  body.setka-menu-ready #mayatnikRail .setka-menu-body>.gz-hx{min-height:30px}
 }
+
+/* Upward popup needs room for the shared contour at y = first button - 12. */
+body.setka-menu-ready #mayatnikRail .gz-group.may-dock-bottom>.setka-menu-body{padding-top:14px!important;padding-bottom:2px!important}

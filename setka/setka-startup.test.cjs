@@ -81,6 +81,15 @@ test('popup rules override shared in-flow menu styles and coordinates remain vie
   w.setkaMenuRefresh();app.flush();
   for(const id of ['edit','grid']){const g=w.document.querySelector('[data-id="'+id+'"]'),list=g.querySelector('.setka-menu-body');assert.equal(w.getComputedStyle(list).position,'fixed');assert.equal(w.getComputedStyle(g).height,'24px');assert.equal(list.style.getPropertyPriority('left'),'important');assert.equal(list.style.getPropertyPriority('top'),'important');}
   const bottom=w.document.querySelector('[data-id="edit"]'),left=w.document.querySelector('[data-id="grid"]');
+  // Supply real relative button rectangles to the shared contour builder: its upper
+  // cap must remain inside the scrolling popup, rather than being clipped at -10px.
+  const box=bottom.querySelector('.setka-menu-body'),padding=parseFloat(w.getComputedStyle(box).paddingTop);
+  assert.equal(padding,14);box.getBoundingClientRect=()=>({left:0,top:0,width:120,height:240});
+  const cells=[...box.querySelectorAll(':scope > .gz-hx')].filter(e=>!e.hidden);
+  cells.forEach((e,i)=>{e.getBoundingClientRect=()=>({left:0,top:padding+i*26,width:120,height:24});});
+  w.mayButtonStandardRefresh();
+  const cap=box.querySelector('.may-standard-contours .cap');assert.ok(cap,'shared closing cap exists');
+  const coords=cap.getAttribute('d').match(/-?\d+(?:\.\d+)?/g).map(Number);assert.ok(coords.every(n=>n>=0),'upper cap stays inside scroll clip');
   assert.ok(parseFloat(bottom.querySelector('.setka-menu-body').style.top)<bottom.getBoundingClientRect().top);
   assert.ok(parseFloat(left.querySelector('.setka-menu-body').style.left)>left.getBoundingClientRect().right);
  }finally{app.dom.window.close();}
