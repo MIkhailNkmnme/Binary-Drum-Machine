@@ -75,11 +75,11 @@ test('header is one strip; four-edge dragging persists separately and reopening 
 });
 
 test('popup rules override shared in-flow menu styles and coordinates remain viewport-fixed',()=>{
- const app=boot({edit:{edge:'bottom',index:0},grid:{edge:'left',index:0}});try{const {w}=app;
+ const app=boot({edit:{edge:'bottom',index:0},grid:{edge:'left',index:0},view:{edge:'right',index:4}});try{const {w}=app;
   for(const file of ['../mayatnik/mayatnik-button-standard.css','setka-menu.css']){const s=w.document.createElement('style');s.textContent=fs.readFileSync(path.resolve(__dirname,file),'utf8');w.document.head.append(s);}
-  for(const id of ['edit','grid']){const g=w.document.querySelector('[data-id="'+id+'"]');g.classList.add('gz-open');const list=g.querySelector('.setka-menu-body');Object.defineProperty(list,'scrollHeight',{value:220});}
+  for(const id of ['edit','grid','view']){const g=w.document.querySelector('[data-id="'+id+'"]');g.classList.add('gz-open');const list=g.querySelector('.setka-menu-body');Object.defineProperty(list,'scrollHeight',{value:220});}
   w.setkaMenuRefresh();app.flush();
-  for(const id of ['edit','grid']){const g=w.document.querySelector('[data-id="'+id+'"]'),list=g.querySelector('.setka-menu-body');assert.equal(w.getComputedStyle(list).position,'fixed');assert.equal(w.getComputedStyle(g).height,'24px');assert.equal(list.style.getPropertyPriority('left'),'important');assert.equal(list.style.getPropertyPriority('top'),'important');}
+  for(const id of ['edit','grid','view']){const g=w.document.querySelector('[data-id="'+id+'"]'),list=g.querySelector('.setka-menu-body');assert.equal(w.getComputedStyle(list).position,'fixed');assert.equal(w.getComputedStyle(g).height,'24px');assert.equal(list.style.getPropertyPriority('left'),'important');assert.equal(list.style.getPropertyPriority('top'),'important');}
   const bottom=w.document.querySelector('[data-id="edit"]'),left=w.document.querySelector('[data-id="grid"]');
   // Supply real relative button rectangles to the shared contour builder: its upper
   // cap must remain inside the scrolling popup, rather than being clipped at -10px.
@@ -91,7 +91,9 @@ test('popup rules override shared in-flow menu styles and coordinates remain vie
   const cap=box.querySelector('.may-standard-contours .cap');assert.ok(cap,'shared closing cap exists');
   const coords=cap.getAttribute('d').match(/-?\d+(?:\.\d+)?/g).map(Number);assert.ok(coords.every(n=>n>=0),'upper cap stays inside scroll clip');
   assert.ok(parseFloat(bottom.querySelector('.setka-menu-body').style.top)<bottom.getBoundingClientRect().top);
-  assert.ok(parseFloat(left.querySelector('.setka-menu-body').style.left)>left.getBoundingClientRect().right);
+  assert.equal(parseFloat(left.querySelector('.setka-menu-body').style.left),left.getBoundingClientRect().left);
+  assert.ok(parseFloat(left.querySelector('.setka-menu-body').style.top)>left.getBoundingClientRect().bottom);
+  const right=w.document.querySelector('[data-id="view"]');assert.equal(parseFloat(right.querySelector('.setka-menu-body').style.left),right.getBoundingClientRect().left);assert.ok(parseFloat(right.querySelector('.setka-menu-body').style.top)>right.getBoundingClientRect().bottom);
  }finally{app.dom.window.close();}
 });
 test('proxy mode button renders all four grid modes without modifying rows',()=>{

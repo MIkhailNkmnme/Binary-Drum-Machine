@@ -14,7 +14,6 @@
         const width=120,gap=3,below=innerHeight-h.bottom-8,above=h.top-8;
         let x=h.left,y=h.bottom+gap,max=below;
         if(edge==='bottom'){max=above;y=Math.max(4,h.top-gap-Math.min(body.scrollHeight,max));}
-        if(edge==='left'||edge==='right'){x=edge==='left'?h.right+gap:h.left-width-gap;max=innerHeight-8;y=Math.max(4,Math.min(h.top,innerHeight-Math.min(body.scrollHeight,max)-4));}
         const set=(k,v)=>{const property=k==='maxHeight'?'max-height':k;if(body.style.getPropertyValue(property)!==v)body.style.setProperty(property,v,'important');};
         set('left',Math.max(4,Math.min(x,innerWidth-width-4))+'px');set('top',Math.max(4,y)+'px');set('maxHeight',Math.max(24,max)+'px');
       }
