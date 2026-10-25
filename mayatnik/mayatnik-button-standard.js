@@ -26,17 +26,21 @@
       if(host.classList.contains('gz-ladder'))host.append(s);else host.prepend(s);
     }
     if(host.classList.contains('may-diamond-options')){
-      const r=host.getBoundingClientRect(),w=r.width,h=Math.max(r.height,host.scrollHeight||0),columns=new Map();
-      for(const cell of cells){const b=cell.getBoundingClientRect();if(!b.width||!b.height)continue;const x=Math.round(b.left-r.left+host.scrollLeft),y=Math.round(b.top-r.top+host.scrollTop);if(!columns.has(x))columns.set(x,[]);columns.get(x).push({x,y,w:b.width,h:b.height});}
-      const cols=[...columns.values()].sort((a,b)=>a[0].x-b[0].x);for(const col of cols)col.sort((a,b)=>a.y-b.y);
-      const sig='diamonds:'+JSON.stringify([w,h,cols]);if(s.dataset.sig!==sig){s.dataset.sig=sig;s.replaceChildren();
-        cols.forEach((col,index)=>{const first=col[0],left=index?first.x-3:1,right=index+1<cols.length?first.x+first.w+3:w-1;
-          const R=[[right,13]],L=[[left,13]];
-          col.forEach((b,i)=>{R.push([b.x+b.w+2,b.y+b.h/2]);L.push([b.x-2,b.y+b.h/2]);if(i+1<col.length){const mid=(b.y+b.h+col[i+1].y)/2;R.push([b.x+b.w/2+2,mid]);L.push([b.x+b.w/2-2,mid]);}});
-          R.push([right,h-13],[Math.min(right,w-13),h-1]);L.push([left,h-13],[Math.max(left,13),h-1]);
-          const points=[[Math.max(left,13),1],[Math.min(right,w-13),1],...R,...L.reverse()];shape(s,'polygon',{class:'may-diamond-back',points:points.map(p=>p.join(',')).join(' '),fill:'#0e1116'});
-        });
-        shape(s,'path',{class:'cap',d:`M1 13 L13 1 H${w-13} L${w-1} 13 M1 ${h-13} L13 ${h-1} H${w-13} L${w-1} ${h-13}`});
+      const r=host.getBoundingClientRect(),w=r.width,h=Math.max(r.height,host.scrollHeight||0),diamonds=[];
+      for(const cell of cells){const b=cell.getBoundingClientRect();if(!b.width||!b.height)continue;diamonds.push({x:b.left-r.left+host.scrollLeft+b.width/2,y:b.top-r.top+host.scrollTop+b.height/2,r:b.width/2+2});}
+      const sig='chain:'+JSON.stringify([w,h,diamonds]);if(s.dataset.sig!==sig){s.dataset.sig=sig;s.replaceChildren();
+        if(diamonds.length){
+          // Union envelope of touching expanded diamonds; no rectangular body behind the chain.
+          const levels=[...new Set(diamonds.flatMap(d=>[d.y-d.r,d.y,d.y+d.r]))].sort((a,b)=>a-b),left=[],right=[];
+          for(const y of levels){const active=diamonds.filter(d=>Math.abs(y-d.y)<=d.r+.001);if(!active.length)continue;
+            left.push([Math.min(...active.map(d=>d.x-d.r+Math.abs(y-d.y))),y]);right.push([Math.max(...active.map(d=>d.x+d.r-Math.abs(y-d.y))),y]);}
+          shape(s,'polygon',{class:'may-diamond-back',points:[...right,...left.reverse()].map(p=>p.join(',')).join(' '),fill:'#0e1116'});
+          const last=diamonds.reduce((a,b)=>a.y>b.y?a:b),bottom=last.y+last.r,lo=Math.max(1,Math.min(...diamonds.map(d=>d.x-d.r))),hi=Math.min(w-1,Math.max(...diamonds.map(d=>d.x+d.r))),end=Math.min(h-1,bottom+11);
+          shape(s,'polygon',{class:'may-diamond-back',points:`${last.x},${bottom-2} ${hi},${end-12} ${hi-12},${end} ${lo+12},${end} ${lo},${end-12}`,fill:'#0e1116'});
+          shape(s,'path',{class:'cap',d:`M${lo} ${end-12} L${lo+12} ${end} H${hi-12} L${hi} ${end-12}`});
+        }
+        shape(s,'polygon',{class:'may-diamond-back',points:`1,13 13,1 ${w-13},1 ${w-1},13 ${w-1},24 1,24`,fill:'#0e1116'});
+        shape(s,'path',{class:'cap',d:`M1 13 L13 1 H${w-13} L${w-1} 13`});
       }
       return false;
     }

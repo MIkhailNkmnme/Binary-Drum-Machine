@@ -84,6 +84,17 @@
       const d=s.widths[i]-(through?0:.5);
       return {x:x-d*dx,y:y-d*dy,dx,dy,n:2*s.widths[i]+(through?1:0)};
     }
+    // Visit only actual mirrored pairs; a bit lying on the axis is not a pair.
+    // Works for full-grid and checkerboard runs in every orientation.
+    function eachPair(s,anchor,visit) {
+      for(let i=0;i<s.widths.length;i++){
+        const a=span(s,i,anchor);
+        for(let j=0;j<s.widths[i];j++){
+          const k=a.n-1-j;
+          visit(a.x+j*a.dx,a.y+j*a.dy,a.x+k*a.dx,a.y+k*a.dy);
+        }
+      }
+    }
     // Range additions on each normal slice avoid repainting every bit for every
     // overlapping axis. Overlaps blend their axis colours instead of hiding bits.
     function highlights(field,segs,anchor=0) {
@@ -155,7 +166,7 @@
       }
       return new Float32Array(packed);
     }
-    return {find,point,span,highlights,triangles};
+    return {find,point,span,eachPair,highlights,triangles};
   }
   const api=createSymmetry();
   api.createWorker=()=>{

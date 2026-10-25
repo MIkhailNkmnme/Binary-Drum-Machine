@@ -30,6 +30,21 @@ function reference(f,o={}){
   }return result;
 }
 const normalize=segs=>segs.map(({dir,p,axis,t0,t1,widths})=>JSON.stringify([dir,p,axis,t0,t1,widths])).sort();
+test('selected-axis pairs reflect exactly in every direction and lattice, excluding axis bits',()=>{
+  const W=9,H=9,anchor=2,f={W,H,val:new Int8Array(W*H).fill(1)};
+  const segs=S.find(f,{anchor,directions:['v','h','d','u'],plainDirections:['v','h','d','u'],minBits:1,minRows:1});
+  for(const dir of ['v','h','d','u'])for(const p of [-1,0,1]){
+    const runs=segs.filter(s=>s.dir===dir&&s.p===p);assert.ok(runs.length,dir+'/'+p);
+    for(const s of runs){let count=0;S.eachPair(s,anchor,(x,y,mx,my)=>{
+      count++;assert.ok([x,y,mx,my].every(Number.isInteger));
+      assert.ok(x>=0&&x<W&&mx>=0&&mx<W&&y>=0&&y<H&&my>=0&&my<H);
+      assert.ok(x!==mx||y!==my,'central bit is not a mirrored pair');
+      const expected=dir==='v'?[2*s.axis-x,y]:dir==='h'?[x,2*s.axis-y]:dir==='d'?[my+s.axis,mx-s.axis]:[s.axis-my,s.axis-mx];
+      assert.deepEqual(dir==='v'||dir==='h'?[mx,my]:[x,y],expected);
+      if(p>=0){assert.equal(mod(x-y-anchor),p);assert.equal(mod(mx-my-anchor),p);}
+    });assert.equal(count,s.widths.reduce((a,b)=>a+b,0));}
+  }
+});
 test('all four orientations and both lattices equal brute-force reflection',()=>{
   let seed=7;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed;};
   for(let trial=0;trial<24;trial++){

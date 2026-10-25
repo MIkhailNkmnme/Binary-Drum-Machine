@@ -1303,7 +1303,7 @@
     if(window.MayatnikMenuOptions){
       const g=listLayout(owner,list.querySelectorAll(':scope > .gz-hx').length);setListSide(owner,g.side);
       list.dataset.optionColumns=String(g.cols);window.MayatnikMenuOptions.decorate(list,owner);
-      Object.assign(list.style,{width:g.width+'px',gridTemplateRows:`repeat(${g.rows},48px)`,gridAutoColumns:'48px',top:g.top+'px',left:g.left+'px',maxHeight:g.maxHeight+'px',maxWidth:Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px'});
+      Object.assign(list.style,{width:g.width+'px',gridTemplateRows:g.gridTemplateRows,gridTemplateColumns:g.gridTemplateColumns,gridAutoColumns:'48px',top:g.top+'px',left:g.left+'px',maxHeight:g.maxHeight+'px',maxWidth:Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px'});
       list.style.setProperty('width',g.width+'px','important');list.style.setProperty('max-width',Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px','important');
       list.style.setProperty('overflow-y',g.scroll?'auto':'visible','important');list.style.setProperty('overflow-x',g.scroll?'hidden':'visible','important');
     }else{
@@ -1452,6 +1452,8 @@
   }
   // v0.437: цельная зубчатая подложка включает и нижние ползунки; скрытие не меняет раскладку и закрепы.
   const groupSelector = '#paintTools > .pt-g, #paintTools > .gz-group, #mayatnikRail .gz-group';
+  const groupReveal=window.ZerkGroupReveal?.init(document,{groups:groupSelector});
+  addEventListener('pagehide',()=>groupReveal?.disconnect(),{once:true});
   const groupRanks = new WeakMap(), groupOpen = new WeakMap(); let groupRank = 0, groupFrame = 0, groupHover=null;
   const overlaps = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
   function groupBackdrop(group, open) {

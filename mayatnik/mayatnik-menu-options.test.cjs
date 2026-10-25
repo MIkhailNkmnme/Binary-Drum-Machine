@@ -1,31 +1,18 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {layout,slot}=require('./mayatnik-menu-options.js');
-test('predicted side respects screen and template-panel edge, including long lists',()=>{
- for(const right of [320,800,1400])for(const left of [4,right-124])for(const count of [1,5,8,25,100]){
-  const column={left,right:left+120,width:120},owner={...column,top:560},g=layout(count,owner,column,right,600);
-  assert.equal(g.side,left===4?'right':'left');assert.ok(g.left>=4);assert.ok(g.left+g.width<=right-4);assert.ok(g.top>=14);assert.ok(g.top+Math.min(g.rows,Math.floor((600-66)/50))*50-2+40<=586);assert.ok(g.rows*g.cols>=count);
+const {layout,slot,geometry,SIZE}=require('./mayatnik-menu-options.js');
+test('paired chains alternate left/right while progressing down by26; links have disjoint diamond hit regions',()=>{
+ assert.deepEqual(Array.from({length:5},(_,i)=>slot(i)),[{row:1,column:1},{row:2,column:2},{row:3,column:1},{row:4,column:2},{row:5,column:1}]);
+ for(let count=1;count<=100;count++){const g=geometry(count,2),cells=Array.from({length:count},(_,i)=>({x:(slot(i,g.cols).column-1)*26,y:i*g.step}));assert.equal(g.chainHeight,cells.at(-1).y+48);assert.equal(g.chainWidth,count>1?74:48);for(let i=0;i<count;i++)for(let j=i+1;j<count;j++)assert.ok(Math.abs(cells[i].x-cells[j].x)+Math.abs(cells[i].y-cells[j].y)>SIZE);}
+});
+test('popup stays bounded at screen/library edges and scrolls by actual chain height',()=>{
+ for(const right of [80,110,128,320,800,1400])for(const left of [4,Math.max(4,right-124)])for(const count of [1,2,5,8,25,100]){
+  const column={left,right:left+120,width:120},g=layout(count,{...column,top:560},column,right,600);assert.ok(g.left>=4);assert.ok(g.left+g.width<=right-4);assert.ok(g.top>=14);assert.ok(g.top+Math.min(g.chainHeight+40,g.maxHeight)<=586);assert.equal(g.scroll,g.chainHeight+40>g.maxHeight);assert.ok(g.chainWidth+4<=g.width);assert.equal(g.rows,count);
  }
  const col={left:550,right:670,width:120};assert.equal(layout(5,{top:50},col,1000,800).side,'right');assert.equal(layout(5,{top:50},col,700,800).side,'left');
 });
-
-test('a very wide library leaves a bounded single-column dropdown without repeated cells',()=>{
- for(const right of [80,110,128])for(const count of [3,5,25]){
-  const column={left:4,right:124,width:120},g=layout(count,{top:50},column,right,300),cells=Array.from({length:count},(_,i)=>slot(i,g.cols));
-  assert.ok(g.left>=4);assert.ok(g.left+g.width<=right-4);assert.equal(g.cols,right<128?1:2);
-  assert.equal(new Set(cells.map(c=>c.row+':'+c.column)).size,count);assert.equal(g.rows,Math.max(...cells.map(c=>c.row)));
- }
+test('narrow available space falls back to one centered chain; all options retain unique cells',()=>{
+ for(const right of [80,85,110,128])for(const count of [3,5,25]){const g=layout(count,{top:50},{left:4,right:124,width:120},right,300),cells=Array.from({length:count},(_,i)=>slot(i,g.cols));assert.equal(g.cols,right<86||(right<102&&count>6)?1:2);assert.equal(g.step,g.cols===1?50:26);assert.equal(new Set(cells.map(c=>c.row+':'+c.column)).size,count);assert.equal(g.rows,Math.max(...cells.map(c=>c.row)));assert.ok(g.chainWidth<=g.width-4);}
 });
+test('chain CSS uses overlapping grid boxes with clipped diamond hit areas and no rectangular list body',()=>{const fs=require('node:fs'),css=fs.readFileSync(require('node:path').join(__dirname,'mayatnik-button-standard.css'),'utf8');assert.match(css,/may-diamond-options\{[^}]*justify-content:center[^}]*gap:0!important[^}]*background:transparent!important/);assert.match(css,/may-option-diamond\{[^}]*clip-path:polygon\(50% 0,100% 50%,50% 100%,0 50%\)!important/);});
 
-test('two options right, two left, then down: every count stays inside two columns',()=>{
- assert.deepEqual(Array.from({length:9},(_,i)=>slot(i)),[
-  {row:1,column:2},{row:2,column:2},{row:1,column:1},{row:2,column:1},
-  {row:3,column:2},{row:4,column:2},{row:3,column:1},{row:4,column:1},{row:5,column:2}
- ]);
- const column={left:4,right:124,width:120};
- for(let count=1;count<=100;count++){
-  const g=layout(count,{top:50},column,320,250),cells=Array.from({length:count},(_,i)=>slot(i,g.cols));
-  assert.ok(g.cols<=2);assert.equal(g.width,120);assert.equal(g.rows,Math.max(...cells.map(c=>c.row)));
-  assert.equal(new Set(cells.map(c=>c.row+':'+c.column)).size,count);
-  assert.ok(cells.every(c=>c.column<=g.cols));if(count>8)assert.equal(g.scroll,true);
- }
-});
+test('decoration keeps option order, selected state, keyboard click, and hover caption with the centered grid',()=>{const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),fs=require('node:fs'),path=require('node:path');const dom=new JSDOM('<body><button id="owner"><span class="may-list-label"></span></button><div id="list"><button class="gz-hx"><span class="gz-nm">One</span></button><button class="gz-hx gz-on"><span class="gz-nm">Two</span></button><button class="gz-hx"><span class="gz-nm">Three</span></button></div></body>',{runScripts:'outside-only'});try{const w=dom.window,owner=w.document.getElementById('owner'),list=w.document.getElementById('list');owner.dataset.listTitle='Выбор';owner.gzList={options:()=>[{name:'Первый'},{name:'Второй',on:true},{name:'Третий'}]};let clicks=0;list.children[0].onclick=()=>clicks++;w.eval(fs.readFileSync(path.join(__dirname,'mayatnik-menu-options.js'),'utf8'));w.MayatnikMenuOptions.decorate(list,owner);assert.equal(list.style.gridTemplateColumns,'26px 48px');assert.equal(list.style.gridTemplateRows,'repeat(2,26px) 48px');assert.deepEqual([...list.querySelectorAll('.gz-hx')].map(n=>[n.style.gridRow,n.style.gridColumn]),[['1','1'],['2','2'],['3','1']]);assert.ok(list.children[1].classList.contains('gz-on'));assert.equal(owner.querySelector('.may-list-label').textContent,'Второй');list.children[2].dispatchEvent(new w.Event('pointerenter'));assert.equal(owner.querySelector('.may-list-label').textContent,'Третий');list.children[2].dispatchEvent(new w.Event('pointerleave'));assert.equal(owner.querySelector('.may-list-label').textContent,'Второй');list.children[0].dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));assert.equal(clicks,1);w.MayatnikMenuOptions.decorate(list,owner);list.children[0].dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));assert.equal(clicks,2);}finally{dom.window.close();}});
