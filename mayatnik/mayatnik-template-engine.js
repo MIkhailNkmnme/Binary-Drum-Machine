@@ -6,13 +6,15 @@
     function emit(){for(const fn of listeners)fn({...state});}
     function patternsFor(entry){let patterns=patternCache.get(entry.shape);if(!patterns){patterns=[];for(const part of entry.shape.parts){const p=root.MayatnikTemplateMatcher.compile(part,entry.shape.rk||1);if(!patterns.some(q=>q.width===p.width&&q.height===p.height&&q.data.every((v,i)=>v===p.data[i])))patterns.push(p);}patternCache.set(entry.shape,patterns);}return patterns;}
     async function filter(items,run){
-      visibleIds=new Set();state.filtering=true;emit();
-      try{const field=await host.field();if(run!==filterSerial)return;
-        for(const entry of items){if(run!==filterSerial||!host.current(field))return;
+      // Placed figures are already known to exist; show them before a full-field scan.
+      visibleIds=new Set(items.filter(entry=>host.visibleInstances?.(entry.id)).map(entry=>entry.id));state.filtering=true;emit();
+      const missing=items.filter(entry=>!visibleIds.has(entry.id));
+      try{if(!missing.length)return;const field=await host.field();if(run!==filterSerial)return;
+        for(const entry of missing){if(run!==filterSerial)return;if(!host.current(field)){scopeKey=null;return;}
           const exists=host.visibleInstances?.(entry.id)||((await root.MayatnikTemplateMatcher.find(field,patternsFor(entry),{existsOnly:true,cancelled:()=>run!==filterSerial||!host.current(field)})).count>0);
           if(exists){visibleIds.add(entry.id);emit();}
         }
-      }catch(e){if(run===filterSerial&&e.name!=='AbortError')state.message=e.message;}
+      }catch(e){if(run===filterSerial){if(e.name==='AbortError')scopeKey=null;else state.message=e.message;}}
       finally{if(run===filterSerial){state.filtering=false;emit();}}
     }
     function refresh(){const items=host.entries(),key=host.scope?.(),active=host.filterActive?.()!==false;
@@ -57,6 +59,8 @@
       getState:()=>({...state}),subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
       recordExternal:(before,after,apply)=>host.recordExternal(before,after,apply),
       getSelection:()=>selection,clear,refresh,
+      savedMessage(id,message){if(state.selectedId===id&&!state.busy){state.message=message;emit();}},
+      saved(id,message){serial++;selection=null;state={...state,selectedId:id,count:0,busy:false,message};host.redrawSelection?.();scopeKey=null;refresh();emit();},
       changed(){if(selection&&!host.current(selection.field))clear('Поле изменилось — выберите шаблон снова');else emit();}
     };
   }

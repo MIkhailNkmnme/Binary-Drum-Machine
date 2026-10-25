@@ -2,10 +2,36 @@
 (function(root){
   'use strict';
   if(!root.document)return;
-  const doc=root.document,OPEN_KEY='mayatnik-template-panel-open';
+  const doc=root.document,OPEN_KEY='mayatnik-template-panel-open',WIDTH_KEY='mayatnik-template-panel-width';
   let panel,grid,crumbs,status,controls,engine,unsubscribe,store,current='',open=false,scheduled=false,libraryKey='',renderKey='',dragged=null;
   const cards=new Map(),previews=new Map();let observer;
   const identities=new WeakMap();let identityCounter=0;
+  let resizeHandle,widthPreference=null,resizeDrag=null,widthFrame=0,saveButton;
+  function syncSave(){if(saveButton)saveButton.disabled=!doc.getElementById('bTemplateSave')||doc.getElementById('bTemplateSave').disabled;}
+  const widthBounds=()=>{const viewport=Math.max(1,root.innerWidth||doc.documentElement.clientWidth||800),max=Math.max(1,viewport-58);return {viewport,min:Math.min(240,Math.floor(viewport/2),max),max};};
+  function panelWidth(){const {viewport,min,max}=widthBounds();return Math.max(min,Math.min(max,widthPreference??viewport/2));}
+  function applyWidth(notify=false){
+    const width=Math.round(panelWidth()),{min,max}=widthBounds();doc.body.style.setProperty('--may-template-panel-width',width+'px');
+    if(resizeHandle){resizeHandle.style.right=width+'px';resizeHandle.setAttribute('aria-valuemin',String(min));resizeHandle.setAttribute('aria-valuemax',String(max));resizeHandle.setAttribute('aria-valuenow',String(width));resizeHandle.setAttribute('aria-valuetext',width+' пикселей');}
+    if(notify&&!widthFrame)widthFrame=root.requestAnimationFrame(()=>{widthFrame=0;root.dispatchEvent(new Event('resize'));});
+  }
+  function saveWidth(){try{root.localStorage.setItem(WIDTH_KEY,String(widthPreference));}catch(_){} }
+  function finishResize(cancel=false){if(!resizeDrag)return;const drag=resizeDrag;resizeDrag=null;
+    if(cancel)widthPreference=drag.preference;else saveWidth();
+    try{resizeHandle.releasePointerCapture(drag.id);}catch(_){}doc.body.classList.remove('may-template-panel-resizing');applyWidth(true);
+  }
+  function makeResizer(storage){
+    try{const saved=Number(storage?.getItem(WIDTH_KEY));if(Number.isFinite(saved)&&saved>0)widthPreference=saved;}catch(_){}
+    resizeHandle=doc.createElement('div');resizeHandle.className='mtp-resize';resizeHandle.hidden=true;resizeHandle.tabIndex=0;resizeHandle.setAttribute('role','separator');resizeHandle.setAttribute('aria-orientation','vertical');resizeHandle.setAttribute('aria-controls',panel.id);resizeHandle.setAttribute('aria-label','Ширина панели шаблонов');resizeHandle.title='Тянуть левую границу · ← шире · → уже · Home минимум · End максимум';
+    resizeHandle.addEventListener('pointerdown',e=>{if(e.button!==0||resizeDrag)return;e.preventDefault();e.stopPropagation();resizeDrag={id:e.pointerId,x:e.clientX,width:panelWidth(),preference:widthPreference};resizeHandle.focus({preventScroll:true});try{resizeHandle.setPointerCapture(e.pointerId);}catch(_){}doc.body.classList.add('may-template-panel-resizing');});
+    resizeHandle.addEventListener('pointermove',e=>{if(!resizeDrag||resizeDrag.id!==e.pointerId)return;e.preventDefault();const {min,max}=widthBounds();widthPreference=Math.max(min,Math.min(max,resizeDrag.width+resizeDrag.x-e.clientX));applyWidth(true);});
+    resizeHandle.addEventListener('pointerup',e=>{if(resizeDrag?.id===e.pointerId)finishResize();});
+    for(const type of ['pointercancel','lostpointercapture'])resizeHandle.addEventListener(type,e=>{if(resizeDrag?.id===e.pointerId)finishResize(true);});
+    resizeHandle.addEventListener('keydown',e=>{if(e.key==='Escape'&&resizeDrag){e.preventDefault();finishResize(true);return;}const {min,max}=widthBounds(),step=e.shiftKey?40:10;
+      const value=e.key==='ArrowLeft'?panelWidth()+step:e.key==='ArrowRight'?panelWidth()-step:e.key==='Home'?min:e.key==='End'?max:null;
+      if(value===null)return;e.preventDefault();e.stopPropagation();widthPreference=Math.max(min,Math.min(max,value));applyWidth(true);saveWidth();});
+    root.addEventListener('blur',()=>finishResize(true));root.addEventListener('resize',()=>applyWidth());doc.body.append(resizeHandle);applyWidth();
+  }
   function token(value){if(value&&typeof value==='object'){if(!identities.has(value))identities.set(value,++identityCounter);return identities.get(value);}return String(value);}
   function organise(run){const before=store.snapshot(),result=run(),after=store.snapshot();if(JSON.stringify(before)!==JSON.stringify(after))engine?.recordExternal?.(before,after,value=>{store.restore(value);renderKey='';render();});render();return result;}
   function button(symbol,title,run,className='mtp-command'){
@@ -24,13 +50,15 @@
     const actions=doc.createElement('div');actions.className='mtp-selection';actions.dataset.noMini='';
     const colour=doc.createElement('input');colour.type='color';colour.value='#ff7f27';colour.title='Цвет всех найденных вхождений';colour.setAttribute('aria-label',colour.title);
     colour.addEventListener('change',async()=>{try{await engine?.colour(colour.value);schedule();}catch(e){reportError(e);}});
-    actions.append(colour,button('×▧','Удалить все найденные вхождения с поля',async()=>{try{await engine?.removeMatches();schedule();}catch(e){reportError(e);}}));
+    saveButton=button('💾','Сохранить выбранную фигуру в библиотеку',()=>{const source=doc.getElementById('bTemplateSave');if(source&&!source.disabled)source.click();});saveButton.dataset.librarySave='';
+    actions.append(saveButton,colour,button('×▧','Удалить все найденные вхождения с поля',async()=>{try{await engine?.removeMatches();schedule();}catch(e){reportError(e);}}));
+    const saveSource=doc.getElementById('bTemplateSave');if(saveSource&&root.MutationObserver)new root.MutationObserver(syncSave).observe(saveSource,{attributes:true,attributeFilter:['disabled']});syncSave();
     status=doc.createElement('output');status.className='mtp-status';status.setAttribute('aria-live','polite');
     grid=doc.createElement('div');grid.className='mtp-grid';grid.dataset.noMini='';grid.setAttribute('aria-label','Шаблоны и папки — перетащите для группировки');
     grid.addEventListener('dragover',e=>{if(dragged){e.preventDefault();e.dataTransfer.dropEffect='move';}});
     grid.addEventListener('drop',e=>{if(e.target===grid&&dragged){e.preventDefault();organise(()=>store.move(dragged.kind,dragged.id,current));dragged=null;}});
     const detail=doc.createElement('details');detail.className='mtp-controls';const summary=doc.createElement('summary');summary.dataset.noMini='';summary.textContent='⋯';summary.title='Прежние команды шаблонов';summary.setAttribute('aria-label',summary.title);controls=doc.createElement('div');controls.className='mtp-live-controls';detail.append(summary,controls);
-    panel.append(head,crumbs,actions,status,grid,detail);doc.body.append(panel);
+    panel.append(head,crumbs,actions,status,grid,detail);doc.body.append(panel);makeResizer(storage);
     if(root.IntersectionObserver)observer=new root.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const card=entry.target;observer.unobserve(card);drawPreview(card);}}, {root:panel,rootMargin:'160px'});
     panel.addEventListener('dragend',()=>{dragged=null;panel.querySelectorAll('.mtp-drop').forEach(n=>n.classList.remove('mtp-drop'));});
     panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);doc.getElementById('bTemplatePanel')?.focus();}});
@@ -107,16 +135,18 @@
   function syncState(){
     if(!engine||!panel)return;const state=engine.getState();for(const [id,card]of cards){const selected=id===state.selectedId;card.classList.toggle('mtp-selected',selected);card.querySelector('.mtp-preview').setAttribute('aria-pressed',String(selected));}
     panel.setAttribute('aria-busy',String(!!state.busy||!!state.filtering));message((store.persistenceError?'Папки не сохранены: хранилище браузера недоступно. ':'')+(state.filtering?'Проверка шаблонов в текущих строках…':state.message||(state.selectedId?'Найдено: '+(state.count||0):'Выберите шаблон — выделятся все его вхождения на поле.')));
-    for(const n of panel.querySelectorAll('.mtp-selection button,.mtp-selection input'))n.disabled=!state.selectedId||!!state.busy;
+    for(const n of panel.querySelectorAll('.mtp-selection button:not([data-library-save]),.mtp-selection input'))n.disabled=!state.selectedId||!!state.busy;syncSave();
   }
   function schedule(){if(!open||scheduled)return;scheduled=true;root.requestAnimationFrame(()=>{scheduled=false;render();});}
   function bind(api){if(!api||api===engine)return;unsubscribe?.();engine=api;unsubscribe=engine.subscribe(schedule);schedule();}
   function setOpen(value,persist=true){
     if(!panel){make();if(!panel)return;}const next=!!value,changed=next!==!panel.hidden;open=next;panel.hidden=!open;doc.body.classList.toggle('may-template-panel-open',open);
+    if(!open)finishResize(true);resizeHandle.hidden=!open;applyWidth();
     if(persist)try{root.localStorage.setItem(OPEN_KEY,open?'1':'0');}catch(_){}
     engine?.refresh();if(open)render();if(changed){root.dispatchEvent(new CustomEvent('mayatnik-template-panel-change',{detail:{open}}));root.dispatchEvent(new Event('resize'));}
   }
   root.MayatnikTemplatePanel={toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,attachControls(element){make();if(element&&element!==controls&&!controls.contains(element)){element.classList.add('mtp-source-controls');controls.append(element);}}};
   root.addEventListener('may-template-library-ready',()=>{make();bind(root.mayTemplateLibrary);});
+  root.addEventListener('may-template-saved',e=>{make();bind(root.mayTemplateLibrary);if(!engine)return;store.reconcile(engine.allIds());const id=String(e.detail?.id||'');current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';renderKey='';setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});});
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',make,{once:true});else make();
 })(window);
