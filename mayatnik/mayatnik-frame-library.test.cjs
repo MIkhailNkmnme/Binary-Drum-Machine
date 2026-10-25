@@ -46,3 +46,12 @@ test('subscriptions show operation state, cannot break storage commits, browser 
  const f=fixture(),events=[];f.api.subscribe(s=>events.push(s));f.api.subscribe(()=>{throw Error('view');});await f.api.ready;await f.api.save();assert.ok(events.some(s=>s.busy));assert.equal(events.at(-1).busy,false);assert.equal(f.api.list().length,1);
  const ctx=vm.createContext({});vm.runInContext(fs.readFileSync(__dirname+'/mayatnik-frame-library.js','utf8'),ctx);assert.equal(typeof ctx.MayatnikFrameLibrary.create,'function');
 });
+
+test('old frame records remain Views while whole Frames use an independent namespace',async()=>{
+ const f=fixture(),old=await f.api.save('Legacy view'),views=L.create({...f.host,kind:'view'}),frames=L.create({...f.host,namespace:'whole-frames',kind:'frame'});
+ await Promise.all([views.ready,frames.ready]);assert.equal(views.list()[0].id,old);assert.deepEqual(frames.list(),[]);assert.match(views.getState().message,/видов/);
+ const before=structuredClone(f.map.get(L.INDEX_KEY)),whole=await frames.save('Whole');assert.deepEqual(f.map.get(L.INDEX_KEY),before);assert.ok(f.map.has('whole-frames-library-item:'+whole));
+ await frames.rename(whole,'Entire');await views.remove(old);assert.equal(frames.list()[0].name,'Entire');assert.ok(f.map.get('whole-frames-library-item:'+whole));
+ const again=L.create({...f.host,namespace:'whole-frames'});await again.ready;assert.equal(again.list()[0].id,whole);await again.open(whole);assert.equal(f.restores.length,1);
+ assert.throws(()=>L.create({...f.host,namespace:'bad/key'}),/namespace/);
+});

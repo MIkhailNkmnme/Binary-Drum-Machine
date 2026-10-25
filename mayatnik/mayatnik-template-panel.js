@@ -7,29 +7,35 @@
   const cards=new Map(),previews=new Map(),metricsCache=new WeakMap();let observer;
   const identities=new WeakMap();let identityCounter=0;
   const metricTasks=new Map();let metricTimer=0,metricActive=null;
-  let activeTab='templates',templatePane,framePane,frameGrid,frameStatus,frameSave,frameApi,frameUnsubscribe,framePending=false,frameError='',folderButton;
+  let activeTab='templates',templatePane,folderButton;
+  const captureLibraries=new Map([
+    ['views',{key:'views',title:'Виды',word:'вид',genitive:'вида',plural:'видов',scope:'текущую видимую область поля',apiName:'mayViewLibrary'}],
+    ['frames',{key:'frames',title:'Кадры',word:'кадр',genitive:'кадра',plural:'кадров',scope:'весь маятник целиком',apiName:'mayFrameLibrary'}]
+  ]);
   const tabButtons=new Map();
-  function selectTab(tab,persist=true){activeTab=tab==='frames'?'frames':'templates';if(!panel)return;
-    templatePane.hidden=activeTab!=='templates';framePane.hidden=activeTab!=='frames';folderButton.hidden=activeTab!=='templates';
+  function selectTab(tab,persist=true){activeTab=captureLibraries.has(tab)?tab:'templates';if(!panel)return;
+    templatePane.hidden=activeTab!=='templates';for(const library of captureLibraries.values())library.pane.hidden=activeTab!==library.key;folderButton.hidden=activeTab!=='templates';
     for(const [key,b]of tabButtons){b.setAttribute('aria-selected',String(key===activeTab));b.setAttribute('aria-pressed',String(key===activeTab));b.tabIndex=key===activeTab?0:-1;}
     if(persist)try{root.localStorage.setItem(TAB_KEY,activeTab);}catch(_){}
-    if(activeTab==='frames'){metricTasks.clear();metricActive=null;renderFrames();}else{engine?.refresh();renderKey='';render();}
+    if(activeTab!=='templates'){metricTasks.clear();metricActive=null;renderCapture(captureLibraries.get(activeTab));}else{engine?.refresh();renderKey='';render();}
   }
-  async function frameAction(method,...args){if(!frameApi||framePending||frameApi.getState().busy)return;framePending=true;frameError='';renderFrames();
-    try{await frameApi[method](...args);}catch(e){frameError=e?.message||'Не удалось выполнить действие с кадром';}finally{framePending=false;renderFrames();}}
-  function renderFrames(){if(!framePane||!open||activeTab!=='frames')return;const state=frameApi?.getState()||{},busy=framePending||!!state.busy,list=frameApi?.list()||[];
-    frameSave.disabled=!frameApi||busy;framePane.setAttribute('aria-busy',String(busy));panel.setAttribute('aria-busy',String(busy));frameStatus.textContent=frameError||state.message||(!frameApi?'Библиотека кадров загружается…':'Сохраните текущий кадр или откройте сохранённый.');
+  async function captureAction(library,method,...args){if(!library.api||library.pending||library.api.getState().busy)return;library.pending=true;library.error='';renderCapture(library);
+    try{await library.api[method](...args);}catch(e){library.error=e?.message||'Не удалось выполнить действие';}finally{library.pending=false;renderCapture(library);}}
+  function renderCapture(library){if(!library?.pane||!open||activeTab!==library.key)return;const state=library.api?.getState()||{},busy=library.pending||!!state.busy,list=library.api?.list()||[];
+    library.save.disabled=!library.api||busy;library.pane.setAttribute('aria-busy',String(busy));panel.setAttribute('aria-busy',String(busy));library.status.textContent=library.error||state.message||(!library.api?'Библиотека '+library.plural+' загружается…':'Сохранить '+library.word+': '+library.scope+'.');
     const fragment=doc.createDocumentFragment();for(const entry of list){
-      const card=doc.createElement('article');card.className='mtp-card mtp-frame-card';card.dataset.frameId=entry.id;card.classList.toggle('mtp-selected',entry.id===state.selectedId);
-      const choose=button('','Открыть кадр '+entry.name,()=>frameAction('open',entry.id),'mtp-preview');choose.disabled=busy;choose.setAttribute('aria-pressed',String(entry.id===state.selectedId));
+      const card=doc.createElement('article');card.className='mtp-card mtp-capture-card';card.dataset[library.key==='views'?'viewId':'frameId']=entry.id;card.classList.toggle('mtp-selected',entry.id===state.selectedId);
+      const choose=button('','Открыть '+library.word+' '+entry.name,()=>captureAction(library,'open',entry.id),'mtp-preview');choose.disabled=busy;choose.setAttribute('aria-pressed',String(entry.id===state.selectedId));
       const image=doc.createElement('img');image.className='mtp-image';image.alt='';image.draggable=false;if(entry.thumbnail)image.src=entry.thumbnail;const name=doc.createElement('span');name.className='mtp-name';name.dataset.userLabel='';name.textContent=entry.name;choose.append(image,name);
-      const rename=()=>{if(busy)return;const next=root.prompt('Название кадра',entry.name);if(next?.trim())frameAction('rename',entry.id,next.trim());};choose.addEventListener('contextmenu',e=>{e.preventDefault();rename();});
-      const actions=doc.createElement('div');actions.className='mtp-card-actions mtp-frame-actions';actions.append(button('✎','Переименовать кадр',rename),button('↓','Скачать кадр',()=>frameAction('download',entry.id)),button('×','Удалить сохранённый кадр',()=>{if(root.confirm('Удалить сохранённый кадр «'+entry.name+'» из библиотеки?'))frameAction('remove',entry.id);}));
+      const rename=()=>{if(busy)return;const next=root.prompt('Название '+library.genitive,entry.name);if(next?.trim())captureAction(library,'rename',entry.id,next.trim());};choose.addEventListener('contextmenu',e=>{e.preventDefault();rename();});
+      const actions=doc.createElement('div');actions.className='mtp-card-actions mtp-frame-actions';actions.append(button('✎','Переименовать '+library.word,rename),button('↓','Скачать '+library.word,()=>captureAction(library,'download',entry.id)),button('×','Удалить сохранённый '+library.word,()=>{if(root.confirm('Удалить сохранённый '+library.word+' «'+entry.name+'» из библиотеки?'))captureAction(library,'remove',entry.id);}));
       for(const b of actions.querySelectorAll('button'))b.disabled=busy;card.append(choose,actions);fragment.append(card);
     }
-    if(!list.length){const empty=doc.createElement('p');empty.className='mtp-empty';empty.textContent='Кадров пока нет. «Сохранить кадр» добавит текущий кадр в эту библиотеку.';fragment.append(empty);}frameGrid.replaceChildren(fragment);
+    if(!list.length){const empty=doc.createElement('p');empty.className='mtp-empty';empty.textContent='Сохранённых '+library.plural+' пока нет. «Сохранить '+library.word+'» добавит '+library.scope+'.';fragment.append(empty);}library.grid.replaceChildren(fragment);
   }
-  function bindFrames(api){if(!api||api===frameApi)return;frameUnsubscribe?.();frameApi=api;frameUnsubscribe=api.subscribe(()=>renderFrames());Promise.resolve(api.ready).then(()=>{if(api===frameApi)renderFrames();},e=>{frameError=e?.message||'Не удалось загрузить кадры';renderFrames();});renderFrames();}
+  function bindCapture(library,api){if(!api||api===library.api)return;library.unsubscribe?.();library.api=api;library.unsubscribe=api.subscribe(()=>renderCapture(library));Promise.resolve(api.ready).then(()=>{if(api===library.api)renderCapture(library);},e=>{library.error=e?.message||'Не удалось загрузить библиотеку';renderCapture(library);});renderCapture(library);}
+  function capturePane(library){const pane=doc.createElement('section');pane.className='mtp-pane '+(library.key==='views'?'mtp-view-pane':'mtp-frame-pane');pane.id=library.key==='views'?'mayViewPane':'mayFramePane';pane.setAttribute('role','tabpanel');
+    const save=button('Сохранить '+library.word,'Сохранить '+library.scope+' в библиотеку '+library.plural,()=>captureAction(library,'save'));save.dataset[library.key==='views'?'viewSave':'frameSave']='';const output=doc.createElement('output');output.className='mtp-status';output.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-grid';pane.append(save,output,list);Object.assign(library,{pane,save,status:output,grid:list});return pane;}
   let resizeHandle,widthPreference=null,resizeDrag=null,widthFrame=0,saveButton;
   function syncSave(){if(saveButton)saveButton.disabled=!doc.getElementById('bTemplateSave')||doc.getElementById('bTemplateSave').disabled;}
   const widthBounds=()=>{const viewport=Math.max(1,root.innerWidth||doc.documentElement.clientWidth||800),max=Math.max(1,viewport-58);return {viewport,min:Math.min(240,Math.floor(viewport/2),max),max};};
@@ -67,13 +73,13 @@
   function make(){
     if(panel)return;let storage;try{storage=root.localStorage;}catch(_){}
     store=root.MayatnikTemplateFolders.create(storage);
-    panel=doc.createElement('aside');panel.id='mayatnikTemplatePanel';panel.hidden=true;panel.setAttribute('aria-label','Библиотека шаблонов и кадров');
+    panel=doc.createElement('aside');panel.id='mayatnikTemplatePanel';panel.hidden=true;panel.setAttribute('aria-label','Библиотека шаблонов, видов и кадров');
     const head=doc.createElement('div');head.className='mtp-heading';const title=doc.createElement('strong');title.textContent='Библиотека';
     folderButton=button('＋▣','Создать папку в текущей папке',()=>{const name=root.prompt('Название новой папки','Папка');if(name)organise(()=>store.addFolder(name,current));});head.append(title,folderButton,button('×','Закрыть библиотеку',()=>setOpen(false)));
     const tabs=doc.createElement('div');tabs.className='mtp-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Раздел библиотеки');
-    templatePane=doc.createElement('section');templatePane.className='mtp-pane mtp-template-pane';templatePane.id='mayTemplatePane';templatePane.setAttribute('role','tabpanel');framePane=doc.createElement('section');framePane.className='mtp-pane mtp-frame-pane';framePane.id='mayFramePane';framePane.setAttribute('role','tabpanel');
-    for(const [key,label,pane]of [['templates','Шаблоны',templatePane],['frames','Кадры',framePane]]){const b=button(label,label,()=>selectTab(key));b.dataset.libraryTab=key;b.setAttribute('role','tab');b.id='mayLibraryTab-'+key;b.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',b.id);b.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?'templates':e.key==='End'?'frames':key==='templates'?'frames':'templates';selectTab(next);tabButtons.get(next).focus();}});tabButtons.set(key,b);tabs.append(b);}
-    frameSave=button('Сохранить кадр','Сохранить текущий кадр в библиотеку',()=>frameAction('save'));frameSave.dataset.frameSave='';frameStatus=doc.createElement('output');frameStatus.className='mtp-status mtp-frame-status';frameStatus.setAttribute('aria-live','polite');frameGrid=doc.createElement('div');frameGrid.className='mtp-grid mtp-frame-grid';framePane.append(frameSave,frameStatus,frameGrid);
+    templatePane=doc.createElement('section');templatePane.className='mtp-pane mtp-template-pane';templatePane.id='mayTemplatePane';templatePane.setAttribute('role','tabpanel');
+    const sections=[['templates','Шаблоны',templatePane],...[...captureLibraries.values()].map(library=>[library.key,library.title,capturePane(library)])],tabKeys=sections.map(s=>s[0]);
+    for(const [key,label,pane]of sections){const b=button(label,label,()=>selectTab(key));b.dataset.libraryTab=key;b.setAttribute('role','tab');b.id='mayLibraryTab-'+key;b.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',b.id);b.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?tabKeys[0]:e.key==='End'?tabKeys.at(-1):tabKeys[(tabKeys.indexOf(key)+(e.key==='ArrowRight'?1:tabKeys.length-1))%tabKeys.length];selectTab(next);tabButtons.get(next).focus();}});tabButtons.set(key,b);tabs.append(b);}
     head.dataset.noMini='';crumbs=doc.createElement('nav');crumbs.className='mtp-crumbs';crumbs.dataset.noMini='';crumbs.setAttribute('aria-label','Путь папки');
     const actions=doc.createElement('div');actions.className='mtp-selection';actions.dataset.noMini='';
     const colour=doc.createElement('input');colour.type='color';colour.value='#ff7f27';colour.title='Цвет всех найденных вхождений';colour.setAttribute('aria-label',colour.title);
@@ -86,13 +92,14 @@
     grid.addEventListener('dragover',e=>{if(dragged){e.preventDefault();e.dataTransfer.dropEffect='move';}});
     grid.addEventListener('drop',e=>{if(e.target===grid&&dragged){e.preventDefault();organise(()=>store.move(dragged.kind,dragged.id,current));dragged=null;}});
     const detail=doc.createElement('details');detail.className='mtp-controls';const summary=doc.createElement('summary');summary.dataset.noMini='';summary.textContent='⋯';summary.title='Прежние команды шаблонов';summary.setAttribute('aria-label',summary.title);controls=doc.createElement('div');controls.className='mtp-live-controls';detail.append(summary,controls);
-    templatePane.append(crumbs,actions,status,grid,detail);panel.append(head,tabs,templatePane,framePane);doc.body.append(panel);makeResizer(storage);
+    templatePane.append(crumbs,actions,status,grid,detail);panel.append(head,tabs,...sections.map(s=>s[2]));doc.body.append(panel);makeResizer(storage);
     if(root.IntersectionObserver)observer=new root.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const card=entry.target;observer.unobserve(card);drawPreview(card);queueMetrics(card);}}, {root:panel,rootMargin:'160px'});
     else panel.addEventListener('scroll',queueVisibleMetrics,{passive:true});
     panel.addEventListener('dragend',()=>{dragged=null;panel.querySelectorAll('.mtp-drop').forEach(n=>n.classList.remove('mtp-drop'));});
     panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);doc.getElementById('bTemplatePanel')?.focus();}});
     try{open=storage?.getItem(OPEN_KEY)==='1';}catch(_){}
-    try{activeTab=storage?.getItem(TAB_KEY)==='frames'?'frames':'templates';}catch(_){}bind(root.mayTemplateLibrary);bindFrames(root.mayFrameLibrary);selectTab(activeTab,false);if(open)setOpen(true,false);
+    try{let saved=storage?.getItem(TAB_KEY);if(storage?.getItem('mayatnik-library-tabs-v2')!=='1'){if(saved==='frames'){saved='views';storage?.setItem(TAB_KEY,saved);}storage?.setItem('mayatnik-library-tabs-v2','1');}activeTab=captureLibraries.has(saved)?saved:'templates';}catch(_){}
+    bind(root.mayTemplateLibrary);for(const library of captureLibraries.values())bindCapture(library,root[library.apiName]);selectTab(activeTab,false);if(open)setOpen(true,false);
   }
   function beginDrag(e,kind,id){dragged={kind,id};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('application/x-mayatnik-template',JSON.stringify(dragged));}
   function dropTarget(node,kind,id){
@@ -198,17 +205,17 @@
     panel.setAttribute('aria-busy',String(!!state.busy||!!state.filtering));message((store.persistenceError?'Папки не сохранены: хранилище браузера недоступно. ':'')+(state.filtering?'Проверка шаблонов в текущих строках…':state.message||(state.selectedId?'Найдено: '+(state.count||0):'Выберите шаблон — выделятся все его вхождения на поле.')));
     for(const n of templatePane.querySelectorAll('.mtp-selection button:not([data-library-save]),.mtp-selection input'))n.disabled=!state.selectedId||!!state.busy;syncSave();
   }
-  function schedule(){if(!open||scheduled)return;scheduled=true;root.requestAnimationFrame(()=>{scheduled=false;activeTab==='frames'?renderFrames():render();});}
+  function schedule(){if(!open||scheduled)return;scheduled=true;root.requestAnimationFrame(()=>{scheduled=false;activeTab!=='templates'?renderCapture(captureLibraries.get(activeTab)):render();});}
   function bind(api){if(!api||api===engine)return;unsubscribe?.();engine=api;unsubscribe=engine.subscribe(schedule);schedule();}
   function setOpen(value,persist=true){
     if(!panel){make();if(!panel)return;}const next=!!value,changed=next!==!panel.hidden;open=next;panel.hidden=!open;doc.body.classList.toggle('may-template-panel-open',open);
     if(!open)finishResize(true);resizeHandle.hidden=!open;applyWidth();
     if(persist)try{root.localStorage.setItem(OPEN_KEY,open?'1':'0');}catch(_){}
-    engine?.refresh();if(open){if(activeTab==='frames')renderFrames();else render();}if(changed){root.dispatchEvent(new CustomEvent('mayatnik-template-panel-change',{detail:{open}}));root.dispatchEvent(new Event('resize'));}
+    engine?.refresh();if(open){if(activeTab!=='templates')renderCapture(captureLibraries.get(activeTab));else render();}if(changed){root.dispatchEvent(new CustomEvent('mayatnik-template-panel-change',{detail:{open}}));root.dispatchEvent(new Event('resize'));}
   }
   root.MayatnikTemplatePanel={toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,attachControls(element){make();if(element&&element!==controls&&!controls.contains(element)){element.classList.add('mtp-source-controls');controls.append(element);}}};
   root.addEventListener('may-template-library-ready',()=>{make();bind(root.mayTemplateLibrary);});
-  root.addEventListener('may-frame-library-ready',()=>{make();bindFrames(root.mayFrameLibrary);});
+  for(const library of captureLibraries.values())root.addEventListener(library.key==='views'?'may-view-library-ready':'may-frame-library-ready',()=>{make();bindCapture(library,root[library.apiName]);});
   root.addEventListener('may-template-saved',e=>{make();bind(root.mayTemplateLibrary);if(!engine)return;store.reconcile(engine.allIds());const id=String(e.detail?.id||'');current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';renderKey='';selectTab('templates');setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});});
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',make,{once:true});else make();
 })(window);
