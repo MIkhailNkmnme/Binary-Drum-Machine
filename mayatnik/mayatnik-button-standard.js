@@ -87,6 +87,42 @@
     const id='may-back-'+(++gradN);
     s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
   }
+  // The wider decoration never changes layout or covers a neighbouring group.
+  // Each local stacking context masks its extension below the other groups.
+  function groupExtensions(){
+    const groups=[...document.querySelectorAll('#paintTools > .pt-g,#paintTools > .gz-group,#mayatnikRail .gz-group')];
+    const visible=new Map();
+    for(const g of groups){
+      const head=g.querySelector(':scope > .pt-l,:scope > .gz-head');if(!head||g.classList.contains('pt-btn'))continue;
+      const elements=[head];if(g.matches('.pt-open,.gz-open'))elements.push(g.querySelector(':scope > .pt-r,:scope > .may-rail-list'));
+      const style=getComputedStyle(g),gr=g.getBoundingClientRect(),clipped=style.clipPath.startsWith('inset('),top=clipped?gr.top+(parseFloat(style.getPropertyValue('--may-side-clip-top'))||0):-Infinity,bottom=clipped?gr.bottom-(parseFloat(style.getPropertyValue('--may-side-clip-bottom'))||0):Infinity;
+      const rects=[];
+      for(const el of elements){if(!el||!el.getClientRects().length||getComputedStyle(el).visibility==='hidden')continue;
+        const r=el.getBoundingClientRect(),t=Math.max(r.top,top,0),b=Math.min(r.bottom,bottom,innerHeight),l=Math.max(r.left,0),rr=Math.min(r.right,innerWidth);
+        if(rr>l&&b>t)rects.push({left:l,top:t,right:rr,bottom:b});
+      }
+      if(rects.length)visible.set(g,rects);
+    }
+    for(const [g]of visible){
+      g.querySelector(':scope > .may-closed-back > .may-group-extension')?.remove();
+      if(!g.matches('.pt-open,.gz-open'))continue;
+      const s=g.querySelector(':scope > .pt-r > .may-standard-contours,:scope > .may-rail-list > .may-standard-contours');if(!s)continue;
+      const polygons=[...s.querySelectorAll(':scope > polygon')];if(!polygons.length)continue;
+      const points=polygons.flatMap(p=>p.getAttribute('points').trim().split(/\s+/).map(pair=>pair.split(',').map(Number))),xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),bounds={x:Math.min(...xs)-14,y:Math.min(...ys)-14,width:Math.max(...xs)-Math.min(...xs)+28,height:Math.max(...ys)-Math.min(...ys)+28};
+      const sr=s.getBoundingClientRect(),others=[...visible].filter(([other])=>other!==g).flatMap(([,rects])=>rects.map(r=>[r.left-sr.left,r.top-sr.top,r.right-r.left,r.bottom-r.top])).filter(([x,y,w,h])=>x<bounds.x+bounds.width&&x+w>bounds.x&&y<bounds.y+bounds.height&&y+h>bounds.y);
+      const sig=JSON.stringify([polygons.map(p=>p.getAttribute('points')),others]);let ext=s.querySelector(':scope > .may-group-extension');if(ext?.dataset.sig===sig)continue;
+      ext?.remove();ext=document.createElementNS(NS,'g');ext.classList.add('may-group-extension');ext.setAttribute('pointer-events','none');ext.dataset.sig=sig;
+      const id=s.dataset.extensionId||(s.dataset.extensionId='may-extension-'+(++gradN));
+      const defs=document.createElementNS(NS,'defs'),mask=document.createElementNS(NS,'mask');mask.id=id;mask.setAttribute('maskUnits','userSpaceOnUse');
+      for(const [key,value]of Object.entries(bounds))mask.setAttribute(key,value);
+      shape(mask,'rect',{...bounds,fill:'#fff'});
+      for(const [x,y,width,height]of others)shape(mask,'rect',{x,y,width,height,fill:'#000'});
+      defs.append(mask);ext.append(defs);
+      const fill=document.createElementNS(NS,'g');fill.setAttribute('mask',`url(#${id})`);
+      for(const p of polygons)shape(fill,'polygon',{points:p.getAttribute('points'),fill:'#0e1116',stroke:'#0e1116','stroke-width':24,'stroke-linejoin':'bevel'});
+      ext.append(fill);s.prepend(ext);
+    }
+  }
   function choiceShape(count,index,selected){
     if(count===3){const left=selected<0?true:0<selected,right=selected<0?false:1<selected;
       return [left?'12,0 36,0 44,24 12,24 0,12':'12,0 44,0 36,24 12,24 0,12',
@@ -218,6 +254,7 @@
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }
     for(const list of ladders){list.classList.add('may-standard-list');if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
+    groupExtensions();
     standardObserver?.observe(document.body,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class','disabled','aria-pressed','style']});
   }
   document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half,.may-segments .gz-half,.may-parts-multi .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
@@ -240,6 +277,7 @@
   let refreshFrame=0;
   const requestRefresh=()=>{if(!refreshFrame)refreshFrame=requestAnimationFrame(()=>{refreshFrame=0;refresh();});};
   addEventListener('resize',requestRefresh);document.addEventListener('click',requestRefresh);document.addEventListener('change',requestRefresh);
+  document.addEventListener('scroll',requestRefresh,true);
   // Decorative SVG updates do not trigger another pass. Stable menu polling also stays a no-op.
   var standardObserver=new MutationObserver(records=>{if(records.some(r=>{
     const t=r.target.nodeType===3?r.target.parentElement:r.target;

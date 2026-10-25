@@ -131,9 +131,8 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayatnikTemplatePanel .mtp-section-commands{display:flex;flex-wrap:wrap;gap:2px}
 #mayatnikTemplatePanel .mtp-viewbar{display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap;min-width:0}
 #mayatnikTemplatePanel .mtp-search{min-width:0;width:150px;flex:1;max-width:240px;height:28px;padding:3px 6px;border:1px solid #526075;border-radius:0;background:#1b2430;color:inherit;font:inherit;user-select:text}
-#mayatnikTemplatePanel .mtp-file{position:relative;max-width:100%}
-#mayatnikTemplatePanel .mtp-file-commands{position:absolute;top:26px;left:0;z-index:10;display:flex;flex-direction:column;gap:2px;padding:4px;background:#0e1116;border:1px solid #334052}
-#mayatnikTemplatePanel .mtp-file-commands .mtp-command{width:160px;max-width:100%}
+#mayatnikTemplatePanel .mtp-file-commands{display:flex;flex:0 1 184px;width:184px;max-width:100%;flex-wrap:nowrap;gap:2px;min-width:0}
+#mayatnikTemplatePanel .mtp-file-commands .mtp-command{flex:1 1 60px;width:60px;min-width:0;max-width:60px;height:24px;overflow:hidden;white-space:nowrap;padding:0 2px;font-size:9px}
 #mayatnikTemplatePanel .mtp-crumbs,#mayatnikTemplatePanel .mtp-pane>[data-frame-save],#mayatnikTemplatePanel .mtp-pane>[data-view-save],#mayatnikTemplatePanel .mtp-pane>[data-settings-save],#mayatnikTemplatePanel .mtp-selection>[data-library-save]{display:none}
 #mayatnikTemplatePanel .mtp-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,120px),1fr))}
 #mayatnikTemplatePanel .mtp-layer-row{grid-template-columns:minmax(0,1fr) 35px 28px;gap:2px;min-width:0}
@@ -160,7 +159,7 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
  #mayatnikTemplatePanel .mtp-location{align-items:flex-start;flex-wrap:wrap}
  #mayatnikTemplatePanel .mtp-address{flex-basis:100%}
  #mayatnikTemplatePanel .mtp-search{flex-basis:100%;max-width:none;width:100%}
- #mayatnikTemplatePanel .mtp-file-commands{max-width:calc(100cqw - 12px)}
+ #mayatnikTemplatePanel .mtp-file-commands{max-width:100%}
 }
 
 @container(max-width:300px){
