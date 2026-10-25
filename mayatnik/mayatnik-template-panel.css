@@ -88,3 +88,10 @@ body.may-template-panel-open #mayTemplateLauncher{right:calc(var(--may-template-
 #mayatnikTemplatePanel .mtp-layer-row{display:grid;grid-template-columns:minmax(100px,1fr) 45px 36px;gap:4px;align-items:center}
 #mayatnikTemplatePanel .mtp-layer-row .mtp-command{width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mayatnikTemplatePanel .mtp-layer-opacity{text-align:right;color:#b7c5d7}
+#mayatnikTemplatePanel .mtp-toolbar{display:flex;flex-wrap:wrap;gap:2px;flex:none}
+html.may-library-detached body{margin:0;padding:0!important;background:#0e1116;color:#dfe6f5}
+html.may-library-detached #mayatnikTemplatePanel{inset:0;width:100%!important;border:0}
+html.may-library-detached .mtp-resize{display:none!important}
+html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
+#mayLibraryConnection{position:fixed;inset:0;z-index:2147483647;padding:24px;background:#0e1116;color:#dfe6f5;font:16px/1.5 system-ui,sans-serif}
+#mayLibraryConnection[hidden]{display:none}

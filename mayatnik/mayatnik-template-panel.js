@@ -4,6 +4,7 @@
   if(!root.document)return;
   const doc=root.document,OPEN_KEY='mayatnik-template-panel-open',WIDTH_KEY='mayatnik-template-panel-width',TAB_KEY='mayatnik-library-tab',LAYOUT_KEY='mayatnik-library-layout';
   let panel,grid,crumbs,status,engine,unsubscribe,store,current='',open=false,scheduled=false,libraryKey='',renderKey='',dragged=null;
+  let libraryWindow=null,folderUnsubscribe;
   const cards=new Map(),previews=new Map(),metricsCache=new WeakMap();let observer;
   const identities=new WeakMap();let identityCounter=0;
   const metricTasks=new Map();let metricTimer=0,metricActive=null;
@@ -76,19 +77,26 @@
     root.addEventListener('blur',()=>finishResize(true));root.addEventListener('resize',()=>applyWidth());doc.body.append(resizeHandle);applyWidth();
   }
   function token(value){if(value&&typeof value==='object'){if(!identities.has(value))identities.set(value,++identityCounter);return identities.get(value);}return String(value);}
-  function organise(run){const before=store.snapshot(),result=run(),after=store.snapshot();if(JSON.stringify(before)!==JSON.stringify(after))engine?.recordExternal?.(before,after,value=>{store.restore(value);renderKey='';render();});render();return result;}
+  function organise(run){const before=store.snapshot(),result=run(),after=store.snapshot();if(JSON.stringify(before)!==JSON.stringify(after))engine?.recordExternal?.(before,after,store.restore.bind(store));render();return result;}
   function button(symbol,title,run,className='mtp-command'){
     const b=doc.createElement('button');b.type='button';b.className=className;b.textContent=symbol;b.title=title;b.setAttribute('aria-label',title);b.addEventListener('click',run);return b;
   }
   function message(value){if(status)status.textContent=String(value||'');}
   function reportError(e){message(e?.message||'Не удалось выполнить действие');}
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
+  function openWindow(){
+    if(libraryWindow&&!libraryWindow.closed){libraryWindow.focus();libraryWindow.MayatnikTemplatePanel?.openTab('templates');return;}
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','529');
+    libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
+    if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();
+  }
   function make(){
     if(panel)return;let storage;try{storage=root.localStorage;}catch(_){}
-    store=root.MayatnikTemplateFolders.create(storage);
+    store=root.MayatnikTemplateFolderStore||root.MayatnikTemplateFolders.create(storage);folderUnsubscribe=store.subscribe?.(()=>{renderKey='';schedule();});
     panel=doc.createElement('aside');panel.id='mayatnikTemplatePanel';panel.hidden=true;panel.setAttribute('aria-label','Библиотека слоёв, шаблонов, видов и кадров');
     const head=doc.createElement('div');head.className='mtp-heading';const title=doc.createElement('strong');title.textContent='Библиотека';
-    folderButton=button('＋▣','Создать папку в текущей папке',()=>{const name=root.prompt('Название новой папки','Папка');if(name)organise(()=>store.addFolder(name,current));});head.append(title,folderButton,button('×','Закрыть библиотеку',()=>setOpen(false)));
+    folderButton=button('＋ Новая папка','Создать папку в текущей папке',()=>{const name=root.prompt('Название новой папки','Папка');if(name)organise(()=>store.addFolder(name,current));});head.append(title,button('×','Закрыть библиотеку',()=>root.MayatnikLibraryDetached?root.close():setOpen(false)));
+    const toolbar=doc.createElement('div');toolbar.className='mtp-toolbar';toolbar.dataset.noMini='';folderButton.dataset.libraryFolder='';const detached=button('↗ Окно','Открыть шаблоны в отдельном окне браузера',openWindow);detached.dataset.libraryWindow='';detached.hidden=!!root.MayatnikLibraryDetached;const notice=doc.createElement('output');notice.dataset.windowNotice='';notice.hidden=true;notice.setAttribute('role','status');toolbar.append(folderButton,detached,notice);
     const tabs=doc.createElement('div');tabs.className='mtp-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Раздел библиотеки');
     const layouts=doc.createElement('div');layouts.className='mtp-layout';layouts.setAttribute('role','group');layouts.setAttribute('aria-label','Вид библиотеки');
     for(const [key,label]of [['tiles','Плитки'],['list','Список']]){const b=button(label,'Вид библиотеки: '+label,()=>setLayout(key));b.dataset.libraryLayout=key;layoutButtons.set(key,b);layouts.append(b);}
@@ -109,11 +117,11 @@
     grid.addEventListener('dragover',e=>{if(dragged){e.preventDefault();e.dataTransfer.dropEffect='move';}});
     grid.addEventListener('drop',e=>{if(e.target===grid&&dragged){e.preventDefault();organise(()=>store.move(dragged.kind,dragged.id,current));dragged=null;}});
     const listHead=doc.createElement('div');listHead.className='mtp-list-head';for(const label of ['Название','Размер · 1/0','Кнопки']){const cell=doc.createElement('span');cell.textContent=label;listHead.append(cell);}
-    templatePane.append(crumbs,actions,status,listHead,grid);panel.append(head,tabs,layouts,...sections.map(s=>s[2]));doc.body.append(panel);makeResizer(storage);
+    templatePane.append(crumbs,actions,status,listHead,grid);panel.append(head,toolbar,tabs,layouts,...sections.map(s=>s[2]));doc.body.append(panel);makeResizer(storage);
     if(root.IntersectionObserver)observer=new root.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const card=entry.target;observer.unobserve(card);drawPreview(card);queueMetrics(card);}}, {root:panel,rootMargin:'160px'});
     else panel.addEventListener('scroll',queueVisibleMetrics,{passive:true});
     panel.addEventListener('dragend',()=>{dragged=null;panel.querySelectorAll('.mtp-drop').forEach(n=>n.classList.remove('mtp-drop'));});
-    panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);doc.getElementById('bTemplatePanel')?.focus();}});
+    panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();if(root.MayatnikLibraryDetached){root.close();return;}setOpen(false);doc.getElementById('bTemplatePanel')?.focus();}});
     try{open=storage?.getItem(OPEN_KEY)==='1';}catch(_){}
     try{let saved=storage?.getItem(TAB_KEY);if(storage?.getItem('mayatnik-library-tabs-v2')!=='1'){if(saved==='frames'){saved='views';storage?.setItem(TAB_KEY,saved);}storage?.setItem('mayatnik-library-tabs-v2','1');}activeTab=saved==='layers'||captureLibraries.has(saved)?saved:'templates';}catch(_){}
     bindLayers(root.mayLayers);bind(root.mayTemplateLibrary);for(const library of captureLibraries.values())bindCapture(library,root[library.apiName]);selectTab(activeTab,false);if(open)setOpen(true,false);
@@ -234,10 +242,11 @@
     if(persist)try{root.localStorage.setItem(OPEN_KEY,open?'1':'0');}catch(_){}
     engine?.refresh();if(open){if(activeTab!=='templates')renderActive();else render();}if(changed){root.dispatchEvent(new CustomEvent('mayatnik-template-panel-change',{detail:{open}}));root.dispatchEvent(new Event('resize'));}
   }
-  root.MayatnikTemplatePanel={toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,openTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true);}};
+  root.MayatnikTemplatePanel={toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,getFolderStore:()=>store,hasWindow:()=>!!libraryWindow&&!libraryWindow.closed,openTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true);}};
   root.addEventListener('may-layers-ready',()=>{make();bindLayers(root.mayLayers);});
   root.addEventListener('may-template-library-ready',()=>{make();bind(root.mayTemplateLibrary);});
   for(const library of captureLibraries.values())root.addEventListener(library.key==='views'?'may-view-library-ready':'may-frame-library-ready',()=>{make();bindCapture(library,root[library.apiName]);});
   root.addEventListener('may-template-saved',e=>{make();bind(root.mayTemplateLibrary);if(!engine)return;store.reconcile(engine.allIds());const id=String(e.detail?.id||'');current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';renderKey='';selectTab('templates');setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});});
+  root.addEventListener('pagehide',()=>{unsubscribe?.();layerUnsubscribe?.();folderUnsubscribe?.();for(const library of captureLibraries.values())library.unsubscribe?.();observer?.disconnect();},{once:true});
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',make,{once:true});else make();
 })(window);

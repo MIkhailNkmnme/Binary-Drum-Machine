@@ -17,10 +17,11 @@
   }
   function create(storage){
     let value;try{value=JSON.parse(storage?.getItem(KEY)||'null');}catch(_){}
-    let state=normalise(value),error=false,lastSaved=JSON.stringify(state);
-    function save(){const text=JSON.stringify(state);if(text===lastSaved)return !error;try{if(!storage)throw Error('storage');storage.setItem(KEY,text);lastSaved=text;error=false;}catch(_){error=true;}return !error;}
+    const listeners=new Set();let state=normalise(value),error=false,lastSaved=JSON.stringify(state);
+    function save(){const text=JSON.stringify(state);if(text===lastSaved)return !error;try{if(!storage)throw Error('storage');storage.setItem(KEY,text);lastSaved=text;error=false;}catch(_){error=true;}for(const fn of listeners)fn();return !error;}
     const api={
       snapshot:()=>structuredClone(state),
+      subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
       restore(value){state=normalise(value);save();},
       get persistenceError(){return error;},
       children:parent=>state.nodes.filter(n=>n.parent===(parent||'')).map(n=>({...n})),
