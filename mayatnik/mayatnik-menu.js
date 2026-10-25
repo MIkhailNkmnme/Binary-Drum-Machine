@@ -131,15 +131,18 @@
     const joint=ZerkControlFrame.pairSwitch(host,{read,onToggle:target=>{for(const id of ids)if(($(id).getAttribute('aria-pressed')==='true')!==target)$(id).click();rail.refresh();}});
     const observer=new MutationObserver(joint.sync);for(const id of ids)observer.observe($(id),{attributes:true,attributeFilter:['aria-pressed']});
   }
-  // v0.255: «тут тоже — если правой, то в ромб»: правый щелчок по шапке группы рейки — она сворачивается в ромб со значком, ещё раз — обратно
-  // (щелчок по ромбу открывает группу, как шапка); свёрнутые — в памяти браузера (mayatnik-rail-mini)
+  // Right-click closes a whole group to its normal header; saved legacy minis
+  // remain readable until that group is explicitly closed this way.
   { const MINI = 'mayatnik-rail-mini', ICO = { 'Поле': '▦', 'Очки': '◎', 'Масштаб': '⤢', 'Зеркала': '⋈', 'Раскраска': '✎', 'Шаблон': '▣', 'Шаблоны': '▤', 'Экспорт': '⇩' };
     let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
     for (const box of rail.el.querySelectorAll('.gz-group')) { const head = box.querySelector(':scope > .gz-head'), nm = head?.querySelector('.gz-nm'); if (!nm) continue;
       const k = nm.textContent.trim(), ic = ZerkGroupHeader.parts(head).icon;ic.textContent = ICO[k] || [...k][0] || '◆';
       const sync = () => { box.classList.toggle('gz-mini', minis.has(k));ZerkGroupHeader.sync(head,{mini:minis.has(k)}); head.setAttribute('aria-label', k); };
-      sync(); head.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
-        try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); }); } }
+      head.title = 'Щелчок — открыть · правый щелчок — свернуть группу';
+      sync(); head.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); minis.delete(k);
+        try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync();
+        // Use grozd's own close route so its pinned/shut state survives refresh/F5.
+        if(box.classList.contains('gz-open'))head.click(); }); } }
   // v0.167: подсказки кнопок рейки — в title (их показывает mayatnik-tips.js рядом с кнопкой через 4 с)
   for (const g of groups) { const box = rail.el.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
     const wide = t => ['value', 'list', 'control', 'vpair'].includes(t), a = g.items.filter(i => !wide(i.type)), b = g.items.filter(i => wide(i.type));
@@ -960,7 +963,7 @@
     const pinsSync = () => { for (const g of groupsAll()) { const on = stay(g) || g === open; if (g.classList.contains('pt-open') !== on) setOpen(g, on); else {g.classList.toggle('pt-pinned', pinned(g));ZerkGroupHeader.sync(g.querySelector('.pt-l'),{pinned:pinned(g)});} } };
     addEventListener('resize', () => { grid?.relayout(); for (const g of groupsAll()) if (g.classList.contains('pt-open')) { place(g); zig(g.querySelector('.pt-r')); } requestAnimationFrame(alignOpen); });
     const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
-    const show = g => { if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
+    const show = (g,explicit=false) => { const k=keyOf(g);if(folds.has(k)){if(!explicit)return;folds.delete(k);saveDd();}if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
     // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
     // «↶ Отм. | ↷ Повт.» (жмёт прежние «Отмена» / «Повтор»); тянется по сетке и сворачивается в ромб ↶ ↷, как остальные; ключ раскладки — прежний («Правка»)
     const ud = gHistory.parentElement, udL = ud.querySelector('.pt-l');
@@ -1002,7 +1005,7 @@
         saveDd(); if (!pins.has(k) && open !== g) setOpen(g, false); pinsSync(); });
       l.onclick = () => { if (pinned(g)) { const k = keyOf(g); if (stay(g)) { folds.add(k); if (open === g) open = null; setOpen(g, false); } else { folds.delete(k); setOpen(g, true); } saveDd(); return; }
         if (open === g && Date.now() - (g._hoverAt || 0) < 900) return;   // только что раскрылся наведением — щелчок его не захлопывает
-        open === g ? shut() : show(g); };
+        open === g ? shut() : show(g,true); };
       // Header and pin keyboard actions are provided by the shared view.
       l.onpointerenter = e => { if (e.pointerType === 'mouse' && !tools.classList.contains('pt-dragging') && open !== g && !g.classList.contains('pt-open')) { g._hoverAt = Date.now(); show(g); } };   // v0.170: «раскрывай сразу при наведении» — мышью без щелчка
       // v0.169: «не скрывается при уходе» — мышь ушла с названия и списка: незакреплённый список закрывается (с запасом 350 мс на переход)
@@ -1194,16 +1197,16 @@
       // v0.509: capture group dragging before the legacy rail/free-bottom handlers.
       dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,
         excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{relayout();reopen();}}); }
-    // v0.209: «правой кнопкой по кнопке — свернуть кнопку в ромб со значком и сдвинуть все остальные на освободившееся место»:
-    // правый щелчок по названию группы полосы — оно сворачивается в ромб со значком (соседи встают вплотную), ещё раз — разворачивается.
-    // Список при этом открывается как прежде; свёрнутые — в памяти браузера (mayatnik-dd-mini).
+    // Group headers close the whole group on right-click. The history control
+    // keeps its separate mini mode; old group minis can still be restored.
     { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
       let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = ZerkGroupHeader.parts(l).icon;ic.textContent = glyph(k);if(!ic.parentNode)l.append(ic);
-        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on);ZerkGroupHeader.sync(l,{mini:on}); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · стоит по середине шапки · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : on ?k + ' · правый щелчок — развернуть · тянуть — переставить' : 'Щелчок — открыть · тянуть — поставить в любое место шапки (по сетке) · правый щелчок — свернуть в ромб · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
-        sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
-          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); }); }
+        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on);ZerkGroupHeader.sync(l,{mini:on}); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · стоит по середине шапки · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : 'Щелчок — открыть · тянуть — переставить · правый щелчок — свернуть группу · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
+        sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation();
+          if(g.classList.contains('pt-btn')){if(minis.has(k))minis.delete(k);else minis.add(k);}else{minis.delete(k);folds.add(k);if(open===g)open=null;g._hoverAt=0;setOpen(g,false);saveDd();}
+          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); if(g.classList.contains('pt-btn'))grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); }); }
     }
     grid.relayout();   // v0.225: ромбы v0.209 уже свёрнуты — ширины верные
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(() => {
