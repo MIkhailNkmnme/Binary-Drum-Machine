@@ -20,7 +20,7 @@
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
       nameNow: () => id === 'sym' ? (e.checked ? 'Скрыть оси' : 'Показать оси') : id === 'noband' ? ['С полосами', 'Без полос', 'До треугольника'][+e.dataset.mode || 0] : name(e),
-      on: () => e.checked, disabled: () => e.disabled, click: () => e.click() };
+      on: () => e.checked, disabled: () => e.disabled, click: () => e.click(), src:id };
   };
   const select = (id, kind, names) => {
     const e = $(id);
@@ -893,6 +893,40 @@
     for (const id of ['bRec', 'bGif', 'zIn', 'zOut']) if ($(id)) mo.observe($(id), { attributes: true, attributeFilter: ['aria-pressed', 'class', 'disabled', 'title'] });
     sync();
     const vg = [...tools.querySelectorAll('.pt-g')].find(g => g.querySelector('.pt-l')?.firstChild?.textContent.trim() === 'Видео'); if (vg) vg.remove(); }
+  // One mirror group owns the existing engines; search and folding keep independent menus.
+  if(window.MayatnikMirrorControls){
+    const compactKey=node=>{const owner=node.closest('[data-id],.pt-g'),group=owner?.dataset.id||owner?.dataset.k||owner?.querySelector('.may-group-title')?.textContent.trim()||'';const parent=node.parentElement,peers=parent?[...parent.children].filter(n=>n.matches('button,.gz-hx,[role="button"]')):[];return node.dataset.n?'group:'+group+':data:'+node.dataset.n:'group:'+group+':parent:'+(parent?.id||parent?.className||'')+':slot:'+peers.indexOf(node);};
+    const compactBefore=new Map([...tools.querySelectorAll('button.gz-hx,[data-n]'),...rail.el.querySelectorAll('.gz-hx')].map(node=>[node,compactKey(node)]));
+    const ochki=rail.el.querySelector('.gz-group[data-id="ochki"]')||tools.querySelector('.gz-group[data-id="ochki"]');if(ochki&&!manualLegacyCells.has('ochki'))manualLegacyCells.set('ochki',[...ochki.querySelectorAll('.gz-soty > .gz-hx')]);
+    const legacy=manualLegacyCells.get('mirrors')||[];
+    if(legacy[0]){legacy[0].dataset.n='mayMirAxis';legacy[0].dataset.mayPinGroup='mirrors';legacy[0].dataset.mayPinIndex='0';}
+    if(legacy[1]){legacy[1].dataset.n='mayContour';legacy[1].dataset.mayPinGroup='mirrors';legacy[1].dataset.mayPinIndex='1';gView.append(legacy[1]);}
+    // Mark the original two-half template mirror, which previously had no source ID.
+    const templateFlip=[...tools.querySelectorAll('.gz-pair')].find(b=>b.title==='Отразить шаблон ↔ · ↕');
+    const folds=ptGroup('Свёртки');folds.parentElement.dataset.k='Свёртки';folds.parentElement.style.setProperty('--c','#73e4a5');
+    for(const id of ['bFoldCompare','bFoldHorizontal','bFoldVertical','fixFold','fixFoldV']){const b=tools.querySelector('[data-n="'+id+'"]');if(b)folds.append(b);}
+    const take=id=>id==='templateMirrorPair'?templateFlip:railSourceButtons.get(id)||tools.querySelector('[data-n="'+id+'"]')||(id==='mayMirAxis'?legacy[0]:null);
+    const mirrorIds=new Set(window.MayatnikMirrorControls.profiles.flatMap(p=>p.nodes));
+    // Застыло, pixel visibility and contour are view tools, rather than mirrors.
+    for(const node of [...gMir.querySelectorAll('[data-n]')])if(!mirrorIds.has(node.dataset.n)&&!['fixAxis','fixCross','fixDragK','fixLines',...['b','r','y','k','w'].map(c=>'px_'+c)].includes(node.dataset.n))gView.append(node);
+    // Keep original hidden sources connected, together with their compound visible controls.
+    for(const id of ['fixAxis','fixCross','fixDragK','fixLines',...['b','r','y','k','w'].map(c=>'px_'+c)]){const node=gMir.querySelector('[data-n="'+id+'"]');if(node)gView.append(node);}
+    const mirrorMenu=window.MayatnikMirrorControls.mount({row:gMir,take,after:()=>{rail.refresh();placeTools();},listHover:(b,o)=>ZerkGrozd.listHover(b,o)});
+    window.MayatnikMirrorControls.migrate(localStorage,[...compactBefore].filter(([node])=>node.isConnected).map(([node,from])=>[from,compactKey(node)]));
+    toolSync.push(()=>mirrorMenu.sync());
+    for(const node of [...gMir.querySelectorAll('.pt-col,.pt-sec')].reverse())if(!node.children.length)node.remove();
+    const old=rail.el.querySelector('.gz-group[data-id="mirrors"]')||tools.querySelector('.gz-group[data-id="mirrors"]');
+    if(old)old.remove();
+    // Preserve moved source ordinals for existing Ctrl-drag field pins.
+    for(const definition of groups){
+      const id=definition.id,cells=manualLegacyCells.get(id);if(!cells)continue;
+      for(const [index,node]of cells.entries())if(node?.closest('.may-mirror-group')){node.dataset.mayPinGroup=id;node.dataset.mayPinIndex=String(index);}
+    }
+    // Hide line-mounted duplicate mirror commands; the retained handlers still serve old references.
+    const style=document.createElement('style');style.textContent='.may-mirror-group [hidden],.may-mirror-group [data-mirror-retained]{display:none!important} .may-mirror-group .pt-r{flex-direction:column;gap:2px!important} #zTopLine .ztl-mir,.zl-hd .zl-mir{visibility:hidden;pointer-events:none}';document.head.append(style);
+  }
+  // Cell selection uses only the page's original commands.
+  {const ids=['bCellSelect','bRowSelect','bCellCollapseRows','bCellCollapseCols','bCellReveal','bCellClear'];if(ids.some(id=>$(id))){const row=ptGroup('Ячейки');row.parentElement.dataset.k='Ячейки';row.parentElement.style.setProperty('--c','#73e4a5');for(const id of ids){const e=$(id);if(!e)continue;const b=document.createElement('button');b.type='button';b.className='pt-b gz-hx';b.dataset.n=id;const n=document.createElement('span');n.className='gz-nm';n.textContent=e.dataset.miShort||e.textContent;b.append(n);b.onclick=()=>{e.click();placeTools();};toolSync.push(()=>{b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');b.setAttribute('aria-pressed',e.getAttribute('aria-pressed')||'false');b.title=e.title;});row.append(b);}if($('cellSelectionInfo'))row.append($('cellSelectionInfo'));}}
   // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;
   // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
   // Пока какой-то список открыт, наведение на соседнее название переключает на него. Точка у названия — в группе что-то включено.
@@ -1521,7 +1555,7 @@
   const cellOf = (g, i) => manualLegacyCells.get(g)?.[i] || document.querySelectorAll(`#mayatnikRail .gz-group[data-id="${g}"] .gz-soty > .gz-hx, #paintTools > .gz-group[data-id="${g}"] .gz-soty > .gz-hx`)[i] || null;   // v0.491: прежние номера zoom сохраняют свои живые узлы после переноса
   function makePin(pin) {
     const src = cellOf(pin.g, pin.i); if (!src) return null;
-    const el = src.cloneNode(true); el.classList.add('may-pin'); el.style.display = ''; el.removeAttribute('tabindex'); el.title = (src.title || '') + ' · тянуть — переставить, правая кнопка — убрать';
+    const el = src.cloneNode(true); el.hidden=false;el.classList.add('may-pin'); el.style.display = ''; el.removeAttribute('tabindex'); el.title = (src.title || '') + ' · тянуть — переставить, правая кнопка — убрать';
     document.body.append(el); pin.el = el; pin.src = src;
     el.addEventListener('pointerdown', e => {
       if (e.button !== 0) return; e.preventDefault(); el.setPointerCapture(e.pointerId);

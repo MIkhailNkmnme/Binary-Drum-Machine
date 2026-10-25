@@ -1,0 +1,14 @@
+/* Only the field projection is painted; the viewport never owns a full copy of
+   the potentially huge source raster. Seam controls have their own hit zones. */
+.mcsv-canvas{position:fixed;pointer-events:none;z-index:12;image-rendering:pixelated}
+.mcsv-canvas[hidden]{display:none}
+.mcsv-seams{position:fixed;inset:0;pointer-events:none;z-index:13}
+.mcsv-selecting{cursor:crosshair;user-select:none;-webkit-user-select:none}
+.mcsv-seam{position:fixed;display:block;box-sizing:border-box;margin:0;padding:0;border:0;border-radius:0;background:transparent;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.mcsv-seam-cols{width:8px;min-width:8px}
+.mcsv-seam-rows{height:8px;min-height:8px}
+.mcsv-seam::after{content:'';position:absolute;background:#53b6ff;pointer-events:none}
+.mcsv-seam-cols::after{top:0;bottom:0;left:3px;width:2px}
+.mcsv-seam-rows::after{left:0;right:0;top:3px;height:2px}
+.mcsv-seam:hover::after,.mcsv-seam:focus-visible::after{background:#c5e8ff;box-shadow:0 0 0 1px #53b6ff}
+.mcsv-seam:focus-visible{outline:1px solid #c5e8ff;outline-offset:0}
