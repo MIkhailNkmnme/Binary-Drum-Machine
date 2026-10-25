@@ -1,0 +1,7 @@
+#mayBackupDialog{box-sizing:border-box;max-width:min(680px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;padding:18px;border:1px solid #b48cff;border-radius:0;background:#0e1116;color:#dfe6f5;font:14px/1.4 system-ui,sans-serif}
+#mayBackupDialog::backdrop{background:#0009}
+#mayBackupDialog h2,#mayBackupDialog h3{color:#b48cff;font-size:16px;margin:4px 0 12px}
+#mayBackupDialog h3{margin-top:20px}
+#mayBackupDialog .mtp-command{display:inline-flex;margin:2px;--mtp-accent:#b48cff}
+#mayBackupDialog button:disabled{opacity:.45;cursor:wait}
+#mayBackupDialog output{display:block;white-space:pre-wrap;overflow-wrap:anywhere;margin:16px 0 6px;color:#ffe969;min-height:2em}

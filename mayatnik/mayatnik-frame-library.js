@@ -56,7 +56,7 @@
       return id;
     });}
     function download(id){return run('Скачивание кадра',async()=>{const {entry,blob}=await readItem(id);await host.download(blob,entry.name);message='Файл кадра передан для скачивания: '+entry.name;return id;});}
-    return {ready,list:()=>copy(items),getState,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},save,open,rename,remove,download};
+    return {ready,idle:()=>queue,list:()=>copy(items),getState,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},save,open,rename,remove,download};
   }
   return {create,INDEX_KEY,ITEM_PREFIX};
 });

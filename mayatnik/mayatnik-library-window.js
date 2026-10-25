@@ -7,13 +7,13 @@
   try{
     source=root.opener;api=source&&!source.closed&&source.mayTemplateLibrary;
     if(!api||!source.MayatnikTemplatePanel)throw Error('source');
-    root.mayTemplateLibrary=api;root.mayViewLibrary=source.mayViewLibrary;root.mayFrameLibrary=source.mayFrameLibrary;root.mayLayers=source.mayLayers;root.maySettingsLibrary=source.maySettingsLibrary;
+    root.mayTemplateLibrary=api;root.mayViewLibrary=source.mayViewLibrary;root.mayFrameLibrary=source.mayFrameLibrary;root.mayLayers=source.mayLayers;root.maySettingsLibrary=source.maySettingsLibrary;root.mayBackup=source.mayBackup;
     root.MayatnikTemplateFolderStore=source.MayatnikTemplatePanel.getFolderStore();
   }catch(_){disconnected('Откройте это окно кнопкой «Окно» в Библиотеке работающего Маятника.');return;}
   const proxy=doc.getElementById('bTemplateSave'),original=source.document.getElementById('bTemplateSave');
   const syncSave=()=>{proxy.disabled=!original||original.disabled;};syncSave();proxy.onclick=()=>{if(!proxy.disabled)original.click();};
   if(original){saveObserver=new root.MutationObserver(syncSave);saveObserver.observe(original,{attributes:true,attributeFilter:['disabled']});}
-  for(const type of ['may-template-saved','may-template-library-ready','may-view-library-ready','may-frame-library-ready','may-layers-ready','may-settings-library-ready']){
+  for(const type of ['may-template-saved','may-template-library-ready','may-view-library-ready','may-frame-library-ready','may-layers-ready','may-settings-library-ready','may-backup-ready']){
     const listener=e=>root.dispatchEvent(new root.CustomEvent(type,{detail:e.detail}));source.addEventListener(type,listener);listeners.push([type,listener]);
   }
   const ready=()=>root.queueMicrotask(()=>root.MayatnikTemplatePanel?.openTab('templates'));

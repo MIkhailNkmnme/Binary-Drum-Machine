@@ -28,7 +28,7 @@
     function run(label,fn){const result=queue.then(async()=>{await ready;busy=true;message=label;emit();try{return await fn();}catch(e){message=e.message;throw e;}finally{busy=false;emit();}});queue=result.catch(()=>{});return result;}
     async function write(next){await host.storage.write({version:1,items:clone(next)},KEY);items=next;}
     function find(id){const item=items.find(e=>e.id===id);if(!item)throw Error('Набор настроек не найден');return item;}
-    return {ready,getState,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},refresh:emit,
+    return {ready,idle:()=>queue,getState,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},refresh:emit,
       list:()=>items.map(({snapshot,...entry})=>({...entry,summary:'Режимы · цвета',thumbnail:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path fill="none" stroke="#b48cff" stroke-width="2" d="M3 8h26M3 16h26M3 24h26M10 4v8M22 12v8M14 20v8"/></svg>')})),
       save(name){return run('Сохранение настроек…',async()=>{const snapshot=normalized(host.capture()),id=Date.now().toString(36)+'-'+(++serial)+'-'+Math.random().toString(36).slice(2,8),entry={id,name:String(name||'Набор '+(items.length+1)).trim(),createdAt:Date.now(),snapshot};await write([...items,entry]);selectedId=id;message='Сохранено: '+entry.name;return id;});},
       open(id){return run('Применение настроек…',async()=>{const item=find(id);await host.restore(clone(item.snapshot));selectedId=id;message='Применено: '+item.name;return id;});},
