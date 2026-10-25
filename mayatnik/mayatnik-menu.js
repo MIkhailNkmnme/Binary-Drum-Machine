@@ -325,7 +325,7 @@
     // v0.050: правый клик по нажатому значку — выключить его режим.
     b.oncontextmenu = ev => { ev.preventDefault(); if (e.matches('[aria-pressed="true"]') || (e.type === 'checkbox' && e.checked)) e.click(); };
     toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' ? ' · сейчас: ' + e.textContent : ''); if (['bPaintMeet','bPaintAxis','bThirds','bTriTop'].includes(id)) b.setAttribute('aria-label', b.title); b.disabled = e.disabled;
-      if (id === 'bPaintMeet' || id === 'bPaintAxis' || id === 'bTriTop') { const nm = b.querySelector('.gz-nm'); if (nm && nm.textContent !== e.dataset.miShort) nm.textContent = e.dataset.miShort; }   // v0.315: «Точка 1 / 0»
+      if (id === 'bPaintMeet' || id === 'bPaintAxis' || id === 'bTriTop') { const nm = b.querySelector(':scope > .gz-nm'); if (nm && nm.textContent !== e.dataset.miShort) nm.textContent = e.dataset.miShort; }   // v0.315: «Точка 1 / 0»
       const on=e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"]');b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on)); });
     // v0.121: «Симметрия» — включить и выключить оси симметрии (выключает и выбор оси с конусом, как «Скрыть оси»).
     if (id === 'sym') { const hide = $('mayHideAxes'); b.onclick = b.oncontextmenu = ev => { ev?.preventDefault?.(); if (!hide.hidden || e.checked) hide.click(); else if (ev.type === 'click') e.click(); };
@@ -1198,7 +1198,13 @@
       narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick);
       // v0.509: capture group dragging before the legacy rail/free-bottom handlers.
       dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,
-        excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{relayout();reopen();}}); }
+        excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{
+          // The side strips own the lower corners; keep the physical footer
+          // between them too, including its backdrop and legacy history control.
+          const desktop=innerWidth>600,step=window.MayatnikMenuDock.DX;
+          footerBar.style.marginLeft=desktop?(Math.max(4,rail.el.getBoundingClientRect().left)+step)+'px':'';
+          footerBar.style.marginRight=desktop?(4+step)+'px':'';
+          relayout();reopen();}}); }
     // Group headers close the whole group on right-click. The history control
     // keeps its separate mini mode; old group minis can still be restored.
     { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
@@ -1235,6 +1241,21 @@
     const viewIcon = new Map(Object.entries(viewIcons).map(([v, [kind, t]]) => { const p = document.createElement('button'); p.title = t; return [v, icon(p, kind)]; }));
     reg(tools.querySelector('[data-n="viewCycle"]'), fromSelect($('view'), o => (viewIcons[o.value] || [, o.textContent])[1], o => viewIcon.get(o.value)));
     reg(tools.querySelector('[data-n="fontCycle"]'), fromSelect($('digitFont')));
+    // One exclusive 1/0 control; selecting the active half turns the mode off.
+    // Set the final state once: cycling through another active state paints it.
+    {
+      const source=$('bPaintAxis'),button=tools.querySelector('[data-n="bPaintAxis"]');
+      const state=()=>window.mayPaintAxis.get();
+      const options=()=>[1,2].map((mode,i)=>({name:'Ось '+(i?'0':'1'),on:state()===mode,pick:()=>{
+        if(source.disabled)return;
+        const target=state()===mode?0:mode;
+        window.mayPaintAxis.set(target);
+      }}));
+      mountSegments(button,options);
+      const parts=[...button.querySelectorAll(':scope > .gz-half')];
+      parts.forEach((part,i)=>{part.setAttribute('aria-label','ТочкаОсь: краска по битам '+(i?'0':'1')+'. Повторное нажатие выключает режим.');part.title=part.getAttribute('aria-label');});
+      toolSync.push(()=>{parts.forEach(part=>{part.setAttribute('aria-disabled',String(source.disabled));});});
+    }
     reg(tools.querySelector('[data-n="fixLow"]'), () => [1,2].map(i => ({ name:window.mayFixLowNames[i], on: !!((window.mayFixLow?.get() || 0) & i), pick: () => window.mayFixLow?.set((window.mayFixLow.get() || 0) ^ i) })));   // v0.222
     reg(tools.querySelector('[data-n="fixAxis"]'), () => window.mayFixAxisNames.map((name, i) => ({ name: name.slice(5), on: (window.mayFixAxis?.get() || 0) === i, pick: () => window.mayFixAxis?.set(i) })));   // v0.216
     { const M = () => window.mayMir, L = () => window.mayMirLists;   // v0.210

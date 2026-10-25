@@ -113,7 +113,7 @@ test('shared side stack pushes following groups, scrolls overflow and restores s
    assert.ok(lower.getBoundingClientRect().top>=group.getBoundingClientRect().bottom,'opened group pushes following header');
    const bar=w.document.querySelector('.may-menu-side-scroll[data-edge="'+edge+'"]');assert.equal(bar.style.display,'block');
    body.dispatchEvent(new w.WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:1000}));app.flush();
-   assert.ok(bar.scrollTop>0);assert.ok(lower.getBoundingClientRect().bottom<=770,'scroll exposes last header');
+   assert.ok(bar.scrollTop>0);assert.ok(lower.getBoundingClientRect().bottom<=w.innerHeight-4,'scroll exposes last header inside the viewport');
    assert.equal(w.localStorage.getItem('setka-menu-dock-v1'),saved,'temporary push/scroll must not rewrite slots');
    group.classList.remove('gz-open');w.setkaMenuRefresh();app.flush();assert.equal(lower.getBoundingClientRect().top,original);assert.equal(bar.scrollTop,0);assert.equal(bar.style.display,'none');
   }

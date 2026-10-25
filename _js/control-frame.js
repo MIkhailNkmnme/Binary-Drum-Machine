@@ -9,8 +9,13 @@
     host.classList.add('zcf-control');left.classList.add('zcf-side','zcf-left');right.classList.add('zcf-side','zcf-right');middle.classList.add('zcf-middle');
     const contours=[outline(left,'zcf-outline',24,'M24 0H12L0 12 12 24H24'),outline(middle,'zcf-outline',72,'M0 0H72M0 24H72'),outline(right,'zcf-outline',24,'M0 0H12L24 12 12 24H0')];
     const range=options.input?.type==='range'?options.input:null;
-    const sync=()=>{if(!range)return;const min=Number(range.min)||0,max=Number(range.max)||100,value=Number(range.value)||0;const side=value<=min+(max-min)/2?'right':'left';if(middle.dataset.valueSide!==side)middle.dataset.valueSide=side;};
-    if(range){middle.classList.add('zcf-range');range.classList.add('zcf-input');options.output?.classList.add('zcf-value');range.addEventListener('input',sync);sync();}
+    const sync=()=>{if(!range)return;const min=range.min===''?0:Number(range.min),max=range.max===''?100:Number(range.max),value=Number(range.value)||0;const side=value<=min+(max-min)/2?'right':'left';if(middle.dataset.valueSide!==side)middle.dataset.valueSide=side;
+      // Native 14px thumb travels through the 72px middle, not its full width.
+      // Break only the frame directly behind the X; keep the native input live.
+      const fraction=max>min?Math.max(0,Math.min(1,(value-min)/(max-min))):0,start=+(58*fraction).toFixed(3),end=+(start+14).toFixed(3),path=contours[1].children[0],d=`M0 0H${start}M${end} 0H72M0 24H${start}M${end} 24H72`;
+      if(path.getAttribute('d')!==d)path.setAttribute('d',d);
+    };
+    if(range){middle.classList.add('zcf-range');range.classList.add('zcf-input');options.output?.classList.add('zcf-value');range.addEventListener('input',sync);range.addEventListener('change',sync);sync();}
 
     // Hold repeats are owned by the caller; this only keeps the pressed contour visible.
     for(const button of [left,right]){

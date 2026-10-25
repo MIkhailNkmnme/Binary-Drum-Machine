@@ -3,12 +3,13 @@
   'use strict';
   const WIDTH=120,HEIGHT=24,DX=126,DY=26;
   const overlap=(a,b)=>a.x<b.x+b.w+2&&a.x+a.w+2>b.x&&a.y<b.y+b.h+2&&a.y+a.h+2>b.y;
-  function slots({left=8,right,topX,topY,bottomY,sideY}){
+  function slots({left=8,right,topX,topY,bottomY,sideY,sideBottom=bottomY+HEIGHT}){
     const out=[];
-    for(const [edge,y,x0] of [['top',topY,topX],['bottom',bottomY,left]])
-      for(let i=0,x=x0;x+WIDTH<=right;i++,x=x0+i*DX)out.push({edge,index:i,x,y,w:WIDTH,h:HEIGHT});
+    // The side columns own both lower corners, including their backdrops.
+    for(const [edge,y,x0,end] of [['top',topY,topX,right],['bottom',bottomY,left+DX,right-DX]])
+      for(let i=0,x=x0;x+WIDTH<=end;i++,x=x0+i*DX)out.push({edge,index:i,x,y,w:WIDTH,h:HEIGHT});
     for(const [edge,x] of [['left',left],['right',right-WIDTH]])
-      for(let i=0,y=sideY;y+HEIGHT+2<=bottomY;i++,y=sideY+i*DY)out.push({edge,index:i,x,y,w:WIDTH,h:HEIGHT});
+      for(let i=0,y=sideY;y+HEIGHT+2<=sideBottom;i++,y=sideY+i*DY)out.push({edge,index:i,x,y,w:WIDTH,h:HEIGHT});
     return out;
   }
   function nearest(list,x,y,preferred){let best=null,score=Infinity;for(const p of list){const d=Math.hypot(p.x+WIDTH/2-x,p.y+HEIGHT/2-y)+(preferred&&p.edge!==preferred?1e5:0);if(d<score){score=d;best=p;}}return best;}
@@ -27,7 +28,7 @@
     Object.assign(overlay.style,{position:'fixed',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'2147483644',display:'none'});document.body.append(overlay);
     const save=()=>{try{localStorage.setItem(key,JSON.stringify(state));}catch(_){}};
     const bounds=()=>{const H=header.getBoundingClientRect(),T=tools.getBoundingClientRect(),F=footer.getBoundingClientRect(),R=rail.getBoundingClientRect(),customLeft=typeof leftEdge==='function'?leftEdge():null;
-      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:T.top,bottomY:F.top+(F.height-HEIGHT)/2,sideY:Math.ceil(H.bottom+8)};};
+      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:T.top,bottomY:F.top+(F.height-HEIGHT)/2,sideY:Math.ceil(H.bottom+8),sideBottom:(typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom)-4};};
     const rect=el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};};
     const obstacles=()=>excluded.filter(e=>e?.getClientRects().length).map(rect);
     const available=skip=>slots(bounds()).filter(s=>!obstacles().some(r=>overlap(s,r))&&![...placed].some(([g,p])=>g!==skip&&overlap(s,p)));
@@ -43,7 +44,7 @@
     function layoutSides(){
       if(!useSideStack||drag)return;
       if(innerWidth<=600){for(const side of Object.values(sides)){side.bar.style.display='none';side.signature='';}return;}
-      const B=bounds(),end=B.bottomY-4;
+      const B=bounds(),end=B.sideBottom;
       for(const edge of ['left','right']){
         const side=sides[edge],items=[...placed].filter(([g,p])=>p.edge===edge&&heads.get(g).getClientRects().length).map(([g,p])=>({g,index:p.index,y:p.y,height:g.getBoundingClientRect().height}));
         const start=items.length?Math.max(B.sideY,Math.min(...items.map(item=>item.y))):B.sideY,height=Math.max(1,end-start);
@@ -55,14 +56,32 @@
         for(const row of stack.rows){setVar(row.g,'--may-dock-y',row.screenY+'px');setVar(row.g,'--may-side-clip-top',Math.max(0,start-row.screenY)+'px');setVar(row.g,'--may-side-clip-bottom',Math.max(0,row.screenY+row.height-end)+'px');}
       }
     }
-    const sideOf=target=>{const g=target?.closest?.('.may-dock-side');return g&&placed.has(g)?sides[placed.get(g).edge]:null;};
-    document.addEventListener('wheel',e=>{if(innerWidth<=600||drag||e.ctrlKey)return;const side=sideOf(e.target);if(!side?.max)return;const delta=e.deltaY*(e.deltaMode===1?DY:e.deltaMode===2?parseFloat(side.bar.style.height):1);side.bar.scrollTop=Math.max(0,Math.min(side.max,side.bar.scrollTop+delta));e.preventDefault();e.stopImmediatePropagation();queueStack();},{capture:true,passive:false});
+    const sideOf=target=>{const g=target?.closest?.('.may-dock-side');if(g&&placed.has(g))return sides[placed.get(g).edge];const bar=target?.closest?.('.may-menu-side-scroll');return bar&&sides[bar.dataset.edge]?.bar===bar?sides[bar.dataset.edge]:null;};
+    const wheelControls='input,textarea,select,[contenteditable],[role="slider"],.gz-control,.gz-val,.gz-vpair,.gz-sl,.gz-sl2,.may-slide,.gz-ladder,.may-hp-pop,[role="listbox"],[data-n="fontCycle"],[data-n="sizeCtl"],[data-n="viewCycle"]';
+    document.addEventListener('wheel',e=>{
+      if(innerWidth<=600||drag||e.ctrlKey||e.defaultPrevented)return;
+      const side=sideOf(e.target);if(!side?.max)return;
+      const control=e.target.closest?.(wheelControls);if(control?.matches?.(wheelControls))return;
+      // Nested native lists own their wheel, including when they reach an end.
+      for(let node=e.target;node&&node!==document.body;node=node.parentElement){
+        if(node===side.bar)break;
+        if(node.scrollHeight>node.clientHeight+1&&/auto|scroll/.test(getComputedStyle(node).overflowY))return;
+        if(node.matches?.('.may-dock-side'))break;
+      }
+      const delta=e.deltaY*(e.deltaMode===1?DY:e.deltaMode===2?parseFloat(side.bar.style.height):1);if(!Number.isFinite(delta)||!delta)return;
+      const current=side.bar.scrollTop;
+      // Crossing an edge first lands there. Only a subsequent outward wheel
+      // wraps, so a large delta in the middle cannot jump past unseen groups.
+      side.bar.scrollTop=delta>0&&current>=side.max-.5?0:delta<0&&current<=.5?side.max:Math.max(0,Math.min(side.max,current+delta));
+      e.preventDefault();e.stopImmediatePropagation();queueStack();
+    },{passive:false});
     document.addEventListener('focusin',e=>{const side=sideOf(e.target);if(!side?.max)return;const r=e.target.getBoundingClientRect(),delta=r.top<side.start?r.top-side.start:r.bottom>side.end?r.bottom-side.end:0;if(delta){side.bar.scrollTop=Math.max(0,Math.min(side.max,side.bar.scrollTop+delta));queueStack();}});
     const layout=()=>{if(innerWidth<=600){for(const g of heads.keys())g.classList.remove('may-docked','may-dock-bottom','may-dock-side');placed.clear();geometry='';onLayout();layoutSides();return;}
       const B=bounds(),signature=JSON.stringify(B)+'|'+[...heads.values()].map(h=>h.getClientRects().length?h.offsetWidth:0).join(',');if(drag)return;if(ready&&signature===geometry){layoutSides();return;}geometry=signature;
       const previous=new Map(placed);placed.clear();
       for(const [g,hd] of heads){if(!hd.getClientRects().length)continue;const saved=state[idOf(g)],r=rect(hd),prior=previous.get(g),side=saved?.edge||prior?.edge||initialEdge||(g.parentElement===rail?'left':g.classList.contains('pt-bot')?'bottom':'top');
-        const free=available(g),p=free.find(p=>p.edge===saved?.edge&&p.index===saved.index)||nearest(free,prior?prior.x+WIDTH/2:r.x+r.w/2,prior?prior.y+HEIGHT/2:r.y+r.h/2,side);
+        const free=available(g),bottomFallback=saved?.edge==='bottom'?free.filter(p=>p.edge==='bottom').sort((a,b)=>Math.abs(a.index-saved.index)-Math.abs(b.index-saved.index))[0]:null,
+          p=free.find(p=>p.edge===saved?.edge&&p.index===saved.index)||bottomFallback||nearest(free,prior?prior.x+WIDTH/2:r.x+r.w/2,prior?prior.y+HEIGHT/2:r.y+r.h/2,side);
         if(!p)continue;moveToTools(g);apply(g,p);if(!saved)state[idOf(g)]={edge:p.edge,index:p.index};}
       ready=true;save();onLayout();for(const side of Object.values(sides))side.signature='';layoutSides();};
     const show=(free,chosen)=>{const signature=free.map(p=>[p.edge,p.index,p.x,p.y].join(':')).join('|');overlay.style.display='';

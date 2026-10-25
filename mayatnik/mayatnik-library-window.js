@@ -7,7 +7,7 @@
   try{
     source=root.opener;api=source&&!source.closed&&source.mayTemplateLibrary;
     if(!api||!source.MayatnikTemplatePanel)throw Error('source');
-    root.mayTemplateLibrary=api;root.mayViewLibrary=source.mayViewLibrary;root.mayFrameLibrary=source.mayFrameLibrary;root.mayLayers=source.mayLayers;root.maySettingsLibrary=source.maySettingsLibrary;root.mayBackup=source.mayBackup;
+    root.mayTemplateLibrary=api;root.mayViewLibrary=source.mayViewLibrary;root.mayFrameLibrary=source.mayFrameLibrary;root.mayLayers=source.mayLayers;root.maySettingsLibrary=source.maySettingsLibrary;root.mayBackup=source.mayBackup;root.maySequences=source.maySequences;root.MayatnikSequences=source.MayatnikSequences;
     root.MayatnikTemplateFolderStore=source.MayatnikTemplatePanel.getFolderStore();
   }catch(_){disconnected('Откройте это окно кнопкой «Окно» в Библиотеке работающего Маятника.');return;}
   const proxy=doc.getElementById('bTemplateSave'),original=source.document.getElementById('bTemplateSave');

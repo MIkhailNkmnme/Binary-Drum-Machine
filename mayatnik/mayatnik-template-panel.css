@@ -167,3 +167,14 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
  #mayatnikTemplatePanel .mtp-heading strong{flex-basis:100%}
 }
 #mayatnikTemplatePanel .mtp-section-commands .mtp-command{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mayatnikTemplatePanel .mtp-sequences{min-width:0;overflow:hidden}
+#mayatnikTemplatePanel .mtp-sequences p{margin:4px 0;color:#aab8cc;font-size:11px}
+#mayatnikTemplatePanel .mtp-sequences label{display:block;font-size:12px}
+#mayatnikTemplatePanel .mtp-sequences textarea{display:block;width:100%;height:150px;box-sizing:border-box;resize:vertical;white-space:pre;overflow:auto;background:#111823;color:#dfe6f5;border:1px solid #394657;font:12px/1.5 monospace;user-select:text;-webkit-user-select:text}
+#mayatnikTemplatePanel .mtp-sequence-actions{display:flex;flex-wrap:wrap;gap:2px;margin:4px 0}
+#mayatnikTemplatePanel .mtp-sequence-actions input{min-width:0;width:120px;box-sizing:border-box;background:#111823;color:#dfe6f5;border:1px solid #394657;height:24px}
+#mayatnikTemplatePanel .mtp-sequence-actions input[type=number]{width:65px}
+#mayatnikTemplatePanel .mtp-sequence-notice,#mayatnikTemplatePanel .mtp-sequence-summary{display:block;font:11px/1.5 'Segoe UI',sans-serif;color:#b9c7db;margin:3px 0}
+#mayatnikTemplatePanel .mtp-sequence-rows{max-height:50dvh;overflow:auto;max-width:100%;margin:4px 0;padding-left:42px;font:12px/1.5 monospace;background:#0e1116}
+#mayatnikTemplatePanel .mtp-sequence-rows li{width:max-content;min-width:100%;white-space:pre;padding:1px 4px;box-sizing:border-box;color:#8d9bb0}
+#mayatnikTemplatePanel .mtp-sequence-rows .is-found{color:#ffd646;background:#453016}

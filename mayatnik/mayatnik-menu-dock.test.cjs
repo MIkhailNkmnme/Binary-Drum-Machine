@@ -10,6 +10,15 @@ test('magnet chooses nearest free slot, with exact shared edge collision handlin
  const a={edge:'left',index:0,x:8,y:62,w:120,h:24},b={...a,index:1,y:88};assert.equal(D.overlap(a,b),false);assert.equal(D.overlap(a,{...b,y:87}),true);
  assert.equal(D.nearest([a,b],68,99),b);assert.equal(D.nearest([],0,0),null);
 });
+test('side strips own lower corners and bottom slots stay between them at desktop widths',()=>{
+ for(const right of [597,796,996,1436]){
+  const s=D.slots({left:8,right,topX:160,topY:8,bottomY:756,sideY:58,sideBottom:796}),bottom=s.filter(p=>p.edge==='bottom'),sides=s.filter(p=>['left','right'].includes(p.edge));
+  assert.ok(bottom.every(p=>p.x>=8+D.DX&&p.x+p.w<=right-D.DX));
+  assert.ok(sides.every(p=>p.y+p.h+2<=796));assert.ok(sides.some(p=>p.y>756),'side strip reaches below the footer headers');
+  for(const b of bottom)for(const side of sides)assert.equal(D.overlap(b,side),false);
+ }
+ const narrow=D.slots({left:200,right:500,topX:200,topY:8,bottomY:756,sideY:58,sideBottom:796});assert.equal(narrow.filter(p=>p.edge==='bottom').length,0);
+});
 test('saved coordinates accept only four strips and nonnegative integer slots',()=>{
  assert.deepEqual(D.read({a:{edge:'right',index:7},b:{edge:'free',index:3},c:{edge:'top',index:-1},d:{edge:'left',index:.5}}),{a:{edge:'right',index:7}});
 });
@@ -25,12 +34,24 @@ function fixture(saved={},options={}){
  vm.runInNewContext(fs.readFileSync(require.resolve('./mayatnik-menu-dock.js'),'utf8'),ctx);
  const dock=ctx.module.exports.mount({groups:()=>gs,idOf:g=>g.id,header,tools,footer,rail,rightEdge:()=>width,moveToTools:g=>tools.append(g),onLayout:()=>{},...options});frames.splice(0).forEach(fn=>fn());
  const event=(type,props={},doc=false)=>{const e={type,button:0,pointerId:1,preventDefault(){},stopImmediatePropagation(){},...props};for(const fn of (doc?docEvents:events).get(type)||[])fn(e);};
- return {gs,dock,store,event,body,rail,footer,flush(){frames.splice(0).forEach(fn=>fn());},resize(w){width=w;event('resize');}};
+ return {gs,dock,store,event,body,rail,footer,flush(){frames.splice(0).forEach(fn=>fn());},resize(w,h){width=w;if(h!==undefined)ctx.innerHeight=h;event('resize');}};
 }
+test('saved bottom indexes stay bottom through shortened strip, resize and mobile restoration',()=>{
+ const saved=JSON.stringify({g0:{edge:'bottom',index:7},g1:{edge:'right',index:26}}),f=fixture({'mayatnik-menu-dock-v509':saved});
+ assert.equal(f.gs[0].dataset.dockEdge,'bottom');assert.equal(f.gs[0].style['--may-dock-x'],'638px');assert.equal(f.gs[1].style['--may-dock-y'],'734px');
+ f.resize(800,900);assert.equal(f.gs[0].style['--may-dock-x'],'512px');assert.equal(f.gs[0].dataset.dockEdge,'bottom');
+ f.gs[1].box.height=1000;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='right');assert.equal(parseFloat(bar.style.top)+parseFloat(bar.style.height),896,'side clipping follows viewport height independently of footer');
+ f.resize(500);assert.equal(f.gs[0].classList.contains('may-docked'),false);f.resize(1000,784);assert.equal(f.gs[0].style['--may-dock-x'],'638px');assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved,'temporary clamping preserves original saved indexes');
+});
 test('real controller snaps drag to right strip and persists slot, never raw pixels',()=>{
  const f=fixture();f.event('pointerdown',{target:f.gs[0].hd,clientX:68,clientY:74},true);f.event('pointermove',{clientX:936,clientY:270});f.event('pointerup',{clientX:936,clientY:270});
  const saved=JSON.parse(f.store.get('mayatnik-menu-dock-v509'));assert.equal(saved.g0.edge,'right');assert.equal(saved.g0.index,8);assert.deepEqual(Object.keys(saved.g0).sort(),['edge','index']);assert.equal(f.gs[0].style['--may-dock-x'],'876px');
  const restored=fixture({'mayatnik-menu-dock-v509':JSON.stringify(saved)});assert.equal(restored.gs[0].dataset.dockEdge,'right');assert.equal(restored.gs[0].style['--may-dock-y'],'266px');
+});
+test('dragging into a lower corner lands on the extended side strip',()=>{
+ const f=fixture();f.resize(1000,800);
+ f.event('pointerdown',{target:f.gs[0].hd,clientX:68,clientY:74},true);f.event('pointermove',{clientX:936,clientY:772});f.event('pointerup',{clientX:936,clientY:772});
+ const saved=JSON.parse(f.store.get('mayatnik-menu-dock-v509'));assert.deepEqual(saved.g0,{edge:'right',index:27});assert.equal(f.gs[0].style['--may-dock-y'],'760px');
 });
 test('Escape and pointercancel restore last slot without changing storage',()=>{
  for(const cancel of ['keydown','pointercancel']){const f=fixture(),before=f.store.get('mayatnik-menu-dock-v509');f.event('pointerdown',{target:f.gs[0].hd,clientX:68,clientY:74},true);f.event('pointermove',{clientX:936,clientY:270});f.event(cancel,{key:'Escape'});assert.equal(f.store.get('mayatnik-menu-dock-v509'),before);assert.equal(f.gs[0].style['--may-dock-x'],'8px');}
@@ -73,18 +94,34 @@ test('open side groups push following headers by grid steps and collapsing resto
 });
 test('side column scroll exposes lower groups without changing saved grid slots; closed height resets scroll',()=>{
  const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})}),saved=f.store.get('mayatnik-menu-dock-v509');f.gs[0].box.height=780;f.dock.refresh();assert.equal(f.gs[1].style['--may-dock-y'],'864px');
- const bar=f.body.children.find(n=>n.dataset.edge==='left');assert.equal(bar.style.display,'block');bar.scrollTop=100;bar.events.scroll();f.flush();assert.equal(f.gs[1].style['--may-dock-y'],'764px');assert.equal(f.gs[0].style['--may-side-clip-top'],'100px');let stopped=false;f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:999,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(stopped,true);assert.equal(f.gs[1].style['--may-dock-y'],'726px');assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);
+ const bar=f.body.children.find(n=>n.dataset.edge==='left');assert.equal(bar.style.display,'block');bar.scrollTop=100;bar.events.scroll();f.flush();assert.equal(f.gs[1].style['--may-dock-y'],'764px');assert.equal(f.gs[0].style['--may-side-clip-top'],'100px');let stopped=false;f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:999,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(stopped,true);assert.equal(f.gs[1].style['--may-dock-y'],'754px');assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);
  f.gs[0].box.height=24;f.dock.refresh();assert.equal(bar.style.display,'none');assert.equal(bar.scrollTop,0);assert.equal(f.gs[1].style['--may-dock-y'],'84px');
+});
+test('overflow wheel first reaches an edge then wraps on the next outward wheel',()=>{
+ const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})}),saved=f.store.get('mayatnik-menu-dock-v509');f.gs[0].box.height=780;f.dock.refresh();
+ const bar=f.body.children.find(n=>n.dataset.edge==='left'),max=parseFloat(bar.children[0].style.height)-parseFloat(bar.style.height),target={closest:()=>f.gs[0]};
+ const wheel=(delta,extra={})=>{f.event('wheel',{target,deltaY:delta,deltaMode:0,...extra},true);f.flush();};
+ wheel(60);assert.equal(bar.scrollTop,60);wheel(1000);assert.equal(bar.scrollTop,max,'overshoot from the middle lands at the bottom');
+ wheel(1);assert.equal(bar.scrollTop,0);wheel(-1);assert.equal(bar.scrollTop,max);wheel(-1000);assert.equal(bar.scrollTop,0);
+ for(const extra of [{ctrlKey:true},{defaultPrevented:true}]){wheel(60,extra);assert.equal(bar.scrollTop,0);}
+ assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);
+});
+test('side wheel leaves sliders, editable fields, cycle controls and nested scrolling lists alone',()=>{
+ const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})});f.gs[0].box.height=780;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='left');
+ for(const selector of ['input','textarea','select','[role="slider"]','.gz-control','.gz-ladder','[data-n="fontCycle"]','[data-n="sizeCtl"]','[data-n="viewCycle"]']){
+  const control={matches:selectors=>selectors.includes(selector)},target={closest:selectors=>selectors==='.may-dock-side'?f.gs[0]:control};let stopped=false;
+  f.event('wheel',{target,deltaY:80,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(bar.scrollTop,0,selector);assert.equal(stopped,false,selector);
+ }
 });
 
 test('low right groups get a scrollbar beside occupied slots, not through empty space above',()=>{
  const saved={g0:{edge:'right',index:18},g1:{edge:'right',index:19}},f=fixture({'mayatnik-menu-dock-v509':JSON.stringify(saved)}),before=f.store.get('mayatnik-menu-dock-v509');
  f.gs[0].box.height=400;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='right');
- assert.equal(bar.style.top,'526px');assert.equal(bar.style.height,'226px');assert.equal(bar.style.left,'860px','bar remains left of the 876px right column');
+ assert.equal(bar.style.top,'526px');assert.equal(bar.style.height,'254px');assert.equal(bar.style.left,'860px','bar remains left of the 876px right column');
  assert.equal(bar.children[0].style.height,'442px');assert.equal(bar.style.display,'block');
  f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:1000,deltaMode:0},true);f.flush();
- assert.equal(bar.scrollTop,216);assert.equal(f.gs[0].style['--may-side-clip-top'],'216px');assert.equal(f.gs[1].style['--may-dock-y'],'726px');
- f.event('focusin',{target:{closest:()=>f.gs[0],getBoundingClientRect:()=>({top:510,bottom:534})}},true);f.flush();assert.equal(bar.scrollTop,200,'keyboard focus uses the same occupied viewport');
+ assert.equal(bar.scrollTop,188);assert.equal(f.gs[0].style['--may-side-clip-top'],'188px');assert.equal(f.gs[1].style['--may-dock-y'],'754px');
+ f.event('focusin',{target:{closest:()=>f.gs[0],getBoundingClientRect:()=>({top:510,bottom:534})}},true);f.flush();assert.equal(bar.scrollTop,172,'keyboard focus uses the same occupied viewport');
  assert.equal(f.store.get('mayatnik-menu-dock-v509'),before);
  f.gs[0].box.height=24;f.dock.refresh();assert.equal(bar.style.display,'none');assert.equal(bar.scrollTop,0);assert.equal(f.gs[0].style['--may-dock-y'],'526px');assert.equal(f.gs[1].style['--may-dock-y'],'552px');
 });
@@ -127,8 +164,8 @@ test('leftEdge keeps the left dock at the viewport edge when the rail starts aft
 
 test('last side slot keeps native scrollbar extent equal to computed range',()=>{
  const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'right',index:26},g1:{edge:'left',index:0}})});
- f.footer.box.top=756;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='right');
- assert.equal(bar.style.top,'734px');assert.equal(bar.style.height,'22px');assert.equal(bar.children[0].style.height,'26px');
+ f.footer.box.top=756;f.gs[0].box.height=52;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='right');
+ assert.equal(bar.style.top,'734px');assert.equal(bar.style.height,'50px');assert.equal(bar.children[0].style.height,'54px');
  f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:1000,deltaMode:0},true);f.flush();
  assert.equal(bar.scrollTop,parseFloat(bar.children[0].style.height)-parseFloat(bar.style.height));assert.equal(bar.scrollTop,4);
 });
