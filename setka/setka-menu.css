@@ -15,10 +15,24 @@ body.setka-menu-ready #mayatnikRail .gz-list .gz-nm{display:none}
 body.setka-menu-ready .setka-direct{--c:#bc94ff;--gz-bg:#1b2430;--gz-n:10px;--gz-h:24px;display:inline-flex;vertical-align:middle;justify-content:center;max-width:100%;flex:none;font:inherit}
 body.setka-menu-ready #gridsRowsPane .tools{display:flex;flex-wrap:wrap}
 body.setka-menu-ready .setka-title .setka-direct{--c:#ffd166}
-@media(max-width:760px){
-  body.setka-menu-ready #mayatnikRail .gz-rail{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:5px}
-  body.setka-menu-ready #mayatnikRail .gz-group{--gz-h:30px}
-  body.setka-menu-ready #mayatnikRail .gz-open{z-index:2}
-  body.setka-menu-ready #mayatnikRail .setka-menu-body{max-height:calc(100dvh - 150px)}
+/* One header strip. Popups are removed from layout on every edge. */
+body.setka-menu-ready .setka-title{height:36px;min-height:36px;flex-wrap:nowrap;gap:5px;padding:4px 6px}
+body.setka-menu-ready .setka-title>:not(#mayatnikRail):not(output){flex:none}
+body.setka-menu-ready #mayatnikRail{flex:1;min-width:0;width:auto;height:26px;min-height:26px;padding:0;margin:0}
+body.setka-menu-ready #mayatnikRail .gz-rail{display:flex;flex-direction:row;justify-content:space-between;flex-wrap:nowrap;width:100%;height:26px;gap:6px}
+body.setka-menu-ready #mayatnikRail .gz-group{flex:0 0 120px;width:120px;max-width:none;height:24px!important;min-height:24px!important;margin:0!important;transform:none!important}
+body.setka-menu-ready #mayatnikRail .gz-head{height:24px;cursor:grab}
+body.setka-menu-ready #mayatnikRail .gz-pin{cursor:pointer}
+body.setka-menu-ready #mayatnikRail .gz-group>.setka-menu-body{position:fixed!important;inset:auto;right:auto!important;bottom:auto!important;width:120px!important;max-width:120px!important;max-height:calc(100dvh - 44px);overflow:auto!important;z-index:60}
+body.setka-menu-ready #mayatnikRail .gz-open{z-index:100}
+body.setka-menu-ready #mayatnikRail .may-docked{position:fixed!important;left:var(--may-dock-x)!important;top:var(--may-dock-y)!important;bottom:auto!important}
+body.setka-menu-ready #mayatnikRail .may-dock-drag{z-index:2147483643!important;pointer-events:none!important}
+body.setka-menu-ready #mayatnikRail .gz-group.may-dock-drag>.setka-menu-body{display:none!important}
+#setkaFooter{position:fixed;bottom:0;left:4px;right:4px;height:28px;pointer-events:none}
+body.setka-menu-ready .setka-title output{position:fixed;bottom:2px;left:136px;max-width:calc(100% - 272px);margin:0;pointer-events:none;z-index:1;background:var(--bg)}
+@media(max-width:600px){
+ body.setka-menu-ready #mayatnikRail{overflow-x:auto;scrollbar-width:none}
+ body.setka-menu-ready #mayatnikRail .gz-rail{width:max-content;justify-content:flex-start}
+ body.setka-menu-ready #mayatnikRail .gz-group{--gz-h:30px}
+ body.setka-menu-ready #mayatnikRail .setka-menu-body>.gz-hx{min-height:30px}
 }
-@media(max-width:390px){body.setka-menu-ready #mayatnikRail .gz-rail{grid-template-columns:repeat(2,minmax(0,1fr))}}

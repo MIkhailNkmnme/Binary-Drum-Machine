@@ -13,7 +13,7 @@ test('magnet chooses nearest free slot, with exact shared edge collision handlin
 test('saved coordinates accept only four strips and nonnegative integer slots',()=>{
  assert.deepEqual(D.read({a:{edge:'right',index:7},b:{edge:'free',index:3},c:{edge:'top',index:-1},d:{edge:'left',index:.5}}),{a:{edge:'right',index:7}});
 });
-function fixture(saved={}){
+function fixture(saved={},options={}){
  const events=new Map(),docEvents=new Map(),frames=[],store=new Map(Object.entries(saved));let width=1000;
  const listen=(map)=>(type,fn)=>{if(!map.has(type))map.set(type,[]);map.get(type).push(fn);};
  class El{constructor(box={left:0,top:0,width:120,height:24}){this.box=box;this.children=[];this.dataset={};this.attrs={};const set=new Set();this.classList={add:(...v)=>v.forEach(x=>set.add(x)),remove:(...v)=>v.forEach(x=>set.delete(x)),contains:x=>set.has(x),toggle:(x,on)=>on?set.add(x):set.delete(x)};this.style={getPropertyValue:k=>this.style[k]||'',setProperty:(k,v)=>this.style[k]=v};this.scrollTop=0;this.events={};this.offsetWidth=box.width;}
@@ -23,9 +23,9 @@ function fixture(saved={}){
  const gs=[0,1].map(i=>{const g=new El();g.id='g'+i;g.hd=new El({left:8,top:62+i*26,width:120,height:24});g.parentElement=rail;return g;});
  const ctx={module:{exports:{}},globalThis:null,document:{body,createElement:()=>new El(),createElementNS:()=>new El(),addEventListener:listen(docEvents)},localStorage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)},addEventListener:listen(events),requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},setTimeout:()=>0,get innerWidth(){return width;}};ctx.globalThis=ctx;
  vm.runInNewContext(fs.readFileSync(require.resolve('./mayatnik-menu-dock.js'),'utf8'),ctx);
- const dock=ctx.module.exports.mount({groups:()=>gs,idOf:g=>g.id,header,tools,footer,rail,rightEdge:()=>width,moveToTools:g=>tools.append(g),onLayout:()=>{}});frames.splice(0).forEach(fn=>fn());
+ const dock=ctx.module.exports.mount({groups:()=>gs,idOf:g=>g.id,header,tools,footer,rail,rightEdge:()=>width,moveToTools:g=>tools.append(g),onLayout:()=>{},...options});frames.splice(0).forEach(fn=>fn());
  const event=(type,props={},doc=false)=>{const e={type,button:0,pointerId:1,preventDefault(){},stopImmediatePropagation(){},...props};for(const fn of (doc?docEvents:events).get(type)||[])fn(e);};
- return {gs,dock,store,event,body,flush(){frames.splice(0).forEach(fn=>fn());},resize(w){width=w;event('resize');}};
+ return {gs,dock,store,event,body,rail,flush(){frames.splice(0).forEach(fn=>fn());},resize(w){width=w;event('resize');}};
 }
 test('real controller snaps drag to right strip and persists slot, never raw pixels',()=>{
  const f=fixture();f.event('pointerdown',{target:f.gs[0].hd,clientX:68,clientY:74},true);f.event('pointermove',{clientX:936,clientY:270});f.event('pointerup',{clientX:936,clientY:270});
@@ -75,4 +75,39 @@ test('side column scroll exposes lower groups without changing saved grid slots;
  const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})}),saved=f.store.get('mayatnik-menu-dock-v509');f.gs[0].box.height=780;f.dock.refresh();assert.equal(f.gs[1].style['--may-dock-y'],'864px');
  const bar=f.body.children.find(n=>n.dataset.edge==='left');assert.equal(bar.style.display,'block');bar.scrollTop=100;bar.events.scroll();f.flush();assert.equal(f.gs[1].style['--may-dock-y'],'764px');assert.equal(f.gs[0].style['--may-side-clip-top'],'100px');let stopped=false;f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:999,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(stopped,true);assert.equal(f.gs[1].style['--may-dock-y'],'726px');assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);
  f.gs[0].box.height=24;f.dock.refresh();assert.equal(bar.style.display,'none');assert.equal(bar.scrollTop,0);assert.equal(f.gs[1].style['--may-dock-y'],'84px');
+});
+
+test('standalone key isolates persistence and default edge only affects unplaced groups',()=>{
+ const old=JSON.stringify({g0:{edge:'left',index:4}}),key='setka-menu-dock-v1';
+ const f=fixture({'mayatnik-menu-dock-v509':old},{storageKey:key,defaultEdge:'top',stackSides:false});
+ assert.ok(f.gs.every(g=>g.dataset.dockEdge==='top'));assert.equal(f.store.get('mayatnik-menu-dock-v509'),old);
+ f.event('pointerdown',{target:f.gs[0].hd,clientX:68,clientY:74},true);f.event('pointermove',{clientX:936,clientY:270});f.event('pointerup',{clientX:936,clientY:270});
+ const saved=f.store.get(key);assert.equal(JSON.parse(saved).g0.edge,'right');assert.equal(f.store.get('mayatnik-menu-dock-v509'),old);
+ const restored=fixture({[key]:saved},{storageKey:key,defaultEdge:'top',stackSides:false});assert.equal(restored.gs[0].dataset.dockEdge,'right');
+});
+
+test('all four default edges are accepted; invalid options retain Mayatnik defaults',()=>{
+ for(const edge of ['top','bottom','left','right'])assert.equal(fixture({},{defaultEdge:edge}).gs[0].dataset.dockEdge,edge);
+ for(const storageKey of ['', '  ', 12, null]){
+  const f=fixture({},{storageKey,defaultEdge:'floating',stackSides:'false'});assert.equal(f.gs[0].dataset.dockEdge,'left');assert.ok(f.store.has('mayatnik-menu-dock-v509'));assert.equal(f.body.children.filter(n=>n.dataset.edge).length,2);
+ }
+});
+
+test('stackSides false keeps side slots fixed and adds no clipping or side scroll controls',()=>{
+ const key='setka-menu-dock-v1',saved=JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}});
+ const f=fixture({[key]:saved},{storageKey:key,defaultEdge:'top',stackSides:false}),before=f.gs.map(g=>g.style['--may-dock-y']);
+ f.gs[0].box.height=780;f.gs[1].box.height=300;f.dock.refresh();f.flush();assert.deepEqual(f.gs.map(g=>g.style['--may-dock-y']),before);
+ assert.equal(f.body.children.filter(n=>n.dataset.edge).length,0);
+ for(const g of f.gs){assert.equal(g.style['--may-side-clip-top'],undefined);assert.equal(g.style['--may-side-clip-bottom'],undefined);}
+ let stopped=false;f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:999,deltaMode:0,preventDefault(){stopped=true;}},true);f.event('focusin',{target:{closest:()=>f.gs[1]}},true);f.flush();
+ assert.equal(stopped,false);assert.deepEqual(f.gs.map(g=>g.style['--may-dock-y']),before);assert.equal(f.store.get(key),saved);
+ f.resize(800);assert.deepEqual(f.gs.map(g=>g.style['--may-dock-y']),before);
+});
+
+test('leftEdge keeps the left dock at the viewport edge when the rail starts after the title',()=>{
+ const f=fixture({},{leftEdge:()=>4,defaultEdge:'left',stackSides:false});f.rail.box.left=280;f.dock.refresh();
+ assert.equal(f.gs[0].style['--may-dock-x'],'4px');assert.equal(f.gs[1].style['--may-dock-x'],'4px');
+ const previous=fixture();previous.rail.box.left=280;previous.dock.refresh();assert.equal(previous.gs[0].style['--may-dock-x'],'280px');
+ for(const leftEdge of [()=>NaN,()=>Infinity,null,4]){const g=fixture({},{leftEdge});assert.equal(g.gs[0].style['--may-dock-x'],'8px');}
+ assert.equal(fixture({},{leftEdge:()=>-10}).gs[0].style['--may-dock-x'],'4px');
 });

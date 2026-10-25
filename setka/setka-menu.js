@@ -6,7 +6,19 @@
     if (!source || !host || !window.ZerkGrozd || !window.ZerkGroupHeader || host.dataset.setkaMenu) return;
     host.dataset.setkaMenu = '1';
     const bindings = [], lists = [];
-    let rail, refreshing = false, pending = 0;
+    let rail, dock, refreshing = false, pending = 0;
+    const placePopups = () => {
+      for(const group of rail.el.querySelectorAll(':scope > .gz-group')){
+        const body=group.querySelector('.setka-menu-body');if(!body||!group.classList.contains('gz-open'))continue;
+        const h=group.querySelector('.gz-head').getBoundingClientRect(),edge=group.dataset.dockEdge||'top';
+        const width=120,gap=3,below=innerHeight-h.bottom-8,above=h.top-8;
+        let x=h.left,y=h.bottom+gap,max=below;
+        if(edge==='bottom'){max=above;y=Math.max(4,h.top-gap-Math.min(body.scrollHeight,max));}
+        if(edge==='left'||edge==='right'){x=edge==='left'?h.right+gap:h.left-width-gap;max=innerHeight-8;y=Math.max(4,Math.min(h.top,innerHeight-Math.min(body.scrollHeight,max)-4));}
+        const set=(k,v)=>{const property=k==='maxHeight'?'max-height':k;if(body.style.getPropertyValue(property)!==v)body.style.setProperty(property,v,'important');};
+        set('left',Math.max(4,Math.min(x,innerWidth-width-4))+'px');set('top',Math.max(4,y)+'px');set('maxHeight',Math.max(24,max)+'px');
+      }
+    };
     const label = e => e.textContent.trim() || e.getAttribute('aria-label') || e.title || e.id;
     const tip = e => e.title || e.getAttribute('aria-label') || e.closest('label')?.title || label(e);
     const inactive = e => e.disabled || e.getAttribute('aria-disabled') === 'true';
@@ -78,12 +90,18 @@
           button.classList.toggle('gz-off-dis',button.disabled);
           if(!button.querySelector(':scope > .gz-nm')){const name=document.createElement('span');name.className='gz-nm';name.textContent=button.textContent;button.replaceChildren(name);}
         }
-        window.mayButtonStandardRefresh?.();
+        dock?.refresh();placePopups();window.mayButtonStandardRefresh?.();
       }finally{refreshing=false;}
     }
     window.setkaMenuRefresh=request;
     source.hidden=true;
     document.body.classList.add('mayatnik-menu-ready','setka-menu-ready');
+    dock=window.MayatnikMenuDock?.mount({storageKey:'setka-menu-dock-v1',defaultEdge:'top',stackSides:false,
+      groups:()=>[...rail.el.querySelectorAll(':scope > .gz-group')],idOf:g=>g.dataset.id,
+      header:document.querySelector('.setka-title'),tools:host,footer:document.getElementById('setkaFooter'),rail:rail.el,leftEdge:()=>4,rightEdge:()=>innerWidth,
+      moveToTools:()=>{},onLayout:()=>{placePopups();window.mayButtonStandardRefresh?.();}});
+    host.addEventListener('scroll',placePopups,{passive:true});
+    for(const head of rail.el.querySelectorAll('.gz-head'))head.style.touchAction='none';
     host.addEventListener('click',request);host.addEventListener('input',request);host.addEventListener('change',request);
     addEventListener('resize',request);
     refresh();
