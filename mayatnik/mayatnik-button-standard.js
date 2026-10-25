@@ -87,40 +87,38 @@
     const id='may-back-'+(++gradN);
     s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
   }
-  // The wider decoration never changes layout or covers a neighbouring group.
-  // Each local stacking context masks its extension below the other groups.
-  function groupExtensions(){
-    const groups=[...document.querySelectorAll('#paintTools > .pt-g,#paintTools > .gz-group,#mayatnikRail .gz-group')];
-    const visible=new Map();
+  // DX126 - button120 - the two 2px backing tips = a 2px close gap.
+  // Return only the empty facing sides; each owner draws its own half.
+  function groupGapGeometry(a,b){
+    const bounds=p=>({left:Math.min(...p.points.map(q=>q[0])),right:Math.max(...p.points.map(q=>q[0])),top:Math.max(p.top,Math.min(...p.points.map(q=>q[1]))),bottom:Math.min(p.bottom,Math.max(...p.points.map(q=>q[1])))});
+    let A=bounds(a),B=bounds(b);if(A.left>B.left){[a,b]=[b,a];[A,B]=[B,A];}
+    const gap=B.left-A.right,top=Math.max(A.top,B.top),bottom=Math.min(A.bottom,B.bottom);
+    if(gap<0||gap>2.5||bottom<=top)return null;
+    const edge=(p,y,right)=>{const xs=[];p.forEach((q,i)=>{const n=p[(i+1)%p.length];if(y<Math.min(q[1],n[1])||y>Math.max(q[1],n[1]))return;if(q[1]===n[1])xs.push(q[0],n[0]);else xs.push(q[0]+(y-q[1])*(n[0]-q[0])/(n[1]-q[1]));});return right?Math.max(...xs):Math.min(...xs);};
+    const levels=[...new Set([top,bottom,...a.points.map(q=>q[1]),...b.points.map(q=>q[1])].filter(y=>y>=top&&y<=bottom))].sort((x,y)=>x-y),mid=(A.right+B.left)/2;
+    const left=levels.map(y=>[edge(a.points,y,true),y]),right=levels.map(y=>[edge(b.points,y,false),y]);
+    return {left:a,right:b,leftPoints:[...left,[mid,bottom],[mid,top]],rightPoints:[[mid,top],[mid,bottom],...right.reverse()]};
+  }
+  function groupGaps(){
+    const groups=[...document.querySelectorAll('#paintTools > .pt-g,#paintTools > .gz-group,#mayatnikRail .gz-group')],parts=[],layers=new Map();
     for(const g of groups){
-      const head=g.querySelector(':scope > .pt-l,:scope > .gz-head');if(!head||g.classList.contains('pt-btn'))continue;
-      const elements=[head];if(g.matches('.pt-open,.gz-open'))elements.push(g.querySelector(':scope > .pt-r,:scope > .may-rail-list'));
-      const style=getComputedStyle(g),gr=g.getBoundingClientRect(),clipped=style.clipPath.startsWith('inset('),top=clipped?gr.top+(parseFloat(style.getPropertyValue('--may-side-clip-top'))||0):-Infinity,bottom=clipped?gr.bottom-(parseFloat(style.getPropertyValue('--may-side-clip-bottom'))||0):Infinity;
-      const rects=[];
-      for(const el of elements){if(!el||!el.getClientRects().length||getComputedStyle(el).visibility==='hidden')continue;
-        const r=el.getBoundingClientRect(),t=Math.max(r.top,top,0),b=Math.min(r.bottom,bottom,innerHeight),l=Math.max(r.left,0),rr=Math.min(r.right,innerWidth);
-        if(rr>l&&b>t)rects.push({left:l,top:t,right:rr,bottom:b});
-      }
-      if(rects.length)visible.set(g,rects);
+      const head=g.querySelector(':scope > .pt-l,:scope > .gz-head');if(!head||g.classList.contains('pt-btn')||!head.getClientRects().length||getComputedStyle(head).visibility==='hidden')continue;
+      g.querySelectorAll('.may-group-extension').forEach(e=>e.remove());
+      const open=g.matches('.pt-open,.gz-open'),s=g.querySelector(open?':scope > .pt-r > .may-standard-contours,:scope > .may-rail-list > .may-standard-contours':':scope > .may-closed-back');if(!s)continue;
+      const sr=s.getBoundingClientRect(),style=getComputedStyle(g),gr=g.getBoundingClientRect(),clipped=style.clipPath.startsWith('inset(');
+      let top=clipped?Math.max(0,gr.top+(parseFloat(style.getPropertyValue('--may-side-clip-top'))||0)):0,bottom=clipped?Math.min(innerHeight,gr.bottom-(parseFloat(style.getPropertyValue('--may-side-clip-bottom'))||0)):innerHeight;
+      const host=s.parentElement;if(getComputedStyle(host).overflowY!=='visible'&&host!==g){const r=host.getBoundingClientRect();top=Math.max(top,r.top);bottom=Math.min(bottom,r.bottom);}
+      layers.set(s,{origin:sr,polygons:[]});
+      for(const polygon of s.querySelectorAll(':scope > polygon')){const points=polygon.getAttribute('points').trim().split(/\s+/).map(pair=>pair.split(',').map(Number)).map(([x,y])=>[x+sr.left,y+sr.top]);parts.push({g,s,points,top,bottom});}
     }
-    for(const [g]of visible){
-      g.querySelector(':scope > .may-closed-back > .may-group-extension')?.remove();
-      if(!g.matches('.pt-open,.gz-open'))continue;
-      const s=g.querySelector(':scope > .pt-r > .may-standard-contours,:scope > .may-rail-list > .may-standard-contours');if(!s)continue;
-      const polygons=[...s.querySelectorAll(':scope > polygon')];if(!polygons.length)continue;
-      const points=polygons.flatMap(p=>p.getAttribute('points').trim().split(/\s+/).map(pair=>pair.split(',').map(Number))),xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),bounds={x:Math.min(...xs)-14,y:Math.min(...ys)-14,width:Math.max(...xs)-Math.min(...xs)+28,height:Math.max(...ys)-Math.min(...ys)+28};
-      const sr=s.getBoundingClientRect(),others=[...visible].filter(([other])=>other!==g).flatMap(([,rects])=>rects.map(r=>[r.left-sr.left,r.top-sr.top,r.right-r.left,r.bottom-r.top])).filter(([x,y,w,h])=>x<bounds.x+bounds.width&&x+w>bounds.x&&y<bounds.y+bounds.height&&y+h>bounds.y);
-      const sig=JSON.stringify([polygons.map(p=>p.getAttribute('points')),others]);let ext=s.querySelector(':scope > .may-group-extension');if(ext?.dataset.sig===sig)continue;
-      ext?.remove();ext=document.createElementNS(NS,'g');ext.classList.add('may-group-extension');ext.setAttribute('pointer-events','none');ext.dataset.sig=sig;
-      const id=s.dataset.extensionId||(s.dataset.extensionId='may-extension-'+(++gradN));
-      const defs=document.createElementNS(NS,'defs'),mask=document.createElementNS(NS,'mask');mask.id=id;mask.setAttribute('maskUnits','userSpaceOnUse');
-      for(const [key,value]of Object.entries(bounds))mask.setAttribute(key,value);
-      shape(mask,'rect',{...bounds,fill:'#fff'});
-      for(const [x,y,width,height]of others)shape(mask,'rect',{x,y,width,height,fill:'#000'});
-      defs.append(mask);ext.append(defs);
-      const fill=document.createElementNS(NS,'g');fill.setAttribute('mask',`url(#${id})`);
-      for(const p of polygons)shape(fill,'polygon',{points:p.getAttribute('points'),fill:'#0e1116',stroke:'#0e1116','stroke-width':24,'stroke-linejoin':'bevel'});
-      ext.append(fill);s.prepend(ext);
+    for(let i=0;i<parts.length;i++)for(let j=i+1;j<parts.length;j++){
+      if(parts[i].g===parts[j].g)continue;const gap=groupGapGeometry(parts[i],parts[j]);if(!gap)continue;
+      for(const [part,points]of [[gap.left,gap.leftPoints],[gap.right,gap.rightPoints]]){const layer=layers.get(part.s),r=layer.origin;layer.polygons.push(points.map(([x,y])=>`${(x-r.left).toFixed(2)},${(y-r.top).toFixed(2)}`).join(' '));}
+    }
+    for(const [s,layer]of layers){
+      let fill=s.querySelector(':scope > .may-group-gap');const sig=JSON.stringify(layer.polygons);if(fill?.dataset.sig===sig)continue;fill?.remove();if(!layer.polygons.length)continue;
+      fill=document.createElementNS(NS,'g');fill.classList.add('may-group-gap');fill.setAttribute('pointer-events','none');fill.dataset.sig=sig;
+      for(const points of layer.polygons)shape(fill,'polygon',{points,fill:'#000'});s.prepend(fill);
     }
   }
   function choiceShape(count,index,selected){
@@ -254,7 +252,7 @@
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }
     for(const list of ladders){list.classList.add('may-standard-list');if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
-    groupExtensions();
+    groupGaps();
     standardObserver?.observe(document.body,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class','disabled','aria-pressed','style']});
   }
   document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half,.may-segments .gz-half,.may-parts-multi .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
