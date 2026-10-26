@@ -7229,7 +7229,7 @@ function posPopOpen(anchor){
       else if (a === "del" && p) { if (!confirm(`Удалить положение «${p.n}»?`)) return; L.splice(L.indexOf(p), 1); if (Z.conePosStar === p.id) delete Z.conePosStar; save(); renderCone(); say(`📍 «${p.n}» удалено.`); }
       posPopRender(); });
     pp.addEventListener("dblclick", (e) => { const b = e.target.closest('[data-pa="go"]'), it = b && b.closest("[data-id]"), p = it && (Z.conePos || []).find(q => String(q.id) === it.dataset.id); if (!p) return;
-      const n = prompt("Имя положения", p.n); if (n && n.trim()) { p.n = n.trim(); save(); posPopRender(); } });
+      ZZInputDialog.open({title:"Имя положения",value:p.n,decorate:el=>plateZig(el,"#f1c56d")}).then(n=>{if(n&&n.trim()&&(Z.conePos||[]).includes(p)){p.n=n.trim();save();posPopRender();}}); });
     pp.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "conePosName") { e.preventDefault(); const b = pp.querySelector('[data-pa="add"]'); if (b) b.click(); } if (e.key === "Escape") pp.hidden = true; e.stopPropagation(); });
     document.addEventListener("pointerdown", (e) => { const q = $("conePosPop"); if (q && !q.hidden && !q.contains(e.target) && !(q._a && q._a.contains(e.target))) q.hidden = true; }, { capture: true, passive: true });
   }
@@ -8315,8 +8315,8 @@ function setupCone(){
     else if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
     coneSliceChainUi(); save(); renderCone();
   };
-  if ($("bConeSliceRingCount")) $("bConeSliceRingCount").onclick = () => {
-    const value = prompt("Конечное число колец (1–" + CONE_MAX + "). Изменение начнёт новый прогон с нуля.",String(Z.coneSliceRingCount || 5));
+  if ($("bConeSliceRingCount")) $("bConeSliceRingCount").onclick = async () => {
+    const value = await ZZInputDialog.open({title:"Конечное число колец (1–"+CONE_MAX+"). Изменение начнёт новый прогон с нуля.",value:String(Z.coneSliceRingCount||5),type:"number",min:1,max:CONE_MAX,decorate:el=>plateZig(el,"#f1c56d")});
     if (value === null) return;
     const n = Number(value.trim());
     if (!value.trim() || !Number.isInteger(n) || n < 1 || n > CONE_MAX) { say("Укажи целое число колец от 1 до " + CONE_MAX + "."); return; }
@@ -11388,8 +11388,9 @@ if ($("triCv")) {
       return `Сцена ${i + 1} (рядов ${sc.R}, в ряду ${sc.N}) — ${parts.length ? parts.join("; ") : "пусто"}` + (more.length ? NL + more.join(NL) : "");
     }).join(NL);
     const done = () => say(`△ ${Z.triScenes.length} сцен — в буфере.`);
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).then(done, () => { prompt("Скопируй:", out); });
-    else prompt("Скопируй:", out);
+    const fallback=()=>ZZInputDialog.open({title:"Скопируй текст сцен",value:out,readOnly:true,decorate:el=>plateZig(el,"#f1c56d")});
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).then(done, fallback);
+    else fallback();
   };
   renderTri();
 }
@@ -15964,7 +15965,7 @@ async function zzLinkMake(toFile){   // v0.654: toFile — правый щелч
     say(`🔗 Ссылка на всё состояние — в файл ${a.download} (${kb} КБ). Открыть — скопировать строку из файла в адрес браузера.`); return;
   }
   let ok = false; try { await navigator.clipboard.writeText(url); ok = true; } catch (e) { ok = false; }
-  if (!ok) prompt("🔗 Ссылка на это состояние — скопируй:", url);
+  if (!ok) await ZZInputDialog.open({title:"Ссылка на это состояние — скопируй",value:url,readOnly:true,decorate:el=>plateZig(el,"#f1c56d")});
   say(`🔗 Ссылка на всё состояние страницы${ok ? " — в буфере обмена" : ""} (${kb} КБ${url.length > 60000 ? "; длинная — мессенджер может обрезать, надёжнее «💾 В файл»" : ""}). Открывший увидит ровно это; его собственные строки и настройки не тронутся.`);
 }
 async function zzLinkOpen(code){
@@ -16878,11 +16879,11 @@ function init(){
       renderTpl(); renderRows(); save(); if (t) say(`Шаблон «${t.name}» удалён.`);
     }
   };
-  const tplDbl = (e) => {
+  const tplDbl = async (e) => {
     const b = e.target.closest("button[data-u]"); if (!b) return;
     const t = Z.tpl[+b.dataset.u]; if (!t) return;
-    const n = window.prompt("Имя шаблона", t.name);
-    if (n && n.trim()) { t.name = n.trim().slice(0, 60); renderTpl(); save(); }
+    const n = await ZZInputDialog.open({title:"Имя шаблона",value:t.name,maxLength:60,decorate:el=>plateZig(el,"#f1c56d")});
+    if (n && n.trim() && Z.tpl.includes(t)) { t.name = n.trim().slice(0, 60); renderTpl(); save(); }
   };
   for (const id of ["tplList", "tplMine"]) { $(id).onclick = tplClick; $(id).ondblclick = tplDbl; }
   $("bTplNew").onclick = () => { const t = tplNew(); say(`＋ Новый шаблон «${t.name}» — ${t.rows.length} стр., он теперь текущий (жёлтый).`); };
