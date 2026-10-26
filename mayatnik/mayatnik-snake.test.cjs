@@ -16,7 +16,7 @@ test('inversion and reversal remain explicit sequence variants',()=>{
  const input=field(5,3,[[2,0,1],[1,1,0],[2,2,0]],{sequence:['001'],reverse:true});assert.equal(Snake.find(input).found[0].vn,'рев');input.sequence=['011'];input.reverse=false;input.inverse=true;assert.equal(Snake.find(input).found[0].vn,'инв');
 });
 test('DAG memoization bounds branching, depth uses no recursion, limits report incomplete search',()=>{
- const height=1500,width=3,val=new Int8Array(width*height).fill(1),result=Snake.find({width,height,val,sequence:['1'.repeat(height)],maxMs:10000});assert.equal(result.complete,true);assert.equal(result.found.length,2);assert.ok(result.operations<100000);assert.equal(result.found[0].n,height);
+ const height=1500,width=3,val=new Int8Array(width*height).fill(1),result=Snake.find({width,height,val,sequence:['1'.repeat(height)],maxMs:10000});assert.equal(result.complete,true);assert.equal(result.found.length,2);assert.ok(result.operations<width*height*(Math.ceil(height/32)+10));assert.equal(result.found[0].n,height);
  for(const budget of [{maxOperations:1},{maxEntries:1}]){const limited=Snake.find({width:10,height:10,val:new Int8Array(100),sequence:['00000'],...budget});assert.equal(limited.complete,false);assert.match(limited.reason,/не все пути/);}
  assert.throws(()=>Snake.find({width:0,height:1,val:[],sequence:[]}));assert.throws(()=>Snake.find({width:1,height:1,val:[1],sequence:['10x']}));
 });
@@ -48,4 +48,19 @@ test('progress updates status without drawing; new hit deltas appear immediately
  worker.onmessage({data:{progress:{index:0,half:0,found:1,total:2,newFound:[{i:0,p:0,r:0,c:1,cells:[1,3],n:2}]}}});assert.equal(api.draws,1);assert.equal(api.ochki.complete,false);assert.deepEqual(Array.from(api.ochki.found[0].cells),[6,15]);assert.equal(api.ochki.hl[15],1);
  worker.onmessage({data:{progress:{index:0,half:1,found:1,total:2,newFound:[]}}});assert.equal(api.draws,1);assert.equal(api.published.result,api.ochki);assert.match(api.ochki.reason,/правый/);
  worker.onerror({message:'interrupted worker'});assert.match(api.ochki.reason,/interrupted worker/);assert.equal(api.ochki.complete,false);
+});
+test('production Shift-And earliest rows agree with exhaustive paths on 17210 fixtures',()=>{
+ function brute({width:W,height:H,val,anchor=0,text}){const rows=[-1,-1];function walk(r,c,i){return r<H&&c>=0&&c<W&&val[r*W+c]===Number(text[i])&&(i+1===text.length||walk(r+1,c-1,i+1)||walk(r+1,c+1,i+1));}for(let r=0;r<H;r++)for(let c=0;c<W;c++){const p=(c-anchor-r)&1;if(rows[p]<0&&walk(r,c,0))rows[p]=r;}return rows;}
+ let seed=123456,checked=0;const random=n=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return (seed>>>0)%n;};
+ const check=input=>{assert.deepEqual(Snake.earliest(input).rows,brute(input));checked++;};
+ for(let run=0;run<10000;run++){const width=1+random(8),height=1+random(10),val=Int8Array.from({length:width*height},()=>random(5)===0?-1:random(2)),text=Array.from({length:1+random(12)},()=>random(2)).join('');check({width,height,val,text,anchor:random(width)});}
+ for(let bits=0;bits<512;bits++){const val=Int8Array.from({length:9},(_,q)=>(bits>>>q)&1);for(let m=1;m<=3;m++)for(let word=0;word<1<<m;word++)check({width:3,height:3,val,text:word.toString(2).padStart(m,'0')});}
+ for(const m of [31,32,33,63,64,65,127,128,129,255,256,257,511,512]){
+  const ones={width:3,height:m+2,val:new Int8Array(3*(m+2)).fill(1),text:'1'.repeat(m)};check(ones);assert.deepEqual(Snake.earliest({...ones,text:ones.text.slice(0,-1)+'0'}).rows,[-1,-1]);checked++;
+  const width=5,height=m+6,text=Array.from({length:m},()=>random(2)).join(''),val=new Int8Array(width*height).fill(-1);for(let i=0;i<m;i++){val[(i+2)*width+(i%2?1:2)]=Number(text[i]);val[(i+4)*width+(i%2?4:3)]=Number(text[i]);}check({width,height,val,text});
+ }
+ assert.equal(checked,17210);
+});
+test('prepass only bounds the starting row, preserving duplicate paths and earliest starting column',()=>{
+ const input=field(7,5,[[2,1,1],[4,1,1],[1,2,0],[3,2,0],[5,2,0],[2,3,1],[4,3,1]],{sequence:['101','101','101'],chunkOperations:9});const result=Snake.find(input),hits=result.found.filter(hit=>hit.p===1);assert.equal(result.complete,true);assert.equal(hits.length,3);assert.deepEqual(hits.map(hit=>hit.cells),[[9,15,23],[9,17,23],[9,17,25]]);assert.ok(result.prepassWords>0);
 });
