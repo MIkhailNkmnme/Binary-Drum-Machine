@@ -1,4 +1,4 @@
-/* v4. Главная: синхронное сравнение конусов 5.7 и глобального XOR 5.8.
+/* v5. Главная: синхронное сравнение конусов 5.7 и глобального XOR 5.8.
    Рабочая и последняя опубликованная пара полей, без истории кадров. */
 (() => {
   'use strict';
@@ -27,7 +27,7 @@
     green: { label: 'Зелёный', left: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, всё поле и общие — зелёный' }
   };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
-  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice' };
+  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 } } };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE));
     if (saved && typeof saved === 'object') {
@@ -35,11 +35,16 @@
       if (typeof saved.mirror === 'boolean') view.mirror = saved.mirror;
       if (Object.prototype.hasOwnProperty.call(PALETTES, saved.palette)) view.palette = saved.palette;
       if (typeof saved.zoom === 'number' && Number.isFinite(saved.zoom)) view.zoom = Math.max(1, Math.min(64, saved.zoom));
+      for (const key of ['left', 'right', 'blend']) for (const axis of ['x', 'y']) {
+        const value = saved.pan?.[key]?.[axis];
+        if (typeof value === 'number' && Number.isFinite(value)) view.pan[key][axis] = value;
+      }
     }
   } catch (_) {}
   let published = false;
   let frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
   let cycle = 0, awaitingStats = false, failed = false, controller = null;
+  let drag = null, middle = null, swallowClick = false;
   try {
     if (typeof window !== 'undefined' && window.HubComparePanel?.create) controller = window.HubComparePanel.create({ W, H });
   } catch (error) { stop(error); }
@@ -56,6 +61,48 @@
   function text(id, value) {
     const node = document.getElementById(id); if (node) node.textContent = value;
   }
+  const PAN_KEYS = ['left', 'right', 'blend'], canvases = { left, right, blend };
+  const CONTROL_SELECTOR = 'button,a,input,select,textarea,summary,label,dialog,[contenteditable],[role="button"],[role="slider"],[role="dialog"],[role="group"],.hub,#hubCompareTools,#hubComparePanel,.gz-rail,.gz-ladder,.hubRombGrid,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubRail,#hubZoom,#hubFieldTools';
+  function isControl(event) { return !!event.target?.closest?.(CONTROL_SELECTOR); }
+  function paneRect(key) { return canvases[key]?.parentElement?.getBoundingClientRect?.(); }
+  function paneAt(event) {
+    for (const key of view.mode === 'split' ? ['left', 'right'] : ['blend']) {
+      const rect = paneRect(key);
+      if (rect && rect.width > 0 && rect.height > 0 && event.clientX >= rect.left && event.clientX < rect.left + rect.width && event.clientY >= rect.top && event.clientY < rect.top + rect.height) return key;
+    }
+    return null;
+  }
+  function rebaseDrag() {
+    if (!drag) return;
+    drag.x = drag.lastX; drag.y = drag.lastY;
+    drag.panX = view.pan[drag.key].x; drag.panY = view.pan[drag.key].y;
+  }
+  function applyPan(rebase = false) {
+    for (const key of PAN_KEYS) {
+      const pan = view.pan[key], rect = paneRect(key);
+      if (view.zoom === 1) pan.x = pan.y = 0;
+      else if (rect && rect.width > 0 && rect.height > 0) {
+        const pw = rect.width, ph = rect.height, fit = Math.min(pw / W, ph / H);
+        const sw = W * fit * view.zoom, sh = H * fit * view.zoom;
+        const baseX = key === 'left' ? 0 : key === 'right' ? pw - sw : (pw - sw) / 2;
+        pan.x = sw > pw ? Math.max(pw - sw - baseX, Math.min(-baseX, pan.x)) : 0;
+        const yLimit = Math.max(0, (sh - ph) / 2);
+        pan.y = Math.max(-yLimit, Math.min(yLimit, pan.y));
+      }
+      if (root) {
+        const prefix = '--hubPan' + key[0].toUpperCase() + key.slice(1);
+        root.style.setProperty(prefix + 'X', pan.x + 'px'); root.style.setProperty(prefix + 'Y', pan.y + 'px');
+      }
+    }
+    if (rebase) rebaseDrag();
+  }
+  function finishDrag() {
+    if (!drag) return;
+    const previous = drag; drag = null;
+    document.body?.classList?.toggle('hubCompareDragging', false);
+    try { root.releasePointerCapture?.(previous.id); } catch (_) {}
+    saveView();
+  }
   function syncView() {
     const modeLabel = { split: 'Рядом', xor: 'XOR', and: 'AND' }[view.mode];
     const mirrorLabel = view.mirror ? 'Зеркально' : 'Прямо';
@@ -65,6 +112,8 @@
       root.style.setProperty('--hubCompareZoom', String(view.zoom));
       for (const key of ['left', 'right', 'common']) root.style.setProperty('--hubCompare' + key[0].toUpperCase() + key.slice(1), css(palette[key]));
     }
+    if (drag && (view.mode === 'split' ? drag.key === 'blend' : drag.key !== 'blend')) finishDrag();
+    applyPan(true);
     text('hubCompareModeLabel', modeLabel);
     text('hubCompareModeIcon', { split: '↔', xor: '⊕', and: '∧' }[view.mode]);
     text('hubCompareMirrorLabel', mirrorLabel); text('hubCompareMirrorIcon', view.mirror ? 'Ƨ1' : '11');
@@ -140,15 +189,67 @@
     // Оставляем стандартный zoom браузера, не вызывая preventDefault.
     if (event.ctrlKey || event.metaKey) { event.stopImmediatePropagation(); return; }
     if (event.defaultPrevented) return;
-    const target = event.target;
-    if (target && target.closest && target.closest('button,a,input,select,textarea,summary,label,dialog,[contenteditable],[role="button"],[role="slider"],[role="dialog"],[role="group"],.hub,#hubCompareTools,#hubComparePanel,.gz-rail,.gz-ladder,.hubRombGrid,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubRail,#hubZoom,#hubFieldTools')) return;
+    if (isControl(event)) return;
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
     const delta = event.deltaY * unit;
     if (!Number.isFinite(delta) || delta === 0) return;
     event.preventDefault(); event.stopImmediatePropagation();
     view.zoom = Math.max(1, Math.min(64, view.zoom * Math.exp(-delta * .0015)));
-    root.style.setProperty('--hubCompareZoom', String(view.zoom)); saveView();
+    root.style.setProperty('--hubCompareZoom', String(view.zoom));
+    if (drag) {
+      if (Number.isFinite(event.clientX)) drag.lastX = event.clientX;
+      if (Number.isFinite(event.clientY)) drag.lastY = event.clientY;
+    }
+    applyPan(true); saveView();
   }, { capture: true, passive: false });
+  if (root) {
+    const capture = { capture: true, passive: false };
+    const consume = event => { event.preventDefault(); event.stopImmediatePropagation(); };
+    window.addEventListener('pointerdown', event => {
+      swallowClick = false;
+      if (event.button === 1) middle = null;
+      if (isControl(event) || event.ctrlKey || event.metaKey || (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen')) return;
+      const key = paneAt(event); if (!key) return;
+      if (event.button === 1) {
+        finishDrag(); middle = { id: event.pointerId }; consume(event);
+        document.getElementById('hubCompareZen')?.click(); return;
+      }
+      if (event.button !== 0 || view.zoom <= 1) return;
+      finishDrag(); consume(event);
+      const pan = view.pan[key];
+      drag = { key, id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, lastY: event.clientY, panX: pan.x, panY: pan.y };
+      document.body?.classList?.toggle('hubCompareDragging', true);
+      try { root.setPointerCapture?.(event.pointerId); } catch (_) {}
+    }, capture);
+    window.addEventListener('pointermove', event => {
+      if (!drag || event.pointerId !== drag.id) return;
+      consume(event);
+      if (event.buttons === 0) { finishDrag(); return; }
+      drag.lastX = event.clientX; drag.lastY = event.clientY;
+      view.pan[drag.key].x = drag.panX + event.clientX - drag.x;
+      view.pan[drag.key].y = drag.panY + event.clientY - drag.y;
+      applyPan(true);
+    }, capture);
+    window.addEventListener('pointerup', event => {
+      if (middle && event.pointerId === middle.id && event.button === 1) consume(event);
+      if (drag && event.pointerId === drag.id && event.button === 0) { consume(event); swallowClick = true; finishDrag(); }
+    }, capture);
+    window.addEventListener('pointercancel', event => {
+      if (middle && event.pointerId === middle.id) { consume(event); middle = null; }
+      if (drag && event.pointerId === drag.id) { consume(event); finishDrag(); }
+    }, capture);
+    window.addEventListener('mousedown', event => {
+      if ((event.button === 1 && middle) || (event.button === 0 && drag)) consume(event);
+    }, capture);
+    window.addEventListener('auxclick', event => {
+      if (event.button === 1 && middle) { consume(event); middle = null; }
+    }, capture);
+    window.addEventListener('click', event => {
+      if (swallowClick && event.button === 0) { swallowClick = false; if (!isControl(event)) consume(event); }
+    }, capture);
+    window.addEventListener('blur', () => { middle = null; swallowClick = false; finishDrag(); });
+    window.addEventListener('resize', () => { applyPan(true); saveView(); });
+  }
   syncView();
 
   // Пустота не участвует в XOR; три пустых входа оставляют клетку пустой.
