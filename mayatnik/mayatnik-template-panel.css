@@ -185,3 +185,5 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayatnikTemplatePanel .mtp-sequence-rows .is-found{color:#ffd646;background:#453016}
 .may-template-limit-notice{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:2147483646;box-sizing:border-box;width:max-content;max-width:calc(100vw - 24px);padding:8px 12px;background:#111823;color:#ffe969;border:1px solid #ffe969;font:13px/1.4 'Segoe UI',sans-serif;pointer-events:none}
 .may-template-limit-notice[hidden]{display:none}
+
+#mayatnikTemplatePanel .mtp-sequence-rows .is-selected{color:#edffff;background:#124b55;box-shadow:inset 3px 0 #69edff}

@@ -7,7 +7,7 @@
   const popupRight=()=>{const panel=$('mayatnikTemplatePanel');if(window.MayatnikTemplatePanel?.isOpen()&&panel){const left=panel.getBoundingClientRect().left;if(left>0)return left;}return innerWidth;};
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
@@ -29,7 +29,7 @@
       set: v => { e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); } };
   };
   const segments = (title, options) => ({type:'pair',cls:'may-segments',name:title,tip:title,mid:'',parts:options.map(o=>({label:o.name,tip:o.tip||title+' — '+o.name,on:o.on,click:o.pick}))});
-  const selectSegments = (id,names) => {const e=$(id);return segments(tip(e),[...e.options].map(o=>({name:names?.[o.value]||o.textContent,tip:id==='ochkiMode'?'Очки: '+o.textContent:undefined,on:()=>e.value===o.value,pick:()=>{e.value=o.value;e.dispatchEvent(new Event('change',{bubbles:true}));}})));};
+  const selectSegments = (id,names) => {const e=$(id);return {...segments(tip(e),[...e.options].map(o=>({name:names?.[o.value]||o.textContent,tip:id==='ochkiMode'?'Очки: '+o.textContent:undefined,on:()=>e.value===o.value,pick:()=>{if(e.disabled||o.disabled)return;e.value=o.value;e.dispatchEvent(new Event('change',{bubbles:true}));}}))),disabled:()=>e.disabled};};
   const ringSegments = (id,names) => {const e=$(id),now=()=>e.textContent.split(': ')[1];return {...segments(tip(e),names.map(name=>({name,on:()=>now()===name,pick:()=>{for(let n=0;n<names.length&&now()!==name;n++)e.click();}}))),src:id};};
   const control = id => {
     const e = $(id), node = e.closest('label') || e;
@@ -89,7 +89,7 @@
         arrows: ['−1', '+1'], thumb: { label: () => $('bPlay').getAttribute('aria-pressed') === 'true' ? '❚❚' : '▶', click: () => $('bPlay').click() } } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
-      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
+      button('bOchki', 'eye'), button('bOchkiSnake','eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),num('ochkiLength',{name:'От бит',slider:false}) ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),

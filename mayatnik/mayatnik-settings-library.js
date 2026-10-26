@@ -2,7 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSettingsLibrary=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
   const KEY='settings-library-v1';
-  const STATE_KEYS=('speed outline sym symBits symRowsMin symRowsMax symBitsMin symBitsMax symV symH symD symPlainV symPlainH symPlainD symTriangles symTriangleRows frozen ochki ochkiMode ochkiInv ochkiRev ochkiPattern ochkiLength bitOneColour bitZeroColour overOneColour overZeroColour digitOneColour digitZeroColour digitFont digitSize geomCenter fixLines blackMirror animHl fillArea fillGrow paintMeet paintAxis paintMid midOneOn midZeroOn midWide midOneColour midZeroColour verticalFillColour stolbFillColour triTop thirds zsnap zbase zLock zoom zMid ztop zBot linesOn contour mirCol mirOp rowLab heat sectors areas fixWide fixLow fixLowOut fixMirror fixFold fixRot fixHor fixCross fixAxis fixDown fixDragK sawFull saw lineMeasures templateMaxArea').split(' ');
+  const STATE_KEYS=('speed outline sym symBits symRowsMin symRowsMax symBitsMin symBitsMax symV symH symD symPlainV symPlainH symPlainD symTriangles symTriangleRows frozen ochki ochkiSnake ochkiMode ochkiInv ochkiRev ochkiPattern ochkiLength bitOneColour bitZeroColour overOneColour overZeroColour digitOneColour digitZeroColour digitFont digitSize geomCenter fixLines blackMirror animHl fillArea fillGrow paintMeet paintAxis paintMid midOneOn midZeroOn midWide midOneColour midZeroColour verticalFillColour stolbFillColour triTop thirds zsnap zbase zLock zoom zMid ztop zBot linesOn contour mirCol mirOp rowLab heat sectors areas fixWide fixLow fixLowOut fixMirror fixFold fixRot fixHor fixCross fixAxis fixDown fixDragK sawFull saw lineMeasures templateMaxArea').split(' ');
   const TOOL_KEYS=['fillMode','autoVertical','axisPicking','axisLineMode','rulerMode','mirrorLine','mirrorAxis','templatePickEnabled','templatePickMode','templateDragEnabled'];
   const clone=value=>JSON.parse(JSON.stringify(value));
   function pick(state,tools={},controls={},colourAuto={}){
@@ -13,7 +13,7 @@
   }
   function validate(value){
     if(!value||value.version!==1||!value.state||!value.tools||!value.parity||!/^#[0-9a-f]{6}$/i.test(value.controls?.fillColour))throw Error('Повреждён набор настроек');
-    for(const k of STATE_KEYS){const v=value.state[k];if(k==='templateMaxArea'&&v===undefined)continue;if(v!==null&&typeof v!=='boolean'&&typeof v!=='string'&&!(typeof v==='number'&&Number.isFinite(v)))throw Error('Некорректная настройка: '+k);}
+    for(const k of STATE_KEYS){const v=value.state[k];if((k==='templateMaxArea'||k==='ochkiSnake')&&v===undefined)continue;if(v!==null&&typeof v!=='boolean'&&typeof v!=='string'&&!(typeof v==='number'&&Number.isFinite(v)))throw Error('Некорректная настройка: '+k);}
     if(value.state.templateMaxArea!=null&&(!Number.isInteger(value.state.templateMaxArea)||value.state.templateMaxArea<1||value.state.templateMaxArea>1048576))throw Error('Некорректная максимальная площадь шаблона');
     for(const k of TOOL_KEYS){const v=k==='templateDragEnabled'&&value.tools[k]===undefined?false:value.tools[k];if(k==='autoVertical'?![0,1,2].includes(v):k==='templatePickMode'?!['one','add'].includes(v):typeof v!=='boolean')throw Error('Некорректный режим: '+k);}
     return pick(value.state,value.tools,value.controls,value.colourAuto);
