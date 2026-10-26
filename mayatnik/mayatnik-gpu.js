@@ -317,7 +317,7 @@ fn contour(pos:vec2<f32>) -> bool {
 }
 fn antiEdge(a:i32,b:i32,mode:u32,distance:f32)->bool {
   if(b== -1){return distance<=2.0;}
-  return (b==a||(mode==3u&&b>=0))&&distance<=1.0;
+  return (b==a||((mode==3u||mode==4u)&&b>=0))&&distance<=1.0;
 }
 fn antiContour(pos:vec2<f32>,mode:u32)->i32 {
   let step=u.step*u.pixelRatio;let f=vec2<f32>(u.cx0,u.cy0)+pos*u.step;
@@ -333,6 +333,13 @@ fn antiContour(pos:vec2<f32>,mode:u32)->i32 {
     l=sampledKind(r,c-1,step);rr=sampledKind(r,c+1,step);t=sampledKind(r-1,c,step);b=sampledKind(r+1,c,step);
   }
   if(a<0){return -1;}
+  if(mode==4u){
+    let ht=antiEdge(a,t,mode,top);let hb=antiEdge(a,b,mode,bottom);
+    if(ht||hb){return select(0,1,(ht&&t==a&&a==0)||(hb&&b==a&&a==0));}
+    let vl=antiEdge(a,l,mode,left);let vr=antiEdge(a,rr,mode,right);
+    if(vl||vr){return select(0,1,(vl&&(l!=a||a==0))||(vr&&(rr!=a||a==0)));}
+    return -1;
+  }
   if(antiEdge(a,l,mode,left)||antiEdge(a,rr,mode,right)||antiEdge(a,t,mode,top)||antiEdge(a,b,mode,bottom)){return a;}
   return -1;
 }
@@ -500,7 +507,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
       function render(context, o) {
         if (dead || !pic || !win) return;
         const ub = new ArrayBuffer(80), f = new Float32Array(ub), i = new Int32Array(ub),p=o.contourProjection;
-        const mode=o.contourMode==='same'?2:o.contourMode==='double'?3:1;
+        const mode=o.contourMode==='same'?2:o.contourMode==='double'?3:o.contourMode==='directional'?4:1;
         // Low byte selects contour mode; remaining bytes retain the single colour.
         f[0] = o.x0; f[1] = o.y0; f[2] = o.step;i[3]=o.contours&&win.contours?((o.contourColour??0xff69e9ff)<<8)|mode:0; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;f[7]=o.pixelRatio||1;
         i[16]=o.contourColours?.[0]??0xffffffff;i[17]=o.contourColours?.[1]??0xff000000;

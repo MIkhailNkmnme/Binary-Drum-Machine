@@ -14,7 +14,7 @@
   function validate(value){
     if(!value||value.version!==1||!value.state||!value.tools||!value.parity||!/^#[0-9a-f]{6}$/i.test(value.controls?.fillColour))throw Error('Повреждён набор настроек');
     for(const k of STATE_KEYS){const v=value.state[k];if((k==='templateMaxArea'||k==='ochkiSnake'||k==='bitContourColour1'||k==='bitContourColour2'||k==='bitContourMode'||k==='bitContourColours')&&v===undefined)continue;if(v!==null&&typeof v!=='boolean'&&typeof v!=='string'&&!(typeof v==='number'&&Number.isFinite(v)))throw Error('Некорректная настройка: '+k);}
-    for(const [key,values]of [['bitContourMode',['single','same','double']],['bitContourColours',['auto','custom']]])if(value.state[key]!=null&&!values.includes(value.state[key]))throw Error('Некорректная настройка: '+key);
+    for(const [key,values]of [['bitContourMode',['single','same','double','directional']],['bitContourColours',['auto','custom']]])if(value.state[key]!=null&&!values.includes(value.state[key]))throw Error('Некорректная настройка: '+key);
     if(value.state.templateMaxArea!=null&&(!Number.isInteger(value.state.templateMaxArea)||value.state.templateMaxArea<1||value.state.templateMaxArea>1048576))throw Error('Некорректная максимальная площадь шаблона');
     for(const k of TOOL_KEYS){const v=k==='templateDragEnabled'&&value.tools[k]===undefined?false:value.tools[k];if(k==='autoVertical'?![0,1,2].includes(v):k==='templatePickMode'?!['one','add'].includes(v):typeof v!=='boolean')throw Error('Некорректный режим: '+k);}
     return pick(value.state,value.tools,value.controls,value.colourAuto);

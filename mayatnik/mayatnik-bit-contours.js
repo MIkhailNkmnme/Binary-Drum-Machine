@@ -31,20 +31,26 @@
     }
     const screenX=sampled?col=>x+Math.min(col,spanX):col=>x+col*scale;
     const screenY=sampled?row=>y+Math.min(row,spanY):row=>y+row*scale;
-    if(mode==='same'||mode==='double'){
+    if(mode==='same'||mode==='double'||mode==='directional'){
       // Each cell owns its inner strips. Even four-way junctions never put
       // another bit's contour colour into this cell. The outer edge is inward.
       const bit=(col,row)=>col<0||row<0||col>=gridWidth||row>=gridHeight?-1:reader(col,row);
       const x0=Math.max(0,Math.floor(left)),y0=Math.max(0,Math.floor(top)),x1=Math.min(gridWidth,Math.ceil(right)),y1=Math.min(gridHeight,Math.ceil(bottom));
-      const paths=[[],[]];let count=0;
+      const paths=mode==='directional'?[[],[],[],[]]:[[],[]];let count=0;
       for(let row=y0;row<y1;row++){
         let run=-1,runBit=-1;
         const flush=end=>{if(run>=0){paths[runBit].push([screenX(run),screenY(row),screenX(end)-screenX(run),screenY(row+1)-screenY(row)]);count++;run=-1;}};
         for(let col=x0;col<x1;col++){
           const a=bit(col,row);if(a!==0&&a!==1){flush(col);continue;}
-          const thick=b=>b===-1?lineWidth:b===a||mode==='double'&&(b===0||b===1)?half:0;
+          const thick=b=>b===-1?lineWidth:b===a||(mode==='double'||mode==='directional')&&(b===0||b===1)?half:0;
           const l=thick(bit(col-1,row)),r=thick(bit(col+1,row)),t=thick(bit(col,row-1)),b=thick(bit(col,row+1));
           const X=screenX(col),Y=screenY(row),W=screenX(col+1)-X,H=screenY(row+1)-Y;
+          if(mode==='directional'){
+            const add=(colour,x,y,w,h)=>{if(w>0&&h>0){paths[colour].push([x,y,w,h]);count++;}};
+            const edgeColour=(neighbour,direction)=>neighbour===a?1-a:direction;
+            add(edgeColour(bit(col-1,row),1),X,Y,Math.min(l,W),H);add(edgeColour(bit(col+1,row),1),X+W-Math.min(r,W),Y,Math.min(r,W),H);
+            add(2+edgeColour(bit(col,row-1),0),X,Y,W,Math.min(t,H));add(2+edgeColour(bit(col,row+1),0),X,Y+H-Math.min(b,H),W,Math.min(b,H));continue;
+          }
           if(l+r>=W||t+b>=H){if(runBit!==a)flush(col);if(run<0){run=col;runBit=a;}continue;}
           flush(col);const add=(x,y,w,h)=>{if(w>0&&h>0){paths[a].push([x,y,w,h]);count++;}};
           add(X,Y,Math.min(l,W),H);add(X+W-Math.min(r,W),Y,Math.min(r,W),H);
@@ -52,7 +58,7 @@
         }flush(x1);
       }
       ctx.save();ctx.beginPath();ctx.rect(0,0,screenWidth,screenHeight);ctx.clip();
-      for(let bit=0;bit<2;bit++){ctx.fillStyle=colours[bit];ctx.beginPath();for(const rect of paths[bit])ctx.rect(...rect);ctx.fill();}
+      for(let bit=0;bit<paths.length;bit++){ctx.fillStyle=colours[bit%2];ctx.beginPath();for(const rect of paths[bit])ctx.rect(...rect);ctx.fill();}
       ctx.restore();return count;
     }
     ctx.save();ctx.beginPath();ctx.rect(0,0,screenWidth,screenHeight);ctx.clip();ctx.strokeStyle=colour;ctx.lineWidth=lineWidth;

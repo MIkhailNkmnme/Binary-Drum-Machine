@@ -13,7 +13,7 @@ test('real WebGPU anti contours match CPU cell strips, junctions, projection and
    const colours=['#20d080','#a020e0'],packed=[0xff80d020,0xffe020a0];
    const patterns=[[[0,0],[1,1]],[[0,1],[1,0]],[[0,1],[0,1]],[[0,-1,1],[1,-2,0],[1,1,0]]];
    for(const rows of patterns){const width=rows[0].length,height=rows.length,val=Int8Array.from(rows.flat(),v=>v<0?-1:v),field=api.field({W:width,H:height,anchor:0,bg:'empty'});field.write(val);field.picture({VX:0,VW:width,VH:height,tint:0,T:Array(6).fill(0xff444444),bitC:[0xff444444,0xff444444],empty:0xff000000,contours:true});const source=await field.readPic();field.writePic(source,Int8Array.from(rows.flat()));
-    for(const mode of ['same','double'])for(const scale of [16,3,1,.75,.1])for(const pan of [0,.25])for(const ratio of [1,2]){
+    for(const mode of ['same','double','directional'])for(const scale of [16,3,1,.75,.1])for(const pan of [0,.25])for(const ratio of [1,2]){
      const W=80*ratio,H=70*ratio,x=pan+4,y=pan+5,step=1/(scale*ratio),options={x0:-x/scale,y0:-y/scale,step,pixelRatio:ratio,contours:true,contourMode:mode,contourColours:packed};
      const actual=await pixels(field,options,W,H),base=await pixels(field,{...options,contours:false},W,H);
      const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');ctx.setTransform(ratio,0,0,ratio,0,0);MayatnikBitContours.paint(ctx,{width,height,read:(c,r)=>rows[r][c],x,y,scale,screenWidth:W/ratio,screenHeight:H/ratio,mode,colours});const overlay=ctx.getImageData(0,0,W,H).data;
@@ -31,6 +31,6 @@ test('real WebGPU anti contours match CPU cell strips, junctions, projection and
    const actual=await pixels(field,options,32,32);for(const [x,y,bit]of [[15,8,0],[16,8,0],[8,15,0],[8,16,1],[15,15,0],[16,16,1]]){const p=packed[bit],expected=[p&255,p>>>8&255,p>>>16&255,255];if(String(actual[y*32+x])!==String(expected))throw Error('Projected junction mismatch');compared++;}field.destroy();
    await device.queue.onSubmittedWorkDone();return {cases,compared,partial,errors,adapter:api.adapter};
   });
-  assert.deepEqual(result.errors,[]);assert.equal(result.cases,160);assert.ok(result.compared>1000000);t.diagnostic(JSON.stringify(result));
+  assert.deepEqual(result.errors,[]);assert.equal(result.cases,240);assert.ok(result.compared>1000000);t.diagnostic(JSON.stringify(result));
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 });

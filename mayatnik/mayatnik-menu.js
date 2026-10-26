@@ -570,20 +570,21 @@
   // Contour selectors forward only to retained controls; source handlers own persistence/rendering.
   function contourSelector(id,title,choices){
     const source=$(id);if(!source)return;
-    const row=document.createElement('div');row.className='gz-hx gz-pair may-segments '+(choices.length===3?'gz-split3 may-mirror-three':'gz-split');row.dataset.n=id;row.title=title;row.setAttribute('role','group');row.setAttribute('aria-label',title);
+    const row=document.createElement('div');row.className='gz-hx gz-pair may-segments '+(choices.length===3?'gz-split3 may-mirror-three':choices.length===4?'gz-split4':'gz-split');row.dataset.n=id;row.title=title;row.setAttribute('role','group');row.setAttribute('aria-label',title);
     const parts=choices.map(([value,label,help],i)=>{const part=document.createElement('span');part.className='gz-half gz-h'+i;part.textContent=label;part.title=help;part.setAttribute('aria-label',help);part.setAttribute('role','button');part.tabIndex=0;
       part.addEventListener('click',event=>{event.stopPropagation();if(source.disabled)return;const view=$('view'),activate=id==='bitContourMode'&&view.value!=='bitContours';if(source.value===value&&!activate)return;if(source.value!==value){source.value=value;source.dispatchEvent(new Event('change',{bubbles:true}));}if(activate){view.value='bitContours';view.dispatchEvent(new Event('change',{bubbles:true}));}rail.refresh();placeTools();});
       part.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();part.click();}});row.append(part);return part;});
     toolSync.push(()=>parts.forEach((part,i)=>{const on=source.value===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.setAttribute('aria-disabled',String(!!source.disabled));}));gView.append(row);
   }
   contourSelector('bitContourMode','Контуры битов: способ обводки',[
-    ['single','Общий','Общий контур всех битов первым собственным цветом.'],
+    ['single','Общ','Общий контур всех битов первым собственным цветом.'],
     ['same','Равн','Контуры одинаковых битов антицветом; между разными битами обводки нет.'],
-    ['double','Двойн','Контуры одинаковых битов антицветом; между разными — две полосы, каждая со стороны своего бита.']
+    ['double','Двойн','Контуры одинаковых битов антицветом; между разными — две полосы, каждая со стороны своего бита.'],
+    ['directional','1/0','Одна линия: между разными соседними битами слева и справа — цвет 1, между разными строками сверху и снизу — цвет 0. Между одинаковыми: 1–1 цвет 0, 0–0 цвет 1; граница всегда есть. На пересечении приоритет межстрочной линии.']
   ]);
   contourSelector('bitContourColours','Цвета контуров: авто или свои; общий контур всегда первым собственным цветом',[
-    ['auto','Авто','Антицвет — цвет противоположного бита из палитры битов. Общий контур использует первый собственный цвет.'],
-    ['custom','Свои','Собственные цвета контуров из двух кружков: первый для бита 0, второй для бита 1. Общий контур использует первый.']
+    ['auto','Авто','Для Равн/Двойн — цвет противоположного бита. Для ↔1↕0 — антицвет между одинаковыми; между разными цвет 1 в строке и 0 между строками. Общий контур использует первый собственный цвет.'],
+    ['custom','Свои','Собственные цвета из двух кружков: первый 0, второй 1. В ↔1↕0 это цвета линий по правилу 1–1 → 0, 0–0 → 1; в Равн/Двойн — контур своего бита. Общий контур использует первый.']
   ]);
   // v0.226: «и эту раздели в 2, отдели фоном или вложенностью, сделай по темам» — список «Вида» в два столбца (.pt-col), в них блоки по темам
   // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.

@@ -76,3 +76,11 @@ test('anti contours retain viewport read limits and merge uniform minified rows'
   assert.ok(reads<=5*(64+5)*(48+5),String(reads));if(scale<1)assert.ok(ctx.rects.length<=52,'one full-span run per uniform sampled row');
  }
 });
+
+test('directional uses anti colour for equal bits, 1 between differing columns and 0 between differing rows',()=>{
+ const colours=['zero','one'];for(const rows of [[[0,0],[0,0]],[[1,1],[1,1]],[[0,1],[1,0]],[[0,0],[1,1]],[[0,1],[0,1]]]){
+ const ctx=fills();C.paint(ctx,{width:2,height:2,read:(x,y)=>rows[y][x],mode:'directional',colours,scale:16,screenWidth:40,screenHeight:40});
+ for(let r=0;r<2;r++){const want=rows[r][0]===rows[r][1]?1-rows[r][0]:1;assert.equal(at(ctx,15.5,r*16+8),colours[want]);assert.equal(at(ctx,16.5,r*16+8),colours[want]);assert.equal(at(ctx,14.5,r*16+8),null);assert.equal(at(ctx,17.5,r*16+8),null);}
+ for(let c=0;c<2;c++){const want=rows[0][c]===rows[1][c]?1-rows[0][c]:0;assert.equal(at(ctx,c*16+8,15.5),colours[want]);assert.equal(at(ctx,c*16+8,16.5),colours[want]);}
+ }
+});

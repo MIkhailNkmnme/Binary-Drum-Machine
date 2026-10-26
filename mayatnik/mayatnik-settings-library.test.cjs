@@ -23,7 +23,7 @@ test('two contour colours round trip independently and old presets remain compat
 });
 
 test('contour geometry and colour source round trip, validate enums and accept legacy snapshots',()=>{
- for(const bitContourMode of ['single','same','double'])for(const bitContourColours of ['auto','custom']){const p=S.pick({bitContourMode,bitContourColours,bitContourColour1:'#123456',bitContourColour2:'#abcdef'}),st={};S.applyState(st,p);assert.equal(st.bitContourMode,bitContourMode);assert.equal(st.bitContourColours,bitContourColours);assert.equal(st.bitContourColour2,'#abcdef');}
+ for(const bitContourMode of ['single','same','double','directional'])for(const bitContourColours of ['auto','custom']){const p=S.pick({bitContourMode,bitContourColours,bitContourColour1:'#123456',bitContourColour2:'#abcdef'}),st={};S.applyState(st,p);assert.equal(st.bitContourMode,bitContourMode);assert.equal(st.bitContourColours,bitContourColours);assert.equal(st.bitContourColour2,'#abcdef');}
  const legacy=S.pick({});delete legacy.state.bitContourMode;delete legacy.state.bitContourColours;const st={bitContourMode:'double',bitContourColours:'custom'};S.applyState(st,legacy);assert.equal(st.bitContourMode,undefined);assert.equal(st.bitContourColours,undefined);
  for(const key of ['bitContourMode','bitContourColours']){const p=S.pick({});p.state[key]='unknown';assert.throws(()=>S.normalized(p),new RegExp(key));}
 });

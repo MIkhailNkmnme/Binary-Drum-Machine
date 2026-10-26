@@ -72,6 +72,7 @@ test('contour first colour reaches CPU drawing, GPU render and captures; second 
 test('automatic anti palette uses the opposite bit and custom colours map directly to their cells',()=>{
  const {c}=fixture();vm.runInContext(fn('bitContourOptions'),c);c.st.bitContourMode='double';c.st.bitZeroColour='#a020e0';c.st.bitOneColour='#20d080';
  assert.deepEqual(Array.from(c.bitContourOptions().colours),['#20d080','#a020e0']);
+ c.st.bitContourMode='directional';assert.deepEqual(Array.from(c.bitContourOptions().colours),['#a020e0','#20d080']);
  c.st.bitContourColours='custom';c.st.bitContourColour1='#123456';c.st.bitContourColour2='#fedcba';assert.deepEqual(Array.from(c.bitContourOptions().colours),['#123456','#fedcba']);
  c.st.bitContourMode='single';assert.equal(c.bitContourOptions().colour,'#123456');
 });
