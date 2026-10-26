@@ -15,6 +15,20 @@
     ['settings',{key:'settings',title:'Настройки',word:'набор',genitive:'набора',plural:'настроек',scope:'включённые режимы, цвета, масштаб и инструменты (текущий кадр и его геометрия сохраняются)',apiName:'maySettingsLibrary'}]
   ]);
   const tabButtons=new Map();
+  let templateLimitButton;
+  let templateLimitNotice,templateLimitTimer;
+  function showTemplateLimitNotice(event){
+    if(!templateLimitNotice){templateLimitNotice=doc.createElement('output');templateLimitNotice.className='may-template-limit-notice';templateLimitNotice.setAttribute('role','status');doc.body.append(templateLimitNotice);}
+    templateLimitNotice.textContent=event.detail?.message||'Шаблон превышает максимальную площадь';templateLimitNotice.hidden=false;
+    root.clearTimeout(templateLimitTimer);templateLimitTimer=root.setTimeout(()=>{templateLimitNotice.hidden=true;},4000);
+  }
+  function syncTemplateLimit(){if(!templateLimitButton)return;const api=root.mayTemplateLimit;templateLimitButton.disabled=!api;
+    templateLimitButton.textContent='▣ Площадь ≤ '+(api?.get()??4096).toLocaleString('ru-RU')+' бит';}
+  function editTemplateLimit(){const api=root.mayTemplateLimit;if(!api)return;
+    const value=root.prompt('Максимальная площадь выделяемого шаблона в битах (ширина × высота, включая промежутки). От 1 до 1048576.',String(api.get()));
+    if(value===null)return;const n=Number(value.trim());
+    if(!Number.isInteger(n)||n<1||n>1048576){root.alert('Введите целое число от 1 до 1048576.');return;}
+    api.set(n);syncTemplateLimit();}
   let folderTree,address,upButton,sectionSave,renameButton,deleteButton,searchInput,query='',folderSelection='';
   const sectionTitle=()=>activeTab==='templates'?'Шаблоны':activeTab==='layers'?'Слои':activeTab==='sequences'?'Послед-ти':captureLibraries.get(activeTab)?.title||'';
   const matches=name=>!query||String(name||'').toLocaleLowerCase().includes(query);
@@ -73,7 +87,7 @@
     try{await library.api[method](...args);}catch(e){library.error=e?.message||'Не удалось выполнить действие';}finally{library.pending=false;renderCapture(library);}}
   function renderCapture(library){if(!library?.pane||!open||activeTab!==library.key)return;const state=library.api?.getState()||{},busy=library.pending||!!state.busy,list=library.api?.list()||[];
     library.save.disabled=!library.api||busy;library.pane.setAttribute('aria-busy',String(busy));panel.setAttribute('aria-busy',String(busy));library.status.textContent=library.error||state.message||(!library.api?'Библиотека '+library.plural+' загружается…':'Сохранить '+library.word+': '+library.scope+'.');
-    syncExplorer();const fragment=doc.createDocumentFragment();for(const entry of list.filter(n=>matches(n.name))){
+    syncExplorer();syncTemplateLimit();const fragment=doc.createDocumentFragment();for(const entry of list.filter(n=>matches(n.name))){
       const card=doc.createElement('article');card.className='mtp-card mtp-capture-card';card.dataset[library.key==='settings'?'settingsId':'frameId']=entry.id;card.classList.toggle('mtp-selected',entry.id===state.selectedId);
       const choose=button('','Открыть '+library.word+' '+entry.name+(library.key==='frames'?' с сохранённым масштабом и положением поля':''),()=>captureAction(library,'open',entry.id),'mtp-preview');choose.disabled=busy;choose.setAttribute('aria-pressed',String(entry.id===state.selectedId));
       const image=doc.createElement('img');image.className='mtp-image';image.alt=library.key==='frames'?(entry.previewKind==='view'?'Прежнее превью кадра':'Весь маятник целиком'):'';if(library.key==='frames'&&entry.previewKind==='view')image.title='Прежнее превью; обновится при открытии кадра';image.draggable=false;if(entry.thumbnail)image.src=entry.thumbnail;const name=doc.createElement('span');name.className='mtp-name';name.dataset.userLabel='';name.textContent=entry.name;choose.append(image,name);
@@ -85,7 +99,7 @@
   }
   function bindCapture(library,api){if(!api||api===library.api)return;library.unsubscribe?.();library.api=api;library.unsubscribe=api.subscribe(()=>renderCapture(library));Promise.resolve(api.ready).then(()=>{if(api===library.api)renderCapture(library);},e=>{library.error=e?.message||'Не удалось загрузить библиотеку';renderCapture(library);});renderCapture(library);}
   function capturePane(library){const pane=doc.createElement('section');pane.className='mtp-pane '+(library.key==='settings'?'mtp-settings-pane':'mtp-frame-pane');pane.id=library.key==='settings'?'maySettingsPane':'mayFramePane';pane.setAttribute('role','tabpanel');
-    const save=button('Сохранить '+library.word,'Сохранить '+library.scope+' в библиотеку '+library.plural,()=>{if(library.key==='settings'){const name=root.prompt('Название набора настроек','Набор '+((library.api?.list().length||0)+1));if(name?.trim())captureAction(library,'save',name.trim());}else captureAction(library,'save');});save.dataset[library.key==='settings'?'settingsSave':'frameSave']='';const output=doc.createElement('output');output.className='mtp-status';output.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-grid';pane.append(save,output,list);Object.assign(library,{pane,save,status:output,grid:list});return pane;}
+    const save=button('Сохранить '+library.word,'Сохранить '+library.scope+' в библиотеку '+library.plural,()=>{if(library.key==='settings'){const name=root.prompt('Название набора настроек','Набор '+((library.api?.list().length||0)+1));if(name?.trim())captureAction(library,'save',name.trim());}else captureAction(library,'save');});save.dataset[library.key==='settings'?'settingsSave':'frameSave']='';const output=doc.createElement('output');output.className='mtp-status';output.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-grid';pane.append(save,output,list);if(library.key==='settings'){templateLimitButton=button('','Максимальная площадь выделяемого шаблона, бит',editTemplateLimit);templateLimitButton.dataset.templateLimit='';templateLimitButton.style.width='100%';pane.prepend(templateLimitButton);syncTemplateLimit();}Object.assign(library,{pane,save,status:output,grid:list});return pane;}
   let resizeHandle,widthPreference=null,resizeDrag=null,widthFrame=0,saveButton;
   function syncSave(){if(saveButton)saveButton.disabled=!doc.getElementById('bTemplateSave')||doc.getElementById('bTemplateSave').disabled;syncExplorer();}
   const widthBounds=()=>{const viewport=Math.max(1,root.innerWidth||doc.documentElement.clientWidth||800),max=Math.max(1,viewport-58);return {viewport,min:Math.min(240,Math.floor(viewport/2),max),max};};
@@ -122,7 +136,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','540');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','555');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -295,6 +309,8 @@
     engine?.refresh();if(open){if(activeTab!=='templates')renderActive();else render();}if(changed){root.dispatchEvent(new CustomEvent('mayatnik-template-panel-change',{detail:{open}}));root.dispatchEvent(new Event('resize'));}
   }
   root.MayatnikTemplatePanel={toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,getFolderStore:()=>store,hasWindow:()=>!!libraryWindow&&!libraryWindow.closed,openTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true);}};
+  root.addEventListener('may-template-limit-change',syncTemplateLimit);
+  root.addEventListener('may-template-limit-rejected',showTemplateLimitNotice);
   root.addEventListener('may-layers-ready',()=>{make();bindLayers(root.mayLayers);});
   root.addEventListener('may-template-library-ready',()=>{make();bind(root.mayTemplateLibrary);});
   for(const library of captureLibraries.values())root.addEventListener(library.key==='settings'?'may-settings-library-ready':'may-frame-library-ready',()=>{make();bindCapture(library,root[library.apiName]);});

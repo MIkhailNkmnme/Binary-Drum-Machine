@@ -9,3 +9,10 @@ test('real host restore updates modes, defaults and indicators without resetting
 test('automatic colours are saved independently for each palette clock',()=>{const p=S.pick({}, {},{}, {fillColour:{mode:'frame',color:'#123456'},midOneColour:{mode:'build',color:'#abcdef'}});const q=S.normalized(p);assert.deepEqual(q.colourAuto,p.colourAuto);assert.equal(q.colourAuto.fillColour.mode,'frame');});
 
 test('template drag mode round trips and old version 1 presets default to off',()=>{const p=S.pick({}, {templateDragEnabled:true});assert.equal(S.normalized(p).tools.templateDragEnabled,true);delete p.tools.templateDragEnabled;assert.equal(S.normalized(p).tools.templateDragEnabled,false);p.tools.templateDragEnabled='yes';assert.throws(()=>S.normalized(p),/templateDragEnabled/);});
+
+test('template area limit round trips and legacy presets retain default-compatible missing value',()=>{
+ const snapshot=S.pick({templateMaxArea:4096});assert.equal(S.normalized(snapshot).state.templateMaxArea,4096);
+ const legacy=JSON.parse(JSON.stringify(snapshot));delete legacy.state.templateMaxArea;assert.equal(S.normalized(legacy).state.templateMaxArea,null);
+ const st={templateMaxArea:8000};S.applyState(st,legacy);assert.equal(st.templateMaxArea,undefined);
+ for(const value of [0,-1,1.5,1048577,'4096']){const bad=JSON.parse(JSON.stringify(snapshot));bad.state.templateMaxArea=value;assert.throws(()=>S.normalized(bad),/площадь/);}
+});

@@ -8,7 +8,9 @@
     async function filter(items,run){
       // Placed figures are already known to exist; show them before a full-field scan.
       visibleIds=new Set(items.filter(entry=>(host.listedInstances||host.visibleInstances)?.(entry.id)).map(entry=>entry.id));state.filtering=true;emit();
-      const missing=items.filter(entry=>!visibleIds.has(entry.id));
+      const missing=items.filter(entry=>!visibleIds.has(entry.id)&&host.selectionAllowed?.(entry)!==false);
+      // Oversize saved shapes remain listed; defer their expensive matching until the limit permits it.
+      for(const entry of items)if(host.selectionAllowed?.(entry)===false)visibleIds.add(entry.id);
       try{if(!missing.length)return;const field=await host.field();if(run!==filterSerial)return;
         for(const entry of missing){if(run!==filterSerial)return;if(!host.current(field)){scopeKey=null;return;}
           const exists=(host.listedInstances||host.visibleInstances)?.(entry.id)||((await root.MayatnikTemplateMatcher.find(field,patternsFor(entry),{existsOnly:true,cancelled:()=>run!==filterSerial||!host.current(field)})).count>0);
@@ -26,6 +28,7 @@
     function clear(message=''){serial++;selection=null;state={...state,count:0,busy:false,message};host.redrawSelection();emit();}
     async function select(id){
       const entry=host.entries().find(t=>t.id===id);if(!entry)return state;
+      if(host.selectionAllowed?.(entry)===false){state={...state,message:host.selectionMessage?.()||'Template area limit'};emit();return {...state};}
       const run=++serial;selection=null;state={...state,selectedId:id,count:0,busy:true,message:'Поиск в текущих строках…'};emit();
       host.choose(id);host.stop();host.redrawSelection();
       try{
