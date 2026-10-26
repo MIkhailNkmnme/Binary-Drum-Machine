@@ -231,26 +231,32 @@
         if (window.mayTestOn) window.mayTestStop?.();
         else { if (window.mayTestPrepare?.() == null) { window.mayTestXor?.(+$('rows').value || 128); window.mayTestPrepare?.(); } window.mayTestBuild?.(); }
         sync(); }; pop.append(ab); }
-    { const mb = document.createElement('button'); mb.className = 'gz-hx'; mb.dataset.n = 'testBuildMode';
-      const syncMode = () => { const fr = window.mayTestBuildMode?.get?.() === 'frames'; mb.textContent = fr ? 'Кадрами' : 'Построчно';
-        mb.dataset.miShort = mb.textContent;
-        mb.classList.toggle('on', fr); mb.setAttribute('aria-pressed', String(fr));
-        mb.title = fr ? 'Режим сборки: кадры — как раньше, каждый кадр добавляет единицу и перестраивает весь квадрат. Щелчок — построчно.' : 'Режим сборки: строки — сверху вниз, каждый бит из двух диагональных сверху (над текущей пустота). Щелчок — по кадрам.'; };
-      mb.onclick = ev => { ev.stopPropagation(); window.mayTestBuildMode?.toggle?.(); window.mayTestPrepare?.(); syncMode(); sync(); };
-      syncMode(); pop.append(mb); }
-    { const sb = document.createElement('button'); sb.className = 'gz-hx'; sb.dataset.n = 'testStats';
-      const syncStats = () => { const on = window.mayTestStats?.get?.() !== false; sb.textContent = on ? 'Счёт' : 'Счёт выкл';
-        sb.dataset.miShort = sb.textContent; sb.classList.toggle('on', on); sb.setAttribute('aria-pressed', String(on));
+    { const mkMode = label => { const b = document.createElement('button'); b.className = 'gz-hx'; b.dataset.n = 'testBuildMode';
+        b.textContent = label; b.dataset.miShort = label;
+        b.onclick = ev => { ev.stopPropagation(); window.mayTestBuildMode?.toggle?.();
+          window.mayTestPrepare?.(); syncMode(); sync(); };
+        return b; };
+      const mbRows = mkMode('Построчно'), mbFrames = mkMode('Кадрами');
+      const syncMode = () => { const fr = window.mayTestBuildMode?.get?.() === 'frames';
+        mbRows.hidden = fr; mbFrames.hidden = !fr;
+        mbRows.classList.toggle('on', !fr); mbFrames.classList.toggle('on', fr);
+        mbRows.setAttribute('aria-pressed', String(!fr)); mbFrames.setAttribute('aria-pressed', String(fr));
+        mbRows.title = 'Режим сборки: строки — сверху вниз, каждый бит из двух диагональных сверху (над текущей пустота).';
+        mbFrames.title = 'Режим сборки: кадры — каждый кадр добавляет единицу и перестраивает весь квадрат.'; };
+      syncMode(); pop.append(mbRows, mbFrames); }
+    { const sb = document.createElement('button'); sb.className = 'gz-hx'; sb.dataset.n = 'testStats'; sb.textContent = 'Счёт'; sb.dataset.miShort = 'Счёт';
+      const syncStats = () => { const on = window.mayTestStats?.get?.() !== false;
+        sb.classList.toggle('on', on); sb.classList.toggle('off', !on); sb.setAttribute('aria-pressed', String(on));
         sb.title = on ? 'Счёт 0/1/пусто и баланс по квадрату и периметру показан · щелчок — скрыть' : 'Счёт скрыт · щелчок — показать'; };
       sb.onclick = ev => { ev.stopPropagation(); window.mayTestStats?.toggle?.(); syncStats(); sync(); };
       syncStats(); pop.append(sb); }
     { const fb = document.createElement('button'); fb.className = 'gz-hx'; fb.textContent = 'Запомнить'; fb.dataset.miShort = 'Запомнить'; fb.dataset.n = 'testFrameSave';
       fb.title = 'Сохранить текущий тестовый кадр (до 2 млн клеток) и потом начать с него кнопкой «С кадра».';
-      fb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameSave?.(); fb.textContent = ok ? 'Есть' : 'Нет'; setTimeout(() => { fb.textContent = 'Запомнить'; sync(); }, 900); sync(); };
+      fb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameSave?.(); fb.title = ok ? 'Кадр сохранён' : 'Не удалось сохранить кадр'; setTimeout(() => { fb.title = 'Сохранить текущий тестовый кадр (до 2 млн клеток) и потом начать с него кнопкой «С кадра».'; }, 1200); sync(); };
       pop.append(fb); }
     { const lb = document.createElement('button'); lb.className = 'gz-hx'; lb.textContent = 'С кадра'; lb.dataset.miShort = 'С кадра'; lb.dataset.n = 'testFrameLoad';
       lb.title = 'Начать с сохранённого тестового кадра: восстановить поле и кадр, дальше ▶ продолжит сборку.';
-      lb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameLoad?.(); lb.textContent = ok ? 'Есть' : 'Нет'; setTimeout(() => { lb.textContent = 'С кадра'; sync(); }, 900); sync(); };
+      lb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameLoad?.(); lb.title = ok ? 'Кадр восстановлен' : 'Сохранённого кадра нет'; setTimeout(() => { lb.title = 'Начать с сохранённого тестового кадра: восстановить поле и кадр, дальше ▶ продолжит сборку.'; }, 1200); sync(); };
       pop.append(lb); }
     const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
       if (customInput) customInput.value = n;

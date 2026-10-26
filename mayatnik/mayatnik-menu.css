@@ -954,8 +954,10 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-option-excluded::before,.may-option-excluded::after{opacity:.3}
 
 
-/* v0.573: любое число строк в «Хорръ» — поле ввода + «Задать». */
-.may-rows-custom{display:flex;gap:2px;align-items:center;margin:2px 0}
-.may-rows-custom input{width:64px;height:24px;box-sizing:border-box;background:#0c0f14;color:var(--fg);border:1px solid var(--line);border-radius:0;font:12px var(--mono);padding:0 6px;text-align:center}
+/* v0.594: любое число строк — поле и «Задать» в столбик, чтобы кнопка не вылезала. */
+.may-rows-custom{display:flex;flex-direction:column;align-items:center;gap:3px;margin:3px 0;width:100%;max-width:100%;overflow:hidden}
+.may-rows-custom input{width:120px;max-width:100%;height:24px;box-sizing:border-box;background:#0c0f14;color:var(--fg);border:1px solid var(--line);border-radius:0;font:12px var(--mono);padding:0 6px;text-align:center}
 .may-rows-custom input:focus{outline:1px solid var(--acc);outline-offset:0}
-.may-rows-custom .gz-hx{flex:1 1 auto;min-width:0;height:24px;font-size:11px}
+.may-rows-custom .gz-hx{flex:0 0 auto;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px;font-size:11px}
+.gz-hx[hidden]{display:none!important}
+.gz-hx.off{opacity:.55}
