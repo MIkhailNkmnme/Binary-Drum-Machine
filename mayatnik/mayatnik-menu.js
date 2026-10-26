@@ -238,6 +238,12 @@
         mb.title = fr ? 'Режим сборки: кадры — как раньше, каждый кадр добавляет единицу и перестраивает весь квадрат. Щелчок — построчно.' : 'Режим сборки: строки — сверху вниз, каждый бит из двух диагональных сверху (над текущей пустота). Щелчок — по кадрам.'; };
       mb.onclick = ev => { ev.stopPropagation(); window.mayTestBuildMode?.toggle?.(); window.mayTestPrepare?.(); syncMode(); sync(); };
       syncMode(); pop.append(mb); }
+    { const sb = document.createElement('button'); sb.className = 'gz-hx'; sb.dataset.n = 'testStats';
+      const syncStats = () => { const on = window.mayTestStats?.get?.() !== false; sb.textContent = on ? 'Счёт' : 'Счёт выкл';
+        sb.dataset.miShort = sb.textContent; sb.classList.toggle('on', on); sb.setAttribute('aria-pressed', String(on));
+        sb.title = on ? 'Счёт 0/1/пусто и баланс по квадрату и периметру показан · щелчок — скрыть' : 'Счёт скрыт · щелчок — показать'; };
+      sb.onclick = ev => { ev.stopPropagation(); window.mayTestStats?.toggle?.(); syncStats(); sync(); };
+      syncStats(); pop.append(sb); }
     const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
       if (customInput) customInput.value = n;
       for (const r of sizeRows) r.gzSync();   // v0.380
