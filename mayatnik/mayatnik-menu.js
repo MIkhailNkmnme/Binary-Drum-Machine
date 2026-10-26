@@ -1236,7 +1236,7 @@
       toolSync.push(()=>options().forEach((o,i)=>{nodes[i].classList.toggle('gz-on',!!o.on);nodes[i].setAttribute('aria-pressed',String(!!o.on));}));};
     const reg = (b, options) => { if(b&&['fixLow','mirOp'].includes(b.dataset.n)){mountSegments(b,options);return;} if (b) ZerkGrozd.listHover(b, { options, after, color: () => getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff',
       host: () => b.closest('.pt-g') || document.body, col: () => b.closest('.pt-col, .pt-r, .gz-rail, .gz-soty, .gz-wide') }); };   // v0.226: в «Виде» — правее своего столбца; v0.232: в группе рейки, поднятой в шапку, — правее её списка
-    const fromSelect = (sel, nameOf = o => o.textContent, iconOf = null) => () => [...sel.options].map(o => ({ name: nameOf(o), icon: iconOf?.(o), on: o.value === sel.value,
+    const fromSelect = (sel, nameOf = o => o.textContent, iconOf = null) => () => [...sel.options].map(o => ({ key:o.value, name: nameOf(o), icon: iconOf?.(o), on: o.value === sel.value,
       pick: () => { if (sel.value === o.value) return; sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } }));
     const viewIcon = new Map(Object.entries(viewIcons).map(([v, [kind, t]]) => { const p = document.createElement('button'); p.title = t; return [v, icon(p, kind)]; }));
     reg(tools.querySelector('[data-n="viewCycle"]'), fromSelect($('view'), o => (viewIcons[o.value] || [, o.textContent])[1], o => viewIcon.get(o.value)));
@@ -1381,7 +1381,7 @@
   for (const b of document.querySelectorAll('.gz-lst')) if (b.gzList) {
     // Native rail lists have no source click handler; tool buttons already cycle themselves.
     if(b.classList.contains('gz-list'))b.gzList.cycleOnClick=true;
-    nameListButton(b);syncListButton(b);
+    nameListButton(b);window.MayatnikMenuOptions?.install(b);syncListButton(b);
     b.addEventListener('pointerenter',()=>syncListButton(b),true);
     if(b.dataset.n==='layerSelect'){const closed=b.gzList.closed;b.gzList.closed=(...args)=>{closed?.(...args);clearListUnder();};}
     else Object.assign(b.gzList, {placement:'right', placed:hideListUnder, closed:clearListUnder});

@@ -269,3 +269,8 @@ body.may-zen>.may-menu-side-scroll{display:none!important}
 
 /* Frame/row count already sits below the transport thumb. */
 #mayFieldCaption{display:none!important}
+/* v0.556: the title, Hub mark and version share the left menu's 120px column. */
+body.mayatnik-menu-ready>header>.may-brand{display:flex;align-items:center;gap:3px;width:120px;min-width:120px;max-width:120px;height:26px;flex:0 0 120px;align-self:flex-start;order:-1}
+.may-brand #zerkHubBtn{width:18px;height:18px;margin:0;flex:0 0 18px}
+.may-brand #appTitle{font-size:12px;line-height:26px;letter-spacing:0;white-space:nowrap;flex:1 1 auto;min-width:0}
+.may-brand>.ver{font-size:9px;line-height:26px;white-space:nowrap;flex:0 0 auto}

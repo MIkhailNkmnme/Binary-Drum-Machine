@@ -60,13 +60,13 @@
     nodes.get('bAxisMirror')?.addEventListener('click',event=>{if(!win.mayManualMirror)return;event.preventDefault();event.stopImmediatePropagation();win.mayManualMirror.setOn(!win.mayManualMirror.on());sync();after();},true);
     const setSource=id=>{if(!profiles.some(p=>p.id===id))return;state.source=id;save();sync();after();};
     const optionsFor=b=>{
-      if(b===source)return profiles.map(p=>({name:p.name,on:p.id===state.source,pick:()=>setSource(p.id)}));
-      if(b===axis&&state.source==='template')return [['h','Слева ↔ справа'],['v','Сверху ↔ снизу'],['line','Линия-зеркало']].map(([id,name])=>({name,on:state.axis===id,pick:()=>{state.axis=id;save();sync();after();}}));
-      if(b===axis&&state.source==='lines')return lines().map(l=>({name:(l.id==='main'?'Главная':({h:'Горизонталь',v:'Вертикаль',d1:'Диагональ ╲',d2:'Диагональ ╱',d:'Диагональ',a:'Диагональ'}[l.kind]||l.kind))+' '+l.position,on:String(line()?.id)===String(l.id),pick:()=>{state.line=l.id;save();sync();after();}}));
-      if(b===side&&state.source==='template'&&state.copy&&state.axis!=='line')return(state.axis==='h'?[['left','Влево'],['right','Вправо']]:[['top','Вверх'],['bottom','Вниз']]).map(([id,name])=>({name,on:state.side===id,pick:()=>{state.side=id;save();sync();after();}}));
-      if(b===side&&state.source==='lines')return line()?.disabled?[]:[['Выключено',0],['Вниз / вправо',1],['Вверх / влево',2]].map(([name,m])=>({name,on:line()?.mode===m,pick:()=>{const l=line();if(l&&!l.disabled)win.mayLineMirrors.set(l.id,m);sync();after();}}));
-      if(b===op&&['manual','upper','lower','lines','black'].includes(state.source))return [['','Копия'],['xor','XOR'],['and','AND']].map(([id,name])=>({name,on:operation()===id,pick:()=>{setOperation(id);sync();after();}}));
-      if(b===result&&state.source==='template'&&state.axis!=='line')return [[false,'На месте'],[true,'Копией за край']].map(([id,name])=>({name,on:state.copy===id,pick:()=>{state.copy=id;save();sync();after();}}));
+      if(b===source)return profiles.map(p=>({key:p.id,name:p.name,on:p.id===state.source,pick:()=>setSource(p.id)}));
+      if(b===axis&&state.source==='template')return [['h','Слева ↔ справа'],['v','Сверху ↔ снизу'],['line','Линия-зеркало']].map(([id,name])=>({key:id,name,on:state.axis===id,pick:()=>{state.axis=id;save();sync();after();}}));
+      if(b===axis&&state.source==='lines')return lines().map(l=>({key:'line:'+l.id,name:(l.id==='main'?'Главная':({h:'Горизонталь',v:'Вертикаль',d1:'Диагональ ╲',d2:'Диагональ ╱',d:'Диагональ',a:'Диагональ'}[l.kind]||l.kind))+' '+l.position,on:String(line()?.id)===String(l.id),pick:()=>{state.line=l.id;save();sync();after();}}));
+      if(b===side&&state.source==='template'&&state.copy&&state.axis!=='line')return(state.axis==='h'?[['left','Влево'],['right','Вправо']]:[['top','Вверх'],['bottom','Вниз']]).map(([id,name])=>({key:id,name,on:state.side===id,pick:()=>{state.side=id;save();sync();after();}}));
+      if(b===side&&state.source==='lines')return line()?.disabled?[]:[['Выключено',0],['Вниз / вправо',1],['Вверх / влево',2]].map(([name,m])=>({key:m,name,on:line()?.mode===m,pick:()=>{const l=line();if(l&&!l.disabled)win.mayLineMirrors.set(l.id,m);sync();after();}}));
+      if(b===op&&['manual','upper','lower','lines','black'].includes(state.source))return [['','Копия'],['xor','XOR'],['and','AND']].map(([id,name])=>({key:id,name,on:operation()===id,pick:()=>{setOperation(id);sync();after();}}));
+      if(b===result&&state.source==='template'&&state.axis!=='line')return [[false,'На месте'],[true,'Копией за край']].map(([id,name])=>({key:id,name,on:state.copy===id,pick:()=>{state.copy=id;save();sync();after();}}));
       return [];
     };
     for(const b of [source,axis,side,op,result]){

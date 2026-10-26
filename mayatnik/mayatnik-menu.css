@@ -947,3 +947,8 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
   body.mayatnik-menu-ready #mayatnikSidebar #mayatnikRail .gz-group>.may-rail-list{position:fixed!important;z-index:50;width:120px!important;max-height:60dvh;padding:2px 0 14px!important;margin:0!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;touch-action:pan-y}
   body.mayatnik-menu-ready #mayatnikSidebar #mayatnikRail .gz-group.gz-mini.gz-open>.may-rail-list{margin-top:0!important}
 }
+
+/* Excluded cycle variants retain their palette controls and diamond hit area. */
+.may-option-diamond.may-option-excluded{color:#69727d!important;background:#101318!important;cursor:default}
+.may-option-excluded>.gz-ic,.may-option-excluded>.may-option-symbol{opacity:.3}
+.may-option-excluded::before,.may-option-excluded::after{opacity:.3}
