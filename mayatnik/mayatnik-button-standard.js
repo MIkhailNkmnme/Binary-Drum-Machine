@@ -10,11 +10,11 @@
     let s=b.querySelector(':scope > .may-standard-outline');
     if(!s){s=svg('may-standard-outline');shape(s,'polygon',{points:polygon});b.append(s);}
     if(b.matches('.gz-wl,.may-center-control')&&!s.querySelector('.may-half-side'))shape(s,'path',{class:'may-half-side',d:'M12 0L0 12 12 24M108 0L120 12 108 24'});
-    const mini=b.classList.contains('may-standard-mini')||b.classList.contains('may-control-mini');const diamond=b.classList.contains('may-option-diamond');set(s,'viewBox',diamond?'0 0 48 48':mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',diamond?'24,0 48,24 24,48 0,24':mini?'17,0 34,12 17,24 0,12':polygon);
+    const mini=b.classList.contains('may-standard-mini')||b.classList.contains('may-control-mini');const triangle=b.classList.contains('may-header-triangle'),diamond=b.classList.contains('may-option-diamond');set(s,'viewBox',triangle?'0 0 48 24':diamond?'0 0 48 48':mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',triangle?'0,0 48,0 24,24':diamond?'24,0 48,24 24,48 0,24':mini?'17,0 34,12 17,24 0,12':polygon);
   }
   function roof(b,mini,up=false){
     let s=b.querySelector(':scope > .may-standard-roof');if(!s){s=svg('may-standard-roof');b.append(s);}
-    const w=mini?34:120,d=up?(mini?'M1 12 L17 23 33 12':'M1 12 L12 23 H108 L119 12'):(mini?'M1 12 L17 1 33 12':'M1 12 L12 1 H108 L119 12');
+    const triangle=b.classList.contains('may-header-triangle'),w=triangle?48:mini?34:120,d=triangle?'M1 1 H47 L24 23 Z':up?(mini?'M1 12 L17 23 33 12':'M1 12 L12 23 H108 L119 12'):(mini?'M1 12 L17 1 33 12':'M1 12 L12 1 H108 L119 12');
     set(s,'viewBox',`0 0 ${w} 24`);
     if(s.dataset.d!==d){s.dataset.d=d;s.replaceChildren();shape(s,'path',{d});}
   }
@@ -93,12 +93,18 @@
     let s=g.querySelector(':scope > .may-closed-back');const r=head.getBoundingClientRect();
     if(!r.width||!r.height){s?.remove();return;}
     const op=head.offsetParent||g,b=op.getBoundingClientRect(),x=Math.round(r.left-b.left-op.clientLeft+op.scrollLeft),y=Math.round(r.top-b.top-op.clientTop+op.scrollTop),w=Math.round(r.width),h=Math.round(r.height);
-    const sig=[x,y,w,h].join();if(s&&s.dataset.sig===sig)return;
+    const triangle=head.classList.contains('may-header-triangle'),sig=[x,y,w,h,triangle,r.left,r.top].join();if(s&&s.dataset.sig===sig)return;
+    // A dock move also needs a fresh SVG layer; reusing it can retain stale culling.
+    if(s){s.remove();s=null;}
     if(!s){s=svg('may-closed-back');g.prepend(s);g.classList.add('may-back-host');}
     s.dataset.sig=sig;const mini=head.classList.contains('may-standard-mini'),m=h/2;
-    const pts=mini?[[x+w/2,y-1],[x+w+2,y+m],[x+w/2,y+h+1],[x-2,y+m]]:[[x+12,y-1],[x+w-12,y-1],[x+w+2,y+m],[x+w-12,y+h+1],[x+12,y+h+1],[x-2,y+m]];
+    const pts=triangle?[[x-2,y-1],[x+w+2,y-1],[x+w/2,y+h+1]]:mini?[[x+w/2,y-1],[x+w+2,y+m],[x+w/2,y+h+1],[x-2,y+m]]:[[x+12,y-1],[x+w-12,y-1],[x+w+2,y+m],[x+w-12,y+h+1],[x+12,y+h+1],[x-2,y+m]];
+    // Give the closed backing its actual local bounds. A 1px overflow SVG at
+    // a fixed bottom slot can make Chromium cull unrelated canvas layers.
+    const left=Math.min(...pts.map(q=>q[0])),top=Math.min(...pts.map(q=>q[1])),width=Math.max(...pts.map(q=>q[0]))-left,height=Math.max(...pts.map(q=>q[1]))-top;
+    Object.assign(s.style,{left:left+'px',top:top+'px',width:width+'px',height:height+'px'});set(s,'viewBox',`0 0 ${width} ${height}`);
     const id='may-back-'+(++gradN);
-    s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
+    s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(([x,y])=>[x-left,y-top].join(',')).join(' ')}" fill="url(#${id})"/>`;
   }
   // Each backing tip extends 2px beyond its button. At close spacing the
   // tips can overlap while the notches still leave an empty facing gap.
@@ -242,8 +248,8 @@
     document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,.gz-ladder .gz-hx,#mayatnikTemplatePanel .pt-r .gz-hx').forEach(b=>{
       if(b.closest('#mayInfoDiamond,.pt-btn')||b.closest('#mayBottomBar')&&!b.classList.contains('gz-head'))return;
       if(b.querySelector('#templateLibraryChoices'))return;   // v0.471: список шаблонов — не кнопка; кнопки — его записи (иначе список сжимался в одну строку 24 px и вылезал вверх)
+      const mini=b.matches('.gz-head')&&b.closest('.gz-mini')||b.matches('.pt-l')&&b.closest('.pt-mini')||b.id==='mayAbout'&&b.classList.contains('pt-mini');b.classList.toggle('may-standard-mini',!!mini);b.classList.toggle('may-header-triangle',!!mini&&b.matches('.pt-l,.gz-head'));
       if(!b.classList.contains('may-standard'))b.classList.add('may-standard');outline(b);parts(b);if(b.closest('.gz-ladder')){keyboard(b);set(b,'aria-pressed',String(b.classList.contains('gz-on')));}
-      const mini=b.matches('.gz-head')&&b.closest('.gz-mini')||b.matches('.pt-l')&&b.closest('.pt-mini')||b.id==='mayAbout'&&b.classList.contains('pt-mini');b.classList.toggle('may-standard-mini',!!mini);
     });
     syncControlMinis();
     for(const g of document.querySelectorAll('#paintTools > .pt-g,#paintTools > .gz-group,#mayatnikRail .gz-group')){

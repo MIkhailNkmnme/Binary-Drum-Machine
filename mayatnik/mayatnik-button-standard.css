@@ -274,3 +274,11 @@ body.mayatnik-menu-ready>header>.may-brand{display:flex;align-items:center;gap:3
 .may-brand #zerkHubBtn{width:18px;height:18px;margin:0;flex:0 0 18px}
 .may-brand #appTitle{font-size:12px;line-height:26px;letter-spacing:0;white-space:nowrap;flex:1 1 auto;min-width:0}
 .may-brand>.ver{font-size:9px;line-height:26px;white-space:nowrap;flex:0 0 auto}
+
+/* Compact group headers: flat top, downward tip; controls keep their diamond form. */
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-header-triangle{--gz-w:48px;width:48px!important;min-width:48px!important;max-width:48px!important;flex:0 0 48px!important;clip-path:polygon(0 0,100% 0,50% 100%)!important;justify-content:center;padding:0!important;gap:0!important}
+.may-header-triangle.zgh-head>.zgh-icon{position:absolute!important;left:0!important;right:0!important;top:3px!important;height:12px!important;display:block!important;text-align:center;font:11px/12px 'Segoe UI',sans-serif!important;color:var(--c,#7cbcff)!important}
+.may-header-triangle>.may-standard-outline{display:block!important}
+.may-header-triangle.may-standard-open>.may-standard-outline{display:none!important}
+
+.may-header-triangle.zgh-head>.zgh-icon.may-header-abbrev{top:2px!important;height:11px!important;font-size:10px!important;line-height:11px!important}

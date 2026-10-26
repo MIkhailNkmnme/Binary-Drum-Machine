@@ -28,8 +28,8 @@
       options: [...e.options].map(o => ({ v: o.value, name: names?.[o.value] || o.textContent })),
       set: v => { e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); } };
   };
-  const segments = (title, options) => ({type:'pair',cls:'may-segments',name:title,tip:title,mid:'',parts:options.map(o=>({label:o.name,tip:title+' — '+o.name,on:o.on,click:o.pick}))});
-  const selectSegments = (id,names) => {const e=$(id);return segments(tip(e),[...e.options].map(o=>({name:names?.[o.value]||o.textContent,on:()=>e.value===o.value,pick:()=>{e.value=o.value;e.dispatchEvent(new Event('change',{bubbles:true}));}})));};
+  const segments = (title, options) => ({type:'pair',cls:'may-segments',name:title,tip:title,mid:'',parts:options.map(o=>({label:o.name,tip:o.tip||title+' — '+o.name,on:o.on,click:o.pick}))});
+  const selectSegments = (id,names) => {const e=$(id);return segments(tip(e),[...e.options].map(o=>({name:names?.[o.value]||o.textContent,tip:id==='ochkiMode'?'Очки: '+o.textContent:undefined,on:()=>e.value===o.value,pick:()=>{e.value=o.value;e.dispatchEvent(new Event('change',{bubbles:true}));}})));};
   const ringSegments = (id,names) => {const e=$(id),now=()=>e.textContent.split(': ')[1];return {...segments(tip(e),names.map(name=>({name,on:()=>now()===name,pick:()=>{for(let n=0;n<names.length&&now()!==name;n++)e.click();}}))),src:id};};
   const control = id => {
     const e = $(id), node = e.closest('label') || e;
@@ -90,7 +90,7 @@
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
-      selectSegments('ochkiMode',{diag:'Диаг.',row:'Ряды'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),num('ochkiLength',{name:'От бит',slider:false}) ] },
+      selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),num('ochkiLength',{name:'От бит',slider:false}) ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
       button('zLock', 'pin'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4') ] },
@@ -131,18 +131,17 @@
     const joint=ZerkControlFrame.pairSwitch(host,{read,onToggle:target=>{for(const id of ids)if(($(id).getAttribute('aria-pressed')==='true')!==target)$(id).click();rail.refresh();}});
     const observer=new MutationObserver(joint.sync);for(const id of ids)observer.observe($(id),{attributes:true,attributeFilter:['aria-pressed']});
   }
-  // Right-click closes a whole group to its normal header; saved legacy minis
-  // remain readable until that group is explicitly closed this way.
+  // Right-click toggles the compact group header and closes its contents.
   { const MINI = 'mayatnik-rail-mini', ICO = { 'Поле': '▦', 'Очки': '◎', 'Масштаб': '⤢', 'Зеркала': '⋈', 'Раскраска': '✎', 'Шаблон': '▣', 'Шаблоны': '▤', 'Экспорт': '⇩' };
     let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
     for (const box of rail.el.querySelectorAll('.gz-group')) { const head = box.querySelector(':scope > .gz-head'), nm = head?.querySelector('.gz-nm'); if (!nm) continue;
       const k = nm.textContent.trim(), ic = ZerkGroupHeader.parts(head).icon;ic.textContent = ICO[k] || [...k][0] || '◆';
       const sync = () => { box.classList.toggle('gz-mini', minis.has(k));ZerkGroupHeader.sync(head,{mini:minis.has(k)}); head.setAttribute('aria-label', k); };
-      head.title = 'Щелчок — открыть · правый щелчок — свернуть группу';
-      sync(); head.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); minis.delete(k);
+      head.title = k+' \u00b7 '+'\u0429\u0435\u043b\u0447\u043e\u043a \u2014 \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u00b7 \u0442\u044f\u043d\u0443\u0442\u044c \u2014 \u043f\u0435\u0440\u0435\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u00b7 \u041f\u041a\u041c \u2014 \u0442\u0440\u0435\u0443\u0433\u043e\u043b\u044c\u043d\u0438\u043a / \u043f\u043e\u043b\u043d\u044b\u0439 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a';
+      sync(); head.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if(minis.has(k))minis.delete(k);else minis.add(k);
         try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync();
         // Use grozd's own close route so its pinned/shut state survives refresh/F5.
-        if(box.classList.contains('gz-open'))head.click(); }); } }
+        if(box.classList.contains('gz-open'))head.click();window.dispatchEvent(new Event('resize')); }); } }
   // v0.167: подсказки кнопок рейки — в title (их показывает mayatnik-tips.js рядом с кнопкой через 4 с)
   for (const g of groups) { const box = rail.el.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
     const wide = t => ['value', 'list', 'control', 'vpair'].includes(t), a = g.items.filter(i => !wide(i.type)), b = g.items.filter(i => wide(i.type));
@@ -1205,16 +1204,16 @@
           footerBar.style.marginLeft=desktop?(Math.max(4,rail.el.getBoundingClientRect().left)+step)+'px':'';
           footerBar.style.marginRight=desktop?(4+step)+'px':'';
           relayout();reopen();}}); }
-    // Group headers close the whole group on right-click. The history control
-    // keeps its separate mini mode; old group minis can still be restored.
+    // Group headers toggle their compact form. History keeps its separate mini mode.
     { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
+      ICO['\u042f\u0447\u0435\u0439\u043a\u0438']='\u042f\u0427\u041a';
       let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
-      for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = ZerkGroupHeader.parts(l).icon;ic.textContent = glyph(k);if(!ic.parentNode)l.append(ic);
-        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on);ZerkGroupHeader.sync(l,{mini:on}); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · стоит по середине шапки · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : 'Щелчок — открыть · тянуть — переставить · правый щелчок — свернуть группу · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
+      for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = ZerkGroupHeader.parts(l).icon;ic.textContent = glyph(k);ic.classList.toggle('may-header-abbrev',ic.textContent.length>1);if(!ic.parentNode)l.append(ic);
+        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on);ZerkGroupHeader.sync(l,{mini:on}); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · стоит по середине шапки · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : k+' \u00b7 '+'\u0429\u0435\u043b\u0447\u043e\u043a \u2014 \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u00b7 \u0442\u044f\u043d\u0443\u0442\u044c \u2014 \u043f\u0435\u0440\u0435\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u00b7 \u041f\u041a\u041c \u2014 \u0442\u0440\u0435\u0443\u0433\u043e\u043b\u044c\u043d\u0438\u043a / \u043f\u043e\u043b\u043d\u044b\u0439 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a'; };
         sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation();
-          if(g.classList.contains('pt-btn')){if(minis.has(k))minis.delete(k);else minis.add(k);}else{minis.delete(k);folds.add(k);if(open===g)open=null;g._hoverAt=0;setOpen(g,false);saveDd();}
-          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); if(g.classList.contains('pt-btn'))grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); }); }
+          if(minis.has(k))minis.delete(k);else minis.add(k);if(!g.classList.contains('pt-btn')){folds.add(k);if(open===g)open=null;g._hoverAt=0;setOpen(g,false);saveDd();}
+          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); }); }
     }
     grid.relayout();   // v0.225: ромбы v0.209 уже свёрнуты — ширины верные
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(() => {

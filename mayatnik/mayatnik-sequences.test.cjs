@@ -66,3 +66,18 @@ test('UI inserts rule drafts and exact original sequence, preserving applied row
   seed.value='x';pane.querySelector('[data-sequence-generate]').click();assert.equal(editor.value,'1\n1\n11\n111\n1000\n10101');assert.match(pane.querySelector('.mtp-sequence-notice').textContent,/Начальная строка/);
  }finally{view.destroy();dom.window.close();}
 });
+test('library match summary and row tooltip distinguish columns and the two diagonals without losing a draft',()=>{
+ const dom=new JSDOM('<section></section>'),pane=dom.window.document.querySelector('section'),api=Sequences.create(storage(),{rows:2}),view=Sequences.mount(pane,api);
+ try{
+  const editor=pane.querySelector('textarea');editor.value='000';editor.dispatchEvent(new dom.window.Event('input'));
+  for(const [mode,label]of [['diag','по диагоналям ↘'],['antidiag','по противодиагоналям ↙'],['row','по рядам →'],['col','по столбцам ↓']]){
+   api.setMatches({enabled:true,active:true,mode,pattern:'initial',found:[{i:0,r:2}],frame:8});assert.ok(pane.querySelector('.mtp-sequence-summary').textContent.endsWith(label));assert.ok(pane.querySelector('.is-found').title.includes(label));assert.equal(editor.value,'000');
+  }
+ }finally{view.destroy();dom.window.close();}
+});
+test('one library sequence row retains both independent half matches and counts occurrences',()=>{
+ const dom=new JSDOM('<section></section>'),pane=dom.window.document.querySelector('section'),api=Sequences.create(storage(),{rows:2}),view=Sequences.mount(pane,api);
+ try{
+  api.setMatches({enabled:true,active:true,mode:'col',pattern:'initial',halves:2,total:4,found:[{i:0,r:2,p:0},{i:0,r:4,p:1}],frame:8});const row=pane.querySelector('.is-found');assert.equal(pane.querySelectorAll('.is-found').length,1);assert.match(row.title,/левый полумаятник · строка 3/);assert.match(row.title,/правый полумаятник · строка 5/);assert.match(pane.querySelector('.mtp-sequence-summary').textContent,/2 из 4 совпадений в двух полумаятниках/);
+ }finally{view.destroy();dom.window.close();}
+});
