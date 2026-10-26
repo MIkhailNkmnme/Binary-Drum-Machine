@@ -224,7 +224,7 @@
       cb.onclick = ev => { ev.stopPropagation(); window.mayTestCarpet?.(+$('rows').value || 243); sync(); }; pop.append(cb); }
     { const ab = document.createElement('button'); ab.className = 'gz-hx'; ab.textContent = 'Сборка'; ab.dataset.miShort = 'Сборка';
       ab.setAttribute('aria-pressed', 'false');
-      ab.title = 'Включить сборку последнего теста (XOR/Рандом/Ковёр): кадр 0, затем строки/кадры по очереди. Повторный щелчок или общая ▶/Ⅱ останавливает. Если теста ещё не было — сначала строит XOR.';
+      ab.title = 'Включить сборку последнего теста: кадр 0 и дальше без остановки, пока не нажать паузу или «Сборку» ещё раз. Рядом с начальной 1 добавляется следующая, строки 1…n−1 пересчитываются по очереди. «Скорость» — темп, «Кадр, с» — пауза. Если теста ещё не было — сначала строит XOR.';
       const syncAb = on => { ab.classList.toggle('on', !!on); ab.setAttribute('aria-pressed', String(!!on)); };
       addEventListener('may-test-on', ev => syncAb(ev.detail));
       ab.onclick = ev => { ev.stopPropagation();
