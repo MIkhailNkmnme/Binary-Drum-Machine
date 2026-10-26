@@ -40,7 +40,7 @@ test('collapsed columns and rows compare new semantic neighbours without changin
  const bits=Int8Array.of(0,1,0, 1,1,1, 0,1,1),before=Array.from(bits),calls=[];
  const c=vm.createContext({st:{bitContourColour1:'#12abef'},cellSelectionModel:model,cellContourCache:null,VX:5,VW:3,VH:3,contourBits:bits,Int32Array,
   MayatnikBitContours:{paint(ctx,o){calls.push(o);return Contours.paint(ctx,o);}}});
- for(const name of ['cellContourProjection','cellVisiblePosition','cellTileCoordinates','cellContourTile'])vm.runInContext(fn(name),c);
+ for(const name of ['bitContourOptions','cellContourProjection','cellVisiblePosition','cellTileCoordinates','cellContourTile'])vm.runInContext(fn(name),c);
  const p=c.cellContourProjection();assert.deepEqual(Array.from(p.cols),[5,7]);assert.deepEqual(Array.from(p.rows),[0,2]);assert.equal(c.cellContourProjection(),p);
  const lines=[],ctx={save(){},restore(){},translate(){},beginPath(){},rect(){},clip(){},moveTo(x,y){this.start=[x,y];},lineTo(x,y){lines.push([...this.start,x,y]);},stroke(){}};
  c.cellContourTile(ctx,{sx:0,sy:0,sw:3,sh:3,dx:0,dy:0,dw:8,dh:8},{canvas:{width:3,height:3},cols:3,rows:3,rect:{width:12}});
@@ -63,8 +63,15 @@ test('new mode has a host option, exact palette, screen rendering and all full-f
 
 test('contour first colour reaches CPU drawing, GPU render and captures; second is storage only',()=>{
  const {c}=fixture();c.contourBits=Int8Array.of(0,1,0,1);c.st.bitContourColour1='#12abef';c.st.bitContourColour2='#34cd56';let colour;
- c.MayatnikBitContours={paint(ctx,o){colour=o.colour;}};vm.runInContext(fn('paintBitContours'),c);c.paintBitContours({},0,0,8,16,16);assert.equal(colour,'#12abef');
+ c.MayatnikBitContours={paint(ctx,o){colour=o.colour;}};vm.runInContext(fn('bitContourOptions'),c);vm.runInContext(fn('paintBitContours'),c);c.paintBitContours({},0,0,8,16,16);assert.equal(colour,'#12abef');
  c.st.bitContourColour2='#ff0000';c.paintBitContours({},0,0,8,16,16);assert.equal(colour,'#12abef');
- for(const name of ['gpuRender','cellGpuTile'])assert.match(fn(name),/contourColour:rgba\(hexRGB\(st.bitContourColour1/);
+ for(const name of ['gpuRender','cellGpuTile'])assert.match(fn(name),/gpuContourOptions\(\)/);
  for(const name of ['wholeFrameThumbnail','captureScaleGifFrame','frameSnapshot'])assert.match(fn(name),/paintBitContours/);
+});
+
+test('automatic anti palette uses the opposite bit and custom colours map directly to their cells',()=>{
+ const {c}=fixture();vm.runInContext(fn('bitContourOptions'),c);c.st.bitContourMode='double';c.st.bitZeroColour='#a020e0';c.st.bitOneColour='#20d080';
+ assert.deepEqual(Array.from(c.bitContourOptions().colours),['#20d080','#a020e0']);
+ c.st.bitContourColours='custom';c.st.bitContourColour1='#123456';c.st.bitContourColour2='#fedcba';assert.deepEqual(Array.from(c.bitContourOptions().colours),['#123456','#fedcba']);
+ c.st.bitContourMode='single';assert.equal(c.bitContourOptions().colour,'#123456');
 });

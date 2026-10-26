@@ -45,3 +45,34 @@ test('viewport clips stroke but includes a boundary just beyond its edge',()=>{
  const ctx=canvas();C.paint(ctx,{width:20,height:20,read:x=>x<5?0:1,x:-20.5,y:-20,scale:4,screenWidth:10,screenHeight:10});assert.deepEqual(ctx.lines,[[-.5,-4,-.5,12]]);
  for(const scale of [0,-1,NaN,Infinity]){const ctx=canvas();assert.equal(C.paint(ctx,{width:10,height:10,read:()=>1,scale,screenWidth:20,screenHeight:20}),0);assert.deepEqual(ctx.state,[]);}
 });
+
+function fills(){let path=[];const rects=[];return {rects,save(){},restore(){},beginPath(){path=[];},rect(...r){path.push(r);},clip(){},fill(){for(const r of path)rects.push({r,colour:this.fillStyle});}};}
+function at(ctx,x,y){return ctx.rects.findLast(({r:[a,b,w,h]})=>x>=a&&x<a+w&&y>=b&&y<b+h)?.colour||null;}
+test('two-colour contours stay on their own sides at all four-cell junctions',()=>{
+ const colours=['#f08020','#20a0e0'];
+ for(const rows of [[[0,0],[1,1]],[[0,1],[1,0]],[[0,1],[0,1]]])for(const mode of ['same','double']){
+  const ctx=fills();C.paint(ctx,{width:2,height:2,read:(x,y)=>rows[y][x],mode,colours,scale:16,screenWidth:40,screenHeight:40});
+  for(let r=0;r<2;r++)for(let c=0;c<2;c++){
+   const own=rows[r][c],X=c?16.5:15.5,Y=r?16.5:15.5;
+   const expected=mode==='double'||rows[r][1-c]===own||rows[1-r][c]===own?colours[own]:null;
+   assert.equal(at(ctx,X,Y),expected,JSON.stringify({rows,mode,c,r}));
+   assert.equal(at(ctx,c*16+8,r*16+8),null,'cell interior stays unpainted');
+   assert.equal(at(ctx,c?31.5:.5,r*16+8),colours[own],'outer edge is inward and belongs to visible bit');
+  }
+  assert.equal(at(ctx,-.5,8),null);assert.equal(at(ctx,32.5,8),null);
+ }
+});
+test('mixed boundary is absent or exactly two separate one-pixel strips',()=>{
+ for(const mode of ['same','double']){
+  const ctx=fills();C.paint(ctx,{width:2,height:1,read:x=>x,mode,colours:['red','blue'],scale:16,screenWidth:40,screenHeight:20});
+  assert.equal(at(ctx,14.5,8),null);assert.equal(at(ctx,17.5,8),null);
+  assert.equal(at(ctx,15.5,8),mode==='double'?'red':null);assert.equal(at(ctx,16.5,8),mode==='double'?'blue':null);
+ }
+ for(const mode of ['same','double']){const ctx=fills();C.paint(ctx,{width:3,height:1,read:x=>x===1?-2:0,mode,colours:['red','blue'],scale:16,screenWidth:60,screenHeight:20});assert.equal(at(ctx,15.5,8),null);assert.equal(at(ctx,32.5,8),null);}
+});
+test('anti contours retain viewport read limits and merge uniform minified rows',()=>{
+ for(const mode of ['same','double'])for(const scale of [.0001,.01,.5,1]){
+  let reads=0;const ctx=fills();C.paint(ctx,{width:10000000,height:10000000,read:()=>{reads++;return 1;},mode,scale,x:-20.5,y:-40.25,screenWidth:64,screenHeight:48});
+  assert.ok(reads<=5*(64+5)*(48+5),String(reads));if(scale<1)assert.ok(ctx.rects.length<=52,'one full-span run per uniform sampled row');
+ }
+});

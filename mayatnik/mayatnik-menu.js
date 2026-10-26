@@ -567,11 +567,29 @@
       part.addEventListener('click',e=>{e.stopPropagation();const api=window.mayParity;if(api)api.set(key,api.get()[key]===false);rail.refresh();placeTools();});part.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();part.click();}});row.append(part);return part;});
     toolSync.push(()=>{const value=window.mayParity?.get()||{};parts.forEach((part,i)=>{const on=value[keys[i]]!==false;part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));});});gView.append(row);
   }
+  // Contour selectors forward only to retained controls; source handlers own persistence/rendering.
+  function contourSelector(id,title,choices){
+    const source=$(id);if(!source)return;
+    const row=document.createElement('div');row.className='gz-hx gz-pair may-segments '+(choices.length===3?'gz-split3 may-mirror-three':'gz-split');row.dataset.n=id;row.title=title;row.setAttribute('role','group');row.setAttribute('aria-label',title);
+    const parts=choices.map(([value,label,help],i)=>{const part=document.createElement('span');part.className='gz-half gz-h'+i;part.textContent=label;part.title=help;part.setAttribute('aria-label',help);part.setAttribute('role','button');part.tabIndex=0;
+      part.addEventListener('click',event=>{event.stopPropagation();if(source.disabled)return;const view=$('view'),activate=id==='bitContourMode'&&view.value!=='bitContours';if(source.value===value&&!activate)return;if(source.value!==value){source.value=value;source.dispatchEvent(new Event('change',{bubbles:true}));}if(activate){view.value='bitContours';view.dispatchEvent(new Event('change',{bubbles:true}));}rail.refresh();placeTools();});
+      part.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();part.click();}});row.append(part);return part;});
+    toolSync.push(()=>parts.forEach((part,i)=>{const on=source.value===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.setAttribute('aria-disabled',String(!!source.disabled));}));gView.append(row);
+  }
+  contourSelector('bitContourMode','Контуры битов: способ обводки',[
+    ['single','Общий','Общий контур всех битов первым собственным цветом.'],
+    ['same','Равн','Контуры одинаковых битов антицветом; между разными битами обводки нет.'],
+    ['double','Двойн','Контуры одинаковых битов антицветом; между разными — две полосы, каждая со стороны своего бита.']
+  ]);
+  contourSelector('bitContourColours','Цвета контуров: авто или свои; общий контур всегда первым собственным цветом',[
+    ['auto','Авто','Антицвет — цвет противоположного бита из палитры битов. Общий контур использует первый собственный цвет.'],
+    ['custom','Свои','Собственные цвета контуров из двух кружков: первый для бита 0, второй для бита 1. Общий контур использует первый.']
+  ]);
   // v0.226: «и эту раздели в 2, отдели фоном или вложенностью, сделай по темам» — список «Вида» в два столбца (.pt-col), в них блоки по темам
   // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.
   // У блока поля 2 px сверху и снизу и нет зазора между блоками — шаг рядов (кнопка + зазор 4 px) тот же, зубцы рамки (zig) — против остриёв кнопок.
   { const VIEW_COLS = [
-      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'parityCells', 'parityRows', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat']],
+      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'bitContourMode', 'bitContourColours', 'parityCells', 'parityRows', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
       [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'lineMeasures', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],

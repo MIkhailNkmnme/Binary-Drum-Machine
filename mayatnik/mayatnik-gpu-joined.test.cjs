@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const Joined=require('./mayatnik-joined-romb.js');
-test('GPU uniform contract keeps64bytes and joined branch precedes flat contours',()=>{
- const source=fs.readFileSync(__dirname+'/mayatnik-gpu.js','utf8');assert.match(source,/mapped:u32, joined:u32, joinedAnchor:f32, joinedReflection:f32/);assert.match(source,/i\[13\]=joined\?\(joined.rotate\?2:1\):0/);assert.match(source,/f\[14\]=joined\?\.anchor\|\|0;f\[15\]=joined\?\.reflection\|\|0/);assert.ok(source.indexOf('if(u.joined!=0u){return joinedPixel(pos.xy);}')<source.indexOf('if(u.contours!=0u&&contour(pos.xy))'));assert.match(source,/floor\(\(x\+y\)\*0.5\+0.5\)/);
+test('GPU uniform contract keeps joined offsets in the extended80bytes and joined branch precedes flat contours',()=>{
+ const source=fs.readFileSync(__dirname+'/mayatnik-gpu.js','utf8');assert.match(source,/mapped:u32, joined:u32, joinedAnchor:f32, joinedReflection:f32/);assert.match(source,/i\[13\]=joined\?\(joined.rotate\?2:1\):0/);assert.match(source,/f\[14\]=joined\?\.anchor\|\|0;f\[15\]=joined\?\.reflection\|\|0/);assert.ok(source.indexOf('if(u.joined!=0u){return joinedPixel(pos.xy);}')<source.indexOf('if(mode==1u&&contour(pos.xy))'));assert.match(source,/new ArrayBuffer\(80\)/);assert.match(source,/contour0:u32, contour1:u32/);assert.match(source,/floor\(\(x\+y\)\*0.5\+0.5\)/);
 });
 test('real WebGPU joined pixels agree with the CPU geometry, source data survives and flat mode restores', {timeout:120000},async t=>{
  let chromium;try{chromium=require(process.env.PLAYWRIGHT_PATH||'C:/Users/Mhl/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright').chromium;}catch(_){t.skip('Playwright runtime unavailable');return;}

@@ -11,7 +11,7 @@
     for(let x=x0;x<=x1;x++){let start=-1;for(let y=y0;y<=y1;y++){const on=y<y1&&boundary(bit(x-1,y),bit(x,y));if(on&&start<0)start=y;if(!on&&start>=0){visit(x,start,x,y);count++;start=-1;}}}
     return count;
   }
-  function paint(ctx,{width,height,read,x=0,y=0,scale=1,screenWidth,screenHeight,lineWidth=2,colour='#ffe969'}){
+  function paint(ctx,{width,height,read,x=0,y=0,scale=1,screenWidth,screenHeight,lineWidth=2,colour='#ffe969',mode='single',colours=['#ffffff','#000000']}){
     if(![width,height,x,y,scale,screenWidth,screenHeight,lineWidth].every(Number.isFinite)||!(scale>0)||width<=0||height<=0||screenWidth<=0||screenHeight<=0||lineWidth<=0)return 0;
     // Below one screen pixel per cell, use nearest-cell samples at screen-pixel
     // centres. Cost then follows the viewport, rather than the hidden cell count.
@@ -31,6 +31,30 @@
     }
     const screenX=sampled?col=>x+Math.min(col,spanX):col=>x+col*scale;
     const screenY=sampled?row=>y+Math.min(row,spanY):row=>y+row*scale;
+    if(mode==='same'||mode==='double'){
+      // Each cell owns its inner strips. Even four-way junctions never put
+      // another bit's contour colour into this cell. The outer edge is inward.
+      const bit=(col,row)=>col<0||row<0||col>=gridWidth||row>=gridHeight?-1:reader(col,row);
+      const x0=Math.max(0,Math.floor(left)),y0=Math.max(0,Math.floor(top)),x1=Math.min(gridWidth,Math.ceil(right)),y1=Math.min(gridHeight,Math.ceil(bottom));
+      const paths=[[],[]];let count=0;
+      for(let row=y0;row<y1;row++){
+        let run=-1,runBit=-1;
+        const flush=end=>{if(run>=0){paths[runBit].push([screenX(run),screenY(row),screenX(end)-screenX(run),screenY(row+1)-screenY(row)]);count++;run=-1;}};
+        for(let col=x0;col<x1;col++){
+          const a=bit(col,row);if(a!==0&&a!==1){flush(col);continue;}
+          const thick=b=>b===-1?lineWidth:b===a||mode==='double'&&(b===0||b===1)?half:0;
+          const l=thick(bit(col-1,row)),r=thick(bit(col+1,row)),t=thick(bit(col,row-1)),b=thick(bit(col,row+1));
+          const X=screenX(col),Y=screenY(row),W=screenX(col+1)-X,H=screenY(row+1)-Y;
+          if(l+r>=W||t+b>=H){if(runBit!==a)flush(col);if(run<0){run=col;runBit=a;}continue;}
+          flush(col);const add=(x,y,w,h)=>{if(w>0&&h>0){paths[a].push([x,y,w,h]);count++;}};
+          add(X,Y,Math.min(l,W),H);add(X+W-Math.min(r,W),Y,Math.min(r,W),H);
+          add(X,Y,W,Math.min(t,H));add(X,Y+H-Math.min(b,H),W,Math.min(b,H));
+        }flush(x1);
+      }
+      ctx.save();ctx.beginPath();ctx.rect(0,0,screenWidth,screenHeight);ctx.clip();
+      for(let bit=0;bit<2;bit++){ctx.fillStyle=colours[bit];ctx.beginPath();for(const rect of paths[bit])ctx.rect(...rect);ctx.fill();}
+      ctx.restore();return count;
+    }
     ctx.save();ctx.beginPath();ctx.rect(0,0,screenWidth,screenHeight);ctx.clip();ctx.strokeStyle=colour;ctx.lineWidth=lineWidth;
     ctx.beginPath();
     const count=segments({width:gridWidth,height:gridHeight,read:reader,left,top,right,bottom},(ax,ay,bx,by)=>{ctx.moveTo(screenX(ax),screenY(ay));ctx.lineTo(screenX(bx),screenY(by));});

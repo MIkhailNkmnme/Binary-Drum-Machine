@@ -257,7 +257,8 @@ fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
   // Картинка на экран: пиксель холста — среднее цветов клеток окна под ним (до 32 × 32 выборок), при увеличении — клетка под серединой
   const RENDER_WGSL = /* wgsl */`
 struct R { x0: f32, y0: f32, step: f32, contours: u32, VX: i32, VW: i32, VH: i32, pixelRatio: f32,
-  cx0:f32, cy0:f32, cw:i32, ch:i32, mapped:u32, joined:u32, joinedAnchor:f32, joinedReflection:f32 }
+  cx0:f32, cy0:f32, cw:i32, ch:i32, mapped:u32, joined:u32, joinedAnchor:f32, joinedReflection:f32,
+  contour0:u32, contour1:u32, reserved0:u32, reserved1:u32 }
 @group(0) @binding(0) var<uniform> u: R;
 @group(0) @binding(1) var<storage, read> pic: array<u32>;
 @group(0) @binding(2) var<storage, read> axes: array<i32>;
@@ -314,9 +315,33 @@ fn contour(pos:vec2<f32>) -> bool {
   let vertical=q.y>=max(0.0,y0)&&q.y<=min(span.y,y1);let horizontal=q.x>=max(0.0,x0)&&q.x<=min(span.x,x1);
   return (vertical&&((abs(q.x-x0)<=1.0&&boundary(v,sampledKind(row,col-1,step)))||(abs(q.x-x1)<=1.0&&boundary(v,sampledKind(row,col+1,step)))))||(horizontal&&((abs(q.y-y0)<=1.0&&boundary(v,sampledKind(row-1,col,step)))||(abs(q.y-y1)<=1.0&&boundary(v,sampledKind(row+1,col,step)))));
 }
+fn antiEdge(a:i32,b:i32,mode:u32,distance:f32)->bool {
+  if(b== -1){return distance<=2.0;}
+  return (b==a||(mode==3u&&b>=0))&&distance<=1.0;
+}
+fn antiContour(pos:vec2<f32>,mode:u32)->i32 {
+  let step=u.step*u.pixelRatio;let f=vec2<f32>(u.cx0,u.cy0)+pos*u.step;
+  var q=f/step;var span=vec2<f32>(f32(u.cw),f32(u.ch))/step;
+  var c=i32(floor(f.x));var r=i32(floor(f.y));var a=kind(r,c);
+  var left=fract(f.x)/step;var top=fract(f.y)/step;
+  var right=(1.0-fract(f.x))/step;var bottom=(1.0-fract(f.y))/step;
+  var l=kind(r,c-1);var rr=kind(r,c+1);var t=kind(r-1,c);var b=kind(r+1,c);
+  if(step>1.0){
+    c=i32(floor(q.x));r=i32(floor(q.y));a=sampledKind(r,c,step);
+    if(q.x<0.0||q.y<0.0||q.x>=span.x||q.y>=span.y){return -1;}
+    left=q.x-f32(c);top=q.y-f32(r);right=min(f32(c+1),span.x)-q.x;bottom=min(f32(r+1),span.y)-q.y;
+    l=sampledKind(r,c-1,step);rr=sampledKind(r,c+1,step);t=sampledKind(r-1,c,step);b=sampledKind(r+1,c,step);
+  }
+  if(a<0){return -1;}
+  if(antiEdge(a,l,mode,left)||antiEdge(a,rr,mode,right)||antiEdge(a,t,mode,top)||antiEdge(a,b,mode,bottom)){return a;}
+  return -1;
+}
+fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>>8u)&255u),f32((p>>16u)&255u))/255.0,1.0);}
 @fragment fn fs(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
   if(u.joined!=0u){return joinedPixel(pos.xy);}
-  if(u.contours!=0u&&contour(pos.xy)){return vec4<f32>(vec3<f32>(f32((u.contours>>8u)&255u),f32((u.contours>>16u)&255u),f32((u.contours>>24u)&255u))/255.0,1.0);}
+  let mode=u.contours&255u;
+  if(mode==1u&&contour(pos.xy)){return packedColour(u.contours>>8u);}
+  if(mode>=2u){let bit=antiContour(pos.xy,mode);if(bit>=0){return packedColour(select(u.contour0,u.contour1,bit==1));}}
   let fx = u.x0 + floor(pos.x) * u.step; let fy = u.y0 + floor(pos.y) * u.step;
   var c0: i32; var c1: i32; var r0: i32; var r1: i32;
   if (u.step < 1.0) { c0 = i32(floor(fx + u.step * 0.5)); c1 = c0 + 1; r0 = i32(floor(fy + u.step * 0.5)); r1 = r0 + 1; }
@@ -368,7 +393,7 @@ fn contour(pos:vec2<f32>) -> bool {
       const pBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       const bitsBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
       const hasBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
-      const uBuf = device.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+      const uBuf = device.createBuffer({ size: 80, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       let axesBuf=device.createBuffer({size:4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST}),axesCapacity=1,axesCols=null,axesRows=null;
       const PBuf = device.createBuffer({ size: 32 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       let tBuf = null, apBuf = null, bind = null, tCap = 0, apCap = 0, renderBind = null, dead = false;
@@ -474,9 +499,11 @@ fn contour(pos:vec2<f32>) -> bool {
       // На холст (GPUCanvasContext, уже configure) — последняя picture(): o = { x0, y0, step — клеток окна на пиксель холста }
       function render(context, o) {
         if (dead || !pic || !win) return;
-        const ub = new ArrayBuffer(64), f = new Float32Array(ub), i = new Int32Array(ub),p=o.contourProjection;
-        // Low byte enables contours; remaining bytes carry RGB without enlarging the shared 64-byte uniform.
-        f[0] = o.x0; f[1] = o.y0; f[2] = o.step;i[3]=o.contours&&win.contours?((o.contourColour??0xff69e9ff)<<8)|1:0; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;f[7]=o.pixelRatio||1;
+        const ub = new ArrayBuffer(80), f = new Float32Array(ub), i = new Int32Array(ub),p=o.contourProjection;
+        const mode=o.contourMode==='same'?2:o.contourMode==='double'?3:1;
+        // Low byte selects contour mode; remaining bytes retain the single colour.
+        f[0] = o.x0; f[1] = o.y0; f[2] = o.step;i[3]=o.contours&&win.contours?((o.contourColour??0xff69e9ff)<<8)|mode:0; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;f[7]=o.pixelRatio||1;
+        i[16]=o.contourColours?.[0]??0xffffffff;i[17]=o.contourColours?.[1]??0xff000000;
         const joined=o.joined;i[13]=joined?(joined.rotate?2:1):0;f[14]=joined?.anchor||0;f[15]=joined?.reflection||0;
         f[8]=p?p.x0:o.x0-win.VX;f[9]=p?p.y0:o.y0;i[10]=p?p.cols.length:win.VW;i[11]=p?p.rows.length:win.VH;i[12]=p?1:0;
         // Projection changes only the semantic neighbour lookup. The tile's
