@@ -89,11 +89,11 @@
         arrows: ['−1', '+1'], thumb: { label: () => $('bPlay').getAttribute('aria-pressed') === 'true' ? '❚❚' : '▶', click: () => $('bPlay').click() } } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
-      button('bOchki', 'eye'), button('bOchkiSnake','eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
+      button('bOchki', 'eye'), button('bOchkiSnake','eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),num('ochkiLength',{name:'От бит',slider:false}) ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
-      button('zLock', 'pin'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4') ] },
+      button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
@@ -200,7 +200,46 @@
     const sizeRows = [];
     for (let i = 0; i < pres.length; i += 2) { const row = gzPair(pres.slice(i, i + 2).map(e => ({ label: e.textContent, tip: e.title || ('Построить ' + e.textContent), data: { n: e.dataset.n },
         on: () => cur() === e.dataset.n, click: () => { e.click(); sync(); } }))); sizeRows.push(row); pop.append(row); }
+    let customInput = null;   // v0.573: любое число строк, не только 128/256/…
+    { const cr = document.createElement('div'); cr.className = 'may-rows-custom';
+      customInput = document.createElement('input'); customInput.type = 'number'; customInput.min = '8'; customInput.max = '4096'; customInput.step = '1';
+      customInput.value = cur() || '128'; customInput.title = 'Любое число строк от 8 до 4096 · Enter — задать и перестроить поле';
+      customInput.setAttribute('aria-label', 'Любое число строк');
+      const apply = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128))); customInput.value = String(v);
+        const r = $('rows'); r.value = v; r.dispatchEvent(new Event('change', { bubbles: true })); $('bBuild')?.click(); sync(); };
+      const cb = document.createElement('button'); cb.className = 'gz-hx'; cb.textContent = 'Задать'; cb.dataset.miShort = 'Задать';
+      cb.title = 'Задать любое число строк от 8 до 4096 и перестроить поле';
+      cb.onclick = ev => { ev.stopPropagation(); apply(); };
+      customInput.onclick = ev => ev.stopPropagation();
+      customInput.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); apply(); } };
+      cr.append(customInput, cb); pop.append(cr); }
+    { const rb = document.createElement('button'); rb.className = 'gz-hx'; rb.textContent = 'Рандом'; rb.dataset.miShort = 'Рандом';
+      rb.title = 'Тест: очистить поле и заполнить квадрат N×N случайными битами (N = число строк); остальное поле пусто. Для проверки уменьшения и Очков по наложению.';
+      rb.onclick = ev => { ev.stopPropagation(); window.mayTestRandom?.(+$('rows').value || 128); sync(); }; pop.append(rb); }
+    { const xb = document.createElement('button'); xb.className = 'gz-hx'; xb.textContent = 'XOR'; xb.dataset.miShort = 'XOR';
+      xb.title = 'Тест: XOR-маятник — правило 90 с замкнутыми краями (тор) на квадрате N×N, N = число строк. Пустых углов нет.';
+      xb.onclick = ev => { ev.stopPropagation(); window.mayTestXor?.(+$('rows').value || 128); sync(); }; pop.append(xb); }
+    { const cb = document.createElement('button'); cb.className = 'gz-hx'; cb.textContent = 'Ковёр'; cb.dataset.miShort = 'Ковёр';
+      cb.title = 'Тест: ковёр Серпинского — квадрат 3^k (центр каждого блока 3×3 выколот рекурсивно). Размер — ближайшая степень тройки, не больше числа строк.';
+      cb.onclick = ev => { ev.stopPropagation(); window.mayTestCarpet?.(+$('rows').value || 243); sync(); }; pop.append(cb); }
+    { const ab = document.createElement('button'); ab.className = 'gz-hx'; ab.textContent = 'Сборка'; ab.dataset.miShort = 'Сборка';
+      ab.setAttribute('aria-pressed', 'false');
+      ab.title = 'Включить сборку последнего теста (XOR/Рандом/Ковёр): кадр 0, затем строки/кадры по очереди. Повторный щелчок или общая ▶/Ⅱ останавливает. Если теста ещё не было — сначала строит XOR.';
+      const syncAb = on => { ab.classList.toggle('on', !!on); ab.setAttribute('aria-pressed', String(!!on)); };
+      addEventListener('may-test-on', ev => syncAb(ev.detail));
+      ab.onclick = ev => { ev.stopPropagation();
+        if (window.mayTestOn) window.mayTestStop?.();
+        else { if (window.mayTestPrepare?.() == null) { window.mayTestXor?.(+$('rows').value || 128); window.mayTestPrepare?.(); } window.mayTestBuild?.(); }
+        sync(); }; pop.append(ab); }
+    { const mb = document.createElement('button'); mb.className = 'gz-hx'; mb.dataset.n = 'testBuildMode';
+      const syncMode = () => { const fr = window.mayTestBuildMode?.get?.() === 'frames'; mb.textContent = fr ? 'Кадрами' : 'Построчно';
+        mb.dataset.miShort = mb.textContent;
+        mb.classList.toggle('on', fr); mb.setAttribute('aria-pressed', String(fr));
+        mb.title = fr ? 'Режим сборки: кадры — как раньше, каждый кадр добавляет единицу и перестраивает весь квадрат. Щелчок — построчно.' : 'Режим сборки: строки — сверху вниз, каждый бит из двух диагональных сверху (над текущей пустота). Щелчок — по кадрам.'; };
+      mb.onclick = ev => { ev.stopPropagation(); window.mayTestBuildMode?.toggle?.(); window.mayTestPrepare?.(); syncMode(); sync(); };
+      syncMode(); pop.append(mb); }
     const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
+      if (customInput) customInput.value = n;
       for (const r of sizeRows) r.gzSync();   // v0.380
       };   // v0.379: «или-или — обводка одной кнопки, а не двух сразу»: каймой — только выбранная половина (CSS .may-hp-h.on), не вся кнопка   // v0.374: только кнопки размеров (не «N/3 | 4N»)
     $('rows').addEventListener('change', sync); $('rows').addEventListener('input', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
@@ -418,24 +457,50 @@
     const ohp = document.createElement('button'); ohp.title = 'Шаг'; const bOh = ptBtn('ovlH0', 'grid4', ohp, () => { window.mayOvl?.h0(); placeTools(); });
     const orp = document.createElement('button'); orp.title = 'Сброс наложения'; const bOr = ptBtn('ovlReset', 'reset', orp, () => { window.mayOvl?.reset(); placeTools(); });
     const ofp = document.createElement('button'); ofp.title = 'Фиксировать наложение'; const bOf = ptBtn('ovlFreeze', 'pin', ofp, () => { window.mayOvl?.freeze(); placeTools(); });
-    const oap = document.createElement('button'); oap.title = 'Видимость наложения'; const bOa = ptBtn('ovlAlpha', 'half', oap, () => { window.mayOvl?.opacity(); placeTools(); });
+    var bVis = null;   // v0.566: одна кнопка-три по стандарту: 100 | 50 | 0 (строится после toolSync)
+    const bOa = ptBtn('ovlAlpha', 'half', document.createElement('button'), () => { window.mayOvl?.opacity(); placeTools(); });
+    bOa.hidden = true; bOa.tabIndex = -1;   // скрытая кнопка старого цикла — только для совместимости обработчиков
     const oop = document.createElement('button'); oop.title = 'Оригинал под наложение'; const bOo = ptBtn('ovlOriginal', 'target', oop, () => { window.mayOvl?.original(); placeTools(); });
     const ocp = document.createElement('button'); ocp.title = 'По вертикальной оси оригинала: центрировать наложение только по X. Y и масштаб сохраняются.'; const bOc = ptBtn('ovlCenter', 'axes', ocp, () => { if(!bOc.disabled)window.mayOvl?.center(); placeTools(); });bOc.title=ocp.title;bOc.setAttribute('aria-label',ocp.title);
+    const oqp = document.createElement('button'); oqp.title = 'Уменьшение'; const bOq = ptBtn('ovlReduce', 'grid4', oqp, () => { if(!bOq.disabled)window.mayOvl?.reduce(); placeTools(); });
+    bOq.dataset.miShort = 'Умен.';
+    bOq.title = 'Уменьшение q×q: грубая сетка по делителям числа строк. Клетка — бит, только если все q×q бит одинаковы; смешанный блок пуст. Очки ищут по этой сетке.';
+    bOq.setAttribute('aria-label', bOq.title);
     bOr.dataset.miShort = 'Сброс налож.'; bOr.title = 'Сброс наложения: убрать увеличенную копию и забыть её снимок. Поле, кадр, масштаб, краска и шаблоны сохраняются. Следующее включение возьмёт новый исходник.'; bOr.setAttribute('aria-label', bOr.title);
     toolSync.push(() => { const O = window.mayOvl?.get(); if (!O) return; const total = O.n+1, ratio = O.n ? total/O.n : 2;
       bOv.disabled = bOp.disabled = bOh.disabled = O.fixed; bOf.disabled = !O.n; bOo.disabled = !O.fixed;
-      bOc.disabled=!O.centerable;
+      bOc.disabled=!O.centerable; bOq.disabled=O.fixed||(!O.n&&!O.q); bOr.disabled=!O.n&&!O.q;
+      const qn=bOq.querySelector('.gz-nm'); if(qn){const t=O.q?'Умен. ×'+O.q:'Умен.'; if(qn.textContent!==t)qn.textContent=t;}
+      bOq.classList.toggle('on',!!O.q);
       bOf.classList.toggle('on',O.fixed); bOf.setAttribute('aria-pressed',String(O.fixed));
       bOf.title = O.fixed ? 'Увеличенная копия закреплена на экране. Кадры, построение и масштаб оригинала её не меняют. Ещё раз — снять фиксацию и привязку оригинала; снимок остаётся. После F5 экранная фиксация не восстанавливается.' : 'Зафиксировать именно текущее увеличенное наложение на экране с сохранением выбранной видимости (по умолчанию 50%). Вершина сразу привязана; колесо, ± и жест притягивают масштаб к копии бит в бит. «Оригинал» совмещает сразу. После F5 фиксированный снимок не восстанавливается.';
       bOf.setAttribute('aria-label',bOf.title);
-      const na=bOa.querySelector('.gz-nm');if(na){const t='Видимость '+O.alpha+'%';if(na.textContent!==t)na.textContent=t;}
-      bOa.title='Видимость всего наложения до и после фиксации: '+O.alpha+'%. Щелчок — 0 → 25 → 50 → 75 → 100%. При 0% копия скрыта, фиксация и магнит сохраняются; при 50% оригинал виден сквозь копию; при 100% полная видимость. Пиксели снимка не меняются.';bOa.setAttribute('aria-label',bOa.title);
+      if (bVis && bVis.gzSync) bVis.gzSync(O.alpha);
+      { const na=bOa.querySelector?.('.gz-nm'); if(na){const t='Видимость '+O.alpha+'%';if(na.textContent!==t)na.textContent=t;}
+        bOa.title='Видимость всего наложения до и после фиксации: '+O.alpha+'%. Щелчок — 0 → 25 → 50 → 75 → 100%. При 0% копия скрыта, фиксация и магнит сохраняются; при 50% оригинал виден сквозь копию; при 100% полная видимость. Пиксели снимка не меняются.'; bOa.setAttribute('aria-label',bOa.title); }
       bOo.classList.toggle('on',O.matched);bOo.setAttribute('aria-pressed',String(O.matched));bOo.title=(O.matched?'Сетка совмещена. ':'Магнит масштаба включается при фиксации. ')+'Бит в бит: совместить размер, центры и границы клеток оригинала с закреплённой копией и привязать последующее масштабирование колесом, ± и жестом к общей вершине. Кадр и значения битов не меняются. Другой кадр или мелкий исходный масштаб не обещают одинаковых цветов снимка и поля. Для RGB опора — центральная копия G. Предел масштаба 40; «Блок» сохраняется. '+(O.message||'');bOo.setAttribute('aria-label',bOo.title);
       bOv.classList.toggle('on', O.n > 0); bOv.title = (O.n ? 'Наложение: итог ×' + total + ' от снимка; переход ×' + O.n + ' → ×' + total + ' (ещё ×' + (+ratio.toFixed(4)).toString().replace('.', ',') + '). ' : 'Наложение: запомнить чистое построение в текущем масштабе и увеличить ×2 от вершины. ') + 'Один исходник с цветами и правками, без новых битов, осей, подписей и сглаживания. Вершина на оси остаётся на месте; сдвиги R/B действуют отдельно. В большом режиме в исходник входит видимая область. Следующие щелчки: ×3, ×4 и далее, без предела. «Сброс наложения» убирает копию; новое включение берёт свежий исходник; после F5 снимок берётся заново.';
       bOv.setAttribute('aria-label', bOv.title);
       const nb = bOv.querySelector('.gz-nm'); if (nb) { const t = O.n ? 'Налож. ×' + total : 'Наложение'; if (nb.textContent !== t) nb.textContent = t; }
       const np = bOp.querySelector('.gz-nm'); if (np) { const t = 'Сдвиг ' + O.pos; if (np.textContent !== t) np.textContent = t; } bOp.title = 'Сдвиг копии снимка: R — вправо на (k − 1)/2 клетки предыдущего размера, G — по центру, B — влево, RGB — копии по очереди R, G, B (непрозрачные участки верхней B закрывают нижние). k — отношение текущего шага; исходные цвета не меняются · сейчас ' + O.pos; bOp.setAttribute('aria-label', bOp.title);
       const nh = bOh.querySelector('.gz-nm'); if (nh) { const t = 'Шаг ' + O.h0; if (nh.textContent !== t) nh.textContent = t; } bOh.title = 'Шаг h0: 8 → 16 → 32 → 64 → 128. Задаёт длину цикла до выключения по числу строк в момент снимка; не обрезает снимок. Смена шага выключает наложение; следующее включение возьмёт новый снимок · сейчас ' + O.h0; bOh.setAttribute('aria-label', bOh.title); });
+    // v0.566: «100 | 50 | 0» — одна стандартная кнопка из трёх половин, как «выкл | столбъ | всё».
+    // В упрощённом окружении тестов DOM-элемент без append оставляем старую кнопку видимой.
+    { const canTriple = (() => { try { return typeof document.createElement('span').append === 'function'; } catch (_) { return false; } })();
+      if (canTriple) {
+        const row = document.createElement('div'); row.className = 'gz-hx gz-pair gz-split gz-split3 may-vis-triple'; row.title = 'Видимость наложения: 100 | 50 | 0 %';
+        row.setAttribute('aria-label', row.title);
+        const parts = [[100, '100', 'Налож(100): видна только копия — при этой видимости её можно тащить мышью'],
+                       [50, '50', 'Налож(50): копия полупрозрачна, видны и поле, и наложение'],
+                       [0, '0', 'Налож(0): копия скрыта, настройки и фиксация сохраняются']];
+        const hs = parts.map(([v, label, tip], j) => { const h = document.createElement('span'); h.className = 'gz-half gz-h' + j;
+          h.textContent = label; h.title = tip; h.dataset.v = String(v);
+          h.onclick = ev => { ev.stopPropagation(); window.mayOvl?.alpha?.(v); placeTools(); }; return h; });
+        row.append(...hs);
+        row.gzSync = a => { for (let j = 0; j < 3; j++) { const on = a === parts[j][0]; hs[j].classList.toggle('gz-on', on); hs[j].setAttribute('aria-pressed', String(on)); } };
+        bVis = row;
+      } else { bOa.hidden = false; bOa.tabIndex = 0; }
+    }
     // v0.270: «Секторы» — фон четырёх секторов вокруг точки встречи
     const scp = document.createElement('button'); scp.title = 'Секторы'; const bSc = ptBtn('sectors', 'grid4', scp, () => { const S = window.maySectors; S?.set(!S.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.maySectors?.get(); bSc.classList.toggle('on', on); bSc.title = 'Секторы вокруг точки встречи «Застыло»: верхний — застыл, больше не меняется (синий); нижний — меняется на каждом шаге (красный); левый / правый — только когда маятник на своей стороне, через шаг (жёлтые; когда вершин по сторонам не поровну — правый зелёный) · ' + (on ? 'вкл' : 'выкл'); });
@@ -507,7 +572,8 @@
     // v0.224: «Наружу» — «Зеркало ↓» наоборот: нижний треугольник через диагонали в боковые клинья
     const op = document.createElement('button'); op.title = 'Наружу'; const bn = ptBtn('fixLowOut', 'swap', op, () => { const Lw = window.mayFixLow; Lw?.setOut(!Lw.out()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixLow?.out(); bn.classList.toggle('on', on); bn.title = 'Наружу: «Зеркало ↓» наоборот — нижний треугольник отражается через диагонали в боковые клинья · ' + (on ? 'вкл' : 'выкл'); });
-    gView.querySelector('[data-n="fixMirror"]').after(bTc, bSf, bSc, bAr, bAf, bOv, bOp, bOh, bOf, bOa, bOo, bOc, bOr, bRl, bVf, bHt, bd, bf, bv, ba, bLk, bRc, bw, br, bk, bl, bn, bc, bo);
+    const visBtn = bVis || bOa;   // v0.567: в упрощённом окружении тестов тройка может не построиться
+    gView.querySelector('[data-n="fixMirror"]').after(bTc, bSf, bSc, bAr, bAf, bOv, bOp, bOh, bOf, visBtn, bOa, bOo, bOc, bOq, bOr, bRl, bVf, bHt, bd, bf, bv, ba, bLk, bRc, bw, br, bk, bl, bn, bc, bo);
     window.mayFixAxisNames = AX;
     window.mayMirLists = { col: COL, op: OP }; }
   // v0.194: показ пикселей по цвету — пять кнопок: горит — пиксели этого цвета видны, погашена — скрыты (цветом пустоты)
@@ -541,7 +607,7 @@
   const ptColour = { 'Точка Ось':'#b48cff', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Зеркала':'#b48cff', 'Шаблон':'#ffd35b' };
   for (const g of tools.querySelectorAll('.pt-g')) { const c = ptColour[g.querySelector('.pt-l').textContent]; if (c) { g.style.setProperty('--c', c); g.classList.add('pt-long'); } }
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
-    if (b.id === 'lg') return;
+    if (b.id === 'lg' || b.classList.contains('may-vis-triple')) return;   // v0.566: у тройки видимости свои подписи 100 | 50 | 0
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
       b.classList.add('gz-hx'); b.querySelector('i').classList.add('gz-ic');
       const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return; }

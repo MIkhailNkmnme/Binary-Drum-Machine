@@ -54,14 +54,15 @@ test('present records raw/shown/quick source before CPU service lines',()=>{
   const record=body.indexOf('present.clean = quick && sd < 1 ? { canvas:cv } : { pic:sd >= 1 ? pic : shown };');assert.ok(record>0);
   for(const line of ['stolbLine();','midColLine();','fixColLines();','if (quick) { align(); return; }'])assert.ok(record<body.indexOf(line));
 });
-test('vertex remains fixed at ×2/×3/×4 through ×32; service axis never enlarges',()=>{
+test('X vertex stays fixed and Y grows around the middle at ×2/×3/×4 through ×32; service axis never enlarges',()=>{
   const e=env();e.api.step();const S=e.snapshot(),layer=S.layers[0],out=e.appended[0],original=layer.c.pixels.slice();
   for(let total=2;total<=32;total++){if(total>2)e.api.step();const call=out.calls.at(-1);assert.equal(call.w,layer.w*total);assert.equal(call.h,layer.h*total);
-    assert.equal(call.x+(S.ax-layer.x)*total,S.ax);assert.equal(call.y+(S.ay-layer.y)*total,S.ay);assert.ok(!out.pixels.includes(AXIS));assert.deepEqual(layer.c.pixels,original);}
+    const oy=S.ay+(S.bits?S.bits.H:S.layers[0].h/S.cell)*S.cell/2;
+    assert.equal(call.x+(S.ax-layer.x)*total,S.ax);assert.equal(call.y+(oy-layer.y)*total,oy);assert.ok(!out.pixels.includes(AXIS));assert.deepEqual(layer.c.pixels,original);}
 });
 test('scrolled CPU retains full raster, offscreen pixels and actual vertex coordinates',()=>{
   const e=env({rect:{left:7,top:23,right:15,bottom:27,width:8,height:4}});e.api.step();const S=e.snapshot();assert.deepEqual(S.layers[0].c.pixels,e.pixels);assert.equal(S.layers[0].w,8);assert.equal(S.layers[0].x,-4);
-  assert.equal(S.ax,-4+3.5*.5);assert.equal(S.ay,2);const call=e.appended[0].calls.at(-1);assert.equal(call.x+(S.ax-S.layers[0].x)*2,S.ax);assert.equal(call.y,S.ay);
+  assert.equal(S.ax,-4+3.5*.5);assert.equal(S.ay,2);const call=e.appended[0].calls.at(-1);const oy=S.ay+(S.bits?S.bits.H:S.layers[0].h/S.cell)*S.cell/2;assert.equal(call.x+(S.ax-S.layers[0].x)*2,S.ax);assert.equal(call.y+(oy-S.layers[0].y)*2,oy);
 });
 test('GPU immediately copies clean viewport after render without CPU readback or service layers',()=>{
   const e=env({gpu:true});e.ctx.img=null;e.api.step();assert.deepEqual(e.events,['cancel:7','render']);assert.deepEqual(e.snapshot().layers[0].c.pixels,e.pixels);assert.equal(e.snapshot().layers[0].w,4);assert.equal(e.snapshot().layers.length,1);

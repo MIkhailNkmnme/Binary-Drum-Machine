@@ -952,3 +952,10 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-option-diamond.may-option-excluded{color:#69727d!important;background:#101318!important;cursor:default}
 .may-option-excluded>.gz-ic,.may-option-excluded>.may-option-symbol{opacity:.3}
 .may-option-excluded::before,.may-option-excluded::after{opacity:.3}
+
+
+/* v0.573: любое число строк в «Хорръ» — поле ввода + «Задать». */
+.may-rows-custom{display:flex;gap:2px;align-items:center;margin:2px 0}
+.may-rows-custom input{width:64px;height:24px;box-sizing:border-box;background:#0c0f14;color:var(--fg);border:1px solid var(--line);border-radius:0;font:12px var(--mono);padding:0 6px;text-align:center}
+.may-rows-custom input:focus{outline:1px solid var(--acc);outline-offset:0}
+.may-rows-custom .gz-hx{flex:1 1 auto;min-width:0;height:24px;font-size:11px}
