@@ -244,6 +244,14 @@
         sb.title = on ? 'Счёт 0/1/пусто и баланс по квадрату и периметру показан · щелчок — скрыть' : 'Счёт скрыт · щелчок — показать'; };
       sb.onclick = ev => { ev.stopPropagation(); window.mayTestStats?.toggle?.(); syncStats(); sync(); };
       syncStats(); pop.append(sb); }
+    { const fb = document.createElement('button'); fb.className = 'gz-hx'; fb.textContent = 'Запомнить'; fb.dataset.miShort = 'Запомнить'; fb.dataset.n = 'testFrameSave';
+      fb.title = 'Сохранить текущий тестовый кадр (до 2 млн клеток) и потом начать с него кнопкой «С кадра».';
+      fb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameSave?.(); fb.textContent = ok ? 'Есть' : 'Нет'; setTimeout(() => { fb.textContent = 'Запомнить'; sync(); }, 900); sync(); };
+      pop.append(fb); }
+    { const lb = document.createElement('button'); lb.className = 'gz-hx'; lb.textContent = 'С кадра'; lb.dataset.miShort = 'С кадра'; lb.dataset.n = 'testFrameLoad';
+      lb.title = 'Начать с сохранённого тестового кадра: восстановить поле и кадр, дальше ▶ продолжит сборку.';
+      lb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameLoad?.(); lb.textContent = ok ? 'Есть' : 'Нет'; setTimeout(() => { lb.textContent = 'С кадра'; sync(); }, 900); sync(); };
+      pop.append(lb); }
     const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
       if (customInput) customInput.value = n;
       for (const r of sizeRows) r.gzSync();   // v0.380
