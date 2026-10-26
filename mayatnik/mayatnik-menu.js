@@ -775,10 +775,10 @@
   { const src = tools.querySelector('[data-n="fixAxis"]');
     if (src) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-tri'; b.dataset.n = 'fixAxis3';b.dataset.maySearchPrimary='';b.dataset.maySearchAliases='ход оси|антиход';
       const pm = document.createElement('span'); pm.className = 'gz-pm'; pm.textContent = 'Ось'; b.append(pm);
-      [['0', 1, 'стоит — на границе, толщиной 2 пикселя'], ['1', 0, 'ход — за точкой встречи: при равном числе битов слева и справа — на границе между битами (2 пикселя), иначе на бите слева или справа от неё'], ['−1', 2, 'антиход — 1 пиксель навстречу маятнику']].forEach(([l, v, t], j) => {
+      [['0', 1, 'стоит — неподвижно на границе между битами'], ['1', 0, 'ход — за точкой встречи: на границе между битами либо на бите; в отдельных кадрах совпадает с режимом 0'], ['−1', 2, 'антиход — смещается навстречу маятнику']].forEach(([l, v, t], j) => {
         const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; sp.textContent = l; b.append(sp);
         sp.onclick = e => { e.stopPropagation(); window.mayFixAxis?.set(v); placeTools(); };
-        toolSync.push(() => { const on = (window.mayFixAxis?.get() || 0) === v; sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = 'Ход оси «Зеркала ↑»: ' + l + ' — ' + t; }); });
+        toolSync.push(() => { const on = (window.mayFixAxis?.get() || 0) === v; sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = 'Ход оси «Зеркала ↑»: ' + l + ' — ' + t + '. Выбор снимает замок оси.'; }); });
       b.classList.add('gz-any'); b.title = 'Ход оси «Зеркала ↑»: 0 — стоит, 1 — ход, −1 — антиход';
       // v0.500: «в Оси» — переключатель живёт в группе «Оси», после «Своей оси»
       const after = gAxis.querySelector('[data-n="bAxisLine"]'); if (after) after.after(b); else gAxis.append(b); src.style.display = 'none';src.dataset.maySearchSkip='';for(const half of b.querySelectorAll('.gz-half'))half.dataset.maySearchSkip=''; } }
