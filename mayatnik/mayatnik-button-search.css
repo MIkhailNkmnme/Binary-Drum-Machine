@@ -1,0 +1,22 @@
+/* Search is a temporary navigation aid; the matched command is never invoked. */
+#mayButtonSearchTrigger{position:fixed;z-index:2147483001;display:flex;align-items:center;justify-content:center;flex:0 0 48px!important;width:48px!important;min-width:48px!important;max-width:48px!important;height:24px!important;padding:0!important;margin:0!important;border:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#1b2430!important;color:#80aee8;cursor:pointer;user-select:none}
+#mayButtonSearchTrigger svg{width:48px;height:24px;fill:none;stroke:currentColor;stroke-width:1px;pointer-events:none}
+#mayButtonSearchTrigger svg polygon{stroke:#52688c}
+#mayButtonSearchTrigger:is(:hover,:focus-visible) svg polygon{stroke:#80aee8}
+#mayButtonSearchTrigger[aria-expanded=true] svg polygon{stroke:#80aee8;stroke-width:2px}
+#mayButtonSearchTrigger:active svg polygon{stroke-width:3px}
+#mayButtonSearch{position:fixed;z-index:2147483645;box-sizing:border-box;max-height:min(65dvh,420px);padding:12px;background:#0e1116;color:#e8edf5;border:1px solid #80aee8;font:12px/1.4 'Segoe UI',sans-serif;box-shadow:0 4px 24px #0009;overflow:auto}
+#mayButtonSearch[hidden],.may-button-search-frame[hidden],.may-button-search-tip[hidden]{display:none!important}
+.may-button-search-label{display:flex;flex-direction:column;gap:5px;color:#80aee8}
+#mayButtonSearch .may-button-search-input{box-sizing:border-box;width:100%;min-height:34px;padding:6px 8px;border:1px solid #52688c;border-radius:0;background:#141c27;color:#fff;font:16px/1.3 'Segoe UI',sans-serif;user-select:text}
+.may-button-search-status{display:block;margin:7px 0;color:#aebbd0}
+.may-button-search-results{list-style:none;padding:0;margin:0;max-height:42dvh;overflow:auto;overscroll-behavior:contain}
+.may-button-search-result{display:flex;align-items:center;gap:8px;min-height:30px;padding:2px 0;color:#9baac0;cursor:pointer;user-select:none}
+#mayButtonSearch .may-button-search-result-button{box-sizing:border-box;flex:0 0 120px;width:120px;height:24px;min-height:24px;padding:0 12px;border:0;border-radius:0;background:#1b2430;color:#dfe6f5;font:12px/24px 'Segoe UI',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);cursor:pointer;user-select:none}
+#mayButtonSearch .is-active .may-button-search-result-button{background:#21495b;color:#fff}
+.may-button-search-context{font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.may-button-search-frame{position:fixed;box-sizing:border-box;border:2px solid #69edff;z-index:2147483643;pointer-events:none;box-shadow:0 0 0 2px #07111c}
+.may-button-search-tip{position:fixed;z-index:2147483644;box-sizing:border-box;max-height:45dvh;overflow:auto;padding:8px 10px;white-space:pre-wrap;background:#101c29;color:#edffff;border-left:3px solid #69edff;font:12px/1.45 'Segoe UI',sans-serif;user-select:text;box-shadow:0 4px 16px #0008}
+@media(max-width:600px){#mayButtonSearch{max-height:70dvh;padding:10px}.may-button-search-results{max-height:40dvh}.may-button-search-result{min-height:36px}.may-button-search-tip{font-size:13px}}
+
+body.mayatnik-menu-ready #paintTools>.may-button-search-reveal,body.mayatnik-menu-ready #mayatnikRail .may-button-search-reveal{z-index:2147483000!important}

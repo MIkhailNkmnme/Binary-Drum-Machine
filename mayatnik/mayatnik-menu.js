@@ -352,8 +352,8 @@
   {const e=$('bFoldVertical'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bFoldVertical';b.title=e.title;
     const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'down');b.append(mark);b.onclick=()=>e.click();gView.append(b);
     toolSync.push(()=>b.classList.toggle('on',e.getAttribute('aria-pressed')==='true'));}
-  const VIEW_SHORT = { col: 'Перекрытия', bits: 'Биты', bitContours: 'Контуры битов', digitsOnly: 'Цифры', romb0: 'Ромбы чёт', romb1: 'Ромбы нечёт', romb2: 'Ромбы оба' };   // v0.329: на кнопке — коротко, в подсказке и списке — полностью
-  const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], bitContours: ['corners', 'Контуры битов'], digits: ['steps', 'Цифры 0/1'], digitsOnly: ['steps', 'Только цифры'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'] };
+  const VIEW_SHORT = { col: 'Перекрытия', bits: 'Биты', bitContours: 'Контуры битов', digitsOnly: 'Цифры', romb0: 'Ромбы чёт', romb1: 'Ромбы нечёт', romb2: 'Ромбы оба',rombJoin:'Ромб общий',rombJoin180:'Ромб 180°' };
+  const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], bitContours: ['corners', 'Контуры битов'], digits: ['steps', 'Цифры 0/1'], digitsOnly: ['steps', 'Только цифры'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'],rombJoin:['square','Ромб · соединённый'],rombJoin180:['square','Ромб · соединённый 180°'] };
   { const sel = $('view'), nameOf = o => (viewIcons[o.value] || [, o.textContent])[1];   // v0.176: семь видов «или — или» — одной кнопкой, как список в хабе
     const go = d => { const n = sel.options.length; sel.selectedIndex = (sel.selectedIndex + d + n) % n; sel.dispatchEvent(new Event('change', { bubbles: true })); };
     const probe = document.createElement('button'); probe.title = 'Цвета'; const b = ptBtn('viewCycle', 'eye', probe, () => go(1));
@@ -454,6 +454,7 @@
     // v0.308: и «Окраска» (выключить живую окраску «Краски»); «Выделение» — у всех шаблонов: выбор и обводка
     for (const [n, kind, has, off, t] of [['clrPaint', 'colour', 'paint', 'paintOff', 'Снять все цвета: заливку кадра и застывшую краску, и выключить живую окраску — заливку и столбы, проход, центр краской, живые шахматки и автопокраску, повтор столбов; изменённые биты остаются'],
       ['clrMirrors', 'mirror', 'mirrors', 'mirrorsOff', 'Выключить все зеркала: Зеркало ↑ (с загибом), Зеркало ↓, «Зерк. ось», зеркало по своей оси и «Зерк. краска / всё»'],
+      ['clrAxes', 'axes', 'axes', 'axesOff', 'Удалить все созданные оси, наборы N осей и линейку; скрыть найденные оси симметрии, зеркальные оси, линии застывания, точку встречи, центр, геоцентр и размеры. Биты, шаблоны и положение поля сохраняются. Одно действие «Отмена» возвращает оси.'],
       ['clrSel', 'select', 'sel', 'selOff', 'Снять выделение всех шаблонов на поле: выбор и обводку; сами шаблоны остаются']]) {
       const p = document.createElement('button'); p.title = t; const b = ptBtn(n, kind, p, () => { window.mayClear?.[off](); placeTools(); });
       toolSync.push(() => { b.title = t; b.disabled = !window.mayClear?.[has](); }); gEdit.append(b); }
@@ -463,7 +464,7 @@
     const bMs = ptBtn('lineMeasures', 'ruler', mp, () => { const M=window.mayLineMeasures; M?.set(!M.get()); placeTools(); });
     gView.append(bMs);
     bMs.setAttribute('aria-label','Размеры линий в битах');
-    toolSync.push(() => { const on=!!window.mayLineMeasures?.get(); bMs.classList.toggle('on',on); bMs.setAttribute('aria-pressed',String(on)); bMs.title='Размеры линий в битах: числа и все линии поверх битов · '+(on?'вкл':'выкл'); });
+    toolSync.push(() => { const on=!!window.mayLineMeasures?.get(); bMs.classList.toggle('on',on); bMs.setAttribute('aria-pressed',String(on)); bMs.title='Размеры линий в битах: числа и все линии поверх битов; включение возвращает центральную ось после «Все оси» · '+(on?'вкл':'выкл'); });
     // v0.236: «Замок ↔» — ось «Застыло» не ходит по сторонам: стоит на столбце, где была при включении
     const lkp = document.createElement('button'); lkp.title = 'Замок'; const bLk = ptBtn('fixLock', 'pin', lkp, () => { const L = window.mayFixLock; L?.set(!L.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixLock?.get(); bLk.classList.toggle('on', on); bLk.title = 'Замок ↔: ось «Застыло» (и центр зеркал) стоит на своём столбце — не ходит влево-вправо ни со сменой кадров, ни при «Сдвиге кадром», ни при «Гориз» · ' + (on ? 'вкл' : 'выкл'); });
@@ -534,7 +535,7 @@
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   {const e=$('bGif'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bGif';const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'record');b.append(mark);b.onclick=()=>e.click();toolSync.push(()=>{b.title=tip(e);b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');});tools.querySelector('[data-n="bRec"]').parentElement.append(b);}
   const ptNames = { lineMeasures:'Размеры', fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'Загиб Верт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', rowCount:'Биты в строках', fixCross:'Точка встречи', sawFull:'Пила полная', rowLab:'Подписи', vtxFlash:'Вспышка', heat:'Тепло',   // v0.329: «Вид» — стандартной ширины, названия короче
-    sectors:'Секторы', areas:'Площади', areaFreeze:'Заморозка', ovlStep:'Наложение', ovlPos:'Сдвиг G', ovlH0:'Шаг 8', ovlReset:'Сброс налож.', ovlFreeze:'Фиксировать', ovlAlpha:'Видимость 50%', ovlOriginal:'Оригинал', ovlCenter:'По оси', saw:'Пила', fixLock:'Замок ↔', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', clrPaint:'Окраска', clrMirrors:'Зеркала', clrSel:'Выделение', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', bPaintMeet:'Точка', bPaintAxis:'ТочкаОсь', bThirds:'Трети', bTriTop:'▼ ← верх', meetGrow:'Рост', meetCol:'Цвет', bFillGrow:'Рост', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Шахм ↕', symH:'Шахм ↔', symD:'Шахм ╲╱', symPlainV:'Оси ↕', symPlainH:'Оси ↔', symPlainD:'Оси ╲╱', bAxisLine:'Своя ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
+    sectors:'Секторы', areas:'Площади', areaFreeze:'Заморозка', ovlStep:'Наложение', ovlPos:'Сдвиг G', ovlH0:'Шаг 8', ovlReset:'Сброс налож.', ovlFreeze:'Фиксировать', ovlAlpha:'Видимость 50%', ovlOriginal:'Оригинал', ovlCenter:'По оси', saw:'Пила', fixLock:'Замок ↔', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', clrPaint:'Окраска', clrMirrors:'Зеркала', clrAxes:'Все оси', clrSel:'Выделение', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', bPaintMeet:'Точка', bPaintAxis:'ТочкаОсь', bThirds:'Трети', bTriTop:'▼ ← верх', meetGrow:'Рост', meetCol:'Цвет', bFillGrow:'Рост', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Шахм ↕', symH:'Шахм ↔', symD:'Шахм ╲╱', symPlainV:'Оси ↕', symPlainH:'Оси ↔', symPlainD:'Оси ╲╱', bAxisLine:'Своя ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
   const ptColour = { 'Точка Ось':'#b48cff', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Зеркала':'#b48cff', 'Шаблон':'#ffd35b' };
@@ -952,6 +953,7 @@
     const FOLD_DD = 'mayatnik-dd-fold'; let folds = new Set(); try { folds = new Set(JSON.parse(localStorage.getItem(FOLD_DD) || '[]')); } catch (_) {}
     const saveDd = () => { try { localStorage.setItem(PIN_DD, JSON.stringify([...pins])); localStorage.setItem(FOLD_DD, JSON.stringify([...folds])); } catch (_) {} };
     const pinned = g => !narrow.matches && pins.has(keyOf(g)) && !g.classList.contains('pt-btn'), stay = g => pinned(g) && !folds.has(keyOf(g)), groupsAll = () => [...tools.querySelectorAll('.pt-g')];
+    const searchRevealGroups=new Set();
     const place = g => { const r = g.querySelector('.pt-r'); r.style.left = r.style.top = '';
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
       r.style.minWidth = narrow.matches ? '' : (g.querySelector('.pt-l').offsetWidth + 4) + 'px'; requestAnimationFrame(() => zig(r));
@@ -961,10 +963,13 @@
     // Списки стоят под своей шапкой; соседние раскрытые группы не сдвигают их вбок.
     const alignOpen = () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) place(g); };
     const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); ZerkGroupHeader.sync(g.querySelector('.pt-l'),{open:on,pinned:pinned(g)}); if (on) place(g); requestAnimationFrame(() => requestAnimationFrame(alignOpen)); };
-    const pinsSync = () => { for (const g of groupsAll()) { const on = stay(g) || g === open; if (g.classList.contains('pt-open') !== on) setOpen(g, on); else {g.classList.toggle('pt-pinned', pinned(g));ZerkGroupHeader.sync(g.querySelector('.pt-l'),{pinned:pinned(g)});} } };
+    const pinsSync = () => { for (const g of groupsAll()) { const on = stay(g) || g === open || searchRevealGroups.has(g); if (g.classList.contains('pt-open') !== on) setOpen(g, on); else {g.classList.toggle('pt-pinned', pinned(g));ZerkGroupHeader.sync(g.querySelector('.pt-l'),{pinned:pinned(g)});} } };
     addEventListener('resize', () => { grid?.relayout(); for (const g of groupsAll()) if (g.classList.contains('pt-open')) { place(g); zig(g.querySelector('.pt-r')); } requestAnimationFrame(alignOpen); });
     const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
     const show = (g,explicit=false) => { const k=keyOf(g);if(folds.has(k)){if(!explicit)return;folds.delete(k);saveDd();}if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
+    // Temporary discovery does not alter explicit folds, pins or saved opening.
+    window.mayMenuSearchReveal=target=>{const g=target?.matches('.pt-g')?target:target?.closest('.pt-g');if(!g||g.classList.contains('pt-btn')||!g.querySelector('.pt-r'))return null;
+      searchRevealGroups.add(g);setOpen(g,true);let active=true;return()=>{if(!active)return;active=false;searchRevealGroups.delete(g);setOpen(g,stay(g)||g===open);};};
     // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
     // «↶ Отм. | ↷ Повт.» (жмёт прежние «Отмена» / «Повтор»); тянется по сетке и сворачивается в ромб ↶ ↷, как остальные; ключ раскладки — прежний («Правка»)
     const ud = gHistory.parentElement, udL = ud.querySelector('.pt-l');
@@ -1221,7 +1226,7 @@
       try { const key = localStorage.getItem('mayatnik-dd-open'); const g = groupsAll().find(g => keyOf(g) === key && !g.classList.contains('pt-btn')); if (g && !stay(g)) show(g); } catch (_) {}
     });
     const saveMenuOpen=()=>{if(window.mayBackupRestoring)return;try{localStorage.setItem('mayatnik-dd-open',open?keyOf(open):'');}catch(_){}};window.mayMenuFlush=saveMenuOpen;addEventListener('pagehide',saveMenuOpen);
-    addEventListener('pointerdown', e => { if (open && !open.contains(e.target) && !popupContains(open, e.target)) shut(); }, true);
+    addEventListener('pointerdown', e => { if(e.target.closest?.('[data-may-search-ui]'))return;if (open && !open.contains(e.target) && !popupContains(open, e.target)) shut(); }, true);
     addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
     tools.addEventListener('scroll', shut, { passive: true }); }
   // v0.190: «те кнопки, в которых список, — покажи выводом всех в соседний столбец при наведении, и у таких кнопок стрелки обводкой справа».
@@ -1294,7 +1299,7 @@
     toolSync.push(()=>{for(const [n,id]of [[bit0,'midZeroOn'],[bit1,'midOneOn']]){n.classList.toggle('gz-on',$(id).checked);n.setAttribute('aria-pressed',String($(id).checked));}for(const [n,id]of [[sw0,'midZeroColour'],[sw1,'midOneColour']])if(n.dataset.colour!==$(id).value){n.dataset.colour=$(id).value;n.style.backgroundColor=$(id).value;}one.classList.toggle('gz-on',$('midZeroOn').checked||$('midOneOn').checked);});
   }}
   // v0.441: варианты сбоку от столбца; перекрытые элементы чужой группы скрываются по одному (v0.452).
-  const viewPaletteSources={col:['lgOverOne','lgOverZero'],bits:['lgBitZero','lgBitOne'],bitContours:['lgBitZero','lgBitOne'],digits:['digitZeroColour','digitOneColour'],digitsOnly:['digitZeroColour','digitOneColour']},viewPalettePickers=new Map();
+  const viewPaletteSources={col:['lgOverOne','lgOverZero'],bits:['lgBitZero','lgBitOne'],bitContours:['bitContourColour1','bitContourColour2'],digits:['digitZeroColour','digitOneColour'],digitsOnly:['digitZeroColour','digitOneColour']},viewPalettePickers=new Map();
   $('lg').style.setProperty('display','none','important');
   tools.querySelector('[data-n="c2_digitOneColour"]')?.style.setProperty('display','none','important');
   function decorateViewPalette(list,owner){

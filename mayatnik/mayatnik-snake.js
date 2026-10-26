@@ -22,11 +22,12 @@
     }
     return {rows,words:operations,cells};
   }
-  function* findSteps({width,height,val,anchor=0,sequence=[],inverse=false,reverse=false,maxOperations=Infinity,maxEntries=Infinity,maxMs=Infinity,chunkMs=125,chunkOperations=Infinity}){
+  function* findSteps({width,height,val,anchor=0,sequence=[],inverse=false,reverse=false,parities=[0,1],halves:outputHalves=parities.length,maxOperations=Infinity,maxEntries=Infinity,maxMs=Infinity,chunkMs=125,chunkOperations=Infinity}){
     if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||!val||val.length<width*height||sequence.some(s=>typeof s!=='string'||!/^[01]+$/.test(s)))throw Error('Некорректные данные поиска змеи.');
-    const N=width*height,found=[],hl=new Uint8Array(N),started=Date.now();let operations=0,entries=0,peakEntries=0,complete=true,reason='',chunkStarted=started,chunkAt=0,currentIndex=0,currentHalf=0,reportedFound=0,prepassWords=0,prepassCells=0;
+    if(!Array.isArray(parities)||!parities.length||parities.some(p=>p!==0&&p!==1)||new Set(parities).size!==parities.length)throw Error('Некорректные решётки поиска змеи.');
+    const N=width*height,total=sequence.length*parities.length,found=[],hl=new Uint8Array(N),started=Date.now();let operations=0,entries=0,peakEntries=0,complete=true,reason='',chunkStarted=started,chunkAt=0,currentIndex=0,currentHalf=0,reportedFound=0,prepassWords=0,prepassCells=0;
     const limit={};const tick=()=>{operations++;if(operations>maxOperations||(operations%1024===0&&Date.now()-started>maxMs))throw limit;return operations-chunkAt>=chunkOperations||operations%1024===0&&Date.now()-chunkStarted>=chunkMs;};
-    const progress=()=>{chunkStarted=Date.now();chunkAt=operations;const newFound=found.slice(reportedFound);reportedFound=found.length;return {operations,entries,peakEntries,found:found.length,total:2*sequence.length,index:currentIndex,half:currentHalf,newFound};};
+    const progress=()=>{chunkStarted=Date.now();chunkAt=operations;const newFound=found.slice(reportedFound);reportedFound=found.length;return {operations,entries,peakEntries,found:found.length,total,halves:outputHalves,index:currentIndex,half:currentHalf,newFound};};
     const prepassCheckpoint=work=>{operations+=work;const now=Date.now();if(operations>maxOperations||now-started>maxMs)throw limit;return operations-chunkAt>=chunkOperations||now-chunkStarted>=chunkMs?progress():null;};
     const inv=s=>s.replace(/[01]/g,v=>v==='1'?'0':'1'),rev=s=>s.split('').reverse().join('');
     const variants=sequence.map(text=>{const out=[[text,'']];if(inverse)out.push([inv(text),'инв']);if(reverse)out.push([rev(text),'рев']);if(inverse&&reverse)out.push([rev(inv(text)),'инв+рев']);return out;});
@@ -41,7 +42,7 @@
     const rememberImpossible=(text,p)=>{let node=impossible[p];for(const bit of text)node=node[bit]||(node[bit]={});node.end=true;};
     const firstRows=new Map();
     function* firstRow(text,p){
-      if(!firstRows.has(text)){const result=yield* earliestSteps({width,height,val,anchor,text,skip:[knownImpossible(text,0),knownImpossible(text,1)]},prepassCheckpoint);prepassWords+=result.words;prepassCells+=result.cells;firstRows.set(text,result.rows);for(let half=0;half<2;half++)if(result.rows[half]<0)rememberImpossible(text,half);}
+      if(!firstRows.has(text)){const result=yield* earliestSteps({width,height,val,anchor,text,skip:[!parities.includes(0)||knownImpossible(text,0),!parities.includes(1)||knownImpossible(text,1)]},prepassCheckpoint);prepassWords+=result.words;prepassCells+=result.cells;firstRows.set(text,result.rows);for(const half of parities)if(result.rows[half]<0)rememberImpossible(text,half);}
       return firstRows.get(text)[p];
     }
     function occurrence(text,cap,p){
@@ -73,10 +74,10 @@
     }
     const needs=new Map();for(const vars of variants)for(const text of new Set(vars.map(v=>v[0])))needs.set(text,(needs.get(text)||0)+1);
     const halves=[0,1].map(p=>new Map(Array.from(needs,([text,cap])=>[text,occurrence(text,cap,p)])));
-    try{for(let q=0;q<N;q++){if(tick())yield progress();const bit=val[q];if(bit===0||bit===1)starts[2*((q%width-anchor-Math.floor(q/width))&1)+bit].push(q);}for(let i=0;i<variants.length;i++)for(const p of [0,1]){
+    try{for(let q=0;q<N;q++){if(tick())yield progress();const bit=val[q];if(bit===0||bit===1)starts[2*((q%width-anchor-Math.floor(q/width))&1)+bit].push(q);}for(let i=0;i<variants.length;i++)for(const p of parities){
       currentIndex=i;currentHalf=p;const occurrences=halves[p];let best=null;for(const [text,vn]of variants[i]){const hit=yield* occurrences.get(text).peek();if(hit&&(!best||hit.r<best.r||hit.r===best.r&&hit.c<best.c))best={...hit,text,vn};}if(!best)continue;occurrences.get(best.text).take();found.push({i,p,r:best.r,c:best.c,n:best.cells.length,cells:best.cells,vn:best.vn,dir:'snake'});for(const cell of best.cells)hl[cell]=1;
     }}catch(e){if(e!==limit)throw e;complete=false;reason='Достигнут предел поиска змеи; проверены не все пути.';}
-    return {found,hl,total:2*sequence.length,halves:2,snake:true,complete,reason,operations,entries,peakEntries,prepassWords,prepassCells,elapsedMs:Date.now()-started};
+    return {found,hl,total,halves:outputHalves,snake:true,complete,reason,operations,entries,peakEntries,prepassWords,prepassCells,elapsedMs:Date.now()-started};
   }
   function find(options){const steps=findSteps(options);let step;do{step=steps.next();}while(!step.done);return step.value;}
   function createWorker(){const source='const api=('+createSnake.toString()+')();onmessage=e=>{const steps=api.findSteps(e.data);let last=0,pending=[];const pump=()=>{try{const step=steps.next();if(step.done){const result=step.value;postMessage({result},[result.hl.buffer]);}else{pending.push(...step.value.newFound);if(Date.now()-last>=100||pending.length){last=Date.now();postMessage({progress:{...step.value,newFound:pending}});pending=[];}setTimeout(pump,0);}}catch(error){postMessage({error:error.message});}};pump();};',url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));try{return new Worker(url);}finally{URL.revokeObjectURL(url);}}

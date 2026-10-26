@@ -3,7 +3,7 @@ const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
 const Contours=require('./mayatnik-bit-contours.js'),Cells=require('./mayatnik-cell-selection.js');
 function fn(name){const start=html.indexOf('function '+name+'(');assert.ok(start>=0,name);const brace=html.indexOf('{',start);let depth=1,i=brace+1;for(;depth&&i<html.length;i++){if(html[i]==='{')depth++;else if(html[i]==='}')depth--;}return html.slice(start,i);}
 function fixture(view='bitContours'){
- const colour=0xff555555,c=vm.createContext({st:{view,blackMirror:2},f:{W:2,H:2,val:Int8Array.of(0,1,0,-1)},img:{width:2,height:2},VW:2,VH:2,VX:0,RK:1,contourBits:null,contourTagging:false,paintBits:null,parityVisible:()=>true,outShow:()=>false,fillBase:null,rombP:()=>-1,blackTriUp:()=>Uint16Array.of(0,0,1,1),mirBitC:[colour,colour],mirPre:()=>{},pxFam:()=> 'k',pxBit:()=>0,mixPx:()=>{throw Error('unexpected blend');},Int8Array,Uint32Array,rgba:()=>0xff000000,EMPTY:[],parityActive:()=>true});
+ const colour=0xff555555,c=vm.createContext({st:{view,blackMirror:2},joinedOn:()=>false,f:{W:2,H:2,val:Int8Array.of(0,1,0,-1)},img:{width:2,height:2},VW:2,VH:2,VX:0,RK:1,contourBits:null,contourTagging:false,paintBits:null,parityVisible:()=>true,outShow:()=>false,fillBase:null,rombP:()=>-1,blackTriUp:()=>Uint16Array.of(0,0,1,1),mirBitC:[colour,colour],mirPre:()=>{},pxFam:()=> 'k',pxBit:()=>0,mixPx:()=>{throw Error('unexpected blend');},Int8Array,Uint32Array,rgba:()=>0xff000000,EMPTY:[],parityActive:()=>true});
  for(const name of ['contourColour','contourBegin','contourEnd','contourEdits','mirPut','blackMirrorApply','parityMask'])vm.runInContext(fn(name),c);
  return {c,px:new Uint32Array(4).fill(colour)};
 }
@@ -38,7 +38,7 @@ test('thirds semantic history with unknown cells round-trips through existing wo
 test('collapsed columns and rows compare new semantic neighbours without changing source data',()=>{
  const model=Cells.create({rows:3,cols:3});model.hideRange('rows',1,1);model.hideRange('cols',1,1);
  const bits=Int8Array.of(0,1,0, 1,1,1, 0,1,1),before=Array.from(bits),calls=[];
- const c=vm.createContext({cellSelectionModel:model,cellContourCache:null,VX:5,VW:3,VH:3,contourBits:bits,Int32Array,
+ const c=vm.createContext({st:{bitContourColour1:'#12abef'},cellSelectionModel:model,cellContourCache:null,VX:5,VW:3,VH:3,contourBits:bits,Int32Array,
   MayatnikBitContours:{paint(ctx,o){calls.push(o);return Contours.paint(ctx,o);}}});
  for(const name of ['cellContourProjection','cellVisiblePosition','cellTileCoordinates','cellContourTile'])vm.runInContext(fn(name),c);
  const p=c.cellContourProjection();assert.deepEqual(Array.from(p.cols),[5,7]);assert.deepEqual(Array.from(p.rows),[0,2]);assert.equal(c.cellContourProjection(),p);
@@ -47,7 +47,7 @@ test('collapsed columns and rows compare new semantic neighbours without changin
  assert.deepEqual([calls[0].read(0,0),calls[0].read(1,0),calls[0].read(0,1),calls[0].read(1,1)],[0,0,0,1]);
  assert.ok(!lines.some(l=>l.join()==='4,0,4,4'),'same bits across removed column have no seam');
  assert.ok(lines.some(l=>l.join()==='4,4,4,8'),'different bits across removed column share one edge');
- assert.deepEqual(Array.from(bits),before);
+ assert.deepEqual(Array.from(bits),before);assert.equal(calls[0].colour,'#12abef');
 });
 test('XOR and AND retain existing colour-operation results while tagging the bit they actually produce',()=>{
  for(const op of ['xor','and']){const {c,px}=fixture();c.st.mirOp=op;c.pxBit=()=>0;
@@ -59,4 +59,12 @@ test('new mode has a host option, exact palette, screen rendering and all full-f
  assert.match(html,/<option value="bitContours">/);assert.match(fn('gpuPicture'),/v === 'bitContours'/);assert.match(fn('drawDigits'),/paintBitContours\(/);
  for(const name of ['wholeFrameThumbnail','captureScaleGifFrame','frameSnapshot'])assert.match(fn(name),/paintBitContours\(/);
  for(const match of html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);
+});
+
+test('contour first colour reaches CPU drawing, GPU render and captures; second is storage only',()=>{
+ const {c}=fixture();c.contourBits=Int8Array.of(0,1,0,1);c.st.bitContourColour1='#12abef';c.st.bitContourColour2='#34cd56';let colour;
+ c.MayatnikBitContours={paint(ctx,o){colour=o.colour;}};vm.runInContext(fn('paintBitContours'),c);c.paintBitContours({},0,0,8,16,16);assert.equal(colour,'#12abef');
+ c.st.bitContourColour2='#ff0000';c.paintBitContours({},0,0,8,16,16);assert.equal(colour,'#12abef');
+ for(const name of ['gpuRender','cellGpuTile'])assert.match(fn(name),/contourColour:rgba\(hexRGB\(st.bitContourColour1/);
+ for(const name of ['wholeFrameThumbnail','captureScaleGifFrame','frameSnapshot'])assert.match(fn(name),/paintBitContours/);
 });

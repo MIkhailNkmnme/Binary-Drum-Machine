@@ -3,11 +3,11 @@ body{--may-template-panel-width:50vw}
 body.may-template-panel-open{padding-right:var(--may-template-panel-width);box-sizing:border-box}
 body.may-template-panel-open #mayRhombs{right:calc(var(--may-template-panel-width) + 10px)}
 body.may-template-panel-open #cellInkBar{left:calc((100vw - var(--may-template-panel-width))/2);max-width:calc(100vw - var(--may-template-panel-width) - 24px)}
-.mtp-resize{position:fixed;top:0;bottom:0;width:10px;margin-right:-5px;z-index:2147483640;cursor:ew-resize;touch-action:none;user-select:none}
+.mtp-resize{position:fixed;top:0;bottom:0;width:10px;margin-right:0;z-index:2147483640;cursor:ew-resize;touch-action:none;user-select:none;background-repeat:repeat-y;background-size:10px 24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='24'%3E%3Cpath d='M9 0L2.07 12L9 24H10V0Z' fill='%230e1116'/%3E%3Cpath d='M9 0L2.07 12L9 24' fill='none' stroke='%23b48cff' stroke-width='1.5'/%3E%3C/svg%3E")}
 .mtp-resize[hidden]{display:none!important}
-.mtp-resize:hover,.mtp-resize:focus-visible{background:color-mix(in srgb,#b48cff 35%,transparent);outline:none}
+.mtp-resize:hover,.mtp-resize:focus-visible,body.may-template-panel-resizing .mtp-resize{outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='24'%3E%3Cpath d='M9 0L2.07 12L9 24H10V0Z' fill='%230e1116'/%3E%3Cpath d='M9 0L2.07 12L9 24' fill='none' stroke='%23d9b9ff' stroke-width='2'/%3E%3C/svg%3E")}
 body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-resize!important;user-select:none!important}
-#mayatnikTemplatePanel{--mtp-accent:#b48cff;position:fixed;inset:0 0 0 auto;width:var(--may-template-panel-width);height:100vh;height:100dvh;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;z-index:2147483639;background:#0e1116;color:#dfe6f5;border-left:2px solid #334052;padding:6px;display:flex;flex-direction:column;gap:4px;font:12px/1.35 system-ui,sans-serif;scrollbar-width:thin;user-select:none}
+#mayatnikTemplatePanel{--mtp-accent:#b48cff;position:fixed;inset:0 0 0 auto;width:var(--may-template-panel-width);height:100vh;height:100dvh;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;z-index:2147483639;background:#0e1116;color:#dfe6f5;border-left:0;padding:6px;display:flex;flex-direction:column;gap:4px;font:12px/1.35 system-ui,sans-serif;scrollbar-width:thin;user-select:none}
 #mayatnikTemplatePanel[hidden]{display:none!important}
 #mayatnikTemplatePanel *{box-sizing:border-box}
 :is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) button,#mayatnikTemplatePanel summary{font:inherit;color:inherit;text-shadow:none!important;cursor:pointer;user-select:none;-webkit-user-select:none}

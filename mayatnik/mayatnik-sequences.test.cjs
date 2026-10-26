@@ -81,3 +81,7 @@ test('one library sequence row retains both independent half matches and counts 
   api.setMatches({enabled:true,active:true,mode:'col',pattern:'initial',halves:2,total:4,found:[{i:0,r:2,p:0},{i:0,r:4,p:1}],frame:8});const row=pane.querySelector('.is-found');assert.equal(pane.querySelectorAll('.is-found').length,1);assert.match(row.title,/левый полумаятник · строка 3/);assert.match(row.title,/правый полумаятник · строка 5/);assert.match(pane.querySelector('.mtp-sequence-summary').textContent,/2 из 4 совпадений в двух полумаятниках/);
  }finally{view.destroy();dom.window.close();}
 });
+test('joined match titles use the displayed rhombus row and preserve row selection',()=>{
+ const dom=new JSDOM('<section></section>'),pane=dom.window.document.querySelector('section'),api=Sequences.create(storage(),{rows:2}),view=Sequences.mount(pane,api);
+ try{api.setMatches({enabled:true,active:true,joined:true,halves:1,total:2,mode:'snake',pattern:'initial',found:[{i:0,r:6,p:null}],frame:4});api.selectMatches({rowIndices:[0],matchIndices:[0],key:'joined'});assert.match(pane.querySelector('.is-found').title,/строка ромба 7/);assert.doesNotMatch(pane.querySelector('.is-found').title,/полумаятник/);assert.match(pane.querySelector('.mtp-sequence-summary').textContent,/единый ромб/);assert.equal(pane.querySelector('.is-selected').dataset.sequenceRow,'0');}finally{view.destroy();dom.window.close();}
+});

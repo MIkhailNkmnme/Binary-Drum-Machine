@@ -257,7 +257,7 @@ fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
   // Картинка на экран: пиксель холста — среднее цветов клеток окна под ним (до 32 × 32 выборок), при увеличении — клетка под серединой
   const RENDER_WGSL = /* wgsl */`
 struct R { x0: f32, y0: f32, step: f32, contours: u32, VX: i32, VW: i32, VH: i32, pixelRatio: f32,
-  cx0:f32, cy0:f32, cw:i32, ch:i32, mapped:u32, pad0:u32, pad1:u32, pad2:u32 }
+  cx0:f32, cy0:f32, cw:i32, ch:i32, mapped:u32, joined:u32, joinedAnchor:f32, joinedReflection:f32 }
 @group(0) @binding(0) var<uniform> u: R;
 @group(0) @binding(1) var<storage, read> pic: array<u32>;
 @group(0) @binding(2) var<storage, read> axes: array<i32>;
@@ -265,6 +265,29 @@ struct R { x0: f32, y0: f32, step: f32, contours: u32, VX: i32, VW: i32, VH: i32
   let x = f32((i << 1u) & 2u) * 2.0 - 1.0; let y = f32(i & 2u) * 2.0 - 1.0; return vec4<f32>(x, y, 0.0, 1.0);
 }
 fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return vec3<f32>(f32(p & 255u), f32((p >> 8u) & 255u), f32((p >> 16u) & 255u)) / 255.0; }
+// Joined display coordinates map back into the unchanged logical picture.
+// floor(v + .5) deliberately follows JavaScript Math.round at negative ties.
+fn joinedColour(fx:f32,fy:f32)->vec3<f32> {
+  let width=select(f32(u.VW),max(f32(u.VW),u.joinedReflection+1.0),u.joined==2u);if(fx<0.0||fy<0.0||fx>=width||fy>=f32(2*u.VH)){return vec3<f32>(0.0);}
+  let x=fx-0.5-u.joinedAnchor;let y=fy-0.5;
+  let i=i32(floor((x+y)*0.5+0.5));let j=i32(floor((x-y)*0.5+0.5));
+  let dx=i+j+i32(u.joinedAnchor);let dy=i-j;let lower=dy>=u.VH;
+  var c=dx;if(lower&&u.joined==2u){c=i32(u.joinedReflection)-dx;}
+  let r=select(dy,2*u.VH-1-dy,lower);
+  if(dy<0||dy>=2*u.VH||c<0||c>=u.VW||r<0||r>=u.VH){return vec3<f32>(0.0);}
+  return cell(r,c+u.VX);
+}
+fn joinedPixel(pos:vec2<f32>)->vec4<f32> {
+  let width=select(f32(u.VW),max(f32(u.VW),u.joinedReflection+1.0),u.joined==2u);let height=f32(2*u.VH);
+  let x0=u.x0+floor(pos.x)*u.step;let y0=u.y0+floor(pos.y)*u.step;
+  if(x0>=width||y0>=height||x0+u.step<=0.0||y0+u.step<=0.0){return vec4<f32>(0.0);}
+  if(u.step<=1.0){return vec4<f32>(joinedColour(x0+u.step*0.5,y0+u.step*0.5),1.0);}
+  // As in the flat pass, zoomed-out sampling is bounded by screen pixels.
+  let lo=max(vec2<f32>(x0,y0),vec2<f32>(0.0));let hi=min(vec2<f32>(x0+u.step,y0+u.step),vec2<f32>(width,height));
+  let nx=max(1,i32(min(32.0,ceil(hi.x-lo.x))));let ny=max(1,i32(min(32.0,ceil(hi.y-lo.y))));var acc=vec3<f32>(0.0);
+  for(var y=0;y<ny;y++){for(var x=0;x<nx;x++){let q=lo+(vec2<f32>(f32(x),f32(y))+vec2<f32>(0.5))*(hi-lo)/vec2<f32>(f32(nx),f32(ny));acc+=joinedColour(q.x,q.y);}}
+  return vec4<f32>(acc/f32(nx*ny),1.0);
+}
 fn kind(r:i32,c:i32) -> i32 {
   if(r<0 || r>=u.ch || c<0 || c>=u.cw){return -1;}
   var sr=r;var sc=c;if(u.mapped!=0u){sc=axes[c]-u.VX;sr=axes[u.cw+r];}
@@ -292,7 +315,8 @@ fn contour(pos:vec2<f32>) -> bool {
   return (vertical&&((abs(q.x-x0)<=1.0&&boundary(v,sampledKind(row,col-1,step)))||(abs(q.x-x1)<=1.0&&boundary(v,sampledKind(row,col+1,step)))))||(horizontal&&((abs(q.y-y0)<=1.0&&boundary(v,sampledKind(row-1,col,step)))||(abs(q.y-y1)<=1.0&&boundary(v,sampledKind(row+1,col,step)))));
 }
 @fragment fn fs(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
-  if(u.contours!=0u&&contour(pos.xy)){return vec4<f32>(1.0,233.0/255.0,105.0/255.0,1.0);}
+  if(u.joined!=0u){return joinedPixel(pos.xy);}
+  if(u.contours!=0u&&contour(pos.xy)){return vec4<f32>(vec3<f32>(f32((u.contours>>8u)&255u),f32((u.contours>>16u)&255u),f32((u.contours>>24u)&255u))/255.0,1.0);}
   let fx = u.x0 + floor(pos.x) * u.step; let fy = u.y0 + floor(pos.y) * u.step;
   var c0: i32; var c1: i32; var r0: i32; var r1: i32;
   if (u.step < 1.0) { c0 = i32(floor(fx + u.step * 0.5)); c1 = c0 + 1; r0 = i32(floor(fy + u.step * 0.5)); r1 = r0 + 1; }
@@ -451,7 +475,9 @@ fn contour(pos:vec2<f32>) -> bool {
       function render(context, o) {
         if (dead || !pic || !win) return;
         const ub = new ArrayBuffer(64), f = new Float32Array(ub), i = new Int32Array(ub),p=o.contourProjection;
-        f[0] = o.x0; f[1] = o.y0; f[2] = o.step;i[3]=o.contours&&win.contours?1:0; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;f[7]=o.pixelRatio||1;
+        // Low byte enables contours; remaining bytes carry RGB without enlarging the shared 64-byte uniform.
+        f[0] = o.x0; f[1] = o.y0; f[2] = o.step;i[3]=o.contours&&win.contours?((o.contourColour??0xff69e9ff)<<8)|1:0; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;f[7]=o.pixelRatio||1;
+        const joined=o.joined;i[13]=joined?(joined.rotate?2:1):0;f[14]=joined?.anchor||0;f[15]=joined?.reflection||0;
         f[8]=p?p.x0:o.x0-win.VX;f[9]=p?p.y0:o.y0;i[10]=p?p.cols.length:win.VW;i[11]=p?p.rows.length:win.VH;i[12]=p?1:0;
         // Projection changes only the semantic neighbour lookup. The tile's
         // colour sampling remains in original coordinates, without readback.

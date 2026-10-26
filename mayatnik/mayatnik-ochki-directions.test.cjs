@@ -1,11 +1,13 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
 const source=html.slice(html.indexOf('  let ochki = null;'),html.indexOf('  function updWin()'));
+const Joined=require('./mayatnik-joined-romb.js');
 function finder({mode='diag',view='bits',width=12,height=12,points=null,sequence=['1011'],pattern='initial',inv=false,rev=false,left=0,right=width,bottom=height,zone=null}={}){
  const val=new Int8Array(width*height).fill(points?-1:0);if(points)for(const [x,y,v]of points)val[y*width+x]=v;
  const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,{textContent:'',hidden:false,selectedOptions:[{textContent:pattern}]});return elements.get(id);};
  const state={view,ochki:true,ochkiMode:mode,ochkiPattern:pattern,ochkiLength:3,ochkiInv:inv,ochkiRev:rev};
- const context={f:{W:width,H:height,val},geo:{anchor:0},st:state,VX:left,VW:right-left,VH:bottom,ZL:zone?Int32Array.from({length:bottom},()=>zone[0]):[],ZR:zone?Int32Array.from({length:bottom},()=>zone[1]):[],k:1,sequences:{rows:sequence,revision:1,setMatches(x){context.matches=x;}},pairOn:()=>false,rombP:()=>state.view==='romb2'?2:state.view==='romb0'?0:state.view==='romb1'?1:-1,clampInt:(x,min,max,def)=>Math.max(min,Math.min(max,Number(x)||def)),$:get,TextDecoder,performance,setTimeout,clearTimeout};
+ const context={f:{W:width,H:height,val},geo:{anchor:0},st:state,playing:false,VX:left,VW:right-left,VH:bottom,ZL:zone?Int32Array.from({length:bottom},()=>zone[0]):[],ZR:zone?Int32Array.from({length:bottom},()=>zone[1]):[],k:1,sequences:{rows:sequence,revision:1,setMatches(x){context.matches=x;}},pairOn:()=>false,rombP:()=>state.view==='romb2'?2:state.view==='romb0'?0:state.view==='romb1'?1:-1,clampInt:(x,min,max,def)=>Math.max(min,Math.min(max,Number(x)||def)),$:get,TextDecoder,performance,setTimeout,clearTimeout};
+ context.joinedOn=()=>state.view==='rombJoin'||state.view==='rombJoin180';context.joinedGeometry=()=>Joined.create({width:right-left,height:bottom,origin:left,anchor:0,fieldWidth:width,rotate:state.view==='rombJoin180'});context.parityVisible=()=>true;context.outZone=(r,c)=>!!zone&&(c<zone[0]||c>zone[1]);
  vm.createContext(context);vm.runInContext(source+';globalThis.getLines=ochkiLines;globalThis.getResult=()=>{const result=ochkiGet();publishOchki(result);return result;};',context);
  return {context,state,get,lines:()=>context.getLines(),result:()=>context.getResult()};
 }
@@ -63,4 +65,32 @@ test('both halves have independent long-pattern occurrence cursors and duplicate
 });
 test('changing between flat and both-rombs invalidates the match cache',()=>{
  const points=fixtures.col.points.concat(fixtures.col.points.map(([x,y,v])=>[x+1,y,v])),api=finder({mode:'col',points});assert.equal(api.result().found.length,1);api.state.view='romb2';assert.equal(api.result().found.length,2);api.state.view='bits';assert.equal(api.result().found.length,1);
+});
+function displayFixture(mode,points,{rotate=false,width=8,height=4,sequence=['1011'],pattern='initial'}={}){
+ const map=Joined.create({width,height,anchor:0,rotate}),sourcePoints=points.map(([x,y,v])=>{const cell=map.inverse(x,y);assert.ok(cell,'valid display lattice point '+[x,y]);return [cell.c,cell.r,v];});return {map,api:finder({mode,view:rotate?'rombJoin180':'rombJoin',width,height,points:sourcePoints,sequence,pattern})};
+}
+test('joined display lines cross the base in both diagonals and columns, with original source highlights',()=>{
+ const paths={diag:[[1,3,1],[2,4,0],[3,5,1],[4,6,1]],antidiag:[[6,2,1],[5,3,0],[4,4,1],[3,5,1]],col:[[1,1,1],[1,3,0],[1,5,1],[1,7,1]]};
+ for(const rotate of [false,true])for(const [mode,points]of Object.entries(paths)){
+  const {map,api}=displayFixture(mode,points,{rotate}),result=api.result();assert.equal(result.found.length,1,mode+' rotate '+rotate);assert.equal(result.total,1);assert.equal(result.halves,1);assert.equal(result.joined,true);const hit=result.found[0],display=points.map(([x,y])=>y*map.width+x);assert.equal(hit.p,null);assert.deepEqual(Array.from(hit.displayCells),display);assert.deepEqual(Array.from(hit.cells),display.map(q=>map.fromDisplay(q).q));assert.equal(hit.r,points[0][1]);assert.ok(hit.displayCells.some(q=>Math.floor(q/map.width)<4)&&hit.displayCells.some(q=>Math.floor(q/map.width)>=4));for(const q of hit.cells)assert.equal(result.hl[q],1);assert.equal(api.context.matches.joined,true);assert.match(api.get('ochkiList').textContent,/строка ромба/);
+  const cut=displayFixture(mode,points.filter((_,i)=>i!==1),{rotate}).api.result();assert.equal(cut.found.length,0,'holes cannot bridge a joined line');
+ }
+});
+test('joined horizontal rows search the upper and lower parts with one shared sequence consumption',()=>{
+ const points=[[0,2,1],[2,2,0],[4,2,1],[6,2,1],[1,5,1],[3,5,0],[5,5,1],[7,5,1]];
+ for(const rotate of [false,true]){const {api}=displayFixture('row',points,{rotate,sequence:['1011','1011']}),result=api.result();assert.equal(result.found.length,2);assert.equal(result.total,2);assert.deepEqual(Array.from(result.found,h=>h.r),[2,5]);assert.ok(result.found.every(hit=>hit.displayCells.every(q=>Math.floor(q/api.lines().width)===hit.r)));}
+});
+test('long initial patterns and simple runs preserve display ordering across the reversed lower half',()=>{
+ const text='10110111001011011',points=Array.from(text,(v,i)=>[i,i+2,Number(v)]);
+ for(const rotate of [false,true]){const {api}=displayFixture('diag',points,{rotate,width:20,height:10,sequence:[text]}),result=api.result();assert.equal(result.found.length,1);assert.equal(result.found[0].n,17);assert.equal(result.found[0].r,2);assert.equal(result.total,1);
+  const run=displayFixture('diag',[[1,3,1],[2,4,1],[3,5,1],[4,6,1]],{rotate,pattern:'ones'}).api.result();assert.equal(run.count,1);assert.equal(run.longest,4);assert.equal(run.found[0].displayCells.length,4);assert.equal(run.found[0].p,null);
+ }
+});
+test('joined flip and rotation have separate search cache keys',()=>{
+ const {api}=displayFixture('diag',[[1,3,1],[2,4,0],[3,5,1],[4,6,1]]),key=api.result().key;api.state.view='rombJoin180';assert.notEqual(api.result().key,key);
+});
+test('joined simple matches beyond the first 100 recover in display coordinates for click selection',()=>{
+ const width=160,height=4,map=Joined.create({width,height,anchor:0}),points=[];for(let y=0;y<map.height;y++)for(let i=0;i<width/2;i++)if(i%4!==3)points.push([2*i+(y&1),y,1]);const {api}=displayFixture('row',points,{width,height,pattern:'ones'}),result=api.result();assert.equal(result.count,160);assert.equal(result.found.length,100);
+ const display=map.inverse(155,7),context=api.context;context.MayatnikOchkiSelection=require('./mayatnik-ochki-selection.js');context.selectTemplate=()=>{};context.queueDigits=()=>{};context.window={mayTemplateLibrary:{clear(){}},MayatnikTemplatePanel:{openTab(){}}};context.sequences.selectMatches=value=>context.selected=value;vm.runInContext('globalThis.choose=ochkiSelectionChoose;globalThis.chosen=()=>ochkiSelected;',context);
+ context.choose({cell:display.q,p:null,row:display.r,col:display.c,displayRow:7,displayCol:155,key:result.key,owner:context.f});assert.equal(result.found.length,101);assert.equal(context.chosen().cells.length,3);assert.deepEqual(Array.from(result.found[100].displayCells),[7*width+153,7*width+155,7*width+157]);assert.deepEqual(Array.from(context.selected.matchIndices),[100]);
 });

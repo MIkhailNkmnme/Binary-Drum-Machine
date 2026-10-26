@@ -16,3 +16,8 @@ test('template area limit round trips and legacy presets retain default-compatib
  const st={templateMaxArea:8000};S.applyState(st,legacy);assert.equal(st.templateMaxArea,undefined);
  for(const value of [0,-1,1.5,1048577,'4096']){const bad=JSON.parse(JSON.stringify(snapshot));bad.state.templateMaxArea=value;assert.throws(()=>S.normalized(bad),/площадь/);}
 });
+
+test('two contour colours round trip independently and old presets remain compatible',()=>{
+ const p=S.pick({bitContourColour1:'#12abef',bitContourColour2:'#34cd56'}),st={};S.applyState(st,p);assert.equal(st.bitContourColour1,'#12abef');assert.equal(st.bitContourColour2,'#34cd56');
+ delete p.state.bitContourColour1;delete p.state.bitContourColour2;S.applyState(st,p);assert.equal(st.bitContourColour1,undefined);assert.equal(st.bitContourColour2,undefined);
+});
