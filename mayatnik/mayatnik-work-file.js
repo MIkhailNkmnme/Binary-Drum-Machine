@@ -52,9 +52,12 @@
   const api={pack,unpack,encode,decode};
   api.run=(op,value)=>new Promise((resolve,reject)=>{
     if(typeof Worker!=='function'){api[op](value).then(resolve,reject);return;}
-    const worker=new Worker(new URL('mayatnik-file-worker.js?v=139',document.currentScript?.src||location.href));
+    let worker, fellBack = false;
+    const fallback = () => { if (fellBack) return; fellBack = true; try { worker?.terminate(); } catch (_) {} api[op](value).then(resolve, reject); };
+    try { worker=new Worker(new URL('mayatnik-file-worker.js?v=140',document.currentScript?.src||location.href)); }
+    catch(_) { fallback(); return; }   // file:// — Worker запрещён, считаем в главном потоке
     worker.onmessage=e=>{worker.terminate();e.data.error?reject(Error(e.data.error)):resolve(e.data.result);};
-    worker.onerror=e=>{worker.terminate();reject(Error(e.message));};worker.postMessage({op,value});
+    worker.onerror=e=>{ e.preventDefault?.(); fallback(); };worker.postMessage({op,value});
   });
   if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikWorkFile=api;
 })(typeof globalThis==='object'?globalThis:this);
