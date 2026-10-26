@@ -1,5 +1,5 @@
-/* v3. Главная: синхронное сравнение конусов 5.7 и глобального XOR 5.8.
-   По одному полю и изображению на сторону, без кэша прошедших кадров. */
+/* v4. Главная: синхронное сравнение конусов 5.7 и глобального XOR 5.8.
+   Рабочая и последняя опубликованная пара полей, без истории кадров. */
 (() => {
   'use strict';
   const left = document.getElementById('hubCones'), right = document.getElementById('hubXor');
@@ -12,24 +12,43 @@
   left.width = right.width = W; left.height = right.height = H;
   const cones = MAYATNIK.field(W, H, 'empty', CENTER);
   const grid = new Int8Array(W * H).fill(-1);
+  const publishedLeft = new Int8Array(W * H), publishedRight = new Int8Array(W * H);
   const coneImage = coneCtx.createImageData(W, H), xorImage = xorCtx.createImageData(W, H);
   const root = document.getElementById('hubXorBackground'), blend = document.getElementById('hubBlend');
   const blendCtx = blend && blend.getContext('2d', { alpha: false });
   if (blend) { blend.width = W; blend.height = H; }
   const blendImage = blendCtx && blendCtx.createImageData(W, H);
   const modeButton = document.getElementById('hubCompareMode'), mirrorButton = document.getElementById('hubCompareMirror');
+  const paletteButton = document.getElementById('hubComparePalette'), paletteMenu = document.getElementById('hubComparePaletteMenu');
+  const PALETTES = {
+    ice: { label: 'Лёд', left: [88,183,255], right: [255,179,91], common: [232,237,245], legend: 'Конусы — голубой · Всё поле — оранжевый · Общие — белый' },
+    mint: { label: 'Мята', left: [115,228,165], right: [255,135,207], common: [255,211,91], legend: 'Конусы — мятный · Всё поле — розовый · Общие — жёлтый' },
+    mono: { label: 'Моно', left: [255,255,255], right: [153,153,153], common: [221,221,221], legend: 'Конусы — белый · Всё поле — серый · Общие — светло-серый' },
+    green: { label: 'Зелёный', left: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, всё поле и общие — зелёный' }
+  };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
-  const view = { mode: 'split', mirror: false, zoom: 1 };
+  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice' };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE));
     if (saved && typeof saved === 'object') {
       if (MODES.includes(saved.mode)) view.mode = saved.mode;
       if (typeof saved.mirror === 'boolean') view.mirror = saved.mirror;
+      if (Object.prototype.hasOwnProperty.call(PALETTES, saved.palette)) view.palette = saved.palette;
       if (typeof saved.zoom === 'number' && Number.isFinite(saved.zoom)) view.zoom = Math.max(1, Math.min(64, saved.zoom));
     }
   } catch (_) {}
   let published = false;
   let frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
+  let cycle = 0, awaitingStats = false, failed = false, controller = null;
+  try {
+    if (typeof window !== 'undefined' && window.HubComparePanel?.create) controller = window.HubComparePanel.create({ W, H });
+  } catch (error) { stop(error); }
+
+  function stop(error) {
+    failed = true; awaitingStats = false; clearTimeout(timer); timer = 0;
+    if (root) root.dataset.error = error instanceof Error ? error.message : String(error);
+    if (controller && typeof controller.error === 'function') controller.error(error);
+  }
 
   function saveView() {
     try { localStorage.setItem(STORAGE, JSON.stringify(view)); } catch (_) {}
@@ -40,11 +59,26 @@
   function syncView() {
     const modeLabel = { split: 'Рядом', xor: 'XOR', and: 'AND' }[view.mode];
     const mirrorLabel = view.mirror ? 'Зеркально' : 'Прямо';
-    if (root) { root.dataset.mode = view.mode; root.style.setProperty('--hubCompareZoom', String(view.zoom)); }
+    const palette = PALETTES[view.palette], css = colour => 'rgb(' + colour.join(',') + ')';
+    if (root) {
+      root.dataset.mode = view.mode; root.dataset.palette = view.palette;
+      root.style.setProperty('--hubCompareZoom', String(view.zoom));
+      for (const key of ['left', 'right', 'common']) root.style.setProperty('--hubCompare' + key[0].toUpperCase() + key.slice(1), css(palette[key]));
+    }
     text('hubCompareModeLabel', modeLabel);
     text('hubCompareModeIcon', { split: '↔', xor: '⊕', and: '∧' }[view.mode]);
     text('hubCompareMirrorLabel', mirrorLabel); text('hubCompareMirrorIcon', view.mirror ? 'Ƨ1' : '11');
     text('hubCompareOverlayLabel', modeLabel + ' · ' + mirrorLabel);
+    text('hubComparePaletteLabel', palette.label); text('hubComparePaletteIcon', '◐');
+    text('hubCompareLegend', palette.legend);
+    if (paletteButton) {
+      paletteButton.title = 'Цвета построений: ' + palette.label + '. Выбрать готовую палитру';
+      paletteButton.setAttribute('aria-label', 'Цвета построений: ' + palette.label);
+    }
+    if (paletteMenu) for (const button of paletteMenu.querySelectorAll('[data-hub-palette]')) {
+      const selected = button.dataset.hubPalette === view.palette;
+      button.classList.toggle('gz-on', selected); button.setAttribute('aria-pressed', String(selected));
+    }
     if (modeButton) {
       modeButton.title = 'Сравнение построений: ' + modeLabel + '. Щелчок: Рядом → XOR → AND';
       modeButton.setAttribute('aria-label', 'Сравнение построений: ' + modeLabel);
@@ -60,21 +94,39 @@
   }
   function renderBlend(a, b) {
     if (!blendImage || view.mode === 'split') return;
+    const palette = PALETTES[view.palette];
     for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
       const i = r * W + c, j = r * W + (view.mirror ? W - 1 - c : c);
-      // Опубликованный #337a34 означает бит 1; чёрный объединяет 0 и пустоту.
-      const av = a[i * 4] === 51, bv = b[j * 4] === 51;
-      paint(blendImage.data, i, (view.mode === 'xor' ? av !== bv : av && bv) ? 1 : 0);
+      const av = a[i] === 1, bv = b[j] === 1;
+      const on = view.mode === 'xor' ? av !== bv : av && bv;
+      paint(blendImage.data, i, on ? 1 : 0, view.mode === 'and' ? palette.common : av ? palette.left : palette.right);
     }
     blendCtx.putImageData(blendImage, 0, 0);
     blend.dataset.frame = left.dataset.frame;
   }
   function changeView() {
     syncView(); saveView();
-    if (!published || view.mode === 'split' || !blendCtx) return;
-    // Рабочие ImageData могут уже содержать часть следующего кадра.
-    // Снимки берём только при переключении, из последней опубликованной пары.
-    renderBlend(coneCtx.getImageData(0, 0, W, H).data, xorCtx.getImageData(0, 0, W, H).data);
+    if (published) renderPublished();
+  }
+  function closePalette() {
+    if (paletteMenu) paletteMenu.hidden = true;
+    if (paletteButton) paletteButton.setAttribute('aria-expanded', 'false');
+  }
+  if (paletteButton && paletteMenu) {
+    closePalette();
+    paletteButton.addEventListener('click', () => {
+      paletteMenu.hidden = !paletteMenu.hidden;
+      paletteButton.setAttribute('aria-expanded', String(!paletteMenu.hidden));
+    });
+    paletteMenu.addEventListener('click', event => {
+      const button = event.target.closest('[data-hub-palette]');
+      if (!button || !Object.prototype.hasOwnProperty.call(PALETTES, button.dataset.hubPalette)) return;
+      view.palette = button.dataset.hubPalette; closePalette(); changeView();
+    });
+    document.addEventListener('click', event => {
+      if (!paletteMenu.contains(event.target) && !paletteButton.contains(event.target)) closePalette();
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closePalette(); });
   }
   if (modeButton) modeButton.addEventListener('click', () => {
     view.mode = MODES[(MODES.indexOf(view.mode) + 1) % MODES.length]; changeView();
@@ -89,7 +141,7 @@
     if (event.ctrlKey || event.metaKey) { event.stopImmediatePropagation(); return; }
     if (event.defaultPrevented) return;
     const target = event.target;
-    if (target && target.closest && target.closest('button,a,input,select,textarea,summary,label,dialog,[contenteditable],[role="button"],[role="slider"],[role="dialog"],[role="group"],.hub,#hubCompareTools,.gz-rail,.gz-ladder,.hubRombGrid,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubRail,#hubZoom,#hubFieldTools')) return;
+    if (target && target.closest && target.closest('button,a,input,select,textarea,summary,label,dialog,[contenteditable],[role="button"],[role="slider"],[role="dialog"],[role="group"],.hub,#hubCompareTools,#hubComparePanel,.gz-rail,.gz-ladder,.hubRombGrid,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubRail,#hubZoom,#hubFieldTools')) return;
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
     const delta = event.deltaY * unit;
     if (!Number.isFinite(delta) || delta === 0) return;
@@ -106,36 +158,39 @@
     if (c >= 0) v = v < 0 ? c : v ^ c;
     return v;
   }
-  function paint(pixels, i, value) {
+  function paint(pixels, i, value, colour) {
     const p = i * 4, on = value === 1;
-    // Точная палитра прежнего _img/hub-xor-1024.png: #337a34 / чёрный.
-    pixels[p] = on ? 51 : 0;
-    pixels[p + 1] = on ? 122 : 0;
-    pixels[p + 2] = on ? 52 : 0;
+    pixels[p] = on ? colour[0] : 0;
+    pixels[p + 1] = on ? colour[1] : 0;
+    pixels[p + 2] = on ? colour[2] : 0;
     pixels[p + 3] = 255;
   }
-  function paintCell(i) {
-    paint(coneImage.data, i, cones.val[i]);
-    paint(xorImage.data, i, grid[i]);
+  function renderPublished() {
+    const palette = PALETTES[view.palette];
+    for (let i = 0; i < W * H; i++) {
+      paint(coneImage.data, i, publishedLeft[i], palette.left);
+      paint(xorImage.data, i, publishedRight[i], palette.right);
+    }
+    coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
+    renderBlend(publishedLeft, publishedRight);
   }
   function schedule(delay) {
-    if (!document.hidden) timer = setTimeout(tick, delay);
+    if (!document.hidden && !awaitingStats && !failed) timer = setTimeout(tick, delay);
   }
   function tick() {
     timer = 0;
-    if (document.hidden) return;
+    if (document.hidden || awaitingStats || failed) return;
     if (nextFrame) {
       nextFrame = false; frame++; row = 1; started = performance.now();
       // Все 2047 вершин внутри рамки пройдены: обе стороны начинают новый цикл.
       // Не заворачиваем вершины через край и не меняем исходный алгоритм cone.
-      if (frame === W) { frame = 0; cones.val.fill(-1); grid.fill(-1); }
+      if (frame === W) { frame = 0; cycle++; cones.val.fill(-1); grid.fill(-1); }
       const d = Math.ceil(frame / 2), pos = CENTER + (frame % 2 ? -d : d);
       grid[pos] = 1;
       // Один исходный cone за такт; его границы обрезаются самим общим ядром.
       MAYATNIK.cone(cones, pos, H);
     }
     const visible = frame >= FIRST_FRAME;
-    if (visible && row === 1) for (let c = 0; c < W; c++) paintCell(c);
     const end = Math.min(H, row + ROW_CHUNK);
     for (; row < end; row++) {
       const base = row * W, up = base - W;
@@ -144,20 +199,27 @@
         // In-place, сверху вниз: родители уже пересчитаны в этом же кадре.
         grid[i] = xor3(grid[i], c > 0 ? grid[up + c - 1] : -1,
           c + 1 < W ? grid[up + c + 1] : -1);
-        if (visible) paintCell(i);
       }
     }
     if (row < H) { schedule(0); return; }
     if (visible) {
       // Оба готовых изображения публикуются в одном задании, без промежуточного кадра.
-      coneCtx.putImageData(coneImage, 0, 0);
-      xorCtx.putImageData(xorImage, 0, 0);
+      publishedLeft.set(cones.val); publishedRight.set(grid);
       left.dataset.frame = right.dataset.frame = String(frame);
       published = true;
-      renderBlend(coneImage.data, xorImage.data);
+      renderPublished();
     }
     nextFrame = true;
-    schedule(visible ? Math.max(0, INTERVAL - (performance.now() - started)) : 0);
+    const continueFrame = () => {
+      awaitingStats = false;
+      schedule(visible ? Math.max(0, INTERVAL - (performance.now() - started)) : 0);
+    };
+    if (controller && typeof controller.measure === 'function') {
+      awaitingStats = true;
+      try {
+        Promise.resolve(controller.measure({ left: cones.val, right: grid, W, H, frame, cycle })).then(continueFrame, stop);
+      } catch (error) { stop(error); }
+    } else continueFrame();
   }
   document.addEventListener('visibilitychange', () => {
     clearTimeout(timer); timer = 0;
