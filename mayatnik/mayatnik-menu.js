@@ -754,15 +754,15 @@
   // v0.499: «Ось: 0, 1, −1 — как Стык, между ними ромб текущей»: [Ось | 0 | 1 | −1] — gz-tri, как в Хабе; 0 — стоит, 1 — ход, −1 — антиход.
   // Прежняя кнопка «Ось» спрятана и по-прежнему хранит режим (mayFixAxis: 0 — ход, 1 — стоит, 2 — антиход).
   { const src = tools.querySelector('[data-n="fixAxis"]');
-    if (src) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-tri'; b.dataset.n = 'fixAxis3';
+    if (src) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-tri'; b.dataset.n = 'fixAxis3';b.dataset.maySearchPrimary='';b.dataset.maySearchAliases='ход оси|антиход';
       const pm = document.createElement('span'); pm.className = 'gz-pm'; pm.textContent = 'Ось'; b.append(pm);
       [['0', 1, 'стоит — на границе, толщиной 2 пикселя'], ['1', 0, 'ход — за точкой встречи: при равном числе битов слева и справа — на границе между битами (2 пикселя), иначе на бите слева или справа от неё'], ['−1', 2, 'антиход — 1 пиксель навстречу маятнику']].forEach(([l, v, t], j) => {
         const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; sp.textContent = l; b.append(sp);
         sp.onclick = e => { e.stopPropagation(); window.mayFixAxis?.set(v); placeTools(); };
-        toolSync.push(() => { const on = (window.mayFixAxis?.get() || 0) === v; sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = 'Ось «Зеркала ↑»: ' + l + ' — ' + t; }); });
-      b.classList.add('gz-any'); b.title = 'Ось «Зеркала ↑»: 0 — стоит, 1 — ход, −1 — антиход';
+        toolSync.push(() => { const on = (window.mayFixAxis?.get() || 0) === v; sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = 'Ход оси «Зеркала ↑»: ' + l + ' — ' + t; }); });
+      b.classList.add('gz-any'); b.title = 'Ход оси «Зеркала ↑»: 0 — стоит, 1 — ход, −1 — антиход';
       // v0.500: «в Оси» — переключатель живёт в группе «Оси», после «Своей оси»
-      const after = gAxis.querySelector('[data-n="bAxisLine"]'); if (after) after.after(b); else gAxis.append(b); src.style.display = 'none'; } }
+      const after = gAxis.querySelector('[data-n="bAxisLine"]'); if (after) after.after(b); else gAxis.append(b); src.style.display = 'none';src.dataset.maySearchSkip='';for(const half of b.querySelectorAll('.gz-half'))half.dataset.maySearchSkip=''; } }
   // v0.501: «в одну кнопку Полосы, Треуг, Обвод» — [Полосы | Треуг | Обвод]: Полосы — режим 0 (щелчок — без полос / обратно),
   // Треуг — режим 2 «до треугольника» (щелчок — к нему / к «без полос»); не горят обе — «без полос». Обвод — обводка, вкл / выкл.
   { const nb = $('noband'), ol = $('outline'), sNb = tools.querySelector('[data-n="noband"]'), sOl = tools.querySelector('[data-n="outline"]');

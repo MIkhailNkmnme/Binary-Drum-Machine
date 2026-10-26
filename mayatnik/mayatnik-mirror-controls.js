@@ -6,7 +6,7 @@
     {id:'template',name:'Шаблон',axis:'Ось шаблона',side:'Целиком',op:'Копия',result:'На месте',nodes:['templateMirrorPair','bMirrorLine','bMirrorByLine']},
     {id:'manual',name:'Биты / краска',axis:'Своя ось',side:'Сверху вниз',op:'Копия / XOR / AND',result:'Правка клеток',nodes:['bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','mirCol']},
     {id:'canvas',name:'Поле за осью',axis:'Подвижная ось',side:'За ось',op:'Копия',result:'Отдельный холст',nodes:['mayMirAxis','mirCol']},
-    {id:'upper',name:'Растр: треугольник',axis:'Горизонталь встречи',side:'Снизу вверх',op:'Копия / XOR / AND',result:'Только вид',nodes:['fixAxis3','fixMirror','fixDown','fixWide','fixRot','fixLock','mirCol','mirOp']},
+    {id:'upper',name:'Растр: треугольник',axis:'Горизонталь встречи',side:'Снизу вверх',op:'Копия / XOR / AND',result:'Только вид',nodes:['fixMirror','fixDown','fixWide','fixRot','fixLock','mirCol','mirOp']},
     {id:'lower',name:'Растр: клинья',axis:'Две диагонали',side:'Левая / правая',op:'Копия / XOR / AND',result:'Только вид',nodes:['fixLow','fixLowOut','mirCol','mirOp']},
     {id:'lines',name:'Растр: линии',axis:'Линия',side:'Через линию',op:'Копия / XOR / AND',result:'Только вид',nodes:['mirCol','mirOp']},
     {id:'black',name:'Краска / весь растр',axis:'Найденные треугольники',side:'Внутрь',op:'Копия / XOR / AND',result:'Только вид',nodes:['bBlackMirror','mirCol','mirOp']},
@@ -94,7 +94,7 @@
       for(const [id,node]of nodes){if(settings.includes(id)){if(node.parentElement!==row)row.insertBefore(node,retained);if(node.hidden)node.hidden=false;if(node.style.display)node.style.removeProperty('display');}else{if(node.parentElement!==retained)retained.append(node);if(!node.hidden)node.hidden=true;}}
       const arrangement=p.id+':'+(template?state.axis:'');
       if(arranged!==arrangement){
-        const axisIds=['bMirrorLine','bAxisLine','bAxisLinesClear','mayMirAxis','fixAxis3'],opIds=['mirCol','bAxisMirror','bAxisXor'];
+        const axisIds=['bMirrorLine','bAxisLine','bAxisLinesClear','mayMirAxis'],opIds=['mirCol','bAxisMirror','bAxisXor'];
         const settingNodes=ids=>ids.filter(id=>settings.includes(id)).map(id=>nodes.get(id)).filter(Boolean);
         row.append(source,axis,...settingNodes(axisIds),side,...settingNodes(settings.filter(id=>!axisIds.includes(id)&&!opIds.includes(id))),op,...settingNodes(opIds),result,apply,retained);arranged=arrangement;
       }
