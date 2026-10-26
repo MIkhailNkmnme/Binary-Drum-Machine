@@ -1,4 +1,4 @@
-/* v5. Главная: синхронное сравнение конусов 5.7 и глобального XOR 5.8.
+/* v6. Главная: синхронное сравнение конусов 5.7 и глобального XOR 5.8.
    Рабочая и последняя опубликованная пара полей, без истории кадров. */
 (() => {
   'use strict';
@@ -19,6 +19,7 @@
   if (blend) { blend.width = W; blend.height = H; }
   const blendImage = blendCtx && blendCtx.createImageData(W, H);
   const modeButton = document.getElementById('hubCompareMode'), mirrorButton = document.getElementById('hubCompareMirror');
+  const pauseButton = document.getElementById('hubComparePause');
   const paletteButton = document.getElementById('hubComparePalette'), paletteMenu = document.getElementById('hubComparePaletteMenu');
   const PALETTES = {
     ice: { label: 'Лёд', left: [88,183,255], right: [255,179,91], common: [232,237,245], legend: 'Конусы — голубой · Всё поле — оранжевый · Общие — белый' },
@@ -43,7 +44,7 @@
   } catch (_) {}
   let published = false;
   let frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
-  let cycle = 0, awaitingStats = false, failed = false, controller = null;
+  let cycle = 0, awaitingStats = false, failed = false, paused = false, controller = null;
   let drag = null, middle = null, swallowClick = false;
   try {
     if (typeof window !== 'undefined' && window.HubComparePanel?.create) controller = window.HubComparePanel.create({ W, H });
@@ -51,9 +52,31 @@
 
   function stop(error) {
     failed = true; awaitingStats = false; clearTimeout(timer); timer = 0;
+    syncPlayback();
     if (root) root.dataset.error = error instanceof Error ? error.message : String(error);
     if (controller && typeof controller.error === 'function') controller.error(error);
   }
+
+  function syncPlayback() {
+    if (root) root.dataset.paused = String(paused);
+    if (!pauseButton) return;
+    pauseButton.disabled = failed;
+    pauseButton.setAttribute('aria-pressed', String(paused));
+    const label = paused ? 'Продолжить оба построения' : 'Пауза обоих построений';
+    pauseButton.setAttribute('aria-label', label); pauseButton.title = label;
+    pauseButton.classList.toggle('gz-on', paused);
+    text('hubComparePauseIcon', paused ? '▶' : 'Ⅱ');
+  }
+  if (pauseButton) pauseButton.addEventListener('click', () => {
+    if (failed) return;
+    paused = !paused;
+    clearTimeout(timer); timer = 0;
+    syncPlayback();
+    // Neither the partially computed row nor an in-flight statistics job is
+    // discarded. The statistics continuation also respects this pause.
+    if (!paused) { started = performance.now(); schedule(0); }
+  });
+  syncPlayback();
 
   function saveView() {
     try { localStorage.setItem(STORAGE, JSON.stringify(view)); } catch (_) {}
@@ -276,11 +299,11 @@
     renderBlend(publishedLeft, publishedRight);
   }
   function schedule(delay) {
-    if (!document.hidden && !awaitingStats && !failed) timer = setTimeout(tick, delay);
+    if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);
   }
   function tick() {
     timer = 0;
-    if (document.hidden || awaitingStats || failed) return;
+    if (document.hidden || awaitingStats || failed || paused) return;
     if (nextFrame) {
       nextFrame = false; frame++; row = 1; started = performance.now();
       // Все 2047 вершин внутри рамки пройдены: обе стороны начинают новый цикл.

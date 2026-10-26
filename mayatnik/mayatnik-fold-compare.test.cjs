@@ -1,5 +1,19 @@
 const test=require('node:test'),assert=require('node:assert/strict'),C=require('./mayatnik-fold-compare.js');
 const field=rows=>({W:rows[0].length,H:rows.length,val:Int8Array.from(rows.join(''),x=>x==='.'?-1:+x)});
+
+test('explicit null span preserves every canonical comparison cell for each source and right reflection',()=>{
+ const Compare=require('./mayatnik-compare.js'),engine=Compare.create({rows:5});
+ const state=engine.seek(2),val=new Int8Array(state.W*state.H);
+ for(const source of ['cone','field','xor','and'])for(const mirror of [false,true]){
+  engine.copyTo(val,source,mirror);const before=val.slice(),m=C.create({W:state.W,H:state.H,val,anchor:state.anchor,span:null});
+  for(let y=0;y<state.H;y++)for(let x=0;x<state.W;x++)assert.equal(m.bit(x,y),before[y*state.W+x],`${source}/${mirror}/${x}/${y}`);
+  val.fill(-1);for(let y=0;y<state.H;y++)for(let x=0;x<state.W;x++)assert.equal(m.bit(x,y),before[y*state.W+x]);
+ }
+ // The reflected operand contributes a top-row bit outside the left source's span.
+ engine.copyTo(val,'xor',true);const raw=C.create({W:state.W,H:state.H,val,anchor:state.anchor,span:null});
+ const masked=C.create({W:state.W,H:state.H,val,anchor:state.anchor,span:[state.lo,state.hi]});
+ assert.equal(raw.bit(state.anchor+1,0),1);assert.equal(masked.bit(state.anchor+1,0),-1);
+});
 test('cone occupancy retains uniform bit strips and excludes filled background in every direction',()=>{
  const M=require('./mayatnik-core.js');
  for(const mode of ['pend','left','right','one'])for(const frames of [1,2,5,8]){

@@ -20,7 +20,7 @@ function oracle(values, W, H, frame, saw = true, sawFull = true) {
   const X = (W >> 1) - (frame % 2) / 2, Y = (frame + 2) / 2;
   const context = vm.createContext({ f: { W, H, val: values }, geo: { anchor: W >> 1 }, k: frame + 1,
     VX: 0, VW: W, VH: H, st: { rows: H, mode: 'pend', saw, sawFull },
-    rombP: () => -1, pairOn: () => false, MAYATNIK,
+    rombP: () => -1, pairOn: () => false, compareOn: () => false, MAYATNIK,
     areaFrame: () => ({ q: [0, 0, Y, 0, X], H }),
     AREA_LET_PAL: ['white'], areaLetter: i => String(i) });
   vm.runInContext(oracleCode + ';result=areaFigs(areaCalc());', context);

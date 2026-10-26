@@ -3,6 +3,17 @@ const fixture=()=>({createdAt:'2026-10-25',entries:[{key:'latest',value:{field:I
 test('full backup preserves all entries, typed arrays, blobs, nulls, local strings and metadata',async()=>{
  const source=fixture(),file=await F.encode(source),result=await F.decode(file);assert.equal(result.format,'mayatnik-backup');assert.equal(result.version,1);assert.equal(result.snapshot.createdAt,source.createdAt);assert.deepEqual(result.snapshot.local,source.local);assert.deepEqual(result.snapshot.entries[0],source.entries[0]);assert.deepEqual(result.snapshot.entries[2],source.entries[2]);const blob=result.snapshot.entries[1].value;assert.equal(blob.type,'application/x-test');assert.deepEqual(new Uint8Array(await blob.arrayBuffer()),Uint8Array.of(0,128,255));
 });
+
+test('full backup preserves comparison descriptor consistently in current work, saved-frame blob and local state',async()=>{
+ const Work=require('./mayatnik-work-file.js'),Compare=require('./mayatnik-compare.js');
+ const engine=Compare.create({rows:8}),state=engine.seek(9),field=new Int8Array(state.W*state.H);engine.copyTo(field,'xor',true);
+ const st={rows:8,steps:15,mode:'pend',pair:false,bg:'empty',compareSource:'xor',compareMirror:true};
+ const work={schema:2,st,k:state.k,field,width:state.W,height:state.H,frameHost:{version:1,state:{},controls:{},layers:[]}};
+ const snapshot={entries:[{key:'latest',value:work},{key:'whole-frames-library-item:compare',value:await Work.encode(work)}],local:[{key:'zerk_mayatnik',value:JSON.stringify(st)}]};
+ const restored=(await F.decode(await F.encode(snapshot))).snapshot;
+ assert.deepEqual(restored.entries[0].value,work);assert.deepEqual(JSON.parse(restored.local[0].value),st);
+ assert.deepEqual((await Work.decode(restored.entries[1].value)).data,work);
+});
 test('scope excludes other applications and accepts migration keys',()=>{
  for(const key of ['zerk_rec_mode','zerk-mayatnik-naklon','zerk_mayatnik_other','grozd:other','__proto__'])assert.equal(F.isLocalKey(key),false,key);
  for(const key of ['mayatnik-dd-grid-before-v461','zerkalius_mayatnik_template_locks_v1','zerk_mayatnik_solarius'])assert.equal(F.isLocalKey(key),true,key);

@@ -1,4 +1,4 @@
-/* Маятник v0.517 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.597 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -216,18 +216,65 @@
     { const rb = document.createElement('button'); rb.className = 'gz-hx'; rb.textContent = 'Рандом'; rb.dataset.miShort = 'Рандом';
       rb.title = 'Тест: очистить поле и заполнить квадрат N×N случайными битами (N = число строк); остальное поле пусто. Для проверки уменьшения и Очков по наложению.';
       rb.onclick = ev => { ev.stopPropagation(); window.mayTestRandom?.(+$('rows').value || 128); sync(); }; pop.append(rb); }
-    { const xb = document.createElement('button'); xb.className = 'gz-hx'; xb.textContent = 'XOR'; xb.dataset.miShort = 'XOR';
-      xb.title = 'Тест: XOR-маятник — правило 90 с замкнутыми краями (тор) на квадрате N×N, N = число строк. Пустых углов нет.';
-      xb.onclick = ev => { ev.stopPropagation(); window.mayTestXor?.(+$('rows').value || 128); sync(); }; pop.append(xb); }
+    // Comparison sources share the ordinary field, editing tools and transport.
+    // This replaces the old standalone XOR test action, without a second clock.
+    { const api = () => window.mayComparison;
+      const state = () => api()?.get?.() || { source: '', mirror: false };
+      const rows = [], controls = [];
+      const choose = source => { api()?.set?.(source); syncComparison(); rail.refresh(); };
+      const pair = (id, title, parts) => {
+        const row = gzPair(parts); row.id = id; row.dataset.n = id; row.setAttribute('role', 'group'); row.setAttribute('aria-label', title); row.title = title;
+        const halves = [...row.querySelectorAll('.gz-half')];
+        halves.forEach((half, i) => {
+          half.id = parts[i].id; half.setAttribute('role', 'button'); half.tabIndex = 0; half.setAttribute('aria-label', parts[i].tip);
+          half.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault(); event.stopPropagation(); half.click();
+          });
+          controls.push({ half, on: parts[i].on });
+        });
+        rows.push(row); pop.append(row); return row;
+      };
+      const legacy = document.createElement('button'); legacy.type = 'button'; legacy.className = 'gz-hx';
+      legacy.id = 'mayCompareLegacy'; legacy.dataset.n = 'mayCompareLegacy'; legacy.textContent = 'Маятник';
+      legacy.title = 'Обычный маятник: вернуться к прежнему построению и общему управлению'; legacy.setAttribute('aria-label', legacy.title);
+      legacy.onclick = event => { event.stopPropagation(); choose(''); }; pop.append(legacy);
+      pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
+        { id: 'mayCompareCones', label: '5.7', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
+        { id: 'mayCompareField', label: '5.8', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }
+      ]);
+      pair('mayCompareModes', 'Наложение исходных построений 5.7 и 5.8', [
+        { id: 'mayCompareXor', label: 'XOR', tip: 'XOR: побитовое наложение конусов 5.7 и всего поля 5.8', on: () => state().source === 'xor', click: () => choose('xor') },
+        { id: 'mayCompareAnd', label: 'AND', tip: 'AND: пересечение единиц конусов 5.7 и всего поля 5.8', on: () => state().source === 'and', click: () => choose('and') }
+      ]);
+      pair('mayCompareMirror', 'Направление правого источника 5.8', [
+        { id: 'mayCompareDirect', label: 'Прямо', tip: 'Правый источник 5.8 прямо, без горизонтального отражения', on: () => !state().mirror, click: () => { api()?.mirror?.(false); syncComparison(); rail.refresh(); } },
+        { id: 'mayCompareReflected', label: 'Зеркл.', tip: 'Правый источник 5.8 зеркально по горизонтали', on: () => !!state().mirror, click: () => { api()?.mirror?.(true); syncComparison(); rail.refresh(); } }
+      ]);
+      function syncComparison() {
+        for (const row of rows) row.gzSync();
+        for (const {half,on} of controls) half.setAttribute('aria-pressed', String(!!on()));
+        const selected = !state().source; legacy.classList.toggle('gz-on', selected); legacy.setAttribute('aria-pressed', String(selected));
+      }
+      addEventListener('may-compare-change', syncComparison);
+      b.addEventListener('click', syncComparison); syncComparison();
+    }
     { const cb = document.createElement('button'); cb.className = 'gz-hx'; cb.textContent = 'Ковёр'; cb.dataset.miShort = 'Ковёр';
       cb.title = 'Тест: ковёр Серпинского — квадрат 3^k (центр каждого блока 3×3 выколот рекурсивно). Размер — ближайшая степень тройки, не больше числа строк.';
       cb.onclick = ev => { ev.stopPropagation(); window.mayTestCarpet?.(+$('rows').value || 243); sync(); }; pop.append(cb); }
     { const ab = document.createElement('button'); ab.className = 'gz-hx'; ab.textContent = 'Сборка'; ab.dataset.miShort = 'Сборка';
       ab.setAttribute('aria-pressed', 'false');
       ab.title = 'Включить сборку последнего теста: кадр 0 и дальше без остановки, пока не нажать паузу или «Сборку» ещё раз. Рядом с начальной 1 добавляется следующая, строки 1…n−1 пересчитываются по очереди. «Скорость» — темп, «Кадр, с» — пауза. Если теста ещё не было — сначала строит XOR.';
-      const syncAb = on => { ab.classList.toggle('on', !!on); ab.setAttribute('aria-pressed', String(!!on)); };
+      const testTitle = ab.title, comparisonOn = () => !!window.mayComparison?.get?.().source;
+      const syncAb = on => { if (comparisonOn()) on = $('bPlay')?.getAttribute('aria-pressed') === 'true';
+        ab.classList.toggle('on', !!on); ab.setAttribute('aria-pressed', String(!!on));
+        ab.title = comparisonOn() ? 'Пуск или пауза выбранного построения: продолжить с текущего кадра обычным управлением маятника' : testTitle; };
       addEventListener('may-test-on', ev => syncAb(ev.detail));
+      addEventListener('may-compare-change', () => syncAb(window.mayTestOn));
+      if ($('bPlay')) new MutationObserver(() => syncAb(window.mayTestOn)).observe($('bPlay'), { attributes: true, attributeFilter: ['aria-pressed'] });
+      syncAb(window.mayTestOn);
       ab.onclick = ev => { ev.stopPropagation();
+        if (comparisonOn()) { $('bPlay')?.click(); syncAb(); sync(); return; }
         if (window.mayTestOn) window.mayTestStop?.();
         else { if (window.mayTestPrepare?.() == null) { window.mayTestXor?.(+$('rows').value || 128); window.mayTestPrepare?.(); } window.mayTestBuild?.(); }
         sync(); }; pop.append(ab); }
@@ -237,12 +284,15 @@
           window.mayTestPrepare?.(); syncMode(); sync(); };
         return b; };
       const mbRows = mkMode('Построчно'), mbFrames = mkMode('Кадрами');
-      const syncMode = () => { const fr = window.mayTestBuildMode?.get?.() === 'frames';
-        mbRows.hidden = fr; mbFrames.hidden = !fr;
+      const syncMode = () => { const fr = window.mayTestBuildMode?.get?.() === 'frames', comparison = !!window.mayComparison?.get?.().source;
+        // Comparisons use the existing «По стрк.» / common frame transport.
+        // These two legacy test-only modes do not control those transports.
+        mbRows.hidden = comparison || fr; mbFrames.hidden = comparison || !fr;
         mbRows.classList.toggle('on', !fr); mbFrames.classList.toggle('on', fr);
         mbRows.setAttribute('aria-pressed', String(!fr)); mbFrames.setAttribute('aria-pressed', String(fr));
         mbRows.title = 'Режим сборки: строки — сверху вниз, каждый бит из двух диагональных сверху (над текущей пустота).';
         mbFrames.title = 'Режим сборки: кадры — каждый кадр добавляет единицу и перестраивает весь квадрат.'; };
+      addEventListener('may-compare-change', syncMode);
       syncMode(); pop.append(mbRows, mbFrames); }
     { const sb = document.createElement('button'); sb.className = 'gz-hx'; sb.dataset.n = 'testStats'; sb.textContent = 'Счёт'; sb.dataset.miShort = 'Счёт';
       const syncStats = () => { const on = window.mayTestStats?.get?.() !== false;
@@ -275,7 +325,7 @@
       const vm = gzPair([{ label: 'N/3', data: { v: 'n3' }, on: () => (V()?.get() || '') === 'n3', click: () => pickV('n3') }, { label: '4N', data: { v: '4n' }, on: () => (V()?.get() || '') === '4n', click: () => pickV('4n') }]);
       vm.classList.add('may-hp-vm');
       function vsync() { vm.gzSync(); const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.gz-half')) {
-        h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
+        h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : window.mayComparison?.get().source ? 'Конечное поле: до последней вершины внутри рамки 2N−1' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
       queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(vm); }   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
     // v0.391: «по 2 в одну кнопку шириной по стандарту»: «Построить | Построчно» — одна пара (как «N/3 | 4N»); ячейки сот из рейки убраны
     { const bt = bbCells.btns || [], sot = bt[0]?.parentElement; for (const c of bt) c.remove(); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0';
@@ -1751,6 +1801,16 @@
       const full=parts.join('').trim();if(full){owner.setAttribute('aria-label',full);captionAria.add(owner);if(!owner.title)owner.title=full;}
     }
   };
+  const comparisonGuideTips=new WeakMap();
+  const comparisonGuideSync=()=>{
+    const on=!!window.mayComparison?.get().source;
+    for(const node of document.querySelectorAll('[data-n="fixLines"]')){
+      if(!comparisonGuideTips.has(node))comparisonGuideTips.set(node,node.title);
+      const title=on?'Общая геометрия конусов для выбранного поля. Это линии построения; фактическое застывание рассчитывает «Неизменные».':comparisonGuideTips.get(node);
+      if(node.title!==title)node.title=title;
+    }
+  };
+  toolSync.push(comparisonGuideSync);addEventListener('may-compare-change',comparisonGuideSync);comparisonGuideSync();
   captionsIn(document.body);
   new MutationObserver(records=>{
     for(const record of records)if(record.type==='characterData')captionsIn(record.target);else for(const node of record.addedNodes)captionsIn(node);
