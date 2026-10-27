@@ -1,8 +1,8 @@
 /* N-axis interaction adapter. Field hit-testing, history and drawing belong to the host. */
 (function(root,factory){
-  const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-n-axes.js'):root.MayatnikNAxes);
+  const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-n-axes.js'):root.MayatnikNAxes,typeof module==='object'&&module.exports?require('./mayatnik-axis-style.js'):root.MayatnikAxisStyle);
   if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikNAxesControl=api;
-})(typeof globalThis==='object'?globalThis:this,function(A){
+})(typeof globalThis==='object'?globalThis:this,function(A,Style){
   'use strict';
   function mount(host){
     const element=host.element,doc=element.ownerDocument,keys=doc?.defaultView||element;
@@ -41,7 +41,7 @@
     }
     function draw(ctx,g){if(!valid(g))return;syncSelection();ctx.save();ctx.lineWidth=1;ctx.setLineDash?.([]);
       for(const set of sets()){if(set.row>=g.height)continue;const selected=set.id===selectedId;ctx.strokeStyle=selected?'#fff1a8':'#d8ad43';ctx.lineWidth=selected?1.5:1;ctx.globalAlpha=selected?1:.72;
-        ctx.beginPath();for(const x of A.positions(set)){const sx=g.left+(x+g.center)*g.scale;ctx.moveTo(sx,g.top);ctx.lineTo(sx,g.top+g.height*g.scale);}ctx.stroke();
+        ctx.beginPath();for(const x of A.positions(set)){const sx=g.left+(x+g.center)*g.scale;ctx.moveTo(sx,g.top);ctx.lineTo(sx,g.top+g.height*g.scale);}Style.stroke(ctx,{mode:state().axisPalette});
         const x=g.left+(set.center+g.center)*g.scale,y=g.top+(set.row+.5)*g.scale,r=selected?5:4;
         ctx.globalAlpha=1;ctx.beginPath();ctx.moveTo(x,y-r);ctx.lineTo(x+r,y);ctx.lineTo(x,y+r);ctx.lineTo(x-r,y);ctx.closePath();ctx.fillStyle=selected?'#fff1a8':'#d8ad43';ctx.fill();ctx.stroke();
       }ctx.restore();

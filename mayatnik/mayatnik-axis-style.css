@@ -1,0 +1,6 @@
+/* Axis strokes only: cell grids, selection outlines and paint colours are separate. */
+:root{--may-axis-primary:#b48cff;--may-axis-secondary:#000000;--may-axis-dash:6px}
+.may-axis-stroke::before{content:'';position:absolute;left:0;right:0;top:calc(var(--may-axis-width,1px) / -2);height:var(--may-axis-width,1px);pointer-events:none;background:repeating-linear-gradient(to right,var(--may-axis-primary) 0 var(--may-axis-dash),var(--may-axis-secondary) var(--may-axis-dash) calc(2 * var(--may-axis-dash)))}
+#zTopLine::before,#zTopLine.drag::before,#zTopLine:hover::before{border-top:0;height:1px;background:repeating-linear-gradient(to right,var(--may-axis-primary) 0 var(--may-axis-dash),var(--may-axis-secondary) var(--may-axis-dash) calc(2 * var(--may-axis-dash)))}
+/* The free axis already offsets its border by -1px in mirDraw; preserve that band. */
+.may-mir.may-axis-stroke::before{top:0}

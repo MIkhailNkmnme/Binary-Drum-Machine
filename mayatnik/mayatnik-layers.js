@@ -58,6 +58,9 @@
         const key='snapshot:'+(++serial),copy=add(key,{name:'Фиксация '+serial,kind:'snapshot',opacity:i.opacity,tint:i.tint});
         const dx=i.geometryApplied?0:i.x,dy=i.geometryApplied?0:i.y;
         copy.source=raw;copy.origin=i.origin||id;copy.rect={...i.rect,left:i.rect.left+dx,top:i.rect.top+dy};copy.pivot=i.pivot?{...i.pivot,x:i.pivot.x+dx,y:i.pivot.y+dy}:null;copy.dirty=true;draw(copy);api.select(key);options.capture?.(key,id);return key;},
+      async exportItem(id){const i=items.get(id);if(!i)throw Error('Слой не найден');const meta={format:'mayatnik-layer',version:1,...desc(i),rect:i.rect?{...i.rect}:null,pivot:i.pivot?{...i.pivot}:null,geometryApplied:!!i.geometryApplied,enabled:i.enabled!==false,origin:i.origin||null,sourceAvailable:!!(i.source?.width&&i.source?.height)},files=[];
+        if(meta.sourceAvailable){const c=make();c.width=i.source.width;c.height=i.source.height;c.getContext('2d').drawImage(i.source,0,0);const blob=await new Promise((resolve,reject)=>{try{c.toBlob(b=>b?resolve(b):reject(Error('Не удалось создать PNG слоя')),'image/png');}catch(e){reject(e);}});files.push({extension:'.png',blob});}
+        files.push({extension:'.layer.json',blob:new Blob([JSON.stringify(meta,null,2)],{type:'application/json'})});return {id:meta.id,name:meta.name,files};},
       subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
       // Rendering adapter API. Frames do not emit UI/settings events and cannot mutate source pixels.
       _add:add,_frame(id,frame){const i=items.get(id);if(!i)return;const before=ready(i);Object.assign(i,frame);i.dirty=true;draw(i);if(ready(i)!==before)notify();},

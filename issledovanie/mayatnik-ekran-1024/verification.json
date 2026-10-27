@@ -1,0 +1,95 @@
+{
+  "method": "Actual unchanged test HTML in Chromium with all scripts and no request interception, both embedded and ordinary page. Runtime bit-field SHA256 matches generated data for k8/36/128. PNG SHA256 unchanged.",
+  "sourcePage": "../../mayatnik/Zerkalius-mayatnik-test.html?test=field&n=1024&sides=both&gpu=0&chisto=1",
+  "runs": [
+    {
+      "mode": "embedded page",
+      "allScripts": true,
+      "interceptions": false,
+      "results": [
+        {
+          "frame": 8,
+          "width": 2047,
+          "height": 1024,
+          "sha256": "36ce1ed9b0fec83e66dbd092de25fcfbc5e1747f55b9d5ed79f71d621f96d566",
+          "tag": "обе стороны сразу"
+        },
+        {
+          "frame": 36,
+          "width": 2047,
+          "height": 1024,
+          "sha256": "aeeaf94688438e4ba894c2fe448bcb15f4142d97e014a25be6127729cef3e8ef",
+          "tag": "обе стороны сразу"
+        },
+        {
+          "frame": 128,
+          "width": 2047,
+          "height": 1024,
+          "sha256": "7fdd07969e7ea141a65523d9c882e3716221dde0c4b743611ce84dae6770c948",
+          "tag": "обе стороны сразу"
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "mode": "ordinary page with visible menus",
+      "allScripts": true,
+      "interceptions": false,
+      "results": [
+        {
+          "frame": 8,
+          "width": 2047,
+          "height": 1024,
+          "sha256": "36ce1ed9b0fec83e66dbd092de25fcfbc5e1747f55b9d5ed79f71d621f96d566",
+          "tag": "обе стороны сразу"
+        },
+        {
+          "frame": 36,
+          "width": 2047,
+          "height": 1024,
+          "sha256": "aeeaf94688438e4ba894c2fe448bcb15f4142d97e014a25be6127729cef3e8ef",
+          "tag": "обе стороны сразу"
+        },
+        {
+          "frame": 128,
+          "width": 2047,
+          "height": 1024,
+          "sha256": "7fdd07969e7ea141a65523d9c882e3716221dde0c4b743611ce84dae6770c948",
+          "tag": "обе стороны сразу"
+        }
+      ],
+      "pageErrors": []
+    }
+  ],
+  "pngHashesUnchanged": [
+    {
+      "file": "pair-field-1024-k008.png",
+      "pngSha256": "87e91a57d094b092a743116e99942a8f7cd34f8bcadc67b99b68ca1ceec37245"
+    },
+    {
+      "file": "pair-field-1024-k036.png",
+      "pngSha256": "57fb9bc3b3806c3868db5d9edd21b646bb2e417f1911219e3f9244124b557ee6"
+    },
+    {
+      "file": "pair-field-1024-k128.png",
+      "pngSha256": "8aeab1f4922efa98ea629aa0b83d8cfc4a908830ee52680f1d96815568996dd8"
+    }
+  ],
+  "researchViewer": {
+    "desktop": [
+      1440,
+      1000
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "images": 3,
+    "zooms": [
+      1,
+      2,
+      4
+    ],
+    "errors": []
+  }
+}

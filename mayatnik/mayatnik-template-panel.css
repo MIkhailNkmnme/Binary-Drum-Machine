@@ -187,3 +187,13 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 .may-template-limit-notice[hidden]{display:none}
 
 #mayatnikTemplatePanel .mtp-sequence-rows .is-selected{color:#edffff;background:#124b55;box-shadow:inset 3px 0 #69edff}
+
+#mayLibraryExport{box-sizing:border-box;width:min(620px,94vw);max-height:90vh;overflow:auto;padding:16px;color:#e8edf5;background:#0e1116;border:1px solid #b48cff;font:13px system-ui,sans-serif}
+#mayLibraryExport::backdrop{background:#000a}
+#mayLibraryExport h3,#mayLibraryExport h4{margin:8px 0}
+#mayLibraryExport p{line-height:1.45}
+#mayLibraryExport .mtp-export-commands{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0}
+#mayLibraryExport .mtp-export-list{max-height:45vh;overflow:auto;border-block:1px solid #465066;padding:6px 0}
+#mayLibraryExport .mtp-export-list label{display:flex;align-items:center;gap:8px;min-height:30px;padding:2px 4px;overflow-wrap:anywhere}
+#mayLibraryExport .mtp-export-list input{flex:none;width:18px;height:18px}
+#mayLibraryExport .mtp-status{display:block;white-space:normal;overflow-wrap:anywhere}

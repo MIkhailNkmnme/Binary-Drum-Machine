@@ -8,7 +8,7 @@
     $('stage').style.transform=`scale(${zoom})`;$('stage').style.width=w+'px';$('stage').style.height=h+'px';$('space').style.width=Math.ceil(w*zoom)+'px';$('space').style.height=Math.ceil(h*zoom)+'px';$('zoom').textContent=Math.round(zoom*100)+'%';}
   function fit(){if(snapshot)zoomTo(Math.min(viewport.clientWidth/snapshot.image.width,viewport.clientHeight/snapshot.image.height));}
   function redrawLines(){if(!snapshot)return;const c=$('lines'),g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);g.strokeStyle='#ffd650';g.lineWidth=Math.max(1,snapshot.rasterScale*.35);
-    for(const [a,b,x,y]of snapshot.axes||[]){g.beginPath();g.moveTo(a*snapshot.rasterScale,b*snapshot.rasterScale);g.lineTo(x*snapshot.rasterScale,y*snapshot.rasterScale);g.stroke();}}
+    for(const [a,b,x,y]of snapshot.axes||[]){g.beginPath();g.moveTo(a*snapshot.rasterScale,b*snapshot.rasterScale);g.lineTo(x*snapshot.rasterScale,y*snapshot.rasterScale);MayatnikAxisStyle.stroke(g,{mode:snapshot.axisPalette});}}
   function load(s){if(!s?.image||!(s.image.pixels instanceof Uint8ClampedArray)||s.image.width*s.image.height*4!==s.image.pixels.length||!(s.field?.val instanceof Int8Array)||s.field.W*s.field.H!==s.field.val.length)throw Error('В файле нет полного снимка кадра');
     stop();snapshot=s;colourReady=false;for(const id of ['base','colours','lines']){$(id).width=s.image.width;$(id).height=s.image.height;}
     $('base').getContext('2d').putImageData(new ImageData(s.image.pixels,s.image.width,s.image.height),0,0);redrawLines();

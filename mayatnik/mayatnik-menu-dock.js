@@ -126,7 +126,9 @@
     document.addEventListener('wheel',e=>scrollSide(e,sideOf(e.target)),{passive:false});
     document.addEventListener('focusin',e=>{const side=sideOf(e.target);if(!side?.max)return;const r=e.target.getBoundingClientRect(),delta=r.top<side.start?r.top-side.start:r.bottom>side.end?r.bottom-side.end:0;if(delta){side.bar.scrollTop=Math.max(0,Math.min(side.max,side.bar.scrollTop+delta));queueStack();}});
     const layout=()=>{if(innerWidth<=600){for(const g of heads.keys())g.classList.remove('may-docked','may-dock-bottom','may-dock-side');placed.clear();geometry='';onLayout();layoutSides();return;}
-      const B=bounds(),signature=JSON.stringify(B)+'|'+[...heads.values()].map(h=>h.getClientRects().length?h.offsetWidth:0).join(',');if(drag)return;if(ready&&signature===geometry){layoutSides();return;}geometry=signature;
+      // The frame controls follow the field axis without resizing the header.
+      // Their new position must free/reoccupy slots just like a viewport resize.
+      const B=bounds(),signature=JSON.stringify([B,obstacles()])+'|'+[...heads.values()].map(h=>h.getClientRects().length?h.offsetWidth:0).join(',');if(drag)return;if(ready&&signature===geometry){layoutSides();return;}geometry=signature;
       const previous=new Map(placed);placed.clear();
       for(const [g,hd] of heads){if(!hd.getClientRects().length)continue;const saved=state[idOf(g)],r=rect(hd),prior=previous.get(g),side=saved?.edge||prior?.edge||initialEdge||(g.parentElement===rail?'left':g.classList.contains('pt-bot')?'bottom':'top');
         const free=available(g),bottomFallback=saved?.edge==='bottom'?free.filter(p=>p.edge==='bottom').sort((a,b)=>Math.abs(a.index-saved.index)-Math.abs(b.index-saved.index))[0]:null,

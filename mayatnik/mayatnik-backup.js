@@ -4,7 +4,7 @@
  function create(host){
   let busy=false,message='',restored=false,terminal=false;const listeners=new Set();const state=()=>({busy,message,restored,terminal});
   function report(text){message=text;for(const fn of listeners)try{fn(state());}catch(_){}}
-  async function run(label,action){if(busy||restored||terminal)throw Error('Дождитесь завершения текущего действия');busy=true;report(label);try{return await action();}catch(e){report(e.message||String(e));throw e;}finally{busy=false;if(!restored&&!terminal)host.cache.freeze(false);report(message);}}
+  async function run(label,action){if(busy||restored||terminal)throw Error('Дождитесь завершения текущего действия');host.guard?.();busy=true;report(label);try{return await action();}catch(e){report(e.message||String(e));throw e;}finally{busy=false;if(!restored&&!terminal)host.cache.freeze(false);report(message);}}
   function local(){const pairs=[];for(let i=0;i<host.local.length;i++){const key=host.local.key(i);if(host.codec.isLocalKey(key))pairs.push({key,value:host.local.getItem(key)});}return host.codec.validateLocal(pairs);}
   function putLocal(pairs){const existing=local();for(const {key}of existing)host.local.removeItem(key);for(const {key,value}of pairs)host.local.setItem(key,value);const sort=a=>JSON.stringify(a.slice().sort((x,y)=>x.key.localeCompare(y.key)));if(sort(local())!==sort(pairs))throw Error('Настройки записаны не полностью');}
   async function snapshot(){await host.otherTabs?.();await host.prepare();await host.cache.idle();host.cache.freeze(true);return {createdAt:new Date().toISOString(),appVersion:host.version,entries:await host.cache.snapshot(),local:host.exportLocal?host.codec.validateLocal(host.exportLocal(local())):local()};}

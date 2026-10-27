@@ -1,10 +1,11 @@
 /* Длины направляющих в шагах сетки битов, разбиение в точках пересечения. */
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof module==='object'&&module.exports?require('./mayatnik-axis-style.js'):root.MayatnikAxisStyle);
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.MayatnikLineMeasures = api;
-})(typeof globalThis === 'object' ? globalThis : this, function () {
+})(typeof globalThis === 'object' ? globalThis : this, function (AxisStyle) {
   'use strict';
+  const PURPLE=AxisStyle?.PURPLE||'#b48cff';
   const EPS = 1e-8, cross = (a,b) => a[0]*b[1]-a[1]*b[0];
   const sub = (a,b) => [a[0]-b[0],a[1]-b[1]], at = (a,b,t) => [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
   const length = (a,b) => Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]));
@@ -105,7 +106,7 @@
     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),path=document.createElementNS(ns,'path');
     const guides=document.createElementNS(ns,'g');guides.classList.add('may-measure-guides');
     svg.setAttribute('aria-hidden','true');svg.append(guides,path);root.append(svg);document.body.append(root);
-    root.addEventListener('wheel',e=>{if(!host)return;const forwarded=new WheelEvent('wheel',{deltaX:e.deltaX,deltaY:e.deltaY,deltaZ:e.deltaZ,deltaMode:e.deltaMode,clientX:e.clientX,clientY:e.clientY,ctrlKey:e.ctrlKey,altKey:e.altKey,shiftKey:e.shiftKey,metaKey:e.metaKey,bubbles:true,cancelable:true});if(!host.dispatchEvent(forwarded))e.preventDefault();},{passive:false});
+    root.addEventListener('wheel',e=>{if(!host)return;const p=window.mayViewRotation?.physicalPoint(e)||{x:e.clientX,y:e.clientY},forwarded=new WheelEvent('wheel',{deltaX:e.deltaX,deltaY:e.deltaY,deltaZ:e.deltaZ,deltaMode:e.deltaMode,clientX:p.x,clientY:p.y,ctrlKey:e.ctrlKey,altKey:e.altKey,shiftKey:e.shiftKey,metaKey:e.metaKey,bubbles:true,cancelable:true});if(!host.dispatchEvent(forwarded))e.preventDefault();},{passive:false});
     const labels=new Map();let active=null,view=null,items=new Map(),cacheKey='',cache=[];
     const format=n=>Number(n.toFixed(2)).toLocaleString('ru-RU');
     const probe=document.createElement('span');probe.className='may-line-value';probe.textContent='0';root.append(probe);
@@ -125,10 +126,10 @@
       const serialized=JSON.stringify(input.map(l=>[...l.a,...l.b,l.color].map(v=>typeof v==='number'?key(v):v)));
       if(serialized!==cacheKey){cache=split(input);cacheKey=serialized;}
       const p=q=>[q[0]*view.scale+view.x,q[1]*view.scale+view.y];
-      const foreground=[...merge(input),...(view.axis?[view.axis]:[])],groups=new Map();
+      const foreground=[...merge(input.filter(l=>l.color!==PURPLE)),...merge(input.filter(l=>l.color===PURPLE)),...(view.axis?[view.axis]:[])],groups=new Map();
       for(const line of foreground){const color=/^#0{3}(?:0{3})?$/i.test(line.color)?'#b48cff':line.color,k=color+'|'+!!line.dash;
         if(!groups.has(k))groups.set(k,{color,dash:line.dash,paths:[]});groups.get(k).paths.push('M'+p(line.a).join(',')+'L'+p(line.b).join(','));}
-      guides.replaceChildren(...[...groups.values()].map(group=>{const q=document.createElementNS(ns,'path');q.style.stroke=group.color;q.setAttribute('d',group.paths.join(''));if(group.dash)q.setAttribute('stroke-dasharray','4 3');return q;}));
+      guides.replaceChildren(...[...groups.values()].flatMap(group=>{const d=group.paths.join('');if(group.color===PURPLE&&AxisStyle?.svgPaths)return AxisStyle.svgPaths(document,d,{mode:view.axisPalette});const q=document.createElementNS(ns,'path');q.style.stroke=group.color;q.setAttribute('d',d);if(group.dash)q.setAttribute('stroke-dasharray','4 3');return [q];}));
       items=new Map();const candidates=[],box={left:-view.x/view.scale,top:-view.y/view.scale,right:(view.width-view.x)/view.scale,bottom:(view.height-view.y)/view.scale};
       for(const line of cache){
         const pieces=line.segments.length>1?[{...line,whole:true},...line.segments.map(s=>({...s,whole:false}))]:[{...line,whole:true}];

@@ -1,0 +1,2 @@
+/* Overlays keep their original z order in separate transformed worlds. */
+body.may-embed .may-rotation-world > .may-layer-scene{display:none!important}

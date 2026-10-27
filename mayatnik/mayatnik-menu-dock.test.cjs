@@ -43,6 +43,14 @@ test('saved bottom indexes stay bottom through shortened strip, resize and mobil
  f.gs[1].box.height=1000;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='right');assert.equal(parseFloat(bar.style.top)+parseFloat(bar.style.height),896,'side clipping follows viewport height independently of footer');
  f.resize(500);assert.equal(f.gs[0].classList.contains('may-docked'),false);f.resize(1000,784);assert.equal(f.gs[0].style['--may-dock-x'],'638px');assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved,'temporary clamping preserves original saved indexes');
 });
+test('moving frame controls relocate overlapping headers without changing saved slots',()=>{
+ let visible=true;const box={left:900,top:8,width:90,height:24},bar={getClientRects:()=>visible?[box]:[],getBoundingClientRect:()=>({...box,right:box.left+box.width,bottom:box.top+box.height})};
+ const f=fixture({},{defaultEdge:'top',excluded:[bar],stackSides:false}),saved=f.store.get('mayatnik-menu-dock-v509'),original=f.gs.map(g=>g.style['--may-dock-x']);
+ box.left=parseFloat(original[0])+60;box.width=242;f.dock.refresh();
+ for(const g of f.gs){const r={x:parseFloat(g.style['--may-dock-x']),y:parseFloat(g.style['--may-dock-y']),w:120,h:24};assert.equal(D.overlap(r,{x:box.left,y:box.top,w:box.width,h:box.height}),false);}
+ assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);assert.notEqual(f.gs[0].style['--may-dock-x'],original[0]);
+ visible=false;f.dock.refresh();assert.deepEqual(f.gs.map(g=>g.style['--may-dock-x']),original);assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);
+});
 test('real controller snaps drag to right strip and persists slot, never raw pixels',()=>{
  const f=fixture();f.event('pointerdown',{target:f.gs[0].hd,clientX:68,clientY:74},true);f.event('pointermove',{clientX:936,clientY:270});f.event('pointerup',{clientX:936,clientY:270});
  const saved=JSON.parse(f.store.get('mayatnik-menu-dock-v509'));assert.equal(saved.g0.edge,'right');assert.equal(saved.g0.index,8);assert.deepEqual(Object.keys(saved.g0).sort(),['edge','index']);assert.equal(f.gs[0].style['--may-dock-x'],'876px');
@@ -153,7 +161,7 @@ test('wheel ownership covers disabled controls, fixed popup backings and side cl
 
 test('production field wheel ignores menu-owned and already handled events, preserving ordinary zoom',()=>{
  const html=fs.readFileSync(require.resolve('./Zerkalius-mayatnik.html'),'utf8'),start=html.indexOf("  wrap.addEventListener('wheel', e => {"),handlers={};let owned=false,zooms=0;
- const ctx={wrap:{addEventListener:(name,fn)=>handlers[name]=fn},geo:{},window:{MayatnikMenuDock:{guardWheel:()=>owned}},st:{},ovlLinked:()=>false,scale:()=>1,zoomTo:()=>{zooms++;},zWant:0};
+ const ctx={viewRotation:{isFieldEvent:()=>false},wrap:{addEventListener:(name,fn)=>handlers[name]=fn},geo:{},window:{MayatnikMenuDock:{guardWheel:()=>owned}},st:{},ovlLinked:()=>false,scale:()=>1,zoomTo:()=>{zooms++;},zWant:0};
  vm.runInNewContext(html.slice(start,html.indexOf('  // Тянуть',start)),ctx);
  const event={deltaY:50,deltaMode:0,clientX:500,clientY:500,preventDefault(){}};
  owned=true;handlers.wheel(event);assert.equal(zooms,0);owned=false;handlers.wheel({...event,defaultPrevented:true});assert.equal(zooms,0);handlers.wheel(event);assert.equal(zooms,1);

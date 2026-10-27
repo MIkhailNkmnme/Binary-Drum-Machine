@@ -82,14 +82,14 @@ test('service adapters preserve clean content, clip to viewport, and remove stal
   assert.match(html,/body\.may-fold-active \.may-layer-scene,body\.may-fold-active \.may-layer-service\{visibility:hidden!important\}/);
 });
 test('actual GIF adapter draws registered content once before services, and retains the source-PNG path',()=>{
-  const e=adapter(),C=e.ctx;let paints=0,serviceDraws=0;C.mayLayers._paint=()=>paints++;C.gpuBig=null;C.GIF_LAYERS='legacy';C.getComputedStyle=e=>({display:e.style.display||'',visibility:e.style.visibility||'',opacity:e.style.opacity||'1'});
+  const e=adapter(),C=e.ctx;let paints=0,serviceDraws=0;C.mayLayers._paint=()=>paints++;C.gpuBig=null;C.GIF_LAYERS='legacy';C.viewRotation={capture:c=>c};C.getComputedStyle=e=>({display:e.style.display||'',visibility:e.style.visibility||'',opacity:e.style.opacity||'1'});
   const svc=canvas(1,1);Object.assign(svc,{tagName:'CANVAS'});Object.assign(svc.style,{left:'11px',top:'21px',width:'1px',height:'1px'});const r=svc.getBoundingClientRect();svc.getBoundingClientRect=()=>({...r,right:12,bottom:22});
   const legacy=canvas(1,1);legacy.tagName='CANVAS';legacy.style.visibility='hidden';C.document.querySelectorAll=q=>q==='.may-layer-service'?[svc]:[legacy];const out=canvas(4,4),G=out.getContext('2d');G.drawImage=()=>serviceDraws++;
   vm.runInContext(html.slice(html.indexOf('  function gifViewFrame('),html.indexOf("  $('bGif').onclick")),C);C.gifViewFrame(out,4,4);assert.equal(paints,1);assert.equal(serviceDraws,1);
-  const png=html.slice(html.indexOf("  $('bPng').onclick"),html.indexOf('  function frameSnapshot'));assert.ok(png.includes('cg.putImageData(img,0,0)'));assert.ok(!png.includes('mayLayers'));
+  const png=html.slice(html.indexOf("  $('bPng').onclick"),html.indexOf('  function frameSnapshot'));assert.ok(png.includes('const picture=capturePicture()'));assert.ok(png.includes('cg.putImageData(picture,0,0)'));assert.ok(!png.includes('mayLayers'));
 });
 test('individual template adapter and hit testing use display offsets/order while preserving paint/view data',()=>{
-  const e=adapter(),C=e.ctx,M=C.mayLayers;C.RK=1;C.VW=8;C.playing=false;C.rememberTemplate=()=>{};C.colourTemplate=null;
+  const e=adapter(),C=e.ctx,M=C.mayLayers;C.RK=1;C.VW=8;C.playing=false;C.joinedOn=()=>false;C.dispH=()=>8;C.templateSelectionSkipped=()=>false;C.rememberTemplate=()=>{};C.colourTemplate=null;
   const item={id:'t',name:'Моя фигура',view:{visible:true,alpha:50,x:0,down:0},parts:[{ox:0,mask:{width:2,height:2},canvas:canvas(2,2,new Array(16).fill(255))}]};C.templateItems=[item];C.templateRect=()=>({x:0,y:0,width:2,height:2});C.MayatnikTemplate={contains:(_,r,x,y)=>x>=r.x&&x<r.x+r.width&&y>=r.y&&y<r.y+r.height};
   vm.runInContext(html.slice(html.indexOf('  function paintTemplate('),html.indexOf('  function templateBitCanvas(')),C);
   vm.runInContext(html.slice(html.indexOf('  function hitTemplate('),html.indexOf('  // v0.037: курсор')),C);

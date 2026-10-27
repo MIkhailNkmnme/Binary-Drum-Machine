@@ -1,7 +1,6 @@
-/* Shared menu hover focus: raise the owner, shade peer controls without moving fixed popups. */
+/* Shared menu hover focus: raise the owner without dimming peers or moving fixed popups. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ZerkMenuGroupFocus=api;})(globalThis,function(){
   'use strict';
-  const CELLS='.pt-l,.gz-head,.pt-b,.gz-hx,.gz-control,.may-group-backdrop,.may-standard-contours';
   function mount({document:doc=globalThis.document,groups,ownerOf,onChange=()=>{}}){
     let current=null;const saved=[],win=doc.defaultView||globalThis;
     function changeStyle(node,key,value){saved.push({node,key,value,old:node.style.getPropertyValue(key),priority:node.style.getPropertyPriority(key)});node.style.setProperty(key,value,'important');}
@@ -12,12 +11,6 @@
         // Elevate its existing stacking ancestors too (header versus side rail).
         // Do not reparent nodes or transform a group: its fixed children stay put.
         for(let node=group;node&&node!==doc.body;node=node.parentElement)changeStyle(node,'z-index','2147483642');
-        for(const other of all){if(other===group)continue;
-          for(const cell of other.querySelectorAll(CELLS)){
-            const parent=cell.parentElement?.closest(CELLS);if(parent&&other.contains(parent))continue;
-            const filter=win.getComputedStyle(cell).filter;changeStyle(cell,'filter',(filter&&filter!=='none'?filter+' ':'')+'brightness(0.75)');
-          }
-        }
       }onChange(group);
     }
     const owner=target=>target?.nodeType===1?ownerOf(target):null;

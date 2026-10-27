@@ -1,0 +1,97 @@
+{
+  "status": "Exact frames from pair-field test1024; source and parameters recorded",
+  "sourcePage": "../../mayatnik/Zerkalius-mayatnik-test.html?test=field&n=1024&sides=both",
+  "hubReference": {
+    "field": "5.9 / hubPair / middle pane",
+    "source": "../../_js/hub-xor-background.js",
+    "frameConvention": "test k = 1 + ceil(hub frame / 2); test k8,36,128 correspond to hub frames13-14,69-70,253-254. These PNG use data orientation; no CSS transform."
+  },
+  "parameters": {
+    "rows": 1024,
+    "width": 2047,
+    "height": 1024,
+    "source": "field",
+    "direction": "pend",
+    "pair": true,
+    "mirror": false,
+    "background": "empty",
+    "palette": {
+      "0": [
+        91,
+        100,
+        117
+      ],
+      "1": [
+        232,
+        237,
+        245
+      ],
+      "-1": [
+        0,
+        0,
+        0
+      ]
+    },
+    "scale": "one source cell per image pixel; no smoothing; full uncropped field"
+  },
+  "frameConvention": "k counts operations: k=0 empty, k=1 centre seed, each next operation adds both seeds at anchor ±(k−1) before one rowwise sweep. mayTestXorFrame(q) uses k=q+1; use mayComparison.set(field,{rows:1024,frame:k}) for these exact frames.",
+  "recurrence": "Each operation sets new row-0 seed(s) to 1. Rows then update top to bottom; each cell XORs its existing value with available upper-left and upper-right neighbours; −1 is absent and skipped. Horizontal boundaries are finite, not toroidal.",
+  "sources": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik-test.html",
+      "sha256": "b59eae0715b47ff8f3de24a1627dc20beb764e62884a735f51eecdbebfda7809"
+    },
+    {
+      "file": "mayatnik/mayatnik-compare.js",
+      "sha256": "4d666b3b2c55340857cfa1adb88233942201a4c5e4b03308b696975c37ae2a99"
+    },
+    {
+      "file": "mayatnik/mayatnik-core.js",
+      "sha256": "207e53206313726ba79a4a250a66323641d5375d777645f0018ad2bc6f2ca5a3"
+    }
+  ],
+  "frames": [
+    {
+      "frame": 8,
+      "vertices": 15,
+      "file": "pair-field-1024-k008.png",
+      "width": 2047,
+      "height": 1024,
+      "counts": {
+        "empty": 1033272,
+        "zero": 931653,
+        "one": 131203
+      },
+      "bitsSha256": "36ce1ed9b0fec83e66dbd092de25fcfbc5e1747f55b9d5ed79f71d621f96d566",
+      "pngSha256": "87e91a57d094b092a743116e99942a8f7cd34f8bcadc67b99b68ca1ceec37245"
+    },
+    {
+      "frame": 36,
+      "vertices": 71,
+      "file": "pair-field-1024-k036.png",
+      "width": 2047,
+      "height": 1024,
+      "counts": {
+        "empty": 977132,
+        "zero": 950377,
+        "one": 168619
+      },
+      "bitsSha256": "aeeaf94688438e4ba894c2fe448bcb15f4142d97e014a25be6127729cef3e8ef",
+      "pngSha256": "57fb9bc3b3806c3868db5d9edd21b646bb2e417f1911219e3f9244124b557ee6"
+    },
+    {
+      "frame": 128,
+      "vertices": 255,
+      "file": "pair-field-1024-k128.png",
+      "width": 2047,
+      "height": 1024,
+      "counts": {
+        "empty": 803712,
+        "zero": 1091549,
+        "one": 200867
+      },
+      "bitsSha256": "7fdd07969e7ea141a65523d9c882e3716221dde0c4b743611ce84dae6770c948",
+      "pngSha256": "8aeab1f4922efa98ea629aa0b83d8cfc4a908830ee52680f1d96815568996dd8"
+    }
+  ]
+}

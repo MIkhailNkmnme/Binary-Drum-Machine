@@ -9,7 +9,7 @@ const hostSource=html.slice(html.indexOf('  let autoAxesRevision='),html.indexOf
 const plain=x=>JSON.parse(JSON.stringify(x));
 function makeHost({fallback=false}={}){
   const nodes=new Map(),workers=[];
-  const ctx={st:{autoAxes:true,view:'bits'},f:{W:15,H:14,val:new Int8Array(210).fill(1)},geo:{anchor:7},k:4,VX:0,VW:15,VH:14,RG:2,bmGen:0,gpuBig:null,quiet:false,redraws:0,symCanvas:{hidden:false},window:{},
+  const ctx={axisStroke:(g,o)=>require('./mayatnik-axis-style.js').stroke(g,{mode:'purple-black',...o}),st:{autoAxes:true,view:'bits'},f:{W:15,H:14,val:new Int8Array(210).fill(1)},geo:{anchor:7},k:4,VX:0,VW:15,VH:14,RG:2,bmGen:0,gpuBig:null,quiet:false,redraws:0,symCanvas:{hidden:false},window:{},
     $:id=>{if(!nodes.has(id))nodes.set(id,{textContent:''});return nodes.get(id);},navQuick:()=>ctx.quiet,parityVisible:()=>true,outShow:()=>false,queueDigits:()=>ctx.redraws++,joinedOn:()=>false,rombP:()=>-1,
     MayatnikAutoAxes:{...Auto,createWorker(){if(fallback)throw Error('CSP');const w={terminated:false,terminate(){this.terminated=true;},postMessage(data){this.request=data;}};workers.push(w);return w;}}};
   for(let r=0;r<4;r++)for(let c=4+r;c<=10-r;c++)ctx.f.val[(2+r)*15+c]=0;
@@ -68,7 +68,7 @@ test('menu, clear/undo, restores and export include the auto-axes state',()=>{
 test('PNG refuses an incomplete/error result and exports the full accepted axes',()=>{
   const handler=html.slice(html.indexOf("  $('bPng').onclick = () =>"),html.indexOf('  function frameSnapshot(){'));
   const nodes={bPng:{},fillInfo:{textContent:''}},calls={capture:0,axes:0,download:0};let result=null;
-  const ctx={$:id=>nodes[id],st:{autoAxes:true},f:{},img:{},autoAxesGet:()=>result,capturePicture:()=>{calls.capture++;return {width:12,height:14};},document:{createElement:()=>({getContext:()=>({putImageData(){}}),toBlob:callback=>callback({})})},paintBitContours(){},paintTemplate(){},paintGeomCenter(){},paintAutoAxes(g,a){assert.equal(a,result);calls.axes++;},RK:1,download(){calls.download++;},fname:()=> 'field.png'};
+  const ctx={viewRotation:{capture:c=>c},$:id=>nodes[id],st:{autoAxes:true},f:{},img:{},autoAxesGet:()=>result,capturePicture:()=>{calls.capture++;return {width:12,height:14};},document:{createElement:()=>({getContext:()=>({putImageData(){}}),toBlob:callback=>callback({})})},paintBitContours(){},paintTemplate(){},paintGeomCenter(){},paintAutoAxes(g,a){assert.equal(a,result);calls.axes++;},RK:1,download(){calls.download++;},fname:()=> 'field.png'};
   vm.runInNewContext(handler,ctx);nodes.bPng.onclick();assert.equal(calls.capture,0);assert.match(nodes.fillInfo.textContent,/дождитесь/);
   result={error:'failed'};nodes.bPng.onclick();assert.equal(calls.capture,0);assert.match(nodes.fillInfo.textContent,/failed/);
   result={triangles:[],segments:[{x:1.5,y0:2,y1:8,h:6}]};nodes.bPng.onclick();assert.deepEqual(calls,{capture:1,axes:1,download:1});

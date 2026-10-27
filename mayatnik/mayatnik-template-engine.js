@@ -58,6 +58,8 @@
     }
     return {
       list:()=>host.entries().filter(t=>!visibleIds||visibleIds.has(t.id)).map(t=>({id:t.id,name:t.name,hex:t.shape.hex,parts:t.shape.parts,previewKey:t.shape,builtin:String(t.id).startsWith('standard:')})),allIds:()=>host.entries().map(t=>t.id),whenFiltered:()=>filterPending,
+      exportList:()=>host.entries().map(({id,name})=>({id,name})),
+      exportItem(id){const entry=host.entries().find(t=>t.id===id);if(!entry)throw Error('Шаблон не найден');const item=structuredClone(entry);return {id:item.id,name:item.name,files:[{extension:'.template.json',blob:new Blob([JSON.stringify({format:'mayatnik-templates',version:1,templates:[item]})],{type:'application/json'})}]};},
       select,colour:hex=>edit('colour',hex),removeMatches:()=>edit('delete'),
       async action(id,action,value){const result=await host.action(id,action,value);if(action==='visible'||action==='skip-selection'){clear();if(action==='visible'){scopeKey=null;refresh();}emit();}return result;},
       visibility:id=>host.visibility?.(id)||{placed:0,visible:false,skipSelection:false},getControls:()=>null,

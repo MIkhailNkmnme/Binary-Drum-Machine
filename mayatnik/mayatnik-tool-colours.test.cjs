@@ -3,8 +3,8 @@ const html=fs.readFileSync(path.join(__dirname,'Zerkalius-mayatnik.html'),'utf8'
 const menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8');
 function block(start,end){const a=html.indexOf(start),b=html.indexOf(end,a);assert.ok(a>=0&&b>a);return html.slice(a,b);}
 function setup(st={}){
-  const controls={};for(const [id,value]of Object.entries({fillColour:'#123456',verticalFillColour:'#ff7f27',stolbFillColour:'#ff7f27',midOneColour:'#ff7f27',midZeroColour:'#4f9bff',fillMirror:'',fillInfo:''}))controls[id]={value,checked:false,dataset:{},addEventListener(type,fn){this[type]=fn;}};
-  const c={st,$:id=>controls[id],controls,save(){c.saved=JSON.parse(JSON.stringify(st));},clearFillPreview(){c.fillPreview=null;},previewPoint:null,previewFrame:0,f:{},draw(){},requestAnimationFrame(){return 1;},rgba:([r,g,b])=>(255<<24|b<<16|g<<8|r)>>>0,Uint32Array,Uint8ClampedArray,Math,setTimeout(){}};
+  const controls={};for(const [id,value]of Object.entries({axesFillColour:'#ff7f27',autoFillColour:'#ff7f27',growFillColour:'#ff7f27',meetFillColour:'#ff7f27',axisFillColour:'#ff7f27',autoFillPalette:'',growOwnColour:'',fillColour:'#123456',verticalFillColour:'#ff7f27',stolbFillColour:'#ff7f27',midOneColour:'#ff7f27',midZeroColour:'#4f9bff',fillMirror:'',fillInfo:''}))controls[id]={value,checked:false,dataset:{},addEventListener(type,fn){this[type]=fn;}};
+  const c={st,MayatnikPaintGroups:require('./mayatnik-paint-groups.js'),window:{},autoPaintIds:[],queueSession(){},triangleMapRasterMask:()=>null,$:id=>controls[id],controls,save(){c.saved=JSON.parse(JSON.stringify(st));},clearFillPreview(){c.fillPreview=null;},previewPoint:null,previewFrame:0,f:{},draw(){},requestAnimationFrame(){return 1;},rgba:([r,g,b])=>(255<<24|b<<16|g<<8|r)>>>0,Uint32Array,Uint8ClampedArray,Math,setTimeout(){}};
   vm.createContext(c);vm.runInContext(block('  function paintToolColour(','  for(const ev of'),c);return c;
 }
 test('old saves inherit restored common colour once; selections persist independently of fill and centre',()=>{
