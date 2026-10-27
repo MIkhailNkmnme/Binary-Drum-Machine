@@ -1,5 +1,7 @@
-/* v6. Главная: синхронное сравнение конусов 5.7 и глобального XOR 5.8.
-   Рабочая и последняя опубликованная пара полей, без истории кадров. */
+/* v7. Главная: синхронное сравнение трёх полей — конусы 5.7, «обе стороны» 5.9
+   (пара вершин −m/+m одним проходом) и глобальный XOR 5.8. Третье поле на экране
+   перевёрнуто (scaleY(-1) в CSS), данные у всех трёх в обычной ориентации.
+   В наложении XOR/AND доступны любые две пары: 1–2, 2–3, 3–1. */
 (() => {
   'use strict';
   const left = document.getElementById('hubCones'), right = document.getElementById('hubXor');
@@ -7,13 +9,18 @@
   const coneCtx = left.getContext('2d', { alpha: false });
   const xorCtx = right.getContext('2d', { alpha: false });
   if (!coneCtx || !xorCtx) return;
+  const middle = document.getElementById('hubPair');
+  const pairCtx = middle && middle.getContext('2d', { alpha: false });
   const H = 1024, W = 2 * H - 1, CENTER = W >> 1;
   const FIRST_FRAME = 8, INTERVAL = 120, ROW_CHUNK = 64;
   left.width = right.width = W; left.height = right.height = H;
+  if (middle) { middle.width = W; middle.height = H; }
   const cones = MAYATNIK.field(W, H, 'empty', CENTER);
   const grid = new Int8Array(W * H).fill(-1);
-  const publishedLeft = new Int8Array(W * H), publishedRight = new Int8Array(W * H);
+  const pairGrid = new Int8Array(W * H).fill(-1);
+  const publishedLeft = new Int8Array(W * H), publishedRight = new Int8Array(W * H), publishedPair = new Int8Array(W * H);
   const coneImage = coneCtx.createImageData(W, H), xorImage = xorCtx.createImageData(W, H);
+  const pairImage = pairCtx && pairCtx.createImageData(W, H);
   const root = document.getElementById('hubXorBackground'), blend = document.getElementById('hubBlend');
   const blendCtx = blend && blend.getContext('2d', { alpha: false });
   if (blend) { blend.width = W; blend.height = H; }
@@ -21,31 +28,37 @@
   const modeButton = document.getElementById('hubCompareMode'), mirrorButton = document.getElementById('hubCompareMirror');
   const pauseButton = document.getElementById('hubComparePause');
   const paletteButton = document.getElementById('hubComparePalette'), paletteMenu = document.getElementById('hubComparePaletteMenu');
+  const pairsBox = document.getElementById('hubComparePairs');
   const PALETTES = {
-    ice: { label: 'Лёд', left: [88,183,255], right: [255,179,91], common: [232,237,245], legend: 'Конусы — голубой · Всё поле — оранжевый · Общие — белый' },
-    mint: { label: 'Мята', left: [115,228,165], right: [255,135,207], common: [255,211,91], legend: 'Конусы — мятный · Всё поле — розовый · Общие — жёлтый' },
-    mono: { label: 'Моно', left: [255,255,255], right: [153,153,153], common: [221,221,221], legend: 'Конусы — белый · Всё поле — серый · Общие — светло-серый' },
-    green: { label: 'Зелёный', left: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, всё поле и общие — зелёный' }
+    ice: { label: 'Лёд', left: [88,183,255], middle: [232,237,245], right: [255,179,91], common: [232,237,245], legend: 'Конусы — голубой · Обе стороны — белый · Всё поле — оранжевый · Общие — белый' },
+    mint: { label: 'Мята', left: [115,228,165], middle: [255,211,91], right: [255,135,207], common: [255,211,91], legend: 'Конусы — мятный · Обе стороны — жёлтый · Всё поле — розовый · Общие — жёлтый' },
+    mono: { label: 'Моно', left: [255,255,255], middle: [221,221,221], right: [153,153,153], common: [221,221,221], legend: 'Конусы — белый · Обе стороны — светло-серый · Всё поле — серый' },
+    green: { label: 'Зелёный', left: [51,122,52], middle: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, обе стороны, всё поле и общие — зелёный' }
   };
-  const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
-  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 } } };
+  const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'], PAIRS = ['12', '23', '31'];
+  const PAIR_LABEL = { 12: '1–2', 23: '2–3', 31: '3–1' };
+  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', pair: '12',
+    pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 }, pair: { x: 0, y: 0 } } };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE));
     if (saved && typeof saved === 'object') {
       if (MODES.includes(saved.mode)) view.mode = saved.mode;
       if (typeof saved.mirror === 'boolean') view.mirror = saved.mirror;
       if (Object.prototype.hasOwnProperty.call(PALETTES, saved.palette)) view.palette = saved.palette;
+      if (PAIRS.includes(saved.pair)) view.pair = saved.pair;
       if (typeof saved.zoom === 'number' && Number.isFinite(saved.zoom)) view.zoom = Math.max(1, Math.min(64, saved.zoom));
-      for (const key of ['left', 'right', 'blend']) for (const axis of ['x', 'y']) {
+      for (const key of ['left', 'right', 'blend', 'pair']) for (const axis of ['x', 'y']) {
         const value = saved.pan?.[key]?.[axis];
         if (typeof value === 'number' && Number.isFinite(value)) view.pan[key][axis] = value;
       }
     }
   } catch (_) {}
+  if (!middle) view.pair = '12';
   let published = false;
   let frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
+  let pairStep = false;   // текущий кадр — шаг пары для 5.9 (переживает разбивку на куски строк)
   let cycle = 0, awaitingStats = false, failed = false, paused = false, controller = null;
-  let drag = null, middle = null, swallowClick = false;
+  let drag = null, middle1 = null, swallowClick = false;
   try {
     if (typeof window !== 'undefined' && window.HubComparePanel?.create) controller = window.HubComparePanel.create({ W, H });
   } catch (error) { stop(error); }
@@ -62,7 +75,7 @@
     if (!pauseButton) return;
     pauseButton.disabled = failed;
     pauseButton.setAttribute('aria-pressed', String(paused));
-    const label = paused ? 'Продолжить оба построения' : 'Пауза обоих построений';
+    const label = paused ? 'Продолжить все три построения' : 'Пауза трёх построений';
     pauseButton.setAttribute('aria-label', label); pauseButton.title = label;
     pauseButton.classList.toggle('gz-on', paused);
     text('hubComparePauseIcon', paused ? '▶' : 'Ⅱ');
@@ -84,12 +97,12 @@
   function text(id, value) {
     const node = document.getElementById(id); if (node) node.textContent = value;
   }
-  const PAN_KEYS = ['left', 'right', 'blend'], canvases = { left, right, blend };
+  const PAN_KEYS = ['left', 'pair', 'right', 'blend'], canvases = { left, right, blend, pair: middle };
   const CONTROL_SELECTOR = 'button,a,input,select,textarea,summary,label,dialog,[contenteditable],[role="button"],[role="slider"],[role="dialog"],[role="group"],.hub,#hubCompareTools,#hubComparePanel,.gz-rail,.gz-ladder,.hubRombGrid,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubRail,#hubZoom,#hubFieldTools';
   function isControl(event) { return !!event.target?.closest?.(CONTROL_SELECTOR); }
   function paneRect(key) { return canvases[key]?.parentElement?.getBoundingClientRect?.(); }
   function paneAt(event) {
-    for (const key of view.mode === 'split' ? ['left', 'right'] : ['blend']) {
+    for (const key of view.mode === 'split' ? ['left', 'pair', 'right'] : ['blend']) {
       const rect = paneRect(key);
       if (rect && rect.width > 0 && rect.height > 0 && event.clientX >= rect.left && event.clientX < rect.left + rect.width && event.clientY >= rect.top && event.clientY < rect.top + rect.height) return key;
     }
@@ -102,6 +115,7 @@
   }
   function applyPan(rebase = false) {
     for (const key of PAN_KEYS) {
+      if (!canvases[key]) continue;
       const pan = view.pan[key], rect = paneRect(key);
       if (view.zoom === 1) pan.x = pan.y = 0;
       else if (rect && rect.width > 0 && rect.height > 0) {
@@ -121,14 +135,17 @@
   }
   function finishDrag() {
     if (!drag) return;
-    const previous = drag; drag = null;
+    const previous = drag;
+    drag = null;
     document.body?.classList?.toggle('hubCompareDragging', false);
     try { root.releasePointerCapture?.(previous.id); } catch (_) {}
     saveView();
   }
   function syncView() {
+    if (!middle) view.pair = '12';
     const modeLabel = { split: 'Рядом', xor: 'XOR', and: 'AND' }[view.mode];
     const mirrorLabel = view.mirror ? 'Зеркально' : 'Прямо';
+    const pairLabel = PAIR_LABEL[view.pair];
     const palette = PALETTES[view.palette], css = colour => 'rgb(' + colour.join(',') + ')';
     if (root) {
       root.dataset.mode = view.mode; root.dataset.palette = view.palette;
@@ -140,9 +157,16 @@
     text('hubCompareModeLabel', modeLabel);
     text('hubCompareModeIcon', { split: '↔', xor: '⊕', and: '∧' }[view.mode]);
     text('hubCompareMirrorLabel', mirrorLabel); text('hubCompareMirrorIcon', view.mirror ? 'Ƨ1' : '11');
-    text('hubCompareOverlayLabel', modeLabel + ' · ' + mirrorLabel);
+    text('hubCompareOverlayLabel', modeLabel + ' ' + pairLabel + ' · ' + mirrorLabel);
     text('hubComparePaletteLabel', palette.label); text('hubComparePaletteIcon', '◐');
     text('hubCompareLegend', palette.legend);
+    if (pairsBox) {
+      pairsBox.hidden = view.mode === 'split';
+      for (const button of pairsBox.querySelectorAll('[data-hub-pair]')) {
+        const selected = button.dataset.hubPair === view.pair;
+        button.classList.toggle('gz-on', selected); button.setAttribute('aria-pressed', String(selected));
+      }
+    }
     if (paletteButton) {
       paletteButton.title = 'Цвета построений: ' + palette.label + '. Выбрать готовую палитру';
       paletteButton.setAttribute('aria-label', 'Цвета построений: ' + palette.label);
@@ -158,20 +182,28 @@
     }
     if (mirrorButton) {
       mirrorButton.disabled = view.mode === 'split';
-      mirrorButton.title = 'Правый источник: ' + mirrorLabel + '. Отражение по горизонтали перед XOR или AND';
-      mirrorButton.setAttribute('aria-label', 'Правый источник: ' + mirrorLabel);
+      mirrorButton.title = 'Второе поле пары: ' + mirrorLabel + '. Отражение по горизонтали перед XOR или AND';
+      mirrorButton.setAttribute('aria-label', 'Второе поле пары: ' + mirrorLabel);
       mirrorButton.setAttribute('aria-pressed', String(view.mirror));
       mirrorButton.classList.toggle('gz-on', view.mode !== 'split' && view.mirror);
     }
   }
-  function renderBlend(a, b) {
+  // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
+  const FIELD_COLOUR = { left: 'left', pair: 'middle', right: 'right' };
+  function pairFields() {
+    if (view.pair === '23') return ['pair', 'right'];
+    if (view.pair === '31') return ['right', 'left'];
+    return ['left', 'pair'];
+  }
+  function renderBlend(a, b, fa, fb) {
     if (!blendImage || view.mode === 'split') return;
     const palette = PALETTES[view.palette];
+    const ca = palette[FIELD_COLOUR[fa]], cb = palette[FIELD_COLOUR[fb]];
     for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
       const i = r * W + c, j = r * W + (view.mirror ? W - 1 - c : c);
       const av = a[i] === 1, bv = b[j] === 1;
       const on = view.mode === 'xor' ? av !== bv : av && bv;
-      paint(blendImage.data, i, on ? 1 : 0, view.mode === 'and' ? palette.common : av ? palette.left : palette.right);
+      paint(blendImage.data, i, on ? 1 : 0, view.mode === 'and' ? palette.common : av ? ca : cb);
     }
     blendCtx.putImageData(blendImage, 0, 0);
     blend.dataset.frame = left.dataset.frame;
@@ -207,6 +239,11 @@
     if (view.mode === 'split') return;
     view.mirror = !view.mirror; changeView();
   });
+  if (pairsBox) pairsBox.addEventListener('click', event => {
+    const button = event.target.closest('[data-hub-pair]');
+    if (!button || !PAIRS.includes(button.dataset.hubPair)) return;
+    view.pair = button.dataset.hubPair; changeView();
+  });
   if (root) window.addEventListener('wheel', event => {
     // Старый hub-view слушает capture на document и иначе забирает Ctrl+колесо.
     // Оставляем стандартный zoom браузера, не вызывая preventDefault.
@@ -230,11 +267,11 @@
     const consume = event => { event.preventDefault(); event.stopImmediatePropagation(); };
     window.addEventListener('pointerdown', event => {
       swallowClick = false;
-      if (event.button === 1) middle = null;
+      if (event.button === 1) middle1 = null;
       if (isControl(event) || event.ctrlKey || event.metaKey || (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen')) return;
       const key = paneAt(event); if (!key) return;
       if (event.button === 1) {
-        finishDrag(); middle = { id: event.pointerId }; consume(event);
+        finishDrag(); middle1 = { id: event.pointerId }; consume(event);
         document.getElementById('hubCompareZen')?.click(); return;
       }
       if (event.button !== 0 || view.zoom <= 1) return;
@@ -254,23 +291,23 @@
       applyPan(true);
     }, capture);
     window.addEventListener('pointerup', event => {
-      if (middle && event.pointerId === middle.id && event.button === 1) consume(event);
+      if (middle1 && event.pointerId === middle1.id && event.button === 1) consume(event);
       if (drag && event.pointerId === drag.id && event.button === 0) { consume(event); swallowClick = true; finishDrag(); }
     }, capture);
     window.addEventListener('pointercancel', event => {
-      if (middle && event.pointerId === middle.id) { consume(event); middle = null; }
+      if (middle1 && event.pointerId === middle1.id) { consume(event); middle1 = null; }
       if (drag && event.pointerId === drag.id) { consume(event); finishDrag(); }
     }, capture);
     window.addEventListener('mousedown', event => {
-      if ((event.button === 1 && middle) || (event.button === 0 && drag)) consume(event);
+      if ((event.button === 1 && middle1) || (event.button === 0 && drag)) consume(event);
     }, capture);
     window.addEventListener('auxclick', event => {
-      if (event.button === 1 && middle) { consume(event); middle = null; }
+      if (event.button === 1 && middle1) { consume(event); middle1 = null; }
     }, capture);
     window.addEventListener('click', event => {
       if (swallowClick && event.button === 0) { swallowClick = false; if (!isControl(event)) consume(event); }
     }, capture);
-    window.addEventListener('blur', () => { middle = null; swallowClick = false; finishDrag(); });
+    window.addEventListener('blur', () => { middle1 = null; swallowClick = false; finishDrag(); });
     window.addEventListener('resize', () => { applyPan(true); saveView(); });
   }
   syncView();
@@ -294,9 +331,14 @@
     for (let i = 0; i < W * H; i++) {
       paint(coneImage.data, i, publishedLeft[i], palette.left);
       paint(xorImage.data, i, publishedRight[i], palette.right);
+      if (pairImage) paint(pairImage.data, i, publishedPair[i], palette.middle);
     }
     coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
-    renderBlend(publishedLeft, publishedRight);
+    if (pairCtx) pairCtx.putImageData(pairImage, 0, 0);
+    const [fa, fb] = pairFields();
+    const a = fa === 'pair' ? publishedPair : fa === 'right' ? publishedRight : publishedLeft;
+    const b = fb === 'pair' ? publishedPair : fb === 'right' ? publishedRight : publishedLeft;
+    renderBlend(a, b, fa, fb);
   }
   function schedule(delay) {
     if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);
@@ -306,11 +348,21 @@
     if (document.hidden || awaitingStats || failed || paused) return;
     if (nextFrame) {
       nextFrame = false; frame++; row = 1; started = performance.now();
-      // Все 2047 вершин внутри рамки пройдены: обе стороны начинают новый цикл.
+      // Все 2047 вершин внутри рамки пройдены: все три поля начинают новый цикл.
       // Не заворачиваем вершины через край и не меняем исходный алгоритм cone.
-      if (frame === W) { frame = 0; cycle++; cones.val.fill(-1); grid.fill(-1); }
+      if (frame === W) { frame = 0; cycle++; cones.val.fill(-1); grid.fill(-1); pairGrid.fill(-1); }
       const d = Math.ceil(frame / 2), pos = CENTER + (frame % 2 ? -d : d);
       grid[pos] = 1;
+      // 5.9 повторяет пару шагов тест-страницы: −m и +m одной дистанцией, ровно
+      // один пересчёт на пару (кадры 0, 1, 3, 5…), поэтому поле совпадает с
+      // «обе стороны» на той же странице кадр в кадр, но обновляется через кадр.
+      const pairStepNow = frame === 0 || frame % 2 === 1;
+      pairStep = pairStepNow;
+      if (middle && pairStep) {
+        pairGrid[pos] = 1;
+        const twin = 2 * CENTER - pos;
+        if (twin >= 0 && twin < W) pairGrid[twin] = 1;
+      }
       // Один исходный cone за такт; его границы обрезаются самим общим ядром.
       MAYATNIK.cone(cones, pos, H);
     }
@@ -321,15 +373,20 @@
       for (let c = 0; c < W; c++) {
         const i = base + c;
         // In-place, сверху вниз: родители уже пересчитаны в этом же кадре.
-        grid[i] = xor3(grid[i], c > 0 ? grid[up + c - 1] : -1,
-          c + 1 < W ? grid[up + c + 1] : -1);
+        const lv = c > 0 ? grid[up + c - 1] : -1, rv = c + 1 < W ? grid[up + c + 1] : -1;
+        grid[i] = xor3(grid[i], lv, rv);
+        if (middle && pairStep) {
+          const pl = c > 0 ? pairGrid[up + c - 1] : -1, pr = c + 1 < W ? pairGrid[up + c + 1] : -1;
+          pairGrid[i] = xor3(pairGrid[i], pl, pr);
+        }
       }
     }
     if (row < H) { schedule(0); return; }
     if (visible) {
-      // Оба готовых изображения публикуются в одном задании, без промежуточного кадра.
-      publishedLeft.set(cones.val); publishedRight.set(grid);
+      // Готовые изображения публикуются в одном задании, без промежуточного кадра.
+      publishedLeft.set(cones.val); publishedRight.set(grid); publishedPair.set(pairGrid);
       left.dataset.frame = right.dataset.frame = String(frame);
+      if (middle) middle.dataset.frame = String(frame);
       published = true;
       renderPublished();
     }
