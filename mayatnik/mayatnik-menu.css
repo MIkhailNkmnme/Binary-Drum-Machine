@@ -955,7 +955,7 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 
 
 /* v0.594: любое число строк — поле и «Задать» в столбик, чтобы кнопка не вылезала. */
-.may-rows-custom{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:3px;margin:3px 0;width:100%;max-width:100%;overflow:hidden}
+.may-rows-custom{display:flex;flex-direction:column;align-items:center;gap:3px;margin:3px 0;width:100%;max-width:100%;overflow:hidden}
 .may-rows-custom input{width:120px;max-width:100%;height:24px;box-sizing:border-box;background:#0c0f14;color:var(--fg);border:1px solid var(--line);border-radius:0;font:12px var(--mono);padding:0 6px;text-align:center}
 .may-rows-custom input:focus{outline:1px solid var(--acc);outline-offset:0}
 .may-rows-custom .gz-hx{flex:0 0 auto;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px;font-size:11px}
@@ -970,6 +970,7 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 #mayCompareP12,#mayCompareP23,#mayCompareP31,#mayCompareP123,#mayCompareOp{--gz-bg:#2a1c38}
 
 /* v0.609: число строк — стрелки − и + по бокам, как половины кнопки. */
-.may-rows-step{flex:0 0 auto;width:24px;height:24px;padding:0;border:1px solid var(--line);background:#0c0f14;color:var(--fg);font:14px/1 var(--mono);cursor:pointer}
+.may-rows-line{display:flex;align-items:center;justify-content:center;gap:2px;width:100%}
+.may-rows-step{flex:0 0 auto;width:22px;height:24px;padding:0;border:1px solid var(--line);background:#0c0f14;color:var(--fg);font:14px/1 var(--mono);cursor:pointer}
 .may-rows-step:hover{border-color:var(--acc)}
-.may-rows-custom input{width:84px}
+.may-rows-custom input{width:64px}

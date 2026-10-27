@@ -218,7 +218,9 @@
       cb.onclick = ev => { ev.stopPropagation(); apply(); };
       customInput.onclick = ev => ev.stopPropagation();
       customInput.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); apply(); } };
-      cr.append(arrow('−', -1, 'На 1 меньше'), customInput, arrow('+', 1, 'На 1 больше'), cb); pop.append(cr); }
+      const line = document.createElement('div'); line.className = 'may-rows-line';
+      line.append(arrow('−', -1, 'На 1 меньше'), customInput, arrow('+', 1, 'На 1 больше'));
+      cr.append(line, cb); pop.append(cr); }
     { const rb = document.createElement('button'); rb.className = 'gz-hx'; rb.textContent = 'Рандом'; rb.dataset.miShort = 'Рандом';
       rb.title = 'Тест: очистить поле и заполнить квадрат N×N случайными битами (N = число строк); остальное поле пусто. Для проверки уменьшения и Очков по наложению.';
       rb.onclick = ev => { ev.stopPropagation(); window.mayTestRandom?.(+$('rows').value || 128); sync(); }; pop.append(rb); }
