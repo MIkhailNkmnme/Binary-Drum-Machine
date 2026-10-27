@@ -38,8 +38,8 @@
     mono: { label: 'Моно', left: [255,255,255], middle: [221,221,221], right: [153,153,153], common: [221,221,221], legend: 'Конусы — белый · Обе стороны — светло-серый · Всё поле — серый' },
     green: { label: 'Зелёный', left: [51,122,52], middle: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, обе стороны, всё поле и общие — зелёный' }
   };
-  const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'], PAIRS = ['12', '23', '31'];
-  const PAIR_LABEL = { 12: '1–2', 23: '2–3', 31: '3–1' };
+  const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'], PAIRS = ['12', '23', '31', '123'];
+  const PAIR_LABEL = { 12: '1–2', 23: '2–3', 31: '3–1', 123: '1–2–3' };
   const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', pair: '12',
     pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 }, pair: { x: 0, y: 0 } } };
   try {
@@ -222,17 +222,23 @@
   function pairFields() {
     if (view.pair === '23') return ['pair', 'right'];
     if (view.pair === '31') return ['right', 'left'];
+    if (view.pair === '123') return ['left', 'pair', 'right'];   // v0.466: все три поля сразу
     return ['left', 'pair'];
   }
-  function renderBlend(a, b, fa, fb) {
+  function renderBlend() {
     if (!blendImage || view.mode === 'split') return;
     const palette = PALETTES[view.palette];
-    const ca = palette[FIELD_COLOUR[fa]], cb = palette[FIELD_COLOUR[fb]];
+    const fields = pairFields().map(key => ({ key, colour: palette[FIELD_COLOUR[key]], data: key === 'pair' ? publishedPair : key === 'right' ? publishedRight : publishedLeft }));
     for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
-      const i = r * W + c, j = r * W + (view.mirror ? W - 1 - c : c);
-      const av = a[i] === 1, bv = b[j] === 1;
-      const on = view.mode === 'xor' ? av !== bv : av && bv;
-      paint(blendImage.data, i, on ? 1 : 0, view.mode === 'and' ? palette.common : av ? ca : cb);
+      const i = r * W + c;
+      let ones = 0, all = true, colour = null;
+      for (const field of fields) {
+        // зеркально читается всё, кроме первого поля: прежде — только второе из пары
+        const j = r * W + (view.mirror && field !== fields[0] ? W - 1 - c : c);
+        if (field.data[j] === 1) { ones++; if (!colour) colour = field.colour; }
+        else all = false;
+      }
+      paint(blendImage.data, i, view.mode === 'xor' ? ones % 2 : (all ? 1 : 0), view.mode === 'and' ? palette.common : (colour || palette.common));
     }
     blendCtx.putImageData(blendImage, 0, 0);
     blend.dataset.frame = left.dataset.frame;
@@ -378,10 +384,7 @@
     }
     coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
     if (pairCtx) pairCtx.putImageData(pairImage, 0, 0);
-    const [fa, fb] = pairFields();
-    const a = fa === 'pair' ? publishedPair : fa === 'right' ? publishedRight : publishedLeft;
-    const b = fb === 'pair' ? publishedPair : fb === 'right' ? publishedRight : publishedLeft;
-    renderBlend(a, b, fa, fb);
+    renderBlend();
   }
   function schedule(delay) {
     if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);

@@ -43,3 +43,16 @@ test('модуль меню: задержка наведения, закреп �
   has(menu, 'function wireMenu(menu = menuEl())');
   has(menu, "filter(drawer => drawer.querySelector('.hubCompareDrawerBody'))", 'левый треугольник без тела не ломает модуль');
 });
+
+test('наложение всех трёх полей: кнопка 1–2–3 и общая логика XOR/AND', () => {
+  const bg = fs.readFileSync(path.join(__dirname, 'hub-xor-background.js'), 'utf8');
+  has(html, 'data-hub-pair="123"');
+  has(html, '<span class="gz-nm">1–2–3</span>');
+  has(html, '#hubComparePairs .gz-hx[data-hub-pair="123"]{flex:1 1 100%}', 'кнопка всех трёх — отдельной строкой под парами');
+  has(bg, "PAIRS = ['12', '23', '31', '123']");
+  has(bg, "123: '1–2–3'");
+  has(bg, "if (view.pair === '123') return ['left', 'pair', 'right'];", 'все три поля сразу');
+  has(bg, 'ones % 2', 'XOR всех трёх — нечётное число единиц');
+  has(bg, 'all ? 1 : 0', 'AND всех трёх — единица во всех трёх');
+  has(bg, 'view.mirror && field !== fields[0]', 'зеркально читаются все поля, кроме первого');
+});
