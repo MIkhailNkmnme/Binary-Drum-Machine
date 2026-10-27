@@ -6,11 +6,11 @@
   'use strict';
   const left = document.getElementById('hubCones'), right = document.getElementById('hubXor');
   if (!left || !right || typeof MAYATNIK === 'undefined') return;
-  const coneCtx = left.getContext('2d', { alpha: false });
-  const xorCtx = right.getContext('2d', { alpha: false });
+  const coneCtx = left.getContext('2d', { alpha: true });
+  const xorCtx = right.getContext('2d', { alpha: true });
   if (!coneCtx || !xorCtx) return;
   const middle = document.getElementById('hubPair');
-  const pairCtx = middle && middle.getContext('2d', { alpha: false });
+  const pairCtx = middle && middle.getContext('2d', { alpha: true });
   const H = 1024, W = 2 * H - 1, CENTER = W >> 1;
   const FIRST_FRAME = 8, INTERVAL = 120, ROW_CHUNK = 64;
   left.width = right.width = W; left.height = right.height = H;
@@ -22,7 +22,7 @@
   const coneImage = coneCtx.createImageData(W, H), xorImage = xorCtx.createImageData(W, H);
   const pairImage = pairCtx && pairCtx.createImageData(W, H);
   const root = document.getElementById('hubXorBackground'), blend = document.getElementById('hubBlend');
-  const blendCtx = blend && blend.getContext('2d', { alpha: false });
+  const blendCtx = blend && blend.getContext('2d', { alpha: true });
   if (blend) { blend.width = W; blend.height = H; }
   const blendImage = blendCtx && blendCtx.createImageData(W, H);
   const modeButton = document.getElementById('hubCompareMode'), mirrorButton = document.getElementById('hubCompareMirror');
@@ -101,10 +101,20 @@
   const CONTROL_SELECTOR = 'button,a,input,select,textarea,summary,label,dialog,[contenteditable],[role="button"],[role="slider"],[role="dialog"],[role="group"],.hub,#hubCompareTools,#hubComparePanel,.gz-rail,.gz-ladder,.hubRombGrid,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubRail,#hubZoom,#hubFieldTools';
   function isControl(event) { return !!event.target?.closest?.(CONTROL_SELECTOR); }
   function paneRect(key) { return canvases[key]?.parentElement?.getBoundingClientRect?.(); }
+  function insidePane(key, x, y) {
+    const rect = paneRect(key);
+    if (!rect || !rect.width || !rect.height) return false;
+    const px = x - rect.left, py = y - rect.top, w = rect.width, h = rect.height;
+    if (px < 0 || py < 0 || px > w || py > h) return false;
+    if (key === 'blend') return true;
+    // Прямоугольники панелей перекрываются на 25 %, а треугольники — нет:
+    // 5.7 и 5.8 стоят на основании (▲), 5.9 перевёрнут (▼).
+    const half = w / 2, k = key === 'pair' ? 1 - py / h : py / h;
+    return Math.abs(px - half) <= half * k;
+  }
   function paneAt(event) {
-    for (const key of view.mode === 'split' ? ['left', 'pair', 'right'] : ['blend']) {
-      const rect = paneRect(key);
-      if (rect && rect.width > 0 && rect.height > 0 && event.clientX >= rect.left && event.clientX < rect.left + rect.width && event.clientY >= rect.top && event.clientY < rect.top + rect.height) return key;
+    for (const key of view.mode === 'split' ? ['pair', 'left', 'right'] : ['blend']) {
+      if (insidePane(key, event.clientX, event.clientY)) return key;
     }
     return null;
   }
@@ -116,14 +126,15 @@
   function applyPan(rebase = false) {
     for (const key of PAN_KEYS) {
       if (!canvases[key]) continue;
-      const pan = view.pan[key], rect = paneRect(key);
+      const pan = view.pan[key], el = canvases[key].parentElement;
+      // Масштаб теперь у самой панели: её раскладка не меняется, поэтому
+      // границы берём из offset, а не из getBoundingClientRect с трансформом.
+      const pw = el?.offsetWidth || 0, ph = el?.offsetHeight || 0;
       if (view.zoom === 1) pan.x = pan.y = 0;
-      else if (rect && rect.width > 0 && rect.height > 0) {
-        const pw = rect.width, ph = rect.height, fit = Math.min(pw / W, ph / H);
-        const sw = W * fit * view.zoom, sh = H * fit * view.zoom;
-        const baseX = key === 'left' ? 0 : key === 'right' ? pw - sw : (pw - sw) / 2;
-        pan.x = sw > pw ? Math.max(pw - sw - baseX, Math.min(-baseX, pan.x)) : 0;
-        const yLimit = Math.max(0, (sh - ph) / 2);
+      else if (pw > 0 && ph > 0) {
+        const xLimit = Math.max(0, pw * (view.zoom - 1) / 2);
+        const yLimit = Math.max(0, ph * (view.zoom - 1) / 2);
+        pan.x = Math.max(-xLimit, Math.min(xLimit, pan.x));
         pan.y = Math.max(-yLimit, Math.min(yLimit, pan.y));
       }
       if (root) {
@@ -135,6 +146,7 @@
   }
   function finishDrag() {
     if (!drag) return;
+    for (const key of PAN_KEYS) canvases[key]?.parentElement?.classList?.remove('hubDragTarget');
     const previous = drag;
     drag = null;
     document.body?.classList?.toggle('hubCompareDragging', false);
@@ -270,6 +282,7 @@
       if (event.button === 1) middle1 = null;
       if (isControl(event) || event.ctrlKey || event.metaKey || (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen')) return;
       const key = paneAt(event); if (!key) return;
+      canvases[key]?.parentElement?.classList?.add('hubDragTarget');
       if (event.button === 1) {
         finishDrag(); middle1 = { id: event.pointerId }; consume(event);
         document.getElementById('hubCompareZen')?.click(); return;
@@ -324,7 +337,7 @@
     pixels[p] = on ? colour[0] : 0;
     pixels[p + 1] = on ? colour[1] : 0;
     pixels[p + 2] = on ? colour[2] : 0;
-    pixels[p + 3] = 255;
+    pixels[p + 3] = on ? 255 : 0;   // пустые клетки прозрачны: при увеличении поля наезжают друг на друга
   }
   function renderPublished() {
     const palette = PALETTES[view.palette];
