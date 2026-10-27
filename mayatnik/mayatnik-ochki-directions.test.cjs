@@ -6,7 +6,7 @@ function finder({mode='diag',view='bits',width=12,height=12,points=null,sequence
  const val=new Int8Array(width*height).fill(points?-1:0);if(points)for(const [x,y,v]of points)val[y*width+x]=v;
  const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,{textContent:'',hidden:false,selectedOptions:[{textContent:pattern}]});return elements.get(id);};
  const state={view,ochki:true,ochkiMode:mode,ochkiPattern:pattern,ochkiLength:3,ochkiInv:inv,ochkiRev:rev};
- const context={f:{W:width,H:height,val},geo:{anchor:0},st:state,playing:false,VX:left,VW:right-left,VH:bottom,ZL:zone?Int32Array.from({length:bottom},()=>zone[0]):[],ZR:zone?Int32Array.from({length:bottom},()=>zone[1]):[],k:1,sequences:{rows:sequence,revision:1,setMatches(x){context.matches=x;}},pairOn:()=>false,rombP:()=>state.view==='romb2'?2:state.view==='romb0'?0:state.view==='romb1'?1:-1,clampInt:(x,min,max,def)=>Math.max(min,Math.min(max,Number(x)||def)),$:get,TextDecoder,performance,setTimeout,clearTimeout};
+ const context={f:{W:width,H:height,val},geo:{anchor:0},st:state,playing:false,VX:left,VW:right-left,VH:bottom,ZL:zone?Int32Array.from({length:bottom},()=>zone[0]):[],ZR:zone?Int32Array.from({length:bottom},()=>zone[1]):[],k:1,sequences:{rows:sequence,revision:1,setMatches(x){context.matches=x;}},pairOn:()=>false,rombP:()=>state.view==='romb2'?2:state.view==='romb0'?0:state.view==='romb1'?1:-1,clampInt:(x,min,max,def)=>Math.max(min,Math.min(max,Number(x)||def)),$:get,TextDecoder,performance,setTimeout:()=>0,clearTimeout,ovlSerial:0,window:{},localStorage:{getItem:()=>null,setItem(){}}};
  context.joinedOn=()=>state.view==='rombJoin'||state.view==='rombJoin180';context.joinedGeometry=()=>Joined.create({width:right-left,height:bottom,origin:left,anchor:0,fieldWidth:width,rotate:state.view==='rombJoin180'});context.parityVisible=()=>true;context.outZone=(r,c)=>!!zone&&(c<zone[0]||c>zone[1]);
  vm.createContext(context);vm.runInContext(source+';globalThis.getLines=ochkiLines;globalThis.getResult=()=>{const result=ochkiGet();publishOchki(result);return result;};',context);
  return {context,state,get,lines:()=>context.getLines(),result:()=>context.getResult()};
@@ -45,9 +45,9 @@ test('visible window and noise-zone limits crop column/diagonal input without re
   assert.equal(lines.reduce((n,line)=>n+line.n,0),35);
  }
 });
-test('source select, sync and segmented adapter expose exactly four stable values',()=>{
- const options=html.match(/<select id="ochkiMode"[^>]*>(.*?)<\/select>/s)[1];assert.deepEqual([...options.matchAll(/value="([^"]+)"/g)].map(x=>x[1]),['diag','antidiag','row','col']);assert.match(html,/\['diag','antidiag','row','col'\]\.includes\(st\.ochkiMode\)/);
- const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8');assert.match(menu,/selectSegments\('ochkiMode',\{diag:'↘',antidiag:'↙',row:'→',col:'↓'\}\)/);
+test('source select, sync and segmented adapter expose four directions and their all-direction union',()=>{
+ const options=html.match(/<select id="ochkiMode"[^>]*>(.*?)<\/select>/s)[1];assert.deepEqual([...options.matchAll(/value="([^"]+)"/g)].map(x=>x[1]),['diag','antidiag','row','col','all']);assert.match(html,/\['diag','antidiag','row','col','all'\]\.includes\(st\.ochkiMode\)/);
+ const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8');assert.match(menu,/selectSegments\('ochkiMode',\{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все'\}\)/);
 });
 test('side-by-side rombs search every sequence row independently in each lattice, without crossing the seam',()=>{
  for(const [mode,{points}]of Object.entries(fixtures)){
@@ -93,4 +93,21 @@ test('joined simple matches beyond the first 100 recover in display coordinates 
  const width=160,height=4,map=Joined.create({width,height,anchor:0}),points=[];for(let y=0;y<map.height;y++)for(let i=0;i<width/2;i++)if(i%4!==3)points.push([2*i+(y&1),y,1]);const {api}=displayFixture('row',points,{width,height,pattern:'ones'}),result=api.result();assert.equal(result.count,160);assert.equal(result.found.length,100);
  const display=map.inverse(155,7),context=api.context;context.MayatnikOchkiSelection=require('./mayatnik-ochki-selection.js');context.selectTemplate=()=>{};context.queueDigits=()=>{};context.window={mayTemplateLibrary:{clear(){}},MayatnikTemplatePanel:{openTab(){}}};context.sequences.selectMatches=value=>context.selected=value;vm.runInContext('globalThis.choose=ochkiSelectionChoose;globalThis.chosen=()=>ochkiSelected;',context);
  context.choose({cell:display.q,p:null,row:display.r,col:display.c,displayRow:7,displayCol:155,key:result.key,owner:context.f});assert.equal(result.found.length,101);assert.equal(context.chosen().cells.length,3);assert.deepEqual(Array.from(result.found[100].displayCells),[7*width+153,7*width+155,7*width+157]);assert.deepEqual(Array.from(context.selected.matchIndices),[100]);
+});
+
+function assertAllUnion(api,read){
+ const modes=['diag','antidiag','row','col'],expected=[],hl=new Uint8Array(api.context.f.val.length);let total=0;
+ for(const mode of modes){api.state.ochkiMode=mode;const r=read();expected.push(...r.found);total+=r.total||0;for(let i=0;i<hl.length;i++)hl[i]|=r.hl[i];}
+ api.state.ochkiMode='all';const actual=read(),key=hit=>JSON.stringify([hit.i,hit.p??null,hit.dir,Array.from(hit.cells),hit.vn||'',hit.text||'']);assert.deepEqual(Array.from(actual.found,key).sort(),expected.map(key).sort());assert.deepEqual(Array.from(actual.hl),Array.from(hl));if(!actual.simple)assert.equal(actual.total,total);return actual;
+}
+test('all directions equal the independent union, with separate duplicate and long-pattern cursors',()=>{
+ const width=40,height=40,points=Array.from({length:width*height},(_,q)=>[q%width,Math.floor(q/width),((q*73^(q>>2)*19)>>>2)&1]);
+ for(const view of ['bits','romb0','romb1','romb2','rombJoin','rombJoin180']){const api=finder({view,width,height,points,sequence:['1011','1011','0','1','10110111001011011']});const r=assertAllUnion(api,()=>api.result());assert.equal(r.directions,4);assert.equal(r.total,5*4*(view==='romb2'?2:1));}
+});
+test('all directions combine every simple run count and highlight',()=>{
+ const points=Array.from({length:144},(_,q)=>[q%12,Math.floor(q/12),(q%7===0)?0:1]);
+ for(const pattern of ['ones','zeros','alternating']){const api=finder({points,pattern});let count=0;for(const mode of ['diag','antidiag','row','col']){api.state.ochkiMode=mode;count+=api.result().count;}const all=assertAllUnion(api,()=>api.result());assert.equal(all.count,count);}
+});
+test('all directions on overlay equal four independent searches and keep exact total',()=>{
+ const api=finder({sequence:['1011','1','1']}),c=api.context;for(let q=0;q<c.f.val.length;q++)c.f.val[q]=(q*13^(q>>2))&1;c.ovlSource={bits:{W:12,H:12,anchor:0,val:c.f.val,frame:1}};c.ovlFrozen=null;c.gpuBig=null;c.ovlDraw=()=>{};api.state.ochkiOverlay=true;const r=assertAllUnion(api,()=>c.ochkiOverlayGet());assert.equal(r.total,12);assert.equal(r.directions,4);
 });

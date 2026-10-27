@@ -1,0 +1,16 @@
+/* v1: persistent searchable discovery frames. */
+#mayOchkiSearchLog{--c:#ffb347;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#121a30;--gz-txt:#dfe6f5;color:#e9edf4;background:#151922;border:2px solid #ffb347;padding:12px;width:min(820px,calc(100vw - 28px));max-height:calc(100dvh - 28px);box-sizing:border-box;overflow:hidden}
+#mayOchkiSearchLog::backdrop{background:#0009}
+#mayOchkiSearchLog header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#mayOchkiSearchLog h2{font:600 18px sans-serif;margin:0}
+#mayOchkiSearchLog .gz-hx{flex:none;width:120px;height:24px;min-height:24px}
+#mayOchkiSearchLog .gz-hx::before,#mayOchkiSearchLog .gz-hx:hover::before{background:var(--gz-bg)}
+#mayOchkiSearchLog .gz-hx:hover,#mayOchkiSearchLog .gz-hx:focus-visible{background:var(--c)}
+#mayOchkiSearchLog .gz-hx:disabled{opacity:.45;cursor:default}
+.may-ochki-log-status{font:13px sans-serif;overflow-wrap:anywhere;min-height:16px}
+.may-ochki-log-list{overflow:auto;max-height:calc(100dvh - 150px);overscroll-behavior:contain}
+.may-ochki-log-entry{display:flex;gap:12px;border-top:1px solid #465164;padding:10px 0;font:13px/1.4 sans-serif;overflow-wrap:anywhere}
+.may-ochki-log-entry img{width:120px;height:100px;object-fit:contain;flex:none;background:#0d1119}
+.may-ochki-log-entry p{margin:4px 0}
+.may-ochki-log-state{color:#ffce89}
+@media(max-width:480px){.may-ochki-log-entry{gap:6px}.may-ochki-log-entry img{width:64px;height:70px}#mayOchkiSearchLog h2{font-size:15px}}

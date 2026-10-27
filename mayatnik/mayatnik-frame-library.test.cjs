@@ -12,6 +12,11 @@ test('no capture until explicit save; concurrent saves are serial and both survi
  const reload=fixture(f.map);await reload.api.ready;assert.deepEqual(reload.api.list(),f.api.list());assert.deepEqual(reload.calls,[['read',L.INDEX_KEY]],'loading list never loads payloads');
  const list=reload.api.list();list[0].name='outside';assert.equal(reload.api.list()[0].name,'Первый');assert.ok(!('blob' in list[0]));
 });
+test('supplied frozen capture survives a delayed library queue and never invokes live host capture',async()=>{
+ const f=fixture();await f.api.ready;let release;const held=new Promise(resolve=>release=resolve),first=f.api.save('Delayed',held);let live=10;
+ const captured=Promise.resolve({blob:new Blob(['exact-'+live]),thumbnail:'exact',frame:live,rows:256}),second=f.api.save('Found',captured);live=99;f.host.capture=()=>{throw Error('Late live capture');};
+ release({blob:new Blob(['first']),thumbnail:'first',frame:1,rows:256});await first;const id=await second;assert.equal(f.api.list().find(x=>x.id===id).frame,10);await f.api.open(id);assert.deepEqual(f.restores,['exact-10']);
+});
 test('open and download use exact stored Blob, rename touches only index, delete never restores field',async()=>{
  const f=fixture();const id=await f.api.save();await f.api.open(id);assert.deepEqual(f.restores,['frame-1']);assert.equal(f.api.getState().selectedId,id);
  const start=f.calls.length;await f.api.rename(id,'Новое имя');assert.deepEqual(f.calls.slice(start).map(x=>x[1]),[L.INDEX_KEY]);

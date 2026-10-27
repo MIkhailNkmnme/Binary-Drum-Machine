@@ -1,4 +1,4 @@
-/* Маятник v0.622 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.623 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -28,7 +28,7 @@
       options: [...e.options].map(o => ({ v: o.value, name: names?.[o.value] || o.textContent })),
       set: v => { e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); } };
   };
-  const segments = (title, options) => ({type:'pair',cls:'may-segments',name:title,tip:title,mid:'',parts:options.map(o=>({label:o.name,tip:o.tip||title+' — '+o.name,on:o.on,click:o.pick}))});
+  const segments = (title, options) => ({type:'pair',cls:'may-segments'+(options.length===5?' gz-split gz-split5':''),name:title,tip:title,mid:'',parts:options.map(o=>({label:o.name,tip:o.tip||title+' — '+o.name,on:o.on,click:o.pick}))});
   const selectSegments = (id,names) => {const e=$(id);return {...segments(tip(e),[...e.options].map(o=>({name:names?.[o.value]||o.textContent,tip:id==='ochkiMode'?'Очки: '+o.textContent:undefined,on:()=>e.value===o.value,pick:()=>{if(e.disabled||o.disabled)return;e.value=o.value;e.dispatchEvent(new Event('change',{bubbles:true}));}}))),disabled:()=>e.disabled};};
   const ringSegments = (id,names) => {const e=$(id),now=()=>e.textContent.split(': ')[1];return {...segments(tip(e),names.map(name=>({name,on:()=>now()===name,pick:()=>{for(let n=0;n<names.length&&now()!==name;n++)e.click();}}))),src:id};};
   const control = id => {
@@ -90,7 +90,8 @@
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), button('bOchkiSnake','eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
-      selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),num('ochkiLength',{name:'От бит',slider:false}) ] },
+      selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),num('ochkiLength',{name:'От бит',slider:false}),
+      {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска Очков — все сохранённые найденные кадры',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
       button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4') ] },
@@ -149,6 +150,8 @@
     const ca = box.querySelectorAll('.gz-soty > .gz-hx'), cb = box.querySelectorAll('.gz-wide > .gz-hx');
     a.forEach((it, i) => { if(ca[i]&&it.src)railSourceButtons.set(it.src,ca[i]);if(ca[i]&&it.colourSource&&['fillColour',...(window.MayatnikPaintGroups?.FIELDS||[]),'midZeroColour','midOneColour'].includes(it.colourSource)){const dot=ca[i].querySelector('.gz-h1');if(dot){dot.classList.add('may-auto-ink');window.MayatnikColourAuto?.adaptPalette(dot,it.colourSource,()=>$(it.colourSource).value,null,{paint:false});}}if (ca[i] && (it.tip || it.name)) ca[i].title = it.tip || it.name; }); b.forEach((it, i) => { if(cb[i]&&it.type==='list')cb[i].dataset.listTitle=it.name; if (cb[i] && it.type !== 'control' && it.type !== 'vpair' && (it.tip || it.name)) cb[i].title = it.tip || it.name; }); }
   {const cell=railSourceButtons.get('bAxesColour');if(cell)cell.dataset.n='bAxesColour';}
+  // Declare history in the rail model so all layouts and legacy cell snapshots own it.
+  {const cell=railSourceButtons.get('ochkiSearchLog');if(cell){cell.dataset.n='ochkiSearchLog';cell.setAttribute('aria-label','Лог поиска Очков');}}
   {const cell=rail.el.querySelector('[data-list-title="Сброс цветов"]');if(cell)cell.dataset.n='paintColourReset';}
   // v0.327: «внизу сделай полосу для меню и в центр перемести» — полоса во всю ширину под полем, в её центре — ползунок «кадр» из «Поля»
   const bbCells = {};   // v0.355: ползунки «Поля», что уходят в список «Хорр»
@@ -168,7 +171,7 @@
     if (mid) { b.className = 'may-bb-rs'; b.removeAttribute('id'); b.textContent = '✖'; b.addEventListener('pointerdown', e => e.stopPropagation()); mid.append(b);
       const pl = document.createElement('button'); pl.type = 'button'; pl.className = 'may-bb-play'; pl.addEventListener('pointerdown', e => e.stopPropagation());
       const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true'; pl.textContent = on ? '❚❚' : '▶'; pl.title = on ? 'Пауза' : 'Анимация: пуск'; };
-      pl.onclick = () => { P.click(); plSync(); rail.refresh(); }; new MutationObserver(plSync).observe(P, { attributes: true, attributeFilter: ['aria-pressed'] }); plSync(); mid.append(pl);
+      pl.onclick = ev => { ev.stopPropagation(); P.click(); plSync(); rail.refresh(); }; new MutationObserver(plSync).observe(P, { attributes: true, attributeFilter: ['aria-pressed'] }); plSync(); mid.append(pl);
       // подпись «кадр N» — в 6 px от линии (слева, нет места — справа)
       // v0.348: «не видно номера кадра» — подпись обходит середину (▶ и «✖»): слева от линии, нет места или налезает — справа, иначе — сразу за краем ▶ / ✖ со стороны линии
       // v0.395: «плей по центру оси»: ▶ и «✖» — на оси якоря (window.mayAxisX), прижаты к краям дорожки; страница зовёт при прокрутке и масштабе (window.mayPlayPlace)

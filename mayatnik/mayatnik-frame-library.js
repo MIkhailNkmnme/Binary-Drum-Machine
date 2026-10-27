@@ -1,4 +1,4 @@
-/* Explicit saved-frame library. The index contains only metadata; each Blob has its own key. */
+/* v0.623: Explicit saved-frame library. The index contains only metadata; each Blob has its own key. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikFrameLibrary=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
   const INDEX_KEY='frame-library-v1',ITEM_PREFIX='frame-library-item:';
@@ -42,8 +42,10 @@
     }
     function uniqueId(){let id;do{id=publicId(namespace,Date.now().toString(36)+'-'+(++serial).toString(36)+'-'+Math.random().toString(36).slice(2,10));}while(items.some(item=>item.id===id));return id;}
     async function writeIndex(next,ns){const stored=next.filter(item=>location(item.id).ns===ns).map(item=>({...item,id:location(item.id).id}));await storage.write({version:1,items:stored},ns+'-library-v1');items=copy(ordered(next));}
-    function save(name){return run('Сохранение кадра',async()=>{
-      const captured=await host.capture();if(!isBlob(captured?.blob))throw Error('Снимок кадра не содержит файл');
+    function save(name,suppliedCapture){
+      const frozen=suppliedCapture===undefined?null:Promise.resolve(suppliedCapture);if(frozen)frozen.catch(()=>{});
+      return run('Сохранение кадра',async()=>{
+      const captured=await (frozen||host.capture());if(!isBlob(captured?.blob))throw Error('Снимок кадра не содержит файл');
       const id=uniqueId(),entry=metadata({id,name:nameOf(name)||nameOf(captured.name)||display('Кадр ')+captured.frame,thumbnail:captured.thumbnail,previewKind:captured.previewKind,frame:captured.frame,rows:captured.rows,createdAt:Date.now()});
       const key=payloadKey(id);
       try{await storage.write(captured.blob,key);await writeIndex([...items,entry],namespace);}
