@@ -27,7 +27,7 @@ function fixture({deferred=false}={}){
 }
 test('48px pause diamond stays outside hidden Zen groups; release version and cache agree',()=>{
   const html=fs.readFileSync(__dirname+'/../index.html','utf8');
-  assert.match(html,/<title>[^<]*v0\.460<\/title>/);
+  assert.match(html,/<title>[^<]*v0\.461<\/title>/);
   assert.match(html,/hub-xor-background\.js\?v=460/);
   assert.match(html,/#hubComparePause\{[^}]*width:48px;height:48px/);
   assert.match(html,/#hubComparePause\{[^}]*clip-path:polygon\(50% 0,100% 50%,50% 100%,0 50%\)/);
