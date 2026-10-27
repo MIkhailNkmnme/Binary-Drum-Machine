@@ -961,3 +961,10 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-rows-custom .gz-hx{flex:0 0 auto;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px;font-size:11px}
 .gz-hx[hidden]{display:none!important}
 .gz-hx.off{opacity:.55}
+
+/* v0.608: поле «Задать» — как остальные кнопки: без родных стрелок, один вид. */
+.may-rows-custom input{appearance:textfield;-moz-appearance:textfield}
+.may-rows-custom input::-webkit-outer-spin-button,.may-rows-custom input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+/* v0.608: группы сравнения различаются подложкой: поля — синеватые, наложения — лиловые. */
+#mayCompareCones,#mayCompareField,#mayCompareBoth{--gz-bg:#16243a}
+#mayCompareP12,#mayCompareP23,#mayCompareP31,#mayCompareP123,#mayCompareOp{--gz-bg:#2a1c38}
