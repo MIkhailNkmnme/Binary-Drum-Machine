@@ -971,6 +971,6 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 
 /* v0.609: число строк — стрелки − и + по бокам, как половины кнопки. */
 .may-rows-line{display:flex;align-items:center;justify-content:center;gap:2px;width:100%}
-.may-rows-step{flex:0 0 auto;width:22px;height:24px;padding:0;border:1px solid var(--line);background:#0c0f14;color:var(--fg);font:14px/1 var(--mono);cursor:pointer}
+.may-rows-step{flex:0 0 auto;width:26px;height:26px;padding:0;border:0;color:#dfe6f5;background:color-mix(in srgb,var(--acc) 26%,#0c0f14);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);font:16px/1 var(--mono);cursor:pointer;display:grid;place-items:center}
 .may-rows-step:hover{border-color:var(--acc)}
 .may-rows-custom input{width:64px}
