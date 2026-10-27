@@ -281,10 +281,7 @@
         pop.append(button);
         controls.push({ half: button, on: () => state().source === (overlayAnd ? 'a' : 'p') + suffix, gz: true });
       }
-      pair('mayCompareModes', 'Наложение исходных построений 5.7 и 5.8', [
-        { id: 'mayCompareXor', label: 'XOR', tip: 'XOR: побитовое наложение конусов 5.7 и всего поля 5.8', on: () => state().source === 'xor', click: () => choose('xor') },
-        { id: 'mayCompareAnd', label: 'AND', tip: 'AND: пересечение единиц конусов 5.7 и всего поля 5.8', on: () => state().source === 'and', click: () => choose('and') }
-      ]);
+      
       pair('mayCompareMirror', 'Направление правого источника 5.8', [
         { id: 'mayCompareDirect', label: 'Прямо', tip: 'Правый источник 5.8 прямо, без горизонтального отражения', on: () => !state().mirror, click: () => { api()?.mirror?.(false); syncComparison(); rail.refresh(); } },
         { id: 'mayCompareReflected', label: 'Зеркл.', tip: 'Правый источник 5.8 зеркально по горизонтали', on: () => !!state().mirror, click: () => { api()?.mirror?.(true); syncComparison(); rail.refresh(); } }
