@@ -1,4 +1,4 @@
-/* Маятник v0.497 — page layout only; button geometry, colours and groups come from grozd.css. */
+/* Маятник v0.622 — page layout only; button geometry, colours and groups come from grozd.css. */
 .may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
 body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}
@@ -955,7 +955,7 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 
 
 /* v0.594: любое число строк — поле и «Задать» в столбик, чтобы кнопка не вылезала. */
-.may-rows-custom{display:flex;flex-direction:column;align-items:center;gap:3px;margin:3px 0;width:100%;max-width:100%;overflow:hidden}
+.may-rows-custom{display:flex;flex:none;flex-direction:column;align-items:center;gap:3px;margin:3px 0;width:100%;max-width:100%;overflow:hidden}
 .may-rows-custom input{width:120px;max-width:100%;height:24px;box-sizing:border-box;background:#0c0f14;color:var(--fg);border:1px solid var(--line);border-radius:0;font:12px var(--mono);padding:0 6px;text-align:center}
 .may-rows-custom input:focus{outline:1px solid var(--acc);outline-offset:0}
 .may-rows-custom .gz-hx{flex:0 0 auto;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px;font-size:11px}
@@ -969,13 +969,12 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 #mayCompareCones,#mayCompareField,#mayCompareBoth{--gz-bg:#16243a}
 #mayCompareP12,#mayCompareP23,#mayCompareP31,#mayCompareP123,#mayCompareOp{--gz-bg:#2a1c38}
 
-/* v0.609: число строк — стрелки − и + по бокам, как половины кнопки. */
-.may-rows-line{display:flex;align-items:center;justify-content:center;gap:2px;width:100%}
-.may-rows-step{position:relative;flex:0 0 auto;width:26px;height:24px;padding:0;border:0;color:#eaf6ff;font:14px/1 var(--mono);cursor:pointer;display:grid;place-items:center;
-  background:#4aa8ff;text-shadow:0 0 2px #04121f}
-.may-rows-step[data-dir=left]{clip-path:polygon(0 12px,10px 0,100% 0,100% 100%,10px 100%)}
-.may-rows-step[data-dir=right]{clip-path:polygon(0 0,100% 0,100% 12px,calc(100% - 10px) 100%,0 100%)}
-.may-rows-step::after{content:"";position:absolute;inset:2px;background:#0c0f14;z-index:-2}
-.may-rows-step::before{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#2f7ff0;border:1px solid #ffffff66;z-index:-1}
-.may-rows-custom input{width:96px;border:0;border-top:2px solid #4aa8ff;border-bottom:2px solid #4aa8ff;background:#05080c;color:#ffb46a}
-.may-rows-custom input{width:64px}
+/* v0.622: число строк — единая кнопка 120×24 с ромбовыми краями и внутренними шевронами. */
+.may-rows-line{display:flex;align-items:center;justify-content:center;gap:0;flex:0 0 auto;width:120px;min-width:120px;max-width:120px;height:24px;box-sizing:border-box;clip-path:polygon(0 50%,10% 0,90% 0,100% 50%,90% 100%,10% 100%);background:#05080c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cpath d='M.7 12 12 .7H108L119.3 12 108 23.3H12ZM12 .7 24 12 12 23.3M108 .7 96 12 108 23.3' fill='none' stroke='%234aa8ff' stroke-width='1.4' stroke-linejoin='miter'/%3E%3C/svg%3E") center/120px 24px no-repeat}
+.may-rows-step{position:relative;flex:0 0 24px;width:24px;height:24px;box-sizing:border-box;padding:0;border:0;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:transparent;color:#4aa8ff;cursor:pointer;font-size:0;text-shadow:none;user-select:none;outline:0}
+.may-rows-step::before{content:"";position:absolute;inset:0;pointer-events:none;background:transparent}
+.may-rows-step::after{content:"";position:absolute;top:8px;left:10px;width:7px;height:7px;box-sizing:border-box;border:solid currentColor;border-width:0 0 1.4px 1.4px;transform:rotate(45deg);pointer-events:none}
+.may-rows-step[data-dir=right]::after{left:7px;transform:rotate(225deg)}
+.may-rows-step:hover::before,.may-rows-step:focus-visible::before{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1.4 12 12 1.4 22.6 12 12 22.6Z' fill='none' stroke='%234aa8ff' stroke-width='2'/%3E%3C/svg%3E") center/24px 24px no-repeat}
+.may-rows-custom .may-rows-line input{flex:0 0 72px;width:72px;min-width:0;max-width:72px;height:24px;padding:0 3px;border:0;background:transparent;color:#dcecff;outline:0;box-shadow:none}
+.may-rows-custom .may-rows-line input:focus{outline:0;box-shadow:inset 0 0 0 1px #4aa8ff}

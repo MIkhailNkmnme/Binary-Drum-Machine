@@ -1,4 +1,4 @@
-/* Маятник v0.597 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.622 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -211,7 +211,7 @@
       const apply = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128))); customInput.value = String(v);
         const r = $('rows'); r.value = v; r.dispatchEvent(new Event('change', { bubbles: true })); $('bBuild')?.click(); sync(); };
       const step = d => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128) + d)); customInput.value = String(v); };
-      const arrow = (label, d, tip) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-rows-step'; b.dataset.dir = d < 0 ? 'left' : 'right'; b.textContent = label; b.title = tip; b.setAttribute('aria-label', tip);
+      const arrow = (d, tip) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-rows-step'; b.dataset.dir = d < 0 ? 'left' : 'right'; b.title = tip; b.setAttribute('aria-label', tip);
         b.onclick = ev => { ev.stopPropagation(); step(d); }; return b; };
       const cb = document.createElement('button'); cb.className = 'gz-hx'; cb.textContent = 'Задать'; cb.dataset.miShort = 'Задать';
       cb.title = 'Задать любое число строк от 8 до 4096 и перестроить поле';
@@ -219,7 +219,7 @@
       customInput.onclick = ev => ev.stopPropagation();
       customInput.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); apply(); } };
       const line = document.createElement('div'); line.className = 'may-rows-line';
-      line.append(arrow('−', -1, 'На 1 меньше'), customInput, arrow('+', 1, 'На 1 больше'));
+      line.append(arrow(-1, 'На 1 меньше'), customInput, arrow(1, 'На 1 больше'));
       cr.append(line, cb); pop.append(cr); }
     { const rb = document.createElement('button'); rb.className = 'gz-hx'; rb.textContent = 'Рандом'; rb.dataset.miShort = 'Рандом';
       rb.title = 'Тест: очистить поле и заполнить квадрат N×N случайными битами (N = число строк); остальное поле пусто. Для проверки уменьшения и Очков по наложению.';
