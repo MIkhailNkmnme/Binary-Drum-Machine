@@ -253,6 +253,18 @@
       bothButton.onclick = event => { event.stopPropagation(); choose('pair'); };
       pop.append(bothButton);
       controls.push({ half: bothButton, on: () => state().source === 'pair', gz: true });
+      for (const [id, label, src, tip] of [
+        ['mayCompareP12', '1–2', 'p12', 'Наложение 1–2: конусы 5.7 и обе стороны 5.9'],
+        ['mayCompareP23', '2–3', 'p23', 'Наложение 2–3: обе стороны 5.9 и всё поле 5.8'],
+        ['mayCompareP31', '3–1', 'p31', 'Наложение 3–1: всё поле 5.8 и конусы 5.7'],
+        ['mayCompareP123', '1–2–3', 'p123', 'Наложение всех трёх полей: конусы 5.7, обе стороны 5.9, всё поле 5.8']
+      ]) {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'gz-hx';
+        button.id = id; button.dataset.n = id; button.textContent = label; button.title = tip; button.setAttribute('aria-label', tip);
+        button.onclick = event => { event.stopPropagation(); choose(src); };
+        pop.append(button);
+        controls.push({ half: button, on: () => state().source === src, gz: true });
+      }
       pair('mayCompareModes', 'Наложение исходных построений 5.7 и 5.8', [
         { id: 'mayCompareXor', label: 'XOR', tip: 'XOR: побитовое наложение конусов 5.7 и всего поля 5.8', on: () => state().source === 'xor', click: () => choose('xor') },
         { id: 'mayCompareAnd', label: 'AND', tip: 'AND: пересечение единиц конусов 5.7 и всего поля 5.8', on: () => state().source === 'and', click: () => choose('and') }

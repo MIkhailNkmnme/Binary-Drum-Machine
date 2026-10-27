@@ -83,7 +83,7 @@
     }
     function copyTo(target, source = 'cone', mirror = false, contribution = null) {
       if (!(target instanceof Int8Array) || target.length !== size) throw new RangeError('Target must be an Int8Array matching the field');
-      if (!['cone', 'field', 'pair', 'xor', 'and'].includes(source)) throw new RangeError('Unknown comparison source');
+      if (!['cone', 'field', 'pair', 'p12', 'p23', 'p31', 'p123', 'xor', 'and'].includes(source)) throw new RangeError('Unknown comparison source');
       if (target.buffer === left.buffer || target.buffer === right.buffer || target.buffer === both.buffer) throw new TypeError('Target must not alias a source field');
       if (contribution && (!(contribution instanceof Uint8Array) || contribution.length !== size || contribution.buffer === target.buffer || contribution.buffer === left.buffer || contribution.buffer === right.buffer || contribution.buffer === both.buffer)) throw new RangeError('Contribution map must be a separate Uint8Array matching the field');
       for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
@@ -91,6 +91,11 @@
         if (source === 'cone') target[i] = a;
         else if (source === 'field') target[i] = b;
         else if (source === 'pair') target[i] = pair ? b : both[i];
+        else if (source === 'p12' || source === 'p23' || source === 'p31' || source === 'p123') {
+          const c = pair ? b : both[i];
+          const xs = (...v) => v.every(x => x < 0) ? -1 : v.reduce((s, x) => s ^ (x === 1 ? 1 : 0), 0);
+          target[i] = source === 'p12' ? xs(a, c) : source === 'p23' ? xs(c, b) : source === 'p31' ? xs(b, a) : xs(a, c, b);
+        }
         else target[i] = a < 0 && b < 0 ? -1 : source === 'xor' ? (a === 1) ^ (b === 1) : (a === 1) & (b === 1);
         // Bit flags describe lit input contributions; 0 and empty remain distinct in target.
         if (contribution) {
