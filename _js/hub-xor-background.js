@@ -1,4 +1,7 @@
-/* v7. Главная: синхронное сравнение трёх полей — конусы 5.7, «обе стороны» 5.9
+/* v8 (Хаб v0.463). Двойной щелчок по любому полю — пауза и продолжение всех трёх
+   построений, в любом виде сравнения и в дзене; в дзене кнопки «Пауза» и «Меню»
+   скрыты, поэтому выход из дзена ещё и удержанием указателя на поле.
+   v7. Главная: синхронное сравнение трёх полей — конусы 5.7, «обе стороны» 5.9
    (пара вершин −m/+m одним проходом) и глобальный XOR 5.8. Третье поле на экране
    перевёрнуто (scaleY(-1) в CSS), данные у всех трёх в обычной ориентации.
    В наложении XOR/AND доступны любые две пары: 1–2, 2–3, 3–1. */
@@ -58,7 +61,7 @@
   let frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
   let pairStep = false;   // текущий кадр — шаг пары для 5.9 (переживает разбивку на куски строк)
   let cycle = 0, awaitingStats = false, failed = false, paused = false, controller = null;
-  let drag = null, middle1 = null, swallowClick = false;
+  let drag = null, middle1 = null, swallowClick = false, holdTimer = 0, hold = null;
   try {
     if (typeof window !== 'undefined' && window.HubComparePanel?.create) controller = window.HubComparePanel.create({ W, H });
   } catch (error) { stop(error); }
@@ -80,7 +83,7 @@
     pauseButton.classList.toggle('gz-on', paused);
     text('hubComparePauseIcon', paused ? '▶' : 'Ⅱ');
   }
-  if (pauseButton) pauseButton.addEventListener('click', () => {
+  function togglePause() {
     if (failed) return;
     paused = !paused;
     clearTimeout(timer); timer = 0;
@@ -88,8 +91,22 @@
     // Neither the partially computed row nor an in-flight statistics job is
     // discarded. The statistics continuation also respects this pause.
     if (!paused) { started = performance.now(); schedule(0); }
-  });
+  }
+  if (pauseButton) pauseButton.addEventListener('click', togglePause);
   syncPlayback();
+
+  // Дзен: в нём кнопок «Пауза» и «Меню» нет, поэтому выход — удержание на поле.
+  function inZen() { return !!document.body && !!document.body.classList && document.body.classList.contains('hubCompareZen'); }
+  function stopHold() { if (holdTimer) { clearTimeout(holdTimer); holdTimer = 0; } hold = null; }
+  function startHold(event) {
+    stopHold();
+    hold = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    holdTimer = setTimeout(() => {
+      holdTimer = 0; hold = null;
+      if (!inZen()) return;
+      document.getElementById('hubCompareZen')?.click();
+    }, 700);
+  }
 
   function saveView() {
     try { localStorage.setItem(STORAGE, JSON.stringify(view)); } catch (_) {}
@@ -280,8 +297,11 @@
     window.addEventListener('pointerdown', event => {
       swallowClick = false;
       if (event.button === 1) middle1 = null;
-      if (isControl(event) || event.ctrlKey || event.metaKey || (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen')) return;
+      stopHold();
+      if (isControl(event) || event.ctrlKey || event.metaKey) return;
       const key = paneAt(event); if (!key) return;
+      if (event.button === 0 && inZen()) startHold(event);
+      if (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen') return;
       canvases[key]?.parentElement?.classList?.add('hubDragTarget');
       if (event.button === 1) {
         finishDrag(); middle1 = { id: event.pointerId }; consume(event);
@@ -295,6 +315,7 @@
       try { root.setPointerCapture?.(event.pointerId); } catch (_) {}
     }, capture);
     window.addEventListener('pointermove', event => {
+      if (hold && event.pointerId === hold.id && (Math.abs(event.clientX - hold.x) > 8 || Math.abs(event.clientY - hold.y) > 8)) stopHold();
       if (!drag || event.pointerId !== drag.id) return;
       consume(event);
       if (event.buttons === 0) { finishDrag(); return; }
@@ -304,10 +325,12 @@
       applyPan(true);
     }, capture);
     window.addEventListener('pointerup', event => {
+      stopHold();
       if (middle1 && event.pointerId === middle1.id && event.button === 1) consume(event);
       if (drag && event.pointerId === drag.id && event.button === 0) { consume(event); swallowClick = true; finishDrag(); }
     }, capture);
     window.addEventListener('pointercancel', event => {
+      stopHold();
       if (middle1 && event.pointerId === middle1.id) { consume(event); middle1 = null; }
       if (drag && event.pointerId === drag.id) { consume(event); finishDrag(); }
     }, capture);
@@ -317,10 +340,17 @@
     window.addEventListener('auxclick', event => {
       if (event.button === 1 && middle1) { consume(event); middle1 = null; }
     }, capture);
+    // v0.463: двойной щелчок по любому полю — пауза и продолжение трёх построений
+    // в любом виде (рядом/XOR/AND) и в дзене. Меню, панели и другие кнопки не считаются.
+    window.addEventListener('dblclick', event => {
+      if (event.button !== 0 || isControl(event)) return;
+      if (!paneAt(event)) return;
+      stopHold(); consume(event); togglePause();
+    }, capture);
     window.addEventListener('click', event => {
       if (swallowClick && event.button === 0) { swallowClick = false; if (!isControl(event)) consume(event); }
     }, capture);
-    window.addEventListener('blur', () => { middle1 = null; swallowClick = false; finishDrag(); });
+    window.addEventListener('blur', () => { middle1 = null; swallowClick = false; stopHold(); finishDrag(); });
     window.addEventListener('resize', () => { applyPan(true); saveView(); });
   }
   syncView();
