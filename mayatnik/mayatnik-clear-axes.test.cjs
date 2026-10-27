@@ -27,6 +27,12 @@ test('default system axes restore without adding persisted keys',()=>{
  const {c,history,st}=fixture();delete st.anchorAxis;delete st.fixLines;const before=c.axesSnapshot();c.clearAllAxes();history[0].external.apply(before);
  assert.equal(Object.hasOwn(st,'anchorAxis'),false);assert.equal(Object.hasOwn(st,'fixLines'),false);assert.equal(c.$('fixLines').checked,true);
 });
+test('selected manual axes delete in one undo entry and restore selection and live mirror without changing bits',()=>{
+ const {c,history,st}=fixture(),before=c.axesSnapshot(),bits=Array.from(c.f.val);c.axisSelected=1;const selected=c.axesSnapshot();
+ assert.equal(c.removeSelectedAxes(),true);assert.equal(st.userLines.length,1);assert.equal(c.axisSelected,0);assert.equal(c.mirrorLive,false);assert.equal(history.length,1);assert.deepEqual(Array.from(c.f.val),bits);
+ history[0].external.apply(selected);assert.deepEqual(c.axesSnapshot(),selected);history[0].external.apply(history[0].external.after);assert.equal(st.userLines.length,1);
+ for(const invalid of [0,-1,2,1.5]){c.axisSelected=invalid;assert.equal(c.removeSelectedAxes(),false);assert.equal(history.length,1);}assert.deepEqual(Array.from(c.f.val),bits);
+});
 test('shared cleanup button and both anchor drawing paths honor the same visibility state',()=>{
  assert.match(menu,/\['clrAxes', 'axes', 'axes', 'axesOff'/);assert.match(menu,/clrAxes:'Все оси'/);assert.match(menu,/включение возвращает центральную ось/);
  assert.match(html,/on=!!\(st\.anchorAxis!==false&&picOn/);assert.match(html,/if\(st\.anchorAxis!==false\)add\(/);assert.match(html,/const axis=st\.anchorAxis===false\?null:/);

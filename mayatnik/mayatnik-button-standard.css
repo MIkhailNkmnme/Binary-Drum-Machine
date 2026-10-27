@@ -263,6 +263,8 @@ body.mayatnik-menu-ready .gz-group>.gz-head>.gz-ar{display:none!important}
 .may-menu-side-scroll::-webkit-scrollbar{display:none;width:0;height:0}
 .may-menu-side-scroll>div{width:1px;pointer-events:none}
 .may-menu-side-scroll:focus-visible{outline:1px solid #7cbcff}
+/* Lists keep native scrolling, including at their ends, inside the menu. */
+body.mayatnik-menu-ready :is(.pt-r,.may-rail-list,.gz-ladder,.may-hp-pop){overscroll-behavior:contain}
 body.may-zen>.may-menu-side-scroll{display:none!important}
 
 @media(min-width:601px){body.mayatnik-menu-ready header #paintTools.pt-grid>.may-docked.may-dock-side.may-dock-drag,body.mayatnik-menu-ready .may-menu-side-stack.may-docked.may-dock-side.may-dock-drag{clip-path:none}}

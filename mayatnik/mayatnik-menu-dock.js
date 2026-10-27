@@ -2,6 +2,41 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikMenuDock=api;})(globalThis,function(){
   'use strict';
   const WIDTH=120,HEIGHT=24,DX=126,DY=26;
+  const wheelRegions=[];
+  const wheelMenu='#paintTools,#mayatnikRail,#mayatnikRailR,#mayBottomBar,#mayCorner,.may-menu-side-scroll,.may-rail-list,.gz-ladder,.may-hp-pop';
+  const wheelGeometry=['#paintTools','#mayatnikRail','#mayatnikRailR','#mayBottomBar'].flatMap(root=>['.may-closed-back','.may-standard-contours polygon','.pt-g','.gz-group'].map(part=>root+' '+part)).concat('#mayBottomBar > *','.may-rail-list','.gz-ladder','.may-hp-pop').join(',');
+  const fieldTarget=target=>target===document.body||target===document.documentElement||!!target?.closest?.('#wrap');
+  function ownsWheel(e){
+    if(e.target?.closest?.(wheelMenu))return true;
+    if(!fieldTarget(e.target)||!Number.isFinite(e.clientX)||!Number.isFinite(e.clientY))return false;
+    if(wheelRegions.some(hit=>hit(e)))return true;
+    // Backings deliberately pass pointer hits through to the field. Their
+    // visible geometry still belongs to the menu, including the 2px seams.
+    for(const node of document.querySelectorAll?.(wheelGeometry)||[]){
+      const r=node.getBoundingClientRect();if(!r.width||!r.height)continue;
+      let left=r.left-3,right=r.right+3,top=r.top-1,bottom=r.bottom+1,visible=true,fixed=false;
+      if(e.clientX<left||e.clientX>right||e.clientY<top||e.clientY>bottom)continue;
+      for(let p=node;p&&p!==document.body;p=p.parentElement){
+        const style=getComputedStyle(p);if(style.visibility==='hidden'||style.display==='none'){visible=false;break;}
+        if(!fixed&&/auto|scroll|hidden|clip/.test(style.overflowY)){const b=p.getBoundingClientRect();top=Math.max(top,b.top);bottom=Math.min(bottom,b.bottom);}
+        if(p.classList.contains('may-dock-side')){const b=p.getBoundingClientRect();top=Math.max(top,b.top+(parseFloat(style.getPropertyValue('--may-side-clip-top'))||0));bottom=Math.min(bottom,b.bottom-(parseFloat(style.getPropertyValue('--may-side-clip-bottom'))||0));}
+        // Fixed popups escape the toolbar's own scrolling/overflow box.
+        if(style.position==='fixed')fixed=true;
+      }
+      if(visible&&e.clientX>=left&&e.clientX<=right&&e.clientY>=top&&e.clientY<=bottom)return true;
+    }
+    return false;
+  }
+  function guardWheel(e){
+    if(!ownsWheel(e))return false;
+    // A DOM menu can live inside wrap too. Returning from its zoom handler
+    // alone would still let the browser scroll wrap by default.
+    for(let node=e.target;node&&node!==document.body&&node.id!=='wrap';node=node.parentElement){
+      const style=getComputedStyle(node);
+      if(node.scrollHeight>node.clientHeight+1&&/auto|scroll/.test(style.overflowY)||node.scrollWidth>node.clientWidth+1&&/auto|scroll/.test(style.overflowX))return true;
+    }
+    e.preventDefault();return true;
+  }
   const overlap=(a,b)=>a.x<b.x+b.w+2&&a.x+a.w+2>b.x&&a.y<b.y+b.h+2&&a.y+a.h+2>b.y;
   function slots({left=8,right,topX,topY,bottomY,sideY,sideBottom=bottomY+HEIGHT}){
     const out=[];
@@ -48,15 +83,17 @@
       for(const edge of ['left','right']){
         const side=sides[edge],items=[...placed].filter(([g,p])=>p.edge===edge&&heads.get(g).getClientRects().length).map(([g,p])=>({g,index:p.index,y:p.y,height:g.getBoundingClientRect().height}));
         const start=items.length?Math.max(B.sideY,Math.min(...items.map(item=>item.y))):B.sideY,height=Math.max(1,end-start);
-        side.start=start;side.end=end;side.left=(edge==='left'?B.left:B.right-WIDTH)-2;side.right=side.left+WIDTH+4;
+        side.start=start;side.end=end;side.left=(edge==='left'?B.left:B.right-WIDTH)-2;side.right=side.left+WIDTH+4;side.groups=items.map(item=>item.g);
         const stack=stackPositions(items,start,end,side.bar.scrollTop||0),signature=JSON.stringify([start,end,B.left,B.right,stack.offset,stack.rows.map(r=>[idOf(r.g),r.top,r.height])]);
-        side.max=stack.maxScroll;if(signature===side.signature)continue;side.signature=signature;
+        side.max=stack.maxScroll;side.hitEnd=Math.min(end,start+stack.height);if(signature===side.signature)continue;side.signature=signature;
         setStyle(side.bar,'display',stack.maxScroll?'block':'none');setStyle(side.bar,'top',start+'px');setStyle(side.bar,'height',height+'px');setStyle(side.bar,'left',(edge==='left'?B.left+WIDTH+2:B.right-WIDTH-16)+'px');setStyle(side.space,'height',Math.max(height,stack.height)+'px');
         if(side.bar.scrollTop!==stack.offset)side.bar.scrollTop=stack.offset;
         for(const row of stack.rows){setVar(row.g,'--may-dock-y',row.screenY+'px');setVar(row.g,'--may-side-clip-top',Math.max(0,start-row.screenY)+'px');setVar(row.g,'--may-side-clip-bottom',Math.max(0,row.screenY+row.height-end)+'px');}
       }
     }
     const sideOf=target=>{const g=target?.closest?.('.may-dock-side');if(g&&placed.has(g))return sides[placed.get(g).edge];const bar=target?.closest?.('.may-menu-side-scroll');return bar&&sides[bar.dataset.edge]?.bar===bar?sides[bar.dataset.edge]:null;};
+    const gapSide=e=>innerWidth<=600||document.body.classList.contains('may-zen')?null:Object.values(sides).find(s=>s.groups?.some(g=>heads.get(g).getClientRects().length)&&e.clientX>=s.left&&e.clientX<=s.right&&e.clientY>=s.start&&e.clientY<=s.hitEnd);
+    wheelRegions.push(e=>!!gapSide(e));
     const wheelControls='input,textarea,select,[contenteditable],[role="slider"],.gz-control,.gz-val,.gz-vpair,.gz-sl,.gz-sl2,.may-slide,.gz-ladder,.may-hp-pop,[role="listbox"],[data-n="fontCycle"],[data-n="sizeCtl"],[data-n="viewCycle"]';
     function scrollSide(e,side,fieldGap=false){
       if(innerWidth<=600||drag||e.ctrlKey||e.defaultPrevented||!side?.max)return;
@@ -77,11 +114,14 @@
     // Gaps hit the canvas under the menu. Route those coordinates before its
     // wheel handler zooms the field; actual menu controls keep their own events.
     document.addEventListener('wheel',e=>{
-      if(innerWidth<=600||drag||e.ctrlKey||e.defaultPrevented||sideOf(e.target))return;
+      if(!useSideStack||drag||e.defaultPrevented||sideOf(e.target)||e.target?.closest?.(wheelMenu))return;
       const target=e.target;
-      if(target!==document.body&&target!==document.documentElement&&!target?.closest?.('#wrap'))return;
-      const side=Object.values(sides).find(s=>s.max&&s.bar.getClientRects().length&&s.bar.style.display!=='none'&&e.clientX>=s.left&&e.clientX<=s.right&&e.clientY>=s.start&&e.clientY<=s.end);
+      if(!fieldTarget(target))return;
+      const side=gapSide(e);
       if(side)scrollSide(e,side,true);
+      // Only hits which fell through decorative menu geometry are consumed
+      // here. DOM controls reach their own wheel handlers unchanged.
+      if(!e.defaultPrevented&&ownsWheel(e)){e.preventDefault();e.stopImmediatePropagation();}
     },{capture:true,passive:false});
     document.addEventListener('wheel',e=>scrollSide(e,sideOf(e.target)),{passive:false});
     document.addEventListener('focusin',e=>{const side=sideOf(e.target);if(!side?.max)return;const r=e.target.getBoundingClientRect(),delta=r.top<side.start?r.top-side.start:r.bottom>side.end?r.bottom-side.end:0;if(delta){side.bar.scrollTop=Math.max(0,Math.min(side.max,side.bar.scrollTop+delta));queueStack();}});
@@ -115,5 +155,5 @@
     addEventListener('resize',layout);requestAnimationFrame(layout);
     return {refresh:layout};
   }
-  return {WIDTH,HEIGHT,DX,DY,slots,nearest,overlap,read,stackPositions,mount};
+  return {WIDTH,HEIGHT,DX,DY,slots,nearest,overlap,read,stackPositions,mount,ownsWheel,guardWheel};
 });

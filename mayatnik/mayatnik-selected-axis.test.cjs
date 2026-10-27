@@ -11,7 +11,7 @@ test('manual selection shows only its group pairs below x3 with global bit highl
   const field={W:9,H:9,val:new Int8Array(81).fill(1)},anchor=2;
   const segs=S.find(field,{anchor,directions:['v','h','d','u'],plainDirections:['v','h','d','u'],minBits:1,minRows:1});
   const context={MayatnikSymmetry:S,rombP:()=>-1,VW:9,VH:9,VX:0,geo:{anchor},st:{symBits:false,symTriangles:false},k:4,f:field,outShow:()=>false,scale:()=>2,konus:null};
-  vm.createContext(context);vm.runInContext(code,context);
+  context.joinedOn=()=>false;vm.createContext(context);vm.runInContext(code,context);
   let drawn=[];const ctx={save(){},restore(){},beginPath(){},rect(){},clip(){},moveTo(){},lineTo(){},stroke(){},fillRect(x,y,w,h){drawn.push([Math.round((x+w/2)/2-.5),Math.round((y+h/2)/2-.5)]);}};
   const draw=()=>{drawn=[];context.paintSymmetry(ctx,{segs},0,0,2,18,18);return [...new Set(drawn.map(p=>p.join(',')))].sort();};
   assert.deepEqual(draw(),[]);
@@ -33,7 +33,7 @@ test('real click selects both strokes and their pairs while export retains the c
   const element=id=>{if(!els.has(id))els.set(id,{classList:{add(){},remove(){}},setAttribute(){}});return els.get(id);};
   const context={MayatnikSymmetry:S,rombP:()=>-1,VW:11,VH:9,VX:0,geo:{anchor:5},st:{sym:true,symBits:false,symTriangles:false,rows:9},
     k:4,f:field,outShow:()=>false,scale:()=>10,konus:null,symGet:()=>data,$:element,axisPicking:false,draw(){}};
-  vm.createContext(context);vm.runInContext(code,context);
+  context.joinedOn=()=>false;vm.createContext(context);vm.runInContext(code,context);
   vm.runInContext(html.slice(html.indexOf('  function konusData()'),html.indexOf('  function konusDraw(')),context);
   let cells=[],strokes=[];
   const ctx={save(){},restore(){},beginPath(){},rect(){},clip(){},moveTo(){},lineTo(){},
@@ -65,7 +65,7 @@ test('hidden checkerboard lattice does not show the selected group',()=>{
   const field={W:11,H:9,val:new Int8Array(99).fill(1)},anchor=5,segs=S.find(field,{anchor,minBits:1,minRows:1,directions:['v']});
   const selected=segs.find(s=>s.p===1),context={MayatnikSymmetry:S,rombP:()=>0,VW:11,VH:9,VX:0,geo:{anchor},st:{symBits:false,symTriangles:false},
     k:4,f:field,outShow:()=>false,scale:()=>2,konus:{frame:4,segment:selected}};
-  vm.createContext(context);vm.runInContext(code,context);
+  context.joinedOn=()=>false;vm.createContext(context);vm.runInContext(code,context);
   let fills=0;const strokes=[],ctx={save(){},restore(){},beginPath(){},rect(){},clip(){},moveTo(){},lineTo(){},closePath(){},fill(){fills++;},stroke(){strokes.push(this.lineWidth);}};
   context.paintSymmetry(ctx,{segs},0,0,2,22,18);
   assert.equal(fills,0);assert.ok(strokes.every(w=>w===1.1));

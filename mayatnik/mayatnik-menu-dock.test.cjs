@@ -123,12 +123,40 @@ test('wheel over field gaps routes the entire occupied side column before the ca
  }
 });
 
-test('gap routing leaves overlays and nonoverflowing columns alone',()=>{
+test('gap routing protects short columns while leaving overlays and hidden menus alone',()=>{
  const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})}),bar=f.body.children.find(n=>n.dataset.edge==='left'),wrap={id:'wrap',closest:s=>s==='#wrap'?wrap:null};
- let stopped=false;const wheel=target=>f.event('wheel',{target,clientX:68,clientY:200,deltaY:60,deltaMode:0,preventDefault(){stopped=true;}},true);
- wheel(wrap);f.flush();assert.equal(stopped,false);assert.equal(bar.scrollTop,0);
+ let stopped=false;const wheel=(target,clientY=200)=>f.event('wheel',{target,clientX:68,clientY,deltaY:60,deltaMode:0,preventDefault(){stopped=true;}},true);
+ wheel(wrap,83);f.flush();assert.equal(stopped,true);assert.equal(bar.scrollTop,0);stopped=false;
+ wheel(wrap);assert.equal(stopped,false,'free field below a short column keeps zoom');
  f.gs[0].box.height=780;f.dock.refresh();wheel({closest:()=>null});f.flush();assert.equal(stopped,false);assert.equal(bar.scrollTop,0,'library/popup over the column keeps its wheel');
- bar.getClientRects=()=>[];wheel(wrap);f.flush();assert.equal(stopped,false);assert.equal(bar.scrollTop,0,'hidden menu, including Zen, leaves canvas wheel alone');
+ for(const g of f.gs)g.hd.getClientRects=()=>[];wheel(wrap);f.flush();assert.equal(stopped,false);assert.equal(bar.scrollTop,0,'hidden menu, including Zen, leaves canvas wheel alone');
+});
+
+test('wheel ownership covers disabled controls, fixed popup backings and side clipping',()=>{
+ const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
+ const dom=new JSDOM('<body><div id="wrap"></div><header style="height:42px;overflow:hidden"><div id="paintTools"><div class="pt-g"><button disabled></button><div class="pt-r" style="position:fixed"><svg class="may-standard-contours"><polygon/></svg></div></div></div></header></body>');
+ const doc=dom.window.document,poly=doc.querySelector('polygon'),group=doc.querySelector('.pt-g'),wrap=doc.querySelector('#wrap'),popup=doc.querySelector('.pt-r');
+ const box=(left,top,width,height)=>({left,top,width,height,right:left+width,bottom:top+height});
+ poly.getBoundingClientRect=()=>box(200,100,120,200);popup.getBoundingClientRect=()=>box(200,100,120,200);group.getBoundingClientRect=()=>box(200,5,120,24);
+ const ctx={module:{exports:{}},document:doc,getComputedStyle:dom.window.getComputedStyle};ctx.globalThis=ctx;vm.runInNewContext(fs.readFileSync(require.resolve('./mayatnik-menu-dock.js'),'utf8'),ctx);const owns=ctx.module.exports.ownsWheel;
+ assert.equal(owns({target:doc.querySelector('button')}),true,'disabled control still owns wheel');
+ assert.equal(owns({target:wrap,clientX:260,clientY:150}),true,'fixed popup escapes header overflow');
+ assert.equal(owns({target:wrap,clientX:500,clientY:150}),false,'unoccupied field remains free');
+ let cancelled=false;assert.equal(ctx.module.exports.guardWheel({target:doc.querySelector('button'),preventDefault(){cancelled=true;}}),true);assert.equal(cancelled,true,'unhandled menu DOM cannot scroll its surrounding field');
+ const list=doc.createElement('div');list.className='gz-ladder';list.style.overflowY='auto';Object.defineProperties(list,{scrollHeight:{value:420},clientHeight:{value:90}});wrap.append(list);cancelled=false;
+ assert.equal(ctx.module.exports.guardWheel({target:list,preventDefault(){cancelled=true;}}),true);assert.equal(cancelled,false,'native nested menu scrolling stays available');
+ group.classList.add('may-dock-side');group.style.setProperty('--may-side-clip-top','120px');group.getBoundingClientRect=()=>box(200,0,120,300);
+ assert.equal(owns({target:wrap,clientX:260,clientY:110}),false,'clipped backing cannot shield invisible field');
+ assert.equal(owns({target:wrap,clientX:260,clientY:150}),true);
+ group.style.visibility='hidden';assert.equal(owns({target:wrap,clientX:260,clientY:150}),false);dom.window.close();
+});
+
+test('production field wheel ignores menu-owned and already handled events, preserving ordinary zoom',()=>{
+ const html=fs.readFileSync(require.resolve('./Zerkalius-mayatnik.html'),'utf8'),start=html.indexOf("  wrap.addEventListener('wheel', e => {"),handlers={};let owned=false,zooms=0;
+ const ctx={wrap:{addEventListener:(name,fn)=>handlers[name]=fn},geo:{},window:{MayatnikMenuDock:{guardWheel:()=>owned}},st:{},ovlLinked:()=>false,scale:()=>1,zoomTo:()=>{zooms++;},zWant:0};
+ vm.runInNewContext(html.slice(start,html.indexOf('  // Тянуть',start)),ctx);
+ const event={deltaY:50,deltaMode:0,clientX:500,clientY:500,preventDefault(){}};
+ owned=true;handlers.wheel(event);assert.equal(zooms,0);owned=false;handlers.wheel({...event,defaultPrevented:true});assert.equal(zooms,0);handlers.wheel(event);assert.equal(zooms,1);
 });
 
 test('low right groups get a scrollbar beside occupied slots, not through empty space above',()=>{
