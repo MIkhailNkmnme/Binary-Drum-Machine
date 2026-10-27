@@ -211,7 +211,7 @@
       const apply = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128))); customInput.value = String(v);
         const r = $('rows'); r.value = v; r.dispatchEvent(new Event('change', { bubbles: true })); $('bBuild')?.click(); sync(); };
       const step = d => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128) + d)); customInput.value = String(v); };
-      const arrow = (label, d, tip) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-rows-step'; b.textContent = label; b.title = tip; b.setAttribute('aria-label', tip);
+      const arrow = (label, d, tip) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-rows-step'; b.dataset.dir = d < 0 ? 'left' : 'right'; b.textContent = label; b.title = tip; b.setAttribute('aria-label', tip);
         b.onclick = ev => { ev.stopPropagation(); step(d); }; return b; };
       const cb = document.createElement('button'); cb.className = 'gz-hx'; cb.textContent = 'Задать'; cb.dataset.miShort = 'Задать';
       cb.title = 'Задать любое число строк от 8 до 4096 и перестроить поле';
