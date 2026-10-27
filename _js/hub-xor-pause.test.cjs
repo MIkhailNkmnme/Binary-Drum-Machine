@@ -36,7 +36,7 @@ function fixture({deferred=false}={}){
 }
 test('release version and cache agree; pause and zen buttons are hidden inside zen',()=>{
   const html=fs.readFileSync(__dirname+'/../index.html','utf8');
-  assert.match(html,/<title>[^<]*v0\.463<\/title>/);
+  assert.match(html,/<title>[^<]*v0\.464<\/title>/);
   assert.match(html,/hub-xor-background\.js\?v=463/);
   assert.match(html,/#hubComparePause\{[^}]*width:48px;height:48px/);
   assert.match(html,/#hubComparePause\{[^}]*clip-path:polygon\(50% 0,100% 50%,50% 100%,0 50%\)/);
@@ -46,6 +46,18 @@ test('release version and cache agree; pause and zen buttons are hidden inside z
   assert.ok(hidden[1].includes('#hubCompareZen'),'zen/menu button is hidden in zen');
   assert.match(html,/<button id="hubComparePause"[^>]*aria-label="Пауза трёх построений"/);
   assert.match(html,/id="hubCompareZen"[^>]*title="[^"]*Esc[^"]*удержание/);
+});
+test('touch screens keep a translucent hollow diamond exit in zen',()=>{
+  const html=fs.readFileSync(__dirname+'/../index.html','utf8');
+  assert.match(html,/@media \(hover: none\),\(pointer: coarse\)\{/);
+  const touch=html.slice(html.indexOf('@media (hover: none),(pointer: coarse){'));
+  assert.match(touch,/body\.hubCompareZen #hubCompareZen\{[^}]*display:flex!important/,'кнопка снова видна только в этом медиазапросе');
+  assert.match(touch,/body\.hubCompareZen #hubCompareZen\{[^}]*background:transparent!important/,'фона у ромба нет');
+  assert.match(touch,/body\.hubCompareZen #hubCompareZen\{[^}]*opacity:\.42/,'ромб полупрозрачный');
+  assert.match(touch,/body\.hubCompareZen #hubCompareZen\{[^}]*width:56px!important/,'ромб 56px — палец попадает');
+  assert.match(touch,/body\.hubCompareZen #hubCompareZen::before\{[^}]*stroke-opacity/,'контур ромба рисует SVG, заливки нет');
+  assert.match(touch,/body\.hubCompareZen #hubCompareZen \.gz-ic\{display:none\}/,'в ромбе остаётся слово, а не значок');
+  assert.match(touch,/body\.hubCompareZen #hubCompareZen:is\(:active,:focus-visible\)\{opacity:1\}/,'касание показывает ромб полностью');
 });
 test('pause before start blocks both sources and resumes exactly once',async()=>{
   const f=fixture();f.pause();assert.equal(f.timers.size,0);assert.equal(f.measured.length,0);
