@@ -243,11 +243,11 @@
       legacy.title = 'Обычный маятник: вернуться к прежнему построению и общему управлению'; legacy.setAttribute('aria-label', legacy.title);
       legacy.onclick = event => { event.stopPropagation(); choose(''); }; pop.append(legacy);
       pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
-        { id: 'mayCompareCones', label: '5.7', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
-        { id: 'mayCompareField', label: '5.8', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }
+        { id: 'mayCompareCones', label: 'Конусы', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
+        { id: 'mayCompareField', label: 'Поле', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }
       ]);
       const bothButton = document.createElement('button'); bothButton.type = 'button'; bothButton.className = 'gz-hx';
-      bothButton.id = 'mayCompareBoth'; bothButton.dataset.n = 'mayCompareBoth'; bothButton.textContent = '5.9';
+      bothButton.id = 'mayCompareBoth'; bothButton.dataset.n = 'mayCompareBoth'; bothButton.textContent = 'Обе стороны';
       bothButton.title = 'Обе стороны 5.9: та же вершина и её зеркало одним проходом, пересчёт раз в пару; поле N × (2N−1)';
       bothButton.setAttribute('aria-label', bothButton.title);
       bothButton.onclick = event => { event.stopPropagation(); choose('pair'); };
@@ -265,10 +265,10 @@
       };
       pop.append(opButton);
       for (const [id, label, src, tip] of [
-        ['mayCompareP12', '1–2', 'p12', 'Наложение 1–2: конусы 5.7 и обе стороны 5.9'],
-        ['mayCompareP23', '2–3', 'p23', 'Наложение 2–3: обе стороны 5.9 и всё поле 5.8'],
-        ['mayCompareP31', '3–1', 'p31', 'Наложение 3–1: всё поле 5.8 и конусы 5.7'],
-        ['mayCompareP123', '1–2–3', 'p123', 'Наложение всех трёх полей: конусы 5.7, обе стороны 5.9, всё поле 5.8']
+        ['mayCompareP12', 'Конусы+Обе', 'p12', 'Наложение 1–2: конусы 5.7 и обе стороны 5.9'],
+        ['mayCompareP23', 'Обе+Поле', 'p23', 'Наложение 2–3: обе стороны 5.9 и всё поле 5.8'],
+        ['mayCompareP31', 'Поле+Конусы', 'p31', 'Наложение 3–1: всё поле 5.8 и конусы 5.7'],
+        ['mayCompareP123', 'Все три', 'p123', 'Наложение всех трёх полей: конусы 5.7, обе стороны 5.9, всё поле 5.8']
       ]) {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'gz-hx';
         button.id = id; button.dataset.n = id; button.textContent = label; button.title = tip; button.setAttribute('aria-label', tip);
