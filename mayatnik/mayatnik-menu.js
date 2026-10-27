@@ -210,12 +210,15 @@
       customInput.setAttribute('aria-label', 'Любое число строк');
       const apply = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128))); customInput.value = String(v);
         const r = $('rows'); r.value = v; r.dispatchEvent(new Event('change', { bubbles: true })); $('bBuild')?.click(); sync(); };
+      const step = d => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128) + d)); customInput.value = String(v); };
+      const arrow = (label, d, tip) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-rows-step'; b.textContent = label; b.title = tip; b.setAttribute('aria-label', tip);
+        b.onclick = ev => { ev.stopPropagation(); step(d); }; return b; };
       const cb = document.createElement('button'); cb.className = 'gz-hx'; cb.textContent = 'Задать'; cb.dataset.miShort = 'Задать';
       cb.title = 'Задать любое число строк от 8 до 4096 и перестроить поле';
       cb.onclick = ev => { ev.stopPropagation(); apply(); };
       customInput.onclick = ev => ev.stopPropagation();
       customInput.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); apply(); } };
-      cr.append(customInput, cb); pop.append(cr); }
+      cr.append(arrow('−', -1, 'На 1 меньше'), customInput, arrow('+', 1, 'На 1 больше'), cb); pop.append(cr); }
     { const rb = document.createElement('button'); rb.className = 'gz-hx'; rb.textContent = 'Рандом'; rb.dataset.miShort = 'Рандом';
       rb.title = 'Тест: очистить поле и заполнить квадрат N×N случайными битами (N = число строк); остальное поле пусто. Для проверки уменьшения и Очков по наложению.';
       rb.onclick = ev => { ev.stopPropagation(); window.mayTestRandom?.(+$('rows').value || 128); sync(); }; pop.append(rb); }
