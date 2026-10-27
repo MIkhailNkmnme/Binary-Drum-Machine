@@ -60,6 +60,24 @@ test('single operation 9 is Hub frame 8; cone and global inputs differ at the fi
   assert.equal(first.left[i], 1); assert.equal(first.right[i], 0);
 });
 
+test('5.9 both-sided field is symmetric, advances once per pair, and copies as pair', () => {
+  const engine = compare.create({ rows: 16 });
+  const symmetric = state => {
+    const { W, H, both } = state;
+    for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) if (both[r * W + c] !== both[r * W + (W - 1 - c)]) return false;
+    return true;
+  };
+  const at2 = engine.seek(2), two = at2.both.slice();       // пара ±1 после шага 1
+  const at3 = engine.seek(3), three = at3.both.slice();     // чётный шаг 2: 5.9 стоит
+  assert.deepEqual(Array.from(three), Array.from(two), '5.9 advances only on pair steps');
+  const at4 = engine.seek(4), four = at4.both;              // шаг 3: пара ±2
+  assert.notDeepEqual(Array.from(four), Array.from(three), 'the next pair must change 5.9');
+  for (const state of [at2, at3, at4]) assert.ok(symmetric(state), '5.9 must stay mirror-symmetric');
+  const host = new Int8Array(at4.W * at4.H);
+  engine.copyTo(host, 'pair');
+  assert.deepEqual(Array.from(host), Array.from(four));
+});
+
 test('all ternary XOR/AND operands preserve empty union, reflect only the right input, and identify contributions', () => {
   const engine = compare.create({ rows: 5 }), state = engine.seek(0), size = state.W * state.H;
   const values = [-1, 0, 1];
@@ -88,12 +106,12 @@ test('no-checkpoint backward replay is exact, retains the same working buffers, 
   assert.equal(back.left, l); assert.equal(back.right, r);
   assert.deepEqual(back.right, expected(8, 'pend', false, 3).right);
   assert.deepEqual(host, savedHost); assert.equal(engine.memory().checkpointCount, 0);
-  assert.equal(engine.memory().workingBytes, 2 * host.length);
+  assert.equal(engine.memory().workingBytes, 3 * host.length);
 });
 
 test('4096 rows allocate no checkpoint when one pair of snapshots exceeds the default 32 MiB budget', () => {
   const engine = compare.create({ rows: 4096 }), memory = engine.memory();
-  assert.equal(memory.workingBytes, 2 * 4096 * 8191);
+  assert.equal(memory.workingBytes, 3 * 4096 * 8191);
   assert.equal(memory.checkpointLimit, 0); assert.equal(memory.checkpointBytes, 0);
 });
 

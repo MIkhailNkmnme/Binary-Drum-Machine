@@ -12,7 +12,7 @@
     const max = pair ? rows : 2 * rows - 1, steps = options.steps === undefined ? max : options.steps;
     if (!Number.isSafeInteger(rows) || rows < 1 || rows > 4096 ||
         !['pend', 'pendR'].includes(direction) || typeof pair !== 'boolean' ||
-        !['cone', 'field', 'xor', 'and'].includes(source) || typeof mirror !== 'boolean' ||
+        !['cone', 'field', 'pair', 'xor', 'and'].includes(source) || typeof mirror !== 'boolean' ||
         !Number.isSafeInteger(steps) || steps < 0 || steps > max) throw new RangeError('Invalid finite freeze configuration');
     return { rows, direction, pair, source, mirror, steps };
   }

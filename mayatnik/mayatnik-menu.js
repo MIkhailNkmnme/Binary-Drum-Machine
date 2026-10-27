@@ -246,6 +246,13 @@
         { id: 'mayCompareCones', label: '5.7', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
         { id: 'mayCompareField', label: '5.8', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }
       ]);
+      const bothButton = document.createElement('button'); bothButton.type = 'button'; bothButton.className = 'gz-hx';
+      bothButton.id = 'mayCompareBoth'; bothButton.dataset.n = 'mayCompareBoth'; bothButton.textContent = '5.9';
+      bothButton.title = 'Обе стороны 5.9: та же вершина и её зеркало одним проходом, пересчёт раз в пару; поле N × (2N−1)';
+      bothButton.setAttribute('aria-label', bothButton.title);
+      bothButton.onclick = event => { event.stopPropagation(); choose('pair'); };
+      pop.append(bothButton);
+      controls.push({ half: bothButton, on: () => state().source === 'pair', gz: true });
       pair('mayCompareModes', 'Наложение исходных построений 5.7 и 5.8', [
         { id: 'mayCompareXor', label: 'XOR', tip: 'XOR: побитовое наложение конусов 5.7 и всего поля 5.8', on: () => state().source === 'xor', click: () => choose('xor') },
         { id: 'mayCompareAnd', label: 'AND', tip: 'AND: пересечение единиц конусов 5.7 и всего поля 5.8', on: () => state().source === 'and', click: () => choose('and') }
@@ -256,7 +263,10 @@
       ]);
       function syncComparison() {
         for (const row of rows) row.gzSync();
-        for (const {half,on} of controls) half.setAttribute('aria-pressed', String(!!on()));
+        for (const {half,on,gz} of controls) {
+          half.setAttribute('aria-pressed', String(!!on()));
+          if (gz) half.classList.toggle('gz-on', !!on());
+        }
         const selected = !state().source; legacy.classList.toggle('gz-on', selected); legacy.setAttribute('aria-pressed', String(selected));
       }
       addEventListener('may-compare-change', syncComparison);
