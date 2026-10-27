@@ -975,4 +975,6 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
   background:color-mix(in srgb,var(--acc) 22%,#0c0f14);text-shadow:0 0 2px #04121f}
 .may-rows-step[data-dir=left]{clip-path:polygon(0 12px,10px 0,100% 0,100% 100%,10px 100%)}
 .may-rows-step[data-dir=right]{clip-path:polygon(0 0,100% 0,100% 12px,calc(100% - 10px) 100%,0 100%)}
+.may-rows-step::before{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#2f7ff0;border:1px solid #ffffff66;z-index:-1}
+.may-rows-custom input{width:96px;border:0;border-top:2px solid #4aa8ff;border-bottom:2px solid #4aa8ff;background:#05080c;color:#ffb46a}
 .may-rows-custom input{width:64px}
