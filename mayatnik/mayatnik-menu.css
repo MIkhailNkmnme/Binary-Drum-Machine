@@ -973,5 +973,5 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-rows-line{display:flex;align-items:center;justify-content:center;gap:2px;width:100%}
 .may-rows-step{position:relative;flex:0 0 auto;width:30px;height:24px;padding:0;border:0;color:#eaf6ff;font:13px/1 var(--mono);cursor:pointer;display:grid;place-items:center;
   background:color-mix(in srgb,var(--acc) 22%,#0c0f14);clip-path:polygon(6px 0,24px 0,30px 12px,24px 24px,6px 24px,0 12px);text-shadow:0 0 2px #04121f}
-.may-rows-step::before{content:"";position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#2f7ff0;border:1px solid #ffffff55;z-index:-1}
+
 .may-rows-custom input{width:64px}
