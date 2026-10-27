@@ -6,13 +6,14 @@
     if(q>=w)visit(q-w);if(q+w<n)visit(q+w);
     if(diagonal){if(q>=w){if(q%w)visit(q-w-1);if(q%w<w-1)visit(q-w+1);}if(q+w<n){if(q%w)visit(q+w-1);if(q%w<w-1)visit(q+w+1);}}
   }
-  function fill(pixels,w,start,colour,diagonal=false){
+  // Optional scratch is reusable across a batch; its returned view lasts until the next fill.
+  function fill(pixels,w,start,colour,diagonal=false,scratch=null){
     if(start<0||start>=pixels.length||pixels[start]===colour)return new Uint32Array();
-    const old=pixels[start],queue=new Uint32Array(pixels.length);let head=0,tail=1;
+    const old=pixels[start],queue=scratch&&scratch.length>=pixels.length?scratch:new Uint32Array(pixels.length);let head=0,tail=1;
     queue[0]=start;pixels[start]=colour;
     const visit=q=>{if(pixels[q]===old){pixels[q]=colour;queue[tail++]=q;}};
     while(head<tail)neighbours(queue[head++],w,pixels.length,visit,diagonal);
-    return queue.slice(0,tail);
+    return scratch?queue.subarray(0,tail):queue.slice(0,tail);
   }
   function count(pixels,w){
     const seen=new Uint8Array(pixels.length),queue=new Uint32Array(pixels.length),colours=new Map();let regions=0;
