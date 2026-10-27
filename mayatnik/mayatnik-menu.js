@@ -253,6 +253,17 @@
       bothButton.onclick = event => { event.stopPropagation(); choose('pair'); };
       pop.append(bothButton);
       controls.push({ half: bothButton, on: () => state().source === 'pair', gz: true });
+      let overlayAnd = false;
+      const opButton = document.createElement('button'); opButton.type = 'button'; opButton.className = 'gz-hx';
+      opButton.id = 'mayCompareOp'; opButton.dataset.n = 'mayCompareOp'; opButton.textContent = 'XOR';
+      opButton.title = 'Наложение трёх полей: XOR или AND. Щелчок переключает';
+      opButton.setAttribute('aria-label', opButton.title);
+      opButton.onclick = event => {
+        event.stopPropagation(); overlayAnd = !overlayAnd; opButton.textContent = overlayAnd ? 'AND' : 'XOR';
+        const match = /^(?:p|a)(12|23|31|123)$/.exec(state().source || '');
+        if (match) choose((overlayAnd ? 'a' : 'p') + match[1]);
+      };
+      pop.append(opButton);
       for (const [id, label, src, tip] of [
         ['mayCompareP12', '1–2', 'p12', 'Наложение 1–2: конусы 5.7 и обе стороны 5.9'],
         ['mayCompareP23', '2–3', 'p23', 'Наложение 2–3: обе стороны 5.9 и всё поле 5.8'],
@@ -261,9 +272,9 @@
       ]) {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'gz-hx';
         button.id = id; button.dataset.n = id; button.textContent = label; button.title = tip; button.setAttribute('aria-label', tip);
-        button.onclick = event => { event.stopPropagation(); choose(src); };
+        const suffix = src.slice(1); button.onclick = event => { event.stopPropagation(); choose((overlayAnd ? 'a' : 'p') + suffix); };
         pop.append(button);
-        controls.push({ half: button, on: () => state().source === src, gz: true });
+        controls.push({ half: button, on: () => state().source === (overlayAnd ? 'a' : 'p') + suffix, gz: true });
       }
       pair('mayCompareModes', 'Наложение исходных построений 5.7 и 5.8', [
         { id: 'mayCompareXor', label: 'XOR', tip: 'XOR: побитовое наложение конусов 5.7 и всего поля 5.8', on: () => state().source === 'xor', click: () => choose('xor') },
