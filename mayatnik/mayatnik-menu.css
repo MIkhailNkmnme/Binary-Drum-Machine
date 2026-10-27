@@ -971,6 +971,10 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 
 /* v0.609: число строк — стрелки − и + по бокам, как половины кнопки. */
 .may-rows-line{display:flex;align-items:center;justify-content:center;gap:2px;width:100%}
-.may-rows-step{flex:0 0 auto;width:26px;height:26px;padding:0;border:0;color:#dfe6f5;background:color-mix(in srgb,var(--acc) 26%,#0c0f14);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);font:16px/1 var(--mono);cursor:pointer;display:grid;place-items:center}
+.may-rows-step{position:relative;flex:0 0 auto;width:28px;height:28px;padding:0;border:0;background:transparent;color:#eaf6ff;font:15px/1 var(--mono);cursor:pointer;display:grid;place-items:center}
+.may-rows-step::before{content:"";position:absolute;inset:2px;transform:rotate(45deg);border:2px solid #5aa9ff;background:#0c0f14}
+.may-rows-step::after{content:"";position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#2f7ff0;box-shadow:inset 0 0 0 2px #0c0f14}
+.may-rows-step>span,.may-rows-step{isolation:isolate}
+.may-rows-step{text-shadow:0 0 2px #04121f}
 .may-rows-step:hover{border-color:var(--acc)}
 .may-rows-custom input{width:64px}
