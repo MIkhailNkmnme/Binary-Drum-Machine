@@ -357,7 +357,8 @@
     // v0.355: «эти сюда сверху» — «Строк», «Вершин», «Показ» из рейки «Поле» — наверху списка «Хорр»
     // v0.372: «ползунок с вершинами удали» — вершин ставит выбор «N/3 | 4N» (или N)
     bbCells['Вершин']?.remove();
-    const top = ['Строк', 'Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) c.classList.add('may-hp-sl'); pop.prepend(...top); }
+    bbCells['Строк']?.remove();
+    const top = ['Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) c.classList.add('may-hp-sl'); pop.prepend(...top); }
     // v0.372: «убери До N/3 — там дубль; 2 кнопки в одну N/3 и 4N, какая выбрана — по той и строй»: «До N/3», «N/3», «4N» из сот убраны,
     // вместо них — одна кнопка из двух половин; выбранная горит, щелчок по горящей — снова N вершин; выбор — для кнопок размеров и «Построить»
     const nm = c => c.querySelector('.gz-nm')?.textContent.trim(); for (const c of (bbCells.btns || [])) if (['N/3', '4N', 'До N/3'].includes(nm(c))) c.remove();
