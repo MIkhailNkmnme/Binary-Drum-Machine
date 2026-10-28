@@ -55,7 +55,7 @@ function fixture({ saved = null } = {}) {
   document.getElementById = id => nodes[id] || null;
 
   const context = {
-    document, MAYATNIK: M, performance: { now: () => ++time },
+    document, MAYATNIK: M, HubXorKernel: require('./hub-xor-kernel.js'), performance: { now: () => ++time },
     localStorage: { getItem: () => (saved ? JSON.stringify(saved) : null), setItem(key, value) { stored.push([key, value]); } },
     setTimeout(fn, delay) { delays.push(delay); const id = ++serial; timers.set(id, fn); return id; },
     clearTimeout: id => timers.delete(id),
@@ -124,10 +124,10 @@ function assertBlend(f, label) {
   assert.deepEqual(Array.from(actual), Array.from(f.nodes.hubBlend.ctx.expected), label + ': blend pixels');
 }
 
-test('v0.470 markup: three independent field buttons, the old pair buttons are gone', () => {
+test('v0.471 markup: three independent field buttons, the old pair buttons are gone', () => {
   const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
-  assert.match(html, /<title>[^<]*v0\.470<\/title>/);
-  assert.match(html, /hub-xor-background\.js\?v=470/);
+  assert.match(html, /<title>[^<]*v0\.471<\/title>/);
+  assert.match(html, /hub-xor-background\.js\?v=471/);
   const group = html.match(/<div id="hubComparePairs"[^>]*>([\s\S]*?)<\/div>/);
   assert.ok(group, 'field group exists');
   for (const value of [1, 2, 3]) {
@@ -247,13 +247,13 @@ test('saved fields win; the old 1–2 / 2–3 / 3–1 / 1–2–3 pairs are migr
   assert.deepEqual(broken.fields(), [1, 2], 'a non-array selection is ignored');
 });
 
-test('player speed cycles 0,25×–4×, scales the next frame delay and is saved', async () => {
+test('player speed cycles 0,25×–16×, scales the next frame delay and is saved', async () => {
   const f = fixture();
   assert.equal(f.nodes.hubCompareSpeedLabel.textContent, '1×');
   const seen = [];
-  for (let i = 0; i < 5; i++) { f.clickSpeed(); seen.push(f.nodes.hubCompareSpeedLabel.textContent); }
-  assert.deepEqual(seen, ['2×', '4×', '0,25×', '0,5×', '1×']);
-  assert.match(f.nodes.hubCompareSpeed.title, /0,25× → 0,5× → 1× → 2× → 4×/);
+  for (let i = 0; i < 7; i++) { f.clickSpeed(); seen.push(f.nodes.hubCompareSpeedLabel.textContent); }
+  assert.deepEqual(seen, ['2×', '4×', '8×', '16×', '0,25×', '0,5×', '1×']);
+  assert.match(f.nodes.hubCompareSpeed.title, /0,25× → 0,5× → 1× → 2× → 4× → 8× → 16×/);
   await f.frame();
   const one = f.delays[f.delays.length - 1];
   f.clickSpeed();   // 2×
@@ -266,6 +266,12 @@ test('player speed cycles 0,25×–4×, scales the next frame delay and is saved
   assert.ok(two < one, '2× schedules sooner than 1×');
   assert.ok(four < two, '4× schedules sooner than 2×');
   assert.equal(JSON.parse(f.stored[f.stored.length - 1][1]).speed, 4);
+  f.clickSpeed();   // 8×
+  await f.frame();
+  const eight = f.delays[f.delays.length - 1];
+  f.clickSpeed();   // 16×
+  await f.frame();
+  assert.ok(eight < four && f.delays[f.delays.length - 1] < eight);
   f.clickSpeed();   // 0,25×
   f.clickSpeed();   // 0,5×
   await f.frame();
@@ -276,6 +282,7 @@ test('saved player speed is restored and validated', () => {
   const half = fixture({ saved: { fields: [3], speed: 0.5 } });
   assert.equal(half.nodes.hubCompareSpeedLabel.textContent, '0,5×');
   assert.deepEqual(half.fields(), [3]);
+  for (const speed of [8, 16]) assert.equal(fixture({ saved: { speed } }).nodes.hubCompareSpeedLabel.textContent, speed + '×');
   const invalid = fixture({ saved: { speed: 7 } });
   assert.equal(invalid.nodes.hubCompareSpeedLabel.textContent, '1×');
 });

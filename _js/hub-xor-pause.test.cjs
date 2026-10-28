@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const M=require('../mayatnik/mayatnik-core.js');
 const source=fs.readFileSync(__dirname+'/hub-xor-background.js','utf8');
 function element(){const events={},classes=new Set();return {dataset:{},attributes:{},style:{setProperty(){}},clicks:0,click(){this.clicks++;},classList:{toggle(k,on){if(on)classes.add(k);else classes.delete(k);},add(k){classes.add(k);},remove(k){classes.delete(k);},contains(k){return classes.has(k);}},setAttribute(k,v){this.attributes[k]=v;},addEventListener(k,fn){(events[k]||=[]).push(fn);},fire(k,e={}){for(const fn of events[k]||[])fn(e);},closest(){return null;}};}
-function fixture({deferred=false}={}){
+function fixture({deferred=false,firstFrame=0}={}){
   const nodes={},timers=new Map(),measured=[],pending=[],listeners={};let serial=0,time=0;
   for(const id of ['hubXorBackground','hubComparePause','hubComparePauseIcon','hubCompareZen'])nodes[id]=element();
   for(const id of ['hubCones','hubXor','hubBlend']){
@@ -11,13 +11,13 @@ function fixture({deferred=false}={}){
     c.getContext=()=>({createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData(){}});
   }
   const document=element();document.hidden=false;document.body=element();document.getElementById=id=>nodes[id]||null;
-  const context={document,MAYATNIK:M,performance:{now:()=>++time},localStorage:{getItem:()=>null,setItem(){}},
+  const context={document,MAYATNIK:M,HubXorKernel:require('./hub-xor-kernel.js'),performance:{now:()=>++time},localStorage:{getItem:()=>null,setItem(){}},
     setTimeout(fn){const id=++serial;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
     addEventListener(k,fn){(listeners[k]||=[]).push(fn);},
     fire(k,e={}){for(const fn of listeners[k]||[])fn(e);},
     HubComparePanel:{create:()=>({measure(input){measured.push({frame:input.frame,cycle:input.cycle,left:Array.from(input.left),right:Array.from(input.right)});return deferred?new Promise((resolve,reject)=>pending.push({resolve,reject})):Promise.resolve();},error(){}})} };
   context.window=context;
-  const small=source.replace('const H = 1024','const H = 5').replace('FIRST_FRAME = 8','FIRST_FRAME = 0').replace('ROW_CHUNK = 64','ROW_CHUNK = 2');
+  const small=source.replace('const H = 1024','const H = 5').replace('FIRST_FRAME = 8','FIRST_FRAME = '+firstFrame).replace('ROW_CHUNK = 64','ROW_CHUNK = 2');
   vm.runInNewContext(small,context);
   const pointer=(type,{pointerId=1,button=0,pointerType='mouse',clientX=250,clientY=150}={})=>context.fire(type,{pointerId,button,buttons:type==='pointerup'?0:1,pointerType,clientX,clientY,preventDefault(){},stopImmediatePropagation(){}});
   return {nodes,document,timers,measured,pending,
@@ -36,8 +36,8 @@ function fixture({deferred=false}={}){
 }
 test('release version and cache agree; pause and zen buttons are hidden inside zen',()=>{
   const html=fs.readFileSync(__dirname+'/../index.html','utf8');
-  assert.match(html,/<title>[^<]*v0\.470<\/title>/);
-  assert.match(html,/hub-xor-background\.js\?v=470/);
+  assert.match(html,/<title>[^<]*v0\.471<\/title>/);
+  assert.match(html,/hub-xor-background\.js\?v=471/);
   assert.match(html,/#hubComparePause\{[^}]*width:48px;height:48px/);
   assert.match(html,/#hubComparePause\{[^}]*clip-path:polygon\(50% 0,100% 50%,50% 100%,0 50%\)/);
   const hidden=html.match(/body\.hubCompareZen :is\(([^)]*)\)\{display:none!important\}/);
@@ -81,6 +81,16 @@ test('pause while statistics are pending lets current job settle but cannot star
   f.pause();f.pending.shift().resolve();await f.flush();assert.equal(f.timers.size,0);
   assert.deepEqual(f.measured.map(x=>x.frame),[0]);
   f.pause();assert.equal(f.timers.size,1);await f.frame();assert.equal(f.measured[1].frame,1);
+});
+
+test('pause during next-cycle hidden warmup measures the last displayed field, not the hidden new field',async()=>{
+  const f=fixture({firstFrame:2});
+  for(let i=0;i<10;i++)await f.frame();
+  assert.deepEqual(f.measured.slice(-1).map(x=>[x.cycle,x.frame]),[[1,0]]);
+  assert.equal(f.nodes.hubCones.dataset.frame,'8');
+  const displayed=f.measured[8];
+  f.pause();await f.flush();
+  assert.deepEqual(f.measured[f.measured.length-1],displayed);
 });
 test('resume during pending statistics and hidden transitions never duplicates a timer',async()=>{
   const f=fixture({deferred:true});await f.frame();

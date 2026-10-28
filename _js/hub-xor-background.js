@@ -1,4 +1,5 @@
-/* v11 (Хаб v0.470). Скорость плеера 0,25× / 0,5× / 1× / 2× / 4×; кадр
+/* v12 (Хаб v0.471). Точные packed-поля, отрисовка без распаковки, 8×/16×.
+   v11 (Хаб v0.470). Скорость плеера 0,25× / 0,5× / 1× / 2× / 4×; кадр
    рисуется 32-битными словами, 5.9 не перерисовывается на промежуточных
    кадрах, на 4× кадр режется одним куском 1024 строки — 4× обгоняет 2×.
    v10 (v0.469). Скорость плеера: 0,25× / 0,5× / 1× / 2× — кнопка в
@@ -28,9 +29,10 @@
   const FIRST_FRAME = 8, INTERVAL = 120, ROW_CHUNK = 64;
   left.width = right.width = W; left.height = right.height = H;
   if (middle) { middle.width = W; middle.height = H; }
-  const cones = MAYATNIK.field(W, H, 'empty', CENTER);
-  const grid = new Int8Array(W * H).fill(-1);
-  const pairGrid = new Int8Array(W * H).fill(-1);
+  const kernel = HubXorKernel;
+  const cones = kernel.create(W, H), grid = kernel.create(W, H), pairGrid = kernel.create(W, H);
+  const packedLeft = kernel.create(W, H), packedRight = kernel.create(W, H), packedPair = kernel.create(W, H);
+  let decoded = false, earlyStats = null;
   const publishedLeft = new Int8Array(W * H), publishedRight = new Int8Array(W * H), publishedPair = new Int8Array(W * H);
   const coneImage = coneCtx.createImageData(W, H), xorImage = xorCtx.createImageData(W, H);
   const pairImage = pairCtx && pairCtx.createImageData(W, H);
@@ -59,7 +61,7 @@
     green: { label: 'Зелёный', left: [51,122,52], middle: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, обе стороны, всё поле и общие — зелёный' }
   };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
-  const SPEEDS = [0.25, 0.5, 1, 2, 4];
+  const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16];
   // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
   const FIELDS = [1, 2, 3];
   const FIELD_KEYS = { 1: 'left', 2: 'pair', 3: 'right' };
@@ -254,7 +256,7 @@
     if (speedButton) {
       const label = speedLabel(view.speed);
       text('hubCompareSpeedLabel', label);
-      speedButton.title = 'Скорость плеера: ' + label + '. Щелчок — следующая: 0,25× → 0,5× → 1× → 2× → 4×';
+      speedButton.title = 'Скорость плеера: ' + label + '. Щелчок — следующая: 0,25× → 0,5× → 1× → 2× → 4× → 8× → 16×';
       speedButton.setAttribute('aria-label', 'Скорость плеера: ' + label);
       speedButton.classList.toggle('gz-on', view.speed !== 1);
     }
@@ -274,18 +276,10 @@
     }
     const common32 = colour32(palette.common);
     if (blendPixels) {
-      for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
-        const i = r * W + c;
-        let ones = 0, all = true, colour = 0;
-        for (const field of fields) {
-          // зеркально читаются поля 2 и 3: поле 1 (конусы 5.7) остаётся прямым
-          const j = r * W + (view.mirror && field.key !== 'left' ? W - 1 - c : c);
-          if (field.data[j] === 1) { ones++; if (!colour) colour = field.colour32; }
-          else all = false;
-        }
-        blendPixels[i] = (view.mode === 'xor' ? ones % 2 === 1 : all) ? (view.mode === 'and' ? common32 : (colour || common32)) : 0;
-      }
+      kernel.blend(fields.map(field => ({ data: field.key === 'pair' ? packedPair : field.key === 'right' ? packedRight : packedLeft, mirror: field.key !== 'left' })),
+        blendPixels, view.mode === 'and', view.mirror, fields.map(field => field.colour32), common32);
     } else {
+      decodePublished();
       for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
         const i = r * W + c;
         let ones = 0, all = true, colour = null;
@@ -429,12 +423,12 @@
   }
   syncView();
 
-  // Пустота не участвует в XOR; три пустых входа оставляют клетку пустой.
-  function xor3(a, b, c) {
-    let v = a;
-    if (b >= 0) v = v < 0 ? b : v ^ b;
-    if (c >= 0) v = v < 0 ? c : v ^ c;
-    return v;
+  // Int8 snapshots are only needed by statistics or the big-endian renderer.
+  // Keep them tied to the published frame even if computation is paused mid-row.
+  function decodePublished() {
+    if (decoded) return;
+    kernel.unpack(packedLeft, publishedLeft); kernel.unpack(packedRight, publishedRight); kernel.unpack(packedPair, publishedPair);
+    decoded = true;
   }
   function paint(pixels, i, value, colour) {
     const p = i * 4, on = value === 1;
@@ -448,16 +442,14 @@
     if (view.mode === 'split') {
       if (conePixels) {
         const lc = colour32(palette.left), rc = colour32(palette.right), mc = colour32(palette.middle);
-        for (let i = 0; i < PIXELS; i++) {
-          conePixels[i] = publishedLeft[i] === 1 ? lc : 0;
-          xorPixels[i] = publishedRight[i] === 1 ? rc : 0;
-        }
+        kernel.paint(packedLeft, conePixels, lc); kernel.paint(packedRight, xorPixels, rc);
         // 5.9 меняется только через кадр: на промежуточных кадрах канвас не трогаем.
         const repaintPair = !!pairPixels && (force || pairStep || !pairPainted);
-        if (repaintPair) for (let i = 0; i < PIXELS; i++) pairPixels[i] = publishedPair[i] === 1 ? mc : 0;
+        if (repaintPair) kernel.paint(packedPair, pairPixels, mc);
         coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
         if (repaintPair) { pairCtx.putImageData(pairImage, 0, 0); pairPainted = true; }
       } else {
+        decodePublished();
         for (let i = 0; i < PIXELS; i++) {
           paint(coneImage.data, i, publishedLeft[i], palette.left);
           paint(xorImage.data, i, publishedRight[i], palette.right);
@@ -480,54 +472,35 @@
       nextFrame = false; frame++; row = 1; started = performance.now();
       // Все 2047 вершин внутри рамки пройдены: все три поля начинают новый цикл.
       // Не заворачиваем вершины через край и не меняем исходный алгоритм cone.
-      if (frame === W) { frame = 0; cycle++; cones.val.fill(-1); grid.fill(-1); pairGrid.fill(-1); }
+      if (frame === W) { frame = 0; cycle++; kernel.reset(cones); kernel.reset(grid); kernel.reset(pairGrid); }
       const d = Math.ceil(frame / 2), pos = CENTER + (frame % 2 ? -d : d);
-      grid[pos] = 1;
+      kernel.apex(grid, pos);
       // 5.9 повторяет пару шагов тест-страницы: −m и +m одной дистанцией, ровно
       // один пересчёт на пару (кадры 0, 1, 3, 5…), поэтому поле совпадает с
       // «обе стороны» на той же странице кадр в кадр, но обновляется через кадр.
       const pairStepNow = frame === 0 || frame % 2 === 1;
       pairStep = pairStepNow;
       if (middle && pairStep) {
-        pairGrid[pos] = 1;
+        kernel.apex(pairGrid, pos);
         const twin = 2 * CENTER - pos;
-        if (twin >= 0 && twin < W) pairGrid[twin] = 1;
+        if (twin >= 0 && twin < W) kernel.apex(pairGrid, twin);
       }
-      // Один исходный cone за такт; его границы обрезаются самим общим ядром.
-      MAYATNIK.cone(cones, pos, H);
+      // Один исходный cone за такт; packed-ядро сохраняет границы и чётность.
+      kernel.cone(cones, pos);
     }
     const visible = frame >= FIRST_FRAME;
     // На высокой скорости режем кадр крупнее: меньше таймеров, больше кадров/с.
     const chunk = view.speed >= 4 ? 1024 : view.speed >= 2 ? 512 : ROW_CHUNK;
     const end = Math.min(H, row + chunk);
-    for (; row < end; row++) {
-      const base = row * W, up = base - W;
-      if (middle && pairStep) {
-        for (let c = 0; c < W; c++) {
-          const i = base + c;
-          let v = grid[i];
-          if (c > 0) { const p = grid[up + c - 1]; if (p >= 0) v = v < 0 ? p : v ^ p; }
-          if (c + 1 < W) { const p = grid[up + c + 1]; if (p >= 0) v = v < 0 ? p : v ^ p; }
-          grid[i] = v;
-          let q = pairGrid[i];
-          if (c > 0) { const p = pairGrid[up + c - 1]; if (p >= 0) q = q < 0 ? p : q ^ p; }
-          if (c + 1 < W) { const p = pairGrid[up + c + 1]; if (p >= 0) q = q < 0 ? p : q ^ p; }
-          pairGrid[i] = q;
-        }
-      } else {
-        for (let c = 0; c < W; c++) {
-          const i = base + c;
-          let v = grid[i];
-          if (c > 0) { const p = grid[up + c - 1]; if (p >= 0) v = v < 0 ? p : v ^ p; }
-          if (c + 1 < W) { const p = grid[up + c + 1]; if (p >= 0) v = v < 0 ? p : v ^ p; }
-          grid[i] = v;
-        }
-      }
-    }
+    kernel.sweep(grid, row, end);
+    if (middle && pairStep) kernel.sweep(pairGrid, row, end);
+    row = end;
     if (row < H) { schedule(0); return; }
     if (visible) {
+      // Preserve the last displayed snapshot throughout the next cycle's
+      // hidden warmup frames too (pause and palette changes can occur there).
+      kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
       // Готовые изображения публикуются в одном задании, без промежуточного кадра.
-      publishedLeft.set(cones.val); publishedRight.set(grid); publishedPair.set(pairGrid);
       left.dataset.frame = right.dataset.frame = String(frame);
       if (middle) middle.dataset.frame = String(frame);
       published = true;
@@ -546,7 +519,14 @@
     if (statsOn) {
       awaitingStats = true;
       try {
-        Promise.resolve(controller.measure({ left: cones.val, middle: pairGrid, right: grid, W, H, frame, cycle }))
+        let data;
+        if (visible) { decodePublished(); data = [publishedLeft, publishedPair, publishedRight]; }
+        else {
+          if (!earlyStats) earlyStats = [new Int8Array(PIXELS), new Int8Array(PIXELS), new Int8Array(PIXELS)];
+          kernel.unpack(cones, earlyStats[0]); kernel.unpack(pairGrid, earlyStats[1]); kernel.unpack(grid, earlyStats[2]);
+          data = earlyStats;
+        }
+        Promise.resolve(controller.measure({ left: data[0], middle: data[1], right: data[2], W, H, frame, cycle }))
           .then(() => { statsFrame = frame; continueFrame(); }, stop);
       } catch (error) { stop(error); }
     } else continueFrame();
@@ -559,6 +539,7 @@
     if (typeof controller.active === 'function' && !controller.active()) return;
     if (awaitingStats) return;
     const target = publishedFrame, targetCycle = publishedCycle;
+    decodePublished();
     awaitingStats = true;
     Promise.resolve(controller.measure({ left: publishedLeft, middle: publishedPair, right: publishedRight, W, H, frame: target, cycle: targetCycle }))
       .then(() => { statsFrame = target; awaitingStats = false; if (!paused) schedule(0); }, stop);
