@@ -245,7 +245,7 @@
     tintIcons();
     const ladders=[...document.querySelectorAll('.gz-ladder')];
     document.querySelectorAll('.may-options-owner').forEach(b=>{if(!ladders.some(l=>l.owner===b)){b.classList.remove('may-options-owner','may-standard-open');b.querySelector('.may-standard-roof')?.remove();}});
-    document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,.gz-ladder .gz-hx,#mayatnikTemplatePanel .pt-r .gz-hx').forEach(b=>{
+    document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,.gz-ladder .gz-hx,.may-horr-popup .gz-hx,#mayatnikTemplatePanel .pt-r .gz-hx').forEach(b=>{
       if(b.closest('#mayInfoDiamond,.pt-btn')||b.closest('#mayBottomBar')&&!b.classList.contains('gz-head'))return;
       if(b.querySelector('#templateLibraryChoices'))return;   // v0.471: список шаблонов — не кнопка; кнопки — его записи (иначе список сжимался в одну строку 24 px и вылезал вверх)
       const mini=b.matches('.gz-head')&&b.closest('.gz-mini')||b.matches('.pt-l')&&b.closest('.pt-mini')||b.id==='mayAbout'&&b.classList.contains('pt-mini');b.classList.toggle('may-standard-mini',!!mini);b.classList.toggle('may-header-triangle',!!mini&&b.matches('.pt-l,.gz-head'));
@@ -272,6 +272,10 @@
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }
     for(const list of ladders){list.classList.add('may-standard-list');if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
+    for(const popup of document.querySelectorAll('.may-horr-popup:not([hidden])')){
+      const cells=[...popup.querySelectorAll('.may-standard,.gz-control,.may-rows-line')].filter(b=>!b.parentElement.closest('.gz-hx,.gz-control')&&!b.closest('[hidden],[data-horr-inactive="true"]'));
+      contour(popup,cells,true);
+    }
     groupGaps();
     standardObserver?.observe(document.body,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class','disabled','aria-pressed','style']});
   }
@@ -299,7 +303,7 @@
   // Decorative SVG updates do not trigger another pass. Stable menu polling also stays a no-op.
   var standardObserver=new MutationObserver(records=>{if(records.some(r=>{
     const t=r.target.nodeType===3?r.target.parentElement:r.target;
-    if(!t||t.closest?.('svg,[data-no-mini]')||!t.closest?.('#paintTools,#mayatnikRail,.gz-ladder,#mayatnikTemplatePanel'))return false;
+    if(!t||t.closest?.('svg,[data-no-mini]')||!t.closest?.('#paintTools,#mayatnikRail,.gz-ladder,.may-horr-popup,#mayatnikTemplatePanel'))return false;
     if(r.type==='attributes')return r.oldValue!==t.getAttribute(r.attributeName);
     return [...r.addedNodes,...r.removedNodes].some(n=>n.nodeType!==1||n.namespaceURI!==NS);
   }))requestRefresh();});

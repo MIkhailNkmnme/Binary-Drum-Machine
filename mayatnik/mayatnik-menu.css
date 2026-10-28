@@ -981,8 +981,15 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-rows-custom .may-rows-line input{flex:0 0 72px;width:72px;min-width:0;max-width:72px;height:24px;padding:0 3px;border:0;background:transparent;color:#dcecff;outline:0;box-shadow:none}
 .may-rows-custom .may-rows-line input:focus{outline:0;box-shadow:inset 0 0 0 1px var(--c,#73e4a5)}
 
-/* v0.629: only the selected Horr section participates in layout and keyboard focus. */
-.gz-group[data-id="horr"] [data-horr-inactive="true"]{display:none!important}
-.gz-group[data-id="horr"] .may-horr-selector{width:120px;min-height:24px;flex:none;order:-1;pointer-events:auto}
-.gz-group[data-id="horr"] .may-horr-selector>.gz-hx{width:120px!important}
-.gz-group[data-id="horr"] [data-n="bReset"],.gz-group[data-id="horr"] [data-n="resetTransport"]{order:100}
+/* v0.630: settings escape rail/filter clipping; all five launchers stay in Horr. */
+[data-id="horr"] [data-horr-inactive="true"],.may-horr-home{display:none!important}
+.may-horr-main>.may-horr-trigger{width:120px!important;height:24px!important;flex:none;padding-right:22px!important}
+.may-horr-trigger>.may-horr-arrow{position:absolute;right:8px;top:4px;width:8px;height:16px;pointer-events:none;fill:none;stroke:currentColor;stroke-width:1.2}
+.may-horr-trigger[data-list-side="left"]>.may-horr-arrow{transform:rotate(180deg)}
+.may-horr-trigger.may-control-mini>.may-horr-arrow{display:none}
+body>.may-horr-popup{--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;--gz-txt:#dfe6f5;--gz-mut:#8592ad;position:fixed!important;z-index:2147483645!important;width:120px;box-sizing:border-box;padding:0;margin:0;color:var(--gz-txt);font:12px/1.2 "Segoe UI",sans-serif;isolation:isolate;background:transparent;overflow:visible;pointer-events:auto;user-select:none}
+body>.may-horr-popup[hidden]{display:none!important}
+body>.may-horr-popup>.gz-wide{display:flex!important;position:relative;flex-direction:column;flex-wrap:nowrap;gap:2px!important;margin:0!important;padding:0!important;width:120px!important}
+body>.may-horr-popup>.gz-wide>.gz-hx{position:relative!important;left:auto!important;top:auto!important;width:120px;height:24px;flex:none;margin:0!important}
+body>.may-horr-popup .may-rows-line{flex:none}
+body>.may-horr-popup input{user-select:text}

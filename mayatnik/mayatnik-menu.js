@@ -1173,37 +1173,101 @@
     const instruction=document.createElement('a');instruction.href='instruction/index.html';instruction.target='_blank';instruction.rel='noopener';instruction.className='pt-b gz-hx';instruction.dataset.n='instruction';instruction.title='Инструкция: оси, зеркала, поворот холста и выделенного фрагмента';instruction.innerHTML='<i class="gz-ic">?</i><span class="gz-nm">Инструкция</span>';infoRow.append(instruction);
     addEventListener('may-reset-complete',()=>{rail.refresh();placeTools();});
   }
-  // v0.629: filter existing controls in place; their parents, slots and handlers stay stable.
-  function mountHorrSections(group, { storage = localStorage, listHover = ZerkGrozd.listHover, after = () => {} } = {}) {
+  // v0.630: five independent buttons open the original controls beside the main group.
+  function mountHorrSections(group, { storage = localStorage, after = () => {}, openGroup = () => {} } = {}) {
     if (!group) return null;
+    const doc = group.ownerDocument, win = doc.defaultView;
     const sections = [['size', 'Размер', 'line'], ['build', 'Построение', 'steps'], ['fields', 'Поля', 'field'], ['overlay', 'Наложение', 'plusRing'], ['run', 'Прогон', 'play']];
-    // Reuse existing menu glyphs; the shared catalogue has no ruler/xor kind.
-    const sectionIcons = new Map(sections.map(([id, name, kind]) => { const probe = document.createElement('button'); probe.textContent = name; return [id, icon(probe, kind)]; }));
-    const key = 'mayatnik-horr-section-v1', controls = [...group.querySelectorAll('[data-horr-section]')];
-    const host = group.querySelector('.gz-wide'); if (!host || !controls.length) return null;
-    let selected = 'size'; try { const saved = storage.getItem(key); if (sections.some(([id]) => id === saved)) selected = saved; } catch (_) {}
-    const wrap = document.createElement('div'); wrap.className = 'may-horr-selector';
-    const button = document.createElement('button'); button.type = 'button'; button.className = 'gz-hx'; button.dataset.n = 'horrSection'; button.dataset.listTitle = 'Раздел Хорра';
-    button.title = 'Раздел Хорра: размер, построение, поля, наложение или прогон';
-    const label = document.createElement('span'); label.className = 'gz-nm'; button.append(label); wrap.append(button); host.prepend(wrap);
+    const key = 'mayatnik-horr-section-v1', openKey = 'mayatnik-horr-section-open-v1';
+    const controls = [...group.querySelectorAll('[data-horr-section]')], host = controls[0]?.closest('.gz-wide');
+    if (!host || !controls.length) return null;
+    const valid = id => sections.some(([value]) => value === id);
+    let selected = null, last = 'size'; group.mayHorrRevision = 0;
+    try { const saved = storage.getItem(key); if (valid(saved)) last = saved; if (storage.getItem(openKey) === '1') selected = last; } catch (_) {}
+    const main = doc.createElement('div'); main.className = 'gz-wide may-horr-main';
+    const home = doc.createElement('div'); home.className = 'may-horr-home';
+    host.before(main, home); home.append(host);
+    // Moving the whole host preserves parents, sibling slots and mini keys of every setting.
+    // The two common commands have explicit data-n keys, independent of their parent.
+    const common = [...host.children].filter(node => !node.hasAttribute('data-horr-section') && node.matches('[data-n="bReset"],[data-n="resetTransport"]'));
+    const popup = doc.createElement('div'); popup.className = 'may-horr-popup'; popup.dataset.id = 'horr'; popup.id = 'mayHorrPopup';
+    popup.setAttribute('role', 'group'); popup.hidden = true; popup.mayHorrOwner = group; doc.body.append(popup);
+    const buttons = new Map();
+    for (const [id, name, kind] of sections) {
+      const button = doc.createElement('button'); button.type = 'button'; button.className = 'gz-hx may-horr-trigger';
+      button.dataset.n = 'horrSection:' + id; button.dataset.horrTrigger = id; button.title = name + ': открыть настройки';
+      button.setAttribute('aria-label', name); button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-haspopup', 'true'); button.setAttribute('aria-controls', popup.id);
+      const glyph = doc.createElement('i'); glyph.className = 'gz-ic'; glyph.style.backgroundImage = icon(button, kind); glyph.setAttribute('aria-hidden', 'true');
+      const label = doc.createElement('span'); label.className = 'gz-nm'; label.textContent = name; button.append(glyph, label);
+      const arrow = doc.createElementNS('http://www.w3.org/2000/svg', 'svg'); arrow.classList.add('may-horr-arrow'); arrow.setAttribute('viewBox', '0 0 8 16'); arrow.setAttribute('aria-hidden', 'true');
+      const path = doc.createElementNS(arrow.namespaceURI, 'path'); path.setAttribute('d', 'M1 1L7 8L1 15'); arrow.append(path); button.append(arrow);
+      button.addEventListener('click', event => { event.stopPropagation(); choose(selected === id ? null : id); });
+      button.addEventListener('keydown', event => {
+        const index = sections.findIndex(([value]) => value === id);
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End') {
+          event.preventDefault(); event.stopPropagation();
+          const next = event.key === 'Home' ? 0 : event.key === 'End' ? sections.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + sections.length) % sections.length;
+          buttons.get(sections[next][0]).focus({ preventScroll: true });
+        } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+          event.preventDefault(); event.stopPropagation(); choose(id);
+          focusable()[0]?.focus({ preventScroll: true });
+        }
+      });
+      buttons.set(id, button); main.append(button);
+    }
+    main.append(...common);
+    const focusable = () => [...host.querySelectorAll('button,input,select,[tabindex]')].filter(node => !node.disabled && !node.closest('[hidden],[inert],[data-horr-inactive="true"]') && node.tabIndex >= 0 && node.getClientRects().length);
+    function place() {
+      const visible = selected && group.classList.contains('gz-open');
+      if (!visible) { popup.hidden = true; if (host.parentNode !== home) home.append(host); return; }
+      if (host.parentNode !== popup) popup.append(host);
+      const button = buttons.get(selected), style = win.getComputedStyle(button);
+      for (const name of ['--c', '--gz-w', '--gz-h', '--gz-n', '--gz-bg', '--gz-txt', '--gz-mut']) { const value = style.getPropertyValue(name); if (value) popup.style.setProperty(name, value); }
+      popup.style.font = style.font; popup.setAttribute('aria-label', sections.find(([id]) => id === selected)[1]); popup.hidden = false;
+      const edge = 14, maxHeight = Math.max(24, win.innerHeight - edge * 2), scroll = host.scrollHeight > maxHeight;
+      popup.style.maxHeight = maxHeight + 'px'; popup.style.overflowY = scroll ? 'auto' : 'visible'; popup.style.overflowX = scroll ? 'hidden' : 'visible';
+      popup.style.padding = scroll ? '14px 6px' : '0'; popup.style.width = scroll ? '148px' : '120px';
+      const r = button.getBoundingClientRect(), width = scroll ? 148 : 120, right = r.right + 6, left = r.left - width - 6;
+      const side = right + width <= win.innerWidth - edge || left < edge && win.innerWidth - r.right >= r.left ? 'right' : 'left';
+      popup.dataset.side = side; button.dataset.listSide = side;
+      const height = popup.getBoundingClientRect().height || Math.min(popup.scrollHeight, win.innerHeight - edge * 2);
+      popup.style.left = Math.max(edge, Math.min(side === 'right' ? right : left, win.innerWidth - width - edge)) + 'px';
+      popup.style.top = Math.max(edge, Math.min(r.top, win.innerHeight - height - edge)) + 'px';
+    }
     const choose = (id, persist = true, refresh = true) => {
-      if (!sections.some(([value]) => value === id)) return false;
-      const focused = document.activeElement, leaving = controls.find(node => node.contains(focused) && node.dataset.horrSection !== id);
+      if (id !== null && !valid(id)) return false;
+      const previous = selected, focused = doc.activeElement, leaving = controls.find(node => node.contains(focused) && node.dataset.horrSection !== id);
+      if (leaving) buttons.get(id || previous || last)?.focus({ preventScroll: true });
       selected = id;
+      if (id) last = id;
       for (const node of controls) { const hidden = node.dataset.horrSection !== selected; node.dataset.horrInactive = String(hidden); node.inert = hidden; }
-      label.textContent = sections.find(([value]) => value === selected)[1];
-      const liveLabel = button.querySelector(':scope > .may-list-label'); if (liveLabel) liveLabel.textContent = label.textContent;
-      button.setAttribute('aria-label', 'Раздел Хорра: ' + label.textContent);
-      if (persist) try { storage.setItem(key, selected); } catch (_) {}
-      if (leaving) button.focus({ preventScroll: true });
-      if (refresh) after(); return true;
+      for (const [value, button] of buttons) { button.setAttribute('aria-expanded', String(value === selected)); button.classList.toggle('gz-on', value === selected); }
+      if (persist) { group.mayHorrRevision++; if (id) openGroup(); try { if (id) storage.setItem(key, id); storage.setItem(openKey, id ? '1' : '0'); } catch (_) {} }
+      place(); if (refresh) { after(); place(); } return true;
     };
-    listHover(button, { options: () => sections.map(([id, name]) => ({ key: id, name, icon: sectionIcons.get(id), on: selected === id, pick: () => choose(id) })),
-      after, color: () => getComputedStyle(button).getPropertyValue('--c').trim() || '#7cbcff' });
+    const outside = event => { if (selected && !main.contains(event.target) && !popup.contains(event.target) && !event.target.closest?.('[data-may-search-ui]')) choose(null); };
+    const keys = event => {
+      if (!selected || popup.hidden) return;
+      const search = win.mayButtonSearch?.getState(); if (event.key === 'Escape' && (search?.open || search?.current)) return;
+      if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); const owner = buttons.get(selected); choose(null); owner.focus({ preventScroll: true }); }
+      else if (popup.contains(event.target) && !event.target.matches('input,select,textarea')) {
+        const items = focusable(), index = items.indexOf(event.target);
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); event.stopPropagation(); items[(index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus(); }
+        else if (event.key === 'ArrowLeft' && popup.dataset.side === 'right' || event.key === 'ArrowRight' && popup.dataset.side === 'left') { event.preventDefault(); event.stopPropagation(); buttons.get(selected).focus({ preventScroll: true }); }
+      }
+    };
+    doc.addEventListener('pointerdown', outside, true); doc.addEventListener('keydown', keys, true);
+    win.addEventListener('resize', place); doc.addEventListener('scroll', place, true);
+    const observer = new win.MutationObserver(place); observer.observe(group, { attributes: true, attributeFilter: ['class', 'style'] });
+    const sizeObserver = win.ResizeObserver ? new win.ResizeObserver(place) : null; sizeObserver?.observe(host); sizeObserver?.observe(group);
     choose(selected, false, false);
-    return { get: () => selected, choose, reveal(target) { const node = target?.closest('[data-horr-section]'); if (node && group.contains(node)) choose(node.dataset.horrSection, false); }, button };
+    return { get: () => selected, choose, buttons, popup, place,
+      contains(owner, target) { return owner === group && !popup.hidden && (target ? popup.contains(target) : popup.matches(':hover')); },
+      reveal(target) { const node = target?.closest('[data-horr-section]'); if (!node || !controls.includes(node)) return null; const previous = selected, revision = group.mayHorrRevision; choose(node.dataset.horrSection, false); return () => { if (revision === group.mayHorrRevision) choose(previous, false); }; },
+      destroy() { observer.disconnect(); sizeObserver?.disconnect(); doc.removeEventListener('pointerdown', outside, true); doc.removeEventListener('keydown', keys, true); doc.removeEventListener('scroll', place, true); win.removeEventListener('resize', place); choose(null, false, false); popup.remove(); }
+    };
   }
-  window.mayHorrSections = mountHorrSections(document.querySelector('.gz-group[data-id="horr"]'), { after: () => { rail.refresh(); placeTools(); } });
+  window.mayHorrSections = mountHorrSections(document.querySelector('.gz-group[data-id="horr"]'), { after: () => { rail.refresh(); placeTools(); }, openGroup: () => rail.open('horr') });
   // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;
   // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
   // Пока какой-то список открыт, наведение на соседнее название переключает на него. Точка у названия — в группе что-то включено.
@@ -1240,7 +1304,7 @@
     const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
     const show = (g,explicit=false) => { const k=keyOf(g);if(folds.has(k)){if(!explicit)return;folds.delete(k);saveDd();}if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
     // Temporary discovery does not alter explicit folds, pins or saved opening.
-    window.mayMenuSearchReveal=(target,control)=>{window.mayHorrSections?.reveal(control);const g=target?.matches('.pt-g')?target:target?.closest('.pt-g');if(!g||g.classList.contains('pt-btn')||!g.querySelector('.pt-r'))return null;
+    window.mayMenuSearchReveal=(target,control)=>{const releaseHorr=window.mayHorrSections?.reveal(control);if(releaseHorr)return releaseHorr;const g=target?.matches('.pt-g')?target:target?.closest('.pt-g');if(!g||g.classList.contains('pt-btn')||!g.querySelector('.pt-r'))return null;
       searchRevealGroups.add(g);setOpen(g,true);let active=true;return()=>{if(!active)return;active=false;searchRevealGroups.delete(g);setOpen(g,stay(g)||g===open);};};
     // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
     // «↶ Отм. | ↷ Повт.» (жмёт прежние «Отмена» / «Повтор»); тянется по сетке и сворачивается в ромб ↶ ↷, как остальные; ключ раскладки — прежний («Правка»)
@@ -1435,7 +1499,7 @@
       // группа рейки в шапке: шапку группы тянет сетка (перестановку в рейке grozd тут не начинает); щелчок мимо — незакреплённая сворачивается
       tools.addEventListener('pointerdown', e => { const h = e.target.closest('.gz-head'), box = h?.parentElement; if (!h || box?.parentElement !== tools) return;
         e.stopPropagation(); if (!e.target.closest('.gz-pin')) start(box, e); }, true);
-      addEventListener('pointerdown', e => { for (const b of ups()) if (b.classList.contains('gz-open') && !b.classList.contains('gz-pinned') && !b.contains(e.target) && !e.target.closest?.('.gz-ladder')) rail.close(); }, true);
+      addEventListener('pointerdown', e => { for (const b of ups()) if (b.classList.contains('gz-open') && !b.classList.contains('gz-pinned') && !b.contains(e.target) && !popupContains(b,e.target) && !e.target.closest?.('.gz-ladder')) rail.close(); }, true);
       // группа рейки едет за мышью (grozd, .gz-drag): над шапкой — пунктиром место в сетке; отпустили там — группа наверх
       rail.el.addEventListener('pointerdown', e => { const h = e.target.closest('.gz-head'); rdown = null; if (h && e.button === 0 && !narrow.matches) { const r = h.getBoundingClientRect(); rdown = { ox: e.clientX - r.left, oy: e.clientY - r.top }; } }, true);
       addEventListener('pointermove', e => { if (!rdown) return; const box = rail.el.querySelector(':scope > .gz-group.gz-drag'); if (!box) return;
@@ -1616,6 +1680,7 @@
   let activeList=null;
   // v0.497: only the popup escapes group stacking contexts; its owner stays in place.
   function popupContains(group, target) {
+    if(window.mayHorrSections?.contains(group,target))return true;
     if(window.MayatnikColourAuto?.contains(group,target))return true;
     const list=activeList?.group===group && activeList.list;
     return !!(list?.isConnected && (target ? list.contains(target) : list.matches(':hover')));
@@ -1841,7 +1906,7 @@
   }
   const scheduleGroups = () => { if(!groupFrame)groupFrame=requestAnimationFrame(syncGroupOverlap); };
   groupHover=window.ZerkMenuGroupFocus?.mount({groups:()=>document.querySelectorAll(groupSelector),
-    ownerOf:target=>activeList?.list.contains(target)?activeList.group:target.closest(groupSelector),
+    ownerOf:target=>activeList?.list.contains(target)?activeList.group:(target.closest('.may-horr-popup')?.mayHorrOwner||target.closest(groupSelector)),
     onChange:group=>{if(group)groupRanks.set(group,++groupRank);scheduleGroups();}});
   for (const host of [tools,rail.el]) {
     for(const event of ['pointerdown','focusin'])host.addEventListener(event,e=>{const group=e.target.closest('.pt-g, .gz-group');if(group){groupRanks.set(group,++groupRank);scheduleGroups();}},true);
