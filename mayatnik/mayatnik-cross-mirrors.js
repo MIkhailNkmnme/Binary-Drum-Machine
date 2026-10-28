@@ -5,6 +5,32 @@
   const EPS=1e-9;
   const LABELS={A1:'А1',A2:'А2',B1:'Б1',B2:'Б2',a1:'а1',a2:'а2',b1:'б1',b2:'б2',C1:'С1',C2:'С2'};
   const IDS=Object.keys(LABELS);
+  // Display only. A sector keeps its colour across crosses and frames.
+  const COLOURS=Object.freeze({A1:'#58b9ff',A2:'#ad88ff',B1:'#ffb34f',B2:'#ff718e',a1:'#43d5be',a2:'#7cce56',b1:'#e9cf49',b2:'#ee8fe0',C1:'#738bff',C2:'#ed976b'});
+  const FILL_ALPHA=.2;
+  function orderedCrosses(input){return input.slice().sort((a,b)=>a.y-b.y||a.verticalX-b.verticalX||a.diagX-b.diagX||(a.left??0)-(b.left??0)||(a.right??0)-(b.right??0)).filter((c,i,a)=>!i||JSON.stringify(c)!==JSON.stringify(a[i-1]));}
+  function ownerIndex(ordered,x,y){
+    let index=-1,best=Infinity;for(let i=0;i<ordered.length;i++){const c=ordered[i],d=(x-c.diagX)**2+(y-c.y)**2;if(d<best-EPS){best=d;index=i;}}return index;
+  }
+  function sectorRaster({W,H,crosses:input,valid=null}){
+    const ordered=orderedCrosses(input),codes=new Uint8Array(W*H),owners=new Int32Array(W*H).fill(-1);
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const q=y*W+x;if(valid!=null&&!(typeof valid==='function'?valid(q):valid[q]))continue;
+      const i=ownerIndex(ordered,x,y);if(i<0)continue;owners[q]=i;codes[q]=classifyCode(ordered[i],x,y);
+    }
+    return {codes,owners,crosses:ordered};
+  }
+  // Voronoi cells keep labels in the same cross's region as the raster. Use the
+  // diagonal meeting point, not the independently lockable vertical axis.
+  function ownerRegions(input,box){
+    const ordered=orderedCrosses(input),result=[];
+    for(let i=0;i<ordered.length;i++){
+      const c=ordered[i];let points=[[box[0],box[1]],[box[2],box[1]],[box[2],box[3]],[box[0],box[3]]];
+      for(let j=0;j<ordered.length&&points.length;j++){if(i===j)continue;const o=ordered[j],a=2*(c.diagX-o.diagX),b=2*(c.y-o.y),d=o.diagX**2+o.y**2-c.diagX**2-c.y**2;
+        if(Math.abs(a)+Math.abs(b)<EPS){if(j<i)points=[];}else points=clip(points,[a,b,d]);
+      }
+      if(points.length&&centroid(points))result.push({cross:c,index:i,points});
+    }return result;
+  }
   function classifyCode(cross,x,y){
     const {verticalX:V,diagX:D,y:Y,left:L,right:R}=cross,dy=y-Y,dx=x-D;
     if(Math.abs(x-V)<EPS||Math.abs(dy)<EPS||Math.abs(Math.abs(dx)-Math.abs(dy))<EPS)return 0;
@@ -97,5 +123,5 @@
     }
     return result;
   }
-  return {LABELS,classify,crosses,candidates,mapping,apply,sectorPolygons,labelAnchors};
+  return {LABELS,COLOURS,FILL_ALPHA,classify,crosses,candidates,mapping,apply,sectorPolygons,labelAnchors,sectorRaster,ownerRegions};
 });

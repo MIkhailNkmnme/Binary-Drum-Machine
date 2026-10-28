@@ -33,3 +33,32 @@ test('state restores, separate label clear/undo, mirror clear and PNG are wired'
   assert.ok(html.includes('triangleMapMirrorApply(px);crossMirrorApply(px);'));
   for(const id of ['crossMirror','crossMirrorMode','crossMirrorSector','crossLabels'])assert.ok(html.includes('id="'+id+'"'));
 });
+
+function canvasHost(c){
+  const canvases=[];c.document={createElement:()=>{const canvas={width:0,height:0,calls:[]},g={createImageData:(w,h)=>({width:w,height:h,data:new Uint8ClampedArray(w*h*4)}),putImageData:image=>canvas.image=image,save(){},restore(){},measureText:()=>({width:12}),strokeText(){},fillText(){},drawImage:(...args)=>canvas.calls.push(args)};canvas.getContext=()=>g;canvas.toBlob=fn=>fn({type:'image/png'});canvases.push(canvas);return canvas;}};return canvases;
+}
+
+test('sector fill uses a cached immutable RGBA mask, one opacity, neutral/hidden/empty cells and matching labels',()=>{
+  const {c,api}=host(),canvases=canvasHost(c),calls=[],ctx={save(){},restore(){},drawImage:(...args)=>calls.push(args)};c.f.val[3*c.VW+3]=-1;const before=c.f.val.slice();
+  const data=c.paintCrossSectors(ctx,-50,-30,8),rgba=data.canvas.image.data;assert.equal(canvases.length,1);
+  for(let q=0;q<data.codes.length;q++){
+    assert.equal(rgba[q*4+3],data.codes[q]?51:0);if(data.codes[q]){const id=Object.keys(M.COLOURS)[data.codes[q]-1],colour=parseInt(M.COLOURS[id].slice(1),16);assert.deepEqual(Array.from(rgba.slice(q*4,q*4+3)),[colour>>>16,colour>>>8&255,colour&255]);assert.ok(c.f.val[q]>=0&&c.parityVisible(Math.floor(q/c.VW),q%c.VW)&&!c.outShow(Math.floor(q/c.VW),q%c.VW));}
+  }
+  const labels=c.paintCrossLabels({save(){},restore(){},measureText:()=>({width:12}),strokeText(){},fillText(){}},0,0,20,c.VW*20,c.VH*20);
+  for(const label of labels){const q=Math.round(label.y)*c.VW+Math.round(label.x);assert.equal(Object.keys(M.LABELS)[data.codes[q]-1],label.sector);assert.deepEqual(data.crosses[data.owners[q]],label.cross);}
+  assert.strictEqual(c.paintCrossSectors(ctx,11,13,16),data);assert.equal(canvases.length,1);assert.deepEqual(calls[1].slice(1),[11,13,c.VW*16,c.VH*16]);
+  c.st.crossMirror=false;c.st.crossMirrorMode='bt';assert.strictEqual(api.sectors(),data);c.st.crossLabels=false;assert.equal(c.paintCrossSectors(ctx,0,0,1),null);assert.equal(calls.length,2);assert.deepEqual(c.f.val,before);
+});
+
+test('sector cache tracks actual frame, masks, geometry, rows, crop and field revision',()=>{
+  const {c,api,points}=host();let data=api.sectors();assert.strictEqual(api.sectors(),data);
+  for(const change of [()=>c.k++,()=>c.bmGen++,()=>c.st.rows--,()=>c.st.view='col',()=>c.st.noband=2,()=>c.st.parity={colsOdd:false},()=>points[0][3]++,()=>points[0][4]++,()=>points[0][2]++,()=>c.VX++,()=>c.VW--,()=>c.f={...c.f,val:c.f.val.slice()}]){change();const next=api.sectors();assert.notStrictEqual(next,data);assert.strictEqual(api.sectors(),next);data=next;}
+});
+
+test('PNG paints the same cached sector mask before contours/axes and keeps fill independent of mirror',()=>{
+  const {c,nodes}=host(),canvases=canvasHost(c),trace=[],ctx={save(){},restore(){},drawImage(){}};c.st.crossMirror=false;const data=c.paintCrossSectors(ctx,0,0,5);
+  Object.assign(c,{playing:false,capturePicture:()=>({width:c.VW,height:c.VH}),paintBitContours:()=>trace.push('contours'),paintTemplate(){},paintGeomCenter(){},viewRotation:{capture:canvas=>canvas},download:(name,blob)=>trace.push(blob.type),fname:()=> 'frame.png'});
+  const source=html.slice(html.indexOf("  $('bPng').onclick ="),html.indexOf('  function frameSnapshot()'));vm.runInContext(source,c);nodes.get('bPng').onclick();
+  assert.equal(canvases.length,2);assert.strictEqual(canvases[1].calls[0][0],data.canvas);assert.deepEqual(canvases[1].calls[0].slice(1),[0,0,c.VW,c.VH]);assert.deepEqual(trace,['contours','image/png']);
+  const png=source.indexOf('paintCrossSectors'),contours=source.indexOf('paintBitContours');assert.ok(png<contours);assert.ok(html.indexOf('paintCrossSectors(symG')<html.indexOf('if(data)paintSymmetry(symG'));
+});

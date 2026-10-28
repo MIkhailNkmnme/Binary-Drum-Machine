@@ -56,3 +56,28 @@ test('clipped polygons cover the box and each label anchor belongs to its named 
     assert.deepEqual(X.labelAnchors(c,[0,0,22,20],()=>false),[]);
   }
 });
+
+test('sector raster has ten stable colours, neutral axes and exact visible-cell classification',()=>{
+  assert.equal(new Set(Object.values(X.COLOURS)).size,10);assert.deepEqual(Object.keys(X.COLOURS),Object.keys(X.LABELS));assert.equal(X.FILL_ALPHA,.2);
+  const W=22,H=20,valid=Uint8Array.from({length:W*H},(_,q)=>q%7!==0),before=valid.slice(),ids=Object.keys(X.LABELS);
+  for(const c of [cross,{...cross,verticalX:4.5,diagX:12,y:7.5}]){
+    const data=X.sectorRaster({W,H,crosses:[c],valid});
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const q=y*W+x;assert.equal(ids[data.codes[q]-1]||null,valid[q]?oracle(c,x,y):null);assert.equal(data.owners[q],valid[q]?0:-1);}
+  }
+  assert.deepEqual(valid,before);
+});
+
+test('overlapping crosses assign each cell once to the nearest meeting, independent of input order',()=>{
+  const W=30,H=25,cs=[cross,{...cross,verticalX:7.5,diagX:19,y:15}],a=X.sectorRaster({W,H,crosses:cs}),b=X.sectorRaster({W,H,crosses:[cs[1],cs[0],cs[0]]}),ids=Object.keys(X.LABELS);
+  assert.deepEqual(a,b);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const q=y*W+x,dist=cs.map(c=>(x-c.diagX)**2+(y-c.y)**2),owner=dist[0]<=dist[1]?0:1;assert.equal(a.owners[q],owner);assert.equal(ids[a.codes[q]-1]||null,oracle(cs[owner],x,y));}
+  const regions=X.ownerRegions(cs,[0,0,W,H]);assert.equal(regions.length,2);
+  for(const r of regions)for(const p of X.sectorPolygons(r.cross,r.points)){
+    const [x,y]=p.centroid,own=cs[r.index],other=cs[1-r.index];assert.ok((x-own.diagX)**2+(y-own.y)**2<=(x-other.diagX)**2+(y-other.y)**2+1e-8);assert.equal(p.sector,oracle(own,x,y));
+  }
+});
+
+test('same meeting with different locked verticals has deterministic ownership and one label region',()=>{
+  const cs=[cross,{...cross,verticalX:4}],data=X.sectorRaster({W:22,H:20,crosses:cs});assert.ok(data.owners.every(i=>i===0));
+  const regions=X.ownerRegions(cs,[0,0,22,20]);assert.equal(regions.length,1);assert.equal(regions[0].cross.verticalX,4);
+});
