@@ -522,8 +522,8 @@ header #paintTools .pt-b.gz-hx.on::before{inset:1.5px}
 /* v0.193: перетаскивание групп полосы */
 #paintTools .pt-g.pt-drag{opacity:.6}#paintTools.pt-dragging .pt-l{cursor:grabbing}
 #wrap.ruler-grab,#wrap.ruler-grab canvas{cursor:move!important}   /* v0.195: вершина линейки под мышью */
-#wrap.fix-grab,#wrap.fix-grab canvas{cursor:ns-resize!important}   /* v0.207: центр «Зеркала ↑» */
-#wrap.fix-grab-h,#wrap.fix-grab-h canvas{cursor:ew-resize!important}   /* v0.208: по горизонтали */
+#wrap.fix-grab,#wrap.fix-grab canvas{cursor:default!important}   /* v0.207: центр «Зеркала ↑» */
+#wrap.fix-grab-h,#wrap.fix-grab-h canvas{cursor:default!important}   /* v0.208: по горизонтали */
 #paintTools .pt-b .pt-half{order:9;margin-left:4px;padding:0 0 0 6px;border-left:1px solid #ffffff40;font-size:inherit;color:#8e98ad;cursor:pointer;align-self:stretch;display:flex;align-items:center}
 #paintTools .pt-b .pt-half:hover{color:#fff}
 #paintTools .pt-b .pt-half.on{color:#6cff6c;text-shadow:0 0 4px #6cff6c99}
@@ -933,9 +933,9 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 #paintTools .gz-pair.gz-cpair .gz-half.gz-h1{justify-content:flex-end!important;padding:0 17px 0 0!important}
 #paintTools .gz-pair.gz-tri .gz-half.gz-on::before{inset:auto!important;left:50%!important;top:50%!important;width:22px!important;height:18px!important;margin:-9px 0 0 -11px!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:var(--c)!important}
 
-/* v0.510: centre hover is a hand; an actual captured centre drag is a grip. */
-#wrap.may-center-hover,#wrap.may-center-hover canvas{cursor:grab!important}
-#wrap.may-center-drag,#wrap.may-center-drag canvas{cursor:grabbing!important}
+/* v0.631: keep the ordinary cursor over the meeting point, including captured drag. */
+#wrap.may-center-hover,#wrap.may-center-hover canvas{cursor:default!important}
+#wrap.may-center-drag,#wrap.may-center-drag canvas{cursor:default!important}
 
 /* МАЯ-061: a mobile header strip keeps its height; its menus float over the field. */
 @media(max-width:600px){
@@ -980,6 +980,24 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-rows-step:is(:hover,:focus-visible,:active)::before{background:var(--c,#73e4a5);mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1.4 12 12 1.4 22.6 12 12 22.6Z' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E") center/24px 24px no-repeat}
 .may-rows-custom .may-rows-line input{flex:0 0 72px;width:72px;min-width:0;max-width:72px;height:24px;padding:0 3px;border:0;background:transparent;color:#dcecff;outline:0;box-shadow:none}
 .may-rows-custom .may-rows-line input:focus{outline:0;box-shadow:inset 0 0 0 1px var(--c,#73e4a5)}
+
+/* Both row controls use narrow dashed indicators; only the lower input edits a draft. */
+.may-rows-thumb{position:absolute;z-index:5;top:3px;width:8px;height:18px;margin-left:-4px;cursor:ew-resize;touch-action:none;outline:0;user-select:none;background:transparent}
+.may-rows-thumb::before{content:"";position:absolute;left:4px;top:0;bottom:0;border-left:1px dashed #dfe6f5;pointer-events:none}
+.may-rows-thumb:focus-visible{outline:1px solid var(--c,#73e4a5)}
+.may-rows-slider.gz-val.gz-sl{gap:0;padding:0;width:120px;height:24px;flex:none;--gz-bg:#1b2430}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-rows-slider{padding:0!important;gap:0!important}
+.may-rows-slider.gz-sl .gz-a:not(.gz-a2){width:24px;flex:0 0 24px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:transparent!important;color:#dfe6f5;font-size:0}
+.may-rows-slider.gz-sl .gz-a:not(.gz-a2)::after{content:"";position:absolute;top:8px;left:10px;width:7px;height:7px;box-sizing:border-box;border:solid currentColor;border-width:0 0 1.4px 1.4px;transform:rotate(45deg);pointer-events:none}
+.may-rows-slider.gz-sl .gz-a:nth-last-child(2)::after{left:7px;transform:rotate(225deg)}
+.may-rows-slider.gz-sl .gz-a::before{content:"";position:absolute;inset:0;background:#394657;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M.7 12 12 .7 23.3 12 12 23.3Z' fill='none' stroke='white' stroke-width='1.4'/%3E%3C/svg%3E") center/24px 24px no-repeat;pointer-events:none}
+.may-rows-slider.gz-sl .gz-a:is(:hover,:active,:focus-visible)::before{background:var(--c,#73e4a5)}
+.may-rows-slider.gz-sl .gz-mid{margin:0;flex:1;min-width:0;outline:0}
+.may-rows-slider.gz-sl .gz-mid::before,.may-rows-slider.gz-sl .gz-mid::after{display:none}
+.may-rows-slider.gz-sl .gz-mid:focus-visible{outline:1px solid var(--c,#73e4a5);outline-offset:-1px}
+.may-rows-slider.gz-sl .gz-th{z-index:5;top:3px;width:1px;height:18px;margin:0;transform:none;clip-path:none;background:transparent;box-shadow:none;border:0;border-left:1px dashed #dfe6f5;cursor:ew-resize}
+.may-rows-slider.gz-sl .gz-th::after{content:"";position:absolute;inset:0 -4px}
+.may-rows-slider.gz-sl .gz-vl{left:0!important;right:0;text-align:center;padding:0;background:transparent;font-size:11px}
 
 /* v0.630: settings escape rail/filter clipping; all five launchers stay in Horr. */
 [data-id="horr"] [data-horr-inactive="true"],.may-horr-home{display:none!important}

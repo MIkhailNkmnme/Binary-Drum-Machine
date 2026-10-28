@@ -207,14 +207,14 @@
     const sizeRows = [];
     for (let i = 0; i < pres.length; i += 2) { const row = gzPair(pres.slice(i, i + 2).map(e => ({ label: e.textContent, tip: e.title || ('Построить ' + e.textContent), data: { n: e.dataset.n },
         on: () => cur() === e.dataset.n, click: () => { e.click(); sync(); } }))); sizeRows.push(row); pop.append(section(row, 'size')); }
-    let customInput = null;   // v0.573: любое число строк, не только 128/256/…
+    let customInput = null, syncRowsThumb = () => {};   // draft applies only with Enter / Задать
     { const cr = document.createElement('div'); cr.className = 'may-rows-custom';
       customInput = document.createElement('input'); customInput.type = 'number'; customInput.min = '8'; customInput.max = '4096'; customInput.step = '1';
       customInput.value = cur() || '128'; customInput.title = 'Любое число строк от 8 до 4096 · Enter — задать и перестроить поле';
       customInput.setAttribute('aria-label', 'Любое число строк');
       const apply = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128))); customInput.value = String(v);
         const r = $('rows'); r.value = v; r.dispatchEvent(new Event('change', { bubbles: true })); $('bBuild')?.click(); sync(); };
-      const step = d => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128) + d)); customInput.value = String(v); };
+      const step = d => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128) + d)); customInput.value = String(v); syncRowsThumb(); };
       const arrow = (d, tip) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-rows-step'; b.dataset.dir = d < 0 ? 'left' : 'right'; b.title = tip; b.setAttribute('aria-label', tip);
         b.onclick = ev => { ev.stopPropagation(); step(d); }; return b; };
       const cb = document.createElement('button'); cb.className = 'gz-hx'; cb.textContent = 'Задать'; cb.dataset.miShort = 'Задать';
@@ -224,6 +224,26 @@
       customInput.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); apply(); } };
       const line = document.createElement('div'); line.className = 'may-rows-line';
       line.append(arrow(-1, 'На 1 меньше'), customInput, arrow(1, 'На 1 больше'));
+      const thumb = document.createElement('span'); thumb.className = 'may-rows-thumb'; thumb.tabIndex = 0;
+      thumb.setAttribute('role', 'slider'); thumb.setAttribute('aria-label', 'Число строк: черновик, Enter — задать');
+      thumb.setAttribute('aria-valuemin', '8'); thumb.setAttribute('aria-valuemax', '4096'); thumb.setAttribute('aria-orientation', 'horizontal');
+      thumb.title = 'Тянуть — число строк от 8 до 4096 · Enter или Задать — перестроить поле';
+      syncRowsThumb = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128)));
+        thumb.style.left = (32 + (v - 8) / (4096 - 8) * 56) + 'px'; thumb.setAttribute('aria-valuenow', String(v)); };
+      customInput.addEventListener('input', syncRowsThumb);
+      thumb.addEventListener('click', ev => ev.stopPropagation());
+      thumb.addEventListener('pointerdown', ev => { if (ev.button !== 0) return; ev.preventDefault(); ev.stopPropagation(); thumb.focus(); thumb.setPointerCapture(ev.pointerId);
+        const at = event => { const r = line.getBoundingClientRect(), f = Math.max(0, Math.min(1, (event.clientX - r.left - 32) / 56));
+          customInput.value = String(Math.round(8 + f * (4096 - 8))); syncRowsThumb(); };
+        const move = event => { if (event.pointerId === ev.pointerId) at(event); }, end = event => { if (event.pointerId !== ev.pointerId) return;
+          thumb.removeEventListener('pointermove', move); thumb.removeEventListener('pointerup', end); thumb.removeEventListener('pointercancel', end);
+          if (thumb.hasPointerCapture(ev.pointerId)) thumb.releasePointerCapture(ev.pointerId); };
+        thumb.addEventListener('pointermove', move); thumb.addEventListener('pointerup', end); thumb.addEventListener('pointercancel', end); });
+      thumb.addEventListener('keydown', ev => { if (!['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter'].includes(ev.key)) return;
+        ev.preventDefault(); ev.stopPropagation(); if (ev.key === 'Enter') return apply();
+        if (ev.key === 'Home' || ev.key === 'End') { customInput.value = ev.key === 'Home' ? '8' : '4096'; syncRowsThumb(); }
+        else step((ev.key === 'ArrowLeft' || ev.key === 'ArrowDown' ? -1 : 1) * (ev.shiftKey ? 10 : 1)); });
+      line.append(thumb); syncRowsThumb();
       cr.append(line, cb); pop.append(section(cr, 'size')); }
     { const rb = document.createElement('button'); rb.className = 'gz-hx'; rb.textContent = 'Рандом'; rb.dataset.miShort = 'Рандом';
       rb.title = 'Тест: очистить поле и заполнить квадрат N×N случайными битами (N = число строк); остальное поле пусто. Для проверки уменьшения и Очков по наложению.';
@@ -352,7 +372,7 @@
       lb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameLoad?.(); lb.title = ok ? 'Кадр восстановлен' : 'Сохранённого кадра нет'; setTimeout(() => { lb.title = 'Начать с сохранённого тестового кадра: восстановить поле и кадр, дальше ▶ продолжит сборку.'; }, 1200); sync(); };
       pop.append(section(lb, 'run')); }
     const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
-      if (customInput) customInput.value = n;
+      if (customInput) { customInput.value = n; syncRowsThumb(); }
       for (const r of sizeRows) r.gzSync();   // v0.380
       };   // v0.379: «или-или — обводка одной кнопки, а не двух сразу»: каймой — только выбранная половина (CSS .may-hp-h.on), не вся кнопка   // v0.374: только кнопки размеров (не «N/3 | 4N»)
     $('rows').addEventListener('change', sync); $('rows').addEventListener('input', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
@@ -360,7 +380,15 @@
     // v0.372: «ползунок с вершинами удали» — вершин ставит выбор «N/3 | 4N» (или N)
     bbCells['Вершин']?.remove();
     bbCells['Строк']?.remove();
-    const top = ['Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) c.classList.add('may-hp-sl'); pop.prepend(...top.map(node => section(node, 'size'))); }
+    const top = ['Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) { c.classList.add('may-hp-sl', 'may-rows-slider');
+        const mid = c.querySelector('.gz-mid'); mid?.setAttribute('role', 'slider'); mid?.setAttribute('aria-label', 'Показ строк'); if (mid) mid.tabIndex = 0;
+        const state = () => { const e = $('vrows'), v = e.value === '' || +e.value === 0 ? rowsMax() : +e.value;
+          mid?.setAttribute('aria-valuemin', '0'); mid?.setAttribute('aria-valuemax', String(rowsMax())); mid?.setAttribute('aria-valuenow', String(v)); mid?.setAttribute('aria-valuetext', e.value === '' || +e.value === 0 ? 'Все строки' : String(v)); };
+        for (const e of [$('vrows'), $('rows')]) for (const event of ['input', 'change']) e.addEventListener(event, state); state();
+        mid?.addEventListener('keydown', ev => { if (!['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Home','End'].includes(ev.key)) return; ev.preventDefault(); ev.stopPropagation();
+          const e = $('vrows'), value = e.value === '' || +e.value === 0 ? rowsMax() : +e.value;
+          e.value = ev.key === 'End' ? '' : ev.key === 'Home' ? '1' : String(Math.max(1, Math.min(rowsMax(), value + (['ArrowLeft','ArrowDown'].includes(ev.key) ? -1 : 1)))); fire(e); rail.refresh(); });
+      } pop.prepend(...top.map(node => section(node, 'size'))); }
     // v0.372: «убери До N/3 — там дубль; 2 кнопки в одну N/3 и 4N, какая выбрана — по той и строй»: «До N/3», «N/3», «4N» из сот убраны,
     // вместо них — одна кнопка из двух половин; выбранная горит, щелчок по горящей — снова N вершин; выбор — для кнопок размеров и «Построить»
     const nm = c => c.querySelector('.gz-nm')?.textContent.trim(); for (const c of (bbCells.btns || [])) if (['N/3', '4N', 'До N/3'].includes(nm(c))) c.remove();

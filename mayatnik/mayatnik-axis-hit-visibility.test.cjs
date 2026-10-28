@@ -31,7 +31,7 @@ test('folded or missing field cannot capture a hidden meeting axis',()=>{
  f.classes.clear();f.context.picOn=()=>false;assert.equal(f.near(145,120),false);
 });
 test('visible meeting marker below the field remains draggable without a phantom vertical',()=>{
- const f=fixture({fixLines:true,fixDragK:true});f.context.fixSegments=()=>[[0,0,9,9,9,9,15]];
+ const f=fixture({fixLines:true,fixDragK:true});f.context.fixSegments=()=>[[0,0,15,15,9,9,15]];f.context.fixPts=()=>new Map([['15:15',[15,15,15,15,15]]]);
  assert.equal(f.near(255,205),true);assert.equal(f.near(255,160),false);
 });
 test('hidden manual and mirror guide canvas cannot claim line hits',()=>{
