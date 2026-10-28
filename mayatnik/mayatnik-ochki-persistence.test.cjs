@@ -12,15 +12,15 @@ function fixture({saved=[],sequence=['1011'],view='bits'}={}){
  const advance=ms=>{const end=now+ms;while(true){const next=[...timers].filter(([,v])=>v.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;timers.delete(next[0]);now=next[1].at;next[1].fn();}now=end;};
  bits();return {c:context,api:context.api,st,f,storage,saves,events,bits,advance,$};
 }
-test('repeated searches and later matching frames retain current highlights without logging duplicates',()=>{
+test('a row found once is not searched or highlighted again in the same scope',()=>{
  const a=fixture();const first=a.api.get();assert.equal(first.found.length,1);const cells=Array.from(first.found[0].cells);assert.equal(a.api.log().length,1);
- a.c.k++;const second=a.api.get();assert.equal(second.found.length,1);assert.deepEqual(Array.from(second.found[0].cells),cells);assert.equal(a.api.log().length,1);assert.equal(a.api.current(),second);
- a.bits(2,1);a.c.k++;const moved=a.api.get();assert.notDeepEqual(Array.from(moved.found[0].cells),cells);for(const q of cells)assert.equal(moved.hl[q],0);
+ a.c.k++;const second=a.api.get();assert.equal(second.found.length,0,'already found row is skipped');assert.equal(Array.from(second.hl).some(Boolean),false);assert.equal(a.api.log().length,1);assert.equal(a.api.current(),second);
+ a.bits(2,1);a.c.k++;const moved=a.api.get();assert.equal(moved.found.length,0,'the same row is not searched at a new place');assert.equal(Array.from(moved.hl).some(Boolean),false);
  a.f.val.fill(-1);a.c.k++;assert.equal(a.api.get().found.length,0);assert.equal(Array.from(a.api.current().hl).some(Boolean),false);
 });
 test('stored legacy findings never exclude current matches; half-maятniks have independent findings',()=>{
  const a=fixture({saved:[{i:0,src:'',text:'1011'}],view:'romb2'});for(let i=0;i<4;i++)a.f.val[12+i*2+1]=+'1011'[i];const r=a.api.get();assert.equal(r.found.length,2);assert.equal(a.api.log().filter(x=>x.key).length,2);
- a.c.k++;assert.equal(a.api.get().found.length,2);assert.equal(a.api.log().filter(x=>x.key).length,2);
+ a.c.k++;assert.equal(a.api.get().found.length,0,'both halves already found');assert.equal(a.api.log().filter(x=>x.key).length,2);
 });
 test('source, mirror, mode, text and owner changes invalidate cache and scoped log dedup',()=>{
  const a=fixture();let r=a.api.get();for(const change of [()=>a.st.compareSource='field',()=>a.st.compareMirror=true,()=>a.st.mode='pendR',()=>{a.c.sequences.rows=['0100'];a.st.ochkiInv=true;a.c.sequences.revision++;}]){change();assert.equal(a.api.current(),null);const next=a.api.get();assert.equal(next.found.length,1);assert.notEqual(next,r);r=next;}
@@ -77,7 +77,7 @@ test('test build continuation waits for snake, transfers to three-second pause, 
  for(const manualStop of [false,true]){const timers=[],f={W:4,H:4,val:new Int8Array(16).fill(-1)},c={f,testPattern:{W:4,rows:4,data:new Int8Array(16).fill(1),kind:'carpet'},st:{speed:1,frameT:0},testXorInfo:null,bmGen:0,k:0,testBuildTimer:0,ochkiPause:null,ochkiSnakeJob:{},playing:false,TEST_CYCLES:1,compareOn:()=>false,clearTimeout(){},setTimeout:fn=>(timers.push(fn),timers.length),$:()=>({value:'1',setAttribute(){}}),testNotify(){},save(){},testStatsUpdate(){},draw(){},ochkiKey:()=>String(c.bmGen),ochkiSnakeWait:()=>!!c.ochkiSnakeJob};c.stop=()=>c.playing=false;c.window={};vm.createContext(c);const start=html.indexOf('  window.mayTestBuild = () =>');vm.runInContext(html.slice(start,html.indexOf('  window.mayTestStop',start)),c);c.window.mayTestBuild();assert.equal(timers.length,0);const continuation=c.ochkiSnakeJob.buildContinue;c.ochkiSnakeJob=null;if(manualStop)c.stop();else{c.playing=false;c.ochkiPause={};}continuation();if(manualStop){assert.equal(timers.length,0);assert.equal(c.playing,false);}else{assert.equal(typeof c.ochkiPause.resume,'function');const resume=c.ochkiPause.resume;c.ochkiPause=null;resume();assert.equal(timers.length,1);timers.shift()();assert.equal(c.bmGen,2);}}
 });
 test('growing the visible window does not make an already found sequence novel again',()=>{
- const a=fixture();a.api.get();assert.equal(a.api.log().length,1);a.c.VW=11;a.c.k++;assert.equal(a.api.get().found.length,1);assert.equal(a.api.log().length,1);
+ const a=fixture();a.api.get();assert.equal(a.api.log().length,1);a.c.VW=11;a.c.k++;assert.equal(a.api.get().found.length,0);assert.equal(a.api.log().length,1);
 });
 test('separate row-run transport holds its visible row for three seconds and never starts normal playback',()=>{
  const a=fixture(),c=a.c;let interval;c.rowRun={prev:0,r:0,timer:0};c.total=()=>1;c.setInterval=fn=>(interval=fn,1);c.st.speed=1;c.draw=()=>{};c.rowRunEnd=()=>{c.rowRun=null;};const start=html.indexOf('    rowRun.timer = setInterval('),end=html.indexOf('}, 60);',start)+7;vm.runInContext(html.slice(start,end)+';globalThis.isPaused=()=>!!ochkiPause;',c);

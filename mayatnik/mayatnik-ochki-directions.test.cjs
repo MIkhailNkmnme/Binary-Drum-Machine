@@ -64,7 +64,7 @@ test('both halves have independent long-pattern occurrence cursors and duplicate
  const api=finder({mode:'col',view:'romb2',height:40,points,sequence:[text,text]}),result=api.result();assert.equal(result.total,4);assert.equal(result.found.length,2);assert.deepEqual(Array.from(result.found,h=>[h.i,h.p]),[[0,0],[0,1]]);
 });
 test('changing between flat and both-rombs invalidates the match cache',()=>{
- const points=fixtures.col.points.concat(fixtures.col.points.map(([x,y,v])=>[x+1,y,v])),api=finder({mode:'col',points});assert.equal(api.result().found.length,1);api.state.view='romb2';assert.equal(api.result().found.length,2);api.state.view='bits';assert.equal(api.result().found.length,1);
+ const points=fixtures.col.points.concat(fixtures.col.points.map(([x,y,v])=>[x+1,y,v])),api=finder({mode:'col',points});assert.equal(api.result().found.length,1);api.state.view='romb2';assert.equal(api.result().found.length,2);api.state.view='bits';assert.equal(api.result().found.length,0,'already found in the flat view is not searched again');
 });
 function displayFixture(mode,points,{rotate=false,width=8,height=4,sequence=['1011'],pattern='initial'}={}){
  const map=Joined.create({width,height,anchor:0,rotate}),sourcePoints=points.map(([x,y,v])=>{const cell=map.inverse(x,y);assert.ok(cell,'valid display lattice point '+[x,y]);return [cell.c,cell.r,v];});return {map,api:finder({mode,view:rotate?'rombJoin180':'rombJoin',width,height,points:sourcePoints,sequence,pattern})};
