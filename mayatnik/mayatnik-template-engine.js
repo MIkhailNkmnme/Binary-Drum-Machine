@@ -28,16 +28,20 @@
     function clear(message=''){serial++;selection=null;state={...state,count:0,busy:false,message};host.redrawSelection();emit();}
     async function select(id){
       const entry=host.entries().find(t=>t.id===id);if(!entry)return state;
+      return selectEntry(entry);
+    }
+    async function selectEntry(entry,temporary=false){
+      const id=temporary?null:entry.id;
       if(host.selectionAllowed?.(entry)===false){state={...state,message:host.selectionMessage?.()||'Template area limit'};emit();return {...state};}
       const run=++serial;selection=null;state={...state,selectedId:id,count:0,busy:true,message:'Поиск в текущих строках…'};emit();
-      host.choose(id);host.stop();host.redrawSelection();
+      if(!temporary)host.choose(id);host.stop();host.redrawSelection();
       try{
         const field=await host.field();if(run!==serial)return state;
         const patterns=patternsFor(entry);
         let found=results.find(r=>r.field===field&&r.patterns===patterns)?.found;
         if(!found){found=await root.MayatnikTemplateMatcher.find(field,patterns,{cancelled:()=>run!==serial||!host.current(field)});results.push({field,patterns,found});while(results.length>3)results.shift();}
         if(run!==serial)return state;
-        const instances=host.instances(id);
+        const instances=temporary?(host.shapeInstances?.(entry.shape)||[]):host.instances(id);
         selection={...found,instances,field};state={...state,selectedId:id,count:found.count+instances.length,busy:false,message:`Найдено: ${found.count} · отдельных копий: ${instances.length}`};
         if(!state.count){selection=null;state.message='В текущих строках этого шаблона нет';}
         host.redrawSelection();emit();
@@ -60,7 +64,7 @@
       list:()=>host.entries().filter(t=>!visibleIds||visibleIds.has(t.id)).map(t=>({id:t.id,name:t.name,hex:t.shape.hex,parts:t.shape.parts,previewKey:t.shape,builtin:String(t.id).startsWith('standard:')})),allIds:()=>host.entries().map(t=>t.id),whenFiltered:()=>filterPending,
       exportList:()=>host.entries().map(({id,name})=>({id,name})),
       exportItem(id){const entry=host.entries().find(t=>t.id===id);if(!entry)throw Error('Шаблон не найден');const item=structuredClone(entry);return {id:item.id,name:item.name,files:[{extension:'.template.json',blob:new Blob([JSON.stringify({format:'mayatnik-templates',version:1,templates:[item]})],{type:'application/json'})}]};},
-      select,colour:hex=>edit('colour',hex),removeMatches:()=>edit('delete'),
+      select,selectShape:shape=>selectEntry({shape},true),colour:hex=>edit('colour',hex),removeMatches:()=>edit('delete'),
       async action(id,action,value){const result=await host.action(id,action,value);if(action==='visible'||action==='skip-selection'){clear();if(action==='visible'){scopeKey=null;refresh();}emit();}return result;},
       visibility:id=>host.visibility?.(id)||{placed:0,visible:false,skipSelection:false},getControls:()=>null,
       getState:()=>({...state}),subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},

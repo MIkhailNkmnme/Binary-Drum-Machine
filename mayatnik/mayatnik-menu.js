@@ -946,17 +946,17 @@
   }
   removePaintClearDuplicates(railSourceButtons);
 
-  // v0.356: «точка встречи пусть включена по умолчанию и привязана к Сдвигу кадром и Застыло — все 3 кнопки объедини в одну, как в Хабе, только 3 части»:
-  // одна кнопка «Точка | Сдвиг | Застыло» на месте «Застыло»; каждая часть — своя прежняя кнопка (они спрятаны и работают), горит — включена
-  { const parts = [['fixCross', 'Точка', 'Точка встречи'], ['fixDragK', 'Сдвиг', 'Сдвиг кадром'], ['fixLines', 'Застыло', 'Застыло']].map(([n, l, t]) => [tools.querySelector('[data-n="' + n + '"]'), l, t]).filter(p => p[0]);
-    // v0.381: «на стандартную кнопку из частей, как в Хабе»: пара grozd gz-pair gz-split с третьей частью (gz-split3) — части через косую черту,
-    // у каждой своя кайма (--gz-rI): включённая — цветом группы, прочие — 30 %; фон свой, без свечения текста
-    if (parts.length === 3) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-split gz-split3'; b.dataset.n = 'fixTri';
-      parts.forEach(([src, l, t], j) => { const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; sp.textContent = l;
-        sp.onclick = e => { e.stopPropagation(); src.click(); placeTools(); };
-        toolSync.push(() => { const on = src.classList.contains('on'); sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = t + ': ' + (src.title || ''); });
-        b.append(sp); if (!j) { const pm = document.createElement('span'); pm.className = 'gz-pm'; b.append(pm); } });
-      parts[2][0].before(b); for (const p of parts) p[0].style.display = 'none'; } }
+  // v0.627: одна команда ведёт точку встречи и ось за кадром; прежний ключ раскладки и скрытые контролы сохранены.
+  { const sources = ['fixCross','fixDragK','fixLines'].map(n => tools.querySelector('[data-n="' + n + '"]'));
+    if (sources.every(Boolean)) { const help = 'Точка встречи и ось: следовать за кадром';
+      ptNames.fixTri = 'Точка';
+      const probe = document.createElement('button'); probe.title = help;
+      const b = ptBtn('fixTri','axes',probe,() => { const follow = window.mayFixFollow; follow?.set(!follow.get()); placeTools(); });
+      b.classList.add('gz-hx'); b.querySelector('i').classList.add('gz-ic');
+      const label = document.createElement('span'); label.className = 'gz-nm'; label.textContent = ptNames.fixTri; b.append(label);
+      b.title = help; b.setAttribute('aria-label',help);
+      toolSync.push(() => { const on = !!window.mayFixFollow?.get(); b.classList.toggle('on',on); b.setAttribute('aria-pressed',String(on)); });
+      sources[2].before(b); for (const source of sources) { source.style.display = 'none'; source.dataset.maySearchSkip = ''; } } }
   // v0.499: «Ось: 0, 1, −1 — как Стык, между ними ромб текущей»: [Ось | 0 | 1 | −1] — gz-tri, как в Хабе; 0 — стоит, 1 — ход, −1 — антиход.
   // Прежняя кнопка «Ось» спрятана и по-прежнему хранит режим (mayFixAxis: 0 — ход, 1 — стоит, 2 — антиход).
   { const src = tools.querySelector('[data-n="fixAxis"]');
@@ -1053,6 +1053,11 @@
     row.parentElement.dataset.k = 'Шаблоны';
     mergeTemplateRail(row,railSourceButtons);
     row.prepend(...['bTemplatePick','bTemplateDrag','templatePickMode'].map(id=>railSourceButtons.get(id)).filter(Boolean));
+    const source=$('bTemplateFindAll'),findAll=ptBtn('bTemplateFindAll','select',source,()=>{source.click();placeTools();});
+    ptNames.bTemplateFindAll='Найти все';findAll.classList.add('gz-hx');findAll.querySelector('i').classList.add('gz-ic');
+    const label=document.createElement('span');label.className='gz-nm';label.textContent=ptNames.bTemplateFindAll;findAll.append(label);
+    findAll.title=source.title;findAll.setAttribute('aria-label',source.getAttribute('aria-label'));
+    toolSync.push(()=>{findAll.disabled=source.disabled;});row.prepend(findAll);
     railR.style.setProperty('display', 'none', 'important'); }
   // v0.485: библиотека сохраняет своё место. Если сохранён только старый «Шаблон», наследуем его раскладку; исходные ключи остаются в резервной копии.
   try {
