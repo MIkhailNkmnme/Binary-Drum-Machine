@@ -130,4 +130,3 @@
   }
   return { create, reset, apex, copy, sweep, cone, unpack, paint, blend };
 });
-
