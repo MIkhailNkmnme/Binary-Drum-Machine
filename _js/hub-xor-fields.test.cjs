@@ -124,10 +124,10 @@ function assertBlend(f, label) {
   assert.deepEqual(Array.from(actual), Array.from(f.nodes.hubBlend.ctx.expected), label + ': blend pixels');
 }
 
-test('v0.469 markup: three independent field buttons, the old pair buttons are gone', () => {
+test('v0.470 markup: three independent field buttons, the old pair buttons are gone', () => {
   const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
-  assert.match(html, /<title>[^<]*v0\.469<\/title>/);
-  assert.match(html, /hub-xor-background\.js\?v=469/);
+  assert.match(html, /<title>[^<]*v0\.470<\/title>/);
+  assert.match(html, /hub-xor-background\.js\?v=470/);
   const group = html.match(/<div id="hubComparePairs"[^>]*>([\s\S]*?)<\/div>/);
   assert.ok(group, 'field group exists');
   for (const value of [1, 2, 3]) {
@@ -247,21 +247,25 @@ test('saved fields win; the old 1–2 / 2–3 / 3–1 / 1–2–3 pairs are migr
   assert.deepEqual(broken.fields(), [1, 2], 'a non-array selection is ignored');
 });
 
-test('player speed cycles 0,25×–2×, scales the next frame delay and is saved', async () => {
+test('player speed cycles 0,25×–4×, scales the next frame delay and is saved', async () => {
   const f = fixture();
   assert.equal(f.nodes.hubCompareSpeedLabel.textContent, '1×');
   const seen = [];
-  for (let i = 0; i < 4; i++) { f.clickSpeed(); seen.push(f.nodes.hubCompareSpeedLabel.textContent); }
-  assert.deepEqual(seen, ['2×', '0,25×', '0,5×', '1×']);
-  assert.match(f.nodes.hubCompareSpeed.title, /0,25× → 0,5× → 1× → 2×/);
+  for (let i = 0; i < 5; i++) { f.clickSpeed(); seen.push(f.nodes.hubCompareSpeedLabel.textContent); }
+  assert.deepEqual(seen, ['2×', '4×', '0,25×', '0,5×', '1×']);
+  assert.match(f.nodes.hubCompareSpeed.title, /0,25× → 0,5× → 1× → 2× → 4×/);
   await f.frame();
   const one = f.delays[f.delays.length - 1];
   f.clickSpeed();   // 2×
   await f.frame();
   const two = f.delays[f.delays.length - 1];
-  assert.ok(one > 0 && two > 0, 'positive delays');
+  f.clickSpeed();   // 4×
+  await f.frame();
+  const four = f.delays[f.delays.length - 1];
+  assert.ok(one > 0 && two > 0 && four > 0, 'positive delays');
   assert.ok(two < one, '2× schedules sooner than 1×');
-  assert.equal(JSON.parse(f.stored[f.stored.length - 1][1]).speed, 2);
+  assert.ok(four < two, '4× schedules sooner than 2×');
+  assert.equal(JSON.parse(f.stored[f.stored.length - 1][1]).speed, 4);
   f.clickSpeed();   // 0,25×
   f.clickSpeed();   // 0,5×
   await f.frame();

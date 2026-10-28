@@ -1,4 +1,7 @@
-/* v10 (Хаб v0.469). Скорость плеера: 0,25× / 0,5× / 1× / 2× — кнопка в
+/* v11 (Хаб v0.470). Скорость плеера 0,25× / 0,5× / 1× / 2× / 4×; кадр
+   рисуется 32-битными словами, 5.9 не перерисовывается на промежуточных
+   кадрах, на 4× кадр режется одним куском 1024 строки — 4× обгоняет 2×.
+   v10 (v0.469). Скорость плеера: 0,25× / 0,5× / 1× / 2× — кнопка в
    меню сравнения; интервал кадра — 120 мс / скорость, выбор сохраняется.
    Пока панель статистики закрыта, расчёт кадра не ждёт: плеер идёт со
    скоростью кнопки, статистика начинается при открытии панели.
@@ -31,10 +34,19 @@
   const publishedLeft = new Int8Array(W * H), publishedRight = new Int8Array(W * H), publishedPair = new Int8Array(W * H);
   const coneImage = coneCtx.createImageData(W, H), xorImage = xorCtx.createImageData(W, H);
   const pairImage = pairCtx && pairCtx.createImageData(W, H);
+  // Пиксели пишутся одним 32-битным словом: на 2M клеток это заметно быстрее
+  // четырёх записей в Uint8ClampedArray. На big-endian остаётся старый paint().
+  const PIXELS = W * H;
+  const LITTLE_ENDIAN = new Uint8Array(new Uint32Array([0x0a0b0c0d]).buffer)[0] === 0x0d;
+  const conePixels = LITTLE_ENDIAN ? new Uint32Array(coneImage.data.buffer) : null;
+  const xorPixels = LITTLE_ENDIAN ? new Uint32Array(xorImage.data.buffer) : null;
+  const pairPixels = LITTLE_ENDIAN && pairImage ? new Uint32Array(pairImage.data.buffer) : null;
+  let pairPainted = false;
   const root = document.getElementById('hubXorBackground'), blend = document.getElementById('hubBlend');
   const blendCtx = blend && blend.getContext('2d', { alpha: true });
   if (blend) { blend.width = W; blend.height = H; }
   const blendImage = blendCtx && blendCtx.createImageData(W, H);
+  const blendPixels = LITTLE_ENDIAN && blendImage ? new Uint32Array(blendImage.data.buffer) : null;
   const modeButton = document.getElementById('hubCompareMode'), mirrorButton = document.getElementById('hubCompareMirror');
   const speedButton = document.getElementById('hubCompareSpeed');
   const pauseButton = document.getElementById('hubComparePause');
@@ -47,7 +59,7 @@
     green: { label: 'Зелёный', left: [51,122,52], middle: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, обе стороны, всё поле и общие — зелёный' }
   };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
-  const SPEEDS = [0.25, 0.5, 1, 2];
+  const SPEEDS = [0.25, 0.5, 1, 2, 4];
   // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
   const FIELDS = [1, 2, 3];
   const FIELD_KEYS = { 1: 'left', 2: 'pair', 3: 'right' };
@@ -242,7 +254,7 @@
     if (speedButton) {
       const label = speedLabel(view.speed);
       text('hubCompareSpeedLabel', label);
-      speedButton.title = 'Скорость плеера: ' + label + '. Щелчок — следующая: 0,25× → 0,5× → 1× → 2×';
+      speedButton.title = 'Скорость плеера: ' + label + '. Щелчок — следующая: 0,25× → 0,5× → 1× → 2× → 4×';
       speedButton.setAttribute('aria-label', 'Скорость плеера: ' + label);
       speedButton.classList.toggle('gz-on', view.speed !== 1);
     }
@@ -250,28 +262,47 @@
   function speedLabel(value) { return (Number.isInteger(value) ? String(value) : String(value).replace('.', ',')) + '×'; }
   const FIELD_COLOUR = { left: 'left', pair: 'middle', right: 'right' };
   function selectedFields() { return view.fields.map(field => FIELD_KEYS[field]); }
+  function colour32(colour) { return ((255 << 24) | (colour[2] << 16) | (colour[1] << 8) | colour[0]) >>> 0; }
   function renderBlend() {
     if (!blendImage || view.mode === 'split') return;
     const palette = PALETTES[view.palette];
-    const fields = selectedFields().map(key => ({ key, colour: palette[FIELD_COLOUR[key]], data: key === 'pair' ? publishedPair : key === 'right' ? publishedRight : publishedLeft }));
-    if (!fields.length) { blendImage.data.fill(0); blendCtx.putImageData(blendImage, 0, 0); blend.dataset.frame = left.dataset.frame; return; }
-    for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
-      const i = r * W + c;
-      let ones = 0, all = true, colour = null;
-      for (const field of fields) {
-        // зеркально читаются поля 2 и 3: поле 1 (конусы 5.7) остаётся прямым
-        const j = r * W + (view.mirror && field.key !== 'left' ? W - 1 - c : c);
-        if (field.data[j] === 1) { ones++; if (!colour) colour = field.colour; }
-        else all = false;
+    const fields = selectedFields().map(key => ({ key, colour: palette[FIELD_COLOUR[key]],
+      colour32: colour32(palette[FIELD_COLOUR[key]]), data: key === 'pair' ? publishedPair : key === 'right' ? publishedRight : publishedLeft }));
+    if (!fields.length) {
+      if (blendPixels) blendPixels.fill(0); else blendImage.data.fill(0);
+      blendCtx.putImageData(blendImage, 0, 0); blend.dataset.frame = left.dataset.frame; return;
+    }
+    const common32 = colour32(palette.common);
+    if (blendPixels) {
+      for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
+        const i = r * W + c;
+        let ones = 0, all = true, colour = 0;
+        for (const field of fields) {
+          // зеркально читаются поля 2 и 3: поле 1 (конусы 5.7) остаётся прямым
+          const j = r * W + (view.mirror && field.key !== 'left' ? W - 1 - c : c);
+          if (field.data[j] === 1) { ones++; if (!colour) colour = field.colour32; }
+          else all = false;
+        }
+        blendPixels[i] = (view.mode === 'xor' ? ones % 2 === 1 : all) ? (view.mode === 'and' ? common32 : (colour || common32)) : 0;
       }
-      paint(blendImage.data, i, view.mode === 'xor' ? ones % 2 : (all ? 1 : 0), view.mode === 'and' ? palette.common : (colour || palette.common));
+    } else {
+      for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
+        const i = r * W + c;
+        let ones = 0, all = true, colour = null;
+        for (const field of fields) {
+          const j = r * W + (view.mirror && field.key !== 'left' ? W - 1 - c : c);
+          if (field.data[j] === 1) { ones++; if (!colour) colour = field.colour; }
+          else all = false;
+        }
+        paint(blendImage.data, i, view.mode === 'xor' ? ones % 2 : (all ? 1 : 0), view.mode === 'and' ? palette.common : (colour || palette.common));
+      }
     }
     blendCtx.putImageData(blendImage, 0, 0);
     blend.dataset.frame = left.dataset.frame;
   }
   function changeView() {
     syncView(); saveView();
-    if (published) renderPublished();
+    if (published) renderPublished(true);
   }
   function closePalette() {
     if (paletteMenu) paletteMenu.hidden = true;
@@ -412,16 +443,29 @@
     pixels[p + 2] = on ? colour[2] : 0;
     pixels[p + 3] = on ? 255 : 0;   // пустые клетки прозрачны: при увеличении поля наезжают друг на друга
   }
-  function renderPublished() {
+  function renderPublished(force = false) {
     const palette = PALETTES[view.palette];
     if (view.mode === 'split') {
-      for (let i = 0; i < W * H; i++) {
-        paint(coneImage.data, i, publishedLeft[i], palette.left);
-        paint(xorImage.data, i, publishedRight[i], palette.right);
-        if (pairImage) paint(pairImage.data, i, publishedPair[i], palette.middle);
+      if (conePixels) {
+        const lc = colour32(palette.left), rc = colour32(palette.right), mc = colour32(palette.middle);
+        for (let i = 0; i < PIXELS; i++) {
+          conePixels[i] = publishedLeft[i] === 1 ? lc : 0;
+          xorPixels[i] = publishedRight[i] === 1 ? rc : 0;
+        }
+        // 5.9 меняется только через кадр: на промежуточных кадрах канвас не трогаем.
+        const repaintPair = !!pairPixels && (force || pairStep || !pairPainted);
+        if (repaintPair) for (let i = 0; i < PIXELS; i++) pairPixels[i] = publishedPair[i] === 1 ? mc : 0;
+        coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
+        if (repaintPair) { pairCtx.putImageData(pairImage, 0, 0); pairPainted = true; }
+      } else {
+        for (let i = 0; i < PIXELS; i++) {
+          paint(coneImage.data, i, publishedLeft[i], palette.left);
+          paint(xorImage.data, i, publishedRight[i], palette.right);
+          if (pairImage) paint(pairImage.data, i, publishedPair[i], palette.middle);
+        }
+        coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
+        if (pairCtx) pairCtx.putImageData(pairImage, 0, 0);
       }
-      coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
-      if (pairCtx) pairCtx.putImageData(pairImage, 0, 0);
     }
     renderBlend();
   }
@@ -454,18 +498,29 @@
     }
     const visible = frame >= FIRST_FRAME;
     // На высокой скорости режем кадр крупнее: меньше таймеров, больше кадров/с.
-    const chunk = view.speed >= 2 ? 512 : ROW_CHUNK;
+    const chunk = view.speed >= 4 ? 1024 : view.speed >= 2 ? 512 : ROW_CHUNK;
     const end = Math.min(H, row + chunk);
     for (; row < end; row++) {
       const base = row * W, up = base - W;
-      for (let c = 0; c < W; c++) {
-        const i = base + c;
-        // In-place, сверху вниз: родители уже пересчитаны в этом же кадре.
-        const lv = c > 0 ? grid[up + c - 1] : -1, rv = c + 1 < W ? grid[up + c + 1] : -1;
-        grid[i] = xor3(grid[i], lv, rv);
-        if (middle && pairStep) {
-          const pl = c > 0 ? pairGrid[up + c - 1] : -1, pr = c + 1 < W ? pairGrid[up + c + 1] : -1;
-          pairGrid[i] = xor3(pairGrid[i], pl, pr);
+      if (middle && pairStep) {
+        for (let c = 0; c < W; c++) {
+          const i = base + c;
+          let v = grid[i];
+          if (c > 0) { const p = grid[up + c - 1]; if (p >= 0) v = v < 0 ? p : v ^ p; }
+          if (c + 1 < W) { const p = grid[up + c + 1]; if (p >= 0) v = v < 0 ? p : v ^ p; }
+          grid[i] = v;
+          let q = pairGrid[i];
+          if (c > 0) { const p = pairGrid[up + c - 1]; if (p >= 0) q = q < 0 ? p : q ^ p; }
+          if (c + 1 < W) { const p = pairGrid[up + c + 1]; if (p >= 0) q = q < 0 ? p : q ^ p; }
+          pairGrid[i] = q;
+        }
+      } else {
+        for (let c = 0; c < W; c++) {
+          const i = base + c;
+          let v = grid[i];
+          if (c > 0) { const p = grid[up + c - 1]; if (p >= 0) v = v < 0 ? p : v ^ p; }
+          if (c + 1 < W) { const p = grid[up + c + 1]; if (p >= 0) v = v < 0 ? p : v ^ p; }
+          grid[i] = v;
         }
       }
     }
