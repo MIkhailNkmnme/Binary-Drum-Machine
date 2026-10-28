@@ -1,4 +1,8 @@
-/* v9 (Хаб v0.467). В наложении поля 1, 2 и 3 включаются отдельными кнопками:
+/* v10 (Хаб v0.469). Скорость плеера: 0,25× / 0,5× / 1× / 2× — кнопка в
+   меню сравнения; интервал кадра — 120 мс / скорость, выбор сохраняется.
+   Пока панель статистики закрыта, расчёт кадра не ждёт: плеер идёт со
+   скоростью кнопки, статистика начинается при открытии панели.
+   v9 (v0.467). В наложении поля 1, 2 и 3 включаются отдельными кнопками:
    горит кнопка — поле участвует в XOR/AND, погашена — не участвует. Хотя бы
    одно поле остаётся включённым. Зеркально читаются поля 2 и 3, поле 1 —
    прямое. v8 (v0.463). Двойной щелчок по любому полю — пауза и продолжение всех трёх
@@ -32,6 +36,7 @@
   if (blend) { blend.width = W; blend.height = H; }
   const blendImage = blendCtx && blendCtx.createImageData(W, H);
   const modeButton = document.getElementById('hubCompareMode'), mirrorButton = document.getElementById('hubCompareMirror');
+  const speedButton = document.getElementById('hubCompareSpeed');
   const pauseButton = document.getElementById('hubComparePause');
   const paletteButton = document.getElementById('hubComparePalette'), paletteMenu = document.getElementById('hubComparePaletteMenu');
   const pairsBox = document.getElementById('hubComparePairs');
@@ -42,12 +47,13 @@
     green: { label: 'Зелёный', left: [51,122,52], middle: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, обе стороны, всё поле и общие — зелёный' }
   };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
+  const SPEEDS = [0.25, 0.5, 1, 2];
   // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
   const FIELDS = [1, 2, 3];
   const FIELD_KEYS = { 1: 'left', 2: 'pair', 3: 'right' };
   const FIELD_NAMES = { 1: 'конусы 5.7', 2: 'обе стороны 5.9', 3: 'всё поле 5.8' };
   const LEGACY_PAIRS = { 12: [1, 2], 23: [2, 3], 31: [1, 3], 123: [1, 2, 3] };
-  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', fields: [1, 2],
+  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', fields: [1, 2], speed: 1,
     pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 }, pair: { x: 0, y: 0 } } };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE));
@@ -60,6 +66,7 @@
         if (fields.length) view.fields = fields;
       } else if (LEGACY_PAIRS[saved.pair]) view.fields = LEGACY_PAIRS[saved.pair].slice();   // прежняя пара 1–2 / 2–3 / 3–1 / 1–2–3
       if (typeof saved.zoom === 'number' && Number.isFinite(saved.zoom)) view.zoom = Math.max(1, Math.min(64, saved.zoom));
+      if (SPEEDS.includes(saved.speed)) view.speed = saved.speed;
       for (const key of ['left', 'right', 'blend', 'pair']) for (const axis of ['x', 'y']) {
         const value = saved.pan?.[key]?.[axis];
         if (typeof value === 'number' && Number.isFinite(value)) view.pan[key][axis] = value;
@@ -68,6 +75,7 @@
   } catch (_) {}
   let published = false;
   let frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
+  let publishedFrame = -1, publishedCycle = 0, statsFrame = -1;
   let pairStep = false;   // текущий кадр — шаг пары для 5.9 (переживает разбивку на куски строк)
   let cycle = 0, awaitingStats = false, failed = false, paused = false, controller = null;
   let drag = null, middle1 = null, swallowClick = false, holdTimer = 0, hold = null;
@@ -99,7 +107,11 @@
     syncPlayback();
     // Neither the partially computed row nor an in-flight statistics job is
     // discarded. The statistics continuation also respects this pause.
-    if (!paused) { started = performance.now(); schedule(0); }
+    if (!paused) {
+      started = performance.now();
+      // Если снимок на паузе ещё считается, он сам запустит следующий кадр.
+      if (!awaitingStats) schedule(0);
+    } else measureSnapshot();
   }
   if (pauseButton) pauseButton.addEventListener('click', togglePause);
   syncPlayback();
@@ -227,7 +239,15 @@
       mirrorButton.setAttribute('aria-pressed', String(view.mirror));
       mirrorButton.classList.toggle('gz-on', view.mode !== 'split' && view.mirror);
     }
+    if (speedButton) {
+      const label = speedLabel(view.speed);
+      text('hubCompareSpeedLabel', label);
+      speedButton.title = 'Скорость плеера: ' + label + '. Щелчок — следующая: 0,25× → 0,5× → 1× → 2×';
+      speedButton.setAttribute('aria-label', 'Скорость плеера: ' + label);
+      speedButton.classList.toggle('gz-on', view.speed !== 1);
+    }
   }
+  function speedLabel(value) { return (Number.isInteger(value) ? String(value) : String(value).replace('.', ',')) + '×'; }
   const FIELD_COLOUR = { left: 'left', pair: 'middle', right: 'right' };
   function selectedFields() { return view.fields.map(field => FIELD_KEYS[field]); }
   function renderBlend() {
@@ -279,6 +299,10 @@
   if (mirrorButton) mirrorButton.addEventListener('click', () => {
     if (view.mode === 'split') return;
     view.mirror = !view.mirror; changeView();
+  });
+  if (speedButton) speedButton.addEventListener('click', () => {
+    view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length];
+    changeView();
   });
   if (pairsBox) pairsBox.addEventListener('click', event => {
     const button = event.target.closest('[data-hub-field]');
@@ -390,15 +414,18 @@
   }
   function renderPublished() {
     const palette = PALETTES[view.palette];
-    for (let i = 0; i < W * H; i++) {
-      paint(coneImage.data, i, publishedLeft[i], palette.left);
-      paint(xorImage.data, i, publishedRight[i], palette.right);
-      if (pairImage) paint(pairImage.data, i, publishedPair[i], palette.middle);
+    if (view.mode === 'split') {
+      for (let i = 0; i < W * H; i++) {
+        paint(coneImage.data, i, publishedLeft[i], palette.left);
+        paint(xorImage.data, i, publishedRight[i], palette.right);
+        if (pairImage) paint(pairImage.data, i, publishedPair[i], palette.middle);
+      }
+      coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
+      if (pairCtx) pairCtx.putImageData(pairImage, 0, 0);
     }
-    coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
-    if (pairCtx) pairCtx.putImageData(pairImage, 0, 0);
     renderBlend();
   }
+  function frameInterval() { return INTERVAL / view.speed; }
   function schedule(delay) {
     if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);
   }
@@ -426,7 +453,9 @@
       MAYATNIK.cone(cones, pos, H);
     }
     const visible = frame >= FIRST_FRAME;
-    const end = Math.min(H, row + ROW_CHUNK);
+    // На высокой скорости режем кадр крупнее: меньше таймеров, больше кадров/с.
+    const chunk = view.speed >= 2 ? 512 : ROW_CHUNK;
+    const end = Math.min(H, row + chunk);
     for (; row < end; row++) {
       const base = row * W, up = base - W;
       for (let c = 0; c < W; c++) {
@@ -447,20 +476,39 @@
       left.dataset.frame = right.dataset.frame = String(frame);
       if (middle) middle.dataset.frame = String(frame);
       published = true;
+      publishedFrame = frame; publishedCycle = cycle;
       renderPublished();
     }
     nextFrame = true;
     const continueFrame = () => {
       awaitingStats = false;
-      schedule(visible ? Math.max(0, INTERVAL - (performance.now() - started)) : 0);
+      schedule(visible ? Math.max(0, frameInterval() - (performance.now() - started)) : 0);
     };
-    if (controller && typeof controller.measure === 'function') {
+    // Пока ни одна панель статистики не открыта, расчёт не тормозит плеер:
+    // кадры идут со скоростью кнопки, статистика начинается при открытии панели.
+    const statsOn = controller && typeof controller.measure === 'function' &&
+      (typeof controller.active !== 'function' || controller.active());
+    if (statsOn) {
       awaitingStats = true;
       try {
-        Promise.resolve(controller.measure({ left: cones.val, right: grid, W, H, frame, cycle })).then(continueFrame, stop);
+        Promise.resolve(controller.measure({ left: cones.val, middle: pairGrid, right: grid, W, H, frame, cycle }))
+          .then(() => { statsFrame = frame; continueFrame(); }, stop);
       } catch (error) { stop(error); }
     } else continueFrame();
   }
+  // Пауза/открытие панели на паузе: посчитать последний опубликованный кадр,
+  // иначе панель осталась бы с «Подготовкой первого кадра» до продолжения.
+  function measureSnapshot() {
+    if (!paused || !published || failed || statsFrame === publishedFrame) return;
+    if (!controller || typeof controller.measure !== 'function') return;
+    if (typeof controller.active === 'function' && !controller.active()) return;
+    if (awaitingStats) return;
+    const target = publishedFrame, targetCycle = publishedCycle;
+    awaitingStats = true;
+    Promise.resolve(controller.measure({ left: publishedLeft, middle: publishedPair, right: publishedRight, W, H, frame: target, cycle: targetCycle }))
+      .then(() => { statsFrame = target; awaitingStats = false; if (!paused) schedule(0); }, stop);
+  }
+  document.addEventListener('hubStatsActivated', () => { statsFrame = -1; measureSnapshot(); });
   document.addEventListener('visibilitychange', () => {
     clearTimeout(timer); timer = 0;
     // Скрытая вкладка сохраняет даже незаконченный кадр; пропуска кадров нет.

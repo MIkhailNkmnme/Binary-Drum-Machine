@@ -118,3 +118,70 @@ test('1024-row source scan has exact full-size counts', () => {
   assert.equal(r.fieldsEqual, true);
   console.log('2047×1024 exact stats scan: ' + elapsed.toFixed(1) + ' ms');
 });
+test('middle 5.9 is counted; all-three direct, mirror and count events are exact', () => {
+  const symmetric = [0, 1, 0], other = [1, 1, 0];
+  const same = createTracker({ W: 3, H: 1 }).record({ left: symmetric, middle: symmetric, right: symmetric, frame: 0 });
+  assert.deepEqual(same.middle, brute(symmetric));
+  assert.equal(same.countsEqualAll, true);
+  assert.equal(same.fieldsEqualAll, true);
+  assert.equal(same.fieldsMirrorEqualAll, true);
+  const split = createTracker({ W: 3, H: 1 });
+  const r = split.record({ left: symmetric, middle: other, right: symmetric, frame: 0 });
+  assert.deepEqual(r.middle, brute(other));
+  assert.equal(r.countsEqual, true, 'legacy 5.7/5.8 pair is unchanged');
+  assert.equal(r.fieldsEqual, true);
+  assert.equal(r.countsEqualAll, false);
+  assert.equal(r.fieldsEqualAll, false);
+  assert.equal(r.fieldsMirrorEqualAll, false);
+  const s = split.snapshot();
+  assert.deepEqual(s.cycle.events.fieldsEqual.frames, [0]);
+  assert.deepEqual(s.cycle.events.fieldsEqualAll.frames, []);
+  assert.equal(s.cycle.totals.middle.ones, 2);
+  assert.equal(s.cycle.totals.countsEqualAll, false);
+});
+test('middle field must stay the same within a cycle and invalid middle data is rejected atomically', () => {
+  const t = createTracker({ W: 2, H: 1 });
+  const base = { left: [1, 0], middle: [1, 0], right: [1, 0], frame: 0 };
+  t.record(base);
+  const before = t.snapshot();
+  assert.throws(() => t.record({ left: [1, 0], right: [1, 0], frame: 1 }), /consistent/);
+  assert.throws(() => t.record({ ...base, frame: 1, middle: [1, 2] }), /middle field/);
+  assert.deepEqual(t.snapshot(), before);
+  t.record({ ...base, frame: 1 });
+  assert.equal(t.snapshot().cycle.frames, 2);
+});
+test('partial start begins at the current frame and completes at the cycle wrap', () => {
+  const t = createTracker({ W: 5, H: 1 });
+  t.startFrom();
+  const a = new Array(5).fill(0), b = new Array(5).fill(0);
+  const first = t.record({ left: a, middle: a, right: b, frame: 3 });
+  assert.equal(first.frame, 3);
+  assert.equal(t.snapshot().cycle.startFrame, 3);
+  assert.equal(t.snapshot().cycle.partial, true);
+  t.record({ left: a, middle: a, right: b, frame: 4 });
+  assert.equal(t.snapshot().cycle.complete, true);
+  assert.equal(t.snapshot().cycle.frames, 2);
+  t.record({ left: a, middle: a, right: b, frame: 0, cycle: 1 });
+  assert.equal(t.snapshot().previousCycle.startFrame, 3);
+  assert.equal(t.snapshot().previousCycle.partial, true);
+});
+test('all-three area events require the middle summary and use cumulative sums', () => {
+  const t = createTracker({ W: 2, H: 1 });
+  const side = { figureCount: 3, sum: 12, figures: [{ kind:'triangle',name:'triangle',n:4,count:3 }], repeated:[{ n:4,count:3 }] };
+  const areas = { left: side, middle: side, right: side,
+    shared:[{ n:4,left:3,right:3 }], sharedAll:[{ n:4,left:3,middle:3,right:3 }],
+    histogramEqual:true, histogramEqualAll:true, namedHistogramEqual:true, namedHistogramEqualAll:true };
+  const r = t.record({ left:[1,0], middle:[1,0], right:[1,0], frame:0, areas });
+  assert.equal(r.cumulativeAreas.middle.sum, 12);
+  assert.equal(r.cumulativeAreas.sumsEqualAll, true);
+  const events = t.snapshot().cycle.events;
+  assert.deepEqual(events.areasEqualAll.frames, [0]);
+  assert.deepEqual(events.namedAreasEqualAll.frames, [0]);
+  assert.deepEqual(events.areaSumsEqualAll.frames, [0]);
+  assert.deepEqual(events.cumulativeAreaSumsEqualAll.frames, [0]);
+  assert.deepEqual(events.repeatedAreasMiddle.frames, [0]);
+  const empty = { figureCount:0, sum:0, repeated:[] };
+  t.record({ left:[0,1], middle:[0,1], right:[0,1], frame:1, areas:{ left:empty,middle:empty,right:empty,
+    shared:[],sharedAll:[],histogramEqual:true,histogramEqualAll:true,namedHistogramEqual:true,namedHistogramEqualAll:true } });
+  assert.deepEqual(t.snapshot().cycle.events.cumulativeAreaSumsEqualAll.frames, [0,1]);
+});

@@ -1,6 +1,6 @@
-/* v1. One complete area analysis per request; caller applies backpressure. */
+/* v2. One complete area analysis of up to three fields per request; caller applies backpressure. */
 'use strict';
-importScripts('hub-compare-areas.js?v=1');
+importScripts('hub-compare-areas.js?v=2');
 const analyzer = HubCompareAreas.createAnalyzer();
 onmessage = event => {
   const {id, ...input} = event.data;

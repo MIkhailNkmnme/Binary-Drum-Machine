@@ -57,11 +57,15 @@ function harness({ worker='success', saved=null, deferred=false }={}) {
   return { controller,elements,document,body,workers,jobs,messages,storage };
 }
 function input(frame,cycle=0) {
-  const left=new Int8Array(15).fill(0),right=new Int8Array(15).fill(0);
+  const left=new Int8Array(15).fill(0),middle=new Int8Array(15).fill(0),right=new Int8Array(15).fill(0);
   if(frame%2){left[0]=1;right[4]=1;}
-  return {left,right,frame,cycle};
+  middle.set(left);   // v2: третье поле 5.9 участвует в таблицах и событиях
+  return {left,middle,right,frame,cycle};
 }
-async function complete(h,cycle=0) {for(let frame=0;frame<5;frame++)await h.controller.measure(input(frame,cycle));}
+function activate(h) {
+  if (h.elements.hubCompareCounts.attributes['aria-pressed'] !== 'true') h.elements.hubCompareCounts.emit('click');
+}
+async function complete(h,cycle=0) {activate(h);for(let frame=0;frame<5;frame++)await h.controller.measure(input(frame,cycle));}
 
 test('real worker algorithm emits areas and errors with matching request id', () => {
   const output=[], scope={HubCompareAreas:Areas,onmessage:null,importScripts(){},postMessage:data=>output.push(data)};
@@ -75,7 +79,8 @@ test('real worker algorithm emits areas and errors with matching request id', ()
 });
 test('worker path preserves caller buffers, records every frame and previous cycle', async () => {
   const h=harness(), expected=Stats.createTracker({W:5,H:3});
-  assert.equal(h.workers[0].url,'https://example.test/_js/hub-compare-worker.js?v=1');
+  activate(h);
+  assert.equal(h.workers[0].url,'https://example.test/_js/hub-compare-worker.js?v=2');
   for(let frame=0;frame<5;frame++){
     const data=input(frame), original=Array.from(data.left);
     const got=await h.controller.measure(data);
@@ -104,7 +109,7 @@ for(const worker of ['error','messageError','reportedError','postError','constru
   });
 }
 test('worker backpressure rejects overlap and ignores stale worker replies',async()=>{
-  const h=harness({deferred:true}), first=h.controller.measure(input(0));
+  const h=harness({deferred:true});activate(h);const first=h.controller.measure(input(0));
   await assert.rejects(h.controller.measure(input(1)),/ещё считается/);
   h.workers[0].onmessage({data:{id:999,areas:null}});
   assert.equal(h.controller.snapshot(),null);
@@ -113,12 +118,12 @@ test('worker backpressure rejects overlap and ignores stale worker replies',asyn
   assert.equal(h.controller.snapshot().cycle.frames,2);
 });
 test('main-thread fallback also rejects overlapping calls',async()=>{
-  const h=harness({worker:'absent'}), first=h.controller.measure(input(0));
+  const h=harness({worker:'absent'});activate(h);const first=h.controller.measure(input(0));
   const second=h.controller.measure(input(1));
   await assert.rejects(second,/ещё считается/);await first;
 });
 test('worker failure midway keeps prior statistics and fallback stays under backpressure',async()=>{
-  const h=harness({deferred:true});
+  const h=harness({deferred:true});activate(h);
   const first=h.controller.measure(input(0));h.jobs.shift()();await first;
   const second=h.controller.measure(input(1));
   h.workers[0].onerror({preventDefault(){}});
@@ -130,13 +135,14 @@ test('worker failure midway keeps prior statistics and fallback stays under back
   assert.deepEqual(plain(h.controller.snapshot().cycle.events.fieldsEqual.ranges),[[0,0],[2,2],[4,4]]);
 });
 test('mode buttons render numeric count, area and event tables while retaining scroll',async()=>{
-  const h=harness();await complete(h);
+  const h=harness();
   const {hubComparePanel:panel,hubComparePanelContent:content}=h.elements;
   assert.equal(panel.hidden,true);
-  h.elements.hubCompareCounts.emit('click');
+  await complete(h);
   assert.equal(panel.hidden,false);assert.equal(h.elements.hubCompareCounts.attributes['aria-pressed'],'true');
-  assert.match(content.innerHTML,/Единицы<\/td><td>0<\/td><td>0/);
-  assert.match(content.innerHTML,/Единицы<\/td><td>2<\/td><td>2/);
+  assert.match(content.innerHTML,/Единицы<\/td><td>0<\/td><td>0<\/td><td>0/);
+  assert.match(content.innerHTML,/Единицы<\/td><td>2<\/td><td>2<\/td><td>2/);
+  assert.match(content.innerHTML,/Количество 1 и 0 у всех трёх/);
   assert.match(content.innerHTML,/За цикл · 5 \/ 5 кадров/);
   panel.scrollTop=217;await h.controller.measure(input(0,1));
   assert.equal(panel.scrollTop,217);assert.match(content.innerHTML,/Завершённый цикл 1/);
@@ -144,12 +150,37 @@ test('mode buttons render numeric count, area and event tables while retaining s
   assert.equal(h.elements.hubCompareCounts.attributes['aria-pressed'],'false');
   assert.match(content.innerHTML,/Сумма площадей/);assert.match(content.innerHTML,/перекрыва/);
   const a=h.controller.snapshot().current.areas;
-  assert.ok(content.innerHTML.includes('<td>'+a.left.figureCount+'</td><td>'+a.right.figureCount+'</td>'));
+  assert.ok(content.innerHTML.includes('<td>'+a.left.figureCount+'</td><td>'+a.middle.figureCount+'</td><td>'+a.right.figureCount+'</td>'));
+  assert.match(content.innerHTML,/Равные площади у трёх/);
   h.elements.hubCompareEvents.emit('click');
-  assert.match(content.innerHTML,/Полное поле совпало прямо/);
+  assert.match(content.innerHTML,/5\.7 и 5\.8: полное поле совпало прямо/);
+  assert.match(content.innerHTML,/Все три: полное поле совпало прямо/);
   assert.match(content.innerHTML,/<td>3<\/td><td>0, 2, 4<\/td>/);
   assert.match(content.innerHTML,/<td>5<\/td><td>0–4<\/td>/);
   h.elements.hubCompareEvents.emit('click');assert.equal(panel.hidden,true);
+});
+test('statistics are on demand: no worker while closed, partial cycle when opened',async()=>{
+  const h=harness();
+  assert.equal(h.controller.active(),false);
+  assert.equal(await h.controller.measure(input(0)),null);
+  assert.equal(h.messages.length,0);
+  h.elements.hubCompareCounts.emit('click');
+  assert.equal(h.controller.active(),true);
+  const first=await h.controller.measure(input(2));
+  assert.equal(first.cycle.startFrame,2);
+  assert.equal(first.cycle.partial,true);
+  assert.equal(first.cycle.frames,1);
+  await h.controller.measure(input(3));
+  assert.equal(h.controller.snapshot().cycle.frames,2);
+  h.elements.hubCompareCounts.emit('click');
+  assert.equal(h.controller.active(),false);
+  const closed=await h.controller.measure(input(4));
+  assert.equal(closed.cycle.frames,2,'closed panel does not record');
+  assert.equal(h.messages.length,2,'closed panel sends no worker job');
+  h.elements.hubCompareCounts.emit('click');
+  const reopened=await h.controller.measure(input(4));
+  assert.equal(reopened.cycle.startFrame,4);
+  assert.equal(reopened.cycle.frames,1);
 });
 test('Zen restores saved state, persists toggles and Escape restores menu',()=>{
   const h=harness({saved:{section:'counts',zen:true}});

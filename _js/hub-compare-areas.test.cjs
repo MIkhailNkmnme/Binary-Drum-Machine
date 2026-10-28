@@ -107,4 +107,32 @@ test('input grids remain immutable and reusable analyzer rejects malformed frame
   assert.throws(() => a.analyzeAreas({ ...input, frame: 31 }), RangeError);
 });
 
+test('middle 5.9: figures match the oracle, all-three flags use the third field', () => {
+  const analyzer = areas.createAnalyzer();
+  const input = build(15, 8, 8), middle = input.left;
+  const result = analyzer.analyzeAreas({ ...input, middle });
+  assert.deepEqual(actual(result.middle), oracle(middle, 15, 8, 8), 'middle figures');
+  assert.equal(result.geometry.H, 8);
+  const identical = analyzer.analyzeAreas({ left: middle, middle, right: middle, W: 15, H: 8, frame: 8 });
+  assert.equal(identical.histogramEqualAll, true);
+  assert.equal(identical.namedHistogramEqualAll, true);
+  assert.equal(identical.sumsEqualAll, true);
+  assert.ok(identical.sharedAll.length > 0);
+  assert.ok(identical.sharedAll.every(x => x.left === x.middle && x.middle === x.right));
+  const empty = new Int8Array(15 * 8).fill(-1);
+  const mixed = analyzer.analyzeAreas({ left: input.left, middle: empty, right: input.right, W: 15, H: 8, frame: 8 });
+  assert.equal(mixed.histogramEqualAll, false);
+  assert.notEqual(mixed.middle.sum, mixed.left.sum);
+});
+test('invalid middle length is rejected and all three inputs stay unchanged', () => {
+  const analyzer = areas.createAnalyzer();
+  const input = build(15, 8, 7), before = [input.left.slice(), input.right.slice()];
+  const middle = input.left.slice();
+  assert.throws(() => analyzer.analyzeAreas({ ...input, middle: new Int8Array(4) }), RangeError);
+  analyzer.analyzeAreas({ ...input, middle });
+  assert.deepEqual(input.left, before[0]);
+  assert.deepEqual(input.right, before[1]);
+  assert.deepEqual(middle, before[0]);
+});
+
 module.exports = { build };

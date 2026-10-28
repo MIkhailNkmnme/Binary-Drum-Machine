@@ -1,4 +1,6 @@
-/* v1. Geometric areas from Mayatnik areaCalc/areaFigs, on the finite Hub source grids.
+/* v2. Geometric areas from Mayatnik areaCalc/areaFigs, on the finite Hub source grids.
+   v2: три поля — 5.7 конусы, 5.9 обе стороны, 5.8 всё поле; сравнения пары 5.7/5.8
+   сохранены, добавлены общие площади и равенство всех трёх.
    Source figures overlap: their summed areas are not a partition of the field. */
 (function (root) {
   'use strict';
@@ -204,25 +206,41 @@
         repeated: histogram.filter(h => h.count > 1) };
     }
 
-    function analyzeAreas({ left, right, W, H, frame, anchor = W >> 1, saw = true, sawFull = true }) {
+    function analyzeAreas({ left, middle, right, W, H, frame, anchor = W >> 1, saw = true, sawFull = true }) {
+      const hasMiddle = middle != null;
       if (!Number.isInteger(W) || !Number.isInteger(H) || W < 1 || H < 1 ||
           !Number.isInteger(frame) || frame < 0 || frame >= W ||
-          !Number.isFinite(anchor) || !left || !right || left.length !== W * H || right.length !== W * H) {
-        throw new RangeError('Area analysis requires two finite W × H fields and a frame in [0,W).');
+          !Number.isFinite(anchor) || !left || !right || left.length !== W * H || right.length !== W * H ||
+          (hasMiddle && (!middle || middle.length !== W * H))) {
+        throw new RangeError('Area analysis requires two or three finite W × H fields and a frame in [0,W).');
       }
       prepare(W, H);
       const X = anchor - (frame % 2) / 2, Y = (frame + 2) / 2;
       const a = analyzeSide(left, W, H, X, Y, saw, sawFull);
+      const m = hasMiddle ? analyzeSide(middle, W, H, X, Y, saw, sawFull) : null;
       const b = analyzeSide(right, W, H, X, Y, saw, sawFull);
       const bh = new Map(b.histogram.map(h => [h.n, h]));
       const shared = a.histogram.filter(h => bh.has(h.n)).map(h => ({ n: h.n,
         left: h.count, right: bh.get(h.n).count, namesLeft: h.names, namesRight: bh.get(h.n).names }));
+      const mh = m ? new Map(m.histogram.map(h => [h.n, h])) : null;
+      // v2: площади, которые есть у всех трёх, и полное совпадение всех трёх.
+      const sharedAll = mh ? a.histogram.filter(h => mh.has(h.n) && bh.has(h.n)).map(h => ({ n: h.n,
+        left: h.count, middle: mh.get(h.n).count, right: bh.get(h.n).count,
+        namesLeft: h.names, namesMiddle: mh.get(h.n).names, namesRight: bh.get(h.n).names })) : [];
+      const histogramEqualAll = !!mh && a.histogram.length === m.histogram.length && m.histogram.length === b.histogram.length &&
+        sharedAll.length === a.histogram.length && sharedAll.every(h => h.left === h.middle && h.middle === h.right);
+      const namedHistogramEqualAll = !!mh && JSON.stringify(a.figures) === JSON.stringify(m.figures) &&
+        JSON.stringify(m.figures) === JSON.stringify(b.figures);
+      const sumsEqualAll = !!mh && a.sum === m.sum && m.sum === b.sum;
       return {
         geometry: { X, Y, W, H, frame, vertices: frame + 1, finite: true,
           note: 'Общая геометрия точки конуса; только клетки исходного поля. На 5.8 это не граница застывания.' },
-        left: a, right: b, shared,
+        left: a, middle: m, right: b, shared, sharedAll,
         histogramEqual: a.histogram.length === b.histogram.length && shared.length === a.histogram.length && shared.every(h => h.left === h.right),
-        namedHistogramEqual: JSON.stringify(a.figures) === JSON.stringify(b.figures)
+        histogramEqualAll,
+        namedHistogramEqual: JSON.stringify(a.figures) === JSON.stringify(b.figures),
+        namedHistogramEqualAll,
+        sumsEqualAll
       };
     }
     return { analyzeAreas };
