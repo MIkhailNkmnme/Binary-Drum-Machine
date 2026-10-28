@@ -1,6 +1,6 @@
-/* v0.625: Editable binary rows shared by Очки and the live/detached library.
-   v0.625: the table marks only rows found in the current frame; the cumulative
-   found count is passed separately (foundEver/foundIndices), old rows stay plain. */
+/* v0.626: Editable binary rows shared by Очки and the live/detached library.
+   v0.626: the table keeps old gold rows across frames; new matches are added to
+   foundHistory, current found stays only for the frame and field highlight. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSequences=api;})(globalThis,function(){
   'use strict';
   const KEY='mayatnik-sequences-v1',MAX_BITS=2100000,MAX_ROWS=4096;
@@ -29,11 +29,16 @@
   }
   function create(storage,{rows:count=512,initialRows=[]}={}){
     const originalRows=parse(initialRows.join('\n'));
-    let state=null,error='',revision=0,matches={enabled:false,active:false,found:[]},matchKey='',selection=null,selectionSerial=0,listeners=new Set();
+    let state=null,error='',revision=0,matches={enabled:false,active:false,found:[]},matchKey='',foundHistory=new Map(),selection=null,selectionSerial=0,listeners=new Set();
     try{const raw=storage?.getItem(KEY);if(raw!==null&&raw!==undefined){const saved=JSON.parse(raw);if(saved?.version!==1||!Array.isArray(saved.rows)||saved.rows.some(row=>typeof row!=='string'))throw Error('format');state={rows:parse(saved.rows.join('\n')),source:saved.source==='serp'?'serp':'user',count:saved.count||saved.rows.length};}}catch(_){state={rows:[],source:'user',count:0};error='Сохранённая последовательность повреждена. Исходная запись сохранена; исправьте строки и нажмите «Применить».';}
     const emit=kind=>{for(const listener of listeners)listener(kind);};
-    const write=(rows,source,count)=>{const next={version:1,rows,source,count};try{storage?.setItem(KEY,JSON.stringify(next));}catch(_){throw Error('Не удалось сохранить последовательность в браузере. Освободите место и повторите.');}state=next;error='';selection=null;matches={...matches,active:false,found:[]};matchKey='';revision++;emit('sequence');};
-    const api={get rows(){return state.rows;},get initialRows(){return originalRows.slice();},get revision(){return revision;},snapshot:()=>({rows:state.rows,source:state.source,count:state.count,revision,error,matches,selection}),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},setText(text){const rows=parse(text);write(rows,'user',rows.length);},generate(count){const rows=sierpinski(count);write(rows,'serp',rows.length);},selectMatches(value){selection=value?{...value,token:++selectionSerial}:null;emit('selection');},setMatches(value){const key=JSON.stringify(value);if(key===matchKey)return;matchKey=key;matches=value;
+    const write=(rows,source,count)=>{const next={version:1,rows,source,count};try{storage?.setItem(KEY,JSON.stringify(next));}catch(_){throw Error('Не удалось сохранить последовательность в браузере. Освободите место и повторите.');}state=next;error='';selection=null;foundHistory.clear();matches={...matches,active:false,found:[]};matchKey='';revision++;emit('sequence');};
+    const api={get rows(){return state.rows;},get initialRows(){return originalRows.slice();},get revision(){return revision;},snapshot:()=>({rows:state.rows,source:state.source,count:state.count,revision,error,matches,foundHistory:Array.from(foundHistory.values()),selection}),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},setText(text){const rows=parse(text);write(rows,'user',rows.length);},generate(count){const rows=sierpinski(count);write(rows,'serp',rows.length);},selectMatches(value){selection=value?{...value,token:++selectionSerial}:null;emit('selection');},setMatches(value){const key=JSON.stringify(value);if(key===matchKey)return;matchKey=key;matches=value;
+      if(!value.enabled)foundHistory.clear();
+      else if(value.active&&(!value.pattern||value.pattern==='initial')){
+        const rows=new Map();for(const hit of value.found||[]){if(!Number.isInteger(hit.i)||hit.i<0||hit.i>=state.rows.length)continue;if(!rows.has(hit.i))rows.set(hit.i,[]);rows.get(hit.i).push({...hit});}
+        for(const [i,hits]of rows)foundHistory.set(i,{i,hits,frame:value.frame,mode:value.mode,halves:value.halves,joined:value.joined});
+      }
       emit('matches');}};
     if(!state){const n=Math.max(1,Math.min(512,Math.floor(Number(count)||512)));state={rows:sierpinski(n),source:'serp',count:n};try{storage?.setItem(KEY,JSON.stringify({version:1,...state}));}catch(_){error='Начальные строки созданы, но браузер не смог их сохранить.';}}
     return api;
@@ -70,17 +75,18 @@
       const found=new Map();for(const hit of m.found||[]){if(!found.has(hit.i))found.set(hit.i,[]);found.get(hit.i).push(hit);}
       const foundEver=Number.isInteger(m.foundEver)?m.foundEver:found.size;
       const foundIndices=new Set(Array.isArray(m.foundIndices)?m.foundIndices:(m.found||[]).map(hit=>hit.i));
-      nodes.forEach((node,i)=>{const current=m.enabled&&m.active?(simple?((m.found||[])[i]?[(m.found||[])[i]]:[]):found.get(i)||[]):[];
-        const title=current.map(hit=>'Найдено на поле: '+(m.halves===2?(hit.p?'правый':'левый')+' полумаятник · ':'')+(m.joined?'строка ромба ':'строка ')+(hit.r+1)+' · '+(m.mode==='all'?directionLabel(hit.dir):directionLabel(m.mode))+(hit.vn?' · '+hit.vn:'')).join('\n');
-        if(node.dataset.found!==String(current.length>0)){node.classList.toggle('is-found',current.length>0);node.dataset.found=String(current.length>0);}if(node.title!==title)node.title=title;});
+      const previous=new Map((state.foundHistory||[]).map(entry=>[entry.i,entry]));
+      nodes.forEach((node,i)=>{const current=m.enabled&&m.active?(simple?((m.found||[])[i]?[(m.found||[])[i]]:[]):found.get(i)||[]):[],prior=m.enabled&&!simple?previous.get(i):null,hits=current.length?current:prior?.hits||[],past=!current.length&&!!prior;
+        const context=past?prior:m,title=hits.map(hit=>(past?'Ранее найдено · кадр '+prior.frame+': ':'Найдено на поле: ')+(context.halves===2?(hit.p?'правый':'левый')+' полумаятник · ':'')+(context.joined?'строка ромба ':'строка ')+(hit.r+1)+' · '+(context.mode==='all'?directionLabel(hit.dir):directionLabel(context.mode))+(hit.vn?' · '+hit.vn:'')).join('\n');
+        if(node.dataset.found!==String(hits.length>0)){node.classList.toggle('is-found',hits.length>0);node.dataset.found=String(hits.length>0);}if(node.title!==title)node.title=title;});
       const selection=state.selection,selected=new Set(simple?selection?.matchIndices:selection?.rowIndices);nodes.forEach((node,i)=>{const on=selected.has(i);node.classList.toggle('is-selected',on);if(node.getAttribute('aria-selected')!==String(on))node.setAttribute('aria-selected',String(on));});
       if(selection&&selection.token!==scrolledSelection){const first=nodes.find((node,i)=>selected.has(i));if(first){const top=first.offsetTop-list.offsetTop,bottom=top+first.offsetHeight;if(top<list.scrollTop)list.scrollTop=top;else if(bottom>list.scrollTop+list.clientHeight)list.scrollTop=Math.max(0,bottom-list.clientHeight);scrolledSelection=selection.token;}}
       if(!m.enabled)summary.textContent='Очки выключены.';
       else if(!m.active)summary.textContent='Кадр '+m.frame+': '+(m.reason||'ожидание поиска');
       else if(simple)summary.textContent='Серии '+({ones:'111…',zeros:'000…',alternating:'1010…'}[m.pattern]||'')+': '+m.count+(m.count>shown.length?' · показаны первые '+shown.length:'')+' · кадр '+m.frame+' · '+modeLabel;
       else {
-        const fresh=(m.found||[]).length;
-        let text=(fresh?'Новых: '+fresh+' · ':'')+'Найдено '+foundEver+' из '+state.rows.length+' строк';
+        const fresh=(m.found||[]).length, totalFound=previous.size||foundEver;
+        let text=(fresh?'Новых: '+fresh+' · ':'')+'Всего найдено '+totalFound+' из '+state.rows.length+' строк';
         if(m.halves===2)text+=' · '+fresh+' из '+(m.total??0)+' совпадений в двух полумаятниках';
         else if(m.mode==='all')text+=' · '+fresh+' из '+(m.total??0)+' совпадений';
         summary.textContent=text+' · кадр '+m.frame+' · '+modeLabel;
