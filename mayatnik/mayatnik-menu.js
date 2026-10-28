@@ -203,9 +203,10 @@
       const pm = document.createElement('span'); pm.className = 'gz-pm'; row.append(hs[0], pm, ...hs.slice(1));
       row.gzSync = () => parts.forEach((pt, j) => { const on = !!pt.on(); hs[j].classList.toggle('gz-on', on); row.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); });
       return row; };
+    const section = (node, key) => { node.dataset.horrSection = key; return node; };
     const sizeRows = [];
     for (let i = 0; i < pres.length; i += 2) { const row = gzPair(pres.slice(i, i + 2).map(e => ({ label: e.textContent, tip: e.title || ('Построить ' + e.textContent), data: { n: e.dataset.n },
-        on: () => cur() === e.dataset.n, click: () => { e.click(); sync(); } }))); sizeRows.push(row); pop.append(row); }
+        on: () => cur() === e.dataset.n, click: () => { e.click(); sync(); } }))); sizeRows.push(row); pop.append(section(row, 'size')); }
     let customInput = null;   // v0.573: любое число строк, не только 128/256/…
     { const cr = document.createElement('div'); cr.className = 'may-rows-custom';
       customInput = document.createElement('input'); customInput.type = 'number'; customInput.min = '8'; customInput.max = '4096'; customInput.step = '1';
@@ -223,10 +224,10 @@
       customInput.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); apply(); } };
       const line = document.createElement('div'); line.className = 'may-rows-line';
       line.append(arrow(-1, 'На 1 меньше'), customInput, arrow(1, 'На 1 больше'));
-      cr.append(line, cb); pop.append(cr); }
+      cr.append(line, cb); pop.append(section(cr, 'size')); }
     { const rb = document.createElement('button'); rb.className = 'gz-hx'; rb.textContent = 'Рандом'; rb.dataset.miShort = 'Рандом';
       rb.title = 'Тест: очистить поле и заполнить квадрат N×N случайными битами (N = число строк); остальное поле пусто. Для проверки уменьшения и Очков по наложению.';
-      rb.onclick = ev => { ev.stopPropagation(); window.mayTestRandom?.(+$('rows').value || 128); sync(); }; pop.append(rb); }
+      rb.onclick = ev => { ev.stopPropagation(); window.mayTestRandom?.(+$('rows').value || 128); sync(); }; pop.append(section(rb, 'fields')); }
     // Comparison sources share the ordinary field, editing tools and transport.
     // This replaces the old standalone XOR test action, without a second clock.
     { const api = () => window.mayComparison;
@@ -244,12 +245,12 @@
           });
           controls.push({ half, on: parts[i].on });
         });
-        rows.push(row); pop.append(row); return row;
+        rows.push(row); pop.append(section(row, id === 'mayCompareSources' ? 'fields' : 'overlay')); return row;
       };
       const legacy = document.createElement('button'); legacy.type = 'button'; legacy.className = 'gz-hx';
       legacy.id = 'mayCompareLegacy'; legacy.dataset.n = 'mayCompareLegacy'; legacy.textContent = 'Маятник';
       legacy.title = 'Обычный маятник: вернуться к прежнему построению и общему управлению'; legacy.setAttribute('aria-label', legacy.title);
-      legacy.onclick = event => { event.stopPropagation(); choose(''); }; pop.append(legacy);
+      legacy.onclick = event => { event.stopPropagation(); choose(''); }; pop.append(section(legacy, 'fields'));
       pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
         { id: 'mayCompareCones', label: 'Конусы', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
         { id: 'mayCompareField', label: 'Поле', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }
@@ -259,7 +260,7 @@
       bothButton.title = 'Обе стороны 5.9: та же вершина и её зеркало одним проходом, пересчёт раз в пару; поле N × (2N−1)';
       bothButton.setAttribute('aria-label', bothButton.title);
       bothButton.onclick = event => { event.stopPropagation(); choose('pair'); };
-      pop.append(bothButton);
+      pop.append(section(bothButton, 'fields'));
       controls.push({ half: bothButton, on: () => state().source === 'pair', gz: true });
       let overlayAnd = false;
       const opButton = document.createElement('button'); opButton.type = 'button'; opButton.className = 'gz-hx';
@@ -271,7 +272,7 @@
         const match = /^(?:p|a)(12|23|31|123)$/.exec(state().source || '');
         if (match) choose((overlayAnd ? 'a' : 'p') + match[1]);
       };
-      pop.append(opButton);
+      pop.append(section(opButton, 'overlay'));
       for (const [id, label, src, tip] of [
         ['mayCompareP12', 'Конусы+Обе', 'p12', 'Наложение 1–2: конусы 5.7 и обе стороны 5.9'],
         ['mayCompareP23', 'Обе+Поле', 'p23', 'Наложение 2–3: обе стороны 5.9 и всё поле 5.8'],
@@ -281,7 +282,7 @@
         const button = document.createElement('button'); button.type = 'button'; button.className = 'gz-hx';
         button.id = id; button.dataset.n = id; button.textContent = label; button.title = tip; button.setAttribute('aria-label', tip);
         const suffix = src.slice(1); button.onclick = event => { event.stopPropagation(); choose((overlayAnd ? 'a' : 'p') + suffix); };
-        pop.append(button);
+        pop.append(section(button, 'overlay'));
         controls.push({ half: button, on: () => state().source === (overlayAnd ? 'a' : 'p') + suffix, gz: true });
       }
       
@@ -302,7 +303,7 @@
     }
     { const cb = document.createElement('button'); cb.className = 'gz-hx'; cb.textContent = 'Ковёр'; cb.dataset.miShort = 'Ковёр';
       cb.title = 'Тест: ковёр Серпинского — квадрат 3^k (центр каждого блока 3×3 выколот рекурсивно). Размер — ближайшая степень тройки, не больше числа строк.';
-      cb.onclick = ev => { ev.stopPropagation(); window.mayTestCarpet?.(+$('rows').value || 243); sync(); }; pop.append(cb); }
+      cb.onclick = ev => { ev.stopPropagation(); window.mayTestCarpet?.(+$('rows').value || 243); sync(); }; pop.append(section(cb, 'fields')); }
     { const ab = document.createElement('button'); ab.className = 'gz-hx'; ab.textContent = 'Сборка'; ab.dataset.miShort = 'Сборка';
       ab.setAttribute('aria-pressed', 'false');
       ab.title = 'Включить сборку последнего теста: кадр 0 и дальше без остановки, пока не нажать паузу или «Сборку» ещё раз. Рядом с начальной 1 добавляется следующая, строки 1…n−1 пересчитываются по очереди. «Скорость» — темп, «Кадр, с» — пауза. Если теста ещё не было — сначала строит XOR.';
@@ -318,37 +319,38 @@
         if (comparisonOn()) { $('bPlay')?.click(); syncAb(); sync(); return; }
         if (window.mayTestOn) window.mayTestStop?.();
         else { if (window.mayTestPrepare?.() == null) { window.mayTestXor?.(+$('rows').value || 128); window.mayTestPrepare?.(); } window.mayTestBuild?.(); }
-        sync(); }; pop.append(ab); }
+        sync(); }; pop.append(section(ab, 'run')); }
     { const mkMode = label => { const b = document.createElement('button'); b.className = 'gz-hx'; b.dataset.n = 'testBuildMode';
         b.textContent = label; b.dataset.miShort = label;
         b.onclick = ev => { ev.stopPropagation(); window.mayTestBuildMode?.toggle?.();
           window.mayTestPrepare?.(); syncMode(); sync(); };
         return b; };
-      const mbRows = mkMode('Построчно'), mbFrames = mkMode('Кадрами');
+      const mbRows = mkMode('Сборка строк'), mbFrames = mkMode('Сборка кадров');
       const syncMode = () => { const fr = window.mayTestBuildMode?.get?.() === 'frames', comparison = !!window.mayComparison?.get?.().source;
         // Comparisons use the existing «По стрк.» / common frame transport.
         // These two legacy test-only modes do not control those transports.
         mbRows.hidden = comparison || fr; mbFrames.hidden = comparison || !fr;
         mbRows.classList.toggle('on', !fr); mbFrames.classList.toggle('on', fr);
         mbRows.setAttribute('aria-pressed', String(!fr)); mbFrames.setAttribute('aria-pressed', String(fr));
+        mbRows.setAttribute('aria-label', 'Сборка: строки'); mbFrames.setAttribute('aria-label', 'Сборка: кадры');
         mbRows.title = 'Режим сборки: строки — сверху вниз, каждый бит из двух диагональных сверху (над текущей пустота).';
         mbFrames.title = 'Режим сборки: кадры — каждый кадр добавляет единицу и перестраивает весь квадрат.'; };
       addEventListener('may-compare-change', syncMode);
-      syncMode(); pop.append(mbRows, mbFrames); }
+      syncMode(); pop.append(section(mbRows, 'run'), section(mbFrames, 'run')); }
     { const sb = document.createElement('button'); sb.className = 'gz-hx'; sb.dataset.n = 'testStats'; sb.textContent = 'Счёт'; sb.dataset.miShort = 'Счёт';
       const syncStats = () => { const on = window.mayTestStats?.get?.() !== false;
         sb.classList.toggle('on', on); sb.classList.toggle('off', !on); sb.setAttribute('aria-pressed', String(on));
         sb.title = on ? 'Счёт 0/1/пусто и баланс по квадрату и периметру показан · щелчок — скрыть' : 'Счёт скрыт · щелчок — показать'; };
       sb.onclick = ev => { ev.stopPropagation(); window.mayTestStats?.toggle?.(); syncStats(); sync(); };
-      syncStats(); pop.append(sb); }
+      syncStats(); pop.append(section(sb, 'run')); }
     { const fb = document.createElement('button'); fb.className = 'gz-hx'; fb.textContent = 'Запомнить'; fb.dataset.miShort = 'Запомнить'; fb.dataset.n = 'testFrameSave';
       fb.title = 'Сохранить текущий тестовый кадр (до 2 млн клеток) и потом начать с него кнопкой «С кадра».';
       fb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameSave?.(); fb.title = ok ? 'Кадр сохранён' : 'Не удалось сохранить кадр'; setTimeout(() => { fb.title = 'Сохранить текущий тестовый кадр (до 2 млн клеток) и потом начать с него кнопкой «С кадра».'; }, 1200); sync(); };
-      pop.append(fb); }
+      pop.append(section(fb, 'run')); }
     { const lb = document.createElement('button'); lb.className = 'gz-hx'; lb.textContent = 'С кадра'; lb.dataset.miShort = 'С кадра'; lb.dataset.n = 'testFrameLoad';
       lb.title = 'Начать с сохранённого тестового кадра: восстановить поле и кадр, дальше ▶ продолжит сборку.';
       lb.onclick = ev => { ev.stopPropagation(); const ok = window.mayTestFrameLoad?.(); lb.title = ok ? 'Кадр восстановлен' : 'Сохранённого кадра нет'; setTimeout(() => { lb.title = 'Начать с сохранённого тестового кадра: восстановить поле и кадр, дальше ▶ продолжит сборку.'; }, 1200); sync(); };
-      pop.append(lb); }
+      pop.append(section(lb, 'run')); }
     const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
       if (customInput) customInput.value = n;
       for (const r of sizeRows) r.gzSync();   // v0.380
@@ -358,7 +360,7 @@
     // v0.372: «ползунок с вершинами удали» — вершин ставит выбор «N/3 | 4N» (или N)
     bbCells['Вершин']?.remove();
     bbCells['Строк']?.remove();
-    const top = ['Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) c.classList.add('may-hp-sl'); pop.prepend(...top); }
+    const top = ['Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) c.classList.add('may-hp-sl'); pop.prepend(...top.map(node => section(node, 'size'))); }
     // v0.372: «убери До N/3 — там дубль; 2 кнопки в одну N/3 и 4N, какая выбрана — по той и строй»: «До N/3», «N/3», «4N» из сот убраны,
     // вместо них — одна кнопка из двух половин; выбранная горит, щелчок по горящей — снова N вершин; выбор — для кнопок размеров и «Построить»
     const nm = c => c.querySelector('.gz-nm')?.textContent.trim(); for (const c of (bbCells.btns || [])) if (['N/3', '4N', 'До N/3'].includes(nm(c))) c.remove();
@@ -368,18 +370,21 @@
       vm.classList.add('may-hp-vm');
       function vsync() { vm.gzSync(); const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.gz-half')) {
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : window.mayComparison?.get().source ? 'Конечное поле: до последней вершины внутри рамки 2N−1' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
-      queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(vm); }   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
+      queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(section(vm, 'build')); }   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
     // v0.391: «по 2 в одну кнопку шириной по стандарту»: «Построить | Построчно» — одна пара (как «N/3 | 4N»); ячейки сот из рейки убраны
     { const bt = bbCells.btns || [], sot = bt[0]?.parentElement; for (const c of bt) c.remove(); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0';
       const bB = $('bBuild'), bR = $('bRowRun');
+      const rowRunTitle = 'Прогон строк: рассчитать конечный кадр и раскрывать готовое поле сверху вниз; повторное нажатие — остановить и вернуть прежний показ строк.';
       const bp = gzPair([{ label: 'Постро.', tip: bB?.title || 'Построить', on: () => false, click: () => { bB?.click(); rail.refresh(); } },
-        { label: 'По стрк.', tip: bR?.title || 'Построчно', on: () => bR?.getAttribute('aria-pressed') === 'true', click: () => { bR?.click(); bp.gzSync(); rail.refresh(); } }]);
-      bp.gzSync(); if (bR) new MutationObserver(() => bp.gzSync()).observe(bR, { attributes: true, attributeFilter: ['aria-pressed'] }); pop.prepend(bp); }
+        { label: 'Прогон', tip: rowRunTitle, on: () => bR?.getAttribute('aria-pressed') === 'true', click: () => { bR?.click(); bp.gzSync(); rail.refresh(); } }]);
+      bp.dataset.maySearchPrimary = ''; bp.dataset.maySearchAliases = 'Прогон строк|Построчно|По строкам';
+      for (const half of bp.querySelectorAll('.gz-half')) { half.setAttribute('role', 'button'); half.tabIndex = 0; half.dataset.maySearchSkip = ''; half.setAttribute('aria-label', half.title); half.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ev.stopPropagation(); half.click(); } }); } bp.title = 'Построить поле или включить прогон строк';
+      bp.gzSync(); if (bR) new MutationObserver(() => bp.gzSync()).observe(bR, { attributes: true, attributeFilter: ['aria-pressed'] }); bp.querySelectorAll('.gz-half')[1]?.setAttribute('aria-label', rowRunTitle); pop.prepend(section(bp, 'build')); }
     // v0.397: «оставь две кнопки — ЛевПрав, ПравЛев — и в нижнее меню, в группу Хорр»: ход одной парой; выбор — и сразу построить
     { const M = $('mode'), go = m => { if (!M) return; M.value = m; M.dispatchEvent(new Event('change', { bubbles: true })); $('bBuild')?.click(); mp.gzSync(); rail.refresh(); };
       const mp = gzPair([{ label: 'ЛевПрав', tip: 'Ход лево-право: якорь, −1, +1, −2, +2… · щелчок — выбрать и построить', on: () => M?.value !== 'pendR', click: () => go('pend') },
         { label: 'ПравЛев', tip: 'Ход право-лево: якорь, +1, −1, +2, −2… · щелчок — выбрать и построить', on: () => M?.value === 'pendR', click: () => go('pendR') }]);
-      mp.gzSync(); b.addEventListener('click', () => mp.gzSync()); pop.prepend(mp); }
+      mp.gzSync(); b.addEventListener('click', () => mp.gzSync()); pop.prepend(section(mp, 'build')); }
     wrapH.append(pop);sync(); }
   // v0.337: «Анимацию вниз копируй, но только число ×1…×10 — по нажатию меняется, пол-кнопки; вторая половина — время 0 … 1/20 … до 1 с, тоже по нажатию»:
   // слева в полосе одна кнопка из двух половин: скорость (щелчок +1, после ×10 — ×1; правый — назад) | длительность кадра (0, 1/20, 1/10, 1/5, 1/2, 1 с по кругу)
@@ -1168,6 +1173,37 @@
     const instruction=document.createElement('a');instruction.href='instruction/index.html';instruction.target='_blank';instruction.rel='noopener';instruction.className='pt-b gz-hx';instruction.dataset.n='instruction';instruction.title='Инструкция: оси, зеркала, поворот холста и выделенного фрагмента';instruction.innerHTML='<i class="gz-ic">?</i><span class="gz-nm">Инструкция</span>';infoRow.append(instruction);
     addEventListener('may-reset-complete',()=>{rail.refresh();placeTools();});
   }
+  // v0.629: filter existing controls in place; their parents, slots and handlers stay stable.
+  function mountHorrSections(group, { storage = localStorage, listHover = ZerkGrozd.listHover, after = () => {} } = {}) {
+    if (!group) return null;
+    const sections = [['size', 'Размер', 'line'], ['build', 'Построение', 'steps'], ['fields', 'Поля', 'field'], ['overlay', 'Наложение', 'plusRing'], ['run', 'Прогон', 'play']];
+    // Reuse existing menu glyphs; the shared catalogue has no ruler/xor kind.
+    const sectionIcons = new Map(sections.map(([id, name, kind]) => { const probe = document.createElement('button'); probe.textContent = name; return [id, icon(probe, kind)]; }));
+    const key = 'mayatnik-horr-section-v1', controls = [...group.querySelectorAll('[data-horr-section]')];
+    const host = group.querySelector('.gz-wide'); if (!host || !controls.length) return null;
+    let selected = 'size'; try { const saved = storage.getItem(key); if (sections.some(([id]) => id === saved)) selected = saved; } catch (_) {}
+    const wrap = document.createElement('div'); wrap.className = 'may-horr-selector';
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'gz-hx'; button.dataset.n = 'horrSection'; button.dataset.listTitle = 'Раздел Хорра';
+    button.title = 'Раздел Хорра: размер, построение, поля, наложение или прогон';
+    const label = document.createElement('span'); label.className = 'gz-nm'; button.append(label); wrap.append(button); host.prepend(wrap);
+    const choose = (id, persist = true, refresh = true) => {
+      if (!sections.some(([value]) => value === id)) return false;
+      const focused = document.activeElement, leaving = controls.find(node => node.contains(focused) && node.dataset.horrSection !== id);
+      selected = id;
+      for (const node of controls) { const hidden = node.dataset.horrSection !== selected; node.dataset.horrInactive = String(hidden); node.inert = hidden; }
+      label.textContent = sections.find(([value]) => value === selected)[1];
+      const liveLabel = button.querySelector(':scope > .may-list-label'); if (liveLabel) liveLabel.textContent = label.textContent;
+      button.setAttribute('aria-label', 'Раздел Хорра: ' + label.textContent);
+      if (persist) try { storage.setItem(key, selected); } catch (_) {}
+      if (leaving) button.focus({ preventScroll: true });
+      if (refresh) after(); return true;
+    };
+    listHover(button, { options: () => sections.map(([id, name]) => ({ key: id, name, icon: sectionIcons.get(id), on: selected === id, pick: () => choose(id) })),
+      after, color: () => getComputedStyle(button).getPropertyValue('--c').trim() || '#7cbcff' });
+    choose(selected, false, false);
+    return { get: () => selected, choose, reveal(target) { const node = target?.closest('[data-horr-section]'); if (node && group.contains(node)) choose(node.dataset.horrSection, false); }, button };
+  }
+  window.mayHorrSections = mountHorrSections(document.querySelector('.gz-group[data-id="horr"]'), { after: () => { rail.refresh(); placeTools(); } });
   // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;
   // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
   // Пока какой-то список открыт, наведение на соседнее название переключает на него. Точка у названия — в группе что-то включено.
@@ -1204,7 +1240,7 @@
     const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
     const show = (g,explicit=false) => { const k=keyOf(g);if(folds.has(k)){if(!explicit)return;folds.delete(k);saveDd();}if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
     // Temporary discovery does not alter explicit folds, pins or saved opening.
-    window.mayMenuSearchReveal=target=>{const g=target?.matches('.pt-g')?target:target?.closest('.pt-g');if(!g||g.classList.contains('pt-btn')||!g.querySelector('.pt-r'))return null;
+    window.mayMenuSearchReveal=(target,control)=>{window.mayHorrSections?.reveal(control);const g=target?.matches('.pt-g')?target:target?.closest('.pt-g');if(!g||g.classList.contains('pt-btn')||!g.querySelector('.pt-r'))return null;
       searchRevealGroups.add(g);setOpen(g,true);let active=true;return()=>{if(!active)return;active=false;searchRevealGroups.delete(g);setOpen(g,stay(g)||g===open);};};
     // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
     // «↶ Отм. | ↷ Повт.» (жмёт прежние «Отмена» / «Повтор»); тянется по сетке и сворачивается в ромб ↶ ↷, как остальные; ключ раскладки — прежний («Правка»)

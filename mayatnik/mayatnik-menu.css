@@ -980,3 +980,9 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-rows-step:is(:hover,:focus-visible,:active)::before{background:var(--c,#73e4a5);mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1.4 12 12 1.4 22.6 12 12 22.6Z' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E") center/24px 24px no-repeat}
 .may-rows-custom .may-rows-line input{flex:0 0 72px;width:72px;min-width:0;max-width:72px;height:24px;padding:0 3px;border:0;background:transparent;color:#dcecff;outline:0;box-shadow:none}
 .may-rows-custom .may-rows-line input:focus{outline:0;box-shadow:inset 0 0 0 1px var(--c,#73e4a5)}
+
+/* v0.629: only the selected Horr section participates in layout and keyboard focus. */
+.gz-group[data-id="horr"] [data-horr-inactive="true"]{display:none!important}
+.gz-group[data-id="horr"] .may-horr-selector{width:120px;min-height:24px;flex:none;order:-1;pointer-events:auto}
+.gz-group[data-id="horr"] .may-horr-selector>.gz-hx{width:120px!important}
+.gz-group[data-id="horr"] [data-n="bReset"],.gz-group[data-id="horr"] [data-n="resetTransport"]{order:100}
