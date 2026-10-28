@@ -1,10 +1,13 @@
-/* v8 (Хаб v0.463). Двойной щелчок по любому полю — пауза и продолжение всех трёх
+/* v9 (Хаб v0.467). В наложении поля 1, 2 и 3 включаются отдельными кнопками:
+   горит кнопка — поле участвует в XOR/AND, погашена — не участвует. Хотя бы
+   одно поле остаётся включённым. Зеркально читаются поля 2 и 3, поле 1 —
+   прямое. v8 (v0.463). Двойной щелчок по любому полю — пауза и продолжение всех трёх
    построений, в любом виде сравнения и в дзене; в дзене кнопки «Пауза» и «Меню»
    скрыты, поэтому выход из дзена ещё и удержанием указателя на поле.
    v7. Главная: синхронное сравнение трёх полей — конусы 5.7, «обе стороны» 5.9
    (пара вершин −m/+m одним проходом) и глобальный XOR 5.8. Третье поле на экране
    перевёрнуто (scaleY(-1) в CSS), данные у всех трёх в обычной ориентации.
-   В наложении XOR/AND доступны любые две пары: 1–2, 2–3, 3–1. */
+   В наложении XOR/AND доступны любые наборы полей 1, 2, 3. */
 (() => {
   'use strict';
   const left = document.getElementById('hubCones'), right = document.getElementById('hubXor');
@@ -38,9 +41,13 @@
     mono: { label: 'Моно', left: [255,255,255], middle: [221,221,221], right: [153,153,153], common: [221,221,221], legend: 'Конусы — белый · Обе стороны — светло-серый · Всё поле — серый' },
     green: { label: 'Зелёный', left: [51,122,52], middle: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, обе стороны, всё поле и общие — зелёный' }
   };
-  const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'], PAIRS = ['12', '23', '31', '123'];
-  const PAIR_LABEL = { 12: '1–2', 23: '2–3', 31: '3–1', 123: '1–2–3' };
-  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', pair: '12',
+  const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
+  // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
+  const FIELDS = [1, 2, 3];
+  const FIELD_KEYS = { 1: 'left', 2: 'pair', 3: 'right' };
+  const FIELD_NAMES = { 1: 'конусы 5.7', 2: 'обе стороны 5.9', 3: 'всё поле 5.8' };
+  const LEGACY_PAIRS = { 12: [1, 2], 23: [2, 3], 31: [1, 3], 123: [1, 2, 3] };
+  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', fields: [1, 2],
     pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 }, pair: { x: 0, y: 0 } } };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE));
@@ -48,7 +55,10 @@
       if (MODES.includes(saved.mode)) view.mode = saved.mode;
       if (typeof saved.mirror === 'boolean') view.mirror = saved.mirror;
       if (Object.prototype.hasOwnProperty.call(PALETTES, saved.palette)) view.palette = saved.palette;
-      if (PAIRS.includes(saved.pair)) view.pair = saved.pair;
+      if (Array.isArray(saved.fields)) {
+        const fields = [...new Set(saved.fields.map(Number).filter(field => FIELDS.includes(field)))].sort((a, b) => a - b);
+        if (fields.length) view.fields = fields;
+      } else if (LEGACY_PAIRS[saved.pair]) view.fields = LEGACY_PAIRS[saved.pair].slice();   // прежняя пара 1–2 / 2–3 / 3–1 / 1–2–3
       if (typeof saved.zoom === 'number' && Number.isFinite(saved.zoom)) view.zoom = Math.max(1, Math.min(64, saved.zoom));
       for (const key of ['left', 'right', 'blend', 'pair']) for (const axis of ['x', 'y']) {
         const value = saved.pan?.[key]?.[axis];
@@ -56,7 +66,6 @@
       }
     }
   } catch (_) {}
-  if (!middle) view.pair = '12';
   let published = false;
   let frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
   let pairStep = false;   // текущий кадр — шаг пары для 5.9 (переживает разбивку на куски строк)
@@ -171,10 +180,9 @@
     saveView();
   }
   function syncView() {
-    if (!middle) view.pair = '12';
     const modeLabel = { split: 'Рядом', xor: 'XOR', and: 'AND' }[view.mode];
     const mirrorLabel = view.mirror ? 'Зеркально' : 'Прямо';
-    const pairLabel = PAIR_LABEL[view.pair];
+    const fieldsLabel = view.fields.length ? view.fields.join('–') : 'без полей';
     const palette = PALETTES[view.palette], css = colour => 'rgb(' + colour.join(',') + ')';
     if (root) {
       root.dataset.mode = view.mode; root.dataset.palette = view.palette;
@@ -186,14 +194,17 @@
     text('hubCompareModeLabel', modeLabel);
     text('hubCompareModeIcon', { split: '↔', xor: '⊕', and: '∧' }[view.mode]);
     text('hubCompareMirrorLabel', mirrorLabel); text('hubCompareMirrorIcon', view.mirror ? 'Ƨ1' : '11');
-    text('hubCompareOverlayLabel', modeLabel + ' ' + pairLabel + ' · ' + mirrorLabel);
+    text('hubCompareOverlayLabel', modeLabel + ' ' + fieldsLabel + ' · ' + mirrorLabel);
     text('hubComparePaletteLabel', palette.label); text('hubComparePaletteIcon', '◐');
     text('hubCompareLegend', palette.legend);
     if (pairsBox) {
       pairsBox.hidden = view.mode === 'split';
-      for (const button of pairsBox.querySelectorAll('[data-hub-pair]')) {
-        const selected = button.dataset.hubPair === view.pair;
+      for (const button of pairsBox.querySelectorAll('[data-hub-field]')) {
+        const field = Number(button.dataset.hubField), selected = view.fields.includes(field);
         button.classList.toggle('gz-on', selected); button.setAttribute('aria-pressed', String(selected));
+        button.title = 'Поле ' + field + ' — ' + FIELD_NAMES[field] + '. ' + (selected
+          ? (view.fields.length === 1 ? 'Единственное включённое поле: выключить нельзя' : 'Включено: щелчок выключит его в наложении')
+          : 'Выключено: щелчок включит его в наложении');
       }
     }
     if (paletteButton) {
@@ -211,30 +222,25 @@
     }
     if (mirrorButton) {
       mirrorButton.disabled = view.mode === 'split';
-      mirrorButton.title = 'Второе поле пары: ' + mirrorLabel + '. Отражение по горизонтали перед XOR или AND';
-      mirrorButton.setAttribute('aria-label', 'Второе поле пары: ' + mirrorLabel);
+      mirrorButton.title = 'Зеркало: ' + mirrorLabel + '. Поля 2 и 3 читаются отражёнными по горизонтали перед XOR или AND, поле 1 — прямое';
+      mirrorButton.setAttribute('aria-label', 'Зеркало: ' + mirrorLabel);
       mirrorButton.setAttribute('aria-pressed', String(view.mirror));
       mirrorButton.classList.toggle('gz-on', view.mode !== 'split' && view.mirror);
     }
   }
-  // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
   const FIELD_COLOUR = { left: 'left', pair: 'middle', right: 'right' };
-  function pairFields() {
-    if (view.pair === '23') return ['pair', 'right'];
-    if (view.pair === '31') return ['right', 'left'];
-    if (view.pair === '123') return ['left', 'pair', 'right'];   // v0.466: все три поля сразу
-    return ['left', 'pair'];
-  }
+  function selectedFields() { return view.fields.map(field => FIELD_KEYS[field]); }
   function renderBlend() {
     if (!blendImage || view.mode === 'split') return;
     const palette = PALETTES[view.palette];
-    const fields = pairFields().map(key => ({ key, colour: palette[FIELD_COLOUR[key]], data: key === 'pair' ? publishedPair : key === 'right' ? publishedRight : publishedLeft }));
+    const fields = selectedFields().map(key => ({ key, colour: palette[FIELD_COLOUR[key]], data: key === 'pair' ? publishedPair : key === 'right' ? publishedRight : publishedLeft }));
+    if (!fields.length) { blendImage.data.fill(0); blendCtx.putImageData(blendImage, 0, 0); blend.dataset.frame = left.dataset.frame; return; }
     for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
       const i = r * W + c;
       let ones = 0, all = true, colour = null;
       for (const field of fields) {
-        // зеркально читается всё, кроме первого поля: прежде — только второе из пары
-        const j = r * W + (view.mirror && field !== fields[0] ? W - 1 - c : c);
+        // зеркально читаются поля 2 и 3: поле 1 (конусы 5.7) остаётся прямым
+        const j = r * W + (view.mirror && field.key !== 'left' ? W - 1 - c : c);
         if (field.data[j] === 1) { ones++; if (!colour) colour = field.colour; }
         else all = false;
       }
@@ -275,9 +281,16 @@
     view.mirror = !view.mirror; changeView();
   });
   if (pairsBox) pairsBox.addEventListener('click', event => {
-    const button = event.target.closest('[data-hub-pair]');
-    if (!button || !PAIRS.includes(button.dataset.hubPair)) return;
-    view.pair = button.dataset.hubPair; changeView();
+    const button = event.target.closest('[data-hub-field]');
+    if (!button) return;
+    const field = Number(button.dataset.hubField);
+    if (!FIELDS.includes(field)) return;
+    if (view.fields.includes(field)) {
+      // пустое наложение не показываем: последнее включённое поле остаётся
+      if (view.fields.length === 1) return;
+      view.fields = view.fields.filter(item => item !== field);
+    } else view.fields = view.fields.concat(field).sort((a, b) => a - b);
+    changeView();
   });
   if (root) window.addEventListener('wheel', event => {
     // Старый hub-view слушает capture на document и иначе забирает Ctrl+колесо.

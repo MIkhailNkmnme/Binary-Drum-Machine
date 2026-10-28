@@ -44,15 +44,18 @@ test('модуль меню: задержка наведения, закреп �
   has(menu, "filter(drawer => drawer.querySelector('.hubCompareDrawerBody'))", 'левый треугольник без тела не ломает модуль');
 });
 
-test('наложение всех трёх полей: кнопка 1–2–3 и общая логика XOR/AND', () => {
+test('наложение полей 1, 2, 3: отдельные кнопки и общая логика XOR/AND', () => {
   const bg = fs.readFileSync(path.join(__dirname, 'hub-xor-background.js'), 'utf8');
-  has(html, 'data-hub-pair="123"');
-  has(html, '<span class="gz-nm">1–2–3</span>');
-  has(html, '#hubComparePairs .gz-hx[data-hub-pair="123"]{flex:1 1 100%}', 'кнопка всех трёх — отдельной строкой под парами');
-  has(bg, "PAIRS = ['12', '23', '31', '123']");
-  has(bg, "123: '1–2–3'");
-  has(bg, "if (view.pair === '123') return ['left', 'pair', 'right'];", 'все три поля сразу');
-  has(bg, 'ones % 2', 'XOR всех трёх — нечётное число единиц');
-  has(bg, 'all ? 1 : 0', 'AND всех трёх — единица во всех трёх');
-  has(bg, 'view.mirror && field !== fields[0]', 'зеркально читаются все поля, кроме первого');
+  for (const field of [1, 2, 3]) {
+    has(html, `data-hub-field="${field}"`, `кнопка поля ${field}`);
+    has(html, `<span class="gz-nm">${field}</span>`, `подпись поля ${field}`);
+  }
+  assert.ok(!html.includes('data-hub-pair'), 'прежних парных кнопок нет');
+  has(html, 'aria-label="Какие поля накладывать: 1 — конусы 5.7, 2 — обе стороны 5.9, 3 — всё поле 5.8"');
+  has(bg, 'const FIELDS = [1, 2, 3]');
+  has(bg, 'function selectedFields()');
+  has(bg, 'ones % 2', 'XOR — нечётное число единиц');
+  has(bg, 'all ? 1 : 0', 'AND — единица во всех включённых полях');
+  has(bg, "field.key !== 'left'", 'зеркально читаются поля 2 и 3, поле 1 — прямое');
+  has(bg, 'view.fields.length === 1', 'последнее включённое поле не выключается');
 });
