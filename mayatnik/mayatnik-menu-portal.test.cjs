@@ -22,6 +22,7 @@ class Node{
  getBoundingClientRect(){return this.rect} getClientRects(){return this.hidden||this.closest('.test-hidden')?[]:[this.rect]}
  get offsetWidth(){return parseFloat(this.style.width)||120} get offsetHeight(){return this.children.length*26}
  setAttribute(k,v){this[k]=v}
+ getAttribute(k){return this[k]??null}
 }
 function fixture(diamonds=false){
  const body=new Node('body');body.root=true;const doc=new Node();doc.body=body;doc.documentElement=new Node();doc.createElement=t=>new Node(t);doc.querySelectorAll=s=>body.querySelectorAll(s);
@@ -42,7 +43,7 @@ function fixture(diamonds=false){
  Object.defineProperty(ctx,'open',{get:()=>open,set:v=>{open=v}});
  const na=menu.indexOf('      g._popupLeave ='),nb=menu.indexOf('      toolSync.push',na);
  vm.runInContext(menu.slice(na,nb),ctx);
- const outside=menu.match(/    addEventListener\('pointerdown', e => \{ if \(open && !open\.contains\(e\.target\)[^\n]+/)[0];vm.runInContext(outside,ctx);
+ const outside=menu.split('\n').find(line=>line.includes("addEventListener('pointerdown'")&&line.includes('!popupContains(open, e.target)'));assert.ok(outside);vm.runInContext(outside,ctx);
  function bind(button=owner,extra={}){ctx.window.ZerkGrozd.listHover(button,{options:()=>[{name:'Consolas',pick:()=>picks++},{name:'Mono',pick:()=>picks++}],host:()=>group,color:()=>'#abc',placement:'right',placed:ctx.place,closed:ctx.closed,...extra})}
  bind();
  return {body,doc,win,ctx,group,column,owner,bind,get picks(){return picks},get shuts(){return shuts},get list(){return body.children.find(x=>x.matches('.gz-ladder'))},
@@ -90,15 +91,15 @@ test('production SVG contour cannot shift any selected option during real shared
  list.children[1].emit('click');assert.equal(selected,1);assert.equal(list.children[1].classList.contains('gz-on'),true);
 });
 
-test('diamond dropdown previews in owner, keeps title above, restores selection and preserves real option indexes',()=>{
+test('standard dropdown previews in owner, keeps title above, restores selection and preserves real option indexes',()=>{
  const f=fixture(true);f.owner.dataset.n='fontCycle';const old=new Node('span');old.className='gz-nm';old.textContent='Consolas';f.owner.append(old);
  f.ctx.nameListButton(f.owner);let selected=0;
  f.bind(f.owner,{options:()=>['A','B','C'].map((name,i)=>({name,on:i===selected,pick:()=>selected=i}))});
  f.column.rect={left:650,right:770,width:120,top:50};f.owner.rect=f.column.rect;f.ctx.syncListButton(f.owner);
  assert.equal(f.owner.dataset.listSide,'left');const label=f.owner.querySelector('.may-list-label');assert.equal(label.textContent,'A');
  f.reopen();const list=f.list,rows=list.querySelectorAll(':scope > .gz-hx'),heading=list.querySelector('.may-list-heading');
- assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(2,24px) 48px');
- assert.ok(rows.every(row=>row.classList.contains('may-option-diamond')));assert.equal(list.children.at(-1),heading);
+ assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(3,24px)');
+ assert.ok(rows.every(row=>row.classList.contains('may-option-button')));assert.equal(list.children.at(-1),heading);
  rows[2].emit('pointerenter');assert.equal(label.textContent,'C');f.ctx.sync();assert.equal(label.textContent,'C');rows[2].emit('pointerleave');assert.equal(label.textContent,'A');
  for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.equal(label.textContent,['A','B','C'][i]);assert.deepEqual(rows.map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}
  rows[1].emit('click');assert.equal(selected,1);assert.equal(label.textContent,'B');rows[0].emit('pointerenter');assert.equal(label.textContent,'A');f.ctx.sharedClose();assert.equal(label.textContent,'B');assert.equal(f.owner.dataset.listTitle,'Шрифт');
@@ -122,7 +123,7 @@ test('owner click cycles every native select through its live change route; hove
   const rows=f.list.querySelectorAll(':scope > .gz-hx');
   rows.forEach((row,i)=>{row.click();assert.equal(saved,options[i].value,id+' option '+i);assert.equal(row['aria-pressed'],'true');});
  }
- assert.match(menu,/if\(b.classList.contains\('gz-list'\)\)b.gzList.cycleOnClick=true/);
+ assert.match(menu,/if\(b.classList.contains\('gz-list'\)\)b.gzList.cycleOnClick=b.dataset.n!=='paintColourReset'/);
 });
 
 test('option clicks resolve current records and decoration never shifts selected indexes; keyboard picks once',()=>{

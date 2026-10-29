@@ -1,20 +1,17 @@
-/* Icon diamonds with stable list titles and a preview caption in the owner. */
+/* Standard button options with stable list titles and an owner preview. */
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikMenuOptions=api;})(globalThis,function(root){
   'use strict';
-  const SIZE=48,STEP=24,SINGLE_STEP=48,HEADER=26,FOOT=14,hovered=new WeakMap();
-  // Alternating half-size offsets join diamond edges without overlapping their hit interiors.
-  function slot(index,cols=2){return {row:index+1,column:cols===1?1:index%2+1};}
-  function geometry(count,cols=2){count=Math.max(1,Math.floor(Number(count)||1));cols=count>1&&cols===2?2:1;const step=cols===2?STEP:SINGLE_STEP;
-    return {count,cols,rows:count,step,chainWidth:cols===2?SIZE+STEP:SIZE,chainHeight:SIZE+(count-1)*step,gridTemplateColumns:cols===2?STEP+'px '+SIZE+'px':SIZE+'px',gridTemplateRows:(count>1?'repeat('+(count-1)+','+step+'px) ':'')+SIZE+'px'};
+  const SIZE=120,HEIGHT=24,STEP=26,SINGLE_STEP=STEP,HEADER=26,FOOT=14,hovered=new WeakMap();
+  function slot(index){return {row:index+1,column:1};}
+  function geometry(count){count=Math.max(1,Math.floor(Number(count)||1));
+    return {count,cols:1,rows:count,step:STEP,chainWidth:SIZE,chainHeight:HEIGHT+(count-1)*STEP,gridTemplateColumns:SIZE+'px',gridTemplateRows:'repeat('+count+','+HEIGHT+'px)'};
   }
   function layout(count,owner,column,right,height){
-    const width=Math.min(120,Math.max(48,right-8)),maxHeight=Math.max(HEADER+FOOT+SIZE,Math.floor(height-28));let g=geometry(count,width>=76?2:1);
-    // Reserve a conventional scrollbar gutter before choosing the two-chain layout.
-    if(g.cols===2&&g.chainHeight+HEADER+FOOT>maxHeight&&width<92)g=geometry(count,1);
+    const width=Math.min(SIZE,Math.max(1,right-8)),maxHeight=Math.max(HEADER+FOOT+HEIGHT,Math.floor(height-28)),g=geometry(count);
     const contentHeight=g.chainHeight+HEADER+FOOT,h=Math.min(contentHeight,maxHeight);
     const side=column.right+6+width<=right-4?'right':column.left-width-6>=4?'left':right-column.right>=column.left?'right':'left';
     const x=side==='right'?column.right+6:column.left-width-6;
-    return {...g,side,width,left:Math.max(4,Math.min(x,right-width-4)),top:Math.max(14,Math.min(owner.top,height-h-14)),maxHeight,scroll:contentHeight>maxHeight};
+    return {...g,side,width,left:Math.max(4,Math.min(x,right-width-4)),top:Math.max(14,Math.min(owner.top,height-h-14)),maxHeight,scroll:contentHeight>maxHeight,scrollX:width<SIZE};
   }
   function options(owner){return owner.gzList?.options?.()||[];}
   const STORAGE_KEY='mayatnik-list-exclusions-v1',bound=new WeakSet(),rowsByOwner=new WeakMap();
@@ -56,11 +53,13 @@
     return (String(name).match(/[\p{L}\p{N}]+/u)?.[0]||String(index+1)).slice(0,2);
   }
   function decorate(list,owner){
-    install(owner);list.classList.add('may-diamond-options');const opts=options(owner),rows=[...list.querySelectorAll(':scope > .gz-hx')],g=geometry(rows.length,+list.dataset.optionColumns||2);list.style.gridTemplateColumns=g.gridTemplateColumns;list.style.gridTemplateRows=g.gridTemplateRows;
+    install(owner);list.classList.remove('may-diamond-options');list.classList.add('may-button-options');const opts=options(owner),rows=[...list.querySelectorAll(':scope > .gz-hx')],g=geometry(rows.length);list.style.gridTemplateColumns=g.gridTemplateColumns;list.style.gridTemplateRows=g.gridTemplateRows;
     rows.forEach((row,index)=>{const name=String(opts[index]?.name||row.title||row.querySelector('.gz-nm')?.textContent||index+1);
       const cell=slot(index,g.cols);row.style.gridRow=String(cell.row);row.style.gridColumn=String(cell.column);
       row.dataset.optionKey=optionKey(opts[index]);
-      row.classList.add('may-option-diamond');row.dataset.noMini='';row.setAttribute('aria-label',name);row.title=name;
+      row.classList.remove('may-option-diamond');row.classList.add('may-option-button');row.dataset.noMini='';row.setAttribute('aria-label',name);row.title=name;
+      let label=row.querySelector(':scope > .gz-nm');if(!label){label=document.createElement('span');label.className='gz-nm';label.textContent=name;row.append(label);}
+      if(owner.dataset.n==='layerSelect')label.setAttribute('data-user-label','');
       if(!row.dataset.mayOptionReady){row.dataset.mayOptionReady='1';row.setAttribute('role','button');row.setAttribute('tabindex','0');
         const palette=target=>target.closest?.('.may-view-swatch,input,select,textarea,[contenteditable]');
         row.addEventListener('contextmenu',event=>{if(palette(event.target))return;event.preventDefault();event.stopImmediatePropagation();const option=options(owner).find(o=>optionKey(o)===row.dataset.optionKey);if(option)toggle(owner,option);},true);
@@ -71,7 +70,7 @@
         row.addEventListener('pointerleave',()=>restore(owner));row.addEventListener('focusout',()=>restore(owner));
       }
       const icon=row.querySelector('.gz-ic'),font=owner.dataset.n==='fontCycle';
-      if(icon&&row.classList.contains('may-view-palette'))icon.style.removeProperty('display');
+      if(icon&&row.classList.contains('may-view-palette'))icon.style.setProperty('display','none','important');
       if(font||!icon||!icon.children.length&&!icon.style.backgroundImage&&(!icon.textContent?.trim()||icon.textContent.trim()==='·')){
         let symbol=row.querySelector(':scope > .may-option-symbol');if(!symbol){symbol=document.createElement('span');symbol.className='may-option-symbol';row.append(symbol);}
         row.classList.add('may-option-fallback');const text=font?'Aa':glyph(name,index);if(symbol.textContent!==text)symbol.textContent=text;
@@ -81,5 +80,5 @@
     if(!list.dataset.mayOptionReady){list.dataset.mayOptionReady='1';list.addEventListener('pointerleave',()=>restore(owner));}
     rowsByOwner.set(owner,rows);syncExcluded(owner);syncOwner(owner);
   }
-  return {STORAGE_KEY,ownerKey,optionKey,isExcluded,toggle,nextIndex,cycle,install,SIZE,STEP,SINGLE_STEP,slot,geometry,layout,decorate,caption,syncOwner,restore,glyph};
+  return {STORAGE_KEY,ownerKey,optionKey,isExcluded,toggle,nextIndex,cycle,install,SIZE,HEIGHT,STEP,SINGLE_STEP,slot,geometry,layout,decorate,caption,syncOwner,restore,glyph};
 });

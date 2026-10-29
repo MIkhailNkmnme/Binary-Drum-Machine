@@ -10,7 +10,7 @@
     let s=b.querySelector(':scope > .may-standard-outline');
     if(!s){s=svg('may-standard-outline');shape(s,'polygon',{points:polygon});b.append(s);}
     if(b.matches('.gz-wl,.may-center-control')&&!s.querySelector('.may-half-side'))shape(s,'path',{class:'may-half-side',d:'M12 0L0 12 12 24M108 0L120 12 108 24'});
-    const mini=b.classList.contains('may-standard-mini')||b.classList.contains('may-control-mini');const triangle=b.classList.contains('may-header-triangle'),diamond=b.classList.contains('may-option-diamond');set(s,'viewBox',triangle?'0 0 48 24':diamond?'0 0 48 48':mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',triangle?'0,0 48,0 24,24':diamond?'24,0 48,24 24,48 0,24':mini?'17,0 34,12 17,24 0,12':polygon);
+    const mini=b.classList.contains('may-standard-mini')||b.classList.contains('may-control-mini');const triangle=b.classList.contains('may-header-triangle');set(s,'viewBox',triangle?'0 0 48 24':mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',triangle?'0,0 48,0 24,24':mini?'17,0 34,12 17,24 0,12':polygon);
   }
   function roof(b,mini,up=false){
     let s=b.querySelector(':scope > .may-standard-roof');if(!s){s=svg('may-standard-roof');b.append(s);}
@@ -24,38 +24,6 @@
     let s=host.querySelector(':scope > .may-standard-contours');if(!s){s=svg('may-standard-contours');
       // grozd synchronizes option states by child index. Decoration must follow every option.
       if(host.classList.contains('gz-ladder'))host.append(s);else host.prepend(s);
-    }
-    if(host.classList.contains('may-diamond-options')){
-      const r=host.getBoundingClientRect(),w=r.width,h=Math.max(r.height,host.scrollHeight||0),diamonds=[];
-      for(const cell of cells){const b=cell.getBoundingClientRect();if(!b.width||!b.height)continue;diamonds.push({x:b.left-r.left+host.scrollLeft+b.width/2,y:b.top-r.top+host.scrollTop+b.height/2,r:b.width/2+2});}
-      const sig='chain:'+JSON.stringify([w,h,diamonds]);if(s.dataset.sig!==sig){s.dataset.sig=sig;s.replaceChildren();
-        if(diamonds.length){
-          // Connected components keep separate columns separate. Include every
-          // crossing of boundary edges, not just the diamond tips: otherwise
-          // the envelope cuts across the small concave corners between links.
-          const pending=new Set(diamonds),components=[];
-          while(pending.size){const component=[pending.values().next().value];pending.delete(component[0]);for(let i=0;i<component.length;i++)for(const d of pending)if(Math.abs(d.x-component[i].x)+Math.abs(d.y-component[i].y)<=d.r+component[i].r+.001){component.push(d);pending.delete(d);}components.push(component);}
-          const edge=(d,y,right)=>d.x+(right?1:-1)*(d.r-Math.abs(y-d.y));
-          for(const component of components){
-            const levels=new Set(component.flatMap(d=>[d.y-d.r,d.y,d.y+d.r]));
-            for(let i=0;i<component.length;i++)for(let j=i+1;j<component.length;j++){
-              const a=component[i],b=component[j],lo=Math.max(a.y-a.r,b.y-b.r),hi=Math.min(a.y+a.r,b.y+b.r);if(hi<=lo)continue;
-              const cuts=[...new Set([lo,hi,a.y,b.y].filter(y=>y>=lo&&y<=hi))].sort((x,y)=>x-y);
-              for(let k=1;k<cuts.length;k++)for(const right of [false,true]){const y0=cuts[k-1],y1=cuts[k],v0=edge(a,y0,right)-edge(b,y0,right),v1=edge(a,y1,right)-edge(b,y1,right);if(v0*v1<0)levels.add(y0+(y1-y0)*v0/(v0-v1));}
-            }
-            const left=[],right=[];for(const y of [...levels].sort((a,b)=>a-b)){const active=component.filter(d=>Math.abs(y-d.y)<=d.r+.001);if(!active.length)continue;left.push([Math.min(...active.map(d=>edge(d,y,false))),y]);right.push([Math.max(...active.map(d=>edge(d,y,true))),y]);}
-            const points=[...right,...left.reverse()].filter((p,i,all)=>!i||Math.abs(p[0]-all[i-1][0])+Math.abs(p[1]-all[i-1][1])>.001);
-            if(points.length>1&&points[0][0]===points.at(-1)[0]&&points[0][1]===points.at(-1)[1])points.pop();
-            shape(s,'polygon',{class:'may-diamond-back', 'data-part':'body',points:points.map(p=>p.join(',')).join(' '),fill:'#0e1116'});
-          }
-          // The final V follows the last diamond itself; no widening footer spur.
-          const last=diamonds.reduce((a,b)=>a.y>b.y?a:b);
-          shape(s,'path',{class:'cap',d:`M${last.x-last.r} ${last.y} L${last.x} ${last.y+last.r} L${last.x+last.r} ${last.y}`});
-        }
-        shape(s,'polygon',{class:'may-diamond-back',points:`1,13 13,1 ${w-13},1 ${w-1},13 ${w-1},24 1,24`,fill:'#0e1116'});
-        shape(s,'path',{class:'cap',d:`M1 13 L13 1 H${w-13} L${w-1} 13`});
-      }
-      return false;
     }
     const base=host.getBoundingClientRect(),cols=new Map();
     const add=(b,head)=>{const r=b.getBoundingClientRect();if(!r.width||!r.height)return false;const x=Math.round(r.left-base.left+host.scrollLeft),y=Math.round(r.top-base.top+host.scrollTop);let k=[...cols.keys()].find(c=>Math.abs(c-x)<30);if(k===undefined){if(head)return false;k=x;cols.set(k,[]);}cols.get(k).push({x,y,w:r.width,h:r.height,head:!!head});return true;};

@@ -239,17 +239,16 @@ body.mayatnik-menu-ready .gz-group>.gz-head>.gz-ar{display:none!important}
   body.mayatnik-menu-ready header #paintTools.pt-grid>.gz-group.may-docked.pt-bot>.may-rail-list{position:absolute!important;left:0!important;top:auto!important;bottom:calc(100% + 2px)!important}
 }
 
-/* v0.514: icon options; list title above, option caption in the owner. */
-:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-diamond-options{display:grid!important;grid-auto-flow:row;justify-content:center;align-content:start;gap:0!important;padding:26px 0 14px!important;box-sizing:border-box!important;background:transparent!important;isolation:isolate}
-:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-option-diamond{width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;min-height:48px!important;max-height:48px!important;padding:0!important;justify-content:center;gap:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
-.may-option-diamond>.gz-nm,.may-option-diamond>.gz-v{display:none!important}
-.may-option-diamond>.gz-ic{display:block!important;flex:0 0 18px;width:18px!important;height:18px!important;margin:0!important}
-.may-option-diamond.may-option-fallback>.gz-ic{display:none!important}
-.may-option-symbol{display:block;font-size:16px;font-weight:600;line-height:1;pointer-events:none}
-:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-option-diamond>.may-standard-outline polygon{stroke-dasharray:none!important;stroke-dashoffset:0!important}
-.may-option-diamond>.may-view-swatch{position:absolute;left:5px;top:20px;width:8px;height:8px;min-width:0;z-index:4}
-.may-option-diamond>.may-view-swatch:last-of-type{left:auto;right:5px}
-.may-diamond-options>.may-list-heading{background:transparent;border-bottom:0}
+/* Option lists use the common 120x24 button outline and column backing. */
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-button-options{display:grid!important;grid-auto-flow:row;justify-content:start;align-content:start;gap:2px 0!important;padding:26px 0 14px!important;box-sizing:border-box!important;background:transparent!important;isolation:isolate;scrollbar-width:none}
+.may-button-options::-webkit-scrollbar{display:none}
+.may-option-button>.gz-nm{display:block!important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.may-option-button>.gz-ic{flex:0 0 16px;width:16px!important;height:16px!important;margin:0!important}
+.may-option-button.may-option-fallback>.gz-ic{display:none!important}
+.may-option-symbol{display:block;order:-1;flex:0 0 16px;font-size:12px;font-weight:600;line-height:1;pointer-events:none}
+.may-option-button.may-view-palette>.gz-ic,.may-option-button.may-view-palette>.may-option-symbol{display:none!important}
+.may-option-button>.may-view-swatch{position:relative;left:auto;right:auto;top:auto;flex:0 0 12px;width:12px;height:12px;min-width:12px;z-index:4}
+.may-button-options>.may-list-heading{background:transparent;border-bottom:0}
 .mayatnik-menu-ready .gz-hx.gz-lst.may-list-left>.may-list-inner-arrow{left:4px;right:auto;transform:scaleX(-1)}
 
 /* v0.518: side groups expand in their column; headers below move by grid steps. */

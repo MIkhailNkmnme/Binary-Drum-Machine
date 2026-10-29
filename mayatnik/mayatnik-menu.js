@@ -1745,9 +1745,9 @@
     if(window.MayatnikMenuOptions){
       const g=listLayout(owner,list.querySelectorAll(':scope > .gz-hx').length);setListSide(owner,g.side);
       list.dataset.optionColumns=String(g.cols);window.MayatnikMenuOptions.decorate(list,owner);
-      Object.assign(list.style,{width:g.width+'px',gridTemplateRows:g.gridTemplateRows,gridTemplateColumns:g.gridTemplateColumns,gridAutoColumns:'48px',top:g.top+'px',left:g.left+'px',maxHeight:g.maxHeight+'px',maxWidth:Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px'});
-      list.style.setProperty('width',g.width+'px','important');list.style.setProperty('max-width',Math.max(48,Math.min(g.width,popupRight()-g.left-4))+'px','important');
-      list.style.setProperty('overflow-y',g.scroll?'auto':'visible','important');list.style.setProperty('overflow-x',g.scroll?'hidden':'visible','important');
+      Object.assign(list.style,{width:g.width+'px',gridTemplateRows:g.gridTemplateRows,gridTemplateColumns:g.gridTemplateColumns,gridAutoColumns:'120px',top:g.top+'px',left:g.left+'px',maxHeight:g.maxHeight+'px',maxWidth:Math.max(1,Math.min(g.width,popupRight()-g.left-4))+'px'});
+      list.style.setProperty('width',g.width+'px','important');list.style.setProperty('max-width',Math.max(1,Math.min(g.width,popupRight()-g.left-4))+'px','important');
+      list.style.setProperty('overflow-y',g.scroll?'auto':'visible','important');list.style.setProperty('overflow-x',g.scrollX?'auto':g.scroll?'hidden':'visible','important');
     }else{
     // v0.481: окончательная геометрия списка задаётся здесь; адаптер контура её больше не сдвигает своим таймером.
     const count=list.querySelectorAll(':scope > .gz-hx').length,maxRows=Math.max(1,Math.floor((innerHeight-54)/26)),space=Math.max(innerWidth-c.right-6,c.left-6),maxCols=Math.max(1,Math.floor((space+6)/126)),cols=Math.min(maxCols,Math.ceil(count/Math.min(7,maxRows))),rows=Math.ceil(count/cols),width=cols*126-6;

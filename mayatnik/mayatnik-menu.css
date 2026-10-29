@@ -948,9 +948,9 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
   body.mayatnik-menu-ready #mayatnikSidebar #mayatnikRail .gz-group.gz-mini.gz-open>.may-rail-list{margin-top:0!important}
 }
 
-/* Excluded cycle variants retain their palette controls and diamond hit area. */
-.may-option-diamond.may-option-excluded{color:#69727d!important;background:#101318!important;cursor:default}
-.may-option-excluded>.gz-ic,.may-option-excluded>.may-option-symbol{opacity:.3}
+/* Excluded cycle variants retain their palette controls and button hit area. */
+.may-option-button.may-option-excluded{color:#69727d!important;background:#101318!important;cursor:default}
+.may-option-excluded>.gz-ic,.may-option-excluded>.may-option-symbol,.may-option-excluded>.gz-nm{opacity:.3}
 .may-option-excluded::before,.may-option-excluded::after{opacity:.3}
 
 
