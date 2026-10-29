@@ -91,19 +91,30 @@ test('production SVG contour cannot shift any selected option during real shared
  list.children[1].emit('click');assert.equal(selected,1);assert.equal(list.children[1].classList.contains('gz-on'),true);
 });
 
-test('standard dropdown previews in owner, keeps title above, restores selection and preserves real option indexes',()=>{
+test('standard dropdown keeps its semantic owner heading through hover, focus, selection and closing',()=>{
  const f=fixture(true);f.owner.dataset.n='fontCycle';const old=new Node('span');old.className='gz-nm';old.textContent='Consolas';f.owner.append(old);
  f.ctx.nameListButton(f.owner);let selected=0;
  f.bind(f.owner,{options:()=>['A','B','C'].map((name,i)=>({name,on:i===selected,pick:()=>selected=i}))});
  f.column.rect={left:650,right:770,width:120,top:50};f.owner.rect=f.column.rect;f.ctx.syncListButton(f.owner);
- assert.equal(f.owner.dataset.listSide,'left');const label=f.owner.querySelector('.may-list-label');assert.equal(label.textContent,'A');
+ assert.equal(f.owner.dataset.listSide,'left');const label=f.owner.querySelector('.may-list-label');assert.equal(label.textContent,'Шрифт');
  f.reopen();const list=f.list,rows=list.querySelectorAll(':scope > .gz-hx'),heading=list.querySelector('.may-list-heading');
  assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(3,24px)');
  assert.ok(rows.every(row=>row.classList.contains('may-option-button')));assert.equal(list.children.at(-1),heading);
- rows[2].emit('pointerenter');assert.equal(label.textContent,'C');f.ctx.sync();assert.equal(label.textContent,'C');rows[2].emit('pointerleave');assert.equal(label.textContent,'A');
- for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.equal(label.textContent,['A','B','C'][i]);assert.deepEqual(rows.map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}
- rows[1].emit('click');assert.equal(selected,1);assert.equal(label.textContent,'B');rows[0].emit('pointerenter');assert.equal(label.textContent,'A');f.ctx.sharedClose();assert.equal(label.textContent,'B');assert.equal(f.owner.dataset.listTitle,'Шрифт');
+ rows[2].emit('pointerenter');rows[2].emit('focusin');assert.equal(label.textContent,'Шрифт');f.ctx.sync();assert.equal(label.textContent,'Шрифт');rows[2].emit('pointerleave');assert.equal(label.textContent,'Шрифт');
+ for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.equal(label.textContent,'Шрифт');assert.equal(f.owner.getAttribute('aria-label'),'Шрифт: '+['A','B','C'][i]);assert.deepEqual(rows.map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}
+ rows[1].emit('click');assert.equal(selected,1);assert.equal(label.textContent,'Шрифт');rows[0].emit('pointerenter');assert.equal(label.textContent,'Шрифт');f.ctx.sharedClose();assert.equal(label.textContent,'Шрифт');assert.equal(f.owner.dataset.listTitle,'Шрифт');
  assert.equal(list.children.filter(n=>n.classList.contains('may-list-heading')).length,1);assert.equal(list.children.length,4);
+});
+
+test('toolbar lists have semantic names and explicit native/mirror/action titles survive dynamic source captions',()=>{
+ const names={viewCycle:'Вид',fontCycle:'Шрифт',fixMirror:'Зеркало ↑',fixAxis:'Ось',mirCol:'Цвет зеркал',noband:'Полосы',layerSelect:'Слои',paintColourReset:'Сброс цветов'};
+ for(const [id,title]of Object.entries(names)){
+  const f=fixture(true);f.owner.dataset.n=id;const selected=new Node('span');selected.className='gz-nm';selected.textContent='Выбранный вариант';f.owner.append(selected);f.ctx.nameListButton(f.owner);f.bind(f.owner,{options:()=>[{name:'Другая маска',on:true}]});f.ctx.syncListButton(f.owner);
+  assert.equal(f.owner.dataset.listTitle,title,id);assert.equal(f.owner.querySelector('.may-list-label').textContent,title,id);assert.equal(f.owner.getAttribute('aria-label'),title+': Другая маска',id);
+ }
+ for(const title of ['Область','Порядок','Метод','Что отражать','Ось','Сторона','Операция','Результат','Рзмер\\счёт','Сброс цветов']){
+  const f=fixture(true);f.owner.dataset.listTitle=title;const selected=new Node('span');selected.className='gz-nm';selected.textContent='Тотем';f.owner.append(selected);f.ctx.nameListButton(f.owner);f.bind(f.owner,{options:()=>[{name:'Маска',on:true}]});f.ctx.syncListButton(f.owner);assert.equal(f.owner.querySelector('.may-list-label').textContent,title);f.reopen();assert.equal(f.list.querySelector('.may-list-heading').textContent,title);
+ }
 });
 
 test('owner click cycles every native select through its live change route; hover only opens',()=>{

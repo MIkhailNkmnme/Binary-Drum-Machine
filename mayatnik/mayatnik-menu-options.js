@@ -1,7 +1,7 @@
-/* Standard button options with stable list titles and an owner preview. */
+/* Standard button options with permanent semantic list titles. */
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikMenuOptions=api;})(globalThis,function(root){
   'use strict';
-  const SIZE=120,HEIGHT=24,STEP=26,SINGLE_STEP=STEP,HEADER=26,FOOT=14,hovered=new WeakMap();
+  const SIZE=120,HEIGHT=24,STEP=26,SINGLE_STEP=STEP,HEADER=26,FOOT=14;
   function slot(index){return {row:index+1,column:1};}
   function geometry(count){count=Math.max(1,Math.floor(Number(count)||1));
     return {count,cols:1,rows:count,step:STEP,chainWidth:SIZE,chainHeight:HEIGHT+(count-1)*STEP,gridTemplateColumns:SIZE+'px',gridTemplateRows:'repeat('+count+','+HEIGHT+'px)'};
@@ -39,14 +39,15 @@
     // The page's document capture retains whole-button context folding.
     owner.addEventListener('contextmenu',event=>intercept(event,-1),true);
   }
-  function caption(owner,index){
-    const opts=options(owner),selected=opts.findIndex(o=>o.on),item=opts[index??(selected<0?0:selected)],label=owner.querySelector(':scope > .may-list-label');
-    const name=String(item?.name||owner.dataset.listTitle||'Варианты');if(label&&label.dataset.optionCaption!==name){label.dataset.optionCaption=name;label.textContent=name;}
-    if(label&&owner.dataset.n==='layerSelect')label.setAttribute('data-user-label','');
-    const aria=(owner.dataset.listTitle||'Варианты')+': '+name;if(owner.getAttribute?.('aria-label')!==aria)owner.setAttribute('aria-label',aria);
+  function caption(owner){
+    const title=owner.dataset.listTitle||'Варианты',item=options(owner).find(o=>o.on),label=owner.querySelector(':scope > .may-list-label');
+    if(label&&label.dataset.optionCaption!==title){label.dataset.optionCaption=title;label.textContent=title;}
+    // Only option rows contain user layer names; the owner is always «Слои».
+    if(label&&owner.dataset.n==='layerSelect')delete label.dataset.userLabel;
+    const aria=title+(item?.name?': '+item.name:'');if(owner.getAttribute?.('aria-label')!==aria)owner.setAttribute('aria-label',aria);
   }
-  function restore(owner){if(!owner)return;hovered.delete(owner);caption(owner);}
-  function syncOwner(owner){const h=hovered.get(owner);if(h?.list.isConnected)caption(owner,h.index);else{hovered.delete(owner);caption(owner);}}
+  function restore(owner){if(owner)caption(owner);}
+  function syncOwner(owner){caption(owner);}
   function glyph(name,index){
     if(/выкл/i.test(name))return '○';if(/левая|лево/i.test(name))return '◀';if(/правая|право/i.test(name))return '▶';if(/обе/i.test(name))return '◈';
     if(/шахм/i.test(name))return '▦';if(/цвет|краск/i.test(name))return '◒';if(/оригинал/i.test(name))return '◇';if(/налож/i.test(name))return '▱';
@@ -65,9 +66,6 @@
         row.addEventListener('contextmenu',event=>{if(palette(event.target))return;event.preventDefault();event.stopImmediatePropagation();const option=options(owner).find(o=>optionKey(o)===row.dataset.optionKey);if(option)toggle(owner,option);},true);
         row.addEventListener('click',event=>{if(!row.classList.contains('may-option-excluded'))return;const option=options(owner).find(o=>optionKey(o)===row.dataset.optionKey);if(palette(event.target)&&option?.on)return;event.preventDefault();event.stopImmediatePropagation();},true);
         row.addEventListener('keydown',e=>{if(e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();row.click();}});
-        row.addEventListener('pointerenter',()=>{hovered.set(owner,{list,index});caption(owner,index);});
-        row.addEventListener('focusin',()=>{hovered.set(owner,{list,index});caption(owner,index);});
-        row.addEventListener('pointerleave',()=>restore(owner));row.addEventListener('focusout',()=>restore(owner));
       }
       const icon=row.querySelector('.gz-ic'),font=owner.dataset.n==='fontCycle';
       if(icon&&row.classList.contains('may-view-palette'))icon.style.setProperty('display','none','important');
@@ -77,7 +75,6 @@
         if(font){const families=["var(--mono,monospace)","Consolas,'Cascadia Mono',monospace","'Courier New',Courier,monospace","'Segoe UI',Arial,sans-serif","Georgia,'Times New Roman',serif"];symbol.style.fontFamily=families[index]||'monospace';}
       }
     });
-    if(!list.dataset.mayOptionReady){list.dataset.mayOptionReady='1';list.addEventListener('pointerleave',()=>restore(owner));}
     rowsByOwner.set(owner,rows);syncExcluded(owner);syncOwner(owner);
   }
   return {STORAGE_KEY,ownerKey,optionKey,isExcluded,toggle,nextIndex,cycle,install,SIZE,HEIGHT,STEP,SINGLE_STEP,slot,geometry,layout,decorate,caption,syncOwner,restore,glyph};

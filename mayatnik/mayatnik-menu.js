@@ -1696,7 +1696,7 @@
     });
   }
   function nameListButton(b){
-    const names={viewCycle:'Вид',fontCycle:'Шрифт',fixMirror:'Зеркало ↑',fixAxis:'Ось',mirCol:'Цвет зеркал',noband:'Полосы',layerSelect:'Слои'};
+    const names={viewCycle:'Вид',fontCycle:'Шрифт',fixMirror:'Зеркало ↑',fixAxis:'Ось',mirCol:'Цвет зеркал',noband:'Полосы',layerSelect:'Слои',paintColourReset:'Сброс цветов'};
     const title=b.dataset.listTitle||names[b.dataset.n]||b.querySelector('.gz-nm')?.textContent.trim()||b.title||'Варианты';b.dataset.listTitle=title;b.classList.add('may-named-list');b.setAttribute('aria-label',title);
     let label=b.querySelector(':scope > .may-list-label');if(!label){label=document.createElement('span');label.className='may-list-label';label.textContent=title;b.append(label);}return title;
   }
@@ -1714,7 +1714,6 @@
   function syncListButton(owner){
     if(!window.MayatnikMenuOptions)return;
     window.MayatnikMenuOptions.syncOwner(owner);
-    if(owner.dataset.n==='paintColourReset'){const label=owner.querySelector(':scope > .may-list-label');if(label){label.textContent='Сброс цветов';label.dataset.userLabel='';}owner.setAttribute('aria-label','Сброс цветов');}
     if(owner.getClientRects().length)setListSide(owner,listLayout(owner).side);
   }
   let activeList=null;

@@ -3,7 +3,7 @@
   'use strict';
   const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
   const abort=()=>{const e=new Error('Поиск отменён');e.name='AbortError';return e;};
-  function compile(part,rk=1){
+  function compile(part,rk=1,options={}){
     const width=Math.max(1,Math.round(part.width/rk)),height=Math.max(1,Math.round(part.height/rk));
     const data=new Uint8Array(width*height),filled=[];
     for(let y=0;y<height;y++)for(let x=0;x<width;x++){
@@ -14,7 +14,20 @@
     // Spread the first probes over the rectangle, before the exhaustive check.
     const order=[...new Set([0,data.length-1,width-1,(height-1)*width,Math.floor(data.length/2),...Array.from({length:12},(_,i)=>Math.floor(i*data.length/12))])];
     const used=new Set(order);for(let q=0;q<data.length;q++)if(!used.has(q))order.push(q);
-    return {width,height,data,filled:Uint32Array.from(filled),order:Uint32Array.from(order)};
+    const pattern={width,height,data,filled:Uint32Array.from(filled),order:Uint32Array.from(order)};
+    if(options.silhouette){
+      // A transparent pixel is not an opposite bit. Only the immediate side
+      // boundary belongs to this silhouette, including neighbours outside its box.
+      const boundary=new Set(),stride=width+2;
+      for(const q of filled){const x=q%width,y=Math.floor(q/width);
+        for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]]){const xx=x+dx,yy=y+dy;
+          if(xx<0||xx>=width||yy<0||yy>=height||!data[yy*width+xx])boundary.add((yy+1)*stride+xx+1);
+        }
+      }
+      pattern.order=Uint32Array.from(order.filter(q=>data[q]));
+      pattern.boundary=Int32Array.from([...boundary].flatMap(q=>[q%stride-1,Math.floor(q/stride)-1]));
+    }
+    return pattern;
   }
   async function find(field,patterns,options={}){
     const {width:W,height:H,data}=field,N=W*H,selected=options.existsOnly?null:new Uint8Array(N);
@@ -33,6 +46,12 @@
         let match=first>=0;
         for(let j=1;match&&j<offsets.length;j++){
           match=data[start+offsets[j]]===(p.data[p.order[j]]^inverse);
+          if(++operations>=8192){operations=0;if(due())await checkpoint();}
+        }
+        if(match&&p.boundary)for(let j=0;match&&j<p.boundary.length;j+=2){
+          const xx=x+p.boundary[j],yy=y+p.boundary[j+1];
+          // Empty cells and the field edge terminate a figure; never wrap rows.
+          if(xx>=0&&xx<W&&yy>=0&&yy<H)match=data[yy*W+xx]!==first;
           if(++operations>=8192){operations=0;if(due())await checkpoint();}
         }
         if(match){

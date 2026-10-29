@@ -4,7 +4,7 @@
     const listeners=new Set(),patternCache=new WeakMap(),results=[];
     let serial=0,selection=null,libraryStamp=[],scopeKey=null,filterSerial=0,filterPending=Promise.resolve(),visibleIds=host.scope?new Set():null,state={selectedId:null,count:0,busy:false,message:'',filtering:false};
     function emit(){for(const fn of listeners)fn({...state});}
-    function patternsFor(entry){let patterns=patternCache.get(entry.shape);if(!patterns){patterns=[];for(const part of entry.shape.parts){const p=root.MayatnikTemplateMatcher.compile(part,entry.shape.rk||1);if(!patterns.some(q=>q.width===p.width&&q.height===p.height&&q.data.every((v,i)=>v===p.data[i])))patterns.push(p);}patternCache.set(entry.shape,patterns);}return patterns;}
+    function patternsFor(entry){let patterns=patternCache.get(entry.shape);if(!patterns){patterns=[];for(const part of entry.shape.parts){const p=root.MayatnikTemplateMatcher.compile(part,entry.shape.rk||1,{silhouette:true});if(!patterns.some(q=>q.width===p.width&&q.height===p.height&&q.data.every((v,i)=>v===p.data[i])))patterns.push(p);}patternCache.set(entry.shape,patterns);}return patterns;}
     async function filter(items,run){
       // Placed figures are already known to exist; show them before a full-field scan.
       visibleIds=new Set(items.filter(entry=>(host.listedInstances||host.visibleInstances)?.(entry.id)).map(entry=>entry.id));state.filtering=true;emit();
