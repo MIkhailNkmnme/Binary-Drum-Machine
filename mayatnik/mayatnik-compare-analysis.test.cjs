@@ -128,7 +128,7 @@ test('host geometry counts actual finite fields and keeps common cone points for
 test('host freeze consumers keep pending cells mutable and read the exact completed map', () => {
   const values = Int8Array.from([1, 0, -1, 1, 0, 1]), map = { lastAt: null };
   const context = vm.createContext({ f: { W: 3, H: 2, val: values }, geo: { anchor: 1 }, k: 2,
-    compareOn: () => true, compareFrozen: () => map, total: () => 3,
+    compareOn: () => true, compareFrozen: () => map, coneContinueUse: () => false, st: {}, total: () => 3,
     freezeCache: new Int32Array(6), freezeRowDone: new Uint8Array(2) });
   vm.runInContext(section('  function cellFreezeFrame(', '  function templateLockCheck(') +
     section('  function freezeRow(', '  const freezeInit=') +

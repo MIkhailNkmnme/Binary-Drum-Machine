@@ -413,6 +413,18 @@
       const mp = gzPair([{ label: 'ЛевПрав', tip: 'Ход лево-право: якорь, −1, +1, −2, +2… · щелчок — выбрать и построить', on: () => M?.value !== 'pendR', click: () => go('pend') },
         { label: 'ПравЛев', tip: 'Ход право-лево: якорь, +1, −1, +2, −2… · щелчок — выбрать и построить', on: () => M?.value === 'pendR', click: () => go('pendR') }]);
       mp.gzSync(); b.addEventListener('click', () => mp.gzSync()); pop.prepend(section(mp, 'build')); }
+    // v0.634: opt-in continuation belongs to construction, with a stable control key.
+    { const more = document.createElement('button'); more.type = 'button'; more.id = 'mayConeContinue'; more.dataset.n = 'mayConeContinue'; more.className = 'gz-hx';
+      more.dataset.maySearchAliases = 'Продолжение Конусов|Снять предел|Без предела|Дальше последнего кадра';
+      const glyph = document.createElement('i'); glyph.className = 'gz-ic'; glyph.style.backgroundImage = icon(more, 'steps'); glyph.setAttribute('aria-hidden', 'true');
+      const label = document.createElement('span'); label.className = 'gz-nm'; label.textContent = 'Продолжать'; more.append(glyph, label);
+      more.gzSync = () => { const api = window.mayConeContinue, state = api?.status?.(), supported = !!state?.supported, on = supported && !!api?.get?.();
+        more.disabled = !supported; more.classList.toggle('gz-on', on); more.setAttribute('aria-pressed', String(on));
+        more.title = supported ? 'Продолжать Конусы: снять предел 2N−1. Плеер и перетаскивание точки строят новые кадры за прежней границей. Выключение сохраняет уже открытые кадры.' : 'Продолжать Конусы: сначала выберите «Конусы» в подгруппе «Поля».';
+        if (state?.error) more.title += ' ' + state.error; more.setAttribute('aria-label', 'Продолжать Конусы'); };
+      more.onclick = event => { event.stopPropagation(); const api = window.mayConeContinue; api?.set?.(!api.get()); more.gzSync(); rail.refresh(); };
+      for (const event of ['may-compare-change', 'may-cone-continue-change']) addEventListener(event, more.gzSync);
+      b.addEventListener('click', more.gzSync); more.gzSync(); pop.append(section(more, 'build')); }
     wrapH.append(pop);sync(); }
   // v0.337: «Анимацию вниз копируй, но только число ×1…×10 — по нажатию меняется, пол-кнопки; вторая половина — время 0 … 1/20 … до 1 с, тоже по нажатию»:
   // слева в полосе одна кнопка из двух половин: скорость (щелчок +1, после ×10 — ×1; правый — назад) | длительность кадра (0, 1/20, 1/10, 1/5, 1/2, 1 с по кругу)

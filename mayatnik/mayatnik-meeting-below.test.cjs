@@ -16,7 +16,7 @@ function boot({ rows = 8, visible = rows, direction = 'pend', pair = false, lega
     geo: { anchor: legacy ? 6 * rows : rows - 1 }, MAYATNIK: Core,
     f: { H: rows, W: legacy ? 12 * rows + 1 : 2 * rows - 1, val: new Int8Array((legacy ? 12 * rows + 1 : 2 * rows - 1) * rows).fill(-1) },
     compareOn: () => !legacy, pairOn: () => pair, rombP: () => -1, total: () => legacy ? (pair ? 2 * rows : 4 * rows) : (pair ? rows : 2 * rows - 1),
-    g: {}, vtxLabels() {}, fixPad: h => { c.pad = h; }, window: {}, save() {}, draw() {} };
+    g: {}, vtxLabels() {}, fixPad: h => { c.pad = h; }, window: {}, save() {}, draw() {}, coneContinueAllowed:()=>false };
   vm.createContext(c);
   vm.runInContext(section('  function compareLimit(', '  function compareConfig(') +
     section('  function compareSpan(', '  function compareMaterialize(') +
@@ -131,7 +131,7 @@ test('frame dragging selects the same nearest frame without materializing candid
   for (const pair of [false, true]) {
     const c = boot({ pair }); c.seek(5); const field = Array.from(c.f.val), changes = [];
     Object.assign(c, { compareEnsure() { throw Error('geometry must not seek the field engine'); },
-      Event: class {}, $: () => ({ value: 0, dispatchEvent() { changes.push(this.value); } }) });
+      Event: class {}, $: () => ({ value: c.k, dispatchEvent() { changes.push(this.value); } }) });
     vm.runInContext(section('  function fixMeetAt(', '  window.mayFixAxis='), c);
     for (const y of [1, 2.25, 3, 3.25, 3.5, 7.75, 8, 100]) {
       let expected = c.k, score = Infinity;

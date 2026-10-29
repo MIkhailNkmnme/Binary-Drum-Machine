@@ -8,7 +8,7 @@ function fixture(state={}){
  document:{body:{classList:{contains:c=>classes.has(c)}}},cv:{getBoundingClientRect:()=>({left:100,top:50})},scale:()=>10,
  fixShown:()=>st.fixLines!==false||st.fixCross!==false,fixBound:()=>st.fixLines!==false,
  fixSegments:()=>[[0,0,4,4,9,9,4]],fixPts:()=>new Map([['4:4',[4,4,4,4,4]]]),
- fixReal(){},fixMeetAt:()=>4,save(){},draw(){}};
+ fixReal(){},fixMeetAt:()=>4,save(){},draw(){},stop(){}};
  vm.createContext(context);
  const a=html.indexOf('  let fixDrag=null;'),b=html.indexOf('  const fixAt=',a);
  vm.runInContext(html.slice(a,b),context);
