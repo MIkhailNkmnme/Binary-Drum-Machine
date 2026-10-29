@@ -9,7 +9,7 @@ function fixture(state={}){
  const c={st:{rows:8,linesOn:false,ztopRow:4,ztlMain:true,ztMir:0,...state},f:{W:9,H:8,val:new Int8Array(72).fill(1)},geo:{anchor:4},VX:0,VW:9,VH:8,RK:1,img:{},devicePixelRatio:1,scale:()=>10,rombP:()=>-1,outShow:()=>false,guideHeight:()=>8,window:{},queueLineMeasures(){},mirPre(){},mirPut:(px,q,v)=>px[q]=v,save(){saved=json(c.st);},draw(){draws++;},$:id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);},document:{createElement(){const e=element();nodes.push(e);return e;},body:{append(){},classList:{contains:()=>false}}},ztl:element(),zlO:undefined};
  const rect={left:0,top:0,right:90,bottom:80,width:90,height:80};c.cv={getBoundingClientRect:()=>rect};c.wrap={clientWidth:90,clientHeight:80,getBoundingClientRect:()=>rect};c.axisStroke=(g,o)=>Style.stroke(g,{mode:c.st.axisPalette,...o});vm.createContext(c);
  c.dispW=()=>c.VW;c.MayatnikManualLines=require('./mayatnik-manual-lines.js');c.MayatnikManualLinesView={mount(options){c.manualCallbacks=options;return {render(snapshot){c.manualSnapshot=snapshot;}};}};c.manualLinesView=undefined;
- for(const name of ['zlFamilies','zlFamily','zlFamilyOn','zlColour','zlShowFamily','zlList','zlHalf','zlAdd','zlEnsure','zlNumbers','zlAxis','zlDraw','zTopLine','ztMirApply','zlMirApply','gpuMirPasses'])vm.runInContext(production(name),c);
+ for(const name of ['zlFamilies','zlFamily','zlFamilyOn','zlColour','zlShowFamily','zlList','zlHalf','zlAdd','zlEnsure','zlNumbers','zlAxis','zlDraw','zTopLine','manualMirrorPlan','zlMirApply','gpuMirPasses'])vm.runInContext(production(name),c);
  const start=html.indexOf('  const zLinesSync = '),end=html.indexOf('  // v0.365:',start);vm.runInContext(html.slice(start,end),c);
  const mirrors=html.indexOf('  window.mayLineMirrors=');vm.runInContext(html.slice(mirrors,html.indexOf('  function zlHalf(',mirrors)),c);
  return {c,drawn,elements,click:id=>c.$(id).onclick(),saved:()=>saved,draws:()=>draws};
@@ -39,8 +39,8 @@ test('add/remove and drag keep their family and preserve other axes',()=>{
 test('CPU and GPU mirror paths apply only visible families, preserving modes through off/on',()=>{
  for(const k of ['main','h','v','d','e'])for(const mode of [1,2]){
   const family=k==='main'?'h':k==='e'?'d':k,state={linesOn:true,lineFamilies:{h:false,v:false,d:false},ztMir:k==='main'?mode:0,zl:k==='main'?[]:[{k,p:k==='h'?3:k==='v'?0:k==='d'?0:4,m:mode}]};state.lineFamilies[family]=true;
-  const {c}=fixture(state),base=Uint32Array.from({length:72},(_,i)=>i+1),on=base.slice();c.ztMirApply(on);c.zlMirApply(on);assert.notDeepEqual(on,base,k+' mode '+mode);assert.equal(c.gpuMirPasses().out.length,1,k);
-  c.st.lineFamilies[family]=false;const off=base.slice();c.ztMirApply(off);c.zlMirApply(off);assert.deepEqual(off,base);assert.equal(c.gpuMirPasses().out.length,0);c.st.lineFamilies[family]=true;const restored=base.slice();c.ztMirApply(restored);c.zlMirApply(restored);assert.deepEqual(restored,on);
+  const {c}=fixture(state),base=Uint32Array.from({length:72},(_,i)=>i+1),on=base.slice();c.zlMirApply(on);assert.notDeepEqual(on,base,k+' mode '+mode);assert.equal(c.gpuMirPasses().out.length,1,k);
+  c.st.lineFamilies[family]=false;const off=base.slice();c.zlMirApply(off);assert.deepEqual(off,base);assert.equal(c.gpuMirPasses().out.length,0);c.st.lineFamilies[family]=true;const restored=base.slice();c.zlMirApply(restored);assert.deepEqual(restored,on);
  }
 });
 test('setting mirror mode wakes only its family, and disabling a mirror does not reveal hidden axes',()=>{
@@ -63,7 +63,7 @@ test('plus at zero creates independent numbered horizontal axes; dragging, mirro
 test('last-row centre and bottom boundary keep correct CPU/GPU mirror coordinates',()=>{
  for(const main of [true,false])for(const p of [7.5,8])for(const mode of [1,2]){
   const {c}=fixture({linesOn:true,lineFamilies:{h:true,v:false,d:false},ztopRow:p,ztMir:main?mode:0,zl:main?[]:[{k:'h',p,m:mode}]});
-  const base=Uint32Array.from({length:72},(_,i)=>i+1),paint=base.slice();c.ztMirApply(paint);c.zlMirApply(paint);assert.deepEqual(paint,base,'no opposite-side row exists at '+p);
+  const base=Uint32Array.from({length:72},(_,i)=>i+1),paint=base.slice();c.zlMirApply(paint);assert.deepEqual(paint,base,'no opposite-side row exists at '+p);
   assert.deepEqual(Array.from(c.gpuMirPasses().out[0].slice(0,4)),[3,mode,p%1?1:0,Math.floor(p)]);
  }
 });
