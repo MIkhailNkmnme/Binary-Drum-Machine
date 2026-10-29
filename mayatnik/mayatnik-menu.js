@@ -183,10 +183,15 @@
         let dx = Number.isFinite(ax) ? ax - c0 : 0; dx = Math.max(BR.left + 4 - L0, Math.min(BR.right - 4 - R0, dx)); const v = Math.round(dx) + 'px'; if (bar.style.getPropertyValue('--axdx') !== v) { bar.style.setProperty('--axdx', v); window.mayBotPlace?.(); } };   // v0.406: связка сдвинулась — группы внизу обходят её заново
       window.mayPlayPlace = playPlace;
       // v0.442: число сразу под линией бегунка; вне шестиугольника, чтобы его не обрезало.
-      const vl = mid.querySelector('.gz-vl');if(vl){vl.classList.add('may-frame-value');cell.after(vl);}
+      const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span');buildLabel.className='may-frame-type';if(vl){vl.classList.add('may-frame-value');cell.after(vl);vl.before(buildLabel);}
       const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),b=bar.getBoundingClientRect();
-        const x=(t.left+t.width/2-b.left-bar.clientLeft)+'px',y=(t.bottom-b.top-bar.clientTop)+'px';if(vl.style.left!==x)vl.style.left=x;if(vl.style.top!==y)vl.style.top=y;};
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style']});
+        const x=(t.left+t.width/2-b.left-bar.clientLeft)+'px',y=(t.bottom-b.top-bar.clientTop)+'px';if(vl.style.left!==x)vl.style.left=x;if(vl.style.top!==y)vl.style.top=y;
+        const type=$('frame').dataset.buildType||'Маятник';if(buildLabel.textContent!==type)buildLabel.textContent=type;
+        const anchor=parseFloat(x)-vl.offsetWidth/2-6,room=b.left+bar.clientLeft+anchor-4,below=room<48;
+        const left=(below?4-b.left-bar.clientLeft:anchor)+'px',width=Math.max(1,Math.min(300,below?innerWidth-8:room))+'px',transform=below?'none':'';
+        if(buildLabel.style.left!==left)buildLabel.style.left=left;if(buildLabel.style.maxWidth!==width)buildLabel.style.maxWidth=width;if(buildLabel.style.transform!==transform)buildLabel.style.transform=transform;
+        const top=Math.max(4-b.top-bar.clientTop,Math.min(parseFloat(y)+(below?14:0),innerHeight-b.top-bar.clientTop-buildLabel.offsetHeight-4))+'px';if(buildLabel.style.top!==top)buildLabel.style.top=top;};
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type']});
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)

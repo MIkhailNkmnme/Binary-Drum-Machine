@@ -27,7 +27,7 @@ function env({saved,ready=true,gpu=false,dpr=2,rect,templates=false}={}){
     img:pic,present:{clean:{pic}},cv,gpuCv,gpuBig:gpu?{}:null,gpuRaf:gpu?7:0,wrap,k:7,sessionReady:ready,
     templateCanvas:{hidden:!templates},templateItems:templates?[{view:{visible:true}}]:[],
     paintTemplate(g,x,y,s,contentOnly){assert.equal(contentOnly,true);events.push('template-content');const t=canvas(8,8);t.pixels[10]=0xff00aa33;g.drawImage(t,0,0,4,4);},
-    layout(){},scale:()=>.5,DPR:()=>dpr,rombP:()=>-1,gpuRender(){events.push('render');gpuCv.pixels.set(pixels);},
+    frameBuildTypeSync(){},layout(){},scale:()=>.5,DPR:()=>dpr,rombP:()=>-1,gpuRender(){events.push('render');gpuCv.pixels.set(pixels);},
     cancelAnimationFrame(id){events.push('cancel:'+id);queue.delete(id);},requestAnimationFrame(fn){const id=++rid;queue.set(id,fn);return id;},addEventListener(type,fn){listeners[type]=fn;},
     save(){saves.push(JSON.parse(JSON.stringify(ctx.st.ovl)));},document:{body:{classList:{contains:()=>false},append:c=>appended.push(c)},createElement:tag=>{assert.equal(tag,'canvas');return canvas();},querySelectorAll(){throw Error('service layer capture forbidden');}}
   });ctx.window=ctx;vm.runInContext(source,ctx);
