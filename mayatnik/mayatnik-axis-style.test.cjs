@@ -20,3 +20,11 @@ test('main diagonal is one continuous dash path with the original endpoints in b
  vm.createContext(c);vm.runInContext(html.slice(start,end)+';globalThis.run=run;',c);
  for(const sg of [-1,1]){c.run(7,sg,.5,12.25,4);const expected=[[13+(7+sg*.5+.5)*4,17+1*4],[13+(7+sg*12.25+.5)*4,17+12.75*4]];assert.deepEqual(records.at(-1),expected);assert.deepEqual(calls.at(-1).path.ops,[['move',...expected[0]],['line',...expected[1]]]);assert.equal(calls.at(-1).unit,.25);}
 });
+
+test('manual primary override keeps both solid backing and original dash geometry in Canvas and SVG',()=>{
+ const doc={createElementNS(){return{style:{},attrs:{},setAttribute(k,v){this.attrs[k]=v;}};}};
+ for(const mode of ['purple-black','purple-red'])for(const primary of ['#7cbcff','#ffcf73','#c89aff']){
+  const {ctx,calls}=context();A.stroke(ctx,{mode,primary,width:1});assert.deepEqual(calls.map(c=>c.colour),[A.palette(mode)[1],primary]);assert.deepEqual(calls.map(c=>c.dash),[[],[6,6]]);
+  const paths=A.svgPaths(doc,'M0 0L100 0',{mode,primary});assert.deepEqual(paths.map(p=>p.style.stroke),[A.palette(mode)[1],primary]);assert.equal(paths[0].attrs['stroke-dasharray'],undefined);assert.equal(paths[1].attrs['stroke-dasharray'],'6 6');
+ }
+});

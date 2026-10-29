@@ -17,7 +17,7 @@ function setup(seed={}){
   const button=(id,withData=true)=>{const node=new Element('gz-hx');if(withData)node.dataset.n=id;node.style.left='112px';node.style.top='27px';native[id]={click:()=>counts[id]=(counts[id]||0)+1};node.onclick=()=>native[id].click();nodes[id]=node;return node;};
   const group=name=>{const g=new Element('pt-g'),head=new Element('pt-l',name),row=new Element('pt-r');g.append(head,row);tools.append(g);return row;};
   const zoom=new Element('gz-group');zoom.dataset.id='zoom';const soty=new Element('gz-soty');zoom.append(soty);rail.append(zoom);
-  const zoomIds=['zFit','zoomEdges','zLock','zLines','zVert','zDiag','zSnap'];for(const id of zoomIds){const node=button(id,false);soty.append(node);if(id!=='zoomEdges')railButtons.set(id,node);}
+  const zoomIds=['zFit','zoomEdges','zLock','zLines','zVert','zDiag','zSnap','zHoriz'];for(const id of zoomIds){const node=button(id,false);soty.append(node);if(id!=='zoomEdges')railButtons.set(id,node);}
   const snapPopup={options:()=>['Плавно','×2','×3']};nodes.zSnap.gzList=snapPopup;
   const axes=group('Оси');for(const id of ['sym','symV','symH','symD','symTriangles','bTriangleAxes','bFrameWindow','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler'])axes.append(button(id));
   const view=group('Вид'),section=new Element('pt-col');view.append(section);for(const id of ['bFoldCompare','bFoldHorizontal','bFoldVertical','geomCenter'])section.append(button(id));
@@ -29,11 +29,12 @@ function setup(seed={}){
 }
 
 test('manual group receives existing live controls and callbacks; automatic axes, regular folds and popups remain owned by their original groups',()=>{
-  const e=setup(),ids=['zLines','zVert','zDiag','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler','bFoldCompare'];
+  const e=setup(),ids=['zLines','zVert','zHoriz','zDiag','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler','bFoldCompare'];
   assert.deepEqual(e.row.children,ids.map(id=>e.nodes[id]));assert.equal(e.row.parentElement.dataset.k,'Ручные оси');
   for(const id of ids){assert.equal(e.nodes[id].onclick,e.callbacks[id]);e.nodes[id].click();assert.equal(e.counts[id],1);assert.equal(e.nodes[id].style.left,'');assert.equal(e.nodes[id].style.top,'');}
   assert.ok(e.axes.children.includes(e.nodes.symTriangles));assert.ok(e.axes.children.includes(e.nodes.bTriangleAxes));assert.ok(e.section.children.includes(e.nodes.bFoldHorizontal));assert.ok(e.section.children.includes(e.nodes.geomCenter));
   assert.ok(e.soty.children.includes(e.nodes.zSnap));assert.equal(e.nodes.zSnap.gzList,e.snapPopup);
+  for(const [id,colour]of [['zHoriz','#7cbcff'],['zVert','#ffcf73'],['zDiag','#c89aff']])assert.equal(e.nodes[id].style['--c'],colour);
 });
 
 test('mini migration preserves each old zoom ordinal and old group key with backup; F5 does not overwrite saved group layouts',()=>{

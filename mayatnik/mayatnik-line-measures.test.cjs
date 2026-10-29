@@ -59,3 +59,13 @@ test('Canvas capture preserves drawing calls, clip rectangles and bit coordinate
   assert.equal(strokes,2);
   assert.deepEqual(captured.map(l=>[l.a,l.b]),[[[2,0],[8,0]],[[0,0],[0,10]]]);
 });
+
+test('manual axis metadata survives measurement splitting and renders two SVG passes in both palettes',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),AxisStyle=require('./mayatnik-axis-style.js'),source=fs.readFileSync(__dirname+'/mayatnik-line-measures.js','utf8'),start=source.indexOf('      const foreground='),end=source.indexOf('      items=new Map();',start);
+ const input=[{a:[0,0],b:[20,0],color:'#7cbcff',axisPrimary:'#7cbcff'},{a:[10,-10],b:[10,10],color:'#ffcf73',axisPrimary:'#ffcf73'},{a:[0,-10],b:[20,10],color:'#c89aff',axisPrimary:'#c89aff'},{a:[0,30],b:[20,30],color:'#123456'}];
+ const split=M.split(input);assert.deepEqual(split.map(l=>l.axisPrimary),['#7cbcff','#ffcf73','#c89aff',undefined]);assert.ok(split.slice(0,3).every(l=>l.segments.length===2));
+ for(const axisPalette of ['purple-black','purple-red']){let drawn;const document={createElementNS(){return{style:{},attrs:{},setAttribute(k,v){this.attrs[k]=v;}};}};
+  vm.runInNewContext(source.slice(start,end),{input,view:{axisPalette},p:v=>v,merge:M.merge,PURPLE:AxisStyle.PURPLE,AxisStyle,document,ns:'svg',guides:{replaceChildren(...paths){drawn=paths;}}});
+  assert.equal(drawn.length,7);for(let i=0;i<3;i++){assert.equal(drawn[2*i].style.stroke,AxisStyle.palette(axisPalette)[1]);assert.equal(drawn[2*i].attrs['stroke-dasharray'],undefined);assert.equal(drawn[2*i+1].style.stroke,input[i].color);assert.equal(drawn[2*i+1].attrs['stroke-dasharray'],'6 6');}assert.equal(drawn[6].style.stroke,'#123456');assert.equal(drawn[6].attrs['stroke-dasharray'],undefined);
+ }
+});

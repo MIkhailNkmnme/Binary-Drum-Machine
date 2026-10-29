@@ -26,14 +26,14 @@
       const sign=delta[0]<-EPS||Math.abs(delta[0])<EPS&&delta[1]<0?-1:1,u=delta.map(v=>v/norm*sign);
       const offset=cross(u,line.a),id=[...u,offset].map(key).join(':'),t=p=>p[0]*u[0]+p[1]*u[1];
       if(!groups.has(id))groups.set(id,{u,offset,spans:[]});
-      groups.get(id).spans.push({lo:Math.min(t(line.a),t(line.b)),hi:Math.max(t(line.a),t(line.b)),color:line.color||'#b48cff'});
+      groups.get(id).spans.push({lo:Math.min(t(line.a),t(line.b)),hi:Math.max(t(line.a),t(line.b)),color:line.color||'#b48cff',...(line.axisPrimary?{axisPrimary:line.axisPrimary}:{})});
     }
     const result=[];
     for(const {u,offset,spans} of groups.values()) {
       spans.sort((a,b)=>a.lo-b.lo);const united=[];
       for(const span of spans){const last=united[united.length-1];if(last&&span.lo<=last.hi+EPS)last.hi=Math.max(last.hi,span.hi);else united.push({...span});}
       const point=t=>[u[0]*t-u[1]*offset,u[1]*t+u[0]*offset];
-      for(const span of united){const a=point(span.lo),b=point(span.hi);result.push({a,b,color:span.color,id:[...a,...b].map(key).join(':'),length:length(a,b)});}
+      for(const span of united){const a=point(span.lo),b=point(span.hi);result.push({a,b,color:span.color,...(span.axisPrimary?{axisPrimary:span.axisPrimary}:{}),id:[...a,...b].map(key).join(':'),length:length(a,b)});}
     }
     return result;
   }
@@ -123,13 +123,13 @@
       view=nextView;root.hidden=!view;if(!view){items.clear();highlight(null);return;}
       Object.assign(root.style,{left:view.left+'px',top:view.top+'px',width:view.width+'px',height:view.height+'px'});
       svg.setAttribute('viewBox',`0 0 ${view.width} ${view.height}`);
-      const serialized=JSON.stringify(input.map(l=>[...l.a,...l.b,l.color].map(v=>typeof v==='number'?key(v):v)));
+      const serialized=JSON.stringify(input.map(l=>[...l.a,...l.b,l.color,l.axisPrimary].map(v=>typeof v==='number'?key(v):v)));
       if(serialized!==cacheKey){cache=split(input);cacheKey=serialized;}
       const p=q=>[q[0]*view.scale+view.x,q[1]*view.scale+view.y];
       const foreground=[...merge(input.filter(l=>l.color!==PURPLE)),...merge(input.filter(l=>l.color===PURPLE)),...(view.axis?[view.axis]:[])],groups=new Map();
-      for(const line of foreground){const color=/^#0{3}(?:0{3})?$/i.test(line.color)?'#b48cff':line.color,k=color+'|'+!!line.dash;
-        if(!groups.has(k))groups.set(k,{color,dash:line.dash,paths:[]});groups.get(k).paths.push('M'+p(line.a).join(',')+'L'+p(line.b).join(','));}
-      guides.replaceChildren(...[...groups.values()].flatMap(group=>{const d=group.paths.join('');if(group.color===PURPLE&&AxisStyle?.svgPaths)return AxisStyle.svgPaths(document,d,{mode:view.axisPalette});const q=document.createElementNS(ns,'path');q.style.stroke=group.color;q.setAttribute('d',d);if(group.dash)q.setAttribute('stroke-dasharray','4 3');return [q];}));
+      for(const line of foreground){const color=/^#0{3}(?:0{3})?$/i.test(line.color)?'#b48cff':line.color,k=color+'|'+!!line.dash+'|'+(line.axisPrimary||'');
+        if(!groups.has(k))groups.set(k,{color,axisPrimary:line.axisPrimary,dash:line.dash,paths:[]});groups.get(k).paths.push('M'+p(line.a).join(',')+'L'+p(line.b).join(','));}
+      guides.replaceChildren(...[...groups.values()].flatMap(group=>{const d=group.paths.join('');if((group.color===PURPLE||group.axisPrimary)&&AxisStyle?.svgPaths)return AxisStyle.svgPaths(document,d,{mode:view.axisPalette,primary:group.axisPrimary});const q=document.createElementNS(ns,'path');q.style.stroke=group.color;q.setAttribute('d',d);if(group.dash)q.setAttribute('stroke-dasharray','4 3');return [q];}));
       items=new Map();const candidates=[],box={left:-view.x/view.scale,top:-view.y/view.scale,right:(view.width-view.x)/view.scale,bottom:(view.height-view.y)/view.scale};
       for(const line of cache){
         const pieces=line.segments.length>1?[{...line,whole:true},...line.segments.map(s=>({...s,whole:false}))]:[{...line,whole:true}];
