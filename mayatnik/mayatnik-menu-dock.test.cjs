@@ -30,7 +30,7 @@ function fixture(saved={},options={}){
   getBoundingClientRect(){return {...this.box,right:this.box.left+this.box.width,bottom:this.box.top+this.box.height};}getClientRects(){return [this.box];}setAttribute(k,v){this.attrs[k]=v;}append(n){this.children.push(n);n.parentElement=this;}replaceChildren(){this.children=[];}querySelector(){return this.hd;}closest(s){return s.includes('.pt-l')?this:null;}}
  const body=new El(),rail=new El({left:8,top:60,width:120,height:650}),tools=new El({left:160,top:8,width:830,height:42}),header=new El({left:0,top:0,width:1000,height:50}),footer=new El({left:0,top:752,width:1000,height:32});
  const gs=[0,1].map(i=>{const g=new El();g.id='g'+i;g.hd=new El({left:8,top:62+i*26,width:120,height:24});g.parentElement=rail;return g;});
- const ctx={module:{exports:{}},globalThis:null,document:{body,createElement:()=>new El(),createElementNS:()=>new El(),addEventListener:listen(docEvents)},localStorage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)},addEventListener:listen(events),requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},setTimeout:()=>0,get innerWidth(){return width;}};ctx.globalThis=ctx;
+ const ctx={module:{exports:{}},globalThis:null,document:{body,createElement:()=>new El(),createElementNS:()=>new El(),addEventListener:listen(docEvents)},getComputedStyle:node=>node.style||{},localStorage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)},addEventListener:listen(events),requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},setTimeout:()=>0,get innerWidth(){return width;}};ctx.globalThis=ctx;
  vm.runInNewContext(fs.readFileSync(require.resolve('./mayatnik-menu-dock.js'),'utf8'),ctx);
  const dock=ctx.module.exports.mount({groups:()=>gs,idOf:g=>g.id,header,tools,footer,rail,rightEdge:()=>width,moveToTools:g=>tools.append(g),onLayout:()=>{},...options});frames.splice(0).forEach(fn=>fn());
  const event=(type,props={},doc=false)=>{const e={type,button:0,pointerId:1,preventDefault(){},stopImmediatePropagation(){},...props};for(const fn of (doc?docEvents:events).get(type)||[])fn(e);};
@@ -105,20 +105,33 @@ test('side column scroll exposes lower groups without changing saved grid slots;
  const bar=f.body.children.find(n=>n.dataset.edge==='left');assert.equal(bar.style.display,'block');bar.scrollTop=100;bar.events.scroll();f.flush();assert.equal(f.gs[1].style['--may-dock-y'],'764px');assert.equal(f.gs[0].style['--may-side-clip-top'],'100px');let stopped=false;f.event('wheel',{target:{closest:()=>f.gs[0]},deltaY:999,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(stopped,true);assert.equal(f.gs[1].style['--may-dock-y'],'754px');assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);
  f.gs[0].box.height=24;f.dock.refresh();assert.equal(bar.style.display,'none');assert.equal(bar.scrollTop,0);assert.equal(f.gs[1].style['--may-dock-y'],'84px');
 });
-test('overflow wheel first reaches an edge then wraps on the next outward wheel',()=>{
- const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})}),saved=f.store.get('mayatnik-menu-dock-v509');f.gs[0].box.height=780;f.dock.refresh();
- const bar=f.body.children.find(n=>n.dataset.edge==='left'),max=parseFloat(bar.children[0].style.height)-parseFloat(bar.style.height),target={closest:()=>f.gs[0]};
- const wheel=(delta,extra={})=>{f.event('wheel',{target,deltaY:delta,deltaMode:0,...extra},true);f.flush();};
- wheel(60);assert.equal(bar.scrollTop,60);wheel(1000);assert.equal(bar.scrollTop,max,'overshoot from the middle lands at the bottom');
- wheel(1);assert.equal(bar.scrollTop,0);wheel(-1);assert.equal(bar.scrollTop,max);wheel(-1000);assert.equal(bar.scrollTop,0);
- for(const extra of [{ctrlKey:true},{defaultPrevented:true}]){wheel(60,extra);assert.equal(bar.scrollTop,0);}
- assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved);
+test('both side columns clamp repeated wheel at either edge over buttons and field gaps in every delta mode',()=>{
+ for(const edge of ['left','right'])for(const route of ['button','disabled button','gap'])for(const deltaMode of [0,1,2]){
+  const saved=JSON.stringify({g0:{edge,index:0},g1:{edge,index:1}}),f=fixture({'mayatnik-menu-dock-v509':saved});f.gs[0].box.height=2000;f.dock.refresh();
+  const bar=f.body.children.find(n=>n.dataset.edge===edge),height=parseFloat(bar.style.height),max=parseFloat(bar.children[0].style.height)-height;
+  const target=route==='gap'?{id:'wrap',closest:s=>s==='#wrap'?target:null}:{disabled:route==='disabled button',closest:s=>s==='.may-dock-side'?f.gs[0]:null};
+  const label=`${edge} ${route} mode ${deltaMode}`,factor=deltaMode===1?D.DY:deltaMode===2?height:1;
+  const wheel=(delta,extra={})=>{let prevented=false,stopped=false;f.event('wheel',{target,clientX:edge==='left'?68:936,clientY:200,deltaY:delta,deltaMode,preventDefault(){prevented=true;},stopImmediatePropagation(){stopped=true;},...extra},true);f.flush();return {prevented,stopped};};
+  for(const extra of [{ctrlKey:true},{defaultPrevented:true}]){wheel(1,extra);assert.equal(bar.scrollTop,0,label);}
+  wheel(.25);assert.equal(bar.scrollTop,.25*factor,label+' converts pixels, lines and pages');
+  assert.deepEqual(wheel(10000),{prevented:true,stopped:true},label);assert.equal(bar.scrollTop,max,label+' overshoot lands at bottom');
+  for(const delta of [.01,1,10000]){assert.deepEqual(wheel(delta),{prevented:true,stopped:true},label+' still owns outward wheel');assert.equal(bar.scrollTop,max,label+' stays at bottom');}
+  wheel(-.25);assert.equal(bar.scrollTop,max-.25*factor,label+' reverses immediately');
+  wheel(-10000);assert.equal(bar.scrollTop,0,label+' overshoot lands at top');
+  for(const delta of [-.01,-1,-10000]){assert.deepEqual(wheel(delta),{prevented:true,stopped:true},label+' still owns outward wheel');assert.equal(bar.scrollTop,0,label+' stays at top');}
+  wheel(.25);assert.equal(bar.scrollTop,.25*factor,label+' reverses immediately');
+  for(const deltaY of [0,NaN,Infinity,-Infinity]){wheel(deltaY);assert.equal(bar.scrollTop,.25*factor,label+' ignores empty/invalid delta');}
+  assert.equal(f.store.get('mayatnik-menu-dock-v509'),saved,label+' preserves saved slots');
+ }
 });
 test('side wheel leaves sliders, editable fields, cycle controls and nested scrolling lists alone',()=>{
- const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'left',index:0},g1:{edge:'left',index:1}})});f.gs[0].box.height=780;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge==='left');
- for(const selector of ['input','textarea','select','[role="slider"]','.gz-control','.gz-ladder','[data-n="fontCycle"]','[data-n="sizeCtl"]','[data-n="viewCycle"]']){
+ for(const edge of ['left','right']){const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge,index:0},g1:{edge,index:1}})});f.gs[0].box.height=780;f.dock.refresh();const bar=f.body.children.find(n=>n.dataset.edge===edge);
+ for(const selector of ['input','textarea','select','[contenteditable]','[role="slider"]','.gz-control','.gz-val','.gz-vpair','.gz-sl','.gz-sl2','.may-slide','.gz-ladder','.may-hp-pop','[role="listbox"]','[data-n="fontCycle"]','[data-n="sizeCtl"]','[data-n="viewCycle"]']){
   const control={matches:selectors=>selectors.includes(selector)},target={closest:selectors=>selectors==='.may-dock-side'?f.gs[0]:control};let stopped=false;
   f.event('wheel',{target,deltaY:80,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(bar.scrollTop,0,selector);assert.equal(stopped,false,selector);
+ }
+ const list={scrollHeight:500,clientHeight:100,style:{overflowY:'auto'},closest:s=>s==='.may-dock-side'?f.gs[0]:null};
+ for(const scrollTop of [0,400]){list.scrollTop=scrollTop;let stopped=false;f.event('wheel',{target:list,deltaY:scrollTop?80:-80,deltaMode:0,preventDefault(){stopped=true;}},true);f.flush();assert.equal(bar.scrollTop,0,edge+' nested native list owns wheel even at its limits');assert.equal(stopped,false);}
  }
 });
 

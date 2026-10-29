@@ -106,9 +106,8 @@
       }
       const delta=e.deltaY*(e.deltaMode===1?DY:e.deltaMode===2?parseFloat(side.bar.style.height):1);if(!Number.isFinite(delta)||!delta)return;
       const current=side.bar.scrollTop;
-      // Crossing an edge first lands there. Only a subsequent outward wheel
-      // wraps, so a large delta in the middle cannot jump past unseen groups.
-      side.bar.scrollTop=delta>0&&current>=side.max-.5?0:delta<0&&current<=.5?side.max:Math.max(0,Math.min(side.max,current+delta));
+      // Keep outward wheel events at the edge and owned by this column.
+      side.bar.scrollTop=Math.max(0,Math.min(side.max,current+delta));
       e.preventDefault();e.stopImmediatePropagation();queueStack();
     }
     // Gaps hit the canvas under the menu. Route those coordinates before its
