@@ -34,7 +34,7 @@ function harness({rows=100,cols=10,gpu=false,entries}={}){
     f:{val:new Int8Array(rows*cols)},geo:{anchor:0},img:gpu?null:{width:cols,height:rows},gpuBig:gpu?{fresh:false,fld:{render(ctx,options){calls.gpu.push({ctx,options});}}}:null,
     gpuCv:null,cv,wrap:{clientWidth:100,clientHeight:100,getBoundingClientRect:()=>({...viewport})},
     VH:rows,VW:cols,VX:7,RK:1,RG:0,EMPTY:[13,15,22],st:{rows,view:'bits',digitSize:80},
-    dispW:()=>cols,scale:()=>10,DPR:()=>1,rombP:()=>-1,templateItems:[],playing:false,
+    dispW:()=>cols,scale:()=>10,DPR:()=>1,rombP:()=>-1,gpuCpuOchki:()=>false,gpuDisplay:()=>gpu,templateItems:[],playing:false,
     layerCpuService:null,layerDigitService:null,
     window:{mayLayers:{list:()=>descriptors,_entry:()=>({node:original,enabled:true})}},
     document:{querySelectorAll:()=>[],createElement:()=>canvas(1,1,viewport)},gpuApi:{attach:()=>({gpuContext:true})},

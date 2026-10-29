@@ -54,7 +54,7 @@ function fixture(view,mode,rk){
     $:id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',hidden:false,selectedOptions:[{textContent:'Начальная'}]});return nodes.get(id);},sequences:{rows:['1011'],revision:1,setMatches(){}},setTimeout:()=>0,clearTimeout(){},localStorage:{getItem:()=>null,setItem(){}},window:{},pairOn:()=>false,parityVisible:()=>true,outShow:()=>false,outZone:()=>false,joinedOn:()=>false,rgba:colour,HL0,HL1,
     DPR:()=>1,scale:()=>st.zoom,rombP:()=>view==='flat'?-1:view==='romb0'?0:view==='romb1'?1:2,clampInt:(v,a,b,d)=>Math.max(a,Math.min(b,+v||d))};
   c.halfOf=fx=>c.rombP()!==2?[c.rombP(),fx]:fx<VW?[0,fx]:fx>=VW+RG?[1,fx-VW-RG]:null;
-  vm.createContext(c);vm.runInContext(finderSource,c);for(const name of ['drawRomb','downsampleRaster','rombCell','displayCell','displayPoint'])vm.runInContext(fn(name),c);return c;
+  Object.assign(c,{gpuBig:null,gpuDisplay:()=>false});vm.createContext(c);vm.runInContext(finderSource,c);for(const name of ['drawRomb','downsampleRaster','rombCell','displayCell','displayPoint'])vm.runInContext(fn(name),c);return c;
 }
 function logicalCandidates(c){
   const [dx,dy,dir]=directions[c.st.ochkiMode],out=new Map();

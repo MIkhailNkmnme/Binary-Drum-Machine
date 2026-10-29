@@ -448,16 +448,22 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
       }
       // Видеокарта → поле ядра; into — Int8Array W*H (по умолчанию новый)
       async function read(into) {
-        const n = W * H, outBytes = Math.ceil(n / 4) * 4, out = device.createBuffer({ size: outBytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
-        const rb = device.createBuffer({ size: outBytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+        const n = W * H, outBytes = Math.ceil(n / 4) * 4;
+        if(outBytes>device.limits.maxStorageBufferBindingSize||outBytes>device.limits.maxBufferSize)throw Error(`Полный снимок поля требует ${Math.ceil(outBytes/1048576)} МиБ; превышен лимит буфера видеокарты. Поиск не выполнен.`);
+        if(into&&into.length!==n)throw Error('Размер приёмника полного GPU-снимка не совпадает с полем');
+        let out,rb,mapped=false;
+        try{
+        out = device.createBuffer({ size: outBytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
+        rb = device.createBuffer({ size: outBytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
         const bg0 = device.createBindGroup({ layout: pipeUnpack.getBindGroupLayout(0), entries: [
           { binding: 0, resource: { buffer: pBuf } }, { binding: 1, resource: { buffer: bitsBuf } }, { binding: 2, resource: { buffer: hasBuf } }, { binding: 3, resource: { buffer: out } }] });
         const enc = device.createCommandEncoder(), pass = enc.beginComputePass(), [gx, gy] = grid(Math.ceil(outBytes / 4 / 64));
         pass.setPipeline(pipeUnpack); pass.setBindGroup(0, bg0); pass.dispatchWorkgroups(gx, gy); pass.end();
         enc.copyBufferToBuffer(out, 0, rb, 0, outBytes); device.queue.submit([enc.finish()]);
-        await rb.mapAsync(GPUMapMode.READ);
-        const val = into || new Int8Array(n); val.set(new Int8Array(rb.getMappedRange(), 0, n)); rb.unmap(); rb.destroy(); out.destroy();
+        await rb.mapAsync(GPUMapMode.READ);mapped=true;
+        const val = into || new Int8Array(n); val.set(new Int8Array(rb.getMappedRange(), 0, n));
         return val;
+        }finally{if(mapped)rb.unmap();rb?.destroy();out?.destroy();}
       }
       // Картинка окна (буфер pic, как img страницы): o = { VX, VW, VH — окно; tint: 0 — нет, 1 — по размаху lo…hi, 2 — пара (k); filled;
       // T — 6 цветов u32 (как rgba страницы), empty; zl — Int32Array ZL, затем ZR (или null); nb2 — «до треугольника», sides — [L0, R0, L1, R1];
