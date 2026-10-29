@@ -22,19 +22,23 @@
     }
     return {rows,words:operations,cells};
   }
-  function* findSteps({width,height,val,anchor=0,sequence=[],inverse=false,reverse=false,parities=[0,1],halves:outputHalves=parities.length,maxOperations=Infinity,maxEntries=Infinity,maxMs=Infinity,chunkMs=125,chunkOperations=Infinity}){
+  function* findSteps({width,height,val,anchor=0,sequence=[],inverse=false,reverse=false,parities=[0,1],halves:outputHalves=parities.length,skipIndices=[[],[]],maxOperations=Infinity,maxEntries=Infinity,maxMs=Infinity,chunkMs=125,chunkOperations=Infinity}){
     if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||!val||val.length<width*height||sequence.some(s=>typeof s!=='string'||!/^[01]+$/.test(s)))throw Error('Некорректные данные поиска змеи.');
     if(!Array.isArray(parities)||!parities.length||parities.some(p=>p!==0&&p!==1)||new Set(parities).size!==parities.length)throw Error('Некорректные решётки поиска змеи.');
+    if(!Array.isArray(skipIndices)||skipIndices.length!==2||skipIndices.some(indices=>!Array.isArray(indices)||indices.some(i=>!Number.isInteger(i)||i<0||i>=sequence.length)))throw Error('Некорректные исключения поиска змеи.');
+    const excluded=skipIndices.map(indices=>new Set(indices));
     const N=width*height,total=sequence.length*parities.length,found=[],hl=new Uint8Array(N),started=Date.now();let operations=0,entries=0,peakEntries=0,complete=true,reason='',chunkStarted=started,chunkAt=0,currentIndex=0,currentHalf=0,reportedFound=0,prepassWords=0,prepassCells=0;
     const limit={};const tick=()=>{operations++;if(operations>maxOperations||(operations%1024===0&&Date.now()-started>maxMs))throw limit;return operations-chunkAt>=chunkOperations||operations%1024===0&&Date.now()-chunkStarted>=chunkMs;};
     const progress=()=>{chunkStarted=Date.now();chunkAt=operations;const newFound=found.slice(reportedFound);reportedFound=found.length;return {operations,entries,peakEntries,found:found.length,total,halves:outputHalves,index:currentIndex,half:currentHalf,newFound};};
     const prepassCheckpoint=work=>{operations+=work;const now=Date.now();if(operations>maxOperations||now-started>maxMs)throw limit;return operations-chunkAt>=chunkOperations||now-chunkStarted>=chunkMs?progress():null;};
     const inv=s=>s.replace(/[01]/g,v=>v==='1'?'0':'1'),rev=s=>s.split('').reverse().join('');
     const variants=sequence.map(text=>{const out=[[text,'']];if(inverse)out.push([inv(text),'инв']);if(reverse)out.push([rev(text),'рев']);if(inverse&&reverse)out.push([rev(inv(text)),'инв+рев']);return out;});
+    const needs=[new Map(),new Map()];for(const p of parities)for(let i=0;i<variants.length;i++)if(!excluded[p].has(i))for(const text of new Set(variants[i].map(v=>v[0])))needs[p].set(text,(needs[p].get(text)||0)+1);
+    if(parities.every(p=>!needs[p].size))return {found,hl,total,halves:outputHalves,snake:true,complete:true,reason:'',operations:0,entries:0,peakEntries:0,prepassWords:0,prepassCells:0,elapsedMs:Date.now()-started};
     const starts=[[],[],[],[]],impossible=[{},{}];
     // During one starting row, index = row - startingRow. A shared sliding
     // workspace therefore needs width*maxWordLength slots, not a Map per word.
-    const depth=Math.min(height,Math.max(1,...sequence.map(text=>text.length))),memoValues=new Uint32Array(width*depth),memoStamp=new Uint32Array(width*depth);let generation=1,memoOffset=0;
+    const depth=Math.min(height,Math.max(1,...needs.flatMap(map=>Array.from(map.keys(),text=>text.length)))),memoValues=new Uint32Array(width*depth),memoStamp=new Uint32Array(width*depth);let generation=1,memoOffset=0;
     const workspace={has:q=>memoStamp[q-memoOffset]===generation,get:q=>memoStamp[q-memoOffset]===generation?memoValues[q-memoOffset]:undefined,set(q,value){memoStamp[q-memoOffset]=generation;memoValues[q-memoOffset]=value;},clear(){if(++generation===4294967295){memoStamp.fill(0);generation=1;}}};
     // Only an exhaustive zero-path result is reusable as an impossible prefix.
     // Consuming one occurrence never forbids its starting cell or its prefix.
@@ -42,7 +46,7 @@
     const rememberImpossible=(text,p)=>{let node=impossible[p];for(const bit of text)node=node[bit]||(node[bit]={});node.end=true;};
     const firstRows=new Map();
     function* firstRow(text,p){
-      if(!firstRows.has(text)){const result=yield* earliestSteps({width,height,val,anchor,text,skip:[!parities.includes(0)||knownImpossible(text,0),!parities.includes(1)||knownImpossible(text,1)]},prepassCheckpoint);prepassWords+=result.words;prepassCells+=result.cells;firstRows.set(text,result.rows);for(const half of parities)if(result.rows[half]<0)rememberImpossible(text,half);}
+      if(!firstRows.has(text)){const result=yield* earliestSteps({width,height,val,anchor,text,skip:[!needs[0].has(text)||knownImpossible(text,0),!needs[1].has(text)||knownImpossible(text,1)]},prepassCheckpoint);prepassWords+=result.words;prepassCells+=result.cells;firstRows.set(text,result.rows);for(const half of parities)if(needs[half].has(text)&&result.rows[half]<0)rememberImpossible(text,half);}
       return firstRows.get(text)[p];
     }
     function occurrence(text,cap,p){
@@ -72,10 +76,9 @@
       function* path(q,which){const cells=[q];for(let i=1;i<text.length;i++){for(const next of children(q)){const n=yield* count(next,i);if(which<n){q=next;cells.push(q);break;}which-=n;}}return cells;}
       return { *peek(){if(pending)return pending;if(!text.length||text.length>height||knownImpossible(text,p))return null;if(!seeded){const row=yield* firstRow(text,p);seeded=true;if(row<0)return null;const minimum=row*width;let lo=0,hi=candidates.length;while(lo<hi){const mid=(lo+hi)>>>1;if(candidates[mid]<minimum)lo=mid+1;else hi=mid;}cursor=lo;}startRow=-1;while(cursor<candidates.length&&candidates[cursor]<lastStart){if(tick())yield progress();const q=candidates[cursor],c=q%width,r=Math.floor(q/width);if(r!==startRow){release();startRow=r;memoOffset=r*width;}const n=yield* count(q,0);if(rank<n){pending={cells:yield* path(q,rank),r,c};everFound=true;release();return pending;}cursor++;rank=0;}release();if(!everFound)rememberImpossible(text,p);return null;},take(){rank++;pending=null;}};
     }
-    const needs=new Map();for(const vars of variants)for(const text of new Set(vars.map(v=>v[0])))needs.set(text,(needs.get(text)||0)+1);
-    const halves=[0,1].map(p=>new Map(Array.from(needs,([text,cap])=>[text,occurrence(text,cap,p)])));
+    const halves=[0,1].map(p=>new Map(Array.from(needs[p],([text,cap])=>[text,occurrence(text,cap,p)])));
     try{for(let q=0;q<N;q++){if(tick())yield progress();const bit=val[q];if(bit===0||bit===1)starts[2*((q%width-anchor-Math.floor(q/width))&1)+bit].push(q);}for(let i=0;i<variants.length;i++)for(const p of parities){
-      currentIndex=i;currentHalf=p;const occurrences=halves[p];let best=null;for(const [text,vn]of variants[i]){const hit=yield* occurrences.get(text).peek();if(hit&&(!best||hit.r<best.r||hit.r===best.r&&hit.c<best.c))best={...hit,text,vn};}if(!best)continue;occurrences.get(best.text).take();found.push({i,p,r:best.r,c:best.c,n:best.cells.length,cells:best.cells,vn:best.vn,dir:'snake'});for(const cell of best.cells)hl[cell]=1;
+      if(excluded[p].has(i))continue;currentIndex=i;currentHalf=p;const occurrences=halves[p];let best=null;for(const [text,vn]of variants[i]){const hit=yield* occurrences.get(text).peek();if(hit&&(!best||hit.r<best.r||hit.r===best.r&&hit.c<best.c))best={...hit,text,vn};}if(!best)continue;occurrences.get(best.text).take();found.push({i,p,r:best.r,c:best.c,n:best.cells.length,cells:best.cells,vn:best.vn,dir:'snake'});for(const cell of best.cells)hl[cell]=1;
     }}catch(e){if(e!==limit)throw e;complete=false;reason='Достигнут предел поиска змеи; проверены не все пути.';}
     return {found,hl,total,halves:outputHalves,snake:true,complete,reason,operations,entries,peakEntries,prepassWords,prepassCells,elapsedMs:Date.now()-started};
   }

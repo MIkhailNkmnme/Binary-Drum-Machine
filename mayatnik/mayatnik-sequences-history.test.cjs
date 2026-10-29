@@ -9,6 +9,14 @@ test('table keeps old gold rows when a later frame finds a new row; field matche
  assert.deepEqual(state.foundHistory.map(e=>e.i),[0,1,2,3,4,5,6,7,14]);assert.deepEqual(state.matches.found.map(e=>e.i),[14]);assert.equal(state.foundHistory[0].frame,8);
  api.setMatches(result(16,[],{active:false,reason:'searching',foundEver:9,foundIndices:[0,1,2,3,4,5,6,7,14]}));assert.equal(api.snapshot().foundHistory.length,9);
 });
+
+test('search scope resets gold history, while frame changes and a later opposite-half find preserve it',()=>{
+ const api=make();api.setMatches(result(8,[hit(2)],{halves:2,searchScope:'searchA',complete:true}));api.setMatches(result(9,[{...hit(2),p:1}],{halves:2,searchScope:'searchA',complete:true}));
+ assert.deepEqual(api.snapshot().foundHistory[0].hits.map(h=>h.p),[0,1]);api.setMatches(result(10,[],{halves:2,searchScope:'searchA',complete:true}));assert.equal(api.snapshot().foundHistory.length,1);
+ api.setMatches(result(11,[],{active:false,searchScope:'searchB'}));assert.equal(api.snapshot().foundHistory.length,0);
+ api.setMatches(result(12,[hit(4)],{searchScope:'searchB',complete:false}));assert.equal(api.snapshot().foundHistory.length,0,'partial findings remain current-only');
+ api.setMatches(result(12,[hit(4)],{searchScope:'searchB',complete:true}));assert.equal(api.snapshot().foundHistory.length,1);
+});
 test('turning off or applying a different sequence clears table history without retaining stale indices',()=>{
  const api=make();api.setMatches(result(8,[hit(7)],{foundEver:1,foundIndices:[7]}));api.setMatches({enabled:false,active:false,found:[]});assert.equal(api.snapshot().foundHistory.length,0);
  api.setMatches(result(15,[hit(14)],{foundEver:1,foundIndices:[14]}));api.setText('0\n10');assert.equal(api.snapshot().foundHistory.length,0);assert.deepEqual(api.snapshot().matches.found,[]);

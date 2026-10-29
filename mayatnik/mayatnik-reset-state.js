@@ -3,10 +3,10 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikResetState=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
   const off=('outline third sym symBits symV symH symD symPlainV symPlainH symPlainD symTriangles autoAxes triangleMapAxes triangleMapMask triangleMapMirror crossMirror crossLabels pair compareMirror noband ochki ochkiSnake ochkiInv ochkiRev ochkiOverlay frozen zLimit anchorAxis fixLines fixCross lineMeasures linesOn saw sawFull midOneOn midZeroOn midWide paintMid fixWide fixLowOut fixRot fixHor fixDown fixDragK geomCenter sectors areas heat vtxFlash contour both viewUpsideDown templateLock templateMask testStats').split(' ');
-  const zero=('blackMirror animHl paintAxis paintMeet triTop thirds fixMirror fixFold fixLow fixDx fixDy rowLab midCol bothDx ztMir ztopRow ztlBx frameT vrows').split(' ');
+  const zero=('blackMirror animHl paintAxis paintMeet triTop thirds fixMirror fixFold fixLow fixDx fixDy rowLab midCol bothDx ztMir ztPaint ztopRow ztlBx frameT vrows').split(' ');
   function defaults(){return {...Object.fromEntries(off.map(k=>[k,false])),...Object.fromEntries(zero.map(k=>[k,0])),
     rows:512,steps:512,mode:'pend',bg:'empty',view:'bits',speed:4,vmode:'',compareSource:'',
-    zoom:'fit',zMid:true,ztop:true,zBot:false,zLock:false,zsnap:true,zbase:2,ztopPin:false,ztlMain:false,ztlZen:false,
+    zoom:'fit',zMid:true,ztop:true,zBot:false,zLock:false,zsnap:true,zbase:2,ztopPin:false,ztlMain:false,ztlZen:false,zlSelected:null,ztMirOp:'',
     fixAxis:1,fixLockX:null,axisPalette:'purple-black',triangleMapSource:'static',crossMirrorMode:'lr',crossMirrorSector:'A1',
     fillArea:'sides',fillGrow:false,symRowsMin:2,symRowsMax:0,symBitsMin:2,symBitsMax:0,symTriangleRows:16,
     bitOneColour:'#e8edf5',bitZeroColour:'#5b6475',overOneColour:'#4f9bff',overZeroColour:'#ff5a4f',digitOneColour:'#e8edf5',digitZeroColour:'#7cbcff',

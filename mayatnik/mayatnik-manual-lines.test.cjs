@@ -106,3 +106,27 @@ test('direction buttons preserve legacy mirror modes, including slash diagonal d
  assert.ok(Lines.mirrorButtons('h',2.5).every(b=>!b.disabled));
  assert.equal(Lines.toggleMirror(0,1),1);assert.equal(Lines.toggleMirror(1,2),2);assert.equal(Lines.toggleMirror(2,2),0);
 });
+
+test('narrow-screen two-row panels on coincident axes fit without overlap and retain an explicit line attachment',()=>{
+ const screen={left:8,top:10,right:352,bottom:610};
+ for(const y of [10,200,610]){
+  const items=Array.from({length:4},(_,i)=>({id:i,kind:'h',segment:[8,y,352,y],size:{width:206,height:50}})),before=JSON.stringify(items),positions=Lines.controlLayout(items,screen);
+  assert.equal(JSON.stringify(items),before);assert.deepEqual(Lines.controlLayout(items,screen),positions);
+  for(let i=0;i<positions.length;i++){const a=positions[i];assert.equal(a.overlap,false);assert.ok(a.rect.left>=screen.left&&a.rect.right<=screen.right&&a.rect.top>=screen.top&&a.rect.bottom<=screen.bottom);assert.equal(a.onLineY,y);
+   for(const b of positions.slice(0,i))assert.ok(a.rect.bottom<=b.rect.top-1.99||a.rect.top>=b.rect.bottom+1.99);
+  }
+  assert.ok(positions.slice(1).some(p=>p.detached));
+ }
+});
+
+test('keyboard half steps and Shift full steps preserve centre/boundary phase and use natural perpendicular movement',()=>{
+ for(const p of [0,1,1.5,20.5]){
+  assert.equal(Lines.keyPosition('h',p,'ArrowDown'),p+.5);assert.equal(Lines.keyPosition('h',p,'ArrowDown',true),p+1);
+  assert.equal(Lines.keyPosition('v',p,'ArrowRight'),p+.5);assert.equal(Lines.keyPosition('v',p,'ArrowLeft',true),p-1);
+  assert.equal(Lines.keyPosition('d',p,'ArrowUp'),p+.5);assert.equal(Lines.keyPosition('d',p,'ArrowDown',true),p-1);
+  assert.equal(Lines.keyPosition('e',p,'ArrowUp'),p-.5);assert.equal(Lines.keyPosition('e',p,'ArrowDown',true),p+1);
+ }
+ assert.equal(Lines.keyPosition('h',.5,'ArrowUp',true,8),.5);assert.equal(Lines.keyPosition('h',7.5,'ArrowDown',true,8),7.5);
+ assert.equal(Lines.keyPosition('h',.5,'ArrowUp',false,8),0);assert.equal(Lines.keyPosition('h',8,'ArrowDown',false,8),8);
+ assert.equal(Lines.keyPosition('h',1,'ArrowLeft'),null);assert.equal(Lines.keyPosition('v',1,'ArrowDown'),null);assert.equal(Lines.keyPosition('d',1,'Enter'),null);
+});

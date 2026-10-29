@@ -171,8 +171,16 @@ fn fam(u: u32) -> i32 {
 fn pxBit(u: u32) -> i32 { let k = fam(u); if (k == 1 || k == 4) { return 1; } if (k == 2 || k == 5) { return 0; } return -1; }
 fn put(o: i32, v: u32) -> bool {
   let mc = P[24]; if (mc != 0 && fam(v) != mc) { return false; }
-  let op = P[25];
-  if (op != 0) { let s = pxBit(v); let t = pxBit(pic2[o]); if (s < 0 || t < 0) { return false; } let bit=select(s & t, s ^ t, op == 1); pic[o] = semantic(u32(P[26 + bit]),bit); return true; }
+  // Q6 marks an explicit per-axis operation; unrelated mirrors keep the global operation.
+  let manual = Q[0] >= 3 && Q[0] <= 5 && Q[6] == 1;
+  let op = select(P[25], Q[7], manual);
+  if (op != 0) {
+    let tagged = manual && (P[10] & 4) != 0;
+    let s = select(pxBit(v), i32(v >> 24u) - 253, tagged);
+    let t = select(pxBit(pic2[o]), i32(pic2[o] >> 24u) - 253, tagged);
+    if (s < 0 || s > 1 || t < 0 || t > 1) { return false; }
+    let bit=select(s & t, s ^ t, op == 1); pic[o] = semantic(u32(P[26 + bit]),bit); return true;
+  }
   pic[o] = select(v | 0xff000000u, v, (P[10] & 4) != 0); return true;
 }
 fn fixAt(Y: i32, C: i32, o: i32) {
@@ -231,9 +239,30 @@ fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
   let VW = P[2]; let VH = P[3]; let o = i32(g.x + g.y * 65535u * 64u); if (o >= VW * VH) { return; }
   let Y = o / VW; let C = o % VW; let kind = Q[0]; let m = Q[1];
   if (!parityShown(Y, C + P[1])) { pic[o] = semantic(u32(P[22]),-1); return; }
+  // Manual-axis paint is a live picture pass after mirrors. The semantic tag
+  // survives every paint pass, so intersecting axes never decode a paint RGB.
+  if (kind == 6) {
+    if ((P[10] & 4) == 0) { return; }
+    let value = pic2[o]; let bit = i32(value >> 24u) - 253;
+    if (bit < 0 || bit > 1) { return; }
+    let wanted = select(2, 1, bit == 1); let X = C - (P[9] - P[1]);
+    for (var i = 0; i < min(Q[3], 14); i++) {
+      let at = 8 + i * 4; let axis = Q[at]; let p2 = Q[at + 1];
+      if ((Q[at + 2] & wanted) == 0) { continue; }
+      var distance = 2 * X - p2;
+      if (axis == 1) { distance = 2 * Y + 1 - p2; }
+      else if (axis == 3) { distance = 2 * (X - Y) - p2; }
+      else if (axis == 4) { distance = 2 * (X + Y) - p2; }
+      if (axis >= 1 && axis <= 4 && abs(distance) <= 1) { pic[o] = semantic(u32(Q[1]), bit); return; }
+    }
+    return;
+  }
   if (kind == 1) { fixAt(Y, C, o); return; }
   if (kind == 2) { lowAt(Y, C, o); return; }
   if (kind == 3) {
+    // Upward manual mirrors may only write originally visible occupied cells.
+    // This reads raw field visibility, independent of earlier picture passes.
+    if (m == 2 && Q[6] == 1 && shown(Y, C) < 0) { return; }
     let L = Q[3]; let mid = Q[2] != 0; var src = -1;
     if (m == 1) { let k = select(Y - L, Y - L - 1, mid); if (k >= 0 && L - 1 - k >= 0) { src = L - 1 - k; } }
     else { let k = L - 1 - Y; if (k >= 0) { let b = select(L + k, L + 1 + k, mid); if (b < VH) { src = b; } } }

@@ -103,7 +103,7 @@ test('snake animation gate remains closed through progress and opens on completi
  worker.onmessage({data:{progress:{index:0,found:0,total:2}}});assert.equal(a.c.ochkiSnakeWait(),true);if(error)worker.onerror({message:'failed'});else worker.onmessage({data:{result:{found:[],total:2,halves:2,snake:true,complete:true}}});assert.equal(a.c.ochkiSnakeWait(),false);assert.equal(a.c.k,1);}
 });
 test('normal transport waits for snake and advances only one frame after completion even at high speed',()=>{
- const a=fixture(),c=a.c;let waiting=true,steps=0,scheduled=0;c.ochkiSnakeWait=()=>waiting;c.raf=0;c.timer=0;c.gpuBig=null;c.fast=false;c.st.ochkiSnake=true;c.st.speed=20;c.third=null;c.lastShown=null;c.paintJumpFrom=null;c.target=100;c.advancePaintColour=()=>{};c.draw=()=>{};c.lastDraw=0;c.drawMs=0;c.t0=0;c.next=()=>scheduled++;c.more=()=>{steps++;c.k++;return true;};c.playing=true;
+ const a=fixture(),c=a.c;let waiting=true,steps=0,scheduled=0;c.ochkiSnakeWait=()=>waiting;c.raf=0;c.timer=0;c.gpuBig=null;c.gpuManualCpu=()=>false;c.gpuPaintCpu=()=>false;c.fast=false;c.st.ochkiSnake=true;c.st.speed=20;c.third=null;c.lastShown=null;c.paintJumpFrom=null;c.target=100;c.advancePaintColour=()=>{};c.draw=()=>{};c.lastDraw=0;c.drawMs=0;c.t0=0;c.next=()=>scheduled++;c.more=()=>{steps++;c.k++;return true;};c.playing=true;
  const start=html.indexOf('  function tick() {',html.indexOf('  const more ='));vm.runInContext(html.slice(start,html.indexOf('  function play()',start)),c);c.tick();assert.equal(steps,0);assert.equal(scheduled,1);waiting=false;c.tick();assert.equal(steps,1);assert.equal(scheduled,2);
 });
 test('test build continuation waits for snake, transfers to three-second pause, and manual stop prevents resume',()=>{
@@ -111,6 +111,25 @@ test('test build continuation waits for snake, transfers to three-second pause, 
 });
 test('growing the visible window does not make an already found sequence novel again',()=>{
  const a=fixture();a.api.get();assert.equal(a.api.log().length,1);a.c.VW=11;a.c.k++;assert.equal(a.api.get().found.length,0);assert.equal(a.api.log().length,1);
+});
+
+test('snake excludes only the completed half, keeps golden indices, and stops reporting old rows as new',()=>{
+ const a=fixture({view:'romb2',sequence:['101','111']}),c=a.c,Snake=require('./mayatnik-snake.js'),workers=[];a.st.ochkiSnake=true;a.f.val.fill(-1);c.draw=()=>{};
+ const add=col=>{for(const [r,dx,v]of [[0,0,1],[1,1,0],[2,0,1]])a.f.val[r*12+col+dx]=v;};add(0);
+ c.MayatnikSnake={createWorker(){const worker={terminate(){},postMessage(data){this.data=data;}};workers.push(worker);return worker;}};
+ const finish=()=>{const worker=workers.at(-1),result=Snake.find(worker.data);worker.onmessage({data:{result}});return a.api.current();};
+ c.ochkiSnakeFor();assert.deepEqual(JSON.parse(JSON.stringify(workers[0].data.skipIndices)),[[],[]]);let r=finish();assert.deepEqual(Array.from(r.found,h=>[h.i,h.p]),[[0,0]]);assert.equal(r.foundCount,1);assert.equal(r.total,4);a.advance(0);
+ add(3);c.k++;c.ochkiSnakeFor();assert.deepEqual(JSON.parse(JSON.stringify(workers[1].data.skipIndices)),[[0],[]]);r=finish();assert.deepEqual(Array.from(r.found,h=>[h.i,h.p]),[[0,1]]);assert.equal(r.foundCount,2);assert.deepEqual(Array.from(r.foundIndices),[0]);a.advance(0);
+ const records=a.events.filter(e=>e.detail.status==='saving').map(e=>e.detail);assert.equal(records.length,2);assert.deepEqual(Array.from(records[1].finds,h=>[h.i,h.p]),[[0,1]],'frame log contains the new right finding only');
+ const logged=a.api.log().length;c.k++;c.ochkiSnakeFor();assert.deepEqual(JSON.parse(JSON.stringify(workers[2].data.skipIndices)),[[0],[0]]);r=finish();assert.equal(r.found.length,0);assert.equal(r.foundCount,2);assert.equal(r.hl.some(Boolean),false);assert.deepEqual(Array.from(r.foundIndices),[0]);assert.equal(a.api.log().length,logged);
+ c.resetOchkiFindings(false,false);c.ochkiSnakeFor();assert.deepEqual(JSON.parse(JSON.stringify(workers.at(-1).data.skipIndices)),[[],[]]);assert.equal(finish().found.length,2);
+ c.f={...c.f,val:c.f.val.slice()};c.ochkiSnakeFor();assert.deepEqual(JSON.parse(JSON.stringify(workers.at(-1).data.skipIndices)),[[],[]]);assert.equal(finish().found.length,2);
+});
+
+test('incomplete and stale snake paths never exclude a sequence index from the next frame',()=>{
+ const a=fixture({view:'romb2',sequence:['101']}),c=a.c,workers=[];a.st.ochkiSnake=true;c.draw=()=>{};c.MayatnikSnake={createWorker(){const worker={terminate(){},postMessage(data){this.data=data;}};workers.push(worker);return worker;}};
+ const hit={i:0,p:0,r:0,c:0,n:3,cells:[0,13,24],dir:'snake'};c.ochkiSnakeFor();workers[0].onmessage({data:{progress:{index:0,half:0,found:1,total:2,newFound:[hit]}}});workers[0].onmessage({data:{result:{found:[hit],total:2,halves:2,complete:false}}});
+ assert.equal(a.api.log().length,0);c.k++;c.ochkiSnakeFor();assert.deepEqual(JSON.parse(JSON.stringify(workers[1].data.skipIndices)),[[],[]]);const late=workers[1].onmessage;c.k++;late({data:{result:{found:[hit],complete:true}}});c.ochkiSnakeFor();assert.deepEqual(JSON.parse(JSON.stringify(workers[2].data.skipIndices)),[[],[]]);
 });
 test('separate row-run transport holds its visible row for three seconds and never starts normal playback',()=>{
  const a=fixture(),c=a.c;let interval;c.rowRun={prev:0,r:0,timer:0};c.total=()=>1;c.setInterval=fn=>(interval=fn,1);c.st.speed=1;c.draw=()=>{};c.rowRunEnd=()=>{c.rowRun=null;};const start=html.indexOf('    rowRun.timer = setInterval('),end=html.indexOf('}, 60);',start)+7;vm.runInContext(html.slice(start,end)+';globalThis.isPaused=()=>!!ochkiPause;',c);

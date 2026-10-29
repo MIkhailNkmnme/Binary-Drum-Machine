@@ -10,10 +10,10 @@ test('live sequence refresh counts unique rows separately from directional hits 
   for(const halves of [1,2]){
     const node=()=>({dataset:{},classList:{toggle(){}},title:'',getAttribute(){return 'false';},setAttribute(){}}),nodes=[node(),node(),node()],summary={};
     const found=Array.from({length:4*halves},(_,i)=>({i:0,dir:[1,-1,0,2][i%4],p:i>=4?1:0,r:5}));found.push({i:2,dir:0,r:7});
-    const state={revision:1,rows:['1','11','101'],matches:{enabled:true,active:true,pattern:'initial',mode:'all',frame:42,halves,total:12*halves,found}};
+    const state={revision:1,rows:['1','11','101'],matches:{enabled:true,active:true,pattern:'initial',mode:'all',frame:42,halves,total:3*halves,found}};
     const context={pane:{closest:()=>null},api:{snapshot:()=>state},rendered:1,dirty:false,listKey:'sequence:1',nodes,summary,scrolledSelection:0};
     vm.runInNewContext(source.slice(labelStart,labelEnd)+'\n'+source.slice(start,end)+'\nrefresh();',context);
-    assert.match(summary.textContent,/Всего найдено 2 из 3 строк/);assert.match(summary.textContent,new RegExp(found.length+' из '+12*halves+' совпадений'));assert.match(summary.textContent,/во всех 4 направлениях/);
+    assert.match(summary.textContent,/Всего найдено 2 из 3 строк/);if(halves===2)assert.match(summary.textContent,/из 6 совпадений в двух полумаятниках/);assert.doesNotMatch(summary.textContent,/из 12|из 24/);assert.match(summary.textContent,/во всех 4 направлениях/);
     for(const arrow of ['↘','↙','→','↓'])assert.ok(nodes[0].title.includes(arrow));assert.ok(!nodes[0].title.includes('во всех'));assert.equal(nodes[1].title,'');
   }
 });

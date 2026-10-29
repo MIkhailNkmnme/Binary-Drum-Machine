@@ -4,7 +4,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSequences=api;})(globalThis,function(){
   'use strict';
   const KEY='mayatnik-sequences-v1',MAX_BITS=2100000,MAX_ROWS=4096;
-  const directionLabel=mode=>({row:'по рядам →',col:'по столбцам ↓',antidiag:'по противодиагоналям ↙',diag:'по диагоналям ↘',snake:'змея вниз ↙↘',all:'во всех 4 направлениях',0:'по рядам →',2:'по столбцам ↓','-1':'по противодиагоналям ↙',1:'по диагоналям ↘'}[mode]||'по диагоналям ↘');
+  const directionLabel=mode=>({v:'через встречу ↘↗',row:'по рядам →',col:'по столбцам ↓',antidiag:'по противодиагоналям ↙',diag:'по диагоналям ↘',snake:'змея вниз ↙↘',all:'во всех 4 направлениях',0:'по рядам →',2:'по столбцам ↓','-1':'по противодиагоналям ↙',1:'по диагоналям ↘'}[mode]||'по диагоналям ↘');
   function parse(text){const value=String(text).replace(/\r\n?/g,'\n').trim();if(!value)return[];const rows=value.split('\n');if(rows.length>MAX_ROWS)throw Error('Не более '+MAX_ROWS+' строк. Данные не изменены.');let bits=0;rows.forEach((row,i)=>{if(!/^[01]+$/.test(row))throw Error('Строка '+(i+1)+': допустимы только 0 и 1, без пробелов.');bits+=row.length;});if(bits>MAX_BITS)throw Error('Больше '+MAX_BITS+' бит. Данные не изменены.');return rows;}
   function sierpinski(count){count=Number(count);if(!Number.isInteger(count)||count<1||count>2048)throw Error('Для Серпинского задайте от 1 до 2048 строк.');const rows=['1'];for(let i=1;i<count;i++){const prev=rows[i-1];let next='';for(let j=0;j<=i;j++)next+=Number(prev[j-1]||0)^Number(prev[j]||0);rows.push(next);}return rows;}
   // Wolfram numbering: bit (4*left+2*centre+right) is the next cell.
@@ -29,15 +29,16 @@
   }
   function create(storage,{rows:count=512,initialRows=[]}={}){
     const originalRows=parse(initialRows.join('\n'));
-    let state=null,error='',revision=0,matches={enabled:false,active:false,found:[]},matchKey='',foundHistory=new Map(),selection=null,selectionSerial=0,listeners=new Set();
+    let state=null,error='',revision=0,matches={enabled:false,active:false,found:[]},matchKey='',matchScope,foundHistory=new Map(),selection=null,selectionSerial=0,listeners=new Set();
     try{const raw=storage?.getItem(KEY);if(raw!==null&&raw!==undefined){const saved=JSON.parse(raw);if(saved?.version!==1||!Array.isArray(saved.rows)||saved.rows.some(row=>typeof row!=='string'))throw Error('format');state={rows:parse(saved.rows.join('\n')),source:saved.source==='serp'?'serp':'user',count:saved.count||saved.rows.length};}}catch(_){state={rows:[],source:'user',count:0};error='Сохранённая последовательность повреждена. Исходная запись сохранена; исправьте строки и нажмите «Применить».';}
     const emit=kind=>{for(const listener of listeners)listener(kind);};
     const write=(rows,source,count)=>{const next={version:1,rows,source,count};try{storage?.setItem(KEY,JSON.stringify(next));}catch(_){throw Error('Не удалось сохранить последовательность в браузере. Освободите место и повторите.');}state=next;error='';selection=null;foundHistory.clear();matches={...matches,active:false,found:[]};matchKey='';revision++;emit('sequence');};
     const api={get rows(){return state.rows;},get initialRows(){return originalRows.slice();},get revision(){return revision;},snapshot:()=>({rows:state.rows,source:state.source,count:state.count,revision,error,matches,foundHistory:Array.from(foundHistory.values()),selection}),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},setText(text){const rows=parse(text);write(rows,'user',rows.length);},generate(count){const rows=sierpinski(count);write(rows,'serp',rows.length);},selectMatches(value){selection=value?{...value,token:++selectionSerial}:null;emit('selection');},setMatches(value){const key=JSON.stringify(value);if(key===matchKey)return;matchKey=key;matches=value;
-      if(!value.enabled)foundHistory.clear();
-      else if(value.active&&(!value.pattern||value.pattern==='initial')){
+      if(!value.enabled||value.searchScope!==undefined&&value.searchScope!==matchScope)foundHistory.clear();
+      matchScope=value.searchScope;
+      if(value.enabled&&value.active&&value.complete!==false&&(!value.pattern||value.pattern==='initial')){
         const rows=new Map();for(const hit of value.found||[]){if(!Number.isInteger(hit.i)||hit.i<0||hit.i>=state.rows.length)continue;if(!rows.has(hit.i))rows.set(hit.i,[]);rows.get(hit.i).push({...hit});}
-        for(const [i,hits]of rows)foundHistory.set(i,{i,hits,frame:value.frame,mode:value.mode,halves:value.halves,joined:value.joined});
+        for(const [i,hits]of rows){const prior=foundHistory.get(i),merged=value.halves===2?[...(prior?.hits||[]).filter(old=>!hits.some(hit=>hit.p===old.p)),...hits]:hits;foundHistory.set(i,{i,hits:merged,frame:value.frame,mode:value.mode,halves:value.halves,joined:value.joined});}
       }
       emit('matches');}};
     if(!state){const n=Math.max(1,Math.min(512,Math.floor(Number(count)||512)));state={rows:sierpinski(n),source:'serp',count:n};try{storage?.setItem(KEY,JSON.stringify({version:1,...state}));}catch(_){error='Начальные строки созданы, но браузер не смог их сохранить.';}}
@@ -87,8 +88,7 @@
       else {
         const fresh=(m.found||[]).length, totalFound=previous.size||foundEver;
         let text=(fresh?'Новых: '+fresh+' · ':'')+'Всего найдено '+totalFound+' из '+state.rows.length+' строк';
-        if(m.halves===2)text+=' · '+fresh+' из '+(m.total??0)+' совпадений в двух полумаятниках';
-        else if(m.mode==='all')text+=' · '+fresh+' из '+(m.total??0)+' совпадений';
+        if(m.halves===2)text+=' · '+(m.foundCount??(Array.from(previous.values()).reduce((n,entry)=>n+entry.hits.length,0)||fresh))+' из '+(m.total??state.rows.length*2)+' совпадений в двух полумаятниках';
         summary.textContent=text+' · кадр '+m.frame+' · '+modeLabel;
         if(m.complete===false)summary.textContent+=' · '+m.reason;
         if(m.joined)summary.textContent+=' · единый ромб';

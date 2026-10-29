@@ -3,7 +3,7 @@ const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
 const Contours=require('./mayatnik-bit-contours.js'),Cells=require('./mayatnik-cell-selection.js');
 function fn(name){const start=html.indexOf('function '+name+'(');assert.ok(start>=0,name);const brace=html.indexOf('{',start);let depth=1,i=brace+1;for(;depth&&i<html.length;i++){if(html[i]==='{')depth++;else if(html[i]==='}')depth--;}return html.slice(start,i);}
 function fixture(view='bitContours'){
- const colour=0xff555555,c=vm.createContext({st:{view,blackMirror:2},joinedOn:()=>false,f:{W:2,H:2,val:Int8Array.of(0,1,0,-1)},img:{width:2,height:2},VW:2,VH:2,VX:0,RK:1,contourBits:null,contourTagging:false,paintBits:null,parityVisible:()=>true,outShow:()=>false,fillBase:null,rombP:()=>-1,blackTriUp:()=>Uint16Array.of(0,0,1,1),mirBitC:[colour,colour],mirPre:()=>{},pxFam:()=> 'k',pxBit:()=>0,mixPx:()=>{throw Error('unexpected blend');},Int8Array,Uint32Array,rgba:()=>0xff000000,EMPTY:[],parityActive:()=>true});
+ const colour=0xff555555,c=vm.createContext({st:{view,blackMirror:2},joinedOn:()=>false,f:{W:2,H:2,val:Int8Array.of(0,1,0,-1)},img:{width:2,height:2},VW:2,VH:2,VX:0,RK:1,contourBits:null,contourTagging:false,paintBits:null,faceLayer:null,manualPaintOn:()=>false,manualMirrorPlan:()=>[],parityVisible:()=>true,outShow:()=>false,fillBase:null,rombP:()=>-1,blackTriUp:()=>Uint16Array.of(0,0,1,1),mirBitC:[colour,colour],mirPre:()=>{},pxFam:()=> 'k',pxBit:()=>0,mixPx:()=>{throw Error('unexpected blend');},Int8Array,Uint32Array,rgba:()=>0xff000000,EMPTY:[],parityActive:()=>true});
  for(const name of ['contourColour','contourBegin','contourEnd','contourEdits','mirPut','blackMirrorApply','parityMask'])vm.runInContext(fn(name),c);
  return {c,px:new Uint32Array(4).fill(colour)};
 }

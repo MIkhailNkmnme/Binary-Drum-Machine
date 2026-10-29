@@ -33,6 +33,13 @@ test('inversion, reversal, duplicate consumption and long-pattern search follow 
  assert.equal(finder({mode:'col',points,sequence:['1011','1011']}).result().found.length,1);
  const text='10110111001011011',long=Array.from(text,(v,i)=>[2,i*2,Number(v)]),api=finder({mode:'col',height:40,points:long,sequence:[text]});assert.equal(api.result().found.length,1);assert.equal(api.result().found[0].n,text.length);
 });
+
+test('completed long rows are excluded before the occurrence scanner while their duplicate index remains independent',()=>{
+ const text='10110111001011011',points=Array.from(text,(v,i)=>[2,i*2,Number(v)]),api=finder({mode:'col',height:40,points,sequence:[text,text]}),first=api.result();assert.deepEqual(Array.from(first.found,h=>h.i),[0]);
+ const original=api.context.ochkiLong,scanned=[];api.context.ochkiLong=(lines,sets)=>{scanned.push(Array.from(sets,vars=>vars.length));return original(lines,sets);};api.context.k++;
+ const second=api.result();assert.deepEqual(scanned,[[0,1]]);assert.deepEqual(Array.from(second.found,h=>h.i),[1]);assert.equal(second.foundCount,2);
+ api.context.k++;scanned.length=0;assert.equal(api.result().found.length,0);assert.deepEqual(scanned,[[0,0]]);
+});
 test('simple runs use contiguous column steps, split holes and publish the chosen direction',()=>{
  for(const [mode,{dir,points}]of Object.entries(fixtures)){
   const ones=points.map(([x,y])=>[x,y,1]),api=finder({mode,points:ones,pattern:'ones'}),result=api.result();assert.equal(result.count,1);assert.equal(result.longest,4);assert.equal(result.found[0].dir,dir);assert.equal(Array.from(result.hl).filter(Boolean).length,4);assert.equal(api.context.matches.mode,mode);
@@ -45,9 +52,9 @@ test('visible window and noise-zone limits crop column/diagonal input without re
   assert.equal(lines.reduce((n,line)=>n+line.n,0),35);
  }
 });
-test('source select, sync and segmented adapter expose four directions and their all-direction union',()=>{
- const options=html.match(/<select id="ochkiMode"[^>]*>(.*?)<\/select>/s)[1];assert.deepEqual([...options.matchAll(/value="([^"]+)"/g)].map(x=>x[1]),['diag','antidiag','row','col','all']);assert.match(html,/\['diag','antidiag','row','col','all'\]\.includes\(st\.ochkiMode\)/);
- const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8');assert.match(menu,/selectSegments\('ochkiMode',\{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все'\}\)/);
+test('source select, sync and segmented adapter expose four directions, their union, and the separate V route',()=>{
+ const options=html.match(/<select id="ochkiMode"[^>]*>(.*?)<\/select>/s)[1];assert.deepEqual([...options.matchAll(/value="([^"]+)"/g)].map(x=>x[1]),['diag','antidiag','row','col','all','v']);assert.match(html,/\['diag','antidiag','row','col','all','v'\]\.includes\(st\.ochkiMode\)/);
+ const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8');assert.match(menu,/selectSegments\('ochkiMode',\{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'\}\)/);
 });
 test('side-by-side rombs search every sequence row independently in each lattice, without crossing the seam',()=>{
  for(const [mode,{points}]of Object.entries(fixtures)){
@@ -100,14 +107,34 @@ function assertAllUnion(api,read){
  for(const mode of modes){api.state.ochkiMode=mode;const r=read();expected.push(...r.found);total+=r.total||0;for(let i=0;i<hl.length;i++)hl[i]|=r.hl[i];}
  api.state.ochkiMode='all';const actual=read(),key=hit=>JSON.stringify([hit.i,hit.p??null,hit.dir,Array.from(hit.cells),hit.vn||'',hit.text||'']);assert.deepEqual(Array.from(actual.found,key).sort(),expected.map(key).sort());assert.deepEqual(Array.from(actual.hl),Array.from(hl));if(!actual.simple)assert.equal(actual.total,total);return actual;
 }
-test('all directions equal the independent union, with separate duplicate and long-pattern cursors',()=>{
+// Independently enumerate candidate substrings and consume one occurrence per
+// index within each half. Geometry is checked separately by the line-step tests.
+function initialReference(api,allLines){
+ const c=api.context,W=allLines.width||c.f.W,groups=api.state.view==='romb2'?[0,1]:[null],out=[];
+ for(const half of groups){const lines=half===null?allLines:allLines.filter(L=>L.p===half),used=new Set();
+  for(let i=0;i<c.sequences.rows.length;i++){const text=c.sequences.rows[i];let best=null;
+   for(let li=0;li<lines.length;li++){const L=lines[li];for(let at=0;at+text.length<=L.n;at++){
+    if(used.has(li+'|'+at+'|'+text))continue;let matches=true;for(let j=0;j<text.length;j++)if(L.str[at+j]!==text[j]){matches=false;break;}if(!matches)continue;
+    const row=Math.floor(L.cells[at]/W);if(!best||row<best.row)best={li,at,row};
+   }}
+   if(best){const L=lines[best.li],raw=Array.from(L.cells.slice(best.at,best.at+text.length));used.add(best.li+'|'+best.at+'|'+text);out.push({i,p:allLines.joined?null:L.p,dir:L.dir,cells:allLines.joined?raw.map(q=>allLines.mapper.fromDisplay(q).q):raw});}
+  }
+ }return out;
+}
+test('all directions choose one earliest occurrence per index in each half, with exact duplicate and long-pattern paths',()=>{
  const width=40,height=40,points=Array.from({length:width*height},(_,q)=>[q%width,Math.floor(q/width),((q*73^(q>>2)*19)>>>2)&1]);
- for(const view of ['bits','romb0','romb1','romb2','rombJoin','rombJoin180']){const api=finder({view,width,height,points,sequence:['1011','1011','0','1','10110111001011011']});const r=assertAllUnion(api,()=>api.result());assert.equal(r.directions,4);assert.equal(r.total,5*4*(view==='romb2'?2:1));}
+ for(const view of ['bits','romb0','romb1','romb2','rombJoin','rombJoin180']){const api=finder({mode:'all',view,width,height,points,sequence:['1011','1011','0','1','10110111001011011']}),expected=initialReference(api,api.lines()),r=api.result();
+  assert.deepEqual(Array.from(r.found,({i,p,dir,cells})=>({i,p,dir,cells:Array.from(cells)})),expected);assert.equal(r.total,5*(view==='romb2'?2:1));assert.equal(r.directions,4);
+  const want=new Set(expected.flatMap(h=>h.cells));assert.deepEqual(Array.from(r.hl,(on,q)=>on?q:-1).filter(q=>q>=0),[...want].sort((a,b)=>a-b));
+  api.context.k++;const next=api.result();assert.equal(next.found.length,0);assert.equal(next.foundCount,expected.length);
+ }
 });
+
 test('all directions combine every simple run count and highlight',()=>{
  const points=Array.from({length:144},(_,q)=>[q%12,Math.floor(q/12),(q%7===0)?0:1]);
  for(const pattern of ['ones','zeros','alternating']){const api=finder({points,pattern});let count=0;for(const mode of ['diag','antidiag','row','col']){api.state.ochkiMode=mode;count+=api.result().count;}const all=assertAllUnion(api,()=>api.result());assert.equal(all.count,count);}
 });
-test('all directions on overlay equal four independent searches and keep exact total',()=>{
- const api=finder({sequence:['1011','1','1']}),c=api.context;for(let q=0;q<c.f.val.length;q++)c.f.val[q]=(q*13^(q>>2))&1;c.ovlSource={bits:{W:12,H:12,anchor:0,val:c.f.val,frame:1}};c.ovlFrozen=null;c.gpuBig=null;c.ovlDraw=()=>{};api.state.ochkiOverlay=true;const r=assertAllUnion(api,()=>c.ochkiOverlayGet());assert.equal(r.total,12);assert.equal(r.directions,4);
+test('all directions on overlay consume one earliest occurrence per sequence index',()=>{
+ const api=finder({mode:'all',sequence:['1011','1','1']}),c=api.context;for(let q=0;q<c.f.val.length;q++)c.f.val[q]=(q*13^(q>>2))&1;c.ovlSource={bits:{W:12,H:12,anchor:0,val:c.f.val,frame:1}};c.ovlFrozen=null;c.gpuBig=null;c.ovlDraw=()=>{};api.state.ochkiOverlay=true;
+ const expected=initialReference(api,c.ochkiGridLines(c.ovlSource.bits)),r=c.ochkiOverlayGet();assert.deepEqual(Array.from(r.found,({i,dir,cells})=>({i,dir,cells:Array.from(cells)})),expected.map(({i,dir,cells})=>({i,dir,cells})));assert.equal(r.total,3);assert.equal(r.directions,4);
 });

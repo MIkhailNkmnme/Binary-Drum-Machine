@@ -9,3 +9,7 @@
 .may-manual-axis-controls button:disabled{opacity:.35;cursor:default}
 .may-manual-axis-controls .may-manual-axis-label{width:180px;min-width:180px;max-width:180px;padding:0 9px;overflow:hidden;text-overflow:ellipsis;font:11px/24px var(--mono,monospace)}
 .may-manual-axis-controls .may-manual-axis-remove{color:#ff7373}
+.may-manual-axis-controls .may-manual-axis-xor,.may-manual-axis-controls .may-manual-axis-and{padding:0;font-size:9px}
+.may-manual-axis-controls[data-compact="true"]{display:grid;grid-template-columns:repeat(8,24px);height:50px}
+.may-manual-axis-controls[data-compact="true"] .may-manual-axis-label{grid-column:1/-1;justify-self:center}
+.may-manual-axis-controls[data-selected="true"] button{background:var(--manual-axis-colour)}

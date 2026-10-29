@@ -10,7 +10,7 @@ function fixture(){
   triangleMapRasterMask:()=>c.mapMask||null,cv:{getBoundingClientRect:()=>({left:0,top:0,width:c.img.width,height:c.img.height})}};
  c.draw=()=>{const px=new Uint32Array(c.img.data.buffer);px.fill(0xff010203);if(c.fillMask)for(let q=0;q<px.length;q++)if(c.fillMask[q])px[q]=c.fillMask[q];c.colReplayRun(px);};
  c.resize=(vx,width=9-vx)=>{c.VX=vx;c.VW=width;c.img={width:width*c.RK,height:c.VH*c.RK,data:new Uint8ClampedArray(width*c.RK*c.VH*c.RK*4)};c.fillBits=null;};c.resize(2,5);c.fillField=c.f;
- vm.createContext(c);
+ c.gpuBig=null;vm.createContext(c);
  for(const code of [section('  function fieldCellAt(','  // Final view mask'),section('  function cellPixels(','  function templateLimitRefusal('),section('  function columnSeed(','  // v0.310:'),section('  function fillAt(','  // v0.070:'),section('  function pushHistory(','  function sceneSnapshot('),section('  function sceneSnapshot(',"  $('bRegions').onclick"),section('  function paintSnapshot(','  function savePaint('),section('  function resetFillHistory(','  function clearFill(')])vm.runInContext(code,c);
  c.click=(col,row)=>c.fillAt((col-c.VX+.5)*c.RK,(row+.5)*c.RK);
  c.painted=()=>{const out=[];for(let q=0;q<(c.colReplayPaint?.length||0);q++)if(c.colReplayPaint[q])out.push({c:c.VX+q%c.img.width,r:Math.floor(q/c.img.width),colour:c.colReplayPaint[q]});return out;};

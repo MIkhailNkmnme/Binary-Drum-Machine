@@ -21,8 +21,8 @@ test('corrupt saved data stays intact until explicit user replacement',()=>{
 test('frame matches update readonly highlights while preserving editor identity, draft and caret',()=>{
  const dom=new JSDOM('<section></section>'),pane=dom.window.document.querySelector('section'),api=Sequences.create(storage(),{rows:3}),view=Sequences.mount(pane,api);try{
  const editor=pane.querySelector('textarea');editor.value='010\n111';editor.dispatchEvent(new dom.window.Event('input'));editor.focus();editor.setSelectionRange(2,4);
- api.setMatches({enabled:true,active:true,pattern:'initial',mode:'row',frame:12,found:[{i:1,r:7,vn:'инв'}]});assert.equal(pane.querySelector('textarea'),editor);assert.equal(editor.value,'010\n111');assert.equal(editor.selectionStart,2);assert.equal(editor.selectionEnd,4);assert.equal(pane.querySelectorAll('.is-found').length,1);assert.equal(pane.querySelector('.is-found').dataset.sequenceRow,'1');
- api.setMatches({enabled:true,active:true,pattern:'initial',mode:'diag',frame:13,found:[{i:2,r:9}]});assert.equal(pane.querySelector('.is-found').dataset.sequenceRow,'2');assert.equal(editor.selectionStart,2);
+ api.setMatches({enabled:true,active:true,pattern:'initial',mode:'row',searchScope:'row',frame:12,found:[{i:1,r:7,vn:'инв'}]});assert.equal(pane.querySelector('textarea'),editor);assert.equal(editor.value,'010\n111');assert.equal(editor.selectionStart,2);assert.equal(editor.selectionEnd,4);assert.equal(pane.querySelectorAll('.is-found').length,1);assert.equal(pane.querySelector('.is-found').dataset.sequenceRow,'1');
+ api.setMatches({enabled:true,active:true,pattern:'initial',mode:'diag',searchScope:'diag',frame:13,found:[{i:2,r:9}]});assert.equal(pane.querySelector('.is-found').dataset.sequenceRow,'2');assert.equal(editor.selectionStart,2);
  pane.querySelector('[data-sequence-save]').click();assert.deepEqual(api.rows,['010','111']);api.setMatches({enabled:false,active:false,found:[]});assert.equal(pane.querySelectorAll('.is-found').length,0);
  }finally{view.destroy();dom.window.close();}
 });

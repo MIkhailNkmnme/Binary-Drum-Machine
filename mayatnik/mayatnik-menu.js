@@ -90,7 +90,7 @@
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), button('bOchkiSnake','eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
-      selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
+      selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска Очков — все сохранённые найденные кадры',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
@@ -495,7 +495,8 @@
   };
   // v0.037: неактивные кнопки в рейке не показываются (как на других страницах); соты пересобираются без них.
   const relayout = () => { for (const soty of [...rail.el.querySelectorAll('.gz-soty'), ...railR.querySelectorAll('.gz-soty'), ...tools.querySelectorAll(':scope > .gz-group .gz-soty')]) {   // v0.232: и группы рейки, поднятые в шапку
-    const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('gz-off-dis')&&!b.classList.contains('may-merged-source'));
+    // «Змея» stays next to «Очки», including unsupported views: its disabled state explains how to enable it.
+    const cells = [...soty.children], shown = cells.filter(b => (!b.classList.contains('gz-off-dis')||b===railSourceButtons.get('bOchkiSnake'))&&!b.classList.contains('may-merged-source'));
     const top = tools.contains(soty), key = (top ? 'u' : '') + shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;   // top — в шапке (v0.232)
     cells.forEach(b => { b.style.display = shown.includes(b) ? '' : 'none'; });
     // v0.072: справа («Шаблоны») кнопки в одну строку, без сдвига сот.
@@ -507,6 +508,10 @@
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
   const toolSync = [];
+  {const cell=railSourceButtons.get('bOchkiSnake'),source=$('bOchkiSnake');if(cell&&source){
+    const sync=()=>{cell.setAttribute('aria-disabled',String(source.disabled));cell.setAttribute('aria-pressed',source.getAttribute('aria-pressed')||'false');if(cell.title!==source.title)cell.title=source.title;};
+    toolSync.push(sync);sync();
+  }}
   // v0.054: значки разбиты на группы с промежутками, над каждой группой — короткая подпись.
   const groupOf = {}; const ptGroup = name => { const g = document.createElement('div'); g.className = 'pt-g';
     const l = ZerkGroupHeader.create({title:name,className:'pt-l',titleClass:'may-group-title',pinClass:'pt-pin',iconClass:'pt-ico'}).head; const row = document.createElement('div'); row.className = 'pt-r';

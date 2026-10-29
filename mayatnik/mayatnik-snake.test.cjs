@@ -12,6 +12,24 @@ test('each half gets its own ordered sequence, and opposite parities cannot comp
  const input=field(6,3,[[2,0,1],[1,1,0],[2,2,1],[3,0,1],[4,1,0],[3,2,1]],{sequence:['101','1']}),result=Snake.find(input);assert.deepEqual(result.found.map(x=>[x.i,x.p]),[[0,0],[0,1],[1,0],[1,1]]);assert.equal(result.total,4);assert.equal(result.halves,2);
  assert.equal(Snake.find(field(5,3,[[2,0,1],[2,1,0],[2,2,1]],{sequence:['101']})).found.length,0,'vertical corner contacts do not count as shared sides');
 });
+
+test('already-found indices are never searched again in the same half and preserve original numbering',()=>{
+ const input=field(6,3,[[2,0,1],[1,1,0],[2,2,1],[3,0,1],[4,1,0],[3,2,1]],{sequence:['101','1','101']}),skipIndices=[[0],[1]],result=Snake.find({...input,skipIndices});
+ assert.deepEqual(result.found.map(h=>[h.i,h.p]),[[0,1],[1,0],[2,0]]);assert.equal(result.total,6);
+ assert.deepEqual(skipIndices,[[0],[1]],'caller current-search ledger is not mutated');
+ const fresh=Snake.find(input);assert.ok(fresh.found.some(h=>h.i===0&&h.p===0),'a new search can find the same index');
+ const done=Snake.find({...input,skipIndices:[[0,1,2],[0,1,2]],maxOperations:0,maxEntries:0});
+ assert.equal(done.complete,true);assert.equal(done.operations,0);assert.equal(done.prepassCells,0);assert.deepEqual(done.found,[]);assert.equal(done.hl.some(Boolean),false);
+});
+
+test('skip applies before inversion, reverse, shared-prefix scanning and progress reports',()=>{
+ const input=field(6,3,[[2,0,1],[1,1,0],[2,2,1],[3,0,1],[4,1,0],[3,2,1]],{sequence:['010','1','101'],inverse:true,reverse:true,skipIndices:[[0,2],[]],chunkOperations:1});
+ const steps=Snake.findSteps(input),deltas=[];let step;do{step=steps.next();if(!step.done)deltas.push(...step.value.newFound);}while(!step.done);
+ for(const hit of [...deltas,...step.value.found])assert.ok(hit.p!==0||hit.i===1);
+ assert.ok(step.value.found.some(h=>h.p===1&&h.i===0));
+ const one=Snake.find({...input,parities:[0],skipIndices:[[0,1,2],[]],maxOperations:0});assert.equal(one.complete,true);assert.equal(one.operations,0);
+ for(const skipIndices of [[],[[],[-1]],[[3],[]],[[.5],[]]])assert.throws(()=>Snake.find({...input,skipIndices}),/исключения/);
+});
 test('inversion and reversal remain explicit sequence variants',()=>{
  const input=field(5,3,[[2,0,1],[1,1,0],[2,2,0]],{sequence:['001'],reverse:true});assert.equal(Snake.find(input).found[0].vn,'рев');input.sequence=['011'];input.reverse=false;input.inverse=true;assert.equal(Snake.find(input).found[0].vn,'инв');
 });
@@ -24,7 +42,7 @@ test('blob worker construction failure always revokes its temporary URL',()=>{
  const previousWorker=global.Worker,oldCreate=URL.createObjectURL,oldRevoke=URL.revokeObjectURL,revoked=[];try{URL.createObjectURL=()=> 'blob:snake-test';URL.revokeObjectURL=url=>revoked.push(url);global.Worker=class{constructor(){throw Error('blocked');}};assert.throws(()=>Snake.createWorker(),/blocked/);assert.deepEqual(revoked,['blob:snake-test']);}finally{global.Worker=previousWorker;URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;}
 });
 const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8'),integration=html.slice(html.indexOf('  let ochkiSnakeJob='),html.indexOf('  const ochkiTail'));
-function host(factory){const buttons=new Map();const get=id=>{if(!buttons.has(id))buttons.set(id,{disabled:false,options:[{value:'initial'},{value:'ones'}],setAttribute(name,value){this[name]=value;}});return buttons.get(id);};const context={st:{ochki:true,ochkiSnake:true,ochkiPattern:'initial'},key:'a',f:{W:10,H:3,val:new Int8Array(30)},geo:{anchor:5},VW:3,VH:3,VX:5,sequences:{rows:['10']},ochki:null,playing:false,MayatnikSnake:{createWorker:factory},rombP:()=>context.view??2,ochkiJoined:()=>!!context.joined,joinedGeometry:()=>context.joinMap,ochkiJoinedSnapshot:()=>context.joinedSnapshot,ochkiKey:()=>context.key,parityVisible:()=>true,outZone:()=>false,$:get,draw:()=>context.draws++,draws:0,ochkiShow(){},publishOchki(result,note){context.published={result,note};}};vm.createContext(context);vm.runInContext(html.match(/  function ochkiMapHit[^\r\n]+/)[0]+integration+';globalThis.search=ochkiSnakeFor;globalThis.sync=ochkiSnakeSync;globalThis.stop=ochkiSnakeStop;globalThis.note=()=>ochkiSnakeNote;',context);return context;}
+function host(factory){const buttons=new Map();const get=id=>{if(!buttons.has(id))buttons.set(id,{disabled:false,options:[{value:'initial'},{value:'ones'}],setAttribute(name,value){this[name]=value;}});return buttons.get(id);};const context={st:{ochki:true,ochkiSnake:true,ochkiPattern:'initial'},key:'a',f:{W:10,H:3,val:new Int8Array(30)},geo:{anchor:5},VW:3,VH:3,VX:5,sequences:{rows:['10']},ochki:null,playing:false,ochkiFindingsSuppressed:()=>false,ochkiRecordResult:()=>{},MayatnikSnake:{createWorker:factory},rombP:()=>context.view??2,ochkiJoined:()=>!!context.joined,joinedGeometry:()=>context.joinMap,ochkiJoinedSnapshot:()=>context.joinedSnapshot,ochkiKey:()=>context.key,parityVisible:()=>true,outZone:()=>false,$:get,draw:()=>context.draws++,draws:0,ochkiShow(){},publishOchki(result,note){context.published={result,note};}};context.ochkiScope=()=> 'scope';context.rows=new Map();context.union=new Set();context.ochkiFoundCount=new Map();context.ochkiRowsFor=key=>{if(!context.rows.has(key))context.rows.set(key,new Set());return context.rows.get(key);};context.ochkiUnionFor=()=>context.union;context.ochkiCountFor=key=>context.ochkiFoundCount.get(key)||0;let owner=context.f;context.ochkiFindingsSuppressed=()=>{if(owner!==context.f){owner=context.f;context.rows.clear();context.union.clear();context.ochkiFoundCount.clear();}return false;};vm.createContext(context);vm.runInContext(html.match(/  function ochkiMapHit[^\r\n]+/)[0]+integration+';globalThis.search=ochkiSnakeFor;globalThis.sync=ochkiSnakeSync;globalThis.stop=ochkiSnakeStop;globalThis.note=()=>ochkiSnakeNote;',context);return context;}
 test('worker integration transfers a copy, maps hits to original field cells, and cancels stale jobs',()=>{
  const workers=[],api=host(()=>{const worker={terminated:0,terminate(){this.terminated++;},postMessage(data,transfer){this.data=data;this.transfer=transfer;}};workers.push(worker);return worker;});api.search();assert.notEqual(workers[0].transfer[0],api.f.val.buffer);assert.equal(api.f.val.length,30);api.key='b';api.search();assert.equal(workers[0].terminated,1);workers[0].onmessage({data:{result:{found:[]}}});assert.equal(api.ochki,null);
  workers[1].onmessage({data:{result:{found:[{i:0,p:1,r:0,c:1,cells:[1,3],n:2}],hl:new Uint8Array(9),complete:true,total:2,halves:2}}});assert.deepEqual(Array.from(api.ochki.found[0].cells),[6,15]);assert.equal(api.ochki.hl[6],1);assert.equal(api.ochki.hl[15],1);assert.equal(api.ochki.key,'b');
@@ -83,5 +101,18 @@ test('single display parity with duplicate rows agrees with exhaustive downward 
    for(let q=0;q<val.length&&!chosen;q++)walk(q,0,[]);if(chosen)expected.push({i,cells:chosen});
   }
   const result=Snake.find({width,height,val,sequence,parities:[0],halves:1});assert.deepEqual(result.found.map(({i,cells})=>({i,cells})),expected);assert.equal(result.total,sequence.length);assert.equal(result.complete,true);
+ }
+});
+
+test('half-specific exclusions match an independent exhaustive oracle with duplicate rows',()=>{
+ let seed=165;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};
+ for(let run=0;run<160;run++){
+  const width=3+random(4),height=3+random(3),anchor=random(width),val=Int8Array.from({length:width*height},()=>random(5)===0?-1:random(2)),sequence=['1','11','101','101'],skipIndices=[0,1].map(()=>sequence.flatMap((_,i)=>random(3)===0?[i]:[])),expected=[],used=[new Set(),new Set()];
+  for(let i=0;i<sequence.length;i++)for(const p of [0,1]){if(skipIndices[p].includes(i))continue;const text=sequence[i];let chosen=null;
+   function walk(q,index,path){if(chosen||val[q]!==Number(text[index]))return;const cells=path.concat(q);if(index+1===text.length){const key=text+':'+cells.join(',');if(!used[p].has(key)){used[p].add(key);chosen=cells;}return;}const c=q%width;if(Math.floor(q/width)+1<height){if(c>0)walk(q+width-1,index+1,cells);if(c+1<width)walk(q+width+1,index+1,cells);}}
+   for(let q=0;q<val.length&&!chosen;q++)if(((q%width-anchor-Math.floor(q/width))&1)===p)walk(q,0,[]);
+   if(chosen)expected.push({i,p,cells:chosen});
+  }
+  const result=Snake.find({width,height,anchor,val,sequence,skipIndices});assert.deepEqual(result.found.map(({i,p,cells})=>({i,p,cells})),expected,'case '+run);assert.equal(result.complete,true);
  }
 });

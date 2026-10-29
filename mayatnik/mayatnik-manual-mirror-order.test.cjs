@@ -3,8 +3,10 @@ const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
 function source(name){const start=html.indexOf('  function '+name+'(');if(start<0)return null;const body=html.indexOf('{',start);let depth=1,end=body+1;for(;depth&&end<html.length;end++){if(html[end]==='{')depth++;if(html[end]==='}')depth--;}assert.equal(depth,0,name);return html.slice(start,end);}
 const stage=html.slice(html.indexOf('    contourBegin(px);try{'),html.indexOf('    drawPost(px,',html.indexOf('    contourBegin(px);try{')));
 function fixture(lines,{main=null,op='',colour=''}={}){
- const c={VW:17,VH:64,VX:0,RK:1,f:{},geo:{anchor:8},st:{rows:64,linesOn:true,lineFamilies:{h:true,v:true,d:true},ztlMain:main!==null,ztopRow:main?.p||0,ztMir:main?.m||0,zl:structuredClone(lines),mirOp:op,mirCol:colour},rombP:()=>-1,contourTagging:false,mirBitC:[0xff000000,0xffffffff],pxFam:v=>v&1?'w':'k',pxBit:v=>v&1,mirPre(){},contourBegin(){},contourEnd(){},fixMirrorApply(){},fixLowApply(){},triTopApply(){}};
- vm.createContext(c);for(const name of ['zlFamilies','zlFamily','zlFamilyOn','zlList','manualMirrorPlan','ztMirApply','zlMirApply','gpuMirPasses','mirPut']){const text=source(name);if(text)vm.runInContext(text,c);}
+ const c={VW:17,VH:64,VX:0,RK:1,f:{},geo:{anchor:8},st:{rows:64,linesOn:true,lineFamilies:{h:true,v:true,d:true},ztlMain:main!==null,ztopRow:main?.p||0,ztMir:main?.m||0,zl:structuredClone(lines),mirOp:op,mirCol:colour},rombP:()=>-1,contourTagging:false,mirBitC:[0xff000000,0xffffffff],pxFam:v=>v&1?'w':'k',pxBit:v=>v&1,mirPre(){},contourBegin(){},contourEnd(){},manualPaintApply(){},fixMirrorApply(){},fixLowApply(){},triTopApply(){}};
+ Object.assign(c,{img:{width:17,height:64},MayatnikManualLines:require('./mayatnik-manual-lines.js'),MayatnikManualMirrorRaster:require('./mayatnik-manual-mirror-raster.js'),MIR_OP:{xor:1,and:2},dispH:()=>64,manualPaintOn:()=>false,manualPaintCellAt:()=>null,displayCell:(x,y)=>({c:Math.floor(x),r:Math.floor(y)}),parityVisible:()=>true,outShow:()=>false});c.f={W:17,H:64,val:new Int8Array(17*64).fill(1)};
+ vm.createContext(c);for(const name of ['zlFamilies','zlFamily','zlFamilyOn','zlList','manualMirrorOperations','manualMirrorPlan','ztMirApply','zlMirApply','gpuMirPasses','mirPut']){const text=source(name);if(text)vm.runInContext(text,c);}
+ c.manualMirrorOperations();
  return c;
 }
 const tagged=c=>Uint32Array.from({length:c.VW*c.VH},(_,q)=>(0xff000000|q)>>>0);
