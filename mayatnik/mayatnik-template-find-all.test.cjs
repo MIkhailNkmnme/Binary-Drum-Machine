@@ -34,7 +34,7 @@ test('shape matching includes independent visible copies and respects hidden, sk
 });
 test('Find all is present in the main Templates group and uses the active snapshot without saving the library',async()=>{
   const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8'),at=menu.indexOf("  { const row = ptGroup('Шаблоны')"),end=menu.indexOf('railR.style.setProperty',at);assert.match(menu.slice(at,end),/bTemplateFindAll/);assert.match(html,/id="bTemplateFindAll" disabled title="Найти и выделить все такие же шаблоны"/);
-  const nodes={bTemplateFindAll:{},paintCacheInfo:{}},shape={parts:[]};let requested;
-  const c={$:id=>nodes[id],colourTemplate:{},templateItemAllowed:()=>true,templateSnapshot:()=>shape,window:{mayTemplateLibrary:{selectShape:async value=>{requested=value;return{message:'Найдено: 3'};}}}};
-  vm.createContext(c);const start=html.indexOf("  $('bTemplateFindAll').onclick="),stop=html.indexOf('  window.mayTemplateLibrary=',start);vm.runInContext(html.slice(start,stop),c);await nodes.bTemplateFindAll.onclick();assert.equal(requested,shape);assert.equal(nodes.paintCacheInfo.textContent,'Найдено: 3');
+  const nodes={bTemplateFindAll:{},paintCacheInfo:{}},shape={parts:[]};let requested,options;
+  const c={$:id=>nodes[id],colourTemplate:{},templateItemAllowed:()=>true,templateSnapshot:()=>shape,templateMatchProjection:()=> 'projection',window:{mayTemplateLibrary:{selectShape:async(value,opts)=>{requested=value;options=opts;return{message:'Найдено: 3'};}}}};
+  vm.createContext(c);const start=html.indexOf("  $('bTemplateFindAll').onclick="),stop=html.indexOf('  window.mayTemplateLibrary=',start);vm.runInContext(html.slice(start,stop),c);await nodes.bTemplateFindAll.onclick();assert.equal(requested,shape);assert.equal(shape.searchProjection,'projection');assert.equal(options.mirrorX,true);assert.equal(options.materialize,true);assert.equal(nodes.paintCacheInfo.textContent,'Найдено: 3');
 });

@@ -90,7 +90,7 @@
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), button('bOchkiSnake','eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
-      selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),num('ochkiLength',{name:'От бит',slider:false}),
+      selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска Очков — все сохранённые найденные кадры',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
@@ -1174,6 +1174,8 @@
     for(const node of [...gMir.querySelectorAll('[data-n]')])if(!mirrorIds.has(node.dataset.n)&&!['fixAxis','fixCross','fixDragK','fixLines',...['b','r','y','k','w'].map(c=>'px_'+c)].includes(node.dataset.n))gView.append(node);
     // Keep original hidden sources connected, together with their compound visible controls.
     for(const id of ['fixAxis','fixCross','fixDragK','fixLines',...['b','r','y','k','w'].map(c=>'px_'+c)]){const node=gMir.querySelector('[data-n="'+id+'"]');if(node)gView.append(node);}
+    // These display effects keep their original controls and saved values.
+    for(const id of ['frozen','bAnimHl']){const node=railSourceButtons.get(id);if(!node)continue;const index=manualLegacyCells.get('ochki')?.indexOf(node);node.dataset.n=id;if(index>=0){node.dataset.mayPinGroup='ochki';node.dataset.mayPinIndex=String(index);}node.style.removeProperty('left');node.style.removeProperty('top');gView.append(node);}
     const mirrorMenu=window.MayatnikMirrorControls.mount({row:gMir,take,after:()=>{rail.refresh();placeTools();},listHover:(b,o)=>ZerkGrozd.listHover(b,o)});
     window.MayatnikMirrorControls.migrate(localStorage,[...compactBefore].filter(([node])=>node.isConnected).map(([node,from])=>[from,compactKey(node)]));
     toolSync.push(()=>mirrorMenu.sync());
@@ -1201,8 +1203,8 @@
     for(const id of ['bFillClear','bPaintNew','clrPaint'])move(id,railRow('paint'));
     move('bReset',railRow('horr'));move('clrAxes',gAxis);move('clrMirrors',gMir);move('clrSel',railRow('template')||tools.querySelector('[data-n=bXor2]')?.closest('.pt-r')||groupRow('Шаблон'));
     const all=command(gEdit,'resetAll','Всё сразу','Сбросить текущую сцену и все настройки: чёрно-белый Хорр 512, по ширине оси, вверх, кратный ×2. Сохранённые библиотеки остаются.',async()=>{all.disabled=true;try{await window.mayReset?.all();}finally{all.disabled=false;rail.refresh();placeTools();}});
-    for(const [row,id,label,group]of [[gView,'resetView','Сброс вида','view'],[railRow('zoom'),'resetScale','Сброс масштаба','scale'],[gAreas,'resetMeasure','Сброс измерений','measure'],[gMeet,'resetPoint','Сброс точки','point'],[groupRow('Ячейки'),'resetCells','Сброс ячеек','cells'],[groupRow('Слои'),'resetLayers','Сброс слоёв','layers'],[railRow('ochki'),'resetOchki','Сброс очков','ochki'],[railRow('horr'),'resetTransport','Остановить всё','transport']])
-      command(row,id,label,label+' — только эта группа',()=>{window.mayReset?.group(group);rail.refresh();placeTools();});
+    for(const [row,id,label,group]of [[gView,'resetView','Сброс вида','view'],[railRow('zoom'),'resetScale','Сброс масштаба','scale'],[gAreas,'resetMeasure','Сброс измерений','measure'],[gMeet,'resetPoint','Сброс точки','point'],[groupRow('Ячейки'),'resetCells','Сброс ячеек','cells'],[groupRow('Слои'),'resetLayers','Сброс слоёв','layers'],[railRow('ochki'),'resetOchki','Сброс находок','ochki'],[railRow('horr'),'resetTransport','Остановить всё','transport']])
+      command(row,id,label,group==='ochki'?'Сброс находок — снять найденные подсветки, сохранив кнопки и настройки':label+' — только эта группа',()=>{window.mayReset?.group(group);rail.refresh();placeTools();});
     }
     // Keep original measure/count controls and callbacks as list actions.
     const size=tools.querySelector('[data-n=lineMeasures]'),count=tools.querySelector('[data-n=rowCount]');

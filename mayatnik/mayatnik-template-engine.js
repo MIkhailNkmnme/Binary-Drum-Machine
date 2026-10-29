@@ -4,7 +4,15 @@
     const listeners=new Set(),patternCache=new WeakMap(),results=[];
     let serial=0,selection=null,libraryStamp=[],scopeKey=null,filterSerial=0,filterPending=Promise.resolve(),visibleIds=host.scope?new Set():null,state={selectedId:null,count:0,busy:false,message:'',filtering:false};
     function emit(){for(const fn of listeners)fn({...state});}
-    function patternsFor(entry){let patterns=patternCache.get(entry.shape);if(!patterns){patterns=[];for(const part of entry.shape.parts){const p=root.MayatnikTemplateMatcher.compile(part,entry.shape.rk||1,{silhouette:true});if(!patterns.some(q=>q.width===p.width&&q.height===p.height&&q.data.every((v,i)=>v===p.data[i])))patterns.push(p);}patternCache.set(entry.shape,patterns);}return patterns;}
+    function patternsFor(entry,mirrorX=false){
+      let cache=patternCache.get(entry.shape);if(!cache){cache={};patternCache.set(entry.shape,cache);}
+      const key=mirrorX?'mirrored':'direct';if(cache[key])return cache[key];const patterns=[];
+      for(const part of entry.shape.parts)for(const reflected of mirrorX?[false,true]:[false]){
+        const p=root.MayatnikTemplateMatcher.compile(part,entry.shape.rk||1,{silhouette:true,mirrorX:reflected});
+        if(!patterns.some(q=>q.width===p.width&&q.height===p.height&&q.data.every((v,i)=>v===p.data[i])))patterns.push(p);
+      }
+      return cache[key]=patterns;
+    }
     async function filter(items,run){
       // Placed figures are already known to exist; show them before a full-field scan.
       visibleIds=new Set(items.filter(entry=>(host.listedInstances||host.visibleInstances)?.(entry.id)).map(entry=>entry.id));state.filtering=true;emit();
@@ -30,18 +38,32 @@
       const entry=host.entries().find(t=>t.id===id);if(!entry)return state;
       return selectEntry(entry);
     }
-    async function selectEntry(entry,temporary=false){
+    async function selectEntry(entry,temporary=false,options={}){
       const id=temporary?null:entry.id;
       if(host.selectionAllowed?.(entry)===false){state={...state,message:host.selectionMessage?.()||'Template area limit'};emit();return {...state};}
       const run=++serial;selection=null;state={...state,selectedId:id,count:0,busy:true,message:'Поиск в текущих строках…'};emit();
       if(!temporary)host.choose(id);host.stop();host.redrawSelection();
       try{
+        if(options.materialize&&typeof host.materializeMatches!=='function')throw Error('Создание шаблонов из найденных фигур недоступно');
         const field=await host.field();if(run!==serial)return state;
-        const patterns=patternsFor(entry);
-        let found=results.find(r=>r.field===field&&r.patterns===patterns)?.found;
-        if(!found){found=await root.MayatnikTemplateMatcher.find(field,patterns,{cancelled:()=>run!==serial||!host.current(field)});results.push({field,patterns,found});while(results.length>3)results.shift();}
+        const patterns=patternsFor(entry,!!options.mirrorX),cancelled=()=>run!==serial||!host.current(field);
+        let found=results.find(r=>r.field===field&&r.patterns===patterns&&(!options.materialize||r.found.matches))?.found;
+        if(!found){found=await root.MayatnikTemplateMatcher.find(field,patterns,{collectMatches:!!options.materialize,cancelled});results.push({field,patterns,found});while(results.length>3)results.shift();}
         if(run!==serial)return state;
-        const instances=temporary?(host.shapeInstances?.(entry.shape)||[]):host.instances(id);
+        const instances=temporary?(host.shapeInstances?.(entry.shape,{mirrorX:!!options.mirrorX})||[]):host.instances(id);
+        if(options.materialize){
+          if(cancelled())throw root.MayatnikTemplateMatcher.abort();
+          // The host stages source-preserving copies, validates its raster projection,
+          // then commits them and their common undo entry in one synchronous step.
+          const result=await host.materializeMatches({shape:entry.shape,field,patterns,matches:found.matches,instances},cancelled);
+          if(run!==serial)return state;
+          if(!result||!Array.isArray(result.instances))throw Error('Не удалось выделить найденные шаблоны');
+          const ids=[...new Set(result.instances)];selection=null;
+          state={...state,selectedId:id,count:ids.length,busy:false,message:ids.length?`Найдено в текущих строках: ${ids.length} шаблонов`:'В текущих строках этого шаблона нет'};
+          host.redrawSelection();emit();
+          if(ids.length)host.focus?.({id,instances:ids,first:found.first||null,field});
+          return {...state};
+        }
         selection={...found,instances,field};state={...state,selectedId:id,count:found.count+instances.length,busy:false,message:`Найдено: ${found.count} · отдельных копий: ${instances.length}`};
         if(!state.count){selection=null;state.message='В текущих строках этого шаблона нет';}
         host.redrawSelection();emit();
@@ -64,7 +86,7 @@
       list:()=>host.entries().filter(t=>!visibleIds||visibleIds.has(t.id)).map(t=>({id:t.id,name:t.name,hex:t.shape.hex,parts:t.shape.parts,previewKey:t.shape,builtin:String(t.id).startsWith('standard:')})),allIds:()=>host.entries().map(t=>t.id),whenFiltered:()=>filterPending,
       exportList:()=>host.entries().map(({id,name})=>({id,name})),
       exportItem(id){const entry=host.entries().find(t=>t.id===id);if(!entry)throw Error('Шаблон не найден');const item=structuredClone(entry);return {id:item.id,name:item.name,files:[{extension:'.template.json',blob:new Blob([JSON.stringify({format:'mayatnik-templates',version:1,templates:[item]})],{type:'application/json'})}]};},
-      select,selectShape:shape=>selectEntry({shape},true),colour:hex=>edit('colour',hex),removeMatches:()=>edit('delete'),
+      select,selectShape:(shape,options)=>selectEntry({shape},true,options),colour:hex=>edit('colour',hex),removeMatches:()=>edit('delete'),
       async action(id,action,value){const result=await host.action(id,action,value);if(action==='visible'||action==='skip-selection'){clear();if(action==='visible'){scopeKey=null;refresh();}emit();}return result;},
       visibility:id=>host.visibility?.(id)||{placed:0,visible:false,skipSelection:false},getControls:()=>null,
       getState:()=>({...state}),subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},

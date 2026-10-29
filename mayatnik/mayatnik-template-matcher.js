@@ -1,4 +1,4 @@
-/* Exact translated binary silhouettes. No rotations, colour comparison or polling. */
+/* Exact translated binary silhouettes, with optional horizontal reflection. */
 (function(root){
   'use strict';
   const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
@@ -7,7 +7,7 @@
     const width=Math.max(1,Math.round(part.width/rk)),height=Math.max(1,Math.round(part.height/rk));
     const data=new Uint8Array(width*height),filled=[];
     for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-      const q=y*width+x;data[q]=part.data[Math.min(part.height-1,Math.floor((y+.5)*rk))*part.width+Math.min(part.width-1,Math.floor((x+.5)*rk))]?1:0;
+      const q=y*width+x,sx=options.mirrorX?width-1-x:x;data[q]=part.data[Math.min(part.height-1,Math.floor((y+.5)*rk))*part.width+Math.min(part.width-1,Math.floor((sx+.5)*rk))]?1:0;
       if(data[q])filled.push(q);
     }
     if(!filled.length)throw Error('В шаблоне нет клеток');
@@ -30,7 +30,7 @@
     return pattern;
   }
   async function find(field,patterns,options={}){
-    const {width:W,height:H,data}=field,N=W*H,selected=options.existsOnly?null:new Uint8Array(N);
+    const {width:W,height:H,data}=field,N=W*H,selected=options.existsOnly?null:new Uint8Array(N),matches=options.collectMatches&&!options.existsOnly?[]:null;
     if(data.length!==N)throw Error('Размер поля не совпадает');
     const cancelled=options.cancelled||(()=>false),yieldTask=options.yieldTask||pause;
     const clock=options.now||(()=>performance.now()),budget=options.budgetMs??8;
@@ -57,6 +57,7 @@
         if(match){
           if(!firstMatch)firstMatch={x,y,width:pw,height:ph,patternIndex:pi};
           if(options.existsOnly)return {count:1,yields,maxSliceMs:Math.max(maxSliceMs,clock()-sliceStart)};
+          if(matches)matches.push({x,y,width:pw,height:ph,patternIndex:pi,bit:first});
           count++;
           for(const offset of ones){const q=start+offset;if(!selected[q]){selected[q]=1;selectedCount++;}
             if(++operations>=8192){operations=0;if(due())await checkpoint();}}
@@ -66,7 +67,7 @@
     }
     if(cancelled())throw abort();
     maxSliceMs=Math.max(maxSliceMs,clock()-sliceStart);
-    return {count,selectedCount,selected,first:firstMatch,width:W,height:H,yields,maxSliceMs};
+    return {count,selectedCount,selected,first:firstMatch,width:W,height:H,yields,maxSliceMs,...(matches?{matches}:{})};
   }
   const api={compile,find,abort};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateMatcher=api;
 })(typeof window==='object'?window:globalThis);

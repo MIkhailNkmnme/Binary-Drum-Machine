@@ -12,6 +12,39 @@ function fixture({saved=[],sequence=['1011'],view='bits'}={}){
  const advance=ms=>{const end=now+ms;while(true){const next=[...timers].filter(([,v])=>v.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;timers.delete(next[0]);now=next[1].at;next[1].fn();}now=end;};
  bits();return {c:context,api:context.api,st,f,storage,saves,events,bits,advance,$};
 }
+test('reset findings preserves settings and saved log, clears accumulated rows, and suppresses only the current search key',()=>{
+ const a=fixture(),c=a.c;let published,chosen='old';c.sequences.setMatches=v=>published=v;c.sequences.selectMatches=v=>chosen=v;
+ a.api.get();const settings=JSON.stringify(a.st),log=JSON.stringify(a.api.log()),storage=a.storage.get('mayatnik_ochki_log'),keys=a.api.keys();
+ c.resetOchkiFindings(false);assert.equal(JSON.stringify(a.st),settings);assert.equal(JSON.stringify(a.api.log()),log);assert.equal(a.storage.get('mayatnik_ochki_log'),storage);assert.equal(a.api.keys(),keys);
+ assert.equal(chosen,null);assert.equal(published.count,0);assert.equal(published.enabled,true);assert.equal(a.api.get(),null);assert.equal(c.ochkiFor(),null);assert.equal(c.ochkiOverlayGet(),null);assert.equal(a.api.current(),null);
+ assert.deepEqual(Array.from(vm.runInContext('[ochkiFoundRows.size,ochkiFoundUnion.size,ochkiFoundCount.size]',c)),[0,0,0]);
+ a.advance(0);assert.equal(a.saves.length,0,'cleared pending capture cannot save the old highlights');
+ a.f.val.fill(-1);c.k++;const empty=a.api.get();assert.equal(empty.found.length,0);assert.equal(empty.foundEver,0);assert.equal(empty.hl.some(Boolean),false);
+ a.bits(2,1);c.k++;const next=a.api.get();assert.equal(next.found.length,1);assert.equal(next.foundEver,1);assert.equal(next.hl[12],0);assert.equal(JSON.stringify(a.api.log()),log,'log dedup remains intact');
+});
+test('reset findings cancels a pending automatic pause without changing the glasses controls',()=>{
+ const a=fixture(),c=a.c;c.playing=true;a.api.get();assert.equal(c.playing,false);const settings=JSON.stringify(a.st);c.resetOchkiFindings(false);a.advance(3000);assert.equal(c.playing,false);assert.equal(c.resumes,undefined);assert.equal(JSON.stringify(a.st),settings);assert.equal(a.saves.length,0);
+});
+test('reset terminates the current snake worker and rejects late findings while the next frame may start a fresh search',()=>{
+ const a=fixture({view:'romb2'}),c=a.c;let creates=0,terminated=0;const worker={postMessage(){},terminate(){terminated++;}};a.st.ochkiSnake=true;c.MayatnikSnake={createWorker(){creates++;return worker;}};c.draw=()=>{};
+ c.ochkiSnakeFor();const late=worker.onmessage;c.resetOchkiFindings(false);assert.equal(terminated,1);assert.equal(a.st.ochkiSnake,true);assert.equal(c.ochkiSnakeWait(),false);assert.equal(creates,1);
+ late({data:{result:{found:[{i:0,n:4,p:0,r:1,c:0,dir:'snake',cells:[12,14,16,18]}],total:1,complete:true}}});assert.equal(a.api.current(),null);assert.equal(a.api.log().length,0);
+ c.k++;c.ochkiSnakeFor();assert.equal(creates,2);
+});
+test('changing bit display clears previous runtime findings and searches the new view without suppressing it',()=>{
+ const a=fixture(),c=a.c;a.api.get();c.resetOchkiFindings(false);assert.equal(a.api.get(),null);a.st.view='col';const next=a.api.get();assert.equal(next.found.length,1);assert.equal(next.foundCount,1);assert.equal(c.ochkiFindingsSuppressed(),false);
+ const maps=vm.runInContext('[ochkiFoundRows.size,ochkiFoundUnion.size,ochkiFoundCount.size]',c);assert.deepEqual(Array.from(maps),[1,1,1]);assert.equal(a.st.ochki,true);assert.equal(a.st.ochkiMode,'row');
+ a.st.view='bits';assert.equal(a.api.get().found.length,1);assert.deepEqual(Array.from(vm.runInContext('[ochkiFoundRows.size,ochkiFoundUnion.size,ochkiFoundCount.size]',c)),[1,1,1]);
+});
+test('resetting findings releases an already-running test build from its terminated snake job without restarting playback',()=>{
+ const a=fixture({view:'romb2'}),c=a.c;let resumed=0;a.st.ochkiSnake=true;c.playing=true;c.MayatnikSnake={createWorker:()=>({postMessage(){},terminate(){}})};c.ochkiSnakeFor();
+ c.continueTestBuild=()=>{resumed++;assert.equal(c.ochkiSnakeWait(),false);};vm.runInContext('ochkiSnakeJob.buildContinue=continueTestBuild',c);
+ c.resetOchkiFindings(false);assert.equal(resumed,1);assert.equal(c.playing,true);assert.equal(c.resumes,undefined);
+});
+test('the glasses reset command avoids the generic settings-reset and UI-rewrite path',()=>{
+ const a=fixture(),c=a.c;a.api.get();let draws=0,events=0;Object.assign(c,{resetAllBusy:false,sessionReady:true,cacheRestoring:false,frameLibraryBusy:false,backupOperationBusy:()=>false,draw(){draws++;assert.equal(c.ochkiFor(),null);},queueDigits(){},dispatchEvent(){events++;},Event:class{},writeUI(){throw Error('reset findings must not rewrite controls');},savePaint(){throw Error('reset findings must not save paint');}});
+ const start=html.indexOf('  function resetGroup(name){'),end=html.indexOf('  async function resetAll()',start);vm.runInContext(html.slice(start,end),c);const before=JSON.stringify(a.st);assert.equal(c.resetGroup('ochki'),true);assert.equal(JSON.stringify(a.st),before);assert.equal(draws,1);assert.equal(events,1);
+});
 test('a row found once is not searched or highlighted again in the same scope',()=>{
  const a=fixture();const first=a.api.get();assert.equal(first.found.length,1);const cells=Array.from(first.found[0].cells);assert.equal(a.api.log().length,1);
  a.c.k++;const second=a.api.get();assert.equal(second.found.length,0,'already found row is skipped');assert.equal(Array.from(second.hl).some(Boolean),false);assert.equal(a.api.log().length,1);assert.equal(a.api.current(),second);

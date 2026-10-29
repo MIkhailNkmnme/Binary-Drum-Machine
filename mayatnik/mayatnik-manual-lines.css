@@ -1,0 +1,11 @@
+.may-manual-axis-controls{position:fixed;z-index:6;display:flex;align-items:center;gap:2px;height:24px;touch-action:none;user-select:none;white-space:nowrap}
+.may-manual-axis-controls[hidden],.may-manual-axis-controls button[hidden]{display:none!important}
+.may-manual-axis-controls button{position:relative;flex:none;box-sizing:border-box;width:24px;height:24px;padding:0 4px;border:0;border-radius:0;background:color-mix(in srgb,var(--manual-axis-colour) 35%,#1b2430);color:var(--manual-axis-colour);font:700 13px/24px system-ui,sans-serif;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%);isolation:isolate;user-select:none;touch-action:none}
+.may-manual-axis-controls button::before{content:"";position:absolute;z-index:-1;inset:1px;clip-path:inherit;background:#1b2430}
+.may-manual-axis-controls button:hover,.may-manual-axis-controls button:focus-visible{background:var(--manual-axis-colour);outline:none}
+.may-manual-axis-controls button[aria-pressed="true"]{background:var(--manual-axis-colour)}
+.may-manual-axis-controls button[aria-pressed="true"]::before{inset:2px}
+.may-manual-axis-controls button:active::before,.may-manual-axis-controls button.drag::before{inset:3px}
+.may-manual-axis-controls button:disabled{opacity:.35;cursor:default}
+.may-manual-axis-controls .may-manual-axis-label{width:180px;min-width:180px;max-width:180px;padding:0 9px;overflow:hidden;text-overflow:ellipsis;font:11px/24px var(--mono,monospace)}
+.may-manual-axis-controls .may-manual-axis-remove{color:#ff7373}
