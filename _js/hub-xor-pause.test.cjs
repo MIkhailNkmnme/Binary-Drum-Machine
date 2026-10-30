@@ -36,8 +36,8 @@ function fixture({deferred=false,firstFrame=0}={}){
 }
 test('release version and cache agree; pause and zen buttons are hidden inside zen',()=>{
   const html=fs.readFileSync(__dirname+'/../index.html','utf8');
-  assert.match(html,/<title>[^<]*v0\.471<\/title>/);
-  assert.match(html,/hub-xor-background\.js\?v=471/);
+  assert.match(html,/<title>[^<]*v0\.472<\/title>/);
+  assert.match(html,/hub-xor-background\.js\?v=472/);
   assert.match(html,/#hubComparePause\{[^}]*width:48px;height:48px/);
   assert.match(html,/#hubComparePause\{[^}]*clip-path:polygon\(50% 0,100% 50%,50% 100%,0 50%\)/);
   const hidden=html.match(/body\.hubCompareZen :is\(([^)]*)\)\{display:none!important\}/);
@@ -143,4 +143,14 @@ test('holding the field in zen leaves it once; moving cancels; outside zen nothi
   const g=fixture();g.pointerdown({pointerId:5,clientX:250,clientY:150});
   assert.equal(g.timers.size,1,'no hold timer outside zen');
   assert.equal(g.nodes.hubCompareZen.clicks,0);
+});
+test('hub version is hidden while the player runs and returns on pause',()=>{
+  const f=fixture();
+  assert.ok(f.document.body.classList.contains('hubPlaying'),'playing at start');
+  f.nodes.hubComparePause.fire('click');
+  assert.equal(f.nodes.hubXorBackground.dataset.paused,'true');
+  assert.ok(!f.document.body.classList.contains('hubPlaying'),'version visible on pause');
+  f.nodes.hubComparePause.fire('click');
+  assert.equal(f.nodes.hubXorBackground.dataset.paused,'false');
+  assert.ok(f.document.body.classList.contains('hubPlaying'),'version hidden again on resume');
 });

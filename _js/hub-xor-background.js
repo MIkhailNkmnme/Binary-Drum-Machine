@@ -1,4 +1,6 @@
-/* v12 (Хаб v0.471). Точные packed-поля, отрисовка без распаковки, 8×/16×.
+/* v13 (Хаб v0.472). Скорость плеера — 0,25× … 1024× шагом ×2; номер хаба
+   скрыт, пока плеер идёт (на паузе возвращается).
+   v12 (Хаб v0.471). Точные packed-поля, отрисовка без распаковки, 8×/16×.
    v11 (Хаб v0.470). Скорость плеера 0,25× / 0,5× / 1× / 2× / 4×; кадр
    рисуется 32-битными словами, 5.9 не перерисовывается на промежуточных
    кадрах, на 4× кадр режется одним куском 1024 строки — 4× обгоняет 2×.
@@ -61,7 +63,7 @@
     green: { label: 'Зелёный', left: [51,122,52], middle: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, обе стороны, всё поле и общие — зелёный' }
   };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
-  const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16];
+  const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
   // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
   const FIELDS = [1, 2, 3];
   const FIELD_KEYS = { 1: 'left', 2: 'pair', 3: 'right' };
@@ -106,6 +108,7 @@
 
   function syncPlayback() {
     if (root) root.dataset.paused = String(paused);
+    if (document.body && document.body.classList) document.body.classList.toggle('hubPlaying', !failed && !paused);   // v0.472: номер хаба не виден, пока плеер идёт
     if (!pauseButton) return;
     pauseButton.disabled = failed;
     pauseButton.setAttribute('aria-pressed', String(paused));
@@ -256,7 +259,7 @@
     if (speedButton) {
       const label = speedLabel(view.speed);
       text('hubCompareSpeedLabel', label);
-      speedButton.title = 'Скорость плеера: ' + label + '. Щелчок — следующая: 0,25× → 0,5× → 1× → 2× → 4× → 8× → 16×';
+      speedButton.title = 'Скорость плеера: ' + label + '. Щелчок — следующая: ' + SPEEDS.map(speedLabel).join(' → ');
       speedButton.setAttribute('aria-label', 'Скорость плеера: ' + label);
       speedButton.classList.toggle('gz-on', view.speed !== 1);
     }

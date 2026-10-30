@@ -124,10 +124,10 @@ function assertBlend(f, label) {
   assert.deepEqual(Array.from(actual), Array.from(f.nodes.hubBlend.ctx.expected), label + ': blend pixels');
 }
 
-test('v0.471 markup: three independent field buttons, the old pair buttons are gone', () => {
+test('v0.472 markup: three independent field buttons, the old pair buttons are gone', () => {
   const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
-  assert.match(html, /<title>[^<]*v0\.471<\/title>/);
-  assert.match(html, /hub-xor-background\.js\?v=471/);
+  assert.match(html, /<title>[^<]*v0\.472<\/title>/);
+  assert.match(html, /hub-xor-background\.js\?v=472/);
   const group = html.match(/<div id="hubComparePairs"[^>]*>([\s\S]*?)<\/div>/);
   assert.ok(group, 'field group exists');
   for (const value of [1, 2, 3]) {
@@ -247,13 +247,13 @@ test('saved fields win; the old 1–2 / 2–3 / 3–1 / 1–2–3 pairs are migr
   assert.deepEqual(broken.fields(), [1, 2], 'a non-array selection is ignored');
 });
 
-test('player speed cycles 0,25×–16×, scales the next frame delay and is saved', async () => {
+test('player speed cycles 0,25×–1024×, scales the next frame delay and is saved', async () => {
   const f = fixture();
   assert.equal(f.nodes.hubCompareSpeedLabel.textContent, '1×');
   const seen = [];
-  for (let i = 0; i < 7; i++) { f.clickSpeed(); seen.push(f.nodes.hubCompareSpeedLabel.textContent); }
-  assert.deepEqual(seen, ['2×', '4×', '8×', '16×', '0,25×', '0,5×', '1×']);
-  assert.match(f.nodes.hubCompareSpeed.title, /0,25× → 0,5× → 1× → 2× → 4× → 8× → 16×/);
+  for (let i = 0; i < 13; i++) { f.clickSpeed(); seen.push(f.nodes.hubCompareSpeedLabel.textContent); }
+  assert.deepEqual(seen, ['2×', '4×', '8×', '16×', '32×', '64×', '128×', '256×', '512×', '1024×', '0,25×', '0,5×', '1×']);
+  assert.match(f.nodes.hubCompareSpeed.title, /0,25× → 0,5× → 1× → 2× → 4× → 8× → 16× → 32× → 64× → 128× → 256× → 512× → 1024×/);
   await f.frame();
   const one = f.delays[f.delays.length - 1];
   f.clickSpeed();   // 2×
@@ -272,6 +272,9 @@ test('player speed cycles 0,25×–16×, scales the next frame delay and is save
   f.clickSpeed();   // 16×
   await f.frame();
   assert.ok(eight < four && f.delays[f.delays.length - 1] < eight);
+  for (let i = 0; i < 6; i++) { f.clickSpeed(); await f.frame(); }   // 32× … 1024×
+  assert.equal(f.nodes.hubCompareSpeedLabel.textContent, '1024×');
+  assert.equal(JSON.parse(f.stored[f.stored.length - 1][1]).speed, 1024);
   f.clickSpeed();   // 0,25×
   f.clickSpeed();   // 0,5×
   await f.frame();
@@ -282,7 +285,7 @@ test('saved player speed is restored and validated', () => {
   const half = fixture({ saved: { fields: [3], speed: 0.5 } });
   assert.equal(half.nodes.hubCompareSpeedLabel.textContent, '0,5×');
   assert.deepEqual(half.fields(), [3]);
-  for (const speed of [8, 16]) assert.equal(fixture({ saved: { speed } }).nodes.hubCompareSpeedLabel.textContent, speed + '×');
+  for (const speed of [8, 16, 32, 64, 128, 256, 512, 1024]) assert.equal(fixture({ saved: { speed } }).nodes.hubCompareSpeedLabel.textContent, speed + '×');
   const invalid = fixture({ saved: { speed: 7 } });
   assert.equal(invalid.nodes.hubCompareSpeedLabel.textContent, '1×');
 });
