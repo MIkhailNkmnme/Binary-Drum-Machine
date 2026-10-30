@@ -36,9 +36,9 @@ function fixture({deferred=false,firstFrame=0}={}){
 }
 test('release version and cache agree; pause and zen buttons are hidden inside zen',()=>{
   const html=fs.readFileSync(__dirname+'/../index.html','utf8');
-  assert.match(html,/<title>[^<]*v0\.475<\/title>/);
-  assert.match(html,/hub-xor-kernel\.js\?v=475/);
-  assert.match(html,/hub-xor-background\.js\?v=475/);
+  assert.match(html,/<title>[^<]*v0\.476<\/title>/);
+  assert.match(html,/hub-xor-kernel\.js\?v=476/);
+  assert.match(html,/hub-xor-background\.js\?v=476/);
   assert.match(html,/#hubComparePause\{[^}]*width:48px;height:48px/);
   assert.match(html,/#hubComparePause\{[^}]*clip-path:polygon\(50% 0,100% 50%,50% 100%,0 50%\)/);
   const hidden=html.match(/body\.hubCompareZen :is\(([^)]*)\)\{display:none!important\}/);
@@ -75,7 +75,7 @@ test('mid-chunk pause preserves exact source fields, frame sequence and cycle ro
   paused.pause();assert.equal(paused.timers.size,1);
   for(let i=0;i<11;i++)await paused.frame();
   assert.deepEqual(paused.measured,baseline.measured);
-  assert.deepEqual(paused.measured.map(x=>[x.cycle,x.frame]),[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,7],[1,6]]);
+  assert.deepEqual(paused.measured.map(x=>[x.cycle,x.frame]),[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,0],[1,1]]);
 });
 test('pause while statistics are pending lets current job settle but cannot start a new frame',async()=>{
   const f=fixture({deferred:true});await f.frame();assert.equal(f.timers.size,0);
@@ -87,8 +87,8 @@ test('pause while statistics are pending lets current job settle but cannot star
 test('pause during next-cycle hidden warmup measures the last displayed field, not the hidden new field',async()=>{
   const f=fixture({firstFrame:2});
   for(let i=0;i<10;i++)await f.frame();
-  assert.deepEqual(f.measured.slice(-1).map(x=>[x.cycle,x.frame]),[[1,7]]);
-  assert.equal(f.nodes.hubCones.dataset.frame,'7');
+  assert.deepEqual(f.measured.slice(-1).map(x=>[x.cycle,x.frame]),[[1,0]]);
+  assert.equal(f.nodes.hubCones.dataset.frame,'0');
   const displayed=f.measured[9];
   f.pause();await f.flush();
   assert.deepEqual(f.measured[f.measured.length-1],displayed);
@@ -154,18 +154,4 @@ test('hub version is hidden while the player runs and returns on pause',()=>{
   f.nodes.hubComparePause.fire('click');
   assert.equal(f.nodes.hubXorBackground.dataset.paused,'false');
   assert.ok(f.document.body.classList.contains('hubPlaying'),'version hidden again on resume');
-});
-test('ping-pong reverse frame 7 equals the same forward frame 7',async()=>{
-  const f=fixture();
-  for(let i=0;i<9;i++)await f.frame();   // 0…8 вперёд
-  const forward=f.measured.find(x=>x.frame===7&&x.cycle===0);
-  assert.ok(forward,'кадр 7 вперёд измерен');
-  await f.frame();                        // 8 → 7 назад
-  const back=f.measured[f.measured.length-1];
-  assert.equal(back.frame,7);
-  assert.equal(back.cycle,1);
-  const norm = values => values.map(value => value === -1 ? 0 : value);   // пусто и 0 рисуются одинаково
-  assert.deepEqual(norm(back.left),norm(forward.left),'5.7 на обратном ходу тот же');
-  assert.deepEqual(norm(back.middle),norm(forward.middle),'5.9 на обратном ходу тот же');
-  assert.deepEqual(norm(back.right),norm(forward.right),'5.8 на обратном ходу тот же');
 });

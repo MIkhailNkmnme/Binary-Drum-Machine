@@ -39,29 +39,6 @@ test('all three fields match scalar at every adjacent frame, odd/even pair step,
     }
   }
 });
-test('unsweep and uncone restore the previous frame bits exactly', () => {
-  for (const H of [5, 17]) {
-    const W = 2 * H - 1, center = W >> 1;
-    const g = K.create(W, H), p = K.create(W, H), c = K.create(W, H);
-    for (let frame = 0; frame < W; frame++) {
-      const d = Math.ceil(frame / 2), pos = center + (frame % 2 ? -d : d);
-      const pair = frame === 0 || frame % 2 === 1;
-      const beforeG = g.bits.slice(), beforeP = p.bits.slice(), beforeC = c.bits.slice();
-      K.apex(g, pos); K.sweep(g, 1, H); K.cone(c, pos);
-      if (pair) { K.apex(p, pos); K.apex(p, 2 * center - pos); K.sweep(p, 1, H); }
-      if (frame > 0) {
-        K.unsweep(g, 1, H); K.clearApex(g, pos);
-        K.uncone(c, pos);
-        if (pair) { K.unsweep(p, 1, H); K.clearApex(p, pos); K.clearApex(p, 2 * center - pos); }
-        assert.deepEqual(g.bits, beforeG, 'unsweep H=' + H + ' frame=' + frame);
-        assert.deepEqual(c.bits, beforeC, 'uncone H=' + H + ' frame=' + frame);
-        if (pair) assert.deepEqual(p.bits, beforeP, 'pair unsweep H=' + H + ' frame=' + frame);
-        K.apex(g, pos); K.sweep(g, 1, H); K.cone(c, pos);
-        if (pair) { K.apex(p, pos); K.apex(p, 2 * center - pos); K.sweep(p, 1, H); }
-      }
-    }
-  }
-});
 test('partial fields preserve empty versus zero, word boundaries, cone clipping and partial-row continuation', () => {
   for (const W of [1, 31, 32, 33, 63, 64, 65, 2047]) {
     const H = 11, values = new Int8Array(W * H);

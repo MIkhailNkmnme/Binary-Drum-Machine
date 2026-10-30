@@ -1,5 +1,6 @@
-/* v16 (Хаб v0.475). Пинг-понг: после 2047 вершин плеер идёт назад и убирает
-   вершины обратным проходом sweep/cone; пустого кадра и сброса нет.
+/* v17 (Хаб v0.476). Вершина, дошедшая до края, перескакивает на противоположную
+   сторону и идёт дальше в том же направлении; поле не сбрасывается.
+   v16 (Хаб v0.475). Пинг-понг — откатан: обратный проход не пересчитывал поле.
    v14 (Хаб v0.473). Выше 16× плеер считает несколько кадров за тик и рисует
    последний: кнопка 32…1024× снова заметно ускоряет, узор тот же — кадры
    не пропускаются, только промежуточные не выводятся.
@@ -95,8 +96,7 @@
     }
   } catch (_) {}
   let published = false;
-  let frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
-  let direction = 1;   // v0.475: 1 — вершины добавляются, −1 — пинг-понг назад, вершины убираются
+  let step = -1, frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
   let publishedFrame = -1, publishedCycle = 0, statsFrame = -1;
   let pairStep = false;   // текущий кадр — шаг пары для 5.9 (переживает разбивку на куски строк)
   let cycle = 0, awaitingStats = false, failed = false, paused = false, controller = null;
@@ -477,38 +477,20 @@
   function framesPerTick() {
     return Math.min(16, Math.max(2, Math.round(view.speed / 8)));
   }
-  function apexPos(f) {
-    const d = Math.ceil(f / 2);
-    return CENTER + (f % 2 ? -d : d);
-  }
-  function reverseOneFrame() {
-    if (frame <= 0) return false;
-    const pos = apexPos(frame);
-    kernel.unsweep(grid, 1, H);
-    const pairThis = frame === 0 || frame % 2 === 1;
-    if (middle && pairThis) kernel.unsweep(pairGrid, 1, H);
-    kernel.uncone(cones, pos);
-    kernel.clearApex(grid, pos);
-    if (middle && pairThis) {
-      kernel.clearApex(pairGrid, pos);
-      const twin = 2 * CENTER - pos;
-      if (twin >= 0 && twin < W) kernel.clearApex(pairGrid, twin);
-    }
-    frame--;
-    pairStep = frame >= 0 && (frame === 0 || frame % 2 === 1);
-    row = H;
-    nextFrame = true;
-    return true;
+  function apexPos(s) {
+    const d = Math.ceil(s / 2);
+    const pos = CENTER + (s % 2 ? -d : d);
+    return ((pos % W) + W) % W;   // v0.476: дошедшая до края вершина перескакивает на противоположную сторону
   }
   function advanceWholeFrame() {
-    frame++; row = 1;
-    const pos = apexPos(frame);
+    step++; frame = step % W; cycle = Math.floor(step / W); row = 1;
+    const pos = apexPos(step);
     kernel.apex(grid, pos);
-    pairStep = frame === 0 || frame % 2 === 1;
+    pairStep = step === 0 || step % 2 === 1;
     if (middle && pairStep) {
       kernel.apex(pairGrid, pos);
-      const twin = 2 * CENTER - pos;
-      if (twin >= 0 && twin < W) kernel.apex(pairGrid, twin);
+      const twin = ((2 * CENTER - pos) % W + W) % W;
+      kernel.apex(pairGrid, twin);
     }
     kernel.cone(cones, pos);
     kernel.sweep(grid, 1, H);
@@ -518,27 +500,6 @@
   function schedule(delay) {
     if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);
   }
-  function reverseTick(statsOn) {
-    const startedAt = performance.now();
-    const steps = view.speed > 16 && !statsOn ? framesPerTick() : 1;
-    for (let i = 0; i < steps; i++) if (!reverseOneFrame()) break;
-    if (frame >= FIRST_FRAME) {
-      kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
-      left.dataset.frame = right.dataset.frame = String(frame);
-      if (middle) middle.dataset.frame = String(frame);
-      published = true; publishedFrame = frame; publishedCycle = cycle;
-      renderPublished();
-    }
-    const finish = () => schedule(Math.max(0, frameInterval() - (performance.now() - startedAt)));
-    if (statsOn && frame >= FIRST_FRAME) {
-      awaitingStats = true;
-      decodePublished();
-      Promise.resolve(controller.measure({ left: publishedLeft, middle: publishedPair, right: publishedRight, W, H, frame, cycle }))
-        .then(() => { awaitingStats = false; if (!paused) finish(); }, stop);
-      return;
-    }
-    finish();
-  }
   function tick() {
     timer = 0;
     if (document.hidden || awaitingStats || failed || paused) return;
@@ -546,14 +507,11 @@
     // кадры идут со скоростью кнопки, статистика начинается при открытии панели.
     const statsOn = controller && typeof controller.measure === 'function' &&
       (typeof controller.active !== 'function' || controller.active());
-    if (direction < 0 && frame <= 0) direction = 1;
-    if (direction < 0) { reverseTick(statsOn); return; }
-    if (frame >= W - 1 && row >= H && nextFrame) { direction = -1; cycle++; reverseTick(statsOn); return; }
     if (view.speed > 16 && !statsOn) {
       const startedAt = performance.now();
-      const steps = Math.min(framesPerTick(), W - 1 - frame);
+      const steps = framesPerTick();
       for (let i = 0; i < steps; i++) advanceWholeFrame();
-      if (frame >= FIRST_FRAME) {
+      if (step >= FIRST_FRAME) {
         kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
         left.dataset.frame = right.dataset.frame = String(frame);
         if (middle) middle.dataset.frame = String(frame);
@@ -565,23 +523,23 @@
       return;
     }
     if (nextFrame) {
-      nextFrame = false; frame++; row = 1; started = performance.now();
-      const pos = apexPos(frame);
+      nextFrame = false; step++; frame = step % W; cycle = Math.floor(step / W); row = 1; started = performance.now();
+      const pos = apexPos(step);
       kernel.apex(grid, pos);
       // 5.9 повторяет пару шагов тест-страницы: −m и +m одной дистанцией, ровно
       // один пересчёт на пару (кадры 0, 1, 3, 5…), поэтому поле совпадает с
       // «обе стороны» на той же странице кадр в кадр, но обновляется через кадр.
-      const pairStepNow = frame === 0 || frame % 2 === 1;
+      const pairStepNow = step === 0 || step % 2 === 1;
       pairStep = pairStepNow;
       if (middle && pairStep) {
         kernel.apex(pairGrid, pos);
-        const twin = 2 * CENTER - pos;
-        if (twin >= 0 && twin < W) kernel.apex(pairGrid, twin);
+        const twin = ((2 * CENTER - pos) % W + W) % W;
+        kernel.apex(pairGrid, twin);
       }
       // Один исходный cone за такт; packed-ядро сохраняет границы и чётность.
       kernel.cone(cones, pos);
     }
-    const visible = frame >= FIRST_FRAME;
+    const visible = step >= FIRST_FRAME;
     // На высокой скорости режем кадр крупнее: меньше таймеров, больше кадров/с.
     const chunk = view.speed >= 4 ? 1024 : view.speed >= 2 ? 512 : ROW_CHUNK;
     const end = Math.min(H, row + chunk);

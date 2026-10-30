@@ -124,11 +124,11 @@ function assertBlend(f, label) {
   assert.deepEqual(Array.from(actual), Array.from(f.nodes.hubBlend.ctx.expected), label + ': blend pixels');
 }
 
-test('v0.475 markup: three independent field buttons, the old pair buttons are gone', () => {
+test('v0.476 markup: three independent field buttons, the old pair buttons are gone', () => {
   const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
-  assert.match(html, /<title>[^<]*v0\.475<\/title>/);
-  assert.match(html, /hub-xor-kernel\.js\?v=475/);
-  assert.match(html, /hub-xor-background\.js\?v=475/);
+  assert.match(html, /<title>[^<]*v0\.476<\/title>/);
+  assert.match(html, /hub-xor-kernel\.js\?v=476/);
+  assert.match(html, /hub-xor-background\.js\?v=476/);
   const group = html.match(/<div id="hubComparePairs"[^>]*>([\s\S]*?)<\/div>/);
   assert.ok(group, 'field group exists');
   for (const value of [1, 2, 3]) {
