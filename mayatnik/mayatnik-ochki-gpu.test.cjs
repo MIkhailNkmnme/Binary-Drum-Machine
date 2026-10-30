@@ -61,7 +61,7 @@ test('manual projected playback waits for exact snapshot without accepting a sta
 });
 
 test('manual CPU display is limited to visible romb operations while Ochki readback permits active playback',()=>{
-  const c={gpuBig:{},templatePaintLayer:null,fillMask:null,fillHistory:[],fillRedo:[],gpuPaintRequests:0,st:{ochki:false},rombP:()=>0,manualPaintOn:()=>false,manualMirrorPlan:()=>[]};Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);
+  const c={gpuBig:{},templatePaintLayer:null,templateMatchLayer:null,fillMask:null,fillHistory:[],fillRedo:[],gpuPaintRequests:0,st:{ochki:false},rombP:()=>0,manualPaintOn:()=>false,manualMirrorPlan:()=>[]};Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);
   vm.runInContext(['gpuCpuOchki','gpuManualCpu','gpuPaintCpu','gpuCpuDisplay','gpuDisplay'].map(name=>html.match(new RegExp('  const '+name+' =[^\\n]+'))[0]).join('\n')+'\nthis.display=()=>gpuCpuDisplay();this.manual=()=>gpuManualCpu();',c);
   assert.equal(c.display(),false);c.manualMirrorPlan=()=>[{k:'h',m:2}];assert.equal(c.display(),true);
   c.rombP=()=>-1;assert.equal(c.display(),false);c.manualMirrorPlan=()=>[];c.manualPaintOn=()=>true;c.rombP=()=>2;assert.equal(c.display(),true);
@@ -70,7 +70,7 @@ test('manual CPU display is limited to visible romb operations while Ochki readb
 });
 test('GPU calculation keeps its identity while CPU geometry covers every romb and restores GPU canvas on OFF',()=>{
   for(const rp of [-1,0,1,2,3]){
-    const owner={},c={templatePaintLayer:null,fillMask:null,fillHistory:[],fillRedo:[],gpuPaintRequests:0,st:{ochki:true},gpuBig:owner,RG:0,RK:1,VW:20,VH:8,img:null,cv:{width:4,height:4},wrap:{clientWidth:640},wrapPadX:()=>0,rombP:()=>rp,
+    const owner={},c={templatePaintLayer:null,templateMatchLayer:null,fillMask:null,fillHistory:[],fillRedo:[],gpuPaintRequests:0,st:{ochki:true},gpuBig:owner,RG:0,RK:1,VW:20,VH:8,img:null,cv:{width:4,height:4},wrap:{clientWidth:640},wrapPadX:()=>0,rombP:()=>rp,
       g:{createImageData:(width,height)=>({width,height,data:new Uint8ClampedArray(width*height*4)})}};
     c.manualPaintOn=()=>false;c.manualMirrorPlan=()=>[];c.dispW=()=>rp===2?2*c.VW+c.RG:c.VW;c.dispH=()=>rp===3?2*c.VH:c.VH;
     Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(['gpuCpuOchki','gpuManualCpu','gpuPaintCpu','gpuCpuDisplay','gpuDisplay'].map(name=>html.match(new RegExp('  const '+name+' =[^\n]+'))[0]).join('\n')+fn('canvasSize'),c);
@@ -89,7 +89,7 @@ test('CPU presentation is selected consistently and async GPU post cannot overwr
 test('exact-search gate waits for GPU and snake completion without changing Play, but errors stop transport',()=>{
   let draws=0,searches=0,stops=0,result={complete:false};const c={st:{ochki:true,ochkiSnake:true},f:{},k:3,playing:true,
     gpuBig:{fresh:false,k:3,pend:[],snapshotPending:null},draw:()=>draws++,ochkiKey:()=> 'key',ochkiFindingsSuppressed:()=>false,
-    ochkiFor:()=>{searches++;return result;},ochkiSnakeJob:null,ochkiSnakeFailed:'',stopFrameTransports(){stops++;c.playing=false;}};
+    ochkiFor:()=>{searches++;return result;},ochkiSnakeJob:null,ochkiSnakeFailed:'',ochkiSnakeSavePending:null,stopFrameTransports(){stops++;c.playing=false;}};
   vm.createContext(c);vm.runInContext(fn('ochkiFrameWait'),c);
   assert.equal(c.ochkiFrameWait(),true);assert.equal(draws,1);assert.equal(searches,0);assert.equal(c.playing,true);
   c.gpuBig.snapshotPending={};assert.equal(c.ochkiFrameWait(),true);assert.equal(draws,1);assert.equal(c.playing,true);

@@ -6,6 +6,9 @@ function fixture(width,height,rotate,rk=2){
  const c=vm.createContext({st:{view:rotate?'rombJoin180':'rombJoin',frozen:false},f:{W:fieldWidth,H:height,val},geo:{anchor},VX:origin,VW:width,VH:height,RK:rk,RG:0,
   img:{width:jg.width*rk,height:jg.height*rk},joinedOn:()=>true,joinedGeometry:()=>jg,halfOf:()=>[3,0],rombP:()=>3,parityVisible:()=>true,outShow:()=>false,outZone:()=>false,
   paintBits:null,templateMatchLayer:null,gpuBig:null,fillMask:null,faceCurrent:()=>false,gpuDisplay:()=>false,rgba:c=>(0xff000000|c[2]<<16|c[1]<<8|c[0])>>>0,Uint32Array,Int8Array,Float64Array});
+ // Baseline geometry has no row copies or active parity plan. Keep live f and
+ // parityVisible references so the source-mask assertion below remains independent.
+ Object.assign(c,{parityField:()=>c.f,parityValues:()=>c.f.val,parityActive:()=>false,parityRow:r=>r,parityPlan:()=>({settings:{rowFill:'none'}})});
  for(const name of ['displayPoint','displayCell','fieldCellAt','rasterBit','drawRomb'])vm.runInContext(fn(name),c);
  return {c,jg,val};
 }

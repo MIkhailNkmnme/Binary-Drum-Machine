@@ -10,6 +10,9 @@ function finder({mode='diag',view='bits',width=12,height=12,points=null,sequence
  const state={view,ochki:true,ochkiMode:mode,ochkiPattern:pattern,ochkiLength:3,ochkiInv:inv,ochkiRev:rev};
  const context={MayatnikVariants:require('./mayatnik-variants.js'),f:{W:width,H:height,val},geo:{anchor:0},st:state,playing:false,VX:left,VW:right-left,VH:bottom,ZL:zone?Int32Array.from({length:bottom},()=>zone[0]):[],ZR:zone?Int32Array.from({length:bottom},()=>zone[1]):[],k:1,sequences:{rows:sequence,revision:1,setMatches(x){context.matches=x;}},pairOn:()=>false,rombP:()=>state.view==='romb2'?2:state.view==='romb0'?0:state.view==='romb1'?1:-1,clampInt:(x,min,max,def)=>Math.max(min,Math.min(max,Number(x)||def)),$:get,TextDecoder,performance,setTimeout:()=>0,clearTimeout,ovlSerial:0,window:{},localStorage:{getItem:()=>null,setItem(){}}};
  context.joinedOn=()=>state.view==='rombJoin'||state.view==='rombJoin180';context.joinedGeometry=()=>Joined.create({width:right-left,height:bottom,origin:left,anchor:0,fieldWidth:width,rotate:state.view==='rombJoin180'});context.parityVisible=()=>true;context.outZone=(r,c)=>!!zone&&(c<zone[0]||c>zone[1]);
+ // These search-direction cases use the all-visible/no-copy parity baseline.
+ // Read the current field rather than a snapshot: several cases edit it in place.
+ Object.assign(context,{parityField:()=>context.f,parityValues:()=>context.f.val,parityRow:r=>r,parityActive:()=>false,parityPlan:()=>({settings:{rowFill:'none'}})});
  Object.assign(context,{gpuBig:null,gpuDisplay:()=>false,RG:0,structuredClone,CustomEvent,window:new EventTarget()});vm.createContext(context);vm.runInContext(source+';globalThis.getLines=ochkiLines;globalThis.getResult=()=>{const result=ochkiGet();publishOchki(result);return result;};',context);
  return {context,state,get,lines:()=>context.getLines(),result:()=>context.getResult()};
 }

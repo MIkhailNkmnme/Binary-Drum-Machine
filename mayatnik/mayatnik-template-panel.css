@@ -1,13 +1,14 @@
-/* The page keeps its existing vertical flex flow. The resizable right panel defaults to half the viewport. */
+/* The resizable library overlays the field without reserving space for it or moving menus. */
 body{--may-template-panel-width:50vw}
-body.may-template-panel-open:not(.may-mobile-menu) #wrap{margin-right:var(--may-template-panel-width)}
 .mtp-resize{top:var(--may-library-field-top,0px)!important;bottom:auto!important;height:var(--may-library-field-height,100dvh)}
-.mtp-resize{position:fixed;top:0;bottom:0;width:10px;margin-right:0;z-index:2147483640;cursor:ew-resize;touch-action:none;user-select:none;background-repeat:repeat-y;background-size:10px 24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='24'%3E%3Cpath d='M9 0L2.07 12L9 24H10V0Z' fill='%230e1116'/%3E%3Cpath d='M9 0L2.07 12L9 24' fill='none' stroke='%23b48cff' stroke-width='1.5'/%3E%3C/svg%3E")}
+.mtp-resize{position:fixed;top:0;bottom:0;width:10px;margin-right:0;z-index:7;cursor:ew-resize;touch-action:none;user-select:none;background-repeat:repeat-y;background-size:10px 24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='24'%3E%3Cpath d='M9 0L2.07 12L9 24H10V0Z' fill='%230e1116'/%3E%3Cpath d='M9 0L2.07 12L9 24' fill='none' stroke='%23b48cff' stroke-width='1.5'/%3E%3C/svg%3E")}
 .mtp-resize[hidden]{display:none!important}
 .mtp-resize:hover,.mtp-resize:focus-visible,body.may-template-panel-resizing .mtp-resize{outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='24'%3E%3Cpath d='M9 0L2.07 12L9 24H10V0Z' fill='%230e1116'/%3E%3Cpath d='M9 0L2.07 12L9 24' fill='none' stroke='%23d9b9ff' stroke-width='2'/%3E%3C/svg%3E")}
 body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-resize!important;user-select:none!important}
-#mayatnikTemplatePanel{--mtp-accent:#b48cff;position:fixed;inset:0 0 0 auto;width:var(--may-template-panel-width);height:100vh;height:100dvh;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;z-index:2147483639;background:#0e1116;color:#dfe6f5;border-left:0;padding:6px;display:flex;flex-direction:column;gap:4px;font:12px/1.35 system-ui,sans-serif;scrollbar-width:thin;user-select:none}
+#mayatnikTemplatePanel{--mtp-accent:#b48cff;position:fixed;inset:0 0 0 auto;width:var(--may-template-panel-width);height:100vh;height:100dvh;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;z-index:7;background:#0e1116;color:#dfe6f5;border-left:0;padding:6px;display:flex;flex-direction:column;gap:4px;font:12px/1.35 system-ui,sans-serif;scrollbar-width:thin;user-select:none}
 #mayatnikTemplatePanel[hidden]{display:none!important}
+/* The legacy right rail also sits above the field overlay, like the other menus. */
+.mayatnik-menu-ready :is(#mayatnikRailR,#canvasActs,.may-pin,.may-manual-axis-controls){z-index:8}
 #mayatnikTemplatePanel *{box-sizing:border-box}
 :is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) button,#mayatnikTemplatePanel summary{font:inherit;color:inherit;text-shadow:none!important;cursor:pointer;user-select:none;-webkit-user-select:none}
 #mayatnikTemplatePanel .mtp-heading{display:flex;align-items:center;gap:2px;flex:none;min-height:26px}
@@ -69,7 +70,7 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 
 /* Fixed field-corner launcher, outside every movable menu group. */
 #mayTemplateLauncher{position:fixed!important;top:8px!important;right:10px!important;left:auto!important;bottom:auto!important;transform:none!important;translate:none!important;width:48px!important;height:48px!important;padding:0!important;margin:0!important;z-index:2147483640;--c:#d9b9ff}
-body.may-template-panel-open #mayTemplateLauncher{display:none!important}
+/* Keep the launcher in its saved slot while open; it also closes the library. */
 #mayTemplateLauncher>.pt-l{position:relative;display:flex;align-items:center;justify-content:center;width:48px!important;min-width:48px!important;height:48px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;cursor:pointer;color:var(--c)}
 #mayTemplateLauncher .may-template-diamond{position:absolute;inset:0;width:48px;height:48px;fill:#1b2430;stroke:#6d597f;stroke-width:1px;pointer-events:none}
 #mayTemplateLauncher .may-template-puzzle{width:20px;height:22px;position:relative;fill:none;stroke:currentColor;stroke-width:1.5px;pointer-events:none}
@@ -245,7 +246,7 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 body.may-mobile-menu.may-template-panel-open{padding-right:0}
 body.may-mobile-menu #mayatnikTemplatePanel{left:var(--may-library-vv-left,0px);right:auto;top:max(var(--may-mobile-bar-height,36px),var(--may-library-vv-top,0px));bottom:auto;width:var(--may-template-panel-width);height:calc(var(--may-library-vv-bottom,100dvh) - max(var(--may-mobile-bar-height,36px),var(--may-library-vv-top,0px)));padding-bottom:max(8px,env(safe-area-inset-bottom));overflow-x:hidden}
 body.may-mobile-menu .mtp-resize{display:none!important}
-body.may-mobile-menu.may-template-panel-open :is(.may-manual-axis-controls,#cellInkBar){visibility:hidden}
+/* Field controls remain available above the mobile library too. */
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-heading{position:sticky;top:0;z-index:4;background:#0e1116;min-height:36px}
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-workspace{display:flex;flex-direction:column;flex:1}
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-rows{font-size:11px;max-height:55dvh}

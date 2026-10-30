@@ -14,7 +14,7 @@
     midOneColour:'#ff7f27',midZeroColour:'#4f9bff',verticalFillColour:'#ff7f27',stolbFillColour:'#ff7f27',axesFillColour:'#ff7f27',autoFillColour:'#ff7f27',growFillColour:'#ff7f27',meetFillColour:'#ff7f27',axisFillColour:'#ff7f27',autoFillPalette:true,growOwnColour:false,
     ochkiMode:'diag',ochkiPattern:'initial',ochkiLength:5,templateMaxArea:4096,templateFocusMargins:null,
     userLines:[],zl:[],lineFamilies:{h:false,v:false,d:false},nAxisSets:[],nAxesN:3,areaFreeze:null,mirAxis:{on:false,ax:.5,ang:0},ovl:{n:0,pos:'R',alpha:50},
-    cellSelection:null,cellInk:{},parity:{cellsEven:true,cellsOdd:true,rowsEven:true,rowsOdd:true}};}
+    cellSelection:null,cellInk:{},parity:{cellsEven:true,cellsOdd:true,rowsEven:true,rowsOdd:true,colsEven:true,colsOdd:true,rowLevels:[],cellLevels:[],colLevels:[],rowFill:'none'}};}
   const groups={
     scale:'zoom zMid ztop zBot zLock zsnap zbase ztopPin ztopRow templateFocusMargins',
     view:'view joined180 viewUpsideDown outline noband both bothDx blackMirror animHl frozen ochki ochkiSnake manualSnake heat vtxFlash rowLab contour geomCenter bitOneColour bitZeroColour digitOneColour digitZeroColour digitFont digitSize bitContourColour1 bitContourColour2 bitContourMode bitContourColours overOneColour overZeroColour parity',

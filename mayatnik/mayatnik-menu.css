@@ -1013,6 +1013,16 @@ body>.may-horr-popup>.gz-wide{display:flex!important;position:relative;flex-dire
 body>.may-horr-popup>.gz-wide>.gz-hx{position:relative!important;left:auto!important;top:auto!important;width:120px;height:24px;flex:none;margin:0!important}
 body>.may-horr-popup .may-rows-line{flex:none}
 body>.may-horr-popup input{user-select:text}
+/* The central parity action shares the existing120×24 pair; halves reserve its text space. */
+.may-standard.may-standard.may-parity-pair{position:relative}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-parity-pair.may-independent-selector>.gz-h0{padding-right:10px!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-parity-pair.may-independent-selector>.gz-h1{padding-left:10px!important}
+.may-parity-cycle{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:3;box-sizing:border-box;width:18px;min-width:18px;max-width:18px;height:24px;min-height:24px;padding:0!important;margin:0!important;border:0;background:transparent;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);cursor:pointer;user-select:none}
+.may-parity-cycle>svg{display:block;width:18px;height:24px;pointer-events:none}
+.may-parity-cycle-edge{fill:#1b2430;stroke:#394657;stroke-width:1}
+.may-parity-cycle-arrow{fill:none;stroke:#dfe6f5;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.may-parity-cycle:is(:hover,:focus-visible) .may-parity-cycle-edge{stroke:var(--c,#7cbcff);stroke-width:2}
+.may-parity-cycle:active .may-parity-cycle-edge{stroke:var(--c,#7cbcff);stroke-width:3}
 /* МАЯ-176: one mobile strip; desktop DOM homes/preferences are restored on exit. */
 body.may-mobile-menu{--may-mobile-bar-height:calc(36px + env(safe-area-inset-top));grid-template-columns:minmax(0,1fr)!important;grid-template-rows:var(--may-mobile-bar-height) auto auto minmax(0,1fr) auto!important}
 body.may-mobile-menu>header{grid-column:1!important;grid-row:1!important;display:block!important;height:var(--may-mobile-bar-height)!important;min-height:0!important;padding:0!important;margin:0!important;overflow:visible!important;z-index:30}

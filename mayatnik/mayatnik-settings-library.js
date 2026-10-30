@@ -2,6 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSettingsLibrary=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
   const Follow=typeof module==='object'&&module.exports?require('./mayatnik-template-follow.js'):globalThis.MayatnikTemplateFollow;
+  const Parity=typeof module==='object'&&module.exports?require('../_js/grid-parity.js'):globalThis.ZerkGridParity;
   const KEY='settings-library-v1';
   const STATE_KEYS=('joined180 templateFindAll speed outline sym symBits symRowsMin symRowsMax symBitsMin symBitsMax symV symH symD symPlainV symPlainH symPlainD symTriangles symTriangleRows frozen ochki ochkiSnake manualSnake ochkiMode ochkiInv ochkiRev ochkiHalf ochkiPattern ochkiLength bitOneColour bitZeroColour bitContourColour1 bitContourColour2 bitContourMode bitContourColours overOneColour overZeroColour digitOneColour digitZeroColour digitFont digitSize geomCenter fixLines blackMirror animHl fillArea paintSame paintSymmetric fillGrow paintMeet paintAxis paintMid midOneOn midZeroOn midWide midOneColour midZeroColour verticalFillColour stolbFillColour axesFillColour autoFillColour growFillColour meetFillColour axisFillColour autoFillPalette growOwnColour triTop thirds zsnap zbase zLock zoom zMid ztop zBot linesOn lineFamilies contour mirCol mirOp rowLab heat sectors areas fixWide fixLow fixLowOut fixMirror fixFold fixRot fixHor fixCross fixAxis fixDown fixDragK sawFull saw lineMeasures templateMaxArea viewUpsideDown autoAxes triangleMapSource triangleMapAxes triangleMapMask triangleMapMirror axisPalette crossMirror crossLabels crossMirrorMode crossMirrorSector').split(' ');
   const NEW_STATE_KEYS=new Set('ochkiHalf joined180 manualSnake lineFamilies autoAxes triangleMapSource triangleMapAxes triangleMapMask triangleMapMirror axisPalette crossMirror crossLabels crossMirrorMode crossMirrorSector viewUpsideDown axesFillColour autoFillColour growFillColour meetFillColour axisFillColour autoFillPalette growOwnColour'.split(' '));
@@ -11,7 +12,7 @@
     const values={};for(const key of STATE_KEYS){const v=state[key];values[key]=v===undefined?null:key==='lineFamilies'||key==='templateFindAll'?clone(v):v;}
     const modes={};for(const key of TOOL_KEYS)modes[key]=tools[key]??(key==='templatePickMode'?'one':key==='autoVertical'?0:false);
     const clocks={};for(const key of ['fillColour','verticalFillColour','stolbFillColour','midZeroColour','midOneColour','axesFillColour','autoFillColour','growFillColour','meetFillColour','axisFillColour']){const q=colourAuto[key];if(q&&['off','build','frame'].includes(q.mode)&&/^#[0-9a-f]{6}$/i.test(q.color))clocks[key]={mode:q.mode,color:q.color};}
-    return {version:1,colourAuto:clocks,state:values,parity:Object.fromEntries(['cellsEven','cellsOdd','rowsEven','rowsOdd'].map(k=>[k,state.parity?.[k]!==false])),tools:modes,controls:{fillColour:controls.fillColour||'#ff7f27',fillMirror:controls.fillMirror!==false}};
+    return {version:1,colourAuto:clocks,state:values,parity:Parity.normalize(state.parity),tools:modes,controls:{fillColour:controls.fillColour||'#ff7f27',fillMirror:controls.fillMirror!==false}};
   }
   function validate(value){
     if(!value||value.version!==1||!value.state||!value.tools||!value.parity||!/^#[0-9a-f]{6}$/i.test(value.controls?.fillColour))throw Error('Повреждён набор настроек');
@@ -23,7 +24,7 @@
     for(const k of TOOL_KEYS){const v=k==='templateDragEnabled'&&value.tools[k]===undefined?false:value.tools[k];if(k==='autoVertical'?![0,1,2].includes(v):k==='templatePickMode'?!['one','add'].includes(v):typeof v!=='boolean')throw Error('Некорректный режим: '+k);}
     return pick(value.state,value.tools,value.controls,value.colourAuto);
   }
-  function normalized(value){const next=validate(value);for(const k in next.parity)next.parity[k]=value.parity[k]!==false;return next;}
+  function normalized(value){const next=validate(value);next.parity=Parity.normalize(value.parity);return next;}
   function applyState(state,snapshot){const data=normalized(snapshot);for(const key of STATE_KEYS){if(data.state[key]===null)delete state[key];else state[key]=data.state[key];}state.parity={...data.parity};return data;}
   const signature=value=>JSON.stringify(normalized(value));
   function create(host){

@@ -15,7 +15,7 @@ function boot(width=1200,saved,setup){
 test('default panel is half viewport; separate source controls, four card columns and common layout width remain intact',()=>{
  const a=boot();try{assert.equal(a.value(),600);assert.equal(a.handle.hidden,false);assert.equal(a.handle.getAttribute('role'),'separator');assert.equal(a.handle.getAttribute('aria-orientation'),'vertical');
   const source=a.w.document.getElementById('source');assert.ok(!a.panel.contains(source));assert.equal(a.panel.querySelector('.mtp-controls'),null);
-  const css=fs.readFileSync(path.join(__dirname,'mayatnik-template-panel.css'),'utf8');assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);assert.match(css,/#wrap\{margin-right:var\(--may-template-panel-width\)\}/);assert.doesNotMatch(css,/body\.may-template-panel-open\{padding-right:/);assert.doesNotMatch(css,/37\.5vw|75vw|25vw|--may-template-panel-width:100vw/);
+  const css=fs.readFileSync(path.join(__dirname,'mayatnik-template-panel.css'),'utf8');assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);assert.doesNotMatch(css,/#wrap\{margin-right:var\(--may-template-panel-width\)\}/);assert.doesNotMatch(css,/body\.may-template-panel-open\{padding-right:/);assert.doesNotMatch(css,/37\.5vw|75vw|25vw|--may-template-panel-width:100vw/);
  }finally{a.dom.window.close();}
 });
 test('saving reveals a new root card from an open subfolder and existing cards in their saved parent',async()=>{
@@ -70,9 +70,40 @@ test('mobile library follows the visible viewport while the keyboard is open and
  }finally{a.dom.window.close();}
 });
 test('desktop library shares only the field bounds, follows header resizing and leaves external controls untouched',()=>{
- let top=130,height=600,changed,observed=[];const a=boot(1200,600,w=>{const d=w.document,header=d.createElement('header'),wrap=d.createElement('div');header.innerHTML='<button id="headerCommand">View</button>';wrap.id='wrap';d.body.prepend(header,wrap);const reserve=()=>d.body.classList.contains('may-template-panel-open')?parseFloat(d.body.style.getPropertyValue('--may-template-panel-width'))||0:0;
+ let top=130,height=600,changed,observed=[];const a=boot(1200,600,w=>{const d=w.document,header=d.createElement('header'),wrap=d.createElement('div');header.innerHTML='<button id="headerCommand">View</button>';wrap.id='wrap';d.body.prepend(header,wrap);const reserve=()=>0;
   wrap.getBoundingClientRect=()=>({left:100,top,right:1160-reserve(),bottom:top+height,width:1060-reserve(),height});const computed=w.getComputedStyle.bind(w);w.getComputedStyle=n=>n===wrap?{marginRight:reserve()+'px'}:computed(n);w.ResizeObserver=class{constructor(f){changed=f;}observe(n){observed.push(n);}disconnect(){}};
  });try{const style=a.w.document.body.style;assert.equal(a.value(),600);assert.equal(style.getPropertyValue('--may-library-field-top'),'130px');assert.equal(style.getPropertyValue('--may-library-field-height'),'600px');assert.equal(style.getPropertyValue('--may-library-field-right'),'40px');assert.equal(a.handle.style.right,'640px');assert.equal(a.w.document.body.style.paddingRight,'');assert.equal(a.w.document.getElementById('headerCommand').parentElement.tagName,'HEADER');assert.deepEqual(observed.map(n=>n.id||n.tagName),['wrap','HEADER']);
   top=210;height=520;changed();assert.equal(style.getPropertyValue('--may-library-field-top'),'210px');assert.equal(style.getPropertyValue('--may-library-field-height'),'520px');a.key('End');assert.equal(a.value(),1002);assert.ok(a.value()<1060);a.w.MayatnikTemplatePanel.setOpen(false);assert.equal(a.w.document.getElementById('wrap').getBoundingClientRect().width,1060);assert.equal(a.w.document.getElementById('headerCommand').parentElement.tagName,'HEADER');
+ }finally{a.dom.window.close();}
+});
+
+test('opening and resizing the overlay preserves real dock coordinates, field bounds and saved layout',()=>{
+ const a=boot(1200,600,w=>{const d=w.document,wrap=d.createElement('div'),header=d.createElement('header'),tools=d.createElement('div'),footer=d.createElement('footer'),rail=d.createElement('div');
+  wrap.id='wrap';tools.id='paintTools';rail.id='mayatnikRail';footer.id='mayFooterBar';header.append(tools);d.body.prepend(header,wrap,footer,rail);
+  const rect=(left,top,width,height)=>({left,top,width,height,right:left+width,bottom:top+height});
+  wrap.getBoundingClientRect=()=>rect(0,70,w.innerWidth,650);header.getBoundingClientRect=()=>rect(0,0,w.innerWidth,60);tools.getBoundingClientRect=()=>rect(140,8,w.innerWidth-140,24);footer.getBoundingClientRect=()=>rect(0,750,w.innerWidth,30);rail.getBoundingClientRect=()=>rect(8,60,120,650);
+  for(const id of ['savedRight','savedTop']){const group=d.createElement('div'),head=d.createElement('button');group.id=id;group.className='pt-g';head.className='pt-l';head.textContent=id;head.getBoundingClientRect=()=>rect(140,8,120,24);head.getClientRects=()=>[head.getBoundingClientRect()];group.append(head);tools.append(group);}
+  w.localStorage.setItem('mayatnik-menu-dock-v509',JSON.stringify({savedRight:{edge:'right',index:3},savedTop:{edge:'top',index:1}}));
+ });try{
+  const w=a.w,d=w.document,menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8'),line=menu.split('\n').find(l=>l.includes('const popupRight='));
+  const rightEdge=w.eval('('+line.slice(line.indexOf('=')+1,line.lastIndexOf(';'))+')');w.eval(fs.readFileSync(path.join(__dirname,'mayatnik-menu-dock.js'),'utf8'));
+  const groups=[d.getElementById('savedRight'),d.getElementById('savedTop')],tools=d.getElementById('paintTools');
+  const dock=w.MayatnikMenuDock.mount({groups:()=>groups,idOf:g=>g.id,header:d.querySelector('header'),tools,footer:d.querySelector('footer'),rail:d.getElementById('mayatnikRail'),rightEdge,moveToTools:g=>{if(g.parentElement!==tools)tools.append(g);},onLayout(){},excluded:[d.getElementById('mayTemplateLauncher')],stackSides:false});a.flush();
+  const snapshot=()=>groups.map(g=>[g.dataset.dockEdge,g.style.getPropertyValue('--may-dock-x'),g.style.getPropertyValue('--may-dock-y')]),before=snapshot(),saved=w.localStorage.getItem('mayatnik-menu-dock-v509'),field=d.getElementById('wrap').getBoundingClientRect();
+  assert.equal(rightEdge(),1200);assert.equal(before[0][1],'1076px');
+  for(const open of [false,true,false,true]){w.MayatnikTemplatePanel.setOpen(open);a.flush();dock.refresh();assert.deepEqual(snapshot(),before);assert.deepEqual(d.getElementById('wrap').getBoundingClientRect(),field);assert.equal(w.localStorage.getItem('mayatnik-menu-dock-v509'),saved);}
+  for(const k of ['Home','End','ArrowRight']){a.key(k);a.flush();dock.refresh();assert.deepEqual(snapshot(),before);assert.equal(rightEdge(),1200);assert.equal(w.localStorage.getItem('mayatnik-menu-dock-v509'),saved);}
+  w.innerWidth=1400;w.dispatchEvent(new w.Event('resize'));a.flush();const resized=snapshot();assert.equal(rightEdge(),1400);assert.equal(resized[0][1],'1276px');w.MayatnikTemplatePanel.setOpen(false);a.flush();assert.deepEqual(snapshot(),resized);w.MayatnikTemplatePanel.setOpen(true);a.flush();assert.deepEqual(snapshot(),resized);assert.equal(w.localStorage.getItem('mayatnik-menu-dock-v509'),saved);
+  d.dispatchEvent(new w.Event('fullscreenchange'));assert.equal(a.handle.style.right,a.value()+'px');assert.deepEqual(snapshot(),resized);
+ }finally{a.dom.window.close();}
+});
+
+test('library and resize border stack above canvases and below menus without hiding launcher or mobile controls',()=>{
+ const css=fs.readFileSync(path.join(__dirname,'mayatnik-template-panel.css'),'utf8'),menuCss=fs.readFileSync(path.join(__dirname,'mayatnik-menu.css'),'utf8');
+ const panelRule=css.match(/#mayatnikTemplatePanel\{--mtp-accent:[^}]+\}/)[0],handleRule=css.match(/\.mtp-resize\{position:fixed;[^}]+\}/)[0];
+ const a=boot(1200,600,w=>{const style=w.document.createElement('style');style.textContent=panelRule+handleRule;w.document.head.append(style);});try{
+  assert.equal(a.w.getComputedStyle(a.panel).position,'fixed');assert.equal(+a.w.getComputedStyle(a.panel).zIndex,7);assert.equal(+a.w.getComputedStyle(a.handle).zIndex,7);
+  assert.match(menuCss,/\.mayatnik-menu-ready>header\{position:relative;z-index:40/);assert.match(css,/\.mayatnik-menu-ready :is\(#mayatnikRailR,#canvasActs,\.may-pin,\.may-manual-axis-controls\)\{z-index:8\}/);assert.match(menuCss,/#mayFooterBar\{[^}]+z-index:9/);assert.match(menuCss,/body\.may-mobile-menu>header\{[^}]+z-index:30/);
+  assert.doesNotMatch(css,/may-template-panel-open[^}]+#wrap\{/);assert.doesNotMatch(css,/may-template-panel-open #mayTemplateLauncher\{display:none/);assert.doesNotMatch(css,/may-template-panel-open[^}]+visibility:hidden/);
  }finally{a.dom.window.close();}
 });

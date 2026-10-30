@@ -1,14 +1,15 @@
-/* Маятник v0.623 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.654 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id), source = document.querySelector('.bar');
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const mobileMenu=window.MayatnikMenuDock.mobileStrip();
-  const popupRight=()=>{const panel=$('mayatnikTemplatePanel');if(window.MayatnikTemplatePanel?.isOpen()&&panel){const left=panel.getBoundingClientRect().left;if(left>0)return left;}return innerWidth;};
+  // The library overlays the field behind controls; it never changes menu slots.
+  const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({ochkiHalf:'Полуинверсия',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);if(!e)return null;
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
@@ -800,13 +801,72 @@
     const sb = ptBtn('sizeCtl', 'plus', sz, () => szSet(1)); sb.oncontextmenu = ev => { ev.preventDefault(); szSet(-1); }; sb.addEventListener('wheel', ev => { ev.preventDefault(); szSet(ev.deltaY < 0 ? 1 : -1); }, { passive: false });
     toolSync.push(() => { const t = 'Цифры ' + sz.value + ' %'; sb.title = 'Размер цифр в клетке · щелчок — больше, правый — меньше, колесо'; const nm = sb.querySelector('.gz-nm'); if (nm && nm.textContent !== t) nm.textContent = t; }); gView.append(done(sb));
   }
-  // Independent view switches: neither half turns its neighbour off.
-  for(const [id,title,prefix,keys]of [['parityCells','Клетки','Кл',['cellsEven','cellsOdd']],['parityRows','Строки','Стр',['rowsEven','rowsOdd']]]){
-    const row=document.createElement('div');row.className='gz-hx gz-pair gz-split may-segments may-independent-selector';row.dataset.n=id;row.setAttribute('role','group');row.setAttribute('aria-label',title+' — чётные и нечётные');row.title=title+' — видимость чётных и нечётных независимо; исходные биты сохраняются';
-    const parts=keys.map((key,i)=>{const part=document.createElement('span');part.className='gz-half gz-h'+i;part.textContent=prefix+' '+['Чёт','Нечёт'][i];part.title=title+' — '+['чётные','нечётные'][i]+'. Показать или скрыть независимо.';part.setAttribute('role','button');part.tabIndex=0;part.setAttribute('aria-label',part.title);
-      part.addEventListener('click',e=>{e.stopPropagation();const api=window.mayParity;if(api)api.set(key,api.get()[key]===false);rail.refresh();placeTools();});part.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();part.click();}});row.append(part);return part;});
-    toolSync.push(()=>{const value=window.mayParity?.get()||{};parts.forEach((part,i)=>{const on=value[keys[i]]!==false;part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));});});gView.append(row);
+  // The engine owns all parity settings; this adapter keeps only DOM references.
+  function installParityMenu(parent){
+    const describe=(node,text)=>{node.title=text;node.setAttribute('aria-label',text);};
+    const api=()=>window.mayParity,refresh=()=>{sync();rail.refresh();placeTools();};
+    const command=(label,help,run)=>{const b=document.createElement('button');b.type='button';b.className='gz-hx';
+      const text=document.createElement('span');text.className='gz-nm';text.textContent=label;b.append(text);describe(b,help);
+      b.addEventListener('click',event=>{event.stopPropagation();if(!b.disabled)run();});return b;};
+    const pressed=(node,on)=>{node.classList.toggle('gz-on',on);node.setAttribute('aria-pressed',String(on));};
+    const pairs=[],popups=[];
+    const pair=(axis,index,title,prefix,keys)=>{
+      const row=document.createElement('div');row.className='gz-hx gz-pair gz-split may-segments may-independent-selector may-parity-pair';row.setAttribute('role','group');
+      // Only the two native buttons take focus; the common outline pass must keep this a group.
+      row.dataset.mayStandardKey='1';
+      describe(row,title+' — чётные и нечётные независимо; исходные биты неизменны.');
+      const parts=['even','odd'].map((key,i)=>{const part=document.createElement('button');part.type='button';part.className='gz-half gz-h'+i;
+        part.textContent=prefix+' '+['Чёт','Нечёт'][i];describe(part,title+' — '+['чётные','нечётные'][i]+'. Показать или скрыть независимо. Исходные биты неизменны.');
+        part.addEventListener('click',event=>{event.stopPropagation();const value=api()?.get()||{},level=(value[{rows:'rowLevels',cells:'cellLevels',cols:'colLevels'}[axis]]||[])[index-1];
+          if(index===0)api()?.set(keys[i],value[keys[i]]===false);else api()?.setLevel(axis,index,key,level?.[key]===false);refresh();});row.append(part);return part;});
+      const cycle=document.createElement('button');cycle.type='button';cycle.className='may-parity-cycle';cycle.dataset.parityAction='cycle-'+axis+'-'+index;
+      describe(cycle,title+' — по кольцу: только чётные → только нечётные → только чётные. Если видны оба или скрыты оба, первое нажатие оставляет только чётные. Исходные биты неизменны.');
+      const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 18 24');svg.setAttribute('aria-hidden','true');
+      const edge=document.createElementNS(ns,'polygon');edge.setAttribute('points','9,1 17,12 9,23 1,12');edge.setAttribute('class','may-parity-cycle-edge');
+      const arrow=document.createElementNS(ns,'path');arrow.setAttribute('d','M6 15a4 4 0 1 0-1-5M3 7v4h4');arrow.setAttribute('class','may-parity-cycle-arrow');svg.append(edge,arrow);cycle.append(svg);
+      cycle.addEventListener('click',event=>{event.stopPropagation();api()?.cycle(axis,index);refresh();});row.append(cycle);
+      return {row,parts,axis,index,keys};
+    };
+    for(const [axis,title,prefix,keys]of [['cells','Клетки','Кл',['cellsEven','cellsOdd']],['rows','Строки','Стр',['rowsEven','rowsOdd']],['cols','Столбцы','Стл',['colsEven','colsOdd']]]){
+      const item=pair(axis,0,title,prefix,keys);item.row.dataset.n='parity'+{cells:'Cells',rows:'Rows',cols:'Cols'}[axis];pairs.push(item);parent.append(item.row);
+    }
+    const fillHelp='Заполнение пустот скрытых строк копиями ближайшей видимой строки сверху или снизу. У края без строки выбранной стороны берётся ближайшая с противоположной стороны. Исходные биты неизменны.';
+    const fill=command('Пустоты: нет',fillHelp,()=>{const modes=['none','above','below'];api()?.set('rowFill',modes[(modes.indexOf(api()?.get().rowFill)+1)%modes.length]);refresh();});fill.dataset.n='parityRowFill';parent.append(fill);
+    for(const [axis,title,levelKey,prefix]of [['rows','Строки','rowLevels','Стр'],['cells','Клетки','cellLevels','Кл']]){
+      const help='Вложенная чётность: '+title.toLowerCase()+'. Каждый следующий уровень заново нумерует и фильтрует только оставшиеся после предыдущего уровня элементы. Исходные биты неизменны.';
+      const owner=command(prefix+' вложенно',help,()=>{});owner.dataset.n='parity'+(axis==='rows'?'Rows':'Cells')+'Levels';owner.dataset.listTitle=prefix+' вложенно';
+      owner.setAttribute('aria-haspopup','true');owner.setAttribute('aria-expanded','false');
+      const popup={owner,axis,levelKey,list:null,signature:'',pairs:[]};popups.push(popup);
+      const options=()=>{const levels=api()?.get()[levelKey]||[];return [{name:'Добавить уровень'},...levels.flatMap((_,i)=>[{name:'Уровень '+(i+2)},{name:'Убрать уровень '+(i+2)}])];};
+      const draw=list=>{
+        popup.list=list;list.classList.add('may-button-options');owner.setAttribute('aria-expanded','true');const levels=api()?.get()[levelKey]||[],signature=String(levels.length);
+        if(popup.signature!==signature||!list.querySelector('[data-parity-action]')){
+          const focused=list.contains(document.activeElement)?document.activeElement.dataset.parityAction:null;
+          list.replaceChildren();popup.pairs=[];popup.signature=signature;
+          const add=command('+ Уровень','Добавить следующий уровень чётности '+title.toLowerCase()+'. Чётные и нечётные изначально включены. '+help,()=>{api()?.addLevel(axis);refresh();});add.dataset.parityAction='add';list.append(add);
+          levels.forEach((_,i)=>{const index=i+1,item=pair(axis,index,title+' — уровень '+(index+1),String(index+1),null);popup.pairs.push(item);
+            item.parts.forEach((part,j)=>part.dataset.parityAction='level-'+index+'-'+j);list.append(item.row);
+            const remove=command('− Уровень '+(index+1),'Убрать уровень '+(index+1)+' чётности '+title.toLowerCase()+'. Остальные уровни сохраняются.',()=>{api()?.removeLevel(axis,index);refresh();});remove.dataset.parityAction='remove-'+index;list.append(remove);
+          });
+          if(focused)([...list.querySelectorAll('[data-parity-action]')].find(n=>n.dataset.parityAction===focused)||add).focus();
+          [...list.children].forEach((row,i)=>{row.style.gridRow=String(i+1);row.style.gridColumn='1';});
+        }
+        popup.pairs.forEach(item=>item.parts.forEach((part,i)=>pressed(part,levels[item.index-1]?.[i?'odd':'even']!==false)));
+      };
+      popup.draw=draw;
+      ZerkGrozd.listHover(owner,{options,after:refresh,color:()=> '#7cbcff',host:()=>owner.closest('.pt-g')||document.body,col:()=>owner.closest('.pt-col,.pt-r'),placement:'right',placed:draw,
+        closed:()=>{popup.list=null;owner.setAttribute('aria-expanded','false');}});
+      owner.addEventListener('keydown',event=>{if(event.key==='ArrowDown'){event.preventDefault();owner.click();popup.list?.querySelector('button')?.focus();}});
+      parent.append(owner);
+    }
+    function sync(){const value=api()?.get()||{};
+      pairs.forEach(item=>item.parts.forEach((part,i)=>pressed(part,value[item.keys[i]]!==false)));
+      const fillMode=value.rowFill||'none',caption='Пустоты: '+({none:'нет',above:'сверху',below:'снизу'}[fillMode]||'нет');fill.querySelector('.gz-nm').textContent=caption;describe(fill,fillHelp+' Сейчас: '+caption+'. Щелчок: нет → сверху → снизу → нет.');pressed(fill,fillMode!=='none');
+      for(const popup of popups){pressed(popup.owner,(value[popup.levelKey]||[]).length>0);if(popup.list?.isConnected)popup.draw(popup.list);}
+    }
+    toolSync.push(sync);sync();
   }
+  installParityMenu(gView);
   // Contour selectors forward only to retained controls; source handlers own persistence/rendering.
   function contourSelector(id,title,choices){
     const source=$(id);if(!source)return;
@@ -830,7 +890,7 @@
   // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.
   // У блока поля 2 px сверху и снизу и нет зазора между блоками — шаг рядов (кнопка + зазор 4 px) тот же, зубцы рамки (zig) — против остриёв кнопок.
   { const VIEW_COLS = [
-      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'bitContourMode', 'bitContourColours', 'parityCells', 'parityRows', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat']],
+      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'bitContourMode', 'bitContourColours', 'parityCells', 'parityRows', 'parityCols', 'parityRowFill', 'parityRowsLevels', 'parityCellsLevels', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
       [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'lineMeasures', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
@@ -1741,7 +1801,8 @@
   function setListSide(owner,side){if(owner.dataset.listSide!==side){owner.dataset.listSide=side;owner.classList.toggle('may-list-left',side==='left');}}
   function syncListButton(owner){
     if(!window.MayatnikMenuOptions)return;
-    window.MayatnikMenuOptions.syncOwner(owner);
+    if(/^parity(?:Rows|Cells)Levels$/.test(owner.dataset.n))owner.setAttribute('aria-label',owner.title);
+    else window.MayatnikMenuOptions.syncOwner(owner);
     if(owner.getClientRects().length)setListSide(owner,listLayout(owner).side);
   }
   let activeList=null;
@@ -1771,7 +1832,7 @@
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
     if(window.MayatnikMenuOptions){
       const g=listLayout(owner,list.querySelectorAll(':scope > .gz-hx').length+(owner.dataset.n==='viewCycle'?viewActions.host.children.length:0));setListSide(owner,g.side);
-      list.dataset.optionColumns=String(g.cols);window.MayatnikMenuOptions.decorate(list,owner);
+      list.dataset.optionColumns=String(g.cols);if(!/^parity(?:Rows|Cells)Levels$/.test(owner.dataset.n))window.MayatnikMenuOptions.decorate(list,owner);
       Object.assign(list.style,{width:g.width+'px',gridTemplateRows:g.gridTemplateRows,gridTemplateColumns:g.gridTemplateColumns,gridAutoColumns:'120px',top:g.top+'px',left:g.left+'px',maxHeight:g.maxHeight+'px',maxWidth:Math.max(1,Math.min(g.width,popupRight()-g.left-4))+'px'});
       list.style.setProperty('width',g.width+'px','important');list.style.setProperty('max-width',Math.max(1,Math.min(g.width,popupRight()-g.left-4))+'px','important');
       list.style.setProperty('overflow-y',g.scroll?'auto':'visible','important');list.style.setProperty('overflow-x',g.scrollX?'auto':g.scroll?'hidden':'visible','important');
@@ -1790,9 +1851,11 @@
   for (const b of document.querySelectorAll('.gz-lst')) if (b.gzList) {
     // Native rail lists have no source click handler; tool buttons already cycle themselves.
     if(b.classList.contains('gz-list'))b.gzList.cycleOnClick=b.dataset.n!=='paintColourReset';
-    nameListButton(b);window.MayatnikMenuOptions?.install(b);syncListButton(b);
+    nameListButton(b);if(!/^parity(?:Rows|Cells)Levels$/.test(b.dataset.n))window.MayatnikMenuOptions?.install(b);syncListButton(b);
     b.addEventListener('pointerenter',()=>syncListButton(b),true);
-    if(b.dataset.n==='layerSelect'){const closed=b.gzList.closed;b.gzList.closed=(...args)=>{closed?.(...args);clearListUnder();};}
+    if(/^parity(?:Rows|Cells)Levels$/.test(b.dataset.n)){const placed=b.gzList.placed,closed=b.gzList.closed;
+      Object.assign(b.gzList,{placement:'right',placed:(list,owner)=>{placed?.(list,owner);hideListUnder(list,owner);},closed:(...args)=>{closed?.(...args);clearListUnder();}});b.setAttribute('aria-label',b.title);}
+    else if(b.dataset.n==='layerSelect'){const closed=b.gzList.closed;b.gzList.closed=(...args)=>{closed?.(...args);clearListUnder();};}
     else Object.assign(b.gzList, {placement:'right', placed:hideListUnder, closed:clearListUnder});
     // v0.446: an inset, shorter chevron complements the existing right edge.
     if(!b.querySelector(':scope > .may-list-inner-arrow')){

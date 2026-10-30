@@ -107,7 +107,21 @@ fn unpack(@builtin(global_invocation_id) g: vec3<u32>) {
 @group(0) @binding(5) var<storage, read_write> pic: array<u32>;
 @group(0) @binding(6) var<storage, read> pic2: array<u32>;
 fn pm2(x: i32) -> i32 { return ((x % 2) + 2) % 2; }
-fn parityShown(r: i32, fc: i32) -> bool { return P[28 + pm2(r + fc)] != 0 && P[30 + pm2(r + 1)] != 0; }
+fn selected(index: i32, at: i32) -> bool { return index >= P[at] && (index - P[at]) % P[at + 1] == 0; }
+fn parityRow(r: i32) -> i32 {
+  let first = P[32]; let stride = P[33];
+  if (r < 0 || r >= P[3] || first >= P[3]) { return -1; }
+  if (selected(r, 32)) { return r; }
+  if (P[40] == 0) { return -1; }
+  if (r < first) { return first; }
+  let last = first + ((P[3] - 1 - first) / stride) * stride;
+  let lower = first + ((r - first) / stride) * stride;
+  return min(last, select(lower, lower + stride, P[40] == 2));
+}
+fn parityShown(r: i32, fc: i32) -> bool {
+  let source = parityRow(r);
+  return source >= 0 && selected(fc, 34) && selected(fc, 36 + 2 * pm2(source));
+}
 fn jr(x: f32) -> i32 { return i32(floor(x + 0.5)); }
 fn raw(r: i32, fc: i32) -> i32 {
   if (r < 0 || r >= P[3] || fc < 0 || fc >= P[23]) { return -1; }
@@ -123,8 +137,9 @@ fn triFill(r: i32, fc: i32) -> bool {
 fn shown(r: i32, c: i32) -> i32 {
   let fc = c + P[1];
   if (!parityShown(r, fc)) { return -1; }
-  if (outZone(r, fc) && !((P[10] & 2) != 0 && triFill(r, fc))) { return -1; }
-  return raw(r, fc);
+  let source = parityRow(r);
+  if (outZone(source, fc) && !((P[10] & 2) != 0 && triFill(source, fc))) { return -1; }
+  return raw(source, fc);
 }
 fn semantic(colour: u32, bit: i32) -> u32 {
   if ((P[10] & 4) == 0) { return colour; }
@@ -155,7 +170,7 @@ fn base(@builtin(global_invocation_id) g: vec3<u32>) {
   let VW = P[2]; let i = i32(g.x + g.y * 65535u * 64u); if (i >= VW * P[3]) { return; }
   let y = i / VW; let c = i % VW; let v = shown(y, c);
   if (v < 0) { pic[i] = semantic(u32(P[22]), -1); return; }
-  var t = 0; if (P[4] != 0) { t = tintOf(y, c + P[1] - P[9], v); }
+  var t = 0; if (P[4] != 0) { t = tintOf(parityRow(y), c + P[1] - P[9], v); }
   pic[i] = semantic(u32(P[16 + v * 3 + t]), v);
 }
 fn fam(u: u32) -> i32 {
@@ -239,6 +254,7 @@ fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
   let VW = P[2]; let VH = P[3]; let o = i32(g.x + g.y * 65535u * 64u); if (o >= VW * VH) { return; }
   let Y = o / VW; let C = o % VW; let kind = Q[0]; let m = Q[1];
   if (!parityShown(Y, C + P[1])) { pic[o] = semantic(u32(P[22]),-1); return; }
+  if (kind == 7) { let source = parityRow(Y); pic[o] = pic2[source * VW + C]; return; }
   // Manual-axis paint is a live picture pass after mirrors. The semantic tag
   // survives every paint pass, so intersecting axes never decode a paint RGB.
   if (kind == 6) {
@@ -433,7 +449,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
       const hasBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
       const uBuf = device.createBuffer({ size: 80, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       let axesBuf=device.createBuffer({size:4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST}),axesCapacity=1,axesCols=null,axesRows=null;
-      const PBuf = device.createBuffer({ size: 32 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+      const PBuf = device.createBuffer({ size: 41 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       let tBuf = null, apBuf = null, bind = null, tCap = 0, apCap = 0, renderBind = null, dead = false;
       let pic = null, pic2 = null, picN = 0, zBuf = null, zCap = 0, qBuf = null, qCap = 0, picBind = null, win = null;
       const Q_INTS = 64;   // запись прохода: 8 чисел + до 14 центров по 4
@@ -508,13 +524,14 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
           pic2 = device.createBuffer({ size: bytesN, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }); picBind = renderBind = null; }
         const zl = o.zl && o.zl.length ? o.zl : null, zN = zl ? zl.length : 1;
         if (!zBuf || zN > zCap) { zBuf?.destroy(); zCap = Math.max(zN, 64); zBuf = device.createBuffer({ size: zCap * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }); picBind = null; }
-        const passes = o.passes || [], qN = Math.max(1, passes.length), slot = Math.max(SALIGN, Q_INTS * 4);
+        const parity=o.parity?globalThis.ZerkGridParity.compile(o.parity):{settings:{rowFill:'none'},active:false,gpu:()=>[0,1,0,1,0,1,0,1,0]},passes = parity.settings.rowFill!=='none'&&parity.active?[...(o.passes||[]),[7]]:o.passes || [], qN = Math.max(1, passes.length), slot = Math.max(SALIGN, Q_INTS * 4);
         if (!qBuf || qN > qCap) { qBuf?.destroy(); qCap = Math.max(qN, 8); qBuf = device.createBuffer({ size: qCap * slot, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }); picBind = null; }
-        const P = new Int32Array(32), sd = o.sides || [1e9, -1e9, 1e9, -1e9];
+        const P = new Int32Array(41), sd = o.sides || [1e9, -1e9, 1e9, -1e9];
         P[0] = WW; P[1] = o.VX; P[2] = o.VW; P[3] = o.VH; P[4] = o.tint | 0; P[5] = o.lo | 0; P[6] = o.hi | 0; P[7] = o.k | 0; P[8] = o.filled ? 1 : 0; P[9] = anchor;
         P[10] = (o.nb2 ? 2 : 0)|(o.contours?4:0); P[11] = zl ? zl.length / 2 : 0; for (let i = 0; i < 4; i++) P[12 + i] = Number.isFinite(sd[i]) ? sd[i] : (i % 2 ? -1e9 : 1e9);
         for (let i = 0; i < 6; i++) P[16 + i] = o.T[i] | 0; P[22] = o.empty | 0; P[23] = W; P[24] = o.mirCol | 0; P[25] = o.mirOp | 0; P[26] = (o.bitC || [0, 0])[0] | 0; P[27] = (o.bitC || [0, 0])[1] | 0;
         for(const [i,key]of ['cellsEven','cellsOdd','rowsEven','rowsOdd'].entries())P[28+i]=o.parity?.[key]===false?0:1;
+        P.set(parity.gpu(W,o.VH),32);
         device.queue.writeBuffer(PBuf, 0, P); if (zl) device.queue.writeBuffer(zBuf, 0, zl);
         if (passes.length) { const q = new Int32Array(qN * slot / 4); passes.forEach((r, i) => q.set(r.slice(0, Q_INTS), i * slot / 4)); device.queue.writeBuffer(qBuf, 0, q); }
         if (!picBind) picBind = device.createBindGroup({ layout: picLayout, entries: [

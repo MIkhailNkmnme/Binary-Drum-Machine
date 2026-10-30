@@ -1,5 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8'),source=html.slice(html.indexOf('  let ochki = null;'),html.indexOf('  function updWin()'));
+const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
+// Keep search/publishing/selection together, excluding the intervening UI listeners.
+function section(start,end){const a=html.indexOf(start),b=html.indexOf(end,a+start.length);assert.ok(a>=0&&b>a,'host section '+start);assert.equal(html.indexOf(start,a+start.length),-1,'unique host section '+start);return html.slice(a,b);}
+const source=section('  function displayPoint(c,r,p){','  let RK =')+section('  let ochki = null;','  window.mayCurrentSnakePaths=')+section('  function publishOchki(result,','  function updWin()');
 const route=require('./mayatnik-ochki-v-route.js'),Joined=require('./mayatnik-joined-romb.js'),Selection=require('./mayatnik-ochki-selection.js');
 function fn(name){const a=html.indexOf('function '+name+'('),b=html.indexOf('{',a);let i=b+1,d=1;for(;d;i++){if(html[i]==='{')d++;if(html[i]==='}')d--;}return html.slice(a,i);}
 function fixture({view='bits',W=15,H=8,VX=1,VW=13,A=7,Y=4,pattern='initial',sequence=['101101001'],points=null}={}){
@@ -7,6 +10,8 @@ function fixture({view='bits',W=15,H=8,VX=1,VW=13,A=7,Y=4,pattern='initial',sequ
  const c={st,f:{W,H,val},VX,VW,VH:H,geo:{anchor:A},k:4,playing:false,ZL:[],ZR:[],ovlSerial:0,ovlFrozen:null,gpuBig:null,gpuDisplay:()=>false,MayatnikOchkiVRoute:route,MayatnikOchkiSelection:Selection,TextDecoder,performance,structuredClone,Date,
   $:id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',hidden:false,selectedOptions:[{textContent:pattern}]});return nodes.get(id);},sequences:{rows:sequence,revision:1,setMatches(){},selectMatches(){}},pairOn:()=>false,compareOn:()=>false,total:()=>16,fixApexes:()=>({past:[-1,0,1],fut:[-Y,Y]}),fixBound:()=>st.fixLines!==false,parityVisible:()=>true,outZone:()=>false,outShow:()=>false,clampInt:(x,a,b,d)=>Math.max(a,Math.min(b,+x||d)),setTimeout:()=>0,clearTimeout(){},localStorage:{getItem:()=>null,setItem(){}},window:{dispatchEvent(){}},CustomEvent:class {constructor(type,options){this.type=type;this.detail=options.detail;}},queueDigits(){},selectTemplate(){}};
  c.rombP=()=>view==='romb0'?0:view==='romb1'?1:view==='romb2'?2:view.startsWith('rombJoin')?3:-1;c.joinedOn=()=>view.startsWith('rombJoin');c.joinedGeometry=()=>Joined.create({width:VW,height:H,origin:VX,anchor:A,fieldWidth:W,rotate:view==='rombJoin180'});
+ // The V-route fixtures use all-visible parity with no row copies.
+ Object.assign(c,{RG:0,MayatnikVariants:require('./mayatnik-variants.js'),parityField:()=>c.f,parityValues:()=>c.f.val,parityRow:r=>r});
  vm.createContext(c);vm.runInContext(source+';globalThis.current=()=>ochki;globalThis.key=ochkiKey;globalThis.setOchki=x=>ochki=x;',c);for(const name of ['fixSegments','fixPts'])vm.runInContext(fn(name),c);
  if(points)c.fixSegments=()=>points.map(p=>[p.x-p.y,0,p.x,p.y,p.x+p.y,0,p.y]);
  c.testY=Y;return c;
