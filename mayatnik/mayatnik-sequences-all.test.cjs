@@ -8,10 +8,10 @@ test('five direction segments select all with existing split5 geometry',()=>{
 test('live sequence refresh counts unique rows separately from directional hits and labels each direction',()=>{
   const source=fs.readFileSync(__dirname+'/mayatnik-sequences.js','utf8'),labelStart=source.indexOf('  const directionLabel='),labelEnd=source.indexOf('\n',labelStart),start=source.indexOf('    function refresh(){'),end=source.indexOf('    const unsubscribe=',start);
   for(const halves of [1,2]){
-    const node=()=>({dataset:{},classList:{toggle(){}},title:'',getAttribute(){return 'false';},setAttribute(){}}),nodes=[node(),node(),node()],summary={};
+    const node=()=>({dataset:{},classList:{toggle(){}},title:'',querySelector(){return {};},getAttribute(){return 'false';},setAttribute(){}}),nodes=[node(),node(),node()],summary={};
     const found=Array.from({length:4*halves},(_,i)=>({i:0,dir:[1,-1,0,2][i%4],p:i>=4?1:0,r:5}));found.push({i:2,dir:0,r:7});
     const state={revision:1,rows:['1','11','101'],matches:{enabled:true,active:true,pattern:'initial',mode:'all',frame:42,halves,total:3*halves,found}};
-    const context={pane:{closest:()=>null},api:{snapshot:()=>state},rendered:1,dirty:false,listKey:'sequence:1',nodes,summary,scrolledSelection:0};
+    const context={methodLabel:require('./mayatnik-ochki-method.js').label,pane:{closest:()=>null},api:{snapshot:()=>state},rendered:1,dirty:false,listKey:'sequence:1',nodes,summary,scrolledSelection:0};
     vm.runInNewContext(source.slice(labelStart,labelEnd)+'\n'+source.slice(start,end)+'\nrefresh();',context);
     assert.match(summary.textContent,/Всего найдено 2 из 3 строк/);if(halves===2)assert.match(summary.textContent,/из 6 совпадений в двух полумаятниках/);assert.doesNotMatch(summary.textContent,/из 12|из 24/);assert.match(summary.textContent,/во всех 4 направлениях/);
     for(const arrow of ['↘','↙','→','↓'])assert.ok(nodes[0].title.includes(arrow));assert.ok(!nodes[0].title.includes('во всех'));assert.equal(nodes[1].title,'');

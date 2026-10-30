@@ -1,8 +1,9 @@
 /* v0.626: Editable binary rows shared by Очки and the live/detached library.
    v0.626: the table keeps old gold rows across frames; new matches are added to
    foundHistory, current found stays only for the frame and field highlight. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSequences=api;})(globalThis,function(){
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-ochki-method.js'):root.MayatnikOchkiMethod);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSequences=api;})(globalThis,function(Methods){
   'use strict';
+  const methodLabel=Methods.label;
   const KEY='mayatnik-sequences-v1',MAX_BITS=2100000,MAX_ROWS=4096;
   const directionLabel=mode=>({v:'вдоль осей ↘↗',row:'по рядам →',col:'по столбцам ↓',antidiag:'по противодиагоналям ↙',diag:'по диагоналям ↘',snake:'змея вниз ↙↘',all:'во всех 4 направлениях',0:'по рядам →',2:'по столбцам ↓','-1':'по противодиагоналям ↙',1:'по диагоналям ↘'}[mode]||'по диагоналям ↘');
   function parse(text){const value=String(text).replace(/\r\n?/g,'\n').trim();if(!value)return[];const rows=value.split('\n');if(rows.length>MAX_ROWS)throw Error('Не более '+MAX_ROWS+' строк. Данные не изменены.');let bits=0;rows.forEach((row,i)=>{if(!/^[01]+$/.test(row))throw Error('Строка '+(i+1)+': допустимы только 0 и 1, без пробелов.');bits+=row.length;});if(bits>MAX_BITS)throw Error('Больше '+MAX_BITS+' бит. Данные не изменены.');return rows;}
@@ -29,16 +30,26 @@
   }
   function create(storage,{rows:count=512,initialRows=[]}={}){
     const originalRows=parse(initialRows.join('\n'));
-    let state=null,error='',revision=0,matches={enabled:false,active:false,found:[]},matchKey='',matchScope,foundHistory=new Map(),selection=null,selectionSerial=0,listeners=new Set();
+    let state=null,error='',revision=0,matches={enabled:false,active:false,found:[]},matchKey='',matchScope,foundHistory=new Map(),firstFinds=new Map(),firstScope,selection=null,selectionSerial=0,listeners=new Set();
     try{const raw=storage?.getItem(KEY);if(raw!==null&&raw!==undefined){const saved=JSON.parse(raw);if(saved?.version!==1||!Array.isArray(saved.rows)||saved.rows.some(row=>typeof row!=='string'))throw Error('format');state={rows:parse(saved.rows.join('\n')),source:saved.source==='serp'?'serp':'user',count:saved.count||saved.rows.length};}}catch(_){state={rows:[],source:'user',count:0};error='Сохранённая последовательность повреждена. Исходная запись сохранена; исправьте строки и нажмите «Применить».';}
     const emit=kind=>{for(const listener of listeners)listener(kind);};
-    const write=(rows,source,count)=>{const next={version:1,rows,source,count};try{storage?.setItem(KEY,JSON.stringify(next));}catch(_){throw Error('Не удалось сохранить последовательность в браузере. Освободите место и повторите.');}state=next;error='';selection=null;foundHistory.clear();matches={...matches,active:false,found:[]};matchKey='';revision++;emit('sequence');};
-    const api={get rows(){return state.rows;},get initialRows(){return originalRows.slice();},get revision(){return revision;},snapshot:()=>({rows:state.rows,source:state.source,count:state.count,revision,error,matches,foundHistory:Array.from(foundHistory.values()),selection}),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},setText(text){const rows=parse(text);write(rows,'user',rows.length);},generate(count){const rows=sierpinski(count);write(rows,'serp',rows.length);},selectMatches(value){selection=value?{...value,token:++selectionSerial}:null;emit('selection');},setMatches(value){const key=JSON.stringify(value);if(key===matchKey)return;matchKey=key;matches=value;
+    const write=(rows,source,count)=>{const next={version:1,rows,source,count};try{storage?.setItem(KEY,JSON.stringify(next));}catch(_){throw Error('Не удалось сохранить последовательность в браузере. Освободите место и повторите.');}state=next;error='';selection=null;foundHistory.clear();firstFinds.clear();matches={...matches,active:false,found:[]};matchKey='';revision++;emit('sequence');};
+    const remember=(hit,context)=>{
+      if(!Number.isInteger(hit.i)||hit.i<0||hit.i>=state.rows.length)return;
+      const key=hit.i+':'+(context.halves===2?hit.p:'single');
+      if(!firstFinds.has(key))firstFinds.set(key,{...hit,frame:context.frame,halves:context.halves,joined:!!context.joined});
+    };
+    const api={get rows(){return state.rows;},get initialRows(){return originalRows.slice();},get revision(){return revision;},snapshot:()=>({rows:state.rows,source:state.source,count:state.count,revision,error,matches,foundHistory:Array.from(foundHistory.values()),firstFinds:Array.from(firstFinds.values()),selection}),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},setText(text){const rows=parse(text);write(rows,'user',rows.length);},generate(count){const rows=sierpinski(count);write(rows,'serp',rows.length);},selectMatches(value){selection=value?{...value,token:++selectionSerial}:null;emit('selection');},recordFirstFind(hit,context){if(context.searchScope!==firstScope){firstFinds.clear();firstScope=context.searchScope;}remember(hit,context);emit('first-find');},setMatches(value){const wasEnabled=matches.enabled,key=JSON.stringify(value);if(key===matchKey)return;matchKey=key;matches=value;
       if(!value.enabled||value.searchScope!==undefined&&value.searchScope!==matchScope)foundHistory.clear();
-      matchScope=value.searchScope;
+      if(wasEnabled&&!value.enabled||value.searchScope!==undefined&&value.searchScope!==firstScope)firstFinds.clear();
+      firstScope=value.searchScope;matchScope=value.searchScope;
       if(value.enabled&&value.active&&value.complete!==false&&(!value.pattern||value.pattern==='initial')){
         const rows=new Map();for(const hit of value.found||[]){if(!Number.isInteger(hit.i)||hit.i<0||hit.i>=state.rows.length)continue;if(!rows.has(hit.i))rows.set(hit.i,[]);rows.get(hit.i).push({...hit});}
-        for(const [i,hits]of rows){const prior=foundHistory.get(i),merged=value.halves===2?[...(prior?.hits||[]).filter(old=>!hits.some(hit=>hit.p===old.p)),...hits]:hits;foundHistory.set(i,{i,hits:merged,frame:value.frame,mode:value.mode,halves:value.halves,joined:value.joined});}
+        for(const [i,hits]of rows){
+          const prior=foundHistory.get(i),merged=[...(prior?.hits||[])];
+          for(const hit of hits){remember(hit,value);if(!merged.some(old=>value.halves!==2||old.p===hit.p))merged.push({...hit,frame:value.frame});}
+          foundHistory.set(i,prior?{...prior,hits:merged}:{i,hits:merged,frame:value.frame,mode:value.mode,halves:value.halves,joined:value.joined});
+        }
       }
       emit('matches');}};
     if(!state){const n=Math.max(1,Math.min(512,Math.floor(Number(count)||512)));state={rows:sierpinski(n),source:'serp',count:n};try{storage?.setItem(KEY,JSON.stringify({version:1,...state}));}catch(_){error='Начальные строки созданы, но браузер не смог их сохранить.';}}
@@ -66,19 +77,25 @@
     function syncCompact(){compact.disabled=Number(rule.value)!==90||seed.value!=='1';if(compact.disabled)compact.checked=false;}
     presets.addEventListener('change',()=>{if(presets.value!=='custom')rule.value=presets.value;syncCompact();});rule.addEventListener('input',()=>{presets.value=['30','60','90','102','150'].includes(rule.value)?rule.value:'custom';syncCompact();});seed.addEventListener('input',syncCompact);
     const insert=button('↓ Вставить',()=>{const rows=elementary({rule:rule.value,seed:seed.value,count:count.value,compact:compact.checked});editor.value=rows.join('\n');dirty=true;notice.textContent='В редактор вставлено '+rows.length+' строк правила '+Number(rule.value)+'. Нажмите «Применить».';});insert.setAttribute('aria-label','Вставить сгенерированные строки в редактор');insert.dataset.sequenceGenerate='';generator.append(insert);
-    const summary=doc.createElement('output');summary.className='mtp-sequence-summary';summary.setAttribute('aria-live','polite');const list=doc.createElement('ol');list.className='mtp-sequence-rows';list.setAttribute('aria-label','Строки и совпадения Очков');let nodes=[],listKey='',scrolledSelection=0;list.setAttribute('role','listbox');list.setAttribute('aria-multiselectable','true');
+    const summary=doc.createElement('output');summary.className='mtp-sequence-summary';summary.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-sequence-rows';const table=doc.createElement('table'),head=doc.createElement('thead'),headRow=doc.createElement('tr'),body=doc.createElement('tbody');table.setAttribute('aria-label','Строки и первые находки Очков');
+    for(const text of ['№','Последовательность','Первый кадр','Способ поиска']){const cell=doc.createElement('th');cell.scope='col';cell.textContent=text;headRow.append(cell);}head.append(headRow);table.append(head,body);list.append(table);let nodes=[],listKey='',scrolledSelection=0;
     pane.append(intro,label,commands,generator,notice,summary,list);
     function refresh(){
       if(pane.closest('[hidden]'))return;const state=api.snapshot(),m=state.matches||{},simple=m.pattern&&m.pattern!=='initial',shown=simple&&m.active?(m.found||[]).map(hit=>hit.text||''):state.rows;
       if(rendered!==state.revision){if(!dirty)editor.value=state.rows.join('\n');rendered=state.revision;if(state.error)notice.textContent=state.error;}
-      const key=simple&&m.active?'runs:'+shown.join('|'):'sequence:'+state.revision;if(key!==listKey){listKey=key;nodes=shown.map((text,i)=>{const li=doc.createElement('li'),code=doc.createElement('code');li.dataset.sequenceRow=String(i);li.setAttribute('role','option');code.textContent=text;li.append(code);return li;});list.replaceChildren(...nodes);}
+      const key=simple&&m.active?'runs:'+shown.join('|'):'sequence:'+state.revision;if(key!==listKey){listKey=key;nodes=shown.map((text,i)=>{const row=doc.createElement('tr');row.dataset.sequenceRow=String(i);for(const kind of ['number','sequence','frame','method']){const cell=doc.createElement('td');cell.dataset.column=kind;if(kind==='sequence'){const code=doc.createElement('code');code.textContent=text;code.title=text;cell.append(code);}else cell.textContent=kind==='number'?String(i+1):'—';row.append(cell);}return row;});body.replaceChildren(...nodes);}
       const modeLabel=directionLabel(m.mode);
       const found=new Map();for(const hit of m.found||[]){if(!found.has(hit.i))found.set(hit.i,[]);found.get(hit.i).push(hit);}
       const foundEver=Number.isInteger(m.foundEver)?m.foundEver:found.size;
       const foundIndices=new Set(Array.isArray(m.foundIndices)?m.foundIndices:(m.found||[]).map(hit=>hit.i));
       const previous=new Map((state.foundHistory||[]).map(entry=>[entry.i,entry]));
+      const first=new Map();for(const hit of state.firstFinds||[]){if(!first.has(hit.i))first.set(hit.i,[]);first.get(hit.i).push(hit);}
       nodes.forEach((node,i)=>{const current=m.enabled&&m.active?(simple?((m.found||[])[i]?[(m.found||[])[i]]:[]):found.get(i)||[]):[],prior=m.enabled&&!simple?previous.get(i):null,hits=current.length?current:prior?.hits||[],past=!current.length&&!!prior;
-        const context=past?prior:m,title=hits.map(hit=>(past?'Ранее найдено · кадр '+prior.frame+': ':'Найдено на поле: ')+(context.halves===2?(hit.p?'правый':'левый')+' полумаятник · ':'')+(context.joined?'строка ромба ':'строка ')+(hit.r+1)+' · '+(context.mode==='all'?directionLabel(hit.dir):directionLabel(context.mode))+(hit.vn?' · '+hit.vn:'')).join('\n');
+        const context=past?prior:m,title=hits.map(hit=>(past?'Ранее найдено · кадр '+(hit.frame??prior.frame)+': ':'Найдено на поле: ')+(context.halves===2?(hit.p?'правый':'левый')+' полумаятник · ':'')+(context.joined?'строка ромба ':'строка ')+(hit.r+1)+' · '+methodLabel(hit)).join('\n');
+        const earliest=simple?current.map(hit=>({...hit,frame:m.frame,halves:m.halves})):first.get(i)||[];
+        const prefix=hit=>hit.halves===2?(hit.p?'Правый: ':'Левый: '):'';
+        node.querySelector('[data-column=frame]').textContent=earliest.map(hit=>prefix(hit)+(Number.isFinite(hit.frame)?hit.frame:'не записан')).join('\n')||'—';
+        node.querySelector('[data-column=method]').textContent=earliest.map(hit=>prefix(hit)+methodLabel(hit)).join('\n')||'—';
         if(node.dataset.found!==String(hits.length>0)){node.classList.toggle('is-found',hits.length>0);node.dataset.found=String(hits.length>0);}if(node.title!==title)node.title=title;});
       const selection=state.selection,selected=new Set(simple?selection?.matchIndices:selection?.rowIndices);nodes.forEach((node,i)=>{const on=selected.has(i);node.classList.toggle('is-selected',on);if(node.getAttribute('aria-selected')!==String(on))node.setAttribute('aria-selected',String(on));});
       if(selection&&selection.token!==scrolledSelection){const first=nodes.find((node,i)=>selected.has(i));if(first){const top=first.offsetTop-list.offsetTop,bottom=top+first.offsetHeight;if(top<list.scrollTop)list.scrollTop=top;else if(bottom>list.scrollTop+list.clientHeight)list.scrollTop=Math.max(0,bottom-list.clientHeight);scrolledSelection=selection.token;}}

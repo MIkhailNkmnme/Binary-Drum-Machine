@@ -10,8 +10,8 @@ test('snapshot acquisition stops active transports without redrawing an already 
 });
 function fixture(){
  const els=new Map(),owner={},graph={nodes:[{x:1,y:0,bit:1,edges:[1,2]},{x:0,y:1,bit:0,edges:[]},{x:2,y:1,bit:1,edges:[]}],rasterOwnerIds:Int32Array.from([0,1,2]),hit:x=>Math.floor(x)},snapshot={owner,key:'k',geometry:'g',scale:1,width:3,height:1,bits:Int8Array.from([1,0,1]),visibleMask:Uint8Array.from([1,1,1]),cellAt:x=>graph.nodes[x],current:()=>true,release(){c.releases++;}};
- const c={st:{manualSnake:true},f:owner,sequences:{rows:['10','11'],revision:1},manualPaintRevision:0,manualSnakeBusy:false,manualSnakeSerial:0,manualSnakeSession:Snake.createSession(),manualSnakeLayer:null,MayatnikManualSnake:Snake,MayatnikManualPaintPattern:{abort:()=>Error('changed')},window:{mayVisibleSemantic:{acquire:async()=>snapshot}},visibleGraphKnown(){},manualPatternEffects:()=>true,visibleGraph:async()=>graph,manualPaintKey:()=> 'k',manualPatternGeometry:()=> 'g',draw(){c.draws++;},draws:0,releases:0,$:id=>{if(!els.has(id))els.set(id,{});return els.get(id);},setTimeout,Uint8Array,Set,rgba:()=>123};
- vm.createContext(c);vm.runInContext(fn('manualSnakeClick')+fn('manualSnakeApply'),c);return {c,graph,snapshot,els};
+ const c={st:{manualSnake:true},f:owner,sequences:{rows:['10','11'],revision:1,recordFirstFind(hit,context){c.first.push({hit,context});}},k:16,rombP:()=>-1,joinedOn:()=>false,ochkiScope:()=> 'scope',ochkiSearchSerial:0,ochkiLogSerial:0,ochkiLogEvent:entry=>c.logs.push(entry),logs:[],first:[],manualPaintRevision:0,manualSnakeBusy:false,manualSnakeSerial:0,manualSnakeSession:Snake.createSession(),manualSnakeLayer:null,MayatnikManualSnake:Snake,MayatnikManualPaintPattern:{abort:()=>Error('changed')},window:{mayVisibleSemantic:{acquire:async()=>snapshot}},visibleGraphKnown(){},manualPatternEffects:()=>true,visibleGraph:async()=>graph,manualPaintKey:()=> 'k',manualPatternGeometry:()=> 'g',draw(){c.draws++;},draws:0,releases:0,$:id=>{if(!els.has(id))els.set(id,{});return els.get(id);},setTimeout,Uint8Array,Set,rgba:()=>123};
+ vm.createContext(c);vm.runInContext(fn('ochkiRecordManualSnake')+fn('manualSnakeClick')+fn('manualSnakeApply'),c);return {c,graph,snapshot,els};
 }
 test('host clicks visible start inclusively, advances sequence, preserves final result without wrapping, and resets on another bit',async()=>{
  const {c}=fixture();let r=await c.manualSnakeClick(0,0);assert.deepEqual(Array.from(r.cells),[0,1]);assert.equal(c.manualSnakeSession.current().index,0);assert.deepEqual(Array.from(c.manualSnakeLayer.mask),[1,1,0]);
@@ -44,4 +44,13 @@ test('sparse overlay uses exact raster coordinates and a single physical pixel a
  const draws=[],ctx={fillRect(...a){draws.push(a);}},canvas={style:{},setAttribute(){},getContext:()=>ctx},owner={};
  const c={st:{manualSnake:true},manualSnakeLayer:{owner,key:'k',geometry:'g',overlay:true,width:100,rasterScale:1,indices:Uint32Array.of(204,205)},f:owner,manualPaintKey:()=> 'k',manualPatternGeometry:()=> 'g',document:{createElement:()=>canvas,body:{append(){}}},wrap:{clientLeft:0,clientTop:0,clientWidth:100,clientHeight:80,getBoundingClientRect:()=>({left:20,top:10})},cv:{getBoundingClientRect:()=>({left:20,top:10})},DPR:()=>2,scale:()=>.1};
  vm.createContext(c);vm.runInContext(fn('manualSnakeOverlayDraw'),c);c.manualSnakeOverlayDraw();assert.equal(canvas.style.background,'transparent');assert.equal(draws.length,2);assert.deepEqual(draws,[[0,0,1,1],[1,0,1,1]]);c.st.manualSnake=false;c.manualSnakeOverlayDraw();assert.equal(canvas.hidden,true);
+});
+
+test('manual success logs actual solver variant and records table metadata without touching automatic ledger',async()=>{
+ for(const [word,variant]of [['001',''],['110','инв'],['100','рев'],['011','инв+рев']]){
+  const {c}=fixture(),nodes=[...word].map((bit,i)=>({x:i,y:i,bit:Number(bit),edges:i<2?[i+1]:[]}));let step,it=Snake.findGraphSteps({nodes,start:0,text:'001',inverse:true,reverse:true});do{step=it.next();}while(!step.done);
+  assert.equal(step.value.variant,variant);c.VW=3;c.RG=1;c.rombP=()=>2;
+  c.ochkiRecordManualSnake(1,step.value,{x:4.5,y:2});assert.equal(c.logs.length,1);assert.equal(c.logs[0].finds[0].vn,variant);assert.equal(c.logs[0].finds[0].manual,true);assert.equal(c.logs[0].finds[0].p,1);assert.equal(c.first[0].context.frame,16);assert.equal(c.first[0].hit.i,1);
+  c.ochkiRecordManualSnake(1,{found:false},{});assert.equal(c.logs.length,1,'failed clicks do not log findings');
+ }
 });

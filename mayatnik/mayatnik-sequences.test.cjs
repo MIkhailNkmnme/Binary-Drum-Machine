@@ -71,7 +71,7 @@ test('library match summary and row tooltip distinguish columns and the two diag
  try{
   const editor=pane.querySelector('textarea');editor.value='000';editor.dispatchEvent(new dom.window.Event('input'));
   for(const [mode,label]of [['diag','по диагоналям ↘'],['antidiag','по противодиагоналям ↙'],['row','по рядам →'],['col','по столбцам ↓']]){
-   api.setMatches({enabled:true,active:true,mode,pattern:'initial',found:[{i:0,r:2}],frame:8});assert.ok(pane.querySelector('.mtp-sequence-summary').textContent.endsWith(label));assert.ok(pane.querySelector('.is-found').title.includes(label));assert.equal(editor.value,'000');
+   api.setMatches({enabled:true,active:true,mode,pattern:'initial',found:[{i:0,r:2,dir:{diag:1,antidiag:-1,row:0,col:2}[mode],vn:''}],frame:8});assert.ok(pane.querySelector('.mtp-sequence-summary').textContent.endsWith(label));assert.ok(pane.querySelector('.is-found').title.includes(require('./mayatnik-ochki-method.js').label({dir:{diag:1,antidiag:-1,row:0,col:2}[mode]})));assert.equal(editor.value,'000');
   }
  }finally{view.destroy();dom.window.close();}
 });

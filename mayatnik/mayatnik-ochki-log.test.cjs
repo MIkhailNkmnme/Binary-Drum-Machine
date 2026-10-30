@@ -73,6 +73,6 @@ test('text-only log UI has no frame button or archive warning while previous sav
  try{global.document=dom.window.document;dom.window.HTMLDialogElement.prototype.showModal=function(){this.open=true;};dom.window.HTMLDialogElement.prototype.close=function(){this.open=false;};
   dom.window.MayatnikPaintCache={read:async()=>null,write:async()=>{}};dom.window.mayFrameLibrary={list:()=>[],subscribe(){},ready:Promise.resolve(),save(){throw Error('no automatic frame capture');}};
   const log=install(dom.window);await log.record(record('old'));await log.record({...record('new','found'),finds:[{i:18,p:1,r:4,c:8}],count:1});log.show();await new Promise(setImmediate);
-  const rows=dom.window.document.querySelectorAll('.may-ochki-log-entry');assert.equal(rows.length,2);assert.match(rows[0].textContent,/№ 19/);assert.match(rows[0].textContent,/Находки записаны в лог/);assert.doesNotMatch(rows[0].textContent,/Ошибка|архив|Открыть кадр/);assert.equal(rows[0].querySelector('button'),null);assert.equal(rows[1].querySelector('button').disabled,false);
+  const rows=dom.window.document.querySelectorAll('.may-ochki-log-entry');assert.equal(rows.length,2);assert.match(rows[0].textContent,/№ 19/);assert.doesNotMatch(rows[0].textContent,/Находки записаны в лог/);assert.match(rows[0].textContent,/№ 19 · способ не записан/);assert.doesNotMatch(rows[0].textContent,/Ошибка|архив|Открыть кадр/);assert.equal(rows[0].querySelector('button'),null);assert.equal(rows[1].querySelector('button').disabled,false);
  }finally{global.document=originalDocument;dom.window.close();}
 });

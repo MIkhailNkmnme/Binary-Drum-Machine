@@ -494,10 +494,10 @@
     const closed = document.body.classList.toggle('mayatnik-menu-closed');
     menu.setAttribute('aria-expanded', String(!closed)); dispatchEvent(new Event('resize'));
   };
-  // v0.037: неактивные кнопки в рейке не показываются (как на других страницах); соты пересобираются без них.
+  // v0.646: disabled changes availability, never the position of a menu command.
   const relayout = () => { for (const soty of [...rail.el.querySelectorAll('.gz-soty'), ...railR.querySelectorAll('.gz-soty'), ...tools.querySelectorAll(':scope > .gz-group .gz-soty')]) {   // v0.232: и группы рейки, поднятые в шапку
-    // «Змея» stays next to «Очки», including unsupported views: its disabled state explains how to enable it.
-    const cells = [...soty.children], shown = cells.filter(b => (!b.classList.contains('gz-off-dis')||b===railSourceButtons.get('bOchkiSnake'))&&!b.classList.contains('may-merged-source'));
+    // Keep disabled commands in place while asynchronous actions are running.
+    const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('may-merged-source'));
     const top = tools.contains(soty), key = (top ? 'u' : '') + shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;   // top — в шапке (v0.232)
     cells.forEach(b => { b.style.display = shown.includes(b) ? '' : 'none'; });
     // v0.072: справа («Шаблоны») кнопки в одну строку, без сдвига сот.
@@ -509,7 +509,7 @@
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
   const toolSync = [];
-  {const cell=railSourceButtons.get('bOchkiSnake'),source=$('bOchkiSnake');if(cell&&source){
+  for(const id of ['bOchkiSnake','bPaintSame','bPaintSymmetric']){const cell=railSourceButtons.get(id),source=$(id);if(cell&&source){
     const sync=()=>{cell.setAttribute('aria-disabled',String(source.disabled));cell.setAttribute('aria-pressed',source.getAttribute('aria-pressed')||'false');if(cell.title!==source.title)cell.title=source.title;};
     toolSync.push(sync);sync();
   }}

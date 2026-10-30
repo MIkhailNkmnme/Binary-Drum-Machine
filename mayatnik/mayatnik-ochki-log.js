@@ -1,9 +1,9 @@
 /* Search metadata is stored independently; older entries can retain Library frame references. */
 (function(root,factory){
-  const api=factory();
+  const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-ochki-method.js'):root.MayatnikOchkiMethod);
   if(typeof module==='object'&&module.exports)module.exports=api;
   else api.install(root);
-})(typeof globalThis==='object'?globalThis:this,function(){
+})(typeof globalThis==='object'?globalThis:this,function(Methods){
   'use strict';
   const KEY='ochki-search-log-v1';
   const SOURCE_NAMES={'':'Обычный Маятник',legacy:'Обычный Маятник',horr:'Обычный Маятник',cone:'Конусы 5.7',field:'Поле 5.8',pair:'Обе 5.9',p12:'XOR 1–2',p23:'XOR 2–3',p31:'XOR 3–1',p123:'XOR все 3',a12:'AND 1–2',a23:'AND 2–3',a31:'AND 3–1',a123:'AND все 3',xor:'XOR 1–3',and:'AND 1–3'};
@@ -71,8 +71,10 @@
         const preview=frames.get(entry.savedId)?.thumbnail;
         if(preview){const img=document.createElement('img');img.src=preview;img.alt='Кадр '+entry.frame;img.loading='lazy';row.append(img);}
         const info=document.createElement('div'),title=document.createElement('strong');title.textContent='Кадр '+entry.frame+' · '+(entry.rows??frames.get(entry.savedId)?.rows??'—')+' строк';info.append(title);
-        const text=document.createElement('p');text.textContent=new Date(entry.at||0).toLocaleString('ru-RU')+' · Построение: '+sourceName(entry.src??entry.source)+' · '+(entry.mirror?'Зеркально':'Прямо')+' · Найдено: '+(entry.count??entry.finds?.length??0)+foundRows(entry.finds);info.append(text);
-        const state=document.createElement('p');state.className='may-ochki-log-state';state.textContent=entry.status==='found'?(log.getState().pending.includes(entry.id)?'Запись находок…':log.getState().storageError?'Находки не записаны: '+log.getState().storageError:'Находки записаны в лог'):entry.status==='saved'?(log.getState().pending.includes(entry.id)?'Кадр в библиотеке; сохранение лога…':log.getState().storageError?'Кадр в библиотеке; лог не сохранён':'Сохранён в библиотеке и логе'):entry.status==='saving'?'Сохранение кадра…':'Ошибка сохранения: '+(entry.error||'неизвестная ошибка');info.append(state);
+        const text=document.createElement('p');text.textContent=new Date(entry.at||0).toLocaleString('ru-RU')+' · Построение: '+sourceName(entry.src??entry.source)+' · '+(entry.mirror?'Зеркально':'Прямо')+' · Найдено: '+(entry.count??entry.finds?.length??0);info.append(text);
+        const methods=document.createElement('ul');methods.className='may-ochki-log-methods';
+        for(const hit of entry.finds||[]){const item=document.createElement('li');item.textContent=(Number.isInteger(hit.i)?'№ '+(hit.i+1):'Серия '+(hit.text||''))+(entry.halves===2?' · '+(hit.p?'правый':'левый')+' полумаятник':'')+' · '+Methods.label(hit);methods.append(item);}info.append(methods);
+        const state=document.createElement('p');state.className='may-ochki-log-state';state.textContent=entry.status==='found'?(log.getState().pending.includes(entry.id)?'Запись находок…':log.getState().storageError?'Находки не записаны: '+log.getState().storageError:''):entry.status==='saved'?(log.getState().pending.includes(entry.id)?'Кадр в библиотеке; сохранение лога…':log.getState().storageError?'Кадр в библиотеке; лог не сохранён':'Сохранён в библиотеке и логе'):entry.status==='saving'?'Сохранение кадра…':'Ошибка сохранения: '+(entry.error||'неизвестная ошибка');if(state.textContent)info.append(state);
         const b=button('Открыть кадр',async()=>{opening=true;render();try{await log.open(entry.id);panel.close();}catch(error){status.textContent='Не удалось открыть кадр: '+errorText(error);}finally{opening=false;renderButtons();}});
         b.disabled=entry.status!=='saved'||opening;if(entry.status!=='found')info.append(b);row.append(info);list.append(row);
       }
