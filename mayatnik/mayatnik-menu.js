@@ -1142,9 +1142,8 @@
       localStorage.setItem(mark, '1');
     }
   } catch (_) {}
-  // Results share the existing Search group and retain their live source nodes.
-  { const g = document.querySelector('.gz-group[data-id="ochki"]'), box = $('ochkiBox'), row = g?.querySelector('.gz-wide');
-    if(row&&box){g.classList.add('may-search-results-group');row.append(box);box.open=true;} }
+  // Search data is displayed in the library table; retained source IDs serve legacy callbacks.
+  { const box=$('ochkiBox');if(box){source.append(box);box.hidden=true;box.style.setProperty('display','none','important');} }
   // v0.182: «Сведения — тоже кнопкой, как Очки»: выпадающая группа «ⓘ Сведения» в полосе; панель (#mayatnikInfoPanel) кладётся в неё ниже
   const infoRow = ptGroup('ⓘ Сведения'); infoRow.parentElement.classList.add('pt-info'); infoRow.parentElement.style.setProperty('--c', '#9fb4d8');
   { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
@@ -1884,9 +1883,7 @@
         if (box.classList.contains('gz-open')) {
           const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(), up = !mobileMenu.matches && box.classList.contains('pt-bot');
           const max = Math.max(24, up ? h.top - 14 : innerHeight - h.bottom - 16);
-          const resultWidth=box.classList.contains('may-search-results-group')?Math.min(360,Math.max(120,popupRight()-8)):120;
-          if(box.classList.contains('may-search-results-group'))list.style.setProperty('width',resultWidth+'px','important');
-          if (!up) { list.style.setProperty('left', Math.max(4, Math.min(h.left, (box.classList.contains('may-search-results-group')?popupRight():innerWidth) - resultWidth - 4)) + 'px', 'important'); list.style.setProperty('top', (h.bottom + 2) + 'px', 'important'); }
+          if (!up) { list.style.setProperty('left', Math.max(4, Math.min(h.left, innerWidth - 124)) + 'px', 'important'); list.style.setProperty('top', (h.bottom + 2) + 'px', 'important'); }
           list.style.maxHeight = max + 'px';
           // v0.464: внешняя скобка не обрезается overflow:auto у короткого списка;
           // у длинного списка для неё есть место внутри прокручиваемого содержимого.

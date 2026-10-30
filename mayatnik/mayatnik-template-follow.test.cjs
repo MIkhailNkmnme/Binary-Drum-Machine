@@ -35,7 +35,7 @@ test('acknowledged own publication revision completes once, while a change after
 });
 test('production autoplay and fast build visit and finish every frame even at speed 13',async()=>{
  for(const fast of [false,true]){
-  const jobs=[],searched=[],drawn=[],c={k:0,target:4,playing:true,fast,raf:0,timer:0,st:{speed:13},gpuBig:null,paintJumpFrom:null,t0:0,lastDraw:0,drawMs:0,f:{val:new Int8Array(3)},performance,document:{hidden:false},gpuManualCpu:()=>false,gpuPaintCpu:()=>false,ochkiFrameWait:()=>false,templateFollowActive:()=>true,coneAutoExtend(){},advancePaintColour(){},status(){},next(){},stop(){c.playing=false;c.fast=false;},more(){if(c.k>=c.target)return false;c.k++;return true;}};
+  const jobs=[],searched=[],drawn=[],c={k:0,target:4,playing:true,fast,raf:0,timer:0,st:{speed:13},gpuBig:null,paintJumpFrom:null,t0:0,lastDraw:0,drawMs:0,f:{val:new Int8Array(3)},performance,document:{hidden:false},gpuManualCpu:()=>false,gpuPaintCpu:()=>false,manualSnakeFrameWait:()=>false,ochkiFrameWait:()=>false,templateFollowActive:()=>true,coneAutoExtend(){},advancePaintColour(){},status(){},next(){},stop(){c.playing=false;c.fast=false;},more(){if(c.k>=c.target)return false;c.k++;return true;}};
   c.templateFollow=Follow.create({capture:()=>({owner:c.f,key:c.k}),search:async()=>{const k=c.k,d=deferred();jobs.push(d);await d.promise;searched.push(k);}},{on:true,source});
   c.templateFollowFrameWait=()=>{if(c.templateFollow.complete)return false;c.templateFollow.ensure();return true;};c.draw=()=>{drawn.push(c.k);c.templateFollow.ensure();};vm.createContext(c);vm.runInContext(fn('tick'),c);
   for(let k=0;k<4;k++){c.tick();await turn();assert.equal(c.k,k,'pending search holds frame');jobs.at(-1).resolve();await c.templateFollow.idle();c.tick();assert.equal(c.k,k+1);await turn();}
@@ -66,7 +66,7 @@ test('manual frame change waits for pending GPU readback and search before advan
  ready=true;c.gpuBig.snapshotPending=null;await new Promise(r=>setTimeout(r,20));assert.deepEqual(calls,['search']);assert.equal(settled,false);search.resolve();await wait;assert.equal(settled,true);assert.equal(calls.includes('stop'),false);
 });
 test('row playback waits for exact completion and reveals only one next row at speed 13',()=>{
- let interval;const nodes=new Map(),c={rowRun:null,k:4,f:{H:10},st:{vrows:2,speed:13},playing:false,ochkiPause:null,templateFollowActive:()=>true,templateFollowFrameWait:()=>waiting,ochkiFrameWait:()=>false,total:()=>4,draw(){draws++;},$:id=>{if(!nodes.has(id))nodes.set(id,{value:0,setAttribute(){}});return nodes.get(id);},setInterval:fn=>{interval=fn;return 1;}};let waiting=true,draws=0;
+ let interval;const nodes=new Map(),c={rowRun:null,k:4,f:{H:10},st:{vrows:2,speed:13},playing:false,ochkiPause:null,templateFollowActive:()=>true,templateFollowFrameWait:()=>waiting,manualSnakeFrameWait:()=>false,ochkiFrameWait:()=>false,total:()=>4,draw(){draws++;},$:id=>{if(!nodes.has(id))nodes.set(id,{value:0,setAttribute(){}});return nodes.get(id);},setInterval:fn=>{interval=fn;return 1;}};let waiting=true,draws=0;
  const a=html.indexOf("  $('bRowRun').onclick ="),b=html.indexOf("  $('bStep').onclick",a);vm.createContext(c);vm.runInContext(html.slice(a,b),c);c.$('bRowRun').onclick();interval();assert.equal(c.rowRun.r,0);assert.equal(draws,0);waiting=false;interval();assert.equal(c.rowRun.r,1);assert.equal(draws,1);waiting=true;interval();assert.equal(c.rowRun.r,1);
 });
 test('engine propagates exact follow failures and external cancellation instead of reporting success',async()=>{
