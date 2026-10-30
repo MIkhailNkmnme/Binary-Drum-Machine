@@ -1,4 +1,4 @@
-/* Маятник v0.664 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.665 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -297,7 +297,7 @@
       legacy.title = 'Обычный маятник: вернуться к прежнему построению и общему управлению'; legacy.setAttribute('aria-label', legacy.title);
       legacy.onclick = event => { event.stopPropagation(); choose(''); }; pop.append(section(legacy, 'fields'));
       const own=document.createElement('button');own.type='button';own.className='gz-hx';own.id='maySequenceField';own.dataset.n='maySequenceField';own.textContent='Своя последовательность';
-      own.title='Свой маятник: строки текущей библиотеки становятся отдельным исходным рисунком. В разделе «Размер» задаются отдельно высота поля и число строк своего исходника. Остальные строки библиотеки сохраняются. Общий центр, между битами одна пустая клетка. Кадр 0 — только исходник, остальное поле пустое; далее обычные шаги маятника.';own.setAttribute('aria-label',own.title);
+      own.title='Свой маятник: строки текущей библиотеки становятся отдельным исходным рисунком. В разделе «Размер» задаются отдельно высота поля и число строк своего исходника. Остальные строки библиотеки сохраняются. Общий центр; промежутки между битами можно заполнить кнопкой «Инв. сверху». Кадр 0 — исходник с выбранным заполнением, остальное поле пустое; далее обычные шаги маятника.';own.setAttribute('aria-label',own.title);
       own.onclick=event=>{event.stopPropagation();window.maySequenceField?.set(!window.maySequenceField?.get().on);syncComparison();rail.refresh();};pop.append(section(own,'fields'));
       controls.push({half:own,on:()=>!!window.maySequenceField?.get().on,gz:true});
       const ownGrid=document.createElement('button');ownGrid.type='button';ownGrid.className='gz-hx';ownGrid.id='maySequenceOwnGrid';ownGrid.dataset.n='maySequenceOwnGrid';
@@ -308,6 +308,14 @@
         ownGrid.title='Своя решётка: '+(on?'включена':'выключена')+'. Вариант только своего Маятника: сдвиги −2, +2, −4, +4… вместо −1, +1, −2, +2…; для строк длиной 1, 2, 3… пересчёт сразу затрагивает исходную решётку. Для ПравЛев порядок обратный; пара — ±2, ±4… Переключение возвращает активный свой Маятник к кадру 0. Исходные строки сохраняются.';ownGrid.setAttribute('aria-label',ownGrid.title);};
       ownGrid.onclick=event=>{event.stopPropagation();const api=window.maySequenceField;api?.setOwnGrid(!api.get().ownGrid);ownGrid.gzSync();rail.refresh();};
       toolSync.push(ownGrid.gzSync);addEventListener('may-compare-change',ownGrid.gzSync);ownGrid.gzSync();pop.append(section(ownGrid,'fields'));
+      const invAbove=document.createElement('button');invAbove.type='button';invAbove.className='gz-hx';invAbove.id='maySequenceInverseAbove';invAbove.dataset.n='maySequenceInverseAbove';
+      invAbove.dataset.maySearchAliases='Инверсия сверху|Заполнить пустоты|Исходник без промежутков';
+      const invIcon=document.createElement('i');invIcon.className='gz-ic';invIcon.style.backgroundImage=icon(invAbove,'down');invIcon.setAttribute('aria-hidden','true');
+      const invLabel=document.createElement('span');invLabel.className='gz-nm';invLabel.textContent='Инв. сверху';invAbove.append(invIcon,invLabel);
+      invAbove.gzSync=()=>{const api=window.maySequenceField,on=!!api?.get().inverseAbove;invAbove.disabled=!api;invAbove.classList.toggle('gz-on',on);invAbove.setAttribute('aria-pressed',String(on));
+        invAbove.title='Инверсия сверху: '+(on?'включена':'выключена')+'. В кадре 0 заполнить промежутки между битами своего исходника инверсией клетки прямо сверху: 0→1, 1→0. Проход сверху вниз, уже заполненная верхняя строка учитывается. Если сверху пусто, промежуток остаётся пустым. Исходные биты и строки ниже выбранного исходника не менять. Переключение возвращает свой Маятник к кадру 0; работает с обоими вариантами шага.';invAbove.setAttribute('aria-label',invAbove.title);};
+      invAbove.onclick=event=>{event.stopPropagation();const api=window.maySequenceField;api?.setInverseAbove(!api.get().inverseAbove);invAbove.gzSync();rail.refresh();};
+      toolSync.push(invAbove.gzSync);addEventListener('may-compare-change',invAbove.gzSync);invAbove.gzSync();pop.append(section(invAbove,'fields'));
       pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
         { id: 'mayCompareCones', label: 'Конусы', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
         { id: 'mayCompareField', label: 'Поле', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }
