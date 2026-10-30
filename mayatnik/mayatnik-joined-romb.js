@@ -6,10 +6,10 @@
   const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikJoinedRomb=api;
 })(globalThis,function(){
   'use strict';
-  function create({width,height,origin=0,anchor=0,fieldWidth=width,rotate=false,rotateParity=1,wholeSource=false,topology='square',lattice=-1,gap=0}){
+  function create({width,height,origin=0,anchor=0,fieldWidth=width,rotate=false,rotateParity=1,wholeSource=false,topology='square',lattice=-1,gap=0,panelCopies=false}){
     if(![width,height,origin,anchor,fieldWidth].every(Number.isSafeInteger)||width<1||height<1||origin<0||fieldWidth<origin+width)
       throw new RangeError('Invalid joined rhombus source geometry');
-    if(wholeSource)return whole({width,height,origin,anchor,fieldWidth,topology,lattice,gap});
+    if(wholeSource)return whole({width,height,origin,anchor,fieldWidth,topology,lattice,gap,panelCopies});
     const reflection=2*Math.ceil((width-1)/2),displayWidth=rotate?Math.max(width,reflection+1):width,displayHeight=2*height,displayAnchor=anchor-origin+(rotateParity===0?1:0);
     if(!Number.isSafeInteger(fieldWidth*height)||!Number.isSafeInteger(displayWidth*displayHeight))throw new RangeError('Joined rhombus geometry is too large');
     const config=Object.freeze({width,height,origin,anchor,fieldWidth,rotate:!!rotate,...(rotateParity===0?{rotateParity:0}:{})});
@@ -79,39 +79,39 @@
   }
   // A custom bitmap is not a pair of complementary lattices. Each cell has
   // two display addresses: the selected complete view and its complete 180° copy.
-  function whole({width,height,origin,anchor,fieldWidth,topology,lattice,gap}){
+  function whole({width,height,origin,anchor,fieldWidth,topology,lattice,gap,panelCopies}){
     const diamond=topology==='diamond';lattice=diamond?(lattice===0||lattice===1?lattice:2):-1;gap=diamond&&lattice===2?Math.max(0,Math.floor(gap)):0;
-    const displayWidth=lattice===2?2*width+gap:width,displayHeight=2*height,displayAnchor=anchor-origin,reflection=displayWidth-1;
+    const localCopies=diamond&&lattice===2&&!!panelCopies,displayWidth=lattice===2?2*width+gap:width,displayHeight=2*height,displayAnchor=anchor-origin,reflection=displayWidth-1;
     if(!Number.isSafeInteger(gap)||!Number.isSafeInteger(fieldWidth*height)||!Number.isSafeInteger(displayWidth*displayHeight))throw new RangeError('Joined bitmap geometry is too large');
-    const config=Object.freeze({width,height,origin,anchor,fieldWidth,rotate:true,wholeSource:true,...(diamond?{topology:'diamond',lattice,gap}:{})});
+    const config=Object.freeze({width,height,origin,anchor,fieldWidth,rotate:true,wholeSource:true,...(diamond?{topology:'diamond',lattice,gap,...(localCopies?{panelCopies:true}:{})}:{})});
     const sourceParities=diamond?(lattice===2?[0,1]:[lattice]):[-1],parts=Object.freeze([0,1].flatMap(copy=>sourceParities.map(sourceParity=>{
       const offset=lattice===2&&sourceParity===1?width+gap:0,p=diamond?copy*2+sourceParity:copy;
-      return Object.freeze({p,copy,sourceParity,offset,matrix:Object.freeze(copy?[-1,0,0,-1,displayWidth-offset,displayHeight]:[1,0,0,1,offset,0])});
+      return Object.freeze({p,copy,sourceParity,offset,matrix:Object.freeze(copy?[-1,0,0,-1,localCopies?offset+width:displayWidth-offset,displayHeight]:[1,0,0,1,offset,0])});
     }))),byPart=new Map(parts.map(part=>[part.p,part]));
     function point(x,y,p=parts[0].p){if(!Number.isFinite(x)||!Number.isFinite(y))return null;const part=byPart.get(p);if(!part)return null;const m=part.matrix;return {x:m[0]*x+m[4],y:m[3]*y+m[5]};}
-    // Whole-view copies have the same rectangular crop as the selected view.
+    // Each copy has the same rectangular crop as its source panel.
     function footprint(p){return byPart.has(p)?[[[0,0],[width,0],[width,height],[0,height],[0,0]]]:[];}
-    function partAt(fx,fy){if(fx<0||fy<0||fx>=displayWidth||fy>=displayHeight)return null;const copy=fy>=height?1:0,tx=copy?displayWidth-fx:fx,panel=lattice===2?(tx<width?0:tx>=width+gap?1:-1):lattice;if(diamond&&panel<0)return null;return byPart.get(diamond?copy*2+panel:copy)||null;}
+    function partAt(fx,fy){if(fx<0||fy<0||fx>=displayWidth||fy>=displayHeight)return null;const copy=fy>=height?1:0,tx=copy&&!localCopies?displayWidth-fx:fx,panel=lattice===2?(tx<width?0:tx>=width+gap?1:-1):lattice;if(diamond&&panel<0)return null;return byPart.get(diamond?copy*2+panel:copy)||null;}
     function forward(c,r,copy=0){
       if(!Number.isInteger(c)||!Number.isInteger(r)||c<origin||c>=origin+width||r<0||r>=height||(copy!==0&&copy!==1))return null;
       const sourceParity=(c-anchor-r)&1;if(diamond&&lattice!==2&&lattice!==sourceParity)return null;
-      const offset=lattice===2&&sourceParity===1?width+gap:0,tx=c-origin+offset,x=copy?displayWidth-1-tx:tx,y=copy?displayHeight-1-r:r;
+      const offset=lattice===2&&sourceParity===1?width+gap:0,tx=c-origin+offset,x=copy?(localCopies?offset+width-1-(c-origin):displayWidth-1-tx):tx,y=copy?displayHeight-1-r:r;
       return {x,y,c,r,p:diamond?copy*2+sourceParity:copy,copy,sourceParity,q:r*fieldWidth+c,displayQ:y*displayWidth+x};
     }
     function inverse(x,y){
       if(!Number.isInteger(x)||!Number.isInteger(y)||x<0||x>=displayWidth||y<0||y>=displayHeight)return null;
-      const copy=y>=height?1:0,tx=copy?displayWidth-1-x:x,r=copy?displayHeight-1-y:y,offset=lattice===2&&tx>=width+gap?width+gap:0,c=origin+tx-offset;
+      const copy=y>=height?1:0,tx=copy&&!localCopies?displayWidth-1-x:x,r=copy?displayHeight-1-y:y,offset=lattice===2&&tx>=width+gap?width+gap:0,c=origin+(copy&&localCopies?width-1-(tx-offset):tx-offset);
       if(tx>=width&&tx<width+gap)return null;const cell=forward(c,r,copy);return cell&&cell.x===x?cell:null;
     }
     // Numeric address avoids allocating a cell object for every raster pixel.
     function hitIndex(fx,fy){
       if(!Number.isFinite(fx)||!Number.isFinite(fy)||fx<0||fy<0||fx>=displayWidth||fy>=displayHeight)return -1;
-      const copy=fy>=height?1:0,tx=copy?displayWidth-fx:fx,ty=copy?displayHeight-fy:fy;
+      const copy=fy>=height?1:0,tx=copy&&!localCopies?displayWidth-fx:fx,ty=copy?displayHeight-fy:fy;
       if(!diamond){const x=Math.floor(fx),y=Math.floor(fy);return y*displayWidth+x;}
       const panel=lattice===2?(tx<width?0:tx>=width+gap?1:-1):lattice;if(panel<0)return -1;
-      const offset=lattice===2&&panel===1?width+gap:0,x=tx-offset-.5-displayAnchor-panel,y=ty-.5,i=Math.round((x+y)/2),j=Math.round((x-y)/2),c=i+j+displayAnchor+panel,r=i-j;
+      const offset=lattice===2&&panel===1?width+gap:0,x=(copy&&localCopies?width-(tx-offset):tx-offset)-.5-displayAnchor-panel,y=ty-.5,i=Math.round((x+y)/2),j=Math.round((x-y)/2),c=i+j+displayAnchor+panel,r=i-j;
       if(c<0||c>=width||r<0||r>=height)return -1;
-      const dx=copy?displayWidth-1-(c+offset):c+offset,dy=copy?displayHeight-1-r:r;return dy*displayWidth+dx;
+      const dx=copy?(localCopies?offset+width-1-c:displayWidth-1-(c+offset)):c+offset,dy=copy?displayHeight-1-r:r;return dy*displayWidth+dx;
     }
     function hit(x,y){const q=hitIndex(x,y);return q<0?null:fromDisplay(q);}
     function fromSource(q,copy=0){return Number.isSafeInteger(q)&&q>=0?forward(q%fieldWidth,Math.floor(q/fieldWidth),copy):null;}
