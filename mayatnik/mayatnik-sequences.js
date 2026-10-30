@@ -122,13 +122,10 @@
   function mount(pane,api){
     const doc=pane.ownerDocument;pane.classList.add('mtp-sequences');pane.dataset.noMini='';
     const label=doc.createElement('div');const editor=doc.createElement('textarea');editor.id='maySequenceEditor';editor.setAttribute('aria-label','Строки своей последовательности');editor.spellcheck=false;editor.wrap='off';label.append(editor);
-    const commands=doc.createElement('div');commands.className='mtp-sequence-actions';
     const notice=doc.createElement('output');notice.className='mtp-sequence-notice';notice.setAttribute('role','status');let dirty=false,rendered=-1;
-    const button=(text,run)=>{const b=doc.createElement('button');b.type='button';b.className='mtp-command';b.textContent=text;b.title=text;b.setAttribute('aria-label',text);b.addEventListener('click',()=>{try{run();}catch(e){notice.textContent=e.message;}});commands.append(b);return b;};
+    const button=(text,run)=>{const b=doc.createElement('button');b.type='button';b.className='mtp-command';b.textContent=text;b.title=text;b.setAttribute('aria-label',text);b.addEventListener('click',()=>{try{run();}catch(e){notice.textContent=e.message;}});return b;};
     const save=button('Применить',()=>{api.setText(editor.value);dirty=false;rendered=-1;notice.textContent='';refresh();});save.dataset.sequenceSave='';
     editor.addEventListener('input',()=>{dirty=true;notice.textContent='Есть изменения — нажмите «Применить». Они ещё не участвуют в поиске.';});
-    const append=doc.createElement('input');append.type='text';append.inputMode='numeric';append.placeholder='Новая строка: 01…';append.setAttribute('aria-label','Добавить строку последовательности');commands.append(append);
-    button('＋ Строка',()=>{if(!append.value.trim())throw Error('Введите новую строку из 0 и 1.');parse(append.value);editor.value+=(editor.value.trim()?'\n':'')+append.value.trim();append.value='';dirty=true;notice.textContent='Строка добавлена в редактор — нажмите «Применить».';});
 
     const generator=doc.createElement('div');generator.className='mtp-sequence-generator';generator.setAttribute('role','group');generator.setAttribute('aria-label','Генератор последовательностей');generator.title='Одна строка — один ряд из 0 и 1. Каждый полный ряд расширяется на две ячейки; вне предыдущего конечного ряда вход равен 0, в том числе для правил с 000 → 1. Сжатые 90 соответствуют строкам Хаба: 1, 11, 101…';
     function field(text,control){const label=doc.createElement('label');label.title=control.getAttribute('aria-label')||text;control.title=label.title;label.append(control);generator.append(label);return control;}
@@ -143,7 +140,8 @@
     const summary=doc.createElement('output');summary.className='mtp-sequence-summary';summary.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-sequence-rows';const table=doc.createElement('table'),head=doc.createElement('thead'),headRow=doc.createElement('tr'),body=doc.createElement('tbody');table.setAttribute('aria-label','Строки, первые находки и текущие результаты Поиска');const caption=doc.createElement('caption');caption.className='mtp-current-context';caption.append(doc.createElement('span'));table.append(caption);
     for(const [text,full] of [['№','Номер последовательности'],['Послед-ть','Последовательность'],['Кадр','Первый кадр находки'],['Начало','Начало змейки: строка и бит'],['Конец','Конец змейки: строка и бит'],['Поиск','Способ поиска']]){const cell=doc.createElement('th');cell.scope='col';cell.textContent=text;cell.title=full;cell.setAttribute('aria-label',full);headRow.append(cell);}head.append(headRow);table.append(head,body);list.append(table);let nodes=[],listKey='',scrolledSelection=0;
     table.classList.add('mtp-resizable-sequences');const columns=Columns&&api.columns?Columns.mount(table,COLUMN_KEYS,api.columns,{onError:error=>notice.textContent=error.message}):null;
-    pane.append(label,commands,generator,notice,summary,list);
+    generator.insertBefore(save,insert);
+    pane.append(label,generator,notice,summary,list);
     function refresh(){
       if(pane.closest('[hidden]'))return;const state=api.snapshot(),m=state.matches||{},simple=m.simple||m.pattern&&m.pattern!=='initial',shown=state.rows;
       if(rendered!==state.revision){if(!dirty)editor.value=state.rows.join('\n');rendered=state.revision;if(state.error)notice.textContent=state.error;}

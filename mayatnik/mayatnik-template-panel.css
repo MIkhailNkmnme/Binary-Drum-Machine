@@ -256,11 +256,11 @@ body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-rows th:nth-child(3){w
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequences textarea{height:90px}
 body.may-mobile-menu #mayatnikTemplatePanel :is(input:not([type=checkbox]):not([type=color]),select){font-size:16px;min-height:32px}
 
-/* 247: exactly two command rows; semantic labels remain in accessible names. */
+/* Sequence generator commands; semantic labels remain in accessible names. */
 #mayatnikTemplatePanel .mtp-sequence-actions{display:grid;grid-template-columns:60px minmax(0,1fr) 60px;gap:2px;min-width:0;flex-wrap:nowrap}
 #mayatnikTemplatePanel .mtp-sequence-actions>*{box-sizing:border-box;min-width:0;width:100%;max-width:100%}
 #mayatnikTemplatePanel .mtp-sequence-actions .mtp-command{width:60px;min-width:0;height:24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#mayatnikTemplatePanel .mtp-sequence-generator{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 60px;align-items:center;gap:2px;min-width:0}
+#mayatnikTemplatePanel .mtp-sequence-generator{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 18px 60px 60px;align-items:center;gap:2px;min-width:0}
 #mayatnikTemplatePanel .mtp-sequence-generator label{display:block;min-width:0;overflow:hidden}
 #mayatnikTemplatePanel .mtp-sequence-generator :is(input:not([type=checkbox]),select){width:100%;min-width:0;max-width:100%;height:24px}
 #mayatnikTemplatePanel .mtp-sequence-generator .mtp-command{width:60px;min-width:0;height:24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -277,3 +277,13 @@ body.may-mobile-menu #mayatnikTemplatePanel :is(input:not([type=checkbox]):not([
 #mayatnikTemplatePanel .mtp-current-matches summary,#mayatnikTemplatePanel .mtp-current-line{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%;min-width:0}
 #mayatnikTemplatePanel .mtp-current-matches summary{cursor:pointer;color:#ffbd60}
 #mayatnikTemplatePanel .mtp-current-hit+ .mtp-current-hit{border-top:1px solid #394657;margin-top:2px;padding-top:2px}
+
+/* 265: backup commands in the title; sequence actions in the editor corner. */
+#mayatnikTemplatePanel .mtp-heading .mtp-header-path{flex:1 1 0}
+#mayatnikTemplatePanel .mtp-heading .mtp-file-commands{flex:0 0 184px}
+#mayatnikTemplatePanel .mtp-toolbar:not(:has(>[data-window-notice]:not([hidden]))){display:none}
+#mayatnikTemplatePanel[data-tab=sequences] .mtp-main{position:relative}
+#mayatnikTemplatePanel[data-tab=sequences] .mtp-section-commands{position:absolute;top:2px;right:2px;z-index:2;flex-wrap:nowrap;background:#111823}
+#mayatnikTemplatePanel[data-tab=sequences] .mtp-sequences textarea{padding-right:106px}
+#mayatnikTemplatePanel .mtp-sequences textarea::-webkit-scrollbar,
+#mayatnikTemplatePanel .mtp-sequence-rows::-webkit-scrollbar{width:0}

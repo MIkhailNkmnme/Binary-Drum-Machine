@@ -69,6 +69,7 @@
   }
 
   function selectTab(tab,persist=true){if(tab==='views')tab='frames';activeTab=tab==='layers'||tab==='sequences'||captureLibraries.has(tab)?tab:'templates';if(!panel)return;
+    panel.dataset.tab=activeTab;
     templatePane.hidden=activeTab!=='templates';sequencePane.hidden=activeTab!=='sequences';panel.querySelector('.mtp-viewbar').hidden=activeTab==='sequences';layerPane.hidden=activeTab!=='layers';for(const library of captureLibraries.values())library.pane.hidden=activeTab!==library.key;folderButton.hidden=activeTab!=='templates';
     for(const [key,b]of tabButtons){b.setAttribute('aria-selected',String(key===activeTab));b.setAttribute('aria-pressed',String(key===activeTab));b.tabIndex=key===activeTab?0:-1;}
     if(persist)try{root.localStorage.setItem(TAB_KEY,activeTab);}catch(_){}
@@ -156,7 +157,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','555');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','656');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -171,7 +172,7 @@
     const head=doc.createElement('div');head.className='mtp-heading';crumbs=doc.createElement('nav');crumbs.className='mtp-header-path mtp-address';crumbs.dataset.noMini='';address=crumbs;
     folderButton=headingButton('Создать папку в текущей папке','M5 8H10L12 10H19V17H5ZM12 11V16M9.5 13.5H14.5',()=>{const name=root.prompt('Название новой папки','Папка');if(name)organise(()=>store.addFolder(name,current));});const close=headingButton('Закрыть библиотеку','M8 8 16 16M16 8 8 16',()=>{if(root.MayatnikLibraryDetached)root.close();else{setOpen(false);doc.getElementById('bTemplatePanel')?.focus();}});close.dataset.libraryClose='';head.append(crumbs,close);
     const toolbar=doc.createElement('div');toolbar.className='mtp-toolbar';toolbar.dataset.noMini='';folderButton.dataset.libraryFolder='';const detached=headingButton('Открыть библиотеку в отдельном окне браузера','M8 16 16 8M8 8H16V16',openWindow);detached.dataset.libraryWindow='';detached.hidden=!!root.MayatnikLibraryDetached;const notice=doc.createElement('output');notice.dataset.windowNotice='';notice.hidden=true;notice.setAttribute('role','status');head.insertBefore(detached,head.lastChild);toolbar.append(notice);
-    const fileCommands=doc.createElement('div');fileCommands.className='mtp-file-commands';fileCommands.setAttribute('role','group');fileCommands.setAttribute('aria-label','Резервная копия, восстановление и облачный файл');toolbar.append(fileCommands);
+    const fileCommands=doc.createElement('div');fileCommands.className='mtp-file-commands';fileCommands.setAttribute('role','group');fileCommands.setAttribute('aria-label','Резервная копия, восстановление и облачный файл');head.insertBefore(fileCommands,detached);
     for(const [symbol,title,short,action]of [['💾','Сохранить все библиотеки и текущую работу в один файл','Резрвъ','save'],['↑','Восстановить полную копию Маятника','Возстнвть','restore'],['☁','Подключить файл в облачной папке','к Облку','file']]){const b=button(symbol+' '+short,title,()=>root.MayatnikBackupUI?.open(action));b.dataset.backupAction=action;fileCommands.append(b);}
     const tabs=doc.createElement('div');tabs.className='mtp-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Раздел библиотеки');
     const layouts=doc.createElement('div');layouts.className='mtp-layout';layouts.setAttribute('role','group');layouts.setAttribute('aria-label','Вид библиотеки');
