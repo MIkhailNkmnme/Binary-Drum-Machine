@@ -1,4 +1,5 @@
-/* Hub v0.471. Exact -1/0/1 fields packed in occupied/value bit planes.
+/* Hub v0.475. Точные -1/0/1 fields packed in occupied/value bit planes.
+   v0.475: unsweep/uncone — обратный проход пинг-понга (биты восстанавливаются точно).
    Rows have independent word padding: a shift never wraps into another row.
    No frame is skipped; each sweep consumes the just-updated preceding row. */
 (function (root, factory) {
@@ -128,5 +129,47 @@
       }
     }
   }
-  return { create, reset, apex, copy, sweep, cone, unpack, paint, blend };
+  // v0.475: обратный ход пинг-понга. sweep/cone — линейные по битам, но
+  // применяются к уже перестроенному полю; обратный проход идёт снизу вверх
+  // по строкам и восстанавливает ровно предыдущее поле (valid не откатываем —
+  // для рисования он не нужен, биты восстанавливаются точно).
+  function clearApex(f, c) {
+    if (c < 0 || c >= f.W) return;
+    const i = c >>> 5, bit = 1 << (c & 31);
+    f.bits[i] &= ~bit;
+  }
+  function unsweep(f, from, to) {
+    const { bits, stride, tail } = f;
+    let prev = bits.slice((from - 1) * stride, from * stride);
+    for (let r = from; r < to; r++) {
+      const base = r * stride, cur = bits.slice(base, base + stride);
+      for (let w = 0; w < stride; w++) {
+        const p = prev[w], l = w ? prev[w - 1] >>> 31 : 0, rr = w + 1 < stride ? prev[w + 1] << 31 : 0;
+        bits[base + w] = cur[w] ^ ((p << 1 | l) ^ (p >>> 1 | rr));
+      }
+      bits[base + stride - 1] &= tail;
+      prev = cur;
+    }
+  }
+  function uncone(f, a) {
+    const { W, H, stride, tail, bits } = f;
+    if (a < 0 || a >= W) return;
+    let prev = bits.slice(0, stride);
+    for (let r = 1; r < H; r++) {
+      const lo = Math.max(0, a - r), hi = Math.min(W - 1, a + r);
+      const first = lo >>> 5, last = hi >>> 5, parity = (a + r) & 1 ? 0xaaaaaaaa : 0x55555555;
+      const base = r * stride, cur = bits.slice(base, base + stride);
+      for (let w = first; w <= last; w++) {
+        let mask = parity;
+        if (w === first) mask &= 0xffffffff << (lo & 31);
+        if (w === last) mask &= 0xffffffff >>> (31 - (hi & 31));
+        const p = prev[w], l = w ? prev[w - 1] >>> 31 : 0, rr = w + 1 < stride ? prev[w + 1] << 31 : 0;
+        bits[base + w] = cur[w] ^ (((p << 1 | l) ^ (p >>> 1 | rr)) & mask);
+      }
+      bits[base + stride - 1] &= tail;
+      prev = cur;
+    }
+    clearApex(f, a);
+  }
+  return { create, reset, apex, clearApex, copy, sweep, unsweep, cone, uncone, unpack, paint, blend };
 });
