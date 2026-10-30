@@ -60,9 +60,10 @@ test('shape instance matching includes horizontal reflections only when requeste
   assert.deepEqual([...c.templateShapeInstances({rk:1,parts:[part]})],['direct']);assert.deepEqual([...c.templateShapeInstances({rk:1,parts:[part]},{mirrorX:true})],['direct','mirror']);
 });
 test('real diamond projections materialize the exact displayed cells and preserve their RGBA',async()=>{
-  for(const mode of ['romb0','romb1','romb2','rombJoin','rombJoin180']){
-    const f=fixture({rk:3}),{c}=f;c.st.view=mode;c.f.val.fill(-1);c.f.val[2*c.f.W+4]=0;c.f.val[2*c.f.W+9]=1;
-    Object.assign(c,{joinedCache:null,MayatnikJoinedRomb:require('./mayatnik-joined-romb.js'),joinedOn:()=>mode.startsWith('rombJoin'),rombP:()=>mode==='romb0'?0:mode==='romb1'?1:mode==='romb2'?2:3});
+  for(const mode of ['romb0','romb1','romb2','rombJoin','rombJoin180','joined180']){
+    const f=fixture({rk:3}),{c}=f;c.st.view=mode==='joined180'?'bits':mode;c.st.joined180=mode==='joined180';c.f.val.fill(-1);c.f.val[2*c.f.W+4]=0;c.f.val[2*c.f.W+9]=1;
+    Object.assign(c,{joinedCache:null,MayatnikJoinedRomb:require('./mayatnik-joined-romb.js'),joinedOn:()=>!!c.st.joined180||mode.startsWith('rombJoin'),rombP:()=>mode==='romb0'?0:mode==='romb1'?1:mode==='romb2'?2:3});
+    const rot=html.indexOf('  const joinedRotated =');vm.runInContext(html.slice(rot,html.indexOf('\n',rot)),c);
     c.halfOf=fx=>c.rombP()!==2?[c.rombP(),fx]:fx<c.VW?[0,fx]:fx>=c.VW+c.RG?[1,fx-c.VW-c.RG]:null;
     for(const name of ['joinedGeometry','rombCell','displayCell','displayPoint','fieldCellAt','cellPixels'])vm.runInContext(production(name),c);
     const width=(c.joinedOn()?c.joinedGeometry().width:mode==='romb2'?2*c.VW+c.RG:c.VW)*c.RK,height=(c.joinedOn()?c.joinedGeometry().height:c.VH)*c.RK;
@@ -91,4 +92,23 @@ test('real engine + materializer acknowledge their own history revision and foll
     c.k++;if(gpu)c.gpuBig.k=c.k;await follow.ensure();assert.equal(searches,2);assert.equal(follow.complete,true);assert.equal(c.templateItems.length,2);assert.equal(c.templatePickedIds.size,2);assert.equal(stops,0);assert.equal(focus,0);assert.equal(c.playing,true);
     follow.off();assert.equal(c.templateItems.length,2);
   }
+});
+test('new and reused matches get source-relative orientation; metadata-only correction has atomic undo/redo',async()=>{
+ const host=fixture(),{c}=host;const original=c.f.val.slice(),pixels=Uint8ClampedArray.from(c.img.data);
+ await c.materializeTemplateMatches(await host.request(),()=>false);assert.deepEqual(c.templateItems.map(t=>t.matchOrientation),['direct','mirror']);const ids=c.templateItems.map(t=>t.id);
+ c.templateItems[0].matchOrientation='mirror';c.templateItems[1].matchOrientation='direct';const before=c.fillHistory.length;
+ const again=await c.materializeTemplateMatches(await host.request(),()=>false);assert.equal(again.createdCount,0);assert.deepEqual(c.templateItems.map(t=>t.id),ids);assert.deepEqual(c.templateItems.map(t=>t.matchOrientation),['direct','mirror']);assert.equal(c.fillHistory.length,before+1);
+ c.historyStep(false);assert.deepEqual(c.templateItems.map(t=>t.matchOrientation),['mirror','direct']);c.historyStep(true);assert.deepEqual(c.templateItems.map(t=>t.matchOrientation),['direct','mirror']);
+ const count=c.fillHistory.length;await c.materializeTemplateMatches(await host.request(),()=>false);assert.equal(c.fillHistory.length,count);assert.deepEqual(c.f.val,original);assert.deepEqual(c.img.data,pixels);
+});
+test('orientation survives real work serialization and the production template restore path; legacy metadata stays absent',async()=>{
+ const host=fixture(),{c}=host;await c.materializeTemplateMatches(await host.request(),()=>false);
+ Object.assign(c,{structuredClone,manualPaintSnapshot:()=>null,autoPaintIds:[],mirrorLive:false,mirrorXor:false});vm.runInContext(production('paintSnapshot'),c);
+ const Work=require('./mayatnik-work-file.js'),saved=await Work.decode(await Work.encode(c.paintSnapshot()));assert.deepEqual(saved.data.templates.map(t=>t.matchOrientation),['direct','mirror']);
+ const start=html.indexOf('      templateItems=data.schema===2?'),end=html.indexOf('      if(Array.isArray(data.library))',start);c.data=saved.data;vm.runInContext(html.slice(start,end),c);assert.deepEqual([...c.templateItems].map(t=>t.matchOrientation),['direct','mirror']);
+ delete c.data.templates[0].matchOrientation;c.data.templates[1].matchOrientation='unknown';vm.runInContext(html.slice(start,end),c);assert.equal(c.templateItems[0].matchOrientation,undefined);assert.equal(c.templateItems[1].matchOrientation,undefined);
+});
+test('stale preparation never changes existing orientation metadata or adds a history entry',async()=>{
+ const host=fixture(),{c}=host;await c.materializeTemplateMatches(await host.request(),()=>false);c.templateItems[0].matchOrientation='mirror';const request=await host.request(),before=c.fillHistory.length;
+ await assert.rejects(c.materializeTemplateMatches(request,()=>true),{name:'AbortError'});assert.equal(c.templateItems[0].matchOrientation,'mirror');assert.equal(c.fillHistory.length,before);
 });

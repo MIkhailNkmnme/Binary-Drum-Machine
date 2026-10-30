@@ -85,7 +85,7 @@
     function show(){
       if(!document.body)return;
       if(!panel){panel=document.createElement('dialog');panel.id='mayOchkiSearchLog';panel.setAttribute('aria-labelledby','mayOchkiSearchLogTitle');
-        const header=document.createElement('header'),title=document.createElement('h2');title.id='mayOchkiSearchLogTitle';title.textContent='Лог поиска Очков';header.append(title,button('Закрыть',()=>panel.close()));
+        const header=document.createElement('header'),title=document.createElement('h2');title.id='mayOchkiSearchLogTitle';title.textContent='Лог поиска';header.append(title,button('Закрыть',()=>panel.close()));
         status=document.createElement('p');status.className='may-ochki-log-status';status.setAttribute('role','status');list=document.createElement('div');list.className='may-ochki-log-list';panel.append(header,status,list);document.body.append(panel);
         panel.addEventListener('close',()=>opener?.focus());log.subscribe(render);root.mayFrameLibrary?.subscribe(render);log.ready.then(render,render);}
       opener=document.activeElement;render();if(!panel.open)panel.showModal();

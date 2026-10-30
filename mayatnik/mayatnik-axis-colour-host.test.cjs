@@ -3,7 +3,7 @@ const Fill=require('./mayatnik-fill.js'),html=fs.readFileSync(__dirname+'/Zerkal
 function fixture(mode){
  const W=17,H=15,pixels=Uint32Array.from({length:W*H},(_,q)=>[0xff112233,0xff445566,0xff778899][(q*7+Math.floor(q/W)*3)%3]),bits=Int8Array.from({length:W*H},(_,q)=>(q+Math.floor(q/W))%3?0:1);
  let allocations=0;class Counted extends Uint32Array{constructor(...args){super(...args);if(typeof args[0]==='number'&&args[0]===W*H)allocations++;}}
- const c={Uint32Array:Counted,MayatnikFill:Fill,st:{fillArea:mode},img:{width:W,height:H,data:new Uint8ClampedArray(pixels.buffer)},pxView:()=>c.img,autoVertical:1,fillBits:null,RK:1,VX:0,VW:W,VH:H,geo:{anchor:8},rgba:()=>0,EMPTY:[],joinedOn:()=>false,halfOf:x=>[-1,x],rombP:()=>-1,displayPoint:(c,r)=>({x:c+.5,y:r+.5}),fieldCellAt:(x,y)=>x>=0&&x<W&&y>=0&&y<H?{c:x,r:y,p:-1,ox:0}:null,fillBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?bits[y*W+x]:-1,rasterBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?bits[y*W+x]:-1,cellPixels:(cell,visit)=>visit(cell.r*W+cell.c),allocations:()=>allocations};
+ const c={MayatnikCellArea:require('./mayatnik-cell-area.js'),Uint32Array:Counted,MayatnikFill:Fill,st:{fillArea:mode},img:{width:W,height:H,data:new Uint8ClampedArray(pixels.buffer)},pxView:()=>c.img,autoVertical:1,fillBits:null,RK:1,VX:0,VW:W,VH:H,geo:{anchor:8},rgba:()=>0,EMPTY:[],joinedOn:()=>false,halfOf:x=>[-1,x],rombP:()=>-1,displayPoint:(c,r)=>({x:c+.5,y:r+.5}),fieldCellAt:(x,y)=>x>=0&&x<W&&y>=0&&y<H?{c:x,r:y,p:-1,ox:0}:null,fillBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?bits[y*W+x]:-1,rasterBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?bits[y*W+x]:-1,cellPixels:(cell,visit)=>visit(cell.r*W+cell.c),allocations:()=>allocations};
  vm.createContext(c);let start=html.indexOf('  function paintSelection(');vm.runInContext(html.slice(start,html.indexOf('  // v0.202:',start)),c);return c;
 }
 test('batch equals union on the immutable original image; manualOnly ignores active Columns',()=>{
@@ -15,11 +15,12 @@ test('batch equals union on the immutable original image; manualOnly ignores act
   assert.deepEqual(Array.from(actual).sort((a,b)=>a-b),[...expected].sort((a,b)=>a-b),mode+' '+mirror);assert.deepEqual(Array.from(c.img.data),before);
  }
 });
-test('batch uses one scratch flood queue even for many differently coloured regions',()=>{
- const c=fixture('sides'),before=c.allocations(),queues=[];c.MayatnikFill={...Fill,fill(...args){queues.push(args[5]);return Fill.fill(...args);}};c.paintSelection(0,0,false,true,Uint32Array.from({length:255},(_,q)=>q));
- // Output, image copy, one scratch queue, and the final owned output.
- assert.equal(c.allocations()-before,4);assert.ok(queues.length>10);assert.ok(queues[0] instanceof Uint32Array);assert.ok(queues.every(q=>q===queues[0]));
+test('cell-area batch avoids raster flood queues for many differently coloured regions',()=>{
+ const c=fixture('sides'),before=c.allocations();c.MayatnikFill={...Fill,fill(){throw Error('cell selection must not use pixel connectivity');}};
+ const result=c.paintSelection(0,0,false,true,Uint32Array.from({length:255},(_,q)=>q));
+ assert.equal(result.indices.length,255);assert.ok(c.allocations()-before<4);
 });
+
 test('scratch flood output matches legacy owned output for sides and corners',()=>{
  for(const diagonal of [false,true]){
   const original=Uint32Array.from([1,2,1,2,1,2,1,2,1]),a=original.slice(),b=original.slice(),scratch=new Uint32Array(a.length);

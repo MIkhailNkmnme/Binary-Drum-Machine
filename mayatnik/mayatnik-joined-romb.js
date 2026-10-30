@@ -6,17 +6,16 @@
   const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikJoinedRomb=api;
 })(globalThis,function(){
   'use strict';
-  function create({width,height,origin=0,anchor=0,fieldWidth=width,rotate=false}){
+  function create({width,height,origin=0,anchor=0,fieldWidth=width,rotate=false,rotateParity=1}){
     if(![width,height,origin,anchor,fieldWidth].every(Number.isSafeInteger)||width<1||height<1||origin<0||fieldWidth<origin+width)
       throw new RangeError('Invalid joined rhombus source geometry');
-    const reflection=2*Math.ceil((width-1)/2),displayWidth=rotate?Math.max(width,reflection+1):width,displayHeight=2*height,displayAnchor=anchor-origin;
+    const reflection=2*Math.ceil((width-1)/2),displayWidth=rotate?Math.max(width,reflection+1):width,displayHeight=2*height,displayAnchor=anchor-origin+(rotateParity===0?1:0);
     if(!Number.isSafeInteger(fieldWidth*height)||!Number.isSafeInteger(displayWidth*displayHeight))throw new RangeError('Joined rhombus geometry is too large');
-    const config=Object.freeze({width,height,origin,anchor,fieldWidth,rotate:!!rotate});
+    const config=Object.freeze({width,height,origin,anchor,fieldWidth,rotate:!!rotate,...(rotateParity===0?{rotateParity:0}:{})});
     // Canvas-compatible transforms of continuous source-window coordinates.
     // They also transform axes, clips and cell polygons without separate rules.
     const parts=Object.freeze([
-      Object.freeze({p:0,matrix:Object.freeze([1,0,0,1,0,0])}),
-      Object.freeze({p:1,matrix:Object.freeze([rotate?-1:1,0,0,-1,rotate?reflection+1:0,displayHeight])})
+      ...[0,1].map(p=>Object.freeze({p,matrix:Object.freeze(p===rotateParity?[rotate?-1:1,0,0,-1,rotate?reflection+1:0,displayHeight]:[1,0,0,1,0,0])}))
     ]);
     function point(x,y,p){
       if(!Number.isFinite(x)||!Number.isFinite(y)||(p!==0&&p!==1))return null;
@@ -44,12 +43,12 @@
     }
     function forward(c,r){
       if(!Number.isInteger(c)||!Number.isInteger(r)||c<origin||c>=origin+width||r<0||r>=height)return null;
-      const p=(c-anchor-r)&1,x=p&&rotate?reflection-(c-origin):c-origin,y=p?displayHeight-1-r:r;
+      const p=(c-anchor-r)&1,x=p===rotateParity&&rotate?reflection-(c-origin):c-origin,y=p===rotateParity?displayHeight-1-r:r;
       return {x,y,c,r,p,q:r*fieldWidth+c,displayQ:y*displayWidth+x};
     }
     function inverse(x,y){
       if(!Number.isInteger(x)||!Number.isInteger(y)||x<0||x>=displayWidth||y<0||y>=displayHeight||((x-displayAnchor-y)&1))return null;
-      const p=y>=height?1:0,c=origin+(p&&rotate?reflection-x:x),r=p?displayHeight-1-y:y;
+      const lower=y>=height,p=lower?rotateParity:1-rotateParity,c=origin+(lower&&rotate?reflection-x:x),r=lower?displayHeight-1-y:y;
       if(c<origin||c>=origin+width)return null;
       return {x,y,c,r,p,q:r*fieldWidth+c,displayQ:y*displayWidth+x};
     }
@@ -68,7 +67,7 @@
       for(let r=0;r<height;r++)for(let c=origin;c<origin+width;c++){
         const q=r*fieldWidth+c,p=(c-anchor-r)&1,v=val[q];
         if(v!==-1&&v!==0&&v!==1)throw new RangeError('Invalid joined rhombus bit');
-        if(v>=0&&(!allowed||allowed(r,c,p,q))){const x=p&&rotate?reflection-(c-origin):c-origin,y=p?displayHeight-1-r:r;values[y*displayWidth+x]=v;}
+        if(v>=0&&(!allowed||allowed(r,c,p,q))){const x=p===rotateParity&&rotate?reflection-(c-origin):c-origin,y=p===rotateParity?displayHeight-1-r:r;values[y*displayWidth+x]=v;}
       }
       // Mapping is compact and serializable. create(snapshot.mapping).fromDisplay
       // maps worker hits back to {q,p}; no full-size Int32 qMap is necessary.
@@ -77,5 +76,20 @@
     return Object.freeze({width:displayWidth,height:displayHeight,anchor:displayAnchor,sourceWidth:width,sourceHeight:height,
       reflection,config,parts,point,footprint,forward,inverse,hit,fromSource,fromDisplay,snapshot});
   }
-  return {create};
+  // Muted blue / warm charcoal; packed RGBA, shared by CPU, GPU and viewport.
+  const backgrounds=Object.freeze([0xff211a15,0xff181a22]);
+  function paintContours(ctx,{geometry,read,x=0,y=0,scale,screenWidth,screenHeight,mode='single',colour='#ffe969',colours=['#ffffff','#000000']}){
+    if(!(scale>0))return 0;
+    const step=Math.max(1,Math.ceil(1/scale)),left=Math.max(0,Math.floor(-x/scale)-2),right=Math.min(geometry.width,Math.ceil((screenWidth-x)/scale)+2),top=Math.max(0,Math.floor(-y/scale)-2),bottom=Math.min(geometry.height,Math.ceil((screenHeight-y)/scale)+2);
+    let count=0;ctx.save();ctx.beginPath();ctx.rect(0,0,screenWidth,screenHeight);ctx.clip();ctx.lineWidth=1;
+    for(let r=top;r<bottom;r+=step)for(let col=left;col<right;col+=step){const c=step>1?col+((col-geometry.anchor-r)&1):col;if(!geometry.inverse(c,r))continue;const a=read(c,r);if(a<0)continue;
+      ctx.save();if(mode!=='single'){ctx.beginPath();ctx.moveTo(x+(c+.5)*scale,y+(r-.5)*scale);ctx.lineTo(x+(c+1.5)*scale,y+(r+.5)*scale);ctx.lineTo(x+(c+.5)*scale,y+(r+1.5)*scale);ctx.lineTo(x+(c-.5)*scale,y+(r+.5)*scale);ctx.closePath();ctx.clip();ctx.lineWidth=2;}
+      const edges=[[-1,-1,[-1,0],[0,-1]],[1,-1,[0,-1],[1,0]],[1,1,[1,0],[0,1]],[-1,1,[0,1],[-1,0]]];
+      for(const [dc,dr,p,q]of edges){const b=read(c+dc,r+dr),on=mode==='single'?a!==b:mode==='same'?b===a||b<0:true;if(!on)continue;
+        ctx.strokeStyle=mode==='single'?colour:colours[mode==='directional'?(dc===dr?1:0):a];ctx.beginPath();ctx.moveTo(x+(c+.5+p[0])*scale,y+(r+.5+p[1])*scale);ctx.lineTo(x+(c+.5+q[0])*scale,y+(r+.5+q[1])*scale);ctx.stroke();count++;
+      }
+      ctx.restore();
+    }ctx.restore();return count;
+  }
+  return {create,backgrounds,paintContours};
 });

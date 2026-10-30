@@ -1,10 +1,10 @@
 (function(root){
   'use strict';
   const DEFAULT=4096,MAX=1048576;
-  function normalize(value){const n=Number(value);return Number.isFinite(n)&&n>0?Math.max(1,Math.min(MAX,Math.floor(n))):DEFAULT;}
+  function normalize(value){if(value===0||typeof value==='string'&&value.trim()==='0')return 0;const n=Number(value);return Number.isFinite(n)&&n>0?Math.max(1,Math.min(MAX,Math.floor(n))):DEFAULT;}
   function area(width,height){return Math.max(1,Math.ceil(width-1e-9))*Math.max(1,Math.ceil(height-1e-9));}
-  function error(limit){const e=new Error(`\u0428\u0430\u0431\u043b\u043e\u043d \u043d\u0435 \u0432\u044b\u0434\u0435\u043b\u0435\u043d: \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u0431\u043e\u043b\u044c\u0448\u0435 ${normalize(limit).toLocaleString('ru-RU')} \u0431\u0438\u0442. \u041b\u0438\u043c\u0438\u0442 \u2014 \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445 \u0431\u0438\u0431\u043b\u0438\u043e\u0442\u0435\u043a\u0438.`);e.name='TemplateAreaLimitError';return e;}
-  function allowed(width,height,limit){return area(width,height)<=normalize(limit);}
+  function error(limit){const n=normalize(limit),e=new Error(n===0?'Ограничение площади шаблона отключено.':`Шаблон не выделен: площадь больше ${n.toLocaleString('ru-RU')} бит. Лимит — кнопкой «Лимит» в разделе «Шаблоны» библиотеки.`);e.name='TemplateAreaLimitError';return e;}
+  function allowed(width,height,limit){const n=normalize(limit);return n===0||area(width,height)<=n;}
   // No field-sized masks or queues. Bounding area is monotone, including holes.
   function flood({seed,key=q=>q,match,neighbours,point,limit}){
     const seen=new Set(),queue=[seed],indices=[];let head=0,x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;

@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 function boot(width=1200,saved,setup){
- const dom=new JSDOM('<body><button id="bTemplateSave" disabled></button><div id="source"><button>control</button></div></body>',{url:'http://test/',runScripts:'outside-only'}),w=dom.window;
+ const dom=new JSDOM('<body><div id="mayTemplateLauncher"><button id="bTemplatePanel">Library</button></div><button id="bTemplateSave" disabled></button><div id="source"><button>control</button></div></body>',{url:'http://test/',runScripts:'outside-only'}),w=dom.window;
  Object.defineProperty(w,'innerWidth',{value:width,writable:true});if(saved)w.localStorage.setItem('mayatnik-template-panel-width',String(saved));
  const frames=[];w.requestAnimationFrame=f=>(frames.push(f),frames.length);w.HTMLElement.prototype.setPointerCapture=function(id){this.capture=id;};w.HTMLElement.prototype.releasePointerCapture=function(){this.capture=null;};
  w.structuredClone=structuredClone;w.HTMLCanvasElement.prototype.getContext=()=>null;w.HTMLElement.prototype.scrollIntoView=function(){this.scrolled=true;};if(setup)setup(w);
@@ -38,12 +38,22 @@ test('cancel, lost capture, blur and close restore the start width without persi
  }finally{a.dom.window.close();}}
 });
 test('keyboard separator supports arrows, Shift, Home and End; narrow viewport clamps without losing preference',()=>{
- const a=boot();try{a.key('ArrowLeft');assert.equal(a.value(),610);a.key('ArrowRight',true);assert.equal(a.value(),570);a.key('Home');assert.equal(a.value(),240);a.key('End');assert.equal(a.value(),1142);a.flush();
+ const a=boot();try{a.key('ArrowLeft');assert.equal(a.value(),610);a.key('ArrowRight',true);assert.equal(a.value(),570);a.key('Home');assert.equal(a.value(),332);a.key('End');assert.equal(a.value(),1142);a.flush();
   a.w.innerWidth=390;a.w.dispatchEvent(new a.w.Event('resize'));assert.equal(a.value(),332);assert.equal(a.handle.getAttribute('aria-valuemax'),'332');assert.equal(a.w.localStorage.getItem('mayatnik-template-panel-width'),'1142');
   a.w.innerWidth=1200;a.w.dispatchEvent(new a.w.Event('resize'));assert.equal(a.value(),1142);
   a.w.MayatnikTemplatePanel.setOpen(false);assert.equal(a.handle.hidden,true);a.w.MayatnikTemplatePanel.setOpen(true);assert.equal(a.handle.hidden,false);
  }finally{a.dom.window.close();}
- const small=boot(390);try{assert.equal(small.value(),195);}finally{small.dom.window.close();}
+ const small=boot(390);try{assert.equal(small.value(),332);}finally{small.dom.window.close();}
+ const legacy=boot(1200,240);try{assert.equal(legacy.value(),332);assert.equal(legacy.handle.getAttribute('aria-valuemin'),'332');legacy.fire('pointerdown',868);legacy.fire('pointermove',1100);legacy.fire('pointerup',1100);legacy.flush();assert.equal(legacy.value(),332);assert.equal(legacy.w.localStorage.getItem('mayatnik-template-panel-width'),'332');}finally{legacy.dom.window.close();}
+ const narrow=boot(320,240);try{assert.equal(narrow.value(),262);narrow.key('Home');assert.equal(narrow.value(),262);assert.equal(narrow.handle.getAttribute('aria-valuemin'),'262');assert.equal(narrow.handle.getAttribute('aria-valuemax'),'262');assert.ok(narrow.value()<=narrow.w.innerWidth);}finally{narrow.dom.window.close();}
+});
+test('double-clicking only the resize border collapses and reopens the same width, cancelling a pending drag',()=>{
+ for(const pending of [false,true]){const a=boot(1200,700);try{
+  a.panel.dispatchEvent(new a.w.MouseEvent('dblclick',{bubbles:true}));assert.equal(a.w.MayatnikTemplatePanel.isOpen(),true,'content double-click remains unrelated to collapse');
+  if(pending){a.fire('pointerdown',500);a.fire('pointermove',400);assert.equal(a.value(),800);}
+  a.handle.dispatchEvent(new a.w.MouseEvent('dblclick',{bubbles:true,cancelable:true}));a.flush();assert.equal(a.w.MayatnikTemplatePanel.isOpen(),false);assert.equal(a.handle.hidden,true);assert.equal(a.value(),700);assert.equal(a.w.localStorage.getItem('mayatnik-template-panel-width'),'700');assert.equal(a.w.document.activeElement.id,'bTemplatePanel');assert.equal(a.w.document.body.classList.contains('may-template-panel-resizing'),false);
+  a.w.MayatnikTemplatePanel.toggle();a.flush();assert.equal(a.w.MayatnikTemplatePanel.isOpen(),true);assert.equal(a.handle.hidden,false);assert.equal(a.value(),700);
+ }finally{a.dom.window.close();}}
 });
 
 test('mobile library uses the viewport without overwriting desktop width or allowing hidden resize gestures',()=>{

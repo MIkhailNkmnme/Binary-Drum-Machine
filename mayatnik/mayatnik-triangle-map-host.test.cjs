@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const html=fs.readFileSync(require.resolve('./Zerkalius-mayatnik.html'),'utf8'),Fill=require('./mayatnik-fill.js'),M=require('./mayatnik-triangle-map.js'),D=require('./mayatnik-triangle-map-data.js'),Core=require('./mayatnik-core.js');
 function selection(mode){
   const W=13,H=11,pixels=new Uint32Array(W*H).fill(0xff123456),blocked=Uint8Array.from({length:W*H},(_,q)=>q%W===6?1:0),stored=new Uint32Array(W*H).fill(0xff223344);
-  const c={MayatnikFill:Fill,st:{fillArea:mode,triangleMapMask:true},triangleMapRasterMask:()=>blocked,fillMask:stored,img:{width:W,height:H,data:new Uint8ClampedArray(pixels.buffer)},pxView:()=>c.img,autoVertical:0,fillBits:null,RK:1,VX:0,VW:W,VH:H,geo:{anchor:6},rgba:()=>0,EMPTY:[],joinedOn:()=>false,halfOf:x=>[-1,x],rombP:()=>-1,displayPoint:(c,r)=>({x:c+.5,y:r+.5}),fieldCellAt:(x,y)=>x>=0&&x<W&&y>=0&&y<H?{c:x,r:y,p:-1,ox:0}:null,fillBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?0:-1,rasterBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?0:-1,cellPixels:(cell,visit)=>visit(cell.r*W+cell.c)};
+  const c={MayatnikCellArea:require('./mayatnik-cell-area.js'),MayatnikFill:Fill,st:{fillArea:mode,triangleMapMask:true},triangleMapRasterMask:()=>blocked,fillMask:stored,img:{width:W,height:H,data:new Uint8ClampedArray(pixels.buffer)},pxView:()=>c.img,autoVertical:0,fillBits:null,RK:1,VX:0,VW:W,VH:H,geo:{anchor:6},rgba:()=>0,EMPTY:[],joinedOn:()=>false,halfOf:x=>[-1,x],rombP:()=>-1,displayPoint:(c,r)=>({x:c+.5,y:r+.5}),fieldCellAt:(x,y)=>x>=0&&x<W&&y>=0&&y<H?{c:x,r:y,p:-1,ox:0}:null,fillBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?0:-1,rasterBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?0:-1,cellPixels:(cell,visit)=>visit(cell.r*W+cell.c)};
   vm.createContext(c);const start=html.indexOf('  function paintSelection(');vm.runInContext(html.slice(start,html.indexOf('  // v0.202:',start)),c);return {c,blocked,stored,pixels,W,H};
 }
 test('every selection mode treats the mask as traversal barrier and preserves old paint/bits',()=>{
@@ -16,8 +16,8 @@ test('every selection mode treats the mask as traversal barrier and preserves ol
 });
 test('vertical column fills also respect the barrier and mirrored blocked destinations',()=>{
   const {c,blocked,W}=selection('sides');c.autoVertical=2;
-  const result=c.paintSelection(2,0,false).indices;assert.ok(result.length>0);assert.ok([...result].every(q=>q%W<6));
-  blocked.fill(1);assert.equal(c.paintSelection(2,0,true).indices.length,0);
+  const result=c.paintSelection(2,0,false,false,null,true).indices;assert.ok(result.length>0);assert.ok([...result].every(q=>q%W<6));
+  blocked.fill(1);assert.equal(c.paintSelection(2,0,true,false,null,true).indices.length,0);
 });
 function host(){
   const g=Core.geometry('pend',512,512),f=Core.field(g.W,512,'empty',g.anchor);Core.cone(f,g.anchor,512);const nodes=new Map();

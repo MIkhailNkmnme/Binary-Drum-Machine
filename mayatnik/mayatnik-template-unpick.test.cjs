@@ -19,3 +19,19 @@ test('real right drag and cancellation retain selection',()=>{for(const type of 
 test('contextmenu fallback toggles a selected figure when selection mode is disabled',()=>{const f=fixture();f.c.templatePickEnabled=false;f.menu();assert.equal(f.c.templatePickedIds.size,0);assert.equal(f.c.colourTemplate,null);assert.equal(f.calls.some(c=>c[0]==='pick'),false);});
 test('Alt mirror and Ctrl or Meta copy intent keep their selection',()=>{for(const key of ['altKey','ctrlKey','metaKey']){const f=fixture();f.down({[key]:true});f.finish();f.menu({[key]:true});assert.ok(f.c.templatePickedIds.has('a'));if(key==='altKey')assert.equal(f.calls.filter(c=>c[0]==='mirror').length,1);}});
 test('a first right click on an unselected figure keeps the picker route',()=>{const f=fixture();f.c.templatePickedIds.clear();f.c.colourTemplate=null;f.down();assert.equal(f.c.templateDragging,null);f.menu();assert.equal(f.calls.filter(c=>c[0]==='pick').length,1);});
+
+test('first right click focuses an inactive found copy; only a repeated click deselects it',()=>{
+ for(const orientation of ['mirror','direct'])for(const early of [false,true]){
+  const f=fixture();f.a.sourcePreserving=true;f.a.matchOrientation=orientation;f.b.matchOrientation='direct';f.c.colourTemplate=f.b;f.c.templatePickedIds.add('b');
+  f.down();assert.equal(f.c.colourTemplate,f.a);if(early)f.menu();f.finish();if(!early)f.menu();
+  assert.equal(f.c.colourTemplate,f.a,orientation);assert.deepEqual([...f.c.templatePickedIds],['a','b']);assert.equal(f.a.matchOrientation,orientation);
+  f.down();if(early)f.menu();f.finish();if(!early)f.menu();assert.equal(f.c.colourTemplate,f.b);assert.deepEqual([...f.c.templatePickedIds],['b']);
+ }
+});
+test('contextmenu fallback focuses an inactive found copy through the picker instead of deselecting it',()=>{
+ const f=fixture();f.c.colourTemplate=f.b;f.c.templatePickedIds.add('b');f.a.matchOrientation='mirror';f.menu();
+ assert.deepEqual([...f.c.templatePickedIds],['a','b']);assert.equal(f.calls.filter(c=>c[0]==='pick').length,1);
+});
+test('drag and cancellation of an inactive found copy preserve its selected state',()=>{
+ for(const type of ['pointerup','pointercancel']){const f=fixture();f.c.colourTemplate=f.b;f.c.templatePickedIds.add('b');f.down();if(type==='pointerup')f.c.templateDragging.moved=true;f.finish(type);f.menu();assert.equal(f.c.colourTemplate,f.a);assert.deepEqual([...f.c.templatePickedIds],['a','b']);}
+});

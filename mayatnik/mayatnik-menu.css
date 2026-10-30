@@ -1044,8 +1044,28 @@ body.may-mobile-menu #mayMobileBar :is(#mayRhombs .may-rh,#mayButtonSearchTrigge
 body.may-mobile-menu #mayMobileBar #mayRhombs .may-rh{white-space:normal;font-size:10px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 body.may-mobile-menu #mayMobileBar #mayRhombs .may-rh::after{inset:0;transform:none;border:0;background:transparent}
 body.may-mobile-menu #mayButtonSearchTrigger{order:-4}
+/* Search, information and help retain their original live buttons inside View. */
+#paintTools #mayInfoDiamond.may-view-utilities{--c:#7cbcff;display:flex!important;position:relative;flex:0 0 120px;width:120px!important;min-width:120px;max-width:120px;height:24px!important;padding:0!important;gap:0!important;background:#1b2430!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);isolation:isolate}
+#paintTools #mayInfoDiamond.may-view-utilities::before,#paintTools #mayInfoDiamond.may-view-utilities::after{display:none!important}
+#paintTools #mayInfoDiamond.may-view-utilities>button{position:relative!important;inset:auto!important;order:initial!important;display:flex!important;align-items:center;justify-content:center;flex:0 0 40px!important;width:40px!important;min-width:40px!important;max-width:40px!important;height:24px!important;min-height:24px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;color:var(--c)!important;font:13px/24px 'Segoe UI',sans-serif!important;text-shadow:none!important;box-shadow:none!important;outline:none;overflow:visible;cursor:pointer}
+#paintTools #mayInfoDiamond.may-view-utilities>button:nth-child(1){clip-path:polygon(12px 0,44px 0,36px 24px,12px 24px,0 12px)!important}
+#paintTools #mayInfoDiamond.may-view-utilities>button:nth-child(2){clip-path:polygon(4px 0,44px 0,36px 24px,-4px 24px)!important}
+#paintTools #mayInfoDiamond.may-view-utilities>button:nth-child(3){clip-path:polygon(4px 0,28px 0,40px 12px,28px 24px,-4px 24px)!important}
+#paintTools #mayInfoDiamond.may-view-utilities>button>svg.may-utility-frame{position:absolute;inset:0;width:40px;height:24px;overflow:visible;fill:none;stroke:none;pointer-events:none}
+#paintTools #mayInfoDiamond.may-view-utilities .may-utility-face{fill:#1b2430;stroke:#394657;stroke-width:1px}
+#paintTools #mayInfoDiamond.may-view-utilities .may-utility-side{fill:none;stroke:var(--c);stroke-width:1px;display:none}
+#paintTools #mayInfoDiamond.may-view-utilities>button:is(:hover,:focus-visible) .may-utility-side{display:block}
+#paintTools #mayInfoDiamond.may-view-utilities>button:is([aria-pressed=true],[aria-expanded=true]) .may-utility-face{stroke:var(--c);stroke-width:2px}
+#paintTools #mayInfoDiamond.may-view-utilities>button:is(:hover,:focus-visible,:active,[aria-pressed=true],[aria-expanded=true]){z-index:1}
+#paintTools #mayInfoDiamond.may-view-utilities>button:active .may-utility-face{stroke:var(--c);stroke-width:3px}
+#paintTools #mayInfoDiamond.may-view-utilities>button>span{transform:none;position:relative;pointer-events:none}
+#paintTools #mayInfoDiamond.may-view-utilities>button>svg.may-utility-loupe{position:relative;inset:auto;width:24px;height:24px;fill:none;stroke:var(--c);stroke-width:1.5px;pointer-events:none}
+#paintTools #mayCorner{display:none!important}
 body.may-mobile-menu #mayMobileBar #zerkHubBtn{display:flex!important;position:relative!important;inset:auto!important;transform:none!important;order:-5;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:24px!important;margin:0!important;padding:0!important;touch-action:pan-x!important}
 body.may-mobile-menu #mayMobileBar #zerkHubBtn canvas{width:24px!important;height:24px!important}
 /* Zen keeps a single top-row exit, never a second floating control strip. */
 body.may-mobile-menu.may-zen #mayMobileBar>:not(#mayRhombs){display:none!important}
 body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){display:none!important}
+
+/* Area caption ends at24px; the first option cap starts at26px. */
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-titled-list.may-area-options,.gz-ladder.may-titled-list.may-area-options{padding-top:38px!important}

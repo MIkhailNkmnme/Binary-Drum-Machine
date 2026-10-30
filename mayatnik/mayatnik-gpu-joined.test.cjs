@@ -16,8 +16,8 @@ test('real WebGPU joined pixels agree with the CPU geometry, source data survive
    for(const width of [3,4,5,6])for(const height of [2,4]){
     const origin=2,fieldWidth=width+4,anchor=(width%2)+3,val=Int8Array.from({length:fieldWidth*height},(_,q)=>q%7===0?-1:(q*13+Math.floor(q/fieldWidth))%2),field=api.field({W:fieldWidth,H:height,anchor,bg:'empty'});field.write(val);field.picture({VX:origin,VW:width,VH:height,tint:0,T:[0xff403020,0xff403020,0xff403020,0xffd0c0b0,0xffd0c0b0,0xffd0c0b0],empty:0xff000000,passes:[]});
     const picture=await field.readPic();for(let r=0;r<height;r++)for(let c=0;c<width;c++){const q=r*fieldWidth+c+origin;if(val[q]>=0)picture[r*width+c]=(0xff000000|((r*41+c*23+91)%256)<<16|((r*29+c*47+31)%256)<<8|((r*17+c*53+13)%256))>>>0;}field.writePic(picture);
-    for(const rotate of [false,true])for(const step of [.25,.5,1,2.5]){
-     const geometry=MayatnikJoinedRomb.create({width,height,origin,anchor,fieldWidth,rotate}),x0=-.5,y0=-.5,outWidth=Math.ceil((geometry.width+1)/step),outHeight=Math.ceil((geometry.height+1)/step),actual=await pixels(field,{x0,y0,step,joined:{anchor:anchor-origin,reflection:geometry.reflection,rotate}},outWidth,outHeight);
+    for(const rotateParity of [0,1])for(const rotate of [false,true])for(const step of [.25,.5,1,2.5]){
+     const geometry=MayatnikJoinedRomb.create({width,height,origin,anchor,fieldWidth,rotate,rotateParity}),x0=-.5,y0=-.5,outWidth=Math.ceil((geometry.width+1)/step),outHeight=Math.ceil((geometry.height+1)/step),actual=await pixels(field,{x0,y0,step,joined:{anchor:geometry.anchor,reflection:geometry.reflection,rotate,rotateParity}},outWidth,outHeight);
      const sample=(x,y)=>{const hit=geometry.hit(x,y);return hit?rgba(picture[hit.r*width+hit.c-origin]).slice(0,3):[0,0,0];};
      for(let y=0;y<outHeight;y++)for(let x=0;x<outWidth;x++){
       const fx=x0+x*step,fy=y0+y*step;let expected;if(fx>=geometry.width||fy>=geometry.height||fx+step<=0||fy+step<=0)expected=[0,0,0,0];else if(step<=1)expected=[...sample(fx+step/2,fy+step/2),255];else{const left=Math.max(0,fx),top=Math.max(0,fy),right=Math.min(geometry.width,fx+step),bottom=Math.min(geometry.height,fy+step),nx=Math.max(1,Math.min(32,Math.ceil(right-left))),ny=Math.max(1,Math.min(32,Math.ceil(bottom-top))),sum=[0,0,0];for(let yy=0;yy<ny;yy++)for(let xx=0;xx<nx;xx++){const pixel=sample(left+(xx+.5)*(right-left)/nx,top+(yy+.5)*(bottom-top)/ny);for(let channel=0;channel<3;channel++)sum[channel]+=pixel[channel];}expected=[...sum.map(v=>Math.round(v/(nx*ny))),255];}
@@ -29,6 +29,6 @@ test('real WebGPU joined pixels agree with the CPU geometry, source data survive
    }
    await device.queue.onSubmittedWorkDone();return{adapter:api.adapter,format,compared,maxDifference,cases:reports.length,errors};
   });
-  assert.deepEqual(result.errors,[]);assert.equal(result.cases,64);assert.ok(result.compared>10000);t.diagnostic(JSON.stringify(result));
+  assert.deepEqual(result.errors,[]);assert.equal(result.cases,128);assert.ok(result.compared>10000);t.diagnostic(JSON.stringify(result));
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 });

@@ -57,12 +57,12 @@
   }
   function mount(pane,api){
     const doc=pane.ownerDocument;pane.classList.add('mtp-sequences');pane.dataset.noMini='';
-    const intro=doc.createElement('p');intro.textContent='Строки для «Начальной» в Очках. Серпинский: 60, 90, 102; другие узоры: 30, 150.';
+    const intro=doc.createElement('p');intro.textContent='Строки для «Начальной» в Поиске. Серпинский: 60, 90, 102; другие узоры: 30, 150.';
     const label=doc.createElement('label');label.textContent='Своя последовательность';const editor=doc.createElement('textarea');editor.id='maySequenceEditor';editor.setAttribute('aria-label','Строки своей последовательности');editor.spellcheck=false;editor.wrap='off';label.append(editor);
     const commands=doc.createElement('div');commands.className='mtp-sequence-actions';
     const notice=doc.createElement('output');notice.className='mtp-sequence-notice';notice.setAttribute('role','status');let dirty=false,rendered=-1;
     const button=(text,run)=>{const b=doc.createElement('button');b.type='button';b.className='mtp-command';b.textContent=text;b.addEventListener('click',()=>{try{run();}catch(e){notice.textContent=e.message;}});commands.append(b);return b;};
-    const save=button('Применить',()=>{api.setText(editor.value);dirty=false;rendered=-1;notice.textContent='Сохранено. Очки используют эти строки.';refresh();});save.dataset.sequenceSave='';
+    const save=button('Применить',()=>{api.setText(editor.value);dirty=false;rendered=-1;notice.textContent='Сохранено. Поиск использует эти строки.';refresh();});save.dataset.sequenceSave='';
     editor.addEventListener('input',()=>{dirty=true;notice.textContent='Есть изменения — нажмите «Применить». Они ещё не участвуют в поиске.';});
     const append=doc.createElement('input');append.type='text';append.inputMode='numeric';append.placeholder='Новая строка: 01…';append.setAttribute('aria-label','Добавить строку последовательности');commands.append(append);
     button('＋ Строка',()=>{if(!append.value.trim())throw Error('Введите новую строку из 0 и 1.');parse(append.value);editor.value+=(editor.value.trim()?'\n':'')+append.value.trim();append.value='';dirty=true;notice.textContent='Строка добавлена в редактор — нажмите «Применить».';});
@@ -77,7 +77,7 @@
     function syncCompact(){compact.disabled=Number(rule.value)!==90||seed.value!=='1';if(compact.disabled)compact.checked=false;}
     presets.addEventListener('change',()=>{if(presets.value!=='custom')rule.value=presets.value;syncCompact();});rule.addEventListener('input',()=>{presets.value=['30','60','90','102','150'].includes(rule.value)?rule.value:'custom';syncCompact();});seed.addEventListener('input',syncCompact);
     const insert=button('↓ Вставить',()=>{const rows=elementary({rule:rule.value,seed:seed.value,count:count.value,compact:compact.checked});editor.value=rows.join('\n');dirty=true;notice.textContent='В редактор вставлено '+rows.length+' строк правила '+Number(rule.value)+'. Нажмите «Применить».';});insert.setAttribute('aria-label','Вставить сгенерированные строки в редактор');insert.dataset.sequenceGenerate='';generator.append(insert);
-    const summary=doc.createElement('output');summary.className='mtp-sequence-summary';summary.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-sequence-rows';const table=doc.createElement('table'),head=doc.createElement('thead'),headRow=doc.createElement('tr'),body=doc.createElement('tbody');table.setAttribute('aria-label','Строки и первые находки Очков');
+    const summary=doc.createElement('output');summary.className='mtp-sequence-summary';summary.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-sequence-rows';const table=doc.createElement('table'),head=doc.createElement('thead'),headRow=doc.createElement('tr'),body=doc.createElement('tbody');table.setAttribute('aria-label','Строки и первые находки Поиска');
     for(const text of ['№','Последовательность','Первый кадр','Способ поиска']){const cell=doc.createElement('th');cell.scope='col';cell.textContent=text;headRow.append(cell);}head.append(headRow);table.append(head,body);list.append(table);let nodes=[],listKey='',scrolledSelection=0;
     pane.append(intro,label,commands,generator,notice,summary,list);
     function refresh(){
@@ -99,7 +99,7 @@
         if(node.dataset.found!==String(hits.length>0)){node.classList.toggle('is-found',hits.length>0);node.dataset.found=String(hits.length>0);}if(node.title!==title)node.title=title;});
       const selection=state.selection,selected=new Set(simple?selection?.matchIndices:selection?.rowIndices);nodes.forEach((node,i)=>{const on=selected.has(i);node.classList.toggle('is-selected',on);if(node.getAttribute('aria-selected')!==String(on))node.setAttribute('aria-selected',String(on));});
       if(selection&&selection.token!==scrolledSelection){const first=nodes.find((node,i)=>selected.has(i));if(first){const top=first.offsetTop-list.offsetTop,bottom=top+first.offsetHeight;if(top<list.scrollTop)list.scrollTop=top;else if(bottom>list.scrollTop+list.clientHeight)list.scrollTop=Math.max(0,bottom-list.clientHeight);scrolledSelection=selection.token;}}
-      if(!m.enabled)summary.textContent='Очки выключены.';
+      if(!m.enabled)summary.textContent='Поиск выключен.';
       else if(!m.active)summary.textContent='Кадр '+m.frame+': '+(m.reason||'ожидание поиска');
       else if(simple)summary.textContent='Серии '+({ones:'111…',zeros:'000…',alternating:'1010…'}[m.pattern]||'')+': '+m.count+(m.count>shown.length?' · показаны первые '+shown.length:'')+' · кадр '+m.frame+' · '+modeLabel;
       else {

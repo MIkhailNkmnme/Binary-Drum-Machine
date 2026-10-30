@@ -7,7 +7,9 @@
     function patternsFor(entry,mirrorX=false){
       let cache=patternCache.get(entry.shape);if(!cache){cache={};patternCache.set(entry.shape,cache);}
       const key=mirrorX?'mirrored':'direct';if(cache[key])return cache[key];const patterns=[];
-      for(const part of entry.shape.parts)for(const reflected of mirrorX?[false,true]:[false]){
+      // A pattern present in the original source takes precedence over its
+      // reflection from another part; ambiguity must not invent handedness.
+      for(const reflected of mirrorX?[false,true]:[false])for(const part of entry.shape.parts){
         const p=root.MayatnikTemplateMatcher.compile(part,entry.shape.rk||1,{silhouette:true,mirrorX:reflected});
         if(!patterns.some(q=>q.width===p.width&&q.height===p.height&&q.data.every((v,i)=>v===p.data[i])))patterns.push(p);
       }

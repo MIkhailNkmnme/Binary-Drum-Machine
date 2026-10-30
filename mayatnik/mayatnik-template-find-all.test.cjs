@@ -16,7 +16,7 @@ test('temporary selection shares cancellation and area-limit protection with sav
 });
 function rightClick(){
   let handler,taken=0,cleared=0,lines=0;const c={wrap:{addEventListener:(kind,fn)=>handler=fn},unpickTemplate:()=>false,templateContextSkip:false,templateDragging:null,templatePickEnabled:false,img:{width:20,height:10},cv:{getBoundingClientRect:()=>({left:0,top:0,width:20,height:10})},hitTemplate:()=>null,f:{},st:{userLines:[]},nearestUserLine:()=>0,axisSelected:0,axisSelTo(){lines++;},axisSelOut(){lines++;},axisLinesSync(){},queueDigits(){},takeColourAt:()=>{taken++;return true;},window:{mayTemplateLibrary:{clear(){cleared++;}}}};
-  vm.createContext(c);const at=html.indexOf("  wrap.addEventListener('contextmenu',e=>{"),end=html.indexOf('  // v0.309:',at);vm.runInContext(html.slice(at,end),c);
+  c.colourTemplate=null;vm.createContext(c);const at=html.indexOf("  wrap.addEventListener('contextmenu',e=>{"),end=html.indexOf('  // v0.309:',at);vm.runInContext(html.slice(at,end),c);
   return {c,click:()=>handler({clientX:2,clientY:3,preventDefault(){}}),get taken(){return taken;},get cleared(){return cleared;},get lines(){return lines;}};
 }
 test('right click extracts field areas with left-selection mode off, preserves placed-template priority and axis selection',()=>{

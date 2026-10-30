@@ -17,3 +17,10 @@ test('ordinary mask flip preserves original source for lifting and does not inve
   const data=new Uint32Array([1,0,3]),item={parts:[{mask:{width:3,height:1,data}}]};
   context.flipParts(item,true);assert.deepEqual([...item.parts[0].mask.data],[3,0,1]);assert.equal(item.parts[0].sourceData,data);assert.equal(item.parts[0].bitsData,undefined);
 });
+test('manual reflections preserve only a geometrically valid source-orientation label',()=>{
+ const make=(data,width,orientation)=>({matchOrientation:orientation,parts:[{mask:{width,height:data.length/width,data:Uint32Array.from(data)}}]});
+ const asymmetric=make([1,1,1,1,0,0],3,'direct');context.flipParts(asymmetric,true);assert.equal(asymmetric.matchOrientation,'mirror');context.flipParts(asymmetric,true);assert.equal(asymmetric.matchOrientation,'direct');context.flipParts(asymmetric,false);assert.equal(asymmetric.matchOrientation,undefined);
+ const symmetric=make([1,1,1,0,1,0],3,'symmetric');context.flipParts(symmetric,true);assert.equal(symmetric.matchOrientation,'symmetric');
+ const unchangedVertical=make([1,1,0,1,1,0],3,'mirror');context.flipParts(unchangedVertical,false);assert.equal(unchangedVertical.matchOrientation,'mirror');
+ const verticalEqualsHorizontal=make([1,0,0,1],2,'direct');context.flipParts(verticalEqualsHorizontal,false);assert.equal(verticalEqualsHorizontal.matchOrientation,'mirror');context.flipParts(verticalEqualsHorizontal,false);assert.equal(verticalEqualsHorizontal.matchOrientation,'direct');
+});

@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
+const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 const D=require('./mayatnik-menu-dock.js');
 test('one mobile predicate covers narrow portraits and coarse phone landscape, preserving desktop',()=>{
  for(const width of [320,360,390,430,600])assert.equal(D.isMobile({width,height:844,coarse:false}),true);

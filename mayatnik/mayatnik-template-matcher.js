@@ -14,7 +14,8 @@
     // Spread the first probes over the rectangle, before the exhaustive check.
     const order=[...new Set([0,data.length-1,width-1,(height-1)*width,Math.floor(data.length/2),...Array.from({length:12},(_,i)=>Math.floor(i*data.length/12))])];
     const used=new Set(order);for(let q=0;q<data.length;q++)if(!used.has(q))order.push(q);
-    const pattern={width,height,data,filled:Uint32Array.from(filled),order:Uint32Array.from(order)};
+    const mirrorSymmetric=data.every((v,q)=>v===data[Math.floor(q/width)*width+width-1-q%width]);
+    const pattern={width,height,data,filled:Uint32Array.from(filled),order:Uint32Array.from(order),mirrorSymmetric,mirrorX:!!options.mirrorX&&!mirrorSymmetric};
     if(options.silhouette){
       // A transparent pixel is not an opposite bit. Only the immediate side
       // boundary belongs to this silhouette, including neighbours outside its box.

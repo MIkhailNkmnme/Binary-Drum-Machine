@@ -21,6 +21,16 @@ test('selection caches exact results; idle library refresh emits no events; edit
 test('a newer selection cancels an older asynchronous request',async()=>{
  const f=fixture();let resolve;f.host.field=()=>new Promise(r=>resolve=r);const pending=f.api.select('a');f.api.clear();resolve(f.field);await pending;assert.equal(f.api.getSelection(),null);assert.equal(f.api.getState().busy,false);
 });
+test('reflected matcher patterns carry source orientation and symmetric or ambiguous originals never invent mirrors',async()=>{
+ const asymmetric={width:3,height:2,data:[1,1,1,1,0,0]},reflected={width:3,height:2,data:[1,1,1,0,0,1]},symmetric={width:3,height:2,data:[1,1,1,0,1,0]};
+ const direct=M.compile(asymmetric,1,{mirrorX:false}),mirror=M.compile(asymmetric,1,{mirrorX:true});assert.equal(direct.mirrorX,false);assert.equal(direct.mirrorSymmetric,false);assert.equal(mirror.mirrorX,true);
+ assert.equal(M.compile(symmetric,1,{mirrorX:true}).mirrorSymmetric,true);assert.equal(M.compile(symmetric,1,{mirrorX:true}).mirrorX,false);
+ const field={width:3,height:2,data:Int8Array.from([1,1,1,1,0,0])};let patterns;
+ const engine=Engine.create({entries:()=>[],field:async()=>field,current:()=>true,shapeInstances:()=>[],stop(){},redrawSelection(){},materializeMatches:async request=>{patterns=request.patterns;return {instances:[]};}});
+ await engine.selectShape({rk:1,parts:[asymmetric]},{mirrorX:true,materialize:true});assert.deepEqual(patterns.map(p=>p.mirrorX),[false,true]);
+ await engine.selectShape({rk:1,parts:[symmetric]},{mirrorX:true,materialize:true});assert.equal(patterns.length,1);assert.equal(patterns[0].mirrorSymmetric,true);assert.equal(patterns[0].mirrorX,false);
+ await engine.selectShape({rk:1,parts:[asymmetric,reflected]},{mirrorX:true,materialize:true});assert.equal(patterns.length,2);assert.deepEqual(patterns.map(p=>p.mirrorX),[false,false]);
+});
 function actualHistory(){
  const controls={};const c={console,Uint32Array,Uint8Array,Uint8ClampedArray,Int8Array,Set,Map,Promise,setTimeout,window:{mayTemplateLibrary:{clear(){}}},document:{createElement:()=>({getContext:()=>({putImageData(){}})})},ImageData:function(data,width,height){Object.assign(this,{data,width,height});},
   $:id=>controls[id]??=( {value:'',disabled:false,textContent:''}),f:{val:new Int8Array([1,0,1,0]),W:4,H:1},img:{width:4,height:1},gpuBig:null,k:1,bmGen:0,playing:false,st:{},templateMatchLayer:null,templateMatchRevision:0,templateMatchCache:null,
@@ -60,7 +70,7 @@ test('existence scan returns early without allocating a full selection mask',asy
  const found=await M.find({width:3,height:1,data:Int8Array.from([1,1,0])},[M.compile({width:3,height:1,data:[1,1,0]})],{existsOnly:true});assert.equal(found.count,1);assert.equal(found.selected,undefined);
 });
 
-test('Delete removes just the selected field copy; common undo/redo restores it without touching the library',()=>{
+test('explicit Remove command removes just the selected field copy; common undo/redo restores it without touching the library',()=>{
  const c=actualHistory();c.templateLocks=null;c.colourTemplate=c.templateItems[0];c.templatePickedIds=new Set();c.pickedTemplates=()=>c.colourTemplate?[c.colourTemplate]:[];c.selectTemplate=t=>{c.colourTemplate=t;};
  c.templateItems.push({...c.templateItems[0],id:'second'});const library=c.templateLibrary[0],data=c.f.val.slice();
  vm.runInContext(html.slice(html.indexOf('  function removeSelectedTemplate('),html.indexOf("  $('bTemplateRemove').onclick=")),c);
@@ -68,11 +78,11 @@ test('Delete removes just the selected field copy; common undo/redo restores it 
  c.historyStep(false);assert.equal(c.templateItems.length,2);assert.equal(c.colourTemplate.id,'copy');c.historyStep(true);assert.equal(c.templateItems.length,1);assert.equal(c.templateLibrary[0].id,'a');
 });
 test('production Delete hotkey respects text editing, composition and active drag',()=>{
- let handler,deletes=0;const c={addEventListener:(name,fn)=>handler=fn,colourTemplate:{id:'a'},templateDragging:false,axisSelected:0,$:()=>({click:()=>deletes++})};vm.createContext(c);
+ let handler,deletes=0,hidden=0;const c={temporarilyHideSelectedTemplates:()=>hidden++,addEventListener:(name,fn)=>handler=fn,colourTemplate:{id:'a'},templateDragging:false,axisSelected:0,$:()=>({click:()=>deletes++})};vm.createContext(c);
  const a=html.lastIndexOf("  addEventListener('keydown', e => {",html.indexOf("// v0.104: Delete")),b=html.indexOf("  cv.addEventListener('pointermove'",a);assert.ok(a>0);vm.runInContext(html.slice(a,b),c);
  const event=editing=>({key:'Delete',target:{closest:()=>editing},preventDefault(){this.defaultPrevented=true;}});
- handler(event(false));assert.equal(deletes,1);handler(event(true));assert.equal(deletes,1);handler({...event(false),isComposing:true});assert.equal(deletes,1);
- c.templateDragging={};handler(event(false));assert.equal(deletes,1);
+ handler(event(false));assert.equal(hidden,1);assert.equal(deletes,0);handler({...event(false),key:'Backspace'});assert.equal(deletes,1);handler(event(true));assert.equal(hidden,1);handler({...event(false),isComposing:true});assert.equal(hidden,1);
+ c.templateDragging={};handler(event(false));assert.equal(deletes,1);assert.equal(hidden,1);
  const hit=html.slice(html.indexOf('if(hit){axisSelected=0;'),html.indexOf('      if(part){',html.indexOf('if(hit){axisSelected=0;')));assert.ok(hit.includes('wrap.focus({preventScroll:true})'));assert.ok(hit.includes('selectTemplate(hit.item,false,false,true)'));
 });
 test('hidden in-range copies stay listed and visibility does not insert or discard the library entry',async()=>{const f=fixture();let visible=true;f.host.scope=()=> 'field';f.host.listedInstances=()=>true;f.host.visibleInstances=()=>visible;f.host.visibility=()=>({placed:1,visible});f.host.action=()=>{visible=!visible;};const api=Engine.create(f.host);api.refresh();await api.whenFiltered();assert.equal(api.list().length,1);await api.action('a','visible');await api.whenFiltered();assert.equal(api.visibility('a').visible,false);assert.equal(api.list()[0].id,'a');assert.equal(f.inserts,0);await api.action('a','visible');assert.equal(api.visibility('a').visible,true);});

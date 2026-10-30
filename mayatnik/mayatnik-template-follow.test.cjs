@@ -43,7 +43,7 @@ test('production autoplay and fast build visit and finish every frame even at sp
  }
 });
 test('production manual requests queue distinct frames and wait for each complete search',async()=>{
- const searched=[],jobs=[],c={k:4,f:{},playing:false,templateFollowReady:true,templateFollowQueue:Promise.resolve(),templateFollowTarget:null,gpuBig:null,templateFollowScope:()=>({}),setTimeout,Promise,$:()=>({}),goToImmediate(k){c.k=k;c.templateFollow.ensure();}};
+ const searched=[],jobs=[],c={k:4,f:{},playing:false,templateFollowReady:true,templateFollowQueue:Promise.resolve(),templateFollowTarget:null,templateNavigationSerial:0,gpuBig:null,templateFollowScope:()=>({}),setTimeout,Promise,$:()=>({}),goToImmediate(k){c.k=k;c.templateFollow.ensure();}};
  c.templateFollow=Follow.create({capture:()=>({owner:c.f,key:c.k}),search:async()=>{const frame=c.k,d=deferred();jobs.push(d);await d.promise;searched.push(frame);}},{on:true,source});
  vm.createContext(c);vm.runInContext(['templateFollowActive','templateFollowStep','templateFollowWait','goTo'].map(fn).join('\n'),c);
  const a=c.templateFollowStep(1),b=c.templateFollowStep(1);await turn();assert.equal(c.k,4);jobs[0].resolve();await turn();assert.equal(c.k,5);jobs[1].resolve();await turn();assert.equal(c.k,6);jobs[2].resolve();await Promise.all([a,b]);assert.deepEqual(searched,[4,5,6]);assert.equal(c.templateFollowTarget,null);
