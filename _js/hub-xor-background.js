@@ -1,4 +1,6 @@
-/* v18 (Хаб v0.477). Кнопка «Цикл / Край / Пинг»: старый сброс на 2047,
+/* v19 (Хаб v0.478). Пинг-понг показывает и кадры ниже стартовых 8 — отскок
+   доходит до центра, а не стоит на кадре 8.
+   v18 (Хаб v0.477). Кнопка «Цикл / Край / Пинг»: старый сброс на 2047,
    перескок вершины через край и пинг-понг с пересчётом поля (чекпоинты).
    v17 (Хаб v0.476). Вершина, дошедшая до края, перескакивает на противоположную
    сторону и идёт дальше в том же направлении; поле не сбрасывается.
@@ -104,7 +106,7 @@
   } catch (_) {}
   let published = false;
   let step = -1, frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
-  let pingDir = 1, pingFrame = -1, pingCycle = 0;
+  let pingDir = 1, pingFrame = -1, pingCycle = 0, pingStarted = false;
   const pingCheckpoints = [], PING_CHECKPOINT = 64;
   let publishedFrame = -1, publishedCycle = 0, statsFrame = -1;
   let pairStep = false;   // текущий кадр — шаг пары для 5.9 (переживает разбивку на куски строк)
@@ -538,7 +540,7 @@
   function resetAnimation() {
     clearTimeout(timer); timer = 0;
     step = -1; frame = -1; cycle = 0; row = 1; nextFrame = true; started = performance.now();
-    pingDir = 1; pingFrame = -1; pingCycle = 0; pingCheckpoints.length = 0;
+    pingDir = 1; pingFrame = -1; pingCycle = 0; pingStarted = false; pingCheckpoints.length = 0;
     resetFields();
     published = false;
     if (!paused) schedule(0);
@@ -598,7 +600,8 @@
       if (pingFrame === 0) pingDir = 1;
     }
     frame = pingFrame; step = pingFrame; cycle = pingCycle;
-    if (frame >= FIRST_FRAME) {
+    if (frame >= FIRST_FRAME) pingStarted = true;
+    if (pingStarted) {
       kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
       left.dataset.frame = right.dataset.frame = String(frame);
       if (middle) middle.dataset.frame = String(frame);
@@ -606,7 +609,7 @@
       renderPublished();
     }
     const finish = () => schedule(Math.max(0, frameInterval() - (performance.now() - startedAt)));
-    if (statsOn && frame >= FIRST_FRAME) {
+    if (statsOn && pingStarted) {
       awaitingStats = true;
       decodePublished();
       Promise.resolve(controller.measure({ left: publishedLeft, middle: publishedPair, right: publishedRight, W, H, frame, cycle }))
