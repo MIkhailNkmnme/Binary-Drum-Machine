@@ -1,4 +1,4 @@
-/* Маятник v0.655 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.657 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -1665,14 +1665,18 @@
       grid = { relayout, tick: () => { dock?.refresh(); if (!narrow.matches && !d?.on && !rd) { repairSavedRows(); if (sigOf() !== sig) relayout(); } },
         touch: k => { if (gw && ok(gw[k])) { gw[k][2] = topT() + 1; saveGrid(); } relayout(); } };   // правый щелчок (ромб ↔ название): тот, кого меняли, остаётся на месте, соседи уступают
       narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick);
+      const placeHorizontalStrips=()=>{
+        const desktop=!narrow.matches,step=window.MayatnikMenuDock.DX;
+        const left=desktop?(Math.max(4,rail.el.getBoundingClientRect().left)+2*step)+'px':'';
+        // The two left columns continue from the top to the bottom of the window.
+        // Shorten the physical strips too, including their backgrounds and controls.
+        for(const strip of [head,footerBar]){strip.style.marginLeft=left;strip.style.marginRight=desktop?'4px':'';}
+      };
+      placeHorizontalStrips();relayout();
       // v0.509: capture group dragging before the legacy rail/free-bottom handlers.
       dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,sideColumnsLeft:true,
         excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{
-          // Both side strips now sit on the left; keep the footer after them,
-          // including its backdrop and legacy history control.
-          const desktop=!narrow.matches,step=window.MayatnikMenuDock.DX;
-          footerBar.style.marginLeft=desktop?(Math.max(4,rail.el.getBoundingClientRect().left)+2*step)+'px':'';
-          footerBar.style.marginRight=desktop?'4px':'';
+          placeHorizontalStrips();
           relayout();reopen();}}); }
     // Group headers toggle their compact form. History keeps its separate mini mode.
     { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };

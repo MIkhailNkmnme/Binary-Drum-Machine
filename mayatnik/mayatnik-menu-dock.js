@@ -63,8 +63,8 @@
   const overlap=(a,b)=>a.x<b.x+b.w+2&&a.x+a.w+2>b.x&&a.y<b.y+b.h+2&&a.y+a.h+2>b.y;
   function slots({left=8,right,topX,topY,bottomY,sideY,sideBottom=bottomY+HEIGHT,sideColumnsLeft=false}){
     const out=[];
-    // Reserve the lower corners occupied by the side columns and backdrops.
-    for(const [edge,y,x0,end] of [['top',topY,topX,right],['bottom',bottomY,left+DX*(sideColumnsLeft?2:1),sideColumnsLeft?right:right-DX]])
+    // Full-height left columns own both upper and lower corners.
+    for(const [edge,y,x0,end] of [['top',topY,sideColumnsLeft?Math.max(topX,left+2*DX):topX,right],['bottom',bottomY,left+DX*(sideColumnsLeft?2:1),sideColumnsLeft?right:right-DX]])
       for(let i=0,x=x0;x+WIDTH<=end;i++,x=x0+i*DX)out.push({edge,index:i,x,y,w:WIDTH,h:HEIGHT});
     // Keep the saved "right" column identity, but place it beside the left one.
     for(const [edge,x] of [['left',left],['right',sideColumnsLeft?left+DX:right-WIDTH]])
@@ -87,7 +87,7 @@
     Object.assign(overlay.style,{position:'fixed',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'2147483644',display:'none'});document.body.append(overlay);
     const save=()=>{try{localStorage.setItem(key,JSON.stringify(state));}catch(_){}};
     const bounds=()=>{const H=header.getBoundingClientRect(),T=tools.getBoundingClientRect(),F=footer.getBoundingClientRect(),R=rail.getBoundingClientRect(),customLeft=typeof leftEdge==='function'?leftEdge():null;
-      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:T.top,bottomY:F.top+(F.height-HEIGHT)/2,sideY:Math.ceil(H.bottom+8),sideBottom:(typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom)-4,sideColumnsLeft};};
+      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:T.top,bottomY:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?4:Math.ceil(H.bottom+8),sideBottom:(typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom)-4,sideColumnsLeft};};
     const rect=el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};};
     const obstacles=()=>excluded.filter(e=>e?.getClientRects().length).map(rect);
     const available=skip=>slots(bounds()).filter(s=>!obstacles().some(r=>overlap(s,r))&&![...placed].some(([g,p])=>g!==skip&&overlap(s,p)));
