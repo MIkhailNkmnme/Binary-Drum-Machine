@@ -1,4 +1,7 @@
-/* v13 (Хаб v0.472). Скорость плеера — 0,25× … 1024× шагом ×2; номер хаба
+/* v14 (Хаб v0.473). Выше 16× плеер считает несколько кадров за тик и рисует
+   последний: кнопка 32…1024× снова заметно ускоряет, узор тот же — кадры
+   не пропускаются, только промежуточные не выводятся.
+   v13 (Хаб v0.472). Скорость плеера — 0,25× … 1024× шагом ×2; номер хаба
    скрыт, пока плеер идёт (на паузе возвращается).
    v12 (Хаб v0.471). Точные packed-поля, отрисовка без распаковки, 8×/16×.
    v11 (Хаб v0.470). Скорость плеера 0,25× / 0,5× / 1× / 2× / 4×; кадр
@@ -465,12 +468,53 @@
     renderBlend();
   }
   function frameInterval() { return INTERVAL / view.speed; }
+  // v0.473: после 16× плеер упирается в расчёт одного кадра. Чтобы кнопка
+  // 32…1024× действительно ускоряла, за один тик считается несколько кадров,
+  // а рисуется только последний: узор тот же, промежуточные кадры не видны.
+  function framesPerTick() {
+    return Math.min(16, Math.max(2, Math.round(view.speed / 8)));
+  }
+  function advanceWholeFrame() {
+    frame++; row = 1;
+    if (frame === W) { frame = 0; cycle++; kernel.reset(cones); kernel.reset(grid); kernel.reset(pairGrid); }
+    const d = Math.ceil(frame / 2), pos = CENTER + (frame % 2 ? -d : d);
+    kernel.apex(grid, pos);
+    pairStep = frame === 0 || frame % 2 === 1;
+    if (middle && pairStep) {
+      kernel.apex(pairGrid, pos);
+      const twin = 2 * CENTER - pos;
+      if (twin >= 0 && twin < W) kernel.apex(pairGrid, twin);
+    }
+    kernel.cone(cones, pos);
+    kernel.sweep(grid, 1, H);
+    if (middle && pairStep) kernel.sweep(pairGrid, 1, H);
+    row = H;
+  }
   function schedule(delay) {
     if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);
   }
   function tick() {
     timer = 0;
     if (document.hidden || awaitingStats || failed || paused) return;
+    // Пока ни одна панель статистики не открыта, расчёт не тормозит плеер:
+    // кадры идут со скоростью кнопки, статистика начинается при открытии панели.
+    const statsOn = controller && typeof controller.measure === 'function' &&
+      (typeof controller.active !== 'function' || controller.active());
+    if (view.speed > 16 && !statsOn) {
+      const startedAt = performance.now();
+      const steps = framesPerTick();
+      for (let i = 0; i < steps; i++) advanceWholeFrame();
+      if (frame >= FIRST_FRAME) {
+        kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
+        left.dataset.frame = right.dataset.frame = String(frame);
+        if (middle) middle.dataset.frame = String(frame);
+        published = true; publishedFrame = frame; publishedCycle = cycle;
+        renderPublished();
+      }
+      nextFrame = true;
+      schedule(Math.max(0, frameInterval() - (performance.now() - startedAt)));
+      return;
+    }
     if (nextFrame) {
       nextFrame = false; frame++; row = 1; started = performance.now();
       // Все 2047 вершин внутри рамки пройдены: все три поля начинают новый цикл.
@@ -517,8 +561,6 @@
     };
     // Пока ни одна панель статистики не открыта, расчёт не тормозит плеер:
     // кадры идут со скоростью кнопки, статистика начинается при открытии панели.
-    const statsOn = controller && typeof controller.measure === 'function' &&
-      (typeof controller.active !== 'function' || controller.active());
     if (statsOn) {
       awaitingStats = true;
       try {

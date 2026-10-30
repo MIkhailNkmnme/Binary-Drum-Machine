@@ -124,10 +124,10 @@ function assertBlend(f, label) {
   assert.deepEqual(Array.from(actual), Array.from(f.nodes.hubBlend.ctx.expected), label + ': blend pixels');
 }
 
-test('v0.472 markup: three independent field buttons, the old pair buttons are gone', () => {
+test('v0.473 markup: three independent field buttons, the old pair buttons are gone', () => {
   const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
-  assert.match(html, /<title>[^<]*v0\.472<\/title>/);
-  assert.match(html, /hub-xor-background\.js\?v=472/);
+  assert.match(html, /<title>[^<]*v0\.473<\/title>/);
+  assert.match(html, /hub-xor-background\.js\?v=473/);
   const group = html.match(/<div id="hubComparePairs"[^>]*>([\s\S]*?)<\/div>/);
   assert.ok(group, 'field group exists');
   for (const value of [1, 2, 3]) {
@@ -279,6 +279,17 @@ test('player speed cycles 0,25×–1024×, scales the next frame delay and is sa
   f.clickSpeed();   // 0,5×
   await f.frame();
   assert.ok(f.delays[f.delays.length - 1] > one, '0,5× schedules later than 1×');
+});
+
+test('speeds above 16× simulate several frames per rendered frame', async () => {
+  const fast = fixture({ saved: { speed: 1024 } });
+  await fast.frame();
+  const fastFrame = Number(fast.nodes.hubXor.dataset.frame);
+  const slow = fixture({ saved: { speed: 16 } });
+  await slow.frame();
+  const slowFrame = Number(slow.nodes.hubXor.dataset.frame);
+  assert.ok(Number.isInteger(fastFrame) && Number.isInteger(slowFrame));
+  assert.ok(fastFrame >= slowFrame + 2, '1024× advances more frames than 16× per rendered frame (' + slowFrame + ' → ' + fastFrame + ')');
 });
 
 test('saved player speed is restored and validated', () => {
