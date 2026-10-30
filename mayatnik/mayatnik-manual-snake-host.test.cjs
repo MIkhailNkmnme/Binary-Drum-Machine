@@ -1,9 +1,10 @@
+const REPO=require('node:fs').existsSync(__dirname+'/mayatnik-manual-snake.js')?__dirname:require('node:path').resolve(__dirname,'../../../Binary-Drum-Machine/mayatnik');
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8').replace(/\r\n/g,'\n'),Snake=require('./mayatnik-manual-snake.js');
+const html=fs.readFileSync(process.env.MAYATNIK_TEST_HTML||REPO+'/Zerkalius-mayatnik.html','utf8').replace(/\r\n/g,'\n'),Snake=require(REPO+'/mayatnik-manual-snake.js');
 function fn(name){const at=html.indexOf('function '+name+'(');assert.ok(at>=0,name);let end=html.indexOf('{',at),d=1;while(d){end++;if(html[end]==='{')d++;if(html[end]==='}')d--;}return (html.slice(at-6,at)==='async '?'async ':'')+html.slice(at,end+1);}
 test('snapshot acquisition stops active transports without redrawing an already closed column player',()=>{
  const c={k:64,target:0,stops:0,closes:0,stop(){c.stops++;},autoStop(){},rowRunEnd(){},stolbTransport:{active:false,close(){c.closes++;this.active=false;}}};
- vm.createContext(c);vm.runInContext(fn('stopFrameTransports'),c);
+ Object.assign(c,{snakePathRefresh(){},snakePathClear(){},viewRotation:{logicalPoint:p=>p},MayatnikSnakeSource:require(process.env.MAY_SNAKE_SOURCE||REPO+'/mayatnik-snake-source.js'),displayCell:()=>null});vm.createContext(c);vm.runInContext(fn('snakePathManual'),c);vm.runInContext(fn('stopFrameTransports'),c);
  c.stopFrameTransports();assert.equal(c.closes,0);assert.equal(c.target,64);
  c.stolbTransport.active=true;c.stopFrameTransports();assert.equal(c.closes,1);
  c.stopFrameTransports();assert.equal(c.closes,1);assert.equal(c.stops,3);
@@ -11,7 +12,7 @@ test('snapshot acquisition stops active transports without redrawing an already 
 function fixture(){
  const els=new Map(),owner={},graph={nodes:[{x:1,y:0,bit:1,edges:[1,2]},{x:0,y:1,bit:0,edges:[]},{x:2,y:1,bit:1,edges:[]}],rasterOwnerIds:Int32Array.from([0,1,2]),hit:x=>Math.floor(x)},snapshot={owner,key:'k',geometry:'g',scale:1,width:3,height:1,bits:Int8Array.from([1,0,1]),visibleMask:Uint8Array.from([1,1,1]),cellAt:x=>graph.nodes[x],current:()=>true,release(){c.releases++;}};
  const c={st:{manualSnake:true},f:owner,sequences:{rows:['10','11'],revision:1,recordFirstFind(hit,context){c.first.push({hit,context});}},k:16,rombP:()=>-1,joinedOn:()=>false,ochkiScope:()=> 'scope',ochkiSearchSerial:0,ochkiLogSerial:0,ochkiLogEvent:entry=>c.logs.push(entry),logs:[],first:[],manualPaintRevision:0,manualSnakeBusy:false,manualSnakeSerial:0,manualSnakeSession:Snake.createSession(),manualSnakeLayer:null,MayatnikManualSnake:Snake,MayatnikManualPaintPattern:{abort:()=>Error('changed')},window:{mayVisibleSemantic:{acquire:async()=>snapshot}},visibleGraphKnown(){},manualPatternEffects:()=>true,visibleGraph:async()=>graph,manualPaintKey:()=> 'k',manualPatternGeometry:()=> 'g',draw(){c.draws++;},draws:0,releases:0,$:id=>{if(!els.has(id))els.set(id,{});return els.get(id);},setTimeout,Uint8Array,Set,rgba:()=>123};
- vm.createContext(c);vm.runInContext(fn('ochkiRecordManualSnake')+fn('manualSnakeClick')+fn('manualSnakeApply'),c);return {c,graph,snapshot,els};
+ Object.assign(c,{snakePathRefresh(){},snakePathClear(){},viewRotation:{logicalPoint:p=>p},MayatnikSnakeSource:require(process.env.MAY_SNAKE_SOURCE||REPO+'/mayatnik-snake-source.js'),displayCell:()=>null});vm.createContext(c);vm.runInContext(fn('snakePathManual'),c);vm.runInContext(fn('ochkiRecordManualSnake')+fn('manualSnakeClick')+fn('manualSnakeApply'),c);return {c,graph,snapshot,els};
 }
 function escapeFixture(){const f=fixture(),c=f.c;c.fillMode=true;c.f.val=Int8Array.of(1,0,1);c.fillMask=Uint32Array.of(7,8,9);c.colourTemplate={id:'keep'};c.templateFollow={on:true,source:'pinned'};c.tableMatch=null;
  c.sequences.setManualMatch=value=>c.tableMatch=value;c.gpuCpuDisplay=()=>false;c.visibleSemanticCanLazy=()=>true;c.manualSnakeOverlayDraw=()=>{};c.clearFillPreview=()=>c.previewClears=(c.previewClears||0)+1;c.fillSync=()=>c.fillPressed=!!c.fillMode;c.save=()=>{};c.document={querySelector:()=>null};c.$('bManualSnake').setAttribute=(key,value)=>c.$('bManualSnake')[key]=value;
@@ -51,7 +52,7 @@ test('changed snapshot or mode cancels host search atomically and always release
 });
 test('fragment adapter passes the original semantic snapshot and cancellation to the exact shared graph',async()=>{
  const snapshot={scale:1},cancelled=()=>true,result={nodes:[]};let actual;
- const c={visibleGraphKnown(){},MayatnikVisibleCellGraph:{build:async(s,options)=>{actual={s,options};return result;}}};vm.createContext(c);vm.runInContext(fn('visibleGraph'),c);
+ const c={visibleGraphKnown(){},MayatnikVisibleCellGraph:{build:async(s,options)=>{actual={s,options};return result;}}};Object.assign(c,{snakePathRefresh(){},snakePathClear(){},viewRotation:{logicalPoint:p=>p},MayatnikSnakeSource:require(process.env.MAY_SNAKE_SOURCE||REPO+'/mayatnik-snake-source.js'),displayCell:()=>null});vm.createContext(c);vm.runInContext(fn('snakePathManual'),c);vm.runInContext(fn('visibleGraph'),c);
  assert.equal(await c.visibleGraph(snapshot,cancelled),result);assert.equal(actual.s,snapshot);assert.equal(actual.options.geometry,'half-grid');assert.equal(actual.options.cancelled,cancelled);assert.equal(snapshot.scale,1);
 });
 
@@ -63,7 +64,7 @@ test('lazy basic click highlights sparse exact pixels without redrawing the full
 test('sparse overlay uses exact raster coordinates and a single physical pixel at small zoom',()=>{
  const draws=[],ctx={fillRect(...a){draws.push(a);}},canvas={style:{},setAttribute(){},getContext:()=>ctx},owner={};
  const c={st:{manualSnake:true},manualSnakeLayer:{owner,key:'k',geometry:'g',overlay:true,width:100,rasterScale:1,indices:Uint32Array.of(204,205)},f:owner,manualPaintKey:()=> 'k',manualPatternGeometry:()=> 'g',document:{createElement:()=>canvas,body:{append(){}}},wrap:{clientLeft:0,clientTop:0,clientWidth:100,clientHeight:80,getBoundingClientRect:()=>({left:20,top:10})},cv:{getBoundingClientRect:()=>({left:20,top:10})},DPR:()=>2,scale:()=>.1};
- vm.createContext(c);vm.runInContext(fn('manualSnakeOverlayDraw'),c);c.manualSnakeOverlayDraw();assert.equal(canvas.style.background,'transparent');assert.equal(draws.length,2);assert.deepEqual(draws,[[0,0,1,1],[1,0,1,1]]);c.st.manualSnake=false;c.manualSnakeOverlayDraw();assert.equal(canvas.hidden,true);
+ Object.assign(c,{snakePathRefresh(){},snakePathClear(){},viewRotation:{logicalPoint:p=>p},MayatnikSnakeSource:require(process.env.MAY_SNAKE_SOURCE||REPO+'/mayatnik-snake-source.js'),displayCell:()=>null});vm.createContext(c);vm.runInContext(fn('snakePathManual'),c);vm.runInContext(fn('manualSnakeOverlayDraw'),c);c.manualSnakeOverlayDraw();assert.equal(canvas.style.background,'transparent');assert.equal(draws.length,2);assert.deepEqual(draws,[[0,0,1,1],[1,0,1,1]]);c.st.manualSnake=false;c.manualSnakeOverlayDraw();assert.equal(canvas.hidden,true);
 });
 
 test('manual success logs actual solver variant and records table metadata without touching automatic ledger',async()=>{
@@ -99,3 +100,5 @@ test('an operation limit or stale snapshot never publishes a prefix highlight or
   if(kind==='limit'){assert.equal(result.complete,false);assert.equal(result.maximal,false);assert.equal(c.manualSnakeLayer.partial,false);assert.equal(c.manualSnakeLayer.mask.some(Boolean),false);assert.match(els.get('manualSnakeInfo').textContent,/предел/);}else{assert.ok(result.error);assert.equal(c.manualSnakeLayer,null);assert.equal(c.draws,0);}
  }
 });
+test('changing any I/R/H flag cancels a pending manual snapshot and cannot publish old variants',async()=>{for(const flag of['ochkiInv','ochkiRev','ochkiHalf']){const{c,snapshot}=escapeFixture();let resolve;c.window.mayVisibleSemantic.acquire=()=>new Promise(r=>resolve=r);const pending=c.manualSnakeClick(0,0);c.st[flag]=true;resolve(snapshot);await pending;assert.equal(c.manualSnakeLayer,null);assert.equal(c.logs.length,0);assert.equal(c.tableMatch,null);assert.equal(c.releases,1);}});
+test('manual session starts at row one after half-family changes at the same bit',async()=>{const{c}=fixture();await c.manualSnakeClick(0,0);await c.manualSnakeClick(0,0);assert.equal(c.manualSnakeSession.current().index,1);c.st.ochkiHalf=true;await c.manualSnakeClick(0,0);assert.equal(c.manualSnakeSession.current().index,0);});

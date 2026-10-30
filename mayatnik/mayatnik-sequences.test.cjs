@@ -4,7 +4,7 @@ const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/
 function storage(){const values=new Map();return{getItem:key=>values.has(key)?values.get(key):null,setItem:(key,value)=>values.set(key,value),values};}
 test('default matches the Hub compressed Pascal mod2 sequence and current row count up to512',()=>{
  const memory=storage(),api=Sequences.create(memory,{rows:6});assert.deepEqual(api.rows,['1','11','101','1111','10001','110011']);assert.equal(api.snapshot().source,'serp');assert.equal(Sequences.create(storage(),{rows:100000}).rows.length,512);
- const hub=fs.readFileSync(__dirname+'/../index.html','utf8'),start=hub.indexOf("            const SERP_ROWS = ['1'];"),end=hub.indexOf('            const ROW_PATTERNS',start),context={HUB_ROWS:new Array(64)};vm.runInNewContext(hub.slice(start,end)+';globalThis.rows=SERP_ROWS;',context);assert.deepEqual(Sequences.sierpinski(64),Array.from(context.rows));
+ const hub=fs.readFileSync((process.env.SETKA_REPO||__dirname+'/..')+'/index.html','utf8'),start=hub.indexOf("            const SERP_ROWS = ['1'];"),end=hub.indexOf('            const ROW_PATTERNS',start),context={HUB_ROWS:new Array(64)};vm.runInNewContext(hub.slice(start,end)+';globalThis.rows=SERP_ROWS;',context);assert.deepEqual(Sequences.sierpinski(64),Array.from(context.rows));
 });
 test('saved user rows and explicit empty sequence survive recreation without regeneration',()=>{
  const memory=storage(),api=Sequences.create(memory,{rows:4});api.setText('001\n110\n1');assert.deepEqual(Sequences.create(memory,{rows:200}).rows,['001','110','1']);api.setText('');const again=Sequences.create(memory,{rows:200});assert.deepEqual(again.rows,[]);assert.equal(again.snapshot().source,'user');
@@ -61,9 +61,9 @@ test('UI inserts rule drafts and exact original sequence, preserving applied row
   const editor=pane.querySelector('textarea'),select=pane.querySelector('select'),count=pane.querySelector('[aria-label="Число строк генератора"]'),seed=pane.querySelector('[aria-label="Начальная строка генератора из 0 и 1"]'),compact=pane.querySelector('input[type=checkbox]');
   select.value='30';select.dispatchEvent(new dom.window.Event('change'));count.value='5';assert.equal(compact.disabled,true);pane.querySelector('[data-sequence-generate]').click();assert.equal(editor.value,'1\n111\n11001\n1101111\n110010001');assert.deepEqual(api.rows,['1','11','101']);
   pane.querySelector('[data-sequence-save]').click();assert.deepEqual(api.rows,Sequences.elementary({rule:30,count:5}));
-  pane.querySelector('[data-sequence-initial]').click();assert.equal(editor.value,initial.join('\n'));initial[0]='0';api.initialRows[0]='0';assert.equal(api.initialRows[0],'1');
+  select.value='initial';select.dispatchEvent(new dom.window.Event('change'));pane.querySelector('[data-sequence-generate]').click();assert.equal(editor.value,initial.join('\n'));initial[0]='0';api.initialRows[0]='0';assert.equal(api.initialRows[0],'1');
   api.setMatches({enabled:true,active:true,pattern:'initial',found:[],frame:4});assert.equal(editor.value,'1\n1\n11\n111\n1000\n10101');
-  seed.value='x';pane.querySelector('[data-sequence-generate]').click();assert.equal(editor.value,'1\n1\n11\n111\n1000\n10101');assert.match(pane.querySelector('.mtp-sequence-notice').textContent,/Начальная строка/);
+  select.value='custom';select.dispatchEvent(new dom.window.Event('change'));seed.value='x';pane.querySelector('[data-sequence-generate]').click();assert.equal(editor.value,'1\n1\n11\n111\n1000\n10101');assert.match(pane.querySelector('.mtp-sequence-notice').textContent,/Начальная строка/);
  }finally{view.destroy();dom.window.close();}
 });
 test('library match summary and row tooltip distinguish columns and the two diagonals without losing a draft',()=>{
@@ -71,17 +71,17 @@ test('library match summary and row tooltip distinguish columns and the two diag
  try{
   const editor=pane.querySelector('textarea');editor.value='000';editor.dispatchEvent(new dom.window.Event('input'));
   for(const [mode,label]of [['diag','по диагоналям ↘'],['antidiag','по противодиагоналям ↙'],['row','по рядам →'],['col','по столбцам ↓']]){
-   api.setMatches({enabled:true,active:true,mode,pattern:'initial',found:[{i:0,r:2,dir:{diag:1,antidiag:-1,row:0,col:2}[mode],vn:''}],frame:8});assert.ok(pane.querySelector('.mtp-sequence-summary').textContent.endsWith(label));assert.ok(pane.querySelector('.is-found').title.includes(require('./mayatnik-ochki-method.js').label({dir:{diag:1,antidiag:-1,row:0,col:2}[mode]})));assert.equal(editor.value,'000');
+   api.setMatches({enabled:true,active:true,mode,pattern:'initial',found:[{i:0,r:2,dir:{diag:1,antidiag:-1,row:0,col:2}[mode],vn:''}],frame:8});assert.equal(pane.querySelector('.mtp-sequence-summary').textContent,'');assert.ok(pane.querySelector('.is-found').title.includes(require('./mayatnik-ochki-method.js').label({dir:{diag:1,antidiag:-1,row:0,col:2}[mode]})));assert.equal(editor.value,'000');
   }
  }finally{view.destroy();dom.window.close();}
 });
 test('one library sequence row retains both independent half matches and counts occurrences',()=>{
  const dom=new JSDOM('<section></section>'),pane=dom.window.document.querySelector('section'),api=Sequences.create(storage(),{rows:2}),view=Sequences.mount(pane,api);
  try{
-  api.setMatches({enabled:true,active:true,mode:'col',pattern:'initial',halves:2,total:4,found:[{i:0,r:2,p:0},{i:0,r:4,p:1}],frame:8});const row=pane.querySelector('.is-found');assert.equal(pane.querySelectorAll('.is-found').length,1);assert.match(row.title,/левый полумаятник · строка 3/);assert.match(row.title,/правый полумаятник · строка 5/);assert.match(pane.querySelector('.mtp-sequence-summary').textContent,/2 из 4 совпадений в двух полумаятниках/);
+  api.setMatches({enabled:true,active:true,mode:'col',pattern:'initial',halves:2,total:4,found:[{i:0,r:2,p:0},{i:0,r:4,p:1}],frame:8});const row=pane.querySelector('.is-found');assert.equal(pane.querySelectorAll('.is-found').length,1);assert.match(row.title,/левый полумаятник · строка 3/);assert.match(row.title,/правый полумаятник · строка 5/);assert.equal(pane.querySelector('.mtp-sequence-summary').textContent,'');
  }finally{view.destroy();dom.window.close();}
 });
 test('joined match titles use the displayed rhombus row and preserve row selection',()=>{
  const dom=new JSDOM('<section></section>'),pane=dom.window.document.querySelector('section'),api=Sequences.create(storage(),{rows:2}),view=Sequences.mount(pane,api);
- try{api.setMatches({enabled:true,active:true,joined:true,halves:1,total:2,mode:'snake',pattern:'initial',found:[{i:0,r:6,p:null}],frame:4});api.selectMatches({rowIndices:[0],matchIndices:[0],key:'joined'});assert.match(pane.querySelector('.is-found').title,/строка ромба 7/);assert.doesNotMatch(pane.querySelector('.is-found').title,/полумаятник/);assert.match(pane.querySelector('.mtp-sequence-summary').textContent,/единый ромб/);assert.equal(pane.querySelector('.is-selected').dataset.sequenceRow,'0');}finally{view.destroy();dom.window.close();}
+ try{api.setMatches({enabled:true,active:true,joined:true,halves:1,total:2,mode:'snake',pattern:'initial',found:[{i:0,r:6,p:null}],frame:4});api.selectMatches({rowIndices:[0],matchIndices:[0],key:'joined'});assert.match(pane.querySelector('.is-found').title,/строка ромба 7/);assert.doesNotMatch(pane.querySelector('.is-found').title,/полумаятник/);assert.equal(pane.querySelector('.mtp-sequence-summary').textContent,'');assert.equal(pane.querySelector('.is-selected').dataset.sequenceRow,'0');}finally{view.destroy();dom.window.close();}
 });

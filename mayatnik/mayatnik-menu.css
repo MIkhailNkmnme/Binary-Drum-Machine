@@ -1063,8 +1063,8 @@ body.may-mobile-menu #mayButtonSearchTrigger{order:-4}
 #paintTools #mayCorner{display:none!important}
 .gz-ladder .may-view-actions{display:flex;flex-direction:column;gap:2px;width:120px;min-width:120px;align-self:start}
 .gz-ladder .may-view-actions>.gz-hx{flex:none;width:120px;height:24px;margin:0!important}
-#paintTools [data-n=templateAxes]>.gz-half{appearance:none;border:0;border-radius:0;outline:none;font:inherit;color:inherit;cursor:pointer}
-#paintTools [data-n=templateAxes]>.gz-half:disabled{opacity:.45;cursor:default}
+#paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half{appearance:none;border:0;border-radius:0;outline:none;font:inherit;color:inherit;cursor:pointer}
+#paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half:disabled{opacity:.45;cursor:default}
 body.may-mobile-menu #mayMobileBar #zerkHubBtn{display:flex!important;position:relative!important;inset:auto!important;transform:none!important;order:-5;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:24px!important;margin:0!important;padding:0!important;touch-action:pan-x!important}
 body.may-mobile-menu #mayMobileBar #zerkHubBtn canvas{width:24px!important;height:24px!important}
 /* Zen keeps a single top-row exit, never a second floating control strip. */
@@ -1073,3 +1073,10 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 
 /* Area caption ends at24px; the first option cap starts at26px. */
 :is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-titled-list.may-area-options,.gz-ladder.may-titled-list.may-area-options{padding-top:38px!important}
+
+/* The existing Search group contains both controls and current results. */
+body.mayatnik-menu-ready .may-search-results-group .may-rail-list{max-width:calc(100vw - 8px)}
+body.mayatnik-menu-ready .may-search-results-group .gz-wide{width:100%!important;align-items:flex-start}
+body.mayatnik-menu-ready .may-search-results-group #ochkiBox{grid-column:auto;grid-row:auto;width:100%;min-width:0;max-width:360px;box-sizing:border-box;border:0;background:transparent;padding:4px}
+body.mayatnik-menu-ready .may-search-results-group #ochkiBox summary{white-space:normal;overflow-wrap:anywhere}
+body.mayatnik-menu-ready .may-search-results-group #ochkiList{max-height:40dvh;overflow:auto;overflow-wrap:anywhere}

@@ -33,7 +33,7 @@
         // Ignore late progress events after a confirmed terminal status.
         if(entry.status==='saving'&&['saved','error'].includes(previous.status))return;
         const next={...previous,...entry};
-        if(next.status==='saved'&&!next.savedId){next.status='error';next.error='Библиотека не подтвердила сохранённый кадр';}
+        if(next.status==='saved'&&!next.savedId&&!next.scanKey){next.status='error';next.error='Библиотека не подтвердила сохранённый кадр';}
         if(index<0)items.push(next);else items[index]=next;
         pending.add(entry.id);emit();
         try{const storage=await host.storage();await storage.write({version:1,items:clone(items)},KEY);storageError='';message='';}
@@ -42,20 +42,37 @@
         emit();
       });queue=result.catch(()=>{});return result;
     }
-    async function open(id){
+    async function open(id,options={}){
       await ready;
       const entry=items.find(item=>item.id===id);
+      if(entry?.status==='saved'&&entry.scanKey){const storage=await host.storage(),stored=await storage.read(entry.scanKey);if(!stored?.snapshot?.blob||stored.catalog?.complete!==true&&stored.complete!==true)throw Error('Сохранённый кадр прогона недоступен');if(!host.openScan)throw Error('Открытие кадра прогона пока не готово');await host.openScan(clone(entry),stored,options.ticket);return entry.scanKey;}
       if(entry?.status!=='saved'||!entry.savedId)throw Error('Кадр ещё не сохранён');
       const library=await host.library();await library.ready;
       const snapshot=clone(entry);
       if(host.open)await host.open(snapshot,library);else await library.open(snapshot.savedId);
       return snapshot.savedId;
     }
-    return {ready,record,open,idle:()=>queue,list:()=>clone(items),getState:()=>({message,storageError,pending:[...pending]}),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}};
+    const scanJobKey=id=>'ochki-scan-job:'+id,scanFrameKey=(id,frame)=>'ochki-scan-frame:'+id+':'+frame;
+    let jobsQueue=Promise.resolve();
+    function putScanJob(value){const job=structuredClone(value);const result=jobsQueue.then(async()=>{await ready;const storage=await host.storage();await storage.write(job,scanJobKey(job.id));const ids=await storage.read('ochki-scan-jobs')||[];if(!ids.includes(job.id))await storage.write([...ids,job.id],'ochki-scan-jobs');emit();});jobsQueue=result.catch(()=>{});return result;}
+    async function getScanJob(id){await ready;const storage=await host.storage();return storage.read(scanJobKey(id));}
+    async function listScanJobs(){await ready;const storage=await host.storage(),ids=await storage.read('ochki-scan-jobs')||[];return (await Promise.all(ids.map(id=>storage.read(scanJobKey(id))))).filter(Boolean);}
+    async function readScanFrame(id,frame){await ready;const storage=await host.storage();return storage.read(scanFrameKey(id,frame));}
+    async function commitScanFrame(job,catalog,snapshot){
+      if(catalog?.complete!==true||!snapshot?.blob||!Number.isSafeInteger(catalog.frame)||catalog.frame<0||catalog.frame>=job.total)throw Error('Неполный кадр прогона');
+      const stored=structuredClone({catalog,snapshot}),key=scanFrameKey(job.id,catalog.frame);await ready;const storage=await host.storage();await storage.write(stored,key);
+      const count=String(catalog.rows.reduce((sum,row)=>sum+BigInt(row.count),0n));
+      await record({id:key,scanKey:key,scanJob:job.id,status:'saved',frame:catalog.frame,rows:snapshot.rows,width:snapshot.sourceWidth,openInWindow:!!job.openInWindow,at:Date.now(),settings:job.settings,sequence:job.sequence,count,complete:true,catalogRows:catalog.rows.map(row=>({i:row.i,count:row.count})),src:job.settings?.compareSource,mirror:job.settings?.compareMirror});
+      return key;
+    }
+    async function commitSnakeFrame(detail,snapshot){if(!snapshot?.blob||detail.complete!==true)throw Error('Неполный кадр змеи');const stored=structuredClone({snapshot,finds:detail.finds,complete:true}),key='ochki-snake-frame:'+detail.id;await ready;const storage=await host.storage();await storage.write(stored,key);await record({...detail,scanKey:key,status:'saved'});return key;}
+    return {ready,record,open,prepareOpen:id=>host.prepareOpen?.(clone(items.find(entry=>entry.id===id)||{})),putScanJob,getScanJob,listScanJobs,readScanFrame,commitScanFrame,commitSnakeFrame,idle:()=>Promise.all([queue,jobsQueue]),list:()=>clone(items),getState:()=>({message,storageError,pending:[...pending]}),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}};
   }
   function install(root){
     const waitFor=get=>new Promise(resolve=>{const poll=()=>{const value=get();if(value)resolve(value);else root.setTimeout(poll,40);};poll();});
     const log=create({storage:()=>waitFor(()=>root.MayatnikPaintCache),library:()=>waitFor(()=>root.mayFrameLibrary),
+      prepareOpen(entry){const detail={entry,ticket:null};root.dispatchEvent(new CustomEvent('may-ochki-scan-prepare-open',{detail}));if(detail.error)throw detail.error;return detail.ticket;},
+      async openScan(entry,stored,ticket){const detail={entry,stored,ticket,handled:null};root.dispatchEvent(new CustomEvent('may-ochki-scan-open',{detail}));if(detail.handled)await detail.handled;else throw Error('Открытие кадра прогона пока не готово.');},
       async open(entry,library){const detail={entry,handled:null};root.dispatchEvent(new CustomEvent('may-ochki-log-open',{detail}));
         if(detail.handled)await detail.handled;else throw Error('Открытие кадра пока не готово. Повторите после загрузки страницы.');}});
     // Listen immediately, before storage, Library or DOM initialization.
@@ -73,9 +90,10 @@
         const info=document.createElement('div'),title=document.createElement('strong');title.textContent='Кадр '+entry.frame+' · '+(entry.rows??frames.get(entry.savedId)?.rows??'—')+' строк';info.append(title);
         const text=document.createElement('p');text.textContent=new Date(entry.at||0).toLocaleString('ru-RU')+' · Построение: '+sourceName(entry.src??entry.source)+' · '+(entry.mirror?'Зеркально':'Прямо')+' · Найдено: '+(entry.count??entry.finds?.length??0);info.append(text);
         const methods=document.createElement('ul');methods.className='may-ochki-log-methods';
+        for(const item of entry.catalogRows||[]){const li=document.createElement('li');li.textContent='№ '+(item.i+1)+' · маршрутов: '+item.count;methods.append(li);}
         for(const hit of entry.finds||[]){const item=document.createElement('li');item.textContent=(Number.isInteger(hit.i)?'№ '+(hit.i+1):'Серия '+(hit.text||''))+(entry.halves===2?' · '+(hit.p?'правый':'левый')+' полумаятник':'')+' · '+Methods.label(hit);methods.append(item);}info.append(methods);
-        const state=document.createElement('p');state.className='may-ochki-log-state';state.textContent=entry.status==='found'?(log.getState().pending.includes(entry.id)?'Запись находок…':log.getState().storageError?'Находки не записаны: '+log.getState().storageError:''):entry.status==='saved'?(log.getState().pending.includes(entry.id)?'Кадр в библиотеке; сохранение лога…':log.getState().storageError?'Кадр в библиотеке; лог не сохранён':'Сохранён в библиотеке и логе'):entry.status==='saving'?'Сохранение кадра…':'Ошибка сохранения: '+(entry.error||'неизвестная ошибка');if(state.textContent)info.append(state);
-        const b=button('Открыть кадр',async()=>{opening=true;render();try{await log.open(entry.id);panel.close();}catch(error){status.textContent='Не удалось открыть кадр: '+errorText(error);}finally{opening=false;renderButtons();}});
+        const state=document.createElement('p');state.className='may-ochki-log-state';state.textContent=entry.status==='found'?(log.getState().pending.includes(entry.id)?'Запись находок…':log.getState().storageError?'Находки не записаны: '+log.getState().storageError:''):entry.status==='saved'?(log.getState().pending.includes(entry.id)?'Кадр в библиотеке; сохранение лога…':log.getState().storageError?'Кадр в библиотеке; лог не сохранён':(entry.scanKey?(entry.scanJob?'Кадр и все маршруты сохранены в журнале':'Кадр и найденные змеи сохранены в журнале'):'Сохранён в библиотеке и логе')):entry.status==='saving'?'Сохранение кадра…':'Ошибка сохранения: '+(entry.error||'неизвестная ошибка');if(state.textContent)info.append(state);
+        const b=button('Открыть кадр',async()=>{opening=true;render();try{const ticket=log.prepareOpen(entry.id);await log.open(entry.id,{ticket});panel.close();}catch(error){status.textContent='Не удалось открыть кадр: '+errorText(error);}finally{opening=false;renderButtons();}});if(entry.openInWindow)b.title='Открыть кадр в отдельном окне';
         b.disabled=entry.status!=='saved'||opening;if(entry.status!=='found')info.append(b);row.append(info);list.append(row);
       }
       list.scrollTop=oldScroll;

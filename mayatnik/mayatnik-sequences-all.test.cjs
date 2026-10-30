@@ -13,7 +13,7 @@ test('live sequence refresh counts unique rows separately from directional hits 
     const state={revision:1,rows:['1','11','101'],matches:{enabled:true,active:true,pattern:'initial',mode:'all',frame:42,halves,total:3*halves,found}};
     const context={methodLabel:require('./mayatnik-ochki-method.js').label,pane:{closest:()=>null},api:{snapshot:()=>state},rendered:1,dirty:false,listKey:'sequence:1',nodes,summary,scrolledSelection:0};
     vm.runInNewContext(source.slice(labelStart,labelEnd)+'\n'+source.slice(start,end)+'\nrefresh();',context);
-    assert.match(summary.textContent,/Всего найдено 2 из 3 строк/);if(halves===2)assert.match(summary.textContent,/из 6 совпадений в двух полумаятниках/);assert.doesNotMatch(summary.textContent,/из 12|из 24/);assert.match(summary.textContent,/во всех 4 направлениях/);
+    assert.equal(summary.textContent,'','the requested stock summary is hidden; per-hit directions remain in row titles');
     for(const arrow of ['↘','↙','→','↓'])assert.ok(nodes[0].title.includes(arrow));assert.ok(!nodes[0].title.includes('во всех'));assert.equal(nodes[1].title,'');
   }
 });

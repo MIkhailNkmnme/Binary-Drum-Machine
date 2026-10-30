@@ -1,5 +1,5 @@
 /* Downward edge-neighbour paths on the two diamond lattices. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSnake=api;})(globalThis,function createSnake(){
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-variants.js'):root.MayatnikVariants);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSnake=api;})(globalThis,function createSnake(Variants){
   'use strict';
   // Shift-And existence pass on the downward DAG. The first accepting row
   // fixes the earliest starting row; it deliberately does not choose a column.
@@ -22,7 +22,7 @@
     }
     return {rows,words:operations,cells};
   }
-  function* findSteps({width,height,val,anchor=0,sequence=[],inverse=false,reverse=false,parities=[0,1],halves:outputHalves=parities.length,skipIndices=[[],[]],maxOperations=Infinity,maxEntries=Infinity,maxMs=Infinity,chunkMs=125,chunkOperations=Infinity}){
+  function* findSteps({width,height,val,anchor=0,sequence=[],inverse=false,reverse=false,half=false,parities=[0,1],halves:outputHalves=parities.length,skipIndices=[[],[]],maxOperations=Infinity,maxEntries=Infinity,maxMs=Infinity,chunkMs=125,chunkOperations=Infinity}){
     if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||!val||val.length<width*height||sequence.some(s=>typeof s!=='string'||!/^[01]+$/.test(s)))throw Error('Некорректные данные поиска змеи.');
     if(!Array.isArray(parities)||!parities.length||parities.some(p=>p!==0&&p!==1)||new Set(parities).size!==parities.length)throw Error('Некорректные решётки поиска змеи.');
     if(!Array.isArray(skipIndices)||skipIndices.length!==2||skipIndices.some(indices=>!Array.isArray(indices)||indices.some(i=>!Number.isInteger(i)||i<0||i>=sequence.length)))throw Error('Некорректные исключения поиска змеи.');
@@ -31,8 +31,7 @@
     const limit={};const tick=()=>{operations++;if(operations>maxOperations||(operations%1024===0&&Date.now()-started>maxMs))throw limit;return operations-chunkAt>=chunkOperations||operations%1024===0&&Date.now()-chunkStarted>=chunkMs;};
     const progress=()=>{chunkStarted=Date.now();chunkAt=operations;const newFound=found.slice(reportedFound);reportedFound=found.length;return {operations,entries,peakEntries,found:found.length,total,halves:outputHalves,index:currentIndex,half:currentHalf,newFound};};
     const prepassCheckpoint=work=>{operations+=work;const now=Date.now();if(operations>maxOperations||now-started>maxMs)throw limit;return operations-chunkAt>=chunkOperations||now-chunkStarted>=chunkMs?progress():null;};
-    const inv=s=>s.replace(/[01]/g,v=>v==='1'?'0':'1'),rev=s=>s.split('').reverse().join('');
-    const variants=sequence.map(text=>{const out=[[text,'']];if(inverse)out.push([inv(text),'инв']);if(reverse)out.push([rev(text),'рев']);if(inverse&&reverse)out.push([rev(inv(text)),'инв+рев']);return out;});
+    const variants=sequence.map(text=>Variants.generate(text,{inverse,reverse,half}).map(record=>[record.word,record.vn,record]));
     const needs=[new Map(),new Map()];for(const p of parities)for(let i=0;i<variants.length;i++)if(!excluded[p].has(i))for(const text of new Set(variants[i].map(v=>v[0])))needs[p].set(text,(needs[p].get(text)||0)+1);
     if(parities.every(p=>!needs[p].size))return {found,hl,total,halves:outputHalves,snake:true,complete:true,reason:'',operations:0,entries:0,peakEntries:0,prepassWords:0,prepassCells:0,elapsedMs:Date.now()-started};
     const starts=[[],[],[],[]],impossible=[{},{}];
@@ -78,12 +77,12 @@
     }
     const halves=[0,1].map(p=>new Map(Array.from(needs[p],([text,cap])=>[text,occurrence(text,cap,p)])));
     try{for(let q=0;q<N;q++){if(tick())yield progress();const bit=val[q];if(bit===0||bit===1)starts[2*((q%width-anchor-Math.floor(q/width))&1)+bit].push(q);}for(let i=0;i<variants.length;i++)for(const p of parities){
-      if(excluded[p].has(i))continue;currentIndex=i;currentHalf=p;const occurrences=halves[p];let best=null;for(const [text,vn]of variants[i]){const hit=yield* occurrences.get(text).peek();if(hit&&(!best||hit.r<best.r||hit.r===best.r&&hit.c<best.c))best={...hit,text,vn};}if(!best)continue;occurrences.get(best.text).take();found.push({i,p,r:best.r,c:best.c,n:best.cells.length,cells:best.cells,vn:best.vn,dir:'snake'});for(const cell of best.cells)hl[cell]=1;
+      if(excluded[p].has(i))continue;currentIndex=i;currentHalf=p;const occurrences=halves[p];let best=null;for(const [text,vn,variant]of variants[i]){const hit=yield* occurrences.get(text).peek();if(hit&&(!best||hit.r<best.r||hit.r===best.r&&hit.c<best.c))best={...hit,text,vn,variant};}if(!best)continue;occurrences.get(best.text).take();found.push({i,p,r:best.r,c:best.c,n:best.cells.length,cells:best.cells,vn:best.vn,text:best.text,variantFlags:best.variant.flags,variantIndex:best.variant.index,variantLabel:best.variant.label,dir:'snake'});for(const cell of best.cells)hl[cell]=1;
     }}catch(e){if(e!==limit)throw e;complete=false;reason='Достигнут предел поиска змеи; проверены не все пути.';}
     return {found,hl,total,halves:outputHalves,snake:true,complete,reason,operations,entries,peakEntries,prepassWords,prepassCells,elapsedMs:Date.now()-started};
   }
   function find(options){const steps=findSteps(options);let step;do{step=steps.next();}while(!step.done);return step.value;}
-  function createWorker(){const source='const api=('+createSnake.toString()+')();onmessage=e=>{const steps=api.findSteps(e.data);let last=0,pending=[];const pump=()=>{try{const step=steps.next();if(step.done){const result=step.value;postMessage({result},[result.hl.buffer]);}else{pending.push(...step.value.newFound);if(Date.now()-last>=100||pending.length){last=Date.now();postMessage({progress:{...step.value,newFound:pending}});pending=[];}setTimeout(pump,0);}}catch(error){postMessage({error:error.message});}};pump();};',url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));try{return new Worker(url);}finally{URL.revokeObjectURL(url);}}
+  function createWorker(){const source='const variants=('+Variants.create.toString()+')();const api=('+createSnake.toString()+')(variants);onmessage=e=>{const steps=api.findSteps(e.data);let last=0,pending=[];const pump=()=>{try{const step=steps.next();if(step.done){const result=step.value;postMessage({result},[result.hl.buffer]);}else{pending.push(...step.value.newFound);if(Date.now()-last>=100||pending.length){last=Date.now();postMessage({progress:{...step.value,newFound:pending}});pending=[];}setTimeout(pump,0);}}catch(error){postMessage({error:error.message});}};pump();};',url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));try{return new Worker(url);}finally{URL.revokeObjectURL(url);}}
   function earliest(options){const steps=earliestSteps(options);let step;do{step=steps.next();}while(!step.done);return step.value;}
   return {find,findSteps,createWorker,earliest};
 });

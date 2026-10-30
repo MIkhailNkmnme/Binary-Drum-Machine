@@ -1,14 +1,16 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
-const source=html.slice(html.indexOf('  let ochki = null;'),html.indexOf('  function updWin()'));
+// Keep the real search, publishing and coordinate functions; exclude UI bootstrap listeners.
+function section(start,end){const a=html.indexOf(start),b=html.indexOf(end,a+start.length);assert.ok(a>=0&&b>a,'host section '+start);assert.equal(html.indexOf(start,a+start.length),-1,'unique host section '+start);return html.slice(a,b);}
+const source=section('  function displayPoint(c,r,p){','  let RK =')+section('  let ochki = null;','  window.mayCurrentSnakePaths=')+section('  function publishOchki(result,','  function updWin()');
 const Joined=require('./mayatnik-joined-romb.js');
 function finder({mode='diag',view='bits',width=12,height=12,points=null,sequence=['1011'],pattern='initial',inv=false,rev=false,left=0,right=width,bottom=height,zone=null}={}){
  const val=new Int8Array(width*height).fill(points?-1:0);if(points)for(const [x,y,v]of points)val[y*width+x]=v;
  const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,{textContent:'',hidden:false,selectedOptions:[{textContent:pattern}]});return elements.get(id);};
  const state={view,ochki:true,ochkiMode:mode,ochkiPattern:pattern,ochkiLength:3,ochkiInv:inv,ochkiRev:rev};
- const context={f:{W:width,H:height,val},geo:{anchor:0},st:state,playing:false,VX:left,VW:right-left,VH:bottom,ZL:zone?Int32Array.from({length:bottom},()=>zone[0]):[],ZR:zone?Int32Array.from({length:bottom},()=>zone[1]):[],k:1,sequences:{rows:sequence,revision:1,setMatches(x){context.matches=x;}},pairOn:()=>false,rombP:()=>state.view==='romb2'?2:state.view==='romb0'?0:state.view==='romb1'?1:-1,clampInt:(x,min,max,def)=>Math.max(min,Math.min(max,Number(x)||def)),$:get,TextDecoder,performance,setTimeout:()=>0,clearTimeout,ovlSerial:0,window:{},localStorage:{getItem:()=>null,setItem(){}}};
+ const context={MayatnikVariants:require('./mayatnik-variants.js'),f:{W:width,H:height,val},geo:{anchor:0},st:state,playing:false,VX:left,VW:right-left,VH:bottom,ZL:zone?Int32Array.from({length:bottom},()=>zone[0]):[],ZR:zone?Int32Array.from({length:bottom},()=>zone[1]):[],k:1,sequences:{rows:sequence,revision:1,setMatches(x){context.matches=x;}},pairOn:()=>false,rombP:()=>state.view==='romb2'?2:state.view==='romb0'?0:state.view==='romb1'?1:-1,clampInt:(x,min,max,def)=>Math.max(min,Math.min(max,Number(x)||def)),$:get,TextDecoder,performance,setTimeout:()=>0,clearTimeout,ovlSerial:0,window:{},localStorage:{getItem:()=>null,setItem(){}}};
  context.joinedOn=()=>state.view==='rombJoin'||state.view==='rombJoin180';context.joinedGeometry=()=>Joined.create({width:right-left,height:bottom,origin:left,anchor:0,fieldWidth:width,rotate:state.view==='rombJoin180'});context.parityVisible=()=>true;context.outZone=(r,c)=>!!zone&&(c<zone[0]||c>zone[1]);
- Object.assign(context,{gpuBig:null,gpuDisplay:()=>false,structuredClone,CustomEvent,window:new EventTarget()});vm.createContext(context);vm.runInContext(source+';globalThis.getLines=ochkiLines;globalThis.getResult=()=>{const result=ochkiGet();publishOchki(result);return result;};',context);
+ Object.assign(context,{gpuBig:null,gpuDisplay:()=>false,RG:0,structuredClone,CustomEvent,window:new EventTarget()});vm.createContext(context);vm.runInContext(source+';globalThis.getLines=ochkiLines;globalThis.getResult=()=>{const result=ochkiGet();publishOchki(result);return result;};',context);
  return {context,state,get,lines:()=>context.getLines(),result:()=>context.getResult()};
 }
 const fixtures={diag:{dir:1,step:[1,1],points:[[1,1,1],[2,2,0],[3,3,1],[4,4,1]]},antidiag:{dir:-1,step:[-1,1],points:[[6,1,1],[5,2,0],[4,3,1],[3,4,1]]},row:{dir:0,step:[2,0],points:[[1,2,1],[3,2,0],[5,2,1],[7,2,1]]},col:{dir:2,step:[0,2],points:[[2,1,1],[2,3,0],[2,5,1],[2,7,1]]}};

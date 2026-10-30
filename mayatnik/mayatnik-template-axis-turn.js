@@ -31,6 +31,44 @@
     return {...previous,[id]:{position:Number.isFinite(old?.position)?old.position:initial,visible:!old?.visible}};
   }
   function moveManual(previous,id,position){return previous?.[id]&&Number.isFinite(position)?{...previous,[id]:{...previous[id],position}}:previous;}
+  function operation(value){return value==='xor'||value==='and'?value:'';}
+  function toggleOperation(previous,requested){const op=operation(requested);return op?{...previous,operation:operation(previous?.operation)===op?'':op}:previous;}
+  function rebaseFrame(previous,box,pose){const frame=previous?.fixedFrame;return {...previous,fixedFrame:{box:{...(frame?.box||box)},pose:[...pose]}};}
+  // Extra contributions keep the other operand's real source addresses. The
+  // primary source remains sourceOrigin/sourceIndices for ordinary transforms.
+  // No derived pixel retains a librarySource proof of an unmodified source bit.
+  function sourceContributions(part,q){
+    const out=part.sourceOrigin?[{origin:part.sourceOrigin,index:part.sourceIndices?.[q]??q,proof:part.sourceOrigin.compositionSourceProof||part.sourceOrigin.librarySource||part.librarySource}]:[];
+    for(const record of part.compositionSources||[]){const a=record.pairs;let lo=0,hi=a.length/2;while(lo<hi){const mid=(lo+hi)>>1;if(a[mid*2]<q)lo=mid+1;else hi=mid;}for(let i=lo*2;i<a.length&&a[i]===q;i+=2)out.push({origin:record.origin,index:a[i+1],proof:record.origin.compositionSourceProof});}
+    return out;
+  }
+  function remapCompositionSources(records,newToOld,mask){
+    if(!records?.length)return undefined;const inverse=new Map();for(let q=0;q<newToOld.length;q++){if(mask&&!mask[q])continue;const old=newToOld[q];if(!inverse.has(old))inverse.set(old,[]);inverse.get(old).push(q);}
+    return records.map(record=>{const pairs=[];for(let i=0;i<record.pairs.length;i+=2)for(const q of inverse.get(record.pairs[i])||[])pairs.push([q,record.pairs[i+1]]);pairs.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);return {origin:record.origin,pairs:Uint32Array.from(pairs.flat())};}).filter(r=>r.pairs.length);
+  }
+  function semanticParts(parts,read){return prepareParts(parts).map(part=>{
+    if(part.bitsData)return part;const bitsData=new Int8Array(part.mask.data.length).fill(-1);
+    for(let q=0;q<bitsData.length;q++)if(part.mask.data[q]){const bit=read(part,q);if(bit!==-1&&bit!==0&&bit!==1)throw Error('Для операции нужны сохранённые значения битов шаблона');bitsData[q]=bit;}
+    return {...part,bitsData};
+  });}
+  function compose(oldParts,oldRects,turnedParts,turnedRects,op,{zero=0xff202020,one=0xffffffff,clipWidth=Infinity,maxPixels=12e6}={}){
+    op=operation(op);if(!op)throw Error('Не выбрана операция шаблона');const box=bounds([...oldRects,...turnedRects]);if(!box)throw Error('Нет геометрии шаблона');
+    const x=Math.floor(box.x),y=Math.floor(box.y),w=Math.max(1,Math.ceil(box.x+box.width)-x),h=Math.max(1,Math.ceil(box.y+box.height)-y),size=w*h;if(!Number.isSafeInteger(size)||size>maxPixels)throw Error('Результат слишком большой — приблизьте ось к шаблону');
+    const origins=new Map(),groups=new Map();
+    const origin=(o,proof)=>{if(!origins.has(o.key)){const copy={...o},saved=proof||o.compositionSourceProof||o.librarySource;if(saved)copy.compositionSourceProof=saved;delete copy.librarySource;origins.set(o.key,copy);}return origins.get(o.key);};
+    function sample(parts,rects,px,py){for(let i=parts.length-1;i>=0;i--){const p=parts[i],r=rects[i],m=p.mask;if(px<r.x||py<r.y||px>=r.x+r.width||py>=r.y+r.height)continue;const q=Math.floor((py-r.y)/r.height*m.height)*m.width+Math.floor((px-r.x)/r.width*m.width),bit=p.bitsData?.[q];if(m.data[q]&&(bit===0||bit===1))return {part:p,q,bit};}return null;}
+    function group(o,proof){o=origin(o,proof);if(!groups.has(o.key))groups.set(o.key,{origin:o,data:new Uint32Array(size),bits:new Int8Array(size).fill(-1),indices:new Uint32Array(size),extra:new Map(),count:0});return groups.get(o.key);}
+    for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++){
+      const a=sample(oldParts,oldRects,x+xx+.5,y+yy+.5),b=sample(turnedParts,turnedRects,x+xx+.5,y+yy+.5);if(op==='and'?(!a||!b):(!a&&!b))continue;
+      const bit=a&&b?(op==='xor'?a.bit^b.bit:a.bit&b.bit):(b||a).bit,contributions=[],seen=new Set();
+      for(const v of [b,a])if(v)for(const c of sourceContributions(v.part,v.q)){const key=c.origin.key+':'+c.index;if(!seen.has(key)){seen.add(key);contributions.push(c);}}
+      if(!contributions.length)throw Error('У результата нет исходных адресов шаблона');const primary=contributions[0],g=group(primary.origin,primary.proof),q=yy*w+xx;g.data[q]=((bit?one:zero)|0xff000000)>>>0;g.bits[q]=bit;g.indices[q]=primary.index;g.count++;
+      for(const c of contributions.slice(1)){const o=origin(c.origin,c.proof);if(!g.extra.has(o.key))g.extra.set(o.key,{origin:o,pairs:[]});g.extra.get(o.key).pairs.push(q,c.index);}
+    }
+    // Empty AND keeps a geometric frame so the active controls and Undo remain.
+    if(!groups.size){const first=oldParts[0]||turnedParts[0];if(!first?.sourceOrigin)throw Error('Нет исходной маски шаблона');group(first.sourceOrigin);}
+    return [...groups.values()].map(g=>({mask:{x,y,width:w,height:h,data:g.data,count:g.count},axis:x+w/2,axisOriginY:y,p:-1,ox:0,axisClipWidth:Number.isFinite(clipWidth)?clipWidth:Math.max(1,x+w),sourceOrigin:g.origin,sourceIndices:g.indices,sourceData:g.data,bitsData:g.bits,librarySource:null,compositionSources:[...g.extra.values()].map(r=>({origin:r.origin,pairs:Uint32Array.from(r.pairs)})),canvas:null,bitCanvas:null,edges:null}));
+  }
   let sourceSerial=0;
   function prepareParts(parts){return parts.map(part=>part.sourceOrigin?part:{...part,sourceOrigin:{key:'axis-source:'+Date.now()+':'+(++sourceSerial),mask:{...part.mask,data:part.sourceData||part.mask.data},axis:part.axis,ox:part.ox,p:part.p},sourceIndices:Uint32Array.from({length:part.mask.data.length},(_,i)=>i)});}
   // flipParts owns pixel orientation; this step reflects part placement as ONE
@@ -47,8 +85,9 @@
   function validatePart(part){
     if(part.axisClipWidth!=null&&(!Number.isFinite(part.axisClipWidth)||part.axisClipWidth<=0))throw Error('Повреждена область шаблона');
     if(part.axisOriginY!=null&&!Number.isFinite(part.axisOriginY))throw Error('Повреждено начало шаблона');
-    if(!part.sourceOrigin){if(part.sourceIndices!=null)throw Error('Нет исходной маски шаблона');return;}
+    if(!part.sourceOrigin){if(part.sourceIndices!=null||part.compositionSources?.length)throw Error('Нет исходной маски шаблона');return;}
     const o=part.sourceOrigin,m=o.mask;if(!m||typeof o.key!=='string'||o.key.length>200||!Number.isFinite(m.x)||!Number.isFinite(m.y)||!Number.isFinite(o.axis)||!Number.isFinite(o.ox)||!Number.isInteger(m.width)||!Number.isInteger(m.height)||m.width<1||m.height<1||m.width*m.height>100e6||!(m.data instanceof Uint32Array)||m.data.length!==m.width*m.height||!(part.sourceIndices instanceof Uint32Array)||part.sourceIndices.length!==part.mask.data.length||part.sourceIndices.some(q=>q>=m.data.length))throw Error('Повреждены исходные адреса шаблона');
+    if(part.compositionSources!=null){if(!Array.isArray(part.compositionSources))throw Error('Повреждены адреса операции шаблона');for(const record of part.compositionSources){const origin=record?.origin,source=origin?.mask,pairs=record?.pairs;if(!origin||typeof origin.key!=='string'||origin.key.length>200||!source||![source.x,source.y,origin.axis,origin.ox].every(Number.isFinite)||!Number.isInteger(source.width)||!Number.isInteger(source.height)||source.width<1||source.height<1||source.width*source.height>100e6||!(source.data instanceof Uint32Array)||source.data.length!==source.width*source.height||!(pairs instanceof Uint32Array)||pairs.length%2)throw Error('Повреждены адреса операции шаблона');let last=0;for(let i=0;i<pairs.length;i+=2){if(pairs[i]<last||pairs[i]>=part.mask.data.length||pairs[i+1]>=source.data.length)throw Error('Повреждены адреса операции шаблона');last=pairs[i];}}}
   }
   function libraryParts(parts,anchor){return parts.map(p=>({x:p.mask.x-anchor,y:p.mask.y,width:p.mask.width,height:p.mask.height,axis:p.axis-anchor,axisOriginY:p.axisOriginY,data:Array.from(p.mask.data),bits:p.bitsData?Array.from(p.bitsData):null}));}
   function libraryPreview(parts,rects,rk,anchor,viewX=0,viewY=0){
@@ -98,11 +137,11 @@
       for(const [lo,hi,flip]of bands){const a=Math.max(start,lo),b=Math.min(start+extent,hi);if(b<=a)continue;
         // Retain the full half-strip, including empty outer cells, so the next
         // press uses the same geometric frame and inside-out is an involution.
-        const w=horizontal?hi-lo:m.width,h=horizontal?m.height:hi-lo,data=new Uint32Array(w*h),bits=p.bitsData?new Int8Array(w*h).fill(-1):null,indices=new Uint32Array(w*h);let count=0;
-        for(let y=0;y<h;y++)for(let x=0;x<w;x++){const u=horizontal?(flip?hi-1-x:lo+x)-start:x,v=horizontal?y:(flip?hi-1-y:lo+y)-start;if(u<0||v<0||u>=m.width||v>=m.height)continue;const q=v*m.width+u,j=y*w+x;data[j]=m.data[q];if(data[j])count++;if(bits)bits[j]=p.bitsData[q];indices[j]=p.sourceIndices?p.sourceIndices[q]:q;}
+        const w=horizontal?hi-lo:m.width,h=horizontal?m.height:hi-lo,data=new Uint32Array(w*h),bits=p.bitsData?new Int8Array(w*h).fill(-1):null,indices=new Uint32Array(w*h),working=p.compositionSources?.length?new Uint32Array(w*h):null;let count=0;
+        for(let y=0;y<h;y++)for(let x=0;x<w;x++){const u=horizontal?(flip?hi-1-x:lo+x)-start:x,v=horizontal?y:(flip?hi-1-y:lo+y)-start;if(u<0||v<0||u>=m.width||v>=m.height)continue;const q=v*m.width+u,j=y*w+x;data[j]=m.data[q];if(data[j])count++;if(bits)bits[j]=p.bitsData[q];indices[j]=p.sourceIndices?p.sourceIndices[q]:q;if(working)working[j]=q;}
         if(!count)continue;
         const dest=lo,targetX=horizontal?box.x+dest*g.sx:r.x,targetY=horizontal?r.y:box.y+dest*g.sy,viewX=r.x-(p.axis+(m.x-p.axis)*g.sx),oldY=p.axisOriginY??m.y,viewY=r.y-(oldY+(m.y-oldY)*g.sy),commonX=box.x+box.width/2-viewX,commonY=box.y-viewY,mx=commonX+(targetX-viewX-commonX)/g.sx,my=commonY+(targetY-viewY-commonY)/g.sy;
-        result.push({...p,mask:{...m,x:mx,y:my,width:w,height:h,data,count},axis:commonX,axisOriginY:commonY,ox:0,p:-1,axisClipWidth:clipWidth,sourceData:data,sourceIndices:indices,...(bits?{bitsData:bits}:{}),canvas:null,bitCanvas:null,edges:null});
+        result.push({...p,mask:{...m,x:mx,y:my,width:w,height:h,data,count},axis:commonX,axisOriginY:commonY,ox:0,p:-1,axisClipWidth:clipWidth,sourceData:data,sourceIndices:indices,...(bits?{bitsData:bits}:{}),...(working?{compositionSources:remapCompositionSources(p.compositionSources,working,data)}:{}),canvas:null,bitCanvas:null,edges:null});
       }
     }
     return result;
@@ -175,5 +214,5 @@
     }
     return {render,hide,destroy(){hide();host.remove();},host};
   }
-  return {bounds,axes,frameBox,freezeFrame,toggleManual,moveManual,prepareParts,placeReflected,originalPart,validatePart,libraryParts,libraryPreview,fromLibrary,grid,symmetricGrid,insideOut,layout,mount};
+  return {bounds,axes,frameBox,freezeFrame,toggleManual,moveManual,operation,toggleOperation,rebaseFrame,sourceContributions,remapCompositionSources,semanticParts,compose,prepareParts,placeReflected,originalPart,validatePart,libraryParts,libraryPreview,fromLibrary,grid,symmetricGrid,insideOut,layout,mount};
 });

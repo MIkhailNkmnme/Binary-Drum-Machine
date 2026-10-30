@@ -39,11 +39,11 @@ test('real table refresh keeps earlier gold rows and describes them as previous 
  const api=make(),source=fs.readFileSync(__dirname+'/mayatnik-sequences.js','utf8'),a=source.indexOf('  const directionLabel='),b=source.indexOf('\n',a),start=source.indexOf('    function refresh(){'),end=source.indexOf('    const unsubscribe=',start);
  const node=()=>({dataset:{},classes:new Set(),classList:{toggle(name,on){on?this.owner.classes.add(name):this.owner.classes.delete(name);}},title:'',querySelector(){return {};},getAttribute(){return 'false';},setAttribute(){}});
  const nodes=Array.from({length:16},()=>{const n=node();n.classList.owner=n;return n;});
- const context={methodLabel:require('./mayatnik-ochki-method.js').label,pane:{closest:()=>null},api,rendered:0,dirty:false,listKey:'sequence:0',nodes,summary:{},scrolledSelection:0};
+ const context={startLabel:Sequences.startLabel,methodLabel:require('./mayatnik-ochki-method.js').label,pane:{closest:()=>null},api,rendered:0,dirty:false,listKey:'sequence:0',nodes,summary:{},scrolledSelection:0};
  vm.createContext(context);vm.runInContext(source.slice(a,b)+'\n'+source.slice(start,end),context);
  api.setMatches(result(8,Array.from({length:8},(_,i)=>hit(i)),{foundEver:8,foundIndices:[0,1,2,3,4,5,6,7]}));vm.runInContext('refresh()',context);
  api.setMatches(result(15,[hit(14)],{foundEver:9,foundIndices:[0,1,2,3,4,5,6,7,14]}));vm.runInContext('refresh()',context);
- assert.equal(nodes.filter(n=>n.classes.has('is-found')).length,9);assert.equal(nodes[0].dataset.found,'true');assert.equal(nodes[14].dataset.found,'true');assert.match(nodes[0].title,/Ранее найдено · кадр 8/);assert.match(nodes[14].title,/Найдено на поле/);assert.match(context.summary.textContent,/Всего найдено 9 из 16 строк/);
+ assert.equal(nodes.filter(n=>n.classes.has('is-found')).length,9);assert.equal(nodes[0].dataset.found,'true');assert.equal(nodes[14].dataset.found,'true');assert.match(nodes[0].title,/Ранее найдено · кадр 8/);assert.match(nodes[14].title,/Найдено на поле/);assert.equal(context.summary.textContent,'');
  api.setMatches(result(16,[],{active:false,foundEver:9,foundIndices:[0,1,2,3,4,5,6,7,14]}));vm.runInContext('refresh()',context);assert.equal(nodes.filter(n=>n.classes.has('is-found')).length,9);
  api.setMatches({enabled:false,active:false,found:[]});vm.runInContext('refresh()',context);assert.equal(nodes.filter(n=>n.classes.has('is-found')).length,0);
 });
@@ -65,7 +65,7 @@ test('first findings are immutable per half across frames and manual searches do
 test('visible table shows sequence, first frames and methods separately per half without changing gold or editor',()=>{
  const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<section></section>'),pane=dom.window.document.querySelector('section'),api=make(),view=Sequences.mount(pane,api);
  try{
-  assert.deepEqual([...pane.querySelectorAll('thead th')].map(n=>n.textContent),['№','Последовательность','Первый кадр','Способ поиска']);
+  assert.deepEqual([...pane.querySelectorAll('thead th')].map(n=>n.textContent),['№','Послед-ть','Кадр','Начало','Конец','Поиск']);
   const row=pane.querySelector('[data-sequence-row="0"]');assert.equal(row.querySelector('[data-column=sequence]').textContent,'1');assert.equal(row.querySelector('[data-column=frame]').textContent,'—');
   api.recordFirstFind({...hit(0),p:0,dir:'snake',manual:true,vn:'инв'},{frame:7,halves:2,searchScope:'a'});
   assert.equal(pane.querySelectorAll('.is-found').length,0);assert.equal(row.querySelector('[data-column=frame]').textContent,'Левый: 7');assert.match(row.querySelector('[data-column=method]').textContent,/ручная змея.*инверсия/);

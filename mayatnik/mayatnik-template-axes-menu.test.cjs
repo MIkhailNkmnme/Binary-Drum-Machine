@@ -9,3 +9,13 @@ test('template axis pair accepts a late API, forwards one native click, and mirr
   state.enabled=false;w.dispatchEvent(new w.Event('may-template-axes-change'));parts[0].click();assert.equal(calls.length,3);assert.ok(parts.every(n=>n.disabled&&n.getAttribute('aria-disabled')==='true'));
  }finally{dom.window.close();}
 });
+
+test('XOR and AND form one adjacent native pair, start OFF, remain mutually exclusive and retain disabled slots',()=>{
+ const dom=new JSDOM('<div id="paintTools"><div class="pt-g"><div class="pt-r"></div></div></div>',{runScripts:'outside-only'}),w=dom.window,d=w.document,row=d.querySelector('.pt-r');try{
+  const state={enabled:true,manualH:false,manualV:false,operation:''},calls=[];w.toolSync=[];w.rail={refresh(){}};w.placeTools=()=>{};w.mayTemplateAxes={get:()=>({...state}),toggle(){},toggleOperation(op){calls.push(op);state.operation=state.operation===op?'':op;w.dispatchEvent(new w.Event('may-template-axes-change'));}};
+  w.eval(source.slice(start,end)+'window.mount=installTemplateAxesMenu;');const axes=w.mount(row),pair=row.querySelector('[data-n="templateAxisOperation"]'),buttons=[...pair.children];assert.equal(axes.nextElementSibling,pair);assert.ok(pair.classList.contains('gz-split'));assert.ok(!pair.classList.contains('may-independent-selector'));assert.deepEqual(buttons.map(b=>b.textContent),['XOR','AND']);assert.ok(buttons.every(b=>!b.disabled&&b.getAttribute('aria-pressed')==='false'));for(const b of buttons){assert.equal(b.type,'button');assert.equal(b.getAttribute('aria-label'),b.title);assert.ok(b.title.includes('0'));}
+  buttons[0].click();assert.deepEqual(calls,['xor']);assert.deepEqual(buttons.map(b=>b.getAttribute('aria-pressed')),['true','false']);buttons[1].click();assert.deepEqual(buttons.map(b=>b.getAttribute('aria-pressed')),['false','true']);buttons[1].click();assert.equal(state.operation,'');assert.ok(buttons.every(b=>b.getAttribute('aria-pressed')==='false'));
+  state.enabled=false;w.dispatchEvent(new w.Event('may-template-axes-change'));buttons[0].click();assert.equal(calls.length,3);assert.ok(buttons.every(b=>b.disabled&&!b.hidden&&b.getAttribute('aria-disabled')==='true'));assert.equal(pair.style.display,'');w.mount(row);assert.equal(row.querySelectorAll('[data-n="templateAxisOperation"]').length,1);
+  const style=d.createElement('style');style.textContent=fs.readFileSync(__dirname+'/mayatnik-menu.css','utf8');d.head.append(style);assert.ok(buttons.every(b=>w.getComputedStyle(b).borderTopWidth==='0px'));
+ }finally{dom.window.close();}
+});

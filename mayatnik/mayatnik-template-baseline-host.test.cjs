@@ -51,8 +51,14 @@ function turningFixture(){const f=fixture(),c=f.c;c.f.val.fill(1);f.source=c.f.v
  c.document={createElement:()=>({getContext:()=>({putImageData(){}})})};c.ImageData=function(data,width,height){Object.assign(this,{data,width,height});};c.mirrorLive=false;c.manualPaintRevision=0;c.colReplayRestore=()=>{};c.persistLibrary=()=>{};
  c.sceneSnapshot=()=>({items:c.templateItems.map(item=>({...item,view:{...item.view}})),matches:c.templateMatchLayer,templatePaint:c.templatePaintLayer,active:c.colourTemplate?.id,picked:[...c.templatePickedIds],library:f.library,hidden:[],manualPaint:null});
  c.templateAxisCommit=before=>{c.templateMatchRevision++;c.pushHistory({indices:new Uint32Array(),previous:new Uint32Array(),next:new Uint32Array(),beforeScene:before,afterScene:c.sceneSnapshot(),bytes:1024,templateOwned:true});};
- for(const name of ['templateAxisState','flipParts','turnTemplateAxis','historyStep'])vm.runInContext(fn(name),c);return f;
+ for(const name of ['templateAxisState','flipParts','templateAxisSemanticParts','templateAxisCanvasParts','templateAxisBuildTurn','toggleTemplateAxisOperation','turnTemplateAxis','historyStep'])vm.runInContext(fn(name),c);return f;
 }
+test('XOR and AND results keep source vacate in one edit and Reset/frame departure discard operation mode and derived pixels',()=>{
+ for(const op of ['xor','and'])for(const frame of [false,true]){const f=turningFixture(),c=f.c,original=c.colourTemplate.parts[0].mask.data.slice();c.st.bitZeroColour='#112233';c.st.bitOneColour='#ffffff';c.hexRGB=s=>[1,3,5].map(i=>parseInt(s.slice(i,i+2),16));c.toggleTemplateAxisOperation(op);const n=c.fillHistory.length;assert.equal(c.turnTemplateAxis('centerV'),true);assert.equal(c.fillHistory.length,n+1);assert.ok(c.templateMatchLayer);assert.ok(c.colourTemplate.parts.every(p=>p.bitsData));assert.equal(c.colourTemplate.templateAxes.operation,op);assert.deepEqual(c.f.val,f.source);
+  if(frame){f.api.frame(4);assert.equal(c.templateItems.length,0);}else{f.api.reset();assert.deepEqual([...c.templateItems[0].parts[0].mask.data],[...original]);assert.equal(c.templateItems[0].parts[0].compositionSources,undefined);assert.equal(c.templateItems[0].templateAxes,undefined);}
+  assert.equal(c.templateMatchLayer,null);assert.equal(c.templateLibrary,f.library);assert.equal(c.fillMask[0],888);assert.equal(c.templateFollow.on,true);
+ }
+});
 test('axis turn vacates only the original field silhouette once; repeated same-axis turns return the same item and one Undo restores source',()=>{
  for(const gpu of [false,true]){const f=turningFixture(),c=f.c;c.gpuBig=gpu?{}:null;const id=c.colourTemplate.id,original=c.colourTemplate.parts[0].mask.data.slice(),initialRect=c.templateRect(c.colourTemplate.parts[0]);
   assert.equal(c.turnTemplateAxis('right'),true);assert.equal(c.templateItems.length,1);assert.equal(c.colourTemplate.id,id);assert.deepEqual([...c.templateMatchLayer.indices].sort((a,b)=>a-b),[9,10,17]);assert.equal(c.templateMatchLayer.bits[18],2,'transparent hole is untouched');assert.equal(c.templateMatchLayer.bits[11],2,'intermediate destination is not erased');assert.equal(c.fillHistory.length,1);

@@ -89,7 +89,7 @@
         arrows: ['−1', '+1'], thumb: { label: () => $('bPlay').getAttribute('aria-pressed') === 'true' ? '❚❚' : '▶', click: () => $('bPlay').click() } } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
-      button('bOchki', 'eye'), button('bOchkiSnake','eye'), button('bManualSnake','eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
+      button('bOchki', 'eye'), button('bOchkiSnake','eye'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
@@ -277,6 +277,10 @@
       legacy.id = 'mayCompareLegacy'; legacy.dataset.n = 'mayCompareLegacy'; legacy.textContent = 'Маятник';
       legacy.title = 'Обычный маятник: вернуться к прежнему построению и общему управлению'; legacy.setAttribute('aria-label', legacy.title);
       legacy.onclick = event => { event.stopPropagation(); choose(''); }; pop.append(section(legacy, 'fields'));
+      const own=document.createElement('button');own.type='button';own.className='gz-hx';own.id='maySequenceField';own.dataset.n='maySequenceField';own.textContent='Своя последовательность';
+      own.title='Свой маятник: все строки текущей библиотеки становятся отдельным исходным рисунком. Число строк ограничивает первые N строк; остальные сохраняются. Общий центр, между битами одна пустая клетка. Кадр 0 — исходный рисунок, далее обычные шаги маятника.';own.setAttribute('aria-label',own.title);
+      own.onclick=event=>{event.stopPropagation();window.maySequenceField?.set(!window.maySequenceField?.get().on);syncComparison();rail.refresh();};pop.append(section(own,'fields'));
+      controls.push({half:own,on:()=>!!window.maySequenceField?.get().on,gz:true});
       pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
         { id: 'mayCompareCones', label: 'Конусы', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
         { id: 'mayCompareField', label: 'Поле', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }
@@ -322,7 +326,7 @@
           half.setAttribute('aria-pressed', String(!!on()));
           if (gz) half.classList.toggle('gz-on', !!on());
         }
-        const selected = !state().source; legacy.classList.toggle('gz-on', selected); legacy.setAttribute('aria-pressed', String(selected));
+        const selected = !state().source&&!state().sequence; legacy.classList.toggle('gz-on', selected); legacy.setAttribute('aria-pressed', String(selected));
       }
       addEventListener('may-compare-change', syncComparison);
       b.addEventListener('click', syncComparison); syncComparison();
@@ -333,7 +337,7 @@
     { const ab = document.createElement('button'); ab.className = 'gz-hx'; ab.textContent = 'Сборка'; ab.dataset.miShort = 'Сборка';
       ab.setAttribute('aria-pressed', 'false');
       ab.title = 'Включить сборку последнего теста: кадр 0 и дальше без остановки, пока не нажать паузу или «Сборку» ещё раз. Рядом с начальной 1 добавляется следующая, строки 1…n−1 пересчитываются по очереди. «Скорость» — темп, «Кадр, с» — пауза. Если теста ещё не было — сначала строит XOR.';
-      const testTitle = ab.title, comparisonOn = () => !!window.mayComparison?.get?.().source;
+      const testTitle = ab.title, comparisonOn = () => !!(window.mayComparison?.get?.().source||window.maySequenceField?.get?.().on);
       const syncAb = on => { if (comparisonOn()) on = $('bPlay')?.getAttribute('aria-pressed') === 'true';
         ab.classList.toggle('on', !!on); ab.setAttribute('aria-pressed', String(!!on));
         ab.title = comparisonOn() ? 'Пуск или пауза выбранного построения: продолжить с текущего кадра обычным управлением маятника' : testTitle; };
@@ -352,7 +356,7 @@
           window.mayTestPrepare?.(); syncMode(); sync(); };
         return b; };
       const mbRows = mkMode('Сборка строк'), mbFrames = mkMode('Сборка кадров');
-      const syncMode = () => { const fr = window.mayTestBuildMode?.get?.() === 'frames', comparison = !!window.mayComparison?.get?.().source;
+      const syncMode = () => { const fr = window.mayTestBuildMode?.get?.() === 'frames', comparison = !!(window.mayComparison?.get?.().source||window.maySequenceField?.get?.().on);
         // Comparisons use the existing «По стрк.» / common frame transport.
         // These two legacy test-only modes do not control those transports.
         mbRows.hidden = comparison || fr; mbFrames.hidden = comparison || !fr;
@@ -950,8 +954,10 @@
   function installTemplateAxesMenu(row){
     if(!row||row.querySelector('[data-n="templateAxes"]'))return;const doc=row.ownerDocument,win=doc.defaultView,pair=doc.createElement('div');pair.className='gz-hx gz-pair gz-split may-segments may-independent-selector';pair.dataset.n='templateAxes';pair.setAttribute('role','group');pair.setAttribute('aria-label','Ручные оси выбранного шаблона');
     const parts=[['manualV','Верт','Вертикальная ось выбранного шаблона'],['manualH','Гориз','Горизонтальная ось выбранного шаблона']].map(([key,label,title],i)=>{const b=doc.createElement('button');b.type='button';b.className='gz-half gz-h'+i;b.dataset.templateAxis=key;b.textContent=label;b.title=title+' — первое нажатие создаёт обе оси в центре, затем эта половина показывает или скрывает свою ось';b.setAttribute('aria-label',b.title);b.addEventListener('click',()=>{if(b.disabled)return;win.mayTemplateAxes?.toggle(key);sync();rail.refresh();placeTools();});pair.append(b);return b;});
-    function sync(){const state=win.mayTemplateAxes?.get()||{};for(const b of parts){const on=!!state[b.dataset.templateAxis];b.disabled=!state.enabled;b.setAttribute('aria-disabled',String(b.disabled));b.classList.toggle('gz-on',on);b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}}
-    row.append(pair);win.addEventListener('may-template-axes-change',sync);toolSync.push(sync);sync();return pair;
+    const operations=doc.createElement('div');operations.className='gz-hx gz-pair gz-split may-segments';operations.dataset.n='templateAxisOperation';operations.setAttribute('role','group');operations.setAttribute('aria-label','Операция поворота шаблона со старой фигурой');
+    const operationParts=['xor','and'].map((op,i)=>{const b=doc.createElement('button');b.type='button';b.className='gz-half gz-h'+i;b.dataset.templateOperation=op;b.textContent=op.toUpperCase();b.title='Поворот шаблона: '+op.toUpperCase()+' со старой фигурой. Повтор отключает режим; 0 остаётся занятым битом, пустая клетка отличается от 0';b.setAttribute('aria-label',b.title);b.addEventListener('click',()=>{if(b.disabled)return;win.mayTemplateAxes?.toggleOperation(op);sync();rail.refresh();placeTools();});operations.append(b);return b;});
+    function sync(){const api=win.mayTemplateAxes,state=api?.get()||{};for(const b of parts){const on=!!state[b.dataset.templateAxis];b.disabled=!state.enabled;b.setAttribute('aria-disabled',String(b.disabled));b.classList.toggle('gz-on',on);b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}for(const b of operationParts){const on=state.operation===b.dataset.templateOperation;b.disabled=!state.enabled||typeof api?.toggleOperation!=='function';b.setAttribute('aria-disabled',String(b.disabled));b.classList.toggle('gz-on',on);b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}}
+    row.append(pair,operations);win.addEventListener('may-template-axes-change',sync);toolSync.push(sync);sync();return pair;
   }
   const manualAxesRow=installManualAxesMenu(railSourceButtons);installTemplateAxesMenu(manualAxesRow);
   installNAxesMenu(manualAxesRow,window.mayNAxes);
@@ -1136,12 +1142,9 @@
       localStorage.setItem(mark, '1');
     }
   } catch (_) {}
-  // v0.180: «это в верхнее меню, открытие кнопкой и скрытие, как выпадающее меню, только полем»: сводка «Очков» — не полосой под шапкой,
-  // а выпадающей группой «👓 Очки» в полосе (наведение / щелчок / закреп — как у остальных); группа видна, только пока «Очки» что-то показывают
-  { const row = ptGroup('👓 Очки'), g = row.parentElement, box = $('ochkiBox'); g.classList.add('pt-ochki'); g.style.setProperty('--c', '#ffb347'); row.append(box); box.open = true;
-    const top = () => { const l = $('ochkiList'); if (l?.getClientRects().length) g.style.setProperty('--ochki-top', Math.round(l.getBoundingClientRect().top) + 'px'); };   // v0.181: верх списка — чтобы дотянуть его ровно до низа окна
-    g.querySelector('.pt-l').addEventListener('pointerenter', () => requestAnimationFrame(top)); g.querySelector('.pt-l').addEventListener('click', () => requestAnimationFrame(top)); addEventListener('resize', top);
-    toolSync.push(() => { const hide = box.hidden; if ((g.style.display === 'none') !== hide) g.style.display = hide ? 'none' : ''; }); }
+  // Results share the existing Search group and retain their live source nodes.
+  { const g = document.querySelector('.gz-group[data-id="ochki"]'), box = $('ochkiBox'), row = g?.querySelector('.gz-wide');
+    if(row&&box){g.classList.add('may-search-results-group');row.append(box);box.open=true;} }
   // v0.182: «Сведения — тоже кнопкой, как Очки»: выпадающая группа «ⓘ Сведения» в полосе; панель (#mayatnikInfoPanel) кладётся в неё ниже
   const infoRow = ptGroup('ⓘ Сведения'); infoRow.parentElement.classList.add('pt-info'); infoRow.parentElement.style.setProperty('--c', '#9fb4d8');
   { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
@@ -1881,7 +1884,9 @@
         if (box.classList.contains('gz-open')) {
           const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(), up = !mobileMenu.matches && box.classList.contains('pt-bot');
           const max = Math.max(24, up ? h.top - 14 : innerHeight - h.bottom - 16);
-          if (!up) { list.style.setProperty('left', Math.max(4, Math.min(h.left, innerWidth - 124)) + 'px', 'important'); list.style.setProperty('top', (h.bottom + 2) + 'px', 'important'); }
+          const resultWidth=box.classList.contains('may-search-results-group')?Math.min(360,Math.max(120,popupRight()-8)):120;
+          if(box.classList.contains('may-search-results-group'))list.style.setProperty('width',resultWidth+'px','important');
+          if (!up) { list.style.setProperty('left', Math.max(4, Math.min(h.left, (box.classList.contains('may-search-results-group')?popupRight():innerWidth) - resultWidth - 4)) + 'px', 'important'); list.style.setProperty('top', (h.bottom + 2) + 'px', 'important'); }
           list.style.maxHeight = max + 'px';
           // v0.464: внешняя скобка не обрезается overflow:auto у короткого списка;
           // у длинного списка для неё есть место внутри прокручиваемого содержимого.

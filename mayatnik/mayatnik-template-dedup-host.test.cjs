@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const html=fs.readFileSync(process.env.MAYATNIK_TEST_HTML||__dirname+'/Zerkalius-mayatnik.html','utf8');
 const section=(a,b)=>{const start=html.indexOf(a),end=html.indexOf(b,start);assert.ok(start>=0&&end>start,a);return html.slice(start,end);};
 function fixture(){
- const nodes={templateName:{value:'Серый'},paintCacheInfo:{textContent:''}},entries=[],item={id:'field',view:{}},events=[];
+ const nodes={templateName:{value:'Серый'},paintCacheInfo:{textContent:''}},entries=[],item={id:'field',view:{},parts:[{mask:{data:Uint32Array.of(1,1)}}]},events=[];
  let shape;const c={window:{},MayatnikTemplateDedup:D,templateLibrary:entries,colourTemplate:item,templateItems:[item],libraryReady:Promise.resolve(),templateSnapshot:()=>shape,$:id=>nodes[id],sceneSnapshot:()=>({}),templateSceneHistory(){},savePaint(){},libraryList(){},dispatchEvent:e=>events.push(e),CustomEvent:class{constructor(type,args){this.type=type;this.detail=args.detail;}},MayatnikPaintCache:{write:async()=>{}},RK:1,VX:10,rombP:()=>-1,displayCell:(x,y)=>x<0?null:{c:10+Math.floor(x),r:Math.floor(y)},visibleSemanticContext:()=>({readBit:(x,y)=>x%2}),};
  vm.createContext(c);vm.runInContext(section('  function templateLibraryCaptureParts(','  function templateSnapshot('),c);vm.runInContext(section('  async function saveTemplateLibrary(','  function useLibraryTemplate('),c);
  function create(y=3,colour=0xff556677){const parts=c.templateLibraryCaptureParts([{mask:{x:2,y,width:2,height:1,data:Uint32Array.of(colour,colour)},axis:3,ox:0}]);return {hex:'#556677',rk:1,height:100,proportional:false,parts:[{width:2,height:1,y,center:3,data:[colour,colour]}],libraryProof:D.serialize(parts)};}

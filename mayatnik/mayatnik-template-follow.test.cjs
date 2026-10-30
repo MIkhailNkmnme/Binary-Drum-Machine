@@ -51,7 +51,7 @@ test('production manual requests queue distinct frames and wait for each complet
 test('retired picker cannot reappear in menus or restore left selection, while source ID remains compatible',()=>{
  const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8');assert.match(html,/<button id="bTemplatePick" hidden style="display:none!important"/);assert.doesNotMatch(menu,/button\('bTemplatePick'|\['bTemplatePick'/);
  assert.match(html,/templatePickEnabled=false;templatePickMode=s\.templatePickMode/);assert.match(html,/templatePickEnabled=false;templatePickMode=q\.templatePickMode/);
- assert.match(html,/if\(\(e\.button===2\|\|templateDragEnabled&&e\.button===0\)/);
+ assert.match(html,/if\(\(e\.button===2\|\|templateDragEnabled&&e\.button===0&&e\.pointerType!=='touch'\)/);
 });
 test('older pages without the optional follow runtime still normalize legacy presets',()=>{
  const c={};vm.createContext(c);vm.runInContext(fs.readFileSync(__dirname+'/mayatnik-settings-library.js','utf8'),c);

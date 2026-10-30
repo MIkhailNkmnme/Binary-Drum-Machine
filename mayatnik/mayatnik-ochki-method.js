@@ -3,7 +3,7 @@
   'use strict';
   function label(hit={}){
     const names={0:'горизонталь →',2:'вертикаль ↓',1:'диагональ ↘','-1':'диагональ ↙',v:'V ↘↗',snake:hit.manual?'ручная змея ↙↘':'змея ↙↘'};
-    const name=names[hit.dir]||'способ не записан',variant={инв:'инверсия',рев:'реверс','инв+рев':'инверсия + реверс'}[hit.vn];
+    const name=names[hit.dir]||'способ не записан',variant=hit.variantLabel?(hit.variantLabel==='исходная'?'':hit.variantLabel):{инв:'инверсия',рев:'реверс','инв+рев':'инверсия + реверс'}[hit.vn];
     return name+(variant?' · '+variant:'');
   }
   return {label};

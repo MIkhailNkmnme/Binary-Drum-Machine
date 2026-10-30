@@ -222,6 +222,9 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayatnikTemplatePanel .mtp-sequence-rows tbody td{padding:1px 4px!important;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mayatnikTemplatePanel .mtp-sequence-rows [data-column=sequence] code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 #mayatnikTemplatePanel .mtp-sequence-notice:empty,#mayatnikTemplatePanel .mtp-sequence-summary:empty{display:none}
+#mayatnikTemplatePanel .mtp-sequence-rows .mtp-resizable-sequences th{width:auto!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 8px 1px 4px!important;line-height:16px}
+#mayatnikTemplatePanel .mtp-sequence-col-resize{position:absolute;right:0;top:0;bottom:0;width:7px;cursor:col-resize;touch-action:none;user-select:none}
+#mayatnikTemplatePanel .mtp-sequence-col-resize:is(:hover,:focus-visible){outline:1px solid #69edff;outline-offset:-1px;background:#69edff20}
 .may-template-limit-notice{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:2147483646;box-sizing:border-box;width:max-content;max-width:calc(100vw - 24px);padding:8px 12px;background:#111823;color:#ffe969;border:1px solid #ffe969;font:13px/1.4 'Segoe UI',sans-serif;pointer-events:none}
 .may-template-limit-notice[hidden]{display:none}
 
@@ -251,3 +254,16 @@ body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-rows th:first-child{wi
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-rows th:nth-child(3){width:62px}
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequences textarea{height:90px}
 body.may-mobile-menu #mayatnikTemplatePanel :is(input:not([type=checkbox]):not([type=color]),select){font-size:16px;min-height:32px}
+
+/* 247: exactly two command rows; semantic labels remain in accessible names. */
+#mayatnikTemplatePanel .mtp-sequence-actions{display:grid;grid-template-columns:60px minmax(0,1fr) 60px;gap:2px;min-width:0;flex-wrap:nowrap}
+#mayatnikTemplatePanel .mtp-sequence-actions>*{box-sizing:border-box;min-width:0;width:100%;max-width:100%}
+#mayatnikTemplatePanel .mtp-sequence-actions .mtp-command{width:60px;min-width:0;height:24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mayatnikTemplatePanel .mtp-sequence-generator{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 60px;align-items:center;gap:2px;min-width:0}
+#mayatnikTemplatePanel .mtp-sequence-generator label{display:block;min-width:0;overflow:hidden}
+#mayatnikTemplatePanel .mtp-sequence-generator :is(input:not([type=checkbox]),select){width:100%;min-width:0;max-width:100%;height:24px}
+#mayatnikTemplatePanel .mtp-sequence-generator .mtp-command{width:60px;min-width:0;height:24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mayatnikTemplatePanel .mtp-snake-catalog{margin:2px 0;max-width:100%;min-width:0}
+#mayatnikTemplatePanel .mtp-snake-catalog :is(select,button){max-width:100%;min-width:0}
+#mayatnikTemplatePanel .mtp-snake-catalog ol{padding-left:22px;margin:2px 0}
+#mayatnikTemplatePanel .mtp-snake-catalog li button{display:block;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}

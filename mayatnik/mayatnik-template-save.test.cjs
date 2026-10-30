@@ -1,9 +1,10 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
+const repo=fs.existsSync(__dirname+'/mayatnik-template-engine.js')?__dirname:require('node:path').resolve(__dirname,'../../../Binary-Drum-Machine/mayatnik');
+const html=fs.readFileSync(process.env.MAY_INLINE_HTML||repo+'/Zerkalius-mayatnik.html','utf8');
 const saveCode=html.slice(html.indexOf('  async function saveTemplateLibrary('),html.indexOf('  function useLibraryTemplate('));
-global.MayatnikTemplateMatcher=require('./mayatnik-template-matcher.js');const Engine=require('./mayatnik-template-engine.js');
+global.MayatnikTemplateMatcher=require(repo+'/mayatnik-template-matcher.js');const Engine=require(repo+'/mayatnik-template-engine.js');
 function hostFixture(){
- let revision=0,field,scans=0;const item={id:'field',view:{visible:true}},entries=[],shape={hex:'#123456',parts:[{width:2,height:1,data:[1,0]}]},events=[],persist=[];
+ let revision=0,field,scans=0;const item={id:'field',parts:[{mask:{width:2,height:1,data:Uint32Array.from([1,0])}}],view:{visible:true}},entries=[],shape={hex:'#123456',parts:[{width:2,height:1,data:[1,0]}]},events=[],persist=[];
  const host={entries:()=>entries,scope:()=>revision,filterActive:()=>true,visibleInstances:id=>item.libraryId===id&&item.view.visible,field:async()=>{scans++;return field={width:2,height:1,data:Int8Array.from([1,0]),revision}},current:f=>f.revision===revision,redrawSelection(){}};
  const engine=Engine.create(host),nodes={templateName:{value:'Новый'},templateList:{value:'unrelated'},paintCacheInfo:{textContent:''}};
  const c={colourTemplate:item,templateItems:[item],templateLibrary:entries,libraryReady:Promise.resolve(),templateSnapshot:()=>shape,$:id=>nodes[id],sceneSnapshot:()=>({}),templateSceneHistory:()=>revision++,savePaint(){},libraryList:()=>engine.refresh(),window:{mayTemplateLibrary:engine},MayatnikPaintCache:{write:async v=>persist.push(JSON.parse(JSON.stringify(v)))},dispatchEvent:e=>events.push(e),CustomEvent:class{constructor(type,args){this.type=type;this.detail=args.detail;}}};vm.createContext(c);vm.runInContext(saveCode,c);return {c,item,entries,shape,events,persist,engine,nodes,get scans(){return scans}};
