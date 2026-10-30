@@ -1,4 +1,4 @@
-/* Маятник v0.663 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.664 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -300,6 +300,14 @@
       own.title='Свой маятник: строки текущей библиотеки становятся отдельным исходным рисунком. В разделе «Размер» задаются отдельно высота поля и число строк своего исходника. Остальные строки библиотеки сохраняются. Общий центр, между битами одна пустая клетка. Кадр 0 — только исходник, остальное поле пустое; далее обычные шаги маятника.';own.setAttribute('aria-label',own.title);
       own.onclick=event=>{event.stopPropagation();window.maySequenceField?.set(!window.maySequenceField?.get().on);syncComparison();rail.refresh();};pop.append(section(own,'fields'));
       controls.push({half:own,on:()=>!!window.maySequenceField?.get().on,gz:true});
+      const ownGrid=document.createElement('button');ownGrid.type='button';ownGrid.className='gz-hx';ownGrid.id='maySequenceOwnGrid';ownGrid.dataset.n='maySequenceOwnGrid';
+      ownGrid.dataset.maySearchAliases='Своя решётка|Шаг через два|Исходник с первого хода';
+      const gridIcon=document.createElement('i');gridIcon.className='gz-ic';gridIcon.style.backgroundImage=icon(ownGrid,'grid');gridIcon.setAttribute('aria-hidden','true');
+      const gridLabel=document.createElement('span');gridLabel.className='gz-nm';gridLabel.textContent='Своя решётка';ownGrid.append(gridIcon,gridLabel);
+      ownGrid.gzSync=()=>{const api=window.maySequenceField,on=!!api?.get().ownGrid;ownGrid.disabled=!api;ownGrid.classList.toggle('gz-on',on);ownGrid.setAttribute('aria-pressed',String(on));
+        ownGrid.title='Своя решётка: '+(on?'включена':'выключена')+'. Вариант только своего Маятника: сдвиги −2, +2, −4, +4… вместо −1, +1, −2, +2…; для строк длиной 1, 2, 3… пересчёт сразу затрагивает исходную решётку. Для ПравЛев порядок обратный; пара — ±2, ±4… Переключение возвращает активный свой Маятник к кадру 0. Исходные строки сохраняются.';ownGrid.setAttribute('aria-label',ownGrid.title);};
+      ownGrid.onclick=event=>{event.stopPropagation();const api=window.maySequenceField;api?.setOwnGrid(!api.get().ownGrid);ownGrid.gzSync();rail.refresh();};
+      toolSync.push(ownGrid.gzSync);addEventListener('may-compare-change',ownGrid.gzSync);ownGrid.gzSync();pop.append(section(ownGrid,'fields'));
       pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
         { id: 'mayCompareCones', label: 'Конусы', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
         { id: 'mayCompareField', label: 'Поле', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }

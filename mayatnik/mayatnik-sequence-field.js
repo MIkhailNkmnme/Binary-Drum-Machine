@@ -13,15 +13,21 @@
   }
   function normalize(source){if(source&&known.has(source))return source;if(!source||source.version!==1)throw Error('Повреждён исходный рисунок своего маятника.');return capture(source.rows);}
   const active=state=>!!state?.sequenceSourceOn&&!state.compareSource;
-  const legacy=state=>active(state)&&state.sequenceEvolution!==EVOLUTION;
+  const evolution=state=>state.sequenceOwnGrid===true?4:EVOLUTION;
+  const legacy=state=>active(state)&&state.sequenceEvolution!==evolution(state);
   function assertEvolution(state){if(legacy(state))throw Error(LEGACY_MESSAGE);}
   function limit(state){const n=state.sequenceSourceLimit??0;if(!Number.isInteger(n)||n<0||n>MAX_ROWS)throw Error('Лимит своего исходника: от 0 (все строки) до 4096.');return n;}
   function activeRows(state,rows=state.rows){return Math.min(rows,normalize(state.sequenceSource).rows.length,limit(state)||MAX_ROWS);}
+  const stride=state=>state.sequenceOwnGrid===true?2:1;
+  function offsets(mode,frame,pair=false,stepSize=1){
+    if(!Number.isSafeInteger(frame)||frame<1||(stepSize!==1&&stepSize!==2))throw Error('Некорректный ход своего маятника.');
+    return pair?[-frame*stepSize,frame*stepSize]:[Core.offset(mode,frame)*stepSize];
+  }
   function bounds(source,limit){source=normalize(source);if(!Number.isInteger(limit)||limit<1||limit>MAX_ROWS)throw Error('Число строк своего маятника должно быть от 1 до 4096.');let half=0;for(let r=0;r<Math.min(limit,source.rows.length);r++)half=Math.max(half,source.rows[r].length-1);return {left:-half,right:half,rows:Math.min(limit,source.rows.length)};}
   function frames(state){return state.mode==='one'?0:state.pair&&state.mode==='pend'?Math.floor(state.steps/2):state.steps;}
   function span(state,frame=frames(state)){
     if(!Number.isSafeInteger(frame)||frame<0)throw Error('Некорректный кадр своего маятника.');
-    return state.pair&&state.mode==='pend'?[-frame,frame]:Core.span(state.mode,frame+1);
+    return (state.pair&&state.mode==='pend'?[-frame,frame]:Core.span(state.mode,frame+1)).map(value=>value*stride(state));
   }
   function extent(state,frame=frames(state),rows=state.rows){
     const b=bounds(state.sequenceSource,activeRows(state,rows));if(frame===0)return b;
@@ -32,20 +38,20 @@
     for(let r=0;r<b.rows;r++){const word=source.rows[r],start=geo.anchor-(word.length-1);for(let i=0;i<word.length;i++)field.val[r*field.W+start+2*i]=word.charCodeAt(i)-48;}
     return field;
   }
-  function step(field,geo,source,mode,frame,pair=false,lastAt,stamp=frame){
+  function step(field,geo,source,mode,frame,pair=false,lastAt,stamp=frame,stepSize=1){
     normalize(source);if(!Number.isSafeInteger(frame)||frame<1||mode==='one')throw Error('Следующая вершина требует кадр от 1 и направление хода.');
     if(field.val?.length!==field.W*field.H||lastAt&&lastAt.length!==field.val.length)throw Error('Неверный размер поля своего маятника.');
-    const offsets=pair?[-frame,frame]:[Core.offset(mode,frame)],radius=field.H-1;
-    if(offsets.some(offset=>geo.anchor+offset-radius<0||geo.anchor+offset+radius>=field.W))throw Error('Поле не вмещает пересчёт строк своего маятника.');
+    const apices=offsets(mode,frame,pair,stepSize),radius=field.H-1;
+    if(apices.some(offset=>geo.anchor+offset-radius<0||geo.anchor+offset+radius>=field.W))throw Error('Поле не вмещает пересчёт строк своего маятника.');
     // Use exactly the same in-place row recurrence and paired union as the
     // ordinary pendulum; the immutable source is never stamped again.
-    if(pair)Core.conePair(field,geo.anchor-frame,geo.anchor+frame,field.H,lastAt,stamp);
-    else Core.cone(field,geo.anchor+offsets[0],field.H,lastAt,stamp);
+    if(pair)Core.conePair(field,geo.anchor+apices[0],geo.anchor+apices[1],field.H,lastAt,stamp);
+    else Core.cone(field,geo.anchor+apices[0],field.H,lastAt,stamp);
     return field;
   }
   function sourceAt(source,geo,r,c){source=normalize(source);const word=source.rows[r];if(word===undefined||!Number.isInteger(r)||!Number.isInteger(c))return null;const i=(c-geo.anchor+word.length-1)/2;return Number.isInteger(i)&&i>=0&&i<word.length?{row:r,index:i,bit:Number(word[i])}:null;}
   function key(source){source=normalize(source);if(keys.has(source))return keys.get(source);let a=2166136261,b=5381,n=0;for(const row of source.rows){for(const char of row){const code=char.charCodeAt(0);a=Math.imul(a^code,16777619)>>>0;b=(Math.imul(b,33)^code)>>>0;n++;}a=Math.imul(a^10,16777619)>>>0;b=(Math.imul(b,33)^10)>>>0;}const value=source.rows.length+':'+n+':'+a.toString(16)+':'+b.toString(16);keys.set(source,value);return value;}
-  function stateKey(state){const n=limit(state);return key(state.sequenceSource)+(n?':limit:'+n:'');}
-  function same(a,b){if(active(a)!==active(b))return false;if(!active(a))return true;const A=normalize(a.sequenceSource).rows,B=normalize(b.sequenceSource).rows;return limit(a)===limit(b)&&A.length===B.length&&A.every((row,i)=>row===B[i]);}
-  return {capture,normalize,active,legacy,assertEvolution,EVOLUTION,LEGACY_MESSAGE,limit,activeRows,stateKey,bounds,frames,span,extent,geometry,seed,step,sourceAt,key,same,MAX_ROWS,MAX_WORD,MAX_BITS,MAX_CELLS};
+  function stateKey(state){const n=limit(state);return key(state.sequenceSource)+(n?':limit:'+n:'')+(stride(state)===2?':grid:2':'');}
+  function same(a,b){if(active(a)!==active(b))return false;if(!active(a))return true;const A=normalize(a.sequenceSource).rows,B=normalize(b.sequenceSource).rows;return stride(a)===stride(b)&&limit(a)===limit(b)&&A.length===B.length&&A.every((row,i)=>row===B[i]);}
+  return {capture,normalize,active,legacy,assertEvolution,evolution,EVOLUTION,LEGACY_MESSAGE,limit,activeRows,stride,offsets,stateKey,bounds,frames,span,extent,geometry,seed,step,sourceAt,key,same,MAX_ROWS,MAX_WORD,MAX_BITS,MAX_CELLS};
 });
