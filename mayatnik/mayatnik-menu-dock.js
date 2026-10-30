@@ -2,8 +2,31 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikMenuDock=api;})(globalThis,function(){
   'use strict';
   const WIDTH=120,HEIGHT=24,DX=126,DY=26;
+  const isMobile=({width,height,coarse=false})=>width<=600||(coarse&&width<=960&&height<=600);
+  const mobileNow=()=>isMobile({width:innerWidth,height:typeof innerHeight==='number'?innerHeight:Infinity,coarse:typeof matchMedia==='function'&&matchMedia('(pointer:coarse)').matches});
+  // Temporary DOM homes never write desktop layout preferences.
+  function mobileStrip(){
+    const listeners=new Set(),homes=new Map();let mobile=mobileNow(),bar=null,parent=null;
+    const place=()=>{
+      if(!bar)return;
+      if(mobile){if(bar.parentElement!==parent)parent.append(bar);for(const node of homes.keys())bar.append(node);}
+      else{for(const [node,home] of homes)home.after(node);bar.remove();}
+    };
+    const add=nodes=>{let changed=false;for(const node of nodes.filter(Boolean)){if(homes.has(node)||[...homes.keys()].some(p=>p.contains(node)))continue;const home=document.createComment('desktop menu home');node.before(home);homes.set(node,home);changed=true;}if(changed)place();};
+    const sync=()=>{const next=mobileNow(),changed=next!==mobile;mobile=next;document.body.classList.toggle('may-mobile-menu',mobile);if(changed){place();for(const fn of listeners)fn({matches:mobile});dispatchEvent(new CustomEvent('may-mobile-menu-change',{detail:{mobile}}));}};
+    document.body.classList.toggle('may-mobile-menu',mobile);
+    addEventListener('resize',sync);globalThis.visualViewport?.addEventListener('resize',sync);
+    if(typeof matchMedia==='function')matchMedia('(pointer:coarse)').addEventListener?.('change',sync);
+    return {get matches(){return mobile;},addEventListener(type,fn){if(type==='change')listeners.add(fn);},
+      add,connect(host,nodes){parent=host;bar=document.createElement('div');bar.id='mayMobileBar';bar.setAttribute('aria-label','Все меню и управление кадром');
+        add(nodes);
+        bar.addEventListener('pointerdown',e=>{if(mobile&&e.target.closest('.pt-l,.gz-head'))e.stopPropagation();},true);
+        bar.addEventListener('wheel',e=>{if(e.ctrlKey||e.target.closest('.pt-r,.may-rail-list,.gz-ladder'))return;e.preventDefault();e.stopPropagation();bar.scrollLeft=Math.max(0,Math.min(bar.scrollWidth-bar.clientWidth,bar.scrollLeft+(Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY)));},{passive:false});
+        bar.addEventListener('focusin',e=>{const head=e.target.closest('.pt-l,.gz-head,#mayTemplateLauncher,#mayCorner');if(!head)return;const r=head.getBoundingClientRect(),b=bar.getBoundingClientRect();if(r.left<b.left)bar.scrollLeft-=b.left-r.left;else if(r.right>b.right)bar.scrollLeft+=r.right-b.right;});
+        place();return bar;},sync};
+  }
   const wheelRegions=[];
-  const wheelMenu='#paintTools,#mayatnikRail,#mayatnikRailR,#mayBottomBar,#mayCorner,.may-menu-side-scroll,.may-rail-list,.gz-ladder,.may-hp-pop';
+  const wheelMenu='#mayMobileBar,#paintTools,#mayatnikRail,#mayatnikRailR,#mayBottomBar,#mayCorner,.may-menu-side-scroll,.may-rail-list,.gz-ladder,.may-hp-pop';
   const wheelGeometry=['#paintTools','#mayatnikRail','#mayatnikRailR','#mayBottomBar'].flatMap(root=>['.may-closed-back','.may-standard-contours polygon','.pt-g','.gz-group'].map(part=>root+' '+part)).concat('#mayBottomBar > *','.may-rail-list','.gz-ladder','.may-hp-pop').join(',');
   const fieldTarget=target=>target===document.body||target===document.documentElement||!!target?.closest?.('#wrap');
   function ownsWheel(e){
@@ -78,7 +101,7 @@
     const setVar=(node,key,value)=>{if(node.style.getPropertyValue(key)!==value)node.style.setProperty(key,value);};
     function layoutSides(){
       if(!useSideStack||drag)return;
-      if(innerWidth<=600){for(const side of Object.values(sides)){side.bar.style.display='none';side.signature='';}return;}
+      if(mobileNow()){for(const side of Object.values(sides)){side.bar.style.display='none';side.signature='';}return;}
       const B=bounds(),end=B.sideBottom;
       for(const edge of ['left','right']){
         const side=sides[edge],items=[...placed].filter(([g,p])=>p.edge===edge&&heads.get(g).getClientRects().length).map(([g,p])=>({g,index:p.index,y:p.y,height:g.getBoundingClientRect().height}));
@@ -92,11 +115,11 @@
       }
     }
     const sideOf=target=>{const g=target?.closest?.('.may-dock-side');if(g&&placed.has(g))return sides[placed.get(g).edge];const bar=target?.closest?.('.may-menu-side-scroll');return bar&&sides[bar.dataset.edge]?.bar===bar?sides[bar.dataset.edge]:null;};
-    const gapSide=e=>innerWidth<=600||document.body.classList.contains('may-zen')?null:Object.values(sides).find(s=>s.groups?.some(g=>heads.get(g).getClientRects().length)&&e.clientX>=s.left&&e.clientX<=s.right&&e.clientY>=s.start&&e.clientY<=s.hitEnd);
+    const gapSide=e=>mobileNow()||document.body.classList.contains('may-zen')?null:Object.values(sides).find(s=>s.groups?.some(g=>heads.get(g).getClientRects().length)&&e.clientX>=s.left&&e.clientX<=s.right&&e.clientY>=s.start&&e.clientY<=s.hitEnd);
     wheelRegions.push(e=>!!gapSide(e));
     const wheelControls='input,textarea,select,[contenteditable],[role="slider"],.gz-control,.gz-val,.gz-vpair,.gz-sl,.gz-sl2,.may-slide,.gz-ladder,.may-hp-pop,[role="listbox"],[data-n="fontCycle"],[data-n="sizeCtl"],[data-n="viewCycle"]';
     function scrollSide(e,side,fieldGap=false){
-      if(innerWidth<=600||drag||e.ctrlKey||e.defaultPrevented||!side?.max)return;
+      if(mobileNow()||drag||e.ctrlKey||e.defaultPrevented||!side?.max)return;
       const control=e.target.closest?.(wheelControls);if(control?.matches?.(wheelControls))return;
       // Nested native lists own their wheel, including when they reach an end.
       for(let node=e.target;node&&node!==document.body;node=node.parentElement){
@@ -124,7 +147,7 @@
     },{capture:true,passive:false});
     document.addEventListener('wheel',e=>scrollSide(e,sideOf(e.target)),{passive:false});
     document.addEventListener('focusin',e=>{const side=sideOf(e.target);if(!side?.max)return;const r=e.target.getBoundingClientRect(),delta=r.top<side.start?r.top-side.start:r.bottom>side.end?r.bottom-side.end:0;if(delta){side.bar.scrollTop=Math.max(0,Math.min(side.max,side.bar.scrollTop+delta));queueStack();}});
-    const layout=()=>{if(innerWidth<=600){for(const g of heads.keys())g.classList.remove('may-docked','may-dock-bottom','may-dock-side');placed.clear();geometry='';onLayout();layoutSides();return;}
+    const layout=()=>{if(mobileNow()){for(const g of heads.keys())g.classList.remove('may-docked','may-dock-bottom','may-dock-side');placed.clear();geometry='';onLayout();layoutSides();return;}
       // The frame controls follow the field axis without resizing the header.
       // Their new position must free/reoccupy slots just like a viewport resize.
       const B=bounds(),signature=JSON.stringify([B,obstacles()])+'|'+[...heads.values()].map(h=>h.getClientRects().length?h.offsetWidth:0).join(',');if(drag)return;if(ready&&signature===geometry){layoutSides();return;}geometry=signature;
@@ -140,7 +163,7 @@
       const next=gridNodes[free.indexOf(chosen)]||null;if(next===activeSlot)return;
       if(activeSlot){activeSlot.setAttribute('fill','none');activeSlot.setAttribute('stroke','#72839c');activeSlot.setAttribute('stroke-width','1');}
       if(next){next.setAttribute('fill','#b48cff22');next.setAttribute('stroke','#e4d4ff');next.setAttribute('stroke-width','2');}activeSlot=next;};
-    document.addEventListener('pointerdown',e=>{if(e.button!==0||innerWidth<=600)return;const hd=e.target.closest?.('.pt-l,.gz-head,#mayCorner'),g=[...heads].find(([,h])=>h===hd)?.[0];if(!g||e.target.closest('.pt-pin,.gz-pin'))return;
+    document.addEventListener('pointerdown',e=>{if(e.button!==0||mobileNow())return;const hd=e.target.closest?.('.pt-l,.gz-head,#mayCorner'),g=[...heads].find(([,h])=>h===hd)?.[0];if(!g||e.target.closest('.pt-pin,.gz-pin'))return;
       e.stopImmediatePropagation();const r=rect(hd);drag={g,id:e.pointerId,x:e.clientX,y:e.clientY,ox:e.clientX-r.x,oy:e.clientY-r.y,w:r.w,on:false};},true);
     addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const d=drag;if(!d.on&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<6)return;
       e.preventDefault();if(!d.on)d.free=available(d.g);d.on=true;d.g.classList.add('may-dock-drag');const free=d.free,chosen=nearest(free,e.clientX-d.ox+d.w/2,e.clientY-d.oy+HEIGHT/2);d.chosen=chosen;
@@ -156,5 +179,5 @@
     addEventListener('resize',layout);requestAnimationFrame(layout);
     return {refresh:layout};
   }
-  return {WIDTH,HEIGHT,DX,DY,slots,nearest,overlap,read,stackPositions,mount,ownsWheel,guardWheel};
+  return {isMobile,mobileStrip,WIDTH,HEIGHT,DX,DY,slots,nearest,overlap,read,stackPositions,mount,ownsWheel,guardWheel};
 });

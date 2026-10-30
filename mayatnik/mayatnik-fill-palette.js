@@ -34,17 +34,19 @@
   function mount({wrap,canvas,colourInput,isActive,paintAt,bounds,document:doc=wrap?.ownerDocument,window:win=doc?.defaultView}){
     if(!wrap||!canvas||!colourInput||typeof isActive!=='function'||typeof paintAt!=='function')throw Error('Fill palette requires field, colour input, active state and paint callback');
     const panel=doc.createElement('section');panel.className='may-fill-palette';panel.dataset.noMini='';panel.setAttribute('aria-label','Палитра заливки');panel.hidden=true;
-    panel.innerHTML='<div class="may-fill-palette-title">Заливка</div><div class="may-fill-sv" role="slider" tabindex="0" aria-label="Насыщенность и яркость" aria-valuemin="0" aria-valuemax="100"><i aria-hidden="true"></i></div>'
+    panel.innerHTML='<div class="may-fill-palette-title">Заливка</div><button class="may-fill-toggle" type="button" aria-expanded="false" hidden><span class="may-fill-compact-sample" aria-hidden="true"></span><span class="may-fill-toggle-text"></span></button><div class="may-fill-details"><div class="may-fill-sv" role="slider" tabindex="0" aria-label="Насыщенность и яркость" aria-valuemin="0" aria-valuemax="100"><i aria-hidden="true"></i></div>'
       +'<label class="may-fill-hue-label">Тон<input class="may-fill-hue" type="range" min="0" max="360" step="1" aria-label="Цветовой тон"></label>'
       +'<label class="may-fill-hex-label"><span class="may-fill-sample" aria-hidden="true"></span>HEX<input class="may-fill-hex" type="text" maxlength="7" spellcheck="false" aria-label="Цвет HEX"></label>'
       +'<div class="may-fill-rgb" aria-label="Цвет RGB">'+['R','G','B'].map(n=>'<label>'+n+'<input type="number" min="0" max="255" step="1" data-fill-channel="'+n+'" aria-label="'+({R:'Красный',G:'Зелёный',B:'Синий'})[n]+' канал"></label>').join('')+'</div>'
-      +'<div class="may-fill-rainbow" role="group" aria-label="Цвета радуги">'+RAINBOW.map((colour,i)=>'<button type="button" data-fill-colour="'+colour+'" aria-label="'+NAMES[i]+'" title="'+NAMES[i]+'" aria-pressed="false"><svg class="may-fill-swatch-outline" viewBox="0 0 120 24" preserveAspectRatio="none" aria-hidden="true"><polygon points="12,0 108,0 120,12 108,24 12,24 0,12"/></svg></button>').join('')+'</div>';
+      +'</div><div class="may-fill-rainbow" role="group" aria-label="Цвета радуги">'+RAINBOW.map((colour,i)=>'<button type="button" data-fill-colour="'+colour+'" aria-label="'+NAMES[i]+'" title="'+NAMES[i]+'" aria-pressed="false"><svg class="may-fill-swatch-outline" viewBox="0 0 120 24" preserveAspectRatio="none" aria-hidden="true"><polygon points="12,0 108,0 120,12 108,24 12,24 0,12"/></svg></button>').join('')+'</div>';
     doc.body.append(panel);
+    const toggle=panel.querySelector('.may-fill-toggle'),toggleText=panel.querySelector('.may-fill-toggle-text'),compactSample=panel.querySelector('.may-fill-compact-sample'),title=panel.querySelector('.may-fill-palette-title'),details=panel.querySelector('.may-fill-details');
     const sv=panel.querySelector('.may-fill-sv'),marker=sv.querySelector('i'),hue=panel.querySelector('.may-fill-hue'),hex=panel.querySelector('.may-fill-hex'),channels=[...panel.querySelectorAll('[data-fill-channel]')],swatches=[...panel.querySelectorAll('[data-fill-colour]')],sample=panel.querySelector('.may-fill-sample');
-    const dispose=[];let colour=normalise(colourInput.value)||'#ff7f27',hsv=hexToHsv(colour),drag=null,destroyed=false;
+    const dispose=[];let colour=normalise(colourInput.value)||'#ff7f27',hsv=hexToHsv(colour),drag=null,destroyed=false,mobileExpanded=false;
     const listen=(node,type,fn,options)=>{node.addEventListener(type,fn,options);dispose.push(()=>node.removeEventListener(type,fn,options));};
     function render(){
       panel.style.setProperty('--fill-hue',String(hsv.h));marker.style.left=hsv.s+'%';marker.style.top=(100-hsv.v)+'%';sample.style.backgroundColor=colour;
+      compactSample.style.backgroundColor=colour;toggleText.textContent='Заливка · '+colour+(mobileExpanded?' ▴':' ▾');toggle.setAttribute('aria-label',(mobileExpanded?'Свернуть':'Раскрыть')+' палитру заливки · '+colour);
       sv.setAttribute('aria-valuenow',String(Math.round(hsv.s)));sv.setAttribute('aria-valuetext','Насыщенность '+Math.round(hsv.s)+'%, яркость '+Math.round(hsv.v)+'%');hue.value=String(Math.round(hsv.h));
       if(doc.activeElement!==hex)hex.value=colour;const values=rgb(colour);channels.forEach((node,i)=>{if(doc.activeElement!==node)node.value=String(values[i]);});
       for(const swatch of swatches){swatch.style.backgroundColor=swatch.dataset.fillColour;swatch.setAttribute('aria-pressed',String(swatch.dataset.fillColour===colour));}
@@ -56,8 +58,13 @@
     }
     function setColour(value,final=true){const valueHex=normalise(value);if(!valueHex)return false;colour=valueHex;hsv=hexToHsv(colour);publish(final);return true;}
     function fromHsv(final=false){colour=hsvToHex(hsv.h,hsv.s,hsv.v);publish(final);}
+    function visualBounds(){
+      const v=win.visualViewport,left=Number(v?.offsetLeft)||0,top=Number(v?.offsetTop)||0;
+      return {left,top,right:left+(v?.width||win.innerWidth),bottom:top+(v?.height||win.innerHeight)};
+    }
     function fieldBounds(){
-      if(bounds)return bounds();const r=wrap.getBoundingClientRect(),b={left:Math.max(0,r.left),top:Math.max(0,r.top),right:Math.min(win.innerWidth,r.right),bottom:Math.min(win.innerHeight,r.bottom)};
+      const v=visualBounds(),r=bounds?bounds():wrap.getBoundingClientRect(),b={left:Math.max(v.left,r.left),top:Math.max(v.top,r.top),right:Math.min(v.right,r.right),bottom:Math.min(v.bottom,r.bottom)};
+      if(bounds)return b;
       for(const node of doc.querySelectorAll('.may-dock-side,#mayBottomBar,header,#mayatnikTemplatePanel')){
         if(node.hidden||!node.getClientRects().length)continue;const q=node.getBoundingClientRect();if(q.width<=0||q.height<=0)continue;
         if(q.left>=b.left+(b.right-b.left)/2&&q.right>=b.right-8)b.right=Math.min(b.right,q.left-4);
@@ -67,16 +74,30 @@
       }
       return b;
     }
-    function position(){
-      if(panel.hidden)return;const p=placement(fieldBounds(),240,panel.scrollHeight||280);Object.assign(panel.style,{left:p.left+'px',top:p.top+'px',width:p.width+'px',maxHeight:p.maxHeight+'px'});panel.hidden=!p.visible;
+    function position(event){
+      if(destroyed)return;
+      const mobile=doc.body.classList.contains('may-mobile-menu');
+      // Tool activity, occlusion and available space are separate states. A
+      // temporary hide must not prevent the next viewport change restoring it.
+      if(!isActive()||mobile&&doc.body.classList.contains('may-template-panel-open')){panel.hidden=true;drag=null;return;}
+      panel.dataset.mobile=String(mobile);panel.dataset.collapsed=String(mobile&&!mobileExpanded);
+      title.hidden=mobile;toggle.hidden=!mobile;details.hidden=mobile&&!mobileExpanded;toggle.setAttribute('aria-expanded',String(!details.hidden));
+      panel.hidden=false;
+      const p=placement(fieldBounds(),240,panel.scrollHeight||(mobile&&!mobileExpanded?90:280));Object.assign(panel.style,{left:p.left+'px',top:p.top+'px',width:p.width+'px',maxHeight:p.maxHeight+'px'});panel.hidden=!p.visible;
+      if(panel.hidden){drag=null;return;}
+      const focused=doc.activeElement;if(event&&(event.type==='focusin'||event.target===win.visualViewport)&&focused&&details.contains(focused)){
+        const q=focused.getBoundingClientRect(),r=panel.getBoundingClientRect();if(q.bottom>r.bottom)panel.scrollTop+=q.bottom-r.bottom+4;else if(q.top<r.top)panel.scrollTop-=r.top-q.top+4;
+      }
     }
-    function sync(){if(destroyed)return;const active=!!isActive();panel.hidden=!active;if(!active)drag=null;doc.body.classList.toggle('may-fill-active',active);wrap.classList.toggle('may-fill-pencil',active);canvas.classList.toggle('may-fill-pencil',active);if(active){read();position();}}
+    function sync(){if(destroyed)return;const active=!!isActive();if(!active)drag=null;doc.body.classList.toggle('may-fill-active',active);wrap.classList.toggle('may-fill-pencil',active);canvas.classList.toggle('may-fill-pencil',active);if(active)read();position();}
     function handleContextMenu(e){
       if(destroyed||!isActive()||e.button!==2||!Number.isFinite(e.clientX)||!Number.isFinite(e.clientY)||!wrap.contains(e.target)||e.target.closest?.('button,input,select,textarea,a,[role="button"],[role="slider"],.may-fill-palette'))return false;
       const r=canvas.getBoundingClientRect();if(e.clientX<r.left||e.clientX>=r.right||e.clientY<r.top||e.clientY>=r.bottom)return false;
       e.preventDefault();e.stopImmediatePropagation();setColour(nextRainbow(colourInput.value));paintAt(e.clientX,e.clientY,{forcePaint:true,shiftKey:!!e.shiftKey});return true;
     }
     function svAt(e){const r=sv.getBoundingClientRect();if(!r.width||!r.height)return;hsv.s=clamp((e.clientX-r.left)/r.width*100,0,100);hsv.v=100-clamp((e.clientY-r.top)/r.height*100,0,100);fromHsv();}
+    listen(toggle,'click',()=>{mobileExpanded=!mobileExpanded;render();position();});
+    listen(panel,'focusin',position);
     listen(sv,'pointerdown',e=>{if(e.button!==0)return;e.preventDefault();drag=e.pointerId;sv.setPointerCapture?.(e.pointerId);svAt(e);});
     listen(sv,'pointermove',e=>{if(drag===e.pointerId)svAt(e);});
     for(const type of ['pointerup','pointercancel'])listen(sv,type,e=>{if(drag!==e.pointerId)return;drag=null;publish(true);});
@@ -86,7 +107,11 @@
     for(const node of channels)for(const type of ['input','change'])listen(node,type,()=>{const valid=channels.every(n=>/^\d{1,3}$/.test(n.value)&&+n.value<=255);for(const n of channels)n.setAttribute('aria-invalid',String(!/^\d{1,3}$/.test(n.value)||+n.value>255));if(valid)setColour('#'+channels.map(n=>(+n.value).toString(16).padStart(2,'0')).join(''),type==='change');});
     for(const swatch of swatches)listen(swatch,'click',()=>setColour(swatch.dataset.fillColour));
     for(const type of ['input','change'])listen(colourInput,type,read);
-    listen(win,'resize',position);listen(doc,'scroll',position,true);sync();
+    listen(win,'resize',position);listen(doc,'scroll',position,true);
+    if(win.visualViewport)for(const type of ['resize','scroll'])listen(win.visualViewport,type,position);
+    for(const type of ['may-mobile-menu-change','mayatnik-template-panel-change'])listen(win,type,position);
+    const observer=win.MutationObserver?new win.MutationObserver(position):null;observer?.observe(doc.body,{attributes:true,attributeFilter:['class']});if(observer)dispose.push(()=>observer.disconnect());
+    sync();
     return {panel,sync,setColour,handleContextMenu,destroy(){if(destroyed)return;destroyed=true;for(const cleanup of dispose)cleanup();doc.body.classList.remove('may-fill-active');wrap.classList.remove('may-fill-pencil');canvas.classList.remove('may-fill-pencil');panel.remove();}};
   }
   return {RAINBOW,normalise,rgb,hexToHsv,hsvToHex,nextRainbow,placement,mount};

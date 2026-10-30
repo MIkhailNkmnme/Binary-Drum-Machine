@@ -5,6 +5,7 @@ function fixture(){
  const dom=new JSDOM('<div id="mayatnikRail"></div><header><div id="paintTools"><div class="gz-group gz-open may-menu-side-stack may-docked may-dock-side" data-id="gifscale"><button class="gz-head"></button><div class="gz-soty"><button class="gz-hx">Record</button></div><div class="gz-wide"><button class="gz-hx">Sequence</button></div></div></div></header>'),doc=dom.window.document,box=doc.querySelector('.gz-group'),head=box.querySelector('.gz-head');
  head.getBoundingClientRect=()=>({left:14,top:137,bottom:161});
  const ctx={document:doc,innerWidth:1440,innerHeight:1000,pushStrip(){}};
+ ctx.mobileMenu={get matches(){return ctx.innerWidth<=600;}};
  vm.createContext(ctx);vm.runInContext(menu.slice(menu.indexOf('  function syncRailFlyouts()'),menu.indexOf('  function pushStrip()')),ctx);
  return{dom,doc,box,head,ctx,sync:()=>ctx.syncRailFlyouts(),get list(){return box.querySelector('.may-rail-list')}};
 }

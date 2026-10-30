@@ -24,3 +24,15 @@
 .may-fill-rainbow>button:is(:hover,:focus-visible){--fill-outline:#fff;outline:0}
 .may-fill-rainbow>button[aria-pressed=true]{--fill-outline:#fff;--fill-stroke:4px}
 .may-fill-rainbow>button:active{--fill-stroke:6px}
+
+.may-fill-details{display:grid;gap:6px;min-width:0}
+.may-fill-details[hidden],.may-fill-toggle[hidden],.may-fill-palette-title[hidden]{display:none!important}
+.may-fill-toggle{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:32px;padding:4px 12px;border:0;border-radius:0;background:#596a80;color:#dfe6f5;font:12px/1.2 'Segoe UI',sans-serif;cursor:pointer;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);isolation:isolate;touch-action:manipulation}
+.may-fill-toggle::before{content:"";position:absolute;inset:1px;background:#1b2430;clip-path:inherit;z-index:-1}
+.may-fill-toggle:is(:hover,:focus-visible),.may-fill-toggle[aria-expanded=true]{background:#ffcf73;outline:none}
+.may-fill-toggle[aria-expanded=true]::before{inset:2px}
+.may-fill-compact-sample{width:18px;height:18px;flex:none;border:1px solid #dfe6f5;box-sizing:border-box}
+.may-fill-toggle-text{overflow-wrap:anywhere;min-width:0}
+body.may-mobile-menu .may-fill-palette{padding:6px;gap:4px}
+body.may-mobile-menu .may-fill-palette .may-fill-rainbow,body.may-mobile-menu .may-fill-palette .may-fill-rainbow>button{height:30px}
+body.may-mobile-menu.may-template-panel-open .may-fill-palette{display:none!important}

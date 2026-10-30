@@ -883,6 +883,7 @@ body.may-zen #mayFooterBar{display:none!important}
 }
 .may-line-value{position:absolute;pointer-events:auto;cursor:help;white-space:nowrap;padding:1px 3px;background:#05070de6;border-radius:2px;color:var(--measure-color,#b48cff);font:11px/14px var(--mono,monospace);font-variant-numeric:tabular-nums;text-shadow:none}
 .may-line-value:hover,.may-line-value:focus-visible,.may-line-value.may-measure-active{color:#ffd35b;outline:1px solid #ffd35b;outline-offset:0}
+body.may-mobile-menu .may-line-value{pointer-events:none}
 
 
 /* v0.445: palette — one standard 120×24 surface; each half owns its clipped outline. */
@@ -1012,3 +1013,39 @@ body>.may-horr-popup>.gz-wide{display:flex!important;position:relative;flex-dire
 body>.may-horr-popup>.gz-wide>.gz-hx{position:relative!important;left:auto!important;top:auto!important;width:120px;height:24px;flex:none;margin:0!important}
 body>.may-horr-popup .may-rows-line{flex:none}
 body>.may-horr-popup input{user-select:text}
+/* МАЯ-176: one mobile strip; desktop DOM homes/preferences are restored on exit. */
+body.may-mobile-menu{--may-mobile-bar-height:calc(36px + env(safe-area-inset-top));grid-template-columns:minmax(0,1fr)!important;grid-template-rows:var(--may-mobile-bar-height) auto auto minmax(0,1fr) auto!important}
+body.may-mobile-menu>header{grid-column:1!important;grid-row:1!important;display:block!important;height:var(--may-mobile-bar-height)!important;min-height:0!important;padding:0!important;margin:0!important;overflow:visible!important;z-index:30}
+body.may-mobile-menu #mayMobileBar{display:flex;flex-flow:row nowrap;align-items:center;gap:6px;position:relative;box-sizing:border-box;width:100%;height:var(--may-mobile-bar-height);padding:calc(6px + env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));overflow-x:auto;overflow-y:hidden;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-x;scroll-behavior:auto;background:#000}
+body.may-mobile-menu #mayMobileBar::-webkit-scrollbar{display:none}
+body.may-mobile-menu #mayMobileBar :is(#paintTools,#mayatnikSidebar,#mayatnikRail,#mayatnikRailR,#mayatnikRail>.gz-rail,#mayatnikRailR>.gz-rail){display:contents!important}
+body.may-mobile-menu #mayMobileBar :is(.pt-g,.gz-group,#mayCorner,#mayBottomBar,#mayTemplateLauncher){position:relative!important;inset:auto!important;transform:none!important;translate:none!important;flex:0 0 auto!important;margin:0!important;height:24px!important;min-height:24px!important;max-height:24px!important;clip-path:none!important}
+body.may-mobile-menu #mayMobileBar :is(.pt-g,.gz-group){width:max-content!important;max-width:none!important;overflow:visible!important}
+body.may-mobile-menu #mayMobileBar :is(.pt-l,.gz-head){touch-action:pan-x!important;height:24px!important;min-height:24px!important;max-height:24px!important}
+body.may-mobile-menu #mayMobileBar :is(.may-brand,.sub,#mayMenu,.pt-gridbg,.pt-ghost,.may-closed-back){display:none!important}
+body.may-mobile-menu :is(#mayFooterBar,.may-menu-side-scroll,#mayMenuDockGrid){display:none!important}
+body.may-mobile-menu #mayBottomBar{display:flex!important;align-items:center!important;justify-content:flex-start!important;order:-3;width:276px!important;min-width:276px!important;max-width:276px!important;padding:0!important;border:0!important;overflow:visible!important;--may-frame-width:160px}
+body.may-mobile-menu #paintTools>.pt-g.pt-btn{order:-2}
+body.may-mobile-menu #mayTemplateLauncher{order:-1;width:24px!important;min-width:24px!important;max-width:24px!important;z-index:auto!important}
+body.may-mobile-menu #mayCorner{display:flex!important;flex-direction:row!important;width:max-content!important}
+body.may-mobile-menu #mayBottomBar>.may-frame-type{display:none}
+body.may-mobile-menu #mayBottomBar>.may-frame-value{top:22px!important;font-size:8px;line-height:8px;z-index:1}
+body.may-mobile-menu #mayBottomBar>.gz-sl .gz-th{height:24px;margin-top:-12px}
+body.may-mobile-menu #paintTools .pt-open>.pt-r{display:flex!important;flex-direction:column!important;align-items:flex-start!important;grid-template-columns:none!important;grid-template-rows:none!important}
+body.may-mobile-menu.mayatnik-menu-ready #mayMobileBar :is(#paintTools,#mayatnikRail,#mayatnikRailR) :is(.pt-r,.may-rail-list){position:fixed!important;right:auto!important;bottom:auto!important;transform:none!important;width:120px!important;min-width:120px!important;max-width:calc(100vw - 16px)!important;max-height:calc(100dvh - var(--may-mobile-bar-height) - 12px);box-sizing:border-box;padding:2px 0 12px!important;margin:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y!important;z-index:2147483644!important;background:#000}
+body.may-mobile-menu #mayMobileBar :is(.gz-group:not(.gz-open)>.may-rail-list,.pt-g:not(.pt-open)>.pt-r){display:none!important}
+body.may-mobile-menu #imageStats{grid-column:1!important;grid-row:2!important}
+body.may-mobile-menu #ochkiBox{grid-column:1!important;grid-row:3!important}
+body.may-mobile-menu #wrap{grid-column:1!important;grid-row:4!important}
+body.may-mobile-menu #mayMobileBar .gz-group:not(.may-mobile-open):not(.may-button-search-reveal)>.may-rail-list{display:none!important}
+body.may-mobile-menu #mayMobileBar :is(.pt-r,.may-rail-list) .gz-hx{flex-shrink:0}
+body.may-mobile-menu #mayMobileBar #mayRhombs{display:contents!important}
+body.may-mobile-menu #mayMobileBar :is(#mayRhombs .may-rh,#mayButtonSearchTrigger){position:relative!important;inset:auto!important;transform:none!important;flex:0 0 48px!important;width:48px!important;min-width:48px!important;max-width:48px!important;height:24px!important;min-height:24px!important;max-height:24px!important;margin:0!important;touch-action:pan-x!important}
+body.may-mobile-menu #mayMobileBar #mayRhombs .may-rh{white-space:normal;font-size:10px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+body.may-mobile-menu #mayMobileBar #mayRhombs .may-rh::after{inset:0;transform:none;border:0;background:transparent}
+body.may-mobile-menu #mayButtonSearchTrigger{order:-4}
+body.may-mobile-menu #mayMobileBar #zerkHubBtn{display:flex!important;position:relative!important;inset:auto!important;transform:none!important;order:-5;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:24px!important;margin:0!important;padding:0!important;touch-action:pan-x!important}
+body.may-mobile-menu #mayMobileBar #zerkHubBtn canvas{width:24px!important;height:24px!important}
+/* Zen keeps a single top-row exit, never a second floating control strip. */
+body.may-mobile-menu.may-zen #mayMobileBar>:not(#mayRhombs){display:none!important}
+body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){display:none!important}

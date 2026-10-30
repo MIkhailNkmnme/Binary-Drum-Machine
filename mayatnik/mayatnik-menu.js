@@ -4,6 +4,7 @@
   'use strict';
   const $ = id => document.getElementById(id), source = document.querySelector('.bar');
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
+  const mobileMenu=window.MayatnikMenuDock.mobileStrip();
   const popupRight=()=>{const panel=$('mayatnikTemplatePanel');if(window.MayatnikTemplatePanel?.isOpen()&&panel){const left=panel.getBoundingClientRect().left;if(left>0)return left;}return innerWidth;};
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
@@ -1325,7 +1326,7 @@
   // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;
   // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
   // Пока какой-то список открыт, наведение на соседнее название переключает на него. Точка у названия — в группе что-то включено.
-  { tools.classList.add('pt-dd'); let open = null, grid = null; const narrow = matchMedia('(max-width:600px)');   // grid — раскладка по сетке (v0.225)
+  { tools.classList.add('pt-dd'); let open = null, grid = null; const narrow = mobileMenu;   // grid — раскладка по сетке (v0.225)
     // v0.506: both original actions share one split diamond at every viewport width.
     const infoDiamond=document.createElement('div');infoDiamond.id='mayInfoDiamond';infoDiamond.dataset.noMini='';$('mayCorner').append(infoDiamond);
     infoDiamond.append($('mayAbout'),$('mayHelp'));
@@ -1348,7 +1349,7 @@
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
       r.style.minWidth = narrow.matches ? '' : (g.querySelector('.pt-l').offsetWidth + 4) + 'px'; requestAnimationFrame(() => zig(r));
       // v0.460: фиксированный мобильный список привязан к своему заголовку, а не к левому краю окна.
-      if (narrow.matches || !g.classList.contains('pt-bot')) { const h = g.querySelector('.pt-l').getBoundingClientRect(); r.style.left = Math.max(4, Math.min(h.left, popupRight() - r.offsetWidth - 4)) + 'px'; r.style.top = (h.bottom + 2) + 'px'; return; }
+      if (narrow.matches || !g.classList.contains('pt-bot')) { const h = g.querySelector('.pt-l').getBoundingClientRect();if(narrow.matches)r.style.maxHeight=Math.max(24,innerHeight-h.bottom-12)+'px';r.style.left = Math.max(4, Math.min(h.left, popupRight() - r.offsetWidth - 4)) + 'px'; r.style.top = (h.bottom + 2) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > popupRight() - 4) r.style.left = Math.min(0, popupRight() - 4 - b.right) + 'px'; };
     // Списки стоят под своей шапкой; соседние раскрытые группы не сдвигают их вбок.
     const alignOpen = () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) place(g); };
@@ -1465,7 +1466,7 @@
       const toRail = (box, y) => { const kids = [...rail.el.querySelectorAll(':scope > .gz-group')], ri = railOrder.indexOf(box.dataset.id);
         const at = y == null ? kids.find(k => railOrder.indexOf(k.dataset.id) > ri) : kids.find(k => y < k.getBoundingClientRect().top + 12);
         rail.el.insertBefore(box, at || null); box.style.left = box.style.top = ''; box.style.removeProperty('--gdx'); box.classList.remove('pt-drag'); };
-      const placeUps = () => { for (const id of up) { const b = boxOf(id); if (!b) continue; if (narrow.matches) { if (b.parentElement !== rail.el) toRail(b); } else if (b.parentElement !== tools) tools.append(b); } };
+      const placeUps = () => { if(narrow.matches)return;for (const id of up) { const b = boxOf(id); if (!b) continue; if (narrow.matches) { if (b.parentElement !== rail.el) toRail(b); } else if (b.parentElement !== tools) tools.append(b); } };
       // порядок в DOM (телефон, Tab) — по рядам сетки
       const domSort = () => { if (!gw) return; const at = el => gw[idOf(el)], all = items(), a = all.filter(el => ok(at(el))).sort((x, y) => at(x)[1] - at(y)[1] || at(x)[0] - at(y)[0]);
         for (const el of [...a, ...all.filter(el => !ok(at(el)))]) tools.append(el); };
@@ -1485,7 +1486,7 @@
       const snap = () => { gw = {}; let i = 0; for (const [it, [c, r]] of shown) if (it !== ud) gw[idOf(it)] = [c, r, i++]; };   // своей раскладки ещё нет — снять с того, как стоит сейчас
       // v0.389: «по середине на ось, чтоб ромб встал»: центр ромба «Правки» — на оси якоря (window.mayAxisX, экранный x); нет оси — середина плея / шапки.
       // Зовёт и страница (прокрутка, масштаб) — window.mayUdPlace
-      const udPlace = () => { if (!ud.getClientRects().length) return;ud.classList.add('pt-bot');const R=footerBar.getBoundingClientRect(),w=ud.offsetWidth,axEl=ud.querySelector('.pt-ud-ax');
+      const udPlace = () => { if(narrow.matches){ud.classList.remove('pt-bot');return;}if (!ud.getClientRects().length) return;ud.classList.add('pt-bot');const R=footerBar.getBoundingClientRect(),w=ud.offsetWidth,axEl=ud.querySelector('.pt-ud-ax');
         const controlWidth=udL.getBoundingClientRect().width+'px';if(frameBar.style.getPropertyValue('--may-frame-width')!==controlWidth)frameBar.style.setProperty('--may-frame-width',controlWidth);
         const pl = document.querySelector('#mayBottomBar .may-bb-play'), pr = pl && pl.getClientRects().length ? pl.getBoundingClientRect() : null, axX = window.mayAxisX?.();
         const cx = Number.isFinite(axX) ? axX : pr ? pr.left + pr.width / 2 : R.left+R.width/2, U = ud.getBoundingClientRect(), A = axEl?.getBoundingClientRect(), off = A && A.width ? A.left + A.width / 2 - U.left : w / 2;
@@ -1496,7 +1497,7 @@
         if(frameBar.style.left!==x){frameBar.style.left=x;if(refresh&&!framePlaceRaf)framePlaceRaf=requestAnimationFrame(()=>{framePlaceRaf=0;relayout();});}};
       window.mayFramePlace=framePlace;
       const relayout = (compact = false) => { const all = items();
-        if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==head)head.append(frameBar);shown = new Map(); sig = '';placeBot(); alignOpen(); syncRailFlyouts(); window.mayButtonStandardRefresh?.(); return; }
+        if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==tools)tools.append(frameBar);shown = new Map(); sig = '';placeBot(); alignOpen(); syncRailFlyouts(); window.mayButtonStandardRefresh?.(); return; }
         if(frameBar.parentElement!==tools)tools.append(frameBar);
         tools.classList.add('pt-grid'); head.classList.add('may-grid'); if (!tools.getClientRects().length) return;   // дзен — шапки нет
         const B = room(), occ = [], at = el => gw?.[idOf(el)], held = d?.on && d.el, vis = all.filter(el => el.getClientRects().length && el !== held && !isBot(el) && !el.classList.contains('may-docked'));
@@ -1595,7 +1596,7 @@
         excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{
           // The side strips own the lower corners; keep the physical footer
           // between them too, including its backdrop and legacy history control.
-          const desktop=innerWidth>600,step=window.MayatnikMenuDock.DX;
+          const desktop=!narrow.matches,step=window.MayatnikMenuDock.DX;
           footerBar.style.marginLeft=desktop?(Math.max(4,rail.el.getBoundingClientRect().left)+step)+'px':'';
           footerBar.style.marginRight=desktop?(4+step)+'px':'';
           relayout();reopen();}}); }
@@ -1859,15 +1860,15 @@
     if (as[0] && as[0].textContent !== '−' + N) as[0].textContent = '−' + N; if (as[1] && as[1].textContent !== '+' + N) as[1].textContent = '+' + N; }); }
   // v0.454 (Р02): слева заголовки остаются на месте, кнопки группы — одним столбцом вниз под шапкой, остальное сдвигается.
   function syncRailFlyouts() {
-    for (const box of document.querySelectorAll('#mayatnikRail .gz-group, #paintTools > .gz-group')) {
+    for (const box of document.querySelectorAll('#mayatnikRail .gz-group, #mayatnikRailR .gz-group, #paintTools > .gz-group')) {
       const left = !!box.closest('#mayatnikRail'), sideStack = box.matches('.may-menu-side-stack.may-dock-side'); let list = box.querySelector(':scope > .may-rail-list');
       if (!list) { list = document.createElement('div'); list.className = 'may-rail-list';
         list.append(...box.querySelectorAll(':scope > .gz-soty, :scope > .gz-wide')); box.append(list); }
       if (!list) continue;
-      if ((!left && !sideStack) || innerWidth <= 600) {
+      if ((!left && !sideStack) || mobileMenu.matches) {
         list.removeAttribute('style');
         if (box.classList.contains('gz-open')) {
-          const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(), up = box.classList.contains('pt-bot');
+          const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(), up = !mobileMenu.matches && box.classList.contains('pt-bot');
           const max = Math.max(24, up ? h.top - 14 : innerHeight - h.bottom - 16);
           if (!up) { list.style.setProperty('left', Math.max(4, Math.min(h.left, innerWidth - 124)) + 'px', 'important'); list.style.setProperty('top', (h.bottom + 2) + 'px', 'important'); }
           list.style.maxHeight = max + 'px';
@@ -2052,6 +2053,13 @@
     for(const record of records)if(record.type==='characterData')captionsIn(record.target);else for(const node of record.addedNodes)captionsIn(node);
   }).observe(document.body,{subtree:true,childList:true,characterData:true});
   new ResizeObserver(() => dispatchEvent(new Event('resize'))).observe($('wrap'));
+  const mobileBar=mobileMenu.connect(tools.closest('header'),[...tools.closest('header').children].filter(n=>!n.matches('dialog,.bar,script,style')).concat([sidebar,railR,$('mayTemplateLauncher'),$('mayRhombs'),$('mayButtonSearchTrigger'),$('zerkHubBtn')]));
+  mobileBar.addEventListener('click',e=>{if(!mobileMenu.matches)return;const h=e.target.closest('.gz-head,.pt-l'),g=h?.parentElement;if(!g)return;for(const other of mobileBar.querySelectorAll('.may-mobile-open'))if(other!==g)other.classList.remove('may-mobile-open');g.classList.add('may-mobile-open');syncRailFlyouts();},true);
+  mobileBar.addEventListener('scroll',()=>{syncRailFlyouts();dispatchEvent(new Event('may-mobile-menu-scroll'));},{passive:true});
+  addEventListener('may-mobile-menu-scroll',()=>{for(const g of tools.querySelectorAll('.pt-open')){const r=g.querySelector('.pt-r'),h=g.querySelector('.pt-l')?.getBoundingClientRect();if(r&&h){r.style.left=Math.max(4,Math.min(h.left,innerWidth-r.offsetWidth-4))+'px';r.style.top=(h.bottom+2)+'px';}}});
+  const collectLateMenu=()=>mobileMenu.add([$('mayButtonSearchTrigger'),$('zerkHubBtn')]);
+  new MutationObserver(collectLateMenu).observe(document.body,{childList:true});collectLateMenu();
+  window.mayMobileMenu=mobileMenu;
   dispatchEvent(new Event('resize'));
 })();
 

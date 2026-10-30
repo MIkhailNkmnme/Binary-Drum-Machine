@@ -45,3 +45,17 @@ test('keyboard separator supports arrows, Shift, Home and End; narrow viewport c
  }finally{a.dom.window.close();}
  const small=boot(390);try{assert.equal(small.value(),195);}finally{small.dom.window.close();}
 });
+
+test('mobile library uses the viewport without overwriting desktop width or allowing hidden resize gestures',()=>{
+ const a=boot(1200,700);try{
+  for(const width of [320,360,390,430,844]){a.w.innerWidth=width;a.w.document.body.classList.add('may-mobile-menu');a.w.dispatchEvent(new a.w.Event('may-mobile-menu-change'));assert.equal(a.value(),width);assert.equal(a.handle.hidden,true);a.fire('pointerdown',100);a.fire('pointermove',10);a.fire('pointerup',10);a.key('End');assert.equal(a.value(),width);assert.equal(a.w.localStorage.getItem('mayatnik-template-panel-width'),'700');}
+  a.w.document.body.classList.remove('may-mobile-menu');a.w.innerWidth=1200;a.w.dispatchEvent(new a.w.Event('may-mobile-menu-change'));assert.equal(a.value(),700);assert.equal(a.handle.hidden,false);
+ }finally{a.dom.window.close();}
+});
+
+test('mobile library follows the visible viewport while the keyboard is open and restores on close',()=>{
+ const a=boot(390,700,w=>{w.document.body.classList.add('may-mobile-menu');w.visualViewport=new w.EventTarget();Object.assign(w.visualViewport,{width:390,height:844,offsetTop:0,offsetLeft:0});});try{
+  const v=a.w.visualViewport;Object.assign(v,{width:360,height:300,offsetTop:250,offsetLeft:15});v.dispatchEvent(new a.w.Event('resize'));assert.equal(a.value(),360);const style=a.w.document.body.style;assert.equal(style.getPropertyValue('--may-library-vv-bottom'),'550px');assert.equal(style.getPropertyValue('--may-library-vv-top'),'250px');assert.equal(style.getPropertyValue('--may-library-vv-left'),'15px');
+  Object.assign(v,{width:390,height:844,offsetTop:0,offsetLeft:0});v.dispatchEvent(new a.w.Event('resize'));assert.equal(a.value(),390);assert.equal(style.getPropertyValue('--may-library-vv-bottom'),'844px');assert.equal(a.w.localStorage.getItem('mayatnik-template-panel-width'),'700');
+ }finally{a.dom.window.close();}
+});

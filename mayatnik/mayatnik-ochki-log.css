@@ -13,4 +13,10 @@
 .may-ochki-log-entry img{width:120px;height:100px;object-fit:contain;flex:none;background:#0d1119}
 .may-ochki-log-entry p{margin:4px 0}
 .may-ochki-log-state{color:#ffce89}
+#mayOchkiSearchLog[open]{display:flex;flex-direction:column}
+#mayOchkiSearchLog>header,#mayOchkiSearchLog>.may-ochki-log-status{flex:none}
+#mayOchkiSearchLog>.may-ochki-log-list{flex:1;min-height:0;max-height:none}
+body.may-mobile-menu #mayOchkiSearchLog{padding:8px;width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}
+body.may-mobile-menu #mayOchkiSearchLog header{gap:6px}
+body.may-mobile-menu #mayOchkiSearchLog .gz-hx{width:92px;min-height:32px}
 @media(max-width:480px){.may-ochki-log-entry{gap:6px}.may-ochki-log-entry img{width:64px;height:70px}#mayOchkiSearchLog h2{font-size:15px}}

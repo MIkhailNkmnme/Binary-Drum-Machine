@@ -2,8 +2,10 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const Palette=require('./mayatnik-fill-palette.js');
 const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 const rect=(left,top,width,height)=>({left,top,right:left+width,bottom:top+height,width,height});
-function fixture(value='#ff0000',customBounds=true){
+function fixture(value='#ff0000',customBounds=true,options={}){
  const dom=new JSDOM('<body><div id="wrap"><canvas></canvas><button>Menu</button></div><input id="colour" type="color"></body>',{runScripts:'outside-only'}),w=dom.window,doc=w.document,wrap=doc.querySelector('#wrap'),canvas=doc.querySelector('canvas'),input=doc.querySelector('input');let active=false;const events=[],paints=[];
+ if(options.mobile)doc.body.classList.add('may-mobile-menu');
+ if(options.visualViewport)Object.defineProperty(w,'visualViewport',{value:Object.assign(new w.EventTarget(),options.visualViewport),configurable:true});
  input.value=value;wrap.getBoundingClientRect=()=>rect(0,0,1000,800);canvas.getBoundingClientRect=()=>rect(200,100,600,400);
  for(const type of ['input','change'])input.addEventListener(type,()=>events.push(type+':'+input.value));
  w.eval(fs.readFileSync(__dirname+'/mayatnik-fill-palette.js','utf8'));
@@ -65,4 +67,55 @@ test('placement clamps to visible field, default layout reserves docked menus an
 test('destroy removes palette, cursors and colour listeners and leaves the host field usable',()=>{
  const f=fixture();try{f.active(true);const panel=f.palette.panel;f.palette.destroy();assert.equal(panel.isConnected,false);assert.equal(f.wrap.classList.contains('may-fill-pencil'),false);assert.equal(f.palette.handleContextMenu({button:2}),false);f.input.value='#abcdef';f.input.dispatchEvent(new f.w.Event('input'));assert.equal(panel.querySelector('.may-fill-hex').value,'#ff0000');f.palette.destroy();
  }finally{f.close();}
+});
+
+
+test('temporary lack of space hides the palette but window resize restores it without toggling fill',()=>{
+ const f=fixture('#ff0000',false);try{
+  f.active(true);f.wrap.getBoundingClientRect=()=>rect(0,0,80,300);f.w.dispatchEvent(new f.w.Event('resize'));assert.equal(f.palette.panel.hidden,true);assert.equal(f.wrap.classList.contains('may-fill-pencil'),true);
+  f.wrap.getBoundingClientRect=()=>rect(0,0,360,600);f.w.dispatchEvent(new f.w.Event('resize'));assert.equal(f.palette.panel.hidden,false);assert.equal(f.palette.panel.style.width,'240px');
+  f.active(false);f.w.dispatchEvent(new f.w.Event('resize'));assert.equal(f.palette.panel.hidden,true,'space changes never enable an inactive tool');
+ }finally{f.close();}
+});
+
+test('visual viewport keyboard and pan offsets constrain even caller-supplied bounds and recover after occlusion',()=>{
+ const f=fixture('#ff0000',true,{visualViewport:{offsetLeft:150,offsetTop:110,width:350,height:260}});try{
+  f.active(true);const v=f.w.visualViewport,p=f.palette.panel;
+  assert.equal(p.style.left,'252px');assert.equal(p.style.top,'118px');assert.equal(p.style.maxHeight,'244px');
+  v.offsetLeft=200;v.offsetTop=240;v.width=300;v.height=150;v.dispatchEvent(new f.w.Event('scroll'));
+  assert.equal(p.style.left,'252px');assert.equal(p.style.top,'248px');assert.equal(p.style.maxHeight,'134px');assert.equal(p.hidden,false);
+  v.height=30;v.dispatchEvent(new f.w.Event('resize'));assert.equal(p.hidden,true);
+  v.height=260;v.dispatchEvent(new f.w.Event('resize'));assert.equal(p.hidden,false);assert.equal(p.style.top,'248px');
+  f.palette.destroy();const left=p.style.left;v.offsetLeft=500;v.dispatchEvent(new f.w.Event('scroll'));assert.equal(p.style.left,left,'destroy removes visual viewport listeners');
+ }finally{f.close();}
+});
+
+test('mobile collapsed controls retain rainbow and colour, expose every editor, and desktop always stays expanded',()=>{
+ const f=fixture('#123456',false,{mobile:true});try{
+  f.active(true);const p=f.palette.panel,b=p.querySelector('.may-fill-toggle'),details=p.querySelector('.may-fill-details');
+  assert.equal(p.dataset.collapsed,'true');assert.equal(details.hidden,true);assert.equal(b.hidden,false);assert.equal(b.getAttribute('aria-expanded'),'false');assert.match(b.textContent,/#123456/);
+  p.querySelector('[data-fill-colour="#00ff00"]').click();assert.equal(f.input.value,'#00ff00');assert.match(b.textContent,/#00ff00/);assert.equal(f.paints.length,0);
+  b.click();assert.equal(details.hidden,false);assert.equal(b.getAttribute('aria-expanded'),'true');for(const selector of ['.may-fill-sv','.may-fill-hue','.may-fill-hex','.may-fill-rgb'])assert.ok(details.querySelector(selector));
+  b.click();assert.equal(details.hidden,true);f.active(false);f.active(true);assert.equal(details.hidden,true);
+  f.doc.body.classList.remove('may-mobile-menu');f.w.dispatchEvent(new f.w.Event('may-mobile-menu-change'));assert.equal(details.hidden,false);assert.equal(b.hidden,true);assert.equal(p.dataset.collapsed,'false');assert.equal(f.input.value,'#00ff00');
+ }finally{f.close();}
+});
+
+test('full-width mobile library occludes palette and class/event changes restore prior state without changing colour',async()=>{
+ const f=fixture('#abcdef',false,{mobile:true});try{
+  f.active(true);const p=f.palette.panel,b=p.querySelector('.may-fill-toggle');b.click();
+  f.doc.body.classList.add('may-template-panel-open');f.w.dispatchEvent(new f.w.Event('mayatnik-template-panel-change'));assert.equal(p.hidden,true);
+  f.w.dispatchEvent(new f.w.Event('resize'));assert.equal(p.hidden,true);
+  f.doc.body.classList.remove('may-template-panel-open');await Promise.resolve();assert.equal(p.hidden,false,'body class observer restores without requiring host fillSync');assert.equal(b.getAttribute('aria-expanded'),'true');assert.equal(f.input.value,'#abcdef');
+ }finally{f.close();}
+});
+
+test('mobile placement stays inside 320/360/390/430 portrait and 844x390 landscape visual viewports',()=>{
+ for(const [width,height]of [[320,640],[360,720],[390,844],[430,932],[844,390]]){
+  const f=fixture('#ff0000',false,{mobile:true,visualViewport:{offsetLeft:12,offsetTop:25,width,height}});try{
+   f.wrap.getBoundingClientRect=()=>rect(12,61,width,height-36);f.active(true);const p=f.palette.panel;
+   assert.equal(p.hidden,false);assert.equal(p.dataset.collapsed,'true');assert.ok(parseFloat(p.style.left)>=20);assert.ok(parseFloat(p.style.left)+parseFloat(p.style.width)<=width+4);assert.ok(parseFloat(p.style.top)>=69);
+   p.querySelector('.may-fill-toggle').click();assert.equal(p.hidden,false);assert.ok(parseFloat(p.style.top)>=69);assert.ok(parseFloat(p.style.maxHeight)<=height-52);
+  }finally{f.close();}
+ }
 });

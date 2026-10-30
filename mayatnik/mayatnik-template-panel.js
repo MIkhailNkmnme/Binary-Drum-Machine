@@ -103,9 +103,12 @@
   let resizeHandle,widthPreference=null,resizeDrag=null,widthFrame=0,saveButton;
   function syncSave(){if(saveButton)saveButton.disabled=!doc.getElementById('bTemplateSave')||doc.getElementById('bTemplateSave').disabled;syncExplorer();}
   const widthBounds=()=>{const viewport=Math.max(1,root.innerWidth||doc.documentElement.clientWidth||800),max=Math.max(1,viewport-58);return {viewport,min:Math.min(240,Math.floor(viewport/2),max),max};};
-  function panelWidth(){const {viewport,min,max}=widthBounds();return Math.max(min,Math.min(max,widthPreference??viewport/2));}
+  const mobilePanel=()=>doc.body.classList.contains('may-mobile-menu')&&!root.MayatnikLibraryDetached;
+  function panelWidth(){const {viewport,min,max}=widthBounds();return mobilePanel()?Math.min(viewport,root.visualViewport?.width||viewport):Math.max(min,Math.min(max,widthPreference??viewport/2));}
   function applyWidth(notify=false){
     const width=Math.round(panelWidth()),{min,max}=widthBounds();doc.body.style.setProperty('--may-template-panel-width',width+'px');
+    const vv=root.visualViewport;doc.body.style.setProperty('--may-library-vv-top',(vv?.offsetTop||0)+'px');doc.body.style.setProperty('--may-library-vv-left',(vv?.offsetLeft||0)+'px');doc.body.style.setProperty('--may-library-vv-bottom',((vv?.offsetTop||0)+(vv?.height||root.innerHeight))+'px');
+    if(resizeHandle)resizeHandle.hidden=!open||mobilePanel();
     if(resizeHandle){resizeHandle.style.right=width+'px';resizeHandle.setAttribute('aria-valuemin',String(min));resizeHandle.setAttribute('aria-valuemax',String(max));resizeHandle.setAttribute('aria-valuenow',String(width));resizeHandle.setAttribute('aria-valuetext',width+' пикселей');}
     if(notify&&!widthFrame)widthFrame=root.requestAnimationFrame(()=>{widthFrame=0;root.dispatchEvent(new Event('resize'));});
   }
@@ -117,14 +120,16 @@
   function makeResizer(storage){
     try{const saved=Number(storage?.getItem(WIDTH_KEY));if(Number.isFinite(saved)&&saved>0)widthPreference=saved;}catch(_){}
     resizeHandle=doc.createElement('div');resizeHandle.className='mtp-resize';resizeHandle.hidden=true;resizeHandle.tabIndex=0;resizeHandle.setAttribute('role','separator');resizeHandle.setAttribute('aria-orientation','vertical');resizeHandle.setAttribute('aria-controls',panel.id);resizeHandle.setAttribute('aria-label','Ширина панели шаблонов');resizeHandle.title='Тянуть левую границу · ← шире · → уже · Home минимум · End максимум';
-    resizeHandle.addEventListener('pointerdown',e=>{if(e.button!==0||resizeDrag)return;e.preventDefault();e.stopPropagation();resizeDrag={id:e.pointerId,x:e.clientX,width:panelWidth(),preference:widthPreference};resizeHandle.focus({preventScroll:true});try{resizeHandle.setPointerCapture(e.pointerId);}catch(_){}doc.body.classList.add('may-template-panel-resizing');});
+    resizeHandle.addEventListener('pointerdown',e=>{if(e.button!==0||resizeDrag||mobilePanel())return;e.preventDefault();e.stopPropagation();resizeDrag={id:e.pointerId,x:e.clientX,width:panelWidth(),preference:widthPreference};resizeHandle.focus({preventScroll:true});try{resizeHandle.setPointerCapture(e.pointerId);}catch(_){}doc.body.classList.add('may-template-panel-resizing');});
     resizeHandle.addEventListener('pointermove',e=>{if(!resizeDrag||resizeDrag.id!==e.pointerId)return;e.preventDefault();const {min,max}=widthBounds();widthPreference=Math.max(min,Math.min(max,resizeDrag.width+resizeDrag.x-e.clientX));applyWidth(true);});
     resizeHandle.addEventListener('pointerup',e=>{if(resizeDrag?.id===e.pointerId)finishResize();});
     for(const type of ['pointercancel','lostpointercapture'])resizeHandle.addEventListener(type,e=>{if(resizeDrag?.id===e.pointerId)finishResize(true);});
-    resizeHandle.addEventListener('keydown',e=>{if(e.key==='Escape'&&resizeDrag){e.preventDefault();finishResize(true);return;}const {min,max}=widthBounds(),step=e.shiftKey?40:10;
+    resizeHandle.addEventListener('keydown',e=>{if(mobilePanel())return;if(e.key==='Escape'&&resizeDrag){e.preventDefault();finishResize(true);return;}const {min,max}=widthBounds(),step=e.shiftKey?40:10;
       const value=e.key==='ArrowLeft'?panelWidth()+step:e.key==='ArrowRight'?panelWidth()-step:e.key==='Home'?min:e.key==='End'?max:null;
       if(value===null)return;e.preventDefault();e.stopPropagation();widthPreference=Math.max(min,Math.min(max,value));applyWidth(true);saveWidth();});
     root.addEventListener('blur',()=>finishResize(true));root.addEventListener('resize',()=>applyWidth());doc.body.append(resizeHandle);applyWidth();
+    root.addEventListener('may-mobile-menu-change',()=>{finishResize(true);applyWidth();});
+    root.visualViewport?.addEventListener('resize',()=>applyWidth());root.visualViewport?.addEventListener('scroll',()=>applyWidth());
   }
   function token(value){if(value&&typeof value==='object'){if(!identities.has(value))identities.set(value,++identityCounter);return identities.get(value);}return String(value);}
   function organise(run){const before=store.snapshot(),result=run(),after=store.snapshot();if(JSON.stringify(before)!==JSON.stringify(after))engine?.recordExternal?.(before,after,store.restore.bind(store));render();return result;}
