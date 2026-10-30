@@ -11,7 +11,7 @@ function fixture(){
     setTimeout:cb=>(timers.push(cb),timers.length),ochkiKey:()=>c.k+'|'+c.st.view,gpuCpuOchki:()=>!!c.gpuBig&&c.st.ochki,gpuManualCpu:()=>false,gpuPaintCpu:()=>false,gpuCpuDisplay:()=>!!c.gpuBig&&c.st.ochki,
     draw:()=>calls.push('draw'),gpuPicture:()=>calls.push('picture'),gpuPost:()=>calls.push('post'),cssLayout:()=>calls.push('layout'),canvasSize:()=>calls.push('size'),updWin:()=>false,
     publishOchki:(result,reason)=>calls.push(['publish',result,reason]),$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);},ochki:{old:true}};
-  Object.assign(c,{manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(fn('gpuReadSoon'),c);return {c,read,timers,nodes,calls};
+  Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(fn('gpuReadSoon'),c);return {c,read,timers,nodes,calls};
 }
 test('host reads the full fixed GPU frame before search; geometry updates precede draw',async()=>{
   const {c,read,timers,calls}=fixture();c.st.noband=true;c.updWin=()=>{calls.push('window');c.st.view='romb2';return true;};
@@ -61,7 +61,7 @@ test('manual projected playback waits for exact snapshot without accepting a sta
 });
 
 test('manual CPU display is limited to visible romb operations while Ochki readback permits active playback',()=>{
-  const c={gpuBig:{},fillMask:null,fillHistory:[],fillRedo:[],gpuPaintRequests:0,st:{ochki:false},rombP:()=>0,manualPaintOn:()=>false,manualMirrorPlan:()=>[]};Object.assign(c,{manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);
+  const c={gpuBig:{},templatePaintLayer:null,fillMask:null,fillHistory:[],fillRedo:[],gpuPaintRequests:0,st:{ochki:false},rombP:()=>0,manualPaintOn:()=>false,manualMirrorPlan:()=>[]};Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);
   vm.runInContext(['gpuCpuOchki','gpuManualCpu','gpuPaintCpu','gpuCpuDisplay','gpuDisplay'].map(name=>html.match(new RegExp('  const '+name+' =[^\\n]+'))[0]).join('\n')+'\nthis.display=()=>gpuCpuDisplay();this.manual=()=>gpuManualCpu();',c);
   assert.equal(c.display(),false);c.manualMirrorPlan=()=>[{k:'h',m:2}];assert.equal(c.display(),true);
   c.rombP=()=>-1;assert.equal(c.display(),false);c.manualMirrorPlan=()=>[];c.manualPaintOn=()=>true;c.rombP=()=>2;assert.equal(c.display(),true);
@@ -70,10 +70,10 @@ test('manual CPU display is limited to visible romb operations while Ochki readb
 });
 test('GPU calculation keeps its identity while CPU geometry covers every romb and restores GPU canvas on OFF',()=>{
   for(const rp of [-1,0,1,2,3]){
-    const owner={},c={fillMask:null,fillHistory:[],fillRedo:[],gpuPaintRequests:0,st:{ochki:true},gpuBig:owner,RG:0,RK:1,VW:20,VH:8,img:null,cv:{width:4,height:4},wrap:{clientWidth:640},wrapPadX:()=>0,rombP:()=>rp,
+    const owner={},c={templatePaintLayer:null,fillMask:null,fillHistory:[],fillRedo:[],gpuPaintRequests:0,st:{ochki:true},gpuBig:owner,RG:0,RK:1,VW:20,VH:8,img:null,cv:{width:4,height:4},wrap:{clientWidth:640},wrapPadX:()=>0,rombP:()=>rp,
       g:{createImageData:(width,height)=>({width,height,data:new Uint8ClampedArray(width*height*4)})}};
     c.manualPaintOn=()=>false;c.manualMirrorPlan=()=>[];c.dispW=()=>rp===2?2*c.VW+c.RG:c.VW;c.dispH=()=>rp===3?2*c.VH:c.VH;
-    Object.assign(c,{manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(['gpuCpuOchki','gpuManualCpu','gpuPaintCpu','gpuCpuDisplay','gpuDisplay'].map(name=>html.match(new RegExp('  const '+name+' =[^\n]+'))[0]).join('\n')+fn('canvasSize'),c);
+    Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(['gpuCpuOchki','gpuManualCpu','gpuPaintCpu','gpuCpuDisplay','gpuDisplay'].map(name=>html.match(new RegExp('  const '+name+' =[^\n]+'))[0]).join('\n')+fn('canvasSize'),c);
     c.canvasSize();assert.equal(c.gpuBig,owner);assert.equal(c.gpuBig.cpuRaster,true);assert.equal(c.img.width,c.dispW()*c.RK);assert.equal(c.img.height,c.dispH()*c.RK);if(rp===2)assert.ok(c.RG>=2);
     c.st.ochki=false;c.canvasSize();assert.equal(c.gpuBig,owner);assert.equal(c.img,null);assert.equal(c.RK,1);assert.equal(c.RG,0);assert.equal(c.gpuBig.cpuRaster,false);assert.equal(c.cv.width,1);
   }
@@ -81,7 +81,7 @@ test('GPU calculation keeps its identity while CPU geometry covers every romb an
 test('CPU presentation is selected consistently and async GPU post cannot overwrite it',async()=>{
   for(const name of ['present','cellSource','gifViewFrame','ovlCapture'])assert.match(fn(name),/gpuDisplay\(\)/,name);
   const read=deferred();let calls=0,c={gpuBig:{fresh:true,fld:{readPic:()=>read.promise}},gpuCpuDisplay:()=>false,k:1,playing:false,VW:2,VH:2};
-  c.gpuPostDone=()=>calls++;Object.assign(c,{manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext('async '+fn('gpuPost'),c);const p=c.gpuPost();c.gpuCpuDisplay=()=>true;read.resolve(new Uint32Array(4));await p;assert.equal(c.img,undefined);assert.equal(calls,0);
+  c.gpuPostDone=()=>calls++;Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext('async '+fn('gpuPost'),c);const p=c.gpuPost();c.gpuCpuDisplay=()=>true;read.resolve(new Uint32Array(4));await p;assert.equal(c.img,undefined);assert.equal(calls,0);
   const draw=fn('draw'),catchAt=draw.lastIndexOf('}catch(error){');assert.ok(catchAt>0);assert.doesNotMatch(draw.slice(0,catchAt),/stopFrameTransports\(\)/);assert.match(draw.slice(catchAt),/if\(playing\)stopFrameTransports\(\)/,'real display errors still stop safely');assert.match(draw,/if\(!same\)[\s\S]*gpuReadSoon\(0\)/);
   assert.match(fn('ochkiRecordFrame'),/status:'found'/);assert.doesNotMatch(fn('ochkiRecordFrame'),/captureOchkiFrame|mayFrameLibrary|\.save\(|stop\(|stopFrameTransports/);
 });
@@ -109,11 +109,11 @@ test('failed or truncated playback snapshots stop explicitly and never commit pa
 test('joined GPU-field CPU image masks projected cells instead of interpreting display rows as raw field rows',()=>{
   const c={img:{width:3,height:4},f:{W:3,H:2},VX:0,parityActive:()=>true,rgba:()=>99,EMPTY:[],joinedOn:()=>true,gpuDisplay:()=>false,
     cellMapper:()=>((x,y)=>y<2?y*3+x:(3-y)*3+2-x),parityVisible:(r,col)=>r===0&&col===1};
-  Object.assign(c,{manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(fn('parityMask'),c);const px=new Uint32Array(12).fill(7);c.parityMask(px);
+  Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(fn('parityMask'),c);const px=new Uint32Array(12).fill(7);c.parityMask(px);
   assert.deepEqual([...px],[99,7,99,99,99,99,99,99,99,99,7,99]);
 });
 test('CPU image allocation failure is explicit and never leaves a previous raster marked ready',()=>{
   const nodes=new Map(),c={st:{ochki:true},gpuBig:{cpuRaster:true},RG:0,RK:1,VW:20,VH:8,img:{old:true},cv:{},wrap:{clientWidth:640},wrapPadX:()=>0,rombP:()=>-1,
     g:{createImageData(){throw new RangeError('allocation');}},dispW:()=>20,dispH:()=>8,gpuDisplay:()=>false,gpuCpuDisplay:()=>true,ochkiKey:()=> 'frame',publishOchki:(r,reason)=>{c.published={r,reason};},$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);}};
-  Object.assign(c,{manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(fn('canvasSize'),c);c.canvasSize();assert.equal(c.img,null);assert.equal(c.gpuBig.cpuRaster,false);assert.equal(c.published.r,null);assert.match(c.published.reason,/Ошибка памяти полного изображения/);assert.equal(nodes.get('ochkiBox').hidden,false);
+  Object.assign(c,{templateFollowActive:()=>false,manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false});vm.createContext(c);vm.runInContext(fn('canvasSize'),c);c.canvasSize();assert.equal(c.img,null);assert.equal(c.gpuBig.cpuRaster,false);assert.equal(c.published.r,null);assert.match(c.published.reason,/Ошибка памяти полного изображения/);assert.equal(nodes.get('ochkiBox').hidden,false);
 });

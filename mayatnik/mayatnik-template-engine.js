@@ -40,35 +40,36 @@
     }
     async function selectEntry(entry,temporary=false,options={}){
       const id=temporary?null:entry.id;
-      if(host.selectionAllowed?.(entry)===false){state={...state,message:host.selectionMessage?.()||'Template area limit'};emit();return {...state};}
+      if(host.selectionAllowed?.(entry)===false){state={...state,message:host.selectionMessage?.()||'Template area limit'};emit();if(options.follow)throw Error(state.message);return {...state};}
       const run=++serial;selection=null;state={...state,selectedId:id,count:0,busy:true,message:'Поиск в текущих строках…'};emit();
-      if(!temporary)host.choose(id);host.stop();host.redrawSelection();
+      if(!temporary)host.choose(id);if(!options.follow)host.stop();host.redrawSelection();
       try{
         if(options.materialize&&typeof host.materializeMatches!=='function')throw Error('Создание шаблонов из найденных фигур недоступно');
-        const field=await host.field();if(run!==serial)return state;
-        const patterns=patternsFor(entry,!!options.mirrorX),cancelled=()=>run!==serial||!host.current(field);
+        const field=await host.field(true,options);if(run!==serial){if(options.follow)throw root.MayatnikTemplateMatcher.abort();return state;}
+        const patterns=patternsFor(entry,!!options.mirrorX),cancelled=()=>run!==serial||!!options.cancelled?.()||!host.current(field,options);
+        if(cancelled())throw root.MayatnikTemplateMatcher.abort();
         let found=results.find(r=>r.field===field&&r.patterns===patterns&&(!options.materialize||r.found.matches))?.found;
         if(!found){found=await root.MayatnikTemplateMatcher.find(field,patterns,{collectMatches:!!options.materialize,cancelled});results.push({field,patterns,found});while(results.length>3)results.shift();}
-        if(run!==serial)return state;
+        if(run!==serial){if(options.follow)throw root.MayatnikTemplateMatcher.abort();return state;}
         const instances=temporary?(host.shapeInstances?.(entry.shape,{mirrorX:!!options.mirrorX})||[]):host.instances(id);
         if(options.materialize){
           if(cancelled())throw root.MayatnikTemplateMatcher.abort();
           // The host stages source-preserving copies, validates its raster projection,
           // then commits them and their common undo entry in one synchronous step.
           const result=await host.materializeMatches({shape:entry.shape,field,patterns,matches:found.matches,instances},cancelled);
-          if(run!==serial)return state;
+          if(run!==serial){if(options.follow)throw root.MayatnikTemplateMatcher.abort();return state;}
           if(!result||!Array.isArray(result.instances))throw Error('Не удалось выделить найденные шаблоны');
           const ids=[...new Set(result.instances)];selection=null;
           state={...state,selectedId:id,count:ids.length,busy:false,message:ids.length?`Найдено в текущих строках: ${ids.length} шаблонов`:'В текущих строках этого шаблона нет'};
           host.redrawSelection();emit();
-          if(ids.length)host.focus?.({id,instances:ids,first:found.first||null,field});
-          return {...state};
+          if(ids.length&&!options.follow)host.focus?.({id,instances:ids,first:found.first||null,field});
+          return {...state,completedScope:result.completedScope};
         }
         selection={...found,instances,field};state={...state,selectedId:id,count:found.count+instances.length,busy:false,message:`Найдено: ${found.count} · отдельных копий: ${instances.length}`};
         if(!state.count){selection=null;state.message='В текущих строках этого шаблона нет';}
         host.redrawSelection();emit();
-        if(selection)host.focus?.({id,instances:[...instances],first:found.first||null,field});
-      }catch(e){if(run!==serial)return state;selection=null;state={...state,busy:false,count:0,message:e.name==='AbortError'?'Поле изменилось — выберите шаблон снова':e.message};host.redrawSelection();emit();}
+        if(selection&&!options.follow)host.focus?.({id,instances:[...instances],first:found.first||null,field});
+      }catch(e){if(run!==serial){if(options.follow)throw root.MayatnikTemplateMatcher.abort();return state;}selection=null;state={...state,busy:false,count:0,message:e.name==='AbortError'?'Поле изменилось — выберите шаблон снова':e.message};host.redrawSelection();emit();if(options.follow)throw e;}
       return {...state};
     }
     async function edit(kind,value){

@@ -15,7 +15,7 @@ test('temporary selection shares cancellation and area-limit protection with sav
   allowed=false;const state=await api.selectShape(shape);assert.equal(state.message,'limit');assert.equal(api.getSelection(),null);
 });
 function rightClick(){
-  let handler,taken=0,cleared=0,lines=0;const c={wrap:{addEventListener:(kind,fn)=>handler=fn},templateContextSkip:false,templateDragging:null,templatePickEnabled:false,img:{width:20,height:10},cv:{getBoundingClientRect:()=>({left:0,top:0,width:20,height:10})},hitTemplate:()=>null,f:{},st:{userLines:[]},nearestUserLine:()=>0,axisSelected:0,axisSelTo(){lines++;},axisSelOut(){lines++;},axisLinesSync(){},queueDigits(){},takeColourAt:()=>{taken++;return true;},window:{mayTemplateLibrary:{clear(){cleared++;}}}};
+  let handler,taken=0,cleared=0,lines=0;const c={wrap:{addEventListener:(kind,fn)=>handler=fn},unpickTemplate:()=>false,templateContextSkip:false,templateDragging:null,templatePickEnabled:false,img:{width:20,height:10},cv:{getBoundingClientRect:()=>({left:0,top:0,width:20,height:10})},hitTemplate:()=>null,f:{},st:{userLines:[]},nearestUserLine:()=>0,axisSelected:0,axisSelTo(){lines++;},axisSelOut(){lines++;},axisLinesSync(){},queueDigits(){},takeColourAt:()=>{taken++;return true;},window:{mayTemplateLibrary:{clear(){cleared++;}}}};
   vm.createContext(c);const at=html.indexOf("  wrap.addEventListener('contextmenu',e=>{"),end=html.indexOf('  // v0.309:',at);vm.runInContext(html.slice(at,end),c);
   return {c,click:()=>handler({clientX:2,clientY:3,preventDefault(){}}),get taken(){return taken;},get cleared(){return cleared;},get lines(){return lines;}};
 }
@@ -32,9 +32,9 @@ test('shape matching includes independent visible copies and respects hidden, sk
   const c={templateItems:[a,b,hidden,skipped,large,layer],RK:1,MayatnikTemplateMatcher:global.MayatnikTemplateMatcher,templateSelectionSkipped:t=>t===skipped,templateItemAllowed:t=>t!==large,window:{mayLayers:{get:id=>({visible:id!=='template:layer'})}}};vm.createContext(c);vm.runInContext(production('templateShapeInstances'),c);
   assert.deepEqual([...c.templateShapeInstances({rk:1,parts:[mask]})],['a','b']);
 });
-test('Find all is present in the main Templates group and uses the active snapshot without saving the library',async()=>{
-  const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8'),at=menu.indexOf("  { const row = ptGroup('Шаблоны')"),end=menu.indexOf('railR.style.setProperty',at);assert.match(menu.slice(at,end),/bTemplateFindAll/);assert.match(html,/id="bTemplateFindAll" disabled title="Найти и выделить все такие же шаблоны"/);
-  const nodes={bTemplateFindAll:{},paintCacheInfo:{}},shape={parts:[]};let requested,options;
-  const c={$:id=>nodes[id],colourTemplate:{},templateItemAllowed:()=>true,templateSnapshot:()=>shape,templateMatchProjection:()=> 'projection',window:{mayTemplateLibrary:{selectShape:async(value,opts)=>{requested=value;options=opts;return{message:'Найдено: 3'};}}}};
-  vm.createContext(c);const start=html.indexOf("  $('bTemplateFindAll').onclick="),stop=html.indexOf('  window.mayTemplateLibrary=',start);vm.runInContext(html.slice(start,stop),c);await nodes.bTemplateFindAll.onclick();assert.equal(requested,shape);assert.equal(shape.searchProjection,'projection');assert.equal(options.mirrorX,true);assert.equal(options.materialize,true);assert.equal(nodes.paintCacheInfo.textContent,'Найдено: 3');
+test('Find all source toggles persistent mode and OFF remains usable without an active shape',async()=>{
+  const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8');assert.match(menu,/bTemplateFindAll/);assert.match(html,/id="bTemplateFindAll" disabled aria-pressed="false"/);
+  const nodes={bTemplateFindAll:{},paintCacheInfo:{}},shape={rk:1,parts:[{width:1,height:1,data:[9]}]};let enabled=0,off=0,searched=0;
+  const c={$:id=>nodes[id],f:{},colourTemplate:{},templateItemAllowed:()=>true,templateSnapshot:()=>shape,MayatnikTemplateMatcher:global.MayatnikTemplateMatcher,MayatnikTemplateFollow:require('./mayatnik-template-follow.js'),queueSession(){},draw(){},templateFollow:{on:false,enable(source){this.on=true;enabled++;},off(){this.on=false;off++;},async ensure(){searched++;}}};
+  vm.createContext(c);const start=html.indexOf("  $('bTemplateFindAll').onclick="),stop=html.indexOf('  window.mayTemplateLibrary=',start);vm.runInContext(html.slice(start,stop),c);await nodes.bTemplateFindAll.onclick();assert.equal(enabled,1);assert.equal(searched,1);assert.equal(c.templateFollow.on,true);c.colourTemplate=null;await nodes.bTemplateFindAll.onclick();assert.equal(off,1);assert.equal(c.templateFollow.on,false);
 });

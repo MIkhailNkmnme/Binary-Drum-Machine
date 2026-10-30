@@ -12,7 +12,7 @@ function fixture({rk=1,vx=0,vw=14}={}){
     VX:vx,VW:vw,VH:H,RK:rk,RG:2,rombP:()=>-1,scale:()=>1,DPR:()=>1,wrap:{clientWidth:800,clientHeight:600},st:{templateMaxArea:4096,view:'bits'},parityVisible:()=>true,compareOn:()=>false,tintAt:()=>0,PAL:{bits:[[[1,2,3]],[[7,8,9]]]},rgba:rgb=>(0xff000000|rgb[2]<<16|rgb[1]<<8|rgb[0])>>>0,
     MayatnikTemplateMatcher:M,MayatnikTemplate:T,MayatnikTemplateLimit:L,window:{mayLayers:{get:()=>null},mayTemplateLibrary:{clear(){}}},templateItems:[],templateSerial:0,templatePickedIds:new Set(),colourTemplate:null,templateOffsetX:0,templateDragging:null,templateMatchRevision:0,templateMatchCache:null,templateMatchLayer:null,templateLibrary:[],removedTemplateIds:new Set(),
     templateTransfer:false,templateAxisUnlocked:false,templateVisible:false,templatePaintBit:1,templateReturn:null,templateLastDown:0,templateStatsKey:'',templateMove:false,fillMode:false,autoVertical:0,
-    faceLayer:null,fillMask:Uint32Array.of(5,6),paintBits:Int8Array.of(0,1),fillBits:null,fillHistory:[],fillRedo:[],fillHistoryBytes:0,mirrorLive:false,mirrorApplying:false,
+    faceLayer:null,templatePaintLayer:null,fillMask:Uint32Array.of(5,6),paintBits:Int8Array.of(0,1),fillBits:null,fillHistory:[],fillRedo:[],fillHistoryBytes:0,mirrorLive:false,mirrorApplying:false,
     colReplaySnapshot:()=>[],colReplayRestore(){},autoSync(){},fillSync(){},templateSync(){},queueDigits(){},savePaint(){},draw(){},persistLibrary(){},MayatnikPaintCache:{write:async()=>{}},templateSelectionSkipped:()=>false};
   vm.createContext(c);for(const name of ['templateOptions','templateRect','templateItemAllowed','rememberTemplate','selectTemplate','sceneSnapshot','pushHistory','templateSceneHistory','historyStep','templateMatchKey','templateMatchProjection','templateMatchOffscreenColour','materializeTemplateMatches','templateShapeInstances','liftTemplateSource'])vm.runInContext(production(name),c);
   async function request(){const patterns=[M.compile(part,1,{silhouette:true}),M.compile(part,1,{silhouette:true,mirrorX:true})],found=await M.find(field,patterns,{collectMatches:true});return {field,patterns,matches:found.matches,instances:c.templateItems.map(t=>t.id),shape:{rk:1,parts:[part],searchProjection:c.templateMatchProjection()}};}
@@ -78,4 +78,17 @@ test('a projection change during a yielded preparation aborts with no additions 
   const f=fixture(),{c}=f;const mask={x:0,y:0,width:100,height:100,data:new Uint32Array(10000).fill(0xff123456)};
   c.templateItems=[{id:'large',view:{height:100,down:0,x:0,visible:true},parts:[{mask,axis:50}]}];c.st.templateMaxArea=20000;c.setTimeout=fn=>{c.st.view='col';fn();};
   const request=await f.request();await assert.rejects(c.materializeTemplateMatches(request,()=>false),{name:'AbortError'});assert.equal(c.templateItems.length,1);assert.equal(c.fillHistory.length,0);
+});
+test('real engine + materializer acknowledge their own history revision and follow later CPU/GPU frames without duplicates',async()=>{
+  const Follow=require('./mayatnik-template-follow.js');global.MayatnikTemplateMatcher=M;const Engine=require('./mayatnik-template-engine.js');
+  for(const gpu of [false,true]){
+    const {c}=fixture();c.paintBits=null;if(gpu)c.gpuBig={fresh:true,k:c.k,cpuRaster:true};c.playing=true;let searches=0,stops=0,focus=0;
+    for(const name of ['templateMatchRows','templateMatchCurrent','templateMatchField'])vm.runInContext(''+(name==='templateMatchField'?'async ':'')+production(name).replace(/^\s*async /,''),c);
+    c.templateFollowScope=()=>({owner:c.f,key:c.k+':'+c.templateMatchRevision});
+    const engine=Engine.create({entries:()=>[],field:c.templateMatchField,current:c.templateMatchCurrent,shapeInstances:()=>[],stop(){stops++;},redrawSelection(){},focus(){focus++;},materializeMatches:async(req,cancelled)=>{searches++;return c.materializeTemplateMatches(req,cancelled);}});
+    const follow=Follow.create({capture:c.templateFollowScope,search:(shape,cancelled)=>engine.selectShape({...shape,searchProjection:c.templateMatchProjection()},{materialize:true,mirrorX:true,follow:true,cancelled})},{on:true,source:Follow.pack({rk:1,parts:[part]},M.compile)});
+    await follow.ensure();assert.equal(follow.complete,true);assert.equal(c.templateItems.length,2);assert.equal(c.templateMatchRevision,1);assert.equal(searches,1);await follow.ensure();assert.equal(searches,1);
+    c.k++;if(gpu)c.gpuBig.k=c.k;await follow.ensure();assert.equal(searches,2);assert.equal(follow.complete,true);assert.equal(c.templateItems.length,2);assert.equal(c.templatePickedIds.size,2);assert.equal(stops,0);assert.equal(focus,0);assert.equal(c.playing,true);
+    follow.off();assert.equal(c.templateItems.length,2);
+  }
 });

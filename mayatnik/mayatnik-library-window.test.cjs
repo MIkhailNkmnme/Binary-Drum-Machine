@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
-const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
+const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 const script=fs.readFileSync(__dirname+'/mayatnik-library-window.js','utf8'),folders=fs.readFileSync(__dirname+'/mayatnik-template-folders.js','utf8'),panel=fs.readFileSync(__dirname+'/mayatnik-template-panel.js','utf8');
 function windowDom(){const dom=new JSDOM('<html><body><p id="mayLibraryConnection" hidden></p><button id="bTemplateSave" disabled></button></body></html>',{url:'http://test/mayatnik/mayatnik-library.html',runScripts:'outside-only'}),w=dom.window;w.structuredClone=structuredClone;w.HTMLCanvasElement.prototype.getContext=()=>null;w.requestAnimationFrame=f=>w.setTimeout(f,0);return dom;}
 test('detached window shares live APIs, folder store and save action; source close disables disconnected view',async()=>{const source=windowDom(),popup=windowDom(),s=source.window,w=popup.window;try{

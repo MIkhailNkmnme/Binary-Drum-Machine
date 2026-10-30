@@ -59,7 +59,7 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 
 /* Fixed field-corner launcher, outside every movable menu group. */
 #mayTemplateLauncher{position:fixed!important;top:8px!important;right:10px!important;left:auto!important;bottom:auto!important;transform:none!important;translate:none!important;width:48px!important;height:48px!important;padding:0!important;margin:0!important;z-index:2147483640;--c:#d9b9ff}
-body.may-template-panel-open #mayTemplateLauncher{right:calc(var(--may-template-panel-width) + 10px)!important}
+body.may-template-panel-open #mayTemplateLauncher{display:none!important}
 #mayTemplateLauncher>.pt-l{position:relative;display:flex;align-items:center;justify-content:center;width:48px!important;min-width:48px!important;height:48px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;cursor:pointer;color:var(--c)}
 #mayTemplateLauncher .may-template-diamond{position:absolute;inset:0;width:48px;height:48px;fill:#1b2430;stroke:#6d597f;stroke-width:1px;pointer-events:none}
 #mayTemplateLauncher .may-template-puzzle{width:20px;height:22px;position:relative;fill:none;stroke:currentColor;stroke-width:1.5px;pointer-events:none}
@@ -121,8 +121,8 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayatnikTemplatePanel .mtp-heading>[data-library-window]{width:88px}
 #mayatnikTemplatePanel .mtp-navigation{min-width:0;border-right:1px solid #334052;padding-right:4px}
 #mayatnikTemplatePanel .mtp-navigation>summary{display:flex;margin-bottom:4px;max-width:100%}
-#mayatnikTemplatePanel .mtp-tabs{flex-direction:column}
-#mayatnikTemplatePanel .mtp-tabs .mtp-command{width:100%;max-width:120px}
+#mayatnikTemplatePanel .mtp-tabs{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x;max-width:100%;padding:2px 0}
+#mayatnikTemplatePanel .mtp-tabs .mtp-command{flex:0 0 120px;width:120px;max-width:120px}
 #mayatnikTemplatePanel .mtp-folder-tree{display:flex;flex-direction:column;gap:2px;margin-top:8px;min-width:0}
 #mayatnikTemplatePanel .mtp-folder-tree .mtp-command{width:100%;justify-content:flex-start;padding-left:calc(10px + min(var(--mtp-depth),3)*8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #mayatnikTemplatePanel .mtp-location{display:flex;align-items:center;gap:4px;min-width:0}
@@ -151,8 +151,6 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
  #mayatnikTemplatePanel .mtp-workspace{display:flex;flex-direction:column}
  #mayatnikTemplatePanel .mtp-navigation{border-right:0;border-bottom:1px solid #334052;padding:0 0 4px;max-height:160px;overflow:auto;flex:none}
  #mayatnikTemplatePanel .mtp-navigation>summary{display:flex}
- #mayatnikTemplatePanel .mtp-navigation .mtp-tabs{flex-direction:row;margin-top:2px}
- #mayatnikTemplatePanel .mtp-navigation .mtp-tabs .mtp-command{width:calc(50% - 1px);max-width:120px;min-width:0}
  #mayatnikTemplatePanel .mtp-folder-tree{margin-top:4px}
  #mayatnikTemplatePanel .mtp-folder-tree .mtp-command{max-width:100%}
  #mayatnikTemplatePanel .mtp-section-commands .mtp-command{width:calc(50% - 1px);font-size:10px;padding:0 5px;overflow:hidden;white-space:nowrap}
@@ -216,8 +214,7 @@ body.may-mobile-menu #mayatnikTemplatePanel .mtp-heading{position:sticky;top:0;z
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-workspace{display:flex;flex-direction:column;flex:none}
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-navigation{border-right:0;border-bottom:1px solid #334052;padding:0 0 4px;max-height:none;overflow:visible;flex:none}
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-navigation>summary{display:flex}
-body.may-mobile-menu #mayatnikTemplatePanel .mtp-navigation .mtp-tabs{display:flex;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x;max-width:100%}
-body.may-mobile-menu #mayatnikTemplatePanel .mtp-navigation .mtp-tabs .mtp-command{flex:0 0 108px;width:108px;min-height:32px}
+body.may-mobile-menu #mayatnikTemplatePanel .mtp-tabs .mtp-command{min-height:32px}
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-rows{font-size:11px;max-height:55dvh}
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-rows :is(th,td){padding:5px 4px}
 body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-rows th:first-child{width:30px}
