@@ -41,6 +41,7 @@ function fixture({ saved = null } = {}) {
   for (const id of ['hubXorBackground', 'hubComparePause', 'hubComparePauseIcon', 'hubCompareZen',
     'hubCompareMode', 'hubCompareModeLabel', 'hubCompareModeIcon', 'hubCompareMirror',
     'hubCompareMirrorLabel', 'hubCompareMirrorIcon', 'hubCompareSpeed', 'hubCompareSpeedLabel',
+    'hubCompareCycle', 'hubCompareCycleLabel',
     'hubCompareOverlayLabel']) nodes[id] = element();
   for (const id of ['hubCones', 'hubXor', 'hubBlend', 'hubPair']) nodes[id] = canvas();
   const fieldButtons = [1, 2, 3].map(value => element({
@@ -124,11 +125,11 @@ function assertBlend(f, label) {
   assert.deepEqual(Array.from(actual), Array.from(f.nodes.hubBlend.ctx.expected), label + ': blend pixels');
 }
 
-test('v0.476 markup: three independent field buttons, the old pair buttons are gone', () => {
+test('v0.477 markup: three independent field buttons, the old pair buttons are gone', () => {
   const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
-  assert.match(html, /<title>[^<]*v0\.476<\/title>/);
+  assert.match(html, /<title>[^<]*v0\.477<\/title>/);
   assert.match(html, /hub-xor-kernel\.js\?v=476/);
-  assert.match(html, /hub-xor-background\.js\?v=476/);
+  assert.match(html, /hub-xor-background\.js\?v=477/);
   const group = html.match(/<div id="hubComparePairs"[^>]*>([\s\S]*?)<\/div>/);
   assert.ok(group, 'field group exists');
   for (const value of [1, 2, 3]) {
@@ -291,6 +292,36 @@ test('speeds above 16× simulate several frames per rendered frame', async () =>
   const slowFrame = Number(slow.nodes.hubXor.dataset.frame);
   assert.ok(Number.isInteger(fastFrame) && Number.isInteger(slowFrame));
   assert.ok(fastFrame >= slowFrame + 2, '1024× advances more frames than 16× per rendered frame (' + slowFrame + ' → ' + fastFrame + ')');
+});
+
+test('cycle mode button switches Цикл → Край → Пинг and is saved', () => {
+  const f = fixture();
+  assert.equal(f.nodes.hubCompareCycleLabel.textContent, 'Край');
+  f.nodes.hubCompareCycle.fire('click');
+  assert.equal(f.nodes.hubCompareCycleLabel.textContent, 'Пинг');
+  assert.equal(JSON.parse(f.stored[f.stored.length - 1][1]).cycleMode, 'pingpong');
+  f.nodes.hubCompareCycle.fire('click');
+  assert.equal(f.nodes.hubCompareCycleLabel.textContent, 'Цикл');
+  f.nodes.hubCompareCycle.fire('click');
+  assert.equal(f.nodes.hubCompareCycleLabel.textContent, 'Край');
+});
+
+test('cycle mode resets the field at W and starts from frame 0', async () => {
+  const f = fixture({ saved: { cycleMode: 'cycle' } });
+  for (let i = 0; i < 10; i++) await f.frame();
+  assert.equal(f.nodes.hubXor.dataset.frame, '0');
+});
+
+test('ping-pong reverse is recomputed and equals the same forward frame', async () => {
+  const f = fixture({ saved: { cycleMode: 'pingpong' } });
+  for (let i = 0; i < 8; i++) await f.frame();   // кадры 0…7 вперёд
+  const forward = [f.nodes.hubCones.ctx.last.data.slice(), f.nodes.hubPair.ctx.last.data.slice(), f.nodes.hubXor.ctx.last.data.slice()];
+  await f.frame();                                // 8 — полное поле
+  await f.frame();                                // 8 → 7 назад, пересчёт
+  assert.equal(f.nodes.hubXor.dataset.frame, '7');
+  assert.deepEqual(f.nodes.hubCones.ctx.last.data, forward[0], '5.7 пересчитан точно');
+  assert.deepEqual(f.nodes.hubPair.ctx.last.data, forward[1], '5.9 пересчитан точно');
+  assert.deepEqual(f.nodes.hubXor.ctx.last.data, forward[2], '5.8 пересчитан точно');
 });
 
 test('saved player speed is restored and validated', () => {

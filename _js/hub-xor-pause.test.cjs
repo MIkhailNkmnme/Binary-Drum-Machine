@@ -36,9 +36,9 @@ function fixture({deferred=false,firstFrame=0}={}){
 }
 test('release version and cache agree; pause and zen buttons are hidden inside zen',()=>{
   const html=fs.readFileSync(__dirname+'/../index.html','utf8');
-  assert.match(html,/<title>[^<]*v0\.476<\/title>/);
+  assert.match(html,/<title>[^<]*v0\.477<\/title>/);
   assert.match(html,/hub-xor-kernel\.js\?v=476/);
-  assert.match(html,/hub-xor-background\.js\?v=476/);
+  assert.match(html,/hub-xor-background\.js\?v=477/);
   assert.match(html,/#hubComparePause\{[^}]*width:48px;height:48px/);
   assert.match(html,/#hubComparePause\{[^}]*clip-path:polygon\(50% 0,100% 50%,50% 100%,0 50%\)/);
   const hidden=html.match(/body\.hubCompareZen :is\(([^)]*)\)\{display:none!important\}/);

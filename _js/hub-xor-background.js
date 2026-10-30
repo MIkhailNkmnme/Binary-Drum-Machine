@@ -1,4 +1,6 @@
-/* v17 (Хаб v0.476). Вершина, дошедшая до края, перескакивает на противоположную
+/* v18 (Хаб v0.477). Кнопка «Цикл / Край / Пинг»: старый сброс на 2047,
+   перескок вершины через край и пинг-понг с пересчётом поля (чекпоинты).
+   v17 (Хаб v0.476). Вершина, дошедшая до края, перескакивает на противоположную
    сторону и идёт дальше в том же направлении; поле не сбрасывается.
    v16 (Хаб v0.475). Пинг-понг — откатан: обратный проход не пересчитывал поле.
    v14 (Хаб v0.473). Выше 16× плеер считает несколько кадров за тик и рисует
@@ -59,6 +61,7 @@
   const blendPixels = LITTLE_ENDIAN && blendImage ? new Uint32Array(blendImage.data.buffer) : null;
   const modeButton = document.getElementById('hubCompareMode'), mirrorButton = document.getElementById('hubCompareMirror');
   const speedButton = document.getElementById('hubCompareSpeed');
+  const cycleButton = document.getElementById('hubCompareCycle');
   const pauseButton = document.getElementById('hubComparePause');
   const paletteButton = document.getElementById('hubComparePalette'), paletteMenu = document.getElementById('hubComparePaletteMenu');
   const pairsBox = document.getElementById('hubComparePairs');
@@ -70,12 +73,15 @@
   };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
   const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
+  const CYCLE_MODES = ['cycle', 'wrap', 'pingpong'];
+  const CYCLE_NAMES = { cycle: 'Цикл', wrap: 'Край', pingpong: 'Пинг' };
+  const CYCLE_TITLES = { cycle: 'Цикл: на 2047 поле сбрасывается и начинается заново', wrap: 'Край: дошедшая до края вершина перескакивает на противоположную сторону', pingpong: 'Пинг-понг: после 2047 плеер идёт назад с пересчётом поля' };
   // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
   const FIELDS = [1, 2, 3];
   const FIELD_KEYS = { 1: 'left', 2: 'pair', 3: 'right' };
   const FIELD_NAMES = { 1: 'конусы 5.7', 2: 'обе стороны 5.9', 3: 'всё поле 5.8' };
   const LEGACY_PAIRS = { 12: [1, 2], 23: [2, 3], 31: [1, 3], 123: [1, 2, 3] };
-  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', fields: [1, 2], speed: 1,
+  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', fields: [1, 2], speed: 1, cycleMode: 'wrap',
     pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 }, pair: { x: 0, y: 0 } } };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE));
@@ -89,6 +95,7 @@
       } else if (LEGACY_PAIRS[saved.pair]) view.fields = LEGACY_PAIRS[saved.pair].slice();   // прежняя пара 1–2 / 2–3 / 3–1 / 1–2–3
       if (typeof saved.zoom === 'number' && Number.isFinite(saved.zoom)) view.zoom = Math.max(1, Math.min(64, saved.zoom));
       if (SPEEDS.includes(saved.speed)) view.speed = saved.speed;
+      if (CYCLE_MODES.includes(saved.cycleMode)) view.cycleMode = saved.cycleMode;
       for (const key of ['left', 'right', 'blend', 'pair']) for (const axis of ['x', 'y']) {
         const value = saved.pan?.[key]?.[axis];
         if (typeof value === 'number' && Number.isFinite(value)) view.pan[key][axis] = value;
@@ -97,6 +104,8 @@
   } catch (_) {}
   let published = false;
   let step = -1, frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
+  let pingDir = 1, pingFrame = -1, pingCycle = 0;
+  const pingCheckpoints = [], PING_CHECKPOINT = 64;
   let publishedFrame = -1, publishedCycle = 0, statsFrame = -1;
   let pairStep = false;   // текущий кадр — шаг пары для 5.9 (переживает разбивку на куски строк)
   let cycle = 0, awaitingStats = false, failed = false, paused = false, controller = null;
@@ -269,6 +278,13 @@
       speedButton.setAttribute('aria-label', 'Скорость плеера: ' + label);
       speedButton.classList.toggle('gz-on', view.speed !== 1);
     }
+    if (cycleButton) {
+      const label = CYCLE_NAMES[view.cycleMode] || CYCLE_NAMES.wrap;
+      text('hubCompareCycleLabel', label);
+      cycleButton.title = (CYCLE_TITLES[view.cycleMode] || CYCLE_TITLES.wrap) + '. Щелчок — Цикл → Край → Пинг-понг';
+      cycleButton.setAttribute('aria-label', 'Режим края: ' + label);
+      cycleButton.classList.toggle('gz-on', view.cycleMode !== 'wrap');
+    }
   }
   function speedLabel(value) { return (Number.isInteger(value) ? String(value) : String(value).replace('.', ',')) + '×'; }
   const FIELD_COLOUR = { left: 'left', pair: 'middle', right: 'right' };
@@ -336,6 +352,11 @@
   });
   if (speedButton) speedButton.addEventListener('click', () => {
     view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length];
+    changeView();
+  });
+  if (cycleButton) cycleButton.addEventListener('click', () => {
+    view.cycleMode = CYCLE_MODES[(CYCLE_MODES.indexOf(view.cycleMode) + 1) % CYCLE_MODES.length];
+    resetAnimation();
     changeView();
   });
   if (pairsBox) pairsBox.addEventListener('click', event => {
@@ -477,19 +498,33 @@
   function framesPerTick() {
     return Math.min(16, Math.max(2, Math.round(view.speed / 8)));
   }
-  function apexPos(s) {
+  function baseApexPos(s) {
     const d = Math.ceil(s / 2);
-    const pos = CENTER + (s % 2 ? -d : d);
-    return ((pos % W) + W) % W;   // v0.476: дошедшая до края вершина перескакивает на противоположную сторону
+    return CENTER + (s % 2 ? -d : d);
+  }
+  function apexPos(s) {
+    const pos = baseApexPos(s);
+    return view.cycleMode === 'wrap' ? ((pos % W) + W) % W : pos;
+  }
+  function resetFields() {
+    kernel.reset(cones); kernel.reset(grid); kernel.reset(pairGrid);
   }
   function advanceWholeFrame() {
-    step++; frame = step % W; cycle = Math.floor(step / W); row = 1;
+    step++;
+    if (view.cycleMode === 'cycle') {
+      if (step >= W) { step = 0; cycle++; resetFields(); }
+      frame = step;
+    } else {
+      frame = step % W; cycle = Math.floor(step / W);
+    }
+    row = 1;
     const pos = apexPos(step);
     kernel.apex(grid, pos);
     pairStep = step === 0 || step % 2 === 1;
     if (middle && pairStep) {
       kernel.apex(pairGrid, pos);
-      const twin = ((2 * CENTER - pos) % W + W) % W;
+      const twinRaw = 2 * CENTER - pos;
+      const twin = view.cycleMode === 'wrap' ? ((twinRaw % W) + W) % W : twinRaw;
       kernel.apex(pairGrid, twin);
     }
     kernel.cone(cones, pos);
@@ -500,6 +535,86 @@
   function schedule(delay) {
     if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);
   }
+  function resetAnimation() {
+    clearTimeout(timer); timer = 0;
+    step = -1; frame = -1; cycle = 0; row = 1; nextFrame = true; started = performance.now();
+    pingDir = 1; pingFrame = -1; pingCycle = 0; pingCheckpoints.length = 0;
+    resetFields();
+    published = false;
+    if (!paused) schedule(0);
+  }
+  function pingApply(k) {
+    frame = k; row = 1;
+    const pos = baseApexPos(k);
+    kernel.apex(grid, pos);
+    pairStep = k === 0 || k % 2 === 1;
+    if (middle && pairStep) {
+      kernel.apex(pairGrid, pos);
+      kernel.apex(pairGrid, 2 * CENTER - pos);
+    }
+    kernel.cone(cones, pos);
+    kernel.sweep(grid, 1, H);
+    if (middle && pairStep) kernel.sweep(pairGrid, 1, H);
+    row = H;
+  }
+  function pingSave(k) {
+    if (k < 0 || k % PING_CHECKPOINT) return;
+    const i = k / PING_CHECKPOINT;
+    let cp = pingCheckpoints[i];
+    if (!cp) cp = pingCheckpoints[i] = { grid: kernel.create(W, H), pair: kernel.create(W, H), cones: kernel.create(W, H) };
+    kernel.copy(cp.grid, grid); kernel.copy(cp.pair, pairGrid); kernel.copy(cp.cones, cones);
+  }
+  function pingRecompute(target) {
+    if (target < 0) { resetFields(); frame = -1; return; }
+    const cpFrame = Math.floor(target / PING_CHECKPOINT) * PING_CHECKPOINT;
+    const cp = pingCheckpoints[cpFrame / PING_CHECKPOINT];
+    let start = 0;
+    if (cp) {
+      kernel.copy(grid, cp.grid); kernel.copy(pairGrid, cp.pair); kernel.copy(cones, cp.cones);
+      frame = cpFrame; start = cpFrame + 1;
+    } else {
+      resetFields(); frame = -1;
+    }
+    for (let k = start; k <= target; k++) pingApply(k);
+    frame = target;
+  }
+  function pingTick(statsOn) {
+    const startedAt = performance.now();
+    const steps = view.speed > 16 && !statsOn ? framesPerTick() : 1;
+    if (pingDir > 0) {
+      if (pingFrame >= W - 1) { pingDir = -1; pingCycle++; }
+      else {
+        const advance = Math.min(steps, W - 1 - pingFrame);
+        for (let i = 0; i < advance; i++) {
+          pingFrame++; pingApply(pingFrame);
+          if (pingFrame % PING_CHECKPOINT === 0) pingSave(pingFrame);
+        }
+      }
+    }
+    if (pingDir < 0) {
+      const target = Math.max(0, pingFrame - steps);
+      pingRecompute(target);
+      pingFrame = target;
+      if (pingFrame === 0) pingDir = 1;
+    }
+    frame = pingFrame; step = pingFrame; cycle = pingCycle;
+    if (frame >= FIRST_FRAME) {
+      kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
+      left.dataset.frame = right.dataset.frame = String(frame);
+      if (middle) middle.dataset.frame = String(frame);
+      published = true; publishedFrame = frame; publishedCycle = cycle;
+      renderPublished();
+    }
+    const finish = () => schedule(Math.max(0, frameInterval() - (performance.now() - startedAt)));
+    if (statsOn && frame >= FIRST_FRAME) {
+      awaitingStats = true;
+      decodePublished();
+      Promise.resolve(controller.measure({ left: publishedLeft, middle: publishedPair, right: publishedRight, W, H, frame, cycle }))
+        .then(() => { awaitingStats = false; if (!paused) finish(); }, stop);
+      return;
+    }
+    finish();
+  }
   function tick() {
     timer = 0;
     if (document.hidden || awaitingStats || failed || paused) return;
@@ -507,11 +622,12 @@
     // кадры идут со скоростью кнопки, статистика начинается при открытии панели.
     const statsOn = controller && typeof controller.measure === 'function' &&
       (typeof controller.active !== 'function' || controller.active());
+    if (view.cycleMode === 'pingpong') { pingTick(statsOn); return; }
     if (view.speed > 16 && !statsOn) {
       const startedAt = performance.now();
       const steps = framesPerTick();
       for (let i = 0; i < steps; i++) advanceWholeFrame();
-      if (step >= FIRST_FRAME) {
+      if (view.cycleMode === 'cycle' ? frame >= FIRST_FRAME : step >= FIRST_FRAME) {
         kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
         left.dataset.frame = right.dataset.frame = String(frame);
         if (middle) middle.dataset.frame = String(frame);
@@ -523,7 +639,13 @@
       return;
     }
     if (nextFrame) {
-      nextFrame = false; step++; frame = step % W; cycle = Math.floor(step / W); row = 1; started = performance.now();
+      nextFrame = false; step++; row = 1; started = performance.now();
+      if (view.cycleMode === 'cycle') {
+        if (step >= W) { step = 0; cycle++; resetFields(); }
+        frame = step;
+      } else {
+        frame = step % W; cycle = Math.floor(step / W);
+      }
       const pos = apexPos(step);
       kernel.apex(grid, pos);
       // 5.9 повторяет пару шагов тест-страницы: −m и +m одной дистанцией, ровно
@@ -533,13 +655,14 @@
       pairStep = pairStepNow;
       if (middle && pairStep) {
         kernel.apex(pairGrid, pos);
-        const twin = ((2 * CENTER - pos) % W + W) % W;
+        const twinRaw = 2 * CENTER - pos;
+        const twin = view.cycleMode === 'wrap' ? ((twinRaw % W) + W) % W : twinRaw;
         kernel.apex(pairGrid, twin);
       }
       // Один исходный cone за такт; packed-ядро сохраняет границы и чётность.
       kernel.cone(cones, pos);
     }
-    const visible = step >= FIRST_FRAME;
+    const visible = view.cycleMode === 'cycle' ? frame >= FIRST_FRAME : step >= FIRST_FRAME;
     // На высокой скорости режем кадр крупнее: меньше таймеров, больше кадров/с.
     const chunk = view.speed >= 4 ? 1024 : view.speed >= 2 ? 512 : ROW_CHUNK;
     const end = Math.min(H, row + chunk);
