@@ -124,10 +124,10 @@ function assertBlend(f, label) {
   assert.deepEqual(Array.from(actual), Array.from(f.nodes.hubBlend.ctx.expected), label + ': blend pixels');
 }
 
-test('v0.474 markup: three independent field buttons, the old pair buttons are gone', () => {
+test('v0.473 markup: three independent field buttons, the old pair buttons are gone', () => {
   const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
-  assert.match(html, /<title>[^<]*v0\.474<\/title>/);
-  assert.match(html, /hub-xor-background\.js\?v=474/);
+  assert.match(html, /<title>[^<]*v0\.473<\/title>/);
+  assert.match(html, /hub-xor-background\.js\?v=473/);
   const group = html.match(/<div id="hubComparePairs"[^>]*>([\s\S]*?)<\/div>/);
   assert.ok(group, 'field group exists');
   for (const value of [1, 2, 3]) {
@@ -290,19 +290,6 @@ test('speeds above 16× simulate several frames per rendered frame', async () =>
   const slowFrame = Number(slow.nodes.hubXor.dataset.frame);
   assert.ok(Number.isInteger(fastFrame) && Number.isInteger(slowFrame));
   assert.ok(fastFrame >= slowFrame + 2, '1024× advances more frames than 16× per rendered frame (' + slowFrame + ' → ' + fastFrame + ')');
-});
-
-test('cycle seam fades to near black instead of resetting to a bright blank frame', async () => {
-  const f = fixture();
-  for (let i = 0; i < 18; i++) await f.frame();   // до кадра W−1 второго цикла
-  const endFilter = f.nodes.hubCones.style.filter, endFrame = f.nodes.hubXor.dataset.frame;
-  await f.frame();                                // сброс → кадр 0
-  const startFilter = f.nodes.hubCones.style.filter, startFrame = f.nodes.hubXor.dataset.frame;
-  assert.equal(endFrame, '8');
-  assert.equal(startFrame, '0');
-  const level = text => Number((/brightness\(([\d.]+)\)/.exec(text) || [0, 1])[1]);
-  assert.ok(level(endFilter) < .1, 'перед сбросом поле почти чёрное');
-  assert.ok(level(startFilter) < .1, 'после сброса поле тоже почти чёрное');
 });
 
 test('saved player speed is restored and validated', () => {

@@ -1,6 +1,4 @@
-/* v15 (Хаб v0.474). У стыка цикла поле гаснет почти в чёрный и снова
-   проявляется — сброс 2047 → 0 не вспыхивает пустым полем.
-   v14 (Хаб v0.473). Выше 16× плеер считает несколько кадров за тик и рисует
+/* v14 (Хаб v0.473). Выше 16× плеер считает несколько кадров за тик и рисует
    последний: кнопка 32…1024× снова заметно ускоряет, узор тот же — кадры
    не пропускаются, только промежуточные не выводятся.
    v13 (Хаб v0.472). Скорость плеера — 0,25× … 1024× шагом ×2; номер хаба
@@ -34,7 +32,6 @@
   const pairCtx = middle && middle.getContext('2d', { alpha: true });
   const H = 1024, W = 2 * H - 1, CENTER = W >> 1;
   const FIRST_FRAME = 8, INTERVAL = 120, ROW_CHUNK = 64;
-  const CYCLE_FADE_FRAMES = 5;   // v0.474: затемнение у стыка цикла — сброс под почти чёрным
   left.width = right.width = W; left.height = right.height = H;
   if (middle) { middle.width = W; middle.height = H; }
   const kernel = HubXorKernel;
@@ -448,10 +445,6 @@
   }
   function renderPublished(force = false) {
     const palette = PALETTES[view.palette];
-    // v0.474: у стыка цикла поле гаснет почти в чёрный и снова проявляется —
-    // сброс 2047 → 0 происходит под затемнением, без вспышки пустого поля.
-    const fade = cycleFade(), filter = fade < .999 ? 'brightness(' + fade.toFixed(3) + ')' : '';
-    for (const canvas of [left, right, middle, blend]) if (canvas) canvas.style.filter = filter;
     if (view.mode === 'split') {
       if (conePixels) {
         const lc = colour32(palette.left), rc = colour32(palette.right), mc = colour32(palette.middle);
@@ -475,12 +468,6 @@
     renderBlend();
   }
   function frameInterval() { return INTERVAL / view.speed; }
-  function cycleFade() {
-    if (cycle === 0 && frame < FIRST_FRAME + CYCLE_FADE_FRAMES) return 1;   // первый показ — без тёмного старта
-    const edge = Math.min(W - frame, frame - FIRST_FRAME + 1);
-    const t = Math.min(1, Math.max(0, edge / CYCLE_FADE_FRAMES));
-    return t * t;
-  }
   // v0.473: после 16× плеер упирается в расчёт одного кадра. Чтобы кнопка
   // 32…1024× действительно ускоряла, за один тик считается несколько кадров,
   // а рисуется только последний: узор тот же, промежуточные кадры не видны.
