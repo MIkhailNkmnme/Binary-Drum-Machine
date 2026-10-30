@@ -1,4 +1,4 @@
-/* Маятник v0.658 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.661 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -253,6 +253,23 @@
         else step((ev.key === 'ArrowLeft' || ev.key === 'ArrowDown' ? -1 : 1) * (ev.shiftKey ? 10 : 1)); });
       line.append(thumb); syncRowsThumb();
       cr.append(line, cb); pop.append(section(cr, 'size')); }
+    // Лимит исходника независим от высоты поля; 0 означает все сохранённые строки.
+    { const box=document.createElement('div');box.className='may-rows-custom';box.id='maySequenceRows';box.dataset.n='maySequenceRows';
+      const input=document.createElement('input');input.type='number';input.min='0';input.max='4096';input.step='1';
+      input.setAttribute('aria-label','Число строк своего исходника; 0 — все');input.title='Первые N строк своей последовательности. 0 — все. Высота поля не меняется. Enter — применить и вернуться к кадру 0.';
+      const button=document.createElement('button');button.type='button';button.className='gz-hx';
+      let lastLimit=null;
+      const syncOwn=()=>{const state=window.maySequenceField?.get();if(!state)return;
+        if(lastLimit!==state.limit){input.value=String(state.limit);lastLimit=state.limit;}
+        button.textContent='Свои '+(state.limit||'все');
+        button.title='Задать отдельный лимит строк своего исходника: 0 — все, 1–4096 — первые N. Кадр 0 содержит только исходник, остальное поле пустое. Строки библиотеки сохраняются.'+(state.on?' Использовано '+state.active+' из '+state.rows+'.':' Вступит в силу при включении своей последовательности.');
+        button.setAttribute('aria-label',button.title);};
+      const apply=()=>{const n=Math.max(0,Math.min(4096,Math.round(Number(input.value)||0)));input.value=String(n);window.maySequenceField?.setLimit(n);syncOwn();rail.refresh();};
+      const arrow=d=>{const a=document.createElement('button');a.type='button';a.className='may-rows-step';a.dataset.dir=d<0?'left':'right';a.title=d<0?'На одну строку исходника меньше':'На одну строку исходника больше';a.setAttribute('aria-label',a.title);
+        a.onclick=event=>{event.stopPropagation();input.value=String(Math.max(0,Math.min(4096,(Number(input.value)||0)+d)));};return a;};
+      const line=document.createElement('div');line.className='may-rows-line';line.append(arrow(-1),input,arrow(1));box.append(line,button);
+      input.onclick=event=>event.stopPropagation();input.onkeydown=event=>{event.stopPropagation();if(event.key==='Enter'){event.preventDefault();apply();}};
+      button.onclick=event=>{event.stopPropagation();apply();};toolSync.push(syncOwn);syncOwn();pop.append(section(box,'size')); }
     { const rb = document.createElement('button'); rb.className = 'gz-hx'; rb.textContent = 'Рандом'; rb.dataset.miShort = 'Рандом';
       rb.title = 'Тест: очистить поле и заполнить квадрат N×N случайными битами (N = число строк); остальное поле пусто. Для проверки уменьшения и Поиска по наложению.';
       rb.onclick = ev => { ev.stopPropagation(); window.mayTestRandom?.(+$('rows').value || 128); sync(); }; pop.append(section(rb, 'fields')); }
@@ -280,7 +297,7 @@
       legacy.title = 'Обычный маятник: вернуться к прежнему построению и общему управлению'; legacy.setAttribute('aria-label', legacy.title);
       legacy.onclick = event => { event.stopPropagation(); choose(''); }; pop.append(section(legacy, 'fields'));
       const own=document.createElement('button');own.type='button';own.className='gz-hx';own.id='maySequenceField';own.dataset.n='maySequenceField';own.textContent='Своя последовательность';
-      own.title='Свой маятник: все строки текущей библиотеки становятся отдельным исходным рисунком. Число строк ограничивает первые N строк; остальные сохраняются. Общий центр, между битами одна пустая клетка. Кадр 0 — исходный рисунок, далее обычные шаги маятника.';own.setAttribute('aria-label',own.title);
+      own.title='Свой маятник: строки текущей библиотеки становятся отдельным исходным рисунком. В разделе «Размер» задаются отдельно высота поля и число строк своего исходника. Остальные строки библиотеки сохраняются. Общий центр, между битами одна пустая клетка. Кадр 0 — только исходник, остальное поле пустое; далее обычные шаги маятника.';own.setAttribute('aria-label',own.title);
       own.onclick=event=>{event.stopPropagation();window.maySequenceField?.set(!window.maySequenceField?.get().on);syncComparison();rail.refresh();};pop.append(section(own,'fields'));
       controls.push({half:own,on:()=>!!window.maySequenceField?.get().on,gz:true});
       pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
@@ -416,6 +433,19 @@
       const mp = gzPair([{ label: 'ЛевПрав', tip: 'Ход лево-право: якорь, −1, +1, −2, +2… · щелчок — выбрать и построить', on: () => M?.value !== 'pendR', click: () => go('pend') },
         { label: 'ПравЛев', tip: 'Ход право-лево: якорь, +1, −1, +2, −2… · щелчок — выбрать и построить', on: () => M?.value === 'pendR', click: () => go('pendR') }]);
       mp.gzSync(); b.addEventListener('click', () => mp.gzSync()); pop.prepend(section(mp, 'build')); }
+    // v0.661: отдельный ручной шаг настоящего расчёта, рядом с прогоном готового поля.
+    { const row = document.createElement('button'); row.type = 'button'; row.id = 'mayRowBuild'; row.dataset.n = 'mayRowBuild'; row.className = 'gz-hx';
+      row.dataset.maySearchAliases = 'Строка +1|Построчный шаг|Пересчёт строки';
+      const glyph = document.createElement('i'); glyph.className = 'gz-ic'; glyph.style.backgroundImage = icon(row, 'steps'); glyph.setAttribute('aria-hidden', 'true');
+      const label = document.createElement('span'); label.className = 'gz-nm'; row.append(glyph, label);
+      row.gzSync = () => { const state = window.mayRowBuild?.status(); row.disabled = !state || !!state.reason;
+        label.textContent = state?.active ? `Стр. ${state.row}/${state.height}` : 'Строка +1';
+        row.classList.toggle('gz-on', !!state?.active); row.setAttribute('aria-pressed', String(!!state?.active));
+        row.title = state?.reason || 'Пересчитать одну строку следующего хода сверху вниз. После последней строки — следующий ход; после конца построения — снова с кадра 0. Переход к обычному транспорту отменяет незавершённый ход. Промежуточный ход не сохраняется.';
+        if (state?.progress) row.title += ' · ' + state.progress;
+        row.setAttribute('aria-label', 'Пересчитать следующую строку' + (state?.progress ? ' · ' + state.progress : '')); };
+      row.onclick = event => { event.stopPropagation(); window.mayRowBuild?.step(); row.gzSync(); rail.refresh(); };
+      toolSync.push(row.gzSync); row.gzSync(); pop.append(section(row, 'build')); }
     // v0.634: opt-in continuation belongs to construction, with a stable control key.
     { const more = document.createElement('button'); more.type = 'button'; more.id = 'mayConeContinue'; more.dataset.n = 'mayConeContinue'; more.className = 'gz-hx';
       more.dataset.maySearchAliases = 'Продолжение Конусов|Снять предел|Без предела|Дальше последнего кадра';

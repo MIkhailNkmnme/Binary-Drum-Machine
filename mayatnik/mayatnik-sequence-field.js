@@ -15,6 +15,8 @@
   const active=state=>!!state?.sequenceSourceOn&&!state.compareSource;
   const legacy=state=>active(state)&&state.sequenceEvolution!==EVOLUTION;
   function assertEvolution(state){if(legacy(state))throw Error(LEGACY_MESSAGE);}
+  function limit(state){const n=state.sequenceSourceLimit??0;if(!Number.isInteger(n)||n<0||n>MAX_ROWS)throw Error('Лимит своего исходника: от 0 (все строки) до 4096.');return n;}
+  function activeRows(state,rows=state.rows){return Math.min(rows,normalize(state.sequenceSource).rows.length,limit(state)||MAX_ROWS);}
   function bounds(source,limit){source=normalize(source);if(!Number.isInteger(limit)||limit<1||limit>MAX_ROWS)throw Error('Число строк своего маятника должно быть от 1 до 4096.');let half=0;for(let r=0;r<Math.min(limit,source.rows.length);r++)half=Math.max(half,source.rows[r].length-1);return {left:-half,right:half,rows:Math.min(limit,source.rows.length)};}
   function frames(state){return state.mode==='one'?0:state.pair&&state.mode==='pend'?Math.floor(state.steps/2):state.steps;}
   function span(state,frame=frames(state)){
@@ -22,11 +24,11 @@
     return state.pair&&state.mode==='pend'?[-frame,frame]:Core.span(state.mode,frame+1);
   }
   function extent(state,frame=frames(state),rows=state.rows){
-    const b=bounds(state.sequenceSource,rows);if(frame===0)return b;
+    const b=bounds(state.sequenceSource,activeRows(state,rows));if(frame===0)return b;
     const [lo,hi]=span(state,frame),radius=rows-1;return {left:Math.min(b.left,lo-radius),right:Math.max(b.right,hi+radius),rows};
   }
   function geometry(state,base){if(!active(state))return base;const b=extent(state),left=Math.min(-base.anchor,b.left),right=Math.max(base.W-1-base.anchor,b.right),result={W:right-left+1,anchor:-left};if(!Number.isSafeInteger(result.W*state.rows)||result.W*state.rows>MAX_CELLS)throw Error('Свой маятник превышает безопасный размер поля 100 миллионов клеток.');return result;}
-  function seed(field,geo,source){source=normalize(source);if(!Number.isInteger(field.W)||!Number.isInteger(field.H)||field.W<1||field.H<1||field.val?.length!==field.W*field.H)throw Error('Неверный размер исходного поля.');const b=bounds(source,field.H);if(geo.anchor+b.left<0||geo.anchor+b.right>=field.W)throw Error('Поле не вмещает все биты исходных строк.');field.val.fill(-1);
+  function seed(field,geo,source,rowLimit=field.H){source=normalize(source);if(!Number.isInteger(field.W)||!Number.isInteger(field.H)||field.W<1||field.H<1||field.val?.length!==field.W*field.H)throw Error('Неверный размер исходного поля.');const b=bounds(source,Math.min(field.H,rowLimit));if(geo.anchor+b.left<0||geo.anchor+b.right>=field.W)throw Error('Поле не вмещает все биты исходных строк.');field.val.fill(-1);
     for(let r=0;r<b.rows;r++){const word=source.rows[r],start=geo.anchor-(word.length-1);for(let i=0;i<word.length;i++)field.val[r*field.W+start+2*i]=word.charCodeAt(i)-48;}
     return field;
   }
@@ -43,6 +45,7 @@
   }
   function sourceAt(source,geo,r,c){source=normalize(source);const word=source.rows[r];if(word===undefined||!Number.isInteger(r)||!Number.isInteger(c))return null;const i=(c-geo.anchor+word.length-1)/2;return Number.isInteger(i)&&i>=0&&i<word.length?{row:r,index:i,bit:Number(word[i])}:null;}
   function key(source){source=normalize(source);if(keys.has(source))return keys.get(source);let a=2166136261,b=5381,n=0;for(const row of source.rows){for(const char of row){const code=char.charCodeAt(0);a=Math.imul(a^code,16777619)>>>0;b=(Math.imul(b,33)^code)>>>0;n++;}a=Math.imul(a^10,16777619)>>>0;b=(Math.imul(b,33)^10)>>>0;}const value=source.rows.length+':'+n+':'+a.toString(16)+':'+b.toString(16);keys.set(source,value);return value;}
-  function same(a,b){if(active(a)!==active(b))return false;if(!active(a))return true;const A=normalize(a.sequenceSource).rows,B=normalize(b.sequenceSource).rows;return A.length===B.length&&A.every((row,i)=>row===B[i]);}
-  return {capture,normalize,active,legacy,assertEvolution,EVOLUTION,LEGACY_MESSAGE,bounds,frames,span,extent,geometry,seed,step,sourceAt,key,same,MAX_ROWS,MAX_WORD,MAX_BITS,MAX_CELLS};
+  function stateKey(state){const n=limit(state);return key(state.sequenceSource)+(n?':limit:'+n:'');}
+  function same(a,b){if(active(a)!==active(b))return false;if(!active(a))return true;const A=normalize(a.sequenceSource).rows,B=normalize(b.sequenceSource).rows;return limit(a)===limit(b)&&A.length===B.length&&A.every((row,i)=>row===B[i]);}
+  return {capture,normalize,active,legacy,assertEvolution,EVOLUTION,LEGACY_MESSAGE,limit,activeRows,stateKey,bounds,frames,span,extent,geometry,seed,step,sourceAt,key,same,MAX_ROWS,MAX_WORD,MAX_BITS,MAX_CELLS};
 });

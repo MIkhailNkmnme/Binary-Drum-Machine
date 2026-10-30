@@ -11,12 +11,20 @@ const MAYATNIK = (() => {
   }
   // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
   function cone(f, a, D, lastAt, stamp) {
+    for (const row of coneRows(f, a, D, lastAt, stamp)) { /* полный проход */ }
+  }
+  // Тот же проход можно остановить после каждой строки. Между шагами
+  // временная единица родительской вершины не остаётся в видимом поле.
+  function* coneRows(f, a, D, lastAt, stamp) {
     const { W, H, val } = f;
     if (a < 0 || a >= W) return;
     if (val[a] === -1) { val[a] = 1; if (lastAt) lastAt[a] = stamp; }
     const apex = val[a]; val[a] = 1;             // родитель-вершина всегда 1 (в Excel: parentCell = startCell)
     const last = Math.min(D, H);
+    if (last > 1) val[a] = apex;
+    yield 0;
     for (let r = 1; r < last; r++) {             // r = step − 1; клетки конуса a−r … a+r через одну
+      if (r === 1) val[a] = 1;
       const row = r * W, up = row - W, end = a + r;
       let c = a - r;
       if (c < 0) c += ((-c + 1) >> 1) << 1;
@@ -28,12 +36,16 @@ const MAYATNIK = (() => {
         val[i] = nv;
       }
       if (r === 1) val[a] = apex;
+      yield r;
     }
   }
   // v2 (2026-10-13, Маятник v0.012): пара вершин a1, a2 (одной чётности) ОДНИМ проходом — «шаг влево и вправо сразу».
   // Строка за строкой пересчитываются клетки обоих конусов; клетка, попавшая в оба, — один раз: старое ⊕ левый ⊕ правый.
   // По очереди (cone, затем cone) выходит другое: левый конус пишет середину, пока правой вершины ещё нет.
   function conePair(f, a1, a2, D, lastAt, stamp) {
+    for (const row of conePairRows(f, a1, a2, D, lastAt, stamp)) { /* полный проход */ }
+  }
+  function* conePairRows(f, a1, a2, D, lastAt, stamp) {
     const { W, H, val } = f;
     if (a1 > a2) { const t = a1; a1 = a2; a2 = t; }
     const ap = [];
@@ -48,11 +60,15 @@ const MAYATNIK = (() => {
       }
     };
     const last = Math.min(D, H);
+    if (last > 1) for (const [a, v] of ap) val[a] = v;
+    yield 0;
     for (let r = 1; r < last; r++) {
+      if (r === 1) for (const [a] of ap) val[a] = 1;
       const row = r * W, up = row - W;
       if (a2 - r <= a1 + r + 2) pass(row, up, a1 - r, a2 + r);   // конусы сошлись — один отрезок через одну
       else { pass(row, up, a1 - r, a1 + r); pass(row, up, a2 - r, a2 + r); }
       if (r === 1) for (const [a, v] of ap) val[a] = v;
+      yield r;
     }
   }
   // Цвет при «паре сразу»: k пар после якоря. Записей в клетку = конус якоря + пары m ≤ k, чей конус −m или +m её
@@ -102,6 +118,6 @@ const MAYATNIK = (() => {
     for (let j = 0; j < k; j++) { const o = offset(mode, j); if (o < lo) lo = o; if (o > hi) hi = o; }
     return [lo, hi];
   }
-  return { field, cone, conePair, offset, geometry, tint, tintPair, span };
+  return { field, cone, conePair, coneRows, conePairRows, offset, geometry, tint, tintPair, span };
 })();
 if (typeof module !== 'undefined') module.exports = MAYATNIK;

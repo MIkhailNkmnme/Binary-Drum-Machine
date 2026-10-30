@@ -3,7 +3,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikResetState=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
   const off=('sequenceSourceOn joined180 outline third sym symBits symV symH symD symPlainV symPlainH symPlainD symTriangles autoAxes triangleMapAxes triangleMapMask triangleMapMirror crossMirror crossLabels pair compareMirror noband ochki ochkiSnake manualSnake paintSame paintSymmetric ochkiInv ochkiRev ochkiHalf ochkiOverlay frozen zLimit anchorAxis fixLines fixCross lineMeasures linesOn saw sawFull midOneOn midZeroOn midWide paintMid fixWide fixLowOut fixRot fixHor fixDown fixDragK geomCenter sectors areas heat vtxFlash contour both viewUpsideDown templateLock templateMask testStats').split(' ');
-  const zero=('blackMirror animHl paintAxis paintMeet triTop thirds fixMirror fixFold fixLow fixDx fixDy rowLab midCol bothDx ztMir ztPaint ztopRow ztlBx frameT vrows').split(' ');
+  const zero=('sequenceSourceLimit blackMirror animHl paintAxis paintMeet triTop thirds fixMirror fixFold fixLow fixDx fixDy rowLab midCol bothDx ztMir ztPaint ztopRow ztlBx frameT vrows').split(' ');
   function defaults(){return {...Object.fromEntries(off.map(k=>[k,false])),...Object.fromEntries(zero.map(k=>[k,0])),
     sequenceSource:null,templateFindAll:null,rows:512,steps:512,mode:'pend',bg:'empty',view:'bits',speed:4,vmode:'',compareSource:'',
     zoom:'fit',zMid:true,ztop:true,zBot:false,zLock:false,zsnap:true,zbase:2,ztopPin:false,ztlMain:false,ztlZen:false,zlSelected:null,ztMirOp:'',
