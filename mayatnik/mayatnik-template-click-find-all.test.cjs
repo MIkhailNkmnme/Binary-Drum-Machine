@@ -7,12 +7,13 @@ function fixture(drag=false){
  const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='templateHeight'?100:0,checked:false,setAttribute(){},click(){return this.onclick?.();}});return nodes.get(id);};
  const c=vm.createContext({wrap,window:{mayTemplateLibrary:{clear(){}}},$:node,templateItems:[a,b],colourTemplate:a,templatePickedIds:new Set(['a']),templateDragging:null,templatePickTap:null,templateContextSkip:false,templatePickEnabled:false,templateDragEnabled:drag,templateMove:true,templateHover:null,templateVisible:true,templateOffsetX:0,templateTransfer:false,templateStatsKey:'',templateLastDown:0,img:{width:100,height:100},cv:{getBoundingClientRect:()=>({left:0,top:0,width:100,height:100})},f:null,st:{userLines:[]},lineDrag:null,axisDrag:null,axisBox:null,rulerMode:false,axisSelected:0,axisLineMode:false,axisLinePending:null,axisPicking:false,fillMode:false,autoVertical:0,RK:1,scale:()=>1,nearLine:()=>false,hitTemplate:()=>({item:a,part}),templateItemAllowed:()=>true,templateSelectionSkipped:()=>false,templateRect:()=>({x:0,y:0,width:10,height:10}),templateEdge:()=> 'left',editSnapshot:()=>({}),finishEdit(){},libraryIfOutside(){},actSet(){},clearFillPreview(){},mirrorTemplate:()=>calls.push('mirror'),takeColourAt:()=>{calls.push('pick');return true;},rememberTemplate(){},templateSync(){},queueDigits(){},savePaint(){},liftTemplateSource(){},templateOutside:()=>false,rombP:()=>-1,changeTemplate:(id,v)=>node(id).value=v,pts:new Map(),pan:null,pinch:null});
  vm.runInContext(['selectTemplate','findAllSelectedTemplate','finishTemplateDrag'].map(fn).join('\n'),c);
- node('bTemplateFindAll').onclick=()=>requests.push({active:c.colourTemplate?.id,picked:[...c.templatePickedIds]});
+ c.findAllTemplateOnce=()=>requests.push({active:c.colourTemplate?.id,picked:[...c.templatePickedIds]});
+ node('bTemplateFindAll').onclick=()=>{throw Error('A template click must not toggle the persistent button');};
  const ds=html.indexOf("  wrap.addEventListener('pointerdown', e => {",html.indexOf('  const nearLine=')),de=html.indexOf("  addEventListener('keydown', e => {",ds);vm.runInContext(html.slice(ds,de),c);
  const fire=(type,extra={})=>handlers[type]({type,pointerId:1,pointerType:'mouse',button:0,clientX:10,clientY:10,offsetX:10,offsetY:10,target:wrap,preventDefault(){},...extra});
  return{c,a,b,node,calls,requests,fire};
 }
-test('plain mouse or pen click on selected template invokes the existing Find all button in either gesture mode',()=>{
+test('plain mouse or pen click on selected template invokes one-shot Find all without toggling the persistent button',()=>{
  for(const drag of [false,true])for(const pointerType of ['mouse','pen']){const f=fixture(drag);f.fire('pointerdown',{pointerType});assert.equal(f.requests.length,0);f.fire('pointerup',{pointerType});assert.equal(f.requests.length,1);assert.equal(f.requests[0].active,'a');assert.equal(f.calls.includes('pick'),false);}
 });
 test('clicking another selected template searches that item and retains the rest of the multiple selection',()=>{

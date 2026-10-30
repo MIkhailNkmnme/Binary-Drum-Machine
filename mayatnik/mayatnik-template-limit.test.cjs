@@ -37,8 +37,8 @@ test('production item/shape guards include enlarged height, width, and ignore ma
 });
 test('library refuses before field copy and keeps prior selection',async()=>{
  let allowed=true,copies=0,chooses=0;globalThis.MayatnikTemplateMatcher={compile:p=>p,find:async()=>({count:1,selected:Uint8Array.of(1)})};const entry={id:'a',shape:{parts:[{width:1,height:1}]}};
- const api=Engine.create({entries:()=>[entry],selectionAllowed:()=>allowed,selectionMessage:()=> 'limit',field:async()=>{copies++;return{};},current:()=>true,instances:()=>[],choose:()=>chooses++,stop(){},redrawSelection(){}});
- await api.select('a');const before=api.getSelection();allowed=false;await api.select('a');assert.equal(api.getSelection(),before);assert.equal(copies,1);assert.equal(chooses,1);assert.equal(api.getState().message,'limit');
+ const other={...entry,id:'b'},api=Engine.create({entries:()=>[entry,other],selectionAllowed:()=>allowed,selectionMessage:()=> 'limit',field:async()=>{copies++;return{};},current:()=>true,instances:()=>[],choose:()=>chooses++,stop(){},redrawSelection(){}});
+ await api.select('a');const before=api.getSelection();allowed=false;await api.select('b');assert.equal(api.getSelection(),before);assert.equal(copies,1);assert.equal(chooses,1);assert.equal(api.getState().message,'limit');
 });
 test('limit setting persists in st and reloads without mutating saved shapes',()=>{
  const controls={templateMaxArea:{}},saved=[],events=[],c={st:{templateMaxArea:17},MayatnikTemplateLimit:L,$:id=>controls[id],window:{},save(){saved.push(JSON.stringify(c.st));},dispatchEvent:e=>events.push(e.type),Event:class{constructor(type){this.type=type;}}};vm.createContext(c);

@@ -15,7 +15,7 @@ function boot(width=1200,saved,setup){
 test('default panel is half viewport; separate source controls, four card columns and common layout width remain intact',()=>{
  const a=boot();try{assert.equal(a.value(),600);assert.equal(a.handle.hidden,false);assert.equal(a.handle.getAttribute('role'),'separator');assert.equal(a.handle.getAttribute('aria-orientation'),'vertical');
   const source=a.w.document.getElementById('source');assert.ok(!a.panel.contains(source));assert.equal(a.panel.querySelector('.mtp-controls'),null);
-  const css=fs.readFileSync(path.join(__dirname,'mayatnik-template-panel.css'),'utf8');assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);assert.match(css,/#cellInkBar\{left:calc\(\(100vw - var\(--may-template-panel-width\)\)\/2\)/);assert.doesNotMatch(css,/37\.5vw|75vw|25vw|--may-template-panel-width:100vw/);
+  const css=fs.readFileSync(path.join(__dirname,'mayatnik-template-panel.css'),'utf8');assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);assert.match(css,/#wrap\{margin-right:var\(--may-template-panel-width\)\}/);assert.doesNotMatch(css,/body\.may-template-panel-open\{padding-right:/);assert.doesNotMatch(css,/37\.5vw|75vw|25vw|--may-template-panel-width:100vw/);
  }finally{a.dom.window.close();}
 });
 test('saving reveals a new root card from an open subfolder and existing cards in their saved parent',async()=>{
@@ -67,5 +67,12 @@ test('mobile library follows the visible viewport while the keyboard is open and
  const a=boot(390,700,w=>{w.document.body.classList.add('may-mobile-menu');w.visualViewport=new w.EventTarget();Object.assign(w.visualViewport,{width:390,height:844,offsetTop:0,offsetLeft:0});});try{
   const v=a.w.visualViewport;Object.assign(v,{width:360,height:300,offsetTop:250,offsetLeft:15});v.dispatchEvent(new a.w.Event('resize'));assert.equal(a.value(),360);const style=a.w.document.body.style;assert.equal(style.getPropertyValue('--may-library-vv-bottom'),'550px');assert.equal(style.getPropertyValue('--may-library-vv-top'),'250px');assert.equal(style.getPropertyValue('--may-library-vv-left'),'15px');
   Object.assign(v,{width:390,height:844,offsetTop:0,offsetLeft:0});v.dispatchEvent(new a.w.Event('resize'));assert.equal(a.value(),390);assert.equal(style.getPropertyValue('--may-library-vv-bottom'),'844px');assert.equal(a.w.localStorage.getItem('mayatnik-template-panel-width'),'700');
+ }finally{a.dom.window.close();}
+});
+test('desktop library shares only the field bounds, follows header resizing and leaves external controls untouched',()=>{
+ let top=130,height=600,changed,observed=[];const a=boot(1200,600,w=>{const d=w.document,header=d.createElement('header'),wrap=d.createElement('div');header.innerHTML='<button id="headerCommand">View</button>';wrap.id='wrap';d.body.prepend(header,wrap);const reserve=()=>d.body.classList.contains('may-template-panel-open')?parseFloat(d.body.style.getPropertyValue('--may-template-panel-width'))||0:0;
+  wrap.getBoundingClientRect=()=>({left:100,top,right:1160-reserve(),bottom:top+height,width:1060-reserve(),height});const computed=w.getComputedStyle.bind(w);w.getComputedStyle=n=>n===wrap?{marginRight:reserve()+'px'}:computed(n);w.ResizeObserver=class{constructor(f){changed=f;}observe(n){observed.push(n);}disconnect(){}};
+ });try{const style=a.w.document.body.style;assert.equal(a.value(),600);assert.equal(style.getPropertyValue('--may-library-field-top'),'130px');assert.equal(style.getPropertyValue('--may-library-field-height'),'600px');assert.equal(style.getPropertyValue('--may-library-field-right'),'40px');assert.equal(a.handle.style.right,'640px');assert.equal(a.w.document.body.style.paddingRight,'');assert.equal(a.w.document.getElementById('headerCommand').parentElement.tagName,'HEADER');assert.deepEqual(observed.map(n=>n.id||n.tagName),['wrap','HEADER']);
+  top=210;height=520;changed();assert.equal(style.getPropertyValue('--may-library-field-top'),'210px');assert.equal(style.getPropertyValue('--may-library-field-height'),'520px');a.key('End');assert.equal(a.value(),1002);assert.ok(a.value()<1060);a.w.MayatnikTemplatePanel.setOpen(false);assert.equal(a.w.document.getElementById('wrap').getBoundingClientRect().width,1060);assert.equal(a.w.document.getElementById('headerCommand').parentElement.tagName,'HEADER');
  }finally{a.dom.window.close();}
 });

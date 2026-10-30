@@ -34,7 +34,7 @@
     }
     templateLimitInput.value=String(api.get()||4096);templateLimitDialog.showModal();templateLimitInput.focus();
   }
-  let folderTree,address,upButton,sectionSave,renameButton,deleteButton,searchInput,query='',folderSelection='';
+  let address,sectionSave,renameButton,deleteButton,searchInput,query='',folderSelection='';
   const sectionTitle=()=>activeTab==='templates'?'Шаблоны':activeTab==='layers'?'Слои':activeTab==='sequences'?'Послед-ти':captureLibraries.get(activeTab)?.title||'';
   const matches=name=>!query||String(name||'').toLocaleLowerCase().includes(query);
   function folderNodes(){return store?.snapshot().nodes.filter(n=>n.kind==='folder')||[];}
@@ -58,16 +58,14 @@
   function syncExplorer(){if(!address)return;
     const folders=new Map(folderNodes().map(n=>[n.id,n])),path=[];let id=activeTab==='templates'?current:'';const seen=new Set();
     while(id&&folders.has(id)&&!seen.has(id)){seen.add(id);const n=folders.get(id);path.unshift(n);id=n.parent;}
-    address.textContent=['Библиотека',sectionTitle(),...path.map(n=>n.name)].join(' / ');address.title=address.textContent;
-    upButton.disabled=activeTab!=='templates'||!current;folderButton.hidden=activeTab!=='templates';
+    const fullPath=['Библиотека',sectionTitle(),...path.map(n=>n.name)].join(' / '),fragment=doc.createDocumentFragment();
+    for(const [index,node]of [{id:'',name:'Библиотека'},{id:'',name:sectionTitle()},...path].entries()){if(index){const separator=doc.createElement('span');separator.textContent=' / ';separator.setAttribute('aria-hidden','true');fragment.append(separator);}const b=button(node.name,index===0?'Все шаблоны':node.name,()=>index===1&&activeTab!=='templates'?selectTab(activeTab):navigateFolder(node.id),'mtp-header-crumb');b.dataset.userLabel='';b.dataset.folderId=node.id;dropTarget(b,'folder',node.id);fragment.append(b);}address.replaceChildren(fragment);address.title=fullPath;address.setAttribute('aria-label',fullPath);
+    folderButton.hidden=activeTab!=='templates';
     const library=captureLibraries.get(activeTab),entry=selectedEntry(),busy=activeTab==='templates'?!!engine?.getState().busy:activeTab==='layers'?false:!!library?.pending||!!library?.api?.getState().busy;
     sectionSave.disabled=busy||(activeTab==='templates'?!!saveButton?.disabled:activeTab==='layers'?!entry?.capturable:activeTab==='sequences'?!root.maySequences:!library?.api);
     sectionSave.title=activeTab==='templates'?'Сохранить выбранную фигуру в библиотеку':activeTab==='layers'?'Создать фиксацию выбранного слоя':activeTab==='sequences'?'Применить строки из редактора':library?'Сохранить '+library.scope:'';
     renameButton.disabled=busy||!entry||activeTab==='layers';deleteButton.disabled=busy||!entry||(activeTab==='layers'&&!entry.removable);
     searchInput.placeholder='Поиск: '+sectionTitle();
-    const fragment=doc.createDocumentFragment();
-    const add=(parent,depth)=>{for(const n of folders.values())if(n.parent===parent){const b=button('📁 '+n.name,n.name,()=>navigateFolder(n.id));b.dataset.folderId=n.id;b.dataset.userLabel='';b.style.setProperty('--mtp-depth',String(depth));b.setAttribute('aria-pressed',String(activeTab==='templates'&&current===n.id));dropTarget(b,'folder',n.id);fragment.append(b);add(n.id,depth+1);}};
-    add('',0);if(!folders.size){const empty=doc.createElement('p');empty.className='mtp-folder-empty';empty.textContent='Нет папок';fragment.append(empty);}folderTree.replaceChildren(fragment);
   }
 
   function selectTab(tab,persist=true){if(tab==='views')tab='frames';activeTab=tab==='layers'||tab==='sequences'||captureLibraries.has(tab)?tab:'templates';if(!panel)return;
@@ -105,16 +103,20 @@
   function bindCapture(library,api){if(!api||api===library.api)return;library.unsubscribe?.();library.api=api;library.unsubscribe=api.subscribe(()=>renderCapture(library));Promise.resolve(api.ready).then(()=>{if(api===library.api)renderCapture(library);},e=>{library.error=e?.message||'Не удалось загрузить библиотеку';renderCapture(library);});renderCapture(library);}
   function capturePane(library){const pane=doc.createElement('section');pane.className='mtp-pane '+(library.key==='settings'?'mtp-settings-pane':'mtp-frame-pane');pane.id=library.key==='settings'?'maySettingsPane':'mayFramePane';pane.setAttribute('role','tabpanel');
     const save=button('Сохранить '+library.word,'Сохранить '+library.scope+' в библиотеку '+library.plural,()=>{if(library.key==='settings'){const name=root.prompt('Название набора настроек','Набор '+((library.api?.list().length||0)+1));if(name?.trim())captureAction(library,'save',name.trim());}else captureAction(library,'save');});save.dataset[library.key==='settings'?'settingsSave':'frameSave']='';const output=doc.createElement('output');output.className='mtp-status';output.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-grid';pane.append(save,output,list);if(library.key==='settings'){pane.prepend(templateLimitControl());}Object.assign(library,{pane,save,status:output,grid:list});return pane;}
-  let resizeHandle,widthPreference=null,resizeDrag=null,widthFrame=0,saveButton;
+  let resizeHandle,widthPreference=null,resizeDrag=null,widthFrame=0,saveButton,fieldWidth=null,fieldRight=0,fieldReserve=0,fieldObserver;
   function syncSave(){if(saveButton)saveButton.disabled=!doc.getElementById('bTemplateSave')||doc.getElementById('bTemplateSave').disabled;syncExplorer();}
-  const widthBounds=()=>{const viewport=Math.max(1,root.innerWidth||doc.documentElement.clientWidth||800),max=Math.max(1,viewport-58);return {viewport,min:Math.min(332,max),max};};
+  const widthBounds=()=>{const viewport=Math.max(1,root.innerWidth||doc.documentElement.clientWidth||800),max=Math.max(1,Math.min(viewport,fieldWidth??viewport)-58);return {viewport,min:Math.min(332,max),max};};
   const mobilePanel=()=>doc.body.classList.contains('may-mobile-menu')&&!root.MayatnikLibraryDetached;
   function panelWidth(){const {viewport,min,max}=widthBounds();return mobilePanel()?Math.min(viewport,root.visualViewport?.width||viewport):Math.max(min,Math.min(max,widthPreference??viewport/2));}
+  function syncFieldBox(){const wrap=doc.getElementById('wrap');fieldWidth=null;fieldRight=0;if(!wrap||mobilePanel()||root.MayatnikLibraryDetached)return;const r=wrap.getBoundingClientRect();if(!r.width||!r.height)return;
+    const reserved=open?(parseFloat(root.getComputedStyle(wrap).marginRight)||fieldReserve):0;fieldWidth=r.width+reserved;fieldRight=Math.max(0,(root.innerWidth||doc.documentElement.clientWidth)-(r.right+reserved));
+    doc.body.style.setProperty('--may-library-field-top',Math.max(0,r.top)+'px');doc.body.style.setProperty('--may-library-field-height',r.height+'px');doc.body.style.setProperty('--may-library-field-right',fieldRight+'px');
+  }
   function applyWidth(notify=false){
-    const width=Math.round(panelWidth()),{min,max}=widthBounds();doc.body.style.setProperty('--may-template-panel-width',width+'px');
+    syncFieldBox();const width=Math.round(panelWidth()),{min,max}=widthBounds();doc.body.style.setProperty('--may-template-panel-width',width+'px');fieldReserve=open&&!mobilePanel()&&!root.MayatnikLibraryDetached?width:0;
     const vv=root.visualViewport;doc.body.style.setProperty('--may-library-vv-top',(vv?.offsetTop||0)+'px');doc.body.style.setProperty('--may-library-vv-left',(vv?.offsetLeft||0)+'px');doc.body.style.setProperty('--may-library-vv-bottom',((vv?.offsetTop||0)+(vv?.height||root.innerHeight))+'px');
     if(resizeHandle)resizeHandle.hidden=!open||mobilePanel();
-    if(resizeHandle){resizeHandle.style.right=width+'px';resizeHandle.setAttribute('aria-valuemin',String(min));resizeHandle.setAttribute('aria-valuemax',String(max));resizeHandle.setAttribute('aria-valuenow',String(width));resizeHandle.setAttribute('aria-valuetext',width+' пикселей');}
+    if(resizeHandle){resizeHandle.style.right=(fieldRight+width)+'px';resizeHandle.setAttribute('aria-valuemin',String(min));resizeHandle.setAttribute('aria-valuemax',String(max));resizeHandle.setAttribute('aria-valuenow',String(width));resizeHandle.setAttribute('aria-valuetext',width+' пикселей');}
     if(notify&&!widthFrame)widthFrame=root.requestAnimationFrame(()=>{widthFrame=0;root.dispatchEvent(new Event('resize'));});
   }
   function saveWidth(){try{root.localStorage.setItem(WIDTH_KEY,String(widthPreference));}catch(_){} }
@@ -136,6 +138,7 @@
     root.addEventListener('blur',()=>finishResize(true));root.addEventListener('resize',()=>applyWidth());doc.body.append(resizeHandle);applyWidth();
     root.addEventListener('may-mobile-menu-change',()=>{finishResize(true);applyWidth();});
     root.visualViewport?.addEventListener('resize',()=>applyWidth());root.visualViewport?.addEventListener('scroll',()=>applyWidth());
+    if(root.ResizeObserver){fieldObserver=new root.ResizeObserver(()=>applyWidth());for(const n of [doc.getElementById('wrap'),doc.querySelector('header')])if(n)fieldObserver.observe(n);root.addEventListener('pagehide',()=>fieldObserver.disconnect(),{once:true});}
   }
   function token(value){if(value&&typeof value==='object'){if(!identities.has(value))identities.set(value,++identityCounter);return identities.get(value);}return String(value);}
   function organise(run){const before=store.snapshot(),result=run(),after=store.snapshot();if(JSON.stringify(before)!==JSON.stringify(after))engine?.recordExternal?.(before,after,store.restore.bind(store));render();return result;}
@@ -143,8 +146,9 @@
     const b=doc.createElement('button');b.type='button';b.className=className;b.textContent=symbol;b.title=title;b.setAttribute('aria-label',title);b.addEventListener('click',run);return b;
   }
   function headingButton(title,path,run){
+    const danger=title.startsWith('Удалить');if(danger)path='M8 8 16 16M16 8 8 16';
     const b=button('',title,run,'mtp-command mtp-heading-icon'),ns='http://www.w3.org/2000/svg',svg=doc.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
-    for(const [className,d]of [['mtp-heading-edge','M12 1 23 12 12 23 1 12Z'],['mtp-heading-glyph',path]]){const p=doc.createElementNS(ns,'path');p.setAttribute('class',className);p.setAttribute('d',d);svg.append(p);}b.append(svg);return b;
+    for(const [className,d]of [['mtp-heading-edge','M12 1 23 12 12 23 1 12Z'],['mtp-heading-glyph',path]]){const p=doc.createElementNS(ns,'path');p.setAttribute('class',className);p.setAttribute('d',d);svg.append(p);}if(danger)b.dataset.deleteGlyph='';b.append(svg);return b;
   }
   function message(value){if(status)status.textContent=String(value||'');}
   function reportError(e){message(e?.message||'Не удалось выполнить действие');}
@@ -163,8 +167,8 @@
     if(panel)return;let storage;try{storage=root.localStorage;}catch(_){}
     store=root.MayatnikTemplateFolderStore||root.MayatnikTemplateFolders.create(storage);folderUnsubscribe=store.subscribe?.(()=>{renderKey='';schedule();});
     panel=doc.createElement('aside');panel.id='mayatnikTemplatePanel';panel.hidden=true;panel.setAttribute('aria-label','Библиотека последовательностей, слоёв, шаблонов, кадров и настроек');
-    const head=doc.createElement('div');head.className='mtp-heading';const title=doc.createElement('strong');title.textContent='Библиотека';
-    folderButton=headingButton('Создать папку в текущей папке','M5 8H10L12 10H19V17H5ZM12 11V16M9.5 13.5H14.5',()=>{const name=root.prompt('Название новой папки','Папка');if(name)organise(()=>store.addFolder(name,current));});const close=headingButton('Закрыть библиотеку','M8 8 16 16M16 8 8 16',()=>{if(root.MayatnikLibraryDetached)root.close();else{setOpen(false);doc.getElementById('bTemplatePanel')?.focus();}});close.dataset.libraryClose='';head.append(title,close);
+    const head=doc.createElement('div');head.className='mtp-heading';crumbs=doc.createElement('nav');crumbs.className='mtp-header-path mtp-address';crumbs.dataset.noMini='';address=crumbs;
+    folderButton=headingButton('Создать папку в текущей папке','M5 8H10L12 10H19V17H5ZM12 11V16M9.5 13.5H14.5',()=>{const name=root.prompt('Название новой папки','Папка');if(name)organise(()=>store.addFolder(name,current));});const close=headingButton('Закрыть библиотеку','M8 8 16 16M16 8 8 16',()=>{if(root.MayatnikLibraryDetached)root.close();else{setOpen(false);doc.getElementById('bTemplatePanel')?.focus();}});close.dataset.libraryClose='';head.append(crumbs,close);
     const toolbar=doc.createElement('div');toolbar.className='mtp-toolbar';toolbar.dataset.noMini='';folderButton.dataset.libraryFolder='';const detached=headingButton('Открыть библиотеку в отдельном окне браузера','M8 16 16 8M8 8H16V16',openWindow);detached.dataset.libraryWindow='';detached.hidden=!!root.MayatnikLibraryDetached;const notice=doc.createElement('output');notice.dataset.windowNotice='';notice.hidden=true;notice.setAttribute('role','status');head.insertBefore(detached,head.lastChild);toolbar.append(notice);
     const fileCommands=doc.createElement('div');fileCommands.className='mtp-file-commands';fileCommands.setAttribute('role','group');fileCommands.setAttribute('aria-label','Резервная копия, восстановление и облачный файл');toolbar.append(fileCommands);
     for(const [symbol,title,short,action]of [['💾','Сохранить все библиотеки и текущую работу в один файл','Резрвъ','save'],['↑','Восстановить полную копию Маятника','Возстнвть','restore'],['☁','Подключить файл в облачной папке','к Облку','file']]){const b=button(symbol+' '+short,title,()=>root.MayatnikBackupUI?.open(action));b.dataset.backupAction=action;fileCommands.append(b);}
@@ -180,13 +184,11 @@
     sequencePane=doc.createElement('section');sequencePane.className='mtp-pane';sequencePane.id='maySequencePane';sequencePane.setAttribute('role','tabpanel');
     const sections=[['templates','Шаблоны',templatePane],['layers','Слои',layerPane],...[...captureLibraries.values()].map(library=>[library.key,library.title,capturePane(library)]),['sequences','Послед-ти',sequencePane]],tabKeys=sections.map(s=>s[0]);
     for(const [key,label,pane]of sections){const b=button(label,label,()=>selectTab(key));b.dataset.libraryTab=key;b.setAttribute('role','tab');b.id='mayLibraryTab-'+key;b.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',b.id);b.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?tabKeys[0]:e.key==='End'?tabKeys.at(-1):tabKeys[(tabKeys.indexOf(key)+(e.key==='ArrowRight'?1:tabKeys.length-1))%tabKeys.length];selectTab(next);tabButtons.get(next).focus();}});tabButtons.set(key,b);tabs.append(b);}
-    const navigation=doc.createElement('details');navigation.className='mtp-navigation';const navTitle=doc.createElement('summary');navTitle.className='mtp-command';navTitle.textContent='☰ Папки';navTitle.title='Папки шаблонов';navTitle.setAttribute('aria-label',navTitle.title);folderTree=doc.createElement('nav');folderTree.className='mtp-folder-tree';folderTree.setAttribute('aria-label','Папки шаблонов');navigation.append(navTitle,folderTree);toolbar.insertBefore(navigation,fileCommands);
     const workspace=doc.createElement('div');workspace.className='mtp-workspace';const main=doc.createElement('div');main.className='mtp-main';
-    const location=doc.createElement('div');location.className='mtp-location';upButton=button('↑ Вверх','На уровень выше',()=>{const parent=folderNodes().find(n=>n.id===current)?.parent||'';navigateFolder(parent);});upButton.dataset.libraryUp='';address=doc.createElement('output');address.className='mtp-address';address.setAttribute('aria-label','Текущий путь');location.append(upButton,address);
     const commands=doc.createElement('div');commands.className='mtp-section-commands';sectionSave=headingButton('Сохранить в текущий раздел','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>{if(activeTab==='templates')saveButton.click();else if(activeTab==='layers')layerApi?.capture();else if(activeTab==='sequences')sequenceView?.save();else captureLibraries.get(activeTab)?.save.click();});sectionSave.dataset.sectionSave='';renameButton=headingButton('Переименовать выбранный элемент','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',()=>selectedAction('rename'));renameButton.dataset.sectionRename='';deleteButton=headingButton('Удалить выбранный элемент','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>selectedAction('delete'));deleteButton.dataset.sectionDelete='';commands.append(sectionSave,folderButton,renameButton,deleteButton);
     const exporter=root.MayatnikLibraryExport?.mount(root,{parent:panel,tab:()=>activeTab});if(exporter){const exportButton=headingButton('Скачать элемент, отмеченные элементы, весь раздел или всю библиотеку в папку либо ZIP','M12 5V14M8 10L12 14 16 10M7 16V18H17V16',()=>exporter.open());exportButton.dataset.libraryExport='';commands.append(exportButton);}
     const viewbar=doc.createElement('div');viewbar.className='mtp-viewbar';searchInput=doc.createElement('input');searchInput.type='search';searchInput.className='mtp-search';searchInput.setAttribute('aria-label','Поиск в текущем разделе');searchInput.addEventListener('input',()=>{query=searchInput.value.trim().toLocaleLowerCase();renderKey='';if(layerGrid)delete layerGrid.dataset.signature;activeTab==='templates'?render():renderActive();});viewbar.append(layouts,searchInput);
-    head.dataset.noMini='';crumbs=doc.createElement('nav');crumbs.className='mtp-crumbs';crumbs.dataset.noMini='';crumbs.setAttribute('aria-label','Путь папки');
+    head.dataset.noMini='';
     const actions=doc.createElement('div');actions.className='mtp-selection';actions.dataset.noMini='';
     const colour=doc.createElement('input');colour.type='color';colour.value='#ff7f27';colour.title='Цвет всех найденных вхождений';colour.setAttribute('aria-label',colour.title);
     colour.addEventListener('change',async()=>{try{await engine?.colour(colour.value);schedule();}catch(e){reportError(e);}});
@@ -198,7 +200,7 @@
     grid.addEventListener('dragover',e=>{if(dragged){e.preventDefault();e.dataTransfer.dropEffect='move';}});
     grid.addEventListener('drop',e=>{if(e.target===grid&&dragged){e.preventDefault();organise(()=>store.move(dragged.kind,dragged.id,current));dragged=null;}});
     const listHead=doc.createElement('div');listHead.className='mtp-list-head';for(const label of ['Название','Размер · 1/0','Кнопки']){const cell=doc.createElement('span');cell.textContent=label;listHead.append(cell);}
-    templatePane.append(templateLimitControl(),crumbs,actions,status,listHead,grid);main.append(location,commands,...sections.map(s=>s[2]));workspace.append(main);panel.append(head,tabs,toolbar,workspace,viewbar);doc.body.append(panel);makeResizer(storage);
+    templatePane.append(templateLimitControl(),actions,status,listHead,grid);main.append(commands,...sections.map(s=>s[2]));workspace.append(main);panel.append(head,tabs,toolbar,workspace,viewbar);doc.body.append(panel);makeResizer(storage);
     if(root.IntersectionObserver)observer=new root.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const card=entry.target;observer.unobserve(card);drawPreview(card);queueMetrics(card);}}, {root:panel,rootMargin:'160px'});
     else workspace.addEventListener('scroll',queueVisibleMetrics,{passive:true});
     panel.addEventListener('dragend',()=>{dragged=null;panel.querySelectorAll('.mtp-drop').forEach(n=>n.classList.remove('mtp-drop'));});
@@ -276,16 +278,15 @@
     card.addEventListener('dragstart',e=>beginDrag(e,'template',item.id));dropTarget(card,'template',item.id);
     const choose=button('','Выделить все вхождения шаблона на поле',async()=>{try{folderSelection='';await engine.select(item.id);schedule();}catch(e){reportError(e);}},'mtp-preview');
     const img=doc.createElement('img');img.className='mtp-image';img.alt='';img.draggable=false;choose.append(img);
-    const name=doc.createElement('span');name.className='mtp-name';name.dataset.userLabel='';
+    const name=doc.createElement('span');name.className='mtp-name';name.dataset.userLabel='';name.tabIndex=0;name.setAttribute('role','button');name.title='Щелчок — выбрать шаблон; двойной щелчок — переименовать';name.setAttribute('aria-label',name.title);
     const metrics=doc.createElement('span');metrics.className='mtp-metrics';const size=doc.createElement('span');size.className='mtp-size';size.title='Размер частей шаблона в клетках';const bits=doc.createElement('span');bits.className='mtp-bits';bits.title='1 — заполненные клетки; 0 — замкнутые внутренние пустоты, без внешнего фона';metrics.append(size,bits);
-    choose.addEventListener('contextmenu',e=>{e.preventDefault();const value=root.prompt('Название шаблона',card._item.name);if(value)act(item.id,'rename',value);});
+    const rename=()=>{const value=root.prompt('Название шаблона',card._item.name);if(value)act(item.id,'rename',value);};
+    choose.addEventListener('contextmenu',e=>{e.preventDefault();rename();});
+    name.addEventListener('click',e=>{e.stopPropagation();if(e.detail<2)choose.click();});name.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation();rename();});name.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();choose.click();}});
     const row=doc.createElement('div');row.className='mtp-card-actions';
-    const visibility=button('◉','Скрыть шаблон с поля',()=>act(item.id,'visible'));visibility.dataset.templateVisibility='';
-    const skip=button('↛','Пропуск выделения на поле',()=>act(item.id,'skip-selection'));skip.dataset.templateSkip='';row.append(visibility,skip);
-    row.append(button('＋','Добавить копию шаблона на поле',()=>act(item.id,'insert')),button('↓','Скачать шаблон',()=>act(item.id,'download')),button('●','Изменить цвет шаблона',()=>act(item.id,'colour')),button('×','Удалить шаблон из библиотеки',()=>act(item.id,'delete-library')));
-    const more=doc.createElement('details');more.className='mtp-more';const summary=doc.createElement('summary');summary.textContent='⋯';summary.title='Ещё действия с шаблоном';summary.setAttribute('aria-label',summary.title);
-    const menu=doc.createElement('div');menu.className='mtp-more-menu';
-    menu.append(button('💾','Сохранить изменения фигуры в этот шаблон',()=>act(item.id,'save')),button('✎','Переименовать шаблон',()=>{const value=root.prompt('Название шаблона',card._item.name);if(value)act(item.id,'rename',value);}));more.append(summary,menu);row.append(more);
+    const visibility=headingButton('Скрыть шаблон с поля','M5 12Q12 5 19 12Q12 19 5 12ZM12 10A2 2 0 1 0 12 14A2 2 0 1 0 12 10',()=>act(item.id,'visible'));visibility.dataset.templateVisibility='';
+    const skip=headingButton('Пропуск выделения на поле','M6 8H13L18 13M14 13H18V9M7 17L17 7',()=>act(item.id,'skip-selection'));skip.dataset.templateSkip='';row.append(visibility,skip);
+    row.append(headingButton('Добавить копию шаблона на поле','M12 6V18M6 12H18',()=>act(item.id,'insert')),headingButton('Скачать шаблон','M12 5V14M8 10L12 14 16 10M7 16V18H17V16',()=>act(item.id,'download')),headingButton('Изменить цвет шаблона','M12 6A6 6 0 1 0 12 18A6 6 0 1 0 12 6ZM12 6V18',()=>act(item.id,'colour')),headingButton('Удалить шаблон из библиотеки','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>act(item.id,'delete-library')),headingButton('Сохранить изменения фигуры в этот шаблон','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>act(item.id,'save')),headingButton('Переименовать шаблон','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',rename));
     card.append(name,choose,metrics,row);return card;
   }
   function folderCard(node){
@@ -299,8 +300,6 @@
     const snapshot=store.snapshot(),folders=new Map(snapshot.nodes.filter(n=>n.kind==='folder').map(n=>[n.id,n]));if(current&&!folders.has(current))current='';
     const nextKey=JSON.stringify([query,current,snapshot.nodes,list.map(t=>[t.id,t.name,t.hex,token(previewKey(t))])]);
     if(nextKey===renderKey){syncState();return;}renderKey=nextKey;
-    crumbs.replaceChildren();const path=[];let p=current;while(p){const n=folders.get(p);if(!n)break;path.unshift(n);p=n.parent;}
-    for(const node of [{id:'',name:'⌂'},...path]){const b=button(node.name,node.id?node.name:'Все шаблоны',()=>navigateFolder(node.id),'mtp-path');b.dataset.userLabel='';dropTarget(b,'folder',node.id);crumbs.append(b);}
     syncExplorer();const children=store.children(current).filter(n=>matches(n.kind==='folder'?n.name:byId.get(n.id)?.name)),wanted=new Set();const fragment=doc.createDocumentFragment();
     for(const node of children){if(node.kind==='folder'){fragment.append(folderCard(node));continue;}const item=byId.get(node.id);if(!item)continue;wanted.add(item.id);let card=cards.get(item.id);if(!card){card=templateCard(item);cards.set(item.id,card);}const old=card._item;card._item=item;syncTemplateCard(card,item);if(!old||previewKey(old)!==previewKey(item)){card.querySelector('.mtp-image').removeAttribute('src');if(observer)observer.observe(card);else drawPreview(card);}fragment.append(card);}
     grid.replaceChildren(fragment);if(observer)for(const id of wanted){const card=cards.get(id);if(!card.querySelector('.mtp-image').getAttribute('src')||!metricsCache.has(previewKey(card._item)))observer.observe(card);}else{for(const id of wanted)drawPreview(cards.get(id));queueVisibleMetrics();}
@@ -310,7 +309,7 @@
   }
   function syncState(){
     if(!engine||!panel)return;const state=engine.getState();for(const [id,card]of cards){const selected=id===state.selectedId;card.classList.toggle('mtp-selected',selected);card.querySelector('.mtp-preview').setAttribute('aria-pressed',String(selected));const view=engine.visibility?.(id)||{placed:0,visible:false,skipSelection:false},visible=card.querySelector('[data-template-visibility]'),skip=card.querySelector('[data-template-skip]');
-      if(visible){visible.disabled=!view.placed||!!state.busy;visible.setAttribute('aria-pressed',String(!!view.visible));visible.textContent=view.visible?'◉':'○';visible.title=!view.placed?'На поле нет размещённых копий этого шаблона':view.visible?'Скрыть все копии шаблона с поля':'Показать все копии шаблона на поле';visible.setAttribute('aria-label',visible.title);}
+      if(visible){visible.disabled=!view.placed||!!state.busy;visible.setAttribute('aria-pressed',String(!!view.visible));visible.title=!view.placed?'На поле нет размещённых копий этого шаблона':view.visible?'Скрыть все копии шаблона с поля':'Показать все копии шаблона на поле';visible.setAttribute('aria-label',visible.title);}
       if(skip){skip.disabled=!!state.busy;skip.setAttribute('aria-pressed',String(!!view.skipSelection));skip.title=view.skipSelection?'Пропуск выделения включён — разрешить выбор на поле':'Пропуск выделения — не выбирать этот шаблон кликом по полю';skip.setAttribute('aria-label',skip.title);}}
     panel.setAttribute('aria-busy',String(!!state.busy||!!state.filtering));message((store.persistenceError?'Папки не сохранены: хранилище браузера недоступно. ':'')+(state.filtering?'Проверка шаблонов в текущих строках…':state.message||(state.selectedId?'Найдено: '+(state.count||0):'Выберите шаблон — выделятся все его вхождения на поле.')));
     for(const n of templatePane.querySelectorAll('.mtp-selection button:not([data-library-save]),.mtp-selection input'))n.disabled=!state.selectedId||!!state.busy;syncSave();syncExplorer();

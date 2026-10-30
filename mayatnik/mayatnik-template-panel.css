@@ -1,8 +1,7 @@
 /* The page keeps its existing vertical flex flow. The resizable right panel defaults to half the viewport. */
 body{--may-template-panel-width:50vw}
-body.may-template-panel-open{padding-right:var(--may-template-panel-width);box-sizing:border-box}
-body.may-template-panel-open #mayRhombs{right:calc(var(--may-template-panel-width) + 10px)}
-body.may-template-panel-open #cellInkBar{left:calc((100vw - var(--may-template-panel-width))/2);max-width:calc(100vw - var(--may-template-panel-width) - 24px)}
+body.may-template-panel-open:not(.may-mobile-menu) #wrap{margin-right:var(--may-template-panel-width)}
+.mtp-resize{top:var(--may-library-field-top,0px)!important;bottom:auto!important;height:var(--may-library-field-height,100dvh)}
 .mtp-resize{position:fixed;top:0;bottom:0;width:10px;margin-right:0;z-index:2147483640;cursor:ew-resize;touch-action:none;user-select:none;background-repeat:repeat-y;background-size:10px 24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='24'%3E%3Cpath d='M9 0L2.07 12L9 24H10V0Z' fill='%230e1116'/%3E%3Cpath d='M9 0L2.07 12L9 24' fill='none' stroke='%23b48cff' stroke-width='1.5'/%3E%3C/svg%3E")}
 .mtp-resize[hidden]{display:none!important}
 .mtp-resize:hover,.mtp-resize:focus-visible,body.may-template-panel-resizing .mtp-resize{outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='24'%3E%3Cpath d='M9 0L2.07 12L9 24H10V0Z' fill='%230e1116'/%3E%3Cpath d='M9 0L2.07 12L9 24' fill='none' stroke='%23d9b9ff' stroke-width='2'/%3E%3C/svg%3E")}
@@ -13,6 +12,10 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 :is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) button,#mayatnikTemplatePanel summary{font:inherit;color:inherit;text-shadow:none!important;cursor:pointer;user-select:none;-webkit-user-select:none}
 #mayatnikTemplatePanel .mtp-heading{display:flex;align-items:center;gap:2px;flex:none;min-height:26px}
 #mayatnikTemplatePanel .mtp-heading strong{flex:1;font-size:14px;min-width:0}
+#mayatnikTemplatePanel .mtp-header-path{display:flex;align-items:center;gap:2px;flex:1;min-width:0;overflow:hidden;white-space:nowrap;font-size:12px}
+#mayatnikTemplatePanel .mtp-header-crumb{flex:0 1 auto;min-width:0;height:24px;padding:0;border:0;background:transparent;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mayatnikTemplatePanel .mtp-header-path>span{flex:none}
+#mayatnikTemplatePanel .mtp-header-crumb:focus-visible{outline:1px solid var(--mtp-accent);outline-offset:-1px}
 :is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command,#mayatnikTemplatePanel .mtp-path,#mayatnikTemplatePanel .mtp-more>summary{--gz-w:120px;--gz-h:24px;position:relative;display:flex;align-items:center;justify-content:center;flex:none;width:120px;height:24px;margin:0;padding:0 10px;border:0;border-radius:0;background:#1b2430;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);box-shadow:none!important;outline:none;line-height:24px}
 :is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command::after,#mayatnikTemplatePanel .mtp-path::after,#mayatnikTemplatePanel summary::after{content:"";pointer-events:none;position:absolute;inset:0;background:var(--mtp-accent);clip-path:polygon(10px 0,11px 1px,2px 50%,11px calc(100% - 1px),10px 100%,0 50%,10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,calc(100% - 11px) calc(100% - 1px),calc(100% - 2px) 50%,calc(100% - 11px) 1px,calc(100% - 10px) 0);opacity:0}
 :is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command:hover::after,:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command:focus-visible::after,#mayatnikTemplatePanel .mtp-path:hover::after,#mayatnikTemplatePanel .mtp-path:focus-visible::after,#mayatnikTemplatePanel summary:hover::after,#mayatnikTemplatePanel summary:focus-visible::after{opacity:1}
@@ -23,6 +26,7 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 #mayatnikTemplatePanel .mtp-heading-edge{fill:#1b2430;stroke:#6d597f;stroke-width:1}
 #mayatnikTemplatePanel .mtp-heading-glyph{fill:none;stroke:var(--mtp-accent);stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter}
 #mayatnikTemplatePanel .mtp-heading-icon:is(:hover,:focus-visible) .mtp-heading-edge{stroke:var(--mtp-accent)}
+#mayatnikTemplatePanel .mtp-heading-icon[aria-pressed=true] .mtp-heading-edge{stroke:var(--mtp-accent);stroke-width:2}
 #mayatnikTemplatePanel .mtp-heading-icon:active .mtp-heading-edge{stroke:var(--mtp-accent);stroke-width:3}
 #mayatnikTemplatePanel .mtp-crumbs{display:flex;flex-wrap:wrap;gap:2px;flex:none}
 #mayatnikTemplatePanel .mtp-path{width:auto;max-width:100%;min-width:32px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 12px}
@@ -121,8 +125,10 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayatnikTemplatePanel .mtp-layout-diamond[aria-pressed=true] .mtp-layout-edge{stroke:var(--mtp-accent);stroke-width:2}
 #mayatnikTemplatePanel .mtp-layout-diamond:active .mtp-layout-edge{stroke:var(--mtp-accent);stroke-width:3}
 /* Explorer shell: one navigation tree and shared commands for every library. */
-#mayatnikTemplatePanel{container-type:inline-size;overflow:hidden}
+#mayatnikTemplatePanel{container-type:inline-size;overflow:hidden;top:var(--may-library-field-top,0px);bottom:auto;right:var(--may-library-field-right,0px);height:var(--may-library-field-height,100dvh)}
 #mayatnikTemplatePanel .mtp-workspace{display:grid;grid-template-columns:minmax(0,1fr);flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain}
+#mayatnikTemplatePanel,#mayatnikTemplatePanel .mtp-workspace{scrollbar-width:none}
+#mayatnikTemplatePanel::-webkit-scrollbar,#mayatnikTemplatePanel .mtp-workspace::-webkit-scrollbar{display:none;width:0;height:0}
 #mayatnikTemplatePanel .mtp-main{display:flex;flex-direction:column;gap:4px;min-width:0}
 #mayatnikTemplatePanel .mtp-navigation{position:relative;min-width:0;flex:none}
 #mayatnikTemplatePanel .mtp-navigation>summary{display:flex;max-width:100%;list-style:none}
@@ -165,6 +171,7 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayatnikTemplatePanel .mtp-section-commands>.mtp-command,#mayatnikTemplatePanel .mtp-selection>[data-library-export]{width:24px;min-width:24px;max-width:24px;height:24px;min-height:24px;padding:0}
 #mayatnikTemplatePanel [data-section-delete]{--mtp-accent:#ff625c}
 #mayatnikTemplatePanel [data-section-delete] .mtp-heading-edge{stroke:#ff625c}
+#mayatnikTemplatePanel [data-delete-glyph] .mtp-heading-glyph{stroke:#ff625c}
 #mayatnikTemplatePanel [data-section-delete]:disabled{opacity:.7}
 #mayTemplateLimitDialog{max-width:calc(100% - 24px);padding:12px;background:#0e1116;color:#dfe6f5;border:1px solid #b48cff}
 #mayTemplateLimitDialog::backdrop{background:#0009}
@@ -172,6 +179,18 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayTemplateLimitDialog input{width:120px;max-width:100%;height:28px;background:#1b2430;color:inherit;border:1px solid #526075;user-select:text}
 #mayTemplateLimitDialog .mtp-limit-actions{display:flex;flex-wrap:wrap;gap:2px;margin-top:8px}
 #mayatnikTemplatePanel .mtp-sequences{min-width:0;overflow:hidden}
+/* Template list cards keep text/actions left and use the full right side for preview. */
+#mayatnikTemplatePanel[data-layout=list] .mtp-template-pane .mtp-list-head{display:none}
+#mayatnikTemplatePanel[data-layout=list] .mtp-template-pane [data-template-id]{grid-template-columns:minmax(0,1fr) minmax(72px,38%);grid-template-rows:auto auto auto;gap:2px 4px;height:auto;min-height:104px;min-width:0;align-items:start}
+#mayatnikTemplatePanel[data-layout=list] .mtp-template-pane [data-template-id] .mtp-preview{grid-column:2;grid-row:1 / 4;align-self:stretch;position:relative;aspect-ratio:auto;width:100%;height:100%;min-height:0}
+#mayatnikTemplatePanel[data-layout=list] .mtp-template-pane [data-template-id] .mtp-image{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+#mayatnikTemplatePanel[data-layout=list] .mtp-template-pane [data-template-id] .mtp-name{grid-column:1;grid-row:1;position:static;inset:auto;height:auto;min-width:0;margin:0;padding:0 2px;white-space:normal;overflow-wrap:anywhere;line-height:16px}
+#mayatnikTemplatePanel[data-layout=list] .mtp-template-pane [data-template-id] .mtp-metrics{grid-column:1;grid-row:2;height:auto;min-width:0;margin:0;flex-direction:column;gap:0}
+#mayatnikTemplatePanel[data-layout=list] .mtp-template-pane [data-template-id] .mtp-card-actions{grid-column:1;grid-row:3;display:flex;flex-wrap:wrap;justify-self:start;align-self:start;width:100%;height:auto;margin:0}
+#mayatnikTemplatePanel .mtp-template-pane [data-template-id] .mtp-card-actions{display:flex;flex-wrap:wrap;gap:2px}
+#mayatnikTemplatePanel .mtp-template-pane [data-template-id] .mtp-card-actions>.mtp-heading-icon{flex:none;width:24px;min-width:24px;max-width:24px;height:24px;min-height:24px;line-height:24px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#mayatnikTemplatePanel .mtp-template-pane [data-template-id] .mtp-name{pointer-events:auto;cursor:pointer}
+#mayatnikTemplatePanel .mtp-template-pane [data-template-id] .mtp-name:focus-visible{outline:1px solid var(--mtp-accent);outline-offset:-1px}
 #mayatnikTemplatePanel .mtp-sequences p{margin:4px 0;color:#aab8cc;font-size:11px}
 #mayatnikTemplatePanel .mtp-sequences label{display:block;font-size:12px}
 #mayatnikTemplatePanel .mtp-sequences textarea{display:block;width:100%;height:150px;box-sizing:border-box;resize:vertical;white-space:pre;overflow:auto;background:#111823;color:#dfe6f5;border:1px solid #394657;font:12px/1.5 monospace;user-select:text;-webkit-user-select:text}
@@ -196,10 +215,18 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 
 #mayatnikTemplatePanel .mtp-sequence-rows .is-found td,#mayatnikTemplatePanel .mtp-sequence-rows .is-selected td{color:inherit}
 #mayatnikTemplatePanel .mtp-sequence-rows .is-found{color:#ffd646;background:#453016}
+#mayatnikTemplatePanel .mtp-sequence-rows .is-manual-found{color:#ffd646;background:#453016}
+#mayatnikTemplatePanel .mtp-sequence-rows .is-manual-found td{color:inherit}
+#mayatnikTemplatePanel .mtp-sequence-rows .mtp-manual-prefix{color:#ff4040;background:transparent}
+#mayatnikTemplatePanel .mtp-sequence-rows .is-manual-partial [data-column=sequence] code{color:#8d9bb0}
+#mayatnikTemplatePanel .mtp-sequence-rows tbody td{padding:1px 4px!important;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mayatnikTemplatePanel .mtp-sequence-rows [data-column=sequence] code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+#mayatnikTemplatePanel .mtp-sequence-notice:empty,#mayatnikTemplatePanel .mtp-sequence-summary:empty{display:none}
 .may-template-limit-notice{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:2147483646;box-sizing:border-box;width:max-content;max-width:calc(100vw - 24px);padding:8px 12px;background:#111823;color:#ffe969;border:1px solid #ffe969;font:13px/1.4 'Segoe UI',sans-serif;pointer-events:none}
 .may-template-limit-notice[hidden]{display:none}
 
 #mayatnikTemplatePanel .mtp-sequence-rows .is-selected{color:#edffff;background:#124b55;box-shadow:inset 3px 0 #69edff}
+#mayatnikTemplatePanel .mtp-sequence-rows .is-selected.is-manual-found{color:#ffd646;background:#453016}
 
 #mayLibraryExport{box-sizing:border-box;width:min(620px,94vw);max-height:90vh;overflow:auto;padding:16px;color:#e8edf5;background:#0e1116;border:1px solid #b48cff;font:13px system-ui,sans-serif}
 #mayLibraryExport::backdrop{background:#000a}

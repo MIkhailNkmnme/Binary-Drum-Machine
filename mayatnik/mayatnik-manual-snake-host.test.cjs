@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8'),Snake=require('./mayatnik-manual-snake.js');
+const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8').replace(/\r\n/g,'\n'),Snake=require('./mayatnik-manual-snake.js');
 function fn(name){const at=html.indexOf('function '+name+'(');assert.ok(at>=0,name);let end=html.indexOf('{',at),d=1;while(d){end++;if(html[end]==='{')d++;if(html[end]==='}')d--;}return (html.slice(at-6,at)==='async '?'async ':'')+html.slice(at,end+1);}
 test('snapshot acquisition stops active transports without redrawing an already closed column player',()=>{
  const c={k:64,target:0,stops:0,closes:0,stop(){c.stops++;},autoStop(){},rowRunEnd(){},stolbTransport:{active:false,close(){c.closes++;this.active=false;}}};
@@ -13,6 +13,26 @@ function fixture(){
  const c={st:{manualSnake:true},f:owner,sequences:{rows:['10','11'],revision:1,recordFirstFind(hit,context){c.first.push({hit,context});}},k:16,rombP:()=>-1,joinedOn:()=>false,ochkiScope:()=> 'scope',ochkiSearchSerial:0,ochkiLogSerial:0,ochkiLogEvent:entry=>c.logs.push(entry),logs:[],first:[],manualPaintRevision:0,manualSnakeBusy:false,manualSnakeSerial:0,manualSnakeSession:Snake.createSession(),manualSnakeLayer:null,MayatnikManualSnake:Snake,MayatnikManualPaintPattern:{abort:()=>Error('changed')},window:{mayVisibleSemantic:{acquire:async()=>snapshot}},visibleGraphKnown(){},manualPatternEffects:()=>true,visibleGraph:async()=>graph,manualPaintKey:()=> 'k',manualPatternGeometry:()=> 'g',draw(){c.draws++;},draws:0,releases:0,$:id=>{if(!els.has(id))els.set(id,{});return els.get(id);},setTimeout,Uint8Array,Set,rgba:()=>123};
  vm.createContext(c);vm.runInContext(fn('ochkiRecordManualSnake')+fn('manualSnakeClick')+fn('manualSnakeApply'),c);return {c,graph,snapshot,els};
 }
+function escapeFixture(){const f=fixture(),c=f.c;c.fillMode=true;c.f.val=Int8Array.of(1,0,1);c.fillMask=Uint32Array.of(7,8,9);c.colourTemplate={id:'keep'};c.templateFollow={on:true,source:'pinned'};c.tableMatch=null;
+ c.sequences.setManualMatch=value=>c.tableMatch=value;c.gpuCpuDisplay=()=>false;c.visibleSemanticCanLazy=()=>true;c.manualSnakeOverlayDraw=()=>{};c.clearFillPreview=()=>c.previewClears=(c.previewClears||0)+1;c.fillSync=()=>c.fillPressed=!!c.fillMode;c.save=()=>{};c.document={querySelector:()=>null};c.$('bManualSnake').setAttribute=(key,value)=>c.$('bManualSnake')[key]=value;
+ vm.runInContext(fn('manualSnakeSync')+'\n'+fn('exitInteractiveModes')+'\n'+html.split('\n').find(line=>line.includes("$('bManualSnake').onclick=")),c);
+ return f;
+}
+test('Escape exits fill and manual snake first, preserves selected template/source/paint and clears table feedback',async()=>{
+ const {c}=escapeFixture();await c.manualSnakeClick(0,0);assert.ok(c.tableMatch?.found);const source=c.f.val.slice(),paint=c.fillMask.slice(),selected=c.colourTemplate,pinned=c.templateFollow;
+ let handler;c.addEventListener=(_,fn)=>handler=fn;const a=html.indexOf("  addEventListener('keydown', e => {\n    if(e.key==='Escape'&&typeof exitInteractiveModes"),b=html.indexOf("  cv.addEventListener('pointermove'",a);assert.ok(a>0);vm.runInContext(html.slice(a,b),c);
+ const e={key:'Escape',target:{closest:()=>null},preventDefault(){this.defaultPrevented=true;}};handler(e);
+ assert.equal(e.defaultPrevented,true);assert.equal(c.fillMode,false);assert.equal(c.st.manualSnake,false);assert.equal(c.fillPressed,false);assert.equal(c.$('bManualSnake')['aria-pressed'],'false');assert.equal(c.manualSnakeLayer,null);assert.equal(c.tableMatch,null);assert.equal(c.colourTemplate,selected);assert.equal(c.templateFollow,pinned);assert.deepEqual(c.f.val,source);assert.deepEqual(c.fillMask,paint);
+});
+test('Escape cancels a late manual snapshot without publishing colour, table feedback or a finding',async()=>{
+ const {c,snapshot}=escapeFixture();let resolve;c.window.mayVisibleSemantic.acquire=()=>new Promise(r=>resolve=r);const pending=c.manualSnakeClick(0,0),serial=c.manualSnakeSerial;
+ const e={key:'Escape',target:{closest:()=>null},preventDefault(){}};assert.equal(c.exitInteractiveModes(e),true);assert.ok(c.manualSnakeSerial>serial);resolve(snapshot);await pending;
+ assert.equal(c.manualSnakeLayer,null);assert.equal(c.tableMatch,null);assert.equal(c.logs.length,0);assert.equal(c.first.length,0);assert.equal(c.releases,1);assert.equal(c.manualSnakeBusy,false);
+});
+test('Escape leaves modes alone when consumed, composing, editing text or handling an open modal',()=>{
+ for(const kind of ['consumed','composing','text','modal']){const {c}=escapeFixture(),e={key:'Escape',target:{closest:()=>kind==='text'?{}:null},defaultPrevented:kind==='consumed',isComposing:kind==='composing',preventDefault(){throw Error('must preserve local Escape');}};
+  if(kind==='modal')c.document.querySelector=()=>({});assert.equal(c.exitInteractiveModes(e),false);assert.equal(c.fillMode,true);assert.equal(c.st.manualSnake,true);}
+});
 test('host clicks visible start inclusively, advances sequence, preserves final result without wrapping, and resets on another bit',async()=>{
  const {c}=fixture();let r=await c.manualSnakeClick(0,0);assert.deepEqual(Array.from(r.cells),[0,1]);assert.equal(c.manualSnakeSession.current().index,0);assert.deepEqual(Array.from(c.manualSnakeLayer.mask),[1,1,0]);
  r=await c.manualSnakeClick(0,0);assert.deepEqual(Array.from(r.cells),[0,2]);assert.equal(c.manualSnakeSession.current().index,1);assert.deepEqual(Array.from(c.manualSnakeLayer.mask),[1,0,1]);
@@ -52,5 +72,30 @@ test('manual success logs actual solver variant and records table metadata witho
   assert.equal(step.value.variant,variant);c.VW=3;c.RG=1;c.rombP=()=>2;
   c.ochkiRecordManualSnake(1,step.value,{x:4.5,y:2});assert.equal(c.logs.length,1);assert.equal(c.logs[0].finds[0].vn,variant);assert.equal(c.logs[0].finds[0].manual,true);assert.equal(c.logs[0].finds[0].p,1);assert.equal(c.first[0].context.frame,16);assert.equal(c.first[0].hit.i,1);
   c.ochkiRecordManualSnake(1,{found:false},{});assert.equal(c.logs.length,1,'failed clicks do not log findings');
+ }
+});
+
+test('verified partial prefix is red on CPU, reports matched/total and never records a full finding; next row still advances',async()=>{
+ const {c,snapshot,els}=fixture(),bits=snapshot.bits.slice();c.sequences.rows=['1011','11'];const colours=[];c.rgba=rgb=>{colours.push([...rgb]);return 0xffff4040;};
+ const result=await c.manualSnakeClick(0,0);assert.equal(result.found,false);assert.equal(result.partial,true);assert.equal(result.matched,2);assert.deepEqual([...result.prefixCells],[0,1]);assert.deepEqual([...c.manualSnakeLayer.mask],[1,1,0]);assert.equal(c.manualSnakeLayer.partial,true);assert.match(els.get('manualSnakeInfo').textContent,/максимальный префикс 2 из 4/);assert.equal(c.logs.length,0);assert.equal(c.first.length,0);
+ const pixels=Uint32Array.of(4,5,6);c.manualSnakeApply(pixels);assert.deepEqual(colours,[[255,64,64]]);assert.deepEqual([...pixels],[0xffff4040,0xffff4040,6]);assert.deepEqual(snapshot.bits,bits);
+ const full=await c.manualSnakeClick(0,0);assert.equal(full.found,true);assert.equal(c.manualSnakeSession.current().index,1);assert.equal(c.manualSnakeLayer.partial,false);assert.equal(c.logs.length,1);assert.equal(c.first.length,1);c.manualSnakeApply(pixels);assert.deepEqual(colours.at(-1),[255,214,70]);
+});
+
+test('shared sparse semantic overlay uses red for maximal prefixes and yellow for full paths, without painting the source',async()=>{
+ for(const word of ['111','1111']){
+  const {c,snapshot,els}=fixture(),draws=[],ctx={fillRect(...args){draws.push({colour:this.fillStyle,args});}},canvas={style:{},setAttribute(){},getContext:()=>ctx};
+  snapshot.lazy=true;snapshot.width=3;snapshot.height=3;snapshot.scale=1;snapshot.readBit=(x,y)=>x>=0&&x<3&&y>=0&&y<3?1:-1;snapshot.isVisible=(x,y)=>snapshot.readBit(x,y)>=0;snapshot.cellAt=(x,y)=>snapshot.isVisible(x,y)?{x:x+.5,y:y+.5}:null;c.manualPatternEffects=()=>false;c.sequences.rows=[word];
+  Object.assign(c,{document:{createElement:()=>canvas,body:{append(){}}},wrap:{clientLeft:0,clientTop:0,clientWidth:30,clientHeight:30,getBoundingClientRect:()=>({left:0,top:0})},cv:{getBoundingClientRect:()=>({left:0,top:0})},DPR:()=>1,scale:()=>8});vm.runInContext(fn('manualSnakeOverlayDraw'),c);
+  const result=await c.manualSnakeClick(1.5,.5);assert.equal(result.matched,3);assert.equal(c.draws,0);assert.equal(c.manualSnakeLayer.overlay,true);assert.equal(draws.length,3);assert.ok(draws.every(q=>q.colour===(word.length===3?'rgb(255,214,70)':'rgb(255,64,64)')));assert.equal(result.found,word.length===3);assert.match(els.get('manualSnakeInfo').textContent,new RegExp('3 из '+word.length));assert.equal(c.logs.length,word.length===3?1:0);
+ }
+});
+
+test('an operation limit or stale snapshot never publishes a prefix highlight or finding',async()=>{
+ for(const kind of ['limit','stale']){
+  const {c,snapshot,els}=fixture();c.sequences.rows=['1011'];c.MayatnikManualSnake={...Snake,findGraphSteps:options=>Snake.findGraphSteps({...options,chunkOperations:1,...(kind==='limit'?{maxOperations:1}:{})})};
+  if(kind==='stale')c.setTimeout=callback=>setTimeout(()=>{snapshot.current=()=>false;callback();},0);
+  const result=await c.manualSnakeClick(0,0);assert.equal(c.logs.length,0);assert.equal(c.first.length,0);assert.equal(c.manualSnakeSession.current().result?.partial===true,false);assert.equal(c.releases,1);
+  if(kind==='limit'){assert.equal(result.complete,false);assert.equal(result.maximal,false);assert.equal(c.manualSnakeLayer.partial,false);assert.equal(c.manualSnakeLayer.mask.some(Boolean),false);assert.match(els.get('manualSnakeInfo').textContent,/предел/);}else{assert.ok(result.error);assert.equal(c.manualSnakeLayer,null);assert.equal(c.draws,0);}
  }
 });

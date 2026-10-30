@@ -2,6 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const html=fs.readFileSync(require('node:path').join(__dirname,'Zerkalius-mayatnik.html'),'utf8');
 const code=html.slice(html.indexOf('  function flipParts('),html.indexOf('  // v0.039: горизонтальная линия-зеркало'));
 const context={Uint32Array,Int8Array,Uint8ClampedArray,ImageData:class{},document:{createElement:()=>({getContext:()=>({putImageData(){}})})},MayatnikTemplate:{symmetry:()=>({})}};
+context.MayatnikTemplateAxisTurn=require('./mayatnik-template-axis-turn.js');context.window={MayatnikTemplateAxisTurn:context.MayatnikTemplateAxisTurn};
 vm.createContext(context);vm.runInContext(code,context);
 for(const horizontal of [true,false])test('template '+(horizontal?'horizontal':'vertical')+' flip mirrors mask and own 0/1/empty bits together',()=>{
   const mask=new Uint32Array([7,0,8,9,10,0]),bits=new Int8Array([1,-1,0,0,1,-1]),source=new Uint32Array([31,32,33,34,35,36]);

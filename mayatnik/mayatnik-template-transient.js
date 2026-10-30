@@ -2,9 +2,16 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateTransient=api;})(globalThis,function(){
   'use strict';
   function create(){
-    let owner=null,key=null,spans=[],ids=new Set();
-    function clear(){spans=[];ids.clear();}
+    let owner=null,key=null,spans=[],ids=new Set(),changes=new WeakMap();
+    function clear(){spans=[];ids.clear();changes=new WeakMap();}
     function sync(scope){if(!scope||scope.owner!==owner||scope.key!==key){clear();owner=scope?.owner??null;key=scope?.key??null;return true;}return false;}
+    // History carries an opaque token only. Geometry lives in this instance's
+    // private map and becomes unreachable as soon as the view scope changes.
+    const snapshot=()=>({spans:spans.slice(),ids:[...ids]});
+    function checkpoint(){const token={};changes.set(token,{before:snapshot(),after:null});return token;}
+    function commit(token){const change=changes.get(token);if(!change)return 0;change.after=snapshot();return 128+32*(change.before.spans.length+change.after.spans.length)+16*(change.before.ids.length+change.after.ids.length);}
+    function valid(token){return !!token&&!!changes.get(token)?.after;}
+    function apply(token,redo){const change=changes.get(token);if(!change?.after)return false;const state=redo?change.after:change.before;spans=state.spans.slice();ids=new Set(state.ids);return true;}
     function hide(parts,itemIds){
       const prepared=[];
       for(const {mask,rect,clip}of parts){
@@ -27,7 +34,7 @@
         if(end>mid){ctx.fillStyle=bottom;ctx.fillRect(x+left*scale,y+mid*scale,width*scale,(end-mid)*scale);}
       }ctx.restore();
     }
-    return {sync,clear,hide,draw,has:id=>ids.has(id),contains:(x,y)=>spans.some(([a,b,w,h])=>x>=a&&x<a+w&&y>=b&&y<b+h),get active(){return spans.length>0;}};
+    return {sync,clear,checkpoint,commit,valid,apply,hide,draw,has:id=>ids.has(id),contains:(x,y)=>spans.some(([a,b,w,h])=>x>=a&&x<a+w&&y>=b&&y<b+h),get active(){return spans.length>0;}};
   }
   return {create};
 });

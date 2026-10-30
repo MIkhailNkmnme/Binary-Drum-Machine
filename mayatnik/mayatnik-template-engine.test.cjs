@@ -15,7 +15,7 @@ function fixture(){let inserts=0,edits=0,draws=0;const entry={id:'a',name:'A',sh
  const host={entries:()=>[entry],field:async()=>stamp,current:x=>x===stamp,instances:()=>[],choose(){},stop(){},redrawSelection(){draws++;},insert(){inserts++;},async edit(){edits++;},action(){},recordExternal(){}};const api=Engine.create(host);return {api,entry,field,host,get inserts(){return inserts},get edits(){return edits},get draws(){return draws},invalidate(){stamp={...field}}};}
 test('selection caches exact results; idle library refresh emits no events; edits use the entire selection',async()=>{
  const f=fixture();let events=0;f.api.subscribe(()=>events++);f.api.refresh();const n=events;for(let i=0;i<100;i++)f.api.refresh();assert.equal(events,n);
- await f.api.select('a');const selected=f.api.getSelection().selected;assert.ok(f.api.getState().count>0);assert.equal(f.inserts,0);await f.api.select('a');assert.equal(f.api.getSelection().selected,selected);assert.equal(await f.api.colour('#aabbcc'),true);assert.equal(f.edits,1);f.invalidate();assert.equal(await f.api.removeMatches(),false);assert.equal(f.edits,1);
+ await f.api.select('a');const selected=f.api.getSelection().selected;assert.ok(f.api.getState().count>0);assert.equal(f.inserts,0);await f.api.select('a');assert.equal(f.api.getSelection(),null);assert.equal(f.api.getState().selectedId,null);await f.api.select('a');assert.equal(f.api.getSelection().selected,selected);assert.equal(await f.api.colour('#aabbcc'),true);assert.equal(f.edits,1);f.invalidate();assert.equal(await f.api.removeMatches(),false);assert.equal(f.edits,1);
  f.entry.name='renamed';f.api.refresh();assert.ok(events>n);
 });
 test('a newer selection cancels an older asynchronous request',async()=>{

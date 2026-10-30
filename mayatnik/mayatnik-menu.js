@@ -947,7 +947,13 @@
       remove.classList.toggle('gz-off-dis',remove.disabled);remove.setAttribute('aria-disabled',String(remove.disabled));}
     const unsubscribe=api.subscribe?.(sync);addEventListener('pagehide',()=>unsubscribe?.(),{once:true});toolSync.push(sync);sync();
   }
-  const manualAxesRow=installManualAxesMenu(railSourceButtons);
+  function installTemplateAxesMenu(row){
+    if(!row||row.querySelector('[data-n="templateAxes"]'))return;const doc=row.ownerDocument,win=doc.defaultView,pair=doc.createElement('div');pair.className='gz-hx gz-pair gz-split may-segments may-independent-selector';pair.dataset.n='templateAxes';pair.setAttribute('role','group');pair.setAttribute('aria-label','Ручные оси выбранного шаблона');
+    const parts=[['manualV','Верт','Вертикальная ось выбранного шаблона'],['manualH','Гориз','Горизонтальная ось выбранного шаблона']].map(([key,label,title],i)=>{const b=doc.createElement('button');b.type='button';b.className='gz-half gz-h'+i;b.dataset.templateAxis=key;b.textContent=label;b.title=title+' — первое нажатие создаёт обе оси в центре, затем эта половина показывает или скрывает свою ось';b.setAttribute('aria-label',b.title);b.addEventListener('click',()=>{if(b.disabled)return;win.mayTemplateAxes?.toggle(key);sync();rail.refresh();placeTools();});pair.append(b);return b;});
+    function sync(){const state=win.mayTemplateAxes?.get()||{};for(const b of parts){const on=!!state[b.dataset.templateAxis];b.disabled=!state.enabled;b.setAttribute('aria-disabled',String(b.disabled));b.classList.toggle('gz-on',on);b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}}
+    row.append(pair);win.addEventListener('may-template-axes-change',sync);toolSync.push(sync);sync();return pair;
+  }
+  const manualAxesRow=installManualAxesMenu(railSourceButtons);installTemplateAxesMenu(manualAxesRow);
   installNAxesMenu(manualAxesRow,window.mayNAxes);
   function reconcileAxisMenus(rail,definitions,axisRow,manualRow){
     const box=rail.el.querySelector('.gz-group[data-id="mirrors"]'),definition=definitions.find(g=>g.id==='mirrors');if(!box||!definition)return;
@@ -1107,7 +1113,7 @@
     ptNames.bTemplateFindAll='Найти все';findAll.classList.add('gz-hx');findAll.querySelector('i').classList.add('gz-ic');
     const label=document.createElement('span');label.className='gz-nm';label.textContent=ptNames.bTemplateFindAll;findAll.append(label);
     findAll.title=source.title;findAll.setAttribute('aria-label',source.getAttribute('aria-label'));
-    toolSync.push(()=>{findAll.disabled=source.disabled;});row.prepend(findAll);
+    toolSync.push(()=>{const on=source.getAttribute('aria-pressed')==='true';findAll.disabled=source.disabled;findAll.setAttribute('aria-pressed',String(on));findAll.classList.toggle('on',on);findAll.classList.toggle('gz-on',on);});row.prepend(findAll);
     railR.style.setProperty('display', 'none', 'important'); }
   // v0.485: библиотека сохраняет своё место. Если сохранён только старый «Шаблон», наследуем его раскладку; исходные ключи остаются в резервной копии.
   try {
@@ -1193,8 +1199,13 @@
     // Hide line-mounted duplicate mirror commands; the retained handlers still serve old references.
     const style=document.createElement('style');style.textContent='.may-mirror-group [hidden],.may-mirror-group [data-mirror-retained]{display:none!important} .may-mirror-group .pt-r{flex-direction:column;gap:2px!important} #zTopLine .ztl-mir,.zl-hd .zl-mir{visibility:hidden;pointer-events:none}';document.head.append(style);
   }
-  if($('bJoined180')){const e=$('bJoined180'),b=ptBtn('bJoined180','swap',e,()=>e.click());b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');const label=document.createElement('span');label.className='gz-nm';label.textContent='180°';b.append(label);toolSync.push(()=>{const on=e.getAttribute('aria-pressed')==='true';b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));b.title=e.title;});gView.append(b);}
-  if($('bViewUpsideDown')){const e=$('bViewUpsideDown'),b=ptBtn('bViewUpsideDown','swap',e,()=>e.click());b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');const label=document.createElement('span');label.className='gz-nm';label.textContent='Вверх ногами';b.append(label);toolSync.push(()=>{const on=e.getAttribute('aria-pressed')==='true';b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));b.title=e.title;});gView.append(b);}
+  function mountViewActions(view,source,makeButton,after){
+    const doc=view.ownerDocument,home=doc.createElement('div'),host=doc.createElement('div'),bindings=[];home.hidden=true;home.dataset.viewActionsHome='';host.className='may-view-actions';host.setAttribute('role','group');host.setAttribute('aria-label','Поворот и переворот поля');home.append(host);view.append(home);
+    const sync=()=>{for(const [e,b]of bindings){const on=e.getAttribute('aria-pressed')==='true';b.classList.toggle('on',on);b.classList.toggle('gz-on',on);b.setAttribute('aria-pressed',String(on));b.disabled=e.disabled;b.title=e.title;b.setAttribute('aria-label',e.title);}};
+    for(const [id,title]of [['bJoined180','180°'],['bViewUpsideDown','Вверх ногами']]){const e=source(id);if(!e)continue;const b=makeButton(id,'swap',e,()=>{e.click();sync();after();});b.classList.add('gz-hx');b.querySelector('i')?.classList.add('gz-ic');const label=doc.createElement('span');label.className='gz-nm';label.textContent=title;b.append(label);host.append(b);bindings.push([e,b]);}
+    source('view')?.addEventListener('change',sync);sync();return {home,host,sync,place(list){const row=list.querySelectorAll(':scope > .gz-hx').length+1;host.style.gridRow=row+' / span '+host.children.length;host.style.gridColumn='1';if(host.parentElement!==list)list.append(host);sync();},restore(){if(host.parentElement!==home)home.append(host);}};
+  }
+  const viewActions=mountViewActions(gView,$,ptBtn,()=>{rail.refresh();placeTools();});toolSync.push(viewActions.sync);
   // Cell selection uses only the page's original commands.
   {const ids=['bCellSelect','bRowSelect','bCellCollapseRows','bCellCollapseCols','bCellReveal','bCellClear','bFaceRotate','bFaceFlipY'];if(ids.some(id=>$(id))){const row=ptGroup('Ячейки');row.parentElement.dataset.k='Ячейки';row.parentElement.style.setProperty('--c','#73e4a5');for(const id of ids){const e=$(id);if(!e)continue;const b=document.createElement('button');b.type='button';b.className='pt-b gz-hx';b.dataset.n=id;const n=document.createElement('span');n.className='gz-nm';n.textContent=e.dataset.miShort||e.textContent;b.append(n);b.onclick=()=>{e.click();placeTools();};toolSync.push(()=>{b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');b.setAttribute('aria-pressed',e.getAttribute('aria-pressed')||'false');b.title=e.title;});row.append(b);}if($('cellSelectionInfo'))row.append($('cellSelectionInfo'));}}
   // Reset commands stay in their own groups; Cleanup has one global action.
@@ -1739,12 +1750,12 @@
     const list=activeList?.group===group && activeList.list;
     return !!(list?.isConnected && (target ? list.contains(target) : list.matches(':hover')));
   }
-  const clearListUnder = () => {window.MayatnikMenuOptions?.restore(activeList?.owner);const group=activeList?.group;activeList=null;group?._popupLeave?.();document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
+  const clearListUnder = () => {if(activeList?.owner.dataset.n==='viewCycle')viewActions.restore();window.MayatnikMenuOptions?.restore(activeList?.owner);const group=activeList?.group;activeList=null;group?._popupLeave?.();document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
   // v0.482: «дрожание всех списков»: grozd пристраивает открытый список каждые 400 мс и зовёт эту функцию; прежде она снимала затемнение со всех,
   // мерила колонку (браузер успевал применить снятие) и ставила заново — переход opacity .12s заставлял кнопки под списком вспыхивать на каждом такте.
   // Теперь затемнение меняется только у тех, кому его надо снять или добавить.
   const hideListUnder = (list, owner) => {
-    decorateViewPalette(list,owner);decorateListHeading(list,owner);
+    decorateViewPalette(list,owner);decorateListHeading(list,owner);if(owner.dataset.n==='viewCycle')viewActions.place(list);
     const group = owner.closest('.pt-g, .gz-group, .may-hp-pop');
     if(list.parentNode!==document.body){
       // Shared grozd has already copied owner font/variables and installed option handlers.
@@ -1757,14 +1768,14 @@
     const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
     if(window.MayatnikMenuOptions){
-      const g=listLayout(owner,list.querySelectorAll(':scope > .gz-hx').length);setListSide(owner,g.side);
+      const g=listLayout(owner,list.querySelectorAll(':scope > .gz-hx').length+(owner.dataset.n==='viewCycle'?viewActions.host.children.length:0));setListSide(owner,g.side);
       list.dataset.optionColumns=String(g.cols);window.MayatnikMenuOptions.decorate(list,owner);
       Object.assign(list.style,{width:g.width+'px',gridTemplateRows:g.gridTemplateRows,gridTemplateColumns:g.gridTemplateColumns,gridAutoColumns:'120px',top:g.top+'px',left:g.left+'px',maxHeight:g.maxHeight+'px',maxWidth:Math.max(1,Math.min(g.width,popupRight()-g.left-4))+'px'});
       list.style.setProperty('width',g.width+'px','important');list.style.setProperty('max-width',Math.max(1,Math.min(g.width,popupRight()-g.left-4))+'px','important');
       list.style.setProperty('overflow-y',g.scroll?'auto':'visible','important');list.style.setProperty('overflow-x',g.scrollX?'auto':g.scroll?'hidden':'visible','important');
     }else{
     // v0.481: окончательная геометрия списка задаётся здесь; адаптер контура её больше не сдвигает своим таймером.
-    const count=list.querySelectorAll(':scope > .gz-hx').length,maxRows=Math.max(1,Math.floor((innerHeight-54)/26)),space=Math.max(innerWidth-c.right-6,c.left-6),maxCols=Math.max(1,Math.floor((space+6)/126)),cols=Math.min(maxCols,Math.ceil(count/Math.min(7,maxRows))),rows=Math.ceil(count/cols),width=cols*126-6;
+    const count=list.querySelectorAll(':scope > .gz-hx').length+(owner.dataset.n==='viewCycle'?viewActions.host.children.length:0),maxRows=Math.max(1,Math.floor((innerHeight-54)/26)),space=Math.max(innerWidth-c.right-6,c.left-6),maxCols=Math.max(1,Math.floor((space+6)/126)),cols=Math.min(maxCols,Math.ceil(count/Math.min(7,maxRows))),rows=Math.ceil(count/cols),width=cols*126-6;
     Object.assign(list.style,{width:width+'px',gridTemplateRows:`repeat(${rows},24px)`,gridAutoColumns:'120px',top:Math.max(14,Math.min(owner.getBoundingClientRect().top,innerHeight-Math.min(rows,maxRows)*26-38))+'px',maxHeight:(maxRows*26+24)+'px'});
     list.style.setProperty('overflow-y',rows>maxRows?'auto':'visible','important');
     list.style.setProperty('overflow-x',rows>maxRows?'hidden':'visible','important');

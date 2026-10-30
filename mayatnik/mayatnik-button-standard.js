@@ -239,7 +239,7 @@
       }else{host.querySelector(':scope > .may-standard-contours')?.remove();head.classList.remove('may-head-in');closedBack(g,head);}
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }
-    for(const list of ladders){list.classList.add('may-standard-list');if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
+    for(const list of ladders){list.classList.add('may-standard-list');if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx, :scope > .may-view-actions > .gz-hx')],true);}
     for(const popup of document.querySelectorAll('.may-horr-popup:not([hidden])')){
       const cells=[...popup.querySelectorAll('.may-standard,.gz-control,.may-rows-line')].filter(b=>!b.parentElement.closest('.gz-hx,.gz-control')&&!b.closest('[hidden],[data-horr-inactive="true"]'));
       contour(popup,cells,true);

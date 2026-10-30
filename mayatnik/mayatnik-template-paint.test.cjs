@@ -11,7 +11,7 @@ function fixture(){
   document:{createElement:()=>{const canvas={};canvas.getContext=()=>({createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData:im=>canvas.pixels=new Uint32Array(im.data.buffer)});return canvas;}}
  });
  const geometry=html.indexOf('  const geometryKey =');vm.runInContext(html.slice(geometry,html.indexOf('\n',geometry)),c);
- for(const name of ['pickedTemplates','templateOptions','templateRect','templatePaintTargets','templatePaintColour','templatePaintSync','templatePaintValidate','templatePaintBuild','templatePaintApply','templatePaintCanvas','templatePaintToggle','templatePaintColourChanged','sceneSnapshot','editSnapshot','finishEdit','pushHistory','paintHistoryCurrent','historyStep','templateSceneHistory','paintSnapshot'])vm.runInContext(fn(name),c);
+ for(const name of ['templatePartWidth','pickedTemplates','templateOptions','templateRect','templatePaintTargets','templatePaintColour','templatePaintSync','templatePaintValidate','templatePaintBuild','templatePaintApply','templatePaintCanvas','templatePaintToggle','templatePaintColourChanged','sceneSnapshot','editSnapshot','finishEdit','pushHistory','paintHistoryCurrent','historyStep','templateSceneHistory','paintSnapshot'])vm.runInContext(fn(name),c);
  c.draw=()=>{c.pixels=Uint32Array.from(c.f.val,v=>v===1?0xffffffff:v===0?0xff444444:0);if(c.fillMask)for(let q=0;q<50;q++)if(c.fillMask[q])c.pixels[q]=c.fillMask[q];c.templatePaintApply(c.pixels);};
  const start=html.indexOf("  $('bFillClear').onclick="),end=html.indexOf("  $('bRegions').onclick",start);vm.runInContext(html.slice(start,end),c);
  c.draw();return {c,a,b,meta};

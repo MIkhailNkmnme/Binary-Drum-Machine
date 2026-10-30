@@ -13,7 +13,7 @@ function fixture({W=8,H=5,VX=1,VW=6,VH=3}={}){
   g:{createImageData:(width,height)=>({width,height,data:new Uint8ClampedArray(width*height*4)})}};
  c.manualPaintCellAt=(x,y)=>{const a=c.fieldCellAt(x,y);return a?c.displayPoint(a.c,a.r):null;};
  c.draw=()=>{c.manualPaintFrameSync();c.contourBits=Int8Array.from({length:VW*VH},(_,q)=>c.f.val[Math.floor(q/VW)*W+VX+q%VW]);const pixels=new Uint32Array(c.img.data.buffer);pixels.fill(0xff555555);if(c.fillMask)for(let q=0;q<pixels.length;q++)if(c.fillMask[q])pixels[q]=c.fillMask[q];c.manualPaintLayerApply(pixels);};
- vm.createContext(c);const a=html.indexOf('  function manualPaintKey('),b=html.indexOf('  // Colour from the same geometric axes',a);vm.runInContext(html.slice(a,b),c);
+ vm.createContext(c);vm.runInContext(html.match(/  const joinedRotated =[^\n]+/)[0],c);const a=html.indexOf('  function manualPaintKey('),b=html.indexOf('  // Colour from the same geometric axes',a);vm.runInContext(html.slice(a,b),c);
  for(const name of ['fillAt','eraseFillAt','pushHistory','paintHistoryCurrent','sceneSnapshot','editSnapshot','finishEdit','historyStep'])vm.runInContext(fn(name),c);
  const clearStart=html.indexOf("  $('bFillClear').onclick="),clearEnd=html.indexOf("  $('bRegions').onclick",clearStart);vm.runInContext(html.slice(clearStart,clearEnd),c);
  c.paint=(x,y,colour='#123456',force=true)=>{c.$('fillColour').value=colour;c.fillAt(x+.1,y+.1,false,force);};c.draw();return c;

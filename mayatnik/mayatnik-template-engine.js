@@ -2,7 +2,7 @@
   'use strict';
   function create(host){
     const listeners=new Set(),patternCache=new WeakMap(),results=[];
-    let serial=0,selection=null,libraryStamp=[],scopeKey=null,filterSerial=0,filterPending=Promise.resolve(),visibleIds=host.scope?new Set():null,state={selectedId:null,count:0,busy:false,message:'',filtering:false};
+    let serial=0,selection=null,cardId=null,libraryStamp=[],scopeKey=null,filterSerial=0,filterPending=Promise.resolve(),visibleIds=host.scope?new Set():null,state={selectedId:null,count:0,busy:false,message:'',filtering:false};
     function emit(){for(const fn of listeners)fn({...state});}
     function patternsFor(entry,mirrorX=false){
       let cache=patternCache.get(entry.shape);if(!cache){cache={};patternCache.set(entry.shape,cache);}
@@ -35,23 +35,24 @@
       if(host.scope){if(!active){if(state.filtering){filterSerial++;state.filtering=false;scopeKey=null;}if(changed)scopeKey=null;return;}if(changed||scopeKey!==key){scopeKey=key;filterPending=filter(items.slice(),++filterSerial);}return;}
       if(changed)emit();
     }
-    function clear(message=''){serial++;selection=null;state={...state,count:0,busy:false,message};host.redrawSelection();emit();}
+    function clear(message=''){serial++;selection=null;cardId=null;state={...state,selectedId:null,count:0,busy:false,message};host.redrawSelection();emit();}
     async function select(id){
       const entry=host.entries().find(t=>t.id===id);if(!entry)return state;
-      return selectEntry(entry);
+      if(cardId===id){clear();return {...state};}
+      return selectEntry(entry,false,{preview:true});
     }
     async function selectEntry(entry,temporary=false,options={}){
       const id=temporary?null:entry.id;
       if(host.selectionAllowed?.(entry)===false){state={...state,message:host.selectionMessage?.()||'Template area limit'};emit();if(options.follow)throw Error(state.message);return {...state};}
-      const run=++serial;selection=null;state={...state,selectedId:id,count:0,busy:true,message:'Поиск в текущих строках…'};emit();
+      const run=++serial;selection=null;cardId=options.preview?id:null;state={...state,selectedId:id,count:0,busy:true,message:'Поиск в текущих строках…'};emit();
       if(!temporary)host.choose(id);if(!options.follow)host.stop();host.redrawSelection();
       try{
         if(options.materialize&&typeof host.materializeMatches!=='function')throw Error('Создание шаблонов из найденных фигур недоступно');
         const field=await host.field(true,options);if(run!==serial){if(options.follow)throw root.MayatnikTemplateMatcher.abort();return state;}
         const patterns=patternsFor(entry,!!options.mirrorX),cancelled=()=>run!==serial||!!options.cancelled?.()||!host.current(field,options);
         if(cancelled())throw root.MayatnikTemplateMatcher.abort();
-        let found=results.find(r=>r.field===field&&r.patterns===patterns&&(!options.materialize||r.found.matches))?.found;
-        if(!found){found=await root.MayatnikTemplateMatcher.find(field,patterns,{collectMatches:!!options.materialize,cancelled});results.push({field,patterns,found});while(results.length>3)results.shift();}
+        let found=results.find(r=>r.field===field&&r.patterns===patterns&&(!(options.materialize||options.preview)||r.found.matches))?.found;
+        if(!found){found=await root.MayatnikTemplateMatcher.find(field,patterns,{collectMatches:!!(options.materialize||options.preview),cancelled});if(cancelled())throw root.MayatnikTemplateMatcher.abort();results.push({field,patterns,found});while(results.length>3)results.shift();}
         if(run!==serial){if(options.follow)throw root.MayatnikTemplateMatcher.abort();return state;}
         const instances=temporary?(host.shapeInstances?.(entry.shape,{mirrorX:!!options.mirrorX})||[]):host.instances(id);
         if(options.materialize){
@@ -67,7 +68,10 @@
           if(ids.length&&!options.follow)host.focus?.({id,instances:ids,first:found.first||null,field});
           return {...state,completedScope:result.completedScope};
         }
-        selection={...found,instances,field};state={...state,selectedId:id,count:found.count+instances.length,busy:false,message:`Найдено: ${found.count} · отдельных копий: ${instances.length}`};
+        if(cancelled())throw root.MayatnikTemplateMatcher.abort();
+        const colours=options.preview?new Uint32Array(field.width*field.height):null;
+        if(colours){let copied=0;for(const match of found.matches){const p=patterns[match.patternIndex];for(const q of p.filled){colours[(match.y+Math.floor(q/p.width))*field.width+match.x+q%p.width]=p.colours[q];if(++copied%131072===0){await new Promise(resolve=>setTimeout(resolve,0));if(cancelled())throw root.MayatnikTemplateMatcher.abort();}}}}
+        selection={...found,instances,field,colours,previewShape:options.preview?entry.shape:null};state={...state,selectedId:id,count:found.count+instances.length,busy:false,message:`Найдено: ${found.count} · отдельных копий: ${instances.length}`};
         if(!state.count){selection=null;state.message='В текущих строках этого шаблона нет';}
         host.redrawSelection();emit();
         if(selection&&!options.follow)host.focus?.({id,instances:[...instances],first:found.first||null,field});
@@ -96,7 +100,7 @@
       recordExternal:(before,after,apply)=>host.recordExternal(before,after,apply),
       getSelection:()=>selection,clear,refresh,
       savedMessage(id,message){if(state.selectedId===id&&!state.busy){state.message=message;emit();}},
-      saved(id,message){serial++;selection=null;state={...state,selectedId:id,count:0,busy:false,message};host.redrawSelection?.();scopeKey=null;refresh();emit();},
+      saved(id,message){serial++;selection=null;cardId=null;state={...state,selectedId:id,count:0,busy:false,message};host.redrawSelection?.();scopeKey=null;refresh();emit();},
       changed(){if(selection&&!host.current(selection.field))clear('Поле изменилось — выберите шаблон снова');else emit();}
     };
   }

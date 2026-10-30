@@ -1,54 +1,43 @@
 /* Exact downward diamond path from one selected cell, independent of automatic findings. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikManualSnake=api;})(globalThis,function createManualSnake(){
   'use strict';
-  function* findSteps({width:W,height:H,val,start,text,inverse=false,reverse=false,allowed,chunkOperations=32768,maxOperations=Infinity}){
-    if(!Number.isSafeInteger(W)||!Number.isSafeInteger(H)||W<1||H<1||!Number.isSafeInteger(W*H)||!val||val.length<W*H||!Number.isSafeInteger(start)||start<0||start>=W*H||typeof text!=='string'||!/^[01]+$/.test(text))throw new RangeError('Некорректные данные ручного поиска змеи.');
-    if(!(chunkOperations>0)||!(maxOperations>=0))throw new RangeError('Некорректный предел ручного поиска змеи.');
-    let operations=0,chunk=0;const r=Math.floor(start/W),c=start%W,n=text.length;
-    const empty=reason=>({found:false,complete:true,start,n,cells:[],variant:'',reason,operations});
-    if(val[start]<0||allowed&&!allowed(start,r,c))return empty('Выбранная клетка пуста или скрыта.');
-    if(n>H-r)return empty('Ниже выбранной клетки недостаточно строк.');
-    const invert=s=>s.replace(/[01]/g,b=>b==='1'?'0':'1'),rev=s=>s.split('').reverse().join(''),variants=[[text,'']];
-    if(inverse)variants.push([invert(text),'инв']);if(reverse)variants.push([rev(text),'рев']);if(inverse&&reverse)variants.push([rev(invert(text)),'инв+рев']);
-    const left=Math.max(0,c-n+1),right=Math.min(W-1,c+n-1),span=right-left+1,seen=new Set();
-    for(const [word,variant]of variants){
-      if(seen.has(word))continue;seen.add(word);if(val[start]!==Number(word[0]))continue;
-      const viable=new Uint8Array(span*n);
-      for(let i=n-1;i>=0;i--){const row=r+i,bit=Number(word[i]),lo=Math.max(0,c-i),hi=Math.min(W-1,c+i);
-        for(let col=lo+((lo-c-i)&1);col<=hi;col+=2){
-          if(++operations>maxOperations)return {...empty('Достигнут предел ручного поиска; результат не завершён.'),complete:false};
-          if(++chunk>=chunkOperations){chunk=0;yield {operations,remainingRows:i+1,variant};}
-          const q=row*W+col,j=i*span+col-left;if(val[q]!==bit||allowed&&!allowed(q,row,col))continue;
-          if(i===n-1||col>left&&viable[j+span-1]||col<right&&viable[j+span+1])viable[j]=1;
-        }
+  // Search each (visible node, word index) at most once per variant. Tracking
+  // the deepest matching parent chain adds no second search or path enumeration.
+  function* anchoredSteps({readNode,size,start,text,inverse=false,reverse=false,chunkOperations=32768,maxOperations=Infinity,cancelled=()=>false}){
+    const inv=s=>s.replace(/[01]/g,b=>b==='1'?'0':'1'),rev=s=>s.split('').reverse().join(''),variants=[[text,'']];let operations=0,chunk=0,best=null;
+    if(inverse)variants.push([inv(text),'инв']);if(reverse)variants.push([rev(text),'рев']);if(inverse&&reverse)variants.push([rev(inv(text)),'инв+рев']);
+    const seen=new Set(),empty=reason=>({found:false,partial:false,complete:true,maximal:true,start,n:text.length,matched:0,cells:[],prefixCells:[],variant:'',reason,operations});
+    const path=tail=>{const cells=[];for(let node=tail;node;node=node.parent)cells.push(node.q);return cells.reverse();};
+    for(const [word,variant]of variants){if(seen.has(word))continue;seen.add(word);const rejected=new Set(),stack=[{q:start,i:0,next:0,edges:null,parent:null}];
+      while(stack.length){
+        if(cancelled())return {...empty('Ручной поиск отменён; максимум не определён.'),complete:false,maximal:false};
+        if(++operations>maxOperations)return {...empty('Достигнут предел ручного поиска; результат не завершён.'),complete:false,maximal:false};
+        if(++chunk>=chunkOperations){chunk=0;yield {operations,variant};if(cancelled())return {...empty('Ручной поиск отменён; максимум не определён.'),complete:false,maximal:false};}
+        const current=stack.at(-1),key=current.i+':'+current.q;
+        if(rejected.has(key)){stack.pop();continue;}
+        const node=current.node||(current.node=readNode(current.q));
+        if(!node||!Number.isFinite(node.x)||!Number.isFinite(node.y)||node.bit!==Number(word[current.i])){rejected.add(key);stack.pop();continue;}
+        const matched=current.i+1;
+        if(matched===word.length)return {found:true,partial:false,complete:true,maximal:true,start,n:word.length,matched,cells:path(current),prefixCells:[],variant,text:word,reason:'',operations};
+        if(!best||matched>best.matched)best={tail:current,matched,variant,text:word};
+        if(!current.edges)current.edges=[...new Set(node.edges||[])].filter(q=>{if(!Number.isInteger(q)||q<0||q>=size)return false;const next=readNode(q);return next&&next.y>node.y&&next.x!==node.x;}).sort((a,b)=>readNode(a).x-readNode(b).x||a-b);
+        if(current.next===current.edges.length){rejected.add(key);stack.pop();continue;}
+        stack.push({q:current.edges[current.next++],i:matched,next:0,edges:null,parent:current});
       }
-      if(!viable[c-left])continue;
-      const cells=[start];let col=c;
-      for(let i=1;i<n;i++){const j=i*span+col-left;col=col>left&&viable[j-1]?col-1:col+1;cells.push((r+i)*W+col);}
-      return {found:true,complete:true,start,n,cells,variant,text:word,reason:'',operations};
     }
+    if(best)return {...empty('Полная строка не найдена; показан максимальный префикс.'),partial:true,matched:best.matched,prefixCells:path(best.tail),variant:best.variant,text:best.text};
     return empty('От выбранного бита эта строка не найдена.');
   }
+  function* findSteps({width:W,height:H,val,start,text,inverse=false,reverse=false,allowed,chunkOperations=32768,maxOperations=Infinity,cancelled}){
+    if(!Number.isSafeInteger(W)||!Number.isSafeInteger(H)||W<1||H<1||!Number.isSafeInteger(W*H)||!val||val.length<W*H||!Number.isSafeInteger(start)||start<0||start>=W*H||typeof text!=='string'||!/^[01]+$/.test(text))throw new RangeError('Некорректные данные ручного поиска змеи.');
+    if(!(chunkOperations>0)||!(maxOperations>=0))throw new RangeError('Некорректный предел ручного поиска змеи.');
+    const readNode=q=>{const r=Math.floor(q/W),c=q%W;return {x:c,y:r,bit:allowed&&!allowed(q,r,c)?-1:val[q],edges:r+1<H?[...(c>0?[q+W-1]:[]),...(c+1<W?[q+W+1]:[])]:[]};};
+    return yield* anchoredSteps({readNode,size:W*H,start,text,inverse,reverse,chunkOperations,maxOperations,cancelled});
+  }
   function findFrom(options){const steps=findSteps(options);let result;do{result=steps.next();}while(!result.done);return result.value;}
-  function* findGraphSteps({nodes,start,text,inverse=false,reverse=false,chunkOperations=32768,maxOperations=Infinity}){
+  function* findGraphSteps({nodes,start,text,inverse=false,reverse=false,chunkOperations=32768,maxOperations=Infinity,cancelled}){
     if(!Array.isArray(nodes)||!Number.isInteger(start)||start<0||start>=nodes.length||typeof text!=='string'||!/^[01]+$/.test(text)||!(chunkOperations>0)||!(maxOperations>=0))throw new RangeError('Некорректный граф ручного поиска змеи.');
-    const inv=s=>s.replace(/[01]/g,b=>b==='1'?'0':'1'),rev=s=>s.split('').reverse().join(''),variants=[[text,'']];let operations=0,chunk=0;
-    if(inverse)variants.push([inv(text),'инв']);if(reverse)variants.push([rev(text),'рев']);if(inverse&&reverse)variants.push([rev(inv(text)),'инв+рев']);
-    const seen=new Set(),empty=reason=>({found:false,complete:true,start,n:text.length,cells:[],variant:'',reason,operations});
-    for(const [word,variant]of variants){if(seen.has(word))continue;seen.add(word);const rejected=new Set(),stack=[{q:start,i:0,next:0,edges:null}];
-      while(stack.length){
-        if(++operations>maxOperations)return {...empty('Достигнут предел ручного поиска; результат не завершён.'),complete:false};
-        if(++chunk>=chunkOperations){chunk=0;yield {operations,variant};}
-        const current=stack.at(-1),key=current.i+':'+current.q,node=nodes[current.q];
-        if(rejected.has(key)){stack.pop();continue;}
-        if(!node||!Number.isFinite(node.x)||!Number.isFinite(node.y)||node.bit!==Number(word[current.i])){rejected.add(key);stack.pop();continue;}
-        if(current.i+1===word.length)return {found:true,complete:true,start,n:word.length,cells:stack.map(s=>s.q),variant,text:word,reason:'',operations};
-        if(!current.edges)current.edges=[...new Set(node.edges||[])].filter(q=>Number.isInteger(q)&&q>=0&&q<nodes.length&&nodes[q]?.y>node.y&&nodes[q]?.x!==node.x).sort((a,b)=>nodes[a].x-nodes[b].x||a-b);
-        if(current.next===current.edges.length){rejected.add(key);stack.pop();continue;}
-        stack.push({q:current.edges[current.next++],i:current.i+1,next:0,edges:null});
-      }
-    }
-    return empty('От выбранного бита эта строка не найдена.');
+    return yield* anchoredSteps({readNode:q=>nodes[q],size:nodes.length,start,text,inverse,reverse,chunkOperations,maxOperations,cancelled});
   }
   function findGraph(options){const steps=findGraphSteps(options);let result;do{result=steps.next();}while(!result.done);return result.value;}
   async function coneGraph(snapshot,{x,y,bit,length,cancelled=()=>false}){

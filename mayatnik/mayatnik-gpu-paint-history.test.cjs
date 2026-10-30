@@ -7,8 +7,8 @@ function fixture(view='bits'){
   img:null,gpuBig:{fresh:true,k:16,cpuRaster:true,cpuLayout:true},templatePaintLayer:null,fillMask:null,paintBits:null,fillHistory:[],fillRedo:[],fillHistoryBytes:0,gpuPaintRequests:0,templateDragging:false,mirrorLive:false,mirrorApplying:false,templateMatchRevision:0,templateMatchCache:null,
   Uint32Array,Int8Array,window:{},$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);},rombP:()=>rp,joinedOn:()=>rp===3,manualPaintOn:()=>false,manualMirrorPlan:()=>[],
   g:{createImageData:(width,height)=>({width,height,data:new Uint8ClampedArray(width*height*4)})},cv:{width:1,height:1},wrap:{clientWidth:800},wrapPadX:()=>0,fillSync(){},cssLayout(){},savePaint(){},stopFrameTransports(){c.stopped++;},stopped:0};
- c.dispW=()=>rp===2?2*c.VW+c.RG:c.VW;c.dispH=()=>rp===3?2*c.VH:c.VH;c.img=c.g.createImageData(c.dispW()*c.RK,c.dispH()*c.RK);
- vm.createContext(c);vm.runInContext(['gpuCpuOchki','gpuManualCpu','gpuPaintCpu','gpuCpuDisplay','gpuDisplay'].map(name=>html.match(new RegExp('  const '+name+' =[^\\n]+'))[0]).join('\n')+['paintHistoryCurrent','pushHistory','historyStep','canvasSize'].map(fn).join('\n')+';this.cpu=()=>gpuCpuDisplay();this.gpu=()=>gpuDisplay();',c);
+ c.templateMatchLayer=null;c.dispW=()=>rp===2?2*c.VW+c.RG:c.VW;c.dispH=()=>rp===3?2*c.VH:c.VH;c.img=c.g.createImageData(c.dispW()*c.RK,c.dispH()*c.RK);
+ vm.createContext(c);vm.runInContext(['geometryKey','gpuCpuOchki','gpuManualCpu','gpuPaintCpu','gpuCpuDisplay','gpuDisplay'].map(name=>html.match(new RegExp('  const '+name+' =[^\\n]+'))[0]).join('\n')+['paintHistoryCurrent','pushHistory','historyStep','canvasSize'].map(fn).join('\n')+';this.cpu=()=>gpuCpuDisplay();this.gpu=()=>gpuDisplay();',c);
  c.draw=()=>{if(c.gpu()||!c.gpuBig.cpuRaster||!c.img)c.canvasSize();};
  c.paint=()=>{const n=c.img.width*c.img.height,indices=Uint32Array.from([0,c.img.width+7,n-1]),previous=new Uint32Array(3),next=Uint32Array.from([0xff123456,0xffabcdef,0xff135790]);c.fillMask=new Uint32Array(n);for(let j=0;j<3;j++)c.fillMask[indices[j]]=next[j];c.pushHistory({indices,previous,next,bytes:36});return c.fillMask.slice();};return c;
 }

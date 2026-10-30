@@ -5,9 +5,10 @@
   const abort=()=>{const e=new Error('Поиск отменён');e.name='AbortError';return e;};
   function compile(part,rk=1,options={}){
     const width=Math.max(1,Math.round(part.width/rk)),height=Math.max(1,Math.round(part.height/rk));
-    const data=new Uint8Array(width*height),filled=[];
+    const data=new Uint8Array(width*height),colours=new Uint32Array(width*height),sourceIndices=new Uint32Array(width*height),filled=[];
     for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-      const q=y*width+x,sx=options.mirrorX?width-1-x:x;data[q]=part.data[Math.min(part.height-1,Math.floor((y+.5)*rk))*part.width+Math.min(part.width-1,Math.floor((sx+.5)*rk))]?1:0;
+      const q=y*width+x,sx=options.mirrorX?width-1-x:x,source=Math.min(part.height-1,Math.floor((y+.5)*rk))*part.width+Math.min(part.width-1,Math.floor((sx+.5)*rk));
+      sourceIndices[q]=source;colours[q]=part.data[source];data[q]=colours[q]?1:0;
       if(data[q])filled.push(q);
     }
     if(!filled.length)throw Error('В шаблоне нет клеток');
@@ -15,7 +16,7 @@
     const order=[...new Set([0,data.length-1,width-1,(height-1)*width,Math.floor(data.length/2),...Array.from({length:12},(_,i)=>Math.floor(i*data.length/12))])];
     const used=new Set(order);for(let q=0;q<data.length;q++)if(!used.has(q))order.push(q);
     const mirrorSymmetric=data.every((v,q)=>v===data[Math.floor(q/width)*width+width-1-q%width]);
-    const pattern={width,height,data,filled:Uint32Array.from(filled),order:Uint32Array.from(order),mirrorSymmetric,mirrorX:!!options.mirrorX&&!mirrorSymmetric};
+    const pattern={width,height,data,colours,sourceIndices,filled:Uint32Array.from(filled),order:Uint32Array.from(order),mirrorSymmetric,mirrorX:!!options.mirrorX&&!mirrorSymmetric};
     if(options.silhouette){
       // A transparent pixel is not an opposite bit. Only the immediate side
       // boundary belongs to this silhouette, including neighbours outside its box.

@@ -23,7 +23,7 @@ test('variants stay explicit; absent or hidden start and insufficient height nev
 });
 test('cooperative steps preserve the exact result and do not use a shared automatic-search ledger',()=>{
  const input={width:15,height:30,val:new Int8Array(450).fill(1),start:7,text:'1'.repeat(24),chunkOperations:3},steps=Snake.findSteps(input),progress=[];let step;do{step=steps.next();if(!step.done)progress.push(step.value);}while(!step.done);
- assert.ok(progress.length>10);assert.deepEqual(step.value,Snake.findFrom(input));assert.deepEqual(Snake.findFrom(input),Snake.findFrom(input));assert.equal(step.value.cells.length,24);
+ assert.ok(progress.length>0);assert.equal(progress.length,Math.floor(step.value.operations/input.chunkOperations));assert.deepEqual(step.value,Snake.findFrom(input));assert.deepEqual(Snake.findFrom(input),Snake.findFrom(input));assert.equal(step.value.cells.length,24);
 });
 test('joined display starts and paths map exactly across the seam in both orientations',()=>{
  for(const rotate of [false,true]){
@@ -58,7 +58,7 @@ test('display graph follows supplied visible edges and semantic bits, including 
 
 test('display graph search agrees with rectangular anchored oracle for every start on both lattices',()=>{
  const width=7,height=7,val=Int8Array.from({length:49},(_,q)=>q%11===0?-1:(q*17^(q>>2))&1),nodes=Array.from(val,(bit,q)=>({bit,x:q%width+.5,y:Math.floor(q/width)+.5,edges:Math.floor(q/width)+1<height?[...(q%width?[q+width-1]:[]),...(q%width+1<width?[q+width+1]:[])]:[]}));
- for(let start=0;start<49;start++)for(const text of ['1','10','101','0011'])assert.deepEqual(Snake.findGraph({nodes,start,text}).cells,Snake.findFrom({width,height,val,start,text}).cells);
+ for(let start=0;start<49;start++)for(const text of ['1','10','101','0011']){const graph=Snake.findGraph({nodes,start,text}),grid=Snake.findFrom({width,height,val,start,text});assert.deepEqual(graph.cells,grid.cells);assert.deepEqual(graph.prefixCells,grid.prefixCells);assert.equal(graph.matched,grid.matched);}
 });
 
 test('a two-bit click on a 4096-row field reads only its bounded cone, never constructs a full-field graph',async()=>{

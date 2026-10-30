@@ -27,7 +27,9 @@
       job.promise=Promise.resolve().then(()=>host.search(shape,cancelled)).then(result=>{if(!cancelled()||run===serial&&state.on&&same(result?.completedScope,host.capture())){done=host.capture();failed=null;host.result?.(result);}},error=>{if(!cancelled()&&error.name!=='AbortError'){failed=host.capture();host.error?.(error);}}).finally(()=>{if(pending===job)pending=null;});
       return job.promise;
     }
-    return {enable,off,restore,ensure,snapshot:()=>normalize(state),get on(){return state.on;},get busy(){return !!pending;},get blocked(){return same(failed,host.capture());},get complete(){return !state.on||same(done,host.capture());},invalidate(){serial++;pending=null;done=null;failed=null;},idle:()=>pending?.promise||Promise.resolve()};
+    // A manual one-shot may finish this frame without replacing the pinned source.
+    function acknowledge(scope){if(!state.on||!same(scope,host.capture()))return false;serial++;pending=null;done=scope;failed=null;return true;}
+    return {enable,off,restore,ensure,acknowledge,snapshot:()=>normalize(state),get on(){return state.on;},get busy(){return !!pending;},get blocked(){return same(failed,host.capture());},get complete(){return !state.on||same(done,host.capture());},invalidate(){serial++;pending=null;done=null;failed=null;},idle:()=>pending?.promise||Promise.resolve()};
   }
   return {normalize,pack,unpack,create};
 });
