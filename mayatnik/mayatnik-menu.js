@@ -1,3 +1,4 @@
+/* v0.669: варианты решётки и инверсии для обычного Маятника. */
 /* Маятник v0.665 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
@@ -304,16 +305,16 @@
       ownGrid.dataset.maySearchAliases='Своя решётка|Шаг через два|Исходник с первого хода';
       const gridIcon=document.createElement('i');gridIcon.className='gz-ic';gridIcon.style.backgroundImage=icon(ownGrid,'grid');gridIcon.setAttribute('aria-hidden','true');
       const gridLabel=document.createElement('span');gridLabel.className='gz-nm';gridLabel.textContent='Своя решётка';ownGrid.append(gridIcon,gridLabel);
-      ownGrid.gzSync=()=>{const api=window.maySequenceField,on=!!api?.get().ownGrid;ownGrid.disabled=!api;ownGrid.classList.toggle('gz-on',on);ownGrid.setAttribute('aria-pressed',String(on));
-        ownGrid.title='Своя решётка: '+(on?'включена':'выключена')+'. Вариант только своего Маятника: сдвиги −2, +2, −4, +4… вместо −1, +1, −2, +2…; для строк длиной 1, 2, 3… пересчёт сразу затрагивает исходную решётку. Для ПравЛев порядок обратный; пара — ±2, ±4… Переключение возвращает активный свой Маятник к кадру 0. Исходные строки сохраняются.';ownGrid.setAttribute('aria-label',ownGrid.title);};
+      ownGrid.gzSync=()=>{const api=window.maySequenceField,state=api?.get(),supported=!!state?.variantsSupported,on=supported&&!!state.ownGrid;ownGrid.disabled=!supported;ownGrid.classList.toggle('gz-on',on);ownGrid.setAttribute('aria-pressed',String(on));
+        ownGrid.title=!supported?'Своя решётка недоступна для сравнений и тестовых фигур.':'Своя решётка: '+(on?'включена':'выключена')+'. Обычный и свой Маятник: сдвиги через два столбца. Обычный начинает с центральной вершины, затем −2, +2, −4, +4…; свой — сразу со сдвига −2. Для ПравЛев порядок обратный; пара — ±2, ±4… Переключение возвращает кадр 0. Исходные строки сохраняются.';ownGrid.setAttribute('aria-label',ownGrid.title);};
       ownGrid.onclick=event=>{event.stopPropagation();const api=window.maySequenceField;api?.setOwnGrid(!api.get().ownGrid);ownGrid.gzSync();rail.refresh();};
       toolSync.push(ownGrid.gzSync);addEventListener('may-compare-change',ownGrid.gzSync);ownGrid.gzSync();pop.append(section(ownGrid,'fields'));
       const invAbove=document.createElement('button');invAbove.type='button';invAbove.className='gz-hx';invAbove.id='maySequenceInverseAbove';invAbove.dataset.n='maySequenceInverseAbove';
       invAbove.dataset.maySearchAliases='Инверсия сверху|Заполнить пустоты|Исходник без промежутков';
       const invIcon=document.createElement('i');invIcon.className='gz-ic';invIcon.style.backgroundImage=icon(invAbove,'down');invIcon.setAttribute('aria-hidden','true');
       const invLabel=document.createElement('span');invLabel.className='gz-nm';invLabel.textContent='Инв. сверху';invAbove.append(invIcon,invLabel);
-      invAbove.gzSync=()=>{const api=window.maySequenceField,on=!!api?.get().inverseAbove;invAbove.disabled=!api;invAbove.classList.toggle('gz-on',on);invAbove.setAttribute('aria-pressed',String(on));
-        invAbove.title='Инверсия сверху: '+(on?'включена':'выключена')+'. В кадре 0 заполнить промежутки между битами своего исходника инверсией клетки прямо сверху: 0→1, 1→0. Проход сверху вниз, уже заполненная верхняя строка учитывается. Если сверху пусто, промежуток остаётся пустым. Исходные биты и строки ниже выбранного исходника не менять. Переключение возвращает свой Маятник к кадру 0; работает с обоими вариантами шага.';invAbove.setAttribute('aria-label',invAbove.title);};
+      invAbove.gzSync=()=>{const api=window.maySequenceField,state=api?.get(),supported=!!state?.variantsSupported,on=supported&&!!state.inverseAbove;invAbove.disabled=!supported;invAbove.classList.toggle('gz-on',on);invAbove.setAttribute('aria-pressed',String(on));
+        invAbove.title=!supported?'Инверсия сверху недоступна для сравнений и тестовых фигур.':'Инверсия сверху: '+(on?'включена':'выключена')+'. '+(state.on?'В кадре 0 заполняет внутренние промежутки выбранных исходных строк.':'После расчёта каждой строки обычного Маятника заполняет внутренние промежутки конуса.')+' Пустая клетка получает инверсию бита прямо сверху: 0→1, 1→0. Если сверху пусто, заполнения нет. Уже записанные биты сохраняются; на полностью заполненном фоне пустот нет. Переключение возвращает кадр 0; работает с шагом 1 и 2.';invAbove.setAttribute('aria-label',invAbove.title);};
       invAbove.onclick=event=>{event.stopPropagation();const api=window.maySequenceField;api?.setInverseAbove(!api.get().inverseAbove);invAbove.gzSync();rail.refresh();};
       toolSync.push(invAbove.gzSync);addEventListener('may-compare-change',invAbove.gzSync);invAbove.gzSync();pop.append(section(invAbove,'fields'));
       pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
