@@ -13,8 +13,8 @@
    current(){return state?{...state}:null;},clear(){state=null;retry=false;serial++;}
   };
  }
- function anchor(point,source,fx,fy,fragment=false,fragmentIdentity=null){return {source:source?{c:source.c,r:source.r,q:source.q}:null,display:{x:fx,y:fy},center:{x:point.x,y:point.y},fragment:!!fragment,...(fragmentIdentity?{fragmentIdentity:{id:fragmentIdentity.id,geometry:fragmentIdentity.geometry}}:{})};}
- function identity(value){if(value.source)return 'source:'+value.source.c+':'+value.source.r;const part=value.fragmentIdentity;if(value.fragment&&Number.isInteger(part?.id)&&part.id>=0&&typeof part.geometry==='string')return 'fragment:'+JSON.stringify([part.geometry,part.id]);return 'display:'+value.display.x+':'+value.display.y+':'+value.center.x+':'+value.center.y;}
+ function anchor(point,source,fx,fy,fragment=false,fragmentIdentity=null){return {source:source?{c:source.c,r:source.r,q:source.q,...(Number.isInteger(source.copy)?{copy:source.copy}:{})}:null,display:{x:fx,y:fy},center:{x:point.x,y:point.y},fragment:!!fragment,...(fragmentIdentity?{fragmentIdentity:{id:fragmentIdentity.id,geometry:fragmentIdentity.geometry}}:{})};}
+ function identity(value){if(value.source)return 'source:'+value.source.c+':'+value.source.r+(Number.isInteger(value.source.copy)?':copy:'+value.source.copy:'');const part=value.fragmentIdentity;if(value.fragment&&Number.isInteger(part?.id)&&part.id>=0&&typeof part.geometry==='string')return 'fragment:'+JSON.stringify([part.geometry,part.id]);return 'display:'+value.display.x+':'+value.display.y+':'+value.center.x+':'+value.center.y;}
  function resolve(value,{width,height,point,visible=()=>true}){if(!value)return null;if(value.source){const {c,r}=value.source;if(c<0||c>=width||r<0||r>=height||!visible(c,r))return null;return point(c,r);}return {...value.display};}
  function sameFragment(value,point){return !value?.fragment||!!point&&Math.abs(point.x-value.center.x)<1e-8&&Math.abs(point.y-value.center.y)<1e-8;}
  return {createSession,anchor,identity,resolve,sameFragment};

@@ -1,7 +1,7 @@
 /* Read-only hit selection for all Ochki paths; gestures never edit field data. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikOchkiSelection=api;})(globalThis,function(){
   'use strict';
-  function pick(found,cell,half=null){const matchIndices=[],rows=new Set(),cells=new Set();found.forEach((hit,index)=>{if(half!=null&&hit.p!==half||!hit.cells?.includes(cell))return;matchIndices.push(index);if(Number.isInteger(hit.i))rows.add(hit.i);for(const q of hit.cells)cells.add(q);});return {matchIndices,rowIndices:[...rows].sort((a,b)=>a-b),cells:[...cells]};}
+  function pick(found,cell,half=null,displayCell=null){const matchIndices=[],rows=new Set(),cells=new Set(),displayCells=new Set();found.forEach((hit,index)=>{if(half!=null&&hit.p!==half||!(displayCell==null?hit.cells?.includes(cell):hit.displayCells?.includes(displayCell)))return;matchIndices.push(index);if(Number.isInteger(hit.i))rows.add(hit.i);for(const q of hit.cells)cells.add(q);for(const q of hit.displayCells||[])displayCells.add(q);});return {matchIndices,rowIndices:[...rows].sort((a,b)=>a-b),cells:[...cells],...(displayCell==null?{}:{displayCells:[...displayCells]})};}
   function recoverRun({W,H,val,row,col,mode,pattern,min=2,allowed=()=>true}){
     const [dc,dr]=({row:[2,0],col:[0,2],diag:[1,1],antidiag:[-1,1]})[mode]||[1,1],alternate=pattern==='alternating';
     const valid=(r,c)=>r>=0&&r<H&&c>=0&&c<W&&val[r*W+c]>=0&&allowed(r,c),joins=(r,c,rr,cc)=>valid(rr,cc)&&(alternate?val[r*W+c]!==val[rr*W+cc]:val[r*W+c]===val[rr*W+cc]);

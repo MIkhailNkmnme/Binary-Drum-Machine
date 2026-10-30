@@ -11,9 +11,9 @@
     if(mode==='bit')return value.bit===bit;
     return value.colour===colour&&(!['diagonal','chess0'].includes(mode)||value.bit===bit);
   }
-  function select({seed,mode,bit,match,move,key=cell=>cell.p+':'+cell.c+':'+cell.r,point=cell=>[cell.c,cell.r],limit,flood}){
+  function select({seed,mode,bit,match,move,topology,key=cell=>cell.p+':'+cell.c+':'+cell.r,point=cell=>[cell.c,cell.r],limit,flood}){
     if(!seed)return [];
-    const sides=seed.p<0?squareSides:squareCorners,corners=seed.p<0?squareCorners:diamondCorners;
+    const square=topology==='square'||seed.p<0,sides=square?squareSides:squareCorners,corners=square?squareCorners:diamondCorners;
     const chain=cell=>corners.some(([dc,dr])=>{const next=move(cell,dc,dr);return !!next&&match(next);});
     const neighbours=(cell,visit)=>{
       if(mode==='bit')return;

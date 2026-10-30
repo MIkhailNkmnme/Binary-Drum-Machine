@@ -270,11 +270,11 @@ body.may-zen>.may-menu-side-scroll{display:none!important}
 
 /* Frame/row count already sits below the transport thumb. */
 #mayFieldCaption{display:none!important}
-/* v0.558: user's sketch — logo/title above, version at the right below. */
-body.mayatnik-menu-ready>header>.may-brand{display:flex;flex-direction:column;align-items:stretch;gap:0;width:120px;min-width:120px;max-width:120px;height:39px;flex:0 0 120px;align-self:flex-start;order:-1}
+/* One brand row spans the two left columns; menu slots begin directly below it. */
+body.mayatnik-menu-ready>header>.may-brand{position:fixed;left:var(--may-brand-left,4px);top:4px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:6px;box-sizing:border-box;width:246px;min-width:246px;max-width:246px;height:24px;flex:0 0 246px;order:-1;background:#000}
 .may-brand #zerkHubBtn{width:22px;height:22px;margin:0 3px 0 0;flex:0 0 22px}
-.may-brand #appTitle{display:flex;align-items:center;width:100%;font-size:15px;line-height:26px;letter-spacing:0;white-space:nowrap;flex:0 0 26px;min-width:0;margin:0}
-.may-brand>.ver{align-self:flex-end;font-size:10px;line-height:13px;white-space:nowrap;flex:0 0 13px;margin:0}
+.may-brand #appTitle{display:flex;align-items:center;width:auto;font-size:15px;line-height:24px;letter-spacing:0;white-space:nowrap;flex:1 1 auto;min-width:0;margin:0}
+.may-brand>.ver{align-self:center;font-size:10px;line-height:24px;white-space:nowrap;flex:0 0 auto;margin:0}
 
 /* Compact group headers: flat top, downward tip; controls keep their diamond form. */
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-header-triangle{--gz-w:48px;width:48px!important;min-width:48px!important;max-width:48px!important;flex:0 0 48px!important;clip-path:polygon(0 0,100% 0,50% 100%)!important;justify-content:center;padding:0!important;gap:0!important}

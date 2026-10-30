@@ -79,15 +79,15 @@
     const maxScroll=Math.max(0,last-end),offset=Math.max(0,Math.min(maxScroll,scroll));
     return {rows:rows.map(row=>({...row,screenY:row.top-offset})),height:last-start,maxScroll,offset};
   }
-  function mount({groups,idOf,header,tools,footer,rail,rightEdge,leftEdge,moveToTools,onLayout,excluded=[],storageKey,defaultEdge,stackSides=true,sideColumnsLeft=false}){
+  function mount({groups,idOf,header,tools,footer,rail,rightEdge,leftEdge,sideTop,moveToTools,onLayout,excluded=[],storageKey,defaultEdge,stackSides=true,sideColumnsLeft=false}){
     const key=typeof storageKey==='string'&&storageKey.trim()?storageKey:'mayatnik-menu-dock-v509',initialEdge=['top','bottom','left','right'].includes(defaultEdge)?defaultEdge:null,useSideStack=stackSides!==false;
     let state={};try{state=read(JSON.parse(localStorage.getItem(key)||'{}'));}catch(_){}
     const heads=new Map(),placed=new Map();let drag=null,geometry='',ready=false,gridSignature='',gridNodes=[],activeSlot=null;
     const ns='http://www.w3.org/2000/svg',overlay=document.createElementNS(ns,'svg');overlay.id='mayMenuDockGrid';overlay.setAttribute('aria-hidden','true');
     Object.assign(overlay.style,{position:'fixed',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'2147483644',display:'none'});document.body.append(overlay);
     const save=()=>{try{localStorage.setItem(key,JSON.stringify(state));}catch(_){}};
-    const bounds=()=>{const H=header.getBoundingClientRect(),T=tools.getBoundingClientRect(),F=footer.getBoundingClientRect(),R=rail.getBoundingClientRect(),customLeft=typeof leftEdge==='function'?leftEdge():null;
-      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:T.top,bottomY:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?4:Math.ceil(H.bottom+8),sideBottom:(typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom)-4,sideColumnsLeft};};
+    const bounds=()=>{const H=header.getBoundingClientRect(),T=tools.getBoundingClientRect(),F=footer.getBoundingClientRect(),R=rail.getBoundingClientRect(),customLeft=typeof leftEdge==='function'?leftEdge():null,customTop=typeof sideTop==='function'?sideTop():null;
+      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:T.top,bottomY:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?Math.ceil(Math.max(4,Number.isFinite(customTop)?customTop:4)):Math.ceil(H.bottom+8),sideBottom:(typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom)-4,sideColumnsLeft};};
     const rect=el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};};
     const obstacles=()=>excluded.filter(e=>e?.getClientRects().length).map(rect);
     const available=skip=>slots(bounds()).filter(s=>!obstacles().some(r=>overlap(s,r))&&![...placed].some(([g,p])=>g!==skip&&overlap(s,p)));
