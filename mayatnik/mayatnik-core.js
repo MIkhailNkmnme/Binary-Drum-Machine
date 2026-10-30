@@ -10,15 +10,16 @@ const MAYATNIK = (() => {
     return { W, H, val };
   }
   // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
-  function cone(f, a, D, lastAt, stamp) {
-    for (const row of coneRows(f, a, D, lastAt, stamp)) { /* полный проход */ }
+  function cone(f, a, D, lastAt, stamp, mark, markValue) {
+    for (const row of coneRows(f, a, D, lastAt, stamp, mark, markValue)) { /* полный проход */ }
   }
   // Тот же проход можно остановить после каждой строки. Между шагами
   // временная единица родительской вершины не остаётся в видимом поле.
-  function* coneRows(f, a, D, lastAt, stamp) {
+  function* coneRows(f, a, D, lastAt, stamp, mark, markValue) {
     const { W, H, val } = f;
     if (a < 0 || a >= W) return;
     if (val[a] === -1) { val[a] = 1; if (lastAt) lastAt[a] = stamp; }
+    if (mark) mark[a] = markValue;
     const apex = val[a]; val[a] = 1;             // родитель-вершина всегда 1 (в Excel: parentCell = startCell)
     const last = Math.min(D, H);
     if (last > 1) val[a] = apex;
@@ -33,6 +34,7 @@ const MAYATNIK = (() => {
         const i = row + c, old = val[i];
         const nv = ((old === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
         if (lastAt && nv !== old) lastAt[i] = stamp;
+        if (mark) mark[i] = markValue;
         val[i] = nv;
       }
       if (r === 1) val[a] = apex;
@@ -42,14 +44,14 @@ const MAYATNIK = (() => {
   // v2 (2026-10-13, Маятник v0.012): пара вершин a1, a2 (одной чётности) ОДНИМ проходом — «шаг влево и вправо сразу».
   // Строка за строкой пересчитываются клетки обоих конусов; клетка, попавшая в оба, — один раз: старое ⊕ левый ⊕ правый.
   // По очереди (cone, затем cone) выходит другое: левый конус пишет середину, пока правой вершины ещё нет.
-  function conePair(f, a1, a2, D, lastAt, stamp) {
-    for (const row of conePairRows(f, a1, a2, D, lastAt, stamp)) { /* полный проход */ }
+  function conePair(f, a1, a2, D, lastAt, stamp, mark, markValue) {
+    for (const row of conePairRows(f, a1, a2, D, lastAt, stamp, mark, markValue)) { /* полный проход */ }
   }
-  function* conePairRows(f, a1, a2, D, lastAt, stamp) {
+  function* conePairRows(f, a1, a2, D, lastAt, stamp, mark, markValue) {
     const { W, H, val } = f;
     if (a1 > a2) { const t = a1; a1 = a2; a2 = t; }
     const ap = [];
-    for (const a of [a1, a2]) { if (a < 0 || a >= W) continue; if (val[a] === -1) { val[a] = 1; if (lastAt) lastAt[a] = stamp; } ap.push([a, val[a]]); val[a] = 1; }
+    for (const a of [a1, a2]) { if (a < 0 || a >= W) continue; if (val[a] === -1) { val[a] = 1; if (lastAt) lastAt[a] = stamp; } if (mark) mark[a] = markValue; ap.push([a, val[a]]); val[a] = 1; }
     const pass = (row, up, from, to) => {
       let c = from;
       if (c < 0) c += ((-c + 1) >> 1) << 1;
@@ -57,6 +59,7 @@ const MAYATNIK = (() => {
         const L = c > 0 ? val[up + c - 1] : 0, R = c + 1 < W ? val[up + c + 1] : 0, i = row + c, old = val[i];
         val[i] = ((old === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
         if (lastAt && val[i] !== old) lastAt[i] = stamp;
+        if (mark) mark[i] = markValue;
       }
     };
     const last = Math.min(D, H);
