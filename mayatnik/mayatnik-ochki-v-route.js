@@ -2,9 +2,16 @@
  * Coordinates name logical cell centres, independently of display scale. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikOchkiVRoute=api;})(globalThis,function(){
   'use strict';
+  function verticalPoints(points,height){
+    if(!Number.isSafeInteger(height)||height<1)throw new RangeError('Invalid V-route height');
+    const axes=[...new Set((points||[]).map(p=>p.x))].sort((a,b)=>a-b);
+    if(axes.some(x=>!Number.isFinite(x)))throw new RangeError('Invalid V-route axis');
+    if(axes.length*height*2>262144)throw Object.assign(new RangeError('Слишком много положений V-вершины для полного поиска; частичный поиск не выполнен.'),{code:'OCHKI_LIMIT'});
+    const out=[];for(const x of axes)for(let y=0;y<=height-.5;y+=.5)out.push({x,y});return out;
+  }
   function lines({width,height,val,points,allowed=null,partition=null}){
     if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||!Number.isSafeInteger(width*height)||!val||val.length<width*height)throw new RangeError('Incomplete V-route field');
-    const out=[],seen=new Set();
+    const out=[],seen=new Set();let totalCells=0;
     for(const point of points||[]){
       const {x:X,y:Y}=point;
       if(!Number.isFinite(X)||!Number.isFinite(Y))throw new RangeError('Invalid V-route meeting point');
@@ -13,8 +20,9 @@
       const emit=()=>{
         // A surviving straight arm is not a V. Both upper rays must belong to
         // this uninterrupted fragment; an off-screen/empty turn cannot join them.
-        if(cells.length&&cells[0]%width<X&&cells[cells.length-1]%width>X)
-          out.push({dir:'v',p:lastPartition,cells:Int32Array.from(cells),str:bits.join(''),n:cells.length,monotonic:false,meeting:{x:X,y:Y}});
+        if(cells.length&&cells[0]%width<X&&cells[cells.length-1]%width>X){
+          totalCells+=cells.length;if(totalCells>16777216)throw Object.assign(new RangeError('Полные V-маршруты превышают безопасный бюджет памяти; частичный поиск не выполнен.'),{code:'OCHKI_LIMIT'});
+          out.push({dir:'v',p:lastPartition,cells:Int32Array.from(cells),str:bits.join(''),n:cells.length,monotonic:false,meeting:{x:X,y:Y}});}
         cells=[];bits=[];
       };
       // Do not round an axis onto another lattice. Half-cell meetings naturally
@@ -59,5 +67,5 @@
     }
     return found;
   }
-  return {lines,firstOccurrence,recoverRuns};
+  return {lines,verticalPoints,firstOccurrence,recoverRuns};
 });

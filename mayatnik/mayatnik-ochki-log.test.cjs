@@ -60,3 +60,19 @@ test('error and interrupted entries cannot be opened; late saving never downgrad
 test('history keeps more than 500 frames without truncation',async()=>{
   const f=fixture();for(let i=0;i<503;i++)await f.log.record(record(String(i)));assert.equal(f.map.get(KEY).items.length,503);
 });
+
+test('text-only findings persist and reload without capturing or opening a Library frame',async()=>{
+ const f=fixture(),entry={...record('text','found'),finds:[{i:18,p:0,r:9,c:11}],count:1};await f.log.record(entry);entry.finds[0].i=99;
+ assert.equal(f.log.list()[0].status,'found');assert.equal(f.log.list()[0].savedId,undefined);assert.equal(f.log.list()[0].finds[0].i,18);assert.deepEqual(f.opened,[]);
+ const reload=fixture(f.map);await reload.log.ready;assert.equal(reload.log.list()[0].status,'found');await assert.rejects(reload.log.open('text'),/не сохранён/);assert.deepEqual(reload.opened,[]);
+ await reload.log.record(record('legacy'));await reload.log.open('legacy');assert.deepEqual(reload.opened,['frame:legacy']);
+});
+
+test('text-only log UI has no frame button or archive warning while previous saved entries remain openable',async()=>{
+ const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),{install}=require('./mayatnik-ochki-log.js'),dom=new JSDOM('<body></body>'),originalDocument=global.document;
+ try{global.document=dom.window.document;dom.window.HTMLDialogElement.prototype.showModal=function(){this.open=true;};dom.window.HTMLDialogElement.prototype.close=function(){this.open=false;};
+  dom.window.MayatnikPaintCache={read:async()=>null,write:async()=>{}};dom.window.mayFrameLibrary={list:()=>[],subscribe(){},ready:Promise.resolve(),save(){throw Error('no automatic frame capture');}};
+  const log=install(dom.window);await log.record(record('old'));await log.record({...record('new','found'),finds:[{i:18,p:1,r:4,c:8}],count:1});log.show();await new Promise(setImmediate);
+  const rows=dom.window.document.querySelectorAll('.may-ochki-log-entry');assert.equal(rows.length,2);assert.match(rows[0].textContent,/№ 19/);assert.match(rows[0].textContent,/Находки записаны в лог/);assert.doesNotMatch(rows[0].textContent,/Ошибка|архив|Открыть кадр/);assert.equal(rows[0].querySelector('button'),null);assert.equal(rows[1].querySelector('button').disabled,false);
+ }finally{global.document=originalDocument;dom.window.close();}
+});

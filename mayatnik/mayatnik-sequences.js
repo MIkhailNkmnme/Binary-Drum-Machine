@@ -4,7 +4,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSequences=api;})(globalThis,function(){
   'use strict';
   const KEY='mayatnik-sequences-v1',MAX_BITS=2100000,MAX_ROWS=4096;
-  const directionLabel=mode=>({v:'через встречу ↘↗',row:'по рядам →',col:'по столбцам ↓',antidiag:'по противодиагоналям ↙',diag:'по диагоналям ↘',snake:'змея вниз ↙↘',all:'во всех 4 направлениях',0:'по рядам →',2:'по столбцам ↓','-1':'по противодиагоналям ↙',1:'по диагоналям ↘'}[mode]||'по диагоналям ↘');
+  const directionLabel=mode=>({v:'вдоль осей ↘↗',row:'по рядам →',col:'по столбцам ↓',antidiag:'по противодиагоналям ↙',diag:'по диагоналям ↘',snake:'змея вниз ↙↘',all:'во всех 4 направлениях',0:'по рядам →',2:'по столбцам ↓','-1':'по противодиагоналям ↙',1:'по диагоналям ↘'}[mode]||'по диагоналям ↘');
   function parse(text){const value=String(text).replace(/\r\n?/g,'\n').trim();if(!value)return[];const rows=value.split('\n');if(rows.length>MAX_ROWS)throw Error('Не более '+MAX_ROWS+' строк. Данные не изменены.');let bits=0;rows.forEach((row,i)=>{if(!/^[01]+$/.test(row))throw Error('Строка '+(i+1)+': допустимы только 0 и 1, без пробелов.');bits+=row.length;});if(bits>MAX_BITS)throw Error('Больше '+MAX_BITS+' бит. Данные не изменены.');return rows;}
   function sierpinski(count){count=Number(count);if(!Number.isInteger(count)||count<1||count>2048)throw Error('Для Серпинского задайте от 1 до 2048 строк.');const rows=['1'];for(let i=1;i<count;i++){const prev=rows[i-1];let next='';for(let j=0;j<=i;j++)next+=Number(prev[j-1]||0)^Number(prev[j]||0);rows.push(next);}return rows;}
   // Wolfram numbering: bit (4*left+2*centre+right) is the next cell.

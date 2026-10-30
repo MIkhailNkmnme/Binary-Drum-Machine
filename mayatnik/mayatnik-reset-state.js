@@ -2,7 +2,7 @@
  * menu placement are intentionally outside this state. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikResetState=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
-  const off=('outline third sym symBits symV symH symD symPlainV symPlainH symPlainD symTriangles autoAxes triangleMapAxes triangleMapMask triangleMapMirror crossMirror crossLabels pair compareMirror noband ochki ochkiSnake ochkiInv ochkiRev ochkiOverlay frozen zLimit anchorAxis fixLines fixCross lineMeasures linesOn saw sawFull midOneOn midZeroOn midWide paintMid fixWide fixLowOut fixRot fixHor fixDown fixDragK geomCenter sectors areas heat vtxFlash contour both viewUpsideDown templateLock templateMask testStats').split(' ');
+  const off=('outline third sym symBits symV symH symD symPlainV symPlainH symPlainD symTriangles autoAxes triangleMapAxes triangleMapMask triangleMapMirror crossMirror crossLabels pair compareMirror noband ochki ochkiSnake manualSnake ochkiInv ochkiRev ochkiOverlay frozen zLimit anchorAxis fixLines fixCross lineMeasures linesOn saw sawFull midOneOn midZeroOn midWide paintMid fixWide fixLowOut fixRot fixHor fixDown fixDragK geomCenter sectors areas heat vtxFlash contour both viewUpsideDown templateLock templateMask testStats').split(' ');
   const zero=('blackMirror animHl paintAxis paintMeet triTop thirds fixMirror fixFold fixLow fixDx fixDy rowLab midCol bothDx ztMir ztPaint ztopRow ztlBx frameT vrows').split(' ');
   function defaults(){return {...Object.fromEntries(off.map(k=>[k,false])),...Object.fromEntries(zero.map(k=>[k,0])),
     rows:512,steps:512,mode:'pend',bg:'empty',view:'bits',speed:4,vmode:'',compareSource:'',
@@ -17,7 +17,7 @@
     cellSelection:null,cellInk:{},parity:{cellsEven:true,cellsOdd:true,rowsEven:true,rowsOdd:true}};}
   const groups={
     scale:'zoom zMid ztop zBot zLock zsnap zbase ztopPin ztopRow templateFocusMargins',
-    view:'view viewUpsideDown outline noband both bothDx blackMirror animHl frozen ochki ochkiSnake heat vtxFlash rowLab contour geomCenter bitOneColour bitZeroColour digitOneColour digitZeroColour digitFont digitSize bitContourColour1 bitContourColour2 bitContourMode bitContourColours overOneColour overZeroColour parity',
+    view:'view viewUpsideDown outline noband both bothDx blackMirror animHl frozen ochki ochkiSnake manualSnake heat vtxFlash rowLab contour geomCenter bitOneColour bitZeroColour digitOneColour digitZeroColour digitFont digitSize bitContourColour1 bitContourColour2 bitContourMode bitContourColours overOneColour overZeroColour parity',
     measure:'areas sectors sawFull lineMeasures areaFreeze rowLab',
     point:'fixLines fixCross fixMirror fixFold fixLow fixWide fixLowOut fixRot fixHor fixDown fixDragK fixDx fixDy fixLockX fixAxis saw',
     cells:'cellSelection cellInk',

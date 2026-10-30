@@ -1,4 +1,4 @@
-/* v1: Search history stores references to immutable Library frames, never frame Blobs. */
+/* Search metadata is stored independently; older entries can retain Library frame references. */
 (function(root,factory){
   const api=factory();
   if(typeof module==='object'&&module.exports)module.exports=api;
@@ -28,7 +28,7 @@
       const entry=clone(detail);
       const result=queue.then(async()=>{
         await ready;
-        if(typeof entry.id!=='string'||!entry.id||!['saving','saved','error'].includes(entry.status))throw Error('Некорректная запись лога поиска');
+        if(typeof entry.id!=='string'||!entry.id||!['found','saving','saved','error'].includes(entry.status))throw Error('Некорректная запись лога поиска');
         const index=items.findIndex(item=>item.id===entry.id),previous=index<0?{}:items[index];
         // Ignore late progress events after a confirmed terminal status.
         if(entry.status==='saving'&&['saved','error'].includes(previous.status))return;
@@ -64,7 +64,7 @@
     function render(){
       if(!list)return;
       const oldScroll=list.scrollTop,entries=log.list().reverse();list.replaceChildren();
-      status.textContent=log.getState().message||'Найденных кадров: '+entries.length;
+      status.textContent=log.getState().message||'Записей поиска: '+entries.length;
       const library=root.mayFrameLibrary,frames=new Map((library?.list()||[]).map(frame=>[frame.id,frame]));
       for(const entry of entries){
         const row=document.createElement('article');row.className='may-ochki-log-entry';
@@ -72,13 +72,13 @@
         if(preview){const img=document.createElement('img');img.src=preview;img.alt='Кадр '+entry.frame;img.loading='lazy';row.append(img);}
         const info=document.createElement('div'),title=document.createElement('strong');title.textContent='Кадр '+entry.frame+' · '+(entry.rows??frames.get(entry.savedId)?.rows??'—')+' строк';info.append(title);
         const text=document.createElement('p');text.textContent=new Date(entry.at||0).toLocaleString('ru-RU')+' · Построение: '+sourceName(entry.src??entry.source)+' · '+(entry.mirror?'Зеркально':'Прямо')+' · Найдено: '+(entry.count??entry.finds?.length??0)+foundRows(entry.finds);info.append(text);
-        const state=document.createElement('p');state.className='may-ochki-log-state';state.textContent=entry.status==='saved'?(log.getState().pending.includes(entry.id)?'Кадр в библиотеке; сохранение лога…':log.getState().storageError?'Кадр в библиотеке; лог не сохранён':'Сохранён в библиотеке и логе'):entry.status==='saving'?'Сохранение кадра…':'Ошибка сохранения: '+(entry.error||'неизвестная ошибка');info.append(state);
+        const state=document.createElement('p');state.className='may-ochki-log-state';state.textContent=entry.status==='found'?(log.getState().pending.includes(entry.id)?'Запись находок…':log.getState().storageError?'Находки не записаны: '+log.getState().storageError:'Находки записаны в лог'):entry.status==='saved'?(log.getState().pending.includes(entry.id)?'Кадр в библиотеке; сохранение лога…':log.getState().storageError?'Кадр в библиотеке; лог не сохранён':'Сохранён в библиотеке и логе'):entry.status==='saving'?'Сохранение кадра…':'Ошибка сохранения: '+(entry.error||'неизвестная ошибка');info.append(state);
         const b=button('Открыть кадр',async()=>{opening=true;render();try{await log.open(entry.id);panel.close();}catch(error){status.textContent='Не удалось открыть кадр: '+errorText(error);}finally{opening=false;renderButtons();}});
-        b.disabled=entry.status!=='saved'||opening;info.append(b);row.append(info);list.append(row);
+        b.disabled=entry.status!=='saved'||opening;if(entry.status!=='found')info.append(b);row.append(info);list.append(row);
       }
       list.scrollTop=oldScroll;
     }
-    function renderButtons(){if(!list)return;for(const [i,row]of [...list.children].entries()){const entry=log.list().reverse()[i];row.querySelector('button').disabled=opening||entry.status!=='saved';}}
+    function renderButtons(){if(!list)return;for(const [i,row]of [...list.children].entries()){const entry=log.list().reverse()[i],button=row.querySelector('button');if(button)button.disabled=opening||entry.status!=='saved';}}
     function button(label,run){const b=document.createElement('button');b.type='button';b.className='gz-hx';b.title=label;b.setAttribute('aria-label',label);const name=document.createElement('span');name.className='gz-nm';name.textContent=label;b.append(name);b.addEventListener('click',run);return b;}
     function show(){
       if(!document.body)return;

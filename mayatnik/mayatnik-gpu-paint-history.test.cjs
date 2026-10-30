@@ -3,7 +3,7 @@ const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
 function fn(name){const a=html.indexOf('function '+name+'('),b=html.indexOf('{',a);assert.ok(a>=0,name);let i=b+1,d=1;for(;d;i++){if(html[i]==='{')d++;if(html[i]==='}')d--;}return html.slice(a,i);}
 function fixture(view='bits'){
  const nodes=new Map(),rp=view==='bits'?-1:view==='romb2'?2:view.startsWith('rombJoin')?3:0;
- const c={st:{view,ochki:false},f:{W:29,H:10,val:new Int8Array(290).fill(1)},k:16,VX:5,VW:17,VH:10,RK:rp<0?1:4,RG:rp===2?3:0,geo:{anchor:14},
+ const c={manualPaintCurrent:()=>null,manualPaintEntryCurrent:()=>false,st:{view,ochki:false},f:{W:29,H:10,val:new Int8Array(290).fill(1)},k:16,VX:5,VW:17,VH:10,RK:rp<0?1:4,RG:rp===2?3:0,geo:{anchor:14},
   img:null,gpuBig:{fresh:true,k:16,cpuRaster:true,cpuLayout:true},fillMask:null,paintBits:null,fillHistory:[],fillRedo:[],fillHistoryBytes:0,gpuPaintRequests:0,templateDragging:false,mirrorLive:false,mirrorApplying:false,templateMatchRevision:0,templateMatchCache:null,
   Uint32Array,Int8Array,window:{},$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);},rombP:()=>rp,joinedOn:()=>rp===3,manualPaintOn:()=>false,manualMirrorPlan:()=>[],
   g:{createImageData:(width,height)=>({width,height,data:new Uint8ClampedArray(width*height*4)})},cv:{width:1,height:1},wrap:{clientWidth:800},wrapPadX:()=>0,fillSync(){},cssLayout(){},savePaint(){},stopFrameTransports(){c.stopped++;},stopped:0};

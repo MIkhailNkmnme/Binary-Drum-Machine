@@ -67,3 +67,12 @@ test('simple-run selection follows the actual V order through its turn, rather t
   assert.equal(route.recoverRuns(lines,40,{pattern:'zeros'}).length,0);assert.equal(route.recoverRuns(lines,40,{pattern:'zeros',inverse:true}).length,1);
   lines[0].str='010101010';const alt=route.recoverRuns(lines,40,{pattern:'alternating',min:9});assert.equal(alt[0].n,9);assert.equal(alt[0].dir,'v');assert.equal(route.recoverRuns(lines,40,{pattern:'alternating',min:10}).length,0);
 });
+
+test('all vertical apex positions are enumerated without moving the fixed axis or inventing off-lattice bridges',()=>{
+ const W=11,H=7,val=Int8Array.from({length:W*H},(_,q)=>(q*7+Math.floor(q/W))&1),axes=[{x:5,y:1},{x:5,y:5},{x:4.5,y:3.5}],points=route.verticalPoints(axes,H);
+ assert.equal(points.length,28);assert.deepEqual([...new Set(points.map(p=>p.x))],[4.5,5]);assert.deepEqual(points.filter(p=>p.x===5).map(p=>p.y),Array.from({length:14},(_,i)=>i/2));
+ const actual=route.lines({width:W,height:H,val,points}),oracle=[];
+ for(const X of [4.5,5])for(let Y=0;Y<H;Y+=.5){const cells=[];for(let x=0;x<W;x++)for(let y=0;y<H;y++)if(y+Math.abs(x-X)===Y)cells.push(y*W+x);if(cells.length&&cells[0]%W<X&&cells.at(-1)%W>X)oracle.push(cells.join(','));}
+ assert.deepEqual(actual.map(l=>Array.from(l.cells).join(',')).sort(),oracle.sort());
+ const phased=route.lines({width:W,height:H,val,points,partition:(r,c)=>(r+c)&1});assert.ok(phased.every(l=>Number.isInteger(l.meeting.x)&&Number.isInteger(l.meeting.y)));assert.ok(phased.some(l=>l.meeting.y===6));
+});
