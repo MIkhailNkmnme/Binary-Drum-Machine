@@ -1,4 +1,4 @@
-/* Маятник v0.661 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.663 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -446,6 +446,14 @@
         row.setAttribute('aria-label', 'Пересчитать следующую строку' + (state?.progress ? ' · ' + state.progress : '')); };
       row.onclick = event => { event.stopPropagation(); window.mayRowBuild?.step(); row.gzSync(); rail.refresh(); };
       toolSync.push(row.gzSync); row.gzSync(); pop.append(section(row, 'build')); }
+    { const button=document.createElement('button');button.type='button';button.id='mayRowStepOutline';button.dataset.n='mayRowStepOutline';button.className='gz-hx';
+      button.dataset.maySearchAliases='Рамка шага|Рамка новых битов|Выделение строки';
+      const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(button,'outline');glyph.setAttribute('aria-hidden','true');
+      const label=document.createElement('span');label.className='gz-nm';label.textContent='Рамка шага';button.append(glyph,label);
+      button.gzSync=()=>{const api=window.mayRowStepOutline,on=!!api?.get();button.disabled=!api;button.classList.toggle('gz-on',on);button.setAttribute('aria-pressed',String(on));
+        button.title='Рамка шага: '+(on?'включена — нажать, чтобы скрыть':'выключена — нажать, чтобы показать')+'. Тонкая рамка вокруг рассчитанных битов последнего шага «Строка +1». Настройка сохраняется.';button.setAttribute('aria-label',button.title);};
+      button.onclick=event=>{event.stopPropagation();const api=window.mayRowStepOutline;api?.set(!api.get());button.gzSync();rail.refresh();};
+      toolSync.push(button.gzSync);addEventListener('may-row-step-outline-change',button.gzSync);button.gzSync();pop.append(section(button,'build')); }
     // v0.634: opt-in continuation belongs to construction, with a stable control key.
     { const more = document.createElement('button'); more.type = 'button'; more.id = 'mayConeContinue'; more.dataset.n = 'mayConeContinue'; more.className = 'gz-hx';
       more.dataset.maySearchAliases = 'Продолжение Конусов|Снять предел|Без предела|Дальше последнего кадра';
