@@ -1,10 +1,11 @@
-/* Маятник v0.654 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.655 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id), source = document.querySelector('.bar');
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const mobileMenu=window.MayatnikMenuDock.mobileStrip();
+  const toolSync = [];
   // The library overlays the field behind controls; it never changes menu slots.
   const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
@@ -437,7 +438,7 @@
       e.innerHTML = '<i class="may-bb-ar" data-d="-1" aria-hidden="true">◂</i><span class="may-hp-h"></span><i class="may-bb-ar" data-d="1" aria-hidden="true">▸</i>'; return e; };
     const bs = half('sp'), bf = half('ft'), hs = bs.querySelector('.may-hp-h'), hf = bf.querySelector('.may-hp-h');
     hs.title = 'Скорость анимации: вершин за кадр · щелчок — +1 (после ×10 — ×1), правый — −1'; hf.title = 'Сколько длится кадр анимации · щелчок — следующее (0 · 1/20 · 1/10 · 1/5 · 1/2 · 1 с), правый — предыдущее';
-    const sync = () => { hs.textContent = '×' + (+sp.value || 1); const v = +ft.value || 0, i = T.indexOf(v); hf.textContent = i >= 0 ? TN[i] : String(+(v * .05).toFixed(2)).replace('.', ',') + 'с'; };
+    const sync = () => { const speedText = '×' + (+sp.value || 1), v = +ft.value || 0, i = T.indexOf(v), timeText = i >= 0 ? TN[i] : String(+(v * .05).toFixed(2)).replace('.', ',') + 'с'; if(hs.textContent!==speedText)hs.textContent=speedText;if(hf.textContent!==timeText)hf.textContent=timeText; };
     const spSet = d => { const v = +sp.value || 1; sp.value = String(d > 0 ? (v >= 10 ? 1 : v + 1) : (v <= 1 ? 10 : Math.min(10, v - 1))); fire(sp); sync(); rail.refresh(); };
     const ftSet = d => { const v = +ft.value || 0; let i; if (d > 0) { i = T.findIndex(t => t > v); if (i < 0) i = 0; } else { i = T.length - 1; while (i >= 0 && T[i] >= v) i--; if (i < 0) i = T.length - 1; }
       ft.value = String(T[i]); fire(ft); sync(); rail.refresh(); };
@@ -452,7 +453,10 @@
       ar.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); b.arDown = true; step(d); hold = setTimeout(() => { rep = setInterval(() => step(d), 90); }, 350); });
       for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) ar.addEventListener(ev, end);
       ar.addEventListener('click', e => { e.stopPropagation(); b.arDown = false; }); }
-    sp.addEventListener('input', sync); ft.addEventListener('input', sync); const sl = $('mayBottomBar').querySelector(':scope > .gz-sl');
+    for(const el of [sp,ft])for(const event of ['input','change'])el.addEventListener(event,sync);
+    // Restoring settings writes .value directly, without an input event.
+    addEventListener('may-transport-change',sync);toolSync.push(sync);
+    const sl = $('mayBottomBar').querySelector(':scope > .gz-sl');
     if (sl) { sl.before(bs); sl.after(bf); } else $('mayBottomBar').append(bs, bf); sync();
     const hr = $('mayBbHorr'); if (hr) bf.after(hr); }   // v0.350: «Хорр» — сразу справа от ползунка (за временем кадра)
   rail.el.querySelector('.gz-group[data-id="build"]')?.remove(); // Управление полем уже перенесено в нижний пульт.
@@ -504,7 +508,6 @@
     soty.style.display = shown.length ? '' : 'none'; } };
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
-  const toolSync = [];
   for(const id of ['bOchkiSnake','bPaintSame','bPaintSymmetric']){const cell=railSourceButtons.get(id),source=$(id);if(cell&&source){
     const sync=()=>{cell.setAttribute('aria-disabled',String(source.disabled));cell.setAttribute('aria-pressed',source.getAttribute('aria-pressed')||'false');if(cell.title!==source.title)cell.title=source.title;};
     toolSync.push(sync);sync();
@@ -1663,13 +1666,13 @@
         touch: k => { if (gw && ok(gw[k])) { gw[k][2] = topT() + 1; saveGrid(); } relayout(); } };   // правый щелчок (ромб ↔ название): тот, кого меняли, остаётся на месте, соседи уступают
       narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick);
       // v0.509: capture group dragging before the legacy rail/free-bottom handlers.
-      dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,
+      dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,sideColumnsLeft:true,
         excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{
-          // The side strips own the lower corners; keep the physical footer
-          // between them too, including its backdrop and legacy history control.
+          // Both side strips now sit on the left; keep the footer after them,
+          // including its backdrop and legacy history control.
           const desktop=!narrow.matches,step=window.MayatnikMenuDock.DX;
-          footerBar.style.marginLeft=desktop?(Math.max(4,rail.el.getBoundingClientRect().left)+step)+'px':'';
-          footerBar.style.marginRight=desktop?(4+step)+'px':'';
+          footerBar.style.marginLeft=desktop?(Math.max(4,rail.el.getBoundingClientRect().left)+2*step)+'px':'';
+          footerBar.style.marginRight=desktop?'4px':'';
           relayout();reopen();}}); }
     // Group headers toggle their compact form. History keeps its separate mini mode.
     { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
