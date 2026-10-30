@@ -3,7 +3,7 @@
  * or Event prototype is changed. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikViewRotation=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
-  const LAYERS='#cv,#cvGpu,#cvBoth,#bitDigits,#colourTemplate,#symAxes,#geomCenterCanvas,#fillPreview,#cellInkCanvas,#cellLineCanvas,.may-anchor-ov,.may-fix-ov,.may-sectors,.may-row-lab,.may-flash,.may-area-frz,.may-ovl,.may-contour,.may-mir,.may-zl-ov,.may-layer-scene,.may-layer-service,.mcsv-canvas,.mcsv-seams,#mayLineMeasures,#mayCenterHover,#mayFieldCaption,#zTopLine,.zl-hd,.may-both-div';
+  const LAYERS='#cv,#cvGpu,#cvBoth,#bitDigits,#colourTemplate,#symAxes,#geomCenterCanvas,#fillPreview,#cellInkCanvas,#cellLineCanvas,.may-anchor-ov,.may-fix-ov,.may-sectors,.may-row-lab,.may-row-step-highlight,.may-flash,.may-area-frz,.may-ovl,.may-contour,.may-mir,.may-zl-ov,.may-layer-scene,.may-layer-service,.mcsv-canvas,.mcsv-seams,#mayLineMeasures,#mayCenterHover,#mayFieldCaption,#zTopLine,.zl-hd,.may-both-div';
   function center(rect){return {x:rect.left+rect.width/2,y:rect.top+rect.height/2};}
   function point(p,c){return {x:2*c.x-p.x,y:2*c.y-p.y};}
   function rect(r,c){const p=point({x:r.left+r.width,y:r.top+r.height},c);return {x:p.x,y:p.y,left:p.x,top:p.y,right:p.x+r.width,bottom:p.y+r.height,width:r.width,height:r.height};}
