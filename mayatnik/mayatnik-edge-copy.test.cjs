@@ -68,18 +68,16 @@ test('edge copy matches cone-built field bit-for-bit', () => {
   }
 });
 
-test('«Ромбы» в «Краях»: низ — две крайние половинки, а не квадратные биты', () => {
+test('«Края»: низ — отражение верхнего кадра, две крайние половинки на своих местах', () => {
   const html = fs.readFileSync(path.join(__dirname, 'Zerkalius-mayatnik.html'), 'utf8');
   const start = html.indexOf('function drawEdgeRhomb');
   assert.ok(start > 0, 'drawEdgeRhomb найден');
   const fn = html.slice(start, html.indexOf('function edgeBelowFieldPoint'));
-  assert.match(fn, /const rhombus = rombP\(\) >= 0 && rombP\(\) < 3;/, 'вид «Ромбы» распознаётся');
-  const rhombusAt = fn.indexOf('if (rhombus) {');
-  const flatAt = fn.indexOf('MayatnikEdgeCopy.copy(f.val');
-  assert.ok(rhombusAt > 0, 'ромбовая ветка есть');
-  assert.ok(flatAt > rhombusAt, 'ромбовая ветка идёт раньше плоской');
-  assert.match(fn, /strip\(src\.width - p\.Rw \* K/, 'правый край берётся справа');
-  assert.match(fn, /strip\(0, p\.Lw \* K/, 'левый край берётся слева');
-  assert.match(fn, /cx\.scale\(1, -1\)/, 'копии краёв отражены вниз');
-  assert.doesNotMatch(fn.slice(rhombusAt, flatAt), /lineTo|rombCell/, 'ромбовая ветка не рисует сама, а берёт готовый кадр');
+  assert.match(fn, /const narrow = f\.W <= 2 \* f\.H;/, '2N−1 распознаётся');
+  assert.match(fn, /if \(narrow\) cx\.drawImage\(src, 0, 0\);/, '2N−1 — отражение всего кадра');
+  assert.match(fn, /cx\.drawImage\(src, 0, 0, lw, h, 0, 0, lw, h\)/, 'левая половина — под собой');
+  assert.match(fn, /cx\.drawImage\(src, cw - rw, 0, rw, h, cw - rw, 0, rw, h\)/, 'правая половина — под собой');
+  assert.match(fn, /cx\.scale\(1, -1\)/, 'отражение вниз');
+  assert.match(fn, /#5bff9d/, 'зелёный пунктир начал копий');
+  assert.doesNotMatch(fn, /MayatnikEdgeCopy\.copy\(f\.val/, 'полосы из сырых битов больше не рисуются');
 });
