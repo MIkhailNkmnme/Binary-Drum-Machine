@@ -26,5 +26,11 @@
     }
     return { width: p.C, height: p.H, data, panels: p };
   }
-  return { panels, srcColumn, copy };
+  // Для 2N−1 боковых полей нет — вниз кладётся всё поле, отражённое по вертикали: получается ромб.
+  function mirrorDown(val, W, H) {
+    const data = new Int8Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) data[y * W + x] = val[(H - 1 - y) * W + x];
+    return { width: W, height: H, data, mirrored: true };
+  }
+  return { panels, srcColumn, copy, mirrorDown };
 });
