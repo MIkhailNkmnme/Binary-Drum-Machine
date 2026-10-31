@@ -32,7 +32,7 @@
       options: [...e.options].map(o => ({ v: o.value, name: names?.[o.value] || o.textContent })),
       set: v => { e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); } };
   };
-  const segments = (title, options) => ({type:'pair',cls:'may-segments'+(options.length===5?' gz-split gz-split5':''),name:title,tip:title,mid:'',parts:options.map(o=>({label:o.name,tip:o.tip||title+' — '+o.name,on:o.on,click:o.pick}))});
+  const segments = (title, options) => ({type:'pair',cls:'may-segments'+(options.length===5?' gz-split gz-split5':options.length===4?' gz-split gz-split4':''),name:title,tip:title,mid:'',parts:options.map(o=>({label:o.name,tip:o.tip||title+' — '+o.name,on:o.on,click:o.pick}))});
   const selectSegments = (id,names) => {const e=$(id);return {...segments(tip(e),[...e.options].map(o=>({name:names?.[o.value]||o.textContent,tip:id==='ochkiMode'?'Поиск: '+o.textContent:undefined,on:()=>e.value===o.value,pick:()=>{if(e.disabled||o.disabled)return;e.value=o.value;e.dispatchEvent(new Event('change',{bubbles:true}));}}))),disabled:()=>e.disabled};};
   const ringSegments = (id,names) => {const e=$(id),now=()=>e.textContent.split(': ')[1];return {...segments(tip(e),names.map(name=>({name,on:()=>now()===name,pick:()=>{for(let n=0;n<names.length&&now()!==name;n++)e.click();}}))),src:id};};
   const control = id => {
@@ -121,7 +121,8 @@
   groups.push({id:'horr',title:'Хорр',color:'#73e4a5',items:[]});
   groups.push({id:'edge',title:'Край',color:'#7cbcff',items:[
     button('edgeWrapTop','field'),
-    button('edgeWidthCycle','grid4'),
+    (() => { const get = () => $('edgeWidthTop')?.value || '4', set = v => { const e = $('edgeWidthTop'); if (!e) return; e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); };
+      return segments('Ширина', [2, 4, 6, 8].map(v => ({ name: v + 'N', tip: 'Ширина поля ' + v + 'N−1', on: () => get() === String(v), pick: () => set(String(v)) }))); })(),
     button('edgeMarkTop','eye'),
     button('edgeEndsTop','grid4'),
     button('edgeEndsMinus','minus'),
