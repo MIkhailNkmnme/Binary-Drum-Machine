@@ -15,9 +15,9 @@
     return { W, H, A, Lw, Rs, Rw, C: Lw + Rw, edgeClose: !!edgeClose };
   }
   function srcColumn(p, x) {
-    if (x < p.Lw) return p.edgeClose ? p.Lw - 1 - x : x;
-    const dx = x - p.Lw;
-    return p.Rs + (p.edgeClose ? p.Rw - 1 - dx : dx);
+    // v0.719: без поворотов — правый край слева, левый справа (левая половина уходит направо).
+    if (x < p.Rw) return p.Rs + x;
+    return x - p.Rw;
   }
   function copy(val, W, H, edgeClose) {
     const p = panels(W, H, edgeClose), data = new Int8Array(p.C * p.H);

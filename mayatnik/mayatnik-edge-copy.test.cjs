@@ -46,6 +46,14 @@ test('2N−1: mirrorDown gives a full rhombus below, bit for bit', () => {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) assert.equal(c.data[y * W + x], val[(H - 1 - y) * W + x]);
 });
 
+test('4N−1: right edge stands left, left edge stands right', () => {
+  const H = 10, W = 4 * H - 1, val = fieldValue(W, H), c = EC.copy(val, W, H, true), p = c.panels;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < p.Rw; x++) assert.equal(c.data[y * c.width + x], val[y * W + p.Rs + x]);
+    for (let x = 0; x < p.Lw; x++) assert.equal(c.data[y * c.width + p.Rw + x], val[y * W + x]);
+  }
+});
+
 test('edge copy matches cone-built field bit-for-bit', () => {
   const H = 32, W = 4 * H - 1, f = MAYATNIK.field(W, H, 'empty', (W - 1) / 2);
   for (let k = 0; k < 24; k++) MAYATNIK.cone(f, (W - 1) / 2 + (k % 2 ? 1 : -1) * Math.ceil(k / 2), H);
