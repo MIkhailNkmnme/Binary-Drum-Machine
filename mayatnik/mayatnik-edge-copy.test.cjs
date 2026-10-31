@@ -1,6 +1,8 @@
 'use strict';
 const assert = require('node:assert/strict');
 const test = require('node:test');
+const fs = require('node:fs');
+const path = require('node:path');
 const EC = require('./mayatnik-edge-copy.js');
 const MAYATNIK = require('./mayatnik-core.js');
 
@@ -64,4 +66,20 @@ test('edge copy matches cone-built field bit-for-bit', () => {
       assert.equal(c.data[y * c.width + x], f.val[y * W + sx]);
     }
   }
+});
+
+test('«Ромбы» в «Краях»: низ — две крайние половинки, а не квадратные биты', () => {
+  const html = fs.readFileSync(path.join(__dirname, 'Zerkalius-mayatnik.html'), 'utf8');
+  const start = html.indexOf('function drawEdgeRhomb');
+  assert.ok(start > 0, 'drawEdgeRhomb найден');
+  const fn = html.slice(start, html.indexOf('function edgeBelowFieldPoint'));
+  assert.match(fn, /const rhombus = rombP\(\) >= 0 && rombP\(\) < 3;/, 'вид «Ромбы» распознаётся');
+  const rhombusAt = fn.indexOf('if (rhombus) {');
+  const flatAt = fn.indexOf('MayatnikEdgeCopy.copy(f.val');
+  assert.ok(rhombusAt > 0, 'ромбовая ветка есть');
+  assert.ok(flatAt > rhombusAt, 'ромбовая ветка идёт раньше плоской');
+  assert.match(fn, /strip\(src\.width - p\.Rw \* K/, 'правый край берётся справа');
+  assert.match(fn, /strip\(0, p\.Lw \* K/, 'левый край берётся слева');
+  assert.match(fn, /cx\.scale\(1, -1\)/, 'копии краёв отражены вниз');
+  assert.doesNotMatch(fn.slice(rhombusAt, flatAt), /lineTo|rombCell/, 'ромбовая ветка не рисует сама, а берёт готовый кадр');
 });
