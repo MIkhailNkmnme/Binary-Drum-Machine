@@ -11,12 +11,12 @@
   const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({ochkiHalf:'Полуинверсия',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({ochkiHalf:'Полуинверсия',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);if(!e)return null;
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
       nameNow: () => id === 'bPlay' ? (e.getAttribute('aria-pressed') === 'true' ? 'Пауза' : 'Анимация')
-        : id === 'bTemplatePaint'||id === 'bGifScale' ? e.textContent : id === 'bAnimHl'||id === 'bBlackMirror' ? e.textContent.replace(/^Зеркало:\s*/, 'Зерк. ').replace(/^Аниматрица:\s*/, 'Аним. ') : id === 'bStep' ? e.textContent.trim() : id === 'zSnap' ? 'Кратный ×' + (e.dataset.base || 2) : name(e),
+        : id === 'bTemplatePaint'||id === 'bGifScale'||id === 'edgeWidthCycle' ? e.textContent : id === 'bAnimHl'||id === 'bBlackMirror' ? e.textContent.replace(/^Зеркало:\s*/, 'Зерк. ').replace(/^Аниматрица:\s*/, 'Аним. ') : id === 'bStep' ? e.textContent.trim() : id === 'zSnap' ? 'Кратный ×' + (e.dataset.base || 2) : name(e),
       on: () => e.matches('[aria-pressed="true"],.on'), disabled: () => e.disabled,
       click: () => e.click(), src: id };
   };
@@ -119,6 +119,16 @@
   for(const group of groups)group.items=group.items.filter(Boolean);
   { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр' && it.name !== 'Анимация' && it.name !== 'Кадр, с'); const fr = g0.items.find(it => it.name === 'Кадр'); if (fr) delete fr.thumb; }   // v0.339: бегунок кадра — линия, плей — своей кнопкой в середине   // v0.332: «Хорр» — в нижней полосе   // v0.395: «удали дубли» — «Анимация» и «Кадр, с» есть в нижней полосе (×N | время)
   groups.push({id:'horr',title:'Хорр',color:'#73e4a5',items:[]});
+  groups.push({id:'edge',title:'Край',color:'#7cbcff',items:[
+    button('edgeWrapTop','field'),
+    button('edgeWidthCycle','grid4'),
+    button('edgeMarkTop','eye'),
+    button('edgeEndsTop','grid4'),
+    button('edgeEndsMinus','minus'),
+    button('edgeEndsPlus','plus'),
+    button('edgeRhombTop','tri'),
+    button('edgeCloseTop','corners')
+  ]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
   const railSourceButtons=new Map(),manualLegacyCells=new Map();
   {const group=rail.el.querySelector('.gz-group[data-id="mirrors"]');if(group)manualLegacyCells.set('mirrors',[...group.querySelectorAll('.gz-soty > .gz-hx')]);}
