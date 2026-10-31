@@ -200,12 +200,16 @@
       const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span');buildLabel.className='may-frame-type';if(vl){vl.classList.add('may-frame-value');cell.after(vl);vl.before(buildLabel);}
       const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),b=bar.getBoundingClientRect();
         const x=(t.left+t.width/2-b.left-bar.clientLeft)+'px',y=(t.bottom-b.top-bar.clientTop)+'px';if(vl.style.left!==x)vl.style.left=x;if(vl.style.top!==y)vl.style.top=y;
-        const type=$('frame').dataset.buildType||'Маятник';if(buildLabel.textContent!==type)buildLabel.textContent=type;
+        let type=$('frame').dataset.buildType||'Маятник';   // v0.717: режимы края — в подписи над кадром
+        if($('edgeWrapTop')?.getAttribute('aria-pressed')==='true')type+=' · Перескок';
+        if($('edgeEndsTop')?.getAttribute('aria-pressed')==='true')type+=' · Края';
+        if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
+        if(buildLabel.textContent!==type)buildLabel.textContent=type;
         const anchor=parseFloat(x)-vl.offsetWidth/2-6,room=b.left+bar.clientLeft+anchor-4,below=room<48;
         const left=(below?4-b.left-bar.clientLeft:anchor)+'px',width=Math.max(1,Math.min(300,below?innerWidth-8:room))+'px',transform=below?'none':'';
         if(buildLabel.style.left!==left)buildLabel.style.left=left;if(buildLabel.style.maxWidth!==width)buildLabel.style.maxWidth=width;if(buildLabel.style.transform!==transform)buildLabel.style.transform=transform;
         const top=Math.max(4-b.top-bar.clientTop,Math.min(parseFloat(y)+(below?14:0),innerHeight-b.top-bar.clientTop-buildLabel.offsetHeight-4))+'px';if(buildLabel.style.top!==top)buildLabel.style.top=top;};
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type']});
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
