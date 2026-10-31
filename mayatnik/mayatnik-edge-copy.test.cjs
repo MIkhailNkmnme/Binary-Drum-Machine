@@ -20,10 +20,9 @@ for (const f of [2, 4, 6, 8]) {
       assert.equal(c.width, c.panels.Lw + c.panels.Rw);
       assert.ok(c.panels.Lw > 0 && c.panels.Rw > 0);
       for (let y = 0; y < H; y++) {
-        const sy = H - 1 - y;
         for (let x = 0; x < c.width; x++) {
           const sx = EC.srcColumn(c.panels, x);
-          assert.equal(c.data[y * c.width + x], val[sy * W + sx], `bit mismatch f=${f} close=${edgeClose} x=${x} y=${y}`);
+          assert.equal(c.data[y * c.width + x], val[y * W + sx], `bit mismatch f=${f} close=${edgeClose} x=${x} y=${y}`);
         }
       }
     }
@@ -48,7 +47,7 @@ test('edge copy matches cone-built field bit-for-bit', () => {
     const c = EC.copy(f.val, W, H, edgeClose);
     for (let y = 0; y < H; y++) for (let x = 0; x < c.width; x++) {
       const sx = EC.srcColumn(c.panels, x);
-      assert.equal(c.data[y * c.width + x], f.val[(H - 1 - y) * W + sx]);
+      assert.equal(c.data[y * c.width + x], f.val[y * W + sx]);
     }
   }
 });

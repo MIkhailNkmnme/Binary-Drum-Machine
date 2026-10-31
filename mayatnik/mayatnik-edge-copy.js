@@ -22,8 +22,7 @@
   function copy(val, W, H, edgeClose) {
     const p = panels(W, H, edgeClose), data = new Int8Array(p.C * p.H);
     for (let y = 0; y < p.H; y++) {
-      const sy = p.H - 1 - y;
-      for (let x = 0; x < p.C; x++) data[y * p.C + x] = val[sy * p.W + srcColumn(p, x)];
+      for (let x = 0; x < p.C; x++) data[y * p.C + x] = val[y * p.W + srcColumn(p, x)];
     }
     return { width: p.C, height: p.H, data, panels: p };
   }
