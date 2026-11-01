@@ -1065,21 +1065,21 @@ body.may-mobile-menu #mayMobileBar #mayRhombs .may-rh{white-space:normal;font-si
 body.may-mobile-menu #mayMobileBar #mayRhombs .may-rh::after{inset:0;transform:none;border:0;background:transparent}
 body.may-mobile-menu #mayButtonSearchTrigger{order:-4}
 /* Search, information and help retain their original live buttons inside View. */
-#paintTools #mayInfoDiamond.may-view-utilities{--c:#7cbcff;display:flex!important;position:relative;flex:none;width:120px!important;min-width:120px;max-width:120px;height:24px!important;padding:0!important;gap:0!important;background:#1b2430!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);isolation:isolate}
-#paintTools #mayInfoDiamond.may-view-utilities::before,#paintTools #mayInfoDiamond.may-view-utilities::after{display:none!important}
-#paintTools #mayInfoDiamond.may-view-utilities>button{position:relative!important;inset:auto!important;order:initial!important;display:flex!important;align-items:center;justify-content:center;flex:0 0 40px!important;width:40px!important;min-width:40px!important;max-width:40px!important;height:24px!important;min-height:24px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;color:var(--c)!important;font:13px/24px 'Segoe UI',sans-serif!important;text-shadow:none!important;box-shadow:none!important;outline:none;overflow:visible;cursor:pointer}
-#paintTools #mayInfoDiamond.may-view-utilities>button:nth-child(1){clip-path:polygon(12px 0,44px 0,36px 24px,12px 24px,0 12px)!important}
-#paintTools #mayInfoDiamond.may-view-utilities>button:nth-child(2){clip-path:polygon(4px 0,44px 0,36px 24px,-4px 24px)!important}
-#paintTools #mayInfoDiamond.may-view-utilities>button:nth-child(3){clip-path:polygon(4px 0,28px 0,40px 12px,28px 24px,-4px 24px)!important}
-#paintTools #mayInfoDiamond.may-view-utilities>button>svg.may-utility-frame{position:absolute;inset:0;width:40px;height:24px;overflow:visible;fill:none;stroke:none;pointer-events:none}
-#paintTools #mayInfoDiamond.may-view-utilities .may-utility-face{fill:#1b2430;stroke:#394657;stroke-width:1px}
-#paintTools #mayInfoDiamond.may-view-utilities .may-utility-side{fill:none;stroke:var(--c);stroke-width:1px;display:none}
-#paintTools #mayInfoDiamond.may-view-utilities>button:is(:hover,:focus-visible) .may-utility-side{display:block}
-#paintTools #mayInfoDiamond.may-view-utilities>button:is([aria-pressed=true],[aria-expanded=true]) .may-utility-face{stroke:var(--c);stroke-width:2px}
-#paintTools #mayInfoDiamond.may-view-utilities>button:is(:hover,:focus-visible,:active,[aria-pressed=true],[aria-expanded=true]){z-index:1}
-#paintTools #mayInfoDiamond.may-view-utilities>button:active .may-utility-face{stroke:var(--c);stroke-width:3px}
-#paintTools #mayInfoDiamond.may-view-utilities>button>span{transform:none;position:relative;pointer-events:none}
-#paintTools #mayInfoDiamond.may-view-utilities>button>svg.may-utility-loupe{position:relative;inset:auto;width:24px;height:24px;fill:none;stroke:var(--c);stroke-width:1.5px;pointer-events:none}
+#mayInfoDiamond.may-view-utilities{--c:#7cbcff;display:flex!important;position:relative;flex:none;width:120px!important;min-width:120px;max-width:120px;height:24px!important;padding:0!important;gap:0!important;background:#1b2430!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);isolation:isolate}
+#mayInfoDiamond.may-view-utilities::before,#mayInfoDiamond.may-view-utilities::after{display:none!important}
+#mayInfoDiamond.may-view-utilities>button{position:relative!important;inset:auto!important;order:initial!important;display:flex!important;align-items:center;justify-content:center;flex:0 0 40px!important;width:40px!important;min-width:40px!important;max-width:40px!important;height:24px!important;min-height:24px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;color:var(--c)!important;font:13px/24px 'Segoe UI',sans-serif!important;text-shadow:none!important;box-shadow:none!important;outline:none;overflow:visible;cursor:pointer}
+#mayInfoDiamond.may-view-utilities>button:nth-child(1){clip-path:polygon(12px 0,44px 0,36px 24px,12px 24px,0 12px)!important}
+#mayInfoDiamond.may-view-utilities>button:nth-child(2){clip-path:polygon(4px 0,44px 0,36px 24px,-4px 24px)!important}
+#mayInfoDiamond.may-view-utilities>button:nth-child(3){clip-path:polygon(4px 0,28px 0,40px 12px,28px 24px,-4px 24px)!important}
+#mayInfoDiamond.may-view-utilities>button>svg.may-utility-frame{position:absolute;inset:0;width:40px;height:24px;overflow:visible;fill:none;stroke:none;pointer-events:none}
+#mayInfoDiamond.may-view-utilities .may-utility-face{fill:#1b2430;stroke:#394657;stroke-width:1px}
+#mayInfoDiamond.may-view-utilities .may-utility-side{fill:none;stroke:var(--c);stroke-width:1px;display:none}
+#mayInfoDiamond.may-view-utilities>button:is(:hover,:focus-visible) .may-utility-side{display:block}
+#mayInfoDiamond.may-view-utilities>button:is([aria-pressed=true],[aria-expanded=true]) .may-utility-face{stroke:var(--c);stroke-width:2px}
+#mayInfoDiamond.may-view-utilities>button:is(:hover,:focus-visible,:active,[aria-pressed=true],[aria-expanded=true]){z-index:1}
+#mayInfoDiamond.may-view-utilities>button:active .may-utility-face{stroke:var(--c);stroke-width:3px}
+#mayInfoDiamond.may-view-utilities>button>span{transform:none;position:relative;pointer-events:none}
+#mayInfoDiamond.may-view-utilities>button>svg.may-utility-loupe{position:relative;inset:auto;width:24px;height:24px;fill:none;stroke:var(--c);stroke-width:1.5px;pointer-events:none}
 #paintTools #mayCorner{display:none!important}
 .gz-ladder .may-view-actions{display:flex;flex-direction:column;gap:2px;width:120px;min-width:120px;align-self:start}
 .gz-ladder .may-view-actions>.gz-hx{flex:none;width:120px;height:24px;margin:0!important}
