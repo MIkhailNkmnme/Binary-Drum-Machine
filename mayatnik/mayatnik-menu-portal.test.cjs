@@ -98,12 +98,12 @@ test('standard dropdown keeps its semantic owner heading through hover, focus, s
  f.column.rect={left:650,right:770,width:120,top:50};f.owner.rect=f.column.rect;f.ctx.syncListButton(f.owner);
  assert.equal(f.owner.dataset.listSide,'left');const label=f.owner.querySelector('.may-list-label');assert.equal(label.textContent,'Шрифт');
  f.reopen();const list=f.list,rows=list.querySelectorAll(':scope > .gz-hx'),heading=list.querySelector('.may-list-heading');
- assert.equal(heading.textContent,'Шрифт');assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(3,24px)');
- assert.ok(rows.every(row=>row.classList.contains('may-option-button')));assert.equal(list.children.at(-1),heading);
+ assert.equal(heading,null);assert.equal(list.style.left,'524px');assert.equal(list.style.width,'120px');assert.equal(list.style.widthPriority,'important');assert.equal(list.style.gridTemplateRows,'repeat(3,24px)');
+ assert.ok(rows.every(row=>row.classList.contains('may-option-button')));
  rows[2].emit('pointerenter');rows[2].emit('focusin');assert.equal(label.textContent,'Шрифт');f.ctx.sync();assert.equal(label.textContent,'Шрифт');rows[2].emit('pointerleave');assert.equal(label.textContent,'Шрифт');
  for(let i=0;i<3;i++){selected=i;f.ctx.sync();assert.equal(label.textContent,'Шрифт');assert.equal(f.owner.getAttribute('aria-label'),'Шрифт: '+['A','B','C'][i]);assert.deepEqual(rows.map(n=>n.classList.contains('gz-on')),[0,1,2].map(j=>i===j));}
  rows[1].emit('click');assert.equal(selected,1);assert.equal(label.textContent,'Шрифт');rows[0].emit('pointerenter');assert.equal(label.textContent,'Шрифт');f.ctx.sharedClose();assert.equal(label.textContent,'Шрифт');assert.equal(f.owner.dataset.listTitle,'Шрифт');
- assert.equal(list.children.filter(n=>n.classList.contains('may-list-heading')).length,1);assert.equal(list.children.length,4);
+ assert.equal(list.children.filter(n=>n.classList.contains('may-list-heading')).length,0);assert.equal(list.children.length,3);
 });
 
 test('toolbar lists have semantic names and explicit native/mirror/action titles survive dynamic source captions',()=>{
@@ -113,7 +113,7 @@ test('toolbar lists have semantic names and explicit native/mirror/action titles
   assert.equal(f.owner.dataset.listTitle,title,id);assert.equal(f.owner.querySelector('.may-list-label').textContent,title,id);assert.equal(f.owner.getAttribute('aria-label'),title+': Другая маска',id);
  }
  for(const title of ['Область','Порядок','Метод','Что отражать','Ось','Сторона','Операция','Результат','Рзмер\\счёт','Сброс цветов']){
-  const f=fixture(true);f.owner.dataset.listTitle=title;const selected=new Node('span');selected.className='gz-nm';selected.textContent='Тотем';f.owner.append(selected);f.ctx.nameListButton(f.owner);f.bind(f.owner,{options:()=>[{name:'Маска',on:true}]});f.ctx.syncListButton(f.owner);assert.equal(f.owner.querySelector('.may-list-label').textContent,title);f.reopen();assert.equal(f.list.querySelector('.may-list-heading').textContent,title);
+  const f=fixture(true);f.owner.dataset.listTitle=title;const selected=new Node('span');selected.className='gz-nm';selected.textContent='Тотем';f.owner.append(selected);f.ctx.nameListButton(f.owner);f.bind(f.owner,{options:()=>[{name:'Маска',on:true}]});f.ctx.syncListButton(f.owner);assert.equal(f.owner.querySelector('.may-list-label').textContent,title);f.reopen();assert.equal(f.list.querySelector('.may-list-heading'),null);
  }
 });
 

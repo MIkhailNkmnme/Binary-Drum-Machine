@@ -88,5 +88,6 @@ test('«Вспышка» в «Крае» стоит там же, куда вст
   assert.ok(start > 0, 'flashDraw найден');
   const fn = html.slice(start, html.indexOf('function rowLabDraw'));
   assert.match(fn, /edgeEdge=st\.edgeWrap&&!compareOn\(\)&&!st\.sequenceSourceOn/, 'край распознаётся как при постановке вершины');
-  assert.match(fn, /edgeEdge\?edgeCol\(geo\.anchor\+x\.p\):geo\.anchor\+x\.p/, 'столбец вспышки проходит тот же edgeCol');
+  assert.match(fn, /edgeC=edgeEdge\?edgeCol\(raw\):raw/, 'столбец вспышки проходит тот же edgeCol');
+  assert.match(fn, /edgeC!==raw\?0xd05bff:0x5bd3ff/, 'у завёрнутой вершины вспышка розовая, у обычной — золотая');
 });

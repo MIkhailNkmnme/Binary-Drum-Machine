@@ -1867,9 +1867,9 @@
     let label=b.querySelector(':scope > .may-list-label');if(!label){label=document.createElement('span');label.className='may-list-label';label.textContent=title;b.append(label);}return title;
   }
   function decorateListHeading(list,owner){
-    const title=owner.dataset.listTitle||nameListButton(owner);let heading=list.querySelector(':scope > .may-list-heading');
-    if(!heading){heading=document.createElement('div');heading.className='may-list-heading';heading.setAttribute('role','heading');heading.setAttribute('aria-level','3');list.append(heading);}
-    if(heading.textContent!==title)heading.textContent=title;list.classList.add('may-titled-list');list.classList.toggle('may-area-options',title==='Область');list.setAttribute('aria-label',title);
+    // v0.726: заголовок списка убран — список стоит у своей кнопки, подпись у неё уже есть
+    const title=owner.dataset.listTitle||nameListButton(owner);const heading=list.querySelector(':scope > .may-list-heading');if(heading)heading.remove();
+    list.classList.remove('may-titled-list');list.classList.remove('may-area-options');list.setAttribute('aria-label',title);
   }
   function listLayout(owner,count){
     const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
