@@ -89,9 +89,10 @@ test('«Вспышка» в «Крае» стоит там же, куда вст
   const fn = html.slice(start, html.indexOf('function rowLabDraw'));
   assert.match(fn, /edgeEdge=st\.edgeWrap&&!compareOn\(\)&&!st\.sequenceSourceOn/, 'край распознаётся как при постановке вершины');
   assert.match(fn, /edgeC=edgeEdge\?edgeCol\(raw\):raw/, 'столбец вспышки проходит тот же edgeCol');
-  assert.match(fn, /base=\(edgeC-geo\.anchor\)<0\?0x5bd3ff:0xffd35b/, 'цвет по стороне, где вершина стоит после заворота');
+  assert.match(fn, /side=\(edgeC-geo\.anchor\)<0\?1:2,base=side===1\?0x5bd3ff:0xffd35b/, 'цвет по стороне, где вершина стоит после заворота');
   assert.match(fn, /overA=0xff6bb0/, 'наложение вспышек — фиолетовое #b06bff');
-  assert.match(fn, /if\(had<=al\)\{D\[q\]=\(had\?over:col\)/, 'в наложении рисуется фиолетовый, в том числе при равном возрасте');
+  assert.match(fn, /mix=had>0&&SIDE\[q\]!==side/, 'фиолетовое только пересечение разных сторон');
+  assert.match(fn, /D\[q\]=\(mix\?over:col\)/, 'в пересечении сторон рисуется фиолетовый');
   assert.match(fn, /FLASH_MS=1300/, 'вспышка держится 1,3 с');
   assert.match(fn, /OVER_MS=Math\.max\(FLASH_MS,2000\)/, 'наложение горит 2 с');
   assert.match(fn, /o\.over\.set\(q,now\)/, 'клетки наложения запоминаются с временем');
