@@ -141,7 +141,7 @@
     button('edgeRhombTop','tri'),
     button('edgeCloseTop','corners')
   ]});
-  const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
+  const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
   const railSourceButtons=new Map(),manualLegacyCells=new Map();
   {const group=rail.el.querySelector('.gz-group[data-id="mirrors"]');if(group)manualLegacyCells.set('mirrors',[...group.querySelectorAll('.gz-soty > .gz-hx')]);}
   // v0.439: «Верх / Вниз» — одна стандартная кнопка, два независимых включателя.
@@ -634,7 +634,7 @@
   // v0.054: значки разбиты на группы с промежутками, над каждой группой — короткая подпись.
   const groupOf = {}; const ptGroup = name => { const g = document.createElement('div'); g.className = 'pt-g';
     if(name==='👓 Очки')g.dataset.k=name;
-    const l = ZerkGroupHeader.create({title:name==='👓 Очки'?'👓 Поиск':name,className:'pt-l',titleClass:'may-group-title',pinClass:'pt-pin',iconClass:'pt-ico'}).head; const row = document.createElement('div'); row.className = 'pt-r';
+    const l = ZerkGroupHeader.create({title:name==='👓 Очки'?'👓 Поиск':name,dualPins:true,className:'pt-l',titleClass:'may-group-title',pinClass:'pt-pin',iconClass:'pt-ico'}).head; const row = document.createElement('div'); row.className = 'pt-r';
     g.append(l, row); tools.append(g); return row; };
   // v0.478: одна «Раскраска» — группа paint в общей рейке; её исходные контролы и обработчики сохранены.
   const gEdit = ptGroup('Очистка'), gAxis = ptGroup('Оси'),gHistory=ptGroup('Правка'), gMeet = ptGroup('Точка Ось');   // v0.318: «отдельная кнопка Точка Ось меню — туда все её кнопки и заливки»

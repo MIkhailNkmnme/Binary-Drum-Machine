@@ -224,7 +224,7 @@
       const head=g.querySelector(':scope > .pt-l,:scope > .gz-head'),open=g.matches('.pt-open,.gz-open')&&!g.hasAttribute('data-library-folded');if(!head)continue;
       if(g.classList.contains('pt-btn'))continue;
       head.classList.toggle('may-standard-open',open);if(!open)head.querySelector('.may-standard-roof')?.remove();
-      const pin=head.querySelector('.pt-pin,.gz-pin');if(pin){keyboard(pin);set(pin,'aria-label','Закрепить группу');set(pin,'aria-pressed',String(g.matches('.pt-pinned,.gz-pinned')));}
+      for(const pin of head.querySelectorAll('.pt-pin,.gz-pin')){keyboard(pin);const pinned=g.matches('.pt-pinned,.gz-pinned');set(pin,'aria-label',pinned?'Открепить группу':'Закрепить группу');set(pin,'aria-pressed',String(pinned));}
       if(!head.dataset.mayMiniKeys){head.dataset.mayMiniKeys='1';let last=0;head.addEventListener('keydown',e=>{if(e.target===head&&(e.key==='ContextMenu'||e.shiftKey&&e.key==='F10')){e.preventDefault();e.stopPropagation();last=performance.now();head.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,button:2}));}});head.addEventListener('contextmenu',e=>{if(e.button!==2&&performance.now()-last<500)e.stopImmediatePropagation();},true);}
       const host=g.querySelector(':scope > .pt-r,:scope > .may-rail-list')||g;
       if(open){
