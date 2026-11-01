@@ -603,12 +603,7 @@
   document.body.classList.add('mayatnik-menu-ready');
   document.documentElement.classList.remove('may-boot');   // v0.162: меню собрано — показать
   const help = $('mayHelp'), menu = $('mayMenu');
-  const about = $('mayAboutDialog');
-  $('mayAbout').onclick = () => about.showModal();
-  about.addEventListener('click', e => { if (e.target === about) {
-    const r = about.getBoundingClientRect();
-    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) about.close();
-  } });
+  $('mayAbout').onclick = () => window.open('instruction/index.html','_blank','noopener');
   help.onclick = () => {
     const on = help.getAttribute('aria-pressed') !== 'true';
     help.setAttribute('aria-pressed', String(on)); document.documentElement.classList.toggle('gz-help', on);
@@ -1340,8 +1335,8 @@
   } catch (_) {}
   // Search data is displayed in the library table; retained source IDs serve legacy callbacks.
   { const box=$('ochkiBox');if(box){source.append(box);box.hidden=true;box.style.setProperty('display','none','important');} }
-  // v0.182: «Сведения — тоже кнопкой, как Очки»: выпадающая группа «ⓘ Сведения» в полосе; панель (#mayatnikInfoPanel) кладётся в неё ниже
-  const infoRow = ptGroup('ⓘ Сведения'); infoRow.parentElement.classList.add('pt-info'); infoRow.parentElement.style.setProperty('--c', '#9fb4d8');
+  // Status IDs remain available to calculation callbacks without a visible menu group.
+  const infoRow=document.createElement('div');infoRow.hidden=true;infoRow.style.setProperty('display','none','important');document.body.append(infoRow);
   { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
   // v0.179: «Видео (Запись, GIF) — ромбами как в хабе, справа по середине высоты, и Дзен также»: столбик ромбов у правого края,
   // виден и в дзене (там «Дзен» — «Меню»); группы «Видео» в полосе и «Дзен» в углу шапки больше нет — ромбы жмут прежние кнопки
@@ -1426,7 +1421,6 @@
       combo.dataset.miShort='Рзмер\\счёт';combo.dataset.listTitle='Рзмер\\счёт';combo.querySelector('.gz-nm').dataset.userLabel='';
       ZerkGrozd.listHover(combo,{options:()=>[{key:'size',name:'Размеры',on:!!window.mayLineMeasures?.get(),pick:()=>size.click()},{key:'count',name:'Счёт',on:count.classList.contains('on'),pick:()=>count.click()}],after:()=>{rail.refresh();placeTools();},color:()=>getComputedStyle(combo).getPropertyValue('--c').trim()||'#b48cff'});
     }
-    const instruction=document.createElement('a');instruction.href='instruction/index.html';instruction.target='_blank';instruction.rel='noopener';instruction.className='pt-b gz-hx';instruction.dataset.n='instruction';instruction.title='Инструкция: оси, зеркала, поворот холста и выделенного фрагмента';instruction.innerHTML='<i class="gz-ic">?</i><span class="gz-nm">Инструкция</span>';infoRow.append(instruction);
     addEventListener('may-reset-complete',()=>{rail.refresh();placeTools();});
   }
   // v0.630: five independent buttons open the original controls beside the main group.
@@ -1525,8 +1519,8 @@
   }
   window.mayHorrSections = mountHorrSections(document.querySelector('.gz-group[data-id="horr"]'), { after: () => { rail.refresh(); placeTools(); }, openGroup: () => rail.open('horr') });
   function mountViewUtilities(view,doc=document){
-    let row=doc.getElementById('mayInfoDiamond');if(!row){row=doc.createElement('div');row.id='mayInfoDiamond';row.className='gz-hx gz-pair gz-split gz-split3 may-view-utilities';row.dataset.noMini='';row.setAttribute('role','group');row.setAttribute('aria-label','Поиск кнопок, сведения и подсказки');(view.querySelector('.pt-colv')||view).append(row);}
-    for(const [i,id,label,title]of [[0,'mayButtonSearchTrigger','⌕','Найти кнопку по названию или подсказке'],[1,'mayAbout','i','Что такое маятник'],[2,'mayHelp','?','Подсказки к кнопкам и координаты']]){
+    let row=doc.getElementById('mayInfoDiamond');if(!row){row=doc.createElement('div');row.id='mayInfoDiamond';row.className='gz-hx gz-pair gz-split gz-split3 may-view-utilities';row.dataset.noMini='';row.setAttribute('role','group');row.setAttribute('aria-label','Поиск кнопок, инструкция и подсказки');(view.querySelector('.pt-colv')||view).append(row);}
+    for(const [i,id,label,title]of [[0,'mayButtonSearchTrigger','⌕','Найти кнопку по названию или подсказке'],[1,'mayAbout','i','Инструкция по Маятнику'],[2,'mayHelp','?','Подсказки к кнопкам и координаты']]){
       const b=doc.getElementById(id);if(!b)continue;if(b.parentElement!==row)row.insertBefore(b,[...row.children].find(n=>Number(n.dataset.utilityPart)>i)||null);
       b.style.removeProperty('left');b.style.removeProperty('top');if(b.dataset.utilityPart===String(i))continue;b.dataset.utilityPart=String(i);b.className='gz-half gz-h'+i;b.title=title;b.setAttribute('aria-label',title);
       const face=i===0?'M12 0H44L36 24H12L0 12Z':i===2?'M4 0H28L40 12 28 24H-4Z':'M4 0H44L36 24H-4Z',sides=i===0?'M12 0L0 12 12 24':i===2?'M28 0L40 12 28 24':'M4 0L-4 24M44 0L36 24';
@@ -1703,13 +1697,7 @@
       const framePlace=(refresh=true)=>{
         if(narrow.matches)return;
         const T=tools.getBoundingClientRect(),B=frameBar.getBoundingClientRect(),C=frameBar.querySelector(':scope > .gz-sl').getBoundingClientRect();
-        let cx=window.mayAxisX?.();const library=$('mayatnikTemplatePanel');
-        if(document.body.classList.contains('may-template-panel-open')&&library&&!library.hidden){
-          const field=$('wrap').getBoundingClientRect(),cover=library.getBoundingClientRect();let left=Math.max(0,field.left),right=Math.min(innerWidth,field.right);
-          if(cover.top<field.bottom&&cover.bottom>field.top){if(cover.right>=right&&cover.left<right)right=Math.max(left,cover.left);else if(cover.left<=left&&cover.right>left)left=Math.min(right,cover.right);}
-          if(right>left)cx=(left+right)/2;
-        }
-        const offset=C.left+C.width/2-B.left,x=Math.round(tools.scrollLeft+(Number.isFinite(cx)?cx:innerWidth/2)-T.left-offset)+'px';
+        const offset=C.left+C.width/2-B.left,x=Math.round(tools.scrollLeft+innerWidth/2-T.left-offset)+'px';
         if(frameBar.style.left!==x){frameBar.style.left=x;if(refresh&&!framePlaceRaf)framePlaceRaf=requestAnimationFrame(()=>{framePlaceRaf=0;relayout();});}
       };
       window.mayFramePlace=framePlace;
