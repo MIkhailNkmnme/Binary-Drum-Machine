@@ -74,8 +74,8 @@
   function nearest(list,x,y,preferred){let best=null,score=Infinity;for(const p of list){const d=Math.hypot(p.x+WIDTH/2-x,p.y+HEIGHT/2-y)+(preferred&&p.edge!==preferred?1e5:0);if(d<score){score=d;best=p;}}return best;}
   function read(value){const result={};if(!value||typeof value!=='object'||Array.isArray(value))return result;
     for(const [key,p] of Object.entries(value))if(p&&['top','bottom','left','right'].includes(p.edge)&&Number.isInteger(p.index)&&p.index>=0)result[key]={edge:p.edge,index:p.index};return result;}
-  function stackPositions(items,start,end,scroll=0){
-    let cursor=start,last=start;const rows=[...items].sort((a,b)=>a.index-b.index).map(item=>{const height=Math.max(HEIGHT,item.height),top=Math.max(item.y,cursor);cursor=top+Math.ceil((height+2)/DY)*DY;last=top+height+2;return {...item,top,height};});
+  function stackPositions(items,start,end,scroll=0,compact=false){
+    let cursor=start,last=start;const rows=[...items].sort((a,b)=>a.index-b.index).map(item=>{const height=Math.max(HEIGHT,item.height),top=compact?cursor:Math.max(item.y,cursor);cursor=top+Math.ceil((height+2)/DY)*DY;last=top+height+2;return {...item,top,height};});
     const maxScroll=Math.max(0,last-end),offset=Math.max(0,Math.min(maxScroll,scroll));
     return {rows:rows.map(row=>({...row,screenY:row.top-offset})),height:last-start,maxScroll,offset};
   }
@@ -106,10 +106,10 @@
       const B=bounds(),end=B.sideBottom;
       for(const edge of ['left','right']){
         const side=sides[edge],items=[...placed].filter(([g,p])=>p.edge===edge&&heads.get(g).getClientRects().length).map(([g,p])=>({g,index:p.index,y:p.y,height:g.getBoundingClientRect().height}));
-        const start=items.length?Math.max(B.sideY,Math.min(...items.map(item=>item.y))):B.sideY,height=Math.max(1,end-start);
+        const start=sideColumnsLeft?B.sideY:items.length?Math.max(B.sideY,Math.min(...items.map(item=>item.y))):B.sideY,height=Math.max(1,end-start);
         const columnX=edge==='left'?B.left:sideColumnsLeft?B.left+DX:B.right-WIDTH;
         side.start=start;side.end=end;side.left=columnX-2;side.right=side.left+WIDTH+4;side.groups=items.map(item=>item.g);
-        const stack=stackPositions(items,start,end,side.bar.scrollTop||0),signature=JSON.stringify([start,end,B.left,B.right,stack.offset,stack.rows.map(r=>[idOf(r.g),r.top,r.height])]);
+        const stack=stackPositions(items,start,end,side.bar.scrollTop||0,sideColumnsLeft),signature=JSON.stringify([start,end,B.left,B.right,stack.offset,stack.rows.map(r=>[idOf(r.g),r.top,r.height])]);
         side.max=stack.maxScroll;side.hitEnd=Math.min(end,start+stack.height);if(signature===side.signature)continue;side.signature=signature;
         setStyle(side.bar,'display',stack.maxScroll?'block':'none');setStyle(side.bar,'top',start+'px');setStyle(side.bar,'height',height+'px');setStyle(side.bar,'left',(sideColumnsLeft||edge==='left'?columnX+WIDTH+2:columnX-16)+'px');setStyle(side.space,'height',Math.max(height,stack.height)+'px');
         if(side.bar.scrollTop!==stack.offset)side.bar.scrollTop=stack.offset;
