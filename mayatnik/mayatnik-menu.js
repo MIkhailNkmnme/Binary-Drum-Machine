@@ -216,7 +216,7 @@
       window.mayPlayPlace = playPlace;
       // v0.442: число сразу под линией бегунка; вне шестиугольника, чтобы его не обрезало.
       cell.classList.add('may-rows-slider','may-frame-slider');
-      const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span'),rowsLabel=document.createElement('span'),tail=document.createElement('span');buildLabel.className='may-frame-type';rowsLabel.className='may-frame-rows';tail.className='may-frame-tail';tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');tail.setAttribute('aria-orientation','horizontal');tail.title='Тянуть пунктир, в том числе под кнопкой, — выбрать кадр';cell.parentElement.append(buildLabel,rowsLabel,tail);
+      const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span'),rowsLabel=document.createElement('span'),caption=document.createElement('span'),tail=document.createElement('span');caption.className='may-frame-caption';buildLabel.className='may-frame-type';rowsLabel.className='may-frame-rows';tail.className='may-frame-tail';tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');tail.setAttribute('aria-orientation','horizontal');tail.title='Тянуть пунктир, в том числе под кнопкой, — выбрать кадр';caption.append(buildLabel,rowsLabel);cell.parentElement.append(caption,tail);
       const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
       tail.addEventListener('pointerdown',event=>{
         const frame=$('frame');if(event.button!==0||frame.disabled)return;
@@ -243,7 +243,8 @@
         const x=Math.round(t.left+t.width/2-b.left-bar.clientLeft),y=c.bottom-b.top-bar.clientTop;
         tail.style.left=x+'px';tail.style.top=(c.top-b.top-bar.clientTop+3)+'px';tail.style.height=(c.height*1.5-3)+'px';
         for(const [key,value]of Object.entries({'aria-valuemin':$('frame').min,'aria-valuemax':$('frame').max,'aria-valuenow':$('frame').value}))if(tail.getAttribute(key)!==value)tail.setAttribute(key,value);
-        buildLabel.style.left=(x-6)+'px';buildLabel.style.top=y+'px';rowsLabel.style.left=(x+6)+'px';rowsLabel.style.top=y+'px';
+        const center=Math.round(c.left+c.width/2-b.left-bar.clientLeft);
+        caption.style.left=center+'px';caption.style.top=y+'px';
         const rows=Number($('frame').dataset.fieldRows)||Number($('rows').value)||0,width=Number($('frame').dataset.fieldWidth)||2*rows-1,factor=(width+1)/rows;
         rowsLabel.textContent=rows.toLocaleString('ru-RU')+' строк · '+([2,4,6,8].includes(factor)?factor+'N−1 = ':'ширина ')+width.toLocaleString('ru-RU');
         let type=$('frame').dataset.buildType||'Маятник';   // v0.717: режимы края — в подписи над кадром
