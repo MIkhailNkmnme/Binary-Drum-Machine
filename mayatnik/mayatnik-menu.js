@@ -1910,19 +1910,45 @@
     const options=[...$('view').options].filter(o=>!o.hidden&&!o.disabled&&['col','bits','rgbNeighbours'].includes(o.value));
     const rgbChoices=[[0,'Чёрный','#000000'],[4,'Красный','#ff0000'],[2,'Зелёный','#00ff00'],[1,'Синий','#0000ff'],[6,'Жёлтый','#ffff00'],[5,'Пурпурный','#ff00ff'],[3,'Голубой','#00ffff'],[7,'Белый','#ffffff']];
     const rgbHint='RGB-соседи: R — ячейка, G — слева, B — справа. Щелчок включает или снимает цветовой фильтр; пустой выбор показывает все цвета.';
-    const shortCount=n=>n>=1e6?(n/1e6).toLocaleString('ru-RU',{maximumFractionDigits:1})+'м':n>=1e3?Math.round(n/1e3).toLocaleString('ru-RU')+'к':n.toLocaleString('ru-RU');
-     const syncRGBPalette=panel=>{panel.hidden=$('view').value!=='rgbNeighbours';const api=window.mayRGBNeighbours,counts=api?.counts?.()||[],selected=api?.filters?.()||[];for(const chip of panel.querySelectorAll('.may-rgb-choice')){const code=Number(chip.dataset.rgbCode),choice=rgbChoices.find(x=>x[0]===code),count=counts[code]||0,on=selected.includes(code),triangle=chip.querySelector('polygon');chip.setAttribute('aria-pressed',String(on));chip.title=`${choice[1]} · RGB ${code.toString(2).padStart(3,'0')} · ${count.toLocaleString('ru-RU')} клеток. ${rgbHint}`;chip.setAttribute('aria-label',`${choice[1]}, RGB ${code.toString(2).padStart(3,'0')}, ${count.toLocaleString('ru-RU')} клеток. ${rgbHint}`);chip.classList.toggle('gz-on',on);if(triangle){triangle.setAttribute('stroke',on?'#00c8ff':'#8492a6');triangle.setAttribute('stroke-width',on?'3':'1.4');triangle.setAttribute('stroke-linejoin','miter');triangle.setAttribute('vector-effect','non-scaling-stroke');triangle.setAttribute('shape-rendering',on?'crispEdges':'geometricPrecision');}const n=chip.parentElement.querySelector('.may-rgb-count');if(n)n.textContent=shortCount(count);}const bw=panel.querySelector('.may-rgb-bw');if(bw){const mode=api?.bw?.()||0;for(const option of bw.querySelectorAll('.may-rgb-bw-option')){const optionMode=Number(option.dataset.mode),on=optionMode===mode;option.setAttribute('aria-pressed',String(on));option.classList.toggle('gz-on',on);option.style.color=on?'#f5fbff':'#aebbd0';option.style.background=on?(optionMode===1?'#173451':optionMode===2?'#3a2b18':'#16415a'):'transparent';option.style.borderColor=on?(optionMode===1?'#66caff':optionMode===2?'#ffbd66':'#55c8ef'):'transparent';option.title=optionMode===1?'ЧБ: выбранные цвета белые, остальные биты чёрные.':optionMode===0?'Цвт: цветной режим RGB без чёрно-белого преобразования.':'БЧ: выбранные цвета чёрные, остальные биты белые.';}}};
+    const syncRGBPalette=panel=>{
+      panel.hidden=$('view').value!=='rgbNeighbours';
+      const api=window.mayRGBNeighbours,counts=api?.counts?.()||[],selected=api?.filters?.()||[];
+      for(const chip of panel.querySelectorAll('.may-rgb-choice')){
+        const code=Number(chip.dataset.rgbCode),choice=rgbChoices.find(x=>x[0]===code),count=counts[code]||0,on=selected.includes(code);
+        chip.setAttribute('aria-pressed',String(on));chip.classList.toggle('gz-on',on);
+        const state=on?'Выбран. ':selected.length?'Не выбран. ':'Фильтр не задан: показаны все цвета. ';
+        chip.title=`${choice[1]} · RGB ${code.toString(2).padStart(3,'0')} · ${count.toLocaleString('ru-RU')} клеток. ${state}${rgbHint}`;
+        chip.setAttribute('aria-label',chip.title);
+      }
+      const mode=api?.bw?.()||0;
+      for(const option of panel.querySelectorAll('.may-rgb-bw-option')){
+        const optionMode=Number(option.dataset.mode),on=optionMode===mode;
+        option.setAttribute('aria-pressed',String(on));option.classList.toggle('gz-on',on);
+        option.title=optionMode===1?'ЧБ: выбранные цвета белые, остальные биты чёрные.':optionMode===0?'Цвт: цветной режим RGB без чёрно-белого преобразования.':'БЧ: выбранные цвета чёрные, остальные биты белые.';
+        option.setAttribute('aria-label',option.title);
+      }
+    };
     list.querySelectorAll(':scope > .gz-hx').forEach((row,i)=>{
       const mode=row.dataset.viewMode||options[i]?.value,ids=viewPaletteSources[mode];
       if(mode==='rgbNeighbours'){
         let panel=row.nextElementSibling?.classList.contains('may-rgb-panel')?row.nextElementSibling:null;
         if(!panel){
-          panel=document.createElement('div');panel.className='may-rgb-panel may-rgb-palette';panel.dataset.noMini='';panel.setAttribute('role','group');panel.setAttribute('aria-label','Цветовые фильтры RGB');panel.title=rgbHint;panel.style.cssText='display:flex;flex-direction:column;gap:0;grid-column:1 / -1;min-width:0;height:72px;box-sizing:border-box;padding:2px;background:#10151d;border:1px solid #33445f;';
-          const actions=document.createElement('span');actions.style.cssText='display:flex;align-items:center;justify-content:flex-end;gap:5px;';panel.append(actions);
-          const bw=document.createElement('div');bw.className='may-rgb-bw';bw.setAttribute('role','group');bw.setAttribute('aria-label','Режим отображения RGB');bw.style.cssText='display:inline-flex;flex:none;overflow:hidden;border:1px solid #65758d;border-radius:4px;background:#141c28;';for(const [index,mode,label] of [[0,1,'ЧБ'],[1,0,'Цвт'],[2,2,'БЧ']]){const option=document.createElement('button');option.type='button';option.className='may-rgb-bw-option';option.dataset.mode=String(mode);option.textContent=label;option.setAttribute('aria-pressed','false');option.style.cssText=`min-width:${index===1?35:29}px;padding:2px 5px;border:0;border-right:${index<2?'1px solid #40516a':'0'};border-radius:0;background:transparent;color:#aebbd0;font:600 10px ui-monospace,Consolas,monospace;line-height:1;cursor:pointer;`;option.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();window.mayRGBNeighbours?.setBW?.(mode);syncRGBPalette(panel);});bw.append(option);}actions.append(bw);
-          const grid=document.createElement('span');grid.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:3px;row-gap:0;padding:0;';panel.append(grid);
-          for(const [index,[code,name,colour]]of rgbChoices.entries()){const inverted=index>=4,card=document.createElement('span');card.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;min-width:0;';const chip=document.createElement('button');chip.type='button';chip.className='may-view-swatch may-rgb-choice';chip.dataset.rgbCode=String(code);chip.setAttribute('aria-label',name);chip.setAttribute('aria-pressed','false');chip.style.cssText='display:block;box-sizing:border-box;width:16px;height:16px;min-width:16px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;cursor:pointer;';const triangle=document.createElementNS('http://www.w3.org/2000/svg','svg');triangle.setAttribute('viewBox','0 0 24 24');triangle.setAttribute('width','16');triangle.setAttribute('height','16');triangle.setAttribute('aria-hidden','true');triangle.style.display='block';if(inverted)triangle.style.transform='rotate(180deg)';const shape=document.createElementNS('http://www.w3.org/2000/svg','polygon');shape.setAttribute('points','12,2 22,21 2,21');shape.setAttribute('fill',colour);shape.setAttribute('stroke','#8492a6');shape.setAttribute('stroke-width','1.4');shape.setAttribute('stroke-linejoin','round');triangle.append(shape);chip.append(triangle);
-            const count=document.createElement('small');count.className='may-rgb-count';count.textContent='0';count.style.cssText='font:8px/8px ui-monospace,Consolas,monospace;color:#d6deeb;white-space:nowrap;';chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();});chip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();window.mayRGBNeighbours?.toggleFilter?.(code);syncRGBPalette(panel);});if(inverted)card.append(chip,count);else card.append(count,chip);grid.append(card);
+          panel=document.createElement('div');panel.className='may-rgb-panel may-rgb-palette';panel.dataset.noMini='';panel.setAttribute('role','group');panel.setAttribute('aria-label','Цветовые фильтры RGB');panel.title=rgbHint;
+          const bw=document.createElement('div');bw.className='may-rgb-bw';bw.setAttribute('role','group');bw.setAttribute('aria-label','Режим отображения RGB');
+          for(const [mode,label] of [[1,'ЧБ'],[0,'Цвт'],[2,'БЧ']]){
+            const option=document.createElement('button');option.type='button';option.className='may-rgb-bw-option';option.dataset.mode=String(mode);option.setAttribute('aria-pressed','false');
+            option.innerHTML='<svg viewBox="0 0 36 24" aria-hidden="true"><path d="M1 12 18 1 35 12 18 23Z"/></svg><span>'+label+'</span>';
+            option.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();window.mayRGBNeighbours?.setBW?.(mode);syncRGBPalette(panel);});bw.append(option);
+          }
+          panel.append(bw);
+          const grid=document.createElement('div');grid.className='may-rgb-grid';panel.append(grid);
+          for(const [index,[code,name,colour]]of rgbChoices.entries()){
+            const inverted=index>=4,chip=document.createElement('button');chip.type='button';chip.className='may-view-swatch may-rgb-choice';chip.dataset.rgbCode=String(code);chip.setAttribute('aria-label',name);chip.setAttribute('aria-pressed','false');
+            const triangle=document.createElementNS('http://www.w3.org/2000/svg','svg');triangle.setAttribute('viewBox','0 0 28 24');triangle.setAttribute('width','28');triangle.setAttribute('height','24');triangle.setAttribute('aria-hidden','true');
+            const shape=document.createElementNS(triangle.namespaceURI,'polygon');shape.setAttribute('points',inverted?'14,22 26,2 2,2':'14,2 26,22 2,22');shape.setAttribute('fill',colour);triangle.append(shape);
+            for(const cls of ['may-rgb-check-back','may-rgb-check']){const check=document.createElementNS(triangle.namespaceURI,'path');check.setAttribute('class',cls);check.setAttribute('d',inverted?'M9 9 12 12 18 6':'M9 15 12 18 18 12');triangle.append(check);}
+            chip.append(triangle);
+            chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();});chip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();window.mayRGBNeighbours?.toggleFilter?.(code);syncRGBPalette(panel);});grid.append(chip);
           }
           row.after(panel);
         }
