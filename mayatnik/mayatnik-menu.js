@@ -1234,7 +1234,9 @@
       const label = document.createElement('span'); label.className = 'gz-nm'; label.textContent = ptNames.fixTri; b.append(label);
       b.title = help; b.setAttribute('aria-label',help);
       toolSync.push(() => { const on = !!window.mayFixFollow?.get(); b.classList.toggle('on',on); b.setAttribute('aria-pressed',String(on)); });
-      sources[2].before(b); for (const source of sources) { source.style.display = 'none'; source.dataset.maySearchSkip = ''; } } }
+      gAxis.append(b); for (const source of sources) { source.style.display = 'none'; source.dataset.maySearchSkip = ''; }
+      try{const key='mayatnik-control-mini-v464',raw=localStorage.getItem(key),saved=JSON.parse(raw||'[]'),next='group:Оси:data:fixTri';if(Array.isArray(saved)&&saved.includes('group:Вид:data:fixTri')&&!saved.includes(next)){if(!localStorage.getItem('mayatnik-point-mini-before-v810'))localStorage.setItem('mayatnik-point-mini-before-v810',raw);localStorage.setItem(key,JSON.stringify([...saved,next]));}}catch(_){}
+    } }
   // v0.499: «Ось: 0, 1, −1 — как Стык, между ними ромб текущей»: [Ось | 0 | 1 | −1] — gz-tri, как в Хабе; 0 — стоит, 1 — ход, −1 — антиход.
   // Прежняя кнопка «Ось» спрятана и по-прежнему хранит режим (mayFixAxis: 0 — ход, 1 — стоит, 2 — антиход).
   { const src = tools.querySelector('[data-n="fixAxis"]');
