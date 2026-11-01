@@ -45,8 +45,8 @@
     const write=(rows,source,count)=>{const next={version:1,rows,source,count};try{storage?.setItem(KEY,JSON.stringify(next));}catch(_){throw Error('Не удалось сохранить последовательность в браузере. Освободите место и повторите.');}state=next;error='';selection=null;manualMatch=null;snakeSelection=null;foundHistory.clear();firstFinds.clear();matches={...matches,active:false,found:[]};matchKey='';revision++;emit('sequence');};
     const remember=(hit,context)=>{
       if(!Number.isInteger(hit.i)||hit.i<0||hit.i>=state.rows.length)return;
-      const key=hit.i+':'+(context.halves===2?hit.p:'single');
-      if(!firstFinds.has(key))firstFinds.set(key,{...copyHit(hit),frame:context.frame,halves:context.halves,joined:!!context.joined});
+      const key=hit.i+':'+(context.halves===2?hit.p:'single'),jumps=Number.isFinite(context.jumps)?context.jumps:Number.isFinite(hit.jumps)?hit.jumps:null;
+      if(!firstFinds.has(key))firstFinds.set(key,{...copyHit(hit),frame:context.frame,halves:context.halves,joined:!!context.joined,jumps});
     };
     const api={columns:Columns?.create(storage,COLUMN_KEYS),get rows(){return state.rows;},get initialRows(){return originalRows.slice();},get revision(){return revision;},snapshot:()=>({rows:state.rows,source:state.source,count:state.count,revision,error,matches,manualMatch:manualMatch?copyHit(manualMatch):null,foundHistory:Array.from(foundHistory.values(),entry=>({...entry,hits:entry.hits.map(copyHit)})),firstFinds:Array.from(firstFinds.values(),copyHit),selection,snakeSelection:snakeSelection?{...snakeSelection}:null}),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},setText(text){const rows=parse(text);write(rows,'user',rows.length);},generate(count){const rows=sierpinski(count);write(rows,'serp',rows.length);},setManualMatch(value){if(value==null)manualMatch=null;else{const i=value.i,n=state.rows[i]?.length;if(!Number.isInteger(i)||!n)throw Error('Некорректная строка ручного поиска');const complete=value.complete!==false,matched=Math.max(0,Math.min(n,Math.floor(Number(value.matched??(value.found?n:0))||0)));manualMatch={enabled:true,i,n,matched:complete?matched:0,found:complete&&!!value.found&&matched===n,complete,variant:String(value.variant||''),variantFlags:value.variantFlags?{...value.variantFlags}:null,variantLabel:value.variantLabel||'',frame:value.frame,text:value.text,matchedText:value.matchedText,reason:value.reason||'',start:copyHit(value).start,end:copyHit(value).end};}emit('manual-match');},selectSnakePath(value){if(value==null)snakeSelection=null;else{if(!Number.isInteger(value.i)||!state.rows[value.i]||typeof value.id!=='string')throw Error('Некорректный выбор змеи');snakeSelection={...value,token:++selectionSerial};}emit('snake-selection');},selectMatches(value){selection=value?{...value,token:++selectionSerial}:null;emit('selection');},recordFirstFind(hit,context){if(context.searchScope!==firstScope){firstFinds.clear();firstScope=context.searchScope;}remember(hit,context);emit('first-find');},setMatches(value){const wasEnabled=matches.enabled,oldFrame=matches.frame,key=JSON.stringify(value);if(key===matchKey)return;matchKey=key;matches=value;if(Number.isFinite(oldFrame)&&Number.isFinite(value.frame)&&oldFrame!==value.frame)snakeSelection=null;if(manualMatch&&Number.isFinite(value.frame)&&Number.isFinite(manualMatch.frame)&&value.frame!==manualMatch.frame)manualMatch=null;
       if(!value.enabled||value.searchScope!==undefined&&value.searchScope!==matchScope)foundHistory.clear();
@@ -57,7 +57,7 @@
         for(const [i,hits]of rows){
           const prior=foundHistory.get(i),merged=[...(prior?.hits||[])];
           for(const hit of hits){remember(hit,value);if(!merged.some(old=>value.halves!==2||old.p===hit.p))merged.push({...copyHit(hit),frame:value.frame});}
-          foundHistory.set(i,prior?{...prior,hits:merged}:{i,hits:merged,frame:value.frame,mode:value.mode,halves:value.halves,joined:value.joined});
+          foundHistory.set(i,prior?{...prior,hits:merged}:{i,hits:merged,frame:value.frame,mode:value.mode,halves:value.halves,joined:value.joined,jumps:Number.isFinite(value.jumps)?value.jumps:null});
         }
       }
       emit('matches');}};
@@ -95,8 +95,13 @@
   function paintCurrentDetails(node,raw,hits,match,manual){
     const cell=node.querySelector('[data-column=sequence]'),doc=node.ownerDocument;let details=cell.querySelector('.mtp-current-matches');
     if((!match.enabled||match.simple||match.pattern&&match.pattern!=='initial')&&!manual&&!node.hasAttribute('data-sequence-run')){details?.remove();return;}
+    const current=manual?[...hits,{...manual,dir:'snake',manual:true}]:hits;
+    // v0.751: у строк без находок «Текущий кадр N · нет находок» больше не пишется —
+    // строка таблицы остаётся строкой таблицы, лог не дублирует пустоту. Ошибки и
+    // незавершённый поиск по-прежнему видны.
+    if(!current.length&&!manual&&match.active&&match.complete!==false){details?.remove();return;}
     if(!details){details=doc.createElement('details');details.className='mtp-current-matches';const summary=doc.createElement('summary');details.append(summary,doc.createElement('div'));cell.append(details);}
-    const current=manual?[...hits,{...manual,dir:'snake',manual:true}]:hits,lines=current.map(hit=>currentHitLines(hit,match,raw));
+    const lines=current.map(hit=>currentHitLines(hit,match,raw));
     if(!current.length){const absent=match.complete===false?match.reason||'Поиск не завершён':match.active?(match.halves===2?'В текущем кадре не найдено в левом и правом полумаятниках':'В текущем кадре не найдено'):match.reason||'Ожидание поиска';lines.push([absent]);}
     if(match.enabled&&match.active&&match.complete!==false&&match.halves===2&&hits.length&&hits.every(hit=>Number.isInteger(hit.p))){const missing=[0,1].filter(p=>!hits.some(hit=>hit.p===p));if(missing.length)lines.push(['В текущем кадре не найдено: '+missing.map(p=>p?'правый полумаятник':'левый полумаятник').join(', ')]);}
     const key=JSON.stringify(lines);if(details.dataset.currentKey===key)return;details.dataset.currentKey=key;const summary=details.firstElementChild;summary.textContent='Текущий кадр '+(manual&&!match.enabled?manual.frame:Number.isFinite(match.frame)?match.frame:manual?.frame??'—')+' · '+(manual?.complete===false?'поиск не завершён':manual&&!manual.found&&manual.matched>0?'частичное совпадение':current.length?'находки':'нет находок');summary.title=lines.flat().join('\n');summary.setAttribute('aria-label',summary.title);
@@ -111,7 +116,7 @@
       for(const key of COLUMN_KEYS){const cell=doc.createElement('td');cell.dataset.column=key;let value='—',title='';
         if(key==='number')value='Серия №'+(index+1);
         else if(key==='sequence'){const code=doc.createElement('code');code.textContent=raw;code.title=raw||'Текст серии не записан';code.setAttribute('aria-label',code.title);cell.append(code);}
-        else if(key==='frame'){value=Number.isFinite(match.frame)?String(match.frame):'—';title='Текущий кадр: '+value;}
+        else if(key==='frame'){const jumps=Number.isFinite(match.jumps)?' · пер. '+match.jumps:'';value=(Number.isFinite(match.frame)?String(match.frame):'—')+jumps;title='Текущий кадр: '+(Number.isFinite(match.frame)?match.frame:'—')+(jumps?' · номер перескока '+match.jumps:'');}
         else if(key==='method')value=methodLabel(hit);
         else{const address=hit[key]||hit[key==='start'?'sourceStart':'sourceEnd'];if(address){const label=startLabel(address);value=label.text;title=label.title;}else title=(key==='start'?'Начало':'Конец')+': адрес не записан';}
         if(key!=='sequence')cell.textContent=value;cell.title=title||value;cell.setAttribute('aria-label',cell.title);row.append(cell);
@@ -156,7 +161,7 @@
         const context=past?prior:m,title=hits.map(hit=>(past?'Ранее найдено · кадр '+(hit.frame??prior.frame)+': ':'Найдено на поле: ')+(context.halves===2?(hit.p?'правый':'левый')+' полумаятник · ':'')+(Number.isInteger(hit.r)?(context.joined?'строка ромба ':'строка ')+(hit.r+1):'строка не записана')+' · '+methodLabel(hit)).join('\n');
         const earliest=first.get(i)||[];
         const prefix=hit=>hit.halves===2?(hit.p?'Правый: ':'Левый: '):'';
-        node.querySelector('[data-column=frame]').textContent=earliest.map(hit=>prefix(hit)+(Number.isFinite(hit.frame)?hit.frame:'не записан')).join('\n')||'—';
+        node.querySelector('[data-column=frame]').textContent=earliest.map(hit=>{const jumps=Number.isFinite(hit.jumps)?hit.jumps:Number.isFinite(context.jumps)?context.jumps:null;return prefix(hit)+(Number.isFinite(hit.frame)?hit.frame:'не записан')+(jumps==null?'':' · пер. '+jumps);}).join('\n')||'—';
         node.querySelector('[data-column=method]').textContent=earliest.map(hit=>prefix(hit)+methodLabel(hit)).join('\n')||'—';
         for(const key of ['frame','method']){const cell=node.querySelector('[data-column='+key+']');if(cell){cell.title=cell.textContent;cell.setAttribute?.('aria-label',cell.title);}}
         const endCell=node.querySelector('[data-column=end]');if(endCell){endCell.textContent=earliest.map(hit=>prefix(hit)+startLabel(hit.end).text).join('\n')||'—';endCell.title=earliest.map(hit=>prefix(hit)+startLabel(hit.end).title).join('\n')||'Конечный бит не записан';}

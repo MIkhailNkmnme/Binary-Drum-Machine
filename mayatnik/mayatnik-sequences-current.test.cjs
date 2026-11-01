@@ -1,4 +1,4 @@
-const test=require('node:test'),assert=require('node:assert/strict');
+﻿const test=require('node:test'),assert=require('node:assert/strict');
 const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 const S=require('./mayatnik-sequences.js');
 function setup(){const dom=new JSDOM('<aside id="mayatnikTemplatePanel"><section></section></aside>',{url:'https://test/'}),pane=dom.window.document.querySelector('section'),store=new Map(),api=S.create({getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v)},{rows:2});api.setText('10'.repeat(256)+'\n11');const mounted=S.mount(pane,api);return {dom,pane,api,close(){mounted.destroy();dom.window.close();}};}
@@ -19,5 +19,19 @@ test('unindexed simple series are transient rows in the same tbody, preserving s
  const f=setup();try{const editor=f.pane.querySelector('textarea'),saved=f.api.rows.slice(),row=f.pane.querySelector('[data-sequence-row="0"]');f.api.setMatches(state(5,[{i:0,p:0,n:512,dir:0,text:saved[0]}]));const first=JSON.stringify(f.api.snapshot().firstFinds),history=JSON.stringify(f.api.snapshot().foundHistory);editor.value='draft';editor.dispatchEvent(new f.dom.window.Event('input'));editor.setSelectionRange(1,3);
  const hits=[{text:'00000',n:5,r:4,c:8,dir:0,p:0,relativeColumn:-2,start:{row:4,bit:8},end:{row:4,bit:12}},{text:'000',n:3,r:7,c:11,dir:2,p:1,relativeColumn:1,start:{row:7,bit:11},end:{row:9,bit:11},variantLabel:'реверс'}];f.api.setMatches(state(6,hits,{pattern:'zeros',simple:true,count:120}));const runs=[...f.pane.querySelectorAll('tbody [data-sequence-run]')];assert.equal(runs.length,2);assert.equal(f.pane.querySelectorAll('table').length,1);assert.equal(f.pane.querySelectorAll('tbody').length,1);assert.equal(f.pane.querySelector('[data-sequence-row="0"]'),row);assert.ok(row.classList.contains('is-found'));assert.equal(runs[0].querySelector('[data-column=number]').textContent,'Серия №1');assert.equal(runs[1].hasAttribute('data-sequence-row'),false);assert.deepEqual(runs.map(n=>n.querySelector('code').textContent),['00000','000']);assert.equal(runs[0].querySelector('[data-column=frame]').textContent,'6');assert.equal(runs[0].querySelector('[data-column=start]').textContent,'5:9');assert.equal(runs[0].querySelector('[data-column=end]').textContent,'5:13');assert.match(lines(runs[0]),/Столбец относительно оси: -2/);assert.match(lines(runs[1]),/вертикаль ↓/);assert.match(lines(runs[1]),/реверс/);assert.match(lines(runs[0]),/Текст серии \(5 бит\): 00000/);assert.doesNotMatch(lines(runs[0]),/Исходная последовательность|NaN|undefined/);assert.match(f.pane.querySelector('caption').title,/первые 2; подсвечены все/);assert.match(f.pane.querySelector('caption').title,/Серий или совпадений: 120/);assert.equal(JSON.stringify(f.api.snapshot().firstFinds),first);assert.equal(JSON.stringify(f.api.snapshot().foundHistory),history);assert.deepEqual(f.api.rows,saved);f.api.selectMatches({rowIndices:[],matchIndices:[1]});assert.equal(f.pane.querySelector('[data-sequence-run="1"]').getAttribute('aria-selected'),'true');assert.equal(f.pane.querySelector('[data-sequence-row="1"]').getAttribute('aria-selected'),'false');
  f.api.setMatches(state(7,[{text:'00',n:2,r:9,c:2,dir:1}],{pattern:'zeros',simple:true,count:1}));assert.equal(f.pane.querySelectorAll('[data-sequence-run]').length,1);assert.equal(f.pane.querySelector('[data-sequence-run] code').textContent,'00');assert.equal(runs[0].isConnected,false);f.api.setMatches(state(8,[],{pattern:'zeros',simple:true,count:0}));assert.equal(f.pane.querySelectorAll('[data-sequence-run]').length,0);assert.equal(f.pane.querySelector('[data-sequence-row="0"]'),row);assert.ok(row.classList.contains('is-found'));assert.equal(row.querySelector('[data-column=frame]').textContent,'Левый: 5');assert.equal(f.pane.querySelector('textarea'),editor);assert.equal(editor.value,'draft');assert.equal(editor.selectionStart,1);assert.equal(editor.selectionEnd,3);assert.equal(JSON.stringify(f.api.snapshot().firstFinds),first);assert.equal(JSON.stringify(f.api.snapshot().foundHistory),history);
+ }finally{f.close();}
+});
+
+test('rows without findings keep no empty details, and a first find records the jump number',()=>{
+ const f=setup();try{
+  const row=f.pane.querySelector('[data-sequence-row="0"]');
+  f.api.setMatches(state(2,[{i:0,r:0,c:0,n:1,dir:0,text:'1',p:0}],{halves:1}));
+  assert.ok(row.querySelector('.mtp-current-matches'),'у находки подробности есть');
+  f.api.setMatches(state(2,[],{halves:1}));
+  assert.equal(row.querySelector('.mtp-current-matches'),null,'«нет находок» в строке больше не пишется');
+  f.api.setMatches(state(3,[{i:1,r:0,c:0,n:1,dir:0,text:'1',p:0}],{halves:1,jumps:4}));
+  const found=f.pane.querySelector('[data-sequence-row="1"]');
+  assert.equal(found.querySelector('[data-column=frame]').textContent,'3 · пер. 4');
+  assert.equal(f.api.snapshot().firstFinds.find(hit=>hit.i===1)?.jumps,4);
  }finally{f.close();}
 });
