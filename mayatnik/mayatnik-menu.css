@@ -1137,7 +1137,7 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 @media(prefers-reduced-motion:reduce){#mayBottomBar .may-frame-slider.may-frame-running>.gz-a::before{animation:none}}
 
 /* v0.790: ромбы параметров транспорта и списки по щелчку. */
-#mayBottomBar>.may-transport-diamond{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;min-width:24px;height:24px;margin:0 2px;padding:0!important;border:0;outline:0;box-shadow:none;background:transparent;clip-path:none;cursor:pointer;font:600 12px/24px var(--mono,monospace);color:#dfe6f5;--c:#80aee8}
+#mayBottomBar>.may-transport-diamond{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;min-width:48px;height:24px;margin:0 2px;padding:0!important;border:0;outline:0;box-shadow:none;background:transparent;clip-path:none;cursor:pointer;font:600 10px/24px var(--mono,monospace);color:#dfe6f5;--c:#80aee8}
 #mayBottomBar>.may-transport-diamond::before,#mayBottomBar>.may-transport-diamond::after{content:"";position:absolute;inset:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#40516b;pointer-events:none}
 #mayBottomBar>.may-transport-diamond::after{inset:1px;background:#1b2430}
 #mayBottomBar>.may-transport-diamond:is(:hover,:focus-visible,[aria-expanded="true"])::before{background:var(--c)}
