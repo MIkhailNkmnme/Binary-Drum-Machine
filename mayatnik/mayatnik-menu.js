@@ -92,7 +92,7 @@
         arrows: ['−1', '+1'], thumb: { label: () => $('bPlay').getAttribute('aria-pressed') === 'true' ? '❚❚' : '▶', click: () => $('bPlay').click() } } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
-      button('bOchki', 'eye'), button('bOchkiSnake','eye'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
+      button('bOchki', 'eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
