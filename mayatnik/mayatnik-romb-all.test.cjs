@@ -9,7 +9,7 @@ test('rombAll view shows the whole field as diamonds with both parities',()=>{
  assert.match(html,/if \(rp === 4\) drawRombAll\(px, T, empty, och && och\.hl\)/);
  assert.match(html,/const i = Math\.round\(\(u \+ v - \(VH \+ 1\)\) \/ 2\), j = Math\.round\(\(v - u \+ \(VH - 1\)\) \/ 2\)/);
  assert.match(html,/rombAll:'Всё поле ромбами'/);
- assert.match(html,/st\.view === 'rombAll' \|\| st\.view === 'rombDirect' \|\| constructionActive\(\)/);
+ assert.match(html,/st\.view === 'rombAll' \|\| st\.view === 'rombDirect' \|\| st\.view === 'rombTri' \|\| constructionActive\(\)/);
  assert.match(menu,/romb2: 'Ромбы оба', rombAll: 'Ромбы всё'/);
  assert.match(menu,/rombAll: \['square','Ромбы · всё поле'\]/);
 });
