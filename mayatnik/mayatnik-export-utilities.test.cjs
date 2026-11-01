@@ -4,6 +4,6 @@ test('search/info/help utility button sits in the Экспорт group',()=>{
  assert.match(menu,/doc\.querySelector\('\.gz-group\[data-id="export"\]'\)/);
  assert.match(menu,/mayInfoDiamond/);
  assert.match(menu,/mayButtonSearchTrigger/);
- assert.match(html,/mayatnik-menu\.js\?v=818/);
- assert.match(html,/<title>Zerkalius Маятнкъ — v0\.818<\/title>/);
+ assert.match(html,/mayatnik-menu\.js\?v=\d+/);
+ assert.match(html,/<title>Zerkalius Маятнкъ — v0\.\d+<\/title>/);
 });

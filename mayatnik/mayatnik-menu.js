@@ -522,7 +522,7 @@
       vm.classList.add('may-hp-vm');
       function vsync() { vm.gzSync(); const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.gz-half')) {
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : window.mayComparison?.get().source ? 'Конечное поле: до последней вершины внутри рамки 2N−1' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
-      queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(section(vm, 'build')); }   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
+      queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(section(vm, 'size')); }   // v0.819: «N/3 | 4N» — в раздел «Размер», самым верхом (автор: «перемести в Размер в верх самый»)   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
     // v0.391: «по 2 в одну кнопку шириной по стандарту»: «Построить | Построчно» — одна пара (как «N/3 | 4N»); ячейки сот из рейки убраны
     { const bt = bbCells.btns || [], sot = bt[0]?.parentElement; for (const c of bt) c.remove(); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0';
       const bB = $('bBuild'), bR = $('bRowRun');
