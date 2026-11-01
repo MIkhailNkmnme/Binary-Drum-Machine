@@ -1129,6 +1129,14 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-transport-option-row>.may-transport-option:last-child{border-right:0}
 .may-transport-option-row>.may-transport-option:is(:hover,:focus-visible){outline:1px solid #80aee8;outline-offset:-1px}
 .may-transport-option-row>.may-transport-option[aria-checked="true"]{outline:2px solid #80aee8;outline-offset:-2px}
+.may-menu-side-backdrop{position:fixed;display:none;pointer-events:none;z-index:6;background:rgba(0,0,0,.78)}
+body.may-zen>.may-menu-side-backdrop,body.may-mobile-menu>.may-menu-side-backdrop{display:none!important}
+@media(min-width:601px){
+  body.mayatnik-menu-ready:not(.may-mobile-menu)>header{padding-top:0;padding-bottom:0;margin-top:0}
+  body.mayatnik-menu-ready:not(.may-mobile-menu) header #paintTools.pt-dd.pt-grid{margin-top:0;padding-top:0}
+  body.mayatnik-menu-ready:not(.may-mobile-menu)>header.may-grid>.gz-hx{margin-top:0}
+  body.mayatnik-menu-ready:not(.may-mobile-menu) #mayFooterBar{height:24px;min-height:24px;margin:0;padding:0;border:0}
+}
 
 /* v0.757: в логе находок у строк больше нет подписи «Текущий кадр»: пустой summary не занимает строку; ручная змея подписана. */
 #mayatnikTemplatePanel .mtp-sequence-rows .mtp-current-matches summary:empty{display:none}

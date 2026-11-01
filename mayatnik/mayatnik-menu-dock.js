@@ -87,7 +87,8 @@
     Object.assign(overlay.style,{position:'fixed',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'2147483644',display:'none'});document.body.append(overlay);
     const save=()=>{try{localStorage.setItem(key,JSON.stringify(state));}catch(_){}};
     const bounds=()=>{const H=header.getBoundingClientRect(),T=tools.getBoundingClientRect(),F=footer.getBoundingClientRect(),R=rail.getBoundingClientRect(),customLeft=typeof leftEdge==='function'?leftEdge():null,customTop=typeof sideTop==='function'?sideTop():null;
-      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:T.top,bottomY:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?Math.ceil(Math.max(4,Number.isFinite(customTop)?customTop:4)):Math.ceil(H.bottom+8),sideBottom:(typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom)-4,sideColumnsLeft};};
+      const viewportBottom=typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom;
+      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:sideColumnsLeft?0:T.top,bottomY:sideColumnsLeft?viewportBottom-HEIGHT:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?Math.ceil(Math.max(4,Number.isFinite(customTop)?customTop:4)):Math.ceil(H.bottom+8),sideBottom:viewportBottom-4,sideColumnsLeft};};
     const rect=el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};};
     const obstacles=()=>excluded.filter(e=>e?.getClientRects().length).map(rect);
     const available=skip=>slots(bounds()).filter(s=>!obstacles().some(r=>overlap(s,r))&&![...placed].some(([g,p])=>g!==skip&&overlap(s,p)));
@@ -96,13 +97,13 @@
     const sides={};let stackFrame=0;
     const queueStack=()=>{if(useSideStack&&!stackFrame)stackFrame=requestAnimationFrame(()=>{stackFrame=0;layoutSides();});};
     for(const edge of useSideStack?['left','right']:[]){
-      const bar=document.createElement('div'),space=document.createElement('div');bar.className='may-menu-side-scroll';bar.dataset.edge=edge;bar.tabIndex=0;bar.setAttribute('role','region');bar.setAttribute('aria-label',sideColumnsLeft?(edge==='left'?'Прокрутка первого левого столбца меню':'Прокрутка второго левого столбца меню'):(edge==='left'?'Прокрутка левой колонки меню':'Прокрутка правой колонки меню'));if(sideColumnsLeft)bar.style.width='2px';bar.append(space);document.body.append(bar);bar.addEventListener('scroll',queueStack);sides[edge]={bar,space,max:0,signature:''};
+      const bar=document.createElement('div'),space=document.createElement('div'),backdrop=document.createElement('div');backdrop.className='may-menu-side-backdrop';backdrop.dataset.edge=edge;backdrop.setAttribute('aria-hidden','true');document.body.append(backdrop);bar.className='may-menu-side-scroll';bar.dataset.edge=edge;bar.tabIndex=0;bar.setAttribute('role','region');bar.setAttribute('aria-label',sideColumnsLeft?(edge==='left'?'Прокрутка первого левого столбца меню':'Прокрутка второго левого столбца меню'):(edge==='left'?'Прокрутка левой колонки меню':'Прокрутка правой колонки меню'));if(sideColumnsLeft)bar.style.width='2px';bar.append(space);document.body.append(bar);bar.addEventListener('scroll',queueStack);sides[edge]={bar,space,backdrop,max:0,signature:''};
     }
     const setStyle=(node,key,value)=>{if(node.style[key]!==value)node.style[key]=value;};
     const setVar=(node,key,value)=>{if(node.style.getPropertyValue(key)!==value)node.style.setProperty(key,value);};
     function layoutSides(){
       if(!useSideStack||drag)return;
-      if(mobileNow()){for(const side of Object.values(sides)){side.bar.style.display='none';side.signature='';}return;}
+      if(mobileNow()){for(const side of Object.values(sides)){side.bar.style.display='none';side.backdrop.style.display='none';side.signature='';}return;}
       const B=bounds(),end=B.sideBottom;
       for(const edge of ['left','right']){
         const side=sides[edge],items=[...placed].filter(([g,p])=>p.edge===edge&&heads.get(g).getClientRects().length).map(([g,p])=>({g,index:p.index,y:p.y,height:g.getBoundingClientRect().height}));
@@ -111,6 +112,7 @@
         side.start=start;side.end=end;side.left=columnX-2;side.right=side.left+WIDTH+4;side.groups=items.map(item=>item.g);
         const stack=stackPositions(items,start,end,side.bar.scrollTop||0,sideColumnsLeft),signature=JSON.stringify([start,end,B.left,B.right,stack.offset,stack.rows.map(r=>[idOf(r.g),r.top,r.height])]);
         side.max=stack.maxScroll;side.hitEnd=Math.min(end,start+stack.height);if(signature===side.signature)continue;side.signature=signature;
+        setStyle(side.backdrop,'display',items.length?'block':'none');setStyle(side.backdrop,'left',(columnX-3)+'px');setStyle(side.backdrop,'top',(start-2)+'px');setStyle(side.backdrop,'width',(WIDTH+6)+'px');setStyle(side.backdrop,'height',Math.max(0,side.hitEnd-start+4)+'px');
         setStyle(side.bar,'display',stack.maxScroll?'block':'none');setStyle(side.bar,'top',start+'px');setStyle(side.bar,'height',height+'px');setStyle(side.bar,'left',(sideColumnsLeft||edge==='left'?columnX+WIDTH+2:columnX-16)+'px');setStyle(side.space,'height',Math.max(height,stack.height)+'px');
         if(side.bar.scrollTop!==stack.offset)side.bar.scrollTop=stack.offset;
         for(const row of stack.rows){setVar(row.g,'--may-dock-y',row.screenY+'px');setVar(row.g,'--may-side-clip-top',Math.max(0,start-row.screenY)+'px');setVar(row.g,'--may-side-clip-bottom',Math.max(0,row.screenY+row.height-end)+'px');}

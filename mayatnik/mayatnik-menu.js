@@ -7,6 +7,7 @@
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const mobileMenu=window.MayatnikMenuDock.mobileStrip();
   const toolSync = [];
+  let libraryMenuFold=null;
   const suppressPlayerTips=host=>{host.dataset.noTooltips='';const strip=()=>{for(const node of [host,...host.querySelectorAll('[title],[data-may-tip],[data-zz-tip]')])for(const attr of ['title','data-may-tip','data-zz-tip'])if(node.hasAttribute(attr))node.removeAttribute(attr);};strip();new MutationObserver(strip).observe(host,{subtree:true,childList:true,attributes:true,attributeFilter:['title','data-may-tip','data-zz-tip']});};
   // The library overlays the field behind controls; it never changes menu slots.
   const popupRight=()=>innerWidth;
@@ -1699,8 +1700,18 @@
         const v=Math.round(Math.max(R.left+4,Math.min(R.right-w-4,cx-off)))+'px';if(ud.style.left!==v)ud.style.left=v;ud.style.top='';ud.style.bottom=Math.round(innerHeight-R.bottom+(R.height-ud.offsetHeight)/2)+'px'; };
       window.mayUdPlace = udPlace;
       let framePlaceRaf=0;
-      const framePlace=(refresh=true)=>{if(narrow.matches)return;const T=tools.getBoundingClientRect(),B=frameBar.getBoundingClientRect(),C=frameBar.querySelector(':scope > .gz-sl').getBoundingClientRect(),cx=window.mayAxisX?.(),offset=C.left+C.width/2-B.left,x=Math.round(tools.scrollLeft+(Number.isFinite(cx)?cx:innerWidth/2)-T.left-offset)+'px';
-        if(frameBar.style.left!==x){frameBar.style.left=x;if(refresh&&!framePlaceRaf)framePlaceRaf=requestAnimationFrame(()=>{framePlaceRaf=0;relayout();});}};
+      const framePlace=(refresh=true)=>{
+        if(narrow.matches)return;
+        const T=tools.getBoundingClientRect(),B=frameBar.getBoundingClientRect(),C=frameBar.querySelector(':scope > .gz-sl').getBoundingClientRect();
+        let cx=window.mayAxisX?.();const library=$('mayatnikTemplatePanel');
+        if(document.body.classList.contains('may-template-panel-open')&&library&&!library.hidden){
+          const field=$('wrap').getBoundingClientRect(),cover=library.getBoundingClientRect();let left=Math.max(0,field.left),right=Math.min(innerWidth,field.right);
+          if(cover.top<field.bottom&&cover.bottom>field.top){if(cover.right>=right&&cover.left<right)right=Math.max(left,cover.left);else if(cover.left<=left&&cover.right>left)left=Math.min(right,cover.right);}
+          if(right>left)cx=(left+right)/2;
+        }
+        const offset=C.left+C.width/2-B.left,x=Math.round(tools.scrollLeft+(Number.isFinite(cx)?cx:innerWidth/2)-T.left-offset)+'px';
+        if(frameBar.style.left!==x){frameBar.style.left=x;if(refresh&&!framePlaceRaf)framePlaceRaf=requestAnimationFrame(()=>{framePlaceRaf=0;relayout();});}
+      };
       window.mayFramePlace=framePlace;
       const relayout = (compact = false) => { const all = items();
         if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==tools)tools.append(frameBar);shown = new Map(); sig = '';placeBot(); alignOpen(); syncRailFlyouts(); window.mayButtonStandardRefresh?.(); return; }
@@ -2184,7 +2195,7 @@
     if(groupHover?.active()){document.querySelectorAll('.may-overlap-shade').forEach(shade=>shade.remove());return;}
     const entries=[];
     for(const group of document.querySelectorAll(groupSelector)){
-      const open=group.matches('.pt-open,.gz-open');if(open&&groupOpen.get(group)===false)groupRanks.set(group,++groupRank);groupOpen.set(group,open);
+      const open=group.matches('.pt-open,.gz-open')&&!group.hasAttribute('data-library-folded');if(open&&groupOpen.get(group)===false)groupRanks.set(group,++groupRank);groupOpen.set(group,open);
       const cells=[...group.querySelectorAll('.pt-l,.gz-head,.pt-b,.gz-hx,.gz-control')].filter(e=>e.getClientRects().length&&!e.parentElement.closest('.pt-b,.gz-hx'));
       const rects=cells.map(e=>e.getBoundingClientRect());if(activeList?.group===group&&activeList.list.isConnected)rects.push(activeList.list.getBoundingClientRect());
       entries.push({group,open,rects,rank:groupRanks.get(group)||0,listOwner:activeList?.group===group});
@@ -2206,7 +2217,7 @@
     for(const event of ['pointerdown','focusin'])host.addEventListener(event,e=>{const group=e.target.closest('.pt-g, .gz-group');if(group){groupRanks.set(group,++groupRank);scheduleGroups();}},true);
     new MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.pt-g, .gz-group') && /\b(?:pt-open|gz-open)\b/.test(r.oldValue||'')!==r.target.matches('.pt-open, .gz-open')))scheduleGroups();}).observe(host,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});
   }
-  const placeTools = () => { for (const f of toolSync) f(); syncRailFlyouts(); scheduleGroups(); };
+  const placeTools = () => { for (const f of toolSync) f(); syncRailFlyouts(); libraryMenuFold?.syncHeads(); scheduleGroups(); };
   rail.el.addEventListener('click', () => requestAnimationFrame(syncRailFlyouts));
   $('mayatnikRail').addEventListener('scroll', () => requestAnimationFrame(syncRailFlyouts), {passive:true});
   addEventListener('resize', placeTools); placeTools();
@@ -2300,6 +2311,8 @@
   const collectLateMenu=()=>{mountViewUtilities(gView);mobileMenu.add([$('zerkHubBtn')]);};
   new MutationObserver(collectLateMenu).observe(document.body,{childList:true});collectLateMenu();
   window.mayMobileMenu=mobileMenu;
+  libraryMenuFold=window.MayatnikLibraryMenuFold?.mount({groups:()=>document.querySelectorAll('#paintTools .pt-g,#paintTools .gz-group,#mayatnikRail .gz-group,#mayatnikRailR .gz-group'),panel:()=>$('mayatnikTemplatePanel'),popups:()=>[...(activeList?[{node:activeList.list,group:activeList.group}]:[]),...[...document.querySelectorAll('.may-horr-popup')].map(node=>({node,group:node.mayHorrOwner}))],onLayout:()=>{syncRailFlyouts();libraryMenuFold?.syncHeads();scheduleGroups();window.mayFramePlace?.();}});
+  addEventListener('pagehide',()=>libraryMenuFold?.destroy(),{once:true});
   dispatchEvent(new Event('resize'));
 })();
 
