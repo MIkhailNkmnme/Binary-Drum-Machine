@@ -1051,6 +1051,12 @@
   { const last = gModes.querySelector('[data-n="bitContourColours"]') || gModes.querySelector('[data-view-overlay="contours"]');
     let at = last;
     for (const n of ['vtxFlash', 'heat']) { const e = gView.querySelector(`[data-n="${n}"]`); if (!e) continue; if (at) at.after(e); else gModes.append(e); at = e; } }
+  { const owner=gModes.querySelector('[data-view-overlay="contours"]'),mode=gModes.querySelector('[data-n="bitContourMode"]'),colours=gModes.querySelector('[data-n="bitContourColours"]');
+    if(owner&&mode&&colours){const group=document.createElement('div');group.className='may-contours-group';group.setAttribute('role','group');group.setAttribute('aria-label','Контуры: включение, способ обводки и цвета');
+      const frame=document.createElementNS('http://www.w3.org/2000/svg','svg');frame.classList.add('may-contours-frame');frame.setAttribute('viewBox','0 0 124 80');frame.setAttribute('aria-hidden','true');frame.innerHTML='<path d="M14 1H110L123 14 117 27 123 40 117 53 123 66 110 79H14L1 66 7 53 1 40 7 27 1 14Z"/>';
+      owner.before(group);group.append(frame,owner,mode,colours);
+    }
+  }
   { const VIEW_COLS = [
        [['Показ поля', '#7cbcff', ['lg', 'parityCells', 'parityRows', 'parityCols', 'parityRowFill', 'parityRowsLevels', 'parityCellsLevels', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
@@ -1966,7 +1972,7 @@
         option.setAttribute('aria-label',option.title);
       }
     };
-    list.querySelectorAll(':scope > .gz-hx').forEach((row,i)=>{
+    list.querySelectorAll(':scope > .gz-hx, :scope > .may-contours-group > .gz-hx').forEach((row,i)=>{
       const mode=row.dataset.viewMode||options[i]?.value,ids=viewPaletteSources[mode];
       if(mode==='rgbNeighbours'){
         let panel=row.nextElementSibling?.classList.contains('may-rgb-panel')?row.nextElementSibling:null;

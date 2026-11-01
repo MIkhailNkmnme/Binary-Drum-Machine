@@ -1086,6 +1086,10 @@ body.may-mobile-menu #mayButtonSearchTrigger{order:-4}
 /* These are full menu rows; the legacy inset for non-button children must not shift them. */
 body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>[data-view-actions-home]{width:120px;max-width:120px;margin:0!important;padding:0;align-self:flex-start}
 #paintTools .may-view-actions{display:flex;flex-direction:column;gap:2px;width:120px;min-width:120px;margin:0;padding:0}
+body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>.may-contours-group{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:2px;width:120px;min-width:120px;max-width:120px;margin:2px 0!important;padding:0;align-self:flex-start}
+.may-contours-group>.gz-hx{position:relative;z-index:1}
+.may-contours-group>.may-contours-frame{position:absolute;left:-2px;top:-2px;width:124px;height:80px;pointer-events:none;z-index:0;overflow:visible;fill:#7cbcff0a;stroke:#7cbcff;stroke-width:1;opacity:.65}
+.may-contours-group:has(>[data-view-overlay="contours"].on)>.may-contours-frame{opacity:1;stroke-width:1.5}
 #paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half{appearance:none;border:0;border-radius:0;outline:none;font:inherit;color:inherit;cursor:pointer}
 #paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half:disabled{opacity:.45;cursor:default}
 body.may-mobile-menu #mayMobileBar #zerkHubBtn{display:flex!important;position:relative!important;inset:auto!important;transform:none!important;order:-5;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:24px!important;margin:0!important;padding:0!important;touch-action:pan-x!important}
