@@ -90,5 +90,10 @@ test('«Вспышка» в «Крае» стоит там же, куда вст
   assert.match(fn, /edgeEdge=st\.edgeWrap&&!compareOn\(\)&&!st\.sequenceSourceOn/, 'край распознаётся как при постановке вершины');
   assert.match(fn, /edgeC=edgeEdge\?edgeCol\(raw\):raw/, 'столбец вспышки проходит тот же edgeCol');
   assert.match(fn, /base=x\.p<0\?0x5bd3ff:0xffd35b/, 'левый и правый — два разных цвета');
+  assert.match(fn, /overA=0xff6bb0/, 'наложение вспышек — фиолетовое #b06bff');
+  assert.match(fn, /D\[q\]=\(had\?over:col\)/, 'в наложении рисуется фиолетовый');
+  assert.match(fn, /FLASH_MS=1300/, 'вспышка держится 1,3 с');
+  assert.match(fn, /OVER_MS=FLASH_MS\+300/, 'наложение держится на 0,3 с дольше вспышки');
+  assert.match(fn, /o\.over\.set\(q,now\)/, 'клетки наложения запоминаются с временем');
   assert.match(fn, /cr=Math\.round\(cr\+\(255-cr\)\*\.45\)/, 'через край — светлее, цвет тот же');
 });
