@@ -186,15 +186,15 @@
     bbCells.btns = [...(box?.querySelectorAll('.gz-soty > .gz-hx') || [])].filter(c => ['Построить', 'N/3', '4N', 'Построчно', 'До N/3'].includes(c.querySelector('.gz-nm')?.textContent.trim()));
     const cell = box?.querySelectorAll('.gz-wide > .gz-hx')[i]; if (cell) { bar.style.setProperty('--c', g.color); bar.append(cell); } }
   // v0.330: «помести туда Сброс — в 0 с очисткой от всего»: свёртки, окраска, зеркала, выделение шаблонов — выкл, затем «Очистить» (поле с кадра 0)
-  { const b = document.createElement('button'); b.type = 'button'; b.id = 'mayBbReset'; b.className = 'gz-hx'; b.innerHTML = '<span>✖ Сброс</span>';
-    b.title = 'Сброс: кадр 0 и очистка от всего — свёртки, вся краска и живая окраска, все зеркала, выделение шаблонов, поле заново';
-    b.onclick = () => { const C = window.mayClear; if (C) { C.paintOff(); C.mirrorsOff(); C.selOff(); } $('bReset').click(); rail.refresh(); placeTools(); };
+  {
     // v0.335: «Сброс прямо в ползунке рядом с плеем». v0.339: «ширину в 2 раза меньше, плей всегда по центру, бегунок текущего кадра — вертикальная линия
     // в 2 px, за неё перемещать, и поверх всех»: ▶ / ❚❚ и «✖» стоят в середине дорожки, линия-бегунок (grozd .gz-th без thumb) — над ними
     const cell = $('mayBottomBar').querySelector('.gz-sl'), mid = cell?.querySelector('.gz-mid'), th = mid?.querySelector('.gz-th');
-    if (mid) { const stop=e=>e.stopPropagation(); b.className = 'may-bb-rs'; b.removeAttribute('id'); b.textContent = '✖'; b.addEventListener('pointerdown',stop); b.addEventListener('pointerup',stop); b.addEventListener('click',stop); mid.append(b);
+    if (mid) { const stop=e=>e.stopPropagation();
       const pl = document.createElement('button'); pl.type = 'button'; pl.className = 'may-bb-play'; pl.addEventListener('pointerdown',stop); pl.addEventListener('pointerup',stop); pl.addEventListener('click',stop);
-      const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true'; pl.textContent = on ? '❚❚' : '▶'; pl.title = on ? 'Пауза' : 'Анимация: пуск'; pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on)); };
+      const transportArrows=[...cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)')];
+      const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true';cell.classList.toggle('may-frame-running',on);pl.textContent='▶';pl.title='Анимация: пуск';pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on));for(const [i,arrow]of transportArrows.entries()){if(on)arrow.dataset.transportGlyph=i===0?'✕':'Ⅱ';else delete arrow.dataset.transportGlyph;const title=on?(i===0?'Остановить и вернуться на кадр 0':'Пауза'):(i===0?'На предыдущий кадр':'На следующий кадр');arrow.title=title;arrow.setAttribute('aria-label',title);} };
+      for(const [i,arrow]of transportArrows.entries()){arrow.setAttribute('role','button');arrow.tabIndex=0;arrow.addEventListener('click',event=>{if(P.getAttribute('aria-pressed')!=='true')return;event.preventDefault();event.stopImmediatePropagation();P.click();if(i===0){$('frame').value='0';fire($('frame'));}plSync();rail.refresh();},true);arrow.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopImmediatePropagation();arrow.click();}},true);}
       pl.onclick = ev => { ev.stopPropagation(); P.click(); plSync(); rail.refresh(); }; new MutationObserver(plSync).observe(P, { attributes: true, attributeFilter: ['aria-pressed'] }); plSync(); mid.append(pl);
       // подпись «кадр N» — в 6 px от линии (слева, нет места — справа)
       // v0.348: «не видно номера кадра» — подпись обходит середину (▶ и «✖»): слева от линии, нет места или налезает — справа, иначе — сразу за краем ▶ / ✖ со стороны линии
@@ -212,10 +212,11 @@
       for(const arrow of cell.querySelectorAll(':scope > .gz-a'))arrow.addEventListener('pointerenter',()=>cell.classList.add('may-frame-play-reveal'));
       cell.addEventListener('pointerleave',()=>cell.classList.remove('may-frame-play-reveal'));
       const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect();
-        const x=t.left+t.width/2-b.left-bar.clientLeft,y=c.bottom-b.top-bar.clientTop;
-        tail.style.left=x+'px';tail.style.top=y+'px';tail.style.height=(c.height/2)+'px';
+        const x=Math.round(t.left+t.width/2-b.left-bar.clientLeft),y=c.bottom-b.top-bar.clientTop;
+        tail.style.left=x+'px';tail.style.top=(c.top-b.top-bar.clientTop+3)+'px';tail.style.height=(c.height*1.5-3)+'px';
         buildLabel.style.left=(x-6)+'px';buildLabel.style.top=y+'px';rowsLabel.style.left=(x+6)+'px';rowsLabel.style.top=y+'px';
-        rowsLabel.textContent=(Number($('rows').value)||0).toLocaleString('ru-RU')+' строк';
+        const rows=Number($('frame').dataset.fieldRows)||Number($('rows').value)||0,width=Number($('frame').dataset.fieldWidth)||2*rows-1,factor=(width+1)/rows;
+        rowsLabel.textContent=rows.toLocaleString('ru-RU')+' строк · '+([2,4,6,8].includes(factor)?factor+'N−1 = ':'ширина ')+width.toLocaleString('ru-RU');
         let type=$('frame').dataset.buildType||'Маятник';   // v0.717: режимы края — в подписи над кадром
         if($('edgeWrapTop')?.getAttribute('aria-pressed')==='true'){
           // v0.746: у «Перескока» в подписи — номер перескока (автор: «тут номер перескока учитывать»).
@@ -226,7 +227,7 @@
         if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
         if(buildLabel.textContent!==type)buildLabel.textContent=type;
       };
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)

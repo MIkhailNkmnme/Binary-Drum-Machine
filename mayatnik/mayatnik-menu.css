@@ -1092,16 +1092,23 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-slider{width:120px!important;min-width:120px;max-width:120px;height:24px;--gz-bg:#1b2430;--c:#80aee8}
 #mayBottomBar>.may-frame-slider .gz-mid{margin:0;min-width:0}
 #mayBottomBar>.may-frame-slider .gz-vl{left:0!important;right:0;top:50%;transform:translateY(-50%);padding:0;background:transparent;text-align:center;font-size:11px}
-#mayBottomBar>.may-frame-slider .gz-th{top:3px;height:21px;width:1px;margin:0;background:transparent;box-shadow:none;border-left:1px dashed #dfe6f5}
+#mayBottomBar>.may-frame-slider .gz-th{top:3px;height:21px;width:1px;margin:0;background:transparent;box-shadow:none;border:0}
 #mayBottomBar>.may-frame-type{max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translateX(-100%)}
 #mayBottomBar>.may-frame-rows{position:absolute;pointer-events:none;font:10px/12px var(--mono,monospace);white-space:nowrap;background:#000;color:#dfe6f5;z-index:11}
-#mayBottomBar>.may-frame-tail{position:absolute;border-left:1px dashed #dfe6f5;width:0;pointer-events:none;z-index:10}
+#mayBottomBar>.may-frame-tail{position:absolute;border:0;width:1px;background:repeating-linear-gradient(to bottom,#dfe6f5 0 2px,transparent 2px 4px);pointer-events:none;z-index:10}
 #mayBottomBar .may-frame-slider .may-bb-play{width:20px;height:20px;margin:-10px 0 0 -10px;clip-path:none;background:#1b2430;color:#dfe6f5;font-size:12px}
 #mayBottomBar .may-frame-slider .may-bb-rs{opacity:0;visibility:hidden;pointer-events:none}
 #mayBottomBar .may-frame-slider.may-frame-play-reveal .may-bb-play,#mayBottomBar .may-frame-slider:focus-within .may-bb-play{opacity:1;visibility:visible;transform:none;pointer-events:auto}
 #mayBottomBar .may-frame-slider:not(.may-frame-play-reveal):not(:focus-within) .may-bb-play:not([aria-pressed="true"]){opacity:0;visibility:hidden;pointer-events:none}
 #mayBottomBar .may-frame-slider.may-frame-play-reveal .may-bb-rs{opacity:1;visibility:visible;pointer-events:auto}
 @media(hover:none){#mayBottomBar .may-frame-slider .may-bb-play{opacity:1!important;visibility:visible!important;pointer-events:auto!important}}
+#mayBottomBar .may-frame-slider.may-frame-running .may-bb-play{display:none!important}
+#mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph]::after{content:attr(data-transport-glyph);inset:0;display:flex;align-items:center;justify-content:center;width:auto;height:auto;border:0;transform:none;font:700 13px/24px sans-serif;color:#dfe6f5}
+#mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph="✕"]::after{color:#ff6868}
+#mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph]::before{background:#80aee8;animation:mayFrameTransportOutline 1.2s ease-in-out infinite}
+#mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph="✕"]::before{background:#ff6868}
+@keyframes mayFrameTransportOutline{0%,100%{opacity:1}50%{opacity:.3}}
+@media(prefers-reduced-motion:reduce){#mayBottomBar .may-frame-slider.may-frame-running>.gz-a::before{animation:none}}
 
 /* v0.757: в логе находок у строк больше нет подписи «Текущий кадр»: пустой summary не занимает строку; ручная змея подписана. */
 #mayatnikTemplatePanel .mtp-sequence-rows .mtp-current-matches summary:empty{display:none}
