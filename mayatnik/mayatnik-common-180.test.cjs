@@ -64,10 +64,19 @@ test('joined 180 views route the vertex and row flash through the joined lattice
  const src=html.slice(html.indexOf('function flashRowCells'),html.indexOf('function rowLabDraw'));
  assert.match(src,/function flashDrawJoined/);
  assert.match(src,/if\(joinedOn\(\)\)\{flashDrawJoined\(o,now,FLASH_MS\);return;\}/);
- assert.match(src,/const vtxOn = !!st\.vtxFlash && \(joinedOn\(\)\|\|rombP\(\)<2\)/);
+ assert.match(src,/const vtxOn = !!st\.vtxFlash && \(joinedOn\(\)\|\|rombP\(\)<3\)/);
  assert.match(src,/fromSourceAll\(q\)/);
  assert.match(src,/fillRect\(cell\.x \* K, cell\.y \* K, K, K\)/);
  assert.match(src,/2 \* VH - 1 - r/);
+});
+test('flash also covers both rhombus panels and appears as soon as it is switched on',()=>{
+ const src=html.slice(html.indexOf('let flashSeed'),html.indexOf('function rowLabDraw'));
+ assert.match(src,/const centre = \(col, row\) => \{ const p = \(col - geo\.anchor\) & 1, pt = displayPoint\(col, row, p\)/);
+ assert.match(src,/rp === 2 \? \(pt\.p \? VW \+ RG : 0\) : 0/);
+ assert.match(src,/g\.rect\(ox \* K, 0, VW \* K, c\.height\)/);
+ assert.match(src,/let flashSeed=false/);
+ assert.match(src,/if\(vtxOn&&flashSeed\)\{flashSeed=false;if\(past\.length\)o\.list\.push/);
+ assert.match(html,/window\.mayVtxFlash=\{get:\(\)=>!!st\.vtxFlash,set\(v\)\{st\.vtxFlash=!!v;if\(st\.vtxFlash\)flashSeed=true/);
 });
 
 test('GPU render writes the new/legacy mapper, display anchor and two background colours without rewriting data',()=>{
