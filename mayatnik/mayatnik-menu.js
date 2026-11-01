@@ -1859,8 +1859,9 @@
     one.addEventListener('click',e=>{if(e.target===one)label.click();});
     toolSync.push(()=>{for(const [n,id]of [[bit0,'midZeroOn'],[bit1,'midOneOn']]){n.classList.toggle('gz-on',$(id).checked);n.setAttribute('aria-pressed',String($(id).checked));}for(const [n,id]of [[sw0,'midZeroColour'],[sw1,'midOneColour']])if(n.dataset.colour!==$(id).value){n.dataset.colour=$(id).value;n.style.backgroundColor=$(id).value;}one.classList.toggle('gz-on',$('midZeroOn').checked||$('midOneOn').checked);});
   }}
-  // v0.441: варианты сбоку от столбца; перекрытые элементы чужой группы скрываются по одному (v0.452).
-  const viewPaletteSources={col:['lgOverOne','lgOverZero'],bits:['lgBitZero','lgBitOne'],bitContours:['bitContourColour1','bitContourColour2'],digits:['digitZeroColour','digitOneColour'],digitsOnly:['digitZeroColour','digitOneColour']},viewPalettePickers=new Map();
+  // v0.775: палитры стоят у всех режимов с собственными цветами (в ромбах — цвета битов).
+  const bitViewPalette=['lgBitZero','lgBitOne'];
+  const viewPaletteSources={col:['lgOverOne','lgOverZero'],bits:bitViewPalette,bitContours:['bitContourColour1','bitContourColour2'],digits:['digitZeroColour','digitOneColour'],digitsOnly:['digitZeroColour','digitOneColour'],romb0:bitViewPalette,rombTri:bitViewPalette,romb1:bitViewPalette,romb2:bitViewPalette,rombAll:bitViewPalette,rombDirect:bitViewPalette,rombTight:bitViewPalette,rombJoin:bitViewPalette,rombJoin180:bitViewPalette},viewPalettePickers=new Map();
   $('lg').style.setProperty('display','none','important');
   tools.querySelector('[data-n="c2_digitOneColour"]')?.style.setProperty('display','none','important');
   function decorateViewPalette(list,owner){
