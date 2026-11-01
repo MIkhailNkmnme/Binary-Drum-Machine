@@ -1097,3 +1097,6 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar .may-bb-play[aria-pressed="true"]{opacity:1;visibility:visible;transform:none;pointer-events:auto}
 @media(hover:none){#mayBottomBar .may-bb-play{opacity:1;visibility:visible;transform:none;pointer-events:auto}}
 
+
+/* v0.757: в логе находок у строк больше нет подписи «Текущий кадр»: пустой summary не занимает строку; ручная змея подписана. */
+#mayatnikTemplatePanel .mtp-sequence-rows .mtp-current-matches summary:empty{display:none}
