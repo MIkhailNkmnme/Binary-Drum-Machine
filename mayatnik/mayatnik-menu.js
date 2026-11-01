@@ -216,6 +216,7 @@
       window.mayPlayPlace = playPlace;
       // v0.442: число сразу под линией бегунка; вне шестиугольника, чтобы его не обрезало.
       cell.classList.add('may-rows-slider','may-frame-slider');
+      const fieldOutline=document.createElementNS('http://www.w3.org/2000/svg','svg');fieldOutline.classList.add('may-frame-field-outline');fieldOutline.setAttribute('viewBox','0 0 120 24');fieldOutline.setAttribute('aria-hidden','true');const fieldPath=document.createElementNS(fieldOutline.namespaceURI,'path');fieldPath.setAttribute('d','M12 1H108L97 12 108 23H12L23 12Z');fieldOutline.append(fieldPath);cell.append(fieldOutline);
       const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span'),rowsLabel=document.createElement('span'),caption=document.createElement('span'),tail=document.createElement('span');caption.className='may-frame-caption';buildLabel.className='may-frame-type';rowsLabel.className='may-frame-rows';tail.className='may-frame-tail';tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');tail.setAttribute('aria-orientation','horizontal');tail.title='Тянуть пунктир, в том числе под кнопкой, — выбрать кадр';caption.append(buildLabel,rowsLabel);cell.parentElement.append(caption,tail);
       const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
       tail.addEventListener('pointerdown',event=>{
