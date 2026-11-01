@@ -21,5 +21,15 @@ test('в «Поиске» есть режим «Код» и таблица по�
   assert.match(html, /if\(!best\)\{stoppedAt=i;reason=reason\|\|'строка №'/);
   assert.match(html, /st\.ochkiCode\?1:0/);
   assert.match(html, /ochkiCodeSync\(\)/);
+  assert.match(html, /sequences\.codeStartGet=/);
+  assert.match(html, /sequences\.codeStartSet=/);
+  assert.match(html, /codeMode:!!st\.ochkiCode,codeNext:/);
+  assert.match(html, /st\.ochkiCodeStart/);
   assert.match(menu, /button\('bOchkiCode','text'\)/);
+  const seq = read('mayatnik-sequences.js');
+  assert.match(seq, /field\('Код с №',codeStart\)/);
+  assert.match(seq, /С какой строки начинать поиск Код/);
+  assert.match(seq, /Код · ищем №/);
+  assert.match(seq, /match\.codeMode/);
+  assert.match(seq, /codeText/);
 });
