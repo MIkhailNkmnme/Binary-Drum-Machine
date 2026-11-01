@@ -209,8 +209,9 @@
       // v0.442: число сразу под линией бегунка; вне шестиугольника, чтобы его не обрезало.
       cell.classList.add('may-rows-slider','may-frame-slider');
       const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span'),rowsLabel=document.createElement('span'),tail=document.createElement('span');buildLabel.className='may-frame-type';rowsLabel.className='may-frame-rows';tail.className='may-frame-tail';tail.setAttribute('aria-hidden','true');cell.parentElement.append(buildLabel,rowsLabel,tail);
-      for(const arrow of cell.querySelectorAll(':scope > .gz-a'))arrow.addEventListener('pointerenter',()=>cell.classList.add('may-frame-play-reveal'));
-      cell.addEventListener('pointerleave',()=>cell.classList.remove('may-frame-play-reveal'));
+      for(const arrow of transportArrows)arrow.addEventListener('pointerenter',()=>cell.classList.add('may-frame-play-reveal'));
+      const hideFramePlay=()=>cell.classList.remove('may-frame-play-reveal');
+      cell.addEventListener('pointerleave',hideFramePlay);cell.addEventListener('pointercancel',hideFramePlay);addEventListener('blur',hideFramePlay);
       const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect();
         const x=Math.round(t.left+t.width/2-b.left-bar.clientLeft),y=c.bottom-b.top-bar.clientTop;
         tail.style.left=x+'px';tail.style.top=(c.top-b.top-bar.clientTop+3)+'px';tail.style.height=(c.height*1.5-3)+'px';
