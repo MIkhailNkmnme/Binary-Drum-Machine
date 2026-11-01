@@ -52,6 +52,7 @@
   {key:'layers',title:'Слои',api:root.mayLayers},
   {key:'frames',title:'Кадры',api:root.mayFrameLibrary},
   {key:'settings',title:'Настройки',api:root.maySettingsLibrary},
+  {key:'links',title:'Ссылки',api:root.mayLinkLibrary},
   {key:'sequences',title:'Последовательности',api:root.maySequences&&{list:()=>[{id:'current',name:'Текущая последовательность'}],exportItem(){const s=root.maySequences.snapshot(),rows=s.rows.slice();return {id:'current',name:'Текущая последовательность',files:[{extension:'.txt',blob:new Blob([rows.join('\n')],{type:'text/plain;charset=utf-8'})},{extension:'.sequence.json',blob:json({format:'mayatnik-sequence',version:1,rows,source:s.source,count:s.count})}]};}}}
  ];}
  function mount(root,{parent,tab=()=> 'templates'}={}){
