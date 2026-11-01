@@ -89,7 +89,7 @@
     const save=()=>{try{localStorage.setItem(key,JSON.stringify(state));}catch(_){}};
     const bounds=()=>{const H=header.getBoundingClientRect(),T=tools.getBoundingClientRect(),F=footer.getBoundingClientRect(),R=rail.getBoundingClientRect(),customLeft=typeof leftEdge==='function'?leftEdge():null,customTop=typeof sideTop==='function'?sideTop():null;
       const viewportBottom=typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom;
-      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:sideColumnsLeft?0:T.top,bottomY:sideColumnsLeft?viewportBottom-HEIGHT:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?Math.ceil(Math.max(4,Number.isFinite(customTop)?customTop:4)):Math.ceil(H.bottom+8),sideBottom:viewportBottom-4,sideColumnsLeft,singleLeftColumn,sideCount:singleLeftColumn?heads.size:0};};
+      return {left:Math.max(singleLeftColumn?2:4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:sideColumnsLeft?0:T.top,bottomY:sideColumnsLeft?viewportBottom-HEIGHT:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?Math.ceil(Math.max(4,Number.isFinite(customTop)?customTop:4)):Math.ceil(H.bottom+8),sideBottom:viewportBottom-4,sideColumnsLeft,singleLeftColumn,sideCount:singleLeftColumn?heads.size:0};};
     const rect=el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};};
     const obstacles=()=>excluded.filter(e=>e?.getClientRects().length).map(rect);
     const available=skip=>slots(bounds()).filter(s=>!obstacles().some(r=>overlap(s,r))&&![...placed].some(([g,p])=>g!==skip&&overlap(s,p)));

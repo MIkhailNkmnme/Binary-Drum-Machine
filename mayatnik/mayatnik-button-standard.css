@@ -271,7 +271,7 @@ body.may-zen>.may-menu-side-scroll{display:none!important}
 /* Frame/row count already sits below the transport thumb. */
 #mayFieldCaption{display:none!important}
 /* Fixed branding uses the menu's 120×24 slots without joining its drag layout. */
-body.mayatnik-menu-ready>header>.may-brand{position:fixed;left:var(--may-brand-left,4px);top:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:2px;box-sizing:border-box;width:120px;min-width:120px;max-width:120px;height:50px;flex:0 0 120px;order:-1;background:#000}
+body.mayatnik-menu-ready>header>.may-brand{position:fixed;left:var(--may-brand-left,2px);top:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:2px;box-sizing:border-box;width:120px;min-width:120px;max-width:120px;height:50px;flex:0 0 120px;order:-1;background:#000}
 .may-brand #mayBrandHubSlot{width:120px;height:24px;flex:none}
 .may-brand #zerkHubBtn,.may-brand-title{position:relative;display:flex;align-items:center;justify-content:center;gap:4px;box-sizing:border-box;width:120px;height:24px;margin:0;padding:0 12px;border:0;border-radius:0;flex:none;background:#000;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);box-shadow:none;opacity:1}
 .may-brand #zerkHubBtn::before,.may-brand-title::before{content:"";position:absolute;inset:0;pointer-events:none;background:#53667e;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cpath d='M.7 12 12 .7H108L119.3 12 108 23.3H12Z' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E") center/120px 24px no-repeat}
@@ -280,7 +280,7 @@ body.mayatnik-menu-ready>header>.may-brand{position:fixed;left:var(--may-brand-l
 .may-brand #zerkHubBtn>canvas{width:22px;height:22px;flex:0 0 22px}
 .may-brand #zerkHubBtn::after{content:"Hub";font:600 12px/24px 'Segoe UI',sans-serif;color:#7cbcff}
 .may-brand #appTitle{display:block;width:auto;height:24px;font-size:12px;line-height:24px;letter-spacing:0;white-space:nowrap;flex:none;min-width:0;margin:0}
-.may-brand-title>.ver{font-size:8px;line-height:24px;white-space:nowrap;flex:none;margin:0}
+.may-brand-title>.ver{font-size:11px;font-weight:600;line-height:24px;white-space:nowrap;flex:none;margin:0}
 
 /* Compact group headers: flat top, downward tip; controls keep their diamond form. */
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-header-triangle{--gz-w:48px;width:48px!important;min-width:48px!important;max-width:48px!important;flex:0 0 48px!important;clip-path:polygon(0 0,100% 0,50% 100%)!important;justify-content:center;padding:0!important;gap:0!important}

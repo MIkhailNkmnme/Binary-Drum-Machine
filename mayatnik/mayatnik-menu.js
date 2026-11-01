@@ -1824,7 +1824,7 @@
       narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick);
       const placeHorizontalStrips=()=>{
         const desktop=!narrow.matches,step=window.MayatnikMenuDock.DX;
-        const columnLeft=Math.max(4,rail.el.getBoundingClientRect().left),left=desktop?(columnLeft+step)+'px':'';
+        const columnLeft=2,left=desktop?(columnLeft+step)+'px':'';
         const brand=head.querySelector(':scope > .may-brand');if(brand)brand.style.setProperty('--may-brand-left',columnLeft+'px');
         // The brand occupies one column; horizontal strips start immediately after that column.
         // Shorten the physical strips too, including their backgrounds and controls.
@@ -1832,7 +1832,7 @@
       };
       placeHorizontalStrips();relayout();
       // v0.509: capture group dragging before the legacy rail/free-bottom handlers.
-      dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,sideColumnsLeft:true,singleLeftColumn:true,
+      dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,leftEdge:()=>2,sideColumnsLeft:true,singleLeftColumn:true,
         sideTop:()=>{const brand=head.querySelector(':scope > .may-brand');return brand?.getClientRects().length?brand.getBoundingClientRect().bottom+2:30;},
         excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{
           placeHorizontalStrips();
