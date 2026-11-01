@@ -1,4 +1,4 @@
-/* v0.669: варианты решётки и инверсии для обычного Маятника. */
+﻿/* v0.669: варианты решётки и инверсии для обычного Маятника. */
 /* Маятник v0.665 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
@@ -1030,7 +1030,9 @@
     const parts=choices.map(([value,label,help],i)=>{const part=document.createElement('span');part.className='gz-half gz-h'+i;part.textContent=label;part.title=help;part.setAttribute('aria-label',help);part.setAttribute('role','button');part.tabIndex=0;
       part.addEventListener('click',event=>{event.stopPropagation();if(source.disabled||source.value===value)return;source.value=value;source.dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();});
       part.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();part.click();}});row.append(part);return part;});
-    toolSync.push(()=>parts.forEach((part,i)=>{const on=source.value===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.setAttribute('aria-disabled',String(!!source.disabled));}));gView.append(row);
+    toolSync.push(()=>parts.forEach((part,i)=>{const on=source.value===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.setAttribute('aria-disabled',String(!!source.disabled));}));
+    // v0.817: выбор контуров — под кнопкой «Контуры» в группе «Виды поля» (автор: «перемести под Контуры в Вид поля»).
+    const anchor=gModes.querySelector('[data-view-overlay="contours"]');if(anchor)anchor.after(row);else gModes.append(row);
   }
   contourSelector('bitContourMode','Контуры битов: способ обводки',[
     ['single','Общ','Общий контур всех битов первым собственным цветом.'],
@@ -1045,8 +1047,12 @@
   // v0.226: «и эту раздели в 2, отдели фоном или вложенностью, сделай по темам» — список «Вида» в два столбца (.pt-col), в них блоки по темам
   // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.
   // У блока поля 2 px сверху и снизу и нет зазора между блоками — шаг рядов (кнопка + зазор 4 px) тот же, зубцы рамки (zig) — против остриёв кнопок.
+  // v0.817: «Вспышка» и «Тепло» — тоже под «Контуры» в группу «Вид поля».
+  { const last = gModes.querySelector('[data-n="bitContourColours"]') || gModes.querySelector('[data-view-overlay="contours"]');
+    let at = last;
+    for (const n of ['vtxFlash', 'heat']) { const e = gView.querySelector(`[data-n="${n}"]`); if (!e) continue; if (at) at.after(e); else gModes.append(e); at = e; } }
   { const VIEW_COLS = [
-       [['Показ поля', '#7cbcff', ['lg', 'bitContourMode', 'bitContourColours', 'parityCells', 'parityRows', 'parityCols', 'parityRowFill', 'parityRowsLevels', 'parityCellsLevels', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat']],
+       [['Показ поля', '#7cbcff', ['lg', 'parityCells', 'parityRows', 'parityCols', 'parityRowFill', 'parityRowsLevels', 'parityCellsLevels', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
       [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'lineMeasures', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
