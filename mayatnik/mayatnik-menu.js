@@ -1597,7 +1597,7 @@
         launch.type='button';launch.id='bTemplatePanel';launch.setAttribute('aria-controls','mayatnikTemplatePanel');
         launcher.append(launch);document.body.append(launcher);
         launch.className='pt-l';launch.title='Библиотека';launch.setAttribute('aria-label','Библиотека');
-        launch.innerHTML='<svg class="may-template-diamond" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 1L47 24 24 47 1 24Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg>';
+        launch.innerHTML='<svg class="may-template-diamond" viewBox="0 0 48 24" aria-hidden="true"><path d="M1 .5H47L24 23Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg>';
 
         const sync=()=>{const on=String(window.MayatnikTemplatePanel.isOpen());launch.setAttribute('aria-expanded',on);launch.setAttribute('aria-pressed',on);};
         launch.onclick=()=>{window.MayatnikTemplatePanel.toggle();sync();};
