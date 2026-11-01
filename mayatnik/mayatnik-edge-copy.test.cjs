@@ -81,3 +81,12 @@ test('«Края»: низ — отражение верхнего кадра, �
   assert.match(fn, /#5bff9d/, 'зелёный пунктир начал копий');
   assert.doesNotMatch(fn, /MayatnikEdgeCopy\.copy\(f\.val/, 'полосы из сырых битов больше не рисуются');
 });
+
+test('«Вспышка» в «Крае» стоит там же, куда встала вершина после перескока', () => {
+  const html = fs.readFileSync(path.join(__dirname, 'Zerkalius-mayatnik.html'), 'utf8');
+  const start = html.indexOf('function flashDraw');
+  assert.ok(start > 0, 'flashDraw найден');
+  const fn = html.slice(start, html.indexOf('function rowLabDraw'));
+  assert.match(fn, /edgeEdge=st\.edgeWrap&&!compareOn\(\)&&!st\.sequenceSourceOn/, 'край распознаётся как при постановке вершины');
+  assert.match(fn, /edgeEdge\?edgeCol\(geo\.anchor\+x\.p\):geo\.anchor\+x\.p/, 'столбец вспышки проходит тот же edgeCol');
+});
