@@ -89,5 +89,6 @@ test('«Вспышка» в «Крае» стоит там же, куда вст
   const fn = html.slice(start, html.indexOf('function rowLabDraw'));
   assert.match(fn, /edgeEdge=st\.edgeWrap&&!compareOn\(\)&&!st\.sequenceSourceOn/, 'край распознаётся как при постановке вершины');
   assert.match(fn, /edgeC=edgeEdge\?edgeCol\(raw\):raw/, 'столбец вспышки проходит тот же edgeCol');
-  assert.match(fn, /pal\?\(edgeV\?0xb06bff:0xffd35b\):\(edgeV\?0xd05bff:0x5bd3ff\)/, 'цвет только по краю, пара меняется на следующем круге');
+  assert.match(fn, /base=x\.p<0\?0x5bd3ff:0xffd35b/, 'левый и правый — два разных цвета');
+  assert.match(fn, /cr=Math\.round\(cr\+\(255-cr\)\*\.45\)/, 'через край — светлее, цвет тот же');
 });
