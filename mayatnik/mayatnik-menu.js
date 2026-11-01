@@ -859,16 +859,21 @@
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   {const e=$('bGif'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bGif';const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'record');b.append(mark);b.onclick=()=>e.click();toolSync.push(()=>{b.title=tip(e);b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');});tools.querySelector('[data-n="bRec"]').parentElement.append(b);}
-  const ptNames = { crossMirror:'Зеркала крестов',crossMirrorMode:'Слева → вправо',crossMirrorSector:'Сектор А1',crossLabels:'Секторы креста', lineMeasures:'Размеры', fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'Загиб Верт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', rowCount:'Биты в строках', fixCross:'Точка встречи', sawFull:'Пила полная', rowLab:'Подписи', vtxFlash:'Вспышка', heat:'Тепло',   // v0.329: «Вид» — стандартной ширины, названия короче
+  const ptNames = { viewOverlay_contours:'Контуры',viewOverlay_digits:'Цифры',crossMirror:'Зеркала крестов',crossMirrorMode:'Слева → вправо',crossMirrorSector:'Сектор А1',crossLabels:'Секторы креста', lineMeasures:'Размеры', fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'Загиб Верт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', rowCount:'Биты в строках', fixCross:'Точка встречи', sawFull:'Пила полная', rowLab:'Подписи', vtxFlash:'Вспышка', heat:'Тепло',   // v0.329: «Вид» — стандартной ширины, названия короче
     sectors:'Секторы', areas:'Площади', areaFreeze:'Заморозка', ovlStep:'Наложение', ovlPos:'Сдвиг G', ovlH0:'Шаг 8', ovlReset:'Сброс налож.', ovlFreeze:'Фиксировать', ovlAlpha:'Видимость 50%', ovlOriginal:'Оригинал', ovlCenter:'По оси', saw:'Пила', fixLock:'Замок ↔', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', clrPaint:'Окраска', clrMirrors:'Зеркала', clrAxes:'Все оси', clrSel:'Выделение', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', bPaintMeet:'Точка', bPaintAxis:'ТочкаОсь', bThirds:'Трети', bTriTop:'▼ ← верх', meetGrow:'Рост', meetCol:'Цвет', bFillGrow:'Рост', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', triangleMapSource:'Карта 1093', triangleMapAxes:'Оси карты', triangleMapMask:'Маска узора', triangleMapMirror:'Зеркала ▼', autoAxes:'Автооси ▼', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Шахм ↕', symH:'Шахм ↔', symD:'Шахм ╲╱', symPlainV:'Оси ↕', symPlainH:'Оси ↔', symPlainD:'Оси ╲╱', bAxisLine:'Своя ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Виды поля', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.774: пункты списка «Вид» раскрываются сразу внутри группы «Виды поля», без вложенной кнопки.
   const viewModeButtons=new Map();
-  for(const option of [...viewSelect.options].filter(o=>!o.hidden&&!o.disabled)){
+  for(const option of [...viewSelect.options].filter(o=>!o.hidden&&!o.disabled&&['col','bits','rgbNeighbours'].includes(o.value))){
     const [kind,description]=viewIcons[option.value]||['eye',option.title||option.textContent],id='viewMode_'+option.value;
     ptNames[id]=VIEW_SHORT[option.value]||option.textContent.trim();
     const b=ptBtn(id,kind,viewSelect,()=>{if(viewSelect.value===option.value)return;viewSelect.value=option.value;viewSelect.dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();});
     b.dataset.viewMode=option.value;b.title=description;b.setAttribute('aria-label',description);gModes.append(b);viewModeButtons.set(option.value,b);
     toolSync.push(()=>{const selected=viewSelect.value===option.value;b.hidden=option.hidden||option.disabled;b.classList.toggle('on',selected);b.classList.toggle('gz-on',selected);b.setAttribute('aria-pressed',String(selected));});
+    if(option.value==='rgbNeighbours')for(const [key,label,kind]of [['contours','Контуры','corners'],['digits','Цифры','steps']]){
+      const probe=document.createElement('button');probe.title=label;const overlay=ptBtn('viewOverlay_'+key,kind,probe,()=>{window.mayViewOverlay?.toggle(key);rail.refresh();placeTools();});
+      overlay.dataset.viewMode='overlay-'+key;overlay.dataset.viewOverlay=key;overlay.title=key==='contours'?'Контуры битов поверх выбранного вида':'Цифры 0/1 поверх выбранного вида';overlay.setAttribute('aria-label',overlay.title);gModes.append(overlay);
+      toolSync.push(()=>{const active=!!window.mayViewOverlay?.get(key);overlay.classList.toggle('on',active);overlay.classList.toggle('gz-on',active);overlay.setAttribute('aria-pressed',String(active));});
+    }
   }
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
@@ -965,7 +970,7 @@
     const source=$(id);if(!source)return;
     const row=document.createElement('div');row.className='gz-hx gz-pair may-segments '+(choices.length===3?'gz-split3 may-mirror-three':choices.length===4?'gz-split4':'gz-split');row.dataset.n=id;row.title=title;row.setAttribute('role','group');row.setAttribute('aria-label',title);
     const parts=choices.map(([value,label,help],i)=>{const part=document.createElement('span');part.className='gz-half gz-h'+i;part.textContent=label;part.title=help;part.setAttribute('aria-label',help);part.setAttribute('role','button');part.tabIndex=0;
-      part.addEventListener('click',event=>{event.stopPropagation();if(source.disabled)return;const view=$('view'),activate=id==='bitContourMode'&&view.value!=='bitContours';if(source.value===value&&!activate)return;if(source.value!==value){source.value=value;source.dispatchEvent(new Event('change',{bubbles:true}));}if(activate){view.value='bitContours';view.dispatchEvent(new Event('change',{bubbles:true}));}rail.refresh();placeTools();});
+      part.addEventListener('click',event=>{event.stopPropagation();if(source.disabled||source.value===value)return;source.value=value;source.dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();});
       part.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();part.click();}});row.append(part);return part;});
     toolSync.push(()=>parts.forEach((part,i)=>{const on=source.value===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.setAttribute('aria-disabled',String(!!source.disabled));}));gView.append(row);
   }
@@ -1859,19 +1864,19 @@
     one.addEventListener('click',e=>{if(e.target===one)label.click();});
     toolSync.push(()=>{for(const [n,id]of [[bit0,'midZeroOn'],[bit1,'midOneOn']]){n.classList.toggle('gz-on',$(id).checked);n.setAttribute('aria-pressed',String($(id).checked));}for(const [n,id]of [[sw0,'midZeroColour'],[sw1,'midOneColour']])if(n.dataset.colour!==$(id).value){n.dataset.colour=$(id).value;n.style.backgroundColor=$(id).value;}one.classList.toggle('gz-on',$('midZeroOn').checked||$('midOneOn').checked);});
   }}
-  // v0.775: палитры стоят у всех режимов с собственными цветами (в ромбах — цвета битов).
+  // v0.776: три основы отображения выбираются по одной; контуры и цифры — независимые надстройки.
   const bitViewPalette=['lgBitZero','lgBitOne'];
-  const viewPaletteSources={col:['lgOverOne','lgOverZero'],bits:bitViewPalette,bitContours:['bitContourColour1','bitContourColour2'],digits:['digitZeroColour','digitOneColour'],digitsOnly:['digitZeroColour','digitOneColour'],romb0:bitViewPalette,rombTri:bitViewPalette,romb1:bitViewPalette,romb2:bitViewPalette,rombAll:bitViewPalette,rombDirect:bitViewPalette,rombTight:bitViewPalette,rombJoin:bitViewPalette,rombJoin180:bitViewPalette},viewPalettePickers=new Map();
+  const viewPaletteSources={col:['lgOverOne','lgOverZero'],bits:bitViewPalette,'overlay-contours':['bitContourColour1','bitContourColour2'],'overlay-digits':['digitZeroColour','digitOneColour']},viewPalettePickers=new Map();
   $('lg').style.setProperty('display','none','important');
   tools.querySelector('[data-n="c2_digitOneColour"]')?.style.setProperty('display','none','important');
   function decorateViewPalette(list,owner){
     if(!owner?.dataset.viewMode)return;
-    const options=[...$('view').options].filter(o=>!o.hidden&&!o.disabled);
+    const options=[...$('view').options].filter(o=>!o.hidden&&!o.disabled&&['col','bits','rgbNeighbours'].includes(o.value));
     const rgbChoices=[[0,'Чёрный','#000000'],[4,'Красный','#ff0000'],[2,'Зелёный','#00ff00'],[1,'Синий','#0000ff'],[6,'Жёлтый','#ffff00'],[5,'Пурпурный','#ff00ff'],[3,'Голубой','#00ffff'],[7,'Белый','#ffffff']];
     const shortCount=n=>n>=1e6?(n/1e6).toLocaleString('ru-RU',{maximumFractionDigits:1})+'м':n>=1e3?Math.round(n/1e3).toLocaleString('ru-RU')+'к':n.toLocaleString('ru-RU');
      const syncRGBPalette=panel=>{panel.hidden=$('view').value!=='rgbNeighbours';const api=window.mayRGBNeighbours,counts=api?.counts?.()||[],selected=api?.filters?.()||[],hasSelected=selected.length>0;for(const chip of panel.querySelectorAll('.may-rgb-choice')){const code=Number(chip.dataset.rgbCode),choice=rgbChoices.find(x=>x[0]===code),count=counts[code]||0,on=selected.includes(code);chip.setAttribute('aria-pressed',String(on));chip.title=`${choice[1]} · RGB ${code.toString(2).padStart(3,'0')} · ${count.toLocaleString('ru-RU')} клеток · щелчок добавляет или снимает этот цвет; без выбранных кругов видны все`;chip.setAttribute('aria-label',`${choice[1]}, RGB ${code.toString(2).padStart(3,'0')}, ${count.toLocaleString('ru-RU')} клеток`);chip.classList.toggle('gz-on',on);chip.style.outline=on?'2px solid #66caff':'none';const n=chip.parentElement.querySelector('.may-rgb-count');if(n)n.textContent=shortCount(count);}const bw=panel.querySelector('.may-rgb-bw');if(bw){const mode=api?.bw?.()||0,active=mode!==0;bw.textContent=mode===2?'Б/Ч':'Ч/Б';bw.setAttribute('aria-pressed',String(active));bw.classList.toggle('gz-on',active);bw.style.borderColor=mode===1?'#66caff':mode===2?'#ffbd66':'#65758d';bw.style.background=mode===1?'#173451':mode===2?'#3a2b18':'#141c28';bw.title=mode===1?(hasSelected?'Ч/Б включено: выбранные цвета белые, остальные биты чёрные. Следующий щелчок — Б/Ч.':'Ч/Б включено: все занятые клетки белые на чёрном. Следующий щелчок — Б/Ч.'):mode===2?(hasSelected?'Б/Ч включено: выбранные цвета чёрные, остальные биты белые. Следующий щелчок выключит раскраску.':'Б/Ч включено: все занятые клетки чёрные, фон белый. Следующий щелчок выключит раскраску.'):'Ч/Б и Б/Ч выключены. Щелчок включит Ч/Б.';}};
     list.querySelectorAll(':scope > .gz-hx').forEach((row,i)=>{
-      const mode=options[i]?.value,ids=viewPaletteSources[mode];
+      const mode=row.dataset.viewMode||options[i]?.value,ids=viewPaletteSources[mode];
       if(mode==='rgbNeighbours'){
         let panel=row.nextElementSibling?.classList.contains('may-rgb-panel')?row.nextElementSibling:null;
         if(!panel){
@@ -1894,7 +1899,7 @@
         ids.forEach((id,j)=>{const src=$(id),dot=document.createElement('button');dot.type='button';dot.className='may-view-swatch';dot.dataset.noMini='';dot.dataset.source=id;dot.title=src.title||src.getAttribute('aria-label');dot.setAttribute('aria-label',dot.title);
           if(!viewPalettePickers.has(id))viewPalettePickers.set(id,picker(src));
           dot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();});
-          dot.addEventListener('click',e=>{e.stopPropagation();if($('view').value!==mode){$('view').value=mode;$('view').dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();return;}viewPalettePickers.get(id)(dot);});
+          dot.addEventListener('click',e=>{e.stopPropagation();if(viewModeButtons.has(mode)&&$('view').value!==mode){$('view').value=mode;$('view').dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();return;}viewPalettePickers.get(id)(dot);});
           if(j)row.append(dot);else row.prepend(dot);
         });
       }
