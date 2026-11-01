@@ -1,4 +1,4 @@
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+﻿const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const Sequences=require('./mayatnik-sequences.js');
 const make=()=>Sequences.create(null,{rows:16});
 const hit=i=>({i,r:i,c:0,n:i+1,dir:1,p:0});
@@ -65,7 +65,7 @@ test('first findings are immutable per half across frames and manual searches do
 test('visible table shows sequence, first frames and methods separately per half without changing gold or editor',()=>{
  const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<section></section>'),pane=dom.window.document.querySelector('section'),api=make(),view=Sequences.mount(pane,api);
  try{
-  assert.deepEqual([...pane.querySelectorAll('thead th')].map(n=>n.textContent),['№','Послед-ть','Кадр','Начало','Конец','Поиск']);
+  assert.deepEqual([...pane.querySelectorAll('thead th')].map(n=>n.textContent),['№','Послед-ть','Кадр / пер.','Начало','Конец','Поиск']);
   const row=pane.querySelector('[data-sequence-row="0"]');assert.equal(row.querySelector('[data-column=sequence]').textContent,'1');assert.equal(row.querySelector('[data-column=frame]').textContent,'—');
   api.recordFirstFind({...hit(0),p:0,dir:'snake',manual:true,vn:'инв'},{frame:7,halves:2,searchScope:'a'});
   assert.equal(pane.querySelectorAll('.is-found').length,0);assert.equal(row.querySelector('[data-column=frame]').textContent,'Левый: 7');assert.match(row.querySelector('[data-column=method]').textContent,/ручная змея.*инверсия/);

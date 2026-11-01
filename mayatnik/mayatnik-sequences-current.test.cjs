@@ -31,7 +31,7 @@ test('rows without findings keep no empty details, and a first find records the 
   assert.equal(row.querySelector('.mtp-current-matches'),null,'«нет находок» в строке больше не пишется');
   f.api.setMatches(state(3,[{i:1,r:0,c:0,n:1,dir:0,text:'1',p:0}],{halves:1,jumps:4}));
   const found=f.pane.querySelector('[data-sequence-row="1"]');
-  assert.equal(found.querySelector('[data-column=frame]').textContent,'3 · пер. 4');
+  assert.equal(found.querySelector('[data-column=frame]').textContent,'3 / 4');
   assert.equal(f.api.snapshot().firstFinds.find(hit=>hit.i===1)?.jumps,4);
  }finally{f.close();}
 });
