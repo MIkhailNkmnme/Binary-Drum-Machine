@@ -131,7 +131,7 @@
   groups.push({id:'horr',title:'Хорр',color:'#73e4a5',items:[]});
   groups.push({id:'edge',title:'Край',color:'#7cbcff',items:[
     button('edgeWrapTop','field'),
-    button('edgeBounceTop','mirror'),
+    button('edgeBounceTop','mirror'),button('edgeContinuous','steps'),
     (() => { const get = () => $('edgeWidthTop')?.value || '4', set = v => { const e = $('edgeWidthTop'); if (!e) return; e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); };
       return segments('Ширина', [2, 4, 6, 8].map(v => ({ name: v + 'N', tip: 'Ширина поля ' + v + 'N−1', on: () => get() === String(v), pick: () => set(String(v)) }))); })(),
     button('edgeMarkTop','eye'),
@@ -300,6 +300,8 @@
       row.gzSync = () => parts.forEach((pt, j) => { const on = !!pt.on(); hs[j].classList.toggle('gz-on', on); row.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); });
       return row; };
     const section = (node, key) => { node.dataset.horrSection = key; return node; };
+    { const host=document.createElement('div');host.className='may-animatrix-controls';pop.append(section(host,'animatrix'));
+      window.MayatnikAnimatrixControls?.mount({host,api:()=>window.mayAnimatrix,after:()=>{rail.refresh();placeTools();}}); }
     const sizeRows = [];
     for (let i = 0; i < pres.length; i += 2) { const row = gzPair(pres.slice(i, i + 2).map(e => ({ label: e.textContent, tip: e.title || ('Построить ' + e.textContent), data: { n: e.dataset.n },
         on: () => cur() === e.dataset.n, click: () => { e.click(); sync(); } }))); sizeRows.push(row); pop.append(section(row, 'size')); }
@@ -449,7 +451,7 @@
           half.setAttribute('aria-pressed', String(!!on()));
           if (gz) half.classList.toggle('gz-on', !!on());
         }
-        const selected = !state().source&&!state().sequence; legacy.classList.toggle('gz-on', selected); legacy.setAttribute('aria-pressed', String(selected));
+        const selected = !state().source&&!state().sequence&&!state().animatrix; legacy.classList.toggle('gz-on', selected); legacy.setAttribute('aria-pressed', String(selected));
       }
       addEventListener('may-compare-change', syncComparison);
       b.addEventListener('click', syncComparison); syncComparison();
@@ -1026,11 +1028,14 @@
   // Contour selectors forward only to retained controls; source handlers own persistence/rendering.
   function contourSelector(id,title,choices){
     const source=$(id);if(!source)return;
+    const unavailable=()=>!!source.disabled||!window.mayViewOverlay?.get('contours');
     const row=document.createElement('div');row.className='gz-hx gz-pair may-segments '+(choices.length===3?'gz-split3 may-mirror-three':choices.length===4?'gz-split4':'gz-split');row.dataset.n=id;row.title=title;row.setAttribute('role','group');row.setAttribute('aria-label',title);
     const parts=choices.map(([value,label,help],i)=>{const part=document.createElement('span');part.className='gz-half gz-h'+i;part.textContent=label;part.title=help;part.setAttribute('aria-label',help);part.setAttribute('role','button');part.tabIndex=0;
-      part.addEventListener('click',event=>{event.stopPropagation();if(source.disabled||source.value===value)return;source.value=value;source.dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();});
-      part.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();part.click();}});row.append(part);return part;});
-    toolSync.push(()=>parts.forEach((part,i)=>{const on=source.value===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.setAttribute('aria-disabled',String(!!source.disabled));}));
+      part.addEventListener('click',event=>{event.stopPropagation();if(unavailable()||source.value===value)return;source.value=value;source.dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();});
+      part.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();if(!unavailable())part.click();}});row.append(part);return part;});
+    const sync=()=>{const disabled=unavailable();row.inert=disabled;row.setAttribute('aria-disabled',String(disabled));
+      parts.forEach((part,i)=>{const on=source.value===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.setAttribute('aria-disabled',String(disabled));part.toggleAttribute('disabled',disabled);part.tabIndex=disabled?-1:0;});};
+    toolSync.push(sync);sync();
     // v0.817: выбор контуров — под кнопкой «Контуры» в группе «Виды поля» (автор: «перемести под Контуры в Вид поля»).
     const anchor=gModes.querySelector('[data-view-overlay="contours"]');if(anchor)anchor.after(row);else gModes.append(row);
   }
@@ -1467,7 +1472,7 @@
   function mountHorrSections(group, { storage = localStorage, after = () => {}, openGroup = () => {} } = {}) {
     if (!group) return null;
     const doc = group.ownerDocument, win = doc.defaultView;
-    const sections = [['size', 'Размер', 'line'], ['build', 'Построение', 'steps'], ['fields', 'Поля', 'field'], ['overlay', 'Наложение', 'plusRing'], ['run', 'Прогон', 'play']];
+    const sections = [['size', 'Размер', 'line'], ['build', 'Построение', 'steps'], ['fields', 'Поля', 'field'], ['overlay', 'Наложение', 'plusRing'], ['run', 'Прогон', 'play'], ['animatrix', 'Аниматрица', 'grid4']];
     const key = 'mayatnik-horr-section-v1', openKey = 'mayatnik-horr-section-open-v1';
     const controls = [...group.querySelectorAll('[data-horr-section]')], host = controls[0]?.closest('.gz-wide');
     if (!host || !controls.length) return null;

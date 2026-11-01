@@ -33,6 +33,8 @@
     if(!BACKGROUNDS.includes(state.bg))throw Error('В ссылке некорректный фон поля');
     if(!COMPARE_SOURCES.includes(state.compareSource??''))throw Error('В ссылке неизвестное построение');
     if(state.sequenceSource!=null){if(!isPlainObject(state.sequenceSource)||state.sequenceSource.version!==1||!Array.isArray(state.sequenceSource.rows)||!state.sequenceSource.rows.length)throw Error('В ссылке повреждён свой исходный рисунок');if(state.sequenceSource.rows.length>4096||state.sequenceSource.rows.some(row=>typeof row!=='string'||!/^[01]+$/.test(row)))throw Error('В ссылке повреждены строки своего рисунка');if(state.sequenceSourceOn&&state.compareSource)throw Error('В ссылке два источника поля');}
+    if(state.animatrixOn){const api=typeof globalThis==='object'?globalThis.MayatnikAnimatrixSource:null;if(api)api.assertState(state);else if(state.sequenceSourceOn||state.compareSource||!isPlainObject(state.animatrixSource)||state.animatrixEvolution!==1)throw Error('В ссылке повреждена Аниматрица');}
+    if(typeof globalThis==='object'&&globalThis.MayatnikEdgeFlow)globalThis.MayatnikEdgeFlow.validate(state);
     const k=integer(Number(value.k),0,MAX_FRAME,'В ссылке некорректный кадр');
     const tools=isPlainObject(value.tools)?{...value.tools}:{};
     const colours=isPlainObject(value.colours)?{...value.colours}:{};
@@ -68,9 +70,10 @@
   function describe(payload){
     const state=payload?.state||{},rows=Number(state.rows)||0,k=Number(payload?.k)||0,steps=Number(state.steps)||0;
     const pair=!!state.pair&&state.mode==='pend';
-    const construction=state.compareSource==='cone'?'Конусы':state.compareSource?'Сравнение':state.sequenceSourceOn?'Свой маятник':state.edgeWrap?(state.edgeBounce?'Отскок':'Перескок'):'Маятник';
+    const construction=state.animatrixOn?'Аниматрица'+(state.animatrixTiming==='rows'?' по строкам':''):state.compareSource==='cone'?'Конусы':state.compareSource?'Сравнение':state.sequenceSourceOn?'Свой маятник':state.edgeWrap?(state.edgeBounce?'Отскок':'Перескок')+(state.edgeContinuous?' без сброса':''):'Маятник';
     const view=VIEWS[state.view]||'Биты';
-    const summary=[rows+' строк','кадр '+k+' из '+(pair?Math.max(0,steps>>1):steps),(pair?'пара · ':'')+construction,view].filter(Boolean).join(' · ');
+    const flow=typeof globalThis==='object'?globalThis.MayatnikEdgeFlow:null,maximum=state.animatrixOn?(state.animatrixTiming==='rows'?state.animatrixSource.height-1:state.animatrixSource.height)*state.animatrixCycles:flow?.active(state)?flow.limit(state):pair?Math.max(0,steps>>1):steps;
+    const summary=[rows+' строк','кадр '+k+' из '+maximum,(pair?'пара · ':'')+construction,view].filter(Boolean).join(' · ');
     return {title:'Ссылка '+rows+' строк · кадр '+k+(construction!=='Маятник'?' · '+construction:''),summary};
   }
   return {VERSION,HASH,MAX_CODE,MAX_FRAME,MAX_PAINT_CELLS,MODES,BACKGROUNDS,COMPARE_SOURCES,VIEWS,b64url,unb64url,normalizePayload,encodePaint,decodePaint,pack,unpack,encode,decode,hashCode,urlFor,describe};

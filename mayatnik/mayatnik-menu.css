@@ -1,4 +1,7 @@
 /* Маятник v0.622 — page layout only; button geometry, colours and groups come from grozd.css. */
+.may-animatrix-controls{display:flex;flex-direction:column;gap:2px;width:120px;max-width:120px;flex:none}
+.may-animatrix-controls>.gz-hx{margin:0;flex:none}
+.may-animatrix-controls input[type=number]{box-sizing:border-box;height:18px;max-width:44px;padding:0 2px;text-align:center}
 .may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
 body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}
@@ -1088,6 +1091,7 @@ body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>[data-view-actions-home]{width:
 #paintTools .may-view-actions{display:flex;flex-direction:column;gap:2px;width:120px;min-width:120px;margin:0;padding:0}
 body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>.may-contours-group{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:2px;width:120px;min-width:120px;max-width:120px;margin:2px 0!important;padding:0;align-self:flex-start}
 .may-contours-group>.gz-hx{position:relative;z-index:1}
+.may-contours-group>:is([data-n="bitContourMode"],[data-n="bitContourColours"])[aria-disabled="true"]{opacity:.4!important;pointer-events:none!important}
 .may-contours-group>.may-contours-frame{position:absolute;left:-2px;top:-2px;width:124px;height:80px;pointer-events:none;z-index:0;overflow:visible;fill:#7cbcff0a;stroke:#7cbcff;stroke-width:1;opacity:.65}
 .may-contours-group:has(>[data-view-overlay="contours"].on)>.may-contours-frame{opacity:1;stroke-width:1.5}
 #paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half{appearance:none;border:0;border-radius:0;outline:none;font:inherit;color:inherit;cursor:pointer}

@@ -1,0 +1,381 @@
+/* Pure finite-field ports of the selected-cell VBA transformations.
+ * No canvas, storage, timers, vertex insertion or pattern-search side effects.
+ * Coordinates are zero-based; outside the fixed field is empty (no wrapping).
+ * RGB values are 0xRRGGBB. Empty and bit 0 are distinguished by present.
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.MayatnikAnimatrixCore = api;
+})(typeof globalThis === 'object' ? globalThis : this, function () {
+  'use strict';
+  const TYPES = { bits: Uint8Array, present: Uint8Array, colours: Uint32Array,
+    bold: Uint8Array, automatic: Uint8Array, fills: Uint32Array, filled: Uint8Array, selection: Uint8Array };
+  const KEYS = Object.keys(TYPES);
+  const ALGORITHMS = ['two', 'three', 'shift', 'horr', 'zero', 'background'];
+  const DIRECTIONS = ['down', 'up', 'left', 'right'];
+  const EMPTY = Object.freeze([0, 0, 0, 0, 0]); // present, bit, RGB, bold, colour participates
+
+  function dimension(n) {
+    if (!Number.isSafeInteger(n) || n < 1) throw new RangeError('Invalid field dimension');
+    return n;
+  }
+  function count(n) {
+    if (!Number.isSafeInteger(n) || n < 0) throw new RangeError('Invalid step count');
+    return n;
+  }
+  function clip(s, a) {
+    const x = Math.max(0, Math.min(s.width, Math.trunc(Number(a.x) || 0)));
+    const y = Math.max(0, Math.min(s.height, Math.trunc(Number(a.y) || 0)));
+    const right = Math.max(x, Math.min(s.width, Math.trunc((Number(a.x) || 0) + Number(a.width || 0))));
+    const bottom = Math.max(y, Math.min(s.height, Math.trunc((Number(a.y) || 0) + Number(a.height || 0))));
+    return { x, y, width: right - x, height: bottom - y };
+  }
+  function each(s, a, fn) {
+    for (let y = a.y; y < a.y + a.height; y++)
+      for (let x = a.x; x < a.x + a.width; x++) fn(y * s.width + x, x, y);
+  }
+  function maskAreas(s, mask) {
+    // Preserve supplied VBA Areas when available. Otherwise merge identical
+    // horizontal runs on adjacent rows; arbitrary masks have a canonical order.
+    const result = []; let previous = new Map();
+    for (let y = 0; y < s.height; y++) {
+      const next = new Map();
+      for (let x = 0; x < s.width;) {
+        if (!mask[y * s.width + x]) { x++; continue; }
+        const left = x; while (x < s.width && mask[y * s.width + x]) x++;
+        const key = left + ':' + x, old = previous.get(key);
+        const a = old || { x: left, y, width: x - left, height: 0 };
+        a.height++; if (!old) result.push(a); next.set(key, a);
+      }
+      previous = next;
+    }
+    return result;
+  }
+  function cloneSeed(seed) {
+    const width = dimension(seed.width), height = dimension(seed.height), size = width * height;
+    if (!Number.isSafeInteger(size)) throw new RangeError('Field is too large');
+    const out = { width, height };
+    for (const [key, Type] of Object.entries(TYPES)) {
+      if (seed[key] != null && seed[key].length !== size) throw new RangeError('Invalid ' + key + ' length');
+      out[key] = seed[key] == null ? new Type(size) : Type.from(seed[key]);
+    }
+    if (seed.present == null) {
+      const values = seed.bits || [];
+      for (let i = 0; i < size; i++) out.present[i] = values[i] != null && values[i] >= 0 ? 1 : 0;
+    }
+    for (let i = 0; i < size; i++) {
+      out.bits[i] = out.present[i] && out.bits[i] === 1 ? 1 : 0;
+      for (const key of ['present', 'bold', 'automatic', 'filled', 'selection']) out[key][i] = out[key][i] ? 1 : 0;
+      out.colours[i] &= 0xffffff; out.fills[i] &= 0xffffff;
+    }
+    if (Array.isArray(seed.areas)) {
+      out.areas = seed.areas.map(a => clip(out, a)).filter(a => a.width && a.height);
+      out.selection.fill(0); for (const a of out.areas) each(out, a, i => { out.selection[i] = 1; });
+    } else {
+      if (seed.selection == null) out.selection.set(out.present);
+      out.areas = maskAreas(out, out.selection);
+    }
+    return out;
+  }
+  function create(seed, options = {}) {
+    const algorithm = options.algorithm || 'two', direction = options.direction || 'down';
+    if (!ALGORITHMS.includes(algorithm)) throw new RangeError('Unknown algorithm');
+    if (!DIRECTIONS.includes(direction)) throw new RangeError('Unknown direction');
+    if (options.scan && direction !== 'down') throw new RangeError('Row scan supports down only');
+    const initial = cloneSeed(seed), state = cloneSeed(initial);
+    state.algorithm = algorithm; state.direction = direction; state.scan = !!options.scan;
+    state.stepCount = 0; state.rowCount = 0; state.cursorRow = state.height > 1 ? 1 : 0;
+    state.cycle = 0; state.done = state.height < 2 && state.scan;
+    Object.defineProperty(state, '_seed', { value: initial });
+    Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
+    return state;
+  }
+  function snapshot(s) {
+    return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
+      stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done });
+  }
+  function reset(s) {
+    const initial = cloneSeed(s._seed);
+    for (const key of KEYS) s[key].set(initial[key]);
+    s.areas = initial.areas; s.stepCount = s.rowCount = s.cycle = 0;
+    s.cursorRow = s.height > 1 ? 1 : 0; s.done = s.scan && s.height < 2;
+    s._scanSelectionRows = null;
+    return s;
+  }
+  function index(s, x, y) { return x < 0 || y < 0 || x >= s.width || y >= s.height ? -1 : y * s.width + x; }
+  function read(s, i, style = 'live', allowed = true) {
+    if (i < 0 || !allowed) return EMPTY;
+    if (style === 'live' && !s.present[i]) return EMPTY;
+    const p = s.present[i], colour = s.colours[i];
+    return [p, p ? s.bits[i] : 0, colour, s.bold[i],
+      p && colour !== 0 && (style === 'snapshot' ? colour !== 0xffffff : !s.automatic[i]) ? 1 : 0];
+  }
+  function raw(s, i) {
+    if (i < 0) return EMPTY;
+    return [s.present[i], s.present[i] ? s.bits[i] : 0, s.colours[i], s.bold[i], s.present[i]];
+  }
+  function calculate(kind, a, b, c = EMPTY, vertical = true) {
+    const sum = a[1] + b[1] + c[1];
+    let colour = 0, seen = false, mixed = false;
+    for (const v of [a, b, c]) if (v[4]) {
+      if (!seen) { colour = v[2]; seen = true; } else if (colour !== v[2]) mixed = true;
+    }
+    const bit = kind === 'three' ? (vertical ? +(sum === 1 || sum === 2) : +(sum === 1)) : sum % 2;
+    return [1, bit, seen && !mixed ? colour : 0, a[3] ^ b[3] ^ c[3], 0];
+  }
+  function calculateZero(a, b, vertical) {
+    if (!a[0] && !b[0]) return [0, 0, a[2], a[3] ^ b[3], 0];
+    const both = a[1] && b[1];
+    return [1, a[1] ^ b[1], both ? 0 : !vertical || a[1] || !b[1] ? a[2] : b[2], a[3] ^ b[3], 0];
+  }
+  function put(s, i, v) {
+    s.present[i] = v[0]; s.bits[i] = v[0] ? v[1] : 0;
+    s.colours[i] = v[2]; s.bold[i] = v[3]; s.automatic[i] = 0;
+  }
+  function select(s, mask, areas) {
+    s.selection.set(mask); s.areas = areas || maskAreas(s, mask);
+  }
+  function markYellow(s) {
+    for (let i = 0; i < s.selection.length; i++) if (s.selection[i]) { s.filled[i] = 1; s.fills[i] = 0xffff00; }
+  }
+  function isShift(s) { return s.algorithm === 'shift' || s.algorithm === 'horr'; }
+  function targets(s) {
+    const seen = new Uint8Array(s.bits.length), order = [], dy = s.direction === 'down' ? 1 : -1;
+    // Insertion order: VBA Selection.Areas order, then rows, columns, left/right target.
+    for (const area of s.areas) each(s, area, (i, x, y) => {
+      if (!s.selection[i]) return;
+      for (const dx of [-1, 1]) {
+        const t = index(s, x + dx, y + dy);
+        if (t >= 0 && !seen[t]) { seen[t] = 1; order.push(t); }
+      }
+    });
+    return order;
+  }
+  function diagonal(s) {
+    const next = new Uint8Array(s.bits.length), dy = s.direction === 'down' ? -1 : 1;
+    let any = false;
+    for (const i of targets(s)) {
+      const x = i % s.width, y = Math.floor(i / s.width);
+      const l = index(s, x - 1, y + dy), r = index(s, x + 1, y + dy);
+      const a = read(s, l, 'live', l >= 0 && !!s.selection[l]);
+      const b = read(s, r, 'live', r >= 0 && !!s.selection[r]), c = read(s, i);
+      if (!a[0] && !b[0] && !c[0]) continue;
+      put(s, i, calculate(s.algorithm, a, b, c)); next[i] = 1; any = true;
+    }
+    if (any) select(s, next); // VBA leaves selection unchanged if no result exists.
+    return any;
+  }
+  function expanded(s, a, direction) {
+    const x = a.x, y = a.y, w = a.width, h = a.height;
+    if (direction === 'down') return clip(s, { x: Math.max(0, x - 1), y, width: w + (x ? 2 : 1), height: h + 1 });
+    if (direction === 'up') return y ? clip(s, { x: Math.max(0, x - 1), y: y - 1, width: w + (x ? 2 : 1), height: h + 1 }) : null;
+    if (direction === 'right') return clip(s, { x, y, width: w + 1, height: h });
+    return x ? clip(s, { x: x - 1, y, width: w + 1, height: h }) : null;
+  }
+  function pairIndices(s, a, x, y) {
+    const inside = (xx, yy) => xx < a.x || xx >= a.x + a.width || yy < a.y || yy >= a.y + a.height ? -1 : index(s, xx, yy);
+    if (s.direction === 'down') return [inside(x - 1, y - 1), inside(x + 1, y - 1)];
+    if (s.direction === 'up') return [inside(x - 1, y + 1), inside(x + 1, y + 1)];
+    return [inside(x + (s.direction === 'right' ? -1 : 1), y), inside(x, y)];
+  }
+  function fillPair(s, from, i, a, b) {
+    const fa = a >= 0 && !!from.filled[a], fb = b >= 0 && !!from.filled[b];
+    s.filled[i] = fa !== fb ? 1 : 0;
+    if (s.filled[i]) s.fills[i] = from.fills[fa ? a : b];
+  }
+  function snapshotStep(s) {
+    const next = new Uint8Array(s.bits.length), areas = [], vertical = s.direction === 'down' || s.direction === 'up';
+    for (const original of s.areas) {
+      const area = expanded(s, original, s.direction); if (!area) continue;
+      const from = cloneSeed(s); areas.push(area);
+      each(s, area, (i, x, y) => {
+        next[i] = 1;
+        if (s.direction === 'down' && y === area.y || s.direction === 'up' && y === area.y + area.height - 1 ||
+            s.direction === 'right' && x === area.x || s.direction === 'left' && x === area.x + area.width - 1) return;
+        const [a, b] = pairIndices(s, area, x, y);
+        if (s.algorithm === 'background') fillPair(s, from, i, a, b);
+        else put(s, i, calculateZero(read(from, a, 'snapshot'), read(from, b, 'snapshot'), vertical));
+      });
+    }
+    if (areas.length) select(s, next, areas);
+    return areas.length > 0;
+  }
+  function horizontal(s) {
+    const next = new Uint8Array(s.bits.length), areas = [], right = s.direction === 'right';
+    // VBA three's omitted boundary arguments retain their previous bold values.
+    const staleBold = [0, 0, 0];
+    for (const original of s.areas) {
+      let area;
+      if (isShift(s) && !right) area = clip(s, { ...original, width: original.width + 1 });
+      else area = expanded(s, original, s.direction) || original;
+      const from = cloneSeed(s); areas.push(area);
+      if (isShift(s) && !right) {
+        // Range.Cut moves all cell properties before the two-input calculation.
+        for (let y = original.y; y < original.y + original.height; y++) {
+          for (let x = original.x; x < area.x + area.width; x++) {
+            const dst = index(s, x, y), src = x > original.x ? index(s, x - 1, y) : -1;
+            for (const key of KEYS) if (key !== 'selection') s[key][dst] = src < 0 ? 0 : from[key][src];
+          }
+        }
+      }
+      each(s, area, (i, x, y) => {
+        next[i] = 1;
+        if (s.algorithm === 'three') {
+          const v = [EMPTY, EMPTY, EMPTY];
+          for (let k = 0; k < 3; k++) {
+            const xx = right ? x - 2 + k : x + k;
+            if (xx >= area.x && xx < area.x + area.width) {
+              v[k] = read(from, index(s, xx, y), 'snapshot'); staleBold[k] = v[k][3];
+            } else v[k] = [0, 0, 0, staleBold[k], 0];
+          }
+          put(s, i, calculate('three', v[0], v[1], v[2], false)); return;
+        }
+        if (isShift(s) && !right) {
+          const local = x - original.x;
+          const a = local < original.width ? raw(from, index(s, x, y)) : EMPTY;
+          const b = local > 0 ? raw(from, index(s, x - 1, y)) : EMPTY;
+          put(s, i, calculate('shift', a, b)); return;
+        }
+        if (right && x === area.x || !right && x === area.x + area.width - 1) return;
+        if (!right && original.x === 0) return; // two's LEFT at first column is a no-op.
+        const other = index(s, x + (right ? -1 : 1), y);
+        const live = isShift(s), source = live ? s : from;
+        const a = live ? raw(source, other) : read(source, other, 'snapshot');
+        const b = live ? raw(source, i) : read(source, i, 'snapshot');
+        put(s, i, calculate(s.algorithm, a, b));
+      });
+    }
+    if (areas.length) select(s, next, areas);
+    return areas.length > 0;
+  }
+  function matrixStep(s) {
+    if (isShift(s)) s.filled.fill(0); // VBA clears backgrounds across the active sheet.
+    let worked;
+    if (s.algorithm === 'zero' || s.algorithm === 'background') worked = snapshotStep(s);
+    else worked = s.direction === 'down' || s.direction === 'up' ? diagonal(s) : horizontal(s);
+    if (isShift(s)) markYellow(s);
+    s.stepCount++; s.done = !worked;
+  }
+  function scanRow(s, capture) {
+    if (s.height < 2) { s.done = true; return; }
+    const y = s.cursorRow;
+    if (s._scanSelectionRows === null) {
+      // Only the first scan after create/reset may carry an arbitrary seed mask.
+      // Subsequent frames hold selection in one row, independent of field height.
+      const rows = new Set();
+      for (const a of s.areas) for (let r = a.y; r < a.y + a.height; r++) rows.add(r);
+      s._scanSelectionRows = [...rows];
+    }
+    for (const row of s._scanSelectionRows) {
+      capture(row);
+      s.selection.fill(0, row * s.width, (row + 1) * s.width);
+    }
+    capture(y);
+    // A row is atomic. All parents are existing cells of the preceding row;
+    // targets comprise the existing row plus one diagonal extension of parents.
+    for (let x = 0; x < s.width; x++) {
+      const i = y * s.width + x, l = index(s, x - 1, y - 1), r = index(s, x + 1, y - 1);
+      const background = s.algorithm === 'background';
+      const has = j => j >= 0 && (s.present[j] || background && s.filled[j]);
+      if (!has(i) && !has(l) && !has(r)) continue;
+      s.selection[i] = 1;
+      if (background) fillPair(s, s, i, l, r);
+      else {
+        const a = read(s, l), b = read(s, r);
+        put(s, i, s.algorithm === 'zero' ? calculateZero(a, b, true) : calculate(s.algorithm, a, b, read(s, i)));
+      }
+    }
+    const areas = [];
+    for (let x = 0; x < s.width;) {
+      if (!s.selection[y * s.width + x]) { x++; continue; }
+      const left = x;
+      while (x < s.width && s.selection[y * s.width + x]) x++;
+      areas.push({ x: left, y, width: x - left, height: 1 });
+    }
+    s.areas = areas;
+    s._scanSelectionRows = areas.length ? [y] : [];
+    s.stepCount++; s.rowCount++;
+    s.cursorRow++;
+    if (s.cursorRow >= s.height) { s.cursorRow = 1; s.cycle++; }
+    s.done = false;
+  }
+  function bounds(s) {
+    if (s.scan) return areaBounds(s.areas);
+    let x = s.width, y = s.height, right = -1, bottom = -1;
+    for (let i = 0; i < s.selection.length; i++) if (s.selection[i]) {
+      const xx = i % s.width, yy = Math.floor(i / s.width);
+      x = Math.min(x, xx); y = Math.min(y, yy); right = Math.max(right, xx); bottom = Math.max(bottom, yy);
+    }
+    return right < 0 ? null : { x, y, width: right - x + 1, height: bottom - y + 1 };
+  }
+  function report(s, before) {
+    let changed = 0;
+    for (let i = 0; i < s.bits.length; i++) {
+      for (const key of KEYS) if (before[key][i] !== s[key][i]) { changed++; break; }
+    }
+    return { changed, done: s.done, rows: s.rowCount, steps: s.stepCount,
+      cursorRow: s.cursorRow, cycle: s.cycle, bounds: bounds(s) };
+  }
+  function advance(s, n = 1) {
+    count(n);
+    if (s.scan) return advanceScan(s, n);
+    const before = cloneSeed(s);
+    for (let i = 0; i < n; i++) {
+      matrixStep(s);
+      if (s.done) break;
+    }
+    return report(s, before);
+  }
+  function advanceScan(s, n) {
+    // Save each touched row once per call. A one-frame advance copies/compares
+    // only the receiving row and previous selection row, never the whole field.
+    const beforeRows = new Map();
+    const capture = row => {
+      if (beforeRows.has(row)) return;
+      const start = row * s.width, end = start + s.width, copy = {};
+      for (const key of KEYS) copy[key] = s[key].slice(start, end);
+      beforeRows.set(row, copy);
+    };
+    for (let i = 0; i < n; i++) {
+      scanRow(s, capture);
+      if (s.done) break;
+    }
+    let changed = 0;
+    const dirtyRows = [];
+    for (const [row, before] of beforeRows) {
+      const start = row * s.width; let dirty = false;
+      for (let x = 0; x < s.width; x++) {
+        for (const key of KEYS) if (before[key][x] !== s[key][start + x]) {
+          changed++; dirty = true; break;
+        }
+      }
+      if (dirty) dirtyRows.push(row);
+    }
+    dirtyRows.sort((a, b) => a - b);
+    return { changed, done: s.done, rows: s.rowCount, steps: s.stepCount,
+      cursorRow: s.cursorRow, cycle: s.cycle, bounds: areaBounds(s.areas), dirtyRows };
+  }
+  function areaBounds(areas) {
+    let selectedBounds = null;
+    for (const a of areas) {
+      if (!selectedBounds) selectedBounds = { ...a };
+      else {
+        const right = Math.max(selectedBounds.x + selectedBounds.width, a.x + a.width);
+        const bottom = Math.max(selectedBounds.y + selectedBounds.height, a.y + a.height);
+        selectedBounds.x = Math.min(selectedBounds.x, a.x);
+        selectedBounds.y = Math.min(selectedBounds.y, a.y);
+        selectedBounds.width = right - selectedBounds.x;
+        selectedBounds.height = bottom - selectedBounds.y;
+      }
+    }
+    return selectedBounds;
+  }
+  function stepRows(s, n = 1) {
+    if (!s.scan) throw new Error('stepRows requires scan=true');
+    return advance(s, n);
+  }
+  function seek(s, frame) { count(frame); reset(s); return advance(s, frame); }
+  return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds,
+    algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
+});
