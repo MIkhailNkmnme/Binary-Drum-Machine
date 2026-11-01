@@ -7,6 +7,8 @@ body{--may-template-panel-width:50vw}
 body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-resize!important;user-select:none!important}
 #mayatnikTemplatePanel{--mtp-accent:#b48cff;position:fixed;inset:0 0 0 auto;width:var(--may-template-panel-width);height:100vh;height:100dvh;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;z-index:7;background:#0e1116;color:#dfe6f5;border-left:0;padding:6px;display:flex;flex-direction:column;gap:4px;font:12px/1.35 system-ui,sans-serif;scrollbar-width:thin;user-select:none}
 #mayatnikTemplatePanel[hidden]{display:none!important}
+/* Right field controls sit beneath the open library, whose layer is 7. */
+body.may-template-panel-open:not(.may-mobile-menu) #mayRhombs{z-index:6}
 /* The legacy right rail also sits above the field overlay, like the other menus. */
 .mayatnik-menu-ready :is(#mayatnikRailR,#canvasActs,.may-pin,.may-manual-axis-controls){z-index:8}
 #mayatnikTemplatePanel *{box-sizing:border-box}
