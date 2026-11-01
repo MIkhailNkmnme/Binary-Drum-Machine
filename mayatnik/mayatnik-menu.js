@@ -1800,7 +1800,7 @@
         const desktop=!narrow.matches,step=window.MayatnikMenuDock.DX;
         const columnLeft=Math.max(4,rail.el.getBoundingClientRect().left),left=desktop?(columnLeft+2*step)+'px':'';
         const brand=head.querySelector(':scope > .may-brand');if(brand)brand.style.setProperty('--may-brand-left',columnLeft+'px');
-        // The brand spans both left columns; horizontal strips begin after them.
+        // The brand occupies one column; horizontal strips clear both menu columns.
         // Shorten the physical strips too, including their backgrounds and controls.
         for(const strip of [head,footerBar]){strip.style.marginLeft=left;strip.style.marginRight=desktop?'4px':'';}
       };

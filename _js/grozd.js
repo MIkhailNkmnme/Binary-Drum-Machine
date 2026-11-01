@@ -39,6 +39,7 @@
     if (!text || !document.documentElement.classList.contains('gz-help')) return;
     if (!tipEl) { tipEl = el('div', 'gz-tip'); document.body.append(tipEl); }
     tipEl.textContent = text; tipEl.hidden = false;
+    if (window.MayatnikPlaceMenuTip?.(btn, tipEl)) return;
     const r = btn.getBoundingClientRect(), rail = btn.closest('.gz-rail').getBoundingClientRect(), tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
     let x = Math.max(r.right, rail.right) + 8; if (x + tw > innerWidth - 4) x = r.left - tw - 8;
     let y = r.top + r.height / 2 - th / 2; y = Math.max(4, Math.min(innerHeight - th - 4, y));

@@ -5,6 +5,37 @@
 (() => {
   'use strict';
   const DELAY = 4000;
+  // Horizontal menus keep their tips on the field side of the entire button strip.
+  // The shared rail calls the same placement in help mode.
+  window.MayatnikPlaceMenuTip = (owner, tip) => {
+    tip.style.maxHeight = ''; tip.style.overflow = '';
+    const dock = owner.closest('[data-dock-edge]');
+    const host = owner.closest('#mayFooterBar,#mayMobileBar,body>header');
+    const edge = document.body.classList.contains('may-mobile-menu') && host?.id === 'mayMobileBar'
+      ? 'top' : dock?.dataset.dockEdge || (host ? (host.id === 'mayFooterBar' ? 'bottom' : 'top') : '');
+    if (edge !== 'top' && edge !== 'bottom') return false;
+    const strip = edge === 'bottom' ? document.getElementById('mayFooterBar')
+      : host?.id === 'mayMobileBar' ? host : document.querySelector('body>header');
+    const r = owner.getBoundingClientRect(), w = tip.offsetWidth;
+    const x = Math.max(4, Math.min(innerWidth - w - 4, r.left));
+    let boundary = edge === 'top' ? r.bottom : r.top;
+    const roots = new Set([strip, ...document.querySelectorAll(`[data-dock-edge="${edge}"]`)]);
+    for (const root of roots) {
+      if (!root) continue;
+      for (const node of [root, ...root.querySelectorAll('button,input,select,.gz-hx,.pt-l,.gz-head,.gz-control')]) {
+        const nodeEdge = node.closest('[data-dock-edge]')?.dataset.dockEdge;
+        if (nodeEdge && nodeEdge !== edge || !node.getClientRects().length || getComputedStyle(node).visibility === 'hidden') continue;
+        const b = node.getBoundingClientRect();
+        if (!b.width || !b.height || b.right <= x || b.left >= x + w) continue;
+        boundary = edge === 'top' ? Math.max(boundary, b.bottom) : Math.min(boundary, b.top);
+      }
+    }
+    const available = Math.max(0, edge === 'top' ? innerHeight - boundary - 10 : boundary - 10);
+    tip.style.maxHeight = available + 'px'; tip.style.overflow = 'hidden';
+    const y = edge === 'top' ? boundary + 6 : boundary - tip.offsetHeight - 6;
+    tip.style.left = Math.round(x) + 'px'; tip.style.top = Math.round(y) + 'px';
+    return true;
+  };
   const box = document.createElement('div'); box.id = 'mayTip'; box.hidden = true; box.setAttribute('role', 'tooltip');
   let cur = null, timer = 0, obs = null;
   const strip = el => { const t = el.getAttribute('title'); if (t != null) { if (t) el.dataset.mayTip = t; el.removeAttribute('title'); } };
@@ -15,6 +46,7 @@
     if (!cur || !cur.isConnected || document.documentElement.classList.contains('gz-help')) return;
     const text = cur.dataset.mayTip; if (!text) return;
     box.textContent = text; box.hidden = false;
+    if (window.MayatnikPlaceMenuTip(cur, box)) return;
     const r = cur.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
     let x = r.right + 8; if (x + w > innerWidth - 6) x = r.left - w - 8; if (x < 6) x = Math.max(6, Math.min(innerWidth - w - 6, r.left));
     let y = r.top + r.height / 2 - h / 2; if (x + w > r.left && x < r.right) y = r.bottom + 6;   // не влезла ни справа, ни слева — под кнопкой
