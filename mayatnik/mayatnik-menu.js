@@ -1598,9 +1598,9 @@
         launch.type='button';launch.id='bTemplatePanel';launch.setAttribute('aria-controls','mayatnikTemplatePanel');
         launcher.append(launch);document.body.append(launcher);
         launch.className='pt-l';launch.title='Библиотека';launch.setAttribute('aria-label','Библиотека');
-        launch.innerHTML='<svg class="may-template-diamond" viewBox="0 0 48 24" aria-hidden="true"><path d="M1 .5H47L24 23Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg>';
+        launch.innerHTML='<svg class="may-template-diamond" viewBox="0 0 24 48" aria-hidden="true"><path d="M23.5 1V47L1 24Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg><svg class="may-template-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 12h9m-4-4 4 4-4 4"/></svg>';
 
-        const sync=()=>{const on=String(window.MayatnikTemplatePanel.isOpen());launch.setAttribute('aria-expanded',on);launch.setAttribute('aria-pressed',on);};
+        const sync=()=>{const open=window.MayatnikTemplatePanel.isOpen(),on=String(open);launch.setAttribute('aria-expanded',on);launch.setAttribute('aria-pressed',on);launch.title=open?'Свернуть окно библиотеки вправо':'Открыть библиотеку';launch.setAttribute('aria-label',launch.title);};
         launch.onclick=()=>{window.MayatnikTemplatePanel.toggle();sync();};
         addEventListener('mayatnik-template-panel-change',sync);sync();
       }
@@ -2304,7 +2304,7 @@
     for(const record of records)if(record.type==='characterData')captionsIn(record.target);else for(const node of record.addedNodes)captionsIn(node);
   }).observe(document.body,{subtree:true,childList:true,characterData:true});
   new ResizeObserver(() => dispatchEvent(new Event('resize'))).observe($('wrap'));
-  const mobileBar=mobileMenu.connect(tools.closest('header'),[...tools.closest('header').children].filter(n=>!n.matches('dialog,.bar,script,style')).concat([sidebar,railR,$('mayTemplateLauncher'),$('mayRhombs'),$('zerkHubBtn')]));
+  const mobileBar=mobileMenu.connect(tools.closest('header'),[...tools.closest('header').children].filter(n=>!n.matches('dialog,.bar,script,style')).concat([sidebar,railR,$('mayRhombs'),$('zerkHubBtn')]));
   mobileBar.addEventListener('click',e=>{if(!mobileMenu.matches)return;const h=e.target.closest('.gz-head,.pt-l'),g=h?.parentElement;if(!g)return;for(const other of mobileBar.querySelectorAll('.may-mobile-open'))if(other!==g)other.classList.remove('may-mobile-open');g.classList.add('may-mobile-open');syncRailFlyouts();},true);
   mobileBar.addEventListener('scroll',()=>{syncRailFlyouts();dispatchEvent(new Event('may-mobile-menu-scroll'));},{passive:true});
   addEventListener('may-mobile-menu-scroll',()=>{for(const g of tools.querySelectorAll('.pt-open')){const r=g.querySelector('.pt-r'),h=g.querySelector('.pt-l')?.getBoundingClientRect();if(r&&h){r.style.left=Math.max(4,Math.min(h.left,innerWidth-r.offsetWidth-4))+'px';r.style.top=(h.bottom+2)+'px';}}});

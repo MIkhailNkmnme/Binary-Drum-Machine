@@ -73,12 +73,15 @@ body>[data-library-folded-popup]{display:none!important}
 :is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) button:disabled,#mayatnikTemplatePanel input:disabled{opacity:.45;cursor:default}
 @media(max-width:600px){#mayatnikTemplatePanel .mtp-card-actions{grid-template-columns:repeat(3,minmax(0,1fr))}#mayatnikTemplatePanel .mtp-card-actions>.mtp-command,#mayatnikTemplatePanel .mtp-more>summary{min-height:28px;height:28px}}
 
-/* Fixed field-corner launcher, outside every movable menu group. */
-#mayTemplateLauncher{position:fixed!important;top:0!important;right:10px!important;left:auto!important;bottom:auto!important;transform:none!important;translate:none!important;width:48px!important;height:24px!important;padding:0!important;margin:0!important;z-index:2147483640;--c:#d9b9ff}
+/* Half diamond stays on the right viewport edge, above the library in either state. */
+body.mayatnik-menu-ready #mayTemplateLauncher{position:fixed!important;top:50%!important;right:0!important;left:auto!important;bottom:auto!important;transform:translateY(-50%)!important;translate:none!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:48px!important;padding:0!important;margin:0!important;z-index:2147483646!important;--c:#d9b9ff}
 /* Keep the launcher in its saved slot while open; it also closes the library. */
-#mayTemplateLauncher>.pt-l{position:relative;display:flex;align-items:flex-start;justify-content:center;width:48px!important;min-width:48px!important;height:24px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;clip-path:polygon(0 0,100% 0,50% 100%)!important;cursor:pointer;color:var(--c)}
-#mayTemplateLauncher .may-template-diamond{position:absolute;inset:0;width:48px;height:24px;fill:#1b2430;stroke:#6d597f;stroke-width:1px;pointer-events:none}
-#mayTemplateLauncher .may-template-puzzle{width:14px;height:14px;position:absolute;top:1px;left:17px;fill:none;stroke:currentColor;stroke-width:1.5px;pointer-events:none}
+#mayTemplateLauncher>.pt-l{position:relative;display:flex;align-items:center;justify-content:center;width:24px!important;min-width:24px!important;height:48px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;clip-path:polygon(100% 0,100% 100%,0 50%)!important;cursor:pointer;color:var(--c)}
+#mayTemplateLauncher .may-template-diamond{position:absolute;inset:0;width:24px;height:48px;fill:#1b2430;stroke:#6d597f;stroke-width:1px;pointer-events:none}
+#mayTemplateLauncher :is(.may-template-puzzle,.may-template-hide){width:14px;height:14px;position:absolute;top:17px;left:9px;fill:none;stroke:currentColor;stroke-width:1.5px;pointer-events:none}
+#mayTemplateLauncher .may-template-hide{display:none}
+#mayTemplateLauncher>.pt-l[aria-expanded=true] .may-template-puzzle{display:none}
+#mayTemplateLauncher>.pt-l[aria-expanded=true] .may-template-hide{display:block}
 #mayTemplateLauncher>.pt-l:is(:hover,:focus-visible) .may-template-diamond{stroke:var(--c)}
 #mayTemplateLauncher>.pt-l[aria-pressed=true] .may-template-diamond{stroke:var(--c);stroke-width:2px}
 #mayTemplateLauncher>.pt-l:active .may-template-diamond{stroke:var(--c);stroke-width:3px}
