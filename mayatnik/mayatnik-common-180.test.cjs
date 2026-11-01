@@ -60,6 +60,15 @@ test('whole 180 is a separate mode: it turns the parity 180 off and back on',()=
  whole.onclick();assert.equal(state.joined180,false);assert.equal(state.joined180Whole,false);
  state.view='romb0';whole.onclick();assert.equal(state.view,'bits');assert.equal(state.joined180,true);assert.equal(state.joined180Whole,true);
 });
+test('joined square views route the vertex and row flash through the joined lattice',()=>{
+ const src=html.slice(html.indexOf('function flashRowCells'),html.indexOf('function rowLabDraw'));
+ assert.match(src,/function flashDrawJoined/);
+ assert.match(src,/if\(joinedOn\(\)&&joinedSquare\(\)\)\{flashDrawJoined\(o,now,FLASH_MS\);return;\}/);
+ assert.match(src,/const vtxOn = !!st\.vtxFlash && \(joinedOn\(\)&&joinedSquare\(\)\|\|rombP\(\)<2\)/);
+ assert.match(src,/fromSourceAll\(q\)/);
+ assert.match(src,/fillRect\(cell\.x \* K, cell\.y \* K, K, K\)/);
+ assert.match(src,/2 \* VH - 1 - r/);
+});
 
 test('GPU render writes the new/legacy mapper, display anchor and two background colours without rewriting data',()=>{
  const source=fs.readFileSync(__dirname+'/mayatnik-gpu.js','utf8'),a=source.indexOf('      function render(context, o)'),b=source.indexOf('      return { W, H, WW',a),render=source.slice(a,b);let uniform;
