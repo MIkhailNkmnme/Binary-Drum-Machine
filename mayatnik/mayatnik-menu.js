@@ -71,7 +71,6 @@
   const groups = [
     { id: 'build', title: 'Поле', color: '#73e4a5', open: true, items: [
       button('bBuild', 'field'), button('bThird', 'tri'), button('bFour', 'plusRing'),
-      num('rows', { name: 'Строк', tip: 'Строк в поле (построение — кнопкой «Построить») · двойной щелчок — наименьшее', log: true, fmt: v => v + ' строк' }),
       num('steps', { name: 'Вершин', tip: 'Вершин (шагов маятника) · двойной щелчок — наименьшее', log: true, fmt: v => v + ' вершин' }),
     // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»).
     // v0.115: и «По очереди» убрана — «не нужна теперь, и так автоматом по очереди»
@@ -96,6 +95,7 @@
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
+      num('rows', { name: 'Строк', tip: 'Строк в поле (построение — кнопкой «Построить») · двойной щелчок — наименьшее', log: true, fmt: v => v + ' строк' }),   // v0.735: ползунок строк — в «Масштабе»
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
       button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
@@ -478,7 +478,19 @@
         if (state?.progress) row.title += ' · ' + state.progress;
         row.setAttribute('aria-label', 'Пересчитать следующую строку' + (state?.progress ? ' · ' + state.progress : '')); };
       row.onclick = event => { event.stopPropagation(); window.mayRowBuild?.step(); row.gzSync(); rail.refresh(); };
-      toolSync.push(row.gzSync); row.gzSync(); pop.append(section(row, 'build')); }
+      toolSync.push(row.gzSync); row.gzSync();
+      // v0.735: шаг строки и обратный шаг — в группу «Масштаб»
+      const back = document.createElement('button'); back.type = 'button'; back.id = 'mayRowBuildBack'; back.dataset.n = 'mayRowBuildBack'; back.className = 'gz-hx';
+      back.dataset.maySearchAliases = 'Строка -1|Обратный шаг строки|Назад по строкам';
+      const backGlyph = document.createElement('i'); backGlyph.className = 'gz-ic'; backGlyph.style.backgroundImage = icon(back, 'steps'); backGlyph.setAttribute('aria-hidden', 'true');
+      const backLabel = document.createElement('span'); backLabel.className = 'gz-nm'; backLabel.textContent = 'Строка −1'; back.append(backGlyph, backLabel);
+      back.gzSync = () => { const state = window.mayRowBuild?.status(); back.disabled = !state?.active; back.classList.remove('gz-on'); back.setAttribute('aria-pressed', 'false');
+        back.title = state?.active ? 'Вернуть поле на строку назад. На первой строке ход отменяется и кадр возвращается прежним.' : 'Строка −1: сначала начните шаг «Строка +1».';
+        back.setAttribute('aria-label', back.title); };
+      back.onclick = event => { event.stopPropagation(); window.mayRowBuild?.back(); row.gzSync(); back.gzSync(); rail.refresh(); };
+      toolSync.push(back.gzSync); back.gzSync();
+      const zoomBody = rail.el.querySelector('.gz-group[data-id="zoom"] > .gz-soty');
+      if (zoomBody) { zoomBody.append(row, back); rail.refresh(); } else pop.append(section(row, 'build'), section(back, 'build')); }
     { const button=document.createElement('button');button.type='button';button.id='mayRowStepOutline';button.dataset.n='mayRowStepOutline';button.className='gz-hx';
       button.dataset.maySearchAliases='Рамка шага|Рамка новых битов|Выделение строки';
       const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(button,'outline');glyph.setAttribute('aria-hidden','true');
