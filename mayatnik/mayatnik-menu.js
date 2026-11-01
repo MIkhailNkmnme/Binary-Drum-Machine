@@ -184,8 +184,8 @@
     // v0.335: «Сброс прямо в ползунке рядом с плеем». v0.339: «ширину в 2 раза меньше, плей всегда по центру, бегунок текущего кадра — вертикальная линия
     // в 2 px, за неё перемещать, и поверх всех»: ▶ / ❚❚ и «✖» стоят в середине дорожки, линия-бегунок (grozd .gz-th без thumb) — над ними
     const cell = $('mayBottomBar').querySelector('.gz-sl'), mid = cell?.querySelector('.gz-mid'), th = mid?.querySelector('.gz-th');
-    if (mid) { b.className = 'may-bb-rs'; b.removeAttribute('id'); b.textContent = '✖'; b.addEventListener('pointerdown', e => e.stopPropagation()); mid.append(b);
-      const pl = document.createElement('button'); pl.type = 'button'; pl.className = 'may-bb-play'; pl.addEventListener('pointerdown', e => e.stopPropagation());
+    if (mid) { const stop=e=>e.stopPropagation(); b.className = 'may-bb-rs'; b.removeAttribute('id'); b.textContent = '✖'; b.addEventListener('pointerdown',stop); b.addEventListener('pointerup',stop); b.addEventListener('click',stop); mid.append(b);
+      const pl = document.createElement('button'); pl.type = 'button'; pl.className = 'may-bb-play'; pl.addEventListener('pointerdown',stop); pl.addEventListener('pointerup',stop); pl.addEventListener('click',stop);
       const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true'; pl.textContent = on ? '❚❚' : '▶'; pl.title = on ? 'Пауза' : 'Анимация: пуск'; pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on)); };
       pl.onclick = ev => { ev.stopPropagation(); P.click(); plSync(); rail.refresh(); }; new MutationObserver(plSync).observe(P, { attributes: true, attributeFilter: ['aria-pressed'] }); plSync(); mid.append(pl);
       // подпись «кадр N» — в 6 px от линии (слева, нет места — справа)

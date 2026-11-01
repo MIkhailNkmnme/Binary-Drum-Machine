@@ -1083,3 +1083,17 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 
 /* Area caption ends at24px; the first option cap starts at26px. */
 :is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list.may-titled-list.may-area-options,.gz-ladder.may-titled-list.may-area-options{padding-top:38px!important}
+
+/* v0.753: «плей вверху — по стандарту»: в середине ползунка кадра ▶ / ❚❚
+   появляется при наведении на любую стрелку (или на сам ползунок) и прячется,
+   когда указатель ушёл. Пока идёт анимация, ❚❚ остаётся видимой — состояние
+   понятно без наведения. На касании (нет hover) кнопка видна всегда. */
+#mayBottomBar .may-bb-play{opacity:0;visibility:hidden;transform:scale(.55);pointer-events:none;transition:opacity .12s ease,transform .12s ease,visibility .12s;z-index:11}
+#mayBottomBar .may-bb-rs{z-index:11}
+#mayBottomBar>.gz-sl:hover .may-bb-play,
+#mayBottomBar>.gz-sl:focus-visible .may-bb-play,
+#mayBottomBar .may-bb-play:hover,
+#mayBottomBar .may-bb-play:focus-visible,
+#mayBottomBar .may-bb-play[aria-pressed="true"]{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+@media(hover:none){#mayBottomBar .may-bb-play{opacity:1;visibility:visible;transform:none;pointer-events:auto}}
+
