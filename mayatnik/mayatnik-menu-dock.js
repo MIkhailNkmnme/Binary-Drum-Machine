@@ -61,14 +61,14 @@
     e.preventDefault();return true;
   }
   const overlap=(a,b)=>a.x<b.x+b.w+2&&a.x+a.w+2>b.x&&a.y<b.y+b.h+2&&a.y+a.h+2>b.y;
-  function slots({left=8,right,topX,topY,bottomY,sideY,sideBottom=bottomY+HEIGHT,sideColumnsLeft=false}){
+  function slots({left=8,right,topX,topY,bottomY,sideY,sideBottom=bottomY+HEIGHT,sideColumnsLeft=false,singleLeftColumn=false,sideCount=0}){
     const out=[];
     // Full-height left columns own both upper and lower corners.
-    for(const [edge,y,x0,end] of [['top',topY,sideColumnsLeft?Math.max(topX,left+2*DX):topX,right],['bottom',bottomY,left+DX*(sideColumnsLeft?2:1),sideColumnsLeft?right:right-DX]])
+    for(const [edge,y,x0,end] of [['top',topY,sideColumnsLeft?Math.max(topX,left+(singleLeftColumn?1:2)*DX):topX,right],['bottom',bottomY,left+DX*(sideColumnsLeft&&!singleLeftColumn?2:1),sideColumnsLeft?right:right-DX]])
       for(let i=0,x=x0;x+WIDTH<=end;i++,x=x0+i*DX)out.push({edge,index:i,x,y,w:WIDTH,h:HEIGHT});
     // Keep the saved "right" column identity, but place it beside the left one.
-    for(const [edge,x] of [['left',left],['right',sideColumnsLeft?left+DX:right-WIDTH]])
-      for(let i=0,y=sideY;y+HEIGHT+2<=sideBottom;i++,y=sideY+i*DY)out.push({edge,index:i,x,y,w:WIDTH,h:HEIGHT});
+    for(const [edge,x] of (singleLeftColumn?[['left',left]]:[['left',left],['right',sideColumnsLeft?left+DX:right-WIDTH]]))
+      for(let i=0,y=sideY;y+HEIGHT+2<=sideBottom||singleLeftColumn&&i<sideCount;i++,y=sideY+i*DY)out.push({edge,index:i,x,y,w:WIDTH,h:HEIGHT});
     return out;
   }
   function nearest(list,x,y,preferred){let best=null,score=Infinity;for(const p of list){const d=Math.hypot(p.x+WIDTH/2-x,p.y+HEIGHT/2-y)+(preferred&&p.edge!==preferred?1e5:0);if(d<score){score=d;best=p;}}return best;}
@@ -79,16 +79,17 @@
     const maxScroll=Math.max(0,last-end),offset=Math.max(0,Math.min(maxScroll,scroll));
     return {rows:rows.map(row=>({...row,screenY:row.top-offset})),height:last-start,maxScroll,offset};
   }
-  function mount({groups,idOf,header,tools,footer,rail,rightEdge,leftEdge,sideTop,moveToTools,onLayout,excluded=[],storageKey,defaultEdge,stackSides=true,sideColumnsLeft=false}){
+  function mount({groups,idOf,header,tools,footer,rail,rightEdge,leftEdge,sideTop,moveToTools,onLayout,excluded=[],storageKey,defaultEdge,stackSides=true,sideColumnsLeft=false,singleLeftColumn=false}){
     const key=typeof storageKey==='string'&&storageKey.trim()?storageKey:'mayatnik-menu-dock-v509',initialEdge=['top','bottom','left','right'].includes(defaultEdge)?defaultEdge:null,useSideStack=stackSides!==false;
     let state={};try{state=read(JSON.parse(localStorage.getItem(key)||'{}'));}catch(_){}
+    if(singleLeftColumn){const moved=Object.entries(state).filter(([,p])=>p.edge==='right').sort((a,b)=>a[1].index-b[1].index);if(moved.length){try{const backup=key+'-before-single-left-v806';if(!localStorage.getItem(backup))localStorage.setItem(backup,JSON.stringify(state));}catch(_){}let next=Math.max(-1,...Object.values(state).filter(p=>p.edge==='left').map(p=>p.index))+1;for(const [,p]of moved){p.edge='left';p.index=next++;}}}
     const heads=new Map(),placed=new Map();let drag=null,geometry='',ready=false,gridSignature='',gridNodes=[],activeSlot=null;
     const ns='http://www.w3.org/2000/svg',overlay=document.createElementNS(ns,'svg');overlay.id='mayMenuDockGrid';overlay.setAttribute('aria-hidden','true');
     Object.assign(overlay.style,{position:'fixed',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'2147483644',display:'none'});document.body.append(overlay);
     const save=()=>{try{localStorage.setItem(key,JSON.stringify(state));}catch(_){}};
     const bounds=()=>{const H=header.getBoundingClientRect(),T=tools.getBoundingClientRect(),F=footer.getBoundingClientRect(),R=rail.getBoundingClientRect(),customLeft=typeof leftEdge==='function'?leftEdge():null,customTop=typeof sideTop==='function'?sideTop():null;
       const viewportBottom=typeof innerHeight==='number'&&Number.isFinite(innerHeight)?innerHeight:F.bottom;
-      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:sideColumnsLeft?0:T.top,bottomY:sideColumnsLeft?viewportBottom-HEIGHT:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?Math.ceil(Math.max(4,Number.isFinite(customTop)?customTop:4)):Math.ceil(H.bottom+8),sideBottom:viewportBottom-4,sideColumnsLeft};};
+      return {left:Math.max(4,Number.isFinite(customLeft)?customLeft:R.left),right:rightEdge()-4,topX:T.left,topY:sideColumnsLeft?0:T.top,bottomY:sideColumnsLeft?viewportBottom-HEIGHT:F.top+(F.height-HEIGHT)/2,sideY:sideColumnsLeft?Math.ceil(Math.max(4,Number.isFinite(customTop)?customTop:4)):Math.ceil(H.bottom+8),sideBottom:viewportBottom-4,sideColumnsLeft,singleLeftColumn,sideCount:singleLeftColumn?heads.size:0};};
     const rect=el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};};
     const obstacles=()=>excluded.filter(e=>e?.getClientRects().length).map(rect);
     const available=skip=>slots(bounds()).filter(s=>!obstacles().some(r=>overlap(s,r))&&![...placed].some(([g,p])=>g!==skip&&overlap(s,p)));
@@ -96,7 +97,7 @@
       g.classList.toggle('pt-bot',p.edge==='bottom');g.style.bottom='';g.style.setProperty('--may-dock-x',(p.x+(WIDTH-w)/2)+'px');g.style.setProperty('--may-dock-y',p.y+'px');placed.set(g,p);};
     const sides={};let stackFrame=0;
     const queueStack=()=>{if(useSideStack&&!stackFrame)stackFrame=requestAnimationFrame(()=>{stackFrame=0;layoutSides();});};
-    for(const edge of useSideStack?['left','right']:[]){
+    for(const edge of useSideStack?(singleLeftColumn?['left']:['left','right']):[]){
       const bar=document.createElement('div'),space=document.createElement('div'),backdrop=document.createElement('div');backdrop.className='may-menu-side-backdrop';backdrop.dataset.edge=edge;backdrop.setAttribute('aria-hidden','true');document.body.append(backdrop);bar.className='may-menu-side-scroll';bar.dataset.edge=edge;bar.tabIndex=0;bar.setAttribute('role','region');bar.setAttribute('aria-label',sideColumnsLeft?(edge==='left'?'Прокрутка первого левого столбца меню':'Прокрутка второго левого столбца меню'):(edge==='left'?'Прокрутка левой колонки меню':'Прокрутка правой колонки меню'));if(sideColumnsLeft)bar.style.width='2px';bar.append(space);document.body.append(bar);bar.addEventListener('scroll',queueStack);sides[edge]={bar,space,backdrop,max:0,signature:''};
     }
     const setStyle=(node,key,value)=>{if(node.style[key]!==value)node.style[key]=value;};
@@ -105,7 +106,7 @@
       if(!useSideStack||drag)return;
       if(mobileNow()){for(const side of Object.values(sides)){side.bar.style.display='none';side.backdrop.style.display='none';side.signature='';}return;}
       const B=bounds(),end=B.sideBottom;
-      for(const edge of ['left','right']){
+      for(const edge of Object.keys(sides)){
         const side=sides[edge],items=[...placed].filter(([g,p])=>p.edge===edge&&heads.get(g).getClientRects().length).map(([g,p])=>({g,index:p.index,y:p.y,height:g.getBoundingClientRect().height}));
         const start=sideColumnsLeft?B.sideY:items.length?Math.max(B.sideY,Math.min(...items.map(item=>item.y))):B.sideY,height=Math.max(1,end-start);
         const columnX=edge==='left'?B.left:sideColumnsLeft?B.left+DX:B.right-WIDTH;

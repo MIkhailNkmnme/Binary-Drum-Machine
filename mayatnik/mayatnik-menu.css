@@ -1110,7 +1110,9 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 
 /* Frame metadata stays centered under the capsule independently of its thumb. */
 #mayBottomBar>.may-frame-slider{width:120px!important;min-width:120px;max-width:120px;height:24px;--gz-bg:#1b2430;--c:#80aee8}
-#mayBottomBar>.may-frame-slider .gz-mid{margin:0;min-width:0}
+#mayBottomBar>.may-frame-slider .gz-mid{margin:0;min-width:0;cursor:pointer}
+#mayBottomBar>.may-frame-slider{cursor:pointer}
+#mayBottomBar>.may-frame-slider.may-frame-thumb-hover .gz-mid{cursor:ew-resize}
 #mayBottomBar>.may-frame-slider .gz-vl{left:var(--may-frame-value-left,0px)!important;right:auto;top:50%;transform:translateY(-50%);width:max-content;padding:0;background:transparent;text-align:left;font-size:11px}
 #mayBottomBar>.may-frame-slider .gz-th{top:3px;height:21px;width:1px;margin:0;background:transparent;box-shadow:none;border:0}
 #mayBottomBar>.may-frame-caption{position:absolute;display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100vw - 8px);transform:translateX(-50%);pointer-events:none;font:10px/12px var(--mono,monospace);white-space:nowrap;background:#000;color:#dfe6f5;z-index:11}
@@ -1123,15 +1125,12 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::after{opacity:1;transform:translateX(1px)}
 #mayBottomBar .may-frame-slider .may-bb-play{display:none!important;width:20px;height:20px;margin:-10px 0 0 -10px;clip-path:none;background:#1b2430;color:#dfe6f5;font-size:12px;transition:none}
 #mayBottomBar .may-frame-slider .may-bb-rs{opacity:0;visibility:hidden;pointer-events:none}
-#mayBottomBar .may-frame-slider.may-frame-play-reveal:not(.may-frame-running) .may-bb-play{display:flex!important;opacity:1;visibility:visible;transform:none;pointer-events:auto}
-#mayBottomBar .may-frame-slider.may-frame-play-reveal:not(.may-frame-running) .gz-vl{left:calc(50% - 14px)!important;transform:translate(-100%,-50%);font-size:9px;z-index:12}
+#mayBottomBar .may-frame-slider.may-frame-play-reveal .may-bb-play{display:flex!important;opacity:1;visibility:visible;transform:none;pointer-events:auto;cursor:pointer}
+#mayBottomBar .may-frame-slider.may-frame-play-reveal .gz-vl{left:calc(50% - 14px)!important;transform:translate(-100%,-50%);font-size:9px;z-index:12}
 #mayBottomBar .may-frame-slider>.may-frame-field-outline{position:absolute;inset:0;display:none;width:100%;height:100%;pointer-events:none;z-index:4;fill:none;stroke:var(--c,#80aee8);stroke-width:2;stroke-linejoin:miter}
 #mayBottomBar .may-frame-slider:has(>.gz-mid:is(:hover,:focus-within))>.may-frame-field-outline{display:block}
 #mayBottomBar .may-frame-slider:has(>.gz-mid:is(:hover,:focus-within))>.may-standard-outline>polygon{stroke:#394657!important;stroke-dasharray:none!important}
-#mayBottomBar .may-frame-slider.may-frame-play-reveal:not(.may-frame-running) .gz-th{visibility:hidden;pointer-events:none}
-#mayBottomBar:has(>.may-frame-slider.may-frame-play-reveal:not(.may-frame-running))>.may-frame-tail{visibility:hidden}
 #mayBottomBar .may-frame-slider.may-frame-play-reveal .may-bb-rs{opacity:1;visibility:visible;pointer-events:auto}
-#mayBottomBar .may-frame-slider.may-frame-running .may-bb-play{display:none!important}
 #mayBottomBar .may-frame-slider.may-frame-scrubbing .may-bb-play{display:none!important}
 #mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph]::after{content:attr(data-transport-glyph);inset:0;display:flex;align-items:center;justify-content:center;width:auto;height:auto;border:0;transform:none;font:700 13px/24px sans-serif;color:#dfe6f5}
 #mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph="✕"]::after{color:#ff6868}

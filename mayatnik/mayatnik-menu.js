@@ -192,10 +192,10 @@
     // v0.335: «Сброс прямо в ползунке рядом с плеем». v0.339: «ширину в 2 раза меньше, плей всегда по центру, бегунок текущего кадра — вертикальная линия
     // в 2 px, за неё перемещать, и поверх всех»: ▶ / ❚❚ и «✖» стоят в середине дорожки, линия-бегунок (grozd .gz-th без thumb) — над ними
     const cell = $('mayBottomBar').querySelector('.gz-sl'), mid = cell?.querySelector('.gz-mid'), th = mid?.querySelector('.gz-th');
-    if (mid) { const stop=e=>e.stopPropagation();let scrubPointer=null,playPress=null,scrubJustEnded=false;
+    if (mid) { const stop=e=>e.stopPropagation();let scrubPointer=null,playPress=null;
       const pl = document.createElement('button'); pl.type = 'button'; pl.className = 'may-bb-play'; pl.addEventListener('pointerdown',stop); pl.addEventListener('pointerup',stop); pl.addEventListener('click',stop);
       const transportArrows=[...cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)')];
-      const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true';cell.classList.toggle('may-frame-running',on);pl.textContent='▶';pl.title='Анимация: пуск';pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on));for(const [i,arrow]of transportArrows.entries()){if(on)arrow.dataset.transportGlyph=i===0?'✕':'Ⅱ';else delete arrow.dataset.transportGlyph;const title=on?(i===0?'Остановить и вернуться на кадр 0':'Пауза'):(i===0?'На предыдущий кадр':'На следующий кадр');arrow.title=title;arrow.setAttribute('aria-label',title);} };
+      const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true';cell.classList.toggle('may-frame-running',on);pl.textContent=on?'Ⅱ':'▶';pl.title=on?'Анимация: пауза':'Анимация: пуск';pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on));for(const [i,arrow]of transportArrows.entries()){if(on)arrow.dataset.transportGlyph=i===0?'✕':'Ⅱ';else delete arrow.dataset.transportGlyph;const title=on?(i===0?'Остановить и вернуться на кадр 0':'Пауза'):(i===0?'На предыдущий кадр':'На следующий кадр');arrow.title=title;arrow.setAttribute('aria-label',title);} };
       for(const [i,arrow]of transportArrows.entries()){arrow.setAttribute('role','button');arrow.tabIndex=0;arrow.addEventListener('click',event=>{if(P.getAttribute('aria-pressed')!=='true')return;event.preventDefault();event.stopImmediatePropagation();P.click();if(i===0){$('frame').value='0';fire($('frame'));}plSync();rail.refresh();},true);arrow.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopImmediatePropagation();arrow.click();}},true);}
       pl.addEventListener('pointerdown',event=>{playPress=event.button===0&&scrubPointer===null&&cell.classList.contains('may-frame-play-reveal')&&pl.getClientRects().length?{id:event.pointerId,x:event.clientX,y:event.clientY,released:false}:null;});
       pl.addEventListener('pointerup',event=>{if(playPress?.id===event.pointerId)playPress.released=Math.hypot(event.clientX-playPress.x,event.clientY-playPress.y)<=3;});
@@ -219,7 +219,7 @@
       const fieldOutline=document.createElementNS('http://www.w3.org/2000/svg','svg');fieldOutline.classList.add('may-frame-field-outline');fieldOutline.setAttribute('viewBox','0 0 120 24');fieldOutline.setAttribute('aria-hidden','true');const fieldPath=document.createElementNS(fieldOutline.namespaceURI,'path');fieldPath.setAttribute('d','M12 1H108L97 12 108 23H12L23 12Z');fieldOutline.append(fieldPath);cell.append(fieldOutline);
       const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span'),rowsLabel=document.createElement('span'),caption=document.createElement('span'),tail=document.createElement('span');caption.className='may-frame-caption';buildLabel.className='may-frame-type';rowsLabel.className='may-frame-rows';tail.className='may-frame-tail';tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');tail.setAttribute('aria-orientation','horizontal');tail.title='Тянуть пунктир, в том числе под кнопкой, — выбрать кадр';caption.append(buildLabel,rowsLabel);cell.parentElement.append(caption,tail);
       const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
-      tail.addEventListener('pointerdown',event=>{
+      const startFrameScrub=event=>{
         const frame=$('frame');if(event.button!==0||frame.disabled)return;
         event.preventDefault();event.stopPropagation();hideFramePlay();if(P.getAttribute('aria-pressed')==='true')P.click();
         tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);tail.classList.add('may-frame-dragging');
@@ -227,19 +227,40 @@
         const move=e=>{if(e.pointerId!==event.pointerId)return;e.preventDefault();frameModel.setFrac(Math.max(0,Math.min(1,start+(e.clientX-origin)/span)));rail.refresh();side();};
         const end=e=>{if(e.pointerId!==event.pointerId)return;tail.removeEventListener('pointermove',move);tail.removeEventListener('pointerup',end);tail.removeEventListener('pointercancel',end);tail.removeEventListener('lostpointercapture',end);tail.classList.remove('may-frame-dragging');if(tail.hasPointerCapture(event.pointerId))tail.releasePointerCapture(event.pointerId);finishFrameScrub(e);};
         tail.addEventListener('pointermove',move);tail.addEventListener('pointerup',end);tail.addEventListener('pointercancel',end);tail.addEventListener('lostpointercapture',end);
-      });
+      };
+      tail.addEventListener('pointerdown',startFrameScrub);
       tail.addEventListener('keydown',event=>{const frame=$('frame'),low=Number(frame.min)||0,high=Number(frame.max),next=event.key==='Home'?low:event.key==='End'?high:event.key==='ArrowLeft'?Number(frame.value)-1:event.key==='ArrowRight'?Number(frame.value)+1:null;if(next===null)return;event.preventDefault();event.stopPropagation();hideFramePlay();frame.value=String(Math.max(low,Math.min(high,next)));fire(frame);rail.refresh();side();});
-      for(const arrow of transportArrows)arrow.addEventListener('pointerenter',event=>{if(scrubPointer===null&&!scrubJustEnded&&!event.buttons)cell.classList.add('may-frame-play-reveal');});
       const hideFramePlay=()=>cell.classList.remove('may-frame-play-reveal');
-      cell.addEventListener('pointerleave',hideFramePlay);cell.addEventListener('pointercancel',hideFramePlay);addEventListener('blur',hideFramePlay);
+      const onFrameThumb=event=>{const t=th.getBoundingClientRect();return Math.abs(event.clientX-t.left-t.width/2)<=6&&event.clientY>=t.top-3&&event.clientY<=t.bottom;};
+      const revealFramePlay=event=>{
+        if(event.buttons||scrubPointer!==null)return;
+        const thumb=onFrameThumb(event);cell.classList.toggle('may-frame-thumb-hover',thumb);
+        cell.classList.toggle('may-frame-play-reveal',!thumb);
+      };
+      cell.addEventListener('pointerenter',revealFramePlay);cell.addEventListener('pointermove',revealFramePlay);
+      cell.addEventListener('pointerleave',()=>{hideFramePlay();cell.classList.remove('may-frame-thumb-hover');});cell.addEventListener('pointercancel',hideFramePlay);addEventListener('blur',hideFramePlay);
       const beginFrameScrub=event=>{scrubPointer=event.pointerId;playPress=null;cell.classList.add('may-frame-scrubbing');hideFramePlay();};
-      cell.addEventListener('pointerdown',event=>{if(event.button===0&&event.target.closest('.gz-mid')&&!event.target.closest('.may-bb-play'))beginFrameScrub(event);},true);
+      const isPlayerField=target=>cell.contains(target)&&!target.closest('.gz-a');
+      cell.addEventListener('pointerdown',event=>{
+        if(event.button!==0||!isPlayerField(event.target))return;
+        if(onFrameThumb(event)){beginFrameScrub(event);startFrameScrub(event);return;}
+        event.preventDefault();event.stopImmediatePropagation();
+        playPress={id:event.pointerId,x:event.clientX,y:event.clientY,field:true};mid.focus({preventScroll:true});cell.classList.add('may-frame-play-reveal');
+      },true);
+      addEventListener('pointerup',event=>{
+        if(playPress?.id!==event.pointerId||!playPress.field)return;
+        const press=playPress;playPress=null;
+        if(scrubPointer!==null||Math.hypot(event.clientX-press.x,event.clientY-press.y)>3||!isPlayerField(event.target)||onFrameThumb(event))return;
+        P.click();plSync();rail.refresh();
+      },true);
+      cell.addEventListener('click',event=>{if(isPlayerField(event.target)&&!(event.detail===0&&event.target.closest('.may-bb-play'))){event.preventDefault();event.stopImmediatePropagation();}},true);
+      mid.addEventListener('keydown',event=>{if(event.target===mid&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopImmediatePropagation();cell.classList.add('may-frame-play-reveal');P.click();plSync();rail.refresh();}},true);
       tail.addEventListener('pointerdown',event=>{if(event.button===0)beginFrameScrub(event);},true);
-      const finishFrameScrub=event=>{if(scrubPointer!==event.pointerId)return;scrubPointer=null;scrubJustEnded=true;cell.classList.remove('may-frame-scrubbing');hideFramePlay();};
+      tail.addEventListener('pointerenter',()=>{if(scrubPointer===null)hideFramePlay();});
+      const finishFrameScrub=event=>{if(scrubPointer!==event.pointerId)return;scrubPointer=null;cell.classList.remove('may-frame-scrubbing');hideFramePlay();};
       const resetFrameToZero=event=>{event.preventDefault();event.stopImmediatePropagation();playPress=null;hideFramePlay();if(P.getAttribute('aria-pressed')==='true')P.click();$('frame').value='0';fire($('frame'));rail.refresh();side();};
-      tail.addEventListener('dblclick',resetFrameToZero);cell.addEventListener('dblclick',event=>{if(event.target.closest('.gz-mid')&&!event.target.closest('.may-bb-play'))resetFrameToZero(event);});
-      cell.addEventListener('pointermove',event=>{if(!event.buttons)scrubJustEnded=false;});
-      addEventListener('pointerup',finishFrameScrub,true);addEventListener('pointercancel',finishFrameScrub,true);addEventListener('blur',()=>{scrubPointer=null;playPress=null;cell.classList.remove('may-frame-scrubbing');hideFramePlay();});
+      tail.addEventListener('dblclick',resetFrameToZero);cell.addEventListener('dblclick',event=>{if(onFrameThumb(event))resetFrameToZero(event);});
+      addEventListener('pointerup',finishFrameScrub,true);addEventListener('pointercancel',event=>{playPress=null;finishFrameScrub(event);},true);addEventListener('blur',()=>{scrubPointer=null;playPress=null;cell.classList.remove('may-frame-scrubbing','may-frame-thumb-hover');hideFramePlay();});
       const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect();
         const track=mid.getBoundingClientRect(),thumbX=t.left+t.width/2-track.left,valueWidth=vl.offsetWidth;
         const valueX=Math.round(Math.max(0,Math.min(track.width-valueWidth,thumbX+6+valueWidth<=track.width?thumbX+6:thumbX-6-valueWidth)))+'px';
@@ -1803,15 +1824,15 @@
       narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick);
       const placeHorizontalStrips=()=>{
         const desktop=!narrow.matches,step=window.MayatnikMenuDock.DX;
-        const columnLeft=Math.max(4,rail.el.getBoundingClientRect().left),left=desktop?(columnLeft+2*step)+'px':'';
+        const columnLeft=Math.max(4,rail.el.getBoundingClientRect().left),left=desktop?(columnLeft+step)+'px':'';
         const brand=head.querySelector(':scope > .may-brand');if(brand)brand.style.setProperty('--may-brand-left',columnLeft+'px');
-        // The brand occupies one column; horizontal strips clear both menu columns.
+        // The brand occupies one column; horizontal strips start immediately after that column.
         // Shorten the physical strips too, including their backgrounds and controls.
         for(const strip of [head,footerBar]){strip.style.marginLeft=left;strip.style.marginRight=desktop?'4px':'';}
       };
       placeHorizontalStrips();relayout();
       // v0.509: capture group dragging before the legacy rail/free-bottom handlers.
-      dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,sideColumnsLeft:true,
+      dock=window.MayatnikMenuDock?.mount({groups:()=>[...items().filter(g=>g!==ud&&g!==frameBar),...rail.el.querySelectorAll(':scope > .gz-group')],idOf,header:head,tools,footer:footerBar,rail:rail.el,rightEdge:popupRight,sideColumnsLeft:true,singleLeftColumn:true,
         sideTop:()=>{const brand=head.querySelector(':scope > .may-brand');return brand?.getClientRects().length?brand.getBoundingClientRect().bottom+2:30;},
         excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{
           placeHorizontalStrips();
