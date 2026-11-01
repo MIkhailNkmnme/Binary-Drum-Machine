@@ -6,13 +6,15 @@
   const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikJoinedRomb=api;
 })(globalThis,function(){
   'use strict';
-  function create({width,height,origin=0,anchor=0,fieldWidth=width,rotate=false,rotateParity=1,wholeSource=false,topology='square',lattice=-1,gap=0,panelCopies=false}){
+  function create({width,height,origin=0,anchor=0,fieldWidth=width,rotate=false,rotateParity=1,wholeSource=false,topology='square',lattice=-1,gap=0,panelCopies=false,shape='diamond'}){
     if(![width,height,origin,anchor,fieldWidth].every(Number.isSafeInteger)||width<1||height<1||origin<0||fieldWidth<origin+width)
       throw new RangeError('Invalid joined rhombus source geometry');
+    if(shape!=='diamond'&&shape!=='square')throw new RangeError('Invalid joined rhombus cell shape');
     if(wholeSource)return whole({width,height,origin,anchor,fieldWidth,topology,lattice,gap,panelCopies});
+    const square=shape==='square';
     const reflection=2*Math.ceil((width-1)/2),displayWidth=rotate?Math.max(width,reflection+1):width,displayHeight=2*height,displayAnchor=anchor-origin+(rotateParity===0?1:0);
     if(!Number.isSafeInteger(fieldWidth*height)||!Number.isSafeInteger(displayWidth*displayHeight))throw new RangeError('Joined rhombus geometry is too large');
-    const config=Object.freeze({width,height,origin,anchor,fieldWidth,rotate:!!rotate,...(rotateParity===0?{rotateParity:0}:{})});
+    const config=Object.freeze({width,height,origin,anchor,fieldWidth,rotate:!!rotate,...(rotateParity===0?{rotateParity:0}:{}),...(square?{shape:'square'}:{})});
     // Canvas-compatible transforms of continuous source-window coordinates.
     // They also transform axes, clips and cell polygons without separate rules.
     const parts=Object.freeze([
@@ -47,14 +49,17 @@
       const p=(c-anchor-r)&1,x=p===rotateParity&&rotate?reflection-(c-origin):c-origin,y=p===rotateParity?displayHeight-1-r:r;
       return {x,y,c,r,p,q:r*fieldWidth+c,displayQ:y*displayWidth+x};
     }
-    function inverse(x,y){
+    function inverse(x,y,out){
       if(!Number.isInteger(x)||!Number.isInteger(y)||x<0||x>=displayWidth||y<0||y>=displayHeight||((x-displayAnchor-y)&1))return null;
       const lower=y>=height,p=lower?rotateParity:1-rotateParity,c=origin+(lower&&rotate?reflection-x:x),r=lower?displayHeight-1-y:y;
       if(c<origin||c>=origin+width)return null;
-      return {x,y,c,r,p,q:r*fieldWidth+c,displayQ:y*displayWidth+x};
+      const cell=out||{};cell.x=x;cell.y=y;cell.c=c;cell.r=r;cell.p=p;cell.q=r*fieldWidth+c;cell.displayQ=y*displayWidth+x;return cell;
     }
     function hit(fx,fy){
       if(!Number.isFinite(fx)||!Number.isFinite(fy)||fx<0||fy<0||fx>=displayWidth||fy>=displayHeight)return null;
+      // Square cells keep the same display lattice address as the rhombi: the
+      // bit occupies [x, x + 1] × [y, y + 1], so the cell is simply the floor.
+      if(square)return inverse(Math.floor(fx),Math.floor(fy));
       // The nearest diamond centre is found in the common display lattice,
       // before selecting its source half. This also handles points on the join.
       const x=fx-.5-displayAnchor,y=fy-.5,i=Math.round((x+y)/2),j=Math.round((x-y)/2);
@@ -75,7 +80,7 @@
       return {width:displayWidth,height:displayHeight,anchor:displayAnchor,val:values,parities:[0],halves:1,mapping:config};
     }
     return Object.freeze({width:displayWidth,height:displayHeight,anchor:displayAnchor,sourceWidth:width,sourceHeight:height,
-      reflection,config,parts,point,footprint,forward,inverse,hit,fromSource,fromDisplay,snapshot});
+      reflection,config,parts,point,footprint,forward,inverse,hit,fromSource,fromDisplay,snapshot,square,shape});
   }
   // A custom bitmap is not a pair of complementary lattices. Each cell has
   // two display addresses: the selected complete view and its complete 180° copy.
@@ -128,9 +133,9 @@
   const backgrounds=Object.freeze([0xff211a15,0xff181a22]);
   function paintContours(ctx,{geometry,read,x=0,y=0,scale,screenWidth,screenHeight,mode='single',colour='#ffe969',colours=['#ffffff','#000000']}){
     if(!(scale>0))return 0;
-    const square=geometry.config.wholeSource&&geometry.config.topology!=='diamond',step=Math.max(1,Math.ceil(1/scale)),left=Math.max(0,Math.floor(-x/scale)-2),right=Math.min(geometry.width,Math.ceil((screenWidth-x)/scale)+2),top=Math.max(0,Math.floor(-y/scale)-2),bottom=Math.min(geometry.height,Math.ceil((screenHeight-y)/scale)+2);
+    const square=geometry.config.wholeSource?geometry.config.topology!=='diamond':geometry.config.shape==='square',step=Math.max(1,Math.ceil(1/scale)),left=Math.max(0,Math.floor(-x/scale)-2),right=Math.min(geometry.width,Math.ceil((screenWidth-x)/scale)+2),top=Math.max(0,Math.floor(-y/scale)-2),bottom=Math.min(geometry.height,Math.ceil((screenHeight-y)/scale)+2);
     let count=0;ctx.save();ctx.beginPath();ctx.rect(0,0,screenWidth,screenHeight);ctx.clip();ctx.lineWidth=1;
-    for(let r=top;r<bottom;r+=step)for(let col=left;col<right;col+=step){const c=step>1&&!geometry.config.wholeSource?col+((col-geometry.anchor-r)&1):col;const cell=geometry.inverse(c,r);if(!cell)continue;const a=read(c,r);if(a<0)continue;
+    for(let r=top;r<bottom;r+=step)for(let col=left;col<right;col+=step){const c=step>1&&!geometry.config.wholeSource&&!square?col+((col-geometry.anchor-r)&1):col;const cell=geometry.inverse(c,r);if(!cell)continue;const a=read(c,r);if(a<0)continue;
       ctx.save();if(geometry.config.wholeSource){const m=geometry.parts.find(part=>part.p===cell.p).matrix;ctx.beginPath();ctx.rect(x+Math.min(m[4],m[0]*geometry.sourceWidth+m[4])*scale,y+Math.min(m[5],m[3]*geometry.sourceHeight+m[5])*scale,geometry.sourceWidth*scale,geometry.sourceHeight*scale);ctx.clip();}if(mode!=='single'){ctx.beginPath();if(square)ctx.rect(x+c*scale,y+r*scale,scale,scale);else{ctx.moveTo(x+(c+.5)*scale,y+(r-.5)*scale);ctx.lineTo(x+(c+1.5)*scale,y+(r+.5)*scale);ctx.lineTo(x+(c+.5)*scale,y+(r+1.5)*scale);ctx.lineTo(x+(c-.5)*scale,y+(r+.5)*scale);ctx.closePath();}ctx.clip();ctx.lineWidth=2;}
       const edges=square?[[-1,0,[-.5,.5],[-.5,-.5]],[0,-1,[-.5,-.5],[.5,-.5]],[1,0,[.5,-.5],[.5,.5]],[0,1,[.5,.5],[-.5,.5]]]:[[-1,-1,[-1,0],[0,-1]],[1,-1,[0,-1],[1,0]],[1,1,[1,0],[0,1]],[-1,1,[0,1],[-1,0]]];
       for(const [dc,dr,p,q]of edges){const b=read(c+dc,r+dr),on=mode==='single'?a!==b:mode==='same'?b===a||b<0:true;if(!on)continue;

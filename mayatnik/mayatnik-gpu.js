@@ -303,7 +303,7 @@ fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
   const RENDER_WGSL = /* wgsl */`
 struct R { x0: f32, y0: f32, step: f32, contours: u32, VX: i32, VW: i32, VH: i32, pixelRatio: f32,
   cx0:f32, cy0:f32, cw:i32, ch:i32, mapped:u32, joined:u32, joinedAnchor:f32, joinedReflection:f32,
-  contour0:u32, contour1:u32, background0:u32, background1:u32 }
+  contour0:u32, contour1:u32, background0:u32, background1:u32, joinedSquare:u32, pad0:u32, pad1:u32, pad2:u32 }
 @group(0) @binding(0) var<uniform> u: R;
 @group(0) @binding(1) var<storage, read> pic: array<u32>;
 @group(0) @binding(2) var<storage, read> axes: array<i32>;
@@ -315,13 +315,22 @@ fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return 
 // floor(v + .5) deliberately follows JavaScript Math.round at negative ties.
 fn joinedColour(fx:f32,fy:f32)->vec3<f32> {
   let width=select(f32(u.VW),max(f32(u.VW),u.joinedReflection+1.0),u.joined>=2u);if(fx<0.0||fy<0.0||fx>=width||fy>=f32(2*u.VH)){return vec3<f32>(0.0);}
-  let x=fx-0.5-u.joinedAnchor;let y=fy-0.5;
-  let i=i32(floor((x+y)*0.5+0.5));let j=i32(floor((x-y)*0.5+0.5));
-  let dx=i+j+i32(u.joinedAnchor);let dy=i-j;let lower=dy>=u.VH;
+  let background=select(u.background0,u.background1,fy>=f32(u.VH));
+  var dx:i32;var dy:i32;
+  if(u.joinedSquare==1u){
+    // v0.745: плоский вид с «180°» — клетки-квадраты, как в «Битах».
+    dx=i32(floor(fx));dy=i32(floor(fy));
+    if(((dx-i32(u.joinedAnchor)-dy)&1)!=0){return packedColour(background).rgb;}
+  }else{
+    let x=fx-0.5-u.joinedAnchor;let y=fy-0.5;
+    let i=i32(floor((x+y)*0.5+0.5));let j=i32(floor((x-y)*0.5+0.5));
+    dx=i+j+i32(u.joinedAnchor);dy=i-j;
+  }
+  let lower=dy>=u.VH;
   var c=dx;if(lower&&u.joined>=2u){c=i32(u.joinedReflection)-dx;}
   let r=select(dy,2*u.VH-1-dy,lower);
-  if(dy<0||dy>=2*u.VH||c<0||c>=u.VW||r<0||r>=u.VH){return packedColour(select(u.background0,u.background1,fy>=f32(u.VH))).rgb;}
-  let colour=pic[r*u.VW+c];let background=select(u.background0,u.background1,fy>=f32(u.VH));
+  if(dy<0||dy>=2*u.VH||c<0||c>=u.VW||r<0||r>=u.VH){return packedColour(background).rgb;}
+  let colour=pic[r*u.VW+c];
   if(background!=0u&&(colour>>24u)==252u){return packedColour(background).rgb;}
   return cell(r,c+u.VX);
 }
@@ -447,7 +456,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
       const pBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       const bitsBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
       const hasBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
-      const uBuf = device.createBuffer({ size: 80, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+      const uBuf = device.createBuffer({ size: 96, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       let axesBuf=device.createBuffer({size:4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST}),axesCapacity=1,axesCols=null,axesRows=null;
       const PBuf = device.createBuffer({ size: 41 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       let tBuf = null, apBuf = null, bind = null, tCap = 0, apCap = 0, renderBind = null, dead = false;
@@ -560,12 +569,12 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
       // На холст (GPUCanvasContext, уже configure) — последняя picture(): o = { x0, y0, step — клеток окна на пиксель холста }
       function render(context, o) {
         if (dead || !pic || !win) return;
-        const ub = new ArrayBuffer(80), f = new Float32Array(ub), i = new Int32Array(ub),p=o.contourProjection;
+        const ub = new ArrayBuffer(96), f = new Float32Array(ub), i = new Int32Array(ub),p=o.contourProjection;
         const mode=o.contourMode==='same'?2:o.contourMode==='double'?3:o.contourMode==='directional'?4:1;
         // Low byte selects contour mode; remaining bytes retain the single colour.
         f[0] = o.x0; f[1] = o.y0; f[2] = o.step;i[3]=o.contours&&win.contours?((o.contourColour??0xff69e9ff)<<8)|mode:0; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;f[7]=o.pixelRatio||1;
         i[16]=o.contourColours?.[0]??0xffffffff;i[17]=o.contourColours?.[1]??0xff000000;
-        const joined=o.joined;i[13]=joined?(joined.rotate?2:1):0;f[14]=joined?.anchor||0;f[15]=joined?.reflection||0;i[18]=joined?.backgrounds?.[0]||0;i[19]=joined?.backgrounds?.[1]||0;
+        const joined=o.joined;i[13]=joined?(joined.rotate?2:1):0;f[14]=joined?.anchor||0;f[15]=joined?.reflection||0;i[18]=joined?.backgrounds?.[0]||0;i[19]=joined?.backgrounds?.[1]||0;i[20]=joined?.square?1:0;
         f[8]=p?p.x0:o.x0-win.VX;f[9]=p?p.y0:o.y0;i[10]=p?p.cols.length:win.VW;i[11]=p?p.rows.length:win.VH;i[12]=p?1:0;
         // Projection changes only the semantic neighbour lookup. The tile's
         // colour sampling remains in original coordinates, without readback.

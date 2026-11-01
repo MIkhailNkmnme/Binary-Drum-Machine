@@ -10,18 +10,26 @@ test('new 180 rotates even source below the unchanged odd half; legacy mappings 
   }assert.equal(seen.size,width*height);assert.deepEqual(bits,before);
  }
 });
-function host(view,rk=2){
- const width=6,height=4,origin=2,anchor=4,fieldWidth=10,j=J.create({width,height,origin,anchor,fieldWidth,rotate:true,rotateParity:0}),val=Int8Array.from({length:40},(_,q)=>q%5===0?-1:q%2),pixels=new Uint32Array(j.width*j.height*rk*rk),c=vm.createContext({st:{view,joined180:true,digitSize:80,digitOneColour:'#ffffff',digitZeroColour:'#777777'},f:{W:fieldWidth,H:height,val},geo:{anchor},VX:origin,VW:width,VH:height,RK:rk,RG:0,img:{width:j.width*rk,height:j.height*rk,data:new Uint8ClampedArray(pixels.buffer)},joinedOn:()=>true,joinedGeometry:()=>j,halfOf:()=>[3,0],rombP:()=>3,parityVisible:()=>true,outShow:()=>false,outZone:()=>false,tintAt:()=>2,MayatnikJoinedRomb:J,paintBits:null,templateMatchLayer:null,fillMask:null,stolbPaint:null,colReplayPaint:null,faceCurrent:()=>false,gpuDisplay:()=>false,rgba:()=>0,Uint32Array,Int8Array,Float64Array,ochkiCurrent:()=>null,digitFamily:()=> 'monospace',dispW:()=>j.width,dispH:()=>j.height});
+function host(view,rk=2,shape='diamond'){
+ const width=6,height=4,origin=2,anchor=4,fieldWidth=10,j=J.create({width,height,origin,anchor,fieldWidth,rotate:true,rotateParity:0,shape}),val=Int8Array.from({length:40},(_,q)=>q%5===0?-1:q%2),pixels=new Uint32Array(j.width*j.height*rk*rk),c=vm.createContext({st:{view,joined180:true,digitSize:80,digitOneColour:'#ffffff',digitZeroColour:'#777777'},f:{W:fieldWidth,H:height,val},geo:{anchor},VX:origin,VW:width,VH:height,RK:rk,RG:0,img:{width:j.width*rk,height:j.height*rk,data:new Uint8ClampedArray(pixels.buffer)},joinedOn:()=>true,joinedWhole:()=>false,joinedDiamond:()=>false,joinedSquare:()=>shape==='square',joinedCellClip:()=>{},joinedGeometry:()=>j,parityField:()=>({W:fieldWidth,H:height,val}),parityValues:()=>val,parityActive:()=>false,parityRow:r=>r,parityPlan:()=>({settings:{rowFill:'none'},active:false}),halfOf:()=>[3,0],rombP:()=>3,parityVisible:()=>true,outShow:()=>false,outZone:()=>false,tintAt:()=>2,MayatnikJoinedRomb:J,paintBits:null,templateMatchLayer:null,fillMask:null,stolbPaint:null,colReplayPaint:null,faceCurrent:()=>false,gpuDisplay:()=>false,rgba:()=>0,Uint32Array,Int8Array,Float64Array,ochkiCurrent:()=>null,ochkiWholeHighlights:()=>null,digitFamily:()=> 'monospace',dispW:()=>j.width,dispH:()=>j.height});
  for(const name of ['displayCell','fieldCellAt','rasterBit','drawRomb','paintCellDigits'])vm.runInContext(fn(name),c);
  return {c,j,val,pixels};
 }
 test('all appearances retain their palette and exact source identity in the new CPU raster',()=>{
  const palette=Uint32Array.of(0xff000000,0xff000011,0xff000022,0xff000033,0xff000044,0xff000055);
- for(const view of ['bits','col','digits','digitsOnly','bitContours','romb0','romb1','romb2'])for(const rk of [1,2,8]){
-  const {c,j,val,pixels}=host(view,rk);c.drawRomb(pixels,palette,0xff000000,null);
+ for(const shape of ['diamond','square'])for(const view of ['bits','col','digits','digitsOnly','bitContours','romb0','romb1','romb2'])for(const rk of [1,2,8]){
+  const {c,j,val,pixels}=host(view,rk,shape);c.drawRomb(pixels,palette,0xff000000,null);
   for(let y=0;y<c.img.height;y++)for(let x=0;x<c.img.width;x++){
    const hit=j.hit((x+.5)/rk,(y+.5)/rk),v=hit?val[hit.q]:-1,expected=v<0?J.backgrounds[y/rk>=c.VH?1:0]:palette[v*3+(view==='col'?2:0)];assert.equal(pixels[y*c.img.width+x],expected);assert.equal(c.rasterBit(x,y),v);
   }
+ }
+});
+test('flat views keep square cells with 180° while rhombus views keep diamonds',()=>{
+ const a=html.indexOf('  const joinedOn = () =>'),b=html.indexOf('  function joinedBackground(){');
+ const c=vm.createContext({st:{view:'bits',joined180:true,sequenceSourceOn:false},RG:2});
+ vm.runInContext(html.slice(a,b)+'\nthis.joinedSquare=joinedSquare;this.joinedOptions=joinedOptions;',c);
+ for(const [view,joined,square]of[['bits',true,true],['digits',true,true],['digitsOnly',true,true],['bitContours',true,true],['col',true,true],['romb0',true,false],['romb1',true,false],['romb2',true,false],['rombJoin',false,false],['rombJoin180',false,false],['bits',false,false]]){
+  c.st.view=view;c.st.joined180=joined;assert.equal(c.joinedSquare(),square,view+' '+joined);assert.equal(c.joinedOptions().shape,square?'square':undefined,view+' '+joined);
  }
 });
 test('digits only draws text without recolouring cells, while digits uses the selected rendered palette',()=>{
@@ -41,7 +49,7 @@ test('GPU render writes the new/legacy mapper, display anchor and two background
  const pass={setPipeline(){},setBindGroup(){},draw(){},end(){}},encoder={beginRenderPass:()=>pass,finish:()=>({})};
  const device={queue:{writeBuffer(buffer,offset,data){if(data instanceof ArrayBuffer)uniform=data.slice(0);},submit(){}},createCommandEncoder:()=>encoder};
  const c=vm.createContext({reset(){},dead:false,pic:{},win:{VX:2,VW:6,VH:4,contours:true},device,uBuf:{},renderBind:{},pipeRender:{},ArrayBuffer,Float32Array,Int32Array,axesCols:null,axesRows:null});vm.runInContext(render,c);
- for(const rotateParity of [0,1])for(const rotate of [false,true]){const j=J.create({width:6,height:4,origin:2,anchor:4,fieldWidth:10,rotate,rotateParity}),backgrounds=rotateParity===0?J.backgrounds:null;c.render({getCurrentTexture:()=>({createView:()=>({})})},{x0:0,y0:0,step:.5,joined:{anchor:j.anchor,reflection:j.reflection,rotate,rotateParity,backgrounds}});const f=new Float32Array(uniform),i=new Uint32Array(uniform);assert.equal(i[13],rotate?2:1);assert.equal(f[14],j.anchor);assert.equal(f[15],j.reflection);assert.equal(i[18],backgrounds?.[0]||0);assert.equal(i[19],backgrounds?.[1]||0);}
+ for(const rotateParity of [0,1])for(const rotate of [false,true])for(const square of [false,true]){const j=J.create({width:6,height:4,origin:2,anchor:4,fieldWidth:10,rotate,rotateParity,shape:square?'square':'diamond'}),backgrounds=rotateParity===0?J.backgrounds:null;c.render({getCurrentTexture:()=>({createView:()=>({})})},{x0:0,y0:0,step:.5,joined:{anchor:j.anchor,reflection:j.reflection,rotate,rotateParity,backgrounds,square}});const f=new Float32Array(uniform),i=new Uint32Array(uniform);assert.equal(i[13],rotate?2:1);assert.equal(f[14],j.anchor);assert.equal(f[15],j.reflection);assert.equal(i[18],backgrounds?.[0]||0);assert.equal(i[19],backgrounds?.[1]||0);assert.equal(i[20],square?1:0);assert.equal(uniform.byteLength,96);}
 });
 
 test('diamond contour modes stay within their cell clips and remain nonempty at zoom-out on either lattice phase',()=>{

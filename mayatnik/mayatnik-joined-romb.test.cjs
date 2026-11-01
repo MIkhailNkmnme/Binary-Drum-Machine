@@ -92,3 +92,29 @@ test('invalid source geometry or non-binary snapshot values are rejected without
  const g=Joined.create({width:2,height:2});assert.throws(()=>g.snapshot({val:Int8Array.of(1)}),RangeError);
  const val=Int8Array.of(0,1,-1,2);assert.throws(()=>g.snapshot({val}),RangeError);assert.deepEqual(Array.from(val),[0,1,-1,2]);
 });
+
+test('square shape maps each whole display cell to one source bit and keeps the same lattice',()=>{
+ for(const rotate of [false,true])for(const width of [3,4])for(const height of [2,3]){
+  const origin=2,anchor=4,fieldWidth=width+4,g=Joined.create({width,height,origin,anchor,fieldWidth,rotate,rotateParity:0,shape:'square'});
+  assert.equal(g.square,true);assert.equal(g.shape,'square');assert.equal(g.config.shape,'square');
+  const seen=new Set();
+  for(let r=0;r<height;r++)for(let c=origin;c<origin+width;c++){
+   const cell=g.forward(c,r);
+   // The bit fills [x, x + 1] × [y, y + 1]; every interior point is the same cell.
+   for(const [dx,dy]of [[.01,.01],[.5,.5],[.99,.99]])assert.deepEqual(g.hit(cell.x+dx,cell.y+dy),cell);
+   assert.ok(!seen.has(cell.displayQ));seen.add(cell.displayQ);
+  }
+  assert.equal(seen.size,width*height);
+  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){const cell=g.inverse(x,y);if(cell)assert.equal(g.hit(x+.5,y+.5).q,cell.q);}
+  assert.equal(g.hit(-.1,0),null);assert.equal(g.hit(0,-.1),null);assert.equal(g.hit(g.width,0),null);
+ }
+});
+
+test('square shape outlines axis-aligned cell edges instead of diagonals',()=>{
+ const paths=[],clips=[],ctx={save(){},restore(){},beginPath(){this.at=null;},rect(x,y,w,h){clips.push([x,y,w,h]);},clip(){},closePath(){},moveTo(x,y){this.at=[x,y];},lineTo(x,y){this.end=[x,y];},stroke(){paths.push([this.at,this.end]);}};
+ const g=Joined.create({width:8,height:4,anchor:4,shape:'square'});
+ const count=Joined.paintContours(ctx,{geometry:g,read:(x,y)=>g.inverse(x,y)?((x+y)%3===0?1:0):-1,x:0,y:0,scale:4,screenWidth:120,screenHeight:120,mode:'single'});
+ assert.ok(count>0);assert.ok(clips.length>0);
+ assert.ok(paths.every(([a,b])=>a[0]===b[0]||a[1]===b[1]));
+});
+
