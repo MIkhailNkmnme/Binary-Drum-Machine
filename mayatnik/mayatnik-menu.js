@@ -1553,7 +1553,11 @@
   }
   window.mayHorrSections = mountHorrSections(document.querySelector('.gz-group[data-id="horr"]'), { after: () => { rail.refresh(); placeTools(); }, openGroup: () => rail.open('horr') });
   function mountViewUtilities(view,doc=document){
-    let row=doc.getElementById('mayInfoDiamond');if(!row){row=doc.createElement('div');row.id='mayInfoDiamond';row.className='gz-hx gz-pair gz-split gz-split3 may-view-utilities';row.dataset.noMini='';row.setAttribute('role','group');row.setAttribute('aria-label','Поиск кнопок, инструкция и подсказки');const target=doc.querySelector('.gz-group[data-id="export"]')||[...doc.querySelectorAll('.gz-group')].find(g=>/Экспорт/.test(g.querySelector('.pt-l')?.textContent||''))||view;(target.querySelector('.pt-colv')||target).append(row);}   // v0.818: поиск/инструкция/подсказки — в «Экспорт» (автор: «в Экспорт перемести»)
+    let row=doc.getElementById('mayInfoDiamond');if(!row){row=doc.createElement('div');row.id='mayInfoDiamond';row.className='gz-hx gz-pair gz-split gz-split3 may-view-utilities';row.dataset.noMini='';row.setAttribute('role','group');row.setAttribute('aria-label','Поиск кнопок, инструкция и подсказки');}
+    const target=doc.querySelector('.gz-group[data-id="export"]')||[...doc.querySelectorAll('.gz-group')].find(g=>/Экспорт/.test(g.querySelector('.gz-head,.pt-l')?.textContent||''))||view;
+    // The list owns visibility, clipping, stacking and the group's lower bracket.
+    const host=target.querySelector(':scope > .may-rail-list > .gz-wide')||target.querySelector(':scope > .gz-wide')||target.querySelector(':scope > .pt-r')||target.querySelector('.pt-colv')||target;
+    if(row.parentElement!==host)host.append(row);
     for(const [i,id,label,title]of [[0,'mayButtonSearchTrigger','⌕','Найти кнопку по названию или подсказке'],[1,'mayAbout','i','Инструкция по Маятнику'],[2,'mayHelp','?','Подсказки к кнопкам и координаты']]){
       const b=doc.getElementById(id);if(!b)continue;if(b.parentElement!==row)row.insertBefore(b,[...row.children].find(n=>Number(n.dataset.utilityPart)>i)||null);
       b.style.removeProperty('left');b.style.removeProperty('top');if(b.dataset.utilityPart===String(i))continue;b.dataset.utilityPart=String(i);b.className='gz-half gz-h'+i;b.title=title;b.setAttribute('aria-label',title);
