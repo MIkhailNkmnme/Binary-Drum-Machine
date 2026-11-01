@@ -83,7 +83,7 @@
   const FIELD_KEYS = { 1: 'left', 2: 'pair', 3: 'right' };
   const FIELD_NAMES = { 1: 'конусы 5.7', 2: 'обе стороны 5.9', 3: 'всё поле 5.8' };
   const LEGACY_PAIRS = { 12: [1, 2], 23: [2, 3], 31: [1, 3], 123: [1, 2, 3] };
-  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', fields: [1, 2], speed: 1, cycleMode: 'wrap',
+  const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', fields: [1, 2, 3], speed: 1, cycleMode: 'wrap',
     pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 }, pair: { x: 0, y: 0 } } };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE));
@@ -93,7 +93,8 @@
       if (Object.prototype.hasOwnProperty.call(PALETTES, saved.palette)) view.palette = saved.palette;
       if (Array.isArray(saved.fields)) {
         const fields = [...new Set(saved.fields.map(Number).filter(field => FIELDS.includes(field)))].sort((a, b) => a - b);
-        if (fields.length) view.fields = fields;
+        // v0.481: прежняя пара по умолчанию 1–2 поднимается до 1–2–3 (все поля включены)
+        if (fields.length) view.fields = (fields.length === 2 && fields[0] === 1 && fields[1] === 2) ? [1, 2, 3] : fields;
       } else if (LEGACY_PAIRS[saved.pair]) view.fields = LEGACY_PAIRS[saved.pair].slice();   // прежняя пара 1–2 / 2–3 / 3–1 / 1–2–3
       if (typeof saved.zoom === 'number' && Number.isFinite(saved.zoom)) view.zoom = Math.max(1, Math.min(64, saved.zoom));
       if (SPEEDS.includes(saved.speed)) view.speed = saved.speed;
@@ -110,7 +111,8 @@
   let coneFlashOn = false, coneFlash = [];
   const CONE_FLASH_MS = 700;
   function paintConeFlash() {
-    if (!coneFlashOn || !coneCtx) { coneFlash.length = 0; return; }
+    const g = view.mode === 'split' ? coneCtx : (blendCtx || coneCtx);
+    if (!coneFlashOn || !g) { coneFlash.length = 0; return; }
     const now = performance.now();
     coneFlash = coneFlash.filter(x => now - x.t < CONE_FLASH_MS);
     if (coneFlash.length > 4) coneFlash.splice(0, coneFlash.length - 4);
@@ -118,18 +120,18 @@
     for (const x of coneFlash) {
       const a = 0.18 * (1 - (now - x.t) / CONE_FLASH_MS);
       if (a <= 0) continue;
-      coneCtx.save();
-      coneCtx.globalCompositeOperation = 'source-over';
-      coneCtx.globalAlpha = a;
-      coneCtx.fillStyle = '#ffd35b';
-      coneCtx.beginPath();
-      coneCtx.moveTo(x.c, 0);
-      coneCtx.lineTo(x.c - (H - 1), H - 1);
-      coneCtx.lineTo(x.c + (H - 1), H - 1);
-      coneCtx.closePath();
-      coneCtx.fill();
-      coneCtx.globalAlpha = Math.min(1, a * 4); coneCtx.lineWidth = 2; coneCtx.strokeStyle = '#ffd35b'; coneCtx.stroke();
-      coneCtx.restore();
+      g.save();
+      g.globalCompositeOperation = 'source-over';
+      g.globalAlpha = a;
+      g.fillStyle = '#ffd35b';
+      g.beginPath();
+      g.moveTo(x.c, 0);
+      g.lineTo(x.c - (H - 1), H - 1);
+      g.lineTo(x.c + (H - 1), H - 1);
+      g.closePath();
+      g.fill();
+      g.globalAlpha = Math.min(1, a * 4); g.lineWidth = 2; g.strokeStyle = '#ffd35b'; g.stroke();
+      g.restore();
     }
   }
   let pingDir = 1, pingFrame = -1, pingCycle = 0, pingStarted = false;
@@ -270,7 +272,7 @@
     text('hubComparePaletteLabel', palette.label); text('hubComparePaletteIcon', '◐');
     text('hubCompareLegend', palette.legend);
     if (pairsBox) {
-      pairsBox.hidden = view.mode === 'split';
+      pairsBox.hidden = false;   // v0.481: кнопки 1/2/3 видны в любом режиме
       for (const button of pairsBox.querySelectorAll('[data-hub-field]')) {
         const field = Number(button.dataset.hubField), selected = view.fields.includes(field);
         button.classList.toggle('gz-on', selected); button.setAttribute('aria-pressed', String(selected));
