@@ -108,17 +108,18 @@
   let step = -1, frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
   // v20 (Хаб v0.479). Вспышка конуса новой вершины поля 5.7 — по кнопке.
   let coneFlashOn = false, coneFlash = [];
-  const CONE_FLASH_MS = 1300;
+  const CONE_FLASH_MS = 700;
   function paintConeFlash() {
     if (!coneFlashOn || !coneCtx) { coneFlash.length = 0; return; }
     const now = performance.now();
     coneFlash = coneFlash.filter(x => now - x.t < CONE_FLASH_MS);
+    if (coneFlash.length > 4) coneFlash.splice(0, coneFlash.length - 4);
     if (!coneFlash.length) return;
     for (const x of coneFlash) {
-      const a = 0.34 * (1 - (now - x.t) / CONE_FLASH_MS);
+      const a = 0.18 * (1 - (now - x.t) / CONE_FLASH_MS);
       if (a <= 0) continue;
       coneCtx.save();
-      coneCtx.globalCompositeOperation = 'lighter';
+      coneCtx.globalCompositeOperation = 'source-over';
       coneCtx.globalAlpha = a;
       coneCtx.fillStyle = '#ffd35b';
       coneCtx.beginPath();
@@ -127,6 +128,7 @@
       coneCtx.lineTo(x.c + (H - 1), H - 1);
       coneCtx.closePath();
       coneCtx.fill();
+      coneCtx.globalAlpha = Math.min(1, a * 4); coneCtx.lineWidth = 2; coneCtx.strokeStyle = '#ffd35b'; coneCtx.stroke();
       coneCtx.restore();
     }
   }
@@ -380,6 +382,26 @@
     view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length];
     changeView();
   });
+  const prevFrameButton = document.getElementById('hubPrevFrame');
+  if (prevFrameButton) prevFrameButton.addEventListener('click', () => {
+    if (view.cycleMode !== 'pingpong') {   // первый щелчок — включить «Пинг» (он умеет идти назад)
+      view.cycleMode = 'pingpong'; resetAnimation(); changeView();
+      prevFrameButton.title = 'Режим «Пинг» включён — «−1 кадр» шагает назад по чекпоинтам';
+      prevFrameButton.setAttribute('aria-label', 'Кадр назад: режим Пинг включён');
+      return;
+    }
+    if (!paused) { paused = true; syncPlayback(); }
+    const target = Math.max(0, (pingFrame < 0 ? frame : pingFrame) - 1);
+    if (target === pingFrame) return;
+    pingRecompute(target);
+    pingFrame = target; frame = target; step = target; pingDir = -1;
+    pingStarted = frame >= FIRST_FRAME;
+    kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
+    left.dataset.frame = right.dataset.frame = String(frame);
+    if (middle) middle.dataset.frame = String(frame);
+    published = true; publishedFrame = frame; publishedCycle = cycle;
+    renderPublished();
+  });
   const coneFlashButton = document.getElementById('hubVtxFlash');
   if (coneFlashButton) coneFlashButton.addEventListener('click', () => { coneFlashOn = !coneFlashOn; coneFlashButton.setAttribute('aria-pressed', String(coneFlashOn)); coneFlashButton.classList.toggle('gz-on', coneFlashOn); if (!coneFlashOn) coneFlash.length = 0; });
   if (cycleButton) cycleButton.addEventListener('click', () => {
@@ -505,7 +527,6 @@
         const repaintPair = !!pairPixels && (force || pairStep || !pairPainted);
         if (repaintPair) kernel.paint(packedPair, pairPixels, mc);
         coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
-        paintConeFlash();
         if (repaintPair) { pairCtx.putImageData(pairImage, 0, 0); pairPainted = true; }
       } else {
         decodePublished();
@@ -519,6 +540,7 @@
       }
     }
     renderBlend();
+    paintConeFlash();
   }
   function frameInterval() { return INTERVAL / view.speed; }
   // v0.473: после 16× плеер упирается в расчёт одного кадра. Чтобы кнопка
@@ -575,6 +597,7 @@
   }
   function pingApply(k) {
     frame = k; row = 1;
+    if (coneFlashOn) coneFlash.push({ c: baseApexPos(k), t: performance.now() });
     const pos = baseApexPos(k);
     kernel.apex(grid, pos);
     pairStep = k === 0 || k % 2 === 1;
@@ -678,6 +701,7 @@
         frame = step % W; cycle = Math.floor(step / W);
       }
       const pos = apexPos(step);
+      if (coneFlashOn) coneFlash.push({ c: pos, t: performance.now() });   // v0.480: вспышка в основном проходе
       kernel.apex(grid, pos);
       // 5.9 повторяет пару шагов тест-страницы: −m и +m одной дистанцией, ровно
       // один пересчёт на пару (кадры 0, 1, 3, 5…), поэтому поле совпадает с
