@@ -33,19 +33,23 @@
   ];
   function mount(options){
     const doc=options.document||document,host=doc.createElement('div');host.className='may-template-inline';host.setAttribute('aria-label','Действия выбранного шаблона');host.setAttribute('data-no-mini','');host.hidden=true;doc.body.append(host);
-    const buttons=new Map(),inputs=new Map(),palette=doc.createElement('div');let currentState=null;palette.className='may-template-inline-palette';palette.hidden=true;
+    const buttons=new Map(),inputs=new Map(),palette=doc.createElement('div');let currentState=null,dismissed=false,dismissedKey=null;palette.className='may-template-inline-palette';palette.hidden=true;
     const events=['pointerdown','pointerup','pointermove','dblclick','contextmenu'];for(const name of events)host.addEventListener(name,e=>e.stopPropagation());
     function button(id,title,text,parent=host){const node=doc.createElement('button');node.type='button';node.className='may-template-inline-button';node.dataset.command=id;node.title=title;node.setAttribute('aria-label',title);node.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path class="inline-face" d="M12 1 23 12 12 23 1 12Z"/><path class="inline-hover" d="m6 6-5 6 5 6m12-12 5 6-5 6"/></svg>';const label=doc.createElement('span');label.textContent=text;node.append(label);parent.append(node);return node;}
     for(const [id,title,text]of commands){const node=button(id,title,text);buttons.set(id,node);node.addEventListener('click',e=>{e.stopPropagation();if(id==='colour'){palette.hidden=!palette.hidden;if(currentState)render(currentState);return;}palette.hidden=true;options.action(id);});}
     for(const colour of options.colours||['#ffffff','#000000','#ff4040','#ffb347','#ffd646','#74df76','#65d9ff','#5795ff','#b48cff','#5b6475']){const swatch=button('colour:'+colour,'Цвет '+colour,'',palette);swatch.style.setProperty('--sample',colour);swatch.classList.add('may-template-inline-swatch');swatch.addEventListener('click',()=>options.action('colour',colour));}
     const custom=doc.createElement('input');custom.type='color';custom.title='Собственный цвет выбранных шаблонов';custom.setAttribute('aria-label',custom.title);custom.addEventListener('input',()=>options.action('colour',custom.value));palette.append(custom);host.append(palette);
     for(const [id,title,min,max,step]of [['height','Высота шаблона, проценты',1,3200,10],['downValue','Сдвиг вниз, строки',-4096,4096,1],['alpha','Видимость шаблона, проценты',0,100,10]]){const input=doc.createElement('input');input.type='number';input.min=min;input.max=max;input.step=step;input.title=title;input.setAttribute('aria-label',title);input.dataset.field=id;input.addEventListener('change',()=>options.action(id,Number(input.value)));host.append(input);inputs.set(id,input);}
-    function render(state){if(!state||state.width<64){hide();return;}currentState=state;host.hidden=false;const w=Math.min(214,state.width-8),columns=Math.max(2,Math.min(8,Math.floor((w-4)/26))),height=4+26*(Math.ceil((commands.length+6)/columns)+(palette.hidden?0:Math.ceil(palette.children.length/columns))),viewportHeight=state.viewportHeight||state.height;
+    function render(state){if(!state||state.width<64){hide();return;}if(dismissed&&dismissedKey===state.key)return;dismissed=false;dismissedKey=null;currentState=state;host.hidden=false;const w=Math.min(214,state.width-8),columns=Math.max(2,Math.min(8,Math.floor((w-4)/26))),height=4+26*(Math.ceil((commands.length+6)/columns)+(palette.hidden?0:Math.ceil(palette.children.length/columns))),viewportHeight=state.viewportHeight||state.height;
       Object.assign(host.style,{boxSizing:'border-box',gridTemplateColumns:'repeat('+columns+',24px)',width:w+'px',maxHeight:Math.max(24,viewportHeight-8)+'px',left:Math.max(state.left+4,Math.min(state.left+state.width-w-4,state.box.x))+'px',top:Math.max(state.top+4,Math.min(state.top+viewportHeight-height-4,state.box.y+state.box.height+6))+'px'});palette.style.gridTemplateColumns='repeat('+columns+',24px)';
       for(const [id,node]of buttons){node.disabled=!!state.busy||state.disabled?.includes(id);if(['show','move','transfer','paint','trail','proportional','fall'].includes(id))node.setAttribute('aria-pressed',String(!!state[id]));}custom.value=state.colour||'#ffffff';buttons.get('colour').style.setProperty('--sample',custom.value);
       for(const [id,input]of inputs){if(doc.activeElement!==input)input.value=state[id]??'';input.disabled=!!state.busy;}}
-    function hide(){host.hidden=true;palette.hidden=true;currentState=null;}
-    return {host,render,hide,destroy(){host.remove();}};
+    function hide(resetDismissal=true){host.hidden=true;palette.hidden=true;currentState=null;if(resetDismissal){dismissed=false;dismissedKey=null;}}
+    // Capture outside presses before field/menu handlers can stop propagation.
+    // Keep the dismissal across redraws of this selection; its palette is inside host.
+    function outside(event){if(host.hidden||host.contains(event.target))return;dismissed=true;dismissedKey=currentState?.key;hide(false);}
+    doc.addEventListener('pointerdown',outside,true);
+    return {host,render,hide,destroy(){doc.removeEventListener('pointerdown',outside,true);host.remove();}};
   }
   // The existing axis component owns turns and perpendicular manual-axis edits.
   // This adapter contributes translation grips only while the Move control is on.
