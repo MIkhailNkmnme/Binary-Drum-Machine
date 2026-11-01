@@ -528,36 +528,27 @@
       for (const event of ['may-compare-change', 'may-cone-continue-change']) addEventListener(event, more.gzSync);
       b.addEventListener('click', more.gzSync); more.gzSync(); pop.append(section(more, 'build')); }
     wrapH.append(pop);sync(); }
-  // v0.337: «Анимацию вниз копируй, но только число ×1…×10 — по нажатию меняется, пол-кнопки; вторая половина — время 0 … 1/20 … до 1 с, тоже по нажатию»:
-  // слева в полосе одна кнопка из двух половин: скорость (щелчок +1, после ×10 — ×1; правый — назад) | длительность кадра (0, 1/20, 1/10, 1/5, 1/2, 1 с по кругу)
-  { const sp = $('speed'), ft = $('frameT'), T = [0, 1, 2, 4, 10, 20], TN = ['0с', '1/20с', '1/10с', '1/5с', '1/2с', '1с'];   // v0.473: без пробела — помещается между стрелками
-    // v0.340: «по обе стороны от бегунка раздели»: ×N — полкнопкой слева от ползунка кадра, время — справа
-    // v0.473: «эти две крайние от ползунка — со стрелками, чтобы уменьшать и увеличивать»: ◂ ▸ по краям, без перескока по кругу, удержание повторяет
-    const half = k => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gz-hx may-bb-half'; e.dataset.k = k;
-      e.innerHTML = '<i class="may-bb-ar" data-d="-1" aria-hidden="true">◂</i><span class="may-hp-h"></span><i class="may-bb-ar" data-d="1" aria-hidden="true">▸</i>'; return e; };
-    const bs = half('sp'), bf = half('ft'), hs = bs.querySelector('.may-hp-h'), hf = bf.querySelector('.may-hp-h');
-    hs.title = 'Скорость анимации: вершин за кадр · щелчок — +1 (после ×10 — ×1), правый — −1'; hf.title = 'Сколько длится кадр анимации · щелчок — следующее (0 · 1/20 · 1/10 · 1/5 · 1/2 · 1 с), правый — предыдущее';
-    const sync = () => { const speedText = '×' + (+sp.value || 1), v = +ft.value || 0, i = T.indexOf(v), timeText = i >= 0 ? TN[i] : String(+(v * .05).toFixed(2)).replace('.', ',') + 'с'; if(hs.textContent!==speedText)hs.textContent=speedText;if(hf.textContent!==timeText)hf.textContent=timeText; };
-    const spSet = d => { const v = +sp.value || 1; sp.value = String(d > 0 ? (v >= 10 ? 1 : v + 1) : (v <= 1 ? 10 : Math.min(10, v - 1))); fire(sp); sync(); rail.refresh(); };
-    const ftSet = d => { const v = +ft.value || 0; let i; if (d > 0) { i = T.findIndex(t => t > v); if (i < 0) i = 0; } else { i = T.length - 1; while (i >= 0 && T[i] >= v) i--; if (i < 0) i = T.length - 1; }
-      ft.value = String(T[i]); fire(ft); sync(); rail.refresh(); };
-    bs.onclick = e => { if (bs.arDown) { bs.arDown = false; return; } if (!e.target.closest('.may-bb-ar')) spSet(1); }; bs.oncontextmenu = e => { e.preventDefault(); spSet(-1); };
-    bf.onclick = e => { if (bf.arDown) { bf.arDown = false; return; } if (!e.target.closest('.may-bb-ar')) ftSet(1); };   // arDown: нажали на стрелку — подпись могла сменить ширину и увести стрелку из-под мыши bf.oncontextmenu = e => { e.preventDefault(); ftSet(-1); };
-    const spStep = d => { const v = Math.max(1, Math.min(32, (+sp.value || 1) + d)); if (String(v) === sp.value) return; sp.value = String(v); fire(sp); sync(); rail.refresh(); };
-    const ftStep = d => { const v = +ft.value || 0; let i = T.indexOf(v); if (i < 0) i = d > 0 ? T.findIndex(t => t > v) - 1 : T.findIndex(t => t >= v); i = Math.max(0, Math.min(T.length - 1, (i < 0 ? T.length - 1 : i) + d));
-      if (T[i] === v) return; ft.value = String(T[i]); fire(ft); sync(); rail.refresh(); };
-    for (const [b, step, what] of [[bs, spStep, 'скорость'], [bf, ftStep, 'длительность кадра']]) for (const ar of b.querySelectorAll('.may-bb-ar')) {
-      const d = +ar.dataset.d; ar.title = (d < 0 ? 'Меньше' : 'Больше') + ' — ' + what + ' · удержание — подряд';
-      let hold = 0, rep = 0; const end = () => { clearTimeout(hold); clearInterval(rep); hold = rep = 0; };
-      ar.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); b.arDown = true; step(d); hold = setTimeout(() => { rep = setInterval(() => step(d), 90); }, 350); });
-      for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) ar.addEventListener(ev, end);
-      ar.addEventListener('click', e => { e.stopPropagation(); b.arDown = false; }); }
-    for(const el of [sp,ft])for(const event of ['input','change'])el.addEventListener(event,sync);
-    // Restoring settings writes .value directly, without an input event.
+  // v0.790: ромбы x/t раскрывают вниз полный список; повторный щелчок — следующий вариант.
+  {
+    const sp=$('speed'),ft=$('frameT');let popup=null,active=null;
+    const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;return Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);};
+    const label=(input,value)=>input===sp?'×'+value:value===0?'0 с · без паузы':({1:'1/20 с',2:'1/10 с',4:'1/5 с',10:'1/2 с',20:'1 с'}[value]||String(+(value*.05).toFixed(2)).replace('.',',')+' с');
+    const make=(letter,input,name)=>{const button=document.createElement('button');button.type='button';button.className='may-bb-half may-transport-diamond';button.dataset.k=input===sp?'sp':'ft';button.dataset.noMini='';const glyph=document.createElement('span');glyph.textContent=letter;button.append(glyph);button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');button.onclick=event=>{event.stopPropagation();if(active?.button===button){const all=values(input),index=all.indexOf(Number(input.value));setValue(input,all[(index+1)%all.length]);}else open(button,input,name);};button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();button.click();return;}if(event.key==='ArrowDown'){event.preventDefault();if(active?.button!==button)open(button,input,name);popup?.querySelector('[aria-checked="true"]')?.focus();}});return button;};
+    const bs=make('x',sp,'Вершин за кадр'),bf=make('t',ft,'Длительность кадра');
+    function close(focus=false){const owner=active?.button;popup?.remove();popup=null;active=null;owner?.setAttribute('aria-expanded','false');if(focus)owner?.focus();}
+    function place(){if(!popup||!active)return;const r=active.button.getBoundingClientRect(),top=Math.max(4,Math.min(r.bottom+2,innerHeight-30));popup.style.left=Math.max(4,Math.min(r.left,innerWidth-124))+'px';popup.style.top=top+'px';popup.style.maxHeight=Math.max(24,innerHeight-top-8)+'px';}
+    function selected(){if(!popup||!active)return;const value=Number(active.input.value);if(popup.dataset.selectedValue===String(value))return;popup.dataset.selectedValue=String(value);for(const option of popup.querySelectorAll('[data-value]')){const on=Number(option.dataset.value)===value;option.setAttribute('aria-checked',String(on));option.classList.toggle('gz-on',on);option.tabIndex=on?0:-1;}}
+    function setValue(input,value){input.value=String(value);fire(input);sync();rail.refresh();selected();popup?.querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest'});}
+    function open(button,input,name){close();active={button,input,name};popup=document.createElement('div');popup.className='gz-ladder may-transport-options';popup.dataset.noMini='';popup.setAttribute('role','menu');popup.setAttribute('aria-label',name);for(const value of values(input)){const option=document.createElement('button');option.type='button';option.className='gz-hx';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');const text=document.createElement('span');text.className='gz-nm';text.textContent=label(input,value);option.append(text);option.onclick=event=>{event.stopPropagation();setValue(input,value);close(true);};popup.append(option);}document.body.append(popup);button.setAttribute('aria-expanded','true');place();selected();popup.querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest'});popup.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();document.activeElement?.click();return;}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);return;}const delta=event.key==='ArrowDown'?1:event.key==='ArrowUp'?-1:0;if(delta){event.preventDefault();event.stopPropagation();const all=[...popup.children],index=all.indexOf(document.activeElement);all[(index+delta+all.length)%all.length]?.focus();}});}
+    const sync=()=>{for(const [button,input,name]of [[bs,sp,'Вершин за кадр'],[bf,ft,'Длительность кадра']]){button.title=name+': '+label(input,Number(input.value))+'. Нажать — список; повторное нажатие — следующий вариант.';button.setAttribute('aria-label',button.title);}selected();place();};
+    for(const input of [sp,ft])for(const event of ['input','change'])input.addEventListener(event,sync);
+    document.addEventListener('pointerdown',event=>{if(popup&&!popup.contains(event.target)&&!active.button.contains(event.target))close();},true);
+    document.addEventListener('keydown',event=>{if(popup&&event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);}},true);
+    addEventListener('resize',place);document.addEventListener('scroll',event=>{if(popup&&!popup.contains(event.target))place();},true);
     addEventListener('may-transport-change',sync);toolSync.push(sync);
-    const sl = $('mayBottomBar').querySelector(':scope > .gz-sl');
-    if (sl) { sl.before(bs); sl.after(bf); } else $('mayBottomBar').append(bs, bf); sync();
-    const hr = $('mayBbHorr'); if (hr) bf.after(hr); }   // v0.350: «Хорр» — сразу справа от ползунка (за временем кадра)
+    const slider=$('mayBottomBar').querySelector(':scope > .gz-sl');if(slider){slider.before(bs);slider.after(bf);}else $('mayBottomBar').append(bs,bf);sync();
+    const hr=$('mayBbHorr');if(hr)bf.after(hr);
+  }
   rail.el.querySelector('.gz-group[data-id="build"]')?.remove(); // Управление полем уже перенесено в нижний пульт.
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.

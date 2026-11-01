@@ -1110,5 +1110,15 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 @keyframes mayFrameTransportOutline{0%,100%{opacity:1}50%{opacity:.3}}
 @media(prefers-reduced-motion:reduce){#mayBottomBar .may-frame-slider.may-frame-running>.gz-a::before{animation:none}}
 
+/* v0.790: ромбы параметров транспорта и списки по щелчку. */
+#mayBottomBar>.may-transport-diamond{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;min-width:24px;height:24px;margin:0 2px;padding:0!important;border:0;outline:0;box-shadow:none;background:transparent;clip-path:none;cursor:pointer;font:600 12px/24px var(--mono,monospace);color:#dfe6f5;--c:#80aee8}
+#mayBottomBar>.may-transport-diamond::before,#mayBottomBar>.may-transport-diamond::after{content:"";position:absolute;inset:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#40516b;pointer-events:none}
+#mayBottomBar>.may-transport-diamond::after{inset:1px;background:#1b2430}
+#mayBottomBar>.may-transport-diamond:is(:hover,:focus-visible,[aria-expanded="true"])::before{background:var(--c)}
+#mayBottomBar>.may-transport-diamond[aria-expanded="true"]::after{inset:2px}
+#mayBottomBar>.may-transport-diamond>span{position:relative;z-index:1;user-select:none}
+.may-transport-options{width:120px;box-sizing:content-box;padding:2px;gap:2px;overflow-y:auto;overflow-x:hidden;background:#000;overscroll-behavior:contain;--c:#80aee8;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;--gz-txt:#dfe6f5;color:#dfe6f5;font:11px/24px var(--mono,monospace)}
+.may-transport-options>.gz-hx{flex:0 0 24px;min-height:24px;justify-content:center;padding:0 12px}
+
 /* v0.757: в логе находок у строк больше нет подписи «Текущий кадр»: пустой summary не занимает строку; ручная змея подписана. */
 #mayatnikTemplatePanel .mtp-sequence-rows .mtp-current-matches summary:empty{display:none}
