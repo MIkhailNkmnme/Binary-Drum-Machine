@@ -268,16 +268,6 @@ header #paintTools #templateActions>.gz-hx{display:none}
 .may-fold-win .may-fold-panel{position:static!important;transform:none!important;width:auto!important;left:auto;bottom:auto;padding:4px 6px}
 .may-fold-panel{position:fixed;z-index:9;left:25vw;bottom:8px;transform:translateX(-50%);width:min(480px,calc(50vw - 24px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);padding:5px 8px;color:var(--fg)}
 .may-fold-panel[hidden],.may-fold-canvas[hidden]{display:none}
-/* v0.092: пульт «Прохода столба» — как у свёртки, на том же месте (вместе не бывают). */
-#mayStolbPanel{position:fixed;z-index:9;left:25vw;bottom:8px;transform:translateX(-50%);width:min(480px,calc(50vw - 24px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);padding:5px 8px;color:var(--fg)}
-#mayStolbPanel[hidden]{display:none}
-#mayStolbPanel .zz-pult{position:relative;width:100%}
-#mayStolbPanel .may-fold-steps{display:flex;gap:6px;align-items:center;justify-content:space-between;font:11px/1.4 var(--mono)}
-#mayStolbPanel .may-fold-steps button{flex:none;padding:3px 8px}
-#mayStolbPanel .may-fold-frame{display:block;box-sizing:border-box;width:100%;margin:4px 0}
-#mayStolbPanel .may-stolb-range{display:flex;gap:10px;align-items:center;margin-top:4px;font:11px/1.4 var(--mono)}
-#mayStolbPanel .may-stolb-range input{width:64px}
-@media(max-width:600px){#mayStolbPanel{left:8px;bottom:calc(33.333dvh + 16px);transform:none;width:calc(100vw - 16px)}}
 .may-fold-panel .zz-pult{position:relative;width:100%}
 .may-fold-panel .may-fold-steps{display:flex;gap:6px;align-items:center;justify-content:space-between;font:11px/1.4 var(--mono)}
 .may-fold-panel .may-fold-steps button{flex:none;padding:3px 8px}
@@ -363,8 +353,8 @@ header #paintTools .pt-view .pt-vx-row{display:flex;gap:3px}
 header #paintTools .pt-view .pt-vx select{width:96px;height:16px;padding:0 2px;border:1px solid #33405a;background:#121a30;color:#dfe6f5;font:10px 'Segoe UI',sans-serif}
 header #paintTools .pt-view .pt-vx .pt-vrows{width:46px;height:16px;box-sizing:border-box;padding:0 3px;border:1px solid #33405a;background:#121a30;color:#dfe6f5;font:10px var(--mono)}
 /* v0.113: «тут убери фон» — пульты свёртки и прохода без своей подложки и рамки, прямо на поле; надписи читаются за счёт тени. */
-.may-fold-panel,#mayStolbPanel{background:transparent;border:0}
-.may-fold-panel .may-fold-steps,#mayStolbPanel .may-fold-steps,#mayStolbPanel .may-stolb-range{text-shadow:0 0 3px #000,0 0 3px #000}
+.may-fold-panel{background:transparent;border:0}
+.may-fold-panel .may-fold-steps{text-shadow:0 0 3px #000,0 0 3px #000}
 /* v0.116: «дай прокручивать вниз всё это поле без скроллов» — содержимое «Сведений» листается колесом, полосы прокрутки не видно. */
 #mayatnikInfoPanel #mayatnikStatus{scrollbar-width:none;overscroll-behavior:contain}
 #mayatnikInfoPanel #mayatnikStatus::-webkit-scrollbar{display:none}
