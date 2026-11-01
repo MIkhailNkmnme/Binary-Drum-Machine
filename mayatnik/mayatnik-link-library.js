@@ -1,10 +1,10 @@
-/* v0.748: Библиотека → Ссылки. Хранит готовые ссылки на построение и настройки:
-   имя, время, краткое описание и саму ссылку. Открытие применяет ссылку к текущей
-   странице (без перезагрузки), ⧉ кладёт её в буфер, ↓ отдаёт текстовым файлом. */
+/* v0.783: Библиотека → Ссылки также хранит миниатюру текущего изображения.
+   Открытие применяет ссылку к текущей странице (без перезагрузки), ⧉ кладёт её
+   в буфер, ↓ отдаёт текстовым файлом. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikLinkLibrary=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
   const KEY='link-library-v1';
-  const MAX_NAME=120,MAX_SUMMARY=300,MAX_LINK=400000;
+  const MAX_NAME=120,MAX_SUMMARY=300,MAX_LINK=400000,MAX_THUMBNAIL=350000;
   const ICON='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><path fill="none" stroke="#b48cff" stroke-width="3" d="M19 15l6-6a8 8 0 0111 11l-6 6M29 33l-6 6a8 8 0 01-11-11l6-6M18 30l12-12"/></svg>');
   const clone=value=>JSON.parse(JSON.stringify(value));
   const text=value=>typeof value==='string'?value.trim():'';
@@ -14,7 +14,8 @@
     if(!name)throw Error('У ссылки нет названия');
     if(!link||link.length>MAX_LINK||!/#s=[A-Za-z0-9._-]+$/.test(link))throw Error('Ссылка «'+name+'» повреждена');
     if(!Number.isFinite(item.createdAt))throw Error('У ссылки «'+name+'» нет даты');
-    return {id:item.id,name:name.slice(0,MAX_NAME),createdAt:item.createdAt,link,summary:text(item.summary).slice(0,MAX_SUMMARY)};
+    const thumbnail=typeof item.thumbnail==='string'&&item.thumbnail.length<=MAX_THUMBNAIL&&/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(item.thumbnail)?item.thumbnail:'';
+    return {id:item.id,name:name.slice(0,MAX_NAME),createdAt:item.createdAt,link,summary:text(item.summary).slice(0,MAX_SUMMARY),thumbnail};
   }
   function create(host){
     if(!host||typeof host.capture!=='function'||typeof host.restore!=='function')throw Error('Библиотеке ссылок нужен источник и приёмник');
@@ -42,7 +43,7 @@
       return run('Сохранение ссылки',async()=>{
         const captured=await host.capture();
         if(!captured||!text(captured.link))throw Error('Ссылка не собрана');
-        const entry=metadata({id:uniqueId(),name:text(name)||text(captured.name)||'Ссылка',createdAt:Date.now(),link:captured.link,summary:captured.summary||''});
+        const entry=metadata({id:uniqueId(),name:text(name)||text(captured.name)||'Ссылка',createdAt:Date.now(),link:captured.link,summary:captured.summary||'',thumbnail:captured.thumbnail||''});
         await write([...items,entry]);selectedId=entry.id;
         const copied=await copyLink(entry.link);
         message=(copied?'Ссылка скопирована и сохранена в Библиотеку → Ссылки: ':'Ссылка сохранена в Библиотеку → Ссылки: ')+entry.name+(copied?'':' · буфер недоступен — кнопка ↓ или ⧉ скопирует позже');
@@ -54,7 +55,7 @@
     function rename(id,name){return run('Переименование ссылки',async()=>{const item=find(id),title=text(name);if(!title)throw Error('Название ссылки не должно быть пустым');await write(items.map(entry=>entry.id===id?{...entry,name:title.slice(0,MAX_NAME)}:entry));message='Ссылка переименована: '+title;return id;});}
     function remove(id){return run('Удаление ссылки',async()=>{const item=find(id);await write(items.filter(entry=>entry.id!==id));if(selectedId===id)selectedId=null;message='Ссылка удалена из библиотеки: '+item.name;return id;});}
     function download(id){return run('Скачивание ссылки',async()=>{const item=find(id);await host.download(new Blob([item.link+'\r\n'],{type:'text/plain;charset=utf-8'}),item.name);message='Ссылка передана для скачивания: '+item.name;return id;});}
-    return {ready,idle:()=>queue,KEY,list:()=>items.map(item=>({...item,thumbnail:ICON})),getState,
+    return {ready,idle:()=>queue,KEY,list:()=>items.map(item=>({...item,thumbnail:item.thumbnail||ICON})),getState,
       subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},
       async exportItem(id){await ready;await queue;const item=find(id);return {id:item.id,name:item.name,files:[{extension:'.txt',blob:new Blob([item.link+'\r\n'],{type:'text/plain;charset=utf-8'})}]};},
       save,open,copy,rename,remove,download};
