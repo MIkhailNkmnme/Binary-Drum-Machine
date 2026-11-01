@@ -7,6 +7,7 @@
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const mobileMenu=window.MayatnikMenuDock.mobileStrip();
   const toolSync = [];
+  const suppressPlayerTips=host=>{host.dataset.noTooltips='';const strip=()=>{for(const node of [host,...host.querySelectorAll('[title],[data-may-tip],[data-zz-tip]')])for(const attr of ['title','data-may-tip','data-zz-tip'])if(node.hasAttribute(attr))node.removeAttribute(attr);};strip();new MutationObserver(strip).observe(host,{subtree:true,childList:true,attributes:true,attributeFilter:['title','data-may-tip','data-zz-tip']});};
   // The library overlays the field behind controls; it never changes menu slots.
   const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
@@ -89,7 +90,7 @@
         // v0.317: «если ставлю ×2 — в стрелках кадра также пиши +2»: стрелки шагают на скорость анимации (подписи −N / +N обновляет toolSync ниже)
         step: d => { if (window.mayThirds?.on() && Math.abs(d) !== 2) { window.mayThirds.step(Math.sign(d)); return; }   // v0.318: «Трети»
           const e = $('frame'), N = Math.abs(d) === 2 ? Math.max(1, Math.round(((+e.max || 0) - (+e.min || 0)) / 20)) : Math.max(1, +$('speed').value || 1), v = Math.max(+e.min || 0, Math.min(+e.max, +e.value + Math.sign(d) * N)); if (String(v) !== e.value) { e.value = String(v); fire(e); } },
-        arrows: ['−1', '+1'], thumb: { label: () => $('bPlay').getAttribute('aria-pressed') === 'true' ? '❚❚' : '▶', click: () => $('bPlay').click() } } ] },
+        arrows: ['−1', '+1'] } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
@@ -190,12 +191,14 @@
     // v0.335: «Сброс прямо в ползунке рядом с плеем». v0.339: «ширину в 2 раза меньше, плей всегда по центру, бегунок текущего кадра — вертикальная линия
     // в 2 px, за неё перемещать, и поверх всех»: ▶ / ❚❚ и «✖» стоят в середине дорожки, линия-бегунок (grozd .gz-th без thumb) — над ними
     const cell = $('mayBottomBar').querySelector('.gz-sl'), mid = cell?.querySelector('.gz-mid'), th = mid?.querySelector('.gz-th');
-    if (mid) { const stop=e=>e.stopPropagation();
+    if (mid) { const stop=e=>e.stopPropagation();let scrubPointer=null,playPress=null,scrubJustEnded=false;
       const pl = document.createElement('button'); pl.type = 'button'; pl.className = 'may-bb-play'; pl.addEventListener('pointerdown',stop); pl.addEventListener('pointerup',stop); pl.addEventListener('click',stop);
       const transportArrows=[...cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)')];
       const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true';cell.classList.toggle('may-frame-running',on);pl.textContent='▶';pl.title='Анимация: пуск';pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on));for(const [i,arrow]of transportArrows.entries()){if(on)arrow.dataset.transportGlyph=i===0?'✕':'Ⅱ';else delete arrow.dataset.transportGlyph;const title=on?(i===0?'Остановить и вернуться на кадр 0':'Пауза'):(i===0?'На предыдущий кадр':'На следующий кадр');arrow.title=title;arrow.setAttribute('aria-label',title);} };
       for(const [i,arrow]of transportArrows.entries()){arrow.setAttribute('role','button');arrow.tabIndex=0;arrow.addEventListener('click',event=>{if(P.getAttribute('aria-pressed')!=='true')return;event.preventDefault();event.stopImmediatePropagation();P.click();if(i===0){$('frame').value='0';fire($('frame'));}plSync();rail.refresh();},true);arrow.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopImmediatePropagation();arrow.click();}},true);}
-      pl.onclick = ev => { ev.stopPropagation(); P.click(); plSync(); rail.refresh(); }; new MutationObserver(plSync).observe(P, { attributes: true, attributeFilter: ['aria-pressed'] }); plSync(); mid.append(pl);
+      pl.addEventListener('pointerdown',event=>{playPress=event.button===0&&scrubPointer===null?{id:event.pointerId,x:event.clientX,y:event.clientY}:null;});
+      addEventListener('pointermove',event=>{if(playPress&&playPress.id===event.pointerId&&Math.hypot(event.clientX-playPress.x,event.clientY-playPress.y)>3)playPress=null;},true);
+      pl.onclick = ev => { ev.stopPropagation();const explicit=playPress&&Math.hypot(ev.clientX-playPress.x,ev.clientY-playPress.y)<=3;playPress=null;if(scrubPointer!==null||!pl.getClientRects().length||(!explicit&&ev.detail!==0))return;P.click();plSync();rail.refresh(); }; new MutationObserver(plSync).observe(P, { attributes: true, attributeFilter: ['aria-pressed'] }); plSync(); mid.append(pl);
       // подпись «кадр N» — в 6 px от линии (слева, нет места — справа)
       // v0.348: «не видно номера кадра» — подпись обходит середину (▶ и «✖»): слева от линии, нет места или налезает — справа, иначе — сразу за краем ▶ / ✖ со стороны линии
       // v0.395: «плей по центру оси»: ▶ и «✖» — на оси якоря (window.mayAxisX), прижаты к краям дорожки; страница зовёт при прокрутке и масштабе (window.mayPlayPlace)
@@ -212,9 +215,17 @@
       const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
       tail.addEventListener('pointerdown',event=>{if(event.button!==0||frame.disabled)return;event.preventDefault();event.stopPropagation();hideFramePlay();if(P.getAttribute('aria-pressed')==='true')P.click();tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);tail.classList.add('may-frame-dragging');const frame=$('frame'),low=Number(frame.min)||0,high=Number(frame.max),start=(Number(frame.value)-low)/Math.max(1,high-low),origin=event.clientX,span=Math.max(1,mid.getBoundingClientRect().width-16);const move=e=>{if(e.pointerId!==event.pointerId)return;frameModel.setFrac(Math.max(0,Math.min(1,start+(e.clientX-origin)/span)));rail.refresh();side();};const end=e=>{if(e.pointerId!==event.pointerId)return;tail.removeEventListener('pointermove',move);tail.removeEventListener('pointerup',end);tail.removeEventListener('pointercancel',end);tail.removeEventListener('lostpointercapture',end);tail.classList.remove('may-frame-dragging');if(tail.hasPointerCapture(event.pointerId))tail.releasePointerCapture(event.pointerId);};tail.addEventListener('pointermove',move);tail.addEventListener('pointerup',end);tail.addEventListener('pointercancel',end);tail.addEventListener('lostpointercapture',end);});
       tail.addEventListener('keydown',event=>{const frame=$('frame'),low=Number(frame.min)||0,high=Number(frame.max),next=event.key==='Home'?low:event.key==='End'?high:event.key==='ArrowLeft'?Number(frame.value)-1:event.key==='ArrowRight'?Number(frame.value)+1:null;if(next===null)return;event.preventDefault();event.stopPropagation();hideFramePlay();frame.value=String(Math.max(low,Math.min(high,next)));fire(frame);rail.refresh();side();});
-      for(const arrow of transportArrows)arrow.addEventListener('pointerenter',()=>cell.classList.add('may-frame-play-reveal'));
+      for(const arrow of transportArrows)arrow.addEventListener('pointerenter',event=>{if(scrubPointer===null&&!scrubJustEnded&&!event.buttons)cell.classList.add('may-frame-play-reveal');});
       const hideFramePlay=()=>cell.classList.remove('may-frame-play-reveal');
       cell.addEventListener('pointerleave',hideFramePlay);cell.addEventListener('pointercancel',hideFramePlay);addEventListener('blur',hideFramePlay);
+      const beginFrameScrub=event=>{scrubPointer=event.pointerId;playPress=null;cell.classList.add('may-frame-scrubbing');hideFramePlay();};
+      cell.addEventListener('pointerdown',event=>{if(event.button===0&&event.target.closest('.gz-mid')&&!event.target.closest('.may-bb-play'))beginFrameScrub(event);},true);
+      tail.addEventListener('pointerdown',event=>{if(event.button===0)beginFrameScrub(event);},true);
+      const finishFrameScrub=event=>{if(scrubPointer!==event.pointerId)return;scrubPointer=null;scrubJustEnded=true;cell.classList.remove('may-frame-scrubbing');hideFramePlay();};
+      const resetFrameToZero=event=>{event.preventDefault();event.stopImmediatePropagation();playPress=null;hideFramePlay();if(P.getAttribute('aria-pressed')==='true')P.click();$('frame').value='0';fire($('frame'));rail.refresh();side();};
+      tail.addEventListener('dblclick',resetFrameToZero);cell.addEventListener('dblclick',event=>{if(event.target.closest('.gz-mid')&&!event.target.closest('.may-bb-play'))resetFrameToZero(event);});
+      cell.addEventListener('pointermove',event=>{if(!event.buttons)scrubJustEnded=false;});
+      addEventListener('pointerup',finishFrameScrub,true);addEventListener('pointercancel',finishFrameScrub,true);addEventListener('blur',()=>{scrubPointer=null;playPress=null;cell.classList.remove('may-frame-scrubbing');hideFramePlay();});
       const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect();
         const x=Math.round(t.left+t.width/2-b.left-bar.clientLeft),y=c.bottom-b.top-bar.clientTop;
         tail.style.left=x+'px';tail.style.top=(c.top-b.top-bar.clientTop+3)+'px';tail.style.height=(c.height*1.5-3)+'px';
@@ -547,7 +558,7 @@
     function open(button,input,name){
       close();active={button,input,name};const columns=input===sp?4:3;popup=document.createElement('div');popup.style.setProperty('--transport-columns',String(columns));popup.className='gz-ladder may-transport-options';popup.dataset.noMini='';popup.setAttribute('role','menu');popup.setAttribute('aria-label',name);
       let row;values(input).forEach((value,index)=>{if(index%columns===0){row=document.createElement('div');row.className='gz-hx may-transport-option-row';row.dataset.noMini='';row.setAttribute('role','presentation');popup.append(row);}const option=document.createElement('button');option.type='button';option.className='may-transport-option';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');option.title=name+': '+label(input,value);option.setAttribute('aria-label',option.title);option.textContent=input===sp?'×'+value:label(input,value).split(' · ')[0].replace(/\s/g,'');option.onclick=event=>{event.stopPropagation();setValue(input,value);close(true);};row.append(option);});
-      document.body.append(popup);button.setAttribute('aria-expanded','true');place();selected();popup.querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest'});
+      suppressPlayerTips(popup);document.body.append(popup);button.setAttribute('aria-expanded','true');place();selected();popup.querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest'});
       popup.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();document.activeElement?.click();return;}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);return;}const delta={ArrowDown:columns,ArrowUp:-columns,ArrowRight:1,ArrowLeft:-1}[event.key]||0;if(delta){event.preventDefault();event.stopPropagation();const all=[...popup.querySelectorAll('[data-value]')],index=all.indexOf(document.activeElement);all[(index+delta+all.length)%all.length]?.focus();}});
     }
     const sync=()=>{for(const [button,input,name]of [[bs,sp,'Вершин за кадр'],[bf,ft,'Длительность кадра']]){button.title=name+': '+label(input,Number(input.value))+'. Нажать — список; повторное нажатие — следующий вариант.';button.setAttribute('aria-label',button.title);}selected();place();};
@@ -1238,6 +1249,7 @@
   // v0.441: кадр — наверху, «Отмена / ось / Повтор» — в нижней полосе.
   const frameBar=$('mayBottomBar'),footerBar=document.createElement('div');footerBar.id='mayFooterBar';document.body.append(footerBar);tools.append(frameBar);
   frameBar.style.setProperty('--axdx','0px');frameBar.setAttribute('aria-label','Управление кадром');
+  suppressPlayerTips(frameBar);
   // v0.496: оставшаяся рейка шаблона входит в ту же библиотеку; пары и ползунки переносятся целиком.
   function mergeTemplateRail(row,railButtons) {
     const box=railButtons.get('bAutoTpl')?.closest('.gz-group');if(!box)return;

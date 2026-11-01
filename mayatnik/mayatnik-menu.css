@@ -1098,8 +1098,8 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-tail{position:absolute;border:0;width:11px;margin-left:-5px;background:transparent;pointer-events:auto;touch-action:none;cursor:ew-resize;outline:0;z-index:10}
 #mayBottomBar>.may-frame-tail::before,#mayBottomBar>.may-frame-tail::after{content:"";position:absolute;top:0;bottom:0;left:5px;width:1px;background:repeating-linear-gradient(to bottom,#dfe6f5 0 2px,transparent 2px 4px);pointer-events:none}
 #mayBottomBar>.may-frame-tail::after{opacity:0}
-#mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::before{transform:translateX(-3px)}
-#mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::after{opacity:1;transform:translateX(3px)}
+#mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::before{transform:translateX(-1px)}
+#mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::after{opacity:1;transform:translateX(1px)}
 #mayBottomBar .may-frame-slider .may-bb-play{display:none!important;width:20px;height:20px;margin:-10px 0 0 -10px;clip-path:none;background:#1b2430;color:#dfe6f5;font-size:12px;transition:none}
 #mayBottomBar .may-frame-slider .may-bb-rs{opacity:0;visibility:hidden;pointer-events:none}
 #mayBottomBar .may-frame-slider.may-frame-play-reveal:not(.may-frame-running) .may-bb-play{display:flex!important;opacity:1;visibility:visible;transform:none;pointer-events:auto}
@@ -1107,6 +1107,7 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar:has(>.may-frame-slider.may-frame-play-reveal:not(.may-frame-running))>.may-frame-tail{visibility:hidden}
 #mayBottomBar .may-frame-slider.may-frame-play-reveal .may-bb-rs{opacity:1;visibility:visible;pointer-events:auto}
 #mayBottomBar .may-frame-slider.may-frame-running .may-bb-play{display:none!important}
+#mayBottomBar .may-frame-slider.may-frame-scrubbing .may-bb-play{display:none!important}
 #mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph]::after{content:attr(data-transport-glyph);inset:0;display:flex;align-items:center;justify-content:center;width:auto;height:auto;border:0;transform:none;font:700 13px/24px sans-serif;color:#dfe6f5}
 #mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph="✕"]::after{color:#ff6868}
 #mayBottomBar .may-frame-slider.may-frame-running>.gz-a[data-transport-glyph]::before{background:#80aee8;animation:mayFrameTransportOutline 1.2s ease-in-out infinite}

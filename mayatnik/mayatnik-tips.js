@@ -11,6 +11,7 @@
   const giveBack = el => { if (el && el.dataset.mayTip != null && !el.hasAttribute('title')) el.setAttribute('title', el.dataset.mayTip); };
   const hide = () => { clearTimeout(timer); timer = 0; box.hidden = true; obs?.disconnect(); obs = null; giveBack(cur); cur = null; };
   function show() {
+    if(cur?.closest('[data-no-tooltips]'))return;
     if (!cur || !cur.isConnected || document.documentElement.classList.contains('gz-help')) return;
     const text = cur.dataset.mayTip; if (!text) return;
     box.textContent = text; box.hidden = false;
@@ -21,6 +22,7 @@
     box.style.left = Math.round(x) + 'px'; box.style.top = Math.round(y) + 'px';
   }
   document.addEventListener('pointerover', e => {
+    if(e.target.closest?.('[data-no-tooltips]')){hide();return;}
     if (e.pointerType === 'touch') return;
     const el = e.target.closest?.('[title],[data-may-tip]'); if (el === cur) return;
     hide(); if (!el || el === document.documentElement || el.closest('#mayTip')) return;

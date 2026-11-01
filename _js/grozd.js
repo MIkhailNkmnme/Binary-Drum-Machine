@@ -35,6 +35,7 @@
   }
   let tipEl = null;
   function tipShow(btn, text) {
+    if(btn.closest('[data-no-tooltips]')){tipHide();return;}
     if (!text || !document.documentElement.classList.contains('gz-help')) return;
     if (!tipEl) { tipEl = el('div', 'gz-tip'); document.body.append(tipEl); }
     tipEl.textContent = text; tipEl.hidden = false;
