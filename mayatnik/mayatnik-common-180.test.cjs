@@ -27,10 +27,13 @@ test('all appearances retain their palette and exact source identity in the new 
 test('flat views keep square cells with 180° while rhombus views keep diamonds',()=>{
  const a=html.indexOf('  const joinedOn = () =>'),b=html.indexOf('  function joinedBackground(){');
  const c=vm.createContext({st:{view:'bits',joined180:true,sequenceSourceOn:false},RG:2});
- vm.runInContext(html.slice(a,b)+'\nthis.joinedSquare=joinedSquare;this.joinedOptions=joinedOptions;',c);
+ vm.runInContext(html.slice(a,b)+'\nthis.joinedSquare=joinedSquare;this.joinedWhole=joinedWhole;this.joinedOptions=joinedOptions;',c);
  for(const [view,joined,square]of[['bits',true,true],['digits',true,true],['digitsOnly',true,true],['bitContours',true,true],['col',true,true],['romb0',true,false],['romb1',true,false],['romb2',true,false],['rombJoin',false,false],['rombJoin180',false,false],['bits',false,false]]){
   c.st.view=view;c.st.joined180=joined;assert.equal(c.joinedSquare(),square,view+' '+joined);assert.equal(c.joinedOptions().shape,square?'square':undefined,view+' '+joined);
  }
+ c.st.view='bits';c.st.joined180=true;c.st.joined180Whole=true;
+ assert.equal(c.joinedWhole(),true);assert.equal(c.joinedSquare(),true);assert.equal(c.joinedOptions().wholeSource,true);assert.equal(c.joinedOptions().shape,undefined);
+ c.st.view='romb0';assert.equal(c.joinedWhole(),false);assert.equal(c.joinedOptions().wholeSource,false);
 });
 test('digits only draws text without recolouring cells, while digits uses the selected rendered palette',()=>{
  for(const only of [false,true]){const {c,j,pixels}=host(only?'digitsOnly':'digits');pixels.fill(0xff123456);const calls=[];const ctx={beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){calls.push(['fill',this.fillStyle]);},stroke(){},save(){},restore(){},fillText(value){calls.push(['text',value,this.fillStyle]);}};c.paintCellDigits(ctx,0,0,8,0,j.width,0,j.height,3,only);assert.ok(calls.some(q=>q[0]==='text'));assert.equal(calls.some(q=>q[0]==='fill'),!only);if(!only)assert.ok(calls.filter(q=>q[0]==='fill').every(q=>q[1]==='rgb(86,52,18)'));}
@@ -39,9 +42,23 @@ test('background boundary follows the exact joined seam across zoom and vertical
  const style={},host={top:30},field={top:42},c=vm.createContext({f:{},st:{joined180:true},VH:16,scale:()=>2,cv:{getBoundingClientRect:()=>field},wrap:{style,scrollTop:0,clientHeight:600,getBoundingClientRect:()=>host},MayatnikJoinedRomb:J});vm.runInContext(fn('joinedBackground'),c);c.joinedBackground();assert.match(style.backgroundImage,/44px/);assert.equal(style.backgroundSize,'100% 600px');field.top=-58;c.wrap.scrollTop=100;c.scale=()=>4;c.joinedBackground();assert.match(style.backgroundImage,/-24px/);assert.equal(style.backgroundPosition,'0 100px');c.st.joined180=false;c.joinedBackground();assert.equal(style.backgroundImage,'');
 });
 test('the new toggle never rewrites any appearance or source; legacy paint keys stay unchanged',()=>{
- const a=html.indexOf("  $('bJoined180').onclick="),b=html.indexOf('\n',a),button={},state={};const c=vm.createContext({st:state,f:{val:Int8Array.of(1,0)},$:()=>button});
- for(const name of ['stopFrameTransports','foldCloseAll','joined180Sync','clearFillPreview','resetOchkiFindings','save','canvasSize','layout','draw','ovlDraw','queueDigits','savePaint'])c[name]=()=>{};vm.runInContext(html.slice(a,b),c);
- for(const view of ['bits','col','digits','digitsOnly','bitContours','romb0','romb1','romb2']){state.view=view;state.joined180=false;button.onclick();assert.equal(state.joined180,true);assert.equal(state.view,view);button.onclick();assert.equal(state.joined180,false);assert.equal(state.view,view);assert.deepEqual([...c.f.val],[1,0]);}
+ const a=html.indexOf("  $('bJoined180').onclick="),b=html.indexOf('\n',a),button={},state={};const c=vm.createContext({st:state,f:{val:Int8Array.of(1,0)},$:()=>button,bmGen:0,paintBits:null});
+ for(const name of ['stopFrameTransports','foldCloseAll','joined180Sync','clearFillPreview','resetOchkiFindings','save','canvasSize','layout','draw','ovlDraw','queueDigits','savePaint','lgSync','templateTransientSync'])c[name]=()=>{};vm.runInContext(fn('joinedToggle'),c);vm.runInContext(html.slice(a,b),c);
+ for(const view of ['bits','col','digits','digitsOnly','bitContours','romb0','romb1','romb2']){state.view=view;state.joined180=false;button.onclick();assert.equal(state.joined180,true);assert.equal(state.joined180Whole,false);assert.equal(state.view,view);button.onclick();assert.equal(state.joined180,false);assert.equal(state.view,view);assert.deepEqual([...c.f.val],[1,0]);}
+});
+test('whole 180 is a separate mode: it turns the parity 180 off and back on',()=>{
+ const state={view:'bits',joined180:false,joined180Whole:false},half={},whole={},view={value:''};
+ const c=vm.createContext({st:state,f:{val:Int8Array.of(1,0)},$:id=>id==='bJoined180'?half:id==='bJoined180Whole'?whole:id==='view'?view:null,bmGen:0,paintBits:null});
+ for(const name of ['stopFrameTransports','foldCloseAll','joined180Sync','clearFillPreview','resetOchkiFindings','save','canvasSize','layout','draw','ovlDraw','queueDigits','savePaint','lgSync','templateTransientSync'])c[name]=()=>{};
+ vm.runInContext(fn('joinedToggle'),c);
+ const ha=html.indexOf("  $('bJoined180').onclick="),hb=html.indexOf('\n',ha),wa=html.indexOf("  $('bJoined180Whole').onclick="),wb=html.indexOf('\n',wa);
+ vm.runInContext(html.slice(ha,hb),c);vm.runInContext(html.slice(wa,wb),c);
+ whole.onclick();assert.equal(state.joined180,true);assert.equal(state.joined180Whole,true);assert.equal(state.view,'bits');
+ half.onclick();assert.equal(state.joined180,true);assert.equal(state.joined180Whole,false);
+ half.onclick();assert.equal(state.joined180,false);assert.equal(state.joined180Whole,false);
+ whole.onclick();assert.equal(state.joined180,true);assert.equal(state.joined180Whole,true);
+ whole.onclick();assert.equal(state.joined180,false);assert.equal(state.joined180Whole,false);
+ state.view='romb0';whole.onclick();assert.equal(state.view,'bits');assert.equal(state.joined180,true);assert.equal(state.joined180Whole,true);
 });
 
 test('GPU render writes the new/legacy mapper, display anchor and two background colours without rewriting data',()=>{

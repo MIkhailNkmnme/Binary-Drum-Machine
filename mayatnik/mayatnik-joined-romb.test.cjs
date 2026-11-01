@@ -118,3 +118,18 @@ test('square shape outlines axis-aligned cell edges instead of diagonals',()=>{
  assert.ok(paths.every(([a,b])=>a[0]===b[0]||a[1]===b[1]));
 });
 
+test('whole square source keeps every bit twice: on top and in the 180° copy',()=>{
+ for(const width of [3,4])for(const height of [2,3]){
+  const origin=1,anchor=3,fieldWidth=width+4,g=Joined.create({width,height,origin,anchor,fieldWidth,wholeSource:true});
+  assert.equal(g.width,width);assert.equal(g.height,2*height);assert.equal(g.config.wholeSource,true);
+  const seen=new Set();
+  for(let r=0;r<height;r++)for(let c=origin;c<origin+width;c++){
+   const both=g.fromSourceAll(r*fieldWidth+c);assert.equal(both.length,2);
+   for(const cell of both){assert.deepEqual(g.inverse(cell.x,cell.y),cell);assert.equal(g.hit(cell.x+.5,cell.y+.5).displayQ,cell.displayQ);assert.ok(!seen.has(cell.displayQ));seen.add(cell.displayQ);}
+   assert.equal(both[0].copy,0);assert.equal(both[0].x,c-origin);assert.equal(both[0].y,r);
+   assert.equal(both[1].copy,1);assert.equal(both[1].x,g.width-1-(c-origin));assert.equal(both[1].y,2*height-1-r);
+  }
+  assert.equal(seen.size,width*height*2);
+ }
+});
+

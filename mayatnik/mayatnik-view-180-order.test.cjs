@@ -5,7 +5,7 @@ function fn(name){const a=html.indexOf('function '+name+'(');assert.ok(a>=0,name
 function fixture(gpu=false){
  const nodes=new Map(),saved=[],layouts=[],field={W:18,H:8,val:Int8Array.from({length:144},(_,q)=>q%3-1)},paint=Uint32Array.of(0xff123456,0xff654321),templates=[{id:'source'},{id:'mirror'}];
  const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='rows'||id==='steps'?8:id==='mode'?'pend':id==='speed'?4:'bits',attrs:{},listeners:{},setAttribute(k,v){this.attrs[k]=v;},addEventListener(k,f){this.listeners[k]=f;},dispatchEvent(e){this.listeners[e.type]?.(e);}});return nodes.get(id);};
- const c=vm.createContext({st:{view:'bits',joined180:false,viewUpsideDown:true,rows:8,steps:8,mode:'pend',bg:'empty',speed:4},f:field,geo:{anchor:9},VX:0,VW:18,VH:8,RG:2,RK:1,k:4,gpuBig:gpu?{}:null,img:null,cv:{width:18,height:8},wrap:{clientWidth:800},MayatnikJoinedRomb:J,templateTransient:Transient.create(),templateTransientCanvas:null,fillMask:paint,templateItems:templates,$:node,Event:class{constructor(type){this.type=type;}},gpuDisplay:()=>gpu,gpuCpuDisplay:()=>false,wrapPadX:()=>32,vSteps:n=>n,
+ const c=vm.createContext({st:{view:'bits',joined180:false,viewUpsideDown:true,rows:8,steps:8,mode:'pend',bg:'empty',speed:4},f:field,geo:{anchor:9},VX:0,VW:18,VH:8,RG:2,RK:1,k:4,gpuBig:gpu?{}:null,img:null,bmGen:0,paintBits:null,cv:{width:18,height:8},wrap:{clientWidth:800},MayatnikJoinedRomb:J,templateTransient:Transient.create(),templateTransientCanvas:null,fillMask:paint,templateItems:templates,$:node,Event:class{constructor(type){this.type=type;}},gpuDisplay:()=>gpu,gpuCpuDisplay:()=>false,wrapPadX:()=>32,vSteps:n=>n,
   g:{createImageData:(width,height)=>({width,height,data:new Uint8ClampedArray(width*height*4)})},save(){saved.push(JSON.parse(JSON.stringify(c.st)));},layout(){layouts.push({view:c.st.view,on:c.st.joined180,width:c.dispW(),height:c.dispH(),rp:c.rombP()});},scale:()=>8,draw(){},fillBits:null});
  Object.assign(c,{fillHistory:[],fillRedo:[],fillHistoryBytes:0,fillSync(){}});
  for(const name of ['lgSync','stopFrameTransports','foldCloseAll','clearFillPreview','resetOchkiFindings','ovlDraw','queueDigits','savePaint','zoomTo'])c[name]=()=>{};
@@ -13,6 +13,7 @@ function fixture(gpu=false){
  vm.runInContext("let joinedCache=null;"+fn('joinedGeometry'),c);
  for(const name of ['clampInt','readUI','changeView','canvasSize','templateTransientScope','templateTransientSync'])vm.runInContext(fn(name),c);
  for(const name of ['dispW','dispH']){const a=html.indexOf('  const '+name+' ='),b=html.indexOf('\n',a);vm.runInContext(html.slice(a,b)+'\nthis.'+name+'='+name+';',c);}
+ vm.runInContext(fn('joinedToggle'),c);
  const start=html.indexOf("  $('bJoined180').onclick="),end=html.indexOf('\n',start);vm.runInContext(html.slice(start,end),c);
  node('view').addEventListener('change',c.changeView);const a=html.indexOf('  const lgSelect ='),b=html.indexOf('\n',a);vm.runInContext(html.slice(a,b)+'\nthis.lgSelect=lgSelect;',c);
  const choose=view=>{node('view').value=view;node('view').dispatchEvent(new c.Event('change'));};return {c,node,choose,saved,layouts,field,paint,templates};
