@@ -939,8 +939,8 @@
     for(const [axis,title,prefix,keys]of [['cells','Клетки','Кл',['cellsEven','cellsOdd']],['rows','Строки','Стр',['rowsEven','rowsOdd']],['cols','Столбцы','Стл',['colsEven','colsOdd']]]){
       const item=pair(axis,0,title,prefix,keys);item.row.dataset.n='parity'+{cells:'Cells',rows:'Rows',cols:'Cols'}[axis];pairs.push(item);parent.append(item.row);
     }
-    const fillHelp='Заполнение пустот скрытых строк копиями ближайшей видимой строки сверху или снизу. У края без строки выбранной стороны берётся ближайшая с противоположной стороны. Исходные биты неизменны.';
-    const fill=command('Пустоты: нет',fillHelp,()=>{const modes=['none','above','below'];api()?.set('rowFill',modes[(modes.indexOf(api()?.get().rowFill)+1)%modes.length]);refresh();});fill.dataset.n='parityRowFill';parent.append(fill);
+    const fillHelp='Заполнение пустот скрытых строк копиями ближайшей видимой строки. Исходные биты неизменны.';
+    const fill=command('Заполнить пустоты',fillHelp,()=>{api()?.set('rowFill',(api()?.get().rowFill||'none')==='none'?'above':'none');refresh();});fill.dataset.n='parityRowFill';parent.append(fill);
     for(const [axis,title,levelKey,prefix]of [['rows','Строки','rowLevels','Стр'],['cells','Клетки','cellLevels','Кл']]){
       const help='Вложенная чётность: '+title.toLowerCase()+'. Каждый следующий уровень заново нумерует и фильтрует только оставшиеся после предыдущего уровня элементы. Исходные биты неизменны.';
       const owner=command(prefix+' вложенно',help,()=>{});owner.dataset.n='parity'+(axis==='rows'?'Rows':'Cells')+'Levels';owner.dataset.listTitle=prefix+' вложенно';
@@ -970,7 +970,7 @@
     }
     function sync(){const value=api()?.get()||{};
       pairs.forEach(item=>item.parts.forEach((part,i)=>pressed(part,value[item.keys[i]]!==false)));
-      const fillMode=value.rowFill||'none',caption='Пустоты: '+({none:'нет',above:'сверху',below:'снизу'}[fillMode]||'нет');fill.querySelector('.gz-nm').textContent=caption;describe(fill,fillHelp+' Сейчас: '+caption+'. Щелчок: нет → сверху → снизу → нет.');pressed(fill,fillMode!=='none');
+      const fillOn=(value.rowFill||'none')!=='none';describe(fill,fillHelp+' Сейчас '+(fillOn?'включено. Нажать — выключить.':'выключено. Нажать — включить.'));pressed(fill,fillOn);
       for(const popup of popups){pressed(popup.owner,(value[popup.levelKey]||[]).length>0);if(popup.list?.isConnected)popup.draw(popup.list);}
     }
     toolSync.push(sync);sync();
