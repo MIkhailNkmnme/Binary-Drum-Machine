@@ -1863,8 +1863,26 @@
   function decorateViewPalette(list,owner){
     if(owner.dataset.n!=='viewCycle')return;
     const options=[...$('view').options].filter(o=>!o.hidden&&!o.disabled);
+    const rgbChoices=[[0,'Чёрный','#000000'],[4,'Красный','#ff0000'],[2,'Зелёный','#00ff00'],[1,'Синий','#0000ff'],[6,'Жёлтый','#ffff00'],[5,'Пурпурный','#ff00ff'],[3,'Голубой','#00ffff'],[7,'Белый','#ffffff']];
+    const syncRGBPalette=row=>{const api=window.mayRGBNeighbours,counts=api?.counts?.()||[],selected=api?.filter?.();for(const chip of row.querySelectorAll('.may-rgb-choice')){const code=Number(chip.dataset.rgbCode),choice=rgbChoices.find(x=>x[0]===code),count=counts[code]||0,on=selected===code;chip.setAttribute('aria-pressed',String(on));chip.title=`${choice[1]} · ${count.toLocaleString('ru-RU')} клеток · щелчок оставляет только этот цвет; повторный — показать все`;chip.classList.toggle('gz-on',on);const n=chip.querySelector('.may-rgb-count');if(n)n.textContent=count.toLocaleString('ru-RU');}};
     list.querySelectorAll(':scope > .gz-hx').forEach((row,i)=>{
-      const mode=options[i]?.value,ids=viewPaletteSources[mode];if(!ids)return;
+      const mode=options[i]?.value,ids=viewPaletteSources[mode];
+      if(mode==='rgbNeighbours'){
+        if(!row.classList.contains('may-rgb-palette')){
+          row.classList.add('may-rgb-palette');row.querySelector('.gz-ic')?.style.setProperty('display','none','important');
+          const panel=document.createElement('span');panel.className='may-rgb-panel';panel.dataset.noMini='';panel.style.cssText='display:inline-flex;flex-direction:column;gap:3px;margin-left:4px;vertical-align:middle;';
+          const heading=document.createElement('span');heading.textContent='8 цветов · выбрать для фильтра';heading.style.cssText='font:10px/1.2 ui-monospace,Consolas,monospace;color:#aab6c8;text-align:left;';panel.append(heading);
+          const grid=document.createElement('span');grid.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(43px,auto));gap:3px;';panel.append(grid);
+          for(const [code,name,colour]of rgbChoices){const chip=document.createElement('button');chip.type='button';chip.className='may-view-swatch may-rgb-choice';chip.dataset.rgbCode=String(code);chip.setAttribute('aria-label',name);chip.style.cssText='display:inline-flex;align-items:center;justify-content:flex-start;gap:3px;min-width:43px;height:22px;padding:2px 4px;background:#10151d;border:1px solid #48566b;color:#edf2fa;cursor:pointer;';
+            const sample=document.createElement('i');sample.setAttribute('aria-hidden','true');sample.style.cssText=`display:inline-block;width:10px;height:10px;flex:none;background:${colour};border:1px solid #8b96a7;`;
+            const count=document.createElement('small');count.className='may-rgb-count';count.textContent='0';count.style.cssText='font:10px/1 ui-monospace,Consolas,monospace;';chip.append(sample,count);
+            chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();});chip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const api=window.mayRGBNeighbours;if(api)api.setFilter(api.filter()===code?null:code);syncRGBPalette(row);});grid.append(chip);
+          }
+          row.append(panel);
+        }
+        syncRGBPalette(row);return;
+      }
+      if(!ids)return;
       if(!row.classList.contains('may-view-palette')){
         row.classList.add('may-view-palette');row.querySelector('.gz-ic')?.style.setProperty('display','none','important');
         ids.forEach((id,j)=>{const src=$(id),dot=document.createElement('button');dot.type='button';dot.className='may-view-swatch';dot.dataset.noMini='';dot.dataset.source=id;dot.title=src.title||src.getAttribute('aria-label');dot.setAttribute('aria-label',dot.title);
@@ -1877,6 +1895,7 @@
       for(const dot of row.querySelectorAll('.may-view-swatch')){const colour=$(dot.dataset.source).value;if(dot.dataset.colour!==colour){dot.dataset.colour=colour;dot.style.backgroundColor=colour;}}
     });
   }
+  window.addEventListener('may-rgb-neighbours-update',()=>document.querySelectorAll('.may-rgb-palette').forEach(syncRGBPalette));
   function nameListButton(b){
     const names={viewCycle:'Вид',fontCycle:'Шрифт',fixMirror:'Зеркало ↑',fixAxis:'Ось',mirCol:'Цвет зеркал',noband:'Полосы',layerSelect:'Слои',paintColourReset:'Сброс цветов'};
     const title=b.dataset.listTitle||names[b.dataset.n]||b.querySelector('.gz-nm')?.textContent.trim()||b.title||'Варианты';b.dataset.listTitle=title;b.classList.add('may-named-list');b.setAttribute('aria-label',title);
