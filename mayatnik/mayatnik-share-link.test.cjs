@@ -46,6 +46,8 @@ test('описание ссылки: строки, кадр, построени�
   assert.match(d.title, /^Ссылка 128 строк · кадр 107 · Перескок$/);
   const pair = SL.describe({ k: 3, state: { ...state, pair: true, steps: 64, edgeWrap: false, sequenceSourceOn: true, view: 'romb0' } });
   assert.match(pair.summary, /кадр 3 из 32 · пара · Свой маятник · Ромбы чёт/);
+  const tri = SL.describe({ k: 7, state: { ...state, view: 'rombTri' } });
+  assert.match(tri.summary, /· Треугольники$/);
 });
 
 test('испорченная ссылка не применяется', async () => {

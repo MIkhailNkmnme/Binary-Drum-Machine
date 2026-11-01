@@ -1,4 +1,5 @@
 /* v0.748: ссылка на построение и настройки Маятника — #s=<1|0>.<base64url>.
+   v0.758: в описании ссылки — вид «Треугольники» (rombTri) и «Ромбы · всё поле».
    Внутри — настройки поля и вида (st), кадр, инструменты и цвета. Ссылка не несёт
    раскраску и шаблоны: поле строится заново из настроек, поэтому ссылка короткая.
    Код: '1.' — deflate-raw (CompressionStream), '0.' — несжатый JSON в base64url. */
@@ -8,7 +9,7 @@
   const MODES=['pend','pendR','left','right','one'];
   const BACKGROUNDS=['empty','0','1','chess'];
   const COMPARE_SOURCES=['','cone','field','pair','p12','p23','p31','p123','a12','a23','a31','a123','xor','and'];
-  const VIEWS={bits:'Биты',digits:'Цифры',romb0:'Ромбы чёт',romb1:'Ромбы нечёт',romb2:'Ромбы обе',rombJoin:'Соединённый',rombJoin180:'Соединённый 180',bitContours:'Контуры',black:'Чёрное'};
+  const VIEWS={bits:'Биты',digits:'Цифры',romb0:'Ромбы чёт',rombTri:'Треугольники',romb1:'Ромбы нечёт',romb2:'Ромбы обе',rombAll:'Ромбы всё поле',rombJoin:'Соединённый',rombJoin180:'Соединённый 180',bitContours:'Контуры',black:'Чёрное'};
   function b64url(bytes){let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
   function unb64url(text){if(typeof text!=='string'||!/^[A-Za-z0-9_-]+$/.test(text))throw Error('Ссылка повреждена: неверные символы');const padded=text.replace(/-/g,'+').replace(/_/g,'/'),s=atob(padded+'==='.slice((padded.length+3)%4)),bytes=new Uint8Array(s.length);for(let i=0;i<s.length;i++)bytes[i]=s.charCodeAt(i);return bytes;}
   const isPlainObject=value=>!!value&&typeof value==='object'&&!Array.isArray(value);

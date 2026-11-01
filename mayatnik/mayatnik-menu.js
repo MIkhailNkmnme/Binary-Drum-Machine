@@ -1,4 +1,4 @@
-﻿/* v0.669: варианты решётки и инверсии для обычного Маятника. */
+/* v0.669: варианты решётки и инверсии для обычного Маятника. */
 /* Маятник v0.665 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
@@ -656,8 +656,8 @@
   {const e=$('bFoldVertical'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bFoldVertical';b.title=e.title;
     const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'down');b.append(mark);b.onclick=()=>e.click();gView.append(b);
     toolSync.push(()=>b.classList.toggle('on',e.getAttribute('aria-pressed')==='true'));}
-  const VIEW_SHORT = { col: 'Перекрытия', bits: 'Биты', bitContours: 'Контуры битов', digitsOnly: 'Цифры', romb0: 'Ромбы чёт', romb1: 'Ромбы нечёт', romb2: 'Ромбы оба', rombAll: 'Ромбы всё', rombDirect: 'Ромбы прям',rombJoin:'Ромб общий',rombJoin180:'Ромб 180°' };
-  const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], bitContours: ['corners', 'Контуры битов'], digits: ['steps', 'Цифры 0/1'], digitsOnly: ['steps', 'Только цифры'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'],rombAll: ['square','Ромбы · всё поле'],rombDirect: ['square','Ромбы · прямо'],rombJoin:['square','Ромб · соединённый'],rombJoin180:['square','Ромб · соединённый 180°'] };
+  const VIEW_SHORT = { col: 'Перекрытия', bits: 'Биты', bitContours: 'Контуры битов', digitsOnly: 'Цифры', romb0: 'Ромбы чёт', rombTri: 'Треуг.', romb1: 'Ромбы нечёт', romb2: 'Ромбы оба', rombAll: 'Ромбы всё', rombDirect: 'Ромбы прям',rombJoin:'Ромб общий',rombJoin180:'Ромб 180°' };
+  const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], bitContours: ['corners', 'Контуры битов'], digits: ['steps', 'Цифры 0/1'], digitsOnly: ['steps', 'Только цифры'], romb0: ['square', 'Ромбы · чётная'], rombTri: ['tri', 'Треугольники · половинки ромбов'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'],rombAll: ['square','Ромбы · всё поле'],rombDirect: ['square','Ромбы · прямо'],rombJoin:['square','Ромб · соединённый'],rombJoin180:['square','Ромб · соединённый 180°'] };
   { const sel = $('view'), nameOf = o => (viewIcons[o.value] || [, o.textContent])[1];   // v0.176: семь видов «или — или» — одной кнопкой, как список в хабе
     const go = d => { const n = sel.options.length;for(let i=1;i<=n;i++){const index=(sel.selectedIndex+d*i+n*i)%n,o=sel.options[index];if(o.hidden||o.disabled)continue;sel.selectedIndex=index;sel.dispatchEvent(new Event('change', { bubbles: true }));break;} };
     const probe = document.createElement('button'); probe.title = 'Цвета'; const b = ptBtn('viewCycle', 'eye', probe, () => go(1));
