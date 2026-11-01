@@ -1095,7 +1095,11 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-slider .gz-th{top:3px;height:21px;width:1px;margin:0;background:transparent;box-shadow:none;border:0}
 #mayBottomBar>.may-frame-type{max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translateX(-100%)}
 #mayBottomBar>.may-frame-rows{position:absolute;pointer-events:none;font:10px/12px var(--mono,monospace);white-space:nowrap;background:#000;color:#dfe6f5;z-index:11}
-#mayBottomBar>.may-frame-tail{position:absolute;border:0;width:1px;background:repeating-linear-gradient(to bottom,#dfe6f5 0 2px,transparent 2px 4px);pointer-events:none;z-index:10}
+#mayBottomBar>.may-frame-tail{position:absolute;border:0;width:11px;margin-left:-5px;background:transparent;pointer-events:auto;touch-action:none;cursor:ew-resize;outline:0;z-index:10}
+#mayBottomBar>.may-frame-tail::before,#mayBottomBar>.may-frame-tail::after{content:"";position:absolute;top:0;bottom:0;left:5px;width:1px;background:repeating-linear-gradient(to bottom,#dfe6f5 0 2px,transparent 2px 4px);pointer-events:none}
+#mayBottomBar>.may-frame-tail::after{opacity:0}
+#mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::before{transform:translateX(-3px)}
+#mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::after{opacity:1;transform:translateX(3px)}
 #mayBottomBar .may-frame-slider .may-bb-play{display:none!important;width:20px;height:20px;margin:-10px 0 0 -10px;clip-path:none;background:#1b2430;color:#dfe6f5;font-size:12px;transition:none}
 #mayBottomBar .may-frame-slider .may-bb-rs{opacity:0;visibility:hidden;pointer-events:none}
 #mayBottomBar .may-frame-slider.may-frame-play-reveal:not(.may-frame-running) .may-bb-play{display:flex!important;opacity:1;visibility:visible;transform:none;pointer-events:auto}
@@ -1119,6 +1123,11 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-transport-diamond>span{position:relative;z-index:1;user-select:none}
 .may-transport-options{width:120px;box-sizing:content-box;padding:2px;gap:2px;overflow-y:auto;overflow-x:hidden;background:#000;overscroll-behavior:contain;--c:#80aee8;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;--gz-txt:#dfe6f5;color:#dfe6f5;font:11px/24px var(--mono,monospace)}
 .may-transport-options>.gz-hx{flex:0 0 24px;min-height:24px;justify-content:center;padding:0 12px}
+.may-transport-options>.may-transport-option-row{display:flex!important;gap:0!important;padding:0!important;justify-content:flex-start;overflow:hidden}
+.may-transport-option-row>.may-transport-option{position:relative;z-index:1;box-sizing:border-box;flex:0 0 calc(100% / var(--transport-columns,4));width:calc(100% / var(--transport-columns,4));height:24px;margin:0;padding:0;border:0;border-right:1px solid #40516b;background:transparent;color:#dfe6f5;font:9px/24px var(--mono,monospace);white-space:nowrap;cursor:pointer;user-select:none}
+.may-transport-option-row>.may-transport-option:last-child{border-right:0}
+.may-transport-option-row>.may-transport-option:is(:hover,:focus-visible){outline:1px solid #80aee8;outline-offset:-1px}
+.may-transport-option-row>.may-transport-option[aria-checked="true"]{outline:2px solid #80aee8;outline-offset:-2px}
 
 /* v0.757: в логе находок у строк больше нет подписи «Текущий кадр»: пустой summary не занимает строку; ручная змея подписана. */
 #mayatnikTemplatePanel .mtp-sequence-rows .mtp-current-matches summary:empty{display:none}
