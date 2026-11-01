@@ -106,6 +106,30 @@
   } catch (_) {}
   let published = false;
   let step = -1, frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
+  // v20 (Хаб v0.479). Вспышка конуса новой вершины поля 5.7 — по кнопке.
+  let coneFlashOn = false, coneFlash = [];
+  const CONE_FLASH_MS = 1300;
+  function paintConeFlash() {
+    if (!coneFlashOn || !coneCtx) { coneFlash.length = 0; return; }
+    const now = performance.now();
+    coneFlash = coneFlash.filter(x => now - x.t < CONE_FLASH_MS);
+    if (!coneFlash.length) return;
+    for (const x of coneFlash) {
+      const a = 0.34 * (1 - (now - x.t) / CONE_FLASH_MS);
+      if (a <= 0) continue;
+      coneCtx.save();
+      coneCtx.globalCompositeOperation = 'lighter';
+      coneCtx.globalAlpha = a;
+      coneCtx.fillStyle = '#ffd35b';
+      coneCtx.beginPath();
+      coneCtx.moveTo(x.c, 0);
+      coneCtx.lineTo(x.c - (H - 1), H - 1);
+      coneCtx.lineTo(x.c + (H - 1), H - 1);
+      coneCtx.closePath();
+      coneCtx.fill();
+      coneCtx.restore();
+    }
+  }
   let pingDir = 1, pingFrame = -1, pingCycle = 0, pingStarted = false;
   const pingCheckpoints = [], PING_CHECKPOINT = 64;
   let publishedFrame = -1, publishedCycle = 0, statsFrame = -1;
@@ -356,6 +380,8 @@
     view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length];
     changeView();
   });
+  const coneFlashButton = document.getElementById('hubVtxFlash');
+  if (coneFlashButton) coneFlashButton.addEventListener('click', () => { coneFlashOn = !coneFlashOn; coneFlashButton.setAttribute('aria-pressed', String(coneFlashOn)); coneFlashButton.classList.toggle('gz-on', coneFlashOn); if (!coneFlashOn) coneFlash.length = 0; });
   if (cycleButton) cycleButton.addEventListener('click', () => {
     view.cycleMode = CYCLE_MODES[(CYCLE_MODES.indexOf(view.cycleMode) + 1) % CYCLE_MODES.length];
     resetAnimation();
@@ -479,6 +505,7 @@
         const repaintPair = !!pairPixels && (force || pairStep || !pairPainted);
         if (repaintPair) kernel.paint(packedPair, pairPixels, mc);
         coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
+        paintConeFlash();
         if (repaintPair) { pairCtx.putImageData(pairImage, 0, 0); pairPainted = true; }
       } else {
         decodePublished();
@@ -521,6 +548,7 @@
     }
     row = 1;
     const pos = apexPos(step);
+    if (coneFlashOn) coneFlash.push({ c: pos, t: performance.now() });
     kernel.apex(grid, pos);
     pairStep = step === 0 || step % 2 === 1;
     if (middle && pairStep) {
