@@ -207,9 +207,12 @@
         let dx = Number.isFinite(ax) ? ax - c0 : 0; dx = Math.max(BR.left + 4 - L0, Math.min(BR.right - 4 - R0, dx)); const v = Math.round(dx) + 'px'; if (bar.style.getPropertyValue('--axdx') !== v) { bar.style.setProperty('--axdx', v); window.mayBotPlace?.(); } };   // v0.406: связка сдвинулась — группы внизу обходят её заново
       window.mayPlayPlace = playPlace;
       // v0.442: число сразу под линией бегунка; вне шестиугольника, чтобы его не обрезало.
-      const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span');buildLabel.className='may-frame-type';if(vl){vl.classList.add('may-frame-value');cell.after(vl);vl.before(buildLabel);}
-      const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),b=bar.getBoundingClientRect();
+      const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span'),rowsLabel=document.createElement('span'),axisLine=document.createElement('span');buildLabel.className='may-frame-type';rowsLabel.className='may-frame-rows';axisLine.className='may-frame-axis';axisLine.setAttribute('aria-hidden','true');cell.parentElement.append(buildLabel,rowsLabel,axisLine);if(vl){vl.classList.add('may-frame-value');cell.after(vl);}
+      const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect();
         const x=(t.left+t.width/2-b.left-bar.clientLeft)+'px',y=(t.bottom-b.top-bar.clientTop)+'px';if(vl.style.left!==x)vl.style.left=x;if(vl.style.top!==y)vl.style.top=y;
+        const midY=(c.top+c.height/2-b.top-bar.clientTop)+'px',left=(c.left-b.left-bar.clientLeft-8)+'px',right=(c.right-b.left-bar.clientLeft+8)+'px';
+        buildLabel.style.left=left;buildLabel.style.top=midY;rowsLabel.style.left=right;rowsLabel.style.top=midY;
+        const axisX=(t.left+t.width/2-b.left-bar.clientLeft)+'px',axisTop=(c.bottom-b.top-bar.clientTop)+'px',axisHeight=Math.max(1,Math.round(c.height/2))+'px';axisLine.style.left=axisX;axisLine.style.top=axisTop;axisLine.style.height=axisHeight;
         let type=$('frame').dataset.buildType||'Маятник';   // v0.717: режимы края — в подписи над кадром
         if($('edgeWrapTop')?.getAttribute('aria-pressed')==='true'){
           // v0.746: у «Перескока» в подписи — номер перескока (автор: «тут номер перескока учитывать»).
@@ -219,11 +222,8 @@
         if($('edgeEndsTop')?.getAttribute('aria-pressed')==='true')type+=' · Края';
         if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
         if(buildLabel.textContent!==type)buildLabel.textContent=type;
-        const anchor=parseFloat(x)-vl.offsetWidth/2-6,room=b.left+bar.clientLeft+anchor-4,below=room<48;
-        const left=(below?4-b.left-bar.clientLeft:anchor)+'px',width=Math.max(1,Math.min(300,below?innerWidth-8:room))+'px',transform=below?'none':'';
-        if(buildLabel.style.left!==left)buildLabel.style.left=left;if(buildLabel.style.maxWidth!==width)buildLabel.style.maxWidth=width;if(buildLabel.style.transform!==transform)buildLabel.style.transform=transform;
-        const top=Math.max(4-b.top-bar.clientTop,Math.min(parseFloat(y)+(below?14:0),innerHeight-b.top-bar.clientTop-buildLabel.offsetHeight-4))+'px';if(buildLabel.style.top!==top)buildLabel.style.top=top;};
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+        const rows=Number($('frame').dataset.rows)||Number($('rows').value)||0,rowsText=rows.toLocaleString('ru-RU')+' строк';if(rowsLabel.textContent!==rowsText)rowsLabel.textContent=rowsText;};
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-rows']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}for(const event of ['input','change'])$('rows').addEventListener(event,side);
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
@@ -1670,7 +1670,7 @@
         const v=Math.round(Math.max(R.left+4,Math.min(R.right-w-4,cx-off)))+'px';if(ud.style.left!==v)ud.style.left=v;ud.style.top='';ud.style.bottom=Math.round(innerHeight-R.bottom+(R.height-ud.offsetHeight)/2)+'px'; };
       window.mayUdPlace = udPlace;
       let framePlaceRaf=0;
-      const framePlace=(refresh=true)=>{if(narrow.matches)return;const T=tools.getBoundingClientRect(),w=frameBar.offsetWidth,cx=window.mayAxisX?.(),x=Math.round(tools.scrollLeft+Math.max(0,Math.min(tools.clientWidth-w,(Number.isFinite(cx)?cx:innerWidth/2)-T.left-w/2)))+'px';
+      const framePlace=(refresh=true)=>{if(narrow.matches)return;const w=frameBar.offsetWidth,x=Math.round(tools.scrollLeft+Math.max(0,Math.min(tools.clientWidth-w,(tools.clientWidth-w)/2)))+'px';
         if(frameBar.style.left!==x){frameBar.style.left=x;if(refresh&&!framePlaceRaf)framePlaceRaf=requestAnimationFrame(()=>{framePlaceRaf=0;relayout();});}};
       window.mayFramePlace=framePlace;
       const relayout = (compact = false) => { const all = items();
