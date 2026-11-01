@@ -102,6 +102,22 @@
     }
     const setStyle=(node,key,value)=>{if(node.style[key]!==value)node.style[key]=value;};
     const setVar=(node,key,value)=>{if(node.style.getPropertyValue(key)!==value)node.style.setProperty(key,value);};
+    function clipSideBackdrop(side,rows,columnX,start,end){
+      const originX=columnX-3,originY=start-2,cells=[];
+      for(const {g}of rows)for(const node of new Set([heads.get(g),...g.querySelectorAll('.may-standard,.gz-hx,.gz-control')])){
+        if(!node?.getClientRects().length||getComputedStyle(node).visibility==='hidden'||node.closest('.gz-ladder,.may-hp-pop'))continue;
+        const parent=node.parentElement?.closest('.may-standard,.gz-hx,.gz-control');if(parent&&g.contains(parent))continue;
+        const r=node.getBoundingClientRect();if(!r.width||!r.height||r.left<columnX-3||r.right>columnX+WIDTH+3||r.bottom<=originY||r.top>=end+2)continue;
+        cells.push({x:r.left-originX,y:r.top-originY,w:r.width,h:r.height});
+      }
+      cells.sort((a,b)=>a.y-b.y||b.w-a.w);
+      const lines=cells.filter((r,i)=>!i||Math.abs(r.y-cells[i-1].y)>1);
+      if(!lines.length){setStyle(side.backdrop,'clipPath','polygon(0 0,0 0,0 0)');return;}
+      const first=lines[0],last=lines.at(-1),left=[[first.x+12,first.y-1]],right=[[first.x+first.w-12,first.y-1]];
+      lines.forEach((r,i)=>{const mid=r.y+r.h/2;left.push([r.x-2,mid]);right.push([r.x+r.w+2,mid]);if(i<lines.length-1){const valley=(r.y+r.h+lines[i+1].y)/2;left.push([r.x+4,valley]);right.push([r.x+r.w-4,valley]);}});
+      left.push([last.x+12,last.y+last.h+1]);right.push([last.x+last.w-12,last.y+last.h+1]);
+      setStyle(side.backdrop,'clipPath','polygon('+right.concat(left.reverse()).map(([x,y])=>x.toFixed(1)+'px '+y.toFixed(1)+'px').join(',')+')');
+    }
     function layoutSides(){
       if(!useSideStack||drag)return;
       if(mobileNow()){for(const side of Object.values(sides)){side.bar.style.display='none';side.backdrop.style.display='none';side.signature='';}return;}
@@ -117,6 +133,7 @@
         setStyle(side.bar,'display',stack.maxScroll?'block':'none');setStyle(side.bar,'top',start+'px');setStyle(side.bar,'height',height+'px');setStyle(side.bar,'left',(sideColumnsLeft||edge==='left'?columnX+WIDTH+2:columnX-16)+'px');setStyle(side.space,'height',Math.max(height,stack.height)+'px');
         if(side.bar.scrollTop!==stack.offset)side.bar.scrollTop=stack.offset;
         for(const row of stack.rows){setVar(row.g,'--may-dock-y',row.screenY+'px');setVar(row.g,'--may-side-clip-top',Math.max(0,start-row.screenY)+'px');setVar(row.g,'--may-side-clip-bottom',Math.max(0,row.screenY+row.height-end)+'px');}
+        clipSideBackdrop(side,stack.rows,columnX,start,side.hitEnd);
       }
     }
     const sideOf=target=>{const g=target?.closest?.('.may-dock-side');if(g&&placed.has(g))return sides[placed.get(g).edge];const bar=target?.closest?.('.may-menu-side-scroll');return bar&&sides[bar.dataset.edge]?.bar===bar?sides[bar.dataset.edge]:null;};

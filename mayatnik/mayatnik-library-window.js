@@ -9,6 +9,7 @@
     if(!api||!source.MayatnikTemplatePanel)throw Error('source');
     root.mayTemplateLibrary=api;root.mayFrameLibrary=source.mayFrameLibrary;root.mayLayers=source.mayLayers;root.maySettingsLibrary=source.maySettingsLibrary;root.mayLinkLibrary=source.mayLinkLibrary;root.mayTemplateLimit=source.mayTemplateLimit;root.mayBackup=source.mayBackup;root.maySequences=source.maySequences;root.MayatnikSequences=source.MayatnikSequences;
     root.MayatnikTemplateFolderStore=source.MayatnikTemplatePanel.getFolderStore();
+    root.mayTemplateUnselect=()=>source.mayTemplateUnselect?.()||false;
   }catch(_){disconnected('Откройте это окно кнопкой «Окно» в Библиотеке работающего Маятника.');return;}
   const proxy=doc.getElementById('bTemplateSave'),original=source.document.getElementById('bTemplateSave');
   const syncSave=()=>{proxy.disabled=!original||original.disabled;};syncSave();proxy.onclick=()=>{if(!proxy.disabled)original.click();};
