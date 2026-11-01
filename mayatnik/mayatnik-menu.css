@@ -1111,7 +1111,7 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 /* Frame metadata stays centered under the capsule independently of its thumb. */
 #mayBottomBar>.may-frame-slider{width:120px!important;min-width:120px;max-width:120px;height:24px;--gz-bg:#1b2430;--c:#80aee8}
 #mayBottomBar>.may-frame-slider .gz-mid{margin:0;min-width:0}
-#mayBottomBar>.may-frame-slider .gz-vl{left:0!important;right:0;top:50%;transform:translateY(-50%);padding:0;background:transparent;text-align:center;font-size:11px}
+#mayBottomBar>.may-frame-slider .gz-vl{left:var(--may-frame-value-left,0px)!important;right:auto;top:50%;transform:translateY(-50%);width:max-content;padding:0;background:transparent;text-align:left;font-size:11px}
 #mayBottomBar>.may-frame-slider .gz-th{top:3px;height:21px;width:1px;margin:0;background:transparent;box-shadow:none;border:0}
 #mayBottomBar>.may-frame-caption{position:absolute;display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100vw - 8px);transform:translateX(-50%);pointer-events:none;font:10px/12px var(--mono,monospace);white-space:nowrap;background:#000;color:#dfe6f5;z-index:11}
 .may-frame-caption>.may-frame-type{max-width:240px;overflow:hidden;text-overflow:ellipsis}

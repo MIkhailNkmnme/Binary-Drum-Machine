@@ -240,6 +240,9 @@
       cell.addEventListener('pointermove',event=>{if(!event.buttons)scrubJustEnded=false;});
       addEventListener('pointerup',finishFrameScrub,true);addEventListener('pointercancel',finishFrameScrub,true);addEventListener('blur',()=>{scrubPointer=null;playPress=null;cell.classList.remove('may-frame-scrubbing');hideFramePlay();});
       const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect();
+        const track=mid.getBoundingClientRect(),thumbX=t.left+t.width/2-track.left,valueWidth=vl.offsetWidth;
+        const valueX=Math.round(Math.max(0,Math.min(track.width-valueWidth,thumbX+6+valueWidth<=track.width?thumbX+6:thumbX-6-valueWidth)))+'px';
+        if(cell.style.getPropertyValue('--may-frame-value-left')!==valueX)cell.style.setProperty('--may-frame-value-left',valueX);
         const x=Math.round(t.left+t.width/2-b.left-bar.clientLeft),y=c.bottom-b.top-bar.clientTop;
         tail.style.left=x+'px';tail.style.top=(c.top-b.top-bar.clientTop+3)+'px';tail.style.height=(c.height*1.5-3)+'px';
         for(const [key,value]of Object.entries({'aria-valuemin':$('frame').min,'aria-valuemax':$('frame').max,'aria-valuenow':$('frame').value}))if(tail.getAttribute(key)!==value)tail.setAttribute(key,value);
