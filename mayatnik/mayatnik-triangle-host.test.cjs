@@ -39,7 +39,7 @@ function makeHost(){
     MayatnikAutoAxisGeometry:require('./mayatnik-auto-axis-geometry.js'),MayatnikManualLines:require('./mayatnik-manual-lines.js'),
     MayatnikTriangleAssembly:Geo,MayatnikFaceTransform:require('./mayatnik-face-transform.js'),
     MayatnikConstruction:require('./mayatnik-construction.js'),
-    MayatnikShareLink:Share,MayatnikEdgeFlow:require('./mayatnik-edge-flow.js'),
+    MayatnikShareLink:Share,MayatnikEdgeFlow:require('./mayatnik-edge-flow.js'),MayatnikXorrom:require('./mayatnik-xorrom.js'),
     fixLinesDraw(){},symGet:()=>({segs:[]}),autoAxesGet:()=>({segments:[]}),triangleMapGet:()=>({axes:[]}),
     save(){},edgeSync(){},draw(){},queueSession(){},pushHistory:entry=>hist.push(entry),
     templatePaintValidate(){},assertWorkEvolution(){},fieldFrames:()=>16,fieldGeometry:()=>({W:h.f.W}),

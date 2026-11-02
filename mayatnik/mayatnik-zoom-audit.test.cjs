@@ -8,7 +8,7 @@ function fixture(options={}){
  c.freePanScale=0;c.freePanInset=0;c.getComputedStyle=()=>({paddingLeft:'16px',paddingRight:'16px'});
  vm.createContext(c);
  const declarations=['DPR','zB','snap2','fitScale','fitHRow','fitHScale','baseMinScale','minScale','scale'].map(name=>lines.find(line=>line.trimStart().startsWith('const '+name+' ='))).join('\n');
- vm.runInContext(declarations+'\nthis.scale=scale;this.minimum=minScale;\n'+fn('panCenterX')+'\n'+fn('zoomTo'),c);
+ vm.runInContext(declarations+'\nthis.scale=scale;this.minimum=minScale;\n'+fn('panCenterX')+'\n'+fn('horizontalAxisPinned')+'\n'+fn('zoomTo'),c);
  return c;
 }
 test('actual zoomTo clamps after snapping for every base, DPR and field transport',()=>{
@@ -124,4 +124,46 @@ test('wheel and two-finger pinch hold exact physical scale while allowing gestur
 
 test('Down pins position without changing an unlocked numeric zoom or 1:1 after release',()=>{
  for(const dpr of [1,1.25,1.5,2]){const c=fixture({zoom:1/dpr,zLimit:false,zBot:true,dpr});vm.runInContext(fn('cssLayout')+'\n'+lines.find(line=>line.includes("$('zFitH').onclick =")),c);c.cssLayout();assert.equal(c.st.zoom,1/dpr);c.$('zFitH').onclick();c.$('zFitH').onclick();assert.equal(c.st.zoom,1/dpr);c.zoomTo(2/dpr);assert.equal(c.scale(),2/dpr);}
+});
+
+
+test('axis pin permits horizontal overflow pan and restores centring when the field fits',()=>{
+ for(const visibleWidth of [null,440]){
+  const {c,w,cv,setPanel,center}=scrollFixture();setPanel(visibleWidth);c.st.zMid=true;c.cssLayout();
+  assert.equal(c.horizontalAxisPinned(),true);
+  assert.ok(Math.abs(cv.getBoundingClientRect().left+c.displayAnchorX()*c.scale()-center())<1);
+  const cellAt=x=>(x-cv.getBoundingClientRect().left)/c.scale();
+  c.zoomTo(16,center(),50,true);
+  assert.equal(c.st.zMid,true);assert.equal(c.horizontalAxisPinned(),false);
+  // Crossing into overflow retains the source point previously at the axis.
+  assert.ok(Math.abs(cellAt(center())-c.displayAnchorX())<1e-6);
+  w.scrollLeft=700;const before=cellAt(center());
+  for(let frame=0;frame<3;frame++){c.cssLayout();c.fitHold();c.midScroll();assert.ok(Math.abs(cellAt(center())-before)<1e-6);}
+  vm.runInContext(fn('centerAnchor'),c);c.centerAnchor();assert.ok(Math.abs(cellAt(center())-before)<1e-6);
+  w.clientWidth=1000;c.cssLayout();assert.ok(Math.abs(cellAt(center())-before)<1e-6);
+  c.zoomTo(1,center(),50,true);assert.equal(c.horizontalAxisPinned(),true);
+  assert.ok(Math.abs(cv.getBoundingClientRect().left+c.displayAnchorX()*c.scale()-center())<1);
+ }
+});
+test('an open library releases the axis pin as soon as actual field width overflows its viewport',()=>{
+ const {c,w,cv,setPanel,center}=scrollFixture();c.st.zMid=true;c.st.zoom=4;c.cssLayout();
+ assert.equal(c.horizontalAxisPinned(),true);
+ setPanel(440);c.cssLayout();assert.equal(c.horizontalAxisPinned(),false);
+ const before=(center()-cv.getBoundingClientRect().left)/c.scale();
+ w.scrollLeft+=50;c.fitHold();c.cssLayout();assert.ok(Math.abs((center()-cv.getBoundingClientRect().left)/c.scale()-before-12.5)<1e-6);
+ setPanel(null);c.cssLayout();assert.equal(c.horizontalAxisPinned(),true);
+ assert.ok(Math.abs(cv.getBoundingClientRect().left+c.displayAnchorX()*c.scale()-center())<1);
+});
+
+
+test('axis overflow leaves physical 1:1, independent zoom lock and vertical pins intact',()=>{
+ for(const dpr of [1,1.25,2])for(const zLock of [false,true]){
+  const {c,w,cv}=scrollFixture();c.window.devicePixelRatio=dpr;c.dispW=()=>2048;
+  Object.assign(c.st,{zMid:true,zLimit:true,zLock,ztop:true,zoom:32});
+  let topPins=0;c.zTopScroll=()=>topPins++;c.cssLayout();
+  assert.equal(c.horizontalAxisPinned(),false);assert.equal(c.scale()*dpr,1);assert.equal(c.st.zLock,zLock);assert.ok(topPins>0);
+  w.scrollLeft=400;c.cssLayout();c.fitHold();c.midScroll();assert.equal(w.scrollLeft,400);
+  const left=cv.getBoundingClientRect().left;c.zoomTo(512,200,200,true);
+  assert.equal(c.scale()*dpr,1);assert.equal(cv.getBoundingClientRect().left,left);assert.equal(c.st.zMid,true);assert.equal(c.st.ztop,true);
+ }
 });

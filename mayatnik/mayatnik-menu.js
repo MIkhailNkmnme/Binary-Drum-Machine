@@ -147,6 +147,7 @@
   ];
   for(const group of groups)group.items=group.items.filter(Boolean);
   { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр' && it.name !== 'Анимация' && it.name !== 'Кадр, с'); const fr = g0.items.find(it => it.name === 'Кадр'); if (fr) delete fr.thumb; }   // v0.339: бегунок кадра — линия, плей — своей кнопкой в середине   // v0.332: «Хорр» — в нижней полосе   // v0.395: «удали дубли» — «Анимация» и «Кадр, с» есть в нижней полосе (×N | время)
+  groups.push({id:'xorrom',title:'Xorrom',color:'#c29bff',items:[]});
   groups.push({id:'horr',title:'Хорр',color:'#73e4a5',items:[]});
   groups.push({id:'edge',title:'Край',color:'#7cbcff',items:[
     button('edgeWrapTop','field'),
@@ -159,6 +160,8 @@
   ]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
   const railSourceButtons=new Map(),manualLegacyCells=new Map();
+  const xorromBody=rail.el.querySelector('.gz-group[data-id="xorrom"] > .gz-soty');
+  if(xorromBody&&window.mayXorrom&&window.MayatnikXorromControls)window.mayXorromControls=MayatnikXorromControls.mount(xorromBody,{api:window.mayXorrom,after:()=>rail.refresh()});
   {const group=rail.el.querySelector('.gz-group[data-id="mirrors"]');if(group)manualLegacyCells.set('mirrors',[...group.querySelectorAll('.gz-soty > .gz-hx')]);}
   // v0.439: «Верх / Вниз» — одна стандартная кнопка, два независимых включателя.
   for(const [index,id] of ['zTop','zFitH'].entries()){

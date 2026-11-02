@@ -1,0 +1,131 @@
+'use strict';
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const Field=require('./mayatnik-xorrom-field.js');
+const Music=require('./mayatnik-xorrom.js');
+const Share=require('./mayatnik-share-link.js');
+const Work=require('./mayatnik-work-file.js');
+const html=fs.readFileSync(require.resolve('./Zerkalius-mayatnik.html'),'utf8');
+
+function source(first,next){
+  const start=html.indexOf('  '+first),end=html.indexOf('  '+next,start+1);
+  assert.ok(start>=0&&end>start,'host function '+first);
+  return html.slice(start,end);
+}
+function host(){
+  const grid=[[0,1,-1],[1,0,0]],calls={acquire:0,release:0};
+  const h={f:{val:new Int8Array(6)},geo:{},VW:3,VH:2,k:9,st:{view:'bits'},gpuBig:null,
+    joinedOn:()=>false,rombP:()=>-1,document:{body:{classList:{contains:()=>false}}},
+    rgbNeighbourFilters:()=>[],rgbNeighbourBWMode:()=>0,rgbNeighbourClasses:null,
+    manualPaintRevision:0,templateMatchRevision:0,MayatnikXorromField:Field,window:{}};
+  const semantic={width:3,height:2,current:()=>true,readBit:(x,y)=>grid[y][x],release(){calls.release++;}};
+  h.window.mayVisibleSemantic={async acquire(options){
+    assert.equal(options.lazy,true);assert.ok(!options.preserveTransport);calls.acquire++;return semantic;
+  }};
+  vm.runInNewContext(source('async function captureXorromField','window.mayXorrom='),h);
+  return {h,grid,semantic,calls};
+}
+
+test('captures shown semantic bits with holes and preserves the stopped frame as a score',async()=>{
+  const {h,grid,calls}=host(),score=await h.captureXorromField();
+  grid[0][0]=1;assert.equal(score.frame,9);assert.equal(score.width,3);assert.equal(score.height,2);
+  assert.deepEqual(score.rows.map(row=>[...row.bits]),[[0,1,-1],[1,0,0]]);
+  assert.deepEqual(score.rows.map(row=>[row.ones,row.total]),[[1,2],[1,3]]);
+  assert.deepEqual([...score.rows[0].colors],[0,1,0,0,1,0,0,0]);
+  assert.deepEqual(calls,{acquire:1,release:1});
+});
+
+test('RGB uses displayed neighbour classes, original semantic bits, and selected colours in either B/W palette',async()=>{
+  for(const bw of [0,1,2]){
+    const {h}=host();h.st.view='rgbNeighbours';h.rgbNeighbourBWMode=()=>bw;
+    h.rgbNeighbourClasses=Uint8Array.of(6,1,255,0,1,3);h.rgbNeighbourFilters=()=>[1,6];
+    const {rows}=await h.captureXorromField();
+    assert.deepEqual(rows.map(row=>[...row.bits]),[[0,1,-1],[-1,0,-1]]);
+    assert.deepEqual([...rows[0].colors],[0,1,0,0,0,0,1,0]);
+    assert.deepEqual([...rows[1].colors],[0,1,0,0,0,0,0,0]);
+  }
+});
+
+test('180 degrees reverses both coordinates and keeps the RGB identity on each rotated cell',async()=>{
+  const {h}=host();h.st.viewUpsideDown=true;h.st.view='rgbNeighbours';
+  h.rgbNeighbourClasses=Uint8Array.of(1,2,255,3,4,5);
+  const {rows}=await h.captureXorromField();
+  assert.deepEqual(rows.map(row=>[...row.bits]),[[0,0,1],[-1,1,0]]);
+  assert.deepEqual([...rows[0].colors],[0,0,0,1,1,1,0,0]);
+  assert.deepEqual([...rows[1].colors],[0,1,1,0,0,0,0,0]);
+});
+
+test('cancels a score on changed semantic frame, paints, templates, view, colour selection or explicit stop',async()=>{
+  for(const mutate of [
+    (h,s)=>s.current=()=>false,h=>h.manualPaintRevision++,h=>h.templateMatchRevision++,
+    h=>h.st.view='col',h=>h.st.viewUpsideDown=true,h=>h.rgbNeighbourBWMode=()=>1,
+    h=>h.rgbNeighbourFilters=()=>[2],h=>h.rgbNeighbourClasses=h.rgbNeighbourClasses.slice()
+  ]){
+    const {h,semantic,calls}=host();h.st.view='rgbNeighbours';h.rgbNeighbourClasses=new Uint8Array(6);
+    const previous=semantic.readBit;
+    semantic.readBit=(x,y)=>{if(!x&&!y)mutate(h,semantic);return previous(x,y);};
+    await assert.rejects(h.captureXorromField(),{name:'AbortError'});assert.equal(calls.release,1);
+  }
+  const {h,calls}=host();
+  await assert.rejects(h.captureXorromField({cancelled:()=>true}),{name:'AbortError'});
+  assert.ok(calls.acquire===calls.release);
+});
+
+test('releases the semantic snapshot on a bad shape or unreadable bit',async()=>{
+  const {h,semantic,calls}=host();semantic.width++;
+  await assert.rejects(h.captureXorromField(),/плоский снимок/);
+  semantic.width--;semantic.readBit=()=>{throw Error('ошибка чтения');};
+  await assert.rejects(h.captureXorromField(),/ошибка чтения/);assert.deepEqual(calls,{acquire:2,release:2});
+});
+
+test('unbuilt, oversized, GPU, folded, joined and projected fields fail before acquisition',async()=>{
+  for(const [change,reason] of [[h=>h.f=null,/постройте/],[h=>h.geo=null,/постройте/],
+    [h=>h.VH=Field.MAX_ROWS+1,/большой/],[h=>h.VW=Field.MAX_CELLS,/большой/],[h=>h.gpuBig={},/CPU/],
+    [h=>h.rombP=()=>0,/плоский/],[h=>h.joinedOn=()=>true,/плоский/],[h=>h.st.edgeRhombOn=true,/плоский/],
+    [h=>h.document.body.classList.contains=name=>name==='may-fold-active',/плоский/]]){
+    const {h,calls}=host();change(h);await assert.rejects(h.captureXorromField(),reason);
+    assert.equal(calls.acquire,0);
+  }
+});
+
+test('only cloned audio tracks are owned and stopped by the recorder',()=>{
+  const {h}=host(),recorded=[],output={addTrack:track=>recorded.push(track)};
+  const track=()=>({stopped:false,stop(){this.stopped=true;},clone(){return track();}});
+  const originals=[track(),track()];
+  assert.equal(h.addXorromRecordingAudio(output),false);
+  h.window.mayXorrom={getStream:()=>({getAudioTracks:()=>[]})};assert.equal(h.addXorromRecordingAudio(output),false);
+  h.window.mayXorrom.getStream=()=>({getAudioTracks:()=>originals});
+  assert.equal(h.addXorromRecordingAudio(output),true);assert.equal(recorded.length,2);
+  recorded.forEach(t=>t.stop());assert.ok(originals.every(t=>!t.stopped));
+});
+
+test('site share and compressed work files round-trip music settings without a running transport',async()=>{
+  const settings=Music.normalizeSettings({source:'rhythm',bpm:143,division:16,tonic:3,octave:2,scale:'minor',
+    gain:.18,timbre:'pluck',chord:2,first:1,last:6,stride:2,loop:false,live:true});
+  const {h}=host();
+  Object.assign(h,{st:{mode:'pend',rows:8,steps:8,bg:'empty',view:'bits',xorrom:settings},k:1,
+    f:{val:new Int8Array(8*15)},img:{width:15,height:8},structuredClone,rowBuild:null,testPattern:null,
+    wrap:{scrollLeft:0,scrollTop:0},autoPaintIds:[],fillMode:false,autoVertical:0,axisPicking:false,axisLineMode:false,
+    rulerMode:false,mirrorLine:false,templatePickEnabled:false,templatePickMode:'one',templateDragEnabled:false,
+    $:()=>({value:'#ff8800',checked:false}),paintRepeatSeed:null,captureSharePaint:()=>null,
+    MayatnikPaintRepeat:require('./mayatnik-paint-repeat.js'),MayatnikShareLink:Share,MayatnikXorrom:Music,
+    MayatnikEdgeFlow:require('./mayatnik-edge-flow.js'),MayatnikConstruction:require('./mayatnik-construction.js'),
+    animatrixOn:()=>false,edgeFlowOn:()=>false,rememberTemplate(){},manualPaintSnapshot:()=>null,colReplaySnapshot:()=>[],
+    templateLibrary:[],removedTemplateIds:new Set(),mirrorLive:false,mirrorXor:false,templatePaintLayer:null,
+    fillMask:null,paintBits:null,faceLayer:null,templateMatchLayer:null,colourTemplate:null,templatePickedIds:new Set(),
+    templateItems:[],templateOffsetX:0,templateReturn:null,templatePaintBit:null,templateVisible:false});
+  vm.runInContext([source('function captureSharePayload','async function buildShareUrl'),
+    source('function validateShareState','function applyShareControls'),source('function paintSnapshot','function savePaint')].join('\n'),h);
+  const encoded=await Share.encode(h.captureSharePayload());
+  assert.ok(encoded.startsWith('1.'));
+  const {state}=await Share.decode(encoded);
+  assert.deepEqual(h.validateShareState(state).xorrom,settings);
+  assert.deepEqual(h.validateShareState({...state,xorrom:undefined}).xorrom,Music.normalizeSettings());
+  assert.throws(()=>h.validateShareState({...state,xorrom:[]}),/настройки музыки/);
+  const file=await Work.encode(h.paintSnapshot());
+  assert.deepEqual([...new Uint8Array(await file.slice(0,2).arrayBuffer())],[31,139]);
+  const restored=await Work.decode(file);
+  assert.deepEqual(restored.data.st.xorrom,settings);assert.deepEqual(restored.data.field,h.f.val);
+});

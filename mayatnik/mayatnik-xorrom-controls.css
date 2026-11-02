@@ -1,0 +1,13 @@
+/* Geometry and outlines come from the shared grozd controls. */
+.may-xorrom-control{--c:#c29bff;box-sizing:border-box;width:120px!important;min-width:120px;height:24px;min-height:24px;flex-shrink:0;user-select:none}
+.may-xorrom-control.gz-pair{display:flex;align-items:center;position:relative}
+.may-xorrom-control.gz-pair>.gz-half{box-sizing:border-box;width:50%;min-width:0;height:24px;display:flex;align-items:center;justify-content:center;padding:0 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.may-xorrom-control select.gz-half,.may-xorrom-control input.gz-half{display:block;background:transparent;color:inherit;font:inherit;border:0;border-radius:0;outline-offset:-3px;text-align:center;user-select:text}
+.may-xorrom-control select.gz-half{padding-left:1px;padding-right:0;cursor:pointer}
+.may-xorrom-control select option{color:#eee;background:#1b2430}
+.may-xorrom-control input:focus-visible,.may-xorrom-control select:focus-visible{outline:1px solid var(--c)}
+.may-xorrom-control:disabled,.may-xorrom-control :disabled{opacity:.5;cursor:default}
+a.may-xorrom-control{display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
+.may-xorrom-status,.may-xorrom-notes{display:flex;align-items:center;justify-content:center;padding:0 9px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px}
+.may-xorrom-legend{display:flex;align-items:center;justify-content:center;gap:2px;padding:0 6px;font-size:8px}
+.may-xorrom-legend>span{border-bottom:2px solid var(--note-color);white-space:nowrap}
