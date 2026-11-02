@@ -56,3 +56,10 @@ test('Rombo and whole-colour settings round trip exactly and reject invalid geom
  }
  for(const [key,value]of [['romboAngle',46],['romboAngle',360],['romboAssembly',16],['romboRow',0],['edgeRhombOn','true'],['fillWholeColour','true']]){const p=S.pick({});p.state[key]=value;assert.throws(()=>S.normalized(p));}
 });
+
+test('frame paint repeat mode round trips and rejects unknown values, while legacy presets clear it',()=>{
+ const Library=require('./mayatnik-settings-library.js'),Reset=require('./mayatnik-reset-state.js');
+ for(const mode of ['off','colour','cells']){const value=Library.pick({...Reset.defaults(),paintFrameMode:mode}),state={};Library.applyState(state,value);assert.equal(state.paintFrameMode,mode);}
+ const bad=Library.pick(Reset.defaults());bad.state.paintFrameMode='other';assert.throws(()=>Library.normalized(bad));
+ const legacy=Library.pick(Reset.defaults());delete legacy.state.paintFrameMode;const state={paintFrameMode:'cells'};Library.applyState(state,legacy);assert.equal(state.paintFrameMode,undefined);assert.equal(Reset.defaults().paintFrameMode,'off');
+});

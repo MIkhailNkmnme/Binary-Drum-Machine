@@ -74,6 +74,8 @@
     const tools=isPlainObject(value.tools)?{...value.tools}:{};
     const colours=isPlainObject(value.colours)?{...value.colours}:{};
     const colourAuto=isPlainObject(value.colourAuto)?{...value.colourAuto}:{};
+    const Repeat=typeof module==='object'&&module.exports?require('./mayatnik-paint-repeat.js'):globalThis.MayatnikPaintRepeat;
+    const paintRepeat=Repeat.json(Repeat.normalize(value.paintRepeat));
     const paint=normalizePaint(value.paint);
     const edgeSeed=normalizeEdgeSeed(value.edgeSeed,state);
     let display=null;
@@ -82,7 +84,7 @@
       if(!isPlainObject(value.display)||![scrollLeft,scrollTop].every(n=>Number.isFinite(n)&&n>=0))throw Error('В ссылке повреждено положение просмотра');
       display={scrollLeft,scrollTop};
     }
-    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,rows,steps},tools,colours,colourAuto,paint,...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
+    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,rows,steps},tools,colours,colourAuto,paint,...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
   }
   function pack(value){return JSON.stringify(normalizePayload(value));}
   function unpack(text){let data;try{data=JSON.parse(text);}catch(_){throw Error('Ссылка повреждена: данные не читаются');}return normalizePayload(data);}

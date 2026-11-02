@@ -3,17 +3,17 @@ const Pattern=require('./mayatnik-manual-paint-pattern.js'),html=fs.readFileSync
 test('legacy work without new display and paint flags does not inherit the previous work modes',()=>{
  const a=html.indexOf('if(supplied){if(data.frameHost)st=structuredClone(data.st);'),b=html.indexOf('if(data.frameHost){restoreFrameEffects',a);assert.ok(a>0&&b>a);
  for(const value of [undefined,false,true]){
-  const ctx={supplied:true,data:{st:value===undefined?{rows:512}:{rows:512,fillWholeColour:value,edgeRhombOn:value}},st:{fillWholeColour:true,edgeRhombOn:true},structuredClone};
+  const ctx={supplied:true,data:{st:value===undefined?{rows:512}:{rows:512,fillWholeColour:value,edgeRhombOn:value}},st:{fillWholeColour:true,edgeRhombOn:true},structuredClone,MayatnikPaintRepeat:require('./mayatnik-paint-repeat.js')};
   vm.runInNewContext(html.slice(a,b),ctx);assert.equal(ctx.st.fillWholeColour,!!value);assert.equal(ctx.st.edgeRhombOn,!!value);
  }
 });
 function fn(name){const a=html.indexOf('function '+name+'('),b=html.indexOf('{',a);assert.ok(a>=0,name);let i=b+1,d=1;for(;d;i++){if(html[i]==='{')d++;if(html[i]==='}')d--;}return (html.slice(Math.max(0,a-6),a)==='async '?'async ':'')+html.slice(a,i);}
 function fixture({W=8,H=5,VX=1,VW=6,VH=3}={}){
  const nodes=new Map(),c={Uint32Array,Int8Array,Uint8Array,Map,Set,structuredClone,performance,setTimeout,window:{},st:{view:'bits',fillArea:'bit',blackMirror:0},f:{W,H,val:Int8Array.from({length:W*H},(_,q)=>q%2)},geo:{anchor:3},k:2,bmGen:0,VX,VW,VH,RK:1,RG:0,
-  gpuBig:null,gpuPaintRequests:0,pxHide:new Set(),fillField:null,fillKey:null,manualPaintState:null,manualPaintRevision:0,manualPatternBusy:false,manualSemanticRequested:0,manualPatternAuto:{serial:0,pending:null,running:null},manualPaintFrames:new Map(),contourBits:null,currentManualMirrorMap:null,templatePaintLayer:null,fillMask:null,paintBits:null,faceLayer:null,third:null,templateMatchLayer:null,
+  gpuBig:null,gpuPaintRequests:0,pxHide:new Set(),fillField:null,fillKey:null,paintRepeatSeed:null,paintRepeatPending:null,paintRepeatLayer:null,manualPaintState:null,manualPaintRevision:0,manualPatternBusy:false,manualSemanticRequested:0,manualPatternAuto:{serial:0,pending:null,running:null},manualPaintFrames:new Map(),contourBits:null,currentManualMirrorMap:null,templatePaintLayer:null,fillBase:null,fillMask:null,paintBits:null,faceLayer:null,third:null,templateMatchLayer:null,
   fillHistory:[],fillRedo:[],fillHistoryBytes:0,mirrorLive:false,mirrorApplying:false,templateDragging:false,templateMatchRevision:0,templateMatchCache:null,templateStatsKey:'',fillBits:null,templateItems:[],templatePickedIds:new Set(),templateLibrary:[],removedTemplateIds:new Set(),colourTemplate:null,colReplay:[],colReplayPaint:null,
-  img:{width:VW,height:VH,data:new Uint8ClampedArray(VW*VH*4)},colour:'#123456',playing:false,autoVertical:0,MayatnikManualPaintPattern:Pattern,MayatnikIsolatedBits:require('./mayatnik-isolated-bits.js'),MayatnikJoinedRomb:require('./mayatnik-joined-romb.js'),MayatnikFaceTransform:{find:()=>-1},MayatnikPaintCache:{write:()=>Promise.resolve()},
-  $:id=>{if(!nodes.has(id))nodes.set(id,{value:'#123456',checked:false,dataset:{},textContent:'',setAttribute(k,v){this[k]=v;}});return nodes.get(id);},cv:{getBoundingClientRect:()=>({left:0,top:0,width:VW,height:VH})},rombP:()=>-1,joinedOn:()=>false,manualMirrorPlan:()=>[],faceCurrent:()=>false,parityVisible:()=>true,outShow:()=>false,pxHidden:()=>false,templateMatchKey:()=>'',navQuick:()=>false,stopFrameTransports(){c.playing=false;},
+  img:{width:VW,height:VH,data:new Uint8ClampedArray(VW*VH*4)},colour:'#123456',playing:false,autoVertical:0,MayatnikPaintRepeat:require('./mayatnik-paint-repeat.js'),MayatnikManualPaintPattern:Pattern,MayatnikIsolatedBits:require('./mayatnik-isolated-bits.js'),MayatnikJoinedRomb:require('./mayatnik-joined-romb.js'),MayatnikFaceTransform:{find:()=>-1},MayatnikPaintCache:{write:()=>Promise.resolve()},
+  $:id=>{if(!nodes.has(id))nodes.set(id,{value:'#123456',checked:false,dataset:{},textContent:'',setAttribute(k,v){this[k]=v;}});return nodes.get(id);},cv:{getBoundingClientRect:()=>({left:0,top:0,width:VW,height:VH})},rombP:()=>-1,joinedOn:()=>false,manualMirrorPlan:()=>[],faceCurrent:()=>false,fieldSourceKey:()=> 'fixture',parityVisible:()=>true,outShow:()=>false,pxHidden:()=>false,templateMatchKey:()=>'',navQuick:()=>false,stopFrameTransports(){c.playing=false;},
   displayCell:(x,y)=>{const col=VX+Math.floor(x),r=Math.floor(y);return col<VX||col>=VX+VW||r<0||r>=VH?null:{c:col,r,p:-1,q:r*W+col};},displayPoint:(col,r)=>({x:col-VX+.5,y:r+.5}),
   rasterBit:(x,y)=>{const a=c.fieldCellAt(x,y);return a?c.f.val[a.q]:-1;},fieldCellAt:(x,y)=>c.displayCell(x+.5,y+.5),cellPixels:(cell,visit)=>{if(cell.c>=VX&&cell.c<VX+VW&&cell.r<VH)visit(cell.r*VW+cell.c-VX);},
   paintSelection:(x,y)=>({indices:c.selected||Uint32Array.of(y*VW+x)}),lockColourAt:()=>0,lockErase(){},lockWipe(){},fillSync(){},cssLayout(){},save(){},clearFillPreview(){},savePaint(){},rememberTemplate(){},colReplaySnapshot:()=>[],colReplayRestore(){},selectTemplate(){},persistLibrary(){},rgba:rgb=>(0xff000000|rgb[2]<<16|rgb[1]<<8|rgb[0])>>>0,paintToolColour:()=>c.colour,
@@ -22,7 +22,7 @@ function fixture({W=8,H=5,VX=1,VW=6,VH=3}={}){
  c.parityPlan=()=>({sourceRow:r=>r,visible:(r,col)=>c.parityVisible(r,col),settings:{rowFill:'none'}});
  c.parityValues=()=>c.f.val;c.parityRow=r=>r;
  c.draw=()=>{c.manualPaintFrameSync();c.contourBits=Int8Array.from({length:VW*VH},(_,q)=>c.f.val[Math.floor(q/VW)*W+VX+q%VW]);const pixels=new Uint32Array(c.img.data.buffer);pixels.fill(0xff555555);if(c.fillMask)for(let q=0;q<pixels.length;q++)if(c.fillMask[q])pixels[q]=c.fillMask[q];c.manualPaintLayerApply(pixels);};
- vm.createContext(c);vm.runInContext(html.slice(html.indexOf('  const joinedWhole ='),html.indexOf('  const rombP =')),c);const a=html.indexOf('  function manualPaintKey('),b=html.indexOf('  // Colour from the same geometric axes',a);vm.runInContext(html.slice(a,b),c);
+ vm.createContext(c);vm.runInContext(html.slice(html.indexOf('  const joinedWhole ='),html.indexOf('  const rombP =')),c);const a=html.indexOf('  function paintRepeatScope('),b=html.indexOf('  // Colour from the same geometric axes',a);vm.runInContext(html.slice(a,b),c);
  for(const name of ['fillAt','paintWholeColour','paintWholeColourLayer','eraseFillAt','pushHistory','paintHistoryCurrent','sceneSnapshot','editSnapshot','finishEdit','historyStep'])vm.runInContext(fn(name),c);
  const clearStart=html.indexOf("  $('bFillClear').onclick="),clearEnd=html.indexOf("  $('bRegions').onclick",clearStart);vm.runInContext(html.slice(clearStart,clearEnd),c);
  c.paint=(x,y,colour='#123456',force=true)=>{c.$('fillColour').value=colour;c.fillAt(x+.1,y+.1,false,force);};c.draw();return c;
@@ -210,4 +210,46 @@ test('visible union keeps matches unique to each mode and OFF removes only those
  const pixels=()=>new Uint32Array(c.img.data.buffer);assert.equal(pixels()[1],0xff563412);assert.equal(pixels()[2],0xffefcdab);assert.equal(pixels()[4],0xffefcdab);assert.equal(pixels()[5],0xff563412);assert.equal(pixels()[18],0xff563412);assert.equal(pixels()[19],0xffefcdab);
  c.manualPatternToggle('same');await c.manualPatternWhenIdle();assert.equal(pixels()[18],0xff555555);assert.equal(pixels()[19],0xff555555);assert.equal(pixels()[4],0xffefcdab);assert.equal(pixels()[5],0xff563412);assert.equal(pixels()[1],0xff563412);assert.equal(pixels()[2],0xffefcdab);
  c.manualPatternToggle('mirror');await c.manualPatternWhenIdle();assert.equal(pixels()[4],0xff555555);assert.equal(pixels()[5],0xff555555);assert.equal(pixels()[1],0xff563412);assert.equal(pixels()[2],0xffefcdab);
+});
+
+function repeatFixture(){
+ const c=fixture({W:4,H:1,VX:0,VW:4,VH:1});c.st.paintFrameMode='off';c.fillBase=Uint32Array.of(0xff101010,0xff202020,0xff101010,0xff202020);
+ c.draw=()=>{c.manualPaintFrameSync();const px=c.fillBase.slice();if(c.fillMask)for(let i=0;i<px.length;i++)if(c.fillMask[i])px[i]=c.fillMask[i];c.manualPaintLayerApply(px);c.templatePaintApply?.(px);c.paintRepeatDraw(px);c.shown=px;};c.draw();return c;
+}
+test('frame repeat adopts existing paint and keeps native cells across bit/frame/owner changes; OFF preserves original paint',()=>{
+ const c=repeatFixture(),bits=c.f.val.slice();c.paint(0,0);const own=c.fillMask.slice();c.$('paintFrameMode').value='colour';c.paintRepeatChange();assert.equal(c.shown[2],own[0]);assert.equal(c.paintRepeatSeed.entries[1],0x101010);
+ c.$('paintFrameMode').value='off';c.paintRepeatChange();assert.equal(c.shown[0],own[0]);assert.equal(c.shown[2],c.fillBase[2]);
+ c.$('paintFrameMode').value='cells';c.paintRepeatChange();const seed=c.paintRepeatSeed;c.k++;c.fillMask=null;c.f={...c.f,val:c.f.val.slice().fill(0)};c.draw();assert.equal(c.paintRepeatSeed,seed);assert.equal(c.shown[0],own[0]);assert.equal(c.shown[2],c.fillBase[2]);assert.deepEqual(bits,Int8Array.of(0,1,0,1));
+});
+test('repeat erasure and Clear share Undo/Redo with their seed, without touching field bits',()=>{
+ const c=repeatFixture();c.st.paintFrameMode='cells';c.paint(0,0);const seed=c.paintRepeatSeed,bits=c.f.val.slice();c.k++;c.fillMask=null;c.draw();assert.ok(c.paintRepeatLayer[0]);assert.equal(c.eraseFillAt(.1,.1),true);assert.equal(c.paintRepeatSeed,null);
+ c.historyStep(false);assert.equal(c.paintRepeatSeed,seed);c.historyStep(true);assert.equal(c.paintRepeatSeed,null);c.historyStep(false);c.$('bFillClear').onclick();assert.equal(c.paintRepeatSeed,null);c.historyStep(false);assert.equal(c.paintRepeatSeed,seed);assert.deepEqual(c.f.val,bits);
+});
+test('repeat seeds collect template/isolated raster paints and source changes discard them',()=>{
+ const c=repeatFixture();c.st.paintFrameMode='colour';c.templatePaintApply=px=>{px[1]=0xffaabbcc;};c.pushHistory({indices:new Uint32Array(0),previous:new Uint32Array(0),bytes:1});c.draw();assert.equal(c.shown[3],0xffaabbcc);
+ c.fieldSourceKey=()=> 'different source';c.draw();assert.equal(c.paintRepeatSeed,null);
+});
+
+test('new strokes remember visible source RGB before paint; repaint keeps the unpainted original',()=>{
+ const c=repeatFixture();c.st.paintFrameMode='colour';let shown=Uint32Array.of(0xff717171,0xff202020,0xff717171,0xff202020);c.pxView=()=>({data:new Uint8ClampedArray(shown.buffer)});
+ c.paint(0,0);assert.equal(c.paintRepeatSeed.entries[1],0x717171);shown=Uint32Array.of(0xff563412,0xff202020,0xff563412,0xff202020);c.paint(0,0,'#abcdef');assert.equal(c.paintRepeatSeed.entries[1],0x717171);
+ c.k++;c.fillMask=null;c.fillBase=Uint32Array.of(0xff202020,0xff717171,0xff202020,0xff717171);c.draw();assert.equal(c.shown[1],0xffefcdab);assert.equal(c.shown[3],0xffefcdab);
+});
+
+test('adopting existing paint reconstructs current heat colour without advancing heat or changing semantic cells',()=>{
+ const f={W:4,H:1,val:Int8Array.of(0,1,0,1)},semantic=Int8Array.of(0,1,0,1),base=Uint32Array.of(0xff101010,0xff202020,0xff101010,0xff202020);
+ const c={st:{heat:true},f,geo:{anchor:1},img:{width:4,height:1},fillBase:base,contourBits:semantic,k:7,RK:1,VX:0,VW:4,VH:1,third:null,pxHide:new Set(),
+  heatF:f,heatPrev:f.val.slice(),heatK:7,heatPN:0,heatRun:Uint8Array.of(1,0,0,0),heatCool:new Uint8Array(4),HEAT_N:8,HEAT_C:[0xff5bd3ff],HEAT_COOL:0xffff9b4f,
+  parityField:()=>f,edgeFlowOn:()=>true,rombP:()=>-1,parityActive:()=>false,lockCell:(px,q,colour)=>{px[q]=colour;},mixPx:(colour,under,alpha)=>{const ch=s=>Math.round((colour>>>s&255)*alpha+(under>>>s&255)*(1-alpha));return (0xff000000|ch(16)<<16|ch(8)<<8|ch(0))>>>0;}};
+ vm.createContext(c);vm.runInContext(fn('heatApply')+'\n'+fn('paintRepeatBase'),c);
+ const first=c.paintRepeatBase(),again=c.paintRepeatBase();assert.equal(first[0],c.mixPx(c.HEAT_C[0],base[0],.85));assert.deepEqual(first,again);
+ assert.equal(c.contourBits,semantic);assert.deepEqual(semantic,Int8Array.of(0,1,0,1));assert.equal(c.heatK,7);assert.deepEqual(c.heatRun,Uint8Array.of(1,0,0,0));assert.deepEqual(base,c.fillBase);
+});
+
+test('colour repeat matches the visible pixel family filter instead of hidden raw colours',()=>{
+ const c=repeatFixture();c.st.paintFrameMode='colour';c.pxHide.add('hidden');c.EMPTY=[0,0,0];c.pxFam=()=> 'hidden';
+ c.paintRepeatSeed={version:1,scope:c.paintRepeatScope(),domain:'cells',width:4,height:1,geometry:'',entries:Uint32Array.of(0,0,0xff123456)};
+ const displayed=Uint32Array.of(0xff000000,0xff202020,0xff000000,0xff202020);c.pxView=()=>({data:new Uint8ClampedArray(displayed.buffer)});
+ const raw=c.fillBase.slice();c.paintRepeatDraw(raw);assert.deepEqual([...raw],[0xff123456,0xff202020,0xff123456,0xff202020]);
+ assert.deepEqual([...c.paintRepeatBase()],Array(4).fill(0xff000000));
 });

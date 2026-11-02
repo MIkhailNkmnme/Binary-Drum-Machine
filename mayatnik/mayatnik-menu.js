@@ -120,7 +120,7 @@
       { type: 'vpair', name: 'Строк', tip: 'Длина оси: строк от · до', parts: [{ ...num('symRowsMin', {}), name: 'строк ≥' }, { ...num('symRowsMax', { inf: true, fromInf: () => +$('symRowsMin').value || 2 }), name: '≤' }] },
       { type: 'vpair', name: 'Бит', tip: 'Ширина оси: бит от · до', parts: [{ ...num('symBitsMin', {}), name: 'бит ≥' }, { ...num('symBitsMax', { inf: true, fromInf: () => +$('symBitsMin').value || 2 }), name: '≤' }] }, button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
     { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [
-      withColour('bFill','fillColour','Заливка'),check('fillWholeColour','colour'),withColour('bAutoVertical','verticalFillColour','Столб'),
+      withColour('bFill','fillColour','Заливка'),check('fillWholeColour','colour'),{...selectSegments('paintFrameMode',{off:'Выкл',colour:'Цвет',cells:'Биты'}),src:'paintFrameMode',cls:'may-segments gz-split gz-split3'},withColour('bAutoVertical','verticalFillColour','Столб'),
       button('bPaintSame','copy'),button('bPaintSymmetric','mirror'),button('bPaintIsolated1','grid4'),button('bPaintIsolated0','grid4'),
       select('fillArea','grid4'),check('fillMirror','mirror'),
       withColour('bAxesColour','axesFillColour','От осей'),button('bPaintMid','line'),withColour('midOneOn','midOneColour','Центр 1'),withColour('midZeroOn','midZeroColour','Центр 0'),check('midWide','line'),

@@ -8,7 +8,7 @@
     sequenceSource:null,edgeContinuous:true,edgeWrap:false,edgeBounce:false,edgeRhombOn:false,romboRow:null,romboAngle:0,romboAssembly:1,edgeFlowMax:0,edgeFlowKey:'',animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixEvolution:1,rowStepOutline:true,templateFindAll:null,rows:512,steps:512,mode:'pend',bg:'empty',view:'bits',speed:4,vmode:'',compareSource:'',
     zoom:'fit',zMid:true,ztop:true,zBot:false,zLock:false,zsnap:true,zbase:2,ztopPin:false,ztlMain:false,ztlZen:false,zlSelected:null,ztMirOp:'',
     fixAxis:1,fixLockX:null,axisPalette:'purple-black',triangleMapSource:'static',crossMirrorMode:'lr',crossMirrorSector:'A1',
-    fillArea:'sides',fillWholeColour:false,fillGrow:false,symRowsMin:2,symRowsMax:0,symBitsMin:2,symBitsMax:0,symTriangleRows:16,
+    fillArea:'sides',fillWholeColour:false,paintFrameMode:'off',fillGrow:false,symRowsMin:2,symRowsMax:0,symBitsMin:2,symBitsMax:0,symTriangleRows:16,
     bitOneColour:'#e8edf5',bitZeroColour:'#5b6475',overOneColour:'#4f9bff',overZeroColour:'#ff5a4f',digitOneColour:'#e8edf5',digitZeroColour:'#7cbcff',
     bitContourColour1:'#ffe969',bitContourColour2:'#ffffff',bitContourMode:'single',bitContourColours:'auto',digitFont:'mono',digitSize:80,
     midOneColour:'#ff7f27',midZeroColour:'#4f9bff',verticalFillColour:'#ff7f27',stolbFillColour:'#ff7f27',axesFillColour:'#ff7f27',autoFillColour:'#ff7f27',growFillColour:'#ff7f27',meetFillColour:'#ff7f27',axisFillColour:'#ff7f27',autoFillPalette:true,growOwnColour:false,

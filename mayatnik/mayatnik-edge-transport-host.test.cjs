@@ -195,7 +195,8 @@ test('host share capture and restore reproduce a later legacy cycle, colour and 
   const make = () => {
     const h = host(false, true, false), buttons = new Map([['bStep', h.$('bStep')]]), noop = () => {};
     Object.assign(h, {
-      MayatnikShareLink: links, MayatnikResetState: require('./mayatnik-reset-state.js'),
+      MayatnikShareLink: links, MayatnikResetState: require('./mayatnik-reset-state.js'),MayatnikPaintRepeat:require('./mayatnik-paint-repeat.js'),
+      paintRepeatSeed:null,paintRepeatPending:null,paintRepeatLayer:null,paintRepeatScope:()=> 'share-fixture',
       MayatnikSettingsLibrary: { STATE_KEYS: [] }, MayatnikConstruction: require('./mayatnik-construction.js'),
       structuredClone, Int8Array, Uint8Array, Uint32Array, img: { width: 15, height: 8 },
       RK: 1, VX: 0, joinedOn: () => false, cellSelectionModel: null, SHARE_ACTIVE: true,
@@ -225,11 +226,13 @@ test('host share capture and restore reproduce a later legacy cycle, colour and 
   src.fillMask = new Uint32Array(120); src.fillMask[17] = 0xff123456;
   src.paintBits = new Int8Array(120).fill(-1); src.paintBits[14] = 0; src.paintBits[88] = 1;
   src.wrap.scrollLeft = 3; src.wrap.scrollTop = 2;
+  src.st.paintFrameMode='cells';src.paintRepeatSeed={version:1,scope:'share-fixture',domain:'cells',width:15,height:8,geometry:'',entries:Uint32Array.of(17,0x121212,0xff123456)};
   const data = await links.decode(await links.encode(src.captureSharePayload()));
   await dst.applySharePayload(data, { booting: true, stash: false });
   assert.deepEqual(capture(dst), capture(src));
   assert.deepEqual(dst.fillMask, src.fillMask);
   assert.deepEqual(dst.paintBits, src.paintBits);
+  assert.deepEqual(dst.paintRepeatSeed,src.paintRepeatSeed);assert.equal(dst.st.paintFrameMode,'cells');
   assert.deepEqual(dst.st.rgbNeighbourFilters, src.st.rgbNeighbourFilters);
   assert.equal(dst.st.zoom, 4);
   assert.deepEqual(dst.wrap, src.wrap);
