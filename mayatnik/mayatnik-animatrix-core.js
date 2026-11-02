@@ -103,6 +103,26 @@
     s._scanSelectionRows = null;
     return s;
   }
+  // Independent calculator at the same immutable seed, without duplicating it.
+  function forkInitial(s) {
+    const state = cloneSeed(s._seed);
+    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
+      stepCount: 0, rowCount: 0, cursorRow: s.height > 1 ? 1 : 0, cycle: 0,
+      done: s.scan && s.height < 2 });
+    Object.defineProperty(state, '_seed', { value: s._seed });
+    Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
+    return state;
+  }
+  // Counters are excluded: they cannot affect the next transformation. Areas'
+  // order is included because VBA processes overlapping Areas in that order.
+  function sameState(a, b) {
+    if (a.width !== b.width || a.height !== b.height || a.cursorRow !== b.cursorRow ||
+        a.done !== b.done || a.areas.length !== b.areas.length) return false;
+    for (let i = 0; i < a.areas.length; i++) for (const key of ['x', 'y', 'width', 'height'])
+      if (a.areas[i][key] !== b.areas[i][key]) return false;
+    for (const key of KEYS) for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) return false;
+    return true;
+  }
   function index(s, x, y) { return x < 0 || y < 0 || x >= s.width || y >= s.height ? -1 : y * s.width + x; }
   function read(s, i, style = 'live', allowed = true) {
     if (i < 0 || !allowed) return EMPTY;
@@ -310,12 +330,18 @@
     return right < 0 ? null : { x, y, width: right - x + 1, height: bottom - y + 1 };
   }
   function report(s, before) {
-    let changed = 0;
+    let changed = 0;const changedCells=s.trackChanges?[]:null;
     for (let i = 0; i < s.bits.length; i++) {
       for (const key of KEYS) if (before[key][i] !== s[key][i]) { changed++; break; }
+      if(changedCells&&visualChanged(s,before,i,i))changedCells.push(i);
     }
     return { changed, done: s.done, rows: s.rowCount, steps: s.stepCount,
-      cursorRow: s.cursorRow, cycle: s.cycle, bounds: bounds(s) };
+      cursorRow: s.cursorRow, cycle: s.cycle, bounds: bounds(s),...(changedCells?{changedCells}:{}) };
+  }
+  function visualChanged(s,before,i,j){
+    if(s.present[i]!==before.present[j]||s.filled[i]!==before.filled[j])return true;
+    if(s.present[i])for(const key of ['bits','colours','bold','automatic'])if(s[key][i]!==before[key][j])return true;
+    return !!s.filled[i]&&s.fills[i]!==before.fills[j];
   }
   function advance(s, n = 1) {
     count(n);
@@ -341,7 +367,7 @@
       scanRow(s, capture);
       if (s.done) break;
     }
-    let changed = 0;
+    let changed = 0;const changedCells=s.trackChanges?[]:null;
     const dirtyRows = [];
     for (const [row, before] of beforeRows) {
       const start = row * s.width; let dirty = false;
@@ -349,12 +375,13 @@
         for (const key of KEYS) if (before[key][x] !== s[key][start + x]) {
           changed++; dirty = true; break;
         }
+        if(changedCells&&visualChanged(s,before,start+x,x))changedCells.push(start+x);
       }
       if (dirty) dirtyRows.push(row);
     }
     dirtyRows.sort((a, b) => a - b);
     return { changed, done: s.done, rows: s.rowCount, steps: s.stepCount,
-      cursorRow: s.cursorRow, cycle: s.cycle, bounds: areaBounds(s.areas), dirtyRows };
+      cursorRow: s.cursorRow, cycle: s.cycle, bounds: areaBounds(s.areas), dirtyRows,...(changedCells?{changedCells}:{}) };
   }
   function areaBounds(areas) {
     let selectedBounds = null;
@@ -376,6 +403,6 @@
     return advance(s, n);
   }
   function seek(s, frame) { count(frame); reset(s); return advance(s, frame); }
-  return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds,
+  return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds, forkInitial, sameState,
     algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
 });

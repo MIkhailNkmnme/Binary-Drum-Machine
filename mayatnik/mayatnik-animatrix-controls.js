@@ -23,7 +23,7 @@
       bindings.push({node:b,selected,unavailable});append(b);return b;
     }
     function segments(id,title,parts,unavailable=()=>false){
-      const row=doc.createElement('div');row.className='gz-hx gz-pair gz-split';row.dataset.n='animatrix:'+id;
+      const row=doc.createElement('div');row.className='gz-hx gz-pair gz-split'+(parts.length===3?' gz-split3':'');row.dataset.n='animatrix:'+id;
       row.setAttribute('role','group');describe(row,title);
       parts.forEach((part,index)=>{const b=doc.createElement('button');b.type='button';b.className='gz-half gz-h'+index;
         b.textContent=part.label;describe(b,part.title);b.addEventListener('click',()=>run(part.action));row.append(b);
@@ -58,10 +58,15 @@
       {label:'1',title:'Исходник: одна единица',action:a=>a?.seed?.('one')},
       {label:'Пример',title:'Исходник: учебный пример',action:a=>a?.seed?.('example')}
     ]);
-    const cycles=doc.createElement('label');cycles.className='gz-hx';cycles.dataset.n='animatrix:cycles';describe(cycles,'Количество циклов Аниматрицы: от 1 до 64');
+    segments('cycle-mode','Повторение циклов Аниматрицы',[
+      {label:'Число',title:'Выполнить заданное число циклов от 1 до 64',selected:s=>!s.cycleMode||s.cycleMode==='finite',action:pick('cycleMode','finite')},
+      {label:'∞',title:'Повторять Аниматрицу без ограничения циклов',selected:s=>s.cycleMode==='infinite',action:pick('cycleMode','infinite')},
+      {label:'Повтор',title:'Рассчитать точное начало и период повторения состояния, затем остановиться',selected:s=>s.cycleMode==='repeat',action:pick('cycleMode','repeat')}
+    ]);
+    const cycles=doc.createElement('label');cycles.className='gz-hx';cycles.dataset.n='animatrix:cycles';describe(cycles,'Количество циклов Аниматрицы: от 1 до 64. Для бесконечного повтора выберите ∞; для вычисления начала и периода — «Повтор».');
     label(cycles,'Циклы');const input=doc.createElement('input');input.type='number';input.min='1';input.max='64';input.step='1';input.style.width='44px';input.style.minWidth='0';input.setAttribute('aria-label','Количество циклов Аниматрицы');
     input.addEventListener('change',()=>{const n=Math.max(1,Math.min(64,Math.round(Number(input.value)||1)));input.value=String(n);run(a=>a?.set?.({cycles:n}));});
-    cycles.append(input);bindings.push({node:input,selected:()=>false,unavailable:()=>false});append(cycles);
+    cycles.append(input);bindings.push({node:input,selected:()=>false,unavailable:s=>!!s.cycleMode&&s.cycleMode!=='finite'});append(cycles);
     command('reset','Сброс исходн.','Вернуться к исходному рисунку Аниматрицы',a=>a?.reset?.());
     const info=doc.createElement('output');info.className='gz-hx';info.dataset.n='animatrix:status';info.setAttribute('aria-live','polite');const infoLabel=label(info,'0 / 0');append(info);
     function sync(){
@@ -69,8 +74,10 @@
       for(const binding of bindings){const on=!!binding.selected(s);binding.node.disabled=!available||busy||binding.unavailable(s);binding.node.classList.toggle('gz-on',on);binding.node.classList.toggle('on',on);if(binding.node.tagName==='BUTTON')binding.node.setAttribute('aria-pressed',String(on));}
       if(doc.activeElement!==input)input.value=String(Math.max(1,Math.min(64,Math.round(Number(s.cycles)||1))));
       const enable=nodes[0].querySelector('.gz-nm');enable.textContent=s.on?'Выключить':'Включить';
-      infoLabel.textContent=(s.frame??0)+' / '+(s.total??0);
-      describe(info,error||s.message||('Кадр '+(s.frame??0)+' из '+(s.total??0)+(s.cycle!=null?' · цикл '+s.cycle:'')+(s.cursor!=null?' · строка '+s.cursor:'')));
+      const repeat=s.repeat;
+      infoLabel.textContent=repeat?.complete?'С '+repeat.firstCycle+' · T '+repeat.periodCycles:(s.frame??0)+' / '+(s.cycleMode==='infinite'||s.cycleMode==='repeat'?'∞':s.total??0);
+      const repetition=repeat?.complete?'Повтор состояния: начало с цикла '+repeat.firstCycle+', период '+repeat.periodCycles+' циклов; первое совпадение на цикле '+repeat.repeatCycle+'. Состояние сравнивается полностью, включая цвета и выделение.':s.cycleMode==='infinite'||s.cycleMode==='repeat'?'Поиск точного повтора: '+(repeat?.periodCycles?'период '+repeat.periodCycles+' найден, вычисляется начало.':'начало и период ещё не найдены.'):' ';
+      describe(info,error||repetition+' Кадр '+(s.frame??0)+(s.cycle!=null?' · цикл '+s.cycle:'')+(s.cursor!=null?' · строка '+s.cursor:'')+(s.message?' · '+s.message:''));
       host.setAttribute('aria-busy',String(busy));
     }
     const changes=['may-animatrix-change','may-compare-change','may-reset-complete'];for(const name of changes)win.addEventListener(name,sync);sync();

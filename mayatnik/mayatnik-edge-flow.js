@@ -46,11 +46,21 @@
     const maximum=chunk?Math.min(MAX_FRAME,Math.ceil(requested/chunk)*chunk):0;
     return {edgeFlowKey:key(state),edgeFlowMax:maximum};
   }
+  function mapColumn(raw,width,bounce=false){
+    if(raw>=0&&raw<width)return raw;
+    if(width===1)return 0;
+    const period=bounce?2*(width-1):width;
+    const position=((raw%period)+period)%period;
+    return bounce&&position>=width?period-position:position;
+  }
   function counts(state,at,width){
     frame(at);
     if(!Number.isSafeInteger(width)||width<1||width%2!==1)fail('Некорректная ширина поля непрерывного Перескока.');
-    const pair=paired(state),jumps=pair?2*Math.max(0,at-(width-1)/2):Math.max(0,at-width);
-    return {jumps,laps:Math.floor(at/(pair?width:2*width))};
+    if(state.mode==='one')return {jumps:0,laps:0};
+    const half=(width-1)/2,period=state.edgeBounce?Math.max(1,2*(width-1)):width;
+    if(paired(state))return {jumps:2*Math.max(0,at-half),laps:Math.floor(at/period)};
+    const alternating=state.mode==='pend'||state.mode==='pendR';
+    return {jumps:Math.max(0,at-(alternating?width:half+1)),laps:Math.floor(at/(alternating?2*period:period))};
   }
   function snapshotInterval(frames,cells){
     frame(frames);
@@ -64,5 +74,5 @@
     if(state.edgeFlowMax!=null)frame(state.edgeFlowMax);
     return state;
   }
-  return {MAX_FRAME,MAX_CELLS,active,base,key,limit,range,counts,snapshotInterval,validate};
+  return {MAX_FRAME,MAX_CELLS,active,base,widthFactor,key,limit,range,mapColumn,counts,snapshotInterval,validate};
 });

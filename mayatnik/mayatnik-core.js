@@ -48,6 +48,10 @@ const MAYATNIK = (() => {
     for (const row of conePairRows(f, a1, a2, D, lastAt, stamp, mark, markValue)) { /* полный проход */ }
   }
   function* conePairRows(f, a1, a2, D, lastAt, stamp, mark, markValue) {
+    if (a1 === a2) {
+      yield* coneRows(f, a1, D, lastAt, stamp, mark, markValue);
+      return;
+    }
     const { W, H, val } = f;
     if (a1 > a2) { const t = a1; a1 = a2; a2 = t; }
     const ap = [];

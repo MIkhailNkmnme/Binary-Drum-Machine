@@ -12,6 +12,7 @@ test('new 180 rotates even source below the unchanged odd half; legacy mappings 
 });
 function host(view,rk=2,shape='diamond'){
  const width=6,height=4,origin=2,anchor=4,fieldWidth=10,j=J.create({width,height,origin,anchor,fieldWidth,rotate:true,rotateParity:0,shape}),val=Int8Array.from({length:40},(_,q)=>q%5===0?-1:q%2),pixels=new Uint32Array(j.width*j.height*rk*rk),c=vm.createContext({st:{view,joined180:true,digitSize:80,digitOneColour:'#ffffff',digitZeroColour:'#777777'},f:{W:fieldWidth,H:height,val},geo:{anchor},VX:origin,VW:width,VH:height,RK:rk,RG:0,img:{width:j.width*rk,height:j.height*rk,data:new Uint8ClampedArray(pixels.buffer)},joinedOn:()=>true,joinedWhole:()=>false,joinedDiamond:()=>false,joinedSquare:()=>shape==='square',joinedCellClip:()=>{},joinedGeometry:()=>j,parityField:()=>({W:fieldWidth,H:height,val}),parityValues:()=>val,parityActive:()=>false,parityRow:r=>r,parityPlan:()=>({settings:{rowFill:'none'},active:false}),halfOf:()=>[3,0],rombP:()=>3,parityVisible:()=>true,outShow:()=>false,outZone:()=>false,tintAt:()=>2,MayatnikJoinedRomb:J,paintBits:null,templateMatchLayer:null,fillMask:null,stolbPaint:null,colReplayPaint:null,faceCurrent:()=>false,gpuDisplay:()=>false,rgba:()=>0,Uint32Array,Int8Array,Float64Array,ochkiCurrent:()=>null,ochkiWholeHighlights:()=>null,digitFamily:()=> 'monospace',dispW:()=>j.width,dispH:()=>j.height});
+ Object.assign(c,{animatrixOn:()=>false,animatrixNativeCss:()=>null,digitsOn:()=>['digits','digitsOnly'].includes(c.st.view)});
  for(const name of ['displayCell','fieldCellAt','rasterBit','drawRomb','paintCellDigits'])vm.runInContext(fn(name),c);
  return {c,j,val,pixels};
 }
@@ -64,14 +65,14 @@ test('joined 180 views route the vertex and row flash through the joined lattice
  const src=html.slice(html.indexOf('function flashRowCells'),html.indexOf('function rowLabDraw'));
  assert.match(src,/function flashDrawJoined/);
  assert.match(src,/if\(joinedOn\(\)\)\{flashDrawJoined\(o,now,FLASH_MS\);return;\}/);
- assert.match(src,/const vtxOn = !!st\.vtxFlash && \(joinedOn\(\)\|\|rombP\(\)<3\)/);
+ assert.match(src,/const vtxOn = !!st\.vtxFlash;/);
  assert.match(src,/fromSourceAll\(q\)/);
  assert.match(src,/fillRect\(cell\.x \* K, cell\.y \* K, K, K\)/);
  assert.match(src,/2 \* VH - 1 - r/);
 });
 test('flash also covers both rhombus panels and appears as soon as it is switched on',()=>{
  const src=html.slice(html.indexOf('let flashSeed'),html.indexOf('function rowLabDraw'));
- assert.match(src,/const centre = \(col, row\) => \{ const p = \(col - geo\.anchor\) & 1, pt = displayPoint\(col, row, p\)/);
+ assert.match(src,/const centre = \(col, row\) => \{ const p = \(col - geo\.anchor - row\) & 1, pt = displayPoint\(col, row, p\)/);
  assert.match(src,/rp === 2 \? \(pt\.p \? VW \+ RG : 0\) : 0/);
  assert.match(src,/g\.rect\(ox \* K, 0, VW \* K, c\.height\)/);
  assert.match(src,/let flashSeed=false/);

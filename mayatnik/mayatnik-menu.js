@@ -1,4 +1,4 @@
-﻿/* v0.669: варианты решётки и инверсии для обычного Маятника. */
+/* v0.669: варианты решётки и инверсии для обычного Маятника. */
 /* Маятник v0.665 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
@@ -828,7 +828,7 @@
     toolSync.push(() => { const on = !!window.mayHeat?.get(); bHt.classList.toggle('on', on); bHt.title = 'Карта тепла: клетка меняет бит кадр за кадром подряд — 1 раз жёлтая, 2 оранжевая, 3 красная, 4 малиновая, 5 и больше белая; перестала меняться — остывает голубым за 8 кадров · ' + (on ? 'вкл' : 'выкл'); });
     // v0.259: «Вспышка вершины» — на каждом шаге конус новой вершины золотом на секунду
     const vfp = document.createElement('button'); vfp.title = 'Вспышка'; const bVf = ptBtn('vtxFlash', 'bolt', vfp, () => { const V = window.mayVtxFlash; V?.set(!V.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.mayVtxFlash?.get(); bVf.classList.toggle('on', on); bVf.title = 'Вспышка вершины: на каждом шаге все биты, пришедшие с новой вершины (её конус), подсвечиваются золотом и гаснут за секунду · ' + (on ? 'вкл' : 'выкл'); });
+    toolSync.push(() => { const on = !!window.mayVtxFlash?.get(); bVf.classList.toggle('on', on); bVf.title = 'Вспышка: конус нового хода, в Аниматрице — реально изменённые клетки. Работает в перескоке, отскоке и ромбах; затухает за 1,3 секунды · ' + (on ? 'вкл' : 'выкл'); });
     // v0.254: «Подписи строк» — у каждой строки справа номер, битов, сколько 1 и 0
     const rlp = document.createElement('button'); rlp.title = 'Строки'; const bRl = ptBtn('rowLab', 'bars', rlp, () => { const R = window.mayRowLab; R?.set(R.get() ? 0 : 2); placeTools(); });   // v0.371: «только таблица» — вкл / выкл
     toolSync.push(() => { const m = window.mayRowLab?.get() ? 2 : 0, on = m > 0; bRl.classList.toggle('on', on); bRl.title = 'Таблица строк: правая половина маятника спрятана, от оси — номер, сколько видно бит (нарастающим итогом), сколько 1 и 0 · ' + (on ? 'вкл' : 'выкл');

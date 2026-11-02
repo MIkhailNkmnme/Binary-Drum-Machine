@@ -1,4 +1,4 @@
-/* Versioned seeds and source state for finite Animatrix calculations.
+/* Versioned seeds and source state for fixed-field Animatrix calculations.
  * A seed owns its geometry; the shared transport advances rows or matrices.
  * Packed words are little-endian RGB24 + six independent state flags.
  */
@@ -13,7 +13,7 @@
   const DIRECTIONS=['down','up','left','right'];
   const checked=new WeakMap();
   const fail=message=>{throw Error(message);};
-  function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixColours:'inherit',animatrixEvolution:EVOLUTION};}
+  function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixEvolution:EVOLUTION};}
   function dimensions(width,height){
     if(!Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(height)||height<8||height>MAX_ROWS)fail('Некорректный размер исходника Аниматрицы: высота от 8 до 4096 строк.');
     const n=width*height;if(!Number.isSafeInteger(n)||n>MAX_CELLS)fail('Исходник Аниматрицы превышает 2 100 000 клеток.');return n;
@@ -120,6 +120,8 @@
     const next={...defaults(),...state};
     if(typeof next.animatrixOn!=='boolean'||!ALGORITHMS.includes(next.animatrixAlgorithm)||!['matrix','rows'].includes(next.animatrixTiming)||!DIRECTIONS.includes(next.animatrixDirection)||!['inherit','bits'].includes(next.animatrixColours))fail('Неизвестный режим Аниматрицы.');
     if(!Number.isSafeInteger(next.animatrixCycles)||next.animatrixCycles<1||next.animatrixCycles>64)fail('Число циклов Аниматрицы должно быть от 1 до 64.');
+    if(!['finite','infinite','repeat'].includes(next.animatrixCycleMode))fail('Неизвестный режим циклов Аниматрицы.');
+    if(!Number.isSafeInteger(next.animatrixFrameMax)||next.animatrixFrameMax<0)fail('Некорректная граница кадров Аниматрицы.');
     if(next.animatrixEvolution!==EVOLUTION)fail('Работа сохранена с другой версией расчёта Аниматрицы.');
     if(next.animatrixTiming==='rows')next.animatrixDirection='down';
     if(active(next)){
@@ -131,20 +133,77 @@
   }
   function assertState(state){return normalize(state);}
   function geometry(state){const s=normalize(state),source=assertSource(s.animatrixSource);return {W:source.width,H:source.height,anchor:source.anchor};}
-  function frames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return (s.animatrixTiming==='rows'?source.height-1:source.height)*s.animatrixCycles;}
+  const unlimited=state=>!!state&&['infinite','repeat'].includes(state.animatrixCycleMode);
+  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return s.animatrixTiming==='rows'?source.height-1:source.height;}
+  function frames(state){const s=normalize(state),cycle=cycleFrames(s);return unlimited(s)?Math.max(cycle,s.animatrixFrameMax):cycle*s.animatrixCycles;}
+  function extend(state,requested){
+    frameCount(requested);const cycle=cycleFrames(state);
+    return {animatrixFrameMax:Math.max(frames(state),Math.min(Number.MAX_SAFE_INTEGER,Math.ceil(requested/cycle)*cycle))};
+  }
   function hash(text){let a=2166136261,b=5381;for(let i=0;i<text.length;i++){const c=text.charCodeAt(i);a=Math.imul(a^c,16777619)>>>0;b=(Math.imul(b,33)^c)>>>0;}return text.length+':'+a.toString(16)+':'+b.toString(16);}
   function stateKey(state){
     if(!active(state))return '';
     const s=normalize(state),source=assertSource(s.animatrixSource),record=checked.get(source);
     if(!record.key)record.key=hash(record.stamp.join('|'));
-    return ['animatrix-v'+EVOLUTION,record.key,s.animatrixAlgorithm,s.animatrixTiming,s.animatrixDirection,s.animatrixCycles].join(':');
+    return ['animatrix-v'+EVOLUTION,record.key,s.animatrixAlgorithm,s.animatrixTiming,s.animatrixDirection,s.animatrixCycles,s.animatrixCycleMode].join(':');
   }
   function same(a,b){return active(a)===active(b)&&(!active(a)||stateKey(a)===stateKey(b));}
-  function create(state){const s=normalize(state),engine=Core.create(decode(s.animatrixSource),{algorithm:s.animatrixAlgorithm,direction:s.animatrixDirection,scan:s.animatrixTiming==='rows'});engine.sourceFrame=0;Object.defineProperty(engine,'_sourceLimit',{value:frames(s)});return engine;}
-  function reset(engine){Core.reset(engine);engine.sourceFrame=0;return engine;}
+  function repeatReset(engine){
+    engine._repeat=engine._cycleMode==='finite'?null:{phase:'period',power:1,length:0,checkpoint:Core.snapshot(engine),period:0,first:0,lead:0,pairSteps:0,a:null,b:null,detectedCycle:null};
+  }
+  function create(state){
+    const s=normalize(state),engine=Core.create(decode(s.animatrixSource),{algorithm:s.animatrixAlgorithm,direction:s.animatrixDirection,scan:s.animatrixTiming==='rows'});
+    engine.sourceFrame=0;
+    Object.defineProperties(engine,{_sourceLimit:{value:unlimited(s)?Number.MAX_SAFE_INTEGER:frames(s)},_cycleFrames:{value:cycleFrames(s)},_cycleMode:{value:s.animatrixCycleMode},_repeat:{value:null,writable:true}});
+    repeatReset(engine);return engine;
+  }
+  function reset(engine){Core.reset(engine);engine.sourceFrame=0;repeatReset(engine);return engine;}
   function frameCount(n){if(!Number.isSafeInteger(n)||n<0)fail('Некорректный номер кадра Аниматрицы.');return n;}
-  function seek(engine,frame){frameCount(frame);if(frame>engine._sourceLimit)fail('Кадр Аниматрицы за пределами выбранных циклов.');const report=Core.seek(engine,frame);engine.sourceFrame=frame;return {...report,frame};}
-  function advance(engine,count=1){frameCount(count);const n=Math.min(count,Math.max(0,engine._sourceLimit-engine.sourceFrame)),report=Core.advance(engine,n);engine.sourceFrame+=n;return {...report,frame:engine.sourceFrame};}
+  function repeatInfo(engine){
+    const r=engine?._repeat;if(!r)return null;
+    const complete=r.phase==='complete';
+    return {complete,phase:r.phase,firstCycle:complete?r.first:null,periodCycles:r.period||null,
+      repeatCycle:complete?r.first+r.period:null,repeatFrame:complete?(r.first+r.period)*engine._cycleFrames:null,
+      detectedCycle:r.detectedCycle,cycleFrames:engine._cycleFrames};
+  }
+  function repeatBoundary(engine){
+    const r=engine._repeat;if(!r||r.phase!=='period')return;
+    r.length++;
+    // Brent compares actual typed arrays and ordered Areas, never a hash alone.
+    if(Core.sameState(r.checkpoint,engine)){
+      r.period=r.length;r.phase='start';r.checkpoint=null;
+      r.a=Core.forkInitial(engine);r.b=Core.forkInitial(engine);
+      r.lead=r.period*engine._cycleFrames;return;
+    }
+    if(r.length===r.power){r.checkpoint=Core.snapshot(engine);r.power*=2;r.length=0;}
+  }
+  function repeatWork(engine,budget){
+    const r=engine._repeat;if(!r||r.phase!=='start')return;
+    // Spread the second pass over normal frames; no long synchronous search.
+    while(budget>0&&r.phase==='start'){
+      if(r.lead){const n=Math.min(budget,r.lead);Core.advance(r.b,n);r.lead-=n;budget-=n;if(r.lead)break;}
+      if(r.pairSteps===0&&Core.sameState(r.a,r.b)){
+        r.phase='complete';r.detectedCycle=Math.floor(engine.sourceFrame/engine._cycleFrames);r.a=r.b=null;break;
+      }
+      const n=Math.min(budget,engine._cycleFrames-r.pairSteps);if(!n)break;
+      Core.advance(r.a,n);Core.advance(r.b,n);r.pairSteps+=n;budget-=n;
+      if(r.pairSteps===engine._cycleFrames){r.pairSteps=0;r.first++;}
+    }
+  }
+  function seek(engine,frame){frameCount(frame);if(frame>engine._sourceLimit)fail('Кадр Аниматрицы за пределами выбранных циклов.');reset(engine);return advance(engine,frame);}
+  function advance(engine,count=1){
+    frameCount(count);let remaining=Math.min(count,Math.max(0,engine._sourceLimit-engine.sourceFrame));
+    let report=null,changed=0;const dirty=new Set(),changedCells=engine.trackChanges?new Set():null;
+    do{
+      const n=Math.min(remaining,engine._cycleFrames-engine.sourceFrame%engine._cycleFrames);
+      report=Core.advance(engine,n);engine.sourceFrame+=n;remaining-=n;changed+=report.changed;
+      for(const row of report.dirtyRows||[])dirty.add(row);
+      if(changedCells)for(const q of report.changedCells||[])changedCells.add(q);
+      if(n&&engine.sourceFrame%engine._cycleFrames===0)repeatBoundary(engine);
+      repeatWork(engine,Math.max(1,n));
+    }while(remaining);
+    return {...report,changed,...(engine.scan?{dirtyRows:[...dirty].sort((a,b)=>a-b)}:{}),...(changedCells?{changedCells:[...changedCells]}:{}),frame:engine.sourceFrame,repeat:repeatInfo(engine)};
+  }
   function copyTo(engine,values){if(!values||values.length!==engine.width*engine.height)fail('Размер поля не совпадает с Аниматрицей.');for(let i=0;i<values.length;i++)values[i]=engine.present[i]?engine.bits[i]:-1;return values;}
   function demo(rows=32,type='one',algorithm='two'){
     if(!Number.isSafeInteger(rows)||!['one','example'].includes(type)||!ALGORITHMS.includes(algorithm))fail('Неизвестный пример Аниматрицы.');
@@ -159,5 +218,5 @@
     }
     return encode(seed,{anchor});
   }
-  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,stateKey,same,create,reset,seek,advance,copyTo,demo};
+  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo};
 });

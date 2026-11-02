@@ -247,7 +247,8 @@
        Chrome пишет mp4 «фрагментами» (moof + mdat), и длительность в заголовке
        у него 0, а таблицы, где какой кадр, нет. Проигрыватель такой файл
        играет, но не знает длины и не мотает. Здесь, когда запись кончилась,
-       в заголовок ставится длительность (mvhd, tkhd, mdhd, mehd), а в конец
+       в существующие поля заголовка ставится длительность (mvhd, tkhd, mdhd,
+       mehd, если он уже есть), а в конец
        файла — таблица фрагментов с опорными кадрами (mfra / tfra). Сами кадры
        не трогаются. У webm то же самое: длительность (WEBM.fix) и таблица
        Cues — где начинается каждый кластер с опорным кадром.
@@ -330,7 +331,9 @@
                 }
                 let movie = 0; for (const t of T.values()) movie = Math.max(movie, t.end / t.ts);
                 if (!(movie > 0)) return blob;
-                // заголовок с длительностью: те же коробки, поле длительности переписано, в mvex — mehd
+                // Keep every original box the same size. Inserting mehd shifts media
+                // while tfhd.base_data_offset, stco/co64 and sidx still point at the
+                // old byte positions: a recording then breaks when seeking forward.
                 const out = [], put = (x, v1Off, v0Off, val) => { const c = b.slice(x.p, x.end), d2 = new DataView(c.buffer), v1 = c[8] === 1, o = v1 ? v1Off : v0Off;
                     if (v1) { d2.setUint32(o, Math.floor(val / 4294967296)); d2.setUint32(o + 4, val >>> 0); } else d2.setUint32(o, Math.min(val, 4294967295)); return c; };
                 const rebuild = (x, trackTs) => {
@@ -342,7 +345,6 @@
                     const ks = this.kids(b, x.p + x.head, x.end); let ts = trackTs;
                     if (x.type === 'trak') for (const y of ks) if (y.type === 'tkhd') { const t = T.get(dv.getUint32(y.p + (b[y.p + 8] === 1 ? 28 : 20))); if (t) ts = t.ts; }
                     const parts = ks.map(y => rebuild(y, ts));
-                    if (x.type === 'mvex' && !ks.some(y => y.type === 'mehd')) parts.unshift(this.mk('mehd', [1, 0, 0, 0, ...this.u64(Math.round(movie * mvTs))]));
                     const len = parts.reduce((s, c) => s + c.length, 0), body = new Uint8Array(len); let q = 0; for (const c of parts) { body.set(c, q); q += c.length; }
                     return this.mk(x.type, body);
                 };
