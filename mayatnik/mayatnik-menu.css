@@ -1105,11 +1105,6 @@ body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>.may-contours-group{position:re
 .may-row-lab-close{position:fixed;z-index:3;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:24px;height:24px;padding:0;border:1px solid #8592ad;border-radius:0;background:#1b2430;color:#dfe6f5;font:20px/1 system-ui,sans-serif;cursor:pointer;touch-action:none;user-select:none}
 .may-row-lab-close:hover,.may-row-lab-close:focus-visible{border-color:#b48cff;outline:0}
 .may-row-lab-close[hidden]{display:none!important}
-.may-area-freeze>.gz-h0{width:84px!important;flex:0 0 84px!important}
-.may-area-freeze>.gz-h1{width:44px!important;flex:0 0 44px!important;margin-left:-8px!important;padding:0 2px!important;font-size:10px}
-.may-area-freeze:not(.is-active)>.gz-h0{width:120px!important;flex-basis:120px!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important}
-.may-area-freeze:not(.is-active)>.gz-h0>.may-half-outline{display:none!important}
-.may-area-freeze>.gz-h1[hidden]{display:none!important}
 .may-area-freeze :is(.gz-half),.may-measure-choice>.gz-half{border:0;border-radius:0;font:inherit;color:inherit;cursor:pointer;user-select:none}
 #paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half{appearance:none;border:0;border-radius:0;outline:none;font:inherit;color:inherit;cursor:pointer}
 #paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half:disabled{opacity:.45;cursor:default}

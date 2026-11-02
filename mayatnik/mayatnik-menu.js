@@ -134,7 +134,6 @@
     button('edgeBounceTop','mirror'),button('edgeContinuous','steps'),
     (() => { const get = () => $('edgeWidthTop')?.value || '4', set = v => { const e = $('edgeWidthTop'); if (!e) return; e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); };
       return segments('Ширина', [2, 4, 6, 8].map(v => ({ name: v + 'N', tip: 'Ширина поля ' + v + 'N−1', on: () => get() === String(v), pick: () => set(String(v)) }))); })(),
-    button('edgeMarkTop','eye'),
     button('edgeEndsTop','grid4'),
     button('edgeEndsMinus','minus'),
     button('edgeEndsPlus','plus'),
@@ -720,7 +719,7 @@
   const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], rgbNeighbours: ['grid4', 'RGB-соседи: R — текущий бит, G — слева, B — справа'], bitContours: ['corners', 'Контуры битов'], digits: ['steps', 'Цифры 0/1'], digitsOnly: ['steps', 'Только цифры'], romb0: ['square', 'Ромбы · чётная'], rombTri: ['tri', 'Треугольники · половинки ромбов'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'],rombAll: ['square','Ромбы · всё поле'],rombDirect: ['square','Ромбы · прямо'],rombTight: ['square','Ромбы · вплотную'],rombJoin:['square','Ромб · соединённый'],rombJoin180:['square','Ромб · соединённый 180°'] };
   const viewSelect=$('view');
   // v0.103: «Без полос» (по кругу: полосы / без полос / до треугольника) и «Обводка» — из рейки «Вид» сюда; «Свёртка» — последней
-  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['fixLines', 'corners'], ['geomCenter', 'axes'], ['cellInk', 'grid4']]) {   // v0.132: «Центр» (подсветка столба) снят
+  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['fixLines', 'corners'], ['geomCenter', 'axes']]) {   // v0.132: «Центр» (подсветка столба) снят
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.checked);
@@ -1043,7 +1042,7 @@
     }
   }
   { const VIEW_COLS = [
-       [['Показ поля', '#7cbcff', ['lg', 'parityCells', 'parityRows', 'parityCols', 'parityRowFill', 'parityRowsLevels', 'parityCellsLevels', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab']],
+       [['Показ поля', '#7cbcff', ['lg', 'parityCells', 'parityRows', 'parityCols', 'parityRowFill', 'parityRowsLevels', 'parityCellsLevels', 'noband', 'outline', 'geomCenter', 'rowLab']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
       [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'lineMeasures', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'fixWide', 'fixRot', 'fixDragK']],
@@ -1075,7 +1074,7 @@
     const freeze=row.querySelector('[data-n="areaFreeze"]');
     if(freeze){const reset=doc.createElement('button');reset.type='button';reset.textContent='Сбр';reset.title='Сбросить накопленные границы заморозки';reset.setAttribute('aria-label',reset.title);reset.dataset.n='areaFreezeClear';
       const box=pair([freeze,reset],'areaFreezeControls','may-area-freeze','Заморозка и сброс накопленных границ');moves.push(['group:Площади:data:areaFreeze','group:Площади:data:areaFreezeControls']);
-      const sync=()=>{const active=!!apis.mayAreaFreeze?.get();box.classList.toggle('is-active',active);box.classList.toggle('on',active);box.classList.toggle('gz-pair',active);box.classList.toggle('gz-split',active);freeze.classList.toggle('gz-on',active);freeze.setAttribute('aria-pressed',String(active));reset.hidden=!active;reset.disabled=!active;reset.tabIndex=active?0:-1;if(active){if(reset.parentElement!==box)box.append(reset);}else{reset.remove();freeze.style.removeProperty('clip-path');box.classList.remove('may-standard-pair','may-independent-pair','may-choice-two');}};
+      const sync=()=>{const active=!!apis.mayAreaFreeze?.get();box.classList.toggle('is-active',active);box.classList.toggle('on',active);freeze.classList.toggle('gz-on',active);freeze.setAttribute('aria-pressed',String(active));reset.disabled=!active;reset.tabIndex=active?0:-1;};
       reset.onclick=event=>{event?.stopPropagation();if(reset.disabled)return;apis.mayAreaFreeze?.clear();sync();placeTools();};syncs.push(sync);
     }
     const sync=()=>{for(const run of syncs)run();};sync();toolSync.push(sync);

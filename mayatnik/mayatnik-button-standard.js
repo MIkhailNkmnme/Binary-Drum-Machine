@@ -128,7 +128,7 @@
     halves.forEach((h,i)=>{
       h.dataset.mayPart=String(i);
       const triple=seg&&halves.length===3,choice=exclusive&&halves.length<=3,separate=independent;
-      const w=triple?(i===1?48:44):separate?120/halves.length:halves.length===2?64:120/halves.length;
+      const w=triple?(i===1?48:44):separate?(b.classList.contains('may-area-freeze')?(i===0?80:40):120/halves.length):halves.length===2?64:120/halves.length;
       let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');h.append(s);}s.setAttribute('viewBox','0 0 '+w+' 24');s.setAttribute('preserveAspectRatio','none');
       const joined=b.classList.contains('zcf-switch-pair')&&halves.length===2&&!b.classList.contains('may-control-mini')?window.ZerkControlFrame.pairGeometry(i):null;
       const face=joined?.face||`M${i===0?12:6} 0H${i===halves.length-1?w-12:w-6}L${w} 12 ${i===halves.length-1?w-12:w-6} 24H${i===0?12:6}L0 12Z`;

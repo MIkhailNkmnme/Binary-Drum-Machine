@@ -213,6 +213,8 @@ body.mayatnik-menu-ready .may-list-heading{text-transform:uppercase}
 .may-half-outline .may-half-face{fill:none;stroke:var(--may-outline);stroke-width:calc(2 * var(--may-stroke))}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-independent-pair>.gz-half{flex:0 0 60px!important;width:60px!important;min-width:60px!important;margin:0!important;clip-path:path('M12 0H54L60 12 54 24H12L0 12Z')!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-independent-pair>.gz-half[data-may-part="1"]{clip-path:path('M6 0H48L60 12 48 24H6L0 12Z')!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-independent-pair.may-area-freeze>.gz-half{--may-freeze-width:80px;flex-basis:var(--may-freeze-width)!important;width:var(--may-freeze-width)!important;min-width:var(--may-freeze-width)!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-independent-pair.may-area-freeze>.gz-h1{--may-freeze-width:40px;padding:0 2px!important;font-size:10px!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-choice-two>.gz-half{flex:0 0 64px!important;width:64px!important;min-width:64px!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-choice-two>.gz-half[data-may-part="1"]{margin-left:-8px!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-choice-three>.gz-half{flex:0 0 44px!important;width:44px!important;min-width:44px!important}

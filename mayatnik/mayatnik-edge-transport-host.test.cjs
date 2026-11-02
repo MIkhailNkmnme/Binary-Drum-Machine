@@ -6,6 +6,18 @@ const core = require('./mayatnik-core.js');
 const flow = require('./mayatnik-edge-flow.js');
 const html = fs.readFileSync(__dirname + '/Zerkalius-mayatnik.html', 'utf8');
 
+test('Reset control is off in startup and clean defaults; saved transport preference maps to the inverse visual state',()=>{
+  const initial=html.slice(html.indexOf('  let st = '),html.indexOf('  if (!CHISTO)'));
+  const first={MayatnikAnimatrixSource:{defaults:()=>({})}};vm.runInNewContext(initial+';this.state=st;',first);
+  assert.equal(first.state.edgeContinuous,true);
+  assert.equal(require('./mayatnik-reset-state.js').defaults().edgeContinuous,true);
+  for(const continuous of [true,false]){
+    const button={attrs:{},getAttribute(k){return this.attrs[k];},setAttribute(k,v){this.attrs[k]=v;},classList:{toggle(k,v){this[k]=v;}}};
+    vm.runInNewContext(source('edgeFlowButtonSync')+';edgeFlowButtonSync();',{st:{edgeContinuous:continuous},$:()=>button});
+    assert.equal(button.attrs['aria-pressed'],String(!continuous));assert.equal(button.classList.on,!continuous);
+  }
+});
+
 function source(name) {
   const start = html.indexOf('function ' + name + '(');
   assert.ok(start >= 0, name);
