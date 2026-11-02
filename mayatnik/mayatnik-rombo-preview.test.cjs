@@ -1,23 +1,29 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const P=require('./mayatnik-rombo-preview.js');
 
-function host(){
- const listeners=new Map();let writes=0;
+function host(layout=false){
+ const listeners=new Map(),framesPending=new Map();let writes=0,frameId=0,resize;
  class Element{
-  constructor(tag){this.tagName=tag;this.children=[];this.attributes={};this.hidden=false;this.listeners=new Map();}
+  constructor(tag){this.tagName=tag;this.children=[];this.attributes={};this.hidden=false;this.listeners=new Map();this.style={};}
+  get offsetHeight(){return this.hidden?0:this.layoutHeight??(parseFloat(this.style.height)||0);}
+  get offsetWidth(){return this.layoutWidth??140;}
+  getBoundingClientRect(){return this.rect;}
   append(el){this.children.push(el);el.parent=this;}
   setAttribute(key,value){this.attributes[key]=value;writes++;}
   set textContent(value){this.text=value;writes++;}
   get textContent(){return this.text;}
   addEventListener(type,fn){if(!this.listeners.has(type))this.listeners.set(type,[]);this.listeners.get(type).push(fn);}
+  removeEventListener(type){this.listeners.delete(type);}
   event(type){const event={type,stopped:false,prevented:false,stopPropagation(){this.stopped=true;},preventDefault(){this.prevented=true;}};for(const fn of this.listeners.get(type)||[])fn(event);return event;}
   remove(){this.parent.children=this.parent.children.filter(el=>el!==this);}
  }
- const frames=[],win={addEventListener(type,fn){listeners.set(type,fn);},removeEventListener(type){listeners.delete(type);},ZerkControlFrame:{attach(...args){frames.push(args);}}};
+ const frames=[],win={addEventListener(type,fn){listeners.set(type,fn);},removeEventListener(type){listeners.delete(type);},ZerkControlFrame:{attach(...args){frames.push(args);}},requestAnimationFrame(fn){framesPending.set(++frameId,fn);return frameId;},cancelAnimationFrame(id){framesPending.delete(id);},ResizeObserver:class{constructor(fn){resize=fn;}observe(){}disconnect(){resize=null;}}};
  const doc={defaultView:win,body:new Element('body'),createElement:tag=>new Element(tag),createElementNS:(_,tag)=>new Element(tag)};
- let state=null,calls=[];const preview=P.mount({document:doc,api:()=>state?{get:()=>state,setAssembly(id){calls.push(id);state.assembly=id;fire();}}:null});
+ const viewport=layout?new Element('viewport'):null,figure=layout?new Element('canvas'):null;
+ if(layout){viewport.rect={left:100,top:50,right:1000,bottom:650};figure.rect={left:300,top:100,width:300,height:500,bottom:600};doc.body.append(viewport);}
+ let state=null,calls=[];const preview=P.mount({document:doc,api:()=>state?{get:()=>state,setAssembly(id){calls.push(id);state.assembly=id;fire();}}:null,viewport,figure});preview.element.layoutHeight=175;
  const fire=()=>listeners.get('may-rombo-change')?.();
- return {preview,doc,fire,calls,frames,set(value){state=value;fire();},writes:()=>writes};
+ return {preview,doc,fire,calls,frames,viewport,figure,resize:()=>resize?.(),flush(){const pending=[...framesPending.values()];framesPending.clear();pending.forEach(fn=>fn());},pending:()=>framesPending.size,set(value){state=value;fire();},writes:()=>writes};
 }
 const navigation=h=>h.preview.element.children[1].children.filter(el=>el.tagName==='button');
 const numberInput=h=>h.preview.element.children[1].children[1].children[0];
@@ -94,5 +100,34 @@ test('navigation isolates field gestures and keeps native keyboard activation',(
    const event=button.event(type);assert.equal(event.stopped,true,type);assert.equal(event.prevented,type==='contextmenu'||type==='dblclick',type);
   }
   const before=h.calls.length,event=button.event('click');assert.equal(event.stopped,true);assert.equal(h.calls.length,before+1);
+ }
+});
+
+test('scheme follows fractional zoom and rotated figure bounds below the field, then scrolls into view',()=>{
+ const h=host(true),R=require('./mayatnik-rombo.js');h.set({on:true,assembly:1,angle:0,row:37});
+ for(const unit of [.125,1,2.75])for(const angle of [0,45,90,315]){
+  const p=R.plan(100,80,{row:37,angle}),height=p.outputHeight*unit,width=p.outputWidth*unit;
+  h.figure.rect={left:450-width/2,top:100,width,height,bottom:100+height};h.resize();h.resize();assert.equal(h.pending(),1);h.flush();
+  assert.equal(h.preview.element.style.left,'450px');assert.equal(h.preview.element.style.top,(112+height)+'px');
+  assert.equal(h.pending(),0);assert.equal(h.preview.scrollSpace(),199);
+ }
+ h.figure.rect={left:200,top:100,width:500,height:900,bottom:1000};h.resize();h.flush();
+ assert.equal(h.preview.element.style.top,'1012px'); // No viewport-bottom clamp.
+ h.figure.rect={...h.figure.rect,top:-500,bottom:400};h.viewport.event('scroll');h.flush();
+ assert.equal(h.preview.element.style.top,'412px');assert.equal(h.preview.element.style.clipPath,'inset(0px 0px 0px 0px)');
+ const space=h.viewport.children[0];assert.equal(space.parent,h.viewport);assert.equal(h.preview.element.parent,h.doc.body);
+ const rect=h.figure.rect;h.figure.rect={...rect,width:0};h.resize();h.flush();assert.equal(h.preview.element.style.visibility,'hidden');assert.equal(h.preview.scrollSpace(),0);
+ h.figure.rect=rect;h.resize();h.flush();assert.equal(h.preview.element.style.visibility,'visible');assert.equal(h.preview.scrollSpace(),199);
+ h.set({on:false,assembly:1,angle:0,row:37});h.flush();assert.equal(space.hidden,true);assert.equal(h.preview.scrollSpace(),0);assert.equal(h.preview.element.hidden,true);
+ h.set({on:true,assembly:1,angle:0,row:37});h.flush();assert.equal(space.hidden,false);assert.equal(h.preview.element.style.visibility,'visible');
+ h.preview.destroy();assert.equal(h.viewport.children.length,0);
+});
+
+test('fit centering excludes the whole trailer and keeps the original field anchor',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
+ const code=html.match(/function fitCenterY\(\) \{[^\n]+\}/)[0];
+ for(const content of [500,1000,2073.5]){
+  const wrap={clientHeight:600,scrollHeight:Math.max(600,content),scrollTop:0},context={wrap,ovlLinked:()=>false,window:{}};vm.createContext(context);vm.runInContext(code+';fitCenterY();',context);const baseline=wrap.scrollTop;
+  wrap.scrollHeight=Math.max(600,content+199);wrap.scrollTop=0;context.window.mayRomboPreview={scrollSpace:()=>199};vm.runInContext('fitCenterY();',context);assert.equal(wrap.scrollTop,baseline);
  }
 });

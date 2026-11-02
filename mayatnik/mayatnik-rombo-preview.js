@@ -7,7 +7,7 @@
   const angle=((Math.round((Number(state.angle)||0)/45)*45)%360+360)%360;
   return {assembly,angle,row:state.row,on:!!state.on,slots:slots.map(choice=>({label:choices[choice],flip:choice>=2,fill:choice%2?'#d99bc9':'#78b8e8'})),name:slots.map(choice=>choices[choice]).join(' | ')};
  }
- function mount({document:doc,api,host=doc.body}){
+ function mount({document:doc,api,host=doc.body,viewport=null,figure=null}){
   const win=doc.defaultView,box=doc.createElement('div');box.id='mayRomboPreview';box.hidden=true;box.setAttribute('role','group');box.setAttribute('data-no-mini','');
   const make=(tag,attrs={},parent=box)=>{const el=doc.createElementNS(NS,tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,String(value));parent.append(el);return el;};
   const svg=make('svg',{viewBox:'0 0 164 174','aria-hidden':'true',focusable:'false'});
@@ -44,10 +44,25 @@
   });
   controls.append(buttons[0]);controls.append(mid);controls.append(buttons[1]);win.ZerkControlFrame.attach(controls,buttons[0],mid,buttons[1],{input:number});
   box.append(controls);
-  let last='';
+  let last='',positionFrame=0,positionKey='',spacer=null,observer=null;
+  if(viewport&&figure){
+   spacer=doc.createElement('div');spacer.id='mayRomboPreviewSpace';spacer.hidden=true;spacer.setAttribute('aria-hidden','true');viewport.append(spacer);box.style.visibility='hidden';
+  }
+  function place(){
+   positionFrame=0;if(!spacer||box.hidden)return;
+   const r=figure.getBoundingClientRect(),v=viewport.getBoundingClientRect(),height=box.offsetHeight,gap=12,left=r.left+r.width/2,top=r.bottom+gap;
+   if(!(r.width>0&&r.height>0)){box.style.visibility='hidden';spacer.hidden=true;positionKey='';return;}
+   const key=[left,top,height,v.top,v.bottom,v.left,v.right,box.offsetWidth].join(':');if(key===positionKey)return;positionKey=key;
+   const width=box.offsetWidth;
+   box.style.left=left+'px';box.style.top=top+'px';box.style.visibility='visible';
+   box.style.clipPath=`inset(${Math.max(0,v.top-top)}px ${Math.max(0,left+width/2-v.right)}px ${Math.max(0,top+height-v.bottom)}px ${Math.max(0,v.left-(left-width/2))}px)`;
+   spacer.style.height=(height+gap*2)+'px';spacer.hidden=false;
+  }
+  function queuePosition(){if(spacer&&!positionFrame)positionFrame=win.requestAnimationFrame(place);}
+  if(spacer){viewport.addEventListener('scroll',queuePosition,{passive:true});win.addEventListener('resize',queuePosition);if(win.ResizeObserver){observer=new win.ResizeObserver(queuePosition);for(const node of [figure,viewport,box])observer.observe(node);}}
   function sync(force=false){
-   const current=api(),state=current?.get?.();if(!state){box.hidden=true;for(const button of [...buttons,number])button.disabled=true;last='';return;}
-   const s=describe(state),available=s.on&&typeof current.setAssembly==='function',key=[s.on,s.assembly,s.angle,s.row,available].join(':');if(key===last&&force!==true)return;last=key;box.hidden=!s.on;for(const button of [...buttons,number])button.disabled=!available;if(!s.on)return;
+   const current=api(),state=current?.get?.();if(!state){box.hidden=true;if(spacer)spacer.hidden=true;for(const button of [...buttons,number])button.disabled=true;last='';positionKey='';return;}
+   const s=describe(state),available=s.on&&typeof current.setAssembly==='function',key=[s.on,s.assembly,s.angle,s.row,available].join(':');if(key===last&&force!==true)return;last=key;box.hidden=!s.on;if(spacer){spacer.hidden=!s.on;queuePosition();}for(const button of [...buttons,number])button.disabled=!available;if(!s.on){positionKey='';return;}
    title.textContent='Сборка '+(s.assembly+1)+' · '+s.name;
    number.value=String(s.assembly+1);
    footer.textContent='Ось '+s.row+' · '+s.angle+'°';
@@ -56,7 +71,7 @@
    box.setAttribute('aria-label','Ромбо. Сборка '+(s.assembly+1)+' из 16: '+s.name+'. Верх C. Ось: строка '+s.row+'. Поворот '+s.angle+'°. L — левая исходная часть, R — правая, ↔ — горизонтальное отражение.');
   }
   host.append(box);win.addEventListener('may-rombo-change',sync);sync();
-  return {sync,element:box,destroy(){win.removeEventListener('may-rombo-change',sync);box.remove();}};
+  return {sync,element:box,scrollSpace:()=>spacer&&!spacer.hidden?spacer.offsetHeight:0,destroy(){win.removeEventListener('may-rombo-change',sync);viewport?.removeEventListener('scroll',queuePosition);win.removeEventListener('resize',queuePosition);observer?.disconnect();if(positionFrame)win.cancelAnimationFrame(positionFrame);spacer?.remove();box.remove();}};
  }
  return {describe,mount};
 });
