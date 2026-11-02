@@ -105,7 +105,7 @@
   function bindCapture(library,api){if(!api||api===library.api)return;library.unsubscribe?.();library.api=api;library.unsubscribe=api.subscribe(()=>renderCapture(library));Promise.resolve(api.ready).then(()=>{if(api===library.api)renderCapture(library);},e=>{library.error=e?.message||'Не удалось загрузить библиотеку';renderCapture(library);});renderCapture(library);}
   function capturePane(library){const pane=doc.createElement('section');pane.className='mtp-pane '+(library.key==='settings'?'mtp-settings-pane':library.key==='links'?'mtp-link-pane':'mtp-frame-pane');pane.id=library.key==='settings'?'maySettingsPane':library.key==='links'?'mayLinkPane':'mayFramePane';pane.setAttribute('role','tabpanel');
     const save=button('Сохранить '+library.word,'Сохранить '+library.scope+' в библиотеку '+library.plural,()=>{if(library.key==='settings'){const name=root.prompt('Название набора настроек','Набор '+((library.api?.list().length||0)+1));if(name?.trim())captureAction(library,'save',name.trim());}else captureAction(library,'save');});save.dataset[library.key==='settings'?'settingsSave':library.key==='links'?'linkSave':'frameSave']='';const output=doc.createElement('output');output.className='mtp-status';output.setAttribute('aria-live','polite');const list=doc.createElement('div');list.className='mtp-grid';pane.append(save,output,list);if(library.key==='settings'){pane.prepend(templateLimitControl());}Object.assign(library,{pane,save,status:output,grid:list});return pane;}
-  let resizeHandle,widthPreference=null,resizeDrag=null,widthFrame=0,saveButton,fieldWidth=null,fieldRight=0,fieldObserver;
+  let resizeHandle,widthPreference=null,resizeDrag=null,widthFrame=0,manualWidthChanged=false,appliedWidth=null,saveButton,fieldWidth=null,fieldRight=0,fieldObserver;
   function syncSave(){if(saveButton)saveButton.disabled=!doc.getElementById('bTemplateSave')||doc.getElementById('bTemplateSave').disabled;syncExplorer();}
   const widthBounds=()=>{const viewport=Math.max(1,root.innerWidth||doc.documentElement.clientWidth||800),max=Math.max(1,Math.min(viewport,fieldWidth??viewport)-58);return {viewport,min:Math.min(332,max),max};};
   const mobilePanel=()=>doc.body.classList.contains('may-mobile-menu')&&!root.MayatnikLibraryDetached;
@@ -115,11 +115,12 @@
     doc.body.style.setProperty('--may-library-field-top',Math.max(0,r.top)+'px');doc.body.style.setProperty('--may-library-field-height',r.height+'px');doc.body.style.setProperty('--may-library-field-right',fieldRight+'px');
   }
   function applyWidth(notify=false){
-    syncFieldBox();const width=Math.round(panelWidth()),{min,max}=widthBounds();doc.body.style.setProperty('--may-template-panel-width',width+'px');
+    // Only manual boundary changes request another overlap check; ordinary layout does not.
+    syncFieldBox();const width=Math.round(panelWidth()),{min,max}=widthBounds();if(notify&&appliedWidth!==null&&width!==appliedWidth)manualWidthChanged=true;appliedWidth=width;doc.body.style.setProperty('--may-template-panel-width',width+'px');
     const vv=root.visualViewport;doc.body.style.setProperty('--may-library-vv-top',(vv?.offsetTop||0)+'px');doc.body.style.setProperty('--may-library-vv-left',(vv?.offsetLeft||0)+'px');doc.body.style.setProperty('--may-library-vv-bottom',((vv?.offsetTop||0)+(vv?.height||root.innerHeight))+'px');
     if(resizeHandle)resizeHandle.hidden=!open||mobilePanel();
     if(resizeHandle){resizeHandle.style.right=(fieldRight+width)+'px';resizeHandle.setAttribute('aria-valuemin',String(min));resizeHandle.setAttribute('aria-valuemax',String(max));resizeHandle.setAttribute('aria-valuenow',String(width));resizeHandle.setAttribute('aria-valuetext',width+' пикселей');}
-    if(notify&&!widthFrame)widthFrame=root.requestAnimationFrame(()=>{widthFrame=0;root.dispatchEvent(new Event('resize'));});
+    if(notify&&!widthFrame)widthFrame=root.requestAnimationFrame(()=>{widthFrame=0;const manual=manualWidthChanged;manualWidthChanged=false;root.dispatchEvent(new Event('resize'));if(manual&&open)root.dispatchEvent(new CustomEvent('mayatnik-template-panel-resize'));});
   }
   function saveWidth(){try{root.localStorage.setItem(WIDTH_KEY,String(widthPreference));}catch(_){} }
   function finishResize(cancel=false){if(!resizeDrag)return;const drag=resizeDrag;resizeDrag=null;
@@ -214,9 +215,10 @@
       if(activeTab==='templates'&&engine?.getState().selectedId){e.preventDefault();engine.clear();return;}
       if(root.MayatnikLibraryDetached){root.close();return;}setOpen(false);doc.getElementById('bTemplatePanel')?.focus();
     }});
-    try{open=storage?.getItem(OPEN_KEY)==='1';}catch(_){}
+    // The main page always starts with the library closed, including after F5.
+    open=!!root.MayatnikLibraryDetached;
     try{let saved=storage?.getItem(TAB_KEY);if(saved==='views'){saved='frames';storage?.setItem(TAB_KEY,saved);}storage?.setItem('mayatnik-library-tabs-v2','1');activeTab=saved==='layers'||saved==='sequences'||captureLibraries.has(saved)?saved:'templates';}catch(_){}
-    bindLayers(root.mayLayers);bind(root.mayTemplateLibrary);for(const library of captureLibraries.values())bindCapture(library,root[library.apiName]);selectTab(activeTab,false);if(!root.MayatnikLibraryDetached&&root.maySequences?.snapshot().matches.enabled){selectTab('sequences');setOpen(true);}else if(open)setOpen(true,false);
+    bindLayers(root.mayLayers);bind(root.mayTemplateLibrary);for(const library of captureLibraries.values())bindCapture(library,root[library.apiName]);selectTab(activeTab,false);if(!root.MayatnikLibraryDetached&&root.maySequences?.snapshot().matches.enabled)selectTab('sequences');if(open)setOpen(true,false);
   }
   function beginDrag(e,kind,id){dragged={kind,id};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('application/x-mayatnik-template',JSON.stringify(dragged));}
   function dropTarget(node,kind,id){

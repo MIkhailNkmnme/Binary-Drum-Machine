@@ -12,4 +12,19 @@ footer{max-width:1440px;padding:24px 28px;margin:20px auto 0;border-top:1px soli
 @media(max-width:1050px){.book-layout{grid-template-columns:210px minmax(0,1fr);gap:24px}h2{font-size:26px}.comparison,.legend{grid-template-columns:1fr}}
 @media(max-width:760px){.book-header,.book-title{padding:20px 16px}.book-header{gap:14px}.book-header span{margin-left:0;width:100%}.book-layout{display:block;padding:0 16px}.book-toc{position:static;max-height:none;padding:0;margin:0 0 25px}.book-toc details{margin-top:0}.toc-list{columns:2;column-gap:22px;max-height:340px;overflow:auto}.toc-list li{break-inside:avoid}.toc-list a{font-size:13px}.lead{font-size:18px}.book-main>section{padding:28px 0}h2{font-size:25px}th,td{padding:10px}table{font-size:14px}.controls label{width:100%;justify-content:space-between}.controls select{max-width:67%}.diagram{overflow-x:auto}.diagram svg{min-width:650px}.mobile-hint{display:block;color:var(--muted);font-size:14px}.recipe{padding:15px}.demo{padding:15px}footer{padding:22px 16px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+/* Compact handbook on screen; print keeps its own full-resolution layout. */
+@media screen{
+ :root{font-size:14px;line-height:1.4}
+ .book-header{padding-top:12px;padding-bottom:12px;gap:14px}.book-title{padding-top:24px;padding-bottom:18px}
+ h1{font-size:clamp(28px,3.5vw,40px);margin-bottom:12px}.lead,.section-lead{font-size:16px;line-height:1.4;margin:8px 0}
+ .book-main>section{padding:20px 0 24px}h2{font-size:22px;margin-bottom:12px}h3{font-size:18px;margin:16px 0 8px}
+ p{margin:8px 0 10px}li{margin:4px 0}code,kbd{font-size:12px;line-height:1.3;padding:1px 4px}
+ .table-wrap{margin:10px 0}table{font-size:14px;line-height:1.4}th,td{padding:6px 8px}
+ .note,.recipe,.demo{margin:12px 0;padding:10px 12px}.note{line-height:1.4}.recipe h3{margin-bottom:8px}ol.recipe{padding-left:30px}
+ details{margin:12px 0;padding:10px 12px}details[open]>summary{margin-bottom:8px}.legend{gap:8px}.legend>div{padding:10px 12px}dd{margin-top:4px}
+ figure,.comparison figure{margin:12px 0}figure>a{width:fit-content;max-width:100%}.book-main figure img{width:auto;max-width:min(100%,560px);max-height:340px;object-fit:contain}figcaption{font-size:13px;line-height:1.35;margin-top:5px}
+ .book-main .diagram{min-height:0}.book-main .diagram svg{display:block;width:100%;min-width:0;max-width:760px;max-height:340px;height:auto}.comparison{gap:12px}
+ #shortcuts{font-size:13px;line-height:1.3}#shortcuts h3{font-size:16px;margin:14px 0 6px}#shortcuts p{margin:6px 0 8px}#shortcuts .small{font-size:13px;line-height:1.3}
+ #shortcuts .table-wrap{margin:6px 0 10px}#shortcuts table{font-size:13px;line-height:1.3}#shortcuts th,#shortcuts td{padding:4px 6px}#shortcuts td:first-child{width:32%}#shortcuts kbd{font-size:12px;line-height:1.2}
+}
 @media print{html,body{background:#fff;color:#151515;font-size:11pt}.book-header,.book-toc,.jump-links,.no-print{display:none}.book-title,.book-layout,footer{display:block;max-width:none;padding:0}.book-main>section{break-inside:auto;padding:16pt 0}.book-main h2{break-after:avoid;color:#24334d}h3,b,strong,dt{color:#111}.table-wrap{overflow:visible}table{font-size:9pt}td,th{border-color:#bbb}figure{break-inside:avoid}figure img{max-height:550px}.note,.recipe,.demo,.legend>div,thead th,tbody tr:nth-child(even){background:#f1f3f7;color:#111}a{color:#253c69}figcaption,footer,.scope,.small{color:#444}details{border-color:#ccc}}

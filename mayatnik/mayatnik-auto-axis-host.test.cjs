@@ -13,6 +13,7 @@ function fixture(state={}){
   fixSegments:()=>[[4,0,8,4,13,9,4],[12,0,8,4,3,9,4]],fixShown:()=>st.fixLines!==false||st.fixCross!==false,fixBound:()=>st.fixLines!==false,Path2D:class{moveTo(){}lineTo(){}},axisStroke:(G,o)=>Style.stroke(G,o),fixPad(){assert.fail('read-only collector changed padding');},vtxLabels(){assert.fail('read-only collector changed labels');},
   symGet:()=>({segs:[]}),autoAxesGet:()=>({segments:[]}),triangleMapGet:()=>({axes:[]}),navQuick:()=>false,stopFrameTransports(){c.stops++;},stops:0,paintToolColour:()=>'#123456',rgba:()=>0xff563412,
   paintSelection:(x,y,mirror,manual,indices)=>({indices}),pushHistory:e=>history.push(e),fillSync(){},draw(){c.draws++;},draws:0,savePaint(){c.saves++;},saves:0,history};
+ c.parityValues=()=>c.f.val;c.joinedDiamond=()=>false;c.joinedSquare=()=>false;c.joinedWhole=()=>false;
  c.gpuPaintCpu=()=>!!c.gpuBig&&(c.gpuPaintRequests>0||!!c.fillMask);
  vm.createContext(c);vm.runInContext(section('  function fixPts(','  // v0.205:')+section('  function fixLinesDraw(','  // v0.245 →')+section('  function guideBottom(','  function guideHeight(')+section('  let axesColourBusy=','  // v0.480:'),c);return c;
 }

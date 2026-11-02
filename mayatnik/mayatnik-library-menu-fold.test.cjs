@@ -1,0 +1,36 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const read=name=>fs.readFileSync(__dirname+'/'+name,'utf8');
+function target(){const events=new Map();return {addEventListener(type,fn){if(!events.has(type))events.set(type,new Set());events.get(type).add(fn);},removeEventListener(type,fn){events.get(type)?.delete(fn);},dispatchEvent(event){for(const fn of events.get(event.type)||[])fn(event);}};}
+function node(){const attrs=new Map(),classes=new Set();return Object.assign(target(),{hidden:false,isConnected:true,style:{setProperty(){}},setAttribute:(k,v)=>attrs.set(k,v),getAttribute:k=>attrs.get(k),hasAttribute:k=>attrs.has(k),removeAttribute:k=>attrs.delete(k),classList:{contains:k=>classes.has(k),add:k=>classes.add(k),remove:k=>classes.delete(k)},append(){},focus(){},setPointerCapture(){},releasePointerCapture(){}});}
+function clock(){let frames=[];return {requestAnimationFrame(fn){frames.push(fn);return frames.length;},frame(){const list=frames;frames=[];for(const fn of list)fn();},flush(){for(let i=0;frames.length&&i<10;i++)this.frame();assert.equal(frames.length,0);}};}
+const rect=(left,right,top=0,bottom=100)=>({left,right,top,bottom,width:right-left,height:bottom-top});
+function fixture(){const root=Object.assign(target(),clock()),doc=target(),panel=node(),groups=[],popups=[];let bounds=rect(700,1200),layouts=0;panel.getBoundingClientRect=()=>bounds;root.document=doc;
+ vm.runInNewContext(read('mayatnik-library-menu-fold.js'),{window:root});const api=root.MayatnikLibraryMenuFold.mount({groups:()=>groups,panel:()=>panel,popups:()=>popups,onLayout:()=>layouts++});
+ function group(left,right,open=true){const g=node(),head=node(),content=node();g.open=open;g.matches=sel=>sel==='.pt-open,.gz-open'?g.open:false;content.getBoundingClientRect=()=>g.hasAttribute('data-library-folded')?rect(0,0):rect(left,right);g.querySelector=()=>head;g.querySelectorAll=()=>[content];head.parentElement=g;head.closest=sel=>sel==='.pt-l,.gz-head'?head:null;head.click=()=>{g.open=!g.open;head.setAttribute('aria-expanded',String(g.open));};content.querySelectorAll=()=>[];groups.push(g);return {g,head};}
+ return {root,doc,panel,group,popups,api,setBounds:r=>bounds=r,get layouts(){return layouts;},emit(type,detail){root.dispatchEvent({type,detail});root.flush();},reveal(head){doc.dispatchEvent({type:'click',target:head,preventDefault(){},stopImmediatePropagation(){}});}};
+}
+test('manual boundary change folds newly overlapping groups without changing logical state or unrelated groups',()=>{
+ const f=fixture(),a=f.group(720,850),b=f.group(500,600),safe=f.group(20,100),closed=f.group(500,650,false);f.emit('mayatnik-template-panel-change',{open:true});assert.ok(a.g.hasAttribute('data-library-folded'));assert.ok(!b.g.hasAttribute('data-library-folded'));
+ f.setBounds(rect(550,1200));f.emit('mayatnik-template-panel-resize');assert.ok(b.g.hasAttribute('data-library-folded'));assert.equal(b.head.getAttribute('aria-expanded'),'false');assert.equal(b.g.open,true);assert.ok(!safe.g.hasAttribute('data-library-folded'));assert.ok(!closed.g.hasAttribute('data-library-folded'));
+ f.emit('mayatnik-template-panel-change',{open:false});assert.ok(!a.g.hasAttribute('data-library-folded'));assert.ok(!b.g.hasAttribute('data-library-folded'));assert.equal(a.g.open,true);assert.equal(b.g.open,true);assert.equal(closed.g.open,false);
+});
+test('manually reopened group stays open through ordinary layout, folds again on next manual resize, and restores on close',()=>{
+ const f=fixture(),a=f.group(720,850);f.emit('mayatnik-template-panel-change',{open:true});f.reveal(a.head);assert.ok(!a.g.hasAttribute('data-library-folded'));f.emit('resize');assert.ok(!a.g.hasAttribute('data-library-folded'));
+ f.emit('mayatnik-template-panel-resize');assert.ok(a.g.hasAttribute('data-library-folded'));a.g.open=false;f.emit('mayatnik-template-panel-change',{open:false});assert.equal(a.g.open,true);assert.equal(a.head.getAttribute('aria-expanded'),'true');
+});
+test('resize checks floating popup overlap and closing cancels pending captures',()=>{
+ const f=fixture(),a=f.group(20,100),popup=node();popup.getBoundingClientRect=()=>rect(650,800);f.popups.push({node:popup,group:a.g});f.emit('mayatnik-template-panel-change',{open:true});assert.ok(popup.hasAttribute('data-library-folded-popup'));
+ f.root.dispatchEvent({type:'mayatnik-template-panel-resize'});f.root.dispatchEvent({type:'mayatnik-template-panel-change',detail:{open:false}});f.root.flush();assert.ok(!a.g.hasAttribute('data-library-folded'));assert.ok(!popup.hasAttribute('data-library-folded-popup'));f.api.destroy();const layouts=f.layouts;f.emit('mayatnik-template-panel-resize');assert.equal(f.layouts,layouts);
+});
+test('continuous drag captures while resize events continue rather than postponing every capture until release',()=>{
+ const f=fixture(),a=f.group(500,600);f.emit('mayatnik-template-panel-change',{open:true});f.setBounds(rect(550,1200));for(let i=0;i<4;i++){f.root.dispatchEvent({type:'mayatnik-template-panel-resize'});f.root.frame();}assert.ok(a.g.hasAttribute('data-library-folded'));f.root.flush();
+});
+function resizer(){const root=Object.assign(target(),clock(),{innerWidth:1200,innerHeight:800,localStorage:{setItem(){}}}),doc=Object.assign(target(),{body:node(),documentElement:{clientWidth:1200},getElementById:()=>null,querySelector:()=>null,createElement:()=>node()}),panel={id:'panel'};root.document=doc;const context={root,doc,panel,open:true,OPEN_KEY:'open',WIDTH_KEY:'width',Event:function(type){this.type=type;},CustomEvent:function(type){this.type=type;}};vm.createContext(context);const source=read('mayatnik-template-panel.js');vm.runInContext(source.slice(source.indexOf('  let resizeHandle,'),source.indexOf('  function token('))+'\nmakeResizer();this.handle=resizeHandle;',context);return {root,context,handle:context.handle,send(type,extra={}){context.handle.dispatchEvent({type,preventDefault(){},stopPropagation(){},...extra});}};}
+test('real resizer emits dedicated signal only for changed manual boundaries, including keyboard resizing',()=>{
+ const f=resizer();let changes=0;f.root.addEventListener('mayatnik-template-panel-resize',()=>changes++);f.send('pointerdown',{button:0,pointerId:1,clientX:600});f.send('pointermove',{pointerId:1,clientX:500});f.root.flush();assert.equal(changes,1);f.send('pointermove',{pointerId:1,clientX:500});f.send('pointerup',{pointerId:1});f.root.flush();assert.equal(changes,1);
+ f.send('keydown',{key:'ArrowLeft'});f.root.flush();assert.equal(changes,2);f.send('keydown',{key:'End'});f.root.flush();assert.equal(changes,3);f.send('keydown',{key:'End'});f.root.flush();assert.equal(changes,3);f.root.innerWidth=1000;f.root.dispatchEvent({type:'resize'});f.root.flush();assert.equal(changes,3);
+});
+test('cancel restores boundary and emits a final signal, while closing suppresses a pending resize signal',()=>{
+ const f=resizer();let changes=0;f.root.addEventListener('mayatnik-template-panel-resize',()=>changes++);f.send('pointerdown',{button:0,pointerId:1,clientX:600});f.send('pointermove',{pointerId:1,clientX:500});f.root.flush();f.send('pointercancel',{pointerId:1});f.root.flush();assert.equal(changes,2);
+ f.send('keydown',{key:'ArrowLeft'});vm.runInContext('open=false',f.context);f.root.flush();assert.equal(changes,2);
+});

@@ -762,14 +762,14 @@
     // v0.291: «Пила» — красная пила в боковых секторах, отдельно от осей «Точки встречи»
     // v0.400: «Пила полная» — пила продолжается внутрь, голубым, до низа поля
     const sfp = document.createElement('button'); sfp.title = 'Пила полная'; const bSf = ptBtn('sawFull', 'zigzag', sfp, () => { const P = window.maySawFull; P?.set(!P.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.maySawFull?.get(); bSf.classList.toggle('on', on); bSf.title = 'Пила полная: та же пила, отражённая через главную диагональ — голубые зубцы внутри нижнего сектора, до низа поля · ' + (on ? 'вкл' : 'выкл'); });
+    toolSync.push(() => { const api=window.maySawFull,on=!!api?.get(),reason=api?.reason?.()||'';bSf.classList.toggle('on',on);bSf.disabled=!!reason;bSf.title=reason||'Пила полная: та же пила, отражённая через главную диагональ — голубые зубцы внутри нижнего сектора, до низа поля · '+(on?'вкл':'выкл'); });
     // v0.281: «Площади» — треугольник ▼, секторы, зубец пилы — в клетках, совпадения
     const arp = document.createElement('button'); arp.title = 'Площади'; const bAr = ptBtn('areas', 'square', arp, () => { const A = window.mayAreas; A?.set(!A.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayAreas?.get(); bAr.classList.toggle('on', on); bAr.title = 'Площади в клетках: ▼ — самая большая сплошная область в нижнем секторе, секторы верх / низ / лево / право, зубец пилы; совпавшие — одним цветом и строкой «… = …» внизу слева · ' + (on ? 'вкл' : 'выкл'); });
     // v0.477: «Заморозка» — снимок ▼ площадей текущего кадра, контуры стоят на месте, пока маятник растёт; ещё раз — снять
     // v0.478: щелчок — добавить ▼ этого кадра к замороженным; снять все — «Очистить» в «Очистке» («снятие через очистить»)
     const afp = document.createElement('button'); afp.title = 'Заморозка'; const bAf = ptBtn('areaFreeze', 'pin', afp, () => { window.mayAreaFreeze?.add(); placeTools(); });
-    toolSync.push(() => { const Z = window.mayAreaFreeze?.get(); bAf.classList.toggle('on', !!Z); bAf.title = Z ? 'Заморожено ▼: ' + Z.tris.length + ' (кадры ' + Z.ks.join(', ') + ') — контуры и площади стоят на месте, маятник растёт · щелчок — добавить ▼ этого кадра; снять — «Очистить»' : 'Заморозка: щелчок — запомнить ▼ площади этого кадра (контуры и h² останутся на месте, пока маятник растёт; следующие щелчки добавляют ▼ других кадров); снять — «Очистить» · нужна точка встречи'; });
+    toolSync.push(() => { const Z = window.mayAreaFreeze?.get(); bAf.classList.toggle('on', !!Z); bAf.title = Z ? 'Заморожено ▼: ' + Z.tris.length + ' (кадры ' + Z.ks.join(', ') + ') — контуры и площади стоят на месте, маятник растёт · щелчок — добавить ▼ этого кадра; правая треть — сбросить накопленные границы' : 'Заморозка: щелчок — запомнить ▼ площади этого кадра (контуры и h² останутся на месте, пока маятник растёт; следующие щелчки добавляют ▼ других кадров); правая треть включённой кнопки — сбросить границы · нужна точка встречи'; });
     // v0.486: чистое построение от вершины, отдельный сброс; ×2, затем ×3/2, ×4/3 — итог ×2, ×3, ×4 от снимка.
     const ovp = document.createElement('button'); ovp.title = 'Наложение'; const bOv = ptBtn('ovlStep', 'plus', ovp, () => { window.mayOvl?.step(); placeTools(); });
     const opp = document.createElement('button'); opp.title = 'Сдвиг'; const bOp = ptBtn('ovlPos', 'swap', opp, () => { window.mayOvl?.pos(); placeTools(); });
@@ -852,26 +852,6 @@
     // v0.236: «Замок ↔» — ось «Застыло» не ходит по сторонам: стоит на столбце, где была при включении
     const lkp = document.createElement('button'); lkp.title = 'Замок'; const bLk = ptBtn('fixLock', 'pin', lkp, () => { const L = window.mayFixLock; L?.set(!L.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixLock?.get(); bLk.classList.toggle('on', on); bLk.title = 'Замок ↔: ось «Застыло» (и центр зеркал) стоит на своём столбце — не ходит влево-вправо ни со сменой кадров, ни при «Сдвиге кадром», ни при «Гориз» · ' + (on ? 'вкл' : 'выкл'); });
-    // v0.235: «Биты в строках» — таблица строк 1…15 текущего кадра (window.mayRowCount) под кнопкой; ещё щелчок, Esc или щелчок мимо — закрыть. Кадр сменился — таблица пересчитывается
-    const rcp = document.createElement('button'); rcp.title = 'Счёт'; let rcBox = null;
-    const rcFmt = v => v === null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + String(Math.abs(v)).replace('.5', '½').replace(/^0½/, '½');
-    const rcFill = () => { const d = window.mayRowCount?.(15); if (!rcBox || !d) return;
-      const AXN = ['ход', 'стоит', 'антиход'], h = 'Кадр ' + d.k + ' · вершин ' + d.n + (d.n ? ' (от ' + rcFmt(d.vLo) + ' до ' + rcFmt(d.vHi) + ')' : '') +
-        (d.axis === null ? ' · линий «Застыло» нет' : ' · точка встречи: столбец ' + rcFmt(d.meet) + ', строка ' + rcFmt(d.meetY) + ' · ось (' + AXN[d.am] + '): ' + rcFmt(d.axis));
-      rcBox.querySelector('.rc-h').textContent = h;
-      rcBox.querySelector('tbody').innerHTML = d.rows.map(o => '<tr><td>' + o.r + '</td><td><b>' + o.all + '</b></td><td>' + (o.all % 2 ? 'нечёт' : 'чёт') + '</td><td>' + o.one + '</td><td>' + o.zero + '</td><td>' + rcFmt(o.lo) + ' … ' + rcFmt(o.hi) +
-        '</td><td>' + rcFmt(o.mid) + '</td><td>' + (d.axis === null ? '—' : o.L + ' | ' + o.M + ' | ' + o.R + (o.L === o.R ? ' ✓' : '')) + '</td></tr>').join(''); };
-    const rcClose = () => { rcBox?.remove(); rcBox = null; bRc.classList.remove('on'); };
-    const bRc = ptBtn('rowCount', 'bars', rcp, () => { if (rcBox) { rcClose(); return; }
-      rcBox = document.createElement('div'); rcBox.className = 'may-rc';
-      rcBox.innerHTML = '<div class="rc-h"></div><table><thead><tr><th>строка</th><th>битов</th><th></th><th>1</th><th>0</th><th>столбцы от якоря</th><th>середина</th><th>слева | на оси | справа</th></tr></thead><tbody></tbody></table>' +
-        '<div class="rc-n">Столбец 0 — якорь, ½ — граница между битами. Ширина строки r = вершин + 2·(r − 1): чётность у всех строк кадра одна.</div>';
-      document.body.append(rcBox); const b = (tools.querySelector('[data-n=measureCount]')||bRc).getBoundingClientRect(); rcBox.style.left = Math.max(4, Math.min(innerWidth - rcBox.offsetWidth - 4, b.left)) + 'px'; rcBox.style.top = Math.round(b.bottom + 6) + 'px';
-      bRc.classList.add('on'); rcFill(); });
-    bRc.title = 'Биты в строках: сколько битов в каждой строке 1…15 текущего кадра, из них 1 и 0, крайние столбцы, середина, слева / справа от оси «Застыло»';
-    toolSync.push(rcFill);
-    addEventListener('keydown', e => { if (e.key === 'Escape' && rcBox) rcClose(); });
-    addEventListener('pointerdown', e => { if (rcBox && !rcBox.contains(e.target) && !bRc.contains(e.target)) rcClose(); }, true);
     // v0.220: «Во всю ширину» — вверх отражается вся строка, как если бы треугольник прошёл по горизонтали всё поле
     const wp = document.createElement('button'); wp.title = 'Ширина'; const bw = ptBtn('fixWide', 'corners', wp, () => { const W = window.mayFixWide; W?.set(!W.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixWide?.get(); bw.classList.toggle('on', on); bw.title = 'Во всю ширину: «Зеркало ↑» отражает вверх от горизонтали всю строку поля, а не только треугольник между диагоналями · ' + (on ? 'вкл' : 'выкл'); });
@@ -892,7 +872,7 @@
     const op = document.createElement('button'); op.title = 'Наружу'; const bn = ptBtn('fixLowOut', 'swap', op, () => { const Lw = window.mayFixLow; Lw?.setOut(!Lw.out()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixLow?.out(); bn.classList.toggle('on', on); bn.title = 'Наружу: «Зеркало ↓» наоборот — нижний треугольник отражается через диагонали в боковые клинья · ' + (on ? 'вкл' : 'выкл'); });
     const visBtn = bVis || bOa;   // v0.567: в упрощённом окружении тестов тройка может не построиться
-    gView.querySelector('[data-n="fixMirror"]').after(bTc, bSf, bSc, bAr, bAf, bOv, bOp, bOh, bOf, visBtn, bOa, bOo, bOc, bOq, bOr, bRl, bVf, bHt, bd, bf, bv, ba, bLk, bRc, bw, br, bk, bl, bn, bc, bo);
+    gView.querySelector('[data-n="fixMirror"]').after(bTc, bSf, bSc, bAr, bAf, bOv, bOp, bOh, bOf, visBtn, bOa, bOo, bOc, bOq, bOr, bRl, bVf, bHt, bd, bf, bv, ba, bLk, bw, br, bk, bl, bn, bc, bo);
     window.mayFixAxisNames = AX;
     window.mayMirLists = { col: COL, op: OP }; }
   // v0.194: показ пикселей по цвету — пять кнопок: горит — пиксели этого цвета видны, погашена — скрыты (цветом пустоты)
@@ -919,7 +899,7 @@
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   {const e=$('bGif'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bGif';const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'record');b.append(mark);b.onclick=()=>e.click();toolSync.push(()=>{b.title=tip(e);b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');});tools.querySelector('[data-n="bRec"]').parentElement.append(b);}
-  const ptNames = { viewOverlay_contours:'Контуры',viewOverlay_digits:'Цифры',crossMirror:'Зеркала крестов',crossMirrorMode:'Слева → вправо',crossMirrorSector:'Сектор А1',crossLabels:'Секторы креста', lineMeasures:'Размеры', fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'Загиб Верт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', rowCount:'Биты в строках', fixCross:'Точка встречи', sawFull:'Пила полная', rowLab:'Подписи', vtxFlash:'Вспышка', heat:'Тепло',   // v0.329: «Вид» — стандартной ширины, названия короче
+  const ptNames = { viewOverlay_contours:'Контуры',viewOverlay_digits:'Цифры',crossMirror:'Зеркала крестов',crossMirrorMode:'Слева → вправо',crossMirrorSector:'Сектор А1',crossLabels:'Секторы креста', lineMeasures:'Размеры', fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'Загиб Верт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', fixCross:'Точка встречи', sawFull:'Пила полная', rowLab:'Подписи', vtxFlash:'Вспышка', heat:'Тепло',   // v0.329: «Вид» — стандартной ширины, названия короче
     sectors:'Секторы', areas:'Площади', areaFreeze:'Заморозка', ovlStep:'Наложение', ovlPos:'Сдвиг G', ovlH0:'Шаг 8', ovlReset:'Сброс налож.', ovlFreeze:'Фиксировать', ovlAlpha:'Видимость 50%', ovlOriginal:'Оригинал', ovlCenter:'По оси', saw:'Пила', fixLock:'Замок ↔', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', clrPaint:'Окраска', clrMirrors:'Зеркала', clrAxes:'Все оси', clrSel:'Выделение', bFill:'Заливка', bAutoVertical:'Столбы', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', bPaintMeet:'Точка', bPaintAxis:'ТочкаОсь', bThirds:'Трети', bTriTop:'▼ ← верх', meetGrow:'Рост', meetCol:'Цвет', bFillGrow:'Рост', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', triangleMapSource:'Карта 1093', triangleMapAxes:'Оси карты', triangleMapMask:'Маска узора', triangleMapMirror:'Зеркала ▼', autoAxes:'Автооси ▼', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Шахм ↕', symH:'Шахм ↔', symD:'Шахм ╲╱', symPlainV:'Оси ↕', symPlainH:'Оси ↔', symPlainD:'Оси ╲╱', bAxisLine:'Своя ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Виды поля', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.774: пункты списка «Вид» раскрываются сразу внутри группы «Виды поля», без вложенной кнопки.
   const viewModeButtons=new Map();
@@ -1066,7 +1046,7 @@
        [['Показ поля', '#7cbcff', ['lg', 'parityCells', 'parityRows', 'parityCols', 'parityRowFill', 'parityRowsLevels', 'parityCellsLevels', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
-      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'lineMeasures', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
+      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'lineMeasures', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'fixWide', 'fixRot', 'fixDragK']],
        ['Зеркало ↓', '#ff87cf', ['fixLow', 'fixLowOut']],
        ['Все зеркала: цвет и наложение', '#ff9b50', ['mirCol', 'mirOp']],
        ['Пиксели по цвету: видны / скрыты', '#e8edf5', ['px_b', 'px_r', 'px_y', 'px_k', 'px_w']]] ];
@@ -1080,6 +1060,29 @@
   gAreas.parentElement.dataset.k='Площади';gAreas.parentElement.classList.add('may-measure-group');gAreas.parentElement.querySelector('.may-group-title').textContent='МЕРИТЬ';
   gAreas.parentElement.style.setProperty('--c', '#b48cff');
   for (const n of ['sawFull', 'sectors', 'areas', 'areaFreeze', 'ovlStep', 'ovlPos', 'ovlH0', 'ovlFreeze', 'ovlAlpha', 'ovlOriginal', 'ovlCenter', 'ovlReset', 'lineMeasures']) { const b = tools.querySelector('[data-n=' + n + ']'); if (b) gAreas.append(b); }
+  // МАЯ-395/396: these measurements retain their live controls and compact preferences.
+  for(const id of ['rowLab','geomCenter']){const node=tools.querySelector('[data-n="'+id+'"]');if(node)gAreas.append(node);}
+  try{const key='mayatnik-control-mini-v464',saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved)){const next=new Set(saved);for(const id of ['rowLab','geomCenter'])if(next.has('group:Вид:data:'+id))next.add('group:Площади:data:'+id);if(next.size!==saved.length)localStorage.setItem(key,JSON.stringify([...next]));}}catch(_){}
+  function mountMeasureChoices(row,apis=window){
+    const doc=row.ownerDocument,moves=[],syncs=[];
+    const half=(node,index)=>{node.classList.remove('pt-b','gz-hx');node.classList.add('gz-half','gz-h'+index);};
+    const pair=(nodes,id,cls,label)=>{const box=doc.createElement('div');box.className='gz-hx gz-pair gz-split '+cls;box.dataset.n=id;box.setAttribute('role','group');box.setAttribute('aria-label',label);nodes[0].before(box);nodes.forEach((node,i)=>{half(node,i);box.append(node);});return box;};
+    const sectors=row.querySelector('[data-n="sectors"]'),areas=row.querySelector('[data-n="areas"]');
+    if(sectors&&areas){const box=pair([sectors,areas],'measureMode','may-segments may-measure-choice','Секторы или площади');
+      for(const [node,api,other]of [[sectors,'maySectors','mayAreas'],[areas,'mayAreas','maySectors']]){const original=node.onclick;node.onclick=event=>{if(node.disabled)return;const target=apis[other];if(target?.get())target.set(false);original?.call(node,event);sync();};moves.push(['group:Площади:data:'+node.dataset.n,'group:Площади:data:measureMode']);}
+      const sync=()=>{for(const [node,api]of [[sectors,'maySectors'],[areas,'mayAreas']]){const on=!!apis[api]?.get();node.classList.toggle('gz-on',on);node.setAttribute('aria-pressed',String(on));}box.classList.toggle('on',!!apis.maySectors?.get()||!!apis.mayAreas?.get());};syncs.push(sync);
+    }
+    const freeze=row.querySelector('[data-n="areaFreeze"]');
+    if(freeze){const reset=doc.createElement('button');reset.type='button';reset.textContent='Сбр';reset.title='Сбросить накопленные границы заморозки';reset.setAttribute('aria-label',reset.title);reset.dataset.n='areaFreezeClear';
+      const box=pair([freeze,reset],'areaFreezeControls','may-area-freeze','Заморозка и сброс накопленных границ');moves.push(['group:Площади:data:areaFreeze','group:Площади:data:areaFreezeControls']);
+      const sync=()=>{const active=!!apis.mayAreaFreeze?.get();box.classList.toggle('is-active',active);box.classList.toggle('on',active);box.classList.toggle('gz-pair',active);box.classList.toggle('gz-split',active);freeze.classList.toggle('gz-on',active);freeze.setAttribute('aria-pressed',String(active));reset.hidden=!active;reset.disabled=!active;reset.tabIndex=active?0:-1;if(active){if(reset.parentElement!==box)box.append(reset);}else{reset.remove();freeze.style.removeProperty('clip-path');box.classList.remove('may-standard-pair','may-independent-pair','may-choice-two');}};
+      reset.onclick=event=>{event?.stopPropagation();if(reset.disabled)return;apis.mayAreaFreeze?.clear();sync();placeTools();};syncs.push(sync);
+    }
+    const sync=()=>{for(const run of syncs)run();};sync();toolSync.push(sync);
+    try{const key='mayatnik-control-mini-v464',saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved)){const next=new Set(saved);for(const [from,to]of moves)if(next.has(from))next.add(to);if(next.size!==saved.length)localStorage.setItem(key,JSON.stringify([...next]));}}catch(_){}
+    return {sync};
+  }
+  mountMeasureChoices(gAreas);
   // v0.490 (МАЯ-019): группа — только клиент реестра; настройки не пересчитывают поле и не меняют исходные пиксели.
   function installLayersMenu(api) {
     if(!api)return;
@@ -1459,16 +1462,25 @@
       for(const [row,id,label,group]of [[gView,'resetView','Сброс вида','view'],[railRow('zoom'),'resetScale','Сброс масштаба','scale'],[gAreas,'resetMeasure','Сброс измерений','measure'],[gMeet,'resetPoint','Сброс точки','point'],[groupRow('Ячейки'),'resetCells','Сброс ячеек','cells'],[groupRow('Слои'),'resetLayers','Сброс слоёв','layers'],[railRow('ochki'),'resetOchki','Сброс находок','ochki'],[railRow('horr'),'resetTransport','Остановить всё','transport']])
       command(row,id,label,group==='ochki'?'Сброс находок — снять найденные подсветки, сохранив кнопки и настройки':label+' — только эта группа',()=>{window.mayReset?.group(group);rail.refresh();placeTools();});
     }
-    // Keep original measure/count controls and callbacks as list actions.
-    const size=tools.querySelector('[data-n=lineMeasures]'),count=tools.querySelector('[data-n=rowCount]');
-    if(size&&count){const retained=document.createElement('div');retained.hidden=true;retained.dataset.measureRetained='';retained.style.display='none';retained.append(size,count);gAreas.append(retained);
-      const combo=command(gAreas,'measureCount','Рзмер\\счёт','Размеры линий и счёт битов — две независимые функции в одном списке',null);
-      combo.dataset.miShort='Рзмер\\счёт';combo.dataset.listTitle='Рзмер\\счёт';combo.querySelector('.gz-nm').dataset.userLabel='';
-      ZerkGrozd.listHover(combo,{options:()=>[{key:'size',name:'Размеры',on:!!window.mayLineMeasures?.get(),pick:()=>size.click()},{key:'count',name:'Счёт',on:count.classList.contains('on'),pick:()=>count.click()}],after:()=>{rail.refresh();placeTools();},color:()=>getComputedStyle(combo).getPropertyValue('--c').trim()||'#b48cff'});
-    }
+    // МАЯ-398: lineMeasures remains a direct control in Measure; the row-count popup was removed.
     addEventListener('may-reset-complete',()=>{rail.refresh();placeTools();});
   }
   // v0.630: five independent buttons open the original controls beside the main group.
+  // МАЯ-390: keep the live overlay controls together inside Scale, preserving menu layout keys.
+  function mountOverlaySubgroup(){
+    const zoom=document.querySelector('.gz-group[data-id="zoom"]');if(!zoom)return;
+    let home=zoom.querySelector('.gz-wide');if(!home){home=document.createElement('div');home.className='gz-wide';(zoom.querySelector(':scope > .may-rail-list')||zoom).append(home);}
+    const section=document.createElement('div');section.className='pt-sec may-overlay-group';section.setAttribute('role','group');section.setAttribute('aria-label','Наложение');
+    const title=document.createElement('div');title.className='may-overlay-title';title.dataset.noMini='';title.dataset.userLabel='';title.textContent='НАЛОЖЕНИЕ';title.setAttribute('role','heading');title.setAttribute('aria-level','3');section.append(title);
+    for(const edge of ['top','bottom']){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('may-overlay-bracket','may-overlay-bracket-'+edge);svg.setAttribute('viewBox','0 0 120 14');svg.setAttribute('aria-hidden','true');svg.innerHTML='<path d="M1 13L13 1H107L119 13"/>';section.append(svg);}
+    const ids=['ovlStep','ovlPos','ovlH0','ovlFreeze','ovlVisibility','ovlAlpha','ovlOriginal','ovlCenter','ovlReduce','ovlReset','ovlReturn'],moves=[];
+    const key=node=>{const group=node.closest('[data-id],.pt-g'),owner=group?.dataset.id||group?.dataset.k||group?.querySelector(':scope > .pt-l')?.title||group?.id||'';const parent=node.parentElement,peers=[...parent.children].filter(n=>n.matches('button,.gz-hx,[role="button"]'));return node.dataset.n?'group:'+owner+':data:'+node.dataset.n:'group:'+owner+':parent:'+(parent.id||parent.className)+':slot:'+peers.indexOf(node);};
+    for(const id of ids){const node=id==='ovlVisibility'?tools.querySelector('.may-vis-triple'):tools.querySelector('[data-n="'+id+'"]');if(!node)continue;const from=key(node);if(id==='ovlVisibility')node.dataset.n=id;section.append(node);node.style.left=node.style.top='';moves.push([from,'group:zoom:data:'+id]);}
+    home.append(section);
+    // Copy compact preferences to their new owner; retain the original entries and the storage key.
+    try{const storageKey='mayatnik-control-mini-v464',saved=JSON.parse(localStorage.getItem(storageKey)||'[]');if(Array.isArray(saved)){const next=new Set(saved);for(const [from,to]of moves)if(next.has(from))next.add(to);if(next.size!==saved.length)localStorage.setItem(storageKey,JSON.stringify([...next]));}}catch(_){}
+  }
+  mountOverlaySubgroup();
   function mountHorrSections(group, { storage = localStorage, after = () => {}, openGroup = () => {} } = {}) {
     if (!group) return null;
     const doc = group.ownerDocument, win = doc.defaultView;
@@ -1734,12 +1746,11 @@
       let shown = new Map(), sig = '', d = null, rd = null, rdown = null, swallow = false;
       const sigOf = () => tools.clientWidth + ':' + items().map(el => el.getClientRects().length ? el.offsetWidth : 0).join(',');
       const snap = () => { gw = {}; let i = 0; for (const [it, [c, r]] of shown) if (it !== ud) gw[idOf(it)] = [c, r, i++]; };   // своей раскладки ещё нет — снять с того, как стоит сейчас
-      // v0.389: «по середине на ось, чтоб ромб встал»: центр ромба «Правки» — на оси якоря (window.mayAxisX, экранный x); нет оси — середина плея / шапки.
+      // МАЯ-392: Undo/Redo stays at the viewport centre; its diamond remains between the two arms.
       // Зовёт и страница (прокрутка, масштаб) — window.mayUdPlace
       const udPlace = () => { if(narrow.matches){ud.classList.remove('pt-bot');return;}if (!ud.getClientRects().length) return;ud.classList.add('pt-bot');const R=footerBar.getBoundingClientRect(),w=ud.offsetWidth,axEl=ud.querySelector('.pt-ud-ax');
         const controlWidth=udL.getBoundingClientRect().width+'px';if(frameBar.style.getPropertyValue('--may-frame-width')!==controlWidth)frameBar.style.setProperty('--may-frame-width',controlWidth);
-        const pl = document.querySelector('#mayBottomBar .may-bb-play'), pr = pl && pl.getClientRects().length ? pl.getBoundingClientRect() : null, axX = window.mayAxisX?.();
-        const cx = Number.isFinite(axX) ? axX : pr ? pr.left + pr.width / 2 : R.left+R.width/2, U = ud.getBoundingClientRect(), A = axEl?.getBoundingClientRect(), off = A && A.width ? A.left + A.width / 2 - U.left : w / 2;
+        const cx = innerWidth / 2, U = ud.getBoundingClientRect(), A = axEl?.getBoundingClientRect(), off = A && A.width ? A.left + A.width / 2 - U.left : w / 2;
         const v=Math.round(Math.max(R.left+4,Math.min(R.right-w-4,cx-off)))+'px';if(ud.style.left!==v)ud.style.left=v;ud.style.top='';ud.style.bottom=Math.round(innerHeight-R.bottom+(R.height-ud.offsetHeight)/2)+'px'; };
       window.mayUdPlace = udPlace;
       let framePlaceRaf=0;

@@ -4,9 +4,11 @@ function fn(name){const at=html.indexOf('  function '+name+'(');assert.ok(at>=0,
 function fixture(options={}){
  const buttons=new Map(),st={zoom:1,zsnap:true,zbase:2,zLimit:false,zLock:false,ztop:false,zBot:false,zMid:false,...options};
  const c={st,geo:{anchor:63},window:{devicePixelRatio:options.dpr||1},wrap:{clientWidth:800,clientHeight:800,scrollLeft:100,scrollTop:100,getBoundingClientRect:()=>({left:0,top:0,width:800,height:800})},cv:{style:{},getBoundingClientRect:()=>({left:0,top:0,width:127*c.scale(),height:128*c.scale(),bottom:128*c.scale()})},VTX_H:16,MAX_ZOOM:512,zWant:0,dispW:()=>127,dispH:()=>128,wrapPadX:()=>32,bothOn:()=>false,ovlLinked:()=>false,fitAxis:()=>false,save(){},layout(){},thick(){},zBotScroll(){},zTopScroll(){},zTopLine(){},present(){},imageStats(){},queueDigits(){},midScroll(){},fitHold(){},$:(id)=>{if(!buttons.has(id))buttons.set(id,{setAttribute(){}});return buttons.get(id);}};
+ c.wrap.classList={toggle(){}};c.wrap.style={setProperty(){}};c.document={body:{classList:{contains:()=>false}}};
+ c.freePanScale=0;c.freePanInset=0;c.getComputedStyle=()=>({paddingLeft:'16px',paddingRight:'16px'});
  vm.createContext(c);
- const declarations=['DPR','zB','snap2','fitScale','baseMinScale','minScale','scale'].map(name=>lines.find(line=>line.trimStart().startsWith('const '+name+' ='))).join('\n');
- vm.runInContext(declarations+'\nthis.scale=scale;this.minimum=minScale;\n'+fn('zoomTo'),c);
+ const declarations=['DPR','zB','snap2','fitScale','fitHRow','fitHScale','baseMinScale','minScale','scale'].map(name=>lines.find(line=>line.trimStart().startsWith('const '+name+' ='))).join('\n');
+ vm.runInContext(declarations+'\nthis.scale=scale;this.minimum=minScale;\n'+fn('panCenterX')+'\n'+fn('zoomTo'),c);
  return c;
 }
 test('actual zoomTo clamps after snapping for every base, DPR and field transport',()=>{
@@ -35,4 +37,50 @@ test('free pinch retains the source point under the gesture at custom and maximu
   const c=fixture({zoom:4,zsnap:false});c.cv.getBoundingClientRect=()=>({left:-c.wrap.scrollLeft,top:-c.wrap.scrollTop,width:127*c.scale(),height:128*c.scale(),bottom:128*c.scale()-c.wrap.scrollTop});
   const x=200,y=200,before=c.cv.getBoundingClientRect(),sourceX=(x-before.left)/c.scale(),sourceY=(y-before.top)/c.scale();c.zoomTo(wanted,x,y,true);const after=c.cv.getBoundingClientRect();assert.ok(Math.abs((x-after.left)/c.scale()-sourceX)<1e-9);assert.ok(Math.abs((y-after.top)/c.scale()-sourceY)<1e-9);
  }
+});
+
+function scrollFixture(){
+ const c=fixture({zoom:1,zsnap:false}),w=c.wrap,cv=c.cv,padding=16;
+ let scroll=0,free=false,extent=0,panel=null;
+ const px=v=>parseFloat(v)||0;
+ w.classList.toggle=(name,value)=>{if(name==='may-free-pan')free=value;};
+ w.style.setProperty=(name,value)=>{if(name==='--may-pan-width')extent=px(value);};
+ Object.defineProperty(w,'scrollWidth',{get(){
+  const inner=w.clientWidth-2*padding,canvas=px(cv.style.marginLeft)+px(cv.style.width)+px(cv.style.marginRight);
+  return Math.max(inner,canvas,free?inner+extent:0)+2*padding;
+ }});
+ Object.defineProperty(w,'scrollLeft',{get:()=>scroll,set:v=>{scroll=Math.max(0,Math.min(v,w.scrollWidth-w.clientWidth));}});
+ w.getBoundingClientRect=()=>({left:35,top:10,width:w.clientWidth,height:w.clientHeight});
+ cv.getBoundingClientRect=()=>({left:35+padding+px(cv.style.marginLeft)-scroll,top:10,width:px(cv.style.width),height:px(cv.style.height)});
+ c.window.MayatnikTemplatePanel={isOpen:()=>panel!==null};
+ const regular=c.$;c.$=id=>id==='mayatnikTemplatePanel'?{getBoundingClientRect:()=>({left:35+panel})}:regular(id);
+ c.fitAxis=()=>true;c.displayAnchorX=()=>42;c.fitCenterY=()=>{};
+ vm.runInContext([fn('midScroll'),fn('fitHold'),fn('cssLayout')].join('\n'),c);
+ c.layout=c.cssLayout;c.cssLayout();
+ return {c,w,cv,setPanel(width){panel=width;},center:()=>35+(panel??w.clientWidth)/2};
+}
+
+test('at each zoom either canvas boundary can reach the visible midpoint, including an open library',()=>{
+ assert.match(html,/#wrap\.may-free-pan::after\{[^}]*width:calc\(100% \+ var\(--may-pan-width\)\)/);
+ for(const zoom of [1/127,1,'fit','fitH',16,512])for(const visibleWidth of [null,440]){
+  const {c,w,cv,setPanel,center}=scrollFixture();c.st.zoom=zoom;setPanel(visibleWidth);c.cssLayout();
+  const width=cv.getBoundingClientRect().width;
+  w.scrollLeft=0;c.cssLayout();c.fitHold();c.midScroll();
+  assert.ok(Math.abs(cv.getBoundingClientRect().left-center())<1);
+  w.scrollLeft=Infinity;c.cssLayout();c.fitHold();c.midScroll();
+  assert.ok(Math.abs(cv.getBoundingClientRect().left+width-center())<1);
+  assert.ok(Math.abs(w.scrollLeft-width)<1);
+ }
+});
+test('free repositioning survives layout, resize, leaving the axis pin, and cursor zoom',()=>{
+ const {c,w,cv,setPanel,center}=scrollFixture();
+ const cellAt=x=>(x-cv.getBoundingClientRect().left)/c.scale();
+ w.scrollLeft=31;setPanel(440);c.cssLayout();w.clientWidth=1100;c.cssLayout();
+ assert.equal(cellAt(center()),31);
+ c.st.zMid=true;c.cssLayout();const before=cellAt(center());c.st.zMid=false;c.cssLayout();
+ // A pinned short field can place the library midpoint outside the field; the reachable
+ // free centre in that case is the nearest edge.
+ assert.ok(Math.abs(cellAt(center())-Math.max(0,Math.min(127,before)))<1);
+ w.scrollLeft=52;const cursor=center()+14,cell=cellAt(cursor);c.zoomTo(8,cursor,50,true);
+ assert.ok(Math.abs(cellAt(cursor)-cell)<1e-6);
 });
