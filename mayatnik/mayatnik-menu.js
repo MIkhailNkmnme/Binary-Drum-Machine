@@ -270,7 +270,9 @@
         const center=Math.round(c.left+c.width/2-b.left-bar.clientLeft);
         caption.style.left=center+'px';caption.style.top=y+'px';
         const rows=Number($('frame').dataset.fieldRows)||Number($('rows').value)||0,width=Number($('frame').dataset.fieldWidth)||2*rows-1,factor=(width+1)/rows;
-        rowsLabel.textContent=rows.toLocaleString('ru-RU')+' строк · '+([2,4,6,8].includes(factor)?factor+'N−1 = ':'ширина ')+width.toLocaleString('ru-RU');
+        const zoom=Number($('frame').dataset.zoomRatio),zoomPart=zoom>0&&Number.isFinite(zoom)?String(+(zoom<1?1/zoom:zoom).toPrecision(3)).replace('.',','):'';
+        const zoomLabel=zoomPart==='1'?'1:1':zoom<1?'1/'+zoomPart:'×'+zoomPart;
+        rowsLabel.textContent=rows.toLocaleString('ru-RU')+' строк · '+([2,4,6,8].includes(factor)?factor+'N−1 = ':'ширина ')+width.toLocaleString('ru-RU')+(zoomPart?' · масштаб '+zoomLabel:'');
         let type=$('frame').dataset.buildType||'Маятник';   // v0.717: режимы края — в подписи над кадром
         if($('edgeWrapTop')?.getAttribute('aria-pressed')==='true'){
           // v0.746: у «Перескока» в подписи — номер перескока (автор: «тут номер перескока учитывать»).
@@ -281,7 +283,7 @@
         if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
         if(buildLabel.textContent!==type)buildLabel.textContent=type;
       };
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-ratio']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
