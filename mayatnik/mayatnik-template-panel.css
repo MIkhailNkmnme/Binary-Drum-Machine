@@ -272,6 +272,10 @@ body.may-mobile-menu #mayatnikTemplatePanel :is(input:not([type=checkbox]):not([
 #mayatnikTemplatePanel .mtp-sequence-generator label{display:block;min-width:0;overflow:hidden}
 #mayatnikTemplatePanel .mtp-sequence-generator :is(input:not([type=checkbox]),select){width:100%;min-width:0;max-width:100%;height:24px}
 #mayatnikTemplatePanel .mtp-sequence-generator .mtp-command{width:60px;min-width:0;height:24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:row}
+body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>label:nth-child(-n+4){grid-column:span 2}
+body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>label:nth-child(5){grid-column:1 / span 2;grid-row:3}
+body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>.mtp-command{grid-row:3;justify-self:end}
 #mayatnikTemplatePanel .mtp-snake-catalog{margin:2px 0;max-width:100%;min-width:0}
 #mayatnikTemplatePanel .mtp-snake-catalog :is(select,button){max-width:100%;min-width:0}
 #mayatnikTemplatePanel .mtp-snake-catalog ol{padding-left:22px;margin:2px 0}

@@ -1047,9 +1047,10 @@ body>.may-horr-popup input{user-select:text}
 .may-parity-cycle:is(:hover,:focus-visible) .may-parity-cycle-edge{stroke:var(--c,#7cbcff);stroke-width:2}
 .may-parity-cycle:active .may-parity-cycle-edge{stroke:var(--c,#7cbcff);stroke-width:3}
 /* МАЯ-176: one mobile strip; desktop DOM homes/preferences are restored on exit. */
-body.may-mobile-menu{--may-mobile-bar-height:calc(36px + env(safe-area-inset-top));grid-template-columns:minmax(0,1fr)!important;grid-template-rows:var(--may-mobile-bar-height) auto auto minmax(0,1fr) auto!important}
+body.may-mobile-menu{--may-mobile-bar-height:calc(80px + env(safe-area-inset-top));grid-template-columns:minmax(0,1fr)!important;grid-template-rows:var(--may-mobile-bar-height) auto auto minmax(0,1fr) auto!important}
 body.may-mobile-menu>header{grid-column:1!important;grid-row:1!important;display:block!important;height:var(--may-mobile-bar-height)!important;min-height:0!important;padding:0!important;margin:0!important;overflow:visible!important;z-index:30}
-body.may-mobile-menu #mayMobileBar{display:flex;flex-flow:row nowrap;align-items:center;gap:6px;position:relative;box-sizing:border-box;width:100%;height:var(--may-mobile-bar-height);padding:calc(6px + env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));overflow-x:auto;overflow-y:hidden;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-x;scroll-behavior:auto;background:#000}
+body.may-mobile-menu>header>.may-brand{display:none!important}
+body.may-mobile-menu #mayMobileBar{display:flex;flex-flow:row nowrap;align-items:center;gap:6px;position:relative;box-sizing:border-box;width:100%;height:calc(36px + env(safe-area-inset-top));padding:calc(6px + env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));overflow-x:auto;overflow-y:hidden;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-x;scroll-behavior:auto;background:#000}
 body.may-mobile-menu #mayMobileBar::-webkit-scrollbar{display:none}
 body.may-mobile-menu #mayMobileBar :is(#paintTools,#mayatnikSidebar,#mayatnikRail,#mayatnikRailR,#mayatnikRail>.gz-rail,#mayatnikRailR>.gz-rail){display:contents!important}
 body.may-mobile-menu #mayMobileBar :is(.pt-g,.gz-group,#mayCorner,#mayBottomBar,#mayTemplateLauncher){position:relative!important;inset:auto!important;transform:none!important;translate:none!important;flex:0 0 auto!important;margin:0!important;height:24px!important;min-height:24px!important;max-height:24px!important;clip-path:none!important}
@@ -1058,6 +1059,12 @@ body.may-mobile-menu #mayMobileBar :is(.pt-l,.gz-head){touch-action:pan-x!import
 body.may-mobile-menu #mayMobileBar :is(.may-brand,.sub,#mayMenu,.pt-gridbg,.pt-ghost,.may-closed-back){display:none!important}
 body.may-mobile-menu :is(#mayFooterBar,.may-menu-side-scroll,#mayMenuDockGrid){display:none!important}
 body.may-mobile-menu #mayBottomBar{display:flex!important;align-items:center!important;justify-content:flex-start!important;order:-3;width:340px!important;min-width:340px!important;max-width:340px!important;padding:0!important;border:0!important;overflow:visible!important;--may-frame-width:160px}
+/* The same live player escapes menu scrolling; desktop DOM homes stay untouched. */
+body.may-mobile-menu #mayMobileBar #mayBottomBar{position:fixed!important;inset:auto!important;left:calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2)!important;top:calc(36px + env(safe-area-inset-top))!important;transform:translateX(-50%)!important;translate:none!important;width:288px!important;min-width:288px!important;max-width:288px!important;--may-frame-width:120px!important;z-index:2}
+body.may-mobile-menu #mayMobileBar #mayBottomBar>.gz-sl{width:120px!important;min-width:120px!important;max-width:120px!important}
+body.may-mobile-menu #mayBottomBar>.may-frame-caption{overflow-x:auto;overflow-y:hidden;max-width:calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right)));height:16px;box-sizing:border-box;pointer-events:auto;touch-action:pan-x;scrollbar-width:none;z-index:9}
+body.may-mobile-menu #mayBottomBar>.may-frame-caption::-webkit-scrollbar{display:none}
+body.may-mobile-menu .may-rombo-row .may-rows-line input{font-size:16px}
 body.may-mobile-menu #paintTools>.pt-g.pt-btn{order:-2}
 body.may-mobile-menu #mayTemplateLauncher{order:-1;width:24px!important;min-width:24px!important;max-width:24px!important;z-index:auto!important}
 body.may-mobile-menu #mayCorner{display:flex!important;flex-direction:row!important;width:max-content!important}
@@ -1157,6 +1164,10 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-tail{position:absolute;border:0;width:11px;margin-left:-5px;background:transparent;pointer-events:auto;touch-action:none;cursor:ew-resize;outline:0;z-index:10}
 #mayBottomBar>.may-frame-tail::before,#mayBottomBar>.may-frame-tail::after{content:"";position:absolute;top:0;bottom:0;left:5px;width:1px;background:repeating-linear-gradient(to bottom,#dfe6f5 0 2px,transparent 2px 4px);pointer-events:none}
 #mayBottomBar>.may-frame-tail::after{opacity:0}
+@media(pointer:coarse){
+  #mayBottomBar>.may-frame-tail{width:24px;margin-left:-12px}
+  #mayBottomBar>.may-frame-tail::before,#mayBottomBar>.may-frame-tail::after{left:12px}
+}
 #mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::before{transform:translateX(-1px)}
 #mayBottomBar>.may-frame-tail:is(:hover,:focus-visible,.may-frame-dragging)::after{opacity:1;transform:translateX(1px)}
 #mayBottomBar .may-frame-slider .may-bb-play{display:none!important;width:20px;height:20px;margin:-10px 0 0 -10px;clip-path:none;background:#1b2430;color:#dfe6f5;font-size:12px;transition:none}
@@ -1201,8 +1212,14 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-transport-option-row>.may-transport-option:last-child{border-right:0}
 .may-transport-option-row>.may-transport-option:is(:hover,:focus-visible){outline:1px solid #80aee8;outline-offset:-1px}
 .may-transport-option-row>.may-transport-option[aria-checked="true"]{outline:2px solid #80aee8;outline-offset:-2px}
-:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-transport-options.may-speed-diamond{display:block;width:240px!important;height:192px;padding:0!important;gap:0!important;overflow:visible;background:transparent!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
-.may-speed-diamond>.may-standard-contours{display:none}
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-transport-options.may-speed-options{display:block;width:240px!important;height:192px;padding:0!important;gap:0!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none;background:transparent!important;clip-path:none!important}
+.may-speed-options::-webkit-scrollbar{display:none}
+.may-speed-options>.may-standard-contours{display:none}
+.may-speed-diamond{position:relative;width:240px;height:192px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+:is(body.may-mobile-menu,#mayMobileBar) .gz-ladder.may-transport-options:not(.may-speed-options){overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y;scrollbar-width:none}
+body.may-mobile-menu :is(.gz-ladder,#mayMobileBar).may-standard-list.may-rombo-assembly-options{display:flex!important;flex-direction:column;grid-template-rows:none!important;grid-auto-columns:auto!important;width:120px!important;max-width:120px!important;max-height:var(--may-rombo-list-height)!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none}
+body.may-mobile-menu .may-rombo-assembly-options::-webkit-scrollbar,body.may-mobile-menu .may-transport-options::-webkit-scrollbar{display:none}
+body.may-mobile-menu .may-rombo-assembly-options>.gz-hx{flex:none}
 .may-speed-diamond>.may-transport-option{position:absolute;box-sizing:border-box;width:30px;height:24px;margin:0;padding:0;border:0;outline:none;background:#40516b;color:#dfe6f5;font:9px/24px var(--mono,monospace);cursor:pointer;user-select:none;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .may-speed-diamond>.may-transport-option::before{content:"";position:absolute;inset:1px;background:#1b2430;clip-path:inherit;pointer-events:none}
 .may-speed-diamond>.may-transport-option>span{position:relative;z-index:1;pointer-events:none}

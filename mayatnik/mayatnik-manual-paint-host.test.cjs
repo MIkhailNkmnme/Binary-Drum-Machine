@@ -253,3 +253,10 @@ test('colour repeat matches the visible pixel family filter instead of hidden ra
  const raw=c.fillBase.slice();c.paintRepeatDraw(raw);assert.deepEqual([...raw],[0xff123456,0xff202020,0xff123456,0xff202020]);
  assert.deepEqual([...c.paintRepeatBase()],Array(4).fill(0xff000000));
 });
+
+test('animation reuses its overlay buffer and clears pixels that no longer belong to the seed',()=>{
+ const c=repeatFixture();c.st.paintFrameMode='cells';c.paint(0,0);c.fillMask=null;c.k++;c.draw();
+ const layer=c.paintRepeatLayer;c.draw();assert.equal(c.paintRepeatLayer,layer);
+ c.paintRepeatSeed={...c.paintRepeatSeed,entries:Uint32Array.of(2,0x101010,0xffabcdef)};c.draw();assert.equal(c.paintRepeatLayer,layer);
+ assert.equal(layer[0],0);assert.equal(layer[2],0xffabcdef);assert.equal(c.shown[0],c.fillBase[0]);
+});
