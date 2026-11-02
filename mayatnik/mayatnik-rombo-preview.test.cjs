@@ -133,3 +133,8 @@ test('geometry-only changes refresh SVG even when get state and options are unch
 test('unavailable side assembly keeps table below visible source and lets available central variant recover it',()=>{
  const h=host(true,true);h.figure.rect={left:0,top:0,width:0,height:0,bottom:0};h.set({on:true,assembly:11,angle:0,row:37,available:false,reason:'Нет боковых частей'});h.flush();assert.equal(h.preview.element.style.visibility,'visible');assert.equal(h.preview.element.style.left,'200px');assert.equal(h.preview.element.style.top,'412px');assert.equal(h.preview.scrollSpace(),374);assert.match(h.preview.element.children[1].textContent,/Нет боковых/);assert.equal(cells(h)[5].disabled,true);assert.equal(cells(h)[8].disabled,false);cells(h)[8].event('click');assert.equal(h.calls.at(-1),16);
 });
+
+test('custom assembly hides the fixed atlas and releases its viewport reserve',()=>{
+ const h=host(true,true);h.set({on:true,mode:'custom',assembly:16,angle:0,row:37});h.flush();assert.equal(h.preview.element.hidden,true);assert.equal(h.preview.scrollSpace(),0);
+ h.set({on:true,mode:'fixed',assembly:16,angle:0,row:37});h.flush();assert.equal(h.preview.element.hidden,false);assert.ok(h.preview.scrollSpace()>0);
+});

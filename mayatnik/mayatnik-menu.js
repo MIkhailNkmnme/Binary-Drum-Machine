@@ -1527,15 +1527,17 @@
     const turn=command('romboAngle','Поворот 0°','Поворот ромба: 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°. Правый щелчок — назад.');
     const assembly=command('romboAssembly','Сборка','Выбрать сборку ромба из доступных исходных частей C, L и R.');
     assembly.setAttribute('aria-haspopup','true');
+    const editor=command('triangleEditor','Детали','Сборка: найти треугольные участки между показанными осями исходного поля, двигать, примагничивать, вращать и отражать.');editor.onclick=event=>{event.stopPropagation();window.mayTriangleEditor?.toggle();};
+    const fixed=command('romboFixed','Готовые','Вернуться к десяти готовым схемам Ромбо, сохранив собственную сборку.');fixed.onclick=event=>{event.stopPropagation();api()?.setMode?.('fixed');sync();after();};
     const diagram=command('romboDiagram','Схемы','Открыть схемы всех сборок ромба');diagram.onclick=event=>{event.stopPropagation();window.open('instruction/assets/rombo-assemblies.svg','_blank','noopener');};
     let lastRow=null;
     const state=()=>api()?.get?.(),max=s=>Math.max(1,Math.round(Number(s?.maxRow)||1));
-    const sync=()=>{const s=state(),available=!!s;for(const button of [toggle,turn,assembly])button.disabled=!available;input.disabled=!available;for(const arrow of line.querySelectorAll('button'))arrow.disabled=!available;if(!s)return;
+    const sync=()=>{const s=state(),available=!!s;for(const button of [toggle,turn,assembly])button.disabled=!available;input.disabled=!available||s?.mode==='custom';for(const arrow of line.querySelectorAll('button'))arrow.disabled=!available;if(!s)return;
       toggle.classList.toggle('gz-on',!!s.on);toggle.setAttribute('aria-pressed',String(!!s.on));
       const limit=max(s),value=Math.max(1,Math.min(limit,Math.round(Number(s.row)||limit)));input.max=String(limit);if(lastRow!==value){input.value=String(value);lastRow=value;}
       const angle=((Number(s.angle)||0)%360+360)%360;turn.querySelector('.gz-nm').textContent='Поворот '+angle+'°';turn.setAttribute('aria-label','Поворот ромба: '+angle+'°. Нажать — добавить 45°; правый щелчок — вычесть 45°.');
-      const entries=options(),index=entries.findIndex(entry=>entry.id===s.assembly);assembly.querySelector('.gz-nm').textContent='Сборка '+(index+1);assembly.setAttribute('aria-label','Сборка '+(index+1)+' из '+entries.length+': '+assemblyName(s.assembly));diagram.querySelector('.gz-nm').textContent='Схемы '+entries.length;diagram.title='Открыть схемы всех '+entries.length+' сборок ромба';
-      for(const arrow of line.querySelectorAll('button'))arrow.disabled=Number(arrow.dataset.step)<0?value<=1:value>=limit;
+      const entries=options(),index=entries.findIndex(entry=>entry.id===s.assembly);assembly.querySelector('.gz-nm').textContent=s.mode==='custom'?'Своя сборка':'Сборка '+(index+1);fixed.classList.toggle('gz-on',s.mode!=='custom');fixed.setAttribute('aria-pressed',String(s.mode!=='custom'));assembly.setAttribute('aria-label','Сборка '+(index+1)+' из '+entries.length+': '+assemblyName(s.assembly));diagram.querySelector('.gz-nm').textContent='Схемы '+entries.length;diagram.title='Открыть схемы всех '+entries.length+' сборок ромба';
+      for(const arrow of line.querySelectorAll('button'))arrow.disabled=s.mode==='custom'||(Number(arrow.dataset.step)<0?value<=1:value>=limit);
     };
     const apply=value=>{const s=state();if(!s)return;api().setRow(Math.max(1,Math.min(max(s),Math.round(Number(value)||1))));sync();after();};
     const arrow=direction=>{const b=doc.createElement('button');b.type='button';b.className='may-rows-step';b.dataset.dir=direction<0?'left':'right';b.dataset.step=String(direction);b.title='Сдвинуть ось ромба на одну строку '+(direction<0?'вверх':'вниз');b.setAttribute('aria-label',b.title);b.onclick=event=>{event.stopPropagation();apply((Number(state()?.row)||max(state()))+direction);};return b;};

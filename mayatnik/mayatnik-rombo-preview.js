@@ -67,7 +67,7 @@
    const current=api(),state=current?.get?.(),entries=options(),plans=entries.map(entry=>current?.plan?.(entry.id));
    const writable=!!state?.on&&typeof current?.setAssembly==='function',key=JSON.stringify([state,entries,plans,writable]);if(key===last&&force!==true)return;last=key;
    if(cells.length!==entries.length||cells.some((cell,index)=>cell.id!==entries[index].id))rebuild(entries);
-   box.hidden=!state?.on;for(const control of [...buttons,number])control.disabled=!writable||!entries.some(entry=>entry.available!==false);
+   box.hidden=!state?.on||state?.mode==='custom';for(const control of [...buttons,number])control.disabled=!writable||!entries.some(entry=>entry.available!==false);
    if(spacer){spacer.hidden=box.hidden;queuePosition();}if(box.hidden)positionKey='';
    const index=entries.findIndex(entry=>entry.id===state?.assembly),selected=entries[index];number.value=index<0?'':String(index+1);number.max=String(entries.length);number.setAttribute('aria-label','Номер схемы ромбосборки от 1 до '+entries.length);count.textContent='/'+entries.length;
    table.setAttribute('aria-label','Все '+entries.length+' схем ромбосборки');footer.textContent=state?'Ось '+state.row+' · '+state.angle+'°'+(selected?.available===false||state.available===false?' · '+(selected?.reason||state.reason||'Сборка недоступна'):''):'';

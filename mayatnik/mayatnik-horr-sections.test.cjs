@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {JSDOM}=require(process.env.SETKA_JSDOM||'jsdom'),Search=require('./mayatnik-button-search.js');
 const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8'),standard=fs.readFileSync(__dirname+'/mayatnik-button-standard.js','utf8');
 const mount=menu.slice(menu.indexOf('  function mountHorrSections('),menu.indexOf('  window.mayHorrSections ='));
-const ids=['size','build','fields','overlay','run'];
+const ids=['size','build','fields','rombo','overlay','run','animatrix'];
 function fixture(storage={}){
  const dom=new JSDOM('<div id="paintTools"><div class="gz-group gz-open" data-id="horr"><button class="gz-head">Хорр</button><div class="gz-wide"><div class="gz-hx gz-pair" data-horr-section="build"><span>Построить</span></div><button class="gz-hx" data-horr-section="size">Размер 512</button><div class="may-rows-custom" data-horr-section="size"><input aria-label="Число строк" value="512"><button class="gz-hx">Задать</button></div><button class="gz-hx" data-horr-section="fields" id="mayCompareField">Поле</button><button class="gz-hx" data-horr-section="overlay" id="mayCompareP123">Все три</button><button class="gz-hx" data-horr-section="run" data-n="testBuildMode" hidden disabled>Сборка кадров</button><button class="gz-hx" data-horr-section="run" data-n="testFrameSave">Запомнить</button><button class="gz-hx" data-n="bReset">Сброс</button><button class="gz-hx" data-n="resetTransport">Стоп</button></div></div></div>',{url:'https://test/',pretendToBeVisual:true,runScripts:'outside-only'}),w=dom.window,doc=w.document,group=doc.querySelector('.gz-group'),nodes=[...group.querySelectorAll('[data-horr-section]')];
  const rect={left:20,top:80,right:140,bottom:104,width:120,height:24};
@@ -17,10 +17,10 @@ function fixture(storage={}){
  const before=keyNodes.map(node=>[node,node.parentElement,ctx.key(node)]),api=ctx.mount(group,{storage:w.localStorage});
  return{dom,w,doc,group,nodes,before,api,key:ctx.key,get calls(){return calls},close(){api.destroy();dom.window.close()}};
 }
-test('five ordinary buttons replace selector; settings start closed without disturbing saved section',()=>{
+test('seven ordinary buttons replace selector; settings start closed without disturbing saved section',()=>{
  const f=fixture({'mayatnik-horr-section-v1':'overlay'});try{
   assert.equal(f.api.get(),null);assert.equal(f.doc.querySelector('[data-n="horrSection"]'),null);assert.deepEqual([...f.api.buttons.keys()],ids);
-  assert.deepEqual([...f.api.buttons.values()].map(b=>b.textContent),['Размер','Построение','Поля','Наложение','Прогон']);
+  assert.deepEqual([...f.api.buttons.values()].map(b=>b.textContent),['Размер','Построение','Поля','Ромбо','Наложение','Прогон','Аниматрица']);
   for(const b of f.api.buttons.values()){assert.equal(b.tagName,'BUTTON');assert.equal(b.gzList,undefined);assert.equal(b.getAttribute('aria-expanded'),'false');}
   for(const node of f.nodes)assert.equal(node.inert,true);
   assert.equal(f.w.localStorage.getItem('mayatnik-horr-section-v1'),'overlay');assert.equal(f.w.localStorage.getItem('mayatnik-horr-section-open-v1'),null);
@@ -35,7 +35,7 @@ test('all subgroups retain live nodes, parents, handlers, mini keys, common comm
    for(const button of f.api.buttons.values())assert.equal(f.group.contains(button),true);
    for(const cmd of ['bReset','resetTransport'])assert.equal(f.group.contains(f.doc.querySelector('[data-n="'+cmd+'"]')),true);
   }
-  f.api.buttons.get('run').click();assert.equal(f.api.get(),null);assert.equal(f.api.popup.hidden,true);assert.equal(f.group.contains(f.before[0][0]),true);
+  f.api.buttons.get(ids.at(-1)).click();assert.equal(f.api.get(),null);assert.equal(f.api.popup.hidden,true);assert.equal(f.group.contains(f.before[0][0]),true);
   assert.equal(f.calls,0);assert.equal(f.w.localStorage.getItem('mayatnik-dd-pins'),'["horr"]');assert.equal(f.w.localStorage.getItem('mayatnik-control-mini-v464'),'["old"]');
   const mode=f.doc.querySelector('[data-n="testBuildMode"]');assert.equal(mode.hidden,true);assert.equal(mode.disabled,true);
  }finally{f.close();}

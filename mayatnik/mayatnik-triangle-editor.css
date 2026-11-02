@@ -1,0 +1,27 @@
+/* МАЯ-438 — body portal below the field, hidden until explicitly opened. */
+.may-triangle-editor{position:absolute;z-index:8;box-sizing:border-box;width:min(760px,calc(100vw - 12px));color:#d7e0e8;background:#0e1116;padding:4px;--c:#73e4a5;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;font:12px system-ui,sans-serif}
+.may-triangle-editor[hidden]{display:none!important}
+.may-triangle-tools{display:flex;flex-wrap:wrap;gap:2px;padding:2px;align-items:center}
+.may-triangle-tools .gz-hx{flex:0 0 120px;width:120px;height:24px;min-height:24px;cursor:pointer;user-select:none;-webkit-user-select:none;color:#d7e0e8;text-shadow:none}
+.may-triangle-tools .gz-hx:disabled{opacity:.4;cursor:default}
+.may-triangle-tools .gz-hx{background:transparent!important;filter:none!important}
+.may-triangle-tools .gz-hx::before,.may-triangle-tools .gz-hx:hover::before{inset:0!important;background:#1b2430!important}
+.may-triangle-tools .gz-hx::after{content:'';position:absolute;inset:0;pointer-events:none;clip-path:inherit;background:transparent}
+.may-triangle-tools .gz-hx:is(:hover,:focus-visible):not(:disabled)::after{background:var(--c);clip-path:polygon(12px 0,13px 0,1px 50%,13px 100%,12px 100%,0 50%,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,calc(100% - 13px) 100%,calc(100% - 1px) 50%,calc(100% - 13px) 0)}
+.may-triangle-tools .gz-hx.on,.may-triangle-tools .gz-hx:active:not(:disabled){background:var(--c)!important}
+.may-triangle-tools .gz-hx.on::before{inset:2px!important}
+.may-triangle-tools .gz-hx:active:not(:disabled)::before{inset:3px!important}
+.may-triangle-tools .gz-hx.on::after,.may-triangle-tools .gz-hx:active:not(:disabled)::after{display:none}
+.may-triangle-tools .gz-ic{color:var(--c)}
+.may-triangle-status{min-height:18px;padding:4px 2px;color:#aebdcb}
+.may-triangle-tray{display:flex;gap:2px;overflow:auto;max-height:180px;padding:2px;overscroll-behavior:contain}
+.may-triangle-thumbnail{flex:0 0 92px;min-width:92px;padding:2px;color:#d7e0e8;background:#1b2430;border:1px solid transparent;border-radius:0;font:11px system-ui,sans-serif;cursor:pointer;user-select:none;-webkit-user-select:none}
+.may-triangle-thumbnail.selected{outline:2px solid #ffe174;outline-offset:-2px}
+.may-triangle-thumbnail:hover,.may-triangle-thumbnail:focus-visible{border-color:#73e4a5}
+.may-triangle-thumbnail canvas{display:block;width:88px;height:64px;pointer-events:none}
+.may-triangle-workspace{display:block;width:100%;height:280px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;background:#080b10}
+.may-triangle-workspace:active{cursor:grabbing}
+.may-triangle-workspace:focus-visible{outline:1px solid #73e4a5;outline-offset:-1px}
+.may-triangle-scroll-space{width:1px;min-width:1px;flex:none;pointer-events:none}
+.may-triangle-scroll-space[hidden]{display:none!important}
+@media(max-width:480px){.may-triangle-tools .gz-hx{flex-basis:120px}.may-triangle-tray{max-height:110px}.may-triangle-editor{max-width:calc(100vw - 8px)}}

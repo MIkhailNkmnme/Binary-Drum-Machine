@@ -1,13 +1,14 @@
 /* Assemble the native central cone and two outer boundary cones, or exchange
  * the central diamond's quarters. One staircase mask drives draw and picking;
  * source bit addresses and work data remain in their native frame. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikRombo=api;})(typeof globalThis==='object'?globalThis:this,function(){
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./mayatnik-triangle-assembly.js'));else root.MayatnikRombo=factory(root.MayatnikTriangleAssembly);})(typeof globalThis==='object'?globalThis:this,function(triangles){
  'use strict';
  const point=(m,p)=>({x:m[0]*p.x+m[2]*p.y+m[4],y:m[1]*p.x+m[3]*p.y+m[5]});
  function inverse(m,p){const d=m[0]*m[3]-m[1]*m[2],x=p.x-m[4],y=p.y-m[5];return {x:(m[3]*x-m[2]*y)/d,y:(-m[1]*x+m[0]*y)/d};}
  const choiceNames=['L','R','L↔','R↔'];
  const variants=[...[1,3,4,6,9,11,12,14].map(id=>({id,kind:'sides',choices:[Math.floor(id/4),id%4],label:[Math.floor(id/4),id%4].map(i=>choiceNames[i]).join(' | ')})),{id:16,kind:'central',label:'C → 180° вниз'},{id:17,kind:'quarters',label:'Четверти 1↔3, 2↔4'}];
  const normalise=id=>variants.some(v=>v.id===Number(id))?Number(id):16;
+ const turnAngle=value=>((Math.round((Number(value)||0)/45)*45)%360+360)%360;
  function availability(id,g={},row=g.height){if(g.available===false)return {available:false,reason:g.reason||'Нужна плоская проекция исходного поля'};const anchor=g.anchor??((g.width-1)/2);if(anchor+row<=0||anchor-row+1>=g.width)return {available:false,reason:'Центральный треугольник выше оси находится вне видимого поля'};if(id<16&&!g.sides)return {available:false,reason:'Боковые треугольники доступны в плоском Перескоке'};return {available:true,reason:''};}
  // A row interval is also the exact cell-area mask. Only the vertical seam
  // splits a cell in half; diagonal borders follow whole-cell staircases.
@@ -18,7 +19,7 @@
   return {rows:valid,outline,left,right,height,contains(x,y){const r=map.get(Math.floor(y));return !!r&&x>=r.left&&x<r.right;}};
  }
  function plan(width,height,state={},geometry={}){
-  const W=Math.max(1,width),H=Math.max(1,height),A=Math.max(1,Math.min(H,Math.round(state.row??H))),angle=((Math.round((Number(state.angle)||0)/45)*45)%360+360)%360,id=normalise(state.assembly),status=availability(id,{width:W,height:H,...geometry},A),cx=(geometry.anchor??((W-1)/2))+.5,parts=[],colour={C:'#e5be68',L:'#78b8e8',R:'#d99bc9'};
+  const W=Math.max(1,width),H=Math.max(1,height),A=Math.max(1,Math.min(H,Math.round(state.row??H))),angle=turnAngle(state.angle),id=normalise(state.assembly),status=availability(id,{width:W,height:H,...geometry},A),cx=(geometry.anchor??((W-1)/2))+.5,parts=[],colour={C:'#e5be68',L:'#78b8e8',R:'#d99bc9'};
   const mask=key=>shape(Array.from({length:A},(_,r)=>({y:r,left:Math.max(0,key==='C'?cx-r-.5:key==='L'?.5:W-r-1),right:Math.min(W,key==='C'?cx+r+.5:key==='L'?r+1:W-.5)})));
   const C=mask('C'),L=mask('L'),R=mask('R'),add=(key,matrix,id,label,source=key==='C'?C:key==='L'?L:R,extra={})=>{if(source.outline.length)parts.push({...source,id,label,sourceKey:key,color:colour[key],matrix,...extra});};
   if(status.available){
@@ -41,31 +42,81 @@
     }
    }
   }
+  return project({...status,mode:'fixed',width:W,height:H,row:A,angle,assembly:id,parts,axis:[{x:C.left,y:A},{x:C.right,y:A}]});
+ }
+ function customAvailability(layout,g){
+  if(g.available===false)return {available:false,reason:g.reason||'Нужна плоская проекция исходного поля'};
+  if(!layout?.pieces.length)return {available:false,reason:'Нет сохранённых треугольников для сборки'};
+  if(layout.width!==g.width||layout.height!==g.height)return {available:false,reason:'Размер исходного поля изменился'};
+  if(layout.scope!==g.scope)return {available:false,reason:'Сборка относится к другому исходному полю'};
+  return {available:true,reason:''};
+ }
+ function buildCustom(layout,g,angle){
+  const status=customAvailability(layout,g);
+  const parts=status.available?layout.pieces.map((piece,index)=>{
+   const outline=Object.freeze(piece.vertices.map(([x,y])=>Object.freeze({x,y})));
+   const xs=outline.map(p=>p.x),ys=outline.map(p=>p.y);
+   return {id:piece.id,sourceKey:piece.id,label:'Треугольник '+(index+1),color:'#78b8e8',outline,
+    left:Math.min(...xs),right:Math.max(...xs),top:Math.min(...ys),height:Math.max(...ys),
+    contains:(x,y)=>triangles.contains(piece.vertices,[x,y]),matrix:triangles.matrix(piece)};
+  }):[];
+  return project({...status,mode:'custom',width:g.width,height:g.height,angle:turnAngle(angle),assembly:null,axis:null,parts});
+ }
+ function customPlan(layout,geometry,angle=0){return buildCustom(triangles.normalize(layout),geometry,angle);}
+ function project(config){
+  const {angle,parts}=config;
   const radians=angle*Math.PI/180,c=Math.abs(Math.cos(radians))<1e-12?0:Math.cos(radians),s=Math.abs(Math.sin(radians))<1e-12?0:Math.sin(radians),rotation=[c,s,-s,c,0,0];let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
   for(const t of parts)for(const vertex of t.outline){const p=point(rotation,point(t.matrix,vertex));minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y);}
   if(!parts.length){minX=minY=0;maxX=maxY=1;}rotation[4]=-minX;rotation[5]=-minY;
-  const result={...status,width:W,height:H,row:A,angle,assembly:id,parts,rotation,axis:[{x:C.left,y:A},{x:C.right,y:A}],outputWidth:maxX-minX,outputHeight:maxY-minY,forward:p=>point(rotation,p),unrotate:p=>inverse(rotation,p)};
+  const result={...config,rotation,outputWidth:maxX-minX,outputHeight:maxY-minY,forward:p=>point(rotation,p),unrotate:p=>inverse(rotation,p)};
   const snap=value=>Math.abs(value*2-Math.round(value*2))<1e-9?Math.round(value*2)/2:value;
   result.pick=p=>{const q=result.unrotate(p);for(let i=parts.length-1;i>=0;i--){const tile=parts[i],src=inverse(tile.matrix,q);src.x=snap(src.x);src.y=snap(src.y);if(tile.contains(src.x,src.y))return {...src,part:tile.id,sourceKey:tile.sourceKey};}return null;};return result;
  }
  function draw(ctx,source,p,ratio=1){
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.imageSmoothingEnabled=false;
   const R=p.rotation;ctx.setTransform(R[0]*ratio,R[1]*ratio,R[2]*ratio,R[3]*ratio,R[4]*ratio,R[5]*ratio);
-  for(const tile of p.parts){ctx.save();ctx.transform(...tile.matrix);ctx.beginPath();tile.outline.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.clip();ctx.drawImage(source,0,0,source.width,source.height,0,0,p.width,p.height);ctx.restore();}
+  const sx=source.width/p.width,sy=source.height/p.height;
+  for(const tile of p.parts){ctx.save();ctx.transform(...tile.matrix);ctx.beginPath();tile.outline.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.clip();
+   if(p.mode==='custom'){
+    const x=Math.max(0,Math.floor(tile.left*sx)),y=Math.max(0,Math.floor(tile.top*sy));
+    const w=Math.min(source.width,Math.ceil(tile.right*sx))-x,h=Math.min(source.height,Math.ceil(tile.height*sy))-y;
+    if(w>0&&h>0)ctx.drawImage(source,x,y,w,h,x/sx,y/sy,w/sx,h/sy);
+   }else ctx.drawImage(source,0,0,source.width,source.height,0,0,p.width,p.height);
+   ctx.restore();
+  }
  }
  function mount(o){
   const {host,source,box,canvas}=o,doc=host.ownerDocument,win=doc.defaultView,events=new WeakMap();let drag=null,suppressClick=false,current=null,unit=1,originalVisibility=source.style.visibility,raf=0,layoutKey='',stateKey='';
-  const geometry=()=>o.geometry(),get=()=>{const s=o.state(),g=geometry(),assembly=normalise(s.romboAssembly),row=Math.max(1,Math.min(g.height,Math.round(s.romboRow??g.height)));return {on:!!s.edgeRhombOn,row,maxRow:Math.max(1,Math.round(g.height)),angle:((Number(s.romboAngle)||0)%360+360)%360,assembly,...availability(assembly,g,row)};};
+  let layoutRef,normalized=null,customKey='',custom=null,publishedLayout;
+  const geometry=()=>o.geometry();
+  function layout(){
+   const raw=o.state().romboLayout;
+   if(raw!==layoutRef){layoutRef=raw;normalized=triangles.normalize(raw);custom=null;}
+   return normalized;
+  }
+  function get(g=geometry()){
+   const s=o.state(),assembly=normalise(s.romboAssembly),row=Math.max(1,Math.min(g.height,Math.round(s.romboRow??g.height))),mode=s.romboMode==='custom'?'custom':'fixed';
+   return {on:!!s.edgeRhombOn,row,maxRow:Math.max(1,Math.round(g.height)),angle:((Number(s.romboAngle)||0)%360+360)%360,assembly,mode,...(mode==='custom'?customAvailability(layout(),g):availability(assembly,g,row))};
+  }
   let planKey='',plans=new Map();
-  const makePlan=assembly=>{const g=geometry(),s=get(),id=normalise(assembly??s.assembly),key=[g.width,g.height,g.anchor,g.available,g.reason,g.sides,s.row,s.angle].join(':');if(key!==planKey){planKey=key;plans.clear();}if(!plans.has(id))plans.set(id,plan(g.width,g.height,{...s,assembly:id},g));return plans.get(id);};
+  function makePlan(assembly,g=geometry(),s=get(g)){
+   if(assembly===undefined&&s.mode==='custom'){
+    const pieces=layout(),key=JSON.stringify([g.width,g.height,g.scope,s.angle,s.available,s.reason]);
+    if(!custom||key!==customKey){customKey=key;custom=buildCustom(pieces,g,s.angle);}
+    return custom;
+   }
+   const id=normalise(assembly??s.assembly),key=[g.width,g.height,g.anchor,g.available,g.reason,g.sides,s.row,s.angle].join(':');
+   if(key!==planKey){planKey=key;plans.clear();}if(!plans.has(id))plans.set(id,plan(g.width,g.height,{...s,assembly:id},g));return plans.get(id);
+  }
   // Direct state restore/reset and geometry changes also pass through render.
   // Publish only an effective change, so the legend/menu need no frame polling.
-  function publish(state=get()){const g=geometry(),key=[state.on,state.row,state.maxRow,state.angle,state.assembly,state.available,state.reason,g.width,g.anchor,g.sides].join(':');if(key===stateKey)return;stateKey=key;win.dispatchEvent(new win.Event('may-rombo-change'));}
+  function publish(g=geometry(),state=get(g)){const selected=state.mode==='custom'?layoutRef:null,key=[state.mode,state.on,state.row,state.maxRow,state.angle,state.assembly,state.available,state.reason,g.width,g.anchor,g.sides].join(':');if(key===stateKey&&publishedLayout===selected)return;stateKey=key;publishedLayout=selected;win.dispatchEvent(new win.Event('may-rombo-change'));}
   function notify(){o.changed?.();publish();}
   function render(layoutOnly=false){
-   const state=get();publish(state);doc.body.classList.toggle('may-rombo-active',state.on&&state.available);
+   const g=geometry(),state=get(g);publish(g,state);doc.body.classList.toggle('may-rombo-active',state.on&&state.available);
+   if(drag&&(!state.on||!state.available||state.mode==='custom')){if(canvas.hasPointerCapture?.(drag.id))canvas.releasePointerCapture(drag.id);drag=null;suppressClick=false;}
    if(!state.on||!state.available){if(raf)win.cancelAnimationFrame(raf);raf=0;layoutKey='';box.style.display='none';source.style.visibility=o.restoreVisibility?.()??originalVisibility;current=null;return;}
-   if(!source.width||!source.height)return;current=makePlan();const r=source.getBoundingClientRect();unit=r.width/current.width;if(!(unit>0))return;
+   if(!source.width||!source.height)return;current=makePlan(undefined,g,state);const r=source.getBoundingClientRect();unit=r.width/current.width;if(!(unit>0))return;
    const key=[r.left,r.top,r.width,r.height,current.row,current.angle,current.assembly,current.outputWidth,current.outputHeight,source.style.marginLeft,source.style.marginRight].join(':');
    if(key!==layoutKey){layoutKey=key;source.style.visibility='hidden';box.style.display='block';box.style.width=current.outputWidth*unit+'px';box.style.height=current.outputHeight*unit+'px';box.style.marginLeft=source.style.marginLeft||'auto';box.style.marginRight=source.style.marginRight||'auto';box.style.marginTop=-(r.height+(parseFloat(win.getComputedStyle(source).marginBottom)||0))+'px';box.style.transform='none';
     const br=box.getBoundingClientRect();box.style.transform=`translate(${r.left+(r.width-current.outputWidth*unit)/2-br.left}px, ${r.top-br.top}px)`;canvas.style.width=current.outputWidth*unit+'px';canvas.style.height=current.outputHeight*unit+'px';canvas.style.transform='none';}
@@ -73,14 +124,15 @@
    if(layoutOnly)return;
    const quality=Math.min(Math.max(2,source.width/current.width),Math.sqrt(16e6/(current.outputWidth*current.outputHeight)),16384/current.outputWidth,16384/current.outputHeight),cw=Math.max(1,Math.ceil(current.outputWidth*quality)),ch=Math.max(1,Math.ceil(current.outputHeight*quality));if(canvas.width!==cw)canvas.width=cw;if(canvas.height!==ch)canvas.height=ch;
    const ctx=canvas.getContext('2d'),frame=o.capture?.()||source;draw(ctx,frame,current,quality);ctx.setTransform(quality,0,0,quality,0,0);
-   const a=current.forward(current.axis[0]),b=current.forward(current.axis[1]);ctx.strokeStyle='#ffd35b';ctx.lineWidth=1/Math.max(.02,unit);ctx.setLineDash?.([5/unit,3/unit]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash?.([]);
+   if(current.axis){const a=current.forward(current.axis[0]),b=current.forward(current.axis[1]);ctx.strokeStyle='#ffd35b';ctx.lineWidth=1/Math.max(.02,unit);ctx.setLineDash?.([5/unit,3/unit]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash?.([]);}
    o.paintCentres?.(ctx,current,quality,unit);
   }
   function input(event){
    if(!get().on||!current||events.has(event)||!(event.target===canvas||drag))return;
    if(event.type==='click'&&suppressClick){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();return;}
    if(event.type==='pointerdown')suppressClick=false;
-   const r=canvas.getBoundingClientRect(),p={x:(event.clientX-r.left)/unit,y:(event.clientY-r.top)/unit},a=current.forward(current.axis[0]),b=current.forward(current.axis[1]),dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1))),distance=Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy)*unit;
+   const r=canvas.getBoundingClientRect(),p={x:(event.clientX-r.left)/unit,y:(event.clientY-r.top)/unit};let distance=Infinity;
+   if(current.axis){const a=current.forward(current.axis[0]),b=current.forward(current.axis[1]),dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1)));distance=Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy)*unit;}
    events.set(event,{x:event.clientX,y:event.clientY});
    if(event.type==='pointerdown'&&event.button===0&&distance<=7){drag={id:event.pointerId,x:event.clientX,y:event.clientY,row:get().row,unit,angle:get().angle*Math.PI/180};canvas.setPointerCapture?.(event.pointerId);event.preventDefault();event.stopImmediatePropagation();return;}
    if(drag&&event.pointerId===drag.id){if(event.type==='pointermove'){const delta=(-(event.clientX-drag.x)*Math.sin(drag.angle)+(event.clientY-drag.y)*Math.cos(drag.angle))/drag.unit;api.setRow(drag.row+delta);}if(event.type==='pointerup'||event.type==='pointercancel'){drag=null;suppressClick=true;}event.preventDefault();event.stopImmediatePropagation();return;}
@@ -88,7 +140,7 @@
    const q=current.pick(p);if(!q){event.preventDefault();event.stopImmediatePropagation();return;}const sr=source.getBoundingClientRect();for(const [k,v]of Object.entries({clientX:sr.left+q.x*unit,clientY:sr.top+q.y*unit,x:sr.left+q.x*unit,y:sr.top+q.y*unit}))Object.defineProperty(event,k,{configurable:true,value:v});
   }
   for(const type of ['pointerdown','pointermove','pointerup','pointercancel','mousedown','mousemove','mouseup','click','dblclick','contextmenu','wheel'])win.addEventListener(type,input,{capture:true,passive:false});
-  const api={get,options:()=>variants.map(v=>({...v,...availability(v.id,geometry(),get().row)})),plan:makePlan,render,physicalPoint:event=>events.get(event),capture(){render(false);const c=doc.createElement('canvas'),frame=current?canvas:(o.capture?.()||source);c.width=frame.width;c.height=frame.height;c.getContext('2d').drawImage(frame,0,0);return c;},set(value){o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n)return;s.romboRow=n;notify();},cycleAngle(dir=1){o.state().romboAngle=(get().angle+(dir<0?315:45))%360;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available)return;o.state().romboAssembly=n;notify();}};return api;
+  const api={get,options:()=>variants.map(v=>({...v,...availability(v.id,geometry(),get().row)})),plan:makePlan,render,physicalPoint:event=>events.get(event),capture(){render(false);const c=doc.createElement('canvas'),frame=current?canvas:(o.capture?.()||source);c.width=frame.width;c.height=frame.height;c.getContext('2d').drawImage(frame,0,0);return c;},setMode(value){o.state().romboMode=value==='custom'?'custom':'fixed';notify();},set(value){o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n)return;s.romboRow=n;notify();},cycleAngle(dir=1){o.state().romboAngle=(get().angle+(dir<0?315:45))%360;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available)return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
  }
- return {plan,point,inverse,draw,mount,variants,normalise};
+ return {plan,customPlan,point,inverse,draw,mount,variants,normalise};
 });
