@@ -17,12 +17,15 @@
   for(const tile of p.parts){ctx.save();ctx.transform(...tile.matrix);ctx.beginPath();ctx.rect(tile.left,0,tile.right-tile.left,p.row);ctx.clip();ctx.drawImage(source,0,0,source.width,source.height,0,0,p.width,p.height);ctx.restore();}
  }
  function mount(o){
-  const {host,source,box,canvas}=o,doc=host.ownerDocument,win=doc.defaultView,events=new WeakMap();let drag=null,suppressClick=false,current=null,unit=1,originalVisibility=source.style.visibility,raf=0,layoutKey='';
+  const {host,source,box,canvas}=o,doc=host.ownerDocument,win=doc.defaultView,events=new WeakMap();let drag=null,suppressClick=false,current=null,unit=1,originalVisibility=source.style.visibility,raf=0,layoutKey='',stateKey='';
   const geometry=()=>o.geometry(),get=()=>{const s=o.state(),g=geometry();return {on:!!s.edgeRhombOn,row:Math.max(1,Math.min(g.height,Math.round(s.romboRow??g.height))),maxRow:Math.max(1,Math.round(g.height)),angle:((Number(s.romboAngle)||0)%360+360)%360,assembly:Math.max(0,Math.min(15,Math.trunc(s.romboAssembly??1)))};};
   const makePlan=()=>{const g=geometry();return plan(g.width,g.height,get());};
-  function notify(){o.changed?.();win.dispatchEvent(new win.Event('may-rombo-change'));}
+  // Direct state restore/reset and geometry changes also pass through render.
+  // Publish only an effective change, so the legend/menu need no frame polling.
+  function publish(state=get()){const key=[state.on,state.row,state.maxRow,state.angle,state.assembly].join(':');if(key===stateKey)return;stateKey=key;win.dispatchEvent(new win.Event('may-rombo-change'));}
+  function notify(){o.changed?.();publish();}
   function render(layoutOnly=false){
-   const state=get();doc.body.classList.toggle('may-rombo-active',state.on);
+   const state=get();publish(state);doc.body.classList.toggle('may-rombo-active',state.on);
    if(!state.on){if(raf)win.cancelAnimationFrame(raf);raf=0;layoutKey='';box.style.display='none';source.style.visibility=o.restoreVisibility?.()??originalVisibility;current=null;return;}
    if(!source.width||!source.height)return;current=makePlan();const r=source.getBoundingClientRect();unit=r.width/current.width;if(!(unit>0))return;
    const key=[r.left,r.top,r.width,r.height,current.row,current.angle,current.assembly,source.style.marginLeft,source.style.marginRight].join(':');

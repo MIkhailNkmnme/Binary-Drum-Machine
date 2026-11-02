@@ -1218,6 +1218,16 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-speed-diamond{position:relative;width:240px;height:192px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 :is(body.may-mobile-menu,#mayMobileBar) .gz-ladder.may-transport-options:not(.may-speed-options){overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y;scrollbar-width:none}
 body.may-mobile-menu :is(.gz-ladder,#mayMobileBar).may-standard-list.may-rombo-assembly-options{display:flex!important;flex-direction:column;grid-template-rows:none!important;grid-auto-columns:auto!important;width:120px!important;max-width:120px!important;max-height:var(--may-rombo-list-height)!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none}
+
+/* v0.840: current atlas scheme stays visible independently of the Rombo menu.
+   Below every menu layer; pointer input passes through to the field. */
+#mayRomboPreview{position:fixed;left:50%;bottom:calc(44px + env(safe-area-inset-bottom));transform:translateX(-50%);width:140px;max-width:calc(100vw - 16px);z-index:7;pointer-events:none;user-select:none;color:#dfe6f5}
+#mayRomboPreview[hidden]{display:none}
+#mayRomboPreview>svg{display:block;width:100%;height:auto;overflow:visible;background:#080b10e8}
+.may-rombo-preview-caption{font:12px Arial,sans-serif;fill:#dfe6f5}
+.may-rombo-preview-part{font:bold 13px Arial,sans-serif;fill:#10151d}
+body.may-mobile-menu #mayRomboPreview{width:112px;bottom:calc(8px + env(safe-area-inset-bottom));left:calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2)}
+body.may-zen #mayRomboPreview{bottom:calc(8px + env(safe-area-inset-bottom))}
 body.may-mobile-menu .may-rombo-assembly-options::-webkit-scrollbar,body.may-mobile-menu .may-transport-options::-webkit-scrollbar{display:none}
 body.may-mobile-menu .may-rombo-assembly-options>.gz-hx{flex:none}
 .may-speed-diamond>.may-transport-option{position:absolute;box-sizing:border-box;width:30px;height:24px;margin:0;padding:0;border:0;outline:none;background:#40516b;color:#dfe6f5;font:9px/24px var(--mono,monospace);cursor:pointer;user-select:none;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}

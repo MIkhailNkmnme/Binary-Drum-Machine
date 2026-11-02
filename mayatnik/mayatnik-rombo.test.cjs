@@ -44,17 +44,28 @@ test('crop axis folds only retained rows; centroid counts remain invariant throu
 });
 
 function host(){
-  const state={edgeRhombOn:true,romboRow:3,romboAngle:0,romboAssembly:1},listeners={},r={left:200,top:100,width:90,height:50},classes=new Set();
+  const state={edgeRhombOn:true,romboRow:3,romboAngle:0,romboAssembly:1},listeners={},notifications=[],r={left:200,top:100,width:90,height:50},classes=new Set();
   const style={},source={width:9,height:5,style:{},getBoundingClientRect:()=>({...r})};
   const ctx={canvas:null,setTransform(){},fillRect(){},save(){},restore(){},transform(){},beginPath(){},rect(){},clip(){},drawImage(){},moveTo(){},lineTo(){},stroke(){},setLineDash(){}};
   const box={style,getBoundingClientRect(){const t=/translate\(([-.\d]+)px, ([-.\d]+)px\)/.exec(style.transform||'');return {left:+(t?.[1]||0),top:r.top+r.height+2+(parseFloat(style.marginTop)||0)+ +(t?.[2]||0)};}};
   const canvas={style:{},width:1,height:1,getContext:()=>ctx,getBoundingClientRect(){const b=box.getBoundingClientRect();return {...b,width:parseFloat(canvas.style.width),height:parseFloat(canvas.style.height)};},setPointerCapture(){}};ctx.canvas=canvas;
-  const win={Event:class{constructor(type){this.type=type;}},dispatchEvent(){},requestAnimationFrame:()=>1,cancelAnimationFrame(){},getComputedStyle:()=>({marginBottom:'2px'}),addEventListener(type,fn){listeners[type]=fn;}};
+  const win={Event:class{constructor(type){this.type=type;}},dispatchEvent(event){notifications.push(event.type);},requestAnimationFrame:()=>1,cancelAnimationFrame(){},getComputedStyle:()=>({marginBottom:'2px'}),addEventListener(type,fn){listeners[type]=fn;}};
   const doc={defaultView:win,body:{classList:{toggle(key,on){on?classes.add(key):classes.delete(key);}}},createElement:()=>({getContext:()=>({drawImage(){}})})};
   const api=R.mount({host:{ownerDocument:doc},source,box,canvas,state:()=>state,geometry:()=>({width:9,height:5}),changed(){api.render();}});
   function event(type,x,y){const e={type,target:canvas,clientX:x,clientY:y,pointerId:1,button:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;}};listeners[type](e);return e;}
-  return {api,state,source,box,canvas,r,classes,event};
+  return {api,state,source,box,canvas,r,classes,event,notifications};
 }
+
+test('Rombo publishes effective state changes after setters and direct restore/reset, without frame duplicates',()=>{
+ const h=host();h.api.render();assert.deepEqual(h.notifications,['may-rombo-change']);
+ h.api.render();h.api.render(true);assert.equal(h.notifications.length,1);
+ h.api.setAssembly(15);assert.equal(h.notifications.length,2);
+ h.api.setAssembly(15);assert.equal(h.notifications.length,2);
+ h.api.setRow(4);h.api.cycleAngle();assert.equal(h.notifications.length,4);
+ Object.assign(h.state,{romboAssembly:1,romboRow:3,romboAngle:0});h.api.render();assert.equal(h.notifications.length,5);
+ h.state.edgeRhombOn=false;h.api.render();assert.equal(h.notifications.length,6);
+ h.api.render();assert.equal(h.notifications.length,6);
+});
 
 test('projection follows fractional zoom and scroll without clamping or changing cell aspect',()=>{
   const h=host();
