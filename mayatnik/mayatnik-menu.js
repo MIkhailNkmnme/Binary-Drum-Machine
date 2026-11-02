@@ -120,7 +120,7 @@
       { type: 'vpair', name: 'Строк', tip: 'Длина оси: строк от · до', parts: [{ ...num('symRowsMin', {}), name: 'строк ≥' }, { ...num('symRowsMax', { inf: true, fromInf: () => +$('symRowsMin').value || 2 }), name: '≤' }] },
       { type: 'vpair', name: 'Бит', tip: 'Ширина оси: бит от · до', parts: [{ ...num('symBitsMin', {}), name: 'бит ≥' }, { ...num('symBitsMax', { inf: true, fromInf: () => +$('symBitsMin').value || 2 }), name: '≤' }] }, button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
     { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [
-      withColour('bFill','fillColour','Заливка'),withColour('bAutoVertical','verticalFillColour','Столб'),
+      withColour('bFill','fillColour','Заливка'),check('fillWholeColour','colour'),withColour('bAutoVertical','verticalFillColour','Столб'),
       button('bPaintSame','copy'),button('bPaintSymmetric','mirror'),button('bPaintIsolated1','grid4'),button('bPaintIsolated0','grid4'),
       select('fillArea','grid4'),check('fillMirror','mirror'),
       withColour('bAxesColour','axesFillColour','От осей'),button('bPaintMid','line'),withColour('midOneOn','midOneColour','Центр 1'),withColour('midZeroOn','midZeroColour','Центр 0'),check('midWide','line'),
@@ -146,9 +146,7 @@
       return {...segments('Ширина', [2, 4, 6, 8].map(v => ({ name: v + 'N', tip: 'Ширина поля ' + v + 'N−1', on: () => get() === String(v), pick: () => set(String(v)) }))),disabled:()=>$('edgeWidthTop').disabled}; })(),
     button('edgeEndsTop','grid4'),
     button('edgeEndsMinus','minus'),
-    button('edgeEndsPlus','plus'),
-    button('edgeRhombTop','tri'),
-    button('edgeCloseTop','corners')
+    button('edgeEndsPlus','plus')
   ]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
   const railSourceButtons=new Map(),manualLegacyCells=new Map();
@@ -309,6 +307,8 @@
       row.gzSync = () => parts.forEach((pt, j) => { const on = !!pt.on(); hs[j].classList.toggle('gz-on', on); row.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); });
       return row; };
     const section = (node, key) => { node.dataset.horrSection = key; return node; };
+    { const host=document.createElement('div');host.className='may-rombo-controls';pop.append(section(host,'rombo'));
+      const rombo=mountRomboControls(host,{after:()=>{rail.refresh();placeTools();}});toolSync.push(rombo.sync); }
     { const host=document.createElement('div');host.className='may-animatrix-controls';pop.append(section(host,'animatrix'));
       window.MayatnikAnimatrixControls?.mount({host,api:()=>window.mayAnimatrix,after:()=>{rail.refresh();placeTools();}}); }
     const sizeRows = [];
@@ -608,12 +608,12 @@
     };
     const bs=make('x',sp,'Вершин за кадр'),bf=make('t',ft,'Длительность кадра');
     function close(focus=false){const owner=active?.button;popup?.remove();popup=null;active=null;owner?.setAttribute('aria-expanded','false');if(focus)owner?.focus();}
-    function place(){if(!popup||!active)return;const r=active.button.getBoundingClientRect(),top=Math.max(4,Math.min(r.bottom+2,innerHeight-30));popup.style.left=Math.max(4,Math.min(r.left,innerWidth-124))+'px';popup.style.top=top+'px';popup.style.maxHeight=Math.max(24,innerHeight-top-8)+'px';}
+    function place(){if(!popup||!active)return;const r=active.button.getBoundingClientRect(),diamond=active.input===sp,w=diamond?244:124,h=diamond?200:30,top=Math.max(4,Math.min(r.bottom+2,innerHeight-h));popup.style.left=Math.max(4,Math.min(r.left,innerWidth-w))+'px';popup.style.top=top+'px';popup.style.maxHeight=Math.max(24,innerHeight-top-8)+'px';}
     function selected(){if(!popup||!active)return;const value=Number(active.input.value);if(popup.dataset.selectedValue===String(value))return;popup.dataset.selectedValue=String(value);for(const option of popup.querySelectorAll('[data-value]')){const on=Number(option.dataset.value)===value;option.setAttribute('aria-checked',String(on));option.classList.toggle('gz-on',on);option.tabIndex=on?0:-1;}}
     function setValue(input,value){input.value=String(value);fire(input);sync();rail.refresh();selected();popup?.querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest'});}
     function open(button,input,name){
-      close();active={button,input,name};const columns=input===sp?4:3;popup=document.createElement('div');popup.style.setProperty('--transport-columns',String(columns));popup.className='gz-ladder may-transport-options';popup.dataset.noMini='';popup.setAttribute('role','menu');popup.setAttribute('aria-label',name);
-      let row;values(input).forEach((value,index)=>{if(index%columns===0){row=document.createElement('div');row.className='gz-hx may-transport-option-row';row.dataset.noMini='';row.setAttribute('role','presentation');popup.append(row);}const option=document.createElement('button');option.type='button';option.className='may-transport-option';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');option.title=name+': '+label(input,value);option.setAttribute('aria-label',option.title);option.textContent=input===sp?'×'+value:label(input,value).split(' · ')[0].replace(/\s/g,'');option.onclick=event=>{event.stopPropagation();setValue(input,value);close(true);};row.append(option);});
+      close();active={button,input,name};const diamond=input===sp,columns=diamond?8:3;popup=document.createElement('div');popup.style.setProperty('--transport-columns',String(columns));popup.className='gz-ladder may-transport-options'+(diamond?' may-speed-diamond':'');popup.dataset.noMini='';popup.setAttribute('role','menu');popup.setAttribute('aria-label',name);
+      let row;values(input).forEach((value,index)=>{if(!diamond&&index%columns===0){row=document.createElement('div');row.className='gz-hx may-transport-option-row';row.dataset.noMini='';row.setAttribute('role','presentation');popup.append(row);}const option=document.createElement('button');option.type='button';option.className='may-transport-option';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');option.title=name+': '+label(input,value);option.setAttribute('aria-label',option.title);const text=document.createElement('span');text.textContent=diamond?String(value):label(input,value).split(' · ')[0].replace(/\s/g,'');option.append(text);if(diamond){const col=index%8,r=Math.floor(index/8);option.style.left=((7+col-r)*15)+'px';option.style.top=((col+r)*12)+'px';}option.onclick=event=>{event.stopPropagation();setValue(input,value);close(true);};(diamond?popup:row).append(option);});
       suppressPlayerTips(popup);document.body.append(popup);button.setAttribute('aria-expanded','true');place();selected();popup.querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest'});
       popup.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();document.activeElement?.click();return;}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);return;}const delta={ArrowDown:columns,ArrowUp:-columns,ArrowRight:1,ArrowLeft:-1}[event.key]||0;if(delta){event.preventDefault();event.stopPropagation();const all=[...popup.querySelectorAll('[data-value]')],index=all.indexOf(document.activeElement);all[(index+delta+all.length)%all.length]?.focus();}});
     }
@@ -1454,6 +1454,19 @@
     // Hide line-mounted duplicate mirror commands; the retained handlers still serve old references.
     const style=document.createElement('style');style.textContent='.may-mirror-group [hidden],.may-mirror-group [data-mirror-retained]{display:none!important} .may-mirror-group .pt-r{flex-direction:column;gap:2px!important} #zTopLine .ztl-mir,.zl-hd .zl-mir{visibility:hidden;pointer-events:none}';document.head.append(style);
   }
+  function mountCleanupActions(row,api,makeButton){
+    const buttons=new Map();
+    function sync(){
+      const active=new Map((api()?.present()||[]).map(action=>[action.id,action]));
+      for(const [id,button]of buttons)if(!active.has(id)){button.remove();buttons.delete(id);}
+      for(const [id,action]of active)if(!buttons.has(id)){
+        const help='Очистить: '+action.label+'. Сохранённые библиотеки остаются.';
+        const button=makeButton(row,'cleanup:'+id,action.label,help,async()=>{button.disabled=true;try{await api()?.run(id);}finally{sync();button.disabled=false;}},action.icon);
+        button.dataset.cleanupAction=id;buttons.set(id,button);
+      }
+    }
+    return {sync};
+  }
   function mountViewActions(view,source,makeButton,after){
     const doc=view.ownerDocument,home=doc.createElement('div'),host=doc.createElement('div'),bindings=[];home.dataset.viewActionsHome='';host.className='may-view-actions';host.setAttribute('role','group');host.setAttribute('aria-label','Поворот и переворот поля');home.append(host);view.append(home);
     const sync=()=>{for(const [e,b]of bindings){const on=e.getAttribute('aria-pressed')==='true';b.classList.toggle('on',on);b.classList.toggle('gz-on',on);b.setAttribute('aria-pressed',String(on));b.disabled=e.disabled;b.title=e.title;b.setAttribute('aria-label',e.title);}};
@@ -1463,9 +1476,9 @@
   const viewActions=mountViewActions(gView,$,ptBtn,()=>{rail.refresh();placeTools();});toolSync.push(viewActions.sync);
   // Cell selection uses only the page's original commands.
   {const ids=['bCellSelect','bRowSelect','bCellCollapseRows','bCellCollapseCols','bCellReveal','bCellClear','bFaceRotate','bFaceFlipY'];if(ids.some(id=>$(id))){const row=ptGroup('Ячейки');row.parentElement.dataset.k='Ячейки';row.parentElement.style.setProperty('--c','#73e4a5');for(const id of ids){const e=$(id);if(!e)continue;const b=document.createElement('button');b.type='button';b.className='pt-b gz-hx';b.dataset.n=id;const n=document.createElement('span');n.className='gz-nm';n.textContent=e.dataset.miShort||e.textContent;b.append(n);b.onclick=()=>{e.click();placeTools();};toolSync.push(()=>{b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');b.setAttribute('aria-pressed',e.getAttribute('aria-pressed')||'false');b.title=e.title;});row.append(b);}if($('cellSelectionInfo'))row.append($('cellSelectionInfo'));}}
-  // Reset commands stay in their own groups; Cleanup has one global action.
+  // Cleanup lists only effects/material currently present on the canvas.
   {
-    const command=(row,id,label,help,run)=>{if(!row)return null;const src=document.createElement('button');src.title=help;const b=ptBtn(id,'reset',src,run);b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');const n=document.createElement('span');n.className='gz-nm';n.textContent=label;b.append(n);b.title=help;b.setAttribute('aria-label',help);row.append(b);return b;};
+    const command=(row,id,label,help,run,icon='reset')=>{if(!row)return null;const src=document.createElement('button');src.title=help;const b=ptBtn(id,icon,src,run);b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');const n=document.createElement('span');n.className='gz-nm';n.textContent=label;b.append(n);b.title=help;b.setAttribute('aria-label',help);row.append(b);return b;};
     const railRow=id=>{const group=document.querySelector('.gz-group[data-id="'+id+'"]');return group?.querySelector('.gz-soty')||group?.querySelector('.gz-wide');};
     const groupRow=title=>[...tools.querySelectorAll('.pt-g')].find(g=>g.dataset.k===title||g.querySelector('.may-group-title')?.textContent===title)?.querySelector('.pt-r');
     const move=(id,row)=>{const b=gEdit.querySelector('[data-n="'+id+'"]');if(b&&row){row.append(b);b.style.left=b.style.top='';}};
@@ -1473,6 +1486,7 @@
     for(const id of ['bFillClear','bPaintNew','clrPaint'])move(id,railRow('paint'));
     move('bReset',railRow('horr'));move('clrAxes',gAxis);move('clrMirrors',gMir);move('clrSel',railRow('template')||tools.querySelector('[data-n=bXor2]')?.closest('.pt-r')||groupRow('Шаблон'));
     const all=command(gEdit,'resetAll','Всё сразу','Сбросить текущую сцену и все настройки: чёрно-белый Хорр 512, по ширине оси, вверх, кратный ×2. Сохранённые библиотеки остаются.',async()=>{all.disabled=true;try{await window.mayReset?.all();}finally{all.disabled=false;rail.refresh();placeTools();}});
+    const cleanup=mountCleanupActions(gEdit,()=>window.mayCleanup,command);toolSync.push(cleanup.sync);cleanup.sync();
       for(const [row,id,label,group]of [[gView,'resetView','Сброс вида','view'],[railRow('zoom'),'resetScale','Сброс масштаба','scale'],[gAreas,'resetMeasure','Сброс измерений','measure'],[gMeet,'resetPoint','Сброс точки','point'],[groupRow('Ячейки'),'resetCells','Сброс ячеек','cells'],[groupRow('Слои'),'resetLayers','Сброс слоёв','layers'],[railRow('ochki'),'resetOchki','Сброс находок','ochki'],[railRow('horr'),'resetTransport','Остановить всё','transport']])
       command(row,id,label,group==='ochki'?'Сброс находок — снять найденные подсветки, сохранив кнопки и настройки':label+' — только эта группа',()=>{window.mayReset?.group(group);rail.refresh();placeTools();});
     }
@@ -1490,10 +1504,39 @@
     try{const storageKey='mayatnik-control-mini-v464',saved=JSON.parse(localStorage.getItem(storageKey)||'[]');if(Array.isArray(saved)){const next=new Set(saved);for(const [from,to]of moves)if(next.has(from))next.add(to);if(next.size!==saved.length)localStorage.setItem(storageKey,JSON.stringify([...next]));}}catch(_){}
   }
   mountOverlayGroup();
+  function mountRomboControls(host,{api=()=>window.mayRombo,after=()=>{}}={}){
+    const doc=host.ownerDocument,choices=['L','R','L↔','R↔'];
+    const assemblyName=id=>choices[Math.floor(id/4)]+' | '+choices[id%4];
+    const command=(id,label,help)=>{const b=doc.createElement('button');b.type='button';b.className='gz-hx';b.dataset.n=id;b.title=help;b.setAttribute('aria-label',help);const text=doc.createElement('span');text.className='gz-nm';text.textContent=label;b.append(text);host.append(b);return b;};
+    const toggle=command('edgeRhombTop','Ромб','Ромб: верхний исходный треугольник C и сборка из двух нижних половин');
+    const row=doc.createElement('div');row.className='may-rows-custom may-rombo-row';row.dataset.n='romboRow';
+    const line=doc.createElement('div');line.className='may-rows-line';const input=doc.createElement('input');input.type='number';input.min='1';input.step='1';input.title='Строка горизонтальной оси ромба: от 1 до высоты поля. Enter — применить.';input.setAttribute('aria-label','Строка горизонтальной оси ромба');
+    const label=doc.createElement('label');label.className='may-rombo-axis-label';label.append(line);row.append(label);host.append(row);
+    const turn=command('romboAngle','Поворот 0°','Поворот ромба: 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°. Правый щелчок — назад.');
+    const assembly=command('romboAssembly','Сборка L | R','Сборка ромба: левый нижний слот | правый нижний слот. L и R — исходные боковые части, ↔ — горизонтальное отражение. Верх C сохраняется.');
+    assembly.setAttribute('aria-haspopup','true');
+    const diagram=command('romboDiagram','Схемы 16','Открыть схемы всех 16 сборок ромба');diagram.onclick=event=>{event.stopPropagation();window.open('instruction/assets/rombo-assemblies.svg','_blank','noopener');};
+    let lastRow=null;
+    const state=()=>api()?.get?.(),max=s=>Math.max(1,Math.round(Number(s?.maxRow)||1));
+    const sync=()=>{const s=state(),available=!!s;for(const button of [toggle,turn,assembly])button.disabled=!available;input.disabled=!available;for(const arrow of line.querySelectorAll('button'))arrow.disabled=!available;if(!s)return;
+      toggle.classList.toggle('gz-on',!!s.on);toggle.setAttribute('aria-pressed',String(!!s.on));
+      const limit=max(s),value=Math.max(1,Math.min(limit,Math.round(Number(s.row)||limit)));input.max=String(limit);if(lastRow!==value){input.value=String(value);lastRow=value;}
+      const angle=((Number(s.angle)||0)%360+360)%360;turn.querySelector('.gz-nm').textContent='Поворот '+angle+'°';turn.setAttribute('aria-label','Поворот ромба: '+angle+'°. Нажать — добавить 45°; правый щелчок — вычесть 45°.');
+      const id=Math.max(0,Math.min(15,Math.round(Number(s.assembly)||0)));assembly.querySelector('.gz-nm').textContent='Сборка '+assemblyName(id);assembly.setAttribute('aria-label','Сборка '+(id+1)+' из 16: '+assemblyName(id)+'. L — левая исходная часть, R — правая, ↔ — горизонтальное отражение.');
+      for(const arrow of line.querySelectorAll('button'))arrow.disabled=Number(arrow.dataset.step)<0?value<=1:value>=limit;
+    };
+    const apply=value=>{const s=state();if(!s)return;api().setRow(Math.max(1,Math.min(max(s),Math.round(Number(value)||1))));sync();after();};
+    const arrow=direction=>{const b=doc.createElement('button');b.type='button';b.className='may-rows-step';b.dataset.dir=direction<0?'left':'right';b.dataset.step=String(direction);b.title='Сдвинуть ось ромба на одну строку '+(direction<0?'вверх':'вниз');b.setAttribute('aria-label',b.title);b.onclick=event=>{event.stopPropagation();apply((Number(state()?.row)||max(state()))+direction);};return b;};
+    const caption=doc.createElement('span');caption.className='may-rombo-axis-caption';caption.textContent='Ось';line.append(arrow(-1),caption,input,arrow(1));input.onclick=event=>event.stopPropagation();input.onkeydown=event=>{event.stopPropagation();if(event.key==='Enter'){event.preventDefault();apply(input.value);}};input.addEventListener('change',()=>apply(input.value));
+    toggle.onclick=event=>{event.stopPropagation();const s=state();if(s){api().set(!s.on);sync();after();}};
+    turn.onclick=event=>{event.stopPropagation();api()?.cycleAngle?.(1);sync();after();};turn.oncontextmenu=event=>{event.preventDefault();event.stopPropagation();api()?.cycleAngle?.(-1);sync();after();};
+    ZerkGrozd.listHover(assembly,{options:()=>Array.from({length:16},(_,id)=>({name:(id+1)+'. '+assemblyName(id),on:Number(state()?.assembly)===id,pick:()=>{api()?.setAssembly?.(id);sync();after();}})),color:()=>getComputedStyle(host).getPropertyValue('--c').trim()||'#73e4a5',host:()=>doc.body,col:()=>host});
+    window.addEventListener('may-rombo-change',sync);sync();return{sync,assemblyName};
+  }
   function mountHorrSections(group, { storage = localStorage, after = () => {}, openGroup = () => {} } = {}) {
     if (!group) return null;
     const doc = group.ownerDocument, win = doc.defaultView;
-    const sections = [['size', 'Размер', 'line'], ['build', 'Построение', 'steps'], ['fields', 'Поля', 'field'], ['overlay', 'Наложение', 'plusRing'], ['run', 'Прогон', 'play'], ['animatrix', 'Аниматрица', 'grid4']];
+    const sections = [['size', 'Размер', 'line'], ['build', 'Построение', 'steps'], ['fields', 'Поля', 'field'], ['rombo', 'Ромбо', 'tri'], ['overlay', 'Наложение', 'plusRing'], ['run', 'Прогон', 'play'], ['animatrix', 'Аниматрица', 'grid4']];
     const key = 'mayatnik-horr-section-v1', openKey = 'mayatnik-horr-section-open-v1';
     const controls = [...group.querySelectorAll('[data-horr-section]')], host = controls[0]?.closest('.gz-wide');
     if (!host || !controls.length) return null;
@@ -1561,7 +1604,8 @@
       if (persist) { group.mayHorrRevision++; if (id) openGroup(); try { if (id) storage.setItem(key, id); storage.setItem(openKey, id ? '1' : '0'); } catch (_) {} }
       place(); if (refresh) { after(); place(); } return true;
     };
-    const outside = event => { if (selected && !main.contains(event.target) && !popup.contains(event.target) && !event.target.closest?.('[data-may-search-ui]')) choose(null); };
+    const listContains=target=>[...doc.querySelectorAll('.gz-ladder')].some(list=>list.owner&&host.contains(list.owner)&&(target?list.contains(target):list.matches(':hover')));
+    const outside = event => { if (selected && !main.contains(event.target) && !popup.contains(event.target) && !listContains(event.target) && !event.target.closest?.('[data-may-search-ui]')) choose(null); };
     const keys = event => {
       if (!selected || popup.hidden) return;
       const search = win.mayButtonSearch?.getState(); if (event.key === 'Escape' && (search?.open || search?.current)) return;
@@ -1578,7 +1622,7 @@
     const sizeObserver = win.ResizeObserver ? new win.ResizeObserver(place) : null; sizeObserver?.observe(host); sizeObserver?.observe(group);
     choose(selected, false, false);
     return { get: () => selected, choose, buttons, popup, place,
-      contains(owner, target) { return owner === group && !popup.hidden && (target ? popup.contains(target) : popup.matches(':hover')); },
+      contains(owner, target) { return owner === group && !popup.hidden && ((target ? popup.contains(target) : popup.matches(':hover'))||listContains(target)); },
       reveal(target) { const node = target?.closest('[data-horr-section]'); if (!node || !controls.includes(node)) return null; const previous = selected, revision = group.mayHorrRevision; choose(node.dataset.horrSection, false); return () => { if (revision === group.mayHorrRevision) choose(previous, false); }; },
       destroy() { observer.disconnect(); sizeObserver?.disconnect(); doc.removeEventListener('pointerdown', outside, true); doc.removeEventListener('keydown', keys, true); doc.removeEventListener('scroll', place, true); win.removeEventListener('resize', place); choose(null, false, false); popup.remove(); }
     };
@@ -1641,7 +1685,7 @@
     window.mayMenuSearchReveal=(target,control)=>{const releaseHorr=window.mayHorrSections?.reveal(control);if(releaseHorr)return releaseHorr;const g=target?.matches('.pt-g')?target:target?.closest('.pt-g');if(!g||g.classList.contains('pt-btn')||!g.querySelector('.pt-r'))return null;
       searchRevealGroups.add(g);setOpen(g,true);let active=true;return()=>{if(!active)return;active=false;searchRevealGroups.delete(g);setOpen(g,stay(g)||g===open);};};
     // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
-    // «↶ Отм. | ↷ Повт.» (жмёт прежние «Отмена» / «Повтор»); тянется по сетке и сворачивается в ромб ↶ ↷, как остальные; ключ раскладки — прежний («Правка»)
+    // «↶ Отм. | ↷ Повт.» uses the original history commands, fixed below the three branding rows.
     const ud = gHistory.parentElement, udL = ud.querySelector('.pt-l');
     { ud.classList.add('pt-btn'); ud.dataset.k = 'Правка'; udL.textContent = '';
       const half = (src, glyph, name) => { const e = $(src), s = document.createElement('span'), a = document.createElement('span'), n = document.createElement('span');
@@ -1722,7 +1766,7 @@
       const saveBot = () => { try { if (bot.length) localStorage.setItem('mayatnik-bot', JSON.stringify(bot)); else localStorage.removeItem('mayatnik-bot'); } catch (_) {} };
       try{if(!localStorage.getItem('mayatnik-horr-group-v441')){if(!up.includes('horr'))up.push('horr');if(!bot.includes('gz:horr'))bot.push('gz:horr');saveUp();saveBot();localStorage.setItem('mayatnik-horr-group-v441','1');}}catch(_){}
       try { if (!localStorage.getItem('mayatnik-areas-bottom-v427')) { if (!bot.includes('Площади')) bot.push('Площади'); saveBot(); localStorage.setItem('mayatnik-areas-bottom-v427', '1'); } } catch (_) { if (!bot.includes('Площади')) bot.push('Площади'); }
-      const isBot = el => el===ud||el!==frameBar&&bot.includes(idOf(el)), barTop = () => footerBar.getBoundingClientRect().top;
+      const isBot = el => el!==ud&&el!==frameBar&&bot.includes(idOf(el)), barTop = () => footerBar.getBoundingClientRect().top;
       // v0.406: «в любое место нижней полосы группу поставить без наездов»: своё место — botX[id] (x на экране, куда отпустили); по порядку слева направо,
       // не налезая на соседние группы и на связку «×N | ползунок | время | Хорр», в пределах полосы
       let botX = {}; try { const o = JSON.parse(localStorage.getItem('mayatnik-botx') || '{}'); if (o && typeof o === 'object') botX = o; } catch (_) {}
@@ -1731,7 +1775,7 @@
       const placeBot = () => { const bar = footerBar, R = bar.getClientRects().length ? bar.getBoundingClientRect() : null;udPlace();
         const list = []; for (const el of items()) { if(el===ud||el.classList.contains('may-docked'))continue;if (d?.on && d.el === el) continue; if (!isBot(el) || narrow.matches || !R) { if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; } continue; } list.push(el); }
         if (!R || !list.length) return;
-        const busyX = [ud.getBoundingClientRect()].filter(r=>r.width).map(r => [r.left - 6, r.right + 6]);
+        const busyX = [];
         let def = R.left + 8; const want = el => { const v = +botX[idOf(el)]; return Number.isFinite(v) ? v : def; };
         const occ = busyX.slice();
         for (const el of list.sort((p, q) => want(p) - want(q))) { el.classList.add('pt-bot'); const hd = el.querySelector(':scope > .pt-l, :scope > .gz-head') || el, h = hd.offsetHeight || 24, w = hd.offsetWidth || el.offsetWidth;
@@ -1763,12 +1807,11 @@
       let shown = new Map(), sig = '', d = null, rd = null, rdown = null, swallow = false;
       const sigOf = () => tools.clientWidth + ':' + items().map(el => el.getClientRects().length ? el.offsetWidth : 0).join(',');
       const snap = () => { gw = {}; let i = 0; for (const [it, [c, r]] of shown) if (it !== ud) gw[idOf(it)] = [c, r, i++]; };   // своей раскладки ещё нет — снять с того, как стоит сейчас
-      // МАЯ-392: Undo/Redo stays at the viewport centre; its diamond remains between the two arms.
-      // Зовёт и страница (прокрутка, масштаб) — window.mayUdPlace
-      const udPlace = () => { if(narrow.matches){ud.classList.remove('pt-bot');return;}if (!ud.getClientRects().length) return;ud.classList.add('pt-bot');const R=footerBar.getBoundingClientRect(),w=ud.offsetWidth,axEl=ud.querySelector('.pt-ud-ax');
+      // Fourth fixed left control, directly below Hub, title and utilities.
+      // The existing callback remains available to field/zoom layout updates.
+      const udPlace = () => { const fixed=!narrow.matches;head.classList.toggle('may-history-left',fixed);ud.classList.toggle('may-history-fixed',fixed);ud.classList.remove('pt-bot');ud.style.left=ud.style.top=ud.style.bottom='';if(!fixed)return;
         const controlWidth=udL.getBoundingClientRect().width+'px';if(frameBar.style.getPropertyValue('--may-frame-width')!==controlWidth)frameBar.style.setProperty('--may-frame-width',controlWidth);
-        const cx = innerWidth / 2, U = ud.getBoundingClientRect(), A = axEl?.getBoundingClientRect(), off = A && A.width ? A.left + A.width / 2 - U.left : w / 2;
-        const v=Math.round(Math.max(R.left+4,Math.min(R.right-w-4,cx-off)))+'px';if(ud.style.left!==v)ud.style.left=v;ud.style.top='';ud.style.bottom=Math.round(innerHeight-R.bottom+(R.height-ud.offsetHeight)/2)+'px'; };
+      };
       window.mayUdPlace = udPlace;
       let framePlaceRaf=0;
       const framePlace=(refresh=true)=>{
@@ -1894,7 +1937,7 @@
       let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = ZerkGroupHeader.parts(l).icon;ic.textContent = glyph(k);ic.classList.toggle('may-header-abbrev',ic.textContent.length>1);if(!ic.parentNode)l.append(ic);
-        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on);ZerkGroupHeader.sync(l,{mini:on}); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · стоит по середине шапки · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : (k==='👓 Очки'?'👓 Поиск':k)+' \u00b7 '+'\u0429\u0435\u043b\u0447\u043e\u043a \u2014 \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u00b7 \u0442\u044f\u043d\u0443\u0442\u044c \u2014 \u043f\u0435\u0440\u0435\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u00b7 \u041f\u041a\u041c \u2014 \u0442\u0440\u0435\u0443\u0433\u043e\u043b\u044c\u043d\u0438\u043a / \u043f\u043e\u043b\u043d\u044b\u0439 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a'; };
+        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on);ZerkGroupHeader.sync(l,{mini:on}); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · закреплена четвёртой слева · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : (k==='👓 Очки'?'👓 Поиск':k)+' \u00b7 '+'\u0429\u0435\u043b\u0447\u043e\u043a \u2014 \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u00b7 \u0442\u044f\u043d\u0443\u0442\u044c \u2014 \u043f\u0435\u0440\u0435\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u00b7 \u041f\u041a\u041c \u2014 \u0442\u0440\u0435\u0443\u0433\u043e\u043b\u044c\u043d\u0438\u043a / \u043f\u043e\u043b\u043d\u044b\u0439 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a'; };
         sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation();
           if(minis.has(k))minis.delete(k);else minis.add(k);if(!g.classList.contains('pt-btn')){folds.add(k);if(open===g)open=null;g._hoverAt=0;setOpen(g,false);saveDd();}
           try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); }); }

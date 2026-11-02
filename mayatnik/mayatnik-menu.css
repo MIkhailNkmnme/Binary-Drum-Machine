@@ -887,7 +887,7 @@ header #paintTools.pt-dd .pt-r{padding:0 2px;margin-left:-2px}
 /* v0.441: управление кадром занимает прежнее место правки; правка — внизу на оси. */
 .mayatnik-menu-ready #mayFooterBar{display:block;position:relative;grid-column:1/-1;grid-row:6;min-height:30px;border-top:1px solid var(--line);background:#000;z-index:9}
 #mayFooterBar>.pt-gridbg{position:absolute;pointer-events:none;background:#ffffff0b}
-header #paintTools.pt-grid>#mayBottomBar{position:absolute;top:0;width:calc(var(--may-frame-width,160px) + 116px);height:24px;min-height:24px;padding:0!important;border:0;background:transparent;overflow:visible}
+header #paintTools.pt-grid>#mayBottomBar{position:absolute;top:0;width:calc(var(--may-frame-width,160px) + 180px);height:24px;min-height:24px;padding:0!important;border:0;background:transparent;overflow:visible}
 header #paintTools.pt-grid{min-height:42px}
 header #mayBottomBar>.gz-sl{flex:none;min-width:0;width:var(--may-frame-width,160px);max-width:none}
 #mayBottomBar>.may-frame-value{position:absolute;transform:translateX(-50%);padding:0 2px;color:var(--gz-txt,#dfe6f5);background:#000;font:10px/12px var(--mono,monospace);white-space:nowrap;pointer-events:none;z-index:11}
@@ -999,6 +999,12 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-rows-step:is(:hover,:focus-visible,:active)::before{background:var(--c,#73e4a5);mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1.4 12 12 1.4 22.6 12 12 22.6Z' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E") center/24px 24px no-repeat}
 .may-rows-custom .may-rows-line input{flex:0 0 72px;width:72px;min-width:0;max-width:72px;height:24px;padding:0 3px;border:0;background:transparent;color:#dcecff;outline:0;box-shadow:none}
 .may-rows-custom .may-rows-line input:focus{outline:0;box-shadow:inset 0 0 0 1px var(--c,#73e4a5)}
+.may-rombo-controls{display:flex;flex-direction:column;align-items:center;gap:2px;width:120px}
+.may-rombo-controls>.gz-hx{flex:none;width:120px;height:24px}
+.may-rombo-controls>.may-rombo-row{margin:0;gap:0}
+.may-rombo-axis-label{display:block;width:120px;height:24px}
+.may-rombo-axis-caption{flex:0 0 24px;font-size:10px;color:#dfe6f5;pointer-events:none}
+.may-rombo-row .may-rows-line input{flex:0 0 48px;width:48px;max-width:48px}
 
 /* Both row controls use narrow dashed indicators; only the lower input edits a draft. */
 .may-rows-thumb{position:absolute;z-index:5;top:3px;width:8px;height:18px;margin-left:-4px;cursor:ew-resize;touch-action:none;outline:0;user-select:none;background:transparent}
@@ -1051,7 +1057,7 @@ body.may-mobile-menu #mayMobileBar :is(.pt-g,.gz-group){width:max-content!import
 body.may-mobile-menu #mayMobileBar :is(.pt-l,.gz-head){touch-action:pan-x!important;height:24px!important;min-height:24px!important;max-height:24px!important}
 body.may-mobile-menu #mayMobileBar :is(.may-brand,.sub,#mayMenu,.pt-gridbg,.pt-ghost,.may-closed-back){display:none!important}
 body.may-mobile-menu :is(#mayFooterBar,.may-menu-side-scroll,#mayMenuDockGrid){display:none!important}
-body.may-mobile-menu #mayBottomBar{display:flex!important;align-items:center!important;justify-content:flex-start!important;order:-3;width:276px!important;min-width:276px!important;max-width:276px!important;padding:0!important;border:0!important;overflow:visible!important;--may-frame-width:160px}
+body.may-mobile-menu #mayBottomBar{display:flex!important;align-items:center!important;justify-content:flex-start!important;order:-3;width:340px!important;min-width:340px!important;max-width:340px!important;padding:0!important;border:0!important;overflow:visible!important;--may-frame-width:160px}
 body.may-mobile-menu #paintTools>.pt-g.pt-btn{order:-2}
 body.may-mobile-menu #mayTemplateLauncher{order:-1;width:24px!important;min-width:24px!important;max-width:24px!important;z-index:auto!important}
 body.may-mobile-menu #mayCorner{display:flex!important;flex-direction:row!important;width:max-content!important}
@@ -1092,6 +1098,8 @@ body.may-mobile-menu #mayButtonSearchTrigger{order:-4}
 #mayInfoDiamond.may-view-utilities>button>svg.may-utility-loupe{position:relative;inset:auto;width:24px;height:24px;fill:none;stroke:var(--c);stroke-width:1.5px;pointer-events:none}
 .may-brand-title[role=button]{cursor:pointer}
 .may-brand-title[role=button]:is(:hover,:focus-visible)::before{background:#7cbcff}
+body.mayatnik-menu-ready>header.may-history-left>.may-brand{height:102px}
+header #paintTools.pt-dd.pt-grid>.pt-history.may-history-fixed{position:fixed!important;left:2px!important;top:78px!important;bottom:auto!important;margin:0;z-index:8}
 #paintTools #mayCorner{display:none!important}
 .gz-ladder .may-view-actions{display:flex;flex-direction:column;gap:2px;width:120px;min-width:120px;align-self:start}
 .gz-ladder .may-view-actions>.gz-hx{flex:none;width:120px;height:24px;margin:0!important}
@@ -1107,6 +1115,9 @@ body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>.may-contours-group{position:re
 .may-row-lab-close:hover,.may-row-lab-close:focus-visible{border-color:#b48cff;outline:0}
 .may-row-lab-close[hidden]{display:none!important}
 .may-area-freeze :is(.gz-half),.may-measure-choice>.gz-half{border:0;border-radius:0;font:inherit;color:inherit;cursor:pointer;user-select:none}
+.may-view-effects .gz-ic{--c:#ffd35b;color:#ffd35b!important}
+/* Rombo projects these existing canvas buffers into its one composed scene. */
+body.may-rombo-active :is(#cv,#cvGpu,#cvBoth,#bitDigits,#colourTemplate,#symAxes,#geomCenterCanvas,#fillPreview,#cellInkCanvas,#cellLineCanvas,.may-anchor-ov,.may-fix-ov,.may-sectors,.may-row-lab,.may-row-step-highlight,.may-flash,.may-area-frz,.may-ovl,.may-contour,.may-mir,.may-zl-ov,.may-layer-scene,.may-layer-service,.mcsv-canvas,.mcsv-seams,#mayLineMeasures,#mayCenterHover,#zTopLine,.zl-hd,.may-both-div,.may-row-lab-close){visibility:hidden!important}
 #paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half{appearance:none;border:0;border-radius:0;outline:none;font:inherit;color:inherit;cursor:pointer}
 #paintTools :is([data-n=templateAxes],[data-n=templateAxisOperation])>.gz-half:disabled{opacity:.45;cursor:default}
 body.may-mobile-menu #mayMobileBar #zerkHubBtn{display:flex!important;position:relative!important;inset:auto!important;transform:none!important;order:-5;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:24px!important;margin:0!important;padding:0!important;touch-action:pan-x!important}
@@ -1165,23 +1176,24 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 @media(prefers-reduced-motion:reduce){#mayBottomBar .may-frame-slider.may-frame-running>.gz-a::before{animation:none}}
 
 /* v0.790: ромбы параметров транспорта и списки по щелчку. */
-#mayBottomBar>.may-transport-diamond{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;min-width:48px;height:24px;margin:0 2px;padding:0!important;border:0;outline:0;box-shadow:none;background:transparent;clip-path:none;cursor:pointer;font:600 10px/24px var(--mono,monospace);color:#dfe6f5;--c:#80aee8}
+#mayBottomBar>.may-transport-diamond{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 80px;width:80px;min-width:80px;height:24px;margin:0 2px;padding:0!important;border:0;outline:0;box-shadow:none;background:transparent;clip-path:none;cursor:pointer;font:600 10px/24px var(--mono,monospace);color:#dfe6f5;--c:#80aee8}
 #mayBottomBar>.may-transport-diamond::before,#mayBottomBar>.may-transport-diamond::after{display:none}
-.may-transport-surface{position:absolute;top:0;left:0;display:flex;width:48px;height:24px;isolation:isolate}
+.may-transport-surface{position:absolute;top:0;left:0;display:flex;width:80px;height:24px;isolation:isolate}
 .may-transport-diamond[data-k=sp]>.may-transport-surface{left:auto;right:0}
-.may-transport-surface::before,.may-transport-surface::after{content:"";position:absolute;inset:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#40516b;pointer-events:none;z-index:-1}
+.may-transport-surface::before,.may-transport-surface::after{content:"";position:absolute;inset:0;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);background:#40516b;pointer-events:none;z-index:-1}
 .may-transport-surface::after{inset:1px;background:#1b2430}
 .may-transport-surface>button{position:relative;box-sizing:border-box;height:24px;margin:0;padding:0;border:0;border-radius:0;outline:0;clip-path:none;background:transparent;color:inherit;font:inherit;cursor:pointer;user-select:none}
-.may-transport-center{flex:1;min-width:0}
-.may-transport-nudge{display:none;flex:0 0 24px;font-size:16px!important}
+.may-transport-center{flex:1;min-width:0;border-inline:1px solid #40516b!important}
+.may-transport-nudge{display:block;flex:0 0 20px;font-size:16px!important}
+.may-transport-nudge[data-direction="-1"]{clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%)}
+.may-transport-nudge[data-direction="1"]{clip-path:polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%)}
 #mayBottomBar>.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])){z-index:12}
-.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true]))>.may-transport-surface{width:120px}
 .may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::before,.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::after{clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
 .may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::before{background:var(--c)}
-.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-nudge{display:block}
-.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-center{border-inline:1px solid #40516b}
 .may-transport-surface>button:is(:hover,:focus-visible){box-shadow:inset 0 0 0 1px var(--c)}
 .may-transport-nudge:disabled{opacity:.35;cursor:default}
+.may-transport-nudge:hover:not(:disabled){background:#2e4560}
+.may-transport-nudge:active:not(:disabled){background:#446885}
 .may-transport-options{width:120px;box-sizing:content-box;padding:2px;gap:2px;overflow-y:auto;overflow-x:hidden;background:#000;overscroll-behavior:contain;--c:#80aee8;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;--gz-txt:#dfe6f5;color:#dfe6f5;font:11px/24px var(--mono,monospace)}
 .may-transport-options>.gz-hx{flex:0 0 24px;min-height:24px;justify-content:center;padding:0 12px}
 .may-transport-options>.may-transport-option-row{display:flex!important;gap:0!important;padding:0!important;justify-content:flex-start;overflow:hidden}
@@ -1189,6 +1201,16 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-transport-option-row>.may-transport-option:last-child{border-right:0}
 .may-transport-option-row>.may-transport-option:is(:hover,:focus-visible){outline:1px solid #80aee8;outline-offset:-1px}
 .may-transport-option-row>.may-transport-option[aria-checked="true"]{outline:2px solid #80aee8;outline-offset:-2px}
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-transport-options.may-speed-diamond{display:block;width:240px!important;height:192px;padding:0!important;gap:0!important;overflow:visible;background:transparent!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
+.may-speed-diamond>.may-standard-contours{display:none}
+.may-speed-diamond>.may-transport-option{position:absolute;box-sizing:border-box;width:30px;height:24px;margin:0;padding:0;border:0;outline:none;background:#40516b;color:#dfe6f5;font:9px/24px var(--mono,monospace);cursor:pointer;user-select:none;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.may-speed-diamond>.may-transport-option::before{content:"";position:absolute;inset:1px;background:#1b2430;clip-path:inherit;pointer-events:none}
+.may-speed-diamond>.may-transport-option>span{position:relative;z-index:1;pointer-events:none}
+.may-speed-diamond>.may-transport-option:is(:hover,:focus-visible){background:#80aee8}
+.may-speed-diamond>.may-transport-option[aria-checked="true"]{background:#80aee8}
+.may-speed-diamond>.may-transport-option[aria-checked="true"]::before{inset:2px}
+.may-speed-diamond>.may-transport-option:active{background:#80aee8}
+.may-speed-diamond>.may-transport-option:active::before{inset:3px}
 .may-menu-side-backdrop{position:fixed;display:none;pointer-events:none;z-index:6;background:rgba(0,0,0,.78)}
 body.may-zen>.may-menu-side-backdrop,body.may-mobile-menu>.may-menu-side-backdrop{display:none!important}
 @media(min-width:601px){

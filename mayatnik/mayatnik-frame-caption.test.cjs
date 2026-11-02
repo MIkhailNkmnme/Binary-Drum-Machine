@@ -12,3 +12,11 @@ test('caption honours exact spellings and retains every digit of the scale fract
  assert.equal(caption.children[0].textContent,'Маятнкъ');assert.equal(caption.children[2].textContent,'Прескокъ 2497');assert.equal(caption.children[3].textContent,'512 стркъ');assert.equal(caption.children[4].textContent,'8N−1=4095');assert.equal(caption.children[5].textContent,'Масштбъ 137/12');
  const same=caption.children;context.renderFrameCaption(caption,['Маятник','без сброса хода','Перескок 2497','512 строк','8N−1=4095','масштаб 137/12']);assert.equal(caption.children,same);
 });
+
+test('reset caption is shown only when edge reset is enabled',()=>{
+ const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8'),a=html.indexOf('  function frameBuildType(){'),b=html.indexOf('  function frameBuildTypeSync(',a);
+ for(const edgeWrap of [false,true])for(const edgeContinuous of [false,true]){
+  const c={animatrixOn:()=>false,pairOn:()=>false,testPattern:null,st:{mode:'pend',view:'bits',edgeWrap,edgeContinuous}};vm.createContext(c);vm.runInContext(html.slice(a,b),c);
+  assert.equal(c.frameBuildType().includes('Сброс'),edgeWrap&&!edgeContinuous);assert.equal(c.frameBuildType().includes('без сброса'),false);
+ }
+});

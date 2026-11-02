@@ -145,7 +145,7 @@
   function keyboard(b){if(b.dataset.mayStandardKey||b.getAttribute('role')==='button'&&b.tabIndex>=0)return;b.dataset.mayStandardKey='1';b.tabIndex=0;set(b,'role','button');b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();b.click();}});}
   // v0.456: «цвет значков в цвет группы» — картинка значка становится маской, цвет даёт --c группы (раньше фильтр делал её белой)
   function tintIcons(){
-    for(const i of document.querySelectorAll('#paintTools .pt-b > i, #mayatnikRail .pt-b > i, #mayatnikRailR .pt-b > i, .gz-hx > i.gz-ic')){
+    for(const i of document.querySelectorAll('#paintTools .pt-b > i, #mayatnikRail .pt-b > i, #mayatnikRailR .pt-b > i, .gz-hx > i.gz-ic, .may-view-effects .gz-half > i.gz-ic')){
       const bg=i.style.backgroundImage; if(!bg||bg==='none'||!bg.startsWith('url')||i.dataset.mayTint===bg)continue;
       i.dataset.mayTint=bg; i.style.webkitMaskImage=bg; i.style.maskImage=bg; i.style.backgroundImage='none'; i.classList.add('may-tint');
     }

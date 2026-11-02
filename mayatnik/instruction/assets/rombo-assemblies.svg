@@ -1,0 +1,282 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="1040" viewBox="0 0 1040 1040" role="img" aria-labelledby="title desc">
+<title id="title">Ромбо: все 16 сборок</title>
+<desc id="desc">Верхний треугольник C сохраняется. Для каждого нижнего слота независимо выбирается L, R, L с горизонтальным отражением или R с горизонтальным отражением. Повторы L L и R R разрешены. Номер варианта равен ID плюс один.</desc>
+<style>text{font-family:Arial,sans-serif;fill:#dfe6f5}.title{font-size:26px;font-weight:700}.note{font-size:15px}.card{fill:#10151d;stroke:#40516b}.head{font-size:17px;font-weight:700}.part{font-size:18px;font-weight:700;fill:#10151d}.axis{stroke:#dfe6f5;stroke-width:1;stroke-dasharray:4 3}.arrow{fill:none;stroke:#f9fcff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.notch{fill:#ffe486;stroke:#10151d;stroke-width:.7}</style>
+<rect width="1040" height="1040" fill="#080b10"/>
+<text class="title" x="20" y="38">Ромбо · 16 сборок</text>
+<text class="note" x="20" y="67">C — исходный верх; L — левая часть; R — правая часть; ↔ — горизонтальное отражение.</text>
+<text class="note" x="20" y="90">Стрелка и угловая метка показывают ориентацию. Ось и поворот задаются отдельно.</text>
+<g id="assembly-0" transform="translate(15 115)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">1 · L | L</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">L</text>
+<g transform="translate(102 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">L</text>
+<g transform="translate(142 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 0 · левый | правый</text></g>
+<g id="assembly-1" transform="translate(270 115)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">2 · L | R</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">L</text>
+<g transform="translate(102 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">R</text>
+<g transform="translate(142 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 1 · левый | правый</text></g>
+<g id="assembly-2" transform="translate(525 115)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">3 · L | L↔</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">L</text>
+<g transform="translate(102 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">L↔</text>
+<g transform="translate(142 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 2 · левый | правый</text></g>
+<g id="assembly-3" transform="translate(780 115)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">4 · L | R↔</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">L</text>
+<g transform="translate(102 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">R↔</text>
+<g transform="translate(142 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 3 · левый | правый</text></g>
+<g id="assembly-4" transform="translate(15 330)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">5 · R | L</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">R</text>
+<g transform="translate(102 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">L</text>
+<g transform="translate(142 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 4 · левый | правый</text></g>
+<g id="assembly-5" transform="translate(270 330)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">6 · R | R</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">R</text>
+<g transform="translate(102 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">R</text>
+<g transform="translate(142 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 5 · левый | правый</text></g>
+<g id="assembly-6" transform="translate(525 330)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">7 · R | L↔</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">R</text>
+<g transform="translate(102 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">L↔</text>
+<g transform="translate(142 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 6 · левый | правый</text></g>
+<g id="assembly-7" transform="translate(780 330)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">8 · R | R↔</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">R</text>
+<g transform="translate(102 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">R↔</text>
+<g transform="translate(142 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 7 · левый | правый</text></g>
+<g id="assembly-8" transform="translate(15 545)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">9 · L↔ | L</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">L↔</text>
+<g transform="translate(102 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">L</text>
+<g transform="translate(142 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 8 · левый | правый</text></g>
+<g id="assembly-9" transform="translate(270 545)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">10 · L↔ | R</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">L↔</text>
+<g transform="translate(102 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">R</text>
+<g transform="translate(142 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 9 · левый | правый</text></g>
+<g id="assembly-10" transform="translate(525 545)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">11 · L↔ | L↔</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">L↔</text>
+<g transform="translate(102 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">L↔</text>
+<g transform="translate(142 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 10 · левый | правый</text></g>
+<g id="assembly-11" transform="translate(780 545)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">12 · L↔ | R↔</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">L↔</text>
+<g transform="translate(102 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">R↔</text>
+<g transform="translate(142 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 11 · левый | правый</text></g>
+<g id="assembly-12" transform="translate(15 760)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">13 · R↔ | L</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">R↔</text>
+<g transform="translate(102 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">L</text>
+<g transform="translate(142 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 12 · левый | правый</text></g>
+<g id="assembly-13" transform="translate(270 760)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">14 · R↔ | R</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">R↔</text>
+<g transform="translate(102 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">R</text>
+<g transform="translate(142 130)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 13 · левый | правый</text></g>
+<g id="assembly-14" transform="translate(525 760)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">15 · R↔ | L↔</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">R↔</text>
+<g transform="translate(102 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#78b8e8" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">L↔</text>
+<g transform="translate(142 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 14 · левый | правый</text></g>
+<g id="assembly-15" transform="translate(780 760)">
+<rect class="card" width="245" height="205"/>
+<text class="head" x="122.5" y="24" text-anchor="middle">16 · R↔ | R↔</text>
+<path d="M122 36 42 101H202Z" fill="#e5be68" stroke="#080b10"/>
+<text class="part" x="122" y="79" text-anchor="middle">C</text>
+<path d="M42 101H122V166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="102" y="118" text-anchor="middle">R↔</text>
+<g transform="translate(102 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path d="M122 101H202L122 166Z" fill="#d99bc9" stroke="#080b10"/>
+<text class="part" x="142" y="118" text-anchor="middle">R↔</text>
+<g transform="translate(142 130) scale(-1 1)">
+<path class="arrow" d="M-10 0H10M5-5l5 5-5 5"/>
+<path class="notch" d="M-9 5h6v6Z"/></g>
+<path class="axis" d="M35 101H209"/>
+<text class="note" x="122.5" y="191" text-anchor="middle">ID 15 · левый | правый</text></g>
+<text class="note" x="20" y="1010">Строки: левый слот L, R, L↔, R↔. Столбцы: правый слот L, R, L↔, R↔.</text>
+<text class="note" x="20" y="1031">Верх C не отражается сборкой. Отражения и выбор источника нижних частей независимы.</text></svg>

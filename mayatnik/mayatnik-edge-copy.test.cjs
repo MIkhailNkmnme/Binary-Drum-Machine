@@ -72,14 +72,11 @@ test('«Края»: низ — отражение верхнего кадра, �
   const html = fs.readFileSync(path.join(__dirname, 'Zerkalius-mayatnik.html'), 'utf8');
   const start = html.indexOf('function drawEdgeRhomb');
   assert.ok(start > 0, 'drawEdgeRhomb найден');
-  const fn = html.slice(start, html.indexOf('function edgeBelowFieldPoint'));
-  assert.match(fn, /const narrow = f\.W <= 2 \* f\.H;/, '2N−1 распознаётся');
-  assert.match(fn, /if \(narrow\) cx\.drawImage\(src, 0, 0\);/, '2N−1 — отражение всего кадра');
-  assert.match(fn, /cx\.drawImage\(src, 0, 0, lw, h, 0, 0, lw, h\)/, 'левая половина — под собой');
-  assert.match(fn, /cx\.drawImage\(src, cw - rw, 0, rw, h, cw - rw, 0, rw, h\)/, 'правая половина — под собой');
-  assert.match(fn, /cx\.scale\(1, -1\)/, 'отражение вниз');
-  assert.match(fn, /#5bff9d/, 'зелёный пунктир начал копий');
-  assert.doesNotMatch(fn, /MayatnikEdgeCopy\.copy\(f\.val/, 'полосы из сырых битов больше не рисуются');
+  const fn = html.slice(start, html.indexOf('function romboSourceCanvas',start)),calls=[];
+  const c={f:{},geo:{},window:{mayRombo:{render:layoutOnly=>calls.push(layoutOnly)}}};
+  require('node:vm').runInNewContext(fn+';drawEdgeRhomb(null,true);drawEdgeRhomb(null,false);',c);
+  assert.deepEqual(calls,[true,false]); // The same projection owns both layout and painted cells in every construction.
+  c.f=null;require('node:vm').runInNewContext('drawEdgeRhomb();',c);assert.equal(calls.length,2);
 });
 
 test('«Вспышка» в «Крае» стоит там же, куда встала вершина после перескока', () => {
@@ -89,7 +86,7 @@ test('«Вспышка» в «Крае» стоит там же, куда вст
   const fn = html.slice(start, html.indexOf('function rowLabDraw'));
   assert.match(fn, /edgeEdge=st\.edgeWrap&&!compareOn\(\)&&!st\.sequenceSourceOn/, 'край распознаётся как при постановке вершины');
   assert.match(fn, /edgeC=edgeEdge\?edgeCol\(raw\):raw/, 'столбец вспышки проходит тот же edgeCol');
-  assert.match(fn, /side=\(edgeC-geo\.anchor\)<0\?1:2,base=side===1\?0x5bd3ff:0xffd35b/, 'цвет по стороне, где вершина стоит после заворота');
+  assert.match(fn, /side=x\.p<0\?1:2,base=side===1\?0x5bd3ff:0xffd35b/, 'цвет сохраняется за исходной ветвью после заворота');
   assert.match(fn, /overA=0xff6bb0/, 'наложение вспышек — фиолетовое #b06bff');
   assert.match(fn, /mix=had>0&&SIDE\[q\]!==side/, 'фиолетовое только пересечение разных сторон');
   assert.match(fn, /D\[q\]=\(mix\?over:col\)/, 'в пересечении сторон рисуется фиолетовый');

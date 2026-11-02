@@ -1,5 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const Pattern=require('./mayatnik-manual-paint-pattern.js'),html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');
+test('legacy work without new display and paint flags does not inherit the previous work modes',()=>{
+ const a=html.indexOf('if(supplied){if(data.frameHost)st=structuredClone(data.st);'),b=html.indexOf('if(data.frameHost){restoreFrameEffects',a);assert.ok(a>0&&b>a);
+ for(const value of [undefined,false,true]){
+  const ctx={supplied:true,data:{st:value===undefined?{rows:512}:{rows:512,fillWholeColour:value,edgeRhombOn:value}},st:{fillWholeColour:true,edgeRhombOn:true},structuredClone};
+  vm.runInNewContext(html.slice(a,b),ctx);assert.equal(ctx.st.fillWholeColour,!!value);assert.equal(ctx.st.edgeRhombOn,!!value);
+ }
+});
 function fn(name){const a=html.indexOf('function '+name+'('),b=html.indexOf('{',a);assert.ok(a>=0,name);let i=b+1,d=1;for(;d;i++){if(html[i]==='{')d++;if(html[i]==='}')d--;}return (html.slice(Math.max(0,a-6),a)==='async '?'async ':'')+html.slice(a,i);}
 function fixture({W=8,H=5,VX=1,VW=6,VH=3}={}){
  const nodes=new Map(),c={Uint32Array,Int8Array,Uint8Array,Map,Set,structuredClone,performance,setTimeout,window:{},st:{view:'bits',fillArea:'bit',blackMirror:0},f:{W,H,val:Int8Array.from({length:W*H},(_,q)=>q%2)},geo:{anchor:3},k:2,bmGen:0,VX,VW,VH,RK:1,RG:0,
@@ -12,12 +19,34 @@ function fixture({W=8,H=5,VX=1,VW=6,VH=3}={}){
   paintSelection:(x,y)=>({indices:c.selected||Uint32Array.of(y*VW+x)}),lockColourAt:()=>0,lockErase(){},lockWipe(){},fillSync(){},cssLayout(){},save(){},clearFillPreview(){},savePaint(){},rememberTemplate(){},colReplaySnapshot:()=>[],colReplayRestore(){},selectTemplate(){},persistLibrary(){},rgba:rgb=>(0xff000000|rgb[2]<<16|rgb[1]<<8|rgb[0])>>>0,paintToolColour:()=>c.colour,
   g:{createImageData:(width,height)=>({width,height,data:new Uint8ClampedArray(width*height*4)})}};
  c.manualPaintCellAt=(x,y)=>{const a=c.fieldCellAt(x,y);return a?c.displayPoint(a.c,a.r):null;};
+ c.parityPlan=()=>({sourceRow:r=>r,visible:(r,col)=>c.parityVisible(r,col),settings:{rowFill:'none'}});
+ c.parityValues=()=>c.f.val;c.parityRow=r=>r;
  c.draw=()=>{c.manualPaintFrameSync();c.contourBits=Int8Array.from({length:VW*VH},(_,q)=>c.f.val[Math.floor(q/VW)*W+VX+q%VW]);const pixels=new Uint32Array(c.img.data.buffer);pixels.fill(0xff555555);if(c.fillMask)for(let q=0;q<pixels.length;q++)if(c.fillMask[q])pixels[q]=c.fillMask[q];c.manualPaintLayerApply(pixels);};
- vm.createContext(c);vm.runInContext(html.match(/  const joinedRotated =[^\n]+/)[0],c);const a=html.indexOf('  function manualPaintKey('),b=html.indexOf('  // Colour from the same geometric axes',a);vm.runInContext(html.slice(a,b),c);
- for(const name of ['fillAt','eraseFillAt','pushHistory','paintHistoryCurrent','sceneSnapshot','editSnapshot','finishEdit','historyStep'])vm.runInContext(fn(name),c);
+ vm.createContext(c);vm.runInContext(html.slice(html.indexOf('  const joinedWhole ='),html.indexOf('  const rombP =')),c);const a=html.indexOf('  function manualPaintKey('),b=html.indexOf('  // Colour from the same geometric axes',a);vm.runInContext(html.slice(a,b),c);
+ for(const name of ['fillAt','paintWholeColour','paintWholeColourLayer','eraseFillAt','pushHistory','paintHistoryCurrent','sceneSnapshot','editSnapshot','finishEdit','historyStep'])vm.runInContext(fn(name),c);
  const clearStart=html.indexOf("  $('bFillClear').onclick="),clearEnd=html.indexOf("  $('bRegions').onclick",clearStart);vm.runInContext(html.slice(clearStart,clearEnd),c);
  c.paint=(x,y,colour='#123456',force=true)=>{c.$('fillColour').value=colour;c.fillAt(x+.1,y+.1,false,force);};c.draw();return c;
 }
+test('Весь цвет compares final RGB across gaps, respects the mask, and restores a single stroke',async()=>{
+ const c=fixture({W:7,H:1,VX:0,VW:7,VH:1}),rgb=0xff118822,near=0xff118823,chosen=c.rgba([18,52,86]);
+ const displayed=Uint32Array.of(rgb,near,0x99118822,near,rgb,near,rgb);
+ c.pxView=()=>({data:new Uint8ClampedArray(displayed.buffer)});
+ c.st.fillWholeColour=true;c.st.triangleMapMask=true;c.triangleMapRasterMask=()=>Uint8Array.of(0,0,0,0,1,0,0);
+ c.fillKey='geometry';c.$('fillMirror').checked=true;c.fillMask=Uint32Array.of(0,0,0xff556622,0,0,0,0);
+ const previous=c.fillMask.slice(),bits=c.f.val.slice();c.paint(0,0);
+ assert.deepEqual([...c.fillHistory[0].indices],[0,2,6]);assert.equal(c.fillHistory.length,1);
+ const painted=Uint32Array.of(chosen,0,chosen,0,0,0,chosen);
+ assert.deepEqual(c.fillMask,painted);assert.deepEqual(c.f.val,bits);assert.equal(c.paintBits,null);
+ const overlay=displayed.slice();c.paintWholeColourLayer(overlay);assert.equal(overlay[2],chosen);assert.equal(overlay[4],rgb);
+ const Work=require('./mayatnik-work-file.js'),Settings=require('./mayatnik-settings-library.js');
+ const work=(await Work.decode(await Work.encode({fill:c.fillMask,manualPattern:c.manualPaintSnapshot()}))).data;
+ assert.deepEqual(work.fill,painted);assert.ok(work.manualPattern.wholeColour.marked instanceof Uint8Array);
+ c.manualPaintRestore(work.manualPattern);assert.deepEqual(c.manualPaintSnapshot().wholeColour.marked,work.manualPattern.wholeColour.marked);
+ const settings=Settings.pick(c.st),restored={};Settings.applyState(restored,settings);assert.equal(restored.fillWholeColour,true);
+ assert.equal(c.historyStep(false),true);assert.deepEqual(c.fillMask,previous);assert.equal(c.manualPaintCurrent().wholeColour,undefined);
+ assert.equal(c.historyStep(true),true);assert.deepEqual(c.fillMask,painted);
+ displayed[0]=chosen;c.paint(0,0);assert.equal(c.fillHistory.length,1);assert.deepEqual(c.fillMask,painted);
+});
 test('ordinary manual fill records actual selected bits and colours; automatic operations do not expand the sample',async()=>{
  const c=fixture(),source=c.f.val.slice();c.paint(0,0);c.paint(1,0,'#abcdef');const before=JSON.stringify(c.manualPaintState.source.sample),history=c.fillHistory.length;
  assert.deepEqual(c.manualPaintState.source.sample.cells.map(x=>x.bit),[1,0]);const r=await c.manualPatternApply('same');assert.ok(r.changed>0);assert.equal(c.fillHistory.length,history+1);assert.equal(JSON.stringify(c.manualPaintState.source.sample),before);assert.deepEqual(c.f.val,source);
