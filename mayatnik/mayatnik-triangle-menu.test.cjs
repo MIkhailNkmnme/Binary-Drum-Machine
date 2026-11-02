@@ -23,3 +23,9 @@ test('exact controls disable incompatible 1:1 rotations with an actionable expla
  const dom=new JSDOM('<div></div>'),w=dom.window,host=w.document.querySelector('div'),s={on:true,row:3,maxRow:8,angle:0,assembly:16,mode:'fixed'},api={get:()=>s,options:()=>[],set(){},setRow(){},setMode(){},cycleAngle(){throw Error('incompatible angle must not run');}};
  w.mayPixelExact={canState:patch=>patch.romboAngle===undefined,policyFor:()=>({ok:false,reason:'Выключите 1:1 перед поворотом.'})};const c=vm.createContext({window:w,ZerkGrozd:{listHover(){}},mobileMenu:{matches:false},getComputedStyle:w.getComputedStyle});vm.runInContext(code,c);c.mountRomboControls(host,{api:()=>api});const button=host.querySelector('[data-n="romboAngle"]');assert.equal(button.disabled,true);assert.match(button.getAttribute('aria-label'),/1:1/);button.click();assert.equal(s.angle,0);dom.window.close();
 });
+
+
+test('rejected exact-axis input returns to the real row instead of displaying an unapplied number',()=>{
+ const dom=new JSDOM('<div></div>'),w=dom.window,host=w.document.querySelector('div'),s={on:true,row:3,maxRow:8,angle:0,assembly:16,mode:'fixed'},api={get:()=>s,options:()=>[],setRow(){},setMode(){},set(){},cycleAngle(){}};
+ const c=vm.createContext({window:w,ZerkGrozd:{listHover(){}},mobileMenu:{matches:false},getComputedStyle:w.getComputedStyle});vm.runInContext(code,c);c.mountRomboControls(host,{api:()=>api});const input=host.querySelector('input');input.value='8';input.dispatchEvent(new w.Event('change'));assert.equal(input.value,'3');assert.equal(s.row,3);dom.window.close();
+});
