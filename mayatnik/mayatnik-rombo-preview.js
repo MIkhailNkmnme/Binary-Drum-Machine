@@ -28,7 +28,7 @@
     path('M-8 4h5v5Z','#ffe486',arrow);
    });
    make('path',{d:'M-59 0H59',fill:'none',stroke:'#dfe6f5','stroke-width':1,'stroke-dasharray':'4 3'},turned);
-   isolate(button);button.addEventListener('click',()=>select(assembly));table.append(button);return {button,turned};
+   isolate(button);button.addEventListener('click',()=>select(assembly));table.append(button);return {button,svg,turned};
   });
   const footer=doc.createElement('div');footer.className='may-rombo-preview-footer';box.append(footer);
   const controls=doc.createElement('div');controls.className='gz-hx gz-control gz-val may-layer-value may-standard may-rombo-preview-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Переключение схемы ромбосборки');
@@ -69,7 +69,8 @@
    const s=describe(state),available=s.on&&typeof current.setAssembly==='function',key=[s.on,s.assembly,s.angle,s.row,available].join(':');if(key===last&&force!==true)return;last=key;box.hidden=!s.on;if(spacer){spacer.hidden=!s.on;queuePosition();}for(const button of [...cells.map(cell=>cell.button),...buttons,number])button.disabled=!available;if(!s.on){positionKey='';return;}
    number.value=String(s.assembly+1);
    footer.textContent='Ось '+s.row+' · '+s.angle+'°';
-   for(const cell of cells){cell.button.setAttribute('aria-pressed',String(cell===cells[s.assembly]));cell.turned.setAttribute('transform','translate(64 64) rotate('+s.angle+')');}
+   const radians=s.angle*Math.PI/180,extentY=Math.ceil(Math.max(44*Math.abs(Math.cos(radians)),59*Math.abs(Math.sin(radians))))+3;
+   for(const cell of cells){cell.svg.setAttribute('viewBox','0 '+(64-extentY)+' 128 '+(2*extentY));cell.button.setAttribute('aria-pressed',String(cell===cells[s.assembly]));cell.turned.setAttribute('transform','translate(64 64) rotate('+s.angle+')');}
    box.setAttribute('aria-label','Ромбо. Сборка '+(s.assembly+1)+' из 16: '+s.name+'. Верх C. Ось: строка '+s.row+'. Поворот '+s.angle+'°. L — левая исходная часть, R — правая, ↔ — горизонтальное отражение.');
   }
   host.append(box);win.addEventListener('may-rombo-change',sync);sync();

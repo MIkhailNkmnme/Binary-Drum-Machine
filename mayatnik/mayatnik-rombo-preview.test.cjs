@@ -39,7 +39,7 @@ test('4x4 atlas contains all 16 assemblies with slot order, duplicate parts, col
   assert.deepEqual(texts(turned),['C',...slots.map(i=>expected[i])]);
   assert.deepEqual(turned.children.filter(el=>el.tagName==='g').map(el=>el.attributes.transform),slots.map((slot,i)=>`translate(${i?18:-18} 25) scale(${slot>=2?-1:1} 1)`));
   assert.deepEqual(turned.children.filter(el=>el.tagName==='path').slice(0,3).map(el=>el.attributes.fill),['#e5be68',...slots.map(i=>i%2?'#d99bc9':'#78b8e8')]);
-  assert.equal(svg.attributes.viewBox,'0 0 128 128');
+  assert.equal(svg.attributes.viewBox,'0 17 128 94');
  }
 });
 
@@ -165,14 +165,21 @@ test('compact rectangular atlas stays 4 columns wide at 320px without changing t
  assert.doesNotMatch(block,/#mayCanvas|#canvas|#wrap|may-mobile-menu #mayRomboPreview\{/);
 });
 
-test('all rotated diagram geometry fits the square SVG, including the longest dashed axis',()=>{
+test('angle-specific SVG bounds keep captions close and contain rotated shapes, arrows and dashed axis',()=>{
+ const h=host();
  for(const angle of [0,45,90,135,180,225,270,315]){
-  const a=angle*Math.PI/180;
-  for(const [x,y]of [[-59,0],[59,0],[0,-44],[0,44],[-54,0],[54,0]]){
-   assert.ok(Math.abs(x*Math.cos(a)-y*Math.sin(a))<=64);
-   assert.ok(Math.abs(x*Math.sin(a)+y*Math.cos(a))<=64);
+  h.set({on:true,assembly:0,angle,row:37});const a=angle*Math.PI/180;
+  const extentY=Math.ceil(Math.max(44*Math.abs(Math.cos(a)),59*Math.abs(Math.sin(a))))+3;
+  for(const cell of cells(h)){
+   const svg=cell.children[1],view=svg.attributes.viewBox.split(' ').map(Number);assert.deepEqual(view,[0,64-extentY,128,extentY*2]);
+   for(const [x,y]of [[-59,0],[59,0],[0,-44],[0,44],[-54,0],[54,0],[-27,34],[27,34]]){
+    const px=64+x*Math.cos(a)-y*Math.sin(a),py=64+x*Math.sin(a)+y*Math.cos(a);
+    assert.ok(px>=view[0]&&px<=view[0]+view[2]);assert.ok(py>=view[1]&&py<=view[1]+view[3]);
+   }
   }
  }
+ h.set({on:true,assembly:15,angle:0,row:91});assert.equal(cells(h)[15].children[1].attributes.viewBox,'0 17 128 94');
+ assert.equal(h.preview.element.children[1].textContent,'Ось 91 · 0°');assert.equal(numberInput(h).value,'16');
 });
 
 test('numeric Enter applies once and blocks the field keyboard shortcut',()=>{
