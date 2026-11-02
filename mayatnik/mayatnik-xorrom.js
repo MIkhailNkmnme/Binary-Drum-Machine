@@ -160,9 +160,10 @@
     const timer = options.setTimeout || root.setTimeout.bind(root);
     const clear = options.clearTimeout || root.clearTimeout.bind(root);
     const doc = options.document || root.document;
-    let settings = normalizeSettings(options.settings), state = 'stopped', sequence = 0, pendingStart = false;
+    let settings = normalizeSettings(options.settings), state = 'stopped', sequence = 0;
     let ctx, master, streamNode, bus, snapshot, wake, nextTime, cursor = 0, disposed = false;
-    let queued = [], refreshing = false;
+    let queued = [], refreshing = false, currentIndex = -1;
+    let lastBeat = null, refreshBeat = null;
     const voices = new Map();
     const audioBuffer = cacheTone((note, step, timbre, rate) => {
       const samples = synthesize(note, step, timbre, rate);
@@ -180,9 +181,10 @@
       if (master) master.gain.setTargetAtTime(settings.gain, ctx.currentTime, 0.01);
       return {...settings};
     }
-    function halt(next) {
-      ++sequence;
-      pendingStart = false;
+    function halt(next, retainedBeat = null) {
+      const run = ++sequence;
+      refreshBeat = retainedBeat;
+      lastBeat = null;
       clear(wake);
       if (next === 'paused' && queued.length) {
         const upcoming = queued.find(event => event.time > ctx.currentTime);
@@ -200,21 +202,29 @@
         for (const [source, startTime] of active) {
           const ended = source.onended;
           source.onended = () => { ended(); if (--remaining === 0) oldBus.disconnect(); };
-          source.stop(startTime > now ? now : now + 0.009);
+          source.stop(startTime > now || ctx.state !== 'running' ? now : now + 0.009);
         }
         voices.clear();
         bus = null;
       }
-      if (next === 'stopped') { snapshot = null; cursor = 0; }
+      if (next === 'stopped') { snapshot = null; cursor = 0; currentIndex = -1; }
       changeState(next);
+      return run;
     }
     function stop() { halt('stopped'); }
-    function pause() {
-      if (state === 'playing') halt('paused');
-      else if (pendingStart) halt(state);
+    function pause() { halt(state === 'playing' ? 'paused' : state); }
+    function beginRefresh() {
+      if (!snapshot || disposed) return;
+      let beat = refreshBeat;
+      if (state === 'playing') {
+        const now = ctx.currentTime;
+        beat = lastBeat || queued[0] || {index:cursor, time:nextTime};
+        for (const event of queued) if (event.time <= now) beat = event;
+      }
+      halt('paused', beat && {index:beat.index, time:beat.time});
     }
     function contextStateChanged() {
-      if (ctx.state !== 'running' && state === 'playing') pause();
+      if (ctx.state !== 'running') pause();
     }
     function visibilityChanged() { if (doc && doc.hidden) pause(); }
     if (doc) doc.addEventListener('visibilitychange', visibilityChanged);
@@ -222,6 +232,28 @@
     function reportError(error) {
       stop();
       if (options.onError) options.onError(error);
+    }
+    function sound(notes, step, time, offset = 0) {
+      if (!bus) {
+        bus = ctx.createGain();
+        bus.connect(master);
+      }
+      for (const note of notes) {
+        const buffer = audioBuffer(note, step, settings.timbre, SAMPLE_RATE);
+        if (offset >= buffer.duration) continue;
+        const source = ctx.createBufferSource(), gain = ctx.createGain();
+        source.buffer = buffer;
+        gain.gain.value = 1 / notes.length;
+        if (offset > 0) {
+          gain.gain.setValueAtTime(0, time);
+          gain.gain.linearRampToValueAtTime(1 / notes.length, time + 0.005);
+        }
+        source.connect(gain);
+        gain.connect(bus);
+        voices.set(source, time);
+        source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); };
+        source.start(time, offset);
+      }
     }
     function tick(run) {
       if (sequence !== run || state !== 'playing') return;
@@ -231,6 +263,7 @@
         // A stalled UI can miss a wakeup. Publish only the most recent due step.
         let due;
         while (queued.length && queued[0].time <= now) due = queued.shift();
+        if (due) { currentIndex = due.index; lastBeat = due; }
         if (due && now - due.time < 0.10 && options.onStep) {
           options.onStep({index: due.index, row: due.row, notes: due.notes, time: due.time});
         }
@@ -262,16 +295,7 @@
           cursor = Math.max(range.first, cursor);
           const row = snapshot.rows[cursor], step = stepSeconds(settings);
           const notes = notesForRow(row, cursor, settings);
-          for (const note of notes) {
-            const source = ctx.createBufferSource(), gain = ctx.createGain();
-            source.buffer = audioBuffer(note, step, settings.timbre, SAMPLE_RATE);
-            gain.gain.value = 1 / notes.length;
-            source.connect(gain);
-            gain.connect(bus);
-            voices.set(source, nextTime);
-            source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); };
-            source.start(nextTime);
-          }
+          sound(notes, step, nextTime);
           queued.push({index: cursor, row, notes, time: nextTime, snapshot});
           cursor += settings.stride;
           nextTime += step;
@@ -281,13 +305,74 @@
       } catch (error) { reportError(error); }
     }
 
+    async function seek(index, {audition = true} = {}) {
+      if (disposed || !snapshot?.rows.length || !Number.isFinite(index) || doc?.hidden) return false;
+      const run = halt('paused');
+      if (sequence !== run) return false;
+      const range = bounds(snapshot, settings);
+      currentIndex = cursor = clamp(Math.trunc(index), range.first, range.last);
+      try {
+        if (audition && ctx.state !== 'running') await ctx.resume();
+        if (sequence !== run || doc?.hidden || (audition && ctx.state !== 'running')) return false;
+        const row = snapshot.rows[cursor], notes = notesForRow(row, cursor, settings);
+        const time = ctx.currentTime;
+        if (audition) sound(notes, stepSeconds(settings), time);
+        options.onStep?.({index: cursor, row, notes, time, manual: true});
+        return true;
+      } catch (error) {
+        if (sequence !== run) return false;
+        pause();
+        throw error;
+      }
+    }
+    function replaceSnapshot(fresh, {index = currentIndex, resume = false} = {}) {
+      if (disposed || !snapshot) return -1;
+      const range = bounds(fresh, settings);
+      if (range.first < 0) { stop(); return -1; }
+      const beat = resume && ctx.state === 'running' && !doc?.hidden ? refreshBeat : null;
+      const run = halt('paused');
+      if (sequence !== run) return -1;
+      snapshot = fresh;
+      if (beat) {
+        const now = ctx.currentTime, step = stepSeconds(settings);
+        const passed = Math.max(0, Math.floor((now - beat.time) / step));
+        const firstIndex = clamp(beat.index, range.first, range.last);
+        const untilWrap = Math.floor((range.last - firstIndex) / settings.stride) + 1;
+        cursor = firstIndex + passed * settings.stride;
+        if (passed >= untilWrap) {
+          if (!settings.loop) { stop(); return -1; }
+          const count = Math.floor((range.last - range.first) / settings.stride) + 1;
+          cursor = range.first + (passed - untilWrap) % count * settings.stride;
+        }
+        nextTime = beat.time + passed * step;
+        const selected = cursor;
+        changeState('playing');
+        if (sequence !== run) return -1;
+        // Carry both row and sample phase across a frame replacement, including
+        // the rest at the end of a note. The next beat keeps its original deadline.
+        if (nextTime <= now) {
+          const row = snapshot.rows[cursor], notes = notesForRow(row, cursor, settings);
+          sound(notes, step, now, now - nextTime);
+          lastBeat = {index:cursor, time:nextTime};
+          currentIndex = cursor;
+          cursor += settings.stride;
+          nextTime += step;
+          options.onStep?.({index:selected, row, notes, time:now});
+        }
+        tick(run);
+        return selected;
+      }
+      currentIndex = cursor = Number.isFinite(index) ? clamp(Math.trunc(index), range.first, range.last) : range.first;
+      const row = snapshot.rows[cursor], notes = notesForRow(row, cursor, settings);
+      options.onStep?.({index: cursor, row, notes, time: ctx.currentTime, manual: true});
+      return currentIndex;
+    }
     async function start(patch) {
       if (disposed) return false;
       if (patch) setSettings(patch);
       if (state === 'playing') return true;
       if (doc && doc.hidden) return false;
-      const run = ++sequence;
-      pendingStart = true;
+      const run = halt(state);
       try {
         if (!ctx) {
           const Context = options.AudioContext || root.AudioContext || root.webkitAudioContext;
@@ -300,18 +385,15 @@
         }
         if (ctx.state !== 'running') await ctx.resume();
         if (sequence !== run) return false;
-        if (ctx.state !== 'running' || (doc && doc.hidden)) { pendingStart = false; return false; }
+        if (ctx.state !== 'running' || (doc && doc.hidden)) return false;
         if (state !== 'paused') {
           const fresh = await options.getSnapshot();
           if (sequence !== run) return false;
           snapshot = fresh;
           cursor = bounds(snapshot, settings).first;
         }
-        pendingStart = false;
         if (ctx.state !== 'running' || (doc && doc.hidden)) return false;
         if (bounds(snapshot, settings).first < 0) { stop(); return false; }
-        bus = ctx.createGain();
-        bus.connect(master);
         nextTime = ctx.currentTime + 0.035;
         changeState('playing');
         tick(run);
@@ -338,7 +420,7 @@
         return ctx.close();
       }
     }
-    return { start, pause, stop, setSettings, getState: () => state, getStream, dispose };
+    return { start, pause, stop, seek, beginRefresh, replaceSnapshot, setSettings, getState: () => state, getStream, dispose };
   }
 
   return { DEFAULTS, normalizeSettings, frequency, notesForRow, renderWav, create };

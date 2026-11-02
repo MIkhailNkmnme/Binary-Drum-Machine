@@ -66,7 +66,7 @@
     number('gain','Громк %','Громкость от 0 до 100 процентов. Начальное значение — 25 процентов; 0 отключает звук.',0,100,v=>Math.round(v*100),v=>v/100);
     choice('chord','Аккорд','Максимум одновременных нот от 1 до 4. Применяется только к источнику RGB.',[[1,'1'],[2,'2'],[3,'3'],[4,'4']]);
     const toggles=[];
-    for(const [key,text,title]of [['loop','Повтор','После последней строки начать снова.'],['live','Обновлять','Снимать новое текущее поле на следующем повторе. Захват приостанавливает плеер поля; Xorrom играет строки снимка и сам кадры не переключает.']]){
+    for(const [key,text,title]of [['loop','Повтор','После последней строки начать снова.'],['live','Обновлять','Дополнительно снимать текущее поле на каждом повторе. Смена кадра и правки битов обновляют музыку сразу, независимо от этой кнопки; Xorrom сам кадры не переключает.']]){
       const control=button(key,text,title,()=>safe(()=>api.setSettings({[key]:!settings()[key]})));toggles.push({key,...control,text});
     }
     number('first','От строки','Первая строка для музыки; отсчёт начинается с 0.',0,1000000);
@@ -94,9 +94,9 @@
       caption(start.label,pending?'…':playing?'Ⅱ Пауза':current.state==='paused'?'▶ Дальше':'▶ Старт');start.node.disabled=pending;start.node.classList.toggle('gz-on',playing);start.node.setAttribute('aria-pressed',String(playing));describe(start.node,playing?'Приостановить музыку. Повторное нажатие продолжит с того же места.':current.state==='paused'?'Продолжить музыку с места паузы без нового снимка поля.':'Снять текущее поле и начать музыку. Захват приостанавливает плеер поля; Xorrom играет строки снимка и сам кадры не переключает. Звук включается только после нажатия.');
       stop.node.disabled=false;
       toggles.forEach(t=>{caption(t.label,t.text+': '+(s[t.key]?'вкл':'выкл'));t.node.classList.toggle('gz-on',!!s[t.key]);t.node.setAttribute('aria-pressed',String(!!s[t.key]));});
-      wav.node.disabled=exporting;caption(wav.label,exporting?'… WAV':'↓ WAV');wav.node.setAttribute('aria-busy',String(exporting));
+      wav.node.disabled=exporting||!!current.updating;caption(wav.label,exporting?'… WAV':'↓ WAV');wav.node.setAttribute('aria-busy',String(exporting));
       const visibleError=error||current.error;
-      const message=visibleError?'Ошибка: '+visibleError:exporting?'Создание WAV…':notice||(pending?'Подготовка…':playing?'Играет':current.state==='paused'?'Пауза':'Остановлено');
+      const message=visibleError?'Ошибка: '+visibleError:exporting?'Создание WAV…':current.updating?'Обновляю кадр…':notice||(pending?'Подготовка…':playing?'Играет':current.state==='paused'?'Пауза':'Остановлено');
       const row=(playing||current.state==='paused')&&Number.isInteger(current.index)&&current.index>=0?' · Строка '+current.index:'';
       if(transportStatus.textContent!==message)transportStatus.textContent=message;
       if(rowStatus.textContent!==row)rowStatus.textContent=row;

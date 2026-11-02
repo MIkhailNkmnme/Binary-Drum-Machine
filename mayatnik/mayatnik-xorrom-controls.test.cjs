@@ -47,3 +47,7 @@ test('WAV download exposes render limit note and catches export failure',async()
   const a=boot();a.el('wav').click();assert.equal(a.el('wav').disabled,true);await flush();assert.equal(a.downloaded[0].name,'test.wav');assert.match(a.el('status').textContent,/60 с/);assert.equal(a.el('wav').disabled,false);
   a.api.exportWav=async()=>{throw Error('Слишком большое поле');};a.el('wav').click();await flush();assert.match(a.el('status').textContent,/Слишком большое поле/);assert.equal(a.el('wav').disabled,false);a.dom.window.close();
 });
+
+test('frame refresh shows status and cannot export an outdated score',()=>{
+ const a=boot();a.setState({state:'paused',index:2,notes:[],updating:true});assert.match(a.el('status').textContent,/Обновляю кадр/);assert.equal(a.el('wav').disabled,true);a.setState({state:'playing',index:2,notes:[],updating:false});assert.equal(a.el('wav').disabled,false);a.dom.window.close();
+});

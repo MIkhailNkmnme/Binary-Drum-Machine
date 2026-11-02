@@ -64,7 +64,7 @@ function rig(getSnapshot = () => field(1,2,3), settings = {}) {
   let ms = 0, serial = 0, ctx;
   const events = [], states = [], sources = [], timers = new Map();
   const param = () => ({value:1, setValueAtTime(){}, linearRampToValueAtTime(){}, setTargetAtTime(){}});
-  const node = () => ({connect(){},disconnect(){this.disconnected = true;}});
+  const node = () => ({outputs:[],connect(output){this.outputs.push(output);},disconnect(){this.disconnected = true;}});
   const doc = new EventTarget(); doc.hidden = false;
   class Context extends EventTarget {
     constructor() { super(); ctx = this; this.destination = node(); this.state = 'suspended'; }
@@ -78,7 +78,7 @@ function rig(getSnapshot = () => field(1,2,3), settings = {}) {
     }
     createMediaStreamDestination() { return {...node(), stream:{getTracks:()=>[]}}; }
     createBufferSource() {
-      const source = {...node(), start(at){this.at = at;},stop(at){this.stopped = at;}};
+      const source = {...node(), start(at,offset=0){this.at = at;this.offset=offset;},stop(at){this.stopped = at;}};
       sources.push(source); return source;
     }
   }
@@ -172,4 +172,175 @@ test('a rejected capture propagates on first play, empty captures stop cleanly',
   const failure=rig(async()=>{throw new Error('Лимит поля');});
   await assert.rejects(failure.engine.start(),/Лимит поля/);assert.equal(failure.timers.size,0);
   assert.equal(await rig(()=>field()).engine.start(),false);
+});
+
+test('manual audition uses the frozen row immediately, cancels the clock, and feeds the existing recording stream', async () => {
+  let captures = 0;
+  const snap = field(1, 2, 3);
+  const r = rig(() => { captures++; return snap; }, {bpm:180, division:16});
+  assert.equal(await r.engine.seek(1), false);
+  assert.equal(captures, 0);
+  await r.engine.start();
+  const stream = r.engine.getStream();
+  r.advance(74);
+  const queued = r.sources.at(-1);
+  assert.ok(queued.at > r.ctx().currentTime);
+  assert.equal(await r.engine.seek(2), true);
+  assert.ok(queued.stopped < queued.at);
+  assert.equal(r.engine.getState(), 'paused');
+  assert.equal(r.timers.size, 0);
+  const preview = r.sources.at(-1), event = r.events.at(-1);
+  assert.equal(preview.at, r.ctx().currentTime);
+  assert.ok(preview.buffer.getChannelData().some(n => n !== 0));
+  assert.equal(preview.outputs[0].outputs[0].outputs[0].outputs.some(out => out.stream === stream), true);
+  assert.equal(event.manual, true); assert.equal(event.index, 2); assert.equal(event.row, snap.rows[2]);
+  assert.equal(event.notes[0].code, 3);
+  const before = r.sources.length;
+  await r.engine.seek(2);
+  assert.equal(r.sources.length, before + 1); assert.ok(preview.stopped <= preview.at + 0.01);
+  r.advance(2000);
+  assert.deepEqual(r.events.map(e => e.index), [0, 2, 2]);
+  assert.equal(captures, 1); assert.equal(r.engine.getStream(), stream);
+});
+
+test('manual seek clamps to the active range and resumes from an off-stride row', async () => {
+  const r = rig(() => field(1,2,3,4,5,6,7), {first:1, last:5, stride:2, bpm:180, division:16, loop:false});
+  await r.engine.start(); r.engine.pause();
+  assert.equal(await r.engine.seek(NaN), false);
+  assert.equal(await r.engine.seek(Infinity), false);
+  const before = r.sources.length;
+  await r.engine.seek(-5, {audition:false});
+  await r.engine.seek(99, {audition:false});
+  r.engine.setSettings({last:100});
+  await r.engine.seek(99, {audition:false});
+  assert.deepEqual(r.events.map(e => e.index), [1, 5, 6]);
+  assert.equal(r.sources.length, before);
+  await r.engine.seek(2);
+  const preview = r.sources.at(-1);
+  await r.engine.start();
+  assert.ok(preview.stopped < r.sources.at(-1).at);
+  r.advance(360);
+  assert.deepEqual(r.events.filter(e => !e.manual).map(e => e.index), [2,4,6]);
+  assert.equal(r.engine.getState(), 'stopped');
+});
+
+test('only the latest drag row may sound after asynchronous AudioContext resume', async () => {
+  const r = rig(); await r.engine.start(); r.engine.pause();
+  const d = deferred(); r.ctx().state = 'suspended';
+  r.ctx().resume = async () => { await d.promise; r.ctx().state = 'running'; };
+  const before = r.sources.length;
+  const older = r.engine.seek(1), newer = r.engine.seek(2);
+  d.resolve();
+  assert.deepEqual(await Promise.all([older, newer]), [false, true]);
+  assert.deepEqual(r.events.map(e => e.index), [2]); assert.equal(r.sources.length, before + 1);
+  assert.equal(r.engine.getState(), 'paused');
+});
+
+test('pause, stop, hide, suspension and restart supersede a pending or sounding audition', async () => {
+  const actions = {
+    pause: r => r.engine.pause(), stop: r => r.engine.stop(),
+    hide: r => { r.doc.hidden = true; r.doc.dispatchEvent(new Event('visibilitychange')); },
+    suspend: r => { r.ctx().state = 'suspended'; r.ctx().dispatchEvent(new Event('statechange')); },
+    restart: r => r.engine.start(), dispose: r => r.engine.dispose()
+  };
+  for (const [name, act] of Object.entries(actions)) {
+    const r = rig(); await r.engine.start(); await r.engine.seek(1);
+    const preview = r.sources.at(-1);
+    await act(r);
+    assert.ok(Number.isFinite(preview.stopped), name);
+
+    const pending = rig(); await pending.engine.start(); pending.engine.pause();
+    const d = deferred(); pending.ctx().state = 'suspended';
+    pending.ctx().resume = async () => { await d.promise; pending.ctx().state = 'running'; };
+    const seek = pending.engine.seek(2), next = act(pending);
+    d.resolve();
+    assert.equal(await seek, false, name);
+    await next;
+    pending.advance(40);
+    assert.deepEqual(pending.events.map(e => [e.index, !!e.manual]), name === 'restart' ? [[2,false]] : [], name);
+  }
+});
+
+test('a new silent frame immediately cancels old notes and resumes at the last sounding row', async () => {
+  let captures = 0;
+  const r = rig(() => { captures++; return field(1,2,3,4); }, {bpm:180, division:16});
+  await r.engine.start(); r.advance(155);
+  assert.equal(r.events.at(-1).index, 1);
+  const oldQueue = r.sources.at(-1);
+  assert.ok(oldQueue.at > r.ctx().currentTime);
+  const before = r.sources.length, silent = field(0,0,0);
+  assert.equal(r.engine.replaceSnapshot(silent), 1);
+  assert.equal(r.engine.getState(), 'paused'); assert.equal(r.timers.size, 0);
+  assert.ok(oldQueue.stopped < oldQueue.at);
+  assert.equal(r.events.at(-1).row, silent.rows[1]); assert.deepEqual(r.events.at(-1).notes, []);
+  const count = r.events.length;
+  await r.engine.start(); r.advance(300);
+  assert.equal(captures, 1); assert.equal(r.sources.length, before);
+  assert.deepEqual(r.events.slice(count).map(e => e.index), [1,2,0,1]);
+  assert.ok(r.events.slice(count).every(e => !e.notes.length));
+});
+
+test('replacing a paused score clamps the selection, stops a preview and invalidates pending seek', async () => {
+  const r = rig(() => field(1,2,3,4,5), {first:1, last:4});
+  await r.engine.start(); await r.engine.seek(4);
+  const previous = r.sources.at(-1), shorter = field(1,7,6);
+  assert.equal(r.engine.replaceSnapshot(shorter), 2); assert.ok(Number.isFinite(previous.stopped));
+  assert.equal(r.events.at(-1).notes[0].code, 6); assert.equal(r.events.at(-1).manual, true);
+  const d = deferred(); r.ctx().state = 'suspended';
+  r.ctx().resume = async () => { await d.promise; r.ctx().state = 'running'; };
+  const obsolete = r.engine.seek(1);
+  assert.equal(r.engine.replaceSnapshot(field(3,4), {index:-9}), 1);
+  d.resolve(); assert.equal(await obsolete, false);
+  assert.equal(r.events.at(-1).notes[0].code, 4);
+  assert.equal(r.engine.replaceSnapshot(field()), -1);
+  assert.equal(r.engine.getState(), 'stopped');
+  assert.equal(r.engine.replaceSnapshot(shorter), -1);
+});
+
+test('frame replacements every 16ms keep the original musical beat and sample position', async () => {
+  const r = rig(() => field(1,2,3,4), {bpm:120, division:16, loop:true});
+  await r.engine.start();
+  for (let frame = 1; frame <= 40; frame++) {
+    r.advance(13);
+    r.engine.beginRefresh();
+    const oldCount = r.sources.length;
+    r.advance(3);
+    const now = r.ctx().currentTime, step = 0.125;
+    const silent = frame % 4 === 0;
+    const fresh = silent ? field(0,0,0,0) : field(7,6,5,4);
+    const beat = Math.max(0, Math.floor((now - 0.035) / step));
+    const index = r.engine.replaceSnapshot(fresh, {resume:true});
+    assert.equal(index, beat % 4, 'frame ' + frame);
+    assert.equal(r.engine.getState(), 'playing');
+    const newSources = r.sources.slice(oldCount);
+    if (silent) assert.equal(newSources.length, 0);
+    if (now < 0.035) continue;
+    assert.equal(r.events.at(-1).row, fresh.rows[index]);
+    const offset = now - (0.035 + beat * step);
+    const active = newSources.filter(s => s.at === now);
+    if (silent || offset >= step * 0.86) { assert.equal(active.length, 0); continue; }
+    assert.equal(active.length, 1);
+    assert.ok(Math.abs(active[0].offset - offset) < 1e-6);
+  }
+  assert.deepEqual([...new Set(r.events.map(e => e.index))], [0,1,2,3]);
+});
+
+test('slow and coalesced frame replacements respect a non-looping score and user transport overrides', async () => {
+  const r = rig(() => field(1,2,3,4,5,6), {first:1, last:5, stride:2, bpm:120, division:16, loop:false});
+  await r.engine.start();
+  r.advance(40); r.engine.beginRefresh(); r.advance(120); r.engine.beginRefresh(); r.advance(130);
+  assert.equal(r.engine.replaceSnapshot(field(0,1,2,3,4,5), {resume:true}), 5);
+  assert.equal(r.events.at(-1).notes[0].code, 5);
+  r.engine.beginRefresh(); r.advance(200);
+  assert.equal(r.engine.replaceSnapshot(field(0,1,2,3,4,5), {resume:true}), -1);
+  assert.equal(r.engine.getState(), 'stopped');
+
+  for (const interrupt of [r => r.engine.pause(), r => r.engine.seek(2), r => r.engine.stop(),
+    r => { r.doc.hidden = true; r.doc.dispatchEvent(new Event('visibilitychange')); r.doc.hidden = false; }]) {
+    const t = rig();
+    await t.engine.start(); t.advance(50); t.engine.beginRefresh();
+    await interrupt(t);
+    t.engine.replaceSnapshot(field(7,6,5), {resume:true});
+    assert.notEqual(t.engine.getState(), 'playing'); assert.equal(t.timers.size, 0);
+  }
 });
