@@ -7,6 +7,16 @@
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const mobileMenu=window.MayatnikMenuDock.mobileStrip();
   const toolSync = [];
+  function exactZoomFraction(width,columns,dpr){
+    if(!Number.isFinite(width)||width<=0||!Number.isSafeInteger(columns)||columns<=0||!Number.isFinite(dpr)||dpr<=0)return '';
+    const binary=value=>{const v=new DataView(new ArrayBuffer(8));v.setFloat64(0,value);const hi=v.getUint32(0),lo=v.getUint32(4),exponent=(hi>>>20)&2047;let n=(BigInt(hi&0xfffff)<<32n)|BigInt(lo),d=1n;if(exponent)n|=1n<<52n;const power=exponent?exponent-1075:-1074;if(power>=0)n<<=BigInt(power);else d<<=BigInt(-power);return [n,d];};
+    const [wn,wd]=binary(width),[pn,pd]=binary(dpr);let n=wn*pn,d=wd*pd*BigInt(columns),a=n,b=d;while(b){const r=a%b;a=b;b=r;}return (n/a)+'/'+(d/a);
+  }
+  function renderFrameCaption(caption,parts){
+    const text=parts.join(' · ');if(caption.dataset.captionText===text)return;caption.dataset.captionText=text;
+    const exact={Маятник:'Маятнкъ',Перескок:'Прескокъ',строк:'стркъ',масштаб:'Масштбъ'};
+    caption.replaceChildren(...parts.map(part=>{const span=document.createElement('span');span.className='may-frame-part';span.textContent=part.replace(/[А-Яа-яЁёЪъ]+/gu,word=>exact[word]||window.HubButtonText?.shortCaption(word)||word);return span;}));
+  }
   let libraryMenuFold=null;
   const suppressPlayerTips=host=>{host.dataset.noTooltips='';const strip=()=>{for(const node of [host,...host.querySelectorAll('[title],[data-may-tip],[data-zz-tip]')])for(const attr of ['title','data-may-tip','data-zz-tip'])if(node.hasAttribute(attr))node.removeAttribute(attr);};strip();new MutationObserver(strip).observe(host,{subtree:true,childList:true,attributes:true,attributeFilter:['title','data-may-tip','data-zz-tip']});};
   // The library overlays the field behind controls; it never changes menu slots.
@@ -132,8 +142,8 @@
   groups.push({id:'edge',title:'Край',color:'#7cbcff',items:[
     button('edgeWrapTop','field'),
     button('edgeBounceTop','mirror'),button('edgeContinuous','steps'),
-    (() => { const get = () => $('edgeWidthTop')?.value || '4', set = v => { const e = $('edgeWidthTop'); if (!e) return; e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); };
-      return segments('Ширина', [2, 4, 6, 8].map(v => ({ name: v + 'N', tip: 'Ширина поля ' + v + 'N−1', on: () => get() === String(v), pick: () => set(String(v)) }))); })(),
+    (() => { const get = () => $('edgeWidthTop')?.value || '4', set = v => { const e = $('edgeWidthTop'); if (!e||e.disabled) return; e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); };
+      return {...segments('Ширина', [2, 4, 6, 8].map(v => ({ name: v + 'N', tip: 'Ширина поля ' + v + 'N−1', on: () => get() === String(v), pick: () => set(String(v)) }))),disabled:()=>$('edgeWidthTop').disabled}; })(),
     button('edgeEndsTop','grid4'),
     button('edgeEndsMinus','minus'),
     button('edgeEndsPlus','plus'),
@@ -216,7 +226,7 @@
       // v0.442: число сразу под линией бегунка; вне шестиугольника, чтобы его не обрезало.
       cell.classList.add('may-rows-slider','may-frame-slider');
       const fieldOutline=document.createElementNS('http://www.w3.org/2000/svg','svg');fieldOutline.classList.add('may-frame-field-outline');fieldOutline.setAttribute('viewBox','0 0 120 24');fieldOutline.setAttribute('aria-hidden','true');const fieldPath=document.createElementNS(fieldOutline.namespaceURI,'path');fieldPath.setAttribute('d','M12 1H108L97 12 108 23H12L23 12Z');fieldOutline.append(fieldPath);cell.append(fieldOutline);
-      const vl = mid.querySelector('.gz-vl'),buildLabel=document.createElement('span'),rowsLabel=document.createElement('span'),caption=document.createElement('span'),tail=document.createElement('span');caption.className='may-frame-caption';buildLabel.className='may-frame-type';rowsLabel.className='may-frame-rows';tail.className='may-frame-tail';tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');tail.setAttribute('aria-orientation','horizontal');tail.title='Тянуть пунктир, в том числе под кнопкой, — выбрать кадр';caption.append(buildLabel,rowsLabel);cell.parentElement.append(caption,tail);
+      const vl = mid.querySelector('.gz-vl'),caption=document.createElement('span'),tail=document.createElement('span');caption.className='may-frame-caption';tail.className='may-frame-tail';tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');tail.setAttribute('aria-orientation','horizontal');tail.title='Тянуть пунктир, в том числе под кнопкой, — выбрать кадр';cell.parentElement.append(caption,tail);
       const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
       const startFrameScrub=event=>{
         const frame=$('frame');if(event.button!==0||frame.disabled)return;
@@ -270,9 +280,7 @@
         const center=Math.round(c.left+c.width/2-b.left-bar.clientLeft);
         caption.style.left=center+'px';caption.style.top=y+'px';
         const rows=Number($('frame').dataset.fieldRows)||Number($('rows').value)||0,width=Number($('frame').dataset.fieldWidth)||2*rows-1,factor=(width+1)/rows;
-        const zoom=Number($('frame').dataset.zoomRatio),zoomPart=zoom>0&&Number.isFinite(zoom)?String(+(zoom<1?1/zoom:zoom).toPrecision(3)).replace('.',','):'';
-        const zoomLabel=zoomPart==='1'?'1:1':zoom<1?'1/'+zoomPart:'×'+zoomPart;
-        rowsLabel.textContent=rows.toLocaleString('ru-RU')+' строк · '+([2,4,6,8].includes(factor)?factor+'N−1 = ':'ширина ')+width.toLocaleString('ru-RU')+(zoomPart?' · масштаб '+zoomLabel:'');
+        const zoom=exactZoomFraction(Number($('frame').dataset.zoomWidth),Number($('frame').dataset.zoomColumns),Number($('frame').dataset.zoomDpr));
         let type=$('frame').dataset.buildType||'Маятник';   // v0.717: режимы края — в подписи над кадром
         if($('edgeWrapTop')?.getAttribute('aria-pressed')==='true'){
           // v0.746: у «Перескока» в подписи — номер перескока (автор: «тут номер перескока учитывать»).
@@ -281,9 +289,9 @@
         }
         if($('edgeEndsTop')?.getAttribute('aria-pressed')==='true')type+=' · Края';
         if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
-        if(buildLabel.textContent!==type)buildLabel.textContent=type;
+        renderFrameCaption(caption,[...type.split(' · '),rows+' строк',([2,4,6,8].includes(factor)?factor+'N−1=':'ширина ')+width,...(zoom?['масштаб '+zoom]:[])]);
       };
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-ratio']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
@@ -591,7 +599,13 @@
     const sp=$('speed'),ft=$('frameT');let popup=null,active=null;
     const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;return Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);};
     const label=(input,value)=>input===sp?'×'+value:value===0?'0 с · без паузы':({1:'1/20 с',2:'1/10 с',4:'1/5 с',10:'1/2 с',20:'1 с'}[value]||String(+(value*.05).toFixed(2)).replace('.',',')+' с');
-    const make=(letter,input,name)=>{const button=document.createElement('button');button.type='button';button.className='may-bb-half may-transport-diamond';button.dataset.k=input===sp?'sp':'ft';button.dataset.noMini='';const glyph=document.createElement('span');glyph.textContent=letter;button.append(glyph);button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');button.onclick=event=>{event.stopPropagation();if(active?.button===button){const all=values(input),index=all.indexOf(Number(input.value));setValue(input,all[(index+1)%all.length]);}else open(button,input,name);};button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();button.click();return;}if(event.key==='ArrowDown'){event.preventDefault();if(active?.button!==button)open(button,input,name);popup?.querySelector('[aria-checked="true"]')?.focus();}});return button;};
+    const make=(letter,input,name)=>{
+      const box=document.createElement('div');box.className='may-bb-half may-transport-diamond';box.dataset.k=input===sp?'sp':'ft';box.dataset.noMini='';box.setAttribute('role','group');box.setAttribute('aria-label',name);
+      const surface=document.createElement('div');surface.className='may-transport-surface';const button=document.createElement('button');button.type='button';button.className='may-transport-center';const glyph=document.createElement('span');glyph.className='may-transport-value';glyph.textContent=letter;button.append(glyph);button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
+      button.onclick=event=>{event.stopPropagation();if(active?.button===button){const all=values(input),index=all.indexOf(Number(input.value));setValue(input,all[(index+1)%all.length]);}else open(button,input,name);};button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();button.click();return;}if(event.key==='ArrowDown'){event.preventDefault();if(active?.button!==button)open(button,input,name);popup?.querySelector('[aria-checked="true"]')?.focus();}});
+      const arrow=direction=>{const b=document.createElement('button');b.type='button';b.className='may-transport-nudge';b.dataset.direction=String(direction);b.textContent=direction<0?'‹':'›';b.setAttribute('aria-label',(direction<0?'Уменьшить: ':'Увеличить: ')+name);b.onclick=event=>{event.stopPropagation();const value=Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+direction*(Number(input.step)||1)));setValue(input,value);};return b;};
+      surface.append(arrow(-1),button,arrow(1));box.append(surface);return box;
+    };
     const bs=make('x',sp,'Вершин за кадр'),bf=make('t',ft,'Длительность кадра');
     function close(focus=false){const owner=active?.button;popup?.remove();popup=null;active=null;owner?.setAttribute('aria-expanded','false');if(focus)owner?.focus();}
     function place(){if(!popup||!active)return;const r=active.button.getBoundingClientRect(),top=Math.max(4,Math.min(r.bottom+2,innerHeight-30));popup.style.left=Math.max(4,Math.min(r.left,innerWidth-124))+'px';popup.style.top=top+'px';popup.style.maxHeight=Math.max(24,innerHeight-top-8)+'px';}
@@ -603,7 +617,7 @@
       suppressPlayerTips(popup);document.body.append(popup);button.setAttribute('aria-expanded','true');place();selected();popup.querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest'});
       popup.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();document.activeElement?.click();return;}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);return;}const delta={ArrowDown:columns,ArrowUp:-columns,ArrowRight:1,ArrowLeft:-1}[event.key]||0;if(delta){event.preventDefault();event.stopPropagation();const all=[...popup.querySelectorAll('[data-value]')],index=all.indexOf(document.activeElement);all[(index+delta+all.length)%all.length]?.focus();}});
     }
-    const sync=()=>{for(const [button,input,name]of [[bs,sp,'Вершин за кадр'],[bf,ft,'Длительность кадра']]){const value=input===sp?'x'+input.value:'t'+String(+(Number(input.value)*.05).toFixed(2)).replace('.',',');const text=button.querySelector(':scope > span');if(text.textContent!==value)text.textContent=value;button.title=name+': '+label(input,Number(input.value))+'. Нажать — список; повторное нажатие — следующий вариант.';button.setAttribute('aria-label',button.title);}selected();place();};
+    const sync=()=>{for(const [button,input,name]of [[bs,sp,'Вершин за кадр'],[bf,ft,'Длительность кадра']]){const value=input===sp?'x'+input.value:'t'+String(+(Number(input.value)*.05).toFixed(2)).replace('.',',');const text=button.querySelector('.may-transport-value');if(text.textContent!==value)text.textContent=value;button.querySelector('.may-transport-center').setAttribute('aria-label',name+': '+label(input,Number(input.value))+'. Нажать — список; повторное нажатие — следующий вариант.');for(const arrow of button.querySelectorAll('.may-transport-nudge'))arrow.disabled=Number(arrow.dataset.direction)<0?Number(input.value)<=Number(input.min):Number(input.value)>=Number(input.max);}selected();place();};
     for(const input of [sp,ft])for(const event of ['input','change'])input.addEventListener(event,sync);
     document.addEventListener('pointerdown',event=>{if(popup&&!popup.contains(event.target)&&!active.button.contains(event.target))close();},true);
     document.addEventListener('keydown',event=>{if(popup&&event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);}},true);
@@ -1033,10 +1047,9 @@
   // v0.226: «и эту раздели в 2, отдели фоном или вложенностью, сделай по темам» — список «Вида» в два столбца (.pt-col), в них блоки по темам
   // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.
   // У блока поля 2 px сверху и снизу и нет зазора между блоками — шаг рядов (кнопка + зазор 4 px) тот же, зубцы рамки (zig) — против остриёв кнопок.
-  // v0.817: «Вспышка» и «Тепло» — тоже под «Контуры» в группу «Вид поля».
-  { const last = gModes.querySelector('[data-n="bitContourColours"]') || gModes.querySelector('[data-view-overlay="contours"]');
-    let at = last;
-    for (const n of ['vtxFlash', 'heat']) { const e = gView.querySelector(`[data-n="${n}"]`); if (!e) continue; if (at) at.after(e); else gModes.append(e); at = e; } }
+  // Independent effects share the last standard row of Field View.
+  {const pair=document.createElement('div');pair.className='gz-hx gz-pair gz-split may-view-effects';pair.dataset.n='viewEffects';pair.setAttribute('role','group');pair.setAttribute('aria-label','Вспышка и тепло');
+    for(const [i,n]of ['vtxFlash','heat'].entries()){const e=gView.querySelector('[data-n="'+n+'"]');if(!e)continue;e.classList.remove('pt-b','gz-hx');e.classList.add('gz-half','gz-h'+i);pair.append(e);}if(pair.children.length){gModes.append(pair);toolSync.push(()=>{for(const e of pair.children){const on=e.classList.contains('on');e.classList.toggle('gz-on',on);e.setAttribute('aria-pressed',String(on));}});}}
   { const owner=gModes.querySelector('[data-view-overlay="contours"]'),mode=gModes.querySelector('[data-n="bitContourMode"]'),colours=gModes.querySelector('[data-n="bitContourColours"]');
     if(owner&&mode&&colours){const group=document.createElement('div');group.className='may-contours-group';group.setAttribute('role','group');group.setAttribute('aria-label','Контуры: включение, способ обводки и цвета');
       const frame=document.createElementNS('http://www.w3.org/2000/svg','svg');frame.classList.add('may-contours-frame');frame.setAttribute('viewBox','0 0 124 80');frame.setAttribute('aria-hidden','true');frame.innerHTML='<path d="M14 1H110L123 14 117 27 123 40 117 53 123 66 110 79H14L1 66 7 53 1 40 7 27 1 14Z"/>';
@@ -1977,15 +1990,19 @@
     for(const chip of panel.querySelectorAll('.may-rgb-choice')){
       const code=Number(chip.dataset.rgbCode),choice=rgbChoices.find(x=>x[0]===code),count=counts[code]||0,on=selected.includes(code);
       chip.setAttribute('aria-pressed',String(on));chip.classList.toggle('gz-on',on);
+      chip.disabled=api?.canToggleFilter?.(code)===false;
       const state=on?'Выбран. ':selected.length?'Не выбран. ':'Фильтр не задан: показаны все цвета. ';
       chip.title=`${choice[1]} · RGB ${code.toString(2).padStart(3,'0')} · ${count.toLocaleString('ru-RU')} клеток. ${state}${rgbHint}`;
+      if(chip.disabled)chip.title+=' Недоступно: поле станет сплошным чёрным или белым.';
       chip.setAttribute('aria-label',chip.title);
     }
     const mode=api?.bw?.()||0;
     for(const option of panel.querySelectorAll('.may-rgb-bw-option')){
       const optionMode=Number(option.dataset.mode),on=optionMode===mode;
       option.setAttribute('aria-pressed',String(on));option.classList.toggle('gz-on',on);
+      option.disabled=api?.canSetBW?.(optionMode)===false;
       option.title=optionMode===1?'ЧБ: выбранные цвета белые, остальные биты чёрные.':optionMode===0?'Цвт: цветной режим RGB без чёрно-белого преобразования.':'БЧ: выбранные цвета чёрные, остальные биты белые.';
+      if(option.disabled)option.title+=' Недоступно: поле станет сплошным чёрным или белым.';
       option.setAttribute('aria-label',option.title);
     }
   }
@@ -2002,7 +2019,7 @@
           for(const [mode,label] of [[1,'ЧБ'],[0,'Цвт'],[2,'БЧ']]){
             const option=document.createElement('button');option.type='button';option.className='may-rgb-bw-option';option.dataset.mode=String(mode);option.setAttribute('aria-pressed','false');
             option.innerHTML='<svg viewBox="0 0 36 24" aria-hidden="true"><path d="M1 12 18 1 35 12 18 23Z"/></svg><span>'+label+'</span>';
-            option.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();window.mayRGBNeighbours?.setBW?.(mode);syncRGBPalette(panel);});bw.append(option);
+            option.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(option.disabled)return;window.mayRGBNeighbours?.setBW?.(mode);syncRGBPalette(panel);});bw.append(option);
           }
           panel.append(bw);
           const grid=document.createElement('div');grid.className='may-rgb-grid';panel.append(grid);
@@ -2012,7 +2029,7 @@
             const shape=document.createElementNS(triangle.namespaceURI,'polygon');shape.setAttribute('points',inverted?'14,22 26,2 2,2':'14,2 26,22 2,22');shape.setAttribute('fill',colour);triangle.append(shape);
             for(const cls of ['may-rgb-check-back','may-rgb-check']){const check=document.createElementNS(triangle.namespaceURI,'path');check.setAttribute('class',cls);check.setAttribute('d',inverted?'M9 9 12 12 18 6':'M9 15 12 18 18 12');triangle.append(check);}
             chip.append(triangle);
-            chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();});chip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();window.mayRGBNeighbours?.toggleFilter?.(code);syncRGBPalette(panel);});grid.append(chip);
+            chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();});chip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(chip.disabled)return;window.mayRGBNeighbours?.toggleFilter?.(code);syncRGBPalette(panel);});grid.append(chip);
           }
           row.after(panel);
         }

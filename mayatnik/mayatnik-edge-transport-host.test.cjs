@@ -6,6 +6,18 @@ const core = require('./mayatnik-core.js');
 const flow = require('./mayatnik-edge-flow.js');
 const html = fs.readFileSync(__dirname + '/Zerkalius-mayatnik.html', 'utf8');
 
+test('edge dependencies disable unavailable controls without changing saved values',()=>{
+  const begin=html.indexOf('  const edgeSync = () => {'),end=html.indexOf('  window.mayEdgeFlow=',begin);
+  for(const edgeWrap of [false,true])for(const edgeRhombOn of [false,true])for(const edgeEndsOn of [false,true])for(const foreign of ['', 'animatrix','compare','sequence','test']){
+    const st={edgeWrap,edgeRhombOn,edgeEndsOn,edgeClose:true,edgeBounce:true,edgeContinuous:true,edgeMarkOn:true,edgeEndsScale:1,sequenceSourceOn:foreign==='sequence'},before={...st},nodes=new Map();
+    const get=id=>{if(!nodes.has(id))nodes.set(id,{style:{},attrs:{},setAttribute(k,v){this.attrs[k]=v;},selectedOptions:[{textContent:'4N−1'}]});return nodes.get(id);};
+    const ctx={st,$:get,animatrixOn:()=>foreign==='animatrix',compareOn:()=>foreign==='compare',testPattern:foreign==='test'?{}:null,edgeWidthFactor:()=>4};vm.runInNewContext(html.slice(begin,end)+';this.sync=edgeSync;',ctx);ctx.sync();const active=edgeWrap&&!foreign;
+    for(const id of ['edgeBounceTop','edgeContinuous','edgeEndsTop','edgeRhombTop','edgeWidthTop','edgeWidthCycle'])assert.equal(get(id).disabled,!active,id);
+    assert.equal(get('edgeCloseTop').disabled,!active||!edgeRhombOn);for(const id of ['edgeEndsMinus','edgeEndsPlus'])assert.equal(get(id).disabled,!active||!edgeEndsOn);assert.deepEqual(st,before);
+    st.edgeEndsScale=.5;ctx.sync();assert.equal(get('edgeEndsMinus').disabled,true);st.edgeEndsScale=2;ctx.sync();assert.equal(get('edgeEndsPlus').disabled,true);
+  }
+});
+
 test('Reset control is off in startup and clean defaults; saved transport preference maps to the inverse visual state',()=>{
   const initial=html.slice(html.indexOf('  let st = '),html.indexOf('  if (!CHISTO)'));
   const first={MayatnikAnimatrixSource:{defaults:()=>({})}};vm.runInNewContext(initial+';this.state=st;',first);

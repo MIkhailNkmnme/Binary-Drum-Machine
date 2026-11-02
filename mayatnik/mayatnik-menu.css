@@ -472,6 +472,7 @@ header #paintTools.pt-dd .pt-lib #templateLibraryChoices{display:flex;flex-direc
 .may-rgb-choice[aria-pressed=true] :is(.may-rgb-check-back,.may-rgb-check){display:block}
 .may-rgb-choice .may-rgb-check-back{stroke:#000;stroke-width:4}
 .may-rgb-choice .may-rgb-check{stroke:#fff;stroke-width:1.8}
+.may-rgb-palette :is(.may-rgb-choice,.may-rgb-bw-option):disabled{opacity:.35;cursor:default}
 /* v0.171: «ширину можно уменьшить» — поля-числа рейки («высота от», «строк от / до», «бит от / до») шириной в кнопку, по два в ряд сотами */
 .mayatnik-menu-ready #mayatnikRail .gz-wide{flex-direction:row;flex-wrap:wrap;align-items:center;row-gap:3px}
 .mayatnik-menu-ready #mayatnikRail .gz-wide>.gz-control:has(input[type=number]){width:var(--gz-w);flex:none;margin-right:calc(4px - var(--gz-n))}
@@ -1139,8 +1140,9 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-slider .gz-vl{left:var(--may-frame-value-left,0px)!important;right:auto;top:50%;transform:translateY(-50%);width:max-content;padding:0;background:transparent;text-align:left;font-size:11px}
 #mayBottomBar>.may-frame-slider .gz-th{top:3px;height:21px;width:1px;margin:0;background:transparent;box-shadow:none;border:0}
 #mayBottomBar>.may-frame-caption{position:absolute;display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100vw - 8px);padding:2px 0;transform:translateX(-50%);pointer-events:none;font:10px/12px var(--mono,monospace);white-space:nowrap;background:#000;color:#dfe6f5;z-index:11}
-.may-frame-caption>.may-frame-type{max-width:240px;overflow:hidden;text-overflow:ellipsis}
-.may-frame-caption>.may-frame-rows::before{content:"· ";white-space:pre}
+.may-frame-caption>.may-frame-part:nth-child(odd){color:#dfe6f5}
+.may-frame-caption>.may-frame-part:nth-child(even){color:#929dae}
+.may-frame-caption>.may-frame-part+.may-frame-part::before{content:"· ";white-space:pre;color:#727d8e}
 #mayBottomBar>.may-frame-tail{position:absolute;border:0;width:11px;margin-left:-5px;background:transparent;pointer-events:auto;touch-action:none;cursor:ew-resize;outline:0;z-index:10}
 #mayBottomBar>.may-frame-tail::before,#mayBottomBar>.may-frame-tail::after{content:"";position:absolute;top:0;bottom:0;left:5px;width:1px;background:repeating-linear-gradient(to bottom,#dfe6f5 0 2px,transparent 2px 4px);pointer-events:none}
 #mayBottomBar>.may-frame-tail::after{opacity:0}
@@ -1164,11 +1166,22 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 
 /* v0.790: ромбы параметров транспорта и списки по щелчку. */
 #mayBottomBar>.may-transport-diamond{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;min-width:48px;height:24px;margin:0 2px;padding:0!important;border:0;outline:0;box-shadow:none;background:transparent;clip-path:none;cursor:pointer;font:600 10px/24px var(--mono,monospace);color:#dfe6f5;--c:#80aee8}
-#mayBottomBar>.may-transport-diamond::before,#mayBottomBar>.may-transport-diamond::after{content:"";position:absolute;inset:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#40516b;pointer-events:none}
-#mayBottomBar>.may-transport-diamond::after{inset:1px;background:#1b2430}
-#mayBottomBar>.may-transport-diamond:is(:hover,:focus-visible,[aria-expanded="true"])::before{background:var(--c)}
-#mayBottomBar>.may-transport-diamond[aria-expanded="true"]::after{inset:2px}
-#mayBottomBar>.may-transport-diamond>span{position:relative;z-index:1;user-select:none}
+#mayBottomBar>.may-transport-diamond::before,#mayBottomBar>.may-transport-diamond::after{display:none}
+.may-transport-surface{position:absolute;top:0;left:0;display:flex;width:48px;height:24px;isolation:isolate}
+.may-transport-diamond[data-k=sp]>.may-transport-surface{left:auto;right:0}
+.may-transport-surface::before,.may-transport-surface::after{content:"";position:absolute;inset:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#40516b;pointer-events:none;z-index:-1}
+.may-transport-surface::after{inset:1px;background:#1b2430}
+.may-transport-surface>button{position:relative;box-sizing:border-box;height:24px;margin:0;padding:0;border:0;border-radius:0;outline:0;clip-path:none;background:transparent;color:inherit;font:inherit;cursor:pointer;user-select:none}
+.may-transport-center{flex:1;min-width:0}
+.may-transport-nudge{display:none;flex:0 0 24px;font-size:16px!important}
+#mayBottomBar>.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])){z-index:12}
+.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true]))>.may-transport-surface{width:120px}
+.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::before,.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::after{clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::before{background:var(--c)}
+.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-nudge{display:block}
+.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-center{border-inline:1px solid #40516b}
+.may-transport-surface>button:is(:hover,:focus-visible){box-shadow:inset 0 0 0 1px var(--c)}
+.may-transport-nudge:disabled{opacity:.35;cursor:default}
 .may-transport-options{width:120px;box-sizing:content-box;padding:2px;gap:2px;overflow-y:auto;overflow-x:hidden;background:#000;overscroll-behavior:contain;--c:#80aee8;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;--gz-txt:#dfe6f5;color:#dfe6f5;font:11px/24px var(--mono,monospace)}
 .may-transport-options>.gz-hx{flex:0 0 24px;min-height:24px;justify-content:center;padding:0 12px}
 .may-transport-options>.may-transport-option-row{display:flex!important;gap:0!important;padding:0!important;justify-content:flex-start;overflow:hidden}
