@@ -783,6 +783,10 @@ header #paintTools.pt-dd .pt-view .pt-sec{background:transparent!important;borde
 
 /* v0.417: знаки масштаба в ромбах над Дзеном. */
 #mayRhombs .may-rh-zoom{font-size:24px;font-weight:600}
+/* Keep the library at the viewport midpoint; the zoom diamonds flank its 48px triangle. */
+body:not(.may-mobile-menu) #mayRhombs :is(#mayRhZoomIn,#mayRhZoomOut){position:fixed;right:2px;bottom:auto;margin:0}
+body:not(.may-mobile-menu) #mayRhombs #mayRhZoomIn{top:calc(50% - 74px)}
+body:not(.may-mobile-menu) #mayRhombs #mayRhZoomOut{top:calc(50% + 26px)}
 
 /* v0.434: во всех группах одна кнопка в строке, без второго столбца сот. */
 .mayatnik-menu-ready .gz-rail{width:var(--gz-w)}
