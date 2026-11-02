@@ -20,3 +20,8 @@ test('reset caption is shown only when edge reset is enabled',()=>{
   assert.equal(c.frameBuildType().includes('Сброс'),edgeWrap&&!edgeContinuous);assert.equal(c.frameBuildType().includes('без сброса'),false);
  }
 });
+
+
+test('strict caption uses the canonical lattice expression instead of a rounded DOM width fraction',()=>{
+ const frame={dataset:{pixelExact:'true',zoomExact:'2√2/1',zoomWidth:'45.234375',zoomColumns:'16',zoomDpr:'1'}};assert.equal(context.frameZoomLabel(frame),'2√2/1');frame.dataset.zoomExact='';assert.equal(context.frameZoomLabel(frame),'');delete frame.dataset.pixelExact;assert.equal(context.frameZoomLabel(frame),context.exactZoomFraction(45.234375,16,1));
+});

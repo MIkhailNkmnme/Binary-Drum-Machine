@@ -39,7 +39,7 @@ test('capture yield hint applies only to automatic fields of at most one million
 });
 test('presentation paths notify completed frames and rotation; restore paths explicitly stop music',()=>{
   const present=source.slice(source.indexOf('  function present(quick)'),source.indexOf('  function bothOn()'));
-  assert.match(present,/g\.putImageData/);assert.equal((present.match(/notifyXorromField\(\)/g)||[]).length,4);
+  assert.match(present,/g\.putImageData/);assert.equal((present.match(/notifyXorromField\(\)/g)||[]).length,5);
   assert.match(source,/function viewRotationSync\(\)[^\n]*notifyXorromField\(\)/);
   assert.doesNotMatch(source.slice(source.indexOf('  function reset(paintNow'),source.indexOf('  function reset(paintNow')+150),/mayXorrom\?\.stop/);
   assert.match(source,/window\.mayXorrom\?\.stop\(\);cacheRestoring=true/);

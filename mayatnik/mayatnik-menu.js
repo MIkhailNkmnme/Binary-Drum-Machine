@@ -21,6 +21,9 @@
     const binary=value=>{const v=new DataView(new ArrayBuffer(8));v.setFloat64(0,value);const hi=v.getUint32(0),lo=v.getUint32(4),exponent=(hi>>>20)&2047;let n=(BigInt(hi&0xfffff)<<32n)|BigInt(lo),d=1n;if(exponent)n|=1n<<52n;const power=exponent?exponent-1075:-1074;if(power>=0)n<<=BigInt(power);else d<<=BigInt(-power);return [n,d];};
     const [wn,wd]=binary(width),[pn,pd]=binary(dpr);let n=wn*pn,d=wd*pd*BigInt(columns),a=n,b=d;while(b){const r=a%b;a=b;b=r;}return (n/a)+'/'+(d/a);
   }
+  function frameZoomLabel(frame){
+    return frame.dataset.pixelExact==='true'?(frame.dataset.zoomExact||''):exactZoomFraction(Number(frame.dataset.zoomWidth),Number(frame.dataset.zoomColumns),Number(frame.dataset.zoomDpr));
+  }
   function renderFrameCaption(caption,parts){
     const text=parts.join(' · ');if(caption.dataset.captionText===text)return;caption.dataset.captionText=text;
     const exact={Маятник:'Маятнкъ',Перескок:'Прескокъ',строк:'стркъ',масштаб:'Масштбъ'};
@@ -297,7 +300,7 @@
         const center=Math.round(c.left+c.width/2-b.left-bar.clientLeft);
         caption.style.left=center+'px';caption.style.top=y+'px';
         const rows=Number($('frame').dataset.fieldRows)||Number($('rows').value)||0,width=Number($('frame').dataset.fieldWidth)||2*rows-1,factor=(width+1)/rows;
-        const zoom=exactZoomFraction(Number($('frame').dataset.zoomWidth),Number($('frame').dataset.zoomColumns),Number($('frame').dataset.zoomDpr));
+        const zoom=frameZoomLabel($('frame'));
         let type=$('frame').dataset.buildType||'Маятник';   // v0.717: режимы края — в подписи над кадром
         if($('edgeWrapTop')?.getAttribute('aria-pressed')==='true'){
           // v0.746: у «Перескока» в подписи — номер перескока (автор: «тут номер перескока учитывать»).
@@ -306,9 +309,9 @@
         }
         if($('edgeEndsTop')?.getAttribute('aria-pressed')==='true')type+=' · Края';
         if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
-        renderFrameCaption(caption,[...type.split(' · '),rows+' строк',([2,4,6,8].includes(factor)?factor+'N−1=':'ширина ')+width,...(zoom?['масштаб '+zoom]:[])]);
+        renderFrameCaption(caption,[...type.split(' · '),rows+' строк',([2,4,6,8].includes(factor)?factor+'N−1=':'ширина ')+width,...($('frame').dataset.pixelExact==='true'?[$('frame').dataset.pixelExactError?'Точная сетка: ограничение':'Точно']:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
       };
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
@@ -1541,11 +1544,13 @@
     const fixed=command('romboFixed','Готовые','Вернуться к десяти готовым схемам Ромбо, сохранив собственную сборку.');fixed.onclick=event=>{event.stopPropagation();api()?.setMode?.('fixed');sync();after();};
     const diagram=command('romboDiagram','Схемы','Открыть схемы всех сборок ромба');diagram.onclick=event=>{event.stopPropagation();window.open('instruction/assets/rombo-assemblies.svg','_blank','noopener');};
     let lastRow=null;
+    const permit=patch=>!window.mayPixelExact||window.mayPixelExact.canState(patch);
     const state=()=>api()?.get?.(),max=s=>Math.max(1,Math.round(Number(s?.maxRow)||1));
     const sync=()=>{const s=state(),available=!!s;for(const button of [toggle,turn,assembly])button.disabled=!available;input.disabled=!available||s?.mode==='custom';for(const arrow of line.querySelectorAll('button'))arrow.disabled=!available;if(!s)return;
       toggle.classList.toggle('gz-on',!!s.on);toggle.setAttribute('aria-pressed',String(!!s.on));
       const limit=max(s),value=Math.max(1,Math.min(limit,Math.round(Number(s.row)||limit)));input.max=String(limit);if(lastRow!==value){input.value=String(value);lastRow=value;}
-      const angle=((Number(s.angle)||0)%360+360)%360;turn.querySelector('.gz-nm').textContent='Поворот '+angle+'°';turn.setAttribute('aria-label','Поворот ромба: '+angle+'°. Нажать — добавить 45°; правый щелчок — вычесть 45°.');
+      const angle=((Number(s.angle)||0)%360+360)%360;turn.querySelector('.gz-nm').textContent='Поворот '+angle+'°';turn.title='Поворот ромба на 45° вперёд; правый щелчок — назад. Только совместимые с точной сеткой положения.';turn.setAttribute('aria-label','Поворот ромба: '+angle+'°. Нажать — добавить 45°; правый щелчок — вычесть 45°.');
+      toggle.disabled=!permit({edgeRhombOn:!s.on});turn.disabled=!permit({romboAngle:(angle+45)%360})&&!permit({romboAngle:(angle+315)%360});if(turn.disabled){turn.title=window.mayPixelExact?.policyFor({romboAngle:(angle+45)%360}).reason||'Поворот несовместим с точной сеткой.';turn.setAttribute('aria-label',turn.title);}
       const entries=options(),index=entries.findIndex(entry=>entry.id===s.assembly);assembly.querySelector('.gz-nm').textContent=s.mode==='custom'?'Своя сборка':'Сборка '+(index+1);fixed.classList.toggle('gz-on',s.mode!=='custom');fixed.setAttribute('aria-pressed',String(s.mode!=='custom'));assembly.setAttribute('aria-label','Сборка '+(index+1)+' из '+entries.length+': '+assemblyName(s.assembly));diagram.querySelector('.gz-nm').textContent='Схемы '+entries.length;diagram.title='Открыть схемы всех '+entries.length+' сборок ромба';
       for(const arrow of line.querySelectorAll('button'))arrow.disabled=s.mode==='custom'||(Number(arrow.dataset.step)<0?value<=1:value>=limit);
     };

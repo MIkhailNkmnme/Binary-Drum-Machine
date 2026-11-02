@@ -47,7 +47,7 @@ test('unavailable sources stay explicit; obsolete duplicated-half ids migrate to
 function host(extra={}){
   const geometry={width:9,height:5,sides:true},state={edgeRhombOn:true,romboRow:3,romboAngle:0,romboAssembly:1},listeners={},notifications=[],r={left:200,top:100,width:90,height:50},classes=new Set();
   const style={},source={width:9,height:5,style:{},getBoundingClientRect:()=>({...r})};
-  const ctx={canvas:null,setTransform(){},fillRect(){},save(){},restore(){},transform(){},beginPath(){},rect(){},closePath(){},clip(){},drawImage(){},moveTo(){},lineTo(){},stroke(){},setLineDash(){}};
+  const ctx={canvas:null,createImageData(width,height){return {width,height,data:new Uint8ClampedArray(width*height*4)};},putImageData(image){this.lastImage=image;},setTransform(){},fillRect(){},save(){},restore(){},transform(){},beginPath(){},rect(){},closePath(){},clip(){},drawImage(){},moveTo(){},lineTo(){},stroke(){},setLineDash(){}};
   const box={style,getBoundingClientRect(){const t=/translate\(([-.\d]+)px, ([-.\d]+)px\)/.exec(style.transform||'');return {left:+(t?.[1]||0),top:r.top+r.height+2+(parseFloat(style.marginTop)||0)+ +(t?.[2]||0)};}};
   const canvas={style:{},width:1,height:1,getContext:()=>ctx,getBoundingClientRect(){const b=box.getBoundingClientRect();return {...b,width:parseFloat(canvas.style.width),height:parseFloat(canvas.style.height)};},setPointerCapture(){}};ctx.canvas=canvas;
   const win={Event:class{constructor(type){this.type=type;}},dispatchEvent(event){notifications.push(event.type);},requestAnimationFrame:()=>1,cancelAnimationFrame(){},getComputedStyle:()=>({marginBottom:'2px'}),addEventListener(type,fn){listeners[type]=fn;}};
@@ -180,4 +180,64 @@ test('Rombo capture keeps native-source minimum double density and annotations w
  assert.equal(JSON.stringify([h.box.style,h.canvas.style,h.canvas.width,h.canvas.height]),before);assert.notEqual(out,h.canvas);assert.equal(out.width,Math.ceil(p.outputWidth*2));assert.equal(out.height,Math.ceil(p.outputHeight*2));
  assert.equal(calls.at(-1).canvas,out);assert.equal(calls.at(-1).quality,2);assert.equal(calls.at(-1).unit,.25);assert.equal(strokes.at(-1),out);assert.ok(draws.slice(-p.parts.length).every(args=>args[0]===native));assert.ok(out.width>h.canvas.width);
  h.geometry.width=20000;h.geometry.height=20000;h.source.width=20000;h.source.height=20000;h.state.romboRow=20000;const capped=h.api.capture();assert.ok(capped.width*capped.height<=16e6);assert.ok(capped.width<=16384&&capped.height<=16384);
+});
+
+
+function nativePixels(width,height){const data=new Uint8ClampedArray(width*height*4);for(let i=0;i<width*height;i++){data[i*4]=i%251+1;data[i*4+1]=Math.floor(i/251)%251;data[i*4+2]=17;data[i*4+3]=255;}return {width,height,data};}
+const rgba=(image,index)=>Array.from(image.data.subarray(index*4,index*4+4));
+
+test('exact inverse raster matches native picking and copies only original RGBA across every assembly and turn',()=>{
+ const source=nativePixels(31,8),palette=new Set(['0,0,0,255',...Array.from({length:31*8},(_,i)=>rgba(source,i).join(','))]);
+ for(const {id:assembly}of R.variants)for(let angle=0;angle<360;angle+=45){
+  const p=R.plan(31,8,{assembly,angle,row:8},{sides:true}),ratio=angle%90?Math.SQRT2:2,image=R.rasterPixels(p,source,ratio);
+  for(let y=0;y<image.height;y++)for(let x=0;x<image.width;x++){
+   const q=p.pick({x:(x+.5)/ratio,y:(y+.5)/ratio}),actual=rgba(image,y*image.width+x);assert.ok(palette.has(actual.join(',')));
+   const expected=q?rgba(source,Math.floor(q.y)*source.width+Math.floor(q.x)):[0,0,0,255];assert.deepEqual(actual,expected,`assembly ${assembly}, angle ${angle}, pixel ${x},${y}`);
+  }
+ }
+});
+
+test('exact central diamond keeps every native cone bit visible at diagonal sqrt2 and straight one',()=>{
+ const source=nativePixels(31,8);
+ for(const angle of [0,45,90,135,180,225,270,315]){
+  const p=R.plan(31,8,{assembly:16,angle,row:8},{sides:true}),image=R.rasterPixels(p,source,angle%90?Math.SQRT2:1),seen=new Set();
+  for(let i=0;i<image.width*image.height;i++)seen.add(rgba(image,i).join(','));
+  for(const row of p.parts[0].rows)for(let x=row.left;x<row.right;x++)assert.ok(seen.has(rgba(source,row.y*source.width+x).join(',')),`missing ${x},${row.y} at ${angle}`);
+ }
+});
+
+test('exact custom triangle raster agrees with source picking after local rotations and reflection',()=>{
+ const source=nativePixels(12,10),layout={width:12,height:10,scope:'test',pieces:[{id:'a',vertices:[[1,1],[7,1],[1,7]],pose:{x:2,y:1,turn:1,flip:true}}]};
+ const p=R.customPlan(layout,{width:12,height:10,scope:'test'},45);assert.equal(p.available,true);const ratio=3,image=R.rasterPixels(p,source,ratio);
+ for(let y=0;y<image.height;y++)for(let x=0;x<image.width;x++){
+  const q=p.pick({x:(x+.5)/ratio,y:(y+.5)/ratio});assert.deepEqual(rgba(image,y*image.width+x),q?rgba(source,Math.floor(q.y)*12+Math.floor(q.x)):[0,0,0,255]);
+ }
+});
+
+test('exact raster refuses oversized output and accepts reusable RGBA storage',()=>{
+ const source=nativePixels(31,8),p=R.plan(31,8,{assembly:16,angle:45},{sides:true}),a=R.rasterPixels(p,source,2),data=new Uint8ClampedArray(a.data.length);assert.equal(R.rasterPixels(p,source,2,{data}).data,data);assert.deepEqual(data,a.data);
+ assert.throws(()=>R.rasterPixels(p,source,10000),/Точный растр Ромбо превышает лимит/);assert.throws(()=>R.rasterPixels(p,null),/исходный массив RGBA/);
+});
+
+test('strict display and export use exact native RGBA and report precision failure without stale raster or RAF storm',()=>{
+ const pixels=nativePixels(9,5),errors=[],decorations=[];
+ const h=host({precision:()=>true,captureBits:()=>pixels,capture:()=>{throw Error('interpolated source forbidden');},onPrecisionError:message=>errors.push(message),paintCentres:ctx=>decorations.push(ctx.canvas)});
+ h.canvas.getContext().drawImage=()=>{throw Error('Canvas interpolation forbidden');};h.api.render();assert.ok(h.canvas.getContext().lastImage);assert.equal(decorations.at(-1),h.canvas);
+ const before=JSON.stringify([h.box.style,h.canvas.style,h.canvas.width,h.canvas.height]),out=h.api.capture();assert.ok(out.getContext().lastImage);assert.equal(decorations.at(-1),out);assert.equal(JSON.stringify([h.box.style,h.canvas.style,h.canvas.width,h.canvas.height]),before);
+ h.r.width=9*10000;h.r.height=5*10000;h.api.render();assert.equal(h.canvas.style.display,'none');assert.equal(errors.length,1);assert.match(errors[0],/лимит/);h.api.render();assert.equal(errors.length,1);
+ h.r.width=90;h.r.height=50;h.api.render();assert.equal(h.canvas.style.display,'');assert.equal(errors.at(-1),'');
+});
+
+test('precision state guard rejects incompatible setters before state mutation',()=>{
+ const checked=[],h=host({allowState:next=>{checked.push(next);return false;}}),before={...h.state};h.api.set(false);h.api.setRow(2);h.api.cycleAngle();h.api.setAssembly(16);h.api.setMode('custom');assert.deepEqual(h.state,before);assert.equal(checked.length,5);assert.equal(h.notifications.length,0);
+});
+
+
+test('strict canonical scale survives CSS rounding; overlay palette stays separate and a new revision updates bits',()=>{
+ const pixels=nativePixels(9,5),overlay={width:9,height:5,data:new Uint8ClampedArray(9*5*4)},draws=[];overlay.data.set([200,10,77,255],4*4);let revision=1;
+ const h=host({precision:()=>true,scale:()=>Math.SQRT2,captureBits:()=>pixels,captureOverlay:()=>overlay,revision:()=>revision,exportScale:()=>2*Math.SQRT2});h.state.romboAngle=45;h.r.width=9*Math.SQRT2+.003;h.canvas.getContext().drawImage=(c,...args)=>draws.push([c,args]);h.api.render();
+ const p=h.api.plan(),expected=R.rasterPixels(p,pixels,Math.SQRT2);assert.equal(h.canvas.width,expected.width);assert.deepEqual(h.canvas.getContext().lastImage.data,expected.data);assert.equal(h.canvas.getContext().imageSmoothingEnabled,false);assert.deepEqual(draws[0][1],[0,0]);
+ const decorated=draws[0][0].getContext().lastImage;assert.deepEqual(decorated.data,R.rasterPixels(p,overlay,Math.SQRT2,{transparent:true}).data);
+ pixels.data[4*4]=99;revision++;h.api.render();assert.deepEqual(h.canvas.getContext().lastImage.data,R.rasterPixels(p,pixels,Math.SQRT2).data);
+ const out=h.api.capture();assert.deepEqual(out.getContext().lastImage.data,R.rasterPixels(p,pixels,2*Math.SQRT2).data);
 });
