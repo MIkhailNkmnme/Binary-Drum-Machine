@@ -12,19 +12,20 @@
     let generation=0,disposed=false,lastSnapshot=null,frame=null;
     const listeners=new Set(),viewport=options.viewport;
     const marker=doc.createElement('div');marker.id='mayXorromRow';marker.setAttribute('aria-hidden','true');
-    Object.assign(marker.style,{position:'fixed',display:'none',pointerEvents:'none',boxSizing:'border-box',zIndex:'15',border:'1px solid #a674ff',boxShadow:'inset 0 0 0 1px #65eaa6',background:'transparent'});
+    Object.assign(marker.style,{position:'fixed',display:'none',pointerEvents:'none',boxSizing:'border-box',zIndex:'15',border:'1px solid #a674ff',boxShadow:'inset 0 0 0 1px #65eaa6',background:'rgba(101,234,166,.18)'});
     doc.body.append(marker);
     function getState(){return {state,index,notes:notes.map(note=>({...note})),error};}
     function publish(){if(!disposed)for(const listener of listeners)listener(getState());}
     function showMarker(){
       frame=null;marker.style.display='none';
-      if(disposed||doc.hidden||!lastSnapshot||index<0||!['playing','paused'].includes(state))return;
+      if(disposed||doc.hidden||options.isVisible?.()===false||!lastSnapshot||index<0||!['playing','paused'].includes(state))return;
       const figure=typeof options.figure==='function'?options.figure():options.figure;
       if(!figure||!viewport||figure.isConnected===false||viewport.isConnected===false)return;
-      if(win.getComputedStyle&&(win.getComputedStyle(figure).display==='none'||win.getComputedStyle(viewport).display==='none'||win.getComputedStyle(figure).visibility==='hidden'||win.getComputedStyle(viewport).visibility==='hidden'))return;
-      const rect=figure.getBoundingClientRect(),clip=viewport.getBoundingClientRect(),height=lastSnapshot.height||lastSnapshot.rows.length;
+      if(win.getComputedStyle&&(win.getComputedStyle(figure).display==='none'||win.getComputedStyle(viewport).display==='none'||win.getComputedStyle(viewport).visibility==='hidden'))return;
+      // The hidden source canvas still owns field geometry; visible layers paint it.
+      const rect=options.figureRect?.()||figure.getBoundingClientRect(),clip=viewport.getBoundingClientRect(),height=lastSnapshot.height||lastSnapshot.rows.length;
       if(!(rect.width>0&&rect.height>0&&height>0)||index>=height)return;
-      const rowHeight=rect.height/height,top=Math.max(0,clip.top,rect.top+index*rowHeight),bottom=Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.top+(index+1)*rowHeight);
+      const rowHeight=rect.height/height,center=rect.top+(index+.5)*rowHeight,band=Math.max(2,rowHeight),top=Math.max(0,clip.top,rect.top,center-band/2),bottom=Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.bottom,center+band/2);
       const left=Math.max(0,clip.left,rect.left),right=Math.min(win.innerWidth||doc.documentElement.clientWidth,clip.right,rect.right);
       if(!(bottom>top&&right>left))return;
       Object.assign(marker.style,{display:'block',left:left+'px',top:top+'px',width:(right-left)+'px',height:(bottom-top)+'px',opacity:state==='paused'?'.45':'1'});

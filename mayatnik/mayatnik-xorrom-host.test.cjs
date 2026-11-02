@@ -62,3 +62,17 @@ test('actual core startup error reaches subscribers and caller',async()=>{
   const f=realFixture(async()=>{throw Error('No current field');});const errors=[];f.api.subscribe(s=>errors.push(s.error));
   await assert.rejects(f.api.start(),/No current field/);assert.equal(f.api.getState().error,'No current field');assert.ok(errors.includes('No current field'));await f.close();
 });
+
+test('hidden source canvas remains a valid geometry anchor while display is painted by layers',async()=>{
+ const f=fixture();const figure=f.doc.querySelector('canvas');figure.style.visibility='hidden';await f.api.start();f.opts.onStep({index:1,notes:[{midi:60}]});
+ const marker=f.doc.getElementById('mayXorromRow');assert.equal(marker.style.display,'block');assert.equal(marker.style.top,'50px');assert.notEqual(marker.style.background,'transparent');
+ figure.style.display='none';f.api.refresh();assert.equal(marker.style.display,'none');f.close();
+});
+
+test('marker has a visible two-pixel band at subpixel scale and uses physical geometry for rotated views',async()=>{
+ const f=fixture();f.snapshot.height=1000;await f.api.start();f.opts.onStep({index:200,notes:[]});const marker=f.doc.getElementById('mayXorromRow');assert.equal(marker.style.display,'block');assert.equal(marker.style.height,'2px');assert.equal(marker.style.top,'39.1px');f.close();
+ const dom=new JSDOM('<div><canvas></canvas></div>',{pretendToBeVisual:true}),win=dom.window,figure=win.document.querySelector('canvas'),viewport=win.document.querySelector('div');let config,visible=true;
+ figure.style.visibility='hidden';figure.getBoundingClientRect=()=>({left:0,top:-1000,right:100,bottom:-800,width:100,height:200});viewport.getBoundingClientRect=()=>({left:0,top:0,right:100,bottom:200});
+ const snapshot={height:4,rows:[{},{},{},{}]},engine={...audio,create(o){config=o;return{start:async()=>{await o.getSnapshot();o.onState('playing');return true;},setSettings(){},stop(){o.onState('stopped');},dispose(){},getStream(){return null;}};}};
+ const api=host.mount({window:win,viewport,figure:()=>figure,figureRect:()=>({left:0,top:0,right:100,bottom:200,width:100,height:200}),isVisible:()=>visible,engine,getSnapshot:async()=>snapshot});await api.start();config.onStep({index:1,notes:[]});const m=win.document.getElementById('mayXorromRow');assert.equal(m.style.top,'50px');assert.equal(m.style.display,'block');visible=false;api.refresh();assert.equal(m.style.display,'none');assert.equal(api.getState().state,'playing');api.dispose();dom.window.close();
+});
