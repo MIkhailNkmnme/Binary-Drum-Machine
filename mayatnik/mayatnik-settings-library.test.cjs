@@ -63,3 +63,5 @@ test('frame paint repeat mode round trips and rejects unknown values, while lega
  const bad=Library.pick(Reset.defaults());bad.state.paintFrameMode='other';assert.throws(()=>Library.normalized(bad));
  const legacy=Library.pick(Reset.defaults());delete legacy.state.paintFrameMode;const state={paintFrameMode:'cells'};Library.applyState(state,legacy);assert.equal(state.paintFrameMode,undefined);assert.equal(Reset.defaults().paintFrameMode,'off');
 });
+
+test('exact 1:1 setting round trips, validates boolean and accepts legacy presets',()=>{const data=S.pick({zLimit:true,zoom:64,zLock:true});const normalized=S.normalized(data);assert.equal(normalized.state.zLimit,true);assert.equal(normalized.state.zLock,true);const current={zLimit:false};S.applyState(current,normalized);assert.equal(current.zLimit,true);const legacy=structuredClone(data);delete legacy.state.zLimit;assert.equal(S.normalized(legacy).state.zLimit,null);S.applyState(current,legacy);assert.equal(!!current.zLimit,false);data.state.zLimit='true';assert.throws(()=>S.normalized(data),/Некорректная настройка/);});

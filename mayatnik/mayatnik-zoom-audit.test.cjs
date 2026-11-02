@@ -4,7 +4,7 @@ function fn(name){const at=html.indexOf('  function '+name+'(');assert.ok(at>=0,
 function fixture(options={}){
  const buttons=new Map(),st={zoom:1,zsnap:true,zbase:2,zLimit:false,zLock:false,ztop:false,zBot:false,zMid:false,...options};
  const c={st,geo:{anchor:63},window:{devicePixelRatio:options.dpr||1},wrap:{clientWidth:800,clientHeight:800,scrollLeft:100,scrollTop:100,getBoundingClientRect:()=>({left:0,top:0,width:800,height:800})},cv:{style:{},getBoundingClientRect:()=>({left:0,top:0,width:127*c.scale(),height:128*c.scale(),bottom:128*c.scale()})},VTX_H:16,MAX_ZOOM:512,zWant:0,dispW:()=>127,dispH:()=>128,wrapPadX:()=>32,bothOn:()=>false,ovlLinked:()=>false,fitAxis:()=>false,save(){},layout(){},thick(){},zBotScroll(){},zTopScroll(){},zTopLine(){},present(){},imageStats(){},queueDigits(){},midScroll(){},fitHold(){},$:(id)=>{if(!buttons.has(id))buttons.set(id,{setAttribute(){}});return buttons.get(id);}};
- c.wrap.classList={toggle(){}};c.wrap.style={setProperty(){}};c.document={body:{classList:{contains:()=>false}}};
+ c.requestAnimationFrame=callback=>callback();c.wrap.classList={toggle(){}};c.wrap.style={setProperty(){}};c.document={body:{classList:{contains:()=>false}}};
  c.freePanScale=0;c.freePanInset=0;c.getComputedStyle=()=>({paddingLeft:'16px',paddingRight:'16px'});
  vm.createContext(c);
  const declarations=['DPR','zB','snap2','fitScale','fitHRow','fitHScale','baseMinScale','minScale','scale'].map(name=>lines.find(line=>line.trimStart().startsWith('const '+name+' ='))).join('\n');
@@ -83,4 +83,45 @@ test('free repositioning survives layout, resize, leaving the axis pin, and curs
  assert.ok(Math.abs(cellAt(center())-Math.max(0,Math.min(127,before)))<1);
  w.scrollLeft=52;const cursor=center()+14,cell=cellAt(cursor);c.zoomTo(8,cursor,50,true);
  assert.ok(Math.abs(cellAt(cursor)-cell)<1e-6);
+});
+
+test('physical 1:1 overrides fit, snap bases, pins and resizing until explicitly switched off',()=>{
+ for(const dpr of [1,1.25,1.5,2,3])for(const zoom of [1/128,64,'fit','fitH'])for(const zLock of [false,true]){
+  const c=fixture({zoom,zLimit:true,zLock,dpr,zbase:3,zBot:true});vm.runInContext(fn('cssLayout')+'\n'+fn('fit'),c);
+  c.cssLayout();assert.equal(c.scale()*dpr,1);assert.equal(c.st.zoom,1/dpr);assert.equal(c.st.zLock,zLock);
+  for(const wanted of [1e-8,512]){c.zoomTo(wanted,200,200,true);assert.equal(c.scale()*dpr,1);}
+  c.fit();assert.equal(c.st.zoom,1/dpr);c.wrap.clientHeight=1200;c.cssLayout();assert.equal(c.scale()*dpr,1);
+  vm.runInContext(lines.find(line=>line.includes("$('zFitH').onclick =")),c);c.$('zFitH').onclick();assert.equal(c.scale()*dpr,1);
+ }
+});
+test('1:1 toggle establishes and retains exact scale without overwriting independent zoom lock',()=>{
+ for(const dpr of [1,1.25,1.5,2])for(const zLock of [false,true]){
+  const c=fixture({zoom:64,zLock,dpr,zBot:false});vm.runInContext(lines.find(line=>line.includes("$('zLimit').onclick =")),c);
+  c.$('zLimit').onclick();assert.equal(c.st.zLimit,true);assert.equal(c.st.zoom,1/dpr);assert.equal(c.scale()*dpr,1);assert.equal(c.st.zLock,zLock);
+  c.$('zLimit').onclick();assert.equal(c.st.zLimit,false);assert.equal(c.st.zoom,1/dpr);assert.equal(c.st.zLock,zLock);
+  c.zoomTo(8/dpr);assert.equal(c.scale(),zLock?1/dpr:8/dpr);
+ }
+});
+test('restored 1:1 follows current monitor DPR and normalizes stored numeric zoom',()=>{
+ const c=fixture({zoom:64,zLimit:true,dpr:1.25});vm.runInContext(fn('cssLayout'),c);c.cssLayout();assert.equal(c.st.zoom,.8);c.window.devicePixelRatio=2;c.cssLayout();assert.equal(c.st.zoom,.5);assert.equal(c.scale()*2,1);
+});
+
+test('wheel and two-finger pinch hold exact physical scale while allowing gesture translation',()=>{
+ for(const dpr of [1,1.25,1.5,2,3])for(const zLock of [false,true]){
+  const c=fixture({zoom:1/dpr,zLimit:true,dpr,zLock});
+  c.viewRotation={isFieldEvent:()=>true};c.drawEdgeRhomb=()=>{};
+  c.wrap.addEventListener=(type,handler)=>{if(type==='wheel')c.wheel=handler;};
+  const start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf('\n  // Тянуть',start);
+  vm.runInContext(html.slice(start,end)+'\n'+fn('movePinch'),c);
+  for(const deltaY of [-300,300,-20,20])c.wheel({deltaY,deltaMode:0,clientX:300,clientY:250,preventDefault(){}});
+  assert.equal(c.scale()*dpr,1);assert.equal(c.st.zLock,zLock);
+  c.pinch={d:100,s:c.scale(),x:200,y:200};
+  c.movePinch(new Map([[1,{x:110,y:180}],[2,{x:310,y:180}]]));
+  assert.equal(c.scale()*dpr,1);assert.equal(c.wrap.scrollLeft,90);assert.equal(c.wrap.scrollTop,120);
+  assert.equal(c.pinch.d,200);assert.equal(c.pinch.s,1/dpr);
+ }
+});
+
+test('Down pins position without changing an unlocked numeric zoom or 1:1 after release',()=>{
+ for(const dpr of [1,1.25,1.5,2]){const c=fixture({zoom:1/dpr,zLimit:false,zBot:true,dpr});vm.runInContext(fn('cssLayout')+'\n'+lines.find(line=>line.includes("$('zFitH').onclick =")),c);c.cssLayout();assert.equal(c.st.zoom,1/dpr);c.$('zFitH').onclick();c.$('zFitH').onclick();assert.equal(c.st.zoom,1/dpr);c.zoomTo(2/dpr);assert.equal(c.scale(),2/dpr);}
 });

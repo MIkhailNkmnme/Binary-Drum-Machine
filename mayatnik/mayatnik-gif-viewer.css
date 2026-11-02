@@ -1,6 +1,20 @@
-#mayGifDialog{box-sizing:border-box;width:min(1100px,calc(100vw - 24px));max-width:calc(100vw - 24px);height:min(850px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);padding:10px;border:1px solid #73e4a5;border-radius:0;background:#0e1116;color:#dfe6f5;--mtp-accent:#73e4a5}
+#mayGifDialog{box-sizing:border-box;width:min(1100px,calc(100vw - 24px));max-width:calc(100vw - 24px);height:min(850px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);padding:10px;border:1px solid #73e4a5;border-radius:0;background:#000;color:#dfe6f5;--mtp-accent:#73e4a5;font:12px system-ui,sans-serif;overflow:auto}
 #mayGifDialog::backdrop{background:#000b}
-#mayGifDialog .may-gif-head{display:flex;align-items:center;gap:4px;height:32px;font:12px system-ui,sans-serif}
+#mayGifDialog [hidden]{display:none!important}
+#mayGifDialog .may-gif-head{display:flex;align-items:center;gap:4px;min-height:32px}
 #mayGifDialog strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#mayGifDialog img{display:block;width:100%;height:calc(100% - 36px);object-fit:contain;image-rendering:pixelated;background:#080b10}
-@media(max-width:480px){#mayGifDialog .mtp-command{width:84px}}
+#mayGifDialog .may-gif-panel{height:calc(100% - 36px)}
+#mayGifDialog img{display:block;width:100%;height:calc(100% - 32px);object-fit:contain;image-rendering:pixelated;background:#000}
+#mayGifDialog .may-video-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:4px 0}
+#mayGifDialog .may-video-editor video{display:block;width:100%;height:min(42dvh,400px);object-fit:contain;background:#000}
+#mayGifDialog .may-video-editor input[type=range]{flex:1;min-width:100px;accent-color:#73e4a5}
+#mayGifDialog .may-video-editor input[type=number]{box-sizing:border-box;width:92px;height:24px;border:1px solid #64746b;border-radius:0;background:#080b10;color:inherit}
+#mayGifDialog .may-video-editor output{font-variant-numeric:tabular-nums;white-space:nowrap}
+#mayGifDialog .may-video-clips{max-height:130px;overflow:auto;list-style:none;padding:0;margin:4px 0;border-top:1px solid #345345}
+#mayGifDialog .may-video-clip{display:block;width:100%;min-height:24px;padding:3px 6px;text-align:left;border:1px solid transparent;border-bottom-color:#25382d;border-radius:0;background:#000;color:inherit;font:inherit;overflow-wrap:anywhere}
+#mayGifDialog .may-video-clip[aria-pressed=true]{border-color:#73e4a5}
+#mayGifDialog button:focus-visible,#mayGifDialog input:focus-visible,#mayGifDialog a:focus-visible{outline:1px solid #fff;outline-offset:1px}
+#mayGifDialog .may-video-status{min-height:2em;margin:6px 0;color:#b8d8c5}
+#mayGifDialog progress{width:100px;accent-color:#73e4a5}
+#mayGifDialog a{color:#73e4a5}
+@media(max-width:600px){#mayGifDialog{width:calc(100vw - 8px);max-width:calc(100vw - 8px);height:calc(100dvh - 8px);max-height:calc(100dvh - 8px);padding:4px}#mayGifDialog .may-gif-head{flex-wrap:wrap}#mayGifDialog .may-gif-head strong{flex-basis:100%}#mayGifDialog .may-video-editor video{height:30dvh}#mayGifDialog .may-video-editor input[type=number]{font-size:16px;width:86px}#mayGifDialog .may-video-row{gap:3px}#mayGifDialog .may-video-clips{max-height:96px}}
