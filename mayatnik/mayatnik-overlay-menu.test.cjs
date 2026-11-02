@@ -1,8 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const read=file=>fs.readFileSync(__dirname+'/'+file,'utf8');
-test('Scale subgroup moves every live overlay node, retains handlers and compact preferences, and leaves measurements alone',()=>{
+test('Independent overlay group retains live handlers and preferences from Scale and older owners',()=>{
  class Node{
-  constructor(){this.children=[];this.dataset={};this.style={};this.className='';this.classList={add:(...names)=>this.className+=' '+names.join(' ')};}
+  constructor(){this.children=[];this.dataset={};this.style={setProperty(k,v){this[k]=v;}};this.className='';this.classList={add:(...names)=>this.className+=' '+names.join(' ')};}
   append(...nodes){for(const n of nodes){if(n.parentElement)n.parentElement.children=n.parentElement.children.filter(e=>e!==n);n.parentElement=this;this.children.push(n);}}
   setAttribute(k,v){this[k]=v;}
   matches(s){return s.split(',').some(q=>q==='button'&&this.button||q==='.gz-hx'&&this.className.includes('gz-hx'));}
@@ -14,19 +14,14 @@ test('Scale subgroup moves every live overlay node, retains handlers and compact
  const ids=['ovlStep','ovlPos','ovlH0','ovlFreeze','ovlAlpha','ovlOriginal','ovlCenter','ovlReduce','ovlReset','ovlReturn','sawFull','sectors','areas','areaFreeze','lineMeasures'],nodes=new Map();
  let clicks=0;for(const id of ids){const n=new Node();n.dataset.n=id;n.button=true;n.className='gz-hx';n.onclick=()=>clicks++;nodes.set(id,n);(id==='ovlReduce'?view:measure).append(n);}
  const vis=new Node();vis.className='gz-hx may-vis-triple';view.append(vis);nodes.get('ovlAlpha').hidden=true;
- const storage=new Map([['mayatnik-control-mini-v464',JSON.stringify(['group:Площади:data:ovlStep','group:Вид:data:ovlReduce'])]]),source=read('mayatnik-menu.js'),start=source.indexOf('  function mountOverlaySubgroup(){'),end=source.indexOf('  mountOverlaySubgroup();',start);
- const context={document:{querySelector:()=>zoom,createElement:()=>new Node(),createElementNS:()=>new Node()},tools:{querySelector:s=>s==='.may-vis-triple'?vis:nodes.get(s.match(/data-n="([^"]+)"/)[1])},localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
- vm.runInNewContext(source.slice(start,end)+'mountOverlaySubgroup();',context);
- const section=zoom.children[0].children[0];assert.equal(section['aria-label'],'Наложение');assert.equal(section.children[0].textContent,'НАЛОЖЕНИЕ');assert.equal(section.children[0].className,'may-overlay-title');assert.equal(section.children[0].dataset.userLabel,'');assert.ok(!section.children[0].matches('.gz-hx'));for(const svg of section.children.slice(1,3))assert.equal(svg.viewBox,'0 0 120 14');
+ const storage=new Map([['mayatnik-control-mini-v464',JSON.stringify(['group:Площади:data:ovlStep','group:Вид:data:ovlReduce','group:zoom:data:ovlFreeze','group:zoom:data:ovlVisibility'])]]),source=read('mayatnik-menu.js'),start=source.indexOf('  function mountOverlayGroup(){'),end=source.indexOf('  mountOverlayGroup();',start);
+ const overlay=new Node(),section=new Node();overlay.className='pt-g';overlay.append(section);
+ const context={ptGroup:name=>{assert.equal(name,'Наложение');return section;},tools:{querySelector:s=>s==='.may-vis-triple'?vis:nodes.get(s.match(/data-n="([^"]+)"/)[1])},localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
+ vm.runInNewContext(source.slice(start,end)+'mountOverlayGroup();',context);
+ assert.equal(overlay.dataset.k,'Наложение');assert.equal(overlay.style['--c'],'#7cbcff');assert.equal(zoom.children.length,0);
  for(const id of ids.filter(id=>id.startsWith('ovl'))){assert.equal(nodes.get(id).parentElement,section);nodes.get(id).onclick();}assert.equal(clicks,10);assert.equal(vis.parentElement,section);assert.equal(vis.dataset.n,'ovlVisibility');assert.equal(nodes.get('ovlAlpha').hidden,true);
  for(const id of ['sawFull','sectors','areas','areaFreeze','lineMeasures'])assert.equal(nodes.get(id).parentElement,measure);
- const saved=JSON.parse(storage.get('mayatnik-control-mini-v464'));assert.ok(saved.includes('group:Площади:data:ovlStep'));assert.ok(saved.includes('group:zoom:data:ovlStep'));assert.ok(saved.includes('group:zoom:data:ovlReduce'));
- // Execute the real rail-container construction, where a misplaced utility row previously escaped folding.
- const railStart=source.indexOf('      const left = !!box.closest',source.indexOf('  function syncRailFlyouts()')),railEnd=source.indexOf('      if (!list) continue;',railStart)+'      if (!list) continue;'.length;
- vm.runInNewContext('for(const box of boxes){'+source.slice(railStart,railEnd)+'}',{boxes:[zoom],document:context.document});
- const railList=zoom.querySelector(':scope > .may-rail-list');assert.ok(railList);assert.equal(section.parentElement.parentElement,railList);assert.equal(zoom.children.length,1);
- // Mounting after the flyout already exists must also insert a missing wide host inside that flyout.
- zoom.children[0].children=[];vm.runInNewContext(source.slice(start,end)+'mountOverlaySubgroup();',context);assert.equal(zoom.children.length,1);assert.equal(nodes.get('ovlStep').parentElement.parentElement.parentElement,railList);assert.equal(vis.parentElement.parentElement.parentElement,railList);
+ const saved=JSON.parse(storage.get('mayatnik-control-mini-v464'));for(const id of ['ovlStep','ovlReduce','ovlFreeze','ovlVisibility'])assert.ok(saved.includes('group:Наложение:data:'+id));assert.ok(saved.includes('group:Площади:data:ovlStep'));assert.ok(saved.includes('group:zoom:data:ovlFreeze'));
 });
 test('startup ignores saved open state and active sequence matches, but detached library opens normally',()=>{
  const source=read('mayatnik-template-panel.js'),start=source.indexOf('    // The main page always starts'),end=source.indexOf('\n  }',start),startup=source.slice(start,end);

@@ -1102,14 +1102,6 @@ body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>.may-contours-group{position:re
 .may-contours-group>:is([data-n="bitContourMode"],[data-n="bitContourColours"])[aria-disabled="true"]{opacity:.4!important;pointer-events:none!important}
 .may-contours-group>.may-contours-frame{position:absolute;left:-2px;top:-2px;width:124px;height:80px;pointer-events:none;z-index:0;overflow:visible;fill:#7cbcff0a;stroke:#7cbcff;stroke-width:1;opacity:.65}
 .may-contours-group:has(>[data-view-overlay="contours"].on)>.may-contours-frame{opacity:1;stroke-width:1.5}
-/* МАЯ-390: the overlay is one named subgroup of Scale, with the usual 2px row gap. */
-body.mayatnik-menu-ready :is(#paintTools,#mayatnikRail,#mayatnikRailR) .may-overlay-group{position:relative;isolation:isolate;display:flex!important;flex-direction:column;gap:2px!important;width:120px!important;min-width:120px;max-width:120px;margin:2px 0!important;padding:0 0 14px!important;flex:none}
-body.mayatnik-menu-ready .may-overlay-group>.gz-hx{position:relative!important;left:auto!important;top:auto!important;width:120px!important;min-width:120px;max-width:120px;height:24px!important;min-height:24px;margin:0!important;flex:none}
-body.mayatnik-menu-ready .may-overlay-title{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:120px;height:24px;min-height:24px;flex:none;margin:0;padding:0;border:0;background:none;color:var(--c,#7cbcff);font-size:12px;font-weight:600;line-height:1;user-select:none}
-.may-overlay-group>.may-overlay-bracket{position:absolute;left:0;width:120px;height:14px;pointer-events:none;overflow:hidden;fill:none;stroke:var(--c,#7cbcff);stroke-width:1;opacity:.65}
-.may-overlay-bracket-top{top:0}
-.may-overlay-bracket-bottom{bottom:0;transform:rotate(180deg)}
-.may-overlay-group>[hidden]{display:none!important}
 .may-row-lab-close{position:fixed;z-index:3;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:24px;height:24px;padding:0;border:1px solid #8592ad;border-radius:0;background:#1b2430;color:#dfe6f5;font:20px/1 system-ui,sans-serif;cursor:pointer;touch-action:none;user-select:none}
 .may-row-lab-close:hover,.may-row-lab-close:focus-visible{border-color:#b48cff;outline:0}
 .may-row-lab-close[hidden]{display:none!important}

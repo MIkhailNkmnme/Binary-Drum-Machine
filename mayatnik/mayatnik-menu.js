@@ -1466,21 +1466,16 @@
     addEventListener('may-reset-complete',()=>{rail.refresh();placeTools();});
   }
   // v0.630: five independent buttons open the original controls beside the main group.
-  // МАЯ-390: keep the live overlay controls together inside Scale, preserving menu layout keys.
-  function mountOverlaySubgroup(){
-    const zoom=document.querySelector('.gz-group[data-id="zoom"]');if(!zoom)return;
-    let home=zoom.querySelector('.gz-wide');if(!home){home=document.createElement('div');home.className='gz-wide';(zoom.querySelector(':scope > .may-rail-list')||zoom).append(home);}
-    const section=document.createElement('div');section.className='pt-sec may-overlay-group';section.setAttribute('role','group');section.setAttribute('aria-label','Наложение');
-    const title=document.createElement('div');title.className='may-overlay-title';title.dataset.noMini='';title.dataset.userLabel='';title.textContent='НАЛОЖЕНИЕ';title.setAttribute('role','heading');title.setAttribute('aria-level','3');section.append(title);
-    for(const edge of ['top','bottom']){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('may-overlay-bracket','may-overlay-bracket-'+edge);svg.setAttribute('viewBox','0 0 120 14');svg.setAttribute('aria-hidden','true');svg.innerHTML='<path d="M1 13L13 1H107L119 13"/>';section.append(svg);}
+  // МАЯ-407: an independent standard group owns the original overlay controls.
+  function mountOverlayGroup(){
+    const section=ptGroup('Наложение');section.parentElement.dataset.k='Наложение';section.parentElement.style.setProperty('--c','#7cbcff');
     const ids=['ovlStep','ovlPos','ovlH0','ovlFreeze','ovlVisibility','ovlAlpha','ovlOriginal','ovlCenter','ovlReduce','ovlReset','ovlReturn'],moves=[];
     const key=node=>{const group=node.closest('[data-id],.pt-g'),owner=group?.dataset.id||group?.dataset.k||group?.querySelector(':scope > .pt-l')?.title||group?.id||'';const parent=node.parentElement,peers=[...parent.children].filter(n=>n.matches('button,.gz-hx,[role="button"]'));return node.dataset.n?'group:'+owner+':data:'+node.dataset.n:'group:'+owner+':parent:'+(parent.id||parent.className)+':slot:'+peers.indexOf(node);};
-    for(const id of ids){const node=id==='ovlVisibility'?tools.querySelector('.may-vis-triple'):tools.querySelector('[data-n="'+id+'"]');if(!node)continue;const from=key(node);if(id==='ovlVisibility')node.dataset.n=id;section.append(node);node.style.left=node.style.top='';moves.push([from,'group:zoom:data:'+id]);}
-    home.append(section);
+    for(const id of ids){const node=id==='ovlVisibility'?tools.querySelector('.may-vis-triple'):tools.querySelector('[data-n="'+id+'"]');if(!node)continue;const from=key(node);if(id==='ovlVisibility')node.dataset.n=id;section.append(node);node.style.left=node.style.top='';moves.push([from,'group:Наложение:data:'+id],['group:zoom:data:'+id,'group:Наложение:data:'+id]);}
     // Copy compact preferences to their new owner; retain the original entries and the storage key.
     try{const storageKey='mayatnik-control-mini-v464',saved=JSON.parse(localStorage.getItem(storageKey)||'[]');if(Array.isArray(saved)){const next=new Set(saved);for(const [from,to]of moves)if(next.has(from))next.add(to);if(next.size!==saved.length)localStorage.setItem(storageKey,JSON.stringify([...next]));}}catch(_){}
   }
-  mountOverlaySubgroup();
+  mountOverlayGroup();
   function mountHorrSections(group, { storage = localStorage, after = () => {}, openGroup = () => {} } = {}) {
     if (!group) return null;
     const doc = group.ownerDocument, win = doc.defaultView;
