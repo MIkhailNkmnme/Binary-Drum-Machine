@@ -9,7 +9,7 @@
   const DEFAULTS = Object.freeze({
     source: 'rgb', bpm: 96, division: 8, tonic: 0, scale: 'major', octave: 4,
     timbre: 'triangle', gain: 0.25, chord: 3, first: 0, last: -1, stride: 1,
-    loop: true, live: false
+    loop: true, live: false, autoGeometry: false, geometrySource: 'all', geometryConnectivity: 'sides'
   });
   const SCALES = {
     major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10],
@@ -32,14 +32,58 @@
       tonic: number('tonic', 0, 11), scale: pick('scale', Object.keys(SCALES)), octave: number('octave', 1, 7),
       timbre: pick('timbre', ['sine', 'triangle', 'pluck', 'softsquare']), gain: number('gain', 0, 1, false),
       chord: number('chord', 1, 4), first: number('first', 0, 2147483647), last: number('last', -1, 2147483647),
-      stride: number('stride', 1, 65536), loop: flag('loop'), live: flag('live')
+      stride: number('stride', 1, 65536), loop: flag('loop'), live: flag('live'),
+      autoGeometry: flag('autoGeometry'), geometrySource: pick('geometrySource', ['all', 'regions', 'areas', 'symmetry']),
+      geometryConnectivity: pick('geometryConnectivity', ['sides', 'corners', 'diagonal', 'chess0', 'bit'])
     };
   }
 
+  function selectedRegion(row) {
+    const {triangle, zero, one} = row?.geometry || {};
+    if (triangle) return triangle;
+    if (!zero || !one) return zero || one || null;
+    if (zero.orientation === 'down' && zero.triangleScore >= 0.5) return zero;
+    if (zero.exterior !== one.exterior) return zero.exterior ? one : zero;
+    return zero.area >= one.area ? zero : one;
+  }
+  function volumeFactor(settings, region) {
+    if (!region || !['all','areas'].includes(settings.geometrySource)) return 1;
+    const density = clamp(region.area / (region.width * region.height), 0, 1);
+    return 0.4 + 0.6 * density;
+  }
+  function modulate(base, region) {
+    const s = {...base}, mode = s.geometrySource;
+    if (!region) return s;
+    if (mode === 'all' || mode === 'regions') {
+      s.division = region.width >= 2 * region.height ? 4 : region.height >= 2 * region.width ? 16 : 8;
+      const tier = clamp(Math.floor(Math.log2(region.perimeter / 4)), 0, 3);
+      s.timbre = ['sine', 'triangle', 'pluck', 'softsquare'][tier];
+    }
+    if (mode === 'all' || mode === 'areas') {
+      // Each doubling of the region's area moves one fifth away from the manual tonic.
+      const tier = Math.floor(Math.log2(region.area));
+      s.tonic = (base.tonic + 7 * tier) % 12;
+      s.chord = clamp(1 + Math.floor(tier / 2), 1, 4);
+      s.gain = base.gain * volumeFactor(base, region);
+    }
+    if (mode === 'all' || mode === 'symmetry') {
+      const h = region.symmetryHeight;
+      s.scale = h < 2 ? 'minor' : h < 4 ? 'pentatonic' : 'major';
+      s.octave = clamp(base.octave + (h < 2 ? -1 : h >= 8 ? 1 : 0), 1, 7);
+    }
+    return s;
+  }
+  function effectiveSettings(settings, row) {
+    const s = normalizeSettings(settings);
+    return modulate(s, s.autoGeometry && selectedRegion(row));
+  }
   function frequency(midi) { return 440 * 2 ** ((midi - 69) / 12); }
   function notesForRow(row, index, settings) {
-    if (!row) return [];
-    const s = normalizeSettings(settings), scale = SCALES[s.scale];
+    return notesAt(row, index, effectiveSettings(settings, row));
+  }
+  function notesAt(row, index, s) {
+    if (!row || (s.autoGeometry && row.ones === 0)) return [];
+    const scale = SCALES[s.scale];
     function pitch(degree, code) {
       const midi = 12 * (s.octave + 1 + Math.floor(degree / scale.length)) + s.tonic + scale[degree % scale.length];
       return { midi, frequency: frequency(midi), degree: degree + 1, code, velocity: 0.75 };
@@ -68,6 +112,11 @@
   }
 
   function stepSeconds(s) { return 60 / s.bpm * 4 / s.division; }
+  function rowStep(row, index, base) {
+    const geometry = base.autoGeometry ? selectedRegion(row) : null;
+    const effective = modulate(base, geometry);
+    return {row, index, geometry, effective, notes: notesAt(row, index, effective), step: stepSeconds(effective)};
+  }
   function bounds(snapshot, s) {
     const end = (snapshot && snapshot.rows ? snapshot.rows.length : 0) - 1;
     const first = Math.min(s.first, end);
@@ -125,11 +174,16 @@
     if (range.first < 0) throw new Error('В снимке нет строк для WAV.');
     const sampleRate = options.sampleRate === 44100 ? 44100 : SAMPLE_RATE;
     const maxSeconds = Number.isFinite(options.maxSeconds) ? clamp(options.maxSeconds, 1/sampleRate, 60) : 60;
-    const step = stepSeconds(s);
-    const rowCount = Math.floor((range.last - range.first) / s.stride) + 1;
-    const fullLength = Math.round(rowCount * step * sampleRate);
-    const length = Math.min(fullLength, Math.max(1, Math.round(maxSeconds * sampleRate)));
-    const truncated = length < fullLength;
+    const limit = Math.max(1, Math.round(maxSeconds * sampleRate)), timeline = [];
+    let elapsed = 0, index = range.first;
+    for (; index <= range.last && Math.round(elapsed * sampleRate) < limit; index += s.stride) {
+      const event = rowStep(snapshot.rows[index], index, s);
+      timeline.push({...event, offset: Math.round(elapsed * sampleRate)});
+      elapsed += event.step;
+    }
+    const framesNeeded = Math.round(elapsed * sampleRate);
+    const length = Math.min(framesNeeded, limit);
+    const truncated = index <= range.last || framesNeeded > limit;
     const bytes = new Uint8Array(44 + 2 * length), view = new DataView(bytes.buffer);
     function tag(offset, text) { for (let i = 0; i < text.length; i++) bytes[offset + i] = text.charCodeAt(i); }
     tag(0, 'RIFF'); view.setUint32(4, bytes.length - 8, true); tag(8, 'WAVE');
@@ -138,22 +192,17 @@
     view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
     view.setUint16(34, 16, true); tag(36, 'data'); view.setUint32(40, length * 2, true);
     const toneFor = cacheTone(synthesize);
-    let steps = 0;
-    for (let index = range.first; index <= range.last; index += s.stride) {
-      const offset = Math.round(steps * step * sampleRate);
-      if (offset >= length) break;
-      steps++;
-      const notes = notesForRow(snapshot.rows[index], index, s);
-      const tones = notes.map(note => toneFor(note, step, s.timbre, sampleRate));
+    for (const {notes, step, effective, offset} of timeline) {
+      const tones = notes.map(note => toneFor(note, step, effective.timbre, sampleRate));
       const frames = Math.min(length - offset, Math.max(0, ...tones.map(tone => tone.length)));
       for (let i = 0; i < frames; i++) {
         let sample = 0;
         for (const tone of tones) sample += tone[i] || 0;
         const fade = truncated ? Math.min(1, (length - 1 - offset - i) / (sampleRate * 0.008)) : 1;
-        view.setInt16(44 + 2 * (offset + i), Math.round(sample * s.gain * fade * 32767 / tones.length), true);
+        view.setInt16(44 + 2 * (offset + i), Math.round(sample * effective.gain * fade * 32767 / tones.length), true);
       }
     }
-    return {bytes, duration: length / sampleRate, steps, truncated, sampleRate};
+    return {bytes, duration: length / sampleRate, steps: timeline.length, truncated, sampleRate};
   }
 
   function create(options = {}) {
@@ -221,7 +270,7 @@
         beat = lastBeat || queued[0] || {index:cursor, time:nextTime};
         for (const event of queued) if (event.time <= now) beat = event;
       }
-      halt('paused', beat && {index:beat.index, time:beat.time});
+      halt('paused', beat && {index:beat.index, time:beat.time, step:beat.step});
     }
     function contextStateChanged() {
       if (ctx.state !== 'running') pause();
@@ -233,20 +282,21 @@
       stop();
       if (options.onError) options.onError(error);
     }
-    function sound(notes, step, time, offset = 0) {
+    function sound({notes, step, effective, geometry}, time, offset = 0) {
       if (!bus) {
         bus = ctx.createGain();
         bus.connect(master);
       }
       for (const note of notes) {
-        const buffer = audioBuffer(note, step, settings.timbre, SAMPLE_RATE);
+        const buffer = audioBuffer(note, step, effective.timbre, SAMPLE_RATE);
         if (offset >= buffer.duration) continue;
         const source = ctx.createBufferSource(), gain = ctx.createGain();
         source.buffer = buffer;
-        gain.gain.value = 1 / notes.length;
+        const level = volumeFactor(effective, geometry) / notes.length;
+        gain.gain.value = level;
         if (offset > 0) {
           gain.gain.setValueAtTime(0, time);
-          gain.gain.linearRampToValueAtTime(1 / notes.length, time + 0.005);
+          gain.gain.linearRampToValueAtTime(level, time + 0.005);
         }
         source.connect(gain);
         gain.connect(bus);
@@ -265,7 +315,7 @@
         while (queued.length && queued[0].time <= now) due = queued.shift();
         if (due) { currentIndex = due.index; lastBeat = due; }
         if (due && now - due.time < 0.10 && options.onStep) {
-          options.onStep({index: due.index, row: due.row, notes: due.notes, time: due.time});
+          options.onStep({...due.event, time: due.time});
         }
         if (sequence !== run) return;
         if (nextTime < now) nextTime = now;
@@ -293,12 +343,11 @@
           }
           if (range.first < 0) { stop(); return; }
           cursor = Math.max(range.first, cursor);
-          const row = snapshot.rows[cursor], step = stepSeconds(settings);
-          const notes = notesForRow(row, cursor, settings);
-          sound(notes, step, nextTime);
-          queued.push({index: cursor, row, notes, time: nextTime, snapshot});
+          const event = rowStep(snapshot.rows[cursor], cursor, settings);
+          sound(event, nextTime);
+          queued.push({index:cursor, time:nextTime, step:event.step, snapshot, event});
           cursor += settings.stride;
-          nextTime += step;
+          nextTime += event.step;
         }
         const nextWake = queued.length ? Math.min(0.025, queued[0].time - ctx.currentTime) : 0.025;
         wake = timer(() => tick(run), Math.max(1, Math.ceil(nextWake * 1000)));
@@ -314,15 +363,43 @@
       try {
         if (audition && ctx.state !== 'running') await ctx.resume();
         if (sequence !== run || doc?.hidden || (audition && ctx.state !== 'running')) return false;
-        const row = snapshot.rows[cursor], notes = notesForRow(row, cursor, settings);
+        const event = rowStep(snapshot.rows[cursor], cursor, settings);
         const time = ctx.currentTime;
-        if (audition) sound(notes, stepSeconds(settings), time);
-        options.onStep?.({index: cursor, row, notes, time, manual: true});
+        if (audition) sound(event, time);
+        options.onStep?.({...event, time, manual: true});
         return true;
       } catch (error) {
         if (sequence !== run) return false;
         pause();
         throw error;
+      }
+    }
+    // Preserve the fraction of the sounding beat when a replacement changes its
+    // duration. Cross subsequent rows with their own durations. Skip full loops
+    // arithmetically when capture was delayed for longer than a whole score.
+    function locateBeat(beat, range, now) {
+      let index = clamp(beat.index, range.first, range.last), time = beat.time;
+      let cycleStart;
+      for (;;) {
+        const row = snapshot.rows[index];
+        const step = stepSeconds(modulate(settings, settings.autoGeometry && selectedRegion(row)));
+        const duration = beat?.step || step;
+        if (now < time + duration) {
+          if (now > time) time = now - (now - time) * step / duration;
+          return {index, time};
+        }
+        time += duration;
+        beat = null;
+        index += settings.stride;
+        if (index > range.last) {
+          if (!settings.loop) return null;
+          index = range.first;
+          if (cycleStart !== undefined) {
+            const cycle = time - cycleStart;
+            time += Math.floor((now - time) / cycle) * cycle;
+          }
+          cycleStart = time;
+        }
       }
     }
     function replaceSnapshot(fresh, {index = currentIndex, resume = false} = {}) {
@@ -334,37 +411,30 @@
       if (sequence !== run) return -1;
       snapshot = fresh;
       if (beat) {
-        const now = ctx.currentTime, step = stepSeconds(settings);
-        const passed = Math.max(0, Math.floor((now - beat.time) / step));
-        const firstIndex = clamp(beat.index, range.first, range.last);
-        const untilWrap = Math.floor((range.last - firstIndex) / settings.stride) + 1;
-        cursor = firstIndex + passed * settings.stride;
-        if (passed >= untilWrap) {
-          if (!settings.loop) { stop(); return -1; }
-          const count = Math.floor((range.last - range.first) / settings.stride) + 1;
-          cursor = range.first + (passed - untilWrap) % count * settings.stride;
-        }
-        nextTime = beat.time + passed * step;
+        const now = ctx.currentTime, position = locateBeat(beat, range, now);
+        if (!position) { stop(); return -1; }
+        cursor = position.index;
+        nextTime = position.time;
         const selected = cursor;
         changeState('playing');
         if (sequence !== run) return -1;
         // Carry both row and sample phase across a frame replacement, including
-        // the rest at the end of a note. The next beat keeps its original deadline.
+        // the rest at the end of a note.
         if (nextTime <= now) {
-          const row = snapshot.rows[cursor], notes = notesForRow(row, cursor, settings);
-          sound(notes, step, now, now - nextTime);
-          lastBeat = {index:cursor, time:nextTime};
+          const event = rowStep(snapshot.rows[cursor], cursor, settings);
+          sound(event, now, now - nextTime);
+          lastBeat = {index:cursor, time:nextTime, step:event.step};
           currentIndex = cursor;
           cursor += settings.stride;
-          nextTime += step;
-          options.onStep?.({index:selected, row, notes, time:now});
+          nextTime += event.step;
+          options.onStep?.({...event, time:now});
         }
         tick(run);
         return selected;
       }
       currentIndex = cursor = Number.isFinite(index) ? clamp(Math.trunc(index), range.first, range.last) : range.first;
-      const row = snapshot.rows[cursor], notes = notesForRow(row, cursor, settings);
-      options.onStep?.({index: cursor, row, notes, time: ctx.currentTime, manual: true});
+      const event = rowStep(snapshot.rows[cursor], cursor, settings);
+      options.onStep?.({...event, time: ctx.currentTime, manual: true});
       return currentIndex;
     }
     async function start(patch) {
@@ -423,5 +493,5 @@
     return { start, pause, stop, seek, beginRefresh, replaceSnapshot, setSettings, getState: () => state, getStream, dispose };
   }
 
-  return { DEFAULTS, normalizeSettings, frequency, notesForRow, renderWav, create };
+  return { DEFAULTS, normalizeSettings, effectiveSettings, geometryForRow: selectedRegion, frequency, notesForRow, renderWav, create };
 });

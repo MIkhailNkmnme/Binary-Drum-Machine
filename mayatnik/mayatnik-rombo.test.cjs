@@ -99,3 +99,48 @@ test('unsupported projection leaves the source visible and restores selected var
  h.geometry.available=true;h.api.render();assert.equal(h.box.style.display,'block');assert.equal(h.api.get().assembly,1);
  const outside=R.plan(9,5,{assembly:16,row:1},{anchor:12});assert.equal(outside.available,false);assert.equal(outside.parts.length,0);
 });
+
+
+test('wheel in Rombo gaps and occupied triangles reaches production field zoom at its navigation point',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),Rotation=require('./mayatnik-view-rotation.js');
+ const html=fs.readFileSync(require.resolve('./Zerkalius-mayatnik.html'),'utf8'),start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf("  }, { passive: false });",start)+"  }, { passive: false });".length;
+ assert.ok(start>=0&&end>start);const code=html.slice(start,end);
+ for(const angle of [0,45,90,180,315])for(const turned of [false,true]){
+  const h=host();h.state.romboAngle=angle;h.api.render();const p=h.api.plan(),r=h.canvas.getBoundingClientRect(),positions=[];
+  // Include transparent canvas gaps as well as actual source-triangle pixels.
+  for(let y=.1;y<p.outputHeight;y+=.5)for(let x=.1;x<p.outputWidth;x+=.5){const hit=!!p.pick({x,y});if(!positions.some(q=>q.hit===hit))positions.push({x,y,hit});}
+  assert.ok(positions.some(q=>q.hit));if(p.outputHeight>1)assert.ok(positions.some(q=>!q.hit));
+  for(const q of positions){
+   const logical={x:r.left+q.x*10,y:r.top+q.y*10},center={x:400,y:300},physical=turned?Rotation.point(logical,center):logical;
+   // Whole-view capture runs before Rombo and has already inverse-rotated it.
+   const mapped=turned?Rotation.point(physical,center):physical,event=h.event('wheel',mapped.x,mapped.y);
+   near(event.clientX,logical.x);near(event.clientY,logical.y);assert.equal(event.stopped,undefined);assert.equal(event.prevented,undefined);assert.equal(h.api.physicalPoint(event),undefined);
+   const zooms=[],handlers={},ctx={geo:{},viewRotation:{isFieldEvent:()=>turned},wrap:{addEventListener:(type,fn)=>handlers[type]=fn},window:{MayatnikMenuDock:{guardWheel:()=>false}},st:{},ovlLinked:()=>false,scale:()=>1,zoomTo:(...args)=>zooms.push(args),zWant:0,requestAnimationFrame:()=>{},drawEdgeRhomb:()=>{}};
+   vm.runInNewContext(code,ctx);event.deltaY=20;handlers.wheel(event);assert.equal(zooms.length,1);near(zooms[0][1],logical.x);near(zooms[0][2],logical.y);assert.equal(event.prevented,true);
+  }
+ }
+});
+
+
+test('real DOM wheel keeps Rombo gaps zoomable through whole-view rotation and leaves menus and atlas alone',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),{JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),Rotation=require('./mayatnik-view-rotation.js'),Preview=require('./mayatnik-rombo-preview.js');
+ const html=fs.readFileSync(require.resolve('./Zerkalius-mayatnik.html'),'utf8'),start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf("  }, { passive: false });",start)+"  }, { passive: false });".length;
+ const dom=new JSDOM('<div id="wrap"><canvas id="cv"></canvas><div id="edgeBelowWrap"><canvas id="edgeBelow"></canvas></div><div id="paintTools"><button>Menu</button></div></div>'),doc=dom.window.document,win=dom.window,wrap=doc.querySelector('#wrap'),source=doc.querySelector('#cv'),box=doc.querySelector('#edgeBelowWrap'),canvas=doc.querySelector('#edgeBelow');
+ win.requestAnimationFrame=()=>1;win.cancelAnimationFrame=()=>{};win.ZerkControlFrame={attach(){}};
+ const rect=(left,top,width,height)=>({left,top,width,height,right:left+width,bottom:top+height});
+ wrap.getBoundingClientRect=()=>rect(0,0,800,600);source.getBoundingClientRect=()=>rect(200,100,90,50);box.getBoundingClientRect=()=>rect(200,100,90,60);canvas.getBoundingClientRect=()=>rect(200,100,90,60);source.width=9;source.height=5;
+ const dockContext={document:doc,getComputedStyle:win.getComputedStyle.bind(win)};vm.runInNewContext(fs.readFileSync(require.resolve('./mayatnik-menu-dock.js'),'utf8'),dockContext);const dock=dockContext.MayatnikMenuDock;
+ const rotation=Rotation.mount({host:wrap,ownsMenu:dock.ownsWheel}),state={edgeRhombOn:true,romboRow:3,romboAngle:0,romboAssembly:1};
+ const api=R.mount({host:wrap,source,box,canvas,state:()=>state,geometry:()=>({width:9,height:5,sides:true})});api.render(true);
+ const preview=Preview.mount({document:doc,api:()=>api});
+ const zooms=[],ctx={wrap,geo:{},viewRotation:rotation,window:{MayatnikMenuDock:dock},st:{},ovlLinked:()=>false,scale:()=>1,zoomTo:(...args)=>zooms.push(args),zWant:0,requestAnimationFrame:()=>{},drawEdgeRhomb:()=>{}};vm.runInNewContext(html.slice(start,end),ctx);
+ const wheel=(target,x,y)=>{const e=new win.WheelEvent('wheel',{bubbles:true,cancelable:true,clientX:x,clientY:y,deltaY:30});target.dispatchEvent(e);return e;};
+ for(const turned of [false,true]){
+  rotation.set(turned);
+  const logical=turned?Rotation.point({x:202,y:102},rotation.center):{x:202,y:102},before=zooms.length,event=wheel(canvas,202,102);
+  assert.equal(zooms.length,before+1);near(zooms.at(-1)[1],logical.x);near(zooms.at(-1)[2],logical.y);assert.equal(event.defaultPrevented,true);assert.equal(rotation.isFieldEvent(event),turned);
+  const menuBefore=zooms.length,menuEvent=wheel(doc.querySelector('#paintTools button'),25,25);assert.equal(zooms.length,menuBefore);assert.equal(rotation.isFieldEvent(menuEvent),false);assert.equal(menuEvent.defaultPrevented,true);
+  const atlasEvent=wheel(preview.element.querySelector('button'),400,500);assert.equal(zooms.length,menuBefore);assert.equal(rotation.isFieldEvent(atlasEvent),false);
+ }
+ preview.destroy();rotation.destroy();dom.window.close();
+});

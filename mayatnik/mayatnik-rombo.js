@@ -128,6 +128,10 @@
    o.paintCentres?.(ctx,current,quality,unit);
   }
   function input(event){
+   // Zoom belongs to the whole field, including gaps between the triangles.
+   // Preserve the navigation point already mapped by whole-view rotation;
+   // only cell tools below need a source-triangle address.
+   if(event.type==='wheel')return;
    if(!get().on||!current||events.has(event)||!(event.target===canvas||drag))return;
    if(event.type==='click'&&suppressClick){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();return;}
    if(event.type==='pointerdown')suppressClick=false;

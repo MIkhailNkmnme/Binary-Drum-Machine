@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {DEFAULTS, normalizeSettings, frequency, notesForRow, renderWav, create} = require('./mayatnik-xorrom.js');
+const {DEFAULTS, normalizeSettings, effectiveSettings, frequency, notesForRow, renderWav, create} = require('./mayatnik-xorrom.js');
 
 const rgb = (code, count = 1) => ({ones: 1, colors: Uint32Array.from({length: 8}, (_, i) => i === code ? count : 0)});
 const field = (...codes) => ({rows: codes.map(code => rgb(code))});
@@ -343,4 +343,86 @@ test('slow and coalesced frame replacements respect a non-looping score and user
     t.engine.replaceSnapshot(field(7,6,5), {resume:true});
     assert.notEqual(t.engine.getState(), 'playing'); assert.equal(t.timers.size, 0);
   }
+});
+
+const hole = Object.freeze({id:21, bit:0, orientation:'down', triangleScore:1, exterior:false,
+  width:16, height:8, area:72, perimeter:48, symmetryHeight:8});
+const spike = Object.freeze({id:22, bit:1, orientation:'up', triangleScore:1, exterior:false,
+  width:2, height:4, area:5, perimeter:12, symmetryHeight:1});
+const section = (code, zero, one) => ({...rgb(code), geometry:{zero,one}});
+test('region parameters stay fixed across an inverted zero triangle down to its tip', () => {
+  const settings = Object.freeze({...DEFAULTS, autoGeometry:true, gain:.8});
+  const rows = [section(1, hole, spike), section(2, hole, null), section(0, hole, {...spike, area:512})];
+  const expected = effectiveSettings(settings, rows[0]);
+  for (const row of rows) assert.deepEqual(effectiveSettings(settings, row), expected);
+  assert.deepEqual([expected.tonic, expected.division, expected.timbre, expected.chord, expected.scale, expected.octave],
+    [6,4,'softsquare',4,'major',5]);
+  assert.equal(expected.gain, .8 * (.4 + .6 * 72/128));
+  assert.deepEqual(notesForRow(rows[2], 2, settings), []);
+  for (const source of ['rgb','melody','rhythm'])
+    assert.deepEqual(notesForRow({...rows[0],ones:0},0,{...settings,source}),[]);
+  assert.equal(effectiveSettings({...settings,gain:0}, rows[0]).gain, 0);
+  assert.deepEqual(effectiveSettings(DEFAULTS, rows[0]), DEFAULTS);
+  assert.deepEqual(effectiveSettings(settings, {geometry:{triangle:hole, zero:null, one:spike}}), expected);
+  assert.deepEqual(effectiveSettings(settings, rgb(3)), settings);
+  assert.equal(normalizeSettings({autoGeometry:'true',geometrySource:'bad',geometryConnectivity:'bad'}).autoGeometry, false);
+  for (const mode of ['sides','corners','diagonal','chess0','bit'])
+    assert.equal(normalizeSettings({geometryConnectivity:mode}).geometryConnectivity, mode);
+});
+
+test('geometry source changes only the controls driven by that measurement', () => {
+  const row = section(4, null, spike);
+  const base = {...DEFAULTS, autoGeometry:true};
+  const groups = {regions:['division','timbre'], areas:['tonic','gain','chord'], symmetry:['octave','scale']};
+  const all = effectiveSettings(base,row);
+  for (const [geometrySource, keys] of Object.entries(groups)) {
+    const settings = {...base,geometrySource}, effective = effectiveSettings(settings,row);
+    for (const key of Object.keys(settings)) assert.equal(effective[key], keys.includes(key) ? all[key] : settings[key], key);
+  }
+});
+
+test('mixed geometry uses the same onset, pitch, PCM, gain and duration for playback, audition and WAV', async () => {
+  const rows = [section(1,hole,spike), section(6,null,spike), section(7,hole,null)];
+  const settings = {...DEFAULTS,bpm:120,autoGeometry:true,gain:.7,loop:false}, snap = {rows};
+  const r = rig(() => snap, settings);
+  await r.engine.start(); r.advance(1140);
+  assert.deepEqual(r.events.map(e => +e.time.toFixed(3)), [.035,.535,.660]);
+  assert.deepEqual(r.events.map(e => e.geometry), [hole,spike,hole]);
+  const wav = renderWav(snap,settings), pcm = samples(wav.bytes);
+  assert.equal(wav.bytes.length, 44+2*Math.round(1.125*wav.sampleRate));
+  for (const [i, event] of r.events.entries()) {
+    assert.deepEqual(event.effective, effectiveSettings(settings,rows[i]));
+    const source = r.sources[i], tone = source.buffer.getChannelData();
+    const gain = source.outputs[0].gain.value * settings.gain;
+    assert.ok(Math.abs(gain-event.effective.gain) < 1e-10);
+    const offset = Math.round((event.time-.035)*wav.sampleRate);
+    for (const j of [1,10,100,200]) assert.equal(pcm[offset+j], Math.round(tone[j]*gain*32767));
+  }
+  await r.engine.start(); await r.engine.seek(1);
+  const manual = r.events.at(-1);
+  assert.equal(manual.geometry,spike);
+  assert.deepEqual(manual.effective,r.events[1].effective);
+  assert.deepEqual(manual.notes,r.events[1].notes);
+  assert.deepEqual(r.sources.at(-1).buffer.getChannelData(),r.sources[1].buffer.getChannelData());
+  assert.equal(renderWav(snap,settings,{maxSeconds:.625}).steps,2);
+  assert.equal(renderWav(snap,settings,{maxSeconds:.625}).truncated,true);
+});
+
+test('frame replacement keeps fractional progress when geometry shortens the sounding beat', async () => {
+  const original={rows:[section(1,hole,null),section(1,hole,null)]};
+  const fresh={rows:[section(7,null,spike),section(3,hole,null)]};
+  const r=rig(() => original,{autoGeometry:true,bpm:120,loop:true});
+  await r.engine.start(); r.advance(270);
+  r.engine.beginRefresh(); r.advance(15);
+  assert.equal(r.engine.replaceSnapshot(fresh,{resume:true}),0);
+  const now = r.ctx().currentTime, preview = r.sources.findLast(s => s.at === now);
+  assert.ok(Math.abs(preview.offset - .0625)<1e-9);
+  assert.equal(r.events.at(-1).geometry,spike);
+  assert.equal(r.events.at(-1).notes[0].code,7);
+  // A second rebuild before the deadline must keep the same musical phase.
+  r.advance(20);r.engine.beginRefresh();r.advance(8);
+  assert.equal(r.engine.replaceSnapshot(fresh,{resume:true}),0);
+  r.advance(70);
+  assert.equal(r.events.at(-1).geometry,hole);
+  assert.ok(Math.abs(r.events.at(-1).time-.3475)<1e-9);
 });

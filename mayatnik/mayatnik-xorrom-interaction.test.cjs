@@ -52,3 +52,12 @@ test('frame replacement preserves an ongoing line grab and respects release duri
 test('lost pointer capture leaves the selected line paused',async()=>{
  const f=fixture();await f.api.start();f.step(1);f.fire('pointerdown');await f.flush();f.fire('lostpointercapture');f.fire('pointerup',75,f.win);await f.flush();assert.equal(f.api.getState().state,'paused');assert.equal(f.starts,1);f.close();
 });
+
+
+test('automatic geometry/connectivity toggle refreshes the playing score but base/source edits do not reread',async()=>{
+ const f=fixture();await f.api.start();f.step(1);const before=f.captures.length;
+ f.api.setSettings({autoGeometry:true});assert.equal(f.api.getState().updating,true);await f.raf();assert.equal(f.captures.length,before+1);assert.equal(f.api.getState().state,'playing');
+ f.api.setSettings({geometrySource:'areas',bpm:150});assert.equal(f.api.getState().updating,false);assert.equal(f.captures.length,before+1);
+ f.api.setSettings({geometryConnectivity:'corners'});assert.equal(f.api.getState().updating,true);await f.raf();assert.equal(f.captures.length,before+2);
+ f.api.setSettings({autoGeometry:false});await f.raf();assert.equal(f.captures.length,before+3);assert.equal(f.api.getState().state,'playing');f.close();
+});

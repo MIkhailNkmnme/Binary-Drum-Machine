@@ -76,3 +76,16 @@ test('marker has a visible two-pixel band at subpixel scale and uses physical ge
  const snapshot={height:4,rows:[{},{},{},{}]},engine={...audio,create(o){config=o;return{start:async()=>{await o.getSnapshot();o.onState('playing');return true;},setSettings(){},stop(){o.onState('stopped');},dispose(){},getStream(){return null;}};}};
  const api=host.mount({window:win,viewport,figure:()=>figure,figureRect:()=>({left:0,top:0,right:100,bottom:200,width:100,height:200}),isVisible:()=>visible,engine,getSnapshot:async()=>snapshot});await api.start();config.onStep({index:1,notes:[]});const m=win.document.getElementById('mayXorromRow');assert.equal(m.style.top,'50px');assert.equal(m.style.display,'block');visible=false;api.refresh();assert.equal(m.style.display,'none');assert.equal(api.getState().state,'playing');api.dispose();dom.window.close();
 });
+
+
+test('effective geometry is copied for display while manual settings and frozen region stay private',async()=>{
+  const f=fixture();const region={id:7,area:6,width:3,height:2,perimeter:10,symmetryHeight:2,orientation:'down',triangleScore:1,exterior:false};
+  for(const row of f.snapshot.rows)row.geometry={zero:region};
+  f.api.setSettings({autoGeometry:true,gain:.4});await f.api.start();
+  const effective=audio.effectiveSettings(f.api.getSettings(),f.snapshot.rows[1]);f.opts.onStep({index:1,notes:[],effective,geometry:region});
+  const state=f.api.getState();assert.equal(state.geometry.id,7);assert.equal(state.effective.gain,.4);
+  state.geometry.id=99;state.effective.gain=1;assert.equal(f.api.getState().geometry.id,7);assert.equal(f.api.getSettings().gain,.4);
+  region.area=999;await f.api.exportWav();assert.equal(f.rendered.s.rows[0].geometry.zero.area,6);assert.equal(f.rendered.s.rows[0].geometry.zero,f.rendered.s.rows[1].geometry.zero);assert.equal(Object.isFrozen(f.rendered.s.rows[0].geometry.zero),true);
+  f.api.setSettings({geometrySource:'symmetry',bpm:150});assert.equal(f.api.getState().effective.bpm,150);assert.equal(f.api.getState().effective.tonic,f.api.getSettings().tonic);assert.equal(f.api.getState().updating,false);
+  f.api.stop();assert.equal(f.api.getState().geometry,null);assert.equal(f.api.getState().effective,null);f.close();
+});

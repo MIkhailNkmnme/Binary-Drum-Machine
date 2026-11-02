@@ -10,7 +10,7 @@ function fixture(width=2,height=2){
     f:{},geo:{},k:1,VW:width,VH:height,manualPaintRevision:0,templateMatchRevision:0,pxHide:new Set(),gpuBig:null,rgbNeighbourClasses:null,
     st:{view:'bits',viewUpsideDown:false,edgeRhombOn:false,xorrom:{bpm:120}},document:{body:{classList:{contains:()=>false}}},
     manualPaintKey:()=>String(context.k),manualPatternGeometry:()=>context.st.view,rgbNeighbourFilters:()=>context.filters||[],rgbNeighbourBWMode:()=>context.bw||0,
-    rombP:()=>-1,joinedOn:()=>false,MayatnikXorromField:require('./mayatnik-xorrom-field.js')};
+    rombP:()=>-1,joinedOn:()=>false,MayatnikXorromField:require('./mayatnik-xorrom-field.js'),MayatnikXorromGeometry:require('./mayatnik-xorrom-geometry.js')};
   vm.createContext(context);vm.runInContext(helpers,context);
   return {context,calls,acquired,get released(){return released;}};
 }
@@ -44,4 +44,15 @@ test('presentation paths notify completed frames and rotation; restore paths exp
   assert.doesNotMatch(source.slice(source.indexOf('  function reset(paintNow'),source.indexOf('  function reset(paintNow')+150),/mayXorrom\?\.stop/);
   assert.match(source,/window\.mayXorrom\?\.stop\(\);cacheRestoring=true/);
   assert.match(source,/window\.mayXorrom\?\.stop\(\);stopFrameTransports\(\);target=k/);
+});
+
+
+test('geometry is opt-in, runs on captured visible bits and cancels obsolete settings',async()=>{
+  const f=fixture(5,3),c=f.context;
+  c.window.mayVisibleSemantic.acquire=async()=>({width:5,height:3,current:()=>true,readBit:(x,y)=>x===0||x===4||y===2?1:0,release(){}});
+  const plain=await c.captureXorromField();assert.equal(plain.geometry,undefined);
+  c.st.xorrom.autoGeometry=true;c.st.xorrom.geometryConnectivity='sides';
+  const score=await c.captureXorromField();assert.equal(score.geometry.connectivity,'sides');assert.equal(score.rows[0].geometry.zero,score.rows[1].geometry.zero);assert.equal(score.rows[0].geometry.zero.area,6);
+  let seen;c.MayatnikXorromGeometry={async analyze(score,options){seen=options;assert.equal(options.cancelled(),false);c.st.xorrom.geometryConnectivity='bit';assert.equal(options.cancelled(),true);const e=Error('cancelled');e.name='AbortError';throw e;}};
+  await assert.rejects(c.captureXorromField({automatic:true}),{name:'AbortError'});assert.equal(seen.yieldTask,undefined,'geometry retains task yields rather than blocking frame with microtasks');
 });

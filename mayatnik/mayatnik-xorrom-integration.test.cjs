@@ -102,7 +102,7 @@ test('only cloned audio tracks are owned and stopped by the recorder',()=>{
 });
 
 test('site share and compressed work files round-trip music settings without a running transport',async()=>{
-  const settings=Music.normalizeSettings({source:'rhythm',bpm:143,division:16,tonic:3,octave:2,scale:'minor',
+  const settings=Music.normalizeSettings({autoGeometry:true,geometrySource:'areas',geometryConnectivity:'chess0',source:'rhythm',bpm:143,division:16,tonic:3,octave:2,scale:'minor',
     gain:.18,timbre:'pluck',chord:2,first:1,last:6,stride:2,loop:false,live:true});
   const {h}=host();
   Object.assign(h,{st:{mode:'pend',rows:8,steps:8,bg:'empty',view:'bits',xorrom:settings},k:1,

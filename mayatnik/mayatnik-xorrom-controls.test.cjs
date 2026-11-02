@@ -51,3 +51,44 @@ test('WAV download exposes render limit note and catches export failure',async()
 test('frame refresh shows status and cannot export an outdated score',()=>{
  const a=boot();a.setState({state:'paused',index:2,notes:[],updating:true});assert.match(a.el('status').textContent,/Обновляю кадр/);assert.equal(a.el('wav').disabled,true);a.setState({state:'playing',index:2,notes:[],updating:false});assert.equal(a.el('wav').disabled,false);a.dom.window.close();
 });
+
+
+test('geometry settings use compact standard controls and exact fill connectivity titles',()=>{
+  const a=boot();assert.equal(a.el('autoGeometry').getAttribute('aria-pressed'),'false');assert.equal(a.input('geometrySource').value,'all');assert.equal(a.input('geometryConnectivity').value,'sides');
+  assert.equal(a.el('autoGeometry').dataset.n,'xorrom-autoGeometry');assert.ok(a.el('geometrySource').classList.contains('gz-split'));
+  assert.deepEqual(Array.from(a.input('geometryConnectivity').options,o=>o.title),['По сторонам','Стороны + углы','Только углы','Шахматки 0','Один бит']);
+  a.change('geometrySource','symmetry');assert.deepEqual(a.patches.at(-1),{geometrySource:'symmetry'});a.change('geometryConnectivity','chess0');assert.deepEqual(a.patches.at(-1),{geometryConnectivity:'chess0'});
+  a.el('autoGeometry').click();assert.deepEqual(a.patches.at(-1),{autoGeometry:true});assert.equal(a.el('autoGeometry').getAttribute('aria-pressed'),'true');assert.equal(a.starts,0);a.dom.window.close();
+});
+
+test('effective automatic values are visible without overwriting manual settings and restore on toggle off',()=>{
+  const a=boot();a.api.setSettings({autoGeometry:true});
+  const effective={division:16,scale:'minor',tonic:7,octave:5,timbre:'pluck',gain:.12,chord:2};
+  a.setState({state:'playing',effective,geometry:{id:7,area:120,height:16,symmetryHeight:12},notes:[]});
+  for(const [key,value]of Object.entries(effective)){
+    assert.equal(a.input(key).value,String(key==='gain'?12:value));assert.equal(a.input(key).disabled,true);assert.ok(a.el(key).classList.contains('may-xorrom-modulated'));assert.match(a.input(key).title,/По рисунку: .*вручную:/);
+  }
+  assert.equal(a.input('bpm').disabled,false);assert.equal(a.input('bpm').value,'96');assert.equal(a.input('source').disabled,false);assert.equal(a.input('geometrySource').disabled,false);assert.equal(a.el('geometry').textContent,'Обл 7 · S 120 · H 16 · сим 12');assert.equal(a.el('geometry').getAttribute('aria-live'),'off');assert.match(a.el('geometry').title,/площадь 120 клеток/);
+  assert.deepEqual(a.api.getSettings(),{autoGeometry:true});const count=a.patches.length;a.change('gain',80);assert.equal(a.patches.length,count);
+  a.el('autoGeometry').click();assert.equal(a.input('bpm').value,'96');assert.equal(a.input('gain').value,'25');assert.equal(a.input('scale').value,'major');assert.equal(a.input('gain').disabled,false);assert.equal(a.el('gain').classList.contains('may-xorrom-auto'),false);assert.doesNotMatch(a.input('gain').title,/По рисунку/);assert.equal(a.el('geometry').textContent,'Рисунок: вручную');a.dom.window.close();
+});
+
+test('step synchronization preserves focused manual edits and auto fields wait for effective values',()=>{
+  const a=boot();a.input('bpm').focus();a.input('bpm').value='135';a.setState({state:'playing',index:8,effective:{bpm:110},notes:[]});assert.equal(a.input('bpm').value,'135');assert.equal(a.input('bpm').disabled,false);
+  a.input('bpm').blur();a.api.setSettings({autoGeometry:true});a.setState({state:'playing',notes:[]});assert.equal(a.input('bpm').value,'96');assert.equal(a.input('bpm').disabled,false);assert.equal(a.el('geometry').textContent,'Рисунок: ожидание');
+  a.setState({state:'playing',effective:{bpm:96,gain:.25},notes:[]});assert.equal(a.input('bpm').disabled,false);assert.equal(a.el('bpm').classList.contains('may-xorrom-auto'),false);a.change('bpm',140);assert.deepEqual(a.patches.at(-1),{bpm:140});a.dom.window.close();
+});
+
+
+test('automatic octave displays every normalized core octave without a blank selection',()=>{
+  const a=boot();a.api.setSettings({autoGeometry:true});
+  for(let octave=1;octave<=7;octave++){a.setState({state:'playing',effective:{octave},notes:[]});assert.equal(a.input('octave').value,String(octave));assert.equal(a.input('octave').selectedOptions[0].textContent,String(octave));}
+  a.el('autoGeometry').click();assert.equal(a.input('octave').value,'4');assert.equal(a.input('octave').disabled,false);a.dom.window.close();
+});
+
+
+test('partial geometry modes leave unrelated musical settings editable',()=>{
+ const a=boot();a.api.setSettings({autoGeometry:true,geometrySource:'symmetry'});a.setState({state:'playing',effective:{scale:'minor',octave:5,gain:.25,timbre:'triangle',tonic:0,division:8,chord:3},notes:[]});
+ assert.equal(a.input('scale').disabled,true);assert.equal(a.input('octave').disabled,true);assert.equal(a.input('timbre').disabled,false);assert.equal(a.input('gain').disabled,false);a.change('gain',40);assert.deepEqual(a.patches.at(-1),{gain:.4});
+ a.change('geometrySource','regions');assert.equal(a.input('timbre').disabled,true);assert.equal(a.input('scale').disabled,false);a.dom.window.close();
+});
