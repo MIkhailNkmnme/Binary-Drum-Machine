@@ -72,8 +72,8 @@
   const snap=value=>Math.abs(value*2-Math.round(value*2))<1e-9?Math.round(value*2)/2:value;
   result.pick=p=>{const q=result.unrotate(p);for(let i=parts.length-1;i>=0;i--){const tile=parts[i],src=inverse(tile.matrix,q);src.x=snap(src.x);src.y=snap(src.y);if(tile.contains(src.x,src.y))return {...src,part:tile.id,sourceKey:tile.sourceKey};}return null;};return result;
  }
- function draw(ctx,source,p,ratio=1){
-  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.imageSmoothingEnabled=false;
+ function draw(ctx,source,p,ratio=1,smoothing=false){
+  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.imageSmoothingEnabled=smoothing;if(smoothing)ctx.imageSmoothingQuality='high';
   const R=p.rotation;ctx.setTransform(R[0]*ratio,R[1]*ratio,R[2]*ratio,R[3]*ratio,R[4]*ratio,R[5]*ratio);
   const sx=source.width/p.width,sy=source.height/p.height;
   for(const tile of p.parts){ctx.save();ctx.transform(...tile.matrix);ctx.beginPath();tile.outline.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.clip();
@@ -84,6 +84,12 @@
    }else ctx.drawImage(source,0,0,source.width,source.height,0,0,p.width,p.height);
    ctx.restore();
   }
+ }
+ function rasterSize(W,H,wanted){
+  let quality=Math.min(wanted,Math.sqrt(16e6/(W*H)),16384/W,16384/H);
+  let width=Math.max(1,Math.min(16384,Math.ceil(W*quality))),height=Math.max(1,Math.min(16384,Math.ceil(H*quality)));
+  if(width*height>16e6){quality=Math.min(quality,(width-1-1e-9)/W,(height-1-1e-9)/H);width=Math.max(1,Math.ceil(W*quality));height=Math.max(1,Math.ceil(H*quality));}
+  return {quality,width,height};
  }
  function mount(o){
   const {host,source,box,canvas}=o,doc=host.ownerDocument,win=doc.defaultView,events=new WeakMap();let drag=null,suppressClick=false,current=null,unit=1,originalVisibility=source.style.visibility,raf=0,layoutKey='',stateKey='';
@@ -117,15 +123,32 @@
    if(drag&&(!state.on||!state.available||state.mode==='custom')){if(canvas.hasPointerCapture?.(drag.id))canvas.releasePointerCapture(drag.id);drag=null;suppressClick=false;}
    if(!state.on||!state.available){if(raf)win.cancelAnimationFrame(raf);raf=0;layoutKey='';box.style.display='none';source.style.visibility=o.restoreVisibility?.()??originalVisibility;current=null;return;}
    if(!source.width||!source.height)return;current=makePlan(undefined,g,state);const r=source.getBoundingClientRect();unit=r.width/current.width;if(!(unit>0))return;
-   const key=[r.left,r.top,r.width,r.height,current.row,current.angle,current.assembly,current.outputWidth,current.outputHeight,source.style.marginLeft,source.style.marginRight].join(':');
-   if(key!==layoutKey){layoutKey=key;source.style.visibility='hidden';box.style.display='block';box.style.width=current.outputWidth*unit+'px';box.style.height=current.outputHeight*unit+'px';box.style.marginLeft=source.style.marginLeft||'auto';box.style.marginRight=source.style.marginRight||'auto';box.style.marginTop=-(r.height+(parseFloat(win.getComputedStyle(source).marginBottom)||0))+'px';box.style.transform='none';
-    const br=box.getBoundingClientRect();box.style.transform=`translate(${r.left+(r.width-current.outputWidth*unit)/2-br.left}px, ${r.top-br.top}px)`;canvas.style.width=current.outputWidth*unit+'px';canvas.style.height=current.outputHeight*unit+'px';canvas.style.transform='none';}
+   const dpr=Number(win.devicePixelRatio)>0?Number(win.devicePixelRatio):1,W=current.outputWidth,H=current.outputHeight;
+   // Rasterize once at the physical display density. Ceil padding is clipped,
+   // never stretched back into the exact geometric box by CSS.
+   const {quality,width:cw,height:ch}=rasterSize(W,H,unit*dpr);
+   const cssWidth=cw*unit/quality,cssHeight=ch*unit/quality,rotation=win.mayViewRotation,turned=!!rotation?.enabled,pivot=turned?rotation.center:{x:0,y:0};
+   const key=[r.left,r.top,r.width,r.height,current.row,current.angle,current.assembly,W,H,source.style.marginLeft,source.style.marginRight,dpr,quality,turned,pivot.x,pivot.y].join(':');
+   if(key!==layoutKey){layoutKey=key;source.style.visibility='hidden';box.style.display='block';box.style.width=W*unit+'px';box.style.height=H*unit+'px';box.style.marginLeft=source.style.marginLeft||'auto';box.style.marginRight=source.style.marginRight||'auto';box.style.marginTop=-(r.height+(parseFloat(win.getComputedStyle(source).marginBottom)||0))+'px';box.style.transform='none';
+    let left=r.left+(r.width-W*unit)/2,top=r.top;
+    const px=turned?2*pivot.x-left-cssWidth:left,py=turned?2*pivot.y-top-cssHeight:top,sign=turned?-1:1;
+    left+=sign*(Math.round(px*dpr)/dpr-px);top+=sign*(Math.round(py*dpr)/dpr-py);
+    const br=box.getBoundingClientRect();box.style.transform=`translate(${left-br.left}px, ${top-br.top}px)`;canvas.style.width=cssWidth+'px';canvas.style.height=cssHeight+'px';canvas.style.transform='none';}
    if(!raf)raf=win.requestAnimationFrame(()=>{raf=0;render(false);});
    if(layoutOnly)return;
-   const quality=Math.min(Math.max(2,source.width/current.width),Math.sqrt(16e6/(current.outputWidth*current.outputHeight)),16384/current.outputWidth,16384/current.outputHeight),cw=Math.max(1,Math.ceil(current.outputWidth*quality)),ch=Math.max(1,Math.ceil(current.outputHeight*quality));if(canvas.width!==cw)canvas.width=cw;if(canvas.height!==ch)canvas.height=ch;
-   const ctx=canvas.getContext('2d'),frame=o.capture?.()||source;draw(ctx,frame,current,quality);ctx.setTransform(quality,0,0,quality,0,0);
-   if(current.axis){const a=current.forward(current.axis[0]),b=current.forward(current.axis[1]);ctx.strokeStyle='#ffd35b';ctx.lineWidth=1/Math.max(.02,unit);ctx.setLineDash?.([5/unit,3/unit]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash?.([]);}
-   o.paintCentres?.(ctx,current,quality,unit);
+   if(canvas.width!==cw)canvas.width=cw;if(canvas.height!==ch)canvas.height=ch;
+   const ctx=canvas.getContext('2d'),frame=o.capture?.()||source;paint(ctx,frame,current,quality,unit);
+  }
+  function paint(ctx,frame,p,quality,displayUnit){
+   draw(ctx,frame,p,quality,quality<Math.max(frame.width/p.width,frame.height/p.height));ctx.setTransform(quality,0,0,quality,0,0);
+   if(p.axis){const a=p.forward(p.axis[0]),b=p.forward(p.axis[1]);ctx.strokeStyle='#ffd35b';ctx.lineWidth=1/Math.max(.02,displayUnit);ctx.setLineDash?.([5/displayUnit,3/displayUnit]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash?.([]);}
+   o.paintCentres?.(ctx,p,quality,displayUnit);
+  }
+  function capture(){
+   const c=doc.createElement('canvas'),g=geometry(),state=get(g),frame=o.capture?.()||source;
+   if(!state.on||!state.available){c.width=frame.width;c.height=frame.height;c.getContext('2d').drawImage(frame,0,0);return c;}
+   const p=makePlan(undefined,g,state),raster=rasterSize(p.outputWidth,p.outputHeight,Math.max(2,frame.width/p.width,frame.height/p.height));
+   c.width=raster.width;c.height=raster.height;paint(c.getContext('2d'),frame,p,raster.quality,source.getBoundingClientRect().width/p.width||1);return c;
   }
   function input(event){
    // Zoom belongs to the whole field, including gaps between the triangles.
@@ -144,7 +167,7 @@
    const q=current.pick(p);if(!q){event.preventDefault();event.stopImmediatePropagation();return;}const sr=source.getBoundingClientRect();for(const [k,v]of Object.entries({clientX:sr.left+q.x*unit,clientY:sr.top+q.y*unit,x:sr.left+q.x*unit,y:sr.top+q.y*unit}))Object.defineProperty(event,k,{configurable:true,value:v});
   }
   for(const type of ['pointerdown','pointermove','pointerup','pointercancel','mousedown','mousemove','mouseup','click','dblclick','contextmenu','wheel'])win.addEventListener(type,input,{capture:true,passive:false});
-  const api={get,options:()=>variants.map(v=>({...v,...availability(v.id,geometry(),get().row)})),plan:makePlan,render,physicalPoint:event=>events.get(event),capture(){render(false);const c=doc.createElement('canvas'),frame=current?canvas:(o.capture?.()||source);c.width=frame.width;c.height=frame.height;c.getContext('2d').drawImage(frame,0,0);return c;},setMode(value){o.state().romboMode=value==='custom'?'custom':'fixed';notify();},set(value){o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n)return;s.romboRow=n;notify();},cycleAngle(dir=1){o.state().romboAngle=(get().angle+(dir<0?315:45))%360;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available)return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
+  const api={get,options:()=>variants.map(v=>({...v,...availability(v.id,geometry(),get().row)})),plan:makePlan,render,physicalPoint:event=>events.get(event),capture,setMode(value){o.state().romboMode=value==='custom'?'custom':'fixed';notify();},set(value){o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n)return;s.romboRow=n;notify();},cycleAngle(dir=1){o.state().romboAngle=(get().angle+(dir<0?315:45))%360;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available)return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
  }
  return {plan,customPlan,point,inverse,draw,mount,variants,normalise};
 });

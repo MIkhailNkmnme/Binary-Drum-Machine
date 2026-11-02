@@ -44,17 +44,17 @@ test('unavailable sources stay explicit; obsolete duplicated-half ids migrate to
  assert.equal(R.plan(9,5,{assembly:16}).available,true);
 });
 
-function host(){
+function host(extra={}){
   const geometry={width:9,height:5,sides:true},state={edgeRhombOn:true,romboRow:3,romboAngle:0,romboAssembly:1},listeners={},notifications=[],r={left:200,top:100,width:90,height:50},classes=new Set();
   const style={},source={width:9,height:5,style:{},getBoundingClientRect:()=>({...r})};
   const ctx={canvas:null,setTransform(){},fillRect(){},save(){},restore(){},transform(){},beginPath(){},rect(){},closePath(){},clip(){},drawImage(){},moveTo(){},lineTo(){},stroke(){},setLineDash(){}};
   const box={style,getBoundingClientRect(){const t=/translate\(([-.\d]+)px, ([-.\d]+)px\)/.exec(style.transform||'');return {left:+(t?.[1]||0),top:r.top+r.height+2+(parseFloat(style.marginTop)||0)+ +(t?.[2]||0)};}};
   const canvas={style:{},width:1,height:1,getContext:()=>ctx,getBoundingClientRect(){const b=box.getBoundingClientRect();return {...b,width:parseFloat(canvas.style.width),height:parseFloat(canvas.style.height)};},setPointerCapture(){}};ctx.canvas=canvas;
   const win={Event:class{constructor(type){this.type=type;}},dispatchEvent(event){notifications.push(event.type);},requestAnimationFrame:()=>1,cancelAnimationFrame(){},getComputedStyle:()=>({marginBottom:'2px'}),addEventListener(type,fn){listeners[type]=fn;}};
-  const doc={defaultView:win,body:{classList:{toggle(key,on){on?classes.add(key):classes.delete(key);}}},createElement:()=>({getContext:()=>({drawImage(){}})})};
-  const api=R.mount({host:{ownerDocument:doc},source,box,canvas,state:()=>state,geometry:()=>geometry,changed(){api.render();}});
+  const doc={defaultView:win,body:{classList:{toggle(key,on){on?classes.add(key):classes.delete(key);}}},createElement:()=>{const context={...ctx},out={width:0,height:0,getContext:()=>context};context.canvas=out;return out;}};
+  const api=R.mount({host:{ownerDocument:doc},source,box,canvas,state:()=>state,geometry:()=>geometry,changed(){api.render();},...extra});
   function event(type,x,y){const e={type,target:canvas,clientX:x,clientY:y,pointerId:1,button:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;}};listeners[type](e);return e;}
-  return {api,state,source,box,canvas,r,classes,event,notifications,geometry};
+  return {api,state,source,box,canvas,r,classes,event,notifications,geometry,win};
 }
 
 test('Rombo publishes effective state changes after setters and direct restore/reset, without frame duplicates',()=>{
@@ -72,8 +72,8 @@ test('projection follows fractional zoom and scroll without clamping or changing
   const h=host();
   for(const scale of [.125,1,2.75,20])for(const angle of [0,45,90,180,315]){
     Object.assign(h.r,{left:17.25-scale,top:-60.5+scale,width:9*scale,height:5*scale});h.state.romboAngle=angle;h.api.render();
-    const p=h.api.plan(),r=h.canvas.getBoundingClientRect();near(r.width/p.outputWidth,scale);near(r.height/p.outputHeight,scale);
-    near(r.left+r.width/2,h.r.left+h.r.width/2);near(r.top,h.r.top);
+    const p=h.api.plan(),r=h.canvas.getBoundingClientRect();near(parseFloat(h.box.style.width)/p.outputWidth,scale);near(parseFloat(h.box.style.height)/p.outputHeight,scale);
+    assert.ok(Math.abs(r.left+parseFloat(h.box.style.width)/2-(h.r.left+h.r.width/2))<=.500001);assert.ok(Math.abs(r.top-h.r.top)<=.500001);
   }
   h.api.set(false);assert.equal(h.box.style.display,'none');assert.equal(h.classes.has('may-rombo-active'),false);
 });
@@ -125,22 +125,59 @@ test('wheel in Rombo gaps and occupied triangles reaches production field zoom a
 test('real DOM wheel keeps Rombo gaps zoomable through whole-view rotation and leaves menus and atlas alone',()=>{
  const fs=require('node:fs'),vm=require('node:vm'),{JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),Rotation=require('./mayatnik-view-rotation.js'),Preview=require('./mayatnik-rombo-preview.js');
  const html=fs.readFileSync(require.resolve('./Zerkalius-mayatnik.html'),'utf8'),start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf("  }, { passive: false });",start)+"  }, { passive: false });".length;
+ assert.match(html,/const viewRotation\s*=\s*window.mayViewRotation\s*=\s*MayatnikViewRotation.mount/);
  const dom=new JSDOM('<div id="wrap"><canvas id="cv"></canvas><div id="edgeBelowWrap"><canvas id="edgeBelow"></canvas></div><div id="paintTools"><button>Menu</button></div></div>'),doc=dom.window.document,win=dom.window,wrap=doc.querySelector('#wrap'),source=doc.querySelector('#cv'),box=doc.querySelector('#edgeBelowWrap'),canvas=doc.querySelector('#edgeBelow');
  win.requestAnimationFrame=()=>1;win.cancelAnimationFrame=()=>{};win.ZerkControlFrame={attach(){}};
  const rect=(left,top,width,height)=>({left,top,width,height,right:left+width,bottom:top+height});
  wrap.getBoundingClientRect=()=>rect(0,0,800,600);source.getBoundingClientRect=()=>rect(200,100,90,50);box.getBoundingClientRect=()=>rect(200,100,90,60);canvas.getBoundingClientRect=()=>rect(200,100,90,60);source.width=9;source.height=5;
  const dockContext={document:doc,getComputedStyle:win.getComputedStyle.bind(win)};vm.runInNewContext(fs.readFileSync(require.resolve('./mayatnik-menu-dock.js'),'utf8'),dockContext);const dock=dockContext.MayatnikMenuDock;
- const rotation=Rotation.mount({host:wrap,ownsMenu:dock.ownsWheel}),state={edgeRhombOn:true,romboRow:3,romboAngle:0,romboAssembly:1};
+ const rotation=win.mayViewRotation=Rotation.mount({host:wrap,ownsMenu:dock.ownsWheel}),state={edgeRhombOn:true,romboRow:3,romboAngle:0,romboAssembly:1};
  const api=R.mount({host:wrap,source,box,canvas,state:()=>state,geometry:()=>({width:9,height:5,sides:true})});api.render(true);
  const preview=Preview.mount({document:doc,api:()=>api});
  const zooms=[],ctx={wrap,geo:{},viewRotation:rotation,window:{MayatnikMenuDock:dock},st:{},ovlLinked:()=>false,scale:()=>1,zoomTo:(...args)=>zooms.push(args),zWant:0,requestAnimationFrame:()=>{},drawEdgeRhomb:()=>{}};vm.runInNewContext(html.slice(start,end),ctx);
  const wheel=(target,x,y)=>{const e=new win.WheelEvent('wheel',{bubbles:true,cancelable:true,clientX:x,clientY:y,deltaY:30});target.dispatchEvent(e);return e;};
  for(const turned of [false,true]){
-  rotation.set(turned);
+  rotation.set(turned);api.render(true);
   const logical=turned?Rotation.point({x:202,y:102},rotation.center):{x:202,y:102},before=zooms.length,event=wheel(canvas,202,102);
   assert.equal(zooms.length,before+1);near(zooms.at(-1)[1],logical.x);near(zooms.at(-1)[2],logical.y);assert.equal(event.defaultPrevented,true);assert.equal(rotation.isFieldEvent(event),turned);
   const menuBefore=zooms.length,menuEvent=wheel(doc.querySelector('#paintTools button'),25,25);assert.equal(zooms.length,menuBefore);assert.equal(rotation.isFieldEvent(menuEvent),false);assert.equal(menuEvent.defaultPrevented,true);
   const atlasEvent=wheel(preview.element.querySelector('button'),400,500);assert.equal(zooms.length,menuBefore);assert.equal(rotation.isFieldEvent(atlasEvent),false);
  }
  preview.destroy();rotation.destroy();dom.window.close();
+});
+
+
+test('Rombo backing matches physical density, snaps its origin and stays fixed across changing frames',()=>{
+ for(const dpr of [1,1.25,2])for(const physicalScale of [1,4,26683/30464])for(const turned of [false,true]){
+  const h=host(),unit=physicalScale/dpr;h.win.devicePixelRatio=dpr;h.win.mayViewRotation={enabled:turned,center:{x:400.125,y:300.25}};
+  Object.assign(h.geometry,{width:1534,height:512});Object.assign(h.state,{romboRow:512,romboAngle:45,romboAssembly:16});Object.assign(h.source,{width:1534,height:512});Object.assign(h.r,{left:17.125,top:-63.375,width:1534*unit,height:512*unit});
+  let first;for(let frame=0;frame<6;frame++){
+   h.source.frame=frame;h.api.render();const p=h.api.plan(),r=h.canvas.getBoundingClientRect(),cx=h.win.mayViewRotation.center;
+   near(r.width*dpr,h.canvas.width);near(r.height*dpr,h.canvas.height);
+   const physicalLeft=turned?2*cx.x-r.left-r.width:r.left,physicalTop=turned?2*cx.y-r.top-r.height:r.top;
+   near(physicalLeft*dpr,Math.round(physicalLeft*dpr));near(physicalTop*dpr,Math.round(physicalTop*dpr));
+   assert.equal(h.canvas.getContext().imageSmoothingEnabled,physicalScale<1);
+   const snapshot=JSON.stringify([h.box.style,h.canvas.style.width,h.canvas.style.height,h.canvas.width,h.canvas.height,p.rotation]);if(!first)first=snapshot;else assert.equal(snapshot,first);
+   const q=p.forward(R.point(p.parts[0].matrix,{x:767,y:.25})),e=h.event('pointermove',r.left+q.x*unit,r.top+q.y*unit);near(e.clientX,h.r.left+767*unit);near(e.clientY,h.r.top+.25*unit);
+  }
+ }
+});
+
+test('Rombo capped backing stays below area and side budgets at very large zoom',()=>{
+ for(const assembly of [9,16]){
+  const h=host();h.win.devicePixelRatio=2;Object.assign(h.geometry,{width:1534,height:512});Object.assign(h.state,{romboRow:512,romboAngle:45,romboAssembly:assembly});Object.assign(h.source,{width:1534,height:512});Object.assign(h.r,{width:1534*512,height:512*512});h.api.render();
+  assert.ok(h.canvas.width*h.canvas.height<=16e6);assert.ok(h.canvas.width<=16384&&h.canvas.height<=16384);assert.ok(parseFloat(h.canvas.style.width)*2>h.canvas.width);
+ }
+});
+
+
+test('Rombo capture keeps native-source minimum double density and annotations without changing screen raster',()=>{
+ const calls=[],native={width:1534,height:512};
+ const h=host({capture:()=>native,paintCentres:(ctx,p,quality,unit)=>calls.push({canvas:ctx.canvas,p,quality,unit})});
+ Object.assign(h.geometry,{width:1534,height:512});Object.assign(h.state,{romboRow:512,romboAngle:45,romboAssembly:16});Object.assign(h.source,{width:1344,height:449});Object.assign(h.r,{width:1534*.25,height:512*.25});
+ const draws=[],strokes=[];h.canvas.getContext().drawImage=(...args)=>draws.push(args);h.canvas.getContext().stroke=function(){strokes.push(this.canvas);};h.api.render();
+ const before=JSON.stringify([h.box.style,h.canvas.style,h.canvas.width,h.canvas.height]),p=h.api.plan(),out=h.api.capture();
+ assert.equal(JSON.stringify([h.box.style,h.canvas.style,h.canvas.width,h.canvas.height]),before);assert.notEqual(out,h.canvas);assert.equal(out.width,Math.ceil(p.outputWidth*2));assert.equal(out.height,Math.ceil(p.outputHeight*2));
+ assert.equal(calls.at(-1).canvas,out);assert.equal(calls.at(-1).quality,2);assert.equal(calls.at(-1).unit,.25);assert.equal(strokes.at(-1),out);assert.ok(draws.slice(-p.parts.length).every(args=>args[0]===native));assert.ok(out.width>h.canvas.width);
+ h.geometry.width=20000;h.geometry.height=20000;h.source.width=20000;h.source.height=20000;h.state.romboRow=20000;const capped=h.api.capture();assert.ok(capped.width*capped.height<=16e6);assert.ok(capped.width<=16384&&capped.height<=16384);
 });
