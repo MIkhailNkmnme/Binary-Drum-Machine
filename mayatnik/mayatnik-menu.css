@@ -1229,10 +1229,13 @@ body.may-mobile-menu :is(.gz-ladder,#mayMobileBar).may-standard-list.may-rombo-a
 body.may-mobile-menu #mayRomboPreview{width:120px;bottom:calc(8px + env(safe-area-inset-bottom));left:calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2)}
 body.may-mobile-menu #mayRomboPreview>svg{width:112px;max-width:100%;margin:0 auto}
 body.may-zen #mayRomboPreview{bottom:calc(8px + env(safe-area-inset-bottom))}
-/* v0.841: native buttons reuse the standard equal pair; only they receive input. */
-#mayRomboPreview>.may-rombo-preview-controls{--c:#73e4a5;--may-surface:#1b2430;--gz-bg:#1b2430;--gz-w:120px;--gz-h:24px;--gz-n:12px;pointer-events:auto;gap:0;padding:0!important;width:120px;height:24px;margin:2px auto 0!important;cursor:default}
-#mayRomboPreview .may-rombo-preview-controls>.gz-half{border:0;border-radius:0;outline:0;box-shadow:none;text-shadow:none;cursor:pointer;touch-action:manipulation}
-#mayRomboPreview .may-rombo-preview-controls>.gz-half:disabled{opacity:.4;cursor:default}
+/* v0.842: the shared N-axis numeric frame, with independent side contours. */
+#mayRomboPreview>.may-rombo-preview-controls{--c:#73e4a5;--may-surface:#1b2430;width:120px;margin:2px auto 0!important;padding:0!important;gap:0}
+#mayRomboPreview .may-rombo-preview-controls>:is(.gz-a,.gz-mid){pointer-events:auto;touch-action:manipulation}
+#mayRomboPreview .may-rombo-preview-controls input{width:100%;min-width:0;height:24px;padding:0;border:0;background:transparent;color:inherit;font:12px var(--mono,monospace);text-align:center;appearance:textfield;user-select:text}
+#mayRomboPreview .may-rombo-preview-controls input::-webkit-inner-spin-button,#mayRomboPreview .may-rombo-preview-controls input::-webkit-outer-spin-button{appearance:none;margin:0}
+#mayRomboPreview .may-rombo-preview-controls .may-layer-axis{font:10px var(--mono,monospace)}
+body.may-mobile-menu #mayRomboPreview .may-rombo-preview-controls input{font-size:16px}
 body.may-mobile-menu .may-rombo-assembly-options::-webkit-scrollbar,body.may-mobile-menu .may-transport-options::-webkit-scrollbar{display:none}
 body.may-mobile-menu .may-rombo-assembly-options>.gz-hx{flex:none}
 .may-speed-diamond>.may-transport-option{position:absolute;box-sizing:border-box;width:30px;height:24px;margin:0;padding:0;border:0;outline:none;background:#40516b;color:#dfe6f5;font:9px/24px var(--mono,monospace);cursor:pointer;user-select:none;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}

@@ -26,24 +26,30 @@
   }
   make('path',{d:'M-59 0H59',fill:'none',stroke:'#dfe6f5','stroke-width':1,'stroke-dasharray':'4 3'},turned);
   const footer=make('text',{x:82,y:168,'text-anchor':'middle',class:'may-rombo-preview-caption'},svg);
-  const controls=doc.createElement('div');controls.className='gz-hx gz-pair gz-split may-standard may-standard-pair may-independent-pair may-rombo-preview-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Переключение схемы ромбосборки');
-  const buttons=[-1,1].map((direction,i)=>{
-   const button=doc.createElement('button');button.type='button';button.className='gz-half gz-h'+i;button.setAttribute('data-may-part',String(i));button.textContent=direction<0?'‹ Назад':'Дальше ›';
+  const controls=doc.createElement('div');controls.className='gz-hx gz-control gz-val may-layer-value may-standard may-rombo-preview-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Переключение схемы ромбосборки');
+  const mid=doc.createElement('label');mid.className='gz-mid';
+  const number=doc.createElement('input');number.type='number';number.min='1';number.max='16';number.step='1';number.setAttribute('aria-label','Номер схемы ромбосборки от 1 до 16');
+  const count=doc.createElement('span');count.className='may-layer-axis';count.textContent='/16';mid.append(number);mid.append(count);
+  const isolate=node=>{for(const type of ['pointerdown','pointerup','mousedown','mouseup','click','dblclick','contextmenu','keydown','keyup'])node.addEventListener(type,event=>{event.stopPropagation();if(type==='contextmenu'||type==='dblclick')event.preventDefault();});};
+  isolate(number);isolate(controls);
+  const change=()=>{const current=api(),state=current?.get?.(),value=Number(number.value);if(!box.hidden&&state?.on&&typeof current.setAssembly==='function'&&number.value.trim()&&Number.isFinite(value))current.setAssembly(Math.max(1,Math.min(16,Math.round(value)))-1);sync(true);};
+  number.addEventListener('change',change);number.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();change();}});
+  const buttons=[-1,1].map(direction=>{
+   const button=doc.createElement('button');button.type='button';button.className='gz-a';button.textContent=direction<0?'‹':'›';
    button.title=direction<0?'Предыдущая схема ромбосборки (после первой — шестнадцатая)':'Следующая схема ромбосборки (после шестнадцатой — первая)';button.setAttribute('aria-label',button.title);
    // Native buttons retain Enter/Space activation; isolate all field gestures.
-   for(const type of ['pointerdown','pointerup','mousedown','mouseup','click','dblclick','contextmenu','keydown','keyup'])button.addEventListener(type,event=>{event.stopPropagation();if(type==='contextmenu'||type==='dblclick')event.preventDefault();});
+   isolate(button);
    button.addEventListener('click',()=>{const current=api(),state=current?.get?.();if(box.hidden||!state?.on||typeof current.setAssembly!=='function')return;current.setAssembly((describe(state).assembly+direction+16)%16);sync();});
-   const outline=make('svg',{class:'may-half-outline',viewBox:'0 0 60 24','aria-hidden':'true',focusable:'false'},button);
-   make('path',{class:'may-half-face',d:i?'M6 0H48L60 12 48 24H6L0 12Z':'M12 0H54L60 12 54 24H12L0 12Z'},outline);
-   make('path',{class:'may-half-side',d:i?'M6 0L0 12 6 24M48 0L60 12 48 24':'M12 0L0 12 12 24M54 0L60 12 54 24'},outline);
-   controls.append(button);return button;
+   return button;
   });
+  controls.append(buttons[0]);controls.append(mid);controls.append(buttons[1]);win.ZerkControlFrame.attach(controls,buttons[0],mid,buttons[1],{input:number});
   box.append(controls);
   let last='';
-  function sync(){
-   const current=api(),state=current?.get?.();if(!state){box.hidden=true;for(const button of buttons)button.disabled=true;last='';return;}
-   const s=describe(state),available=s.on&&typeof current.setAssembly==='function',key=[s.on,s.assembly,s.angle,s.row,available].join(':');if(key===last)return;last=key;box.hidden=!s.on;for(const button of buttons)button.disabled=!available;if(!s.on)return;
+  function sync(force=false){
+   const current=api(),state=current?.get?.();if(!state){box.hidden=true;for(const button of [...buttons,number])button.disabled=true;last='';return;}
+   const s=describe(state),available=s.on&&typeof current.setAssembly==='function',key=[s.on,s.assembly,s.angle,s.row,available].join(':');if(key===last&&force!==true)return;last=key;box.hidden=!s.on;for(const button of [...buttons,number])button.disabled=!available;if(!s.on)return;
    title.textContent='Сборка '+(s.assembly+1)+' · '+s.name;
+   number.value=String(s.assembly+1);
    footer.textContent='Ось '+s.row+' · '+s.angle+'°';
    turned.setAttribute('transform','translate(82 86) rotate('+s.angle+')');
    s.slots.forEach((slot,i)=>{parts[i].setAttribute('fill',slot.fill);labels[i].textContent=slot.label;arrows[i].setAttribute('transform','translate('+(i?18:-18)+' 25) scale('+(slot.flip?-1:1)+' 1)');});
