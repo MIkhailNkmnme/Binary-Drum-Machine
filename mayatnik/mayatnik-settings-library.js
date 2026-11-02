@@ -18,7 +18,7 @@
   function validate(value){
     if(!value||value.version!==1||!value.state||!value.tools||!value.parity||!/^#[0-9a-f]{6}$/i.test(value.controls?.fillColour))throw Error('Повреждён набор настроек');
     if(value.state.edgeRhombOn!=null&&typeof value.state.edgeRhombOn!=='boolean')throw Error('Некорректный режим Ромбо');
-    for(const [key,max]of [['romboRow',1048576],['romboAngle',315],['romboAssembly',15]])if(value.state[key]!=null&&(!Number.isInteger(value.state[key])||value.state[key]<(key==='romboRow'?1:0)||value.state[key]>max||key==='romboAngle'&&value.state[key]%45))throw Error('Некорректная настройка Ромбо: '+key);
+    for(const [key,max]of [['romboRow',1048576],['romboAngle',315],['romboAssembly',17]])if(value.state[key]!=null&&(!Number.isInteger(value.state[key])||value.state[key]<(key==='romboRow'?1:0)||value.state[key]>max||key==='romboAngle'&&value.state[key]%45))throw Error('Некорректная настройка Ромбо: '+key);
     for(const k of STATE_KEYS){const v=value.state[k];if(k==='templateFindAll'){if(v!=null){if(!Follow)throw Error('Поиск шаблона недоступен в этой странице');Follow.normalize(v);}continue;}if(k==='lineFamilies'&&v!=null){if(typeof v!=='object'||Array.isArray(v)||!['h','v','d'].every(key=>typeof v[key]==='boolean')||Object.keys(v).length!==3)throw Error('Некорректная настройка: '+k);continue;}if((NEW_STATE_KEYS.has(k)||k==='templateMaxArea'||k==='ochkiSnake'||k==='bitContourColour1'||k==='bitContourColour2'||k==='bitContourMode'||k==='bitContourColours')&&v===undefined)continue;if(v!==null&&typeof v!=='boolean'&&typeof v!=='string'&&!(typeof v==='number'&&Number.isFinite(v)))throw Error('Некорректная настройка: '+k);}
     for(const [key,values]of [['paintFrameMode',['off','colour','cells']],['bitContourMode',['single','same','double','directional']],['bitContourColours',['auto','custom']],['triangleMapSource',['static','time']],['axisPalette',['purple-black','purple-red']],['crossMirrorMode',['lr','rl','tb','bt','sector']],['crossMirrorSector',['A1','A2','B1','B2','a1','a2','b1','b2','C1','C2']]])if(value.state[key]!=null&&!values.includes(value.state[key]))throw Error('Некорректная настройка: '+key);
     for(const key of ['fillWholeColour','rowStepOutline','ochkiHalf','joined180','autoAxes','triangleMapAxes','triangleMapMask','triangleMapMirror','crossMirror','crossLabels','viewUpsideDown','autoFillPalette','growOwnColour'])if(value.state[key]!=null&&typeof value.state[key]!=='boolean')throw Error('Некорректная настройка: '+key);
@@ -27,7 +27,7 @@
     for(const k of TOOL_KEYS){const v=k==='templateDragEnabled'&&value.tools[k]===undefined?false:value.tools[k];if(k==='autoVertical'?![0,1,2].includes(v):k==='templatePickMode'?!['one','add'].includes(v):typeof v!=='boolean')throw Error('Некорректный режим: '+k);}
     return pick(value.state,value.tools,value.controls,value.colourAuto);
   }
-  function normalized(value){const next=validate(value);next.parity=Parity.normalize(value.parity);return next;}
+  function normalized(value){const next=validate(value);next.parity=Parity.normalize(value.parity);if(![1,3,4,6,9,11,12,14,16,17].includes(next.state.romboAssembly))next.state.romboAssembly=16;return next;}
   function applyState(state,snapshot){const data=normalized(snapshot);for(const key of STATE_KEYS){if(data.state[key]===null)delete state[key];else state[key]=data.state[key];}state.parity={...data.parity};return data;}
   const signature=value=>JSON.stringify(normalized(value));
   function create(host){

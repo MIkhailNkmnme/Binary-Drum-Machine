@@ -42,9 +42,16 @@ test('live figure adapter uses visible semantic cells, RGB filters and the share
  const ordinary=ctx.geomCenterFigure();assert.equal(ordinary.count,3);assert.equal(ordinary.center.x,5/6);assert.equal(ordinary.center.y,5/6);
  ctx.st.view='rgbNeighbours';ctx.rgbNeighbourClasses[1]=1;assert.equal(ctx.geomCenterFigure().count,1);assert.equal(ctx.geomCenterFigure().center.x,1.5);
  ctx.st.view='bits';ctx.st.edgeRhombOn=true;
- for(let assembly=0;assembly<16;assembly++)for(let angle=0;angle<360;angle+=45){
-  const p=R.plan(4,2,{row:1,assembly,angle});ctx.window.mayRombo={plan:()=>p};const result=ctx.geomCenterFigure();
-  const expected=C.compose(p.parts.map(t=>({id:t.id,width:4,height:1,left:t.left,right:t.right,transform:t.matrix,read:(x,y)=>data[y*4+x]>=0?0:-1}))),centre=p.forward(expected.center);
+ for(const {id:assembly} of R.variants)for(let angle=0;angle<360;angle+=45){
+  const p=R.plan(4,2,{row:1,assembly,angle},{sides:true});ctx.window.mayRombo={plan:()=>p,get:()=>({available:true})};const result=ctx.geomCenterFigure();
+  const expected=C.compose(p.parts.map(t=>({id:t.id,width:4,height:1,left:t.left,right:t.right,transform:t.matrix,contains:t.contains,sampleStep:.5,read:(x,y)=>data[y*4+x]>=0?0:-1}))),centre=p.forward(expected.center);
   assert.equal(result.count,expected.count);assert.ok(Math.abs(result.center.x-centre.x)<1e-8);assert.ok(Math.abs(result.center.y-centre.y)<1e-8);
+ }
+});
+
+test('half-cell seam area, union and centre are exact at native and enlarged raster scales',()=>{
+ for(const RK of [1,2,4])for(const assembly of [1,3,16,17])for(let angle=0;angle<360;angle+=45){
+  const p=R.plan(31,8,{row:5,assembly,angle},{sides:true}),parts=p.parts.map(t=>({id:t.id,width:31*RK,height:t.height*RK,left:t.left*RK,right:t.right*RK,read:()=>0,contains:(x,y)=>t.contains(x/RK,y/RK),sampleStep:RK%2?.5:1,transform:t.matrix.map((v,i)=>i>=4?v*RK:v)})),native=C.compose(p.parts.map(t=>({id:t.id,width:31,height:t.height,left:t.left,right:t.right,read:()=>0,contains:t.contains,sampleStep:.5,transform:t.matrix}))),scaled=C.compose(parts);
+  assert.equal(scaled.count,native.count*RK*RK);assert.ok(Math.abs(scaled.center.x/RK-native.center.x)<1e-9);assert.ok(Math.abs(scaled.center.y/RK-native.center.y)<1e-9);
  }
 });

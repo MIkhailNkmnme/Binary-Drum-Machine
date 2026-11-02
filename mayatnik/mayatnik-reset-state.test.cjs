@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),R=require('
 test('clean scene has the agreed 512 build, top fit and optional effects off',()=>{
  const s=R.defaults();assert.equal(s.rows,512);assert.equal(s.steps,512);assert.equal(s.mode,'pend');assert.equal(s.view,'bits');assert.equal(s.zoom,'fit');assert.equal(s.zMid,true);assert.equal(s.ztop,true);assert.equal(s.zBot,false);assert.equal(s.zLock,false);assert.equal(s.zsnap,true);assert.equal(s.zbase,2);
  for(const key of R.off)assert.equal(s[key],false,key);for(const key of R.zero)assert.equal(s[key],0,key);
- assert.equal(s.templateMaxArea,4096);assert.equal(s.crossMirrorMode,'lr');assert.equal(s.autoFillPalette,true);assert.equal(s.growOwnColour,false);
+ assert.equal(s.templateMaxArea,4096);assert.equal(s.crossMirrorMode,'lr');assert.equal(s.autoFillPalette,true);assert.equal(s.growOwnColour,false);assert.equal(s.romboAssembly,16);
 });
 test('fresh defaults and group reset never alias mutable selections or touch another group',()=>{
  const a=R.defaults(),b=R.defaults();a.userLines.push([1,2,3,4]);a.parity.cellsEven=false;assert.equal(b.userLines.length,0);assert.equal(b.parity.cellsEven,true);

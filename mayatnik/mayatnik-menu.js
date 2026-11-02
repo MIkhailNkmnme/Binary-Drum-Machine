@@ -1517,24 +1517,24 @@
   }
   mountOverlayGroup();
   function mountRomboControls(host,{api=()=>window.mayRombo,after=()=>{}}={}){
-    const doc=host.ownerDocument,choices=['L','R','L↔','R↔'];
-    const assemblyName=id=>choices[Math.floor(id/4)]+' | '+choices[id%4];
+    const doc=host.ownerDocument,options=()=>api()?.options?.()||[];
+    const assemblyName=id=>options().find(entry=>entry.id===id)?.label||'';
     const command=(id,label,help)=>{const b=doc.createElement('button');b.type='button';b.className='gz-hx';b.dataset.n=id;b.title=help;b.setAttribute('aria-label',help);const text=doc.createElement('span');text.className='gz-nm';text.textContent=label;b.append(text);host.append(b);return b;};
-    const toggle=command('edgeRhombTop','Ромб','Ромб: верхний исходный треугольник C и сборка из двух нижних половин');
+    const toggle=command('edgeRhombTop','Ромб','Ромб: центральная исходная область C и её нижняя сборка');
     const row=doc.createElement('div');row.className='may-rows-custom may-rombo-row';row.dataset.n='romboRow';
     const line=doc.createElement('div');line.className='may-rows-line';const input=doc.createElement('input');input.type='number';input.min='1';input.step='1';input.title='Строка горизонтальной оси ромба: от 1 до высоты поля. Enter — применить.';input.setAttribute('aria-label','Строка горизонтальной оси ромба');
     const label=doc.createElement('label');label.className='may-rombo-axis-label';label.append(line);row.append(label);host.append(row);
     const turn=command('romboAngle','Поворот 0°','Поворот ромба: 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°. Правый щелчок — назад.');
-    const assembly=command('romboAssembly','Сборка L | R','Сборка ромба: левый нижний слот | правый нижний слот. L и R — исходные боковые части, ↔ — горизонтальное отражение. Верх C сохраняется.');
+    const assembly=command('romboAssembly','Сборка','Выбрать сборку ромба из доступных исходных частей C, L и R.');
     assembly.setAttribute('aria-haspopup','true');
-    const diagram=command('romboDiagram','Схемы 16','Открыть схемы всех 16 сборок ромба');diagram.onclick=event=>{event.stopPropagation();window.open('instruction/assets/rombo-assemblies.svg','_blank','noopener');};
+    const diagram=command('romboDiagram','Схемы','Открыть схемы всех сборок ромба');diagram.onclick=event=>{event.stopPropagation();window.open('instruction/assets/rombo-assemblies.svg','_blank','noopener');};
     let lastRow=null;
     const state=()=>api()?.get?.(),max=s=>Math.max(1,Math.round(Number(s?.maxRow)||1));
     const sync=()=>{const s=state(),available=!!s;for(const button of [toggle,turn,assembly])button.disabled=!available;input.disabled=!available;for(const arrow of line.querySelectorAll('button'))arrow.disabled=!available;if(!s)return;
       toggle.classList.toggle('gz-on',!!s.on);toggle.setAttribute('aria-pressed',String(!!s.on));
       const limit=max(s),value=Math.max(1,Math.min(limit,Math.round(Number(s.row)||limit)));input.max=String(limit);if(lastRow!==value){input.value=String(value);lastRow=value;}
       const angle=((Number(s.angle)||0)%360+360)%360;turn.querySelector('.gz-nm').textContent='Поворот '+angle+'°';turn.setAttribute('aria-label','Поворот ромба: '+angle+'°. Нажать — добавить 45°; правый щелчок — вычесть 45°.');
-      const id=Math.max(0,Math.min(15,Math.round(Number(s.assembly)||0)));assembly.querySelector('.gz-nm').textContent='Сборка '+assemblyName(id);assembly.setAttribute('aria-label','Сборка '+(id+1)+' из 16: '+assemblyName(id)+'. L — левая исходная часть, R — правая, ↔ — горизонтальное отражение.');
+      const entries=options(),index=entries.findIndex(entry=>entry.id===s.assembly);assembly.querySelector('.gz-nm').textContent='Сборка '+(index+1);assembly.setAttribute('aria-label','Сборка '+(index+1)+' из '+entries.length+': '+assemblyName(s.assembly));diagram.querySelector('.gz-nm').textContent='Схемы '+entries.length;diagram.title='Открыть схемы всех '+entries.length+' сборок ромба';
       for(const arrow of line.querySelectorAll('button'))arrow.disabled=Number(arrow.dataset.step)<0?value<=1:value>=limit;
     };
     const apply=value=>{const s=state();if(!s)return;api().setRow(Math.max(1,Math.min(max(s),Math.round(Number(value)||1))));sync();after();};
@@ -1542,10 +1542,10 @@
     const caption=doc.createElement('span');caption.className='may-rombo-axis-caption';caption.textContent='Ось';line.append(arrow(-1),caption,input,arrow(1));input.onclick=event=>event.stopPropagation();input.onkeydown=event=>{event.stopPropagation();if(event.key==='Enter'){event.preventDefault();apply(input.value);}};input.addEventListener('change',()=>apply(input.value));
     toggle.onclick=event=>{event.stopPropagation();const s=state();if(s){api().set(!s.on);sync();after();}};
     turn.onclick=event=>{event.stopPropagation();api()?.cycleAngle?.(1);sync();after();};turn.oncontextmenu=event=>{event.preventDefault();event.stopPropagation();api()?.cycleAngle?.(-1);sync();after();};
-    let assemblyList=null;const placeAssembly=(list,owner)=>{assemblyList=list;list.classList.add('may-rombo-assembly-options');if(mobileMenu.matches)placeRomboAssemblyList(list,owner);};
+    let assemblyList=null;const placeAssembly=(list,owner)=>{assemblyList=list;list.classList.add('may-rombo-assembly-options');const entries=options();[...list.querySelectorAll(':scope > .gz-hx')].forEach((node,index)=>{const entry=entries[index],disabled=entry?.available===false;node.setAttribute('role','button');node.setAttribute('aria-disabled',String(disabled));node.tabIndex=disabled?-1:0;node.title=entry?.label+(disabled?' — '+entry.reason:'');node.classList.toggle('gz-off-dis',disabled);node.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();if(!disabled)node.click();}};});if(mobileMenu.matches)placeRomboAssemblyList(list,owner);};
     const reflowAssembly=()=>{if(assemblyList?.isConnected&&mobileMenu.matches)placeAssembly(assemblyList,assembly);};
     window.addEventListener('resize',reflowAssembly);window.visualViewport?.addEventListener('resize',reflowAssembly);window.visualViewport?.addEventListener('scroll',reflowAssembly);
-    ZerkGrozd.listHover(assembly,{options:()=>Array.from({length:16},(_,id)=>({name:(id+1)+'. '+assemblyName(id),on:Number(state()?.assembly)===id,pick:()=>{api()?.setAssembly?.(id);sync();after();}})),color:()=>getComputedStyle(host).getPropertyValue('--c').trim()||'#73e4a5',host:()=>doc.body,col:()=>host,placed:placeAssembly,closed:()=>{assemblyList=null;}});
+    ZerkGrozd.listHover(assembly,{options:()=>options().map((entry,index)=>({name:(index+1)+'. '+entry.label,on:Number(state()?.assembly)===entry.id,pick:()=>{if(options().find(option=>option.id===entry.id)?.available===false)return;api()?.setAssembly?.(entry.id);sync();after();}})),color:()=>getComputedStyle(host).getPropertyValue('--c').trim()||'#73e4a5',host:()=>doc.body,col:()=>host,placed:placeAssembly,closed:()=>{assemblyList=null;}});
     window.addEventListener('may-rombo-change',sync);sync();return{sync,assemblyName};
   }
   function mountHorrSections(group, { storage = localStorage, after = () => {}, openGroup = () => {} } = {}) {

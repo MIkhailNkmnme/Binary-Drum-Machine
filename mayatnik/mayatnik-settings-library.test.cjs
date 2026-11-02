@@ -42,7 +42,7 @@ test('contour geometry and colour source round trip, validate enums and accept l
 
 test('new axes, map, mirror and palette settings round trip with legacy defaults',()=>{
  const values={autoAxes:true,triangleMapSource:'time',triangleMapAxes:true,triangleMapMask:true,triangleMapMirror:true,axisPalette:'purple-red',crossMirror:true,crossLabels:true,crossMirrorMode:'sector',crossMirrorSector:'C2',viewUpsideDown:true};
- const snapshot=S.pick(values),state={};S.applyState(state,snapshot);for(const [key,value]of Object.entries(values))assert.equal(state[key],value);
+ const snapshot=S.pick(values),state={};S.applyState(state,snapshot);for(const [key,value]of Object.entries(values))assert.equal(state[key],key==='romboAssembly'&&![1,3,4,6,9,11,12,14,16,17].includes(value)?16:value);
  for(const key of Object.keys(values))delete snapshot.state[key];S.applyState(state,snapshot);for(const key of Object.keys(values))assert.equal(state[key],undefined);
  for(const key of Object.keys(values)){const invalid=S.pick(values);invalid.state[key]='bad';assert.throws(()=>S.normalized(invalid),new RegExp(key));}
 });
@@ -50,11 +50,11 @@ test('new axes, map, mirror and palette settings round trip with legacy defaults
 test('joined180 and unlimited area round trip without changing appearance; legacy presets switch transform off',()=>{for(const view of ['bits','col','digits','digitsOnly','bitContours','romb0','romb1','romb2','rombJoin','rombJoin180']){const state={view,joined180:true,templateMaxArea:0},saved=S.pick(state);S.applyState(state,S.normalized(saved));assert.equal(state.view,view);assert.equal(state.joined180,true);assert.equal(state.templateMaxArea,0);delete saved.state.joined180;S.applyState(state,saved);assert.equal(!!state.joined180,false);assert.equal(state.view,view);}});
 
 test('Rombo and whole-colour settings round trip exactly and reject invalid geometry',()=>{
- for(const row of [null,1,512])for(let angle=0;angle<360;angle+=45)for(let assembly=0;assembly<16;assembly++){
+ for(const row of [null,1,512])for(let angle=0;angle<360;angle+=45)for(let assembly=0;assembly<18;assembly++){
   const values={edgeRhombOn:true,romboRow:row,romboAngle:angle,romboAssembly:assembly,fillWholeColour:true},state={};S.applyState(state,S.normalized(S.pick(values)));
-  for(const [key,value]of Object.entries(values))assert.equal(state[key],value===null?undefined:value); // Missing/null row both mean the complete source height.
+  for(const [key,value]of Object.entries(values))assert.equal(state[key],value===null?undefined:key==='romboAssembly'&&![1,3,4,6,9,11,12,14,16,17].includes(value)?16:value); // Missing/null row both mean the complete source height.
  }
- for(const [key,value]of [['romboAngle',46],['romboAngle',360],['romboAssembly',16],['romboRow',0],['edgeRhombOn','true'],['fillWholeColour','true']]){const p=S.pick({});p.state[key]=value;assert.throws(()=>S.normalized(p));}
+ for(const [key,value]of [['romboAngle',46],['romboAngle',360],['romboAssembly',18],['romboRow',0],['edgeRhombOn','true'],['fillWholeColour','true']]){const p=S.pick({});p.state[key]=value;assert.throws(()=>S.normalized(p));}
 });
 
 test('frame paint repeat mode round trips and rejects unknown values, while legacy presets clear it',()=>{
