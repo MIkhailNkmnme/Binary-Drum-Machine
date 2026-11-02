@@ -1969,29 +1969,29 @@
   const viewPaletteSources={col:['lgOverOne','lgOverZero'],bits:bitViewPalette,'overlay-contours':['bitContourColour1','bitContourColour2'],'overlay-digits':['digitZeroColour','digitOneColour']},viewPalettePickers=new Map();
   $('lg').style.setProperty('display','none','important');
   tools.querySelector('[data-n="c2_digitOneColour"]')?.style.setProperty('display','none','important');
+  const rgbChoices=[[0,'Чёрный','#000000'],[4,'Красный','#ff0000'],[2,'Зелёный','#00ff00'],[1,'Синий','#0000ff'],[6,'Жёлтый','#ffff00'],[5,'Пурпурный','#ff00ff'],[3,'Голубой','#00ffff'],[7,'Белый','#ffffff']];
+  const rgbHint='RGB-соседи: R — ячейка, G — слева, B — справа. Щелчок включает или снимает цветовой фильтр; пустой выбор показывает все цвета.';
+  function syncRGBPalette(panel){
+    panel.hidden=$('view').value!=='rgbNeighbours';
+    const api=window.mayRGBNeighbours,counts=api?.counts?.()||[],selected=api?.filters?.()||[];
+    for(const chip of panel.querySelectorAll('.may-rgb-choice')){
+      const code=Number(chip.dataset.rgbCode),choice=rgbChoices.find(x=>x[0]===code),count=counts[code]||0,on=selected.includes(code);
+      chip.setAttribute('aria-pressed',String(on));chip.classList.toggle('gz-on',on);
+      const state=on?'Выбран. ':selected.length?'Не выбран. ':'Фильтр не задан: показаны все цвета. ';
+      chip.title=`${choice[1]} · RGB ${code.toString(2).padStart(3,'0')} · ${count.toLocaleString('ru-RU')} клеток. ${state}${rgbHint}`;
+      chip.setAttribute('aria-label',chip.title);
+    }
+    const mode=api?.bw?.()||0;
+    for(const option of panel.querySelectorAll('.may-rgb-bw-option')){
+      const optionMode=Number(option.dataset.mode),on=optionMode===mode;
+      option.setAttribute('aria-pressed',String(on));option.classList.toggle('gz-on',on);
+      option.title=optionMode===1?'ЧБ: выбранные цвета белые, остальные биты чёрные.':optionMode===0?'Цвт: цветной режим RGB без чёрно-белого преобразования.':'БЧ: выбранные цвета чёрные, остальные биты белые.';
+      option.setAttribute('aria-label',option.title);
+    }
+  }
   function decorateViewPalette(list,owner){
     if(!owner?.dataset.viewMode)return;
     const options=[...$('view').options].filter(o=>!o.hidden&&!o.disabled&&['col','bits','rgbNeighbours'].includes(o.value));
-    const rgbChoices=[[0,'Чёрный','#000000'],[4,'Красный','#ff0000'],[2,'Зелёный','#00ff00'],[1,'Синий','#0000ff'],[6,'Жёлтый','#ffff00'],[5,'Пурпурный','#ff00ff'],[3,'Голубой','#00ffff'],[7,'Белый','#ffffff']];
-    const rgbHint='RGB-соседи: R — ячейка, G — слева, B — справа. Щелчок включает или снимает цветовой фильтр; пустой выбор показывает все цвета.';
-    const syncRGBPalette=panel=>{
-      panel.hidden=$('view').value!=='rgbNeighbours';
-      const api=window.mayRGBNeighbours,counts=api?.counts?.()||[],selected=api?.filters?.()||[];
-      for(const chip of panel.querySelectorAll('.may-rgb-choice')){
-        const code=Number(chip.dataset.rgbCode),choice=rgbChoices.find(x=>x[0]===code),count=counts[code]||0,on=selected.includes(code);
-        chip.setAttribute('aria-pressed',String(on));chip.classList.toggle('gz-on',on);
-        const state=on?'Выбран. ':selected.length?'Не выбран. ':'Фильтр не задан: показаны все цвета. ';
-        chip.title=`${choice[1]} · RGB ${code.toString(2).padStart(3,'0')} · ${count.toLocaleString('ru-RU')} клеток. ${state}${rgbHint}`;
-        chip.setAttribute('aria-label',chip.title);
-      }
-      const mode=api?.bw?.()||0;
-      for(const option of panel.querySelectorAll('.may-rgb-bw-option')){
-        const optionMode=Number(option.dataset.mode),on=optionMode===mode;
-        option.setAttribute('aria-pressed',String(on));option.classList.toggle('gz-on',on);
-        option.title=optionMode===1?'ЧБ: выбранные цвета белые, остальные биты чёрные.':optionMode===0?'Цвт: цветной режим RGB без чёрно-белого преобразования.':'БЧ: выбранные цвета чёрные, остальные биты белые.';
-        option.setAttribute('aria-label',option.title);
-      }
-    };
     list.querySelectorAll(':scope > .gz-hx, :scope > .may-contours-group > .gz-hx').forEach((row,i)=>{
       const mode=row.dataset.viewMode||options[i]?.value,ids=viewPaletteSources[mode];
       if(mode==='rgbNeighbours'){
