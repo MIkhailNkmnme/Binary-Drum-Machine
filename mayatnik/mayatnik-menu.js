@@ -1584,11 +1584,19 @@
     for(const [i,id,label,title]of [[0,'mayButtonSearchTrigger','⌕','Найти кнопку по названию или подсказке'],[1,'mayAbout','i','Инструкция по Маятнику'],[2,'mayHelp','?','Подсказки к кнопкам и координаты']]){
       const b=doc.getElementById(id);if(!b)continue;if(b.parentElement!==row)row.insertBefore(b,[...row.children].find(n=>Number(n.dataset.utilityPart)>i)||null);
       b.style.removeProperty('left');b.style.removeProperty('top');if(b.dataset.utilityPart===String(i))continue;b.dataset.utilityPart=String(i);b.className='gz-half gz-h'+i;b.title=title;b.setAttribute('aria-label',title);
-      const face=i===0?'M12 0H44L36 24H12L0 12Z':i===2?'M4 0H28L40 12 28 24H-4Z':'M4 0H44L36 24H-4Z',sides=i===0?'M12 0L0 12 12 24':i===2?'M28 0L40 12 28 24':'M4 0L-4 24M44 0L36 24';
-      b.innerHTML='<svg class="may-utility-frame" viewBox="0 0 40 24" aria-hidden="true"><path class="may-utility-face" d="'+face+'"/><path class="may-utility-side" d="'+sides+'"/></svg>'+(i===0?'<svg class="may-utility-loupe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="4"/><path d="m13 13 5 5"/></svg>':'<span>'+label+'</span>');
+      const width=i===1?48:45;
+      const face=i===0?'M12 .5H44.3L36.7 23.5H12L.7 12Z':i===2?'M8.3 .5H33L44.3 12 33 23.5H.7Z':'M8.3 .5H47.3L39.7 23.5H.7Z',sides=i===0?'M12 .5L.7 12 12 23.5M44.3 .5L36.7 23.5':i===2?'M8.3 .5L.7 23.5M33 .5L44.3 12 33 23.5':'M8.3 .5L.7 23.5M47.3 .5L39.7 23.5';
+      b.innerHTML='<svg class="may-utility-frame" viewBox="0 0 '+width+' 24" aria-hidden="true"><path class="may-utility-face" d="'+face+'"/><path class="may-utility-side" d="'+sides+'"/></svg>'+(i===0?'<svg class="may-utility-loupe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="4"/><path d="m13 13 5 5"/></svg>':'<span>'+label+'</span>');
     }return row;
   }
   mountViewUtilities(gView);
+  const brandRefresh=document.querySelector('.may-brand-title');
+  if(brandRefresh){
+    brandRefresh.setAttribute('role','button');brandRefresh.tabIndex=0;
+    brandRefresh.title='Обновить страницу';brandRefresh.setAttribute('aria-label','Маятник: обновить страницу');
+    brandRefresh.addEventListener('click',()=>window.location.reload());
+    brandRefresh.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(!event.repeat)brandRefresh.click();}});
+  }
   // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;
   // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
   // Пока какой-то список открыт, наведение на соседнее название переключает на него. Точка у названия — в группе что-то включено.
