@@ -93,3 +93,5 @@ test('workspace transform includes moved negative coordinates and round trips po
  for(const p of [[-60,-20],[160,120],[11,29]]){const actual=worldPoint(v,p[0]*v.scale+v.x,p[1]*v.scale+v.y);assert.ok(Math.abs(actual[0]-p[0])<1e-10);assert.ok(Math.abs(actual[1]-p[1])<1e-10);}
  assert.ok(b.minX*v.scale+v.x>=24-1e-10);assert.ok(b.maxY*v.scale+v.y<=256+1e-10);
 });
+
+test('large field keeps the bottom editor compact and centered',()=>{const g=portalGeometry({left:0,width:1920,bottom:300},{left:0,right:1920,top:50,bottom:900},{width:1920,height:1080},440);assert.equal(g.width,760);assert.equal(g.left,580);});

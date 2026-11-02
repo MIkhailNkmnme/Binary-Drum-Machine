@@ -8,7 +8,7 @@
  function worldPoint(view,x,y){return [(x-view.x)/view.scale,(y-view.y)/view.scale];}
  function portalGeometry(figure,clip,screen,height){
   const leftEdge=Math.max(0,clip.left),rightEdge=Math.min(screen.width,clip.right),topEdge=Math.max(0,clip.top),bottomEdge=Math.min(screen.height,clip.bottom),available=Math.max(1,rightEdge-leftEdge-8);
-  const width=Math.min(available,Math.max(320,figure.width)),left=Math.max(leftEdge+4,Math.min(figure.left,rightEdge-width-4)),top=figure.bottom+8;
+  const width=Math.min(760,available,Math.max(320,figure.width)),left=Math.max(leftEdge+4,Math.min(figure.left+(figure.width-width)/2,rightEdge-width-4)),top=figure.bottom+8;
   const insetTop=Math.min(height,Math.max(0,topEdge-top)),insetBottom=Math.min(height-insetTop,Math.max(0,top+height-bottomEdge));
   return {left,top,width,clipPath:`inset(${insetTop}px 0px ${insetBottom}px 0px)`};
  }
