@@ -1243,7 +1243,7 @@
 
   // v0.627: одна команда ведёт точку встречи и ось за кадром; прежний ключ раскладки и скрытые контролы сохранены.
   { const sources = ['fixCross','fixDragK','fixLines'].map(n => tools.querySelector('[data-n="' + n + '"]'));
-    if (sources.every(Boolean)) { const help = 'Точка встречи и ось: следовать за кадром';
+    if (sources.every(Boolean)) { const help = 'Точка встречи и ось: следовать за кадром. Тяните сам центр вверх-вниз для смены кадров';
       ptNames.fixTri = 'Точка';
       const probe = document.createElement('button'); probe.title = help;
       const b = ptBtn('fixTri','axes',probe,() => { const follow = window.mayFixFollow; follow?.set(!follow.get()); placeTools(); });

@@ -218,7 +218,7 @@ test('host share capture and restore reproduce a later legacy cycle, colour and 
   }
 });
 
-test('edge buttons take ownership from each foreign source even when edgeWrap is already saved on', () => {
+test('edge settings prepare the chosen source without starting playback, even with a saved edge flag', () => {
   const start = html.indexOf('  function edgeActivateSource(');
   const end = html.indexOf('\n  };', html.indexOf("$('edgeBounceTop').onclick", start));
   assert.ok(start >= 0 && end > start);
@@ -231,12 +231,13 @@ test('edge buttons take ownership from each foreign source even when edgeWrap is
       h.testPattern = foreign === 'test' ? { kind: 'xor' } : null;
       h.testXorInfo = h.testPattern;
       h.st.edgeBounce = h.st.edgeMarkOn = h.st.edgeEndsOn = true;
-      let built = 0;
+      let prepared = 0,started=0;
       Object.assign(h, {
         animatrixEngine: {}, compareEngine: {}, compareOn: () => !!h.st.compareSource,
         animatrixNewWork() {}, animatrixNotice() {}, edgeSync() {},
-        build() {
-          built++;
+        build() {started++;},
+        reset() {
+          prepared++;h.playing=false;h.k=0;
           assert.equal(h.st.edgeWrap, true);
           assert.equal(h.st.animatrixOn, false);
           assert.equal(h.st.sequenceSourceOn, false);
@@ -248,7 +249,7 @@ test('edge buttons take ownership from each foreign source even when edgeWrap is
       });
       vm.runInContext(html.slice(start, end + 5), h);
       h.$(button).onclick();
-      assert.equal(built, 1);
+      assert.equal(prepared, 1);assert.equal(started,0);assert.equal(h.playing,false);assert.equal(h.k,0);
       assert.equal(h.st.edgeBounce, true);
       if (button === 'edgeMarkTop') assert.equal(h.st.edgeMarkOn, true);
       if (button === 'edgeEndsTop') assert.equal(h.st.edgeEndsOn, true);
@@ -283,4 +284,15 @@ test('unlimited Animatrix play and seek cross 32-bit frames and stop cleanly at 
   assert.equal(h.playing, false);
   assert.equal(h.k, Number.MAX_SAFE_INTEGER);
   assert.ok(h.$('fillInfo').textContent);
+});
+
+test('normal edge playback keeps the same x steps and t delay after Pause then Play',()=>{
+  for(const bounce of [false,true])for(const continuous of [false,true])for(const factor of [2,4,6,8])for(const frameT of [0,4]){
+    const h=host(false,bounce,continuous,factor),delays=[],expected=frameT?200:'raf';h.st.speed=3;h.st.frameT=frameT;
+    Object.assign(h,{setTimeout(fn,ms){delays.push(ms);return 1;},requestAnimationFrame(){delays.push('raf');return 1;}});
+    vm.runInContext(source('next'),h);h.play();assert.equal(h.fast,false);assert.equal(delays.at(-1),expected);
+    const first=h.k;h.tick();const count=h.k-first;assert.equal(count,Math.max(1,Math.round(3*Math.max(1,factor/4))));
+    h.play();assert.equal(h.playing,false);h.play();assert.equal(h.fast,false);assert.equal(delays.at(-1),expected);
+    const resumed=h.k;h.tick();assert.equal(h.k-resumed,count);assert.equal(delays.at(-1),expected);
+  }
 });

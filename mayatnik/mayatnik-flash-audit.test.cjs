@@ -9,6 +9,7 @@ function fixture(view='bits',options={}){
  const ctx={st:{view,rows:8,mode:'pend',vtxFlash:true,...options},geo:{anchor:15},f:{W:31,H:8},VW:31,VH:8,VX:0,RG:2,k:1,third:null,flashSeed:true,flashCellsQueue:[],performance:{now:()=>now},requestAnimationFrame(){frames++;return frames;},cv:el,$:()=>el,dispW:()=>31,dispH:()=>8,edgeFlowOn:()=>!!options.edgeContinuous,animatrixOn:()=>!!options.animatrixOn,compareOn:()=>false,joinedOn:()=>view==='joined',joinedWhole:()=>false,joinedGeometry:()=>({reflection:30,config:{rotateParity:1,rotate:true}}),rombP:()=>({romb0:0,romb1:1,romb2:2,rombAll:4}[view]??-1),displayPoint:(col,row,p)=>({x:col+.5,y:row+.5}),fixApexes:()=>({past:[0],fut:[]})};
  vm.createContext(ctx);vm.runInContext(['flashDrawRhombus','flashDrawJoined','flashDraw'].map(fn).join('\n'),ctx);ctx.flashDraw.o=o;
  Object.assign(ctx,{parityVisible:()=>true,outShow:()=>false,pairOn:()=>false,edgeRawApices:()=>[15],edgeCol:a=>a,animatrixEnsure:()=>({present:new Uint8Array(248).fill(1),filled:new Uint8Array(248),selection:new Uint8Array(248).fill(1)})});ctx.f.val=new Int8Array(248);ctx.st.animatrixTiming='rows';
+ if(view==='romb1')ctx.fixApexes=()=>({past:[1],fut:[]});
  return {ctx,o,draw:()=>ctx.flashDraw(),get frames(){return frames;},get paints(){return paints;},set now(value){now=value;}};
 }
 test('Flash schedules its own fade while paused in flat, diamond and joined displays',()=>{
