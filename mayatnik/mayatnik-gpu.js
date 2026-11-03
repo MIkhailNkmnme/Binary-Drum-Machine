@@ -139,7 +139,8 @@ fn shown(r: i32, c: i32) -> i32 {
   if (!parityShown(r, fc)) { return -1; }
   let source = parityRow(r);
   if (outZone(source, fc) && !((P[10] & 2) != 0 && triFill(source, fc))) { return -1; }
-  return raw(source, fc);
+  let value = raw(source, fc);
+  return select(value, 1-value, value >= 0 && (P[10] & 8) != 0);
 }
 fn semantic(colour: u32, bit: i32) -> u32 {
   if ((P[10] & 4) == 0) { return colour; }
@@ -537,7 +538,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
         if (!qBuf || qN > qCap) { qBuf?.destroy(); qCap = Math.max(qN, 8); qBuf = device.createBuffer({ size: qCap * slot, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }); picBind = null; }
         const P = new Int32Array(41), sd = o.sides || [1e9, -1e9, 1e9, -1e9];
         P[0] = WW; P[1] = o.VX; P[2] = o.VW; P[3] = o.VH; P[4] = o.tint | 0; P[5] = o.lo | 0; P[6] = o.hi | 0; P[7] = o.k | 0; P[8] = o.filled ? 1 : 0; P[9] = anchor;
-        P[10] = (o.nb2 ? 2 : 0)|(o.contours?4:0); P[11] = zl ? zl.length / 2 : 0; for (let i = 0; i < 4; i++) P[12 + i] = Number.isFinite(sd[i]) ? sd[i] : (i % 2 ? -1e9 : 1e9);
+        P[10] = (o.nb2 ? 2 : 0)|(o.contours?4:0)|(o.invertBits?8:0); P[11] = zl ? zl.length / 2 : 0; for (let i = 0; i < 4; i++) P[12 + i] = Number.isFinite(sd[i]) ? sd[i] : (i % 2 ? -1e9 : 1e9);
         for (let i = 0; i < 6; i++) P[16 + i] = o.T[i] | 0; P[22] = o.empty | 0; P[23] = W; P[24] = o.mirCol | 0; P[25] = o.mirOp | 0; P[26] = (o.bitC || [0, 0])[0] | 0; P[27] = (o.bitC || [0, 0])[1] | 0;
         for(const [i,key]of ['cellsEven','cellsOdd','rowsEven','rowsOdd'].entries())P[28+i]=o.parity?.[key]===false?0:1;
         P.set(parity.gpu(W,o.VH),32);

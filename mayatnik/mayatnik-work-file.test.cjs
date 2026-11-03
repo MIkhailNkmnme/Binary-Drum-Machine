@@ -27,3 +27,13 @@ test('legacy JSON opens and truncated or invalid binary files fail',async()=>{
   const file=await F.encode({field:Int8Array.of(0,1)});await assert.rejects(F.decode(file.slice(0,file.size-5)));
   await assert.rejects(F.decode(new Blob(['MYTW0002'])));
 });
+
+test('whole-work and legacy JSON preserve inversion descriptor and canonical bits without baking the view into data',async()=>{
+ const field=Int8Array.from([-1,0,1,1,0]),phase={invertKind:'colour',inverted:true,invertAuto:true,invertFrame:1500001};
+ const data={schema:2,k:1500001,st:{rows:8,...phase},field};
+ const binary=(await F.decode(await F.encode(data))).data;assert.deepEqual(binary.st,data.st);assert.deepEqual(binary.field,field);
+ const legacy=new Blob([JSON.stringify({format:'mayatnik-paint',version:1,data:{st:data.st,k:data.k,field:{array:'i8',data:[...field]}}})]);
+ const json=(await F.decode(legacy)).data;assert.deepEqual(json.st,data.st);assert.deepEqual(json.field,field);
+ const old=await F.decode(new Blob([JSON.stringify({format:'mayatnik-paint',version:1,data:{st:{rows:8}}})]));
+ assert.deepEqual({...require('./mayatnik-reset-state.js').defaults(),...old.data.st}.invertFrame,null);
+});

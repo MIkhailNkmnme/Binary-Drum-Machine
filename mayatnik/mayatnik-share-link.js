@@ -61,6 +61,8 @@
     if(value.v!==VERSION)throw Error('Ссылка сделана другой версией Маятника (формат '+value.v+')');
     if(!isPlainObject(value.state))throw Error('В ссылке нет настроек Маятника');
     const state=value.state;
+    const inversion={invertKind:state.invertKind===undefined?'bits':state.invertKind,inverted:state.inverted===undefined?false:state.inverted,invertAuto:state.invertAuto===undefined?false:state.invertAuto,invertFrame:state.invertFrame===undefined?null:state.invertFrame};
+    if(!['bits','colour'].includes(inversion.invertKind)||typeof inversion.inverted!=='boolean'||typeof inversion.invertAuto!=='boolean'||inversion.invertFrame!==null&&(!Number.isSafeInteger(inversion.invertFrame)||inversion.invertFrame<0))throw Error('В ссылке некорректная инверсия');
     const rows=integer(state.rows,8,4096,'В ссылке некорректное число строк');
     const steps=integer(state.steps,1,16384,'В ссылке некорректное число вершин');
     if(!MODES.includes(state.mode))throw Error('В ссылке некорректный ход маятника');
@@ -84,7 +86,7 @@
       if(!isPlainObject(value.display)||![scrollLeft,scrollTop].every(n=>Number.isFinite(n)&&n>=0))throw Error('В ссылке повреждено положение просмотра');
       display={scrollLeft,scrollTop};
     }
-    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,rows,steps},tools,colours,colourAuto,paint,...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
+    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,...inversion,rows,steps},tools,colours,colourAuto,paint,...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
   }
   function pack(value){return JSON.stringify(normalizePayload(value));}
   function unpack(text){let data;try{data=JSON.parse(text);}catch(_){throw Error('Ссылка повреждена: данные не читаются');}return normalizePayload(data);}

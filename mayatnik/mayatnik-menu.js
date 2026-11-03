@@ -1626,6 +1626,19 @@
     // МАЯ-398: lineMeasures remains a direct control in Measure; the row-count popup was removed.
     addEventListener('may-reset-complete',()=>{rail.refresh();placeTools();});
   }
+  function installInvertMenu(row,api=window.mayInvert,after=()=>{rail.refresh();placeTools();}){
+    if(!row||!api||row.querySelector('[data-n="invertToggle"]'))return null;
+    const doc=row.ownerDocument,win=doc.defaultView;
+    const make=(id,label,kind,help,run)=>{const probe=doc.createElement('button');probe.title=help;const button=ptBtn(id,kind,probe,()=>{run();sync();after();});button.classList.add('gz-hx');button.querySelector('i')?.classList.add('gz-ic');const caption=doc.createElement('span');caption.className='gz-nm';caption.textContent=label;button.append(caption);button.title=help;button.setAttribute('aria-label',help);return button;};
+    const toggle=make('invertToggle','Инверт','half','Инвертировать поле: поменять 0 и 1 или выбранные цвета нуля и единицы',()=>api.toggle());
+    const auto=make('invertAuto','Автоинверт','swap','Автоинверт: чередовать фазу инверсии при смене кадра',()=>api.setAuto(!api.get().auto));
+    const kind=doc.createElement('div');kind.className='gz-hx gz-pair gz-split may-segments';kind.dataset.n='invertKind';kind.setAttribute('role','group');kind.setAttribute('aria-label','Что инвертировать');
+    const choices=[['bits','Биты'],['colour','Цвет']].map(([value,label],index)=>{const button=doc.createElement('button');button.type='button';button.className='gz-half gz-h'+index;button.textContent=label;button.setAttribute('aria-label',value==='bits'?'Инверсия битов: поменять 0 и 1':'Инверсия цвета: поменять местами выбранные цвета нуля и единицы');button.onclick=()=>{api.setKind(value);sync();after();};kind.append(button);return {value,button};});
+    const sync=()=>{const state=api.get();for(const [button,on]of [[toggle,!!state.inverted],[auto,!!state.auto]]){button.classList.toggle('on',on);button.classList.toggle('gz-on',on);button.setAttribute('aria-pressed',String(on));}for(const {value,button}of choices){const on=state.kind===value;button.classList.toggle('gz-on',on);button.setAttribute('aria-pressed',String(on));}};
+    const before=row.querySelector('[data-n="resetView"]');if(before)before.before(toggle,auto,kind);else row.append(toggle,auto,kind);
+    win.addEventListener('may-invert-change',sync);win.addEventListener('pagehide',()=>win.removeEventListener('may-invert-change',sync),{once:true});toolSync.push(sync);sync();return {toggle,auto,kind,sync};
+  }
+  installInvertMenu(gView);
   // v0.630: five independent buttons open the original controls beside the main group.
   // МАЯ-407: an independent standard group owns the original overlay controls.
   function mountOverlayGroup(){

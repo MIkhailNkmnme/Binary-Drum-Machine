@@ -7,9 +7,25 @@ const state = {
   rows: 128, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', speed: 4,
   pair: false, edgeWrap: true, edgeBounce: false, edgeWidth: 4, compareSource: '',
   sequenceSourceOn: false, zoom: 'fit', templateMaxArea: 4096,
+  invertKind: 'bits', inverted: false, invertAuto: false, invertFrame: null,
   sym: false, symBits: false, vrows: 0, parity: { cellsEven: true, cellsOdd: true, rowsEven: true, rowsOdd: true, colsEven: true, colsOdd: true, rowLevels: [], cellLevels: [], colLevels: [], rowFill: 'none' }
 };
 const payload = () => ({ v: 1, at: '2026-11-01T09:00:00.000Z', k: 107, state: structuredClone(state), tools: { fillMode: false, autoVertical: 0, templatePickMode: 'one' }, colours: { fillColour: '#ff7f27', fillMirror: true }, colourAuto: {} });
+
+test('inversion link roundtrip keeps phase, kind and last actual frame, including unlimited-frame counters',async()=>{
+ for(const invertKind of ['bits','colour'])for(const invertFrame of [null,0,1500001,Number.MAX_SAFE_INTEGER]){
+  const data=payload();Object.assign(data.state,{invertKind,inverted:true,invertAuto:true,invertFrame});
+  const back=await SL.decode(await SL.encode(data));assert.deepEqual(back.state,data.state);
+ }
+ const legacy=payload();for(const key of ['invertKind','inverted','invertAuto','invertFrame'])delete legacy.state[key];
+ const restored=SL.normalizePayload(legacy).state;assert.equal(restored.invertKind,'bits');assert.equal(restored.inverted,false);assert.equal(restored.invertAuto,false);assert.equal(restored.invertFrame,null);
+});
+
+test('inversion links reject malformed values rather than coercing or truncating phase',()=>{
+ for(const [key,values]of [['invertKind',['color','other',null,1]],['inverted',[0,1,'false',null]],['invertAuto',[0,1,'true',null]],['invertFrame',[-1,.5,NaN,Infinity,'4',{},Number.MAX_SAFE_INTEGER+1]]])for(const value of values){
+  const data=payload();data.state[key]=value;assert.throws(()=>SL.normalizePayload(data),/инверси/,key+'='+String(value));
+ }
+});
 
 test('ссылка сжимается и читается обратно без потерь', async () => {
   const code = await SL.encode(payload());

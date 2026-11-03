@@ -31,7 +31,7 @@ test('actual WGSL source-row and visibility functions agree with CPU for deep fi
     const settings={rowsEven:!!(seed&1),rowsOdd:!!(seed&2),cellsEven:!!(seed&4),cellsOdd:!!(seed&8),colsEven:!!(seed&16),colsOdd:!!(seed&32),rowLevels:[{even:!!(seed&64),odd:true}],cellLevels:[{even:false,odd:true},{even:true,odd:false}],rowFill},plan=parity.compile(settings),P=new Int32Array(41);P[3]=7;P.set(plan.gpu(13,7),32);const c=shaderContext(P);
     for(let r=0;r<7;r++){assert.equal(c.parityRow(r),plan.sourceRow(r,7));for(let col=0;col<13;col++)assert.equal(c.parityShown(r,col),plan.visible(r,col,7));}
   }
-  assert.match(gpu,/return raw\(source, fc\)/);assert.match(gpu,/outZone\(source, fc\)/);assert.match(gpu,/kind == 7[^\n]+pic2\[source \* VW \+ C\]/);
+  assert.match(gpu,/let value = raw\(source, fc\)/);assert.match(gpu,/outZone\(source, fc\)/);assert.match(gpu,/kind == 7[^\n]+pic2\[source \* VW \+ C\]/);
 });
 test('nested columns and rows have an exact non-2x2 DOM mask at the crop origin',()=>{
   const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<div class="may-layer-scene"></div><canvas id="colourTemplate"></canvas>'),doc=dom.window.document;

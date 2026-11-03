@@ -13,3 +13,12 @@ test('fresh defaults and group reset never alias mutable selections or touch ano
 test('clean defaults can be saved as a valid named preset',()=>{
  const snapshot=S.normalized(S.pick(R.defaults(),{}, {fillColour:'#ff7f27',fillMirror:false}));assert.equal(snapshot.state.templateMaxArea,4096);assert.equal(snapshot.state.crossMirrorMode,'lr');assert.equal(snapshot.state.viewUpsideDown,false);
 });
+
+test('clean and view reset clear inversion and phase without changing other reset scopes or menu layout',()=>{
+ const inversion={invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null};
+ for(const state of [R.defaults(),R.scope('view')])for(const [key,value]of Object.entries(inversion))assert.equal(state[key],value,key);
+ const state={invertKind:'colour',inverted:true,invertAuto:true,invertFrame:1500001,menuOrder:['view','layers'],rows:1024};
+ Object.assign(state,R.scope('scale'));assert.equal(state.invertAuto,true);assert.equal(state.invertFrame,1500001);
+ Object.assign(state,R.scope('view'));for(const [key,value]of Object.entries(inversion))assert.equal(state[key],value);
+ assert.deepEqual(state.menuOrder,['view','layers']);assert.equal(state.rows,1024);
+});

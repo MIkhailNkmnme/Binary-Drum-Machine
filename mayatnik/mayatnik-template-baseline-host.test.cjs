@@ -19,7 +19,7 @@ function fixture(gpu=false){
  };
  c.window.mayTemplateLibrary={clear(){c.libraryClears=(c.libraryClears||0)+1;}};c.window.mayLayers={list:()=>[...layers.values()],_drop:id=>layers.delete(id)};
  const pinned=Follow.pack({rk:1,parts:[{width:1,height:1,data:[1]}]},Matcher.compile);c.templateFollow=Follow.create({capture:c.templateFollowScope,search:async()=>{c.searches=(c.searches||0)+1;}},{on:true,source:pinned});
- vm.createContext(c);const a=html.indexOf('  // Originals and paint ownership are runtime state,'),b=html.indexOf('  // Delete is a session-only',a);assert.ok(a>=0,'baseline host integration');vm.runInContext(html.slice(a,b),c);
+ c.MayatnikInvert=require('./mayatnik-invert.js');vm.createContext(c);vm.runInContext(fn('storedBit'),c);const a=html.indexOf('  // Originals and paint ownership are runtime state,'),b=html.indexOf('  // Delete is a session-only',a);assert.ok(a>=0,'baseline host integration');vm.runInContext(html.slice(a,b),c);
  for(const name of ['rememberTemplate','selectTemplate','registerTemplate','duplicateTemplate','templateOptions','templateRect','templatePartWidth','templateSync','liftTemplateSource','traceTemplate','trailUndo','xorNextLevel'])vm.runInContext(fn(name),c);
  c.registerTemplate('original');c.fillField=c.f;for(const q of [9,10,17])c.fillMask[q]=100;c.fillMask[0]=888;
  return {c,item,source:source.slice(),library,layers,api:c.window.mayTemplateBaseline,pinned:JSON.stringify(c.templateFollow.snapshot().source)};
