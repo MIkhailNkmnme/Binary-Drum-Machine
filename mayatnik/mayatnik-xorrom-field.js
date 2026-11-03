@@ -13,7 +13,7 @@
   // readBit returns -1 for a missing cell. In RGB view readRGB returns the
   // categorical colour before the black/white display palette, or -1 if hidden.
   async function capture(source,options={}){
-    const {width,height,readBit,readRGB,current}=source;
+    const {width,height,readBit,readRGB,readRed,current}=source;
     if(!Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(height)||height<1||typeof readBit!=='function')
       throw Error('Хорром: нет прямоугольного поля для чтения.');
     if(height>MAX_ROWS||width*height>MAX_CELLS)
@@ -29,7 +29,7 @@
     check();
     for(let y=0;y<height;y++){
       const bits=new Int8Array(width),colors=new Uint32Array(8),rgb=readRGB&&options.cellRGB?new Int8Array(width).fill(-1):null;
-      let ones=0,total=0;
+      const red=readRed?new Uint8Array(width):null;let ones=0,total=0;
       for(let x=0;x<width;x++){
         if(cellsSinceYield===32768){await pause();check();cellsSinceYield=0;}
         cellsSinceYield++;
@@ -41,13 +41,13 @@
           else if(Number.isInteger(code)&&code>=0&&code<8){colors[code]++;if(rgb)rgb[x]=code;}
           else throw Error('Хорром: неизвестный цвет RGB-соседей.');
         }
-        bits[x]=bit;
+        bits[x]=bit;if(red&&bit>=0)red[x]=+!!readRed(x,y);
         // The current bit completes the RGB triplet for the preceding cell.
         if(!readRGB&&bits[x-1]>=0)colors[colourCode(bits[x-2],bits[x-1],bit)]++;
         if(bit>=0){ones+=bit;total++;}
       }
       if(!readRGB&&bits[width-1]>=0)colors[colourCode(bits[width-2],bits[width-1],0)]++;
-      rows.push({bits,ones,total,colors,...(rgb?{rgb}:{})});
+      rows.push({bits,ones,total,colors,...(rgb?{rgb}:{}),...(red?{red}:{})});
     }
     check();
     return {width,height,rows};

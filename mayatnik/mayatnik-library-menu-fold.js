@@ -18,13 +18,13 @@
     // Coalesce drag frames without cancelling pending captures on every pointer move.
     function queueCapture(){const ticket=generation;if(queuedGeneration===ticket)return;queuedGeneration=ticket;root.requestAnimationFrame(()=>root.requestAnimationFrame(()=>{if(queuedGeneration===ticket)queuedGeneration=null;if(ticket===generation)capture();}));}
     function change(open){++generation;if(!open){restore();return;}queueCapture();}
-    const changed=event=>change(!!event.detail?.open);root.addEventListener('mayatnik-template-panel-change',changed);
-    root.addEventListener('mayatnik-template-panel-resize',queueCapture);
+    const changed=event=>change(!!event.detail?.open);root.addEventListener('mayatnik-template-panel-change',changed);root.addEventListener('mayatnik-music-panel-change',changed);
+    root.addEventListener('mayatnik-template-panel-resize',queueCapture);root.addEventListener('mayatnik-music-panel-resize',queueCapture);
     function foldedHead(target){const header=target.closest?.('.pt-l,.gz-head'),group=header?.parentElement;return group?.hasAttribute('data-library-folded')?group:null;}
     const clicked=event=>{const group=foldedHead(event.target);if(!group||event.target.closest('.pt-pin,.gz-pin,.zgh-pin'))return;event.preventDefault();event.stopImmediatePropagation();unmask(group);onLayout();};
     const hovered=event=>{if(event.pointerType!=='mouse')return;const group=foldedHead(event.target);if(group){unmask(group);onLayout();}};
     doc.addEventListener('click',clicked,true);doc.addEventListener('pointerover',hovered,true);
-    if(root.MayatnikTemplatePanel?.isOpen())change(true);
-    return {syncHeads,destroy(){generation++;root.removeEventListener('mayatnik-template-panel-change',changed);root.removeEventListener('mayatnik-template-panel-resize',queueCapture);doc.removeEventListener('click',clicked,true);doc.removeEventListener('pointerover',hovered,true);for(const group of saved.keys())unmask(group);saved.clear();floating.clear();}};
+    if(root.MayatnikTemplatePanel?.isOpen()||root.MayatnikMusicPanel?.isOpen())change(true);
+    return {syncHeads,destroy(){generation++;root.removeEventListener('mayatnik-template-panel-change',changed);root.removeEventListener('mayatnik-music-panel-change',changed);root.removeEventListener('mayatnik-template-panel-resize',queueCapture);root.removeEventListener('mayatnik-music-panel-resize',queueCapture);doc.removeEventListener('click',clicked,true);doc.removeEventListener('pointerover',hovered,true);for(const group of saved.keys())unmask(group);saved.clear();floating.clear();}};
   }};
 })(window);

@@ -31,7 +31,7 @@ test('two real hosts share one context/recorder; moving, muting and deleting one
  const r=f.rack;r.add();r.setSettings({bpm:120});assert.equal(f.stats().contexts,0);
  await f.settle();const m=f.marker(2);f.mouse(m.firstChild,'pointerdown',5);f.mouse(f.w,'pointermove',35);f.mouse(f.w,'pointerup',35);
  assert.equal(r.getRack().tracks[1].row,3);assert.deepEqual(await r.startAll(),[true,true]);assert.equal(f.stats().contexts,1);assert.equal(f.stats().captures,1);
- f.advance(1100);assert.equal(r.getState().index,5);assert.match(f.w.document.querySelector('[data-xorrom-edge=left]:not([hidden])').textContent,/№[12] · строка/);assert.equal([...f.w.document.querySelectorAll('[data-xorrom-edge=right]:not([hidden])')].length,2);r.select(1);assert.equal(r.getState().index,1);
+ f.advance(1100);assert.equal(r.getState().index,5);assert.match(f.w.document.querySelector('[data-xorrom-edge=left]:not([hidden])').textContent,/№[12] · Срез/);assert.equal([...f.w.document.querySelectorAll('[data-xorrom-edge=right]:not([hidden])')].length,2);r.select(1);assert.equal(r.getState().index,1);
  const rec=r.getStream();assert.equal(rec,r.getStream());assert.equal(f.gains.filter(g=>g.to.includes(f.gains[0])).length,2);
  r.select(2);f.mouse(m.firstChild,'pointerdown',55);f.mouse(f.w,'pointermove',75);await Promise.resolve();f.mouse(f.w,'pointerup',75);await f.settle();assert.equal(r.getRack().tracks[1].row,7);assert.equal(r.getState().state,'playing');
  r.setMuted(true);assert.ok(f.gains.some(g=>g.to.includes(f.gains[0])&&g.gain.value===0));r.select(1);assert.equal(r.getState().state,'playing');assert.equal(r.getState().index,1);
@@ -78,6 +78,19 @@ test('Library controls create/select readers, bind individual settings and rejec
  sel('trackAdd').click();assert.equal(f.rack.getRack().tracks.length,2);input('bpm').value='135';input('bpm').dispatchEvent(new f.w.Event('change'));input('track').value='1';input('track').dispatchEvent(new f.w.Event('change'));
  assert.equal(input('bpm').value,'96');assert.equal(f.rack.getRack().tracks[1].settings.bpm,135);input('trackAxis').value='v';input('trackAxis').dispatchEvent(new f.w.Event('change'));assert.equal(f.rack.getAxis().x1,3);sel('trackAxisFixed').click();assert.ok(f.rack.getAxis().fixed);
  sel('tracksTemplates').click();assert.match(sel('status').textContent,/Выделите/);controls.destroy();
+ }finally{f.close();}
+});
+
+test('global Music off follows non-selected tracks, stops their backing and retains every setting',async()=>{
+ const f=await rig(null,{bpm:60,source:'melody',backing:'chord',backingGain:.3,backingRows:8});try{
+  const r=f.rack,box=f.w.document.createElement('div');f.w.document.body.append(box);
+  const controls=require('./mayatnik-xorrom-controls').mount(box,{api:r}),off=box.querySelector('[data-xorrom="tracksStop"]');
+  assert.equal(off.disabled,true);assert.match(off.getAttribute('aria-label'),/все дорожки и фон/);
+  await r.start();r.add();assert.equal(r.getState().state,'stopped');assert.equal(off.disabled,false,'the selected stopped track does not hide other playing tracks');
+  const saved=r.getRack();let updates=0;const unsub=r.subscribe(()=>updates++);f.advance(1100);assert.ok(updates>0,'non-selected track publishes its playback state');
+  off.click();assert.equal(off.disabled,true);assert.equal(r.anyActive(),false);assert.deepEqual(r.getRack(),saved);
+  for(const track of saved.tracks){r.select(track.id);assert.equal(r.getState().state,'stopped');assert.deepEqual(r.getState().backingNotes,[]);}
+  f.advance(10000);assert.equal(r.anyActive(),false);unsub();controls.destroy();
  }finally{f.close();}
 });
 

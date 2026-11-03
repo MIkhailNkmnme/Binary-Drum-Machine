@@ -2,6 +2,18 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8');
 const code=menu.slice(menu.indexOf('  function mountRomboControls('),menu.indexOf('  function mountHorrSections('));
+test('duplicate seam toggle follows source eligibility and can always clear a selected preference',()=>{
+ const dom=new JSDOM('<div></div>'),w=dom.window,host=w.document.querySelector('div');let changed=0;
+ const s={on:true,row:3,maxRow:8,angle:0,assembly:16,mode:'fixed',seam:'between',dedupeAvailable:false};
+ const api={get:()=>s,options:()=>[],setSeam:value=>s.seam=value};
+ const c=vm.createContext({window:w,ZerkGrozd:{listHover(){}},mobileMenu:{matches:false},getComputedStyle:w.getComputedStyle});vm.runInContext(code,c);
+ const controls=c.mountRomboControls(host,{api:()=>api,after:()=>changed++}),button=host.querySelector('[data-n="romboSeam"]');
+ assert.equal(button.disabled,true);assert.equal(button.getAttribute('aria-pressed'),'false');button.click();assert.equal(changed,0);
+ s.dedupeAvailable=true;controls.sync();assert.equal(button.disabled,false);button.click();assert.equal(s.seam,'dedupe');assert.equal(button.getAttribute('aria-pressed'),'true');assert.equal(button.classList.contains('gz-on'),true);assert.equal(changed,1);
+ s.mode='custom';s.dedupeAvailable=false;controls.sync();assert.equal(button.disabled,false);button.click();assert.equal(s.seam,'between');assert.equal(button.disabled,true);assert.equal(button.getAttribute('aria-disabled'),'true');assert.equal(changed,2);
+ s.mode='fixed';s.dedupeAvailable=true;w.mayPixelExact={canState:()=>false,policyFor:()=>({reason:'Недоступно'})};controls.sync();assert.equal(button.disabled,true);
+ dom.window.close();
+});
 test('assembly menu opens editor, separates fixed schemes from custom and disables the unused fold axis',()=>{
  const dom=new JSDOM('<div id="host"></div>'),w=dom.window,host=w.document.getElementById('host');
  let toggles=0,list;

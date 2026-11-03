@@ -14,6 +14,11 @@ test('manual boundary change folds newly overlapping groups without changing log
  f.setBounds(rect(550,1200));f.emit('mayatnik-template-panel-resize');assert.ok(b.g.hasAttribute('data-library-folded'));assert.equal(b.head.getAttribute('aria-expanded'),'false');assert.equal(b.g.open,true);assert.ok(!safe.g.hasAttribute('data-library-folded'));assert.ok(!closed.g.hasAttribute('data-library-folded'));
  f.emit('mayatnik-template-panel-change',{open:false});assert.ok(!a.g.hasAttribute('data-library-folded'));assert.ok(!b.g.hasAttribute('data-library-folded'));assert.equal(a.g.open,true);assert.equal(b.g.open,true);assert.equal(closed.g.open,false);
 });
+test('standalone music window uses the same temporary folds and releases listeners on destroy',()=>{
+ const f=fixture(),a=f.group(720,850),b=f.group(500,600);f.emit('mayatnik-music-panel-change',{open:true});assert.ok(a.g.hasAttribute('data-library-folded'));assert.ok(!b.g.hasAttribute('data-library-folded'));
+ f.setBounds(rect(550,1200));f.emit('mayatnik-music-panel-resize');assert.ok(b.g.hasAttribute('data-library-folded'));f.emit('mayatnik-music-panel-change',{open:false});assert.ok(!a.g.hasAttribute('data-library-folded'));assert.ok(!b.g.hasAttribute('data-library-folded'));assert.equal(a.g.open,true);
+ f.api.destroy();f.emit('mayatnik-music-panel-change',{open:true});assert.ok(!a.g.hasAttribute('data-library-folded'));
+});
 test('manually reopened group stays open through ordinary layout, folds again on next manual resize, and restores on close',()=>{
  const f=fixture(),a=f.group(720,850);f.emit('mayatnik-template-panel-change',{open:true});f.reveal(a.head);assert.ok(!a.g.hasAttribute('data-library-folded'));f.emit('resize');assert.ok(!a.g.hasAttribute('data-library-folded'));
  f.emit('mayatnik-template-panel-resize');assert.ok(a.g.hasAttribute('data-library-folded'));a.g.open=false;f.emit('mayatnik-template-panel-change',{open:false});assert.equal(a.g.open,true);assert.equal(a.head.getAttribute('aria-expanded'),'true');

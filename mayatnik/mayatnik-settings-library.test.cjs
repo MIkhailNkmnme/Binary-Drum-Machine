@@ -56,6 +56,17 @@ test('Rombo and whole-colour settings round trip exactly and reject invalid geom
  }
  for(const [key,value]of [['romboAngle',46],['romboAngle',360],['romboAssembly',18],['romboRow',0],['edgeRhombOn','true'],['fillWholeColour','true']]){const p=S.pick({});p.state[key]=value;assert.throws(()=>S.normalized(p));}
 });
+test('Rombo seams survive serialized presets and library reload; legacy presets restore between-column seams',async()=>{
+ const f=fixture(),library=S.create(f.host);await library.ready;
+ for(const seam of ['between','dedupe']){
+  f.set(S.pick({edgeRhombOn:true,romboAssembly:17,romboSeam:seam}));const id=await library.save(seam);
+  const reloaded=S.create(f.host);await reloaded.ready;await reloaded.open(id);assert.equal(f.applied.at(-1).state.romboSeam,seam);
+  const restored={romboSeam:'other'};S.applyState(restored,JSON.parse(JSON.stringify(f.applied.at(-1))));assert.equal(restored.romboSeam,seam);
+ }
+ const legacy=S.pick({});delete legacy.state.romboSeam;const restored={romboSeam:'dedupe'};S.applyState(restored,legacy);assert.equal(restored.romboSeam,'between');
+ for(const seam of ['half','',true,0]){const invalid=S.pick({romboSeam:seam});assert.throws(()=>S.normalized(invalid),/шов Ромбо/);}
+ assert.equal(require('./mayatnik-reset-state.js').defaults().romboSeam,'between');
+});
 
 test('frame paint repeat mode round trips and rejects unknown values, while legacy presets clear it',()=>{
  const Library=require('./mayatnik-settings-library.js'),Reset=require('./mayatnik-reset-state.js');

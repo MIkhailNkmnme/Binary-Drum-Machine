@@ -13,14 +13,14 @@ test('real outer triangles at all Pereskok widths preserve source addresses thro
  }
 });
 
-test('C and the two boundary cones omit wide intermediate areas, and half seam has no gap or overlap',()=>{
+test('C and the two boundary cones omit wide intermediate areas, and whole-cell seam has no gap or overlap',()=>{
  for(const N of [1,4,7])for(const factor of [2,4,6,8])for(let row=1;row<=N;row++){
   const W=factor*N-1,a=(W-1)/2,p=R.plan(W,N,{row,assembly:1},{sides:true}),[top,L,Rt]=p.parts;
   assert.equal(top.sourceKey,'C');assert.equal(L.sourceKey,'L');assert.equal(Rt.sourceKey,'R');
-  for(let r=0;r<row;r++){assert.deepEqual(top.rows[r],{y:r,left:a-r,right:a+r+1});assert.deepEqual(L.rows[r],{y:r,left:.5,right:r+1});assert.deepEqual(Rt.rows[r],{y:r,left:W-r-1,right:W-.5});
-   for(const x of [a+.25,a+.75]){const q=p.pick(p.forward({x,y:2*row-r-.5}));assert.equal(q.sourceKey,x<a+.5?'L':'R');}
+  for(let r=0;r<row;r++){assert.deepEqual(top.rows[r],{y:r,left:a-r,right:a+r+1});assert.deepEqual(L.rows[r],{y:r,left:0,right:r+1});assert.deepEqual(Rt.rows[r],{y:r,left:W-r-1,right:W});
+   for(const x of [a+.75,a+1.25]){const q=p.pick(p.forward({x,y:2*row-r-.5}));assert.equal(q.sourceKey,x<a+1?'L':'R');}
   }
-  const c=composed(p);near(c.count,2*row*row);near(c.center.x,a+.5);near(c.center.y,row);near(c.parts[1].count,row*row/2);near(c.parts[2].count,row*row/2);
+  const c=composed(p);near(c.count,2*row*row+row);near(c.parts[1].count,row*(row+1)/2);near(c.parts[2].count,row*(row+1)/2);
  }
 });
 
@@ -28,7 +28,7 @@ test('central 180 reverses both coordinates; diagonal quarter exchange translate
  const p=R.plan(19,5,{row:4,assembly:16}),q=R.plan(19,5,{row:4,assembly:17});
  assert.deepEqual(p.parts[1].matrix,[-1,0,0,-1,19,8]);assert.equal(q.parts.length,4);
  for(const t of q.parts){assert.equal(t.targetQuarter,({1:3,2:4,3:1,4:2})[t.sourceQuarter]);const m=t.matrix,bottom=t.sourceQuarter>=3;assert.deepEqual(m.slice(0,4),bottom?[-1,0,0,-1]:[1,0,0,1]);}
- near(composed(q).count,composed(p).count);
+ near(composed(q).count,composed(p).count+2*p.row);
 });
 
 test('reflections move the mask together with the pixels, and bounds include every outline',()=>{
@@ -90,7 +90,7 @@ test('rotated copy input maps to native source cells; axis drag changes row with
 });
 
 test('rotated half-open seam boundaries resolve consistently and geometry plans are cached',()=>{
- for(let angle=0;angle<360;angle+=45){const p=R.plan(31,8,{row:8,assembly:1,angle},{sides:true}),seam=p.pick(p.forward({x:15.5,y:10.5}));assert.equal(seam.sourceKey,'L');near(seam.x,.5);}
+ for(let angle=0;angle<360;angle+=45){const p=R.plan(31,8,{row:8,assembly:1,angle},{sides:true}),seam=p.pick(p.forward({x:16,y:10.5}));assert.equal(seam.sourceKey,'R');assert.equal(Math.floor(seam.x),30);}
  const h=host(),a=h.api.plan(),b=h.api.plan(16);assert.strictEqual(h.api.plan(),a);assert.strictEqual(h.api.plan(16),b);h.api.render();assert.strictEqual(h.api.plan(),a);h.api.setRow(2);assert.notStrictEqual(h.api.plan(),a);
  h.api.setAssembly(16);assert.equal(h.api.get().assembly,16);assert.equal(h.api.options().length,10);
 });
@@ -198,6 +198,79 @@ test('exact inverse raster matches native picking and copies only original RGBA 
  }
 });
 
+test('whole-cell quarter exchange preserves every native address with both choices of odd centre',()=>{
+ for(const [W,anchor] of [[9,4],[8,3.5],[8,2],[6,0],[6,7],[1,0]])for(const row of [1,3]){
+  const plain=R.plan(W,3,{assembly:16,row},{anchor});
+  if(!plain.available)continue;
+  const mid=anchor+.5,odd=!Number.isInteger(mid)&&mid>0&&mid<W;
+  for(const seam of ['between','dedupe'])for(let angle=0;angle<360;angle+=45){
+   const p=R.plan(W,3,{assembly:17,row,seam,angle},{anchor}),visits=new Map();
+   assert.equal(p.dedupeAvailable,odd);assert.equal(p.halfCells,false);
+   for(const part of p.parts){assert.ok(part.matrix.every(Number.isInteger));
+    for(const r of part.rows){assert.ok(Number.isInteger(r.left)&&Number.isInteger(r.right));
+     for(let x=r.left;x<r.right;x++){
+      const native={x:x+.5,y:r.y+.5},back=p.pick(p.forward(R.point(part.matrix,native)));
+      assert.equal(back.part,part.id);assert.equal(Math.floor(back.x),x);assert.equal(Math.floor(back.y),r.y);
+      const key=x+','+r.y;visits.set(key,(visits.get(key)||0)+1);
+     }
+    }
+   }
+   for(const r of plain.parts[0].rows)for(let x=r.left;x<r.right;x++){
+    const key=x+','+r.y;
+    assert.equal(visits.get(key),odd&&seam==='between'&&x===Math.floor(mid)?4:2);
+    visits.delete(key);
+   }
+   assert.equal(visits.size,0);
+  }
+ }
+});
+
+test('side joins collapse only identical native columns with identical occupied rows',()=>{
+ for(const W of [1,5,6,7,11])for(const A of [1,3,5])for(const {id:assembly} of R.variants.filter(v=>v.kind==='sides')){
+  const both=R.plan(W,A,{assembly},{sides:true}),single=R.plan(W,A,{assembly,romboSeam:'dedupe'},{sides:true});
+  const seam=Math.ceil(W/2),column=(p,x)=>Array.from({length:A},(_,r)=>{
+   const hit=p.pick(p.forward({x:x+.5,y:A+r+.5}));
+   return hit?[Math.floor(hit.x),Math.floor(hit.y)]:null;
+  });
+  const left=column(both,seam-1),right=column(both,seam),duplicate=JSON.stringify(left)===JSON.stringify(right);
+  assert.equal(single.dedupeAvailable,duplicate);assert.equal(single.seam,'dedupe');
+  for(let x=seam-A;x<seam+A;x++)assert.deepEqual(column(single,x),column(both,duplicate&&x>=seam?x+1:x));
+ }
+ assert.equal(R.plan(5,3,{assembly:4},{sides:true}).dedupeAvailable,true);
+ assert.equal(R.plan(5,3,{assembly:16}).dedupeAvailable,false);
+});
+
+test('diagonal raster and picking preserve the occupied grid at seams of reversed whole-cell pieces',()=>{
+ const W=5,A=3,source=nativePixels(W,A);
+ for(const {id:assembly} of R.variants)for(const seam of ['between','dedupe'])for(let angle=0;angle<360;angle+=45){
+  const p=R.plan(W,A,{assembly,angle,seam},{sides:true}),cells=new Map();
+  for(const part of p.parts)for(const row of part.rows)for(let x=row.left;x<row.right;x++){
+   const q=R.point(part.matrix,{x:x+.5,y:row.y+.5}),key=Math.floor(q.x)+','+Math.floor(q.y);
+   assert.ok(!cells.has(key));cells.set(key,row.y*W+x);
+  }
+  const scale=angle%90?Math.SQRT2:1,image=R.rasterPixels(p,source,scale),seen=new Set();
+  for(let y=0;y<image.height;y++)for(let x=0;x<image.width;x++){
+   const uv={x:(x+.5)/scale,y:(y+.5)/scale},q=p.unrotate(uv),key=Math.floor(q.x+1e-8)+','+Math.floor(q.y+1e-8);
+   const addr=cells.get(key),hit=p.pick(uv);
+   assert.equal(hit?Math.floor(hit.y)*W+Math.floor(hit.x):undefined,addr);
+   assert.deepEqual(rgba(image,y*image.width+x),addr===undefined?[0,0,0,255]:rgba(source,addr));
+   seen.add(key);
+  }
+  for(const key of cells.keys())assert.ok(seen.has(key),assembly+'/'+seam+'/'+angle+' missing '+key);
+ }
+});
+
+test('seam preference updates fixed plans on direct restore and respects the state guard',()=>{
+ const h=host();h.api.setAssembly(17);const both=h.api.plan();
+ assert.equal(h.api.get().seam,'between');assert.equal(h.api.get().dedupeAvailable,true);
+ h.api.setSeam('dedupe');assert.equal(h.api.plan().outputWidth,both.outputWidth-1);
+ assert.equal(h.state.romboSeam,'dedupe');assert.equal(h.notifications.length,2);
+ h.state.romboSeam='between';h.api.render();assert.equal(h.api.plan().outputWidth,both.outputWidth);assert.equal(h.notifications.length,3);
+ h.api.setAssembly(16);assert.equal(h.api.get().dedupeAvailable,false);
+ h.api.setMode('custom');assert.equal(h.api.get().dedupeAvailable,false);
+ const blocked=host({allowState:s=>s.romboSeam!=='dedupe'});blocked.api.setSeam('dedupe');
+ assert.equal(blocked.api.get().seam,'between');assert.equal(blocked.notifications.length,0);
+});
 test('exact central diamond keeps every native cone bit visible at diagonal sqrt2 and straight one',()=>{
  const source=nativePixels(31,8);
  for(const angle of [0,45,90,135,180,225,270,315]){

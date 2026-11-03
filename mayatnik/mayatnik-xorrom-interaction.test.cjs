@@ -104,6 +104,6 @@ test('library edge clips the row and moves its label on resize; controls receive
    pointer(f.win,'pointermove',90,125,true);await f.flush();pointer(f.win,'pointerup',90,125,true);await f.flush();
    assert.equal(f.seeks.at(-1),2);assert.equal(f.api.getState().state,'playing');
    edge=100;f.win.dispatchEvent(new f.win.Event('resize'));await f.raf();assert.equal(f.marker.style.width,'100px');
-   panel.hidden=true;f.win.dispatchEvent(new f.win.Event('resize'));await f.raf();assert.equal(f.marker.style.width,'300px');assert.equal(right.style.right,'0px');assert.equal(f.api.getState().index,2);
+   panel.hidden=true;f.win.dispatchEvent(new f.win.Event('resize'));await f.raf();assert.equal(f.marker.style.width,'300px');assert.equal(right.style.right,(f.win.innerWidth-300)+'px');assert.equal(f.api.getState().index,2);
  }finally{f.close();}
 });

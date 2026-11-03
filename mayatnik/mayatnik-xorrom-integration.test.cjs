@@ -16,7 +16,7 @@ function source(first,next){
 }
 function host(){
   const grid=[[0,1,-1],[1,0,0]],calls={acquire:0,release:0};
-  const h={f:{val:new Int8Array(6)},geo:{},VW:3,VH:2,k:9,st:{view:'bits'},gpuBig:null,
+  const h={f:{val:new Int8Array(6)},geo:{},VW:3,VH:2,k:9,st:{view:'bits'},gpuBig:null,present:{},img:null,pxView:()=>({width:h.VW,height:h.VH,data:new Uint8ClampedArray(h.VW*h.VH*4)}),
     joinedOn:()=>false,rombP:()=>-1,document:{body:{classList:{contains:()=>false}}},
     rgbNeighbourFilters:()=>[],rgbNeighbourBWMode:()=>0,rgbNeighbourClasses:null,
     manualPaintRevision:0,templateMatchRevision:0,MayatnikXorromField:Field,window:{}};
@@ -143,13 +143,13 @@ function assembled(f,angle=0){
 test('production source captures assembled Rombo rows independently of viewport zoom and releases the native field',async()=>{
  for(const angle of [0,45,90,135,180,225,270,315]){
   const f=host(),a=assembled(f,angle),h=f.h,policy=h.window.mayPixelExact.policyFor(),ratio=policy.minScale*policy.dpr;
-  const expected=await h.MayatnikXorromProjection.capture(a.plan(),{width:3,height:2,readBit:(x,y)=>f.grid[y][x]},{ratio});
+  const expected=await h.MayatnikXorromProjection.capture(a.plan(),{width:3,height:2,readBit:(x,y)=>f.grid[y][x],readRed:()=>false},{ratio});
   const score=await h.captureXorromField();assert.deepEqual(score.rows,expected.rows);assert.equal(score.projection.kind,'rombo');assert.equal(score.frame,9);h.st.zoom=500;const again=await h.captureXorromField();assert.deepEqual(again.rows,score.rows);assert.equal(f.calls.release,2);
  }
 });
 test('assembled RGB retains native colour categories and filters after rotation and whole-view half turn',async()=>{
  const f=host(),a=assembled(f,45),h=f.h;h.st.view='rgbNeighbours';h.st.viewUpsideDown=true;h.rgbNeighbourClasses=Uint8Array.of(1,2,255,3,4,5);h.rgbNeighbourFilters=()=>[1,3,5];const ratio=h.window.mayPixelExact.policyFor().minScale*1.25;
- const expected=await h.MayatnikXorromProjection.capture(a.plan(),{width:3,height:2,readBit:(x,y)=>f.grid[y][x],readRGB:(x,y)=>[1,3,5].includes(h.rgbNeighbourClasses[y*3+x])?h.rgbNeighbourClasses[y*3+x]:-1},{ratio,flip:true,cellRGB:true});const score=await h.captureXorromField();assert.deepEqual(score.rows,expected.rows);assert.equal(score.projection.flip,true);
+ const expected=await h.MayatnikXorromProjection.capture(a.plan(),{width:3,height:2,readBit:(x,y)=>f.grid[y][x],readRed:()=>false,readRGB:(x,y)=>[1,3,5].includes(h.rgbNeighbourClasses[y*3+x])?h.rgbNeighbourClasses[y*3+x]:-1},{ratio,flip:true,cellRGB:true});const score=await h.captureXorromField();assert.deepEqual(score.rows,expected.rows);assert.equal(score.projection.flip,true);
 });
 test('assembled auto geometry uses the actual projected areas; changing the plan cancels an old capture',async()=>{
  const f=host(),a=assembled(f),h=f.h;h.st.xorrom={autoGeometry:true,geometryConnectivity:'sides'};const score=await h.captureXorromField();assert.equal(score.geometry.connectivity,'sides');assert.ok(score.rows.some(row=>row.geometry.one));

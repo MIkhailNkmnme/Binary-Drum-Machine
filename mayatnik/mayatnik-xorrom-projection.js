@@ -44,7 +44,7 @@
       if(method==='readBit'?value!==-1&&value!==0&&value!==1:value!==-1&&value!==255&&(!Number.isInteger(value)||value<0||value>7))throw Error('Xorrom: неизвестный бит или RGB-категория исходной клетки.');
       values[q]=value===255?-1:value;return values[q];
     };
-    const score=await Field.capture({width:map.width,height:map.height,current:source.current,readBit:(x,y)=>read('readBit',x,y),...(source.readRGB?{readRGB:(x,y)=>read('readRGB',x,y)}:{})},options);
+    const score=await Field.capture({width:map.width,height:map.height,current:source.current,readBit:(x,y)=>read('readBit',x,y),...(source.readRGB?{readRGB:(x,y)=>read('readRGB',x,y)}:{}),...(source.readRed?{readRed:(x,y)=>{const q=index(x,y);return q>=0&&source.readRed(q%source.width,Math.floor(q/source.width));}}:{})},options);
     check();if(options.nativeAddresses){score.nativeWidth=source.width;score.nativeAt=index;}score.projection=Object.freeze({kind:'rombo',ratio,flip:!!options.flip,width:map.width,height:map.height,logicalWidth:plan.outputWidth,logicalHeight:plan.outputHeight});return score;
   }
   return {capture};

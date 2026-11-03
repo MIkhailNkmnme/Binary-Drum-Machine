@@ -126,7 +126,7 @@ test('scope tracks crop and source geometry while frame, paint and zoom may chan
   h.fieldSourceKey=()=>'another-source';assert.notEqual(h.snapshot().scope,s.scope);
 });
 test('commit, undo/redo, share-code decode and compressed work-file validation preserve source and transforms',async()=>{
-  const h=makeHost();h.st.romboAssembly=12;
+  const h=makeHost();h.st.romboAssembly=12;h.st.romboSeam='dedupe';
   h.st.userLines=[[0,0,16,8]];const shot=h.snapshot(),parts=Geo.find(shot);
   assert.equal(parts.length,2);
   const input={...shot,pieces:parts.map(p=>({...p,pose:{x:-2.5,y:1.25,turn:3,flip:true}}))};
@@ -144,10 +144,13 @@ test('commit, undo/redo, share-code decode and compressed work-file validation p
     mirrorLive:false,mirrorXor:false,fillMask:null,paintBits:null,faceLayer:null,templateMatchLayer:null,templateOffsetX:0,
     templateReturn:null,templatePaintBit:null,templateVisible:false});
   const share=await Share.decode(await Share.encode(h.captureSharePayload()));
+  assert.equal(h.validateShareState(share.state).romboSeam,'dedupe');
+  assert.throws(()=>h.validateShareState({...share.state,romboSeam:'half'}),/шов/);
   assert.deepEqual(plain(h.validateShareState(share.state).romboLayout),expected.layout);
   assert.throws(()=>h.validateShareState({...share.state,romboLayout:{pieces:[null]}}),/сборка/);
   const file=await Work.encode(h.paintSnapshot());
   const restored=h.frameWorkOnly(h.validateFrameWork(await Work.decode(file)));
+  assert.equal(restored.st.romboSeam,'dedupe');
   assert.deepEqual(restored.st.romboLayout,expected.layout);assert.deepEqual(restored.field,h.f.val);
   const previous=plain(h.triangleAssemblyState());
   assert.throws(()=>h.triangleAssemblyCommit({pieces:[]}),/Некорректная сборка/);

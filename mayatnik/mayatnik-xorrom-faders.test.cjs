@@ -59,3 +59,21 @@ test('keyboard arrows and endpoints update the same sound settings, with teardow
   const count=f.writes.length;f.mounted.destroy();assert.equal(f.subscribed,false);assert.equal(f.el.isConnected,false);
   f.emit('gain',50);assert.equal(f.writes.length,count);f.close();
 });
+
+test('playing faders stay left of either side window and its resize edge; narrow and full-width windows cannot cover controls',()=>{
+ const f=setup({},{anchor:()=>({left:950,top:220,width:24,height:48})});
+ try{f.setTransport('playing');const library=f.doc.createElement('section'),music=f.doc.createElement('section'),libraryHandle=f.doc.createElement('div'),musicHandle=f.doc.createElement('div');library.id='mayatnikTemplatePanel';music.id='mayMusicSettingsPanel';libraryHandle.className='mtp-resize';musicHandle.className='mtp-resize may-music-resize';f.doc.body.append(library,music,libraryHandle,musicHandle);
+  let edge=640;const rect=()=>({left:edge,top:0,width:f.win.innerWidth-edge,height:900});library.getBoundingClientRect=music.getBoundingClientRect=rect;libraryHandle.getBoundingClientRect=musicHandle.getBoundingClientRect=()=>({left:edge-10,top:0,width:10,height:900});
+  for(const [active,handle,change,resize]of [[library,libraryHandle,'mayatnik-template-panel-change','mayatnik-template-panel-resize'],[music,musicHandle,'mayatnik-music-panel-change','mayatnik-music-panel-resize']]){
+   library.hidden=music.hidden=libraryHandle.hidden=musicHandle.hidden=true;active.hidden=handle.hidden=false;
+   for(const [viewport,left]of [[1280,640],[640,308],[332,58]]){
+    Object.defineProperty(f.win,'innerWidth',{value:viewport,configurable:true});edge=left;f.win.dispatchEvent(new f.win.Event(change));
+    assert.equal(f.el.style.right,viewport-left+16+'px');const narrow=left<68,width=narrow?42:52;assert.ok(viewport-parseFloat(f.el.style.right)-width>=0,'faders stay inside viewport');assert.equal(f.el.style.getPropertyValue('--may-xorrom-fader-width'),narrow?'20px':'24px');assert.equal(f.el.style.visibility,'');assert.equal(f.el.hidden,false);
+    edge=left+20;f.win.dispatchEvent(new f.win.Event(resize));assert.equal(f.el.style.right,viewport-edge+16+'px');
+   }
+   edge=0;f.win.dispatchEvent(new f.win.Event(resize));assert.equal(f.el.style.visibility,'hidden','a full-width mobile window leaves no field space for faders');
+  }
+  library.hidden=music.hidden=libraryHandle.hidden=musicHandle.hidden=true;f.win.dispatchEvent(new f.win.Event('mayatnik-music-panel-change'));assert.equal(f.el.style.visibility,'');assert.equal(f.el.style.getPropertyValue('--may-xorrom-fader-width'),'24px');assert.equal(f.el.style.right,'94px');
+  music.hidden=musicHandle.hidden=false;edge=120;f.setTransport('stopped');f.setTransport('playing');assert.equal(f.el.style.right,f.win.innerWidth-edge+16+'px','starting transport measures an already open settings window');assert.equal(f.writes.length,0);assert.equal(f.starts,0);
+ }finally{f.close();}
+});

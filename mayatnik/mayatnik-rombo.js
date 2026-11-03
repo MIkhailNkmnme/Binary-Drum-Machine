@@ -10,8 +10,25 @@
  const normalise=id=>variants.some(v=>v.id===Number(id))?Number(id):16;
  const turnAngle=value=>((Math.round((Number(value)||0)/45)*45)%360+360)%360;
  function availability(id,g={},row=g.height){if(g.available===false)return {available:false,reason:g.reason||'Нужна плоская проекция исходного поля'};const anchor=g.anchor??((g.width-1)/2);if(anchor+row<=0||anchor-row+1>=g.width)return {available:false,reason:'Центральный треугольник выше оси находится вне видимого поля'};if(id<16&&!g.sides)return {available:false,reason:'Боковые треугольники доступны в плоском Перескоке'};return {available:true,reason:''};}
- // A row interval is also the exact cell-area mask. Only the vertical seam
- // splits a cell in half; diagonal borders follow whole-cell staircases.
+ const seamMode=value=>value==='dedupe'?'dedupe':'between';
+ const coneCenter=(width,anchor)=>Math.round(2*(anchor??((width-1)/2)))/2+.5;
+ // Each side occupies its own full-width slot. Which native column faces the
+ // join depends on both the source side and the reflection within the slot.
+ function sidePiece(id,slot,W,A){
+  const choice=slot?id%4:Math.floor(id/4),key=choice%2?'R':'L',width=Math.min(W,A);
+  const start=key==='L'?0:W-width,end=start+width,sign=choice>=2?1:-1;
+  const meetsAtEnd=slot===0?sign===1:sign===-1;
+  const column=meetsAtEnd?end-1:start;
+  return {choice,key,width,start,end,sign,column,firstRow:key==='L'?column:W-1-column};
+ }
+ function hasDuplicate(id,W,A,cx){
+  if(id===17)return !Number.isInteger(cx)&&cx>0&&cx<W;
+  if(id===16)return false;
+  const left=sidePiece(id,0,W,A),right=sidePiece(id,1,W,A);
+  return left.column===right.column&&left.firstRow===right.firstRow;
+ }
+ // Every row interval contains whole native cells. Drawing and picking share
+ // the same masks, including the chosen owner of a duplicated source column.
  function shape(rows){
   const valid=rows.filter(r=>r.right>r.left),outline=[];
   if(valid.length){for(const r of valid)outline.push({x:r.left,y:r.y},{x:r.left,y:r.y+1});for(let i=valid.length-1;i>=0;i--){const r=valid[i];outline.push({x:r.right,y:r.y+1},{x:r.right,y:r.y});}}
@@ -19,30 +36,45 @@
   return {rows:valid,outline,left,right,height,contains(x,y){const r=map.get(Math.floor(y));return !!r&&x>=r.left&&x<r.right;}};
  }
  function plan(width,height,state={},geometry={}){
-  const W=Math.max(1,width),H=Math.max(1,height),A=Math.max(1,Math.min(H,Math.round(state.row??H))),angle=turnAngle(state.angle),id=normalise(state.assembly),status=availability(id,{width:W,height:H,...geometry},A),cx=(geometry.anchor??((W-1)/2))+.5,parts=[],colour={C:'#e5be68',L:'#78b8e8',R:'#d99bc9'};
-  const mask=key=>shape(Array.from({length:A},(_,r)=>({y:r,left:Math.max(0,key==='C'?cx-r-.5:key==='L'?.5:W-r-1),right:Math.min(W,key==='C'?cx+r+.5:key==='L'?r+1:W-.5)})));
+  const W=Math.max(1,width),H=Math.max(1,height),A=Math.max(1,Math.min(H,Math.round(state.row??H))),angle=turnAngle(state.angle),id=normalise(state.assembly),status=availability(id,{width:W,height:H,...geometry},A),cx=coneCenter(W,geometry.anchor),seam=seamMode(state.seam??state.romboSeam),parts=[],colour={C:'#e5be68',L:'#78b8e8',R:'#d99bc9'};
+  const dedupeAvailable=status.available&&hasDuplicate(id,W,A,cx),collapse=dedupeAvailable&&seam==='dedupe';
+  const mask=key=>shape(Array.from({length:A},(_,r)=>({y:r,left:Math.max(0,key==='C'?Math.floor(cx-.5)-r:key==='L'?0:W-r-1),right:Math.min(W,key==='C'?Math.ceil(cx+.5)+r:key==='L'?r+1:W)})));
   const C=mask('C'),L=mask('L'),R=mask('R'),add=(key,matrix,id,label,source=key==='C'?C:key==='L'?L:R,extra={})=>{if(source.outline.length)parts.push({...source,id,label,sourceKey:key,color:colour[key],matrix,...extra});};
   if(status.available){
    if(id===17){
-    const half=Math.max(cx-C.left,C.right-cx),base=[{matrix:[1,0,0,1,0,0],bottom:false},{matrix:[-1,0,0,-1,2*cx,2*A],bottom:true}];
-    for(const b of base)for(const left of [true,false]){
-     const sourceLeft=b.bottom?!left:left,source=shape(C.rows.map(r=>({...r,left:sourceLeft?r.left:Math.max(r.left,cx),right:sourceLeft?Math.min(r.right,cx):r.right}))),sourceQuarter=b.bottom?(left?4:3):(left?1:2),targetQuarter=({1:3,2:4,3:1,4:2})[sourceQuarter],m=b.matrix.slice();m[4]+=left?half:-half;m[5]+=b.bottom?-A:A;
-     add('C',m,'quarter'+sourceQuarter,sourceQuarter+'→'+targetQuarter,source,{quadrant:sourceQuarter,sourceQuarter,targetQuarter});
+    // With an odd cone both halves receive the whole middle column. When
+    // collapsing, only the native left half keeps it, before the exchange.
+    const leftEnd=Math.ceil(cx),rightStart=collapse?leftEnd:Math.floor(cx);
+    const left=shape(C.rows.map(r=>({...r,right:Math.min(r.right,leftEnd)})));
+    const right=shape(C.rows.map(r=>({...r,left:Math.max(r.left,rightStart)})));
+    for(const bottom of [false,true]){
+     const halves=bottom?[right,left]:[left,right];
+     let dest=bottom?2*cx-C.right:C.left;
+     // The right quarter becomes the leftmost one; each translation uses
+     // its actual width, including clipped or empty off-centre cones.
+     for(const index of [1,0]){
+      const source=halves[index],quarter=bottom?(index?3:4):(index?2:1),target=({1:3,2:4,3:1,4:2})[quarter];
+      const matrix=bottom?[-1,0,0,-1,dest+source.right,A]:[1,0,0,1,dest-source.left,A];
+      add('C',matrix,'quarter'+quarter,quarter+'→'+target,source,{quadrant:quarter,sourceQuarter:quarter,targetQuarter:target});
+      dest+=source.right-source.left;
+     }
     }
    }else{
     add('C',[1,0,0,1,0,0],'top','C: центральный треугольник');
     if(id===16)add('C',[-1,0,0,-1,2*cx,2*A],'lower','C: поворот 180° вниз');
     else for(let slot=0;slot<2;slot++){
-     const choice=slot?id%4:Math.floor(id/4),key=choice%2?'R':'L',src=key==='L'?L:R,sourceMid=(src.left+src.right)/2,normal=key==='L'?[-1,0,0,-1,cx+.5,2*A]:[-1,0,0,-1,cx+W-.5,2*A];
-     // Exchange complete pieces by translation; reflect each chosen piece
-     // about its own centre, including its mask, without fitting its shape.
-     normal[4]+=(slot===0?0:1)*(A-.5)-(key==='R'?A-.5:0);
-     if(choice>=2){normal[4]+=normal[0]*2*sourceMid;normal[0]*=-1;}
-     add(key,normal,'lower'+slot,(slot?'Низ справа: ':'Низ слева: ')+choiceNames[choice]);
+     const side=sidePiece(id,slot,W,A),{key,choice,sign}=side;
+     let src=key==='L'?L:R;
+     let dest=Math.ceil(cx)+(slot?0:-side.width);
+     if(slot&&collapse){
+      src=shape(src.rows.map(r=>sign===1?{...r,left:Math.max(r.left,side.column+1)}:{...r,right:Math.min(r.right,side.column)}));
+      dest--;
+     }
+     add(key,[sign,0,0,-1,dest+(sign===1?-side.start:side.end),2*A],'lower'+slot,(slot?'Низ справа: ':'Низ слева: ')+choiceNames[choice],src);
     }
    }
   }
-  return project({...status,mode:'fixed',width:W,height:H,row:A,angle,assembly:id,parts,axis:[{x:C.left,y:A},{x:C.right,y:A}]});
+  return project({...status,mode:'fixed',width:W,height:H,row:A,angle,assembly:id,seam,dedupeAvailable,halfCells:false,parts,axis:[{x:C.left,y:A},{x:C.right+(id===17&&dedupeAvailable&&!collapse?1:0),y:A}]});
  }
  function customAvailability(layout,g){
   if(g.available===false)return {available:false,reason:g.reason||'Нужна плоская проекция исходного поля'};
@@ -63,14 +95,32 @@
   return project({...status,mode:'custom',width:g.width,height:g.height,angle:turnAngle(angle),assembly:null,axis:null,parts});
  }
  function customPlan(layout,geometry,angle=0){return buildCustom(triangles.normalize(layout),geometry,angle);}
+ // On a grid line choose the cell on the positive side in assembly space.
+ // Reflection reverses that choice in source space. Both sides of a join
+ // must use this convention or diagonal sampling can leave a black pixel.
+ function sampleCoordinate(value,reversed,tolerance=1e-9){
+  const half=Math.round(value*2)/2;
+  if(Math.abs(value-half)>=tolerance)return value;
+  return reversed&&Number.isInteger(half)?half-1e-9:half;
+ }
  function project(config){
   const {angle,parts}=config;
   const radians=angle*Math.PI/180,c=Math.abs(Math.cos(radians))<1e-12?0:Math.cos(radians),s=Math.abs(Math.sin(radians))<1e-12?0:Math.sin(radians),rotation=[c,s,-s,c,0,0];let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
   for(const t of parts)for(const vertex of t.outline){const p=point(rotation,point(t.matrix,vertex));minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y);}
   if(!parts.length){minX=minY=0;maxX=maxY=1;}rotation[4]=-minX;rotation[5]=-minY;
   const result={...config,rotation,outputWidth:maxX-minX,outputHeight:maxY-minY,forward:p=>point(rotation,p),unrotate:p=>inverse(rotation,p)};
-  const snap=value=>Math.abs(value*2-Math.round(value*2))<1e-9?Math.round(value*2)/2:value;
-  result.pick=p=>{const q=result.unrotate(p);for(let i=parts.length-1;i>=0;i--){const tile=parts[i],src=inverse(tile.matrix,q);src.x=snap(src.x);src.y=snap(src.y);if(tile.contains(src.x,src.y))return {...src,part:tile.id,sourceKey:tile.sourceKey};}return null;};return result;
+
+  result.pick=p=>{
+   const q=result.unrotate(p);
+   for(let i=parts.length-1;i>=0;i--){
+    const tile=parts[i],src=inverse(tile.matrix,q),tolerance=tile.rows?1e-9:5e-10;
+    src.x=sampleCoordinate(src.x,tile.rows&&tile.matrix[0]<0,tolerance);
+    src.y=sampleCoordinate(src.y,tile.rows&&tile.matrix[3]<0,tolerance);
+    if(tile.contains(src.x,src.y))return {...src,part:tile.id,sourceKey:tile.sourceKey};
+   }
+   return null;
+  };
+  return result;
  }
  function draw(ctx,source,p,ratio=1,smoothing=false){
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.imageSmoothingEnabled=smoothing;if(smoothing)ctx.imageSmoothingQuality='high';
@@ -109,11 +159,12 @@
    const x0=Math.max(ox,Math.floor(minX)),x1=Math.min(ox+width,Math.ceil(maxX)),y0=Math.max(oy,Math.floor(minY)),y1=Math.min(oy+height,Math.ceil(maxY));
    const edges=tile.rows?null:tile.outline.map((v,i)=>{const w=tile.outline[(i+1)%tile.outline.length],dx=w.x-v.x,dy=w.y-v.y;return [-dy,dx,dy*v.x-dx*v.y,-1e-7*Math.hypot(dx,dy)];});
    const rows=tile.rows?new Map(tile.rows.map(row=>[row.y,row])):null;
+   const reverseX=rows&&T[0]<0,reverseY=rows&&T[3]<0;
    for(let y=y0;y<y1;y++){
     const rowX=ic*(y+.5)/quality+ie,rowY=id*(y+.5)/quality+iff;
     for(let x=x0;x<x1;x++){
      const sx=ia*(x+.5)/quality+rowX,sy=ib*(x+.5)/quality+rowY;
-     const hx=Math.round(sx*2)/2,hy=Math.round(sy*2)/2,px=Math.abs(sx-hx)<1e-9?hx:sx,py=Math.abs(sy-hy)<1e-9?hy:sy;
+     const px=sampleCoordinate(sx,reverseX),py=sampleCoordinate(sy,reverseY);
      if(rows){const row=rows.get(Math.floor(py));if(!row||px<row.left||px>=row.right)continue;}
      else {let inside=true;for(const edge of edges)if(edge[0]*px+edge[1]*py+edge[2]<edge[3]){inside=false;break;}if(!inside)continue;}
      const sourceX=Math.floor(px*sxScale),sourceY=Math.floor(py*syScale);if(sourceX>=0&&sourceX<sw&&sourceY>=0&&sourceY<sh)out[(y-oy)*width+x-ox]=src[sourceY*sw+sourceX];
@@ -156,7 +207,10 @@
   }
   function get(g=geometry()){
    const s=o.state(),assembly=normalise(s.romboAssembly),row=Math.max(1,Math.min(g.height,Math.round(s.romboRow??g.height))),mode=s.romboMode==='custom'?'custom':'fixed';
-   return {on:!!s.edgeRhombOn,row,maxRow:Math.max(1,Math.round(g.height)),angle:((Number(s.romboAngle)||0)%360+360)%360,assembly,mode,precisionError:precisionMessage,...(mode==='custom'?customAvailability(layout(),g):availability(assembly,g,row))};
+   const status=mode==='custom'?customAvailability(layout(),g):availability(assembly,g,row);
+   const dedupeAvailable=mode==='fixed'&&status.available&&hasDuplicate(assembly,g.width,row,coneCenter(g.width,g.anchor));
+   return {on:!!s.edgeRhombOn,row,maxRow:Math.max(1,Math.round(g.height)),angle:((Number(s.romboAngle)||0)%360+360)%360,
+    assembly,mode,seam:seamMode(s.romboSeam),dedupeAvailable,precisionError:precisionMessage,...status};
   }
   let planKey='',plans=new Map();
   function makePlan(assembly,g=geometry(),s=get(g)){
@@ -165,12 +219,12 @@
     if(!custom||key!==customKey){customKey=key;custom=buildCustom(pieces,g,s.angle);}
     return custom;
    }
-   const id=normalise(assembly??s.assembly),key=[g.width,g.height,g.anchor,g.available,g.reason,g.sides,s.row,s.angle].join(':');
+   const id=normalise(assembly??s.assembly),key=[g.width,g.height,g.anchor,g.available,g.reason,g.sides,s.row,s.angle,s.seam].join(':');
    if(key!==planKey){planKey=key;plans.clear();}if(!plans.has(id))plans.set(id,plan(g.width,g.height,{...s,assembly:id},g));return plans.get(id);
   }
   // Direct state restore/reset and geometry changes also pass through render.
   // Publish only an effective change, so the legend/menu need no frame polling.
-  function publish(g=geometry(),state=get(g)){const selected=state.mode==='custom'?layoutRef:null,key=[state.mode,state.on,state.row,state.maxRow,state.angle,state.assembly,state.available,state.reason,g.width,g.anchor,g.sides].join(':');if(key===stateKey&&publishedLayout===selected)return;stateKey=key;publishedLayout=selected;win.dispatchEvent(new win.Event('may-rombo-change'));}
+  function publish(g=geometry(),state=get(g)){const selected=state.mode==='custom'?layoutRef:null,key=[state.mode,state.on,state.row,state.maxRow,state.angle,state.assembly,state.seam,state.dedupeAvailable,state.available,state.reason,g.width,g.anchor,g.sides].join(':');if(key===stateKey&&publishedLayout===selected)return;stateKey=key;publishedLayout=selected;win.dispatchEvent(new win.Event('may-rombo-change'));}
   function notify(){o.changed?.();publish();}
   function render(layoutOnly=false){
    try{if(precision()){const p=o.precisionPolicy?.();if(p&&!p.ok)throw Error(p.reason);}renderFrame(layoutOnly);if(precision()&&!layoutOnly){if(!viewportMode())canvas.style.display='';if(precisionMessage){precisionMessage='';o.onPrecisionError?.('');}}}
@@ -261,7 +315,7 @@
   }
   for(const type of ['pointerdown','pointermove','pointerup','pointercancel','mousedown','mousemove','mouseup','click','dblclick','contextmenu','wheel'])win.addEventListener(type,input,{capture:true,passive:false});
   const permit=patch=>!o.allowState||o.allowState({...o.state(),...patch})!==false;
-  const api={get,options:()=>variants.map(v=>{const item={...v,...availability(v.id,geometry(),get().row)},next={romboMode:'fixed',romboAssembly:v.id};if(item.available&&!permit(next)){item.available=false;item.reason=o.stateReason?.(next)||'Сборка несовместима с точной сеткой.';}return item;}),plan:makePlan,render,screenTiles:()=>visibleTiles.slice(),physicalPoint:event=>events.get(event),capture,setMode(value){const mode=value==='custom'?'custom':'fixed';if(!permit({romboMode:mode}))return;o.state().romboMode=mode;notify();},set(value){if(!permit({edgeRhombOn:!!value}))return;o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n||!permit({romboRow:n}))return;s.romboRow=n;notify();},cycleAngle(dir=1){const angle=(get().angle+(dir<0?315:45))%360;if(!permit({romboAngle:angle}))return;o.state().romboAngle=angle;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available||!permit({romboMode:'fixed',romboAssembly:n}))return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
+  const api={get,options:()=>variants.map(v=>{const item={...v,...availability(v.id,geometry(),get().row)},next={romboMode:'fixed',romboAssembly:v.id};if(item.available&&!permit(next)){item.available=false;item.reason=o.stateReason?.(next)||'Сборка несовместима с точной сеткой.';}return item;}),plan:makePlan,render,screenTiles:()=>visibleTiles.slice(),physicalPoint:event=>events.get(event),capture,setSeam(value){const seam=seamMode(value);if(seam===get().seam||!permit({romboSeam:seam}))return;o.state().romboSeam=seam;notify();},setMode(value){const mode=value==='custom'?'custom':'fixed';if(!permit({romboMode:mode}))return;o.state().romboMode=mode;notify();},set(value){if(!permit({edgeRhombOn:!!value}))return;o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n||!permit({romboRow:n}))return;s.romboRow=n;notify();},cycleAngle(dir=1){const angle=(get().angle+(dir<0?315:45))%360;if(!permit({romboAngle:angle}))return;o.state().romboAngle=angle;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available||!permit({romboMode:'fixed',romboAssembly:n}))return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
  }
  return {plan,customPlan,point,inverse,draw,rasterPixels,viewportTiles,mount,variants,normalise};
 });

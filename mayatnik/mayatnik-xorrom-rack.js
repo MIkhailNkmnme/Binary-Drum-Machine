@@ -93,7 +93,7 @@
         async getSnapshot(req){const spec=data.axis,ref=data.template,source=await capture(req);if(ref)return templateModule().project(source,ref.mask,{cancelled:()=>req.cancelled()||data.template!==ref});if(!spec)return source;
           return axisModule().project(source,spec,{cancelled:()=>req.cancelled()||data.axis!==spec});},audioBus:bus,trackId:data.id,muted:data.muted,getCue:()=>data.row,setCue:row=>{if(data.row!==row){data.row=row;persist();}},
         getSettings:()=>data.settings,setSettings:s=>{data.settings=s;persist();},onSelect:()=>select(data.id)});
-      const slot={host,data,templateKey:null};slots.set(data.id,slot);host.subscribe(()=>{if(selected===data.id)emit();});return slot;
+      const slot={host,data,templateKey:null};slots.set(data.id,slot);host.subscribe(emit);return slot;
     }
     function load(value){changed=true;try{for(const s of slots.values())s.host.dispose();slots.clear();pending.clear();selected=value.selected;value.tracks.forEach(insert);identify();}finally{changed=false;}emit();}
     function refresh(){
@@ -130,7 +130,7 @@
         function settle(s){if(waiting.delete(s)&&!waiting.size)release(arrived?bus.context().currentTime+.035:0);}
         return Promise.all(all.map(s=>waiting.has(s)?s.host.start(()=>{arrived=true;settle(s);return clock;}).finally(()=>settle(s)):s.host.start()));
       },stopAll(){for(const s of slots.values())s.host.stop();},
-      anyActive:()=>[...slots.values()].some(s=>s.host.getState().state!=='stopped'),getStream:()=>bus.stream(),getRack:serialize,getTrackList:()=>({selected,tracks:[...slots.values()].map(({data:{id,name,color,muted}})=>({id,name,color,muted}))}),select,
+      anyActive:()=>[...slots.values()].some(s=>{const v=s.host.getState();return v.state!=='stopped'||v.updating;}),getStream:()=>bus.stream(),getRack:serialize,getTrackList:()=>({selected,tracks:[...slots.values()].map(({data:{id,name,color,muted}})=>({id,name,color,muted}))}),select,
       add(){let id=1;while(slots.has(id))id++;const source=active().data;const d=normalize({version:1,tracks:[{id,settings:source.settings,row:source.row,axis:source.axis,axisName:source.axisName,template:source.template}]}).tracks[0];insert(d);selected=id;identify();persist();return id;},
       remove(){if(slots.size<=1)return false;const slot=active();slots.delete(selected);selected=slots.keys().next().value;slot.host.dispose();identify();persist();return true;},
       setMuted(v){const a=active();a.data.muted=!!v;a.host.setMuted(!!v);identify();persist();},

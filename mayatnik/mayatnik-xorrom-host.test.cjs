@@ -121,7 +121,7 @@ test('reading line outlines contiguous ones on the full figure, including clippe
  await f.api.start();const marker=f.doc.getElementById('mayXorromRow'),path=marker.querySelector('path');
  const step=index=>f.opts.onStep({index,notes:[],manual:true});
  step(0);assert.equal(path.getAttribute('d'),'M0 0h30v20h-30Z M50 0h20v20h-20Z');
- assert.equal(path.getAttribute('fill'),'rgba(255,184,48,.28)');assert.equal(path.getAttribute('stroke'),'#fff2a6');assert.match(path.style.filter,/drop-shadow/);assert.equal(path.getAttribute('vector-effect'),'non-scaling-stroke');assert.equal(path.parentElement.style.pointerEvents,'none');
+ assert.equal(path.getAttribute('fill'),'#ff3030');assert.equal(path.getAttribute('stroke'),'#ff3030');assert.match(path.style.filter,/drop-shadow/);assert.equal(path.getAttribute('vector-effect'),'non-scaling-stroke');assert.equal(path.parentElement.style.pointerEvents,'none');
  const line=marker.querySelector('[data-xorrom-line]');assert.equal(line.style.height,'1px');assert.equal(line.style.top,'9.5px');assert.equal(marker.style.border,'');assert.equal(marker.style.boxShadow,'');
  f.api.pause();step(1);assert.equal(path.getAttribute('d'),'M0 0h20v20h-20Z M30 0h10v20h-10Z M50 0h10v20h-10Z');
  x=-45;w=350;step(0);assert.equal(path.getAttribute('d'),'M-55 0h150v20h-150Z M195 0h100v20h-100Z');
@@ -130,3 +130,8 @@ test('reading line outlines contiguous ones on the full figure, including clippe
  assert.equal(path.getAttribute('d'),'M0 0h60v20h-60Z M100 0h40v20h-40Z');
  step(2);assert.equal(path.hasAttribute('d'),false);step(1);f.api.stop();assert.equal(path.hasAttribute('d'),false);f.close();
 });
+
+ test('red source cells use cyan, normal ones use red, and row labels follow actual endpoints',async()=>{
+ const f=fixture({getSnapshot:async()=>({width:4,height:1,rows:[{bits:Int8Array.from([1,1,0,1]),rgb:Int8Array.from([7,7,0,4]),red:Uint8Array.from([1,1,0,0])}]}),figure:(doc,source)=>{source.getBoundingClientRect=()=>({left:40,right:120,top:30,bottom:50,width:80,height:20});return source;}});
+ try{await f.api.start();f.opts.onStep({index:0,notes:[]});const m=f.doc.getElementById('mayXorromRow'),paths=m.querySelectorAll('path');assert.equal(paths[0].getAttribute('d'),'M60 0h20v20h-20Z');assert.equal(paths[1].getAttribute('d'),'M0 0h40v20h-40Z');assert.match(m.querySelector('[data-xorrom-line]').style.background,/transparent/);const labels=f.doc.querySelectorAll('[data-xorrom-edge]');assert.match(labels[0].textContent,/Срез 0$/);assert.equal(labels[0].style.left,'40px');assert.equal(labels[1].style.right,(f.win.innerWidth-120)+'px');assert.equal(f.snapshot.rows[0].bits[0],1);}finally{f.close();}
+ });

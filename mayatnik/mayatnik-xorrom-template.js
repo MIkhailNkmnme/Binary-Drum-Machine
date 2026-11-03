@@ -31,12 +31,12 @@
    const nw=score.nativeWidth;if(!Number.isSafeInteger(nw)||nw<1)throw RangeError('Хорром: нет ширины исходного поля шаблона.');
    for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(--budget===0){await yieldTask();check();budget=32768;}const q=score.nativeAt(x,y);if(Number.isSafeInteger(q)&&q>=0&&contains(q%nw,Math.floor(q/nw)))indices.push(y*w+x);}
   }else for(let i=0;i<mask.runs.length;i+=3){const y=mask.runs[i];if(y>=h)continue;for(let x=mask.runs[i+1];x<Math.min(w,mask.runs[i+2]);x++){if(--budget===0){await yieldTask();check();budget=32768;}indices.push(y*w+x);}}
-  const bits=new Int8Array(indices.length),rgb=new Int8Array(indices.length).fill(-1),colors=new Uint32Array(8);let ones=0,total=0,representative=-1;
+  const red=score.rows[0]?.red?new Uint8Array(indices.length):null,bits=new Int8Array(indices.length),rgb=new Int8Array(indices.length).fill(-1),colors=new Uint32Array(8);let ones=0,total=0,representative=-1;
   for(let j=0;j<indices.length;j++){if(--budget===0){await yieldTask();check();budget=32768;}const q=indices[j],x=q%w,row=score.rows[Math.floor(q/w)];let bit=row.bits?.[x];if(bit!==0&&bit!==1)bit=-1;
    let code=-1;if(bit>=0){if(row.rgb){code=row.rgb[x];if(!Number.isInteger(code)||code<0||code>7){bit=-1;code=-1;}}else code=4*bit+(row.bits[x-1]===1?2:0)+(row.bits[x+1]===1?1:0);}
-   bits[j]=bit;rgb[j]=code;if(bit>=0){ones+=bit;total++;colors[code]++;if(representative<0||Math.abs(2*j-indices.length+1)<Math.abs(2*representative-indices.length+1))representative=j;}
+   bits[j]=bit;rgb[j]=code;if(red&&bit>=0)red[j]=row.red?.[x]||0;if(bit>=0){ones+=bit;total++;colors[code]++;if(representative<0||Math.abs(2*j-indices.length+1)<Math.abs(2*representative-indices.length+1))representative=j;}
   }
-  check();const geometry=representative>=0&&score.rows[Math.floor(indices[representative]/w)].geometry,row={bits,indices:Uint32Array.from(indices),rgb,ones,total,colors,...(geometry?{geometry}:{})};
+  check();const geometry=representative>=0&&score.rows[Math.floor(indices[representative]/w)].geometry,row={bits,indices:Uint32Array.from(indices),rgb,ones,total,colors,...(red?{red}:{}),...(geometry?{geometry}:{})};
   return {...score,width:bits.length,height:1,rows:[row],template:true};
  }
  return {normalize,build,project};

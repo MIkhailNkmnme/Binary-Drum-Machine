@@ -103,7 +103,8 @@
       button('trackStop','■ Дорожка','Остановить выбранную дорожку.',()=>safe(()=>api.stop()));
       const mute=button('trackMute','Без звука','Заглушить или вернуть звук выбранной дорожки. Линия продолжает читать поле.',()=>safe(()=>{const r=api.getRack();api.setMuted(!r.tracks.find(t=>t.id===r.selected).muted);}));
       button('tracksStart','▶ Все','Одновременно запустить все дорожки.',()=>run(()=>api.startAll()));
-      button('tracksStop','■ Все','Остановить все дорожки.',()=>safe(()=>api.stopAll()));
+      const allOff=button('tracksStop','■ Выкл','Выключить всю музыку: остановить все дорожки и фон, сохранив настройки.',()=>safe(()=>api.stopAll()));
+      bindings.push((s,current)=>{allOff.node.disabled=!(pending||(api.anyActive?api.anyActive():current.updating||current.state!=='stopped'));});
       if(api.setAxis){
         let catalogue=[];
         if(api.addTemplates)button('tracksTemplates','＋ Шаблоны','Создать по дорожке для каждого выделенного шаблона. Весь шаблон звучит одним срезом из текущих битов под маской.',()=>safe(()=>{const ids=api.addTemplates();notice='Добавлено дорожек: '+ids.length;}));
@@ -241,7 +242,7 @@
     // These existing nodes move together into Library → Music. Quick transport
     // stays directly on the rail; grouping never replaces the live inputs.
     const categories=[
-      ['tracks','Дорожки',['track','trackName','trackAdd','trackRemove','trackPlay','trackStop','trackMute','tracksStart','tracksStop']],
+      ['tracks','Дорожки',['tracksStop','track','trackName','trackAdd','trackRemove','trackPlay','trackStop','trackMute','tracksStart']],
       ['reading','Чтение / Оси',['tracksTemplates','trackAxis','trackAxes','trackAxisx1','trackAxisy1','trackAxisx2','trackAxisy2','trackAxisFixed','trackAxisReverse','first','last','stride','loop','live','restartOnFrame']],
       ['notes','Ноты / Ритм',['source','bpm','division','scale','tonic','octave','chord','arpMode','arpGate','swing','autoGeometry','geometrySource','geometryConnectivity']],
       ['sound','Тембр / Громкость / Фон',['electro','timbre','gain','backing','backingTimbre','backingGain','backingRows']],
@@ -251,7 +252,9 @@
     for(const [id,title,keys]of categories){const controls=keys.map(key=>nodes.find(node=>node.dataset.xorrom===key&&node.parentElement===host)).filter(Boolean);if(!controls.length)continue;
       const section=doc.createElement('section');section.className='may-xorrom-group';section.dataset.xorromGroup=id;section.setAttribute('aria-label',title);
       const heading=doc.createElement('h4');heading.className='may-xorrom-group-title';heading.textContent=title;
-      const grid=doc.createElement('div');grid.className='may-xorrom-grid';grid.append(...controls);section.append(heading,grid);host.append(section);nodes.push(section);
+      const grid=doc.createElement('div');grid.className='may-xorrom-grid';grid.append(...controls);
+      grid.querySelectorAll('.zcf-outline').forEach(svg=>svg.setAttribute('preserveAspectRatio','none'));
+      section.append(heading,grid);host.append(section);nodes.push(section);
     }
     function sync(){
       if(destroyed)return;

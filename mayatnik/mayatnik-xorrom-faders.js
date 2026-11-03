@@ -35,7 +35,9 @@
     function sync(){
       if(disposed)return;
       const playing=api.getState?.().state==='playing';
+      const appeared=panel.hidden&&playing;
       panel.hidden=!playing;
+      if(appeared)position();
       const s=api.getSettings(),bpm=s.bpm,gain=s.gain;
       if(Number.isFinite(gain)){
         const percent=Number((gain*100).toPrecision(12));
@@ -43,9 +45,9 @@
       }
       if(!positive(bpm))return;
       if(bpm<low)low=below(bpm);if(bpm>high)high=above(bpm);
-      const position=Math.round(1000*(Math.log(bpm)-Math.log(low))/(Math.log(high)-Math.log(low)));
+      const tempoPosition=Math.round(1000*(Math.log(bpm)-Math.log(low))/(Math.log(high)-Math.log(low)));
       const exact=String(bpm),short=exact.length<=6?exact:bpm.toPrecision(3).replace(/\.0+(e|$)/,'$1');
-      show(tempo,position,short,exact+' BPM');
+      show(tempo,tempoPosition,short,exact+' BPM');
     }
     volume.input.addEventListener('input',()=>{
       if(disposed)return;
@@ -77,13 +79,24 @@
     const observer=win.ResizeObserver?new win.ResizeObserver(position):null;
     function position(){
       if(disposed)return;
+      let boundary=win.innerWidth,sideWindow=false;
+      for(const [id,selector]of [['mayatnikTemplatePanel','.mtp-resize:not(.may-music-resize)'],['mayMusicSettingsPanel','.may-music-resize']]){
+        const window=doc.getElementById(id);if(!window||window.hidden)continue;
+        const rect=window.getBoundingClientRect();if(!(rect.width>0&&rect.height>0))continue;
+        sideWindow=true;boundary=Math.min(boundary,rect.left);
+        const handle=doc.querySelector(selector);if(handle&&!handle.hidden){const h=handle.getBoundingClientRect();if(h.width>0&&h.height>0&&h.left+h.width>=rect.left-1)boundary=Math.min(boundary,h.left);}
+      }
+      panel.style.setProperty('--may-xorrom-fader-width',sideWindow&&boundary<58?'20px':'24px');
+      panel.style.setProperty('--may-xorrom-fader-gap',sideWindow&&boundary<58?'2px':'4px');
+      panel.style.visibility=sideWindow&&boundary<48?'hidden':'';
       const target=typeof anchor==='function'?anchor():anchor,r=target?.getBoundingClientRect?.()||target;
       if(target?.nodeType===1&&observed!==target){if(observed)observer?.unobserve(observed);observed=target;observer?.observe(target);}
+      if(sideWindow){panel.style.right=Math.max(0,win.innerWidth-boundary+6)+'px';panel.style.top=Math.max(60,Math.min(win.innerHeight-60,r?.top!=null?r.top+r.height/2:win.innerHeight/2))+'px';return;}
       if(!r||!(r.width>0&&r.height>0)){panel.style.removeProperty('right');panel.style.removeProperty('top');return;}
       panel.style.right=Math.max(0,Math.min(win.innerWidth-52,Math.max(94,win.innerWidth-r.left+6)))+'px';
       panel.style.top=Math.max(60,Math.min(win.innerHeight-60,r.top+r.height/2))+'px';
     }
-    const events=['resize','load','mayatnik-template-panel-change','mayatnik-template-panel-resize'];
+    const events=['resize','load','mayatnik-template-panel-change','mayatnik-template-panel-resize','mayatnik-music-panel-change','mayatnik-music-panel-resize'];
     events.forEach(type=>win.addEventListener(type,position));win.visualViewport?.addEventListener('resize',position);
     const unsubscribe=api.subscribe(sync);
     sync();position();if(win.requestAnimationFrame)queued=win.requestAnimationFrame(position);

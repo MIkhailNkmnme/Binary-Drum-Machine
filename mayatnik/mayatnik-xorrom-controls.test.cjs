@@ -36,6 +36,12 @@ test('library groups reuse all live controls and leave quick transport directly 
  }finally{a.control.destroy();a.dom.window.close();}
 });
 
+test('global off can cancel preparation before any track reports playing',async()=>{
+ let finish,stops=0;const tracks=[{id:1,name:'Main',color:'#c29bff',muted:false}];
+ const a=boot({getRack:()=>({selected:1,tracks}),anyActive:()=>false,startAll:()=>new Promise(resolve=>finish=resolve),stopAll(){stops++;finish();}});
+ try{const off=a.el('tracksStop');assert.equal(off.disabled,true);a.el('tracksStart').click();assert.equal(off.disabled,false);off.click();assert.equal(stops,1);await flush();assert.equal(off.disabled,true);assert.deepEqual(a.patches,[]);}finally{a.dom.window.close();}
+});
+
 test('side arrows keep numeric bounds, decimal conversions, unrestricted BPM and manual focus',()=>{
  const a=boot(),side=(key,dir)=>a.el(key).querySelector('[data-xorrom-step="'+dir+'"]');try{
   a.change('bpm',999.25);side('bpm',1).click();assert.equal(a.api.getSettings().bpm,1000.25);assert.equal(a.input('bpm').hasAttribute('max'),false);
@@ -255,7 +261,7 @@ test('late-loaded shared frame supplies real side contours; axis coordinates rem
 
 test('music grid CSS is scoped, uses standard columns/gaps and hides native field arrows',()=>{
  const css=require('node:fs').readFileSync(__dirname+'/mayatnik-xorrom-controls.css','utf8');
- assert.match(css,/#mayMusicPane \.may-xorrom-grid\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(min\(120px,100%\),120px\)\);gap:2px 6px/);
+ assert.match(css,/:is\(#mayMusicPane,#mayMusicSettingsPane\) \.may-xorrom-grid\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(min\(120px,100%\),120px\)\);gap:2px 6px/);
  assert.match(css,/\.may-xorrom-value>\.gz-h1[^}]*appearance:none/);assert.match(css,/::-webkit-inner-spin-button/);assert.match(css,/\.may-xorrom-value:focus-within/);
 });
 

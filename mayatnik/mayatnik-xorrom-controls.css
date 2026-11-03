@@ -33,10 +33,33 @@ a.may-xorrom-control{display:flex;align-items:center;justify-content:center;text
 
 /* Only Library Music gets the multi-column arrangement. Shared control nodes,
    including focused inputs and selected states, stay intact when moved here. */
-#mayMusicPane .mtp-live-controls{align-self:stretch;min-width:0;width:100%;max-width:100%}
-#mayMusicPane .mtp-live-controls>.may-xorrom-group{display:block;box-sizing:border-box;flex:none;width:100%;min-width:0;margin:0;padding:0 2px 4px}
-#mayMusicPane .may-xorrom-group-title{margin:2px 0;font:11px/16px "Segoe UI",sans-serif;color:var(--c,#c29bff);user-select:none}
-#mayMusicPane .may-xorrom-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(120px,100%),120px));gap:2px 6px;align-items:start;min-width:0;width:100%}
-#mayMusicPane .may-xorrom-grid>.may-xorrom-control{position:relative;box-sizing:border-box;margin:0;max-width:100%}
-#mayMusicPane .may-xorrom-group[data-xorrom-group="files"] :is(.may-xorrom-status,.may-xorrom-notes,.may-xorrom-geometry,.may-xorrom-legend){grid-column:1/-1;width:100%!important;min-width:0;justify-content:flex-start}
-#mayMusicPane .may-xorrom-status>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+:is(#mayMusicPane,#mayMusicSettingsPane) .mtp-live-controls{align-self:stretch;min-width:0;width:100%;max-width:100%}
+:is(#mayMusicPane,#mayMusicSettingsPane) .mtp-live-controls>.may-xorrom-group{display:block;box-sizing:border-box;flex:none;width:100%;min-width:0;margin:0;padding:0 2px 4px}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group-title{margin:2px 0;font:11px/16px "Segoe UI",sans-serif;color:var(--c,#c29bff);user-select:none}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(120px,100%),120px));gap:2px 6px;align-items:start;min-width:0;width:100%}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-grid>.may-xorrom-control{position:relative;box-sizing:border-box;margin:0;max-width:100%}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group[data-xorrom-group="files"] :is(.may-xorrom-status,.may-xorrom-notes,.may-xorrom-geometry,.may-xorrom-legend){grid-column:1/-1;width:100%!important;min-width:0;justify-content:flex-start}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-status>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+
+/* Music alone uses 20px rows. Keep the existing live nodes and side arrows;
+   the shared frame SVG scales vertically with its control. */
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group[data-xorrom-group="tracks"]{--c:#c29bff}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group[data-xorrom-group="reading"]{--c:#72baff}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group[data-xorrom-group="notes"]{--c:#75d99b}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group[data-xorrom-group="sound"]{--c:#f2c66d}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group[data-xorrom-group="effects"]{--c:#ec94cf}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group[data-xorrom-group="files"]{--c:#76d6d1}
+:is(#mayMusicPane,#mayMusicSettingsPane) .mtp-live-controls>.may-xorrom-group{border:1px solid var(--c);padding:0 2px 2px;background:#0e1116}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-group-title{margin:0;font:11px/20px "Segoe UI",sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control{--c:inherit;--gz-h:20px;height:20px!important;min-height:20px!important;max-height:20px;line-height:20px}
+:is(#mayMusicPane,#mayMusicSettingsPane) button{height:20px!important;min-height:20px!important;max-height:20px}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.gz-pair>.gz-half{height:20px;min-height:0}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.zcf-control>.zcf-side,
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.zcf-control>.zcf-middle{height:20px!important;min-height:20px}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.zcf-control>.zcf-left{clip-path:polygon(12px 0,24px 0,24px 20px,12px 20px,0 10px)!important}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.zcf-control>.zcf-right{clip-path:polygon(0 0,12px 0,24px 10px,12px 20px,0 20px)!important}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.zcf-control .zcf-outline{height:20px}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.zcf-control>.may-xorrom-value>.gz-h0{height:9px;font:9px/9px "Segoe UI",sans-serif}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.zcf-control>.may-xorrom-value>.gz-h1{height:11px;font:11px/11px "Segoe UI",sans-serif}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control.zcf-control{--zcf-base:var(--c)}
+:is(#mayMusicPane,#mayMusicSettingsPane) .may-xorrom-control[data-xorrom="electro"][aria-pressed="true"]{background:var(--c)!important}

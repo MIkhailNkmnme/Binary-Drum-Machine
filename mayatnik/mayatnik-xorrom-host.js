@@ -17,8 +17,8 @@
       }
     }
     function hide(){if(!item.y)return;item.y=null;labels.forEach(el=>el.hidden=true);arrange();}
-    return {hide,show(left,right,value,name,color,rightInset=0){if(![left,right].every(Number.isFinite)){hide();return;}
-      labels[1].style.right=rightInset+'px';item.y=[left,right];for(const el of labels){el.hidden=false;el.textContent=(id?'№'+id+' · ':'')+value;el.title=name;el.style.color=color;}arrange();},
+    return {hide,show(left,right,value,name,color,rightInset=0,endpoints=null){if(![left,right].every(Number.isFinite)){hide();return;}
+      labels[0].style.left=(endpoints?.left??0)+'px';labels[1].style.right=(endpoints?Math.max(0,(win.innerWidth||doc.documentElement.clientWidth)-endpoints.right):rightInset)+'px';item.y=[left,right];for(const el of labels){el.hidden=false;el.textContent=(id?'№'+id+' · ':'')+value;el.title=name;el.style.color=color;}arrange();},
       destroy(){group.delete(item);labels.forEach(el=>el.remove());arrange();}};
   }
   function mount(options={}){
@@ -37,33 +37,38 @@
     marker.append(readingLine);
     const ns='http://www.w3.org/2000/svg',outline=doc.createElementNS(ns,'svg'),runs=doc.createElementNS(ns,'path');
     outline.setAttribute('aria-hidden','true');Object.assign(outline.style,{position:'absolute',left:'0',pointerEvents:'none',overflow:'hidden'});
-    runs.setAttribute('fill','rgba(255,184,48,.28)');runs.setAttribute('stroke','#fff2a6');runs.setAttribute('stroke-width','1');runs.setAttribute('vector-effect','non-scaling-stroke');runs.setAttribute('shape-rendering','crispEdges');runs.style.filter='drop-shadow(0 0 3px #ffac28)';outline.append(runs);marker.append(outline);
+    runs.setAttribute('fill','#ff3030');runs.setAttribute('stroke','#ff3030');runs.setAttribute('stroke-width','1');runs.setAttribute('vector-effect','non-scaling-stroke');runs.setAttribute('shape-rendering','crispEdges');runs.style.filter='drop-shadow(0 0 3px #ffac28)';const contrast=runs.cloneNode();contrast.setAttribute('fill','#00e5ff');contrast.setAttribute('stroke','#00e5ff');contrast.style.filter='drop-shadow(0 0 2px #00e5ff)';outline.append(runs,contrast);marker.append(outline);
     const sourceFigure=()=>typeof options.figure==='function'?options.figure():options.figure;
     const sourceRect=()=>options.figureRect?.()||sourceFigure()?.getBoundingClientRect();
     const overlay=options.axisMarker?.mount({window:win,document:doc,viewport,figureRect:sourceRect,isFigure:target=>sourceFigure()===target,onDragStart:axisDown,onDrag:axisMove,onDragEnd:axisUp,onKey:axisKey});
     function identify({muted=false,name='Xorrom',color='#a674ff',selected=false,multiple:many=false}={}){identity={name,color,selected,muted};multiple=many;readingLine.style.background=color;marker.setAttribute('aria-label','Линия чтения: '+name);hit.title=name+' — перетащить на другую строку';marker.style.zIndex=selected?'2147483646':'2147483645';scheduleMarker();}
     function getState(){return {state,index,notes:notes.map(note=>({...note})),backingNotes:backingNotes.map(note=>({...note})),error,updating,effective:effective?{...effective}:null,geometry:geometry?{...geometry}:null};}
     function publish(){if(!disposed)for(const listener of listeners)listener(getState());}
-    function showRuns(bits,rect,left,right,top,visibleTop,visibleBottom,rowHeight){
+    function showRuns(row,rect,left,right,top,visibleTop,visibleBottom,rowHeight){
+      const bits=row?.bits;contrast.removeAttribute('d');readingLine.style.background=identity.color||'#a674ff';
       // Give the halo room above/below the row, but clip both ends to the
       // visible field. The viewBox keeps paths in the row's screen coordinates.
       outline.style.top=(visibleTop-top)+'px';outline.setAttribute('width',String(right-left));outline.setAttribute('height',String(visibleBottom-visibleTop));outline.setAttribute('viewBox','0 '+(visibleTop-top)+' '+(right-left)+' '+(visibleBottom-visibleTop));
       if(!bits?.length){runs.removeAttribute('d');return;}
       const pitch=rect.width/bits.length,first=Math.max(0,Math.floor((left-rect.left)/pitch)),end=Math.min(bits.length,Math.ceil((right-rect.left)/pitch));
-      const y=rect.top+index*rowHeight-top,paths=[];
+      const y=rect.top+index*rowHeight-top,paths=[],cyan=[],stops=[];
+      // The one-pixel reader remains only in gaps; highlighted cells have no middle stroke.
+      for(let x=0;x<bits.length;x++)if(bits[x]===1){const a=(rect.left+x*pitch-left)/(right-left)*100,b=(rect.left+(x+1)*pitch-left)/(right-left)*100;stops.push(`${identity.color||'#a674ff'} ${a}%`,`transparent ${a}%`,`transparent ${b}%`,`${identity.color||'#a674ff'} ${b}%`);}
+      if(stops.length)readingLine.style.background=`linear-gradient(to right,${identity.color||'#a674ff'} 0%,${stops.join(',')},${identity.color||'#a674ff'} 100%)`;
       for(let x=first;x<end;){
         if(bits[x]!==1){x++;continue;}
-        let from=x++;while(x<end&&bits[x]===1)x++;
+        const isRed=i=>(row.red?row.red[i]:row.rgb?.[i]===4);const red=isRed(x);let from=x++;while(x<end&&bits[x]===1&&isRed(x)===red)x++;
         // A clipped run continues past the viewport. Leave its outside edge
         // offscreen instead of drawing a new vertical border at the clip.
-        if(from===first)while(from>0&&bits[from-1]===1)from--;
-        let to=x;if(x===end)while(to<bits.length&&bits[to]===1)to++;
-        paths.push('M'+(rect.left+from*pitch-left)+' '+y+'h'+((to-from)*pitch)+'v'+rowHeight+'h'+((from-to)*pitch)+'Z');
+        if(from===first)while(from>0&&bits[from-1]===1&&isRed(from-1)===red)from--;
+        let to=x;if(x===end)while(to<bits.length&&bits[to]===1&&isRed(to)===red)to++;
+        (red?cyan:paths).push('M'+(rect.left+from*pitch-left)+' '+y+'h'+((to-from)*pitch)+'v'+rowHeight+'h'+((from-to)*pitch)+'Z');
       }
+      if(cyan.length)contrast.setAttribute('d',cyan.join(' '));
       if(paths.length)runs.setAttribute('d',paths.join(' '));else runs.removeAttribute('d');
     }
     function showMarker(){
-      rowHit=null;labels.hide();frame=null;marker.style.display='none';runs.removeAttribute('d');
+      rowHit=null;labels.hide();frame=null;marker.style.display='none';runs.removeAttribute('d');contrast.removeAttribute('d');
       const axis=options.getAxis?.(),template=options.getTemplate?.(),special=!!(axis||template);
       const parked=state==='stopped'&&(multiple||special);if(!special)overlay?.hide();
       if(disposed||doc.hidden||updating||options.isVisible?.()===false||!parked&&(!lastSnapshot||index<0||!['playing','paused'].includes(state))){if(!angledDrag)overlay?.hide();return;}
@@ -73,8 +78,8 @@
       if(special&&overlay){
         const size=options.getSize(),row=parked?null:lastSnapshot?.rows[index];let onesRuns=row&&runCache.get(row);
         if(!onesRuns&&row?.indices){
-          onesRuns=[];let prev=-2,run=null;for(let i=0;i<row.bits.length;i++)if(row.bits[i]===1){const q=row.indices[i],x=q%size.width,y=Math.floor(q/size.width);
-            if(run&&y===run.y&&(q===prev+1||q===prev-1)){run.x=Math.min(run.x,x);run.length++;}else {run={x,y,length:1};onesRuns.push(run);}prev=q;}
+          onesRuns=[];let prev=-2,run=null;for(let i=0;i<row.bits.length;i++)if(row.bits[i]===1){const q=row.indices[i],x=q%size.width,y=Math.floor(q/size.width),highlight=(row.red?row.red[i]:row.rgb?.[i]===4)?'cyan':'red';
+            if(run&&highlight===run.highlight&&y===run.y&&(q===prev+1||q===prev-1)){run.x=Math.min(run.x,x);run.length++;}else {run={x,y,length:1,highlight};onesRuns.push(run);}prev=q;}
           runCache.set(row,onesRuns);
         }
         const g=axis?(angledDrag?.next?options.getAxisGeometry(angledDrag.next):!parked&&lastSnapshot?.axis||options.getAxisGeometry(axis)):null;
@@ -83,9 +88,9 @@
         const r=sourceRect(),y=row=>r.top+(row+.5)*r.height/size.height;
         const shown=overlay.visibleSegment?.();
         if(shown&&!overlay.element.hidden){const forward=shown.x1<=shown.x2,step=parked?options.getCue?.()??settings.first:index;
-          labels.show(forward?shown.y1:shown.y2,forward?shown.y2:shown.y1,'срез '+Math.max(0,Math.min(g.length-1,step)),identity.name,identity.color,clip.rightInset);}
+          labels.show(forward?shown.y1:shown.y2,forward?shown.y2:shown.y1,'Срез '+Math.max(0,Math.min(g.length-1,step)),identity.name,identity.color,clip.rightInset,{left:Math.min(shown.x1,shown.x2),right:Math.max(shown.x1,shown.x2)});}
         else if(template&&row?.indices?.length){const first=Math.floor(row.indices[0]/size.width),last=Math.floor(row.indices[row.indices.length-1]/size.width);
-          const h=y((first+last)/2);if(h>=clip.top&&h<=clip.bottom)labels.show(h,h,first===last?'строка '+first:'строки '+first+'–'+last,identity.name,identity.color,clip.rightInset);}
+          const h=y((first+last)/2);if(h>=clip.top&&h<=clip.bottom)labels.show(h,h,first===last?'Срез '+first:'Срезы '+first+'–'+last,identity.name,identity.color,clip.rightInset,{left:Math.max(r.left,clip.left),right:Math.min(r.left+r.width,clip.right)});}
         return;
       }
       const rect=sourceRect(),height=parked?options.getHeight?.():lastSnapshot.height||lastSnapshot.rows.length;
@@ -96,9 +101,9 @@
       const left=Math.max(0,clip.left,rect.left),right=Math.min(win.innerWidth||doc.documentElement.clientWidth,clip.right,rect.right);if(!(bottom>top&&right>left))return;
       Object.assign(marker.style,{display:'block',left:left+'px',top:top+'px',width:(right-left)+'px',height:(bottom-top)+'px',opacity:parked&&!drag?'.65':state==='paused'&&!drag?'.45':'1'});
       rowHit={left,right,center,top:Math.max(clip.top,rect.top),bottom:Math.min(clip.bottom,rect.bottom)};
-      labels.show(center,center,'строка '+at,identity.name||'Линия чтения',identity.color||'#a674ff',clip.rightInset);readingLine.style.top=(center-top-.5)+'px';
+      labels.show(center,center,'Срез '+at,identity.name||'Линия чтения',identity.color||'#a674ff',clip.rightInset,{left,right});readingLine.style.top=(center-top-.5)+'px';
       readingLine.style.display=center>=top&&center<=bottom?'block':'none';
-      showRuns(!parked&&lastSnapshot.rows[index]?.bits,rect,left,right,top,Math.max(0,clip.top,rect.top),Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.bottom),rowHeight);
+      showRuns(!parked&&lastSnapshot.rows[index],rect,left,right,top,Math.max(0,clip.top,rect.top),Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.bottom),rowHeight);
       const first=Math.min(settings.first,height-1),last=settings.last<0?height-1:Math.max(first,Math.min(settings.last,height-1));marker.setAttribute('aria-valuemin',String(first));marker.setAttribute('aria-valuemax',String(last));marker.setAttribute('aria-valuenow',String(at));marker.setAttribute('aria-valuetext','Строка '+at);
     }
     function scheduleMarker(){if(disposed||frame!==null)return;if(win.requestAnimationFrame)frame=win.requestAnimationFrame(showMarker);else showMarker();}
@@ -106,7 +111,7 @@
     function freezeSnapshot(snapshot){
       if(!snapshot||!Array.isArray(snapshot.rows))throw Error('Хорром: источник не вернул строки поля.');
       const regions=new Map(),region=value=>{if(!value)return value;if(!regions.has(value))regions.set(value,Object.freeze({...value}));return regions.get(value);};
-      const rows=snapshot.rows.map(row=>Object.freeze({...row,bits:row.bits?.slice(),colors:row.colors?.slice(),...(row.geometry?{geometry:Object.freeze({zero:region(row.geometry.zero),one:region(row.geometry.one),triangle:region(row.geometry.triangle)})}:{})}));return Object.freeze({...snapshot,rows:Object.freeze(rows)});
+      const rows=snapshot.rows.map(row=>Object.freeze({...row,bits:row.bits?.slice(),colors:row.colors?.slice(),rgb:row.rgb?.slice(),red:row.red?.slice(),...(row.geometry?{geometry:Object.freeze({zero:region(row.geometry.zero),one:region(row.geometry.one),triangle:region(row.geometry.triangle)})}:{})}));return Object.freeze({...snapshot,rows:Object.freeze(rows)});
     }
     async function capture(remember,automatic=false){
       const run=generation,auto=settings.autoGeometry,links=settings.geometryConnectivity,cancelled=()=>disposed||run!==generation||auto!==settings.autoGeometry||auto&&links!==settings.geometryConnectivity;
@@ -216,12 +221,12 @@
     }
     function refresh(){if(disposed)return;applySettings(engine.normalizeSettings(options.getSettings?.()||settings));showMarker();publish();}
     function visibilityChanged(){if(doc.hidden){cancelDrag();resumeAfterRefresh=false;}scheduleMarker();}
-    const scrollOptions={capture:true,passive:true};win.addEventListener('scroll',scheduleMarker,scrollOptions);win.addEventListener('resize',scheduleMarker);doc.addEventListener('visibilitychange',visibilityChanged);
+    const scrollOptions={capture:true,passive:true};win.addEventListener('scroll',scheduleMarker,scrollOptions);win.addEventListener('resize',scheduleMarker);for(const event of ['mayatnik-music-panel-change','mayatnik-music-panel-resize'])win.addEventListener(event,scheduleMarker);doc.addEventListener('visibilitychange',visibilityChanged);
     win.visualViewport?.addEventListener('resize',scheduleMarker);win.visualViewport?.addEventListener('scroll',scheduleMarker);
     observer=win.ResizeObserver?new win.ResizeObserver(scheduleMarker):null;if(viewport)observer?.observe(viewport);observedFigure=sourceFigure();if(observedFigure&&observedFigure!==viewport)observer?.observe(observedFigure);
     function dispose(){
       if(disposed)return;stop();disposed=true;generation++;if(frame!==null)win.cancelAnimationFrame?.(frame);if(refreshFrame!==null)win.cancelAnimationFrame?.(refreshFrame);
-      win.removeEventListener('pointermove',move,true);win.removeEventListener('pointerup',up,true);win.removeEventListener('pointercancel',up,true);win.removeEventListener('scroll',scheduleMarker,scrollOptions);win.removeEventListener('resize',scheduleMarker);doc.removeEventListener('visibilitychange',visibilityChanged);
+      win.removeEventListener('pointermove',move,true);win.removeEventListener('pointerup',up,true);win.removeEventListener('pointercancel',up,true);win.removeEventListener('scroll',scheduleMarker,scrollOptions);win.removeEventListener('resize',scheduleMarker);for(const event of ['mayatnik-music-panel-change','mayatnik-music-panel-resize'])win.removeEventListener(event,scheduleMarker);doc.removeEventListener('visibilitychange',visibilityChanged);
       win.visualViewport?.removeEventListener('resize',scheduleMarker);win.visualViewport?.removeEventListener('scroll',scheduleMarker);observer?.disconnect();unregister();labels.destroy();overlay?.destroy();marker.remove();listeners.clear();lastSnapshot=null;return core.dispose();
     }
     return {getSettings,setSettings,getState,start,pause,stop,seek,identify,sourceChanged(){if(!invalidateScore())scheduleMarker();},setMuted:value=>core.setMuted?.(value),fieldChanged,renderTrackWav,exportWav,getStream:()=>disposed?null:core.getStream(),subscribe(fn){if(disposed)return ()=>{};listeners.add(fn);return ()=>listeners.delete(fn);},refresh,dispose};

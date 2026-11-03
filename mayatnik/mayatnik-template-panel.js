@@ -152,7 +152,7 @@
     musicAudio.addEventListener('play',()=>{drawMusicPreview(true);scheduleMusicPreview();});
     musicAudio.addEventListener('pause',()=>{cancelMusicAnimation();drawMusicPreview(true);});musicAudio.addEventListener('ended',()=>{cancelMusicAnimation();drawMusicPreview(true);});
     for(const type of ['timeupdate','seeking','seeked','loadedmetadata'])musicAudio.addEventListener(type,()=>{drawMusicPreview(type==='seeking');scheduleMusicPreview();});
-    musicAudio.addEventListener('error',()=>{if(musicAudio.getAttribute('src')){cancelMusicAnimation();musicStatus.textContent='Не удалось загрузить аудиопример. Попробуйте скачать WAV.';}});musicStatus=doc.createElement('output');musicStatus.className='mtp-status';musicStatus.setAttribute('aria-live','polite');musicGrid=doc.createElement('div');musicGrid.className='mtp-music-grid';pane.append(liveControlsSection('music'),introduction,musicName,musicVisualStage,musicReader,musicAudio,musicStatus,musicGrid);
+    musicAudio.addEventListener('error',()=>{if(musicAudio.getAttribute('src')){cancelMusicAnimation();musicStatus.textContent='Не удалось загрузить аудиопример. Попробуйте скачать WAV.';}});musicStatus=doc.createElement('output');musicStatus.className='mtp-status';musicStatus.setAttribute('aria-live','polite');musicGrid=doc.createElement('div');musicGrid.className='mtp-music-grid';pane.append(introduction,musicName,musicVisualStage,musicReader,musicAudio,musicStatus,musicGrid);
     if(root.ResizeObserver){musicResizeObserver=new root.ResizeObserver(()=>drawMusicPreview(true));musicResizeObserver.observe(musicVisualStage);}return pane;
   }
   function renderLayers(){if(!layerGrid||!open||activeTab!=='layers')return;const layers=layerApi?.list()||[],selected=layerApi?.selected();

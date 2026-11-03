@@ -7,7 +7,7 @@ const helpers=source.slice(source.indexOf('  function notifyXorromField(){'),sou
 function fixture(width=2,height=2){
   const calls=[],acquired=[];let released=0;
   const context={window:{mayXorrom:{fieldChanged:change=>calls.push(change)},mayVisibleSemantic:{async acquire(options){acquired.push(options);return {width:context.VW,height:context.VH,current:()=>true,readBit:(x,y)=>y?0:1,release(){released++;}};}}},
-    f:{},geo:{},k:1,VW:width,VH:height,manualPaintRevision:0,templateMatchRevision:0,pxHide:new Set(),gpuBig:null,rgbNeighbourClasses:null,
+    f:{},geo:{},k:1,VW:width,VH:height,manualPaintRevision:0,templateMatchRevision:0,pxHide:new Set(),gpuBig:null,rgbNeighbourClasses:null,present:{},img:null,pxView:()=>context.displayPic||({width:context.VW,height:context.VH,data:new Uint8ClampedArray(context.VW*context.VH*4)}),
     st:{view:'bits',viewUpsideDown:false,edgeRhombOn:false,xorrom:{bpm:120}},document:{body:{classList:{contains:()=>false}}},
     manualPaintKey:()=>String(context.k),manualPatternGeometry:()=>context.st.view,rgbNeighbourFilters:()=>context.filters||[],rgbNeighbourBWMode:()=>context.bw||0,
     rombP:()=>-1,joinedOn:()=>false,MayatnikXorromField:require('./mayatnik-xorrom-field.js'),MayatnikXorromGeometry:require('./mayatnik-xorrom-geometry.js')};
@@ -61,4 +61,14 @@ test('geometry is opt-in, runs on captured visible bits and cancels obsolete set
 test('assembly, fold row, turn and saved layout dirty music; zoom and menu state do not',()=>{
  const {context:c,calls}=fixture();c.st.edgeRhombOn=true;c.notifyXorromField();const before=calls.length;
  for(const patch of [{romboAssembly:1},{romboRow:1},{romboAngle:45},{romboMode:'custom'},{romboLayout:{pieces:[1]}}]){Object.assign(c.st,patch);c.notifyXorromField();}assert.equal(calls.length,before+5);c.st.zoom=500;c.st.someMenuOpen=true;c.notifyXorromField();assert.equal(calls.length,before+5);
+});
+
+test('production capture keeps actual displayed red separate from bits and flips its scaled pixels with the view',async()=>{
+ const f=fixture(),c=f.context,red=score=>score.rows.map(row=>Array.from(row.red)),bits=score=>score.rows.map(row=>Array.from(row.bits));
+ const picture={width:4,height:4,data:new Uint8ClampedArray(64)},colours=[[255,20,10,255],[0,220,255,255],[220,0,220,255],[110,0,0,255]];
+ for(let y=0;y<4;y++)for(let x=0;x<4;x++)picture.data.set(colours[Math.floor(y/2)*2+Math.floor(x/2)],(y*4+x)*4);
+ c.displayPic=picture;const normal=await c.captureXorromField();assert.deepEqual(red(normal),[[1,0],[0,0]]);assert.deepEqual(bits(normal),[[1,1],[0,0]]);
+ c.st.viewUpsideDown=true;const flipped=await c.captureXorromField();assert.deepEqual(red(flipped),[[0,0],[0,1]]);assert.deepEqual(bits(flipped),[[0,0],[1,1]]);
+ // The existing frame stays private when later display colours change.
+ picture.data.fill(255);assert.deepEqual(red(normal),[[1,0],[0,0]]);assert.equal(f.released,2);
 });

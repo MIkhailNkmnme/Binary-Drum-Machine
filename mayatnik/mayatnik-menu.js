@@ -176,8 +176,9 @@
     const controls=window.MayatnikXorromControls.mount(body,{api,after:()=>rail.refresh()});
     const settings=document.createElement('div');settings.className='mtp-live-controls';
     for(const node of [...body.children])if(!['start','stop'].includes(node.dataset.xorrom))settings.append(node);
-    window.MayatnikTemplatePanel?.registerControls('music',settings);
-    const launch=document.createElement('button');launch.type='button';launch.className='gz-hx may-xorrom-control';const launchLabel=document.createElement('span');launchLabel.className='gz-nm';launchLabel.textContent=window.HubButtonText?.shortCaption('⚙ Настройки')||'⚙ Настройки';launch.append(launchLabel);launch.title='Открыть настройки Xorrom в Библиотеке → Музыка';launch.setAttribute('aria-label',launch.title);launch.addEventListener('click',()=>window.MayatnikTemplatePanel?.openTab('music'));body.append(launch);
+    window.MayatnikMusicPanel?.registerControls(settings);
+    const launch=document.createElement('button');launch.type='button';launch.className='gz-hx may-xorrom-control';const launchLabel=document.createElement('span');launchLabel.className='gz-nm';launchLabel.textContent=window.HubButtonText?.shortCaption('⚙ Настройки')||'⚙ Настройки';launch.append(launchLabel);launch.title='Открыть отдельное окно музыкальных настроек Xorrom';launch.setAttribute('aria-label',launch.title);launch.addEventListener('click',()=>window.MayatnikMusicPanel?.toggle(launch));body.append(launch);
+    const syncPanel=()=>{const on=!!window.MayatnikMusicPanel?.isOpen();launch.classList.toggle('gz-on',on);launch.setAttribute('aria-pressed',String(on));};window.addEventListener('mayatnik-music-panel-change',syncPanel);syncPanel();
     return controls;
   }
   window.mayXorromControls=mountXorromMenu(rail);
@@ -1583,24 +1584,28 @@
     const turn=command('romboAngle','Поворот 0°','Поворот ромба: 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°. Правый щелчок — назад.');
     const assembly=command('romboAssembly','Сборка','Выбрать сборку ромба из доступных исходных частей C, L и R.');
     assembly.setAttribute('aria-haspopup','true');
+    const dedupe=command('romboSeam','Убрать дубль','Убрать повторную копию одной и той же исходной колонки на центральном шве готовой сборки.');
+    dedupe.querySelector('.gz-nm').setAttribute('data-user-label','');
     const editor=command('triangleEditor','Детали','Сборка: найти треугольные участки между показанными осями исходного поля, двигать, примагничивать, вращать и отражать.');editor.onclick=event=>{event.stopPropagation();window.mayTriangleEditor?.toggle();};
     const fixed=command('romboFixed','Готовые','Вернуться к десяти готовым схемам Ромбо, сохранив собственную сборку.');fixed.onclick=event=>{event.stopPropagation();api()?.setMode?.('fixed');sync();after();};
     const diagram=command('romboDiagram','Схемы','Открыть схемы всех сборок ромба');diagram.onclick=event=>{event.stopPropagation();window.open('instruction/assets/rombo-assemblies.svg','_blank','noopener');};
     let lastRow=null;
     const permit=patch=>!window.mayPixelExact||window.mayPixelExact.canState(patch);
     const state=()=>api()?.get?.(),max=s=>Math.max(1,Math.round(Number(s?.maxRow)||1));
-    const sync=()=>{const s=state(),available=!!s;for(const button of [toggle,turn,assembly])button.disabled=!available;input.disabled=!available||s?.mode==='custom';for(const arrow of line.querySelectorAll('button'))arrow.disabled=!available;if(!s)return;
+    const sync=()=>{const s=state(),available=!!s;for(const button of [toggle,turn,assembly,dedupe])button.disabled=!available;input.disabled=!available||s?.mode==='custom';for(const arrow of line.querySelectorAll('button'))arrow.disabled=!available;if(!s)return;
+      const deduped=s.seam==='dedupe';dedupe.classList.toggle('gz-on',deduped);dedupe.setAttribute('aria-pressed',String(deduped));dedupe.disabled=!deduped&&(s.mode==='custom'||!s.dedupeAvailable||!permit({romboSeam:'dedupe'}));dedupe.classList.toggle('gz-off-dis',dedupe.disabled);dedupe.setAttribute('aria-disabled',String(dedupe.disabled));
       toggle.classList.toggle('gz-on',!!s.on);toggle.setAttribute('aria-pressed',String(!!s.on));
       const limit=max(s),value=Math.max(1,Math.min(limit,Math.round(Number(s.row)||limit)));input.max=String(limit);if(lastRow!==value){input.value=String(value);lastRow=value;}
       const angle=((Number(s.angle)||0)%360+360)%360;turn.querySelector('.gz-nm').textContent='Поворот '+angle+'°';turn.title='Поворот ромба на 45° вперёд; правый щелчок — назад. Только совместимые с точной сеткой положения.';turn.setAttribute('aria-label','Поворот ромба: '+angle+'°. Нажать — добавить 45°; правый щелчок — вычесть 45°.');
       toggle.disabled=!permit({edgeRhombOn:!s.on});turn.disabled=!permit({romboAngle:(angle+45)%360})&&!permit({romboAngle:(angle+315)%360});if(turn.disabled){turn.title=window.mayPixelExact?.policyFor({romboAngle:(angle+45)%360}).reason||'Поворот несовместим с точной сеткой.';turn.setAttribute('aria-label',turn.title);}
-      const entries=options(),index=entries.findIndex(entry=>entry.id===s.assembly);assembly.querySelector('.gz-nm').textContent=s.mode==='custom'?'Своя сборка':'Сборка '+(index+1);fixed.classList.toggle('gz-on',s.mode!=='custom');fixed.setAttribute('aria-pressed',String(s.mode!=='custom'));assembly.setAttribute('aria-label','Сборка '+(index+1)+' из '+entries.length+': '+assemblyName(s.assembly));diagram.querySelector('.gz-nm').textContent='Схемы '+entries.length;diagram.title='Открыть схемы всех '+entries.length+' сборок ромба';
+      const entries=options(),index=entries.findIndex(entry=>entry.id===s.assembly);assembly.querySelector('.gz-nm').textContent=s.mode==='custom'?'Своя сборка':'Сборка '+(index+1);assembly.dataset.listTitle=s.mode==='custom'?'Своя сборка':'Сборка '+(index+1);const visibleAssembly=assembly.querySelector(':scope > .may-list-label');if(visibleAssembly)visibleAssembly.textContent=assembly.dataset.listTitle;fixed.classList.toggle('gz-on',s.mode!=='custom');fixed.setAttribute('aria-pressed',String(s.mode!=='custom'));assembly.setAttribute('aria-label','Сборка '+(index+1)+' из '+entries.length+': '+assemblyName(s.assembly));diagram.querySelector('.gz-nm').textContent='Схемы '+entries.length;diagram.title='Открыть схемы всех '+entries.length+' сборок ромба';
       for(const arrow of line.querySelectorAll('button'))arrow.disabled=s.mode==='custom'||(Number(arrow.dataset.step)<0?value<=1:value>=limit);
     };
     const apply=value=>{const s=state();if(!s)return;api().setRow(Math.max(1,Math.min(max(s),Math.round(Number(value)||1))));lastRow=null;sync();after();};
     const arrow=direction=>{const b=doc.createElement('button');b.type='button';b.className='may-rows-step';b.dataset.dir=direction<0?'left':'right';b.dataset.step=String(direction);b.title='Сдвинуть ось ромба на одну строку '+(direction<0?'вверх':'вниз');b.setAttribute('aria-label',b.title);b.onclick=event=>{event.stopPropagation();apply((Number(state()?.row)||max(state()))+direction);};return b;};
     const caption=doc.createElement('span');caption.className='may-rombo-axis-caption';caption.textContent='Ось';line.append(arrow(-1),caption,input,arrow(1));input.onclick=event=>event.stopPropagation();input.onkeydown=event=>{event.stopPropagation();if(event.key==='Enter'){event.preventDefault();apply(input.value);}};input.addEventListener('change',()=>apply(input.value));
     toggle.onclick=event=>{event.stopPropagation();const s=state();if(s){api().set(!s.on);sync();after();}};
+    dedupe.onclick=event=>{event.stopPropagation();const s=state();if(s&&!dedupe.disabled){api()?.setSeam?.(s.seam==='dedupe'?'between':'dedupe');sync();after();}};
     turn.onclick=event=>{event.stopPropagation();api()?.cycleAngle?.(1);sync();after();};turn.oncontextmenu=event=>{event.preventDefault();event.stopPropagation();api()?.cycleAngle?.(-1);sync();after();};
     let assemblyList=null;const placeAssembly=(list,owner)=>{assemblyList=list;list.classList.add('may-rombo-assembly-options');const entries=options();[...list.querySelectorAll(':scope > .gz-hx')].forEach((node,index)=>{const entry=entries[index],disabled=entry?.available===false;node.setAttribute('role','button');node.setAttribute('aria-disabled',String(disabled));node.tabIndex=disabled?-1:0;node.title=entry?.label+(disabled?' — '+entry.reason:'');node.classList.toggle('gz-off-dis',disabled);node.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();if(!disabled)node.click();}};});if(mobileMenu.matches)placeRomboAssemblyList(list,owner);};
     const reflowAssembly=()=>{if(assemblyList?.isConnected&&mobileMenu.matches)placeAssembly(assemblyList,assembly);};
@@ -1805,7 +1810,7 @@
       l.onpointerenter = e => { if (e.pointerType === 'mouse' && !tools.classList.contains('pt-dragging') && open !== g && !g.classList.contains('pt-open')) { g._hoverAt = Date.now(); show(g); } };   // v0.170: «раскрывай сразу при наведении» — мышью без щелчка
       // v0.169: «не скрывается при уходе» — мышь ушла с названия и списка: незакреплённый список закрывается (с запасом 350 мс на переход)
       g._popupLeave = () => { clearTimeout(g._leave);
-        g._leave = setTimeout(() => { if (open === g && !stay(g) && !g.matches(':hover') && !popupContains(g)) shut(); }, 350); };
+        g._leave = setTimeout(() => { if (open === g && !stay(g) && !g.matches(':hover') && groupHover?.active()!==g && !popupContains(g)) shut(); }, 350); };
       g.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') g._popupLeave(); });
       g.addEventListener('pointerenter', () => clearTimeout(g._leave));   // v0.159: на касании enter приходит перед щелчком и закрывал список
       toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
@@ -2424,9 +2429,11 @@
     }
   }
   const scheduleGroups = () => { if(!groupFrame)groupFrame=requestAnimationFrame(syncGroupOverlap); };
+  let lastHoveredGroup=null;
   groupHover=window.ZerkMenuGroupFocus?.mount({groups:()=>document.querySelectorAll(groupSelector),
     ownerOf:target=>activeList?.list.contains(target)?activeList.group:(target.closest('.may-horr-popup')?.mayHorrOwner||target.closest(groupSelector)),
-    onChange:group=>{if(group)groupRanks.set(group,++groupRank);scheduleGroups();}});
+    ownerAtPoint:(event,current)=>window.ZerkMenuGroupFocus.outlineOwner(document.querySelectorAll(groupSelector),event.clientX,event.clientY,current),
+    onChange:group=>{const previous=lastHoveredGroup;lastHoveredGroup=group;if(previous&&previous!==group)previous._popupLeave?.();if(group)groupRanks.set(group,++groupRank);scheduleGroups();}});
   for (const host of [tools,rail.el]) {
     for(const event of ['pointerdown','focusin'])host.addEventListener(event,e=>{const group=e.target.closest('.pt-g, .gz-group');if(group){groupRanks.set(group,++groupRank);scheduleGroups();}},true);
     new MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.pt-g, .gz-group') && /\b(?:pt-open|gz-open)\b/.test(r.oldValue||'')!==r.target.matches('.pt-open, .gz-open')))scheduleGroups();}).observe(host,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});
@@ -2525,7 +2532,7 @@
   const collectLateMenu=()=>{mountViewUtilities(gView);mobileMenu.add([$('zerkHubBtn')]);};
   new MutationObserver(collectLateMenu).observe(document.body,{childList:true});collectLateMenu();
   window.mayMobileMenu=mobileMenu;
-  libraryMenuFold=window.MayatnikLibraryMenuFold?.mount({groups:()=>document.querySelectorAll('#paintTools .pt-g,#paintTools .gz-group,#mayatnikRail .gz-group,#mayatnikRailR .gz-group'),panel:()=>$('mayatnikTemplatePanel'),popups:()=>[...(activeList?[{node:activeList.list,group:activeList.group}]:[]),...[...document.querySelectorAll('.may-horr-popup')].map(node=>({node,group:node.mayHorrOwner}))],onLayout:()=>{syncRailFlyouts();libraryMenuFold?.syncHeads();scheduleGroups();window.mayFramePlace?.();}});
+  libraryMenuFold=window.MayatnikLibraryMenuFold?.mount({groups:()=>document.querySelectorAll('#paintTools .pt-g,#paintTools .gz-group,#mayatnikRail .gz-group,#mayatnikRailR .gz-group'),panel:()=>window.MayatnikMusicPanel?.isOpen()?window.MayatnikMusicPanel.getElement():$('mayatnikTemplatePanel'),popups:()=>[...(activeList?[{node:activeList.list,group:activeList.group}]:[]),...[...document.querySelectorAll('.may-horr-popup')].map(node=>({node,group:node.mayHorrOwner}))],onLayout:()=>{syncRailFlyouts();libraryMenuFold?.syncHeads();scheduleGroups();window.mayFramePlace?.();}});
   addEventListener('pagehide',()=>libraryMenuFold?.destroy(),{once:true});
   dispatchEvent(new Event('resize'));
 })();

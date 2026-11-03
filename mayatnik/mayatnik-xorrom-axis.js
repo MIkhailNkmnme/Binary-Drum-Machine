@@ -130,7 +130,7 @@
     function allocate(line){
       const length=line?.length||0;
       return {bits:new Int8Array(length),indices:new Int32Array(length),colors:new Uint32Array(8),
-        rgb:rgbMode?new Int8Array(length):null,ones:0,total:0};
+        red:source[0]?.red?new Uint8Array(length):null,rgb:rgbMode?new Int8Array(length):null,ones:0,total:0};
     }
     function sample(row,line,first,last){
       const {bits,indices,colors,rgb}=row,length=bits.length;
@@ -146,7 +146,7 @@
           if(bit<0||!Number.isInteger(code)||code<0||code>7){bit=-1;rgb[j]=-1;}
           else{rgb[j]=code;colors[code]++;}
         }
-        bits[j]=bit;
+        bits[j]=bit;if(row.red&&bit>=0)row.red[j]=r.red?.[x]||0;
         if(bit>=0){
           row.ones+=bit;row.total++;
           if(analyzed){
