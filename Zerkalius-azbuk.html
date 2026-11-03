@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.014</title>
-<!-- АзъБукъ — v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.015</title>
+<!-- АзъБукъ — v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -22,6 +22,8 @@
   #head svg{max-width:100%;height:auto}
   .ver{flex:none;font-size:10px;color:var(--dim);letter-spacing:.08em}
   .bar{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .bar button{display:inline-flex;align-items:center;justify-content:center;max-width:100%}
+  .bar button svg{width:auto;max-width:100%;max-height:18px;pointer-events:none}
   .bar .lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 2px 0 8px}
   button{background:var(--btn);color:var(--ink);border:1px solid var(--line);height:26px;min-width:34px;
     font:11px/1 "Segoe UI";cursor:pointer;padding:0 10px;
@@ -35,8 +37,6 @@
   .row:last-child{margin-bottom:0}
   svg{display:block;flex:0 0 auto;color:var(--ink)}
 
-  .btns{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px;align-items:center}
-  .btns.col{flex-direction:column;align-items:flex-start}
   .pbtn{position:relative;display:flex;align-items:center;justify-content:center;color:var(--ink);padding:0 16px;
     background:var(--line);
     clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
@@ -60,7 +60,7 @@
 <header>
   <div class="title">
     <div id="head" role="heading" aria-level="1" aria-label="АзъБукъ"></div>
-    <span class="ver">v0.014</span>
+    <span class="ver">v0.015</span>
   </div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><button id="theme">цвет: фиолет</button>
@@ -294,7 +294,7 @@ let track = trk.valueAsNumber;
 const trackVal = document.getElementById('trackVal');
 
 function glyphShape(ch) {
-  const rows = G[activeSet][ch];
+  const rows = ch === ' ' ? ['000'] : G[activeSet][ch];
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
   const slope = lattice === 'tri' ? 0.5 : 0;
   // Один наклон для всей буквы сохраняет общие вершины соседних клеток.
@@ -385,37 +385,18 @@ function lettering(text, cell, maxWidth = Infinity) {
 const row = text => '<div class="row">' + text.replaceAll('&', '&amp;').replaceAll('<', '&lt;') + '</div>';
 const btn = (text, cell, style) => '<div class="pbtn" style="' + style + '">' + lettering(text, cell) + '</div>';
 
-function renderButtons() {
-  return '<section><h2>В кнопках</h2>' +
-    '<div class="btns">' +
-      btn('Синхро', 1, 'height:24px') +
-      btn('Азъ', 1, 'height:24px') +
-      btn('ХОР', 1, 'height:24px') +
-      btn('БУКЪ', 1, 'height:24px') +
-      '<span class="note">Ячейка 1 px</span></div>' +
-    '<div class="btns">' +
-      btn('Синхро', 2, 'height:24px') +
-      btn('Азъ', 2, 'height:24px') +
-      btn('ХОР', 2, 'height:24px') +
-      btn('БУКЪ', 2, 'height:24px') +
-    '</div>' +
-    '<div class="btns">' +
-      btn('Треуг', 3, 'height:28px') +
-      btn('Layers', 3, 'height:28px') +
-      btn('Маятник', 3, 'height:28px') +
-    '</div>' +
-    '<div class="btns col">' +
-      btn('Синхрофазотрон', 2, 'height:24px') +
-      btn('Синхроромб', 2, 'height:24px') +
-      btn('Зазеркалиус', 2, 'height:24px') +
-    '</div>' +
-  '</section>';
+function renderButtonLabel(button, label, cell) {
+  button.setAttribute('aria-label', label);
+  button.innerHTML = lettering(label, cell);
 }
 
 function renderSheet(cell) {
   document.getElementById('head').innerHTML = btn('АЗЪ', 4, 'height:38px') + btn('БУКЪ', 4, 'height:38px');
+  document.querySelectorAll('.bar button').forEach(button => {
+    const label = button.getAttribute('aria-label') || button.textContent;
+    renderButtonLabel(button, label, cell);
+  });
   document.getElementById('sheet').innerHTML = [
-    renderButtons(),
     '<section><h2>Кириллица</h2>' + row(UPPER) + row(LOWER) + '</section>',
     '<section><h2>Латиница</h2>' + row(LATU) + row(LATL) + '</section>',
     '<section><h2>Цифры и знаки</h2>' + row(DIGIT) + row(SYM) + '</section>',
@@ -516,7 +497,7 @@ document.getElementById('download').onclick = () => {
 document.getElementById('editToggle').addEventListener('click', (e) => {
   const ed = document.getElementById('editor');
   ed.hidden = !ed.hidden;
-  e.target.classList.toggle('on', !ed.hidden);
+  e.currentTarget.classList.toggle('on', !ed.hidden);
   if (!ed.hidden) { renderChars(); renderEditor(); }
 });
 
@@ -556,7 +537,7 @@ function applyTheme(i) {
   for (const k of Object.keys(t.v)) document.documentElement.style.setProperty(k, t.v[k]);
   localStorage.setItem('azbuk-theme', String(themeIdx));
   const btn = document.getElementById('theme');
-  if (btn) btn.textContent = 'цвет: ' + t.name;
+  renderButtonLabel(btn, 'цвет: ' + t.name, cellSize);
 }
 document.getElementById('theme').addEventListener('click', () => applyTheme(themeIdx + 1));
 if (typeof applyTheme === 'function') applyTheme(themeIdx);
