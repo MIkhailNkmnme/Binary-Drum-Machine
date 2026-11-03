@@ -30,16 +30,16 @@
  function reveal(){
   if(!fieldRestore){const wrap=doc.getElementById('wrap'),height=wrap?.getBoundingClientRect().height;
    if(wrap&&height>0){const old={flex:wrap.style.flex,height:wrap.style.height,boxSizing:wrap.style.boxSizing};
-    const parent=wrap.parentElement,layout=win.getComputedStyle(parent),parentOld={gridTemplateRows:parent.style.gridTemplateRows,overflowY:parent.style.overflowY};
+    const parent=wrap.parentElement,layout=win.getComputedStyle(parent),parentOld={gridTemplateRows:parent.style.gridTemplateRows,gridPriority:parent.style.getPropertyPriority('grid-template-rows'),overflowY:parent.style.overflowY};
     if(layout.display==='grid'){
      // Chromium resolves these tracks to pixels. Freeze every existing row before
      // adding a final auto row, so an expanding strip cannot consume the 1fr field.
      const tracks=layout.gridTemplateRows,parts=tracks.match(/(?:[^\s(]+\([^)]*\)|[^\s]+)/g)||[];
      section.style.gridColumn='1 / -1';section.style.gridRow=String(parts.length+1);
-     parent.style.gridTemplateRows=tracks+' auto';parent.style.overflowY='auto';
+     parent.style.setProperty('grid-template-rows',tracks+' auto','important');parent.style.overflowY='auto';
     }
     wrap.style.flex='0 0 auto';wrap.style.boxSizing='border-box';wrap.style.height=height+'px';
-    fieldRestore=()=>{Object.assign(wrap.style,old);Object.assign(parent.style,parentOld);section.style.gridColumn='';section.style.gridRow='';};}}
+    fieldRestore=()=>{Object.assign(wrap.style,old);parent.style.setProperty('grid-template-rows',parentOld.gridTemplateRows,parentOld.gridPriority);parent.style.overflowY=parentOld.overflowY;section.style.gridColumn='';section.style.gridRow='';};}}
   section.hidden=false;section.scrollIntoView?.({block:'nearest',inline:'nearest'});
  }
  function hide(){finish();if(section)section.hidden=true;fieldRestore?.();fieldRestore=null;}

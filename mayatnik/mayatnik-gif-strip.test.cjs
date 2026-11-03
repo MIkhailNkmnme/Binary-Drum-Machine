@@ -71,8 +71,8 @@ test('only viewport-near images activate, distant images release decode sources 
 test('desktop/mobile grid append a final row without changing existing rows or field placement',()=>{
  for(const [tracks,row]of [['42px 0px 0px 540px 18px 30px','4'],['80px 36px 0px 0px 540px 18px 30px','5']]){
   const f=fixture(),body=f.w.document.body;body.style.display='grid';body.style.gridTemplateRows=tracks;body.style.overflowY='hidden';f.wrap.style.gridRow=row;f.wrap.style.gridColumn='2';
-  f.show();const section=f.q('#mayGifStrip');assert.equal(section.style.gridRow,String(tracks.split(' ').length+1));assert.equal(section.style.gridColumn,'1 / -1');assert.equal(body.style.gridTemplateRows,tracks+' auto');assert.equal(body.style.overflowY,'auto');assert.equal(f.wrap.style.gridRow,row);
+  f.show();const section=f.q('#mayGifStrip');assert.equal(section.style.gridRow,String(tracks.split(' ').length+1));assert.equal(section.style.gridColumn,'1 / -1');assert.equal(body.style.gridTemplateRows,tracks+' auto');assert.equal(body.style.getPropertyPriority('grid-template-rows'),'important');assert.equal(body.style.overflowY,'auto');assert.equal(f.wrap.style.gridRow,row);
   const oldRows=body.style.gridTemplateRows;f.event(f.q('.may-gif-strip-resize'),'keydown',{key:'ArrowDown'});assert.equal(body.style.gridTemplateRows,oldRows);
-  f.api.hide();assert.equal(body.style.gridTemplateRows,tracks);assert.equal(body.style.overflowY,'hidden');assert.equal(f.wrap.style.gridRow,row);f.dom.window.close();
+  f.api.hide();assert.equal(body.style.gridTemplateRows,tracks);assert.equal(body.style.getPropertyPriority('grid-template-rows'),'');assert.equal(body.style.overflowY,'hidden');assert.equal(f.wrap.style.gridRow,row);f.dom.window.close();
  }
 });
