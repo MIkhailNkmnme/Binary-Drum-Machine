@@ -146,7 +146,7 @@
       window.mayPaintGroups?.resetColour?{type:'list',name:'Сброс цветов',tip:'Сбросить только цвет выбранной группы и выключить его автосмену; краска на поле сохраняется',get:()=>'',options:[['fill','Заливка'],['axes','От осей'],['vertical','Столбы'],['centre','Центр'],['auto','Авто'],['grow','Рост'],['meet','Точка'],['pointAxis','ТочкаОсь']].map(([v,name])=>({v,name})),set:v=>window.mayPaintGroups.resetColour(v)}:null
     ] },
     { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),withColour('bTemplatePaint','fillColour','Прокрасть'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50}),{...selectSegments('templatePickMode'),src:'templatePickMode'},button('bTemplateDrag','move')] },
-    {id:'gifscale',title:'Гиф-Масштаб',color:'#73e4a5',items:[button('bGifScale','record'),button('bGifScaleView','eye'),select('gifScaleSequence','steps'),select('gifScaleMethod','grid4'),num('gifScaleDelay',{name:'Пауза, мс',fmt:v=>v+' мс',zero:200}),button('bGifScaleInfo','help')]},
+    {id:'gifscale',title:'Гиф-Масштаб',color:'#73e4a5',items:[button('bGifScale','record'),button('bGifScaleView','eye'),{type:'toggle',name:'Настройки',icon:'⚙',tip:'Открыть настройки GIF в Библиотеке',click:()=>window.MayatnikTemplatePanel?.openTab('gif')}]},
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
       button('bShareLink','link'),button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
@@ -173,9 +173,25 @@
     // Empty rail groups own a detached gzSoty: attach it before adding controls.
     const body=group.querySelector(':scope > .gz-soty')||group.gzSoty||document.createElement('div');
     body.classList.add('gz-soty');if(body.parentElement!==group)group.append(body);
-    return window.MayatnikXorromControls.mount(body,{api,after:()=>rail.refresh()});
+    const controls=window.MayatnikXorromControls.mount(body,{api,after:()=>rail.refresh()});
+    const settings=document.createElement('div');settings.className='mtp-live-controls';
+    for(const node of [...body.children])if(!['start','stop'].includes(node.dataset.xorrom))settings.append(node);
+    window.MayatnikTemplatePanel?.registerControls('music',settings);
+    const launch=document.createElement('button');launch.type='button';launch.className='gz-hx may-xorrom-control';const launchLabel=document.createElement('span');launchLabel.className='gz-nm';launchLabel.textContent=window.HubButtonText?.shortCaption('⚙ Настройки')||'⚙ Настройки';launch.append(launchLabel);launch.title='Открыть настройки Xorrom в Библиотеке → Музыка';launch.setAttribute('aria-label',launch.title);launch.addEventListener('click',()=>window.MayatnikTemplatePanel?.openTab('music'));body.append(launch);
+    return controls;
   }
   window.mayXorromControls=mountXorromMenu(rail);
+  function mountGifLibraryControls(panelApi=window.MayatnikTemplatePanel){
+    if(!panelApi)return;const host=document.createElement('div');host.className='mtp-live-controls mtp-gif-controls';
+    for(const [id,text]of [['gifScaleSequence','Масштабы'],['gifScaleMethod','Уменьшение'],['gifScaleDelay','Пауза, мс']]){
+      const input=$(id);if(!input)continue;const row=document.createElement('label');row.className='gz-hx gz-pair gz-split may-xorrom-control';
+      const label=document.createElement('span');label.className='gz-half gz-h0';label.textContent=window.HubButtonText?.shortCaption(text)||text;
+      const divider=document.createElement('span');divider.className='gz-pm';divider.setAttribute('aria-hidden','true');input.classList.add('gz-half','gz-h1');input.setAttribute('aria-label',input.title||text);row.append(label,divider,input);host.append(row);
+    }
+    const info=$('bGifScaleInfo');if(info){info.className='gz-hx may-xorrom-control';const label=document.createElement('span');label.className='gz-nm';label.textContent=window.HubButtonText?.shortCaption('Сведения')||'Сведения';info.replaceChildren(label);const status=document.createElement('output');status.className='mtp-status';const sync=()=>{status.textContent=info.title;};info.addEventListener('click',sync);const observer=new MutationObserver(sync);observer.observe(info,{attributes:true,attributeFilter:['title']});addEventListener('pagehide',()=>observer.disconnect(),{once:true});sync();host.append(info,status);}
+    panelApi.registerControls('gif',host);return host;
+  }
+  mountGifLibraryControls();
   {const group=rail.el.querySelector('.gz-group[data-id="mirrors"]');if(group)manualLegacyCells.set('mirrors',[...group.querySelectorAll('.gz-soty > .gz-hx')]);}
   // v0.439: «Верх / Вниз» — одна стандартная кнопка, два независимых включателя.
   for(const [index,id] of ['zTop','zFitH'].entries()){

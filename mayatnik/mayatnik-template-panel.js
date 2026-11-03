@@ -9,6 +9,7 @@
   const identities=new WeakMap();let identityCounter=0;
   const metricTasks=new Map();let metricTimer=0,metricActive=null;
   let activeTab='templates',templatePane,folderButton,layerPane,layerGrid,layerApi,layerUnsubscribe,layout='tiles';const layoutButtons=new Map();
+  const liveControlHosts=new Map();let gifPane;
   let musicPane,musicGrid,musicStatus,musicAudio,musicName,musicUnsubscribe,musicBound,musicPreviewGeneration=0;
   let musicVisualStage,musicCanvas,musicReader,musicPrepared,musicAnimation=null,musicDrawKey='',musicResizeObserver;
   function musicLibrary(){try{return root.mayXorromLibrary||root.opener?.mayXorromLibrary||null;}catch(_){return null;}}
@@ -41,7 +42,7 @@
     templateLimitInput.value=String(api.get()||4096);templateLimitDialog.showModal();templateLimitInput.focus();
   }
   let address,sectionSave,renameButton,deleteButton,searchInput,query='',folderSelection='';
-  const sectionTitle=()=>activeTab==='templates'?'Шаблоны':activeTab==='layers'?'Слои':activeTab==='music'?'Музыка':activeTab==='sequences'?'Послед-ти':captureLibraries.get(activeTab)?.title||'';
+  const sectionTitle=()=>activeTab==='templates'?'Шаблоны':activeTab==='layers'?'Слои':activeTab==='music'?'Музыка':activeTab==='gif'?'GIF':activeTab==='sequences'?'Послед-ти':captureLibraries.get(activeTab)?.title||'';
   const matches=name=>!query||String(name||'').toLocaleLowerCase().includes(query);
   function folderNodes(){return store?.snapshot().nodes.filter(n=>n.kind==='folder')||[];}
   function navigateFolder(id){current=id;folderSelection=id;renderKey='';selectTab('templates');}
@@ -68,7 +69,7 @@
     const fullPath=['Библиотека',sectionTitle(),...path.map(n=>n.name)].join(' / '),fragment=doc.createDocumentFragment();
     for(const [index,node]of [{id:'',name:'Библиотека'},{id:'',name:sectionTitle()},...path].entries()){if(index){const separator=doc.createElement('span');separator.textContent=' / ';separator.setAttribute('aria-hidden','true');fragment.append(separator);}const b=button(node.name,index===0?'Все шаблоны':node.name,()=>index===1&&activeTab!=='templates'?selectTab(activeTab):navigateFolder(node.id),'mtp-header-crumb');b.dataset.userLabel='';b.dataset.folderId=node.id;dropTarget(b,'folder',node.id);fragment.append(b);}address.replaceChildren(fragment);address.title=fullPath;address.setAttribute('aria-label',fullPath);
     folderButton.hidden=activeTab!=='templates';
-    sectionSave.parentElement.hidden=activeTab==='music';
+    sectionSave.parentElement.hidden=activeTab==='music'||activeTab==='gif';
     const library=captureLibraries.get(activeTab),entry=selectedEntry(),busy=activeTab==='templates'?!!engine?.getState().busy:activeTab==='layers'?false:!!library?.pending||!!library?.api?.getState().busy;
     sectionSave.disabled=busy||(activeTab==='templates'?!!saveButton?.disabled:activeTab==='layers'?!entry?.capturable:activeTab==='sequences'?!root.maySequences:!library?.api);
     sectionSave.title=activeTab==='templates'?'Сохранить выбранную фигуру в библиотеку':activeTab==='layers'?'Создать фиксацию выбранного слоя':activeTab==='sequences'?'Применить строки из редактора':library?'Сохранить '+library.scope:'';
@@ -76,9 +77,9 @@
     searchInput.placeholder='Поиск: '+sectionTitle();
   }
 
-  function selectTab(tab,persist=true){if(tab==='views')tab='frames';if(tab!=='music')stopMusicPreview();activeTab=tab==='layers'||tab==='sequences'||tab==='music'&&musicPane||captureLibraries.has(tab)?tab:'templates';if(!panel)return;
+  function selectTab(tab,persist=true){if(tab==='views')tab='frames';if(tab!=='music')stopMusicPreview();activeTab=tab==='gif'||tab==='layers'||tab==='sequences'||tab==='music'&&musicPane||captureLibraries.has(tab)?tab:'templates';if(!panel)return;
     panel.dataset.tab=activeTab;
-    templatePane.hidden=activeTab!=='templates';sequencePane.hidden=activeTab!=='sequences';if(musicPane)musicPane.hidden=activeTab!=='music';panel.querySelector('.mtp-viewbar').hidden=activeTab==='sequences';layerPane.hidden=activeTab!=='layers';for(const library of captureLibraries.values())library.pane.hidden=activeTab!==library.key;folderButton.hidden=activeTab!=='templates';
+    templatePane.hidden=activeTab!=='templates';sequencePane.hidden=activeTab!=='sequences';if(musicPane)musicPane.hidden=activeTab!=='music';if(gifPane)gifPane.hidden=activeTab!=='gif';panel.querySelector('.mtp-viewbar').hidden=activeTab==='sequences'||activeTab==='gif';layerPane.hidden=activeTab!=='layers';for(const library of captureLibraries.values())library.pane.hidden=activeTab!==library.key;folderButton.hidden=activeTab!=='templates';
     for(const [key,b]of tabButtons){b.setAttribute('aria-selected',String(key===activeTab));b.setAttribute('aria-pressed',String(key===activeTab));b.tabIndex=key===activeTab?0:-1;}
     if(persist)try{root.localStorage.setItem(TAB_KEY,activeTab);}catch(_){}
     syncExplorer();if(activeTab!=='templates'){metricTasks.clear();metricActive=null;renderActive();}else{engine?.refresh();renderKey='';render();}
@@ -127,6 +128,23 @@
     }
     if(!entries.filter(entry=>matches(entry.name+' '+(entry.description||''))).length){const empty=doc.createElement('p');empty.className='mtp-empty';empty.textContent=query?'Поиск не дал результатов.':'Встроенные примеры ещё не загружены.';fragment.append(empty);}musicGrid.replaceChildren(fragment);
   }
+  function liveControlsSection(key){
+    const section=doc.createElement('section');section.className='mtp-live-settings';section.dataset.libraryControls=key;
+    const title=doc.createElement('h3');title.textContent=key==='music'?'Настройки Xorrom':'Настройки GIF';section.append(title);
+    if(root.MayatnikLibraryDetached){
+      const notice=doc.createElement('p');notice.textContent='Живые настройки находятся в библиотеке главного окна Маятника.';
+      const launch=button('Настройки в Маятнике','Открыть '+(key==='music'?'Музыка':'GIF')+' в библиотеке главного окна Маятника',()=>{
+        try{const source=root.opener;if(!source||source.closed||!source.MayatnikTemplatePanel?.openLocalTab)throw Error();source.MayatnikTemplatePanel.openLocalTab(key);source.focus();}
+        catch(_){notice.textContent='Маятник закрыт или перезагружен. Откройте библиотеку заново из его окна.';launch.disabled=true;}
+      });section.append(notice,launch);
+    }else{const host=liveControlHosts.get(key);if(host)section.append(host);}
+    return section;
+  }
+  function registerControls(key,host){
+    if(!['music','gif'].includes(key)||!host)return;
+    liveControlHosts.set(key,host);make();const pane=key==='music'?musicPane:gifPane;
+    if(pane){let section=pane.querySelector('[data-library-controls]');if(!section){section=liveControlsSection(key);pane.prepend(section);}else section.append(host);}
+  }
   function makeMusicPane(){const pane=doc.createElement('section');pane.id='mayMusicPane';pane.className='mtp-pane mtp-music-pane';pane.setAttribute('role','tabpanel');
     const introduction=doc.createElement('p');introduction.className='mtp-music-intro';introduction.textContent='Готовые примеры Xorrom. «Слушать» воспроизводит запись; «Применить» восстанавливает исходный битовый кадр и музыкальные настройки без запуска. «Кадр» скачивает их одним файлом.';
     musicName=doc.createElement('strong');musicName.className='mtp-music-now';musicAudio=doc.createElement('audio');musicAudio.controls=true;musicAudio.preload='none';musicAudio.hidden=true;musicAudio.setAttribute('aria-label','Прослушивание музыкального примера');
@@ -134,7 +152,7 @@
     musicAudio.addEventListener('play',()=>{drawMusicPreview(true);scheduleMusicPreview();});
     musicAudio.addEventListener('pause',()=>{cancelMusicAnimation();drawMusicPreview(true);});musicAudio.addEventListener('ended',()=>{cancelMusicAnimation();drawMusicPreview(true);});
     for(const type of ['timeupdate','seeking','seeked','loadedmetadata'])musicAudio.addEventListener(type,()=>{drawMusicPreview(type==='seeking');scheduleMusicPreview();});
-    musicAudio.addEventListener('error',()=>{if(musicAudio.getAttribute('src')){cancelMusicAnimation();musicStatus.textContent='Не удалось загрузить аудиопример. Попробуйте скачать WAV.';}});musicStatus=doc.createElement('output');musicStatus.className='mtp-status';musicStatus.setAttribute('aria-live','polite');musicGrid=doc.createElement('div');musicGrid.className='mtp-music-grid';pane.append(introduction,musicName,musicVisualStage,musicReader,musicAudio,musicStatus,musicGrid);
+    musicAudio.addEventListener('error',()=>{if(musicAudio.getAttribute('src')){cancelMusicAnimation();musicStatus.textContent='Не удалось загрузить аудиопример. Попробуйте скачать WAV.';}});musicStatus=doc.createElement('output');musicStatus.className='mtp-status';musicStatus.setAttribute('aria-live','polite');musicGrid=doc.createElement('div');musicGrid.className='mtp-music-grid';pane.append(liveControlsSection('music'),introduction,musicName,musicVisualStage,musicReader,musicAudio,musicStatus,musicGrid);
     if(root.ResizeObserver){musicResizeObserver=new root.ResizeObserver(()=>drawMusicPreview(true));musicResizeObserver.observe(musicVisualStage);}return pane;
   }
   function renderLayers(){if(!layerGrid||!open||activeTab!=='layers')return;const layers=layerApi?.list()||[],selected=layerApi?.selected();
@@ -219,7 +237,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','656');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','870');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -246,8 +264,9 @@
     templatePane=doc.createElement('section');templatePane.className='mtp-pane mtp-template-pane';templatePane.id='mayTemplatePane';templatePane.setAttribute('role','tabpanel');
     layerPane=doc.createElement('section');layerPane.className='mtp-pane mtp-layer-pane';layerPane.id='mayLayerPane';layerPane.setAttribute('role','tabpanel');layerGrid=doc.createElement('div');layerGrid.className='mtp-layer-list';layerPane.append(layerGrid);
     sequencePane=doc.createElement('section');sequencePane.className='mtp-pane';sequencePane.id='maySequencePane';sequencePane.setAttribute('role','tabpanel');
-    if(musicAvailable())musicPane=makeMusicPane();
-    const sections=[['templates','Шаблоны',templatePane],['layers','Слои',layerPane],...[...captureLibraries.values()].map(library=>[library.key,library.title,capturePane(library)]),...(musicPane?[['music','Музыка',musicPane]]:[]),['sequences','Послед-ти',sequencePane]],tabKeys=sections.map(s=>s[0]);
+    if(musicAvailable()||liveControlHosts.has('music'))musicPane=makeMusicPane();
+    gifPane=doc.createElement('section');gifPane.id='mayGifSettingsPane';gifPane.className='mtp-pane';gifPane.setAttribute('role','tabpanel');gifPane.append(liveControlsSection('gif'));
+    const sections=[['templates','Шаблоны',templatePane],['layers','Слои',layerPane],...[...captureLibraries.values()].map(library=>[library.key,library.title,capturePane(library)]),...(musicPane?[['music','Музыка',musicPane]]:[]),['gif','GIF',gifPane],['sequences','Послед-ти',sequencePane]],tabKeys=sections.map(s=>s[0]);
     for(const [key,label,pane]of sections){const b=button(label,label,()=>selectTab(key));b.dataset.libraryTab=key;b.setAttribute('role','tab');b.id='mayLibraryTab-'+key;b.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',b.id);b.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?tabKeys[0]:e.key==='End'?tabKeys.at(-1):tabKeys[(tabKeys.indexOf(key)+(e.key==='ArrowRight'?1:tabKeys.length-1))%tabKeys.length];selectTab(next);tabButtons.get(next).focus();}});tabButtons.set(key,b);tabs.append(b);}
     const workspace=doc.createElement('div');workspace.className='mtp-workspace';const main=doc.createElement('div');main.className='mtp-main';
     const commands=doc.createElement('div');commands.className='mtp-section-commands';sectionSave=headingButton('Сохранить в текущий раздел','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>{if(activeTab==='templates')saveButton.click();else if(activeTab==='layers')layerApi?.capture();else if(activeTab==='sequences')sequenceView?.save();else captureLibraries.get(activeTab)?.save.click();});sectionSave.dataset.sectionSave='';renameButton=headingButton('Переименовать выбранный элемент','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',()=>selectedAction('rename'));renameButton.dataset.sectionRename='';deleteButton=headingButton('Удалить выбранный элемент','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>selectedAction('delete'));deleteButton.dataset.sectionDelete='';commands.append(sectionSave,folderButton,renameButton,deleteButton);
@@ -388,15 +407,15 @@
   }
   function schedule(){if(!open||scheduled)return;scheduled=true;root.requestAnimationFrame(()=>{scheduled=false;activeTab!=='templates'?renderActive():render();});}
   function bind(api){if(!api||api===engine)return;unsubscribe?.();engine=api;unsubscribe=engine.subscribe(schedule);schedule();}
-  function setOpen(value,persist=true){
-    if(value&&showDetached())return;
+  function setOpen(value,persist=true,local=false){
+    if(value&&!local&&showDetached())return;
     if(!panel){make();if(!panel)return;}const next=!!value,changed=next!==!panel.hidden,focused=doc.activeElement,launcher=doc.getElementById('bTemplatePanel');open=next;panel.hidden=!open;doc.body.classList.toggle('may-template-panel-open',open);
     if(changed){if(open&&focused===launcher)tabButtons.get(activeTab)?.focus();else if(!open&&panel.contains(focused))launcher?.focus();}
     if(!open){finishResize(true);stopMusicPreview();}resizeHandle.hidden=!open;applyWidth();
     if(persist)try{root.localStorage.setItem(OPEN_KEY,open?'1':'0');}catch(_){}
     engine?.refresh();if(open){if(activeTab!=='templates')renderActive();else render();}if(changed){root.dispatchEvent(new CustomEvent('mayatnik-template-panel-change',{detail:{open}}));root.dispatchEvent(new Event('resize'));}
   }
-  root.MayatnikTemplatePanel={toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,getFolderStore:()=>store,hasWindow:()=>!!libraryWindow&&!libraryWindow.closed,openTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true);}};
+  root.MayatnikTemplatePanel={registerControls,openLocalTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true,true,true);tabButtons.get(activeTab)?.focus();(activeTab==='music'?musicPane:gifPane)?.querySelector('[data-library-controls]')?.scrollIntoView?.({block:'start'});},toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,getFolderStore:()=>store,hasWindow:()=>!!libraryWindow&&!libraryWindow.closed,openTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true);}};
   root.addEventListener('may-template-limit-change',syncTemplateLimit);
   root.addEventListener('may-template-limit-rejected',showTemplateLimitNotice);
   root.addEventListener('may-layers-ready',()=>{make();bindLayers(root.mayLayers);});

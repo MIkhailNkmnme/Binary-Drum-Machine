@@ -12,17 +12,21 @@
     let drag=null,manualGeneration=0,observer=null,observedFigure=null;
     const listeners=new Set(),viewport=options.viewport;
     const marker=doc.createElement('div');marker.id='mayXorromRow';marker.tabIndex=0;marker.setAttribute('role','slider');marker.setAttribute('aria-orientation','vertical');marker.setAttribute('aria-label','Линия чтения Xorrom');marker.title='Линия чтения: тяните вверх или вниз, чтобы повторить строку';
-    Object.assign(marker.style,{position:'fixed',display:'none',pointerEvents:'none',boxSizing:'border-box',zIndex:'15',border:'1px solid #a674ff',boxShadow:'inset 0 0 0 1px #65eaa6',background:'transparent'});
+    Object.assign(marker.style,{position:'fixed',display:'none',pointerEvents:'none',boxSizing:'border-box',zIndex:'15',background:'transparent'});
+    const readingLine=doc.createElement('div');readingLine.dataset.xorromLine='';Object.assign(readingLine.style,{position:'absolute',left:'0',right:'0',height:'1px',background:'#a674ff',pointerEvents:'none'});
     const hit=doc.createElement('div');hit.dataset.xorromDrag='';hit.title='Тянуть вверх или вниз — снова сыграть выбранную строку';Object.assign(hit.style,{position:'absolute',left:'0',right:'0',top:'50%',height:'14px',transform:'translateY(-50%)',pointerEvents:'auto',cursor:'ns-resize',touchAction:'none'});marker.append(hit);doc.body.append(marker);
+    marker.append(readingLine);
     const ns='http://www.w3.org/2000/svg',outline=doc.createElementNS(ns,'svg'),runs=doc.createElementNS(ns,'path');
-    outline.setAttribute('aria-hidden','true');Object.assign(outline.style,{position:'absolute',left:'-1px',top:'-1px',pointerEvents:'none',overflow:'hidden'});
-    runs.setAttribute('fill','none');runs.setAttribute('stroke','#65eaa6');runs.setAttribute('stroke-width','1');runs.setAttribute('shape-rendering','crispEdges');outline.append(runs);marker.append(outline);
+    outline.setAttribute('aria-hidden','true');Object.assign(outline.style,{position:'absolute',left:'0',pointerEvents:'none',overflow:'hidden'});
+    runs.setAttribute('fill','rgba(255,184,48,.28)');runs.setAttribute('stroke','#fff2a6');runs.setAttribute('stroke-width','1');runs.setAttribute('vector-effect','non-scaling-stroke');runs.setAttribute('shape-rendering','crispEdges');runs.style.filter='drop-shadow(0 0 3px #ffac28)';outline.append(runs);marker.append(outline);
     const sourceFigure=()=>typeof options.figure==='function'?options.figure():options.figure;
     const sourceRect=()=>options.figureRect?.()||sourceFigure()?.getBoundingClientRect();
     function getState(){return {state,index,notes:notes.map(note=>({...note})),backingNotes:backingNotes.map(note=>({...note})),error,updating,effective:effective?{...effective}:null,geometry:geometry?{...geometry}:null};}
     function publish(){if(!disposed)for(const listener of listeners)listener(getState());}
-    function showRuns(bits,rect,left,right,top,bottom,rowHeight){
-      outline.setAttribute('width',String(right-left));outline.setAttribute('height',String(bottom-top));
+    function showRuns(bits,rect,left,right,top,visibleTop,visibleBottom,rowHeight){
+      // Give the halo room above/below the row, but clip both ends to the
+      // visible field. The viewBox keeps paths in the row's screen coordinates.
+      outline.style.top=(visibleTop-top)+'px';outline.setAttribute('width',String(right-left));outline.setAttribute('height',String(visibleBottom-visibleTop));outline.setAttribute('viewBox','0 '+(visibleTop-top)+' '+(right-left)+' '+(visibleBottom-visibleTop));
       if(!bits?.length){runs.removeAttribute('d');return;}
       const pitch=rect.width/bits.length,first=Math.max(0,Math.floor((left-rect.left)/pitch)),end=Math.min(bits.length,Math.ceil((right-rect.left)/pitch));
       const y=rect.top+index*rowHeight-top,paths=[];
@@ -31,8 +35,8 @@
         let from=x++;while(x<end&&bits[x]===1)x++;
         // A clipped run continues past the viewport. Leave its outside edge
         // offscreen instead of drawing a new vertical border at the clip.
-        if(from===first&&bits[from-1]===1)from--;
-        const to=x===end&&bits[x]===1?x+1:x;
+        if(from===first)while(from>0&&bits[from-1]===1)from--;
+        let to=x;if(x===end)while(to<bits.length&&bits[to]===1)to++;
         paths.push('M'+(rect.left+from*pitch-left)+' '+y+'h'+((to-from)*pitch)+'v'+rowHeight+'h'+((from-to)*pitch)+'Z');
       }
       if(paths.length)runs.setAttribute('d',paths.join(' '));else runs.removeAttribute('d');
@@ -48,7 +52,9 @@
       const top=Math.max(0,clip.top,rect.top,center-band/2),bottom=Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.bottom,center+band/2);
       const left=Math.max(0,clip.left,rect.left),right=Math.min(win.innerWidth||doc.documentElement.clientWidth,clip.right,rect.right);if(!(bottom>top&&right>left))return;
       Object.assign(marker.style,{display:'block',left:left+'px',top:top+'px',width:(right-left)+'px',height:(bottom-top)+'px',opacity:state==='paused'&&!drag?'.45':'1'});
-      showRuns(lastSnapshot.rows[index]?.bits,rect,left,right,top,bottom,rowHeight);
+      readingLine.style.top=(center-top-.5)+'px';
+      readingLine.style.display=center>=top&&center<=bottom?'block':'none';
+      showRuns(lastSnapshot.rows[index]?.bits,rect,left,right,top,Math.max(0,clip.top,rect.top),Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.bottom),rowHeight);
       const first=Math.min(settings.first,height-1),last=settings.last<0?height-1:Math.max(first,Math.min(settings.last,height-1));marker.setAttribute('aria-valuemin',String(first));marker.setAttribute('aria-valuemax',String(last));marker.setAttribute('aria-valuenow',String(index));marker.setAttribute('aria-valuetext','Строка '+index);
     }
     function scheduleMarker(){if(disposed||frame!==null)return;if(win.requestAnimationFrame)frame=win.requestAnimationFrame(showMarker);else showMarker();}

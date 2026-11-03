@@ -70,8 +70,8 @@ test('hidden source canvas remains a valid geometry anchor while display is pain
  figure.style.display='none';f.api.refresh();assert.equal(marker.style.display,'none');f.close();
 });
 
-test('marker has a visible two-pixel band at subpixel scale and uses physical geometry for rotated views',async()=>{
- const f=fixture();f.snapshot.height=1000;await f.api.start();f.opts.onStep({index:200,notes:[]});const marker=f.doc.getElementById('mayXorromRow');assert.equal(marker.style.display,'block');assert.equal(marker.style.height,'2px');assert.equal(marker.style.top,'39.1px');f.close();
+test('marker keeps a one-pixel reading line at subpixel scale and uses physical geometry for rotated views',async()=>{
+ const f=fixture();f.snapshot.height=1000;await f.api.start();f.opts.onStep({index:200,notes:[]});const marker=f.doc.getElementById('mayXorromRow');assert.equal(marker.style.display,'block');assert.equal(marker.style.height,'2px');assert.equal(marker.style.top,'39.1px');for(const dpr of [1,1.25,2]){f.win.devicePixelRatio=dpr;f.api.refresh();assert.equal(marker.querySelector('[data-xorrom-line]').style.height,'1px');assert.equal(marker.querySelector('path').getAttribute('stroke-width'),'1');}f.close();
  const dom=new JSDOM('<div><canvas></canvas></div>',{pretendToBeVisual:true}),win=dom.window,figure=win.document.querySelector('canvas'),viewport=win.document.querySelector('div');let config,visible=true;
  figure.style.visibility='hidden';figure.getBoundingClientRect=()=>({left:0,top:-1000,right:100,bottom:-800,width:100,height:200});viewport.getBoundingClientRect=()=>({left:0,top:0,right:100,bottom:200});
  const snapshot={height:4,rows:[{},{},{},{}]},engine={...audio,create(o){config=o;return{start:async()=>{await o.getSnapshot();o.onState('playing');return true;},setSettings(){},stop(){o.onState('stopped');},dispose(){},getStream(){return null;}};}};
@@ -121,7 +121,8 @@ test('reading line outlines contiguous ones on the full figure, including clippe
  await f.api.start();const marker=f.doc.getElementById('mayXorromRow'),path=marker.querySelector('path');
  const step=index=>f.opts.onStep({index,notes:[],manual:true});
  step(0);assert.equal(path.getAttribute('d'),'M0 0h30v20h-30Z M50 0h20v20h-20Z');
- assert.equal(path.getAttribute('fill'),'none');assert.equal(path.parentElement.style.pointerEvents,'none');
+ assert.equal(path.getAttribute('fill'),'rgba(255,184,48,.28)');assert.equal(path.getAttribute('stroke'),'#fff2a6');assert.match(path.style.filter,/drop-shadow/);assert.equal(path.getAttribute('vector-effect'),'non-scaling-stroke');assert.equal(path.parentElement.style.pointerEvents,'none');
+ const line=marker.querySelector('[data-xorrom-line]');assert.equal(line.style.height,'1px');assert.equal(line.style.top,'9.5px');assert.equal(marker.style.border,'');assert.equal(marker.style.boxShadow,'');
  f.api.pause();step(1);assert.equal(path.getAttribute('d'),'M0 0h20v20h-20Z M30 0h10v20h-10Z M50 0h10v20h-10Z');
  x=-45;w=350;step(0);assert.equal(path.getAttribute('d'),'M-55 0h150v20h-150Z M195 0h100v20h-100Z');
  assert.equal(path.parentElement.getAttribute('width'),'200');
