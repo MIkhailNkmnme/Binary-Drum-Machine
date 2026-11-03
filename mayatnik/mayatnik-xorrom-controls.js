@@ -1,15 +1,15 @@
 /* Xorrom: compact, gesture-started music controls for the shared menu. */
 (function(root,factory){
-  const value=factory();
+  const value=factory(typeof module==='object'&&module.exports?require('../_js/control-frame.js'):root.ZerkControlFrame);
   if(typeof module==='object'&&module.exports)module.exports=value;
   else root.MayatnikXorromControls=value;
-})(globalThis,function(){
+})(globalThis,function(Frame){
   'use strict';
   const DEFAULTS={source:'rgb',bpm:96,division:8,tonic:0,scale:'major',octave:4,timbre:'triangle',gain:.25,chord:3,first:0,last:-1,stride:1,loop:true,live:false,restartOnFrame:false,autoGeometry:false,geometrySource:'all',geometryConnectivity:'sides',backing:'off',backingGain:.3,backingTimbre:'sine',backingRows:4,envelopeOn:false,attack:.005,decay:.08,sustain:.7,release:.12,filterType:'off',cutoff:8000,resonance:.7,lfoTarget:'off',lfoRate:2,lfoDepth:0,delayTime:.25,delayFeedback:.25,delayMix:0,reverbMix:0,reverbTime:1,pan:0,arpMode:'off',arpGate:.8,swing:0};
   const AUTO_FIELDS={all:new Set(['division','scale','tonic','octave','timbre','gain','chord']),regions:new Set(['division','timbre']),areas:new Set(['tonic','gain','chord']),symmetry:new Set(['scale','octave'])};
   function mount(host,{api,helpUrl='instruction/index.html#xorrom',download,after=()=>{}}={}){
     if(!host||!api)throw new Error('Xorrom: нужны контейнер и музыкальный API');
-    const doc=host.ownerDocument,win=doc.defaultView,nodes=[],bindings=[];
+    const doc=host.ownerDocument,win=doc.defaultView,nodes=[],bindings=[],steppers=[],controlFrame=win.ZerkControlFrame||Frame;
     let destroyed=false,pending=false,exporting=false,importing=false,importGeneration=0,activeReader=null,error='',notice='',unsubscribe;
     const settings=()=>({...DEFAULTS,...win.MayatnikXorrom?.DEFAULTS,...api.getSettings()});
     const state=()=>api.getState()||{state:'stopped'};
@@ -38,15 +38,31 @@
     const start=button('start','▶ Старт','Начать музыку. Звук включается только после нажатия. Повторное нажатие ставит воспроизведение на паузу.',()=>run(()=>state().state==='playing'?api.pause():api.start()));
     const stop=button('stop','■ Стоп','Остановить музыку или отменить чтение поля и вернуться к первой выбранной строке.',()=>safe(()=>{api.stop();notice='Остановлено';}));
     function field(key,text,title,build){
-      const row=doc.createElement('label');row.className='gz-hx gz-pair gz-split';row.dataset.xorrom=key;
+      const row=doc.createElement('div');row.className='gz-hx gz-pair gz-split';row.dataset.xorrom=key;
       const label=doc.createElement('span');label.className='gz-half gz-h0';caption(label,text);
       const divider=doc.createElement('span');divider.className='gz-pm';divider.setAttribute('aria-hidden','true');
       const input=build();input.classList.add('gz-half','gz-h1');describe(input,title);row.title=title;
       input.addEventListener('click',e=>e.stopPropagation());input.addEventListener('keydown',e=>e.stopPropagation());
-      row.append(label,divider,input);append(row);return input;
+      row.append(label,divider,input);append(row);
+      if((input.tagName==='SELECT'||input.type==='number')&&controlFrame){
+        const middle=doc.createElement('span');middle.className='may-xorrom-value';middle.append(label,divider,input);
+        const side=dir=>{const b=doc.createElement('button');b.type='button';b.className='may-xorrom-side';b.textContent=dir<0?'‹':'›';b.dataset.xorromStep=String(dir);describe(b,(dir<0?'Предыдущее / меньше: ':'Следующее / больше: ')+title);
+          b.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();});
+          b.addEventListener('click',e=>{e.stopPropagation();if(input.disabled||b.disabled)return;
+            if(input.tagName==='SELECT'){const available=Array.from(input.options).filter(o=>!o.disabled&&!o.hidden),at=available.indexOf(input.selectedOptions[0]),next=available[at+dir];if(next)input.value=next.value;else return;}
+            else{const n=Number(input.value),step=input.step==='any'?1:Number(input.step)||1,min=input.min===''?-Infinity:Number(input.min),max=input.max===''?Infinity:Number(input.max);if(!Number.isFinite(n))return;let next=+(n+dir*step).toPrecision(12);next=Math.max(min,Math.min(max,next));if(key==='bpm'&&next<=0)return;input.value=String(next);}
+            input.dispatchEvent(new win.Event('change',{bubbles:true}));sync();
+          });return b;};
+        const left=side(-1),right=side(1);row.replaceChildren(left,middle,right);controlFrame.attach(row,left,middle,right,{input});
+        steppers.push(()=>{if(input.tagName==='SELECT'){const available=Array.from(input.options).filter(o=>!o.disabled&&!o.hidden),at=available.indexOf(input.selectedOptions[0]);left.disabled=input.disabled||at<=0;right.disabled=input.disabled||at<0||at>=available.length-1;}
+          else {const n=Number(input.value),step=input.step==='any'?1:Number(input.step)||1;left.disabled=input.disabled||(input.min!==''?n<=Number(input.min):key==='bpm'&&n-step<=0);right.disabled=input.disabled||(input.max!==''&&n>=Number(input.max));}
+          for(const b of [left,right]){b.title=(b===left?'Предыдущее / меньше: ':'Следующее / больше: ')+input.title;b.setAttribute('aria-label',b.title);}
+        });
+      }
+      return input;
     }
     function bindField(input,key,title,toView=v=>v){
-      const row=input.parentElement;
+      const row=input.closest('.may-xorrom-control');
       const label=value=>input.tagName==='SELECT'?Array.from(input.options).find(option=>option.value===String(value))?.textContent||String(value):String(toView(value));
       bindings.push((s,current)=>{
         const automatic=!!s.autoGeometry&&(AUTO_FIELDS[s.geometrySource]||AUTO_FIELDS.all).has(key)&&current.effective?.[key]!=null;
@@ -222,10 +238,26 @@
     legend.title='Условное назначение цветов ступеням выбранного лада, а не физический закон: 1 синий — До; 2 зелёный — Ре; 3 голубой — Ми; 4 красный — Фа; 5 пурпурный — Соль; 6 жёлтый — Ля; 7 белый — Си. Чёрный — пауза. В других ладах и тональностях ступени звучат иначе.';
     legend.setAttribute('aria-label',legend.title);
     for(const [code,color,note]of [[1,'#00f','До'],[2,'#0f0','Ре'],[3,'#0ff','Ми'],[4,'#f00','Фа'],[5,'#f0f','Соль'],[6,'#ff0','Ля'],[7,'#fff','Си']]){const chip=doc.createElement('span');chip.style.setProperty('--note-color',color);chip.textContent=code+' '+note;legend.append(chip);}append(legend);
+    // These existing nodes move together into Library → Music. Quick transport
+    // stays directly on the rail; grouping never replaces the live inputs.
+    const categories=[
+      ['tracks','Дорожки',['track','trackName','trackAdd','trackRemove','trackPlay','trackStop','trackMute','tracksStart','tracksStop']],
+      ['reading','Чтение / Оси',['tracksTemplates','trackAxis','trackAxes','trackAxisx1','trackAxisy1','trackAxisx2','trackAxisy2','trackAxisFixed','trackAxisReverse','first','last','stride','loop','live','restartOnFrame']],
+      ['notes','Ноты / Ритм',['source','bpm','division','scale','tonic','octave','chord','arpMode','arpGate','swing','autoGeometry','geometrySource','geometryConnectivity']],
+      ['sound','Тембр / Громкость / Фон',['electro','timbre','gain','backing','backingTimbre','backingGain','backingRows']],
+      ['effects','Огибающая / Фильтр / LFO / Эффекты',['envelopeOn','attack','decay','sustain','release','filterType','cutoff','resonance','lfoTarget','lfoRate','lfoDepth','delayTime','delayFeedback','delayMix','reverbMix','reverbTime','pan']],
+      ['files','Файлы / Сведения',['wav','jsonLoad','jsonSave','help','status','geometry','notes','legend']]
+    ];
+    for(const [id,title,keys]of categories){const controls=keys.map(key=>nodes.find(node=>node.dataset.xorrom===key&&node.parentElement===host)).filter(Boolean);if(!controls.length)continue;
+      const section=doc.createElement('section');section.className='may-xorrom-group';section.dataset.xorromGroup=id;section.setAttribute('aria-label',title);
+      const heading=doc.createElement('h4');heading.className='may-xorrom-group-title';heading.textContent=title;
+      const grid=doc.createElement('div');grid.className='may-xorrom-grid';grid.append(...controls);section.append(heading,grid);host.append(section);nodes.push(section);
+    }
     function sync(){
       if(destroyed)return;
       const s=settings(),current=state(),playing=current.state==='playing';
       bindings.forEach(bind=>bind(s,current));
+      steppers.forEach(update=>update());
       const matchesElectro=Object.entries(electroPreset).every(([key,value])=>s[key]===value);
       const electronic=['bass','pulse','metal','robot'].includes(s.timbre);
       electro.node.classList.toggle('gz-on',electronic);electro.node.setAttribute('aria-pressed',String(electronic));electro.node.dataset.presetMatch=String(matchesElectro);

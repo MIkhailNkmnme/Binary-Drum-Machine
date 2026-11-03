@@ -79,3 +79,31 @@ test('automatic geometry/connectivity toggle refreshes the playing score but bas
  f.api.setSettings({geometryConnectivity:'corners'});assert.equal(f.api.getState().updating,true);await f.raf();assert.equal(f.captures.length,before+2);
  f.api.setSettings({autoGeometry:false});await f.raf();assert.equal(f.captures.length,before+3);assert.equal(f.api.getState().state,'playing');f.close();
 });
+
+test('library edge clips the row and moves its label on resize; controls receive the first press and only exposed field starts a drag',async()=>{
+ const f=fixture(),doc=f.win.document,canvas=doc.querySelector('canvas'),view=canvas.parentElement;
+ const panel=doc.createElement('aside'),close=doc.createElement('button'),innerButton=doc.createElement('button');
+ panel.id='mayatnikTemplatePanel';panel.append(close);doc.body.append(panel);view.append(innerButton);
+ let edge=150,closed=0;
+ panel.getBoundingClientRect=()=>({left:edge,top:0,width:300-edge,height:200});
+ close.addEventListener('click',()=>closed++);
+ function pointer(target,type,x,y,touch=false){
+   const e=new f.win.MouseEvent(type,{button:0,clientX:x,clientY:y,bubbles:true,cancelable:true});
+   Object.defineProperties(e,{pointerId:{value:9},pointerType:{value:touch?'touch':'mouse'}});target.dispatchEvent(e);return e;
+ }
+ try{
+   await f.api.start();f.step(1);
+   const right=doc.querySelector('[data-xorrom-edge="right"]');
+   assert.equal(f.marker.style.width,'150px');assert.equal(right.style.right,(f.win.innerWidth-edge)+'px');
+   assert.equal(f.hit.style.pointerEvents,'none');assert.equal(f.marker.style.zIndex,'2147483645');
+   for(const target of [close,innerButton])assert.equal(pointer(target,'pointerdown',140,75,true).defaultPrevented,false);
+   close.click();assert.equal(closed,1);assert.equal(f.api.getState().state,'playing');assert.deepEqual(f.seeks,[]);
+   assert.equal(pointer(canvas,'pointerdown',160,75).defaultPrevented,false,'panel clips the hit range too');
+   assert.equal(pointer(canvas,'pointerdown',90,110).defaultPrevented,false,'empty field keeps native input');
+   assert.equal(pointer(canvas,'pointerdown',90,75,true).defaultPrevented,true);await f.flush();
+   pointer(f.win,'pointermove',90,125,true);await f.flush();pointer(f.win,'pointerup',90,125,true);await f.flush();
+   assert.equal(f.seeks.at(-1),2);assert.equal(f.api.getState().state,'playing');
+   edge=100;f.win.dispatchEvent(new f.win.Event('resize'));await f.raf();assert.equal(f.marker.style.width,'100px');
+   panel.hidden=true;f.win.dispatchEvent(new f.win.Event('resize'));await f.raf();assert.equal(f.marker.style.width,'300px');assert.equal(right.style.right,'0px');assert.equal(f.api.getState().index,2);
+ }finally{f.close();}
+});

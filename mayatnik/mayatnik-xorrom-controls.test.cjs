@@ -25,6 +25,36 @@ test('tempo number accepts fractional, slow and fast values, and keeps the previ
   for(const value of ['',0,-5]){a.change('bpm',value);assert.equal(input.value,'123.45');}
   assert.equal(a.starts,0);a.dom.window.close();
 });
+
+test('library groups reuse all live controls and leave quick transport directly in the rail',()=>{
+ const a=boot();try{
+  assert.equal(a.el('start').parentElement,a.host);assert.equal(a.el('stop').parentElement,a.host);
+  assert.deepEqual([...a.host.querySelectorAll('[data-xorrom-group]')].map(n=>n.dataset.xorromGroup),['reading','notes','sound','effects','files']);
+  for(const [key,group]of [['first','reading'],['tonic','notes'],['timbre','sound'],['attack','effects'],['jsonSave','files']])assert.equal(a.el(key).closest('[data-xorrom-group]').dataset.xorromGroup,group);
+  const input=a.input('bpm'),section=input.closest('section');input.focus();input.value='133.25';a.setState({state:'playing',index:1});assert.equal(a.input('bpm'),input);assert.equal(input.closest('section'),section);assert.equal(input.value,'133.25');assert.equal(a.dom.window.document.activeElement,input);
+  for(const input of a.host.querySelectorAll('select,input[type="number"]')){const row=input.closest('[data-xorrom]');assert.equal(row.querySelectorAll('[data-xorrom-step]').length,2);assert.ok(row.classList.contains('zcf-control'));assert.equal(row.querySelectorAll('.zcf-outline').length,3);}
+ }finally{a.control.destroy();a.dom.window.close();}
+});
+
+test('side arrows keep numeric bounds, decimal conversions, unrestricted BPM and manual focus',()=>{
+ const a=boot(),side=(key,dir)=>a.el(key).querySelector('[data-xorrom-step="'+dir+'"]');try{
+  a.change('bpm',999.25);side('bpm',1).click();assert.equal(a.api.getSettings().bpm,1000.25);assert.equal(a.input('bpm').hasAttribute('max'),false);
+  a.change('bpm',.5);assert.equal(side('bpm',-1).disabled,true);side('bpm',-1).click();assert.equal(a.api.getSettings().bpm,.5);
+  a.change('gain',100);assert.equal(side('gain',1).disabled,true);side('gain',-1).click();assert.equal(a.api.getSettings().gain,.99);
+  a.change('attack',.005);side('attack',1).click();assert.equal(a.api.getSettings().attack,.006);
+  a.input('bpm').focus();a.input('bpm').value='135.5';side('bpm',1).dispatchEvent(new a.dom.window.MouseEvent('pointerdown',{bubbles:true,cancelable:true}));side('bpm',1).click();assert.equal(a.dom.window.document.activeElement,a.input('bpm'));assert.equal(a.input('bpm').value,'136.5');assert.equal(a.api.getSettings().bpm,136.5);
+ }finally{a.dom.window.close();}
+});
+
+test('select side arrows preserve option order and all auto/source-disabled restrictions',()=>{
+ const a=boot(),side=(key,dir)=>a.el(key).querySelector('[data-xorrom-step="'+dir+'"]');try{
+  side('source',1).click();assert.equal(a.api.getSettings().source,'rhythm');assert.equal(side('source',1).disabled,true);assert.equal(a.input('chord').disabled,true);assert.equal(side('chord',-1).disabled,true);
+  side('source',-1).click();assert.equal(a.api.getSettings().source,'rgb');assert.equal(a.input('chord').disabled,false);
+  a.api.setSettings({autoGeometry:true});a.setState({state:'playing',effective:{tonic:7,gain:.2}});const count=a.patches.length;
+  assert.equal(side('tonic',1).disabled,true);assert.equal(side('gain',-1).disabled,true);side('gain',-1).click();assert.equal(a.patches.length,count);
+  a.el('autoGeometry').click();side('tonic',1).click();assert.equal(a.api.getSettings().tonic,1);
+ }finally{a.dom.window.close();}
+});
 test('frame restart is an independent saved toggle and does not start sound',()=>{
   const a=boot(),toggle=a.el('restartOnFrame');assert.equal(toggle.getAttribute('aria-pressed'),'false');
   assert.match(toggle.textContent,/С начала кадра/);assert.match(toggle.title,/линия чтения/);
@@ -206,6 +236,27 @@ test('browser-realm modules validate their JSON import in the same realm as prod
  let config=win.MayatnikXorrom.DEFAULTS,changes=0,starts=0;const api={getSettings:()=>config,getState:()=>({state:'stopped'}),setSettings:value=>{config=value;changes++;},pause(){},start(){starts++;}};
  const host=win.document.querySelector('#host'),controls=win.MayatnikXorromControls.mount(host,{api}),file=host.querySelector('[data-xorrom="jsonFile"]');
  const full=win.JSON.parse(win.JSON.stringify({...win.MayatnikXorrom.DEFAULTS,attack:.75}));Object.defineProperty(file,'files',{value:[{size:1000,text:async()=>win.JSON.stringify(full)}]});file.dispatchEvent(new win.Event('change'));await flush();assert.equal(changes,1);assert.equal(config.attack,.75);assert.equal(starts,0);assert.equal(win.Object.getPrototypeOf(config),win.Object.prototype);controls.destroy();dom.window.close();
+});
+
+test('late-loaded shared frame supplies real side contours; axis coordinates remain signed and track picker stays alive',()=>{
+ const fs=require('node:fs'),dom=new JSDOM('<div id="host"></div>',{runScripts:'outside-only'}),w=dom.window;
+ try{
+  w.eval(fs.readFileSync(require.resolve('./mayatnik-xorrom-controls.js'),'utf8'));
+  w.eval(fs.readFileSync(require.resolve('../_js/control-frame.js'),'utf8'));
+  let selected=1,spec={x1:0,y1:0,x2:9,y2:9},listener;const tracks=[{id:1,name:'A',color:'#f00',muted:false},{id:2,name:'B',color:'#0ff',muted:false}];
+  const api={getSettings:()=>({}),getState:()=>({state:'stopped'}),getRack:()=>({selected,tracks}),getTrackList:()=>({selected,tracks}),getAxis:()=>spec,getAxisName:()=>'',getTemplate:()=>null,getSize:()=>({width:10,height:10}),getAxes:()=>[],setAxis:v=>{spec=v;listener?.();},select:id=>{selected=id;listener?.();},subscribe:fn=>{listener=fn;return()=>{};}};
+  const host=w.document.getElementById('host'),control=w.MayatnikXorromControls.mount(host,{api});
+  const pick=host.querySelector('[data-xorrom="track"] select'),options=[...pick.options];pick.focus();listener();assert.equal(w.document.activeElement,pick);assert.deepEqual([...pick.options],options);
+  host.querySelector('[data-xorrom="track"] [data-xorrom-step="1"]').click();assert.equal(selected,2);assert.equal(host.querySelector('[data-xorrom="track"] select'),pick);
+  const axis=host.querySelector('[data-xorrom="trackAxisx1"]');assert.equal(axis.querySelectorAll('.zcf-outline').length,3);axis.querySelector('[data-xorrom-step="-1"]').click();assert.equal(spec.x1,-1);
+  assert.equal(host.querySelector('[data-xorrom-group="tracks"]').getAttribute('aria-label'),'Дорожки');control.destroy();
+ }finally{dom.window.close();}
+});
+
+test('music grid CSS is scoped, uses standard columns/gaps and hides native field arrows',()=>{
+ const css=require('node:fs').readFileSync(__dirname+'/mayatnik-xorrom-controls.css','utf8');
+ assert.match(css,/#mayMusicPane \.may-xorrom-grid\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(min\(120px,100%\),120px\)\);gap:2px 6px/);
+ assert.match(css,/\.may-xorrom-value>\.gz-h1[^}]*appearance:none/);assert.match(css,/::-webkit-inner-spin-button/);assert.match(css,/\.may-xorrom-value:focus-within/);
 });
 
 test('destroy aborts an active FileReader and a pause failure leaves settings untouched',async()=>{

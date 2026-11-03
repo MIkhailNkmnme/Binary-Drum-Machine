@@ -6,13 +6,22 @@
 .may-xorrom-control select.gz-half{padding-left:1px;padding-right:0;cursor:pointer}
 .may-xorrom-control select option{color:#eee;background:#1b2430}
 .may-xorrom-control input:focus-visible,.may-xorrom-control select:focus-visible{outline:1px solid var(--c)}
+.may-xorrom-control.zcf-control>.may-xorrom-value{flex-direction:column;gap:0;padding:0 3px!important;overflow:hidden}
+.may-xorrom-control.zcf-control>.may-xorrom-value>.gz-half{box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;margin:0;padding:0 1px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;clip-path:none}
+.may-xorrom-control.zcf-control>.may-xorrom-value>.gz-h0{display:block;height:10px;min-height:0;font:9px/10px "Segoe UI",sans-serif;text-align:center;color:var(--gz-mut,#8592ad);pointer-events:none}
+.may-xorrom-control.zcf-control>.may-xorrom-value>.gz-h1{display:block;height:14px;min-height:0;font:12px/14px "Segoe UI",sans-serif;appearance:none;-moz-appearance:textfield;background:transparent!important;border:0;color:inherit;text-align:center;user-select:text}
+.may-xorrom-control.zcf-control>.may-xorrom-value>.gz-pm{display:none}
+.may-xorrom-control input::-webkit-inner-spin-button,.may-xorrom-control input::-webkit-outer-spin-button{appearance:none;margin:0}
+.may-xorrom-control.zcf-control>.may-xorrom-value:focus-within{--zcf-outline:var(--c)}
+.may-xorrom-control.zcf-control>.may-xorrom-side{user-select:none;touch-action:manipulation}
+.may-xorrom-control.may-xorrom-modulated .may-xorrom-value>.gz-h1{font-weight:700;text-decoration:underline;text-underline-offset:2px}
 .may-xorrom-control:disabled,.may-xorrom-control :disabled{opacity:.5;cursor:default}
 a.may-xorrom-control{display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
 .may-xorrom-status,.may-xorrom-notes,.may-xorrom-geometry{display:flex;align-items:center;justify-content:center;padding:0 9px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px}
 .may-xorrom-legend{display:flex;align-items:center;justify-content:center;gap:2px;padding:0 6px;font-size:8px}
 .may-xorrom-legend>span{border-bottom:2px solid var(--note-color);white-space:nowrap}
 
-.may-xorrom-control.may-xorrom-auto :disabled{opacity:1;color:var(--c)}
+.may-xorrom-control.may-xorrom-auto :is(input,select):disabled{opacity:1;color:var(--c)}
 .may-xorrom-control.may-xorrom-modulated>.gz-h1{font-weight:700;text-decoration:underline;text-underline-offset:3px}
 
 /* The rail and Library have different button cascades. Preserve the shared
@@ -21,3 +30,13 @@ a.may-xorrom-control{display:flex;align-items:center;justify-content:center;text
 #mayatnikTemplatePanel .may-xorrom-control[data-xorrom="electro"][aria-pressed="true"]{background:#c29bff!important;color:#fff}
 .may-xorrom-control[data-xorrom="electro"][aria-pressed="true"]::before,
 #mayatnikTemplatePanel .may-xorrom-control[data-xorrom="electro"][aria-pressed="true"]::before{inset:2px!important;background:var(--gz-bg,#1b2430)!important}
+
+/* Only Library Music gets the multi-column arrangement. Shared control nodes,
+   including focused inputs and selected states, stay intact when moved here. */
+#mayMusicPane .mtp-live-controls{align-self:stretch;min-width:0;width:100%;max-width:100%}
+#mayMusicPane .mtp-live-controls>.may-xorrom-group{display:block;box-sizing:border-box;flex:none;width:100%;min-width:0;margin:0;padding:0 2px 4px}
+#mayMusicPane .may-xorrom-group-title{margin:2px 0;font:11px/16px "Segoe UI",sans-serif;color:var(--c,#c29bff);user-select:none}
+#mayMusicPane .may-xorrom-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(120px,100%),120px));gap:2px 6px;align-items:start;min-width:0;width:100%}
+#mayMusicPane .may-xorrom-grid>.may-xorrom-control{position:relative;box-sizing:border-box;margin:0;max-width:100%}
+#mayMusicPane .may-xorrom-group[data-xorrom-group="files"] :is(.may-xorrom-status,.may-xorrom-notes,.may-xorrom-geometry,.may-xorrom-legend){grid-column:1/-1;width:100%!important;min-width:0;justify-content:flex-start}
+#mayMusicPane .may-xorrom-status>span{min-width:0;overflow:hidden;text-overflow:ellipsis}

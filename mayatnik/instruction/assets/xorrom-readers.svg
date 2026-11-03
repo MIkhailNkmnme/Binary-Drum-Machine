@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="220" viewBox="0 0 720 220" role="img" aria-labelledby="title desc">
+ <title id="title">Три независимых источника музыки</title>
+ <desc id="desc">Горизонталь идёт вниз, вертикаль вправо. Разрозненные клетки маски шаблона читают текущие биты всего поля одним шагом.</desc>
+ <defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#344250" stroke-width="1"/></pattern><marker id="arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="none" stroke="context-stroke" stroke-width="1.3"/></marker></defs>
+ <rect width="720" height="220" rx="8" fill="#111923"/>
+ <g font-family="system-ui,sans-serif" font-size="13" fill="#edf2fa" text-anchor="middle">
+  <text x="120" y="24" fill="#bd9bff">Дорожка 1 · горизонталь</text><text x="360" y="24" fill="#55e1e9">Дорожка 2 · вертикаль</text><text x="600" y="24" fill="#ffaf73">Дорожка 3 · шаблон</text>
+  <g fill="url(#grid)" stroke="#586674"><rect x="40" y="40" width="160" height="120"/><rect x="280" y="40" width="160" height="120"/><rect x="520" y="40" width="160" height="120"/></g>
+  <g fill="#a5b0bd" font-family="monospace" font-size="15"><text x="90" y="75">1 0 1</text><text x="150" y="115">0 1 1</text><text x="310" y="75">1</text><text x="310" y="115">0</text><text x="310" y="155">1</text></g>
+  <g fill="none" stroke-width="1"><path d="M40 90H200" stroke="#bd9bff"/><path d="M310 40V160" stroke="#55e1e9"/></g>
+  <g fill="none" stroke-width="2" marker-end="url(#arrow)"><path d="M218 65V128" stroke="#bd9bff"/><path d="M330 175H394" stroke="#55e1e9"/></g>
+  <g stroke="#ffaf73" stroke-width="1.5"><path d="M540 60H580V80H560V100H540Z" fill="#70492f"/><rect x="600" y="100" width="40" height="20" fill="#70492f"/><rect x="620" y="120" width="20" height="20" fill="#70492f"/></g>
+  <g font-family="monospace" font-size="15"><text x="550" y="75">1</text><text x="570" y="75">0</text><text x="550" y="95">1</text><text x="610" y="115">0</text><text x="630" y="115">1</text><text x="630" y="135">1</text></g>
+  <text x="120" y="203">Один ряд → следующий срез</text><text x="360" y="203">Один столбец → следующий срез</text><text x="600" y="180">Все клетки маски → один шаг</text><text x="600" y="203" fill="#b7c2d0">Значения берутся из текущего кадра</text>
+ </g>
+</svg>

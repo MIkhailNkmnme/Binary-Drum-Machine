@@ -1,8 +1,8 @@
 /* Xorrom transport, live field refresh and an interactive score-row marker. */
 (function(root,factory){
-  if(typeof module==='object'&&module.exports)module.exports=factory(root,require('./mayatnik-xorrom.js'));
-  else root.MayatnikXorromHost=factory(root,root.MayatnikXorrom);
-})(globalThis,function(root,defaultEngine){
+  if(typeof module==='object'&&module.exports)module.exports=factory(root,require('./mayatnik-xorrom.js'),require('./mayatnik-xorrom-axis-marker.js'));
+  else root.MayatnikXorromHost=factory(root,root.MayatnikXorrom,root.MayatnikXorromAxisMarker);
+})(globalThis,function(root,defaultEngine,markers){
   'use strict';
   const labelGroups=new WeakMap();
   function edges(doc,win,id){
@@ -17,8 +17,8 @@
       }
     }
     function hide(){if(!item.y)return;item.y=null;labels.forEach(el=>el.hidden=true);arrange();}
-    return {hide,show(left,right,value,name,color){if(![left,right].every(Number.isFinite)){hide();return;}
-      item.y=[left,right];for(const el of labels){el.hidden=false;el.textContent=(id?'№'+id+' · ':'')+value;el.title=name;el.style.color=color;}arrange();},
+    return {hide,show(left,right,value,name,color,rightInset=0){if(![left,right].every(Number.isFinite)){hide();return;}
+      labels[1].style.right=rightInset+'px';item.y=[left,right];for(const el of labels){el.hidden=false;el.textContent=(id?'№'+id+' · ':'')+value;el.title=name;el.style.color=color;}arrange();},
       destroy(){group.delete(item);labels.forEach(el=>el.remove());arrange();}};
   }
   function mount(options={}){
@@ -26,21 +26,21 @@
     if(!doc||!engine||typeof options.getSnapshot!=='function')throw Error('Хорром: нужны документ, аудиоядро и источник поля.');
     let settings=engine.normalizeSettings(options.getSettings?.()),state='stopped',index=-1,notes=[],backingNotes=[],error='',effective=null,geometry=null;
     let generation=0,disposed=false,lastSnapshot=null,frame=null,refreshFrame=null,updating=false,resumeAfterRefresh=false,fieldStamp=null;
-    let multiple=false,identity={},angledDrag=null;
+    let multiple=false,identity={},angledDrag=null,rowHit=null;
     let drag=null,manualGeneration=0,observer=null,observedFigure=null;
     const runCache=new WeakMap(),listeners=new Set(),viewport=options.viewport;
     const labels=edges(doc,win,options.trackId);
     const marker=doc.createElement('div');marker.id=options.trackId&&options.trackId!==1?'mayXorromRow-'+options.trackId:'mayXorromRow';marker.tabIndex=0;marker.setAttribute('role','slider');marker.setAttribute('aria-orientation','vertical');marker.setAttribute('aria-label','Линия чтения Xorrom');marker.title='Линия чтения: тяните вверх или вниз, чтобы повторить строку';
     Object.assign(marker.style,{position:'fixed',display:'none',pointerEvents:'none',boxSizing:'border-box',zIndex:'2147483645',background:'transparent'});
     const readingLine=doc.createElement('div');readingLine.dataset.xorromLine='';Object.assign(readingLine.style,{position:'absolute',left:'0',right:'0',height:'1px',background:'#a674ff',pointerEvents:'none'});
-    const hit=doc.createElement('div');hit.dataset.xorromDrag='';hit.title='Тянуть вверх или вниз — снова сыграть выбранную строку';Object.assign(hit.style,{position:'absolute',left:'0',right:'0',top:'50%',height:'14px',transform:'translateY(-50%)',pointerEvents:'auto',cursor:'ns-resize',touchAction:'none'});marker.append(hit);doc.body.append(marker);
+    const hit=doc.createElement('div');hit.dataset.xorromDrag='';hit.title='Тянуть вверх или вниз — снова сыграть выбранную строку';Object.assign(hit.style,{position:'absolute',left:'0',right:'0',top:'50%',height:'14px',transform:'translateY(-50%)',pointerEvents:'none',cursor:'ns-resize',touchAction:'none'});marker.append(hit);doc.body.append(marker);
     marker.append(readingLine);
     const ns='http://www.w3.org/2000/svg',outline=doc.createElementNS(ns,'svg'),runs=doc.createElementNS(ns,'path');
     outline.setAttribute('aria-hidden','true');Object.assign(outline.style,{position:'absolute',left:'0',pointerEvents:'none',overflow:'hidden'});
     runs.setAttribute('fill','rgba(255,184,48,.28)');runs.setAttribute('stroke','#fff2a6');runs.setAttribute('stroke-width','1');runs.setAttribute('vector-effect','non-scaling-stroke');runs.setAttribute('shape-rendering','crispEdges');runs.style.filter='drop-shadow(0 0 3px #ffac28)';outline.append(runs);marker.append(outline);
     const sourceFigure=()=>typeof options.figure==='function'?options.figure():options.figure;
     const sourceRect=()=>options.figureRect?.()||sourceFigure()?.getBoundingClientRect();
-    const overlay=options.axisMarker?.mount({window:win,document:doc,viewport,figureRect:sourceRect,onDragStart:axisDown,onDrag:axisMove,onDragEnd:axisUp,onKey:axisKey});
+    const overlay=options.axisMarker?.mount({window:win,document:doc,viewport,figureRect:sourceRect,isFigure:target=>sourceFigure()===target,onDragStart:axisDown,onDrag:axisMove,onDragEnd:axisUp,onKey:axisKey});
     function identify({muted=false,name='Xorrom',color='#a674ff',selected=false,multiple:many=false}={}){identity={name,color,selected,muted};multiple=many;readingLine.style.background=color;marker.setAttribute('aria-label','Линия чтения: '+name);hit.title=name+' — перетащить на другую строку';marker.style.zIndex=selected?'2147483646':'2147483645';scheduleMarker();}
     function getState(){return {state,index,notes:notes.map(note=>({...note})),backingNotes:backingNotes.map(note=>({...note})),error,updating,effective:effective?{...effective}:null,geometry:geometry?{...geometry}:null};}
     function publish(){if(!disposed)for(const listener of listeners)listener(getState());}
@@ -63,12 +63,13 @@
       if(paths.length)runs.setAttribute('d',paths.join(' '));else runs.removeAttribute('d');
     }
     function showMarker(){
-      labels.hide();frame=null;marker.style.display='none';runs.removeAttribute('d');
+      rowHit=null;labels.hide();frame=null;marker.style.display='none';runs.removeAttribute('d');
       const axis=options.getAxis?.(),template=options.getTemplate?.(),special=!!(axis||template);
       const parked=state==='stopped'&&(multiple||special);if(!special)overlay?.hide();
       if(disposed||doc.hidden||updating||options.isVisible?.()===false||!parked&&(!lastSnapshot||index<0||!['playing','paused'].includes(state))){if(!angledDrag)overlay?.hide();return;}
       const figure=sourceFigure();if(figure!==observedFigure){if(observedFigure&&observedFigure!==viewport)observer?.unobserve?.(observedFigure);observedFigure=figure;if(figure&&figure!==viewport)observer?.observe(figure);}if(!figure||!viewport||figure.isConnected===false||viewport.isConnected===false){overlay?.hide();return;}
       if(win.getComputedStyle&&(win.getComputedStyle(figure).display==='none'||win.getComputedStyle(viewport).display==='none'||win.getComputedStyle(viewport).visibility==='hidden')){overlay?.hide();return;}
+      const clip=markers.visibleField(doc,win,viewport);if(!(clip.width>0&&clip.height>0)){overlay?.hide();return;}
       if(special&&overlay){
         const size=options.getSize(),row=parked?null:lastSnapshot?.rows[index];let onesRuns=row&&runCache.get(row);
         if(!onesRuns&&row?.indices){
@@ -80,20 +81,22 @@
         const seg=g?.segment(Math.min(g.length-1,Math.max(0,parked?options.getCue?.()??settings.first:index)));
         overlay.update({visible:!!(seg||onesRuns?.length),...identity,...size,a:seg?[seg.x1,seg.y1]:null,b:seg?[seg.x2,seg.y2]:null,onesRuns});
         const r=sourceRect(),y=row=>r.top+(row+.5)*r.height/size.height;
-        if(seg&&!overlay.element.hidden){const forward=seg.x1<=seg.x2,step=parked?options.getCue?.()??settings.first:index;
-          labels.show(y(forward?seg.y1:seg.y2),y(forward?seg.y2:seg.y1),'срез '+Math.max(0,Math.min(g.length-1,step)),identity.name,identity.color);}
+        const shown=overlay.visibleSegment?.();
+        if(shown&&!overlay.element.hidden){const forward=shown.x1<=shown.x2,step=parked?options.getCue?.()??settings.first:index;
+          labels.show(forward?shown.y1:shown.y2,forward?shown.y2:shown.y1,'срез '+Math.max(0,Math.min(g.length-1,step)),identity.name,identity.color,clip.rightInset);}
         else if(template&&row?.indices?.length){const first=Math.floor(row.indices[0]/size.width),last=Math.floor(row.indices[row.indices.length-1]/size.width);
-          const h=y((first+last)/2),clip=viewport.getBoundingClientRect();if(h>=clip.top&&h<=clip.bottom)labels.show(h,h,first===last?'строка '+first:'строки '+first+'–'+last,identity.name,identity.color);}
+          const h=y((first+last)/2);if(h>=clip.top&&h<=clip.bottom)labels.show(h,h,first===last?'строка '+first:'строки '+first+'–'+last,identity.name,identity.color,clip.rightInset);}
         return;
       }
-      const rect=sourceRect(),clip=viewport.getBoundingClientRect(),height=parked?options.getHeight?.():lastSnapshot.height||lastSnapshot.rows.length;
+      const rect=sourceRect(),height=parked?options.getHeight?.():lastSnapshot.height||lastSnapshot.rows.length;
       const at=parked?Math.min(height-1,Math.max(settings.first,Math.min(settings.last<0?height-1:settings.last,options.getCue?.()??settings.first))):index;
       if(!(rect?.width>0&&rect.height>0&&height>0)||at>=height)return;
       const rowHeight=rect.height/height,center=rect.top+(at+.5)*rowHeight,band=Math.max(2,rowHeight);
       const top=Math.max(0,clip.top,rect.top,center-band/2),bottom=Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.bottom,center+band/2);
       const left=Math.max(0,clip.left,rect.left),right=Math.min(win.innerWidth||doc.documentElement.clientWidth,clip.right,rect.right);if(!(bottom>top&&right>left))return;
       Object.assign(marker.style,{display:'block',left:left+'px',top:top+'px',width:(right-left)+'px',height:(bottom-top)+'px',opacity:parked&&!drag?'.65':state==='paused'&&!drag?'.45':'1'});
-      labels.show(center,center,'строка '+at,identity.name||'Линия чтения',identity.color||'#a674ff');readingLine.style.top=(center-top-.5)+'px';
+      rowHit={left,right,center,top:Math.max(clip.top,rect.top),bottom:Math.min(clip.bottom,rect.bottom)};
+      labels.show(center,center,'строка '+at,identity.name||'Линия чтения',identity.color||'#a674ff',clip.rightInset);readingLine.style.top=(center-top-.5)+'px';
       readingLine.style.display=center>=top&&center<=bottom?'block':'none';
       showRuns(!parked&&lastSnapshot.rows[index]?.bits,rect,left,right,top,Math.max(0,clip.top,rect.top),Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.bottom),rowHeight);
       const first=Math.min(settings.first,height-1),last=settings.last<0?height-1:Math.max(first,Math.min(settings.last,height-1));marker.setAttribute('aria-valuemin',String(first));marker.setAttribute('aria-valuemax',String(last));marker.setAttribute('aria-valuenow',String(at));marker.setAttribute('aria-valuetext','Строка '+at);
@@ -179,6 +182,8 @@
       const row=event.key==='Home'?settings.first:event.key==='End'?(settings.last<0?lastSnapshot.rows.length-1:settings.last):index+(event.key==='ArrowUp'?-1:event.key==='ArrowDown'?1:0);
       await seek(row);if(ticket===manualGeneration&&wasPlaying&&!disposed&&!updating&&!doc.hidden)try{await start();}catch(_){}
     }
+    const unregister=markers.registerReader(win,viewport,{down,selected:()=>!!identity.selected,isFigure:target=>sourceFigure()===target,
+      distance(x,y){return rowHit&&x>=rowHit.left&&x<=rowHit.right&&y>=rowHit.top&&y<=rowHit.bottom?Math.abs(y-rowHit.center):Infinity;}});
     hit.addEventListener('pointerdown',down);hit.addEventListener('lostpointercapture',()=>{if(drag){cancelDrag();pause(true);}});marker.addEventListener('keydown',key);win.addEventListener('pointermove',move,{capture:true,passive:false});win.addEventListener('pointerup',up,true);win.addEventListener('pointercancel',up,true);
     function queueRefresh(){if(disposed||!updating||refreshFrame!==null)return;refreshFrame=win.requestAnimationFrame(()=>{refreshFrame=null;void refreshField();});}
     async function refreshField(){
@@ -217,7 +222,7 @@
     function dispose(){
       if(disposed)return;stop();disposed=true;generation++;if(frame!==null)win.cancelAnimationFrame?.(frame);if(refreshFrame!==null)win.cancelAnimationFrame?.(refreshFrame);
       win.removeEventListener('pointermove',move,true);win.removeEventListener('pointerup',up,true);win.removeEventListener('pointercancel',up,true);win.removeEventListener('scroll',scheduleMarker,scrollOptions);win.removeEventListener('resize',scheduleMarker);doc.removeEventListener('visibilitychange',visibilityChanged);
-      win.visualViewport?.removeEventListener('resize',scheduleMarker);win.visualViewport?.removeEventListener('scroll',scheduleMarker);observer?.disconnect();labels.destroy();overlay?.destroy();marker.remove();listeners.clear();lastSnapshot=null;return core.dispose();
+      win.visualViewport?.removeEventListener('resize',scheduleMarker);win.visualViewport?.removeEventListener('scroll',scheduleMarker);observer?.disconnect();unregister();labels.destroy();overlay?.destroy();marker.remove();listeners.clear();lastSnapshot=null;return core.dispose();
     }
     return {getSettings,setSettings,getState,start,pause,stop,seek,identify,sourceChanged(){if(!invalidateScore())scheduleMarker();},setMuted:value=>core.setMuted?.(value),fieldChanged,renderTrackWav,exportWav,getStream:()=>disposed?null:core.getStream(),subscribe(fn){if(disposed)return ()=>{};listeners.add(fn);return ()=>listeners.delete(fn);},refresh,dispose};
   }
