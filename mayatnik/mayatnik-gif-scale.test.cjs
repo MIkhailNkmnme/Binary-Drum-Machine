@@ -1,6 +1,22 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const S=require('./mayatnik-gif-scale.js'),Gif=require('./mayatnik-gif.js');
 const rgba=values=>Uint8ClampedArray.from(values.flatMap(v=>[v,v,v,255]));
+
+test('default canvas reduction matches physical viewport pixel centres without stretching rounded width',()=>{
+ const Host=require('./mayatnik-pixel-exact-host.js');
+ for(const width of [1,7,19,40])for(const height of [8,16,24,40])for(const rows of [8,16,24].filter(n=>n<=height)){
+  const pixels=Uint8ClampedArray.from({length:width*height*4},(_,i)=>i%4===3?255:(i*29)%256),small=S.reduce(pixels,width,height,rows),screen=Host.sampleViewport({width,height,data:pixels},small.width,rows,{scale:rows/height});
+  for(let q=3;q<screen.data.length;q+=4)screen.data[q]=255;
+  assert.deepEqual(small.pixels,screen.data);assert.equal(small.width,Math.ceil(width*rows/height));
+ }
+ const pixels=rgba(Array.from({length:7*24},(_,i)=>i%7*30)),canvas=S.reduce(pixels,7,24,8),legacy=S.reduce(pixels,7,24,8,'nearest');
+ assert.equal(canvas.width,3);assert.equal(legacy.width,2);assert.deepEqual([...canvas.pixels.slice(0,12)],[30,30,30,255,120,120,120,255,0,0,0,255]);
+});
+
+test('canvas is the initial UI choice while every legacy reduction stays available',()=>{
+ const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8'),select=html.match(/<select id="gifScaleMethod"[\s\S]*?<\/select>/)[0];
+ assert.match(select,/<option value="canvas" selected>Как на холсте/);for(const value of ['nearest','majority','average'])assert.ok(select.includes('value="'+value+'"'));
+});
 test('1024 rows: 128 levels in steps of 8 and 8 power-of-two levels; nonmultiples pad only upwards',()=>{
  const a=S.plan(2047,1024);assert.equal(a.levels.length,128);assert.deepEqual(a.levels.slice(0,4),[8,16,24,32]);assert.equal(a.levels.at(-1),1024);assert.equal(a.padded,0);
  assert.deepEqual(S.plan(2047,1024,'powers2').levels,[8,16,32,64,128,256,512,1024]);assert.equal(S.plan(37,1019).height,1024);assert.equal(S.plan(37,1019).padded,5);assert.equal(S.plan(3,1).height,8);assert.equal(S.plan(3,1000,'powers2').levels.at(-1),512);
@@ -26,3 +42,5 @@ test('UI takes one immutable frame, reports progress and restores controls after
 test('UI second click cancels, never saves partial GIF; capture error restores controls',async()=>{const a=ui(),run=a.nodes.get('bGifScale').onclick();await a.nodes.get('bGifScale').onclick();await run;assert.equal(a.cancels,1);assert.equal(a.captures,1);assert.equal(a.downloads.length,0);assert.match(a.nodes.get('bGifScaleInfo').title,/отменён/);const b=ui();b.c.captureScaleGifFrame=()=>{throw Error('no frame')};await b.nodes.get('bGifScale').onclick();assert.match(b.nodes.get('bGifScaleInfo').title,/no frame/);assert.equal(b.nodes.get('gifScaleMethod').disabled,false);});
 
 test('View before generation explains the missing frames without opening video montage',()=>{const a=ui();a.nodes.get('bGifScaleView').onclick();assert.equal(a.opens,1);assert.match(a.nodes.get('triangleInfo').textContent,/Сначала/);assert.equal(a.downloads.length,0);});
+
+test('worker uses canvas by default and returns each exact static scale frame',async()=>{globalThis.Worker=ThreadWorker;globalThis.MayatnikGif=Gif;const result=await S.generate({width:7,height:24,pixels:rgba(Array.from({length:168},(_,i)=>i%7*30))}).promise;assert.equal(result.method,'canvas');assert.deepEqual(result.frames.map(f=>f.rows),[8,16,24]);assert.equal(result.frames.length,3);});
