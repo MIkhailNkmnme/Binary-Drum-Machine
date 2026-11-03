@@ -1,5 +1,5 @@
 /* Same fixed surface and resizable right edge as Library, with independent width. */
-#mayMusicSettingsPanel{--c:#c29bff;--gz-w:120px;--gz-h:20px;--gz-n:10px;--gz-bg:#1b2430;--gz-txt:#dfe6f5;--gz-mut:#8592ad;position:fixed;z-index:7;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;padding:6px;background:#0e1116;color:var(--gz-txt);font:12px/1.2 "Segoe UI",sans-serif;user-select:none;overflow:hidden}
+#mayMusicSettingsPanel{--c:#c29bff;--gz-w:120px;--gz-h:20px;--gz-n:10px;--gz-bg:#1b2430;--gz-txt:#dfe6f5;--gz-mut:#8592ad;position:fixed;z-index:9;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;padding:6px;background:#0e1116;color:var(--gz-txt);font:12px/1.2 "Segoe UI",sans-serif;user-select:none;overflow:hidden}
 body.may-music-panel-open:not(.may-mobile-menu) #mayRhombs{z-index:6}
 #mayMusicSettingsPanel[hidden]{display:none!important}
 #mayMusicSettingsPanel *{box-sizing:border-box}
@@ -14,5 +14,5 @@ body.may-music-panel-open:not(.may-mobile-menu) #mayRhombs{z-index:6}
 #mayMusicSettingsPane{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
 #mayMusicSettingsPane .mtp-live-controls{display:flex;flex-direction:column;align-items:flex-start;gap:2px;--gz-h:20px;--gz-n:10px;font:12px/1.2 "Segoe UI",sans-serif}
 #mayMusicSettingsPane [hidden]{display:none!important}
-.may-music-resize{z-index:7;bottom:auto!important}
+.may-music-resize{z-index:10;bottom:auto!important}
 body.may-music-panel-resizing,body.may-music-panel-resizing *{cursor:ew-resize!important;user-select:none!important}

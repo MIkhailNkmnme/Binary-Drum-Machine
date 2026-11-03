@@ -40,7 +40,8 @@
     const line=button('line','━ Линия','Показывать линии чтения, подписи и подсветку всех дорожек. Скрытие не останавливает звук. При неточном масштабе они скрываются автоматически.',()=>safe(()=>api.setLinesVisible?.(api.getLinesVisible?.()===false)));
     function field(key,text,title,build){
       const row=doc.createElement('div');row.className='gz-hx gz-pair gz-split';row.dataset.xorrom=key;
-      const label=doc.createElement('span');label.className='gz-half gz-h0';caption(label,text);
+      if(['track','trackName','trackAxis','source','scale','tonic','timbre','geometrySource','geometryConnectivity','backing','backingTimbre','filterType','lfoTarget','arpMode'].includes(key))row.classList.add('may-xorrom-wide');
+      const label=doc.createElement('span');label.className='gz-half gz-h0';caption(label,({bpm:'BPM',source:'Звук',tonic:'Нота',octave:'Окт',chord:'Нот',geometrySource:'По',geometryConnectivity:'Связи',backingTimbre:'Тембр',backingRows:'Строк',trackAxis:'Ось',trackAxisx1:'X1',trackAxisy1:'Y1',trackAxisx2:'X2',trackAxisy2:'Y2',first:'От',last:'До',stride:'Шаг',arpMode:'Арп',arpGate:'Нота %',lfoTarget:'LFO',resonance:'Q',backing:'Фон',filterType:'Тип',delayFeedback:'Повт %',reverbMix:'Доля %',reverbTime:'Хвост с'})[key]||text);
       const divider=doc.createElement('span');divider.className='gz-pm';divider.setAttribute('aria-hidden','true');
       const input=build();input.classList.add('gz-half','gz-h1');describe(input,title);row.title=title;
       input.addEventListener('click',e=>e.stopPropagation());input.addEventListener('keydown',e=>e.stopPropagation());
@@ -243,25 +244,54 @@
     // These existing nodes move together into Library → Music. Quick transport
     // stays directly on the rail; grouping never replaces the live inputs.
     const categories=[
-      ['tracks','Дорожки',['tracksStop','track','trackName','trackAdd','trackRemove','trackPlay','trackStop','trackMute','tracksStart']],
-      ['reading','Чтение / Оси',['tracksTemplates','trackAxis','trackAxes','trackAxisx1','trackAxisy1','trackAxisx2','trackAxisy2','trackAxisFixed','trackAxisReverse','first','last','stride','loop','live','restartOnFrame']],
-      ['notes','Ноты / Ритм',['source','bpm','division','scale','tonic','octave','chord','arpMode','arpGate','swing','autoGeometry','geometrySource','geometryConnectivity']],
-      ['sound','Тембр / Громкость / Фон',['electro','timbre','gain','backing','backingTimbre','backingGain','backingRows']],
-      ['effects','Огибающая / Фильтр / LFO / Эффекты',['envelopeOn','attack','decay','sustain','release','filterType','cutoff','resonance','lfoTarget','lfoRate','lfoDepth','delayTime','delayFeedback','delayMix','reverbMix','reverbTime','pan']],
-      ['files','Файлы / Сведения',['wav','jsonLoad','jsonSave','help','status','geometry','notes','legend']]
+      ['common','Общее управление · создание дорожек',['tracksStop','tracksStart','tracksTemplates','trackAdd','trackAxes']],
+      ['tracks','Выбранная дорожка · настройки ниже относятся к ней',['track','trackName','trackPlay','trackStop','trackMute','trackRemove']],
+      ['construction','Построение выбранной дорожки',['source','autoGeometry','geometrySource','geometryConnectivity']],
+      ['reading','Чтение выбранной дорожки · ось и диапазон',['trackAxis','trackAxisx1','trackAxisy1','trackAxisx2','trackAxisy2','trackAxisFixed','trackAxisReverse','first','last','stride','loop','live','restartOnFrame']],
+      ['notes','Ноты и ритм',['bpm','division','scale','tonic','octave','chord','arpMode','arpGate','swing']],
+      ['sound','Тембр и громкость',['electro','timbre','gain']],
+      ['backing','Фоновый инструмент',['backing','backingTimbre','backingGain','backingRows']],
+      ['envelope','Огибающая · форма ноты',['envelopeOn','attack','decay','sustain','release']],
+      ['filter','Фильтр · частоты',['filterType','cutoff','resonance']],
+      ['lfo','LFO · медленная модуляция',['lfoTarget','lfoRate','lfoDepth']],
+      ['delay','Эхо',['delayMix','delayTime','delayFeedback']],
+      ['reverb','Реверберация',['reverbMix','reverbTime']],
+      ['pan','Панорама',['pan']],
+      ['files','Файлы и сведения · WAV всех дорожек / JSON выбранной',['wav','jsonLoad','jsonSave','help','status','geometry','notes','legend']]
     ];
+    let selectedHeading;
     for(const [id,title,keys]of categories){const controls=keys.map(key=>nodes.find(node=>node.dataset.xorrom===key&&node.parentElement===host)).filter(Boolean);if(!controls.length)continue;
       const section=doc.createElement('section');section.className='may-xorrom-group';section.dataset.xorromGroup=id;section.setAttribute('aria-label',title);
-      const heading=doc.createElement('h4');heading.className='may-xorrom-group-title';heading.textContent=title;
+      const heading=doc.createElement('h4');heading.className='may-xorrom-group-title';heading.textContent=title;heading.title=title;
+      if(id==='tracks')selectedHeading=heading;
       const grid=doc.createElement('div');grid.className='may-xorrom-grid';grid.append(...controls);
       grid.querySelectorAll('.zcf-outline').forEach(svg=>svg.setAttribute('preserveAspectRatio','none'));
       section.append(heading,grid);host.append(section);nodes.push(section);
+    }
+    // Mode-off values remain editable wherever they were editable before.
+    // Only their presentation changes; effective automatic values stay readable.
+    function syncAvailability(s){
+      const inactive={attack:!s.envelopeOn,decay:!s.envelopeOn,sustain:!s.envelopeOn,release:!s.envelopeOn,
+        cutoff:s.filterType==='off',resonance:s.filterType==='off',lfoRate:s.lfoTarget==='off',lfoDepth:s.lfoTarget==='off',
+        backingTimbre:s.backing==='off',backingGain:s.backing==='off',backingRows:s.backing==='off',arpGate:s.arpMode==='off',
+        delayTime:!s.delayMix,delayFeedback:!s.delayMix,reverbTime:!s.reverbMix,geometrySource:!s.autoGeometry,geometryConnectivity:!s.autoGeometry};
+      for(const row of nodes){if(!row.classList.contains('may-xorrom-control'))continue;
+        const input=row.querySelector('input:not([type="file"]),select'),automatic=row.classList.contains('may-xorrom-auto');
+        const dim=!automatic&&(!!inactive[row.dataset.xorrom]||!!input?.disabled);
+        row.classList.toggle('may-xorrom-inactive',dim);
+        row.dataset.xorromInactive=String(dim);
+      }
+      if(selectedHeading){const rack=api.getTrackList?api.getTrackList():api.getRack(),selected=rack.tracks.find(t=>t.id===rack.selected);
+        const title='Дорожка «'+(selected?.name||'—')+'» · все настройки ниже относятся к ней';
+        if(selectedHeading.textContent!==title){selectedHeading.textContent=title;selectedHeading.title=title;selectedHeading.parentElement.setAttribute('aria-label',title);}
+      }
     }
     function sync(){
       if(destroyed)return;
       const s=settings(),current=state(),playing=current.state==='playing';
       bindings.forEach(bind=>bind(s,current));
       steppers.forEach(update=>update());
+      syncAvailability(s);
       const matchesElectro=Object.entries(electroPreset).every(([key,value])=>s[key]===value);
       const electronic=['bass','pulse','metal','robot'].includes(s.timbre);
       electro.node.classList.toggle('gz-on',electronic);electro.node.setAttribute('aria-pressed',String(electronic));electro.node.dataset.presetMatch=String(matchesElectro);

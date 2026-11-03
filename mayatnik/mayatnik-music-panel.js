@@ -8,7 +8,7 @@
  const save=(key,value)=>{try{root.localStorage.setItem(key,String(value));}catch(_){} };
  const stored=Number(read(WIDTH));if(stored>0&&Number.isFinite(stored))widthPreference=stored;
  function bounds(){const viewport=root.visualViewport?.width||root.innerWidth||800,wrap=doc.getElementById('wrap'),rect=wrap?.getBoundingClientRect(),mobile=doc.body.classList.contains('may-mobile-menu');
-  const field=!mobile&&rect?.width>0&&rect?.height>0?rect:null,max=Math.max(120,(field?.width||viewport)-58);
+  const field=!mobile&&rect?.width>0&&rect?.height>0?rect:null,max=Math.max(120,(field?.width||viewport)-56);
   return {min:Math.min(332,max),max,top:field?Math.max(0,field.top):root.visualViewport?.offsetTop||0,height:field?.height||root.visualViewport?.height||root.innerHeight,right:field?Math.max(0,root.innerWidth-field.right):0};
  }
  function layout(){if(!panel)return;const b=bounds(),width=Math.round(Math.max(b.min,Math.min(b.max,widthPreference??root.innerWidth/2)));

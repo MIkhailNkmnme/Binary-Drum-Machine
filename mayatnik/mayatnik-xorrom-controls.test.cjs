@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
+const {JSDOM}=require('jsdom');
 const {mount}=require('./mayatnik-xorrom-controls.js');
 function boot(extra={}){
   const dom=new JSDOM('<div id="other">other</div><div id="host"><b>existing</b></div>'),host=dom.window.document.querySelector('#host');
@@ -37,8 +37,8 @@ test('tempo number accepts fractional, slow and fast values, and keeps the previ
 test('library groups reuse all live controls and leave quick transport directly in the rail',()=>{
  const a=boot();try{
   assert.equal(a.el('start').parentElement,a.host);assert.equal(a.el('stop').parentElement,a.host);
-  assert.deepEqual([...a.host.querySelectorAll('[data-xorrom-group]')].map(n=>n.dataset.xorromGroup),['reading','notes','sound','effects','files']);
-  for(const [key,group]of [['first','reading'],['tonic','notes'],['timbre','sound'],['attack','effects'],['jsonSave','files']])assert.equal(a.el(key).closest('[data-xorrom-group]').dataset.xorromGroup,group);
+  assert.deepEqual([...a.host.querySelectorAll('[data-xorrom-group]')].map(n=>n.dataset.xorromGroup),['construction','reading','notes','sound','backing','envelope','filter','lfo','delay','reverb','pan','files']);
+  for(const [key,group]of [['first','reading'],['tonic','notes'],['timbre','sound'],['attack','envelope'],['jsonSave','files']])assert.equal(a.el(key).closest('[data-xorrom-group]').dataset.xorromGroup,group);
   const input=a.input('bpm'),section=input.closest('section');input.focus();input.value='133.25';a.setState({state:'playing',index:1});assert.equal(a.input('bpm'),input);assert.equal(input.closest('section'),section);assert.equal(input.value,'133.25');assert.equal(a.dom.window.document.activeElement,input);
   for(const input of a.host.querySelectorAll('select,input[type="number"]')){const row=input.closest('[data-xorrom]');assert.equal(row.querySelectorAll('[data-xorrom-step]').length,2);assert.ok(row.classList.contains('zcf-control'));assert.equal(row.querySelectorAll('.zcf-outline').length,3);}
  }finally{a.control.destroy();a.dom.window.close();}
@@ -263,7 +263,7 @@ test('late-loaded shared frame supplies real side contours; axis coordinates rem
   const pick=host.querySelector('[data-xorrom="track"] select'),options=[...pick.options];pick.focus();listener();assert.equal(w.document.activeElement,pick);assert.deepEqual([...pick.options],options);
   host.querySelector('[data-xorrom="track"] [data-xorrom-step="1"]').click();assert.equal(selected,2);assert.equal(host.querySelector('[data-xorrom="track"] select'),pick);
   const axis=host.querySelector('[data-xorrom="trackAxisx1"]');assert.equal(axis.querySelectorAll('.zcf-outline').length,3);axis.querySelector('[data-xorrom-step="-1"]').click();assert.equal(spec.x1,-1);
-  assert.equal(host.querySelector('[data-xorrom-group="tracks"]').getAttribute('aria-label'),'Дорожки');control.destroy();
+  assert.match(host.querySelector('[data-xorrom-group="tracks"]').getAttribute('aria-label'),/Дорожка «B».*настройки ниже/);control.destroy();
  }finally{dom.window.close();}
 });
 
@@ -276,4 +276,31 @@ test('music grid CSS is scoped, uses standard columns/gaps and hides native fiel
 test('destroy aborts an active FileReader and a pause failure leaves settings untouched',async()=>{
  const a=boot();jsonCore(a);const file=new a.dom.window.File(['{}'],'cancel.json');chooseJSON(a,'',{file});a.control.destroy();await new Promise(resolve=>setTimeout(resolve,30));assert.deepEqual(a.patches,[]);assert.equal(a.host.innerHTML,'<b>existing</b>');a.dom.window.close();
  const b=boot({pause:()=>{throw Error('Не удалось остановить подготовку звука');}});jsonCore(b);chooseJSON(b,'{}');await flush();assert.deepEqual(b.patches,[]);assert.match(b.el('status').textContent,/Не удалось остановить/);assert.equal(b.starts,0);b.dom.window.close();
+});
+
+
+test('priority groups separate all-track commands from selected-track settings and follow selection',()=>{
+ const tracks=[{id:1,name:'First',color:'#c29bff',muted:false},{id:2,name:'Second',color:'#72baff',muted:false}];let selected=1;
+ const a=boot({getRack:()=>({selected,tracks}),select(id){selected=id;}});try{
+  const group=key=>a.el(key).closest('[data-xorrom-group]').dataset.xorromGroup;
+  assert.deepEqual([...a.host.querySelectorAll('[data-xorrom-group]')].slice(0,3).map(n=>n.dataset.xorromGroup),['common','tracks','construction']);
+  for(const key of ['tracksStart','tracksStop','trackAdd'])assert.equal(group(key),'common');
+  for(const key of ['track','trackName','trackPlay','trackStop','trackMute','trackRemove'])assert.equal(group(key),'tracks');
+  for(const key of ['bpm','scale','tonic'])assert.equal(group(key),'notes');
+  const heading=a.host.querySelector('[data-xorrom-group=tracks] h4');assert.match(heading.textContent,/First.*все настройки ниже относятся к ней/);
+  a.change('track',2);assert.match(heading.textContent,/Second/);assert.equal(a.starts,0);assert.deepEqual(a.patches,[]);
+ }finally{a.control.destroy();a.dom.window.close();}
+});
+
+test('inactive mode parameters dim without disabling preconfiguration; active auto values and boundary fields stay readable',()=>{
+ const a=boot(),dim=key=>a.el(key).classList.contains('may-xorrom-inactive');try{
+  for(const key of ['attack','decay','sustain','release','cutoff','resonance','lfoRate','lfoDepth','arpGate','delayTime','delayFeedback','reverbTime','geometrySource','geometryConnectivity']){assert.equal(dim(key),true,key);assert.equal(a.input(key).disabled,false,key);}
+  for(const key of ['envelopeOn','filterType','lfoTarget','arpMode','delayMix','reverbMix','autoGeometry'])assert.equal(dim(key),false,key);
+  a.change('attack',.25);assert.equal(a.api.getSettings().attack,.25);assert.equal(a.starts,0);
+  a.api.setSettings({envelopeOn:true,filterType:'lowpass',lfoTarget:'pitch',arpMode:'up',delayMix:.2,reverbMix:.2,backing:'pad',autoGeometry:true});
+  for(const key of ['attack','cutoff','lfoRate','arpGate','delayTime','reverbTime','backingGain','geometrySource'])assert.equal(dim(key),false,key);
+  a.setState({state:'playing',effective:{gain:.13,tonic:7}});assert.equal(a.input('gain').value,'13');assert.equal(a.input('gain').disabled,true);assert.equal(dim('gain'),false);
+  a.api.setSettings({autoGeometry:false,gain:1});assert.equal(a.el('gain').querySelector('[data-xorrom-step="1"]').disabled,true);assert.equal(dim('gain'),false);
+  a.api.setSettings({source:'rhythm'});assert.equal(dim('chord'),true);assert.equal(dim('timbre'),true);
+ }finally{a.control.destroy();a.dom.window.close();}
 });
