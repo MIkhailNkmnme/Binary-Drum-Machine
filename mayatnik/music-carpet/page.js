@@ -1,4 +1,4 @@
-/* Музыкальный ковёр v0.001. The recorded media clock drives the bit reader. */
+/* Музыкальный ковёр v0.002. The recorded media clock drives the bit reader. */
 (function(root,factory){const value=factory();if(typeof module==='object'&&module.exports)module.exports=value;else root.MusicCarpet=value;})(globalThis,function(){
  'use strict';
  const fmt=time=>{time=Math.max(0,Number.isFinite(time)?time:0);return Math.floor(time/60)+':'+String(Math.floor(time%60)).padStart(2,'0');};
@@ -41,7 +41,7 @@
   }
   function reset(){pause(audio);pause(video);stopRAF();if(prepared){active.currentTime=prepared.timeline[0]?.start||0;render(true);status('Начало записи');}}
   function nearest(row){let best=null,distance=Infinity;for(const step of prepared?.timeline||[]){const delta=Math.abs(step.index-row);if(delta<distance){best=step;distance=delta;}}return best;}
-  function seekRow(row){const step=nearest(row);if(!step)return;active.currentTime=step.start;render(true);status('Строка '+step.index);}
+  function seekRow(row){const step=nearest(row);if(!step)return;/* HTMLMediaElement truncates seek positions to microseconds. Round up into this score step. */active.currentTime=Math.min(step.start===0?0:(Math.floor(step.start*1e6)+2)/1e6,(step.start+step.end)/2);render(true);status('Строка '+step.index);}
   function pointerRow(event,clamp){
    if(!prepared)return null;const rect=canvas.getBoundingClientRect();if(!rect.width||!rect.height)return null;
    const x=(event.clientX-rect.left)*canvas.width/rect.width,y=(event.clientY-rect.top)*canvas.height/rect.height,box=visual.layout(prepared.source,{width:canvas.width,height:canvas.height});

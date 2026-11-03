@@ -22,7 +22,7 @@ function fixture(options={}){
  const media=new Map();
  for(const element of doc.querySelectorAll('audio,video')){
   const state={time:0,paused:true,ended:false,plays:0,pauses:0,duration:2.6};media.set(element,state);
-  Object.defineProperties(element,{currentTime:{get:()=>state.time,set:value=>{state.time=value;element.dispatchEvent(new win.Event('seeking'));element.dispatchEvent(new win.Event('timeupdate'));}},paused:{get:()=>state.paused},ended:{get:()=>state.ended},duration:{get:()=>state.duration}});
+  Object.defineProperties(element,{currentTime:{get:()=>state.time,set:value=>{state.time=options.mediaMicroseconds?Math.floor(value*1e6)/1e6:value;element.dispatchEvent(new win.Event('seeking'));element.dispatchEvent(new win.Event('timeupdate'));}},paused:{get:()=>state.paused},ended:{get:()=>state.ended},duration:{get:()=>state.duration}});
   element.play=()=>{state.plays++;state.paused=false;state.ended=false;element.dispatchEvent(new win.Event('play'));return Promise.resolve();};
   element.pause=()=>{state.pauses++;const changed=!state.paused;state.paused=true;if(changed)element.dispatchEvent(new win.Event('pause'));};
   element.load=()=>{state.time=0;};
@@ -57,15 +57,15 @@ test('highlight reads actual media time with unequal steps, seek, pause and effe
 test('pointer seeking respects integer layout, empty margins and selected row stride without starting audio',async()=>{
  const f=fixture();try{await f.api.ready;assert.equal(f.api.getState().prepared.timeline[1].index,2);const before=f.audio.currentTime;
   f.pointer('pointerdown',20,250);assert.equal(f.audio.currentTime,before);
-  f.pointer('pointerdown',200,250);assert.equal(f.audio.currentTime,.4);f.pointer('pointermove',200,450);assert.equal(f.audio.currentTime,1.5);f.pointer('pointerup',200,450);
-  f.pointer('pointermove',200,50);assert.equal(f.audio.currentTime,1.5);assert.equal(f.media.get(f.audio).plays,0);assert.equal(f.draws.at(-1).index,4);
+  f.pointer('pointerdown',200,250);assert.equal(f.audio.currentTime,.400002);f.pointer('pointermove',200,450);assert.equal(f.audio.currentTime,1.500002);f.pointer('pointerup',200,450);
+  f.pointer('pointermove',200,50);assert.equal(f.audio.currentTime,1.500002);assert.equal(f.media.get(f.audio).plays,0);assert.equal(f.draws.at(-1).index,4);
  }finally{f.close();}
 });
 test('keyboard and reset move the reading position while retaining pause',async()=>{
  const f=fixture();try{await f.api.ready;const press=key=>f.canvas.dispatchEvent(new f.win.KeyboardEvent('keydown',{key,cancelable:true,bubbles:true}));
-  press('ArrowDown');assert.equal(f.audio.currentTime,.4);press('ArrowDown');assert.equal(f.audio.currentTime,1.5);press('ArrowUp');assert.equal(f.audio.currentTime,.4);press('End');assert.equal(f.audio.currentTime,1.5);press('Home');assert.equal(f.audio.currentTime,0);
+  press('ArrowDown');assert.equal(f.audio.currentTime,.400002);press('ArrowDown');assert.equal(f.audio.currentTime,1.500002);press('ArrowUp');assert.equal(f.audio.currentTime,.400002);press('End');assert.equal(f.audio.currentTime,1.500002);press('Home');assert.equal(f.audio.currentTime,0);
   f.audio.currentTime=1.7;f.doc.getElementById('carpet-reset').click();assert.equal(f.audio.currentTime,0);assert.equal(f.media.get(f.audio).plays,0);
-  f.audio.currentTime=2.2;press('ArrowUp');assert.equal(f.audio.currentTime,1.5);
+  f.audio.currentTime=2.2;press('ArrowUp');assert.equal(f.audio.currentTime,1.500002);
  }finally{f.close();}
 });
 test('video and audio cannot play together and the main picture follows the active recording',async()=>{
@@ -104,5 +104,15 @@ test('real built-in scores highlight exactly their real one-bit runs at the medi
    for(const [x,length] of step.onesRuns)for(let i=0;i<length;i++)assert.equal(prepared.source.bits[step.index*prepared.source.width+x+i],1);
    assert.equal(f.media.get(f.audio).plays,0);
   }
+ }finally{f.close();}
+});
+
+
+test('native microsecond seek precision still reaches each selected real score row',async()=>{
+ const realBank=require('../mayatnik-xorrom-bank'),visual=require('../mayatnik-xorrom-visual');
+ const f=fixture({bank:realBank,visual,mediaMicroseconds:true});try{
+  await f.api.ready;
+  for(const entry of realBank){await f.api.select(entry.id);for(const step of f.api.getState().prepared.timeline){f.api.seekRow(step.index);assert.equal(f.canvas.getAttribute('aria-valuenow'),String(step.index),entry.id+' row '+step.index);assert.equal(visual.stateAt(f.api.getState().prepared,f.audio.currentTime)?.index,step.index);}}
+  assert.equal(f.media.get(f.audio).plays,0);
  }finally{f.close();}
 });
