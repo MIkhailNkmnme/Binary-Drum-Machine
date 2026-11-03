@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.012</title>
-<!-- АзъБукъ — v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.013</title>
+<!-- АзъБукъ — v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -28,7 +28,7 @@
   main{padding:20px 26px 60px;max-width:1500px;margin:0 auto}
   section{margin:0 0 26px;padding:14px 18px;border:1px solid var(--line);background:var(--card)}
   h2{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin:0 0 12px}
-  .row{display:flex;align-items:flex-end;flex-wrap:wrap;row-gap:14px;margin:0 0 12px}
+  .row{display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin:0 0 12px}
   .row:last-child{margin-bottom:0}
   svg{display:block;flex:0 0 auto;color:var(--ink)}
 
@@ -56,7 +56,7 @@
 
 <header>
   <div class="title" id="head"></div>
-  <div class="ver">v0.012</div>
+  <div class="ver">v0.013</div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><button id="theme">цвет: фиолет</button>
     <span class="lbl">толщина</span>
@@ -288,17 +288,20 @@ if (savedTrack !== null && Number.isFinite(Number(savedTrack))) trk.value = save
 let track = trk.valueAsNumber;
 const trackVal = document.getElementById('trackVal');
 
-function glyph(ch, cell, track, set) {
-  const rows = G[set || activeSet][ch];
-  if (!rows) return '';
+function glyphShape(ch) {
+  const rows = G[activeSet][ch];
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
   const shift = (y) => lattice === 'tri' ? 0.5 * (h - 1 - y) : 0;
   const pad = lattice === 'tri' ? 0.5 * h : 0;
   const W = w + pad;
+  const edges = [];
   let cells = '';
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (!rows[y] || rows[y][x] !== '1') continue;
-    cells += 'M' + (x + shift(y)) + ',' + y + 'h1v1h-1z';
+    const left = x + shift(y);
+    if (!edges[y]) edges[y] = { left, right: left + 1 };
+    else edges[y].right = left + 1;
+    cells += 'M' + left + ',' + y + 'h1v1h-1z';
   }
   let grid = '';
   for (let y = 0; y <= h; y++) grid += 'M0,' + y + 'H' + W;
@@ -310,17 +313,62 @@ function glyph(ch, cell, track, set) {
     }
   }
   const id = 'g' + (uid++);
-  const style = 'margin-right:' + (track * (w * AR * cell)) + 'px;color:inherit';
-  const sw = (set || activeSet) === 'thin' ? 0.16 : 0.12;
-  return '<svg style="' + style + '" width="' + (W * AR * cell) + '" height="' + (h * cell) + '" viewBox="0 0 ' + W + ' ' + h + '">' +
-    '<defs><clipPath id="' + id + '"><path d="' + cells + '"/></clipPath></defs>' +
+  const sw = activeSet === 'thin' ? 0.16 : 0.12;
+  const paths = '<defs><clipPath id="' + id + '"><path d="' + cells + '"/></clipPath></defs>' +
     '<g clip-path="url(#' + id + ')"><rect width="' + W + '" height="' + h + '" fill="currentColor"/>' +
-    '<path d="' + grid + '" stroke="var(--bg)" stroke-width="' + sw + '" fill="none"/></g></svg>';
+    '<path d="' + grid + '" stroke="var(--bg)" stroke-width="' + sw + '" fill="none"/></g>';
+  const occupied = edges.filter(Boolean);
+  const left = occupied.length ? Math.min(...occupied.map(e => e.left)) : 0;
+  const right = occupied.length ? Math.max(...occupied.map(e => e.right)) : w;
+  return { h, edges, left, right, paths };
 }
-const row = (text, cell, tr) => '<div class="row">' + [...text].map(c => glyph(c, cell, tr)).join('') + '</div>';
 
-// кнопка с битовой подписью
-const btn = (text, cell, style) => '<div class="pbtn" style="' + style + '">' + [...text].map(c => glyph(c, cell, track)).join('') + '</div>';
+function lettering(text, cell, maxWidth = Infinity) {
+  const lines = [];
+  let placed = [], frontier = new Map(), width = 0, height = 0, gap = 0;
+  function finishLine() {
+    const groups = placed.map(({ shape, x }) =>
+      '<g transform="translate(' + x + ' ' + (height - shape.h) + ')">' + shape.paths + '</g>').join('');
+    lines.push('<svg width="' + width * AR * cell + '" height="' + height * cell +
+      '" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' + groups + '</svg>');
+    placed = [];
+    frontier.clear();
+    width = height = gap = 0;
+  }
+  for (const ch of text) {
+    const shape = glyphShape(ch);
+    // Для каждой занятой строки совмещаем края битов с учётом общей нижней линии.
+    const previous = placed.at(-1)?.shape;
+    let sharedRow = false;
+    let x = -Infinity;
+    shape.edges.forEach((edge, y) => {
+      const level = y - shape.h;
+      if (previous?.edges[level + previous.h]) sharedRow = true;
+      const end = frontier.get(level);
+      if (end !== undefined) x = Math.max(x, end - edge.left);
+    });
+    if (!sharedRow) x = width - shape.left;
+    x = Math.max(x + gap, -shape.left);
+    if (placed.length && Math.max(width, x + shape.right) * AR * cell > maxWidth) {
+      finishLine();
+      x = -shape.left;
+    }
+    placed.push({ shape, x });
+    shape.edges.forEach((edge, y) => frontier.set(y - shape.h, x + edge.right));
+    height = Math.max(height, shape.h);
+    width = Math.max(width, x + shape.right);
+    gap = (shape.right - shape.left) * track;
+    if (!shape.edges.length) {
+      // Пустой знак из редактора сохраняет собственное место.
+      frontier.clear();
+    }
+  }
+  if (placed.length) finishLine();
+  return lines.join('');
+}
+
+const row = text => '<div class="row">' + text.replaceAll('&', '&amp;').replaceAll('<', '&lt;') + '</div>';
+const btn = (text, cell, style) => '<div class="pbtn" style="' + style + '">' + lettering(text, cell) + '</div>';
 
 function renderButtons() {
   return '<section><h2>В кнопках</h2>' +
@@ -354,14 +402,17 @@ function renderButtons() {
 }
 
 function renderSheet(cell) {
-  document.getElementById('head').innerHTML = [...'АзъБукъ'].map(c => glyph(c, Math.max(3, cell), 1)).join('');
+  document.getElementById('head').innerHTML = lettering('АзъБукъ', Math.max(3, cell));
   document.getElementById('sheet').innerHTML = [
     renderButtons(),
-    '<section><h2>Кириллица</h2>' + row(UPPER, cell, track) + row(LOWER, cell, track) + '</section>',
-    '<section><h2>Латиница</h2>' + row(LATU, cell, track) + row(LATL, cell, track) + '</section>',
-    '<section><h2>Цифры и знаки</h2>' + row(DIGIT, cell, track) + row(SYM, cell, track) + '</section>',
-    '<section><h2>Слова</h2>' + row('ЗЕРКАЛИУС', cell, track) + row('СИНХРОМБ', cell, track) + row('ТРЕУГОЛЬНИК', cell, track) + '</section>',
+    '<section><h2>Кириллица</h2>' + row(UPPER) + row(LOWER) + '</section>',
+    '<section><h2>Латиница</h2>' + row(LATU) + row(LATL) + '</section>',
+    '<section><h2>Цифры и знаки</h2>' + row(DIGIT) + row(SYM) + '</section>',
+    '<section><h2>Слова</h2>' + row('ЗЕРКАЛИУС') + row('СИНХРОМБ') + row('ТРЕУГОЛЬНИК') + '</section>',
   ].join('');
+  const rows = document.querySelectorAll('#sheet .row');
+  const maxWidth = rows[0].getBoundingClientRect().width;
+  rows.forEach(el => { el.innerHTML = lettering(el.textContent, cell, maxWidth); });
 }
 
 function renderChars() {
@@ -407,7 +458,7 @@ function renderEditor() {
     el.setPointerCapture(e.pointerId);
     setBit(+el.dataset.x, +el.dataset.y, drag.val);
     el.classList.toggle('on', drag.val === '1');
-    document.getElementById('prev').innerHTML = [3, 4, 6].map(s => glyph(editChar, s, 1)).join('');
+    document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
   });
 
   grid.addEventListener('pointermove', (e) => {
@@ -422,13 +473,13 @@ function renderEditor() {
     if (!drag) return;
     drag = null;
     commit();
-    document.getElementById('prev').innerHTML = [3, 4, 6].map(s => glyph(editChar, s, 1)).join('');
+    document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
     renderSheet(cellSize);
   };
   grid.addEventListener('pointerup', endDrag);
   grid.addEventListener('pointercancel', endDrag);
   window.addEventListener('pointerup', endDrag);
-  document.getElementById('prev').innerHTML = [3, 4, 6].map(s => glyph(editChar, s, 1)).join('');
+  document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
 }
 
 function commit() {
@@ -500,6 +551,14 @@ document.getElementById('theme').addEventListener('click', () => applyTheme(them
 if (typeof applyTheme === 'function') applyTheme(themeIdx);
 
 renderSheet(cellSize);
+let sheetWidth = document.getElementById('sheet').clientWidth;
+new ResizeObserver(([entry]) => {
+  const width = entry.target.clientWidth;
+  if (width !== sheetWidth) {
+    sheetWidth = width;
+    renderSheet(cellSize);
+  }
+}).observe(document.getElementById('sheet'));
 
 trackVal.textContent = track.toLocaleString('ru-RU');
 trk.addEventListener('input', () => {
