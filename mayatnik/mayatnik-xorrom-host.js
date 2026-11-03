@@ -27,7 +27,7 @@
     let settings=engine.normalizeSettings(options.getSettings?.()),state='stopped',index=-1,notes=[],backingNotes=[],error='',effective=null,geometry=null;
     let generation=0,disposed=false,lastSnapshot=null,frame=null,refreshFrame=null,updating=false,resumeAfterRefresh=false,fieldStamp=null;
     let multiple=false,identity={},angledDrag=null,rowHit=null;
-    let drag=null,manualGeneration=0,observer=null,observedFigure=null;
+    let drag=null,manualGeneration=0,observer=null,precisionObserver=null,observedFigure=null;
     const runCache=new WeakMap(),listeners=new Set(),viewport=options.viewport;
     const labels=edges(doc,win,options.trackId);
     const marker=doc.createElement('div');marker.id=options.trackId&&options.trackId!==1?'mayXorromRow-'+options.trackId:'mayXorromRow';marker.tabIndex=0;marker.setAttribute('role','slider');marker.setAttribute('aria-orientation','vertical');marker.setAttribute('aria-label','Линия чтения Xorrom');marker.title='Линия чтения: тяните вверх или вниз, чтобы повторить строку';
@@ -40,6 +40,8 @@
     runs.setAttribute('fill','#ff3030');runs.setAttribute('stroke','#ff3030');runs.setAttribute('stroke-width','1');runs.setAttribute('vector-effect','non-scaling-stroke');runs.setAttribute('shape-rendering','crispEdges');runs.style.filter='drop-shadow(0 0 3px #ffac28)';const contrast=runs.cloneNode();contrast.setAttribute('fill','#00e5ff');contrast.setAttribute('stroke','#00e5ff');contrast.style.filter='drop-shadow(0 0 2px #00e5ff)';outline.append(runs,contrast);marker.append(outline);
     const sourceFigure=()=>typeof options.figure==='function'?options.figure():options.figure;
     const sourceRect=()=>options.figureRect?.()||sourceFigure()?.getBoundingClientRect();
+    const precisionFrame=()=>options.precisionFrame?.()||doc.getElementById('frame')||sourceFigure()?.closest?.('[data-pixel-exact]');
+    function linesAllowed(){const data=precisionFrame()?.dataset;return options.getLinesVisible?.()!==false&&!data?.pixelExactError&&data?.zoomLossy!=='true';}
     const overlay=options.axisMarker?.mount({window:win,document:doc,viewport,figureRect:sourceRect,isFigure:target=>sourceFigure()===target,onDragStart:axisDown,onDrag:axisMove,onDragEnd:axisUp,onKey:axisKey});
     function identify({muted=false,name='Xorrom',color='#a674ff',selected=false,multiple:many=false}={}){identity={name,color,selected,muted};multiple=many;readingLine.style.background=color;marker.setAttribute('aria-label','Линия чтения: '+name);hit.title=name+' — перетащить на другую строку';marker.style.zIndex=selected?'2147483646':'2147483645';scheduleMarker();}
     function getState(){return {state,index,notes:notes.map(note=>({...note})),backingNotes:backingNotes.map(note=>({...note})),error,updating,effective:effective?{...effective}:null,geometry:geometry?{...geometry}:null};}
@@ -69,6 +71,7 @@
     }
     function showMarker(){
       rowHit=null;labels.hide();frame=null;marker.style.display='none';runs.removeAttribute('d');contrast.removeAttribute('d');
+      if(!linesAllowed()){if(drag||angledDrag)cancelDrag();overlay?.hide();return;}
       const axis=options.getAxis?.(),template=options.getTemplate?.(),special=!!(axis||template);
       const parked=state==='stopped'&&(multiple||special);if(!special)overlay?.hide();
       if(disposed||doc.hidden||updating||options.isVisible?.()===false||!parked&&(!lastSnapshot||index<0||!['playing','paused'].includes(state))){if(!angledDrag)overlay?.hide();return;}
@@ -107,6 +110,7 @@
       const first=Math.min(settings.first,height-1),last=settings.last<0?height-1:Math.max(first,Math.min(settings.last,height-1));marker.setAttribute('aria-valuemin',String(first));marker.setAttribute('aria-valuemax',String(last));marker.setAttribute('aria-valuenow',String(at));marker.setAttribute('aria-valuetext','Строка '+at);
     }
     function scheduleMarker(){if(disposed||frame!==null)return;if(win.requestAnimationFrame)frame=win.requestAnimationFrame(showMarker);else showMarker();}
+    function refreshMarker(){if(disposed)return;if(frame!==null){win.cancelAnimationFrame?.(frame);frame=null;}showMarker();}
     function abortError(){const reason=Error('Чтение Хоррома отменено.');reason.name='AbortError';return reason;}
     function freezeSnapshot(snapshot){
       if(!snapshot||!Array.isArray(snapshot.rows))throw Error('Хорром: источник не вернул строки поля.');
@@ -140,7 +144,7 @@
     }
     function preview(row){if(!drag)return;if(drag.parked){park(row);return;}const next=Math.max(settings.first,Math.min(settings.last<0?lastSnapshot.rows.length-1:Math.min(settings.last,lastSnapshot.rows.length-1),Math.round(row)));if(drag.last===next)return;drag.last=next;drag.pending=seek(next);}
     function axisDown(point){
-      const spec=options.getAxis?.();if(!spec||updating||disposed)return;options.onSelect?.();
+      const spec=options.getAxis?.();if(!linesAllowed()||!spec||updating||disposed)return;options.onSelect?.();
       const wasPlaying=state==='playing';if(wasPlaying)pause(true);
       angledDrag={spec,start:point,wasPlaying,parked:state==='stopped',ticket:++manualGeneration,pending:Promise.resolve(),last:null};
     }
@@ -156,7 +160,7 @@
       await d.pending;if(d.wasPlaying&&d.ticket===manualGeneration&&!doc.hidden&&!disposed){if(updating)resumeAfterRefresh=true;else try{await start();}catch(_){}}
     }
     function axisKey(event){
-      const s=options.getAxis?.();if(!s)return;options.onSelect?.();
+      const s=options.getAxis?.();if(!linesAllowed()||!s)return;options.onSelect?.();
       if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){
         event.preventDefault();event.stopPropagation();const step=['ArrowLeft','ArrowUp'].includes(event.key)?-1:1;
         if(s.fixed)options.setAxis({...s,offset:s.offset+step});else if(state==='stopped')park((options.getCue?.()??settings.first)+step);
@@ -164,6 +168,7 @@
       }else void key(event);
     }
     function down(event){
+      if(!linesAllowed())return;
       if(event.button===0&&multiple&&state==='stopped'&&!updating&&!disposed){
         const rect=sourceRect(),height=options.getHeight?.();if(!(height>0&&rect?.height>0))return;
         event.preventDefault();event.stopPropagation();options.onSelect?.();cancelDrag();
@@ -181,6 +186,7 @@
       if(event.type==='pointercancel'){manualGeneration++;pause(true);return;}await previous.pending;if(!disposed&&previous.ticket===manualGeneration&&previous.wasPlaying&&!doc.hidden){if(updating)resumeAfterRefresh=true;else try{await start();}catch(_){}}
     }
     async function key(event){
+      if(!linesAllowed())return;
       if(multiple&&state==='stopped'&&['ArrowUp','ArrowDown','Home','End'].includes(event.key)){event.preventDefault();event.stopPropagation();options.onSelect?.();const at=Number(marker.getAttribute('aria-valuenow'));park(event.key==='Home'?0:event.key==='End'?Infinity:at+(event.key==='ArrowUp'?-1:1));return;}
       if(event.key===' '&&lastSnapshot){event.preventDefault();event.stopPropagation();if(state==='playing')pause();else try{await start();}catch(_){}return;}
       if(!['ArrowUp','ArrowDown','Home','End','Enter'].includes(event.key)||!lastSnapshot||updating)return;event.preventDefault();event.stopPropagation();const wasPlaying=state==='playing',ticket=++manualGeneration;pause(true);
@@ -224,12 +230,13 @@
     const scrollOptions={capture:true,passive:true};win.addEventListener('scroll',scheduleMarker,scrollOptions);win.addEventListener('resize',scheduleMarker);for(const event of ['mayatnik-music-panel-change','mayatnik-music-panel-resize'])win.addEventListener(event,scheduleMarker);doc.addEventListener('visibilitychange',visibilityChanged);
     win.visualViewport?.addEventListener('resize',scheduleMarker);win.visualViewport?.addEventListener('scroll',scheduleMarker);
     observer=win.ResizeObserver?new win.ResizeObserver(scheduleMarker):null;if(viewport)observer?.observe(viewport);observedFigure=sourceFigure();if(observedFigure&&observedFigure!==viewport)observer?.observe(observedFigure);
+    const accuracy=precisionFrame();if(accuracy&&win.MutationObserver){precisionObserver=new win.MutationObserver(refreshMarker);precisionObserver.observe(accuracy,{attributes:true,attributeFilter:['data-pixel-exact-error','data-zoom-lossy']});}
     function dispose(){
       if(disposed)return;stop();disposed=true;generation++;if(frame!==null)win.cancelAnimationFrame?.(frame);if(refreshFrame!==null)win.cancelAnimationFrame?.(refreshFrame);
       win.removeEventListener('pointermove',move,true);win.removeEventListener('pointerup',up,true);win.removeEventListener('pointercancel',up,true);win.removeEventListener('scroll',scheduleMarker,scrollOptions);win.removeEventListener('resize',scheduleMarker);for(const event of ['mayatnik-music-panel-change','mayatnik-music-panel-resize'])win.removeEventListener(event,scheduleMarker);doc.removeEventListener('visibilitychange',visibilityChanged);
-      win.visualViewport?.removeEventListener('resize',scheduleMarker);win.visualViewport?.removeEventListener('scroll',scheduleMarker);observer?.disconnect();unregister();labels.destroy();overlay?.destroy();marker.remove();listeners.clear();lastSnapshot=null;return core.dispose();
+      win.visualViewport?.removeEventListener('resize',scheduleMarker);win.visualViewport?.removeEventListener('scroll',scheduleMarker);observer?.disconnect();precisionObserver?.disconnect();unregister();labels.destroy();overlay?.destroy();marker.remove();listeners.clear();lastSnapshot=null;return core.dispose();
     }
-    return {getSettings,setSettings,getState,start,pause,stop,seek,identify,sourceChanged(){if(!invalidateScore())scheduleMarker();},setMuted:value=>core.setMuted?.(value),fieldChanged,renderTrackWav,exportWav,getStream:()=>disposed?null:core.getStream(),subscribe(fn){if(disposed)return ()=>{};listeners.add(fn);return ()=>listeners.delete(fn);},refresh,dispose};
+    return {getSettings,setSettings,getState,start,pause,stop,seek,identify,refreshMarker,sourceChanged(){if(!invalidateScore())scheduleMarker();},setMuted:value=>core.setMuted?.(value),fieldChanged,renderTrackWav,exportWav,getStream:()=>disposed?null:core.getStream(),subscribe(fn){if(disposed)return ()=>{};listeners.add(fn);return ()=>listeners.delete(fn);},refresh,dispose};
   }
   return Object.freeze({mount});
 });

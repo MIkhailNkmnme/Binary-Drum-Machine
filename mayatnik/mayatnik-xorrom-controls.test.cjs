@@ -11,6 +11,14 @@ function boot(extra={}){
   return {dom,host,api,control,el,input,change,patches,downloaded,get starts(){return starts},get unsubscribed(){return unsubscribed},setState:value=>{current=value;listener?.();}};
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
+
+test('Line is a quick transport toggle that changes only the persisted visual preference',()=>{
+ let visible=true;const writes=[];const a=boot({getLinesVisible:()=>visible,setLinesVisible(value){visible=value;writes.push(value);}});try{
+  const line=a.el('line');assert.equal(line.parentElement,a.host);assert.equal(line.previousElementSibling,a.el('stop'));assert.equal(line.getAttribute('aria-pressed'),'true');assert.ok(line.classList.contains('gz-on'));assert.equal(line.disabled,false);
+  a.setState({state:'playing',index:3,notes:[]});line.click();assert.deepEqual(writes,[false]);assert.equal(line.getAttribute('aria-pressed'),'false');assert.equal(a.api.getState().state,'playing');assert.equal(a.api.getState().index,3);assert.equal(a.starts,0);assert.deepEqual(a.patches,[]);
+  line.click();assert.deepEqual(writes,[false,true]);assert.equal(line.getAttribute('aria-pressed'),'true');assert.match(line.title,/неточном масштабе/);
+ }finally{a.control.destroy();a.dom.window.close();}
+});
 test('Electro rim marks the electronic family even with custom BPM and division; exact preset is separate',()=>{
   const a=boot(),button=a.el('electro');
   const pressed=value=>{assert.equal(button.getAttribute('aria-pressed'),String(value));assert.equal(button.classList.contains('gz-on'),value);};

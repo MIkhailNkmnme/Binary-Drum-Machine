@@ -175,7 +175,7 @@
     body.classList.add('gz-soty');if(body.parentElement!==group)group.append(body);
     const controls=window.MayatnikXorromControls.mount(body,{api,after:()=>rail.refresh()});
     const settings=document.createElement('div');settings.className='mtp-live-controls';
-    for(const node of [...body.children])if(!['start','stop'].includes(node.dataset.xorrom))settings.append(node);
+    for(const node of [...body.children])if(!['start','stop','line'].includes(node.dataset.xorrom))settings.append(node);
     window.MayatnikMusicPanel?.registerControls(settings);
     const launch=document.createElement('button');launch.type='button';launch.className='gz-hx may-xorrom-control';const launchLabel=document.createElement('span');launchLabel.className='gz-nm';launchLabel.textContent=window.HubButtonText?.shortCaption('⚙ Настройки')||'⚙ Настройки';launch.append(launchLabel);launch.title='Открыть отдельное окно музыкальных настроек Xorrom';launch.setAttribute('aria-label',launch.title);launch.addEventListener('click',()=>window.MayatnikMusicPanel?.toggle(launch));body.append(launch);
     const syncPanel=()=>{const on=!!window.MayatnikMusicPanel?.isOpen();launch.classList.toggle('gz-on',on);launch.setAttribute('aria-pressed',String(on));};window.addEventListener('mayatnik-music-panel-change',syncPanel);syncPanel();
@@ -908,7 +908,7 @@
     toolSync.push(() => { const on = !!window.maySectors?.get(); bSc.classList.toggle('on', on); bSc.title = 'Секторы вокруг точки встречи «Застыло»: верхний — застыл, больше не меняется (синий); нижний — меняется на каждом шаге (красный); левый / правый — только когда маятник на своей стороне, через шаг (жёлтые; когда вершин по сторонам не поровну — правый зелёный) · ' + (on ? 'вкл' : 'выкл'); });
     // v0.261: «Карта тепла» — серии изменений подряд и остывание
     const htp = document.createElement('button'); htp.title = 'Тепло'; const bHt = ptBtn('heat', 'drop', htp, () => { const T = window.mayHeat; T?.set(!T.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.mayHeat?.get(); bHt.classList.toggle('on', on); bHt.title = 'Карта тепла: клетка меняет бит кадр за кадром подряд — 1 раз жёлтая, 2 оранжевая, 3 красная, 4 малиновая, 5 и больше белая; перестала меняться — остывает голубым за 8 кадров · ' + (on ? 'вкл' : 'выкл'); });
+    toolSync.push(() => { const on = !!window.mayHeat?.get(); bHt.classList.toggle('on', on); bHt.title = 'Тепло: изменения бита нагревают клетку. Без новых изменений она бледнеет за 2 секунды, даже на паузе; холодный 0 — синий, 1 — ледяной белый. Исходные биты сохраняются · ' + (on ? 'вкл' : 'выкл'); });
     // v0.259: «Вспышка вершины» — на каждом шаге конус новой вершины золотом на секунду
     const vfp = document.createElement('button'); vfp.title = 'Вспышка'; const bVf = ptBtn('vtxFlash', 'bolt', vfp, () => { const V = window.mayVtxFlash; V?.set(!V.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayVtxFlash?.get(); bVf.classList.toggle('on', on); bVf.title = 'Вспышка: конус нового хода, в Аниматрице — реально изменённые клетки. Работает в перескоке, отскоке и ромбах; затухает за 1,3 секунды · ' + (on ? 'вкл' : 'выкл'); });

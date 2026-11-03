@@ -18,7 +18,7 @@ function fixture(){
 }
 test('real empty grozd group gains an attached music body, opens and lays out live controls',async()=>{
  const f=fixture(),controls=f.w.mountXorromMenu(f.rail),body=f.group.querySelector(':scope > .gz-soty');
- assert.ok(body);assert.equal(body,f.group.gzSoty);assert.equal(body.children.length,3);assert.equal(f.starts,0);
+ assert.ok(body);assert.equal(body,f.group.gzSoty);assert.equal(body.children.length,4);assert.ok(body.querySelector('[data-xorrom="line"]'));assert.equal(f.w.document.querySelector('#mayMusicSettingsPane [data-xorrom="line"]'),null);assert.equal(f.starts,0);
  const file=f.w.document.querySelector('#mayMusicSettingsPane [data-xorrom="jsonFile"]');assert.ok(file.hidden);assert.notEqual(file.parentElement,body);assert.equal(f.w.document.querySelectorAll('#mayMusicSettingsPane>.mtp-live-controls').length,1);assert.equal(f.w.document.querySelectorAll('[data-xorrom="bpm"]').length,1);
  const launch=body.lastElementChild;assert.equal(f.w.MayatnikMusicPanel.isOpen(),false);launch.click();assert.equal(f.w.MayatnikMusicPanel.isOpen(),true);assert.equal(launch.getAttribute('aria-pressed'),'true');launch.click();assert.equal(f.w.MayatnikMusicPanel.isOpen(),false);
  f.w.testRelayout();assert.ok(parseFloat(body.style.height)>0);
