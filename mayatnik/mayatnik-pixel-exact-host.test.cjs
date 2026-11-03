@@ -22,3 +22,12 @@ test('nearest copy retains every logical bit when reducing repeated internal ras
  for(let i=0;i<width*height;i++)assert.deepEqual([...copy.data.slice(i*4,i*4+4)],[i,255-i,i%7,255]);assert.deepEqual(data,before);
  assert.throws(()=>Host.resampleNearest(source,20000,2),RangeError);
 });
+
+
+test('viewport host display limits and exact full export budgets stay independent',()=>{
+ const h=Host.create({viewport:true,getState:()=>({}),getGeometry:()=>({width:2000,height:2000,angle:45})});assert.ok(h.snap(512)>500);assert.equal(h.exportScale(),Math.SQRT2);assert.equal(h.policyFor().viewport,true);
+});
+
+test('viewport export retains an explicitly locked physical one-to-one scale',()=>{
+ const h=Host.create({viewport:true,getState:()=>({zLimit:true}),getGeometry:()=>({width:100,height:50,dpr:2})});assert.equal(h.exportScale(),1);assert.equal(h.snap(512),.5);
+});

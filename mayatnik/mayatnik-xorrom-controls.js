@@ -5,7 +5,7 @@
   else root.MayatnikXorromControls=value;
 })(globalThis,function(){
   'use strict';
-  const DEFAULTS={source:'rgb',bpm:96,division:8,tonic:0,scale:'major',octave:4,timbre:'triangle',gain:.25,chord:3,first:0,last:-1,stride:1,loop:true,live:false,autoGeometry:false,geometrySource:'all',geometryConnectivity:'sides',backing:'off',backingGain:.3,backingTimbre:'sine',backingRows:4};
+  const DEFAULTS={source:'rgb',bpm:96,division:8,tonic:0,scale:'major',octave:4,timbre:'triangle',gain:.25,chord:3,first:0,last:-1,stride:1,loop:true,live:false,restartOnFrame:false,autoGeometry:false,geometrySource:'all',geometryConnectivity:'sides',backing:'off',backingGain:.3,backingTimbre:'sine',backingRows:4};
   const AUTO_FIELDS={all:new Set(['division','scale','tonic','octave','timbre','gain','chord']),regions:new Set(['division','timbre']),areas:new Set(['tonic','gain','chord']),symmetry:new Set(['scale','octave'])};
   function mount(host,{api,helpUrl='instruction/index.html#xorrom',download,after=()=>{}}={}){
     if(!host||!api)throw new Error('Xorrom: нужны контейнер и музыкальный API');
@@ -66,17 +66,21 @@
       bindField(input,key,title);return input;
     }
     function number(key,text,title,min,max,toView=v=>v,fromView=v=>v){
-      const input=field(key,text,title,()=>{const n=doc.createElement('input');n.type='number';n.min=String(min);n.max=String(max);n.step='1';return n;});
-      const apply=()=>{if(input.disabled)return;const value=Number(input.value),normalized=Number.isFinite(value)?Math.max(min,Math.min(max,Math.round(value))):toView(settings()[key]);input.value=String(normalized);safe(()=>api.setSettings({[key]:fromView(normalized)}));};
+      const positive=min===undefined;
+      const input=field(key,text,title,()=>{const n=doc.createElement('input');n.type='number';if(positive)n.step='any';else{n.min=String(min);n.max=String(max);n.step='1';}return n;});
+      const apply=()=>{if(input.disabled)return;const value=Number(input.value);let normalized=toView(settings()[key]);
+        if(Number.isFinite(value)){if(!positive)normalized=Math.max(min,Math.min(max,Math.round(value)));else if(value>0)normalized=value;}
+        input.value=String(normalized);safe(()=>api.setSettings({[key]:fromView(normalized)}));};
       input.addEventListener('change',apply);input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();apply();}});
       bindField(input,key,title,toView);return input;
     }
     choice('source','Источник','Что озвучивать: Мелодия — число единиц в строке задаёт высоту нот; RGB — цвета становятся нотами; Ритм — клетки задают удары.',[['melody','Мелодия'],['rgb','RGB'],['rhythm','Ритм']]);
-    button('electro','♫ Электро','Электронный набор: RGB, 112 BPM, 1/16, До минор, октава 3, Пульс, одна нота, громкость 25%. Авто рисунок выключается; диапазон строк и транспорт сохраняются. Нажмите Старт для игры.',()=>safe(()=>api.setSettings(win.MayatnikXorrom?.ELECTRO_PRESET||{source:'rgb',bpm:112,division:16,tonic:0,scale:'minor',octave:3,timbre:'pulse',gain:.25,chord:1,autoGeometry:false})));
+    const electroPreset=win.MayatnikXorrom?.ELECTRO_PRESET||{source:'rgb',bpm:112,division:16,tonic:0,scale:'minor',octave:3,timbre:'pulse',gain:.25,chord:1,autoGeometry:false};
+    const electro=button('electro','♫ Электро','Электронный набор: RGB, 112 BPM, 1/16, До минор, октава 3, Пульс, одна нота, громкость 25%. Авто рисунок выключается; диапазон строк и транспорт сохраняются. Нажмите Старт для игры.',()=>safe(()=>api.setSettings(electroPreset)));
     const auto=button('autoGeometry','Авто рисунок','Автоматически менять музыкальные настройки по рисунку. Поля показывают фактические значения звучащей строки; выключение возвращает ручные настройки. Громкость ограничена ручным значением.',()=>safe(()=>api.setSettings({autoGeometry:!settings().autoGeometry})));
     choice('geometrySource','От рисунка','Что управляет музыкой: всё вместе, связные области, площади областей или их вертикальная симметрия.',[['all','Всё'],['regions','Области'],['areas','Площади'],['symmetry','Симметрия']]);
     choice('geometryConnectivity','Связи','Как соединять биты рисунка: По сторонам; Стороны + углы; Только углы; Шахматки 0; Один бит. Правила соответствуют режимам Область в Краске.',[['sides','Стороны','По сторонам'],['corners','Углы','Стороны + углы'],['diagonal','Диаг…','Только углы'],['chess0','Шахм0','Шахматки 0'],['bit','Один бит','Один бит']]);
-    number('bpm','Темп BPM','Темп от 60 до 180 ударов в минуту. Больше число — музыка быстрее.',60,180);
+    number('bpm','Темп BPM','Удары в минуту. Можно ввести любое положительное значение, включая дробное.');
     choice('division','Доля','Длительность шага: четверть, восьмая или шестнадцатая. При том же темпе шестнадцатые идут чаще.',[[4,'1/4'],[8,'1/8'],[16,'1/16']]);
     choice('scale','Лад','Лад определяет набор высот: мажор, минор или пентатоника из пяти ступеней.',[['major','Мажор'],['minor','Минор'],['pentatonic','Пента']]);
     choice('tonic','Тоника','Главная нота выбранного лада. До = C, Ре = D, Ми = E, Фа = F, Соль = G, Ля = A, Си = B.',[[0,'До C'],[1,'До♯ C♯'],[2,'Ре D'],[3,'Ре♯ D♯'],[4,'Ми E'],[5,'Фа F'],[6,'Фа♯ F♯'],[7,'Соль G'],[8,'Соль♯ G♯'],[9,'Ля A'],[10,'Ля♯ A♯'],[11,'Си B']]);
@@ -89,7 +93,7 @@
     number('backingGain','Фон %','Громкость второго инструмента относительно основной партии, 0–100%. Начните с 20–30%. Общая громкость ограничивает оба слоя; смешивание оставляет запас от перегрузки.',0,100,v=>Math.round(v*100),v=>v/100);
     number('backingRows','Фраза строк','Сколько выбранных строк держать одну фоновую фразу, от 1 до 16. Четыре дают медленный фон под четырьмя шагами мелодии; учитываются диапазон и шаг строк.',1,16);
     const toggles=[];
-    for(const [key,text,title]of [['loop','Повтор','После последней строки начать снова.'],['live','Обновлять','Дополнительно снимать текущее поле на каждом повторе. Смена кадра и правки битов обновляют музыку сразу, независимо от этой кнопки; Xorrom сам кадры не переключает.']]){
+    for(const [key,text,title]of [['loop','Повтор','После последней строки начать снова.'],['live','Обновлять','Дополнительно снимать текущее поле на каждом повторе. Смена кадра и правки битов обновляют музыку сразу, независимо от этой кнопки; Xorrom сам кадры не переключает.'],['restartOnFrame','С начала кадра','При смене кадра вручную или плеером линия чтения возвращается к первой выбранной строке. Во время паузы линия перемещается без звука.']]){
       const control=button(key,text,title,()=>safe(()=>api.setSettings({[key]:!settings()[key]})));toggles.push({key,...control,text});
     }
     number('first','От строки','Первая строка для музыки; отсчёт начинается с 0.',0,1000000);
@@ -115,6 +119,8 @@
       if(destroyed)return;
       const s=settings(),current=state(),playing=current.state==='playing';
       bindings.forEach(bind=>bind(s,current));
+      const matchesElectro=Object.entries(electroPreset).every(([key,value])=>s[key]===value);
+      electro.node.classList.toggle('gz-on',matchesElectro);electro.node.setAttribute('aria-pressed',String(matchesElectro));
       auto.node.classList.toggle('gz-on',!!s.autoGeometry);auto.node.setAttribute('aria-pressed',String(!!s.autoGeometry));
       const g=s.autoGeometry?current.geometry:null;
       const geometryText=g?'Обл '+(g.id??'—')+' · S '+(g.area??'—')+' · H '+(g.height??'—')+' · сим '+(g.symmetryHeight??'—'):s.autoGeometry?'Рисунок: ожидание':'Рисунок: вручную';

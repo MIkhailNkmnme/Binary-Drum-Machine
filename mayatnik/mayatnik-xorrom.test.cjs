@@ -13,7 +13,7 @@ function deferred() {
 test('persistable numeric and enum settings, mute, false and end sentinel survive normalization', () => {
   assert.deepEqual(normalizeSettings(), DEFAULTS);
   assert.deepEqual(normalizeSettings({bpm: 4, division:'16', gain:0, live:true, loop:false, stride:-20,
-    scale:'__proto__', octave:null, last:-17}), {...DEFAULTS, bpm:60, division:16, gain:0, live:true, loop:false});
+    scale:'__proto__', octave:null, last:-17}), {...DEFAULTS, bpm:4, division:16, gain:0, live:true, loop:false});
   assert.deepEqual(normalizeSettings(JSON.parse(JSON.stringify(DEFAULTS))), DEFAULTS);
 });
 test('семь RGB классов, мажор до, чёрная пауза, верхние три класса с устойчивой ничьей', () => {
@@ -97,6 +97,39 @@ function rig(getSnapshot = () => field(1,2,3), settings = {}) {
   return {engine, doc, sources, states, events, advance, stall(delta){ms += delta;}, timers,
     wakeLate(){const [id,event] = [...timers][0]; timers.delete(id); event.fn();}, ctx:()=>ctx};
 }
+test('positive finite BPM survives normalization and round-trip with fractional or extreme values',()=>{
+  for(const bpm of [.5,1,30,250,999,123.45,Number.MIN_VALUE,Number.MAX_VALUE]){
+    assert.equal(normalizeSettings(JSON.parse(JSON.stringify({bpm}))).bpm,bpm);
+  }
+  for(const bpm of [0,-2,'',null,Infinity,NaN])assert.equal(normalizeSettings({bpm}).bpm,DEFAULTS.bpm);
+  assert.throws(()=>renderWav(field(1),{bpm:Number.MAX_VALUE}),/звукового отсчёта/);
+  assert.throws(()=>renderWav(field(1),{bpm:Number.MIN_VALUE}),/звукового отсчёта/);
+  const slow={division:4,bpm:60*22050/(Number.MAX_SAFE_INTEGER*.75),backing:'bass',backingRows:2};
+  assert.throws(()=>renderWav(field(1,2),slow,{maxSeconds:.01}),/фоновой фразы/);
+  assert.throws(()=>renderWav(field(1),slow,{sampleRate:44100,maxSeconds:.01}),/фоновой фразы/);
+  assert.equal(renderWav(field(1,2),{bpm:250,division:4}).duration,.48);
+});
+test('long held backing is streamed across sample-exact chunk boundaries; WAV renders only its requested window',async()=>{
+  const settings={bpm:.5,division:4,backing:'bass',backingRows:4,backingGain:.5,gain:1,loop:false},snap=field(1,2,3,4);
+  const r=rig(()=>snap,settings);await r.engine.start();
+  const first=r.sources[1],second=r.sources[2],rate=22050;
+  assert.equal(first.buffer.duration,1);assert.equal(second.at,first.at+1);
+  first.onended();const third=r.sources[3];assert.equal(third.at,first.at+2);assert.equal(third.buffer.duration,1);
+  const wav=renderWav(snap,settings,{maxSeconds:3}),mixed=mixScheduled(r,3*rate),pcm=samples(wav.bytes);
+  assert.equal(wav.truncated,true);assert.equal(wav.duration,3);
+  for(const i of [rate-1,rate,rate+1,2*rate-1,2*rate,2*rate+1]){
+    assert.ok(Math.abs(pcm[i]-Math.round(mixed[i]*32767))<=1,'continuous sample '+i);
+  }
+  r.advance(120);r.engine.setSettings({bpm:250});r.advance(550);
+  assert.ok(r.events.some(e=>e.index>0),'editing a slow beat releases its previous long deadline');
+  const length=r.sources.length;r.engine.stop();second.onended();assert.equal(r.sources.length,length);
+});
+test('a high but sample-representable tempo schedules bounded batches and skips a stalled clock interval',async()=>{
+  const r=rig(()=>field(1,2,3),{bpm:240000,division:16});await r.engine.start();
+  assert.equal(r.sources.length,64);r.advance(40);r.stall(5000);
+  const count=r.sources.length;r.wakeLate();assert.ok(r.sources.length-count<=64);
+  assert.ok(r.sources.slice(count).every(v=>v.at>=r.ctx().currentTime-1e-10));r.engine.stop();
+});
 test('audio clock schedules notes in advance, UI sees actual onset and one-shot finishes', async () => {
   const r = rig(() => field(1,2,3),{bpm:120,division:8,loop:false});
   assert.equal(await r.engine.start(),true);
@@ -323,6 +356,24 @@ test('frame replacements every 16ms keep the original musical beat and sample po
     assert.ok(Math.abs(active[0].offset - offset) < 1e-6);
   }
   assert.deepEqual([...new Set(r.events.map(e => e.index))], [0,1,2,3]);
+});
+
+test('restart on each 16 ms frame sounds both parts immediately from selected first; paused and hidden replacements are silent',async()=>{
+  const snap=field(1,2,3,4,5,6),r=rig(()=>snap,{first:1,last:5,stride:2,backing:'pad',backingRows:2});
+  assert.equal(await r.engine.start(),true);
+  for(let i=0;i<12;i++){
+    r.advance(16);r.engine.beginRefresh();
+    const count=r.sources.length,now=r.ctx().currentTime;
+    assert.equal(r.engine.replaceSnapshot(snap,{index:5,resume:true,restart:true}),1);
+    const played=r.events.at(-1),voices=r.sources.slice(count);
+    assert.equal(played.index,1);assert.equal(played.time,now);assert.ok(played.notes.length&&played.backing.notes.length);
+    assert.equal(voices.length,played.notes.length+played.backing.notes.length);
+    assert.ok(voices.every(v=>v.at===now&&v.offset===0));
+  }
+  r.engine.beginRefresh();const count=r.sources.length;
+  r.engine.replaceSnapshot(snap,{index:1,resume:false,restart:true});assert.equal(r.engine.getState(),'paused');
+  r.doc.hidden=true;r.engine.replaceSnapshot(snap,{index:1,resume:true,restart:true});
+  assert.equal(r.engine.getState(),'paused');assert.equal(r.sources.length,count);r.engine.stop();
 });
 
 test('slow and coalesced frame replacements respect a non-looping score and user transport overrides', async () => {

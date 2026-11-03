@@ -11,15 +11,34 @@
     let generation=0,disposed=false,lastSnapshot=null,frame=null,refreshFrame=null,updating=false,resumeAfterRefresh=false,fieldStamp=null;
     let drag=null,manualGeneration=0,observer=null,observedFigure=null;
     const listeners=new Set(),viewport=options.viewport;
-    const marker=doc.createElement('div');marker.id='mayXorromRow';marker.tabIndex=0;marker.setAttribute('role','slider');marker.setAttribute('aria-orientation','vertical');marker.setAttribute('aria-label','Звучащая строка Xorrom: тянуть вверх или вниз для повторного прослушивания');
-    Object.assign(marker.style,{position:'fixed',display:'none',pointerEvents:'none',boxSizing:'border-box',zIndex:'15',border:'1px solid #a674ff',boxShadow:'inset 0 0 0 1px #65eaa6',background:'rgba(101,234,166,.18)'});
+    const marker=doc.createElement('div');marker.id='mayXorromRow';marker.tabIndex=0;marker.setAttribute('role','slider');marker.setAttribute('aria-orientation','vertical');marker.setAttribute('aria-label','Линия чтения Xorrom');marker.title='Линия чтения: тяните вверх или вниз, чтобы повторить строку';
+    Object.assign(marker.style,{position:'fixed',display:'none',pointerEvents:'none',boxSizing:'border-box',zIndex:'15',border:'1px solid #a674ff',boxShadow:'inset 0 0 0 1px #65eaa6',background:'transparent'});
     const hit=doc.createElement('div');hit.dataset.xorromDrag='';hit.title='Тянуть вверх или вниз — снова сыграть выбранную строку';Object.assign(hit.style,{position:'absolute',left:'0',right:'0',top:'50%',height:'14px',transform:'translateY(-50%)',pointerEvents:'auto',cursor:'ns-resize',touchAction:'none'});marker.append(hit);doc.body.append(marker);
+    const ns='http://www.w3.org/2000/svg',outline=doc.createElementNS(ns,'svg'),runs=doc.createElementNS(ns,'path');
+    outline.setAttribute('aria-hidden','true');Object.assign(outline.style,{position:'absolute',left:'-1px',top:'-1px',pointerEvents:'none',overflow:'hidden'});
+    runs.setAttribute('fill','none');runs.setAttribute('stroke','#65eaa6');runs.setAttribute('stroke-width','1');runs.setAttribute('shape-rendering','crispEdges');outline.append(runs);marker.append(outline);
     const sourceFigure=()=>typeof options.figure==='function'?options.figure():options.figure;
     const sourceRect=()=>options.figureRect?.()||sourceFigure()?.getBoundingClientRect();
     function getState(){return {state,index,notes:notes.map(note=>({...note})),backingNotes:backingNotes.map(note=>({...note})),error,updating,effective:effective?{...effective}:null,geometry:geometry?{...geometry}:null};}
     function publish(){if(!disposed)for(const listener of listeners)listener(getState());}
+    function showRuns(bits,rect,left,right,top,bottom,rowHeight){
+      outline.setAttribute('width',String(right-left));outline.setAttribute('height',String(bottom-top));
+      if(!bits?.length){runs.removeAttribute('d');return;}
+      const pitch=rect.width/bits.length,first=Math.max(0,Math.floor((left-rect.left)/pitch)),end=Math.min(bits.length,Math.ceil((right-rect.left)/pitch));
+      const y=rect.top+index*rowHeight-top,paths=[];
+      for(let x=first;x<end;){
+        if(bits[x]!==1){x++;continue;}
+        let from=x++;while(x<end&&bits[x]===1)x++;
+        // A clipped run continues past the viewport. Leave its outside edge
+        // offscreen instead of drawing a new vertical border at the clip.
+        if(from===first&&bits[from-1]===1)from--;
+        const to=x===end&&bits[x]===1?x+1:x;
+        paths.push('M'+(rect.left+from*pitch-left)+' '+y+'h'+((to-from)*pitch)+'v'+rowHeight+'h'+((from-to)*pitch)+'Z');
+      }
+      if(paths.length)runs.setAttribute('d',paths.join(' '));else runs.removeAttribute('d');
+    }
     function showMarker(){
-      frame=null;marker.style.display='none';
+      frame=null;marker.style.display='none';runs.removeAttribute('d');
       if(disposed||doc.hidden||updating||options.isVisible?.()===false||!lastSnapshot||index<0||!['playing','paused'].includes(state))return;
       const figure=sourceFigure();if(figure!==observedFigure){if(observedFigure&&observedFigure!==viewport)observer?.unobserve?.(observedFigure);observedFigure=figure;if(figure&&figure!==viewport)observer?.observe(figure);}if(!figure||!viewport||figure.isConnected===false||viewport.isConnected===false)return;
       if(win.getComputedStyle&&(win.getComputedStyle(figure).display==='none'||win.getComputedStyle(viewport).display==='none'||win.getComputedStyle(viewport).visibility==='hidden'))return;
@@ -29,6 +48,7 @@
       const top=Math.max(0,clip.top,rect.top,center-band/2),bottom=Math.min(win.innerHeight||doc.documentElement.clientHeight,clip.bottom,rect.bottom,center+band/2);
       const left=Math.max(0,clip.left,rect.left),right=Math.min(win.innerWidth||doc.documentElement.clientWidth,clip.right,rect.right);if(!(bottom>top&&right>left))return;
       Object.assign(marker.style,{display:'block',left:left+'px',top:top+'px',width:(right-left)+'px',height:(bottom-top)+'px',opacity:state==='paused'&&!drag?'.45':'1'});
+      showRuns(lastSnapshot.rows[index]?.bits,rect,left,right,top,bottom,rowHeight);
       const first=Math.min(settings.first,height-1),last=settings.last<0?height-1:Math.max(first,Math.min(settings.last,height-1));marker.setAttribute('aria-valuemin',String(first));marker.setAttribute('aria-valuemax',String(last));marker.setAttribute('aria-valuenow',String(index));marker.setAttribute('aria-valuetext','Строка '+index);
     }
     function scheduleMarker(){if(disposed||frame!==null)return;if(win.requestAnimationFrame)frame=win.requestAnimationFrame(showMarker);else showMarker();}
@@ -81,11 +101,16 @@
     function queueRefresh(){if(disposed||!updating||refreshFrame!==null)return;refreshFrame=win.requestAnimationFrame(()=>{refreshFrame=null;void refreshField();});}
     async function refreshField(){
       const run=generation;try{
-        const snapshot=await capture(true,true);if(run!==generation||!updating)return;
-        const resume=resumeAfterRefresh&&!drag;core.replaceSnapshot(snapshot,{index:Math.max(0,drag?.last??index),resume});if(run!==generation||!updating)return;
+        const snapshot=await capture(false,true);if(run!==generation||!updating)return;
+        const previous=lastSnapshot?.frame;
+        const restart=settings.restartOnFrame&&Number.isInteger(previous)&&Number.isInteger(snapshot.frame)&&snapshot.frame!==previous;
+        const resume=resumeAfterRefresh&&!drag;
+        lastSnapshot=snapshot;
+        core.replaceSnapshot(snapshot,{index:restart?settings.first:Math.max(0,drag?.last??index),resume,restart});if(run!==generation||!updating)return;
+        const shouldStart=resume&&resumeAfterRefresh;
         updating=false;resumeAfterRefresh=false;showMarker();publish();
-        if(drag){drag.row=index;drag.y=drag.pointerY;drag.unit=sourceRect().height/(snapshot.height||snapshot.rows.length);drag.last=index;drag.pending=seek(index);}
-        else if(resume&&state!=='playing'&&!doc.hidden)await start();
+        if(drag){drag.row=index;drag.y=drag.pointerY;drag.unit=sourceRect().height/(snapshot.height||snapshot.rows.length);drag.last=index;if(!restart)drag.pending=seek(index);}
+        else if(shouldStart&&run===generation&&state!=='playing'&&!doc.hidden)await start();
       }catch(reason){if(disposed||run!==generation)return;if(reason?.name==='AbortError'){queueRefresh();return;}updating=false;resumeAfterRefresh=false;core.stop();fail(reason);}
     }
     function fieldChanged(stamp){

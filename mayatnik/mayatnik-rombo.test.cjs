@@ -48,13 +48,14 @@ function host(extra={}){
   const geometry={width:9,height:5,sides:true},state={edgeRhombOn:true,romboRow:3,romboAngle:0,romboAssembly:1},listeners={},notifications=[],r={left:200,top:100,width:90,height:50},classes=new Set();
   const style={},source={width:9,height:5,style:{},getBoundingClientRect:()=>({...r})};
   const ctx={canvas:null,createImageData(width,height){return {width,height,data:new Uint8ClampedArray(width*height*4)};},putImageData(image){this.lastImage=image;},setTransform(){},fillRect(){},save(){},restore(){},transform(){},beginPath(){},rect(){},closePath(){},clip(){},drawImage(){},moveTo(){},lineTo(){},stroke(){},setLineDash(){}};
-  const box={style,getBoundingClientRect(){const t=/translate\(([-.\d]+)px, ([-.\d]+)px\)/.exec(style.transform||'');return {left:+(t?.[1]||0),top:r.top+r.height+2+(parseFloat(style.marginTop)||0)+ +(t?.[2]||0)};}};
-  const canvas={style:{},width:1,height:1,getContext:()=>ctx,getBoundingClientRect(){const b=box.getBoundingClientRect();return {...b,width:parseFloat(canvas.style.width),height:parseFloat(canvas.style.height)};},setPointerCapture(){}};ctx.canvas=canvas;
+  const box={style,append(){},getBoundingClientRect(){const t=/translate\(([-.\d]+)px, ([-.\d]+)px\)/.exec(style.transform||'');return {left:+(t?.[1]||0),top:r.top+r.height+2+(parseFloat(style.marginTop)||0)+ +(t?.[2]||0)};}};
+  const canvas={style:{},width:1,height:1,getContext:()=>ctx,getBoundingClientRect(){const b=box.getBoundingClientRect();return {...b,left:b.left+(parseFloat(canvas.style.left)||0),top:b.top+(parseFloat(canvas.style.top)||0),width:parseFloat(canvas.style.width),height:parseFloat(canvas.style.height)};},setPointerCapture(){}};ctx.canvas=canvas;
   const win={Event:class{constructor(type){this.type=type;}},dispatchEvent(event){notifications.push(event.type);},requestAnimationFrame:()=>1,cancelAnimationFrame(){},getComputedStyle:()=>({marginBottom:'2px'}),addEventListener(type,fn){listeners[type]=fn;}};
-  const doc={defaultView:win,body:{classList:{toggle(key,on){on?classes.add(key):classes.delete(key);}}},createElement:()=>{const context={...ctx},out={width:0,height:0,getContext:()=>context};context.canvas=out;return out;}};
-  const api=R.mount({host:{ownerDocument:doc},source,box,canvas,state:()=>state,geometry:()=>geometry,changed(){api.render();},...extra});
+  const doc={defaultView:win,body:{classList:{toggle(key,on){on?classes.add(key):classes.delete(key);}}},createElement:()=>{const context={...ctx},out={width:0,height:0,style:{},setAttribute(){},getContext:()=>context,getBoundingClientRect(){const b=box.getBoundingClientRect();return {...b,left:b.left+(parseFloat(this.style.left)||0),top:b.top+(parseFloat(this.style.top)||0),width:parseFloat(this.style.width),height:parseFloat(this.style.height)};}};context.canvas=out;return out;}};
+  const viewport={ownerDocument:doc,clientWidth:800,clientHeight:600,getBoundingClientRect:()=>({left:0,top:0,right:800,bottom:600,width:800,height:600})};
+  const api=R.mount({host:viewport,source,box,canvas,state:()=>state,geometry:()=>geometry,changed(){api.render();},...extra});
   function event(type,x,y){const e={type,target:canvas,clientX:x,clientY:y,pointerId:1,button:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;}};listeners[type](e);return e;}
-  return {api,state,source,box,canvas,r,classes,event,notifications,geometry,win};
+  return {api,state,source,box,canvas,r,classes,event,notifications,geometry,win,viewport};
 }
 
 test('Rombo publishes effective state changes after setters and direct restore/reset, without frame duplicates',()=>{
@@ -240,4 +241,48 @@ test('strict canonical scale survives CSS rounding; overlay palette stays separa
  const decorated=draws[0][0].getContext().lastImage;assert.deepEqual(decorated.data,R.rasterPixels(p,overlay,Math.SQRT2,{transparent:true}).data);
  pixels.data[4*4]=99;revision++;h.api.render();assert.deepEqual(h.canvas.getContext().lastImage.data,R.rasterPixels(p,pixels,Math.SQRT2).data);
  const out=h.api.capture();assert.deepEqual(out.getContext().lastImage.data,R.rasterPixels(p,pixels,2*Math.SQRT2).data);
+});
+
+
+test('regional exact pixels are byte-identical to the whole raster across every variant, turn and tile seam',()=>{
+ const source=nativePixels(31,8);
+ for(const {id:assembly}of R.variants)for(let angle=0;angle<360;angle+=45){
+  const p=R.plan(31,8,{assembly,angle},{sides:true}),quality=angle%90?2*Math.SQRT2:4,full=R.rasterPixels(p,source,quality);
+  for(let y=0;y<full.height;y+=17)for(let x=0;x<full.width;x+=19){
+   const region={x,y,width:Math.min(19,full.width-x),height:Math.min(17,full.height-y)},tile=R.rasterPixels(p,source,quality,{region});
+   for(let v=0;v<region.height;v++)assert.deepEqual(tile.data.subarray(v*region.width*4,(v+1)*region.width*4),full.data.subarray(((y+v)*full.width+x)*4,((y+v)*full.width+x+region.width)*4));
+  }
+ }
+});
+
+test('viewport tiles cover only visible global pixels at 512 zoom and retain full-size picking, overlay and export',()=>{
+ for(const dpr of [1,1.25,2])for(const angle of [0,45,90,135,180,225,270,315]){
+  let overlays=0,revision=1,registrations=0;const pixels=nativePixels(31,8),decorated={...pixels,data:pixels.data.slice()},unit=64;
+  const h=host({viewport:true,precision:()=>true,scale:()=>unit,captureBits:()=>pixels,captureOverlay:()=>{overlays++;return decorated;},revision:()=>revision,exportScale:()=>angle%90?2*Math.SQRT2:2});
+  h.win.devicePixelRatio=dpr;h.win.mayViewRotation={enabled:false,center:{x:400,y:300},register(){registrations++;}};Object.assign(h.geometry,{width:31,height:8});Object.assign(h.state,{romboRow:8,romboAssembly:16,romboAngle:angle});Object.assign(h.source,{width:31,height:8});Object.assign(h.r,{left:-500,top:-200,width:31*unit,height:8*unit});
+  h.api.render();const p=h.api.plan(),tiles=h.api.screenTiles();assert.ok(tiles.length>0);assert.equal(overlays,1);assert.ok(tiles.every(t=>t.width<=2048&&t.height<=2048));
+  assert.equal(parseFloat(h.box.style.width),p.outputWidth*unit);assert.equal(parseFloat(h.box.style.height),p.outputHeight*unit);
+  for(const tile of tiles){
+   const ox=Math.round(parseFloat(tile.style.left)*dpr),oy=Math.round(parseFloat(tile.style.top)*dpr),image=tile.getContext().lastImage;
+   for(let y=0;y<tile.height;y+=127)for(let x=0;x<tile.width;x+=113){
+    const q=p.pick({x:(ox+x+.5)/(unit*dpr),y:(oy+y+.5)/(unit*dpr)}),expected=q?rgba(pixels,Math.floor(q.y)*pixels.width+Math.floor(q.x)):[0,0,0,255];assert.deepEqual(rgba(image,y*tile.width+x),expected);
+   }
+  }
+  const before=JSON.stringify(tiles.map(t=>[t.width,t.height,t.style.left,t.style.top]));h.r.left-=29;h.r.top-=31;h.api.render();assert.notEqual(JSON.stringify(h.api.screenTiles().map(t=>[t.width,t.height,t.style.left,t.style.top])),before);assert.equal(overlays,2);
+  const output=h.api.capture();assert.ok(output.width*output.height<=16e6);assert.ok(output.width<parseFloat(h.box.style.width)*dpr);h.api.render();assert.equal(overlays,4);
+ }
+});
+
+test('very large Rombo canvas is tiled, captured immediately after half-turn registration, and hidden tiles release storage',()=>{
+ let overlays=0,registered=0;const pixels=nativePixels(31,8),unit=512,h=host({viewport:true,precision:()=>true,scale:()=>unit,captureBits:()=>pixels,captureOverlay:()=>{overlays++;return null;}});
+ h.win.devicePixelRatio=2;h.win.innerWidth=5000;h.win.innerHeight=3000;Object.assign(h.viewport,{clientWidth:5000,clientHeight:3000});h.viewport.getBoundingClientRect=()=>({left:0,top:0,right:5000,bottom:3000,width:5000,height:3000});
+ h.win.mayViewRotation={enabled:true,center:{x:2500,y:1500},register(){registered++;}};Object.assign(h.geometry,{width:31,height:8});Object.assign(h.state,{romboRow:8,romboAssembly:16});Object.assign(h.source,{width:31,height:8});Object.assign(h.r,{left:-4000,top:-2000,width:31*unit,height:8*unit});h.api.render();
+ const tiles=h.api.screenTiles();assert.ok(tiles.length>1);assert.equal(registered,tiles.length-1);assert.equal(overlays,1);assert.ok(tiles.every(t=>t.width*t.height<=2048*2048));assert.ok(parseFloat(h.box.style.width)*parseFloat(h.box.style.height)*4>16e6);
+ h.r.left=1e7;h.api.render();assert.deepEqual(h.api.screenTiles(),[]);assert.ok(tiles.every(t=>t.width===1&&t.height===1&&t.style.display==='none'));
+});
+
+test('cropped first-tile and full-container hits map to the same source and physical navigation coordinates',()=>{
+ const pixels=nativePixels(31,8),unit=64,h=host({viewport:true,precision:()=>true,scale:()=>unit,captureBits:()=>pixels});Object.assign(h.geometry,{width:31,height:8});Object.assign(h.state,{romboRow:8,romboAssembly:16,romboAngle:45});Object.assign(h.source,{width:31,height:8});Object.assign(h.r,{left:-650,top:-200,width:31*unit,height:8*unit});h.api.render();
+ const p=h.api.plan(),br=h.box.getBoundingClientRect(),native={x:15.25,y:2.25},q=p.forward(R.point(p.parts[0].matrix,native)),screen={x:br.left+q.x*unit,y:br.top+q.y*unit};
+ const e=h.event('pointermove',screen.x,screen.y);near(e.clientX,h.r.left+native.x*unit);near(e.clientY,h.r.top+native.y*unit);assert.deepEqual(h.api.physicalPoint(e),screen);
 });

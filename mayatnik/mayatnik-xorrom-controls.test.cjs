@@ -11,12 +11,34 @@ function boot(extra={}){
   return {dom,host,api,control,el,input,change,patches,downloaded,get starts(){return starts},get unsubscribed(){return unsubscribed},setState:value=>{current=value;listener?.();}};
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
+test('Electro outlined state follows the matching preset and ignores independently selected backing, transport and rows',()=>{
+  const a=boot(),button=a.el('electro');
+  const pressed=value=>{assert.equal(button.getAttribute('aria-pressed'),String(value));assert.equal(button.classList.contains('gz-on'),value);};
+  pressed(false);button.click();pressed(true);button.click();pressed(true);
+  a.api.setSettings({first:4,last:8,stride:2,loop:false,restartOnFrame:true,live:true,backing:'bass',backingGain:.2});pressed(true);
+  for(const [key,value] of Object.entries({source:'melody',bpm:999,division:8,tonic:1,scale:'major',octave:5,timbre:'sine',gain:.4,chord:2,autoGeometry:true})){
+    a.api.setSettings({[key]:value});pressed(false);button.click();pressed(true);
+  }
+  assert.equal(a.api.getSettings().backing,'bass');assert.equal(a.api.getSettings().first,4);assert.equal(a.starts,0);a.dom.window.close();
+});
+test('tempo number accepts fractional, slow and fast values, and keeps the previous valid value on invalid entry',()=>{
+  const a=boot(),input=a.input('bpm');assert.equal(input.step,'any');assert.equal(input.hasAttribute('min'),false);assert.equal(input.hasAttribute('max'),false);
+  for(const bpm of [.5,1,30,250,999,123.45]){a.change('bpm',bpm);assert.deepEqual(a.patches.at(-1),{bpm});}
+  for(const value of ['',0,-5]){a.change('bpm',value);assert.equal(input.value,'123.45');}
+  assert.equal(a.starts,0);a.dom.window.close();
+});
+test('frame restart is an independent saved toggle and does not start sound',()=>{
+  const a=boot(),toggle=a.el('restartOnFrame');assert.equal(toggle.getAttribute('aria-pressed'),'false');
+  assert.match(toggle.textContent,/С начала кадра/);assert.match(toggle.title,/линия чтения/);
+  toggle.click();assert.equal(toggle.getAttribute('aria-pressed'),'true');assert.deepEqual(a.patches.at(-1),{restartOnFrame:true});
+  toggle.click();assert.equal(a.starts,0);assert.deepEqual(a.patches.at(-1),{restartOnFrame:false});a.dom.window.close();
+});
 test('mount reads state without starting audio and owns only its appended controls',()=>{
   const a=boot();assert.equal(a.starts,0);assert.equal(a.input('source').value,'rgb');assert.equal(a.input('bpm').value,'96');assert.equal(a.input('gain').value,'25');assert.equal(a.el('start').getAttribute('aria-pressed'),'false');
   a.control.destroy();a.control.destroy();assert.equal(a.unsubscribed,1);assert.equal(a.host.innerHTML,'<b>existing</b>');assert.equal(a.dom.window.document.querySelector('#other').textContent,'other');a.dom.window.close();
 });
 test('settings normalize UI units and bounds, source gates RGB chord, API changes sync',()=>{
-  const a=boot();a.change('bpm',999);assert.deepEqual(a.patches.at(-1),{bpm:180});a.change('gain',40);assert.deepEqual(a.patches.at(-1),{gain:.4});a.change('stride',0);assert.deepEqual(a.patches.at(-1),{stride:1});
+  const a=boot();a.change('bpm',999);assert.deepEqual(a.patches.at(-1),{bpm:999});a.change('gain',40);assert.deepEqual(a.patches.at(-1),{gain:.4});a.change('stride',0);assert.deepEqual(a.patches.at(-1),{stride:1});
   a.change('source','rhythm');assert.equal(a.input('chord').disabled,true);a.api.setSettings({source:'rgb',tonic:7});assert.equal(a.input('chord').disabled,false);assert.equal(a.input('tonic').value,'7');a.el('loop').click();assert.equal(a.el('loop').getAttribute('aria-pressed'),'false');a.dom.window.close();
 });
 test('transport starts only by gesture, pauses and stops; note events are not aria-live',async()=>{

@@ -35,3 +35,16 @@ test('production wheel accumulates sub-step deltas even with power snapping disa
 test('unsupported clipping is explicit and never silently selects another angle or lossy scale',()=>{
  const {c,close}=fixture();c.st.edgeRhombOn=true;c.st.romboMode='custom';const old={...c.st};assert.equal(c.window.mayPixelExact.canState({}),false);c.cssLayout();assert.ok(c.document.body.classList.contains('may-pixel-invalid'));assert.match(c.$('mayPixelExactError').textContent,/Готовые/);assert.deepEqual(c.st,old);close();
 });
+
+
+test('production Rombo decreases by minus and by wheel from large scales down to its exact minimum',()=>{
+ for(const dpr of [1,1.25,2])for(const zsnap of [false,true])for(const angle of [0,45,90,135,180,225,270,315]){
+  const {c,close}=fixture(dpr);c.VW=1534;c.VH=512;c.f.W=1534;c.f.H=512;c.st.edgeRhombOn=true;c.st.romboAngle=angle;c.st.zsnap=zsnap;
+  vm.runInContext(lines.find(l=>l.includes('const zoomStep ='))+"\nthis.stepZoom=zoomStep;",c);
+  c.zoomTo(512,100,100,true);const high=c.currentScale();c.stepZoom(-1);assert.ok(c.currentScale()<high);
+  for(let i=0;i<20;i++)c.stepZoom(-1);const p=c.window.mayPixelExact.policyFor();assert.ok(Math.abs(c.currentScale()-p.minScale)<1e-9);
+  c.zoomTo(512,100,100,true);const start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf('  }, { passive: false });',start)+'  }, { passive: false });'.length;vm.runInContext(html.slice(start,end),c);
+  for(let i=0;i<30;i++)c.wrap.dispatchEvent(new c.window.WheelEvent('wheel',{deltaY:120,clientX:100,clientY:100,bubbles:true,cancelable:true}));
+  assert.ok(Math.abs(c.currentScale()-p.minScale)<1e-9);close();
+ }
+});

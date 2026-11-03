@@ -22,7 +22,7 @@ function fixture(extra={}){
 }
 test('mount and restored settings stay silent; patches normalize and persist without per-step writes',async()=>{
   const f=fixture();assert.equal(f.ctxCount,0);assert.equal(f.api.getState().state,'stopped');
-  assert.equal(f.api.getSettings().gain,.4);f.api.setSettings({gain:4,bpm:0});assert.equal(f.api.getSettings().gain,1);assert.equal(f.api.getSettings().bpm,60);assert.equal(f.saved,1);
+  assert.equal(f.api.getSettings().gain,.4);f.api.setSettings({gain:4,bpm:0});assert.equal(f.api.getSettings().gain,1);assert.equal(f.api.getSettings().bpm,96);assert.equal(f.saved,1);
   f.restore({gain:.1,bpm:160});f.api.refresh();assert.equal(f.api.getSettings().gain,.1);assert.equal(f.ctxCount,0);
   await f.api.start();f.opts.onStep({index:1,notes:[{midi:60}]});assert.equal(f.saved,1);assert.equal(f.api.getStream(),f.stream);f.close();
 });
@@ -66,7 +66,7 @@ test('actual core startup error reaches subscribers and caller',async()=>{
 
 test('hidden source canvas remains a valid geometry anchor while display is painted by layers',async()=>{
  const f=fixture();const figure=f.doc.querySelector('canvas');figure.style.visibility='hidden';await f.api.start();f.opts.onStep({index:1,notes:[{midi:60}]});
- const marker=f.doc.getElementById('mayXorromRow');assert.equal(marker.style.display,'block');assert.equal(marker.style.top,'50px');assert.notEqual(marker.style.background,'transparent');
+ const marker=f.doc.getElementById('mayXorromRow');assert.equal(marker.style.display,'block');assert.equal(marker.style.top,'50px');assert.equal(marker.style.background,'transparent');
  figure.style.display='none';f.api.refresh();assert.equal(marker.style.display,'none');f.close();
 });
 
@@ -102,4 +102,30 @@ test('restored backing settings stay silent; live notes identify both parts and 
  const f=fixture();f.restore({backing:'pad',backingGain:.25,backingTimbre:'triangle',backingRows:8});f.api.refresh();assert.equal(f.ctxCount,0);assert.equal(f.api.getState().state,'stopped');assert.equal(f.api.getSettings().backingRows,8);
  await f.api.start();const step={index:1,notes:[{midi:60}],backing:{notes:[{midi:48},{midi:55}]}};f.opts.onStep(step);assert.deepEqual(f.api.getState().backingNotes.map(n=>n.midi),[48,55]);
  const saved=f.api.getState();saved.backingNotes[0].midi=1;assert.equal(f.api.getState().backingNotes[0].midi,48);f.api.setSettings({backing:'off'});f.opts.onStep(step);assert.deepEqual(f.api.getState().backingNotes,[]);f.api.stop();assert.deepEqual(f.api.getState().backingNotes,[]);f.close();
+});
+test('restart switch is saved and restored alongside all four backing settings without starting audio',()=>{
+ const f=fixture(),backing={backing:'counter',backingGain:.4,backingTimbre:'triangle',backingRows:7};
+ f.restore(backing);f.api.refresh();assert.equal(f.api.getSettings().restartOnFrame,false);
+ const saved=f.api.setSettings({restartOnFrame:true});assert.equal(f.saved,1);
+ f.restore(JSON.parse(JSON.stringify(saved)));f.api.refresh();
+ assert.equal(f.api.getSettings().restartOnFrame,true);for(const [key,value] of Object.entries(backing))assert.equal(f.api.getSettings()[key],value);
+ f.restore({restartOnFrame:'false'});f.api.refresh();assert.equal(f.api.getSettings().restartOnFrame,false);
+ assert.equal(f.ctxCount,0);assert.equal(f.api.getState().state,'stopped');f.close();
+});
+test('reading line outlines contiguous ones on the full figure, including clipped and paused rows',async()=>{
+ const rows=[[1,1,1,0,0,1,1],[1,1,-1,1,0,1,0],[0,0,0,0,0,0,0]].map(a=>({bits:Int8Array.from(a)}));
+ let x=10,w=70;
+ const f=fixture({getSnapshot:async()=>({frame:0,width:7,height:3,rows}),figure:(doc,source)=>{
+   source.getBoundingClientRect=()=>({left:x,right:x+w,top:20,bottom:80,width:w,height:60});return source;
+ }});
+ await f.api.start();const marker=f.doc.getElementById('mayXorromRow'),path=marker.querySelector('path');
+ const step=index=>f.opts.onStep({index,notes:[],manual:true});
+ step(0);assert.equal(path.getAttribute('d'),'M0 0h30v20h-30Z M50 0h20v20h-20Z');
+ assert.equal(path.getAttribute('fill'),'none');assert.equal(path.parentElement.style.pointerEvents,'none');
+ f.api.pause();step(1);assert.equal(path.getAttribute('d'),'M0 0h20v20h-20Z M30 0h10v20h-10Z M50 0h10v20h-10Z');
+ x=-45;w=350;step(0);assert.equal(path.getAttribute('d'),'M-55 0h150v20h-150Z M195 0h100v20h-100Z');
+ assert.equal(path.parentElement.getAttribute('width'),'200');
+ x=10;w=140;f.win.dispatchEvent(new f.win.Event('resize'));await new Promise(r=>f.win.setTimeout(r,25));
+ assert.equal(path.getAttribute('d'),'M0 0h60v20h-60Z M100 0h40v20h-40Z');
+ step(2);assert.equal(path.hasAttribute('d'),false);step(1);f.api.stop();assert.equal(path.hasAttribute('d'),false);f.close();
 });

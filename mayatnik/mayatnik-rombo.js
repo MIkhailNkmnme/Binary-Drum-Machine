@@ -92,9 +92,11 @@
  }
  // Pixel centres are classified in native source coordinates. No Canvas
  // filtering, polygon antialiasing or per-pixel point objects enter this path.
- function rasterPixels(p,source,quality=1,{data,transparent=false}={}){
+ function rasterPixels(p,source,quality=1,{data,transparent=false,region=null}={}){
   if(!source||!Number.isInteger(source.width)||!Number.isInteger(source.height)||!source.data||source.data.length!==source.width*source.height*4)throw new TypeError('Для точного Ромбо нужен исходный массив RGBA.');
-  const {width,height}=exactSize(p.outputWidth,p.outputHeight,quality);
+  const ox=region?.x||0,oy=region?.y||0;
+  if(region&&(![ox,oy,region.width,region.height].every(Number.isSafeInteger)||ox<0||oy<0||region.width<1||region.height<1||!(quality>0&&Number.isFinite(quality))||ox+region.width>Math.ceil(p.outputWidth*quality-1e-9)||oy+region.height>Math.ceil(p.outputHeight*quality-1e-9)))throw new RangeError('Неверная область точного растра Ромбо.');
+  const {width,height}=region?exactSize(region.width,region.height,1):exactSize(p.outputWidth,p.outputHeight,quality);
   if(data&&(!(data instanceof Uint8ClampedArray)||data.length!==width*height*4))throw new TypeError('Неверный размер точного растра Ромбо.');
   data=data&&data!==source.data?data:new Uint8ClampedArray(width*height*4);
   const out=new Uint32Array(data.buffer,data.byteOffset,width*height),raw=source.data.byteOffset%4?new Uint8ClampedArray(source.data):source.data,src=new Uint32Array(raw.buffer,raw.byteOffset,source.width*source.height),black=new Uint32Array(new Uint8Array([0,0,0,255]).buffer)[0];out.fill(transparent?0:black);
@@ -104,20 +106,30 @@
    const ia=d/det,ib=-b/det,ic=-c/det,id=a/det,ie=(c*f-d*e)/det,iff=(b*e-a*f)/det;
    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
    for(const v of tile.outline){const x=(a*v.x+c*v.y+e)*quality,y=(b*v.x+d*v.y+f)*quality;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}
-   const x0=Math.max(0,Math.floor(minX)),x1=Math.min(width,Math.ceil(maxX)),y0=Math.max(0,Math.floor(minY)),y1=Math.min(height,Math.ceil(maxY)),stepX=ia/quality,stepY=ib/quality;
+   const x0=Math.max(ox,Math.floor(minX)),x1=Math.min(ox+width,Math.ceil(maxX)),y0=Math.max(oy,Math.floor(minY)),y1=Math.min(oy+height,Math.ceil(maxY));
    const edges=tile.rows?null:tile.outline.map((v,i)=>{const w=tile.outline[(i+1)%tile.outline.length],dx=w.x-v.x,dy=w.y-v.y;return [-dy,dx,dy*v.x-dx*v.y,-1e-7*Math.hypot(dx,dy)];});
    const rows=tile.rows?new Map(tile.rows.map(row=>[row.y,row])):null;
    for(let y=y0;y<y1;y++){
-    let sx=ia*(x0+.5)/quality+ic*(y+.5)/quality+ie,sy=ib*(x0+.5)/quality+id*(y+.5)/quality+iff;
-    for(let x=x0;x<x1;x++,sx+=stepX,sy+=stepY){
+    const rowX=ic*(y+.5)/quality+ie,rowY=id*(y+.5)/quality+iff;
+    for(let x=x0;x<x1;x++){
+     const sx=ia*(x+.5)/quality+rowX,sy=ib*(x+.5)/quality+rowY;
      const hx=Math.round(sx*2)/2,hy=Math.round(sy*2)/2,px=Math.abs(sx-hx)<1e-9?hx:sx,py=Math.abs(sy-hy)<1e-9?hy:sy;
      if(rows){const row=rows.get(Math.floor(py));if(!row||px<row.left||px>=row.right)continue;}
      else {let inside=true;for(const edge of edges)if(edge[0]*px+edge[1]*py+edge[2]<edge[3]){inside=false;break;}if(!inside)continue;}
-     const sourceX=Math.floor(px*sxScale),sourceY=Math.floor(py*syScale);if(sourceX>=0&&sourceX<sw&&sourceY>=0&&sourceY<sh)out[y*width+x]=src[sourceY*sw+sourceX];
+     const sourceX=Math.floor(px*sxScale),sourceY=Math.floor(py*syScale);if(sourceX>=0&&sourceX<sw&&sourceY>=0&&sourceY<sh)out[(y-oy)*width+x-ox]=src[sourceY*sw+sourceX];
     }
    }
   }
   return {width,height,data};
+ }
+ function viewportTiles(W,H,quality,rect,clip,tileSize=2048){
+  if(![W,H,quality].every(v=>Number.isFinite(v)&&v>0)||!rect||!clip||![rect.left,rect.top,clip.left,clip.top,clip.right,clip.bottom].every(Number.isFinite))return [];
+  const d=rect.dpr||1,w=Math.ceil(W*quality-1e-9),h=Math.ceil(H*quality-1e-9);
+  const x0=Math.max(0,Math.floor((clip.left-rect.left)*d)),y0=Math.max(0,Math.floor((clip.top-rect.top)*d));
+  const x1=Math.min(w,Math.ceil((clip.right-rect.left)*d)),y1=Math.min(h,Math.ceil((clip.bottom-rect.top)*d)),tiles=[];
+  const side=Math.max(1,Math.min(2048,Math.floor(tileSize)||2048));
+  for(let y=y0;y<y1;y+=side)for(let x=x0;x<x1;x+=side)tiles.push({x,y,width:Math.min(side,x1-x),height:Math.min(side,y1-y)});
+  return tiles;
  }
  function rasterSize(W,H,wanted){
   let quality=Math.min(wanted,Math.sqrt(16e6/(W*H)),16384/W,16384/H);
@@ -128,7 +140,15 @@
  function mount(o){
   const {host,source,box,canvas}=o,doc=host.ownerDocument,win=doc.defaultView,events=new WeakMap();let drag=null,suppressClick=false,current=null,unit=1,originalVisibility=source.style.visibility,raf=0,layoutKey='',stateKey='',precisionMessage='';
   let layoutRef,normalized=null,customKey='',custom=null,publishedLayout;
-  const geometry=()=>o.geometry(),precision=()=>!!o.precision?.(),images=new WeakMap();
+  const geometry=()=>o.geometry(),precision=()=>!!o.precision?.(),images=new WeakMap(),screen=[canvas];let visibleTiles=[],overlaySnapshot=null;
+  const viewportMode=()=>precision()&&o.viewport===true;
+  function captureOverlayFrame(){
+   const overlay=o.captureOverlay?.();if(!overlay){overlaySnapshot=null;return null;}
+   let same=overlaySnapshot?.width===overlay.width&&overlaySnapshot?.height===overlay.height&&overlaySnapshot.data.length===overlay.data.length;
+   if(same)for(let i=0;i<overlay.data.length;i++)if(overlaySnapshot.data[i]!==overlay.data[i]){same=false;break;}
+   if(!same)overlaySnapshot={width:overlay.width,height:overlay.height,data:overlay.data.slice()};
+   return overlaySnapshot;
+  }
   function layout(){
    const raw=o.state().romboLayout;
    if(raw!==layoutRef){layoutRef=raw;normalized=triangles.normalize(raw);custom=null;}
@@ -153,49 +173,67 @@
   function publish(g=geometry(),state=get(g)){const selected=state.mode==='custom'?layoutRef:null,key=[state.mode,state.on,state.row,state.maxRow,state.angle,state.assembly,state.available,state.reason,g.width,g.anchor,g.sides].join(':');if(key===stateKey&&publishedLayout===selected)return;stateKey=key;publishedLayout=selected;win.dispatchEvent(new win.Event('may-rombo-change'));}
   function notify(){o.changed?.();publish();}
   function render(layoutOnly=false){
-   try{if(precision()){const p=o.precisionPolicy?.();if(p&&!p.ok)throw Error(p.reason);}renderFrame(layoutOnly);if(precision()&&!layoutOnly){canvas.style.display='';if(precisionMessage){precisionMessage='';o.onPrecisionError?.('');}}}
-   catch(error){if(!precision())throw error;canvas.style.display='none';if(raf)win.cancelAnimationFrame(raf);raf=0;const message=error?.message||String(error);if(message!==precisionMessage){precisionMessage=message;o.onPrecisionError?.(message);}}
+   try{if(precision()){const p=o.precisionPolicy?.();if(p&&!p.ok)throw Error(p.reason);}renderFrame(layoutOnly);if(precision()&&!layoutOnly){if(!viewportMode())canvas.style.display='';if(precisionMessage){precisionMessage='';o.onPrecisionError?.('');}}}
+   catch(error){if(!precision())throw error;for(const tile of screen)tile.style.display='none';visibleTiles=[];if(raf)win.cancelAnimationFrame(raf);raf=0;const message=error?.message||String(error);if(message!==precisionMessage){precisionMessage=message;o.onPrecisionError?.(message);}}
   }
   function renderFrame(layoutOnly=false){
    const g=geometry(),state=get(g);publish(g,state);doc.body.classList.toggle('may-rombo-active',state.on&&state.available);
    if(drag&&(!state.on||!state.available||state.mode==='custom')){if(canvas.hasPointerCapture?.(drag.id))canvas.releasePointerCapture(drag.id);drag=null;suppressClick=false;}
-   if(!state.on||!state.available){if(raf)win.cancelAnimationFrame(raf);raf=0;layoutKey='';box.style.display='none';source.style.visibility=o.restoreVisibility?.()??originalVisibility;current=null;return;}
+   if(!state.on||!state.available){if(raf)win.cancelAnimationFrame(raf);raf=0;layoutKey='';box.style.display='none';visibleTiles=[];source.style.visibility=o.restoreVisibility?.()??originalVisibility;current=null;return;}
    if(!source.width||!source.height)return;current=makePlan(undefined,g,state);const r=source.getBoundingClientRect();unit=o.precision?.()&&o.scale?o.scale():r.width/current.width;if(!(unit>0))return;
    const dpr=Number(win.devicePixelRatio)>0?Number(win.devicePixelRatio):1,W=current.outputWidth,H=current.outputHeight;
    // Rasterize once at the physical display density. Ceil padding is clipped,
    // never stretched back into the exact geometric box by CSS.
-   const {quality,width:cw,height:ch}=(precision()?exactSize:rasterSize)(W,H,unit*dpr);
+   const viewport=viewportMode();
+   const {quality,width:cw,height:ch}=viewport?{quality:unit*dpr,width:Math.ceil(W*unit*dpr-1e-9),height:Math.ceil(H*unit*dpr-1e-9)}:(precision()?exactSize:rasterSize)(W,H,unit*dpr);
    const cssWidth=cw*unit/quality,cssHeight=ch*unit/quality,rotation=win.mayViewRotation,turned=!!rotation?.enabled,pivot=turned?rotation.center:{x:0,y:0};
    const key=[r.left,r.top,r.width,r.height,current.row,current.angle,current.assembly,W,H,source.style.marginLeft,source.style.marginRight,dpr,quality,turned,pivot.x,pivot.y].join(':');
    if(key!==layoutKey){layoutKey=key;source.style.visibility='hidden';box.style.display='block';box.style.width=W*unit+'px';box.style.height=H*unit+'px';box.style.marginLeft=source.style.marginLeft||'auto';box.style.marginRight=source.style.marginRight||'auto';box.style.marginTop=-(r.height+(parseFloat(win.getComputedStyle(source).marginBottom)||0))+'px';box.style.transform='none';
     let left=r.left+(r.width-W*unit)/2,top=r.top;
     const px=turned?2*pivot.x-left-cssWidth:left,py=turned?2*pivot.y-top-cssHeight:top,sign=turned?-1:1;
     left+=sign*(Math.round(px*dpr)/dpr-px);top+=sign*(Math.round(py*dpr)/dpr-py);
-    const br=box.getBoundingClientRect();box.style.transform=`translate(${left-br.left}px, ${top-br.top}px)`;canvas.style.width=cssWidth+'px';canvas.style.height=cssHeight+'px';canvas.style.transform='none';}
+    const br=box.getBoundingClientRect();box.style.transform=`translate(${left-br.left}px, ${top-br.top}px)`;if(!viewport){canvas.style.width=cssWidth+'px';canvas.style.height=cssHeight+'px';}canvas.style.transform='none';}
    if(!raf)raf=win.requestAnimationFrame(()=>{raf=0;render(false);});
    if(layoutOnly)return;
+   if(viewport){
+    const hr=rotation?.physicalRect?rotation.physicalRect(host):host.getBoundingClientRect(),br=box.getBoundingClientRect();
+    let clip={left:Math.max(0,hr.left+(host.clientLeft||0)),top:Math.max(0,hr.top+(host.clientTop||0)),right:Math.min(win.innerWidth||Infinity,hr.left+(host.clientLeft||0)+host.clientWidth),bottom:Math.min(win.innerHeight||Infinity,hr.top+(host.clientTop||0)+host.clientHeight)};
+    if(turned)clip={left:2*pivot.x-clip.right,top:2*pivot.y-clip.bottom,right:2*pivot.x-clip.left,bottom:2*pivot.y-clip.top};
+    const regions=viewportTiles(W,H,quality,{left:br.left,top:br.top,dpr},clip),frame=regions.length?o.captureBits?.():null,overlay=regions.length?captureOverlayFrame():null;
+    visibleTiles=[];
+    for(let i=0;i<regions.length;i++){
+     const region=regions[i];let tile=screen[i];
+     if(!tile){tile=doc.createElement('canvas');tile.className='may-rombo-tile';tile.setAttribute('aria-hidden','true');box.append(tile);screen.push(tile);rotation?.register?.(tile);}
+     Object.assign(tile.style,{display:'block',position:'absolute',margin:'0',left:region.x/dpr+'px',top:region.y/dpr+'px',width:region.width/dpr+'px',height:region.height/dpr+'px',pointerEvents:i?'none':'auto',imageRendering:'pixelated'});
+     if(tile.width!==region.width)tile.width=region.width;if(tile.height!==region.height)tile.height=region.height;
+     paint(tile.getContext('2d'),frame,current,quality,unit,region,overlay);visibleTiles.push(tile);
+    }
+    for(let i=regions.length;i<screen.length;i++){screen[i].style.display='none';if(screen[i].width!==1)screen[i].width=1;if(screen[i].height!==1)screen[i].height=1;images.delete(screen[i].getContext('2d'));}
+    return;
+   }
+   visibleTiles=[canvas];
    if(canvas.width!==cw)canvas.width=cw;if(canvas.height!==ch)canvas.height=ch;
    const ctx=canvas.getContext('2d'),frame=precision()?o.captureBits?.():(o.capture?.()||source);paint(ctx,frame,current,quality,unit);
   }
-  function paint(ctx,frame,p,quality,displayUnit){
+  function paint(ctx,frame,p,quality,displayUnit,region=null,overlayFrame){
    if(precision()){
-    const size=exactSize(p.outputWidth,p.outputHeight,quality);let cache=images.get(ctx);
+    const size=region?exactSize(region.width,region.height,1):exactSize(p.outputWidth,p.outputHeight,quality);let cache=images.get(ctx);
     if(!cache||cache.base.width!==size.width||cache.base.height!==size.height){cache={base:ctx.createImageData(size.width,size.height)};images.set(ctx,cache);}
-    const revision=o.revision?.(),same=revision!==undefined&&cache.revision===revision&&cache.plan===p&&cache.quality===quality&&cache.source===frame?.data;
-    if(!same){rasterPixels(p,frame,quality,{data:cache.base.data});cache.revision=revision;cache.plan=p;cache.quality=quality;cache.source=frame.data;cache.overlayReady=false;}
+    const revision=o.revision?.(),regionKey=region?[region.x,region.y].join(':'):'full',same=revision!==undefined&&cache.revision===revision&&cache.plan===p&&cache.quality===quality&&cache.source===frame?.data&&cache.regionKey===regionKey;
+    if(!same){rasterPixels(p,frame,quality,{data:cache.base.data,region});cache.revision=revision;cache.plan=p;cache.quality=quality;cache.source=frame.data;cache.regionKey=regionKey;cache.overlayReady=false;}
     ctx.setTransform(1,0,0,1,0,0);ctx.putImageData(cache.base,0,0);
-    const overlay=o.captureOverlay?.();
+    const overlay=overlayFrame===undefined?captureOverlayFrame():overlayFrame;
     if(overlay){
      if(!cache.overlay){cache.overlay=ctx.createImageData(size.width,size.height);cache.canvas=doc.createElement('canvas');cache.canvas.width=size.width;cache.canvas.height=size.height;}
-     let unchanged=cache.overlayReady&&cache.overlayWidth===overlay.width&&cache.overlayHeight===overlay.height&&cache.overlaySource?.length===overlay.data.length;
-     if(unchanged){const old=cache.overlaySource,next=overlay.data;for(let i=0;i<next.length;i++)if(old[i]!==next[i]){unchanged=false;break;}}
-     if(!unchanged){rasterPixels(p,overlay,quality,{data:cache.overlay.data,transparent:true});cache.canvas.getContext('2d').putImageData(cache.overlay,0,0);cache.overlaySource=overlay.data.slice();cache.overlayWidth=overlay.width;cache.overlayHeight=overlay.height;cache.overlayReady=true;}
+     const unchanged=cache.overlayReady&&cache.overlaySource===overlay;
+     if(!unchanged){rasterPixels(p,overlay,quality,{data:cache.overlay.data,transparent:true,region});cache.canvas.getContext('2d').putImageData(cache.overlay,0,0);cache.overlaySource=overlay;cache.overlayReady=true;}
      ctx.imageSmoothingEnabled=false;ctx.drawImage(cache.canvas,0,0);
     }
    }else draw(ctx,frame,p,quality,quality<Math.max(frame.width/p.width,frame.height/p.height));
-   ctx.setTransform(quality,0,0,quality,0,0);o.paintOverlay?.(ctx,p,quality,displayUnit);
+   const ox=region?.x||0,oy=region?.y||0;
+   ctx.setTransform(quality,0,0,quality,-ox,-oy);o.paintOverlay?.(ctx,p,quality,displayUnit,region);
    if(p.axis){const a=p.forward(p.axis[0]),b=p.forward(p.axis[1]);ctx.strokeStyle='#ffd35b';ctx.lineWidth=1/Math.max(.02,displayUnit);ctx.setLineDash?.([5/displayUnit,3/displayUnit]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash?.([]);}
-   o.paintCentres?.(ctx,p,quality,displayUnit);
+   o.paintCentres?.(ctx,p,quality,displayUnit,region);
   }
   function capture(){
    if(precision()){const policy=o.precisionPolicy?.();if(policy&&!policy.ok)throw Error(policy.reason);}
@@ -210,10 +248,10 @@
    // Preserve the navigation point already mapped by whole-view rotation;
    // only cell tools below need a source-triangle address.
    if(event.type==='wheel')return;
-   if(!get().on||!current||events.has(event)||!(event.target===canvas||drag))return;
+   if(!get().on||!current||events.has(event)||!(event.target===canvas||viewportMode()&&event.target===box||drag))return;
    if(event.type==='click'&&suppressClick){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();return;}
    if(event.type==='pointerdown')suppressClick=false;
-   const r=canvas.getBoundingClientRect(),p={x:(event.clientX-r.left)/unit,y:(event.clientY-r.top)/unit};let distance=Infinity;
+   const r=(viewportMode()?box:canvas).getBoundingClientRect(),p={x:(event.clientX-r.left)/unit,y:(event.clientY-r.top)/unit};let distance=Infinity;
    if(current.axis){const a=current.forward(current.axis[0]),b=current.forward(current.axis[1]),dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1)));distance=Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy)*unit;}
    events.set(event,{x:event.clientX,y:event.clientY});
    if(event.type==='pointerdown'&&event.button===0&&distance<=7){drag={id:event.pointerId,x:event.clientX,y:event.clientY,row:get().row,unit,angle:get().angle*Math.PI/180};canvas.setPointerCapture?.(event.pointerId);event.preventDefault();event.stopImmediatePropagation();return;}
@@ -223,7 +261,7 @@
   }
   for(const type of ['pointerdown','pointermove','pointerup','pointercancel','mousedown','mousemove','mouseup','click','dblclick','contextmenu','wheel'])win.addEventListener(type,input,{capture:true,passive:false});
   const permit=patch=>!o.allowState||o.allowState({...o.state(),...patch})!==false;
-  const api={get,options:()=>variants.map(v=>{const item={...v,...availability(v.id,geometry(),get().row)},next={romboMode:'fixed',romboAssembly:v.id};if(item.available&&!permit(next)){item.available=false;item.reason=o.stateReason?.(next)||'Сборка несовместима с точной сеткой.';}return item;}),plan:makePlan,render,physicalPoint:event=>events.get(event),capture,setMode(value){const mode=value==='custom'?'custom':'fixed';if(!permit({romboMode:mode}))return;o.state().romboMode=mode;notify();},set(value){if(!permit({edgeRhombOn:!!value}))return;o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n||!permit({romboRow:n}))return;s.romboRow=n;notify();},cycleAngle(dir=1){const angle=(get().angle+(dir<0?315:45))%360;if(!permit({romboAngle:angle}))return;o.state().romboAngle=angle;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available||!permit({romboMode:'fixed',romboAssembly:n}))return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
+  const api={get,options:()=>variants.map(v=>{const item={...v,...availability(v.id,geometry(),get().row)},next={romboMode:'fixed',romboAssembly:v.id};if(item.available&&!permit(next)){item.available=false;item.reason=o.stateReason?.(next)||'Сборка несовместима с точной сеткой.';}return item;}),plan:makePlan,render,screenTiles:()=>visibleTiles.slice(),physicalPoint:event=>events.get(event),capture,setMode(value){const mode=value==='custom'?'custom':'fixed';if(!permit({romboMode:mode}))return;o.state().romboMode=mode;notify();},set(value){if(!permit({edgeRhombOn:!!value}))return;o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n||!permit({romboRow:n}))return;s.romboRow=n;notify();},cycleAngle(dir=1){const angle=(get().angle+(dir<0?315:45))%360;if(!permit({romboAngle:angle}))return;o.state().romboAngle=angle;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available||!permit({romboMode:'fixed',romboAssembly:n}))return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
  }
- return {plan,customPlan,point,inverse,draw,rasterPixels,mount,variants,normalise};
+ return {plan,customPlan,point,inverse,draw,rasterPixels,viewportTiles,mount,variants,normalise};
 });

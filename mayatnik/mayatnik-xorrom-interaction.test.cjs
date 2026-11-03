@@ -6,21 +6,39 @@ function fixture(){
  const dom=new JSDOM('<div><canvas></canvas></div>',{pretendToBeVisual:true}),win=dom.window,doc=win.document,viewport=doc.querySelector('div'),figure=doc.querySelector('canvas');
  viewport.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:300});figure.getBoundingClientRect=()=>({left:0,top:0,right:300,bottom:200,width:300,height:200});
  let source={height:4,width:1,rows:Array.from({length:4},()=>({ones:1,bits:new Int8Array([1]),colors:new Uint32Array([0,1,0,0,0,0,0,0])}))},snapshot,state='stopped',current=0,config,starts=0,run=0,captureWait=null,seekWait=null;
- const captures=[],seeks=[],replacements=[],frames=new Map();let frameId=0;
+ const captures=[],seeks=[],replacements=[],replaceOptions=[],frames=new Map();let frameId=0;
  win.requestAnimationFrame=fn=>{frames.set(++frameId,fn);return frameId;};win.cancelAnimationFrame=id=>frames.delete(id);
  const change=next=>{if(next!==state){state=next;config.onState(next);}};
  const engine={...audio,create(o){config=o;return {
   async start(){starts++;const ticket=++run;if(state!=='paused')snapshot=await o.getSnapshot();if(ticket!==run)return false;change('playing');return true;},pause(){run++;change(state==='playing'?'paused':state);},stop(){run++;snapshot=null;change('stopped');},setSettings(){},dispose(){},getStream(){return null;},
   async seek(row){const ticket=++run;change('paused');const wait=seekWait;seekWait=null;if(wait)await wait.promise;if(ticket!==run)return false;current=Math.max(0,Math.min(snapshot.rows.length-1,row));seeks.push(current);o.onStep({index:current,notes:audio.notesForRow(snapshot.rows[current],current),manual:true});return true;},
-  replaceSnapshot(value,{index=0}={}){run++;snapshot=value;current=Math.max(0,Math.min(value.rows.length-1,index));replacements.push(value);change('paused');o.onStep({index:current,notes:audio.notesForRow(value.rows[current],current),manual:true});return current;}
+  replaceSnapshot(value,{index=0,resume=false,restart=false}={}){run++;snapshot=value;current=Math.max(0,Math.min(value.rows.length-1,index));replacements.push(value);replaceOptions.push({index,resume,restart});change('paused');o.onStep({index:current,notes:audio.notesForRow(value.rows[current],current),manual:true});return current;}
  };}};
  const api=host.mount({window:win,document:doc,viewport,figure:()=>figure,engine,getSettings:()=>({}),getSnapshot:async options=>{captures.push(options);const value=source,wait=captureWait;captureWait=null;if(wait)await wait.promise;return value;}});
  const marker=doc.getElementById('mayXorromRow'),hit=marker.firstChild;
  function fire(type,y=75,target=hit,key){const event=key?new win.KeyboardEvent(type,{key,bubbles:true,cancelable:true}):new win.MouseEvent(type,{clientY:y,button:0,bubbles:true,cancelable:true});if(!key)Object.defineProperty(event,'pointerId',{value:7});target.dispatchEvent(event);return event;}
  const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
  const raf=async()=>{const pending=[...frames.values()];frames.clear();for(const fn of pending)fn();await flush();};
- return {api,dom,win,marker,hit,captures,seeks,replacements,fire,flush,raf,owner:{},get starts(){return starts;},setSource(value){source=value;},waitCapture(){captureWait=deferred();return captureWait;},waitSeek(){seekWait=deferred();return seekWait;},step(row){config.onStep({index:row,notes:audio.notesForRow(snapshot.rows[row],row)});},close(){api.dispose();dom.window.close();}};
+ return {api,dom,win,marker,hit,captures,seeks,replacements,replaceOptions,fire,flush,raf,owner:{},get starts(){return starts;},setSource(value){source=value;},setFrame(frame){source={...source,frame};},waitCapture(){captureWait=deferred();return captureWait;},waitSeek(){seekWait=deferred();return seekWait;},step(row){config.onStep({index:row,notes:audio.notesForRow(snapshot.rows[row],row)});},close(){api.dispose();dom.window.close();}};
 }
+test('frame restart uses selected first row on forward or manual backward change; paint keeps beat',async()=>{
+ const f=fixture();f.setFrame(0);f.api.setSettings({first:1,restartOnFrame:true});await f.api.start();f.step(3);
+ const change=async(frame,key)=>{f.setFrame(frame);f.api.fieldChanged({owner:f.owner,key});await f.raf();};
+ await change(0,'paint');assert.deepEqual(f.replaceOptions.at(-1),{index:3,resume:true,restart:false});
+ await change(1,'next');assert.deepEqual(f.replaceOptions.at(-1),{index:1,resume:true,restart:true});assert.equal(f.api.getState().state,'playing');
+ f.step(3);f.api.pause();const starts=f.starts;await change(0,'back');
+ assert.equal(f.api.getState().index,1);assert.equal(f.marker.getAttribute('aria-valuenow'),'1');assert.equal(f.api.getState().state,'paused');assert.equal(f.starts,starts);
+ assert.match(f.marker.getAttribute('aria-label'),/Линия чтения/);f.close();
+});
+test('restart off preserves the beat; pending stale frames cannot overwrite or restart a stopped transport',async()=>{
+ const f=fixture();f.setFrame(0);await f.api.start();f.step(3);f.setFrame(1);f.api.fieldChanged({owner:f.owner,key:1});await f.raf();
+ assert.deepEqual(f.replaceOptions.at(-1),{index:3,resume:true,restart:false});f.api.setSettings({restartOnFrame:true,first:1});
+ const old=f.waitCapture();f.setFrame(2);f.api.fieldChanged({owner:f.owner,key:2});await f.raf();
+ f.setFrame(1);f.api.fieldChanged({owner:f.owner,key:3});await f.raf();old.resolve();await f.flush();
+ assert.equal(f.replacements.length,2);assert.deepEqual(f.replaceOptions.at(-1),{index:3,resume:true,restart:false});
+ const old2=f.waitCapture();f.setFrame(4);f.api.fieldChanged({owner:f.owner,key:4});await f.raf();f.api.stop();old2.resolve();await f.flush();
+ assert.equal(f.replacements.length,2);assert.equal(f.api.getState().state,'stopped');f.close();
+});
 test('line drag retriggers rows, deduplicates motion within a row and resumes from release',async()=>{
  const f=fixture();await f.api.start();f.step(1);assert.equal(f.fire('pointerdown').defaultPrevented,true);await f.flush();assert.deepEqual(f.seeks,[1]);assert.equal(f.api.getState().state,'paused');
  f.fire('pointermove',125,f.win);await f.flush();f.fire('pointermove',126,f.win);await f.flush();assert.deepEqual(f.seeks,[1,2]);assert.equal(f.api.getState().index,2);f.fire('pointerup',125,f.win);await f.flush();assert.equal(f.api.getState().state,'playing');assert.equal(f.starts,2);f.close();

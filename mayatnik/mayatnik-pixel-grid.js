@@ -17,7 +17,7 @@
     return w<=MAX_SIDE&&h<=MAX_SIDE&&w*h<=MAX_PIXELS;
   }
 
-  function policy({angle=0,pieceTurns=[0],width,height,dpr=1,maxZoom=512,oneToOne=false,halfCells=false}={}){
+  function policy({angle=0,pieceTurns=[0],width,height,dpr=1,maxZoom=512,oneToOne=false,halfCells=false,viewport=false}={}){
     if(!positive(width)||!positive(height)||!positive(dpr)||!positive(maxZoom))
       return fail('Неверные размеры поля, масштаб или плотность экрана.');
     if(!Number.isSafeInteger(angle/45)||!Array.isArray(pieceTurns)||!pieceTurns.length||
@@ -28,7 +28,7 @@
     const quantum=parity?Math.SQRT2:1,minK=halfCells&&!parity?2:1;
     if(oneToOne&&(quantum!==1||minK!==1))
       return fail('Для этой сборки точный режим несовместим с 1:1.');
-    const limit=Math.min(maxZoom*dpr,MAX_SIDE/width,MAX_SIDE/height);
+    const limit=viewport?maxZoom*dpr:Math.min(maxZoom*dpr,MAX_SIDE/width,MAX_SIDE/height);
     const bound=limit/quantum;
     if(!Number.isSafeInteger(Math.floor(bound)))
       return fail('Точный масштаб выходит за числовой диапазон.');
@@ -37,10 +37,10 @@
     let lo=0,hi=oneToOne?Math.min(1,Math.floor(bound+tolerance(bound))):Math.floor(bound+tolerance(bound));
     while(lo<hi){
       const mid=lo+Math.ceil((hi-lo)/2);
-      if(fits(width,height,mid*quantum))lo=mid;else hi=mid-1;
+      if(viewport||fits(width,height,mid*quantum))lo=mid;else hi=mid-1;
     }
     if(lo<minK)return fail('Точная сетка целиком не помещается в пределы масштаба и холста.');
-    return {ok:true,reason:'',width,height,dpr,quantum,minK,maxK:lo,minScale:minK*quantum/dpr,maxScale:lo*quantum/dpr};
+    return {ok:true,reason:'',width,height,dpr,quantum,minK,maxK:lo,minScale:minK*quantum/dpr,maxScale:lo*quantum/dpr,viewport};
   }
 
   function snap(scale,p,direction='nearest'){

@@ -4,13 +4,13 @@
   else root.MayatnikPixelExactHost=factory(root.MayatnikPixelGrid);
 })(globalThis,function(Grid){
   'use strict';
-  function create({getState,getGeometry,onError=()=>{}}){
+  function create({getState,getGeometry,onError=()=>{},viewport=false}){
     let error='';
     function report(message=''){if(error!==message){error=message;onError(message);}return message;}
     function policyFor(patch={}){
       const state={...getState(),...patch},geometry=getGeometry(state);
       if(!geometry||geometry.reason)return {ok:false,reason:geometry?.reason||'Нет геометрии точной сетки.'};
-      return Grid.policy({...geometry,oneToOne:!!state.zLimit});
+      return Grid.policy({...geometry,viewport,oneToOne:!!state.zLimit});
     }
     function snap(scale,direction='nearest',powerBase){
       const p=policyFor();if(!p.ok){report(p.reason);return null;}
@@ -22,7 +22,7 @@
       const result=Grid.snap(wanted,p,direction);if(result===null)report('Недопустимый запрос масштаба.');else report('');return result;
     }
     function exportScale(){
-      const p=policyFor();if(!p.ok){report(p.reason);return null;}
+      const state=getState(),p=Grid.policy({...getGeometry(state),viewport:false,oneToOne:!!state.zLimit});if(!p.ok){report(p.reason);return null;}
       const k=Math.min(p.maxK,Math.max(p.minK,Math.ceil(2/p.quantum-1e-12)));return k*p.quantum;
     }
     return {policyFor,canState:patch=>policyFor(patch).ok,snap,step:(scale,dir)=>Grid.step(scale,policyFor(),dir),format:scale=>Grid.format(scale,policyFor()),exportScale,report,getError:()=>error};

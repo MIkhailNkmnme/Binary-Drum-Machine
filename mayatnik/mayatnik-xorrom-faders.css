@@ -1,0 +1,12 @@
+#mayXorromFaders{position:fixed;right:94px;top:50%;transform:translateY(-50%);z-index:30;display:flex;align-items:center;gap:4px;color:#dce8fa;font:9px/1 system-ui,sans-serif;user-select:none}
+#mayXorromFaders label{position:relative;box-sizing:border-box;width:24px;height:120px;display:grid;grid-template-rows:15px 1fr 15px;justify-items:center;align-items:center;background:#000;border:1px solid #8793a4;border-radius:3px}
+#mayXorromFaders label:focus-within{border-color:#ffd166}
+#mayXorromFaders span{color:#dce8fa;font-weight:700}
+#mayXorromFaders output{color:#e5f7fb;font:8px/1 system-ui,sans-serif;max-width:48px;white-space:nowrap;pointer-events:none;text-shadow:0 1px 2px #000,0 -1px 2px #000}
+#mayXorromFaders input[type=range]{writing-mode:vertical-lr;direction:rtl;appearance:none;-webkit-appearance:none;box-sizing:border-box;width:22px;height:100%;min-height:0;min-width:0;margin:0;padding:0;outline:0;background:transparent;cursor:ns-resize;touch-action:none}
+#mayXorromFaders input::-webkit-slider-runnable-track{width:2px;height:100%;background:#a2acb8;border:0}
+#mayXorromFaders input::-moz-range-track{width:2px;height:100%;background:#a2acb8;border:0}
+#mayXorromFaders input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:10px;height:10px;margin-left:-4px;box-sizing:border-box;background:#b8ecf3;border:1px solid #f0ffff;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#mayXorromFaders input::-moz-range-thumb{width:10px;height:10px;box-sizing:border-box;background:#b8ecf3;border:1px solid #f0ffff;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+
+body.may-template-panel-open #mayXorromFaders{z-index:6}

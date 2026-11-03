@@ -85,3 +85,12 @@ test('strict raster rejects smaller fallback, non-lattice or oversized scales, i
   assert.equal(g.snap(500,p),p.maxScale);assert.equal(g.raster(NaN,p),null);
   for(const bad of [{width:0},{height:-1},{maxZoom:Infinity},{dpr:NaN}])assert.equal(plan(bad).ok,false);
 });
+
+
+test('viewport display keeps the exact lattice through 512 regardless of whole raster area, full export remains bounded',()=>{
+ for(const angle of [0,45,90,135,180,225,270,315])for(const dpr of [1,1.25,2]){
+  const p=g.policy({width:2047,height:1024,angle,dpr,viewport:true}),s=g.snap(512,p);assert.ok(p.ok);assert.ok(g.raster(s,p));assert.ok(p.maxK>=Math.floor(512*dpr/p.quantum));assert.ok(g.raster(s,p).width*g.raster(s,p).height>16e6);
+ }
+ assert.equal(g.policy({width:1024,height:512}).maxK,5);assert.equal(g.policy({width:1024,height:512,viewport:true}).maxK,512);
+ assert.equal(g.policy({width:1024,height:512,viewport:true,oneToOne:true}).maxK,1);
+});
