@@ -30,7 +30,7 @@ test('each axis XOR/AND is mutually exclusive, can return to copy and leaves pai
  click('xor');assert.equal(f.axes[1].op,'xor');assert.equal(f.axes[0].op,undefined);assert.equal(f.button('h:2','xor').attributes['aria-pressed'],'true');
  click('and');assert.equal(f.axes[1].op,'and');assert.equal(f.button('h:2','xor').attributes['aria-pressed'],'false');assert.equal(f.button('h:2','and').attributes['aria-pressed'],'true');
  click('and');assert.equal(f.axes[1].op,'');assert.equal(f.axes[1].mode,2);assert.equal(f.axes[1].paint,3);
- f.snapshot.viewport.right=344;f.render();assert.equal(f.panel('h:2').dataset.compact,'true');assert.equal(f.button('h:2','label').textContent,'Г2 · между 20/21');
+ f.snapshot.viewport.right=344;f.render();assert.equal(f.panel('h:2').dataset.compact,'true');assert.equal(f.button('h:2','label').textContent,'Г2');assert.match(f.button('h:2','label').title,/между 20\/21/);
  f.snapshot.viewport.right=1000;f.render();assert.equal(f.panel('h:2').dataset.compact,'false');
 });
 test('direct label drag selects its own coincident axis while panels remain separate',()=>{
@@ -66,8 +66,8 @@ test('main-line double click still resets its row, while command buttons do not'
 });
 test('coordinate labels opt out of command shortening and expose the full changing value',()=>{
  const f=fixture(),label=f.button('main','label');assert.equal(label.dataset.userLabel,'');
- f.axes[0].p=0;f.render();assert.equal(label.textContent,'Г1 · перед 1');assert.equal(label.attributes['aria-label'],label.textContent);assert.ok(label.title.startsWith(label.textContent+' · '));
- f.axes[0].p=45.5;f.render();assert.equal(label.textContent,'Г1 · строка 46');assert.equal(label.attributes['aria-label'],label.textContent);assert.ok(label.title.startsWith(label.textContent+' · '));
+ f.axes[0].p=0;f.render();assert.equal(label.textContent,'Г1');assert.equal(label.attributes['aria-label'],'Г1 · перед 1');assert.ok(label.title.startsWith('Г1 · перед 1 · '));
+ f.axes[0].p=45.5;f.render();assert.equal(label.textContent,'Г1');assert.equal(label.attributes['aria-label'],'Г1 · строка 46');assert.ok(label.title.startsWith('Г1 · строка 46 · '));
  assert.equal(f.button('main','add').dataset.userLabel,undefined,'commands retain the common text rules');
 });
 test('each main/additional family panel has independent 1 and 0 paint switches, preserving its mirror and position',()=>{
@@ -103,4 +103,33 @@ test('axis keyboard leaves editing, modifiers, unsupported arrows and hidden/del
 test('restored stable selection uses the current axis position and survives unrelated renumber-free renders',()=>{
  const f=fixture();f.snapshot.selectedId='h:2';f.axes[1].p=30.5;f.render();assert.equal(f.panel('h:2').dataset.selected,'true');
  f.document.fire('keydown',{key:'ArrowUp',shiftKey:true});assert.equal(f.axes[1].p,29.5);assert.equal(f.axes[0].p,10);
+});
+
+test('vertical whole toolbars sit below the actual field and reserve separate collision rows, including compact expanded panels',()=>{
+ const viewport={left:10,top:20,right:1010,bottom:800},field={left:10,top:30,right:1010,bottom:360},overlap=(a,b)=>a.left<b.right+1.99&&a.right+1.99>b.left&&a.top<b.bottom+1.99&&a.bottom+1.99>b.top;
+ for(const size of [{width:244,height:24},{width:256,height:24},{width:206,height:50}]){
+  const items=[{id:'v:2',kind:'v',segment:[110,20,110,700],size},{id:'v:3',kind:'v',segment:[112,20,112,700],size},{id:'v:4',kind:'v',segment:[800,20,800,700],size}],before=JSON.stringify(items),layout=View.panelLayout(items,viewport,field);
+  assert.equal(layout[0].rect.top,362);assert.equal(layout[1].rect.top,362+size.height+2);assert.equal(layout[2].rect.top,362);assert.ok(layout.every(p=>p.rect.left>=12&&p.rect.right<=1008&&p.rect.top>=field.bottom+2));for(let i=0;i<layout.length;i++)for(const prior of layout.slice(0,i))assert.equal(overlap(layout[i].rect,prior.rect),false);assert.equal(JSON.stringify(items),before);assert.deepEqual(View.panelLayout(items,viewport,field),layout);
+ }
+});
+test('vertical bottom docking avoids existing nonvertical controls without changing their original layout',()=>{
+ const Geometry=require('./mayatnik-manual-lines'),viewport={left:0,top:0,right:1000,bottom:600},size={width:220,height:24},items=[{id:'h',kind:'h',segment:[0,360,1000,360],size},{id:'v',kind:'v',segment:[400,0,400,600],size}],layout=View.panelLayout(items,viewport,{bottom:360});
+ assert.deepEqual(layout.filter(p=>p.id==='h'),Geometry.controlLayout(items.filter(p=>p.kind!=='v'),viewport));assert.equal(layout[1].rect.top,layout[0].rect.bottom+2);assert.equal(layout[1].overlap,false);
+ const below=View.panelLayout(items.filter(p=>p.kind==='v'),viewport,{bottom:900});assert.equal(below[0].rect.top,902,'a zoomed field never pulls a panel upward over its bits');
+});
+test('compact vertical identifiers keep full values in tooltips, preserve drag/actions/keyboard and release the owned scroll reserve',()=>{
+ const f=fixture();f.snapshot.fieldBounds={left:0,top:0,right:1000,bottom:400};f.axes[1].kind='v';f.axes[1].p=.5;f.axes[1].segment=[305,0,305,600];f.view.render(f.snapshot);const panel=f.panel('h:2'),label=f.button('h:2','label'),reserve=()=>f.host.children.find(node=>node.className==='may-manual-axis-space');
+ assert.equal(label.textContent,'В2');assert.match(label.title,/между 31\/32 · \+½/);assert.equal(label.attributes['aria-label'],'В2 · между 31/32 · +½');assert.equal(panel.style.top,'402px');assert.equal(reserve().style.height,'28px');assert.equal(reserve().attributes['aria-hidden'],'true');
+ f.axes[1].number=123;f.view.render(f.snapshot);assert.equal(label.textContent,'В123');assert.match(label.title,/^В123 ·/);assert.match(label.attributes['aria-label'],/^В123 ·/);f.axes[1].number=2;f.view.render(f.snapshot);
+ label.fire('pointerdown',{clientX:305,clientY:414});label.fire('pointermove',{clientX:325,clientY:414});label.fire('pointerup',{clientX:325,clientY:414});assert.equal(f.axes[1].p,2.5);assert.equal(f.axes[0].p,10);assert.equal(f.commits(),1);f.document.fire('keydown',{key:'ArrowRight'});assert.equal(f.axes[1].p,3);assert.equal(f.commits(),2);
+ f.button('h:2','paint1').onclick({preventDefault(){},stopImmediatePropagation(){}});assert.equal(f.axes[1].paint,1);assert.equal(label.textContent,'В2');
+ f.snapshot.viewport.right=344;panel.offsetWidth=206;panel.offsetHeight=50;f.view.render(f.snapshot);assert.equal(panel.dataset.compact,'true');assert.equal(reserve().style.height,'54px');
+ f.view.render(null);assert.equal(reserve(),undefined);f.view.render(f.snapshot);assert.ok(reserve());f.axes[1].visible=false;f.view.render(f.snapshot);assert.equal(reserve(),undefined);f.axes[1].visible=true;f.view.render(f.snapshot);assert.ok(reserve());f.view.destroy();assert.equal(reserve(),undefined);
+});
+test('scrolling below the bits keeps offscreen-line vertical toolbars and their scroll reserve alive',()=>{
+ const f=fixture();f.axes.splice(0,2,...[2,3,4].map((number,index)=>({id:'v:'+number,kind:'v',number,p:index/2,mode:0,segment:[300+index*2,0,300+index*2,200],fieldSegment:[300+index*2,0,300+index*2,200]})));f.snapshot.fieldBounds={left:0,top:0,right:1000,bottom:200};f.view.render(f.snapshot);
+ for(const a of f.axes){f.panel(a.id).offsetWidth=206;f.panel(a.id).offsetHeight=50;}f.view.render(f.snapshot);const spacer=f.host.children.find(node=>node.className==='may-manual-axis-space');assert.equal(spacer.style.height,'158px');
+ f.snapshot.fieldBounds={left:0,top:-224,right:1000,bottom:-24};for(const a of f.axes){a.segment=null;a.fieldSegment=[a.fieldSegment[0],-224,a.fieldSegment[2],-24];}f.view.render(f.snapshot);
+ assert.equal(spacer.style.height,'158px');assert.equal(f.panel('v:2').hidden,false);assert.equal(f.panel('v:3').style.top,'30px');assert.equal(f.panel('v:4').style.top,'82px');assert.equal(f.view.hit(304,100),null,'offscreen source lines do not become field hit regions');
+ for(const a of f.axes)a.fieldSegment=[-100,-224,-100,-24];f.view.render(f.snapshot);assert.equal(f.host.children.some(node=>node.className==='may-manual-axis-space'),false);f.view.destroy();
 });

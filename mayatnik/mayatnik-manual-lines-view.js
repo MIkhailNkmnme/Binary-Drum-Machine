@@ -1,9 +1,21 @@
-/* Line-mounted controls. The host owns field state, persistence and painting. */
+/* Manual-axis controls; vertical panels sit below the bit field.
+ * The host owns field state, persistence and painting. */
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-manual-lines.js'):root.MayatnikManualLines);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikManualLinesView=api;})(globalThis,function(Geometry){
  'use strict';
+ function panelLayout(items,viewport,fieldBounds,gap=2){
+  const placed=Geometry.controlLayout(items.filter(item=>item.kind!=='v'),viewport,gap),vertical=items.filter(item=>item.kind==='v').sort((a,b)=>a.segment[0]-b.segment[0]||String(a.id).localeCompare(String(b.id)));
+  const bottom=Number.isFinite(fieldBounds?.bottom)?fieldBounds.bottom:Math.max(viewport.bottom,...vertical.flatMap(item=>[item.segment[1],item.segment[3]]));
+  for(const item of vertical){const width=item.size.width,height=item.size.height,axisX=item.segment[0],left=Math.max(viewport.left+gap,Math.min(viewport.right-gap-width,axisX-width/2));let top=bottom+gap;
+   for(let i=0;i<=placed.length;i++){const hits=placed.filter(old=>!old.hidden&&left+width+gap>old.rect.left&&left-gap<old.rect.right&&top+height+gap>old.rect.top&&top-gap<old.rect.bottom);if(!hits.length)break;top=Math.max(...hits.map(old=>old.rect.bottom+gap));}
+   const x=left+width/2,y=top+height/2,onLineY=Math.max(Math.min(item.segment[1],item.segment[3]),Math.min(Math.max(item.segment[1],item.segment[3]),y));
+   placed.push({id:item.id,x,y,onLineX:axisX,onLineY,detached:Math.hypot(x-axisX,y-onLineY)>1e-8,overlap:false,rect:{left,right:left+width,top,bottom:top+height},belowField:true});
+  }
+  return placed;
+ }
  function mount(options){
   const host=options.host,doc=options.document||host.ownerDocument,panels=new Map();
-  let current=null,drag=null,preferredId=null;
+  let current=null,drag=null,preferredId=null,spacer=null;
+  function reserve(height){if(!(height>0)){spacer?.remove();spacer=null;return;}if(!spacer){spacer=doc.createElement('div');spacer.className='may-manual-axis-space';spacer.setAttribute('aria-hidden','true');host.append(spacer);}spacer.style.height=height+'px';}
   const consume=e=>{e.preventDefault();e.stopImmediatePropagation();};
   const axis=id=>current?.axes.find(a=>a.id===id&&a.visible!==false);
   const listen=(node,type,fn)=>node.addEventListener(type,fn,true);
@@ -49,28 +61,30 @@
   function render(snapshot){
    current=snapshot;const candidates=[];
    for(const {panel}of panels.values())panel.hidden=true;
-   if(!snapshot)return;
+   if(!snapshot){reserve(0);return;}
    if(Object.hasOwn(snapshot,'selectedId'))preferredId=snapshot.selectedId;
    if(!snapshot.axes.some(a=>a.id===preferredId))preferredId=null;
-   for(const a of snapshot.axes){if(a.visible===false||!a.segment)continue;
+   for(const a of snapshot.axes){const belowSegment=a.kind==='v'&&Array.isArray(a.fieldSegment)&&a.fieldSegment[0]>=snapshot.viewport.left&&a.fieldSegment[0]<=snapshot.viewport.right?a.fieldSegment:null,segment=a.segment||belowSegment;if(a.visible===false||!segment)continue;
     if(!panels.has(a.id))panels.set(a.id,create(a.id));const {panel,parts}=panels.get(a.id);
     panel.hidden=false;panel.dataset.selected=String(a.id===preferredId);panel.style.setProperty('--manual-axis-colour',a.id===preferredId?Geometry.SELECTED_COLOUR:a.colour||'#7cbcff');
     panel.dataset.compact=String(snapshot.viewport.right-snapshot.viewport.left<392);
-    const caption=Geometry.label(a,snapshot.anchor,snapshot.rows);parts.label.textContent=caption;parts.label.title=caption+' · Тянуть — двигать ось с шагом полклетки';parts.label.setAttribute('aria-label',caption);parts.label.style.cursor=a.kind==='h'?'ns-resize':a.kind==='v'?'ew-resize':a.kind==='d'?'nesw-resize':'nwse-resize';
+    const caption=Geometry.label(a,snapshot.anchor,snapshot.rows);parts.label.textContent=caption.split(' · ')[0];parts.label.title=caption+' · Тянуть — двигать ось с шагом полклетки';parts.label.setAttribute('aria-label',caption);parts.label.style.cursor=a.kind==='h'?'ns-resize':a.kind==='v'?'ew-resize':a.kind==='d'?'nesw-resize':'nwse-resize';
     for(const button of Geometry.mirrorButtons(a.kind,a.p)){const element=parts['mirror'+button.mode];element.textContent=button.symbol;element.disabled=button.disabled;element.setAttribute('aria-pressed',String(!button.disabled&&a.mode===button.mode));
      element.title=button.disabled?'Зеркало диагонали доступно по центрам клеток':'Отражать '+button.direction+' · повторное нажатие выключает';}
     for(const bit of [1,0]){const element=parts['paint'+bit];element.disabled=a.paintDisabled===true;element.setAttribute('aria-pressed',String(!!(Geometry.paintMask(a.paint)&(bit===1?1:2))));
      element.title=caption+' · Раскраска битов '+bit+' вдоль оси · цвет «ТочкаОсь» · повторное нажатие выключает';element.setAttribute('aria-label',element.title);}
     for(const op of ['xor','and']){const element=parts[op];element.setAttribute('aria-pressed',String(Geometry.mirrorOperation(a.op)===op));element.title=caption+' · Зеркало '+op.toUpperCase()+' · повторное нажатие возвращает копирование';element.setAttribute('aria-label',element.title);}
     parts.remove.hidden=a.canDelete===false;parts.pin.hidden=a.pin===undefined;parts.pin.setAttribute('aria-pressed',String(!!a.pin));
-    candidates.push({id:a.id,kind:a.kind,segment:a.segment,size:{width:panel.offsetWidth,height:panel.offsetHeight}});
+    candidates.push({id:a.id,kind:a.kind,segment,size:{width:panel.offsetWidth,height:panel.offsetHeight}});
    }
-   for(const p of Geometry.controlLayout(candidates,snapshot.viewport)){
+   const layout=panelLayout(candidates,snapshot.viewport,snapshot.fieldBounds);
+   for(const p of layout){
     const entry=panels.get(p.id);entry.panel.hidden=!!p.hidden;if(p.hidden)continue;
     Object.assign(entry.panel.style,{left:p.rect.left+'px',top:p.rect.top+'px'});
     entry.panel.dataset.detached=String(p.detached);entry.panel.dataset.overlap=String(p.overlap);
     options.onPlacement?.(p.id,p);
    }
+   const vertical=layout.filter(item=>item.belowField);reserve(vertical.length?Math.max(...vertical.map(item=>item.rect.bottom))-(Number.isFinite(snapshot.fieldBounds?.bottom)?snapshot.fieldBounds.bottom:snapshot.viewport.bottom)+2:0);
    for(const [id,entry]of panels)if(!snapshot.axes.some(a=>a.id===id)){entry.panel.remove();panels.delete(id);}
   }
   function pointerDown(e){
@@ -92,7 +106,7 @@
   doc.addEventListener?.('keydown',keyDown,true);
   return {render,hit:(x,y)=>Geometry.hit(current?.axes||[],x,y,{preferredId}),
    destroy(){if(drag){const d=drag;for(const [type,fn]of [['pointermove',move],['pointerup',end],['pointercancel',end],['lostpointercapture',end]])d.target.removeEventListener(type,fn,true);if(d.target.hasPointerCapture?.(d.pointerId))d.target.releasePointerCapture(d.pointerId);drag=null;}
-    host.removeEventListener('pointerdown',pointerDown,true);host.removeEventListener('dblclick',doubleClick,true);doc.removeEventListener?.('keydown',keyDown,true);for(const {panel}of panels.values())panel.remove();panels.clear();current=null;}};
+    host.removeEventListener('pointerdown',pointerDown,true);host.removeEventListener('dblclick',doubleClick,true);doc.removeEventListener?.('keydown',keyDown,true);for(const {panel}of panels.values())panel.remove();panels.clear();reserve(0);current=null;}};
  }
- return {mount};
+ return {mount,panelLayout};
 });
