@@ -5,7 +5,7 @@ test('host snaps to canonical angle lattice, preserves state and rejects incompa
   const state={zLimit:false,angle},messages=[],api=Host.create({getState:()=>state,getGeometry:s=>({width:100,height:60,angle:s.angle,dpr}),onError:s=>messages.push(s)});
   for(const base of [undefined,2,3,10])for(const wanted of [.001,.9,1,2.9,7.8,500,1e8])assert.ok(Grid.raster(api.snap(wanted,'nearest',base),api.policyFor()));
   assert.equal(state.angle,angle);assert.equal(state.zLimit,false);assert.equal(api.canState({zLimit:true}),angle%90===0);
-  const scale=api.snap(.01);assert.equal(api.format(scale),angle%90?'√2/1':'1/1');assert.ok(Grid.raster(api.exportScale()/dpr,api.policyFor()));
+  const scale=api.snap(api.policyFor().exactMinScale);assert.equal(api.format(scale),angle%90?'√2/1':'1/1');assert.ok(Grid.raster(api.exportScale()/dpr,api.policyFor()));
  }
 });
 test('failed policies report once and never pretend a lossy scale is exact',()=>{
@@ -33,10 +33,14 @@ test('viewport export retains an explicitly locked physical one-to-one scale',()
 });
 
 
-test('overview host keeps full exports strict while display and saved scales may be smaller',()=>{
- const state={zOverview:true},api=Host.create({viewport:true,getState:()=>state,getGeometry:()=>({width:1024,height:512})});
- assert.equal(api.snap(.125),.125);assert.equal(api.format(.125),'1/8');assert.equal(api.exportScale(),2);
- state.zOverview=false;assert.equal(api.snap(.125),1);state.zLimit=true;state.zOverview=true;assert.equal(api.policyFor().overview,false);assert.equal(api.exportScale(),1);
+test('display minification ignores legacy overview flags while exports and physical 1:1 stay strict',()=>{
+ for(const dpr of [1,1.25,2])for(const angle of [0,45,90,135,180,225,270,315])for(const legacy of [undefined,false,true]){
+  const state={zOverview:legacy},api=Host.create({viewport:true,getState:()=>state,getGeometry:()=>({width:1024,height:512,angle,dpr})});
+  const before={...state},small=api.snap(.125/dpr),policy=api.policyFor();
+  assert.ok(small>0&&small<policy.exactMinScale);assert.equal(policy.overview,true);assert.ok(api.format(small));assert.deepEqual(state,before);
+  assert.equal(api.exportScale(),angle%90?2*Math.SQRT2:2);
+  if(angle%90===0){state.zLimit=true;assert.equal(api.policyFor().overview,false);assert.equal(api.snap(.125),1/dpr);assert.equal(api.snap(512),1/dpr);assert.equal(api.exportScale(),1);state.zLimit=false;assert.ok(api.snap(.125/dpr)<1/dpr);}
+ }
 });
 test('overview samples the physical centre at 2/3 pitch without refitting the short axis',()=>{
  const data=Uint8ClampedArray.from([1,2,3,4,5,6].flatMap(v=>[v,10+v,250-v,200+v]));

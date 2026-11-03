@@ -7,7 +7,7 @@ test('clean scene has the agreed 512 build, top fit and optional effects off',()
 test('fresh defaults and group reset never alias mutable selections or touch another group',()=>{
  const a=R.defaults(),b=R.defaults();a.userLines.push([1,2,3,4]);a.parity.cellsEven=false;assert.equal(b.userLines.length,0);assert.equal(b.parity.cellsEven,true);
  const scale=R.scope('scale');assert.equal(scale.ztop,true);assert.equal(scale.zBot,false);assert.equal('rows' in scale,false);assert.equal('view' in scale,false);
- assert.equal(scale.zOverview,false);assert.equal(a.zOverview,false);assert.equal('zOverview' in R.scope('view'),false);
+ assert.equal(scale.zOverview,true);assert.equal(a.zOverview,true);assert.equal('zOverview' in R.scope('view'),false);
  assert.throws(()=>R.scope('library'));
 });
 test('clean defaults can be saved as a valid named preset',()=>{

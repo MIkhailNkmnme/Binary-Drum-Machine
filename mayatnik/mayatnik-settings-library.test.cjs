@@ -76,9 +76,10 @@ test('frame paint repeat mode round trips and rejects unknown values, while lega
 });
 
 test('exact 1:1 setting round trips, validates boolean and accepts legacy presets',()=>{const data=S.pick({zLimit:true,zoom:64,zLock:true});const normalized=S.normalized(data);assert.equal(normalized.state.zLimit,true);assert.equal(normalized.state.zLock,true);const current={zLimit:false};S.applyState(current,normalized);assert.equal(current.zLimit,true);const legacy=structuredClone(data);delete legacy.state.zLimit;assert.equal(S.normalized(legacy).state.zLimit,null);S.applyState(current,legacy);assert.equal(!!current.zLimit,false);data.state.zLimit='true';assert.throws(()=>S.normalized(data),/Некорректная настройка/);});
-test('overview round-trips, preserves the independent zoom lock and is cleared by legacy presets',()=>{
+test('legacy overview metadata remains readable without disabling permanent minification',()=>{
  const saved=S.pick({zOverview:true,zLimit:false,zLock:true}),restored={zOverview:false};
  S.applyState(restored,JSON.parse(JSON.stringify(saved)));assert.equal(restored.zOverview,true);assert.equal(restored.zLimit,false);assert.equal(restored.zLock,true);
  const old=structuredClone(saved);delete old.state.zOverview;S.applyState(restored,old);assert.equal(!!restored.zOverview,false);
+ const host=require('./mayatnik-pixel-exact-host.js').create({viewport:true,getState:()=>restored,getGeometry:()=>({width:1024,height:512})});assert.equal(host.snap(.125),.125);assert.equal(host.policyFor().overview,true);
  saved.state.zOverview='true';assert.throws(()=>S.normalized(saved),/Некорректная настройка/);
 });

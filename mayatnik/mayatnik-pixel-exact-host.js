@@ -10,7 +10,7 @@
     function policyFor(patch={}){
       const state={...getState(),...patch},geometry=getGeometry(state);
       if(!geometry||geometry.reason)return {ok:false,reason:geometry?.reason||'Нет геометрии точной сетки.'};
-      return Grid.policy({...geometry,viewport,overview:state.zOverview===true,oneToOne:!!state.zLimit});
+      return Grid.policy({...geometry,viewport,overview:!state.zLimit,oneToOne:!!state.zLimit});
     }
     function snap(scale,direction='nearest',powerBase){
       const p=policyFor();if(!p.ok){report(p.reason);return null;}

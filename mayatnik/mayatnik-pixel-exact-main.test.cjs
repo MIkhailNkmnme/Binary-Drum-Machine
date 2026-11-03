@@ -37,36 +37,61 @@ test('unsupported clipping is explicit and never silently selects another angle 
 });
 
 
-test('production Rombo decreases by minus and by wheel from large scales down to its exact minimum',()=>{
+test('production Rombo decreases by minus and by wheel from large scales down to its overview minimum',()=>{
  for(const dpr of [1,1.25,2])for(const zsnap of [false,true])for(const angle of [0,45,90,135,180,225,270,315]){
   const {c,close}=fixture(dpr);c.VW=1534;c.VH=512;c.f.W=1534;c.f.H=512;c.st.edgeRhombOn=true;c.st.romboAngle=angle;c.st.zsnap=zsnap;
   vm.runInContext(lines.find(l=>l.includes('const zoomStep ='))+"\nthis.stepZoom=zoomStep;",c);
   c.zoomTo(512,100,100,true);const high=c.currentScale();c.stepZoom(-1);assert.ok(c.currentScale()<high);
-  for(let i=0;i<20;i++)c.stepZoom(-1);const p=c.window.mayPixelExact.policyFor();assert.ok(Math.abs(c.currentScale()-p.minScale)<1e-9);
+  for(let i=0;i<60;i++)c.stepZoom(-1);const p=c.window.mayPixelExact.policyFor();assert.ok(Math.abs(c.currentScale()-p.minScale)<1e-9);
   c.zoomTo(512,100,100,true);const start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf('  }, { passive: false });',start)+'  }, { passive: false });'.length;vm.runInContext(html.slice(start,end),c);
-  for(let i=0;i<30;i++)c.wrap.dispatchEvent(new c.window.WheelEvent('wheel',{deltaY:120,clientX:100,clientY:100,bubbles:true,cancelable:true}));
+  for(let i=0;i<60;i++)c.wrap.dispatchEvent(new c.window.WheelEvent('wheel',{deltaY:120,clientX:100,clientY:100,bubbles:true,cancelable:true}));
   assert.ok(Math.abs(c.currentScale()-p.minScale)<1e-9);close();
  }
 });
 
 
-test('overview button enables shrinking Rombo, restores exact minimum on exit, and preserves the independent lock',()=>{
- const {c,close}=fixture();c.VW=1023;c.VH=512;c.f.W=1023;c.st.edgeRhombOn=true;c.st.zsnap=false;c.st.zoom=2;
- const a=html.indexOf('  window.mayOverview='),b=html.indexOf('  zLockSync();',a);assert.ok(a>0&&b>a);vm.runInContext(html.slice(a,b),c);
- vm.runInContext(lines.find(l=>l.includes("$('zLimit').onclick =")),c);
- c.st.zLimit=true;c.st.zLock=true;c.window.mayOverview.set(true);assert.equal(c.st.zLimit,false);assert.equal(c.st.zLock,true);assert.equal(c.$('zOverview').getAttribute('aria-pressed'),'true');
- c.st.zLock=false;c.zoomTo(.125,100,100,true);assert.equal(c.currentScale(),.125);assert.equal(c.$('frame').dataset.zoomOverview,'true');
- c.window.mayOverview.set(false);assert.equal(c.currentScale(),1);assert.equal(c.st.zOverview,false);
- c.window.mayOverview.set(true);c.st.romboAngle=45;c.zoomTo(.1,100,100,true);assert.ok(c.currentScale()<1);c.$('zLimit').onclick();assert.equal(c.st.zLimit,false);assert.equal(c.st.zOverview,true);
- c.st.romboAngle=0;c.$('zLimit').onclick();assert.equal(c.st.zLimit,true);assert.equal(c.st.zOverview,false);assert.equal(c.$('zOverview').getAttribute('aria-pressed'),'false');close();
+test('unlocked plain and Rombo views always shrink even with a saved overview:false',()=>{
+ for(const dpr of [1,1.25,2])for(const rombo of [false,true])for(const angle of [0,45,90,135,180,225,270,315]){
+  const {c,close}=fixture(dpr);
+  try{
+   c.VW=c.f.W=2047;c.VH=c.f.H=512;c.st.edgeRhombOn=rombo;c.st.romboAngle=angle;c.st.zsnap=false;c.st.zOverview=false;
+   c.zoomTo(.125/dpr,100,100,true);assert.ok(c.currentScale()<1/dpr);assert.equal(c.$('frame').dataset.zoomOverview,'true');assert.equal(c.$('frame').dataset.zoomLossy,'true');
+  }finally{close();}
+ }
 });
 
+test('physical 1:1 persists through zoom requests; release restores minification and preserves Block',()=>{
+ for(const dpr of [1,1.25,2])for(const rombo of [false,true]){
+  const {c,close}=fixture(dpr);
+  try{
+   c.st.edgeRhombOn=rombo;c.st.zsnap=false;c.st.zOverview=false;
+   vm.runInContext(lines.find(l=>l.includes("$('zLimit').onclick =")),c);
+   vm.runInContext(lines.find(l=>l.includes('const zoomStep ='))+"\nthis.stepZoom=zoomStep;",c);
+   c.$('zLimit').onclick();assert.equal(c.st.zLimit,true);
+   for(const wanted of [.01,512]){c.zoomTo(wanted,100,100,true);assert.equal(c.currentScale()*dpr,1);assert.equal(c.$('frame').dataset.zoomOverview,'false');}
+   c.st.zLock=true;c.$('zLimit').onclick();assert.equal(c.st.zLimit,false);assert.equal(c.st.zLock,true);
+   c.stepZoom(-1);assert.equal(c.currentScale()*dpr,1);assert.equal(c.$('frame').dataset.zoomOverview,'true');
+   c.st.zLock=false;c.stepZoom(-1);assert.ok(c.currentScale()*dpr<1);
+  }finally{close();}
+ }
+});
 
-test('overview retains fit bindings through toggles and viewport resize',()=>{
- const {c,close}=fixture();c.VW=2047;c.VH=512;c.f.W=2047;c.st.edgeRhombOn=true;c.st.zsnap=false;c.st.zoom='fit';
- const a=html.indexOf('  window.mayOverview='),b=html.indexOf('  zLockSync();',a);vm.runInContext(html.slice(a,b),c);
- c.window.mayOverview.set(true);assert.equal(c.st.zoom,'fit');const before=c.currentScale();assert.ok(before<1);c.wrap.clientWidth=400;c.cssLayout();assert.equal(c.st.zoom,'fit');assert.ok(c.currentScale()<before);
- c.window.mayOverview.set(false);assert.equal(c.st.zoom,'fit');assert.ok(c.currentScale()>=1);close();
+test('saved fit bindings survive minification and viewport resize without an overview switch',()=>{
+ for(const mode of ['fit','fitH'])for(const rombo of [false,true]){
+  const {c,close}=fixture();
+  try{
+   c.VW=c.f.W=2047;c.VH=c.f.H=2048;c.st.edgeRhombOn=rombo;c.st.zsnap=false;c.st.zOverview=false;c.st.zoom=mode;
+   c.cssLayout();const before=c.currentScale();assert.ok(before<1);c.wrap.clientWidth=400;c.wrap.clientHeight=300;c.cssLayout();
+   assert.equal(c.st.zoom,mode);assert.ok(c.currentScale()<before);assert.equal(c.$('frame').dataset.zoomOverview,'true');
+  }finally{close();}
+ }
+});
+
+test('overview has no DOM button, menu descriptor or public toggle API',()=>{
+ const dom=new JSDOM(html);
+ try{assert.equal(dom.window.document.getElementById('zOverview'),null);}finally{dom.window.close();}
+ const menu=fs.readFileSync(require.resolve('./mayatnik-menu.js'),'utf8');
+ assert.doesNotMatch(menu,/zOverview|mayOverview/);assert.doesNotMatch(html,/window\.mayOverview/);
 });
 
 test('overview present preserves the native source instead of allocating a whole minified intermediate',()=>{
@@ -100,7 +125,7 @@ test('production accuracy follows physical exact lattice across overview, DPR an
   const {c,close}=fixture(dpr);
   try{
    c.st.zOverview=true;c.st.zsnap=false;c.f.W=c.VW=3068;c.f.H=c.VH=512;
-   for(const angle of [0,45]){
+   for(const angle of [0,45,90,135,180,225,270,315]){
     c.st.edgeRhombOn=true;c.st.romboAngle=angle;
     const policy=c.window.mayPixelExact.policyFor();
     c.zoomTo(policy.exactMinScale*.85,100,100,true);
@@ -108,7 +133,7 @@ test('production accuracy follows physical exact lattice across overview, DPR an
     c.zoomTo(policy.exactMinScale,100,100,true);
     assert.equal(c.$('frame').dataset.zoomLossy,'false');
     c.st.zOverview=false;c.zoomTo(policy.exactMinScale*.5,100,100,true);
-    assert.equal(c.$('frame').dataset.zoomLossy,'false');c.st.zOverview=true;
+    assert.equal(c.$('frame').dataset.zoomLossy,'true');assert.equal(c.$('frame').dataset.zoomOverview,'true');c.st.zOverview=true;
    }
    c.st.edgeRhombOn=false;c.zoomTo((2615/3068)/dpr,100,100,true);
    assert.equal(c.$('frame').dataset.zoomExact,'2615/3068');assert.equal(c.$('frame').dataset.zoomLossy,'true');

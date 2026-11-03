@@ -125,7 +125,7 @@
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
-      button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line'), button('zOverview', 'eye') ] },
+      button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
@@ -1226,8 +1226,6 @@
     const ids=['zLines','zVert','zHoriz','zDiag','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler','bFoldCompare'];
     const nodes=new Map(ids.map(id=>[id,railButtons.get(id)||tools.querySelector('[data-n="'+id+'"]')]).filter(([,node])=>node));
     const zoom=railButtons.get('zLines')?.closest('.gz-group');if(zoom)manualLegacyCells.set(zoom.dataset.id,[...zoom.querySelectorAll('.gz-soty > .gz-hx')]);
-    const overview=railButtons.get('zOverview');
-    if(overview){overview.dataset.n='zOverview';railButtons.get('zLimit')?.after(overview);}
     const moves=[];
     // zSnap остаётся в Масштабе: его прежний номер ячейки меняется, поэтому тоже получает стабильный ключ.
     for(const [id,node]of [...nodes,...(railButtons.has('zSnap')?[['zSnap',railButtons.get('zSnap')]]:[])]){
