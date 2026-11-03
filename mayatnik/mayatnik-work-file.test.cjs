@@ -47,3 +47,5 @@ test('whole-work and legacy JSON preserve inversion descriptor and canonical bit
  const old=await F.decode(new Blob([JSON.stringify({format:'mayatnik-paint',version:1,data:{st:{rows:8}}})]));
  assert.deepEqual({...require('./mayatnik-reset-state.js').defaults(),...old.data.st}.invertFrame,null);
 });
+
+test('work and legacy files preserve independent main and added axis colours and paint flags',async()=>{const data={schema:2,k:7,st:{ztPaint:3,ztPaintColour1:'#ff0000',ztPaintColour0:'#0000ff',zl:[{k:'v',p:.5,axisNo:2,paint:3,paintColour1:'#00ff00',paintColour0:'#ff00ff'},{k:'d',p:0,axisNo:3,paint:2,paintColour1:'#123456',paintColour0:'#abcdef'}]},field:Int8Array.from([-1,0,1])};assert.deepEqual((await F.decode(await F.encode(data))).data,data);const legacy=new Blob([JSON.stringify({format:'mayatnik-paint',version:1,data:{...data,field:{array:'i8',data:[...data.field]}}})]);assert.deepEqual((await F.decode(legacy)).data,data);});

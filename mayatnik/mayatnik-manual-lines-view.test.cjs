@@ -1,7 +1,10 @@
 const test=require('node:test'),assert=require('node:assert/strict'),View=require('./mayatnik-manual-lines-view.js');
 class Element{
  constructor(tag='div'){this.tagName=tag;this.children=[];this.dataset={};this.attributes={};this.listeners=new Map();this.hidden=false;this.offsetWidth=220;this.offsetHeight=24;this.style={setProperty(k,v){this[k]=v;}};this.classList={add(){},remove(){}};}
- append(child){child.parentElement=this;this.children.push(child);}
+ append(child){if(child.parentElement)child.parentElement.children=child.parentElement.children.filter(e=>e!==child);child.parentElement=this;this.children.push(child);}
+ insertBefore(child,before){if(child.parentElement)child.parentElement.children=child.parentElement.children.filter(e=>e!==child);const index=this.children.indexOf(before);if(index<0)throw Error('Missing reference node');child.parentElement=this;this.children.splice(index,0,child);}
+ click(){this.clicks=(this.clicks||0)+1;}
+ showPicker(){this.pickers=(this.pickers||0)+1;}
  remove(){this.parentElement.children=this.parentElement.children.filter(e=>e!==this);}
  setAttribute(k,v){this.attributes[k]=v;}
  addEventListener(type,fn,capture=false){const a=this.listeners.get(type)||[];a.push({fn,capture});this.listeners.set(type,a);}
@@ -15,8 +18,8 @@ function fixture(){
  const axes=[{id:'main',kind:'h',number:1,p:10,mode:0,colour:'#7cbcff',canDelete:false,resettable:true,pin:false},{id:'h:2',kind:'h',number:2,p:20,mode:0,colour:'#7cbcff',canDelete:true}];
  const snapshot={axes,viewport:{left:0,top:0,right:1000,bottom:600},scale:10,anchor:30,rows:60};let commits=0,pick=true;
  const render=()=>{for(const a of axes)a.segment=[0,a.p*10,1000,a.p*10];view.render(snapshot);};
- const view=View.mount({host,onPosition(id,p){axes.find(a=>a.id===id).p=p;render();},onReset(id){axes.find(a=>a.id===id).p=0;render();},onCommit(){commits++;},onMirror(id,mode){axes.find(a=>a.id===id).mode=mode;render();},onPaint(id,mask){axes.find(a=>a.id===id).paint=mask;render();},onOperation(id,op){axes.find(a=>a.id===id).op=op;render();},canPick:()=>pick});render();
- const panel=id=>document.body.children.find(p=>p.dataset.axisId===id),button=(id,key)=>panel(id).children.find(b=>b.className==='may-manual-axis-'+key);
+ const view=View.mount({host,onPosition(id,p){axes.find(a=>a.id===id).p=p;render();},onReset(id){axes.find(a=>a.id===id).p=0;render();},onCommit(){commits++;},onMirror(id,mode){axes.find(a=>a.id===id).mode=mode;render();},onPaint(id,mask){axes.find(a=>a.id===id).paint=mask;render();},onOperation(id,op){axes.find(a=>a.id===id).op=op;render();},onPaintColour(id,bit,colour){axes.find(a=>a.id===id)['paintColour'+bit]=colour;render();},canPick:()=>pick});render();
+ const panel=id=>document.body.children.find(p=>p.dataset.axisId===id),button=(id,key)=>{const find=node=>node.className==='may-manual-axis-'+key||key.startsWith('colourInput')&&node.className==='may-manual-axis-colour-input'&&node.dataset.bit===key.slice(-1)?node:node.children.map(find).find(Boolean);return find(panel(id));};
  return {view,host,document,axes,snapshot,render,panel,button,commits:()=>commits,pick(value){pick=value;}};
 }
 test('dragging the extra horizontal line far from its panel moves only that axis',()=>{
@@ -79,7 +82,7 @@ test('each main/additional family panel has independent 1 and 0 paint switches, 
   click('h:2',1);assert.equal(f.axes[1].paint,2);assert.equal(f.button('h:2','paint1').attributes['aria-pressed'],'false');
   click('main',1);assert.equal(f.axes[0].paint,1);assert.equal(f.axes[1].paint,2);
   assert.equal(f.axes[1].mode,2);assert.equal(f.axes[1].p,20);assert.equal(f.commits(),0);
-  assert.match(f.button('main','paint1').attributes['aria-label'],/битов 1 вдоль оси/);
+  assert.match(f.button('main','paint1').attributes['aria-label'],/связанные области битов 1 от этой оси/);
   f.axes[1].visible=false;f.render();click('h:2',0);assert.equal(f.axes[1].paint,2);
   f.axes[1].visible=true;f.render();assert.equal(f.button('h:2','paint0').attributes['aria-pressed'],'true');
   f.axes[1].paintDisabled=true;f.render();click('h:2',0);assert.equal(f.axes[1].paint,2);
@@ -107,7 +110,7 @@ test('restored stable selection uses the current axis position and survives unre
 
 test('vertical whole toolbars sit below the actual field and reserve separate collision rows, including compact expanded panels',()=>{
  const viewport={left:10,top:20,right:1010,bottom:800},field={left:10,top:30,right:1010,bottom:360},overlap=(a,b)=>a.left<b.right+1.99&&a.right+1.99>b.left&&a.top<b.bottom+1.99&&a.bottom+1.99>b.top;
- for(const size of [{width:244,height:24},{width:256,height:24},{width:206,height:50}]){
+ for(const size of [{width:244,height:24},{width:256,height:24},{width:206,height:50},{width:206,height:76}]){
   const items=[{id:'v:2',kind:'v',segment:[110,20,110,700],size},{id:'v:3',kind:'v',segment:[112,20,112,700],size},{id:'v:4',kind:'v',segment:[800,20,800,700],size}],before=JSON.stringify(items),layout=View.panelLayout(items,viewport,field);
   assert.equal(layout[0].rect.top,362);assert.equal(layout[1].rect.top,362+size.height+2);assert.equal(layout[2].rect.top,362);assert.ok(layout.every(p=>p.rect.left>=12&&p.rect.right<=1008&&p.rect.top>=field.bottom+2));for(let i=0;i<layout.length;i++)for(const prior of layout.slice(0,i))assert.equal(overlap(layout[i].rect,prior.rect),false);assert.equal(JSON.stringify(items),before);assert.deepEqual(View.panelLayout(items,viewport,field),layout);
  }
@@ -132,4 +135,32 @@ test('scrolling below the bits keeps offscreen-line vertical toolbars and their 
  f.snapshot.fieldBounds={left:0,top:-224,right:1000,bottom:-24};for(const a of f.axes){a.segment=null;a.fieldSegment=[a.fieldSegment[0],-224,a.fieldSegment[2],-24];}f.view.render(f.snapshot);
  assert.equal(spacer.style.height,'158px');assert.equal(f.panel('v:2').hidden,false);assert.equal(f.panel('v:3').style.top,'30px');assert.equal(f.panel('v:4').style.top,'82px');assert.equal(f.view.hit(304,100),null,'offscreen source lines do not become field hit regions');
  for(const a of f.axes)a.fieldSegment=[-100,-224,-100,-24];f.view.render(f.snapshot);assert.equal(f.host.children.some(node=>node.className==='may-manual-axis-space'),false);f.view.destroy();
+});
+
+
+test('each axis has independent palette buttons that never toggle paint, drag or another axis',()=>{
+ const f=fixture();f.axes[0].paint=1;f.axes[0].paintColour1='#111111';f.axes[0].paintColour0='#222222';f.axes[1].paint=2;f.axes[1].paintColour1='#abcdef';f.axes[1].paintColour0='#102030';f.render();
+ const input=f.button('h:2','colourInput1'),palette=f.button('h:2','colour1');
+ assert.equal(input.value,'#abcdef');assert.equal(f.button('h:2','colourInput0').value,'#102030');assert.equal(palette.style['--manual-paint-colour'],'#abcdef');
+ palette.onclick({preventDefault(){},stopImmediatePropagation(){}});assert.equal(input.pickers,1);assert.equal(f.axes[1].paint,2);assert.equal(f.axes[0].paint,1);assert.equal(f.host.capture,undefined);
+ input.value='#456789';assert.equal(input.fire('input').defaultPrevented,true);input.fire('change');
+ assert.equal(f.axes[1].paintColour1,'#456789');assert.equal(f.axes[1].paintColour0,'#102030');assert.equal(f.axes[0].paintColour1,'#111111');assert.equal(f.axes[0].paintColour0,'#222222');assert.equal(f.axes[1].paint,2);assert.equal(f.axes[1].mode,0);assert.equal(f.axes[1].p,20);assert.equal(f.commits(),0);
+ assert.equal(f.button('h:2','paint0').attributes['aria-pressed'],'true');assert.equal(f.button('h:2','paint1').attributes['aria-pressed'],'false');assert.match(palette.attributes['aria-label'],/#456789/);
+ f.button('h:2','paint1').onclick({preventDefault(){},stopImmediatePropagation(){}});assert.equal(f.axes[1].paint,3);assert.equal(f.button('h:2','paint1').attributes['aria-pressed'],'true');assert.equal(f.axes[1].paintColour1,'#456789');
+});
+
+test('palette fallback, cancellation, disabled or hidden axes do not change modes or retained colours',()=>{
+ const f=fixture();f.snapshot.paintColour='#334455';f.render();const palette=f.button('main','colour0'),input=f.button('main','colourInput0');assert.equal(input.value,'#334455');
+ palette.onclick({preventDefault(){},stopImmediatePropagation(){}});input.fire('change');assert.equal(f.axes[0].paintColour0,undefined);assert.equal(f.axes[0].paint,undefined);
+ input.value='invalid';input.fire('input');assert.equal(f.axes[0].paintColour0,undefined);
+ f.axes[0].paintDisabled=true;f.render();assert.equal(palette.disabled,true);input.value='#abcdef';input.fire('input');palette.onclick({preventDefault(){},stopImmediatePropagation(){}});assert.equal(input.pickers,1);assert.equal(f.axes[0].paintColour0,undefined);
+ f.axes[0].paintDisabled=false;f.axes[0].visible=false;f.render();input.value='#123456';input.fire('input');assert.equal(f.axes[0].paintColour0,undefined);assert.equal(f.axes[0].paint,undefined);
+});
+
+
+test('native palette fallback and narrow layout retain independent button states',()=>{
+ const f=fixture();f.axes[1].paint=1;f.axes[1].paintColour1='#ff0000';f.axes[1].paintColour0='#0000ff';f.snapshot.viewport.right=396;f.render();
+ assert.equal(f.panel('h:2').dataset.compact,'true');const palette=f.button('h:2','colour0'),input=f.button('h:2','colourInput0');input.showPicker=()=>{throw Error('unavailable');};
+ palette.onclick({preventDefault(){},stopImmediatePropagation(){}});assert.equal(input.clicks,1);assert.equal(input.value,'#0000ff');assert.equal(f.axes[1].paint,1);assert.equal(f.button('h:2','paint1').attributes['aria-pressed'],'true');assert.equal(f.button('h:2','paint0').attributes['aria-pressed'],'false');
+ f.snapshot.viewport.right=400;f.render();assert.equal(f.panel('h:2').dataset.compact,'false');assert.equal(f.button('h:2','colourInput1').value,'#ff0000');assert.equal(f.button('h:2','colourInput0').value,'#0000ff');
 });

@@ -47,6 +47,23 @@
    for(const [key,text,title]of [['label','','Тянуть — двигать ось с шагом полклетки'],['add','+','Добавить ось между этой и началом поля'],['mirror1','',''],['mirror2','',''],['xor','XOR',''],['and','AND',''],['paint1','1',''],['paint0','0',''],['remove','×','Удалить ось'],['pin','📌','Показывать ручные оси в дзене']]){
     const button=doc.createElement('button');button.type='button';button.className='may-manual-axis-'+key;button.textContent=text;button.title=title;parts[key]=button;panel.append(button);
    }
+   for(const bit of [1,0]){
+    const toggle=parts['paint'+bit],group=doc.createElement('div'),palette=doc.createElement('button'),input=doc.createElement('input');
+    group.className='may-manual-axis-paint-group';group.setAttribute('role','group');
+    palette.type='button';palette.className='may-manual-axis-colour'+bit;palette.dataset.userLabel='';palette.textContent='●';
+    input.type='color';input.className='may-manual-axis-colour-input';input.dataset.bit=String(bit);input.tabIndex=-1;input.value='#ff7f27';
+    parts['colour'+bit]=palette;parts['colourInput'+bit]=input;
+    panel.insertBefore(group,toggle);group.append(toggle);group.append(palette);panel.append(input);
+    let lastColour=input.value;
+    palette.onclick=e=>{consume(e);const a=axis(id);if(!a||palette.disabled)return;select(id);lastColour=input.value;
+     const rect=palette.getBoundingClientRect?.();if(rect){input.style.left=rect.right+'px';input.style.top=rect.top+'px';}
+     try{if(typeof input.showPicker==='function')input.showPicker();else input.click();}catch(_){input.click();}
+    };
+    const change=e=>{consume(e);const a=axis(id),value=input.value;if(!a||palette.disabled||!/^#[0-9a-f]{6}$/i.test(value)||value===lastColour)return;
+     lastColour=value;options.onPaintColour?.(id,bit,value);
+    };
+    listen(input,'input',change);listen(input,'change',change);
+   }
    // The label is a coordinate/state value (button rules T06), not a command
    // caption. Keep its notation intact when the menu's text observer runs.
    parts.label.dataset.userLabel='';parts.label.dataset.mayTipImmediate='';
@@ -67,12 +84,14 @@
    for(const a of snapshot.axes){const belowSegment=a.kind==='v'&&Array.isArray(a.fieldSegment)&&a.fieldSegment[0]>=snapshot.viewport.left&&a.fieldSegment[0]<=snapshot.viewport.right?a.fieldSegment:null,segment=a.segment||belowSegment;if(a.visible===false||!segment)continue;
     if(!panels.has(a.id))panels.set(a.id,create(a.id));const {panel,parts}=panels.get(a.id);
     panel.hidden=false;panel.dataset.selected=String(a.id===preferredId);panel.style.setProperty('--manual-axis-colour',a.id===preferredId?Geometry.SELECTED_COLOUR:a.colour||'#7cbcff');
-    panel.dataset.compact=String(snapshot.viewport.right-snapshot.viewport.left<392);
+    panel.dataset.compact=String(snapshot.viewport.right-snapshot.viewport.left<400);
     const caption=Geometry.label(a,snapshot.anchor,snapshot.rows);parts.label.textContent=caption.split(' · ')[0];parts.label.title=caption+' · Тянуть — двигать ось с шагом полклетки';parts.label.setAttribute('aria-label',caption);parts.label.style.cursor=a.kind==='h'?'ns-resize':a.kind==='v'?'ew-resize':a.kind==='d'?'nesw-resize':'nwse-resize';
     for(const button of Geometry.mirrorButtons(a.kind,a.p)){const element=parts['mirror'+button.mode];element.textContent=button.symbol;element.disabled=button.disabled;element.setAttribute('aria-pressed',String(!button.disabled&&a.mode===button.mode));
      element.title=button.disabled?'Зеркало диагонали доступно по центрам клеток':'Отражать '+button.direction+' · повторное нажатие выключает';}
     for(const bit of [1,0]){const element=parts['paint'+bit];element.disabled=a.paintDisabled===true;element.setAttribute('aria-pressed',String(!!(Geometry.paintMask(a.paint)&(bit===1?1:2))));
-     element.title=caption+' · Раскраска битов '+bit+' вдоль оси · цвет «ТочкаОсь» · повторное нажатие выключает';element.setAttribute('aria-label',element.title);}
+     element.title=caption+' · Автоматически заливать связанные области битов '+bit+' от этой оси · повторное нажатие выключает';element.setAttribute('aria-label',element.title);
+     const palette=parts['colour'+bit],input=parts['colourInput'+bit],own=a['paintColour'+bit],fallback=snapshot.paintColour||'#ff7f27',colour=/^#[0-9a-f]{6}$/i.test(own||'')?own:/^#[0-9a-f]{6}$/i.test(fallback)?fallback:'#ff7f27';
+     palette.disabled=element.disabled;input.disabled=element.disabled;input.value=colour;palette.style.setProperty('--manual-paint-colour',colour);palette.title=caption+' · Цвет заливки битов '+bit+': '+colour+' · открыть палитру без переключения режима';palette.setAttribute('aria-label',palette.title);palette.parentElement.setAttribute('aria-label',caption+' · Заливка битов '+bit);}
     for(const op of ['xor','and']){const element=parts[op];element.setAttribute('aria-pressed',String(Geometry.mirrorOperation(a.op)===op));element.title=caption+' · Зеркало '+op.toUpperCase()+' · повторное нажатие возвращает копирование';element.setAttribute('aria-label',element.title);}
     parts.remove.hidden=a.canDelete===false;parts.pin.hidden=a.pin===undefined;parts.pin.setAttribute('aria-pressed',String(!!a.pin));
     candidates.push({id:a.id,kind:a.kind,segment,size:{width:panel.offsetWidth,height:panel.offsetHeight}});

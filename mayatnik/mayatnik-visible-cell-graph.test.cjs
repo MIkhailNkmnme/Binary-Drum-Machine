@@ -59,3 +59,5 @@ test('snapshot change during async preparation returns no graph and leaves input
  const s=snapshot(256,256,8,(x,y)=>({x:Math.floor(x)+.5,y:Math.floor(y)+.5,bit:0})),before=s.bits.slice();let current=true,yields=0;s.current=()=>current;
  await assert.rejects(build(s,{budgetMs:0,yieldTask:async()=>{yields++;current=false;}}),e=>e.name==='AbortError');assert.equal(yields,1);assert.deepEqual(s.bits,before);
 });
+
+test('optional corners distinguish point contacts; exact trace ignores a mere corner and clips distant endpoints',async()=>{const a=atlas(1,1,8,[0,-1,2,-1]),g=await build(a.snapshot,{corners:true});assert.deepEqual(g.nodes.map(n=>n.edges),[[],[]]);assert.deepEqual(g.nodes.map(n=>n.corners),[[1],[0]]);const top=[],through=[];g.trace([-1e12,1],[1e12,1],id=>top.push(id));assert.deepEqual(top,[g.hit(2,0)]);g.trace([2,-10],[2,10],id=>through.push(id));assert.equal(through.length,2);});
