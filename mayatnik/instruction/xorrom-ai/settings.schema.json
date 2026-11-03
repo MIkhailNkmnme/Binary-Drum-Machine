@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://1001100.online/mayatnik/instruction/xorrom-ai/settings.schema.json",
+  "title": "Настройки Xorrom 0.863",
+  "description": "Полный объект настроек для API mayXorrom.setSettings().",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source", "bpm", "division", "tonic", "scale", "octave", "timbre", "gain", "chord",
+    "first", "last", "stride", "loop", "live", "restartOnFrame", "autoGeometry",
+    "geometrySource", "geometryConnectivity", "backing", "backingGain", "backingTimbre", "backingRows"
+  ],
+  "properties": {
+    "source": {
+      "type": "string", "enum": ["melody", "rgb", "rhythm"], "default": "rgb",
+      "description": "Источник основной партии. Мелодия использует число единиц, RGB — частоты цветовых кодов, ритм — три дорожки ударных."
+    },
+    "bpm": {
+      "type": "number", "exclusiveMinimum": 0, "default": 96,
+      "description": "Темп в ударах в минуту. Допустимо любое положительное конечное число, в том числе дробное. Для воспроизведения длительность шага должна быть представима в звуковых отсчётах."
+    },
+    "division": {
+      "type": "integer", "enum": [4, 8, 16], "default": 8,
+      "description": "Знаменатель длительности шага. Значение 8 задаёт восьмую ноту."
+    },
+    "tonic": {
+      "type": "integer", "minimum": 0, "maximum": 11, "default": 0,
+      "description": "Тоника в полутонах от До. До = 0, Си = 11."
+    },
+    "scale": {
+      "type": "string", "enum": ["major", "minor", "pentatonic"], "default": "major",
+      "description": "Лад основной партии."
+    },
+    "octave": {
+      "type": "integer", "minimum": 1, "maximum": 7, "default": 4,
+      "description": "Базовая октава. До четвёртой октавы соответствует MIDI 60."
+    },
+    "timbre": {
+      "type": "string", "enum": ["sine", "triangle", "pluck", "softsquare", "bass", "pulse", "metal", "robot"], "default": "triangle",
+      "description": "Тембр мелодической или RGB-партии. У ударных собственные тембры."
+    },
+    "gain": {
+      "type": "number", "minimum": 0, "maximum": 1, "default": 0.25,
+      "description": "Общая громкость в долях единицы. Значение 0.25 соответствует 25% в пульте."
+    },
+    "chord": {
+      "type": "integer", "minimum": 1, "maximum": 4, "default": 3,
+      "description": "Максимальное число одновременных RGB-нот в строке."
+    },
+    "first": {
+      "type": "integer", "minimum": 0, "maximum": 2147483647, "default": 0,
+      "description": "Первая выбранная строка, отсчёт с нуля. Числовой пульт принимает до 1 000 000."
+    },
+    "last": {
+      "type": "integer", "minimum": -1, "maximum": 2147483647, "default": -1,
+      "description": "Последняя строка включительно. Значение −1 означает до конца поля. Числовой пульт принимает до 1 000 000."
+    },
+    "stride": {
+      "type": "integer", "minimum": 1, "maximum": 65536, "default": 1,
+      "description": "Расстояние между выбранными строками. API принимает 1–65 536, числовой пульт — 1–32."
+    },
+    "loop": {
+      "type": "boolean", "default": true,
+      "description": "Повторять выбранный диапазон строк."
+    },
+    "live": {
+      "type": "boolean", "default": false,
+      "description": "Дополнительно перечитывать поле в начале каждого повтора."
+    },
+    "restartOnFrame": {
+      "type": "boolean", "default": false,
+      "description": "При смене кадра возвращать линию чтения к первой выбранной строке."
+    },
+    "autoGeometry": {
+      "type": "boolean", "default": false,
+      "description": "Включить управление музыкальными параметрами по геометрии рисунка."
+    },
+    "geometrySource": {
+      "type": "string", "enum": ["all", "regions", "areas", "symmetry"], "default": "all",
+      "description": "Свойства рисунка, которые влияют на музыку при включённом автоуправлении."
+    },
+    "geometryConnectivity": {
+      "type": "string", "enum": ["sides", "corners", "diagonal", "chess0", "bit"], "default": "sides",
+      "description": "Правило соединения клеток в область для автоматического анализа."
+    },
+    "backing": {
+      "type": "string", "enum": ["off", "pad", "bass", "counter"], "default": "off",
+      "description": "Тип второй партии. Созвучие держит тонику и квинту, бас и вторая мелодия используют ноту фразы."
+    },
+    "backingGain": {
+      "type": "number", "minimum": 0, "maximum": 1, "default": 0.3,
+      "description": "Относительная громкость фона к основной партии в долях единицы. При 0 фон молчит, при 1 обе партии получают равные доли уровня."
+    },
+    "backingTimbre": {
+      "type": "string", "enum": ["sine", "triangle", "softsquare"], "default": "sine",
+      "description": "Тембр фонового инструмента."
+    },
+    "backingRows": {
+      "type": "integer", "minimum": 1, "maximum": 16, "default": 4,
+      "description": "Длина фоновой фразы в выбранных строках с учётом stride."
+    }
+  }
+}
