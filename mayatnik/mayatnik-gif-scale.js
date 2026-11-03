@@ -12,7 +12,7 @@
   function validate(source,options={}){
     const p=plan(source.width,source.height,options.sequence);
     if(!source.pixels||source.pixels.length!==source.width*source.height*4)throw Error('Пиксели кадра повреждены');
-    if(!['nearest','majority','average'].includes(options.method||'nearest'))throw Error('Неизвестный способ уменьшения');
+    if(!['canvas','nearest','majority','average'].includes(options.method||'canvas'))throw Error('Неизвестный способ уменьшения');
     if(p.width*p.height>16777216)throw Error('Кадр больше 16 миллионов пикселей. Уменьшите число строк для экспорта');
     if(p.width*p.height*p.levels.length>600000000)throw Error('Для такого кадра выберите степени 2 или уменьшите число строк');
     return p;
@@ -22,8 +22,19 @@
     for(let i=0;i<rgba.length;i+=4){const a=i<source.pixels.length?source.pixels[i+3]/255:0;for(let c=0;c<3;c++)rgba[i+c]=Math.round((a?source.pixels[i+c]*a:0)+(background[c]||0)*(1-a));rgba[i+3]=255;}
     return rgba;
   }
+  // Same physical-pixel centres and a single isotropic scale as sampleViewport.
+  // The last partial column is background if its centre lies outside the field.
+  function reduceCanvas(pixels,width,height,rows){
+    const scale=rows/height,w=Math.max(1,Math.ceil(width*scale-1e-12)),out=new Uint8ClampedArray(w*rows*4);
+    for(let y=0;y<rows;y++)for(let x=0;x<w;x++){
+      const sx=Math.floor((x+.5)/scale),sy=Math.floor((y+.5)/scale),q=(y*w+x)*4;
+      if(sx>=0&&sx<width&&sy>=0&&sy<height){const at=(sy*width+sx)*4;out.set(pixels.subarray(at,at+4),q);}else out[q+3]=255;
+    }
+    return {pixels:out,width:w,height:rows};
+  }
   // Exact area weights prevent dropped edge pixels when a level does not divide H.
-  function reduce(pixels,width,height,rows,method='nearest'){
+  function reduce(pixels,width,height,rows,method='canvas'){
+    if(method==='canvas')return reduceCanvas(pixels,width,height,rows);
     const w=Math.max(1,Math.round(width*rows/height)),h=rows,out=new Uint8ClampedArray(w*h*4);
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
       const left=x*width/w,right=(x+1)*width/w,top=y*height/h,bottom=(y+1)*height/h;
@@ -51,9 +62,9 @@
   }
 
   function generate(source,options={}){
-    const p=validate(source,options),method=options.method||'nearest',delay=Math.max(2,Math.min(500,Math.round((Number(options.delay)||200)/10)));
+    const p=validate(source,options),method=options.method||'canvas',delay=Math.max(2,Math.min(500,Math.round((Number(options.delay)||200)/10)));
     if(!globalThis.MayatnikGif?.encoder)throw Error('Кодировщик GIF не загружен');
-    const code=`const prepare=${prepare.toString()},reduce=${reduce.toString()},enlarge=${enlarge.toString()},encoder=${globalThis.MayatnikGif.encoder.toString()};onmessage=e=>{try{const {source,plan:p,method,delay,background}=e.data,pixels=prepare(source,p,background),gif=encoder(p.width,p.height);for(let n=0;n<p.levels.length;n++){const rows=p.levels[n],small=reduce(pixels,p.width,p.height,rows,method);gif.add(enlarge(small,p.width,p.height),delay);postMessage({done:n+1,total:p.levels.length,rows,frame:gif.frame()});}postMessage({blob:gif.finish()});}catch(error){postMessage({error:error.message||String(error)});}};`;
+    const code=`const prepare=${prepare.toString()},reduceCanvas=${reduceCanvas.toString()},reduce=${reduce.toString()},enlarge=${enlarge.toString()},encoder=${globalThis.MayatnikGif.encoder.toString()};onmessage=e=>{try{const {source,plan:p,method,delay,background}=e.data,pixels=prepare(source,p,background),gif=encoder(p.width,p.height);for(let n=0;n<p.levels.length;n++){const rows=p.levels[n],small=reduce(pixels,p.width,p.height,rows,method);gif.add(enlarge(small,p.width,p.height),delay);postMessage({done:n+1,total:p.levels.length,rows,frame:gif.frame()});}postMessage({blob:gif.finish()});}catch(error){postMessage({error:error.message||String(error)});}};`;
     const url=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));let worker;try{worker=new Worker(url);}finally{URL.revokeObjectURL(url);}
     let settled=false,resolve,reject;const frames=[],promise=new Promise((a,b)=>{resolve=a;reject=b;});
     const finish=(error,blob)=>{if(settled)return;settled=true;worker.terminate();if(error){frames.length=0;reject(error);}else resolve({blob,frames,plan:p,method,delay:delay*10});};
