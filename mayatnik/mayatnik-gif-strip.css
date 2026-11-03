@@ -1,22 +1,37 @@
 /* Independent in-page window: the field and the document layout never move. */
-#mayGifStrip{position:fixed;z-index:40;box-sizing:border-box;min-width:0;max-width:calc(100dvw - 16px);max-height:calc(100dvh - 16px);display:flex;flex-direction:column;padding:4px 8px calc(20px + env(safe-area-inset-bottom,0px));gap:2px;background:#0e1116;color:#dfe6f5;border:1px solid #73e4a5;overflow:hidden;overflow-anchor:none;isolation:isolate;resize:both}
+#mayGifStrip{position:fixed;z-index:40;box-sizing:border-box;min-width:0;max-width:calc(100dvw - 16px);max-height:calc(100dvh - 16px);display:flex;flex-direction:column;padding:4px 8px calc(20px + env(safe-area-inset-bottom,0px));gap:2px;background:#0e1116;color:#dfe6f5;border:1px solid #73e4a5;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;overflow-anchor:none;isolation:isolate;resize:both}
 #mayGifStrip[hidden]{display:none}
+#mayGifStrip .may-standard.may-standard.may-standard.may-standard{--may-outline:#394657;--may-stroke:1px;position:relative;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,calc(100% - 12px) 24px,12px 24px,0 12px)!important}
+#mayGifStrip .may-standard[aria-pressed=true]{--may-outline:#73e4a5!important;--may-stroke:2px!important}
+#mayGifStrip .may-standard-outline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+#mayGifStrip .may-standard-outline polygon{fill:none;stroke:var(--may-outline);stroke-width:calc(2 * var(--may-stroke));stroke-linejoin:miter}
 #mayGifStrip .may-gif-strip-header{display:flex;align-items:center;gap:6px;flex-shrink:0;min-width:0;cursor:move;touch-action:none;user-select:none}
 #mayGifStrip .may-gif-strip-header:focus-visible{outline:1px solid #73e4a5;outline-offset:1px}
 #mayGifStrip .may-gif-strip-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #mayGifStrip .may-gif-strip-header>.gz-hx{--gz-w:120px;--gz-h:24px;--c:#73e4a5;justify-content:center;flex:0 0 120px;user-select:none}
-#mayGifStrip .may-gif-strip-track{display:flex;align-items:flex-start;flex:1 1 auto;gap:6px;min-height:0;overflow:auto;padding:3px 3px 12px;scrollbar-width:auto;overscroll-behavior:contain;touch-action:pan-x pan-y}
+#mayGifStrip .may-gif-strip-toolbar{display:flex;flex-wrap:wrap;gap:4px;flex:none}
+#mayGifStrip .may-gif-strip-toolbar>.gz-hx{--gz-w:120px;--gz-h:24px;--c:#73e4a5;flex:0 0 120px;justify-content:center}
+#mayGifStrip .may-gif-strip-toolbar>[hidden]{display:none!important}
+#mayGifStrip .may-gif-strip-toolbar>button:disabled{opacity:.4;cursor:default}
+#mayGifStrip .may-gif-strip-display{position:relative;flex:1 1 0;min-height:24px;min-width:0;overflow:hidden;background:#000}
+#mayGifStrip .may-gif-strip-display>.may-gif-strip-stage{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;min-height:0;min-width:0}
+#mayGifStrip .may-gif-strip-transport{display:flex;align-items:center;gap:4px;flex:none;min-width:0;flex-wrap:wrap}
+#mayGifStrip .may-gif-strip-transport>.gz-hx.may-standard.may-standard{--gz-w:40px;--gz-h:24px;--c:#73e4a5;flex:0 0 40px;width:40px!important;min-width:40px!important;max-width:40px!important;justify-content:center}
+#mayGifStrip .may-gif-strip-transport>.may-gif-strip-play.may-standard.may-standard{--gz-w:88px;flex-basis:88px;width:88px!important;min-width:88px!important;max-width:88px!important}
+#mayGifStrip .may-gif-strip-seek{flex:1 1 80px;min-width:40px;width:80px;accent-color:#73e4a5;margin:0}
+#mayGifStrip .may-gif-strip-counter{font:11px/20px var(--mono,monospace);white-space:nowrap;font-variant-numeric:tabular-nums}
+#mayGifStrip .may-gif-strip-track{display:flex;align-items:flex-start;flex:0 0 auto;gap:6px;min-height:0;max-height:166px;overflow-x:auto;overflow-y:hidden;padding:3px 3px 12px;scrollbar-width:auto;overscroll-behavior:contain;touch-action:pan-x}
 #mayGifStrip .may-gif-strip-frame{flex:0 0 auto;min-width:0;width:var(--may-gif-width);user-select:none}
 #mayGifStrip .may-gif-strip-image{position:relative;width:var(--may-gif-width);height:var(--may-gif-height)}
 #mayGifStrip .may-gif-strip-select{display:block;box-sizing:border-box;width:100%;height:100%;margin:0;padding:0;border:0;border-radius:0;background:#080b10;outline:1px solid #394657;outline-offset:0;cursor:pointer;touch-action:pan-x pan-y}
 #mayGifStrip .may-gif-strip-select:is(:hover,:focus-visible){outline:1px solid #73e4a5}
 #mayGifStrip .may-gif-strip-select[aria-pressed=true]{outline:2px solid #73e4a5}
 #mayGifStrip .may-gif-strip-select:active{outline:3px solid #73e4a5}
-#mayGifStrip img{display:block;width:100%;height:100%;max-width:none;image-rendering:pixelated;pointer-events:none}
+#mayGifStrip img{display:block;width:100%;height:100%;max-width:none;image-rendering:pixelated;object-fit:contain;pointer-events:none}
 #mayGifStrip .may-gif-strip-resize{position:absolute;right:0;bottom:0;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:24px;height:24px;color:#fff;background:#1b2430;border:1px solid #73e4a5;cursor:nwse-resize;touch-action:none;user-select:none;font:18px/1 sans-serif}
 #mayGifStrip .may-gif-strip-resize[hidden]{display:none}
 #mayGifStrip .may-gif-strip-resize:focus-visible{outline:2px solid #fff;outline-offset:1px}
-#mayGifStrip .may-gif-strip-caption{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-top:3px}
+#mayGifStrip .may-gif-strip-caption{font:10px/14px var(--mono,monospace);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-top:3px}
 #mayGifStrip .may-gif-strip-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #mayGifStrip.may-gif-resizing{cursor:nwse-resize;user-select:none}
 #mayGifStrip.may-gif-moving,#mayGifStrip.may-gif-moving *{cursor:move;user-select:none}

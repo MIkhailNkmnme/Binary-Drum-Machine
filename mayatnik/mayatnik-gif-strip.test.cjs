@@ -7,9 +7,11 @@ const {create}=require('./mayatnik-gif-strip.js');
 function fixture(saved,blocked=false,withObserver=false,withPanelObserver=false){
  const dom=new JSDOM('<!doctype html><body><header></header><div id="wrap" style="flex:1;min-height:0"></div><footer></footer></body>',{url:'https://example.test'}),w=dom.window;
  const revoked=[],created=[],wrap=w.document.getElementById('wrap');wrap.getBoundingClientRect=()=>({height:540});
- if(saved!==undefined)w.localStorage.setItem('mayatnik.gifStrip.size.v1',JSON.stringify(saved));
+ if(saved!==undefined)w.localStorage.setItem('mayatnik.gifStrip.thumbSize.v2',JSON.stringify(saved));
  if(blocked)Object.defineProperty(w,'localStorage',{get(){throw Error('blocked');}});
  w.URL.createObjectURL=blob=>{created.push(blob);return 'blob:test-'+created.length;};w.URL.revokeObjectURL=url=>revoked.push(url);
+ const timers=new Map();let now=0,timerId=0;w.setTimeout=(fn,delay)=>{timers.set(++timerId,{at:now+delay,fn});return timerId;};w.clearTimeout=id=>timers.delete(id);
+ const advance=ms=>{const until=now+ms;let runs=0;while(timers.size){const [id,task]=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(task.at>until)break;assert.ok(runs++<1000,'bounded playback scheduling');now=task.at;timers.delete(id);task.fn();}now=until;};
  let observer,panelObserver;const scrolled=[];w.HTMLElement.prototype.scrollIntoView=function(options){scrolled.push({element:this,options});};
  if(withObserver)w.IntersectionObserver=class{constructor(callback,options){this.callback=callback;this.options=options;this.targets=[];observer=this;}observe(node){this.targets.push(node);}disconnect(){this.targets=[];}};
  if(withPanelObserver)w.ResizeObserver=class{constructor(callback){this.callback=callback;this.targets=[];panelObserver=this;}observe(node){this.targets.push(node);}disconnect(){this.targets=[];}};
@@ -18,12 +20,12 @@ function fixture(saved,blocked=false,withObserver=false,withPanelObserver=false)
  const q=s=>w.document.querySelector(s),qa=s=>[...w.document.querySelectorAll(s)];
  function event(node,type,extra={}){const e=new w.Event(type,{bubbles:true,cancelable:true});Object.assign(e,extra);node.dispatchEvent(e);return e;}
  const edge=()=>parseFloat(q('#mayGifStrip').style.getPropertyValue('--may-gif-width'));
- return {dom,w,api,show,frames,q,qa,event,edge,revoked,created,wrap,scrolled,get observer(){return observer;},get panelObserver(){return panelObserver;}};
+ return {dom,w,api,show,frames,q,qa,event,edge,revoked,created,wrap,scrolled,timers,advance,get observer(){return observer;},get panelObserver(){return panelObserver;}};
 }
 test('separate fixed dialog preserves field styles and document position through show, hide and reopen',()=>{
  const f=fixture();assert.equal(f.api.open(),false);assert.equal(f.show(),true);
  const strip=f.q('#mayGifStrip');assert.equal(strip.parentElement,f.w.document.body);assert.equal(strip.getAttribute('role'),'dialog');assert.equal(strip.getAttribute('aria-label'),'Гиф-Масштаб');assert.equal(strip.getAttribute('aria-modal'),'false');assert.equal(f.wrap.nextElementSibling.tagName,'FOOTER');assert.equal(f.wrap.style.flex,'1 1 0%');assert.equal(f.wrap.style.height,'');
- assert.equal(f.qa('img').length,3);assert.equal(f.qa('canvas').length,0);assert.equal(f.created[1],f.frames[1].blob);assert.match(f.qa('.may-gif-strip-caption')[1].textContent,/2 · 24/);
+ assert.equal(f.qa('img').length,4);assert.equal(f.qa('canvas').length,0);assert.equal(f.created[1],f.frames[1].blob);assert.match(f.qa('.may-gif-strip-caption')[1].textContent,/2 · 24/);
  assert.equal(f.q('.may-gif-strip-header button').classList.contains('gz-hx'),true);
  f.api.hide();assert.equal(strip.hidden,true);assert.equal(f.wrap.style.flex,'1 1 0%');assert.equal(f.wrap.style.height,'');assert.equal(f.api.open(),true);assert.equal(strip.hidden,false);assert.deepEqual(f.scrolled,[]);f.dom.window.close();
 });
@@ -33,13 +35,13 @@ test('any frame selects, keyboard selection and proportional shared resize survi
  const handle=f.qa('.may-gif-strip-resize')[2];assert.equal(handle.hidden,false);const before=f.edge();f.event(handle,'keydown',{key:'ArrowRight'});assert.equal(f.edge(),before+8);
  const h=parseFloat(f.q('#mayGifStrip').style.getPropertyValue('--may-gif-height'));assert.equal(f.edge()/h,2);
  f.api.hide();f.api.open();assert.equal(buttons[2].getAttribute('aria-pressed'),'true');assert.equal(f.edge(),before+8);
- const saved=JSON.parse(f.w.localStorage.getItem('mayatnik.gifStrip.size.v1')),g=fixture(saved);g.show();assert.equal(g.edge(),f.edge());f.dom.window.close();g.dom.window.close();
+ const saved=JSON.parse(f.w.localStorage.getItem('mayatnik.gifStrip.thumbSize.v2')),g=fixture(saved);g.show();assert.equal(g.edge(),f.edge());f.dom.window.close();g.dom.window.close();
 });
 test('pointer resize uses original pointer position for later frames; cancel/lost capture terminate safely',()=>{
  const f=fixture();f.show();const handle=f.qa('.may-gif-strip-resize')[2],start=f.edge();
  f.event(handle,'pointerdown',{pointerId:9,button:0,clientX:100,clientY:100});
- f.event(handle,'pointermove',{pointerId:9,clientX:150,clientY:125});assert.equal(f.edge(),start+50);
- f.event(handle,'pointermove',{pointerId:9,clientX:200,clientY:150});assert.equal(f.edge(),start+100);assert.equal(f.wrap.style.height,'');
+ f.event(handle,'pointermove',{pointerId:9,clientX:150,clientY:125});assert.equal(f.edge(),128);
+ f.event(handle,'pointermove',{pointerId:9,clientX:200,clientY:150});assert.equal(f.edge(),128);assert.equal(f.wrap.style.height,'');
  f.event(handle,'pointercancel',{pointerId:9});const end=f.edge();f.event(handle,'pointermove',{pointerId:9,clientX:999,clientY:999});assert.equal(f.edge(),end);
  f.event(handle,'pointerdown',{pointerId:10,button:0,clientX:0,clientY:0});f.event(handle,'lostpointercapture');f.event(handle,'pointermove',{pointerId:10,clientX:999,clientY:999});assert.equal(f.edge(),end);f.dom.window.close();
 });
@@ -49,25 +51,25 @@ test('all interaction bubbles stay inside strip while scrolling keeps default be
  f.event(button,'keydown',{key:' '});assert.equal(escaped,0);f.dom.window.close();
 });
 test('size is bounded and corrupt/blocked storage does not prevent showing frames',()=>{
- for(const value of ['bad',-1,1e99]){const f=fixture(value);f.show();assert.ok(f.edge()>=96&&f.edge()<=2048);const h=f.q('.may-gif-strip-resize');f.event(h,'keydown',{key:'Home'});assert.equal(f.edge(),96);f.event(h,'keydown',{key:'End'});assert.ok(f.edge()<=2048);f.dom.window.close();}
+ for(const value of ['bad',-1,1e99]){const f=fixture(value);f.show();assert.ok(f.edge()>=64&&f.edge()<=128);const h=f.q('.may-gif-strip-resize');f.event(h,'keydown',{key:'Home'});assert.equal(f.edge(),64);f.event(h,'keydown',{key:'End'});assert.ok(f.edge()<=128);f.dom.window.close();}
  const f=fixture(undefined,true);assert.equal(f.show(),true);f.event(f.q('.may-gif-strip-resize'),'keydown',{key:'ArrowRight'});f.dom.window.close();
 });
 test('replacement and pagehide revoke every old URL; invalid or failed replacements preserve existing strip',()=>{
- const f=fixture();f.show();const old=f.qa('img').map(img=>img.src);assert.equal(f.api.show([],{width:1,height:1}),false);assert.deepEqual(f.revoked,[]);
- f.show({name:'Next'});assert.deepEqual(f.revoked,old);assert.equal(f.qa('img').length,3);
- let count=0;f.w.URL.createObjectURL=()=>{if(count++)throw Error('allocation failed');return 'blob:partial';};assert.equal(f.show(),false);assert.equal(f.qa('img').length,3);assert.equal(f.revoked.at(-1),'blob:partial');
- const current=f.qa('img').map(img=>img.src);f.event(f.w,'pagehide');for(const url of current)assert.ok(f.revoked.includes(url));assert.equal(f.api.open(),false);assert.equal(f.wrap.style.height,'');f.dom.window.close();
+ const f=fixture();f.show();const old=f.qa('.may-gif-strip-track img').map(img=>img.src);assert.equal(f.api.show([],{width:1,height:1}),false);assert.deepEqual(f.revoked,[]);
+ f.show({name:'Next'});assert.deepEqual(f.revoked,old);assert.equal(f.qa('img').length,4);
+ let count=0;f.w.URL.createObjectURL=()=>{if(count++)throw Error('allocation failed');return 'blob:partial';};assert.equal(f.show(),false);assert.equal(f.qa('img').length,4);assert.equal(f.revoked.at(-1),'blob:partial');
+ const current=f.qa('.may-gif-strip-track img').map(img=>img.src);f.event(f.w,'pagehide');for(const url of current)assert.ok(f.revoked.includes(url));assert.equal(f.api.open(),false);assert.equal(f.wrap.style.height,'');f.dom.window.close();
 });
 test('stylesheet isolates a bounded resizable window with pixelated images and internal scrolling',()=>{
- const css=fs.readFileSync(path.join(__dirname,'mayatnik-gif-strip.css'),'utf8');assert.match(css,/image-rendering:pixelated/);assert.match(css,/overflow:auto/);assert.match(css,/scrollbar-width:auto/);assert.match(css,/touch-action:none/);assert.match(css,/#mayGifStrip\{position:fixed/);assert.match(css,/resize:both/);assert.match(css,/max-height:calc\(100dvh - 16px\)/);assert.match(css,/overflow-anchor:none/);assert.doesNotMatch(css,/#wrap|grid-template|body\{/);
+ const css=fs.readFileSync(path.join(__dirname,'mayatnik-gif-strip.css'),'utf8');assert.match(css,/image-rendering:pixelated/);assert.match(css,/overflow-x:auto/);assert.match(css,/scrollbar-width:auto/);assert.match(css,/touch-action:none/);assert.match(css,/#mayGifStrip\{position:fixed/);assert.match(css,/resize:both/);assert.match(css,/max-height:calc\(100dvh - 16px\)/);assert.match(css,/overflow-anchor:none/);assert.doesNotMatch(css,/#wrap|grid-template|body\{/);
 });
 test('only viewport-near images activate, distant images release decode sources and reopening reveals strip',()=>{
- const f=fixture(undefined,false,true);f.show();const images=f.qa('img'),observer=f.observer;
+ const f=fixture(undefined,false,true);f.show();const images=f.qa('.may-gif-strip-track img'),observer=f.observer;
  assert.equal(observer.options.root,f.q('.may-gif-strip-track'));assert.equal(observer.targets.length,3);for(const img of images){assert.equal(img.hasAttribute('src'),false);assert.equal(img.loading,'lazy');assert.equal(img.decoding,'async');}
  observer.callback([{target:images[1],isIntersecting:true}]);assert.equal(images[1].src,images[1].dataset.frameUrl);assert.equal(images[0].hasAttribute('src'),false);
  observer.callback([{target:images[1],isIntersecting:false}]);assert.equal(images[1].hasAttribute('src'),false);assert.equal(f.revoked.length,0);
  f.api.hide();f.api.open();assert.deepEqual(f.scrolled,[]);
- f.show();assert.equal(observer.targets.length,3);assert.equal(observer.targets[0],f.qa('img')[0]);f.event(f.w,'pagehide');assert.equal(observer.targets.length,0);f.dom.window.close();
+ f.show();assert.equal(observer.targets.length,3);assert.equal(observer.targets[0],f.qa('.may-gif-strip-track img')[0]);f.event(f.w,'pagehide');assert.equal(observer.targets.length,0);f.dom.window.close();
 });
 test('desktop/mobile grids remain unchanged through window show, frame resize, viewport change and hide',()=>{
  for(const [tracks,row]of [['42px 0px 0px 540px 18px 30px','4'],['80px 36px 0px 0px 540px 18px 30px','5']]){
@@ -80,7 +82,7 @@ test('desktop/mobile grids remain unchanged through window show, frame resize, v
 
 test('window header dragging and keyboard movement stay inside viewport without resizing GIF frames',()=>{
  const f=fixture();f.show();const panel=f.q('#mayGifStrip'),head=f.q('.may-gif-strip-header'),edge=f.edge(),before={left:parseFloat(panel.style.left),top:parseFloat(panel.style.top)};
- f.event(head,'pointerdown',{pointerId:1,button:0,clientX:100,clientY:100});f.event(f.w,'pointermove',{pointerId:1,clientX:70,clientY:150});assert.equal(parseFloat(panel.style.left),before.left-30);assert.equal(parseFloat(panel.style.top),before.top+50);
+ f.event(head,'pointerdown',{pointerId:1,button:0,clientX:100,clientY:100});f.event(f.w,'pointermove',{pointerId:1,clientX:70,clientY:150});assert.equal(parseFloat(panel.style.left),before.left-30);assert.ok(Math.abs(parseFloat(panel.style.top)-Math.min(before.top+50,f.w.innerHeight-8-parseFloat(panel.style.height)))<1e-9);
  f.event(f.w,'pointermove',{pointerId:1,clientX:99999,clientY:99999});assert.ok(parseFloat(panel.style.left)+parseFloat(panel.style.width)<=f.w.innerWidth-8);assert.ok(parseFloat(panel.style.top)+parseFloat(panel.style.height)<=f.w.innerHeight-8);assert.equal(f.edge(),edge);f.event(f.w,'pointercancel',{pointerId:1});assert.equal(panel.classList.contains('may-gif-moving'),false);
  const end=panel.style.cssText;f.event(f.w,'pointermove',{pointerId:1,clientX:-99999,clientY:-99999});assert.equal(panel.style.cssText,end);f.event(head,'keydown',{key:'Home'});assert.equal(panel.style.left,'8px');assert.equal(panel.style.top,'8px');
  f.event(head,'keydown',{key:'ArrowRight',shiftKey:true});assert.equal(panel.style.left,'48px');assert.equal(f.edge(),edge);f.event(head,'keydown',{key:'Escape'});assert.equal(panel.hidden,true);f.api.open();assert.equal(panel.style.left,'48px');assert.deepEqual(f.scrolled,[]);f.dom.window.close();
@@ -95,7 +97,68 @@ test('close and frame controls cannot start a window drag; keyboard scrolling ch
 
 test('native window resize and visual viewport bounds never alter frame size or field styles',()=>{
  const f=fixture(undefined,false,false,true);f.show();const panel=f.q('#mayGifStrip'),originalField=f.wrap.style.cssText,edge=f.edge();let width=520,height=210;
- panel.getBoundingClientRect=()=>({left:parseFloat(panel.style.left),top:parseFloat(panel.style.top),width,height});f.panelObserver.callback();assert.equal(panel.style.width,'520px');assert.equal(panel.style.height,'210px');assert.equal(f.edge(),edge);
- const view=new f.w.EventTarget();Object.assign(view,{offsetLeft:12,offsetTop:24,width:320,height:240});Object.defineProperty(f.w,'visualViewport',{value:view});f.event(f.w,'resize');assert.equal(panel.style.width,'304px');assert.equal(panel.style.height,'210px');assert.ok(parseFloat(panel.style.left)>=20);assert.ok(parseFloat(panel.style.top)>=32);assert.ok(parseFloat(panel.style.top)+parseFloat(panel.style.height)<=256);
+ panel.getBoundingClientRect=()=>({left:parseFloat(panel.style.left),top:parseFloat(panel.style.top),width,height});f.panelObserver.callback();assert.equal(panel.style.width,'520px');assert.equal(panel.style.height,'320px');assert.equal(f.edge(),edge);
+ const view=new f.w.EventTarget();Object.assign(view,{offsetLeft:12,offsetTop:24,width:320,height:240});Object.defineProperty(f.w,'visualViewport',{value:view});f.event(f.w,'resize');assert.equal(panel.style.width,'304px');assert.equal(panel.style.height,'224px');assert.ok(parseFloat(panel.style.left)>=20);assert.ok(parseFloat(panel.style.top)>=32);assert.ok(parseFloat(panel.style.top)+parseFloat(panel.style.height)<=256);
  assert.equal(f.wrap.style.cssText,originalField);assert.equal(f.edge(),edge);f.event(f.w,'pagehide');assert.equal(f.panelObserver.targets.length,0);f.dom.window.close();
+});
+
+test('large image, selected thumbnail, seek and row label stay synchronous without autoplay',()=>{
+ const f=fixture();try{f.show({delay:360});const stage=f.q('.may-gif-strip-stage'),thumbs=f.qa('.may-gif-strip-select'),seek=f.q('.may-gif-strip-seek'),counter=f.q('.may-gif-strip-counter');
+  assert.equal(stage.src,thumbs[0].querySelector('img').src);assert.equal(seek.max,'2');assert.equal(f.timers.size,0);assert.match(counter.textContent,/1 \/ 3 · 12 строк/);
+  thumbs[2].click();assert.equal(stage.src,thumbs[2].querySelector('img').src);assert.equal(seek.value,'2');assert.match(counter.textContent,/3 \/ 3 · 36 строк/);
+  seek.value='1';f.event(seek,'input');assert.equal(stage.src,thumbs[1].querySelector('img').src);assert.equal(thumbs[1].getAttribute('aria-pressed'),'true');assert.match(seek.getAttribute('aria-valuetext'),/2 из 3, 24 строк/);
+  f.q('.may-gif-strip-next').click();assert.equal(seek.value,'2');f.q('.may-gif-strip-next').click();assert.equal(seek.value,'0');f.q('.may-gif-strip-previous').click();assert.equal(seek.value,'2');assert.equal(f.timers.size,0);
+  assert.equal(f.edge(),88);assert.ok(f.qa('.may-gif-strip-mode').every(button=>button.hidden));assert.equal(f.q('.may-gif-strip-download').hidden,true);
+  const css=fs.readFileSync(path.join(__dirname,'mayatnik-gif-strip.css'),'utf8');assert.match(css,/\.may-gif-strip-stage\{[^}]*object-fit:contain/);assert.match(css,/\.may-gif-strip-track\{[^}]*flex:0 0 auto[^}]*overflow-x:auto;overflow-y:hidden/);
+ }finally{f.dom.window.close();}
+});
+
+test('playback uses GIF delay with one timer; seeking restarts its interval and pause/hide/replace/pagehide stop it',()=>{
+ const f=fixture();try{f.show({delay:360});const play=f.q('.may-gif-strip-play'),seek=f.q('.may-gif-strip-seek');play.click();assert.equal(play.getAttribute('aria-pressed'),'true');assert.equal(f.timers.size,1);
+  f.advance(359);assert.equal(seek.value,'0');f.advance(1);assert.equal(seek.value,'1');assert.equal(f.timers.size,1);f.advance(720);assert.equal(seek.value,'0');
+  f.advance(100);seek.value='2';f.event(seek,'input');assert.equal(f.timers.size,1);f.advance(359);assert.equal(seek.value,'2');f.advance(1);assert.equal(seek.value,'0');
+  play.click();assert.equal(f.timers.size,0);f.advance(1000);assert.equal(seek.value,'0');play.click();f.api.hide();assert.equal(f.timers.size,0);assert.equal(play.getAttribute('aria-pressed'),'false');f.api.open();assert.equal(f.timers.size,0);
+  play.click();assert.equal(f.api.show([],{width:1,height:1}),false);assert.equal(f.timers.size,1,'invalid replacement preserves the playing generation');f.show({delay:40});assert.equal(f.timers.size,0);assert.equal(seek.value,'0');play.click();f.advance(40);assert.equal(seek.value,'1');f.event(f.w,'pagehide');assert.equal(f.timers.size,0);assert.equal(f.api.open(),false);
+ }finally{f.dom.window.close();}
+});
+
+test('presentation controls and download are explicit, busy-aware and use the final GIF blob',()=>{
+ const f=fixture();try{const changes=[],blob=new f.w.Blob(['animated GIF'],{type:'image/gif'});f.api.setBusy(true);f.show({presentation:'pixels',blob,name:'Проверка.gif',onPresentationChange:value=>changes.push(value)});const modes=f.qa('.may-gif-strip-mode'),download=f.q('.may-gif-strip-download');
+  assert.deepEqual(changes,[]);assert.equal(modes[0].getAttribute('aria-pressed'),'true');assert.ok(modes.every(button=>!button.hidden&&button.disabled));assert.equal(download.hidden,false);assert.equal(download.disabled,true);modes[1].click();assert.deepEqual(changes,[]);
+  f.api.setBusy(false);modes[0].click();modes[1].click();assert.deepEqual(changes,['scale']);assert.equal(f.timers.size,0);assert.equal(modes[0].getAttribute('aria-pressed'),'true','selection changes when regenerated frames arrive');
+  const requests=[],click=f.w.HTMLAnchorElement.prototype.click;f.w.HTMLAnchorElement.prototype.click=function(){requests.push({href:this.href,name:this.download});};download.click();assert.deepEqual(requests,[{href:'blob:test-4',name:'Проверка.gif'}]);assert.equal(f.created[3],blob);f.w.HTMLAnchorElement.prototype.click=click;
+  f.show({presentation:'scale',onPresentationChange:value=>changes.push(value)});assert.equal(modes[1].getAttribute('aria-pressed'),'true');assert.equal(download.hidden,true);assert.equal(f.revoked.filter(url=>url==='blob:test-4').length,1);
+  f.event(f.w,'pagehide');f.event(f.w,'pagehide');assert.equal(new Set(f.revoked).size,f.revoked.length,'each static frame and animated download URL is revoked once');
+ }finally{f.dom.window.close();}
+});
+
+test('obsolete lazy observer deliveries cannot reactivate released frame images',()=>{
+ const f=fixture(undefined,false,true);try{f.show();const old=f.qa('.may-gif-strip-track img');f.observer.callback([{target:old[0],isIntersecting:true}]);assert.ok(old[0].hasAttribute('src'));f.show();f.observer.callback([{target:old[0],isIntersecting:true}]);assert.equal(old[0].hasAttribute('src'),false);assert.equal(f.q('.may-gif-strip-stage').src,'blob:test-4');assert.equal(f.revoked.filter(url=>url==='blob:test-1').length,1);
+ }finally{f.dom.window.close();}
+});
+
+test('local standard button outlines survive transport toggles and fit each actual button width',()=>{
+ const f=fixture();try{f.show({onPresentationChange(){}});const play=f.q('.may-gif-strip-play'),outline=play.querySelector('.may-standard-outline');
+  assert.equal(outline.getAttribute('viewBox'),'0 0 88 24');assert.equal(play.querySelector('polygon').getAttribute('points'),'12,0 76,0 88,12 76,24 12,24 0,12');assert.equal(f.q('.may-gif-strip-previous svg').getAttribute('viewBox'),'0 0 40 24');assert.equal(f.q('.may-gif-strip-mode svg').getAttribute('viewBox'),'0 0 120 24');assert.equal(f.q('.may-gif-strip-close svg').getAttribute('viewBox'),'0 0 120 24');
+  play.click();assert.match(play.querySelector('.may-gif-button-caption').textContent,/Пауза/);assert.equal(play.querySelector('.may-standard-outline'),outline);play.click();assert.match(play.querySelector('.may-gif-button-caption').textContent,/Пуск/);assert.equal(play.querySelector('.may-standard-outline'),outline);f.show();assert.equal(play.querySelector('.may-standard-outline'),outline);
+  const css=fs.readFileSync(path.join(__dirname,'mayatnik-gif-strip.css'),'utf8');assert.match(css,/\[aria-pressed=true\]\{--may-outline:#73e4a5!important;--may-stroke:2px!important/);assert.match(css,/\.gz-hx\.may-standard\.may-standard\{[^}]*width:40px!important;min-width:40px!important;max-width:40px!important/);assert.match(css,/\.may-gif-strip-play\.may-standard\.may-standard\{[^}]*width:88px!important;min-width:88px!important;max-width:88px!important/);
+ }finally{f.dom.window.close();}
+});
+
+test('presentation regeneration preserves the selected frame across stage, seek, thumbnail and counter',()=>{
+ const f=fixture();try{const frames=Array.from({length:9},(_,i)=>({rows:128-i*8,blob:new f.w.Blob(['GIF89a'])})),changes=[];
+  assert.equal(f.api.show(frames,{width:400,height:200,presentation:'scale',onPresentationChange:(value,index)=>changes.push([value,index])}),true);
+  f.qa('.may-gif-strip-select')[7].click();f.qa('.may-gif-strip-mode')[0].click();assert.deepEqual(changes,[['pixels',7]]);
+  assert.equal(f.api.show(frames,{width:400,height:200,presentation:'pixels',selectedIndex:7}),true);assert.equal(f.q('.may-gif-strip-seek').value,'7');assert.equal(f.qa('.may-gif-strip-select')[7].getAttribute('aria-pressed'),'true');assert.equal(f.q('.may-gif-strip-stage').src,f.qa('.may-gif-strip-track img')[7].src);assert.match(f.q('.may-gif-strip-counter').textContent,/8 \/ 9 · 72 строк/);assert.equal(f.timers.size,0);
+  for(const [input,expected]of [[999,'8'],[-9,'0'],[1.5,'0'],['7','0'],[undefined,'0']]){f.api.show(frames,{width:400,height:200,selectedIndex:input});assert.equal(f.q('.may-gif-strip-seek').value,expected);}
+ }finally{f.dom.window.close();}
+});
+
+test('viewport changes reveal the selected thumbnail using only track scrolling without restarting playback',()=>{
+ const f=fixture();try{const frames=Array.from({length:8},(_,i)=>({rows:128-i*8,blob:new f.w.Blob(['GIF89a'])}));f.api.show(frames,{width:400,height:200,selectedIndex:7,delay:360});const panel=f.q('#mayGifStrip'),track=f.q('.may-gif-strip-track'),last=f.qa('.may-gif-strip-frame')[7],body=f.w.document.body.style.cssText,field=f.wrap.style.cssText;
+  track.getBoundingClientRect=()=>({left:0,top:0,right:320,bottom:100,width:320,height:100});last.getBoundingClientRect=()=>({left:700,top:0,right:788,bottom:100,width:88,height:100});track.scrollLeft=0;f.q('.may-gif-strip-play').click();const timer=[...f.timers.keys()];
+  Object.defineProperty(f.w,'innerWidth',{value:360,configurable:true});Object.defineProperty(f.w,'innerHeight',{value:800,configurable:true});f.event(f.w,'resize');assert.equal(track.scrollLeft,468);assert.equal(f.q('.may-gif-strip-seek').value,'7');assert.deepEqual([...f.timers.keys()],timer);assert.equal(body,f.w.document.body.style.cssText);assert.equal(field,f.wrap.style.cssText);assert.deepEqual(f.scrolled,[]);assert.equal(panel.style.minHeight,'320px');
+  Object.defineProperty(f.w,'innerHeight',{value:180,configurable:true});f.event(f.w,'resize');assert.equal(panel.style.minHeight,'164px');assert.equal(panel.style.height,'164px');
+  const css=fs.readFileSync(path.join(__dirname,'mayatnik-gif-strip.css'),'utf8');assert.match(css,/#mayGifStrip\{[^}]*overflow-x:hidden;overflow-y:auto/);assert.match(css,/\.may-gif-strip-toolbar\{display:flex;flex-wrap:wrap;gap:4px;flex:none\}/);assert.match(css,/\.may-gif-strip-display\{[^}]*min-height:24px/);assert.match(css,/\.may-gif-strip-transport\{[^}]*flex:none/);
+ }finally{f.api.hide();f.dom.window.close();}
 });

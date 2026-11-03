@@ -15,7 +15,7 @@
     const p=plan(source.width,source.height,options.sequence);
     if(!source.pixels||source.pixels.length!==source.width*source.height*4)throw Error('Пиксели кадра повреждены');
     if(!['canvas','nearest','majority','average'].includes(options.method||'canvas'))throw Error('Неизвестный способ уменьшения');
-    if(!['scale','pixels'].includes(options.presentation===undefined?'scale':options.presentation))throw Error('Неизвестный вид GIF');
+    if(!['scale','pixels'].includes(options.presentation===undefined?'pixels':options.presentation))throw Error('Неизвестный вид GIF');
     if(p.width*p.height>16777216)throw Error('Кадр больше 16 миллионов пикселей. Уменьшите число строк для экспорта');
     if(p.width*p.height*p.levels.length>600000000)throw Error('Для такого кадра выберите степени 2 или уменьшите число строк');
     return p;
@@ -75,7 +75,7 @@
   }
 
   function generate(source,options={}){
-    const p=validate(source,options),method=options.method||'canvas',presentation=options.presentation===undefined?'scale':options.presentation,delay=Math.max(2,Math.min(500,Math.round((Number(options.delay)||200)/10)));
+    const p=validate(source,options),method=options.method||'canvas',presentation=options.presentation===undefined?'pixels':options.presentation,delay=Math.max(2,Math.min(500,Math.round((Number(options.delay)||200)/10)));
     if(!globalThis.MayatnikGif?.encoder)throw Error('Кодировщик GIF не загружен');
     const code=`const prepare=${prepare.toString()},reduceCanvas=${reduceCanvas.toString()},reduce=${reduce.toString()},enlarge=${enlarge.toString()},center=${center.toString()},encoder=${globalThis.MayatnikGif.encoder.toString()};onmessage=e=>{try{const {source,plan:p,method,presentation,delay,background}=e.data;if(!['scale','pixels'].includes(presentation))throw Error('Неизвестный вид GIF');const pixels=prepare(source,p,background),gif=encoder(p.width,p.height);for(let n=0;n<p.levels.length;n++){const rows=p.levels[n],small=reduce(pixels,p.width,p.height,rows,method);gif.add(presentation==='scale'?center(small,p.width,p.height,background):enlarge(small,p.width,p.height),delay);postMessage({done:n+1,total:p.levels.length,rows,frame:gif.frame()});}postMessage({blob:gif.finish(),presentation});}catch(error){postMessage({error:error.message||String(error)});}};`;
     const url=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));let worker;try{worker=new Worker(url);}finally{URL.revokeObjectURL(url);}
