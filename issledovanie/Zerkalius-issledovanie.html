@@ -1,4 +1,4 @@
-<!-- Zerkalius Исследование — v0.081. Раздел8: Xorrom и Музыкальный ковёр, воспроизводимое озвучивание битов.  Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
+<!-- Zerkalius Исследование — v0.082. Раздел8: Xorrom и Музыкальный ковёр, воспроизводимое озвучивание битов.  Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
      законы и картинки. Страница-отчёт: считается не здесь — картинки собраны вне страницы по журналу Аниматрицы
      (35.49) тем же правилом волны, что в Code; те же выводы кратко записаны в борт-журнале (v0.089).
      v0.001: заведена 2026-09-24 по слову пользователя («картинки — в отдельную папку сайта и в индекс»).
@@ -78,12 +78,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Исследование — v0.081</title>
+<title>Zerkalius Исследование — v0.082</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --dn:#ffcf6b; --mem:#ff5d5d; --pink:#ff8a8a; --gold:#ffcc00; }
   html,body{ margin:0; background:var(--bg); color:var(--fg);
     font-family:"Segoe UI", Inter, system-ui, sans-serif; }
+  .xorrom-study a{color:var(--up)}
+  .xorrom-study a:hover{color:var(--gold)}
   .wrap{ max-width:1100px; margin:0 auto; padding:30px 22px 80px; }
   h1{ margin:0 0 4px; font-size:26px; font-weight:300; letter-spacing:6px; }
   .sub{ font-size:12.5px; color:var(--dim); letter-spacing:.3px; margin:0 0 22px; }
@@ -1584,6 +1586,7 @@ const result = A.analyze(f, {minHeight: 4});
 
 
 
+<section class="xorrom-study">
 <h2 class="tema-title" id="tema-8">8. Музыка из битов</h2>
 <h2 id="xorrom-music-carpet"><span class="n">8.1</span>Xorrom: от битового поля к музыке</h2>
 <p class="sub"><b>03.11.2026 · воспроизводимый опыт</b> · Маятник 0.868 · Музыкальный ковёр 0.002</p>
@@ -1613,6 +1616,7 @@ const result = A.analyze(f, {minHeight: 4});
 <p>Все четыре исходных кадра и их восстановление проверены в браузере. Проверки подсветки охватили352события строк четырёх партитур, включая усечение времени. Для четырёхMP4 проверены полное декодирование, переход к концу и12декодированных кадров: подсвеченные клетки совпадают с настоящими единицами. Формат видео —1280×720,30кадров/с. Браузерные пуск, пауза и перемотка подтверждены. Эти проверки устанавливают соответствие данных и воспроизведения; художественную оценку музыки они не заменяют.</p>
 <p class="sub">Исходники: <a href="../mayatnik/mayatnik-xorrom.js">аудиоядро и scoreTimeline</a> · <a href="../mayatnik/mayatnik-xorrom-visual.js">подсветка реальных битов</a> · <a href="../mayatnik/audio-examples/build-video.cjs">сборка видео</a> · <a href="../mayatnik/music-carpet/page.js">проигрыватель ковра</a>. История выпуска — <a href="../Zerkalius-dnevnik.html#music-carpet">в борт-журнале</a>.</p>
 
+</section>
 </div>
 <div id="viewer"><div class="bar">
   <button data-z="1" class="act">1:1</button><button data-z="2">×2</button><button data-z="4">×4</button>
