@@ -105,7 +105,7 @@ test('site share and compressed work files round-trip music settings without a r
   const settings=Music.normalizeSettings({autoGeometry:true,geometrySource:'areas',geometryConnectivity:'chess0',source:'rhythm',bpm:12.375,restartOnFrame:true,division:16,tonic:3,octave:2,scale:'minor',
     gain:.18,timbre:'robot',chord:2,first:1,last:6,stride:2,loop:false,live:true,backing:'counter',backingGain:.22,backingTimbre:'softsquare',backingRows:7});
   const {h}=host();
-  Object.assign(h,{st:{mode:'pend',rows:8,steps:8,bg:'empty',view:'bits',xorrom:settings},k:1,
+  Object.assign(h,{st:{mode:'pend',rows:8,steps:8,bg:'empty',view:'bits',zOverview:true,zLimit:false,zoom:.125,xorrom:settings},k:1,
     f:{val:new Int8Array(8*15)},img:{width:15,height:8},structuredClone,rowBuild:null,testPattern:null,
     wrap:{scrollLeft:0,scrollTop:0},autoPaintIds:[],fillMode:false,autoVertical:0,axisPicking:false,axisLineMode:false,
     rulerMode:false,mirrorLine:false,templatePickEnabled:false,templatePickMode:'one',templateDragEnabled:false,
@@ -121,13 +121,13 @@ test('site share and compressed work files round-trip music settings without a r
   const encoded=await Share.encode(h.captureSharePayload());
   assert.ok(encoded.startsWith('1.'));
   const {state}=await Share.decode(encoded);
-  assert.deepEqual(h.validateShareState(state).xorrom,settings);
+  assert.deepEqual(h.validateShareState(state).xorrom,settings);assert.equal(h.validateShareState(state).zOverview,true);assert.equal(h.validateShareState({...state,zLimit:true}).zOverview,false);assert.throws(()=>h.validateShareState({...state,zOverview:'true'}),/режим обзора/);
   assert.deepEqual(h.validateShareState({...state,xorrom:undefined}).xorrom,Music.normalizeSettings());
   assert.throws(()=>h.validateShareState({...state,xorrom:[]}),/настройки музыки/);
   const file=await Work.encode(h.paintSnapshot());
   assert.deepEqual([...new Uint8Array(await file.slice(0,2).arrayBuffer())],[31,139]);
   const restored=await Work.decode(file);
-  assert.deepEqual(restored.data.st.xorrom,settings);assert.deepEqual(restored.data.field,h.f.val);
+  assert.deepEqual(restored.data.st.xorrom,settings);assert.equal(restored.data.st.zOverview,true);assert.equal(restored.data.st.zoom,.125);assert.deepEqual(restored.data.field,h.f.val);
 });
 
 

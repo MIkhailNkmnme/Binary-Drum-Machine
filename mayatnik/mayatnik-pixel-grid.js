@@ -17,7 +17,7 @@
     return w<=MAX_SIDE&&h<=MAX_SIDE&&w*h<=MAX_PIXELS;
   }
 
-  function policy({angle=0,pieceTurns=[0],width,height,dpr=1,maxZoom=512,oneToOne=false,halfCells=false,viewport=false}={}){
+  function policy({angle=0,pieceTurns=[0],width,height,dpr=1,maxZoom=512,oneToOne=false,halfCells=false,viewport=false,overview=false}={}){
     if(!positive(width)||!positive(height)||!positive(dpr)||!positive(maxZoom))
       return fail('Неверные размеры поля, масштаб или плотность экрана.');
     if(!Number.isSafeInteger(angle/45)||!Array.isArray(pieceTurns)||!pieceTurns.length||
@@ -40,12 +40,19 @@
       if(viewport||fits(width,height,mid*quantum))lo=mid;else hi=mid-1;
     }
     if(lo<minK)return fail('Точная сетка целиком не помещается в пределы масштаба и холста.');
-    return {ok:true,reason:'',width,height,dpr,quantum,minK,maxK:lo,minScale:minK*quantum/dpr,maxScale:lo*quantum/dpr,viewport};
+    overview=!!overview&&!oneToOne;
+    const overviewDivisor=pixelExtent(Math.max(width,height)*quantum),exactMinScale=minK*quantum/dpr;
+    return {ok:true,reason:'',width,height,dpr,quantum,minK,maxK:lo,minScale:overview?quantum/(overviewDivisor*dpr):exactMinScale,maxScale:lo*quantum/dpr,viewport,overview,overviewDivisor,exactMinScale};
   }
 
   function snap(scale,p,direction='nearest'){
     if(!p?.ok||!positive(scale))return null;
     const v=scale*p.dpr/p.quantum;
+    if(p.overview&&scale<p.exactMinScale){
+      const n=v*p.overviewDivisor;
+      const k=direction==='down'?Math.floor(n+tolerance(n)):direction==='up'?Math.ceil(n-tolerance(n)):direction==='nearest'?Math.round(n+tolerance(n)):NaN;
+      return Number.isFinite(k)?Math.max(1,Math.min(p.minK*p.overviewDivisor,k))*p.quantum/(p.overviewDivisor*p.dpr):null;
+    }
     let k;
     if(direction==='down')k=Math.floor(v+tolerance(v));
     else if(direction==='up')k=Math.ceil(v-tolerance(v));
@@ -55,6 +62,7 @@
   }
   function step(scale,p,dir){
     if(!p?.ok||!positive(scale)||(dir!==1&&dir!==-1))return null;
+    if(p.overview&&scale<=p.exactMinScale)return snap(scale*1.5**dir,p,dir>0?'up':'down');
     const v=scale*p.dpr/p.quantum;
     const k=dir>0?Math.floor(v+tolerance(v))+1:Math.ceil(v-tolerance(v))-1;
     return Math.max(p.minK,Math.min(p.maxK,k))*p.quantum/p.dpr;
@@ -62,6 +70,12 @@
   function raster(scale,p){
     if(!p?.ok||!positive(scale))return null;
     const v=scale*p.dpr/p.quantum,k=Math.round(v);
+    if(p.overview&&scale<p.exactMinScale-tolerance(scale)){
+      const n=v*p.overviewDivisor,index=Math.round(n);
+      if(index<1||Math.abs(n-index)>tolerance(n))return null;
+      const quality=index*p.quantum/p.overviewDivisor;
+      return {k:index,divisor:p.overviewDivisor,quality,width:pixelExtent(p.width*quality),height:pixelExtent(p.height*quality),overview:true};
+    }
     if(k<p.minK||k>p.maxK||Math.abs(v-k)>tolerance(v))return null;
     const quality=k*p.quantum;
     return {k,quality,width:pixelExtent(p.width*quality),height:pixelExtent(p.height*quality)};
@@ -69,8 +83,9 @@
   function format(scale,p){
     const r=raster(scale,p);
     if(!r)return '';
-    const numerator=p.quantum===1?String(r.k):(r.k===1?'':String(r.k))+'√2';
-    return numerator+'/1';
+    let n=r.k,d=r.divisor||1,a=n,b=d;while(b){const rest=a%b;a=b;b=rest;}n/=a;d/=a;
+    const numerator=p.quantum===1?String(n):(n===1?'':String(n))+'√2';
+    return numerator+'/'+d;
   }
   return {policy,snap,step,raster,format,MAX_SIDE,MAX_PIXELS};
 });

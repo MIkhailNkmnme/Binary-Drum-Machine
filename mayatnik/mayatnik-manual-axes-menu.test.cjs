@@ -5,6 +5,7 @@ assert.ok(start>0&&end>start);const installer=menu.slice(start,end);
 class Element {
   constructor(cls='',text=''){this.className=cls;this.textContent=text;this.children=[];this.dataset={};this.style={setProperty(k,v){this[k]=v;}};this.tagName='DIV';}
   append(...nodes){for(const node of nodes){if(node.parentElement)node.parentElement.children=node.parentElement.children.filter(n=>n!==node);this.children.push(node);node.parentElement=this;}}
+  after(node){const parent=this.parentElement;parent.children=parent.children.filter(n=>n!==node);parent.children.splice(parent.children.indexOf(this)+1,0,node);node.parentElement=parent;}
   get firstChild(){return this.children[0]||{textContent:this.textContent};}
   matches(selector){return selector==='button,.gz-hx,[role="button"]'?this.className.split(' ').includes('gz-hx')||this.tagName==='BUTTON':false;}
   closest(selector){for(let n=this;n;n=n.parentElement){if(selector==='.gz-group'&&n.className==='gz-group')return n;if(selector==='[data-id],.pt-g'&&(n.dataset.id||n.className==='pt-g'))return n;}return null;}
@@ -12,12 +13,14 @@ class Element {
   querySelector(selector){if(selector===':scope > .pt-l')return this.children.find(n=>n.className==='pt-l');const id=selector.match(/^\[data-n="(.+)"\]$/)?.[1];if(id){const find=n=>n.dataset.n===id?n:n.children.map(find).find(Boolean);return find(this);}return null;}
   click(){this.onclick?.();}
 }
-function setup(seed={}){
+function setup(seed={},currentZoom=false){
   const data=new Map(Object.entries(seed)),tools=new Element(),rail=new Element(),railButtons=new Map(),manualLegacyCells=new Map(),counts={},native={},nodes={};
   const button=(id,withData=true)=>{const node=new Element('gz-hx');if(withData)node.dataset.n=id;node.style.left='112px';node.style.top='27px';native[id]={click:()=>counts[id]=(counts[id]||0)+1};node.onclick=()=>native[id].click();nodes[id]=node;return node;};
   const group=name=>{const g=new Element('pt-g'),head=new Element('pt-l',name),row=new Element('pt-r');g.append(head,row);tools.append(g);return row;};
   const zoom=new Element('gz-group');zoom.dataset.id='zoom';const soty=new Element('gz-soty');zoom.append(soty);rail.append(zoom);
-  const zoomIds=['zFit','zoomEdges','zLock','zLines','zVert','zDiag','zSnap','zHoriz'];for(const id of zoomIds){const node=button(id,false);soty.append(node);if(id!=='zoomEdges')railButtons.set(id,node);}
+  const zoomIds=['zFit','zoomEdges','zLock','zLines','zVert','zDiag','zSnap','zHoriz'];
+  if(currentZoom){zoomIds.splice(3,0,'zLimit');zoomIds.push('zOverview');}
+  for(const id of zoomIds){const node=button(id,false);soty.append(node);if(id!=='zoomEdges')railButtons.set(id,node);}
   const snapPopup={options:()=>['Плавно','×2','×3']};nodes.zSnap.gzList=snapPopup;
   const axes=group('Оси');for(const id of ['sym','symV','symH','symD','symTriangles','bTriangleAxes','bFrameWindow','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler'])axes.append(button(id));
   const view=group('Вид'),section=new Element('pt-col');view.append(section);for(const id of ['bFoldCompare','bFoldHorizontal','bFoldVertical','geomCenter'])section.append(button(id));
@@ -54,4 +57,10 @@ test('legacy zoom pins resolve original source indices and the current stepper a
   const a=menu.indexOf("      a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i];if (it.src === 'zSnap'"),b=menu.indexOf('      a.forEach((it, i) => { const cell=railSourceButtons.get(it.src)||ca[i],names',a);
   vm.runInNewContext(menu.slice(a,b),{a:[{src:'zSnap'}],ca:[wrong],railSourceButtons:new Map([['zSnap',node]]),window:{mayZSnap:{on:()=>base>1,base:()=>base,set:n=>base=n}},document:dom.window.document,toolSync:sync,rail:{refresh(){}},placeTools:()=>sync.forEach(f=>f())});
   sync.forEach(f=>f());assert.equal(node.querySelectorAll('.may-snap-part').length,4);assert.equal(wrong.children.length,0);node.lastChild.click();assert.equal(base,3);dom.window.close();
+});
+test('overview appears beside 1:1 while old zoom pins still resolve their original slots',()=>{
+ const e=setup({},true),cells=e.soty.children;
+ assert.equal(cells[cells.indexOf(e.nodes.zLimit)+1],e.nodes.zOverview);assert.equal(e.nodes.zOverview.dataset.n,'zOverview');
+ for(const [slot,id] of e.zoomIds.entries())assert.equal(e.ctx.legacyPin('zoom',slot),e.nodes[id]);
+ e.nodes.zOverview.click();assert.equal(e.counts.zOverview,1);
 });

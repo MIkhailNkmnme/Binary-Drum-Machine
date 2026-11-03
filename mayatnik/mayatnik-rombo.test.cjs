@@ -286,3 +286,15 @@ test('cropped first-tile and full-container hits map to the same source and phys
  const p=h.api.plan(),br=h.box.getBoundingClientRect(),native={x:15.25,y:2.25},q=p.forward(R.point(p.parts[0].matrix,native)),screen={x:br.left+q.x*unit,y:br.top+q.y*unit};
  const e=h.event('pointermove',screen.x,screen.y);near(e.clientX,h.r.left+native.x*unit);near(e.clientY,h.r.top+native.y*unit);assert.deepEqual(h.api.physicalPoint(e),screen);
 });
+
+
+test('overview minification copies only source palette and identical global pixels across regional seams',()=>{
+ const source=nativePixels(31,8),palette=new Set(['0,0,0,255',...Array.from({length:31*8},(_,i)=>rgba(source,i).join(','))]);
+ for(const {id:assembly}of R.variants)for(let angle=0;angle<360;angle+=45)for(const quality of [.125,.3,.75]){
+  const p=R.plan(31,8,{assembly,angle},{sides:true}),full=R.rasterPixels(p,source,quality);
+  for(let i=0;i<full.width*full.height;i++)assert.ok(palette.has(rgba(full,i).join(',')));
+  for(let y=0;y<full.height;y+=3)for(let x=0;x<full.width;x+=4){const region={x,y,width:Math.min(4,full.width-x),height:Math.min(3,full.height-y)},tile=R.rasterPixels(p,source,quality,{region});
+   for(let v=0;v<region.height;v++)assert.deepEqual(tile.data.subarray(v*region.width*4,(v+1)*region.width*4),full.data.subarray(((y+v)*full.width+x)*4,((y+v)*full.width+x+region.width)*4));
+  }
+ }
+});

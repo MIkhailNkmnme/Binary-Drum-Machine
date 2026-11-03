@@ -31,3 +31,36 @@ test('viewport host display limits and exact full export budgets stay independen
 test('viewport export retains an explicitly locked physical one-to-one scale',()=>{
  const h=Host.create({viewport:true,getState:()=>({zLimit:true}),getGeometry:()=>({width:100,height:50,dpr:2})});assert.equal(h.exportScale(),1);assert.equal(h.snap(512),.5);
 });
+
+
+test('overview host keeps full exports strict while display and saved scales may be smaller',()=>{
+ const state={zOverview:true},api=Host.create({viewport:true,getState:()=>state,getGeometry:()=>({width:1024,height:512})});
+ assert.equal(api.snap(.125),.125);assert.equal(api.format(.125),'1/8');assert.equal(api.exportScale(),2);
+ state.zOverview=false;assert.equal(api.snap(.125),1);state.zLimit=true;state.zOverview=true;assert.equal(api.policyFor().overview,false);assert.equal(api.exportScale(),1);
+});
+test('overview samples the physical centre at 2/3 pitch without refitting the short axis',()=>{
+ const data=Uint8ClampedArray.from([1,2,3,4,5,6].flatMap(v=>[v,10+v,250-v,200+v]));
+ const src={width:3,height:2,data},view=Host.sampleViewport(src,2,2,{scale:2/3});
+ assert.deepEqual([...view.data],[1,11,249,201,3,13,247,203,0,0,0,0,0,0,0,0]);
+ const shifted=Host.sampleViewport(src,2,1,{scale:2/3,y:.5});
+ assert.deepEqual([...shifted.data],[4,14,246,204,6,16,244,206]);
+});
+test('a small viewport addresses a large source by its global offset and preserves its RGBA palette',()=>{
+ const w=8000,h=2200,data=new Uint8ClampedArray(w*h*4),src={width:w,height:h,data};
+ const scale=.75,x=5997.25,y=1648.25,expected=[];
+ for(let Y=0;Y<3;Y++)for(let X=0;X<4;X++){
+   const sx=Math.floor((x+X+.5)/scale),sy=Math.floor((y+Y+.5)/scale);
+   if(sx>=w||sy>=h){expected.push(0,0,0,0);continue;}
+   const pixel=[sx%251,sy%239,60+X,130+Y];data.set(pixel,4*(sy*w+sx));expected.push(...pixel);
+ }
+ const out=Host.sampleViewport(src,4,3,{scale,x,y});
+ assert.equal(out.data.length,48);assert.deepEqual([...out.data],expected);
+});
+test('negative viewport offsets and unaligned source views leave only the outside pixels transparent',()=>{
+ const data=new Uint8ClampedArray(new ArrayBuffer(9),1,8);data.set([10,20,30,40,91,92,93,94]);
+ const src={width:2,height:1,data},sample=Host.sampleViewport(src,4,2,{scale:1,x:-1.25,y:-1});
+ assert.deepEqual([...sample.data],[...Array(16).fill(0),0,0,0,0,10,20,30,40,91,92,93,94,0,0,0,0]);
+ for(const options of [{scale:0},{scale:Infinity},{scale:1,x:NaN}])assert.throws(()=>Host.sampleViewport(src,1,1,options),RangeError);
+ assert.throws(()=>Host.sampleViewport(src,16385,1,{scale:1}),RangeError);
+ assert.throws(()=>Host.sampleViewport({...src,width:3},1,1,{scale:1}),RangeError);
+});

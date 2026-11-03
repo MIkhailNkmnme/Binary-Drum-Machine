@@ -94,3 +94,16 @@ test('viewport display keeps the exact lattice through 512 regardless of whole r
  assert.equal(g.policy({width:1024,height:512}).maxK,5);assert.equal(g.policy({width:1024,height:512,viewport:true}).maxK,512);
  assert.equal(g.policy({width:1024,height:512,viewport:true,oneToOne:true}).maxK,1);
 });
+
+
+test('overview uses small rational steps without weakening the exact lattice or physical 1:1',()=>{
+ for(const angle of [0,45,90,135,180,225,270,315])for(const dpr of [1,1.25,2]){
+  const p=g.policy({width:1024,height:512,angle,dpr,viewport:true,overview:true});assert.ok(p.minScale<p.exactMinScale);
+  let scale=p.exactMinScale;for(let i=0;i<24;i++){const next=g.step(scale,p,-1);assert.ok(next<=scale);scale=next;const r=g.raster(scale,p);assert.ok(r);assert.ok(r.overview);assert.ok(g.format(scale,p).includes('/'));}
+  const enlarged=g.snap(512,p);assert.ok(enlarged>scale);assert.ok(!g.raster(enlarged,p).overview);
+  assert.equal(g.snap(1e-100,p),p.minScale);assert.equal(g.raster(p.minScale/2,p),null);
+  const locked=g.policy({...p,oneToOne:true});if(angle%90===0){assert.equal(locked.overview,false);assert.equal(locked.minScale,1/dpr);}
+ }
+ const p=g.policy({width:1024,height:512,viewport:true,overview:true});assert.equal(g.format(g.snap(.25,p),p),'1/4');assert.equal(g.format(g.snap(.125,p),p),'1/8');
+ const exact=g.policy({width:1024,height:512,viewport:true});assert.equal(g.snap(.125,exact),1);
+});

@@ -22,7 +22,7 @@
     const [wn,wd]=binary(width),[pn,pd]=binary(dpr);let n=wn*pn,d=wd*pd*BigInt(columns),a=n,b=d;while(b){const r=a%b;a=b;b=r;}return (n/a)+'/'+(d/a);
   }
   function frameZoomLabel(frame){
-    return frame.dataset.pixelExact==='true'?(frame.dataset.zoomExact||''):exactZoomFraction(Number(frame.dataset.zoomWidth),Number(frame.dataset.zoomColumns),Number(frame.dataset.zoomDpr));
+    return frame.dataset.pixelExact==='true'?((frame.dataset.zoomOverview==='true'?'Обзор ':'')+(frame.dataset.zoomExact||'')):exactZoomFraction(Number(frame.dataset.zoomWidth),Number(frame.dataset.zoomColumns),Number(frame.dataset.zoomDpr));
   }
   function renderFrameCaption(caption,parts){
     const text=parts.join(' · ');if(caption.dataset.captionText===text)return;caption.dataset.captionText=text;
@@ -121,7 +121,7 @@
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
-      button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line') ] },
+      button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line'), button('zOverview', 'eye') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
@@ -311,7 +311,7 @@
         if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
         renderFrameCaption(caption,[...type.split(' · '),rows+' строк',([2,4,6,8].includes(factor)?factor+'N−1=':'ширина ')+width,...($('frame').dataset.pixelExact==='true'?[$('frame').dataset.pixelExactError?'Точная сетка: ограничение':'Точно']:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
       };
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
@@ -1184,6 +1184,8 @@
     const ids=['zLines','zVert','zHoriz','zDiag','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler','bFoldCompare'];
     const nodes=new Map(ids.map(id=>[id,railButtons.get(id)||tools.querySelector('[data-n="'+id+'"]')]).filter(([,node])=>node));
     const zoom=railButtons.get('zLines')?.closest('.gz-group');if(zoom)manualLegacyCells.set(zoom.dataset.id,[...zoom.querySelectorAll('.gz-soty > .gz-hx')]);
+    const overview=railButtons.get('zOverview');
+    if(overview){overview.dataset.n='zOverview';railButtons.get('zLimit')?.after(overview);}
     const moves=[];
     // zSnap остаётся в Масштабе: его прежний номер ячейки меняется, поэтому тоже получает стабильный ключ.
     for(const [id,node]of [...nodes,...(railButtons.has('zSnap')?[['zSnap',railButtons.get('zSnap')]]:[])]){

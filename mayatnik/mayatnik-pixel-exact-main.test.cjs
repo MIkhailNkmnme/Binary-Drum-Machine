@@ -48,3 +48,48 @@ test('production Rombo decreases by minus and by wheel from large scales down to
   assert.ok(Math.abs(c.currentScale()-p.minScale)<1e-9);close();
  }
 });
+
+
+test('overview button enables shrinking Rombo, restores exact minimum on exit, and preserves the independent lock',()=>{
+ const {c,close}=fixture();c.VW=1023;c.VH=512;c.f.W=1023;c.st.edgeRhombOn=true;c.st.zsnap=false;c.st.zoom=2;
+ const a=html.indexOf('  window.mayOverview='),b=html.indexOf('  zLockSync();',a);assert.ok(a>0&&b>a);vm.runInContext(html.slice(a,b),c);
+ vm.runInContext(lines.find(l=>l.includes("$('zLimit').onclick =")),c);
+ c.st.zLimit=true;c.st.zLock=true;c.window.mayOverview.set(true);assert.equal(c.st.zLimit,false);assert.equal(c.st.zLock,true);assert.equal(c.$('zOverview').getAttribute('aria-pressed'),'true');
+ c.st.zLock=false;c.zoomTo(.125,100,100,true);assert.equal(c.currentScale(),.125);assert.equal(c.$('frame').dataset.zoomOverview,'true');
+ c.window.mayOverview.set(false);assert.equal(c.currentScale(),1);assert.equal(c.st.zOverview,false);
+ c.window.mayOverview.set(true);c.st.romboAngle=45;c.zoomTo(.1,100,100,true);assert.ok(c.currentScale()<1);c.$('zLimit').onclick();assert.equal(c.st.zLimit,false);assert.equal(c.st.zOverview,true);
+ c.st.romboAngle=0;c.$('zLimit').onclick();assert.equal(c.st.zLimit,true);assert.equal(c.st.zOverview,false);assert.equal(c.$('zOverview').getAttribute('aria-pressed'),'false');close();
+});
+
+
+test('overview retains fit bindings through toggles and viewport resize',()=>{
+ const {c,close}=fixture();c.VW=2047;c.VH=512;c.f.W=2047;c.st.edgeRhombOn=true;c.st.zsnap=false;c.st.zoom='fit';
+ const a=html.indexOf('  window.mayOverview='),b=html.indexOf('  zLockSync();',a);vm.runInContext(html.slice(a,b),c);
+ c.window.mayOverview.set(true);assert.equal(c.st.zoom,'fit');const before=c.currentScale();assert.ok(before<1);c.wrap.clientWidth=400;c.cssLayout();assert.equal(c.st.zoom,'fit');assert.ok(c.currentScale()<before);
+ c.window.mayOverview.set(false);assert.equal(c.st.zoom,'fit');assert.ok(c.currentScale()>=1);close();
+});
+
+test('overview present preserves the native source instead of allocating a whole minified intermediate',()=>{
+ for(const [width,height,zoom]of [[3,2,2/3],[8191,4096,.9]]){
+  const {c,close}=fixture();c.VW=width;c.VH=height;c.f.W=width;c.f.H=height;c.st.zoom=zoom;c.st.zsnap=false;c.st.zOverview=true;c.RK=1;c.img={};
+  const pic={width,height,data:new Uint8ClampedArray(4)},puts=[];Object.assign(c,{g:{putImageData:(...args)=>puts.push(args)},layerCpuService:null,gpuDisplay:()=>false,pxView:()=>pic,
+   snakePathRefresh(){},layerOriginalDigits(){},layerOriginalBase(){},align(){},anchorDash(){},vtxLabelsDraw(){},notifyXorromField(){}});c.window.mayLayers={};c.cssLayout();vm.runInContext(fn('present'),c);c.present(true);
+  assert.equal(c.cv.width,width);assert.equal(c.cv.height,height);assert.equal(puts[0][0],pic);assert.equal(c.present.clean.pic,pic);assert.equal(parseFloat(c.cv.style.width),width*c.currentScale());close();
+ }
+});
+
+test('overview layer copies physical pixel centres directly and never rescales an intermediate bitmap',()=>{
+ const image={width:3,height:2,data:Uint8ClampedArray.from({length:24},(_,i)=>i)},owner={},cv={getBoundingClientRect:()=>({left:0,top:0,width:2,height:4/3})};let shown;
+ const G={setTransform(){},putImageData(value){shown=value;},drawImage(){throw Error('intermediate rescale forbidden');}},canvas={getContext:()=>G};
+ const c={window:{mayLayers:{},mayPixelExact:{policyFor:()=>({overview:true})}},DPR:()=>1,RK:1,cv,img:owner,present:{romboNative:{owner,pic:image}},layerBase:null,layerViewport:()=>({left:0,top:0,width:2,height:1}),
+  scale:()=>2/3,layerCanvas:(old,width,height)=>Object.assign(canvas,{width,height}),layerOriginalCompose(){},MayatnikPixelExactHost:require('./mayatnik-pixel-exact-host.js'),ImageData:class{constructor(data,width,height){Object.assign(this,{data,width,height});}}};
+ vm.runInNewContext(fn('layerOriginalBase'),c);c.layerOriginalBase(cv);assert.deepEqual(Array.from(shown.data),[...image.data.subarray(0,4),...image.data.subarray(8,12)]);
+});
+
+
+test('overview overlay bits reuse physical nearest pixels without large canvases or colour averaging',()=>{
+ const pic={width:3,height:2,data:Uint8ClampedArray.from([255,255,255,255,100,100,100,255,255,255,255,255,100,100,100,255,255,255,255,255,100,100,100,255])};
+ const c={VW:3,VH:2,VX:0,RK:1,f:{W:3},geo:{anchor:1},st:{zOverview:true},k:1,ovlSerial:0,scale:()=>2/3,DPR:()=>1,present:{clean:{pic}},cv:{getBoundingClientRect:()=>({left:0,top:0})},layerViewport:()=>({left:0,top:0}),
+  PAL:{bits:[[[100,100,100]],[[255,255,255]]]},rgba:rgb=>((255<<24)|(rgb[2]<<16)|(rgb[1]<<8)|rgb[0])>>>0,parityVisible:()=>true,outShow:()=>false,ochkiMeetingPoints:()=>[],document:{createElement(){throw Error('full-frame allocation forbidden');}}};
+ vm.runInNewContext(fn('ovlBitsNow'),c);const result=c.ovlBitsNow();assert.ok(result);assert.deepEqual(Array.from(result.val),[1,1,1,-1,-1,-1]);assert.equal(c.ovlSerial,1);
+});
