@@ -908,7 +908,7 @@
     toolSync.push(() => { const on = !!window.maySectors?.get(); bSc.classList.toggle('on', on); bSc.title = 'Секторы вокруг точки встречи «Застыло»: верхний — застыл, больше не меняется (синий); нижний — меняется на каждом шаге (красный); левый / правый — только когда маятник на своей стороне, через шаг (жёлтые; когда вершин по сторонам не поровну — правый зелёный) · ' + (on ? 'вкл' : 'выкл'); });
     // v0.261: «Карта тепла» — серии изменений подряд и остывание
     const htp = document.createElement('button'); htp.title = 'Тепло'; const bHt = ptBtn('heat', 'drop', htp, () => { const T = window.mayHeat; T?.set(!T.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.mayHeat?.get(); bHt.classList.toggle('on', on); bHt.title = 'Тепло: изменения бита нагревают клетку. Без новых изменений она бледнеет за 2 секунды, даже на паузе; холодный 0 — синий, 1 — ледяной белый. Исходные биты сохраняются · ' + (on ? 'вкл' : 'выкл'); });
+    toolSync.push(() => { const on = !!window.mayHeat?.get(); bHt.classList.toggle('on', on); bHt.title = 'Тепло: на каждом кадре смена бита повышает температуру на одну ступень, повтор понижает на одну. На паузе цвет сохраняется. Окраска: все, только 1, только 0 или чередование. ·' + (on ? 'вкл' : 'выкл'); bHt.setAttribute('aria-label',bHt.title); });
     // v0.259: «Вспышка вершины» — на каждом шаге конус новой вершины золотом на секунду
     const vfp = document.createElement('button'); vfp.title = 'Вспышка'; const bVf = ptBtn('vtxFlash', 'bolt', vfp, () => { const V = window.mayVtxFlash; V?.set(!V.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayVtxFlash?.get(); bVf.classList.toggle('on', on); bVf.title = 'Вспышка: конус нового хода, в Аниматрице — реально изменённые клетки. Работает в перескоке, отскоке и ромбах; затухает за 1,3 секунды · ' + (on ? 'вкл' : 'выкл'); });
@@ -1118,6 +1118,40 @@
   // Independent effects share the last standard row of Field View.
   {const pair=document.createElement('div');pair.className='gz-hx gz-pair gz-split may-view-effects';pair.dataset.n='viewEffects';pair.setAttribute('role','group');pair.setAttribute('aria-label','Вспышка и тепло');
     for(const [i,n]of ['vtxFlash','heat'].entries()){const e=gView.querySelector('[data-n="'+n+'"]');if(!e)continue;e.classList.remove('pt-b','gz-hx');e.classList.add('gz-half','gz-h'+i);pair.append(e);}if(pair.children.length){gModes.append(pair);toolSync.push(()=>{for(const e of pair.children){const on=e.classList.contains('on');e.classList.toggle('gz-on',on);e.setAttribute('aria-pressed',String(on));}});}}
+  function installHeatChoices(parent){
+    const anchor=parent.querySelector('[data-n="viewEffects"]');if(!anchor)return;
+    const describe=(node,text)=>{node.title=text;node.setAttribute('aria-label',text);};
+    const api=()=>window.mayHeat,readMode=()=>api()?.getMode?.()||'all';
+    const row=document.createElement('div');row.className='gz-hx gz-pair gz-split gz-split4 may-segments';row.dataset.n='heatMode';row.setAttribute('role','group');describe(row,'Какие биты окрашивать теплом');
+    const choices=[['all','Все','Окрашивать теплом все биты'],['one','1','Окрашивать теплом только единицы'],['zero','0','Окрашивать теплом только нули'],['alternate','1↔0','Поочерёдно окрашивать единицы и нули через заданное число кадров']];
+    const parts=choices.map(([mode,label,help],i)=>{const part=document.createElement('button');part.type='button';part.className='gz-half gz-h'+i;part.textContent=label;describe(part,help);part.onclick=event=>{event.stopPropagation();if(part.disabled)return;api()?.setMode?.(mode);sync();placeTools();};row.append(part);return part;});
+    const box=document.createElement('div');box.className='gz-hx gz-control gz-val may-standard';box.dataset.n='heatPeriod';describe(box,'Период чередования нагрева единиц и нулей: от 1 до 64 кадров; действует в режиме 1↔0');
+    const input=document.createElement('input');input.type='range';input.id='mayHeatPeriod';input.min='1';input.max='64';input.step='1';input.setAttribute('aria-label','Период чередования нагрева, кадров');
+    const middle=document.createElement('label');middle.className='gz-mid';middle.htmlFor=input.id;const output=document.createElement('output');output.htmlFor=input.id;middle.append(input,output);
+    const period=()=>Math.max(1,Math.min(64,Math.round(Number(api()?.getPeriod?.())||1)));
+    const change=value=>{if(input.disabled)return;api()?.setPeriod?.(Math.max(1,Math.min(64,Math.round(Number(value)||1))));sync();};
+    input.addEventListener('input',()=>change(input.value));
+    const arrows=[-1,1].map(delta=>{const button=document.createElement('button');button.type='button';button.className='gz-a';button.textContent=delta<0?'‹':'›';describe(button,delta<0?'Уменьшить период чередования нагрева на один кадр':'Увеличить период чередования нагрева на один кадр');
+      let repeated=false,timer=0;const step=()=>{if(!button.disabled)change(period()+delta);};button.onclick=event=>{if(!repeated||!event.detail)step();repeated=false;};
+      button.addEventListener('pointerdown',event=>{
+        if(event.button!==0||button.disabled)return;
+        repeated=false;clearTimeout(timer);
+        const listeners=new AbortController();
+        const stop=()=>{clearTimeout(timer);listeners.abort();};
+        const again=()=>{
+          if(button.disabled){stop();return;}
+          repeated=true;step();timer=setTimeout(again,80);
+        };
+        timer=setTimeout(again,350);
+        for(const name of ['pointerup','pointercancel','blur'])addEventListener(name,stop,{signal:listeners.signal});
+      });return button;});
+    box.append(arrows[0],middle,arrows[1]);const frame=ZerkControlFrame.attach(box,arrows[0],middle,arrows[1],{input,output});
+    anchor.after(row,box);
+    function sync(){const mode=readMode(),available=typeof api()?.setMode==='function';parts.forEach((part,i)=>{const on=mode===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.disabled=!available;part.setAttribute('aria-disabled',String(!available));});
+      const disabled=mode!=='alternate'||typeof api()?.setPeriod!=='function';box.classList.toggle('gz-off-dis',disabled);box.setAttribute('aria-disabled',String(disabled));input.disabled=disabled;arrows.forEach(button=>button.disabled=disabled);const value=String(period());if(input.value!==value)input.value=value;if(output.textContent!==value)output.textContent=value;frame.sync();}
+    toolSync.push(sync);sync();
+  }
+  installHeatChoices(gModes);
   { const owner=gModes.querySelector('[data-view-overlay="contours"]'),mode=gModes.querySelector('[data-n="bitContourMode"]'),colours=gModes.querySelector('[data-n="bitContourColours"]');
     if(owner&&mode&&colours){const group=document.createElement('div');group.className='may-contours-group';group.setAttribute('role','group');group.setAttribute('aria-label','Контуры: включение, способ обводки и цвета');
       const frame=document.createElementNS('http://www.w3.org/2000/svg','svg');frame.classList.add('may-contours-frame');frame.setAttribute('viewBox','0 0 124 80');frame.setAttribute('aria-hidden','true');frame.innerHTML='<path d="M14 1H110L123 14 117 27 123 40 117 53 123 66 110 79H14L1 66 7 53 1 40 7 27 1 14Z"/>';

@@ -30,20 +30,19 @@ function harness(){
     visible(){h.img={width:4,height:1,data:new Uint8ClampedArray(h.shown.buffer)};return Array.from(vm.runInContext('new Uint32Array(pxView().data.buffer)',h));},
     tick(){const [id,fn]=timers.entries().next().value;timers.delete(id);fn();}};
 }
-test('native heat host cools on PAUSE from clean raster without moving frame, painting or changing source bits',()=>{
-  const t=harness(),h=t.h;t.draw();assert.equal(h.shown[2],9);
-  t.time=100;h.f.val[0]=1;h.f.val[1]=0;h.k=1;t.draw();
-  const hot=Array.from(h.shown),source=Array.from(h.f.val);assert.equal(t.timers.size,1);
-  t.time=1100;t.tick();const middle=Array.from(h.shown);assert.notDeepEqual(middle,hot);
-  t.draw();assert.deepEqual(Array.from(h.shown),middle,'same time redraw has no cumulative mixing');
-  t.time=2100;t.tick();assert.deepEqual(Array.from(h.shown),[h.MayatnikHeat.cold[1],h.MayatnikHeat.cold[0],9,h.MayatnikHeat.cold[0]]);
-  assert.equal(t.timers.size,0);assert.equal(h.k,1);assert.equal(h.paints,0);assert.deepEqual(Array.from(h.f.val),source);
+test('pause and repeated redraw hold the colour, the next unchanged frame cools one step',()=>{
+  const t=harness(),h=t.h;t.draw();h.f.val[0]=1;h.k=1;t.draw();
+  const hot=Array.from(h.shown);assert.notEqual(hot[0],h.MayatnikHeat.cold[1]);
+  t.time=86400000;t.draw();assert.deepEqual(Array.from(h.shown),hot);assert.equal(t.timers.size,0);
+  h.k++;t.draw();assert.equal(h.shown[0],h.MayatnikHeat.cold[1]);assert.equal(h.f.val[0],1);
 });
-test('off restores ordinary pixels; hidden expiration redraws once on resume',()=>{
-  const t=harness(),h=t.h;t.draw();h.k=1;h.f.val[0]=1;t.draw();
-  h.document.hidden=true;t.events.visibilitychange();assert.equal(t.timers.size,0);
-  t.time=3000;h.document.hidden=false;const before=h.draws;t.events.visibilitychange();
-  assert.equal(h.draws,before+1);assert.equal(h.shown[0],h.MayatnikHeat.cold[1]);assert.equal(t.timers.size,0);
+test('one, zero and alternating colour only the selected bit, off restores the ordinary raster',()=>{
+  const t=harness(),h=t.h;h.st.heatMode='one';t.draw();assert.equal(h.shown[0],7);assert.equal(h.shown[1],h.MayatnikHeat.cold[1]);
+  h.st.heatMode='zero';t.draw();assert.equal(h.shown[0],h.MayatnikHeat.cold[0]);assert.equal(h.shown[1],8);
+  h.st.heatMode='alternate';h.st.heatPeriod=2;
+  for(const [k,selected] of [[1,1],[2,1],[3,0],[4,0],[5,1]]){
+    h.k=k;t.draw();assert.equal(h.shown[0],selected?7:h.MayatnikHeat.cold[0]);assert.equal(h.shown[1],selected?h.MayatnikHeat.cold[1]:8);
+  }
   h.st.heat=false;t.draw();assert.deepEqual(Array.from(h.shown),[7,8,9,10]);
 });
 test('plain and assembled Rombo both use native drawPost heat before presentation',()=>{
@@ -58,8 +57,8 @@ test('RGB class exclusions remain empty through warm, cooling and cold redraws; 
   h.drawBase=new Uint32Array([0xff050505,0xffffffff,0xff050505,0xff050505]);t.draw();
   const source=Array.from(h.f.val);assert.equal(h.shown[0],h.drawBase[0]);assert.equal(h.shown[3],h.drawBase[3]);
   h.k++;h.f.val[0]=1;h.f.val[1]=0;t.draw();assert.equal(h.shown[0],h.drawBase[0]);
-  t.time=1000;t.tick();assert.equal(h.shown[0],h.drawBase[0]);
-  t.time=2000;t.tick();assert.equal(h.shown[0],h.drawBase[0]);assert.equal(t.timers.size,0);
+  h.k++;t.draw();assert.equal(h.shown[0],h.drawBase[0]);
+  h.k++;t.draw();assert.equal(h.shown[0],h.drawBase[0]);assert.equal(t.timers.size,0);
   assert.equal(h.shown[1],h.MayatnikHeat.cold[0]);
   h.st.rgbNeighbourBW=1;t.draw();assert.equal(h.shown[0],h.MayatnikHeat.cold[1]);
   assert.equal(h.f.val[2],source[2]);
@@ -76,6 +75,6 @@ test('hidden unpainted base colours stay untouched, genuine paint remains eligib
   t.draw();assert.equal(h.shown[0],animation,'heat preserves the animation baseline hiding decision');
   assert.equal(t.visible()[0],0xff050505,'actual pxView falls back through animation to hidden original');
   assert.equal(h.shown[1],h.MayatnikHeat.cold[1]);
-  h.k++;h.f.val[0]=1;t.draw();t.time=2000;t.tick();assert.equal(h.shown[0],animation);
+  h.k++;h.f.val[0]=1;t.draw();h.k++;t.draw();assert.equal(h.shown[0],animation);
   assert.equal(t.timers.size,0);
 });
