@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.015</title>
-<!-- АзъБукъ — v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.016</title>
+<!-- АзъБукъ — v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -22,8 +22,8 @@
   #head svg{max-width:100%;height:auto}
   .ver{flex:none;font-size:10px;color:var(--dim);letter-spacing:.08em}
   .bar{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  .bar button{display:inline-flex;align-items:center;justify-content:center;max-width:100%}
-  .bar button svg{width:auto;max-width:100%;max-height:18px;pointer-events:none}
+  .bar button,.tools button{display:inline-flex;align-items:center;justify-content:center;max-width:100%}
+  .bar button svg,.tools button svg{width:auto;max-width:100%;max-height:18px;pointer-events:none}
   .bar .lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 2px 0 8px}
   button{background:var(--btn);color:var(--ink);border:1px solid var(--line);height:26px;min-width:34px;
     font:11px/1 "Segoe UI";cursor:pointer;padding:0 10px;
@@ -60,14 +60,14 @@
 <header>
   <div class="title">
     <div id="head" role="heading" aria-level="1" aria-label="АзъБукъ"></div>
-    <span class="ver">v0.015</span>
+    <span class="ver">v0.016</span>
   </div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><button id="theme">цвет: фиолет</button>
     <span class="lbl">толщина</span>
     <button data-set="bold" class="on">обычная</button>
     <button data-set="thin" title="Тонкое начертание букв">тонкая</button>
-    <label class="lbl" for="track" title="Зазор в долях ширины буквы">зазор</label><input id="track" type="range" title="Зазор в долях ширины буквы" min="0" max="1" step="0.01" value="0.12"><span id="trackVal" style="font-size:11px;color:var(--dim);min-width:34px">0,12</span><span class="lbl">сетка</span><button data-lat="tri" class="on">ромбы</button><button data-lat="sq">квадрат</button><span class="lbl">ячейка</span>
+    <label class="lbl" for="track" title="Зазор в ячейках сетки, до ширины предыдущей буквы">зазор</label><input id="track" type="range" title="Зазор в ячейках сетки, до ширины предыдущей буквы" min="0" max="8" step="1" value="1"><span id="trackVal" style="font-size:11px;color:var(--dim);min-width:34px">1</span><span class="lbl">сетка</span><button data-lat="tri" class="on">ромбы</button><button data-lat="sq">квадрат</button><span class="lbl">ячейка</span>
     <button data-cell="1">1</button><button data-cell="2">2</button><button data-cell="3">3</button><button data-cell="4" class="on">4</button><button data-cell="6">6</button><button data-cell="8">8</button><button data-cell="16">16</button>
   </div>
 </header>
@@ -288,9 +288,9 @@ let editChar = 'А';
 
 let lattice = 'tri';
 const trk = document.getElementById('track');
-const savedTrack = localStorage.getItem('azbuk-track');
-if (savedTrack !== null && Number.isFinite(Number(savedTrack))) trk.value = savedTrack;
-let track = trk.valueAsNumber;
+const trackKey = 'azbuk-track-cells';
+const savedTrack = Number(localStorage.getItem(trackKey) ?? 1);
+let track = Number.isSafeInteger(savedTrack) && savedTrack >= 0 ? savedTrack : 1;
 const trackVal = document.getElementById('trackVal');
 
 function glyphShape(ch) {
@@ -335,10 +335,10 @@ function glyphShape(ch) {
   const occupied = edges.filter(Boolean);
   const left = occupied.length ? Math.min(...occupied.map(e => e.left)) : 0;
   const right = occupied.length ? Math.max(...occupied.map(e => e.right)) + slope : w;
-  return { h, edges, left, right, paths };
+  return { h, w, edges, left, right, paths };
 }
 
-function lettering(text, cell, maxWidth = Infinity) {
+function lettering(text, cell, gapCells = 1, maxWidth = Infinity) {
   const lines = [];
   let placed = [], frontier = new Map(), width = 0, height = 0, gap = 0;
   function finishLine() {
@@ -372,7 +372,7 @@ function lettering(text, cell, maxWidth = Infinity) {
     shape.edges.forEach((edge, y) => frontier.set(y - shape.h, x + edge.right));
     height = Math.max(height, shape.h);
     width = Math.max(width, x + shape.right);
-    gap = (shape.right - shape.left) * track;
+    gap = Math.min(gapCells, shape.w);
     if (!shape.edges.length) {
       // Пустой знак из редактора сохраняет собственное место.
       frontier.clear();
@@ -387,15 +387,24 @@ const btn = (text, cell, style) => '<div class="pbtn" style="' + style + '">' + 
 
 function renderButtonLabel(button, label, cell) {
   button.setAttribute('aria-label', label);
-  button.innerHTML = lettering(label, cell);
+  button.innerHTML = lettering(label.replaceAll('−', '-'), cell);
 }
 
 function renderSheet(cell) {
+  const letterWidths = [...(UPPER + LOWER + LATU + LATL)].map(ch =>
+    Math.max(...G[activeSet][ch].map(row => row.length)));
+  trk.max = Math.max(1, ...letterWidths);
+  trk.value = track;
+  trackVal.textContent = trk.value;
   document.getElementById('head').innerHTML = btn('АЗЪ', 4, 'height:38px') + btn('БУКЪ', 4, 'height:38px');
-  document.querySelectorAll('.bar button').forEach(button => {
+  document.querySelectorAll('.bar button, .tools button').forEach(button => {
     const label = button.getAttribute('aria-label') || button.textContent;
     renderButtonLabel(button, label, cell);
   });
+  renderAlphabet(cell);
+}
+
+function renderAlphabet(cell) {
   document.getElementById('sheet').innerHTML = [
     '<section><h2>Кириллица</h2>' + row(UPPER) + row(LOWER) + '</section>',
     '<section><h2>Латиница</h2>' + row(LATU) + row(LATL) + '</section>',
@@ -404,7 +413,7 @@ function renderSheet(cell) {
   ].join('');
   const rows = document.querySelectorAll('#sheet .row');
   const maxWidth = rows[0].getBoundingClientRect().width;
-  rows.forEach(el => { el.innerHTML = lettering(el.textContent, cell, maxWidth); });
+  rows.forEach(el => { el.innerHTML = lettering(el.textContent, cell, trk.valueAsNumber, maxWidth); });
 }
 
 function renderChars() {
@@ -486,7 +495,7 @@ document.getElementById('addRow').onclick = mod(r => normalize([...r, '0'.repeat
 document.getElementById('delRow').onclick = mod(r => normalize(r.length > 1 ? r.slice(0, -1) : r));
 document.getElementById('resetChar').onclick = () => { if (BASE[activeSet][editChar]) { G[activeSet][editChar] = BASE[activeSet][editChar].slice(); delete EDITS[activeSet][editChar]; localStorage.setItem(KEY, JSON.stringify(EDITS)); } renderEditor(); renderSheet(cellSize); };
 document.getElementById('resetAll').onclick = () => { EDITS = { bold: {}, thin: {} }; localStorage.removeItem(KEY); for (const s of ['bold','thin']) for (const [ch, rows] of Object.entries(BASE[s])) G[s][ch] = rows.slice(); renderEditor(); renderSheet(cellSize); };
-document.getElementById('save').onclick = () => { commit(); const b = document.getElementById('save'); b.textContent = 'Сохранено'; setTimeout(() => b.textContent = 'Сохранить', 1200); };
+document.getElementById('save').onclick = () => { commit(); const b = document.getElementById('save'); renderButtonLabel(b, 'Сохранено', cellSize); setTimeout(() => renderButtonLabel(b, 'Сохранить', cellSize), 1200); };
 document.getElementById('download').onclick = () => {
   const a = document.createElement('a');
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({ bold: G.bold, thin: G.thin }));
@@ -552,12 +561,11 @@ new ResizeObserver(([entry]) => {
   }
 }).observe(document.getElementById('sheet'));
 
-trackVal.textContent = track.toLocaleString('ru-RU');
 trk.addEventListener('input', () => {
   track = trk.valueAsNumber;
-  trackVal.textContent = track.toLocaleString('ru-RU');
-  localStorage.setItem('azbuk-track', String(track));
-  renderSheet(cellSize);
+  trackVal.textContent = trk.value;
+  localStorage.setItem(trackKey, trk.value);
+  renderAlphabet(cellSize);
 });
 
 if (location.search.includes('edit')) {
