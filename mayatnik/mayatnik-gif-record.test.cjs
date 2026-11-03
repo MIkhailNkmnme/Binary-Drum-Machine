@@ -18,6 +18,14 @@ test('encoder decodes noisy pixels across LZW resets, coalesces equal frames and
  const long=Gif.encoder(1,1);long.add(rgba([0,0,0]),65535);long.add(rgba([0,0,0]),1);assert.deepEqual((await decode(long.finish())).map(f=>f.delay),[655350,10]);
 });
 test('encoder refuses empty and malformed exports before producing a misleading GIF',()=>{for(const [w,h]of [[0,1],[1,0],[65536,1],[1.5,1]])assert.throws(()=>Gif.encoder(w,h));const e=Gif.encoder(1,1);assert.throws(()=>e.finish(),/нет кадров/);assert.throws(()=>e.add(new Uint8Array(3),1),/пиксели/);assert.throws(()=>e.add(rgba([0,0,0]),NaN),/длительность/);});
+
+test('static strip frames decode exactly like GIF images, including palette and coalesced repeats',async()=>{
+ const e=Gif.encoder(3,2);assert.throws(()=>e.frame(),/нет кадров/);
+ e.add(rgba([147,81,133],6),12);const first=e.frame();e.add(rgba([147,81,133],6),12);const repeated=e.frame();
+ e.add(rgba([25,240,57],6),12);const last=e.frame(),animation=await decode(e.finish());
+ for(const [blob,index]of [[first,0],[repeated,0],[last,1]]){const frames=await decode(blob);assert.equal(frames.length,1);assert.deepEqual(frames[0].pixels,animation[index].pixels);assert.equal(frames[0].width,3);assert.equal(frames[0].height,2);}
+ assert.deepEqual(Buffer.from(await first.arrayBuffer()),Buffer.from(await repeated.arrayBuffer()));assert.equal(animation.length,2);
+});
 function fixture(){
  let time=0,nextTimer=0,source=rgba([255,0,0]),worker,done=0,errors=0,result,captures=0,captureError=false;const timers=new Map();
  class Worker{constructor(){worker=this;this.messages=[];this.terminated=false;}postMessage(message){this.messages.push(message);}terminate(){this.terminated=true;}respond(){const m=this.messages.shift();assert.ok(m,'pending worker message');if(m.type==='start'){this.encoder=Gif.encoder(m.width,m.height);this.onmessage({data:{ready:true}});}else if(m.type==='frame'){this.encoder.add(m.pixels,m.delay);this.onmessage({data:{ready:true}});}else this.onmessage({data:{blob:this.encoder.finish()}});}}

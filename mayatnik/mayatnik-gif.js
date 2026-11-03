@@ -8,7 +8,7 @@
     chunks.push(Uint8Array.from([...Array.from('GIF89a',c=>c.charCodeAt(0)),...word(width),...word(height),247,0,0]));
     const palette=new Uint8Array(768);for(let i=0;i<256;i++){palette[i*3]=Math.round((i>>5)*255/7);palette[i*3+1]=Math.round(((i>>2)&7)*255/7);palette[i*3+2]=Math.round((i&3)*255/3);}chunks.push(palette);
     chunks.push(Uint8Array.from([33,255,11,...Array.from('NETSCAPE2.0',c=>c.charCodeAt(0)),3,1,0,0,0]));
-    let previous=null,lastControl=null;
+    let previous=null,lastControl=null,lastImageStart=0;
     function add(rgba,delay){
       if(!rgba||rgba.length!==width*height*4)throw Error('Повреждены пиксели кадра GIF.');
       if(!Number.isFinite(delay))throw Error('Некорректная длительность кадра GIF.');
@@ -17,6 +17,7 @@
       delay=Math.max(1,Math.min(65535,Math.round(delay)));
       if(same&&lastControl){const total=lastControl[4]+(lastControl[5]<<8)+delay;if(total<=65535){lastControl[4]=total&255;lastControl[5]=total>>8;return;}}
       previous=pixels;lastControl=Uint8Array.from([33,249,4,4,...word(delay),0,0]);chunks.push(lastControl);
+      lastImageStart=chunks.length;
       chunks.push(Uint8Array.from([44,0,0,0,0,...word(width),...word(height),0,8]));
       const out=[];let accumulator=0,bits=0,next=258,dict=new Map();
       const code=v=>{accumulator|=v<<bits;bits+=9;while(bits>=8){out.push(accumulator&255);accumulator>>>=8;bits-=8;}};
@@ -30,7 +31,10 @@
       code(prefix);code(257);if(bits)out.push(accumulator&255);
       for(let i=0;i<out.length;i+=255){const block=out.slice(i,i+255);chunks.push(Uint8Array.from([block.length,...block]));}chunks.push(Uint8Array.of(0));
     }
-    return {add,finish(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([...chunks,Uint8Array.of(59)],{type:'image/gif'});}};
+    // A static, independently decodable copy of the last image, using the exact
+    // palette and LZW bytes already encoded. No re-sampling or second encoder.
+    function frame(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([chunks[0],chunks[1],...chunks.slice(lastImageStart),Uint8Array.of(59)],{type:'image/gif'});}
+    return {add,frame,finish(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([...chunks,Uint8Array.of(59)],{type:'image/gif'});}};
   }
   function record({width,height,capture,onDone,onError}){
     const ratio=Math.min(1,1024/width,1024/height),w=Math.max(1,Math.round(width*ratio)),h=Math.max(1,Math.round(height*ratio));

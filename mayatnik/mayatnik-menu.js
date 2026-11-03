@@ -184,6 +184,7 @@
   window.mayXorromControls=mountXorromMenu(rail);
   function mountGifLibraryControls(panelApi=window.MayatnikTemplatePanel){
     if(!panelApi)return;const host=document.createElement('div');host.className='mtp-live-controls mtp-gif-controls';
+    const montage=document.createElement('button');montage.type='button';montage.className='gz-hx may-xorrom-control';montage.title='Открыть монтаж видео: добавить файлы, удалить участки и склеить клипы';montage.setAttribute('aria-label',montage.title);const montageLabel=document.createElement('span');montageLabel.className='gz-nm';montageLabel.textContent=window.HubButtonText?.shortCaption('▸ Монтаж')||'▸ Монтаж';montage.append(montageLabel);montage.addEventListener('click',()=>window.MayatnikGifViewer.openEditor());host.append(montage);
     for(const [id,text]of [['gifScaleSequence','Масштабы'],['gifScaleMethod','Уменьшение'],['gifScaleDelay','Пауза, мс']]){
       const input=$(id);if(!input)continue;const row=document.createElement('label');row.className='gz-hx gz-pair gz-split may-xorrom-control';
       const label=document.createElement('span');label.className='gz-half gz-h0';label.textContent=window.HubButtonText?.shortCaption(text)||text;

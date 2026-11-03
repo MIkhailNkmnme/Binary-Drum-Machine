@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
-const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
+let JSDOM;try{({JSDOM}=require('jsdom'));}catch(_){({JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'));}
 const menu=fs.readFileSync(__dirname+'/mayatnik-menu.js','utf8');
 function fn(name){const start=menu.indexOf('  function '+name+'(');assert.ok(start>=0);let end=menu.indexOf('{',start)+1,depth=1;for(;depth;end++){if(menu[end]==='{')depth++;if(menu[end]==='}')depth--;}return menu.slice(start,end);}
 function fixture({detached=false,opener}={}){
