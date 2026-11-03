@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.007</title>
-<!-- АзъБукъ — v0.007. v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.008</title>
+<!-- АзъБукъ — v0.008. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -32,6 +32,15 @@
   .row:last-child{margin-bottom:0}
   svg{display:block;flex:0 0 auto;color:var(--ink)}
 
+  .btns{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px;align-items:center}
+  .btns.col{flex-direction:column;align-items:flex-start}
+  .pbtn{position:relative;display:flex;align-items:center;justify-content:center;color:var(--ink);padding:0 16px;
+    background:var(--line);
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+  .pbtn::before{content:"";position:absolute;inset:1px;z-index:0;background:var(--btn);
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+  .pbtn > svg{position:relative;z-index:1}
+  .pbtn:hover{background:var(--btnon)}
   #editor .chars{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 14px;max-height:150px;overflow:auto}
   #editor .chars button{width:34px;padding:0;font-size:12px}
   .work{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
@@ -47,7 +56,7 @@
 
 <header>
   <div class="title" id="head"></div>
-  <div class="ver">v0.007</div>
+  <div class="ver">v0.008</div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><button id="theme">цвет: фиолет</button>
     <span class="lbl">толщина</span>
@@ -133,7 +142,7 @@ function glyph(ch, cell, gap, set) {
     }
   }
   const id = 'g' + (uid++);
-  const style = 'margin-right:' + (gap * cell) + 'px;color:var(--ink)';
+  const style = 'margin-right:' + (gap * cell) + 'px;color:inherit';
   const sw = (set || activeSet) === 'thin' ? 0.16 : 0.12;
   return '<svg style="' + style + '" width="' + (W * AR * cell) + '" height="' + (h * cell) + '" viewBox="0 0 ' + W + ' ' + h + '">' +
     '<defs><clipPath id="' + id + '"><path d="' + cells + '"/></clipPath></defs>' +
@@ -142,9 +151,38 @@ function glyph(ch, cell, gap, set) {
 }
 const row = (text, cell, gap) => '<div class="row">' + [...text].map(c => glyph(c, cell, gap)).join('') + '</div>';
 
+// кнопка с битовой подписью
+const btn = (text, cell, style) => '<div class="pbtn" style="' + style + '">' + [...text].map(c => glyph(c, cell, 0.5)).join('') + '</div>';
+
+function renderButtons() {
+  return '<section><h2>В кнопках</h2>' +
+    '<div class="btns">' +
+      btn('Синхро', 2, 'height:24px') +
+      btn('Азъ', 2, 'height:24px') +
+      btn('ХОР', 2, 'height:24px') +
+      btn('БУКЪ', 2, 'height:24px') +
+    '</div>' +
+    '<div class="btns">' +
+      btn('Треуг', 3, 'height:28px') +
+      btn('Layers', 3, 'height:28px') +
+      btn('Маятник', 3, 'height:28px') +
+    '</div>' +
+    '<div class="btns">' +
+      btn('АЗЪ', 4, 'height:38px') +
+      btn('БУКЪ', 4, 'height:38px') +
+    '</div>' +
+    '<div class="btns col">' +
+      btn('Синхрофазотрон', 2, 'height:24px') +
+      btn('Синхроромб', 2, 'height:24px') +
+      btn('Зазеркалиус', 2, 'height:24px') +
+    '</div>' +
+  '</section>';
+}
+
 function renderSheet(cell) {
   document.getElementById('head').innerHTML = [...'АзъБукъ'].map(c => glyph(c, Math.max(3, cell), 1)).join('');
   document.getElementById('sheet').innerHTML = [
+    renderButtons(),
     '<section><h2>Кириллица</h2>' + row(UPPER, cell, 1) + row(LOWER, cell, 1) + '</section>',
     '<section><h2>Латиница</h2>' + row(LATU, cell, 1) + row(LATL, cell, 1) + '</section>',
     '<section><h2>Цифры и знаки</h2>' + row(DIGIT, cell, 1) + row(SYM, cell, 1) + '</section>',
