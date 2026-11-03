@@ -426,3 +426,27 @@ test('frame replacement keeps fractional progress when geometry shortens the sou
   assert.equal(r.events.at(-1).geometry,hole);
   assert.ok(Math.abs(r.events.at(-1).time-.3475)<1e-9);
 });
+
+
+const electroKinds=['bass','pulse','metal','robot'];
+test('electronic voices persist, sound deterministically, stay bounded, honour mute and rest, and remain distinct',()=>{
+ const hashes=new Set(),crypto=require('node:crypto');
+ for(const timbre of electroKinds){assert.equal(normalizeSettings({timbre}).timbre,timbre);
+  for(const sampleRate of [22050,44100]){
+   const settings={timbre,bpm:120,division:8,gain:1,chord:1},a=renderWav(field(1,0),settings,{sampleRate}),pcm=samples(a.bytes);assert.deepEqual(renderWav(field(1,0),settings,{sampleRate}).bytes,a.bytes);assert.ok(pcm.some(s=>Math.abs(s)>100));assert.ok(pcm.every(s=>Number.isFinite(s)&&Math.abs(s)<32767));assert.equal(pcm[0],0);assert.ok(pcm.slice(Math.round(sampleRate*.25)).every(s=>s===0));assert.ok(samples(renderWav(field(1),{...settings,gain:0},{sampleRate}).bytes).every(s=>s===0));
+   if(sampleRate===22050)hashes.add(crypto.createHash('sha256').update(a.bytes).digest('hex'));
+  }
+ }
+ assert.equal(hashes.size,4);
+});
+test('the four previous timbres retain their 0.859 PCM byte-for-byte',()=>{
+ const expected={sine:'fd237a0d877cf15e91134ffab0c764847b4427a36b21b03456fd8841c8b76a4f',triangle:'5eff8068b8473d2d7d19658390ef8044b50fc8d2140a7fb2b1aa385b8d04a065',pluck:'e651931feecc075656efc57b516c6ce6d78082edcbde2c38da0027c7e5708957',softsquare:'6fc2b5c2272083e2526c60b58b4ce1bac978cce02f54b6f6feb4ede50f2e6058'},crypto=require('node:crypto');
+ for(const [timbre,wanted]of Object.entries(expected)){const r=renderWav(field(1,2,3,4,5,6,7,0),{bpm:120,division:16,timbre,gain:.25,chord:1});assert.equal(crypto.createHash('sha256').update(r.bytes).digest('hex'),wanted);}
+});
+test('live, seek and WAV share exactly the same electronic PCM',async()=>{
+ for(const timbre of electroKinds){const settings={...require('./mayatnik-xorrom.js').ELECTRO_PRESET,timbre,division:8,loop:false},snap=field(2),r=rig(()=>snap,settings);await r.engine.start();r.advance(40);const tone=r.sources[0].buffer.getChannelData(),pcm=samples(renderWav(snap,settings).bytes);
+  for(let i=0;i<tone.length;i++)assert.equal(pcm[i],Math.round(tone[i]*settings.gain*32767)||0);await r.engine.seek(0);assert.deepEqual(r.sources.at(-1).buffer.getChannelData(),tone);await r.engine.dispose();}
+});
+test('robot formants follow RGB category even when two settings give the same MIDI pitch',async()=>{
+ const r=rig(()=>field(2,4),{timbre:'robot',loop:false});await r.engine.start();r.advance(40);const first=r.sources[0].buffer.getChannelData(),pitch=r.events[0].notes[0].midi;r.engine.pause();r.engine.setSettings({tonic:9,octave:3});await r.engine.seek(1);assert.equal(r.events.at(-1).notes[0].midi,pitch);assert.notDeepEqual(r.sources.at(-1).buffer.getChannelData(),first);await r.engine.dispose();
+});

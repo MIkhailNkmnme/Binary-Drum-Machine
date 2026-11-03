@@ -92,3 +92,11 @@ test('partial geometry modes leave unrelated musical settings editable',()=>{
  assert.equal(a.input('scale').disabled,true);assert.equal(a.input('octave').disabled,true);assert.equal(a.input('timbre').disabled,false);assert.equal(a.input('gain').disabled,false);a.change('gain',40);assert.deepEqual(a.patches.at(-1),{gain:.4});
  a.change('geometrySource','regions');assert.equal(a.input('timbre').disabled,true);assert.equal(a.input('scale').disabled,false);a.dom.window.close();
 });
+
+
+test('electro preset selects original machine tones without autoplay or replacing the chosen row range',()=>{
+ const a=boot();a.api.setSettings({first:8,last:16,stride:2,loop:false,autoGeometry:true,source:'rhythm'});a.el('electro').click();assert.deepEqual(a.patches.at(-1),require('./mayatnik-xorrom.js').ELECTRO_PRESET);assert.equal(a.starts,0);assert.equal(a.input('first').value,'8');assert.equal(a.input('last').value,'16');assert.equal(a.input('stride').value,'2');assert.equal(a.api.getSettings().loop,false);assert.equal(a.api.getSettings().autoGeometry,false);assert.equal(a.input('timbre').value,'pulse');assert.equal(a.input('bpm').value,'112');assert.equal(a.input('timbre').disabled,false);assert.equal(a.el('electro').dataset.n,'xorrom-electro');a.dom.window.close();
+});
+test('four new timbres are selectable; drum mode explains timbre through its own fixed voices',()=>{
+ const a=boot();for(const timbre of ['bass','pulse','metal','robot']){a.change('timbre',timbre);assert.deepEqual(a.patches.at(-1),{timbre});assert.equal(a.input('timbre').value,timbre);}a.change('source','rhythm');assert.equal(a.input('timbre').disabled,true);assert.match(a.input('timbre').title,/Ритм/);a.change('source','rgb');assert.equal(a.input('timbre').disabled,false);a.dom.window.close();
+});

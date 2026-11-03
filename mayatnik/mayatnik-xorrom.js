@@ -15,6 +15,8 @@
     major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10],
     pentatonic: [0, 2, 4, 7, 9]
   };
+  const ELECTRO_PRESET = Object.freeze({source:'rgb',bpm:112,division:16,tonic:0,scale:'minor',octave:3,timbre:'pulse',gain:.25,chord:1,autoGeometry:false});
+  const ELECTRO_TIMBRES = ['bass','pulse','metal','robot'];
   const DRUMS = ['kick', 'snare', 'hat'];
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   function normalizeSettings(input) {
@@ -30,7 +32,7 @@
       source: pick('source', ['melody', 'rgb', 'rhythm']), bpm: number('bpm', 60, 180),
       division: [4, 8, 16].includes(+raw.division) ? +raw.division : DEFAULTS.division,
       tonic: number('tonic', 0, 11), scale: pick('scale', Object.keys(SCALES)), octave: number('octave', 1, 7),
-      timbre: pick('timbre', ['sine', 'triangle', 'pluck', 'softsquare']), gain: number('gain', 0, 1, false),
+      timbre: pick('timbre', ['sine', 'triangle', 'pluck', 'softsquare', ...ELECTRO_TIMBRES]), gain: number('gain', 0, 1, false),
       chord: number('chord', 1, 4), first: number('first', 0, 2147483647), last: number('last', -1, 2147483647),
       stride: number('stride', 1, 65536), loop: flag('loop'), live: flag('live'),
       autoGeometry: flag('autoGeometry'), geometrySource: pick('geometrySource', ['all', 'regions', 'areas', 'symmetry']),
@@ -138,7 +140,7 @@
   function cacheTone(build) {
     const cache = new Map();
     return (note, step, timbre, rate) => {
-      const key = [note.drum || timbre, note.midi, step, rate].join('/');
+      const key = [note.drum || timbre, note.midi, step, rate,timbre==='robot'?((note.code||1)-1)%3:''].join('/');
       if (!cache.has(key)) {
         if (cache.size >= 48) cache.delete(cache.keys().next().value);
         cache.set(key, build(note, step, timbre, rate));
@@ -148,6 +150,7 @@
   }
   function synthesize(note, step, timbre, rate) {
     const kind = note.drum || timbre;
+    if(ELECTRO_TIMBRES.includes(kind))return synthesizeElectro(note,step,kind,rate);
     const duration = Math.min(step * 0.86, ({kick: 0.22, snare: 0.14, hat: 0.065})[kind] || 2);
     const samples = new Float32Array(Math.max(2, Math.round(duration * rate)));
     const startHz = note.frequency * (kind === 'kick' ? 2.4 : 1);
@@ -166,6 +169,35 @@
       samples[i] = value * level * 0.7 * note.velocity / amplitude;
       phase += increment;
       increment *= pitchChange;
+    }
+    return samples;
+  }
+  function synthesizeElectro(note,step,kind,rate){
+    const duration=Math.min(step*({bass:.68,pulse:.76,metal:.88,robot:.82})[kind],kind==='metal'?1.4:1.2);
+    const samples=new Float32Array(Math.max(2,Math.round(duration*rate))),hz=note.frequency;
+    const partials=[];
+    if(kind==='metal'){
+      for(const [h,w]of [[1,1],[Math.SQRT2,.6],[2.71,.36],[4.07,.2]])if(h*hz<rate/2)partials.push([h,w]);
+    }else{
+      const formants=[[800,1150,2900],[400,1900,2600],[350,900,2200]][((note.code||1)-1)%3];
+      for(let h=1;h<=32&&h*hz<rate/2;h++){
+        let weight=1/h;
+        if(kind==='pulse')weight=2*Math.sin(Math.PI*h*.3)/(Math.PI*h);
+        if(kind==='robot')weight=(.12+formants.reduce((a,f,i)=>a+(i===0?2.4:1.4)*Math.exp(-.5*((h*hz-f)/(i===0?110:180))**2),0))/h;
+        partials.push([h,weight]);
+      }
+    }
+    const normalizer=partials.reduce((n,p)=>n+Math.abs(p[1]),0)||1,attack=Math.max(1,Math.round(.004*rate)),release=Math.max(1,Math.round(.012*rate));
+    for(let i=1;i<samples.length-1;i++){
+      const t=i/rate,progress=i/(samples.length-1),phase=2*Math.PI*hz*t;
+      let value=0;const cutoff=kind==='bass'?180+2600*Math.exp(-t/.055):1;
+      for(const [h,w]of partials){
+        const filter=kind==='bass'?1/Math.sqrt(1+(h*hz/cutoff)**4):1;
+        const ring=kind==='metal'?Math.exp(-t*h*5):1;
+        value+=w*filter*ring*Math.sin(phase*h);
+      }
+      const gate=Math.min(1,i/attack,(samples.length-1-i)/release),decay=kind==='bass'?Math.exp(-t*7):kind==='metal'?1:(1-progress)**.65;
+      samples[i]=value/normalizer*gate*decay*.7*note.velocity;
     }
     return samples;
   }
@@ -493,5 +525,5 @@
     return { start, pause, stop, seek, beginRefresh, replaceSnapshot, setSettings, getState: () => state, getStream, dispose };
   }
 
-  return { DEFAULTS, normalizeSettings, effectiveSettings, geometryForRow: selectedRegion, frequency, notesForRow, renderWav, create };
+  return { DEFAULTS, ELECTRO_PRESET, normalizeSettings, effectiveSettings, geometryForRow: selectedRegion, frequency, notesForRow, renderWav, create };
 });
