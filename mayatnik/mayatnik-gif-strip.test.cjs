@@ -162,3 +162,47 @@ test('viewport changes reveal the selected thumbnail using only track scrolling 
   const css=fs.readFileSync(path.join(__dirname,'mayatnik-gif-strip.css'),'utf8');assert.match(css,/#mayGifStrip\{[^}]*overflow-x:hidden;overflow-y:auto/);assert.match(css,/\.may-gif-strip-toolbar\{display:flex;flex-wrap:wrap;gap:4px;flex:none\}/);assert.match(css,/\.may-gif-strip-display\{[^}]*min-height:24px/);assert.match(css,/\.may-gif-strip-transport\{[^}]*flex:none/);
  }finally{f.api.hide();f.dom.window.close();}
 });
+
+function variantFixture(){
+ const f=fixture(undefined,false,true),draw=[];
+ const ctx={clearRect(){},fillRect(...a){draw.push(['rect',...a]);},strokeText(){},fillText(...a){draw.push(['text',...a]);}};
+ f.w.HTMLCanvasElement.prototype.getContext=()=>ctx;
+ const variants=Array.from({length:8},(_,i)=>({id:'v'+i,method:['canvas','nearest','majority','average'][i>>1],presentation:i%2?'scale':'pixels',name:'v'+i+'.gif',blob:new f.w.Blob(['gif'+i]),delay:100,plan:{width:100,height:100},frames:[8,4,2].map(rows=>({rows,blob:new f.w.Blob(['png']),semantic:{width:2,height:2,bits:new Int8Array([0,1,-2,-1]),bounds:{left:20,top:10,width:40,height:40}}}))}));
+ return {...f,variants,draw};
+}
+test('all eight labeled tracks remain mounted; cross-variant selection pauses and uses cached URLs',()=>{
+ const f=variantFixture(),selections=[];try{assert.equal(f.api.showVariants(f.variants,{onSelection:s=>selections.push(s)}),true);assert.equal(f.qa('.may-gif-strip-track').length,8);assert.equal(f.qa('.may-gif-strip-variant-label').length,8);assert.equal(f.qa('.may-gif-strip-select').length,24);assert.equal(f.qa('.may-gif-strip-stage').length,1);
+  const created=f.created.length;f.q('.may-gif-strip-play').click();assert.equal(f.timers.size,1);f.qa('.may-gif-strip-select')[23].click();assert.equal(f.timers.size,0);assert.equal(f.q('.may-gif-strip-seek').value,'2');assert.equal(selections.at(-1).variant.id,'v7');assert.equal(selections.at(-1).frame,f.variants[7].frames[2]);assert.equal(f.qa('.may-gif-strip-select[aria-pressed=true]').length,1);assert.equal(f.q('.may-gif-strip-stage').src,f.qa('.may-gif-strip-track img')[23].dataset.frameUrl);
+  f.qa('.may-gif-strip-variant-label')[2].click();assert.equal(f.q('.may-gif-strip-seek').value,'2');assert.equal(f.created.length,created);f.api.hide();f.api.open();assert.equal(f.created.length,created);f.event(f.w,'pagehide');assert.equal(new Set(f.revoked).size,32);assert.equal(f.revoked.length,32);
+ }finally{f.dom.window.close();}
+});
+test('digits and match mask follow image contain and semantic bounds without inventing background bits',async()=>{
+ const f=variantFixture(),calls=[];try{f.api.showVariants(f.variants,{search:async(grid,query)=>{calls.push({grid,query});return {count:1,mask:new Uint8Array([0,1,0,0]),complete:true};}});f.q('.may-gif-strip-display').getBoundingClientRect=()=>({width:400,height:200});f.q('.may-gif-strip-digits').click();assert.deepEqual(f.draw.filter(x=>x[0]==='text'),[['text','0',160,40],['text','1',200,40],['text','·',160,80]]);
+  f.q('.may-gif-strip-pattern').value='01';f.q('.may-gif-strip-direction').value='diag';f.q('.may-gif-strip-find').click();await Promise.resolve();assert.equal(calls[0].grid,f.variants[0].frames[0].semantic);assert.deepEqual(calls[0].query.patterns,['01']);assert.equal(calls[0].query.direction,'diag');assert.deepEqual(f.draw.filter(x=>x[0]==='rect').at(-1),['rect',180,20,40,40]);assert.match(f.q('.may-gif-strip-search-status').textContent,/1 совпадений/);
+ }finally{f.dom.window.close();}
+});
+test('search cancels on selection and hide, rejects invalid input, and host changes recompute selected frame',async()=>{
+ const f=variantFixture(),pending=[],queries=[];let enabled=false;try{f.api.showVariants(f.variants,{searchEnabled:()=>enabled,search:(grid,query)=>{queries.push({grid,query});return new Promise(resolve=>pending.push(resolve));}});f.q('.may-gif-strip-pattern').value='012';f.q('.may-gif-strip-find').click();assert.equal(queries.length,0);f.q('.may-gif-strip-pattern').value='01';f.q('.may-gif-strip-find').click();const first=queries[0];f.qa('.may-gif-strip-select')[4].click();assert.equal(first.query.cancelled(),true);assert.equal(queries.length,2);pending[0]({count:99,mask:new Uint8Array(4)});await Promise.resolve();assert.doesNotMatch(f.q('.may-gif-strip-search-status').textContent,/99/);f.api.hide();assert.equal(queries[1].query.cancelled(),true);pending[1]({count:88});await Promise.resolve();assert.doesNotMatch(f.q('.may-gif-strip-search-status').textContent,/88/);
+  enabled=true;f.api.open();f.event(f.w,'may-gif-search-change');assert.equal(queries.at(-1).grid,f.variants[1].frames[1].semantic);f.api.hide();for(const resolve of pending.slice(2))resolve({count:0});await Promise.resolve();
+ }finally{f.dom.window.close();}
+});
+test('viewer speed immediately updates playback and save/generate/cancel callbacks carry its settings',async()=>{
+ const f=variantFixture(),saved=[],generated=[],delays=[];let cancelled=0,resolve;try{f.api.showVariants(f.variants,{onDelayChange:d=>delays.push(d),onDownload:async value=>saved.push(value),onGenerate:value=>{generated.push(value);return new Promise(r=>resolve=r);},onCancel:()=>cancelled++});const speed=f.q('.may-gif-strip-speed');f.q('.may-gif-strip-play').click();speed.value='250';f.event(speed,'change');assert.deepEqual(delays,[250]);f.advance(249);assert.equal(f.q('.may-gif-strip-seek').value,'0');f.advance(1);assert.equal(f.q('.may-gif-strip-seek').value,'1');f.q('.may-gif-strip-download').click();await Promise.resolve();assert.equal(saved[0].delay,250);assert.equal(saved[0].variant.id,'v0');assert.equal(saved[0].index,1);
+  f.q('.may-gif-strip-sequence').value='powers2';f.q('.may-gif-strip-generate').click();assert.deepEqual(generated,[{sequence:'powers2',delay:250}]);assert.equal(f.q('.may-gif-strip-cancel').hidden,false);assert.equal(f.q('.may-gif-strip-generate').disabled,true);f.q('.may-gif-strip-cancel').click();assert.equal(cancelled,1);resolve();await Promise.resolve();assert.equal(f.q('.may-gif-strip-generate').disabled,false);assert.equal(f.q('.may-gif-strip-cancel').hidden,true);
+ }finally{f.api.hide();f.dom.window.close();}
+});
+test('variant allocation failure preserves old selection and revokes partial URLs once',()=>{
+ const f=variantFixture();try{f.api.showVariants(f.variants);f.qa('.may-gif-strip-select')[17].click();const old=f.q('.may-gif-strip-stage').src;let allocations=0;f.w.URL.createObjectURL=()=>{if(allocations++===2)throw Error('fail');return 'blob:partial-'+allocations;};assert.equal(f.api.showVariants(f.variants),false);assert.equal(f.q('.may-gif-strip-stage').src,old);assert.deepEqual(f.revoked,['blob:partial-1','blob:partial-2']);assert.equal(f.qa('.may-gif-strip-track').length,8);
+ }finally{f.dom.window.close();}
+});
+
+test('settings open before capture, retain old cached frames, and expose montage without automatic generation',async()=>{
+ const f=variantFixture();let generated=0,montage=0;try{assert.equal(f.api.openSettings({delay:320,sequence:'powers2',onGenerate:()=>generated++,onMontage:()=>montage++}),true);assert.equal(f.created.length,0);assert.equal(f.q('.may-gif-strip-speed').value,'320');assert.equal(f.q('.may-gif-strip-sequence').value,'powers2');assert.equal(f.q('.may-gif-strip-download').hidden,true);assert.equal(f.q('.may-gif-strip-settings').hidden,false);assert.equal(generated,0);f.q('.may-gif-strip-montage').click();assert.equal(montage,1);f.q('.may-gif-strip-generate').click();await Promise.resolve();assert.equal(generated,1);f.api.hide();assert.equal(f.api.open(),false);
+  f.api.showVariants(f.variants);f.qa('.may-gif-strip-select')[20].click();const source=f.q('.may-gif-strip-stage').src,created=f.created.length;f.api.openSettings({delay:400,onGenerate:()=>generated++});assert.equal(f.q('.may-gif-strip-stage').src,source);assert.equal(f.created.length,created);assert.equal(f.q('.may-gif-strip-speed').value,'400');assert.equal(generated,1);
+ }finally{f.api.hide();f.dom.window.close();}
+});
+
+test('common delay survives variant selection, clamps to encoder bounds and synchronizes both speed controls',async()=>{
+ const f=variantFixture(),saved=[];try{f.api.showVariants(f.variants,{delay:230,onDownload:async value=>saved.push(value)});const number=f.q('.may-gif-strip-speed'),slider=f.q('.may-gif-strip-speed-range');assert.equal(number.min,'20');assert.equal(number.max,'5000');assert.equal(slider.step,'10');assert.equal(slider.value,'230');number.value='375';f.event(number,'change');assert.equal(number.value,'380');assert.equal(slider.value,'380');f.qa('.may-gif-strip-variant-label')[7].click();assert.equal(number.value,'380');assert.equal(f.variants[7].delay,100,'viewer does not mutate cached variants');f.q('.may-gif-strip-download').click();await Promise.resolve();assert.equal(saved[0].delay,380);assert.equal(saved[0].variant.id,'v7');slider.value='490';f.event(slider,'input');assert.equal(number.value,'490');number.value='99999';f.event(number,'change');assert.equal(number.value,'5000');number.value='1';f.event(number,'change');assert.equal(number.value,'20');f.api.openSettings({delay:12345});assert.equal(number.value,'5000');assert.equal(slider.value,'5000');
+ }finally{f.api.hide();f.dom.window.close();}
+});

@@ -62,12 +62,79 @@ test('real worker encodes both presentation modes exactly, starts with the nativ
 });
 test('cancel terminates worker and rejects once without a partial download',async()=>{globalThis.Worker=ThreadWorker;globalThis.MayatnikGif=Gif;const job=S.generate({width:16,height:16,pixels:rgba(new Array(256).fill(127))});job.cancel();job.cancel();await assert.rejects(job.promise,{name:'AbortError'});});
 const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8');function fn(name){const a=html.indexOf('function '+name+'('),b=html.indexOf('{',a);let depth=1,i=b+1;for(;depth;i++){if(html[i]==='{')depth++;if(html[i]==='}')depth--;}return html.slice(a,i);}
-test('host captures complete offscreen raster at one pixel per row and preserves live pixels',()=>{let result;const src={width:4,height:2,data:rgba([0,10,20,30,40,50,60,70])},c=vm.createContext({st:{edgeRhombOn:false},gpuBig:null,f:{},img:src,framePreviewBounds:()=>({left:0,top:0,width:4,height:2,layers:[]}),document:{createElement:()=>({getContext:()=>({createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData:im=>result=im.data,getImageData:()=>({data:result}),drawImage(){}})})},pxView:()=>src,capturePicture:()=>src,paintBitContours(){},window:{},dispW:()=>4,dispH:()=>2,VH:2});vm.runInContext(fn('captureScaleGifFrame'),c);const out=c.captureScaleGifFrame();assert.equal(out.width,4);assert.equal(out.height,2);assert.deepEqual(out.pixels,src.data);assert.notEqual(out.pixels,src.data);c.gpuBig={};assert.throws(()=>c.captureScaleGifFrame(),/процессора/);});
+test('host captures complete offscreen raster at one pixel per row and preserves live pixels',()=>{let result;const src={width:4,height:2,data:rgba([0,10,20,30,40,50,60,70])},c=vm.createContext({st:{edgeRhombOn:false},gpuBig:null,f:{},img:src,framePreviewBounds:()=>({left:0,top:0,width:4,height:2,layers:[]}),document:{createElement:()=>({getContext:()=>({createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData:im=>result=im.data,getImageData:()=>({data:result}),drawImage(){}})})},pxView:()=>src,capturePicture:()=>src,paintBitContours(){},window:{},dispW:()=>4,dispH:()=>2,VH:2,RK:1,visibleSemanticBit:q=>q%3===0?-1:q%2});vm.runInContext(fn('gifScaleBitAt')+fn('captureScaleGifFrame'),c);const out=c.captureScaleGifFrame();assert.equal(out.width,4);assert.equal(out.height,2);assert.deepEqual(out.pixels,src.data);assert.notEqual(out.pixels,src.data);assert.deepEqual([...out.bits],[-1,1,0,-1,0,1,-1,1]);c.gpuBig={};assert.throws(()=>c.captureScaleGifFrame(),/процессора/);});
 const begin=html.indexOf('  let gifScaleJob='),end=html.indexOf('  let gifRecording=null;',begin);
-function ui(){const nodes=new Map(['bGifScale','bGifScaleView','bGifScaleInfo','triangleInfo','gifScaleSequence','gifScaleMethod','gifScalePresentation','gifScaleDelay'].map(id=>[id,{value:id==='gifScaleSequence'?'step8':id==='gifScaleMethod'?'nearest':id==='gifScalePresentation'?'scale':'200',attrs:{},setAttribute(k,v){this.attrs[k]=v;}}]));let resolve,reject,captures=0,cancels=0,options,downloads=[],previews=[],events={};let opens=0;const strip={show:(...args)=>previews.push(args),open:()=>{opens++;return previews.length>0;}};const promise=new Promise((a,b)=>{resolve=a;reject=b;}),job={promise,plan:{width:32,height:24,padded:5,levels:[8,16,24]},cancel(){cancels++;reject(Object.assign(Error('cancel'),{name:'AbortError'}));}},c=vm.createContext({window:{MayatnikGifStrip:strip},MayatnikGifStrip:strip,addEventListener:(name,fn)=>events[name]=fn,$:id=>nodes.get(id),cacheRestoring:false,templateDragging:false,frameLibraryBusy:false,stopFrameTransports(){},captureScaleGifFrame(){captures++;return{width:32,height:19,pixels:rgba(new Array(608).fill(0))};},MayatnikGifScale:{generate(source,o){options=o;return job;}},EMPTY:[0,0,0],k:77,download:(...args)=>downloads.push(args)});vm.runInContext(html.slice(begin,end),c);return{nodes,c,job,resolve,reject,downloads,previews,events,get opens(){return opens},get captures(){return captures},get cancels(){return cancels},get options(){return options}};}
-test('UI takes one immutable frame, reports progress and restores controls after a download',async()=>{const a=ui(),run=a.nodes.get('bGifScale').onclick();assert.equal(a.captures,1);assert.equal(a.nodes.get('gifScaleMethod').disabled,true);a.options.onProgress({done:1,total:3,rows:8});assert.equal(a.nodes.get('bGifScale').textContent,'Отмена 33%');a.nodes.get('gifScaleMethod').value='average';const frames=[{blob:new Blob(['frame']),rows:8}];a.resolve({blob:new Blob(['gif']),frames,plan:a.job.plan});await run;assert.equal(a.downloads.length,1);assert.equal(a.previews.length,1);assert.equal(a.previews[0][0],frames);assert.equal(a.previews[0][1].width,32);a.nodes.get('bGifScaleView').onclick();assert.equal(a.opens,1);a.events['may-gif-ready']();assert.equal(a.nodes.get('bGifScaleView').disabled,false);assert.match(a.downloads[0][0],/kadr77-step8-nearest/);assert.equal(a.nodes.get('gifScaleMethod').disabled,false);assert.equal(a.nodes.get('bGifScale').attrs['aria-pressed'],'false');assert.match(a.nodes.get('bGifScaleInfo').title,/добавлено 5/);});
-test('UI second click cancels, never saves partial GIF; capture error restores controls',async()=>{const a=ui(),run=a.nodes.get('bGifScale').onclick();await a.nodes.get('bGifScale').onclick();await run;assert.equal(a.cancels,1);assert.equal(a.captures,1);assert.equal(a.downloads.length,0);assert.match(a.nodes.get('bGifScaleInfo').title,/отменён/);const b=ui();b.c.captureScaleGifFrame=()=>{throw Error('no frame')};await b.nodes.get('bGifScale').onclick();assert.match(b.nodes.get('bGifScaleInfo').title,/no frame/);assert.equal(b.nodes.get('gifScaleMethod').disabled,false);});
-
-test('View before generation explains the missing frames without opening video montage',()=>{const a=ui();a.nodes.get('bGifScaleView').onclick();assert.equal(a.opens,1);assert.match(a.nodes.get('triangleInfo').textContent,/Сначала/);assert.equal(a.downloads.length,0);});
-
 test('worker uses canvas and full-size figure presentation by default and returns each exact static scale frame',async()=>{globalThis.Worker=ThreadWorker;globalThis.MayatnikGif=Gif;const result=await S.generate({width:7,height:24,pixels:rgba(Array.from({length:168},(_,i)=>i%7*30))}).promise;assert.equal(result.method,'canvas');assert.equal(result.presentation,'pixels');assert.deepEqual(result.frames.map(f=>f.rows),[24,16,8]);assert.equal(result.frames.length,3);});
+
+test('semantic sampling follows the selected source index or contributing colours, never the output RGB',()=>{
+ const pixels=rgba(Array.from({length:7*24},(_,i)=>(i%7)*30));
+ const bits=Int8Array.from({length:7*24},(_,i)=>(i%7===4||i%7===1)?1:0);
+ assert.deepEqual([...S.reduce(pixels,7,24,8,'canvas',bits).bits.slice(0,3)],[1,1,-1]); // Last centre is outside.
+ assert.deepEqual([...S.reduce(pixels,7,24,8,'nearest',bits).bits.slice(0,2)],[1,0]);
+ const four=rgba([220,220,220,15]),cell=(method,values,data=four)=>S.reduce(data,2,2,1,method,Int8Array.from(values)).bits[0];
+ assert.equal(cell('majority',[0,0,0,1]),0);
+ assert.equal(cell('majority',[0,1,0,1]),-2); // Winning colour carries two different bits.
+ assert.equal(cell('majority',[-1,-1,-1,1]),-1);
+ assert.equal(cell('majority',[1,1,0,0],rgba([220,220,15,15])),0); // Tied area uses centre colour.
+ assert.equal(cell('average',[1,1,1,1]),1); // Different colours can still have the very same bit.
+ for(const values of [[1,1,1,0],[-1,-1,-1,1],[-2,-2,-2,-2]])assert.equal(cell('average',values),-2);
+ assert.deepEqual([...S.reduce(rgba([1,2,3]),1,3,2,'average',Int8Array.of(0,0,1)).bits],[0,-2]);
+});
+test('aggregate preflight bounds computation and map memory, and rejects malformed semantic values',()=>{
+ const mock=(width,height)=>({width,height,pixels:{length:width*height*4}});
+ assert.throws(()=>S.plan(1,Number.MAX_SAFE_INTEGER),/предел GIF/);
+ assert.throws(()=>S.validateAll(mock(2047,1024)),/восьми/);
+ assert.equal(S.validateAll(mock(2047,1024),{sequence:'powers2'}).height,1024);
+ assert.throws(()=>S.validateAll(mock(65535,240),{sequence:'powers2'}),/не хватит памяти|восьми/);
+ const large=mock(65535,184);assert.throws(()=>S.validateAll({...large,bits:new Int8Array(large.width*large.height)},{sequence:'powers2'}),/не хватит памяти/);
+ for(const bits of [Int8Array.of(0),new Uint8Array(8),Int8Array.of(0,1,0,1,0,1,-2,2)])assert.throws(()=>S.validateAll({...mock(1,8),bits}),/бит/);
+});
+test('one real worker creates eight complete animations from an immutable snapshot; presentations share semantic cells',async()=>{
+ let workers=0;globalThis.Worker=class extends ThreadWorker{constructor(url){super(url);workers++;}};globalThis.MayatnikGif=Gif;
+ const width=7,height=19,pixels=rgba(Array.from({length:width*height},(_,i)=>i%5*60)),bits=Int8Array.from({length:width*height},(_,i)=>i%4-2);
+ const original=pixels.slice(),native=bits.slice(),progress=[],background=[15,30,40];
+ const job=S.generateAll({width,height,pixels,bits},{delay:110,background,onProgress:p=>progress.push(p)});pixels.fill(255);bits.fill(0);background.fill(0);
+ const {variants,plan}=await job.promise;assert.equal(workers,1);assert.equal(variants.length,8);
+ assert.deepEqual(variants.map(v=>v.id),['canvas','nearest','majority','average'].flatMap(m=>[m+'-pixels',m+'-scale']));
+ assert.deepEqual(progress.map(p=>p.done),Array.from({length:24},(_,i)=>i+1));assert.ok(progress.every(p=>p.total===24));
+ const source=S.prepare({pixels:original},plan,[15,30,40]),padded=new Int8Array(width*24).fill(-1);padded.set(native);
+ for(let i=0;i<8;i++){
+  const v=variants[i],expected=Gif.encoder(width,24);assert.equal(v.delay,110);assert.deepEqual(v.frames.map(f=>f.rows),[24,16,8]);assert.deepEqual(v.frames[0].semantic.bits,padded);
+  for(let n=0;n<v.frames.length;n++){
+   const {rows,semantic,blob}=v.frames[n],small=S.reduce(source,width,24,rows,v.method,padded),isScale=v.presentation==='scale';
+   assert.deepEqual(semantic.bits,small.bits);assert.equal(semantic.bits,variants[i^1].frames[n].semantic.bits);
+   assert.deepEqual(semantic.bounds,isScale?{left:Math.floor((width-small.width)/2),top:(24-rows)/2,width:small.width,height:rows}:{left:0,top:0,width,height:24});
+   assert.deepEqual([semantic.width,semantic.height],[small.width,rows]);
+   expected.add(isScale?S.center(small,width,24,[15,30,40]):S.enlarge(small,width,24),11);
+   assert.deepEqual(Buffer.from(await blob.arrayBuffer()),Buffer.from(await expected.frame().arrayBuffer()));
+  }
+  assert.deepEqual(Buffer.from(await v.blob.arrayBuffer()),Buffer.from(await expected.finish().arrayBuffer()));
+ }
+});
+test('cancelling a batch after receiving its first level rejects once; a batch without semantic input has no digit grids',async()=>{
+ globalThis.Worker=ThreadWorker;globalThis.MayatnikGif=Gif;
+ const source={width:2,height:16,pixels:rgba(new Array(32).fill(0))};
+ const prior=await S.generateAll(source).promise;assert.ok(prior.variants.every(v=>v.frames.every(f=>f.semantic===null)));
+ const progress=[];const next=S.generateAll(source,{onProgress:p=>{progress.push(p.done);next.cancel();}});
+ await assert.rejects(next.promise,{name:'AbortError'});next.cancel();assert.deepEqual(progress,[1]);assert.equal(prior.variants.length,8);
+});
+test('retime edits only real control delays, skips a false control inside image data and rejects truncated records',async()=>{
+ const make=t=>{const gif=Gif.encoder(2,2);gif.add(rgba([255,0,0,255]),t);gif.add(rgba([0,255,255,0]),t);return gif.finish();};
+ async function withExtraPayload(blob){const raw=Buffer.from(await blob.arrayBuffer());assert.deepEqual([...raw.slice(-2)],[0,59]);return new Blob([raw.subarray(0,-2),Uint8Array.of(8,33,249,4,4,12,0,0,0),raw.slice(-2)]);}
+ const original=await withExtraPayload(make(12)),before=Buffer.from(await original.arrayBuffer());
+ const updated=await S.retime(original,397);assert.deepEqual(Buffer.from(await updated.arrayBuffer()),Buffer.from(await (await withExtraPayload(make(40))).arrayBuffer()));
+ assert.deepEqual(Buffer.from(await original.arrayBuffer()),before);for(const v of [before.subarray(0,-1),Buffer.from([1,2,3]),Buffer.concat([before,Buffer.from([0])])])await assert.rejects(S.retime(new Blob([v]),99),/структура GIF/);
+ // A valid 1x1 GIF87a with no controls gains its first actual timed control.
+ const still=Buffer.from('47494638376101000100800000000000ffffff2c00000000010001000002024401003b','hex');
+ const timed=Buffer.from(await (await S.retime(new Blob([still]),80)).arrayBuffer());
+ assert.equal(timed.subarray(0,6).toString(),'GIF89a');assert.deepEqual([...timed.subarray(19,27)],[33,249,4,0,8,0,0,0]);assert.deepEqual(timed.subarray(27),still.subarray(19));
+});
+test('retime preserves logical steps hidden in identical GIF frames, even beyond one control delay',async()=>{
+ globalThis.Worker=ThreadWorker;globalThis.MayatnikGif=Gif;
+ const n=1056,job=S.generate({width:1,height:n,pixels:rgba(new Array(n).fill(0))},{delay:20}),result=await job.promise;
+ assert.equal(result.frames.length,132);
+ const slow=await S.retime(result.blob,5000),expect=Gif.encoder(1,n),raster=rgba(new Array(n).fill(0));for(let i=0;i<132;i++)expect.add(raster,500);
+ assert.deepEqual(Buffer.from(await slow.arrayBuffer()),Buffer.from(await expect.finish().arrayBuffer()));
+});
+
+test('Rombo GIF digit provenance matches the exact independent raster at every turn and central seam',()=>{const R=require('./mayatnik-rombo.js'),W=9,H=4,bits=Int8Array.from({length:W*H},(_,q)=>q%3-1),data=Uint8ClampedArray.from(Array.from(bits,v=>[v+1,0,0,255]).flat());for(const assembly of [16,17])for(const seam of ['between','dedupe'])for(let angle=0;angle<360;angle+=45){const p=R.plan(W,H,{row:H,angle,assembly,seam},{anchor:4,sides:true}),ratio=2,expected=R.rasterPixels(p,{width:W,height:H,data},ratio),canvas={width:expected.width,height:expected.height,getContext:()=>({getImageData:()=>({data:expected.data})})},c=vm.createContext({st:{edgeRhombOn:true},gpuBig:null,img:{width:W,height:H},RK:1,dispW:()=>W,dispH:()=>H,visibleSemanticBit:q=>bits[q],window:{mayRombo:{capture:()=>canvas,plan:()=>p},mayPixelExact:{exportScale:()=>ratio}}});vm.runInContext(fn('gifScaleBitAt')+fn('captureScaleGifFrame'),c);const result=c.captureScaleGifFrame();assert.deepEqual([...result.bits],Array.from({length:result.bits.length},(_,q)=>expected.data[q*4]-1),assembly+' '+seam+' '+angle);}});
