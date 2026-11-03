@@ -42,8 +42,8 @@ test('presentation paths notify completed frames and rotation; restore paths exp
   assert.match(present,/g\.putImageData/);assert.equal((present.match(/notifyXorromField\(\)/g)||[]).length,5);
   assert.match(source,/function viewRotationSync\(\)[^\n]*notifyXorromField\(\)/);
   assert.doesNotMatch(source.slice(source.indexOf('  function reset(paintNow'),source.indexOf('  function reset(paintNow')+150),/mayXorrom\?\.stop/);
-  assert.match(source,/window\.mayXorrom\?\.stop\(\);cacheRestoring=true/);
-  assert.match(source,/window\.mayXorrom\?\.stop\(\);stopFrameTransports\(\);target=k/);
+  assert.match(source,/window\.mayXorrom\?\.stopAll\(\);cacheRestoring=true/);
+  assert.match(source,/window\.mayXorrom\?\.stopAll\(\);stopFrameTransports\(\);target=k/);
 });
 
 

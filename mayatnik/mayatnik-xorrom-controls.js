@@ -74,6 +74,56 @@
       input.addEventListener('change',apply);input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();apply();}});
       bindField(input,key,title,toView);return input;
     }
+    // The same controls move into Library → Music, including its detached window.
+    // Keep the selector alive while beats update, so an open list keeps focus.
+    if(api.getRack){
+      const pick=field('track','Дорожка','Цвет и имя выбранной дорожки. Настройки ниже относятся к ней.',()=>doc.createElement('select'));
+      pick.addEventListener('change',()=>safe(()=>api.select(Number(pick.value))));
+      const name=field('trackName','Имя','Название выбранной дорожки',()=>{const el=doc.createElement('input');el.type='text';return el;});
+      name.addEventListener('change',()=>safe(()=>api.rename(name.value)));
+      button('trackAdd','＋ Дорожка','Добавить независимую дорожку с настройками выбранной, без запуска.',()=>safe(()=>api.add()));
+      const remove=button('trackRemove','− Дорожка','Удалить выбранную дорожку. Должна остаться хотя бы одна.',()=>safe(()=>api.remove()));
+      const play=button('trackPlay','▶ Дорожка','Пуск или пауза выбранной дорожки.',()=>run(()=>state().state==='playing'?api.pause():api.start()));
+      button('trackStop','■ Дорожка','Остановить выбранную дорожку.',()=>safe(()=>api.stop()));
+      const mute=button('trackMute','Без звука','Заглушить или вернуть звук выбранной дорожки. Линия продолжает читать поле.',()=>safe(()=>{const r=api.getRack();api.setMuted(!r.tracks.find(t=>t.id===r.selected).muted);}));
+      button('tracksStart','▶ Все','Одновременно запустить все дорожки.',()=>run(()=>api.startAll()));
+      button('tracksStop','■ Все','Остановить все дорожки.',()=>safe(()=>api.stopAll()));
+      if(api.setAxis){
+        let catalogue=[];
+        if(api.addTemplates)button('tracksTemplates','＋ Шаблоны','Создать по дорожке для каждого выделенного шаблона. Весь шаблон звучит одним срезом из текущих битов под маской.',()=>safe(()=>{const ids=api.addTemplates();notice='Добавлено дорожек: '+ids.length;}));
+        const take=field('trackAxis','Линия','Какую линию перемещать: строки, свою ось или видимый отрезок поля.',()=>doc.createElement('select'));
+        const presets=[['row','Строки'],['h','Горизонталь'],['v','Вертикаль'],['d','Диагональ ↘'],['u','Диагональ ↗']];
+        function choices(){take.replaceChildren(...[...presets,['current',api.getAxisName()||'Своя ось'],...catalogue.map((a,i)=>['a'+i,a.name])].map(([v,t])=>{const o=doc.createElement('option');o.value=v;o.textContent=t;return o;}));}
+        choices();
+        button('trackAxes','↻ Оси поля','Получить видимые оси поля и части между их пересечениями в список «Линия».',()=>safe(()=>{catalogue=api.getAxes();choices();notice='Осей и частей: '+catalogue.length;}));
+        take.addEventListener('change',()=>safe(()=>{const key=take.value;if(key==='row'){api.setAxis(null);return;}if(key==='current')return;
+          if(key.startsWith('a')){const a=catalogue[Number(key.slice(1))];if(a)api.setAxis(a.spec,a.name);return;}
+          const size=api.getSize(),x=Math.max(0,size.width-1),y=Math.max(0,size.height-1),cx=Math.floor(x/2),cy=Math.floor(y/2),side=Math.min(x,y);
+          const points={h:[0,cy,x,cy],v:[cx,0,cx,y],d:[0,0,side,side],u:[0,y,side,y-side]}[key];
+          if(points){const [x1,y1,x2,y2]=points;api.setAxis({x1,y1,x2,y2},presets.find(p=>p[0]===key)[1]);}
+        }));
+        const inputs=[];
+        for(const [a,label] of [['x1','Начало X'],['y1','Начало Y'],['x2','Конец X'],['y2','Конец Y']]){
+          const input=field('trackAxis'+a,label,'Логическая координата центра клетки (от нуля). Можно задать отрезок любого направления.',()=>{const el=doc.createElement('input');el.type='number';el.step='any';return el;});
+          input.addEventListener('change',()=>safe(()=>{const v=input.valueAsNumber,spec=api.getAxis();if(spec&&Number.isFinite(v))api.setAxis({...spec,[a]:v},'Свой отрезок');}));inputs.push([a,input]);
+        }
+        const fixed=button('trackAxisFixed','Фикс оси','Закрепить текущую позицию в клетках поля. При смене кадра звучат новые биты на том же отрезке.',()=>safe(()=>{const a=api.getAxis();if(a)api.fixAxis(!a.fixed);else {const t=api.getTemplate?.();if(t)api.fixTemplate(!t.fixed);}}));
+        const reverse=button('trackAxisReverse','⇄ Ход','Сменить направление движения перпендикулярно оси. Повтор управляет возвратом к началу цикла.',()=>safe(()=>{const a=api.getAxis();if(a)api.setAxis({...a,reverse:!a.reverse},api.getAxisName());}));
+        bindings.push(()=>{const a=api.getAxis(),t=api.getTemplate?.();take.value=a||t?'current':'row';const label=t?'Шаблон: '+t.name:api.getAxisName()||'Своя ось';if(take.options[5].textContent!==label)take.options[5].textContent=label;
+          for(const [key,input] of inputs){input.disabled=!a;if(input.ownerDocument.activeElement!==input)input.value=a?String(a[key]):'';}
+          for(const [control,on] of [[fixed,!!(a?.fixed||t?.fixed)],[reverse,!!a?.reverse]]){control.node.disabled=control===fixed?!a&&!t:!a;control.node.classList.toggle('gz-on',on);control.node.setAttribute('aria-pressed',String(on));}
+        });
+      }
+      let signature='';
+      bindings.push((s,current)=>{
+        const rack=api.getTrackList?api.getTrackList():api.getRack(),all=rack.tracks,sel=all.find(t=>t.id===rack.selected);
+        const key=JSON.stringify(all.map(t=>[t.id,t.name,t.color,t.muted]));if(signature!==key){
+          signature=key;pick.replaceChildren(...all.map(t=>{const op=doc.createElement('option');op.value=String(t.id);op.textContent=(t.muted?'◌ ':'● ')+t.name;op.style.color=t.color;return op;}));}
+        pick.style.color=sel.color;pick.value=String(sel.id);if(name.ownerDocument.activeElement!==name)name.value=sel.name;
+        remove.node.disabled=all.length===1;mute.node.classList.toggle('gz-on',sel.muted);mute.node.setAttribute('aria-pressed',String(sel.muted));
+        caption(play.label,current.state==='playing'?'Ⅱ Дорожка':'▶ Дорожка');play.node.disabled=pending||importing;
+      });
+    }
     choice('source','Источник','Что озвучивать: Мелодия — число единиц в строке задаёт высоту нот; RGB — цвета становятся нотами; Ритм — клетки задают удары.',[['melody','Мелодия'],['rgb','RGB'],['rhythm','Ритм']]);
     const electroPreset=win.MayatnikXorrom?.ELECTRO_PRESET||{source:'rgb',bpm:112,division:16,tonic:0,scale:'minor',octave:3,timbre:'pulse',gain:.25,chord:1,autoGeometry:false};
     const electro=button('electro','♫ Электро','Электронный набор: RGB, 112 BPM, 1/16, До минор, октава 3, Пульс, одна нота, громкость 25%. Авто рисунок выключается; диапазон строк и транспорт сохраняются. Нажмите Старт для игры.',()=>safe(()=>api.setSettings(electroPreset)));
@@ -118,7 +168,7 @@
     number('first','От строки','Первая строка для музыки; отсчёт начинается с 0.',0,1000000);
     number('last','До строки','Последняя строка включительно. Значение −1 означает до конца поля.',-1,1000000);
     number('stride','Шаг строк','Брать каждую строку или пропускать: от 1 до 32. Больший шаг сокращает фразу.',1,32);
-    const wav=button('wav','↓ WAV','Сохранить один проход выбранной музыки в WAV без запуска воспроизведения. Максимум 60 секунд; длинный проход обрезается.',()=>run(async()=>{
+    const wav=button('wav','↓ WAV','Сохранить общий WAV: один проход каждой дорожки от её выбранной позиции; заглушённые дорожки не звучат. Воспроизведение не запускается. Максимум 60 секунд; длинный проход обрезается.',()=>run(async()=>{
       const result=await api.exportWav();if(destroyed)return;
       if(!result?.blob)throw new Error('Не удалось создать WAV');
       if(download){await download(result.blob,result.name||'xorrom.wav');notice=result.note||'WAV сохранён';return;}
@@ -177,7 +227,9 @@
       const s=settings(),current=state(),playing=current.state==='playing';
       bindings.forEach(bind=>bind(s,current));
       const matchesElectro=Object.entries(electroPreset).every(([key,value])=>s[key]===value);
-      electro.node.classList.toggle('gz-on',matchesElectro);electro.node.setAttribute('aria-pressed',String(matchesElectro));
+      const electronic=['bass','pulse','metal','robot'].includes(s.timbre);
+      electro.node.classList.toggle('gz-on',electronic);electro.node.setAttribute('aria-pressed',String(electronic));electro.node.dataset.presetMatch=String(matchesElectro);
+      describe(electro.node,(electronic?'Выбран электронный тембр. ':'')+'Нажать — применить базовый электронный набор: RGB, 112 BPM, 1/16, До минор, Пульс, одна нота.');
       auto.node.classList.toggle('gz-on',!!s.autoGeometry);auto.node.setAttribute('aria-pressed',String(!!s.autoGeometry));
       const g=s.autoGeometry?current.geometry:null;
       const geometryText=g?'Обл '+(g.id??'—')+' · S '+(g.area??'—')+' · H '+(g.height??'—')+' · сим '+(g.symmetryHeight??'—'):s.autoGeometry?'Рисунок: ожидание':'Рисунок: вручную';

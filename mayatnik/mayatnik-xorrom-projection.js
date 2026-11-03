@@ -45,7 +45,7 @@
       values[q]=value===255?-1:value;return values[q];
     };
     const score=await Field.capture({width:map.width,height:map.height,current:source.current,readBit:(x,y)=>read('readBit',x,y),...(source.readRGB?{readRGB:(x,y)=>read('readRGB',x,y)}:{})},options);
-    check();score.projection=Object.freeze({kind:'rombo',ratio,flip:!!options.flip,width:map.width,height:map.height,logicalWidth:plan.outputWidth,logicalHeight:plan.outputHeight});return score;
+    check();if(options.nativeAddresses){score.nativeWidth=source.width;score.nativeAt=index;}score.projection=Object.freeze({kind:'rombo',ratio,flip:!!options.flip,width:map.width,height:map.height,logicalWidth:plan.outputWidth,logicalHeight:plan.outputHeight});return score;
   }
   return {capture};
 });

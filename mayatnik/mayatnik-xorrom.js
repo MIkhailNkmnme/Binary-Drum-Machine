@@ -565,6 +565,9 @@
     const clear = options.clearTimeout || root.clearTimeout.bind(root);
     const doc = options.document || root.document;
     let settings = normalizeSettings(options.settings), state = 'stopped', sequence = 0;
+    let muted = !!options.muted;
+    const outputGain = () => muted ? 0 : settings.gain;
+    function setMuted(value){muted=!!value;if(master)master.gain.setTargetAtTime(outputGain(),ctx.currentTime,.01);}
     let ctx, master, streamNode, bus, snapshot, wake, nextTime, cursor = 0, disposed = false;
     let queued = [], refreshing = false, currentIndex = -1;
     let lastBeat = null, refreshBeat = null;
@@ -586,7 +589,7 @@
     function setSettings(patch) {
       const previous = settings;
       settings = normalizeSettings({...settings, ...patch});
-      if (master) master.gain.setTargetAtTime(settings.gain, ctx.currentTime, 0.01);
+      if (master) master.gain.setTargetAtTime(outputGain(), ctx.currentTime, 0.01);
       if (['backing','backingGain','backingTimbre','backingRows'].some(key => previous[key] !== settings[key])) {
         backingScheduled = null;
         if (ctx) for (const [source, gain] of backingVoices) {
@@ -865,7 +868,7 @@
       options.onStep?.({...event, time: ctx.currentTime, manual: true});
       return currentIndex;
     }
-    async function start(patch) {
+    async function start(patch, rendezvous) {
       if (disposed) return false;
       if (patch) setSettings(patch);
       if (state === 'playing') return true;
@@ -874,11 +877,11 @@
       try {
         if (!ctx) {
           const Context = options.AudioContext || root.AudioContext || root.webkitAudioContext;
-          if (!Context) throw new Error('Web Audio недоступно в этом браузере.');
-          ctx = new Context();
+          if (!Context && !options.audioBus) throw new Error('Web Audio недоступно в этом браузере.');
+          ctx = options.audioBus ? options.audioBus.context() : new Context();
           master = ctx.createGain();
-          master.gain.value = settings.gain;
-          master.connect(ctx.destination);
+          master.gain.value = outputGain();
+          master.connect(options.audioBus ? options.audioBus.input() : ctx.destination);
           ctx.addEventListener('statechange', contextStateChanged);
         }
         if (ctx.state !== 'running') await ctx.resume();
@@ -888,11 +891,13 @@
           const fresh = await options.getSnapshot();
           if (sequence !== run) return false;
           snapshot = fresh;
-          cursor = bounds(snapshot, settings).first;
+          const range=bounds(snapshot,settings),cue=options.getCue?.();
+          cursor=Number.isInteger(cue)&&range.first>=0?clamp(cue,range.first,range.last):range.first;
         }
         if (ctx.state !== 'running' || (doc && doc.hidden)) return false;
         if (bounds(snapshot, settings).first < 0) { stop(); return false; }
-        nextTime = ctx.currentTime + 0.035;
+        nextTime = rendezvous ? await rendezvous() : ctx.currentTime + 0.035;
+        if (sequence !== run || disposed || ctx.state !== 'running' || doc?.hidden) return false;
         changeState('playing');
         tick(run);
         return state === 'playing';
@@ -915,10 +920,10 @@
       if (streamNode) for (const track of streamNode.stream.getTracks()) track.stop();
       if (ctx) {
         ctx.removeEventListener('statechange', contextStateChanged);
-        return ctx.close();
+        master?.disconnect();if(!options.audioBus)return ctx.close();
       }
     }
-    return { start, pause, stop, seek, beginRefresh, replaceSnapshot, setSettings, getState: () => state, getStream, dispose };
+    return { start, pause, stop, seek, setMuted, beginRefresh, replaceSnapshot, setSettings, getState: () => state, getStream, dispose };
   }
 
   return { DEFAULTS, ELECTRO_PRESET, normalizeSettings, validateSettings, effectiveSettings, geometryForRow: selectedRegion, frequency, notesForRow, scoreTimeline, renderWav, create };

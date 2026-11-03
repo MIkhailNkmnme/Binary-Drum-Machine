@@ -11,15 +11,13 @@ function boot(extra={}){
   return {dom,host,api,control,el,input,change,patches,downloaded,get starts(){return starts},get unsubscribed(){return unsubscribed},setState:value=>{current=value;listener?.();}};
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-test('Electro outlined state follows the matching preset and ignores independently selected backing, transport and rows',()=>{
+test('Electro rim marks the electronic family even with custom BPM and division; exact preset is separate',()=>{
   const a=boot(),button=a.el('electro');
   const pressed=value=>{assert.equal(button.getAttribute('aria-pressed'),String(value));assert.equal(button.classList.contains('gz-on'),value);};
-  pressed(false);button.click();pressed(true);button.click();pressed(true);
-  a.api.setSettings({first:4,last:8,stride:2,loop:false,restartOnFrame:true,live:true,backing:'bass',backingGain:.2});pressed(true);
-  for(const [key,value] of Object.entries({source:'melody',bpm:999,division:8,tonic:1,scale:'major',octave:5,timbre:'sine',gain:.4,chord:2,autoGeometry:true})){
-    a.api.setSettings({[key]:value});pressed(false);button.click();pressed(true);
-  }
-  assert.equal(a.api.getSettings().backing,'bass');assert.equal(a.api.getSettings().first,4);assert.equal(a.starts,0);a.dom.window.close();
+  pressed(false);button.click();pressed(true);assert.equal(button.dataset.presetMatch,'true');
+  for(const timbre of ['robot','metal','bass','pulse']){a.api.setSettings({timbre,division:8,bpm:112,backing:'bass'});pressed(true);assert.equal(button.dataset.presetMatch,'false');}
+  a.api.setSettings({timbre:'sine'});pressed(false);button.click();pressed(true);assert.equal(button.dataset.presetMatch,'true');
+  assert.equal(a.api.getSettings().backing,'bass');assert.equal(a.starts,0);a.dom.window.close();
 });
 test('tempo number accepts fractional, slow and fast values, and keeps the previous valid value on invalid entry',()=>{
   const a=boot(),input=a.input('bpm');assert.equal(input.step,'any');assert.equal(input.hasAttribute('min'),false);assert.equal(input.hasAttribute('max'),false);

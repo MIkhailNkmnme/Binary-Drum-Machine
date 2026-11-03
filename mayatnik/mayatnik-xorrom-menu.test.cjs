@@ -32,3 +32,13 @@ test('missing audio API leaves a normal header and can mount after API becomes a
  const f=fixture();assert.equal(f.w.mountXorromMenu(f.rail,null),null);assert.equal(f.group.querySelector('.gz-soty'),null);
  const controls=f.w.mountXorromMenu(f.rail);assert.ok(controls);assert.equal(f.group.querySelectorAll(':scope > .gz-soty').length,1);controls.destroy();f.dom.window.close();
 });
+
+test('actual Mayatnik descriptors mount and refresh the shared Grozd rail; GIF settings is a command',()=>{
+ const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8'),dom=new JSDOM(html,{url:'https://test/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;
+ try{for(const path of ['../_js/menu-icons.js','../_js/group-header.js','../_js/grozd.js','mayatnik-menu-dock.js'])w.eval(fs.readFileSync(__dirname+'/'+path,'utf8'));
+   let opened=null;w.MayatnikTemplatePanel={openTab:k=>{opened=k;}};
+   const adapter=menu.slice(0,menu.indexOf('  function mountXorromMenu('))+'window.realRail=rail;})();';w.eval(adapter);w.realRail.refresh();
+   const button=[...w.realRail.el.querySelectorAll('[data-id="gifscale"] button,[data-id="gifscale"] .gz-hx')].find(b=>b.textContent.includes('Настройки'));
+   assert.ok(button);button.click();assert.equal(opened,'gif');
+ }finally{dom.window.close();}
+});

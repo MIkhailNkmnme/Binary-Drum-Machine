@@ -28,7 +28,7 @@
     let cellsSinceYield=0;
     check();
     for(let y=0;y<height;y++){
-      const bits=new Int8Array(width),colors=new Uint32Array(8);
+      const bits=new Int8Array(width),colors=new Uint32Array(8),rgb=readRGB&&options.cellRGB?new Int8Array(width).fill(-1):null;
       let ones=0,total=0;
       for(let x=0;x<width;x++){
         if(cellsSinceYield===32768){await pause();check();cellsSinceYield=0;}
@@ -38,7 +38,7 @@
         if(readRGB&&bit>=0){
           const code=readRGB(x,y);
           if(code===-1||code===255)bit=-1;
-          else if(Number.isInteger(code)&&code>=0&&code<8)colors[code]++;
+          else if(Number.isInteger(code)&&code>=0&&code<8){colors[code]++;if(rgb)rgb[x]=code;}
           else throw Error('Хорром: неизвестный цвет RGB-соседей.');
         }
         bits[x]=bit;
@@ -47,7 +47,7 @@
         if(bit>=0){ones+=bit;total++;}
       }
       if(!readRGB&&bits[width-1]>=0)colors[colourCode(bits[width-2],bits[width-1],0)]++;
-      rows.push({bits,ones,total,colors});
+      rows.push({bits,ones,total,colors,...(rgb?{rgb}:{})});
     }
     check();
     return {width,height,rows};

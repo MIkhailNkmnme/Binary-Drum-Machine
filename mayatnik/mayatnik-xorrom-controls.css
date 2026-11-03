@@ -14,3 +14,10 @@ a.may-xorrom-control{display:flex;align-items:center;justify-content:center;text
 
 .may-xorrom-control.may-xorrom-auto :disabled{opacity:1;color:var(--c)}
 .may-xorrom-control.may-xorrom-modulated>.gz-h1{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+
+/* The rail and Library have different button cascades. Preserve the shared
+   hexagon and paint its rim explicitly when the Electro recipe matches. */
+.may-xorrom-control[data-xorrom="electro"][aria-pressed="true"],
+#mayatnikTemplatePanel .may-xorrom-control[data-xorrom="electro"][aria-pressed="true"]{background:#c29bff!important;color:#fff}
+.may-xorrom-control[data-xorrom="electro"][aria-pressed="true"]::before,
+#mayatnikTemplatePanel .may-xorrom-control[data-xorrom="electro"][aria-pressed="true"]::before{inset:2px!important;background:var(--gz-bg,#1b2430)!important}

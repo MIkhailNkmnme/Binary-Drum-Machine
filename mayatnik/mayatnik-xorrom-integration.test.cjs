@@ -149,7 +149,7 @@ test('production source captures assembled Rombo rows independently of viewport 
 });
 test('assembled RGB retains native colour categories and filters after rotation and whole-view half turn',async()=>{
  const f=host(),a=assembled(f,45),h=f.h;h.st.view='rgbNeighbours';h.st.viewUpsideDown=true;h.rgbNeighbourClasses=Uint8Array.of(1,2,255,3,4,5);h.rgbNeighbourFilters=()=>[1,3,5];const ratio=h.window.mayPixelExact.policyFor().minScale*1.25;
- const expected=await h.MayatnikXorromProjection.capture(a.plan(),{width:3,height:2,readBit:(x,y)=>f.grid[y][x],readRGB:(x,y)=>[1,3,5].includes(h.rgbNeighbourClasses[y*3+x])?h.rgbNeighbourClasses[y*3+x]:-1},{ratio,flip:true});const score=await h.captureXorromField();assert.deepEqual(score.rows,expected.rows);assert.equal(score.projection.flip,true);
+ const expected=await h.MayatnikXorromProjection.capture(a.plan(),{width:3,height:2,readBit:(x,y)=>f.grid[y][x],readRGB:(x,y)=>[1,3,5].includes(h.rgbNeighbourClasses[y*3+x])?h.rgbNeighbourClasses[y*3+x]:-1},{ratio,flip:true,cellRGB:true});const score=await h.captureXorromField();assert.deepEqual(score.rows,expected.rows);assert.equal(score.projection.flip,true);
 });
 test('assembled auto geometry uses the actual projected areas; changing the plan cancels an old capture',async()=>{
  const f=host(),a=assembled(f),h=f.h;h.st.xorrom={autoGeometry:true,geometryConnectivity:'sides'};const score=await h.captureXorromField();assert.equal(score.geometry.connectivity,'sides');assert.ok(score.rows.some(row=>row.geometry.one));
@@ -164,6 +164,6 @@ test('automatic Rombo capture uses the coherent native-size hint even when proje
 
 test('opening a music link stops the existing transport before replacing state and never starts it implicitly',()=>{
  const apply=source('async function applySharePayload','async function applyShareLink');
- assert.ok(apply.indexOf('window.mayXorrom?.stop()')>=0);assert.ok(apply.indexOf('window.mayXorrom?.stop()')<apply.indexOf('Object.assign(st,next)'));
+ assert.ok(apply.indexOf('window.mayXorrom?.stopAll()')>=0);assert.ok(apply.indexOf('window.mayXorrom?.stopAll()')<apply.indexOf('Object.assign(st,next)'));
  assert.doesNotMatch(apply,/mayXorrom\??\.start\(/);
 });
