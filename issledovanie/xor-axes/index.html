@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#181614">
+<title>Оси XOR · опыт 01</title>
+<style>
+*{box-sizing:border-box} :root{color-scheme:dark;--ink:#f4f0e8;--mut:#b5aca3;--line:#49423d;--red:#ff392c;--base:#181614}
+body{margin:0;background:var(--base);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
+main{max-width:960px;margin:auto;padding:16px clamp(12px,3vw,28px) 32px}
+header, .caption,.bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+header{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+h1{font-size:clamp(24px,6vw,38px);letter-spacing:-.055em;line-height:1;margin:0}h1 b{color:var(--red)}
+small,.caption,.meta,output,.idx{font:12px/1.45 ui-monospace,monospace;letter-spacing:.035em}
+small,.caption,.hint,.meta{color:var(--mut)} .layout{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(258px,.85fr);gap:24px;align-items:start}
+figure{margin:0}.caption{margin-bottom:7px;text-transform:uppercase}
+#field{width:100%;aspect-ratio:1;display:block;background:var(--red);touch-action:none;cursor:grab;user-select:none}
+#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#090908}.dot.zero{background:var(--red)}.dot.neutral{background:white}
+section{border-top:1px solid var(--line);padding:10px 0}h2{font-size:14px;margin:0 0 8px}.hint{font-size:12px;margin:7px 0 0}.group{display:flex;gap:5px}.group>*{flex:1;min-width:0}
+button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:0;background:#342f2b;min-height:44px;padding:4px 9px;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%)}button:hover,button:focus-visible{background:#514740}button[aria-pressed=true]{background:var(--ink);color:#191613}button:focus-visible{outline:3px solid var(--red);outline-offset:-4px}
+.tile{display:flex;align-items:center;justify-content:center;gap:4px}.tile svg{width:26px;height:30px}.tile span{font:12px monospace}
+.bar label{font-weight:650}.bar input[type=number]{width:7ch;text-align:center;background:#25211f;border:1px solid var(--line);padding:7px 2px;font-variant-numeric:tabular-nums}
+.bar .jump{display:flex;align-items:center;gap:6px}.bar output{color:var(--ink)}input[type=range]{width:100%;accent-color:var(--red);height:30px;margin:0}
+.role{margin-top:7px}.role button{font-size:13px}.meta{margin:9px 0 0}
+@media(max-width:650px){main{max-width:500px}.layout{grid-template-columns:minmax(0,1fr);gap:16px}header{margin-bottom:10px}.tile svg{width:26px}.controls{display:grid;gap:0}}
+</style>
+<main>
+<header><h1>Оси <b>XOR</b></h1><small>ОПЫТ 01 / v0.001</small></header>
+<div class="layout">
+<figure><figcaption class="caption"><span>Поле · 29 × 29</span><span id="count"></span></figcaption>
+<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Результат наложения четырёх фигур на двух перпендикулярных осях" shape-rendering="crispEdges"><rect width="29" height="29" fill="#ff392c"/><path id="bits" fill="#090908"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg>
+<div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span><i class="dot neutral"></i>центр вне счёта</span></div>
+<p class="hint">Проведите пальцем по полю вправо или влево, чтобы повернуть выбранную фигуру.</p></figure>
+<div class="controls">
+<section><div class="bar"><label for="index">Раскладка</label><span class="jump"><input id="index" type="number" min="1" max="6144" value="1" inputmode="numeric" aria-label="Номер раскладки"><small>/ 6144</small></span></div>
+<div class="group role"><button id="prev">‹ Назад</button><button id="random">Случайная</button><button id="next">Далее ›</button></div>
+<p class="hint">24 перестановки на четырёх лучах × 256 сочетаний поворотов. Рисунки могут совпадать.</p></section>
+<section><h2>Фигура</h2><div class="group" id="tiles"></div><p class="meta" id="position"></p>
+<div class="group role"><button id="left" aria-label="Повернуть выбранную фигуру влево">↶ 90°</button><button id="right" aria-label="Повернуть выбранную фигуру вправо">90° ↷</button><button id="swap" title="Поменять выбранную фигуру со следующей по часовой стрелке">Обмен ⇄</button></div></section>
+<section><div class="bar"><label for="radius">От центра</label><output id="dist" for="radius"></output></div><input id="radius" type="range" min="0" max="7" value="3"><p class="hint">При нуле все четыре фигуры лежат на общем центре. Дальше они расходятся по лучам ↑ → ↓ ←.</p></section>
+<section><h2>Наложение</h2><div class="group"><button id="xor">XOR</button><button id="union">Вместе</button><button id="solo">Одна</button></div><p id="rule" class="hint"></p></section>
+</div></div></main>
+<script>
+'use strict';
+// Four original pixel silhouettes inspired by the four poses in the reference.
+// Each row is eleven cells wide. The pivot is where the arms cross the upright.
+const masks=[
+ ['00000100000','00000100000','00100100000','00111110000','00001111000','00000101100','11111111111','00000110000','00000110000','00000110000','00000110000','00000100000','00000100000'],
+ ['00000100000','00000100000','00001110000','00001110000','00000110000','00000111000','11111111111','00000110000','00000110000','00000110000','00000100000','00000100000','00000010000'],
+ ['00000100000','00000100000','00001110000','00001110000','00001100000','00010100000','11111111111','00000110000','00000110000','00000110000','00000010000','00000110000','00001110000'],
+ ['00000100000','00000100000','00000111000','00000111000','00000110000','00000100000','11111111111','00000110000','00000110000','00000110000','00000100000','00000100000','00000010000']
+];
+const points=masks.map(rows=>rows.flatMap((row,y)=>Array.from(row,(v,x)=>v==='1'?[x-5,y-6]:null).filter(Boolean)));
+function permutations(left){return left.length?left.flatMap(i=>permutations(left.filter(j=>j!==i)).map(tail=>[i,...tail])):[[]];}
+const orders=permutations([0,1,2,3]),rays=[[0,-1],[1,0],[0,1],[-1,0]],arrows=['↑','→','↓','←'];
+const names=['I','II','III','IV'],size=29,center=14,total=24*256;
+const $=id=>document.getElementById(id);
+const state={variant:0,selected:0,radius:3,mode:'xor'};
+function unpack(v){
+ const order=orders[v%24].slice(),code=Math.floor(v/24);
+ return {order,turn:points.map((_,i)=>(Math.floor(code/4**i)%4+i)%4)};
+}
+function pack(order,turn){
+ const index=orders.findIndex(p=>p.every((id,i)=>id===order[i]));
+ return index+24*turn.reduce((n,angle,i)=>n+((angle-i+4)%4)*4**i,0);
+}
+function rotate(x,y,t){return [[x,y],[-y,x],[-x,-y],[y,-x]][t];}
+function cellPath(x,y){return 'M'+x+' '+y+'h1v1h-1z';}
+const tiles=names.map((name,i)=>{
+ const el=document.createElement('button');el.className='tile';el.setAttribute('aria-label','Фигура '+name);
+ el.innerHTML='<svg viewBox="-6 -7 13 15" aria-hidden="true"><path fill="currentColor" d="'+points[i].map(([x,y])=>cellPath(x,y)).join('')+'"/></svg><span>'+name+'</span>';
+ el.onclick=()=>{state.selected=i;render()};$('tiles').append(el);return el;
+});
+function render(){
+ const {order,turn}=unpack(state.variant),hits=new Uint8Array(size*size),slot=order.indexOf(state.selected);
+ order.forEach((id,ray)=>{
+   if(state.mode==='solo'&&id!==state.selected)return;
+   const [dx,dy]=rays[ray];
+   for(const [x,y] of points[id]){
+     const [rx,ry]=rotate(x,y,turn[id]);
+     hits[(center+dy*state.radius+ry)*size+center+dx*state.radius+rx]++;
+   }
+ });
+ let path='',ones=0;
+ hits.forEach((h,i)=>{
+   if(i===center*size+center)return;
+   if(state.mode==='xor'?h%2:h>0){path+=cellPath(i%size,Math.floor(i/size));ones++;}
+ });
+ $('bits').setAttribute('d',path);$('count').textContent=ones+' ед.';
+ $('index').value=state.variant+1;$('dist').textContent=state.radius+' кл.';$('radius').value=state.radius;
+ $('position').textContent='Фигура '+names[state.selected]+' · луч '+arrows[slot]+' · '+turn[state.selected]*90+'°';
+ tiles.forEach((b,i)=>b.setAttribute('aria-pressed',i===state.selected));
+ for(const id of ['xor','union','solo'])$(id).setAttribute('aria-pressed',id===state.mode);
+ $('rule').textContent={xor:'Один или три чёрных бита дают 1. Два или четыре взаимно гасятся и дают 0.',union:'Видны все клетки, которые занимает хотя бы одна фигура.',solo:'Видна только выбранная фигура в её текущем положении.'}[state.mode];
+}
+function turnBy(delta){const {order,turn}=unpack(state.variant);turn[state.selected]=(turn[state.selected]+delta+4)%4;state.variant=pack(order,turn);render();}
+function advance(n){state.variant=(state.variant+n+total)%total;render();}
+$('left').onclick=()=>turnBy(-1);$('right').onclick=()=>turnBy(1);
+$('prev').onclick=()=>advance(-1);$('next').onclick=()=>advance(1);
+$('random').onclick=()=>advance(1+Math.floor(Math.random()*(total-1)));
+$('swap').onclick=()=>{const {order,turn}=unpack(state.variant),a=order.indexOf(state.selected),b=(a+1)%4;[order[a],order[b]]=[order[b],order[a]];state.variant=pack(order,turn);render();};
+$('index').onchange=e=>{const v=e.target.valueAsNumber;if(Number.isFinite(v))state.variant=Math.max(1,Math.min(total,Math.trunc(v)))-1;render();};
+$('index').onkeydown=e=>{if(e.key==='Enter')e.target.blur();};
+$('radius').oninput=e=>{state.radius=Number(e.target.value);render();};
+for(const id of ['xor','union','solo'])$(id).onclick=()=>{state.mode=id;render();};
+let drag=null;
+$('field').addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
+$('field').onpointerdown=e=>{if(!e.isPrimary||e.button!==0)return;drag={id:e.pointerId,x:e.clientX};e.currentTarget.setPointerCapture(e.pointerId);};
+$('field').onpointermove=e=>{
+ if(drag?.id!==e.pointerId)return;
+ const dx=e.clientX-drag.x,step=Math.max(30,e.currentTarget.clientWidth/7),n=Math.trunc(dx/step);
+ if(n){turnBy(n%4);drag.x+=n*step;}
+};
+$('field').onlostpointercapture=()=>{drag=null;};
+render();
+</script>
+</html>
