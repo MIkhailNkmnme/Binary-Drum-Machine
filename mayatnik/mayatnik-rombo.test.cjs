@@ -316,6 +316,16 @@ test('strict canonical scale survives CSS rounding; overlay palette stays separa
  const out=h.api.capture();assert.deepEqual(out.getContext().lastImage.data,R.rasterPixels(p,pixels,2*Math.SQRT2).data);
 });
 
+test('Rombo opt-in GIF capture uses native cardinal or diagonal lattice without changing PNG defaults or screen raster',()=>{
+ const Exact=require('./mayatnik-pixel-exact-host.js'),pixels=nativePixels(9,5);let zoom=.25,exact;const calls=[];
+ const h=host({precision:()=>true,scale:()=>zoom,captureBits:()=>pixels,exportScale:minimum=>{calls.push(minimum);return exact.exportScale(minimum);}});
+ exact=Exact.create({viewport:true,getState:()=>h.state,getGeometry:()=>{const p=h.api.plan();return {width:p.outputWidth,height:p.outputHeight,angle:h.state.romboAngle,dpr:2};}});
+ for(const angle of [0,45])for(const scale of [.25,2,16]){
+  zoom=scale;h.state.romboAngle=angle;h.r.width=9*zoom;h.r.height=5*zoom;h.api.render();const p=h.api.plan(),before=JSON.stringify([h.box.style,h.canvas.style,h.canvas.width,h.canvas.height]),ordinary=h.api.capture(),gif=h.api.capture({minimumScale:1}),unit=angle?Math.SQRT2:1;
+  assert.equal(calls.at(-2),undefined);assert.equal(calls.at(-1),1);assert.deepEqual(gif.getContext().lastImage.data,R.rasterPixels(p,pixels,unit).data);assert.deepEqual(ordinary.getContext().lastImage.data,R.rasterPixels(p,pixels,angle?2*Math.SQRT2:2).data);assert.ok(ordinary.width>gif.width);assert.equal(JSON.stringify([h.box.style,h.canvas.style,h.canvas.width,h.canvas.height]),before);
+ }
+});
+
 
 test('regional exact pixels are byte-identical to the whole raster across every variant, turn and tile seam',()=>{
  const source=nativePixels(31,8);

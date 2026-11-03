@@ -37,9 +37,9 @@ test('new opening grows row by row, collapses wrappers and restores exact identi
   assert.equal(f.api.activeCount, 1); assert.equal(f.shown().length, 1);
   assert.ok(f.group.querySelector('.gz-wide').hasAttribute('data-may-accordion-pending'));
   assert.equal(f.doc.querySelector('#neighbor').hasAttribute('data-may-accordion-pending'), false);
-  await f.step(240); assert.equal(f.shown().length, 2);
-  await f.step(240); assert.equal(f.shown().length, 4);
-  await f.step(240); assert.equal(f.shown().length, 5);
+  await f.step(120); assert.equal(f.shown().length, 2);
+  await f.step(120); assert.equal(f.shown().length, 4);
+  await f.step(120); assert.equal(f.shown().length, 5);
   assert.equal(f.api.activeCount, 0); assert.equal(f.frames.size, 0);
   assert.equal(f.group.innerHTML, original); assert.deepEqual(f.cells(), nodes);
   assert.ok(f.refreshes() >= 4);

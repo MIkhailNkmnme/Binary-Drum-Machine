@@ -21,9 +21,10 @@
       }
       const result=Grid.snap(wanted,p,direction);if(result===null)report('Недопустимый запрос масштаба.');else report('');return result;
     }
-    function exportScale(){
+    function exportScale(minimum=2){
+      if(!Number.isFinite(minimum)||minimum<=0){report('Неверный минимальный масштаб экспорта.');return null;}
       const state=getState(),p=Grid.policy({...getGeometry(state),viewport:false,overview:false,oneToOne:!!state.zLimit});if(!p.ok){report(p.reason);return null;}
-      const k=Math.min(p.maxK,Math.max(p.minK,Math.ceil(2/p.quantum-1e-12)));return k*p.quantum;
+      const k=Math.min(p.maxK,Math.max(p.minK,Math.ceil(minimum/p.quantum-1e-12)));return k*p.quantum;
     }
     return {policyFor,canState:patch=>policyFor(patch).ok,snap,step:(scale,dir)=>Grid.step(scale,policyFor(),dir),format:scale=>Grid.format(scale,policyFor()),exportScale,report,getError:()=>error};
   }

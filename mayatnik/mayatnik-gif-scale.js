@@ -6,6 +6,8 @@
     if(!['step8','powers2'].includes(sequence))throw Error('Неизвестная последовательность');
     const rows=Math.max(8,Math.ceil(height/8)*8),levels=[];
     for(let n=8;n<=rows;n=sequence==='powers2'?n*2:n+8)levels.push(n);
+    if(levels.at(-1)!==rows)levels.push(rows);
+    levels.reverse(); // Always begin with the complete 1:1 source, then reduce to 8 rows.
     if(width>65535||rows>65535)throw Error('Размер превышает предел GIF (65535)');
     return {width,height:rows,sourceHeight:height,padded:rows-height,sequence,levels};
   }
@@ -13,6 +15,7 @@
     const p=plan(source.width,source.height,options.sequence);
     if(!source.pixels||source.pixels.length!==source.width*source.height*4)throw Error('Пиксели кадра повреждены');
     if(!['canvas','nearest','majority','average'].includes(options.method||'canvas'))throw Error('Неизвестный способ уменьшения');
+    if(!['scale','pixels'].includes(options.presentation===undefined?'scale':options.presentation))throw Error('Неизвестный вид GIF');
     if(p.width*p.height>16777216)throw Error('Кадр больше 16 миллионов пикселей. Уменьшите число строк для экспорта');
     if(p.width*p.height*p.levels.length>600000000)throw Error('Для такого кадра выберите степени 2 или уменьшите число строк');
     return p;
@@ -60,18 +63,28 @@
       for(let x=0;x<width;x++)words[row+x]=input[sy*small.width+columns[x]];previous=sy;
     }return out;
   }
+  // Preserve the reduced raster at one GIF pixel per raster pixel. All frames
+  // share one canvas; the unused area is background, never enlarged pixels.
+  function center(small,width,height,background=[0,0,0]){
+    if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||width*height>16777216||
+      !Number.isSafeInteger(small?.width)||!Number.isSafeInteger(small?.height)||small.width<1||small.height<1||small.width>width||small.height>height||small.pixels?.length!==small.width*small.height*4)throw Error('Неверный размер уменьшенного кадра GIF');
+    const out=new Uint8ClampedArray(width*height*4),left=Math.floor((width-small.width)/2),top=Math.floor((height-small.height)/2);
+    for(let i=0;i<out.length;i+=4){out[i]=background[0]||0;out[i+1]=background[1]||0;out[i+2]=background[2]||0;out[i+3]=255;}
+    for(let y=0;y<small.height;y++)out.set(small.pixels.subarray(y*small.width*4,(y+1)*small.width*4),((top+y)*width+left)*4);
+    return out;
+  }
 
   function generate(source,options={}){
-    const p=validate(source,options),method=options.method||'canvas',delay=Math.max(2,Math.min(500,Math.round((Number(options.delay)||200)/10)));
+    const p=validate(source,options),method=options.method||'canvas',presentation=options.presentation===undefined?'scale':options.presentation,delay=Math.max(2,Math.min(500,Math.round((Number(options.delay)||200)/10)));
     if(!globalThis.MayatnikGif?.encoder)throw Error('Кодировщик GIF не загружен');
-    const code=`const prepare=${prepare.toString()},reduceCanvas=${reduceCanvas.toString()},reduce=${reduce.toString()},enlarge=${enlarge.toString()},encoder=${globalThis.MayatnikGif.encoder.toString()};onmessage=e=>{try{const {source,plan:p,method,delay,background}=e.data,pixels=prepare(source,p,background),gif=encoder(p.width,p.height);for(let n=0;n<p.levels.length;n++){const rows=p.levels[n],small=reduce(pixels,p.width,p.height,rows,method);gif.add(enlarge(small,p.width,p.height),delay);postMessage({done:n+1,total:p.levels.length,rows,frame:gif.frame()});}postMessage({blob:gif.finish()});}catch(error){postMessage({error:error.message||String(error)});}};`;
+    const code=`const prepare=${prepare.toString()},reduceCanvas=${reduceCanvas.toString()},reduce=${reduce.toString()},enlarge=${enlarge.toString()},center=${center.toString()},encoder=${globalThis.MayatnikGif.encoder.toString()};onmessage=e=>{try{const {source,plan:p,method,presentation,delay,background}=e.data;if(!['scale','pixels'].includes(presentation))throw Error('Неизвестный вид GIF');const pixels=prepare(source,p,background),gif=encoder(p.width,p.height);for(let n=0;n<p.levels.length;n++){const rows=p.levels[n],small=reduce(pixels,p.width,p.height,rows,method);gif.add(presentation==='scale'?center(small,p.width,p.height,background):enlarge(small,p.width,p.height),delay);postMessage({done:n+1,total:p.levels.length,rows,frame:gif.frame()});}postMessage({blob:gif.finish(),presentation});}catch(error){postMessage({error:error.message||String(error)});}};`;
     const url=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));let worker;try{worker=new Worker(url);}finally{URL.revokeObjectURL(url);}
     let settled=false,resolve,reject;const frames=[],promise=new Promise((a,b)=>{resolve=a;reject=b;});
-    const finish=(error,blob)=>{if(settled)return;settled=true;worker.terminate();if(error){frames.length=0;reject(error);}else resolve({blob,frames,plan:p,method,delay:delay*10});};
+    const finish=(error,blob)=>{if(settled)return;settled=true;worker.terminate();if(error){frames.length=0;reject(error);}else resolve({blob,frames,plan:p,method,presentation,delay:delay*10});};
     worker.onmessage=e=>{if(settled)return;if(e.data.error)finish(Error(e.data.error));else if(e.data.blob)finish(null,e.data.blob);else {if(e.data.frame)frames.push({blob:e.data.frame,rows:e.data.rows});options.onProgress?.({done:e.data.done,total:e.data.total,rows:e.data.rows});}};worker.onerror=e=>finish(Error(e.message||'Ошибка генератора'));
     // Own copy: transfer cannot detach the live field or the caller's snapshot.
-    const pixels=new Uint8ClampedArray(source.pixels);try{worker.postMessage({source:{width:source.width,height:source.height,pixels},plan:p,method,delay,background:options.background||[0,0,0]},[pixels.buffer]);}catch(e){finish(e);}
-    return {promise,plan:p,cancel(){finish(Object.assign(Error('Генерация отменена'),{name:'AbortError'}));}};
+    const pixels=new Uint8ClampedArray(source.pixels);try{worker.postMessage({source:{width:source.width,height:source.height,pixels},plan:p,method,presentation,delay,background:options.background||[0,0,0]},[pixels.buffer]);}catch(e){finish(e);}
+    return {promise,plan:p,presentation,cancel(){finish(Object.assign(Error('Генерация отменена'),{name:'AbortError'}));}};
   }
-  return {plan,validate,prepare,reduce,enlarge,generate};
+  return {plan,validate,prepare,reduce,enlarge,center,generate};
 });

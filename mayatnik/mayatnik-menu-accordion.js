@@ -42,7 +42,7 @@
   function mount(options = {}) {
     const doc = options.document || globalThis.document, win = doc.defaultView;
     const selector = options.groups || GROUPS;
-    const duration = Math.min(1200, Math.max(0, options.duration == null ? 720 : options.duration));
+    const duration = Math.min(1200, Math.max(0, options.duration == null ? 360 : options.duration));
     const media = win.matchMedia?.('(prefers-reduced-motion: reduce)');
     const states = new WeakMap(), jobs = new Map();
     const style = doc.createElement('style');

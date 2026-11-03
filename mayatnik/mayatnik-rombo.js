@@ -302,12 +302,12 @@
    if(p.axis){const a=p.forward(p.axis[0]),b=p.forward(p.axis[1]);ctx.strokeStyle='#ffd35b';ctx.lineWidth=1/Math.max(.02,displayUnit);ctx.setLineDash?.([5/displayUnit,3/displayUnit]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash?.([]);}
    o.paintCentres?.(ctx,p,quality,displayUnit,region);
   }
-  function capture(){
+  function capture(options={}){
    if(precision()){const policy=o.precisionPolicy?.();if(policy&&!policy.ok)throw Error(policy.reason);}
    const c=doc.createElement('canvas'),g=geometry(),state=get(g),frame=precision()?o.captureBits?.():(o.capture?.()||source);
    if(precision()&&!frame?.data)throw new TypeError('Для точного Ромбо нужен исходный массив RGBA.');
    if(!state.on||!state.available){c.width=frame.width;c.height=frame.height;if(precision()){const image=c.getContext('2d').createImageData(frame.width,frame.height);image.data.set(frame.data);c.getContext('2d').putImageData(image,0,0);}else c.getContext('2d').drawImage(frame,0,0);return c;}
-   const p=makePlan(undefined,g,state),wanted=precision()&&o.exportScale?o.exportScale():Math.max(2,frame.width/p.width,frame.height/p.height);if(wanted===null)throw Error('Не удалось выбрать точный масштаб экспорта.');const raster=(precision()?exactSize:rasterSize)(p.outputWidth,p.outputHeight,wanted);
+   const p=makePlan(undefined,g,state),wanted=precision()&&o.exportScale?o.exportScale(options.minimumScale):Math.max(2,frame.width/p.width,frame.height/p.height);if(wanted===null)throw Error('Не удалось выбрать точный масштаб экспорта.');const raster=(precision()?exactSize:rasterSize)(p.outputWidth,p.outputHeight,wanted);
    c.width=raster.width;c.height=raster.height;paint(c.getContext('2d'),frame,p,raster.quality,o.precision?.()&&o.scale?o.scale():source.getBoundingClientRect().width/p.width||1);return c;
   }
   function input(event){

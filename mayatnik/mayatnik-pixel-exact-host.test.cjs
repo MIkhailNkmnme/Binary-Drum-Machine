@@ -15,6 +15,15 @@ test('failed policies report once and never pretend a lossy scale is exact',()=>
 test('exact export can use the visible diagonal lattice when a double-density raster exceeds the cap',()=>{
  const api=Host.create({getState:()=>({}),getGeometry:()=>({width:2000,height:2000,angle:45})});assert.equal(api.policyFor().maxK,1);assert.equal(api.exportScale(),Math.SQRT2);
 });
+
+test('opt-in native export uses the exact minimum lattice without changing the default PNG density or screen zoom',()=>{
+ for(const dpr of [1,1.25,2])for(const angle of [0,45,90,135])for(const halfCells of [false,true]){
+  const state={zoom:.125,zLimit:false},api=Host.create({viewport:true,getState:()=>state,getGeometry:()=>({width:100,height:60,angle,dpr,halfCells})}),quantum=angle%90?Math.SQRT2:1,minimum=halfCells&&angle%90===0?2:quantum;
+  assert.equal(api.exportScale(),angle%90?2*Math.SQRT2:2);assert.equal(api.exportScale(1),minimum);
+  state.zoom=512;assert.equal(api.exportScale(1),minimum);assert.equal(api.exportScale(),angle%90?2*Math.SQRT2:2);assert.equal(state.zLimit,false);
+ }
+ const api=Host.create({getState:()=>({}),getGeometry:()=>({width:8,height:8})});for(const minimum of [0,-1,NaN,Infinity,'1'])assert.equal(api.exportScale(minimum),null);
+});
 test('nearest copy retains every logical bit when reducing repeated internal raster pixels',()=>{
  const width=17,height=9,RK=3,data=new Uint8ClampedArray(width*height*RK*RK*4);
  for(let y=0;y<height*RK;y++)for(let x=0;x<width*RK;x++){const q=(y*width*RK+x)*4,bit=Math.floor(y/RK)*width+Math.floor(x/RK);data.set([bit,255-bit,bit%7,255],q);}
