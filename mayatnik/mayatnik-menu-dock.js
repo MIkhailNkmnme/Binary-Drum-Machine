@@ -72,6 +72,7 @@
     return out;
   }
   function nearest(list,x,y,preferred){let best=null,score=Infinity;for(const p of list){const d=Math.hypot(p.x+WIDTH/2-x,p.y+HEIGHT/2-y)+(preferred&&p.edge!==preferred?1e5:0);if(d<score){score=d;best=p;}}return best;}
+  function savedPosition(p,b){const {left,right,topX,topY,bottomY,sideY,sideColumnsLeft,singleLeftColumn}=b;return p.edge==='top'?{x:(sideColumnsLeft?Math.max(topX,left+(singleLeftColumn?1:2)*DX):topX)+p.index*DX,y:topY}:p.edge==='bottom'?{x:left+DX*(sideColumnsLeft&&!singleLeftColumn?2:1)+p.index*DX,y:bottomY}:{x:p.edge==='left'?left:sideColumnsLeft?left+DX:right-WIDTH,y:sideY+p.index*DY};}
   function read(value){const result={};if(!value||typeof value!=='object'||Array.isArray(value))return result;
     for(const [key,p] of Object.entries(value))if(p&&['top','bottom','left','right'].includes(p.edge)&&Number.isInteger(p.index)&&p.index>=0)result[key]={edge:p.edge,index:p.index};return result;}
   function stackPositions(items,start,end,scroll=0,compact=false){
@@ -174,9 +175,12 @@
       // Their new position must free/reoccupy slots just like a viewport resize.
       const B=bounds(),signature=JSON.stringify([B,obstacles()])+'|'+[...heads.values()].map(h=>h.getClientRects().length?h.offsetWidth:0).join(',');if(drag)return;if(ready&&signature===geometry){layoutSides();return;}geometry=signature;
       const previous=new Map(placed);placed.clear();
-      for(const [g,hd] of heads){if(!hd.getClientRects().length)continue;const saved=state[idOf(g)],r=rect(hd),prior=previous.get(g),side=saved?.edge||prior?.edge||initialEdge||(g.parentElement===rail?'left':g.classList.contains('pt-bot')?'bottom':'top');
+      // Preference order and ideal saved slots, rather than old DOM pixels, make
+      // a live restore resolve collisions exactly like a fresh startup.
+      const ranks=new Map(Object.keys(state).map((id,index)=>[id,index])),ordered=[...heads].sort(([a],[b])=>{const ai=idOf(a),bi=idOf(b);return (ranks.get(ai)??Infinity)-(ranks.get(bi)??Infinity)||(ai<bi?-1:ai>bi?1:0);});
+      for(const [g,hd] of ordered){if(!hd.getClientRects().length)continue;const saved=state[idOf(g)],r=rect(hd),prior=previous.get(g),anchor=saved?savedPosition(saved,B):prior||r,side=saved?.edge||prior?.edge||initialEdge||(g.parentElement===rail?'left':g.classList.contains('pt-bot')?'bottom':'top');
         const free=available(g),bottomFallback=saved?.edge==='bottom'?free.filter(p=>p.edge==='bottom').sort((a,b)=>Math.abs(a.index-saved.index)-Math.abs(b.index-saved.index))[0]:null,
-          p=free.find(p=>p.edge===saved?.edge&&p.index===saved.index)||bottomFallback||nearest(free,prior?prior.x+WIDTH/2:r.x+r.w/2,prior?prior.y+HEIGHT/2:r.y+r.h/2,side);
+          p=free.find(p=>p.edge===saved?.edge&&p.index===saved.index)||bottomFallback||nearest(free,anchor.x+(saved||prior?WIDTH:r.w)/2,anchor.y+(saved||prior?HEIGHT:r.h)/2,side);
         if(!p)continue;moveToTools(g);apply(g,p);if(!saved)state[idOf(g)]={edge:p.edge,index:p.index};}
       ready=true;save();onLayout();for(const side of Object.values(sides))side.signature='';layoutSides();};
     const show=(free,chosen)=>{const signature=free.map(p=>[p.edge,p.index,p.x,p.y].join(':')).join('|');overlay.style.display='';
@@ -199,7 +203,7 @@
     for(const g of groups()){const hd=g.querySelector(':scope > .pt-l,:scope > .gz-head')||(g.id==='mayCorner'?g:null);if(hd){heads.set(g,hd);g.classList.toggle('may-menu-side-stack',useSideStack);}}
     if(useSideStack&&typeof ResizeObserver==='function'){const observer=new ResizeObserver(queueStack);for(const g of heads.keys())observer.observe(g);}
     addEventListener('resize',layout);requestAnimationFrame(layout);
-    return {refresh:layout,restoreLayout(value){state=read(value);placed.clear();geometry='';ready=false;layout();}};
+    return {refresh:layout,restoreLayout(value){state=read(value);placed.clear();for(const side of Object.values(sides)){side.bar.scrollTop=0;side.signature='';}geometry='';ready=false;layout();}};
   }
   return {isMobile,mobileStrip,WIDTH,HEIGHT,DX,DY,slots,nearest,overlap,read,stackPositions,mount,ownsWheel,guardWheel};
 });
