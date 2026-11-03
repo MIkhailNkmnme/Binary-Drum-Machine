@@ -150,7 +150,7 @@
       { type: 'vpair', name: 'Бит', tip: 'Ширина оси: бит от · до', parts: [{ ...num('symBitsMin', {}), name: 'бит ≥' }, { ...num('symBitsMax', { inf: true, fromInf: () => +$('symBitsMin').value || 2 }), name: '≤' }] }, button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
     { id: 'paint', title: 'Раскраска', color: GROUP_COLOURS['rail:paint'], items: [
       withColour('bFill','fillColour','Заливка'),check('fillWholeColour','colour'),{...selectSegments('paintFrameMode',{off:'Выкл',colour:'Цвет',cells:'Биты'}),src:'paintFrameMode',cls:'may-segments gz-split gz-split3'},withColour('bAutoVertical','verticalFillColour','Столб'),
-      button('bPaintSame','copy'),button('bPaintSymmetric','mirror'),button('bPaintIsolated1','grid4'),button('bPaintIsolated0','grid4'),
+      button('bPaintSame','copy'),button('bPaintSymmetric','mirror'),withColour('bPaintIsolated1','isolatedOneColour','Одиночные 1'),withColour('bPaintIsolated0','isolatedZeroColour','Одиночные 0'),
       select('fillArea','grid4'),check('fillMirror','mirror'),
       withColour('bAxesColour','axesFillColour','От осей'),button('bPaintMid','line'),withColour('midOneOn','midOneColour','Центр 1'),withColour('midZeroOn','midZeroColour','Центр 0'),check('midWide','line'),
       withColour('bAutoAll','autoFillColour','Авто поле'),check('autoFillPalette','colour'),withColour('bFillGrow','growFillColour','Рост'),check('growOwnColour','colour'),

@@ -149,3 +149,5 @@ test('legacy edge links carry the piecewise-replay baseline and reject incompati
   assert.throws(() => SL.decodeEdgeSeed({ ...data.edgeSeed, mark: SL.b64url(Uint8Array.of(0, 1, 2)) }), /серия/);
   assert.throws(() => SL.normalizePayload({ ...data, edgeSeed: { ...data.edgeSeed, laps: -1 } }), /номер круга/);
 });
+
+test('isolated palette links retain distinct colours and clocks; legacy links inherit later',async()=>{const data=payload();Object.assign(data.state,{paintIsolated0:true,paintIsolated1:true,isolatedOneColour:'#00ff00',isolatedZeroColour:'#0000ff'});data.colourAuto={isolatedOneColour:{mode:'frame',color:'#00ff00'},isolatedZeroColour:{mode:'off',color:'#0000ff'}};const back=await SL.decode(await SL.encode(data));assert.deepEqual(back.state,data.state);assert.deepEqual(back.colourAuto,data.colourAuto);const old=await SL.decode(await SL.encode(payload()));assert.equal(old.state.isolatedOneColour,undefined);for(const key of ['isolatedOneColour','isolatedZeroColour'])for(const value of [null,123,'red','#12345',{}]){const bad=payload();bad.state[key]=value;assert.throws(()=>SL.normalizePayload(bad),/цвет одиночных/);}});

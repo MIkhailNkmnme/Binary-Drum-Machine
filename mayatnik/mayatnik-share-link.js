@@ -64,6 +64,7 @@
     const inversion={invertKind:state.invertKind===undefined?'bits':state.invertKind,inverted:state.inverted===undefined?false:state.inverted,invertAuto:state.invertAuto===undefined?false:state.invertAuto,invertFrame:state.invertFrame===undefined?null:state.invertFrame};
     if(!['bits','colour'].includes(inversion.invertKind)||typeof inversion.inverted!=='boolean'||typeof inversion.invertAuto!=='boolean'||inversion.invertFrame!==null&&(!Number.isSafeInteger(inversion.invertFrame)||inversion.invertFrame<0))throw Error('В ссылке некорректная инверсия');
     const isolated={};for(const key of ['paintIsolated0','paintIsolated1']){isolated[key]=state[key]===undefined?false:state[key];if(typeof isolated[key]!=='boolean')throw Error('В ссылке некорректная окраска одиночных: '+key);}
+    for(const key of ['isolatedOneColour','isolatedZeroColour'])if(state[key]!==undefined&&(typeof state[key]!=='string'||!/^#[0-9a-f]{6}$/i.test(state[key])))throw Error('В ссылке некорректный цвет одиночных: '+key);
     const rows=integer(state.rows,8,4096,'В ссылке некорректное число строк');
     const steps=integer(state.steps,1,16384,'В ссылке некорректное число вершин');
     if(!MODES.includes(state.mode))throw Error('В ссылке некорректный ход маятника');

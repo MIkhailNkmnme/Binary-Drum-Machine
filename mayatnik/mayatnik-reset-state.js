@@ -11,7 +11,7 @@
     fillArea:'sides',fillWholeColour:false,paintFrameMode:'off',fillGrow:false,symRowsMin:2,symRowsMax:0,symBitsMin:2,symBitsMax:0,symTriangleRows:16,
     bitOneColour:'#e8edf5',bitZeroColour:'#5b6475',overOneColour:'#4f9bff',overZeroColour:'#ff5a4f',digitOneColour:'#e8edf5',digitZeroColour:'#7cbcff',
     bitContourColour1:'#ffe969',bitContourColour2:'#ffffff',bitContourMode:'single',bitContourColours:'auto',digitFont:'mono',digitSize:80,
-    midOneColour:'#ff7f27',midZeroColour:'#4f9bff',verticalFillColour:'#ff7f27',stolbFillColour:'#ff7f27',axesFillColour:'#ff7f27',autoFillColour:'#ff7f27',growFillColour:'#ff7f27',meetFillColour:'#ff7f27',axisFillColour:'#ff7f27',autoFillPalette:true,growOwnColour:false,
+    midOneColour:'#ff7f27',midZeroColour:'#4f9bff',verticalFillColour:'#ff7f27',stolbFillColour:'#ff7f27',axesFillColour:'#ff7f27',autoFillColour:'#ff7f27',growFillColour:'#ff7f27',meetFillColour:'#ff7f27',axisFillColour:'#ff7f27',isolatedOneColour:'#ff7f27',isolatedZeroColour:'#ff7f27',autoFillPalette:true,growOwnColour:false,
     ochkiMode:'diag',ochkiPattern:'initial',ochkiLength:5,templateMaxArea:4096,templateFocusMargins:null,
     userLines:[],zl:[],lineFamilies:{h:false,v:false,d:false},nAxisSets:[],nAxesN:3,areaFreeze:null,mirAxis:{on:false,ax:.5,ang:0},ovl:{n:0,pos:'R',alpha:50},
     cellSelection:null,cellInk:{},parity:{cellsEven:true,cellsOdd:true,rowsEven:true,rowsOdd:true,colsEven:true,colsOdd:true,rowLevels:[],cellLevels:[],colLevels:[],rowFill:'none'}};}

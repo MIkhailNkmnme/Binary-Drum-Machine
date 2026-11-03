@@ -1,8 +1,8 @@
 /* Independent paint colours. Legacy work inherits its old fill colour once. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikPaintGroups=api;})(globalThis,function(){
   'use strict';
-  const FIELDS=Object.freeze(['verticalFillColour','stolbFillColour','axesFillColour','autoFillColour','growFillColour','meetFillColour','axisFillColour']);
-  const GROUPS=Object.freeze({fill:['fillColour'],vertical:['verticalFillColour'],pass:['stolbFillColour'],centre:['midOneColour','midZeroColour'],axes:['axesFillColour'],auto:['autoFillColour'],grow:['growFillColour'],meet:['meetFillColour'],pointAxis:['axisFillColour']});
+  const FIELDS=Object.freeze(['verticalFillColour','stolbFillColour','axesFillColour','autoFillColour','growFillColour','meetFillColour','axisFillColour','isolatedOneColour','isolatedZeroColour']);
+  const GROUPS=Object.freeze({fill:['fillColour'],vertical:['verticalFillColour'],pass:['stolbFillColour'],centre:['midOneColour','midZeroColour'],axes:['axesFillColour'],auto:['autoFillColour'],grow:['growFillColour'],meet:['meetFillColour'],pointAxis:['axisFillColour'],isolatedOne:['isolatedOneColour'],isolatedZero:['isolatedZeroColour']});
   const valid=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
   const colour=(value,fallback='#ff7f27')=>valid(value)?value.toLowerCase():valid(fallback)?fallback.toLowerCase():'#ff7f27';
   function initialise(state,legacy){const inherited=colour(legacy);for(const key of FIELDS)state[key]=colour(state[key],inherited);return state;}

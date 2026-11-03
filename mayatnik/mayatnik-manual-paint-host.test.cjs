@@ -288,3 +288,35 @@ test('a slow isolated scan cannot publish an old mask after a manual frame jump 
  c.$('bPaintIsolated1').onclick();release();await new Promise(r=>setTimeout(r,0));
  assert.equal(c.isolatedPixel(3),0);assert.equal(c.fillHistory.length,0);assert.equal(c.manualPaintState.layer,null);
 });
+
+
+test('separate isolated palettes recolour only their own bits, digit samples and current frame without changing latches or transport',async()=>{
+ const c=fixture({W:8,H:1,VX:0,VW:8,VH:1}),api=c.window.mayIsolatedPaint,base=c.draw;
+ Object.assign(c,{ZL:[],queueSession(){},hexRGB:value=>[1,3,5].map(i=>parseInt(value.slice(i,i+2),16)),MayatnikPaintGroups:{FIELDS:['isolatedOneColour','isolatedZeroColour']},previewPoint:null});
+ c.st.isolatedOneColour='#ff0000';c.st.isolatedZeroColour='#00ff00';c.playing=true;
+ c.draw=()=>{base();if(c.st.paintIsolated0||c.st.paintIsolated1)c.isolatedLivePaint(new Uint32Array(c.img.data.buffer));};
+ const events={};for(const id of c.MayatnikPaintGroups.FIELDS)c.$(id).addEventListener=(name,fn)=>events[id]=fn;
+ const a=html.indexOf("  for(const id of MayatnikPaintGroups.FIELDS)$(id).addEventListener('input',()=>{"),b=html.indexOf("  for(const id of ['autoFillPalette','growOwnColour'])",a);
+ assert.ok(a>0&&b>a);vm.runInContext(html.slice(a,b),c);
+ c.f.val.set([1,-1,1,1,0,-1,0,0]);api.toggle(1);await api.whenIdle();api.toggle(0);await api.whenIdle();
+ const px=()=>new Uint32Array(c.img.data.buffer),red=c.rgba([255,0,0]),green=c.rgba([0,255,0]),blue=c.rgba([0,0,255]);
+ assert.equal(px()[0],red);assert.equal(px()[4],green);assert.equal(c.isolatedPixel(0),red);assert.equal(c.isolatedPixel(4),green);
+ c.$('isolatedOneColour').value='#0000ff';events.isolatedOneColour();
+ assert.equal(px()[0],blue);assert.equal(c.isolatedPixel(0),blue);assert.equal(px()[4],green);assert.equal(api.get(0),true);assert.equal(api.get(1),true);assert.equal(c.playing,true);
+ c.$('fillColour').value='#abcdef';c.draw();assert.equal(px()[0],blue);assert.equal(px()[4],green,'ordinary fill palette does not alter either own colour');
+ c.k++;c.f.val.set([1,1,-1,0,0,-1,1,0]);const original=c.f.val.slice();c.draw();await api.whenIdle();
+ assert.equal(px()[6],blue);assert.equal(px()[7],green);assert.equal(c.isolatedPixel(0),0);assert.equal(c.isolatedPixel(6),blue);
+ api.toggle(1);await api.whenIdle();assert.equal(c.isolatedPixel(6),0);assert.equal(c.isolatedPixel(7),green);assert.equal(c.fillHistory.length,0);assert.deepEqual(c.f.val,original);
+});
+
+test('cropped isolated palette masks and one-shot colour keep zero and one ownership separate',async()=>{
+ const c=fixture({W:9,H:1,VX:1,VW:7,VH:1}),api=c.window.mayIsolatedPaint,base=c.draw;
+ Object.assign(c,{ZL:[],queueSession(){},hexRGB:value=>[1,3,5].map(i=>parseInt(value.slice(i,i+2),16))});
+ c.st.isolatedOneColour='#ff0000';c.st.isolatedZeroColour='#00ff00';c.f.val.set([-1,1,-1,1,1,0,-1,0,0]);
+ c.draw=()=>{base();if(c.st.paintIsolated0||c.st.paintIsolated1)c.isolatedLivePaint(new Uint32Array(c.img.data.buffer));};
+ api.toggle(0);await api.whenIdle();api.toggle(1);await api.whenIdle();const px=new Uint32Array(c.img.data.buffer);
+ assert.equal(px[0],c.rgba([255,0,0]));assert.equal(px[4],c.rgba([0,255,0]));assert.equal(c.isolatedPixel(4),c.rgba([0,255,0]));assert.equal(c.isolatedPixel(2),0);
+ api.toggle(0);api.toggle(1);await api.whenIdle();
+ const one=await api.apply(1);assert.ok(one.changed>0);assert.equal(c.manualPaintState.layer.paint[1],c.rgba([255,0,0]));
+ const zero=await api.apply(0);assert.ok(zero.changed>0);assert.equal(c.manualPaintState.layer.paint[5],c.rgba([0,255,0]));assert.equal(c.manualPaintState.layer.paint[1],c.rgba([255,0,0]));
+});
