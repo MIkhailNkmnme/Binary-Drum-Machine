@@ -655,7 +655,7 @@
       if(input===ft)for(let row=0;row<9;row++){const count=9-2*Math.abs(4-row);for(let col=0;col<count;col++)delayPositions.push({left:(9-count)*15+col*30,top:row*24});}
       let row;values(input).forEach((value,index)=>{
         const option=document.createElement('button');option.type='button';option.className='may-transport-option';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');option.title=name+': '+label(input,value);option.setAttribute('aria-label',option.title);
-        const text=document.createElement('span');text.textContent=input===sp?String(value):label(input,value).split(' · ')[0].replace(/\s/g,'');option.append(text);
+        const text=document.createElement('span');text.textContent=input===sp?String(value):label(input,value).split(' · ')[0].replace(/\s/g,'').replace(/с$/,'');option.append(text);
         const position=input===sp?{left:(7+index%8-Math.floor(index/8))*15,top:(index%8+Math.floor(index/8))*12}:delayPositions[index];
         option.style.left=position.left+'px';option.style.top=position.top+'px';
         option.onclick=event=>{event.stopPropagation();setValue(input,value);close(true);};(diamond?grid:row).append(option);

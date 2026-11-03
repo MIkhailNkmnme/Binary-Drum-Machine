@@ -22,7 +22,7 @@ test('x retains all 64 values and t contains exactly all 41 seconds choices in a
  const f=setup();try{
   let popup=f.open('sp'),options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,64);assert.deepEqual(options.map(b=>b.textContent),Array.from({length:64},(_,i)=>String(i+1)));assert.ok(options.every(b=>!b.textContent.includes('×')));
   popup=f.open('ft');options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,41);assert.ok(popup.classList.contains('may-delay-options'));assert.equal(popup.querySelectorAll('.may-transport-option-row').length,0);
-  assert.deepEqual(options.map(b=>+b.dataset.value),Array.from({length:41},(_,i)=>i));assert.equal(options[0].textContent,'0с');assert.equal(options.at(-1).textContent,'2с');assert.ok(options.every(b=>b.textContent.includes('с')));
+  assert.deepEqual(options.map(b=>+b.dataset.value),Array.from({length:41},(_,i)=>i));assert.equal(options[0].textContent,'0');assert.equal(options.at(-1).textContent,'2');assert.ok(options.every(b=>/^[\d,/]+$/.test(b.textContent)));
   const counts=Array.from({length:9},(_,r)=>options.filter(b=>parseInt(b.style.top)===r*24).length);assert.deepEqual(counts,[1,3,5,7,9,7,5,3,1]);
   for(let r=0;r<9;r++){const cells=options.filter(b=>parseInt(b.style.top)===r*24),first=parseInt(cells[0].style.left),last=parseInt(cells.at(-1).style.left)+30;assert.equal((first+last)/2,135);}
   assert.ok(options.every(b=>parseInt(b.style.left)>=0&&parseInt(b.style.left)+30<=270&&parseInt(b.style.top)+24<=216));
