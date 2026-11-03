@@ -17,6 +17,7 @@ function fixture(){
 test('real empty grozd group gains an attached music body, opens and lays out live controls',async()=>{
  const f=fixture(),controls=f.w.mountXorromMenu(f.rail),body=f.group.querySelector(':scope > .gz-soty');
  assert.ok(body);assert.equal(body,f.group.gzSoty);assert.ok(body.children.length>20);assert.equal(f.starts,0);
+ const file=body.querySelector('[data-xorrom="jsonFile"]');assert.ok(file.hidden);assert.notEqual(file.parentElement,body);
  f.w.testRelayout();assert.ok(parseFloat(body.style.height)>0);
  const head=f.group.querySelector('.gz-head');head.click();assert.equal(f.group.classList.contains('gz-open'),true);
  const count=body.children.length,input=body.querySelector('[data-xorrom="bpm"] input');input.value='123';input.dispatchEvent(new f.w.Event('change',{bubbles:true}));assert.equal(f.settings.bpm,123);

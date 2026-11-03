@@ -1,20 +1,31 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 const {mount}=require('./mayatnik-xorrom-faders');
+const css=require('node:fs').readFileSync(require.resolve('./mayatnik-xorrom-faders.css'),'utf8');
 
 function setup(settings={},options={}){
   const dom=new JSDOM('<menu id="xorrom"></menu>',{pretendToBeVisual:true}),win=dom.window,doc=win.document;
-  let current={bpm:96,gain:.25,...settings},listener,starts=0;
+  const style=doc.createElement('style');style.textContent=css;doc.head.append(style);
+  let current={bpm:96,gain:.25,...settings},transport='stopped',listener,starts=0;
   const writes=[];
-  const api={getSettings:()=>({...current}),setSettings(patch){writes.push(patch);Object.assign(current,patch);listener?.();},
+  const api={getSettings:()=>({...current}),getState:()=>({state:transport}),setSettings(patch){writes.push(patch);Object.assign(current,patch);listener?.();},
     subscribe(fn){listener=fn;return ()=>{listener=null;};},start(){starts++;}};
   const mounted=mount({document:doc,api,...options}),el=mounted.element;
   const input=key=>el.querySelector(`[data-xorrom-fader="${key}"] input`);
   const emit=(key,value,type='input')=>{const node=input(key);node.value=String(value);node.dispatchEvent(new win.Event(type,{bubbles:true}));};
   const press=(key,button)=>input(key).dispatchEvent(new win.KeyboardEvent('keydown',{key:button,cancelable:true,bubbles:true}));
   const external=patch=>{Object.assign(current,patch);listener?.();};
-  return {win,doc,el,mounted,input,emit,press,external,writes,api,get starts(){return starts;},get subscribed(){return !!listener;},close(){mounted.destroy();win.close();}};
+  return {win,doc,el,mounted,input,emit,press,external,writes,api,setTransport(value){transport=value;listener?.();},get starts(){return starts;},get subscribed(){return !!listener;},close(){mounted.destroy();win.close();}};
 }
+
+test('faders are visible only while audio transport is playing',()=>{
+  const f=setup();assert.equal(f.el.hidden,true);assert.equal(f.win.getComputedStyle(f.el).display,'none');
+  for(const state of ['playing','paused','playing','stopped','capturing','error']){
+    f.setTransport(state);assert.equal(f.el.hidden,state!=='playing');
+    assert.equal(f.win.getComputedStyle(f.el).display,state==='playing'?'flex':'none');
+  }
+  assert.equal(f.writes.length,0);assert.equal(f.starts,0);f.close();
+});
 test('right-edge sliders use shared settings outside Xorrom menu without starting playback',()=>{
   const f=setup();assert.equal(f.el.parentElement,f.doc.body);assert.equal(f.doc.querySelector('menu input'),null);
   assert.equal(f.input('gain').value,'25');assert.equal(f.input('bpm').getAttribute('aria-valuetext'),'96 BPM');

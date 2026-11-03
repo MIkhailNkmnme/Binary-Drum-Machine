@@ -1,5 +1,5 @@
 {
-  "source": "rgb",
+  "source": "rhythm",
   "bpm": 120,
   "division": 16,
   "tonic": 0,
@@ -20,5 +20,25 @@
   "backing": "bass",
   "backingGain": 0.3,
   "backingTimbre": "triangle",
-  "backingRows": 4
+  "backingRows": 4,
+  "envelopeOn": false,
+  "attack": 0.005,
+  "decay": 0.08,
+  "sustain": 0.7,
+  "release": 0.12,
+  "filterType": "lowpass",
+  "cutoff": 2800,
+  "resonance": 0.8,
+  "lfoTarget": "off",
+  "lfoRate": 2,
+  "lfoDepth": 0,
+  "delayTime": 0.25,
+  "delayFeedback": 0.25,
+  "delayMix": 0,
+  "reverbMix": 0,
+  "reverbTime": 1,
+  "pan": 0,
+  "arpMode": "off",
+  "arpGate": 0.8,
+  "swing": 0.18
 }

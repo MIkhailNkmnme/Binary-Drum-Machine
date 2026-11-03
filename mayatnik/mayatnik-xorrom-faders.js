@@ -6,7 +6,7 @@
   'use strict';
   function mount({document:doc,api,anchor}){
     const win=doc.defaultView,panel=doc.createElement('div');
-    panel.id='mayXorromFaders';panel.setAttribute('role','group');panel.setAttribute('aria-label','Громкость и темп Xorrom');
+    panel.id='mayXorromFaders';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Громкость и темп Xorrom');
     function fader(key,icon,name,max){
       const label=doc.createElement('label'),caption=doc.createElement('span'),input=doc.createElement('input'),value=doc.createElement('output');
       label.dataset.xorromFader=key;caption.textContent=icon;caption.setAttribute('aria-hidden','true');
@@ -33,7 +33,10 @@
       }
     }
     function sync(){
-      if(disposed)return;const s=api.getSettings(),bpm=s.bpm,gain=s.gain;
+      if(disposed)return;
+      const playing=api.getState?.().state==='playing';
+      panel.hidden=!playing;
+      const s=api.getSettings(),bpm=s.bpm,gain=s.gain;
       if(Number.isFinite(gain)){
         const percent=Number((gain*100).toPrecision(12));
         show(volume,Math.round(percent),String(percent),percent+' %');

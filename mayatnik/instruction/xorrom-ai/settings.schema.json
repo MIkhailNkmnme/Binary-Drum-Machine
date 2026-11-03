@@ -1,103 +1,383 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://1001100.online/mayatnik/instruction/xorrom-ai/settings.schema.json",
-  "title": "Настройки Xorrom 0.863",
-  "description": "Полный объект настроек для API mayXorrom.setSettings().",
+  "title": "Музыкальный пресет Xorrom 0.865",
+  "description": "Полный объект для импорта в музыкальный пульт. Все ключи обязательны.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "source", "bpm", "division", "tonic", "scale", "octave", "timbre", "gain", "chord",
-    "first", "last", "stride", "loop", "live", "restartOnFrame", "autoGeometry",
-    "geometrySource", "geometryConnectivity", "backing", "backingGain", "backingTimbre", "backingRows"
+    "source",
+    "bpm",
+    "division",
+    "tonic",
+    "scale",
+    "octave",
+    "timbre",
+    "gain",
+    "chord",
+    "first",
+    "last",
+    "stride",
+    "loop",
+    "live",
+    "restartOnFrame",
+    "autoGeometry",
+    "geometrySource",
+    "geometryConnectivity",
+    "backing",
+    "backingGain",
+    "backingTimbre",
+    "backingRows",
+    "envelopeOn",
+    "attack",
+    "decay",
+    "sustain",
+    "release",
+    "filterType",
+    "cutoff",
+    "resonance",
+    "lfoTarget",
+    "lfoRate",
+    "lfoDepth",
+    "delayTime",
+    "delayFeedback",
+    "delayMix",
+    "reverbMix",
+    "reverbTime",
+    "pan",
+    "arpMode",
+    "arpGate",
+    "swing"
   ],
   "properties": {
     "source": {
-      "type": "string", "enum": ["melody", "rgb", "rhythm"], "default": "rgb",
+      "type": "string",
+      "enum": [
+        "melody",
+        "rgb",
+        "rhythm"
+      ],
+      "default": "rgb",
       "description": "Источник основной партии. Мелодия использует число единиц, RGB — частоты цветовых кодов, ритм — три дорожки ударных."
     },
     "bpm": {
-      "type": "number", "exclusiveMinimum": 0, "default": 96,
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "default": 96,
       "description": "Темп в ударах в минуту. Допустимо любое положительное конечное число, в том числе дробное. Для воспроизведения длительность шага должна быть представима в звуковых отсчётах."
     },
     "division": {
-      "type": "integer", "enum": [4, 8, 16], "default": 8,
+      "type": "integer",
+      "enum": [
+        4,
+        8,
+        16
+      ],
+      "default": 8,
       "description": "Знаменатель длительности шага. Значение 8 задаёт восьмую ноту."
     },
     "tonic": {
-      "type": "integer", "minimum": 0, "maximum": 11, "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 11,
+      "default": 0,
       "description": "Тоника в полутонах от До. До = 0, Си = 11."
     },
     "scale": {
-      "type": "string", "enum": ["major", "minor", "pentatonic"], "default": "major",
+      "type": "string",
+      "enum": [
+        "major",
+        "minor",
+        "pentatonic"
+      ],
+      "default": "major",
       "description": "Лад основной партии."
     },
     "octave": {
-      "type": "integer", "minimum": 1, "maximum": 7, "default": 4,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 7,
+      "default": 4,
       "description": "Базовая октава. До четвёртой октавы соответствует MIDI 60."
     },
     "timbre": {
-      "type": "string", "enum": ["sine", "triangle", "pluck", "softsquare", "bass", "pulse", "metal", "robot"], "default": "triangle",
+      "type": "string",
+      "enum": [
+        "sine",
+        "triangle",
+        "pluck",
+        "softsquare",
+        "bass",
+        "pulse",
+        "metal",
+        "robot"
+      ],
+      "default": "triangle",
       "description": "Тембр мелодической или RGB-партии. У ударных собственные тембры."
     },
     "gain": {
-      "type": "number", "minimum": 0, "maximum": 1, "default": 0.25,
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.25,
       "description": "Общая громкость в долях единицы. Значение 0.25 соответствует 25% в пульте."
     },
     "chord": {
-      "type": "integer", "minimum": 1, "maximum": 4, "default": 3,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "default": 3,
       "description": "Максимальное число одновременных RGB-нот в строке."
     },
     "first": {
-      "type": "integer", "minimum": 0, "maximum": 2147483647, "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647,
+      "default": 0,
       "description": "Первая выбранная строка, отсчёт с нуля. Числовой пульт принимает до 1 000 000."
     },
     "last": {
-      "type": "integer", "minimum": -1, "maximum": 2147483647, "default": -1,
+      "type": "integer",
+      "minimum": -1,
+      "maximum": 2147483647,
+      "default": -1,
       "description": "Последняя строка включительно. Значение −1 означает до конца поля. Числовой пульт принимает до 1 000 000."
     },
     "stride": {
-      "type": "integer", "minimum": 1, "maximum": 65536, "default": 1,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65536,
+      "default": 1,
       "description": "Расстояние между выбранными строками. API принимает 1–65 536, числовой пульт — 1–32."
     },
     "loop": {
-      "type": "boolean", "default": true,
+      "type": "boolean",
+      "default": true,
       "description": "Повторять выбранный диапазон строк."
     },
     "live": {
-      "type": "boolean", "default": false,
+      "type": "boolean",
+      "default": false,
       "description": "Дополнительно перечитывать поле в начале каждого повтора."
     },
     "restartOnFrame": {
-      "type": "boolean", "default": false,
+      "type": "boolean",
+      "default": false,
       "description": "При смене кадра возвращать линию чтения к первой выбранной строке."
     },
     "autoGeometry": {
-      "type": "boolean", "default": false,
+      "type": "boolean",
+      "default": false,
       "description": "Включить управление музыкальными параметрами по геометрии рисунка."
     },
     "geometrySource": {
-      "type": "string", "enum": ["all", "regions", "areas", "symmetry"], "default": "all",
+      "type": "string",
+      "enum": [
+        "all",
+        "regions",
+        "areas",
+        "symmetry"
+      ],
+      "default": "all",
       "description": "Свойства рисунка, которые влияют на музыку при включённом автоуправлении."
     },
     "geometryConnectivity": {
-      "type": "string", "enum": ["sides", "corners", "diagonal", "chess0", "bit"], "default": "sides",
+      "type": "string",
+      "enum": [
+        "sides",
+        "corners",
+        "diagonal",
+        "chess0",
+        "bit"
+      ],
+      "default": "sides",
       "description": "Правило соединения клеток в область для автоматического анализа."
     },
     "backing": {
-      "type": "string", "enum": ["off", "pad", "bass", "counter"], "default": "off",
+      "type": "string",
+      "enum": [
+        "off",
+        "pad",
+        "bass",
+        "counter"
+      ],
+      "default": "off",
       "description": "Тип второй партии. Созвучие держит тонику и квинту, бас и вторая мелодия используют ноту фразы."
     },
     "backingGain": {
-      "type": "number", "minimum": 0, "maximum": 1, "default": 0.3,
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.3,
       "description": "Относительная громкость фона к основной партии в долях единицы. При 0 фон молчит, при 1 обе партии получают равные доли уровня."
     },
     "backingTimbre": {
-      "type": "string", "enum": ["sine", "triangle", "softsquare"], "default": "sine",
+      "type": "string",
+      "enum": [
+        "sine",
+        "triangle",
+        "softsquare"
+      ],
+      "default": "sine",
       "description": "Тембр фонового инструмента."
     },
     "backingRows": {
-      "type": "integer", "minimum": 1, "maximum": 16, "default": 4,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16,
+      "default": 4,
       "description": "Длина фоновой фразы в выбранных строках с учётом stride."
+    },
+    "envelopeOn": {
+      "type": "boolean",
+      "default": false,
+      "description": "Включить ручную огибающую ADSR."
+    },
+    "attack": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "default": 0.005,
+      "description": "Время нарастания звука в секундах."
+    },
+    "decay": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "default": 0.08,
+      "description": "Время спада от пика до уровня удержания в секундах."
+    },
+    "sustain": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.7,
+      "description": "Уровень удержания после спада, доля пикового уровня."
+    },
+    "release": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "default": 0.12,
+      "description": "Время отпускания в секундах."
+    },
+    "filterType": {
+      "type": "string",
+      "enum": [
+        "off",
+        "lowpass",
+        "highpass",
+        "bandpass"
+      ],
+      "default": "off",
+      "description": "Тип фильтра. Lowpass пропускает низкие частоты, highpass — высокие, bandpass — полосу около частоты среза."
+    },
+    "cutoff": {
+      "type": "number",
+      "minimum": 20,
+      "maximum": 10000,
+      "default": 8000,
+      "description": "Частота среза или центр полосы в герцах."
+    },
+    "resonance": {
+      "type": "number",
+      "minimum": 0.1,
+      "maximum": 20,
+      "default": 0.7,
+      "description": "Добротность Q фильтра."
+    },
+    "lfoTarget": {
+      "type": "string",
+      "enum": [
+        "off",
+        "pitch",
+        "filter",
+        "gain",
+        "pan"
+      ],
+      "default": "off",
+      "description": "Цель периодической модуляции: высота, фильтр, громкость или панорама."
+    },
+    "lfoRate": {
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 40,
+      "default": 2,
+      "description": "Число периодов модуляции в секунду, Гц."
+    },
+    "lfoDepth": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0,
+      "description": "Глубина модуляции, доля максимального отклонения."
+    },
+    "delayTime": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "default": 0.25,
+      "description": "Интервал между повторами эха в секундах."
+    },
+    "delayFeedback": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.9,
+      "default": 0.25,
+      "description": "Доля сигнала, возвращаемая в следующий повтор."
+    },
+    "delayMix": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0,
+      "description": "Доля эха в звуке. При нуле эхо выключено."
+    },
+    "reverbMix": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0,
+      "description": "Доля реверберации в звуке. При нуле реверберация выключена."
+    },
+    "reverbTime": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 1,
+      "description": "Время реверберации в секундах."
+    },
+    "pan": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1,
+      "default": 0,
+      "description": "Положение в стереополе. −1 слева, 0 в центре, +1 справа."
+    },
+    "arpMode": {
+      "type": "string",
+      "enum": [
+        "off",
+        "up",
+        "down",
+        "updown"
+      ],
+      "default": "off",
+      "description": "Порядок нот арпеджио. Off оставляет ноты аккорда одновременными."
+    },
+    "arpGate": {
+      "type": "number",
+      "minimum": 0.05,
+      "maximum": 1,
+      "default": 0.8,
+      "description": "Доля подшага, отведённая ноте арпеджио."
+    },
+    "swing": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.75,
+      "default": 0,
+      "description": "Смещение ритма пары шагов. Ноль задаёт ровное движение."
     }
   }
 }

@@ -102,8 +102,13 @@ test('only cloned audio tracks are owned and stopped by the recorder',()=>{
 });
 
 test('site share and compressed work files round-trip music settings without a running transport',async()=>{
-  const settings=Music.normalizeSettings({autoGeometry:true,geometrySource:'areas',geometryConnectivity:'chess0',source:'rhythm',bpm:12.375,restartOnFrame:true,division:16,tonic:3,octave:2,scale:'minor',
-    gain:.18,timbre:'robot',chord:2,first:1,last:6,stride:2,loop:false,live:true,backing:'counter',backingGain:.22,backingTimbre:'softsquare',backingRows:7});
+  const input={autoGeometry:true,geometrySource:'areas',geometryConnectivity:'chess0',source:'rhythm',bpm:12.375,restartOnFrame:true,division:16,tonic:3,octave:2,scale:'minor',
+    gain:.18,timbre:'robot',chord:2,first:1,last:6,stride:2,loop:false,live:true,backing:'counter',backingGain:.22,backingTimbre:'softsquare',backingRows:7,
+    envelopeOn:true,attack:.025,decay:.2,sustain:.4,release:.35,filterType:'bandpass',cutoff:730,resonance:2.1,
+    lfoTarget:'pan',lfoRate:3.25,lfoDepth:.6,delayTime:.18,delayFeedback:.4,delayMix:.25,reverbMix:.15,reverbTime:.8,
+    pan:-.3,arpMode:'down',arpGate:.65,swing:.2};
+  const settings=Music.normalizeSettings(input);
+  for(const [key,value] of Object.entries(input))assert.deepEqual(settings[key],value,'preserve '+key);
   const {h}=host();
   Object.assign(h,{st:{mode:'pend',rows:8,steps:8,bg:'empty',view:'bits',zOverview:true,zLimit:false,zoom:.125,xorrom:settings},k:1,
     f:{val:new Int8Array(8*15)},img:{width:15,height:8},structuredClone,rowBuild:null,testPattern:null,

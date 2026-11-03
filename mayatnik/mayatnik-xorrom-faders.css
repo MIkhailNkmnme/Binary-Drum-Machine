@@ -1,4 +1,5 @@
 #mayXorromFaders{position:fixed;right:94px;top:50%;transform:translateY(-50%);z-index:30;display:flex;align-items:center;gap:4px;color:#dce8fa;font:9px/1 system-ui,sans-serif;user-select:none}
+#mayXorromFaders[hidden]{display:none}
 #mayXorromFaders label{position:relative;box-sizing:border-box;width:24px;height:120px;display:grid;grid-template-rows:15px 1fr 15px;justify-items:center;align-items:center;background:#000;border:1px solid #8793a4;border-radius:3px}
 #mayXorromFaders label:focus-within{border-color:#ffd166}
 #mayXorromFaders span{color:#dce8fa;font-weight:700}

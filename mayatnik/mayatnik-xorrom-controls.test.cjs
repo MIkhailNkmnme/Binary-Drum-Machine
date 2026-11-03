@@ -131,3 +131,86 @@ test('backing controls preserve solo settings, use stable IDs and never start pl
  a.setState({state:'playing',index:1,notes:[],backingNotes:[{midi:48}]});assert.match(a.el('notes').textContent,/Фон До3/);
  a.change('backing','off');assert.equal(a.input('backingTimbre').disabled,true);assert.equal(a.input('backingGain').value,'30');a.change('backing','bass');assert.equal(a.input('backingGain').value,'30');a.dom.window.close();
 });
+
+
+const SYNTH_DEFAULTS={envelopeOn:false,attack:.005,decay:.08,sustain:.7,release:.12,filterType:'off',cutoff:8000,resonance:.7,lfoTarget:'off',lfoRate:2,lfoDepth:0,delayTime:.25,delayFeedback:.25,delayMix:0,reverbMix:0,reverbTime:1,pan:0,arpMode:'off',arpGate:.8,swing:0};
+function jsonCore(a,validate=value=>value){a.dom.window.MayatnikXorrom={DEFAULTS:{...require('./mayatnik-xorrom.js').DEFAULTS,...SYNTH_DEFAULTS},validateSettings:validate};}
+function chooseJSON(a,text,options={}){const file=options.file||{size:options.size??new a.dom.window.Blob([text]).size,text:async()=>text};Object.defineProperty(a.el('jsonFile'),'files',{configurable:true,value:options.cancel?[]:[file]});a.el('jsonFile').dispatchEvent(new a.dom.window.Event('change',{bubbles:true}));}
+function blobText(a,blob){return new Promise((resolve,reject)=>{const reader=new a.dom.window.FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsText(blob);});}
+
+test('synth parameters keep exact defaults, decimal units and percent conversions without autoplay',()=>{
+ const a=boot();assert.equal(a.el('envelopeOn').getAttribute('aria-pressed'),'false');
+ const percent=new Set(['sustain','lfoDepth','delayFeedback','delayMix','reverbMix','pan','arpGate','swing']);
+ for(const [key,value]of Object.entries(SYNTH_DEFAULTS)){if(key==='envelopeOn')continue;assert.equal(a.input(key).value,String(percent.has(key)?Math.round(value*100):value));assert.equal(a.el(key).dataset.n,'xorrom-'+key);assert.ok(a.el(key).classList.contains('gz-split'));}
+ for(const [key,value,normalized]of [['attack',.005,.005],['decay',1.234,1.234],['release',.333,.333],['resonance',.7,.7],['lfoRate',.01,.01],['delayTime',.27,.27],['reverbTime',1.25,1.25],['sustain',35,.35],['lfoDepth',42,.42],['delayFeedback',120,.9],['delayMix',55,.55],['reverbMix',25,.25],['pan',-75,-.75],['arpGate',1,.05],['swing',99,.75]]){a.change(key,value);assert.deepEqual(a.patches.at(-1),{[key]:normalized});}
+ for(const [key,value]of [['filterType','bandpass'],['lfoTarget','pan'],['arpMode','updown']]){a.change(key,value);assert.deepEqual(a.patches.at(-1),{[key]:value});}
+ a.el('envelopeOn').click();assert.deepEqual(a.patches.at(-1),{envelopeOn:true});assert.equal(a.starts,0);a.dom.window.close();
+});
+
+test('JSON export saves a pure full manual settings object including every synth field',async()=>{
+ const a=boot();let validated;jsonCore(a,value=>{validated=value;return {...value};});a.api.setSettings({attack:.55,pan:-.2,autoGeometry:true});a.setState({state:'playing',effective:{gain:.1,octave:7},notes:[]});
+ a.el('jsonSave').click();await flush();assert.equal(a.downloaded.length,1);assert.equal(a.downloaded[0].name,'xorrom-settings.json');assert.equal(a.downloaded[0].blob.type,'application/json');const saved=JSON.parse(await blobText(a,a.downloaded[0].blob));assert.deepEqual(saved,validated);
+ for(const key of Object.keys(SYNTH_DEFAULTS))assert.ok(Object.hasOwn(saved,key),key);assert.equal(saved.attack,.55);assert.equal(saved.pan,-.2);assert.equal(saved.gain,.25);assert.equal(saved.octave,4);assert.equal(saved.settings,undefined);assert.match(a.el('status').textContent,/JSON сохранены/);assert.equal(a.starts,0);a.dom.window.close();
+});
+
+test('JSON import validates a BOM file before pausing and atomically applies without autoplay; repeated file works',async()=>{
+ const a=boot(),order=[],valid={...require('./mayatnik-xorrom.js').DEFAULTS,...SYNTH_DEFAULTS,attack:.75,lfoTarget:'pitch'};jsonCore(a,value=>{order.push('validate');assert.deepEqual(value,valid);return {...value};});
+ const originalPause=a.api.pause;a.api.pause=()=>{order.push('pause');return originalPause();};const originalSet=a.api.setSettings;a.api.setSettings=value=>{order.push('set');return originalSet(value);};a.setState({state:'playing',notes:[]});
+ chooseJSON(a,'\uFEFF'+JSON.stringify(valid));await flush();assert.deepEqual(order,['validate','pause','set']);assert.equal(a.patches.length,1);assert.deepEqual(a.patches[0],valid);assert.equal(a.api.getState().state,'paused');assert.equal(a.starts,0);assert.equal(a.el('jsonFile').value,'');assert.match(a.el('status').textContent,/Нажмите Старт/);
+ chooseJSON(a,JSON.stringify(valid));await flush();assert.deepEqual(order.slice(3),['validate','pause','set']);assert.equal(a.patches.length,2);assert.equal(a.starts,0);a.dom.window.close();
+});
+
+test('malformed, oversized and rejected JSON never pauses or partially changes settings',async()=>{
+ const a=boot();let validations=0,pauses=0;jsonCore(a,()=>{validations++;throw Error('Настройки: отсутствует attack');});a.api.pause=()=>pauses++;a.setState({state:'playing',notes:[]});
+ chooseJSON(a,'{');await flush();assert.match(a.el('status').textContent,/Неверный JSON/);assert.equal(validations,0);
+ chooseJSON(a,'{}',{size:65537});await flush();assert.match(a.el('status').textContent,/64 КиБ/);assert.equal(validations,0);
+ chooseJSON(a,' '.repeat(65537),{size:1});await flush();assert.match(a.el('status').textContent,/64 КиБ/);assert.equal(validations,0);
+ chooseJSON(a,'{}');await flush();assert.match(a.el('status').textContent,/отсутствует attack/);assert.equal(validations,1);assert.equal(pauses,0);assert.deepEqual(a.patches,[]);assert.equal(a.api.getState().state,'playing');assert.equal(a.starts,0);a.dom.window.close();
+});
+
+test('JSON cancellation and read failures give feedback; destroy cancels late file results without mutations',async()=>{
+ const a=boot();jsonCore(a);chooseJSON(a,'',{cancel:true});assert.match(a.el('status').textContent,/Импорт отменён/);a.el('jsonFile').dispatchEvent(new a.dom.window.Event('cancel'));assert.match(a.el('status').textContent,/Импорт отменён/);
+ chooseJSON(a,'',{file:{size:1,text:async()=>{throw Error('Нет доступа к файлу');}}});await flush();assert.match(a.el('status').textContent,/Нет доступа/);assert.equal(a.el('jsonLoad').disabled,false);
+ let finish;chooseJSON(a,'',{file:{size:2,text:()=>new Promise(resolve=>finish=resolve)}});assert.equal(a.el('jsonLoad').disabled,true);assert.equal(a.el('start').disabled,true);a.control.destroy();finish('{}');await flush();assert.deepEqual(a.patches,[]);assert.equal(a.host.innerHTML,'<b>existing</b>');assert.equal(a.starts,0);a.dom.window.close();
+});
+
+test('destroy during an asynchronous import pause cannot apply the validated file',async()=>{
+ let finishPause;const a=boot({pause:()=>new Promise(resolve=>finishPause=resolve)});jsonCore(a);a.setState({state:'playing',notes:[]});chooseJSON(a,'{}');await flush();assert.equal(typeof finishPause,'function');a.control.destroy();finishPause();await flush();assert.deepEqual(a.patches,[]);assert.equal(a.starts,0);a.dom.window.close();
+});
+
+test('JSON FileReader fallback reads native File objects and reports missing validator safely',async()=>{
+ const a=boot();jsonCore(a);const file=new a.dom.window.File(['{"attack":0.25}'],'test.json',{type:'application/json'});chooseJSON(a,'',{file});await new Promise(resolve=>setTimeout(resolve,30));assert.deepEqual(a.patches.at(-1),{attack:.25});
+ delete a.dom.window.MayatnikXorrom;chooseJSON(a,'{}');await flush();assert.match(a.el('status').textContent,/Проверка настроек недоступна/);assert.equal(a.patches.length,1);a.dom.window.close();
+});
+
+
+test('JSON import is blocked while a deferred start is preparing and does not pause or mutate',async()=>{
+ let finishStart,pauses=0,checks=0;const a=boot({start:()=>new Promise(resolve=>finishStart=resolve),pause:()=>{pauses++;}});jsonCore(a,value=>{checks++;return value;});a.el('start').click();assert.equal(a.el('jsonLoad').disabled,true);
+ a.el('jsonLoad').click();chooseJSON(a,'{}');await flush();assert.equal(checks,0);assert.equal(pauses,0);assert.deepEqual(a.patches,[]);finishStart();await flush();assert.equal(a.el('jsonLoad').disabled,false);a.dom.window.close();
+});
+
+test('a valid JSON import cancels pending API audio preparation even before playing is reported',async()=>{
+ let cancelled=0;const a=boot({pause:()=>{cancelled++;}});jsonCore(a);a.setState({state:'stopped',notes:[]});chooseJSON(a,'{}');await flush();assert.equal(cancelled,1);assert.equal(a.patches.length,1);assert.equal(a.starts,0);a.dom.window.close();
+});
+
+
+test('real engine validator accepts a full JSON roundtrip and atomically rejects unknown, missing, wrong-type and out-of-range synth values',async()=>{
+ const core=require('./mayatnik-xorrom.js'),a=boot();a.dom.window.MayatnikXorrom=core;let pauses=0;const pause=a.api.pause;a.api.pause=()=>{pauses++;return pause();};a.setState({state:'playing',notes:[]});
+ const invalids=[{...core.DEFAULTS,unknown:1},{...core.DEFAULTS,attack:'0.5'},{...core.DEFAULTS,delayFeedback:.95},{...core.DEFAULTS,envelopeOn:1},Object.fromEntries(Object.entries(core.DEFAULTS).filter(([key])=>key!=='swing'))];
+ for(const value of invalids){chooseJSON(a,JSON.stringify(value));await flush();assert.match(a.el('status').textContent,/Ошибка:/);assert.equal(pauses,0);assert.deepEqual(a.patches,[]);assert.equal(a.api.getState().state,'playing');}
+ const full={...core.DEFAULTS,envelopeOn:true,attack:.123,filterType:'highpass',lfoTarget:'pan',lfoRate:.05,delayMix:.3,pan:-.4,arpMode:'updown',swing:.25};chooseJSON(a,'\uFEFF'+JSON.stringify(full));await flush();assert.equal(pauses,1);assert.deepEqual(a.patches,[full]);assert.equal(a.starts,0);
+ a.el('jsonSave').click();await flush();const saved=JSON.parse(await blobText(a,a.downloaded[0].blob));assert.deepEqual(saved,full);assert.deepEqual(core.validateSettings(saved),full);assert.equal(Object.keys(saved).length,Object.keys(core.DEFAULTS).length);a.dom.window.close();
+});
+
+test('browser-realm modules validate their JSON import in the same realm as production',async()=>{
+ const fs=require('node:fs'),dom=new JSDOM('<div id="host"></div>',{runScripts:'outside-only'}),win=dom.window;
+ win.eval(fs.readFileSync(require.resolve('./mayatnik-xorrom.js'),'utf8'));win.eval(fs.readFileSync(require.resolve('./mayatnik-xorrom-controls.js'),'utf8'));
+ let config=win.MayatnikXorrom.DEFAULTS,changes=0,starts=0;const api={getSettings:()=>config,getState:()=>({state:'stopped'}),setSettings:value=>{config=value;changes++;},pause(){},start(){starts++;}};
+ const host=win.document.querySelector('#host'),controls=win.MayatnikXorromControls.mount(host,{api}),file=host.querySelector('[data-xorrom="jsonFile"]');
+ const full=win.JSON.parse(win.JSON.stringify({...win.MayatnikXorrom.DEFAULTS,attack:.75}));Object.defineProperty(file,'files',{value:[{size:1000,text:async()=>win.JSON.stringify(full)}]});file.dispatchEvent(new win.Event('change'));await flush();assert.equal(changes,1);assert.equal(config.attack,.75);assert.equal(starts,0);assert.equal(win.Object.getPrototypeOf(config),win.Object.prototype);controls.destroy();dom.window.close();
+});
+
+test('destroy aborts an active FileReader and a pause failure leaves settings untouched',async()=>{
+ const a=boot();jsonCore(a);const file=new a.dom.window.File(['{}'],'cancel.json');chooseJSON(a,'',{file});a.control.destroy();await new Promise(resolve=>setTimeout(resolve,30));assert.deepEqual(a.patches,[]);assert.equal(a.host.innerHTML,'<b>existing</b>');a.dom.window.close();
+ const b=boot({pause:()=>{throw Error('Не удалось остановить подготовку звука');}});jsonCore(b);chooseJSON(b,'{}');await flush();assert.deepEqual(b.patches,[]);assert.match(b.el('status').textContent,/Не удалось остановить/);assert.equal(b.starts,0);b.dom.window.close();
+});
