@@ -1,0 +1,19 @@
+/* The original follow-point command remains live in an independent fixed dock. */
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else{root.MayatnikPointDock=api;const start=()=>{root.mayPointDock ||= api.mount(root);};if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',start,{once:true});else start();}})(globalThis,function(){
+ 'use strict';
+ function mount(win){
+  const doc=win.document,button=doc.querySelector('[data-n="fixTri"]');if(!doc.body||!button)return {mounted:false,destroy(){}};
+  const existing=doc.getElementById('mayPointDock');if(existing)return {mounted:true,destroy(){}};
+  const home=doc.createComment('follow point command home');button.before(home);
+  const host=doc.createElement('div');host.id='mayPointDock';host.dataset.noMini='';host.setAttribute('role','group');host.setAttribute('aria-label','Следование точки встречи за кадром');
+  const svg=(cls,viewBox,path)=>{const shape=doc.createElementNS('http://www.w3.org/2000/svg','svg'),p=doc.createElementNS(shape.namespaceURI,'path');shape.classList.add(cls);shape.setAttribute('viewBox',viewBox);shape.setAttribute('aria-hidden','true');p.setAttribute('d',path);shape.append(p);return shape;};
+  const outline=svg('may-point-outline','0 0 48 48','M24 1L47 24 24 47 1 24Z'),glyph=svg('may-point-glyph','0 0 24 24','M12 2V22M2 12H22M12 6L18 12 12 18 6 12Z');
+  const label=button.querySelector('.gz-nm');const oldLabel=label?.textContent;if(label)label.textContent='Точк';
+  button.dataset.noMini='';button.classList.add('may-point-command');button.append(glyph,outline);host.append(button);doc.body.append(host);
+  const events=['pointerdown','pointermove','pointerup','pointercancel','click','dblclick','contextmenu','keydown','keyup','wheel'],isolate=event=>event.stopPropagation();for(const type of events)host.addEventListener(type,isolate);
+  let disposed=false;function destroy(){if(disposed)return;disposed=true;for(const type of events)host.removeEventListener(type,isolate);win.removeEventListener('pagehide',onPageHide);outline.remove();glyph.remove();button.classList.remove('may-point-command');if(label)label.textContent=oldLabel;if(home.isConnected)home.after(button);home.remove();host.remove();}
+  function onPageHide(event){if(!event.persisted)destroy();}
+  win.addEventListener('pagehide',onPageHide);return {mounted:true,button,host,destroy};
+ }
+ return {mount};
+});

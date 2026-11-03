@@ -6,7 +6,7 @@
   const logicalGroup=node=>node.closest('.may-horr-popup')?.mayHorrOwner||node.closest('.pt-g,.gz-group');
   function groupName(node){const group=logicalGroup(node),name=group?.dataset.k||group?.querySelector(':scope>.pt-l .zgh-title,:scope>.gz-head .zgh-title,:scope>.gz-head .gz-nm')?.textContent?.trim()||group?.dataset.id||'';return name==='Очки'?'Поиск':name==='👓 Очки'?'👓 Поиск':name;}
   function collect(doc){
-    const records=[],seen=new Set(),selectors=['#paintTools','#mayatnikRail','#mayBottomBar','#mayTemplateLauncher','.may-horr-popup'];
+    const records=[],seen=new Set(),selectors=['#paintTools','#mayatnikRail','#mayBottomBar','#mayTemplateLauncher','#mayPointDock','.may-horr-popup'];
     for(const scope of selectors.map(selector=>doc.querySelector(selector)).filter(Boolean))for(const node of scope.querySelectorAll('button,.gz-hx,[role="button"],input:not([type=hidden]),select')){
       if(seen.has(node)||node.closest('[data-may-search-ui],[data-may-search-skip],.bar,.gz-ladder')||node.matches('output,.may-cell-info,.gz-pin,.pt-pin,.zgh-pin,.may-standard-outline,.gz-a,.gz-a2')||node.closest('[hidden]')&&!node.closest('[data-mirror-retained]'))continue;seen.add(node);
       if(node.matches('.gz-control,.gz-val,.gz-pair')&&!node.hasAttribute('data-may-search-primary')&&node.querySelector('button,[role="button"],input,select'))continue;

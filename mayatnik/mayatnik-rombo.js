@@ -310,6 +310,15 @@
    const p=makePlan(undefined,g,state),wanted=precision()&&o.exportScale?o.exportScale(options.minimumScale):Math.max(2,frame.width/p.width,frame.height/p.height);if(wanted===null)throw Error('Не удалось выбрать точный масштаб экспорта.');const raster=(precision()?exactSize:rasterSize)(p.outputWidth,p.outputHeight,wanted);
    c.width=raster.width;c.height=raster.height;paint(c.getContext('2d'),frame,p,raster.quality,o.precision?.()&&o.scale?o.scale():source.getBoundingClientRect().width/p.width||1);return c;
   }
+  // The field captures point drags on its host. Retain the originally
+  // selected copy when later events target the host or cross another tile.
+  function sourceDrag(event){
+   const start=events.get(event);if(!current||!start)return null;
+   const plan=current,element=viewportMode()?box:canvas;
+   const local=(e)=>{const r=element.getBoundingClientRect(),p=events.get(e)||{x:e.clientX,y:e.clientY};return {x:(p.x-r.left)/unit,y:(p.y-r.top)/unit};};
+   const hit=plan.pick(local(event)),part=hit&&plan.parts.find(p=>p.id===hit.part);
+   return part?e=>inverse(part.matrix,plan.unrotate(local(e))):null;
+  }
   function input(event){
    // Zoom belongs to the whole field, including gaps between the triangles.
    // Preserve the navigation point already mapped by whole-view rotation;
@@ -328,7 +337,7 @@
   }
   for(const type of ['pointerdown','pointermove','pointerup','pointercancel','mousedown','mousemove','mouseup','click','dblclick','contextmenu','wheel'])win.addEventListener(type,input,{capture:true,passive:false});
   const permit=patch=>!o.allowState||o.allowState({...o.state(),...patch})!==false;
-  const api={get,options:()=>variants.map(v=>{const item={...v,...availability(v.id,geometry(),get().row)},next={romboMode:'fixed',romboAssembly:v.id};if(item.available&&!permit(next)){item.available=false;item.reason=o.stateReason?.(next)||'Сборка несовместима с точной сеткой.';}return item;}),plan:makePlan,render,screenTiles:()=>visibleTiles.slice(),physicalPoint:event=>events.get(event),capture,setSeam(value){const seam=seamMode(value);if(seam===get().seam||!permit({romboSeam:seam}))return;o.state().romboSeam=seam;notify();},setMode(value){const mode=value==='custom'?'custom':'fixed';if(!permit({romboMode:mode}))return;o.state().romboMode=mode;notify();},set(value){if(!permit({edgeRhombOn:!!value}))return;o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n||!permit({romboRow:n}))return;s.romboRow=n;notify();},cycleAngle(dir=1){const angle=(get().angle+(dir<0?315:45))%360;if(!permit({romboAngle:angle}))return;o.state().romboAngle=angle;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available||!permit({romboMode:'fixed',romboAssembly:n}))return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
+  const api={get,options:()=>variants.map(v=>{const item={...v,...availability(v.id,geometry(),get().row)},next={romboMode:'fixed',romboAssembly:v.id};if(item.available&&!permit(next)){item.available=false;item.reason=o.stateReason?.(next)||'Сборка несовместима с точной сеткой.';}return item;}),plan:makePlan,render,screenTiles:()=>visibleTiles.slice(),physicalPoint:event=>events.get(event),sourceDrag,capture,setSeam(value){const seam=seamMode(value);if(seam===get().seam||!permit({romboSeam:seam}))return;o.state().romboSeam=seam;notify();},setMode(value){const mode=value==='custom'?'custom':'fixed';if(!permit({romboMode:mode}))return;o.state().romboMode=mode;notify();},set(value){if(!permit({edgeRhombOn:!!value}))return;o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n||!permit({romboRow:n}))return;s.romboRow=n;notify();},cycleAngle(dir=1){const angle=(get().angle+(dir<0?315:45))%360;if(!permit({romboAngle:angle}))return;o.state().romboAngle=angle;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available||!permit({romboMode:'fixed',romboAssembly:n}))return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
  }
  return {plan,customPlan,point,inverse,draw,paintSourceMarks,rasterPixels,viewportTiles,mount,variants,normalise};
 });

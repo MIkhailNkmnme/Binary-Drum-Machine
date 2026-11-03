@@ -311,7 +311,9 @@
 
     function refresh() { for (const f of refreshers) f(); ladderSync(); }
     setOpen(openId);
-    return { el: root, refresh, open: id => setOpen(id), close: () => setOpen(null), destroy: () => { closeLadder(); tipHide(); root.remove(); } };
+    return { el: root, refresh, open: id => setOpen(id), close: () => setOpen(null),
+      restoreLayout(value={}){pinned.clear();shut.clear();for(const id of Array.isArray(value.pin)?value.pin:[])if(byId.has(id))pinned.add(id);for(const id of Array.isArray(value.shut)?value.shut:[])if(byId.has(id))shut.add(id);const order=[...new Set([...(Array.isArray(value.order)?value.order:[]),...cfg.groups.map(g=>g.id)])];for(const id of order){const box=byId.get(id)?.box;if(box?.parentElement===root)root.append(box);}setOpen(byId.has(value.open)?value.open:null);},
+      destroy: () => { closeLadder(); tipHide(); root.remove(); } };
   }
 
 

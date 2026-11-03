@@ -1,0 +1,49 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const Defaults=require('./mayatnik-menu-defaults');
+class Storage{constructor(values={}){this.values=new Map(Object.entries(values));}getItem(k){return this.values.get(k)??null;}setItem(k,v){this.values.set(k,String(v));}removeItem(k){this.values.delete(k);}}
+const other={'zerk_mayatnik':'scene-bytes','zerk_mayatnik_session':'frame-bytes','mayatnik-mirror-menu':'mirror-logic','mayatnik-xorrom':'audio-bytes','some-library-key':'library-bytes','mayatnik-template-panel-width':'390'};
+function unchanged(storage){for(const [key,value]of Object.entries(other))assert.equal(storage.getItem(key),value,key);}
+test('embedded captured defaults contain only the sixteen menu preferences and six migration guards',()=>{
+ assert.equal(Defaults.keys.length,16);assert.equal(Defaults.markers.length,6);assert.equal(Object.isFrozen(Defaults.defaults),true);assert.ok(!Defaults.keys.includes('mayatnik-mirror-menu'));
+ assert.equal(Defaults.defaults['mayatnik-horr-section-v1'],'rombo');assert.equal(Defaults.defaults['mayatnik-horr-section-open-v1'],'0');assert.equal(Defaults.defaults['mayatnik-dd-open'],'');assert.equal(Defaults.defaults['mayatnik-dd-grid'],null);
+ const rail=JSON.parse(Defaults.defaults['grozd:mayatnik']);assert.deepEqual(rail.pin,['paint','gifscale','horr','edge','zoom','ochki']);assert.deepEqual(rail.shut,['paint','ochki']);assert.equal(rail.open,null);
+ assert.throws(()=>Defaults.validate({...Defaults.defaults,zerk_mayatnik:'bad'}),/Недопустимый/);assert.throws(()=>Defaults.validate({...Defaults.defaults,'mayatnik-mirror-menu':'bad'}),/Недопустимый/);assert.throws(()=>Defaults.validate({'mayatnik-dd-open':''}),/Неполная/);
+});
+test('first visit seeds only menu defaults; any existing preference, including empty lists and strings, prevents seeding',()=>{
+ const storage=new Storage(other),api=Defaults.create({storage});assert.equal(api.seed(),true);for(const key of Defaults.keys)assert.equal(storage.getItem(key),Defaults.defaults[key]);for(const key of Defaults.markers)assert.equal(storage.getItem(key),'1');unchanged(storage);assert.equal(api.seed(),false);
+ for(const [key,value]of [['grozd:mayatnik','{}'],['mayatnik-control-mini-v464','[]'],['mayatnik-dd-open','']]){const saved=new Storage({...other,[key]:value}),before=[...saved.values];assert.equal(Defaults.create({storage:saved}).seed(),false);assert.deepEqual([...saved.values],before);}
+});
+test('live reset restores exact menu prefs and removes null entries while preserving scene, music and library objects',async()=>{
+ const storage=new Storage({...other,'mayatnik-dd-pins':'["Оси"]','mayatnik-pins':'[{"g":"zoom","i":0,"x":4,"y":9}]'}),live={frame:new Uint8Array([1,0,1]),k:37,audio:{playing:true,settings:{bpm:113}},library:{open:true,tab:'music'}},frame=live.frame,audio=live.audio,library=live.library;let flushed=0,applied=0;
+ const api=Defaults.create({storage,flush(){flushed++;},apply(values){assert.equal(flushed,1);assert.deepEqual(values,Defaults.defaults);applied++;}});assert.equal(await api.reset(),true);assert.equal(applied,1);for(const key of Defaults.keys)assert.equal(storage.getItem(key),Defaults.defaults[key]);unchanged(storage);assert.equal(live.frame,frame);assert.equal(live.audio,audio);assert.equal(live.library,library);assert.equal(live.k,37);assert.equal(live.audio.playing,true);assert.equal(live.library.open,true);
+});
+test('failed writes and live apply roll back menu state without erasing unrelated storage',async()=>{
+ const storage=new Storage({...other,'mayatnik-dd-open':'Оси','mayatnik-dd-mini':'["Вид"]','mayatnik-horr-group-v441':'old'}),before=[...storage.values].sort();let calls=0;
+ const api=Defaults.create({storage,apply(values){calls++;if(calls===1)throw Error('UI apply failed');assert.equal(values['mayatnik-dd-open'],'Оси');}});await assert.rejects(api.reset(),/UI apply failed/);assert.equal(calls,2);assert.deepEqual([...storage.values].sort(),before);unchanged(storage);
+ const fresh=new Storage(other),set=fresh.setItem.bind(fresh);let failed=false;fresh.setItem=(key,value)=>{if(!failed&&key==='mayatnik-dd-pins'){failed=true;throw Error('quota');}set(key,value);};assert.throws(()=>Defaults.create({storage:fresh}).seed(),/quota/);assert.deepEqual([...fresh.values].sort(),Object.entries(other).sort());
+});
+test('reset requires a live adapter and rejects concurrent resets without launching another apply',async()=>{
+ const storage=new Storage(other);await assert.rejects(Defaults.create({storage}).reset(),/Меню ещё не готово/);unchanged(storage);let resolve,calls=0;const api=Defaults.create({storage,apply(){calls++;return new Promise(done=>{resolve=done;});}}),first=api.reset();assert.equal(api.isBusy(),true);await assert.rejects(api.reset(),/Дождитесь/);assert.equal(calls,1);resolve();await first;assert.equal(api.isBusy(),false);
+});
+test('native Grozd restoreLayout keeps button nodes, handlers and a detached group while restoring pin/open/shut',()=>{
+ const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<body><div id="rail"></div><div id="up"></div><div id="library"></div></body>',{url:'https://example.test',runScripts:'outside-only'}),w=dom.window,d=w.document;try{
+  w.eval(fs.readFileSync(__dirname+'/../_js/grozd.js','utf8'));let clicks=0;const live={k:37,playing:true,frame:new Uint8Array([1,0,1])},before=live.frame;
+  const rail=w.ZerkGrozd.rail(d.getElementById('rail'),{key:'mayatnik',groups:['a','b','c'].map(id=>({id,title:id,items:[{type:'action',name:id,click(){clicks++;}}]}))}),a=d.querySelector('[data-id=a]'),b=d.querySelector('[data-id=b]'),button=a.querySelector('.gz-soty .gz-hx');d.getElementById('up').append(b);
+  rail.restoreLayout({open:null,pin:['a','b'],shut:['b'],order:['c','a','b']});assert.ok(a.matches('.gz-pinned.gz-open'));assert.ok(b.matches('.gz-pinned:not(.gz-open)'));assert.equal(b.parentElement.id,'up');assert.equal(a.querySelector('.gz-soty .gz-hx'),button);button.click();assert.equal(clicks,1);assert.equal(live.k,37);assert.equal(live.playing,true);assert.equal(live.frame,before);assert.equal(d.getElementById('library').hidden,false);
+  rail.open('c');assert.ok(a.matches('.gz-open'));assert.equal(b.matches('.gz-open'),false);assert.ok(d.querySelector('[data-id=c]').matches('.gz-open'));
+ }finally{w.close();}
+});
+test('dock restoreLayout moves the same headers to captured strips without changing field or native handlers',()=>{
+ const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<body><header></header><div id="tools"><div class="pt-g" data-k="A"><button class="pt-l">A</button></div><div class="pt-g" data-k="B"><button class="pt-l">B</button></div></div><div id="rail"></div><footer></footer><canvas id="cv"></canvas></body>',{url:'https://example.test',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
+ try{Object.defineProperty(w,'innerWidth',{value:1280});Object.defineProperty(w,'innerHeight',{value:720});w.requestAnimationFrame=()=>0;const boxes={HEADER:{left:0,top:0,width:1280,height:28},FOOTER:{left:128,top:696,width:1152,height:24},tools:{left:128,top:0,width:1152,height:28},rail:{left:2,top:104,width:120,height:500}};
+  w.HTMLElement.prototype.getBoundingClientRect=function(){const r=boxes[this.id]||boxes[this.tagName]||{left:this.closest('[data-k=B]')?270:140,top:30,width:120,height:24};return {...r,right:r.left+r.width,bottom:r.top+r.height};};w.HTMLElement.prototype.getClientRects=function(){return[this.getBoundingClientRect()];};const nodes=[...d.querySelectorAll('.pt-g')],heads=nodes.map(node=>node.querySelector('button'));for(const head of heads)Object.defineProperty(head,'offsetWidth',{value:120});let clicks=0;heads[0].onclick=()=>clicks++;const field=d.getElementById('cv'),before=field.outerHTML;
+  w.eval(fs.readFileSync(__dirname+'/mayatnik-menu-dock.js','utf8'));const dock=w.MayatnikMenuDock.mount({groups:()=>nodes,idOf:g=>g.dataset.k,header:d.querySelector('header'),tools:d.getElementById('tools'),footer:d.querySelector('footer'),rail:d.getElementById('rail'),rightEdge:()=>1280,moveToTools:g=>d.getElementById('tools').append(g),onLayout(){},stackSides:false});dock.refresh();dock.restoreLayout({A:{edge:'left',index:3},B:{edge:'bottom',index:2}});
+  assert.equal(nodes[0].dataset.dockEdge,'left');assert.equal(nodes[1].dataset.dockEdge,'bottom');assert.equal(nodes[0].querySelector('button'),heads[0]);heads[0].click();assert.equal(clicks,1);assert.equal(field.outerHTML,before);const saved=JSON.parse(w.localStorage.getItem('mayatnik-menu-dock-v509'));assert.equal(saved.A.edge,'left');assert.equal(saved.B.edge,'bottom');
+ }finally{w.close();}
+});
+test('button-standard reloads compact flags on the existing controls without invoking their command',()=>{
+ const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<body class="mayatnik-menu-ready"><div id="paintTools"><div class="pt-g" data-k="Test"><button class="pt-l">Test</button><div class="pt-r"><button class="gz-hx" data-n="test"><span class="gz-nm">Command</span></button></div></div></div></body>',{url:'https://example.test',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
+ try{const button=d.querySelector('[data-n=test]');let clicks=0;button.onclick=()=>clicks++;w.eval(fs.readFileSync(__dirname+'/mayatnik-button-standard.js','utf8'));w.mayButtonStandardReloadMinis(['group:Test:data:test']);assert.ok(button.classList.contains('may-control-mini'));assert.equal(clicks,0);w.mayButtonStandardReloadMinis([]);assert.equal(button.classList.contains('may-control-mini'),false);assert.equal(d.querySelector('[data-n=test]'),button);button.click();assert.equal(clicks,1);
+ }finally{w.close();}
+});

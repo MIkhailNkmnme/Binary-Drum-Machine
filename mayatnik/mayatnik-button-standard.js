@@ -264,6 +264,7 @@
     document.addEventListener('pointermove',e=>{if(!quiet)return;const b=hov(e.target);if(!b||id(b)!==quiet){quiet=null;document.body.classList.remove('may-quiet-hover');}});
   }
   window.mayButtonStandardRefresh=refresh;
+  window.mayButtonStandardReloadMinis=value=>{controlMinis=new Set((Array.isArray(value)?value:[]).filter(key=>typeof key==='string'));refresh();};
   let refreshFrame=0;
   const requestRefresh=()=>{if(!refreshFrame)refreshFrame=requestAnimationFrame(()=>{refreshFrame=0;refresh();});};
   addEventListener('resize',requestRefresh);document.addEventListener('click',requestRefresh);document.addEventListener('change',requestRefresh);

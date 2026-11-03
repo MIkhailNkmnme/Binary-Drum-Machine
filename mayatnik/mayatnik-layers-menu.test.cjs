@@ -4,7 +4,7 @@ const menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8');
 const start=menu.indexOf('  function installLayersMenu(api) {'),end=menu.indexOf('  installLayersMenu(window.mayLayers);',start);
 assert.ok(start>0&&end>start);const code=menu.slice(start,end);
 class Element {
-  constructor(tag='div'){this.tagName=tag.toUpperCase();this.children=[];this.dataset={};this.attributes={};this.handlers={};this.value='';this.disabled=false;this.isConnected=true;this.style={setProperty(k,v){this[k]=v;}};this.className='';}
+  constructor(tag='div'){this.tagName=tag.toUpperCase();this.children=[];this.dataset={};this.attributes={};this.handlers={};this.value='';this.disabled=false;this.isConnected=true;this.style={priorities:{},setProperty(k,v,priority=''){this[k]=String(v);this.priorities[k]=priority;},getPropertyValue(k){return this[k]||'';},getPropertyPriority(k){return this.priorities[k]||'';},removeProperty(k){const old=this[k]||'';delete this[k];delete this.priorities[k];return old;}};this.className='';}
   set className(v){this.classes=new Set(v.split(/\s+/).filter(Boolean));}
   get className(){return [...this.classes].join(' ');}
   get classList(){const self=this;return {add(...a){a.forEach(x=>self.classes.add(x));},toggle(k,v){if(v??!self.classes.has(k))self.classes.add(k);else self.classes.delete(k);},remove:(...a)=>a.forEach(x=>self.classes.delete(x)),contains:k=>self.classes.has(k)};}
@@ -16,6 +16,7 @@ class Element {
   getAttribute(k){return this.attributes[k]??null;}
   toggleAttribute(k,on){if(on)this.setAttribute(k,'');else delete this.attributes[k];}
   addEventListener(type,fn){(this.handlers[type]??=[]).push(fn);}
+  removeEventListener(type,fn){this.handlers[type]=(this.handlers[type]||[]).filter(f=>f!==fn);}
   fire(type,event={}){for(const fn of this.handlers[type]||[])fn({target:this,...event});}
   click(){if(!this.disabled){this.onclick?.();this.fire('click');}}
   showPicker(){this.picked=true;}
@@ -115,8 +116,36 @@ test('layer controls keep independent outlines and native inputs; one movable X 
   const prior=box.children.slice();e.ctx.ZerkControlFrame.attach(box,left,middle,right);assert.deepEqual(box.children,prior);
  }
  const range=e.input('opacity'),middle=range.parentElement;assert.ok(range.classList.contains('zcf-input'));assert.equal(range.type,'range');
+ assert.equal(middle.classList.contains('zcf-value-in-thumb'),true);assert.ok(middle.querySelector('.zcf-thumb-outline'));assert.equal(range.handlers.pointerenter.length,1);
  for(const n of [0,11,50,51,100]){range.value=String(n);range.fire('input');assert.equal(e.api.get().opacity,n);assert.equal(middle.dataset.valueSide,n<=50?'right':'left');}
  e.api.set('overlay',{opacity:25});assert.equal(Number(range.value),25);assert.equal(middle.dataset.valueSide,'right');assert.equal(e.input('x').classList.contains('zcf-input'),false);
  assert.equal(e.all().filter(n=>n.classList.contains('zcf-control')).length,3);
  const css=fs.readFileSync(path.join(__dirname,'../_js/control-frame.css'),'utf8');assert.match(css,/::-webkit-slider-thumb/);assert.match(css,/::-moz-range-thumb/);assert.match(css,/M1 1L13 23M13 1L1 23/);assert.doesNotMatch(css,/zcf-joints/);
+});
+
+test('opt-in value thumb fits 0/mid/max and live caller text without replacing native controls or dispatching events',()=>{
+ const Frame=require('../_js/control-frame.js'),e=setup(),host=new Element(),left=new Element('button'),middle=new Element(),right=new Element('button'),input=new Element('input'),output=new Element('output');
+ let observed,disconnected=false;
+ host.ownerDocument={...e.document,defaultView:{getComputedStyle:()=>({fontSize:'11px'}),MutationObserver:class{constructor(fn){observed=fn;}observe(node){assert.equal(node,output);}disconnect(){disconnected=true;}}}};
+ output.style.removeProperty=function(k){delete this[k];};
+ output.getBoundingClientRect=()=>({width:String(output.textContent).length*7});
+ input.type='range';input.min='0';input.max='100';input.value='0';output.textContent='0';middle.append(input,output);host.append(left,middle,right);
+ let calls=0;input.addEventListener('input',()=>{calls++;output.textContent=input.value;});
+ const result=Frame.attach(host,left,middle,right,{input,output,valueInThumb:true}),svg=middle.querySelector('.zcf-thumb-outline');
+ assert.equal(input.parentElement,middle);assert.equal(output.parentElement,middle);assert.equal(host.children.length,3);assert.equal(middle.children.filter(n=>n.tagName==='INPUT').length,1);assert.ok(svg);assert.equal(calls,0);
+ for(const value of [0,50,100]){
+  input.value=String(value);input.fire('input');assert.equal(output.textContent,String(value));
+  const x=parseFloat(svg.style.left),width=parseFloat(svg.style.width);assert.ok(x>=0&&x+width<=72);assert.ok(width>=28);
+  const label=parseFloat(output.style.left);assert.ok(label>=x&&label+String(value).length*7<=x+width);
+  input.fire('pointerenter');assert.ok(middle.classList.contains('zcf-thumb-active'));assert.equal(middle.dataset.valueSide,value<=50?'right':'left');
+  assert.equal(result.contours[1].children[0].getAttribute('d'),`M0 0H${58*value/100}M${58*value/100+14} 0H72M0 24H${58*value/100}M${58*value/100+14} 24H72`);
+  assert.ok(parseFloat(output.style.left)>=0&&parseFloat(output.style.left)+String(value).length*7<=72);
+  input.fire('pointerleave');assert.equal(middle.classList.contains('zcf-thumb-active'),false);
+ }
+ assert.equal(calls,3);input.fire('focus');input.fire('pointerleave');assert.ok(middle.classList.contains('zcf-thumb-active'));input.fire('blur');assert.equal(middle.classList.contains('zcf-thumb-active'),false);
+ output.textContent='12345678901234567890';observed();assert.equal(parseFloat(svg.style.width),72);assert.equal(parseFloat(svg.style.left),0);assert.ok(parseFloat(output.style['font-size'])<11);
+ input.value='20';output.textContent='20%';result.sync();assert.equal(calls,3);assert.equal(middle.dataset.valueSide,'right');assert.equal(output.textContent,'20%');
+ result.dispose();assert.equal(disconnected,true);assert.equal(input.handlers.input.length,1);assert.equal(input.handlers.pointerenter.length,0);
+ const fallback=new Element(),a=new Element(),b=new Element(),c=new Element(),r=new Element('input');fallback.ownerDocument=e.document;r.type='range';r.min='0';r.max='100';r.value='50';b.append(r);fallback.append(a,b,c);const plain=Frame.attach(fallback,a,b,c,{input:r,valueInThumb:true});assert.equal(b.querySelector('.zcf-thumb-outline'),null);assert.equal(plain.dispose,undefined);
+ const defaultHost=new Element(),dl=new Element(),dm=new Element(),dr=new Element(),di=new Element('input'),out=new Element('output');defaultHost.ownerDocument=e.document;di.type='range';di.min='0';di.max='100';di.value='50';out.textContent='50';dm.append(di,out);defaultHost.append(dl,dm,dr);Frame.attach(defaultHost,dl,dm,dr,{input:di,output:out});assert.equal(dm.classList.contains('zcf-value-in-thumb'),false);assert.equal(dm.querySelector('.zcf-thumb-outline'),null);assert.equal(di.handlers.pointerenter,undefined);assert.equal(out.style.left,undefined);assert.equal(out.textContent,'50');
 });

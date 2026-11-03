@@ -381,3 +381,17 @@ test('overview minification copies only source palette and identical global pixe
   }
  }
 });
+
+test('captured point drags keep the triangle copy and source direction after the host takes capture',()=>{
+ const h=host();Object.assign(h.state,{romboAssembly:16,romboRow:5});const unit=10;
+ for(const angle of [0,90,180,270]){
+  h.state.romboAngle=angle;h.api.render();const p=h.api.plan(),r=h.canvas.getBoundingClientRect();
+  for(const part of p.parts){
+   const eventAt=(x,y)=>{const q=p.forward(R.point(part.matrix,{x,y}));return {clientX:r.left+q.x*unit,clientY:r.top+q.y*unit};};
+   const start=eventAt(4.5,1.5),down=h.event('pointerdown',start.clientX,start.clientY),project=h.api.sourceDrag(down);
+   assert.equal(typeof project,'function');
+   // Subsequent pointermove targets #wrap and is no longer remapped by Rombo.
+   const q=project(eventAt(4.5,3.5));near(q.x,4.5);near(q.y,3.5);
+  }
+ }
+});

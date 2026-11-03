@@ -28,7 +28,7 @@ function fixture(diamonds=false){
  const body=new Node('body');body.root=true;const doc=new Node();doc.body=body;doc.documentElement=new Node();doc.createElement=t=>new Node(t);doc.querySelectorAll=s=>body.querySelectorAll(s);
  let now=0,id=0;const timers=new Map(),win=new Node();
  const ctx={document:doc,window:{},innerWidth:800,innerHeight:600,getComputedStyle:b=>({font:'12px Consolas',getPropertyValue:k=>b.style.getPropertyValue(k)}),
-  setTimeout(f,ms){timers.set(++id,{at:now+ms,f});return id},clearTimeout(i){timers.delete(i)},addEventListener:win.addEventListener.bind(win),removeEventListener(){},scheduleGroups(){},decorateViewPalette(){},decorateListHeading(){},performance:{now:()=>now}};
+  setTimeout(f,ms){timers.set(++id,{at:now+ms,f});return id},clearTimeout(i){timers.delete(i)},addEventListener:win.addEventListener.bind(win),removeEventListener(){},groupHover:{active:()=>null},scheduleGroups(){},decorateViewPalette(){},decorateListHeading(){},performance:{now:()=>now}};
  ctx.popupRight=()=>ctx.innerWidth;vm.createContext(ctx);
  if(diamonds){vm.runInContext(fs.readFileSync(path.join(__dirname,'mayatnik-menu-options.js'),'utf8'),ctx);ctx.window.MayatnikMenuOptions=ctx.MayatnikMenuOptions;vm.runInContext(menu.slice(menu.indexOf('  function nameListButton('),menu.indexOf('  let activeList=null;')),ctx);}
  // Execute only the real shared list controller, not rail/adopt or any page application.
@@ -144,4 +144,15 @@ test('option clicks resolve current records and decoration never shifts selected
  const decoration=new Node('svg');decoration.parentNode=list;list.children.unshift(decoration);
  revision=1;rows[2].click();assert.deepEqual(picks,[1]);assert.equal(rows[2]['aria-pressed'],'true');assert.equal(rows[1]['aria-pressed'],'false');assert.equal(decoration.classList.contains('gz-on'),false);
  rows[1].emit('keydown',{key:'Enter',preventDefault(){}});assert.equal(selected,1);assert.deepEqual(picks,[1,1]);
+});
+
+test('unpinned rail groups hover open from all closed, retain the whole group and popup bridge, and leave touch and pins alone',()=>{
+ const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom'),dom=new JSDOM('<body><div id="paintTools"><div class="gz-group" data-id="xorrom"><button class="gz-head">X</button></div><div class="gz-group gz-pinned" data-id="export"><button class="gz-head">E</button></div></div></body>',{runScripts:'outside-only'}),w=dom.window,d=w.document,groups=[...d.querySelectorAll('.gz-group')],timers=new Map();let timerId=0,active=null,popup=false,commands=0;for(const group of groups){const matches=group.matches.bind(group);group.matches=selector=>selector===':hover'?false:matches(selector);}
+ try{const mobile={matches:false};Object.assign(w,{tools:d.getElementById('paintTools'),mobileMenu:mobile,rail:{open(id){groups.forEach(g=>{if(!g.matches('.gz-pinned'))g.classList.toggle('gz-open',g.dataset.id===id);});},close(){groups.forEach(g=>{if(!g.matches('.gz-pinned'))g.classList.remove('gz-open');});}},groupHover:{active:()=>active},popupContains:()=>popup,setTimeout(fn,ms){assert.equal(ms,350);timers.set(++timerId,fn);return timerId;},clearTimeout(id){timers.delete(id);}});
+  const start=menu.indexOf('  // Rail groups use Grozd'),end=menu.indexOf('  let lastHoveredGroup',start),head=groups[0].querySelector('button');head.addEventListener('click',()=>commands++);w.eval(menu.slice(start,end));
+  const fire=(node,type,extra={})=>{const event=new w.Event(type);Object.assign(event,{pointerType:'mouse',...extra});node.dispatchEvent(event);},flush=()=>{for(const [id,fn]of [...timers]){timers.delete(id);fn();}};
+  fire(head,'pointerenter');assert.equal(groups[0].classList.contains('gz-open'),true);fire(head,'click',{detail:1});assert.equal(commands,0);fire(head,'click',{detail:1,pointerType:'touch'});assert.equal(commands,1);
+  fire(groups[0],'pointerleave');active=groups[0];flush();assert.equal(groups[0].classList.contains('gz-open'),true);active=null;fire(groups[0],'pointerleave');popup=true;flush();assert.equal(groups[0].classList.contains('gz-open'),true);popup=false;fire(groups[0],'pointerleave');flush();assert.equal(groups[0].classList.contains('gz-open'),false);
+  fire(groups[1].querySelector('button'),'pointerenter');assert.equal(groups[1].classList.contains('gz-open'),false);fire(head,'pointerenter',{pointerType:'touch'});assert.equal(groups[0].classList.contains('gz-open'),false);mobile.matches=true;fire(head,'pointerenter');assert.equal(groups[0].classList.contains('gz-open'),false);
+ }finally{w.close();}
 });

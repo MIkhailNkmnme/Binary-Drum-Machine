@@ -23,6 +23,14 @@
 .zcf-range[data-value-side=right]>.zcf-value{right:2px;left:auto}
 .zcf-range[data-value-side=left]>.zcf-value{left:2px;right:auto}
 
+/* Optional readout inside the idle thumb; native 14px mapping stays unchanged. */
+.zcf-value-in-thumb>.zcf-value{width:max-content!important;max-width:none!important;min-width:0!important;padding:0!important;transform:none!important;user-select:none;z-index:6}
+.zcf-value-in-thumb>.zcf-thumb-outline{position:absolute;top:0;height:24px;pointer-events:none;z-index:2}
+.zcf-value-in-thumb>.zcf-thumb-outline path{fill:var(--zcf-surface);stroke:var(--c,#7cbcff);stroke-width:2px;stroke-linejoin:miter}
+.zcf-value-in-thumb:not(.zcf-thumb-active)>.zcf-input::-webkit-slider-thumb{background:transparent}
+.zcf-value-in-thumb:not(.zcf-thumb-active)>.zcf-input::-moz-range-thumb{background:transparent}
+.zcf-value-in-thumb.zcf-thumb-active>.zcf-thumb-outline{visibility:hidden}
+
 /* Closed diamond between two independent halves: the boundary itself is the both-toggle. */
 .zcf-switch-pair>.zcf-pair-switch{position:absolute;left:calc(50% - 12px);top:0;width:24px;height:24px;min-width:24px;margin:0;padding:0;border:0;border-radius:0;background:var(--may-surface,#1b2430);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);z-index:6;cursor:pointer;--zcf-diamond-stroke:2px;--zcf-diamond-colour:#394657}
 .zcf-switch-pair>.zcf-pair-switch svg{display:block;width:100%;height:100%;pointer-events:none}

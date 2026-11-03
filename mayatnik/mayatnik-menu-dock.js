@@ -199,7 +199,7 @@
     for(const g of groups()){const hd=g.querySelector(':scope > .pt-l,:scope > .gz-head')||(g.id==='mayCorner'?g:null);if(hd){heads.set(g,hd);g.classList.toggle('may-menu-side-stack',useSideStack);}}
     if(useSideStack&&typeof ResizeObserver==='function'){const observer=new ResizeObserver(queueStack);for(const g of heads.keys())observer.observe(g);}
     addEventListener('resize',layout);requestAnimationFrame(layout);
-    return {refresh:layout};
+    return {refresh:layout,restoreLayout(value){state=read(value);placed.clear();geometry='';ready=false;layout();}};
   }
   return {isMobile,mobileStrip,WIDTH,HEIGHT,DX,DY,slots,nearest,overlap,read,stackPositions,mount,ownsWheel,guardWheel};
 });

@@ -1191,19 +1191,24 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 /* v0.790: ромбы параметров транспорта и списки по щелчку. */
 #mayBottomBar>.may-transport-diamond{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 80px;width:80px;min-width:80px;height:24px;margin:0 2px;padding:0!important;border:0;outline:0;box-shadow:none;background:transparent;clip-path:none;cursor:pointer;font:600 10px/24px var(--mono,monospace);color:#dfe6f5;--c:#80aee8}
 #mayBottomBar>.may-transport-diamond::before,#mayBottomBar>.may-transport-diamond::after{display:none}
-.may-transport-surface{position:absolute;top:0;left:0;display:flex;width:80px;height:24px;isolation:isolate}
+.may-transport-surface{position:absolute;top:0;left:0;display:flex;gap:2px;width:80px;height:24px;isolation:isolate}
 .may-transport-diamond[data-k=sp]>.may-transport-surface{left:auto;right:0}
-.may-transport-surface::before,.may-transport-surface::after{content:"";position:absolute;inset:0;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);background:#40516b;pointer-events:none;z-index:-1}
+.may-transport-surface::before,.may-transport-surface::after{display:none}
 .may-transport-surface::after{inset:1px;background:#1b2430}
-.may-transport-surface>button{position:relative;box-sizing:border-box;height:24px;margin:0;padding:0;border:0;border-radius:0;outline:0;clip-path:none;background:transparent;color:inherit;font:inherit;cursor:pointer;user-select:none}
-.may-transport-center{flex:1;min-width:0;border-inline:1px solid #40516b!important}
-.may-transport-nudge{display:block;flex:0 0 20px;font-size:16px!important}
+.may-transport-surface>button{position:relative;box-sizing:border-box;height:24px;margin:0;padding:0;border:0;border-radius:0;outline:0;background:#1b2430;color:inherit;font:inherit;cursor:pointer;user-select:none;--transport-outline:#40516b;--transport-stroke:2px}
+.may-transport-center{flex:0 0 40px;width:40px;min-width:40px;border:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.may-transport-nudge{display:block;flex:0 0 18px;width:18px;min-width:18px;font-size:16px!important}
+.may-transport-surface .may-transport-outline,.may-transport-surface .may-transport-chevron{position:absolute;inset:0;width:100%;height:24px;pointer-events:none;fill:none}
+.may-transport-outline path{stroke:var(--transport-outline);stroke-width:var(--transport-stroke);stroke-linejoin:miter}
+.may-transport-chevron path{stroke:currentColor;stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter}
+.may-transport-surface>button:is(:hover,:focus-visible){--transport-outline:var(--c)}
+.may-transport-surface>button:is(:active,[aria-expanded=true]){--transport-outline:var(--c);--transport-stroke:4px}
 .may-transport-nudge[data-direction="-1"]{clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%)}
 .may-transport-nudge[data-direction="1"]{clip-path:polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%)}
 #mayBottomBar>.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])){z-index:12}
 .may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::before,.may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::after{clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
 .may-transport-diamond:is(:hover,:has(:focus-visible),:has([aria-expanded=true])) .may-transport-surface::before{background:var(--c)}
-.may-transport-surface>button:is(:hover,:focus-visible){box-shadow:inset 0 0 0 1px var(--c)}
+.may-transport-surface>button:is(:hover,:focus-visible){box-shadow:none}
 .may-transport-nudge:disabled{opacity:.35;cursor:default}
 .may-transport-nudge:hover:not(:disabled){background:#2e4560}
 .may-transport-nudge:active:not(:disabled){background:#446885}
@@ -1268,3 +1273,13 @@ body.may-zen>.may-menu-side-backdrop,body.may-mobile-menu>.may-menu-side-backdro
 
 /* v0.757: в логе находок у строк больше нет подписи «Текущий кадр»: пустой summary не занимает строку; ручная змея подписана. */
 #mayatnikTemplatePanel .mtp-sequence-rows .mtp-current-matches summary:empty{display:none}
+/* Mayatnik-only control-frame glyphs; native inputs, values and thumb remain intact. */
+body.mayatnik-menu-ready .zcf-side>.may-control-chevron{position:absolute;inset:0;width:24px;height:24px;pointer-events:none;fill:none;stroke:currentColor;stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter}
+body.mayatnik-menu-ready .zcf-range>.zcf-input::-webkit-slider-runnable-track{background:transparent}
+body.mayatnik-menu-ready .zcf-range>.zcf-input::-moz-range-track{background:transparent}
+header #paintTools.pt-dd.pt-grid>.pt-history.may-history-fixed>.pt-l{padding:0!important}
+header #paintTools.pt-dd .pt-history.may-history-fixed .pt-ud{box-sizing:border-box;min-width:0;flex:1 1 0}
+header #paintTools.pt-dd .pt-history.may-history-fixed .pt-ud:first-child{border-right:1px solid #394657}
+/* Mirror the three faces vertically while their captions stay upright. */
+#paintTools [data-n=bandTri].may-band-flip>.gz-half{transform:scaleY(-1)!important}
+#paintTools [data-n=bandTri].may-band-flip>.gz-half>.may-band-caption{display:block;transform:scaleY(-1);pointer-events:none}

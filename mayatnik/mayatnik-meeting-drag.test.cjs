@@ -4,7 +4,7 @@ function section(start,end){const a=html.indexOf(start),b=html.indexOf(end,a+sta
 function boot({rows=8,visible=rows,steps=rows*4,mode='pend',pair=false,compare=false,cells=100,frame=4}={}){
   const handlers={},events=[],calls=[],classes=new Set(),c={st:{rows,steps,mode,pair,fixLines:true,fixCross:true,fixDragK:true},k:frame,
     VX:0,VW:1000,VH:visible,geo:{anchor:500},f:{H:rows,W:1000,val:{length:cells}},MAYATNIK:Core,
-    compareOn:()=>compare,pairOn:()=>pair&&mode==='pend',rombP:()=>-1,coneContinueAllowed:()=>false,Event:class{constructor(type){this.type=type;}},
+    MayatnikConstruction:require('./mayatnik-construction.js'),animatrixOn:()=>false,edgeFlowOn:()=>false,fieldFrames:()=>compare?c.compareLimit(c.st):require('./mayatnik-edge-flow.js').base(c.st),compareOn:()=>compare,pairOn:()=>pair&&mode==='pend',rombP:()=>-1,coneContinueAllowed:()=>false,Event:class{constructor(type){this.type=type;}},
     actSet(){},save(){},wrap:{classList:{remove:x=>classes.delete(x)},addEventListener(type,fn){handlers[type]=fn;}}};
   const fr={value:frame,addEventListener(type,fn){handlers['frame:'+type]=fn;},dispatchEvent(e){events.push({type:e.type,frame:+fr.value});handlers['frame:'+e.type]?.(e);}},label={textContent:frame};
   c.$=id=>id==='frame'?fr:label;c.goTo=t=>{calls.push(t);c.k=t;};vm.createContext(c);

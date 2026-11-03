@@ -7,6 +7,19 @@
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const mobileMenu=window.MayatnikMenuDock.mobileStrip();
   const toolSync = [];
+  const buttonLayoutRestorers=[];
+  const layoutValue=(values,key,fallback)=>{try{const value=JSON.parse(values[key]);if(value==null)return fallback;if(Array.isArray(fallback))return Array.isArray(value)?value:fallback;return typeof value==='object'&&!Array.isArray(value)?value:fallback;}catch{return fallback;}};
+  // Stable group keys share one palette across headers, controls and detached lists.
+  const GROUP_COLOURS=Object.freeze({
+    'rail:build':'#63d99b','rail:ochki':'#ffb347','rail:zoom':'#7cbcff','rail:mirrors':'#eb92e9',
+    'rail:paint':'#ff9b50','rail:template':'#e3c56f','rail:gifscale':'#41d6bd','rail:library':'#d9b9ff',
+    'rail:export':'#ffd166','rail:xorrom':'#c29bff','rail:horr':'#88db72','rail:edge':'#78a8ec',
+    'pt:Очистка':'#ffe17a','pt:Оси':'#ff87cf','pt:Правка':'#d4c27b','pt:Точка Ось':'#d292ff',
+    'pt:Виды поля':'#5cbce8','pt:Вид':'#91a5ff','pt:Зеркала':'#b48cff','pt:Шаблон':'#e3ad73',
+    'pt:Видео':'#f49d99','pt:Площади':'#b99de9','pt:Слои':'#63cbb3','pt:Ручные оси':'#ffbf73',
+    'pt:Шаблоны':'#ceb6ed','pt:Свёртки':'#91d4a1','pt:Ячейки':'#a4d374','pt:Наложение':'#75c9dc'
+  });
+  window.MayatnikGroupColours=GROUP_COLOURS;
   function menuVisualViewport(win=window){const v=win.visualViewport;return {left:v?.offsetLeft||0,top:v?.offsetTop||0,width:v?.width||win.innerWidth,height:v?.height||win.innerHeight};}
   function menuPopupBounds(owner,view,width,height){
     const available=Math.max(24,view.height-8),shown=Math.min(height,available),top=Math.max(view.top+4,Math.min(owner.bottom+2,view.top+view.height-shown-4));
@@ -97,7 +110,7 @@
   const both = (x, y) => () => x.dis() && y.dis();
   const rowsMax = () => Math.max(8, +$('rows').value || 512);
   const groups = [
-    { id: 'build', title: 'Поле', color: '#73e4a5', open: true, items: [
+    { id: 'build', title: 'Поле', color: GROUP_COLOURS['rail:build'], open: true, items: [
       button('bBuild', 'field'), button('bThird', 'tri'), button('bFour', 'plusRing'),
       num('steps', { name: 'Вершин', tip: 'Вершин (шагов маятника) · двойной щелчок — наименьшее', log: true, fmt: v => v + ' вершин' }),
       num('rows', { name: 'Строк', tip: 'Строк в поле (построение — кнопкой «Построить») · двойной щелчок — наименьшее', log: true, fmt: v => v + ' строк' }),
@@ -119,14 +132,14 @@
           const e = $('frame'), N = Math.abs(d) === 2 ? Math.max(1, Math.round(((+e.max || 0) - (+e.min || 0)) / 20)) : Math.max(1, +$('speed').value || 1), v = Math.max(+e.min || 0, Math.min(+e.max, +e.value + Math.sign(d) * N)); if (String(v) !== e.value) { e.value = String(v); fire(e); } },
         arrows: ['−1', '+1'] } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
-    { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
+    { id: 'ochki', title: 'Очки', color: GROUP_COLOURS['rail:ochki'], items: [
       button('bOchki', 'eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
-    { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
+    { id: 'zoom', title: 'Масштаб', color: GROUP_COLOURS['rail:zoom'], items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
       button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line') ] },
-    { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
+    { id: 'mirrors', title: 'Зеркала', color: GROUP_COLOURS['rail:mirrors'], items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
       { type: 'toggle', icon: '▱', name: 'Контур', tip: 'Контур: внешняя граница фигуры маятника линиями в 1 px · наведи на линию — она продолжится пунктиром в обе стороны',   // v0.186
@@ -135,7 +148,7 @@
       check('symTriangles','tri'),button('bTriangleAxes','tri'),num('symTriangleRows',{name:'Высота ≥',tip:'Высота тотемов: строк от'}),
       { type: 'vpair', name: 'Строк', tip: 'Длина оси: строк от · до', parts: [{ ...num('symRowsMin', {}), name: 'строк ≥' }, { ...num('symRowsMax', { inf: true, fromInf: () => +$('symRowsMin').value || 2 }), name: '≤' }] },
       { type: 'vpair', name: 'Бит', tip: 'Ширина оси: бит от · до', parts: [{ ...num('symBitsMin', {}), name: 'бит ≥' }, { ...num('symBitsMax', { inf: true, fromInf: () => +$('symBitsMin').value || 2 }), name: '≤' }] }, button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
-    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [
+    { id: 'paint', title: 'Раскраска', color: GROUP_COLOURS['rail:paint'], items: [
       withColour('bFill','fillColour','Заливка'),check('fillWholeColour','colour'),{...selectSegments('paintFrameMode',{off:'Выкл',colour:'Цвет',cells:'Биты'}),src:'paintFrameMode',cls:'may-segments gz-split gz-split3'},withColour('bAutoVertical','verticalFillColour','Столб'),
       button('bPaintSame','copy'),button('bPaintSymmetric','mirror'),button('bPaintIsolated1','grid4'),button('bPaintIsolated0','grid4'),
       select('fillArea','grid4'),check('fillMirror','mirror'),
@@ -145,18 +158,18 @@
       (()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),button('bPaintRestore','undo'),button('bFillClear','cross'),button('bPaintNew','reset'),
       window.mayPaintGroups?.resetColour?{type:'list',name:'Сброс цветов',tip:'Сбросить только цвет выбранной группы и выключить его автосмену; краска на поле сохраняется',get:()=>'',options:[['fill','Заливка'],['axes','От осей'],['vertical','Столбы'],['centre','Центр'],['auto','Авто'],['grow','Рост'],['meet','Точка'],['pointAxis','ТочкаОсь']].map(([v,name])=>({v,name})),set:v=>window.mayPaintGroups.resetColour(v)}:null
     ] },
-    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),withColour('bTemplatePaint','fillColour','Прокрасть'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50}),{...selectSegments('templatePickMode'),src:'templatePickMode'},button('bTemplateDrag','move')] },
-    {id:'gifscale',title:'Гиф-Масштаб',color:'#73e4a5',items:[button('bGifScale','record'),button('bGifScaleView','eye'),{type:'action',name:'Настройки',icon:'⚙',tip:'Открыть настройки GIF в Библиотеке',click:()=>window.MayatnikTemplatePanel?.openTab('gif')}]},
-    { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
-    { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
+    { id: 'template', title: 'Шаблон', color: GROUP_COLOURS['rail:template'], items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),withColour('bTemplatePaint','fillColour','Прокрасть'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50}),{...selectSegments('templatePickMode'),src:'templatePickMode'},button('bTemplateDrag','move')] },
+    {id:'gifscale',title:'Гиф-Масштаб',color:GROUP_COLOURS['rail:gifscale'],items:[button('bGifScale','record'),button('bGifScaleView','eye'),{type:'action',name:'Настройки',icon:'⚙',tip:'Открыть настройки GIF в Библиотеке',click:()=>window.MayatnikTemplatePanel?.openTab('gif')}]},
+    { id:'library',title:'Шаблоны',color:GROUP_COLOURS['rail:library'],items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
+    { id: 'export', title: 'Экспорт', color: GROUP_COLOURS['rail:export'], items: [
       button('bShareLink','link'),button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
       button('bPng', 'image'), button('bRec', 'record'), button('bGif','record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
   for(const group of groups)group.items=group.items.filter(Boolean);
   { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр' && it.name !== 'Анимация' && it.name !== 'Кадр, с'); const fr = g0.items.find(it => it.name === 'Кадр'); if (fr) delete fr.thumb; }   // v0.339: бегунок кадра — линия, плей — своей кнопкой в середине   // v0.332: «Хорр» — в нижней полосе   // v0.395: «удали дубли» — «Анимация» и «Кадр, с» есть в нижней полосе (×N | время)
-  groups.push({id:'xorrom',title:'Xorrom',color:'#c29bff',items:[]});
-  groups.push({id:'horr',title:'Хорр',color:'#73e4a5',items:[]});
-  groups.push({id:'edge',title:'Край',color:'#7cbcff',items:[
+  groups.push({id:'xorrom',title:'Xorrom',color:GROUP_COLOURS['rail:xorrom'],items:[]});
+  groups.push({id:'horr',title:'Хорр',color:GROUP_COLOURS['rail:horr'],items:[]});
+  groups.push({id:'edge',title:'Край',color:GROUP_COLOURS['rail:edge'],items:[
     button('edgeWrapTop','field'),
     button('edgeBounceTop','mirror'),button('edgeContinuous','steps'),
     (() => { const get = () => $('edgeWidthTop')?.value || '4', set = v => { const e = $('edgeWidthTop'); if (!e||e.disabled) return; e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); };
@@ -166,6 +179,7 @@
     button('edgeEndsPlus','plus')
   ]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
+  buttonLayoutRestorers.push(values=>rail.restoreLayout(layoutValue(values,'grozd:mayatnik',{})));
   const railSourceButtons=new Map(),manualLegacyCells=new Map();
   function mountXorromMenu(rail,api=window.mayXorrom){
     const group=rail.el.querySelector('.gz-group[data-id="xorrom"]');
@@ -217,6 +231,7 @@
       const k = nm.textContent.trim(), displayName=k==='Очки'?'Поиск':k;nm.textContent=displayName;const ic = ZerkGroupHeader.parts(head).icon;ic.textContent = ICO[k] || [...k][0] || '◆';
       const sync = () => { box.classList.toggle('gz-mini', minis.has(k));ZerkGroupHeader.sync(head,{mini:minis.has(k)}); head.setAttribute('aria-label', displayName); };
       head.title = displayName+' \u00b7 '+'\u0429\u0435\u043b\u0447\u043e\u043a \u2014 \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u00b7 \u0442\u044f\u043d\u0443\u0442\u044c \u2014 \u043f\u0435\u0440\u0435\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u00b7 \u041f\u041a\u041c \u2014 \u0442\u0440\u0435\u0443\u0433\u043e\u043b\u044c\u043d\u0438\u043a / \u043f\u043e\u043b\u043d\u044b\u0439 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a';
+      buttonLayoutRestorers.push(values=>{minis=new Set(layoutValue(values,MINI,[]));sync();});
       sync(); head.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if(minis.has(k))minis.delete(k);else minis.add(k);
         try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync();
         // Use grozd's own close route so its pinned/shut state survives refresh/F5.
@@ -644,10 +659,12 @@
     const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;return Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);};
     const label=(input,value)=>input===sp?'×'+value:value===0?'0 с · без паузы':({1:'1/20 с',2:'1/10 с',4:'1/5 с',10:'1/2 с',20:'1 с'}[value]||String(+(value*.05).toFixed(2)).replace('.',',')+' с');
     const make=(letter,input,name)=>{
+      const svg=(node,width,path,cls)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(s.namespaceURI,'path');s.classList.add(cls);s.setAttribute('viewBox','0 0 '+width+' 24');s.setAttribute('aria-hidden','true');p.setAttribute('d',path);s.append(p);node.append(s);};
       const box=document.createElement('div');box.className='may-bb-half may-transport-diamond';box.dataset.k=input===sp?'sp':'ft';box.dataset.noMini='';box.setAttribute('role','group');box.setAttribute('aria-label',name);
       const surface=document.createElement('div');surface.className='may-transport-surface';const button=document.createElement('button');button.type='button';button.className='may-transport-center';const glyph=document.createElement('span');glyph.className='may-transport-value';glyph.textContent=letter;button.append(glyph);button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
+      svg(button,40,'M20 0L40 12 20 24 0 12Z','may-transport-outline');
       button.onclick=event=>{event.stopPropagation();if(active?.button===button){const all=values(input),index=all.indexOf(Number(input.value));setValue(input,all[(index+1)%all.length]);}else open(button,input,name);};button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();button.click();return;}if(event.key==='ArrowDown'){event.preventDefault();if(active?.button!==button)open(button,input,name);popup?.querySelector('[aria-checked="true"]')?.focus();}});
-      const arrow=direction=>{const b=document.createElement('button');b.type='button';b.className='may-transport-nudge';b.dataset.direction=String(direction);b.textContent=direction<0?'‹':'›';b.setAttribute('aria-label',(direction<0?'Уменьшить: ':'Увеличить: ')+name);b.onclick=event=>{event.stopPropagation();const value=Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+direction*(Number(input.step)||1)));setValue(input,value);};return b;};
+      const arrow=direction=>{const b=document.createElement('button');b.type='button';b.className='may-transport-nudge';b.dataset.direction=String(direction);svg(b,18,direction<0?'M10 8L6 12 10 16':'M8 8L12 12 8 16','may-transport-chevron');svg(b,18,direction<0?'M18 0H12L0 12 12 24H18':'M0 0H6L18 12 6 24H0','may-transport-outline');b.setAttribute('aria-label',(direction<0?'Уменьшить: ':'Увеличить: ')+name);b.onclick=event=>{event.stopPropagation();const value=Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+direction*(Number(input.step)||1)));setValue(input,value);};return b;};
       surface.append(arrow(-1),button,arrow(1));box.append(surface);return box;
     };
     const bs=make('x',sp,'Вершин за кадр'),bf=make('t',ft,'Длительность кадра');
@@ -743,7 +760,7 @@
     toolSync.push(sync);sync();
   }}
   // v0.054: значки разбиты на группы с промежутками, над каждой группой — короткая подпись.
-  const groupOf = {}; const ptGroup = name => { const g = document.createElement('div'); g.className = 'pt-g';
+  const groupOf = {}; const ptGroup = name => { const g = document.createElement('div'); g.className = 'pt-g';g.dataset.mayColourKey='pt:'+name;if(GROUP_COLOURS[g.dataset.mayColourKey])g.style.setProperty('--c',GROUP_COLOURS[g.dataset.mayColourKey]);
     if(name==='👓 Очки')g.dataset.k=name;
     const l = ZerkGroupHeader.create({title:name==='👓 Очки'?'👓 Поиск':name,dualPins:true,className:'pt-l',titleClass:'may-group-title',pinClass:'pt-pin',iconClass:'pt-ico'}).head; const row = document.createElement('div'); row.className = 'pt-r';
     g.append(l, row); tools.append(g); return row; };
@@ -1000,8 +1017,8 @@
   }
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
-  const ptColour = { 'Точка Ось':'#b48cff', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Виды поля':'#7cbcff', 'Вид':'#7cbcff', 'Зеркала':'#b48cff', 'Шаблон':'#ffd35b' };
-  for (const g of tools.querySelectorAll('.pt-g')) { const c = ptColour[g.querySelector('.pt-l').textContent]; if (c) { g.style.setProperty('--c', c); g.classList.add('pt-long'); } }
+  const longGroups=new Set(['Точка Ось','Правка','Очистка','Оси','Виды поля','Вид','Зеркала','Шаблон']);
+  for (const g of tools.querySelectorAll('.pt-g'))if(longGroups.has(g.querySelector('.pt-l').textContent))g.classList.add('pt-long');
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
     if (b.id === 'lg' || b.classList.contains('may-vis-triple')) return;   // v0.566: у тройки видимости свои подписи 100 | 50 | 0
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
@@ -1075,7 +1092,7 @@
         popup.pairs.forEach(item=>item.parts.forEach((part,i)=>pressed(part,levels[item.index-1]?.[i?'odd':'even']!==false)));
       };
       popup.draw=draw;
-      ZerkGrozd.listHover(owner,{options,after:refresh,color:()=> '#7cbcff',host:()=>owner.closest('.pt-g')||document.body,col:()=>owner.closest('.pt-col,.pt-r'),placement:'right',placed:draw,
+      ZerkGrozd.listHover(owner,{options,after:refresh,color:()=>getComputedStyle(owner).getPropertyValue('--c').trim()||'#7cbcff',host:()=>owner.closest('.pt-g')||document.body,col:()=>owner.closest('.pt-col,.pt-r'),placement:'right',placed:draw,
         closed:()=>{popup.list=null;owner.setAttribute('aria-expanded','false');}});
       owner.addEventListener('keydown',event=>{if(event.key==='ArrowDown'){event.preventDefault();owner.click();popup.list?.querySelector('button')?.focus();}});
       parent.append(owner);
@@ -1131,7 +1148,7 @@
     const period=()=>Math.max(1,Math.min(64,Math.round(Number(api()?.getPeriod?.())||1)));
     const change=value=>{if(input.disabled)return;api()?.setPeriod?.(Math.max(1,Math.min(64,Math.round(Number(value)||1))));sync();};
     input.addEventListener('input',()=>change(input.value));
-    const arrows=[-1,1].map(delta=>{const button=document.createElement('button');button.type='button';button.className='gz-a';button.textContent=delta<0?'‹':'›';describe(button,delta<0?'Уменьшить период чередования нагрева на один кадр':'Увеличить период чередования нагрева на один кадр');
+    const arrows=[-1,1].map(delta=>{const button=document.createElement('button');button.type='button';button.className='gz-a';const glyph=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(glyph.namespaceURI,'path');glyph.classList.add('may-control-chevron');glyph.setAttribute('viewBox','0 0 24 24');glyph.setAttribute('aria-hidden','true');path.setAttribute('d',delta<0?'M14 7L9 12 14 17':'M10 7L15 12 10 17');glyph.append(path);button.append(glyph);describe(button,delta<0?'Уменьшить период чередования нагрева на один кадр':'Увеличить период чередования нагрева на один кадр');
       let repeated=false,timer=0;const step=()=>{if(!button.disabled)change(period()+delta);};button.onclick=event=>{if(!repeated||!event.detail)step();repeated=false;};
       button.addEventListener('pointerdown',event=>{
         if(event.button!==0||button.disabled)return;
@@ -1145,7 +1162,7 @@
         timer=setTimeout(again,350);
         for(const name of ['pointerup','pointercancel','blur'])addEventListener(name,stop,{signal:listeners.signal});
       });return button;});
-    box.append(arrows[0],middle,arrows[1]);const frame=ZerkControlFrame.attach(box,arrows[0],middle,arrows[1],{input,output});
+    box.append(arrows[0],middle,arrows[1]);const frame=ZerkControlFrame.attach(box,arrows[0],middle,arrows[1],{input,output,valueInThumb:true});
     const hold=document.createElement('button');
     hold.type='button';
     hold.className='pt-b gz-hx';
@@ -1188,7 +1205,7 @@
     cols[0].classList.add('pt-colv'); gView.append(cols[0]); gMir.append(cols[1]); gView.classList.add('pt-cols'); gMir.classList.add('pt-cols'); }   // v0.238: левый столбец — «Вид», правый — «Зеркала»
   const gAreas = ptGroup('Площади');
   gAreas.parentElement.dataset.k='Площади';gAreas.parentElement.classList.add('may-measure-group');gAreas.parentElement.querySelector('.may-group-title').textContent='МЕРИТЬ';
-  gAreas.parentElement.style.setProperty('--c', '#b48cff');
+
   for (const n of ['sawFull', 'sectors', 'areas', 'areaFreeze', 'ovlStep', 'ovlPos', 'ovlH0', 'ovlFreeze', 'ovlAlpha', 'ovlOriginal', 'ovlCenter', 'ovlReset', 'lineMeasures']) { const b = tools.querySelector('[data-n=' + n + ']'); if (b) gAreas.append(b); }
   // МАЯ-395/396: these measurements retain their live controls and compact preferences.
   for(const id of ['rowLab','geomCenter']){const node=tools.querySelector('[data-n="'+id+'"]');if(node)gAreas.append(node);}
@@ -1217,7 +1234,7 @@
   function installLayersMenu(api) {
     if(!api)return;
     Object.assign(ptNames,{layerSelect:'Слой',layerVisible:'Виден',layerTint:'Цвет',layerNative:'Родные',layerBack:'Назад',layerFront:'Вперёд',layerCapture:'Копия',layerRemove:'Удалить',layerReset:'Сброс слоя',layerCenter:'По оси'});
-    const row=ptGroup('Слои'),group=row.parentElement;group.classList.add('pt-layers');group.style.setProperty('--c','#73e4a5');group.dataset.k='Слои';
+    const row=ptGroup('Слои'),group=row.parentElement;group.classList.add('pt-layers');group.dataset.k='Слои';
     const current=()=>api.get(),change=patch=>{const layer=current();if(layer)api.set(layer.id,patch);};
     const caption=(b,text)=>{const label=b.querySelector('.gz-nm');if(label&&label.textContent!==text)label.textContent=text;};
     const describe=(b,text)=>{b.title=text;b.setAttribute('aria-label',text);};
@@ -1240,12 +1257,12 @@
       const tag=document.createElement('span');tag.className='may-layer-axis';tag.textContent=type==='range'?'':key.toUpperCase();mid.append(tag,input);
       let output=null;if(type==='range'){output=document.createElement('output');output.htmlFor=input.id;mid.append(output);}
       input.addEventListener(type==='range'?'input':'change',()=>{if(input.disabled||input.value.trim()==='')return;const n=Number(input.value);if(Number.isFinite(n))change({[key]:type==='range'?Math.max(0,Math.min(100,n)):n});});
-      const arrows=[-1,1].map(delta=>{const b=document.createElement('button');b.type='button';b.className='gz-a';b.textContent=delta<0?'‹':'›';describe(b,label+(delta<0?' — уменьшить на 1':' — увеличить на 1'));
+      const arrows=[-1,1].map(delta=>{const b=document.createElement('button');b.type='button';b.className='gz-a';const glyph=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(glyph.namespaceURI,'path');glyph.classList.add('may-control-chevron');glyph.setAttribute('viewBox','0 0 24 24');glyph.setAttribute('aria-hidden','true');path.setAttribute('d',delta<0?'M14 7L9 12 14 17':'M10 7L15 12 10 17');glyph.append(path);b.append(glyph);describe(b,label+(delta<0?' — уменьшить на 1':' — увеличить на 1'));
         const step=()=>{const layer=current();if(!layer||b.disabled)return;const n=Number(layer[key])+delta;change({[key]:type==='range'?Math.max(0,Math.min(100,n)):n});};
         let repeated=false,timer=0;b.onclick=event=>{if(!repeated||!event?.detail)step();repeated=false;};
         b.addEventListener('pointerdown',event=>{if(event.button!==0||b.disabled)return;repeated=false;clearTimeout(timer);const again=()=>{repeated=true;step();timer=setTimeout(again,80);};timer=setTimeout(again,350);
           const stop=()=>clearTimeout(timer);addEventListener('pointerup',stop,{once:true});addEventListener('pointercancel',stop,{once:true});});return b;});
-      box.append(arrows[0],mid,arrows[1]);const frame=ZerkControlFrame.attach(box,arrows[0],mid,arrows[1],{input,output});row.append(box);return {box,input,arrows,output,frame};
+      box.append(arrows[0],mid,arrows[1]);const frame=ZerkControlFrame.attach(box,arrows[0],mid,arrows[1],{input,output,valueInThumb:type==='range'});row.append(box);return {box,input,arrows,output,frame};
     };
     const opacity=valueControl('opacity','Видимость выбранного слоя, от 0 до 100 процентов','range'),x=valueControl('x','Сдвиг выбранного слоя X, CSS px','number'),y=valueControl('y','Сдвиг выбранного слоя Y, CSS px','number');
     const center=command('layerCenter','axes','По вертикальной оси оригинала: центрировать выбранное наложение или фиксацию только по X. Y и масштаб сохраняются.',()=>{const layer=current();if(layer?.centerable)api.center(layer.id);});row.append(center);
@@ -1271,7 +1288,7 @@
   window.dispatchEvent(new Event('may-layers-ready'));
   // v0.491 (МАЯ-021): собираем существующие входы ручных инструментов, оставляя экранные ручки и окно Сгиба на прежних местах.
   function installManualAxesMenu(railButtons) {
-    const row=ptGroup('Ручные оси');row.parentElement.dataset.k='Ручные оси';row.parentElement.style.setProperty('--c','#ffcf73');
+    const row=ptGroup('Ручные оси');row.parentElement.dataset.k='Ручные оси';
     const ids=['zLines','zVert','zHoriz','zDiag','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler','bFoldCompare'];
     const nodes=new Map(ids.map(id=>[id,railButtons.get(id)||tools.querySelector('[data-n="'+id+'"]')]).filter(([,node])=>node));
     const zoom=railButtons.get('zLines')?.closest('.gz-group');if(zoom)manualLegacyCells.set(zoom.dataset.id,[...zoom.querySelectorAll('.gz-soty > .gz-hx')]);
@@ -1285,7 +1302,6 @@
       if(id==='zSnap')continue;
       if(group==='zoom'){node.dataset.mayPinGroup=group;node.dataset.mayPinIndex=String(manualLegacyCells.get(group).indexOf(node));}
       row.append(node);node.style.left=node.style.top='';
-      const familyColour={zHoriz:'#7cbcff',zVert:'#ffcf73',zDiag:'#c89aff'}[id];if(familyColour)node.style.setProperty('--c',familyColour);
     }
     // Сохраняем прежние данные перед переносом мини-состояний; настройки и места исходных групп не переименовываются.
     try{const key='mayatnik-control-mini-v464',raw=localStorage.getItem(key),saved=JSON.parse(raw||'[]');if(Array.isArray(saved)){
@@ -1308,7 +1324,7 @@
     const mid=document.createElement('label');mid.className='gz-mid';mid.htmlFor=input.id;const tag=document.createElement('span');tag.className='may-layer-axis';tag.textContent='N';mid.append(tag,input);
     const change=value=>{const n=Number(value);if(!Number.isFinite(n))return;api.setN(Math.max(1,Math.min(64,Math.round(n))));sync();};
     input.addEventListener('change',()=>{if(input.value.trim())change(input.value);else sync();});
-    const arrows=[-1,1].map(delta=>{const b=document.createElement('button');b.type='button';b.className='gz-a';b.textContent=delta<0?'‹':'›';describe(b,delta<0?'Уменьшить число осей на 1':'Увеличить число осей на 1');b.onclick=()=>change((Number(api.get().n)||3)+delta);return b;});
+    const arrows=[-1,1].map(delta=>{const b=document.createElement('button');b.type='button';b.className='gz-a';const glyph=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(glyph.namespaceURI,'path');glyph.classList.add('may-control-chevron');glyph.setAttribute('viewBox','0 0 24 24');glyph.setAttribute('aria-hidden','true');path.setAttribute('d',delta<0?'M14 7L9 12 14 17':'M10 7L15 12 10 17');glyph.append(path);b.append(glyph);describe(b,delta<0?'Уменьшить число осей на 1':'Увеличить число осей на 1');b.onclick=()=>change((Number(api.get().n)||3)+delta);return b;});
     box.append(arrows[0],mid,arrows[1]);ZerkControlFrame.attach(box,arrows[0],mid,arrows[1],{input});
     const remove=command('nAxesRemove','cross','Удалить выбранный набор N-осей. Остальные наборы сохраняются.',()=>api.removeSelected());
     row.append(toggle,box,remove);
@@ -1403,11 +1419,11 @@
   // Треуг — режим 2 «до треугольника» (щелчок — к нему / к «без полос»); не горят обе — «без полос». Обвод — обводка, вкл / выкл.
   { const nb = $('noband'), ol = $('outline'), sNb = tools.querySelector('[data-n="noband"]'), sOl = tools.querySelector('[data-n="outline"]');
     if (nb && ol && sNb && sOl) { const mode = () => +nb.dataset.mode || 0, go = i => { for (let n = 0; n < 3 && mode() !== i; n++) nb.dispatchEvent(new Event('change')); };
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-split gz-split3'; b.dataset.n = 'bandTri';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair may-segments gz-split3 may-mirror-three may-band-flip'; b.dataset.n = 'bandTri';
       [['Полосы', () => mode() === 0, () => go(mode() === 0 ? 1 : 0), 'Полосы: показаны — щелчок убирает (без полос); убраны — щелчок возвращает'],
        ['Треуг', () => mode() === 2, () => go(mode() === 2 ? 1 : 2), 'До треугольника: без полос, стороны треугольника и в обычных видах · щелчок — вкл / выкл'],
        ['Обвод', () => ol.checked, () => ol.click(), 'Обводка: жёлтая ступенчатая линия по краю «шумной» зоны · щелчок — вкл / выкл']].forEach(([l, on, click, t], j) => {
-        const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; sp.textContent = l; sp.title = t; b.append(sp);
+        const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; const caption=document.createElement('span');caption.className='may-band-caption';caption.textContent=l;sp.append(caption);sp.title = t; b.append(sp);
         sp.onclick = e => { e.stopPropagation(); click(); placeTools(); };
         toolSync.push(() => { const v = on(); sp.classList.toggle('gz-on', v); b.style.setProperty('--gz-r' + j, v ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); });
         if (!j) { const pm = document.createElement('span'); pm.className = 'gz-pm'; b.append(pm); } });
@@ -1476,7 +1492,7 @@
   // v0.125: столбик «Дзен» / «?» — в той же верхней полосе меню, последним.
   // v0.165: «шаблоны туда же» — список шаблонов (правая панель «Шаблоны») — выпадающей группой в полоске меню, с закрепом.
   // Кнопки рейки переносятся как есть (их обновление и щелчки остаются), правая панель больше не показывается.
-  { const row = ptGroup('Шаблоны'), lib = railRIn.querySelector('.gz-group'); row.parentElement.classList.add('pt-lib'); row.parentElement.style.setProperty('--c', '#d9b9ff');
+  { const row = ptGroup('Шаблоны'), lib = railRIn.querySelector('.gz-group'); row.parentElement.classList.add('pt-lib');
     if (lib) { row.append(...lib.querySelectorAll('.gz-soty > .gz-hx'), ...lib.querySelectorAll('.gz-wide > *')); lib.remove(); }
     // v0.485: команды выбранного шаблона и библиотека — одна группа; переносим живые узлы с прежними обработчиками.
     const selected = [...tools.querySelectorAll('.pt-g')].find(g => g.querySelector('.pt-l')?.textContent === 'Шаблон');
@@ -1546,7 +1562,7 @@
       legacy[1].style.removeProperty('left');legacy[1].style.removeProperty('top');gView.append(legacy[1]);}
     // Mark the original two-half template mirror, which previously had no source ID.
     const templateFlip=[...tools.querySelectorAll('.gz-pair')].find(b=>b.title==='Отразить шаблон ↔ · ↕');
-    const folds=ptGroup('Свёртки');folds.parentElement.dataset.k='Свёртки';folds.parentElement.style.setProperty('--c','#73e4a5');
+    const folds=ptGroup('Свёртки');folds.parentElement.dataset.k='Свёртки';
     for(const id of ['bFoldCompare','bFoldHorizontal','bFoldVertical','fixFold','fixFoldV']){const b=tools.querySelector('[data-n="'+id+'"]');if(b)folds.append(b);}
     const take=id=>id==='templateMirrorPair'?templateFlip:railSourceButtons.get(id)||tools.querySelector('[data-n="'+id+'"]')||(id==='mayMirAxis'?legacy[0]:null);
     const mirrorIds=new Set(window.MayatnikMirrorControls.profiles.flatMap(p=>p.nodes));
@@ -1591,10 +1607,11 @@
   }
   const viewActions=mountViewActions(gView,$,ptBtn,()=>{rail.refresh();placeTools();});toolSync.push(viewActions.sync);
   // Cell selection uses only the page's original commands.
-  {const ids=['bCellSelect','bRowSelect','bCellCollapseRows','bCellCollapseCols','bCellReveal','bCellClear','bFaceRotate','bFaceFlipY'];if(ids.some(id=>$(id))){const row=ptGroup('Ячейки');row.parentElement.dataset.k='Ячейки';row.parentElement.style.setProperty('--c','#73e4a5');for(const id of ids){const e=$(id);if(!e)continue;const b=document.createElement('button');b.type='button';b.className='pt-b gz-hx';b.dataset.n=id;const n=document.createElement('span');n.className='gz-nm';n.textContent=e.dataset.miShort||e.textContent;b.append(n);b.onclick=()=>{e.click();placeTools();};toolSync.push(()=>{b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');b.setAttribute('aria-pressed',e.getAttribute('aria-pressed')||'false');b.title=e.title;});row.append(b);}if($('cellSelectionInfo'))row.append($('cellSelectionInfo'));}}
+  {const ids=['bCellSelect','bRowSelect','bCellCollapseRows','bCellCollapseCols','bCellReveal','bCellClear','bFaceRotate','bFaceFlipY'];if(ids.some(id=>$(id))){const row=ptGroup('Ячейки');row.parentElement.dataset.k='Ячейки';for(const id of ids){const e=$(id);if(!e)continue;const b=document.createElement('button');b.type='button';b.className='pt-b gz-hx';b.dataset.n=id;const n=document.createElement('span');n.className='gz-nm';n.textContent=e.dataset.miShort||e.textContent;b.append(n);b.onclick=()=>{e.click();placeTools();};toolSync.push(()=>{b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');b.setAttribute('aria-pressed',e.getAttribute('aria-pressed')||'false');b.title=e.title;});row.append(b);}if($('cellSelectionInfo'))row.append($('cellSelectionInfo'));}}
   // Cleanup lists only effects/material currently present on the canvas.
   {
     const command=(row,id,label,help,run,icon='reset')=>{if(!row)return null;const src=document.createElement('button');src.title=help;const b=ptBtn(id,icon,src,run);b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');const n=document.createElement('span');n.className='gz-nm';n.textContent=label;b.append(n);b.title=help;b.setAttribute('aria-label',help);row.append(b);return b;};
+    if(window.mayMenuDefaults){const resetButtons=command(gEdit,'resetButtons','Сброс кнопок','Вернуть исходную раскладку, закрепления и размер кнопок. Поле, музыка и библиотеки сохраняются.',async()=>{resetButtons.disabled=true;try{await window.mayMenuDefaults.reset();}catch(error){resetButtons.title='Не удалось сбросить кнопки: '+error.message;console.error(error);}finally{resetButtons.disabled=false;}});}
     const railRow=id=>{const group=document.querySelector('.gz-group[data-id="'+id+'"]');return group?.querySelector('.gz-soty')||group?.querySelector('.gz-wide');};
     const groupRow=title=>[...tools.querySelectorAll('.pt-g')].find(g=>g.dataset.k===title||g.querySelector('.may-group-title')?.textContent===title)?.querySelector('.pt-r');
     const move=(id,row)=>{const b=gEdit.querySelector('[data-n="'+id+'"]');if(b&&row){row.append(b);b.style.left=b.style.top='';}};
@@ -1612,7 +1629,7 @@
   // v0.630: five independent buttons open the original controls beside the main group.
   // МАЯ-407: an independent standard group owns the original overlay controls.
   function mountOverlayGroup(){
-    const section=ptGroup('Наложение');section.parentElement.dataset.k='Наложение';section.parentElement.style.setProperty('--c','#7cbcff');
+    const section=ptGroup('Наложение');section.parentElement.dataset.k='Наложение';
     const ids=['ovlStep','ovlPos','ovlH0','ovlFreeze','ovlVisibility','ovlAlpha','ovlOriginal','ovlCenter','ovlReduce','ovlReset','ovlReturn'],moves=[];
     const key=node=>{const group=node.closest('[data-id],.pt-g'),owner=group?.dataset.id||group?.dataset.k||group?.querySelector(':scope > .pt-l')?.title||group?.id||'';const parent=node.parentElement,peers=[...parent.children].filter(n=>n.matches('button,.gz-hx,[role="button"]'));return node.dataset.n?'group:'+owner+':data:'+node.dataset.n:'group:'+owner+':parent:'+(parent.id||parent.className)+':slot:'+peers.indexOf(node);};
     for(const id of ids){const node=id==='ovlVisibility'?tools.querySelector('.may-vis-triple'):tools.querySelector('[data-n="'+id+'"]');if(!node)continue;const from=key(node);if(id==='ovlVisibility')node.dataset.n=id;section.append(node);node.style.left=node.style.top='';moves.push([from,'group:Наложение:data:'+id],['group:zoom:data:'+id,'group:Наложение:data:'+id]);}
@@ -1749,6 +1766,7 @@
     const sizeObserver = win.ResizeObserver ? new win.ResizeObserver(place) : null; sizeObserver?.observe(host); sizeObserver?.observe(group);
     choose(selected, false, false);
     return { get: () => selected, choose, buttons, popup, place,
+      restoreLayout(value={}){last=valid(value.section)?value.section:'size';choose(value.open==='1'?last:null,false);},
       contains(owner, target) { return owner === group && !popup.hidden && ((target ? popup.contains(target) : popup.matches(':hover'))||listContains(target)); },
       reveal(target) { const node = target?.closest('[data-horr-section]'); if (!node || !controls.includes(node)) return null; const previous = selected, revision = group.mayHorrRevision; choose(node.dataset.horrSection, false); return () => { if (revision === group.mayHorrRevision) choose(previous, false); }; },
       destroy() { observer.disconnect(); sizeObserver?.disconnect(); doc.removeEventListener('pointerdown', outside, true); doc.removeEventListener('keydown', keys, true); doc.removeEventListener('scroll', place, true); win.removeEventListener('resize', place); choose(null, false, false); popup.remove(); }
@@ -1820,15 +1838,7 @@
         const go = () => { if (!e.disabled) { e.click(); placeTools(); } };
         s.addEventListener('click', go); s.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
         toolSync.push(() => { const off = !!e.disabled; s.classList.toggle('dis', off); s.title = tip(e) + (off ? ' — пока нечего' : ''); }); return s; };
-      const sep = document.createElement('span'); sep.className = 'pt-ud-sep';
-      // v0.368: «эти кнопки такие же скопируй (↶ ◆ ↷ Синхрофазотрона), но ось здесь не сдвигается и ромб оси на месте; клик по нему — замораживает масштаб,
-      // то есть ставит «Верх» и «Вниз»»: ромб посередине «Правки» (она стоит над осью), горит — оба края держатся; ещё щелчок — оба снять
-      const ax = document.createElement('span'); ax.className = 'pt-ud-ax'; ax.setAttribute('role', 'button'); ax.tabIndex = 0;
-      const pz = id => $(id)?.getAttribute('aria-pressed') === 'true', axGo = ev => { ev?.stopPropagation(); const on = pz('zTop') && pz('zFitH');
-        for (const id of ['zTop', 'zFitH']) if (pz(id) === on) $(id).click(); placeTools(); };
-      ax.addEventListener('click', axGo); ax.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); axGo(ev); } });
-      toolSync.push(() => { const on = pz('zTop') && pz('zFitH'); ax.classList.toggle('on', on); ax.title = on ? 'Масштаб заморожен: держатся «Верх» и «Вниз» · щелчок — снять оба' : 'Заморозить масштаб: включить «Верх» и «Вниз» (верх и низ поля держатся, масштаб не меняется)'; });
-      udL.append(half('bFillUndo', '↶', 'Отм.'), sep, ax, half('bFillRedo', '↷', 'Повт.')); }
+      udL.append(half('bFillUndo', '↶', 'Отм.'), half('bFillRedo', '↷', 'Повт.')); }
     for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
       if(g.classList.contains('pt-lib')&&window.MayatnikTemplatePanel){
@@ -2057,7 +2067,8 @@
         sideTop:()=>{const brand=head.querySelector(':scope > .may-brand');return brand?.getClientRects().length?brand.getBoundingClientRect().bottom+2:30;},
         excluded:[ud,frameBar,$('mayTemplateLauncher')],moveToTools:g=>{if(g.classList.contains('gz-group')&&!up.includes(g.dataset.id)){up.push(g.dataset.id);saveUp();}if(g.parentElement!==tools)tools.append(g);g.style.removeProperty('--gdx');},onLayout:()=>{
           placeHorizontalStrips();
-          relayout();reopen();}}); }
+          relayout();reopen();}});
+      buttonLayoutRestorers.push(values=>{gw=layoutValue(values,GRID,null);up=layoutValue(values,UPK,[]);bot=layoutValue(values,'mayatnik-bot',[]);botX=layoutValue(values,'mayatnik-botx',{});repairPending=false;arrange(layoutValue(values,ORDER,[]));placeUps();domSort();shown=new Map();sig='';dock?.restoreLayout(layoutValue(values,'mayatnik-menu-dock-v509',{}));relayout();}); }
     // Group headers toggle their compact form. History keeps its separate mini mode.
     { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
       ICO['\u042f\u0447\u0435\u0439\u043a\u0438']='\u042f\u0427\u041a';
@@ -2065,6 +2076,7 @@
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = ZerkGroupHeader.parts(l).icon;ic.textContent = glyph(k);ic.classList.toggle('may-header-abbrev',ic.textContent.length>1);if(!ic.parentNode)l.append(ic);
         const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on);ZerkGroupHeader.sync(l,{mini:on}); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · закреплена четвёртой слева · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : (k==='👓 Очки'?'👓 Поиск':k)+' \u00b7 '+'\u0429\u0435\u043b\u0447\u043e\u043a \u2014 \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u00b7 \u0442\u044f\u043d\u0443\u0442\u044c \u2014 \u043f\u0435\u0440\u0435\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u00b7 \u041f\u041a\u041c \u2014 \u0442\u0440\u0435\u0443\u0433\u043e\u043b\u044c\u043d\u0438\u043a / \u043f\u043e\u043b\u043d\u044b\u0439 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a'; };
+        buttonLayoutRestorers.push(values=>{minis=new Set(layoutValue(values,MINI,[]));sync();});
         sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation();
           if(minis.has(k))minis.delete(k);else minis.add(k);if(!g.classList.contains('pt-btn')){folds.add(k);if(open===g)open=null;g._hoverAt=0;setOpen(g,false);saveDd();}
           try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); }); }
@@ -2075,6 +2087,7 @@
       try { const key = localStorage.getItem('mayatnik-dd-open'); const g = groupsAll().find(g => keyOf(g) === key && !g.classList.contains('pt-btn')); if (g && !stay(g)) show(g); } catch (_) {}
     });
     const saveMenuOpen=()=>{if(window.mayBackupRestoring)return;try{localStorage.setItem('mayatnik-dd-open',open?keyOf(open):'');}catch(_){}};window.mayMenuFlush=saveMenuOpen;addEventListener('pagehide',saveMenuOpen);
+    buttonLayoutRestorers.push(values=>{pins=new Set(layoutValue(values,PIN_DD,[]));folds=new Set(layoutValue(values,FOLD_DD,[]));open=null;for(const g of groupsAll())if(!g.classList.contains('pt-btn'))setOpen(g,stay(g));const target=groupsAll().find(g=>keyOf(g)===values['mayatnik-dd-open']&&!g.classList.contains('pt-btn'));if(target&&!stay(target))show(target);pinsSync();});
     addEventListener('pointerdown', e => { if(e.target.closest?.('[data-may-search-ui]'))return;if (open && !open.contains(e.target) && !popupContains(open, e.target)) shut(); }, true);
     addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
     tools.addEventListener('scroll', shut, { passive: true }); }
@@ -2425,7 +2438,7 @@
     for (const [g, dy] of want) if (cur(g) !== dy) { g.dataset.pushY = dy; g.style.translate = dy ? '0 ' + dy + 'px' : ''; }
   }
   // v0.437: цельная зубчатая подложка включает и нижние ползунки; скрытие не меняет раскладку и закрепы.
-  const groupSelector = '#paintTools > .pt-g, #paintTools > .gz-group, #mayatnikRail .gz-group';
+  const groupSelector = '#paintTools > .pt-g, #paintTools > .gz-group, #mayatnikRail .gz-group, #mayatnikRailR .gz-group';
   // Sequential layout reveal is mounted after this menu by mayatnik-menu-accordion.js.
   const groupRanks = new WeakMap(), groupOpen = new WeakMap(); let groupRank = 0, groupFrame = 0, groupHover=null;
   const overlaps = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
@@ -2475,11 +2488,22 @@
     }
   }
   const scheduleGroups = () => { if(!groupFrame)groupFrame=requestAnimationFrame(syncGroupOverlap); };
+  // Rail groups use Grozd's own commands; only Mayatnik adds mouse hover opening.
+  for(const group of document.querySelectorAll('#paintTools > .gz-group,#mayatnikRail .gz-group,#mayatnikRailR .gz-group')){
+    const head=group.querySelector(':scope > .gz-head');if(!head)continue;
+    group._hoverOpen=()=>{clearTimeout(group._leave);if(mobileMenu.matches||group.matches('.gz-pinned,.gz-open,.gz-drag')||tools.classList.contains('pt-dragging')||document.body.classList.contains('may-raildrag'))return;group._hoverAt=Date.now();rail.open(group.dataset.id);};
+    group._popupLeave=()=>{clearTimeout(group._leave);group._leave=setTimeout(()=>{if(group.classList.contains('gz-open')&&!group.classList.contains('gz-pinned')&&!group.matches(':hover')&&groupHover?.active()!==group&&!popupContains(group))rail.close();},350);};
+    head.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse')group._hoverOpen();});
+    head.addEventListener('click',event=>{if(!mobileMenu.matches&&event.pointerType!=='touch'&&!head.dataset.dragged&&event.detail>0&&!event.target.closest('.gz-pin')&&group.classList.contains('gz-open')&&Date.now()-(group._hoverAt||0)<900)event.stopImmediatePropagation();},true);
+    group.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse')group._hoverOpen();});
+    group.addEventListener('pointerleave',event=>{if(event.pointerType==='mouse')group._popupLeave();});
+    addEventListener('pagehide',()=>clearTimeout(group._leave),{once:true});
+  }
   let lastHoveredGroup=null;
   groupHover=window.ZerkMenuGroupFocus?.mount({groups:()=>document.querySelectorAll(groupSelector),
     ownerOf:target=>activeList?.list.contains(target)?activeList.group:(target.closest('.may-horr-popup')?.mayHorrOwner||target.closest(groupSelector)),
     ownerAtPoint:(event,current)=>window.ZerkMenuGroupFocus.outlineOwner(document.querySelectorAll(groupSelector),event.clientX,event.clientY,current),
-    onChange:group=>{const previous=lastHoveredGroup;lastHoveredGroup=group;if(previous&&previous!==group)previous._popupLeave?.();if(group)groupRanks.set(group,++groupRank);scheduleGroups();}});
+    onChange:group=>{const previous=lastHoveredGroup;lastHoveredGroup=group;if(previous&&previous!==group)previous._popupLeave?.();if(group){group._hoverOpen?.();groupRanks.set(group,++groupRank);}scheduleGroups();}});
   for (const host of [tools,rail.el]) {
     for(const event of ['pointerdown','focusin'])host.addEventListener(event,e=>{const group=e.target.closest('.pt-g, .gz-group');if(group){groupRanks.set(group,++groupRank);scheduleGroups();}},true);
     new MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.pt-g, .gz-group') && /\b(?:pt-open|gz-open)\b/.test(r.oldValue||'')!==r.target.matches('.pt-open, .gz-open')))scheduleGroups();}).observe(host,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});
@@ -2514,6 +2538,7 @@
         p.el.classList.toggle('gz-on',on);p.el.classList.toggle('on',on);p.el.classList.toggle('gz-off-dis',off);p.el.disabled=!!off;p.el.setAttribute('aria-pressed',String(on));p.el.setAttribute('aria-disabled',String(!!off));
         const n = p.src.querySelector('.gz-nm'), m = p.el.querySelector('.gz-nm'); if (n && m && m.textContent !== n.textContent) m.textContent = n.textContent; } } }
   pins = pins.filter(p => makePin(p)); placePins();
+  buttonLayoutRestorers.push(values=>{for(const pin of pins)pin.el?.remove();pins=layoutValue(values,PIN_KEY,[]).filter(pin=>pin&&typeof pin.g==='string'&&Number.isInteger(pin.i)&&Number.isFinite(pin.x)&&Number.isFinite(pin.y)).map(pin=>({g:pin.g,i:pin.i,x:pin.x,y:pin.y}));pins=pins.filter(pin=>makePin(pin));placePins();});
   let suppressClick = false;
   for (const host of [rail.el, tools]) host.addEventListener('click', e => { if (suppressClick) { suppressClick = false; e.stopPropagation(); e.preventDefault(); } }, true);
   const ctrlPin = e => {
@@ -2578,7 +2603,17 @@
   const collectLateMenu=()=>{mountViewUtilities(gView);mobileMenu.add([$('zerkHubBtn')]);};
   new MutationObserver(collectLateMenu).observe(document.body,{childList:true});collectLateMenu();
   window.mayMobileMenu=mobileMenu;
-  libraryMenuFold=window.MayatnikLibraryMenuFold?.mount({groups:()=>document.querySelectorAll('#paintTools .pt-g,#paintTools .gz-group,#mayatnikRail .gz-group,#mayatnikRailR .gz-group'),panel:()=>window.MayatnikMusicPanel?.isOpen()?window.MayatnikMusicPanel.getElement():$('mayatnikTemplatePanel'),popups:()=>[...(activeList?[{node:activeList.list,group:activeList.group}]:[]),...[...document.querySelectorAll('.may-horr-popup')].map(node=>({node,group:node.mayHorrOwner}))],onLayout:()=>{syncRailFlyouts();libraryMenuFold?.syncHeads();scheduleGroups();window.mayFramePlace?.();}});
+  const mountLibraryFold=()=>window.MayatnikLibraryMenuFold?.mount({groups:()=>document.querySelectorAll('#paintTools .pt-g,#paintTools .gz-group,#mayatnikRail .gz-group,#mayatnikRailR .gz-group'),panel:()=>window.MayatnikMusicPanel?.isOpen()?window.MayatnikMusicPanel.getElement():$('mayatnikTemplatePanel'),popups:()=>[...(activeList?[{node:activeList.list,group:activeList.group}]:[]),...[...document.querySelectorAll('.may-horr-popup')].map(node=>({node,group:node.mayHorrOwner}))],onLayout:()=>{syncRailFlyouts();libraryMenuFold?.syncHeads();scheduleGroups();window.mayFramePlace?.();}});
+  libraryMenuFold=mountLibraryFold();
+  window.mayMenuApplyButtonLayout=values=>{
+    // Rebuild only the menu's temporary panel mask; the library itself stays open.
+    libraryMenuFold?.destroy();clearListUnder();groupHover?.clear();
+    window.mayButtonStandardReloadMinis?.(layoutValue(values,'mayatnik-control-mini-v464',[]));
+    for(const restore of buttonLayoutRestorers)restore(values);
+    window.mayHorrSections?.restoreLayout({section:values['mayatnik-horr-section-v1'],open:values['mayatnik-horr-section-open-v1']});
+    window.mayButtonStandardRefresh?.();placeTools();placePins();window.mayFramePlace?.();
+    libraryMenuFold=mountLibraryFold();
+  };
   addEventListener('pagehide',()=>libraryMenuFold?.destroy(),{once:true});
   dispatchEvent(new Event('resize'));
 })();
