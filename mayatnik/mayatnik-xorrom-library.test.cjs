@@ -88,7 +88,7 @@ test('Музыка opens read-only four-card bank without autoplay; preview is s
   const f=panel();try{
     assert.equal(f.control.isOpen(),false);assert.equal(f.plays,0);assert.equal(f.el.querySelector('[data-library-tab="music"]').textContent,'Музыка');f.control.openTab('music');
     assert.equal(f.el.querySelectorAll('[data-music-id]').length,4);assert.equal(f.plays,0);assert.deepEqual(f.api.calls,[]);assert.equal(f.el.querySelector('.mtp-section-commands').hidden,true);
-    const click=action=>f.el.querySelector('[data-music-id="electro-robot"] [data-music-action="'+action+'"]').click();click('preview');await flush();assert.equal(f.plays,1);assert.deepEqual(f.api.calls,['pause']);const audio=f.el.querySelector('audio');assert.equal(audio.getAttribute('src'),'audio-examples/electro-robot.mp3');assert.equal(audio.hidden,false);
+    const click=action=>f.el.querySelector('[data-music-id="electro-robot"] [data-music-action="'+action+'"]').click();click('preview');await flush();assert.equal(f.plays,1);assert.deepEqual(f.api.calls,['pause']);const audio=f.el.querySelector('audio');assert.equal(audio.getAttribute('src'),'audio-examples/electro-robot.wav');assert.equal(audio.hidden,false);
     click('open');await flush();assert.ok(f.pauses>0);assert.equal(audio.hidden,true);assert.equal(audio.hasAttribute('src'),false);assert.deepEqual(f.api.calls,['pause','pause','settings']);assert.equal(f.api.getSettings().timbre,'robot');assert.equal(f.el.querySelector('[data-music-id="electro-robot"] [data-music-action="open"]').getAttribute('aria-pressed'),'true');assert.equal(f.plays,1);
     f.el.querySelector('.mtp-search').value='Стеклян';f.el.querySelector('.mtp-search').dispatchEvent(new f.w.Event('input'));assert.equal(f.el.querySelectorAll('[data-music-id]').length,1);
   }finally{f.close();}
@@ -102,4 +102,49 @@ test('preview stops on tab switch, close and pagehide, and a delayed preview can
 });
 test('detached library reads the same built-ins from its opener without copying them to storage',async()=>{
   const f=panel({detached:true});try{f.control.openTab('music');assert.equal(f.el.querySelectorAll('[data-music-id]').length,4);assert.equal(f.plays,0);f.el.querySelector('[data-music-action="open"]').click();await flush();assert.deepEqual(f.api.calls,['pause','settings']);assert.equal(f.w.localStorage.getItem('mayatnik-xorrom-library'),null);}finally{f.close();}
+});
+
+function animatedPanel({visual,entries=bank(),detached=false}={}){
+  const frames=new Map(),media=new WeakMap(),draws=[],paints=[];let serial=0,plays=0;
+  const prepared={source:{width:5,height:4,bits:new Int8Array(20)},duration:2.6,timeline:[{index:0,start:0,end:1,onesRuns:[[0,3]]},{index:2,start:1,end:2,onesRuns:[[1,2]]}]};
+  const state=element=>{if(!media.has(element))media.set(element,{paused:true,ended:false,time:0});return media.get(element);};
+  const fakeVisual={async prepare(){return prepared;},stateAt(score,time){return score.timeline.find(step=>time>=step.start&&time<step.end)||null;},draw(context,score,time,box){draws.push({time,index:this.stateAt(score,time)?.index??null,box});}};
+  const f=panel({entries,detached,prepare({w}){
+    if(detached)w.opener.MayatnikXorromVisual=visual||fakeVisual;else w.MayatnikXorromVisual=visual||fakeVisual;
+    w.requestAnimationFrame=fn=>{frames.set(++serial,fn);return serial;};w.cancelAnimationFrame=id=>frames.delete(id);
+    w.HTMLCanvasElement.prototype.getContext=function(){return {canvas:this,fillRect(...box){paints.push({kind:'fill',colour:this.fillStyle,box});},strokeRect(...box){paints.push({kind:'stroke',colour:this.strokeStyle,box});}};};
+    Object.defineProperties(w.HTMLMediaElement.prototype,{paused:{get(){return state(this).paused;},configurable:true},ended:{get(){return state(this).ended;},configurable:true},currentTime:{get(){return state(this).time;},set(value){state(this).time=value;this.dispatchEvent(new w.Event('seeking'));this.dispatchEvent(new w.Event('timeupdate'));},configurable:true}});
+    w.HTMLMediaElement.prototype.play=function(){plays++;state(this).paused=false;state(this).ended=false;this.dispatchEvent(new w.Event('play'));return Promise.resolve();};
+    w.HTMLMediaElement.prototype.pause=function(){const was=state(this).paused;state(this).paused=true;if(!was)this.dispatchEvent(new w.Event('pause'));};
+    w.HTMLMediaElement.prototype.load=function(){state(this).time=0;};
+  }});
+  return {...f,frames,draws,paints,state,get playCalls(){return plays;},frame(){const pending=[...frames.values()];frames.clear();for(const fn of pending)fn(9999999);}};
+}
+
+test('library preview follows the WAV clock, seeking, pause and effect tail, with carpet/video links',async()=>{
+  const f=animatedPanel();try{
+    f.control.openTab('music');f.frames.clear();const card=f.el.querySelector('[data-music-id="electro-robot"]');
+    assert.match(card.querySelector('[data-music-link="carpet"]').getAttribute('href'),/music-carpet\/\?track=electro-robot$/);assert.equal(card.querySelector('[data-music-link="video"]').download,'electro-robot.mp4');
+    card.querySelector('[data-music-action="preview"]').click();await flush();const audio=f.el.querySelector('audio'),canvas=f.el.querySelector('.mtp-music-reader');
+    assert.equal(audio.getAttribute('src'),'audio-examples/electro-robot.wav');assert.equal(f.el.querySelector('.mtp-music-preview').hidden,false);assert.equal(f.draws.at(-1).index,0);assert.equal(f.playCalls,1);
+    audio.currentTime=1.4;f.frame();assert.equal(f.draws.at(-1).index,2);assert.equal(f.draws.at(-1).time,1.4);assert.equal(audio.currentTime,1.4);assert.match(f.el.querySelector('.mtp-music-reading').textContent,/Строка 2/);
+    audio.pause();assert.equal(f.frames.size,0);audio.currentTime=2.2;assert.equal(f.draws.at(-1).index,null);assert.match(f.el.querySelector('.mtp-music-reading').textContent,/Затухание/);
+    const style=f.w.document.createElement('style');style.textContent=fs.readFileSync(require.resolve('./mayatnik-template-panel.css'),'utf8');f.w.document.head.append(style);assert.equal(f.w.getComputedStyle(canvas).imageRendering,'pixelated');
+    assert.ok(canvas.width>=5&&canvas.height>=4);f.control.setOpen(false);assert.equal(f.frames.size,0);assert.equal(f.el.querySelector('.mtp-music-preview').hidden,true);
+  }finally{f.close();}
+});
+
+test('late visual preparation cannot start hidden audio, and detached previews reuse the opener renderer',async()=>{
+  let complete;const visual={prepare:()=>new Promise(resolve=>{complete=resolve;}),stateAt:()=>null,draw:()=>assert.fail('hidden preview drawn')},f=animatedPanel({visual});
+  try{f.control.openTab('music');f.el.querySelector('[data-music-action="preview"]').click();await flush();f.control.setOpen(false);f.control.openTab('music');complete({source:{width:5,height:4},timeline:[]});await flush();assert.equal(f.playCalls,0);assert.equal(f.el.querySelector('.mtp-music-preview').hidden,true);}finally{f.close();}
+  const detached=animatedPanel({detached:true});try{detached.control.openTab('music');detached.el.querySelector('[data-music-action="preview"]').click();await flush();assert.equal(detached.playCalls,1);assert.ok(detached.draws.length>0);Object.defineProperty(detached.w.document,'hidden',{value:true,configurable:true});detached.w.document.dispatchEvent(new detached.w.Event('visibilitychange'));assert.equal(detached.el.querySelector('audio').paused,true);assert.equal(detached.frames.size,0);}finally{detached.close();}
+});
+
+test('actual library audio position highlights only real one-bit runs from the saved frame',async()=>{
+  const visual=require('./mayatnik-xorrom-visual'),entry=require('./mayatnik-xorrom-bank')[0],f=animatedPanel({visual,entries:[entry]});
+  try{f.control.openTab('music');f.el.querySelector('[data-music-action="preview"]').click();await flush();const prepared=await visual.prepare(entry),step=prepared.timeline[17],audio=f.el.querySelector('audio'),canvas=f.el.querySelector('.mtp-music-reader');
+    f.paints.length=0;audio.currentTime=(step.start+step.end)/2;const box=visual.layout(prepared.source,{width:canvas.width,height:canvas.height});
+    assert.deepEqual(f.paints.filter(item=>item.kind==='fill'&&item.colour===visual.palette.active).map(item=>item.box),step.onesRuns.map(([x,length])=>[box.left+x*box.scale,box.top+step.index*box.scale,length*box.scale,box.scale]));
+    assert.match(f.el.querySelector('.mtp-music-reading').textContent,/Строка 17/);assert.equal(f.playCalls,1);
+  }finally{f.close();}
 });

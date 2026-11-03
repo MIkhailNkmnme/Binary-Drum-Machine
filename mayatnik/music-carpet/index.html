@@ -1,0 +1,38 @@
+<!-- Музыкальный ковёр · v0.001. Четыре аудиопримера, точные биты, линия чтения по времени записи и видео. -->
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Музыкальный ковёр Зеркалиуса: четыре аудиопримера Xorrom, точные биты, синхронная линия чтения и видео.">
+<title>Музыкальный ковёр · 0.001 · Зеркалиус</title>
+<link rel="stylesheet" href="../../_js/grozd.css">
+<link rel="stylesheet" href="page.css?v=1">
+<script src="../mayatnik-xorrom.js?v=867" defer></script>
+<script src="../mayatnik-work-file.js?v=140" defer></script>
+<script src="../mayatnik-xorrom-field.js?v=850" defer></script>
+<script src="../mayatnik-xorrom-geometry.js?v=854" defer></script>
+<script src="../mayatnik-xorrom-bank.js?v=866" defer></script>
+<script src="../mayatnik-xorrom-visual.js?v=867" defer></script>
+<script src="page.js?v=1" defer></script>
+</head>
+<body data-carpet>
+<header class="carpet-header">
+ <div><h1>Музыкальный ковёр</h1><p>Зеркалиус · Xorrom <span class="version">0.001</span></p></div>
+ <nav aria-label="Страницы Зеркалиуса"><a class="gz-hx" href="../Zerkalius-mayatnik.html"><span class="gz-nm">◇ Маятнкъ</span></a><a class="gz-hx" href="../instruction/index.html#xorrom"><span class="gz-nm">? Инстркцъ</span></a><a class="gz-hx" href="../../index.html"><span class="gz-nm">⌂ Hub</span></a></nav>
+</header>
+<main>
+ <section class="player" aria-labelledby="track-title">
+  <div class="track-heading"><h2 id="track-title">Выберите пример</h2><output id="track-clock" aria-label="Позиция записи">0:00 / 0:00</output></div>
+  <p id="track-description">Музыка рождается из одного и того же XOR-поля. Выберите пример и нажмите «Старт».</p>
+  <div class="carpet-stage" id="carpet-stage"><canvas id="carpet" width="1140" height="512" tabindex="0" role="slider" aria-label="Строка чтения музыкального ковра" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="127" aria-valuenow="0">Для отображения битов нужен браузер с поддержкой Canvas.</canvas></div>
+  <div class="readout"><output id="carpet-row" aria-live="off">Строка —</output><output id="carpet-notes" aria-live="off">Ноты строки —</output></div>
+  <div class="transport"><button id="carpet-play" class="gz-hx" type="button" disabled title="Начать или приостановить выбранную запись"><span class="gz-nm">▶ Старт</span></button><button id="carpet-reset" class="gz-hx" type="button" disabled title="Приостановить и вернуться к первой строке"><span class="gz-nm">↶ В начало</span></button><output id="carpet-status" role="status" aria-live="polite">Загрузка примеров…</output></div>
+  <audio id="carpet-audio" controls preload="metadata" aria-label="Аудиозапись выбранного примера"></audio>
+  <p class="gesture-help">Щелчок или протяжка по ковру — переход к строке. ↑ / ↓ — соседняя выбранная строка, Home / End — начало и конец, пробел — пуск или пауза. Соседние единицы подсвечиваются вместе: <code>111</code> — один прямоугольник.</p>
+ </section>
+ <section class="playlist-section" aria-labelledby="playlist-title"><h2 id="playlist-title">Четыре звучания одного поля</h2><div id="carpet-playlist" class="playlist"></div></section>
+ <section class="video-section" aria-labelledby="video-title"><div class="track-heading"><h2 id="video-title">Видео выбранного примера</h2><a id="video-download" class="gz-hx" download title="Скачать видео с подсветкой битов"><span class="gz-nm">↓ Видео</span></a></div><video id="carpet-video" controls playsinline preload="none" aria-label="Видео с синхронной подсветкой битов"></video></section>
+</main>
+<footer>Линия чтения следует времени записи. При перемотке подсветка сразу переходит к нужной строке; в хвосте эффектов активной строки уже нет. Исходные биты сохраняются в файлах кадра.</footer>
+</body></html>

@@ -1212,10 +1212,12 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-transport-option-row>.may-transport-option:last-child{border-right:0}
 .may-transport-option-row>.may-transport-option:is(:hover,:focus-visible){outline:1px solid #80aee8;outline-offset:-1px}
 .may-transport-option-row>.may-transport-option[aria-checked="true"]{outline:2px solid #80aee8;outline-offset:-2px}
-:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-transport-options.may-speed-options{display:block;width:240px!important;height:192px;padding:0!important;gap:0!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none;background:transparent!important;clip-path:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-transport-options.may-speed-options{display:block;width:var(--transport-popup-width,240px)!important;height:var(--transport-popup-height,192px);padding:0!important;gap:0!important;overflow-y:auto!important;overflow-x:auto!important;scrollbar-width:none;background:transparent!important;clip-path:none!important}
 .may-speed-options::-webkit-scrollbar{display:none}
 .may-speed-options>.may-standard-contours{display:none}
 .may-speed-diamond{position:relative;width:240px;height:192px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.may-delay-diamond{width:270px;height:216px}
+.may-speed-diamond.may-delay-diamond>.may-transport-option{font-size:7px}
 :is(body.may-mobile-menu,#mayMobileBar) .gz-ladder.may-transport-options:not(.may-speed-options){overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y;scrollbar-width:none}
 body.may-mobile-menu :is(.gz-ladder,#mayMobileBar).may-standard-list.may-rombo-assembly-options{display:flex!important;flex-direction:column;grid-template-rows:none!important;grid-auto-columns:auto!important;width:120px!important;max-width:120px!important;max-height:var(--may-rombo-list-height)!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none}
 

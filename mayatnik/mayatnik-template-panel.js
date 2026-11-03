@@ -10,7 +10,9 @@
   const metricTasks=new Map();let metricTimer=0,metricActive=null;
   let activeTab='templates',templatePane,folderButton,layerPane,layerGrid,layerApi,layerUnsubscribe,layout='tiles';const layoutButtons=new Map();
   let musicPane,musicGrid,musicStatus,musicAudio,musicName,musicUnsubscribe,musicBound,musicPreviewGeneration=0;
+  let musicVisualStage,musicCanvas,musicReader,musicPrepared,musicAnimation=null,musicDrawKey='',musicResizeObserver;
   function musicLibrary(){try{return root.mayXorromLibrary||root.opener?.mayXorromLibrary||null;}catch(_){return null;}}
+  function musicVisual(){try{return root.MayatnikXorromVisual||root.opener?.MayatnikXorromVisual||null;}catch(_){return null;}}
   function musicAvailable(){try{return !!musicLibrary()||Array.isArray(root.MayatnikXorromBank);}catch(_){return false;}}
   function setLayout(value,persist=true){layout=value==='list'?'list':'tiles';panel.dataset.layout=layout;for(const [key,b]of layoutButtons)b.setAttribute('aria-pressed',String(key===layout));if(persist)try{root.localStorage.setItem(LAYOUT_KEY,layout);}catch(_){}queueVisibleMetrics();}
   const captureLibraries=new Map([
@@ -82,10 +84,26 @@
     syncExplorer();if(activeTab!=='templates'){metricTasks.clear();metricActive=null;renderActive();}else{engine?.refresh();renderKey='';render();}
   }
   function renderActive(){if(activeTab==='sequences'){if(!sequenceView&&root.maySequences)sequenceView=root.MayatnikSequences.mount(sequencePane,root.maySequences);sequenceView?.refresh();syncExplorer();}else if(activeTab==='layers')renderLayers();else if(activeTab==='music')renderMusic();else renderCapture(captureLibraries.get(activeTab));}
-  function stopMusicPreview(){musicPreviewGeneration++;if(musicAudio){const hadSource=musicAudio.hasAttribute('src');if(hadSource)try{musicAudio.pause();}catch(_){}musicAudio.removeAttribute('src');if(hadSource)try{musicAudio.load();}catch(_){}musicAudio.hidden=true;if(musicName)musicName.textContent='';}}
+  function cancelMusicAnimation(){if(musicAnimation!==null){root.cancelAnimationFrame?.(musicAnimation);musicAnimation=null;}}
+  function drawMusicPreview(force=false){
+    const visual=musicVisual();if(!musicPrepared||!musicCanvas||!visual||!open||activeTab!=='music')return;
+    const source=musicPrepared.source,ratio=Math.max(1,Number(root.devicePixelRatio)||1),rect=musicVisualStage.getBoundingClientRect(),width=Math.max(source.width,Math.floor((musicVisualStage.clientWidth||rect.width||source.width)*ratio)),height=Math.max(source.height,Math.floor((musicVisualStage.clientHeight||rect.height||source.height)*ratio));
+    let resized=false;if(musicCanvas.width!==width){musicCanvas.width=width;resized=true;}if(musicCanvas.height!==height){musicCanvas.height=height;resized=true;}musicCanvas.style.width=width/ratio+'px';musicCanvas.style.height=height/ratio+'px';
+    const time=Number.isFinite(musicAudio.currentTime)?musicAudio.currentTime:0,step=visual.stateAt(musicPrepared,time),key=musicPreviewGeneration+':'+width+':'+height+':'+(step?.index??'tail');
+    if(force||resized||key!==musicDrawKey){const context=musicCanvas.getContext('2d',{alpha:false});if(context)visual.draw(context,musicPrepared,time,{width,height});musicDrawKey=key;}
+    musicReader.textContent=step?'Строка '+step.index+' / '+(source.height-1):'Затухание / конец записи';
+  }
+  function animateMusicPreview(generation=musicPreviewGeneration){
+    musicAnimation=null;if(generation!==musicPreviewGeneration||!musicPrepared||!open||activeTab!=='music')return;drawMusicPreview();
+    if(!musicAudio.paused&&!musicAudio.ended&&root.requestAnimationFrame)musicAnimation=root.requestAnimationFrame(()=>animateMusicPreview(generation));
+  }
+  function scheduleMusicPreview(){if(musicAnimation===null&&musicPrepared&&!musicAudio.paused&&!musicAudio.ended&&root.requestAnimationFrame){const generation=musicPreviewGeneration;musicAnimation=root.requestAnimationFrame(()=>animateMusicPreview(generation));}}
+  function stopMusicPreview(){musicPreviewGeneration++;cancelMusicAnimation();musicPrepared=null;musicDrawKey='';if(musicVisualStage)musicVisualStage.hidden=true;if(musicReader){musicReader.hidden=true;musicReader.textContent='';}if(musicAudio){const hadSource=musicAudio.hasAttribute('src');if(hadSource)try{musicAudio.pause();}catch(_){}musicAudio.removeAttribute('src');if(hadSource)try{musicAudio.load();}catch(_){}musicAudio.hidden=true;if(musicName)musicName.textContent='';}}
   function bindMusic(){const api=musicLibrary();if(api===musicBound)return;musicUnsubscribe?.();musicBound=api;musicUnsubscribe=api?.subscribe(()=>{if(open&&activeTab==='music')renderMusic();});}
   async function musicAction(action,id){const api=musicLibrary();if(!api)return;try{if(action==='preview'){
-      stopMusicPreview();const generation=musicPreviewGeneration,entry=await api.preview(id);if(!entry||!open||activeTab!=='music'||generation!==musicPreviewGeneration)return;musicAudio.src=entry.audio;musicAudio.hidden=false;musicName.textContent=entry.name;await musicAudio.play();
+      stopMusicPreview();const generation=musicPreviewGeneration,entry=await api.preview(id);if(!entry||!open||activeTab!=='music'||generation!==musicPreviewGeneration)return;
+      const visual=musicVisual(),prepared=visual?await visual.prepare(entry):null;if(!open||activeTab!=='music'||generation!==musicPreviewGeneration)return;
+      musicPrepared=prepared;musicVisualStage.hidden=!prepared;musicReader.hidden=!prepared;musicAudio.src=entry.wav;try{musicAudio.load();}catch(_){}musicAudio.hidden=false;musicName.textContent=entry.name;drawMusicPreview(true);await musicAudio.play();scheduleMusicPreview();
     }else if(action==='open'){stopMusicPreview();await api.open(id);}else await api.download(id,action);
     }catch(error){if(musicStatus)musicStatus.textContent=error?.message||'Не удалось открыть музыкальный пример';}}
   function renderMusic(){if(!musicPane||!open||activeTab!=='music')return;bindMusic();const api=musicLibrary(),state=api?.getState()||{},entries=api?.list()||[];
@@ -96,6 +114,9 @@
       const badge=doc.createElement('span');badge.className='mtp-music-builtin';badge.textContent='Встроенный пример';const actions=doc.createElement('div');actions.className='mtp-music-actions';
       for(const [action,label,description]of [['preview','▶ Слушать','Прослушать готовый аудиопример'],['open','✓ Применить','Восстановить исходный кадр и музыкальные настройки без запуска'],['json','↓ JSON','Скачать музыкальный пресет'],['wav','↓ WAV','Скачать готовый аудиопример WAV'],...(entry.frame?[['work','↓ Кадр','Скачать исходный кадр с музыкальными настройками']]:[])]){
         const control=button(label,description+': '+entry.name,()=>musicAction(action,entry.id));control.dataset.musicAction=action;control.disabled=!!state.busy;if(action==='open')control.setAttribute('aria-pressed',String(entry.id===state.selectedId));actions.append(control);
+      }
+      for(const [href,label,title,download]of [['music-carpet/?track='+encodeURIComponent(entry.id),'◇ Ковёр','Открыть Музыкальный ковёр с этим примером',false],['audio-examples/'+entry.id+'.mp4','↓ Видео','Скачать видео с подсветкой битов',true]]){
+        const link=doc.createElement('a');link.className='mtp-command';link.href=href;link.textContent=label;link.title=title+': '+entry.name;link.setAttribute('aria-label',link.title);link.dataset.musicLink=download?'video':'carpet';if(download)link.download=entry.id+'.mp4';else{link.target='_blank';link.rel='noopener';link.addEventListener('click',stopMusicPreview);}actions.append(link);
       }
       card.append(title,badge);
       if(entry.frame&&typeof entry.thumbnail==='string'){
@@ -109,7 +130,12 @@
   function makeMusicPane(){const pane=doc.createElement('section');pane.id='mayMusicPane';pane.className='mtp-pane mtp-music-pane';pane.setAttribute('role','tabpanel');
     const introduction=doc.createElement('p');introduction.className='mtp-music-intro';introduction.textContent='Готовые примеры Xorrom. «Слушать» воспроизводит запись; «Применить» восстанавливает исходный битовый кадр и музыкальные настройки без запуска. «Кадр» скачивает их одним файлом.';
     musicName=doc.createElement('strong');musicName.className='mtp-music-now';musicAudio=doc.createElement('audio');musicAudio.controls=true;musicAudio.preload='none';musicAudio.hidden=true;musicAudio.setAttribute('aria-label','Прослушивание музыкального примера');
-    musicAudio.addEventListener('error',()=>{if(musicAudio.getAttribute('src'))musicStatus.textContent='Не удалось загрузить аудиопример. Попробуйте скачать WAV.';});musicStatus=doc.createElement('output');musicStatus.className='mtp-status';musicStatus.setAttribute('aria-live','polite');musicGrid=doc.createElement('div');musicGrid.className='mtp-music-grid';pane.append(introduction,musicName,musicAudio,musicStatus,musicGrid);return pane;
+    musicVisualStage=doc.createElement('div');musicVisualStage.className='mtp-music-preview';musicVisualStage.hidden=true;musicCanvas=doc.createElement('canvas');musicCanvas.className='mtp-music-reader';musicCanvas.width=285;musicCanvas.height=128;musicCanvas.setAttribute('role','img');musicCanvas.setAttribute('aria-label','Битовое поле с синхронной подсветкой читаемой строки');musicVisualStage.append(musicCanvas);musicReader=doc.createElement('output');musicReader.className='mtp-music-reading';musicReader.hidden=true;musicReader.setAttribute('aria-live','off');
+    musicAudio.addEventListener('play',()=>{drawMusicPreview(true);scheduleMusicPreview();});
+    musicAudio.addEventListener('pause',()=>{cancelMusicAnimation();drawMusicPreview(true);});musicAudio.addEventListener('ended',()=>{cancelMusicAnimation();drawMusicPreview(true);});
+    for(const type of ['timeupdate','seeking','seeked','loadedmetadata'])musicAudio.addEventListener(type,()=>{drawMusicPreview(type==='seeking');scheduleMusicPreview();});
+    musicAudio.addEventListener('error',()=>{if(musicAudio.getAttribute('src')){cancelMusicAnimation();musicStatus.textContent='Не удалось загрузить аудиопример. Попробуйте скачать WAV.';}});musicStatus=doc.createElement('output');musicStatus.className='mtp-status';musicStatus.setAttribute('aria-live','polite');musicGrid=doc.createElement('div');musicGrid.className='mtp-music-grid';pane.append(introduction,musicName,musicVisualStage,musicReader,musicAudio,musicStatus,musicGrid);
+    if(root.ResizeObserver){musicResizeObserver=new root.ResizeObserver(()=>drawMusicPreview(true));musicResizeObserver.observe(musicVisualStage);}return pane;
   }
   function renderLayers(){if(!layerGrid||!open||activeTab!=='layers')return;const layers=layerApi?.list()||[],selected=layerApi?.selected();
     panel.setAttribute('aria-busy','false');syncExplorer();const signature=JSON.stringify([query,selected,layers.map(l=>[l.id,l.name,l.visible,l.opacity,l.kind])]);if(layerGrid.dataset.signature===signature)return;layerGrid.dataset.signature=signature;
@@ -378,6 +404,8 @@
   root.addEventListener('may-xorrom-library-ready',()=>{make();bindMusic();if(open&&activeTab==='music')renderMusic();});
   for(const library of captureLibraries.values())root.addEventListener(library.key==='settings'?'may-settings-library-ready':'may-frame-library-ready',()=>{make();bindCapture(library,root[library.apiName]);});
   root.addEventListener('may-template-saved',e=>{make();bind(root.mayTemplateLibrary);if(!engine)return;store.reconcile(engine.allIds());const id=String(e.detail?.id||'');folderSelection='';current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';renderKey='';selectTab('templates');setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});});
-  root.addEventListener('pagehide',()=>{stopMusicPreview();musicUnsubscribe?.();unsubscribe?.();layerUnsubscribe?.();folderUnsubscribe?.();sequenceView?.destroy();for(const library of captureLibraries.values())library.unsubscribe?.();observer?.disconnect();},{once:true});
+  root.addEventListener('resize',()=>drawMusicPreview(true));
+  doc.addEventListener('visibilitychange',()=>{if(doc.hidden&&musicAudio){try{musicAudio.pause();}catch(_){}cancelMusicAnimation();}});
+  root.addEventListener('pagehide',()=>{stopMusicPreview();musicResizeObserver?.disconnect();musicUnsubscribe?.();unsubscribe?.();layerUnsubscribe?.();folderUnsubscribe?.();sequenceView?.destroy();for(const library of captureLibraries.values())library.unsubscribe?.();observer?.disconnect();},{once:true});
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',make,{once:true});else make();
 })(window);

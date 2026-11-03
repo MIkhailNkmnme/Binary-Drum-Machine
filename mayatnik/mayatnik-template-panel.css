@@ -44,6 +44,10 @@ body>[data-library-folded-popup]{display:none!important}
 #mayatnikTemplatePanel .mtp-music-intro{margin:0;color:#b7c5d7}
 #mayatnikTemplatePanel .mtp-music-now:empty{display:none}
 #mayatnikTemplatePanel .mtp-music-pane audio{width:100%;height:36px;flex:none}
+#mayatnikTemplatePanel .mtp-music-pane{overflow:auto}
+#mayatnikTemplatePanel .mtp-music-preview{width:100%;aspect-ratio:285/128;min-height:128px;max-height:320px;overflow:auto;flex:none;background:#000;border:1px solid #39434f}
+#mayatnikTemplatePanel .mtp-music-reader{display:block;image-rendering:pixelated}
+#mayatnikTemplatePanel .mtp-music-reading{color:#b7c5d7;font:11px/1.4 monospace;flex:none}
 #mayatnikTemplatePanel .mtp-music-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));align-content:start;gap:8px 4px;padding-bottom:12px}
 #mayatnikTemplatePanel[data-layout=list] .mtp-music-grid{grid-template-columns:minmax(0,1fr)}
 #mayatnikTemplatePanel .mtp-music-card{min-width:0;padding:6px;border:1px solid #39434f;background:#111820;display:flex;flex-direction:column;gap:4px}
@@ -54,6 +58,7 @@ body>[data-library-folded-popup]{display:none!important}
 #mayatnikTemplatePanel .mtp-music-frame{display:block;width:100%;height:auto;object-fit:contain;image-rendering:pixelated;flex:none;background:#000}
 #mayatnikTemplatePanel .mtp-music-frame-caption{font-size:10px;color:#b7c5d7}
 #mayatnikTemplatePanel .mtp-music-actions{display:flex;flex-wrap:wrap;gap:2px}
+#mayatnikTemplatePanel .mtp-music-actions a{color:inherit;text-decoration:none;font:inherit}
 #mayatnikTemplatePanel .mtp-frame-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
 #mayatnikTemplatePanel .mtp-template-pane .mtp-dark-preview .mtp-preview{background:#fff}
 #mayatnikTemplatePanel .mtp-selection input[type=color]{width:40px;height:24px;padding:2px;background:#1b2430;border:1px solid #334052;border-radius:0}

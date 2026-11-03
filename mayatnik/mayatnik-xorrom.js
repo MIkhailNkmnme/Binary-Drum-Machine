@@ -187,6 +187,20 @@
     return step;
   }
 
+  // Visual readers share the actual score clock, including geometry and swing.
+  // Times coincide with the sample boundaries used by WAV rendering.
+  function scoreTimeline(snapshot,settings,options={}) {
+    const s=normalizeSettings(settings),range=bounds(snapshot,s),rate=options.sampleRate===44100?44100:SAMPLE_RATE;
+    if(range.first<0)throw Error('В снимке нет строк для чтения.');
+    const timeline=[];let elapsed=0;
+    for(let index=range.first;index<=range.last;index+=s.stride){
+      const event=rowStep(snapshot.rows[index],index,s,snapshot),start=Math.round(elapsed*rate)/rate;
+      elapsed+=event.step;
+      timeline.push({index,start,end:Math.round(elapsed*rate)/rate,notes:event.notes.map(note=>({...note})),effective:{...event.effective}});
+    }
+    return timeline;
+  }
+
   // The second instrument holds one phrase across several selected rows. Its
   // addresses and duration belong to the score, never to screen pixels or timers.
   function backingFor(snapshot, index, s) {
@@ -907,5 +921,5 @@
     return { start, pause, stop, seek, beginRefresh, replaceSnapshot, setSettings, getState: () => state, getStream, dispose };
   }
 
-  return { DEFAULTS, ELECTRO_PRESET, normalizeSettings, validateSettings, effectiveSettings, geometryForRow: selectedRegion, frequency, notesForRow, renderWav, create };
+  return { DEFAULTS, ELECTRO_PRESET, normalizeSettings, validateSettings, effectiveSettings, geometryForRow: selectedRegion, frequency, notesForRow, scoreTimeline, renderWav, create };
 });

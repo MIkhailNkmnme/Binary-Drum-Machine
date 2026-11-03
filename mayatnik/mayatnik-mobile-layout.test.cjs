@@ -22,21 +22,20 @@ test('fixed mobile player fits four portraits and coarse landscape without chang
  assert.equal(Dock.isMobile({width:1280,height:720,coarse:false}),false);
 });
 
-test('actual transport placement uses visual viewport bounds for portraits, landscape and keyboard pan',()=>{
- const code=menu.slice(menu.indexOf('    function place(){if(!popup||!active)return;'),menu.indexOf('    function selected(){'));
+test('actual transport diamonds use the visible viewport and keep every option reachable after keyboard pan',()=>{
+ const code=menu.slice(menu.indexOf('    const optionShape=input=>'),menu.indexOf('    function selected(){'));
  for(const view of [{width:320,height:568},{width:360,height:640},{width:390,height:844},{width:430,height:932},{width:844,height:390,offsetLeft:44},{width:390,height:260,offsetTop:120},{width:844,height:140,offsetTop:70}]){
-  for(const diamond of [false,true]){
-   const c=geometry(view),input={},r={left:view.width-50,bottom:(view.offsetTop||0)+view.height-20};
-   Object.assign(c,{popup:{style:{}},active:{input,button:{getBoundingClientRect:()=>r}},sp:diamond?input:{},mobileMenu:{matches:true},values:()=>Array.from({length:41})});vm.runInContext(code+'place();',c);
-   const out=c.popup.style,x=parseFloat(out.left),y=parseFloat(out.top),height=parseFloat(out.maxHeight),width=diamond?240:124;
-   assert.ok(x>=(view.offsetLeft||0)+4);assert.ok(x+width<=(view.offsetLeft||0)+view.width-4);assert.ok(y>=(view.offsetTop||0)+4);assert.ok(y+Math.min(diamond?192:366,height)<=(view.offsetTop||0)+view.height-4);
-   if(view.height===140&&diamond)assert.equal(height,132,'only the outer scroll viewport shrinks');
+  for(const speed of [false,true]){
+   const c=geometry(view),input={},r={left:(view.offsetLeft||0)+view.width-50,width:30,bottom:(view.offsetTop||0)+view.height-20};
+   Object.assign(c,{popup:{style:{setProperty(key,value){this[key]=value;}}},active:{input,button:{getBoundingClientRect:()=>r}},sp:speed?input:{}});vm.runInContext(code+'place();',c);
+   const out=c.popup.style,x=parseFloat(out.left),y=parseFloat(out.top),height=parseFloat(out.maxHeight),width=parseFloat(out['--transport-popup-width']);
+   assert.equal(width,speed?240:270);assert.ok(x>=(view.offsetLeft||0)+4);assert.ok(x+width<=(view.offsetLeft||0)+view.width-4);
+   assert.ok(y>=(view.offsetTop||0)+4);assert.ok(y+Math.min(speed?192:216,height)<=(view.offsetTop||0)+view.height-4);assert.ok(height>=24);
   }
  }
- // The desktop branch retains its former coordinates and ignores the keyboard viewport.
- const c=geometry({width:300,height:100,offsetTop:500}),sp={};Object.assign(c,{popup:{style:{}},active:{input:sp,button:{getBoundingClientRect:()=>({left:900,bottom:740})}},sp,mobileMenu:{matches:false},innerWidth:1000,innerHeight:800});vm.runInContext(code+'place();',c);assert.equal(c.popup.style.left,'756px');assert.equal(c.popup.style.top,'600px');
- const grid=rule(css,'.may-speed-diamond');assert.equal(grid.width,'240px');assert.equal(grid.height,'192px');assert.equal(grid.position,'relative');assert.match(grid['clip-path'],/polygon/);
- const outer=rule(css,':is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-transport-options.may-speed-options');assert.equal(outer['overflow-y'],'auto!important');assert.equal(outer['scrollbar-width'],'none');assert.match(menu,/\(diamond\?grid:row\)\.append\(option\)/);
+ // Desktop also respects a panned visual viewport, rather than positioning off-screen.
+ const c=geometry({width:300,height:100,offsetTop:500}),sp={};Object.assign(c,{popup:{style:{setProperty(key,value){this[key]=value;}}},active:{input:sp,button:{getBoundingClientRect:()=>({left:900,width:30,bottom:740})}},sp});vm.runInContext(code+'place();',c);
+ assert.equal(c.popup.style.left,'56px');assert.equal(c.popup.style.top,'572px');assert.equal(c.popup.style.maxHeight,'24px');
 });
 
 test('assembly placement keeps every option reachable above a keyboard and overrides standard overflow',()=>{

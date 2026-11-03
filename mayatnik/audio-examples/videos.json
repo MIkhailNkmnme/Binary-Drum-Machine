@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "renderer": "MayatnikXorromVisual",
+  "clock": "WAV sample-aligned scoreTimeline",
+  "items": [
+    {
+      "id": "electro-robot",
+      "name": "Электро-робот",
+      "path": "audio-examples/electro-robot.mp4",
+      "duration": 18.454149659863944,
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "sourceRows": 128,
+      "readingSteps": 128,
+      "scoreEnd": 16.55174603174603
+    },
+    {
+      "id": "xor-pulse",
+      "name": "XOR-пульс",
+      "path": "audio-examples/xor-pulse.mp4",
+      "duration": 15.4956462585034,
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "sourceRows": 128,
+      "readingSteps": 128,
+      "scoreEnd": 15.483854875283447
+    },
+    {
+      "id": "glass-arpeggio",
+      "name": "Стеклянные ступени",
+      "path": "audio-examples/glass-arpeggio.mp4",
+      "duration": 21.477777777777778,
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "sourceRows": 128,
+      "readingSteps": 64,
+      "scoreEnd": 17.77777777777778
+    },
+    {
+      "id": "triangle-space",
+      "name": "Пространство треугольника",
+      "path": "audio-examples/triangle-space.mp4",
+      "duration": 15.495464852607709,
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "sourceRows": 128,
+      "readingSteps": 32,
+      "scoreEnd": 13.333333333333334
+    }
+  ]
+}
