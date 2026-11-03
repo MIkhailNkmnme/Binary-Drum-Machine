@@ -135,6 +135,19 @@
    ctx.restore();
   }
  }
+ // Draw screen-width marks through the same piece masks as the native bits.
+ // The caller has already transformed the context into output (tile) units.
+ const outlinePaths=new WeakMap();
+ function paintSourceMarks(ctx,p,unit,paint){
+  ctx.save();ctx.transform(...p.rotation);
+  for(const part of p.parts){
+   ctx.save();ctx.transform(...part.matrix);
+   let path=outlinePaths.get(part);
+   if(!path){path=new Path2D();part.outline.forEach((v,i)=>i?path.lineTo(v.x,v.y):path.moveTo(v.x,v.y));path.closePath();outlinePaths.set(part,path);}
+   ctx.clip(path);ctx.scale(1/unit,1/unit);paint(ctx);ctx.restore();
+  }
+  ctx.restore();
+ }
  function exactSize(W,H,quality){
   const width=Math.max(1,Math.ceil(W*quality-1e-9)),height=Math.max(1,Math.ceil(H*quality-1e-9));
   if(!(quality>0&&Number.isFinite(quality))||width>16384||height>16384||width*height>16e6)throw new RangeError('Точный растр Ромбо превышает лимит 16 Мп или 16384 px. Уменьшите масштаб или число строк.');
@@ -317,5 +330,5 @@
   const permit=patch=>!o.allowState||o.allowState({...o.state(),...patch})!==false;
   const api={get,options:()=>variants.map(v=>{const item={...v,...availability(v.id,geometry(),get().row)},next={romboMode:'fixed',romboAssembly:v.id};if(item.available&&!permit(next)){item.available=false;item.reason=o.stateReason?.(next)||'Сборка несовместима с точной сеткой.';}return item;}),plan:makePlan,render,screenTiles:()=>visibleTiles.slice(),physicalPoint:event=>events.get(event),capture,setSeam(value){const seam=seamMode(value);if(seam===get().seam||!permit({romboSeam:seam}))return;o.state().romboSeam=seam;notify();},setMode(value){const mode=value==='custom'?'custom':'fixed';if(!permit({romboMode:mode}))return;o.state().romboMode=mode;notify();},set(value){if(!permit({edgeRhombOn:!!value}))return;o.state().edgeRhombOn=!!value;notify();},setRow(value){const s=o.state(),n=Math.max(1,Math.min(get().maxRow,Math.round(Number(value)||1)));if(s.romboRow===n||!permit({romboRow:n}))return;s.romboRow=n;notify();},cycleAngle(dir=1){const angle=(get().angle+(dir<0?315:45))%360;if(!permit({romboAngle:angle}))return;o.state().romboAngle=angle;notify();},setAssembly(id){const n=normalise(id);if(!availability(n,geometry(),get().row).available||!permit({romboMode:'fixed',romboAssembly:n}))return;o.state().romboMode='fixed';o.state().romboAssembly=n;notify();}};return api;
  }
- return {plan,customPlan,point,inverse,draw,rasterPixels,viewportTiles,mount,variants,normalise};
+ return {plan,customPlan,point,inverse,draw,paintSourceMarks,rasterPixels,viewportTiles,mount,variants,normalise};
 });
