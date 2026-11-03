@@ -7,18 +7,21 @@
   const STATE_KEYS=('rowStepOutline joined180 templateFindAll speed outline sym symBits symRowsMin symRowsMax symBitsMin symBitsMax symV symH symD symPlainV symPlainH symPlainD symTriangles symTriangleRows frozen ochki ochkiSnake manualSnake ochkiMode ochkiInv ochkiRev ochkiHalf ochkiPattern ochkiLength bitOneColour bitZeroColour bitContourColour1 bitContourColour2 bitContourMode bitContourColours overOneColour overZeroColour digitOneColour digitZeroColour digitFont digitSize geomCenter fixLines blackMirror animHl fillArea fillWholeColour paintFrameMode paintSame paintSymmetric fillGrow paintMeet paintAxis paintMid midOneOn midZeroOn midWide midOneColour midZeroColour verticalFillColour stolbFillColour axesFillColour autoFillColour growFillColour meetFillColour axisFillColour autoFillPalette growOwnColour triTop thirds zsnap zbase zLock zLimit zOverview zoom zMid ztop zBot linesOn lineFamilies contour mirCol mirOp rowLab heat sectors areas fixWide fixLow fixLowOut fixMirror fixFold fixRot fixHor fixCross fixAxis fixDown fixDragK sawFull saw lineMeasures templateMaxArea viewUpsideDown autoAxes triangleMapSource triangleMapAxes triangleMapMask triangleMapMirror axisPalette crossMirror crossLabels crossMirrorMode crossMirrorSector').split(' ');
   const NEW_STATE_KEYS=new Set('zLimit zOverview paintFrameMode fillWholeColour rowStepOutline ochkiHalf joined180 manualSnake lineFamilies autoAxes triangleMapSource triangleMapAxes triangleMapMask triangleMapMirror axisPalette crossMirror crossLabels crossMirrorMode crossMirrorSector viewUpsideDown axesFillColour autoFillColour growFillColour meetFillColour axisFillColour autoFillPalette growOwnColour'.split(' '));
   const INVERT_DEFAULTS={invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null};
-  for(const key of ['heatHoldZero','heatMode','heatPeriod','edgeRhombOn','romboRow','romboAngle','romboAssembly','romboSeam',...Object.keys(INVERT_DEFAULTS)]){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
+  const ISOLATED_DEFAULTS={paintIsolated0:false,paintIsolated1:false};
+  for(const key of ['heatHoldZero','heatMode','heatPeriod','edgeRhombOn','romboRow','romboAngle','romboAssembly','romboSeam',...Object.keys(INVERT_DEFAULTS),...Object.keys(ISOLATED_DEFAULTS)]){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   const TOOL_KEYS=['fillMode','autoVertical','axisPicking','axisLineMode','rulerMode','mirrorLine','mirrorAxis','templatePickEnabled','templatePickMode','templateDragEnabled'];
   const clone=value=>JSON.parse(JSON.stringify(value));
   function pick(state,tools={},controls={},colourAuto={}){
     const values={};for(const key of STATE_KEYS){const v=state[key];values[key]=v===undefined?null:key==='lineFamilies'||key==='templateFindAll'?clone(v):v;}
     for(const [key,value]of Object.entries(INVERT_DEFAULTS))if(state[key]===undefined)values[key]=value;
+    for(const [key,value]of Object.entries(ISOLATED_DEFAULTS))if(state[key]===undefined)values[key]=value;
     const modes={};for(const key of TOOL_KEYS)modes[key]=tools[key]??(key==='templatePickMode'?'one':key==='autoVertical'?0:false);
     const clocks={};for(const key of ['fillColour','verticalFillColour','stolbFillColour','midZeroColour','midOneColour','axesFillColour','autoFillColour','growFillColour','meetFillColour','axisFillColour']){const q=colourAuto[key];if(q&&['off','build','frame'].includes(q.mode)&&/^#[0-9a-f]{6}$/i.test(q.color))clocks[key]={mode:q.mode,color:q.color};}
     return {version:1,colourAuto:clocks,state:values,parity:Parity.normalize(state.parity),tools:modes,controls:{fillColour:controls.fillColour||'#ff7f27',fillMirror:controls.fillMirror!==false}};
   }
   function validate(value){
     if(!value||value.version!==1||!value.state||!value.tools||!value.parity||!/^#[0-9a-f]{6}$/i.test(value.controls?.fillColour))throw Error('Повреждён набор настроек');
+    for(const key of Object.keys(ISOLATED_DEFAULTS))if(value.state[key]!==undefined&&typeof value.state[key]!=='boolean')throw Error('Некорректная окраска одиночных: '+key);
     for(const key of ['inverted','invertAuto'])if(value.state[key]!==undefined&&typeof value.state[key]!=='boolean')throw Error('Некорректная инверсия: '+key);
     if(value.state.invertKind!==undefined&&!['bits','colour'].includes(value.state.invertKind))throw Error('Некорректный вид инверсии');
     if(value.state.invertFrame!=null&&(!Number.isSafeInteger(value.state.invertFrame)||value.state.invertFrame<0))throw Error('Некорректный кадр инверсии');

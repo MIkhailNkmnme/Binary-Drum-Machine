@@ -260,3 +260,31 @@ test('animation reuses its overlay buffer and clears pixels that no longer belon
  c.paintRepeatSeed={...c.paintRepeatSeed,entries:Uint32Array.of(2,0x101010,0xffabcdef)};c.draw();assert.equal(c.paintRepeatLayer,layer);
  assert.equal(layer[0],0);assert.equal(layer[2],0xffabcdef);assert.equal(c.shown[0],c.fillBase[0]);
 });
+
+test('latched isolated bits repaint each shown frame without stopping transport, writing history or carrying old masks',async()=>{
+ const c=fixture({W:8,H:1,VX:0,VW:8,VH:1}),api=c.window.mayIsolatedPaint,base=c.draw,hex='#123456',paint=c.rgba([18,52,86]);
+ Object.assign(c,{ZL:[],queueSession(){},hexRGB:value=>[1,3,5].map(i=>parseInt(value.slice(i,i+2),16))});
+ c.draw=()=>{base();if(c.st.paintIsolated0||c.st.paintIsolated1)c.isolatedLivePaint(new Uint32Array(c.img.data.buffer));};
+ const set=(values)=>c.f.val.set(values),pixels=()=>Array.from(new Uint32Array(c.img.data.buffer)),selected=()=>pixels().flatMap((v,i)=>v===paint?[i]:[]);
+ set([1,-1,1,1,0,-1,0,0]);c.playing=true;c.$('fillColour').value=hex;
+ c.$('bPaintIsolated1').onclick();await api.whenIdle();assert.equal(api.get(1),true);assert.equal(c.$('bPaintIsolated1')['aria-pressed'],'true');assert.equal(c.playing,true);assert.deepEqual(selected(),[0]);
+ c.$('bPaintIsolated0').onclick();await api.whenIdle();assert.deepEqual(selected(),[0,4]);assert.equal(c.$('bPaintIsolated0')['aria-pressed'],'true');
+ c.k++;set([1,1,-1,0,0,-1,1,0]);c.draw();assert.equal(c.isolatedFrameWait(),true);await api.whenIdle();assert.deepEqual(selected(),[6,7]);assert.equal(c.isolatedFrameWait(),false);
+ const original=c.f.val.slice();c.$('bPaintIsolated1').onclick();await api.whenIdle();assert.deepEqual(selected(),[7]);assert.equal(c.playing,true);
+ c.$('fillColour').value='#abcdef';c.draw();assert.equal(pixels()[7],c.rgba([171,205,239]));assert.equal(c.fillHistory.length,0);
+ c.$('bPaintIsolated0').onclick();assert.equal(api.get(0),false);assert.equal(c.$('bPaintIsolated0')['aria-pressed'],'false');assert.deepEqual(c.f.val,original);
+ assert.equal(c.manualPaintState.layer,null);assert.equal(c.fillMask,null);
+});
+
+test('a slow isolated scan cannot publish an old mask after a manual frame jump or disabling its latch',async()=>{
+ const c=fixture({W:4,H:1,VX:0,VW:4,VH:1}),base=c.draw,api=c.window.mayIsolatedPaint,engine=c.MayatnikIsolatedBits;
+ Object.assign(c,{ZL:[],queueSession(){},hexRGB:s=>[1,3,5].map(i=>parseInt(s.slice(i,i+2),16))});
+ c.draw=()=>{base();if(c.st.paintIsolated1)c.isolatedLivePaint(new Uint32Array(c.img.data.buffer));};
+ let release,started;const paused=new Promise(r=>started=r),gate=new Promise(r=>release=r);
+ let first=true;c.MayatnikIsolatedBits={...engine,async findGrid(field,options){if(first){first=false;started();await gate;}return engine.findGrid(field,options);}};
+ c.f.val.set([1,-1,-1,-1]);c.$('bPaintIsolated1').onclick();await paused;
+ c.k++;c.f.val.set([-1,-1,-1,1]);c.draw();await api.whenIdle();const colour=c.rgba([18,52,86]);
+ assert.equal(c.isolatedPixel(0),0);assert.equal(c.isolatedPixel(3),colour);
+ c.$('bPaintIsolated1').onclick();release();await new Promise(r=>setTimeout(r,0));
+ assert.equal(c.isolatedPixel(3),0);assert.equal(c.fillHistory.length,0);assert.equal(c.manualPaintState.layer,null);
+});

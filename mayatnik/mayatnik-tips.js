@@ -1,10 +1,12 @@
 /* Маятник v0.167: «подсказки показывай рядом с кнопками, но с задержкой 4 секунды».
    Системная подсказка (title) снимается с элемента на время наведения; если курсор простоял на нём 4 с — плашка рядом с кнопкой
    (справа, не влезает — слева; по высоте — вровень с кнопкой). Уход, щелчок, прокрутка — плашка прячется. При «?» (gz-help) —
-   прежние подсказки рейки сразу, эта плашка не показывается. */
+   прежние подсказки рейки сразу, эта плашка не показывается. Явный data-may-tip-immediate у компактного номера оси
+   показывает полную координатную подсказку сразу, в том числе при «?». */
 (() => {
   'use strict';
   const DELAY = 4000;
+  const immediate = el => el?.hasAttribute('data-may-tip-immediate');
   // Horizontal menus keep their tips on the field side of the entire button strip.
   // The shared rail calls the same placement in help mode.
   window.MayatnikPlaceMenuTip = (owner, tip) => {
@@ -41,11 +43,33 @@
   const strip = el => { const t = el.getAttribute('title'); if (t != null) { if (t) el.dataset.mayTip = t; el.removeAttribute('title'); } };
   const giveBack = el => { if (el && el.dataset.mayTip != null && !el.hasAttribute('title')) el.setAttribute('title', el.dataset.mayTip); };
   const hide = () => { clearTimeout(timer); timer = 0; box.hidden = true; obs?.disconnect(); obs = null; giveBack(cur); cur = null; };
+  function placeManualAxisTip(owner) {
+    const panel = immediate(owner) && owner.closest('.may-manual-axis-controls');
+    if (!panel) return false;
+    box.style.maxHeight = ''; box.style.overflow = '';
+    const r = panel.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+    const x = Math.max(4, Math.min(innerWidth - w - 4, r.left));
+    let top = r.top, bottom = r.bottom;
+    for (const other of document.querySelectorAll('.may-manual-axis-controls')) {
+      if (other.hidden || getComputedStyle(other).visibility === 'hidden') continue;
+      const b = other.getBoundingClientRect();
+      if (!b.width || !b.height || b.right <= x || b.left >= x + w) continue;
+      top = Math.min(top, b.top); bottom = Math.max(bottom, b.bottom);
+    }
+    const below = Math.max(0, innerHeight - bottom - 10), above = Math.max(0, top - 10);
+    const useBelow = below >= h || above < h && below >= above;
+    box.style.maxHeight = (useBelow ? below : above) + 'px'; box.style.overflow = 'hidden';
+    const visibleHeight = Math.min(h, useBelow ? below : above);
+    box.style.left = Math.round(x) + 'px';
+    box.style.top = Math.round(useBelow ? bottom + 6 : top - visibleHeight - 6) + 'px';
+    return true;
+  }
   function show() {
     if(cur?.closest('[data-no-tooltips]'))return;
-    if (!cur || !cur.isConnected || document.documentElement.classList.contains('gz-help')) return;
+    if (!cur || !cur.isConnected || document.documentElement.classList.contains('gz-help') && !immediate(cur)) return;
     const text = cur.dataset.mayTip; if (!text) return;
     box.textContent = text; box.hidden = false;
+    if (placeManualAxisTip(cur)) return;
     if (window.MayatnikPlaceMenuTip(cur, box)) return;
     const r = cur.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
     let x = r.right + 8; if (x + w > innerWidth - 6) x = r.left - w - 8; if (x < 6) x = Math.max(6, Math.min(innerWidth - w - 6, r.left));
@@ -61,10 +85,10 @@
     cur = el; strip(el);
     obs = new MutationObserver(() => { if (cur && cur.hasAttribute('title')) strip(cur); if (!box.hidden) show(); });   // страница переписывает title на ходу
     obs.observe(el, { attributes: true, attributeFilter: ['title'] });
-    timer = setTimeout(show, DELAY);
+    timer = setTimeout(show, immediate(cur) ? 0 : DELAY);
   }, true);
   document.addEventListener('pointerout', e => { if (cur && !cur.contains(e.relatedTarget)) hide(); }, true);
-  for (const t of ['pointerdown', 'wheel', 'keydown']) document.addEventListener(t, () => { if (cur) { clearTimeout(timer); box.hidden = true; timer = setTimeout(show, DELAY); } }, true);
+  for (const t of ['pointerdown', 'wheel', 'keydown']) document.addEventListener(t, () => { if (cur) { clearTimeout(timer); box.hidden = true; timer = setTimeout(show, immediate(cur) ? 0 : DELAY); } }, true);
   addEventListener('scroll', () => { if (!box.hidden) hide(); }, true);
   const init = () => document.body.append(box);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();

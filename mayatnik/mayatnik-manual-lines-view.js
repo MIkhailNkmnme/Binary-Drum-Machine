@@ -49,7 +49,7 @@
    }
    // The label is a coordinate/state value (button rules T06), not a command
    // caption. Keep its notation intact when the menu's text observer runs.
-   parts.label.dataset.userLabel='';
+   parts.label.dataset.userLabel='';parts.label.dataset.mayTipImmediate='';
    listen(parts.label,'pointerdown',e=>begin(id,e,parts.label));
    parts.label.ondblclick=e=>{if(axis(id)?.resettable){consume(e);options.onReset?.(id);}};
    for(const [key,action]of [['add','onAdd'],['remove','onDelete'],['pin','onPin']])parts[key].onclick=e=>{consume(e);if(axis(id)){select(id);options[action]?.(id);}};

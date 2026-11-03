@@ -8,9 +8,18 @@ const state = {
   pair: false, edgeWrap: true, edgeBounce: false, edgeWidth: 4, compareSource: '',
   sequenceSourceOn: false, zoom: 'fit', templateMaxArea: 4096,
   invertKind: 'bits', inverted: false, invertAuto: false, invertFrame: null,
+  paintIsolated0: false, paintIsolated1: false,
   sym: false, symBits: false, vrows: 0, parity: { cellsEven: true, cellsOdd: true, rowsEven: true, rowsOdd: true, colsEven: true, colsOdd: true, rowLevels: [], cellLevels: [], colLevels: [], rowFill: 'none' }
 };
 const payload = () => ({ v: 1, at: '2026-11-01T09:00:00.000Z', k: 107, state: structuredClone(state), tools: { fillMode: false, autoVertical: 0, templatePickMode: 'one' }, colours: { fillColour: '#ff7f27', fillMirror: true }, colourAuto: {} });
+
+test('isolated paint links retain two independent toggles and default old links to off',async()=>{
+ for(const paintIsolated0 of [false,true])for(const paintIsolated1 of [false,true]){
+  const data=payload();Object.assign(data.state,{paintIsolated0,paintIsolated1});const back=await SL.decode(await SL.encode(data));assert.deepEqual(back.state,data.state);assert.equal(back.k,data.k);
+ }
+ const legacy=payload();delete legacy.state.paintIsolated0;delete legacy.state.paintIsolated1;const back=SL.normalizePayload(legacy);assert.equal(back.state.paintIsolated0,false);assert.equal(back.state.paintIsolated1,false);
+ for(const key of ['paintIsolated0','paintIsolated1'])for(const value of [0,1,'false','true',null,{},[]]){const data=payload();data.state[key]=value;assert.throws(()=>SL.normalizePayload(data),/одиночных/);}
+});
 
 test('inversion link roundtrip keeps phase, kind and last actual frame, including unlimited-frame counters',async()=>{
  for(const invertKind of ['bits','colour'])for(const invertFrame of [null,0,1500001,Number.MAX_SAFE_INTEGER]){

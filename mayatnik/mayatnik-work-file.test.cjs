@@ -1,4 +1,14 @@
 const test=require('node:test'),assert=require('node:assert/strict'),F=require('./mayatnik-work-file.js');
+
+test('work and legacy JSON roundtrip isolated paint flags independently without changing raw bits',async()=>{
+ for(const paintIsolated0 of [false,true])for(const paintIsolated1 of [false,true]){
+  const data={schema:2,k:17,st:{rows:8,paintIsolated0,paintIsolated1},field:Int8Array.from([-1,0,1,1,0])};
+  const back=(await F.decode(await F.encode(data))).data;assert.deepEqual(back,data);
+  const legacy=new Blob([JSON.stringify({format:'mayatnik-paint',version:1,data:{...data,field:{array:'i8',data:[...data.field]}}})]);assert.deepEqual((await F.decode(legacy)).data,data);
+ }
+ const old=(await F.decode(new Blob([JSON.stringify({format:'mayatnik-paint',version:1,data:{st:{rows:8}}})]))).data;
+ const restored={...require('./mayatnik-reset-state.js').defaults(),...old.st};assert.equal(restored.paintIsolated0,false);assert.equal(restored.paintIsolated1,false);
+});
 test('ternary packing preserves all lengths and uses exactly two bits per cell',()=>{
   for(const n of [0,1,2,3,4,5,4096]){const a=Int8Array.from({length:n},(_,i)=>i%3-1),p=F.pack(a);assert.equal(p.length,Math.ceil(n/4));assert.deepEqual(F.unpack(p,n),a);}
   assert.throws(()=>F.unpack(Uint8Array.of(3),1));

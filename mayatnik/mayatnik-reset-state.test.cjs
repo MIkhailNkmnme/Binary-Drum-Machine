@@ -1,4 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict'),R=require('./mayatnik-reset-state.js'),S=require('./mayatnik-settings-library.js');
+
+test('clean reset turns both isolated paints off; view/scale reset preserves painting choices',()=>{
+ const clean=R.defaults();assert.equal(clean.paintIsolated0,false);assert.equal(clean.paintIsolated1,false);
+ const current={paintIsolated0:true,paintIsolated1:true,paintSame:true,paintSymmetric:true,menuOrder:['view','paint']};
+ Object.assign(current,R.scope('view'),R.scope('scale'));assert.equal(current.paintIsolated0,true);assert.equal(current.paintIsolated1,true);assert.equal(current.paintSame,true);assert.equal(current.paintSymmetric,true);assert.deepEqual(current.menuOrder,['view','paint']);
+ Object.assign(current,clean);assert.equal(current.paintIsolated0,false);assert.equal(current.paintIsolated1,false);assert.deepEqual(current.menuOrder,['view','paint']);
+});
 test('clean scene has the agreed 512 build, top fit and optional effects off',()=>{
  const s=R.defaults();assert.equal(s.rows,512);assert.equal(s.steps,512);assert.equal(s.mode,'pend');assert.equal(s.view,'bits');assert.equal(s.zoom,'fit');assert.equal(s.zMid,true);assert.equal(s.ztop,true);assert.equal(s.zBot,false);assert.equal(s.zLock,false);assert.equal(s.zsnap,true);assert.equal(s.zbase,2);
  for(const key of R.off)assert.equal(s[key],false,key);for(const key of R.zero)assert.equal(s[key],0,key);
