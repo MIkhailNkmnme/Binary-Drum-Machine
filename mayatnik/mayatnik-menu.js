@@ -2378,8 +2378,7 @@
   }
   // v0.437: цельная зубчатая подложка включает и нижние ползунки; скрытие не меняет раскладку и закрепы.
   const groupSelector = '#paintTools > .pt-g, #paintTools > .gz-group, #mayatnikRail .gz-group';
-  const groupReveal=window.ZerkGroupReveal?.init(document,{groups:groupSelector});
-  addEventListener('pagehide',()=>groupReveal?.disconnect(),{once:true});
+  // Sequential layout reveal is mounted after this menu by mayatnik-menu-accordion.js.
   const groupRanks = new WeakMap(), groupOpen = new WeakMap(); let groupRank = 0, groupFrame = 0, groupHover=null;
   const overlaps = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
   function groupBackdrop(group, open) {
