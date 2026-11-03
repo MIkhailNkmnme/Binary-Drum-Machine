@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.005</title>
-<!-- АзъБукъ — v0.005. v0.005: в редакторе работает протяжка — ведёшь курсором, все клетки под ним меняются. v0.004: размеры ячейки 1 и 16 px добавлены к прежним. Битовый шрифт проекта: буквы на треугольной решётке, как в шапке «Зазеркалиус».
+<title>Zerkalius АзъБукъ v0.006</title>
+<!-- АзъБукъ — v0.006. v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков: кириллица, латиница, цифры и знаки. v0.005: v0.005: в редакторе работает протяжка — ведёшь курсором, все клетки под ним меняются. v0.004: размеры ячейки 1 и 16 px добавлены к прежним. Битовый шрифт проекта: буквы на треугольной решётке, как в шапке «Зазеркалиус».
      v0.003: два веса — обычный и «в одну клетку» (утоньшение Чжана–Суэня); переключатель веса,
      отдельные правки для каждого веса, выгрузка JSON с обоими наборами.
      v0.002: ручной редактор глифов. -->
@@ -46,13 +46,13 @@
 
 <header>
   <div class="title" id="head"></div>
-  <div class="ver">v0.005</div>
+  <div class="ver">v0.006</div>
   <div class="bar">
     <button id="editToggle">Редактировать</button>
     <span class="lbl">толщина</span>
     <button data-set="bold" class="on">обычная</button>
     <button data-set="thin">в клетку</button>
-    <span class="lbl">ячейка</span>
+    <span class="lbl">сетка</span><button data-lat="tri" class="on">ромбы</button><button data-lat="sq">квадрат</button><span class="lbl">ячейка</span>
     <button data-cell="1">1</button><button data-cell="2">2</button><button data-cell="3">3</button><button data-cell="4" class="on">4</button><button data-cell="6">6</button><button data-cell="8">8</button><button data-cell="16">16</button>
   </div>
 </header>
@@ -108,27 +108,35 @@ let cellSize = 4;
 let activeSet = 'bold';
 let editChar = 'А';
 
+let lattice = 'tri';   // 'tri' — ромбосетка из треугольников, 'sq' — квадратная
+
 function glyph(ch, cell, gap, set) {
   const rows = G[set || activeSet][ch];
   if (!rows) return '';
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
+  const shift = (y) => lattice === 'tri' ? 0.5 * (h - 1 - y) : 0;
+  const pad = lattice === 'tri' ? 0.5 * h : 0;
+  const W = w + pad;
   let cells = '';
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (!rows[y] || rows[y][x] !== '1') continue;
-    cells += 'M' + x + ',' + y + 'h1v1h-1z';
+    cells += 'M' + (x + shift(y)) + ',' + y + 'h1v1h-1z';
   }
   let grid = '';
-  for (let y = 0; y <= h; y++) grid += 'M0,' + y + 'H' + w;
-  for (let y = 0; y < h; y++) for (let x = -1; x <= w; x++) {
-    grid += 'M' + x + ',' + y + 'l1,1';
-    grid += 'M' + (x + 1) + ',' + y + 'l-1,1';
+  for (let y = 0; y <= h; y++) grid += 'M0,' + y + 'H' + W;
+  for (let y = 0; y < h; y++) {
+    const d = shift(y);
+    for (let x = -1; x <= Math.ceil(W) + 1; x++) {
+      grid += 'M' + (x + d) + ',' + y + 'l1,1';
+      grid += 'M' + (x + 1 + d) + ',' + y + 'l-1,1';
+    }
   }
   const id = 'g' + (uid++);
   const style = 'margin-right:' + (gap * cell) + 'px;color:var(--ink)';
   const sw = (set || activeSet) === 'thin' ? 0.16 : 0.12;
-  return '<svg style="' + style + '" width="' + (w * AR * cell) + '" height="' + (h * cell) + '" viewBox="0 0 ' + w + ' ' + h + '">' +
+  return '<svg style="' + style + '" width="' + (W * AR * cell) + '" height="' + (h * cell) + '" viewBox="0 0 ' + W + ' ' + h + '">' +
     '<defs><clipPath id="' + id + '"><path d="' + cells + '"/></clipPath></defs>' +
-    '<g clip-path="url(#' + id + ')"><rect width="' + w + '" height="' + h + '" fill="currentColor"/>' +
+    '<g clip-path="url(#' + id + ')"><rect width="' + W + '" height="' + h + '" fill="currentColor"/>' +
     '<path d="' + grid + '" stroke="#07060b" stroke-width="' + sw + '" fill="none"/></g></svg>';
 }
 const row = (text, cell, gap) => '<div class="row">' + [...text].map(c => glyph(c, cell, gap)).join('') + '</div>';
@@ -136,8 +144,7 @@ const row = (text, cell, gap) => '<div class="row">' + [...text].map(c => glyph(
 function renderSheet(cell) {
   document.getElementById('head').innerHTML = [...'АзъБукъ'].map(c => glyph(c, Math.max(3, cell), 1)).join('');
   document.getElementById('sheet').innerHTML = [
-    '<section><h2>Заглавные</h2>' + row(UPPER, cell, 1) + '</section>',
-    '<section><h2>Строчные</h2>' + row(LOWER, cell, 1) + '</section>',
+    '<section><h2>Кириллица</h2>' + row(UPPER, cell, 1) + row(LOWER, cell, 1) + '</section>',
     '<section><h2>Латиница</h2>' + row(LATU, cell, 1) + row(LATL, cell, 1) + '</section>',
     '<section><h2>Цифры и знаки</h2>' + row(DIGIT, cell, 1) + row(SYM, cell, 1) + '</section>',
     '<section><h2>Слова</h2>' + row('ЗЕРКАЛИУС', cell, 2) + row('СИНХРОМБ', cell, 2) + row('ТРЕУГОЛЬНИК', cell, 2) + '</section>',
@@ -244,6 +251,13 @@ document.querySelectorAll('.bar [data-set]').forEach(b => b.addEventListener('cl
   activeSet = b.dataset.set;
   renderSheet(cellSize);
   if (!document.getElementById('editor').hidden) { renderChars(); renderEditor(); }
+}));
+
+document.querySelectorAll('.bar [data-lat]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.bar [data-lat]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  lattice = b.dataset.lat;
+  renderSheet(cellSize);
 }));
 
 document.querySelectorAll('.bar [data-cell]').forEach(b => b.addEventListener('click', () => {
