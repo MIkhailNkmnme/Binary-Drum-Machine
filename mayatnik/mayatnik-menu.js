@@ -1146,8 +1146,22 @@
         for(const name of ['pointerup','pointercancel','blur'])addEventListener(name,stop,{signal:listeners.signal});
       });return button;});
     box.append(arrows[0],middle,arrows[1]);const frame=ZerkControlFrame.attach(box,arrows[0],middle,arrows[1],{input,output});
-    anchor.after(row,box);
-    function sync(){const mode=readMode(),available=typeof api()?.setMode==='function';parts.forEach((part,i)=>{const on=mode===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.disabled=!available;part.setAttribute('aria-disabled',String(!available));});
+    const hold=document.createElement('button');
+    hold.type='button';
+    hold.className='pt-b gz-hx';
+    hold.dataset.n='heatHoldZero';
+    const name=document.createElement('span');
+    name.className='gz-nm';
+    name.textContent='Только при 1';
+    hold.append(name);
+    describe(hold,'Расчёт тепла: на нуле сохранить уровень. При переходе 0→1 прибавить ступень, при 1→1 убавить.');
+    hold.onclick=()=>{api().setHoldZero(!api().holdsZero());sync();};
+    anchor.after(row,box,hold);
+    function sync(){
+      const enabled=api()?.holdsZero?.()===true;
+      hold.classList.toggle('on',enabled);
+      hold.setAttribute('aria-pressed',String(enabled));
+      const mode=readMode(),available=typeof api()?.setMode==='function';parts.forEach((part,i)=>{const on=mode===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.disabled=!available;part.setAttribute('aria-disabled',String(!available));});
       const disabled=mode!=='alternate'||typeof api()?.setPeriod!=='function';box.classList.toggle('gz-off-dis',disabled);box.setAttribute('aria-disabled',String(disabled));input.disabled=disabled;arrows.forEach(button=>button.disabled=disabled);const value=String(period());if(input.value!==value)input.value=value;if(output.textContent!==value)output.textContent=value;frame.sync();}
     toolSync.push(sync);sync();
   }

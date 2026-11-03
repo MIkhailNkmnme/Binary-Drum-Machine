@@ -25,7 +25,7 @@
   function create(){
     let previous=null,owner=null,context=null,frame=-1,levels=null,warmCount=0;
     function reset(){previous=null;owner=null;context=null;frame=-1;levels=null;warmCount=0;}
-    function observe({values,field,frame:nextFrame,context:nextContext}){
+    function observe({values,field,frame:nextFrame,context:nextContext,holdZero=false}){
       // Intermediate changes cannot be reconstructed across a skipped frame.
       if(!previous||owner!==field||context!==nextContext||previous.length!==values.length||nextFrame<frame||nextFrame>frame+1){
         previous=values.slice();owner=field;context=nextContext;frame=nextFrame;
@@ -36,7 +36,8 @@
         for(let q=0;q<values.length;q++){
           const bit=values[q],before=previous[q];
           // Newly occupied cells have no preceding bit to compare against.
-          levels[q]=bit<0||before<0?0:Math.max(0,Math.min(5,levels[q]+(bit!==before?1:-1)));
+          if(bit<0||before<0)levels[q]=0;
+          else if(!holdZero||bit===1)levels[q]=Math.max(0,Math.min(5,levels[q]+(bit!==before?1:-1)));
           if(levels[q])warmCount++;
         }
         frame=nextFrame;

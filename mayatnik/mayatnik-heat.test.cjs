@@ -61,3 +61,14 @@ test('alternate period is an integer clamped to 1..64 with safe invalid defaults
   for(const frame of [NaN,Infinity,undefined,-9])assert.equal(heat.selectedBit('alternate',2,frame),1);
 });
 test('no timer scheduler remains',()=>assert.equal(heat.createScheduler,undefined));
+test('hold zero preserves the level on both transitions to zero and repeated zeros',()=>{
+  const tracker=heat.create(),field={},values=new Int8Array(1);
+  const bits=[0,1,0,0,1,1,0,1];
+  const levels=bits.map((bit,frame)=>{
+    values[0]=bit;tracker.observe({values,field,frame,holdZero:true});
+    return tracker.level(0);
+  });
+  assert.deepEqual(levels,[0,1,1,1,2,1,1,2]);
+  values[0]=0;tracker.observe({values,field,frame:8,holdZero:false});
+  assert.equal(tracker.level(0),3);
+});
