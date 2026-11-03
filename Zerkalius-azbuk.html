@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.011</title>
-<!-- АзъБукъ — v0.011. Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.012</title>
+<!-- АзъБукъ — v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -56,13 +56,13 @@
 
 <header>
   <div class="title" id="head"></div>
-  <div class="ver">v0.011</div>
+  <div class="ver">v0.012</div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><button id="theme">цвет: фиолет</button>
     <span class="lbl">толщина</span>
     <button data-set="bold" class="on">обычная</button>
     <button data-set="thin" title="Тонкое начертание букв">тонкая</button>
-    <span class="lbl">зазор</span><input id="track" type="range" min="0" max="100" step="4"><span id="trackVal" style="font-size:11px;color:var(--dim);min-width:34px">12%</span><span class="lbl">сетка</span><button data-lat="tri" class="on">ромбы</button><button data-lat="sq">квадрат</button><span class="lbl">ячейка</span>
+    <label class="lbl" for="track" title="Зазор в долях ширины буквы">зазор</label><input id="track" type="range" title="Зазор в долях ширины буквы" min="0" max="1" step="0.01" value="0.12"><span id="trackVal" style="font-size:11px;color:var(--dim);min-width:34px">0,12</span><span class="lbl">сетка</span><button data-lat="tri" class="on">ромбы</button><button data-lat="sq">квадрат</button><span class="lbl">ячейка</span>
     <button data-cell="1">1</button><button data-cell="2">2</button><button data-cell="3">3</button><button data-cell="4" class="on">4</button><button data-cell="6">6</button><button data-cell="8">8</button><button data-cell="16">16</button>
   </div>
 </header>
@@ -282,7 +282,11 @@ let activeSet = 'bold';
 let editChar = 'А';
 
 let lattice = 'tri';
-let track = Number(localStorage.getItem('azbuk-track') || 0.12);   // 'tri' — ромбосетка из треугольников, 'sq' — квадратная
+const trk = document.getElementById('track');
+const savedTrack = localStorage.getItem('azbuk-track');
+if (savedTrack !== null && Number.isFinite(Number(savedTrack))) trk.value = savedTrack;
+let track = trk.valueAsNumber;
+const trackVal = document.getElementById('trackVal');
 
 function glyph(ch, cell, track, set) {
   const rows = G[set || activeSet][ch];
@@ -496,12 +500,11 @@ document.getElementById('theme').addEventListener('click', () => applyTheme(them
 if (typeof applyTheme === 'function') applyTheme(themeIdx);
 
 renderSheet(cellSize);
-const trk = document.getElementById('track');
-trk.value = String(Math.round(track * 100));
-document.getElementById('trackVal').textContent = trk.value + '%';
+
+trackVal.textContent = track.toLocaleString('ru-RU');
 trk.addEventListener('input', () => {
-  track = Number(trk.value) / 100;
-  document.getElementById('trackVal').textContent = trk.value + '%';
+  track = trk.valueAsNumber;
+  trackVal.textContent = track.toLocaleString('ru-RU');
   localStorage.setItem('azbuk-track', String(track));
   renderSheet(cellSize);
 });
