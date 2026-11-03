@@ -4,7 +4,7 @@
   else root.MayatnikXorromProjection=factory(root.MayatnikXorromField);
 })(globalThis,function(Field){
   'use strict';
-  const maps=new WeakMap(),pause=()=>new Promise(resolve=>setTimeout(resolve,0));
+  const maps=new WeakMap(),pause=()=>globalThis.scheduler?.yield?.()||new Promise(resolve=>setTimeout(resolve,0));
   function abort(){const error=Error('Чтение сборки Xorrom отменено.');error.name='AbortError';return error;}
   function size(plan,ratio){
     if(!plan?.available||typeof plan.pick!=='function'||!(ratio>0&&Number.isFinite(ratio)))throw Error('Xorrom: нужна доступная сборка Ромбо.');
@@ -37,7 +37,13 @@
     const check=()=>{if(options.cancelled?.()||source.current&&!source.current())throw abort();};check();
     const ratio=options.ratio===undefined?1:options.ratio,map=await mapping(plan,source,ratio,options);check();
     const index=(x,y)=>map.addresses[options.flip?(map.height-1-y)*map.width+map.width-1-x:y*map.width+x];
-    const read=(method,x,y)=>{const q=index(x,y);return q<0?-1:source[method](q%source.width,Math.floor(q/source.width));};
+    const memo={readBit:new Int8Array(source.width*source.height).fill(-2),...(source.readRGB?{readRGB:new Int8Array(source.width*source.height).fill(-2)}:{})};
+    const read=(method,x,y)=>{
+      const q=index(x,y);if(q<0)return -1;const values=memo[method];if(values[q]!==-2)return values[q];
+      const value=source[method](q%source.width,Math.floor(q/source.width));
+      if(method==='readBit'?value!==-1&&value!==0&&value!==1:value!==-1&&value!==255&&(!Number.isInteger(value)||value<0||value>7))throw Error('Xorrom: неизвестный бит или RGB-категория исходной клетки.');
+      values[q]=value===255?-1:value;return values[q];
+    };
     const score=await Field.capture({width:map.width,height:map.height,current:source.current,readBit:(x,y)=>read('readBit',x,y),...(source.readRGB?{readRGB:(x,y)=>read('readRGB',x,y)}:{})},options);
     check();score.projection=Object.freeze({kind:'rombo',ratio,flip:!!options.flip,width:map.width,height:map.height,logicalWidth:plan.outputWidth,logicalHeight:plan.outputHeight});return score;
   }

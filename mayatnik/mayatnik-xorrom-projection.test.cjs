@@ -36,3 +36,9 @@ test('invalid or oversized assembled scores fail without sampling or modifying s
  const source=fixture(),before=source.bits.slice();await assert.rejects(Projection.capture({...R.plan(31,8),available:false},source),/доступная сборка/);
  await assert.rejects(Projection.capture({...R.plan(31,8),outputWidth:1e9},source),/слишком большая/);assert.deepEqual(source.bits,before);await assert.rejects(Projection.capture({},{}),/исходных клеток/);
 });
+
+
+test('large projected frames read each native bit once and a warm automatic capture stays in one task',async()=>{
+ const source={width:1199,height:600,current:()=>true},plan=R.plan(1199,600,{assembly:16,angle:45},{sides:true});let reads=0,value=1;source.readBit=()=>{reads++;return value;};const options={ratio:Math.SQRT2,yieldTask:()=>Promise.resolve()};const first=await Projection.capture(plan,source,options);assert.ok(first.width*first.height>1048576);assert.ok(reads<=source.width*source.height);
+ reads=0;value=0;let nextTask=false;const timer=setTimeout(()=>{nextTask=true;},0);try{const second=await Projection.capture(plan,source,options);assert.equal(nextTask,false);assert.ok(second.rows.every(row=>row.ones===0));assert.ok(reads<=source.width*source.height);}finally{clearTimeout(timer);}
+});

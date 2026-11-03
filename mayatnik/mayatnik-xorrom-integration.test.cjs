@@ -150,3 +150,8 @@ test('assembled auto geometry uses the actual projected areas; changing the plan
  const f=host(),a=assembled(f),h=f.h;h.st.xorrom={autoGeometry:true,geometryConnectivity:'sides'};const score=await h.captureXorromField();assert.equal(score.geometry.connectivity,'sides');assert.ok(score.rows.some(row=>row.geometry.one));
  const read=f.semantic.readBit;let changed=false;f.semantic.readBit=(x,y)=>{if(!changed){changed=true;a.change(45);}return read(x,y);};await assert.rejects(h.captureXorromField(),{name:'AbortError'});assert.equal(f.calls.release,2);
 });
+
+
+test('automatic Rombo capture uses the coherent native-size hint even when projection expands beyond one million cells',async()=>{
+ const f=host(),h=f.h,R=require('./mayatnik-rombo.js'),G=require('./mayatnik-pixel-grid.js');h.VW=1199;h.VH=600;h.st.edgeRhombOn=true;h.st.romboAssembly=16;h.st.romboAngle=45;const plan=R.plan(1199,600,{assembly:16,angle:45},{sides:true});h.window.mayRombo={plan:()=>plan,get:()=>({available:true})};h.window.mayPixelExact={policyFor:()=>G.policy({width:plan.outputWidth,height:plan.outputHeight,angle:45})};h.window.mayVisibleSemantic.acquire=async()=>({width:1199,height:600,current:()=>true,readBit:()=>1,release(){}});let options;h.MayatnikXorromProjection={async capture(_p,_s,o){options=o;return {rows:[]};}};await h.captureXorromField({automatic:true});assert.equal(typeof options.yieldTask,'function');assert.ok(Math.ceil(plan.outputWidth*Math.SQRT2)**2>1048576);
+});
