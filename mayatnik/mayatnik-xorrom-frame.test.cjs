@@ -56,3 +56,9 @@ test('geometry is opt-in, runs on captured visible bits and cancels obsolete set
   let seen;c.MayatnikXorromGeometry={async analyze(score,options){seen=options;assert.equal(options.cancelled(),false);c.st.xorrom.geometryConnectivity='bit';assert.equal(options.cancelled(),true);const e=Error('cancelled');e.name='AbortError';throw e;}};
   await assert.rejects(c.captureXorromField({automatic:true}),{name:'AbortError'});assert.equal(seen.yieldTask,undefined,'geometry retains task yields rather than blocking frame with microtasks');
 });
+
+
+test('assembly, fold row, turn and saved layout dirty music; zoom and menu state do not',()=>{
+ const {context:c,calls}=fixture();c.st.edgeRhombOn=true;c.notifyXorromField();const before=calls.length;
+ for(const patch of [{romboAssembly:1},{romboRow:1},{romboAngle:45},{romboMode:'custom'},{romboLayout:{pieces:[1]}}]){Object.assign(c.st,patch);c.notifyXorromField();}assert.equal(calls.length,before+5);c.st.zoom=500;c.st.someMenuOpen=true;c.notifyXorromField();assert.equal(calls.length,before+5);
+});

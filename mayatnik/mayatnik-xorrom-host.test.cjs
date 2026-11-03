@@ -16,7 +16,8 @@ function fixture(extra={}){
     setSettings(value){this.settings=value;},getState:()=>coreState,getStream:()=>stream,
     dispose(){this.stop();}};},renderWav(s,config,options){rendered={s,config,options};return {bytes:new Uint8Array([1]),duration:60,truncated:true};}};
   const stream={original:true};win.AudioContext=function(){ctxCount++;};
-  const api=host.mount({window:win,document:doc,viewport,figure:()=>figure,engine,getSettings:()=>settings,setSettings:s=>{settings=s;saved++;},getSnapshot:extra.getSnapshot||async function(){return snapshot;}});
+  if(extra.ResizeObserver)win.ResizeObserver=extra.ResizeObserver;
+  const api=host.mount({window:win,document:doc,viewport,figure:()=>extra.figure?.(doc,figure)||figure,engine,getSettings:()=>settings,setSettings:s=>{settings=s;saved++;},getSnapshot:extra.getSnapshot||async function(){return snapshot;}});
   return {api,win,doc,snapshot,get opts(){return opts;},get saved(){return saved;},get ctxCount(){return ctxCount;},get rendered(){return rendered;},restore(s){settings=s;},scroll(y){offset=y;win.dispatchEvent(new win.Event('scroll'));},close(){api.dispose();dom.window.close();},stream};
 }
 test('mount and restored settings stay silent; patches normalize and persist without per-step writes',async()=>{
@@ -88,4 +89,10 @@ test('effective geometry is copied for display while manual settings and frozen 
   region.area=999;await f.api.exportWav();assert.equal(f.rendered.s.rows[0].geometry.zero.area,6);assert.equal(f.rendered.s.rows[0].geometry.zero,f.rendered.s.rows[1].geometry.zero);assert.equal(Object.isFrozen(f.rendered.s.rows[0].geometry.zero),true);
   f.api.setSettings({geometrySource:'symmetry',bpm:150});assert.equal(f.api.getState().effective.bpm,150);assert.equal(f.api.getState().effective.tonic,f.api.getSettings().tonic);assert.equal(f.api.getState().updating,false);
   f.api.stop();assert.equal(f.api.getState().geometry,null);assert.equal(f.api.getState().effective,null);f.close();
+});
+
+
+test('marker follows the assembled canvas and its resize while paused without recapturing or restarting audio',async()=>{
+ let alternate=false,resize,captures=0,height=80;const observed=[],removed=[];class Observer{constructor(fn){resize=fn;}observe(n){observed.push(n);}unobserve(n){removed.push(n);}disconnect(){}}
+ const f=fixture({ResizeObserver:Observer,figure:(doc,base)=>alternate?doc.getElementById('rombo'):base,getSnapshot:async()=>{captures++;return f.snapshot;}}),rombo=f.doc.createElement('canvas');rombo.id='rombo';f.doc.body.append(rombo);rombo.getBoundingClientRect=()=>({left:10,top:20,right:210,bottom:20+height,width:200,height});await f.api.start();f.opts.onStep({index:1,notes:[]});alternate=true;f.opts.onStep({index:1,notes:[]});assert.ok(observed.includes(rombo));assert.ok(removed.includes(f.doc.querySelector('div canvas')));const marker=f.doc.getElementById('mayXorromRow');assert.equal(marker.style.top,'40px');assert.equal(marker.style.height,'20px');f.api.pause();height=160;resize();await new Promise(r=>f.win.setTimeout(r,25));assert.equal(marker.style.top,'60px');assert.equal(marker.style.height,'40px');assert.equal(captures,1);assert.equal(f.api.getState().state,'paused');f.close();
 });

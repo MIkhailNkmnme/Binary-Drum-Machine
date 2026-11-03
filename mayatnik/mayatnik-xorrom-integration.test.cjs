@@ -83,7 +83,7 @@ test('releases the semantic snapshot on a bad shape or unreadable bit',async()=>
 test('unbuilt, oversized, GPU, folded, joined and projected fields fail before acquisition',async()=>{
   for(const [change,reason] of [[h=>h.f=null,/постройте/],[h=>h.geo=null,/постройте/],
     [h=>h.VH=Field.MAX_ROWS+1,/большой/],[h=>h.VW=Field.MAX_CELLS,/большой/],[h=>h.gpuBig={},/CPU/],
-    [h=>h.rombP=()=>0,/плоский/],[h=>h.joinedOn=()=>true,/плоский/],[h=>h.st.edgeRhombOn=true,/плоский/],
+    [h=>h.rombP=()=>0,/плоский/],[h=>h.joinedOn=()=>true,/плоский/],[h=>h.st.edgeRhombOn=true,/Ромбо/],
     [h=>h.document.body.classList.contains=name=>name==='may-fold-active',/плоский/]]){
     const {h,calls}=host();change(h);await assert.rejects(h.captureXorromField(),reason);
     assert.equal(calls.acquire,0);
@@ -128,4 +128,25 @@ test('site share and compressed work files round-trip music settings without a r
   assert.deepEqual([...new Uint8Array(await file.slice(0,2).arrayBuffer())],[31,139]);
   const restored=await Work.decode(file);
   assert.deepEqual(restored.data.st.xorrom,settings);assert.deepEqual(restored.data.field,h.f.val);
+});
+
+
+function assembled(f,angle=0){
+ const R=require('./mayatnik-rombo.js'),Grid=require('./mayatnik-pixel-grid.js'),h=f.h;h.st.edgeRhombOn=true;h.st.romboAssembly=16;h.MayatnikXorromProjection=require('./mayatnik-xorrom-projection.js');h.MayatnikXorromGeometry=require('./mayatnik-xorrom-geometry.js');let plan;
+ const change=value=>{h.st.romboAngle=value;plan=R.plan(3,2,{assembly:16,angle:value},{sides:true});};change(angle);h.window.mayRombo={plan:()=>plan,get:()=>({available:true})};h.window.mayPixelExact={policyFor:()=>Grid.policy({width:plan.outputWidth,height:plan.outputHeight,angle:h.st.romboAngle,dpr:1.25})};return {change,plan:()=>plan};
+}
+test('production source captures assembled Rombo rows independently of viewport zoom and releases the native field',async()=>{
+ for(const angle of [0,45,90,135,180,225,270,315]){
+  const f=host(),a=assembled(f,angle),h=f.h,policy=h.window.mayPixelExact.policyFor(),ratio=policy.minScale*policy.dpr;
+  const expected=await h.MayatnikXorromProjection.capture(a.plan(),{width:3,height:2,readBit:(x,y)=>f.grid[y][x]},{ratio});
+  const score=await h.captureXorromField();assert.deepEqual(score.rows,expected.rows);assert.equal(score.projection.kind,'rombo');assert.equal(score.frame,9);h.st.zoom=500;const again=await h.captureXorromField();assert.deepEqual(again.rows,score.rows);assert.equal(f.calls.release,2);
+ }
+});
+test('assembled RGB retains native colour categories and filters after rotation and whole-view half turn',async()=>{
+ const f=host(),a=assembled(f,45),h=f.h;h.st.view='rgbNeighbours';h.st.viewUpsideDown=true;h.rgbNeighbourClasses=Uint8Array.of(1,2,255,3,4,5);h.rgbNeighbourFilters=()=>[1,3,5];const ratio=h.window.mayPixelExact.policyFor().minScale*1.25;
+ const expected=await h.MayatnikXorromProjection.capture(a.plan(),{width:3,height:2,readBit:(x,y)=>f.grid[y][x],readRGB:(x,y)=>[1,3,5].includes(h.rgbNeighbourClasses[y*3+x])?h.rgbNeighbourClasses[y*3+x]:-1},{ratio,flip:true});const score=await h.captureXorromField();assert.deepEqual(score.rows,expected.rows);assert.equal(score.projection.flip,true);
+});
+test('assembled auto geometry uses the actual projected areas; changing the plan cancels an old capture',async()=>{
+ const f=host(),a=assembled(f),h=f.h;h.st.xorrom={autoGeometry:true,geometryConnectivity:'sides'};const score=await h.captureXorromField();assert.equal(score.geometry.connectivity,'sides');assert.ok(score.rows.some(row=>row.geometry.one));
+ const read=f.semantic.readBit;let changed=false;f.semantic.readBit=(x,y)=>{if(!changed){changed=true;a.change(45);}return read(x,y);};await assert.rejects(h.captureXorromField(),{name:'AbortError'});assert.equal(f.calls.release,2);
 });

@@ -9,7 +9,7 @@
     if(!doc||!engine||typeof options.getSnapshot!=='function')throw Error('Хорром: нужны документ, аудиоядро и источник поля.');
     let settings=engine.normalizeSettings(options.getSettings?.()),state='stopped',index=-1,notes=[],error='',effective=null,geometry=null;
     let generation=0,disposed=false,lastSnapshot=null,frame=null,refreshFrame=null,updating=false,resumeAfterRefresh=false,fieldStamp=null;
-    let drag=null,manualGeneration=0;
+    let drag=null,manualGeneration=0,observer=null,observedFigure=null;
     const listeners=new Set(),viewport=options.viewport;
     const marker=doc.createElement('div');marker.id='mayXorromRow';marker.tabIndex=0;marker.setAttribute('role','slider');marker.setAttribute('aria-orientation','vertical');marker.setAttribute('aria-label','Звучащая строка Xorrom: тянуть вверх или вниз для повторного прослушивания');
     Object.assign(marker.style,{position:'fixed',display:'none',pointerEvents:'none',boxSizing:'border-box',zIndex:'15',border:'1px solid #a674ff',boxShadow:'inset 0 0 0 1px #65eaa6',background:'rgba(101,234,166,.18)'});
@@ -21,7 +21,7 @@
     function showMarker(){
       frame=null;marker.style.display='none';
       if(disposed||doc.hidden||updating||options.isVisible?.()===false||!lastSnapshot||index<0||!['playing','paused'].includes(state))return;
-      const figure=sourceFigure();if(!figure||!viewport||figure.isConnected===false||viewport.isConnected===false)return;
+      const figure=sourceFigure();if(figure!==observedFigure){if(observedFigure&&observedFigure!==viewport)observer?.unobserve?.(observedFigure);observedFigure=figure;if(figure&&figure!==viewport)observer?.observe(figure);}if(!figure||!viewport||figure.isConnected===false||viewport.isConnected===false)return;
       if(win.getComputedStyle&&(win.getComputedStyle(figure).display==='none'||win.getComputedStyle(viewport).display==='none'||win.getComputedStyle(viewport).visibility==='hidden'))return;
       const rect=sourceRect(),clip=viewport.getBoundingClientRect(),height=lastSnapshot.height||lastSnapshot.rows.length;
       if(!(rect?.width>0&&rect.height>0&&height>0)||index>=height)return;
@@ -104,7 +104,7 @@
     function visibilityChanged(){if(doc.hidden){cancelDrag();resumeAfterRefresh=false;}scheduleMarker();}
     const scrollOptions={capture:true,passive:true};win.addEventListener('scroll',scheduleMarker,scrollOptions);win.addEventListener('resize',scheduleMarker);doc.addEventListener('visibilitychange',visibilityChanged);
     win.visualViewport?.addEventListener('resize',scheduleMarker);win.visualViewport?.addEventListener('scroll',scheduleMarker);
-    const observer=win.ResizeObserver?new win.ResizeObserver(scheduleMarker):null;if(viewport)observer?.observe(viewport);const initialFigure=sourceFigure();if(initialFigure)observer?.observe(initialFigure);
+    observer=win.ResizeObserver?new win.ResizeObserver(scheduleMarker):null;if(viewport)observer?.observe(viewport);observedFigure=sourceFigure();if(observedFigure&&observedFigure!==viewport)observer?.observe(observedFigure);
     function dispose(){
       if(disposed)return;stop();disposed=true;generation++;if(frame!==null)win.cancelAnimationFrame?.(frame);if(refreshFrame!==null)win.cancelAnimationFrame?.(refreshFrame);
       win.removeEventListener('pointermove',move,true);win.removeEventListener('pointerup',up,true);win.removeEventListener('pointercancel',up,true);win.removeEventListener('scroll',scheduleMarker,scrollOptions);win.removeEventListener('resize',scheduleMarker);doc.removeEventListener('visibilitychange',visibilityChanged);
