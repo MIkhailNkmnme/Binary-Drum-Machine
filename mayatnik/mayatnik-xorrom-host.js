@@ -7,7 +7,7 @@
   function mount(options={}){
     const win=options.window||root.window||root,doc=options.document||win.document,engine=options.engine||defaultEngine;
     if(!doc||!engine||typeof options.getSnapshot!=='function')throw Error('Хорром: нужны документ, аудиоядро и источник поля.');
-    let settings=engine.normalizeSettings(options.getSettings?.()),state='stopped',index=-1,notes=[],error='',effective=null,geometry=null;
+    let settings=engine.normalizeSettings(options.getSettings?.()),state='stopped',index=-1,notes=[],backingNotes=[],error='',effective=null,geometry=null;
     let generation=0,disposed=false,lastSnapshot=null,frame=null,refreshFrame=null,updating=false,resumeAfterRefresh=false,fieldStamp=null;
     let drag=null,manualGeneration=0,observer=null,observedFigure=null;
     const listeners=new Set(),viewport=options.viewport;
@@ -16,7 +16,7 @@
     const hit=doc.createElement('div');hit.dataset.xorromDrag='';hit.title='Тянуть вверх или вниз — снова сыграть выбранную строку';Object.assign(hit.style,{position:'absolute',left:'0',right:'0',top:'50%',height:'14px',transform:'translateY(-50%)',pointerEvents:'auto',cursor:'ns-resize',touchAction:'none'});marker.append(hit);doc.body.append(marker);
     const sourceFigure=()=>typeof options.figure==='function'?options.figure():options.figure;
     const sourceRect=()=>options.figureRect?.()||sourceFigure()?.getBoundingClientRect();
-    function getState(){return {state,index,notes:notes.map(note=>({...note})),error,updating,effective:effective?{...effective}:null,geometry:geometry?{...geometry}:null};}
+    function getState(){return {state,index,notes:notes.map(note=>({...note})),backingNotes:backingNotes.map(note=>({...note})),error,updating,effective:effective?{...effective}:null,geometry:geometry?{...geometry}:null};}
     function publish(){if(!disposed)for(const listener of listeners)listener(getState());}
     function showMarker(){
       frame=null;marker.style.display='none';
@@ -45,19 +45,19 @@
     function fail(reason){error=reason?.message||String(reason);publish();}
     const core=engine.create({AudioContext:win.AudioContext||win.webkitAudioContext,document:doc,settings,
       getSnapshot:()=>capture(true,state==='playing'),
-      onStep:step=>{if(disposed||state!=='playing'&&!(step.manual&&state==='paused'))return;index=step.index;notes=Array.isArray(step.notes)?step.notes.map(note=>({...note})):[];effective=step.effective?{...step.effective}:null;geometry=step.geometry?{...step.geometry}:null;showMarker();publish();},
-      onState:next=>{if(disposed)return;state=next;if(next!=='playing')generation++;if(next==='stopped'){index=-1;notes=[];effective=null;geometry=null;lastSnapshot=null;updating=false;resumeAfterRefresh=false;}showMarker();publish();},onError:fail});
+      onStep:step=>{if(disposed||state!=='playing'&&!(step.manual&&state==='paused'))return;index=step.index;notes=Array.isArray(step.notes)?step.notes.map(note=>({...note})):[];backingNotes=settings.backing!=='off'&&settings.backingGain?step.backing?.notes?.map(note=>({...note}))||[]:[];effective=step.effective?{...step.effective}:null;geometry=step.geometry?{...step.geometry}:null;showMarker();publish();},
+      onState:next=>{if(disposed)return;state=next;if(next!=='playing')generation++;if(next==='stopped'){index=-1;notes=[];backingNotes=[];effective=null;geometry=null;lastSnapshot=null;updating=false;resumeAfterRefresh=false;}showMarker();publish();},onError:fail});
     function getSettings(){return {...settings};}
     function applySettings(next){
       const analyze=settings.autoGeometry!==next.autoGeometry||next.autoGeometry&&settings.geometryConnectivity!==next.geometryConnectivity;settings=next;core.setSettings(settings);
       const row=lastSnapshot?.rows[index];effective=row&&engine.effectiveSettings?engine.effectiveSettings(settings,row):null;geometry=settings.autoGeometry&&row&&engine.geometryForRow?engine.geometryForRow(row):null;
-      if(analyze)invalidateScore();
+      if(settings.backing==='off'||!settings.backingGain)backingNotes=[];if(analyze)invalidateScore();
     }
     function setSettings(patch){if(disposed)return getSettings();applySettings(engine.normalizeSettings({...settings,...patch}));options.setSettings?.({...settings});publish();return getSettings();}
     async function start(){if(disposed)return false;error='';if(updating){resumeAfterRefresh=true;publish();return true;}if(state==='playing')return true;publish();++generation;try{return await core.start();}catch(reason){if(disposed||reason?.name==='AbortError')return false;fail(reason);throw reason;}}
     function pause(internal=false){if(disposed)return;if(!internal)cancelDrag();resumeAfterRefresh=false;if(!updating)generation++;core.pause();showMarker();publish();}
     function cancelDrag(){manualGeneration++;if(!drag)return;const previous=drag;drag=null;try{hit.releasePointerCapture?.(previous.id);}catch(_){}showMarker();}
-    function stop(){if(disposed)return;cancelDrag();generation++;updating=false;resumeAfterRefresh=false;if(refreshFrame!==null)win.cancelAnimationFrame?.(refreshFrame);refreshFrame=null;core.stop();state='stopped';index=-1;notes=[];effective=null;geometry=null;lastSnapshot=null;showMarker();publish();}
+    function stop(){if(disposed)return;cancelDrag();generation++;updating=false;resumeAfterRefresh=false;if(refreshFrame!==null)win.cancelAnimationFrame?.(refreshFrame);refreshFrame=null;core.stop();state='stopped';index=-1;notes=[];backingNotes=[];effective=null;geometry=null;lastSnapshot=null;showMarker();publish();}
     async function seek(row){if(disposed||updating||!lastSnapshot||typeof core.seek!=='function')return false;error='';try{return await core.seek(row,{audition:true});}catch(reason){if(reason?.name==='AbortError')return false;fail(reason);return false;}}
     function preview(row){if(!drag)return;const next=Math.max(settings.first,Math.min(settings.last<0?lastSnapshot.rows.length-1:Math.min(settings.last,lastSnapshot.rows.length-1),Math.round(row)));if(drag.last===next)return;drag.last=next;drag.pending=seek(next);}
     function down(event){
@@ -94,7 +94,7 @@
     }
     function invalidateScore(){
       if(!lastSnapshot||state==='stopped'&&!updating)return false;
-      const resume=updating?resumeAfterRefresh:drag?drag.wasPlaying:state==='playing';if(core.beginRefresh)core.beginRefresh();else core.pause();generation++;updating=true;resumeAfterRefresh=resume;notes=[];effective=null;geometry=null;showMarker();publish();queueRefresh();return true;
+      const resume=updating?resumeAfterRefresh:drag?drag.wasPlaying:state==='playing';if(core.beginRefresh)core.beginRefresh();else core.pause();generation++;updating=true;resumeAfterRefresh=resume;notes=[];backingNotes=[];effective=null;geometry=null;showMarker();publish();queueRefresh();return true;
     }
     async function exportWav(){
       if(disposed)throw abortError();if(updating)throw Error('Дождитесь обновления музыкального кадра.');const run=generation,snapshot=['playing','paused'].includes(state)&&lastSnapshot?lastSnapshot:await capture(false);if(disposed||run!==generation)throw abortError();

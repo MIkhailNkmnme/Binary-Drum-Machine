@@ -5,7 +5,7 @@
   else root.MayatnikXorromControls=value;
 })(globalThis,function(){
   'use strict';
-  const DEFAULTS={source:'rgb',bpm:96,division:8,tonic:0,scale:'major',octave:4,timbre:'triangle',gain:.25,chord:3,first:0,last:-1,stride:1,loop:true,live:false,autoGeometry:false,geometrySource:'all',geometryConnectivity:'sides'};
+  const DEFAULTS={source:'rgb',bpm:96,division:8,tonic:0,scale:'major',octave:4,timbre:'triangle',gain:.25,chord:3,first:0,last:-1,stride:1,loop:true,live:false,autoGeometry:false,geometrySource:'all',geometryConnectivity:'sides',backing:'off',backingGain:.3,backingTimbre:'sine',backingRows:4};
   const AUTO_FIELDS={all:new Set(['division','scale','tonic','octave','timbre','gain','chord']),regions:new Set(['division','timbre']),areas:new Set(['tonic','gain','chord']),symmetry:new Set(['scale','octave'])};
   function mount(host,{api,helpUrl='instruction/index.html#xorrom',download,after=()=>{}}={}){
     if(!host||!api)throw new Error('Xorrom: нужны контейнер и музыкальный API');
@@ -52,7 +52,7 @@
         const automatic=!!s.autoGeometry&&(AUTO_FIELDS[s.geometrySource]||AUTO_FIELDS.all).has(key)&&current.effective?.[key]!=null;
         const value=automatic?current.effective[key]:s[key];
         if(doc.activeElement!==input)input.value=String(toView(value));
-        input.disabled=automatic||(key==='chord'&&s.source!=='rgb')||(key==='timbre'&&s.source==='rhythm');
+        input.disabled=automatic||(key==='chord'&&s.source!=='rgb')||(key==='timbre'&&s.source==='rhythm')||(key.startsWith('backing')&&key!=='backing'&&s.backing==='off');
         row.classList.toggle('may-xorrom-auto',automatic);
         row.classList.toggle('may-xorrom-modulated',automatic&&value!==s[key]);
         const hint=automatic?'По рисунку: '+label(value)+'; вручную: '+label(s[key])+'. Выключите «Авто рисунок», чтобы изменить ручное значение. '+title:key==='timbre'&&s.source==='rhythm'?'В источнике Ритм используются бочка, малый барабан и хэт. Для выбора тембра включите Мелодию или RGB. '+title:title;
@@ -84,6 +84,10 @@
     choice('timbre','Тембр','Окраска звука: Синус, Треугольник, Щипок, Мягкий квадрат; Бас — затухающий фильтр, Пульс — короткая импульсная волна, Металл — звонкие частичные тоны, Робот — синтез гласных.',[['sine','Синус'],['triangle','Треуг'],['pluck','Щипок'],['softsquare','Мягк кв'],['bass','Бас'],['pulse','Пульс'],['metal','Металл'],['robot','Робот']]);
     number('gain','Громк %','Громкость от 0 до 100 процентов. Начальное значение — 25 процентов; 0 отключает звук.',0,100,v=>Math.round(v*100),v=>v/100);
     choice('chord','Аккорд','Максимум одновременных нот от 1 до 4. Применяется только к источнику RGB.',[[1,'1'],[2,'2'],[3,'3'],[4,'4']]);
+    choice('backing','♫ Фон','Второй тихий инструмент одновременно с основной партией. Созвучие держит тонику и квинту, Бас — низкую ведущую ноту, Вторая — другую ноту рисунка. Полностью пустая фраза молчит.',[['off','Выкл'],['pad','Созвучие'],['bass','Бас'],['counter','Вторая']]);
+    choice('backingTimbre','Волна фона','Форма волны второго инструмента: Синус — чистый мягкий тон; Треугольник — чуть ярче; Мягкий квадрат — насыщеннее. Волна меняет окраску, а не порядок нот.',[['sine','Синус'],['triangle','Треуг'],['softsquare','Мягк кв']]);
+    number('backingGain','Фон %','Громкость второго инструмента относительно основной партии, 0–100%. Начните с 20–30%. Общая громкость ограничивает оба слоя; смешивание оставляет запас от перегрузки.',0,100,v=>Math.round(v*100),v=>v/100);
+    number('backingRows','Фраза строк','Сколько выбранных строк держать одну фоновую фразу, от 1 до 16. Четыре дают медленный фон под четырьмя шагами мелодии; учитываются диапазон и шаг строк.',1,16);
     const toggles=[];
     for(const [key,text,title]of [['loop','Повтор','После последней строки начать снова.'],['live','Обновлять','Дополнительно снимать текущее поле на каждом повторе. Смена кадра и правки битов обновляют музыку сразу, независимо от этой кнопки; Xorrom сам кадры не переключает.']]){
       const control=button(key,text,title,()=>safe(()=>api.setSettings({[key]:!settings()[key]})));toggles.push({key,...control,text});
@@ -128,7 +132,8 @@
       status.title=message+row;
       const played=Array.isArray(current.notes)?current.notes:[];
       const noteName=note=>{if(typeof note!=='object')return String(note);if(note.drum)return {kick:'Бочка',snare:'Малый',hat:'Хэт'}[note.drum]||note.drum;if(note.name||note.note)return note.name||note.note;const midi=Number(note.midi);return Number.isFinite(midi)?['До','До♯','Ре','Ре♯','Ми','Фа','Фа♯','Соль','Соль♯','Ля','Ля♯','Си'][((midi%12)+12)%12]+(Math.floor(midi/12)-1):'♪';};
-      const text=played.length?played.map(noteName).join(' · '):'— пауза';
+      const backing=Array.isArray(current.backingNotes)?current.backingNotes:[];
+      const text=(played.length?played.map(noteName).join(' · '):'— пауза')+(backing.length?' / Фон '+backing.map(noteName).join(' · '):'');
       if(notes.textContent!==text)notes.textContent=text;describe(notes,'Прозвучало: '+text);
     }
     sync();if(typeof api.subscribe==='function')unsubscribe=api.subscribe(sync);

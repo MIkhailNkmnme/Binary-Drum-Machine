@@ -100,3 +100,12 @@ test('electro preset selects original machine tones without autoplay or replacin
 test('four new timbres are selectable; drum mode explains timbre through its own fixed voices',()=>{
  const a=boot();for(const timbre of ['bass','pulse','metal','robot']){a.change('timbre',timbre);assert.deepEqual(a.patches.at(-1),{timbre});assert.equal(a.input('timbre').value,timbre);}a.change('source','rhythm');assert.equal(a.input('timbre').disabled,true);assert.match(a.input('timbre').title,/Ритм/);a.change('source','rgb');assert.equal(a.input('timbre').disabled,false);a.dom.window.close();
 });
+
+
+test('backing controls preserve solo settings, use stable IDs and never start playback',()=>{
+ const a=boot();assert.equal(a.input('backing').value,'off');assert.equal(a.input('backingGain').disabled,true);
+ a.change('backing','pad');assert.equal(a.input('backingGain').disabled,false);assert.equal(a.input('backingRows').disabled,false);a.change('backingGain',30);assert.deepEqual(a.patches.at(-1),{backingGain:.3});a.change('backingRows',4);a.change('backingTimbre','triangle');assert.equal(a.starts,0);
+ assert.equal(a.api.getSettings().backing,'pad');assert.equal(a.input('timbre').value,'triangle');
+ a.setState({state:'playing',index:1,notes:[],backingNotes:[{midi:48}]});assert.match(a.el('notes').textContent,/Фон До3/);
+ a.change('backing','off');assert.equal(a.input('backingTimbre').disabled,true);assert.equal(a.input('backingGain').value,'30');a.change('backing','bass');assert.equal(a.input('backingGain').value,'30');a.dom.window.close();
+});

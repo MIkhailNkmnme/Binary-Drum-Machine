@@ -96,3 +96,10 @@ test('marker follows the assembled canvas and its resize while paused without re
  let alternate=false,resize,captures=0,height=80;const observed=[],removed=[];class Observer{constructor(fn){resize=fn;}observe(n){observed.push(n);}unobserve(n){removed.push(n);}disconnect(){}}
  const f=fixture({ResizeObserver:Observer,figure:(doc,base)=>alternate?doc.getElementById('rombo'):base,getSnapshot:async()=>{captures++;return f.snapshot;}}),rombo=f.doc.createElement('canvas');rombo.id='rombo';f.doc.body.append(rombo);rombo.getBoundingClientRect=()=>({left:10,top:20,right:210,bottom:20+height,width:200,height});await f.api.start();f.opts.onStep({index:1,notes:[]});alternate=true;f.opts.onStep({index:1,notes:[]});assert.ok(observed.includes(rombo));assert.ok(removed.includes(f.doc.querySelector('div canvas')));const marker=f.doc.getElementById('mayXorromRow');assert.equal(marker.style.top,'40px');assert.equal(marker.style.height,'20px');f.api.pause();height=160;resize();await new Promise(r=>f.win.setTimeout(r,25));assert.equal(marker.style.top,'60px');assert.equal(marker.style.height,'40px');assert.equal(captures,1);assert.equal(f.api.getState().state,'paused');f.close();
 });
+
+
+test('restored backing settings stay silent; live notes identify both parts and disabling clears stale queued background labels',async()=>{
+ const f=fixture();f.restore({backing:'pad',backingGain:.25,backingTimbre:'triangle',backingRows:8});f.api.refresh();assert.equal(f.ctxCount,0);assert.equal(f.api.getState().state,'stopped');assert.equal(f.api.getSettings().backingRows,8);
+ await f.api.start();const step={index:1,notes:[{midi:60}],backing:{notes:[{midi:48},{midi:55}]}};f.opts.onStep(step);assert.deepEqual(f.api.getState().backingNotes.map(n=>n.midi),[48,55]);
+ const saved=f.api.getState();saved.backingNotes[0].midi=1;assert.equal(f.api.getState().backingNotes[0].midi,48);f.api.setSettings({backing:'off'});f.opts.onStep(step);assert.deepEqual(f.api.getState().backingNotes,[]);f.api.stop();assert.deepEqual(f.api.getState().backingNotes,[]);f.close();
+});

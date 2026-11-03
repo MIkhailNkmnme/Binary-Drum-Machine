@@ -450,3 +450,86 @@ test('live, seek and WAV share exactly the same electronic PCM',async()=>{
 test('robot formants follow RGB category even when two settings give the same MIDI pitch',async()=>{
  const r=rig(()=>field(2,4),{timbre:'robot',loop:false});await r.engine.start();r.advance(40);const first=r.sources[0].buffer.getChannelData(),pitch=r.events[0].notes[0].midi;r.engine.pause();r.engine.setSettings({tonic:9,octave:3});await r.engine.seek(1);assert.equal(r.events.at(-1).notes[0].midi,pitch);assert.notDeepEqual(r.sources.at(-1).buffer.getChannelData(),first);await r.engine.dispose();
 });
+
+
+test('backing settings validate independently and older links default to one instrument',()=>{
+ assert.deepEqual(normalizeSettings({backing:'bad',backingTimbre:'robot',backingRows:99,backingGain:-1}),{...DEFAULTS,backingRows:16,backingGain:0});
+ for(const backing of ['off','pad','bass','counter'])assert.equal(normalizeSettings({backing}).backing,backing);
+ assert.equal(normalizeSettings({source:'rgb',timbre:'pulse'}).backing,'off');
+});
+
+test('second instrument holds over melodic rests, stays silent for an empty phrase and preserves solo PCM when muted',()=>{
+ const snap=field(1,0,0,0,0,0,0,0),base={bpm:120,division:8,gain:1,timbre:'pulse',loop:false};
+ const solo=renderWav(snap,base),muted=renderWav(snap,{...base,backing:'pad',backingGain:0});
+ assert.deepEqual(muted.bytes,solo.bytes);
+ for(const backing of ['pad','bass','counter']){
+  const s={...base,backing,backingGain:.5,backingRows:4},wav=renderWav(snap,s),pcm=samples(wav.bytes);
+  assert.ok(pcm.slice(11025,18000).some(v=>v!==0));assert.ok(pcm.slice(22050).every(v=>v===0));
+  assert.deepEqual(renderWav(snap,s).bytes,wav.bytes);assert.equal(pcm.at(-1),0);
+ }
+ assert.ok(samples(renderWav(field(0,0,0,0),{...base,backing:'pad'}).bytes).every(v=>v===0));
+});
+
+test('all backing waves mix bounded PCM at full gain with chords and capped exports fade both layers',()=>{
+ const row={ones:7,colors:Uint32Array.from([0,1,1,1,1,1,1,1])},snap={rows:Array(8).fill(row)};
+ const signatures=new Set();
+ for(const backing of ['pad','bass','counter'])for(const backingTimbre of ['sine','triangle','softsquare']){
+  const s={backing,backingTimbre,backingGain:1,gain:1,chord:4,timbre:'metal',bpm:120,division:4};
+  for(const sampleRate of [22050,44100]){
+   const pcm=samples(renderWav(snap,s,{sampleRate,maxSeconds:.55}).bytes);assert.equal(pcm.at(-1),0);assert.ok(pcm.some(v=>v!==0));assert.ok(pcm.every(v=>Math.abs(v)<32767));
+   if(sampleRate===22050)signatures.add(require('node:crypto').createHash('sha256').update(Buffer.from(Int16Array.from(pcm).buffer)).digest('hex'));
+  }
+ }
+ assert.equal(signatures.size,9);
+});
+
+function mixScheduled(r,length,rate=22050){
+ const mixed=new Float32Array(length);
+ for(const source of r.sources){
+  const gain=source.outputs[0].gain.value,pcm=source.buffer.getChannelData(),offset=Math.round((source.at-.035)*rate),start=Math.round(source.offset*rate);
+  for(let i=start;i<pcm.length&&offset+i-start<length;i++)if(offset+i-start>=0)mixed[offset+i-start]+=pcm[i]*gain;
+ }
+ return mixed;
+}
+test('live two-layer mix equals WAV and the held instrument schedules once per phrase, including loop boundaries',async()=>{
+ const snap=field(1,2,3,4,5,6,7,1);
+ for(const backing of ['pad','bass','counter']){
+  const s={backing,backingTimbre:'triangle',backingGain:.4,backingRows:4,gain:1,bpm:120,division:8,loop:false};
+  const r=rig(()=>snap,s);await r.engine.start();r.advance(1850);
+  const backgrounds=r.sources.filter(v=>v.buffer.duration>.25);assert.equal(backgrounds.length,backing==='pad'?4:2);
+  assert.ok(backgrounds.every(v=>v.buffer.duration===1));
+  const wav=samples(renderWav(snap,s).bytes),mixed=mixScheduled(r,wav.length);
+  for(let i=0;i<wav.length;i++)assert.ok(Math.abs(wav[i]-Math.round(mixed[i]*32767))<=1,backing+' sample '+i);
+  assert.ok(r.engine.getStream());r.engine.stop();assert.ok(r.sources.every(v=>v.stopped!==undefined));
+ }
+ const r=rig(()=>field(1,2),{backing:'pad',bpm:120,division:8});await r.engine.start();r.advance(600);
+ assert.equal(r.sources.filter(v=>v.buffer.duration===.5).length,4);r.engine.stop();
+});
+
+test('backing phrases honour selected first/last/stride and seek resumes their exact PCM position',async()=>{
+ const snap=field(7,1,7,2,7,3,7,4),s={backing:'counter',backingRows:2,bpm:120,division:8,first:1,last:7,stride:2,loop:false};
+ const r=rig(()=>snap,s);await r.engine.start();r.advance(40);await r.engine.seek(3);
+ const background=r.sources.at(-1);assert.equal(background.buffer.duration,.5);assert.equal(background.offset,.25);assert.equal(r.events.at(-1).backing.first,1);
+ await r.engine.start();r.advance(550);assert.deepEqual(r.events.slice(-3).map(e=>e.index),[3,5,7]);
+ const wav=renderWav(snap,s);assert.equal(wav.duration,1);assert.equal(wav.steps,4);r.engine.stop();
+});
+
+test('frame refresh preserves held-note phase, empty replacement kills both layers and toggling backing stops only that instrument',async()=>{
+ const s={backing:'pad',backingRows:4,bpm:120,division:8},snap=field(1,2,3,4,5,6,7,1),r=rig(()=>snap,s);
+ await r.engine.start();r.advance(410);const old=r.sources.slice();r.engine.beginRefresh();r.engine.replaceSnapshot(snap,{resume:true});
+ assert.ok(old.every(v=>v.stopped!==undefined));const held=r.sources.at(-1);assert.ok(Math.abs(held.offset-.375)<.001);
+ const before=r.sources.length;r.engine.setSettings({backing:'off'});assert.notEqual(held.stopped,undefined);assert.equal(r.sources.at(-3).stopped,undefined);
+ r.advance(150);assert.ok(r.sources.length>before);assert.ok(r.sources.slice(before).every(v=>v.buffer.duration<.25));
+ r.engine.setSettings({backing:'pad'});r.advance(250);const active=r.sources.slice();r.engine.beginRefresh();const n=r.sources.length;r.engine.replaceSnapshot(field(0,0,0,0),{resume:true});r.advance(200);
+ assert.ok(active.every(v=>v.stopped!==undefined));assert.equal(r.sources.length,n);r.engine.stop();
+});
+
+
+test('geometry-driven unequal steps and gains keep the held layer aligned with live/WAV and recorder bus',async()=>{
+ const snap={rows:[section(1,hole,spike),section(6,null,spike),section(7,hole,null),section(2,null,spike)]};
+ const s={autoGeometry:true,backing:'pad',backingRows:3,backingGain:.3,bpm:120,gain:1,loop:false},r=rig(()=>snap,s),wav=renderWav(snap,s),pcm=samples(wav.bytes);
+ await r.engine.start();r.advance(wav.duration*1000-25);const mixed=mixScheduled(r,pcm.length);
+ for(let i=0;i<pcm.length;i++)assert.ok(Math.abs(pcm[i]-Math.round(mixed[i]*32767))<=1,'unequal-step sample '+i);
+ const held=r.sources.filter(v=>v.buffer.duration>1);assert.equal(held.length,2);assert.equal(held[0].buffer.duration,Math.round(1.125*22050)/22050);
+ r.engine.getStream();const master=held[0].outputs[0].outputs[0].outputs[0];assert.equal(master.outputs.length,2);assert.ok(r.sources.every(v=>v.outputs[0].outputs[0].outputs[0]===master));r.engine.stop();
+});

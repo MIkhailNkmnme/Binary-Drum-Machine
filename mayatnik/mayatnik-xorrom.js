@@ -9,7 +9,8 @@
   const DEFAULTS = Object.freeze({
     source: 'rgb', bpm: 96, division: 8, tonic: 0, scale: 'major', octave: 4,
     timbre: 'triangle', gain: 0.25, chord: 3, first: 0, last: -1, stride: 1,
-    loop: true, live: false, autoGeometry: false, geometrySource: 'all', geometryConnectivity: 'sides'
+    loop: true, live: false, autoGeometry: false, geometrySource: 'all', geometryConnectivity: 'sides',
+    backing: 'off', backingGain: 0.3, backingTimbre: 'sine', backingRows: 4
   });
   const SCALES = {
     major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10],
@@ -36,7 +37,9 @@
       chord: number('chord', 1, 4), first: number('first', 0, 2147483647), last: number('last', -1, 2147483647),
       stride: number('stride', 1, 65536), loop: flag('loop'), live: flag('live'),
       autoGeometry: flag('autoGeometry'), geometrySource: pick('geometrySource', ['all', 'regions', 'areas', 'symmetry']),
-      geometryConnectivity: pick('geometryConnectivity', ['sides', 'corners', 'diagonal', 'chess0', 'bit'])
+      geometryConnectivity: pick('geometryConnectivity', ['sides', 'corners', 'diagonal', 'chess0', 'bit']),
+      backing: pick('backing', ['off', 'pad', 'bass', 'counter']), backingGain: number('backingGain', 0, 1, false),
+      backingTimbre: pick('backingTimbre', ['sine', 'triangle', 'softsquare']), backingRows: number('backingRows', 1, 16)
     };
   }
 
@@ -114,15 +117,46 @@
   }
 
   function stepSeconds(s) { return 60 / s.bpm * 4 / s.division; }
-  function rowStep(row, index, base) {
+  function rowStep(row, index, base, snapshot) {
     const geometry = base.autoGeometry ? selectedRegion(row) : null;
     const effective = modulate(base, geometry);
-    return {row, index, geometry, effective, notes: notesAt(row, index, effective), step: stepSeconds(effective)};
+    return {row, index, geometry, effective, notes: notesAt(row, index, effective), step: stepSeconds(effective),
+      backing: backingFor(snapshot, index, base)};
   }
   function bounds(snapshot, s) {
     const end = (snapshot && snapshot.rows ? snapshot.rows.length : 0) - 1;
     const first = Math.min(s.first, end);
     return { first, last: s.last < 0 ? end : clamp(s.last, first, end) };
+  }
+
+  // The second instrument holds one phrase across several selected rows. Its
+  // addresses and duration belong to the score, never to screen pixels or timers.
+  function backingFor(snapshot, index, s) {
+    if (!snapshot || s.backing === 'off' || !s.backingGain) return null;
+    const range = bounds(snapshot, s);
+    const first = range.first + Math.floor((index - range.first) / (s.stride * s.backingRows)) * s.stride * s.backingRows;
+    let duration = 0, elapsed = 0, anchor;
+    for (let i = first, count = 0; i <= range.last && count < s.backingRows; i += s.stride, count++) {
+      const row = snapshot.rows[i], effective = effectiveSettings(s, row), notes = notesAt(row, i, effective);
+      if (!anchor && notes.length) anchor = {row, effective, notes};
+      const step = stepSeconds(effective);
+      if (i < index) elapsed += step;
+      duration += step;
+    }
+    // Entirely empty/filtered phrases are silent; an internal rest can sit over
+    // the preceding held note, as it does in a two-instrument arrangement.
+    if (!anchor) return null;
+    const {effective, row} = anchor;
+    const tonic = 12 * Math.max(2, effective.octave) + effective.tonic;
+    let midis;
+    if (s.backing === 'pad') midis = [tonic, tonic + 7];
+    else {
+      const notes = notesAt(row, first, {...effective, source: effective.source === 'rhythm' ? 'melody' : effective.source, chord: 4});
+      const note = s.backing === 'counter' ? notes.at(-1) : notes[0];
+      midis = [clamp((note?.midi ?? tonic + 12) - (s.backing === 'bass' ? 24 : 12), 24, 108)];
+    }
+    return {first, duration, elapsed, effective, geometry: s.autoGeometry ? selectedRegion(row) : null,
+      notes: midis.map(midi => ({midi, frequency: frequency(midi), velocity: .75, backing: true}))};
   }
 
   // A single PCM synthesizer serves playback and WAV. Every voice starts and
@@ -140,7 +174,7 @@
   function cacheTone(build) {
     const cache = new Map();
     return (note, step, timbre, rate) => {
-      const key = [note.drum || timbre, note.midi, step, rate,timbre==='robot'?((note.code||1)-1)%3:''].join('/');
+      const key = [note.backing ? 'backing' : 'lead', note.drum || timbre, note.midi, step, rate,timbre==='robot'?((note.code||1)-1)%3:''].join('/');
       if (!cache.has(key)) {
         if (cache.size >= 48) cache.delete(cache.keys().next().value);
         cache.set(key, build(note, step, timbre, rate));
@@ -149,6 +183,7 @@
     };
   }
   function synthesize(note, step, timbre, rate) {
+    if (note.backing) return synthesizeBacking(note, step, timbre, rate);
     const kind = note.drum || timbre;
     if(ELECTRO_TIMBRES.includes(kind))return synthesizeElectro(note,step,kind,rate);
     const duration = Math.min(step * 0.86, ({kick: 0.22, snare: 0.14, hat: 0.065})[kind] || 2);
@@ -169,6 +204,20 @@
       samples[i] = value * level * 0.7 * note.velocity / amplitude;
       phase += increment;
       increment *= pitchChange;
+    }
+    return samples;
+  }
+  function synthesizeBacking(note, duration, timbre, rate) {
+    const samples = new Float32Array(Math.max(2, Math.round(duration * rate)));
+    const partials = PARTIALS[timbre].filter(([h]) => h * note.frequency < rate / 2);
+    const normalizer = partials.reduce((sum, [,weight]) => sum + Math.abs(weight), 0) || 1;
+    const fade = Math.max(1, Math.round(Math.min(.08, duration / 4) * rate));
+    for (let i = 1; i < samples.length - 1; i++) {
+      const edge = Math.min(1, i / fade, (samples.length - 1 - i) / fade);
+      const envelope = .5 - .5 * Math.cos(Math.PI * edge);
+      let value = 0;
+      for (const [h, weight] of partials) value += weight * Math.sin(2 * Math.PI * note.frequency * h * i / rate);
+      samples[i] = value / normalizer * envelope * .7 * note.velocity;
     }
     return samples;
   }
@@ -209,7 +258,7 @@
     const limit = Math.max(1, Math.round(maxSeconds * sampleRate)), timeline = [];
     let elapsed = 0, index = range.first;
     for (; index <= range.last && Math.round(elapsed * sampleRate) < limit; index += s.stride) {
-      const event = rowStep(snapshot.rows[index], index, s);
+      const event = rowStep(snapshot.rows[index], index, s, snapshot);
       timeline.push({...event, offset: Math.round(elapsed * sampleRate)});
       elapsed += event.step;
     }
@@ -224,6 +273,25 @@
     view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
     view.setUint16(34, 16, true); tag(36, 'data'); view.setUint32(40, length * 2, true);
     const toneFor = cacheTone(synthesize);
+    if (s.backing !== 'off' && s.backingGain) {
+      const mixed = new Float32Array(length);
+      function add(notes, duration, timbre, offset, level) {
+        for (const note of notes) {
+          const tone = toneFor(note, duration, timbre, sampleRate);
+          for (let i = 0; i < tone.length && offset + i < length; i++) mixed[offset + i] += tone[i] * level / notes.length;
+        }
+      }
+      for (const {notes, step, effective, offset, backing} of timeline) {
+        const ratio = backing ? s.backingGain : 0, share = 1 / (1 + ratio);
+        add(notes, step, effective.timbre, offset, effective.gain * share);
+        if (backing && !backing.elapsed) add(backing.notes, backing.duration, s.backingTimbre, offset, backing.effective.gain * ratio * share);
+      }
+      for (let i = 0; i < length; i++) {
+        const fade = truncated ? Math.min(1, (length - 1 - i) / (sampleRate * .008)) : 1;
+        view.setInt16(44 + 2 * i, Math.round(clamp(mixed[i] * fade, -1, 1) * 32767), true);
+      }
+      return {bytes, duration: length / sampleRate, steps: timeline.length, truncated, sampleRate};
+    }
     for (const {notes, step, effective, offset} of timeline) {
       const tones = notes.map(note => toneFor(note, step, effective.timbre, sampleRate));
       const frames = Math.min(length - offset, Math.max(0, ...tones.map(tone => tone.length)));
@@ -245,7 +313,9 @@
     let ctx, master, streamNode, bus, snapshot, wake, nextTime, cursor = 0, disposed = false;
     let queued = [], refreshing = false, currentIndex = -1;
     let lastBeat = null, refreshBeat = null;
+    let backingScheduled = null;
     const voices = new Map();
+    const backingVoices = new Map();
     const audioBuffer = cacheTone((note, step, timbre, rate) => {
       const samples = synthesize(note, step, timbre, rate);
       const buffer = ctx.createBuffer(1, samples.length, rate);
@@ -258,14 +328,26 @@
       if (options.onState) options.onState(next);
     }
     function setSettings(patch) {
+      const previous = settings;
       settings = normalizeSettings({...settings, ...patch});
       if (master) master.gain.setTargetAtTime(settings.gain, ctx.currentTime, 0.01);
+      if (['backing','backingGain','backingTimbre','backingRows'].some(key => previous[key] !== settings[key])) {
+        backingScheduled = null;
+        if (ctx) for (const [source, gain] of backingVoices) {
+          gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0, ctx.currentTime + .008);
+          source.stop(ctx.currentTime + .009);
+        }
+        backingVoices.clear();
+      }
       return {...settings};
     }
     function halt(next, retainedBeat = null) {
       const run = ++sequence;
       refreshBeat = retainedBeat;
       lastBeat = null;
+      backingScheduled = null;
+      backingVoices.clear();
       clear(wake);
       if (next === 'paused' && queued.length) {
         const upcoming = queued.find(event => event.time > ctx.currentTime);
@@ -314,28 +396,36 @@
       stop();
       if (options.onError) options.onError(error);
     }
-    function sound({notes, step, effective, geometry}, time, offset = 0) {
+    function sound({notes, step, effective, geometry, backing}, time, offset = 0) {
       if (!bus) {
         bus = ctx.createGain();
         bus.connect(master);
       }
-      for (const note of notes) {
-        const buffer = audioBuffer(note, step, effective.timbre, SAMPLE_RATE);
-        if (offset >= buffer.duration) continue;
+      function play(note, duration, timbre, at, from, level, isBacking = false) {
+        const buffer = audioBuffer(note, duration, timbre, SAMPLE_RATE);
+        if (from >= buffer.duration) return;
         const source = ctx.createBufferSource(), gain = ctx.createGain();
         source.buffer = buffer;
-        const level = volumeFactor(effective, geometry) / notes.length;
         gain.gain.value = level;
-        if (offset > 0) {
-          gain.gain.setValueAtTime(0, time);
-          gain.gain.linearRampToValueAtTime(level, time + 0.005);
+        if (from > 0) {
+          gain.gain.setValueAtTime(0, at);
+          gain.gain.linearRampToValueAtTime(level, at + 0.005);
         }
         source.connect(gain);
         gain.connect(bus);
-        voices.set(source, time);
-        source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); };
-        source.start(time, offset);
+        voices.set(source, at);
+        if (isBacking) backingVoices.set(source, gain);
+        source.onended = () => { voices.delete(source); backingVoices.delete(source); source.disconnect(); gain.disconnect(); };
+        source.start(at, from);
       }
+      const ratio = backing ? effective.backingGain : 0, share = 1 / (1 + ratio);
+      for (const note of notes) play(note, step, effective.timbre, time, offset, volumeFactor(effective, geometry) * share / notes.length);
+      if (!backing) return;
+      const start = time - offset - backing.elapsed;
+      if (backingScheduled?.first === backing.first && Math.abs(backingScheduled.start - start) < .001) return;
+      backingScheduled = {first:backing.first, start};
+      const level = volumeFactor(backing.effective, backing.geometry) * ratio * share / backing.notes.length;
+      for (const note of backing.notes) play(note, backing.duration, effective.backingTimbre, time, backing.elapsed + offset, level, true);
     }
     function tick(run) {
       if (sequence !== run || state !== 'playing') return;
@@ -375,7 +465,7 @@
           }
           if (range.first < 0) { stop(); return; }
           cursor = Math.max(range.first, cursor);
-          const event = rowStep(snapshot.rows[cursor], cursor, settings);
+          const event = rowStep(snapshot.rows[cursor], cursor, settings, snapshot);
           sound(event, nextTime);
           queued.push({index:cursor, time:nextTime, step:event.step, snapshot, event});
           cursor += settings.stride;
@@ -395,7 +485,7 @@
       try {
         if (audition && ctx.state !== 'running') await ctx.resume();
         if (sequence !== run || doc?.hidden || (audition && ctx.state !== 'running')) return false;
-        const event = rowStep(snapshot.rows[cursor], cursor, settings);
+        const event = rowStep(snapshot.rows[cursor], cursor, settings, snapshot);
         const time = ctx.currentTime;
         if (audition) sound(event, time);
         options.onStep?.({...event, time, manual: true});
@@ -453,7 +543,7 @@
         // Carry both row and sample phase across a frame replacement, including
         // the rest at the end of a note.
         if (nextTime <= now) {
-          const event = rowStep(snapshot.rows[cursor], cursor, settings);
+          const event = rowStep(snapshot.rows[cursor], cursor, settings, snapshot);
           sound(event, now, now - nextTime);
           lastBeat = {index:cursor, time:nextTime, step:event.step};
           currentIndex = cursor;
@@ -465,7 +555,7 @@
         return selected;
       }
       currentIndex = cursor = Number.isFinite(index) ? clamp(Math.trunc(index), range.first, range.last) : range.first;
-      const event = rowStep(snapshot.rows[cursor], cursor, settings);
+      const event = rowStep(snapshot.rows[cursor], cursor, settings, snapshot);
       options.onStep?.({...event, time: ctx.currentTime, manual: true});
       return currentIndex;
     }
