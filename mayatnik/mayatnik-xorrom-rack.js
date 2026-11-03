@@ -21,7 +21,7 @@
       return {id,template,name:typeof t.name==='string'&&t.name.trim()?t.name.trim():'Дорожка '+id,color:/^#[0-9a-f]{6}$/i.test(t.color)?t.color:colorFor(id),
         axis:t.axis&&!template?axisModule().normalize(t.axis):null,axisName:typeof t.axisName==='string'?t.axisName:'',muted:t.muted===true,row:Number.isSafeInteger(t.row)&&t.row>=0?t.row:null,settings:Engine.normalizeSettings(t.settings)};
     });
-    return {version:1,selected:used.has(value?.selected)?value.selected:tracks[0].id,tracks};
+    return {version:1,linesVisible:value?.linesVisible!==false,selected:used.has(value?.selected)?value.selected:tracks[0].id,tracks};
   }
   function createBus(win){
     let ctx,input,recorder,closed=false;
@@ -56,9 +56,9 @@
   }
   function mount(options){
     const win=options.window||globalThis,bus=options.audioBus||createBus(win),hostFactory=options.hostFactory||Host.mount;
-    const slots=new Map(),listeners=new Set(),pending=new Map();let selected,changed=false,disposed=false,applied=null;
+    const slots=new Map(),listeners=new Set(),pending=new Map();let selected,linesVisible=true,changed=false,disposed=false,applied=null;
     const active=()=>slots.get(selected);
-    const serialize=()=>({version:1,selected,tracks:[...slots.values()].map(({data})=>({...data,axis:data.axis?{...data.axis}:null,settings:{...data.settings}}))});
+    const serialize=()=>({version:1,linesVisible,selected,tracks:[...slots.values()].map(({data})=>({...data,axis:data.axis?{...data.axis}:null,settings:{...data.settings}}))});
     function emit(){if(!changed&&!disposed)for(const f of listeners)f(active().host.getState());}
     function persist(){applied=serialize();options.setRack?.(applied,{...active().data.settings});emit();}
     function identify(){for(const {host,data} of slots.values())host.identify({...data,selected:data.id===selected,multiple:slots.size>1});}
@@ -87,7 +87,7 @@
       if(changed)persist();return changed;
     }
     function insert(data){
-      const host=hostFactory({...options,ownsSnapshot:true,getTemplate:()=>data.template,getAxis:()=>data.axis,getAxisGeometry:spec=>axisFor(data,spec),getSize:dimensions,
+      const host=hostFactory({...options,ownsSnapshot:true,getLinesVisible:()=>linesVisible,getTemplate:()=>data.template,getAxis:()=>data.axis,getAxisGeometry:spec=>axisFor(data,spec),getSize:dimensions,
         setAxis:spec=>updateAxis(slots.get(data.id),spec),translateAxis:(spec,dx,dy)=>axisModule().translate(spec,dx,dy),
         getHeight:()=>data.template?1:data.axis?axisFor(data)?.length:dimensions().height,
         async getSnapshot(req){const spec=data.axis,ref=data.template,source=await capture(req);if(ref)return templateModule().project(source,ref.mask,{cancelled:()=>req.cancelled()||data.template!==ref});if(!spec)return source;
@@ -95,7 +95,7 @@
         getSettings:()=>data.settings,setSettings:s=>{data.settings=s;persist();},onSelect:()=>select(data.id)});
       const slot={host,data,templateKey:null};slots.set(data.id,slot);host.subscribe(emit);return slot;
     }
-    function load(value){changed=true;try{for(const s of slots.values())s.host.dispose();slots.clear();pending.clear();selected=value.selected;value.tracks.forEach(insert);identify();}finally{changed=false;}emit();}
+    function load(value){changed=true;try{for(const s of slots.values())s.host.dispose();slots.clear();pending.clear();selected=value.selected;linesVisible=value.linesVisible;value.tracks.forEach(insert);identify();}finally{changed=false;}emit();}
     function refresh(){
       const raw=options.getRack?.();if(raw&&raw===applied)return;
       const next=normalize(raw,options.getSettings?.());if(slots.size&&JSON.stringify(next)===JSON.stringify(serialize())){applied=raw;return;}
@@ -120,6 +120,7 @@
         const moved=segment?axisModule().translate({...spec,offset:0},segment.x1-spec.x1,segment.y1-spec.y1):spec;
         updateAxis(slot,{...moved,fixed});},
       getSettings:()=>active().host.getSettings(),setSettings:v=>active().host.setSettings(v),getState:()=>active().host.getState(),
+      getLinesVisible:()=>linesVisible,setLinesVisible(value){const next=!!value;if(disposed||next===linesVisible)return;linesVisible=next;for(const s of slots.values())s.host.refreshMarker?.();persist();},
       start:()=>active().host.start(),pause:()=>active().host.pause(),stop:()=>active().host.stop(),seek:r=>active().host.seek(r),
       async startAll(){
         const all=[...slots.values()],waiting=new Set(all.filter(s=>{const v=s.host.getState();return v.state!=='playing'&&!v.updating;}));

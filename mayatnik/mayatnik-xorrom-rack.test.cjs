@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 const Rack=require('./mayatnik-xorrom-rack'),Engine=require('./mayatnik-xorrom'),Field=require('./mayatnik-xorrom-field'),Work=require('./mayatnik-work-file'),Share=require('./mayatnik-share-link');
 async function rig(saved,legacy,extra={}){
- const dom=new JSDOM('<main><canvas></canvas></main>',{pretendToBeVisual:true}),w=dom.window,d=w.document;
+ const dom=new JSDOM('<main id="frame"><canvas></canvas></main>',{pretendToBeVisual:true}),w=dom.window,d=w.document;
  w.Blob=Blob;const view=d.querySelector('main'),figure=d.querySelector('canvas');const rect=()=>({left:0,top:0,right:80,bottom:120,width:80,height:120});figure.getBoundingClientRect=view.getBoundingClientRect=rect;
  const makeNode=()=>({to:[],connect(n){this.to.push(n);},disconnect(){this.to=[];}});
  let ms=0,n=0,contexts=0,closed=0,captures=0,frame=0,ctx;const timers=new Map(),gains=[];
@@ -65,11 +65,28 @@ test('axis, fixed and whole-template readers sample each new field independently
  const f=await rig(null,{source:'melody',division:4,bpm:120},opts);try{
  const r=f.rack;r.setAxis({x1:2,y1:0,x2:2,y2:11},'Вертикаль');assert.deepEqual(r.getAxis(),{x1:2,y1:0,x2:2,y2:11,offset:0,fixed:false,reverse:false});
  const ids=r.addTemplates();assert.deepEqual(ids,[2,3]);assert.equal(r.getState().state,'stopped');assert.deepEqual(await r.startAll(),[true,true,true]);f.advance(60);
+ r.setLinesVisible(false);assert.ok([...f.w.document.querySelectorAll('.may-xorrom-axis-marker')].every(el=>el.hidden));assert.equal(f.w.document.querySelectorAll('[data-xorrom-edge]:not([hidden])').length,0);assert.equal(r.getState().state,'playing');r.setLinesVisible(true);
  assert.ok(r.getState().notes.length);r.select(1);r.fixAxis(true);await f.settle();assert.equal(r.getAxis().fixed,true);const position=r.getAxis().offset;
  frame++;f.changeFrame();await f.settle();r.select(2);assert.equal(r.getState().notes.length,0);r.select(3);assert.ok(r.getState().notes.length);r.select(1);assert.equal(r.getAxis().offset,position);assert.equal(r.getState().index,0);
  x=3;r.templatesChanged();await f.settle();r.select(2);assert.ok(r.getState().notes.length);r.fixTemplate(true);x=5;r.templatesChanged();assert.deepEqual(r.getRack().tracks[1].template.mask.runs,[2,3,4]);
  const saved=structuredClone(r.getRack());const g=await rig(saved);try{assert.deepEqual(g.rack.getRack(),saved);assert.equal(g.stats().contexts,0);}finally{g.close();}
  r.stopAll();assert.equal(r.anyActive(),false);
+ }finally{f.close();}
+});
+
+test('global line preference and imprecise scale hide every visual reader while real audio keeps its position and bus',async()=>{
+ const f=await rig(null,{bpm:120,source:'melody',division:4});try{
+  const r=f.rack;r.add();await r.startAll();f.advance(100);await f.settle();const stream=r.getStream(),before=f.stats(),frame=f.w.document.getElementById('frame');
+  const hidden=()=>{assert.ok([f.marker(1),f.marker(2)].every(el=>el.style.display==='none'));assert.equal(f.w.document.querySelectorAll('[data-xorrom-edge]:not([hidden])').length,0);};
+  const visible=()=>assert.ok([f.marker(1),f.marker(2)].every(el=>el.style.display==='block'));
+  visible();r.setLinesVisible(false);hidden();assert.equal(r.getState().state,'playing');assert.equal(r.getStream(),stream);assert.deepEqual(f.stats(),before);assert.equal(f.stored().linesVisible,false);
+  f.advance(600);hidden();assert.ok(r.getState().index>0);r.setLinesVisible(true);visible();const at=r.getState().index;
+  frame.dataset.zoomLossy='true';await f.settle();hidden();assert.equal(r.getLinesVisible(),true);assert.equal(r.getState().state,'playing');assert.equal(r.getState().index,at);
+  frame.dataset.pixelExactError='Масштаб не точен';frame.dataset.zoomLossy='false';await f.settle();hidden();frame.dataset.pixelExactError='';await f.settle();visible();
+  r.setLinesVisible(false);r.add();r.setSettings({gain:.27});r.remove();assert.equal(r.getLinesVisible(),false);hidden();
+  const saved=structuredClone(r.getRack()),work=await Work.decode(await Work.encode({st:{xorromRack:saved}}));assert.equal(work.data.st.xorromRack.linesVisible,false);
+  const share=Share.normalizePayload({v:1,k:0,state:{rows:8,steps:1,mode:'pend',bg:'empty',xorromRack:saved}});assert.equal(share.state.xorromRack.linesVisible,false);
+  const restored=await rig(saved);try{assert.equal(restored.rack.getLinesVisible(),false);assert.deepEqual(restored.rack.getRack(),saved);assert.equal(restored.stats().contexts,0);}finally{restored.close();}
  }finally{f.close();}
 });
 test('Library controls create/select readers, bind individual settings and reject an empty template selection',async()=>{

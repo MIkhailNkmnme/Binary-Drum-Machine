@@ -14,7 +14,7 @@ test('actual Xorrom menu mounts one live settings host in its side window while 
  const f=fixture(),calls=[];let settings={bpm:96},listener;const api={getSettings:()=>settings,getState:()=>({state:'stopped'}),setSettings(p){settings={...settings,...p};listener?.();},start(){calls.push('start');},stop(){calls.push('stop');},subscribe(fn){listener=fn;return()=>listener=null;}};
  try{
   const controls=f.w.mountXorromMenu({el:f.d.getElementById('rail'),refresh(){}},api),body=f.d.querySelector('#rail .gz-soty');
-  assert.deepEqual([...body.querySelectorAll('[data-xorrom]')].map(n=>n.dataset.xorrom),['start','stop']);assert.equal(body.children.length,3);
+  assert.deepEqual([...body.querySelectorAll('[data-xorrom]')].map(n=>n.dataset.xorrom),['start','stop','line']);assert.equal(body.children.length,4);
   const panel=f.w.MayatnikMusicPanel,launch=body.lastElementChild,bpm=f.d.querySelector('#mayMusicSettingsPane [data-xorrom="bpm"] input'),liveHost=bpm.closest('.mtp-live-controls');assert.ok(bpm);assert.equal(f.d.querySelectorAll('[data-xorrom="bpm"]').length,1);assert.equal(f.d.querySelectorAll('#mayMusicSettingsPane>.mtp-live-controls').length,1);assert.equal(panel.isOpen(),false);assert.equal(launch.getAttribute('aria-pressed'),'false');
   launch.click();assert.equal(panel.isOpen(),true);assert.equal(launch.getAttribute('aria-pressed'),'true');assert.equal(f.control.isOpen(),false);bpm.value='123.5';bpm.dispatchEvent(new f.w.Event('change'));assert.equal(settings.bpm,123.5);
   launch.click();assert.equal(panel.isOpen(),false);assert.equal(launch.getAttribute('aria-pressed'),'false');assert.equal(bpm.isConnected,true);api.setSettings({bpm:87});assert.equal(bpm.value,'87');

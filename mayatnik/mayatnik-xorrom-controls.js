@@ -37,6 +37,7 @@
     }
     const start=button('start','▶ Старт','Начать музыку. Звук включается только после нажатия. Повторное нажатие ставит воспроизведение на паузу.',()=>run(()=>state().state==='playing'?api.pause():api.start()));
     const stop=button('stop','■ Стоп','Остановить музыку или отменить чтение поля и вернуться к первой выбранной строке.',()=>safe(()=>{api.stop();notice='Остановлено';}));
+    const line=button('line','━ Линия','Показывать линии чтения, подписи и подсветку всех дорожек. Скрытие не останавливает звук. При неточном масштабе они скрываются автоматически.',()=>safe(()=>api.setLinesVisible?.(api.getLinesVisible?.()===false)));
     function field(key,text,title,build){
       const row=doc.createElement('div');row.className='gz-hx gz-pair gz-split';row.dataset.xorrom=key;
       const label=doc.createElement('span');label.className='gz-half gz-h0';caption(label,text);
@@ -272,6 +273,7 @@
       describe(geometry,g?'Звучащая область '+(g.id??'—')+'; площадь '+(g.area??'—')+' клеток; высота '+(g.height??'—')+' строк; высота вертикальной симметрии '+(g.symmetryHeight??'—')+' строк.':geometryText);
       caption(start.label,pending?'…':playing?'Ⅱ Пауза':current.state==='paused'?'▶ Дальше':'▶ Старт');start.node.disabled=pending||importing;start.node.classList.toggle('gz-on',playing);start.node.setAttribute('aria-pressed',String(playing));describe(start.node,playing?'Приостановить музыку. Повторное нажатие продолжит с того же места.':current.state==='paused'?'Продолжить музыку с места паузы без нового снимка поля.':'Снять текущее поле и начать музыку. Захват приостанавливает плеер поля; Xorrom играет строки снимка и сам кадры не переключает. Звук включается только после нажатия.');
       stop.node.disabled=false;
+      const linesVisible=api.getLinesVisible?.()!==false;line.node.disabled=typeof api.setLinesVisible!=='function';line.node.classList.toggle('gz-on',linesVisible);line.node.setAttribute('aria-pressed',String(linesVisible));
       toggles.forEach(t=>{caption(t.label,t.text+': '+(s[t.key]?'вкл':'выкл'));t.node.classList.toggle('gz-on',!!s[t.key]);t.node.setAttribute('aria-pressed',String(!!s[t.key]));});
       wav.node.disabled=exporting||!!current.updating;caption(wav.label,exporting?'… WAV':'↓ WAV');wav.node.setAttribute('aria-busy',String(exporting));
       jsonLoad.node.disabled=importing||pending;jsonSave.node.disabled=pending||importing;jsonLoad.node.setAttribute('aria-busy',String(importing));
