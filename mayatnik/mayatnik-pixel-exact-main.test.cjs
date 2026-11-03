@@ -8,7 +8,7 @@ function fixture(dpr=1){
  const rect=(left,top,width,height)=>({left,top,width,height,right:left+width,bottom:top+height});wrap.style.padding='16px';wrap.getBoundingClientRect=()=>rect(0,0,wrap.clientWidth,wrap.clientHeight);
  cv.style.width='31px';cv.style.height='8px';cv.getBoundingClientRect=()=>{const t=cv.style.translate.split(' ');return rect(17.3+(parseFloat(t[0])||0),18.7+(parseFloat(t[1])||0),parseFloat(cv.style.width),parseFloat(cv.style.height));};
  const c={window:win,document:doc,wrap,cv,st:{zoom:1,zsnap:true,zbase:2,zLimit:false,zLock:false,edgeRhombOn:false,romboAssembly:16,romboAngle:0,edgeWrap:true},geo:{anchor:15},f:{W:31,H:8},VX:0,VW:31,VH:8,gpuBig:null,
-  MayatnikPixelExactHost:require('./mayatnik-pixel-exact-host.js'),MayatnikRombo:require('./mayatnik-rombo.js'),MayatnikViewRotation:require('./mayatnik-view-rotation.js'),
+  MayatnikPixelGrid:require('./mayatnik-pixel-grid.js'),MayatnikPixelExactHost:require('./mayatnik-pixel-exact-host.js'),MayatnikRombo:require('./mayatnik-rombo.js'),MayatnikViewRotation:require('./mayatnik-view-rotation.js'),
   dispW:()=>c.VW,dispH:()=>c.VH,compareOn:()=>false,animatrixOn:()=>false,rombP:()=>-1,joinedOn:()=>false,bothOn:()=>false,ovlLinked:()=>false,fitAxis:()=>false,wrapPadX:()=>32,panCenterX:()=>wrap.clientWidth/2,
   freePanScale:0,freePanInset:0,zWant:0,VTX_H:16,save(){},present(){},imageStats(){},queueDigits(){},thick(){},fitHold(){},fitCenterY(){},midScroll(){},zBotScroll(){},zTopScroll(){},zTopLine(){},drawEdgeRhomb(){},getComputedStyle:win.getComputedStyle.bind(win),requestAnimationFrame:()=>1,
   viewRotation:{enabled:false,physicalRect:()=>cv.getBoundingClientRect(),isFieldEvent:()=>true},$:id=>{let n=doc.getElementById(id);if(!n){n=doc.createElement('span');n.id=id;doc.body.append(n);}return n;}};
@@ -92,4 +92,26 @@ test('overview overlay bits reuse physical nearest pixels without large canvases
  const c={VW:3,VH:2,VX:0,RK:1,f:{W:3},geo:{anchor:1},st:{zOverview:true},k:1,ovlSerial:0,scale:()=>2/3,DPR:()=>1,present:{clean:{pic}},cv:{getBoundingClientRect:()=>({left:0,top:0})},layerViewport:()=>({left:0,top:0}),
   PAL:{bits:[[[100,100,100]],[[255,255,255]]]},rgba:rgb=>((255<<24)|(rgb[2]<<16)|(rgb[1]<<8)|rgb[0])>>>0,parityVisible:()=>true,outShow:()=>false,ochkiMeetingPoints:()=>[],document:{createElement(){throw Error('full-frame allocation forbidden');}}};
  vm.runInNewContext(fn('ovlBitsNow'),c);const result=c.ovlBitsNow();assert.ok(result);assert.deepEqual(Array.from(result.val),[1,1,1,-1,-1,-1]);assert.equal(c.ovlSerial,1);
+});
+
+
+test('production accuracy follows physical exact lattice across overview, DPR and diagonal turns',()=>{
+ for(const dpr of [1,1.25,2]){
+  const {c,close}=fixture(dpr);
+  try{
+   c.st.zOverview=true;c.st.zsnap=false;c.f.W=c.VW=3068;c.f.H=c.VH=512;
+   for(const angle of [0,45]){
+    c.st.edgeRhombOn=true;c.st.romboAngle=angle;
+    const policy=c.window.mayPixelExact.policyFor();
+    c.zoomTo(policy.exactMinScale*.85,100,100,true);
+    assert.equal(c.$('frame').dataset.zoomLossy,'true');assert.equal(c.$('frame').dataset.zoomOverview,'true');
+    c.zoomTo(policy.exactMinScale,100,100,true);
+    assert.equal(c.$('frame').dataset.zoomLossy,'false');
+    c.st.zOverview=false;c.zoomTo(policy.exactMinScale*.5,100,100,true);
+    assert.equal(c.$('frame').dataset.zoomLossy,'false');c.st.zOverview=true;
+   }
+   c.st.edgeRhombOn=false;c.zoomTo((2615/3068)/dpr,100,100,true);
+   assert.equal(c.$('frame').dataset.zoomExact,'2615/3068');assert.equal(c.$('frame').dataset.zoomLossy,'true');
+  }finally{close();}
+ }
 });

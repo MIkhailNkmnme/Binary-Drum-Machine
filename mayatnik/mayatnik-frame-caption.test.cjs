@@ -25,3 +25,23 @@ test('reset caption is shown only when edge reset is enabled',()=>{
 test('strict caption uses the canonical lattice expression instead of a rounded DOM width fraction',()=>{
  const frame={dataset:{pixelExact:'true',zoomExact:'2√2/1',zoomWidth:'45.234375',zoomColumns:'16',zoomDpr:'1'}};assert.equal(context.frameZoomLabel(frame),'2√2/1');frame.dataset.zoomExact='';assert.equal(context.frameZoomLabel(frame),'');delete frame.dataset.pixelExact;assert.equal(context.frameZoomLabel(frame),context.exactZoomFraction(45.234375,16,1));
 });
+
+
+test('accuracy caption keeps literal words and red/green colours regardless of alternating caption parts',()=>{
+ const {JSDOM}=require('C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
+ const dom=new JSDOM('<style>'+fs.readFileSync(__dirname+'/mayatnik-menu.css','utf8')+'</style><span class="may-frame-caption"></span>');
+ const c={window:{HubButtonText:require('../_js/hub-button-text.js')},document:dom.window.document};vm.createContext(c);vm.runInContext(source.slice(source.indexOf('  function exactZoomFraction('),source.indexOf('  let libraryMenuFold=')),c);
+ try{
+  const caption=c.document.querySelector('.may-frame-caption');
+  for(const [dataset,wanted,colour]of [
+   [{pixelExact:'true',zoomOverview:'true',zoomLossy:'true',zoomExact:'2615/3068'},'Неточно','rgb(255, 104, 104)'],
+   [{pixelExact:'true',zoomOverview:'true',zoomLossy:'false',zoomExact:'1/1'},'Точно','rgb(98, 223, 136)'],
+   [{pixelExact:'true',zoomLossy:'false',pixelExactError:'Невозможно показать сетку'},'Неточно','rgb(255, 104, 104)'],
+   [{pixelExact:'true',zoomOverview:'false',zoomLossy:'false',zoomExact:'2√2/1'},'Точно','rgb(98, 223, 136)']
+  ])for(const prefix of [[],['Маятник']]){
+   assert.equal(c.frameAccuracyLabel({dataset}),wanted);c.renderFrameCaption(caption,[...prefix,wanted,'масштаб '+c.frameZoomLabel({dataset})]);
+   const part=caption.children[prefix.length];assert.equal(part.textContent,wanted);assert.equal(dom.window.getComputedStyle(part).color,colour);
+  }
+  assert.equal(c.frameAccuracyLabel({dataset:{}}),'');
+ }finally{dom.window.close();}
+});

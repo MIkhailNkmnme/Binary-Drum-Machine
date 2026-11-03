@@ -1160,6 +1160,8 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-caption{position:absolute;display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100vw - 8px);padding:2px 0;transform:translateX(-50%);pointer-events:none;font:10px/12px var(--mono,monospace);white-space:nowrap;background:#000;color:#dfe6f5;z-index:11}
 .may-frame-caption>.may-frame-part:nth-child(odd){color:#dfe6f5}
 .may-frame-caption>.may-frame-part:nth-child(even){color:#929dae}
+.may-frame-caption>.may-frame-part.may-frame-exact{color:#62df88}
+.may-frame-caption>.may-frame-part.may-frame-lossy{color:#ff6868}
 .may-frame-caption>.may-frame-part+.may-frame-part::before{content:"· ";white-space:pre;color:#727d8e}
 #mayBottomBar>.may-frame-tail{position:absolute;border:0;width:11px;margin-left:-5px;background:transparent;pointer-events:auto;touch-action:none;cursor:ew-resize;outline:0;z-index:10}
 #mayBottomBar>.may-frame-tail::before,#mayBottomBar>.may-frame-tail::after{content:"";position:absolute;top:0;bottom:0;left:5px;width:1px;background:repeating-linear-gradient(to bottom,#dfe6f5 0 2px,transparent 2px 4px);pointer-events:none}

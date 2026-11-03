@@ -24,10 +24,14 @@
   function frameZoomLabel(frame){
     return frame.dataset.pixelExact==='true'?((frame.dataset.zoomOverview==='true'?'Обзор ':'')+(frame.dataset.zoomExact||'')):exactZoomFraction(Number(frame.dataset.zoomWidth),Number(frame.dataset.zoomColumns),Number(frame.dataset.zoomDpr));
   }
+  function frameAccuracyLabel(frame){
+    if(frame.dataset.pixelExact!=='true')return '';
+    return frame.dataset.pixelExactError||frame.dataset.zoomLossy==='true'?'Неточно':'Точно';
+  }
   function renderFrameCaption(caption,parts){
     const text=parts.join(' · ');if(caption.dataset.captionText===text)return;caption.dataset.captionText=text;
-    const exact={Маятник:'Маятнкъ',Перескок:'Прескокъ',строк:'стркъ',масштаб:'Масштбъ'};
-    caption.replaceChildren(...parts.map(part=>{const span=document.createElement('span');span.className='may-frame-part';span.textContent=part.replace(/[А-Яа-яЁёЪъ]+/gu,word=>exact[word]||window.HubButtonText?.shortCaption(word)||word);return span;}));
+    const exact={Точно:'Точно',Неточно:'Неточно',Маятник:'Маятнкъ',Перескок:'Прескокъ',строк:'стркъ',масштаб:'Масштбъ'};
+    caption.replaceChildren(...parts.map(part=>{const span=document.createElement('span');span.className='may-frame-part';if(part==='Точно'||part==='Неточно')span.className+=part==='Точно'?' may-frame-exact':' may-frame-lossy';span.textContent=part.replace(/[А-Яа-яЁёЪъ]+/gu,word=>exact[word]||window.HubButtonText?.shortCaption(word)||word);return span;}));
   }
   let libraryMenuFold=null;
   const suppressPlayerTips=host=>{host.dataset.noTooltips='';const strip=()=>{for(const node of [host,...host.querySelectorAll('[title],[data-may-tip],[data-zz-tip]')])for(const attr of ['title','data-may-tip','data-zz-tip'])if(node.hasAttribute(attr))node.removeAttribute(attr);};strip();new MutationObserver(strip).observe(host,{subtree:true,childList:true,attributes:true,attributeFilter:['title','data-may-tip','data-zz-tip']});};
@@ -309,9 +313,9 @@
         }
         if($('edgeEndsTop')?.getAttribute('aria-pressed')==='true')type+=' · Края';
         if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
-        renderFrameCaption(caption,[...type.split(' · '),rows+' строк',([2,4,6,8].includes(factor)?factor+'N−1=':'ширина ')+width,...($('frame').dataset.pixelExact==='true'?[$('frame').dataset.pixelExactError?'Точная сетка: ограничение':'Точно']:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
+        renderFrameCaption(caption,[...type.split(' · '),rows+' строк',([2,4,6,8].includes(factor)?factor+'N−1=':'ширина ')+width,...(frameAccuracyLabel($('frame'))?[frameAccuracyLabel($('frame'))]:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
       };
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
