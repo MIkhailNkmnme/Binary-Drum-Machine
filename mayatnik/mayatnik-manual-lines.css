@@ -22,3 +22,7 @@
 .may-manual-axis-controls .may-manual-axis-colour0::after,.may-manual-axis-controls .may-manual-axis-colour1::after{content:"";position:absolute;inset:6px;border:1px solid #fff;border-radius:50%;background:var(--manual-paint-colour);box-sizing:border-box}
 .may-manual-axis-colour-input{position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;padding:0;border:0}
 .may-manual-axis-controls[data-compact="true"] .may-manual-axis-paint-group{grid-column:span 2;justify-self:center}
+
+.may-axis-motion{display:flex;gap:2px;align-items:center;flex-wrap:nowrap}.may-axis-motion button{width:24px!important;min-width:24px!important}.may-axis-motion-speed{width:54px;min-width:0;height:24px;background:#19212c;color:inherit;border:1px solid currentColor;font:inherit;user-select:text}.may-axis-motion button[aria-pressed="true"]{outline:2px solid #7ef0a8}
+
+.may-manual-axis-controls{flex-wrap:wrap;height:auto;max-width:310px}.may-axis-motion{flex-basis:100%;justify-content:center}.may-axis-motion-speed{height:24px}

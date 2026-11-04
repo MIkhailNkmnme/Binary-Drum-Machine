@@ -1,0 +1,3 @@
+const test=require('node:test'),assert=require('node:assert/strict'),M=require('./mayatnik-axis-motion.js');
+test('half-bit steps reflect at either edge, including many cycles',()=>{assert.deepEqual(M.advance(0,1,3,0,2),{p:1.5,direction:1});assert.deepEqual(M.advance(1.5,1,3,0,2),{p:1,direction:-1});assert.deepEqual(M.advance(0,-1,1,0,2),{p:.5,direction:1});for(let n=0;n<1000;n++){const a=M.advance(.5,1,n,-2,3);assert.ok(a.p>=-2&&a.p<=3);assert.equal(a.p*2,Math.round(a.p*2));assert.deepEqual(a,M.advance(.5,1,n+20,-2,3));}});
+test('all four line families have finite half-bit field bounds',()=>{for(const k of ['h','v','d','e']){const [a,b]=M.bounds(k,127,64,63);assert.ok(a<b);assert.equal(a*2,Math.round(a*2));assert.equal(b*2,Math.round(b*2));}});

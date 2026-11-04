@@ -64,6 +64,10 @@
     };
     listen(input,'input',change);listen(input,'change',change);
    }
+   const motion=doc.createElement('div');motion.className='may-axis-motion';
+   for(const [key,text]of [['autoBack','◀'],['autoForward','▶']]){const b=doc.createElement('button');b.type='button';b.className='may-manual-axis-'+key;b.textContent=text;parts[key]=b;motion.append(b);b.onclick=e=>{consume(e);const a=axis(id);if(a)options.onAuto?.(id,key==='autoBack'?-1:1);};}
+   const speed=doc.createElement('input');speed.type='number';speed.min='1';speed.max='10000';speed.step='1';speed.value='1';speed.className='may-axis-motion-speed';speed.title='Скорость: полубитов в секунду';speed.setAttribute('aria-label',speed.title);parts.autoSpeed=speed;motion.append(speed);
+   speed.onchange=e=>{consume(e);const value=Math.max(1,Math.min(10000,Math.round(Number(speed.value)||1)));speed.value=String(value);options.onAutoSpeed?.(id,value);};panel.append(motion);
    // The label is a coordinate/state value (button rules T06), not a command
    // caption. Keep its notation intact when the menu's text observer runs.
    parts.label.dataset.userLabel='';parts.label.dataset.mayTipImmediate='';
@@ -93,6 +97,8 @@
      const palette=parts['colour'+bit],input=parts['colourInput'+bit],own=a['paintColour'+bit],fallback=snapshot.paintColour||'#ff7f27',colour=/^#[0-9a-f]{6}$/i.test(own||'')?own:/^#[0-9a-f]{6}$/i.test(fallback)?fallback:'#ff7f27';
      palette.disabled=element.disabled;input.disabled=element.disabled;input.value=colour;palette.style.setProperty('--manual-paint-colour',colour);palette.title=caption+' · Цвет заливки битов '+bit+': '+colour+' · открыть палитру без переключения режима';palette.setAttribute('aria-label',palette.title);palette.parentElement.setAttribute('aria-label',caption+' · Заливка битов '+bit);}
     for(const op of ['xor','and']){const element=parts[op];element.setAttribute('aria-pressed',String(Geometry.mirrorOperation(a.op)===op));element.title=caption+' · Зеркало '+op.toUpperCase()+' · повторное нажатие возвращает копирование';element.setAttribute('aria-label',element.title);}
+    for(const [key,dir]of [['autoBack',-1],['autoForward',1]]){parts[key].setAttribute('aria-pressed',String(a.autoDirection===dir));parts[key].textContent=a.kind==='h'?(dir<0?'↑':'↓'):(dir<0?'←':'→');parts[key].title='Автодвижение '+(dir<0?'назад':'вперёд')+' · у края разворот · повторное нажатие — стоп';}
+    if(doc.activeElement!==parts.autoSpeed)parts.autoSpeed.value=String(a.autoSpeed||1);
     parts.remove.hidden=a.canDelete===false;parts.pin.hidden=a.pin===undefined;parts.pin.setAttribute('aria-pressed',String(!!a.pin));
     candidates.push({id:a.id,kind:a.kind,segment,size:{width:panel.offsetWidth,height:panel.offsetHeight}});
    }
