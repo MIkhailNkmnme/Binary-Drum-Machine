@@ -9,7 +9,31 @@
   const identities=new WeakMap();let identityCounter=0;
   const metricTasks=new Map();let metricTimer=0,metricActive=null;
   let activeTab='templates',templatePane,folderButton,layerPane,layerGrid,layerApi,layerUnsubscribe,layout='tiles';const layoutButtons=new Map();
-  const liveControlHosts=new Map();let gifPane;
+  const liveControlHosts=new Map();let gifPane,gifGrid,gifStatus,gifUnsubscribe,gifBound,gifGeneration=0;const gifUrls=new Set();
+  function gifLibrary(){
+    if(root.MayatnikLibraryDetached){try{return root.opener?.MayatnikTemplatePanel?.getGifLibrary?.()||root.opener?.mayGifLibrary||null;}catch(_){return null;}}
+    if(!root.mayGifLibrary&&root.MayatnikGifLibrary&&root.MayatnikPaintCache)root.mayGifLibrary=root.MayatnikGifLibrary.create(root.MayatnikPaintCache);
+    return root.mayGifLibrary||null;
+  }
+  root.mayatnikLibrarySaveGifScale=async input=>{const api=gifLibrary();if(!api)throw Error('Библиотека GIF недоступна');return api.save(input);};
+  function clearGifUrls(){for(const url of gifUrls)root.URL.revokeObjectURL(url);gifUrls.clear();}
+  function gifUrl(blob){const url=root.URL.createObjectURL(blob);gifUrls.add(url);return url;}
+  async function gifAction(action,id){try{const api=gifLibrary();if(action==='remove'){if(root.confirm('Удалить GIF из библиотеки?'))await api.remove(id);return;}const item=await api.read(id);
+    if(action==='view'){let viewer=root.MayatnikGifViewer;try{viewer=viewer||root.opener?.MayatnikGifViewer;}catch(_){}if(!viewer)throw Error('Просмотр GIF доступен в главном окне Маятника');viewer.show(item.blob,{name:item.name,...item.metadata});}
+    else{const url=root.URL.createObjectURL(item.blob),a=doc.createElement('a');a.href=url;a.download=item.name.endsWith('.gif')?item.name:item.name+'.gif';a.click();root.setTimeout(()=>root.URL.revokeObjectURL(url),60000);}
+  }catch(error){gifStatus.textContent=error?.message||'Не удалось открыть GIF';}}
+  async function renderGifs(){if(!gifGrid||!open||activeTab!=='gif')return;const api=gifLibrary(),generation=++gifGeneration;clearGifUrls();gifGrid.replaceChildren();
+    if(!api){gifStatus.textContent='Библиотека GIF недоступна';return;}
+    if(api!==gifBound){gifUnsubscribe?.();gifBound=api;gifUnsubscribe=api.subscribe(()=>renderGifs());}
+    gifStatus.textContent='Загрузка GIF…';
+    try{await api.ready;if(generation!==gifGeneration||!open||activeTab!=='gif')return;const folders=api.folders(),folder=folders.find(e=>e.id==='gif-scales')||folders.find(e=>e.name==='Масштабы'),entries=api.list().filter(e=>e.folderId===folder?.id&&matches(e.name));gifStatus.textContent=entries.length?'Сохранённых GIF: '+entries.length:query?'Поиск не дал результатов.':'Сохранённых GIF пока нет.';
+      for(const entry of entries){const card=doc.createElement('article');card.className='mtp-card mtp-capture-card';card.dataset.gifId=entry.id;
+        const choose=button('','Просмотреть GIF: '+entry.name,()=>gifAction('view',entry.id),'mtp-preview'),image=doc.createElement('img'),name=doc.createElement('span');image.className='mtp-image';image.alt=entry.name;name.className='mtp-name';name.dataset.userLabel='';name.textContent=entry.name;choose.append(image,name);
+        const actions=doc.createElement('div');actions.className='mtp-card-actions mtp-frame-actions';actions.append(button('↓','Скачать GIF: '+entry.name,()=>gifAction('download',entry.id)),button('×','Удалить GIF: '+entry.name,()=>gifAction('remove',entry.id)));card.append(choose,actions);gifGrid.append(card);
+        api.read(entry.id).then(item=>{if(generation!==gifGeneration||!open||activeTab!=='gif')return;image.src=typeof item.preview==='string'&&item.preview.startsWith('data:image/')?item.preview:gifUrl(item.preview&&typeof item.preview!=='string'?item.preview:item.blob);},error=>{if(generation===gifGeneration)gifStatus.textContent=error?.message||'Не удалось загрузить GIF';});
+      }
+    }catch(error){if(generation===gifGeneration)gifStatus.textContent=error?.message||'Не удалось загрузить GIF';}
+  }
   let musicPane,musicGrid,musicStatus,musicAudio,musicName,musicUnsubscribe,musicBound,musicPreviewGeneration=0;
   let musicVisualStage,musicCanvas,musicReader,musicPrepared,musicAnimation=null,musicDrawKey='',musicResizeObserver;
   function musicLibrary(){try{return root.mayXorromLibrary||root.opener?.mayXorromLibrary||null;}catch(_){return null;}}
@@ -77,14 +101,14 @@
     searchInput.placeholder='Поиск: '+sectionTitle();
   }
 
-  function selectTab(tab,persist=true){if(tab==='views')tab='frames';if(tab!=='music')stopMusicPreview();activeTab=tab==='gif'||tab==='layers'||tab==='sequences'||tab==='music'&&musicPane||captureLibraries.has(tab)?tab:'templates';if(!panel)return;
+  function selectTab(tab,persist=true){if(tab==='views')tab='frames';if(tab!=='music')stopMusicPreview();if(tab!=='gif'){gifGeneration++;clearGifUrls();}activeTab=tab==='gif'||tab==='layers'||tab==='sequences'||tab==='music'&&musicPane||captureLibraries.has(tab)?tab:'templates';if(!panel)return;
     panel.dataset.tab=activeTab;
     templatePane.hidden=activeTab!=='templates';sequencePane.hidden=activeTab!=='sequences';if(musicPane)musicPane.hidden=activeTab!=='music';if(gifPane)gifPane.hidden=activeTab!=='gif';panel.querySelector('.mtp-viewbar').hidden=activeTab==='sequences'||activeTab==='gif';layerPane.hidden=activeTab!=='layers';for(const library of captureLibraries.values())library.pane.hidden=activeTab!==library.key;folderButton.hidden=activeTab!=='templates';
     for(const [key,b]of tabButtons){b.setAttribute('aria-selected',String(key===activeTab));b.setAttribute('aria-pressed',String(key===activeTab));b.tabIndex=key===activeTab?0:-1;}
     if(persist)try{root.localStorage.setItem(TAB_KEY,activeTab);}catch(_){}
     syncExplorer();if(activeTab!=='templates'){metricTasks.clear();metricActive=null;renderActive();}else{engine?.refresh();renderKey='';render();}
   }
-  function renderActive(){if(activeTab==='sequences'){if(!sequenceView&&root.maySequences)sequenceView=root.MayatnikSequences.mount(sequencePane,root.maySequences);sequenceView?.refresh();syncExplorer();}else if(activeTab==='layers')renderLayers();else if(activeTab==='music')renderMusic();else renderCapture(captureLibraries.get(activeTab));}
+  function renderActive(){if(activeTab==='sequences'){if(!sequenceView&&root.maySequences)sequenceView=root.MayatnikSequences.mount(sequencePane,root.maySequences);sequenceView?.refresh();syncExplorer();}else if(activeTab==='layers')renderLayers();else if(activeTab==='music')renderMusic();else if(activeTab==='gif')renderGifs();else renderCapture(captureLibraries.get(activeTab));}
   function cancelMusicAnimation(){if(musicAnimation!==null){root.cancelAnimationFrame?.(musicAnimation);musicAnimation=null;}}
   function drawMusicPreview(force=false){
     const visual=musicVisual();if(!musicPrepared||!musicCanvas||!visual||!open||activeTab!=='music')return;
@@ -265,7 +289,7 @@
     layerPane=doc.createElement('section');layerPane.className='mtp-pane mtp-layer-pane';layerPane.id='mayLayerPane';layerPane.setAttribute('role','tabpanel');layerGrid=doc.createElement('div');layerGrid.className='mtp-layer-list';layerPane.append(layerGrid);
     sequencePane=doc.createElement('section');sequencePane.className='mtp-pane';sequencePane.id='maySequencePane';sequencePane.setAttribute('role','tabpanel');
     if(musicAvailable()||liveControlHosts.has('music'))musicPane=makeMusicPane();
-    gifPane=doc.createElement('section');gifPane.id='mayGifSettingsPane';gifPane.className='mtp-pane';gifPane.setAttribute('role','tabpanel');gifPane.append(liveControlsSection('gif'));
+    gifPane=doc.createElement('section');gifPane.id='mayGifSettingsPane';gifPane.className='mtp-pane';gifPane.setAttribute('role','tabpanel');gifPane.append(liveControlsSection('gif'));const gifFolder=doc.createElement('section'),gifHeading=doc.createElement('h3');gifFolder.dataset.gifFolder='gif-scales';gifHeading.textContent='Масштабы';gifStatus=doc.createElement('output');gifStatus.className='mtp-status';gifStatus.setAttribute('aria-live','polite');gifGrid=doc.createElement('div');gifGrid.className='mtp-grid';gifFolder.append(gifHeading,gifStatus,gifGrid);gifPane.append(gifFolder);
     const sections=[['templates','Шаблоны',templatePane],['layers','Слои',layerPane],...[...captureLibraries.values()].map(library=>[library.key,library.title,capturePane(library)]),...(musicPane?[['music','Музыка',musicPane]]:[]),['gif','GIF',gifPane],['sequences','Послед-ти',sequencePane]],tabKeys=sections.map(s=>s[0]);
     for(const [key,label,pane]of sections){const b=button(label,label,()=>selectTab(key));b.dataset.libraryTab=key;b.setAttribute('role','tab');b.id='mayLibraryTab-'+key;b.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',b.id);b.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?tabKeys[0]:e.key==='End'?tabKeys.at(-1):tabKeys[(tabKeys.indexOf(key)+(e.key==='ArrowRight'?1:tabKeys.length-1))%tabKeys.length];selectTab(next);tabButtons.get(next).focus();}});tabButtons.set(key,b);tabs.append(b);}
     const workspace=doc.createElement('div');workspace.className='mtp-workspace';const main=doc.createElement('div');main.className='mtp-main';
@@ -411,11 +435,11 @@
     if(value&&!local&&showDetached())return;
     if(!panel){make();if(!panel)return;}const next=!!value,changed=next!==!panel.hidden,focused=doc.activeElement,launcher=doc.getElementById('bTemplatePanel');open=next;panel.hidden=!open;doc.body.classList.toggle('may-template-panel-open',open);
     if(changed){if(open&&focused===launcher)tabButtons.get(activeTab)?.focus();else if(!open&&panel.contains(focused))launcher?.focus();}
-    if(!open){finishResize(true);stopMusicPreview();}resizeHandle.hidden=!open;applyWidth();
+    if(!open){finishResize(true);stopMusicPreview();gifGeneration++;clearGifUrls();}resizeHandle.hidden=!open;applyWidth();
     if(persist)try{root.localStorage.setItem(OPEN_KEY,open?'1':'0');}catch(_){}
     engine?.refresh();if(open){if(activeTab!=='templates')renderActive();else render();}if(changed){root.dispatchEvent(new CustomEvent('mayatnik-template-panel-change',{detail:{open}}));root.dispatchEvent(new Event('resize'));}
   }
-  root.MayatnikTemplatePanel={registerControls,openLocalTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true,true,true);tabButtons.get(activeTab)?.focus();(activeTab==='music'?musicPane:gifPane)?.querySelector('[data-library-controls]')?.scrollIntoView?.({block:'start'});},toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,getFolderStore:()=>store,hasWindow:()=>!!libraryWindow&&!libraryWindow.closed,openTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true);}};
+  root.MayatnikTemplatePanel={registerControls,getGifLibrary:gifLibrary,openLocalTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true,true,true);tabButtons.get(activeTab)?.focus();(activeTab==='music'?musicPane:gifPane)?.querySelector('[data-library-controls]')?.scrollIntoView?.({block:'start'});},toggle(){setOpen(!open);},setOpen,isOpen:()=>open,refresh:schedule,bind,getFolderStore:()=>store,hasWindow:()=>!!libraryWindow&&!libraryWindow.closed,openTab(tab){make();bindLayers(root.mayLayers);selectTab(tab);setOpen(true);}};
   root.addEventListener('may-template-limit-change',syncTemplateLimit);
   root.addEventListener('may-template-limit-rejected',showTemplateLimitNotice);
   root.addEventListener('may-layers-ready',()=>{make();bindLayers(root.mayLayers);});
@@ -425,6 +449,6 @@
   root.addEventListener('may-template-saved',e=>{make();bind(root.mayTemplateLibrary);if(!engine)return;store.reconcile(engine.allIds());const id=String(e.detail?.id||'');folderSelection='';current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';renderKey='';selectTab('templates');setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});});
   root.addEventListener('resize',()=>drawMusicPreview(true));
   doc.addEventListener('visibilitychange',()=>{if(doc.hidden&&musicAudio){try{musicAudio.pause();}catch(_){}cancelMusicAnimation();}});
-  root.addEventListener('pagehide',()=>{stopMusicPreview();musicResizeObserver?.disconnect();musicUnsubscribe?.();unsubscribe?.();layerUnsubscribe?.();folderUnsubscribe?.();sequenceView?.destroy();for(const library of captureLibraries.values())library.unsubscribe?.();observer?.disconnect();},{once:true});
+  root.addEventListener('pagehide',()=>{gifGeneration++;clearGifUrls();gifUnsubscribe?.();stopMusicPreview();musicResizeObserver?.disconnect();musicUnsubscribe?.();unsubscribe?.();layerUnsubscribe?.();folderUnsubscribe?.();sequenceView?.destroy();for(const library of captureLibraries.values())library.unsubscribe?.();observer?.disconnect();},{once:true});
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',make,{once:true});else make();
 })(window);

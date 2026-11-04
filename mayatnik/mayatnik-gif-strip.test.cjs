@@ -206,3 +206,31 @@ test('common delay survives variant selection, clamps to encoder bounds and sync
  const f=variantFixture(),saved=[];try{f.api.showVariants(f.variants,{delay:230,onDownload:async value=>saved.push(value)});const number=f.q('.may-gif-strip-speed'),slider=f.q('.may-gif-strip-speed-range');assert.equal(number.min,'20');assert.equal(number.max,'5000');assert.equal(slider.step,'10');assert.equal(slider.value,'230');number.value='375';f.event(number,'change');assert.equal(number.value,'380');assert.equal(slider.value,'380');f.qa('.may-gif-strip-variant-label')[7].click();assert.equal(number.value,'380');assert.equal(f.variants[7].delay,100,'viewer does not mutate cached variants');f.q('.may-gif-strip-download').click();await Promise.resolve();assert.equal(saved[0].delay,380);assert.equal(saved[0].variant.id,'v7');slider.value='490';f.event(slider,'input');assert.equal(number.value,'490');number.value='99999';f.event(number,'change');assert.equal(number.value,'5000');number.value='1';f.event(number,'change');assert.equal(number.value,'20');f.api.openSettings({delay:12345});assert.equal(number.value,'5000');assert.equal(slider.value,'5000');
  }finally{f.api.hide();f.dom.window.close();}
 });
+
+test('semantic overlay stays transparent above the GIF despite the real global canvas background',()=>{
+ const f=variantFixture();try{
+  const page=fs.readFileSync(path.join(__dirname,'Zerkalius-mayatnik.html'),'utf8');
+  const globalRule=page.match(/(?:^|\n)canvas\{[^}]+\}/)[0];
+  const style=f.w.document.createElement('style');style.textContent=globalRule+'\n'+fs.readFileSync(path.join(__dirname,'mayatnik-gif-strip.css'),'utf8');f.w.document.head.append(style);
+  f.api.showVariants(f.variants);
+  const overlay=f.q('.may-gif-strip-overlay'),field=f.w.document.createElement('canvas');f.wrap.append(field);
+  assert.equal(f.w.getComputedStyle(field).backgroundColor,'rgb(0, 0, 0)','main field keeps its original black background');
+  assert.equal(f.w.getComputedStyle(overlay).backgroundColor,'rgba(0, 0, 0, 0)','transparent search/digit layer must not hide the selected GIF');
+  assert.equal(f.w.getComputedStyle(overlay).marginLeft,'0px');assert.equal(f.w.getComputedStyle(overlay).pointerEvents,'none');
+  f.q('.may-gif-strip-digits').click();f.qa('.may-gif-strip-select')[7].click();
+  assert.equal(f.w.getComputedStyle(overlay).backgroundColor,'rgba(0, 0, 0, 0)');assert.equal(f.q('.may-gif-strip-stage').src,f.qa('.may-gif-strip-track img')[7].dataset.frameUrl);
+ }finally{f.dom.window.close();}
+});
+
+test('GIF, saved-frame and replace-field exports use exactly the selected cached frame and explicit callbacks',async()=>{
+ const f=variantFixture(),calls=[];let fail=false;
+ try{
+  const options={onSaveLibrary:async d=>calls.push(['gif',d]),onSaveFrame:async d=>{if(fail)throw Error('Смешанная ячейка');calls.push(['frame',d]);},onApplyFrame:async d=>calls.push(['apply',d])};
+  f.api.openSettings(options);for(const cls of ['save-library','save-frame','apply-frame'])assert.equal(f.q('.may-gif-strip-'+cls).hidden,true);
+  f.api.showVariants(f.variants,options);f.qa('.may-gif-strip-select')[17].click();f.q('.may-gif-strip-speed').value='420';f.event(f.q('.may-gif-strip-speed'),'change');
+  for(const cls of ['save-library','save-frame','apply-frame']){const b=f.q('.may-gif-strip-'+cls);assert.equal(b.hidden,false);b.click();assert.equal(b.disabled,true);await Promise.resolve();assert.equal(b.disabled,false);}
+  assert.deepEqual(calls.map(c=>c[0]),['gif','frame','apply']);for(const [,d]of calls){assert.equal(d.variant,f.variants[5]);assert.equal(d.frame,f.variants[5].frames[2]);assert.equal(d.index,2);assert.equal(d.delay,420);}
+  fail=true;f.q('.may-gif-strip-save-frame').click();await Promise.resolve();assert.match(f.q('.may-gif-strip-status').textContent,/Смешанная ячейка/);assert.equal(calls.length,3);assert.equal(f.q('.may-gif-strip-save-frame').disabled,false);
+  f.show();for(const cls of ['save-library','save-frame','apply-frame'])assert.equal(f.q('.may-gif-strip-'+cls).hidden,true,'legacy show does not retain previous export actions');
+ }finally{f.dom.window.close();}
+});
