@@ -2,13 +2,14 @@
 (function(root,factory){
  'use strict';
  if(typeof module==='object'&&module.exports)module.exports={create:factory};
- else root.MayatnikGifStrip=factory(root);
-})(typeof window==='object'?window:globalThis,function(win){
+ else {root.MayatnikGifStrip=factory(root);root.MayatnikGifStrip.create=factory;}
+})(typeof window==='object'?window:globalThis,function(win,hostOptions){
  'use strict';
+ hostOptions=hostOptions||{};
  const doc=win.document,key='mayatnik.gifStrip.thumbSize.v2';
  let section,track,title,status,header,observer,panelObserver,stage,range,counter,playButton,previousButton,nextButton,modeButtons,download,items=[],urls=[],selected=0,width=1,height=1,edge=88,drag=null,moving=null,box=null,playing=false,timer=null,delay=100,busy=false,presentation='pixels',onPresentationChange=null,downloadUrl=null;
  try{const saved=JSON.parse(win.localStorage.getItem(key));if(Number.isFinite(saved)&&saved>0)edge=saved;}catch{}
- let groups=[],activeGroup=null,tracksArea,display,overlay,searchBar,searchInput,directionInput,searchButton,searchStatus,digitButton,settingsBar,speedInput,speedRange,sequenceInput,generateButton,cancelButton,montageButton,manualSearch=false,searchOptions={},searchToken=0,searchMask=null,digits=false;
+ let groups=[],activeGroup=null,tracksArea,display,overlay,searchBar,searchInput,directionInput,searchButton,searchStatus,digitButton,settingsBar,speedInput,speedRange,sequenceInput,generateButton,cancelButton,montageButton,libraryButton,frameButton,applyButton,manualSearch=false,searchOptions={},searchToken=0,searchMask=null,digits=false;
  const allItems=()=>groups.length?groups.flatMap(g=>g.items):items;
  const boundedDelay=value=>Math.max(20,Math.min(5000,Math.round((Number(value)||100)/10)*10));
  function setDelay(value,notify=false){delay=boundedDelay(value);if(speedInput)speedInput.value=String(delay);if(speedRange)speedRange.value=String(delay);if(notify){searchOptions.onDelayChange?.(delay);schedule();}}
@@ -36,7 +37,7 @@
  function schedule(){if(timer!==null)win.clearTimeout(timer);timer=null;if(playing&&!section.hidden&&items.length>1)timer=win.setTimeout(()=>{timer=null;select((selected+1)%items.length);},delay);}
  function pause(){playing=false;if(timer!==null)win.clearTimeout(timer);timer=null;if(playButton){playButton.querySelector('.may-gif-button-caption').textContent='▶ Пуск';playButton.setAttribute('aria-label','Воспроизвести кадры GIF');playButton.setAttribute('aria-pressed','false');}}
  function play(){if(!items.length||section.hidden)return;playing=true;playButton.querySelector('.may-gif-button-caption').textContent='Ⅱ Пауза';playButton.setAttribute('aria-label','Приостановить просмотр GIF');playButton.setAttribute('aria-pressed','true');schedule();}
- function setBusy(value){busy=!!value;if(!section)return;section.setAttribute('aria-busy',String(busy));for(const button of modeButtons)button.disabled=busy;if(generateButton)generateButton.disabled=busy;if(cancelButton)cancelButton.hidden=!busy;if(speedInput)speedInput.disabled=busy;if(speedRange)speedRange.disabled=busy;if(sequenceInput)sequenceInput.disabled=busy;download.disabled=busy;download.setAttribute('aria-disabled',String(busy));}
+ function setBusy(value){busy=!!value;if(!section)return;section.setAttribute('aria-busy',String(busy));for(const button of modeButtons)button.disabled=busy;if(generateButton)generateButton.disabled=busy;if(cancelButton)cancelButton.hidden=!busy;if(speedInput)speedInput.disabled=busy;if(speedRange)speedRange.disabled=busy;if(sequenceInput)sequenceInput.disabled=busy;for(const b of [libraryButton,frameButton,applyButton])if(b)b.disabled=busy;download.disabled=busy;download.setAttribute('aria-disabled',String(busy));}
  function finish(){
   if(!drag)return;const previous=drag;drag=null;
   try{if(previous.handle.hasPointerCapture?.(previous.id))previous.handle.releasePointerCapture(previous.id);}catch{}
@@ -56,7 +57,7 @@
  function initialBox(){const v=viewport(),w=Math.min(1000,v.width*.9),h=Math.min(720,v.height*.85);return {left:v.left+(v.width-w)/2,top:v.top+(v.height-h)/2,width:w,height:h};}
  function finishMove(){if(!moving)return;const previous=moving;moving=null;try{if(header.hasPointerCapture?.(previous.id))header.releasePointerCapture(previous.id);}catch{}section.classList.remove('may-gif-moving');}
  function reveal(){section.hidden=false;place(box?measuredBox():initialBox());}
- function hide(){pause();clearSearch();finish();finishMove();if(section)section.hidden=true;}
+ function hide(){pause();clearSearch();finish();finishMove();if(section)section.hidden=true;hostOptions.onHide?.();}
  function mount(){
   if(section)return true;if(!doc.body)return false;
   section=doc.createElement('section');section.id='mayGifStrip';section.hidden=true;section.setAttribute('role','dialog');section.setAttribute('aria-modal','false');section.setAttribute('aria-label','Гиф-Масштаб');section.setAttribute('data-no-mini','');
@@ -70,6 +71,11 @@
    const svg=doc.createElementNS('http://www.w3.org/2000/svg','svg'),polygon=doc.createElementNS('http://www.w3.org/2000/svg','polygon');svg.classList.add('may-standard-outline');svg.setAttribute('viewBox','0 0 '+width+' 24');svg.setAttribute('aria-hidden','true');polygon.setAttribute('points','12,0 '+(width-12)+',0 '+width+',12 '+(width-12)+',24 12,24 0,12');svg.append(polygon);node.append(caption,svg);node.addEventListener('click',handler);return node;}
   modeButtons=[['pixels','На весь кадр'],['scale','Уменьшать']].map(([value,label])=>{const node=button(label,'may-gif-strip-mode',()=>{if(!busy&&value!==presentation)onPresentationChange?.(value,selected);});node.dataset.presentation=value;node.setAttribute('aria-label',value==='pixels'?'Фигура занимает весь кадр GIF':'Фигура уменьшается внутри кадра GIF');return node;});
   download=button('↓ Скачать','may-gif-strip-download',async()=>{if(busy)return;if(searchOptions.onDownload){setBusy(true);try{await searchOptions.onDownload({variant:activeGroup?.variant,index:selected,delay});}catch(error){status.textContent=error.message||'Ошибка сохранения';}finally{setBusy(false);}return;}const activeDownload=activeGroup?.downloadUrl||downloadUrl;if(!activeDownload)return;const anchor=doc.createElement('a');anchor.href=activeDownload;anchor.download=download.dataset.filename;doc.body.append(anchor);anchor.click();anchor.remove();});download.hidden=true;toolbar.append(...modeButtons,download);
+  async function exportSelection(callback,message){if(busy||!items.length)return;const payload={variant:activeGroup?.variant,index:selected,frame:items[selected].entry,delay};setBusy(true);try{await searchOptions[callback](payload);status.textContent=message;}catch(error){status.textContent=error.message||'Ошибка экспорта';}finally{setBusy(false);}}
+  libraryButton=button('В GIF-библиотеку','may-gif-strip-save-library',()=>exportSelection('onSaveLibrary','GIF сохранён: Библиотека → GIF → Масштабы'));libraryButton.setAttribute('aria-label','Сохранить анимацию в Библиотека → GIF → Масштабы');
+  frameButton=button('Кадр в библиотеку','may-gif-strip-save-frame',()=>exportSelection('onSaveFrame','Кадр сохранён в библиотеку кадров'));frameButton.setAttribute('aria-label','Сохранить выбранный кадр в библиотеку кадров');
+  applyButton=button('Кадр на поле','may-gif-strip-apply-frame',()=>exportSelection('onApplyFrame','Выбранный кадр заменил текущее поле'));applyButton.setAttribute('aria-label','Заменить текущее поле выбранным кадром GIF');
+  for(const b of [libraryButton,frameButton,applyButton])b.hidden=true;toolbar.append(libraryButton,frameButton,applyButton);
   display=doc.createElement('div');display.className='may-gif-strip-display';stage=doc.createElement('img');stage.className='may-gif-strip-stage';stage.draggable=false;stage.decoding='async';display.append(stage);stage.addEventListener('load',drawOverlay);
   const transport=doc.createElement('div');transport.className='may-gif-strip-transport';
   previousButton=button('◀','may-gif-strip-previous',()=>select((selected-1+items.length)%items.length),40);previousButton.setAttribute('aria-label','Предыдущий кадр GIF');
@@ -151,10 +157,12 @@
   pause();activeGroup=group;items=group.items;track=group.track;width=group.variant.plan.width;height=group.variant.plan.height;download.hidden=!group.downloadUrl&&!searchOptions.onDownload;download.dataset.filename=group.variant.name||'Гиф-Масштаб.gif';
   title.textContent=group.label+' · '+items.length+' кадров';title.title=title.textContent;range.max=String(items.length-1);previousButton.disabled=nextButton.disabled=playButton.disabled=range.disabled=items.length<2;
   for(const g of groups){g.element.setAttribute('data-selected',String(g===group));g.heading.setAttribute('aria-pressed',String(g===group));g.track.style.setProperty('--may-gif-width',(edge*g.variant.plan.width/Math.max(g.variant.plan.width,g.variant.plan.height))+'px');g.track.style.setProperty('--may-gif-height',(edge*g.variant.plan.height/Math.max(g.variant.plan.width,g.variant.plan.height))+'px');}
+  for(const [b,key]of [[libraryButton,'onSaveLibrary'],[frameButton,'onSaveFrame'],[applyButton,'onApplyFrame']])b.hidden=typeof searchOptions[key]!=='function';
   select(index);resize(edge,false);searchButton.disabled=typeof searchOptions.search!=='function'||!semantic()?.bits;
  }
  function configure(options){
   searchOptions=options;settingsBar.hidden=false;sequenceInput.value=options.sequence||'step8';directionInput.value=options.searchDirection||'all';generateButton.hidden=typeof options.onGenerate!=='function';cancelButton.hidden=!busy;montageButton.hidden=typeof options.onMontage!=='function';
+  for(const [b,key]of [[libraryButton,'onSaveLibrary'],[frameButton,'onSaveFrame'],[applyButton,'onApplyFrame']])b.hidden=typeof options[key]!=='function'||!items.length;
   setDelay(Number.isFinite(Number(options.delay))?options.delay:delay);
  }
  function openSettings(options={}){
@@ -178,7 +186,7 @@
   if(!mount())return false;
   // Create the replacement before releasing the previous generation.
   const next=[];let nextDownload=null;try{for(const entry of frames)next.push(win.URL.createObjectURL(entry.blob));if(options.blob)nextDownload=win.URL.createObjectURL(options.blob);}catch{next.forEach(url=>win.URL.revokeObjectURL(url));if(nextDownload)win.URL.revokeObjectURL(nextDownload);return false;}
-  release();tracksArea.classList.remove('may-gif-strip-tracks-many');urls=next;downloadUrl=nextDownload;width=w;height=h;selected=0;delay=Number.isFinite(Number(options.delay))?Math.max(10,Number(options.delay)):100;presentation=options.presentation==='scale'?'scale':'pixels';onPresentationChange=typeof options.onPresentationChange==='function'?options.onPresentationChange:null;
+  release();for(const b of [libraryButton,frameButton,applyButton])b.hidden=true;tracksArea.classList.remove('may-gif-strip-tracks-many');urls=next;downloadUrl=nextDownload;width=w;height=h;selected=0;delay=Number.isFinite(Number(options.delay))?Math.max(10,Number(options.delay)):100;presentation=options.presentation==='scale'?'scale':'pixels';onPresentationChange=typeof options.onPresentationChange==='function'?options.onPresentationChange:null;
   items=frames.map((entry,index)=>frame(entry,index));title.textContent=(options.name?String(options.name)+' · ':'')+frames.length+' кадров';title.title=title.textContent;
   range.max=String(items.length-1);for(const node of modeButtons){node.hidden=!onPresentationChange;node.setAttribute('aria-pressed',String(node.dataset.presentation===presentation));}download.hidden=!downloadUrl;download.dataset.filename=options.name?String(options.name):'Гиф-Масштаб.gif';previousButton.disabled=nextButton.disabled=playButton.disabled=items.length<2;range.disabled=items.length<2;
   status.textContent='Большой кадр вписан целиком. Миниатюры и бегунок выбирают кадр; кнопка Пуск проигрывает ленту.';setBusy(busy);

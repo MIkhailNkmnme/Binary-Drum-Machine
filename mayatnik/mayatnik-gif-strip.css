@@ -41,7 +41,7 @@
 #mayGifStrip .may-gif-strip-variant{border-top:1px solid #394657;padding-top:2px}
 #mayGifStrip .may-gif-strip-variant-label{font:11px/20px var(--mono,monospace);color:#dfe6f5;background:#151b24;border:1px solid #394657;padding:0 8px;cursor:pointer}
 #mayGifStrip .may-gif-strip-variant-label[aria-pressed=true]{border-color:#73e4a5}
-#mayGifStrip .may-gif-strip-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#mayGifStrip .may-gif-strip-overlay{position:absolute;inset:0;width:100%;height:100%;margin:0;background:transparent;pointer-events:none}
 #mayGifStrip .may-gif-strip-search,#mayGifStrip .may-gif-strip-settings{display:flex;flex-wrap:wrap;align-items:center;gap:4px;flex:none}
 #mayGifStrip .may-gif-strip-search[hidden],#mayGifStrip .may-gif-strip-settings[hidden]{display:none}
 #mayGifStrip .may-gif-strip-search>.gz-hx,#mayGifStrip .may-gif-strip-settings>.gz-hx{--gz-w:120px;--gz-h:24px;--c:#73e4a5;flex:0 0 120px;justify-content:center}
