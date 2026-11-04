@@ -5,7 +5,7 @@
   // fixes the earliest starting row; it deliberately does not choose a column.
   function* earliestSteps({width:W,height:H,val,anchor=0,text,skip=[false,false]},checkpoint=()=>null){
     const m=text.length;if(!m||m>H||skip.every(Boolean))return {rows:[-1,-1],words:0,cells:0};
-    const words=Math.ceil(m/32),masks=[new Uint32Array(words),new Uint32Array(words)];for(let i=0;i<m;i++)masks[text.charCodeAt(i)-48][i>>>5]|=1<<(i&31);
+    const words=Math.ceil(m/32),masks=[new Uint32Array(words),new Uint32Array(words)];for(let i=0;i<m;i++){if(text[i]===' '){masks[0][i>>>5]|=1<<(i&31);masks[1][i>>>5]|=1<<(i&31);}else masks[text.charCodeAt(i)-48][i>>>5]|=1<<(i&31);}
     let prev=new Uint32Array(W*words),curr=new Uint32Array(W*words),prevLen=new Uint32Array(W),currLen=new Uint32Array(W),operations=0,cells=0;
     const rows=[-1,-1],done=skip.slice(),lastBit=1<<((m-1)&31);
     for(let r=0;r<H;r++){
@@ -22,7 +22,7 @@
     }
     return {rows,words:operations,cells};
   }
-  function* findSteps({width,height,val,anchor=0,sequence=[],inverse=false,reverse=false,half=false,parities=[0,1],halves:outputHalves=parities.length,skipIndices=[[],[]],maxOperations=Infinity,maxEntries=Infinity,maxMs=Infinity,chunkMs=125,chunkOperations=Infinity}){
+  function* findSteps({width,height,val,anchor=0,sequence=[],inverse=false,reverse=false,half=false,rowReverseMask=false,parities=[0,1],halves:outputHalves=parities.length,skipIndices=[[],[]],maxOperations=Infinity,maxEntries=Infinity,maxMs=Infinity,chunkMs=125,chunkOperations=Infinity}){
     if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||!val||val.length<width*height||sequence.some(s=>typeof s!=='string'||!/^[01]+$/.test(s)))throw Error('Некорректные данные поиска змеи.');
     if(!Array.isArray(parities)||!parities.length||parities.some(p=>p!==0&&p!==1)||new Set(parities).size!==parities.length)throw Error('Некорректные решётки поиска змеи.');
     if(!Array.isArray(skipIndices)||skipIndices.length!==2||skipIndices.some(indices=>!Array.isArray(indices)||indices.some(i=>!Number.isInteger(i)||i<0||i>=sequence.length)))throw Error('Некорректные исключения поиска змеи.');
@@ -31,10 +31,10 @@
     const limit={};const tick=()=>{operations++;if(operations>maxOperations||(operations%1024===0&&Date.now()-started>maxMs))throw limit;return operations-chunkAt>=chunkOperations||operations%1024===0&&Date.now()-chunkStarted>=chunkMs;};
     const progress=()=>{chunkStarted=Date.now();chunkAt=operations;const newFound=found.slice(reportedFound);reportedFound=found.length;return {operations,entries,peakEntries,found:found.length,total,halves:outputHalves,index:currentIndex,half:currentHalf,newFound};};
     const prepassCheckpoint=work=>{operations+=work;const now=Date.now();if(operations>maxOperations||now-started>maxMs)throw limit;return operations-chunkAt>=chunkOperations||now-chunkStarted>=chunkMs?progress():null;};
-    const variants=sequence.map(text=>Variants.generate(text,{inverse,reverse,half}).map(record=>[record.word,record.vn,record]));
+    const variants=sequence.map(text=>Variants.generate(text,{inverse,reverse,half,rowReverseMask}).map(record=>[record.word,record.vn,record]));
     const needs=[new Map(),new Map()];for(const p of parities)for(let i=0;i<variants.length;i++)if(!excluded[p].has(i))for(const text of new Set(variants[i].map(v=>v[0])))needs[p].set(text,(needs[p].get(text)||0)+1);
     if(parities.every(p=>!needs[p].size))return {found,hl,total,halves:outputHalves,snake:true,complete:true,reason:'',operations:0,entries:0,peakEntries:0,prepassWords:0,prepassCells:0,elapsedMs:Date.now()-started};
-    const starts=[[],[],[],[]],impossible=[{},{}];
+    const starts=[[],[],[],[]],wildStarts=[[],[]],impossible=[{},{}];
     // During one starting row, index = row - startingRow. A shared sliding
     // workspace therefore needs width*maxWordLength slots, not a Map per word.
     const depth=Math.min(height,Math.max(1,...needs.flatMap(map=>Array.from(map.keys(),text=>text.length)))),memoValues=new Uint32Array(width*depth),memoStamp=new Uint32Array(width*depth);let generation=1,memoOffset=0;
@@ -51,10 +51,10 @@
     function occurrence(text,cap,p){
       const memo=workspace;let cursor=0,rank=0,pending=null,startRow=-1,everFound=false,seeded=false;
       const word=Uint8Array.from(text,bit=>bit.charCodeAt(0)-48);
-      const candidates=starts[2*p+Number(text[0])],lastStart=(height-text.length+1)*width;
+      const candidates=text[0]===' '?wildStarts[p]:starts[2*p+Number(text[0])],lastStart=(height-text.length+1)*width;
       const release=()=>{entries=0;memo.clear();};
       const store=(key,value)=>{if(++entries>maxEntries)throw limit;peakEntries=Math.max(peakEntries,entries);memo.set(key,value);};
-      const valid=(q,i)=>q>=0&&q<N&&val[q]===word[i];
+      const valid=(q,i)=>q>=0&&q<N&&(text[i]===' '?(val[q]===0||val[q]===1):val[q]===word[i]);
       const children=q=>{const c=q%width,r=Math.floor(q/width);return r+1>=height?[]:[...(c>0?[q+width-1]:[]),...(c+1<width?[q+width+1]:[])];};
       function* count(q,i){
         if(!valid(q,i)||Math.floor(q/width)+text.length-i>height)return 0;
@@ -76,7 +76,7 @@
       return { *peek(){if(pending)return pending;if(!text.length||text.length>height||knownImpossible(text,p))return null;if(!seeded){const row=yield* firstRow(text,p);seeded=true;if(row<0)return null;const minimum=row*width;let lo=0,hi=candidates.length;while(lo<hi){const mid=(lo+hi)>>>1;if(candidates[mid]<minimum)lo=mid+1;else hi=mid;}cursor=lo;}startRow=-1;while(cursor<candidates.length&&candidates[cursor]<lastStart){if(tick())yield progress();const q=candidates[cursor],c=q%width,r=Math.floor(q/width);if(r!==startRow){release();startRow=r;memoOffset=r*width;}const n=yield* count(q,0);if(rank<n){pending={cells:yield* path(q,rank),r,c};everFound=true;release();return pending;}cursor++;rank=0;}release();if(!everFound)rememberImpossible(text,p);return null;},take(){rank++;pending=null;}};
     }
     const halves=[0,1].map(p=>new Map(Array.from(needs[p],([text,cap])=>[text,occurrence(text,cap,p)])));
-    try{for(let q=0;q<N;q++){if(tick())yield progress();const bit=val[q];if(bit===0||bit===1)starts[2*((q%width-anchor-Math.floor(q/width))&1)+bit].push(q);}for(let i=0;i<variants.length;i++)for(const p of parities){
+    try{for(let q=0;q<N;q++){if(tick())yield progress();const bit=val[q];if(bit===0||bit===1){const p=(q%width-anchor-Math.floor(q/width))&1;starts[2*p+bit].push(q);wildStarts[p].push(q);}}for(let i=0;i<variants.length;i++)for(const p of parities){
       if(excluded[p].has(i))continue;currentIndex=i;currentHalf=p;const occurrences=halves[p];let best=null;for(const [text,vn,variant]of variants[i]){const hit=yield* occurrences.get(text).peek();if(hit&&(!best||hit.r<best.r||hit.r===best.r&&hit.c<best.c))best={...hit,text,vn,variant};}if(!best)continue;occurrences.get(best.text).take();found.push({i,p,r:best.r,c:best.c,n:best.cells.length,cells:best.cells,vn:best.vn,text:best.text,variantFlags:best.variant.flags,variantIndex:best.variant.index,variantLabel:best.variant.label,dir:'snake'});for(const cell of best.cells)hl[cell]=1;
     }}catch(e){if(e!==limit)throw e;complete=false;reason='Достигнут предел поиска змеи; проверены не все пути.';}
     return {found,hl,total,halves:outputHalves,snake:true,complete,reason,operations,entries,peakEntries,prepassWords,prepassCells,elapsedMs:Date.now()-started};

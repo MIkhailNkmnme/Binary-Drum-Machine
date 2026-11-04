@@ -18,9 +18,9 @@ function setup(options={}){
 test('both option diamonds are centered below their owner rather than anchored to its left edge',()=>{
  const f=setup();try{for(const key of ['sp','ft']){const popup=f.open(key),width=Number.parseFloat(popup.style.getPropertyValue('--transport-popup-width')),r=f.rects[key];assert.equal(+popup.style.left.replace('px','')+width/2,r.left+r.width/2);assert.equal(popup.style.top,r.top+r.height+2+'px');f.doc.dispatchEvent(new f.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));}}finally{f.close();}
 });
-test('x lists 32 even choices and t packs 21 even ticks edge-to-edge with powers centered',()=>{
+test('x lists 64 choices and t packs 21 even ticks edge-to-edge with powers centered',()=>{
  const f=setup();try{
-  let popup=f.open('sp'),options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,32);assert.deepEqual(options.map(b=>b.textContent),Array.from({length:32},(_,i)=>String((i+1)*2)));
+  let popup=f.open('sp'),options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,64);assert.deepEqual(options.map(b=>b.textContent),Array.from({length:64},(_,i)=>String(i+1)));
   popup=f.open('ft');options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,21);
   assert.deepEqual(options.map(b=>+b.dataset.value),Array.from({length:21},(_,i)=>i*2));assert.equal(options[0].textContent,'0');assert.equal(options.at(-1).textContent,'2');
   const middle=options.filter(b=>parseInt(b.style.left)===60).sort((a,b)=>parseInt(a.style.top)-parseInt(b.style.top));
@@ -63,16 +63,15 @@ test('diamond list CSS keeps each seconds label inside a rhombus and supports ho
 
 test('side arrows are closed rotated squares meeting the wide centre while its total footprint remains 80 by 24',()=>{const f=setup();try{for(const key of ['sp','ft']){const box=f.doc.querySelector('[data-k="'+key+'"]'),style=f.w.getComputedStyle(box),surface=box.querySelector('.may-transport-surface');assert.equal(style.width,'80px');assert.equal(style.height,'24px');assert.equal(f.w.getComputedStyle(surface).gap,'0px');assert.equal(f.w.getComputedStyle(surface).justifyContent,'center');const centre=box.querySelector('.may-transport-center .may-transport-outline');assert.equal(centre.getAttribute('viewBox'),'0 0 40 24');for(const node of box.querySelectorAll('.may-transport-nudge .may-transport-outline')){assert.equal(node.getAttribute('viewBox'),'0 0 18 24');const path=node.firstElementChild.getAttribute('d');assert.ok(path.endsWith('Z'));const xy=path.match(/-?\d+(?:\.\d+)?/g).map(Number),points=[];for(let i=0;i<xy.length;i+=2)points.push([xy[i],xy[i+1]]);assert.equal(points.length,4);const distances=points.map((p,i)=>Math.hypot(p[0]-points[(i+1)%4][0],p[1]-points[(i+1)%4][1]));assert.ok(distances.every(d=>Math.abs(d-distances[0])<1e-9));assert.deepEqual(points[1],[18,12]);assert.deepEqual(points[3],[0,12]);}const original=f.doc.getElementById(key==='sp'?'speed':'frameT'),before=Number(original.value);box.querySelector('[data-direction="1"]').click();assert.equal(Number(original.value),before+1);}}finally{f.close();}});
 
-test('even popup choices do not change unit nudge steps or round an existing odd speed',()=>{const f=setup();try{const input=f.doc.getElementById('speed');input.value='3';input.dispatchEvent(new f.w.Event('input'));let popup=f.open('sp');assert.equal(input.value,'3');assert.equal(popup.querySelector('[aria-checked="true"]'),null);f.doc.querySelector('[data-k="sp"] [data-direction="1"]').click();assert.equal(input.value,'4');f.doc.querySelector('[data-k="sp"] [data-direction="-1"]').click();assert.equal(input.value,'3');f.button('sp').click();assert.equal(input.value,'4');f.doc.querySelector('[data-k="sp"] [data-direction="1"]').click();assert.equal(input.value,'5');assert.equal(popup.querySelector('[aria-checked="true"]'),null);f.button('sp').click();assert.equal(input.value,'6');input.value='64';input.dispatchEvent(new f.w.Event('input'));f.button('sp').click();assert.equal(input.value,'2');const nodes=[...popup.querySelectorAll('[data-value]')];assert.equal(nodes.length,32);for(const b of nodes){assert.ok(parseInt(b.style.left)>=0&&parseInt(b.style.left)+30<=180);assert.ok(parseInt(b.style.top)+24<=144);}}finally{f.close();}});
-
-test('only powers of two occupy the central column, all other even choices flank it without clipping or overlap',()=>{
- const f=setup();try{const popup=f.open('sp'),nodes=[...popup.querySelectorAll('[data-value]')],middle=nodes.filter(b=>parseInt(b.style.left)===75).sort((a,b)=>parseInt(a.style.top)-parseInt(b.style.top));
- assert.deepEqual(middle.map(b=>Number(b.dataset.value)),[2,4,8,16,32,64]);assert.deepEqual(middle.map(b=>parseInt(b.style.top)),[0,24,48,72,96,120]);
- const rest=nodes.filter(b=>!middle.includes(b));assert.equal(rest.filter(b=>parseInt(b.style.left)<75).length,13);assert.equal(rest.filter(b=>parseInt(b.style.left)>75).length,13);
- assert.equal(new Set(nodes.map(b=>b.dataset.value)).size,32);assert.equal(new Set(nodes.map(b=>b.style.left+':'+b.style.top)).size,32);
- for(const b of nodes){const x=parseInt(b.style.left),y=parseInt(b.style.top);for(const [vx,vy]of [[x+15,y],[x+30,y+12],[x+15,y+24],[x,y+12]])assert.ok(Math.abs(vx-90)/90+Math.abs(vy-72)/72<=1+1e-9,'the outer diamond must not clip a selectable rhombus');}
- for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=Math.abs(parseInt(nodes[i].style.left)-parseInt(nodes[j].style.left)),dy=Math.abs(parseInt(nodes[i].style.top)-parseInt(nodes[j].style.top));assert.ok(dx/30+dy/24>=1-1e-9,'separate click targets must not overlap');}
- popup.querySelector('[data-value="32"]').click();assert.equal(f.doc.getElementById('speed').value,'32');
+test('all speeds remain selectable with one at the top, even values right and odd values left',()=>{
+ const f=setup();try{const popup=f.open('sp'),nodes=[...popup.querySelectorAll('[data-value]')],one=popup.querySelector('[data-value="1"]');
+ assert.equal(nodes.length,64);assert.equal(one.style.left,'120px');assert.equal(one.style.top,'0px');
+ for(const b of nodes){const value=Number(b.dataset.value),x=parseInt(b.style.left),y=parseInt(b.style.top);if(value>1)assert.ok(value%2?x<120:x>120);
+  for(const [vx,vy]of [[x+15,y],[x+30,y+12],[x+15,y+24],[x,y+12]])assert.ok(Math.abs(vx-135)/135+Math.abs(vy-108)/108<=1+1e-9);
+ }
+ for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=Math.abs(parseInt(nodes[i].style.left)-parseInt(nodes[j].style.left)),dy=Math.abs(parseInt(nodes[i].style.top)-parseInt(nodes[j].style.top));assert.ok(dx/30+dy/24>=1-1e-9);}
+ popup.querySelector('[data-value="3"]').click();assert.equal(f.doc.getElementById('speed').value,'3');f.open('sp');assert.equal(f.doc.querySelector('[aria-checked="true"]').dataset.value,'3');f.button('sp').click();assert.equal(f.doc.getElementById('speed').value,'4');
+ const input=f.doc.getElementById('speed');input.value='64';input.dispatchEvent(new f.w.Event('input'));f.button('sp').click();assert.equal(input.value,'1');
  }finally{f.close();}
 });
 

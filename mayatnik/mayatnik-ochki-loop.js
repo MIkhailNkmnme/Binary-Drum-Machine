@@ -1,5 +1,5 @@
 /* Row-major cyclic search. Empty cells disappear; unknown values remain barriers. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikOchkiLoop=api;})(globalThis,function(){
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-variants.js'):root.MayatnikVariants);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikOchkiLoop=api;})(globalThis,function(Variants){
   'use strict';
   function pack(lines){let offset=0;for(const L of lines){L.b=offset;offset+=L.n+1;}lines.all=lines.map(L=>L.str+',').join('');lines.bytes=Uint8Array.from(lines.all,ch=>ch.charCodeAt(0));return lines;}
   function lines({width,height,val,allowed=()=>true,all=false}){
@@ -22,7 +22,7 @@
     pack(lines);
   }
   function firstOccurrence(L,text,width,used=()=>false){
-    if(!text.length)return null;let best=null,at=L.str.indexOf(text);while(at>=0&&at<L.cycleSize){if(!used(at)){const row=Math.floor(L.cells[at]/width);if(!best||row<best.row)best={at,row};if(L.monotonic!==false||row===0)break;}at=L.str.indexOf(text,at+1);}return best;
+    if(!text.length)return null;let best=null,at=Variants.indexOf(L.str,text);while(at>=0&&at<L.cycleSize){if(!used(at)){const row=Math.floor(L.cells[at]/width);if(!best||row<best.row)best={at,row};if(L.monotonic!==false||row===0)break;}at=Variants.indexOf(L.str,text,at+1);}return best;
   }
   function runs(lines,{pattern,min=2,inverse=false}={}){
     const out=[],alternate=pattern==='alternating',wanted=pattern==='zeros'?'0':'1';

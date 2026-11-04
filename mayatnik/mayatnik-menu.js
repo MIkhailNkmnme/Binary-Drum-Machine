@@ -52,7 +52,7 @@
   const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({ochkiHalf:'Полуинверсия',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({ochkiHalf:'Полуинверсия',ochkiRowReverseMask:'Пустоты реверса',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);if(!e)return null;
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
@@ -133,7 +133,7 @@
         arrows: ['−1', '+1'] } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: GROUP_COLOURS['rail:ochki'], items: [
-      button('bOchki', 'eye'), button('bOchkiThrough','eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
+      button('bOchki', 'eye'), button('bOchkiThrough','eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiRowReverseMask','swap'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: GROUP_COLOURS['rail:zoom'], items: [
@@ -648,7 +648,7 @@
   // v0.790: ромбы x/t раскрывают вниз полный список; повторный щелчок — следующий вариант.
   {
     const sp=$('speed'),ft=$('frameT');let popup=null,active=null;
-    const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;const all=Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);return all.filter(value=>value%2===0&&(input!==sp||value<=64));};
+    const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;const all=Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);return all.filter(value=>input===sp?value>=1&&value<=64:value%2===0);};
     const label=(input,value)=>input===sp?'×'+value:value===0?'0 с · без паузы':({1:'1/20 с',2:'1/10 с',4:'1/5 с',10:'1/2 с',20:'1 с'}[value]||String(+(value*.05).toFixed(2)).replace('.',',')+' с');
     const make=(letter,input,name)=>{
       const svg=(node,width,path,cls)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(s.namespaceURI,'path');s.classList.add(cls);s.setAttribute('viewBox','0 0 '+width+' 24');s.setAttribute('aria-hidden','true');p.setAttribute('d',path);s.append(p);node.append(s);};
@@ -661,7 +661,7 @@
     };
     const bs=make('x',sp,'Вершин за кадр'),bf=make('t',ft,'Длительность кадра');
     function close(focus=false){const owner=active?.button;popup?.remove();popup=null;active=null;owner?.setAttribute('aria-expanded','false');if(focus)owner?.focus();}
-    const optionShape=input=>input===sp?{width:180,height:144,columns:6}:{width:150,height:120,columns:5};
+    const optionShape=input=>input===sp?{width:270,height:216,columns:9}:{width:150,height:120,columns:5};
     function place(){
       if(!popup||!active)return;
       const r=active.button.getBoundingClientRect(),shape=optionShape(active.input),view=menuVisualViewport();
@@ -683,7 +683,14 @@
       popup.className='gz-ladder may-transport-options may-speed-options'+(input===ft?' may-delay-options':'');popup.dataset.noMini='';popup.setAttribute('role','menu');popup.setAttribute('aria-label',name);
       const grid=document.createElement('div');grid.className='may-speed-diamond'+(input===ft?' may-delay-diamond':'');grid.setAttribute('role','presentation');popup.append(grid);
       const positions=new Map(),sides=[],size=shape.columns;
-      const powers=input===sp?[2,4,8,16,32,64]:[2,4,8,16,32];
+      if(input===sp){
+        positions.set(1,{left:120,top:0});
+        const wings=[[],[]];
+        for(let a=0;a<size;a++)for(let b=0;b<size;b++)if(a!==b)wings[a>b?0:1].push({left:(size-1+a-b)*15,top:(a+b)*12});
+        for(const wing of wings)wing.sort((a,b)=>a.top-b.top||Math.abs(a.left-120)-Math.abs(b.left-120));
+        for(let value=2;value<=64;value++)positions.set(value,wings[value%2][Math.floor((value-2)/2)]);
+      }else{
+      const powers=[2,4,8,16,32];
       powers.forEach((value,row)=>positions.set(value,{left:(size-1)*15,top:row*24}));
       // Edge-to-edge lattice, with powers of two on the central vertical.
       for(let a=0;a<size;a++)for(let b=0;b<size;b++){
@@ -692,6 +699,7 @@
       }
       sides.sort((a,b)=>a.top-b.top||a.left-b.left);
       values(input).filter(value=>!positions.has(value)).forEach((value,index)=>positions.set(value,sides[index]));
+      }
       let row;values(input).forEach((value,index)=>{
         const option=document.createElement('button');option.type='button';option.className='may-transport-option';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');option.title=name+': '+label(input,value);option.setAttribute('aria-label',option.title);
         const text=document.createElement('span');text.textContent=input===sp?String(value):label(input,value).split(' · ')[0].replace(/\s/g,'').replace(/с$/,'');option.append(text);

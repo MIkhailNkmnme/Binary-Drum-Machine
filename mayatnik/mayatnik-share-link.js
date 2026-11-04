@@ -70,6 +70,8 @@
     const axisColour=(obj,key)=>{if(obj[key]!==undefined&&(typeof obj[key]!=='string'||!/^#[0-9a-f]{6}$/i.test(obj[key])))throw Error('В ссылке некорректный цвет оси: '+key);};
     for(const key of ['ztPaintColour1','ztPaintColour0'])axisColour(state,key);
     if(Array.isArray(state.zl))for(const axis of state.zl)if(isPlainObject(axis))for(const key of ['paintColour1','paintColour0'])axisColour(axis,key);
+    if(state.gifScaleStackStep!=null)integer(state.gifScaleStackStep,1,65535,'В ссылке неверный шаг высоты нижних треугольников');
+    if(state.ochkiRowReverseMask!=null&&typeof state.ochkiRowReverseMask!=='boolean')throw Error('В ссылке неверный режим пустот реверса');
     const rows=integer(state.rows,8,4096,'В ссылке некорректное число строк');
     const steps=integer(state.steps,1,16384,'В ссылке некорректное число вершин');
     if(!MODES.includes(state.mode))throw Error('В ссылке некорректный ход маятника');

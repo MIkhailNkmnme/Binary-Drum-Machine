@@ -17,18 +17,21 @@
   const pattern=options.pattern||'initial',min=Number(options.min??5),limit=options.maxHits??2000,mask=new Uint8Array(n),hits=[];
   if(!['initial','ones','zeros','alternating'].includes(pattern)||!Number.isInteger(min)||min<1||min>4096||!Number.isInteger(limit)||limit<0)throw Error('Некорректные настройки поиска GIF');
   const cancelled=options.cancelled||(()=>false),yieldTask=options.yieldTask||(()=>new Promise(r=>setTimeout(r,0))),now=options.now||(()=>performance.now()),budget=options.budgetMs??8;
-  let started=now(),ops=0,count=0,yields=0;
+  let started=now(),ops=0,count=0,yields=0,savedCells=0;const maxSavedCells=Math.min(8*1024*1024,Math.max(0,Math.floor(options.maxSavedCells??8*1024*1024)));
   const check=()=>{if(cancelled())throw abort();};
   const due=()=>{if(++ops%1024)return false;check();return now()-started>=budget;};
   const pause=async()=>{await yieldTask();yields++;check();started=now();};
   const valid=(x,y)=>x>=0&&x<W&&y>=0&&y<H&&(bits[y*W+x]===0||bits[y*W+x]===1);
-  const remember=(cells,start,length,text,direction,metadata={})=>{count++;for(let j=start;j<start+length;j++)mask[cells[j]]=1;if(hits.length<limit)hits.push({cells:Uint32Array.from(cells.slice(start,start+length)),text,direction,...metadata});};
+  // Successive overlapping masks paint each cell once per line, even for all-wildcard words.
+  const lineMarkers=new WeakMap();
+  function marker(cells){let parent=lineMarkers.get(cells);if(!parent){parent=Uint32Array.from({length:cells.length+1},(_,i)=>i);lineMarkers.set(cells,parent);}const next=q=>{let end=q;while(parent[end]!==end)end=parent[end];while(parent[q]!==q){const old=parent[q];parent[q]=end;q=old;}return end;};return function*(from,to){for(let q=next(from);q<to;q=next(q)){mask[cells[q]]=1;parent[q]=next(q+1);yield q;}};}
+  const remember=(cells,start,length,text,direction,metadata={})=>{count++;for(const q of marker(cells)(start,start+length)){}if(hits.length<limit&&savedCells+length<=maxSavedCells){savedCells+=length;hits.push({cells:Uint32Array.from(cells.slice(start,start+length)),text,direction,...metadata});}};
   let patterns=[];
   if(pattern==='initial'){
    if(!Array.isArray(options.patterns)||!options.patterns.length)throw Error('Введите последовательность из 0 и 1 или задайте строки Поиска');
    let size=0;const seen=new Set();for(let i=0;i<options.patterns.length;i++){
     const text=options.patterns[i];if(typeof text!=='string'||!/^[01]+$/.test(text)||text.length>1048576||(size+=text.length)>2097152)throw Error('Некорректная последовательность для поиска GIF');
-    for(const variant of Variants.generate(text,{inverse:!!options.inverse,reverse:!!options.reverse,half:!!options.half}))if(!seen.has(variant.word)){seen.add(variant.word);patterns.push({...variant,i});}
+    for(const variant of Variants.generate(text,{inverse:!!options.inverse,reverse:!!options.reverse,half:!!options.half,rowReverseMask:!!options.rowReverseMask}))if(!seen.has(variant.word)){seen.add(variant.word);patterns.push({...variant,i});}
    }
   }
   check();
@@ -39,10 +42,10 @@
    for(const q of orderedCells(family,W,H)){if(bits[q]!==-1){cells.push(q);chars.push(bits[q]===0?'0':bits[q]===1?'1':'?');}if(due())await pause();}
    const text=chars.join(''),size=cells.length;let wholeMask=false;
    const rememberLoop=async(start,length,word,metadata={})=>{
-    count++;const saved=hits.length<limit?new Uint32Array(length):null;
+    count++;const saved=hits.length<limit&&savedCells+length<=maxSavedCells?new Uint32Array(length):null;if(saved)savedCells+=length;
     if(!wholeMask){
      const mark=Math.min(length,size);
-     for(let j=0;j<mark;j++){mask[cells[(start+j)%size]]=1;if(due())await pause();}
+     const paint=marker(cells),end=Math.min(size,start+mark);for(const q of paint(start,end))if(due())await pause();if(start+mark>size)for(const q of paint(0,start+mark-size))if(due())await pause();
      if(length>=size)wholeMask=true;
     }
     if(saved)for(let j=0;j<length;j++){saved[j]=cells[(start+j)%size];if(due())await pause();}
@@ -52,6 +55,11 @@
     // Finite words may span several laps; every ring origin is considered once.
     for(const item of patterns){
      if(size){
+      if(item.word.includes(' ')){
+       const expanded=text.repeat(Math.ceil((size+item.word.length-1)/size)).slice(0,size+item.word.length-1);
+       for(let at=Variants.indexOf(expanded,item.word);at>=0&&at<size;at=Variants.indexOf(expanded,item.word,at+1)){await rememberLoop(at,item.word.length,item.word,{i:item.i,variantLabel:item.label,variantFlags:item.flags});if(due())await pause();}
+       continue;
+      }
       // KMP keeps periodic rings linear in ring + word length, including overlapping hits.
       const word=item.word,prefix=new Uint32Array(word.length);
       for(let j=1,matched=0;j<word.length;j++){
@@ -86,7 +94,7 @@
   for(const [direction,[dx,dy]]of dirs)for(let y=0;y<H;y++)for(let x=0;x<W;x++){
    if(!valid(x,y)||valid(x-dx,y-dy)){if(due())await pause();continue;}
    const cells=[],chars=[];for(let xx=x,yy=y;valid(xx,yy);xx+=dx,yy+=dy){const q=yy*W+xx;cells.push(q);chars.push(String(bits[q]));}const text=chars.join('');
-   if(pattern==='initial')for(const item of patterns){let from=0;while(from<=text.length-item.word.length){const at=text.indexOf(item.word,from);if(at<0)break;remember(cells,at,item.word.length,item.word,direction,{i:item.i,variantLabel:item.label,variantFlags:item.flags});from=at+1;if(due())await pause();}if(due())await pause();}
+   if(pattern==='initial')for(const item of patterns){let from=0;while(from<=text.length-item.word.length){const at=Variants.indexOf(text,item.word,from);if(at<0)break;remember(cells,at,item.word.length,item.word,direction,{i:item.i,variantLabel:item.label,variantFlags:item.flags});from=at+1;if(due())await pause();}if(due())await pause();}
    else{
     const allowed=pattern==='ones'?(options.inverse?'01':'1'):pattern==='zeros'?(options.inverse?'01':'0'):'01';
     for(let from=0;from<text.length;){let end=from+1;if(!allowed.includes(text[from])){from=end;continue;}while(end<text.length&&(pattern==='alternating'?text[end]!==text[end-1]:text[end]===text[from]))end++;if(end-from>=min)remember(cells,from,end-from,text.slice(from,end),direction);from=end;if(due())await pause();}

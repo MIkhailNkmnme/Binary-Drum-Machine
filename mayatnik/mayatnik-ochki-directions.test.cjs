@@ -227,3 +227,10 @@ test('the new through button preserves every old search pin ordinal without movi
  vm.runInNewContext(source.slice(start,end),{rail:{el:{querySelector:()=>group}},tools:{querySelector:()=>null},manualLegacyCells:legacy,railSourceButtons:new Map([['bOchkiThrough',through]])});
  assert.deepEqual(visible,[first,through,snake,code]);assert.deepEqual(Array.from(legacy.get('ochki')),[first,snake,code,through]);assert.equal(through.dataset.n,'bOchkiThrough');
 });
+
+test('row reverse masks flow through ordinary, long, Code and overlay searches without changing their source rows',()=>{
+ for(const mode of Object.keys(fixtures)){const points=fixtures[mode].points.map(([x,y,bit],i)=>[x,y,i===2?0:bit]),api=finder({mode,points});assert.equal(api.result().found.length,0);api.state.ochkiRowReverseMask=true;const result=api.result();assert.equal(result.found[0].text,'1  1');assert.equal(result.found[0].variantFlags.rowReverseMask,true);assert.equal(result.hl.reduce((a,b)=>a+b,0),4);assert.deepEqual(api.context.sequences.rows,['1011']);assert.equal(api.context.matches.searchOptions.rowReverseMask,true);}
+ const text='1111111100000000',api=finder({mode:'col',height:40,points:Array.from({length:16},(_,i)=>[2,i*2,i%2]),sequence:[text]});api.state.ochkiRowReverseMask=true;assert.equal(api.result().found[0].text,' '.repeat(16));
+ const code=finder({mode:'loop',points:[[0,0,0],[1,0,0]],sequence:['10','11']}),c=code.context;code.state.ochkiCode=true;code.state.ochkiRowReverseMask=true;assert.equal(code.result().found[0].text,'    ');
+ const overlay=finder({mode:'row',sequence:['1011']}),o=overlay.context;overlay.state.ochkiRowReverseMask=true;o.ovlSource={bits:{W:8,H:1,anchor:0,val:Int8Array.from([1,-1,0,-1,0,-1,1,-1]),frame:1}};o.ovlFrozen=null;o.ovlRenderedBits=()=>o.ovlSource.bits;const result=o.ochkiOverlayGet();assert.equal(result.found[0].text,'1  1');assert.equal(result.hl.reduce((a,b)=>a+b,0),4);
+});

@@ -17,7 +17,7 @@
     const words=[],known=new Map(),rows=sequence.map((text,i)=>{
       const refs=[],seen=new Set(),items=variants?.[i]||[[text,'']];
       for(const item of items){const word=Array.isArray(item)?item[0]:item.word??item.text,label=Array.isArray(item)?item[1]:item.label;
-        if(typeof word!=='string'||word.length!==text.length||!/^[01]+$/.test(word))throw Error('Некорректный вариант строки');
+        if(typeof word!=='string'||word.length!==text.length||!/^[01 ]+$/.test(word))throw Error('Некорректный вариант строки');
         if(seen.has(word))continue;seen.add(word);let index=known.get(word);if(index===undefined){index=words.length;known.set(word,index);words.push({text:word});}refs.push({word:index,index:Array.isArray(item)?refs.length:item.index??refs.length,label:label||'',vn:Array.isArray(item)?label||'':item.vn??label??'',flags:Array.isArray(item)?undefined:copy(item.flags)});
       }
       if(!refs.length)throw Error('Нет вариантов строки');return {i,text,variants:refs};
@@ -29,7 +29,7 @@
     for(let at=text.length-1;at>=0;at--){const curr=Array(nodes.length).fill(0n),bit=Number(text[at]);
       for(let q=0;q<nodes.length;q++){
         if(cancelled())throw Error('Поиск отменён');if(++operations>maxOperations)throw Error('Достигнут предел поиска; полнота не доказана');
-        const node=nodes[q];if(node.bit===bit){if(at===text.length-1)curr[q]=1n;else for(const edge of node.edges)curr[q]+=next[edge];}
+        const node=nodes[q];if(text[at]===' '?(node.bit===0||node.bit===1):node.bit===bit){if(at===text.length-1)curr[q]=1n;else for(const edge of node.edges)curr[q]+=next[edge];}
         if(++chunk>=chunkOperations){chunk=0;yield {operations,at};}
       }if(keep)levels[at]=curr;next=curr;
     }return {counts:next,levels,operations};

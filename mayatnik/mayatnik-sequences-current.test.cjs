@@ -1,4 +1,4 @@
-﻿const test=require('node:test'),assert=require('node:assert/strict');
+const test=require('node:test'),assert=require('node:assert/strict');
 const {JSDOM}=require(process.env.SETKA_JSDOM||'C:/Users/Mhl/AppData/Local/Temp/codex-setka-dom/node_modules/jsdom');
 const S=require('./mayatnik-sequences.js');
 function setup(){const dom=new JSDOM('<aside id="mayatnikTemplatePanel"><section></section></aside>',{url:'https://test/'}),pane=dom.window.document.querySelector('section'),store=new Map(),api=S.create({getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v)},{rows:2});api.setText('10'.repeat(256)+'\n11');const mounted=S.mount(pane,api);return {dom,pane,api,close(){mounted.destroy();dom.window.close();}};}
@@ -35,3 +35,5 @@ test('rows without findings keep no empty details, and a first find records the 
   assert.equal(f.api.snapshot().firstFinds.find(hit=>hit.i===1)?.jumps,4);
  }finally{f.close();}
 });
+
+test('row reverse mask uses spaces in the yellow row, preserves editor and restores the original when off',()=>{const f=setup();try{f.api.setText('1011');f.api.setMatches(state(1,[{i:0,n:4,text:'1  1',variantFlags:{rowReverseMask:true}}],{searchOptions:{rowReverseMask:true}}));const row=f.pane.querySelector('[data-sequence-row="0"]'),code=row.querySelector('code');assert.equal(code.textContent,'1  1');assert.equal(code.style.whiteSpace,'pre');assert.ok(row.classList.contains('is-found'));assert.equal(f.pane.querySelector('textarea').value,'1011');assert.deepEqual(f.api.rows,['1011']);f.api.setMatches(state(2,[],{searchOptions:{rowReverseMask:false}}));assert.equal(code.textContent,'1011');}finally{f.close();}});

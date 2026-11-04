@@ -3,8 +3,8 @@
   'use strict';
   // Search each (visible node, word index) at most once per variant. Tracking
   // the deepest matching parent chain adds no second search or path enumeration.
-  function* anchoredSteps({readNode,size,start,text,inverse=false,reverse=false,half=false,chunkOperations=32768,maxOperations=Infinity,cancelled=()=>false}){
-    const variants=Variants.generate(text,{inverse,reverse,half});let operations=0,chunk=0,best=null;
+  function* anchoredSteps({readNode,size,start,text,inverse=false,reverse=false,half=false,rowReverseMask=false,chunkOperations=32768,maxOperations=Infinity,cancelled=()=>false}){
+    const variants=Variants.generate(text,{inverse,reverse,half,rowReverseMask});let operations=0,chunk=0,best=null;
     const seen=new Set(),empty=reason=>({found:false,partial:false,complete:true,maximal:true,start,n:text.length,matched:0,cells:[],prefixCells:[],variant:'',reason,operations});
     const path=tail=>{const cells=[];for(let node=tail;node;node=node.parent)cells.push(node.q);return cells.reverse();};
     for(const record of variants){const {word,vn:variant,flags:variantFlags,index:variantIndex,label:variantLabel}=record;if(seen.has(word))continue;seen.add(word);const rejected=new Set(),stack=[{q:start,i:0,next:0,edges:null,parent:null}];
@@ -15,7 +15,7 @@
         const current=stack.at(-1),key=current.i+':'+current.q;
         if(rejected.has(key)){stack.pop();continue;}
         const node=current.node||(current.node=readNode(current.q));
-        if(!node||!Number.isFinite(node.x)||!Number.isFinite(node.y)||node.bit!==Number(word[current.i])){rejected.add(key);stack.pop();continue;}
+        if(!node||!Number.isFinite(node.x)||!Number.isFinite(node.y)||(word[current.i]===' '?![0,1].includes(node.bit):node.bit!==Number(word[current.i]))){rejected.add(key);stack.pop();continue;}
         const matched=current.i+1;
         if(matched===word.length)return {found:true,partial:false,complete:true,maximal:true,start,n:word.length,matched,cells:path(current),prefixCells:[],variant,variantFlags,variantIndex,variantLabel,text:word,reason:'',operations};
         if(!best||matched>best.matched)best={tail:current,matched,variant,variantFlags,variantIndex,variantLabel,text:word};
@@ -27,16 +27,16 @@
     if(best)return {...empty('Полная строка не найдена; показан максимальный префикс.'),partial:true,matched:best.matched,prefixCells:path(best.tail),variant:best.variant,variantFlags:best.variantFlags,variantIndex:best.variantIndex,variantLabel:best.variantLabel,text:best.text};
     return empty('От выбранного бита эта строка не найдена.');
   }
-  function* findSteps({width:W,height:H,val,start,text,inverse=false,reverse=false,half=false,allowed,chunkOperations=32768,maxOperations=Infinity,cancelled}){
+  function* findSteps({width:W,height:H,val,start,text,inverse=false,reverse=false,half=false,rowReverseMask=false,allowed,chunkOperations=32768,maxOperations=Infinity,cancelled}){
     if(!Number.isSafeInteger(W)||!Number.isSafeInteger(H)||W<1||H<1||!Number.isSafeInteger(W*H)||!val||val.length<W*H||!Number.isSafeInteger(start)||start<0||start>=W*H||typeof text!=='string'||!/^[01]+$/.test(text))throw new RangeError('Некорректные данные ручного поиска змеи.');
     if(!(chunkOperations>0)||!(maxOperations>=0))throw new RangeError('Некорректный предел ручного поиска змеи.');
     const readNode=q=>{const r=Math.floor(q/W),c=q%W;return {x:c,y:r,bit:allowed&&!allowed(q,r,c)?-1:val[q],edges:r+1<H?[...(c>0?[q+W-1]:[]),...(c+1<W?[q+W+1]:[])]:[]};};
-    return yield* anchoredSteps({readNode,size:W*H,start,text,inverse,reverse,half,chunkOperations,maxOperations,cancelled});
+    return yield* anchoredSteps({readNode,size:W*H,start,text,inverse,reverse,half,rowReverseMask,chunkOperations,maxOperations,cancelled});
   }
   function findFrom(options){const steps=findSteps(options);let result;do{result=steps.next();}while(!result.done);return result.value;}
-  function* findGraphSteps({nodes,start,text,inverse=false,reverse=false,half=false,chunkOperations=32768,maxOperations=Infinity,cancelled}){
+  function* findGraphSteps({nodes,start,text,inverse=false,reverse=false,half=false,rowReverseMask=false,chunkOperations=32768,maxOperations=Infinity,cancelled}){
     if(!Array.isArray(nodes)||!Number.isInteger(start)||start<0||start>=nodes.length||typeof text!=='string'||!/^[01]+$/.test(text)||!(chunkOperations>0)||!(maxOperations>=0))throw new RangeError('Некорректный граф ручного поиска змеи.');
-    return yield* anchoredSteps({readNode:q=>nodes[q],size:nodes.length,start,text,inverse,reverse,half,chunkOperations,maxOperations,cancelled});
+    return yield* anchoredSteps({readNode:q=>nodes[q],size:nodes.length,start,text,inverse,reverse,half,rowReverseMask,chunkOperations,maxOperations,cancelled});
   }
   function findGraph(options){const steps=findGraphSteps(options);let result;do{result=steps.next();}while(!result.done);return result.value;}
   async function coneGraph(snapshot,{x,y,bit,length,cancelled=()=>false}){

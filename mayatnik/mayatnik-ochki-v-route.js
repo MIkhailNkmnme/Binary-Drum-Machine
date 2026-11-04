@@ -1,6 +1,6 @@
 /* Exact upper-left → meeting point → upper-right search paths.
  * Coordinates name logical cell centres, independently of display scale. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikOchkiVRoute=api;})(globalThis,function(){
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-variants.js'):root.MayatnikVariants);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikOchkiVRoute=api;})(globalThis,function(Variants){
   'use strict';
   function verticalPoints(points,height){
     if(!Number.isSafeInteger(height)||height<1)throw new RangeError('Invalid V-route height');
@@ -49,7 +49,7 @@
   function firstOccurrence(line,pattern,width,used=null){
     if(!pattern.length)return null;
     let best=null;
-    for(let at=line.str.indexOf(pattern);at>=0;at=line.str.indexOf(pattern,at+1)){
+    for(let at=Variants.indexOf(line.str,pattern);at>=0;at=Variants.indexOf(line.str,pattern,at+1)){
       if(used&&used(at))continue;
       const row=Math.floor(line.cells[at]/width);
       if(!best||row<best.row)best={at,row};

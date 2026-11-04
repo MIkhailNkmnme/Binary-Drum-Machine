@@ -3,3 +3,11 @@
 .may-scale-stack__level{display:flex;flex-direction:column;align-items:flex-start;gap:3px;flex:none}
 .may-scale-stack__label{font:11px/1.2 sans-serif;color:#aaa}
 .may-scale-stack__canvas{display:block;flex:none;max-width:none;margin:0;padding:0;border:0;image-rendering:pixelated}
+
+.may-scale-stack--window{position:relative;pointer-events:auto;gap:8px;flex:none;overflow:visible}
+.may-scale-stack__controls{display:flex;align-self:stretch;width:100%;align-items:center;justify-content:center;gap:6px;height:24px;white-space:nowrap;font:11px/1.2 sans-serif;color:#b7cadf}
+.may-scale-stack__controls input{box-sizing:border-box;width:72px;height:24px;background:#1b2430;color:#dfe6f5;border:1px solid #40516b}
+.may-scale-stack__list{width:100%}
+.may-scale-stack--window .may-scale-stack__level{position:relative;display:block;box-sizing:border-box;width:100%;padding-top:24px}
+.may-scale-stack--window .may-scale-stack__label{position:absolute;top:4px;left:0;width:100%;text-align:center;white-space:nowrap}
+.may-scale-stack--window .may-scale-stack__canvas{width:100%;height:auto}

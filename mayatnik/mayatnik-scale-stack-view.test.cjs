@@ -1,0 +1,32 @@
+const test=require('node:test'),assert=require('node:assert/strict'),path=require('node:path');
+const View=require('./mayatnik-scale-stack-view.js');
+test('one-row step includes every lower triangle through one row, larger steps retain the final row',()=>{
+ assert.deepEqual(View.levels(63,32,1).map(s=>s.height),Array.from({length:31},(_,i)=>31-i));
+ assert.deepEqual(View.levels(63,32,8).map(s=>s.height),[24,16,8,1]);
+ assert.deepEqual(View.levels(1,1,1),[]);
+});
+test('scroll window paints exact pixels, frees offscreen rasters, centres zoom and retains enlargement floor',{timeout:45000},async t=>{
+ const {chromium}=require('playwright-core');const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});t.after(()=>browser.close());
+ const page=await browser.newPage({viewport:{width:1000,height:700}});
+ await page.setContent('<style>body{margin:0}#host{width:900px;height:600px;overflow:auto;padding:0;position:relative}</style><div id="host"></div>');
+ await page.addStyleTag({path:path.join(__dirname,'mayatnik-scale-stack.css')});await page.addScriptTag({path:path.join(__dirname,'mayatnik-scale-stack-view.js')});
+ await page.evaluate(()=>{const source={width:63,height:32,pixels:Uint8ClampedArray.from({length:63*32*4},(_,i)=>i%4===3?255:17)};window.source=source;window.stack=MayatnikScaleStackView.create({host:document.querySelector('#host'),stepRows:()=>1,captureSource:()=>source});stack.refreshLayout({left:100,width:630});stack.setEnabled(true);});
+ await page.waitForFunction(()=>stack.inspect().canvases>0&&!stack.inspect().busy&&!stack.inspect().pending);
+ assert.equal(await page.locator('.may-scale-stack__level').count(),31);
+ assert.ok(await page.locator('.may-scale-stack canvas').count()<5);
+ assert.equal(await page.locator('.may-scale-stack canvas').first().evaluate(c=>c.getContext('2d').getImageData(0,0,1,1).data[0]),17);
+ const centre=await page.locator('.may-scale-stack').evaluate(n=>{const r=n.getBoundingClientRect();return r.x+r.width/2;});
+ await page.evaluate(()=>stack.setZoom(2));assert.equal(await page.locator('.may-scale-stack').evaluate(n=>{const r=n.getBoundingClientRect();return r.x+r.width/2;}),centre);
+ assert.equal(await page.evaluate(()=>stack.setZoom(.5)),1);
+ await page.evaluate(()=>{const h=document.querySelector('#host');h.scrollTop=h.scrollHeight;});
+ await page.waitForFunction(()=>document.querySelector('.may-scale-stack__level:last-child canvas'));
+ assert.equal(await page.locator('.may-scale-stack__level:first-child canvas').count(),0);
+ assert.ok(await page.locator('.may-scale-stack canvas').count()<5);
+ assert.match(await page.locator('.may-scale-stack__level:last-child').textContent(),/1 строк.*часть ×32/);
+ await page.evaluate(()=>{source.pixels.set(source.pixels.map((_,i)=>i%4===3?255:99));stack.requestFrame(source,{key:'changed'});});
+ await page.waitForFunction(()=>stack.inspect().key==='changed'&&!stack.inspect().busy&&!stack.inspect().pending);
+ assert.equal(await page.locator('.may-scale-stack canvas').last().evaluate(c=>c.getContext('2d').getImageData(0,0,1,1).data[0]),99);
+ await page.evaluate(()=>stack.setEnabled(false));assert.equal(await page.locator('.may-scale-stack canvas').count(),0);
+ assert.equal(await page.evaluate(()=>stack.inspect().canvasBytes),0);
+ await page.evaluate(()=>stack.destroy());assert.equal(await page.locator('.may-scale-stack').count(),0);
+});

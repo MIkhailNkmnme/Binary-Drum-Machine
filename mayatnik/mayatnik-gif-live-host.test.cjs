@@ -46,3 +46,14 @@ test('live preview preference persists independently in presets, links and reset
 test('approaching the encoded memory cap finishes the accepted recording instead of losing its frames',async()=>{
  const f=fixture();await f.api.start(f.selection);const job=f.jobs[0];job.options.onProgress({frames:100,pending:1,bytes:128*1024*1024-1000});assert.equal(job.stopped,true);job.finish();await job.promise;await Promise.resolve();assert.equal(f.results[0].limitReason,'предел памяти');f.api.destroy();
 });
+
+
+test('row height step and reverse-hole option survive presets and links with safe legacy defaults',async()=>{
+ const S=require('./mayatnik-settings-library.js'),L=require('./mayatnik-share-link.js'),R=require('./mayatnik-reset-state.js');
+ const state={rows:8,steps:8,mode:'pend',bg:'empty',gifScaleStackStep:1,ochkiRowReverseMask:true},target={};
+ S.applyState(target,S.pick(state));assert.equal(target.gifScaleStackStep,1);assert.equal(target.ochkiRowReverseMask,true);
+ const decoded=(await L.decode(await L.encode({v:1,k:0,state}))).state;assert.equal(decoded.gifScaleStackStep,1);assert.equal(decoded.ochkiRowReverseMask,true);
+ S.applyState(target,S.pick({}));assert.equal(target.gifScaleStackStep,8);assert.equal(target.ochkiRowReverseMask,false);assert.equal(R.defaults().gifScaleStackStep,8);assert.equal(R.defaults().ochkiRowReverseMask,false);
+ for(const bad of [0,-1,1.5,65536])assert.throws(()=>S.normalized(S.pick({...state,gifScaleStackStep:bad})));
+ assert.throws(()=>S.normalized(S.pick({...state,ochkiRowReverseMask:'true'})));
+});
