@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.024</title>
-<!-- АзъБукъ — v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.025</title>
+<!-- АзъБукъ — v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -42,8 +42,9 @@
     clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
   .pbtn > svg{position:relative;z-index:1}
   .pbtn:hover{background:var(--btnon)}
-  #editor .chars{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 14px;max-height:150px;overflow:auto}
-  #editor .chars button{width:34px;padding:0;font-size:12px}
+  #sheet [data-edit-char]{cursor:pointer}
+  #sheet [data-edit-char]:hover{opacity:.7}
+  #sheet [data-edit-char]:focus-visible,#sheet [data-edit-char].editing{outline:1px solid var(--ink);outline-offset:2px}
   .work{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
   .grid{display:grid;gap:2px;background:var(--bg);padding:6px;border:1px solid var(--line);user-select:none;touch-action:none}
   .cell{width:22px;height:22px;background:var(--btn);border:1px solid var(--line);cursor:pointer}
@@ -122,7 +123,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.024"></span>
+    <span class="pbtn ver" aria-label="v0.025"></span>
   </div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><span class="theme-picker"><button id="theme" aria-haspopup="listbox" aria-expanded="false" aria-controls="themeList">цвет: кибер</button><span id="themeList" class="theme-list" role="listbox" aria-label="Палитры" tabindex="0" hidden></span></span>
@@ -147,7 +148,6 @@
 <main>
   <section id="editor" hidden>
     <h2><button id="editLabel" class="pbtn" type="button" title="Выбрать другую букву">Правка буквы А - обычная</button></h2>
-    <div class="chars" id="chars"></div>
     <div class="work">
       <div class="grid" id="grid"></div>
       <div class="side">
@@ -352,7 +352,6 @@ const LATU = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const LATL = 'abcdefghijklmnopqrstuvwxyz';
 const DIGIT = '0123456789';
 const SYM = '.,:;!?-+=/\\%()[]{}<>«»"\'№#@&*_|~^$';
-const ALL = UPPER + LOWER + LATU + LATL + DIGIT + SYM;
 let uid = 0;
 let cellSize = 4;
 let activeSet = 'bold';
@@ -423,13 +422,13 @@ function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
   return { h, w, edges, left, right, paths };
 }
 
-function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[activeSet]) {
+function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[activeSet], editable = false) {
   const aspect = lattice === 'rmbl' || lattice === 'rmbr' ? 2 / Math.sqrt(3) : AR;
   const lines = [];
   let placed = [], frontier = new Map(), width = 0, height = 0, gap = 0;
   function finishLine() {
-    const groups = placed.map(({ shape, x }) =>
-      '<g transform="translate(' + x + ' ' + (height - shape.h) + ')">' + shape.paths + '</g>').join('');
+    const groups = placed.map(({ shape, x, ch }) =>
+      '<g' + (editable ? ' data-edit-char="' + encodeURIComponent(ch) + '" role="button" tabindex="0"' : '') + ' transform="translate(' + x + ' ' + (height - shape.h) + ')">' + shape.paths + '</g>').join('');
     lines.push('<svg width="' + width * aspect * cell + '" height="' + height * cell +
       '" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' + groups + '</svg>');
     placed = [];
@@ -454,7 +453,7 @@ function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[acti
       finishLine();
       x = -shape.left;
     }
-    placed.push({ shape, x });
+    placed.push({ shape, x, ch });
     shape.edges.forEach((edge, y) => frontier.set(y - shape.h, x + edge.right));
     height = Math.max(height, shape.h);
     width = Math.max(width, x + shape.right);
@@ -527,23 +526,46 @@ function renderAlphabet(cell) {
   ].join('');
   const rows = document.querySelectorAll('#sheet .row');
   const maxWidth = rows[0].getBoundingClientRect().width;
-  rows.forEach(el => { el.innerHTML = lettering(el.textContent, cell, trk.valueAsNumber, maxWidth); });
+  rows.forEach(el => { el.innerHTML = lettering(el.textContent, cell, trk.valueAsNumber, maxWidth, G[activeSet], true); });
+  updateSelectedGlyph();
 }
 
-function renderChars() {
-  document.getElementById('chars').innerHTML = [...ALL].map(c =>
-    '<button data-ch="' + c + '"' + (c === editChar ? ' class="on"' : '') + '>' + c + '</button>').join('');
-  document.querySelectorAll('#chars button').forEach(b => b.addEventListener('click', () => {
-    editChar = b.dataset.ch; renderChars(); renderEditor();
-  }));
+function updateSelectedGlyph() {
+  document.querySelectorAll('#sheet [data-edit-char]').forEach(glyph => {
+    const ch = decodeURIComponent(glyph.dataset.editChar);
+    const selected = !document.getElementById('editor').hidden && ch === editChar;
+    glyph.setAttribute('aria-label', 'Править ' + ch);
+    glyph.setAttribute('aria-pressed', String(selected));
+    glyph.classList.toggle('editing', selected);
+  });
 }
+function selectGlyph(event) {
+  const glyph = event.target.closest('[data-edit-char]');
+  if (!glyph) return;
+  editChar = decodeURIComponent(glyph.dataset.editChar);
+  document.getElementById('editor').hidden = false;
+  document.getElementById('editToggle').classList.add('on');
+  renderEditor();
+  document.getElementById('editLabel').focus();
+}
+document.getElementById('sheet').addEventListener('click', selectGlyph);
+document.getElementById('sheet').addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    selectGlyph(event);
+  }
+});
 
 function normalize(rows) {
   const w = Math.max(1, ...rows.map(r => r.length));
   return rows.map(r => r.padEnd(w, '0'));
 }
 
+let editorEvents;
 function renderEditor() {
+  editorEvents?.abort();
+  editorEvents = new AbortController();
+  updateSelectedGlyph();
   renderButtonLabel(document.getElementById('editLabel'), 'Правка буквы ' + editChar + ' - ' + (activeSet === 'thin' ? 'тонкая' : 'обычная'));
   const rows = normalize(G[activeSet][editChar] || ['000']);
   const h = rows.length, w = rows[0].length;
@@ -573,7 +595,7 @@ function renderEditor() {
     setBit(+el.dataset.x, +el.dataset.y, drag.val);
     el.classList.toggle('on', drag.val === '1');
     document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
-  });
+  }, { signal: editorEvents.signal });
 
   grid.addEventListener('pointermove', (e) => {
     if (!drag) return;
@@ -581,7 +603,7 @@ function renderEditor() {
     if (!el) return;
     setBit(+el.dataset.x, +el.dataset.y, drag.val);
     el.classList.toggle('on', drag.val === '1');
-  })
+  }, { signal: editorEvents.signal });
 
   const endDrag = () => {
     if (!drag) return;
@@ -590,9 +612,9 @@ function renderEditor() {
     document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
     renderSheet(cellSize);
   };
-  grid.addEventListener('pointerup', endDrag);
-  grid.addEventListener('pointercancel', endDrag);
-  window.addEventListener('pointerup', endDrag);
+  grid.addEventListener('pointerup', endDrag, { signal: editorEvents.signal });
+  grid.addEventListener('pointercancel', endDrag, { signal: editorEvents.signal });
+  window.addEventListener('pointerup', endDrag, { signal: editorEvents.signal });
   document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
 }
 
@@ -617,14 +639,16 @@ document.getElementById('download').onclick = () => {
 };
 
 document.getElementById('editLabel').addEventListener('click', () => {
-  document.querySelector('#chars button.on')?.focus();
+  [...document.querySelectorAll('#sheet [data-edit-char]')].find(glyph =>
+    decodeURIComponent(glyph.dataset.editChar) === editChar)?.focus();
 });
 
 document.getElementById('editToggle').addEventListener('click', (e) => {
   const ed = document.getElementById('editor');
   ed.hidden = !ed.hidden;
   e.currentTarget.classList.toggle('on', !ed.hidden);
-  if (!ed.hidden) { renderChars(); renderEditor(); }
+  updateSelectedGlyph();
+  if (!ed.hidden) { renderEditor(); }
 });
 
 document.querySelectorAll('.bar [data-set]').forEach(b => b.addEventListener('click', () => {
@@ -632,7 +656,7 @@ document.querySelectorAll('.bar [data-set]').forEach(b => b.addEventListener('cl
   b.classList.add('on');
   activeSet = b.dataset.set;
   renderSheet(cellSize);
-  if (!document.getElementById('editor').hidden) { renderChars(); renderEditor(); }
+  if (!document.getElementById('editor').hidden) { renderEditor(); }
 }));
 
 document.querySelectorAll('.bar [data-lat]').forEach(b => b.addEventListener('click', () => {
@@ -820,7 +844,7 @@ document.querySelectorAll('.gap-step').forEach(button => {
 if (location.search.includes('edit')) {
   document.getElementById('editor').hidden = false;
   document.getElementById('editToggle').classList.add('on');
-  renderChars(); renderEditor();
+  renderEditor();
 }
 </script>
 </html>
