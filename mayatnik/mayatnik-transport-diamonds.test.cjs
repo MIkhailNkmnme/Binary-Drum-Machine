@@ -18,38 +18,45 @@ function setup(options={}){
 test('both option diamonds are centered below their owner rather than anchored to its left edge',()=>{
  const f=setup();try{for(const key of ['sp','ft']){const popup=f.open(key),width=Number.parseFloat(popup.style.getPropertyValue('--transport-popup-width')),r=f.rects[key];assert.equal(+popup.style.left.replace('px','')+width/2,r.left+r.width/2);assert.equal(popup.style.top,r.top+r.height+2+'px');f.doc.dispatchEvent(new f.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));}}finally{f.close();}
 });
-test('x lists 32 even choices while t retains all 41 seconds choices in a symmetric diamond',()=>{
+test('x lists 32 even choices and t packs 21 even ticks edge-to-edge with powers centered',()=>{
  const f=setup();try{
-  let popup=f.open('sp'),options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,32);assert.deepEqual(options.map(b=>b.textContent),Array.from({length:32},(_,i)=>String((i+1)*2)));assert.ok(options.every(b=>!b.textContent.includes('×')));
-  popup=f.open('ft');options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,41);assert.ok(popup.classList.contains('may-delay-options'));assert.equal(popup.querySelectorAll('.may-transport-option-row').length,0);
-  assert.deepEqual(options.map(b=>+b.dataset.value),Array.from({length:41},(_,i)=>i));assert.equal(options[0].textContent,'0');assert.equal(options.at(-1).textContent,'2');assert.ok(options.every(b=>/^[\d,/]+$/.test(b.textContent)));
-  const counts=Array.from({length:9},(_,r)=>options.filter(b=>parseInt(b.style.top)===r*24).length);assert.deepEqual(counts,[1,3,5,7,9,7,5,3,1]);
-  for(let r=0;r<9;r++){const cells=options.filter(b=>parseInt(b.style.top)===r*24),first=parseInt(cells[0].style.left),last=parseInt(cells.at(-1).style.left)+30;assert.equal((first+last)/2,135);}
-  assert.ok(options.every(b=>parseInt(b.style.left)>=0&&parseInt(b.style.left)+30<=270&&parseInt(b.style.top)+24<=216));
+  let popup=f.open('sp'),options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,32);assert.deepEqual(options.map(b=>b.textContent),Array.from({length:32},(_,i)=>String((i+1)*2)));
+  popup=f.open('ft');options=[...popup.querySelectorAll('[data-value]')];assert.equal(options.length,21);
+  assert.deepEqual(options.map(b=>+b.dataset.value),Array.from({length:21},(_,i)=>i*2));assert.equal(options[0].textContent,'0');assert.equal(options.at(-1).textContent,'2');
+  const middle=options.filter(b=>parseInt(b.style.left)===60).sort((a,b)=>parseInt(a.style.top)-parseInt(b.style.top));
+  assert.deepEqual(middle.map(b=>+b.dataset.value),[2,4,8,16,32]);
+  for(const b of options){const x=parseInt(b.style.left),y=parseInt(b.style.top);
+    for(const [vx,vy]of [[x+15,y],[x+30,y+12],[x+15,y+24],[x,y+12]])assert.ok(Math.abs(vx-75)/75+Math.abs(vy-60)/60<=1+1e-9);
+    assert.ok(options.some(other=>{if(other===b)return false;const dx=Math.abs(x-parseInt(other.style.left)),dy=Math.abs(y-parseInt(other.style.top));return dx===15&&dy===12;}),'each option shares an edge with another');
+  }
+  for(let i=0;i<options.length;i++)for(let j=i+1;j<options.length;j++){
+    const dx=Math.abs(parseInt(options[i].style.left)-parseInt(options[j].style.left)),dy=Math.abs(parseInt(options[i].style.top)-parseInt(options[j].style.top));assert.ok(dx/30+dy/24>=1-1e-9);
+  }
  }finally{f.close();}
 });
+
 test('selected seconds, repeat-click cycling, arrows, keyboard choice and outside close retain their original inputs',()=>{
  const f=setup();try{
   let popup=f.open('ft');popup.querySelector('[data-value="40"]').click();assert.equal(f.doc.getElementById('frameT').value,'40');assert.equal(f.doc.querySelector('.may-transport-options'),null);
   popup=f.open('ft');assert.equal(popup.querySelector('[aria-checked="true"]').dataset.value,'40');f.button('ft').click();assert.equal(f.doc.getElementById('frameT').value,'0');
-  const chosen=popup.querySelector('[data-value="17"]');chosen.focus();chosen.dispatchEvent(new f.w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(f.doc.getElementById('frameT').value,'17');
-  f.doc.querySelector('[data-k="ft"] [data-direction="1"]').click();assert.equal(f.doc.getElementById('frameT').value,'18');assert.ok(f.changes>0);
+  const chosen=popup.querySelector('[data-value="18"]');chosen.focus();chosen.dispatchEvent(new f.w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(f.doc.getElementById('frameT').value,'18');
+  f.doc.querySelector('[data-k="ft"] [data-direction="1"]').click();assert.equal(f.doc.getElementById('frameT').value,'19');assert.ok(f.changes>0);
   f.open('sp');f.doc.body.dispatchEvent(new f.w.Event('pointerdown',{bubbles:true}));assert.equal(f.doc.querySelector('.may-transport-options'),null);assert.equal(f.button('sp').getAttribute('aria-expanded'),'false');
  }finally{f.close();}
 });
 test('visual viewport clamps at either edge and short views scroll below the owner without hiding valid choices',()=>{
  const f=setup({mobile:true,viewport:{left:100,top:80,width:300,height:180},rects:{sp:{left:102,top:84,width:30,height:24},ft:{left:368,top:84,width:30,height:24}}});try{
   let popup=f.open('sp');assert.equal(popup.style.left,'104px');assert.equal(popup.style.top,'110px');assert.equal(popup.style.maxHeight,'146px');
-  popup=f.open('ft');assert.equal(popup.style.left,'126px');assert.equal(popup.style.top,'110px');assert.equal(popup.style.maxHeight,'146px');assert.equal(popup.querySelectorAll('[data-value]').length,41);
-  f.setViewport({width:200});assert.equal(popup.style.left,'104px');assert.equal(popup.style.getPropertyValue('--transport-popup-width'),'192px');
-  assert.equal(popup.querySelector('.may-delay-diamond').children.length,41);
-  f.setViewport({left:200,width:500,height:400});assert.equal(popup.style.left,'248px');assert.equal(popup.style.top,'110px');
+  popup=f.open('ft');assert.equal(popup.style.left,'246px');assert.equal(popup.style.top,'110px');assert.equal(popup.style.maxHeight,'146px');assert.equal(popup.querySelectorAll('[data-value]').length,21);
+  f.setViewport({width:200});assert.equal(popup.style.left,'146px');assert.equal(popup.style.getPropertyValue('--transport-popup-width'),'150px');
+  assert.equal(popup.querySelector('.may-delay-diamond').children.length,21);
+  f.setViewport({left:200,width:500,height:400});assert.equal(popup.style.left,'308px');assert.equal(popup.style.top,'110px');
  }finally{f.close();}
 });
 test('diamond list CSS keeps each seconds label inside a rhombus and supports horizontal overflow on narrow viewports',()=>{
  const css=fs.readFileSync(__dirname+'/mayatnik-menu.css','utf8');
  assert.match(css,/\.may-speed-diamond\{[^}]*clip-path:polygon\(50% 0,100% 50%,50% 100%,0 50%\)/);
- assert.match(css,/\.may-delay-diamond\{width:270px;height:216px\}/);
+ assert.match(css,/\.may-delay-diamond\{width:150px;height:120px\}/);
  assert.match(css,/\.may-speed-diamond\.may-delay-diamond>\.may-transport-option\{font-size:7px\}/);
  assert.match(css,/may-speed-options\{[^}]*overflow-x:auto!important/);
 });
@@ -66,5 +73,13 @@ test('only powers of two occupy the central column, all other even choices flank
  for(const b of nodes){const x=parseInt(b.style.left),y=parseInt(b.style.top);for(const [vx,vy]of [[x+15,y],[x+30,y+12],[x+15,y+24],[x,y+12]])assert.ok(Math.abs(vx-90)/90+Math.abs(vy-72)/72<=1+1e-9,'the outer diamond must not clip a selectable rhombus');}
  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=Math.abs(parseInt(nodes[i].style.left)-parseInt(nodes[j].style.left)),dy=Math.abs(parseInt(nodes[i].style.top)-parseInt(nodes[j].style.top));assert.ok(dx/30+dy/24>=1-1e-9,'separate click targets must not overlap');}
  popup.querySelector('[data-value="32"]').click();assert.equal(f.doc.getElementById('speed').value,'32');
+ }finally{f.close();}
+});
+
+test('compact delay choices preserve an odd stored tick and the fine arrow step',()=>{
+ const f=setup();try{const input=f.doc.getElementById('frameT');input.value='17';input.dispatchEvent(new f.w.Event('input'));const popup=f.open('ft');assert.equal(input.value,'17');assert.equal(popup.querySelector('[aria-checked="true"]'),null);
+ f.doc.querySelector('[data-k="ft"] [data-direction="1"]').click();assert.equal(input.value,'18');
+ f.doc.querySelector('[data-k="ft"] [data-direction="-1"]').click();assert.equal(input.value,'17');
+ f.button('ft').click();assert.equal(input.value,'18');assert.equal(popup.querySelector('[aria-checked="true"]').dataset.value,'18');
  }finally{f.close();}
 });

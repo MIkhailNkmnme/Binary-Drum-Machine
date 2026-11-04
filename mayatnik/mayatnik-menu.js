@@ -648,7 +648,7 @@
   // v0.790: ромбы x/t раскрывают вниз полный список; повторный щелчок — следующий вариант.
   {
     const sp=$('speed'),ft=$('frameT');let popup=null,active=null;
-    const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;const all=Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);return input===sp?all.filter(value=>value%2===0&&value<=64):all;};
+    const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;const all=Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);return all.filter(value=>value%2===0&&(input!==sp||value<=64));};
     const label=(input,value)=>input===sp?'×'+value:value===0?'0 с · без паузы':({1:'1/20 с',2:'1/10 с',4:'1/5 с',10:'1/2 с',20:'1 с'}[value]||String(+(value*.05).toFixed(2)).replace('.',',')+' с');
     const make=(letter,input,name)=>{
       const svg=(node,width,path,cls)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(s.namespaceURI,'path');s.classList.add(cls);s.setAttribute('viewBox','0 0 '+width+' 24');s.setAttribute('aria-hidden','true');p.setAttribute('d',path);s.append(p);node.append(s);};
@@ -661,7 +661,7 @@
     };
     const bs=make('x',sp,'Вершин за кадр'),bf=make('t',ft,'Длительность кадра');
     function close(focus=false){const owner=active?.button;popup?.remove();popup=null;active=null;owner?.setAttribute('aria-expanded','false');if(focus)owner?.focus();}
-    const optionShape=input=>input===sp?{width:180,height:144,columns:6}:{width:270,height:216,columns:9};
+    const optionShape=input=>input===sp?{width:180,height:144,columns:6}:{width:150,height:120,columns:5};
     function place(){
       if(!popup||!active)return;
       const r=active.button.getBoundingClientRect(),shape=optionShape(active.input),view=menuVisualViewport();
@@ -682,24 +682,20 @@
       popup.style.setProperty('--transport-popup-height',shape.height+'px');
       popup.className='gz-ladder may-transport-options may-speed-options'+(input===ft?' may-delay-options':'');popup.dataset.noMini='';popup.setAttribute('role','menu');popup.setAttribute('aria-label',name);
       const grid=document.createElement('div');grid.className='may-speed-diamond'+(input===ft?' may-delay-diamond':'');grid.setAttribute('role','presentation');popup.append(grid);
-      const delayPositions=[],speedPositions=[];
-      if(input===sp){
-        const powers=[2,4,8,16,32,64],sides=[],positions=new Map();
-        powers.forEach((value,row)=>positions.set(value,{left:75,top:row*24}));
-        // A true diamond lattice keeps every small rhombus inside the outer clip.
-        for(let a=0;a<6;a++)for(let b=0;b<6;b++){
-          if(a===b||Math.abs(a-b)===5||(a+b===6&&Math.abs(a-b)===4))continue;
-          sides.push({left:(5+a-b)*15,top:(a+b)*12});
-        }
-        sides.sort((a,b)=>a.top-b.top||a.left-b.left);
-        values(input).filter(value=>!positions.has(value)).forEach((value,index)=>positions.set(value,sides[index]));
-        values(input).forEach(value=>speedPositions.push(positions.get(value)));
+      const positions=new Map(),sides=[],size=shape.columns;
+      const powers=input===sp?[2,4,8,16,32,64]:[2,4,8,16,32];
+      powers.forEach((value,row)=>positions.set(value,{left:(size-1)*15,top:row*24}));
+      // Edge-to-edge lattice, with powers of two on the central vertical.
+      for(let a=0;a<size;a++)for(let b=0;b<size;b++){
+        if(a===b||Math.abs(a-b)===size-1||(a+b===size&&Math.abs(a-b)===size-2))continue;
+        sides.push({left:(size-1+a-b)*15,top:(a+b)*12});
       }
-      if(input===ft)for(let row=0;row<9;row++){const count=9-2*Math.abs(4-row);for(let col=0;col<count;col++)delayPositions.push({left:(9-count)*15+col*30,top:row*24});}
+      sides.sort((a,b)=>a.top-b.top||a.left-b.left);
+      values(input).filter(value=>!positions.has(value)).forEach((value,index)=>positions.set(value,sides[index]));
       let row;values(input).forEach((value,index)=>{
         const option=document.createElement('button');option.type='button';option.className='may-transport-option';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');option.title=name+': '+label(input,value);option.setAttribute('aria-label',option.title);
         const text=document.createElement('span');text.textContent=input===sp?String(value):label(input,value).split(' · ')[0].replace(/\s/g,'').replace(/с$/,'');option.append(text);
-        const position=input===sp?speedPositions[index]:delayPositions[index];
+        const position=positions.get(value);
         option.style.left=position.left+'px';option.style.top=position.top+'px';
         option.onclick=event=>{event.stopPropagation();setValue(input,value);close(true);};(diamond?grid:row).append(option);
       });
