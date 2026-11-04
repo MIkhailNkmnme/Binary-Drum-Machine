@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.021</title>
-<!-- АзъБукъ — v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.022</title>
+<!-- АзъБукъ — v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -63,22 +63,28 @@
   .tools button{width:130px;min-width:0;flex:none}
   #editLabel{width:248px;min-width:0}
   .theme-picker{position:relative;display:inline-flex;flex:none;width:142px}
+  .theme-picker:has([aria-expanded="true"])::before{content:"";position:absolute;top:100%;left:0;right:0;height:6px}
   .theme-list{position:absolute;left:0;top:32px;width:142px;height:154px;z-index:10;overflow:hidden;background:var(--bg);border:1px solid var(--line);perspective:260px;touch-action:pan-x}
   .theme-list[hidden]{display:none}
   .bar button.theme-option{position:absolute;left:5px;top:63px;width:130px;transition:transform 180ms,opacity 180ms;transform-origin:center}
   .theme-option[aria-selected="true"]{border-color:var(--ink);background:var(--btnon)}
   @media(prefers-reduced-motion:reduce){.bar button.theme-option{transition:none}}
 
-  .gap-slider{position:relative;display:inline-block;flex:0 0 180px;height:26px;user-select:none;cursor:pointer;--position:0%}
+  .gap-slider{position:relative;display:inline-block;flex:0 0 180px;height:26px;user-select:none;touch-action:none;cursor:pointer;--position:0%}
   .gap-slider::before{content:"";position:absolute;inset:0;background:var(--btnon);clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,13px 100%,0 50%)}
   .gap-rail{position:absolute;inset:12px 16px auto;border-top:1px dashed var(--line)}
   .bar .gap-step{position:absolute;top:0;bottom:0;min-width:0;width:14px;height:26px;padding:0;border:0;background:transparent;clip-path:none}
+  .gap-slider.over-prev,.gap-slider.over-next{cursor:pointer}
+  .gap-slider.over-thumb{cursor:grab}
+  .gap-slider.dragging{cursor:grabbing}
+  .gap-step::before{opacity:.55}
+  .gap-slider.over-prev .prev::before,.gap-slider.over-next .next::before{opacity:1}
   .gap-step.prev{left:0}
   .gap-step::before{content:"";position:absolute;inset:0;background:var(--ink);pointer-events:none}
   .gap-step.prev::before{clip-path:polygon(13px 0,0 50%,13px 100%,13px 76%,6px 50%,13px 24%)}
   .gap-step.next{right:0}
   .gap-step.next::before{clip-path:polygon(1px 0,14px 50%,1px 100%,1px 76%,8px 50%,1px 24%)}
-  #track{position:absolute;left:36px;top:0;width:calc(100% - 72px);height:26px;margin:0;opacity:0;cursor:pointer;appearance:none}
+  #track{position:absolute;left:36px;top:0;width:calc(100% - 72px);height:26px;margin:0;opacity:0;pointer-events:none;appearance:none}
   #track::-webkit-slider-thumb{appearance:none;width:1px;height:26px}
   #track::-moz-range-thumb{width:1px;height:26px;border:0}
   .gap-travel{position:absolute;inset:0 36px;pointer-events:none}
@@ -105,7 +111,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.021"></span>
+    <span class="pbtn ver" aria-label="v0.022"></span>
   </div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><span class="theme-picker"><button id="theme" aria-haspopup="listbox" aria-expanded="false" aria-controls="themeList">цвет: кибер</button><span id="themeList" class="theme-list" role="listbox" aria-label="Палитры" tabindex="0" hidden></span></span>
@@ -679,6 +685,9 @@ themeList.addEventListener('keydown', e => {
 document.addEventListener('pointerdown', e => {
   if (!e.target.closest('.theme-picker')) showThemeList(false);
 });
+document.querySelector('.theme-picker').addEventListener('pointerleave', e => {
+  if (e.pointerType !== 'touch') showThemeList(false);
+});
 document.querySelector('.theme-picker').addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     showThemeList(false);
@@ -709,24 +718,74 @@ trk.addEventListener('input', () => {
   renderAlphabet(cellSize);
 });
 
-document.querySelectorAll('.gap-step').forEach(button => {
-  let repeat;
-  const step = () => {
-    if (button.classList.contains('prev')) trk.stepDown();
-    else trk.stepUp();
+function stepTrack(direction) {
+  if (direction < 0) trk.stepDown();
+  else trk.stepUp();
+  trk.dispatchEvent(new Event('input', { bubbles: true }));
+}
+function trackZone(clientX) {
+  const center = trackControl.querySelector('.gap-thumb').getBoundingClientRect().left;
+  if (Math.abs(clientX - center) <= 10) return 0;
+  return clientX < center ? -1 : 1;
+}
+function hoverTrack(clientX) {
+  const zone = trackZone(clientX);
+  trackControl.classList.toggle('over-prev', zone < 0);
+  trackControl.classList.toggle('over-next', zone > 0);
+  trackControl.classList.toggle('over-thumb', zone === 0);
+}
+let trackGesture = null;
+let trackRepeat;
+function stopTrackGesture() {
+  clearTimeout(trackRepeat);
+  trackGesture = null;
+  trackControl.classList.remove('dragging');
+}
+trackControl.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || trackGesture) return;
+  e.preventDefault();
+  const direction = trackZone(e.clientX);
+  trackGesture = { pointerId: e.pointerId, direction, startX: e.clientX, startValue: trk.valueAsNumber };
+  trackControl.setPointerCapture(e.pointerId);
+  trk.focus({ preventScroll: true });
+  if (direction === 0) {
+    trackControl.classList.add('dragging');
+  } else {
+    const repeat = () => { stepTrack(direction); trackRepeat = setTimeout(repeat, 90); };
+    stepTrack(direction);
+    trackRepeat = setTimeout(repeat, 400);
+  }
+});
+trackControl.addEventListener('pointermove', e => {
+  hoverTrack(e.clientX);
+  if (!trackGesture || trackGesture.pointerId !== e.pointerId) return;
+  if (trackGesture.direction === 0) {
+    const span = Number(trk.max) - Number(trk.min);
+    const travel = trackControl.querySelector('.gap-travel').getBoundingClientRect().width;
+    trk.value = trackGesture.startValue + Math.round((e.clientX - trackGesture.startX) * span / travel);
     trk.dispatchEvent(new Event('input', { bubbles: true }));
-  };
-  const stop = () => clearTimeout(repeat);
-  const again = () => { step(); repeat = setTimeout(again, 90); };
-  button.addEventListener('click', step);
-  button.addEventListener('pointerdown', e => {
-    if (e.button !== 0) return;
-    button.setPointerCapture(e.pointerId);
-    repeat = setTimeout(again, 400);
+  } else {
+    const bounds = trackControl.getBoundingClientRect();
+    if (trackZone(e.clientX) !== trackGesture.direction || e.clientY < bounds.top || e.clientY > bounds.bottom) {
+      clearTimeout(trackRepeat);
+    }
+  }
+});
+trackControl.addEventListener('pointerup', e => {
+  if (trackGesture?.pointerId !== e.pointerId) return;
+  stopTrackGesture();
+  if (trackControl.hasPointerCapture(e.pointerId)) trackControl.releasePointerCapture(e.pointerId);
+});
+trackControl.addEventListener('pointercancel', stopTrackGesture);
+trackControl.addEventListener('lostpointercapture', stopTrackGesture);
+trackControl.addEventListener('pointerleave', () => {
+  trackControl.classList.remove('over-prev', 'over-next', 'over-thumb');
+});
+window.addEventListener('blur', stopTrackGesture);
+document.querySelectorAll('.gap-step').forEach(button => {
+  button.addEventListener('click', e => {
+    if (e.detail === 0) stepTrack(button.classList.contains('prev') ? -1 : 1);
   });
-  button.addEventListener('pointerup', stop);
-  button.addEventListener('pointercancel', stop);
-  button.addEventListener('lostpointercapture', stop);
 });
 
 if (location.search.includes('edit')) {
