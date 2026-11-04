@@ -192,7 +192,7 @@
   }
   function drawHandles(ctx,screen,unit,width,height){
    handles=[];const figure=model.figures[selected];if(!figure||!figure.active)return;
-   const origin=screen(figure.anchor);ctx.font='12px "AzBuk Bold", monospace';ctx.lineWidth=2;
+   const origin=screen(figure.anchor);ctx.font='12px "AzBuk Thin", monospace';ctx.lineWidth=2;
    ctx.fillStyle=COLORS[selected];ctx.fillText(NAMES[selected],origin[0]+7,origin[1]+17);
    for(let axis=0;axis<3;axis++){
     const ray=symmetry.enabled?DIRECTIONS[symmetry.rays[selected]]:null;if(ray&&!ray[axis])continue;
@@ -225,7 +225,7 @@
     const p=xy(overlap.p),size=Math.max(1,unit-.25),left=p[0]-unit/2,top=p[1]-unit/2;
     if(overlap.collisionCount){ctx.fillStyle='rgba(255,102,87,.68)';ctx.fillRect(left,top,size,size);ctx.strokeStyle='#ffb5a3';ctx.lineWidth=Math.min(1.3,unit/4);ctx.beginPath();ctx.moveTo(left,top+size);ctx.lineTo(left+size,top);ctx.stroke();}
     if(overlap.depth>1){ctx.strokeStyle='#66dcff';ctx.lineWidth=Math.min(1.5,unit/3);ctx.strokeRect(left+.3,top+.3,Math.max(.4,size-.6),Math.max(.4,size-.6));}
-    if(unit>=12){ctx.fillStyle='#fff';ctx.font=Math.min(12,Math.floor(unit*.7))+'px "AzBuk Bold",monospace';ctx.textAlign='center';ctx.fillText(String(overlap.voxelCount),p[0],p[1]+Math.min(4,unit*.25));ctx.textAlign='left';}
+    if(unit>=12){ctx.fillStyle='#fff';ctx.font=Math.min(12,Math.floor(unit*.7))+'px "AzBuk Thin",monospace';ctx.textAlign='center';ctx.fillText(String(overlap.voxelCount),p[0],p[1]+Math.min(4,unit*.25));ctx.textAlign='left';}
    }
    ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle='#b4bac0';ctx.fillText('+'+projection.axes[0],width-25,height/2-5);ctx.fillText('+'+projection.axes[1],width/2+5,14);
    canvas.dataset.cells=String(projection.cells.length);

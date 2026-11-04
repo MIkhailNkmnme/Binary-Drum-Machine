@@ -26,19 +26,25 @@ before(async()=>{
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server.close(resolve));assert.deepEqual(errors,[]);});
 
-test('the AzBuk glyph font is delivered and used as the page face',async()=>{
+test('only the thin AzBuk face is delivered and every text style stays thin',async()=>{
  const fonts=await page.evaluate(()=>({
   thin:document.fonts.check('16px "AzBuk Thin"'),
-  bold:document.fonts.check('16px "AzBuk Bold"'),
+  faces:[...document.fonts].filter(f=>f.family.startsWith('AzBuk')).map(f=>f.family+':'+f.status),
   body:getComputedStyle(document.body).fontFamily,
   heading:getComputedStyle(document.querySelector('h1')).fontFamily,
-  status:[...document.fonts].filter(f=>f.family.startsWith('AzBuk')).map(f=>f.status)
+  icon:getComputedStyle(document.querySelector('.ico')).fontFamily,
+  boldWeight:getComputedStyle(document.querySelector('h1')).fontWeight,
+  strongWeight:getComputedStyle(document.querySelector('b')).fontWeight,
+  headWeight:getComputedStyle(document.querySelector('.xs-variant-explanation th')).fontWeight
  }));
  assert.equal(fonts.thin,true);
- assert.equal(fonts.bold,true);
+ assert.deepEqual(fonts.faces,['AzBuk Thin:loaded']);
  assert.match(fonts.body,/AzBuk Thin/);
- assert.match(fonts.heading,/AzBuk Bold/);
- assert.deepEqual(fonts.status,['loaded','loaded']);
+ assert.match(fonts.heading,/AzBuk Thin/);
+ assert.match(fonts.icon,/AzBuk Thin/);
+ assert.equal(fonts.boldWeight,'400');
+ assert.equal(fonts.strongWeight,'400');
+ assert.equal(fonts.headWeight,'400');
 });
 
 test('every button is a strict rectangle with a one-pixel border and no clipped corners',async()=>{
