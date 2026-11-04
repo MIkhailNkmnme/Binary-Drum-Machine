@@ -43,7 +43,7 @@
   function later(){if(timer===null&&!destroyed&&enabled)timer=schedule(tick);}
   function minDisplayZoom(){
    if(!source)return 1/512;const dpr=win.devicePixelRatio||1,p=Number(layout.pixelScale)||1/dpr,w=Number(layout.width)>0?Number(layout.width):source.width*p,h=Number(layout.height)>0?Number(layout.height):w*source.height/source.width;
-   let smallest=h;for(const item of items){const rows=item.size.height,size=heightMode.value==='original'?h:rows*p*(heightMode.value==='integer'?Math.ceil(source.height/rows):1);smallest=Math.min(smallest,size);}
+   let smallest=h;for(const item of heightMode.value==='native'?[]:items){const rows=item.size.height,size=heightMode.value==='original'?h:rows*p*(heightMode.value==='integer'?Math.ceil(source.height/rows):1);smallest=Math.min(smallest,size);}
    return Math.min(512,8/(dpr*Math.max(.000001,smallest)));
   }
   function geometry(){
@@ -54,7 +54,8 @@
    element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
    for(const item of items){
     const trueSize=heightMode.value==='native'||heightMode.value==='integer',factor=heightMode.value==='integer'?Math.ceil(source.height/item.size.height):1;
-    const w=trueSize?item.size.width*pixelScale*factor:width,h=trueSize||heightMode.value==='cell'?item.size.height*pixelScale*factor:height,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*axis-w*smallAxis;
+    const cellScale=heightMode.value==='native'?1/(win.devicePixelRatio||1):pixelScale;
+    const w=trueSize?item.size.width*cellScale*factor:width,h=trueSize||heightMode.value==='cell'?item.size.height*cellScale*factor:height,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*axis-w*smallAxis;
     item.element.style.width=w+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);
     const warning=doc.createElement('span');warning.className='may-scale-stack__warning';
     const fractional=source.width%item.size.width!==0||source.height%item.size.height!==0;
@@ -123,7 +124,7 @@
   function requestFrame(s,meta={}){if(!enabled||destroyed)return false;pending={source:job?undefined:s,key:meta.key};later();return true;}
   function refreshLayout(value={}){layout={...layout,...value};geometry();later();}
   function setZoom(value){zoom=Math.max(minDisplayZoom(),Math.min(512,Number(value)||1));geometry();later();return zoom;}
-  function setEnabled(value){if(destroyed)return false;const next=!!value;if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
+  function setEnabled(value){if(destroyed)return false;const next=!!value;if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);const selectedHeight=o.heightMode?.();if(['original','cell','native','integer'].includes(selectedHeight))heightMode.value=selectedHeight;requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
   function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));baseField.hidden=baseInput.hidden=mode.value==='rows';stepField.hidden=stepLabel.hidden=input.hidden=mode.value!=='rows';o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
   baseField.hidden=baseInput.hidden=mode.value==='rows';stepField.hidden=stepLabel.hidden=input.hidden=mode.value!=='rows';

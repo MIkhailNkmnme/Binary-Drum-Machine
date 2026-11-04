@@ -60,9 +60,10 @@ test('four display sizes preserve cell geometry, integer enlargement and exact d
  const size=()=>level.evaluate(el=>{const cv=el.querySelector('canvas'),r=cv.getBoundingClientRect(),warn=el.querySelector('.may-scale-stack__warning');return {w:r.width,h:r.height,rows:cv.height,warning:!warn.hidden,colour:getComputedStyle(warn).color,axis:el.getBoundingClientRect().left+Number(el.dataset.axisFraction)*r.width};});
  let v=await size();assert.equal(v.w,640);assert.equal(v.h,320);assert.equal(v.warning,true);assert.equal(v.colour,'rgb(255, 91, 91)');
  assert.equal(await page.locator('.may-scale-stack__level').nth(1).locator('.may-scale-stack__warning').evaluate(e=>e.hidden),true);
- for(const [name,w,h]of [['cell',640,240],['native',480,240],['integer',960,480],['original',640,320]]){
+ for(const [name,w,h]of [['cell',640,240],['native',48,24],['integer',960,480],['original',640,320]]){
   await mode.selectOption(name);v=await size();assert.equal(v.w,w,name);assert.equal(v.h,h,name);assert.equal(await page.evaluate(()=>savedHeight),name);assert.ok(Math.abs(v.axis-420)<.1,name);const band=await level.locator('.may-scale-stack__axis-band').boundingBox();assert.ok(band);assert.ok(Math.abs(band.width-w/48)<.02,name);
  }
+ await mode.selectOption('native');for(const z of [.25,2,10]){await page.evaluate(z=>stack.setZoom(z),z);v=await size();assert.equal(v.w,48);assert.equal(v.h,24);assert.match(await level.textContent(),/показ ×1(?:\D|$)/);}await page.evaluate(()=>stack.setZoom(1));
  await mode.selectOption('integer');await page.evaluate(()=>stack.setZoom(.5));v=await size();assert.equal(v.w,480);assert.equal(v.h,240);
  const second=await page.locator('.may-scale-stack__level').nth(1).evaluate(e=>{const r=e.querySelector('canvas').getBoundingClientRect();return {w:r.width,h:r.height};});assert.deepEqual(second,{w:320,h:160});
  await page.evaluate(()=>{source={width:63,height:32,pixels:new Uint8ClampedArray(63*32*4).fill(255)};stack.setZoom(1);stack.requestFrame(source,{key:'odd'});});
@@ -72,8 +73,16 @@ test('four display sizes preserve cell geometry, integer enlargement and exact d
  for(const method of ['average','canvas']){
   await page.getByRole('combobox',{name:'Способ уменьшения'}).selectOption(method);
   await page.waitForFunction(()=>!stack.inspect().busy&&!stack.inspect().pending&&document.querySelector('.may-scale-stack__canvas'));
-  v=await size();assert.equal(v.w,method==='canvas'?480:470);assert.equal(v.h,240);assert.equal(v.warning,true);assert.ok(Math.abs(v.axis-420)<.1);
+  v=await size();assert.equal(v.w,method==='canvas'?48:47);assert.equal(v.h,24);assert.equal(v.warning,true);assert.ok(Math.abs(v.axis-420)<.1);
  }
  for(const name of ['original','cell','native','integer']){await mode.selectOption(name);await page.evaluate(()=>stack.setZoom(1e-20));const a=await page.locator('.may-scale-stack__level').evaluateAll(a=>a.map(e=>parseFloat(e.style.height)-parseFloat(e.style.paddingTop)));assert.ok(a.every(h=>h>=8-1e-8),JSON.stringify({name,a}));}
  assert.deepEqual(errors,[]);
+});
+
+
+test('native lower cells remain physical pixels at fractional device density',{timeout:30000},async t=>{
+ const {chromium}=require('playwright-core'),browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:900,height:700},deviceScaleFactor:1.25});
+ await page.setContent('<div id="host" style="width:850px;height:650px;overflow:auto"></div>');await page.addStyleTag({path:path.join(__dirname,'mayatnik-scale-stack.css')});await page.addScriptTag({path:path.join(__dirname,'mayatnik-scale-stack-view.js')});
+ await page.evaluate(()=>{window.stack=MayatnikScaleStackView.create({host:document.querySelector('#host'),heightMode:()=> 'native',stepRows:()=>8,captureSource:()=>({width:64,height:32,pixels:new Uint8ClampedArray(64*32*4)})});stack.refreshLayout({left:100,width:640,height:320,pixelScale:10});stack.setEnabled(true);});await page.waitForFunction(()=>document.querySelector('.may-scale-stack__canvas'));
+ for(const z of [.25,1,8]){await page.evaluate(z=>stack.setZoom(z),z);const a=await page.locator('.may-scale-stack__level').first().evaluate(el=>({w:parseFloat(el.style.width)*devicePixelRatio,h:(parseFloat(el.style.height)-parseFloat(el.style.paddingTop))*devicePixelRatio,label:el.querySelector('.may-scale-stack__label').textContent}));assert.ok(Math.abs(a.w-48)<1e-6);assert.ok(Math.abs(a.h-24)<1e-6);assert.match(a.label,/показ ×1(?:\D|$)/);}
 });
