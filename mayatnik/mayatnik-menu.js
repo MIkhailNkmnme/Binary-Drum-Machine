@@ -661,7 +661,7 @@
     };
     const bs=make('x',sp,'Вершин за кадр'),bf=make('t',ft,'Длительность кадра');
     function close(focus=false){const owner=active?.button;popup?.remove();popup=null;active=null;owner?.setAttribute('aria-expanded','false');if(focus)owner?.focus();}
-    const optionShape=input=>input===sp?{width:240,height:192,columns:8}:{width:270,height:216,columns:9};
+    const optionShape=input=>input===sp?{width:180,height:144,columns:6}:{width:270,height:216,columns:9};
     function place(){
       if(!popup||!active)return;
       const r=active.button.getBoundingClientRect(),shape=optionShape(active.input),view=menuVisualViewport();
@@ -683,7 +683,18 @@
       popup.className='gz-ladder may-transport-options may-speed-options'+(input===ft?' may-delay-options':'');popup.dataset.noMini='';popup.setAttribute('role','menu');popup.setAttribute('aria-label',name);
       const grid=document.createElement('div');grid.className='may-speed-diamond'+(input===ft?' may-delay-diamond':'');grid.setAttribute('role','presentation');popup.append(grid);
       const delayPositions=[],speedPositions=[];
-      if(input===sp)for(let row=0;row<8;row++){const count=Math.min(row*2+1,(7-row)*2+1);for(let col=0;col<count;col++)speedPositions.push({left:(8-count)*15+col*30,top:row*24});}
+      if(input===sp){
+        const powers=[2,4,8,16,32,64],sides=[],positions=new Map();
+        powers.forEach((value,row)=>positions.set(value,{left:75,top:row*24}));
+        // A true diamond lattice keeps every small rhombus inside the outer clip.
+        for(let a=0;a<6;a++)for(let b=0;b<6;b++){
+          if(a===b||Math.abs(a-b)===5||(a+b===6&&Math.abs(a-b)===4))continue;
+          sides.push({left:(5+a-b)*15,top:(a+b)*12});
+        }
+        sides.sort((a,b)=>a.top-b.top||a.left-b.left);
+        values(input).filter(value=>!positions.has(value)).forEach((value,index)=>positions.set(value,sides[index]));
+        values(input).forEach(value=>speedPositions.push(positions.get(value)));
+      }
       if(input===ft)for(let row=0;row<9;row++){const count=9-2*Math.abs(4-row);for(let col=0;col<count;col++)delayPositions.push({left:(9-count)*15+col*30,top:row*24});}
       let row;values(input).forEach((value,index)=>{
         const option=document.createElement('button');option.type='button';option.className='may-transport-option';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');option.title=name+': '+label(input,value);option.setAttribute('aria-label',option.title);
