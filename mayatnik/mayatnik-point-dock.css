@@ -1,5 +1,5 @@
-/* Follow-point command stays at the browser centre, outside movable menu strips. */
-#mayPointDock{position:fixed;left:50vw;bottom:calc(-24px + env(safe-area-inset-bottom,0px));width:48px;height:48px;transform:translateX(-50%);z-index:30;--c:#ff8dd8}
+/* Follow-point command follows the field axis above movable menu strips. */
+#mayPointDock{position:fixed;left:50vw;bottom:calc(-24px + env(safe-area-inset-bottom,0px));width:48px;height:48px;transform:translateX(-50%);z-index:2147483647;--c:#ff8dd8}
 #mayPointDock>[data-n=fixTri].pt-b.gz-hx.may-point-command{position:relative!important;inset:auto!important;display:block!important;box-sizing:border-box!important;width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;min-height:48px!important;max-height:48px!important;margin:0!important;padding:0!important;flex:none!important;border:0!important;background:#000!important;color:var(--c)!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;outline:0!important;box-shadow:none!important;transform:none!important;cursor:pointer;--point-stroke:1px}
 #mayPointDock>[data-n=fixTri].pt-b.gz-hx.may-point-command:is(.on,.gz-on,[aria-pressed=true]){--point-stroke:2px;background:#261425!important}
 #mayPointDock>[data-n=fixTri].pt-b.gz-hx.may-point-command:is(:hover,:focus-visible){background:#261425!important}

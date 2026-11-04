@@ -933,7 +933,7 @@
     toolSync.push(() => { const on = !!window.maySectors?.get(); bSc.classList.toggle('on', on); bSc.title = 'Секторы вокруг точки встречи «Застыло»: верхний — застыл, больше не меняется (синий); нижний — меняется на каждом шаге (красный); левый / правый — только когда маятник на своей стороне, через шаг (жёлтые; когда вершин по сторонам не поровну — правый зелёный) · ' + (on ? 'вкл' : 'выкл'); });
     // v0.261: «Карта тепла» — серии изменений подряд и остывание
     const htp = document.createElement('button'); htp.title = 'Тепло'; const bHt = ptBtn('heat', 'drop', htp, () => { const T = window.mayHeat; T?.set(!T.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.mayHeat?.get(); bHt.classList.toggle('on', on); bHt.title = 'Тепло: на каждом кадре смена бита повышает температуру на одну ступень, повтор понижает на одну. На паузе цвет сохраняется. Окраска: все, только 1, только 0 или чередование. ·' + (on ? 'вкл' : 'выкл'); bHt.setAttribute('aria-label',bHt.title); });
+    toolSync.push(() => { const available=window.mayHeat?.available?.()!==false;bHt.disabled=!available;bHt.setAttribute('aria-disabled',String(!available));const on = !!window.mayHeat?.get(); bHt.classList.toggle('on', on); bHt.title = 'Тепло: на каждом кадре смена бита повышает температуру на одну ступень, повтор понижает на одну. На паузе цвет сохраняется. Окраска: все, только 1, только 0 или чередование. ·' + (on ? 'вкл' : 'выкл'); bHt.setAttribute('aria-label',bHt.title); });
     // v0.259: «Вспышка вершины» — на каждом шаге конус новой вершины золотом на секунду
     const vfp = document.createElement('button'); vfp.title = 'Вспышка'; const bVf = ptBtn('vtxFlash', 'bolt', vfp, () => { const V = window.mayVtxFlash; V?.set(!V.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayVtxFlash?.get(); bVf.classList.toggle('on', on); bVf.title = 'Вспышка: конус нового хода, в Аниматрице — реально изменённые клетки. Работает в перескоке, отскоке и ромбах; затухает за 1,3 секунды · ' + (on ? 'вкл' : 'выкл'); });
@@ -1180,14 +1180,15 @@
     name.textContent='Только при 1';
     hold.append(name);
     describe(hold,'Расчёт тепла: на нуле сохранить уровень. При переходе 0→1 прибавить ступень, при 1→1 убавить.');
-    hold.onclick=()=>{api().setHoldZero(!api().holdsZero());sync();};
+    hold.onclick=()=>{if(hold.disabled)return;api().setHoldZero(!api().holdsZero());sync();};
     anchor.after(row,box,hold);
     function sync(){
       const enabled=api()?.holdsZero?.()===true;
       hold.classList.toggle('on',enabled);
       hold.setAttribute('aria-pressed',String(enabled));
-      const mode=readMode(),available=typeof api()?.setMode==='function';parts.forEach((part,i)=>{const on=mode===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.disabled=!available;part.setAttribute('aria-disabled',String(!available));});
-      const disabled=mode!=='alternate'||typeof api()?.setPeriod!=='function';box.classList.toggle('gz-off-dis',disabled);box.setAttribute('aria-disabled',String(disabled));input.disabled=disabled;arrows.forEach(button=>button.disabled=disabled);const value=String(period());if(input.value!==value)input.value=value;if(output.textContent!==value)output.textContent=value;frame.sync();}
+      const active=api()?.get?.()===true&&api()?.available?.()!==false;hold.disabled=!active;hold.classList.toggle('gz-off-dis',!active);hold.setAttribute('aria-disabled',String(!active));row.classList.toggle('gz-off-dis',!active);row.setAttribute('aria-disabled',String(!active));
+      const mode=readMode(),available=active&&typeof api()?.setMode==='function';parts.forEach((part,i)=>{const on=mode===choices[i][0];part.classList.toggle('gz-on',on);part.setAttribute('aria-pressed',String(on));part.disabled=!available;part.setAttribute('aria-disabled',String(!available));});
+      const disabled=!active||mode!=='alternate'||typeof api()?.setPeriod!=='function';box.classList.toggle('gz-off-dis',disabled);box.setAttribute('aria-disabled',String(disabled));input.disabled=disabled;arrows.forEach(button=>button.disabled=disabled);const value=String(period());if(input.value!==value)input.value=value;if(output.textContent!==value)output.textContent=value;frame.sync();}
     toolSync.push(sync);sync();
   }
   installHeatChoices(gModes);

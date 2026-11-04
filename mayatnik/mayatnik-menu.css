@@ -1296,3 +1296,5 @@ header #paintTools.pt-dd .may-axes-number>.gz-a{position:relative!important;left
 header #paintTools.pt-dd .may-axes-number output{font-size:10px;white-space:nowrap;color:var(--gz-txt,#dfe6f5)}
 header #paintTools.pt-dd .may-axes-number-row{display:flex;flex:none;flex-direction:column;gap:0;width:120px;margin:0;padding:0}
 header #paintTools.pt-dd .may-axes-label{display:block;height:12px;line-height:12px;padding:0 12px;margin:0;font-size:9px;color:var(--c);white-space:nowrap;user-select:none;cursor:ew-resize}
+
+#paintTools :is([data-n="heatMode"],[data-n="heatPeriod"],[data-n="heatHoldZero"])[aria-disabled="true"]{opacity:.35!important;cursor:default;pointer-events:none}
