@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR · опыт 01 · v0.003</title>
+<title>Оси XOR · опыт 01 · v0.004</title>
 <style>
 *{box-sizing:border-box} :root{color-scheme:dark;--ink:#f4f0e8;--mut:#b5aca3;--line:#49423d;--red:#fd0000;--base:#181614}
 body{margin:0;background:var(--base);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
@@ -17,7 +17,7 @@ small,.caption,.meta,output,.idx{font:12px/1.45 ui-monospace,monospace;letter-sp
 small,.caption,.hint,.meta{color:var(--mut)} .layout{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(258px,.85fr);gap:24px;align-items:start}
 figure{margin:0}.caption{margin-bottom:7px;text-transform:uppercase}
 #field{width:100%;aspect-ratio:1;display:block;background:var(--red);touch-action:none;cursor:grab;user-select:none}
-#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#000}.dot.zero{background:var(--red)}.dot.ghost{background:#7c3aed}.dot.neutral{background:white}.grid{display:none}#bits,#ghostBits,.x-live,.x-ghost{filter:url(#figOutline)}body.shadows #bits,body.shadows #ghostBits,body.shadows .x-live,body.shadows .x-ghost{filter:url(#fig3d)}
+#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#000}.dot.zero{background:var(--red)}.dot.ghost{background:#7c3aed}.dot.neutral{background:white}.grid{display:none}.edit-row{gap:6px;margin-top:7px}.edit-row button{font-size:17px}.tile.editing svg{cursor:cell;outline:2px solid var(--red);outline-offset:-2px}#bits,#ghostBits,.x-live,.x-ghost{filter:url(#figOutline)}body.shadows #bits,body.shadows #ghostBits,body.shadows .x-live,body.shadows .x-ghost{filter:url(#fig3d)}
 section{border-top:1px solid var(--line);padding:10px 0}h2{font-size:14px;margin:0 0 8px}.hint{font-size:12px;margin:7px 0 0}.group{display:flex;gap:5px}.group>*{flex:1;min-width:0}
 button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:0;background:#342f2b;min-height:44px;padding:4px 9px;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%)}button:hover,button:focus-visible{background:#514740}button[aria-pressed=true]{background:var(--ink);color:#191613}button:focus-visible{outline:3px solid var(--red);outline-offset:-4px}button:disabled{opacity:.45;cursor:default}button:disabled:hover{background:#342f2b}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 2px}.tile svg{width:28px;height:28px}.tile span{font:12px monospace}.preview-row{margin-top:10px;gap:6px;align-items:stretch}.preview-row>*{flex:1 1 0;min-width:0;min-height:0;padding:7px 6px 5px;gap:3px;touch-action:pan-y;user-select:none}.preview-row .tile svg{width:100%;height:auto;aspect-ratio:1;display:block}
@@ -62,7 +62,8 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span id="ghostLegend" hidden><i class="dot ghost"></i>силуэт</span><span><i class="dot neutral"></i>центр вне счёта</span></div>
 <p class="hint">Тяните фигуру по полю. Кнопки 90° поворачивают выбранную, «Все» — сразу четыре.</p>
 <div class="group preview-row" id="tiles" role="group" aria-label="Фигуры отдельно"></div>
-<p class="hint">Фиолетовый силуэт — вся фигура, чёрное — её вклад в общий XOR. Белый контур и тёмная тень — как на обложке; «Тени» отключают тень, «Сетка» показывает клетки. Потяните миниатюру влево или вправо, чтобы повернуть.</p>
+<div class="group edit-row" role="group" aria-label="Редактирование клеток фигур"><button type="button" data-edit="0" aria-label="Редактировать клетки фигуры I" aria-pressed="false" title="Редактировать клетки фигуры I">✎</button><button type="button" data-edit="1" aria-label="Редактировать клетки фигуры II" aria-pressed="false" title="Редактировать клетки фигуры II">✎</button><button type="button" data-edit="2" aria-label="Редактировать клетки фигуры III" aria-pressed="false" title="Редактировать клетки фигуры III">✎</button><button type="button" data-edit="3" aria-label="Редактировать клетки фигуры IV" aria-pressed="false" title="Редактировать клетки фигуры IV">✎</button></div>
+<p class="hint">Фиолетовый силуэт — вся фигура, чёрное — её вклад в общий XOR. Белый контур и тёмная тень — как на обложке; «Тени» отключают тень, «Сетка» показывает клетки. ✎ под миниатюрой — редактировать: клик по клетке убирает или ставит бит.</p>
 <div class="group role"><button id="gridToggle" type="button" aria-pressed="false">Сетка</button><button id="shadowToggle" type="button" aria-pressed="true">Тени</button></div></figure>
 <div class="controls">
 <section><h2>Фигуры</h2><p class="meta" id="position"></p>
@@ -83,7 +84,7 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать видео</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF · 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> · <a href="xor.gif">С XOR</a> · <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.003</small></footer></main>
+</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.004</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
@@ -100,7 +101,7 @@ function permutations(left){return left.length?left.flatMap(i=>permutations(left
 const orders=permutations([0,1,2,3]),rays=[[0,-1],[1,0],[0,1],[-1,0]],arrows=['↑','→','↓','←'];
 const names=['I','II','III','IV'],size=29,center=14,total=24*256,dragMargin=6;
 const $=id=>document.getElementById(id);
-const state={variant:0,selected:0,radius:3,mode:'xor',ghosts:false,grid:false,shadows:true,offsets:Array.from({length:4},()=>({x:0,y:0}))};
+const state={variant:0,selected:0,radius:3,mode:'xor',ghosts:false,grid:false,shadows:true,edit:null,offsets:Array.from({length:4},()=>({x:0,y:0}))};
 const speedMin=1,speedMax=10000,rateSteps=1000;
 let speed=4,filmEffect='compare',filmMotion='variants',motionBeforeSolo='variants';
 const rateToSpeed=position=>Math.max(speedMin,Math.min(speedMax,Math.round(10**(4*position/rateSteps))));
@@ -154,14 +155,18 @@ const tiles=names.map((name,i)=>{
  el.title='Потяните влево или вправо, чтобы повернуть';
  el.innerHTML='<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true"><rect width="29" height="29" fill="#fd0000"/><path class="x-ghost" fill="#7c3aed"/><path class="x-live" fill="#000"/><rect class="grid" width="29" height="29" fill="url(#cellGrid)" pointer-events="none"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg><span>'+name+'</span>';
  let pointerId=null,startX=0,suppressClick=false;
- el.onclick=()=>{if(suppressClick){suppressClick=false;return;}state.selected=i;render();};
+ el.onclick=e=>{
+  if(state.edit===i){toggleEditCell(i,e);return;}
+  if(suppressClick){suppressClick=false;return;}
+  state.selected=i;render();
+ };
  el.addEventListener('pointerdown',e=>{
-  if(!e.isPrimary||e.button!==0)return;
+  if(state.edit===i||!e.isPrimary||e.button!==0)return;
   suppressClick=false;pointerId=e.pointerId;startX=e.clientX;
   try{el.setPointerCapture(e.pointerId);}catch{}
  });
  el.addEventListener('pointermove',e=>{
-  if(pointerId!==e.pointerId)return;
+  if(state.edit===i||pointerId!==e.pointerId)return;
   const step=Math.max(18,el.clientWidth/6),n=Math.trunc((e.clientX-startX)/step);
   if(!n)return;
   startX+=n*step;
@@ -177,6 +182,23 @@ const tiles=names.map((name,i)=>{
  el.addEventListener('lostpointercapture',stop);
  $('tiles').append(el);return el;
 });
+function toggleEditCell(i,event){
+ const svg=tiles[i].querySelector('svg'),rect=svg.getBoundingClientRect();
+ const x=Math.floor((event.clientX-rect.left)/rect.width*size);
+ const y=Math.floor((event.clientY-rect.top)/rect.height*size);
+ if(x<0||y<0||x>=size||y>=size)return;
+ const {order,turn}=unpack(state.variant),anchor=figureAnchor(i,order);
+ const [lx,ly]=rotate(x-anchor.x,y-anchor.y,(4-turn[i])%4);
+ const list=points[i],k=list.findIndex(([px,py])=>px===lx&&py===ly);
+ if(k>=0)list.splice(k,1);else list.push([lx,ly]);
+ render();
+}
+function setEdit(i){
+ if(state.edit===i)state.edit=null;
+ else{state.edit=i;state.selected=i;state.grid=true;}
+ render();
+}
+for(const button of document.querySelectorAll('[data-edit]'))button.onclick=()=>setEdit(Number(button.dataset.edit));
 function fieldCells(variant,radius,selected,mode,offsets=[]){
  const {order,turn}=unpack(variant),hits=new Uint8Array(size*size);
  order.forEach((id,ray)=>{
@@ -323,6 +345,11 @@ function render(){
  $('gridToggle').setAttribute('aria-pressed',String(state.grid));
  document.body.classList.toggle('shadows',state.shadows);
  $('shadowToggle').setAttribute('aria-pressed',String(state.shadows));
+ for(const button of document.querySelectorAll('[data-edit]')){
+  const i=Number(button.dataset.edit);
+  button.setAttribute('aria-pressed',String(state.edit===i));
+  tiles[i].classList.toggle('editing',state.edit===i);
+ }
  $('rule').textContent={xor:'Один или три чёрных бита дают 1. Два или четыре взаимно гасятся и дают 0.',union:'Видны все клетки, которые занимает хотя бы одна фигура.',solo:'Видна только выбранная фигура в её текущем положении.'}[state.mode];
 }
 function turnFigure(id,delta){
