@@ -1,12 +1,13 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.022</title>
-<!-- АзъБукъ — v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.023</title>
+<!-- АзъБукъ — v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
      v0.002: ручной редактор глифов. Шрифт: буквы на треугольной решётке, как в шапке «Зазеркалиус». -->
+<link rel="stylesheet" href="_js/grozd.css">
 <style>
   :root{ --bg:#040b12; --ink:#39f8ff; --dim:#87bacb; --line:#27afcd; --btn:#071824; --btnh:#0b2637; --btnon:#103c50; --card:#06121c; }
   *{box-sizing:border-box}
@@ -62,6 +63,15 @@
   .bar button[data-cell]{width:34px}
   .tools button{width:130px;min-width:0;flex:none}
   #editLabel{width:248px;min-width:0}
+
+  .bar .grid-pair{--gz-w:164px;--gz-h:26px;--gz-n:13px;--gz-bg:var(--btn);--gz-k:var(--ink);--c:var(--ink);--gz-r0:var(--line);--gz-r1:var(--line);width:164px;flex:none}
+  .bar .grid-pair:has(.gz-h0.on){--gz-r0:var(--ink)}
+  .bar .grid-pair:has(.gz-h1.on){--gz-r1:var(--ink)}
+  .bar .grid-pair button.gz-half{position:relative;height:26px;border:0;color:var(--ink);text-shadow:none;min-width:0}
+  .bar .grid-pair button.gz-h0{width:calc(50% + 4px)}
+  .bar .grid-pair button.gz-h1{width:calc(50% + 3px)}
+  .bar .grid-pair button svg{position:relative;z-index:1}
+
   .theme-picker{position:relative;display:inline-flex;flex:none;width:142px}
   .theme-picker:has([aria-expanded="true"])::before{content:"";position:absolute;top:100%;left:0;right:0;height:6px}
   .theme-list{position:absolute;left:0;top:32px;width:142px;height:154px;z-index:10;overflow:hidden;background:var(--bg);border:1px solid var(--line);perspective:260px;touch-action:pan-x}
@@ -111,7 +121,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.022"></span>
+    <span class="pbtn ver" aria-label="v0.023"></span>
   </div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><span class="theme-picker"><button id="theme" aria-haspopup="listbox" aria-expanded="false" aria-controls="themeList">цвет: кибер</button><span id="themeList" class="theme-list" role="listbox" aria-label="Палитры" tabindex="0" hidden></span></span>
@@ -124,7 +134,11 @@
       <input id="track" type="range" aria-label="Зазор в ячейках" min="0" max="8" step="1" value="1">
       <span class="gap-travel" aria-hidden="true"><span class="gap-thumb"><i></i><output id="trackVal">1</output><i></i></span></span>
       <button class="gap-step next" type="button" aria-label="Увеличить зазор"></button>
-    </span><span class="lbl">сетка</span><button data-lat="tri" class="on">ромбы</button><button data-lat="sq">квадрат</button><span class="lbl">ячейка</span>
+    </span><span class="lbl">сетка</span><span class="grid-pair gz-hx gz-pair gz-split gz-cut" role="group" aria-label="Сетка">
+      <button data-lat="tri" class="gz-half gz-h0" title="Ромбы с треугольной сеткой">ромбы</button><button data-lat="sq" class="gz-half gz-h1" title="Квадратная сетка">квадрат</button>
+    </span><span class="grid-pair gz-hx gz-pair gz-split gz-cut" role="group" aria-label="Ромбы Зазеркалиуса">
+      <button data-lat="rmbl" class="gz-half gz-h0" title="Ромбы Зазеркалиуса: ряды влево">ромб &lt;</button><button data-lat="rmbr" class="gz-half gz-h1" title="Ромбы Зазеркалиуса: ряды вправо">ромб &gt;</button>
+    </span><span class="lbl">ячейка</span>
     <button data-cell="1">1</button><button data-cell="2">2</button><button data-cell="3">3</button><button data-cell="4" class="on">4</button><button data-cell="6">6</button><button data-cell="8">8</button><button data-cell="16">16</button>
   </div>
 </header>
@@ -343,7 +357,8 @@ let cellSize = 4;
 let activeSet = 'bold';
 let editChar = 'А';
 
-let lattice = 'tri';
+const savedLattice = localStorage.getItem('azbuk-lattice');
+let lattice = ['tri', 'sq', 'rmbl', 'rmbr'].includes(savedLattice) ? savedLattice : 'tri';
 const trk = document.getElementById('track');
 const trackKey = 'azbuk-track-cells';
 const savedTrack = Number(localStorage.getItem(trackKey) ?? 1);
@@ -360,14 +375,16 @@ function updateTrackDisplay() {
 
 function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
-  const slope = lattice === 'tri' ? 0.5 : 0;
+  // Zazerkalius rmbLayout: полширины на ряд; высота ромба = ширина * √3/2.
+  const slope = lattice === 'sq' ? 0 : lattice === 'rmbr' ? -0.5 : 0.5;
+  const offset = h * Math.max(0, slope);
   // Один наклон для всей буквы сохраняет общие вершины соседних клеток.
-  const transform = 'matrix(1 0 ' + -slope + ' 1 ' + h * slope + ' 0)';
+  const transform = 'matrix(1 0 ' + -slope + ' 1 ' + offset + ' 0)';
   const edges = [];
-  let cells = '', joints = '';
+  let cells = '', joints = '', cellLines = '';
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (!rows[y] || rows[y][x] !== '1') continue;
-    const left = x + (h - 1 - y) * slope;
+    const left = x + offset - (y + 1) * slope;
     if (!edges[y]) edges[y] = { left, right: left + 1 };
     else edges[y].right = left + 1;
     // Закрепляем касание углами, чтобы сглаживание не разорвало диагональ.
@@ -380,6 +397,7 @@ function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
       }
     }
     cells += 'M' + x + ',' + y + 'h1v1h-1z';
+    cellLines += 'M' + (x + .08) + ',' + (y + .08) + 'h.84v.84h-.84z';
   }
   let grid = '';
   for (let y = 0; y <= h; y++) grid += 'M0,' + y + 'H' + w;
@@ -389,6 +407,7 @@ function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
       grid += 'M' + (x + 1) + ',' + y + 'l-1,1';
     }
   }
+  if (lattice === 'rmbl' || lattice === 'rmbr') grid = cellLines;
   const id = 'g' + (uid++);
   const sw = activeSet === 'thin' ? 0.16 : 0.12;
   const paths = '<defs><clipPath id="' + id + '"><path d="' + cells + '"/></clipPath></defs>' +
@@ -397,18 +416,19 @@ function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
     '<path d="' + cells + '" stroke="currentColor" stroke-width="' + sw + '" fill="none"/></g>' +
     '<path d="' + joints + '" stroke="currentColor" stroke-width="0.24" stroke-linecap="round"/></g>';
   const occupied = edges.filter(Boolean);
-  const left = occupied.length ? Math.min(...occupied.map(e => e.left)) : 0;
-  const right = occupied.length ? Math.max(...occupied.map(e => e.right)) + slope : w;
+  const left = occupied.length ? Math.min(...occupied.map(e => e.left)) + Math.min(0, slope) : 0;
+  const right = occupied.length ? Math.max(...occupied.map(e => e.right)) + Math.max(0, slope) : w;
   return { h, w, edges, left, right, paths };
 }
 
 function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[activeSet]) {
+  const aspect = lattice === 'rmbl' || lattice === 'rmbr' ? 2 / Math.sqrt(3) : AR;
   const lines = [];
   let placed = [], frontier = new Map(), width = 0, height = 0, gap = 0;
   function finishLine() {
     const groups = placed.map(({ shape, x }) =>
       '<g transform="translate(' + x + ' ' + (height - shape.h) + ')">' + shape.paths + '</g>').join('');
-    lines.push('<svg width="' + width * AR * cell + '" height="' + height * cell +
+    lines.push('<svg width="' + width * aspect * cell + '" height="' + height * cell +
       '" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' + groups + '</svg>');
     placed = [];
     frontier.clear();
@@ -428,7 +448,7 @@ function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[acti
     });
     if (!sharedRow) x = width - shape.left;
     x = Math.max(x + gap, -shape.left);
-    if (placed.length && Math.max(width, x + shape.right) * AR * cell > maxWidth) {
+    if (placed.length && Math.max(width, x + shape.right) * aspect * cell > maxWidth) {
       finishLine();
       x = -shape.left;
     }
@@ -475,6 +495,13 @@ function renderButtonLabel(button, label) {
 }
 
 function renderSheet(cell) {
+  document.querySelectorAll('[data-lat]').forEach(button => {
+    const selected = button.dataset.lat === lattice;
+    button.classList.toggle('on', selected);
+    button.classList.toggle('gz-on', selected);
+    button.setAttribute('aria-pressed', String(selected));
+    button.closest('.grid-pair').classList.toggle('gz-bs', button.closest('.grid-pair').querySelector('.gz-h1').dataset.lat === lattice);
+  });
   const letterWidths = [...(UPPER + LOWER + LATU + LATL)].map(ch =>
     Math.max(...G[activeSet][ch].map(row => row.length)));
   trk.max = Math.max(1, ...letterWidths);
@@ -607,10 +634,10 @@ document.querySelectorAll('.bar [data-set]').forEach(b => b.addEventListener('cl
 }));
 
 document.querySelectorAll('.bar [data-lat]').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.bar [data-lat]').forEach(x => x.classList.remove('on'));
-  b.classList.add('on');
   lattice = b.dataset.lat;
+  localStorage.setItem('azbuk-lattice', lattice);
   renderSheet(cellSize);
+  if (!document.getElementById('editor').hidden) renderEditor();
 }));
 
 document.querySelectorAll('.bar [data-cell]').forEach(b => b.addEventListener('click', () => {
