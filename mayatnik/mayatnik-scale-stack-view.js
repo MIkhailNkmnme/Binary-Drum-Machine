@@ -23,7 +23,8 @@
   for(const [value,text]of [['powers','Степени x'],['multiples','Кратно x'],['rows','По строкам']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;mode.append(opt);}
   mode.value=o.mode?.()||'rows';mode.setAttribute('aria-label','Вариант уменьшения');baseInput.type='number';baseInput.min='2';baseInput.max='10000';baseInput.step='1';baseInput.value=String(o.base?.()||2);baseInput.setAttribute('aria-label','Число x');baseInput.title='Число x';
   const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value),method:method.value});}finally{exportButton.disabled=false;}};
-  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';controls.append(method,mode,baseInput,stepLabel,input,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
+  const heightMode=doc.createElement('select');heightMode.setAttribute('aria-label','Высота нижних построений');heightMode.title='Высота нижних построений';for(const [value,text]of [['original','Высота оригинала'],['cell','Высота ячейки'],['native','Истинный размер'],['integer','Целое ≥ оригинала']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;heightMode.append(opt);}heightMode.value=['original','cell','native','integer'].includes(o.heightMode?.())?o.heightMode():'original';
+  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';controls.append(method,heightMode,mode,baseInput,stepLabel,input,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
   let enabled=false,destroyed=false,source=null,pending=null,job=null,timer=null,layout={},zoom=1,items=[],revision=0,lastKey,error=null;
   const schedule=o.schedule||(fn=>win.setTimeout(fn,0)),cancel=o.cancel||(id=>win.clearTimeout(id));
   const fmt=n=>Number(n.toFixed(4)).toLocaleString('ru-RU');
@@ -36,7 +37,20 @@
    const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
    element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
-   for(const item of items){const w=width,h=item.size.height*pixelScale,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*(axis-smallAxis);item.element.style.width=w+'px';item.element.style.height=(h+24)+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);if(!item.axis){item.axis=doc.createElement('div');item.axis.className='may-scale-stack__axis';item.axis.setAttribute('aria-hidden','true');item.element.append(item.axis);}Object.assign(item.axis.style,{display:layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',height:h+'px'});item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(pixelScale*(win.devicePixelRatio||1));if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}}
+   for(const item of items){
+    const trueSize=heightMode.value==='native'||heightMode.value==='integer',factor=heightMode.value==='integer'?Math.ceil(source.height/item.size.height):1;
+    const w=trueSize?item.size.width*pixelScale*factor:width,h=trueSize||heightMode.value==='cell'?item.size.height*pixelScale*factor:height,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*axis-w*smallAxis;
+    item.element.style.width=w+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);
+    const warning=doc.createElement('span');warning.className='may-scale-stack__warning';
+    const fractional=source.width%item.size.width!==0||source.height%item.size.height!==0;
+    warning.hidden=!fractional;warning.textContent=' · Нецелое число исходных ячеек';
+    warning.title='Исходных ячеек на одну нижнюю: по ширине '+source.width+'/'+item.size.width+', по высоте '+source.height+'/'+item.size.height;
+    item.label.replaceChildren(doc.createTextNode(item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(h/item.size.height*(win.devicePixelRatio||1))),warning);
+    item.headerHeight=Math.max(24,item.label.offsetHeight+8);item.element.style.paddingTop=item.headerHeight+'px';item.element.style.height=(h+item.headerHeight)+'px';
+    if(!item.axis){item.axis=doc.createElement('div');item.axis.className='may-scale-stack__axis';item.axis.setAttribute('aria-hidden','true');item.element.append(item.axis);}
+    Object.assign(item.axis.style,{display:layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',top:item.headerHeight+'px',height:h+'px'});
+    if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}
+   }
    overlays();
   }
   function overlays(){
@@ -46,7 +60,7 @@
     const left=Math.max(hostRect.left,rect.left),top=Math.max(hostRect.top,rect.top),right=Math.min(hostRect.right,rect.right),bottom=Math.min(hostRect.bottom,rect.bottom);if(right<=left||bottom<=top)continue;
     if(!item.overlay){item.overlay=doc.createElement('canvas');item.overlay.className='may-scale-stack__digits';item.overlay.setAttribute('aria-hidden','true');item.element.append(item.overlay);}
     const cv=item.overlay,W=Math.max(1,Math.ceil((right-left)*dpr)),H=Math.max(1,Math.ceil((bottom-top)*dpr));const used=(source?.pixels.byteLength||0)+(source?.bits?.byteLength||0)+items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0)+(i.bits?.byteLength||0)+(i!==item&&i.overlay?i.overlay.width*i.overlay.height*4:0),0);if(used+W*H*4>LIMIT)continue;
-    cv.hidden=false;cv.width=W;cv.height=H;Object.assign(cv.style,{left:(left-rect.left)+'px',top:(24+top-rect.top)+'px',width:(right-left)+'px',height:(bottom-top)+'px'});
+    cv.hidden=false;cv.width=W;cv.height=H;Object.assign(cv.style,{left:(left-rect.left)+'px',top:(item.headerHeight+top-rect.top)+'px',width:(right-left)+'px',height:(bottom-top)+'px'});
     const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.max(3,Math.min(cw*.75,ch*(Number(layout.digitSize)||80)/100))+'px '+(layout.digitFont||'monospace');
     const x0=Math.max(0,Math.floor((left-rect.left)/cw)),x1=Math.min(item.size.width,Math.ceil((right-rect.left)/cw)),y0=Math.max(0,Math.floor((top-rect.top)/ch)),y1=Math.min(item.size.height,Math.ceil((bottom-rect.top)/ch));
     for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const bit=item.bits[y*item.size.width+x];if(bit===-1)continue;ctx.fillStyle=bit===1?(layout.digitOneColour||'#e8edf5'):bit===0?(layout.digitZeroColour||'#7cbcff'):'#ffcf73';const text=bit===0?'0':bit===1?'1':'·',tx=rect.left-left+(x+.5)*cw,ty=rect.top-top+(y+.5)*ch;if(win.MayatnikBitGlyph)win.MayatnikBitGlyph.draw(ctx,text,tx,ty);else ctx.fillText(text,tx,ty);}
@@ -96,6 +110,7 @@
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
   function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));baseInput.hidden=mode.value==='rows';stepLabel.hidden=input.hidden=mode.value!=='rows';o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
   baseInput.hidden=mode.value==='rows';stepLabel.hidden=input.hidden=mode.value!=='rows';
+  heightMode.addEventListener('change',()=>{o.onHeightMode?.(heightMode.value);geometry();later();});
   method.addEventListener('change',()=>{o.onMethod?.(method.value);rebuild();later();});
   mode.addEventListener('change',sequenceChange);baseInput.addEventListener('change',sequenceChange);
   input.addEventListener('change',change);

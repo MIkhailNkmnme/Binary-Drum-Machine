@@ -57,3 +57,15 @@ test('row height step and reverse-hole option survive presets and links with saf
  for(const bad of [0,-1,1.5,65536])assert.throws(()=>S.normalized(S.pick({...state,gifScaleStackStep:bad})));
  assert.throws(()=>S.normalized(S.pick({...state,ochkiRowReverseMask:'true'})));
 });
+
+
+test('all four lower display sizes survive presets and links, with original-height reset',async()=>{
+ const S=require('./mayatnik-settings-library.js'),L=require('./mayatnik-share-link.js'),R=require('./mayatnik-reset-state.js');
+ for(const mode of ['original','cell','native','integer']){
+  const state={rows:32,steps:32,mode:'pend',bg:'empty',gifScaleStackHeight:mode},target={};
+  S.applyState(target,S.pick(state));assert.equal(target.gifScaleStackHeight,mode);
+  assert.equal((await L.decode(await L.encode({v:1,k:0,state}))).state.gifScaleStackHeight,mode);
+ }
+ const target={gifScaleStackHeight:'integer'};S.applyState(target,S.pick({}));assert.equal(target.gifScaleStackHeight,'original');assert.equal(R.defaults().gifScaleStackHeight,'original');
+ assert.throws(()=>S.normalized(S.pick({gifScaleStackHeight:'bad'})));
+});
