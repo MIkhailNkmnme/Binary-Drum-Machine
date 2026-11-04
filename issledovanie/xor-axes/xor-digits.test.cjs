@@ -41,17 +41,21 @@ test('digits are written over the existing black and red cells, not instead of t
  await page.locator('#digitsToggle').click();
  const result=await page.evaluate(()=>{
   const cells=fieldCells(state.variant,state.radius,state.selected,state.mode,state.offsets);
+  const coverage=fieldCells(state.variant,state.radius,state.selected,'union',state.offsets);
   const nodes=[...document.querySelectorAll('#digitBits text')],bad=[];
+  let ones=0,zeros=0,empty=0;
   nodes.forEach((node,i)=>{
-   const value=cells[i],text=value===2?'':String(value),kind=value===2?'digit-pivot':value?'digit-one':'digit-zero';
+   const covered=coverage[i]!==0&&cells[i]!==2;
+   if(covered){if(cells[i]===1)ones++;else zeros++;}else empty++;
+   const text=covered?String(cells[i]):'',kind=covered?(cells[i]?'digit-one':'digit-zero'):'digit-pivot';
    if(node.textContent!==text||node.getAttribute('class')!==kind)bad.push(i);
-   if(value===2)return;
-   if(getComputedStyle(node).fill!==(value?'rgb(244, 240, 232)':'rgb(0, 0, 0)'))bad.push('fill'+i);
+   if(!covered)return;
+   if(getComputedStyle(node).fill!==(cells[i]?'rgb(244, 240, 232)':'rgb(0, 0, 0)'))bad.push('fill'+i);
    if(+node.getAttribute('x')!==i%29+.5||+node.getAttribute('y')!==Math.floor(i/29)+.5)bad.push('xy'+i);
   });
   return {
    count:nodes.length,bad:bad.slice(0,8),badCount:bad.length,
-   ones:cells.filter(value=>value===1).length,zeros:cells.filter(value=>value===0).length,
+   ones,zeros,empty,
    background:getComputedStyle(document.getElementById('field')).backgroundColor,
    bits:getComputedStyle(document.getElementById('bits')).display,
    digitLayer:getComputedStyle(document.getElementById('digitBits')).display,
@@ -61,8 +65,10 @@ test('digits are written over the existing black and red cells, not instead of t
  });
  assert.equal(result.badCount,0,JSON.stringify(result.bad));
  assert.equal(result.count,841);
- assert.equal(result.ones+result.zeros,840);
- assert(result.ones>0&&result.zeros>0);
+ assert.equal(result.ones+result.zeros+result.empty,841);
+ assert(result.ones>0,'ones in the XOR result');
+ assert(result.empty>0,'empty cells stay without digits');
+ assert(result.zeros>=0);
  assert.equal(result.background,'rgb(253, 0, 0)','the field keeps its background');
  assert.equal(result.bits,'inline','the filled cells stay visible');
  assert.equal(result.digitLayer,'inline');
@@ -74,8 +80,12 @@ test('labels follow every layout change, all three operations and the reset',asy
  const mismatches=await page.evaluate(()=>{
   const compare=()=>{
    const cells=fieldCells(state.variant,state.radius,state.selected,state.mode,state.offsets);
+   const coverage=state.mode==='solo'?cells:fieldCells(state.variant,state.radius,state.selected,'union',state.offsets);
    const nodes=document.querySelectorAll('#digitBits text');
-   for(let i=0;i<cells.length;i++)if(nodes[i].textContent!==(cells[i]===2?'':String(cells[i])))return i;
+   for(let i=0;i<cells.length;i++){
+    const expected=coverage[i]===0||cells[i]===2?'':String(cells[i]);
+    if(nodes[i].textContent!==expected)return i;
+   }
    return -1;
   };
   const bad=[];
@@ -148,6 +158,36 @@ test('GIF and video raster carries shadows, digits and the chosen colours',async
  assert(result.yellow>20,'digit 0 colour in raster');
  assert.deepEqual(result.corner,[16,24,32],'raster background follows the colour picker');
  assert.equal(result.different,true);
+});
+
+test('digit size is smaller by default, adjustable and carried into the raster',async()=>{
+ await page.locator('#resetColors').click();
+ const initial=await page.evaluate(()=>({
+  size:state.digitSize,slider:document.getElementById('digitSize').value,
+  shown:document.getElementById('digitSizeNow').textContent,
+  font:getComputedStyle(document.querySelector('#digitBits text')).fontSize,
+  css:getComputedStyle(document.documentElement).getPropertyValue('--digit-size').trim()
+ }));
+ assert.equal(initial.size,0.7);
+ assert.equal(initial.slider,'0.7');
+ assert.equal(initial.shown,'0,70');
+ assert.equal(initial.font,'0.7px');
+ assert.equal(initial.css,'0.7px');
+ const counts=await page.evaluate(()=>{
+  state.digits=true;state.shadows=false;state.variant=1576;state.radius=0;state.selected=null;state.mode='xor';render();
+  const input=document.getElementById('digitSize');
+  const count=()=>{const px=raster(settings(),plan(settings())[0]);let n=0;for(let i=0;i<px.length;i+=4)if(px[i]===244&&px[i+1]===240&&px[i+2]===232)n++;return n;};
+  input.value='0.4';input.dispatchEvent(new Event('input'));
+  const small=count();
+  input.value='1.1';input.dispatchEvent(new Event('input'));
+  const big=count();
+  const font=getComputedStyle(document.querySelector('#digitBits text')).fontSize;
+  input.value='0.7';input.dispatchEvent(new Event('input'));
+  return {small,big,font,size:state.digitSize};
+ });
+ assert.ok(counts.big>counts.small*2,JSON.stringify(counts));
+ assert.equal(counts.font,'1.1px');
+ assert.equal(counts.size,0.7);
 });
 
 test('MP3 duration and the resulting frame rate appear immediately',async()=>{

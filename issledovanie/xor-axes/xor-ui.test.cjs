@@ -83,7 +83,7 @@ test('sliders are drawn with square brackets in both the field and the 3D player
   const font=getComputedStyle(document.querySelector('.x-bracket')).fontFamily;
   return {field,player,font};
  });
- assert.deepEqual(brackets.field,['[',']','[',']','[',']']);
+ assert.deepEqual(brackets.field,['[',']','[',']','[',']','[',']']);
  assert.deepEqual(brackets.player,['[',']']);
  assert.match(brackets.font,/AzBuk/);
 });
