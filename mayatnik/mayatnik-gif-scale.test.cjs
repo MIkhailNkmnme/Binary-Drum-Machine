@@ -15,7 +15,7 @@ test('default canvas reduction matches physical viewport pixel centres without s
 
 test('canvas is the initial UI choice while every legacy reduction stays available',()=>{
  const html=fs.readFileSync(__dirname+'/Zerkalius-mayatnik.html','utf8'),select=html.match(/<select id="gifScaleMethod"[\s\S]*?<\/select>/)[0];
- assert.match(select,/<option value="canvas" selected>Как на холсте/);for(const value of ['nearest','majority','average'])assert.ok(select.includes('value="'+value+'"'));
+ assert.match(select,/<option value="canvas" selected>Как на холсте/);for(const value of ['nearest','average'])assert.ok(select.includes('value="'+value+'"'));assert.ok(!select.includes('value="majority"'));
 });
 test('levels start at full 1:1 and descend to 8 rows, including non-power-of-two sources',()=>{
  const a=S.plan(2047,1024);assert.equal(a.levels.length,128);assert.deepEqual(a.levels.slice(0,4),[1024,1016,1008,1000]);assert.equal(a.levels.at(-1),8);assert.equal(a.padded,0);
@@ -91,19 +91,19 @@ test('aggregate preflight bounds computation and map memory, and rejects malform
  const large=mock(65535,184);assert.throws(()=>S.validateAll({...large,bits:new Int8Array(large.width*large.height)},{sequence:'powers2'}),/не хватит памяти/);
  for(const bits of [Int8Array.of(0),new Uint8Array(8),Int8Array.of(0,1,0,1,0,1,-2,2)])assert.throws(()=>S.validateAll({...mock(1,8),bits}),/бит/);
 });
-test('one real worker creates only four full-frame animations with exact pixels and semantic cells, without scale work',async()=>{
+test('one real worker creates only three full-frame animations with exact pixels and semantic cells, without scale work',async()=>{
  let workers=0;globalThis.Worker=class extends ThreadWorker{
   constructor(url){super(url,code=>code+'\ncenter=()=>{throw Error("Batch must not render scale presentation");};');workers++;}
-  postMessage(message,...rest){assert.deepEqual(message.presentations,['pixels']);assert.deepEqual(message.methods,['canvas','nearest','majority','average']);super.postMessage(message,...rest);}
+  postMessage(message,...rest){assert.deepEqual(message.presentations,['pixels']);assert.deepEqual(message.methods,['canvas','nearest','average']);super.postMessage(message,...rest);}
  };globalThis.MayatnikGif=Gif;
  const width=7,height=19,pixels=rgba(Array.from({length:width*height},(_,i)=>i%5*60)),bits=Int8Array.from({length:width*height},(_,i)=>i%4-2);
  const original=pixels.slice(),native=bits.slice(),progress=[],background=[15,30,40];
  const job=S.generateAll({width,height,pixels,bits},{presentation:'scale',delay:110,background,onProgress:p=>progress.push(p)});pixels.fill(255);bits.fill(0);background.fill(0);
- const {variants,plan}=await job.promise;assert.equal(workers,1);assert.equal(variants.length,4);
- assert.deepEqual(variants.map(v=>v.id),['canvas-pixels','nearest-pixels','majority-pixels','average-pixels']);
- assert.deepEqual(progress.map(p=>p.done),Array.from({length:12},(_,i)=>i+1));assert.ok(progress.every(p=>p.total===12&&p.presentation==='pixels'));
+ const {variants,plan}=await job.promise;assert.equal(workers,1);assert.equal(variants.length,3);
+ assert.deepEqual(variants.map(v=>v.id),['canvas-pixels','nearest-pixels','average-pixels']);
+ assert.deepEqual(progress.map(p=>p.done),Array.from({length:9},(_,i)=>i+1));assert.ok(progress.every(p=>p.total===9&&p.presentation==='pixels'));
  const source=S.prepare({pixels:original},plan,[15,30,40]),padded=new Int8Array(width*24).fill(-1);padded.set(native);
- for(let i=0;i<4;i++){
+ for(let i=0;i<3;i++){
   const v=variants[i],expected=Gif.encoder(width,24);assert.equal(v.presentation,'pixels');assert.equal(v.delay,110);assert.deepEqual(v.frames.map(f=>f.rows),[24,16,8]);assert.deepEqual(v.frames[0].semantic.bits,padded);
   for(let n=0;n<v.frames.length;n++){
    const {rows,semantic,blob}=v.frames[n],small=S.reduce(source,width,24,rows,v.method,padded);
@@ -121,7 +121,7 @@ test('cancelling a batch after receiving its first level rejects once; a batch w
  const source={width:2,height:16,pixels:rgba(new Array(32).fill(0))};
  const prior=await S.generateAll(source).promise;assert.ok(prior.variants.every(v=>v.frames.every(f=>f.semantic===null)));
  const progress=[];const next=S.generateAll(source,{onProgress:p=>{progress.push(p.done);next.cancel();}});
- await assert.rejects(next.promise,{name:'AbortError'});next.cancel();assert.deepEqual(progress,[1]);assert.equal(prior.variants.length,4);
+ await assert.rejects(next.promise,{name:'AbortError'});next.cancel();assert.deepEqual(progress,[1]);assert.equal(prior.variants.length,3);
 });
 test('retime edits only real control delays, skips a false control inside image data and rejects truncated records',async()=>{
  const make=t=>{const gif=Gif.encoder(2,2);gif.add(rgba([255,0,0,255]),t);gif.add(rgba([0,255,255,0]),t);return gif.finish();};

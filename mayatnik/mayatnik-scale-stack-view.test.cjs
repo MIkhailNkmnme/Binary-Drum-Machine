@@ -12,11 +12,11 @@ test('scroll window paints exact pixels, frees offscreen rasters, displays every
  await page.addStyleTag({path:path.join(__dirname,'mayatnik-scale-stack.css')});await page.addScriptTag({path:path.join(__dirname,'mayatnik-scale-stack-view.js')});
  await page.evaluate(()=>{const source={width:63,height:32,pixels:Uint8ClampedArray.from({length:63*32*4},(_,i)=>i%4===3?255:17)};window.source=source;window.stack=MayatnikScaleStackView.create({host:document.querySelector('#host'),stepRows:()=>1,captureSource:()=>source});stack.refreshLayout({left:100,width:630,pixelScale:10});stack.setEnabled(true);});
  await page.waitForFunction(()=>stack.inspect().canvases>0&&!stack.inspect().busy&&!stack.inspect().pending);
- await page.locator('.may-scale-stack__controls select').selectOption('powers');assert.equal(await page.locator('.may-scale-stack__level').count(),2);
+ await page.locator('.may-scale-stack__controls select[aria-label="Вариант уменьшения"]').selectOption('powers');assert.equal(await page.locator('.may-scale-stack__level').count(),2);
  assert.match(await page.locator('.may-scale-stack__level').first().textContent(),/16 строк/);
  const base=page.locator('.may-scale-stack__controls input[aria-label="Число x"]');await base.fill('3');await base.dispatchEvent('change');assert.match(await page.locator('.may-scale-stack__level').first().textContent(),/10 строк/);
- await base.fill('2');await base.dispatchEvent('change');await page.locator('.may-scale-stack__controls select').selectOption('multiples');assert.match(await page.locator('.may-scale-stack__level').nth(1).textContent(),/8 строк/);
- await page.locator('.may-scale-stack__controls select').selectOption('rows');
+ await base.fill('2');await base.dispatchEvent('change');await page.locator('.may-scale-stack__controls select[aria-label="Вариант уменьшения"]').selectOption('multiples');assert.match(await page.locator('.may-scale-stack__level').nth(1).textContent(),/8 строк/);
+ await page.locator('.may-scale-stack__controls select[aria-label="Вариант уменьшения"]').selectOption('rows');
  assert.equal(await page.locator('.may-scale-stack__level').count(),24);
  assert.ok(await page.locator('.may-scale-stack canvas').count()<5);
  assert.equal(await page.locator('.may-scale-stack canvas').first().evaluate(c=>c.getContext('2d').getImageData(0,0,1,1).data[0]),17);

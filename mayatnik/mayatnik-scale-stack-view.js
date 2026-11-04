@@ -18,10 +18,12 @@
   const controls=doc.createElement('label'),input=doc.createElement('input'),list=doc.createElement('div');
   controls.className='may-scale-stack__controls';controls.addEventListener('pointerdown',e=>e.stopPropagation());controls.addEventListener('pointerup',e=>e.stopPropagation());
   const mode=doc.createElement('select'),baseInput=doc.createElement('input');
+  const method=doc.createElement('select');method.setAttribute('aria-label','Способ уменьшения');for(const [value,text]of [['canvas','Как на холсте'],['nearest','Ближайший'],['average','Средний цвет']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;method.append(opt);}method.value=['canvas','nearest','average'].includes(o.method?.())?o.method():'canvas';
+
   for(const [value,text]of [['powers','Степени x'],['multiples','Кратно x'],['rows','По строкам']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;mode.append(opt);}
   mode.value=o.mode?.()||'rows';mode.setAttribute('aria-label','Вариант уменьшения');baseInput.type='number';baseInput.min='2';baseInput.max='10000';baseInput.step='1';baseInput.value=String(o.base?.()||2);baseInput.setAttribute('aria-label','Число x');baseInput.title='Число x';
-  const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value)});}finally{exportButton.disabled=false;}};
-  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';controls.append(mode,baseInput,stepLabel,input,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
+  const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value),method:method.value});}finally{exportButton.disabled=false;}};
+  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';controls.append(method,mode,baseInput,stepLabel,input,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
   let enabled=false,destroyed=false,source=null,pending=null,job=null,timer=null,layout={},zoom=1,items=[],revision=0,lastKey,error=null;
   const schedule=o.schedule||(fn=>win.setTimeout(fn,0)),cancel=o.cancel||(id=>win.clearTimeout(id));
   const fmt=n=>Number(n.toFixed(4)).toLocaleString('ru-RU');
@@ -34,11 +36,11 @@
    const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
    element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
-   for(const item of items){const w=width,h=item.size.height*pixelScale,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=source.width*axis*item.size.height/source.height/item.size.width,offset=width*(axis-smallAxis);item.element.style.width=w+'px';item.element.style.height=(h+24)+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(pixelScale*(win.devicePixelRatio||1));if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}}
+   for(const item of items){const w=width,h=item.size.height*pixelScale,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*(axis-smallAxis);item.element.style.width=w+'px';item.element.style.height=(h+24)+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(pixelScale*(win.devicePixelRatio||1));if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}}
   }
   function rebuild(){
    job=null;if(!source)return;const previous=new Map(items.map(item=>[item.size.height,item]));items=[];input.max=String(Math.max(1,source.height));
-   const sizes=levels(source.width,source.height,Number(input.value),mode.value,Number(baseInput.value));
+   const sizes=levels(source.width,source.height,Number(input.value),mode.value,Number(baseInput.value));if(method.value!=='canvas')for(const size of sizes)size.width=Math.max(1,Math.round(source.width*size.height/source.height));
    for(const size of sizes){let item=previous.get(size.height);if(item){previous.delete(size.height);item.size=size;if(item.canvas&&(item.canvas.width!==size.width||item.canvas.height!==size.height))drop(item);item.revision=-1;}else{const el=doc.createElement('div'),label=doc.createElement('span');el.className='may-scale-stack__level';label.className='may-scale-stack__label';el.append(label);item={element:el,label,size,canvas:null,revision:-1};}list.append(item.element);items.push(item);}
    for(const item of previous.values()){drop(item);item.element.remove();}
    geometry();
@@ -62,9 +64,10 @@
      if(bytes>LIMIT)throw Error('Для видимого масштаба недостаточно памяти');
      job={item,at:0,pixels:new Uint8ClampedArray(item.size.width*item.size.height*4)};
     }}
-    if(job){const {item,pixels}=job,{width,height}=item.size,ratio=height/source.height,end=Math.min(width*height,job.at+1048576);
+    if(job){const {item,pixels}=job,{width,height}=item.size,ratio=height/source.height,end=method.value==='canvas'?Math.min(width*height,job.at+1048576):width*height;
      const output=new Uint32Array(pixels.buffer),input=new Uint32Array(source.pixels.buffer,source.pixels.byteOffset,source.width*source.height);
-     for(let i=job.at;i<end;i++){const x=i%width,y=Math.floor(i/width),sx=Math.floor((x+.5)/ratio),sy=Math.floor((y+.5)/ratio);if(sx<source.width&&sy<source.height)output[i]=input[sy*source.width+sx];}
+     if(method.value==='canvas')for(let i=job.at;i<end;i++){const x=i%width,y=Math.floor(i/width),sx=Math.floor((x+.5)/ratio),sy=Math.floor((y+.5)/ratio);if(sx<source.width&&sy<source.height)output[i]=input[sy*source.width+sx];}
+     if(method.value!=='canvas'){const reduce=o.reduce||win.MayatnikGifScale?.reduce;if(!reduce)throw Error('Модуль уменьшения не загружен');const reduced=reduce(source.pixels,source.width,source.height,height,method.value);pixels.set(reduced.pixels);}
      job.at=end;if(end<width*height){later();return;}
      if(!item.canvas){item.canvas=doc.createElement('canvas');item.canvas.className='may-scale-stack__canvas';item.element.append(item.canvas);}
      const cv=item.canvas;cv.width=width;cv.height=height;const ctx=cv.getContext('2d'),image=ctx.createImageData(width,height);image.data.set(pixels);ctx.putImageData(image,0,0);item.revision=revision;job=null;geometry();o.onPaint?.({key:lastKey,levels:shown.map(i=>i.size)});
@@ -79,6 +82,7 @@
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
   function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));baseInput.hidden=mode.value==='rows';stepLabel.hidden=input.hidden=mode.value!=='rows';o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
   baseInput.hidden=mode.value==='rows';stepLabel.hidden=input.hidden=mode.value!=='rows';
+  method.addEventListener('change',()=>{o.onMethod?.(method.value);rebuild();later();});
   mode.addEventListener('change',sequenceChange);baseInput.addEventListener('change',sequenceChange);
   input.addEventListener('change',change);
   const scroll=()=>later();host.addEventListener('scroll',scroll,{passive:true});win.addEventListener('resize',scroll);

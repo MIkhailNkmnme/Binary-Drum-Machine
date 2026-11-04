@@ -149,7 +149,7 @@
   }
   function start(source,options,all){
     const p=all?validateAll(source,options):validate(source,options);
-    const methods=all?['canvas','nearest','majority','average']:[options.method||'canvas'];
+    const methods=all?['canvas','nearest','average']:[options.method||'canvas'];
     const presentations=all?['pixels']:[options.presentation===undefined?'pixels':options.presentation];
     const delay=delayTicks(options.delay);
     if(!globalThis.MayatnikGif?.encoder)throw Error('Кодировщик GIF не загружен');
