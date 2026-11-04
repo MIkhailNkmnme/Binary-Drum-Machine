@@ -34,6 +34,7 @@ test('reflected matcher patterns carry source orientation and symmetric or ambig
 function actualHistory(){
  const controls={};const c={console,Uint32Array,Uint8Array,Uint8ClampedArray,Int8Array,Set,Map,Promise,setTimeout,window:{mayTemplateLibrary:{clear(){}}},document:{createElement:()=>({getContext:()=>({putImageData(){}})})},ImageData:function(data,width,height){Object.assign(this,{data,width,height});},
   $:id=>controls[id]??=( {value:'',disabled:false,textContent:''}),f:{val:new Int8Array([1,0,1,0]),W:4,H:1},img:{width:4,height:1},gpuBig:null,k:1,bmGen:0,playing:false,st:{},templateMatchLayer:null,templateMatchRevision:0,templateMatchCache:null,
+  paintRepeatSeed:null,paintRepeatPending:null,paintRepeatScope:()=>'',paintRepeatSource:()=>null,paintRepeatStateChanged(){},
   templateItems:[{id:'copy',libraryId:'a',hex:'#112233',name:'A',view:{visible:true},parts:[{mask:{width:1,height:1,data:Uint32Array.of(0xff332211)},canvas:{}}]}],colourTemplate:null,templateLibrary:[{id:'a',name:'A',shape:{hex:'#112233'}}],removedTemplateIds:new Set(),templatePickedIds:new Set(),manualPaintState:null,manualPaintRevision:0,templatePaintLayer:null,manualPaintCurrent:()=>null,faceLayer:null,colReplaySnapshot:()=>[],colReplayRestore(){},
   fillHistory:[],fillRedo:[],fillHistoryBytes:0,fillMask:null,paintBits:null,fillBits:null,templateStatsKey:'',templateDragging:false,mirrorLive:false,mirrorApplying:false,templateSync(){},draw(){},fillSync(){},savePaint(){},persistLibrary(){},rememberTemplate(){},MayatnikPaintCache:{write:async()=>{}},selectTemplate(t){c.colourTemplate=t;},rgba:rgb=>(0xff000000|rgb[2]<<16|rgb[1]<<8|rgb[0])>>>0,hexRGB:h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),MayatnikTemplateMatcher:M};
  vm.createContext(c);const slices=[['  function pushHistory(','  function editSnapshot('],['  function historyStep(','  $(\'bFillUndo\').onclick'],['  function recolourTemplate(','  $(\'templateColour\').onchange'],['  function templateMatchKey(','  async function templateMatchField('],['  function templateSceneHistory(','  function templateFollowScope(']];
@@ -51,7 +52,12 @@ test('production external folder history uses the same undo/redo stack without m
 });
 
 test('production library deletion is separate from field deletion and common undo restores the entry',async()=>{
- const c=actualHistory();c.templateSync=()=>{};c.queueDigits=()=>{};vm.runInContext(html.slice(html.indexOf('  async function deleteLibraryItem('),html.indexOf('  function syncLibraryChoices(')),c);const entry=c.templateLibrary[0];await c.deleteLibraryItem(entry);assert.equal(c.templateLibrary.length,0);assert.equal(c.templateItems.length,1);assert.ok(c.removedTemplateIds.has('a'));c.historyStep(false);assert.equal(c.templateLibrary[0].id,'a');assert.equal(c.removedTemplateIds.size,0);c.historyStep(true);assert.equal(c.templateLibrary.length,0);
+ const c=actualHistory();c.templateSync=()=>{};c.queueDigits=()=>{};vm.runInContext(html.slice(html.indexOf('  async function deleteLibraryItem('),html.indexOf('  function syncLibraryChoices(')),c);
+ const entry=c.templateLibrary[0],cache=c.templateMatchCache={},pending=c.paintRepeatPending={},field=c.f.val.slice(),mask=c.templateItems[0].parts[0].mask.data.slice();c.mirrorLive=true;
+ await c.deleteLibraryItem(entry);assert.equal(c.templateLibrary.length,0);assert.equal(c.templateItems.length,1);assert.ok(c.removedTemplateIds.has('a'));
+ assert.equal(c.templateMatchRevision,0);assert.equal(c.templateMatchCache,cache);assert.equal(c.paintRepeatPending,pending);assert.equal(c.mirrorLive,true);assert.equal(c.fillHistory.length,1);
+ assert.deepEqual(c.f.val,field);assert.deepEqual(c.templateItems[0].parts[0].mask.data,mask);
+ c.mirrorLive=false;c.historyStep(false);assert.equal(c.templateLibrary[0].id,'a');assert.equal(c.removedTemplateIds.size,0);c.historyStep(true);assert.equal(c.templateLibrary.length,0);assert.deepEqual(c.f.val,field);assert.deepEqual(c.templateItems[0].parts[0].mask.data,mask);
 });
 
 test('production scale API maps 1 to smooth, preserves 2..10 and never changes the zoom ceiling',()=>{

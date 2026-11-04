@@ -4,7 +4,7 @@ function fn(name){const at=html.indexOf('  function '+name+'(');assert.ok(at>=0,
 function fixture(options={}){
  const buttons=new Map(),st={zoom:1,zsnap:true,zbase:2,zLimit:false,zLock:false,ztop:false,zBot:false,zMid:false,...options};
  const c={st,geo:{anchor:63},window:{devicePixelRatio:options.dpr||1},wrap:{clientWidth:800,clientHeight:800,scrollLeft:100,scrollTop:100,getBoundingClientRect:()=>({left:0,top:0,width:800,height:800})},cv:{style:{},getBoundingClientRect:()=>({left:0,top:0,width:127*c.scale(),height:128*c.scale(),bottom:128*c.scale()})},VTX_H:16,MAX_ZOOM:512,zWant:0,dispW:()=>127,dispH:()=>128,wrapPadX:()=>32,bothOn:()=>false,ovlLinked:()=>false,fitAxis:()=>false,save(){},layout(){},thick(){},zBotScroll(){},zTopScroll(){},zTopLine(){},present(){},imageStats(){},queueDigits(){},midScroll(){},fitHold(){},$:(id)=>{if(!buttons.has(id))buttons.set(id,{setAttribute(){}});return buttons.get(id);}};
- c.requestAnimationFrame=callback=>callback();c.wrap.classList={toggle(){}};c.wrap.style={setProperty(){}};c.document={body:{classList:{contains:()=>false}}};
+ c.requestAnimationFrame=callback=>callback();c.showWheelZoomCursor=()=>{};c.wrap.classList={toggle(){}};c.wrap.style={setProperty(){}};c.document={body:{classList:{contains:()=>false}}};
  c.freePanScale=0;c.freePanInset=0;c.getComputedStyle=()=>({paddingLeft:'16px',paddingRight:'16px'});
  vm.createContext(c);
  const declarations=['DPR','zB','snap2','fitScale','fitHRow','fitHScale','baseMinScale','minScale','scale'].map(name=>lines.find(line=>line.trimStart().startsWith('const '+name+' ='))).join('\n');
@@ -37,6 +37,31 @@ test('free pinch retains the source point under the gesture at custom and maximu
   const c=fixture({zoom:4,zsnap:false});c.cv.getBoundingClientRect=()=>({left:-c.wrap.scrollLeft,top:-c.wrap.scrollTop,width:127*c.scale(),height:128*c.scale(),bottom:128*c.scale()-c.wrap.scrollTop});
   const x=200,y=200,before=c.cv.getBoundingClientRect(),sourceX=(x-before.left)/c.scale(),sourceY=(y-before.top)/c.scale();c.zoomTo(wanted,x,y,true);const after=c.cv.getBoundingClientRect();assert.ok(Math.abs((x-after.left)/c.scale()-sourceX)<1e-9);assert.ok(Math.abs((y-after.top)/c.scale()-sourceY)<1e-9);
  }
+});
+
+test('ordinary wheel zoom retains the source point under the current cursor in both axes',()=>{
+ for(const [x,y]of [[120,150],[300,350],[500,600]])for(const deltaY of [-160,160]){
+  const c=fixture({zoom:8,zsnap:false});let shown=0;
+  c.cv.getBoundingClientRect=()=>({left:-c.wrap.scrollLeft,top:-c.wrap.scrollTop,width:127*c.scale(),height:128*c.scale(),bottom:128*c.scale()-c.wrap.scrollTop});
+  c.viewRotation={isFieldEvent:()=>true};c.drawEdgeRhomb=()=>{};c.showWheelZoomCursor=()=>shown++;
+  c.wrap.addEventListener=(type,handler)=>{if(type==='wheel')c.wheel=handler;};
+  const start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf('\n  // Тянуть',start);
+  vm.runInContext(html.slice(start,end),c);
+  const before=c.cv.getBoundingClientRect(),sourceX=(x-before.left)/c.scale(),sourceY=(y-before.top)/c.scale(),oldScale=c.scale();
+  c.wheel({target:{},deltaY,deltaMode:0,clientX:x,clientY:y,preventDefault(){}});
+  const after=c.cv.getBoundingClientRect();assert.notEqual(c.scale(),oldScale);assert.equal(shown,1);
+  assert.ok(Math.abs((x-after.left)/c.scale()-sourceX)<1e-9);
+  assert.ok(Math.abs((y-after.top)/c.scale()-sourceY)<1e-9);
+ }
+});
+
+test('wheel cursor expires after the last wheel step and clears when leaving the field',()=>{
+ const handlers={},classes=new Set(),timers=new Map();let serial=0;
+ const c={wrap:{classList:{add:v=>classes.add(v),remove:v=>classes.delete(v)},addEventListener:(type,fn)=>handlers[type]=fn},clearTimeout:id=>timers.delete(id),setTimeout(fn,delay){assert.equal(delay,180);timers.set(++serial,fn);return serial;}};
+ vm.createContext(c);const start=html.indexOf('  let wheelZoomCursorTimer=0;'),end=html.indexOf('  // Колесо — масштаб',start);vm.runInContext(html.slice(start,end),c);
+ c.showWheelZoomCursor();assert.ok(classes.has('may-wheel-zoom'));c.showWheelZoomCursor();assert.equal(timers.size,1);
+ [...timers.values()][0]();assert.equal(classes.size,0);
+ c.showWheelZoomCursor();handlers.pointerleave();assert.equal(classes.size,0);assert.equal(timers.size,0);
 });
 
 function scrollFixture(){
@@ -113,7 +138,7 @@ test('wheel and two-finger pinch hold exact physical scale while allowing gestur
   c.wrap.addEventListener=(type,handler)=>{if(type==='wheel')c.wheel=handler;};
   const start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf('\n  // Тянуть',start);
   vm.runInContext(html.slice(start,end)+'\n'+fn('movePinch'),c);
-  for(const deltaY of [-300,300,-20,20])c.wheel({deltaY,deltaMode:0,clientX:300,clientY:250,preventDefault(){}});
+  for(const deltaY of [-300,300,-20,20])c.wheel({target:{},deltaY,deltaMode:0,clientX:300,clientY:250,preventDefault(){}});
   assert.equal(c.scale()*dpr,1);assert.equal(c.st.zLock,zLock);
   c.pinch={d:100,s:c.scale(),x:200,y:200};
   c.movePinch(new Map([[1,{x:110,y:180}],[2,{x:310,y:180}]]));

@@ -26,12 +26,21 @@
           const exists=(host.listedInstances||host.visibleInstances)?.(entry.id)||((await root.MayatnikTemplateMatcher.find(field,patternsFor(entry),{existsOnly:true,cancelled:()=>run!==filterSerial||!host.current(field)})).count>0);
           if(exists){visibleIds.add(entry.id);emit();}
         }
-      }catch(e){if(run===filterSerial){if(e.name==='AbortError')scopeKey=null;else state.message=e.message;}}
+      }catch(e){if(run===filterSerial){scopeKey=null;if(e.name!=='AbortError')state.message=e.message;}}
       finally{if(run===filterSerial){state.filtering=false;emit();}}
     }
     function refresh(){const items=host.entries(),key=host.scope?.(),active=host.filterActive?.()!==false;
       const changed=items.length!==libraryStamp.length||!items.every((t,i)=>{const p=libraryStamp[i];return t.id===p.id&&t.name===p.name&&t.shape===p.shape;});
+      // Removing a saved entry does not change which remaining silhouettes
+      // occur in this field. Keep completed results and the visible cards.
+      // A pending/cancelled scan or a new field must still take the normal path.
+      let removedOnly=false;
+      if(changed&&host.scope&&active&&!state.filtering&&scopeKey!==null&&scopeKey===key&&items.length<libraryStamp.length){
+        const previous=new Map(libraryStamp.map(t=>[t.id,t]));
+        removedOnly=items.every(t=>{const p=previous.get(t.id);return p&&t.name===p.name&&t.shape===p.shape;});
+      }
       if(changed)libraryStamp=items.map(t=>({id:t.id,name:t.name,shape:t.shape}));
+      if(removedOnly){const ids=new Set(items.map(t=>t.id));visibleIds=new Set([...visibleIds].filter(id=>ids.has(id)));emit();return;}
       if(host.scope){if(!active){if(state.filtering){filterSerial++;state.filtering=false;scopeKey=null;}if(changed)scopeKey=null;return;}if(changed||scopeKey!==key){scopeKey=key;filterPending=filter(items.slice(),++filterSerial);}return;}
       if(changed)emit();
     }
