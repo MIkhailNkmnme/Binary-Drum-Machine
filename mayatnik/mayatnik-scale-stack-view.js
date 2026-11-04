@@ -2,17 +2,25 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikScaleStackView=api;})(globalThis,function(){
  'use strict';
  const LIMIT=32*1024*1024;
- function levels(width,height,step){
-  step=Math.max(1,Math.floor(Number(step)||1));const result=[];
-  for(let rows=height-step;rows>0;rows-=step)result.push({height:rows,width:Math.max(1,Math.ceil(width*rows/height-1e-12))});
-  if(height>1&&result.at(-1)?.height!==1)result.push({height:1,width:Math.max(1,Math.ceil(width/height))});
+ function levels(width,height,step,mode='rows',base=2){
+  step=Math.max(1,Math.floor(Number(step)||1));base=Math.max(2,Math.min(10000,Math.floor(Number(base)||2)));const result=[];
+  const add=rows=>{rows=Math.max(1,Math.floor(rows));if(rows<height&&result.at(-1)?.height!==rows)result.push({height:rows,width:Math.max(1,Math.ceil(width*rows/height-1e-12))});};
+  if(mode==='powers'||mode==='multiples'){
+   for(let n=1;n<=height;n++){const factor=mode==='powers'?base**n:base*n;add(height/factor);if(factor>=height)break;}
+  }else for(let rows=height-step;rows>0;rows-=step)add(rows);
+  if(height>1&&result.at(-1)?.height!==1)add(1);
   return result;
  }
+
  function create(o){
   const host=o.host,doc=host.ownerDocument,win=doc.defaultView,element=doc.createElement('div');
   element.className='may-scale-stack may-scale-stack--window';element.hidden=true;host.append(element);
   const controls=doc.createElement('label'),input=doc.createElement('input'),list=doc.createElement('div');
-  controls.className='may-scale-stack__controls';controls.append('Шаг высоты, строк ',input);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
+  controls.className='may-scale-stack__controls';
+  const mode=doc.createElement('select'),baseInput=doc.createElement('input');
+  for(const [value,text]of [['powers','Степени x'],['multiples','Кратно x'],['rows','По строкам']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;mode.append(opt);}
+  mode.value=o.mode?.()||'rows';mode.setAttribute('aria-label','Вариант уменьшения');baseInput.type='number';baseInput.min='2';baseInput.max='10000';baseInput.step='1';baseInput.value=String(o.base?.()||2);baseInput.setAttribute('aria-label','Число x');baseInput.title='Число x';
+  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';controls.append(mode,baseInput,stepLabel,input);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
   let enabled=false,destroyed=false,source=null,pending=null,job=null,timer=null,layout={},zoom=1,items=[],revision=0,lastKey,error=null;
   const schedule=o.schedule||(fn=>win.setTimeout(fn,0)),cancel=o.cancel||(id=>win.clearTimeout(id));
   const fmt=n=>Number(n.toFixed(4)).toLocaleString('ru-RU');
@@ -29,7 +37,7 @@
   }
   function rebuild(){
    job=null;if(!source)return;const previous=new Map(items.map(item=>[item.size.height,item]));items=[];input.max=String(Math.max(1,source.height));
-   const sizes=levels(source.width,source.height,Number(input.value));
+   const sizes=levels(source.width,source.height,Number(input.value),mode.value,Number(baseInput.value));
    for(const size of sizes){let item=previous.get(size.height);if(item){previous.delete(size.height);item.size=size;if(item.canvas&&(item.canvas.width!==size.width||item.canvas.height!==size.height))drop(item);item.revision=-1;}else{const el=doc.createElement('div'),label=doc.createElement('span');el.className='may-scale-stack__level';label.className='may-scale-stack__label';el.append(label);item={element:el,label,size,canvas:null,revision:-1};}list.append(item.element);items.push(item);}
    for(const item of previous.values()){drop(item);item.element.remove();}
    geometry();
@@ -68,6 +76,9 @@
   function setZoom(value){zoom=Math.max(1/Math.max(1,source?.width||1,source?.height||1),Math.min(512,Number(value)||1));geometry();later();return zoom;}
   function setEnabled(value){if(destroyed)return false;const next=!!value;if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
+  function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));baseInput.hidden=mode.value==='rows';stepLabel.hidden=input.hidden=mode.value!=='rows';o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
+  baseInput.hidden=mode.value==='rows';stepLabel.hidden=input.hidden=mode.value!=='rows';
+  mode.addEventListener('change',sequenceChange);baseInput.addEventListener('change',sequenceChange);
   input.addEventListener('change',change);
   const scroll=()=>later();host.addEventListener('scroll',scroll,{passive:true});win.addEventListener('resize',scroll);
   function destroy(){setEnabled(false);destroyed=true;host.removeEventListener('scroll',scroll);win.removeEventListener('resize',scroll);element.remove();}

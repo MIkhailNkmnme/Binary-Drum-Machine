@@ -12,6 +12,11 @@ test('scroll window paints exact pixels, frees offscreen rasters, displays every
  await page.addStyleTag({path:path.join(__dirname,'mayatnik-scale-stack.css')});await page.addScriptTag({path:path.join(__dirname,'mayatnik-scale-stack-view.js')});
  await page.evaluate(()=>{const source={width:63,height:32,pixels:Uint8ClampedArray.from({length:63*32*4},(_,i)=>i%4===3?255:17)};window.source=source;window.stack=MayatnikScaleStackView.create({host:document.querySelector('#host'),stepRows:()=>1,captureSource:()=>source});stack.refreshLayout({left:100,width:630,pixelScale:10});stack.setEnabled(true);});
  await page.waitForFunction(()=>stack.inspect().canvases>0&&!stack.inspect().busy&&!stack.inspect().pending);
+ await page.locator('.may-scale-stack__controls select').selectOption('powers');assert.equal(await page.locator('.may-scale-stack__level').count(),5);
+ assert.match(await page.locator('.may-scale-stack__level').first().textContent(),/16 строк/);
+ const base=page.locator('.may-scale-stack__controls input[aria-label="Число x"]');await base.fill('3');await base.dispatchEvent('change');assert.match(await page.locator('.may-scale-stack__level').first().textContent(),/10 строк/);
+ await base.fill('2');await base.dispatchEvent('change');await page.locator('.may-scale-stack__controls select').selectOption('multiples');assert.match(await page.locator('.may-scale-stack__level').nth(2).textContent(),/5 строк/);
+ await page.locator('.may-scale-stack__controls select').selectOption('rows');
  assert.equal(await page.locator('.may-scale-stack__level').count(),31);
  assert.ok(await page.locator('.may-scale-stack canvas').count()<5);
  assert.equal(await page.locator('.may-scale-stack canvas').first().evaluate(c=>c.getContext('2d').getImageData(0,0,1,1).data[0]),17);
@@ -31,4 +36,13 @@ test('scroll window paints exact pixels, frees offscreen rasters, displays every
  await page.evaluate(()=>stack.setEnabled(false));assert.equal(await page.locator('.may-scale-stack canvas').count(),0);
  assert.equal(await page.evaluate(()=>stack.inspect().canvasBytes),0);
  await page.evaluate(()=>stack.destroy());assert.equal(await page.locator('.may-scale-stack').count(),0);
+});
+
+test('powers, multiples and row steps build distinct monotone sequences from the original',()=>{
+ const heights=(mode,base)=>View.levels(1023,512,8,mode,base).map(x=>x.height);
+ assert.deepEqual(heights('powers',2),[256,128,64,32,16,8,4,2,1]);
+ assert.deepEqual(heights('multiples',2).slice(0,5),[256,128,85,64,51]);
+ assert.deepEqual(heights('rows',2).slice(0,3),[504,496,488]);
+ assert.deepEqual(heights('powers',3).slice(0,4),[170,56,18,6]);
+ for(const mode of ['powers','multiples','rows']){const a=heights(mode,2);assert.equal(a.at(-1),1);assert.equal(new Set(a).size,a.length);assert.ok(a.every((v,i)=>!i||v<a[i-1]));}
 });
