@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.016</title>
-<!-- АзъБукъ — v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.017</title>
+<!-- АзъБукъ — v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -16,11 +16,10 @@
       repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 26px),
       repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 26px)}
   header{display:flex;align-items:center;gap:18px;padding:16px 26px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .title,#head{display:flex;align-items:center;gap:10px;min-width:0}
-  .title{max-width:100%}
-  #head .pbtn{min-width:0}
+  .title{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%}
+  #head{min-width:0;height:38px}
   #head svg{max-width:100%;height:auto}
-  .ver{flex:none;font-size:10px;color:var(--dim);letter-spacing:.08em}
+  .pbtn.ver{flex:none;height:20px;padding:0 12px;font-size:8px;color:var(--dim);letter-spacing:.08em}
   .bar{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .bar button,.tools button{display:inline-flex;align-items:center;justify-content:center;max-width:100%}
   .bar button svg,.tools button svg{width:auto;max-width:100%;max-height:18px;pointer-events:none}
@@ -42,7 +41,7 @@
     clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
   .pbtn::before{content:"";position:absolute;inset:1px;z-index:0;background:var(--btn);
     clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
-  .pbtn > svg{position:relative;z-index:1}
+  .pbtn > svg,.pbtn.ver > span{position:relative;z-index:1}
   .pbtn:hover{background:var(--btnon)}
   #editor .chars{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 14px;max-height:150px;overflow:auto}
   #editor .chars button{width:34px;padding:0;font-size:12px}
@@ -59,8 +58,8 @@
 
 <header>
   <div class="title">
-    <div id="head" role="heading" aria-level="1" aria-label="АзъБукъ"></div>
-    <span class="ver">v0.016</span>
+    <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
+    <span class="pbtn ver"><span>v0.017</span></span>
   </div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><button id="theme">цвет: фиолет</button>
@@ -293,8 +292,7 @@ const savedTrack = Number(localStorage.getItem(trackKey) ?? 1);
 let track = Number.isSafeInteger(savedTrack) && savedTrack >= 0 ? savedTrack : 1;
 const trackVal = document.getElementById('trackVal');
 
-function glyphShape(ch) {
-  const rows = ch === ' ' ? ['000'] : G[activeSet][ch];
+function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
   const slope = lattice === 'tri' ? 0.5 : 0;
   // Один наклон для всей буквы сохраняет общие вершины соседних клеток.
@@ -338,7 +336,7 @@ function glyphShape(ch) {
   return { h, w, edges, left, right, paths };
 }
 
-function lettering(text, cell, gapCells = 1, maxWidth = Infinity) {
+function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[activeSet]) {
   const lines = [];
   let placed = [], frontier = new Map(), width = 0, height = 0, gap = 0;
   function finishLine() {
@@ -351,7 +349,7 @@ function lettering(text, cell, gapCells = 1, maxWidth = Infinity) {
     width = height = gap = 0;
   }
   for (const ch of text) {
-    const shape = glyphShape(ch);
+    const shape = glyphShape(ch, masks[ch]);
     // Для каждой занятой строки совмещаем края битов с учётом общей нижней линии.
     const previous = placed.at(-1)?.shape;
     let sharedRow = false;
@@ -383,11 +381,22 @@ function lettering(text, cell, gapCells = 1, maxWidth = Infinity) {
 }
 
 const row = text => '<div class="row">' + text.replaceAll('&', '&amp;').replaceAll('<', '&lt;') + '</div>';
-const btn = (text, cell, style) => '<div class="pbtn" style="' + style + '">' + lettering(text, cell) + '</div>';
+function renderHeading() {
+  const masks = G[activeSet];
+  const dash = masks['-'];
+  const first = dash.findIndex(row => row.includes('1'));
+  let centered = dash;
+  if (first >= 0) {
+    centered = dash.slice(first, dash.findLastIndex(row => row.includes('1')) + 1);
+    const below = Math.max(0, Math.floor((masks['Б'].length - centered.length) / 2));
+    centered = centered.concat(Array(below).fill(''));
+  }
+  document.getElementById('head').innerHTML = lettering('АЗЪ-БУКЪ', 4, 1, Infinity, { ...masks, '-': centered });
+}
 
-function renderButtonLabel(button, label, cell) {
+function renderButtonLabel(button, label) {
   button.setAttribute('aria-label', label);
-  button.innerHTML = lettering(label.replaceAll('−', '-'), cell);
+  button.innerHTML = lettering(label.replaceAll('−', '-'), 1);
 }
 
 function renderSheet(cell) {
@@ -396,10 +405,10 @@ function renderSheet(cell) {
   trk.max = Math.max(1, ...letterWidths);
   trk.value = track;
   trackVal.textContent = trk.value;
-  document.getElementById('head').innerHTML = btn('АЗЪ', 4, 'height:38px') + btn('БУКЪ', 4, 'height:38px');
+  renderHeading();
   document.querySelectorAll('.bar button, .tools button').forEach(button => {
     const label = button.getAttribute('aria-label') || button.textContent;
-    renderButtonLabel(button, label, cell);
+    renderButtonLabel(button, label);
   });
   renderAlphabet(cell);
 }
@@ -495,7 +504,7 @@ document.getElementById('addRow').onclick = mod(r => normalize([...r, '0'.repeat
 document.getElementById('delRow').onclick = mod(r => normalize(r.length > 1 ? r.slice(0, -1) : r));
 document.getElementById('resetChar').onclick = () => { if (BASE[activeSet][editChar]) { G[activeSet][editChar] = BASE[activeSet][editChar].slice(); delete EDITS[activeSet][editChar]; localStorage.setItem(KEY, JSON.stringify(EDITS)); } renderEditor(); renderSheet(cellSize); };
 document.getElementById('resetAll').onclick = () => { EDITS = { bold: {}, thin: {} }; localStorage.removeItem(KEY); for (const s of ['bold','thin']) for (const [ch, rows] of Object.entries(BASE[s])) G[s][ch] = rows.slice(); renderEditor(); renderSheet(cellSize); };
-document.getElementById('save').onclick = () => { commit(); const b = document.getElementById('save'); renderButtonLabel(b, 'Сохранено', cellSize); setTimeout(() => renderButtonLabel(b, 'Сохранить', cellSize), 1200); };
+document.getElementById('save').onclick = () => { commit(); const b = document.getElementById('save'); renderButtonLabel(b, 'Сохранено'); setTimeout(() => renderButtonLabel(b, 'Сохранить'), 1200); };
 document.getElementById('download').onclick = () => {
   const a = document.createElement('a');
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({ bold: G.bold, thin: G.thin }));
@@ -529,7 +538,7 @@ document.querySelectorAll('.bar [data-cell]').forEach(b => b.addEventListener('c
   document.querySelectorAll('.bar [data-cell]').forEach(x => x.classList.remove('on'));
   b.classList.add('on');
   cellSize = Number(b.dataset.cell);
-  renderSheet(cellSize);
+  renderAlphabet(cellSize);
 }));
 
 const THEMES = [
@@ -546,7 +555,7 @@ function applyTheme(i) {
   for (const k of Object.keys(t.v)) document.documentElement.style.setProperty(k, t.v[k]);
   localStorage.setItem('azbuk-theme', String(themeIdx));
   const btn = document.getElementById('theme');
-  renderButtonLabel(btn, 'цвет: ' + t.name, cellSize);
+  renderButtonLabel(btn, 'цвет: ' + t.name);
 }
 document.getElementById('theme').addEventListener('click', () => applyTheme(themeIdx + 1));
 if (typeof applyTheme === 'function') applyTheme(themeIdx);
