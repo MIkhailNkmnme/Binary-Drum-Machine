@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.017</title>
-<!-- АзъБукъ — v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.018</title>
+<!-- АзъБукъ — v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -19,7 +19,7 @@
   .title{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%}
   #head{min-width:0;height:38px}
   #head svg{max-width:100%;height:auto}
-  .pbtn.ver{flex:none;height:20px;padding:0 12px;font-size:8px;color:var(--dim);letter-spacing:.08em}
+  .pbtn.ver{flex:none;height:20px;padding:0 12px;color:var(--dim)}
   .bar{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .bar button,.tools button{display:inline-flex;align-items:center;justify-content:center;max-width:100%}
   .bar button svg,.tools button svg{width:auto;max-width:100%;max-height:18px;pointer-events:none}
@@ -41,7 +41,7 @@
     clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
   .pbtn::before{content:"";position:absolute;inset:1px;z-index:0;background:var(--btn);
     clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
-  .pbtn > svg,.pbtn.ver > span{position:relative;z-index:1}
+  .pbtn > svg{position:relative;z-index:1}
   .pbtn:hover{background:var(--btnon)}
   #editor .chars{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 14px;max-height:150px;overflow:auto}
   #editor .chars button{width:34px;padding:0;font-size:12px}
@@ -59,7 +59,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver"><span>v0.017</span></span>
+    <span class="pbtn ver" aria-label="v0.018"></span>
   </div>
   <div class="bar">
     <button id="editToggle">Редактировать</button><button id="theme">цвет: фиолет</button>
@@ -392,6 +392,15 @@ function renderHeading() {
     centered = centered.concat(Array(below).fill(''));
   }
   document.getElementById('head').innerHTML = lettering('АЗЪ-БУКЪ', 4, 1, Infinity, { ...masks, '-': centered });
+  const version = document.querySelector('.ver');
+  const label = version.getAttribute('aria-label');
+  const versionMasks = Object.fromEntries([...label].map(ch => {
+    const rows = masks[ch];
+    const firstInk = rows.findIndex(row => row.includes('1'));
+    return [ch, rows.slice(Math.max(0, firstInk))];
+  }));
+  const height = Math.max(...Object.values(versionMasks).map(rows => rows.length));
+  version.innerHTML = lettering(label, 8 / height, 1, Infinity, versionMasks);
 }
 
 function renderButtonLabel(button, label) {
