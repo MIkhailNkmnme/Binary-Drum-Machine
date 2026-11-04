@@ -16,7 +16,7 @@ small,.caption,.meta,output,.idx{font:12px/1.45 ui-monospace,monospace;letter-sp
 small,.caption,.hint,.meta{color:var(--mut)} .layout{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(258px,.85fr);gap:24px;align-items:start}
 figure{margin:0}.caption{margin-bottom:7px;text-transform:uppercase}
 #field{width:100%;aspect-ratio:1;display:block;background:var(--red);touch-action:none;cursor:grab;user-select:none}
-#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#090908}.dot.zero{background:var(--red)}.dot.ghost{background:#8f241c}.dot.neutral{background:white}
+#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#090908}.dot.zero{background:var(--red)}.dot.ghost{background:#7c3aed}.dot.neutral{background:white}
 section{border-top:1px solid var(--line);padding:10px 0}h2{font-size:14px;margin:0 0 8px}.hint{font-size:12px;margin:7px 0 0}.group{display:flex;gap:5px}.group>*{flex:1;min-width:0}
 button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:0;background:#342f2b;min-height:44px;padding:4px 9px;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%)}button:hover,button:focus-visible{background:#514740}button[aria-pressed=true]{background:var(--ink);color:#191613}button:focus-visible{outline:3px solid var(--red);outline-offset:-4px}button:disabled{opacity:.45;cursor:default}button:disabled:hover{background:#342f2b}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 2px}.tile svg{width:28px;height:28px}.tile span{font:12px monospace}.preview-row{margin-top:10px;gap:6px;align-items:stretch}.preview-row>*{flex:1 1 0;min-width:0;min-height:0;padding:7px 6px 5px;gap:3px;touch-action:pan-y;user-select:none}.preview-row .tile svg{width:100%;height:auto;aspect-ratio:1;display:block}
@@ -54,13 +54,13 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <header><h1>Оси <b>XOR</b></h1><div class="head-meta"><small>ОПЫТ 01 / v0.002</small><a class="hub-link" href="../../index.html">Хаб</a></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span>Поле · 29 × 29</span><span id="count"></span></figcaption>
-<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 × 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect width="29" height="29" fill="#ff392c"/><path id="ghostBits" fill="#8f241c"/><path id="bits" fill="#090908"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg>
+<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 × 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect width="29" height="29" fill="#ff392c"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#090908"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg>
 <p class="sym-note" id="symInfo"></p>
 <div class="layout-strip"><div class="bar"><label for="frame">Раскладка</label><small><span id="frameNow">1</span> \ 6144</small></div><div class="slider-row"><button class="step" id="frameDown" type="button" aria-label="Предыдущая раскладка" aria-controls="frame">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number" aria-hidden="true">1</span><button class="thumb-play" id="thumbPlay" type="button" aria-label="Пуск" aria-pressed="false">▶</button><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="frame" type="range" min="1" max="6144" value="1" aria-valuetext="Раскладка 1 из 6144"></div><button class="step" id="frameUp" type="button" aria-label="Следующая раскладка" aria-controls="frame">▸</button></div><div class="group role"><button id="random">Случайная</button><button id="resetAll">Сброс</button><button id="ghostToggle" type="button" aria-pressed="false">Силуэты</button></div><p class="hint">24 перестановки на четырёх лучах × 256 сочетаний поворотов. Рисунки могут совпадать.</p></div>
 <div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span id="ghostLegend" hidden><i class="dot ghost"></i>силуэт</span><span><i class="dot neutral"></i>центр вне счёта</span></div>
 <p class="hint">Тяните фигуру по полю. Кнопки 90° поворачивают выбранную, «Все» — сразу четыре.</p>
 <div class="group preview-row" id="tiles" role="group" aria-label="Фигуры отдельно"></div>
-<p class="hint">Тёмный силуэт — вся фигура, чёрное — её вклад в общий XOR. Потяните миниатюру влево или вправо, чтобы повернуть.</p></figure>
+<p class="hint">Фиолетовый силуэт — вся фигура, чёрное — её вклад в общий XOR. Потяните миниатюру влево или вправо, чтобы повернуть.</p></figure>
 <div class="controls">
 <section><h2>Фигуры</h2><p class="meta" id="position"></p>
 <div class="group role"><button id="left" aria-label="Повернуть выбранную фигуру влево">↶ 90°</button><button id="right" aria-label="Повернуть выбранную фигуру вправо">90° ↷</button><button id="swap" title="Поменять выбранную фигуру со следующей по часовой стрелке">Обмен ⇄</button></div>
@@ -149,7 +149,7 @@ function cellPath(x,y){return 'M'+x+' '+y+'h1v1h-1z';}
 const tiles=names.map((name,i)=>{
  const el=document.createElement('button');el.type='button';el.className='tile';el.setAttribute('aria-label','Фигура '+name);
  el.title='Потяните влево или вправо, чтобы повернуть';
- el.innerHTML='<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true"><rect width="29" height="29" fill="#ff392c"/><path class="x-ghost" fill="#8f241c"/><path class="x-live" fill="#090908"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg><span>'+name+'</span>';
+ el.innerHTML='<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true"><rect width="29" height="29" fill="#ff392c"/><path class="x-ghost" fill="#7c3aed"/><path class="x-live" fill="#090908"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg><span>'+name+'</span>';
  let pointerId=null,startX=0,suppressClick=false;
  el.onclick=()=>{if(suppressClick){suppressClick=false;return;}state.selected=i;render();};
  el.addEventListener('pointerdown',e=>{
@@ -521,7 +521,7 @@ function rasterCells(config,cells,ghost=null){
   data=new Uint8Array(cells);
   for(let i=0;i<data.length;i++)if(data[i]===0&&ghost[i]===1)data[i]=3;
  }
- const rgba=new Uint8ClampedArray(side*side*4),palette=[[255,57,44],[9,9,8],[255,255,255],[143,36,28]];
+ const rgba=new Uint8ClampedArray(side*side*4),palette=[[255,57,44],[9,9,8],[255,255,255],[124,58,237]];
  for(let y=0;y<size;y++){
    for(let x=0;x<size;x++){
      const colour=palette[data[y*size+x]];
