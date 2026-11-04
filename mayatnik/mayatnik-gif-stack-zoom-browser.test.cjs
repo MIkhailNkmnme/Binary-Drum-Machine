@@ -10,7 +10,7 @@ const seam=`window.__stackTest={
  cell(point,lower=false){const el=lower?gifScaleLive.element.querySelectorAll('.may-scale-stack__level')[16]:cv,r=el.getBoundingClientRect();return {x:(point.x-r.left)/scale(),y:(point.y-r.top-(lower?24:0))/scale()};}
 };\n`;
 function closeEnough(actual,expected,tolerance=.03){assert.ok(Math.abs(actual-expected)<=tolerance,JSON.stringify({actual,expected,tolerance}));}
-test('GIF stack forces native 1:1 then shares wheel, buttons and touch zoom across all raster sizes, DPR 1/2',{timeout:120000},async()=>{
+test('GIF stack starts the original at 1:1 and all lower rasters at its screen size, then shares zoom, DPR 1/2',{timeout:120000},async()=>{
  const root=path.resolve(__dirname,'..'),server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(error,data)=>{if(error){res.writeHead(404).end();return;}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(data);});});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
  try{for(const dpr of [1,2]){
@@ -21,11 +21,11 @@ test('GIF stack forces native 1:1 then shares wheel, buttons and touch zoom acro
   await page.goto(url);await page.waitForFunction(()=>window.__stackTest&&window.mayField?.());
   const settle=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const ready=async()=>{await page.waitForFunction(()=>window.__stackTest.get().preview.canvases>0&&!window.__stackTest.get().preview.pending&&!window.__stackTest.get().preview.busy);await settle();};
-  const sizes=async()=>{const info=await page.evaluate(()=>({state:__stackTest.get(),lower:[...document.querySelectorAll('.may-scale-stack canvas')].map(c=>({width:c.width,height:c.height,w:c.getBoundingClientRect().width,h:c.getBoundingClientRect().height}))}));for(const c of info.lower){closeEnough(c.w,c.width*info.state.zoomFactor/dpr);closeEnough(c.h,c.height*info.state.zoomFactor/dpr);}assert.ok(info.lower.length);return info;};
+  const sizes=async()=>{const info=await page.evaluate(()=>({state:__stackTest.get(),lower:[...document.querySelectorAll('.may-scale-stack canvas')].map(c=>({width:c.width,height:c.height,w:c.getBoundingClientRect().width,h:c.getBoundingClientRect().height}))}));for(const c of info.lower){closeEnough(c.w,info.state.width);closeEnough(c.h,info.state.height);}assert.ok(info.lower.length);return info;};
   for(const initial of ['fit',.12,12])for(const locked of [false,true]){
    const before=await page.evaluate(({initial,locked})=>__stackTest.setup(initial,locked),{initial,locked});
    await page.evaluate(()=>__stackTest.toggle());await ready();const {state,lower}=await sizes();
-   closeEnough(state.scale,1/dpr);closeEnough(state.width,state.dispW/dpr);closeEnough(state.height,state.dispH/dpr);assert.ok(lower[0].w<state.width);assert.deepEqual(state.prefs,before.prefs);
+   closeEnough(state.scale,1/dpr);closeEnough(state.width,state.dispW/dpr);closeEnough(state.height,state.dispH/dpr);closeEnough(lower[0].w,state.width);closeEnough(lower[0].h,state.height);assert.ok(lower[0].height<state.dispH);assert.deepEqual(state.prefs,before.prefs);
    await page.evaluate(()=>__stackTest.button(1));await ready();const enlarged=await sizes();assert.ok(enlarged.state.scale>state.scale);assert.deepEqual(enlarged.state.prefs,before.prefs);
    await page.evaluate(()=>__stackTest.toggle());const restored=await page.evaluate(()=>__stackTest.get());assert.equal(restored.zoom,before.zoom);assert.deepEqual(restored.prefs,before.prefs);
   }

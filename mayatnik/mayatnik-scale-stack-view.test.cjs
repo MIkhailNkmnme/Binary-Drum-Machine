@@ -5,7 +5,7 @@ test('one-row step includes every lower triangle through one row, larger steps r
  assert.deepEqual(View.levels(63,32,8).map(s=>s.height),[24,16,8,1]);
  assert.deepEqual(View.levels(1,1,1),[]);
 });
-test('scroll window paints exact pixels, frees offscreen rasters, centres native-size rasters and supports zoom in both directions',{timeout:45000},async t=>{
+test('scroll window paints exact pixels, frees offscreen rasters, displays every lower raster at the original screen size and supports zoom in both directions',{timeout:45000},async t=>{
  const {chromium}=require('playwright-core');const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});t.after(()=>browser.close());
  const page=await browser.newPage({viewport:{width:1000,height:700}});
  await page.setContent('<style>body{margin:0}#host{width:900px;height:600px;overflow:auto;padding:0;position:relative}</style><div id="host"></div>');
@@ -18,10 +18,11 @@ test('scroll window paints exact pixels, frees offscreen rasters, centres native
  const centre=await page.locator('.may-scale-stack').evaluate(n=>{const r=n.getBoundingClientRect();return r.x+r.width/2;});
  await page.evaluate(()=>stack.setZoom(2));assert.equal(await page.locator('.may-scale-stack').evaluate(n=>{const r=n.getBoundingClientRect();return r.x+r.width/2;}),centre);
  assert.equal(await page.evaluate(()=>stack.setZoom(.5)),.5);
- const size=await page.locator('.may-scale-stack canvas').first().evaluate(c=>({width:c.width,height:c.height,cssWidth:c.getBoundingClientRect().width,cssHeight:c.getBoundingClientRect().height}));assert.equal(size.cssWidth,size.width*5);assert.equal(size.cssHeight,size.height*5);
+ const size=await page.locator('.may-scale-stack canvas').first().evaluate(c=>({width:c.width,height:c.height,cssWidth:c.getBoundingClientRect().width,cssHeight:c.getBoundingClientRect().height}));assert.equal(size.cssWidth,315);assert.equal(size.cssHeight,160);assert.ok(size.width<63);assert.ok(size.height<32);
  await page.evaluate(()=>{const h=document.querySelector('#host');h.scrollTop=h.scrollHeight;});
  await page.waitForFunction(()=>document.querySelector('.may-scale-stack__level:last-child canvas'));
  assert.equal(await page.locator('.may-scale-stack__level:first-child canvas').count(),0);
+ const last=await page.locator('.may-scale-stack__level:last-child canvas').evaluate(c=>({rows:c.height,width:c.getBoundingClientRect().width,height:c.getBoundingClientRect().height}));assert.equal(last.rows,1);assert.equal(last.width,315);assert.equal(last.height,160);
  assert.ok(await page.evaluate(()=>stack.inspect().canvasBytes)<32*1024*1024);
  assert.match(await page.locator('.may-scale-stack__level:last-child').textContent(),/1 строк.*часть ×32/);
  await page.evaluate(()=>{source.pixels.set(source.pixels.map((_,i)=>i%4===3?255:99));stack.requestFrame(source,{key:'changed'});});
