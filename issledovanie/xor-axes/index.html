@@ -9,47 +9,75 @@
 body{margin:0;background:var(--base);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
 main{max-width:960px;margin:auto;padding:16px clamp(12px,3vw,28px) 32px}
 header, .caption,.bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
-header{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+header{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap}
+.head-meta{display:flex;align-items:center;gap:14px;margin-left:auto}.hub-link{color:var(--mut);font:12px/1.45 ui-monospace,monospace;letter-spacing:.035em;text-decoration:none}.hub-link:hover,.hub-link:focus-visible{color:var(--ink);text-decoration:underline;outline:none}
 h1{font-size:clamp(24px,6vw,38px);letter-spacing:-.055em;line-height:1;margin:0}h1 b{color:var(--red)}
 small,.caption,.meta,output,.idx{font:12px/1.45 ui-monospace,monospace;letter-spacing:.035em}
 small,.caption,.hint,.meta{color:var(--mut)} .layout{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(258px,.85fr);gap:24px;align-items:start}
 figure{margin:0}.caption{margin-bottom:7px;text-transform:uppercase}
 #field{width:100%;aspect-ratio:1;display:block;background:var(--red);touch-action:none;cursor:grab;user-select:none}
-#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#090908}.dot.zero{background:var(--red)}.dot.neutral{background:white}
+#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#090908}.dot.zero{background:var(--red)}.dot.ghost{background:#8f241c}.dot.neutral{background:white}
 section{border-top:1px solid var(--line);padding:10px 0}h2{font-size:14px;margin:0 0 8px}.hint{font-size:12px;margin:7px 0 0}.group{display:flex;gap:5px}.group>*{flex:1;min-width:0}
 button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:0;background:#342f2b;min-height:44px;padding:4px 9px;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%)}button:hover,button:focus-visible{background:#514740}button[aria-pressed=true]{background:var(--ink);color:#191613}button:focus-visible{outline:3px solid var(--red);outline-offset:-4px}
-.tile{display:flex;align-items:center;justify-content:center;gap:4px}.tile svg{width:26px;height:30px}.tile span{font:12px monospace}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 2px}.tile svg{width:28px;height:28px}.tile span{font:12px monospace}.preview-row{margin-top:10px;gap:6px;align-items:stretch}.preview-row>*{flex:1 1 0;min-width:0;min-height:0;padding:7px 6px 5px;gap:3px;touch-action:pan-y;user-select:none}.preview-row .tile svg{width:100%;height:auto;aspect-ratio:1;display:block}
 .bar label{font-weight:650}.bar input[type=number]{width:7ch;text-align:center;background:#25211f;border:1px solid var(--line);padding:7px 2px;font-variant-numeric:tabular-nums}
 .bar .jump{display:flex;align-items:center;gap:6px}.bar output{color:var(--ink)}input[type=range]{width:100%;accent-color:var(--red);height:30px;margin:0}
 .role{margin-top:7px}.role button{font-size:13px}.meta{margin:9px 0 0}
-@media(max-width:650px){main{max-width:500px}.layout{grid-template-columns:minmax(0,1fr);gap:16px}header{margin-bottom:10px}.tile svg{width:26px}.controls{display:grid;gap:0}}
+@media(max-width:650px){main{max-width:500px}.layout{grid-template-columns:minmax(0,1fr);gap:16px}header{flex-direction:column;align-items:flex-start;margin-bottom:10px}.head-meta{width:100%;margin-left:0;justify-content:space-between}.controls{display:grid;gap:0}}
 #film details{margin-top:12px}#film details a{color:var(--ink)}#film label{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:6px 0}
-#film select,#rate{background:#25211f;color:var(--ink);font:inherit;padding:5px;border:1px solid var(--line);min-height:40px;max-width:62%}
-#rate{width:7em}#rates button{font-size:12px}#gifLink{display:block;color:white;padding:8px 0}#gifPreview{display:block;max-width:100%;image-rendering:pixelated}#film [hidden]{display:none}
+#film select{background:#25211f;color:var(--ink);font:inherit;padding:5px;border:1px solid var(--line);min-height:40px;max-width:62%}
+.choice{margin-top:7px}.field-label{font-weight:650}.layout-strip{margin-top:10px}.sym-note{font:12px/1.45 ui-monospace,monospace;color:var(--ink);margin:7px 0 0;padding-left:8px;border-left:2px solid var(--red)}.sym-note:empty{display:none}
+.slider-row{display:flex;align-items:center;gap:6px;margin:4px 0 2px}
+.slider-row .step{flex:0 0 44px;width:44px;min-height:44px;padding:0;color:var(--mut);font:16px/1 ui-monospace,monospace;user-select:none}
+.slider-row .step:hover,.slider-row .step:active{color:var(--ink)}
+.slider-row .step:active{color:var(--red)}
+.x-range{position:relative;flex:1 1 0;min-width:0;height:44px;user-select:none}
+.x-range input[type=range]{position:absolute;inset:0;z-index:3;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;outline:none;-webkit-appearance:none;appearance:none}
+.x-range input[type=range]::-webkit-slider-runnable-track{height:100%;background:transparent}
+.x-range input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:var(--thumb-w,0px);height:44px;background:transparent;border:0}
+.x-range input[type=range]::-moz-range-track{height:100%;background:transparent}
+.x-range input[type=range]::-moz-range-thumb{width:var(--thumb-w,0px);height:44px;background:transparent;border:0}
+.x-track{position:absolute;left:0;right:0;top:50%;height:14px;transform:translateY(-50%);background:#342f2b;border:1px solid #4a433d;pointer-events:none}
+.x-thumb{position:absolute;top:50%;left:0;z-index:4;display:flex;align-items:center;gap:4px;height:44px;transform:translateY(-50%);pointer-events:none;white-space:nowrap}
+.x-half{display:block;flex:0 0 12px;width:12px;height:28px;fill:var(--red)}
+.x-number{min-width:1ch;color:var(--ink);font:11px/1 ui-monospace,monospace;font-variant-numeric:tabular-nums;text-align:center}
+.thumb-play{pointer-events:auto;flex:0 0 34px;width:34px;height:44px;min-height:44px;padding:0;margin:0;border:0;background:transparent;color:var(--red);clip-path:none;font:22px/1 ui-monospace,monospace;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
+.thumb-play:hover,.thumb-play:focus-visible{background:transparent;color:var(--ink)}
+.thumb-play:focus-visible{outline:2px solid var(--ink);outline-offset:-6px}
+.thumb-play[aria-pressed=true]{background:transparent;color:var(--ink)}
+.x-range:hover .x-track,.x-range:focus-within .x-track{border-color:var(--mut)}
+.x-range:has(input:focus-visible){outline:2px solid var(--red);outline-offset:2px}
+#rates button{font-size:12px}#gifLink{display:block;color:white;padding:8px 0}#gifPreview{display:block;max-width:100%;image-rendering:pixelated}#film [hidden]{display:none}
+.video-export{margin-top:8px}#film h3{font-size:13px;margin:16px 0 6px;border-top:1px solid var(--line);padding-top:12px}#audioFile{display:block;width:100%;margin:4px 0;color:var(--mut);background:#25211f;border:1px solid var(--line);font:12px/1.5 ui-monospace,monospace;padding:4px}#audioFile::file-selector-button{font:inherit;color:var(--ink);background:#342f2b;border:0;padding:5px 8px;margin-right:8px;cursor:pointer}#audioFile::file-selector-button:hover{background:#514740}#videoInfo{margin:4px 0 8px}#makeVideo:disabled{opacity:.45;cursor:default}#videoPreview{display:block;max-width:100%;margin-top:8px;background:#000}#videoLink{display:block;color:white;padding:6px 0}#videoStatus{display:block;color:var(--mut)}#videoStatus:empty{display:none}
 </style>
 <main>
-<header><h1>Оси <b>XOR</b></h1><small>ОПЫТ 01 / v0.002</small></header>
+<header><h1>Оси <b>XOR</b></h1><div class="head-meta"><small>ОПЫТ 01 / v0.002</small><a class="hub-link" href="../../index.html">Хаб</a></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span>Поле · 29 × 29</span><span id="count"></span></figcaption>
-<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Результат наложения четырёх фигур на двух перпендикулярных осях" shape-rendering="crispEdges"><rect width="29" height="29" fill="#ff392c"/><path id="bits" fill="#090908"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg>
-<div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span><i class="dot neutral"></i>центр вне счёта</span></div>
-<p class="hint">Проведите пальцем по полю вправо или влево, чтобы повернуть выбранную фигуру.</p></figure>
+<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 × 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect width="29" height="29" fill="#ff392c"/><path id="ghostBits" fill="#8f241c"/><path id="bits" fill="#090908"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg>
+<p class="sym-note" id="symInfo"></p>
+<div class="layout-strip"><div class="bar"><label for="frame">Раскладка</label><small><span id="frameNow">1</span> \ 6144</small></div><div class="slider-row"><button class="step" id="frameDown" type="button" aria-label="Предыдущая раскладка" aria-controls="frame">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number" aria-hidden="true">1</span><button class="thumb-play" id="thumbPlay" type="button" aria-label="Пуск" aria-pressed="false">▶</button><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="frame" type="range" min="1" max="6144" value="1" aria-valuetext="Раскладка 1 из 6144"></div><button class="step" id="frameUp" type="button" aria-label="Следующая раскладка" aria-controls="frame">▸</button></div><div class="group role"><button id="random">Случайная</button><button id="resetAll">Сброс</button><button id="ghostToggle" type="button" aria-pressed="false">Силуэты</button></div><p class="hint">24 перестановки на четырёх лучах × 256 сочетаний поворотов. Рисунки могут совпадать.</p></div>
+<div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span id="ghostLegend" hidden><i class="dot ghost"></i>силуэт</span><span><i class="dot neutral"></i>центр вне счёта</span></div>
+<p class="hint">Тяните фигуру по полю. Кнопки 90° поворачивают выбранную, «Все» — сразу четыре.</p>
+<div class="group preview-row" id="tiles" role="group" aria-label="Фигуры отдельно"></div>
+<p class="hint">Тёмный силуэт — вся фигура, чёрное — её вклад в общий XOR. Потяните миниатюру влево или вправо, чтобы повернуть.</p></figure>
 <div class="controls">
-<section><div class="bar"><label for="index">Раскладка</label><span class="jump"><input id="index" type="number" min="1" max="6144" value="1" inputmode="numeric" aria-label="Номер раскладки"><small>/ 6144</small></span></div>
-<div class="group role"><button id="prev">‹ Назад</button><button id="random">Случайная</button><button id="next">Далее ›</button></div>
-<p class="hint">24 перестановки на четырёх лучах × 256 сочетаний поворотов. Рисунки могут совпадать.</p></section>
-<section><h2>Фигура</h2><div class="group" id="tiles"></div><p class="meta" id="position"></p>
-<div class="group role"><button id="left" aria-label="Повернуть выбранную фигуру влево">↶ 90°</button><button id="right" aria-label="Повернуть выбранную фигуру вправо">90° ↷</button><button id="swap" title="Поменять выбранную фигуру со следующей по часовой стрелке">Обмен ⇄</button></div></section>
-<section><div class="bar"><label for="radius">От центра</label><output id="dist" for="radius"></output></div><input id="radius" type="range" min="0" max="7" value="3"><p class="hint">При нуле все четыре фигуры лежат на общем центре. Дальше они расходятся по лучам ↑ → ↓ ←.</p></section>
+<section><h2>Фигуры</h2><p class="meta" id="position"></p>
+<div class="group role"><button id="left" aria-label="Повернуть выбранную фигуру влево">↶ 90°</button><button id="right" aria-label="Повернуть выбранную фигуру вправо">90° ↷</button><button id="swap" title="Поменять выбранную фигуру со следующей по часовой стрелке">Обмен ⇄</button></div>
+<div class="group role"><button id="allLeft" aria-label="Повернуть все фигуры влево" title="Повернуть все четыре фигуры на 90° влево; удержание повторяет">↶ Все 90°</button><button id="allRight" aria-label="Повернуть все фигуры вправо" title="Повернуть все четыре фигуры на 90° вправо; удержание повторяет">90° Все ↷</button><button id="resetPositions" title="Убрать ручные сдвиги и вернуть фигуры на лучи">На лучи</button></div>
+<p class="hint">Выберите фигуру под полем.</p></section>
+<section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number">3</span><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="radius" type="range" min="-7" max="7" value="3" aria-valuetext="3 клетки от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">▸</button></div><p class="hint">При нуле все четыре фигуры лежат на общем центре. Положительные значения уводят их по лучам ↑ → ↓ ←, отрицательные — на противоположные.</p></section>
 <section><h2>Наложение</h2><div class="group"><button id="xor">XOR</button><button id="union">Вместе</button><button id="solo">Одна</button></div><p id="rule" class="hint"></p></section>
 <section id="film"><h2>Анимация / GIF</h2>
-<label>Наложение <select id="filmMode"><option value="compare">Без XOR → с XOR</option><option value="xor">С XOR</option><option value="union">Без XOR</option></select></label>
-<label>Движение <select id="motion"><option value="variants">Перебор раскладок</option><option value="spin">Поворот фигуры</option></select></label>
-<label>Раскладок в секунду <input id="rate" type="number" min="1" max="10000" step="1" value="4" inputmode="numeric"></label>
+<div class="choice"><div class="bar"><span class="field-label">Наложение</span></div><div class="group role" aria-label="Наложение"><button type="button" data-effect="compare" aria-pressed="true" title="Без XOR → с XOR" aria-label="Сравнение: без XOR, затем с XOR">Сравнение</button><button type="button" data-effect="xor" aria-pressed="false">С XOR</button><button type="button" data-effect="union" aria-pressed="false">Без XOR</button></div></div>
+<div class="choice"><div class="bar"><span class="field-label">Движение</span></div><div class="group role" aria-label="Движение"><button type="button" data-motion="variants" aria-pressed="true">Перебор раскладок</button><button type="button" data-motion="spin" aria-pressed="false">Поворот фигуры</button></div></div>
+<div class="bar"><label for="rate">Раскладок в секунду</label></div>
+<div class="slider-row"><button class="step" id="rateDown" type="button" aria-label="Уменьшить скорость" aria-controls="rate">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number">4</span><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="rate" type="range" min="0" max="1000" step="1" value="151" aria-valuetext="4 раскладки в секунду"></div><button class="step" id="rateUp" type="button" aria-label="Увеличить скорость" aria-controls="rate">▸</button></div>
 <div class="group" id="rates" aria-label="Быстрый выбор скорости"><button>1</button><button>10</button><button>100</button><button>1000</button><button>10000</button></div>
 <div class="group role"><button id="play" aria-pressed="false">▶ Пуск</button><button id="makeGif">Создать GIF</button></div>
 <p class="hint">В GIF — 4 секунды движения по кругу. При быстром переборе кадры выбираются с пропуском. В сравнении каждая показанная раскладка идёт парой.</p>
 <output id="gifStatus" aria-live="polite"></output><a id="gifLink" hidden>Скачать GIF</a><img id="gifPreview" hidden alt="Созданная GIF-анимация">
+<div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать видео</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF · 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> · <a href="xor.gif">С XOR</a> · <a href="compare.gif">Сравнение</a></p></details>
 </section>
 </div></div></main>
@@ -67,78 +95,276 @@ const masks=[
 const points=masks.map(rows=>rows.flatMap((row,y)=>Array.from(row,(v,x)=>v==='1'?[x-5,y-6]:null).filter(Boolean)));
 function permutations(left){return left.length?left.flatMap(i=>permutations(left.filter(j=>j!==i)).map(tail=>[i,...tail])):[[]];}
 const orders=permutations([0,1,2,3]),rays=[[0,-1],[1,0],[0,1],[-1,0]],arrows=['↑','→','↓','←'];
-const names=['I','II','III','IV'],size=29,center=14,total=24*256;
+const names=['I','II','III','IV'],size=29,center=14,total=24*256,dragMargin=6;
 const $=id=>document.getElementById(id);
-const state={variant:0,selected:0,radius:3,mode:'xor'};
+const state={variant:0,selected:0,radius:3,mode:'xor',ghosts:false,offsets:Array.from({length:4},()=>({x:0,y:0}))};
+const speedMin=1,speedMax=10000,rateSteps=1000;
+let speed=4,filmEffect='compare',filmMotion='variants';
+const rateToSpeed=position=>Math.max(speedMin,Math.min(speedMax,Math.round(10**(4*position/rateSteps))));
+const speedToRate=value=>Math.round(rateSteps*Math.log10(value)/4);
+function speedLabel(value){
+ const last=value%10,lastTwo=value%100;
+ const word=last===1&&lastTwo!==11?'раскладка':last>=2&&last<=4&&(lastTwo<12||lastTwo>14)?'раскладки':'раскладок';
+ return value+' '+word+' в секунду';
+}
+function cellsLabel(value){
+ const n=Math.abs(value),last=n%10,lastTwo=n%100;
+ const word=last===1&&lastTwo!==11?'клетка':last>=2&&last<=4&&(lastTwo<12||lastTwo>14)?'клетки':'клеток';
+ return value+' '+word+' от центра';
+}
+function updateSlider(input,text,force=false){
+ const range=input.closest('.x-range');
+ if(!range)return;
+ const key=text+'|'+input.value;
+ if(!force&&range.dataset.thumbKey===key)return;
+ range.dataset.thumbKey=key;
+ const thumb=range.querySelector('.x-thumb'),number=thumb.querySelector('.x-number');
+ number.textContent=text;
+ const min=Number(input.min),max=Number(input.max);
+ const progress=max>min?Math.min(1,Math.max(0,(Number(input.value)-min)/(max-min))):0;
+ const trackWidth=range.clientWidth,thumbWidth=thumb.offsetWidth;
+ input.style.setProperty('--thumb-w',thumbWidth+'px');
+ thumb.style.left=progress*Math.max(0,trackWidth-thumbWidth)+'px';
+}
+function syncSpeed(fromSlider=false){
+ if(!fromSlider)$('rate').value=speedToRate(speed);
+ updateSlider($('rate'),speed);
+ $('rate').setAttribute('aria-valuetext',speedLabel(speed));
+}
+function setSpeed(value,{fromSlider=false}={}){
+ const next=Math.round(Number(value));
+ speed=Number.isFinite(next)?Math.max(speedMin,Math.min(speedMax,next)):speedMin;
+ syncSpeed(fromSlider);
+}
 function unpack(v){
  const order=orders[v%24].slice(),code=Math.floor(v/24);
- return {order,turn:points.map((_,i)=>(Math.floor(code/4**i)%4+i)%4)};
+ return {order,turn:points.map((_,i)=>Math.floor(code/4**i)%4)};
 }
 function pack(order,turn){
  const index=orders.findIndex(p=>p.every((id,i)=>id===order[i]));
- return index+24*turn.reduce((n,angle,i)=>n+((angle-i+4)%4)*4**i,0);
+ return index+24*turn.reduce((n,angle,i)=>n+angle*4**i,0);
 }
 function rotate(x,y,t){return [[x,y],[-y,x],[-x,-y],[y,-x]][t];}
 function cellPath(x,y){return 'M'+x+' '+y+'h1v1h-1z';}
 const tiles=names.map((name,i)=>{
- const el=document.createElement('button');el.className='tile';el.setAttribute('aria-label','Фигура '+name);
- el.innerHTML='<svg viewBox="-6 -7 13 15" aria-hidden="true"><path fill="currentColor" d="'+points[i].map(([x,y])=>cellPath(x,y)).join('')+'"/></svg><span>'+name+'</span>';
- el.onclick=()=>{state.selected=i;render()};$('tiles').append(el);return el;
+ const el=document.createElement('button');el.type='button';el.className='tile';el.setAttribute('aria-label','Фигура '+name);
+ el.title='Потяните влево или вправо, чтобы повернуть';
+ el.innerHTML='<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true"><rect width="29" height="29" fill="#ff392c"/><path class="x-ghost" fill="#8f241c"/><path class="x-live" fill="#090908"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg><span>'+name+'</span>';
+ let pointerId=null,startX=0,suppressClick=false;
+ el.onclick=()=>{if(suppressClick){suppressClick=false;return;}state.selected=i;render();};
+ el.addEventListener('pointerdown',e=>{
+  if(!e.isPrimary||e.button!==0)return;
+  suppressClick=false;pointerId=e.pointerId;startX=e.clientX;
+  try{el.setPointerCapture(e.pointerId);}catch{}
+ });
+ el.addEventListener('pointermove',e=>{
+  if(pointerId!==e.pointerId)return;
+  const step=Math.max(18,el.clientWidth/6),n=Math.trunc((e.clientX-startX)/step);
+  if(!n)return;
+  startX+=n*step;
+  const turns=(((n%4)+4)%4);
+  if(turns){suppressClick=true;turnFigure(i,turns);e.preventDefault();}
+ },{passive:false});
+ const stop=e=>{
+  if(pointerId!==e.pointerId)return;
+  pointerId=null;
+ };
+ el.addEventListener('pointerup',stop);
+ el.addEventListener('pointercancel',stop);
+ el.addEventListener('lostpointercapture',stop);
+ $('tiles').append(el);return el;
 });
-function fieldCells(variant,radius,selected,mode){
+function fieldCells(variant,radius,selected,mode,offsets=[]){
  const {order,turn}=unpack(variant),hits=new Uint8Array(size*size);
  order.forEach((id,ray)=>{
    if(mode==='solo'&&id!==selected)return;
-   const [dx,dy]=rays[ray];
+   const [dx,dy]=rays[ray],off=offsets[id]||{x:0,y:0};
    for(const [x,y] of points[id]){
      const [rx,ry]=rotate(x,y,turn[id]);
-     hits[(center+dy*radius+ry)*size+center+dx*radius+rx]++;
+     const px=center+dx*radius+off.x+rx,py=center+dy*radius+off.y+ry;
+     if(px>=0&&px<size&&py>=0&&py<size)hits[py*size+px]++;
    }
  });
  for(let i=0;i<hits.length;i++)hits[i]=mode==='xor'?hits[i]%2:Number(hits[i]>0);
  hits[center*size+center]=2;
  return hits;
 }
+function clampOffsets(){
+ const {order}=unpack(state.variant);
+ order.forEach((id,ray)=>{
+  const offset=state.offsets[id],[dx,dy]=rays[ray];
+  const baseX=center+dx*state.radius,baseY=center+dy*state.radius;
+  const x=Math.max(dragMargin,Math.min(size-1-dragMargin,baseX+offset.x));
+  const y=Math.max(dragMargin,Math.min(size-1-dragMargin,baseY+offset.y));
+  offset.x=x-baseX;offset.y=y-baseY;
+ });
+}
 function paintField(variant,mode){
- let path='',ones=0;
- fieldCells(variant,state.radius,state.selected,mode).forEach((v,i)=>{
+ let ghostPath='',path='',ones=0;
+ const union=state.ghosts?fieldCells(variant,state.radius,state.selected,'union',state.offsets):null;
+ if(union){
+  union.forEach((v,i)=>{
+   if(v===1)ghostPath+=cellPath(i%size,Math.floor(i/size));
+  });
+ }
+ const cells=fieldCells(variant,state.radius,state.selected,mode,state.offsets);
+ cells.forEach((v,i)=>{
    if(v===1){path+=cellPath(i%size,Math.floor(i/size));ones++;}
  });
+ $('ghostBits').setAttribute('d',ghostPath);
  $('bits').setAttribute('d',path);$('count').textContent=ones+' ед.';
+ paintSymmetry(union||cells,union?'силуэта':'XOR');
+}
+function axisSymbol(kind){
+ return {v:'↕',h:'↔',main:'↘',anti:'↙'}[kind];
+}
+function axisSegments(axes){
+ let d='';
+ for(const ax of axes){
+  if(ax.kind==='v'){const x=ax.pos+0.5;d+='M'+x+' 0L'+x+' '+size;}
+  else if(ax.kind==='h'){const y=ax.pos+0.5;d+='M0 '+y+'L'+size+' '+y;}
+  else if(ax.kind==='main'){
+   const c=ax.pos;
+   d+=c>=0?'M0 '+c+'L'+(size-c)+' '+size:'M'+(-c)+' 0L'+size+' '+(size+c);
+  }else{
+   const s=ax.pos+1;
+   d+=s<=size?'M0 '+s+'L'+s+' 0':'M'+(s-size)+' '+size+'L'+size+' '+(s-size);
+  }
+ }
+ return d;
+}
+function findSymmetry(cells){
+ const black=[];
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(cells[y*size+x]===1)black.push([x,y]);
+ if(!black.length)return [];
+ const has=(x,y)=>x>=0&&x<size&&y>=0&&y<size&&cells[y*size+x]===1;
+ const axes=[];
+ if(black.every(([x,y])=>has(size-1-x,y)))axes.push({kind:'v',pos:center});
+ if(black.every(([x,y])=>has(x,size-1-y)))axes.push({kind:'h',pos:center});
+ if(black.every(([x,y])=>has(y,x)))axes.push({kind:'main',pos:0});
+ if(black.every(([x,y])=>has(size-1-y,size-1-x)))axes.push({kind:'anti',pos:size-1});
+ return axes;
+}
+function paintSymmetry(cells,label='XOR'){
+ const axes=findSymmetry(cells),d=axisSegments(axes);
+ $('symAxesGlow').setAttribute('d',d);
+ $('symAxes').setAttribute('d',d);
+ $('symInfo').textContent=axes.length?'Симметрия '+label+': '+axes.map(ax=>axisSymbol(ax.kind)).join(' ')+' — через центр, по битам':'';
+}
+function figureAnchor(id,order){
+ const [dx,dy]=rays[order.indexOf(id)],offset=state.offsets[id]||{x:0,y:0};
+ return {x:center+dx*state.radius+offset.x,y:center+dy*state.radius+offset.y};
+}
+function figuresAt(cellX,cellY){
+ const {order,turn}=unpack(state.variant),found=[];
+ order.forEach((id,ray)=>{
+  const offset=state.offsets[id]||{x:0,y:0};
+  const ax=center+rays[ray][0]*state.radius+offset.x,ay=center+rays[ray][1]*state.radius+offset.y;
+  for(const [x,y] of points[id]){
+   const [rx,ry]=rotate(x,y,turn[id]);
+   if(ax+rx===cellX&&ay+ry===cellY){found.push(id);break;}
+  }
+ });
+ return found;
+}
+function resetPositions(){
+ for(const offset of state.offsets)offset.x=offset.y=0;
+ render();
+}
+function paintTiles(turn,variant=state.variant,updateMeta=true){
+ const common=fieldCells(variant,state.radius,state.selected,'xor',state.offsets);
+ tiles.forEach((b,i)=>{
+  const own=fieldCells(variant,state.radius,i,'solo',state.offsets);
+  let ghost='',live='';
+  for(let k=0;k<own.length;k++)if(own[k]===1){
+   const cell=cellPath(k%size,Math.floor(k/size));
+   ghost+=cell;
+   if(common[k]===1)live+=cell;
+  }
+  b.querySelector('.x-ghost').setAttribute('d',ghost);
+  b.querySelector('.x-live').setAttribute('d',live);
+  if(updateMeta){
+   b.setAttribute('aria-pressed',i===state.selected);
+   b.setAttribute('aria-label','Фигура '+names[i]+', поворот '+turn[i]*90+'°');
+  }
+ });
 }
 function render(){
- const {order,turn}=unpack(state.variant),slot=order.indexOf(state.selected);
+ clampOffsets();
+ const {order,turn}=unpack(state.variant),slot=order.indexOf(state.selected),offset=state.offsets[state.selected];
+ const shift=offset.x||offset.y?' · сдвиг '+offset.x+', '+offset.y:'',direction=state.radius<0?(slot+2)%4:slot;
  paintField(state.variant,state.mode);
- $('index').value=state.variant+1;$('dist').textContent=state.radius+' кл.';$('radius').value=state.radius;
- $('position').textContent='Фигура '+names[state.selected]+' · луч '+arrows[slot]+' · '+turn[state.selected]*90+'°';
- tiles.forEach((b,i)=>b.setAttribute('aria-pressed',i===state.selected));
+ $('frame').value=state.variant+1;$('frameNow').textContent=state.variant+1;
+ $('frame').setAttribute('aria-valuetext','Раскладка '+(state.variant+1)+' из '+total);updateSlider($('frame'),state.variant+1);
+ $('radius').value=state.radius;
+ $('radius').setAttribute('aria-valuetext',cellsLabel(state.radius));updateSlider($('radius'),state.radius);
+ $('position').textContent='Фигура '+names[state.selected]+' · луч '+arrows[direction]+' · '+turn[state.selected]*90+'°'+shift;
+ paintTiles(turn);
  for(const id of ['xor','union','solo'])$(id).setAttribute('aria-pressed',id===state.mode);
+ $('ghostToggle').setAttribute('aria-pressed',String(state.ghosts));$('ghostLegend').hidden=!state.ghosts;
  $('rule').textContent={xor:'Один или три чёрных бита дают 1. Два или четыре взаимно гасятся и дают 0.',union:'Видны все клетки, которые занимает хотя бы одна фигура.',solo:'Видна только выбранная фигура в её текущем положении.'}[state.mode];
 }
-function turnBy(delta){const {order,turn}=unpack(state.variant);turn[state.selected]=(turn[state.selected]+delta+4)%4;state.variant=pack(order,turn);render();}
+function turnFigure(id,delta){
+ const {order,turn}=unpack(state.variant);
+ turn[id]=(turn[id]+delta+4)%4;
+ state.selected=id;state.variant=pack(order,turn);render();
+}
+function turnBy(delta){turnFigure(state.selected,delta);}
+function turnAll(delta){
+ const {order,turn}=unpack(state.variant);
+ for(let i=0;i<turn.length;i++)turn[i]=(turn[i]+delta+4)%4;
+ state.variant=pack(order,turn);render();
+}
 function advance(n){state.variant=(state.variant+n+total)%total;render();}
+function stepFrame(delta){state.variant=Math.max(0,Math.min(total-1,state.variant+delta));render();}
 $('left').onclick=()=>turnBy(-1);$('right').onclick=()=>turnBy(1);
-$('prev').onclick=()=>advance(-1);$('next').onclick=()=>advance(1);
 $('random').onclick=()=>advance(1+Math.floor(Math.random()*(total-1)));
+function resetBoard(){
+ state.variant=0;state.selected=0;state.radius=3;state.mode='xor';
+ state.offsets=Array.from({length:4},()=>({x:0,y:0}));
+ render();
+}
+$('resetAll').onclick=resetBoard;
+$('ghostToggle').onclick=()=>{state.ghosts=!state.ghosts;render();};
 $('swap').onclick=()=>{const {order,turn}=unpack(state.variant),a=order.indexOf(state.selected),b=(a+1)%4;[order[a],order[b]]=[order[b],order[a]];state.variant=pack(order,turn);render();};
-$('index').onchange=e=>{const v=e.target.valueAsNumber;if(Number.isFinite(v))state.variant=Math.max(1,Math.min(total,Math.trunc(v)))-1;render();};
-$('index').onkeydown=e=>{if(e.key==='Enter')e.target.blur();};
+$('resetPositions').onclick=resetPositions;
+$('frame').oninput=e=>{const v=Number(e.target.value);state.variant=Math.max(1,Math.min(total,Math.trunc(v)))-1;render();};
 $('radius').oninput=e=>{state.radius=Number(e.target.value);render();};
+function stepRadius(delta){state.radius=Math.max(Number($('radius').min),Math.min(Number($('radius').max),state.radius+delta));render();}
 for(const id of ['xor','union','solo'])$(id).onclick=()=>{state.mode=id;render();};
 let drag=null;
 $('field').addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
-$('field').onpointerdown=e=>{if(!e.isPrimary||e.button!==0)return;drag={id:e.pointerId,x:e.clientX};e.currentTarget.setPointerCapture(e.pointerId);};
-$('field').onpointermove=e=>{
- if(drag?.id!==e.pointerId)return;
- const dx=e.clientX-drag.x,step=Math.max(30,e.currentTarget.clientWidth/7),n=Math.trunc(dx/step);
- if(n){turnBy(n%4);drag.x+=n*step;}
+$('field').onpointerdown=e=>{
+ if(!e.isPrimary||e.button!==0)return;
+ const rect=e.currentTarget.getBoundingClientRect(),cellX=rect.width/size,cellY=rect.height/size;
+ const cell=Math.floor((e.clientX-rect.left)/cellX),row=Math.floor((e.clientY-rect.top)/cellY);
+ if(cell<0||row<0||cell>=size||row>=size)return;
+ const candidates=figuresAt(cell,row).filter(id=>state.mode!=='solo'||id===state.selected);
+ if(!candidates.length)return;
+ const id=candidates.includes(state.selected)?state.selected:candidates[0];
+ if(id!==state.selected){state.selected=id;render();}
+ const {order}=unpack(state.variant),anchor=figureAnchor(id,order),offset=state.offsets[id];
+ drag={pointerId:e.pointerId,id,startX:e.clientX,startY:e.clientY,cellX,cellY,baseX:anchor.x-offset.x,baseY:anchor.y-offset.y};
+ e.currentTarget.setPointerCapture(e.pointerId);
+ e.preventDefault();
 };
+$('field').onpointermove=e=>{
+ if(drag?.pointerId!==e.pointerId)return;
+ const dx=Math.round((e.clientX-drag.startX)/drag.cellX),dy=Math.round((e.clientY-drag.startY)/drag.cellY);
+ const x=Math.max(dragMargin,Math.min(size-1-dragMargin,drag.baseX+dx));
+ const y=Math.max(dragMargin,Math.min(size-1-dragMargin,drag.baseY+dy));
+ const offset=state.offsets[drag.id];
+ if(offset.x!==x-drag.baseX||offset.y!==y-drag.baseY){offset.x=x-drag.baseX;offset.y=y-drag.baseY;render();}
+};
+$('field').onpointerup=()=>{drag=null;};
+$('field').onpointercancel=()=>{drag=null;};
 $('field').onlostpointercapture=()=>{drag=null;};
 render();
+syncSpeed();
+addEventListener('resize',()=>{updateSlider($('radius'),state.radius,true);updateSlider($('rate'),speed,true);updateSlider($('frame'),state.variant+1,true);});
 const durationSeconds=4;
 function settings(){
- const speed=Math.max(1,Math.min(10000,Math.round($('rate').valueAsNumber)||1));
- return {...state,speed,effect:$('filmMode').value,motion:$('motion').value};
+ return {...state,offsets:state.offsets.map(offset=>({...offset})),speed,effect:filmEffect,motion:filmMotion};
 }
 // Plan in GIF centiseconds. Every comparison pair shares the same layout.
 // At high speeds pick positions over time, while retaining both halves of the pair.
@@ -165,11 +391,19 @@ function plan(config){
  return frames;
 }
 let animation=0,lastFilmFrame=null;
+function setPlayState(playing){
+ const play=$('play'),thumb=$('thumbPlay'),label=playing?'Пауза':'Пуск';
+ play.textContent=playing?'Ⅱ Пауза':'▶ Пуск';
+ play.setAttribute('aria-pressed',String(playing));
+ thumb.textContent=playing?'Ⅱ':'▶';
+ thumb.setAttribute('aria-label',label);
+ thumb.setAttribute('aria-pressed',String(playing));
+}
 function stopFilm(){
  if(!animation)return;
  cancelAnimationFrame(animation);animation=0;
  if(lastFilmFrame){state.variant=lastFilmFrame.variant;state.mode=lastFilmFrame.mode;lastFilmFrame=null;}
- $('play').textContent='▶ Пуск';$('play').setAttribute('aria-pressed','false');render();
+ setPlayState(false);render();
 }
 function playFilm(){
  const frames=plan(settings()),origin=performance.now();let shown=-1;
@@ -178,24 +412,76 @@ function playFilm(){
    const i=frames.findIndex(f=>f.end>t);
    if(i!==shown){
      const frame=frames[i];lastFilmFrame=frame;paintField(frame.variant,frame.mode);
+     paintTiles(unpack(frame.variant).turn,frame.variant,false);
      $('count').textContent=(frame.mode==='xor'?'XOR':'Без XOR')+' · № '+(frame.variant+1);
      shown=i;
    }
    animation=requestAnimationFrame(tick);
  }
- $('play').textContent='Ⅱ Пауза';$('play').setAttribute('aria-pressed','true');
+ setPlayState(true);
  animation=requestAnimationFrame(tick);
 }
 $('play').onclick=()=>animation?stopFilm():playFilm();
-document.addEventListener('pointerdown',e=>{if(!e.target.closest('#film'))stopFilm();},true);
-document.addEventListener('keydown',e=>{if(!e.target.closest('#film'))stopFilm();},true);
-function updatePlayback(){if(animation){stopFilm();playFilm();}}
-for(const id of ['rate','filmMode','motion'])$(id).onchange=()=>{$('rate').value=settings().speed;updatePlayback();};
-$('rates').onclick=e=>{if(e.target.tagName==='BUTTON'){$('rate').value=e.target.textContent;updatePlayback();}};
+$('thumbPlay').onclick=()=>animation?stopFilm():playFilm();
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#film')&&!e.target.closest('#thumbPlay'))stopFilm();},true);
+document.addEventListener('keydown',e=>{if(!e.target.closest('#film')&&!e.target.closest('#thumbPlay'))stopFilm();},true);
+function updatePlayback(){updateVideoInfo();if(animation){stopFilm();playFilm();}}
+for(const button of document.querySelectorAll('[data-effect]'))button.onclick=()=>{
+ filmEffect=button.dataset.effect;
+ for(const b of document.querySelectorAll('[data-effect]'))b.setAttribute('aria-pressed',b===button);
+ updatePlayback();
+};
+for(const button of document.querySelectorAll('[data-motion]'))button.onclick=()=>{
+ filmMotion=button.dataset.motion;
+ for(const b of document.querySelectorAll('[data-motion]'))b.setAttribute('aria-pressed',b===button);
+ updatePlayback();
+};
+$('rate').oninput=e=>setSpeed(rateToSpeed(Number(e.target.value)),{fromSlider:true});
+$('rate').onchange=updatePlayback;
+function nudgeSpeed(direction){
+ const step=speed<10?1:speed<100?5:speed<1000?25:250;
+ setSpeed(speed+direction*step);
+}
+$('rate').onkeydown=e=>{
+ if(!['ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.key))return;
+ e.preventDefault();
+ nudgeSpeed(e.key==='ArrowRight'||e.key==='ArrowUp'?1:-1);
+ updatePlayback();
+};
+$('rates').onclick=e=>{if(e.target.tagName==='BUTTON'){setSpeed(Number(e.target.textContent));updatePlayback();}};
+function bindStep(button,action,done,repeatMs=70){
+ let hold=0,repeat=0,active=false;
+ const stop=(commit=false)=>{
+  if(!active)return;
+  active=false;clearTimeout(hold);clearInterval(repeat);hold=repeat=0;
+  if(commit&&done)done();
+ };
+ button.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  e.preventDefault();
+  stop(false);active=true;action();
+  hold=setTimeout(()=>{repeat=setInterval(action,repeatMs);},350);
+ });
+ for(const type of ['pointerup','pointercancel','pointerleave'])button.addEventListener(type,()=>stop(true));
+ button.addEventListener('blur',()=>stop(true));
+ button.addEventListener('click',e=>{if(e.detail===0){action();if(done)done();}});
+}
+bindStep($('radiusDown'),()=>stepRadius(-1));
+bindStep($('radiusUp'),()=>stepRadius(1));
+bindStep($('rateDown'),()=>nudgeSpeed(-1),updatePlayback);
+bindStep($('rateUp'),()=>nudgeSpeed(1),updatePlayback);
+bindStep($('frameDown'),()=>stepFrame(-1));
+bindStep($('frameUp'),()=>stepFrame(1));
+bindStep($('allLeft'),()=>turnAll(-1),null,180);
+bindStep($('allRight'),()=>turnAll(1),null,180);
 const cellPixels=8,side=size*cellPixels;
 function raster(config,frame){
- const cells=fieldCells(frame.variant,config.radius,config.selected,frame.mode),rgba=new Uint8ClampedArray(side*side*4);
- const palette=[[255,57,44],[9,9,8],[255,255,255]];
+ const cells=fieldCells(frame.variant,config.radius,config.selected,frame.mode,config.offsets),rgba=new Uint8ClampedArray(side*side*4);
+ if(config.ghosts){
+  const union=fieldCells(frame.variant,config.radius,config.selected,'union',config.offsets);
+  for(let i=0;i<cells.length;i++)if(cells[i]===0&&union[i]===1)cells[i]=3;
+ }
+ const palette=[[255,57,44],[9,9,8],[255,255,255],[143,36,28]];
  for(let y=0;y<size;y++){
    for(let x=0;x<size;x++){
      const colour=palette[cells[y*size+x]];
@@ -224,5 +510,157 @@ $('makeGif').onclick=async()=>{
  }catch(error){$('gifStatus').textContent='Не удалось создать GIF. '+error.message;}
  finally{button.disabled=false;}
 };
+
+let audioUrl=null,audioDuration=0,videoUrl=null,videoRecording=false;
+function formatDuration(seconds){
+ const total=Math.max(0,Math.round(Number(seconds)||0));
+ return Math.floor(total/60)+':'+String(total%60).padStart(2,'0');
+}
+function framesLabel(count){
+ const lastTwo=Math.abs(count)%100,last=lastTwo%10;
+ return count+' '+(last===1&&lastTwo!==11?'кадр':last>=2&&last<=4&&(lastTwo<12||lastTwo>14)?'кадра':'кадров');
+}
+function updateVideoInfo(){
+ if(videoRecording)return;
+ const info=$('videoInfo'),button=$('makeVideo');
+ if(!audioDuration){
+  info.textContent='Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.';
+  button.disabled=true;
+  return;
+ }
+ const frames=plan(settings());
+ if(!frames.length){info.textContent='Нет кадров для видео.';button.disabled=true;return;}
+ const per=audioDuration/frames.length;
+ info.textContent=framesLabel(frames.length)+' GIF · '+per.toFixed(2)+' с на кадр · '+formatDuration(audioDuration);
+ button.disabled=false;
+}
+async function loadAudio(file){
+ if(!file||videoRecording)return;
+ $('videoStatus').textContent='';
+ $('videoLink').hidden=true;$('videoPreview').hidden=true;
+ if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
+ if(audioUrl)URL.revokeObjectURL(audioUrl);
+ audioUrl=URL.createObjectURL(file);
+ const probe=new Audio(audioUrl);
+ probe.preload='metadata';
+ await new Promise((resolve,reject)=>{
+  probe.addEventListener('loadedmetadata',resolve,{once:true});
+  probe.addEventListener('error',()=>reject(new Error('Не удалось прочитать аудиофайл')),{once:true});
+  probe.load();
+ });
+ if(!Number.isFinite(probe.duration)||probe.duration<=0)throw new Error('Не удалось определить длину аудио');
+ audioDuration=probe.duration;
+ $('audioInfo').textContent='Длительность · '+formatDuration(audioDuration);
+ updateVideoInfo();
+}
+$('audioFile').onchange=async e=>{
+ try{await loadAudio(e.target.files[0]);}
+ catch(error){
+  audioDuration=0;
+  $('audioInfo').textContent='Длительность не определена';
+  $('videoInfo').textContent='Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.';
+  $('videoStatus').textContent='Не удалось загрузить аудио. '+error.message;
+  $('makeVideo').disabled=true;
+ }
+};
+$('makeVideo').onclick=async()=>{
+ if(videoRecording||!audioUrl||!audioDuration)return;
+ if(typeof MediaRecorder==='undefined'||!HTMLCanvasElement.prototype.captureStream){
+  $('videoStatus').textContent='Браузер не поддерживает запись видео.';
+  return;
+ }
+ const mimeTypes=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+ let mime='';
+ try{mime=mimeTypes.find(type=>MediaRecorder.isTypeSupported(type))||'';}catch{}
+ if(!mime){$('videoStatus').textContent='Браузер не поддерживает WebM-видео.';return;}
+ const config=settings(),frames=plan(config);
+ if(!frames.length){$('videoStatus').textContent='Нет кадров для видео.';return;}
+ if(animation)stopFilm();
+ const button=$('makeVideo');
+ videoRecording=true;button.disabled=true;$('audioFile').disabled=true;
+ $('videoLink').hidden=true;$('videoPreview').hidden=true;
+ if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
+ $('videoStatus').textContent='Подготовка видео…';
+ let audioCtx=null,playback=null,stream=null,recorder=null,raf=0,timer=0;
+ try{
+  const total=frames.length,frameDuration=audioDuration/total,vidSide=side*2;
+  const canvas=document.createElement('canvas');canvas.width=vidSide;canvas.height=vidSide;
+  const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  const tile=document.createElement('canvas');tile.width=side;tile.height=side;
+  const tileCtx=tile.getContext('2d');
+  const drawFrame=index=>{
+   tileCtx.putImageData(new ImageData(raster(config,frames[index]),side,side),0,0);
+   ctx.drawImage(tile,0,0,vidSide,vidSide);
+  };
+  drawFrame(0);
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  await audioCtx.resume();
+  playback=new Audio(audioUrl);playback.preload='auto';playback.style.display='none';document.body.append(playback);
+  await new Promise((resolve,reject)=>{
+   playback.addEventListener('loadedmetadata',resolve,{once:true});
+   playback.addEventListener('error',()=>reject(new Error('Не удалось открыть аудио')),{once:true});
+   playback.load();
+  });
+  const source=audioCtx.createMediaElementSource(playback);
+  const dest=audioCtx.createMediaStreamDestination();
+  source.connect(dest);source.connect(audioCtx.destination);
+  const canvasStream=canvas.captureStream(30);
+  stream=new MediaStream([...canvasStream.getVideoTracks(),...dest.stream.getAudioTracks()]);
+  const chunks=[];
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6000000});
+  const recorded=new Promise((resolve,reject)=>{
+   recorder.onstop=resolve;
+   recorder.onerror=event=>reject(event.error||new Error('Ошибка записи видео'));
+  });
+  recorder.ondataavailable=event=>{if(event.data&&event.data.size)chunks.push(event.data);};
+  recorder.start(1000);
+  playback.currentTime=0;
+  await playback.play();
+  let shown=0,ended=false;
+  const finish=()=>{
+   if(ended)return;
+   ended=true;
+   if(raf)cancelAnimationFrame(raf);
+   if(timer)clearTimeout(timer);
+   drawFrame(total-1);
+   setTimeout(()=>{if(recorder&&recorder.state!=='inactive')recorder.stop();},120);
+  };
+  playback.onended=finish;
+  timer=setTimeout(finish,audioDuration*1000+2500);
+  const started=performance.now();
+  let shownSecond=-1;
+  const tick=()=>{
+   if(ended)return;
+   const t=Number.isFinite(playback.currentTime)&&playback.currentTime>0?playback.currentTime:(performance.now()-started)/1000;
+   const index=Math.min(total-1,Math.max(0,Math.floor(t/frameDuration)));
+   if(index!==shown){shown=index;drawFrame(index);}
+   const second=Math.floor(Math.min(t,audioDuration));
+   if(second!==shownSecond){shownSecond=second;$('videoStatus').textContent='Запись · '+formatDuration(second)+' / '+formatDuration(audioDuration);}
+   raf=requestAnimationFrame(tick);
+  };
+  raf=requestAnimationFrame(tick);
+  await recorded;
+  if(timer)clearTimeout(timer);
+  const blob=new Blob(chunks,{type:mime.split(';')[0]});
+  if(!blob.size)throw new Error('Получился пустой файл');
+  videoUrl=URL.createObjectURL(blob);
+  const ext=mime.includes('mp4')?'mp4':'webm';
+  $('videoPreview').src=videoUrl;$('videoPreview').hidden=false;
+  $('videoLink').href=videoUrl;$('videoLink').download='osi-'+config.effect+'-'+config.motion+'-'+Math.round(audioDuration)+'s.'+ext;$('videoLink').hidden=false;
+  $('videoStatus').textContent='Готово · '+formatDuration(audioDuration)+' · '+framesLabel(total)+' · '+ext.toUpperCase();
+ }catch(error){
+  $('videoStatus').textContent='Не удалось создать видео. '+(error.message||error);
+ }finally{
+  videoRecording=false;
+  if(playback){playback.pause();playback.remove();}
+  if(stream)stream.getTracks().forEach(track=>track.stop());
+  if(audioCtx)audioCtx.close().catch(()=>{});
+  if(recorder&&recorder.state!=='inactive')try{recorder.stop();}catch{}
+  button.disabled=!audioDuration;
+  $('audioFile').disabled=false;
+  updateVideoInfo();
+ }
+};
+
 </script>
 </html>
