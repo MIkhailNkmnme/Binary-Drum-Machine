@@ -10,7 +10,7 @@ before(async()=>{
  const context=await browser.newContext();page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
  await page.context().route('http://xor.test/**',async route=>{
   const name=path.basename(new URL(route.request().url()).pathname);
-  const file=name==='mayatnik-gif.js'?path.join(__dirname,'../../mayatnik/mayatnik-gif.js'):['xor-space.js','xor-space.css'].includes(name)?path.join(__dirname,name):(process.env.XOR_TEST_HTML||path.join(__dirname,'index.html'));
+  const file=name==='mayatnik-gif.js'?path.join(__dirname,'../../mayatnik/mayatnik-gif.js'):['xor-space.js','xor-space.css','xor-space-sequence.js','xor-space-sequence-worker.js','xor-space-player.js','xor-space-player.css'].includes(name)?path.join(__dirname,name):(process.env.XOR_TEST_HTML||path.join(__dirname,'index.html'));
   await route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body:fs.readFileSync(file)});
  });
  await page.addInitScript(()=>{window.__raf=new Map();let id=0;window.requestAnimationFrame=f=>{__raf.set(++id,f);return id;};window.cancelAnimationFrame=id=>__raf.delete(id);});

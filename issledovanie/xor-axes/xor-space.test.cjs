@@ -3,7 +3,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {buildModel,project,orientation,cameraPoint,axisDragSteps}=require('./xor-space.js');
+const {buildModel,project,orientation,cameraPoint,axisDragSteps,orientFigure,isEndVoxel}=require('./xor-space.js');
 const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
 const masks=Function('return '+html.match(/const masks=(\[[\s\S]*?\n\]);/)[1])();
 const points=masks.map(rows=>{const pivot=rows[0].indexOf('1');return rows.flatMap((row,y)=>[...row].flatMap((v,x)=>v==='1'?[[x-pivot,y]]:[]));});
@@ -83,6 +83,41 @@ test('independent XYZ translations preserve every oriented mask and follow each 
  for(const v of [[8,0],[-3,7],[.2,-6]]){assert.equal(axisDragSteps(v.map(n=>n*4),v),4);assert.equal(axisDragSteps(v.map(n=>n*-3),v),-3);assert.equal(axisDragSteps([-v[1]*9,v[0]*9],v),0);}
  assert.equal(axisDragSteps([100,20],[0,0]),0);
 });
+
+test('own-axis roll, six-axis cycle and end-for-end flip preserve world pivots and rigid masks',()=>{
+ const cycle=['+X','+Y','+Z','-X','-Y','-Z'];
+ for(const direction of ['auto',...cycle])for(let roll=0;roll<4;roll++)for(let id=0;id<4;id++){
+  const s=snapshot({mode:'union',radius:3,offsets:[{x:2,y:-3},{x:-1,y:2}],order:[3,1,0,2]}),settings=Array.from({length:4},()=>({direction,roll,offset:[3,-2,5]})),before=buildModel(s,settings);
+  for(const action of ['roll','cycle','flip']){
+   const next=orientFigure(s,settings,id,action),after=buildModel(s,next),a=before.figures[id],b=after.figures[id];
+   assert.deepEqual(b.anchor,a.anchor,action+' keeps nonzero-radius pivot');for(let j=0;j<4;j++)if(j!==id)assert.deepEqual(after.figures[j],before.figures[j]);
+   assert.equal(b.cells.length,a.cells.length);
+   if(action==='cycle')assert.equal(b.direction,cycle[(cycle.indexOf(a.direction)+1)%6]);
+   if(action==='flip'){
+    const right=orientation(a.direction,a.roll).right;
+    assert.deepEqual(b.cells,a.cells.map(p=>{const v=p.map((n,i)=>n-a.anchor[i]),dot=v.reduce((sum,n,i)=>sum+n*right[i],0);return v.map((n,i)=>a.anchor[i]+2*dot*right[i]-n);}));
+    assert.deepEqual(buildModel(s,orientFigure(s,next,id,'flip')).figures[id].cells,a.cells);
+   }
+   if(action==='roll'){
+    const down=orientation(a.direction,a.roll).down,cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+    assert.deepEqual(b.cells,a.cells.map(p=>{const v=p.map((n,i)=>n-a.anchor[i]),dot=v.reduce((sum,n,i)=>sum+n*down[i],0),c=cross(down,v);return c.map((n,i)=>a.anchor[i]+n+dot*down[i]);}));
+   }
+   for(let i=0;i<a.cells.length;i++)assert.equal(a.cells[i].reduce((sum,n,k)=>sum+(n-a.anchor[k])**2,0),b.cells[i].reduce((sum,n,k)=>sum+(n-b.anchor[k])**2,0));
+  }
+  let next=settings;const visited=[];for(let i=0;i<6;i++){next=orientFigure(s,next,id,'cycle');visited.push(buildModel(s,next).figures[id].direction);}assert.equal(new Set(visited).size,6);assert.deepEqual(buildModel(s,next).figures[id].cells,before.figures[id].cells);
+  const f=before.figures[id],ys=points[id].filter(([x,y])=>x||y).map(p=>p[1]),min=Math.min(0,...ys),max=Math.max(0,...ys);assert.equal(isEndVoxel(f,f.anchor),true);
+  f.cells.forEach((p,i)=>assert.equal(isEndVoxel(f,p),ys[i]===min||ys[i]===max));
+ }
+});
+
+test('projection overlap diagnostics retain XOR-cancelled cubes and distinguish real collision from depth',()=>{
+ const s=snapshot({points:Array.from({length:4},()=>[[0,0],[0,1]]),turn:[0,0,0,0]});
+ const cancelled=buildModel(s);assert.equal(cancelled.cells.length,0);assert.equal(cancelled.occupancy.length,1);assert.equal(cancelled.overlaps.length,1);
+ for(const plane of ['XY','XZ','YZ']){const p=project(cancelled,plane);assert.equal(p.overlaps.length,1);assert.equal(p.overlaps[0].collisionCount,1);assert.equal(p.overlaps[0].depth,1);assert.equal(p.overlaps[0].voxelCount,4);}
+ const mixed=buildModel(s,[{}, {}, {offset:[0,0,2]}, {offset:[3,0,0]}]),xy=project(mixed,'XY').overlaps[0];assert.equal(xy.collisionCount,1);assert.equal(xy.depth,2);assert.equal(xy.voxelCount,3);assert.equal(xy.maxMultiplicity,2);
+ const layers=buildModel(s,[{}, {offset:[0,0,2]}, {offset:[0,0,4]}, {offset:[0,0,6]}]);assert.equal(layers.overlaps.length,0);assert.equal(project(layers,'XY').overlaps[0].depth,4);assert.equal(project(layers,'XY').overlaps[0].collisionCount,0);
+ assert.equal(project(buildModel({...s,mode:'solo',selected:2}),'XY').overlaps.length,0);
+});
 test('browser: four assignments, updated masks, drag, zoom, reset, projections and mobile fit',async()=>{
  const {chromium}=require('playwright-core'),browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
  const errors=[];
@@ -160,4 +195,56 @@ test('browser on actual page: each figure drags on every axis, picking, keyboard
   if(process.env.XOR_SPACE_PAGE_SCREENSHOT)await page.locator('.xor-space').screenshot({path:process.env.XOR_SPACE_PAGE_SCREENSHOT});
   await page.locator('.xs-reset').click();assert.deepEqual(await page.evaluate(()=>xorSpaceView.getState().assignments.map(a=>a.offset)),Array.from({length:4},()=>[0,0,0]));assert.deepEqual(errors,[]);
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
+});
+
+test('browser: body double click rolls, extreme double click flips, right click cycles and overlaps remain visible',async()=>{
+ const {chromium}=require('playwright-core'),browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1100,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.route('http://gesture.test/**',route=>{const file=new URL(route.request().url()).pathname;if(file==='/xor-space.js'||file==='/xor-space.css')return route.fulfill({contentType:file.endsWith('js')?'text/javascript':'text/css',body:fs.readFileSync(path.join(__dirname,file.slice(1)))});return route.fulfill({contentType:'text/html',body:'<!doctype html><meta charset="utf-8"><style>body{margin:18px;background:#171513}main{max-width:960px;margin:auto}</style><link rel="stylesheet" href="/xor-space.css"><main id="mount"></main><script src="/xor-space.js"></script>'});});
+  await page.goto('http://gesture.test/');await page.evaluate(s=>{window.source=s;window.instance=XorAxesSpace.mount(document.getElementById('mount'),s);window.events=[];document.addEventListener('xor-space-change',e=>events.push(e.detail.reason));},snapshot({mode:'solo',selected:0,radius:3}));
+  const canvas=page.locator('.xs-main');
+  async function target(kind){
+   await canvas.scrollIntoViewIfNeeded();
+   const candidates=await page.evaluate(kind=>{
+    const model=instance.getModel(),camera=instance.getState().camera,id=model.selected,f=model.figures[id],r=document.querySelector('.xs-main').getBoundingClientRect();let e=14;for(const p of [f.anchor,...f.cells])for(const v of p)e=Math.max(e,Math.abs(v)+1);
+    const width=Math.round(r.width),height=Math.round(Math.min(560,Math.max(280,width*.58))),unit=Math.min(width,height)/(e*3.1)*camera.zoom,screen=p=>{const q=XorAxesSpace.cameraPoint(p,camera);return [r.x+width/2+q[0]*unit,r.y+height/2-q[1]*unit,q[2]];};
+    const voxels=[...f.cells,f.anchor],occupied=new Set(voxels.map(p=>p.join(','))),faces=[];
+    for(const p of voxels)for(let axis=0;axis<3;axis++)for(const sign of [-1,1]){
+     const n=[0,0,0];n[axis]=sign;if(XorAxesSpace.cameraPoint(n,camera)[2]<=0||occupied.has(p.map((v,i)=>v+n[i]).join(',')))continue;
+     const other=[0,1,2].filter(i=>i!==axis),vertices=[[-1,-1],[1,-1],[1,1],[-1,1]].map(s=>{const q=p.slice();q[axis]+=sign*.5;q[other[0]]+=s[0]*.5;q[other[1]]+=s[1]*.5;return screen(q);});
+     const center=vertices[0].map((_,i)=>vertices.reduce((sum,v)=>sum+v[i],0)/4);faces.push({p,vertices,center});
+    }
+    faces.sort((a,b)=>b.center[2]-a.center[2]);
+    const contains=(p,v)=>{let inside=false;for(let i=0,j=v.length-1;i<v.length;j=i++){if((v[i][1]>p[1])!==(v[j][1]>p[1])&&p[0]<(v[j][0]-v[i][0])*(p[1]-v[i][1])/(v[j][1]-v[i][1])+v[i][0])inside=!inside;}return inside;};
+    return faces.filter(face=>{const endpoint=XorAxesSpace.isEndVoxel(f,face.p);if(kind==='body'&&endpoint||kind==='end'&&!endpoint)return false;const visible=faces.find(other=>contains(face.center,other.vertices));return visible===face;}).map(face=>face.center.slice(0,2));
+   },kind);
+   for(const p of candidates){await page.mouse.move(...p);if(await canvas.evaluate(c=>c.style.cursor)==='pointer')return p;}
+   throw new Error('no unobscured '+kind+' voxel outside gizmo');
+  }
+  async function state(){return page.evaluate(()=>({state:instance.getState(),model:instance.getModel(),images:[...document.querySelectorAll('.xs-projection canvas')].map(c=>c.toDataURL())}));}
+  async function gesture(kind,button){const p=await target(kind);if(button==='right')await page.mouse.click(...p,{button:'right'});else await page.mouse.dblclick(...p,{delay:60});}
+  function unchanged(before,after,id){assert.deepEqual(after.state.camera,before.state.camera);assert.deepEqual(after.model.figures[id].anchor,before.model.figures[id].anchor);for(let j=0;j<4;j++)if(j!==id)assert.deepEqual(after.model.figures[j],before.model.figures[j]);}
+  const autoBefore=await state();await gesture('body','right');const autoAfter=await state();assert.equal(autoAfter.model.figures[0].direction,'+Z','auto +Y cycles directly to +Z');unchanged(autoBefore,autoAfter,0);
+  for(let id=0;id<4;id++){
+   await page.evaluate(id=>{source.selected=id;instance.update(source);instance.setAssignments(Array.from({length:4},()=>({direction:'-Y',roll:0,offset:[2,1,0]})));},id);await page.locator('.xs-pick').nth(id).click();
+   let before=await state();await gesture('body');let after=await state();assert.equal(after.state.assignments[id].roll,1);assert.equal(after.model.figures[id].direction,'-Y');unchanged(before,after,id);assert(after.images.some((v,i)=>v!==before.images[i]));
+   for(let flip=0;flip<2;flip++){before=await state();await gesture('end');after=await state();assert.equal(after.model.figures[id].direction,flip===0?'+Y':'-Y');unchanged(before,after,id);const expected=buildModel(await page.evaluate(()=>instance.getSnapshot()),orientFigure(await page.evaluate(()=>instance.getSnapshot()),before.state.assignments,id,'flip'));assert.deepEqual(after.model.figures[id].cells,expected.figures[id].cells);}
+   const seen=[];for(let i=0;i<6;i++){before=await state();await gesture('body','right');after=await state();seen.push(after.model.figures[id].direction);unchanged(before,after,id);}assert.deepEqual(seen,['-Z','+X','+Y','+Z','-X','-Y']);
+  }
+  // Empty background and the visible X arrow must not turn a figure.
+  await canvas.scrollIntoViewIfNeeded();const b=await canvas.boundingBox(),before=await state();await page.mouse.dblclick(b.x+20,b.y+20,{delay:60});assert.deepEqual((await state()).state,before.state);await page.mouse.click(b.x+20,b.y+20,{button:'right'});assert.deepEqual((await state()).state,before.state);
+  const arrow=await page.evaluate(()=>{const m=instance.getModel(),camera=instance.getState().camera,f=m.figures[instance.getState().selected],r=document.querySelector('.xs-main').getBoundingClientRect();let e=14;for(const p of [f.anchor,...f.cells])for(const v of p)e=Math.max(e,Math.abs(v)+1);const width=Math.round(r.width),height=Math.round(Math.min(560,Math.max(280,width*.58))),unit=Math.min(width,height)/(e*3.1)*camera.zoom,p=XorAxesSpace.cameraPoint(f.anchor,camera),v=XorAxesSpace.cameraPoint([1,0,0],camera),length=Math.hypot(v[0],v[1]);return [r.x+width/2+p[0]*unit+v[0]/length*60,r.y+height/2-p[1]*unit-v[1]/length*60];});await page.mouse.dblclick(...arrow,{delay:60});assert.deepEqual((await state()).state,before.state,'double-clicking gizmo cannot rotate a voxel underneath');
+  const saved=await page.evaluate(()=>instance.getState().assignments);await page.evaluate(()=>{instance.destroy();instance=XorAxesSpace.mount(document.getElementById('mount'),source);});assert.deepEqual(await page.evaluate(()=>instance.getState().assignments),saved);
+  await page.evaluate(()=>{source={points:Array.from({length:4},()=>[[0,0],[0,1]]),order:[0,1,2,3],turn:[0,0,0,0],radius:0,mode:'xor',selected:null};instance.update(source);instance.setAssignments([]);});
+  assert.equal(await page.evaluate(()=>instance.getModel().cells.length),0);
+  for(const c of await page.locator('.xs-projection canvas').all())assert.equal(await c.getAttribute('data-collisions'),'1');
+  assert.equal(await page.locator('.xs-overlap-note').isVisible(),true);
+  const pixels=await page.locator('[data-plane="XY"]').evaluate(c=>{const p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let red=0,blue=0;for(let i=0;i<p.length;i+=4){if(p[i]>100&&p[i]>p[i+1]*1.3)red++;if(p[i+2]>150&&p[i+2]>p[i]*1.3)blue++;}return {red,blue};});assert(pixels.red>0,'XOR-cancelled overlap is visibly marked');
+  await page.evaluate(()=>instance.setAssignments(Array.from({length:4},(_,i)=>({offset:[0,0,i*2]}))));assert.equal(await page.locator('[data-plane="XY"]').getAttribute('data-collisions'),'0');assert.equal(await page.locator('[data-plane="XY"]').getAttribute('data-depth-overlaps'),'1');
+  const blue=await page.locator('[data-plane="XY"]').evaluate(c=>{const p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=0;i<p.length;i+=4)if(p[i+2]>150&&p[i+2]>p[i]*1.3)n++;return n;});assert(blue>0,'different depths visibly marked');
+  const eventCount=await page.evaluate(()=>events.length);await page.evaluate(()=>{const s=instance.getSnapshot();s.points[0].push([8,8]);instance.setAssignments([{direction:'invalid',roll:5,offset:[1.8,2.1,Infinity]}]);});assert.equal(await page.evaluate(()=>events.length),eventCount,'programmatic sequence cannot trigger its own stop');assert.equal(await page.evaluate(()=>instance.getSnapshot().points[0].length),2,'snapshot API is detached');assert.deepEqual(await page.evaluate(()=>instance.getState().assignments[0]),{direction:'auto',roll:1,offset:[2,2,0]});
+  await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=390),true);for(const item of await page.locator('.xs-projection').all()){const bounds=await item.boundingBox();assert(bounds.x>=0&&bounds.x+bounds.width<=390);}
+  assert((await page.evaluate(()=>events)).includes('orientation'));assert.deepEqual(errors,[]);
+ }finally{await browser.close();}
 });

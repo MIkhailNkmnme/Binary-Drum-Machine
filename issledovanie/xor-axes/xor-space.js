@@ -4,10 +4,11 @@
  const api=factory();
  if(typeof module==='object'&&module.exports)module.exports=api;
  if(root)root.XorAxesSpace=api;
-})(typeof window!=='undefined'?window:null,function(){
+})(typeof globalThis!=='undefined'?globalThis:null,function(){
  'use strict';
  const NAMES=['I','II','III','IV'],COLORS=['#efad62','#79c5e7','#bb9ce6','#95cf89'];
  const DIRECTIONS={'+X':[1,0,0],'-X':[-1,0,0],'+Y':[0,1,0],'-Y':[0,-1,0],'+Z':[0,0,1],'-Z':[0,0,-1]};
+ const AXIS_CYCLE=['+X','+Y','+Z','-X','-Y','-Z'];
  const AUTO=['-Y','-X','+Y','+X'],RAYS=[[0,1,0],[1,0,0],[0,-1,0],[-1,0,0]];
  const DEFAULT_CAMERA={yaw:-.56,pitch:.38,zoom:1};
  const AXIS_COLORS=['#dd8178','#96bd79','#80b4e8'];
@@ -17,6 +18,7 @@
  const quarter=n=>((int(n)%4)+4)%4;
  const offsetOf=s=>[0,1,2].map(i=>int(s&&s.offset&&s.offset[i]));
  const defaultAssignments=()=>Array.from({length:4},()=>({direction:'auto',roll:0,offset:[0,0,0]}));
+ const normalizeAssignments=values=>Array.from({length:4},(_,i)=>{const s=values&&values[i];return {direction:s&&Object.prototype.hasOwnProperty.call(DIRECTIONS,s.direction)?s.direction:'auto',roll:quarter(s&&s.roll),offset:offsetOf(s)};});
  function axisDragSteps(delta,vector){const n=vector[0]**2+vector[1]**2;return n>.01?int((delta[0]*vector[0]+delta[1]*vector[1])/n):0;}
  function orientation(direction,roll=0){
   const down=DIRECTIONS[direction]||DIRECTIONS['-Y'];
@@ -47,17 +49,42 @@
   }
   const neutral=new Set(centres.map(c=>key(c.p))),cells=[];
   for(const [k,hit] of hits)if(!neutral.has(k)&&(mode!=='xor'||hit.members.length%2))cells.push(hit);
-  return {cells,centres,figures,mode,selected:source.selected,temporal:false};
+  const occupancy=[...hits.values()],overlaps=occupancy.filter(v=>v.members.length>1);
+  return {cells,centres,figures,occupancy,overlaps,mode,selected:source.selected,temporal:false};
+ }
+ function orientFigure(snapshot,assignments,id,action){
+  const next=Array.from({length:4},(_,i)=>({...assignments[i],offset:offsetOf(assignments[i])}));
+  const before=buildModel(snapshot,assignments).figures[id],setting=next[id];
+  if(action==='roll')setting.roll=quarter(before.roll+1);
+  else if(action==='cycle')setting.direction=AXIS_CYCLE[(AXIS_CYCLE.indexOf(before.direction)+1)%6];
+  else if(action==='flip'){
+   const right=orientation(before.direction,before.roll).right;setting.direction=(before.direction[0]==='+'?'-':'+')+before.direction[1];
+   setting.roll=[0,1,2,3].find(roll=>key(orientation(setting.direction,roll).right)===key(right));
+  }else if(action==='auto'||DIRECTIONS[action])setting.direction=action;
+  const after=buildModel(snapshot,next).figures[id];
+  setting.offset=setting.offset.map((v,i)=>v+before.anchor[i]-after.anchor[i]);
+  return next;
+ }
+ function isEndVoxel(figure,p){
+  const down=DIRECTIONS[figure.direction],along=q=>q.reduce((sum,v,i)=>sum+(v-figure.anchor[i])*down[i],0);
+  const values=[0,...figure.cells.map(along)],value=along(p);
+  return value===Math.min(...values)||value===Math.max(...values);
  }
  function project(model,plane){
-  const indices=plane==='XZ'?[0,2]:plane==='YZ'?[1,2]:[0,1],cells=new Map(),centres=new Map();
+  const indices=plane==='XZ'?[0,2]:plane==='YZ'?[1,2]:[0,1],cells=new Map(),centres=new Map(),columns=new Map();
   for(const voxel of model.cells){
    const p=indices.map(i=>voxel.p[i]),k=key(p),old=cells.get(k);
    if(old){old.depth++;for(const id of voxel.members)if(!old.members.includes(id))old.members.push(id);}
    else cells.set(k,{p,members:voxel.members.slice(),depth:1});
   }
   for(const centre of model.centres){const p=indices.map(i=>centre.p[i]);centres.set(key(p),{p,id:centre.id});}
-  return {cells:[...cells.values()],centres:[...centres.values()],axes:indices.map(i=>'XYZ'[i])};
+  for(const voxel of model.occupancy||model.cells){
+   const p=indices.map(i=>voxel.p[i]),k=key(p);let column=columns.get(k);
+   if(!column){column={p,depth:0,voxelCount:0,collisionCount:0,maxMultiplicity:0,members:[]};columns.set(k,column);}
+   column.depth++;column.voxelCount+=voxel.members.length;column.maxMultiplicity=Math.max(column.maxMultiplicity,voxel.members.length);if(voxel.members.length>1)column.collisionCount++;
+   for(const id of voxel.members)if(!column.members.includes(id))column.members.push(id);
+  }
+  return {cells:[...cells.values()],centres:[...centres.values()],overlaps:[...columns.values()].filter(c=>c.collisionCount||c.depth>1),axes:indices.map(i=>'XYZ'[i])};
  }
  function cameraPoint(p,camera){
   const cy=Math.cos(camera.yaw),sy=Math.sin(camera.yaw),cp=Math.cos(camera.pitch),sp=Math.sin(camera.pitch);
@@ -68,12 +95,14 @@
   if(!container||!container.ownerDocument)throw new TypeError('A DOM container is required');
   const doc=container.ownerDocument;
   let assignments=defaultAssignments();
-  try{const saved=JSON.parse(localStorage.getItem('zerk_xor_space')||'null');if(Array.isArray(saved)&&saved.length===4)assignments=saved.map(s=>({direction:s&&DIRECTIONS[s.direction]?s.direction:'auto',roll:quarter(s&&s.roll),offset:offsetOf(s)}));}catch(_){}
+  try{const saved=JSON.parse(localStorage.getItem('zerk_xor_space')||'null');if(Array.isArray(saved)&&saved.length===4)assignments=normalizeAssignments(saved);}catch(_){}
   let snapshot=initialSnapshot||{},model=buildModel(snapshot,assignments),camera={...DEFAULT_CAMERA},drag=null,destroyed=false,selected=0;
-  let hitFaces=[],handles=[],view=null;
+  let hitFaces=[],handles=[],view=null,bodyClick=null;
   const host=doc.createElement('div');host.className='xor-space';
   host.innerHTML='<div class="xs-heading"><h2>3D · ось Z</h2><div class="xs-actions"><button class="gz-hx xs-reset" type="button" title="Сбросить направления и сдвиги всех четырёх фигур в исходное 2D-состояние" aria-label="Вернуть все фигуры в 2D">↶ 2D</button><button class="gz-hx xs-camera" type="button" title="Сбросить только положение камеры" aria-label="Сбросить камеру">⊙ Видъ</button></div></div><p class="xs-explain">Те же четыре фигуры. +Z — к нам, −Z — за экран. Выберите фигуру на поле или кнопкой I–IV, затем тяните её стрелку X, Y или Z. Числа — сдвиг в клетках от положения на основном поле. ↻ меняет плоскость.</p><div class="xs-controls" role="group" aria-label="Направления и сдвиги четырёх фигур"></div><p class="xs-status" role="status"></p><div class="xs-stage"><canvas class="xs-main" role="img" aria-label="Объём четырёх фигур: выберите фигуру, тяните стрелку оси для перемещения; пустое место вращает камеру" tabindex="0"></canvas><span class="xs-camera-note">Стрелка оси — сдвиг · пустое место — камера · колесо — масштаб · Shift + ← → / ↑ ↓ / PageUp PageDown — X / Y / Z</span></div><div class="xs-projections"></div><p class="xs-explain xs-bottom">XOR считается в одинаковых (X, Y, Z). Серые центры вне XOR. Проекции показывают занятые клетки по глубине, без повторного XOR. Режим наложения и рисунки берутся с основного поля.</p>';
   container.appendChild(host);
+  host.querySelector('.xs-camera-note').append(' · 2× по фигуре — 90° вокруг своей оси; 2× по крайнему кубику — переворот 180°; ПКМ — +X → +Y → +Z → −X → −Y → −Z');
+  const overlapNote=doc.createElement('p');overlapNote.className='xs-explain xs-overlap-note';overlapNote.innerHTML='<span class="xs-collision-key">▧ XYZ</span> — кубики разных фигур в одном месте, даже если XOR их убрал; <span class="xs-depth-key">◉ Глубина</span> — кубики на разных глубинах одной клетки проекции. Число в крупной клетке — всего исходных кубиков.';host.querySelector('.xs-projections').after(overlapNote);
   const controls=host.querySelector('.xs-controls'),main=host.querySelector('.xs-main'),status=host.querySelector('.xs-status');
   const selects=[],rollButtons=[],pickButtons=[],offsetInputs=[];
   for(let id=0;id<4;id++){
@@ -92,8 +121,8 @@
     input.addEventListener('focus',()=>choose(id));input.addEventListener('input',()=>{if(input.value!==''&&Number.isFinite(input.valueAsNumber)){assignments[id].offset[axis]=int(input.valueAsNumber);refresh(true);}});input.addEventListener('change',()=>{input.value=String(assignments[id].offset[axis]);});label.appendChild(input);shift.appendChild(label);inputs.push(input);
    }
    offsetInputs.push(inputs);
-   select.addEventListener('change',()=>{assignments[id].direction=select.value;refresh(true);});
-   roll.addEventListener('click',()=>{assignments[id].roll=(assignments[id].roll+1)%4;refresh(true);});
+   select.addEventListener('change',()=>reorient(id,select.value));
+   roll.addEventListener('click',()=>reorient(id,'roll'));
    selects.push(select);rollButtons.push(roll);
   }
   const projections=['XY','XZ','YZ'].map(plane=>{
@@ -154,24 +183,35 @@
    }
   }
   function choose(id){selected=id;refresh(false);}
+  function reorient(id,action){selected=id;assignments=orientFigure(snapshot,assignments,id,action);bodyClick=null;refresh(true,'orientation');}
   function pointInFace(p,vertices){let inside=false;for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){const a=vertices[i],b=vertices[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])inside=!inside;}return inside;}
   function hitHandle(p){
    let best=null,distance=12;
    for(const h of handles){const dx=h.end[0]-h.origin[0],dy=h.end[1]-h.origin[1],t=((p[0]-h.origin[0])*dx+(p[1]-h.origin[1])*dy)/(dx*dx+dy*dy);if(t<.2||t>1.16)continue;const d=Math.hypot(p[0]-h.origin[0]-dx*Math.min(1,t),p[1]-h.origin[1]-dy*Math.min(1,t));if(d<distance){distance=d;best=h;}}
    return best;
   }
-  function hitFigure(p){for(let i=hitFaces.length-1;i>=0;i--)if(pointInFace(p,hitFaces[i].vertices)){const ids=hitFaces[i].voxel.members;return ids.includes(selected)?selected:ids[0];}return null;}
+  function hitVoxel(p){for(let i=hitFaces.length-1;i>=0;i--)if(pointInFace(p,hitFaces[i].vertices)){const voxel=hitFaces[i].voxel,ids=voxel.members;return {id:ids.includes(selected)?selected:ids[0],p:voxel.p.slice()};}return null;}
+  function hitFigure(p){const hit=hitVoxel(p);return hit?hit.id:null;}
   function drawProjection(canvas,plane){
    const {ctx,width,height}=prepare(canvas),projection=project(model,plane),e=extent(),unit=(width-28)/(e*2+1);
    const xy=p=>[width/2+p[0]*unit,height/2-p[1]*unit];
    ctx.strokeStyle='#343b42';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(14,height/2);ctx.lineTo(width-14,height/2);ctx.moveTo(width/2,14);ctx.lineTo(width/2,height-14);ctx.stroke();
    for(const cell of projection.cells){const p=xy(cell.p);ctx.fillStyle=color(cell.members);ctx.fillRect(p[0]-unit/2,p[1]-unit/2,Math.max(.7,unit-.25),Math.max(.7,unit-.25));}
    for(const centre of projection.centres){const p=xy(centre.p);ctx.fillStyle='#858c8c';ctx.fillRect(p[0]-unit/2,p[1]-unit/2,unit,unit);}
+   for(const overlap of projection.overlaps){
+    const p=xy(overlap.p),size=Math.max(1,unit-.25),left=p[0]-unit/2,top=p[1]-unit/2;
+    if(overlap.collisionCount){ctx.fillStyle='rgba(255,102,87,.68)';ctx.fillRect(left,top,size,size);ctx.strokeStyle='#ffb5a3';ctx.lineWidth=Math.min(1.3,unit/4);ctx.beginPath();ctx.moveTo(left,top+size);ctx.lineTo(left+size,top);ctx.stroke();}
+    if(overlap.depth>1){ctx.strokeStyle='#66dcff';ctx.lineWidth=Math.min(1.5,unit/3);ctx.strokeRect(left+.3,top+.3,Math.max(.4,size-.6),Math.max(.4,size-.6));}
+    if(unit>=12){ctx.fillStyle='#fff';ctx.font='bold '+Math.min(12,Math.floor(unit*.7))+'px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText(String(overlap.voxelCount),p[0],p[1]+Math.min(4,unit*.25));ctx.textAlign='left';}
+   }
    ctx.font='11px ui-monospace, monospace';ctx.fillStyle='#b4bac0';ctx.fillText('+'+projection.axes[0],width-25,height/2-5);ctx.fillText('+'+projection.axes[1],width/2+5,14);
    canvas.dataset.cells=String(projection.cells.length);
+   const collisions=projection.overlaps.filter(c=>c.collisionCount).length,depths=projection.overlaps.filter(c=>c.depth>1).length;
+   canvas.dataset.collisions=String(collisions);canvas.dataset.depthOverlaps=String(depths);
+   canvas.previousElementSibling.textContent=plane+' · '+plane[0]+' → / '+plane[1]+' ↑ · XYZ: '+collisions+' · глубина: '+depths;
   }
   function draw(){if(destroyed)return;draw3D();for(const p of projections)drawProjection(p.canvas,p.plane);}
-  function refresh(save){
+  function refresh(save,reason='translation'){
    model=buildModel(snapshot,assignments);
    for(let i=0;i<4;i++){selects[i].value=assignments[i].direction;rollButtons[i].textContent='↻ '+assignments[i].roll*90+'°';rollButtons[i].setAttribute('aria-pressed',String(assignments[i].roll!==0));pickButtons[i].setAttribute('aria-pressed',String(i===selected));for(let axis=0;axis<3;axis++)if(doc.activeElement!==offsetInputs[i][axis])offsetInputs[i][axis].value=String(assignments[i].offset[axis]);}
    const mode=model.mode==='xor'?'XOR':model.mode==='solo'?'Одна':'Вместе';
@@ -180,17 +220,27 @@
    host.dataset.cells=String(model.cells.length);host.dataset.depth=min+','+max;
    if(save)try{localStorage.setItem('zerk_xor_space',JSON.stringify(assignments));}catch(_){}
    draw();
+   if(save)host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason}}));
   }
-  host.querySelector('.xs-reset').addEventListener('click',()=>{assignments=defaultAssignments();refresh(true);});
+  host.querySelector('.xs-reset').addEventListener('click',()=>{assignments=defaultAssignments();refresh(true,'reset');});
   host.querySelector('.xs-camera').addEventListener('click',()=>{camera={...DEFAULT_CAMERA};draw();});
   const local=e=>{const rect=main.getBoundingClientRect();return [e.clientX-rect.left,e.clientY-rect.top];};
   main.addEventListener('pointerdown',e=>{
-   if(e.button!==0)return;e.preventDefault();main.focus({preventScroll:true});const p=local(e),h=hitHandle(p),id=hitFigure(p);
+   if(e.button!==0)return;e.preventDefault();main.focus({preventScroll:true});const p=local(e),h=hitHandle(p),hit=hitVoxel(p);
+   if(h||hit)host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'interaction'}}));
+   const repeat=bodyClick&&hit&&bodyClick.id===hit.id&&e.timeStamp-bodyClick.time<600&&Math.hypot(p[0]-bodyClick.point[0],p[1]-bodyClick.point[1])<6;
+   if(hit&&(!h||repeat)){bodyClick={id:hit.id,point:p,time:e.timeStamp};choose(hit.id);return;}
+   bodyClick=null;
    if(h)drag={kind:'axis',id:e.pointerId,x:e.clientX,y:e.clientY,figure:selected,axis:h.axis,vector:h.vector.slice(),offset:assignments[selected].offset.slice(),unit:view.unit};
-   else if(id!==null){choose(id);return;}
    else drag={kind:'camera',id:e.pointerId,x:e.clientX,y:e.clientY};
    main.setPointerCapture(e.pointerId);main.classList.add('xs-dragging');
   });
+  main.addEventListener('dblclick',e=>{
+   if(e.button!==0||drag||!bodyClick)return;const p=local(e),hit=hitVoxel(p);
+   if(!hit||hit.id!==bodyClick.id||e.timeStamp-bodyClick.time>600||Math.hypot(p[0]-bodyClick.point[0],p[1]-bodyClick.point[1])>=6)return;
+   e.preventDefault();reorient(hit.id,isEndVoxel(model.figures[hit.id],hit.p)?'flip':'roll');
+  });
+  main.addEventListener('contextmenu',e=>{e.preventDefault();if(drag)return;const hit=hitVoxel(local(e));if(hit)reorient(hit.id,'cycle');});
   main.addEventListener('pointermove',e=>{
    if(!drag){const p=local(e);main.style.cursor=hitHandle(p)?'move':hitFigure(p)!==null?'pointer':'';return;}if(drag.id!==e.pointerId)return;
    if(drag.kind==='axis'){const next=drag.offset[drag.axis]+axisDragSteps([e.clientX-drag.x,e.clientY-drag.y],drag.vector);if(next!==assignments[drag.figure].offset[drag.axis]){assignments[drag.figure].offset[drag.axis]=next;refresh(false);}return;}
@@ -206,7 +256,7 @@
   });
   const resize=typeof ResizeObserver==='function'?new ResizeObserver(draw):null;if(resize)resize.observe(host);else window.addEventListener('resize',draw);
   refresh(false);
-  return {update(next){snapshot=next||{};refresh(false);},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
+  return {update(next){snapshot=next||{};refresh(false);host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'source'}}));},getSnapshot(){return JSON.parse(JSON.stringify(snapshot));},setAssignments(next,{save=false}={}){assignments=normalizeAssignments(next);refresh(save,'sequence');},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
  }
- return {mount,buildModel,project,orientation,cameraPoint,axisDragSteps};
+ return {mount,buildModel,project,orientation,cameraPoint,axisDragSteps,orientFigure,isEndVoxel};
 });

@@ -30,4 +30,6 @@
 .xor-space .xs-projection figcaption{margin:0 0 5px;font:12px/1.5 ui-monospace,monospace;color:#b4aaa0}
 .xor-space .xs-projection canvas{width:100%;height:auto;aspect-ratio:1;display:block;border:1px solid #343b42}
 .xor-space .xs-bottom{margin-bottom:0}
+.xor-space .xs-collision-key{color:#ffb5a3}
+.xor-space .xs-depth-key{color:#66dcff}
 @media(max-width:650px){.xor-space .xs-controls{grid-template-columns:minmax(0,1fr)}.xor-space .xs-projections{gap:6px}.xor-space .xs-projection figcaption{font-size:10px}.xor-space .xs-figure{gap:6px}.xor-space .xs-main{aspect-ratio:auto;height:280px}.xor-space .xs-heading{gap:8px}.xor-space .xs-explain{font-size:11px}}
