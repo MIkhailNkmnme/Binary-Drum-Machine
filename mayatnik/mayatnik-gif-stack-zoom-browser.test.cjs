@@ -5,7 +5,7 @@ const seam=`window.__stackTest={
  toggle:gifScaleToggleStack, zoom:s=>zoomTo(s), button:dir=>$(dir>0?'zIn':'zOut').click(),
  rombo(angle){st.edgeRhombOn=true;st.romboMode='fixed';st.romboAngle=angle;st.romboAssembly=0;st.zLimit=false;layout();draw();},
  source(){const c=captureScaleGifFrame();let hash=2166136261;for(const byte of c.pixels)hash=Math.imul(hash^byte,16777619);let bitsHash=2166136261;for(const bit of c.bits)bitsHash=Math.imul(bitsHash^bit,16777619);return {width:c.width,height:c.height,hash,bitsHash};},
- get(){const top=st.edgeRhombOn?$('edgeBelowWrap'):cv,r=top.getBoundingClientRect(),w=wrap.getBoundingClientRect();return {scale:scale(),zoom:st.zoom,enabled:st.gifScaleStack,prefs:[st.zLock,st.zLimit,st.ztop,st.zBot,st.zMid],width:r.width,height:r.height,dispW:dispW(),dispH:dispH(),native:gifStackNativeScale(),zoomFactor:gifStackZoom,frame:k,scrollTop:wrap.scrollTop,wrap:{x:w.x,y:w.y,width:wrap.clientWidth,height:wrap.clientHeight},preview:gifScaleLive.inspect().preview};},
+ get(){const top=st.edgeRhombOn?$('edgeBelowWrap'):cv,r=top.getBoundingClientRect(),w=wrap.getBoundingClientRect();return {scale:scale(),zoom:st.zoom,enabled:st.gifScaleStack,prefs:[st.zLock,st.zLimit,st.ztop,st.zBot,st.zMid],width:r.width,height:r.height,dispW:dispW(),dispH:dispH(),native:gifStackNativeScale(),zoomFactor:gifStackZoom,frame:k,scrollTop:wrap.scrollTop,scrollLeft:wrap.scrollLeft,pinned:horizontalAxisPinned(),axis:cv.getBoundingClientRect().left+displayAnchorX()*scale(),center:panCenterX(),wrap:{x:w.x,y:w.y,width:wrap.clientWidth,height:wrap.clientHeight},preview:gifScaleLive.inspect().preview};},
  point(lower=false){const el=lower?gifScaleLive.element.querySelectorAll('.may-scale-stack__level')[16]:cv;el.scrollIntoView({block:'center',inline:'center'});const r=el.getBoundingClientRect();return {x:r.left+r.width*.45,y:r.top+(lower?24:0)+(r.height-(lower?24:0))*.45};},
  cell(point,lower=false){const el=lower?gifScaleLive.element.querySelectorAll('.may-scale-stack__level')[16]:cv,r=el.getBoundingClientRect();return {x:(point.x-r.left)/scale(),y:(point.y-r.top-(lower?24:0))/scale()};}
 };\n`;
@@ -29,7 +29,19 @@ test('GIF stack starts the original at 1:1 and all lower rasters at its screen s
    await page.evaluate(()=>__stackTest.button(1));await ready();const enlarged=await sizes();assert.ok(enlarged.state.scale>state.scale);assert.deepEqual(enlarged.state.prefs,before.prefs);
    await page.evaluate(()=>__stackTest.toggle());const restored=await page.evaluate(()=>__stackTest.get());assert.equal(restored.zoom,before.zoom);assert.deepEqual(restored.prefs,before.prefs);
   }
-  await page.evaluate(()=>{__stackTest.setup('fit',true);__stackTest.toggle();});await ready();
+  // Axis alignment is a position constraint only, including the live GIF stack.
+  await page.evaluate(()=>{__stackTest.setup('fit');__stackTest.toggle();});await ready();
+  const beforeAxis=await page.evaluate(()=>__stackTest.get());
+  await page.evaluate(()=>document.getElementById('zFit').click());await settle();
+  let aligned=await page.evaluate(()=>__stackTest.get());assert.equal(aligned.pinned,true);closeEnough(aligned.axis,aligned.center,1);closeEnough(aligned.scale,beforeAxis.scale);
+  await page.evaluate(()=>{const w=document.getElementById('wrap');w.scrollLeft+=80;w.scrollTop+=100;});await settle();
+  aligned=await page.evaluate(()=>__stackTest.get());closeEnough(aligned.axis,aligned.center,1);assert.ok(aligned.scrollTop>0);closeEnough(aligned.scale,beforeAxis.scale);
+  await page.evaluate(()=>__stackTest.zoom(8));await settle();const wide=await page.evaluate(()=>__stackTest.get());assert.equal(wide.pinned,false);
+  await page.evaluate(()=>document.getElementById('wrap').scrollLeft+=80);await settle();const panned=await page.evaluate(()=>__stackTest.get());assert.ok(panned.scrollLeft-wide.scrollLeft>50);closeEnough(panned.scale,wide.scale);
+  await page.evaluate(()=>__stackTest.zoom(1/devicePixelRatio));await settle();aligned=await page.evaluate(()=>__stackTest.get());assert.equal(aligned.pinned,true);closeEnough(aligned.axis,aligned.center,1);
+  await page.setViewportSize({width:300,height:900});await settle();const narrow=await page.evaluate(()=>__stackTest.get());assert.equal(narrow.pinned,false);closeEnough(narrow.scale,aligned.scale);
+  await page.setViewportSize({width:1300,height:900});await settle();aligned=await page.evaluate(()=>__stackTest.get());assert.equal(aligned.pinned,true);closeEnough(aligned.axis,aligned.center,1);closeEnough(aligned.scale,beforeAxis.scale);
+  await page.evaluate(()=>{__stackTest.setup('fit',true);__stackTest.toggle();document.getElementById('zFit').click();});await ready();
   const source=await page.evaluate(()=>__stackTest.source());
   for(const lower of [false,true])for(const delta of [-280,280,280]){
    const point=await page.evaluate(lower=>__stackTest.point(lower),lower);await settle();await page.mouse.move(point.x,point.y);
