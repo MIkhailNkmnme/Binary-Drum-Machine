@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR · опыт 01 · v0.005</title>
+<title>Оси XOR · опыт 01 · v0.006</title>
 <style>
 *{box-sizing:border-box} :root{color-scheme:dark;--ink:#f4f0e8;--mut:#b5aca3;--line:#49423d;--red:#fd0000;--base:#181614}
 body{margin:0;background:var(--base);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
@@ -84,19 +84,20 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать видео</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF · 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> · <a href="xor.gif">С XOR</a> · <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.005</small></footer></main>
+</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.006</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
-// Four figures traced from the Kraftwerk 3-D cover on an 11 x 15 cell grid.
-// Each row is eleven cells wide. The pivot is where the arms cross the upright.
+// Four figures traced cell by cell from the supplied reference (8 columns x 12 rows).
+// Grey caps are occupied cells; the white edge is decoration, not another cell.
+// The pivot is the left upright cell on the horizontal arm (column 3, row 5).
 const masks=[
- ['01101000000','01111110000','00111110000','00011111000','00001110110','00001110110','11111111111','00001110000','00001110000','00001110000','00001110000','00001110000','00001110000','00001100000','00001000000'],
- ['00001000000','00011110000','00011110000','00011110000','00001111000','00001111000','11111111111','00001110000','00001110000','00001110000','00001110000','00001110000','00001000000','00000000000','00000010000'],
- ['00000010000','00001111000','00001111000','00001111000','00010010000','00010110000','11111111111','00001110000','00001110000','00001110000','00001110000','00001110000','00000010000','00000010000','00001110000'],
- ['00000010000','00001111000','00001111000','00001111000','00001110000','00001110000','11111111111','00001110000','00001110000','00001110000','00001110000','00001110000','00001000000','00000000000','00000010000']
+ ['00010000','01010000','01111000','00111100','00011010','11111111','00011000','00011000','00011000','00011000','00011000','00010000'],
+ ['00010000','00010000','00111000','00111000','00011100','11111111','00011000','00011000','00011000','00011000','00010000','00001000'],
+ ['00001000','00001000','00011100','00011100','00101000','11111111','00011000','00011000','00011000','00011000','00001000','00011000'],
+ ['00001000','00001000','00011100','00011100','00011000','11111111','00011000','00011000','00011000','00011000','00010000','00001000']
 ];
-const points=masks.map(rows=>rows.flatMap((row,y)=>Array.from(row,(v,x)=>v==='1'?[x-5,y-6]:null).filter(Boolean)));
+const points=masks.map(rows=>rows.flatMap((row,y)=>Array.from(row,(v,x)=>v==='1'?[x-3,y-5]:null).filter(Boolean)));
 function permutations(left){return left.length?left.flatMap(i=>permutations(left.filter(j=>j!==i)).map(tail=>[i,...tail])):[[]];}
 const orders=permutations([0,1,2,3]),rays=[[0,-1],[1,0],[0,1],[-1,0]],arrows=['↑','→','↓','←'];
 const names=['I','II','III','IV'],size=29,center=14,total=24*256,dragMargin=6;
