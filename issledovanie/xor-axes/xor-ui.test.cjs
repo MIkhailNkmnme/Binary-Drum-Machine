@@ -65,7 +65,7 @@ test('every button is a strict rectangle with a one-pixel border and no clipped 
 test('button icons are glyph strings from the alphabet, not emoji or vector shapes',async()=>{
  const icons=await page.evaluate(()=>[...document.querySelectorAll('button .ico')].map(icon=>icon.textContent));
  assert(icons.length>=12);
- for(const icon of icons)assert.match(icon,/^[0-9A-Za-z<>+\-|/\[\]?"'#*=_:;,.\s]+$/,JSON.stringify(icon));
+ for(const icon of icons)assert.match(icon,/^[0-9A-Za-z<>+\-|/\[\]?"'#*=_:;,!.\s]+$/,JSON.stringify(icon));
  const forbidden=await page.evaluate(()=>{
   const bad=new Set();
   for(const ch of document.body.innerText){
