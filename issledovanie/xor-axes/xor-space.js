@@ -19,6 +19,7 @@
  const offsetOf=s=>[0,1,2].map(i=>int(s&&s.offset&&s.offset[i]));
  const defaultAssignments=()=>Array.from({length:4},()=>({direction:'auto',roll:0,offset:[0,0,0]}));
  const normalizeAssignments=values=>Array.from({length:4},(_,i)=>{const s=values&&values[i];return {direction:s&&Object.prototype.hasOwnProperty.call(DIRECTIONS,s.direction)?s.direction:'auto',roll:quarter(s&&s.roll),offset:offsetOf(s)};});
+ const normalizeSymmetry=value=>({enabled:!!(value&&value.enabled),distance:Math.max(0,int(value&&value.distance)),rays:Array.from({length:4},(_,i)=>value&&value.rays&&Object.prototype.hasOwnProperty.call(DIRECTIONS,value.rays[i])?value.rays[i]:AUTO[i])});
  function axisDragSteps(delta,vector){const n=vector[0]**2+vector[1]**2;return n>.01?int((delta[0]*vector[0]+delta[1]*vector[1])/n):0;}
  function orientation(direction,roll=0){
   const down=DIRECTIONS[direction]||DIRECTIONS['-Y'];
@@ -65,6 +66,15 @@
   setting.offset=setting.offset.map((v,i)=>v+before.anchor[i]-after.anchor[i]);
   return next;
  }
+ function alignAnchors(snapshot,assignments,anchors){
+  const next=normalizeAssignments(assignments),model=buildModel(snapshot,next);
+  for(let id=0;id<4;id++)next[id].offset=next[id].offset.map((v,i)=>v+int(anchors[id][i])-model.figures[id].anchor[i]);
+  return next;
+ }
+ function symmetricAssignments(snapshot,assignments,symmetry){
+  const state=normalizeSymmetry(symmetry);
+  return state.enabled?alignAnchors(snapshot,assignments,state.rays.map(ray=>scale(DIRECTIONS[ray],state.distance))):normalizeAssignments(assignments);
+ }
  function isEndVoxel(figure,p){
   const down=DIRECTIONS[figure.direction],along=q=>q.reduce((sum,v,i)=>sum+(v-figure.anchor[i])*down[i],0);
   const values=[0,...figure.cells.map(along)],value=along(p);
@@ -91,12 +101,15 @@
   const x=cy*p[0]+sy*p[2],z=-sy*p[0]+cy*p[2];
   return [x,cp*p[1]-sp*z,sp*p[1]+cp*z];
  }
- function mount(container,initialSnapshot){
+ function mount(container,initialSnapshot,options={}){
   if(!container||!container.ownerDocument)throw new TypeError('A DOM container is required');
   const doc=container.ownerDocument;
   let assignments=defaultAssignments();
-  try{const saved=JSON.parse(localStorage.getItem('zerk_xor_space')||'null');if(Array.isArray(saved)&&saved.length===4)assignments=normalizeAssignments(saved);}catch(_){}
-  let snapshot=initialSnapshot||{},model=buildModel(snapshot,assignments),camera={...DEFAULT_CAMERA},drag=null,destroyed=false,selected=0;
+  if(options.assignments)assignments=normalizeAssignments(options.assignments);
+  else try{const saved=JSON.parse(localStorage.getItem('zerk_xor_space')||'null');if(Array.isArray(saved)&&saved.length===4)assignments=normalizeAssignments(saved);}catch(_){}
+  let symmetry=normalizeSymmetry(options.symmetry);
+  if(!options.capture&&!options.symmetry)try{symmetry=normalizeSymmetry(JSON.parse(localStorage.getItem('zerk_xor_space_symmetry')||'null'));}catch(_){}
+  let snapshot=initialSnapshot||{},model=buildModel(snapshot,assignments),camera={...DEFAULT_CAMERA,...options.camera},drag=null,destroyed=false,selected=Number.isInteger(options.selected)?options.selected:0;
   let hitFaces=[],handles=[],view=null,bodyClick=null;
   const host=doc.createElement('div');host.className='xor-space';
   host.innerHTML='<div class="xs-heading"><h2>3D · ось Z</h2><div class="xs-actions"><button class="gz-hx xs-reset" type="button" title="Сбросить направления и сдвиги всех четырёх фигур в исходное 2D-состояние" aria-label="Вернуть все фигуры в 2D">↶ 2D</button><button class="gz-hx xs-camera" type="button" title="Сбросить только положение камеры" aria-label="Сбросить камеру">⊙ Видъ</button></div></div><p class="xs-explain">Те же четыре фигуры. +Z — к нам, −Z — за экран. Выберите фигуру на поле или кнопкой I–IV, затем тяните её стрелку X, Y или Z. Числа — сдвиг в клетках от положения на основном поле. ↻ меняет плоскость.</p><div class="xs-controls" role="group" aria-label="Направления и сдвиги четырёх фигур"></div><p class="xs-status" role="status"></p><div class="xs-stage"><canvas class="xs-main" role="img" aria-label="Объём четырёх фигур: выберите фигуру, тяните стрелку оси для перемещения; пустое место вращает камеру" tabindex="0"></canvas><span class="xs-camera-note">Стрелка оси — сдвиг · пустое место — камера · колесо — масштаб · Shift + ← → / ↑ ↓ / PageUp PageDown — X / Y / Z</span></div><div class="xs-projections"></div><p class="xs-explain xs-bottom">XOR считается в одинаковых (X, Y, Z). Серые центры вне XOR. Проекции показывают занятые клетки по глубине, без повторного XOR. Режим наложения и рисунки берутся с основного поля.</p>';
@@ -104,6 +117,15 @@
   host.querySelector('.xs-camera-note').append(' · 2× по фигуре — 90° вокруг своей оси; 2× по крайнему кубику — переворот 180°; ПКМ — +X → +Y → +Z → −X → −Y → −Z');
   const overlapNote=doc.createElement('p');overlapNote.className='xs-explain xs-overlap-note';overlapNote.innerHTML='<span class="xs-collision-key">▧ XYZ</span> — кубики разных фигур в одном месте, даже если XOR их убрал; <span class="xs-depth-key">◉ Глубина</span> — кубики на разных глубинах одной клетки проекции. Число в крупной клетке — всего исходных кубиков.';host.querySelector('.xs-projections').after(overlapNote);
   const controls=host.querySelector('.xs-controls'),main=host.querySelector('.xs-main'),status=host.querySelector('.xs-status');
+  const symmetryControls=doc.createElement('div');symmetryControls.className='xs-symmetry';symmetryControls.setAttribute('role','group');symmetryControls.setAttribute('aria-label','Общий центр и симметричное перемещение');
+  symmetryControls.innerHTML='<button class="gz-hx xs-center" type="button" title="Совместить четыре серых центра в начале координат и включить симметричное перемещение">⊙ В центръ</button><button class="gz-hx xs-symmetric" type="button" title="Включить симметричный разнос от центра или снять ограничение, сохранив положения">⇆ Симметр</button><label class="xs-distance-label">R <input class="xs-distance" type="number" min="0" step="1" value="0" aria-label="Общий разнос серых центров в клетках"></label><span class="xs-symmetry-rays"></span>';
+  controls.before(symmetryControls);
+  const distanceInput=symmetryControls.querySelector('.xs-distance'),symmetryButton=symmetryControls.querySelector('.xs-symmetric'),raysLabel=symmetryControls.querySelector('.xs-symmetry-rays');
+  function centreFigures(){symmetry={enabled:true,distance:0,rays:model.figures.map(f=>f.direction)};bodyClick=null;refresh(true,'symmetry');}
+  function setDistance(value,save=true){if(!symmetry.enabled)return;symmetry.distance=Math.max(0,int(value));refresh(save,'translation');}
+  symmetryControls.querySelector('.xs-center').addEventListener('click',centreFigures);
+  symmetryButton.addEventListener('click',()=>{if(symmetry.enabled){symmetry.enabled=false;refresh(true,'symmetry');}else centreFigures();});
+  distanceInput.addEventListener('input',()=>{if(distanceInput.value!==''&&Number.isFinite(distanceInput.valueAsNumber))setDistance(distanceInput.valueAsNumber);});distanceInput.addEventListener('change',()=>{distanceInput.value=String(symmetry.distance);});
   const selects=[],rollButtons=[],pickButtons=[],offsetInputs=[];
   for(let id=0;id<4;id++){
    const row=doc.createElement('div');row.className='xs-figure';row.style.setProperty('--xs-figure-color',COLORS[id]);
@@ -118,7 +140,7 @@
    for(let axis=0;axis<3;axis++){
     const label=doc.createElement('label');label.className='xs-offset-label';label.textContent='XYZ'[axis];label.style.color=AXIS_COLORS[axis];
     const input=doc.createElement('input');input.type='number';input.step='1';input.value=String(assignments[id].offset[axis]);input.dataset.figure=String(id);input.dataset.axis='XYZ'[axis];input.setAttribute('aria-label','Сдвиг фигуры '+NAMES[id]+' по '+ 'XYZ'[axis]+' в клетках');
-    input.addEventListener('focus',()=>choose(id));input.addEventListener('input',()=>{if(input.value!==''&&Number.isFinite(input.valueAsNumber)){assignments[id].offset[axis]=int(input.valueAsNumber);refresh(true);}});input.addEventListener('change',()=>{input.value=String(assignments[id].offset[axis]);});label.appendChild(input);shift.appendChild(label);inputs.push(input);
+    input.addEventListener('focus',()=>choose(id));input.addEventListener('input',()=>{if(!symmetry.enabled&&input.value!==''&&Number.isFinite(input.valueAsNumber)){assignments[id].offset[axis]=int(input.valueAsNumber);refresh(true);}});input.addEventListener('change',()=>{input.value=String(assignments[id].offset[axis]);});label.appendChild(input);shift.appendChild(label);inputs.push(input);
    }
    offsetInputs.push(inputs);
    select.addEventListener('change',()=>reorient(id,select.value));
@@ -135,7 +157,7 @@
    const width=Math.max(1,Math.round(canvas.getBoundingClientRect().width)),height=canvas===main?Math.round(Math.min(560,Math.max(280,width*.58))):width;
    const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(width*dpr),h=Math.round(height*dpr);
    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
-   const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);
+   const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);
    return {ctx,width,height};
   }
   function extent(){let e=14;for(const f of model.figures)if(f.active)for(const p of [f.anchor,...f.cells])for(const v of p)e=Math.max(e,Math.abs(v)+1);return e;}
@@ -173,13 +195,14 @@
    const origin=screen(figure.anchor);ctx.font='bold 12px ui-monospace, monospace';ctx.lineWidth=2;
    ctx.fillStyle=COLORS[selected];ctx.fillText(NAMES[selected],origin[0]+7,origin[1]+17);
    for(let axis=0;axis<3;axis++){
-    const basis=[0,0,0];basis[axis]=1;const p=screen(add(figure.anchor,basis)),vector=[p[0]-origin[0],p[1]-origin[1]],length=Math.hypot(...vector);
+    const ray=symmetry.enabled?DIRECTIONS[symmetry.rays[selected]]:null;if(ray&&!ray[axis])continue;
+    const basis=[0,0,0];basis[axis]=ray?ray[axis]:1;const p=screen(add(figure.anchor,basis)),vector=[p[0]-origin[0],p[1]-origin[1]],length=Math.hypot(...vector);
     if(length<unit*.12)continue; // Looking directly down this axis: numeric/keyboard movement stays available.
     const u=vector.map(v=>v/length),limits=u.map((v,i)=>Math.abs(v)<.001?72:((v>0?(i===0?width:height)-18:18)-origin[i])/v),handleLength=Math.max(24,Math.min(72,...limits));
     const end=[origin[0]+u[0]*handleLength,origin[1]+u[1]*handleLength];
-    handles.push({axis,origin:origin.slice(0,2),end,vector});
+    handles.push({axis,origin:origin.slice(0,2),end,vector,symmetric:!!ray});
     ctx.strokeStyle='#131619';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(origin[0],origin[1]);ctx.lineTo(...end);ctx.stroke();
-    ctx.strokeStyle=AXIS_COLORS[axis];ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=AXIS_COLORS[axis];ctx.beginPath();ctx.moveTo(...end);ctx.lineTo(end[0]-u[0]*11-u[1]*5,end[1]-u[1]*11+u[0]*5);ctx.lineTo(end[0]-u[0]*11+u[1]*5,end[1]-u[1]*11-u[0]*5);ctx.closePath();ctx.fill();ctx.fillText('XYZ'[axis],end[0]+u[0]*12-4,end[1]+u[1]*12+4);
+    ctx.strokeStyle=AXIS_COLORS[axis];ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=AXIS_COLORS[axis];ctx.beginPath();ctx.moveTo(...end);ctx.lineTo(end[0]-u[0]*11-u[1]*5,end[1]-u[1]*11+u[0]*5);ctx.lineTo(end[0]-u[0]*11+u[1]*5,end[1]-u[1]*11-u[0]*5);ctx.closePath();ctx.fill();ctx.fillText(ray?'R':'XYZ'[axis],end[0]+u[0]*12-4,end[1]+u[1]*12+4);
    }
   }
   function choose(id){selected=id;refresh(false);}
@@ -212,17 +235,19 @@
   }
   function draw(){if(destroyed)return;draw3D();for(const p of projections)drawProjection(p.canvas,p.plane);}
   function refresh(save,reason='translation'){
+   if(symmetry.enabled)assignments=symmetricAssignments(snapshot,assignments,symmetry);
    model=buildModel(snapshot,assignments);
-   for(let i=0;i<4;i++){selects[i].value=assignments[i].direction;rollButtons[i].textContent='↻ '+assignments[i].roll*90+'°';rollButtons[i].setAttribute('aria-pressed',String(assignments[i].roll!==0));pickButtons[i].setAttribute('aria-pressed',String(i===selected));for(let axis=0;axis<3;axis++)if(doc.activeElement!==offsetInputs[i][axis])offsetInputs[i][axis].value=String(assignments[i].offset[axis]);}
+   for(let i=0;i<4;i++){selects[i].value=assignments[i].direction;rollButtons[i].textContent='↻ '+assignments[i].roll*90+'°';rollButtons[i].setAttribute('aria-pressed',String(assignments[i].roll!==0));pickButtons[i].setAttribute('aria-pressed',String(i===selected));for(let axis=0;axis<3;axis++){offsetInputs[i][axis].disabled=symmetry.enabled;if(doc.activeElement!==offsetInputs[i][axis])offsetInputs[i][axis].value=String(assignments[i].offset[axis]);}}
+   symmetryButton.setAttribute('aria-pressed',String(symmetry.enabled));distanceInput.disabled=!symmetry.enabled;if(doc.activeElement!==distanceInput)distanceInput.value=String(symmetry.distance);raysLabel.textContent=symmetry.enabled?'Общий разнос · '+symmetry.rays.map((ray,i)=>NAMES[i]+': '+ray).join(' · '):'В центр — совместить серые кубики. Симметр — снять ограничение.';
    const mode=model.mode==='xor'?'XOR':model.mode==='solo'?'Одна':'Вместе';
    const depths=model.cells.map(c=>c.p[2]),min=depths.length?Math.min(...depths):0,max=depths.length?Math.max(...depths):0;
-   status.textContent=mode+' · '+model.cells.length+' клеток в XYZ · Z: '+min+' … '+max+' · '+NAMES[selected]+': сдвиг '+assignments[selected].offset.join(', ');
+   status.textContent=mode+' · '+model.cells.length+' клеток в XYZ · Z: '+min+' … '+max+' · '+(symmetry.enabled?'Общий разнос R: '+symmetry.distance:NAMES[selected]+': сдвиг '+assignments[selected].offset.join(', '));
    host.dataset.cells=String(model.cells.length);host.dataset.depth=min+','+max;
-   if(save)try{localStorage.setItem('zerk_xor_space',JSON.stringify(assignments));}catch(_){}
+   if(save&&!options.capture)try{localStorage.setItem('zerk_xor_space',JSON.stringify(assignments));localStorage.setItem('zerk_xor_space_symmetry',JSON.stringify(symmetry));}catch(_){}
    draw();
    if(save)host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason}}));
   }
-  host.querySelector('.xs-reset').addEventListener('click',()=>{assignments=defaultAssignments();refresh(true,'reset');});
+  host.querySelector('.xs-reset').addEventListener('click',()=>{assignments=defaultAssignments();symmetry=normalizeSymmetry(null);refresh(true,'reset');});
   host.querySelector('.xs-camera').addEventListener('click',()=>{camera={...DEFAULT_CAMERA};draw();});
   const local=e=>{const rect=main.getBoundingClientRect();return [e.clientX-rect.left,e.clientY-rect.top];};
   main.addEventListener('pointerdown',e=>{
@@ -231,7 +256,7 @@
    const repeat=bodyClick&&hit&&bodyClick.id===hit.id&&e.timeStamp-bodyClick.time<600&&Math.hypot(p[0]-bodyClick.point[0],p[1]-bodyClick.point[1])<6;
    if(hit&&(!h||repeat)){bodyClick={id:hit.id,point:p,time:e.timeStamp};choose(hit.id);return;}
    bodyClick=null;
-   if(h)drag={kind:'axis',id:e.pointerId,x:e.clientX,y:e.clientY,figure:selected,axis:h.axis,vector:h.vector.slice(),offset:assignments[selected].offset.slice(),unit:view.unit};
+   if(h)drag={kind:'axis',id:e.pointerId,x:e.clientX,y:e.clientY,figure:selected,axis:h.axis,vector:h.vector.slice(),offset:assignments[selected].offset.slice(),unit:view.unit,symmetric:h.symmetric,distance:symmetry.distance};
    else drag={kind:'camera',id:e.pointerId,x:e.clientX,y:e.clientY};
    main.setPointerCapture(e.pointerId);main.classList.add('xs-dragging');
   });
@@ -243,20 +268,49 @@
   main.addEventListener('contextmenu',e=>{e.preventDefault();if(drag)return;const hit=hitVoxel(local(e));if(hit)reorient(hit.id,'cycle');});
   main.addEventListener('pointermove',e=>{
    if(!drag){const p=local(e);main.style.cursor=hitHandle(p)?'move':hitFigure(p)!==null?'pointer':'';return;}if(drag.id!==e.pointerId)return;
-   if(drag.kind==='axis'){const next=drag.offset[drag.axis]+axisDragSteps([e.clientX-drag.x,e.clientY-drag.y],drag.vector);if(next!==assignments[drag.figure].offset[drag.axis]){assignments[drag.figure].offset[drag.axis]=next;refresh(false);}return;}
+   if(drag.kind==='axis'){const delta=axisDragSteps([e.clientX-drag.x,e.clientY-drag.y],drag.vector);if(drag.symmetric){const next=Math.max(0,drag.distance+delta);if(next!==symmetry.distance)setDistance(next,false);}else{const next=drag.offset[drag.axis]+delta;if(next!==assignments[drag.figure].offset[drag.axis]){assignments[drag.figure].offset[drag.axis]=next;refresh(false);}}return;}
    camera.yaw+=(e.clientX-drag.x)*.009;camera.pitch=Math.max(-1.5,Math.min(1.5,camera.pitch+(e.clientY-drag.y)*.009));drag.x=e.clientX;drag.y=e.clientY;draw();
   });
   const endDrag=e=>{if(!drag||e&&e.pointerId!==drag.id)return;const moved=drag.kind==='axis';drag=null;main.classList.remove('xs-dragging');if(moved)refresh(true);};
   main.addEventListener('pointerup',endDrag);main.addEventListener('pointercancel',endDrag);main.addEventListener('lostpointercapture',endDrag);
   main.addEventListener('wheel',e=>{e.preventDefault();if(drag)return;camera.zoom=Math.max(.25,Math.min(4,camera.zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});
   main.addEventListener('keydown',e=>{
-   if(e.shiftKey&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','PageUp','PageDown'].includes(e.key)){e.preventDefault();const axis=e.key.startsWith('Page')?2:['ArrowLeft','ArrowRight'].includes(e.key)?0:1,step=['ArrowRight','ArrowUp','PageUp'].includes(e.key)?1:-1;assignments[selected].offset[axis]+=step;refresh(true);return;}
+   if(e.shiftKey&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','PageUp','PageDown'].includes(e.key)){e.preventDefault();const axis=e.key.startsWith('Page')?2:['ArrowLeft','ArrowRight'].includes(e.key)?0:1,step=['ArrowRight','ArrowUp','PageUp'].includes(e.key)?1:-1;if(symmetry.enabled)setDistance(symmetry.distance+step);else{assignments[selected].offset[axis]+=step;refresh(true);}return;}
    if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','0'].includes(e.key))return;e.preventDefault();
    if(e.key==='0')camera={...DEFAULT_CAMERA};else if(e.key==='ArrowLeft')camera.yaw-=.12;else if(e.key==='ArrowRight')camera.yaw+=.12;else if(e.key==='ArrowUp')camera.pitch=Math.max(-1.5,camera.pitch-.12);else if(e.key==='ArrowDown')camera.pitch=Math.min(1.5,camera.pitch+.12);else camera.zoom=Math.max(.25,Math.min(4,camera.zoom*(e.key==='-'?.9:1.1)));draw();
   });
-  const resize=typeof ResizeObserver==='function'?new ResizeObserver(draw):null;if(resize)resize.observe(host);else window.addEventListener('resize',draw);
+  const resize=!options.capture&&typeof ResizeObserver==='function'?new ResizeObserver(draw):null;if(resize)resize.observe(host);else if(!options.capture)window.addEventListener('resize',draw);
+  function createCapture(captureOptions={}){
+   const frozen=JSON.parse(JSON.stringify(captureOptions.source||snapshot));
+   const layoutWidth=host.getBoundingClientRect().width,width=Math.max(1,Math.round(layoutWidth));
+   const box=doc.createElement('div');box.setAttribute('aria-hidden','true');box.style.cssText='position:fixed;left:-100000px;top:0;pointer-events:none;width:'+layoutWidth+'px;';doc.body.appendChild(box);
+   const captureView=mount(box,frozen,{capture:true,assignments:JSON.parse(JSON.stringify(assignments)),camera:{...camera},selected,symmetry:JSON.parse(JSON.stringify(symmetry))});
+   const captureHost=box.querySelector('.xor-space');captureHost.style.margin='0';captureHost.style.padding='0';captureHost.style.border='0';
+   const mainCanvas=box.querySelector('.xs-main'),projectionCanvases=[...box.querySelectorAll('.xs-projection canvas')];
+   // Use the same canvas renderers, current width and camera; controls are not in the movie.
+   captureView.setAssignments(assignments);
+   const mainHeight=Math.round(mainCanvas.getBoundingClientRect().height),gap=12,caption=40,header=32,footer=38;
+   const projectionTop=header+mainHeight+gap+caption,projectHeight=Math.max(...projectionCanvases.map(c=>Math.round(c.getBoundingClientRect().height)));
+   const height=projectionTop+projectHeight+footer,output=doc.createElement('canvas');output.width=width;output.height=height;
+   const mainRect=mainCanvas.getBoundingClientRect(),hostRect=captureHost.getBoundingClientRect();
+   const parts=[{name:'3D',x:Math.round(mainRect.left-hostRect.left),y:header,width:Math.round(mainRect.width),height:mainHeight},...projectionCanvases.map(c=>{const r=c.getBoundingClientRect(),h=captureHost.getBoundingClientRect();return {name:c.dataset.plane,x:Math.round(r.left-h.left),y:projectionTop,width:Math.round(r.width),height:Math.round(r.height)};})];
+   let disposed=false;
+   function render(next,label=''){
+    if(disposed)throw new Error('Capture renderer is closed');captureView.setAssignments(next);
+    const ctx=output.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);ctx.fillStyle='#eee6d8';ctx.font='bold 12px ui-monospace,monospace';ctx.textBaseline='top';ctx.fillText('3D · XY / XZ / YZ',8,8);
+    ctx.textAlign='right';ctx.fillText(String(label),width-8,8);ctx.textAlign='left';
+    const canvases=[mainCanvas,...projectionCanvases];for(let i=0;i<parts.length;i++){const p=parts[i];ctx.drawImage(canvases[i],p.x,p.y,p.width,p.height);}
+    for(let i=0;i<projectionCanvases.length;i++){
+     const c=projectionCanvases[i],p=parts[i+1];ctx.font='11px ui-monospace,monospace';ctx.fillStyle='#b4bac0';ctx.fillText(p.name,p.x+3,projectionTop-caption+3);ctx.font='10px ui-monospace,monospace';
+     ctx.fillText('XYZ: '+c.dataset.collisions,p.x+3,projectionTop-caption+17);ctx.fillText('Глубина: '+c.dataset.depthOverlaps,p.x+3,projectionTop-caption+28);
+    }
+    ctx.font='10px ui-monospace,monospace';ctx.fillStyle='#ffb5a3';ctx.fillText('▧ XYZ — совпадение кубиков',8,height-footer+7);ctx.fillStyle='#66dcff';ctx.fillText('◉ Глубина — перекрытие в проекции',8,height-footer+21);
+    return output;
+   }
+   return {width,height,parts:parts.map(p=>({...p})),render,destroy(){if(disposed)return;disposed=true;captureView.destroy();box.remove();}};
+  }
   refresh(false);
-  return {update(next){snapshot=next||{};refresh(false);host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'source'}}));},getSnapshot(){return JSON.parse(JSON.stringify(snapshot));},setAssignments(next,{save=false}={}){assignments=normalizeAssignments(next);refresh(save,'sequence');},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
+  return {createCapture,update(next){snapshot=next||{};refresh(false);host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'source'}}));},getSnapshot(){return JSON.parse(JSON.stringify(snapshot));},setAssignments(next,{save=false}={}){assignments=normalizeAssignments(next);refresh(save,'sequence');},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected,symmetry:JSON.parse(JSON.stringify(symmetry))};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
  }
- return {mount,buildModel,project,orientation,cameraPoint,axisDragSteps,orientFigure,isEndVoxel};
+ return {mount,buildModel,project,orientation,cameraPoint,axisDragSteps,orientFigure,isEndVoxel,alignAnchors,symmetricAssignments};
 });

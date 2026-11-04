@@ -3,7 +3,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {buildModel,project,orientation,cameraPoint,axisDragSteps,orientFigure,isEndVoxel}=require('./xor-space.js');
+const {buildModel,project,orientation,cameraPoint,axisDragSteps,orientFigure,isEndVoxel,alignAnchors,symmetricAssignments}=require('./xor-space.js');
 const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
 const masks=Function('return '+html.match(/const masks=(\[[\s\S]*?\n\]);/)[1])();
 const points=masks.map(rows=>{const pivot=rows[0].indexOf('1');return rows.flatMap((row,y)=>[...row].flatMap((v,x)=>v==='1'?[[x-pivot,y]]:[]));});
@@ -117,6 +117,18 @@ test('projection overlap diagnostics retain XOR-cancelled cubes and distinguish 
  const mixed=buildModel(s,[{}, {}, {offset:[0,0,2]}, {offset:[3,0,0]}]),xy=project(mixed,'XY').overlaps[0];assert.equal(xy.collisionCount,1);assert.equal(xy.depth,2);assert.equal(xy.voxelCount,3);assert.equal(xy.maxMultiplicity,2);
  const layers=buildModel(s,[{}, {offset:[0,0,2]}, {offset:[0,0,4]}, {offset:[0,0,6]}]);assert.equal(layers.overlaps.length,0);assert.equal(project(layers,'XY').overlaps[0].depth,4);assert.equal(project(layers,'XY').overlaps[0].collisionCount,0);
  assert.equal(project(buildModel({...s,mode:'solo',selected:2}),'XY').overlaps.length,0);
+});
+
+test('common centre and symmetric distance preserve masks, source data and fixed reference rays',()=>{
+ const s=snapshot({radius:5,mode:'union',offsets:[{x:4,y:2},{x:-3,y:6},{x:1,y:-7},{x:3,y:5}]}),sourceCopy=structuredClone(s),settings=[{direction:'+X',roll:1,offset:[3,8,-2]},{direction:'-X',roll:2,offset:[-3,2,7]},{direction:'+Z',roll:3,offset:[4,-1,-5]},{direction:'-Z',roll:0,offset:[2,3,6]}],before=buildModel(s,settings),symmetry={enabled:true,distance:0,rays:before.figures.map(f=>f.direction)};
+ assert.deepEqual(buildModel(s,alignAnchors(s,settings,Array.from({length:4},()=>[0,0,0]))).figures.map(f=>f.anchor),Array.from({length:4},()=>[0,0,0]));
+ for(const distance of [0,1,7,30]){
+  symmetry.distance=distance;const aligned=symmetricAssignments(s,settings,symmetry),model=buildModel(s,aligned);
+  for(let id=0;id<4;id++){const anchor=orientation(symmetry.rays[id]).down.map(n=>(n*distance||0));assert.deepEqual(model.figures[id].anchor,anchor);assert.deepEqual(model.figures[id].cells,before.figures[id].cells.map(p=>p.map((n,k)=>n-before.figures[id].anchor[k]+anchor[k])));}
+  const oriented=orientFigure(s,aligned,0,'cycle');assert.deepEqual(buildModel(s,symmetricAssignments(s,oriented,symmetry)).figures.map(f=>f.anchor),model.figures.map(f=>f.anchor));
+  const movedSource={...s,radius:-4,order:[3,2,1,0],offsets:[{x:9,y:8},{x:-7,y:6}]};assert.deepEqual(buildModel(movedSource,symmetricAssignments(movedSource,oriented,symmetry)).figures.map(f=>f.anchor),model.figures.map(f=>f.anchor));
+ }
+ assert.deepEqual(s,sourceCopy);assert.deepEqual(settings[0].offset,[3,8,-2]);
 });
 test('browser: four assignments, updated masks, drag, zoom, reset, projections and mobile fit',async()=>{
  const {chromium}=require('playwright-core'),browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
@@ -246,5 +258,39 @@ test('browser: body double click rolls, extreme double click flips, right click 
   const eventCount=await page.evaluate(()=>events.length);await page.evaluate(()=>{const s=instance.getSnapshot();s.points[0].push([8,8]);instance.setAssignments([{direction:'invalid',roll:5,offset:[1.8,2.1,Infinity]}]);});assert.equal(await page.evaluate(()=>events.length),eventCount,'programmatic sequence cannot trigger its own stop');assert.equal(await page.evaluate(()=>instance.getSnapshot().points[0].length),2,'snapshot API is detached');assert.deepEqual(await page.evaluate(()=>instance.getState().assignments[0]),{direction:'auto',roll:1,offset:[2,2,0]});
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=390),true);for(const item of await page.locator('.xs-projection').all()){const bounds=await item.boundingBox();assert(bounds.x>=0&&bounds.x+bounds.width<=390);}
   assert((await page.evaluate(()=>events)).includes('orientation'));assert.deepEqual(errors,[]);
+ }finally{await browser.close();}
+});
+
+test('browser: shared grey centre, symmetric drag, fixed rays, persistence, exit and isolated capture',async()=>{
+ const {chromium}=require('playwright-core'),browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1100,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.route('http://symmetry.test/**',route=>{const file=new URL(route.request().url()).pathname;if(file==='/xor-space.js'||file==='/xor-space.css')return route.fulfill({contentType:file.endsWith('js')?'text/javascript':'text/css',body:fs.readFileSync(path.join(__dirname,file.slice(1)))});return route.fulfill({contentType:'text/html',body:'<!doctype html><meta charset="utf-8"><style>body{margin:18px;background:#171513}main{max-width:960px;margin:auto}</style><link rel="stylesheet" href="/xor-space.css"><main id="mount"></main><script src="/xor-space.js"></script>'});});
+  await page.goto('http://symmetry.test/');const fixture=snapshot({mode:'union',radius:5,offsets:[{x:4,y:2},{x:-3,y:6},{x:1,y:-7},{x:3,y:5}]});
+  await page.evaluate(s=>{window.source=s;window.instance=XorAxesSpace.mount(document.getElementById('mount'),s);instance.setAssignments(['+X','-X','+Z','-Z'].map((direction,i)=>({direction,roll:i,offset:[4,-2,7]})));},fixture);
+  const canvas=page.locator('.xs-main'),distance=page.locator('.xs-distance'),vectors=[[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]];
+  const anchors=()=>page.evaluate(()=>instance.getModel().figures.map(f=>f.anchor)),check=async n=>assert.deepEqual(await anchors(),vectors.map(v=>v.map(x=>(x*n||0))));
+  const initialSource=await page.evaluate(()=>instance.getSnapshot());await page.locator('.xs-center').click();await check(0);assert.equal(await page.locator('.xs-offset-label input:disabled').count(),12);assert.equal(await page.locator('.xs-symmetric').getAttribute('aria-pressed'),'true');assert.deepEqual(await page.evaluate(()=>instance.getSnapshot()),initialSource);
+  await distance.fill('3');await distance.press('Tab');await check(3);await page.locator('select[data-figure="0"]').selectOption('+Y');await check(3);assert.deepEqual(await page.evaluate(()=>instance.getState().symmetry.rays),['+X','-X','+Z','-Z']);
+  await page.evaluate(()=>{instance.setAssignments(['-Z','+Y','-X','+X'].map(direction=>({direction,roll:2,offset:[99,98,97]})));source.radius=-4;source.order=[3,2,1,0];source.offsets=[{x:9,y:8},{x:-7,y:6}];instance.update(source);});await check(3);
+  await page.locator('.xs-pick').nth(0).click();
+  async function radialDrag(steps){
+   await canvas.scrollIntoViewIfNeeded();const point=await page.evaluate(()=>{const m=instance.getModel(),s=instance.getState(),f=m.figures[s.selected],r=document.querySelector('.xs-main').getBoundingClientRect();let e=14;for(const figure of m.figures)if(figure.active)for(const p of [figure.anchor,...figure.cells])for(const n of p)e=Math.max(e,Math.abs(n)+1);const width=Math.round(r.width),height=Math.round(Math.min(560,Math.max(280,width*.58))),unit=Math.min(width,height)/(e*3.1)*s.camera.zoom,p=XorAxesSpace.cameraPoint(f.anchor,s.camera),q=XorAxesSpace.cameraPoint(XorAxesSpace.orientation(s.symmetry.rays[s.selected]).down,s.camera),v=[q[0]*unit,-q[1]*unit],length=Math.hypot(...v);return {at:[r.x+width/2+p[0]*unit+v[0]/length*60,r.y+height/2-p[1]*unit+v[1]/length*60],v};});const camera=await page.evaluate(()=>instance.getState().camera);await page.mouse.move(...point.at);await page.mouse.down();await page.mouse.move(point.at[0]+point.v[0]*steps,point.at[1]+point.v[1]*steps,{steps:6});await page.mouse.up();assert.deepEqual(await page.evaluate(()=>instance.getState().camera),camera);
+  }
+  await radialDrag(4);await check(7);await radialDrag(-20);await check(0);await distance.fill('3');await distance.press('Tab');await canvas.press('Shift+ArrowUp');await check(4);
+  const beforeCamera=await anchors();await canvas.scrollIntoViewIfNeeded();const bounds=await canvas.boundingBox();await page.mouse.move(bounds.x+20,bounds.y+20);await page.mouse.down();await page.mouse.move(bounds.x+80,bounds.y+40);await page.mouse.up();assert.deepEqual(await anchors(),beforeCamera);
+  const saved=await page.evaluate(()=>instance.getState().symmetry);await page.reload();await page.evaluate(s=>{window.source=s;window.instance=XorAxesSpace.mount(document.getElementById('mount'),s);},fixture);await check(4);assert.deepEqual(await page.evaluate(()=>instance.getState().symmetry),saved);
+  const capture=await page.evaluate(()=>{
+   const initial=JSON.stringify(instance.getState()),settings=instance.getState().assignments,capture=instance.createCapture(),out=capture.render(settings,'fixed'),before=out.toDataURL(),liveCanvases=[document.querySelector('.xs-main'),...document.querySelectorAll('#mount .xs-projection canvas')],parity=[];
+   for(let i=0;i<4;i++){const part=capture.parts[i],normalized=document.createElement('canvas');normalized.width=part.width;normalized.height=part.height;const ctx=normalized.getContext('2d',{willReadFrequently:true});ctx.drawImage(liveCanvases[i],0,0,part.width,part.height);const a=ctx.getImageData(0,0,part.width,part.height).data,b=out.getContext('2d',{willReadFrequently:true}).getImageData(part.x,part.y,part.width,part.height).data;let differences=0;for(let j=0;j<a.length;j++)if(a[j]!==b[j])differences++;parity.push(differences);}
+   const unchanged=initial===JSON.stringify(instance.getState());const input=document.querySelector('#mount .xs-distance');input.value='9';input.dispatchEvent(new Event('input',{bubbles:true}));const liveAfter=JSON.stringify(instance.getState()),sameFrozenImage=before===capture.render(settings,'fixed').toDataURL();capture.destroy();
+   const box=document.createElement('div');box.style.width='960px';document.body.appendChild(box);const isolated=XorAxesSpace.mount(box,source,{capture:true,assignments:settings});const isolatedState=isolated.getState(),isolatedAnchors=isolated.getModel().figures.map(f=>f.anchor);isolated.destroy();box.remove();
+   return {parity,unchanged,sameFrozenImage,afterDestroy:liveAfter===JSON.stringify(instance.getState()),hidden:document.querySelectorAll('[aria-hidden=true] .xor-space').length,isolatedEnabled:isolatedState.symmetry.enabled,isolatedAnchors};
+  });assert.deepEqual(capture.parity,[0,0,0,0],'capture matches live 3D and every projection');assert.equal(capture.unchanged,true);assert.equal(capture.sameFrozenImage,true);assert.equal(capture.afterDestroy,true);assert.equal(capture.hidden,0);assert.equal(capture.isolatedEnabled,false);assert.deepEqual(capture.isolatedAnchors,vectors.map(v=>v.map(n=>n*4)));await check(9);
+  const beforeExit=await page.evaluate(()=>instance.getModel());await page.locator('.xs-symmetric').click();assert.deepEqual(await page.evaluate(()=>instance.getModel()),beforeExit);assert.equal(await page.locator('.xs-offset-label input:disabled').count(),0);
+  const old=await anchors();await page.locator('input[data-figure="0"][data-axis="X"]').fill('1');assert.deepEqual((await anchors()).slice(1),old.slice(1));assert.notDeepEqual((await anchors())[0],old[0]);
+  await page.locator('.xs-center').click();await check(0);await distance.fill('2');await distance.press('Tab');await page.locator('.xs-center').click();await check(0);
+  await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=390),true);for(const item of await page.locator('.xs-symmetry button,.xs-distance').all()){const r=await item.boundingBox();assert(r.x>=0&&r.x+r.width<=390);}
+  if(process.env.XOR_SYMMETRY_SCREENSHOT)await page.locator('.xor-space').screenshot({path:process.env.XOR_SYMMETRY_SCREENSHOT});assert.deepEqual(errors,[]);
  }finally{await browser.close();}
 });

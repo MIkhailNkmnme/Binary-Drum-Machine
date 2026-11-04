@@ -11,6 +11,27 @@ test('3D player worker, fixed centres, strict/shared pivots, every counter, gest
   await page.addInitScript(()=>{window.__raf=new Map();let id=0;requestAnimationFrame=f=>{__raf.set(++id,f);return id;};cancelAnimationFrame=id=>__raf.delete(id);});
   await page.goto('http://127.0.0.1:'+server.address().port+'/issledovanie/xor-axes/index.html');
   const play=page.locator('.xs-sequence [data-action=play]'),allow=page.locator('[data-centres]');
+  const captureCheck=await page.evaluate(async()=>{
+   const stateBefore=JSON.stringify(xorSpaceView.getState()),source=xorSpaceView.getSnapshot(),stored=localStorage.getItem('zerk_xor_space');
+   const data=await xorSpacePlayer.ensureSequence();
+   if(data.count!==64512||xorSpacePlayer.getState().playing)throw Error('Export calculation must not autoplay');
+   if(JSON.stringify(xorSpaceView.getState())!==stateBefore)throw Error('Export calculation changed the visible scene');
+   const capture=xorSpaceView.createCapture(),frame=capture.render(xorSpaceView.getState().assignments,'test'),pixels=frame.getContext('2d').getImageData(0,0,frame.width,frame.height).data.slice();
+   const live=[document.querySelector('#spaceMount .xs-main'),...document.querySelectorAll('#spaceMount .xs-projection canvas')];
+   let compared=0;
+   for(let i=0;i<capture.parts.length;i++){
+    const part=capture.parts[i],reference=document.createElement('canvas');reference.width=part.width;reference.height=part.height;reference.getContext('2d').drawImage(live[i],0,0,part.width,part.height);
+    const expected=reference.getContext('2d').getImageData(0,0,part.width,part.height).data,actual=frame.getContext('2d').getImageData(part.x,part.y,part.width,part.height).data;
+    for(let n=0;n<expected.length;n++)if(expected[n]!==actual[n])throw Error('Capture differs from live '+part.name+' pixel '+n);compared++;
+   }
+   const altered=xorSpaceView.getState().assignments;altered[0].offset[0]+=4;xorSpaceView.setAssignments(altered);const changed={...source,mode:'union'};xorSpaceView.update(changed);
+   const assignments=JSON.parse(stateBefore).assignments,capturedAgain=capture.render(assignments,'test').getContext('2d').getImageData(0,0,frame.width,frame.height).data;
+   const diff=capturedAgain.findIndex((v,i)=>v!==pixels[i]);if(diff!==-1)throw Error('Capture is not frozen '+JSON.stringify({diff,x:Math.floor(diff/4)%frame.width,y:Math.floor(diff/4/frame.width),before:[...pixels.slice(diff,diff+8)],after:[...capturedAgain.slice(diff,diff+8)],parts:capture.parts}));
+   capture.destroy();xorSpaceView.update(source);xorSpaceView.setAssignments(assignments);
+   if(JSON.stringify(xorSpaceView.getState())!==stateBefore||localStorage.getItem('zerk_xor_space')!==stored||document.querySelectorAll('.xor-space').length!==1)throw Error('Capture leaked or changed source');
+   return compared;
+  });assert.equal(captureCheck,4);
+
   assert.equal(await allow.isChecked(),true);await allow.uncheck();await play.click();await page.waitForFunction(()=>!xorSpacePlayer.getState().busy,null,{polling:50,timeout:10000});
   assert.equal(await page.locator('[data-counter]').textContent(),'0 / 0');assert.match(await page.locator('[data-status]').textContent(),/Разведите/);
   await allow.check();const anchors=await page.evaluate(()=>xorSpaceView.getModel().figures.map(f=>f.anchor));
