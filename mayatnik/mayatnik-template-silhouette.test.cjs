@@ -66,3 +66,27 @@ test('silhouette scans still yield and cancel without returning partial selectio
  const field={width:1024,height:512,data:new Int8Array(1024*512)};let cancel=false;
  await assert.rejects(M.find(field,[compile(ring)],{budgetMs:0,cancelled:()=>cancel,yieldTask:async()=>{cancel=true;}}),{name:'AbortError'});
 });
+
+test('uniform interiors fail at the silhouette boundary before probing the entire filled body',async()=>{
+ const width=128,height=64,values=new Int8Array(width*height).fill(1);let reads=0;
+ const data=new Proxy(values,{get(target,key){if(/^\d+$/.test(String(key)))reads++;return target[key];}});
+ const result=await M.find({width,height,data},[compile({width:16,height:16,data:Array(256).fill(1)})]);
+ assert.equal(result.count,0);assert.ok(reads<width*height*8,`read ${reads} cells for an absent solid silhouette`);
+ assert.ok(values.every(v=>v===1));
+});
+
+test('all nonempty 2x2 silhouettes agree with an independent exhaustive 3x3 binary-field oracle',async()=>{
+ for(let mask=1;mask<16;mask++){
+  const part={width:2,height:2,data:Array.from({length:4},(_,q)=>mask>>q&1)},pattern=compile(part),filled=part.data.map((v,q)=>v?q:-1).filter(q=>q>=0);
+  for(let source=0;source<512;source++){
+   const field={width:3,height:3,data:Int8Array.from({length:9},(_,q)=>source>>q&1)},matches=[],selected=new Uint8Array(9);
+   for(let y=0;y<=1;y++)for(let x=0;x<=1;x++){
+    const first=filled[0],bit=field.data[(y+Math.floor(first/2))*3+x+first%2];let valid=true;
+    for(const q of filled){const sx=q%2,sy=Math.floor(q/2),xx=x+sx,yy=y+sy;if(field.data[yy*3+xx]!==bit){valid=false;break;}
+     for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]]){const px=sx+dx,py=sy+dy,nx=xx+dx,ny=yy+dy;if(px>=0&&px<2&&py>=0&&py<2&&part.data[py*2+px])continue;if(nx>=0&&nx<3&&ny>=0&&ny<3&&field.data[ny*3+nx]===bit)valid=false;}}
+    if(valid){matches.push([x,y]);for(const q of filled)selected[(y+Math.floor(q/2))*3+x+q%2]=1;}
+   }
+   const actual=await M.find(field,[pattern],{collectMatches:true});assert.deepEqual(actual.matches.map(m=>[m.x,m.y]),matches);assert.deepEqual(actual.selected,selected);
+  }
+ }
+});

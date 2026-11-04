@@ -46,11 +46,17 @@
       for(let y=0;y<=H-ph;y++)for(let x=0;x<=W-pw;x++){
         const start=y*W+x,first=data[start+offsets[0]],inverse=first^p.data[p.order[0]];
         let match=first>=0;
+        // Uniform areas can pass every filled-cell probe, but cannot contain
+        // the silhouette's side boundary. Reject them before walking its body.
+        if(match&&p.boundary?.length){const xx=x+p.boundary[0],yy=y+p.boundary[1];
+          if(xx>=0&&xx<W&&yy>=0&&yy<H)match=data[yy*W+xx]!==first;
+          if(++operations>=8192){operations=0;if(due())await checkpoint();}
+        }
         for(let j=1;match&&j<offsets.length;j++){
           match=data[start+offsets[j]]===(p.data[p.order[j]]^inverse);
           if(++operations>=8192){operations=0;if(due())await checkpoint();}
         }
-        if(match&&p.boundary)for(let j=0;match&&j<p.boundary.length;j+=2){
+        if(match&&p.boundary)for(let j=2;match&&j<p.boundary.length;j+=2){
           const xx=x+p.boundary[j],yy=y+p.boundary[j+1];
           // Empty cells and the field edge terminate a figure; never wrap rows.
           if(xx>=0&&xx<W&&yy>=0&&yy<H)match=data[yy*W+xx]!==first;
