@@ -15,7 +15,7 @@
  function create(o){
   const host=o.host,doc=host.ownerDocument,win=doc.defaultView,element=doc.createElement('div');
   element.className='may-scale-stack may-scale-stack--window';element.hidden=true;host.append(element);
-  const controls=doc.createElement('label'),input=doc.createElement('input'),list=doc.createElement('div');
+  const controls=doc.createElement('div'),input=doc.createElement('input'),list=doc.createElement('div');
   controls.className='may-scale-stack__controls';controls.addEventListener('pointerdown',e=>e.stopPropagation());controls.addEventListener('pointerup',e=>e.stopPropagation());
   const mode=doc.createElement('select'),baseInput=doc.createElement('input');
   const method=doc.createElement('select');method.setAttribute('aria-label','Способ уменьшения');for(const [value,text]of [['canvas','Как на холсте'],['average','Средний цвет']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;method.append(opt);}method.value=['canvas','average'].includes(o.method?.())?o.method():'canvas';
@@ -24,7 +24,17 @@
   mode.value=o.mode?.()||'rows';mode.setAttribute('aria-label','Вариант уменьшения');baseInput.type='number';baseInput.min='2';baseInput.max='10000';baseInput.step='1';baseInput.value=String(o.base?.()||2);baseInput.setAttribute('aria-label','Число x');baseInput.title='Число x';
   const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value),method:method.value});}finally{exportButton.disabled=false;}};
   const heightMode=doc.createElement('select');heightMode.setAttribute('aria-label','Высота нижних построений');heightMode.title='Высота нижних построений';for(const [value,text]of [['original','Высота оригинала'],['cell','Высота ячейки'],['native','Истинный размер'],['integer','Целое ≥ оригинала']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;heightMode.append(opt);}heightMode.value=['original','cell','native','integer'].includes(o.heightMode?.())?o.heightMode():'original';
-  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';controls.append(method,heightMode,mode,baseInput,stepLabel,input,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
+  const field=(control,caption)=>{
+   const box=doc.createElement('div');box.className='gz-hx may-standard may-scale-stack__field';
+   const content=doc.createElement('label');if(caption){const text=doc.createElement('span');text.className='gz-nm';text.textContent=caption;content.append(text);}content.append(control);
+   if(control.tagName==='INPUT'){
+    box.classList.add('gz-control');box.style.setProperty('padding','0','important');box.style.setProperty('gap','0','important');
+    const sides=[-1,1].map(delta=>{const button=doc.createElement('button');button.type='button';button.className='gz-a';button.textContent=delta<0?'‹':'›';button.setAttribute('aria-label',(delta<0?'Уменьшить':'Увеличить')+' '+(caption==='x'?'число x':'шаг строк'));button.onclick=()=>{const min=control.min===''?1:Number(control.min),max=control.max===''?65535:Number(control.max);control.value=String(Math.max(min,Math.min(max,(Number(control.value)||min)+delta)));control.dispatchEvent(new win.Event('change',{bubbles:true}));};return button;});
+    box.append(sides[0],content,sides[1]);win.ZerkControlFrame?.attach(box,sides[0],content,sides[1]);
+   }else box.append(control);
+   return box;
+  };
+  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';const baseField=field(baseInput,'x'),stepField=field(input,'стр');exportButton.classList.add('gz-hx','may-standard');controls.append(field(method),field(heightMode),field(mode),baseField,stepField,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
   let enabled=false,destroyed=false,source=null,pending=null,job=null,timer=null,layout={},zoom=1,items=[],revision=0,lastKey,error=null;
   const schedule=o.schedule||(fn=>win.setTimeout(fn,0)),cancel=o.cancel||(id=>win.clearTimeout(id));
   const fmt=n=>Number(n.toFixed(4)).toLocaleString('ru-RU');
@@ -57,13 +67,13 @@
   }
   function overlays(){
    const hostRect=host.getBoundingClientRect(),dpr=Math.min(2,win.devicePixelRatio||1);
-   for(const item of items){if(item.overlay)item.overlay.hidden=true;if(!layout.digits||!item.canvas||!item.bits)continue;
+   for(const item of items){if(item.canvas)item.canvas.style.opacity='';if(item.overlay)item.overlay.hidden=true;if(!layout.digits||!item.canvas||!item.bits)continue;
     const rect=item.canvas.getBoundingClientRect(),cw=rect.width/item.size.width,ch=rect.height/item.size.height;if(Math.min(cw,ch)<4)continue;
     const left=Math.max(hostRect.left,rect.left),top=Math.max(hostRect.top,rect.top),right=Math.min(hostRect.right,rect.right),bottom=Math.min(hostRect.bottom,rect.bottom);if(right<=left||bottom<=top)continue;
     if(!item.overlay){item.overlay=doc.createElement('canvas');item.overlay.className='may-scale-stack__digits';item.overlay.setAttribute('aria-hidden','true');item.element.append(item.overlay);}
     const cv=item.overlay,W=Math.max(1,Math.ceil((right-left)*dpr)),H=Math.max(1,Math.ceil((bottom-top)*dpr));const used=(source?.pixels.byteLength||0)+(source?.bits?.byteLength||0)+items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0)+(i.bits?.byteLength||0)+(i!==item&&i.overlay?i.overlay.width*i.overlay.height*4:0),0);if(used+W*H*4>LIMIT)continue;
-    cv.hidden=false;cv.width=W;cv.height=H;Object.assign(cv.style,{left:(left-rect.left)+'px',top:(item.headerHeight+top-rect.top)+'px',width:(right-left)+'px',height:(bottom-top)+'px'});
-    const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.max(3,Math.min(cw*.75,ch*(Number(layout.digitSize)||80)/100))+'px '+(layout.digitFont||'monospace');
+    cv.hidden=false;if(layout.digitsOnly)item.canvas.style.opacity='0';cv.width=W;cv.height=H;Object.assign(cv.style,{left:(left-rect.left)+'px',top:(item.headerHeight+top-rect.top)+'px',width:(right-left)+'px',height:(bottom-top)+'px'});
+    const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='600 '+Math.max(3,Math.min(cw,ch)*(Number(layout.digitSize)||80)/100)+'px '+(layout.digitFont||'monospace');
     const x0=Math.max(0,Math.floor((left-rect.left)/cw)),x1=Math.min(item.size.width,Math.ceil((right-rect.left)/cw)),y0=Math.max(0,Math.floor((top-rect.top)/ch)),y1=Math.min(item.size.height,Math.ceil((bottom-rect.top)/ch));
     for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const bit=item.bits[y*item.size.width+x];if(bit===-1)continue;ctx.fillStyle=bit===1?(layout.digitOneColour||'#e8edf5'):bit===0?(layout.digitZeroColour||'#7cbcff'):'#ffcf73';const text=bit===0?'0':bit===1?'1':'·',tx=rect.left-left+(x+.5)*cw,ty=rect.top-top+(y+.5)*ch;if(win.MayatnikBitGlyph)win.MayatnikBitGlyph.draw(ctx,text,tx,ty);else ctx.fillText(text,tx,ty);}
    }
@@ -110,8 +120,8 @@
   function setZoom(value){zoom=Math.max(1/Math.max(1,source?.width||1,source?.height||1),Math.min(512,Number(value)||1));geometry();later();return zoom;}
   function setEnabled(value){if(destroyed)return false;const next=!!value;if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
-  function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));baseInput.hidden=mode.value==='rows';stepLabel.hidden=input.hidden=mode.value!=='rows';o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
-  baseInput.hidden=mode.value==='rows';stepLabel.hidden=input.hidden=mode.value!=='rows';
+  function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));baseField.hidden=baseInput.hidden=mode.value==='rows';stepField.hidden=stepLabel.hidden=input.hidden=mode.value!=='rows';o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
+  baseField.hidden=baseInput.hidden=mode.value==='rows';stepField.hidden=stepLabel.hidden=input.hidden=mode.value!=='rows';
   heightMode.addEventListener('change',()=>{o.onHeightMode?.(heightMode.value);geometry();later();});
   method.addEventListener('change',()=>{o.onMethod?.(method.value);rebuild();later();});
   mode.addEventListener('change',sequenceChange);baseInput.addEventListener('change',sequenceChange);

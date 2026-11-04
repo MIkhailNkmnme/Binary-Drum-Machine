@@ -11,7 +11,7 @@
    const min=Number(input.min)||0,max=Number(input.max)||100,fraction=max>min?Math.max(0,Math.min(1,(Number(input.value)-min)/(max-min))):0,leftX=28*fraction,x=24+leftX;
    host.style.setProperty('--heat-thumb-left',leftX+'px');output.style.setProperty('left',(leftX+14)+'px','important');unit.style.left=(leftX+14)+'px';
    paths[0].setAttribute('d',`M12 1H${x+1}L${x+13} 23H12L1 12Z`);
-   paths[1].setAttribute('d',`M${x+13} 1H${x+31}L${x+43} 23H${x+1}Z`);
+   paths[1].setAttribute('d',`M${x+13} 1L${x+1} 23M${x+31} 1L${x+43} 23`);
    paths[2].setAttribute('d',`M${x+43} 1H108L119 12 108 23H${x+31}Z`);
   }
   sync();return {sync};
