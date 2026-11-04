@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR · опыт 01 · v0.004</title>
+<title>Оси XOR · опыт 01 · v0.005</title>
 <style>
 *{box-sizing:border-box} :root{color-scheme:dark;--ink:#f4f0e8;--mut:#b5aca3;--line:#49423d;--red:#fd0000;--base:#181614}
 body{margin:0;background:var(--base);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
@@ -63,7 +63,7 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <p class="hint">Тяните фигуру по полю. Кнопки 90° поворачивают выбранную, «Все» — сразу четыре.</p>
 <div class="group preview-row" id="tiles" role="group" aria-label="Фигуры отдельно"></div>
 <div class="group edit-row" role="group" aria-label="Редактирование клеток фигур"><button type="button" data-edit="0" aria-label="Редактировать клетки фигуры I" aria-pressed="false" title="Редактировать клетки фигуры I">✎</button><button type="button" data-edit="1" aria-label="Редактировать клетки фигуры II" aria-pressed="false" title="Редактировать клетки фигуры II">✎</button><button type="button" data-edit="2" aria-label="Редактировать клетки фигуры III" aria-pressed="false" title="Редактировать клетки фигуры III">✎</button><button type="button" data-edit="3" aria-label="Редактировать клетки фигуры IV" aria-pressed="false" title="Редактировать клетки фигуры IV">✎</button></div>
-<p class="hint">Фиолетовый силуэт — вся фигура, чёрное — её вклад в общий XOR. Белый контур и тёмная тень — как на обложке; «Тени» отключают тень, «Сетка» показывает клетки. ✎ под миниатюрой — редактировать: клик по клетке убирает или ставит бит.</p>
+<p class="hint">Фиолетовый силуэт — вся фигура, чёрное — её вклад в общий XOR. Белый контур и тёмная тень — как на обложке; «Тени» отключают тень, «Сетка» показывает клетки. ✎ под миниатюрой — редактировать: кликай по клеткам на большом поле (или в миниатюре) — убирает или ставит бит.</p>
 <div class="group role"><button id="gridToggle" type="button" aria-pressed="false">Сетка</button><button id="shadowToggle" type="button" aria-pressed="true">Тени</button></div></figure>
 <div class="controls">
 <section><h2>Фигуры</h2><p class="meta" id="position"></p>
@@ -84,7 +84,7 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать видео</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF · 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> · <a href="xor.gif">С XOR</a> · <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.004</small></footer></main>
+</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.005</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
@@ -182,16 +182,19 @@ const tiles=names.map((name,i)=>{
  el.addEventListener('lostpointercapture',stop);
  $('tiles').append(el);return el;
 });
-function toggleEditCell(i,event){
- const svg=tiles[i].querySelector('svg'),rect=svg.getBoundingClientRect();
- const x=Math.floor((event.clientX-rect.left)/rect.width*size);
- const y=Math.floor((event.clientY-rect.top)/rect.height*size);
+function toggleMaskCell(i,x,y){
  if(x<0||y<0||x>=size||y>=size)return;
  const {order,turn}=unpack(state.variant),anchor=figureAnchor(i,order);
  const [lx,ly]=rotate(x-anchor.x,y-anchor.y,(4-turn[i])%4);
  const list=points[i],k=list.findIndex(([px,py])=>px===lx&&py===ly);
  if(k>=0)list.splice(k,1);else list.push([lx,ly]);
  render();
+}
+function toggleEditCell(i,event){
+ const svg=tiles[i].querySelector('svg'),rect=svg.getBoundingClientRect();
+ const x=Math.floor((event.clientX-rect.left)/rect.width*size);
+ const y=Math.floor((event.clientY-rect.top)/rect.height*size);
+ toggleMaskCell(i,x,y);
 }
 function setEdit(i){
  if(state.edit===i)state.edit=null;
@@ -408,6 +411,7 @@ $('field').onpointerdown=e=>{
  const rect=e.currentTarget.getBoundingClientRect(),cellX=rect.width/size,cellY=rect.height/size;
  const cell=Math.floor((e.clientX-rect.left)/cellX),row=Math.floor((e.clientY-rect.top)/cellY);
  if(cell<0||row<0||cell>=size||row>=size)return;
+ if(state.edit!==null){toggleMaskCell(state.edit,cell,row);e.preventDefault();return;}
  const candidates=figuresAt(cell,row).filter(id=>state.mode!=='solo'||id===state.selected);
  if(!candidates.length)return;
  const id=candidates.includes(state.selected)?state.selected:candidates[0];
