@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR · опыт 01 · v0.009</title>
+<title>Оси XOR · опыт 01 · v0.010</title>
 <style>
 *{box-sizing:border-box} :root{color-scheme:dark;--ink:#f4f0e8;--mut:#b5aca3;--line:#49423d;--red:#fd0000;--base:#181614}
 body{margin:0;background:var(--base);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
@@ -18,7 +18,7 @@ small,.caption,.meta,output,.idx{font:12px/1.45 ui-monospace,monospace;letter-sp
 small,.caption,.hint,.meta{color:var(--mut)} .layout{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(258px,.85fr);gap:24px;align-items:start}
 figure{margin:0}.caption{margin-bottom:7px;text-transform:uppercase}
 #field{width:100%;aspect-ratio:1;display:block;background:var(--red);touch-action:none;cursor:grab;user-select:none}
-#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#000}.dot.zero{background:var(--red)}.dot.ghost{background:#7c3aed}.dot.neutral{background:white}.grid{display:none}.edit-row{gap:6px;margin-top:7px}.edit-row button{font-size:17px}.tile.editing svg{cursor:cell;outline:2px solid var(--red);outline-offset:-2px}#bits,#ghostBits,.x-live,.x-ghost{filter:none}body.shadows #bits,body.shadows #ghostBits,body.shadows .x-live,body.shadows .x-ghost{filter:url(#fig3d)}
+#field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#000}.dot.zero{background:var(--red)}.dot.ghost{background:#7c3aed}.dot.neutral{background:#717777}.grid{display:none}.edit-row{gap:6px;margin-top:7px}.edit-row button{font-size:17px}.tile.editing svg{cursor:cell;outline:2px solid var(--red);outline-offset:-2px}#bits,#ghostBits,#pivotBits,.x-live,.x-ghost,.x-pivot{filter:none}body.shadows #bits,body.shadows #ghostBits,body.shadows .x-live,body.shadows .x-ghost,body.shadows #pivotBits,body.shadows .x-pivot{filter:url(#fig3d)}
 section{border-top:1px solid var(--line);padding:10px 0}h2{font-size:14px;margin:0 0 8px}.hint{font-size:12px;margin:7px 0 0}.group{display:flex;gap:5px}.group>*{flex:1;min-width:0}
 button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:0;background:#342f2b;min-height:44px;padding:4px 9px;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%)}button:hover,button:focus-visible{background:#514740}button[aria-pressed=true]{background:var(--ink);color:#191613}button:focus-visible{outline:3px solid var(--red);outline-offset:-4px}button:disabled{opacity:.45;cursor:default}button:disabled:hover{background:#342f2b}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 2px}.tile svg{width:28px;height:28px}.tile span{font:12px monospace}.preview-row{margin-top:10px;gap:6px;align-items:stretch}.preview-row>*{flex:1 1 0;min-width:0;min-height:0;padding:7px 6px 5px;gap:3px;touch-action:pan-y;user-select:none}.preview-row .tile svg{width:100%;height:auto;aspect-ratio:1;display:block}
@@ -54,13 +54,13 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="figOutline" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/></filter><filter id="fig3d" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/><feDropShadow dx=".28" dy=".28" stdDeviation="0" flood-color="#2b2d34"/></filter></defs></svg>
 <main>
-<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.009">v0.009</small></div></header>
+<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.010">v0.010</small></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span>Поле · 29 × 29</span><span id="count"></span></figcaption>
-<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 × 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg>
+<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 × 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="pivotBits" fill="#717777" pointer-events="none"/></svg>
 <p class="sym-note" id="symInfo"></p>
 <div class="layout-strip"><div class="bar"><label for="frame">Раскладка</label><small><span id="frameNow">1</span> \ 6144</small></div><div class="slider-row"><button class="step" id="frameDown" type="button" aria-label="Предыдущая раскладка" aria-controls="frame">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number" aria-hidden="true">1</span><button class="thumb-play" id="thumbPlay" type="button" aria-label="Пуск" aria-pressed="false">▶</button><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="frame" type="range" min="1" max="6144" value="1" aria-valuetext="Раскладка 1 из 6144"></div><button class="step" id="frameUp" type="button" aria-label="Следующая раскладка" aria-controls="frame">▸</button></div><div class="group role"><button id="random">Случайная</button><button id="resetAll">Сброс</button><button id="ghostToggle" type="button" aria-pressed="false">Силуэты</button></div><p class="hint">24 перестановки на четырёх лучах × 256 сочетаний поворотов. Рисунки могут совпадать.</p></div>
-<div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span id="ghostLegend" hidden><i class="dot ghost"></i>силуэт</span><span><i class="dot neutral"></i>центр вне счёта</span></div>
+<div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span id="ghostLegend" hidden><i class="dot ghost"></i>силуэт</span><span><i class="dot neutral"></i>серые центры вне XOR</span></div>
 <p class="hint">Тяните фигуру по полю. Кнопки 90° поворачивают выбранную, «Все» — сразу четыре.</p>
 <div class="group preview-row" id="tiles" role="group" aria-label="Фигуры отдельно"></div>
 <div class="group edit-row" role="group" aria-label="Редактирование клеток фигур"><button type="button" data-edit="0" aria-label="Редактировать клетки фигуры I" aria-pressed="false" title="Редактировать клетки фигуры I">✎</button><button type="button" data-edit="1" aria-label="Редактировать клетки фигуры II" aria-pressed="false" title="Редактировать клетки фигуры II">✎</button><button type="button" data-edit="2" aria-label="Редактировать клетки фигуры III" aria-pressed="false" title="Редактировать клетки фигуры III">✎</button><button type="button" data-edit="3" aria-label="Редактировать клетки фигуры IV" aria-pressed="false" title="Редактировать клетки фигуры IV">✎</button></div>
@@ -71,11 +71,11 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <div class="group role"><button id="left" aria-label="Повернуть выбранную фигуру влево">↶ 90°</button><button id="right" aria-label="Повернуть выбранную фигуру вправо">90° ↷</button><button id="swap" title="Поменять выбранную фигуру со следующей по часовой стрелке">Обмен ⇄</button></div>
 <div class="group role"><button id="allLeft" aria-label="Повернуть все фигуры влево" title="Повернуть все четыре фигуры на 90° влево; удержание повторяет">↶ Все 90°</button><button id="allRight" aria-label="Повернуть все фигуры вправо" title="Повернуть все четыре фигуры на 90° вправо; удержание повторяет">90° Все ↷</button><button id="resetPositions" title="Убрать ручные сдвиги и вернуть фигуры на лучи">На лучи</button></div>
 <p class="hint">Выберите фигуру под полем.</p></section>
-<section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number">3</span><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="radius" type="range" min="-7" max="7" value="3" aria-valuetext="3 клетки от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">▸</button></div><p class="hint">При нуле все четыре фигуры лежат на общем центре. Положительные значения уводят их по лучам ↑ → ↓ ←, отрицательные — на противоположные.</p></section>
+<section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number">3</span><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="radius" type="range" min="-7" max="7" value="0" aria-valuetext="0 клеток от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">▸</button></div><p class="hint">При нуле верхние серые клетки всех четырёх фигур соединены в общем центре. Каждая фигура поворачивается вокруг своей серой клетки. Положительные значения уводят их по лучам ↑ → ↓ ←, отрицательные — на противоположные.</p></section>
 <section><h2>Наложение</h2><div class="group"><button id="xor">XOR</button><button id="union">Вместе</button><button id="solo">Одна</button></div><p id="rule" class="hint"></p></section>
 <section id="film"><h2>Анимация / GIF</h2>
 <div class="choice"><div class="bar"><span class="field-label">Эффект</span></div><div class="group role" aria-label="Эффект анимации"><button type="button" data-effect="compare" aria-pressed="true" title="Без XOR → с XOR" aria-label="Сравнение: без XOR, затем с XOR">Сравнение</button><button type="button" data-effect="xor" aria-pressed="false">С XOR</button><button type="button" data-effect="union" aria-pressed="false">Без XOR</button></div></div>
-<div class="choice"><div class="bar"><span class="field-label">Движение</span></div><div class="group role" aria-label="Движение"><button type="button" data-motion="variants" aria-pressed="true">Перебор раскладок</button><button type="button" data-motion="spin" aria-pressed="false">Поворот фигуры</button></div></div>
+<div class="choice"><div class="bar"><span class="field-label">Движение</span></div><div class="group role" aria-label="Движение"><button type="button" data-motion="variants" aria-pressed="false">Перебор раскладок</button><button type="button" data-motion="spin" aria-pressed="true">Поворот фигуры</button></div></div>
 <div class="bar"><label for="rate">Раскладок в секунду</label></div>
 <div class="slider-row"><button class="step" id="rateDown" type="button" aria-label="Уменьшить скорость" aria-controls="rate">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number">4</span><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="rate" type="range" min="0" max="1000" step="1" value="151" aria-valuetext="4 раскладки в секунду"></div><button class="step" id="rateUp" type="button" aria-label="Увеличить скорость" aria-controls="rate">▸</button></div>
 <div class="group" id="rates" aria-label="Быстрый выбор скорости"><button>1</button><button>10</button><button>100</button><button>1000</button><button>10000</button></div>
@@ -85,27 +85,29 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать видео</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF · 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> · <a href="xor.gif">С XOR</a> · <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.009</small></footer></main>
+</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.010</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
 // Four figures traced cell by cell from the supplied reference (8 columns x 12 rows).
 // Grey caps are occupied cells; the white edge is decoration, not another cell.
-// The pivot is the left upright cell on the horizontal arm (column 3, row 5).
+// The grey top cell is the neutral rotation pivot of each figure.
 const masks=[
  ['00010000','01010000','01111000','00111100','00011010','11111111','00011000','00011000','00011000','00011000','00011000','00010000'],
  ['00010000','00010000','00111000','00111000','00011100','11111111','00011000','00011000','00011000','00011000','00010000','00001000'],
  ['00001000','00001000','00011100','00011100','00101000','11111111','00011000','00011000','00011000','00011000','00001000','00011000'],
  ['00001000','00001000','00011100','00011100','00011000','11111111','00011000','00011000','00011000','00011000','00010000','00001000']
 ];
-const points=masks.map(rows=>rows.flatMap((row,y)=>Array.from(row,(v,x)=>v==='1'?[x-3,y-5]:null).filter(Boolean)));
+const pivots=masks.map(rows=>({x:rows[0].indexOf('1'),y:0}));
+const points=masks.map((rows,i)=>rows.flatMap((row,y)=>Array.from(row,(v,x)=>v==='1'?[x-pivots[i].x,y-pivots[i].y]:null).filter(Boolean)));
 function permutations(left){return left.length?left.flatMap(i=>permutations(left.filter(j=>j!==i)).map(tail=>[i,...tail])):[[]];}
 const orders=permutations([0,1,2,3]),rays=[[0,-1],[1,0],[0,1],[-1,0]],arrows=['↑','→','↓','←'];
 const names=['I','II','III','IV'],size=29,center=14,total=24*256,dragMargin=6;
 const $=id=>document.getElementById(id);
-const state={variant:0,selected:0,radius:3,mode:'xor',ghosts:false,grid:false,shadows:true,edit:null,offsets:Array.from({length:4},()=>({x:0,y:0}))};
+const initialVariant=24*(2+3*4+0*16+1*64); // turns: up, right, down, left
+const state={variant:initialVariant,selected:0,radius:0,mode:'xor',ghosts:false,grid:false,shadows:true,edit:null,offsets:Array.from({length:4},()=>({x:0,y:0}))};
 const speedMin=1,speedMax=10000,rateSteps=1000;
-let speed=4,filmEffect='compare',filmMotion='variants',motionBeforeSolo='variants';
+let speed=4,filmEffect='compare',filmMotion='spin',motionBeforeSolo='spin';
 const rateToSpeed=position=>Math.max(speedMin,Math.min(speedMax,Math.round(10**(4*position/rateSteps))));
 const speedToRate=value=>Math.round(rateSteps*Math.log10(value)/4);
 function speedLabel(value){
@@ -155,7 +157,7 @@ function cellPath(x,y){return 'M'+x+' '+y+'h1v1h-1z';}
 const tiles=names.map((name,i)=>{
  const el=document.createElement('button');el.type='button';el.className='tile';el.setAttribute('aria-label','Фигура '+name);
  el.title='Потяните влево или вправо, чтобы повернуть';
- el.innerHTML='<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true"><rect width="29" height="29" fill="#fd0000"/><path class="x-ghost" fill="#7c3aed"/><path class="x-live" fill="#000"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg><span>'+name+'</span>';
+ el.innerHTML='<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true"><rect width="29" height="29" fill="#fd0000"/><path class="x-ghost" fill="#7c3aed"/><path class="x-live" fill="#000"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path class="x-pivot" fill="#717777" pointer-events="none"/></svg><span>'+name+'</span>';
  let pointerId=null,startX=0,suppressClick=false;
  el.onclick=e=>{
   if(state.edit===i){toggleEditCell(i,e);return;}
@@ -191,6 +193,7 @@ function toggleMaskCell(i,x,y){
  if(x<0||y<0||x>=size||y>=size)return;
  const {order,turn}=unpack(state.variant),anchor=figureAnchor(i,order);
  const [lx,ly]=rotate(x-anchor.x,y-anchor.y,(4-turn[i])%4);
+ if(lx===0&&ly===0)return; // The neutral pivot is not an editable bit.
  const list=points[i],k=list.findIndex(([px,py])=>px===lx&&py===ly);
  if(k>=0)list.splice(k,1);else list.push([lx,ly]);
  render();
@@ -208,18 +211,21 @@ function setEdit(i){
 }
 for(const button of document.querySelectorAll('[data-edit]'))button.onclick=()=>setEdit(Number(button.dataset.edit));
 function fieldCells(variant,radius,selected,mode,offsets=[]){
- const {order,turn}=unpack(variant),hits=new Uint8Array(size*size);
+ const {order,turn}=unpack(variant),hits=new Uint8Array(size*size),centres=[];
  order.forEach((id,ray)=>{
    if(mode==='solo'&&id!==selected)return;
    const [dx,dy]=rays[ray],off=offsets[id]||{x:0,y:0};
+   const ax=center+dx*radius+off.x,ay=center+dy*radius+off.y;
+   if(ax>=0&&ax<size&&ay>=0&&ay<size)centres.push(ay*size+ax);
    for(const [x,y] of points[id]){
+     if(x===0&&y===0)continue;
      const [rx,ry]=rotate(x,y,turn[id]);
      const px=center+dx*radius+off.x+rx,py=center+dy*radius+off.y+ry;
      if(px>=0&&px<size&&py>=0&&py<size)hits[py*size+px]++;
    }
  });
  for(let i=0;i<hits.length;i++)hits[i]=mode==='xor'?hits[i]%2:Number(hits[i]>0);
- hits[center*size+center]=2;
+ for(const q of centres)hits[q]=2;
  return hits;
 }
 function clampOffsets(){
@@ -234,12 +240,11 @@ function clampOffsets(){
 }
 function xorCells(a,b){
  const out=new Uint8Array(a.length);
- for(let i=0;i<a.length;i++)out[i]=(a[i]===1)!==(b[i]===1)?1:0;
- out[center*size+center]=2;
+ for(let i=0;i<a.length;i++)out[i]=a[i]===2?2:(a[i]===1)!==(b[i]===1)?1:0;
  return out;
 }
 function paintField(variant,mode,previousBase=null){
- let ghostPath='',path='',ones=0;
+ let ghostPath='',path='',pivotPath='',ones=0;
  const union=state.ghosts?fieldCells(variant,state.radius,state.selected,'union',state.offsets):null;
  if(union){
   union.forEach((v,i)=>{
@@ -250,8 +255,10 @@ function paintField(variant,mode,previousBase=null){
  const cells=previousBase?xorCells(base,previousBase):base;
  cells.forEach((v,i)=>{
    if(v===1){path+=cellPath(i%size,Math.floor(i/size));ones++;}
+   else if(v===2)pivotPath+=cellPath(i%size,Math.floor(i/size));
  });
  $('ghostBits').setAttribute('d',ghostPath);
+ $('pivotBits').setAttribute('d',pivotPath);
  $('bits').setAttribute('d',path);$('count').textContent=ones+' ед.';
  paintSymmetry(previousBase?cells:(union||cells),previousBase?'разницы':union?'силуэта':'XOR');
  return base;
@@ -316,7 +323,8 @@ function paintTiles(turn,variant=state.variant,updateMeta=true){
  const common=fieldCells(variant,state.radius,state.selected,'xor',state.offsets);
  tiles.forEach((b,i)=>{
   const own=fieldCells(variant,state.radius,i,'solo',state.offsets);
-  let ghost='',live='';
+  let ghost='',live='',pivot='';
+  for(let k=0;k<own.length;k++)if(own[k]===2)pivot+=cellPath(k%size,Math.floor(k/size));
   for(let k=0;k<own.length;k++)if(own[k]===1){
    const cell=cellPath(k%size,Math.floor(k/size));
    ghost+=cell;
@@ -324,6 +332,7 @@ function paintTiles(turn,variant=state.variant,updateMeta=true){
   }
   b.querySelector('.x-ghost').setAttribute('d',ghost);
   b.querySelector('.x-live').setAttribute('d',live);
+  b.querySelector('.x-pivot').setAttribute('d',pivot);
   if(updateMeta){
    b.setAttribute('aria-pressed',i===state.selected);
    b.setAttribute('aria-label','Фигура '+names[i]+', поворот '+turn[i]*90+'°');
@@ -377,7 +386,7 @@ $('left').onclick=()=>turnBy(-1);$('right').onclick=()=>turnBy(1);
 $('random').onclick=()=>advance(1+Math.floor(Math.random()*(total-1)));
 function resetBoard(){
  const wasSolo=state.mode==='solo';
- state.variant=0;state.selected=0;state.radius=3;state.mode='xor';
+ state.variant=initialVariant;state.selected=0;state.radius=0;state.mode='xor';
  state.offsets=Array.from({length:4},()=>({x:0,y:0}));
  if(wasSolo)filmMotion=motionBeforeSolo;
  render();syncMotionUI();updateVideoInfo();
@@ -567,7 +576,7 @@ function rasterCells(config,cells,ghost=null){
   for(let i=0;i<data.length;i++)if(data[i]===0&&ghost[i]===1)data[i]=3;
  }
  const solid=new Uint8Array(data.length);
- for(let i=0;i<data.length;i++)if(data[i]===1||data[i]===3)solid[i]=1;
+ for(let i=0;i<data.length;i++)if(data[i]===1||data[i]===2||data[i]===3)solid[i]=1;
  const outlined=new Uint8Array(data);
  if(config.shadows)for(let y=0;y<size;y++)for(let x=0;x<size;x++){
   const i=y*size+x;
@@ -577,7 +586,7 @@ function rasterCells(config,cells,ghost=null){
   else if(down||right)outlined[i]=5;
  }
  data=outlined;
- const rgba=new Uint8ClampedArray(side*side*4),palette=[[253,0,0],[0,0,0],[255,255,255],[124,58,237],[233,233,233],[43,45,52]];
+ const rgba=new Uint8ClampedArray(side*side*4),palette=[[253,0,0],[0,0,0],[113,119,119],[124,58,237],[233,233,233],[43,45,52]];
  for(let y=0;y<size;y++){
    for(let x=0;x<size;x++){
      const colour=palette[data[y*size+x]];
