@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR · опыт 01 · v0.007</title>
+<title>Оси XOR · опыт 01 · v0.008</title>
 <style>
 *{box-sizing:border-box} :root{color-scheme:dark;--ink:#f4f0e8;--mut:#b5aca3;--line:#49423d;--red:#fd0000;--base:#181614}
 body{margin:0;background:var(--base);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
@@ -11,6 +11,7 @@ main{max-width:960px;margin:auto;padding:16px clamp(12px,3vw,28px) 32px}
 header, .caption,.bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
 header{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap}
 .head-left{display:flex;align-items:center;gap:14px;min-width:0}.hub-link{color:var(--mut);font:12px/1.45 ui-monospace,monospace;letter-spacing:.035em;text-decoration:none}.hub-link:hover,.hub-link:focus-visible{color:var(--ink);text-decoration:underline;outline:none}
+.version{white-space:nowrap;align-self:flex-end}
 .page-footer{display:flex;justify-content:flex-end;margin-top:18px;padding-top:10px;border-top:1px solid var(--line)}
 h1{font-size:clamp(24px,6vw,38px);letter-spacing:-.055em;line-height:1;margin:0}h1 b{color:var(--red)}
 small,.caption,.meta,output,.idx{font:12px/1.45 ui-monospace,monospace;letter-spacing:.035em}
@@ -53,7 +54,7 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="figOutline" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/></filter><filter id="fig3d" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/><feDropShadow dx=".28" dy=".28" stdDeviation="0" flood-color="#2b2d34"/></filter></defs></svg>
 <main>
-<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1></div></header>
+<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.008">v0.008</small></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span>Поле · 29 × 29</span><span id="count"></span></figcaption>
 <svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 × 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><rect x="14" y="14" width="1" height="1" fill="white"/></svg>
@@ -84,7 +85,7 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать видео</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF · 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> · <a href="xor.gif">С XOR</a> · <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.007</small></footer></main>
+</div></div><footer class="page-footer"><small>ОПЫТ 01 / v0.008</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
