@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.019</title>
-<!-- АзъБукъ — v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.020</title>
+<!-- АзъБукъ — v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -52,6 +52,47 @@
   .side .tools{display:flex;flex-wrap:wrap;gap:6px;max-width:420px}
   .prev{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
   .note{color:var(--dim);font-size:11px;max-width:420px;line-height:1.5}
+
+
+  .bar button:not(.gap-step){flex:none;width:82px;min-width:0}
+  .bar #editToggle{width:142px}
+  .bar #theme{width:142px;padding-right:18px}
+  .bar #theme::after{content:"";position:absolute;right:7px;width:5px;height:5px;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);transform:rotate(45deg)}
+  .bar #theme{position:relative}
+  .bar button[data-cell]{width:34px}
+  .tools button{width:130px;min-width:0;flex:none}
+  #editLabel{width:248px;min-width:0}
+  .theme-picker{position:relative;display:inline-flex;flex:none;width:142px}
+  .theme-list{position:absolute;left:0;top:32px;width:142px;height:154px;z-index:10;overflow:hidden;background:var(--bg);border:1px solid var(--line);perspective:260px;touch-action:pan-x}
+  .theme-list[hidden]{display:none}
+  .bar button.theme-option{position:absolute;left:5px;top:63px;width:130px;transition:transform 180ms,opacity 180ms;transform-origin:center}
+  .theme-option[aria-selected="true"]{border-color:var(--ink);background:var(--btnon)}
+  @media(prefers-reduced-motion:reduce){.bar button.theme-option{transition:none}}
+
+  .gap-slider{position:relative;display:inline-block;flex:0 0 180px;height:26px;user-select:none;cursor:pointer;--position:0%}
+  .gap-slider::before{content:"";position:absolute;inset:0;background:var(--btnon);clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,13px 100%,0 50%)}
+  .gap-rail{position:absolute;inset:12px 16px auto;border-top:1px dashed var(--line)}
+  .bar .gap-step{position:absolute;top:0;bottom:0;min-width:0;width:14px;height:26px;padding:0;border:0;background:transparent;clip-path:none}
+  .gap-step.prev{left:0}
+  .gap-step::before{content:"";position:absolute;inset:0;background:var(--ink);pointer-events:none}
+  .gap-step.prev::before{clip-path:polygon(13px 0,0 50%,13px 100%,13px 76%,6px 50%,13px 24%)}
+  .gap-step.next{right:0}
+  .gap-step.next::before{clip-path:polygon(1px 0,14px 50%,1px 100%,1px 76%,8px 50%,1px 24%)}
+  #track{position:absolute;left:36px;top:0;width:calc(100% - 72px);height:26px;margin:0;opacity:0;cursor:pointer;appearance:none}
+  #track::-webkit-slider-thumb{appearance:none;width:1px;height:26px}
+  #track::-moz-range-thumb{width:1px;height:26px;border:0}
+  .gap-travel{position:absolute;inset:0 36px;pointer-events:none}
+  .gap-thumb{position:absolute;left:var(--position);top:0;height:26px;width:0}
+  .gap-thumb i{position:absolute;top:0;width:8px;height:26px;background:var(--ink);transition:transform 140ms}
+  .gap-thumb i:first-child{right:0;clip-path:polygon(0 0,8px 50%,0 100%,0 72%,4px 50%,0 28%);transform:translateX(-10px)}
+  .gap-thumb i:last-child{left:0;clip-path:polygon(8px 0,0 50%,8px 100%,8px 72%,4px 50%,8px 28%);transform:translateX(10px)}
+  .gap-thumb output{position:absolute;top:5px;left:0;min-width:16px;padding:1px 3px;text-align:center;font:12px/14px monospace;background:var(--btnon);color:var(--ink);transform:translateX(-50%);transition:transform 140ms,left 140ms}
+  .gap-slider:hover .gap-thumb i,.gap-slider:has(:focus-visible) .gap-thumb i{transform:translateX(0)}
+  .gap-slider:hover output,.gap-slider:has(:focus-visible) output{left:14px;transform:translateX(0)}
+  .gap-slider.value-left:hover output,.gap-slider.value-left:has(:focus-visible) output{left:-14px;transform:translateX(-100%)}
+  .gap-slider:has(:focus-visible){outline:1px solid var(--ink);outline-offset:3px}
+  @media(prefers-reduced-motion:reduce){.gap-thumb i,.gap-thumb output{transition:none}}
+
 .rainbow svg > g:nth-of-type(7n+1){color:#ff647c}
 .rainbow svg > g:nth-of-type(7n+2){color:#ffac55}
 .rainbow svg > g:nth-of-type(7n+3){color:#ffe66d}
@@ -64,14 +105,20 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.019"></span>
+    <span class="pbtn ver" aria-label="v0.020"></span>
   </div>
   <div class="bar">
-    <button id="editToggle">Редактировать</button><button id="theme">цвет: кибер</button>
+    <button id="editToggle">Редактировать</button><span class="theme-picker"><button id="theme" aria-haspopup="listbox" aria-expanded="false" aria-controls="themeList">цвет: кибер</button><span id="themeList" class="theme-list" role="listbox" aria-label="Палитры" tabindex="0" hidden></span></span>
     <span class="lbl">толщина</span>
     <button data-set="bold" class="on">обычная</button>
     <button data-set="thin" title="Тонкое начертание букв">тонкая</button>
-    <label class="lbl" for="track" title="Зазор в ячейках сетки, до ширины предыдущей буквы">зазор</label><input id="track" type="range" title="Зазор в ячейках сетки, до ширины предыдущей буквы" min="0" max="8" step="1" value="1"><span id="trackVal" style="font-size:11px;color:var(--dim);min-width:34px">1</span><span class="lbl">сетка</span><button data-lat="tri" class="on">ромбы</button><button data-lat="sq">квадрат</button><span class="lbl">ячейка</span>
+    <span class="gap-slider" id="trackControl" title="Зазор в ячейках сетки, до ширины предыдущей буквы">
+      <span class="gap-rail" aria-hidden="true"></span>
+      <button class="gap-step prev" type="button" aria-label="Уменьшить зазор"></button>
+      <input id="track" type="range" aria-label="Зазор в ячейках" min="0" max="8" step="1" value="1">
+      <span class="gap-travel" aria-hidden="true"><span class="gap-thumb"><i></i><output id="trackVal">1</output><i></i></span></span>
+      <button class="gap-step next" type="button" aria-label="Увеличить зазор"></button>
+    </span><span class="lbl">сетка</span><button data-lat="tri" class="on">ромбы</button><button data-lat="sq">квадрат</button><span class="lbl">ячейка</span>
     <button data-cell="1">1</button><button data-cell="2">2</button><button data-cell="3">3</button><button data-cell="4" class="on">4</button><button data-cell="6">6</button><button data-cell="8">8</button><button data-cell="16">16</button>
   </div>
 </header>
@@ -296,6 +343,14 @@ const trackKey = 'azbuk-track-cells';
 const savedTrack = Number(localStorage.getItem(trackKey) ?? 1);
 let track = Number.isSafeInteger(savedTrack) && savedTrack >= 0 ? savedTrack : 1;
 const trackVal = document.getElementById('trackVal');
+const trackControl = document.getElementById('trackControl');
+function updateTrackDisplay() {
+  trackVal.textContent = trk.value;
+  const position = (trk.valueAsNumber - Number(trk.min)) / (Number(trk.max) - Number(trk.min));
+  trackControl.style.setProperty('--position', position * 100 + '%');
+  trackControl.classList.toggle('value-left', position > 0.5);
+}
+
 
 function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
@@ -418,9 +473,10 @@ function renderSheet(cell) {
     Math.max(...G[activeSet][ch].map(row => row.length)));
   trk.max = Math.max(1, ...letterWidths);
   trk.value = track;
-  trackVal.textContent = trk.value;
+  updateTrackDisplay();
   renderHeading();
-  document.querySelectorAll('.bar button, .tools button, #editLabel').forEach(button => {
+  renderThemeList();
+  document.querySelectorAll('.bar button:not(.gap-step):not(.theme-option), .tools button, #editLabel').forEach(button => {
     const label = button.getAttribute('aria-label') || button.textContent;
     renderButtonLabel(button, label);
   });
@@ -578,8 +634,59 @@ function applyTheme(i) {
   localStorage.setItem('azbuk-theme', String(themeIdx));
   const btn = document.getElementById('theme');
   renderButtonLabel(btn, 'цвет: ' + t.name);
+  renderThemeList();
 }
-document.getElementById('theme').addEventListener('click', () => applyTheme(themeIdx + 1));
+const themeList = document.getElementById('themeList');
+const themeButton = document.getElementById('theme');
+THEMES.forEach((theme, i) => {
+  const option = document.createElement('button');
+  option.type = 'button';
+  option.className = 'theme-option';
+  option.setAttribute('role', 'option');
+  option.addEventListener('click', () => applyTheme(i));
+  themeList.append(option);
+});
+function renderThemeList() {
+  [...themeList.children].forEach((option, i) => {
+    const offset = ((i - themeIdx + THEMES.length + THEMES.length / 2) % THEMES.length) - THEMES.length / 2;
+    renderButtonLabel(option, THEMES[i].name);
+    option.setAttribute('aria-selected', String(i === themeIdx));
+    option.tabIndex = i === themeIdx ? 0 : -1;
+    option.style.transform = 'translateY(' + offset * 28 + 'px) rotateX(' + offset * -20 + 'deg)';
+    option.style.opacity = Math.abs(offset) <= 2 ? 1 - Math.abs(offset) * 0.2 : 0;
+    option.style.visibility = Math.abs(offset) <= 2 ? 'visible' : 'hidden';
+  });
+}
+function showThemeList(open) {
+  themeList.hidden = !open;
+  themeButton.setAttribute('aria-expanded', String(open));
+}
+themeButton.addEventListener('click', () => showThemeList(themeList.hidden));
+themeList.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (e.deltaY) applyTheme(themeIdx + Math.sign(e.deltaY));
+}, { passive: false });
+themeList.addEventListener('keydown', e => {
+  if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
+    e.preventDefault();
+    const target = { ArrowDown: themeIdx + 1, ArrowUp: themeIdx - 1, Home: 0, End: THEMES.length - 1 };
+    applyTheme(target[e.key]);
+  }
+});
+document.addEventListener('pointerdown', e => {
+  if (!e.target.closest('.theme-picker')) showThemeList(false);
+});
+document.querySelector('.theme-picker').addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    showThemeList(false);
+    themeButton.focus();
+  }
+  if (e.target === themeButton && ['ArrowDown', 'ArrowUp'].includes(e.key)) {
+    e.preventDefault();
+    showThemeList(true);
+    themeList.focus();
+  }
+});
 if (typeof applyTheme === 'function') applyTheme(themeIdx);
 
 renderSheet(cellSize);
@@ -594,9 +701,29 @@ new ResizeObserver(([entry]) => {
 
 trk.addEventListener('input', () => {
   track = trk.valueAsNumber;
-  trackVal.textContent = trk.value;
+  updateTrackDisplay();
   localStorage.setItem(trackKey, trk.value);
   renderAlphabet(cellSize);
+});
+
+document.querySelectorAll('.gap-step').forEach(button => {
+  let repeat;
+  const step = () => {
+    if (button.classList.contains('prev')) trk.stepDown();
+    else trk.stepUp();
+    trk.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const stop = () => clearTimeout(repeat);
+  const again = () => { step(); repeat = setTimeout(again, 90); };
+  button.addEventListener('click', step);
+  button.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    button.setPointerCapture(e.pointerId);
+    repeat = setTimeout(again, 400);
+  });
+  button.addEventListener('pointerup', stop);
+  button.addEventListener('pointercancel', stop);
+  button.addEventListener('lostpointercapture', stop);
 });
 
 if (location.search.includes('edit')) {
