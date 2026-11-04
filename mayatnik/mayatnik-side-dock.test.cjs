@@ -7,7 +7,7 @@ async function fixture(t,options={}){
  const executablePath=process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe';if(!fs.existsSync(executablePath)){t.skip('Chrome unavailable');return;}
  const browser=await chromium.launch({executablePath,headless:true});t.after(()=>browser.close());
  const context=await browser.newContext({viewport:{width:1280,height:900},...options}),page=await context.newPage();
- await page.setContent('<!doctype html><html><body class="mayatnik-menu-ready"><div id="mayRhombs"><button id="mayRhZoomIn" class="may-rh may-rh-zoom">+</button><button id="mayRhZoomOut" class="may-rh may-rh-zoom">−</button><button id="mayRhZen" class="may-rh">◎\nДзен</button><button id="mayRhRec" class="may-rh">⏺\nВидео</button><button id="mayRhGif" class="may-rh">GIF</button></div><div id="mayTemplateLauncher"><button id="bTemplatePanel" class="pt-l" aria-expanded="false"><svg class="may-template-diamond" viewBox="0 0 24 48"><path d="M23.5 1V47L1 24Z"/></svg><svg class="may-template-puzzle"></svg></button></div><div id="mayMobileBar"></div><div id="mayatnikTemplatePanel" hidden></div></body></html>');
+ await page.setContent('<!doctype html><html><body class="mayatnik-menu-ready"><div id="mayRhombs"><button id="mayRhZoomIn" class="may-rh may-rh-zoom">+</button><button id="mayRhZoomOut" class="may-rh may-rh-zoom">в€’</button><button id="mayRhZen" class="may-rh">в—Ћ\nР”Р·РµРЅ</button><button id="mayRhRec" class="may-rh">вЏє\nР’РёРґРµРѕ</button><button id="mayRhGif" class="may-rh">GIF</button></div><div id="mayTemplateLauncher"><button id="bTemplatePanel" class="pt-l" aria-expanded="false"><svg class="may-template-diamond" viewBox="0 0 24 48"><path d="M23.5 1V47L1 24Z"/></svg><svg class="may-template-puzzle"></svg></button></div><div id="mayMobileBar"></div><div id="mayatnikTemplatePanel" hidden></div></body></html>');
  for(const file of ['mayatnik-menu.css','mayatnik-template-panel.css','mayatnik-side-dock.css'])await page.addStyleTag({path:path.join(root,file)});
  await page.evaluate(ids=>{window.nativeNodes=ids.map(id=>document.getElementById(id));window.nativeParents=nativeNodes.map(n=>n.parentElement);window.clicks=[];for(const n of nativeNodes)n.addEventListener('click',()=>clicks.push(n.id));document.querySelector('#bTemplatePanel').onclick=()=>{const p=document.querySelector('#mayatnikTemplatePanel');p.hidden=!p.hidden;document.body.classList.toggle('may-template-panel-open',!p.hidden);};},IDS);
  await page.addScriptTag({path:path.join(root,'mayatnik-side-dock.js')});
@@ -21,21 +21,22 @@ function checkGeometry(items,height,selected=[null,null]){
   const nodes=items.slice(group*3,group*3+3),base=height*(group?.75:.5);
   assert.ok(Math.abs(nodes[1].y-base)<.1);
   for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)assert.ok(separate(nodes[i],nodes[j]),nodes[i].id+' overlaps '+nodes[j].id);
-  if(selected[group]!==null){for(let i=0;i<3;i++)assert.equal(Math.round(1280-nodes[i].left-48),i===selected[group]?2:-24);}
+  for(let i=0;i<3;i++)assert.equal(Math.round(1280-nodes[i].left-48),i===1?-26:2);
+  assert.equal(nodes[1].y-nodes[0].y,26);assert.equal(nodes[2].y-nodes[1].y,26);
  }
 }
-test('native flex dock has staggered groups at 50/75%, hover/focus expands each command and never opens library',{timeout:60000},async t=>{
+test('native flex dock has staggered groups at 50/75%, hover/focus preserves both triplets and never opens library',{timeout:60000},async t=>{
  const page=await fixture(t);if(!page)return;
  await page.mouse.move(600,100);const initial=await boxes(page);checkGeometry(initial,900);
  assert.deepEqual(initial.map(b=>b.position),['fixed','relative','fixed','relative','relative','relative']);
- assert.deepEqual(initial.map(b=>Math.round(1280-b.left-48)),[2,-24,2,2,-24,2]);
+ assert.deepEqual(initial.map(b=>Math.round(1280-b.left-48)),[2,-26,2,2,-26,2]);
  assert.equal(await page.locator('#mayRhombs').evaluate(n=>getComputedStyle(n).display),'flex');
  assert.equal(await page.locator('.may-template-puzzle').evaluate(n=>getComputedStyle(n).zIndex),'1','native glyph paints above the added filled contour');
  for(let index=0;index<6;index++){
   await page.mouse.move(600,100);const base=(await boxes(page))[index];
-  await page.mouse.move(Math.min(1278,base.left+12),base.y);const hovered=await boxes(page),selected=[null,null];selected[Math.floor(index/3)]=index%3;checkGeometry(hovered,900,selected);
+  await page.mouse.move(Math.min(1278,base.left+12),base.y);const hovered=await boxes(page),selected=[null,null];selected[Math.floor(index/3)]=index%3;checkGeometry(hovered,900,selected);assert.deepEqual(hovered,initial);
   assert.equal(hovered[index].y,base.y);assert.equal(await page.locator('#mayatnikTemplatePanel').evaluate(n=>n.hidden),true);
-  await page.mouse.move(600,100);await page.keyboard.press('Tab');await page.locator('#'+IDS[index]).focus();checkGeometry(await boxes(page),900,selected);
+  await page.mouse.move(600,100);await page.keyboard.press('Tab');await page.locator('#'+IDS[index]).focus();checkGeometry(await boxes(page),900,selected);assert.deepEqual(await boxes(page),initial);
   await page.locator('#'+IDS[index]).blur();
  }
  assert.equal(await page.evaluate(()=>nativeNodes.every((n,i)=>n===document.getElementById(n.id)&&n.parentElement===nativeParents[i])),true);

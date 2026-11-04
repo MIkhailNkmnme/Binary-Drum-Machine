@@ -1,14 +1,14 @@
 /* Keep #mayRhombs' native flex tree, fixed zoom buttons and relative lower buttons.
-   48px diamonds, 26px stagger and 25px vertical step leave ~2px along the diagonals. */
+   48px diamonds stay fixed: 28px stagger and 26px vertical step leave ~4px gaps. */
 .may-side-library-outline{display:none}
-body.may-side-dock-ready:not(.may-mobile-menu){--may-side-a0:0;--may-side-a1:1;--may-side-a2:0;--may-side-b0:0;--may-side-b1:1;--may-side-b2:0;--may-side-a0-top:-49px;--may-side-a2-top:1px;--may-side-b-top:-49px;--may-side-b-gap1:-23px;--may-side-b-gap2:-23px}
+body.may-side-dock-ready:not(.may-mobile-menu){--may-side-a0:0;--may-side-a1:1;--may-side-a2:0;--may-side-b0:0;--may-side-b1:1;--may-side-b2:0;--may-side-a0-top:-50px;--may-side-a2-top:2px;--may-side-b-top:-50px;--may-side-b-gap1:-22px;--may-side-b-gap2:-22px}
 body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs{top:calc(75% + var(--may-side-b-top));bottom:auto;right:2px;transform:none;gap:0}
-body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhZoomIn{top:calc(50% + var(--may-side-a0-top));right:calc(2px - 26px * var(--may-side-a0));padding-right:calc(24px * var(--may-side-a0))}
-body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhZoomOut{top:calc(50% + var(--may-side-a2-top));right:calc(2px - 26px * var(--may-side-a2));padding-right:calc(24px * var(--may-side-a2))}
-body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhZen{left:calc(26px * var(--may-side-b0));padding-right:calc(24px * var(--may-side-b0))}
-body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhRec{left:calc(26px * var(--may-side-b1));margin-top:var(--may-side-b-gap1);padding-right:calc(24px * var(--may-side-b1))}
-body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhGif{left:calc(26px * var(--may-side-b2));margin-top:var(--may-side-b-gap2);padding-right:calc(24px * var(--may-side-b2))}
-body.may-side-dock-ready:not(.may-mobile-menu) #mayTemplateLauncher{right:calc(2px - 26px * var(--may-side-a1))!important;width:48px!important;min-width:48px!important;max-width:48px!important}
+body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhZoomIn{top:calc(50% + var(--may-side-a0-top));right:calc(2px - 28px * var(--may-side-a0));padding-right:calc(24px * var(--may-side-a0))}
+body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhZoomOut{top:calc(50% + var(--may-side-a2-top));right:calc(2px - 28px * var(--may-side-a2));padding-right:calc(24px * var(--may-side-a2))}
+body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhZen{left:calc(28px * var(--may-side-b0));padding-right:calc(24px * var(--may-side-b0))}
+body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhRec{left:calc(28px * var(--may-side-b1));margin-top:var(--may-side-b-gap1);padding-right:calc(24px * var(--may-side-b1))}
+body.may-side-dock-ready:not(.may-mobile-menu) #mayRhombs #mayRhGif{left:calc(28px * var(--may-side-b2));margin-top:var(--may-side-b-gap2);padding-right:calc(24px * var(--may-side-b2))}
+body.may-side-dock-ready:not(.may-mobile-menu) #mayTemplateLauncher{right:calc(2px - 28px * var(--may-side-a1))!important;width:48px!important;min-width:48px!important;max-width:48px!important}
 body.may-side-dock-ready:not(.may-mobile-menu) #mayTemplateLauncher>#bTemplatePanel{width:48px!important;min-width:48px!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
 body.may-side-dock-ready:not(.may-mobile-menu) #mayTemplateLauncher .may-template-diamond{display:none}
 body.may-side-dock-ready:not(.may-mobile-menu) #mayTemplateLauncher .may-side-library-outline{display:block;position:absolute;inset:0;width:48px;height:48px;fill:#1b2430;stroke:#6d597f;stroke-width:1px;pointer-events:none}
@@ -17,20 +17,3 @@ body.may-side-dock-ready:not(.may-mobile-menu) #bTemplatePanel:is(:hover,:focus-
 body.may-side-dock-ready:not(.may-mobile-menu) #bTemplatePanel[aria-pressed=true] .may-side-library-outline{stroke-width:2px}
 body.may-side-dock-ready:not(.may-mobile-menu) #bTemplatePanel:active .may-side-library-outline{stroke-width:3px}
 
-/* The selected diamond keeps its original center; only its two neighbours move. */
-body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhZoomIn:focus-visible){--may-side-a2:1;--may-side-a2-top:26px}
-body.may-side-dock-ready:not(.may-mobile-menu):has(#bTemplatePanel:focus-visible){--may-side-a0:1;--may-side-a1:0;--may-side-a2:1}
-body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhZoomOut:focus-visible){--may-side-a0:1;--may-side-a0-top:-74px}
-body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhZen:focus-visible){--may-side-b2:1;--may-side-b-gap2:2px}
-body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhRec:focus-visible){--may-side-b0:1;--may-side-b1:0;--may-side-b2:1}
-body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhGif:focus-visible){--may-side-b0:1;--may-side-b-top:-74px;--may-side-b-gap1:2px}
-@media(hover:hover) and (pointer:fine){
- body.may-side-dock-ready:not(.may-mobile-menu):has(:is(#mayRhZoomIn,#bTemplatePanel,#mayRhZoomOut):hover){--may-side-b0:0;--may-side-b1:1;--may-side-b2:0;--may-side-b-top:-49px;--may-side-b-gap1:-23px;--may-side-b-gap2:-23px}
- body.may-side-dock-ready:not(.may-mobile-menu):has(:is(#mayRhZen,#mayRhRec,#mayRhGif):hover){--may-side-a0:0;--may-side-a1:1;--may-side-a2:0;--may-side-a0-top:-49px;--may-side-a2-top:1px}
- body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhZoomIn:hover){--may-side-a2:1;--may-side-a2-top:26px}
- body.may-side-dock-ready:not(.may-mobile-menu):has(#bTemplatePanel:hover){--may-side-a0:1;--may-side-a1:0;--may-side-a2:1}
- body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhZoomOut:hover){--may-side-a0:1;--may-side-a0-top:-74px}
- body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhZen:hover){--may-side-b2:1;--may-side-b-gap2:2px}
- body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhRec:hover){--may-side-b0:1;--may-side-b1:0;--may-side-b2:1}
- body.may-side-dock-ready:not(.may-mobile-menu):has(#mayRhGif:hover){--may-side-b0:1;--may-side-b-top:-74px;--may-side-b-gap1:2px}
-}
