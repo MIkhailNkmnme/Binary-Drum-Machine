@@ -1171,7 +1171,7 @@
         timer=setTimeout(again,350);
         for(const name of ['pointerup','pointercancel','blur'])addEventListener(name,stop,{signal:listeners.signal});
       });return button;});
-    box.append(arrows[0],middle,arrows[1]);const frame=ZerkControlFrame.attach(box,arrows[0],middle,arrows[1],{input,output,valueInThumb:true});
+    box.append(arrows[0],middle,arrows[1]);const frame=MayatnikHeatPeriodControl.attach(box,arrows[0],middle,arrows[1],input,output);
     const hold=document.createElement('button');
     hold.type='button';
     hold.className='pt-b gz-hx';
