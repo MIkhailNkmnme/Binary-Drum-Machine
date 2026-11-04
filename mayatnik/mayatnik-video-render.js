@@ -76,6 +76,22 @@
     if (signal && signal.aborted) throw new DOMException('Экспорт отменён.', 'AbortError');
   }
 
+  // Coordinates refer to the displayed (pixel-aspect-corrected, rotated) frame.
+  // Round both edges to the nearest pixel and retain at least one pixel per axis.
+  function cropRect(crop, width, height) {
+    if (crop == null) return { left: 0, top: 0, width, height };
+    if (typeof crop !== 'object' || !['x', 'y', 'width', 'height'].every(key => Number.isFinite(crop[key])) ||
+        crop.x < 0 || crop.y < 0 || crop.width <= 0 || crop.height <= 0 ||
+        crop.x + crop.width > 1 || crop.y + crop.height > 1) {
+      throw new Error('Недопустимые границы обрезки кадра.');
+    }
+    const left = Math.min(width - 1, Math.round(crop.x * width));
+    const top = Math.min(height - 1, Math.round(crop.y * height));
+    const right = Math.max(left + 1, Math.min(width, Math.round((crop.x + crop.width) * width)));
+    const bottom = Math.max(top + 1, Math.min(height, Math.round((crop.y + crop.height) * height)));
+    return { left, top, width: right - left, height: bottom - top };
+  }
+
   async function* videoSamples(mb, track, clip, width, height, signal) {
     const { start, end, offset } = clip;
     let previous = null;
@@ -88,12 +104,14 @@
         frame = new mb.VideoSample(new Uint8Array(width * height * 4), {
           format: 'RGBX', codedWidth: width, codedHeight: height, timestamp: 0
         });
-      } else if (previous.codedWidth === width && previous.codedHeight === height &&
+      } else if (!clip.crop && previous.codedWidth === width && previous.codedHeight === height &&
           previous.displayWidth === width && previous.displayHeight === height && !previous.rotation && !previous.flip &&
           !previous.hasAlpha && previous.visibleRect.width === width && previous.visibleRect.height === height) {
         frame = previous.clone();
       } else {
-        frame = await previous.transform({ width, height, fit: 'contain', alpha: 'discard' });
+        // Mediabunny crops after its own rotation/flip handling, before contain scaling.
+        const crop = clip.crop && cropRect(clip.crop, previous.displayWidth, previous.displayHeight);
+        frame = await previous.transform({ width, height, fit: 'contain', alpha: 'discard', ...(crop && { crop }) });
       }
       try {
         frame.setTimestamp(offset + (from - start));
@@ -184,17 +202,18 @@
     const mb = library();
     const plan = [];
     let duration = 0, hasAudio = false;
-    for (const { blob, start, end } of clips) {
+    for (const { blob, start, end, crop } of clips) {
       const info = await inspect(blob);
       check(signal);
       if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end > info.duration + 0.000001 ||
           Math.min(end, info.duration) <= start) throw new Error('Недопустимые границы видеофрагмента.');
       const stop = Math.min(end, info.duration);
-      plan.push({ blob, start, end: stop, offset: duration });
+      const rect = cropRect(crop, info.width, info.height);
+      plan.push({ blob, start, end: stop, offset: duration, crop: crop == null ? null : { ...crop }, rect });
       duration += stop - start;
       hasAudio ||= info.hasAudio;
     }
-    const { width, height } = await inspect(plan[0].blob);
+    const { width, height } = plan[0].rect;
     const codec = await codecs(mb, width, height, hasAudio);
     const file = fileTarget(mb);
     const format = codec.extension === 'mp4' ? new mb.Mp4OutputFormat({ fastStart: false }) : new mb.WebMOutputFormat();
@@ -257,7 +276,7 @@
     } finally { signal?.removeEventListener('abort', abort); }
   }
 
-  const api = { inspect, render };
+  const api = { inspect, render, cropRect };
   root.MayatnikVideoRender = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(globalThis);

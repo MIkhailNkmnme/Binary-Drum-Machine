@@ -33,3 +33,25 @@ test('all short integer timelines agree with an independent per-time-unit cut or
   const actual=[];for(let t=0;t<E.duration(result);t++){const q=E.locate(result,t+.5);actual.push(q.clip.sourceId+':'+Math.floor(q.sourceTime));}assert.deepEqual(actual,expected);
  }
 });
+
+test('spatial crops are per clip, undoable and retained through time edits without changing sources',()=>{
+ const p=E.create(),a=source('a'),b=source('b'),rect={x:.25,y:.125,width:.5,height:.75};p.add(a);p.add(b);
+ assert.equal(p.setCrop(0,rect),true);assert.equal(p.get().duration,20);assert.equal(p.get().clips[1].crop,undefined);
+ rect.width=.1;assert.equal(p.get().clips[0].crop.width,.5);
+ p.get().clips[0].crop.x=0;p.locate(1).clip.crop.height=.1;assert.deepEqual(p.get().clips[0].crop,{x:.25,y:.125,width:.5,height:.75});
+ p.split(4);assert.deepEqual(p.get().clips.slice(0,2).map(c=>c.crop),Array(2).fill({x:.25,y:.125,width:.5,height:.75}));
+ p.setCrop(1,null);assert.equal(p.get().clips[1].crop,undefined);assert.ok(p.get().clips[0].crop);p.undo();assert.ok(p.get().clips[1].crop);p.redo();assert.equal(p.get().clips[1].crop,undefined);
+ p.cut(1,3);assert.deepEqual(p.get().clips.slice(0,2).map(c=>[c.start,c.end]),[[0,1],[3,4]]);assert.deepEqual(p.get().clips[0].crop,p.get().clips[1].crop);
+ p.move(0,1);p.keep(0,2);assert.ok(p.get().clips.every(c=>c.crop));assert.equal(p.get().sources[0].blob,a.blob);assert.equal(a.crop,undefined);
+});
+
+test('invalid and subpixel crop rectangles leave history unchanged; full frame removes crop',()=>{
+ const p=E.create();p.add(source('a'));const before=p.get();
+ for(const rect of [{x:-.1,y:0,width:.5,height:1},{x:.8,y:0,width:.5,height:1},{x:0,y:0,width:0,height:1},{x:0,y:NaN,width:.5,height:.5},{x:0,y:0,width:1/2560,height:1}]){
+  assert.throws(()=>p.setCrop(0,rect));assert.deepEqual(p.get(),before);
+ }
+ assert.equal(p.setCrop(-1,{x:0,y:0,width:1,height:1}),false);
+ assert.equal(p.setCrop(0,{x:0,y:0,width:1,height:1}),false);
+ assert.equal(p.setCrop(0,{x:0,y:0,width:1/1280,height:1/720}),true);
+ assert.equal(p.setCrop(0,{x:0,y:0,width:1,height:1}),true);assert.equal(p.get().clips[0].crop,undefined);p.undo();assert.equal(p.get().clips[0].crop.width,1/1280);
+});

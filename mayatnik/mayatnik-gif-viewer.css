@@ -7,6 +7,17 @@
 #mayGifDialog img{display:block;width:100%;height:calc(100% - 32px);object-fit:contain;image-rendering:pixelated;background:#000}
 #mayGifDialog .may-video-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:4px 0}
 #mayGifDialog .may-video-editor video{display:block;width:100%;height:min(42dvh,400px);object-fit:contain;background:#000}
+#mayGifDialog .may-video-stage{position:relative;overflow:hidden}
+#mayGifDialog .may-video-crop-layer{position:absolute;overflow:hidden;touch-action:none;cursor:crosshair;user-select:none}
+#mayGifDialog .may-video-crop-box{position:absolute;box-sizing:border-box;border:2px solid #73e4a5;box-shadow:0 0 0 2000px #0009;cursor:move;touch-action:none}
+#mayGifDialog .may-video-crop-box:focus-visible{outline:2px solid white;outline-offset:-5px}
+#mayGifDialog .may-video-crop-handle{position:absolute;width:18px;height:18px;border:2px solid #fff;box-sizing:border-box;background:#1b2430;z-index:1}
+#mayGifDialog .may-video-crop-handle[data-corner=nw]{left:-2px;top:-2px;cursor:nwse-resize}
+#mayGifDialog .may-video-crop-handle[data-corner=ne]{right:-2px;top:-2px;cursor:nesw-resize}
+#mayGifDialog .may-video-crop-handle[data-corner=sw]{left:-2px;bottom:-2px;cursor:nesw-resize}
+#mayGifDialog .may-video-crop-handle[data-corner=se]{right:-2px;bottom:-2px;cursor:nwse-resize}
+#mayGifDialog .may-video-crop-info{margin:2px 0;color:#b8d8c5;min-height:1.4em}
+#mayGifDialog .may-video-row .mtp-command[aria-pressed=true]::after{opacity:1;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%,10px 0,11px 2px,3px 50%,11px calc(100% - 2px),calc(100% - 11px) calc(100% - 2px),calc(100% - 3px) 50%,calc(100% - 11px) 2px,11px 2px)}
 #mayGifDialog .may-video-editor input[type=range]{flex:1;min-width:100px;accent-color:#73e4a5}
 #mayGifDialog .may-video-editor input[type=number]{box-sizing:border-box;width:92px;height:24px;border:1px solid #64746b;border-radius:0;background:#080b10;color:inherit}
 #mayGifDialog .may-video-editor output{font-variant-numeric:tabular-nums;white-space:nowrap}
