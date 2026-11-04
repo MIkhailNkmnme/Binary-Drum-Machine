@@ -9,8 +9,9 @@ before(async()=>{
  browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
  page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));
  await page.route('http://xor.test/**',async route=>{
-  const file=new URL(route.request().url()).pathname.endsWith('mayatnik-gif.js')?path.join(__dirname,'../../mayatnik/mayatnik-gif.js'):(process.env.XOR_TEST_HTML||path.join(__dirname,'index.html'));
-  await route.fulfill({contentType:file.endsWith('.js')?'text/javascript':'text/html',body:fs.readFileSync(file)});
+  const name=path.basename(new URL(route.request().url()).pathname);
+  const file=name==='mayatnik-gif.js'?path.join(__dirname,'../../mayatnik/mayatnik-gif.js'):['xor-space.js','xor-space.css'].includes(name)?path.join(__dirname,name):(process.env.XOR_TEST_HTML||path.join(__dirname,'index.html'));
+  await route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body:fs.readFileSync(file)});
  });
  await page.addInitScript(()=>{window.__raf=new Map();let id=0;window.requestAnimationFrame=f=>{__raf.set(++id,f);return id;};window.cancelAnimationFrame=id=>__raf.delete(id);});
  await page.goto('http://xor.test/issledovanie/xor-axes/index.html');
@@ -159,4 +160,47 @@ test('one-centre arrangements have 256 results, or 24 crosses; global-rotation c
   const count=angles=>Object.fromEntries(['xor','union'].map(mode=>{const exact=new Set(),rotated=new Set();for(const turn of angles){const cells=fieldCells(pack([0,1,2,3],turn),0,null,mode);exact.add(Array.from(cells).join(''));rotated.add(canonical(cells));}return [mode,[exact.size,rotated.size]];}));
   return {all:count(Array.from({length:256},(_,n)=>[0,1,2,3].map(i=>Math.floor(n/4**i)%4))),cross:count(orders)};
  });assert.deepEqual(counts,{all:{xor:[256,64],union:[256,64]},cross:{xor:[24,6],union:[24,6]}});
+});
+test('finite modes contain every 2D arrangement once and export their whole cycle',async()=>{
+ const result=await page.evaluate(()=>{
+  const totals={};
+  for(const motion of ['unique','cross24'])for(const effect of ['union','xor','compare'])for(const start of [0,7]){
+   const config={...settings(),variant:sequenceVariant(start,motion),selected:null,mode:'xor',motion,effect,speed:4,radius:0,offsets:Array.from({length:4},()=>({x:0,y:0}))},frames=plan(config),count=sequenceTotal(motion),paired=effect==='compare';
+   if(frames.length!==count*(paired?2:1)||frames.at(-1).end!==count*25)throw Error('Wrong full duration/count');
+   const seen=new Set();for(let i=0;i<frames.length;i+=paired?2:1){const f=frames[i],index=sequenceIndex(f.variant,motion);if(index!==(start+i/(paired?2:1))%count)throw Error('Wrong order');seen.add(f.variant);if(paired&&frames[i+1].variant!==f.variant)throw Error('Comparison mismatch');if(usesTemporalXor(config,f))throw Error('Temporal XOR in enumeration');if(motion==='cross24'&&new Set(unpack(f.variant).turn).size!==4)throw Error('Not perpendicular');}
+   if(seen.size!==count)throw Error('Repeated arrangement');totals[motion]=seen.size;
+  }return totals;
+ });assert.deepEqual(result,{unique:256,cross24:24});
+});
+test('finite controls and live counters visit every frame even after delayed callbacks',async()=>{
+ for(const [motion,totalCount]of [['unique',256],['cross24',24]]){
+  await page.locator('#resetAll').click();await page.locator('[data-motion="'+motion+'"]').click();
+  assert.equal(await page.locator('#frameTotal').textContent(),String(totalCount));assert.equal(await page.locator('#frame').getAttribute('max'),String(totalCount));
+  await page.locator('#frame').fill(String(totalCount));await page.locator('#frame').dispatchEvent('input');assert.equal(await page.locator('#frameNow').textContent(),String(totalCount));
+  await page.locator('#frameDown').click();assert.equal(await page.locator('#frameNow').textContent(),String(totalCount-1));
+  await page.locator('#frame').fill('1');await page.locator('#frame').dispatchEvent('input');
+  const checked=await page.evaluate(({motion,totalCount})=>{
+   setSpeed(10000);if(speed!==25)throw Error('Missing speed cap');filmEffect='compare';playFilm();let now=performance.now(),seen=[];
+   for(let i=0;i<totalCount*2;i++){now+=1000;const cb=[...__raf.values()][0];__raf.clear();cb(now);const n=Number($('frameNow').textContent);if(n!==Math.floor(i/2)+1)throw Error('Skipped frame '+i+' => '+n);if($('frameTotal').textContent!==String(totalCount))throw Error('Wrong total');if(window.xorSpaceSnapshot.variant!==lastFilmFrame.variant)throw Error('3D stale frame');if(i%2===0)seen.push(lastFilmFrame.variant);}
+   now+=1000;const cb=[...__raf.values()][0];__raf.clear();cb(now);if($('frameNow').textContent!=='1')throw Error('Cycle did not wrap');stopFilm();return new Set(seen).size;
+  },{motion,totalCount});assert.equal(checked,totalCount);
+ }
+ await page.locator('#resetAll').click();assert.equal(await page.locator('#frameTotal').textContent(),'6144');assert.equal(await page.locator('#rate').getAttribute('max'),'1000');
+});
+test('integrated third axis, projections and camera follow the displayed sequence without pausing it',async()=>{
+ await page.locator('#resetAll').click();const bits=await page.locator('#bits').getAttribute('d');
+ await page.locator('.xs-figure select').nth(0).selectOption('+Z');await page.locator('.xs-figure select').nth(1).selectOption('-Z');
+ let model=await page.evaluate(()=>window.xorSpaceView.getModel());assert.ok(model.cells.some(c=>c.p[2]>0));assert.ok(model.cells.some(c=>c.p[2]<0));assert.equal(await page.locator('#bits').getAttribute('d'),bits);
+ for(const plane of ['XY','XZ','YZ'])assert.ok(Number(await page.locator('canvas[data-plane="'+plane+'"]').getAttribute('data-cells'))>0);
+ await page.locator('[data-motion="cross24"]').click();await page.locator('#play').click();
+ const before=await page.evaluate(()=>window.xorSpaceView.getState().camera);const canvas=page.locator('.xs-main');await canvas.scrollIntoViewIfNeeded();const box=await canvas.boundingBox();
+ await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+50,box.y+box.height/2+20);await page.mouse.up();await page.mouse.wheel(0,-120);
+ const after=await page.evaluate(()=>({camera:window.xorSpaceView.getState().camera,playing:!!animation}));assert.notDeepEqual(after.camera,before);assert.equal(after.playing,true);
+ await page.locator('#play').click();await page.locator('#frame').fill('3');await page.locator('#frame').dispatchEvent('input');assert.equal(await page.locator('#frameNow').textContent(),'3');
+ assert.equal(await page.evaluate(()=>window.xorSpaceSnapshot.variant===state.variant),true);
+ await page.setViewportSize({width:390,height:900});await page.locator('#spaceMount').scrollIntoViewIfNeeded();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.locator('#spaceMount').screenshot({path:process.env.XOR_SPACE_SCREENSHOT||path.join(require('node:os').tmpdir(),'xor-space-014-integrated.png')});
+ await page.reload();assert.deepEqual(await page.evaluate(()=>window.xorSpaceView.getState().assignments.slice(0,2).map(a=>a.direction)),['+Z','-Z']);
+ await page.locator('.xs-reset').click();model=await page.evaluate(()=>window.xorSpaceView.getModel());assert.ok(model.cells.every(c=>c.p[2]===0));await page.setViewportSize({width:1100,height:900});
 });
