@@ -133,7 +133,7 @@
         arrows: ['−1', '+1'] } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: GROUP_COLOURS['rail:ochki'], items: [
-      button('bOchki', 'eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
+      button('bOchki', 'eye'), button('bOchkiThrough','eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: GROUP_COLOURS['rail:zoom'], items: [
@@ -1554,7 +1554,13 @@
   if(window.MayatnikMirrorControls){
     const compactKey=node=>{const owner=node.closest('[data-id],.pt-g'),group=owner?.dataset.id||owner?.dataset.k||owner?.querySelector('.may-group-title')?.textContent.trim()||'';const parent=node.parentElement,peers=parent?[...parent.children].filter(n=>n.matches('button,.gz-hx,[role="button"]')):[];return node.dataset.n?'group:'+group+':data:'+node.dataset.n:'group:'+group+':parent:'+(parent?.id||parent?.className||'')+':slot:'+peers.indexOf(node);};
     const compactBefore=new Map([...tools.querySelectorAll('button.gz-hx,[data-n]'),...rail.el.querySelectorAll('.gz-hx')].map(node=>[node,compactKey(node)]));
-    const ochki=rail.el.querySelector('.gz-group[data-id="ochki"]')||tools.querySelector('.gz-group[data-id="ochki"]');if(ochki&&!manualLegacyCells.has('ochki'))manualLegacyCells.set('ochki',[...ochki.querySelectorAll('.gz-soty > .gz-hx')]);
+    const ochki=rail.el.querySelector('.gz-group[data-id="ochki"]')||tools.querySelector('.gz-group[data-id="ochki"]');
+    // Append the new command to legacy pin ordinals while keeping it beside Search in the DOM.
+    if(ochki&&!manualLegacyCells.has('ochki')){
+      const through=railSourceButtons.get('bOchkiThrough'),cells=[...ochki.querySelectorAll('.gz-soty > .gz-hx')];
+      if(through)through.dataset.n='bOchkiThrough';
+      manualLegacyCells.set('ochki',through&&cells.includes(through)?[...cells.filter(cell=>cell!==through),through]:cells);
+    }
     const legacy=manualLegacyCells.get('mirrors')||[];
     if(legacy[0]){legacy[0].dataset.n='mayMirAxis';legacy[0].dataset.mayPinGroup='mirrors';legacy[0].dataset.mayPinIndex='0';}
     if(legacy[1]){legacy[1].dataset.n='mayContour';legacy[1].dataset.mayPinGroup='mirrors';legacy[1].dataset.mayPinIndex='1';

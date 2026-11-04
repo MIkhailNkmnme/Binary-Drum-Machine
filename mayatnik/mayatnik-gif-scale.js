@@ -28,11 +28,11 @@
   }
   function validateAll(source,options={}){
     const p=validate(source,options),area=p.width*p.height;
-    if(area*p.levels.length*8>600000000)throw Error('Для восьми видов GIF выберите степени 2 или уменьшите число строк');
-    // Both presentations share each reduced bit grid. The worker keeps only two
-    // encoders active. Reserve room for the source, output, palette/LZW scratch.
+    if(area*p.levels.length*4>600000000)throw Error('Для четырёх видов GIF выберите степени 2 или уменьшите число строк');
+    // One reduced bit grid per method and level; one encoder stays active.
+    // Keep a conservative reserve for the source, output, palette/LZW scratch.
     const grids=source.bits?p.levels.reduce((bytes,h)=>bytes+h*(Math.ceil(p.width*h/p.height)+3*Math.max(1,Math.round(p.width*h/p.height))),0):0;
-    if(grids+area*32>384*1024*1024)throw Error('Восьми видам GIF не хватит памяти. Выберите степени 2 или уменьшите число строк');
+    if(grids+area*32>384*1024*1024)throw Error('Четырём видам GIF не хватит памяти. Выберите степени 2 или уменьшите число строк');
     return p;
   }
   function prepare(source,p,background=[0,0,0]){
@@ -118,10 +118,10 @@
           // Static frame plus animation (the same compressed image + controls).
           // Actual compressed size, never an average compression assumption.
           encodedBytes+=2*blob.size+16;
-          if(all&&encodedBytes>256*1024*1024)throw Error('Восемь GIF превышают 256 МиБ. Выберите степени 2 или уменьшите число строк');
+          if(all&&encodedBytes>256*1024*1024)throw Error('Четыре GIF превышают 256 МиБ. Выберите степени 2 или уменьшите число строк');
           return {presentation,blob,bounds};
         });
-        // Transfer the small grid once per pair. Keep the 1:1 source for later methods.
+        // Transfer each reduced grid once. Keep the 1:1 source for later methods.
         const grid=small.bits===bits&&bits?bits.slice():small.bits;
         done+=frames.length;
         postMessage({method,rows,width:small.width,frames,bits:grid,done,total},grid?[grid.buffer]:[]);
@@ -133,7 +133,7 @@
   function start(source,options,all){
     const p=all?validateAll(source,options):validate(source,options);
     const methods=all?['canvas','nearest','majority','average']:[options.method||'canvas'];
-    const presentations=all?['pixels','scale']:[options.presentation===undefined?'pixels':options.presentation];
+    const presentations=all?['pixels']:[options.presentation===undefined?'pixels':options.presentation];
     const delay=delayTicks(options.delay);
     if(!globalThis.MayatnikGif?.encoder)throw Error('Кодировщик GIF не загружен');
     const code=[prepare,reduceCanvas,reduce,enlarge,center,globalThis.MayatnikGif.encoder,renderJob].map(fn=>fn.toString()).join('\n')+

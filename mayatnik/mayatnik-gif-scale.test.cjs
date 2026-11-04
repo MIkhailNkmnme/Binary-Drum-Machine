@@ -41,7 +41,7 @@ test('presentation validation rejects unknown values and defaults to the full-si
 test('preflight rejects malformed input and huge work without silently changing output dimensions',()=>{assert.throws(()=>S.plan(0,1),/размер/);assert.throws(()=>S.plan(1,1,'bad'),/последовательность/);assert.throws(()=>S.validate({width:8,height:8,pixels:rgba([0])}),/повреждены/);assert.throws(()=>S.validate({width:4096,height:2048,pixels:{length:4096*2048*4}}),/степени/);assert.equal(S.validate({width:4096,height:2048,pixels:{length:4096*2048*4}},{sequence:'powers2'}).height,2048);});
 // Execute the production Blob worker in a real Node worker thread; no browser.
 class ThreadWorker{
- constructor(url){this.queue=[];this.closed=false;this.ready=fetch(url).then(r=>r.text()).then(code=>{if(this.closed)return;const {Worker}=require('node:worker_threads');this.worker=new Worker("const {parentPort}=require('node:worker_threads');globalThis.postMessage=v=>parentPort.postMessage(v);parentPort.on('message',data=>globalThis.onmessage({data}));\n"+code,{eval:true});this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));for(const args of this.queue)this.worker.postMessage(...args);}).catch(error=>this.onerror?.(error));}
+ constructor(url,transform=code=>code){this.queue=[];this.closed=false;this.ready=fetch(url).then(r=>r.text()).then(code=>{if(this.closed)return;const {Worker}=require('node:worker_threads');this.worker=new Worker("const {parentPort}=require('node:worker_threads');globalThis.postMessage=v=>parentPort.postMessage(v);parentPort.on('message',data=>globalThis.onmessage({data}));\n"+transform(code),{eval:true});this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));for(const args of this.queue)this.worker.postMessage(...args);}).catch(error=>this.onerror?.(error));}
  postMessage(...args){if(this.worker)this.worker.postMessage(...args);else this.queue.push(args);}
  terminate(){this.closed=true;this.worker?.terminate();}
 }
@@ -83,29 +83,34 @@ test('semantic sampling follows the selected source index or contributing colour
 test('aggregate preflight bounds computation and map memory, and rejects malformed semantic values',()=>{
  const mock=(width,height)=>({width,height,pixels:{length:width*height*4}});
  assert.throws(()=>S.plan(1,Number.MAX_SAFE_INTEGER),/предел GIF/);
- assert.throws(()=>S.validateAll(mock(2047,1024)),/восьми/);
+ // The four-method batch fits where the former eight-animation batch did not.
+ assert.equal(S.validateAll(mock(1024,1024)).height,1024);
+ assert.throws(()=>S.validateAll(mock(2047,1024)),/четырёх/);
  assert.equal(S.validateAll(mock(2047,1024),{sequence:'powers2'}).height,1024);
- assert.throws(()=>S.validateAll(mock(65535,240),{sequence:'powers2'}),/не хватит памяти|восьми/);
+ assert.throws(()=>S.validateAll(mock(65535,240),{sequence:'powers2'}),/не хватит памяти/);
  const large=mock(65535,184);assert.throws(()=>S.validateAll({...large,bits:new Int8Array(large.width*large.height)},{sequence:'powers2'}),/не хватит памяти/);
  for(const bits of [Int8Array.of(0),new Uint8Array(8),Int8Array.of(0,1,0,1,0,1,-2,2)])assert.throws(()=>S.validateAll({...mock(1,8),bits}),/бит/);
 });
-test('one real worker creates eight complete animations from an immutable snapshot; presentations share semantic cells',async()=>{
- let workers=0;globalThis.Worker=class extends ThreadWorker{constructor(url){super(url);workers++;}};globalThis.MayatnikGif=Gif;
+test('one real worker creates only four full-frame animations with exact pixels and semantic cells, without scale work',async()=>{
+ let workers=0;globalThis.Worker=class extends ThreadWorker{
+  constructor(url){super(url,code=>code+'\ncenter=()=>{throw Error("Batch must not render scale presentation");};');workers++;}
+  postMessage(message,...rest){assert.deepEqual(message.presentations,['pixels']);assert.deepEqual(message.methods,['canvas','nearest','majority','average']);super.postMessage(message,...rest);}
+ };globalThis.MayatnikGif=Gif;
  const width=7,height=19,pixels=rgba(Array.from({length:width*height},(_,i)=>i%5*60)),bits=Int8Array.from({length:width*height},(_,i)=>i%4-2);
  const original=pixels.slice(),native=bits.slice(),progress=[],background=[15,30,40];
- const job=S.generateAll({width,height,pixels,bits},{delay:110,background,onProgress:p=>progress.push(p)});pixels.fill(255);bits.fill(0);background.fill(0);
- const {variants,plan}=await job.promise;assert.equal(workers,1);assert.equal(variants.length,8);
- assert.deepEqual(variants.map(v=>v.id),['canvas','nearest','majority','average'].flatMap(m=>[m+'-pixels',m+'-scale']));
- assert.deepEqual(progress.map(p=>p.done),Array.from({length:24},(_,i)=>i+1));assert.ok(progress.every(p=>p.total===24));
+ const job=S.generateAll({width,height,pixels,bits},{presentation:'scale',delay:110,background,onProgress:p=>progress.push(p)});pixels.fill(255);bits.fill(0);background.fill(0);
+ const {variants,plan}=await job.promise;assert.equal(workers,1);assert.equal(variants.length,4);
+ assert.deepEqual(variants.map(v=>v.id),['canvas-pixels','nearest-pixels','majority-pixels','average-pixels']);
+ assert.deepEqual(progress.map(p=>p.done),Array.from({length:12},(_,i)=>i+1));assert.ok(progress.every(p=>p.total===12&&p.presentation==='pixels'));
  const source=S.prepare({pixels:original},plan,[15,30,40]),padded=new Int8Array(width*24).fill(-1);padded.set(native);
- for(let i=0;i<8;i++){
-  const v=variants[i],expected=Gif.encoder(width,24);assert.equal(v.delay,110);assert.deepEqual(v.frames.map(f=>f.rows),[24,16,8]);assert.deepEqual(v.frames[0].semantic.bits,padded);
+ for(let i=0;i<4;i++){
+  const v=variants[i],expected=Gif.encoder(width,24);assert.equal(v.presentation,'pixels');assert.equal(v.delay,110);assert.deepEqual(v.frames.map(f=>f.rows),[24,16,8]);assert.deepEqual(v.frames[0].semantic.bits,padded);
   for(let n=0;n<v.frames.length;n++){
-   const {rows,semantic,blob}=v.frames[n],small=S.reduce(source,width,24,rows,v.method,padded),isScale=v.presentation==='scale';
-   assert.deepEqual(semantic.bits,small.bits);assert.equal(semantic.bits,variants[i^1].frames[n].semantic.bits);
-   assert.deepEqual(semantic.bounds,isScale?{left:Math.floor((width-small.width)/2),top:(24-rows)/2,width:small.width,height:rows}:{left:0,top:0,width,height:24});
+   const {rows,semantic,blob}=v.frames[n],small=S.reduce(source,width,24,rows,v.method,padded);
+   assert.deepEqual(semantic.bits,small.bits);
+   assert.deepEqual(semantic.bounds,{left:0,top:0,width,height:24});
    assert.deepEqual([semantic.width,semantic.height],[small.width,rows]);
-   expected.add(isScale?S.center(small,width,24,[15,30,40]):S.enlarge(small,width,24),11);
+   expected.add(S.enlarge(small,width,24),11);
    assert.deepEqual(Buffer.from(await blob.arrayBuffer()),Buffer.from(await expected.frame().arrayBuffer()));
   }
   assert.deepEqual(Buffer.from(await v.blob.arrayBuffer()),Buffer.from(await expected.finish().arrayBuffer()));
@@ -116,7 +121,7 @@ test('cancelling a batch after receiving its first level rejects once; a batch w
  const source={width:2,height:16,pixels:rgba(new Array(32).fill(0))};
  const prior=await S.generateAll(source).promise;assert.ok(prior.variants.every(v=>v.frames.every(f=>f.semantic===null)));
  const progress=[];const next=S.generateAll(source,{onProgress:p=>{progress.push(p.done);next.cancel();}});
- await assert.rejects(next.promise,{name:'AbortError'});next.cancel();assert.deepEqual(progress,[1]);assert.equal(prior.variants.length,8);
+ await assert.rejects(next.promise,{name:'AbortError'});next.cancel();assert.deepEqual(progress,[1]);assert.equal(prior.variants.length,4);
 });
 test('retime edits only real control delays, skips a false control inside image data and rejects truncated records',async()=>{
  const make=t=>{const gif=Gif.encoder(2,2);gif.add(rgba([255,0,0,255]),t);gif.add(rgba([0,255,255,0]),t);return gif.finish();};
