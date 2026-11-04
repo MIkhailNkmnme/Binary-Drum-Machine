@@ -129,3 +129,34 @@ test('real clicks clear selection and leave Solo for Variants, including during 
  await page.locator('#tiles .tile').nth(1).click();await page.locator('#field').click({button:'right',position:{x:4,y:4}});assert.equal((await snapshot()).selected,null);
  assert.equal(await page.locator('[data-motion="spin"]').isDisabled(),true);assert.equal(await page.locator('#solo').isDisabled(),true);assert.equal(await page.locator('[data-motion="variants"]').isEnabled(),true);
 });
+test('Cross button joins centres and locks perpendicular orientation through playback and export plans',async()=>{
+ await page.evaluate(()=>{stopFilm();state.variant=1576;state.radius=3;state.selected=1;state.mode='solo';state.offsets[0]={x:2,y:1};filmMotion='spin';filmEffect='union';speed=4;render();});
+ await page.locator('#play').click();await page.locator('[data-motion="cross"]').click();
+ const result=await page.evaluate(()=>{
+  const {order,turn}=unpack(state.variant),original=state.variant;
+  const check=()=>{if(state.radius!==0||state.offsets.some(o=>o.x||o.y)||state.selected!==null||state.mode!=='union'||filmMotion!=='cross')throw Error('Cross not aligned');};check();
+  if(!order.every((id,ray)=>turn[id]===(ray+2)%4))throw Error('Wrong ray directions');
+  let frames=0;
+  for(const speed of [1,4,100,10000])for(const effect of ['xor','union','compare']){
+   const seq=plan({...settings(),speed,effect}),phases=new Set();
+   for(const frame of seq){const v=unpack(frame.variant),delta=(v.turn[0]-turn[0]+4)%4;phases.add(delta);if(v.order.join()!==order.join()||!v.turn.every((t,id)=>(t-turn[id]+4)%4===delta))throw Error('Cross deformed');const cells=fieldCells(frame.variant,0,null,frame.mode);if(cells.filter(c=>c===2).length!==1)throw Error('Separated centres');frames++;}
+   if(phases.size<(speed<=4?4:2))throw Error('Frozen cross at '+speed);
+  }
+  // No individual command may deform the enabled cross.
+  turnFigure(order[0],1);stepRadius(1);stepFrame(1);advance(3);if(state.variant!==original)throw Error('Manual edit escaped cross');
+  return {frames,playing:!!animation};
+ });assert.ok(result.frames>1000);assert.equal(result.playing,true);
+ await page.locator('#play').click();await page.locator('#tiles .tile').nth(0).click();await page.keyboard.press('Escape');
+ assert.equal(await page.locator('[data-motion="cross"]').getAttribute('aria-pressed'),'true');
+ for(const id of ['radius','frame','random','solo','left','swap'])assert.equal(await page.locator('#'+id).isDisabled(),true,id);
+ await page.locator('#allRight').click();assert.equal(await page.evaluate(()=>new Set(unpack(state.variant).turn).size),4);
+ for(const width of [390,1100]){await page.setViewportSize({width,height:900});const box=await page.locator('[data-motion="cross"]').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width,'cross fits viewport');}
+ await page.locator('[data-motion="variants"]').click();assert.equal(await page.locator('#radius').isEnabled(),true);
+});
+test('one-centre arrangements have 256 results, or 24 crosses; global-rotation classes are 64 and 6',async()=>{
+ const counts=await page.evaluate(()=>{
+  const canonical=a=>{let data=Array.from(a),keys=[];for(let t=0;t<4;t++){keys.push(data.join(''));const next=[];for(let y=0;y<size;y++)for(let x=0;x<size;x++)next[x*size+size-1-y]=data[y*size+x];data=next;}return keys.sort()[0];};
+  const count=angles=>Object.fromEntries(['xor','union'].map(mode=>{const exact=new Set(),rotated=new Set();for(const turn of angles){const cells=fieldCells(pack([0,1,2,3],turn),0,null,mode);exact.add(Array.from(cells).join(''));rotated.add(canonical(cells));}return [mode,[exact.size,rotated.size]];}));
+  return {all:count(Array.from({length:256},(_,n)=>[0,1,2,3].map(i=>Math.floor(n/4**i)%4))),cross:count(orders)};
+ });assert.deepEqual(counts,{all:{xor:[256,64],union:[256,64]},cross:{xor:[24,6],union:[24,6]}});
+});
