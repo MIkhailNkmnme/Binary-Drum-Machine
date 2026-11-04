@@ -4,11 +4,11 @@
  const LIMIT=32*1024*1024;
  function levels(width,height,step,mode='rows',base=2){
   step=Math.max(1,Math.floor(Number(step)||1));base=Math.max(2,Math.min(10000,Math.floor(Number(base)||2)));const result=[];
-  const add=rows=>{rows=Math.max(1,Math.floor(rows));if(rows<height&&result.at(-1)?.height!==rows)result.push({height:rows,width:Math.max(1,Math.ceil(width*rows/height-1e-12))});};
+  const add=rows=>{rows=Math.max(8,Math.floor(rows));if(rows<height&&result.at(-1)?.height!==rows)result.push({height:rows,width:Math.max(1,Math.ceil(width*rows/height-1e-12))});};
   if(mode==='powers'||mode==='multiples'){
    for(let n=1;n<=height;n++){const factor=mode==='powers'?base**n:base*n;add(height/factor);if(factor>=height)break;}
-  }else for(let rows=height-step;rows>0;rows-=step)add(rows);
-  if(height>1&&result.at(-1)?.height!==1)add(1);
+  }else for(let rows=height-step;rows>=8;rows-=step)add(rows);
+  if(height>8&&result.at(-1)?.height!==8)add(8);
   return result;
  }
 
@@ -16,11 +16,12 @@
   const host=o.host,doc=host.ownerDocument,win=doc.defaultView,element=doc.createElement('div');
   element.className='may-scale-stack may-scale-stack--window';element.hidden=true;host.append(element);
   const controls=doc.createElement('label'),input=doc.createElement('input'),list=doc.createElement('div');
-  controls.className='may-scale-stack__controls';
+  controls.className='may-scale-stack__controls';controls.addEventListener('pointerdown',e=>e.stopPropagation());controls.addEventListener('pointerup',e=>e.stopPropagation());
   const mode=doc.createElement('select'),baseInput=doc.createElement('input');
   for(const [value,text]of [['powers','Степени x'],['multiples','Кратно x'],['rows','По строкам']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;mode.append(opt);}
   mode.value=o.mode?.()||'rows';mode.setAttribute('aria-label','Вариант уменьшения');baseInput.type='number';baseInput.min='2';baseInput.max='10000';baseInput.step='1';baseInput.value=String(o.base?.()||2);baseInput.setAttribute('aria-label','Число x');baseInput.title='Число x';
-  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';controls.append(mode,baseInput,stepLabel,input);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
+  const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value)});}finally{exportButton.disabled=false;}};
+  const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';controls.append(mode,baseInput,stepLabel,input,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
   let enabled=false,destroyed=false,source=null,pending=null,job=null,timer=null,layout={},zoom=1,items=[],revision=0,lastKey,error=null;
   const schedule=o.schedule||(fn=>win.setTimeout(fn,0)),cancel=o.cancel||(id=>win.clearTimeout(id));
   const fmt=n=>Number(n.toFixed(4)).toLocaleString('ru-RU');

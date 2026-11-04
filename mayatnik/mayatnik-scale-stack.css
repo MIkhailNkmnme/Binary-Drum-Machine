@@ -13,3 +13,5 @@
 .may-scale-stack--window .may-scale-stack__canvas{width:100%;height:auto}
 
 .may-scale-stack__controls select{height:24px;max-width:120px;background:#1b2430;color:#dfe6f5;border:1px solid #40516b;font:inherit}
+
+.may-scale-stack__controls{position:relative;z-index:7}.may-scale-stack__controls button{flex:none;height:24px;font:inherit}

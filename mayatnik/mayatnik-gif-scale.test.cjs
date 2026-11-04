@@ -143,3 +143,9 @@ test('retime preserves logical steps hidden in identical GIF frames, even beyond
 });
 
 test('Rombo GIF digit provenance matches the exact independent raster at every turn and central seam',()=>{const R=require('./mayatnik-rombo.js'),W=9,H=4,bits=Int8Array.from({length:W*H},(_,q)=>q%3-1),data=Uint8ClampedArray.from(Array.from(bits,v=>[v+1,0,0,255]).flat());for(const assembly of R.variants.map(v=>v.id))for(const seam of ['between','dedupe'])for(let angle=0;angle<360;angle+=45){const p=R.plan(W,H,{row:H,angle,assembly,seam},{anchor:4,sides:true}),ratio=2,expected=R.rasterPixels(p,{width:W,height:H,data},ratio),canvas={width:expected.width,height:expected.height,getContext:()=>({getImageData:()=>({data:expected.data})})},c=vm.createContext({st:{edgeRhombOn:true},gpuBig:null,img:{width:W,height:H},RK:1,dispW:()=>W,dispH:()=>H,visibleSemanticBit:q=>bits[q],window:{mayRombo:{capture:()=>canvas,plan:()=>p},mayPixelExact:{exportScale:()=>ratio}}});vm.runInContext(fn('gifScaleBitAt')+fn('captureScaleGifFrame'),c);const result=c.captureScaleGifFrame();assert.deepEqual([...result.bits],Array.from({length:result.bits.length},(_,q)=>expected.data[q*4]-1),assembly+' '+seam+' '+angle);}});
+
+test('custom stack heights retain their exact sequence and reject sub-eight levels',()=>{
+ const source={width:19,height:35,pixels:rgba(Array.from({length:19*35},()=>0))};
+ const p=S.validateAll(source,{sequence:'custom',levels:[35,27,19,11,8]});assert.equal(p.height,35);assert.equal(p.padded,0);assert.deepEqual(p.levels,[35,27,19,11,8]);
+ for(const levels of [[35,1],[35,8,16],[34,8],[35,8,8]])assert.throws(()=>S.validateAll(source,{levels}));
+});

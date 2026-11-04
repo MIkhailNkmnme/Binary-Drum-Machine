@@ -14,7 +14,12 @@
     return {width,height:rows,sourceHeight:height,padded:rows-height,sequence,levels};
   }
   function validate(source,options={}){
-    const p=plan(source.width,source.height,options.sequence);
+    let p;
+    if(options.levels){
+      const levels=options.levels;if(!Array.isArray(levels)||!levels.length||levels[0]!==source.height||levels.some((n,i)=>!Number.isSafeInteger(n)||n<8||n>source.height||i>0&&n>=levels[i-1]))throw Error('Некорректные высоты построений: минимум8строк');
+      p={width:source.width,height:source.height,sourceHeight:source.height,padded:0,sequence:'custom',levels:levels.slice()};
+      if(!Number.isSafeInteger(p.width)||p.width<1||p.width>65535||p.height>65535)throw Error('Неверный размер кадра');
+    }else p=plan(source.width,source.height,options.sequence);
     if(!source.pixels||source.pixels.length!==source.width*source.height*4)throw Error('Пиксели кадра повреждены');
     if(!['canvas','nearest','majority','average'].includes(options.method||'canvas'))throw Error('Неизвестный способ уменьшения');
     if(!['scale','pixels'].includes(options.presentation===undefined?'pixels':options.presentation))throw Error('Неизвестный вид GIF');
