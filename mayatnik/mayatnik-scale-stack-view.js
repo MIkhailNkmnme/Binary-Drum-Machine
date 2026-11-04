@@ -49,6 +49,8 @@
     item.headerHeight=Math.max(24,item.label.offsetHeight+8);item.element.style.paddingTop=item.headerHeight+'px';item.element.style.height=(h+item.headerHeight)+'px';
     if(!item.axis){item.axis=doc.createElement('div');item.axis.className='may-scale-stack__axis';item.axis.setAttribute('aria-hidden','true');item.element.append(item.axis);}
     Object.assign(item.axis.style,{display:layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',top:item.headerHeight+'px',height:h+'px'});
+    if(!item.axisBand){item.axisBand=doc.createElement('div');item.axisBand.className='may-scale-stack__axis-band';item.axisBand.setAttribute('aria-hidden','true');item.element.append(item.axisBand);}
+    const center=smallAxis*item.size.width-.5,col=win.MayatnikAxisColumn?.column(center,item.size.width)??null;Object.assign(item.axisBand.style,{display:layout.axisEnabled===false||col===null?'none':'',left:(col*w/item.size.width)+'px',top:item.headerHeight+'px',width:(w/item.size.width)+'px',height:h+'px'});
     if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}
    }
    overlays();

@@ -21,3 +21,5 @@
 .may-scale-stack__warning{color:#ff5b5b;pointer-events:auto}.may-scale-stack__warning[hidden]{display:none}
 
 .may-scale-stack__controls{flex-wrap:wrap;height:auto;min-height:24px}.may-scale-stack__controls select[aria-label="Высота нижних построений"]{max-width:150px}
+
+.may-scale-stack__axis-band{position:absolute;pointer-events:none;z-index:1;background:color-mix(in srgb,var(--may-axis-primary,#b48cff) 22%,transparent)}

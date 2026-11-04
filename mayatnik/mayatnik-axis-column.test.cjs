@@ -1,0 +1,2 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{column}=require('./mayatnik-axis-column.js');
+test('fractional centre uses only the previous whole column; integral centres stay unchanged',()=>{assert.equal(column(3.5,8),3);assert.equal(column(.5,8),0);assert.equal(column(7.5,8),7);assert.equal(column(3,8),null);assert.equal(column(-.5,8),null);assert.equal(column(8.5,8),null);assert.equal(column(NaN,8),null);});
