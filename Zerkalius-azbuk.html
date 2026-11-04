@@ -1,36 +1,34 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.018</title>
-<!-- АзъБукъ — v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.019</title>
+<!-- АзъБукъ — v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
      v0.002: ручной редактор глифов. Шрифт: буквы на треугольной решётке, как в шапке «Зазеркалиус». -->
 <style>
-  :root{ --bg:#07060b; --ink:#e6dff7; --dim:#8e84a8; --line:rgba(176,108,255,.18); --grid:rgba(176,108,255,.06); --btn:#0c0a14; --btnh:#171029; --btnon:#241a3b; --card:rgba(10,8,19,.6); }
+  :root{ --bg:#040b12; --ink:#39f8ff; --dim:#87bacb; --line:#27afcd; --btn:#071824; --btnh:#0b2637; --btnon:#103c50; --card:#06121c; }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 "Segoe UI",system-ui,sans-serif;
-    background-image:
-      repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 26px),
-      repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 26px)}
+  body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 "Segoe UI",system-ui,sans-serif}
   header{display:flex;align-items:center;gap:18px;padding:16px 26px;border-bottom:1px solid var(--line);flex-wrap:wrap}
   .title{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%}
   #head{min-width:0;height:38px}
   #head svg{max-width:100%;height:auto}
   .pbtn.ver{flex:none;height:20px;padding:0 12px;color:var(--dim)}
   .bar{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  .bar button,.tools button{display:inline-flex;align-items:center;justify-content:center;max-width:100%}
-  .bar button svg,.tools button svg{width:auto;max-width:100%;max-height:18px;pointer-events:none}
+  .bar button,.tools button,#editLabel{display:inline-flex;align-items:center;justify-content:center;max-width:100%}
+  .bar button svg,.tools button svg,#editLabel svg{width:auto;max-width:100%;max-height:18px;pointer-events:none}
   .bar .lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 2px 0 8px}
   button{background:var(--btn);color:var(--ink);border:1px solid var(--line);height:26px;min-width:34px;
     font:11px/1 "Segoe UI";cursor:pointer;padding:0 10px;
     clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 50%,calc(100% - 9px) 100%,9px 100%,0 50%)}
   button:hover{background:var(--btnh);border-color:var(--line)}
   button.on{background:var(--btnon);border-color:var(--line)}
-  main{padding:20px 26px 60px;max-width:1500px;margin:0 auto}
-  section{margin:0 0 26px;padding:14px 18px;border:1px solid var(--line);background:var(--card)}
+  main{width:calc(100% - 52px);max-width:1500px;margin:20px auto 60px;border:1px solid var(--line);background:var(--card)}
+  section{margin:0;padding:14px 18px}
+  #sheet section + section,#editor:not([hidden]) + #sheet{border-top:1px solid var(--line)}
   h2{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin:0 0 12px}
   .row{display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin:0 0 12px}
   .row:last-child{margin-bottom:0}
@@ -46,23 +44,30 @@
   #editor .chars{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 14px;max-height:150px;overflow:auto}
   #editor .chars button{width:34px;padding:0;font-size:12px}
   .work{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
-  .grid{display:grid;gap:2px;background:#0b0813;padding:6px;border:1px solid var(--line);user-select:none;touch-action:none}
-  .cell{width:22px;height:22px;background:#12101c;border:1px solid #1d1930;cursor:pointer}
-  .cell:hover{border-color:rgba(176,108,255,.6)}
-  .cell.on{background:#cfc0ff;border-color:#e6dbff}
+  .grid{display:grid;gap:2px;background:var(--bg);padding:6px;border:1px solid var(--line);user-select:none;touch-action:none}
+  .cell{width:22px;height:22px;background:var(--btn);border:1px solid var(--line);cursor:pointer}
+  .cell:hover{border-color:var(--ink)}
+  .cell.on{background:var(--ink);border-color:var(--ink)}
   .side{display:flex;flex-direction:column;gap:10px}
   .side .tools{display:flex;flex-wrap:wrap;gap:6px;max-width:420px}
   .prev{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
   .note{color:var(--dim);font-size:11px;max-width:420px;line-height:1.5}
+.rainbow svg > g:nth-of-type(7n+1){color:#ff647c}
+.rainbow svg > g:nth-of-type(7n+2){color:#ffac55}
+.rainbow svg > g:nth-of-type(7n+3){color:#ffe66d}
+.rainbow svg > g:nth-of-type(7n+4){color:#78f59a}
+.rainbow svg > g:nth-of-type(7n+5){color:#56e5ff}
+.rainbow svg > g:nth-of-type(7n+6){color:#899bff}
+.rainbow svg > g:nth-of-type(7n+7){color:#d78aff}
 </style>
 
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.018"></span>
+    <span class="pbtn ver" aria-label="v0.019"></span>
   </div>
   <div class="bar">
-    <button id="editToggle">Редактировать</button><button id="theme">цвет: фиолет</button>
+    <button id="editToggle">Редактировать</button><button id="theme">цвет: кибер</button>
     <span class="lbl">толщина</span>
     <button data-set="bold" class="on">обычная</button>
     <button data-set="thin" title="Тонкое начертание букв">тонкая</button>
@@ -73,7 +78,7 @@
 
 <main>
   <section id="editor" hidden>
-    <h2>Правка буквы <span id="editCharName" style="color:#cfc0ff"></span> <span id="editSetName" style="color:#8e84a8"></span></h2>
+    <h2><button id="editLabel" class="pbtn" type="button" title="Выбрать другую букву">Правка буквы А - обычная</button></h2>
     <div class="chars" id="chars"></div>
     <div class="work">
       <div class="grid" id="grid"></div>
@@ -415,7 +420,7 @@ function renderSheet(cell) {
   trk.value = track;
   trackVal.textContent = trk.value;
   renderHeading();
-  document.querySelectorAll('.bar button, .tools button').forEach(button => {
+  document.querySelectorAll('.bar button, .tools button, #editLabel').forEach(button => {
     const label = button.getAttribute('aria-label') || button.textContent;
     renderButtonLabel(button, label);
   });
@@ -448,8 +453,7 @@ function normalize(rows) {
 }
 
 function renderEditor() {
-  document.getElementById('editCharName').textContent = editChar;
-  document.getElementById('editSetName').textContent = activeSet === 'thin' ? '· тонкая' : '· обычная';
+  renderButtonLabel(document.getElementById('editLabel'), 'Правка буквы ' + editChar + ' - ' + (activeSet === 'thin' ? 'тонкая' : 'обычная'));
   const rows = normalize(G[activeSet][editChar] || ['000']);
   const h = rows.length, w = rows[0].length;
   const grid = document.getElementById('grid');
@@ -521,6 +525,10 @@ document.getElementById('download').onclick = () => {
   a.click();
 };
 
+document.getElementById('editLabel').addEventListener('click', () => {
+  document.querySelector('#chars button.on')?.focus();
+});
+
 document.getElementById('editToggle').addEventListener('click', (e) => {
   const ed = document.getElementById('editor');
   ed.hidden = !ed.hidden;
@@ -551,16 +559,21 @@ document.querySelectorAll('.bar [data-cell]').forEach(b => b.addEventListener('c
 }));
 
 const THEMES = [
-  { name: 'фиолет', v: { '--bg': '#07060b', '--ink': '#e6dff7', '--dim': '#8e84a8', '--line': 'rgba(176,108,255,.18)', '--grid': 'rgba(176,108,255,.06)', '--btn': '#0c0a14', '--btnh': '#171029', '--btnon': '#241a3b', '--card': 'rgba(10,8,19,.6)' } },
-  { name: 'золото', v: { '--bg': '#0b0906', '--ink': '#f4e6bd', '--dim': '#a08d63', '--line': 'rgba(217,178,90,.22)', '--grid': 'rgba(217,178,90,.07)', '--btn': '#141008', '--btnh': '#20180a', '--btnon': '#2e2410', '--card': 'rgba(20,15,6,.7)' } },
-  { name: 'бирюза', v: { '--bg': '#050b0b', '--ink': '#d8f6ef', '--dim': '#6f9c96', '--line': 'rgba(79,216,192,.22)', '--grid': 'rgba(79,216,192,.07)', '--btn': '#071413', '--btnh': '#0c2220', '--btnon': '#123029', '--card': 'rgba(6,18,17,.7)' } },
-  { name: 'алый', v: { '--bg': '#0b0506', '--ink': '#f7dcdd', '--dim': '#a07579', '--line': 'rgba(224,85,95,.22)', '--grid': 'rgba(224,85,95,.07)', '--btn': '#14070a', '--btnh': '#200c11', '--btnon': '#2e1218', '--card': 'rgba(20,7,9,.7)' } },
-  { name: 'день', v: { '--bg': '#ecebf3', '--ink': '#181224', '--dim': '#6b6280', '--line': 'rgba(90,60,150,.25)', '--grid': 'rgba(90,60,150,.10)', '--btn': '#ffffff', '--btnh': '#e6e3f2', '--btnon': '#d8d2ee', '--card': 'rgba(255,255,255,.75)' } },
+  { name: 'кибер', v: { '--bg': '#040b12', '--ink': '#39f8ff', '--dim': '#87bacb', '--line': '#27afcd', '--btn': '#071824', '--btnh': '#0b2637', '--btnon': '#103c50', '--card': '#06121c' } },
+  { name: 'плазма', v: { '--bg': '#0c0516', '--ink': '#c38aff', '--dim': '#af92c9', '--line': '#8c42e8', '--btn': '#1a0a2c', '--btnh': '#27123f', '--btnon': '#39175b', '--card': '#12091f' } },
+  { name: 'фуксия', v: { '--bg': '#130511', '--ink': '#ff63dc', '--dim': '#c991bb', '--line': '#d52ca9', '--btn': '#240c20', '--btnh': '#37112f', '--btnon': '#501641', '--card': '#1c0918' } },
+  { name: 'лайм', v: { '--bg': '#080e04', '--ink': '#b6ff46', '--dim': '#a5be80', '--line': '#72ba24', '--btn': '#14210b', '--btnh': '#213311', '--btnon': '#304b17', '--card': '#0e1807' } },
+  { name: 'импульс', v: { '--bg': '#140906', '--ink': '#ff9a47', '--dim': '#d0a183', '--line': '#d46527', '--btn': '#28120b', '--btnh': '#3d1d11', '--btnon': '#562a17', '--card': '#1e0e08' } },
+  { name: 'ЧБ', v: { '--bg': '#ffffff', '--ink': '#000000', '--dim': '#444444', '--line': '#777777', '--btn': '#ffffff', '--btnh': '#eeeeee', '--btnon': '#dddddd', '--card': '#ffffff' } },
+  { name: 'БЧ', v: { '--bg': '#000000', '--ink': '#ffffff', '--dim': '#bbbbbb', '--line': '#888888', '--btn': '#080808', '--btnh': '#181818', '--btnon': '#303030', '--card': '#000000' } },
+  { name: 'радуга', v: { '--bg': '#070913', '--ink': '#dbe5ff', '--dim': '#9ba9d0', '--line': '#6572b9', '--btn': '#11162a', '--btnh': '#1c2440', '--btnon': '#2c3657', '--card': '#0c1020' } }
 ];
-let themeIdx = Number(localStorage.getItem('azbuk-theme') || 0) % THEMES.length;
+const savedTheme = Number(localStorage.getItem('azbuk-theme') || 0);
+let themeIdx = Number.isSafeInteger(savedTheme) ? savedTheme : 0;
 function applyTheme(i) {
   themeIdx = ((i % THEMES.length) + THEMES.length) % THEMES.length;
   const t = THEMES[themeIdx];
+  document.documentElement.classList.toggle('rainbow', t.name === 'радуга');
   for (const k of Object.keys(t.v)) document.documentElement.style.setProperty(k, t.v[k]);
   localStorage.setItem('azbuk-theme', String(themeIdx));
   const btn = document.getElementById('theme');
