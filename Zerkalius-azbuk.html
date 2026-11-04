@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.033</title>
-<!-- АзъБукъ — v0.033. Заголовки разделов алфавита сняты. v0.032. Редактор от 4×4, форма сетки, подсчёт битов и замкнутых пустот, все размеры справа. v0.031. Буквы разделены при любом зазоре, включая нулевой. v0.030. Знаки изменения строк и столбцов над сеткой, действия редактора сверху. v0.029. Выбранная буква выделяется цветом и свечением. v0.028. Число внутри X только при значении по умолчанию 1, иначе сбоку. v0.027. Число зазора зелёное, в покое между половинами X. v0.026. Число сбоку появляется сразу при первом нажатии стрелки. v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.034</title>
+<!-- АзъБукъ — v0.034. Переключатель фоновой сетки поля букв. v0.033. Заголовки разделов алфавита сняты. v0.032. Редактор от 4×4, форма сетки, подсчёт битов и замкнутых пустот, все размеры справа. v0.031. Буквы разделены при любом зазоре, включая нулевой. v0.030. Знаки изменения строк и столбцов над сеткой, действия редактора сверху. v0.029. Выбранная буква выделяется цветом и свечением. v0.028. Число внутри X только при значении по умолчанию 1, иначе сбоку. v0.027. Число зазора зелёное, в покое между половинами X. v0.026. Число сбоку появляется сразу при первом нажатии стрелки. v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -42,7 +42,11 @@
     clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
   .pbtn > svg{position:relative;z-index:1}
   .pbtn:hover{background:var(--btnon)}
+  #sheet{position:relative;isolation:isolate}
+  #sheet .field-grid{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1;opacity:.3}
   #sheet .row > svg{overflow:visible}
+  .bar #fieldGridToggle{width:110px}
+  .bar #fieldGridToggle.on{border-color:var(--ink)}
   #sheet [data-edit-char]{cursor:pointer}
   #sheet [data-edit-char]:hover{opacity:.7}
   #sheet [data-edit-char]:focus-visible,#sheet [data-edit-char].editing{outline:none;color:var(--edit-ink);opacity:1;filter:drop-shadow(0 0 2px var(--edit-glow)) drop-shadow(0 0 4px var(--edit-glow))}
@@ -136,7 +140,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.033"></span>
+    <span class="pbtn ver" aria-label="v0.034"></span>
   </div>
   <div class="bar">
     <button id="editToggle" class="on">Редактировать</button><span class="theme-picker"><button id="theme" aria-haspopup="listbox" aria-expanded="false" aria-controls="themeList">цвет: кибер</button><span id="themeList" class="theme-list" role="listbox" aria-label="Палитры" tabindex="0" hidden></span></span>
@@ -153,7 +157,7 @@
       <button data-lat="tri" class="gz-half gz-h0" title="Ромбы с треугольной сеткой">ромбы</button><button data-lat="sq" class="gz-half gz-h1" title="Квадратная сетка">квадрат</button>
     </span><span class="grid-pair gz-hx gz-pair gz-split gz-cut" role="group" aria-label="Ромбы Зазеркалиуса">
       <button data-lat="rmbl" class="gz-half gz-h0" title="Ромбы Зазеркалиуса: ряды влево">ромб &lt;</button><button data-lat="rmbr" class="gz-half gz-h1" title="Ромбы Зазеркалиуса: ряды вправо">ромб &gt;</button>
-    </span><span class="lbl">ячейка</span>
+    </span><button id="fieldGridToggle" type="button" aria-pressed="false" title="Показать сетку поля с буквами">сетка поля</button><span class="lbl">ячейка</span>
     <button data-cell="1">1</button><button data-cell="2">2</button><button data-cell="3">3</button><button data-cell="4" class="on">4</button><button data-cell="6">6</button><button data-cell="8">8</button><button data-cell="16">16</button>
   </div>
 </header>
@@ -373,6 +377,7 @@ let activeSet = 'bold';
 const savedEditChar = localStorage.getItem('azbuk-edit-char');
 let editChar = Object.hasOwn(G[activeSet], savedEditChar) ? savedEditChar : 'А';
 
+let fieldGridVisible = localStorage.getItem('azbuk-field-grid') === '1';
 const savedLattice = localStorage.getItem('azbuk-lattice');
 let lattice = ['tri', 'sq', 'rmbl', 'rmbr'].includes(savedLattice) ? savedLattice : 'tri';
 const trk = document.getElementById('track');
@@ -521,8 +526,25 @@ function renderSheet(cell) {
   renderAlphabet(cell);
 }
 
+function fieldGrid(cell) {
+  if (!fieldGridVisible) return '';
+  const slope = lattice === 'sq' ? 0 : lattice === 'rmbr' ? -.5 : .5;
+  const aspect = lattice === 'rmbl' || lattice === 'rmbr' ? 2 / Math.sqrt(3) : AR;
+  const w = aspect * cell, h = cell;
+  let lines = 'M0,0H' + w + 'M0,' + h + 'H' + w;
+  for (let i = -1; i <= 2; i++) lines += 'M' + (i * w) + ',0l' + (-2 * slope * w) + ',' + (2 * h);
+  return '<svg class="field-grid" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>' +
+    '<pattern id="alphabet-field-grid" width="' + w + '" height="' + (2 * h) + '" patternUnits="userSpaceOnUse">' +
+    '<path d="' + lines + '" fill="none" stroke="var(--line)" stroke-width=".5"/></pattern></defs>' +
+    '<rect width="100%" height="100%" fill="url(#alphabet-field-grid)"/></svg>';
+}
+
 function renderAlphabet(cell) {
-  document.getElementById('sheet').innerHTML = [
+  const gridButton = document.getElementById('fieldGridToggle');
+  gridButton.classList.toggle('on', fieldGridVisible);
+  gridButton.setAttribute('aria-pressed', String(fieldGridVisible));
+  gridButton.title = (fieldGridVisible ? 'Скрыть' : 'Показать') + ' сетку поля с буквами';
+  document.getElementById('sheet').innerHTML = fieldGrid(cell) + [
     '<section aria-label="Кириллица">' + row(UPPER) + row(LOWER) + '</section>',
     '<section aria-label="Латиница">' + row(LATU) + row(LATL) + '</section>',
     '<section aria-label="Цифры и знаки">' + row(DIGIT) + row(SYM) + '</section>',
@@ -714,6 +736,12 @@ document.querySelectorAll('.bar [data-lat]').forEach(b => b.addEventListener('cl
   renderSheet(cellSize);
   if (!document.getElementById('editor').hidden) renderEditor();
 }));
+
+document.getElementById('fieldGridToggle').addEventListener('click', () => {
+  fieldGridVisible = !fieldGridVisible;
+  localStorage.setItem('azbuk-field-grid', fieldGridVisible ? '1' : '0');
+  renderAlphabet(cellSize);
+});
 
 document.querySelectorAll('.bar [data-cell]').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.bar [data-cell]').forEach(x => x.classList.remove('on'));
