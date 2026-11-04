@@ -3,34 +3,40 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR · опыт 01 · v0.018</title>
+<title>Оси XOR / опыт 01 / v0.019</title>
+<link rel="preload" href="fonts/xor-azbuk-thin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/xor-azbuk-bold.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-*{box-sizing:border-box} :root{color-scheme:dark;--ink:#f4f0e8;--mut:#b5aca3;--line:#49423d;--red:#fd0000;--base:#181614}
-body{margin:0;background:var(--base);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
+@font-face{font-family:"AzBuk Thin";src:url("fonts/xor-azbuk-thin.woff2") format("woff2");font-weight:400;font-display:block}
+@font-face{font-family:"AzBuk Bold";src:url("fonts/xor-azbuk-bold.woff2") format("woff2");font-weight:400;font-display:block}
+*{box-sizing:border-box} :root{color-scheme:dark;--ink:#f4f0e8;--mut:#b5aca3;--line:#5a5148;--line2:#37302b;--red:#fd0000;--base:#181614;--btn:#211d1a;--btn-hover:#302923;--font:"AzBuk Thin",monospace;--font-b:"AzBuk Bold",monospace}
+body{margin:0;background:var(--base);color:var(--ink);font:16px/1.4 var(--font)}
 main{max-width:960px;margin:auto;padding:16px clamp(12px,3vw,28px) 32px}
 header, .caption,.bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
 header{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap}
-.head-left{display:flex;align-items:center;gap:14px;min-width:0}.hub-link{color:var(--mut);font:12px/1.45 ui-monospace,monospace;letter-spacing:.035em;text-decoration:none}.hub-link:hover,.hub-link:focus-visible{color:var(--ink);text-decoration:underline;outline:none}
+.head-left{display:flex;align-items:center;gap:14px;min-width:0}.hub-link{color:var(--mut);font:16px/1.4 var(--font);text-decoration:none}.hub-link:hover,.hub-link:focus-visible{color:var(--ink);text-decoration:underline;outline:none}
 .version{white-space:nowrap;align-self:flex-end}
 .page-footer{display:flex;justify-content:flex-end;margin-top:18px;padding-top:10px;border-top:1px solid var(--line)}
-h1{font-size:clamp(24px,6vw,38px);letter-spacing:-.055em;line-height:1;margin:0}h1 b{color:var(--red)}
-small,.caption,.meta,output,.idx{font:12px/1.45 ui-monospace,monospace;letter-spacing:.035em}
+h1{font:400 clamp(32px,7vw,48px)/1 var(--font-b);letter-spacing:0;margin:0}h1 b{color:var(--red)}
+small,.caption,.meta,output,.idx{font:12px/1.5 var(--font);letter-spacing:0}
 small,.caption,.hint,.meta{color:var(--mut)} .layout{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(258px,.85fr);gap:24px;align-items:start}
 figure{margin:0}.caption{margin-bottom:7px;text-transform:uppercase}
 #field{width:100%;aspect-ratio:1;display:block;background:var(--red);touch-action:none;cursor:grab;user-select:none}
 #field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#000}.dot.zero{background:var(--red)}.dot.ghost{background:#7c3aed}.dot.neutral{background:#717777}.grid{display:none}.edit-row{gap:6px;margin-top:7px}.edit-row button{font-size:17px}.tile.editing svg{cursor:cell;outline:2px solid var(--red);outline-offset:-2px}#bits,#ghostBits,#pivotBits,.x-live,.x-ghost,.x-pivot{filter:none}body.shadows #bits,body.shadows #ghostBits,body.shadows .x-live,body.shadows .x-ghost,body.shadows #pivotBits,body.shadows .x-pivot{filter:url(#fig3d)}
-section{border-top:1px solid var(--line);padding:10px 0}h2{font-size:14px;margin:0 0 8px}.hint{font-size:12px;margin:7px 0 0}.group{display:flex;gap:5px}.group>*{flex:1;min-width:0}
-button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:0;background:#342f2b;min-height:44px;padding:4px 9px;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%)}button:hover,button:focus-visible{background:#514740}button[aria-pressed=true]{background:var(--ink);color:#191613}button:focus-visible{outline:3px solid var(--red);outline-offset:-4px}button:disabled{opacity:.45;cursor:default}button:disabled:hover{background:#342f2b}
-.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 2px}.tile svg{width:28px;height:28px}.tile span{font:12px monospace}.preview-row{margin-top:10px;gap:6px;align-items:stretch}.preview-row>*{flex:1 1 0;min-width:0;min-height:0;padding:7px 6px 5px;gap:3px;touch-action:pan-y;user-select:none}.preview-row .tile svg{width:100%;height:auto;aspect-ratio:1;display:block}
-.bar label{font-weight:650}.bar input[type=number]{width:7ch;text-align:center;background:#25211f;border:1px solid var(--line);padding:7px 2px;font-variant-numeric:tabular-nums}
+section{border-top:1px solid var(--line);padding:10px 0}h2{font:400 20px/1.2 var(--font);margin:0 0 8px}.hint{font-size:12px;line-height:1.5;margin:7px 0 0}.group{display:flex;gap:5px}.group>*{flex:1;min-width:0}
+button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:1px solid var(--line);background:var(--btn);min-height:44px;padding:0 10px;cursor:pointer;border-radius:0;clip-path:none}button:hover,button:focus-visible{background:var(--btn-hover);border-color:var(--mut)}button[aria-pressed=true]{background:var(--ink);color:var(--base);border-color:var(--ink)}button:focus-visible{outline:2px solid var(--red);outline-offset:2px}button:disabled{opacity:.4;cursor:default}button:disabled:hover{background:var(--btn);border-color:var(--line)}
+.ico{font-family:var(--font-b);color:var(--red);margin-right:7px}.ico.r{margin:0 0 0 7px}button[aria-pressed=true] .ico{color:var(--base)}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 2px}.tile svg{width:28px;height:28px}.tile span{font:12px var(--font)}.preview-row{margin-top:10px;gap:6px;align-items:stretch}.preview-row>*{flex:1 1 0;min-width:0;min-height:0;padding:7px 6px 5px;gap:3px;touch-action:pan-y;user-select:none}.preview-row .tile svg{width:100%;height:auto;aspect-ratio:1;display:block}
+.bar label{font-weight:400;font-family:var(--font-b)}.bar input[type=number]{width:7ch;text-align:center;background:#25211f;border:1px solid var(--line);padding:7px 2px;font-variant-numeric:tabular-nums}
 .bar .jump{display:flex;align-items:center;gap:6px}.bar output{color:var(--ink)}input[type=range]{width:100%;accent-color:var(--red);height:30px;margin:0}
 .role{margin-top:7px}.role button{font-size:13px}.meta{margin:9px 0 0}
 @media(max-width:650px){main{max-width:500px}.layout{grid-template-columns:minmax(0,1fr);gap:16px}header{flex-direction:row;align-items:center;margin-bottom:10px}.controls{display:grid;gap:0}}
-#film details{margin-top:12px}#film details a{color:var(--ink)}#film label{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:6px 0}
+@media(max-width:360px){.group:not(.preview-row){flex-wrap:wrap}.group:not(.preview-row)>*{flex:1 1 46%}.edit-row button{flex:1 1 22%}}
+#film details{margin-top:12px}#film summary{list-style:none;cursor:pointer}#film summary::-webkit-details-marker{display:none}#film summary::before{content:"[+] "}#film details[open] summary::before{content:"[-] "}#film details a{color:var(--ink)}#film label{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:6px 0}
 #film select{background:#25211f;color:var(--ink);font:inherit;padding:5px;border:1px solid var(--line);min-height:40px;max-width:62%}
-.choice{margin-top:7px}.field-label{font-weight:650}.layout-strip{margin-top:10px}.sym-note{font:12px/1.45 ui-monospace,monospace;color:var(--ink);margin:7px 0 0;padding-left:8px;border-left:2px solid var(--red)}.sym-note:empty{display:none}
+.choice{margin-top:7px}.field-label{font-weight:400;font-family:var(--font-b)}.layout-strip{margin-top:10px}.sym-note{font:12px/1.45 ui-monospace,monospace;color:var(--ink);margin:7px 0 0;padding-left:8px;border-left:2px solid var(--red)}.sym-note:empty{display:none}
 .slider-row{display:flex;align-items:center;gap:6px;margin:4px 0 2px}
-.slider-row .step{flex:0 0 44px;width:44px;min-height:44px;padding:0;color:var(--mut);font:16px/1 ui-monospace,monospace;user-select:none}
+.slider-row .step{flex:0 0 44px;width:44px;min-height:44px;padding:0;color:var(--mut);font:24px/1 var(--font);background:transparent;border-color:var(--line);user-select:none;display:flex;align-items:center;justify-content:center}
 .slider-row .step:hover,.slider-row .step:active{color:var(--ink)}
 .slider-row .step:active{color:var(--red)}
 .x-range{position:relative;flex:1 1 0;min-width:0;height:44px;user-select:none}
@@ -39,20 +45,20 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 .x-range input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:var(--thumb-w,0px);height:44px;background:transparent;border:0}
 .x-range input[type=range]::-moz-range-track{height:100%;background:transparent}
 .x-range input[type=range]::-moz-range-thumb{width:var(--thumb-w,0px);height:44px;background:transparent;border:0}
-.x-track{position:absolute;left:0;right:0;top:50%;height:14px;transform:translateY(-50%);background:#342f2b;border:1px solid #4a433d;pointer-events:none}
-.x-thumb{position:absolute;top:50%;left:0;z-index:4;display:flex;align-items:center;gap:4px;height:44px;transform:translateY(-50%);pointer-events:none;white-space:nowrap}
-.x-half{display:block;flex:0 0 12px;width:12px;height:28px;fill:var(--red)}
-.x-number{min-width:1ch;color:var(--ink);font:11px/1 ui-monospace,monospace;font-variant-numeric:tabular-nums;text-align:center}
-.thumb-play{pointer-events:auto;flex:0 0 34px;width:34px;height:44px;min-height:44px;padding:0;margin:0;border:0;background:transparent;color:var(--red);clip-path:none;font:22px/1 ui-monospace,monospace;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
-.thumb-play:hover,.thumb-play:focus-visible{background:transparent;color:var(--ink)}
-.thumb-play:focus-visible{outline:2px solid var(--ink);outline-offset:-6px}
-.thumb-play[aria-pressed=true]{background:transparent;color:var(--ink)}
+.x-track{position:absolute;left:0;right:0;top:50%;height:2px;transform:translateY(-50%);background:var(--line2);pointer-events:none}.x-track::before,.x-track::after{content:"";position:absolute;top:-6px;width:1px;height:14px;background:var(--line2)}.x-track::before{left:0}.x-track::after{right:0}
+.x-thumb{position:absolute;top:50%;left:0;z-index:4;display:flex;align-items:center;gap:2px;height:44px;transform:translateY(-50%);pointer-events:none;white-space:nowrap;background:var(--base);padding:0 2px}
+.x-bracket{display:block;flex:0 0 auto;color:var(--red);font:24px/1 var(--font)}
+.x-number{min-width:1ch;color:var(--ink);font:16px/1 var(--font);text-align:center}
+.thumb-play{pointer-events:auto;flex:0 0 30px;width:30px;height:30px;min-height:30px;padding:0;margin:0 0 0 3px;border:1px solid var(--line);background:var(--btn);color:var(--red);font:16px/1 var(--font);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
+.thumb-play:hover,.thumb-play:focus-visible{background:var(--btn-hover);color:var(--ink);border-color:var(--mut)}
+.thumb-play:focus-visible{outline:2px solid var(--red);outline-offset:-4px}
+.thumb-play[aria-pressed=true]{background:var(--ink);color:var(--base);border-color:var(--ink)}
 .x-range:hover .x-track,.x-range:focus-within .x-track{border-color:var(--mut)}
 .x-range:has(input:focus-visible){outline:2px solid var(--red);outline-offset:2px}
 #rates button{font-size:12px}#gifLink{display:block;color:white;padding:8px 0}#gifPreview{display:block;max-width:100%;image-rendering:pixelated}#film [hidden]{display:none}
-.video-export{margin-top:8px}#film h3{font-size:13px;margin:16px 0 6px;border-top:1px solid var(--line);padding-top:12px}#audioFile{display:block;width:100%;margin:4px 0;color:var(--mut);background:#25211f;border:1px solid var(--line);font:12px/1.5 ui-monospace,monospace;padding:4px}#audioFile::file-selector-button{font:inherit;color:var(--ink);background:#342f2b;border:0;padding:5px 8px;margin-right:8px;cursor:pointer}#audioFile::file-selector-button:hover{background:#514740}#videoInfo{margin:4px 0 8px}#makeVideo:disabled{opacity:.45;cursor:default}#videoPreview{display:block;max-width:100%;margin-top:8px;background:#000}#videoLink{display:block;color:white;padding:6px 0}#videoStatus{display:block;color:var(--mut)}#videoStatus:empty{display:none}
+.video-export{margin-top:8px}#film h3{font:400 16px/1.3 var(--font-b);margin:16px 0 6px;border-top:1px solid var(--line);padding-top:12px}#audioFile{display:block;width:100%;margin:4px 0;color:var(--mut);background:var(--btn);border:1px solid var(--line);border-radius:0;font:12px/1.5 var(--font);padding:4px}#audioFile::file-selector-button{font:inherit;color:var(--ink);background:var(--btn-hover);border:1px solid var(--line);border-radius:0;padding:5px 8px;margin-right:8px;cursor:pointer}#audioFile::file-selector-button:hover{background:#514740}#videoInfo{margin:4px 0 8px}#makeVideo:disabled{opacity:.45;cursor:default}#videoPreview{display:block;max-width:100%;margin-top:8px;background:#000}#videoLink{display:block;color:white;padding:6px 0}#videoStatus{display:block;color:var(--mut)}#videoStatus:empty{display:none}
 #digitBits{display:none}
-#digitBits text{font:700 .8px/1 ui-monospace,Consolas,monospace;text-anchor:middle;dominant-baseline:central;letter-spacing:0}
+#digitBits text{font:400 .9px/1 var(--font-b);text-anchor:middle;dominant-baseline:central;letter-spacing:0}
 #digitBits .digit-one{fill:#000}
 #digitBits .digit-zero{fill:#fd0000}
 body.digits #digitBits{display:inline}
@@ -64,44 +70,45 @@ body.digits #pivotBits{filter:none}
 body.digits #symAxesGlow{stroke:#f4f0e8}
 body.digits #symAxes{stroke:#181614}
 body.digits .grid{stroke:#b5aca3;stroke-opacity:.8}
+b,strong{font-family:var(--font-b);font-weight:400}
 </style>
-<link rel="stylesheet" href="xor-space.css?v=017">
-<link rel="stylesheet" href="xor-space-player.css?v=017">
-<link rel="stylesheet" href="xor-space-export.css?v=017">
+<link rel="stylesheet" href="xor-space.css?v=019">
+<link rel="stylesheet" href="xor-space-player.css?v=019">
+<link rel="stylesheet" href="xor-space-export.css?v=019">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="figOutline" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/></filter><filter id="fig3d" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/><feDropShadow dx=".28" dy=".28" stdDeviation="0" flood-color="#2b2d34"/></filter></defs></svg>
 <main>
-<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.018">v0.018</small></div></header>
+<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.019">v0.019</small></div></header>
 <div class="layout">
-<figure><figcaption class="caption"><span>Поле · 29 × 29</span><span id="count"></span></figcaption>
-<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 × 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect id="fieldBg" width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="pivotBits" fill="#717777" pointer-events="none"/><g id="digitBits" aria-hidden="true" pointer-events="none"></g></svg>
+<figure><figcaption class="caption"><span>Поле / 29 x 29</span><span id="count"></span></figcaption>
+<svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 x 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect id="fieldBg" width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="pivotBits" fill="#717777" pointer-events="none"/><g id="digitBits" aria-hidden="true" pointer-events="none"></g></svg>
 <p class="sym-note" id="symInfo"></p>
-<div class="layout-strip"><div class="bar"><label for="frame">Раскладка</label><small><span id="frameNow">1</span> / <span id="frameTotal">6144</span></small></div><div class="slider-row"><button class="step" id="frameDown" type="button" aria-label="Предыдущая раскладка" aria-controls="frame">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number" aria-hidden="true">1</span><button class="thumb-play" id="thumbPlay" type="button" aria-label="Пуск" aria-pressed="false">▶</button><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="frame" type="range" min="1" max="6144" value="1" aria-valuetext="Раскладка 1 из 6144"></div><button class="step" id="frameUp" type="button" aria-label="Следующая раскладка" aria-controls="frame">▸</button></div><div class="group role"><button id="random">Случайная</button><button id="resetAll">Сброс</button><button id="ghostToggle" type="button" aria-pressed="false">Силуэты</button></div><p class="hint" id="sequenceHint">24 перестановки на четырёх лучах × 256 сочетаний поворотов. Рисунки могут совпадать.</p></div>
+<div class="layout-strip"><div class="bar"><label for="frame">Раскладка</label><small><span id="frameNow">1</span> / <span id="frameTotal">6144</span></small></div><div class="slider-row"><button class="step" id="frameDown" type="button" aria-label="Предыдущая раскладка" aria-controls="frame">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb"><span class="x-bracket" aria-hidden="true">[</span><span class="x-number" aria-hidden="true">1</span><span class="x-bracket" aria-hidden="true">]</span><button class="thumb-play" id="thumbPlay" type="button" aria-label="Пуск" aria-pressed="false">|&gt;</button></div><input id="frame" type="range" min="1" max="6144" value="1" aria-valuetext="Раскладка 1 из 6144"></div><button class="step" id="frameUp" type="button" aria-label="Следующая раскладка" aria-controls="frame">&gt;</button></div><div class="group role"><button id="random"><span class="ico">?</span>Случайная</button><button id="resetAll"><span class="ico">0</span>Сброс</button><button id="ghostToggle" type="button" aria-pressed="false"><span class="ico">S</span>Силуэты</button></div><p class="hint" id="sequenceHint">24 перестановки на четырёх лучах x 256 сочетаний поворотов. Рисунки могут совпадать.</p></div>
 <div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span id="ghostLegend" hidden><i class="dot ghost"></i>силуэт</span><span><i class="dot neutral"></i>серые центры вне XOR</span></div>
-<p class="hint">Тяните фигуру по полю. Кнопки 90° поворачивают выбранную, «Все» — сразу четыре. Кнопка «Цифры» подписывает клетки: 1 чёрная, 0 красная.</p>
+<p class="hint">Тяните фигуру по полю. Кнопки 90o поворачивают выбранную, «Все» - сразу четыре. Кнопка «Цифры» подписывает клетки: 1 чёрная, 0 красная.</p>
 <div class="group preview-row" id="tiles" role="group" aria-label="Фигуры отдельно"></div>
-<div class="group edit-row" role="group" aria-label="Редактирование клеток фигур"><button type="button" data-edit="0" aria-label="Редактировать клетки фигуры I" aria-pressed="false" title="Редактировать клетки фигуры I">✎</button><button type="button" data-edit="1" aria-label="Редактировать клетки фигуры II" aria-pressed="false" title="Редактировать клетки фигуры II">✎</button><button type="button" data-edit="2" aria-label="Редактировать клетки фигуры III" aria-pressed="false" title="Редактировать клетки фигуры III">✎</button><button type="button" data-edit="3" aria-label="Редактировать клетки фигуры IV" aria-pressed="false" title="Редактировать клетки фигуры IV">✎</button></div>
-<p class="hint">В режиме XOR фиолетовый силуэт — вся фигура, чёрное — её вклад в результат. В режиме «Вместе» миниатюры показывают фигуры целиком. Белый контур и тёмная тень — как на обложке; «Тени» отключают белую и тёмную тени, «Сетка» показывает клетки. ✎ под миниатюрой — редактировать: кликай по клеткам на большом поле (или в миниатюре) — убирает или ставит бит.</p>
-<div class="group role"><button id="gridToggle" type="button" aria-pressed="false">Сетка</button><button id="digitsToggle" type="button" aria-pressed="false" title="Подписать каждую клетку: 1 — чёрная, 0 — красная. Серые центры остаются без цифры">Цифры</button><button id="shadowToggle" type="button" aria-pressed="true">Тени</button></div></figure>
+<div class="group edit-row" role="group" aria-label="Редактирование клеток фигур"><button type="button" data-edit="0" aria-label="Редактировать клетки фигуры I" aria-pressed="false" title="Редактировать клетки фигуры I"><span class="ico">E</span></button><button type="button" data-edit="1" aria-label="Редактировать клетки фигуры II" aria-pressed="false" title="Редактировать клетки фигуры II"><span class="ico">E</span></button><button type="button" data-edit="2" aria-label="Редактировать клетки фигуры III" aria-pressed="false" title="Редактировать клетки фигуры III"><span class="ico">E</span></button><button type="button" data-edit="3" aria-label="Редактировать клетки фигуры IV" aria-pressed="false" title="Редактировать клетки фигуры IV"><span class="ico">E</span></button></div>
+<p class="hint">В режиме XOR фиолетовый силуэт - вся фигура, чёрное - её вклад в результат. В режиме «Вместе» миниатюры показывают фигуры целиком. Белый контур и тёмная тень - как на обложке; «Тени» отключают белую и тёмную тени, «Сетка» показывает клетки. E под миниатюрой - редактировать: кликай по клеткам на большом поле (или в миниатюре) - убирает или ставит бит.</p>
+<div class="group role"><button id="gridToggle" type="button" aria-pressed="false"><span class="ico">#</span>Сетка</button><button id="digitsToggle" type="button" aria-pressed="false" title="Подписать каждую клетку: 1 чёрная, 0 красная. Серые центры остаются без цифры"><span class="ico">1/0</span>Цифры</button><button id="shadowToggle" type="button" aria-pressed="true"><span class="ico">T</span>Тени</button></div></figure>
 <div class="controls">
 <section><h2>Фигуры</h2><p class="meta" id="position"></p>
-<div class="group role"><button id="left" aria-label="Повернуть выбранную фигуру влево">↶ 90°</button><button id="right" aria-label="Повернуть выбранную фигуру вправо">90° ↷</button><button id="swap" title="Поменять выбранную фигуру со следующей по часовой стрелке">Обмен ⇄</button></div>
-<div class="group role"><button id="allLeft" aria-label="Повернуть все фигуры влево" title="Повернуть все четыре фигуры на 90° влево; удержание повторяет">↶ Все 90°</button><button id="allRight" aria-label="Повернуть все фигуры вправо" title="Повернуть все четыре фигуры на 90° вправо; удержание повторяет">90° Все ↷</button><button id="resetPositions" title="Убрать ручные сдвиги и вернуть фигуры на лучи">На лучи</button></div>
-<p class="hint">Выберите фигуру под полем. Повторный щелчок по миниатюре, пустое поле, ПКМ или Escape снимают выделение. «Перебор» работает со всеми фигурами. «Крест 90°» соединяет серые центры, расставляет фигуры по четырём направлениям и вращает всю расстановку вместе.</p></section>
-<section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number">3</span><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="radius" type="range" min="-7" max="7" value="0" aria-valuetext="0 клеток от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">▸</button></div><p class="hint">При нуле верхние серые клетки всех четырёх фигур соединены в общем центре. Каждая фигура поворачивается вокруг своей серой клетки. Положительные значения уводят их по лучам ↑ → ↓ ←, отрицательные — на противоположные.</p></section>
-<section><h2>Наложение</h2><div class="group"><button id="xor">XOR</button><button id="union">Вместе</button><button id="solo">Одна</button></div><p id="rule" class="hint"></p></section>
+<div class="group role"><button id="left" aria-label="Повернуть выбранную фигуру влево"><span class="ico">&lt;</span>90</button><button id="right" aria-label="Повернуть выбранную фигуру вправо">90<span class="ico r">&gt;</span></button><button id="swap" title="Поменять выбранную фигуру со следующей по часовой стрелке"><span class="ico">&lt;&gt;</span>Обмен</button></div>
+<div class="group role"><button id="allLeft" aria-label="Повернуть все фигуры влево" title="Повернуть все четыре фигуры на 90 градусов влево; удержание повторяет"><span class="ico">&lt;&lt;</span>Все 90</button><button id="allRight" aria-label="Повернуть все фигуры вправо" title="Повернуть все четыре фигуры на 90 градусов вправо; удержание повторяет">Все 90<span class="ico r">&gt;&gt;</span></button><button id="resetPositions" title="Убрать ручные сдвиги и вернуть фигуры на лучи"><span class="ico">-&gt;</span>На лучи</button></div>
+<p class="hint">Выберите фигуру под полем. Повторный щелчок по миниатюре, пустое поле, ПКМ или Escape снимают выделение. «Перебор» работает со всеми фигурами. «Крест 90o» соединяет серые центры, расставляет фигуры по четырём направлениям и вращает всю расстановку вместе.</p></section>
+<section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">3</span><span class="x-bracket">]</span></div><input id="radius" type="range" min="-7" max="7" value="0" aria-valuetext="0 клеток от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">&gt;</button></div><p class="hint">При нуле верхние серые клетки всех четырёх фигур соединены в общем центре. Каждая фигура поворачивается вокруг своей серой клетки. Положительные значения уводят их по лучам ^ -> v <-, отрицательные - на противоположные.</p></section>
+<section><h2>Наложение</h2><div class="group"><button id="xor">XOR</button><button id="union"><span class="ico">+</span>Вместе</button><button id="solo"><span class="ico">1</span>Одна</button></div><p id="rule" class="hint"></p></section>
 <section id="film"><h2>Анимация / GIF</h2>
-<div class="choice"><div class="bar"><span class="field-label">Движение</span></div><div class="group role" aria-label="Движение"><button type="button" data-motion="variants" aria-pressed="true">Перебор раскладок</button><button type="button" data-motion="spin" aria-pressed="false">Поворот фигуры</button><button type="button" data-motion="cross" aria-pressed="false" title="Общий центр, четыре направления под 90°; вращать все фигуры вместе">✛ Крест 90°</button></div></div>
-<div class="group role"><button type="button" data-motion="unique" aria-pressed="false">256 без повторов</button><button type="button" data-motion="cross24" aria-pressed="false">Все 24 креста</button></div>
+<div class="choice"><div class="bar"><span class="field-label">Движение</span></div><div class="group role" aria-label="Движение"><button type="button" data-motion="variants" aria-pressed="true"><span class="ico">24</span>Перебор</button><button type="button" data-motion="spin" aria-pressed="false"><span class="ico">90</span>Поворот</button><button type="button" data-motion="cross" aria-pressed="false" title="Общий центр, четыре направления под 90 градусов; вращать все фигуры вместе"><span class="ico">+</span>Крест 90</button></div></div>
+<div class="group role"><button type="button" data-motion="unique" aria-pressed="false"><span class="ico">256</span>Без повторов</button><button type="button" data-motion="cross24" aria-pressed="false"><span class="ico">24</span>Креста</button></div>
 <div class="bar"><label for="rate">Раскладок в секунду</label></div>
-<div class="slider-row"><button class="step" id="rateDown" type="button" aria-label="Уменьшить скорость" aria-controls="rate">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number">4</span><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="rate" type="range" min="0" max="1000" step="1" value="151" aria-valuetext="4 раскладки в секунду"></div><button class="step" id="rateUp" type="button" aria-label="Увеличить скорость" aria-controls="rate">▸</button></div>
+<div class="slider-row"><button class="step" id="rateDown" type="button" aria-label="Уменьшить скорость" aria-controls="rate">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">4</span><span class="x-bracket">]</span></div><input id="rate" type="range" min="0" max="1000" step="1" value="151" aria-valuetext="4 раскладки в секунду"></div><button class="step" id="rateUp" type="button" aria-label="Увеличить скорость" aria-controls="rate">&gt;</button></div>
 <div class="group" id="rates" aria-label="Быстрый выбор скорости"><button>1</button><button>10</button><button>100</button><button>1000</button><button>10000</button></div>
-<div class="group role"><button id="play" aria-pressed="false">▶ Пуск</button><button id="makeGif">Создать GIF</button></div>
+<div class="group role"><button id="play" aria-pressed="false"><span class="ico">&gt;</span>Пуск</button><button id="makeGif">Создать<span class="ico r">GIF</span></button></div>
 <p class="hint">«256 без повторов» и «Все 24 креста» показывают и сохраняют полный цикл, без пропусков. В остальных режимах GIF содержит 4 секунды движения, а на большой скорости кадры выбираются с пропуском. В сравнении каждая показанная раскладка идёт парой. Сравнение показывает объединение и XOR одной раскладки. В обычных режимах только при сочетании наложения XOR и эффекта «С XOR» кадр сравнивается через XOR с предыдущим (также в GIF/видео). «Без XOR» всегда показывает полные фигуры.</p>
 <output id="gifStatus" aria-live="polite"></output><a id="gifLink" hidden>Скачать GIF</a><img id="gifPreview" hidden alt="Созданная GIF-анимация">
-<div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать видео</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
-<details><summary>Готовые GIF · 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> · <a href="xor.gif">С XOR</a> · <a href="compare.gif">Сравнение</a></p></details>
+<div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать<span class="ico r">MP4</span></button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
+<details><summary>Готовые GIF / 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> / <a href="xor.gif">С XOR</a> / <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.018</small></footer></main>
+</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.019</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
@@ -117,7 +124,7 @@ const masks=[
 const pivots=masks.map(rows=>({x:rows[0].indexOf('1'),y:0}));
 const points=masks.map((rows,i)=>rows.flatMap((row,y)=>Array.from(row,(v,x)=>v==='1'?[x-pivots[i].x,y-pivots[i].y]:null).filter(Boolean)));
 function permutations(left){return left.length?left.flatMap(i=>permutations(left.filter(j=>j!==i)).map(tail=>[i,...tail])):[[]];}
-const orders=permutations([0,1,2,3]),rays=[[0,-1],[1,0],[0,1],[-1,0]],arrows=['↑','→','↓','←'];
+const orders=permutations([0,1,2,3]),rays=[[0,-1],[1,0],[0,1],[-1,0]],arrows=['^','->','v','<-'];
 const names=['I','II','III','IV'],size=29,center=14,total=24*256,dragMargin=6;
 const $=id=>document.getElementById(id);
 const initialVariant=24*(2+3*4+0*16+1*64); // turns: up, right, down, left
@@ -177,7 +184,7 @@ function rotate(x,y,t){return [[x,y],[-y,x],[-x,-y],[y,-x]][t];}
 function cellPath(x,y){return 'M'+x+' '+y+'h1v1h-1z';}
 const tiles=names.map((name,i)=>{
  const el=document.createElement('button');el.type='button';el.className='tile';el.setAttribute('aria-label','Фигура '+name);
- el.title='Щелчок — выбрать или снять выбор; потянуть влево/вправо — повернуть';
+ el.title='Щелчок - выбрать или снять выбор; потянуть влево/вправо - повернуть';
  el.oncontextmenu=e=>{e.preventDefault();clearSelection();};
  el.innerHTML='<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true"><rect width="29" height="29" fill="#fd0000"/><path class="x-ghost" fill="#7c3aed"/><path class="x-live" fill="#000"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path class="x-pivot" fill="#717777" pointer-events="none"/></svg><span>'+name+'</span>';
  let pointerId=null,startX=0,suppressClick=false;
@@ -316,7 +323,7 @@ function paintDigits(cells){
  }
 }
 function axisSymbol(kind){
- return {v:'↕',h:'↔',main:'↘',anti:'↙'}[kind];
+ return {v:'|',h:'-',main:'\\',anti:'/'}[kind];
 }
 function axisSegments(axes){
  let d='';
@@ -349,7 +356,7 @@ function paintSymmetry(cells,label='XOR'){
  const axes=findSymmetry(cells),d=axisSegments(axes);
  $('symAxesGlow').setAttribute('d',d);
  $('symAxes').setAttribute('d',d);
- $('symInfo').textContent=axes.length?'Симметрия '+label+': '+axes.map(ax=>axisSymbol(ax.kind)).join(' ')+' — через центр, по битам':'';
+ $('symInfo').textContent=axes.length?'Симметрия '+label+': '+axes.map(ax=>axisSymbol(ax.kind)).join(' ')+' - через центр, по битам':'';
 }
 function figureAnchor(id,order){
  const [dx,dy]=rays[order.indexOf(id)],offset=state.offsets[id]||{x:0,y:0};
@@ -387,7 +394,7 @@ function paintTiles(turn,variant=state.variant,updateMeta=true,mode=state.mode){
   b.querySelector('.x-pivot').setAttribute('d',pivot);
   if(updateMeta){
    b.setAttribute('aria-pressed',i===state.selected);
-   b.setAttribute('aria-label','Фигура '+names[i]+', поворот '+turn[i]*90+'°');
+   b.setAttribute('aria-label','Фигура '+names[i]+', поворот '+turn[i]*90+'o');
   }
  });
 }
@@ -415,17 +422,17 @@ function setFrameUI(variant){
  $('frameNow').textContent=value;
  $('frame').setAttribute('aria-valuetext','Вариант '+value+' из '+count);
  updateSlider($('frame'),value,true);
- $('sequenceHint').textContent=finiteSequence()?'Полный цикл '+count+' вариантов. Общий центр; стрелки и ползунок выбирают вариант. До 25 вариантов/с, без пропусков.':filmMotion==='cross'?'Четыре поворота одной расстановки крестом.':filmMotion==='spin'?'Четыре поворота выбранной фигуры.':'24 перестановки × 256 сочетаний поворотов. При общем центре возможны повторы.';
+ $('sequenceHint').textContent=finiteSequence()?'Полный цикл '+count+' вариантов. Общий центр; стрелки и ползунок выбирают вариант. До 25 вариантов/с, без пропусков.':filmMotion==='cross'?'Четыре поворота одной расстановки крестом.':filmMotion==='spin'?'Четыре поворота выбранной фигуры.':'24 перестановки x 256 сочетаний поворотов. При общем центре возможны повторы.';
 }
 function render(){
  clampOffsets();
  const {order,turn}=unpack(state.variant),slot=order.indexOf(state.selected),offset=state.offsets[state.selected]||{x:0,y:0};
- const shift=offset.x||offset.y?' · сдвиг '+offset.x+', '+offset.y:'',direction=state.radius<0?(slot+2)%4:slot;
+ const shift=offset.x||offset.y?' / сдвиг '+offset.x+', '+offset.y:'',direction=state.radius<0?(slot+2)%4:slot;
  paintField(state.variant,state.mode);
  setFrameUI(state.variant);
  $('radius').value=state.radius;
  $('radius').setAttribute('aria-valuetext',cellsLabel(state.radius));updateSlider($('radius'),state.radius);
- $('position').textContent=state.selected===null?'Все фигуры · без выделения':'Фигура '+names[state.selected]+' · луч '+arrows[direction]+' · '+turn[state.selected]*90+'°'+shift;
+ $('position').textContent=state.selected===null?'Все фигуры / без выделения':'Фигура '+names[state.selected]+' / луч '+arrows[direction]+' / '+turn[state.selected]*90+'o'+shift;
  paintTiles(turn);
  for(const id of ['left','right','swap','solo'])$(id).disabled=state.selected===null||centredSequence();
  for(const id of ['radius','radiusDown','radiusUp'])$(id).disabled=centredSequence();
@@ -489,7 +496,7 @@ function syncMotionUI(){
  for(const button of document.querySelectorAll('[data-motion]')){
   const isSpin=button.dataset.motion==='spin';
   button.disabled=isSpin&&state.selected===null;
-  button.title=button.disabled?'Сначала выберите фигуру':button.dataset.motion==='cross'?'Общий центр, четыре направления под 90°; вращать все фигуры вместе':'';
+  button.title=button.disabled?'Сначала выберите фигуру':button.dataset.motion==='cross'?'Общий центр, четыре направления под 90o; вращать все фигуры вместе':'';
   button.setAttribute('aria-pressed',String(button.dataset.motion===filmMotion));
  }
 }
@@ -578,9 +585,9 @@ function plan(config){
 let animation=0,lastFilmFrame=null;
 function setPlayState(playing){
  const play=$('play'),thumb=$('thumbPlay'),label=playing?'Пауза':'Пуск';
- play.textContent=playing?'Ⅱ Пауза':'▶ Пуск';
+ play.innerHTML='<span class="ico">'+(playing?'||':'|>')+'</span>'+(playing?'Пауза':'Пуск');
  play.setAttribute('aria-pressed',String(playing));
- thumb.textContent=playing?'Ⅱ':'▶';
+ thumb.textContent=playing?'||':'|>';
  thumb.setAttribute('aria-label',label);
  thumb.setAttribute('aria-pressed',String(playing));
 }
@@ -610,7 +617,7 @@ function playFilm(){
      paintField(frame.variant,frame.mode);
      paintTiles(unpack(frame.variant).turn,frame.variant,false,frame.mode);
      const label=frame.mode==='solo'?'Одна':frame.mode==='xor'?'XOR':'Без XOR';
-     $('count').textContent=label+' · '+(sequenceIndex(frame.variant,config.motion,config.selected)+1)+' / '+sequenceTotal(config.motion);
+     $('count').textContent=label+' / '+(sequenceIndex(frame.variant,config.motion,config.selected)+1)+' / '+sequenceTotal(config.motion);
      setFrameUI(frame.variant);
      shown=i;
    }
@@ -729,7 +736,7 @@ $('makeGif').onclick=async()=>{
    const blob=encoder.finish(),previous=gifUrl;gifUrl=URL.createObjectURL(blob);
    $('gifPreview').src=gifUrl;$('gifPreview').hidden=false;
    $('gifLink').href=gifUrl;$('gifLink').download='osi-'+config.mode+'-'+config.motion+'-'+(config.variant+1)+'-'+config.speed+'.gif';
-   $('gifLink').hidden=false;$('gifStatus').textContent='Готово · '+side+' × '+side+' · '+(frames.at(-1).end/100)+' с';
+   $('gifLink').hidden=false;$('gifStatus').textContent='Готово / '+side+' x '+side+' / '+(frames.at(-1).end/100)+' с';
    if(previous)URL.revokeObjectURL(previous);
  }catch(error){$('gifStatus').textContent='Не удалось создать GIF. '+error.message;}
  finally{button.disabled=false;}
@@ -755,7 +762,7 @@ function updateVideoInfo(){
  const frames=plan(settings());
  if(!frames.length){info.textContent='Нет кадров для видео.';button.disabled=true;return;}
  const per=audioDuration/frames.length;
- info.textContent=framesLabel(frames.length)+' GIF · '+per.toFixed(2)+' с на кадр · '+formatDuration(audioDuration);
+ info.textContent=framesLabel(frames.length)+' GIF / '+per.toFixed(2)+' с на кадр / '+formatDuration(audioDuration);
  button.disabled=false;
 }
 async function loadAudio(file){
@@ -774,7 +781,7 @@ async function loadAudio(file){
  });
  if(!Number.isFinite(probe.duration)||probe.duration<=0)throw new Error('Не удалось определить длину аудио');
  audioDuration=probe.duration;
- $('audioInfo').textContent='Длительность · '+formatDuration(audioDuration);
+ $('audioInfo').textContent='Длительность / '+formatDuration(audioDuration);
  updateVideoInfo();
 }
 $('audioFile').onchange=async e=>{
@@ -804,7 +811,7 @@ $('makeVideo').onclick=async()=>{
  videoRecording=true;button.disabled=true;$('audioFile').disabled=true;
  $('videoLink').hidden=true;$('videoPreview').hidden=true;
  if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
- $('videoStatus').textContent='Подготовка видео…';
+ $('videoStatus').textContent='Подготовка видео...';
  let audioCtx=null,playback=null,stream=null,recorder=null,raf=0,timer=0;
  try{
   const total=frames.length,frameDuration=audioDuration/total,vidSide=side*2;
@@ -859,7 +866,7 @@ $('makeVideo').onclick=async()=>{
    const index=Math.min(total-1,Math.max(0,Math.floor(t/frameDuration)));
    if(index!==shown){shown=index;drawFrame(index);}
    const second=Math.floor(Math.min(t,audioDuration));
-   if(second!==shownSecond){shownSecond=second;$('videoStatus').textContent='Запись · '+formatDuration(second)+' / '+formatDuration(audioDuration);}
+   if(second!==shownSecond){shownSecond=second;$('videoStatus').textContent='Запись / '+formatDuration(second)+' / '+formatDuration(audioDuration);}
    raf=requestAnimationFrame(tick);
   };
   raf=requestAnimationFrame(tick);
@@ -871,7 +878,7 @@ $('makeVideo').onclick=async()=>{
   const ext=mime.includes('mp4')?'mp4':'webm';
   $('videoPreview').src=videoUrl;$('videoPreview').hidden=false;
   $('videoLink').href=videoUrl;$('videoLink').download='osi-'+config.mode+'-'+config.motion+'-'+Math.round(audioDuration)+'s.'+ext;$('videoLink').hidden=false;
-  $('videoStatus').textContent='Готово · '+formatDuration(audioDuration)+' · '+framesLabel(total)+' · '+ext.toUpperCase();
+  $('videoStatus').textContent='Готово / '+formatDuration(audioDuration)+' / '+framesLabel(total)+' / '+ext.toUpperCase();
  }catch(error){
   $('videoStatus').textContent='Не удалось создать видео. '+(error.message||error);
  }finally{
@@ -887,14 +894,15 @@ $('makeVideo').onclick=async()=>{
 };
 
 </script>
-<script src="xor-space.js?v=017"></script>
-<script src="xor-space-sequence.js?v=017"></script>
-<script src="xor-space-player.js?v=017"></script>
-<script src="xor-space-export.js?v=017"></script>
+<script src="xor-space.js?v=019"></script>
+<script src="xor-space-sequence.js?v=019"></script>
+<script src="xor-space-player.js?v=019"></script>
+<script src="xor-space-export.js?v=019"></script>
 <script>
 window.xorSpaceView=window.XorAxesSpace.mount(document.getElementById('spaceMount'),window.xorSpaceSnapshot);
 window.xorSpacePlayer=window.mountXorSpacePlayer(document.getElementById('spaceMount'),window.xorSpaceView);
 window.xorSpaceExport=window.mountXorSpaceExport(document.getElementById('spaceMount'),window.xorSpaceView,window.xorSpacePlayer);
 document.getElementById('spaceMount').addEventListener('xor-space-play',()=>stopFilm());
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(window.xorSpaceView&&window.xorSpaceSnapshot)window.xorSpaceView.update(window.xorSpaceSnapshot);});
 </script>
 </html>

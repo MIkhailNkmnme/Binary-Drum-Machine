@@ -112,13 +112,13 @@
   let snapshot=initialSnapshot||{},model=buildModel(snapshot,assignments),camera={...DEFAULT_CAMERA,...options.camera},drag=null,destroyed=false,selected=Number.isInteger(options.selected)?options.selected:0;
   let hitFaces=[],handles=[],view=null,bodyClick=null;
   const host=doc.createElement('div');host.className='xor-space';
-  host.innerHTML='<div class="xs-heading"><h2>3D · ось Z</h2><div class="xs-actions"><button class="gz-hx xs-reset" type="button" title="Сбросить направления и сдвиги всех четырёх фигур в исходное 2D-состояние" aria-label="Вернуть все фигуры в 2D">↶ 2D</button><button class="gz-hx xs-camera" type="button" title="Сбросить только положение камеры" aria-label="Сбросить камеру">⊙ Видъ</button></div></div><p class="xs-explain">Те же четыре фигуры. +Z — к нам, −Z — за экран. Выберите фигуру на поле или кнопкой I–IV, затем тяните её стрелку X, Y или Z. Числа — сдвиг в клетках от положения на основном поле. ↻ меняет плоскость.</p><div class="xs-controls" role="group" aria-label="Направления и сдвиги четырёх фигур"></div><p class="xs-status" role="status"></p><div class="xs-stage"><canvas class="xs-main" role="img" aria-label="Объём четырёх фигур: выберите фигуру, тяните стрелку оси для перемещения; пустое место вращает камеру" tabindex="0"></canvas><span class="xs-camera-note">Стрелка оси — сдвиг · пустое место — камера · колесо — масштаб · Shift + ← → / ↑ ↓ / PageUp PageDown — X / Y / Z</span></div><div class="xs-projections"></div><p class="xs-explain xs-bottom">XOR считается в одинаковых (X, Y, Z). Серые центры вне XOR. Проекции показывают занятые клетки по глубине, без повторного XOR. Режим наложения и рисунки берутся с основного поля.</p>';
+  host.innerHTML='<div class="xs-heading"><h2>3D / ось Z</h2><div class="xs-actions"><button class="gz-hx xs-reset" type="button" title="Сбросить направления и сдвиги всех четырёх фигур в исходное 2D-состояние" aria-label="Вернуть все фигуры в 2D">< 2D</button><button class="gz-hx xs-camera" type="button" title="Сбросить только положение камеры" aria-label="Сбросить камеру">+ Видъ</button></div></div><p class="xs-explain">Те же четыре фигуры. +Z - к нам, -Z - за экран. Выберите фигуру на поле или кнопкой I-IV, затем тяните её стрелку X, Y или Z. Числа - сдвиг в клетках от положения на основном поле. R меняет плоскость.</p><div class="xs-controls" role="group" aria-label="Направления и сдвиги четырёх фигур"></div><p class="xs-status" role="status"></p><div class="xs-stage"><canvas class="xs-main" role="img" aria-label="Объём четырёх фигур: выберите фигуру, тяните стрелку оси для перемещения; пустое место вращает камеру" tabindex="0"></canvas><span class="xs-camera-note">Стрелка оси - сдвиг / пустое место - камера / колесо - масштаб / Shift + <- -> / ^ v / PageUp PageDown - X / Y / Z</span></div><div class="xs-projections"></div><p class="xs-explain xs-bottom">XOR считается в одинаковых (X, Y, Z). Серые центры вне XOR. Проекции показывают занятые клетки по глубине, без повторного XOR. Режим наложения и рисунки берутся с основного поля.</p>';
   container.appendChild(host);
-  host.querySelector('.xs-camera-note').append(' · 2× по фигуре — 90° вокруг своей оси; 2× по крайнему кубику — переворот 180°; ПКМ — +X → +Y → +Z → −X → −Y → −Z');
-  const overlapNote=doc.createElement('p');overlapNote.className='xs-explain xs-overlap-note';overlapNote.innerHTML='<span class="xs-collision-key">▧ XYZ</span> — кубики разных фигур в одном месте, даже если XOR их убрал; <span class="xs-depth-key">◉ Глубина</span> — кубики на разных глубинах одной клетки проекции. Число в крупной клетке — всего исходных кубиков.';host.querySelector('.xs-projections').after(overlapNote);
+  host.querySelector('.xs-camera-note').append(' / 2x по фигуре - 90o вокруг своей оси; 2x по крайнему кубику - переворот 180o; ПКМ - +X -> +Y -> +Z -> -X -> -Y -> -Z');
+  const overlapNote=doc.createElement('p');overlapNote.className='xs-explain xs-overlap-note';overlapNote.innerHTML='<span class="xs-collision-key"># XYZ</span> - кубики разных фигур в одном месте, даже если XOR их убрал; <span class="xs-depth-key">o Глубина</span> - кубики на разных глубинах одной клетки проекции. Число в крупной клетке - всего исходных кубиков.';host.querySelector('.xs-projections').after(overlapNote);
   const controls=host.querySelector('.xs-controls'),main=host.querySelector('.xs-main'),status=host.querySelector('.xs-status');
   const symmetryControls=doc.createElement('div');symmetryControls.className='xs-symmetry';symmetryControls.setAttribute('role','group');symmetryControls.setAttribute('aria-label','Общий центр и симметричное перемещение');
-  symmetryControls.innerHTML='<button class="gz-hx xs-center" type="button" title="Совместить четыре серых центра в начале координат и включить симметричное перемещение">⊙ В центръ</button><button class="gz-hx xs-symmetric" type="button" title="Включить симметричный разнос от центра или снять ограничение, сохранив положения">⇆ Симметр</button><label class="xs-distance-label">R <input class="xs-distance" type="number" min="0" step="1" value="0" aria-label="Общий разнос серых центров в клетках"></label><span class="xs-symmetry-rays"></span>';
+  symmetryControls.innerHTML='<button class="gz-hx xs-center" type="button" title="Совместить четыре серых центра в начале координат и включить симметричное перемещение">+ В центръ</button><button class="gz-hx xs-symmetric" type="button" title="Включить симметричный разнос от центра или снять ограничение, сохранив положения"><> Симметр</button><label class="xs-distance-label">R <input class="xs-distance" type="number" min="0" step="1" value="0" aria-label="Общий разнос серых центров в клетках"></label><span class="xs-symmetry-rays"></span>';
   controls.before(symmetryControls);
   const distanceInput=symmetryControls.querySelector('.xs-distance'),symmetryButton=symmetryControls.querySelector('.xs-symmetric'),raysLabel=symmetryControls.querySelector('.xs-symmetry-rays');
   function centreFigures(){symmetry={enabled:true,distance:0,rays:model.figures.map(f=>f.direction)};bodyClick=null;refresh(true,'symmetry');}
@@ -129,13 +129,13 @@
   const selects=[],rollButtons=[],pickButtons=[],offsetInputs=[];
   for(let id=0;id<4;id++){
    const row=doc.createElement('div');row.className='xs-figure';row.style.setProperty('--xs-figure-color',COLORS[id]);
-   const label=doc.createElement('label');label.textContent=NAMES[id]+' · ';
+   const label=doc.createElement('label');label.textContent=NAMES[id]+' / ';
    const select=doc.createElement('select');select.setAttribute('aria-label','Ось фигуры '+NAMES[id]);select.dataset.figure=String(id);
-   for(const [value,text] of [['auto','2D · автоматически'],['+X','+X · вправо'],['-X','−X · влево'],['+Y','+Y · вверх'],['-Y','−Y · вниз'],['+Z','+Z · к нам'],['-Z','−Z · за экран']]){const option=doc.createElement('option');option.value=value;option.textContent=text;select.appendChild(option);}
+   for(const [value,text] of [['auto','2D авто'],['+X','+X вправо'],['-X','-X влево'],['+Y','+Y вверх'],['-Y','-Y вниз'],['+Z','+Z к нам'],['-Z','-Z за экран']]){const option=doc.createElement('option');option.value=value;option.textContent=text;select.appendChild(option);}
    select.value=assignments[id].direction;label.appendChild(select);row.appendChild(label);
    const roll=doc.createElement('button');roll.type='button';roll.className='gz-hx xs-roll';roll.setAttribute('aria-label','Повернуть плоскость фигуры '+NAMES[id]+' вокруг выбранной оси на 90 градусов');roll.title='Поворот плоскости вокруг продольной оси фигуры';row.appendChild(roll);controls.appendChild(row);
    const shift=doc.createElement('div');shift.className='xs-shift';row.appendChild(shift);
-   const pick=doc.createElement('button');pick.type='button';pick.className='gz-hx xs-pick';pick.textContent='↔ '+NAMES[id];pick.setAttribute('aria-label','Выбрать фигуру '+NAMES[id]+' для перемещения');pick.title='Выбрать фигуру '+NAMES[id]+' и перемещать её стрелками X, Y, Z';pick.addEventListener('click',()=>choose(id));shift.appendChild(pick);pickButtons.push(pick);
+   const pick=doc.createElement('button');pick.type='button';pick.className='gz-hx xs-pick';pick.textContent='> '+NAMES[id];pick.setAttribute('aria-label','Выбрать фигуру '+NAMES[id]+' для перемещения');pick.title='Выбрать фигуру '+NAMES[id]+' и перемещать её стрелками X, Y, Z';pick.addEventListener('click',()=>choose(id));shift.appendChild(pick);pickButtons.push(pick);
    const inputs=[];
    for(let axis=0;axis<3;axis++){
     const label=doc.createElement('label');label.className='xs-offset-label';label.textContent='XYZ'[axis];label.style.color=AXIS_COLORS[axis];
@@ -149,7 +149,7 @@
   }
   const projections=['XY','XZ','YZ'].map(plane=>{
    const figure=doc.createElement('figure');figure.className='xs-projection';
-   const caption=doc.createElement('figcaption');caption.textContent=plane+' · '+plane[0]+' → / '+plane[1]+' ↑';
+   const caption=doc.createElement('figcaption');caption.textContent=plane+' / '+plane[0]+' -> / '+plane[1]+' ^';
    const canvas=doc.createElement('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Ортографическая проекция '+plane);canvas.dataset.plane=plane;
    figure.append(caption,canvas);host.querySelector('.xs-projections').appendChild(figure);return {plane,canvas};
   });
@@ -168,11 +168,11 @@
    const screen=p=>{const q=cameraPoint(p,camera);return [width/2+q[0]*unit,height/2-q[1]*unit,q[2]];};
    view={unit,screen};
    const origin=screen([0,0,0]),axisLength=Math.max(6,extent()*.95);
-   ctx.lineWidth=1;ctx.font='12px ui-monospace, monospace';
+   ctx.lineWidth=1;ctx.font='12px "AzBuk Thin", monospace';
    for(const [axis,vector,tint] of [['X',[1,0,0],'#dd8178'],['Y',[0,1,0],'#96bd79'],['Z',[0,0,1],'#80b4e8']]){
     const end=screen(scale(vector,axisLength)),back=screen(scale(vector,-axisLength));
     ctx.strokeStyle=tint;ctx.globalAlpha=.7;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(back[0],back[1]);ctx.lineTo(origin[0],origin[1]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(origin[0],origin[1]);ctx.lineTo(end[0],end[1]);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle=tint;
-    ctx.fillText('+'+axis+(axis==='Z'?' к нам':''),end[0]+5,end[1]-5);ctx.fillText('−'+axis+(axis==='Z'?' за экран':''),back[0]+5,back[1]-5);
+    ctx.fillText('+'+axis+(axis==='Z'?' к нам':''),end[0]+5,end[1]-5);ctx.fillText('-'+axis+(axis==='Z'?' за экран':''),back[0]+5,back[1]-5);
    }
    const voxels=model.cells.map(v=>({p:v.p,color:color(v.members),members:v.members,selected:v.members.includes(selected)}));
    const uniqueCentres=new Map(model.centres.map(c=>[key(c.p),c]));
@@ -192,7 +192,7 @@
   }
   function drawHandles(ctx,screen,unit,width,height){
    handles=[];const figure=model.figures[selected];if(!figure||!figure.active)return;
-   const origin=screen(figure.anchor);ctx.font='bold 12px ui-monospace, monospace';ctx.lineWidth=2;
+   const origin=screen(figure.anchor);ctx.font='12px "AzBuk Bold", monospace';ctx.lineWidth=2;
    ctx.fillStyle=COLORS[selected];ctx.fillText(NAMES[selected],origin[0]+7,origin[1]+17);
    for(let axis=0;axis<3;axis++){
     const ray=symmetry.enabled?DIRECTIONS[symmetry.rays[selected]]:null;if(ray&&!ray[axis])continue;
@@ -225,23 +225,23 @@
     const p=xy(overlap.p),size=Math.max(1,unit-.25),left=p[0]-unit/2,top=p[1]-unit/2;
     if(overlap.collisionCount){ctx.fillStyle='rgba(255,102,87,.68)';ctx.fillRect(left,top,size,size);ctx.strokeStyle='#ffb5a3';ctx.lineWidth=Math.min(1.3,unit/4);ctx.beginPath();ctx.moveTo(left,top+size);ctx.lineTo(left+size,top);ctx.stroke();}
     if(overlap.depth>1){ctx.strokeStyle='#66dcff';ctx.lineWidth=Math.min(1.5,unit/3);ctx.strokeRect(left+.3,top+.3,Math.max(.4,size-.6),Math.max(.4,size-.6));}
-    if(unit>=12){ctx.fillStyle='#fff';ctx.font='bold '+Math.min(12,Math.floor(unit*.7))+'px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText(String(overlap.voxelCount),p[0],p[1]+Math.min(4,unit*.25));ctx.textAlign='left';}
+    if(unit>=12){ctx.fillStyle='#fff';ctx.font=Math.min(12,Math.floor(unit*.7))+'px "AzBuk Bold",monospace';ctx.textAlign='center';ctx.fillText(String(overlap.voxelCount),p[0],p[1]+Math.min(4,unit*.25));ctx.textAlign='left';}
    }
-   ctx.font='11px ui-monospace, monospace';ctx.fillStyle='#b4bac0';ctx.fillText('+'+projection.axes[0],width-25,height/2-5);ctx.fillText('+'+projection.axes[1],width/2+5,14);
+   ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle='#b4bac0';ctx.fillText('+'+projection.axes[0],width-25,height/2-5);ctx.fillText('+'+projection.axes[1],width/2+5,14);
    canvas.dataset.cells=String(projection.cells.length);
    const collisions=projection.overlaps.filter(c=>c.collisionCount).length,depths=projection.overlaps.filter(c=>c.depth>1).length;
    canvas.dataset.collisions=String(collisions);canvas.dataset.depthOverlaps=String(depths);
-   canvas.previousElementSibling.textContent=plane+' · '+plane[0]+' → / '+plane[1]+' ↑ · XYZ: '+collisions+' · глубина: '+depths;
+   canvas.previousElementSibling.textContent=plane+' / '+plane[0]+' -> / '+plane[1]+' ^ / XYZ: '+collisions+' / глубина: '+depths;
   }
   function draw(){if(destroyed)return;draw3D();for(const p of projections)drawProjection(p.canvas,p.plane);}
   function refresh(save,reason='translation'){
    if(symmetry.enabled)assignments=symmetricAssignments(snapshot,assignments,symmetry);
    model=buildModel(snapshot,assignments);
-   for(let i=0;i<4;i++){selects[i].value=assignments[i].direction;rollButtons[i].textContent='↻ '+assignments[i].roll*90+'°';rollButtons[i].setAttribute('aria-pressed',String(assignments[i].roll!==0));pickButtons[i].setAttribute('aria-pressed',String(i===selected));for(let axis=0;axis<3;axis++){offsetInputs[i][axis].disabled=symmetry.enabled;if(doc.activeElement!==offsetInputs[i][axis])offsetInputs[i][axis].value=String(assignments[i].offset[axis]);}}
-   symmetryButton.setAttribute('aria-pressed',String(symmetry.enabled));distanceInput.disabled=!symmetry.enabled;if(doc.activeElement!==distanceInput)distanceInput.value=String(symmetry.distance);raysLabel.textContent=symmetry.enabled?'Общий разнос · '+symmetry.rays.map((ray,i)=>NAMES[i]+': '+ray).join(' · '):'В центр — совместить серые кубики. Симметр — снять ограничение.';
+   for(let i=0;i<4;i++){selects[i].value=assignments[i].direction;rollButtons[i].textContent='R '+assignments[i].roll*90+'o';rollButtons[i].setAttribute('aria-pressed',String(assignments[i].roll!==0));pickButtons[i].setAttribute('aria-pressed',String(i===selected));for(let axis=0;axis<3;axis++){offsetInputs[i][axis].disabled=symmetry.enabled;if(doc.activeElement!==offsetInputs[i][axis])offsetInputs[i][axis].value=String(assignments[i].offset[axis]);}}
+   symmetryButton.setAttribute('aria-pressed',String(symmetry.enabled));distanceInput.disabled=!symmetry.enabled;if(doc.activeElement!==distanceInput)distanceInput.value=String(symmetry.distance);raysLabel.textContent=symmetry.enabled?'Общий разнос / '+symmetry.rays.map((ray,i)=>NAMES[i]+': '+ray).join(' / '):'В центр - совместить серые кубики. Симметр - снять ограничение.';
    const mode=model.mode==='xor'?'XOR':model.mode==='solo'?'Одна':'Вместе';
    const depths=model.cells.map(c=>c.p[2]),min=depths.length?Math.min(...depths):0,max=depths.length?Math.max(...depths):0;
-   status.textContent=mode+' · '+model.cells.length+' клеток в XYZ · Z: '+min+' … '+max+' · '+(symmetry.enabled?'Общий разнос R: '+symmetry.distance:NAMES[selected]+': сдвиг '+assignments[selected].offset.join(', '));
+   status.textContent=mode+' / '+model.cells.length+' клеток в XYZ / Z: '+min+' ... '+max+' / '+(symmetry.enabled?'Общий разнос R: '+symmetry.distance:NAMES[selected]+': сдвиг '+assignments[selected].offset.join(', '));
    host.dataset.cells=String(model.cells.length);host.dataset.depth=min+','+max;
    if(save&&!options.capture)try{localStorage.setItem('zerk_xor_space',JSON.stringify(assignments));localStorage.setItem('zerk_xor_space_symmetry',JSON.stringify(symmetry));}catch(_){}
    draw();
@@ -297,14 +297,14 @@
    let disposed=false;
    function render(next,label=''){
     if(disposed)throw new Error('Capture renderer is closed');captureView.setAssignments(next);
-    const ctx=output.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);ctx.fillStyle='#eee6d8';ctx.font='bold 12px ui-monospace,monospace';ctx.textBaseline='top';ctx.fillText('3D · XY / XZ / YZ',8,8);
+    const ctx=output.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);ctx.fillStyle='#eee6d8';ctx.font='bold 12px ui-monospace,monospace';ctx.textBaseline='top';ctx.fillText('3D / XY / XZ / YZ',8,8);
     ctx.textAlign='right';ctx.fillText(String(label),width-8,8);ctx.textAlign='left';
     const canvases=[mainCanvas,...projectionCanvases];for(let i=0;i<parts.length;i++){const p=parts[i];ctx.drawImage(canvases[i],p.x,p.y,p.width,p.height);}
     for(let i=0;i<projectionCanvases.length;i++){
-     const c=projectionCanvases[i],p=parts[i+1];ctx.font='11px ui-monospace,monospace';ctx.fillStyle='#b4bac0';ctx.fillText(p.name,p.x+3,projectionTop-caption+3);ctx.font='10px ui-monospace,monospace';
+     const c=projectionCanvases[i],p=parts[i+1];ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle='#b4bac0';ctx.fillText(p.name,p.x+3,projectionTop-caption+3);ctx.font='12px "AzBuk Thin", monospace';
      ctx.fillText('XYZ: '+c.dataset.collisions,p.x+3,projectionTop-caption+17);ctx.fillText('Глубина: '+c.dataset.depthOverlaps,p.x+3,projectionTop-caption+28);
     }
-    ctx.font='10px ui-monospace,monospace';ctx.fillStyle='#ffb5a3';ctx.fillText('▧ XYZ — совпадение кубиков',8,height-footer+7);ctx.fillStyle='#66dcff';ctx.fillText('◉ Глубина — перекрытие в проекции',8,height-footer+21);
+    ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle='#ffb5a3';ctx.fillText('# XYZ - совпадение кубиков',8,height-footer+7);ctx.fillStyle='#66dcff';ctx.fillText('o Глубина - перекрытие в проекции',8,height-footer+21);
     return output;
    }
    return {width,height,parts:parts.map(p=>({...p})),render,destroy(){if(disposed)return;disposed=true;captureView.destroy();box.remove();}};
