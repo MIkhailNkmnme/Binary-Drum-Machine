@@ -5,7 +5,7 @@
  else root.MayatnikGifStrip=factory(root,root.MayatnikGifStrip);
 })(typeof window==='object'?window:globalThis,function(win,source){
  'use strict';
- let popup=null,viewer=null,local=false,cached=null,settings={},selection=0,busy=false,progress='';
+ let popup=null,viewer=null,local=false,cached=null,settings={},selection=0,busy=false,progress='',recording=false,recordInfo={},stackEnabled=false;
  const target=()=>popup&&!popup.closed?viewer:local?source:null;
  function options(value){
   return {...value,onSelection(detail){selection=detail.index;if(cached)cached.options.selectedVariant=detail.variant?.id;value.onSelection?.(detail);},onDelayChange(delay){settings.delay=delay;if(cached)cached.options.delay=delay;value.onDelayChange?.(delay);}};
@@ -14,7 +14,7 @@
   if(cached){const o=options({...cached.options,...settings,selectedIndex:selection,selectedVariant:cached.options.selectedVariant});
    if(cached.kind==='variants')api.showVariants(cached.data,o);else api.show(cached.data,o);
   }
-  api.setBusy(busy);if(progress)api.setProgress(progress);
+  api.setBusy(busy);api.setRecording?.(recording,recordInfo);api.setStackEnabled?.(stackEnabled);if(progress)api.setProgress(progress);
  }
  function ensure(){
   if(target()){popup?.focus();return target();}
@@ -40,6 +40,8 @@
   open(){if(!cached)return false;ensure();return target().open();},
   hide(){target()?.hide();},
   setBusy(value){busy=!!value;target()?.setBusy(busy);},
+  setRecording(value,info={}){recording=!!value;recordInfo=info;target()?.setRecording?.(recording,info);},
+  setStackEnabled(value){stackEnabled=!!value;target()?.setStackEnabled?.(stackEnabled);},
   setProgress(text){progress=String(text||'');target()?.setProgress(progress);},
   refreshSearch(){return target()?.refreshSearch();}
  };

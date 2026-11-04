@@ -3,9 +3,9 @@ const Gif=require('./mayatnik-gif.js');
 // Independent GIF parser and variable-width LZW decoder, including dictionary
 // resets. Checking decoded pixels catches corrupt streams beyond a valid header.
 async function decode(blob){
- const b=new Uint8Array(await blob.arrayBuffer()),word=p=>b[p]|b[p+1]<<8;assert.equal(Buffer.from(b.slice(0,6)).toString(),'GIF89a');let p=13,palette=b.slice(p,p+3*(2**((b[10]&7)+1)));p+=palette.length;let delay=0;const frames=[];
+ const b=new Uint8Array(await blob.arrayBuffer()),word=p=>b[p]|b[p+1]<<8;assert.equal(Buffer.from(b.slice(0,6)).toString(),'GIF89a');let p=13;const globalPalette=b[10]&128?b.slice(p,p+3*(2**((b[10]&7)+1))):new Uint8Array();p+=globalPalette.length;let delay=0;const frames=[];
  const blocks=()=>{const a=[];while(b[p]){const n=b[p++];a.push(...b.slice(p,p+n));p+=n;}p++;return a;};
- while(p<b.length&&b[p]!==59){const type=b[p++];if(type===33){const extension=b[p++];if(extension===249){assert.equal(b[p++],4);delay=word(p+1)*10;p+=5;}else blocks();continue;}assert.equal(type,44);const width=word(p+4),height=word(p+6),packed=b[p+8];p+=9;if(packed&128)p+=3*2**((packed&7)+1);const minimum=b[p++],data=blocks(),clear=1<<minimum,end=clear+1;let dictionary,bits,position=0,previous=null;const pixels=[];
+ while(p<b.length&&b[p]!==59){const type=b[p++];if(type===33){const extension=b[p++];if(extension===249){assert.equal(b[p++],4);delay=word(p+1)*10;p+=5;}else blocks();continue;}assert.equal(type,44);const width=word(p+4),height=word(p+6),packed=b[p+8];p+=9;let palette=globalPalette;if(packed&128){palette=b.slice(p,p+3*2**((packed&7)+1));p+=palette.length;}const minimum=b[p++],data=blocks(),clear=1<<minimum,end=clear+1;let dictionary,bits,position=0,previous=null;const pixels=[];
   function reset(){dictionary=Array.from({length:end+1},(_,i)=>i<clear?[i]:null);bits=minimum+1;previous=null;}reset();
   while(position+bits<=data.length*8){let code=0;for(let i=0;i<bits;i++,position++)code|=((data[position>>3]>>(position&7))&1)<<i;if(code===clear){reset();continue;}if(code===end)break;const entry=dictionary[code]||(code===dictionary.length&&previous?[...previous,previous[0]]:null);assert.ok(entry,'valid LZW dictionary reference');pixels.push(...entry);if(previous){dictionary.push([...previous,entry[0]]);if(dictionary.length===2**bits&&bits<12)bits++;}previous=entry;}
   assert.equal(pixels.length,width*height);frames.push({width,height,delay,pixels:pixels.map(i=>Array.from(palette.slice(i*3,i*3+3)))});
@@ -13,7 +13,7 @@ async function decode(blob){
 }
 const rgba=(colour,count=1)=>Uint8ClampedArray.from(Array.from({length:count},()=>[...colour,255]).flat());
 test('encoder decodes noisy pixels across LZW resets, coalesces equal frames and splits delay overflow',async()=>{
- let seed=1234567;const pixels=Uint8ClampedArray.from({length:128*64*4},(_,i)=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return i%4===3?255:seed&255;});const e=Gif.encoder(128,64);e.add(pixels,10);const out=await decode(e.finish());assert.equal(out.length,1);assert.deepEqual(out[0].pixels,pixels.reduce((a,v,i)=>{if(i%4===0)a.push([Math.round((v>>5)*255/7),Math.round((pixels[i+1]>>5)*255/7),Math.round((pixels[i+2]>>6)*255/3)]);return a;},[]));
+ let seed=1234567;const pixels=new Uint8ClampedArray(128*64*4);for(let i=0;i<pixels.length;i+=4){seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;const v=seed&255;pixels.set([v,(v*53+17)&255,(v*97+29)&255,255],i);}const e=Gif.encoder(128,64);e.add(pixels,10);const out=await decode(e.finish());assert.equal(out.length,1);assert.deepEqual(out[0].pixels,pixels.reduce((a,v,i)=>{if(i%4===0)a.push([v,pixels[i+1],pixels[i+2]]);return a;},[]));
  const repeated=Gif.encoder(1,1);repeated.add(rgba([255,0,0]),10);repeated.add(rgba([255,0,0]),25);assert.equal((await decode(repeated.finish()))[0].delay,350);
  const long=Gif.encoder(1,1);long.add(rgba([0,0,0]),65535);long.add(rgba([0,0,0]),1);assert.deepEqual((await decode(long.finish())).map(f=>f.delay),[655350,10]);
 });

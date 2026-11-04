@@ -37,3 +37,7 @@ test('blocked popup has a usable local fallback and parent unload closes an open
  const f=fixture(true);try{assert.equal(f.api.openSettings(),true);assert.equal(f.w.document.querySelector('#mayGifStrip').hidden,false);assert.match(f.w.document.querySelector('.may-gif-strip-status').textContent,/заблокировано/);}finally{f.close();}
  const g=fixture();try{g.api.openSettings();g.w.dispatchEvent(new g.w.Event('pagehide'));assert.equal(g.children[0].w.closed,true);assert.equal(g.api.open(),false);}finally{g.close();}
 });
+
+test('recording and live preview state survive popup reopen without starting another recorder',()=>{
+ const f=fixture();try{let record=0;const options={onRecord:()=>record++,onStackToggle:()=>true};f.api.setRecording(true,{pending:3});f.api.setStackEnabled(true);f.api.openSettings(options);f.api.showVariants(f.variants,options);f.api.setRecording(true);assert.equal(f.q('.may-gif-strip-record').getAttribute('aria-pressed'),'true');assert.equal(f.q('.may-gif-strip-stack').getAttribute('aria-pressed'),'true');f.api.hide();f.api.openSettings(options);assert.equal(f.q('.may-gif-strip-record').getAttribute('aria-pressed'),'true');assert.equal(f.q('.may-gif-strip-stack').getAttribute('aria-pressed'),'true');assert.equal(record,0);}finally{f.close();}
+});

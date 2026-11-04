@@ -279,3 +279,7 @@ test('GIF, saved-frame and replace-field exports use exactly the selected cached
   f.show();for(const cls of ['save-library','save-frame','apply-frame'])assert.equal(f.q('.may-gif-strip-'+cls).hidden,true,'legacy show does not retain previous export actions');
  }finally{f.dom.window.close();}
 });
+
+test('record and under-field controls use the selected detail and follow external recording state',async()=>{
+ const f=variantFixture(),calls=[];let stack=false;try{f.api.showVariants(f.variants,{onRecord:async d=>calls.push(d),onStackToggle:()=>stack=!stack});f.qa('.may-gif-strip-select')[7].click();const record=f.q('.may-gif-strip-record'),preview=f.q('.may-gif-strip-stack');assert.equal(record.hidden,false);assert.equal(record.disabled,false);record.click();await Promise.resolve();assert.equal(calls[0].variant,f.variants[2]);assert.equal(calls[0].frame,f.variants[2].frames[1]);f.api.setRecording(true,{pending:2});assert.equal(record.getAttribute('aria-pressed'),'true');assert.match(record.textContent,/Завершить/);f.api.setRecording(true,{finishing:true});assert.equal(record.disabled,true);f.api.setRecording(false);assert.equal(record.disabled,false);preview.click();assert.equal(preview.getAttribute('aria-pressed'),'true');f.api.setStackEnabled(false);assert.equal(preview.getAttribute('aria-pressed'),'false');}finally{f.dom.window.close();}
+});

@@ -1,24 +1,36 @@
-/* Small GIF89a encoder. Fixed 3/3/2 palette; clear LZW before 10-bit codes.
+/* Small GIF89a encoder. Exact per-image palettes; clear LZW before 10-bit codes.
    Encoding runs in a Worker, one frame in flight. Equal frames extend delay. */
 (function(root){
   'use strict';
   function encoder(width,height){
     if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>65535||height>65535)throw Error('Некорректный размер GIF.');
     const chunks=[],word=n=>[n&255,n>>8&255];
-    chunks.push(Uint8Array.from([...Array.from('GIF89a',c=>c.charCodeAt(0)),...word(width),...word(height),247,0,0]));
-    const palette=new Uint8Array(768);for(let i=0;i<256;i++){palette[i*3]=Math.round((i>>5)*255/7);palette[i*3+1]=Math.round(((i>>2)&7)*255/7);palette[i*3+2]=Math.round((i&3)*255/3);}chunks.push(palette);
+    // Every image owns its palette, including independently exported frame().
+    // No global table: different images may use different sets of 256 colours.
+    chunks.push(Uint8Array.from([...Array.from('GIF89a',c=>c.charCodeAt(0)),...word(width),...word(height),112,0,0]));
     chunks.push(Uint8Array.from([33,255,11,...Array.from('NETSCAPE2.0',c=>c.charCodeAt(0)),3,1,0,0,0]));
     let previous=null,lastControl=null,lastImageStart=0;
     function add(rgba,delay){
       if(!rgba||rgba.length!==width*height*4)throw Error('Повреждены пиксели кадра GIF.');
       if(!Number.isFinite(delay))throw Error('Некорректная длительность кадра GIF.');
-      const pixels=new Uint8Array(width*height);let same=!!previous;
-      for(let i=0;i<pixels.length;i++){const j=i*4,v=(rgba[j]>>5)<<5|(rgba[j+1]>>5)<<2|(rgba[j+2]>>6);pixels[i]=v;if(previous&&v!==previous[i])same=false;}
+      const pixels=new Uint8Array(width*height),indices=new Map(),colours=[];let same=!!previous;
+      for(let i=0;i<pixels.length;i++){
+        const j=i*4,rgb=(rgba[j]<<16)|(rgba[j+1]<<8)|rgba[j+2];let index=indices.get(rgb);
+        if(index===undefined){
+          if(colours.length===256)throw Object.assign(Error('В кадре GIF больше 256 цветов (обнаружено не менее 257). Точное сохранение этого кадра в GIF недоступно.'),{code:'GIF_PALETTE_OVERFLOW',colourCount:257});
+          index=colours.length;indices.set(rgb,index);colours.push(rgb);
+        }
+        pixels[i]=index;
+        // Indices alone are insufficient: a new palette can recolour the same pattern.
+        if(previous&&rgb!==previous.colours[previous.pixels[i]])same=false;
+      }
       delay=Math.max(1,Math.min(65535,Math.round(delay)));
       if(same&&lastControl){const total=lastControl[4]+(lastControl[5]<<8)+delay;if(total<=65535){lastControl[4]=total&255;lastControl[5]=total>>8;return;}}
-      previous=pixels;lastControl=Uint8Array.from([33,249,4,4,...word(delay),0,0]);chunks.push(lastControl);
+      previous={pixels,colours};lastControl=Uint8Array.from([33,249,4,4,...word(delay),0,0]);chunks.push(lastControl);
       lastImageStart=chunks.length;
-      chunks.push(Uint8Array.from([44,0,0,0,0,...word(width),...word(height),0,8]));
+      const tableBits=Math.max(1,Math.ceil(Math.log2(colours.length))),palette=new Uint8Array(3*(1<<tableBits));
+      for(let i=0;i<colours.length;i++){palette[i*3]=colours[i]>>>16;palette[i*3+1]=(colours[i]>>>8)&255;palette[i*3+2]=colours[i]&255;}
+      chunks.push(Uint8Array.from([44,0,0,0,0,...word(width),...word(height),128|(tableBits-1)]),palette,Uint8Array.of(8));
       const out=[];let accumulator=0,bits=0,next=258,dict=new Map();
       const code=v=>{accumulator|=v<<bits;bits+=9;while(bits>=8){out.push(accumulator&255);accumulator>>>=8;bits-=8;}};
       code(256);let prefix=pixels[0];
@@ -33,7 +45,7 @@
     }
     // A static, independently decodable copy of the last image, using the exact
     // palette and LZW bytes already encoded. No re-sampling or second encoder.
-    function frame(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([chunks[0],chunks[1],...chunks.slice(lastImageStart),Uint8Array.of(59)],{type:'image/gif'});}
+    function frame(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([chunks[0],...chunks.slice(lastImageStart),Uint8Array.of(59)],{type:'image/gif'});}
     return {add,frame,finish(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([...chunks,Uint8Array.of(59)],{type:'image/gif'});}};
   }
   function record({width,height,capture,onDone,onError}){

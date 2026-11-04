@@ -159,7 +159,7 @@
       window.mayPaintGroups?.resetColour?{type:'list',name:'Сброс цветов',tip:'Сбросить только цвет выбранной группы и выключить его автосмену; краска на поле сохраняется',get:()=>'',options:[['fill','Заливка'],['vertical','Столбы'],['centre','Центр'],['auto','Авто'],['grow','Рост'],['meet','Точка'],['pointAxis','ТочкаОсь']].map(([v,name])=>({v,name})),set:v=>window.mayPaintGroups.resetColour(v)}:null
     ] },
     { id: 'template', title: 'Шаблон', color: GROUP_COLOURS['rail:template'], items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),withColour('bTemplatePaint','fillColour','Прокрасть'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50}),{...selectSegments('templatePickMode'),src:'templatePickMode'},button('bTemplateDrag','move')] },
-    {id:'gifscale',title:'Гиф-Масштаб',color:GROUP_COLOURS['rail:gifscale'],items:[button('bGifScaleView','eye')]},
+    {id:'gifscale',title:'Гиф-Масштаб',color:GROUP_COLOURS['rail:gifscale'],items:[button('bGifScaleView','eye'),button('bGifScaleRecord','record'),button('bGifScaleStack','grid4')]},
     { id:'library',title:'Шаблоны',color:GROUP_COLOURS['rail:library'],items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: GROUP_COLOURS['rail:export'], items: [
       button('bShareLink','link'),button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
@@ -2530,6 +2530,7 @@
     for(const event of ['pointerdown','focusin'])host.addEventListener(event,e=>{const group=e.target.closest('.pt-g, .gz-group');if(group){groupRanks.set(group,++groupRank);scheduleGroups();}},true);
     new MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.pt-g, .gz-group') && /\b(?:pt-open|gz-open)\b/.test(r.oldValue||'')!==r.target.matches('.pt-open, .gz-open')))scheduleGroups();}).observe(host,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});
   }
+  addEventListener('may-gif-live-state',()=>rail.refresh());
   const placeTools = () => { for (const f of toolSync) f(); syncRailFlyouts(); libraryMenuFold?.syncHeads(); scheduleGroups(); };
   rail.el.addEventListener('click', () => requestAnimationFrame(syncRailFlyouts));
   $('mayatnikRail').addEventListener('scroll', () => requestAnimationFrame(syncRailFlyouts), {passive:true});
@@ -2639,4 +2640,3 @@
   addEventListener('pagehide',()=>libraryMenuFold?.destroy(),{once:true});
   dispatchEvent(new Event('resize'));
 })();
-
