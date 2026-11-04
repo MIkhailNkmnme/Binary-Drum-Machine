@@ -1,0 +1,5 @@
+.may-scale-stack{display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:max-content;padding-top:8px;pointer-events:none}
+.may-scale-stack[hidden]{display:none}
+.may-scale-stack__level{display:flex;flex-direction:column;align-items:flex-start;gap:3px;flex:none}
+.may-scale-stack__label{font:11px/1.2 sans-serif;color:#aaa}
+.may-scale-stack__canvas{display:block;flex:none;max-width:none;margin:0;padding:0;border:0;image-rendering:pixelated}

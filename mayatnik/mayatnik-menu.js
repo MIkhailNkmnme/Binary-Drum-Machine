@@ -133,7 +133,7 @@
         arrows: ['−1', '+1'] } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: GROUP_COLOURS['rail:ochki'], items: [
-      button('bOchki', 'eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
+      button('bOchki', 'eye'), button('bOchkiThrough','eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
     { id: 'zoom', title: 'Масштаб', color: GROUP_COLOURS['rail:zoom'], items: [
@@ -159,7 +159,7 @@
       window.mayPaintGroups?.resetColour?{type:'list',name:'Сброс цветов',tip:'Сбросить только цвет выбранной группы и выключить его автосмену; краска на поле сохраняется',get:()=>'',options:[['fill','Заливка'],['vertical','Столбы'],['centre','Центр'],['auto','Авто'],['grow','Рост'],['meet','Точка'],['pointAxis','ТочкаОсь']].map(([v,name])=>({v,name})),set:v=>window.mayPaintGroups.resetColour(v)}:null
     ] },
     { id: 'template', title: 'Шаблон', color: GROUP_COLOURS['rail:template'], items: [button('bAutoTpl','grid4'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),(()=>{const a=tgl('bTemplateFlipH'),b=tgl('bTemplateFlipV');return pair(a,b,'⇆ Отраз.','⇅ Отраз.',{dis:both(a,b),tip:'Отразить шаблон ↔ · ↕'});})(),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),(()=>{const u=tgl('bFillUndo'),r=tgl('bFillRedo');return pair(u,r,'↶ Отмена','↷ Повтор',{dis:both(u,r)});})(),(()=>{const a=tgl('bTemplateTaller'),b=tgl('bTemplateShorter');return pair(a,b,'+ Выше','− Ниже',{dis:both(a,b),tip:'Шаблон выше · ниже'});})(),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),withColour('bTemplatePaint','fillColour','Прокрасть'),check('templateTrail','half'),check('templateProportional','corners'),/* v0.472: «Застыло — цвет» (templateLock) снята — замки выключены (LOCK_OFF в странице) */check('templateMask','corners'),num('xorStep',{name:'Шаг k',fmt:v=>'шаг k '+v}),num('templateHeight',{name:'Высота %',log:true,fmt:v=>'высота '+v+' %',zero:100}),num('templateDown',{name:'Вниз, строк',zero:0}),num('templateAlpha',{name:'Видимость %',fmt:v=>'видимость '+v+' %',zero:50}),{...selectSegments('templatePickMode'),src:'templatePickMode'},button('bTemplateDrag','move')] },
-    {id:'gifscale',title:'Гиф-Масштаб',color:GROUP_COLOURS['rail:gifscale'],items:[button('bGifScaleView','eye')]},
+    {id:'gifscale',title:'Гиф-Масштаб',color:GROUP_COLOURS['rail:gifscale'],items:[button('bGifScaleView','eye'),button('bGifScaleRecord','record'),button('bGifScaleStack','grid4')]},
     { id:'library',title:'Шаблоны',color:GROUP_COLOURS['rail:library'],items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: GROUP_COLOURS['rail:export'], items: [
       button('bShareLink','link'),button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
@@ -1554,7 +1554,13 @@
   if(window.MayatnikMirrorControls){
     const compactKey=node=>{const owner=node.closest('[data-id],.pt-g'),group=owner?.dataset.id||owner?.dataset.k||owner?.querySelector('.may-group-title')?.textContent.trim()||'';const parent=node.parentElement,peers=parent?[...parent.children].filter(n=>n.matches('button,.gz-hx,[role="button"]')):[];return node.dataset.n?'group:'+group+':data:'+node.dataset.n:'group:'+group+':parent:'+(parent?.id||parent?.className||'')+':slot:'+peers.indexOf(node);};
     const compactBefore=new Map([...tools.querySelectorAll('button.gz-hx,[data-n]'),...rail.el.querySelectorAll('.gz-hx')].map(node=>[node,compactKey(node)]));
-    const ochki=rail.el.querySelector('.gz-group[data-id="ochki"]')||tools.querySelector('.gz-group[data-id="ochki"]');if(ochki&&!manualLegacyCells.has('ochki'))manualLegacyCells.set('ochki',[...ochki.querySelectorAll('.gz-soty > .gz-hx')]);
+    const ochki=rail.el.querySelector('.gz-group[data-id="ochki"]')||tools.querySelector('.gz-group[data-id="ochki"]');
+    // Append the new command to legacy pin ordinals while keeping it beside Search in the DOM.
+    if(ochki&&!manualLegacyCells.has('ochki')){
+      const through=railSourceButtons.get('bOchkiThrough'),cells=[...ochki.querySelectorAll('.gz-soty > .gz-hx')];
+      if(through)through.dataset.n='bOchkiThrough';
+      manualLegacyCells.set('ochki',through&&cells.includes(through)?[...cells.filter(cell=>cell!==through),through]:cells);
+    }
     const legacy=manualLegacyCells.get('mirrors')||[];
     if(legacy[0]){legacy[0].dataset.n='mayMirAxis';legacy[0].dataset.mayPinGroup='mirrors';legacy[0].dataset.mayPinIndex='0';}
     if(legacy[1]){legacy[1].dataset.n='mayContour';legacy[1].dataset.mayPinGroup='mirrors';legacy[1].dataset.mayPinIndex='1';
@@ -2524,6 +2530,7 @@
     for(const event of ['pointerdown','focusin'])host.addEventListener(event,e=>{const group=e.target.closest('.pt-g, .gz-group');if(group){groupRanks.set(group,++groupRank);scheduleGroups();}},true);
     new MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.pt-g, .gz-group') && /\b(?:pt-open|gz-open)\b/.test(r.oldValue||'')!==r.target.matches('.pt-open, .gz-open')))scheduleGroups();}).observe(host,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});
   }
+  addEventListener('may-gif-live-state',()=>rail.refresh());
   const placeTools = () => { for (const f of toolSync) f(); syncRailFlyouts(); libraryMenuFold?.syncHeads(); scheduleGroups(); };
   rail.el.addEventListener('click', () => requestAnimationFrame(syncRailFlyouts));
   $('mayatnikRail').addEventListener('scroll', () => requestAnimationFrame(syncRailFlyouts), {passive:true});
@@ -2633,4 +2640,3 @@
   addEventListener('pagehide',()=>libraryMenuFold?.destroy(),{once:true});
   dispatchEvent(new Event('resize'));
 })();
-
