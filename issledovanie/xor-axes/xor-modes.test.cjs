@@ -154,6 +154,35 @@ test('Cross button joins centres and locks perpendicular orientation through pla
  for(const width of [390,1100]){await page.setViewportSize({width,height:900});const box=await page.locator('[data-motion="cross"]').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width,'cross fits viewport');}
  await page.locator('[data-motion="variants"]').click();assert.equal(await page.locator('#radius').isEnabled(),true);
 });
+test('finite modes keep the centre distance: manual slider and automatic sweep',async()=>{
+ const result=await page.evaluate(()=>{
+  stopFilm();
+  document.querySelector('[data-motion="unique"]').click();
+  const enabled=!document.getElementById('radius').disabled,switchShown=!document.getElementById('radiusSwitch').hidden;
+  const input=document.getElementById('radius');input.value='4';input.dispatchEvent(new Event('input'));
+  const manual={radius:state.radius,pivots:[...fieldCells(state.variant,state.radius,state.selected,state.mode,state.offsets)].filter(v=>v===2).length,radii:[...new Set(plan(settings()).map(f=>f.radius))]};
+  document.querySelector('[data-radius="auto"]').click();
+  const auto={disabled:document.getElementById('radius').disabled,a:autoRadius(0,256),m:autoRadius(127,256),b:autoRadius(255,256),radii:[...new Set(plan(settings()).map(f=>f.radius))]};
+  document.querySelector('[data-radius="manual"]').click();
+  const back=!document.getElementById('radius').disabled;
+  document.querySelector('[data-motion="cross24"]').click();
+  const cross24={enabled:!document.getElementById('radius').disabled,switchShown:!document.getElementById('radiusSwitch').hidden,radii:[...new Set(plan(settings()).map(f=>f.radius))]};
+  document.querySelector('[data-motion="variants"]').click();
+  return {enabled,switchShown,manual,auto,back,cross24,variantsSwitch:!document.getElementById('radiusSwitch').hidden,radiusEnabled:!document.getElementById('radius').disabled};
+ });
+ assert.equal(result.enabled,true);
+ assert.equal(result.switchShown,true);
+ assert.deepEqual(result.manual,{radius:4,pivots:4,radii:[4]});
+ assert.equal(result.auto.disabled,true);
+ assert.deepEqual([result.auto.a,result.auto.m,result.auto.b],[-7,7,-7]);
+ assert.ok(result.auto.radii.length>10);
+ assert.equal(result.back,true);
+ assert.equal(result.cross24.enabled,true);
+ assert.equal(result.cross24.switchShown,true);
+ assert.equal(result.cross24.radii.length,1);
+ assert.equal(result.variantsSwitch,false);
+ assert.equal(result.radiusEnabled,true);
+});
 test('one-centre arrangements have 256 results, or 24 crosses; global-rotation classes are 64 and 6',async()=>{
  const counts=await page.evaluate(()=>{
   const canonical=a=>{let data=Array.from(a),keys=[];for(let t=0;t<4;t++){keys.push(data.join(''));const next=[];for(let y=0;y<size;y++)for(let x=0;x<size;x++)next[x*size+size-1-y]=data[y*size+x];data=next;}return keys.sort()[0];};

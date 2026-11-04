@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR / опыт 01 / v0.021</title>
+<title>Оси XOR / опыт 01 / v0.022</title>
 <link rel="preload" href="fonts/xor-azbuk-thin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:"AzBuk Thin";src:url("fonts/xor-azbuk-thin.woff2") format("woff2");font-weight:400;font-display:block}
@@ -27,7 +27,7 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 2px}.tile svg{width:28px;height:28px}.tile span{font:12px var(--font)}.preview-row{margin-top:10px;gap:6px;align-items:stretch}.preview-row>*{flex:1 1 0;min-width:0;min-height:0;padding:7px 6px 5px;gap:3px;touch-action:pan-y;user-select:none}.preview-row .tile svg{width:100%;height:auto;aspect-ratio:1;display:block}
 .bar label{font-weight:400;font-family:var(--font)}.bar input[type=number]{width:7ch;text-align:center;background:#25211f;border:1px solid var(--line);padding:7px 2px;font-variant-numeric:tabular-nums}
 .bar .jump{display:flex;align-items:center;gap:6px}.bar output{color:var(--ink)}input[type=range]{width:100%;accent-color:var(--red);height:30px;margin:0}
-.role{margin-top:7px}.role button{font-size:13px}.meta{margin:9px 0 0}
+.role{margin-top:7px}.role button{font-size:13px}.meta{margin:9px 0 0}.radius-switch[hidden]{display:none}
 @media(max-width:650px){main{max-width:500px}.layout{grid-template-columns:minmax(0,1fr);gap:16px}header{flex-direction:row;align-items:center;margin-bottom:10px}.controls{display:grid;gap:0}}
 @media(max-width:360px){.group:not(.preview-row){flex-wrap:wrap}.group:not(.preview-row)>*{flex:1 1 46%}.edit-row button{flex:1 1 22%}}
 #film details{margin-top:12px}#film summary{list-style:none;cursor:pointer}#film summary::-webkit-details-marker{display:none}#film summary::before{content:"[+] "}#film details[open] summary::before{content:"[-] "}#film details a{color:var(--ink)}#film label{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:6px 0}
@@ -70,7 +70,7 @@ b,strong{font-weight:400}summary{font-weight:400}
 <link rel="stylesheet" href="xor-space-export.css?v=019">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="figOutline" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/></filter><filter id="fig3d" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/><feDropShadow dx=".28" dy=".28" stdDeviation="0" flood-color="#2b2d34"/></filter></defs></svg>
 <main>
-<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.021">v0.021</small></div></header>
+<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.022">v0.022</small></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span>Поле / 29 x 29</span><span id="count"></span></figcaption>
 <svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 x 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect id="fieldBg" width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="pivotBits" fill="#717777" pointer-events="none"/><g id="digitBits" aria-hidden="true" pointer-events="none"></g></svg>
@@ -87,7 +87,7 @@ b,strong{font-weight:400}summary{font-weight:400}
 <div class="group role"><button id="left" aria-label="Повернуть выбранную фигуру влево"><span class="ico">&lt;</span>90</button><button id="right" aria-label="Повернуть выбранную фигуру вправо">90<span class="ico r">&gt;</span></button><button id="swap" title="Поменять выбранную фигуру со следующей по часовой стрелке"><span class="ico">&lt;&gt;</span>Обмен</button></div>
 <div class="group role"><button id="allLeft" aria-label="Повернуть все фигуры влево" title="Повернуть все четыре фигуры на 90 градусов влево; удержание повторяет"><span class="ico">&lt;&lt;</span>Все 90</button><button id="allRight" aria-label="Повернуть все фигуры вправо" title="Повернуть все четыре фигуры на 90 градусов вправо; удержание повторяет">Все 90<span class="ico r">&gt;&gt;</span></button><button id="resetPositions" title="Убрать ручные сдвиги и вернуть фигуры на лучи"><span class="ico">-&gt;</span>На лучи</button></div>
 <p class="hint">Выберите фигуру под полем. Повторный щелчок по миниатюре, пустое поле, ПКМ или Escape снимают выделение. «Перебор» работает со всеми фигурами. «Крест 90o» соединяет серые центры, расставляет фигуры по четырём направлениям и вращает всю расстановку вместе.</p></section>
-<section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">3</span><span class="x-bracket">]</span></div><input id="radius" type="range" min="-7" max="7" value="0" aria-valuetext="0 клеток от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">&gt;</button></div><p class="hint">При нуле верхние серые клетки всех четырёх фигур соединены в общем центре. Каждая фигура поворачивается вокруг своей серой клетки. Положительные значения уводят их по лучам ^ -> v <-, отрицательные - на противоположные.</p></section>
+<section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">3</span><span class="x-bracket">]</span></div><input id="radius" type="range" min="-7" max="7" value="0" aria-valuetext="0 клеток от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">&gt;</button></div><div class="group role radius-switch" id="radiusSwitch" hidden><button type="button" data-radius="manual" aria-pressed="true">Вручную</button><button type="button" data-radius="auto" aria-pressed="false">Авто</button></div><p class="hint">В «256 без повторов» и «Все 24 креста» расстояние можно вести вручную ползунком или включить «Авто» — оно пройдёт весь диапазон за цикл. При нуле верхние серые клетки всех четырёх фигур соединены в общем центре. Каждая фигура поворачивается вокруг своей серой клетки. Положительные значения уводят их по лучам ^ -> v <-, отрицательные - на противоположные.</p></section>
 <section><h2>Наложение</h2><div class="group"><button id="xor">XOR</button><button id="union"><span class="ico">+</span>Вместе</button><button id="solo"><span class="ico">1</span>Одна</button></div><p id="rule" class="hint"></p></section>
 <section><h2>Цвета</h2><div class="color-grid"><label>фон поля<input type="color" id="colorFieldBg" value="#fd0000" aria-label="Цвет фона поля"></label><label>клетка 1<input type="color" id="colorBit" value="#000000" aria-label="Цвет клетки 1"></label><label>цифра 1<input type="color" id="colorDigitOne" value="#f4f0e8" aria-label="Цвет цифры 1"></label><label>цифра 0<input type="color" id="colorDigitZero" value="#000000" aria-label="Цвет цифры 0"></label><label>силуэт<input type="color" id="colorGhost" value="#7c3aed" aria-label="Цвет силуэта"></label><label>центры<input type="color" id="colorPivot" value="#717777" aria-label="Цвет серых центров"></label><label>оси и сетка<input type="color" id="colorAxes" value="#f4f0e8" aria-label="Цвет осей и сетки"></label></div><div class="group role"><button id="resetColors" type="button">Сбросить цвета</button></div><p class="hint">Цвета действуют на поле, миниатюры, GIF и видео.</p></section>
 <section id="film"><h2>Анимация / GIF</h2>
@@ -102,7 +102,7 @@ b,strong{font-weight:400}summary{font-weight:400}
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Загрузите MP3: покажу длительность, число кадров и кадров в секунду.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать<span class="ico r">MP4</span></button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF / 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> / <a href="xor.gif">С XOR</a> / <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.021</small></footer></main>
+</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.022</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
@@ -122,7 +122,7 @@ const orders=permutations([0,1,2,3]),rays=[[0,-1],[1,0],[0,1],[-1,0]],arrows=['^
 const names=['I','II','III','IV'],size=29,center=14,total=24*256,dragMargin=6;
 const $=id=>document.getElementById(id);
 const initialVariant=24*(2+3*4+0*16+1*64); // turns: up, right, down, left
-const state={variant:initialVariant,selected:null,radius:0,mode:'xor',ghosts:false,grid:false,digits:false,shadows:true,edit:null,offsets:Array.from({length:4},()=>({x:0,y:0}))};
+const state={variant:initialVariant,selected:null,radius:0,radiusAuto:false,mode:'xor',ghosts:false,grid:false,digits:false,shadows:true,edit:null,offsets:Array.from({length:4},()=>({x:0,y:0}))};
 const defaultColors={fieldBg:'#fd0000',bit:'#000000',ghost:'#7c3aed',pivot:'#717777',digitOne:'#f4f0e8',digitZero:'#000000',axes:'#f4f0e8'};
 const colorInputs={colorFieldBg:'fieldBg',colorBit:'bit',colorDigitOne:'digitOne',colorDigitZero:'digitZero',colorGhost:'ghost',colorPivot:'pivot',colorAxes:'axes'};
 let colors=Object.assign({},defaultColors);
@@ -279,20 +279,20 @@ function clampOffsets(){
   offset.x=x-baseX;offset.y=y-baseY;
  });
 }
-function syncSpace(variant,mode){
- const {order,turn}=unpack(variant),snapshot={points:points.map(a=>a.map(p=>p.slice())),order,turn,radius:state.radius,offsets:state.offsets.map(o=>({...o})),mode,selected:state.selected,variant};
+function syncSpace(variant,mode,radius=state.radius){
+ const {order,turn}=unpack(variant),snapshot={points:points.map(a=>a.map(p=>p.slice())),order,turn,radius,offsets:state.offsets.map(o=>({...o})),mode,selected:state.selected,variant};
  window.xorSpaceSnapshot=snapshot;
  window.xorSpaceView?.update(window.xorSpaceSnapshot);
 }
-function paintField(variant,mode){
+function paintField(variant,mode,radius=state.radius){
  let ghostPath='',path='',pivotPath='',ones=0;
- const union=state.ghosts?fieldCells(variant,state.radius,state.selected,'union',state.offsets):null;
+ const union=state.ghosts?fieldCells(variant,radius,state.selected,'union',state.offsets):null;
  if(union){
   union.forEach((v,i)=>{
    if(v===1)ghostPath+=cellPath(i%size,Math.floor(i/size));
   });
  }
- const base=fieldCells(variant,state.radius,state.selected,mode,state.offsets);
+ const base=fieldCells(variant,radius,state.selected,mode,state.offsets);
  const cells=base;
  cells.forEach((v,i)=>{
    if(v===1){path+=cellPath(i%size,Math.floor(i/size));ones++;}
@@ -303,7 +303,7 @@ function paintField(variant,mode){
  $('bits').setAttribute('d',path);$('count').textContent=ones+' ед.';
  paintDigits(cells);
  paintSymmetry(union||cells,union?'силуэта':mode==='xor'?'XOR':'силуэта');
- syncSpace(variant,mode);
+ syncSpace(variant,mode,radius);
  return base;
 }
 // The digits view writes the value of every cell over a light field.
@@ -390,10 +390,10 @@ function resetPositions(){
  for(const offset of state.offsets)offset.x=offset.y=0;
  render();
 }
-function paintTiles(turn,variant=state.variant,updateMeta=true,mode=state.mode){
- const common=mode==='xor'?fieldCells(variant,state.radius,state.selected,'xor',state.offsets):null;
+function paintTiles(turn,variant=state.variant,updateMeta=true,mode=state.mode,radius=state.radius){
+ const common=mode==='xor'?fieldCells(variant,radius,state.selected,'xor',state.offsets):null;
  tiles.forEach((b,i)=>{
-  const own=fieldCells(variant,state.radius,i,'solo',state.offsets);
+  const own=fieldCells(variant,radius,i,'solo',state.offsets);
   let ghost='',live='',pivot='';
   for(let k=0;k<own.length;k++)if(own[k]===2)pivot+=cellPath(k%size,Math.floor(k/size));
   for(let k=0;k<own.length;k++)if(own[k]===1){
@@ -427,6 +427,13 @@ function sequenceVariant(index,motion=filmMotion,base=state.variant,selected=sta
  if(motion==='spin'&&selected!==null){turn[selected]=k;return pack(order,turn);}
  return k;
 }
+function autoRadius(index,total=sequenceTotal()){
+ const input=$('radius'),min=Number(input.min),max=Number(input.max),n=Math.max(2,total);
+ const k=((index%n)+n)%n/(n-1),t=k<=.5?2*k:2*(1-k);
+ return Math.round(min+(max-min)*t);
+}
+function autoRadiusOn(){return finiteSequence()&&state.radiusAuto;}
+function displayRadius(){return autoRadiusOn()?autoRadius(sequenceIndex(state.variant),sequenceTotal()):state.radius;}
 function setFrameUI(variant){
  const value=sequenceIndex(variant)+1,count=sequenceTotal();
  $('frame').max=count;$('frameTotal').textContent=count;
@@ -438,16 +445,20 @@ function setFrameUI(variant){
 }
 function render(){
  clampOffsets();
+ const radius=displayRadius();
  const {order,turn}=unpack(state.variant),slot=order.indexOf(state.selected),offset=state.offsets[state.selected]||{x:0,y:0};
- const shift=offset.x||offset.y?' / сдвиг '+offset.x+', '+offset.y:'',direction=state.radius<0?(slot+2)%4:slot;
- paintField(state.variant,state.mode);
+ const shift=offset.x||offset.y?' / сдвиг '+offset.x+', '+offset.y:'',direction=radius<0?(slot+2)%4:slot;
+ paintField(state.variant,state.mode,radius);
  setFrameUI(state.variant);
- $('radius').value=state.radius;
- $('radius').setAttribute('aria-valuetext',cellsLabel(state.radius));updateSlider($('radius'),state.radius);
+ $('radius').value=radius;
+ $('radius').setAttribute('aria-valuetext',cellsLabel(radius));updateSlider($('radius'),radius);
  $('position').textContent=state.selected===null?'Все фигуры / без выделения':'Фигура '+names[state.selected]+' / луч '+arrows[direction]+' / '+turn[state.selected]*90+'o'+shift;
- paintTiles(turn);
+ paintTiles(turn,state.variant,true,state.mode,radius);
  for(const id of ['left','right','swap','solo'])$(id).disabled=state.selected===null||centredSequence();
- for(const id of ['radius','radiusDown','radiusUp'])$(id).disabled=centredSequence();
+ const autoRadiusActive=autoRadiusOn();
+ for(const id of ['radius','radiusDown','radiusUp'])$(id).disabled=filmMotion==='cross'||autoRadiusActive;
+ $('radiusSwitch').hidden=!finiteSequence();
+ for(const button of $('radiusSwitch').querySelectorAll('[data-radius]'))button.setAttribute('aria-pressed',String((button.dataset.radius==='auto')===state.radiusAuto));
  for(const id of ['frame','frameDown','frameUp','random'])$(id).disabled=filmMotion==='cross';
  syncMotionUI();
  for(const id of ['xor','union','solo'])$(id).setAttribute('aria-pressed',id===state.mode);
@@ -502,8 +513,9 @@ $('shadowToggle').onclick=()=>{state.shadows=!state.shadows;render();};
 $('swap').onclick=()=>{if(state.selected===null||centredSequence())return;const {order,turn}=unpack(state.variant),a=order.indexOf(state.selected),b=(a+1)%4;[order[a],order[b]]=[order[b],order[a]];state.variant=pack(order,turn);render();};
 $('resetPositions').onclick=resetPositions;
 $('frame').oninput=e=>{if(filmMotion==='cross')return;const v=Number(e.target.value);state.variant=sequenceVariant(Math.max(1,Math.min(sequenceTotal(),Math.trunc(v)))-1);render();};
-$('radius').oninput=e=>{if(centredSequence())return;state.radius=Number(e.target.value);render();};
-function stepRadius(delta){if(centredSequence())return;state.radius=Math.max(Number($('radius').min),Math.min(Number($('radius').max),state.radius+delta));render();}
+$('radius').oninput=e=>{if(filmMotion==='cross'||autoRadiusOn())return;state.radius=Number(e.target.value);render();};
+function stepRadius(delta){if(filmMotion==='cross'||autoRadiusOn())return;state.radius=Math.max(Number($('radius').min),Math.min(Number($('radius').max),state.radius+delta));render();}
+for(const button of document.querySelectorAll('[data-radius]'))button.onclick=()=>{const auto=button.dataset.radius==='auto';if(!auto&&state.radiusAuto)state.radius=displayRadius();state.radiusAuto=auto;render();updateVideoInfo();};
 function syncMotionUI(){
  for(const button of document.querySelectorAll('[data-motion]')){
   const isSpin=button.dataset.motion==='spin';
@@ -589,8 +601,9 @@ function plan(config){
      if(config.motion==='cross')variant=crossVariant(order,(turn[order[0]]+2+step)%4);
      else{turn[config.selected]=(turn[config.selected]+step)%4;variant=pack(order,turn);}
    }
+   const radius=finite&&config.radiusAuto?autoRadius(sequenceIndex(variant,config.motion,config.selected),sequenceTotal(config.motion)):config.radius;
    const start=Math.round(sample*100/perSecond),end=Math.round((sample+1)*100/perSecond);
-   frames.push({variant,mode:config.mode,start,end});
+   frames.push({variant,mode:config.mode,radius,start,end});
  }
  return frames;
 }
@@ -626,8 +639,10 @@ function playFilm(){
    }
    if(i!==shown){
      const frame=frames[i];lastFilmFrame=frame;
-     paintField(frame.variant,frame.mode);
-     paintTiles(unpack(frame.variant).turn,frame.variant,false,frame.mode);
+     const frameRadius=frame.radius??config.radius;
+     paintField(frame.variant,frame.mode,frameRadius);
+     paintTiles(unpack(frame.variant).turn,frame.variant,false,frame.mode,frameRadius);
+     $('radius').value=frameRadius;$('radius').setAttribute('aria-valuetext',cellsLabel(frameRadius));updateSlider($('radius'),frameRadius);
      const label=frame.mode==='solo'?'Одна':frame.mode==='xor'?'XOR':'Без XOR';
      $('count').textContent=label+' / '+(sequenceIndex(frame.variant,config.motion,config.selected)+1)+' / '+sequenceTotal(config.motion);
      setFrameUI(frame.variant);
@@ -648,7 +663,7 @@ for(const button of document.querySelectorAll('[data-motion]'))button.onclick=()
  if(centredSequence(button.dataset.motion)){
    const playing=!!animation;if(playing)stopFilm();filmMotion=button.dataset.motion;
    if(filmMotion==='cross')alignCross();
-   else{state.variant=sequenceVariant(sequenceIndex(state.variant));state.radius=0;state.offsets=Array.from({length:4},()=>({x:0,y:0}));state.selected=null;state.edit=null;if(state.mode==='solo')state.mode='union';motionBeforeSolo=filmMotion;}
+   else{state.variant=sequenceVariant(sequenceIndex(state.variant));state.offsets=Array.from({length:4},()=>({x:0,y:0}));state.selected=null;state.edit=null;if(state.mode==='solo')state.mode='union';motionBeforeSolo=filmMotion;}
    setSpeed(speed);render();updateVideoInfo();if(playing)playFilm();return;
  }
  filmMotion=button.dataset.motion;
@@ -749,8 +764,9 @@ function rasterCells(config,cells,ghost=null){
  return ctx.getImageData(0,0,side,side).data;
 }
 function raster(config,frame){
- const base=fieldCells(frame.variant,config.radius,config.selected,frame.mode,config.offsets,config.points);
- const ghost=config.ghosts?fieldCells(frame.variant,config.radius,config.selected,'union',config.offsets,config.points):null;
+ const radius=frame.radius??config.radius;
+ const base=fieldCells(frame.variant,radius,config.selected,frame.mode,config.offsets,config.points);
+ const ghost=config.ghosts?fieldCells(frame.variant,radius,config.selected,'union',config.offsets,config.points):null;
  return rasterCells(config,base,ghost);
 }
 let gifUrl=null;
