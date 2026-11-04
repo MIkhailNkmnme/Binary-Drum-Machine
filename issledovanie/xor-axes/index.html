@@ -18,7 +18,7 @@ figure{margin:0}.caption{margin-bottom:7px;text-transform:uppercase}
 #field{width:100%;aspect-ratio:1;display:block;background:var(--red);touch-action:none;cursor:grab;user-select:none}
 #field:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;outline:1px solid #8886}.dot.one{background:#090908}.dot.zero{background:var(--red)}.dot.ghost{background:#8f241c}.dot.neutral{background:white}
 section{border-top:1px solid var(--line);padding:10px 0}h2{font-size:14px;margin:0 0 8px}.hint{font-size:12px;margin:7px 0 0}.group{display:flex;gap:5px}.group>*{flex:1;min-width:0}
-button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:0;background:#342f2b;min-height:44px;padding:4px 9px;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%)}button:hover,button:focus-visible{background:#514740}button[aria-pressed=true]{background:var(--ink);color:#191613}button:focus-visible{outline:3px solid var(--red);outline-offset:-4px}
+button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:0;background:#342f2b;min-height:44px;padding:4px 9px;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%)}button:hover,button:focus-visible{background:#514740}button[aria-pressed=true]{background:var(--ink);color:#191613}button:focus-visible{outline:3px solid var(--red);outline-offset:-4px}button:disabled{opacity:.45;cursor:default}button:disabled:hover{background:#342f2b}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 2px}.tile svg{width:28px;height:28px}.tile span{font:12px monospace}.preview-row{margin-top:10px;gap:6px;align-items:stretch}.preview-row>*{flex:1 1 0;min-width:0;min-height:0;padding:7px 6px 5px;gap:3px;touch-action:pan-y;user-select:none}.preview-row .tile svg{width:100%;height:auto;aspect-ratio:1;display:block}
 .bar label{font-weight:650}.bar input[type=number]{width:7ch;text-align:center;background:#25211f;border:1px solid var(--line);padding:7px 2px;font-variant-numeric:tabular-nums}
 .bar .jump{display:flex;align-items:center;gap:6px}.bar output{color:var(--ink)}input[type=range]{width:100%;accent-color:var(--red);height:30px;margin:0}
@@ -99,7 +99,7 @@ const names=['I','II','III','IV'],size=29,center=14,total=24*256,dragMargin=6;
 const $=id=>document.getElementById(id);
 const state={variant:0,selected:0,radius:3,mode:'xor',ghosts:false,offsets:Array.from({length:4},()=>({x:0,y:0}))};
 const speedMin=1,speedMax=10000,rateSteps=1000;
-let speed=4,filmEffect='compare',filmMotion='variants';
+let speed=4,filmEffect='compare',filmMotion='variants',motionBeforeSolo='variants';
 const rateToSpeed=position=>Math.max(speedMin,Math.min(speedMax,Math.round(10**(4*position/rateSteps))));
 const speedToRate=value=>Math.round(rateSteps*Math.log10(value)/4);
 function speedLabel(value){
@@ -326,9 +326,11 @@ function stepFrame(delta){state.variant=Math.max(0,Math.min(total-1,state.varian
 $('left').onclick=()=>turnBy(-1);$('right').onclick=()=>turnBy(1);
 $('random').onclick=()=>advance(1+Math.floor(Math.random()*(total-1)));
 function resetBoard(){
+ const wasSolo=state.mode==='solo';
  state.variant=0;state.selected=0;state.radius=3;state.mode='xor';
  state.offsets=Array.from({length:4},()=>({x:0,y:0}));
- render();
+ if(wasSolo)filmMotion=motionBeforeSolo;
+ render();syncMotionUI();updateVideoInfo();
 }
 $('resetAll').onclick=resetBoard;
 $('ghostToggle').onclick=()=>{state.ghosts=!state.ghosts;render();};
@@ -337,7 +339,24 @@ $('resetPositions').onclick=resetPositions;
 $('frame').oninput=e=>{const v=Number(e.target.value);state.variant=Math.max(1,Math.min(total,Math.trunc(v)))-1;render();};
 $('radius').oninput=e=>{state.radius=Number(e.target.value);render();};
 function stepRadius(delta){state.radius=Math.max(Number($('radius').min),Math.min(Number($('radius').max),state.radius+delta));render();}
-for(const id of ['xor','union','solo'])$(id).onclick=()=>{state.mode=id;render();};
+function syncMotionUI(){
+ const solo=state.mode==='solo';
+ for(const button of document.querySelectorAll('[data-motion]')){
+  const isVariants=button.dataset.motion==='variants';
+  button.disabled=solo&&isVariants;
+  button.title=solo&&isVariants?'В режиме «Одна» — только поворот':'';
+  button.setAttribute('aria-pressed',String(button.dataset.motion===filmMotion));
+ }
+}
+function setFieldMode(id){
+ const wasSolo=state.mode==='solo';
+ state.mode=id;
+ if(id==='solo'){
+  if(!wasSolo){motionBeforeSolo=filmMotion;filmMotion='spin';}
+ }else if(wasSolo)filmMotion=motionBeforeSolo;
+ render();syncMotionUI();updateVideoInfo();
+}
+for(const id of ['xor','union','solo'])$(id).onclick=()=>setFieldMode(id);
 let drag=null;
 $('field').addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
 $('field').onpointerdown=e=>{
@@ -375,12 +394,13 @@ function settings(){
 // Plan in GIF centiseconds. Every comparison pair shares the same layout.
 // At high speeds pick positions over time, while retaining both halves of the pair.
 function plan(config){
- const paired=config.effect==='compare',perSecond=Math.min(config.speed,paired?25:50);
+ const solo=config.mode==='solo';
+ const paired=!solo&&config.effect==='compare',perSecond=Math.min(config.speed,paired?25:50);
  const count=durationSeconds*perSecond,frames=[];
  for(let sample=0;sample<count;sample++){
    let step=Math.floor(sample*config.speed/perSecond);
    let variant=(config.variant+step)%total;
-   if(config.motion==='spin'){
+   if(solo||config.motion==='spin'){
      const {order,turn}=unpack(config.variant);
      // If four or more turns fit in one sample, select a successive orientation
      // within that interval. Sampling only its start could freeze a fast spin.
@@ -392,7 +412,7 @@ function plan(config){
    if(paired){
      const mid=Math.floor((start+end)/2);
      frames.push({variant,mode:'union',start,end:mid},{variant,mode:'xor',start:mid,end});
-   }else frames.push({variant,mode:config.effect,start,end});
+   }else frames.push({variant,mode:solo?'solo':config.effect,start,end});
  }
  return frames;
 }
@@ -408,7 +428,7 @@ function setPlayState(playing){
 function stopFilm(){
  if(!animation)return;
  cancelAnimationFrame(animation);animation=0;
- if(lastFilmFrame){state.variant=lastFilmFrame.variant;state.mode=lastFilmFrame.mode;lastFilmFrame=null;}
+ if(lastFilmFrame){state.variant=lastFilmFrame.variant;lastFilmFrame=null;}
  setPlayState(false);render();
 }
 function playFilm(){
@@ -419,7 +439,8 @@ function playFilm(){
    if(i!==shown){
      const frame=frames[i];lastFilmFrame=frame;paintField(frame.variant,frame.mode);
      paintTiles(unpack(frame.variant).turn,frame.variant,false);
-     $('count').textContent=(frame.mode==='xor'?'XOR':'Без XOR')+' · № '+(frame.variant+1);
+     const label=frame.mode==='solo'?'Одна':frame.mode==='xor'?'XOR':'Без XOR';
+     $('count').textContent=label+' · № '+(frame.variant+1);
      setFrameUI(frame.variant);
      shown=i;
    }
@@ -439,8 +460,9 @@ for(const button of document.querySelectorAll('[data-effect]'))button.onclick=()
  updatePlayback();
 };
 for(const button of document.querySelectorAll('[data-motion]'))button.onclick=()=>{
+ if(button.disabled)return;
  filmMotion=button.dataset.motion;
- for(const b of document.querySelectorAll('[data-motion]'))b.setAttribute('aria-pressed',b===button);
+ syncMotionUI();
  updatePlayback();
 };
 $('rate').oninput=e=>setSpeed(rateToSpeed(Number(e.target.value)),{fromSlider:true});
