@@ -75,7 +75,7 @@ button,input{touch-action:manipulation;font:inherit;color:inherit}button{border:
 <div class="slider-row"><button class="step" id="rateDown" type="button" aria-label="Уменьшить скорость" aria-controls="rate">◂</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><svg class="x-half x-left" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M0 0H6L12 12 6 24H0L6 12Z"/></svg><span class="x-number">4</span><svg class="x-half x-right" viewBox="0 0 12 24" preserveAspectRatio="none"><path d="M12 0H6L0 12 6 24H12L6 12Z"/></svg></div><input id="rate" type="range" min="0" max="1000" step="1" value="151" aria-valuetext="4 раскладки в секунду"></div><button class="step" id="rateUp" type="button" aria-label="Увеличить скорость" aria-controls="rate">▸</button></div>
 <div class="group" id="rates" aria-label="Быстрый выбор скорости"><button>1</button><button>10</button><button>100</button><button>1000</button><button>10000</button></div>
 <div class="group role"><button id="play" aria-pressed="false">▶ Пуск</button><button id="makeGif">Создать GIF</button></div>
-<p class="hint">В GIF — 4 секунды движения по кругу. При быстром переборе кадры выбираются с пропуском. В сравнении каждая показанная раскладка идёт парой.</p>
+<p class="hint">В GIF — 4 секунды движения по кругу. При быстром переборе кадры выбираются с пропуском. В сравнении каждая показанная раскладка идёт парой. В режиме XOR при проигрывании кадр показывается как XOR с предыдущим (и в GIF/видео).</p>
 <output id="gifStatus" aria-live="polite"></output><a id="gifLink" hidden>Скачать GIF</a><img id="gifPreview" hidden alt="Созданная GIF-анимация">
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Длина ролика равна длине MP3; кадры GIF распределяются по ней поровну.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать видео</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF · 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> · <a href="xor.gif">С XOR</a> · <a href="compare.gif">Сравнение</a></p></details>
@@ -199,7 +199,13 @@ function clampOffsets(){
   offset.x=x-baseX;offset.y=y-baseY;
  });
 }
-function paintField(variant,mode){
+function xorCells(a,b){
+ const out=new Uint8Array(a.length);
+ for(let i=0;i<a.length;i++)out[i]=(a[i]===1)!==(b[i]===1)?1:0;
+ out[center*size+center]=2;
+ return out;
+}
+function paintField(variant,mode,previousBase=null){
  let ghostPath='',path='',ones=0;
  const union=state.ghosts?fieldCells(variant,state.radius,state.selected,'union',state.offsets):null;
  if(union){
@@ -207,13 +213,15 @@ function paintField(variant,mode){
    if(v===1)ghostPath+=cellPath(i%size,Math.floor(i/size));
   });
  }
- const cells=fieldCells(variant,state.radius,state.selected,mode,state.offsets);
+ const base=fieldCells(variant,state.radius,state.selected,mode,state.offsets);
+ const cells=previousBase?xorCells(base,previousBase):base;
  cells.forEach((v,i)=>{
    if(v===1){path+=cellPath(i%size,Math.floor(i/size));ones++;}
  });
  $('ghostBits').setAttribute('d',ghostPath);
  $('bits').setAttribute('d',path);$('count').textContent=ones+' ед.';
- paintSymmetry(union||cells,union?'силуэта':'XOR');
+ paintSymmetry(previousBase?cells:(union||cells),previousBase?'разницы':union?'силуэта':'XOR');
+ return base;
 }
 function axisSymbol(kind){
  return {v:'↕',h:'↔',main:'↘',anti:'↙'}[kind];
@@ -432,14 +440,17 @@ function stopFilm(){
  setPlayState(false);render();
 }
 function playFilm(){
- const frames=plan(settings()),origin=performance.now();let shown=-1;
+ const frames=plan(settings()),origin=performance.now();let shown=-1,previousBase=null;
  function tick(now){
    const t=Math.floor((now-origin)/10)%(durationSeconds*100);
    const i=frames.findIndex(f=>f.end>t);
    if(i!==shown){
-     const frame=frames[i];lastFilmFrame=frame;paintField(frame.variant,frame.mode);
+     const temporal=state.mode==='xor'&&previousBase;
+     const frame=frames[i];lastFilmFrame=frame;
+     const base=paintField(frame.variant,frame.mode,temporal?previousBase:null);
+     previousBase=base;
      paintTiles(unpack(frame.variant).turn,frame.variant,false);
-     const label=frame.mode==='solo'?'Одна':frame.mode==='xor'?'XOR':'Без XOR';
+     const label=temporal?'ΔXOR':frame.mode==='solo'?'Одна':frame.mode==='xor'?'XOR':'Без XOR';
      $('count').textContent=label+' · № '+(frame.variant+1);
      setFrameUI(frame.variant);
      shown=i;
@@ -504,16 +515,16 @@ bindStep($('frameUp'),()=>stepFrame(1));
 bindStep($('allLeft'),()=>turnAll(-1),null,180);
 bindStep($('allRight'),()=>turnAll(1),null,180);
 const cellPixels=8,side=size*cellPixels;
-function raster(config,frame){
- const cells=fieldCells(frame.variant,config.radius,config.selected,frame.mode,config.offsets),rgba=new Uint8ClampedArray(side*side*4);
- if(config.ghosts){
-  const union=fieldCells(frame.variant,config.radius,config.selected,'union',config.offsets);
-  for(let i=0;i<cells.length;i++)if(cells[i]===0&&union[i]===1)cells[i]=3;
+function rasterCells(config,cells,ghost=null){
+ let data=cells;
+ if(config.ghosts&&ghost){
+  data=new Uint8Array(cells);
+  for(let i=0;i<data.length;i++)if(data[i]===0&&ghost[i]===1)data[i]=3;
  }
- const palette=[[255,57,44],[9,9,8],[255,255,255],[143,36,28]];
+ const rgba=new Uint8ClampedArray(side*side*4),palette=[[255,57,44],[9,9,8],[255,255,255],[143,36,28]];
  for(let y=0;y<size;y++){
    for(let x=0;x<size;x++){
-     const colour=palette[cells[y*size+x]];
+     const colour=palette[data[y*size+x]];
      let pos=(y*cellPixels*side+x*cellPixels)*4;
      for(let k=0;k<cellPixels;k++){rgba[pos++]=colour[0];rgba[pos++]=colour[1];rgba[pos++]=colour[2];rgba[pos++]=255;}
    }
@@ -522,14 +533,23 @@ function raster(config,frame){
  }
  return rgba;
 }
+function raster(config,frame){
+ const base=fieldCells(frame.variant,config.radius,config.selected,frame.mode,config.offsets);
+ const ghost=config.ghosts?fieldCells(frame.variant,config.radius,config.selected,'union',config.offsets):null;
+ return rasterCells(config,base,ghost);
+}
 let gifUrl=null;
 $('makeGif').onclick=async()=>{
  const config=settings(),frames=plan(config),button=$('makeGif');button.disabled=true;
  try{
-   const encoder=MayatnikGif.encoder(side,side);
+   const encoder=MayatnikGif.encoder(side,side);let previousBase=null;
    for(let i=0;i<frames.length;i++){
      if(i%8===0){$('gifStatus').textContent='Сборка '+i+' / '+frames.length;await new Promise(resolve=>setTimeout(resolve,0));}
-     const frame=frames[i];encoder.add(raster(config,frame),frame.end-frame.start);
+     const frame=frames[i],base=fieldCells(frame.variant,config.radius,config.selected,frame.mode,config.offsets);
+     const cells=config.mode==='xor'&&previousBase?xorCells(base,previousBase):base;
+     const ghost=config.ghosts?fieldCells(frame.variant,config.radius,config.selected,'union',config.offsets):null;
+     encoder.add(rasterCells(config,cells,ghost),frame.end-frame.start);
+     previousBase=base;
    }
    const blob=encoder.finish(),previous=gifUrl;gifUrl=URL.createObjectURL(blob);
    $('gifPreview').src=gifUrl;$('gifPreview').hidden=false;
@@ -617,8 +637,18 @@ $('makeVideo').onclick=async()=>{
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const tile=document.createElement('canvas');tile.width=side;tile.height=side;
   const tileCtx=tile.getContext('2d');
+  const frameData=frames.map(frame=>{
+   const base=fieldCells(frame.variant,config.radius,config.selected,frame.mode,config.offsets);
+   const ghost=config.ghosts?fieldCells(frame.variant,config.radius,config.selected,'union',config.offsets):null;
+   return {base,ghost};
+  });
+  const displayData=frameData.map((item,index)=>({
+   cells:config.mode==='xor'&&index?xorCells(item.base,frameData[index-1].base):item.base,
+   ghost:item.ghost
+  }));
   const drawFrame=index=>{
-   tileCtx.putImageData(new ImageData(raster(config,frames[index]),side,side),0,0);
+   const item=displayData[index];
+   tileCtx.putImageData(new ImageData(rasterCells(config,item.cells,item.ghost),side,side),0,0);
    ctx.drawImage(tile,0,0,vidSide,vidSide);
   };
   drawFrame(0);
