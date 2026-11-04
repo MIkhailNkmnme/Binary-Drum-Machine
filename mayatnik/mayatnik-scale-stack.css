@@ -9,7 +9,7 @@
 .may-scale-stack__controls input{box-sizing:border-box;width:72px;height:24px;background:#1b2430;color:#dfe6f5;border:1px solid #40516b}
 .may-scale-stack__list{width:100%}
 .may-scale-stack--window .may-scale-stack__level{position:relative;display:block;box-sizing:border-box;width:100%;padding-top:24px}
-.may-scale-stack--window .may-scale-stack__label{position:absolute;top:4px;left:0;width:100%;text-align:center;white-space:normal;pointer-events:none}
+.may-scale-stack--window .may-scale-stack__label{position:absolute;top:4px;left:50%;width:max-content;max-width:none;transform:translateX(-50%);text-align:center;white-space:nowrap;pointer-events:none}
 .may-scale-stack--window .may-scale-stack__canvas{width:100%;height:auto}
 
 .may-scale-stack__controls select{height:24px;max-width:120px;background:#1b2430;color:#dfe6f5;border:1px solid #40516b;font:inherit}
@@ -20,7 +20,7 @@
 
 .may-scale-stack__warning{color:#ff5b5b;pointer-events:auto}.may-scale-stack__warning[hidden]{display:none}
 
-.may-scale-stack__controls{flex-wrap:nowrap;width:max-content;min-width:100%;height:24px;min-height:24px;gap:4px}.may-scale-stack__controls select[aria-label="Высота нижних построений"]{max-width:150px}
+.may-scale-stack__controls{flex-wrap:nowrap;align-self:flex-start;width:max-content;min-width:0;height:24px;min-height:24px;gap:4px}.may-scale-stack__controls select[aria-label="Высота нижних построений"]{max-width:150px}
 
 .may-scale-stack__axis-band{position:absolute;pointer-events:none;z-index:1;background:color-mix(in srgb,var(--may-axis-primary,#b48cff) 22%,transparent)}
 

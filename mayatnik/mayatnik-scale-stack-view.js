@@ -52,6 +52,7 @@
    const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
    element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
+   controls.style.marginLeft=(width*(Number.isFinite(layout.axisFraction)?layout.axisFraction:.5))+'px';controls.style.transform='translateX(-50%)';
    for(const item of items){
     const trueSize=heightMode.value==='native'||heightMode.value==='integer',factor=heightMode.value==='integer'?Math.ceil(source.height/item.size.height):1;
     const cellScale=heightMode.value==='native'?1/(win.devicePixelRatio||1):pixelScale;
@@ -61,7 +62,8 @@
     const fractional=source.width%item.size.width!==0||source.height%item.size.height!==0;
     warning.hidden=!fractional;warning.textContent=' · Нецелое число исходных ячеек';
     warning.title='Исходных ячеек на одну нижнюю: по ширине '+source.width+'/'+item.size.width+', по высоте '+source.height+'/'+item.size.height;
-    item.label.replaceChildren(doc.createTextNode(item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(h/item.size.height*(win.devicePixelRatio||1))),warning);
+    const dpr=win.devicePixelRatio||1,screenRows=Math.max(1,Math.ceil(h*dpr-1e-9)),screenColumns=Math.max(1,Math.ceil(w*dpr-1e-9)),screenInfo=screenRows!==item.size.height||screenColumns!==item.size.width?' · сейчас '+screenRows+' строк × '+screenColumns:'';
+    item.label.replaceChildren(doc.createTextNode(item.size.height+' строк · ширина '+item.size.width+' · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(h/item.size.height*dpr)+screenInfo),warning);
     item.headerHeight=Math.max(24,item.label.offsetHeight+8);item.element.style.paddingTop=item.headerHeight+'px';item.element.style.height=(h+item.headerHeight)+'px';
     if(!item.axis){item.axis=doc.createElement('div');item.axis.className='may-scale-stack__axis';item.axis.setAttribute('aria-hidden','true');item.element.append(item.axis);}
     Object.assign(item.axis.style,{display:layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',top:item.headerHeight+'px',height:h+'px'});

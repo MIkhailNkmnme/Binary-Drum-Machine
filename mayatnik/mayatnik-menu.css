@@ -1326,3 +1326,13 @@ header #paintTools.pt-dd .may-heat-period-control .zcf-value{top:0!important;rig
 .may-heat-period-outline .may-heat-period-grip{stroke:var(--c,#7cbcff)}
 .may-heat-period-control:has(.zcf-left:is(:hover,:focus-visible,.zcf-held)) .may-heat-period-left,.may-heat-period-control:has(.zcf-right:is(:hover,:focus-visible,.zcf-held)) .may-heat-period-right{stroke:var(--c,#7cbcff);fill:color-mix(in srgb,var(--c,#7cbcff) 18%,transparent)}
 .may-heat-period-control:has(.zcf-held) .may-heat-period-outline path{stroke-width:3px}
+
+/* The heat thumb is only the separated halves of one X: ) value (. */
+header #paintTools.pt-dd .may-heat-period-control{background:transparent!important;clip-path:none!important}
+.may-heat-period-control>.zcf-side>.may-control-chevron,.may-heat-period-control>.may-standard-outline,.may-heat-period-control>.may-standard-roof{display:none!important}
+.may-heat-period-control::before,.may-heat-period-control::after,.may-heat-period-control>.zcf-middle::before,.may-heat-period-control>.zcf-middle::after{display:none!important}
+.may-heat-period-outline path{fill:none!important}
+.may-heat-period-control:has(.zcf-input:is(:hover,:focus-visible,:active)) :is(.may-heat-period-left,.may-heat-period-right){stroke:var(--c,#7cbcff)}
+
+.may-heat-period-control .zcf-middle>.zcf-input::-webkit-slider-thumb{width:44px!important;background:transparent!important;mask:none!important;cursor:grab}
+.may-heat-period-control .zcf-middle>.zcf-input::-moz-range-thumb{width:44px!important;background:transparent!important;mask:none!important;cursor:grab}
