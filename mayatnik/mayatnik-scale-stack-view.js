@@ -18,7 +18,7 @@
   const controls=doc.createElement('label'),input=doc.createElement('input'),list=doc.createElement('div');
   controls.className='may-scale-stack__controls';controls.addEventListener('pointerdown',e=>e.stopPropagation());controls.addEventListener('pointerup',e=>e.stopPropagation());
   const mode=doc.createElement('select'),baseInput=doc.createElement('input');
-  const method=doc.createElement('select');method.setAttribute('aria-label','Способ уменьшения');for(const [value,text]of [['canvas','Как на холсте'],['nearest','Ближайший'],['average','Средний цвет']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;method.append(opt);}method.value=['canvas','nearest','average'].includes(o.method?.())?o.method():'canvas';
+  const method=doc.createElement('select');method.setAttribute('aria-label','Способ уменьшения');for(const [value,text]of [['canvas','Как на холсте'],['average','Средний цвет']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;method.append(opt);}method.value=['canvas','average'].includes(o.method?.())?o.method():'canvas';
 
   for(const [value,text]of [['powers','Степени x'],['multiples','Кратно x'],['rows','По строкам']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;mode.append(opt);}
   mode.value=o.mode?.()||'rows';mode.setAttribute('aria-label','Вариант уменьшения');baseInput.type='number';baseInput.min='2';baseInput.max='10000';baseInput.step='1';baseInput.value=String(o.base?.()||2);baseInput.setAttribute('aria-label','Число x');baseInput.title='Число x';
@@ -27,7 +27,7 @@
   let enabled=false,destroyed=false,source=null,pending=null,job=null,timer=null,layout={},zoom=1,items=[],revision=0,lastKey,error=null;
   const schedule=o.schedule||(fn=>win.setTimeout(fn,0)),cancel=o.cancel||(id=>win.clearTimeout(id));
   const fmt=n=>Number(n.toFixed(4)).toLocaleString('ru-RU');
-  function drop(item){if(item.canvas){item.canvas.width=item.canvas.height=0;item.canvas.remove();item.canvas=null;}item.revision=-1;}
+  function drop(item){if(item.canvas){item.canvas.width=item.canvas.height=0;item.canvas.remove();item.canvas=null;}if(item.overlay){item.overlay.width=item.overlay.height=0;item.overlay.remove();item.overlay=null;}item.bits=null;item.revision=-1;}
   function clear(){for(const item of items)drop(item);items=[];list.replaceChildren();job=null;}
   function later(){if(timer===null&&!destroyed&&enabled)timer=schedule(tick);}
   function geometry(){
@@ -36,7 +36,21 @@
    const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
    element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
-   for(const item of items){const w=width,h=item.size.height*pixelScale,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*(axis-smallAxis);item.element.style.width=w+'px';item.element.style.height=(h+24)+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(pixelScale*(win.devicePixelRatio||1));if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}}
+   for(const item of items){const w=width,h=item.size.height*pixelScale,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*(axis-smallAxis);item.element.style.width=w+'px';item.element.style.height=(h+24)+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);if(!item.axis){item.axis=doc.createElement('div');item.axis.className='may-scale-stack__axis';item.axis.setAttribute('aria-hidden','true');item.element.append(item.axis);}Object.assign(item.axis.style,{display:layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',height:h+'px'});item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(pixelScale*(win.devicePixelRatio||1));if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}}
+   overlays();
+  }
+  function overlays(){
+   const hostRect=host.getBoundingClientRect(),dpr=Math.min(2,win.devicePixelRatio||1);
+   for(const item of items){if(item.overlay)item.overlay.hidden=true;if(!layout.digits||!item.canvas||!item.bits)continue;
+    const rect=item.canvas.getBoundingClientRect(),cw=rect.width/item.size.width,ch=rect.height/item.size.height;if(Math.min(cw,ch)<4)continue;
+    const left=Math.max(hostRect.left,rect.left),top=Math.max(hostRect.top,rect.top),right=Math.min(hostRect.right,rect.right),bottom=Math.min(hostRect.bottom,rect.bottom);if(right<=left||bottom<=top)continue;
+    if(!item.overlay){item.overlay=doc.createElement('canvas');item.overlay.className='may-scale-stack__digits';item.overlay.setAttribute('aria-hidden','true');item.element.append(item.overlay);}
+    const cv=item.overlay,W=Math.max(1,Math.ceil((right-left)*dpr)),H=Math.max(1,Math.ceil((bottom-top)*dpr));const used=(source?.pixels.byteLength||0)+(source?.bits?.byteLength||0)+items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0)+(i.bits?.byteLength||0)+(i!==item&&i.overlay?i.overlay.width*i.overlay.height*4:0),0);if(used+W*H*4>LIMIT)continue;
+    cv.hidden=false;cv.width=W;cv.height=H;Object.assign(cv.style,{left:(left-rect.left)+'px',top:(24+top-rect.top)+'px',width:(right-left)+'px',height:(bottom-top)+'px'});
+    const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.max(3,Math.min(cw*.75,ch*(Number(layout.digitSize)||80)/100))+'px '+(layout.digitFont||'monospace');
+    const x0=Math.max(0,Math.floor((left-rect.left)/cw)),x1=Math.min(item.size.width,Math.ceil((right-rect.left)/cw)),y0=Math.max(0,Math.floor((top-rect.top)/ch)),y1=Math.min(item.size.height,Math.ceil((bottom-rect.top)/ch));
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const bit=item.bits[y*item.size.width+x];if(bit===-1)continue;ctx.fillStyle=bit===1?(layout.digitOneColour||'#e8edf5'):bit===0?(layout.digitZeroColour||'#7cbcff'):'#ffcf73';const text=bit===0?'0':bit===1?'1':'·',tx=rect.left-left+(x+.5)*cw,ty=rect.top-top+(y+.5)*ch;if(win.MayatnikBitGlyph)win.MayatnikBitGlyph.draw(ctx,text,tx,ty);else ctx.fillText(text,tx,ty);}
+   }
   }
   function rebuild(){
    job=null;if(!source)return;const previous=new Map(items.map(item=>[item.size.height,item]));items=[];input.max=String(Math.max(1,source.height));
@@ -67,10 +81,10 @@
     if(job){const {item,pixels}=job,{width,height}=item.size,ratio=height/source.height,end=method.value==='canvas'?Math.min(width*height,job.at+1048576):width*height;
      const output=new Uint32Array(pixels.buffer),input=new Uint32Array(source.pixels.buffer,source.pixels.byteOffset,source.width*source.height);
      if(method.value==='canvas')for(let i=job.at;i<end;i++){const x=i%width,y=Math.floor(i/width),sx=Math.floor((x+.5)/ratio),sy=Math.floor((y+.5)/ratio);if(sx<source.width&&sy<source.height)output[i]=input[sy*source.width+sx];}
-     if(method.value!=='canvas'){const reduce=o.reduce||win.MayatnikGifScale?.reduce;if(!reduce)throw Error('Модуль уменьшения не загружен');const reduced=reduce(source.pixels,source.width,source.height,height,method.value);pixels.set(reduced.pixels);}
+     if(method.value!=='canvas'){const reduce=o.reduce||win.MayatnikGifScale?.reduce;if(!reduce)throw Error('Модуль уменьшения не загружен');const reduced=reduce(source.pixels,source.width,source.height,height,method.value,source.bits);pixels.set(reduced.pixels);job.bits=reduced.bits;}
      job.at=end;if(end<width*height){later();return;}
      if(!item.canvas){item.canvas=doc.createElement('canvas');item.canvas.className='may-scale-stack__canvas';item.element.append(item.canvas);}
-     const cv=item.canvas;cv.width=width;cv.height=height;const ctx=cv.getContext('2d'),image=ctx.createImageData(width,height);image.data.set(pixels);ctx.putImageData(image,0,0);item.revision=revision;job=null;geometry();o.onPaint?.({key:lastKey,levels:shown.map(i=>i.size)});
+     if(source.bits&&!job.bits){job.bits=new Int8Array(width*height).fill(-1);for(let q=0;q<job.bits.length;q++){const sx=Math.floor((q%width+.5)/ratio),sy=Math.floor((Math.floor(q/width)+.5)/ratio);if(sx<source.width&&sy<source.height)job.bits[q]=source.bits[sy*source.width+sx];}}item.bits=job.bits||null;const cv=item.canvas;cv.width=width;cv.height=height;const ctx=cv.getContext('2d'),image=ctx.createImageData(width,height);image.data.set(pixels);ctx.putImageData(image,0,0);item.revision=revision;job=null;geometry();o.onPaint?.({key:lastKey,levels:shown.map(i=>i.size)});
     }
     error=null;if(pending||shown.some(item=>item.revision!==revision))later();
    }catch(e){fail(e);}
@@ -85,9 +99,9 @@
   method.addEventListener('change',()=>{o.onMethod?.(method.value);rebuild();later();});
   mode.addEventListener('change',sequenceChange);baseInput.addEventListener('change',sequenceChange);
   input.addEventListener('change',change);
-  const scroll=()=>later();host.addEventListener('scroll',scroll,{passive:true});win.addEventListener('resize',scroll);
+  const scroll=()=>{overlays();later();};host.addEventListener('scroll',scroll,{passive:true});win.addEventListener('resize',scroll);
   function destroy(){setEnabled(false);destroyed=true;host.removeEventListener('scroll',scroll);win.removeEventListener('resize',scroll);element.remove();}
-  return {element,setEnabled,requestFrame,refreshLayout,setZoom,getZoom:()=>zoom,destroy,inspect:()=>({enabled,destroyed,busy:!!job,pending:!!pending,canvases:items.filter(i=>i.canvas).length,levels:items.length,canvasBytes:items.reduce((n,i)=>n+(i.canvas?i.canvas.width*i.canvas.height*4:0),0),key:lastKey,error})};
+  return {element,setEnabled,requestFrame,refreshLayout,setZoom,getZoom:()=>zoom,destroy,inspect:()=>({enabled,destroyed,busy:!!job,pending:!!pending,canvases:items.filter(i=>i.canvas).length,levels:items.length,canvasBytes:items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0)+(i.bits?.byteLength||0)+(i.overlay?i.overlay.width*i.overlay.height*4:0),0),key:lastKey,error})};
  }
  return {create,levels};
 });

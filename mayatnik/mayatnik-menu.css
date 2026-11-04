@@ -1300,3 +1300,6 @@ header #paintTools.pt-dd .may-axes-number-row{display:flex;flex:none;flex-direct
 header #paintTools.pt-dd .may-axes-label{display:block;height:12px;line-height:12px;padding:0 12px;margin:0;font-size:9px;color:var(--c);white-space:nowrap;user-select:none;cursor:ew-resize}
 
 #paintTools :is([data-n="heatMode"],[data-n="heatPeriod"],[data-n="heatHoldZero"])[aria-disabled="true"]{opacity:.35!important;cursor:default;pointer-events:none}
+
+/* Heat-period control is 24 + 72 + 24; inherited button padding clipped its right arrow. */
+header #paintTools.pt-dd [data-n="heatPeriod"].zcf-control{padding:0!important;gap:0!important}

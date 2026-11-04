@@ -167,7 +167,7 @@
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.max(8,Math.min(18,Math.min(cw,ch)*.7))+'px monospace';
   for(let i=0;i<grid.bits.length;i++){const bit=grid.bits[i];if(bit===-1)continue;const x=left+(b.left+i%grid.width*b.width/grid.width)*scale,y=top+(b.top+Math.floor(i/grid.width)*b.height/grid.height)*scale;
    if((bit===0||bit===1)&&maskAt(searchResult,i)){ctx.fillStyle='rgba(255,190,40,.5)';ctx.fillRect(x,y,cw,ch);}
-   if(readable){ctx.lineWidth=2;ctx.strokeStyle=bit===0?'#fff':'#000';ctx.fillStyle=bit===0?'#000':'#fff';const text=bit===0?'0':bit===1?'1':'·';ctx.strokeText(text,x+cw/2,y+ch/2);ctx.fillText(text,x+cw/2,y+ch/2);}
+   if(readable){ctx.lineWidth=2;ctx.strokeStyle=bit===0?'#fff':'#000';ctx.fillStyle=bit===0?'#000':'#fff';const text=bit===0?'0':bit===1?'1':'·';if(win.MayatnikBitGlyph)win.MayatnikBitGlyph.draw(ctx,text,x+cw/2,y+ch/2,true);else{ctx.strokeText(text,x+cw/2,y+ch/2);ctx.fillText(text,x+cw/2,y+ch/2);}}
   }
  }
  async function runSearch(token,frames,search){

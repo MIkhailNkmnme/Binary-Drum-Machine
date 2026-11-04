@@ -28,7 +28,7 @@
    const link=doc.createElement('link');link.rel='stylesheet';link.href=original?.href||new URL(filename==='grozd.css'?'../_js/grozd.css?v=50':'mayatnik-gif-strip.css?v=896',win.location.href).href;doc.head.append(link);
   }
   const style=doc.createElement('style');style.textContent='html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0e1116;color:#dfe6f5;font:12px/1.4 monospace;--mono:monospace;--gz-n:12px;--gz-bg:#1b2430}#mayGifStrip{left:0!important;top:0!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;resize:none}#mayGifStrip .gz-hx{background:#1b2430!important;user-select:none}#mayGifStrip .gz-hx::before{display:none}';doc.head.append(style);
-  child.HubButtonText=win.HubButtonText;
+  child.HubButtonText=win.HubButtonText;child.MayatnikBitGlyph=win.MayatnikBitGlyph;
   viewer=source.create(child,{onHide:()=>{if(!child.closed)child.close();}});
   render(viewer);child.focus();return viewer;
  }

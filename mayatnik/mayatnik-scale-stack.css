@@ -15,3 +15,5 @@
 .may-scale-stack__controls select{height:24px;max-width:120px;background:#1b2430;color:#dfe6f5;border:1px solid #40516b;font:inherit}
 
 .may-scale-stack__controls{position:relative;z-index:7}.may-scale-stack__controls button{flex:none;height:24px;font:inherit}
+
+.may-scale-stack__axis{position:absolute;top:24px;width:0;border-left:1px dashed #b48cff;z-index:2;pointer-events:none}.may-scale-stack__digits{position:absolute;z-index:3;pointer-events:none;max-width:none}.may-scale-stack__digits[hidden]{display:none}
