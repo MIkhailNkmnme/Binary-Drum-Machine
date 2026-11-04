@@ -7,8 +7,8 @@ const {chromium}=require('playwright-core');
 let browser,page;const errors=[];
 before(async()=>{
  browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
- page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));
- await page.route('http://xor.test/**',async route=>{
+ const context=await browser.newContext();page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+ await page.context().route('http://xor.test/**',async route=>{
   const name=path.basename(new URL(route.request().url()).pathname);
   const file=name==='mayatnik-gif.js'?path.join(__dirname,'../../mayatnik/mayatnik-gif.js'):['xor-space.js','xor-space.css'].includes(name)?path.join(__dirname,name):(process.env.XOR_TEST_HTML||path.join(__dirname,'index.html'));
   await route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body:fs.readFileSync(file)});
@@ -42,63 +42,63 @@ test('Together thumbnails contain full masks; XOR thumbnails retain cancelled ce
   return {full,cancelled};
  });assert.deepEqual(result,{full:true,cancelled:true});
 });
-test('playback obeys effect for every field mode, including switching to Without XOR while playing',async()=>{
- const n=await page.evaluate(()=>{
-  let checked=0;
-  const checkFrame=(frame,config,previous)=>{
-   const base=fieldCells(frame.variant,0,0,frame.mode);
-   const expected=config.mode==='xor'&&config.effect==='xor'&&previous?xorCells(base,previous):base;
-   let d='';expected.forEach((v,i)=>{if(v===1)d+=cellPath(i%size,Math.floor(i/size));});
-   if($('bits').getAttribute('d')!==d)throw Error('Preview mismatch '+config.mode+'/'+config.effect);
-   if(frame.mode!=='xor'&&!tiles.every(tile=>tile.querySelector('.x-live').getAttribute('d')===tile.querySelector('.x-ghost').getAttribute('d')))throw Error('Preview thumbnails');
-   checked++;return base;
-  };
-  for(const mode of ['union','xor','solo'])for(const effect of ['union','xor','compare']){
-   stopFilm();state.variant=1576;state.radius=0;state.selected=0;state.mode=mode;filmEffect=effect;filmMotion='spin';speed=4;render();
-   const config=settings(),frames=plan(config),start=performance.now();playFilm();let prev=null;
-   for(const at of (effect==='compare'&&mode!=='solo'?[5,130,260,390]:[5,260,510,760])){
-    const cb=[...__raf.values()][0];__raf.clear();cb(start+at);
-    const f=frames.find(f=>f.end>Math.floor(at/10));prev=checkFrame(f,config,prev);
+test('playback uses current field settings with no temporal XOR or duplicate effect',async()=>{
+ assert.equal(await page.locator('[data-effect]').count(),0);
+ const count=await page.evaluate(()=>{
+  let count=0;
+  for(const mode of ['xor','union','solo'])for(const motion of ['variants','spin','cross','unique','cross24']){
+   if(mode==='solo'&&centredSequence(motion))continue;
+   stopFilm();resetBoard();state.mode=mode;state.selected=mode==='solo'||motion==='spin'?2:null;filmMotion=motion;
+   state.variant=centredSequence(motion)?sequenceVariant(7,motion):1576;state.radius=centredSequence(motion)?0:2;
+   state.offsets=[{x:1,y:0},{x:-1,y:2},{x:0,y:-2},{x:1,y:1}];speed=4;render();
+   const config=settings(),frames=plan(config),start=performance.now();playFilm();
+   for(let i=0;i<4;i++){
+    const cb=[...__raf.values()][0];__raf.clear();cb(start+5+i*260);
+    const frame=lastFilmFrame;
+    if(frame.mode!==mode)throw Error('Wrong operation');
+    const cells=fieldCells(frame.variant,config.radius,config.selected,mode,config.offsets,config.points);let d='';
+    cells.forEach((v,k)=>{if(v===1)d+=cellPath(k%size,Math.floor(k/size));});
+    if($('bits').getAttribute('d')!==d)throw Error('Preview mismatch '+mode+'/'+motion);
+    if(window.xorSpaceSnapshot.previous)throw Error('Temporal 3D snapshot');
+    if(settings().variant!==frame.variant)throw Error('Export starts from stale frame');
+    count++;
    }
   }
-  stopFilm();state.mode='xor';filmEffect='xor';playFilm();
-  document.querySelector('[data-effect="union"]').click();
-  const start=performance.now(),config=settings(),frames=plan(config);
-  for(const at of [5,260]){const cb=[...__raf.values()][0];__raf.clear();cb(start+at);checkFrame(frames.find(f=>f.end>Math.floor(at/10)),config,null);}
-  stopFilm();return checked;
- });assert.equal(n,38);
+  stopFilm();resetBoard();return count;
+ });assert.equal(count,48);
 });
-test('GIF encoder receives complete non-XOR frames and correct comparison pairs',async()=>{
+test('GIF encodes the current operation, offsets, masks, shadows and grid; no frame differences',async()=>{
  const count=await page.evaluate(async()=>{
   const original=MayatnikGif.encoder;let count=0;
   try{
-   for(const mode of ['xor','union'])for(const effect of ['union','compare','xor']){
-    state.mode=mode;state.variant=1576;filmEffect=effect;filmMotion='spin';speed=4;
-    const config=settings(),frames=plan(config);let i=0,previous=null;
+   for(const mode of ['xor','union','solo'])for(const styled of [false,true]){
+    stopFilm();resetBoard();state.mode=mode;state.selected=2;state.variant=1576;state.radius=2;
+    state.offsets=[{x:1,y:0},{x:-1,y:2},{x:0,y:-2},{x:1,y:1}];state.grid=styled;state.shadows=styled;state.ghosts=styled;filmMotion='spin';speed=4;
+    const config=settings(),frames=plan(config);let i=0;
     MayatnikGif.encoder=(...args)=>{
      const encoder=original(...args),add=encoder.add.bind(encoder);
      encoder.add=(rgba,delay)=>{
-      const frame=frames[i++],base=fieldCells(frame.variant,config.radius,config.selected,frame.mode,config.offsets);
-      const cells=mode==='xor'&&effect==='xor'&&previous?xorCells(base,previous):base;
-      // Sample the middle of each cell: independent of shadows and SVG styling.
+      const frame=frames[i++],cells=fieldCells(frame.variant,config.radius,config.selected,mode,config.offsets,config.points);
       for(let k=0;k<cells.length;k++){
        const at=((Math.floor(k/size)*cellPixels+4)*side+(k%size)*cellPixels+4)*4;
        const black=rgba[at]===0&&rgba[at+1]===0&&rgba[at+2]===0;
-       if(black!==(cells[k]===1))throw Error('GIF '+mode+'/'+effect+' frame '+i+' cell '+k);
+       if(black!==(cells[k]===1))throw Error('GIF '+mode+' frame '+i+' cell '+k);
       }
-      previous=base;count++;return add(rgba,delay);
+      if(styled&&rgba[0]===253)throw Error('Grid omitted');
+      count++;return add(rgba,delay);
      };return encoder;
     };
     await $('makeGif').onclick();
-    if(i!==frames.length||$('gifStatus').textContent.includes('Ошибка'))throw Error('GIF failed '+$('gifStatus').textContent);
+    if(i!==frames.length||!$('gifStatus').textContent.startsWith('Готово'))throw Error('GIF failed '+$('gifStatus').textContent);
+    if(!$('gifLink').download.startsWith('osi-'+mode+'-'))throw Error('Wrong filename mode');
    }
-  }finally{MayatnikGif.encoder=original;}
+  }finally{MayatnikGif.encoder=original;state.ghosts=false;state.grid=false;state.shadows=true;resetBoard();}
   return count;
- });assert.equal(count,128);
+ });assert.equal(count,96);
 });
 test('variant traversal changes all figures independently of selection and visits all 6144 layouts',async()=>{
  const result=await page.evaluate(()=>{
-  resetBoard();const base=settings();base.effect='union';base.speed=4;
+  resetBoard();const base=settings();base.mode='union';base.speed=4;
   const reference=plan({...base,motion:'variants'}).map(f=>f.variant);
   for(const selected of [null,0,1,2,3])if(JSON.stringify(reference)!==JSON.stringify(plan({...base,motion:'variants',selected}).map(f=>f.variant)))throw Error('Selection leaked into variants');
   const cycle=new Set();for(let i=0;i<total;i++)cycle.add(layoutAtStep(base.variant,i));
@@ -122,7 +122,7 @@ test('real clicks clear selection and leave Solo for Variants, including during 
  // Execute two actual animation callbacks and compare with their planned union frames.
  await page.evaluate(()=>{const frames=plan(settings()),start=performance.now();for(const at of [5,260]){const cb=[...__raf.values()][0];__raf.clear();cb(start+at);const frame=frames.find(f=>f.end>Math.floor(at/10));let path='';fieldCells(frame.variant,state.radius,null,frame.mode,state.offsets).forEach((v,i)=>{if(v===1)path+=cellPath(i%size,Math.floor(i/size));});if($('bits').getAttribute('d')!==path)throw Error('Wrong variants animation');}});
  // Preview must continue after the four-second export window, not repeat 16 layouts.
- await page.evaluate(()=>{stopFilm();state.variant=initialVariant;state.mode='union';filmEffect='union';filmMotion='variants';speed=4;const start=performance.now();playFilm();for(const at of [5,4010,8260]){const cb=[...__raf.values()][0];__raf.clear();cb(start+at);const expected=layoutAtStep(initialVariant,Math.floor(at/250));if(lastFilmFrame.variant!==expected)throw Error('Traversal restarted at four seconds');}});
+ await page.evaluate(()=>{stopFilm();state.variant=initialVariant;state.mode='union';filmMotion='variants';speed=4;const start=performance.now();playFilm();for(const at of [5,4010,8260]){const cb=[...__raf.values()][0];__raf.clear();cb(start+at);const expected=layoutAtStep(initialVariant,Math.floor(at/250));if(lastFilmFrame.variant!==expected)throw Error('Traversal restarted at four seconds');}});
  await page.locator('#play').click();
  await page.locator('#tiles .tile').nth(2).click();await page.locator('#tiles .tile').nth(2).click();assert.equal((await snapshot()).selected,null);
  await page.locator('#tiles .tile').nth(0).click();await page.keyboard.press('Escape');assert.equal((await snapshot()).selected,null);
@@ -131,22 +131,22 @@ test('real clicks clear selection and leave Solo for Variants, including during 
  assert.equal(await page.locator('[data-motion="spin"]').isDisabled(),true);assert.equal(await page.locator('#solo').isDisabled(),true);assert.equal(await page.locator('[data-motion="variants"]').isEnabled(),true);
 });
 test('Cross button joins centres and locks perpendicular orientation through playback and export plans',async()=>{
- await page.evaluate(()=>{stopFilm();state.variant=1576;state.radius=3;state.selected=1;state.mode='solo';state.offsets[0]={x:2,y:1};filmMotion='spin';filmEffect='union';speed=4;render();});
+ await page.evaluate(()=>{stopFilm();state.variant=1576;state.radius=3;state.selected=1;state.mode='solo';state.offsets[0]={x:2,y:1};filmMotion='spin';speed=4;render();});
  await page.locator('#play').click();await page.locator('[data-motion="cross"]').click();
  const result=await page.evaluate(()=>{
   const {order,turn}=unpack(state.variant),original=state.variant;
   const check=()=>{if(state.radius!==0||state.offsets.some(o=>o.x||o.y)||state.selected!==null||state.mode!=='union'||filmMotion!=='cross')throw Error('Cross not aligned');};check();
   if(!order.every((id,ray)=>turn[id]===(ray+2)%4))throw Error('Wrong ray directions');
   let frames=0;
-  for(const speed of [1,4,100,10000])for(const effect of ['xor','union','compare']){
-   const seq=plan({...settings(),speed,effect}),phases=new Set();
+  for(const speed of [1,4,100,10000])for(const mode of ['xor','union']){
+   const seq=plan({...settings(),speed,mode}),phases=new Set();
    for(const frame of seq){const v=unpack(frame.variant),delta=(v.turn[0]-turn[0]+4)%4;phases.add(delta);if(v.order.join()!==order.join()||!v.turn.every((t,id)=>(t-turn[id]+4)%4===delta))throw Error('Cross deformed');const cells=fieldCells(frame.variant,0,null,frame.mode);if(cells.filter(c=>c===2).length!==1)throw Error('Separated centres');frames++;}
    if(phases.size<(speed<=4?4:2))throw Error('Frozen cross at '+speed);
   }
   // No individual command may deform the enabled cross.
   turnFigure(order[0],1);stepRadius(1);stepFrame(1);advance(3);if(state.variant!==original)throw Error('Manual edit escaped cross');
   return {frames,playing:!!animation};
- });assert.ok(result.frames>1000);assert.equal(result.playing,true);
+ });assert.ok(result.frames>800);assert.equal(result.playing,true);
  await page.locator('#play').click();await page.locator('#tiles .tile').nth(0).click();await page.keyboard.press('Escape');
  assert.equal(await page.locator('[data-motion="cross"]').getAttribute('aria-pressed'),'true');
  for(const id of ['radius','frame','random','solo','left','swap'])assert.equal(await page.locator('#'+id).isDisabled(),true,id);
@@ -164,10 +164,10 @@ test('one-centre arrangements have 256 results, or 24 crosses; global-rotation c
 test('finite modes contain every 2D arrangement once and export their whole cycle',async()=>{
  const result=await page.evaluate(()=>{
   const totals={};
-  for(const motion of ['unique','cross24'])for(const effect of ['union','xor','compare'])for(const start of [0,7]){
-   const config={...settings(),variant:sequenceVariant(start,motion),selected:null,mode:'xor',motion,effect,speed:4,radius:0,offsets:Array.from({length:4},()=>({x:0,y:0}))},frames=plan(config),count=sequenceTotal(motion),paired=effect==='compare';
-   if(frames.length!==count*(paired?2:1)||frames.at(-1).end!==count*25)throw Error('Wrong full duration/count');
-   const seen=new Set();for(let i=0;i<frames.length;i+=paired?2:1){const f=frames[i],index=sequenceIndex(f.variant,motion);if(index!==(start+i/(paired?2:1))%count)throw Error('Wrong order');seen.add(f.variant);if(paired&&frames[i+1].variant!==f.variant)throw Error('Comparison mismatch');if(usesTemporalXor(config,f))throw Error('Temporal XOR in enumeration');if(motion==='cross24'&&new Set(unpack(f.variant).turn).size!==4)throw Error('Not perpendicular');}
+  for(const motion of ['unique','cross24'])for(const mode of ['union','xor'])for(const start of [0,7]){
+   const config={...settings(),variant:sequenceVariant(start,motion),selected:null,mode,motion,speed:4,radius:0,offsets:Array.from({length:4},()=>({x:0,y:0}))},frames=plan(config),count=sequenceTotal(motion);
+   if(frames.length!==count||frames.at(-1).end!==count*25)throw Error('Wrong full duration/count');
+   const seen=new Set();for(let i=0;i<frames.length;i++){const f=frames[i],index=sequenceIndex(f.variant,motion);if(index!==(start+i)%count)throw Error('Wrong order');seen.add(f.variant);if(f.mode!==mode)throw Error('Wrong field mode');if(motion==='cross24'&&new Set(unpack(f.variant).turn).size!==4)throw Error('Not perpendicular');}
    if(seen.size!==count)throw Error('Repeated arrangement');totals[motion]=seen.size;
   }return totals;
  });assert.deepEqual(result,{unique:256,cross24:24});
@@ -180,8 +180,8 @@ test('finite controls and live counters visit every frame even after delayed cal
   await page.locator('#frameDown').click();assert.equal(await page.locator('#frameNow').textContent(),String(totalCount-1));
   await page.locator('#frame').fill('1');await page.locator('#frame').dispatchEvent('input');
   const checked=await page.evaluate(({motion,totalCount})=>{
-   setSpeed(10000);if(speed!==25)throw Error('Missing speed cap');filmEffect='compare';playFilm();let now=performance.now(),seen=[];
-   for(let i=0;i<totalCount*2;i++){now+=1000;const cb=[...__raf.values()][0];__raf.clear();cb(now);const n=Number($('frameNow').textContent);if(n!==Math.floor(i/2)+1)throw Error('Skipped frame '+i+' => '+n);if($('frameTotal').textContent!==String(totalCount))throw Error('Wrong total');if(window.xorSpaceSnapshot.variant!==lastFilmFrame.variant)throw Error('3D stale frame');if(i%2===0)seen.push(lastFilmFrame.variant);}
+   setSpeed(10000);if(speed!==25)throw Error('Missing speed cap');playFilm();let now=performance.now(),seen=[];
+   for(let i=0;i<totalCount;i++){now+=1000;const cb=[...__raf.values()][0];__raf.clear();cb(now);const n=Number($('frameNow').textContent);if(n!==i+1)throw Error('Skipped frame '+i+' => '+n);if($('frameTotal').textContent!==String(totalCount))throw Error('Wrong total');if(window.xorSpaceSnapshot.variant!==lastFilmFrame.variant)throw Error('3D stale frame');seen.push(lastFilmFrame.variant);}
    now+=1000;const cb=[...__raf.values()][0];__raf.clear();cb(now);if($('frameNow').textContent!=='1')throw Error('Cycle did not wrap');stopFilm();return new Set(seen).size;
   },{motion,totalCount});assert.equal(checked,totalCount);
  }
@@ -194,13 +194,50 @@ test('integrated third axis, projections and camera follow the displayed sequenc
  for(const plane of ['XY','XZ','YZ'])assert.ok(Number(await page.locator('canvas[data-plane="'+plane+'"]').getAttribute('data-cells'))>0);
  await page.locator('[data-motion="cross24"]').click();await page.locator('#play').click();
  const before=await page.evaluate(()=>window.xorSpaceView.getState().camera);const canvas=page.locator('.xs-main');await canvas.scrollIntoViewIfNeeded();const box=await canvas.boundingBox();
- await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+50,box.y+box.height/2+20);await page.mouse.up();await page.mouse.wheel(0,-120);
+ await page.mouse.move(box.x+20,box.y+20);await page.mouse.down();await page.mouse.move(box.x+70,box.y+40);await page.mouse.up();await page.mouse.wheel(0,-120);
  const after=await page.evaluate(()=>({camera:window.xorSpaceView.getState().camera,playing:!!animation}));assert.notDeepEqual(after.camera,before);assert.equal(after.playing,true);
  await page.locator('#play').click();await page.locator('#frame').fill('3');await page.locator('#frame').dispatchEvent('input');assert.equal(await page.locator('#frameNow').textContent(),'3');
  assert.equal(await page.evaluate(()=>window.xorSpaceSnapshot.variant===state.variant),true);
  await page.setViewportSize({width:390,height:900});await page.locator('#spaceMount').scrollIntoViewIfNeeded();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
- await page.locator('#spaceMount').screenshot({path:process.env.XOR_SPACE_SCREENSHOT||path.join(require('node:os').tmpdir(),'xor-space-014-integrated.png')});
+ await page.locator('#spaceMount').screenshot({path:process.env.XOR_SPACE_SCREENSHOT||path.join(require('node:os').tmpdir(),'xor-space-015-integrated.png')});
  await page.reload();assert.deepEqual(await page.evaluate(()=>window.xorSpaceView.getState().assignments.slice(0,2).map(a=>a.direction)),['+Z','-Z']);
  await page.locator('.xs-reset').click();model=await page.evaluate(()=>window.xorSpaceView.getModel());assert.ok(model.cells.every(c=>c.p[2]===0));await page.setViewportSize({width:1100,height:900});
+});
+
+test('export snapshot freezes masks and offsets while keeping the displayed starting frame',async()=>{
+ const result=await page.evaluate(()=>{
+  resetBoard();state.mode='xor';const config=settings(),frame=plan(config)[0],expected=Array.from(raster(config,frame)),saved=points[0];
+  points[0]=[[0,0],[1,0]];state.offsets[0].x=4;state.mode='union';
+  try{return JSON.stringify(Array.from(raster(config,frame)))===JSON.stringify(expected);}
+  finally{points[0]=saved;resetBoard();}
+ });assert.equal(result,true);
+});
+test('actual video recording uses the same current field frames as GIF, without temporal XOR',async()=>{
+ const videoPage=await page.context().newPage();const videoErrors=[];videoPage.on('pageerror',e=>videoErrors.push(e.message));
+ try{
+  await videoPage.goto('http://xor.test/issledovanie/xor-axes/index.html');
+  const results=await videoPage.evaluate(async()=>{
+   const pcm=new Uint8Array(44+8000),view=new DataView(pcm.buffer),str=(at,s)=>[...s].forEach((c,i)=>pcm[at+i]=c.charCodeAt(0));
+   str(0,'RIFF');view.setUint32(4,pcm.length-8,true);str(8,'WAVE');str(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,8000,true);view.setUint32(28,16000,true);view.setUint16(32,2,true);view.setUint16(34,16,true);str(36,'data');view.setUint32(40,8000,true);
+   audioUrl=URL.createObjectURL(new Blob([pcm],{type:'audio/wav'}));audioDuration=.5;const results=[];
+   for(const mode of ['xor','union','solo']){
+    resetBoard();state.mode=mode;state.selected=1;state.variant=1576;state.radius=1;state.offsets[2]={x:2,y:-1};state.ghosts=false;state.grid=false;filmMotion='spin';speed=1;
+    const config=settings(),frames=plan(config),original=CanvasRenderingContext2D.prototype.putImageData;let checked=0;
+    CanvasRenderingContext2D.prototype.putImageData=function(data,...args){
+     if(data.width===side&&data.height===side){
+      const matches=frames.some(frame=>{
+       const cells=fieldCells(frame.variant,config.radius,config.selected,mode,config.offsets,config.points);
+       return cells.every((v,k)=>{const at=((Math.floor(k/size)*cellPixels+4)*side+k%size*cellPixels+4)*4;return (data.data[at]===0&&data.data[at+1]===0&&data.data[at+2]===0)===(v===1);});
+      });if(!matches)throw Error('Video contains changed/difference frame '+mode);checked++;
+     }return original.call(this,data,...args);
+    };
+    try{await $('makeVideo').onclick();}finally{CanvasRenderingContext2D.prototype.putImageData=original;}
+    if(!$('videoStatus').textContent.startsWith('Готово'))throw Error($('videoStatus').textContent);
+    const blob=await (await fetch(videoUrl)).blob();results.push({mode,checked,bytes:blob.size,filename:$('videoLink').download});
+   }return results;
+  });
+  for(const r of results){assert.ok(r.checked>=4,JSON.stringify(r));assert.ok(r.bytes>100);assert.ok(r.filename.startsWith('osi-'+r.mode+'-'));}
+  assert.deepEqual(videoErrors,[]);
+ }finally{await videoPage.close();}
 });
