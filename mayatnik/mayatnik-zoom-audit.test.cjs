@@ -192,3 +192,14 @@ test('axis overflow leaves physical 1:1, independent zoom lock and vertical pins
   assert.equal(c.scale()*dpr,1);assert.equal(cv.getBoundingClientRect().left,left);assert.equal(c.st.zMid,true);assert.equal(c.st.ztop,true);
  }
 });
+
+
+test('wheel keeps the axis anchor through overflow until the next pointer press',()=>{
+ const {c,w,cv,center}=scrollFixture();c.st.zMid=true;c.cssLayout();c.viewRotation={isFieldEvent:()=>true};c.drawEdgeRhomb=()=>{};c.wrap.addEventListener=(type,fn)=>{if(type==='wheel')c.wheel=fn;};
+ const start=html.indexOf("  wrap.addEventListener('wheel', e => {"),end=html.indexOf('\n  // Тянуть',start);vm.runInContext(html.slice(start,end),c);
+ const point=center()+150,event={target:{},deltaY:-300,deltaMode:0,clientX:point,clientY:50,preventDefault(){}};
+ for(let n=0;n<8;n++){c.wheel(event);assert.ok(Math.abs(cv.getBoundingClientRect().left+c.displayAnchorX()*c.scale()-center())<1);}
+ assert.equal(c.horizontalAxisPinned(),false);assert.equal(c.zoomTo.axisHold,true);
+ let release;c.document.addEventListener=(name,fn)=>release=fn;vm.runInContext(html.split('\n').find(line=>line.includes("document.addEventListener('pointerdown',()=>{zoomTo.axisHold=false;")),c);release();assert.equal(c.zoomTo.axisHold,false);
+ const before=(point-cv.getBoundingClientRect().left)/c.scale();c.wheel({...event,deltaY:80});assert.ok(Math.abs((point-cv.getBoundingClientRect().left)/c.scale()-before)<1e-6);
+});
