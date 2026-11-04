@@ -21,15 +21,15 @@
   function later(){if(timer===null&&!destroyed&&enabled)timer=schedule(tick);}
   function geometry(){
    if(!source)return;
-   const width=(Number(layout.width)||source.width)*zoom,height=width*source.height/source.width;
+   const pixelScale=(Number(layout.pixelScale)||1/(win.devicePixelRatio||1))*zoom,width=source.width*pixelScale;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
    element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
-   for(const item of items){item.element.style.height=(height+24)+'px';item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(zoom);if(item.canvas){item.canvas.style.width=width+'px';item.canvas.style.height=height+'px';}}
+   for(const item of items){const w=item.size.width*pixelScale,h=item.size.height*pixelScale;item.element.style.width=w+'px';item.element.style.height=(h+24)+'px';item.element.style.marginLeft=(width-w)/2+'px';item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(pixelScale*(win.devicePixelRatio||1));if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}}
   }
   function rebuild(){
    job=null;if(!source)return;const previous=new Map(items.map(item=>[item.size.height,item]));items=[];input.max=String(Math.max(1,source.height));
    const sizes=levels(source.width,source.height,Number(input.value));
-   for(const size of sizes){let item=previous.get(size.height);if(item){previous.delete(size.height);item.size=size;item.revision=-1;}else{const el=doc.createElement('div'),label=doc.createElement('span');el.className='may-scale-stack__level';label.className='may-scale-stack__label';el.append(label);item={element:el,label,size,canvas:null,revision:-1};}list.append(item.element);items.push(item);}
+   for(const size of sizes){let item=previous.get(size.height);if(item){previous.delete(size.height);item.size=size;if(item.canvas&&(item.canvas.width!==size.width||item.canvas.height!==size.height))drop(item);item.revision=-1;}else{const el=doc.createElement('div'),label=doc.createElement('span');el.className='may-scale-stack__level';label.className='may-scale-stack__label';el.append(label);item={element:el,label,size,canvas:null,revision:-1};}list.append(item.element);items.push(item);}
    for(const item of previous.values()){drop(item);item.element.remove();}
    geometry();
   }
@@ -64,7 +64,7 @@
   }
   function requestFrame(s,meta={}){if(!enabled||destroyed)return false;pending={source:job?undefined:s,key:meta.key};later();return true;}
   function refreshLayout(value={}){layout={...layout,...value};geometry();later();}
-  function setZoom(value){zoom=Math.max(1,Math.min(64,Number(value)||1));geometry();later();return zoom;}
+  function setZoom(value){zoom=Math.max(1/Math.max(1,source?.width||1,source?.height||1),Math.min(512,Number(value)||1));geometry();later();return zoom;}
   function setEnabled(value){if(destroyed)return false;const next=!!value;if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
   input.addEventListener('change',change);
