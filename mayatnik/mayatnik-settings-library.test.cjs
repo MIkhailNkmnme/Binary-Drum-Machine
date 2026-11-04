@@ -98,3 +98,14 @@ test('legacy overview metadata remains readable without disabling permanent mini
  const host=require('./mayatnik-pixel-exact-host.js').create({viewport:true,getState:()=>restored,getGeometry:()=>({width:1024,height:512})});assert.equal(host.snap(.125),.125);assert.equal(host.policyFor().overview,true);
  saved.state.zOverview='true';assert.throws(()=>S.normalized(saved),/Некорректная настройка/);
 });
+
+
+test('independent compact and every-frame search flags persist, reset and reject malformed values',()=>{
+ const Reset=require('./mayatnik-reset-state.js');
+ for(const ochkiSkipSpaces of [false,true])for(const ochkiEveryFrame of [false,true]){
+  const state={ochkiSkipSpaces,ochkiEveryFrame},target={};S.applyState(target,S.pick(state));
+  for(const key of Object.keys(state))assert.equal(target[key],state[key]);
+ }
+ const target={ochkiSkipSpaces:true,ochkiEveryFrame:true};S.applyState(target,S.pick({}));
+ for(const key of ['ochkiSkipSpaces','ochkiEveryFrame']){assert.equal(target[key],false);assert.equal(Reset.defaults()[key],false);const bad=S.pick({});bad.state[key]='true';assert.throws(()=>S.normalized(bad),/настройка/);}
+});

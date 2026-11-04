@@ -101,3 +101,11 @@ test('all through explicit matches wrap only their own family, skipping empty ce
  }
  const alt=await S.search(grid(['0101']),{pattern:'alternating',min:4,direction:'loops'});assert.equal(alt.count,4);
 });
+
+
+test('compact GIF search ignores empty cells, retains addresses, and stops at unknown bits',async()=>{
+ const Search=require('./mayatnik-gif-search.js'),grid={width:7,height:1,bits:Int8Array.from([1,-1,0,-1,-1,1,-1])};
+ assert.equal((await Search.search(grid,{patterns:['101'],direction:'row'})).count,0);
+ const compact=await Search.search(grid,{patterns:['101'],direction:'row',skipSpaces:true});assert.equal(compact.count,1);assert.deepEqual(Array.from(compact.hits[0].cells),[0,2,5]);assert.deepEqual(Array.from(compact.mask),[1,0,1,0,0,1,0]);
+ grid.bits[3]=-2;assert.equal((await Search.search(grid,{patterns:['101'],direction:'row',skipSpaces:true})).count,0);
+});

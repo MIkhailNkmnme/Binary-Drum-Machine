@@ -52,7 +52,7 @@
   const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({ochkiHalf:'Полуинверсия',ochkiRowReverseMask:'Пустоты реверса',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({ochkiSkipSpaces:'Без пробелов',ochkiEveryFrame:'Каждый кадр',ochkiHalf:'Полуинверсия',ochkiRowReverseMask:'Пустоты реверса',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);if(!e)return null;
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
@@ -136,7 +136,7 @@
     { id: 'ochki', title: 'Очки', color: GROUP_COLOURS['rail:ochki'], items: [
       button('bOchki', 'eye'), button('bOchkiThrough','eye'), button('bOchkiSnake','eye'), button('bOchkiCode','text'), button('bManualSnake','eye'), button('bSnakeScanAll','eye'), button('bSnakeScanResume','play'), button('bSnakeScanPause','play'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('ochkiHalf', 'half'), check('ochkiRowReverseMask','swap'), check('ochkiOverlay', 'target'), check('frozen', 'pin'), ringSegments('bBlackMirror',['выкл','краска','всё']), ringSegments('bAnimHl',['выкл','столб','всё']),
       selectSegments('ochkiMode',{diag:'↘',antidiag:'↙',row:'→',col:'↓',all:'Все',v:'↘↗'}),selectSegments('ochkiPattern',{initial:'Нач.',ones:'111',zeros:'000',alternating:'1010'}),
-      {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))} ] },
+      {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))}, check('ochkiSkipSpaces','text'), check('ochkiEveryFrame','play') ] },
     { id: 'zoom', title: 'Масштаб', color: GROUP_COLOURS['rail:zoom'], items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
       button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line') ] },

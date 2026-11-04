@@ -91,9 +91,13 @@
     if(!hasStart&&allowed.includes(text[0])&&size>=min)await rememberLoop(0,size,text);
    }
   }
-  for(const [direction,[dx,dy]]of dirs)for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-   if(!valid(x,y)||valid(x-dx,y-dy)){if(due())await pause();continue;}
-   const cells=[],chars=[];for(let xx=x,yy=y;valid(xx,yy);xx+=dx,yy+=dy){const q=yy*W+xx;cells.push(q);chars.push(String(bits[q]));}const text=chars.join('');
+  function* lines(){for(const [direction,[dx,dy]]of dirs)for(let y=0;y<H;y++)for(let x=0;x<W;x++){yield null;
+   if(!options.skipSpaces){if(!valid(x,y)||valid(x-dx,y-dy))continue;const cells=[],chars=[];for(let xx=x,yy=y;valid(xx,yy);xx+=dx,yy+=dy){const q=yy*W+xx;cells.push(q);chars.push(String(bits[q]));}yield {direction,cells,text:chars.join('')};continue;}
+   if(x-dx>=0&&x-dx<W&&y-dy>=0&&y-dy<H)continue;
+   let cells=[],chars=[];for(let xx=x,yy=y;xx>=0&&xx<W&&yy>=0&&yy<H;xx+=dx,yy+=dy){yield null;const q=yy*W+xx,v=bits[q];if(v===0||v===1){cells.push(q);chars.push(String(v));}else if(v!==-1){if(cells.length)yield {direction,cells,text:chars.join('')};cells=[];chars=[];}}
+   if(cells.length)yield {direction,cells,text:chars.join('')};
+  }}
+  for(const line of lines()){if(due())await pause();if(!line)continue;const {direction,cells,text}=line;
    if(pattern==='initial')for(const item of patterns){let from=0;while(from<=text.length-item.word.length){const at=Variants.indexOf(text,item.word,from);if(at<0)break;remember(cells,at,item.word.length,item.word,direction,{i:item.i,variantLabel:item.label,variantFlags:item.flags});from=at+1;if(due())await pause();}if(due())await pause();}
    else{
     const allowed=pattern==='ones'?(options.inverse?'01':'1'):pattern==='zeros'?(options.inverse?'01':'0'):'01';
