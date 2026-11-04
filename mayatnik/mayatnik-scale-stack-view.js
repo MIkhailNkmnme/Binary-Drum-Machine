@@ -41,8 +41,13 @@
   function drop(item){if(item.canvas){item.canvas.width=item.canvas.height=0;item.canvas.remove();item.canvas=null;}if(item.overlay){item.overlay.width=item.overlay.height=0;item.overlay.remove();item.overlay=null;}item.bits=null;item.revision=-1;}
   function clear(){for(const item of items)drop(item);items=[];list.replaceChildren();job=null;}
   function later(){if(timer===null&&!destroyed&&enabled)timer=schedule(tick);}
+  function minDisplayZoom(){
+   if(!source)return 1/512;const dpr=win.devicePixelRatio||1,p=Number(layout.pixelScale)||1/dpr,w=Number(layout.width)>0?Number(layout.width):source.width*p,h=Number(layout.height)>0?Number(layout.height):w*source.height/source.width;
+   let smallest=h;for(const item of items){const rows=item.size.height,size=heightMode.value==='original'?h:rows*p*(heightMode.value==='integer'?Math.ceil(source.height/rows):1);smallest=Math.min(smallest,size);}
+   return Math.min(512,8/(dpr*Math.max(.000001,smallest)));
+  }
   function geometry(){
-   if(!source)return;
+   if(!source)return;zoom=Math.max(zoom,minDisplayZoom());
    const pixelScale=(Number(layout.pixelScale)||1/(win.devicePixelRatio||1))*zoom;
    const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
@@ -117,7 +122,7 @@
   }
   function requestFrame(s,meta={}){if(!enabled||destroyed)return false;pending={source:job?undefined:s,key:meta.key};later();return true;}
   function refreshLayout(value={}){layout={...layout,...value};geometry();later();}
-  function setZoom(value){zoom=Math.max(1/Math.max(1,source?.width||1,source?.height||1),Math.min(512,Number(value)||1));geometry();later();return zoom;}
+  function setZoom(value){zoom=Math.max(minDisplayZoom(),Math.min(512,Number(value)||1));geometry();later();return zoom;}
   function setEnabled(value){if(destroyed)return false;const next=!!value;if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
   function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));baseField.hidden=baseInput.hidden=mode.value==='rows';stepField.hidden=stepLabel.hidden=input.hidden=mode.value!=='rows';o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}

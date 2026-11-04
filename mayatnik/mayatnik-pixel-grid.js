@@ -17,7 +17,7 @@
     return w<=MAX_SIDE&&h<=MAX_SIDE&&w*h<=MAX_PIXELS;
   }
 
-  function policy({angle=0,pieceTurns=[0],width,height,dpr=1,maxZoom=512,oneToOne=false,halfCells=false,viewport=false,overview=false}={}){
+  function policy({angle=0,pieceTurns=[0],width,height,dpr=1,maxZoom=512,oneToOne=false,halfCells=false,viewport=false,overview=false,minRows=0}={}){
     if(!positive(width)||!positive(height)||!positive(dpr)||!positive(maxZoom))
       return fail('Неверные размеры поля, масштаб или плотность экрана.');
     if(!Number.isSafeInteger(angle/45)||!Array.isArray(pieceTurns)||!pieceTurns.length||
@@ -42,7 +42,8 @@
     if(lo<minK)return fail('Точная сетка целиком не помещается в пределы масштаба и холста.');
     overview=!!overview&&!oneToOne;
     const overviewDivisor=pixelExtent(Math.max(width,height)*quantum),exactMinScale=minK*quantum/dpr;
-    return {ok:true,reason:'',width,height,dpr,quantum,minK,maxK:lo,minScale:overview?quantum/(overviewDivisor*dpr):exactMinScale,maxScale:lo*quantum/dpr,viewport,overview,overviewDivisor,exactMinScale};
+    const minOverviewK=Math.max(1,Math.min(minK*overviewDivisor,Math.ceil(Math.max(0,Number(minRows)||0)*overviewDivisor/(height*quantum)-1e-9)));
+    return {ok:true,reason:'',width,height,dpr,quantum,minK,maxK:lo,minOverviewK,minScale:overview?minOverviewK*quantum/(overviewDivisor*dpr):exactMinScale,maxScale:lo*quantum/dpr,viewport,overview,overviewDivisor,exactMinScale};
   }
 
   function snap(scale,p,direction='nearest'){
@@ -51,7 +52,7 @@
     if(p.overview&&scale<p.exactMinScale){
       const n=v*p.overviewDivisor;
       const k=direction==='down'?Math.floor(n+tolerance(n)):direction==='up'?Math.ceil(n-tolerance(n)):direction==='nearest'?Math.round(n+tolerance(n)):NaN;
-      return Number.isFinite(k)?Math.max(1,Math.min(p.minK*p.overviewDivisor,k))*p.quantum/(p.overviewDivisor*p.dpr):null;
+      return Number.isFinite(k)?Math.max(p.minOverviewK||1,Math.min(p.minK*p.overviewDivisor,k))*p.quantum/(p.overviewDivisor*p.dpr):null;
     }
     let k;
     if(direction==='down')k=Math.floor(v+tolerance(v));
@@ -72,7 +73,7 @@
     const v=scale*p.dpr/p.quantum,k=Math.round(v);
     if(p.overview&&scale<p.exactMinScale-tolerance(scale)){
       const n=v*p.overviewDivisor,index=Math.round(n);
-      if(index<1||Math.abs(n-index)>tolerance(n))return null;
+      if(index<(p.minOverviewK||1)||Math.abs(n-index)>tolerance(n))return null;
       const quality=index*p.quantum/p.overviewDivisor;
       return {k:index,divisor:p.overviewDivisor,quality,width:pixelExtent(p.width*quality),height:pixelExtent(p.height*quality),overview:true};
     }

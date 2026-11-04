@@ -107,3 +107,10 @@ test('overview uses small rational steps without weakening the exact lattice or 
  const p=g.policy({width:1024,height:512,viewport:true,overview:true});assert.equal(g.format(g.snap(.25,p),p),'1/4');assert.equal(g.format(g.snap(.125,p),p),'1/8');
  const exact=g.policy({width:1024,height:512,viewport:true});assert.equal(g.snap(.125,exact),1);
 });
+
+
+test('optional eight-row floor survives arbitrary aspect, rotation, density, snap and step',()=>{
+ for(const height of [8,32,256,512])for(const width of [31,1534])for(const angle of [0,45,90])for(const dpr of [1,1.25,2]){
+  const p=g.policy({width,height,angle,dpr,viewport:true,overview:true,minRows:8});assert.ok(p.ok);const scale=g.snap(1e-30,p);assert.ok(scale*height*dpr>=8-1e-8);assert.equal(g.step(scale,p,-1),scale);assert.ok(g.raster(scale,p).height>=8);assert.equal(g.raster(scale/2,p),null);
+ }
+});

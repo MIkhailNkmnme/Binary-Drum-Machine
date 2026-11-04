@@ -97,3 +97,6 @@ test('typed encoder errors cross the worker boundary unchanged',async()=>{
  globalThis.Worker=BrokenWorker;const job=Record.start({width:4,height:16,rows:8});job.push(source());
  await assert.rejects(job.stop(),e=>e.code==='GIF_PALETTE_OVERFLOW');assert.equal(job.pending,0);
 });
+
+
+test("recording rejects every detail level below eight rows",()=>{for(let rows=1;rows<8;rows++)assert.throws(()=>Record.start({width:4,height:16,rows}),/минимум 8/);});

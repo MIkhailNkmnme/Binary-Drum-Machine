@@ -36,7 +36,7 @@
   function start(options={}){
     const {width,height,rows}=options,method=options.method||'canvas';
     if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||width>65535||height>65535||width*height>MAX_AREA)throw fault('Неверный размер записи GIF','GIF_RECORD_SIZE');
-    if(!Number.isSafeInteger(rows)||rows<1||rows>height)throw fault('Неверное число строк записи GIF','GIF_RECORD_SIZE');
+    if(!Number.isSafeInteger(rows)||rows<8||rows>height)throw fault('Неверное число строк записи GIF: минимум 8, не больше высоты кадра','GIF_RECORD_SIZE');
     if(!METHODS.includes(method))throw fault('Неизвестный способ уменьшения GIF','GIF_RECORD_METHOD');
     if(!Scale?.reduceCanvas||!Gif?.encoder)throw Error('Модули записи GIF не загружены');
     const ticks=Math.max(2,Math.min(500,Math.round((Number(options.delay)||200)/10))),background=Array.from(options.background||[0,0,0],n=>Math.max(0,Math.min(255,Math.round(Number(n)||0)))).slice(0,3);

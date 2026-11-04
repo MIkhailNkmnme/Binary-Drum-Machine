@@ -74,5 +74,6 @@ test('four display sizes preserve cell geometry, integer enlargement and exact d
   await page.waitForFunction(()=>!stack.inspect().busy&&!stack.inspect().pending&&document.querySelector('.may-scale-stack__canvas'));
   v=await size();assert.equal(v.w,method==='canvas'?480:470);assert.equal(v.h,240);assert.equal(v.warning,true);assert.ok(Math.abs(v.axis-420)<.1);
  }
+ for(const name of ['original','cell','native','integer']){await mode.selectOption(name);await page.evaluate(()=>stack.setZoom(1e-20));const a=await page.locator('.may-scale-stack__level').evaluateAll(a=>a.map(e=>parseFloat(e.style.height)-parseFloat(e.style.paddingTop)));assert.ok(a.every(h=>h>=8-1e-8),JSON.stringify({name,a}));}
  assert.deepEqual(errors,[]);
 });
