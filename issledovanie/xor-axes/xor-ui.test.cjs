@@ -83,7 +83,7 @@ test('sliders are drawn with square brackets in both the field and the 3D player
   const font=getComputedStyle(document.querySelector('.x-bracket')).fontFamily;
   return {field,player,font};
  });
- assert.deepEqual(brackets.field,['[',']','[',']','[',']','[',']']);
+ assert.deepEqual(brackets.field,['[',']','[',']','[',']','[',']','[',']']);
  assert.deepEqual(brackets.player,['[',']']);
  assert.match(brackets.font,/AzBuk/);
 });
@@ -97,6 +97,34 @@ test('the glyph face reaches the 3D controls and canvas too',async()=>{
  assert.match(state.select,/AzBuk/);
  assert.match(state.button,/AzBuk/);
  assert.match(state.caption,/AzBuk/);
+});
+
+test('field cell size is settable in pixels and never widens the page',async()=>{
+ await page.locator('#cellAuto').click();
+ await page.waitForTimeout(200);
+ const auto=await page.evaluate(()=>({pressed:document.getElementById('cellAuto').getAttribute('aria-pressed'),slider:document.getElementById('cellSize').value}));
+ assert.equal(auto.pressed,'true');
+ assert(Number(auto.slider)>=4);
+ await page.locator('#cellSize').evaluate(el=>{el.value='24';el.dispatchEvent(new Event('input'));});
+ await page.waitForTimeout(200);
+ const fixed=await page.evaluate(()=>{const field=document.getElementById('field'),wrap=field.parentElement;return {w:field.getBoundingClientRect().width,h:field.getBoundingClientRect().height,wrap:wrap.getBoundingClientRect().width,scroll:wrap.scrollWidth,page:document.documentElement.scrollWidth,shown:document.getElementById('cellSizeNow').textContent,pressed:document.getElementById('cellAuto').getAttribute('aria-pressed')};});
+ assert.equal(fixed.w,696);
+ assert.equal(fixed.h,696);
+ assert.equal(fixed.shown,'24 px');
+ assert.equal(fixed.pressed,'false');
+ assert(fixed.scroll>=696);
+ assert(fixed.page<=1100);
+ await page.setViewportSize({width:390,height:844});
+ await page.waitForTimeout(250);
+ const mobile=await page.evaluate(()=>({page:document.documentElement.scrollWidth,field:document.getElementById('field').getBoundingClientRect().width}));
+ assert.equal(mobile.page,390);
+ assert.equal(mobile.field,696);
+ await page.locator('#cellAuto').click();
+ await page.waitForTimeout(200);
+ const back=await page.evaluate(()=>({pressed:document.getElementById('cellAuto').getAttribute('aria-pressed'),field:document.getElementById('field').getBoundingClientRect().width,wrap:document.getElementById('field').parentElement.getBoundingClientRect().width}));
+ assert.equal(back.pressed,'true');
+ assert(Math.abs(back.field-back.wrap)<=1);
+ await page.setViewportSize({width:1100,height:900});
 });
 
 test('the redesign fits a 390 px phone without sideways scrolling',async()=>{
