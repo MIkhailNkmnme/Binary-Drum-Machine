@@ -169,6 +169,15 @@
   Object.assign(SHORT, {"mayatnik:bFill":"Заливка","mayatnik:bFillUndo":"Отменить","mayatnik:bFillRedo":"Повторить","mayatnik:bTemplateClone":"Ещё копия","mayatnik:bTemplateRemove":"Убрать с поля","mayatnik:bFillClear":"Без краски","mayatnik:bRegions":"Области","mayatnik:symBits":"Биты осей","mayatnik:bClearAxis":"Снять выбор"});
   Object.assign(SHORT,{bRowInk:"Клетки",inkText:"Текст",inkEdge:"Обводка",inkBox:"Рамка",inkSlash:"/ Косая",inkBack:"\\ Косая",inkTop:"Верх",inkBottom:"Низ",inkErase:"Ластик",inkUndo:"Отмена",inkRedo:"Повтор",inkWrite:"Записать",inkHorr:"Хоррохориус 128",inkSave:"Файл",bFoldAnim:"Аниматрица",faRow:"Строка",faFrame:"Кадр",faBack:"Назад",faReset:"Исходный",faPlay:"Пуск",faPick:"Ловить клетку"});
   const shortOf=el=>{const named=SHORT[(document.body.dataset.miScope||'')+':'+el.id]||SHORT[el.id]||el.dataset.miShort;if(named)return named;let raw=norm(el.getAttribute('title')||el.getAttribute('aria-label')||el.dataset.zzTip||'');if(/^\W*сейчас не действует/i.test(raw))raw=norm(el.dataset.t0||raw.split(/\n\s*\n/).slice(1).join(' ')||raw);const key=raw.split(/ · наведи| — |\. /)[0].trim().toLowerCase().replace(/\d+/g,'#');const key2=raw.split(/:| · наведи|\. /)[0].trim().toLowerCase().replace(/\d+/g,'#');return SHORT[key2]||SHORT[key]||raw.replace(/^[^\p{L}\p{N}]+/u,'').split(/\n| — |\. |;/)[0]||labelOf(el);};
+  // МАЯ-507: orientation and chess axes share explicit icons across menus.
+  Object.assign(paths,{
+    axisV:'M12 3v18M3 8l5 4-5 4M21 8l-5 4 5 4',
+    axisH:'M3 12h18M8 3l4 5 4-5M8 21l4-5 4 5',
+    axisD:'M4 4l16 16M20 4L4 20M4 4h5M4 4v5M20 4h-5M20 4v5',
+    chessV:'M12 3v3M12 9v6M12 18v3M3 5h5v5H3zM16 14h5v5h-5z',
+    chessH:'M3 12h3M9 12h6M18 12h3M5 3h5v5H5zM14 16h5v5h-5z',
+    chessD:'M4 4l5 5M12 12l8 8M20 4l-5 5M12 12l-8 8M3 10h4v4H3zM17 10h4v4h-4z'
+  });
   // v11, «всем кнопкам добавь значки, если нету»: значок по смыслу для кнопки рейки (сама кнопка не меняется); used — занятые в группе
   const iconFor=(el,used=new Set())=>{const key=keyOf(el),label=kindLabel(el)||key,want=kindsOf(key,words(el.textContent)+' '+label);
     const kind=(paths[el.dataset.miIcon]&&el.dataset.miIcon)||want.find(k=>!used.has(k))||SPARE.find(k=>!used.has(k))||want[0];used.add(kind);return iconUrl(key,kind);};

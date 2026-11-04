@@ -648,15 +648,15 @@
   // v0.790: ромбы x/t раскрывают вниз полный список; повторный щелчок — следующий вариант.
   {
     const sp=$('speed'),ft=$('frameT');let popup=null,active=null;
-    const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;return Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);};
+    const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;const all=Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);return input===sp?all.filter(value=>value%2===0&&value<=64):all;};
     const label=(input,value)=>input===sp?'×'+value:value===0?'0 с · без паузы':({1:'1/20 с',2:'1/10 с',4:'1/5 с',10:'1/2 с',20:'1 с'}[value]||String(+(value*.05).toFixed(2)).replace('.',',')+' с');
     const make=(letter,input,name)=>{
       const svg=(node,width,path,cls)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(s.namespaceURI,'path');s.classList.add(cls);s.setAttribute('viewBox','0 0 '+width+' 24');s.setAttribute('aria-hidden','true');p.setAttribute('d',path);s.append(p);node.append(s);};
       const box=document.createElement('div');box.className='may-bb-half may-transport-diamond';box.dataset.k=input===sp?'sp':'ft';box.dataset.noMini='';box.setAttribute('role','group');box.setAttribute('aria-label',name);
       const surface=document.createElement('div');surface.className='may-transport-surface';const button=document.createElement('button');button.type='button';button.className='may-transport-center';const glyph=document.createElement('span');glyph.className='may-transport-value';glyph.textContent=letter;button.append(glyph);button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
       svg(button,40,'M20 0L40 12 20 24 0 12Z','may-transport-outline');
-      button.onclick=event=>{event.stopPropagation();if(active?.button===button){const all=values(input),index=all.indexOf(Number(input.value));setValue(input,all[(index+1)%all.length]);}else open(button,input,name);};button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();button.click();return;}if(event.key==='ArrowDown'){event.preventDefault();if(active?.button!==button)open(button,input,name);popup?.querySelector('[aria-checked="true"]')?.focus();}});
-      const arrow=direction=>{const b=document.createElement('button');b.type='button';b.className='may-transport-nudge';b.dataset.direction=String(direction);svg(b,18,direction<0?'M10 8L6 12 10 16':'M8 8L12 12 8 16','may-transport-chevron');svg(b,18,direction<0?'M18 0H12L0 12 12 24H18':'M0 0H6L18 12 6 24H0','may-transport-outline');b.setAttribute('aria-label',(direction<0?'Уменьшить: ':'Увеличить: ')+name);b.onclick=event=>{event.stopPropagation();const value=Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+direction*(Number(input.step)||1)));setValue(input,value);};return b;};
+      button.onclick=event=>{event.stopPropagation();if(active?.button===button){const all=values(input),current=Number(input.value),next=all.find(value=>value>current)??all[0];setValue(input,next);}else open(button,input,name);};button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();button.click();return;}if(event.key==='ArrowDown'){event.preventDefault();if(active?.button!==button)open(button,input,name);(popup?.querySelector('[aria-checked="true"]')||popup?.querySelector('[data-value]'))?.focus();}});
+      const arrow=direction=>{const b=document.createElement('button');b.type='button';b.className='may-transport-nudge';b.dataset.direction=String(direction);svg(b,18,direction<0?'M10 8L6 12 10 16':'M8 8L12 12 8 16','may-transport-chevron');svg(b,18,'M9 3L18 12 9 21 0 12Z','may-transport-outline');b.setAttribute('aria-label',(direction<0?'Уменьшить: ':'Увеличить: ')+name);b.onclick=event=>{event.stopPropagation();const value=Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+direction*(Number(input.step)||1)));setValue(input,value);};return b;};
       surface.append(arrow(-1),button,arrow(1));box.append(surface);return box;
     };
     const bs=make('x',sp,'Вершин за кадр'),bf=make('t',ft,'Длительность кадра');
@@ -682,12 +682,13 @@
       popup.style.setProperty('--transport-popup-height',shape.height+'px');
       popup.className='gz-ladder may-transport-options may-speed-options'+(input===ft?' may-delay-options':'');popup.dataset.noMini='';popup.setAttribute('role','menu');popup.setAttribute('aria-label',name);
       const grid=document.createElement('div');grid.className='may-speed-diamond'+(input===ft?' may-delay-diamond':'');grid.setAttribute('role','presentation');popup.append(grid);
-      const delayPositions=[];
+      const delayPositions=[],speedPositions=[];
+      if(input===sp)for(let row=0;row<8;row++){const count=Math.min(row*2+1,(7-row)*2+1);for(let col=0;col<count;col++)speedPositions.push({left:(8-count)*15+col*30,top:row*24});}
       if(input===ft)for(let row=0;row<9;row++){const count=9-2*Math.abs(4-row);for(let col=0;col<count;col++)delayPositions.push({left:(9-count)*15+col*30,top:row*24});}
       let row;values(input).forEach((value,index)=>{
         const option=document.createElement('button');option.type='button';option.className='may-transport-option';option.dataset.noMini='';option.dataset.value=String(value);option.setAttribute('role','menuitemradio');option.title=name+': '+label(input,value);option.setAttribute('aria-label',option.title);
         const text=document.createElement('span');text.textContent=input===sp?String(value):label(input,value).split(' · ')[0].replace(/\s/g,'').replace(/с$/,'');option.append(text);
-        const position=input===sp?{left:(7+index%8-Math.floor(index/8))*15,top:(index%8+Math.floor(index/8))*12}:delayPositions[index];
+        const position=input===sp?speedPositions[index]:delayPositions[index];
         option.style.left=position.left+'px';option.style.top=position.top+'px';
         option.onclick=event=>{event.stopPropagation();setValue(input,value);close(true);};(diamond?grid:row).append(option);
       });
@@ -1792,6 +1793,9 @@
       b.innerHTML='<svg class="may-utility-frame" viewBox="0 0 '+width+' 24" aria-hidden="true"><path class="may-utility-face" d="'+face+'"/><path class="may-utility-side" d="'+sides+'"/></svg>'+(i===0?'<svg class="may-utility-loupe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="4"/><path d="m13 13 5 5"/></svg>':'<span>'+label+'</span>');
     }return row;
   }
+  // All canonical axes controls and cleanup actions now exist; keep the rail group/key.
+  const axesPanel=window.MayatnikAxesPanel?.mount(gAxis,{icon,short:text=>window.HubButtonText?.shortCaption(text)||text,after:()=>{rail.refresh();placeTools();}});
+  if(axesPanel)toolSync.push(axesPanel.sync);
   mountViewUtilities(gView);
   const brandRefresh=document.querySelector('.may-brand-title');
   if(brandRefresh){
