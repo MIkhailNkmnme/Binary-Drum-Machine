@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.031</title>
-<!-- АзъБукъ — v0.031. Буквы разделены при любом зазоре, включая нулевой. v0.030. Знаки изменения строк и столбцов над сеткой, действия редактора сверху. v0.029. Выбранная буква выделяется цветом и свечением. v0.028. Число внутри X только при значении по умолчанию 1, иначе сбоку. v0.027. Число зазора зелёное, в покое между половинами X. v0.026. Число сбоку появляется сразу при первом нажатии стрелки. v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.032</title>
+<!-- АзъБукъ — v0.032. Редактор от 4×4, форма сетки, подсчёт битов и замкнутых пустот, все размеры справа. v0.031. Буквы разделены при любом зазоре, включая нулевой. v0.030. Знаки изменения строк и столбцов над сеткой, действия редактора сверху. v0.029. Выбранная буква выделяется цветом и свечением. v0.028. Число внутри X только при значении по умолчанию 1, иначе сбоку. v0.027. Число зазора зелёное, в покое между половинами X. v0.026. Число сбоку появляется сразу при первом нажатии стрелки. v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -42,6 +42,7 @@
     clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
   .pbtn > svg{position:relative;z-index:1}
   .pbtn:hover{background:var(--btnon)}
+  #sheet .row > svg{overflow:visible}
   #sheet [data-edit-char]{cursor:pointer}
   #sheet [data-edit-char]:hover{opacity:.7}
   #sheet [data-edit-char]:focus-visible,#sheet [data-edit-char].editing{outline:none;color:var(--edit-ink);opacity:1;filter:drop-shadow(0 0 2px var(--edit-glow)) drop-shadow(0 0 4px var(--edit-glow))}
@@ -51,13 +52,20 @@
   .grid-tools button{padding:0;width:24px;min-width:24px;height:24px;border:0;clip-path:none;background:none;color:var(--ink);font:20px/24px monospace}
   .grid-tools button:hover{color:var(--edit-ink);background:none}
   .grid-tools button:focus-visible{outline:1px solid var(--ink)}
-  .grid{display:grid;gap:2px;background:var(--bg);padding:0;border:0;user-select:none;touch-action:none}
-  .cell{width:22px;height:22px;background:var(--btn);border:1px solid var(--line);cursor:pointer}
-  .cell:hover{border-color:var(--ink)}
-  .cell.on{background:var(--ink);border-color:var(--ink)}
-  .side{display:flex;flex-direction:column;gap:10px;width:266px;max-width:100%}
-  .side .tools{display:grid;grid-template-columns:repeat(auto-fit,130px);gap:6px;width:100%}
+  .grid{display:block;background:var(--bg);padding:0;border:0;user-select:none;touch-action:none;overflow:visible}
+  .cell{fill:var(--btn);stroke:var(--line);stroke-width:1;cursor:pointer}
+  .cell:hover{stroke:var(--ink)}
+  .cell.on{fill:var(--ink);stroke:var(--ink)}
+  .grid-tools button:disabled{opacity:.3;cursor:default}
+  .grid-panel{flex:none}
+  .side{display:flex;flex-direction:column;gap:14px;flex:1 1 538px;min-width:0;max-width:100%}
+  .side .tools{display:flex;flex-wrap:nowrap;gap:6px;width:100%;overflow-x:auto}
+  .side .tools button{flex:0 0 130px}
   .prev{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .prev figure{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0}
+  .prev figcaption{color:var(--dim);font-size:10px}
+  .glyph-stats{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--dim);font-size:11px;line-height:1.6}
+  .glyph-stats strong{font-weight:400;color:var(--ink)}
 
 
   .bar button:not(.gap-step){flex:none;width:82px;min-width:0}
@@ -128,7 +136,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.031"></span>
+    <span class="pbtn ver" aria-label="v0.032"></span>
   </div>
   <div class="bar">
     <button id="editToggle" class="on">Редактировать</button><span class="theme-picker"><button id="theme" aria-haspopup="listbox" aria-expanded="false" aria-controls="themeList">цвет: кибер</button><span id="themeList" class="theme-list" role="listbox" aria-label="Палитры" tabindex="0" hidden></span></span>
@@ -159,7 +167,7 @@
           <span role="group" aria-label="Столбцы"><span aria-hidden="true">↔</span><button id="addCol" type="button" title="Добавить столбец" aria-label="Добавить столбец">+</button><button id="delCol" type="button" title="Убрать столбец" aria-label="Убрать столбец">−</button></span>
           <span role="group" aria-label="Строки"><span aria-hidden="true">↕</span><button id="addRow" type="button" title="Добавить строку" aria-label="Добавить строку">+</button><button id="delRow" type="button" title="Убрать строку" aria-label="Убрать строку">−</button></span>
         </div>
-        <div class="grid" id="grid"></div>
+        <svg class="grid" id="grid" xmlns="http://www.w3.org/2000/svg" aria-label="Клетки буквы"></svg>
       </div>
       <div class="side">
         <div class="tools">
@@ -169,6 +177,7 @@
           <button id="resetAll">Сбросить всё</button>
         </div>
         <div class="prev" id="prev"></div>
+        <div class="glyph-stats" id="glyphStats" aria-live="polite"></div>
       </div>
     </div>
   </section>
@@ -553,8 +562,44 @@ document.getElementById('sheet').addEventListener('keydown', event => {
 });
 
 function normalize(rows) {
-  const w = Math.max(1, ...rows.map(r => r.length));
-  return rows.map(r => r.padEnd(w, '0'));
+  const w = Math.max(4, ...rows.map(r => r.length));
+  return Array.from({length: Math.max(4, rows.length)}, (_, y) => (rows[y] || '').padEnd(w, '0'));
+}
+
+function glyphCounts(rows) {
+  const h = rows.length, w = rows[0].length;
+  const outside = new Set(), queue = [];
+  let ones = 0, minX = w, maxX = -1, minY = h, maxY = -1;
+  const visit = (x, y) => {
+    if (x < 0 || y < 0 || x >= w || y >= h || rows[y][x] === '1') return;
+    const index = y * w + x;
+    if (!outside.has(index)) { outside.add(index); queue.push([x, y]); }
+  };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (rows[y][x] === '1') {
+      ones++; minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    } else if (x === 0 || y === 0 || x === w - 1 || y === h - 1) visit(x, y);
+  }
+  // Diagonally touching ink cells close the contour: zeros escape only across an edge.
+  for (let i = 0; i < queue.length; i++) {
+    const [x, y] = queue[i];
+    visit(x - 1, y); visit(x + 1, y); visit(x, y - 1); visit(x, y + 1);
+  }
+  const zeros = w * h - ones;
+  return {w, h, ones, zeros, inside: zeros - outside.size, outside: outside.size,
+    inkW: ones ? maxX - minX + 1 : 0, inkH: ones ? maxY - minY + 1 : 0};
+}
+
+function renderEditorDetails() {
+  const counts = glyphCounts(normalize(G[activeSet][editChar] || ['0']));
+  const {w, h, ones, zeros, inside, outside, inkW, inkH} = counts;
+  document.getElementById('prev').innerHTML = [1, 2, 3, 4, 6, 8, 16].map(size =>
+    '<figure>' + lettering(editChar, size) + '<figcaption>' + size + '</figcaption></figure>').join('');
+  document.getElementById('glyphStats').innerHTML =
+    '<span>Поле <strong>' + w + ' × ' + h + ' = ' + (w * h) + '</strong> клеток<br>Буква <strong>' + inkW + ' × ' + inkH + '</strong> клеток</span>' +
+    '<span>На всём поле: <strong>1 — ' + ones + ' · 0 — ' + zeros + '</strong><br>1 — клетки линии буквы</span>' +
+    '<span>Внутри замкнутых контуров: <strong>0 — ' + inside + '</strong><br>Снаружи: <strong>0 — ' + outside + '</strong></span>';
 }
 
 let editorEvents;
@@ -566,9 +611,20 @@ function renderEditor() {
   const rows = normalize(G[activeSet][editChar] || ['000']);
   const h = rows.length, w = rows[0].length;
   const grid = document.getElementById('grid');
-  grid.style.gridTemplateColumns = 'repeat(' + w + ', 22px)';
-  grid.innerHTML = rows.map((r, y) => [...r].map((v, x) =>
-    '<div class="cell' + (v === '1' ? ' on' : '') + '" data-x="' + x + '" data-y="' + y + '"></div>').join('')).join('');
+  const slope = lattice === 'sq' ? 0 : lattice === 'rmbr' ? -0.5 : 0.5;
+  const aspect = lattice === 'sq' ? 1 : lattice === 'tri' ? AR : 2 / Math.sqrt(3);
+  const pitchY = 24, pitchX = pitchY * aspect, offset = h * Math.max(0, slope);
+  const width = (w + h * Math.abs(slope)) * pitchX, height = h * pitchY;
+  grid.setAttribute('width', width);
+  grid.setAttribute('height', height);
+  grid.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+  grid.innerHTML = rows.map((r, y) => [...r].map((v, x) => {
+    const point = (dx, dy) => ((x + dx + offset - (y + dy) * slope) * pitchX) + ',' + ((y + dy) * pitchY);
+    return '<polygon class="cell' + (v === '1' ? ' on' : '') + '" data-x="' + x + '" data-y="' + y +
+      '" points="' + [point(.045, .045), point(.955, .045), point(.955, .955), point(.045, .955)].join(' ') + '"/>';
+  }).join('')).join('');
+  document.getElementById('delCol').disabled = w <= 4;
+  document.getElementById('delRow').disabled = h <= 4;
   // протяжка: тянем мышь — все клетки под курсором меняются в одну сторону
   let drag = null;
   const setBit = (x, y, val) => {
@@ -590,7 +646,7 @@ function renderEditor() {
     el.setPointerCapture(e.pointerId);
     setBit(+el.dataset.x, +el.dataset.y, drag.val);
     el.classList.toggle('on', drag.val === '1');
-    document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
+    renderEditorDetails();
   }, { signal: editorEvents.signal });
 
   grid.addEventListener('pointermove', (e) => {
@@ -599,19 +655,20 @@ function renderEditor() {
     if (!el) return;
     setBit(+el.dataset.x, +el.dataset.y, drag.val);
     el.classList.toggle('on', drag.val === '1');
+    renderEditorDetails();
   }, { signal: editorEvents.signal });
 
   const endDrag = () => {
     if (!drag) return;
     drag = null;
     commit();
-    document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
+    renderEditorDetails();
     renderSheet(cellSize);
   };
   grid.addEventListener('pointerup', endDrag, { signal: editorEvents.signal });
   grid.addEventListener('pointercancel', endDrag, { signal: editorEvents.signal });
   window.addEventListener('pointerup', endDrag, { signal: editorEvents.signal });
-  document.getElementById('prev').innerHTML = [3, 4, 6].map(s => lettering(editChar, s)).join('');
+  renderEditorDetails();
 }
 
 function commit() {
@@ -619,11 +676,11 @@ function commit() {
   localStorage.setItem(KEY, JSON.stringify(EDITS));
 }
 
-const mod = (fn) => () => { G[activeSet][editChar] = fn(G[activeSet][editChar] || ['0']); commit(); renderEditor(); renderSheet(cellSize); };
+const mod = (fn) => () => { G[activeSet][editChar] = fn(normalize(G[activeSet][editChar] || ['0'])); commit(); renderEditor(); renderSheet(cellSize); };
 document.getElementById('addCol').onclick = mod(r => normalize(r.map(x => x + '0')));
-document.getElementById('delCol').onclick = mod(r => normalize(r.map(x => x.slice(0, Math.max(1, x.length - 1)))));
+document.getElementById('delCol').onclick = mod(r => normalize(r.map(x => x.slice(0, Math.max(4, x.length - 1)))));
 document.getElementById('addRow').onclick = mod(r => normalize([...r, '0'.repeat(r[0].length)]));
-document.getElementById('delRow').onclick = mod(r => normalize(r.length > 1 ? r.slice(0, -1) : r));
+document.getElementById('delRow').onclick = mod(r => normalize(r.length > 4 ? r.slice(0, -1) : r));
 document.getElementById('resetChar').onclick = () => { if (BASE[activeSet][editChar]) { G[activeSet][editChar] = BASE[activeSet][editChar].slice(); delete EDITS[activeSet][editChar]; localStorage.setItem(KEY, JSON.stringify(EDITS)); } renderEditor(); renderSheet(cellSize); };
 document.getElementById('resetAll').onclick = () => { EDITS = { bold: {}, thin: {} }; localStorage.removeItem(KEY); for (const s of ['bold','thin']) for (const [ch, rows] of Object.entries(BASE[s])) G[s][ch] = rows.slice(); renderEditor(); renderSheet(cellSize); };
 document.getElementById('save').onclick = () => { commit(); const b = document.getElementById('save'); renderButtonLabel(b, 'Сохранено'); setTimeout(() => renderButtonLabel(b, 'Сохранить'), 1200); };
