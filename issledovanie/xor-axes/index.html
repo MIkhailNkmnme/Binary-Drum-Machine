@@ -289,13 +289,19 @@ function paintTiles(turn,variant=state.variant,updateMeta=true){
   }
  });
 }
+function setFrameUI(variant){
+ const value=variant+1;
+ $('frame').value=value;
+ $('frameNow').textContent=value;
+ $('frame').setAttribute('aria-valuetext','Раскладка '+value+' из '+total);
+ updateSlider($('frame'),value);
+}
 function render(){
  clampOffsets();
  const {order,turn}=unpack(state.variant),slot=order.indexOf(state.selected),offset=state.offsets[state.selected];
  const shift=offset.x||offset.y?' · сдвиг '+offset.x+', '+offset.y:'',direction=state.radius<0?(slot+2)%4:slot;
  paintField(state.variant,state.mode);
- $('frame').value=state.variant+1;$('frameNow').textContent=state.variant+1;
- $('frame').setAttribute('aria-valuetext','Раскладка '+(state.variant+1)+' из '+total);updateSlider($('frame'),state.variant+1);
+ setFrameUI(state.variant);
  $('radius').value=state.radius;
  $('radius').setAttribute('aria-valuetext',cellsLabel(state.radius));updateSlider($('radius'),state.radius);
  $('position').textContent='Фигура '+names[state.selected]+' · луч '+arrows[direction]+' · '+turn[state.selected]*90+'°'+shift;
@@ -414,6 +420,7 @@ function playFilm(){
      const frame=frames[i];lastFilmFrame=frame;paintField(frame.variant,frame.mode);
      paintTiles(unpack(frame.variant).turn,frame.variant,false);
      $('count').textContent=(frame.mode==='xor'?'XOR':'Без XOR')+' · № '+(frame.variant+1);
+     setFrameUI(frame.variant);
      shown=i;
    }
    animation=requestAnimationFrame(tick);
