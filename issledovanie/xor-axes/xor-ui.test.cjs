@@ -51,6 +51,7 @@ test('every button is a strict rectangle with a one-pixel border and no clipped 
  const damage=await page.evaluate(()=>{
   const bad=[];
   for(const button of document.querySelectorAll('button')){
+   if(button.classList.contains('thumb-play'))continue;
    const style=getComputedStyle(button);
    if(style.clipPath!=='none'||style.borderRadius!=='0px'||parseFloat(style.borderTopWidth)!==1||style.borderTopStyle!=='solid')
     bad.push([button.id||button.textContent.trim().slice(0,14),style.clipPath,style.borderRadius,style.borderTopWidth,style.borderTopStyle]);
@@ -81,11 +82,16 @@ test('sliders are drawn with square brackets in both the field and the 3D player
   const field=[...document.querySelectorAll('.x-range .x-bracket')].map(span=>span.textContent);
   const player=[...document.querySelectorAll('.xs-sequence-position .xs-rail')].map(span=>span.textContent);
   const font=getComputedStyle(document.querySelector('.x-bracket')).fontFamily;
-  return {field,player,font};
+  const size=getComputedStyle(document.querySelector('.x-bracket')).fontSize;
+  const play=getComputedStyle(document.querySelector('.thumb-play'));
+  return {field,player,font,size,playBorder:play.borderTopWidth,playBackground:play.backgroundColor};
  });
  assert.deepEqual(brackets.field,['[',']','[',']','[',']','[',']','[',']']);
  assert.deepEqual(brackets.player,['[',']']);
  assert.match(brackets.font,/AzBuk/);
+ assert.equal(brackets.size,'30px');
+ assert.equal(brackets.playBorder,'0px','the play glyph has no frame');
+ assert.equal(brackets.playBackground,'rgba(0, 0, 0, 0)','the play glyph has no badge');
 });
 
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
