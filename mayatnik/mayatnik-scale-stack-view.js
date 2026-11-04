@@ -34,7 +34,7 @@
    const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
    element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
-   for(const item of items){const w=width,h=height;item.element.style.width=w+'px';item.element.style.height=(h+24)+'px';item.element.style.marginLeft=(width-w)/2+'px';item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(pixelScale*(win.devicePixelRatio||1));if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}}
+   for(const item of items){const w=width,h=item.size.height*pixelScale;item.element.style.width=w+'px';item.element.style.height=(h+24)+'px';item.element.style.marginLeft=(width-w)/2+'px';item.label.textContent=item.size.height+' строк · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(pixelScale*(win.devicePixelRatio||1));if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}}
   }
   function rebuild(){
    job=null;if(!source)return;const previous=new Map(items.map(item=>[item.size.height,item]));items=[];input.max=String(Math.max(1,source.height));

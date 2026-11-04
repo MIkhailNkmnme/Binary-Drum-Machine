@@ -21,11 +21,11 @@ test('GIF stack starts the original at 1:1 and all lower rasters at its screen s
   await page.goto(url);await page.waitForFunction(()=>window.__stackTest&&window.mayField?.());
   const settle=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const ready=async()=>{await page.waitForFunction(()=>window.__stackTest.get().preview.canvases>0&&!window.__stackTest.get().preview.pending&&!window.__stackTest.get().preview.busy);await settle();};
-  const sizes=async()=>{const info=await page.evaluate(()=>({state:__stackTest.get(),lower:[...document.querySelectorAll('.may-scale-stack canvas')].map(c=>({width:c.width,height:c.height,w:c.getBoundingClientRect().width,h:c.getBoundingClientRect().height}))}));for(const c of info.lower){closeEnough(c.w,info.state.width);closeEnough(c.h,info.state.height);}assert.ok(info.lower.length);return info;};
+  const sizes=async()=>{const info=await page.evaluate(()=>({state:__stackTest.get(),lower:[...document.querySelectorAll('.may-scale-stack canvas')].map(c=>({width:c.width,height:c.height,w:c.getBoundingClientRect().width,h:c.getBoundingClientRect().height}))}));for(const c of info.lower){closeEnough(c.w,info.state.width);closeEnough(c.h,c.height*info.state.zoomFactor/dpr);}assert.ok(info.lower.length);return info;};
   for(const initial of ['fit',.12,12])for(const locked of [false,true]){
    const before=await page.evaluate(({initial,locked})=>__stackTest.setup(initial,locked),{initial,locked});
    await page.evaluate(()=>__stackTest.toggle());await ready();const {state,lower}=await sizes();
-   closeEnough(state.scale,1/dpr);closeEnough(state.width,state.dispW/dpr);closeEnough(state.height,state.dispH/dpr);closeEnough(lower[0].w,state.width);closeEnough(lower[0].h,state.height);assert.ok(lower[0].height<state.dispH);assert.deepEqual(state.prefs,before.prefs);
+   closeEnough(state.scale,1/dpr);closeEnough(state.width,state.dispW/dpr);closeEnough(state.height,state.dispH/dpr);closeEnough(lower[0].w,state.width);closeEnough(lower[0].h,lower[0].height/dpr);assert.ok(lower[0].height<state.dispH);assert.deepEqual(state.prefs,before.prefs);
    await page.evaluate(()=>__stackTest.button(1));await ready();const enlarged=await sizes();assert.ok(enlarged.state.scale>state.scale);assert.deepEqual(enlarged.state.prefs,before.prefs);
    await page.evaluate(()=>__stackTest.toggle());const restored=await page.evaluate(()=>__stackTest.get());assert.equal(restored.zoom,before.zoom);assert.deepEqual(restored.prefs,before.prefs);
   }
@@ -54,7 +54,7 @@ test('GIF stack starts the original at 1:1 and all lower rasters at its screen s
   for(const dir of [1,-1]){const before=await page.evaluate(()=>__stackTest.get());await page.evaluate(dir=>__stackTest.button(dir),dir);await settle();const after=await sizes();assert.equal(after.state.scale>before.scale,dir>0);}
   assert.deepEqual(await page.evaluate(()=>__stackTest.source()),source);
   // The numeric step remains editable and does not enter field wheel navigation.
-  const input=page.locator('.may-scale-stack__controls input');await input.fill('16');await input.press('Tab');await ready();assert.equal(await input.inputValue(),'16');
+  const input=page.locator('.may-scale-stack__controls input[aria-label="Шаг высоты нижних треугольников, строк"]');await input.fill('16');await input.press('Tab');await ready();assert.equal(await input.inputValue(),'16');
   const beforeInput=await page.evaluate(()=>__stackTest.get().scale);await input.dispatchEvent('wheel',{deltaY:-200,bubbles:true});closeEnough(await page.evaluate(()=>__stackTest.get().scale),beforeInput);
   // Actual touch events exercise the shared two-finger gesture capture path.
   await page.evaluate(()=>__stackTest.zoom(1/devicePixelRatio));const point=await page.evaluate(()=>__stackTest.point(false));await settle();

@@ -23,11 +23,11 @@ test('scroll window paints exact pixels, frees offscreen rasters, displays every
  const centre=await page.locator('.may-scale-stack').evaluate(n=>{const r=n.getBoundingClientRect();return r.x+r.width/2;});
  await page.evaluate(()=>stack.setZoom(2));assert.equal(await page.locator('.may-scale-stack').evaluate(n=>{const r=n.getBoundingClientRect();return r.x+r.width/2;}),centre);
  assert.equal(await page.evaluate(()=>stack.setZoom(.5)),.5);
- const size=await page.locator('.may-scale-stack canvas').first().evaluate(c=>({width:c.width,height:c.height,cssWidth:c.getBoundingClientRect().width,cssHeight:c.getBoundingClientRect().height}));assert.equal(size.cssWidth,315);assert.equal(size.cssHeight,160);assert.ok(size.width<63);assert.ok(size.height<32);
+ const size=await page.locator('.may-scale-stack canvas').first().evaluate(c=>({width:c.width,height:c.height,cssWidth:c.getBoundingClientRect().width,cssHeight:c.getBoundingClientRect().height}));assert.equal(size.cssWidth,315);assert.equal(size.cssHeight,size.height*5);assert.ok(size.width<63);assert.ok(size.height<32);
  await page.evaluate(()=>{const h=document.querySelector('#host');h.scrollTop=h.scrollHeight;});
  await page.waitForFunction(()=>document.querySelector('.may-scale-stack__level:last-child canvas'));
  assert.equal(await page.locator('.may-scale-stack__level:first-child canvas').count(),0);
- const last=await page.locator('.may-scale-stack__level:last-child canvas').evaluate(c=>({rows:c.height,width:c.getBoundingClientRect().width,height:c.getBoundingClientRect().height}));assert.equal(last.rows,8);assert.equal(last.width,315);assert.equal(last.height,160);
+ const last=await page.locator('.may-scale-stack__level:last-child canvas').evaluate(c=>({rows:c.height,width:c.getBoundingClientRect().width,height:c.getBoundingClientRect().height}));assert.equal(last.rows,8);assert.equal(last.width,315);assert.equal(last.height,40);
  assert.ok(await page.evaluate(()=>stack.inspect().canvasBytes)<32*1024*1024);
  assert.match(await page.locator('.may-scale-stack__level:last-child').textContent(),/8 строк.*часть ×4/);
  await page.evaluate(()=>{source.pixels.set(source.pixels.map((_,i)=>i%4===3?255:99));stack.requestFrame(source,{key:'changed'});});

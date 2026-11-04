@@ -52,3 +52,5 @@
 #mayGifStrip .may-gif-strip-settings>[hidden],#mayGifStrip .may-gif-strip-search>[hidden]{display:none!important}
 
 #mayGifStrip:has(.may-gif-strip-settings:not([hidden])) .may-gif-strip-status{position:static;width:auto;height:auto;clip-path:none;white-space:normal;font:11px/15px var(--mono,monospace);flex:none}
+
+#mayGifStrip .may-gif-frame-check-label{display:flex;align-items:center;gap:4px;justify-content:center;font:11px sans-serif;white-space:nowrap;user-select:none}#mayGifStrip .may-gif-frame-check{width:16px;height:16px;accent-color:#77e6ab}#mayGifStrip .may-gif-frame-selection-status{font:11px sans-serif;color:#b7cadf}

@@ -1,0 +1,4 @@
+const test=require('node:test'),assert=require('node:assert/strict'),F=require('./mayatnik-gif-frame-set.js');
+const frame=bits=>({semantic:{width:bits.length,height:1,bits:Int8Array.from(bits),bounds:{left:0,top:0,width:bits.length,height:1}}});
+test('XOR uses bit values, retains absent and mixed cells and supports all selected frames',()=>{const r=F.xor([frame([1,0,-1,1,-2]),frame([1,1,-1,0,1]),frame([1,0,-1,1,0])],5,1);assert.deepEqual([...r.semantic.bits],[1,1,-1,0,-2]);assert.equal(r.pixels.length,20);assert.ok([...r.pixels].every((n,i)=>i%4!==3||n===255));assert.deepEqual([...F.xor([frame([1,0]),frame([1,0])],2,1).semantic.bits],[0,0]);});
+test('different-resolution frame grids are mapped through their display bounds',()=>{const a=frame([1,0]),b=frame([1,1,0,0]);a.semantic.bounds.width=4;assert.deepEqual([...F.xor([a,b],4,1).semantic.bits],[0,0,0,0]);assert.throws(()=>F.xor([],4,1));});

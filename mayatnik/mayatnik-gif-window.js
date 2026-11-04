@@ -8,7 +8,7 @@
  let popup=null,viewer=null,local=false,cached=null,settings={},selection=0,busy=false,progress='',recording=false,recordInfo={},stackEnabled=false;
  const target=()=>popup&&!popup.closed?viewer:local?source:null;
  function options(value){
-  return {...value,onSelection(detail){selection=detail.index;if(cached)cached.options.selectedVariant=detail.variant?.id;value.onSelection?.(detail);},onDelayChange(delay){settings.delay=delay;if(cached)cached.options.delay=delay;value.onDelayChange?.(delay);}};
+  return {...value,onVariantsChange(detail){cached={kind:'variants',data:detail.variants,options:{...value,selectedVariant:detail.selectedVariant,selectedIndex:0}};settings.selectedVariant=detail.selectedVariant;selection=0;value.onVariantsChange?.(detail);},onDigitsChange(digits){settings.digits=digits;if(cached)cached.options.digits=digits;value.onDigitsChange?.(digits);},onSelection(detail){selection=detail.index;if(cached)cached.options.selectedVariant=detail.variant?.id;value.onSelection?.(detail);},onDelayChange(delay){settings.delay=delay;if(cached)cached.options.delay=delay;value.onDelayChange?.(delay);}};
  }
  function render(api){
   if(cached){const o=options({...cached.options,...settings,selectedIndex:selection,selectedVariant:cached.options.selectedVariant});
