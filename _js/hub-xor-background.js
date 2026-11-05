@@ -38,12 +38,16 @@
   const middle = document.getElementById('hubPair');
   const pairCtx = middle && middle.getContext('2d', { alpha: true });
   const H = 1024, W = 2 * H - 1, CENTER = W >> 1;
+  // v20 (2026-11-05): четвёртый режим «Рост» — на 2047-м шаге поле удваивается один раз
+  // (1024→2048 строк, 2047→4095 столбцов), панели показывают увеличенное поле уменьшенным
+  // вдвое: старый рисунок остаётся верхней половиной, масштаб — прежним.
+  let FW = W, FH = H, FCENTER = CENTER, grown = false;
   const FIRST_FRAME = 8, INTERVAL = 120, ROW_CHUNK = 64;
   left.width = right.width = W; left.height = right.height = H;
   if (middle) { middle.width = W; middle.height = H; }
   const kernel = HubXorKernel;
-  const cones = kernel.create(W, H), grid = kernel.create(W, H), pairGrid = kernel.create(W, H);
-  const packedLeft = kernel.create(W, H), packedRight = kernel.create(W, H), packedPair = kernel.create(W, H);
+  let cones = kernel.create(FW, FH), grid = kernel.create(FW, FH), pairGrid = kernel.create(FW, FH);
+  let packedLeft = kernel.create(FW, FH), packedRight = kernel.create(FW, FH), packedPair = kernel.create(FW, FH);
   let decoded = false, earlyStats = null;
   const publishedLeft = new Int8Array(W * H), publishedRight = new Int8Array(W * H), publishedPair = new Int8Array(W * H);
   const coneImage = coneCtx.createImageData(W, H), xorImage = xorCtx.createImageData(W, H);
@@ -75,9 +79,9 @@
   };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
   const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
-  const CYCLE_MODES = ['cycle', 'wrap', 'pingpong'];
-  const CYCLE_NAMES = { cycle: 'Цикл', wrap: 'Край', pingpong: 'Пинг' };
-  const CYCLE_TITLES = { cycle: 'Цикл: на 2047 поле сбрасывается и начинается заново', wrap: 'Край: дошедшая до края вершина перескакивает на противоположную сторону', pingpong: 'Пинг-понг: после 2047 плеер идёт назад с пересчётом поля' };
+  const CYCLE_MODES = ['cycle', 'wrap', 'pingpong', 'grow'];
+  const CYCLE_NAMES = { cycle: 'Цикл', wrap: 'Край', pingpong: 'Пинг', grow: 'Рост' };
+  const CYCLE_TITLES = { cycle: 'Цикл: на 2047 поле сбрасывается и начинается заново', wrap: 'Край: дошедшая до края вершина перескакивает на противоположную сторону', pingpong: 'Пинг-понг: после 2047 плеер идёт назад с пересчётом поля', grow: 'Рост: на 2047 поле удваивается один раз, масштаб делится пополам; старый рисунок остаётся верхней половиной, построение продолжается в увеличенном поле' };
   // 1 = конусы 5.7, 2 = обе стороны 5.9, 3 = всё поле 5.8.
   const FIELDS = [1, 2, 3];
   const FIELD_KEYS = { 1: 'left', 2: 'pair', 3: 'right' };
@@ -330,7 +334,7 @@
       blendCtx.putImageData(blendImage, 0, 0); blend.dataset.frame = left.dataset.frame; return;
     }
     const common32 = colour32(palette.common);
-    if (blendPixels) {
+    if (blendPixels && !grown) {
       kernel.blend(fields.map(field => ({ data: field.key === 'pair' ? packedPair : field.key === 'right' ? packedRight : packedLeft, mirror: field.key !== 'left' })),
         blendPixels, view.mode === 'and', view.mirror, fields.map(field => field.colour32), common32);
     } else {
@@ -507,9 +511,23 @@
 
   // Int8 snapshots are only needed by statistics or the big-endian renderer.
   // Keep them tied to the published frame even if computation is paused mid-row.
+  function unpackDown() {
+    const list = [[packedLeft, publishedLeft], [packedRight, publishedRight], [packedPair, publishedPair]];
+    for (const [f, out] of list) {
+      const { stride, bits, valid } = f;
+      for (let r = 0; r < H; r++) {
+        const base = (2 * r) * stride, row = r * W;
+        for (let c = 0; c < W; c++) {
+          const fc = 2 * c, w = fc >>> 5, m = 1 << (fc & 31);
+          out[row + c] = (valid[base + w] & m) ? ((bits[base + w] & m) ? 1 : 0) : -1;
+        }
+      }
+    }
+  }
   function decodePublished() {
     if (decoded) return;
-    kernel.unpack(packedLeft, publishedLeft); kernel.unpack(packedRight, publishedRight); kernel.unpack(packedPair, publishedPair);
+    if (grown) unpackDown();
+    else { kernel.unpack(packedLeft, publishedLeft); kernel.unpack(packedRight, publishedRight); kernel.unpack(packedPair, publishedPair); }
     decoded = true;
   }
   function paint(pixels, i, value, colour) {
@@ -519,10 +537,29 @@
     pixels[p + 2] = on ? colour[2] : 0;
     pixels[p + 3] = on ? 255 : 0;   // пустые клетки прозрачны: при увеличении поля наезжают друг на друга
   }
+  // Режим «Рост»: панель показывает вдвое уменьшенную копию увеличенного поля.
+  function paintDown(f, pixels, colour) {
+    const { stride, bits } = f;
+    for (let r = 0; r < H; r++) {
+      const base = (2 * r) * stride;
+      let i = r * W;
+      for (let c = 0; c < W; c++, i++) {
+        const fc = 2 * c;
+        pixels[i] = ((bits[base + (fc >>> 5)] >>> (fc & 31)) & 1) ? colour : 0;
+      }
+    }
+  }
   function renderPublished(force = false) {
     const palette = PALETTES[view.palette];
     if (view.mode === 'split') {
-      if (conePixels) {
+      if (grown && conePixels) {
+        const lc = colour32(palette.left), rc = colour32(palette.right), mc = colour32(palette.middle);
+        paintDown(packedLeft, conePixels, lc); paintDown(packedRight, xorPixels, rc);
+        const repaintPair = !!pairPixels && (force || pairStep || !pairPainted);
+        if (repaintPair) paintDown(packedPair, pairPixels, mc);
+        coneCtx.putImageData(coneImage, 0, 0); xorCtx.putImageData(xorImage, 0, 0);
+        if (repaintPair) { pairCtx.putImageData(pairImage, 0, 0); pairPainted = true; }
+      } else if (conePixels) {
         const lc = colour32(palette.left), rc = colour32(palette.right), mc = colour32(palette.middle);
         kernel.paint(packedLeft, conePixels, lc); kernel.paint(packedRight, xorPixels, rc);
         // 5.9 меняется только через кадр: на промежуточных кадрах канвас не трогаем.
@@ -553,22 +590,52 @@
   }
   function baseApexPos(s) {
     const d = Math.ceil(s / 2);
-    return CENTER + (s % 2 ? -d : d);
+    return FCENTER + (s % 2 ? -d : d);
   }
   function apexPos(s) {
     const pos = baseApexPos(s);
-    return view.cycleMode === 'wrap' ? ((pos % W) + W) % W : pos;
+    if (view.cycleMode === 'wrap') return ((pos % W) + W) % W;
+    if (view.cycleMode === 'grow') return ((pos % FW) + FW) % FW;
+    return pos;
+  }
+  function shiftCopy(dst, src, bitOffset) {
+    const wordOff = bitOffset >>> 5;
+    for (let r = 0; r < src.H; r++) {
+      const sb = r * src.stride, db = r * dst.stride + wordOff;
+      for (let w = 0; w < src.stride; w++) { dst.bits[db + w] = src.bits[sb + w]; dst.valid[db + w] = src.valid[sb + w]; }
+    }
+  }
+  // Рост: один раз удваиваем поле; старый рисунок сдвигаем на половину ширины — он
+  // становится верхней половиной нового, а панели показывают поле вдвое уменьшенным.
+  function growField() {
+    if (grown) return;
+    const oldCones = cones, oldGrid = grid, oldPair = pairGrid;
+    FW = 2 * FW + 1; FH = 2 * FH; FCENTER = (FW - 1) >> 1;
+    const offset = (FW - oldCones.W) >> 1;
+    cones = kernel.create(FW, FH); grid = kernel.create(FW, FH); pairGrid = kernel.create(FW, FH);
+    packedLeft = kernel.create(FW, FH); packedRight = kernel.create(FW, FH); packedPair = kernel.create(FW, FH);
+    shiftCopy(cones, oldCones, offset); shiftCopy(grid, oldGrid, offset); shiftCopy(pairGrid, oldPair, offset);
+    grown = true; decoded = false;
   }
   function resetFields() {
+    if (grown) {
+      grown = false; FW = W; FH = H; FCENTER = CENTER;
+      cones = kernel.create(FW, FH); grid = kernel.create(FW, FH); pairGrid = kernel.create(FW, FH);
+      packedLeft = kernel.create(FW, FH); packedRight = kernel.create(FW, FH); packedPair = kernel.create(FW, FH);
+      decoded = false;
+    }
     kernel.reset(cones); kernel.reset(grid); kernel.reset(pairGrid);
   }
+  function frameSpan() { return grown ? FW : W; }
   function advanceWholeFrame() {
     step++;
+    if (view.cycleMode === 'grow' && !grown && step >= W) growField();
     if (view.cycleMode === 'cycle') {
       if (step >= W) { step = 0; cycle++; resetFields(); }
       frame = step;
     } else {
-      frame = step % W; cycle = Math.floor(step / W);
+      const span = frameSpan();
+      frame = step % span; cycle = Math.floor(step / span);
     }
     row = 1;
     const pos = apexPos(step);
@@ -577,14 +644,15 @@
     pairStep = step === 0 || step % 2 === 1;
     if (middle && pairStep) {
       kernel.apex(pairGrid, pos);
-      const twinRaw = 2 * CENTER - pos;
-      const twin = view.cycleMode === 'wrap' ? ((twinRaw % W) + W) % W : twinRaw;
+      const twinRaw = 2 * FCENTER - pos;
+      const twin = view.cycleMode === 'wrap' ? ((twinRaw % W) + W) % W
+        : view.cycleMode === 'grow' ? ((twinRaw % FW) + FW) % FW : twinRaw;
       kernel.apex(pairGrid, twin);
     }
     kernel.cone(cones, pos);
-    kernel.sweep(grid, 1, H);
-    if (middle && pairStep) kernel.sweep(pairGrid, 1, H);
-    row = H;
+    kernel.sweep(grid, 1, FH);
+    if (middle && pairStep) kernel.sweep(pairGrid, 1, FH);
+    row = FH;
   }
   function schedule(delay) {
     if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);
@@ -696,11 +764,13 @@
     }
     if (nextFrame) {
       nextFrame = false; step++; row = 1; started = performance.now();
+      if (view.cycleMode === 'grow' && !grown && step >= W) growField();
       if (view.cycleMode === 'cycle') {
         if (step >= W) { step = 0; cycle++; resetFields(); }
         frame = step;
       } else {
-        frame = step % W; cycle = Math.floor(step / W);
+        const span = frameSpan();
+        frame = step % span; cycle = Math.floor(step / span);
       }
       const pos = apexPos(step);
       if (coneFlashOn) coneFlash.push({ c: pos, t: performance.now() });   // v0.480: вспышка в основном проходе
@@ -712,8 +782,9 @@
       pairStep = pairStepNow;
       if (middle && pairStep) {
         kernel.apex(pairGrid, pos);
-        const twinRaw = 2 * CENTER - pos;
-        const twin = view.cycleMode === 'wrap' ? ((twinRaw % W) + W) % W : twinRaw;
+        const twinRaw = 2 * FCENTER - pos;
+        const twin = view.cycleMode === 'wrap' ? ((twinRaw % W) + W) % W
+          : view.cycleMode === 'grow' ? ((twinRaw % FW) + FW) % FW : twinRaw;
         kernel.apex(pairGrid, twin);
       }
       // Один исходный cone за такт; packed-ядро сохраняет границы и чётность.
@@ -722,11 +793,11 @@
     const visible = view.cycleMode === 'cycle' ? frame >= FIRST_FRAME : step >= FIRST_FRAME;
     // На высокой скорости режем кадр крупнее: меньше таймеров, больше кадров/с.
     const chunk = view.speed >= 4 ? 1024 : view.speed >= 2 ? 512 : ROW_CHUNK;
-    const end = Math.min(H, row + chunk);
+    const end = Math.min(FH, row + chunk);
     kernel.sweep(grid, row, end);
     if (middle && pairStep) kernel.sweep(pairGrid, row, end);
     row = end;
-    if (row < H) { schedule(0); return; }
+    if (row < FH) { schedule(0); return; }
     if (visible) {
       // Preserve the last displayed snapshot throughout the next cycle's
       // hidden warmup frames too (pause and palette changes can occur there).
