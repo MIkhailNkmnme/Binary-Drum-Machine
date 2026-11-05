@@ -14,7 +14,7 @@ before(async()=>{
   await route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body:fs.readFileSync(file)});
  });
  await page.addInitScript(()=>{window.__raf=new Map();let id=0;window.requestAnimationFrame=f=>{__raf.set(++id,f);return id;};window.cancelAnimationFrame=id=>__raf.delete(id);});
- await page.goto('http://xor.test/issledovanie/xor-axes/index.html');
+ await page.goto('http://xor.test/kraftwerk/glyphen/index.html');
 });
 after(async()=>{await browser?.close();assert.deepEqual(errors,[]);});
 test('all 6144 unions preserve every occupied cell; screenshot layout has 75 black cells',async()=>{
@@ -245,7 +245,7 @@ test('export snapshot freezes masks and offsets while keeping the displayed star
 test('actual video recording uses the same current field frames as GIF, without temporal XOR',async()=>{
  const videoPage=await page.context().newPage();const videoErrors=[];videoPage.on('pageerror',e=>videoErrors.push(e.message));
  try{
-  await videoPage.goto('http://xor.test/issledovanie/xor-axes/index.html');
+  await videoPage.goto('http://xor.test/kraftwerk/glyphen/index.html');
   const results=await videoPage.evaluate(async()=>{
    const pcm=new Uint8Array(44+8000),view=new DataView(pcm.buffer),str=(at,s)=>[...s].forEach((c,i)=>pcm[at+i]=c.charCodeAt(0));
    str(0,'RIFF');view.setUint32(4,pcm.length-8,true);str(8,'WAVE');str(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,8000,true);view.setUint32(28,16000,true);view.setUint16(32,2,true);view.setUint16(34,16,true);str(36,'data');view.setUint32(40,8000,true);

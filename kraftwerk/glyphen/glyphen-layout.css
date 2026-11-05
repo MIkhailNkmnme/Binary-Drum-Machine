@@ -1,0 +1,77 @@
+/* Compact 16px controls, aligned within the available column. */
+main{width:1024px;max-width:calc(100% - 8px);margin:0 auto}
+main [hidden]{display:none!important}
+header{height:auto;min-height:32px;margin-bottom:4px}
+.head-left{height:auto;min-height:32px;flex-wrap:wrap;gap:4px}
+.layout{grid-template-columns:minmax(0,512px) minmax(0,1fr);gap:4px;align-items:start}
+.layout>figure,.field-scroll{width:100%;min-width:0}
+.controls{width:100%;min-width:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 2px;align-items:start}
+.controls>section{width:100%;min-width:0;padding:2px;border-top:1px solid var(--line2)}
+.controls h2{margin-bottom:2px}
+.controls .bar{width:100%;height:auto;min-height:16px;flex-wrap:wrap;gap:2px}
+.controls .meta{overflow-wrap:anywhere}
+.group,.group.role,.edit-row,.search-actions,.playback-row{gap:2px;margin-top:2px;max-width:100%}
+main button[data-compact]{--compact-w:32px!important;flex-shrink:0}
+main button[data-compact][data-compact-wide]{--compact-w:64px!important}
+main button[data-compact][data-compact-long]{--compact-w:128px!important}
+main button.step,main .thumb-play{--compact-w:16px!important}
+main button{user-select:none}
+.slider-row{width:100%;max-width:100%;height:32px;gap:2px}
+.x-range{width:auto;min-width:0;flex:1 1 0}
+.x-thumb{max-width:100%}
+.layout-strip .bar{justify-content:space-between}
+.layout-strip .bar small{margin-left:0}
+.frame-range .x-thumb{top:50%;transform:translate(-100%,-50%)}
+.preview-row,.edit-row{width:256px;max-width:100%;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+main .preview-row .tile{width:100%!important;min-width:0!important;max-width:none!important}
+.edit-row button{justify-self:center}
+.color-grid{width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+.color-grid label{min-width:0;flex-wrap:wrap;align-content:center}
+.color-grid input[type=color]{flex:0 0 16px;margin-left:0}
+.search-field,.search-input-wrap{width:100%;min-width:0;max-width:100%}
+.search-input-wrap{flex:1 1 100%}
+.search-actions{width:100%}
+.found-head{flex-wrap:wrap;gap:2px}
+.found-head span{min-width:0}
+#searchInfo{overflow-wrap:anywhere}
+#film .group{width:100%}
+#audioFile{max-width:100%}
+.field-help,.xor-space,.xs-sequence,.xs-export{width:100%;max-width:100%;min-width:0}
+.field-help{margin-top:4px}
+.field-help p{overflow-wrap:anywhere}
+.xor-space .xs-controls{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 2px}
+.xor-space .xs-figure{width:100%;min-width:0;padding-top:2px;border-top:1px solid var(--line2);align-content:start}
+.xor-space .xs-figure>label{width:100%;flex:1 1 100%}
+.xor-space .xs-figure select{flex:1 1 0;width:auto;min-width:0;max-width:128px}
+.xor-space .xs-shift{width:100%;flex-wrap:wrap;gap:2px}
+.xor-space .xs-shift .xs-offset-label{flex:none;width:auto}
+.xor-space .xs-stage,.xor-space .xs-main{width:100%}
+.xor-space .xs-main{height:auto;aspect-ratio:2/1;min-height:256px}
+.xor-space .xs-projections{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}
+.xor-space .xs-projection{width:100%;min-width:0}
+.xor-space .xs-projection canvas{width:100%;height:auto;aspect-ratio:1}
+.xs-sequence-position{width:100%;min-width:0;gap:2px}
+.xs-sequence-position output{min-width:64px;overflow-wrap:anywhere}
+.xs-export-range,.xs-export-actions,.xs-sequence-controls,.xs-symmetry{gap:2px}
+body.row-layout .layout{grid-template-columns:minmax(0,1fr)}
+body.row-layout .layout>figure,body.row-layout .field-scroll,body.row-layout .controls{width:100%}
+body.row-layout .controls{grid-template-columns:repeat(4,minmax(0,1fr))}
+.row-track{width:100%;height:auto;min-height:16px;flex-wrap:wrap;gap:2px}
+@media(max-width:1040px){
+ main{width:512px}
+ .layout{grid-template-columns:minmax(0,1fr)}
+ .controls,body.row-layout .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .xor-space .xs-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:528px){
+ main{width:512px}
+ .controls,body.row-layout .controls{grid-template-columns:minmax(0,1fr)}
+ .xor-space .xs-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .xor-space .xs-main{min-height:256px;aspect-ratio:1}
+ .xor-space .xs-projections{grid-template-columns:minmax(0,1fr)}
+ .xor-space .xs-projection{max-width:256px;justify-self:center}
+}
+@media(max-width:360px){
+ .xor-space .xs-controls{grid-template-columns:minmax(0,1fr)}
+ .group:not(.preview-row)>*{flex:none}
+}

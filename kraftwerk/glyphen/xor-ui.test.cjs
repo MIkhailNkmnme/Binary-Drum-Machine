@@ -21,7 +21,7 @@ before(async()=>{
  browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
  page=await browser.newPage({viewport:{width:1100,height:900}});
  page.on('pageerror',error=>errors.push(error.message));
- await page.goto('http://127.0.0.1:'+server.address().port+'/issledovanie/xor-axes/index.html');
+ await page.goto('http://127.0.0.1:'+server.address().port+'/kraftwerk/glyphen/index.html');
  await page.evaluate(()=>document.fonts.ready);
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server.close(resolve));assert.deepEqual(errors,[]);});
