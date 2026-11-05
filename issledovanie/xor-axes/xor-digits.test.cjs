@@ -207,8 +207,63 @@ test('MP3 duration and the resulting frame rate appear immediately',async()=>{
  assert.match(info.video,/кадр/);
 });
 
+test('0 under 1 and the top caps are separate reading toggles',async()=>{
+ await page.locator('#resetColors').click();
+ await page.evaluate(()=>{state.variant=1576;state.radius=0;state.selected=null;state.mode='xor';state.digits=false;state.zerosUnder=false;state.topCells=false;render();});
+ await page.locator('#zerosToggle').click();
+ await page.waitForTimeout(150);
+ const zeros=await page.evaluate(()=>{
+  const cells=fieldCells(state.variant,state.radius,state.selected,state.mode,state.offsets);
+  const nodes=[...document.querySelectorAll('#digitBits text')];
+  let zeros=0,ones=0,empty=0,bad=0;
+  nodes.forEach((node,i)=>{
+   if(cells[i]===2){empty++;if(node.textContent!=='')bad++;}
+   else if(cells[i]===1){ones++;if(node.textContent!=='1')bad++;}
+   else{zeros++;if(node.textContent!=='0')bad++;}
+  });
+  return {zeros,ones,empty,bad,body:document.body.classList.contains('digits'),zerosPressed:document.getElementById('zerosToggle').getAttribute('aria-pressed'),digitsPressed:document.getElementById('digitsToggle').getAttribute('aria-pressed')};
+ });
+ assert.equal(zeros.bad,0);
+ assert(zeros.zeros>100,'zeros under the ones');
+ assert(zeros.ones>0);
+ assert.equal(zeros.body,true);
+ assert.equal(zeros.zerosPressed,'true');
+ assert.equal(zeros.digitsPressed,'false');
+ const rasterZeros=await page.evaluate(()=>{
+  const set=(id,value)=>{const input=document.getElementById(id);input.value=value;input.dispatchEvent(new Event('input'));};
+  set('colorDigitOne','#ff00ff');set('colorDigitZero','#00ff00');
+  state.digits=true;state.zerosUnder=true;render();
+  const pixels=raster(settings(),plan(settings())[0]);
+  let magenta=0,green=0;
+  for(let i=0;i<pixels.length;i+=4){
+   if(pixels[i]===255&&pixels[i+1]===0&&pixels[i+2]===255)magenta++;
+   if(pixels[i]===0&&pixels[i+1]===255&&pixels[i+2]===0)green++;
+  }
+  state.digits=false;render();
+  return {magenta,green};
+ });
+ assert(rasterZeros.magenta>20,'ones in the raster');
+ assert(rasterZeros.green>200,'zeros under the ones in the raster');
+ await page.locator('#resetColors').click();
+ await page.locator('#zerosToggle').click();
+ await page.locator('#topToggle').click();
+ await page.waitForTimeout(150);
+ const top=await page.evaluate(()=>({
+  pivots:[...fieldCells(state.variant,state.radius,state.selected,state.mode,state.offsets,points,true)].filter(value=>value===2).length,
+  pivotPath:document.getElementById('pivotBits').getAttribute('d'),
+  legend:document.getElementById('neutralLegend').hidden,
+  pressed:document.getElementById('topToggle').getAttribute('aria-pressed')
+ }));
+ assert.equal(top.pivots,0);
+ assert.equal(top.pivotPath,'');
+ assert.equal(top.legend,true);
+ assert.equal(top.pressed,'true');
+ await page.locator('#topToggle').click();
+});
+
 test('off returns the filled field, and the page fits a 390 px phone',async()=>{
  await page.locator('#resetColors').click();
+ await page.evaluate(()=>{state.digits=true;state.zerosUnder=false;state.topCells=false;render();});
  await page.locator('#digitsToggle').click();
  const off=await page.evaluate(()=>({
   pressed:document.getElementById('digitsToggle').getAttribute('aria-pressed'),
