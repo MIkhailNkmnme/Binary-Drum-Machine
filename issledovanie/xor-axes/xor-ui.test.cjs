@@ -94,6 +94,12 @@ test('sliders are drawn with square brackets in both the field and the 3D player
  assert.equal(brackets.playBackground,'rgba(0, 0, 0, 0)','the play glyph has no badge');
 });
 
+test('every slider rail is dashed instead of solid',async()=>{
+ const tracks=await page.evaluate(()=>[...document.querySelectorAll('.x-range .x-track')].map(track=>getComputedStyle(track).backgroundImage));
+ assert.equal(tracks.length,5);
+ for(const image of tracks)assert(image.includes('repeating-linear-gradient'),image);
+});
+
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
  const state=await page.evaluate(()=>({
   select:getComputedStyle(document.querySelector('.xs-figure select')).fontFamily,
