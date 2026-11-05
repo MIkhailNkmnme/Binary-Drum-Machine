@@ -100,6 +100,26 @@ test('every slider rail is dashed instead of solid',async()=>{
  for(const image of tracks)assert(image.includes('repeating-linear-gradient'),image);
 });
 
+test('field search finds 0/1 sequences along axes and through loops',async()=>{
+ await page.evaluate(()=>{state.variant=1576;state.radius=0;state.selected=null;state.mode='xor';state.topCells=false;render();});
+ await page.locator('#searchPattern').fill('1');
+ await page.locator('#searchAxes').click();
+ await page.locator('#searchRun').click();
+ await page.waitForTimeout(200);
+ const axes=await page.evaluate(()=>({cells:document.querySelectorAll('#searchBits .search-cell').length,info:document.getElementById('searchInfo').textContent,pressed:document.getElementById('searchAxes').getAttribute('aria-pressed')}));
+ assert(axes.cells>0);
+ assert.match(axes.info,/Найдено/);
+ assert.equal(axes.pressed,'true');
+ await page.locator('#searchLoops').click();
+ await page.waitForTimeout(200);
+ const loops=await page.evaluate(()=>({cells:document.querySelectorAll('#searchBits .search-cell').length,info:document.getElementById('searchInfo').textContent,pressed:document.getElementById('searchLoops').getAttribute('aria-pressed')}));
+ assert(loops.cells>0);
+ assert.match(loops.info,/сквозным/);
+ assert.equal(loops.pressed,'true');
+ await page.locator('#searchClear').click();
+ assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchBits .search-cell').length),0);
+});
+
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
  const state=await page.evaluate(()=>({
   select:getComputedStyle(document.querySelector('.xs-figure select')).fontFamily,
