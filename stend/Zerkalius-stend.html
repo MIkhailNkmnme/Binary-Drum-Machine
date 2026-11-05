@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.002</title>
-<!-- Стенд вариантов (v0.002, 2026-11-05): все предложения по росту и вложению треугольника.
+<title>Зеркалиус — Стенд — v0.003</title>
+<!-- Стенд вариантов (v0.003, 2026-11-05): все предложения по росту и вложению треугольника.
      v0.002: варианты «копия вдвое меньше впадины» и «×4 без переворота», раздел «Как встроить».
+     v0.003: петля ×4 признана бесшовной (копия без поворота); ×2 с переворотом — опыт с видимым
+     окружением по углам; добавлено видео бесшовной петли (1920×1080), кадр демо по границам треугольника.
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
 <style>
@@ -63,7 +65,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.002 · 05.11.2026</span>
+  <span class="ver">v0.003 · 05.11.2026</span>
 </header>
 <main>
   <p class="lead">
@@ -165,33 +167,38 @@
   </section>
 
   <section class="card" id="zoom">
-    <h2>3. Бесконечный зум в чёрную впадину <small>петля ×2 с переворотом</small></h2>
+    <h2>3. Бесконечный зум в чёрную впадину <small>копия без поворота, петля ×4</small></h2>
     <p class="sub">
-      Так как впадина содержит ту же картинку, в неё можно влетать камерой: зум ×2 — и кадр повторяется
-      (повёрнутый на 180°; на стыке камера поворачивается на 180°, поэтому петля бесшовная).
-      Это единственный вариант, который не насыщается: детали не уходят в пиксель, а приходят изнутри.
-      Тот же принцип без переворота — копия вдвое меньше впадины и без поворота, тогда повтор ×4.
+      В перевёрнутую впадину можно вписать копию без поворота — вдвое меньше впадины. Тогда через ×4 она
+      занимает кадр ровно как внешняя картинка в начале, и петля точная — единственный вариант, который не
+      насыщается: детали не уходят в пиксель, а приходят изнутри.
+      Второй режим — копия во всю впадину (повёрнутая на 180°), петля ×2 с переворотом на стыке: годен как
+      опыт, но на прямоугольном кадре по углам видно окружение, поэтому бесшовным он не бывает.
     </p>
     <div class="cols">
       <div>
-        <canvas id="cvZoom" style="aspect-ratio:2/1"></canvas>
+        <canvas id="cvZoom" style="aspect-ratio:1.154/1;max-width:620px;margin:0 auto"></canvas>
         <div class="controls">
           <button id="zoomPlay" type="button" aria-pressed="true">Пауза</button>
-          <button id="zoomMode" type="button" aria-pressed="true">×2 с переворотом</button>
-          <button id="zoomFlip" type="button" aria-pressed="true">Переворот на стыке</button>
+          <button id="zoomMode" type="button" aria-pressed="false">×4 без переворота</button>
+          <button id="zoomFlip" type="button" aria-pressed="true" disabled>Переворот на стыке</button>
         </div>
       </div>
       <div>
-        <p class="sub" style="margin-top:0">Что происходит в петле:</p>
+        <p class="sub" style="margin-top:0">Что происходит в петле ×4:</p>
         <ul class="sub" style="margin:0 0 10px 18px;padding:0">
           <li>камера летит в центральную впадину;</li>
-          <li>через ×2 в кадре та же картинка, но перевёрнутая на 180°;</li>
-          <li>на стыке камера добавляет 180° — кадр совпадает, петля замкнута.</li>
+          <li>через ×4 копия без поворота занимает кадр — та же картинка;</li>
+          <li>цвета на стыке меняются местами, поэтому петля замкнута без переворота.</li>
         </ul>
         <p class="sub">На 4K тот же приём даёт ещё более глубокий зум без потери деталей — детали не уменьшаются,
           а приходят из копии.</p>
       </div>
     </div>
+    <figure>
+      <video src="assets/loop-zoom-x4.mp4" controls muted loop playsinline style="width:100%;border:1px solid var(--line);border-radius:8px;background:#04060a"></video>
+      <figcaption>Бесшовная петля ×4 (1920×1080, 8 с): копия приходит изнутри впадины, цвета на стыке меняются местами.</figcaption>
+    </figure>
   </section>
 
   <section class="card" id="calc">
@@ -207,7 +214,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
         <ul class="sub" style="margin:0 0 0 18px;padding:0">
           <li>рост + вписывание: ~4–5 видимых удвоений, потом новые уровни меньше пикселя;</li>
           <li>вложение копий: ~9–10 уровней (чёрные впадины 790 → 395 → 197… px), предел — сплошной;</li>
-          <li>зум в впадину: не сходится, петля ×2;</li>
+          <li>зум в впадину: не сходится, бесшовная петля ×4 (копия без поворота);</li>
           <li>держать масштаб: видно бесконечно, поле уходит за кадр (N=512 — 16 экранов).</li>
         </ul>
       </div>
@@ -266,7 +273,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.002 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.003 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -456,7 +463,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     if (!cv) return;
     const ctx = cv.getContext('2d');
     const playBtn = $('zoomPlay'), flipBtn = $('zoomFlip'), modeBtn = $('zoomMode');
-    let playing = true, flipOn = true, t0 = performance.now(), pausedAt = 0, mode = 'x2';
+    let playing = true, flipOn = true, t0 = performance.now(), pausedAt = 0, mode = 'x4';
     const CHAIN = 7, PERIOD = 5200;
     const MASTER = '#ffc45c', COPY = '#6ee1eb';
     function size() { const r = cv.getBoundingClientRect(); const d = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); return { w: cv.width, h: cv.height }; }
@@ -482,7 +489,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       const flip = (mode === 'x2' && flipOn && swap) ? Math.PI : 0;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = '#04060a'; ctx.fillRect(0, 0, w, h);
-      const s = Math.min(w, h / (SQ3 / 2) * 0.95) * 0.95;
+      const s = Math.min(w, h / (SQ3 / 2));
       ctx.save();
       ctx.translate(w / 2, h / 2);
       ctx.scale(z, z);
@@ -513,7 +520,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     });
     modeBtn.addEventListener('click', () => {
       mode = mode === 'x2' ? 'x4' : 'x2';
-      modeBtn.textContent = mode === 'x2' ? '×2 с переворотом' : '×4 без переворота';
+      modeBtn.textContent = mode === 'x4' ? '×4 без переворота' : '×2 с переворотом';
       modeBtn.setAttribute('aria-pressed', String(mode === 'x2'));
       flipBtn.disabled = mode === 'x4';
       t0 = performance.now(); pausedAt = 0;
