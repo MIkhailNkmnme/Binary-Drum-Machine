@@ -1,8 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.048</title>
-<!-- АзъБукъ — v0.048. Поле текста растягивается вниз по содержимому: минимум три строки, при четырёх и больше высота растёт по тексту без внутренней прокрутки; пересчёт при вводе, загрузке сохранённого текста и изменении ширины. v0.047. Символы выровнены по вертикали: у минуса, плюса, равно, тильды, каретки, звёздочки, двоеточия, кавычек, решётки, процента, косых черт и «» появилась полная высота 7 строк; минус теперь на середине строки, а не внизу. v0.046. Переключатель «моно / по буквам»: моно — клетка 8 у всех, буква центрируется, зазор между клетками; по буквам — шаг по ширине рисунка, зазор между буквами, 0 — буквы касаются. v0.045. Моноширинный набор: каждая буква в клетке 8, буквы центрируются, общая базовая линия строчных, выносные уходят вниз; зазор одинаковый у всех, включая узкие i, j и l. У р, у, ф, g, p, q и y тело строчной дотянуто до пяти клеток, как у остальных. v0.044. Толстое начертание удалено: осталась только тонкая гарнитура, выбор толщины снят. v0.043. Прямоугольные кнопки кратны ячейке, ссылка в хаб.  Палитры квадратами цвета букв внутри цвета фона, без подписей. v0.042. Палитра и свои цвета справа в редакторе буквы. v0.041. Чёрный контур выбранной буквы, полосы прокрутки скрыты. v0.040. Настройки слева от сетки в поле, выбранная буква жёлтая. v0.039. Обводка версии трапецией по рисунку пользователя. v0.038. Нулевой зазор до касания клеток; сетка в правом верхнем углу поля. v0.037. Набор текста с изображением и JSON, цвет сетки, точный шаг зазора, выделение размера. v0.036. Буквы и промежутки на общей сетке; кнопка сетки внутри поля справа. v0.035. Действия справа от заголовка, выбор размера по образцам буквы. v0.034. Переключатель фоновой сетки поля букв. v0.033. Заголовки разделов алфавита сняты. v0.032. Редактор от 4×4, форма сетки, подсчёт битов и замкнутых пустот, все размеры справа. v0.031. Буквы разделены при любом зазоре, включая нулевой. v0.030. Знаки изменения строк и столбцов над сеткой, действия редактора сверху. v0.029. Выбранная буква выделяется цветом и свечением. v0.028. Число внутри X только при значении по умолчанию 1, иначе сбоку. v0.027. Число зазора зелёное, в покое между половинами X. v0.026. Число сбоку появляется сразу при первом нажатии стрелки. v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
+<title>Zerkalius АзъБукъ v0.049</title>
+<!-- АзъБукъ — v0.049. Формы кнопок: пустые примеры (кнопка, ромб, рейка, прямоугольник) из символов шрифта; палитра символов, цвет, покраска отдельной клетки и всей формы, очистка и сброс; состояние в localStorage. v0.048. Поле текста растягивается вниз по содержимому: минимум три строки, при четырёх и больше высота растёт по тексту без внутренней прокрутки; пересчёт при вводе, загрузке сохранённого текста и изменении ширины. v0.047. Символы выровнены по вертикали: у минуса, плюса, равно, тильды, каретки, звёздочки, двоеточия, кавычек, решётки, процента, косых черт и «» появилась полная высота 7 строк; минус теперь на середине строки, а не внизу. v0.046. Переключатель «моно / по буквам»: моно — клетка 8 у всех, буква центрируется, зазор между клетками; по буквам — шаг по ширине рисунка, зазор между буквами, 0 — буквы касаются. v0.045. Моноширинный набор: каждая буква в клетке 8, буквы центрируются, общая базовая линия строчных, выносные уходят вниз; зазор одинаковый у всех, включая узкие i, j и l. У р, у, ф, g, p, q и y тело строчной дотянуто до пяти клеток, как у остальных. v0.044. Толстое начертание удалено: осталась только тонкая гарнитура, выбор толщины снят. v0.043. Прямоугольные кнопки кратны ячейке, ссылка в хаб.  Палитры квадратами цвета букв внутри цвета фона, без подписей. v0.042. Палитра и свои цвета справа в редакторе буквы. v0.041. Чёрный контур выбранной буквы, полосы прокрутки скрыты. v0.040. Настройки слева от сетки в поле, выбранная буква жёлтая. v0.039. Обводка версии трапецией по рисунку пользователя. v0.038. Нулевой зазор до касания клеток; сетка в правом верхнем углу поля. v0.037. Набор текста с изображением и JSON, цвет сетки, точный шаг зазора, выделение размера. v0.036. Буквы и промежутки на общей сетке; кнопка сетки внутри поля справа. v0.035. Действия справа от заголовка, выбор размера по образцам буквы. v0.034. Переключатель фоновой сетки поля букв. v0.033. Заголовки разделов алфавита сняты. v0.032. Редактор от 4×4, форма сетки, подсчёт битов и замкнутых пустот, все размеры справа. v0.031. Буквы разделены при любом зазоре, включая нулевой. v0.030. Знаки изменения строк и столбцов над сеткой, действия редактора сверху. v0.029. Выбранная буква выделяется цветом и свечением. v0.028. Число внутри X только при значении по умолчанию 1, иначе сбоку. v0.027. Число зазора зелёное, в покое между половинами X. v0.026. Число сбоку появляется сразу при первом нажатии стрелки. v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
      v0.005: в редакторе работает протяжка. v0.004: размеры ячейки 1 и 16 px.
      v0.003: два веса — обычный и «в одну клетку»; отдельные правки для каждого веса, выгрузка JSON.
@@ -70,6 +70,31 @@
   #textJsonDetails summary{cursor:pointer}
   #textJson{max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.4 monospace;color:var(--ink)}
   #textNotice{margin-top:6px;color:var(--dim);font-size:11px}
+  .button-forms .form-note{color:var(--dim);font-size:11px;line-height:1.5;margin:0 0 10px}
+  .forms-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  .forms-toolbar .lbl{margin:0 2px 0 0}
+  .form-palette{display:flex;flex-wrap:wrap;gap:2px;max-width:100%}
+  .form-palette button{width:28px;height:28px;min-width:28px;padding:0;display:flex;align-items:center;justify-content:center;clip-path:none;border:1px solid var(--line);background:var(--btn)}
+  .form-palette button.on{border-color:var(--ink);background:var(--btnon)}
+  .form-palette button svg{width:20px;height:20px;display:block;color:var(--ink)}
+  .form-palette .form-void{font:16px/1 "Segoe UI";color:var(--dim)}
+  .form-color{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+  .form-color input{width:34px;height:26px;padding:2px;border:1px solid var(--line);background:var(--btn);cursor:pointer}
+  .form-modes{display:flex;gap:2px}
+  .form-modes button.on{border-color:var(--ink);background:var(--btnon)}
+  .form-samples{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+  .form-sample{--form-cell:24px;margin:0;border:1px solid var(--line);background:var(--bg);padding:10px;min-width:0}
+  .form-head{display:flex;align-items:center;gap:6px;margin:0 0 8px;flex-wrap:wrap}
+  .form-head h3{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0;white-space:nowrap}
+  .form-head .spacer{flex:1}
+  .form-head button{height:24px;min-width:0;padding:0 8px;font-size:10px;clip-path:none}
+  .form-grid{display:grid;grid-template-columns:repeat(var(--cols),var(--form-cell));grid-auto-rows:var(--form-cell)}
+  .form-cell{width:var(--form-cell);height:var(--form-cell);min-width:0;min-height:0;padding:0;border:1px solid transparent;background:none;clip-path:none;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .form-cell:hover{border-color:var(--line);background:rgba(39,175,205,.12)}
+  .form-cell svg{width:100%;height:100%;display:block;pointer-events:none}
+  .form-cell.empty::before{content:"";width:2px;height:2px;background:var(--line);opacity:.25}
+  .form-cell.empty:hover::before{opacity:.8}
+  @media(max-width:700px){.form-sample{--form-cell:19px}.form-head button{font-size:9px;padding:0 6px}}
   @media(max-width:700px){.text-composer{grid-template-columns:minmax(0,1fr)}}
   #sheet .glyph-outline{display:none;fill:none;stroke:#000;stroke-width:.65px;stroke-linejoin:round;vector-effect:non-scaling-stroke;pointer-events:none}
   #sheet .editing .glyph-outline,#sheet [data-edit-char]:focus-visible .glyph-outline{display:block}
@@ -193,7 +218,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.048"></span>
+    <span class="pbtn ver" aria-label="v0.049"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -254,6 +279,22 @@
         <details id="textJsonDetails"><summary>JSON</summary><pre id="textJson"></pre></details>
       </div>
     </section>
+
+<section class="button-forms" aria-label="Формы кнопок">
+  <h2>Формы кнопок</h2>
+  <p class="form-note">Пустые примеры: кнопка, ромб, рейка, прямоугольник. Символы берутся из шрифта АзъБукъ; каждый можно покрасить отдельно или всю форму сразу. Функции появятся позже.</p>
+  <div class="forms-toolbar">
+    <span class="lbl">символ</span>
+    <div class="form-palette" id="formPalette" role="group" aria-label="Символы для форм"></div>
+    <label class="form-color">цвет <input type="color" id="formColor" value="#39f8ff" aria-label="Цвет символов"></label>
+    <div class="form-modes" role="group" aria-label="Режим">
+      <button id="formModeSymbol" type="button" class="on">символ</button>
+      <button id="formModeColor" type="button">цвет</button>
+    </div>
+    <button id="formReset" type="button">сбросить формы</button>
+  </div>
+  <div class="form-samples" id="formSamples"></div>
+</section>
   </div>
 </main>
 
@@ -694,6 +735,7 @@ function renderAlphabet(cell) {
   rows.forEach(el => { el.innerHTML = lettering(el.textContent, cell, trk.valueAsNumber, maxWidth, G[activeSet], true); });
   updateSelectedGlyph();
   renderTextPreview();
+  if(formsReady)renderForms();
 }
 
 
@@ -1158,6 +1200,111 @@ document.querySelectorAll('.gap-step').forEach(button => {
     if (e.detail === 0) stepTrack(button.classList.contains('prev') ? -1 : 1);
   });
 });
+
+
+// --- empty forms of buttons, rhombi, rails and rectangles -----------------
+var formsReady = false;
+const FORM_KEY = 'azbuk-button-forms';
+const FORM_PALETTE = ['+','-','|','/','\\','<','>','[',']','(',')','{','}','=','_','~','#','*','?','!','.',',',':',';','"','\'','@','&','%','$'];
+const FORM_DEFS = [
+ {id:'button',title:'Кнопка',rows:['+-------+','|       |','+-------+'],color:'#39f8ff'},
+ {id:'rhombus',title:'Ромб',rows:['   / \\   ','  /   \\  ',' <     > ','  \\   /  ','   \\ /   '],color:'#ff7ad9'},
+ {id:'rail',title:'Рейка',rows:['[=======]'],color:'#8dff7a'},
+ {id:'rect',title:'Прямоугольник',rows:['+-------+','|       |','|       |','+-------+'],color:'#ffb35c'}
+];
+const formEscape = s => String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+function makeForm(def){
+ const cols = Math.max(...def.rows.map(row => row.length));
+ return { id:def.id, title:def.title, cols, cells:def.rows.map(row => [...row.padEnd(cols,' ')].map(ch => ch===' ' ? null : {ch,color:def.color})) };
+}
+function defaultForms(){ return FORM_DEFS.map(makeForm); }
+function loadForms(){
+ try{
+  const data = JSON.parse(localStorage.getItem(FORM_KEY) || 'null');
+  if(Array.isArray(data) && data.length===FORM_DEFS.length && FORM_DEFS.every((def,i)=>data[i] && data[i].id===def.id && Array.isArray(data[i].cells) && data[i].cells.length===def.rows.length)) return data;
+ }catch{}
+ return defaultForms();
+}
+function saveForms(){ try{ localStorage.setItem(FORM_KEY, JSON.stringify(formState)); }catch{} }
+let formState = loadForms();
+let formSymbol = '+', formColor = '#39f8ff', formMode = 'symbol';
+function squareShape(ch){
+ const saved = lattice; lattice = 'sq';
+ try { return glyphShape(ch); } finally { lattice = saved; }
+}
+function formGlyph(ch, color){
+ if(!ch || !G[activeSet][ch]) return '';
+ const shape = squareShape(ch);
+ return '<svg viewBox="0 0 '+shape.w+' '+shape.h+'" aria-hidden="true" style="color:'+color+'">'+shape.paths+'</svg>';
+}
+function renderForms(){
+ const root = document.getElementById('formSamples');
+ if(!root) return;
+ root.innerHTML = formState.map(form => {
+  const cells = form.cells.map((row,r) => row.map((cell,c) => {
+   const label = cell ? 'Символ ' + cell.ch : 'Пустая клетка';
+   return '<button type="button" class="form-cell'+(cell?'':' empty')+'" data-form="'+form.id+'" data-row="'+r+'" data-col="'+c+'" aria-label="'+formEscape(label)+'">'+(cell?formGlyph(cell.ch,cell.color):'')+'</button>';
+  }).join('')).join('');
+  return '<figure class="form-sample" data-form="'+form.id+'" style="--cols:'+form.cols+'">'+
+   '<figcaption class="form-head"><h3>'+formEscape(form.title)+'</h3><span class="spacer"></span>'+
+   '<button type="button" data-form-color="'+form.id+'">цвет формы</button>'+
+   '<button type="button" data-form-clear="'+form.id+'">очистить</button></figcaption>'+
+   '<div class="form-grid">'+cells+'</div></figure>';
+ }).join('');
+}
+function paletteButtons(){
+ const symbols = FORM_PALETTE.filter(ch => G[activeSet][ch]);
+ return '<button type="button" class="form-void'+(formSymbol===''?' on':'')+'" data-sym="" aria-label="Пусто">×</button>' +
+  symbols.map(ch => '<button type="button"'+(formSymbol===ch?' class="on"':'')+' data-sym="'+formEscape(ch)+'" aria-label="Символ '+formEscape(ch)+'">'+formGlyph(ch,'var(--ink)')+'</button>').join('');
+}
+function renderPalette(){ const box=document.getElementById('formPalette'); if(box) box.innerHTML=paletteButtons(); }
+function setFormSymbol(symbol){ formSymbol=symbol; renderPalette(); }
+function setFormMode(mode){
+ formMode=mode;
+ document.getElementById('formModeSymbol').classList.toggle('on',mode==='symbol');
+ document.getElementById('formModeColor').classList.toggle('on',mode==='color');
+}
+function applyFormCell(formId,row,col){
+ const form=formState.find(f=>f.id===formId); if(!form) return;
+ if(!form.cells[row]||form.cells[row][col]===undefined) return;
+ if(formMode==='color'){ const cell=form.cells[row][col]; if(cell) cell.color=formColor; }
+ else if(formSymbol===''){ form.cells[row][col]=null; }
+ else { form.cells[row][col]={ch:formSymbol,color:formColor}; }
+ saveForms(); renderForms();
+}
+function colorForm(formId){
+ const form=formState.find(f=>f.id===formId); if(!form) return;
+ form.cells.forEach(row=>row.forEach(cell=>{ if(cell) cell.color=formColor; }));
+ saveForms(); renderForms();
+}
+function clearForm(formId){
+ const form=formState.find(f=>f.id===formId); if(!form) return;
+ form.cells=form.cells.map(row=>row.map(()=>null));
+ saveForms(); renderForms();
+}
+function initForms(){
+ renderPalette();
+ renderForms();
+ document.getElementById('formPalette').addEventListener('click',e=>{
+  const button=e.target.closest('[data-sym]'); if(!button) return;
+  setFormSymbol(button.dataset.sym);
+ });
+ document.getElementById('formColor').addEventListener('input',e=>{ formColor=e.target.value; });
+ document.getElementById('formModeSymbol').addEventListener('click',()=>setFormMode('symbol'));
+ document.getElementById('formModeColor').addEventListener('click',()=>setFormMode('color'));
+ document.getElementById('formReset').addEventListener('click',()=>{ formState=defaultForms(); saveForms(); renderForms(); });
+ document.getElementById('formSamples').addEventListener('click',e=>{
+  const colorButton=e.target.closest('[data-form-color]');
+  if(colorButton){ colorForm(colorButton.dataset.formColor); return; }
+  const clearButton=e.target.closest('[data-form-clear]');
+  if(clearButton){ clearForm(clearButton.dataset.formClear); return; }
+  const cell=e.target.closest('.form-cell');
+  if(cell) applyFormCell(cell.dataset.form, Number(cell.dataset.row), Number(cell.dataset.col));
+ });
+ setFormMode(formMode);
+ formsReady = true;
+}
+initForms();
 
 renderEditor();
 
