@@ -33,3 +33,6 @@
 #zerkBitotekaAccess.zbt-access{margin:0 16px 0 0}
 #zerkBitotekaAccess.zbt-corner{position:fixed;left:48px;top:16px;z-index:99999}
 @media(max-width:400px){#zerkBitoteka{inset:0;width:100vw;height:100dvh;padding:16px}#zerkBitoteka .zbt-grid{grid-template-columns:minmax(0,1fr);padding-right:0}#zerkBitoteka header{gap:0}}
+
+#zerkBitoteka .zbt-folders{min-height:32px;border-bottom:1px solid #344356}
+#zerkBitoteka .zbt-card .zbt-collection{color:#8ed1ff}

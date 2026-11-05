@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "source:kraftwerk:cover",
+      "kind": "image",
+      "name": "Kraftwerk — 3-D The Catalogue: обложка",
+      "filename": "3d-the-catalogue-cover.png",
+      "url": "3d-the-catalogue-cover.png",
+      "source": {
+        "name": "Kraftwerk · изображение предоставлено пользователем",
+        "page": "https://en.wikipedia.org/wiki/3-D_The_Catalogue"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "Kraftwerk",
+        "openUrl": "/sources/kraftwerk/3d-the-catalogue-cover.png",
+        "reference": "https://en.wikipedia.org/wiki/3-D_The_Catalogue"
+      }
+    },
+    {
+      "id": "source:kraftwerk:palettes",
+      "kind": "image",
+      "name": "Kraftwerk — обложка и цветовые варианты",
+      "filename": "3d-der-katalog-palettes.png",
+      "url": "3d-der-katalog-palettes.png",
+      "source": {
+        "name": "Kraftwerk · изображение предоставлено пользователем",
+        "page": "https://en.wikipedia.org/wiki/3-D_The_Catalogue"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "Kraftwerk",
+        "openUrl": "/sources/kraftwerk/3d-der-katalog-palettes.png",
+        "reference": "https://en.wikipedia.org/wiki/3-D_The_Catalogue"
+      }
+    }
+  ]
+}

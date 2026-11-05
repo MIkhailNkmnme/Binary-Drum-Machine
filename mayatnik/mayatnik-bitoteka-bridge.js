@@ -27,18 +27,21 @@
       if(!valid.length)return null;
       const totalHeight=valid.reduce((n,p)=>n+p.height,0),maxWidth=Math.max(...valid.map(p=>p.width));
       if(!Number.isSafeInteger(totalHeight))return null;
-      const scale=Math.min(1,96/maxWidth,96/totalHeight),W=Math.max(1,Math.ceil(maxWidth*scale)),H=Math.max(1,Math.ceil(totalHeight*scale)),rectangles=[];
+      const profile=shape.palette,styled=profile?.collection==='Kraftwerk'&&['background','light','dark'].every(key=>/^#[0-9a-f]{6}$/i.test(profile[key]||''));
+      const scale=Math.min(1,96/maxWidth,96/totalHeight),W=Math.max(1,Math.ceil(maxWidth*scale)),H=Math.max(1,Math.ceil(totalHeight*scale)),rectangles=[],coloured=[];
       for(let y=0;y<H;y++){
         const sy=Math.min(totalHeight-1,Math.floor((y+.5)/scale));let offset=0,part=valid[0];
         for(const candidate of valid){part=candidate;if(sy<offset+candidate.height)break;offset+=candidate.height;}
         let start=-1;for(let x=0;x<=W;x++){
           const sx=Math.floor((x+.5)/scale),colour=x<W&&sx<part.width?Number(part.data[Math.min(part.height-1,sy-offset)*part.width+sx]):0;
           const filled=Number.isInteger(colour)&&colour>0&&colour<=0xffffffff;
+          if(styled&&filled){const hex='#'+[colour&255,(colour>>>8)&255,(colour>>>16)&255].map(v=>v.toString(16).padStart(2,'0')).join('');coloured.push('<rect x="'+(x+2)+'" y="'+(y+2)+'" width="1" height="1" fill="'+hex+'"/>');}
           if(filled&&start<0)start=x;
           if(!filled&&start>=0){rectangles.push('<rect x="'+(start+2)+'" y="'+(y+2)+'" width="'+(x-start)+'" height="1"/>');start=-1;}
         }
       }
-      return new Blob(['<svg xmlns="http://www.w3.org/2000/svg" width="'+(W+4)+'" height="'+(H+4)+'" viewBox="0 0 '+(W+4)+' '+(H+4)+'"><rect width="100%" height="100%" fill="#edf1f4"/><g fill="#111820" shape-rendering="crispEdges">'+rectangles.join('')+'</g></svg>'],{type:'image/svg+xml'});
+      const decoration=styled?'<g fill="'+profile.light+'" transform="translate('+(-.22*scale)+' '+(-.22*scale)+')">'+rectangles.join('')+'</g><g fill="'+profile.dark+'" transform="translate('+(.28*scale)+' '+(.28*scale)+')">'+rectangles.join('')+'</g>':'';
+      return new Blob(['<svg xmlns="http://www.w3.org/2000/svg" width="'+(W+4)+'" height="'+(H+4)+'" viewBox="0 0 '+(W+4)+' '+(H+4)+'"><rect width="100%" height="100%" fill="'+(styled?profile.background:'#edf1f4')+'"/>'+decoration+'<g fill="#111820" shape-rendering="crispEdges">'+(styled?coloured.join(''):rectangles.join(''))+'</g></svg>'],{type:'image/svg+xml'});
     }
     function syncTemplates(entries){
       // Capture the call's catalog before queuing: later edits cannot change a
@@ -55,7 +58,7 @@
           if(previous&&previous.hash===fingerprint){unchanged++;continue;}
           const entry=JSON.parse(copy.text).templates[0],id=PREFIX+copy.id,folder=entry.folder||'Шаблоны';
           await library.save({id,kind:'template',name:String(entry.name||'Шаблон'),filename:String(entry.name||'Шаблон')+'.template.json',blob:new Blob([copy.text],{type:'application/json'}),thumbnail:thumbnail(entry.shape),source,
-            meta:{nativeId:entry.id,folder,openUrl:openUrl(id)}});
+            meta:{nativeId:entry.id,folder,openUrl:openUrl(id),...(entry.shape?.palette?.collection==='Kraftwerk'?{collection:'Kraftwerk',paletteName:entry.shape.palette.name,sourceImage:entry.shape.palette.source}:{})}});
           // Only successful writes enter the ledger. An unchanged native item
           // intentionally stays absent if the user later removes its shared copy.
           Object.defineProperty(ledger.entries,copy.id,{value:{id,hash:fingerprint},enumerable:true,configurable:true,writable:true});writeLedger(ledger);saved++;

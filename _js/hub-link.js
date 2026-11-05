@@ -32,7 +32,7 @@
         if (window.ZerkBitoteka) return Promise.resolve(window.ZerkBitoteka);
         if (bitotekaLoading) return bitotekaLoading;
         bitotekaLoading = new Promise((resolve, reject) => {
-            const url = new URL('_js/bitoteka.js', root).href;
+            const url = new URL('_js/bitoteka.js?v=2', root).href;
             let script = [...document.scripts].find(item => item.src === url);
             const loaded = () => window.ZerkBitoteka ? resolve(window.ZerkBitoteka) : reject(Error('Битотека не загрузилась'));
             if (!script) { script = document.createElement('script'); script.src = url; script.async = true; }
@@ -55,7 +55,7 @@
             event.preventDefault(); try { const library = await loadBitoteka(); await library.open(); }
             catch (_) { location.href = link.href; }
         });
-        const css = new URL('_js/bitoteka.css', root).href;
+        const css = new URL('_js/bitoteka.css?v=2', root).href;
         if (![...document.querySelectorAll('link[rel="stylesheet"]')].some(item => item.href === css)) {
             const style = document.createElement('link'); style.rel = 'stylesheet'; style.href = css; document.head.appendChild(style);
         }

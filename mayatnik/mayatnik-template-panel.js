@@ -327,6 +327,7 @@
     for(const [key,label,pane]of sections){const b=button(label,label,()=>selectTab(key));b.dataset.libraryTab=key;b.setAttribute('role','tab');b.id='mayLibraryTab-'+key;b.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',b.id);b.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?tabKeys[0]:e.key==='End'?tabKeys.at(-1):tabKeys[(tabKeys.indexOf(key)+(e.key==='ArrowRight'?1:tabKeys.length-1))%tabKeys.length];selectTab(next);tabButtons.get(next).focus();}});tabButtons.set(key,b);tabs.append(b);}
     const workspace=doc.createElement('div');workspace.className='mtp-workspace';const main=doc.createElement('div');main.className='mtp-main';
     const commands=doc.createElement('div');commands.className='mtp-section-commands';sectionSave=headingButton('Сохранить в текущий раздел','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>{if(activeTab==='templates')saveButton.click();else if(activeTab==='layers')layerApi?.capture();else if(activeTab==='sequences')sequenceView?.save();else captureLibraries.get(activeTab)?.save.click();});sectionSave.dataset.sectionSave='';renameButton=headingButton('Переименовать выбранный элемент','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',()=>selectedAction('rename'));renameButton.dataset.sectionRename='';deleteButton=headingButton('Удалить выбранный элемент','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>selectedAction('delete'));deleteButton.dataset.sectionDelete='';commands.append(sectionSave,folderButton,renameButton,deleteButton);
+    commands.append(headingButton('Kraftwerk: маски, цветовые пресеты и перенос в Маятник','M12 5A7 7 0 1 0 19 12H15L12 9ZM8 9H9M7 13H8M11 16H12',()=>root.open(new URL('../issledovanie/xor-bitglyphs/#palettes',root.location.href).href,'_blank','noopener')));
     const exporter=root.MayatnikLibraryExport?.mount(root,{parent:panel,tab:()=>activeTab});if(exporter){const exportButton=headingButton('Скачать элемент, отмеченные элементы, весь раздел или всю битотеку в папку либо ZIP','M12 5V14M8 10L12 14 16 10M7 16V18H17V16',()=>exporter.open());exportButton.dataset.libraryExport='';commands.append(exportButton);}
     const viewbar=doc.createElement('div');viewbar.className='mtp-viewbar';searchInput=doc.createElement('input');searchInput.type='search';searchInput.className='mtp-search';searchInput.setAttribute('aria-label','Поиск в текущем разделе');searchInput.addEventListener('input',()=>{query=searchInput.value.trim().toLocaleLowerCase();renderKey='';if(layerGrid)delete layerGrid.dataset.signature;activeTab==='templates'?render():renderActive();});viewbar.append(layouts,searchInput);
     head.dataset.noMini='';
@@ -395,7 +396,7 @@
   function templateName(name){return /^#[0-9a-f]{6} · \d+×\d+$/i.test(name||'')?name.slice(0,7):name;}
   function syncTemplateCard(card,item){const key=previewKey(item),metrics=key&&typeof key==='object'?metricsCache.get(key):null,rk=Math.max(1,Number(item.rk??key?.rk)||1);
     syncCardFrameSearch(card,item.id);
-    card.classList.toggle('mtp-dark-preview',darkPreview(item.hex));card.querySelector('.mtp-name').textContent=templateName(item.name);
+    card.classList.toggle('mtp-dark-preview',darkPreview(item.hex));card.querySelector('.mtp-preview').style.background=/^#[0-9a-f]{6}$/i.test(item.palette?.background||'')?item.palette.background:'';card.querySelector('.mtp-name').textContent=templateName(item.name);
     const size=metrics?.size??(item.parts||[]).filter(p=>p.width>0&&p.height>0).map(p=>Math.max(1,Math.round(p.width/rk))+'×'+Math.max(1,Math.round(p.height/rk))).join(' · ');
     card.querySelector('.mtp-size').textContent=size;card.querySelector('.mtp-bits').textContent=metrics?'1('+metrics.ones+') · 0('+metrics.zeros+')':'1(…) · 0(…)';card.querySelector('.mtp-preview').title=item.name+' — выделить все вхождения. '+size+'. 1 — заполненные клетки; 0 — замкнутые внутренние пустоты. Внешние выемки и фон не учитываются.';}
   function metricsPump(){metricTimer=0;if(!open||activeTab!=='templates'){metricTasks.clear();metricActive=null;return;}
@@ -419,7 +420,11 @@
     for(const p of valid){const w=Math.max(1,Math.round(p.width*scale)),h=Math.max(1,Math.round(p.height*scale)),pixels=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){
       const v=p.data[Math.min(p.height-1,Math.floor(y/h*p.height))*p.width+Math.min(p.width-1,Math.floor(x/w*p.width))]>>>0,i=(y*w+x)*4;
       pixels.data[i]=v&255;pixels.data[i+1]=(v>>>8)&255;pixels.data[i+2]=(v>>>16)&255;pixels.data[i+3]=(v>>>24)&255;
-    }ctx.putImageData(pixels,Math.round(left),Math.round((side-h)/2));left+=p.width*scale;}
+    }const px=Math.round(left),py=Math.round((side-h)/2),profile=item.palette;
+      if(profile&&['light','dark'].every(key=>/^#[0-9a-f]{6}$/i.test(profile[key]||''))){
+        const source=doc.createElement('canvas');source.width=w;source.height=h;source.getContext('2d').putImageData(pixels,0,0);
+        for(const [colour,offset]of [[profile.light,-.22],[profile.dark,.28]]){const shadow=doc.createElement('canvas');shadow.width=w;shadow.height=h;const g=shadow.getContext('2d');g.drawImage(source,0,0);g.globalCompositeOperation='source-in';g.fillStyle=colour;g.fillRect(0,0,w,h);ctx.drawImage(shadow,px+offset*scale,py+offset*scale);}ctx.drawImage(source,px,py);
+      }else ctx.putImageData(pixels,px,py);left+=p.width*scale;}
     const url=canvas.toDataURL();previews.set(item.id,{key,url});img.src=url;
   }
   function templateCard(item){
@@ -482,6 +487,7 @@
   root.addEventListener('may-template-library-ready',()=>{make();bind(root.mayTemplateLibrary);});
   root.addEventListener('may-xorrom-library-ready',()=>{make();bindMusic();if(open&&activeTab==='music')renderMusic();});
   for(const library of captureLibraries.values())root.addEventListener(library.key==='settings'?'may-settings-library-ready':'may-frame-library-ready',()=>{make();bindCapture(library,root[library.apiName]);});
+  root.addEventListener('may-template-imported',event=>{if(event.detail?.folder!=='Kraftwerk')return;make();bind(root.mayTemplateLibrary);if(!engine||!store)return;store.reconcile(engine.allIds());let folder=store.snapshot().nodes.find(n=>n.kind==='folder'&&n.parent===''&&n.name==='Kraftwerk')?.id;if(!folder)folder=store.addFolder('Kraftwerk','');for(const id of event.detail.ids||[]){const node=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id);if(node&&!node.parent)store.move('template',id,folder);}current=folder;folderSelection='';renderKey='';selectTab('templates');schedule();});
   root.addEventListener('may-template-saved',e=>{make();bind(root.mayTemplateLibrary);if(!engine)return;store.reconcile(engine.allIds());const id=String(e.detail?.id||'');folderSelection='';current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';renderKey='';selectTab('templates');setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});});
   root.addEventListener('resize',()=>drawMusicPreview(true));
   doc.addEventListener('visibilitychange',()=>{if(doc.hidden&&musicAudio){try{musicAudio.pause();}catch(_){}cancelMusicAnimation();}});
