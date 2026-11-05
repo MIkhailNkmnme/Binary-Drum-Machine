@@ -86,7 +86,7 @@ test('sliders are drawn with square brackets in both the field and the 3D player
   const play=getComputedStyle(document.querySelector('.thumb-play'));
   return {field,player,font,size,playBorder:play.borderTopWidth,playBackground:play.backgroundColor};
  });
- assert.deepEqual(brackets.field,['[',']','[',']','[',']','[',']','[',']']);
+ assert.deepEqual(brackets.field,['-','-','[',']','[',']','[',']','[',']']);
  assert.deepEqual(brackets.player,['[',']']);
  assert.match(brackets.font,/AzBuk/);
  assert.equal(brackets.size,'30px');
@@ -133,19 +133,24 @@ test('field cell size is settable in pixels and never widens the page',async()=>
  await page.setViewportSize({width:1100,height:900});
 });
 
-test('layout readout stays centred while scrubbing and during playback',async()=>{
+test('layout readout keeps its right edge while the number grows',async()=>{
  const geom=()=>page.evaluate(()=>{
   const range=document.querySelector('.frame-range'),thumb=range.querySelector('.x-thumb');
-  const rb=range.getBoundingClientRect(),tb=thumb.getBoundingClientRect();
-  return {value:Number(document.getElementById('frame').value),number:range.querySelector('.x-number').textContent,center:Math.round(tb.left+tb.width/2),rangeCenter:Math.round(rb.left+rb.width/2),plus:range.querySelector('.x-center').textContent,dash:getComputedStyle(range.querySelector('.x-track')).borderTopStyle,page:document.documentElement.scrollWidth};
+  const tb=thumb.getBoundingClientRect(),track=getComputedStyle(range.querySelector('.x-track')),play=range.querySelector('.thumb-play');
+  return {value:Number(document.getElementById('frame').value),number:range.querySelector('.x-number').textContent,left:Math.round(tb.left),right:Math.round(tb.right),plus:range.querySelector('.x-center').textContent,trackBg:track.backgroundImage.includes('repeating-linear-gradient'),trackHeight:track.height,play:play.textContent,playing:play.classList.contains('playing'),page:document.documentElement.scrollWidth};
  });
+ await page.evaluate(()=>{const frame=document.getElementById('frame');frame.value='1';frame.dispatchEvent(new Event('input'));});
+ await page.waitForTimeout(150);
+ const one=await geom();
  await page.evaluate(()=>{const frame=document.getElementById('frame');frame.value='4000';frame.dispatchEvent(new Event('input'));});
  await page.waitForTimeout(150);
- const shown=await geom();
- assert.equal(shown.center,shown.rangeCenter);
- assert.equal(shown.number,'4000');
- assert.equal(shown.plus,'+');
- assert.equal(shown.dash,'dashed');
+ const wide=await geom();
+ assert.equal(wide.number,'4000');
+ assert.equal(wide.right,one.right,'the right edge stays put');
+ assert.ok(wide.left<one.left,'a wider number grows to the left');
+ assert.equal(wide.plus,'+');
+ assert.equal(wide.trackBg,true,'the line is dashed');
+ assert.equal(wide.trackHeight,'3px','the line is thicker');
  const box=await page.locator('.frame-range').scrollIntoViewIfNeeded().then(()=>page.locator('.frame-range').boundingBox());
  await page.mouse.move(box.x+box.width/2,box.y+20);
  await page.mouse.down();
@@ -153,16 +158,17 @@ test('layout readout stays centred while scrubbing and during playback',async()=
  await page.mouse.up();
  await page.waitForTimeout(150);
  const dragged=await geom();
- assert.notEqual(dragged.value,shown.value);
- assert.equal(dragged.center,dragged.rangeCenter);
+ assert.notEqual(dragged.value,wide.value);
+ assert.equal(dragged.right,wide.right,'the right edge stays put while scrubbing');
  await page.evaluate(()=>{const frame=document.getElementById('frame');frame.value='1';frame.dispatchEvent(new Event('input'));});
  await page.locator('#play').click();
  await page.waitForTimeout(700);
  const playing=await geom();
  await page.locator('#play').click();
- assert.equal(playing.center,playing.rangeCenter);
+ assert.equal(playing.right,one.right,'the right edge stays put during playback');
  assert.notEqual(playing.number,'1');
- assert.equal(playing.plus,'+');
+ assert.equal(playing.play,'!!');
+ assert.equal(playing.playing,true);
  assert(playing.page<=1100);
 });
 
