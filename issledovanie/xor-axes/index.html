@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR / опыт 01 / v0.033</title>
+<title>Оси XOR / опыт 01 / v0.034</title>
 <link rel="preload" href="fonts/xor-azbuk-thin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:"AzBuk Thin";src:url("fonts/xor-azbuk-thin.woff2") format("woff2");font-weight:400;font-display:block}
@@ -87,18 +87,18 @@ b,strong{font-weight:400}summary{font-weight:400}
 <link rel="stylesheet" href="xor-space-export.css?v=019">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="figOutline" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/></filter><filter id="fig3d" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/><feDropShadow dx=".28" dy=".28" stdDeviation="0" flood-color="#2b2d34"/></filter></defs></svg>
 <main>
-<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.033">v0.033</small></div></header>
+<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.034">v0.034</small></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span>Поле / 29 x 29</span><span id="count"></span></figcaption>
 <div class="field-scroll"><svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 x 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect id="fieldBg" width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="pivotBits" fill="#717777" pointer-events="none"/><g id="digitBits" aria-hidden="true" pointer-events="none"></g><g id="searchBits" aria-hidden="true" pointer-events="none"></g></svg></div>
 <div class="layout-strip"><div class="bar"><label for="frame">Раскладка</label><small><span id="frameNow">1</span> / <span id="frameTotal">6144</span></small><small id="randomLeft" class="random-left" hidden></small></div><div class="slider-row"><button class="step" id="frameDown" type="button" aria-label="Предыдущая раскладка" aria-controls="frame">&lt;</button><div class="x-range frame-range"><div class="x-track" aria-hidden="true"></div><span class="x-center" aria-hidden="true">+</span><div class="x-thumb"><span class="x-bracket" aria-hidden="true">-</span><span class="x-number" aria-hidden="true">1</span><span class="x-bracket" aria-hidden="true">-</span><button class="thumb-play" id="thumbPlay" type="button" aria-label="Пуск" aria-pressed="false">!&gt;&gt;</button></div><input id="frame" type="range" min="1" max="6144" value="1" aria-valuetext="Раскладка 1 из 6144"></div><button class="step" id="frameUp" type="button" aria-label="Следующая раскладка" aria-controls="frame">&gt;</button></div><div class="group role"><button id="random" type="button" aria-pressed="true" title="Играть в разброс: раскладки идут в перемешанном порядке; выключено — по порядку"><span class="ico">?</span>Случайно</button><button id="resetAll"><span class="ico">0</span>Сброс</button><button id="ghostToggle" type="button" aria-pressed="false"><span class="ico">S</span>Силуэты</button></div></div>
 <div class="legend"><span><i class="dot one"></i>1</span><span><i class="dot zero"></i>0</span><span id="ghostLegend" hidden><i class="dot ghost"></i>силуэт</span><span id="neutralLegend"><i class="dot neutral"></i>серые центры вне XOR</span></div>
-<div class="group role"><button id="gridToggle" type="button" aria-pressed="false"><span class="ico">#</span>Сетка</button><button id="digitsToggle" type="button" aria-pressed="false" title="Подписать клетки результата XOR: 1 или 0; пустые клетки и серые центры без цифр"><span class="ico">1/0</span>Цифры</button><button id="shadowToggle" type="button" aria-pressed="true"><span class="ico">T</span>Тени</button></div><div class="group role"><button id="zerosToggle" type="button" aria-pressed="false" title="Показать 0 в каждой клетке под 1; когда 1 уходят, 0 остаются"><span class="ico">0</span>0 под 1</button><button id="topToggle" type="button" aria-pressed="false" title="Верхняя клетка каждой фигуры входит в XOR как обычная 1"><span class="ico">1</span>Верхняя 1</button></div>
+<div class="group role"><button id="gridToggle" type="button" aria-pressed="false"><span class="ico">#</span>Сетка</button><button id="digitsToggle" type="button" aria-pressed="false" title="1-е нажатие — 1/0 в клетках результата XOR; 2-е — 0 в пустых клетках; 3-е — выкл"><span class="ico">1/0</span>Цифры</button><button id="shadowToggle" type="button" aria-pressed="true"><span class="ico">T</span>Тени</button></div><div class="group role"><button id="zerosToggle" type="button" aria-pressed="false" title="0 под 1: 0 только в клетках, где 1 уже были; никогда не занятые клетки без цифр"><span class="ico">0</span>0 под 1</button><button id="topToggle" type="button" aria-pressed="false" title="Верхняя клетка каждой фигуры входит в XOR как обычная 1"><span class="ico">1</span>Верхняя 1</button></div>
 <div class="group preview-row" id="tiles" role="group" aria-label="Фигуры отдельно"></div>
 <div class="group edit-row" role="group" aria-label="Редактирование клеток фигур"><button type="button" data-edit="0" aria-label="Редактировать клетки фигуры I" aria-pressed="false" title="Редактировать клетки фигуры I"><span class="ico">E</span></button><button type="button" data-edit="1" aria-label="Редактировать клетки фигуры II" aria-pressed="false" title="Редактировать клетки фигуры II"><span class="ico">E</span></button><button type="button" data-edit="2" aria-label="Редактировать клетки фигуры III" aria-pressed="false" title="Редактировать клетки фигуры III"><span class="ico">E</span></button><button type="button" data-edit="3" aria-label="Редактировать клетки фигуры IV" aria-pressed="false" title="Редактировать клетки фигуры IV"><span class="ico">E</span></button></div>
 <div class="field-help"><h2>Инструкция</h2>
 <p class="hint" id="sequenceHint">24 перестановки на четырёх лучах x 256 сочетаний поворотов. Рисунки могут совпадать.</p>
-<p class="hint">Тяните фигуру по полю. Кнопки 90o поворачивают выбранную, «Все» - сразу четыре. «Цифры» пишут 1 и 0 только в клетках результата XOR; пустые клетки остаются без цифр. «0 под 1» показывает 0 в каждой клетке под 1, «Верхняя 1» добавляет верхние клетки фигур в XOR. Цвета — в «Цветах», размер — в «Цифрах».</p>
+<p class="hint">Тяните фигуру по полю. Кнопки 90o поворачивают выбранную, «Все» - сразу четыре. «Цифры»: 1-е нажатие — 1 и 0 только в клетках результата XOR, 2-е — 0 в пустых клетках; «0 под 1» показывает 0 только там, где 1 уже были. «Верхняя 1» добавляет верхние клетки фигур в XOR. Цвета — в «Цветах», размер — в «Цифрах».</p>
 <p class="hint">В режиме XOR фиолетовый силуэт - вся фигура, чёрное - её вклад в результат. В режиме «Вместе» миниатюры показывают фигуры целиком. Белый контур и тёмная тень - как на обложке; «Тени» отключают белую и тёмную тени, «Сетка» показывает клетки. E под миниатюрой - редактировать: кликай по клеткам на большом поле (или в миниатюре) - убирает или ставит бит.</p>
 <p class="sym-note" id="symInfo"></p>
 </div>
@@ -126,7 +126,7 @@ b,strong{font-weight:400}summary{font-weight:400}
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Загрузите MP3: покажу длительность, число кадров и кадров в секунду.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать<span class="ico r">MP4</span></button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF / 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> / <a href="xor.gif">С XOR</a> / <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.033</small></footer></main>
+</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.034</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
@@ -149,7 +149,7 @@ const initialVariant=24*(2+3*4+0*16+1*64); // turns: up, right, down, left
 const digitSizeKey='xor_axes_digit_size';
 const savedDigitSize=Number(localStorage.getItem(digitSizeKey));
 const digitSizeDefault=0.7;
-const state={variant:initialVariant,selected:null,radius:0,radiusAuto:false,mode:'xor',ghosts:false,grid:false,digits:false,zerosUnder:false,topCells:false,digitSize:Number.isFinite(savedDigitSize)&&savedDigitSize>=0.4&&savedDigitSize<=1.2?savedDigitSize:digitSizeDefault,shadows:true,edit:null,offsets:Array.from({length:4},()=>({x:0,y:0}))};
+const state={variant:initialVariant,selected:null,radius:0,radiusAuto:false,mode:'xor',ghosts:false,grid:false,digits:false,digitsAll:false,zerosUnder:false,topCells:false,digitSize:Number.isFinite(savedDigitSize)&&savedDigitSize>=0.4&&savedDigitSize<=1.2?savedDigitSize:digitSizeDefault,shadows:true,edit:null,offsets:Array.from({length:4},()=>({x:0,y:0}))};
 const defaultColors={fieldBg:'#fd0000',bit:'#000000',ghost:'#7c3aed',pivot:'#717777',digitOne:'#f4f0e8',digitZero:'#000000',axes:'#f4f0e8'};
 const colorInputs={colorFieldBg:'fieldBg',colorBit:'bit',colorDigitOne:'digitOne',colorDigitZero:'digitZero',colorGhost:'ghost',colorPivot:'pivot',colorAxes:'axes'};
 let colors=Object.assign({},defaultColors);
@@ -385,9 +385,9 @@ function paintField(variant,mode,radius=state.radius){
 // The digits view writes the value of every cell over a light field.
 // Nodes are created once and then only the cells whose value changed are touched,
 // so dragging and playback do not rebuild 841 elements on every frame.
-let digitNodes=null,digitShown=null;
+let digitNodes=null,digitShown=null,onesTrail=new Set();
 function paintDigits(cells,coverage){
- if(!state.digits&&!state.zerosUnder)return;
+ if(!state.digits&&!state.digitsAll&&!state.zerosUnder)return;
  if(!digitNodes){
   const layer=$('digitBits'),fragment=document.createDocumentFragment();
   for(let i=0;i<cells.length;i++){
@@ -399,9 +399,10 @@ function paintDigits(cells,coverage){
   layer.append(fragment);
   digitNodes=layer.children;digitShown=new Int8Array(cells.length).fill(-1);
  }
- const nodes=digitNodes,shown=digitShown;
+ const nodes=digitNodes,shown=digitShown,all=state.digitsAll,trailMode=state.zerosUnder&&!all;
  for(let i=0;i<cells.length;i++){
-   const empty=cells[i]===2||(!state.zerosUnder&&(!coverage||coverage[i]===0));
+   if(state.zerosUnder&&cells[i]===1)onesTrail.add(i);
+   const empty=cells[i]===2||(all?false:trailMode?(cells[i]===0&&!onesTrail.has(i)):(!coverage||coverage[i]===0));
   const value=empty?2:cells[i]===1?1:0;
   if(shown[i]===value)continue;
   shown[i]=value;
@@ -542,8 +543,11 @@ function render(){
  $('ghostToggle').setAttribute('aria-pressed',String(state.ghosts));$('ghostLegend').hidden=!state.ghosts;
  for(const el of document.querySelectorAll('.grid'))el.style.display=state.grid?'inline':'none';
  $('gridToggle').setAttribute('aria-pressed',String(state.grid));
- document.body.classList.toggle('digits',state.digits||state.zerosUnder);
- $('digitsToggle').setAttribute('aria-pressed',String(state.digits));
+ const digitsLevel=state.digitsAll?2:state.digits?1:0;
+ document.body.classList.toggle('digits',digitsLevel>0||state.zerosUnder);
+ $('digitsToggle').setAttribute('aria-pressed',String(digitsLevel>0));
+ $('digitsToggle').querySelector('.ico').textContent=digitsLevel===2?'0/1':'1/0';
+ $('digitsToggle').title=digitsLevel===2?'Третье нажатие выключает; сейчас 0 в пустых клетках':digitsLevel===1?'Второе нажатие — 0 в пустых клетках':'1-е нажатие — цифры результата XOR; 2-е — 0 в пустых клетках; 3-е — выкл';
  $('zerosToggle').setAttribute('aria-pressed',String(state.zerosUnder));
  $('topToggle').setAttribute('aria-pressed',String(state.topCells));
  $('neutralLegend').hidden=state.topCells;
@@ -588,14 +592,24 @@ $('random').onclick=()=>{
 function resetBoard(){
  state.variant=initialVariant;state.selected=null;state.radius=0;state.mode='xor';state.edit=null;
  state.offsets=Array.from({length:4},()=>({x:0,y:0}));
+ onesTrail=new Set();
  filmMotion='variants';motionBeforeSolo='variants';setSpeed(speed);
  render();syncMotionUI();updateVideoInfo();
 }
 $('resetAll').onclick=resetBoard;
 $('ghostToggle').onclick=()=>{state.ghosts=!state.ghosts;render();};
 $('gridToggle').onclick=()=>{state.grid=!state.grid;render();};
-$('digitsToggle').onclick=()=>{state.digits=!state.digits;render();};
-$('zerosToggle').onclick=()=>{state.zerosUnder=!state.zerosUnder;render();};
+$('digitsToggle').onclick=()=>{
+ if(!state.digits&&!state.digitsAll)state.digits=true;
+ else if(!state.digitsAll)state.digitsAll=true;
+ else{state.digits=false;state.digitsAll=false;}
+ render();
+};
+$('zerosToggle').onclick=()=>{
+ state.zerosUnder=!state.zerosUnder;
+ if(state.zerosUnder)onesTrail=new Set();
+ render();
+};
 $('topToggle').onclick=()=>{state.topCells=!state.topCells;render();};
 $('shadowToggle').onclick=()=>{state.shadows=!state.shadows;render();};
 $('swap').onclick=()=>{if(state.selected===null||centredSequence())return;const {order,turn}=unpack(state.variant),a=order.indexOf(state.selected),b=(a+1)%4;[order[a],order[b]]=[order[b],order[a]];state.variant=pack(order,turn);render();};
@@ -823,7 +837,7 @@ bindStep($('frameUp'),()=>stepFrame(1));
 bindStep($('allLeft'),()=>turnAll(-1),null,180);
 bindStep($('allRight'),()=>turnAll(1),null,180);
 const cellPixels=16,side=size*cellPixels;
-function rasterCells(config,cells,ghost=null,coverage=null){
+function rasterCells(config,cells,ghost=null,coverage=null,trail=null){
  const tint=config.colors||colors;
  const canvas=document.createElement('canvas');canvas.width=side;canvas.height=side;
  const ctx=canvas.getContext('2d',{willReadFrequently:true});
@@ -865,11 +879,13 @@ function rasterCells(config,cells,ghost=null,coverage=null){
   ctx.stroke();ctx.restore();
   for(let i=0;i<data.length;i++)if(data[i]===2){ctx.fillStyle=tint.pivot;ctx.fillRect((i%size)*cellPixels,Math.floor(i/size)*cellPixels,cellPixels,cellPixels);}
  }
- if(config.digits||config.zerosUnder){
+ if(config.digits||config.digitsAll||config.zerosUnder){
   ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round(cellPixels*Math.max(.3,config.digitSize??.7))+'px "AzBuk Thin",monospace';
   for(let i=0;i<cells.length;i++){
    const value=cells[i];if(value!==0&&value!==1)continue;
-   if(!config.zerosUnder&&coverage&&coverage[i]===0)continue;
+   if(config.digitsAll){}
+   else if(config.zerosUnder){if(!trail||!trail.has(i))continue;}
+   else if(coverage&&coverage[i]===0)continue;
    ctx.fillStyle=value?tint.digitOne:tint.digitZero;
    ctx.fillText(value?'1':'0',(i%size)*cellPixels+cellPixels/2,Math.floor(i/size)*cellPixels+cellPixels/2);
   }
@@ -877,23 +893,24 @@ function rasterCells(config,cells,ghost=null,coverage=null){
  }
  return ctx.getImageData(0,0,side,side).data;
 }
-function raster(config,frame){
+function raster(config,frame,trail=null){
  const radius=frame.radius??config.radius;
  const base=fieldCells(frame.variant,radius,config.selected,frame.mode,config.offsets,config.points,config.topCells);
  const union=(config.ghosts||(config.digits&&frame.mode!=='solo'))?fieldCells(frame.variant,radius,config.selected,'union',config.offsets,config.points,config.topCells):null;
  const ghost=config.ghosts?union:null;
+ if(config.zerosUnder&&trail)for(let i=0;i<base.length;i++)if(base[i]===1)trail.add(i);
  const coverage=config.digits?(frame.mode==='solo'?base:union):null;
- return rasterCells(config,base,ghost,coverage);
+ return rasterCells(config,base,ghost,coverage,trail);
 }
 let gifUrl=null;
 $('makeGif').onclick=async()=>{
- const config=settings(),frames=plan(config),button=$('makeGif');button.disabled=true;
+ const config=settings(),frames=plan(config),button=$('makeGif');button.disabled=true,trail=new Set();
  try{
    const encoder=MayatnikGif.encoder(side,side);
    for(let i=0;i<frames.length;i++){
      if(i%8===0){$('gifStatus').textContent='Сборка '+i+' / '+frames.length;await new Promise(resolve=>setTimeout(resolve,0));}
      const frame=frames[i];
-     encoder.add(raster(config,frame),frame.end-frame.start);
+     encoder.add(raster(config,frame,trail),frame.end-frame.start);
    }
    const blob=encoder.finish(),previous=gifUrl;gifUrl=URL.createObjectURL(blob);
    $('gifPreview').src=gifUrl;$('gifPreview').hidden=false;
@@ -980,9 +997,9 @@ $('makeVideo').onclick=async()=>{
   const canvas=document.createElement('canvas');canvas.width=vidSide;canvas.height=vidSide;
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const tile=document.createElement('canvas');tile.width=side;tile.height=side;
-  const tileCtx=tile.getContext('2d');
+  const tileCtx=tile.getContext('2d'),trail=new Set();
   const drawFrame=index=>{
-   tileCtx.putImageData(new ImageData(raster(config,frames[index]),side,side),0,0);
+   tileCtx.putImageData(new ImageData(raster(config,frames[index],trail),side,side),0,0);
    ctx.drawImage(tile,0,0,vidSide,vidSide);
   };
   drawFrame(0);
