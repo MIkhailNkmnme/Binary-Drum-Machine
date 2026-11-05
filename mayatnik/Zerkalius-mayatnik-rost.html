@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Зеркалиус — Маятник — тестовый треугольник: рост — v0.001</title>
+<!-- Маятник, тестовый треугольник: режим роста (v0.001, 2026-11-05).
+     Поле 2N-1 x N, правило 90 от вершин, удвоение N с делением масштаба.
+     Отдельная страница, чтобы не менять рабочую Zerkalius-mayatnik.html. -->
+<!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
+<style>
+  :root{--bg:#07090d;--panel:#0d1117;--line:#232c3a;--text:#cfd6e2;--muted:#8b95a6;--gold:#ffc45c}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+  a{color:var(--gold);text-decoration:none}a:hover{text-decoration:underline}
+  header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:10px 18px;
+    background:rgba(9,12,17,.94);border-bottom:1px solid var(--line)}
+  header h1{font-size:17px;margin:0;letter-spacing:.06em;text-transform:uppercase}
+  header .link{color:var(--muted);font-size:13px}
+  header .ver{margin-left:auto;color:var(--muted);font:12px ui-monospace,Consolas,monospace}
+  main{max-width:1500px;margin:0 auto;padding:16px 18px 60px}
+  .stage{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#04060a}
+  canvas{display:block;width:100%;aspect-ratio:2/1}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0;font-size:13px}
+  .bar button{background:#182130;color:var(--text);border:1px solid #2c3a4e;border-radius:6px;padding:7px 13px;font:inherit;cursor:pointer}
+  .bar button:hover{background:#1f2b3d}
+  .bar button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+  .bar label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+  .bar select{background:#182130;color:var(--text);border:1px solid #2c3a4e;border-radius:6px;padding:6px 8px;font:inherit}
+  .bar input[type=range]{width:220px}
+  output{font-family:ui-monospace,Consolas,monospace;color:var(--gold)}
+  .info{margin:10px 0 0;font-family:ui-monospace,Consolas,monospace;font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--gold);padding:8px 12px;background:#12161c;border-radius:0 6px 6px 0;color:var(--muted);font-size:13px;margin:16px 0 0}
+</style>
+<!-- === МАРКЕР: CSS СТИЛИ КОНЕЦ === -->
+</head>
+<body>
+<header>
+  <a class="link" href="Zerkalius-mayatnik.html">← Маятник</a>
+  <a class="link" href="../stend/Zerkalius-stend.html">Стенд</a>
+  <a class="link" href="../index.html">Хаб</a>
+  <h1>Маятник · тестовый треугольник · рост</h1>
+  <span class="ver">v0.001 · 05.11.2026</span>
+</header>
+<main>
+  <div class="stage"><canvas id="cv"></canvas></div>
+  <div class="bar">
+    <button id="play" type="button" aria-pressed="true">Пауза</button>
+    <button id="mode" type="button" aria-pressed="true">Вписывать</button>
+    <button id="reset" type="button">Сначала</button>
+    <label>октава <input id="nRange" type="range" min="0" max="6" step="1" value="0"><output id="nOut">N = 32</output></label>
+    <label>темп <select id="speed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+  </div>
+  <div class="info" id="info"></div>
+  <p class="note">Тестовый треугольник Маятника в режиме роста: поле 2N−1 × N, правило 90 от вершин.
+    Отдельная страница — рабочая Zerkalius-mayatnik.html не меняется. Проверки за пользователем.</p>
+</main>
+<!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
+<script>
+(() => {
+  'use strict';
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const playBtn = document.getElementById('play');
+  const modeBtn = document.getElementById('mode');
+  const resetBtn = document.getElementById('reset');
+  const nRange = document.getElementById('nRange');
+  const nOut = document.getElementById('nOut');
+  const speedSel = document.getElementById('speed');
+  const info = document.getElementById('info');
+
+  const MAXO = 6, MAXN = 32 << MAXO;
+  const W = 2 * MAXN - 1, C = (W - 1) >> 1;
+  const field = new Uint8Array(MAXN * W);
+  field[C] = 1;
+  for (let r = 1; r < MAXN; r++) {
+    const base = r * W, up = base - W;
+    for (let c = 0; c < W; c++) field[base + c] = (c > 0 ? field[up + c - 1] : 0) ^ (c + 1 < W ? field[up + c + 1] : 0);
+  }
+
+  const GOLD = (255 << 24 | 92 << 16 | 196 << 8 | 255) >>> 0; // ABGR
+  let iw = 0, ih = 0, img = null, buf = null;
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    iw = Math.max(320, Math.round(r.width));
+    ih = Math.max(160, Math.round(r.height));
+    cv.width = iw; cv.height = ih;
+    img = ctx.createImageData(iw, ih);
+    buf = new Uint32Array(img.data.buffer);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  let mode = 'fit', playing = true, t0 = performance.now(), manualN = 0, pausedAt = 0;
+
+  playBtn.addEventListener('click', () => {
+    if (playing) { pausedAt = performance.now(); playing = false; }
+    else { t0 = performance.now() - (pausedAt - t0); playing = true; }
+    playBtn.textContent = playing ? 'Пауза' : 'Дальше';
+    playBtn.setAttribute('aria-pressed', String(!playing));
+  });
+  modeBtn.addEventListener('click', () => {
+    mode = mode === 'fit' ? 'fixed' : 'fit';
+    modeBtn.textContent = mode === 'fit' ? 'Вписывать' : 'Держать масштаб';
+    modeBtn.setAttribute('aria-pressed', String(mode === 'fit'));
+    t0 = performance.now(); pausedAt = 0; manualN = 0;
+  });
+  resetBtn.addEventListener('click', () => { t0 = performance.now(); pausedAt = 0; manualN = 0; });
+  speedSel.addEventListener('change', () => { t0 = performance.now(); pausedAt = 0; });
+  nRange.addEventListener('input', () => {
+    manualN = 32 << Number(nRange.value);
+    playing = false;
+    playBtn.textContent = 'Дальше';
+    playBtn.setAttribute('aria-pressed', 'true');
+    draw(performance.now());
+  });
+
+  function currentN(now) {
+    if (manualN) return { n: manualN, zoom: 1 };
+    const speed = Number(speedSel.value) || 1;
+    const elapsed = Math.max(0, now - t0) * speed;
+    const period = 1600;
+    const octave = Math.floor(elapsed / period) % (MAXO + 1);
+    const t = (elapsed % period) / period;
+    return { n: 32 << octave, zoom: 2 - t };
+  }
+
+  function draw(now) {
+    const { n, zoom } = currentN(now);
+    const cw = cv.width, ch = cv.height;
+    let cell;
+    if (mode === 'fit') cell = Math.min(cw / (2 * n - 1), ch / n) * zoom;
+    else cell = Math.min(cw / (2 * 32 - 1), ch / 32);
+    const x0 = cw / 2 - (2 * n - 1) * cell / 2;
+    buf.fill(0);
+    const row0 = C - (n - 1);
+    for (let py = 0; py < ch; py++) {
+      const fr = Math.floor(py / cell);
+      if (fr < 0 || fr >= n) continue;
+      const base = fr * W + row0;
+      const cLo = Math.max(0, Math.floor((0 - x0) / cell));
+      const cHi = Math.min(2 * n - 1, Math.ceil((cw - x0) / cell));
+      for (let c = cLo; c < cHi; c++) {
+        if (!field[base + c]) continue;
+        const px0 = Math.max(0, Math.round(x0 + c * cell));
+        const px1 = Math.min(cw, Math.max(px0 + 1, Math.round(x0 + (c + 1) * cell)));
+        const off = py * cw;
+        for (let px = px0; px < px1; px++) buf[off + px] = GOLD;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    if (mode === 'fit') {
+      info.textContent = `Вписывать · N = ${n} · 2N−1 = ${2 * n - 1} · клетка ${cell.toFixed(2)} px · высота поля ${(n * cell).toFixed(0)} px · отъезд ×${zoom.toFixed(2)}`;
+    } else {
+      const need = (2 * n - 1) * cell;
+      info.textContent = `Держать масштаб · N = ${n} · 2N−1 = ${2 * n - 1} · клетка ${cell.toFixed(1)} px · поле на экране ${need.toFixed(0)} px — это ${(need / cw).toFixed(1)} экранов`;
+    }
+    nOut.textContent = 'N = ' + n;
+    nRange.value = String(Math.log2(n / 32));
+  }
+
+  function loop() {
+    if (playing) draw(performance.now());
+    requestAnimationFrame(loop);
+  }
+  draw(performance.now());
+  requestAnimationFrame(loop);
+})();
+</script>
+<!-- === МАРКЕР: СКРИПТЫ КОНЕЦ === -->
+</body>
+</html>
