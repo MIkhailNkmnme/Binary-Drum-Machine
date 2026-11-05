@@ -37,7 +37,7 @@ test('all 24 cross identities match the actual cross24 page sequence at radius z
   const entries=pack.entries().slice(4),counts=[];
   entries.forEach((entry,i)=>{
     const variant=oracle.sequenceVariant(i,'cross24',0,null);
-    const bits=oracle.fieldCells(variant,0,null,'xor'),cells=[];
+    const bits=oracle.fieldCells(variant,0,null,'xor',[],oracle.points,false,{width:29,height:29,cx:14,cy:14},null),cells=[];
     for(let q=0;q<bits.length;q++)if(bits[q]===1)cells.push([q%29-14,Math.floor(q/29)-14,0xff000000]);
     assert.equal(entry.source.variant,variant);assert.deepEqual(entry.source.turns,Array.from(oracle.orders[i]));
     assertRaster(entry,crop(cells));assert.equal(entry.source.neutralPivot,'removed');
