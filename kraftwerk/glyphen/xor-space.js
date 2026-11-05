@@ -162,7 +162,7 @@
    figure.append(caption,canvas);host.querySelector('.xs-projections').appendChild(figure);return {plane,canvas};
   });
   function prepare(canvas){
-   const width=Math.max(1,Math.round(canvas.getBoundingClientRect().width)),height=canvas===main?Math.round(Math.min(560,Math.max(280,width*.58))):width;
+   const rect=canvas.getBoundingClientRect(),width=Math.max(1,Math.round(rect.width)),height=Math.max(1,Math.round(rect.height||(canvas===main?Math.min(560,Math.max(280,width*.58)):width)));
    const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(width*dpr),h=Math.round(height*dpr);
    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
    const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);

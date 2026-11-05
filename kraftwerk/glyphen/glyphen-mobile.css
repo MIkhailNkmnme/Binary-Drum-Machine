@@ -1,0 +1,91 @@
+/* Load after glyphen-layout.css. Keep the desktop 16px modules; enlarge touch controls. */
+html{min-width:0;min-height:100%;scroll-padding-bottom:env(safe-area-inset-bottom,0px)}
+body{min-width:0;min-height:100vh;min-height:100dvh;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+main{width:1024px;max-width:calc(100% - max(4px,env(safe-area-inset-left,0px)) - max(4px,env(safe-area-inset-right,0px)));min-width:0}
+header,.head-left,.caption,.controls>section,.row-controls,#spaceMount{min-width:0;max-width:100%}
+.head-left{flex-wrap:wrap;height:auto}
+header{height:auto}
+h1{max-width:100%;overflow-wrap:anywhere}
+main button{white-space:nowrap}
+.caption,.bar,.row-track,.xs-heading{height:auto;flex-wrap:wrap}
+.bar label,.row-track label,.xs-export-range label,.xs-sequence-controls label,.xs-distance-label,.xs-offset-label{white-space:nowrap}
+.row-controls,.found-list,.xs-sequence-controls,.xs-export-range,.xs-export-actions,.xs-symmetry{min-width:0;max-width:100%}
+.field-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.preview-row,.edit-row{margin-right:auto;margin-left:auto}
+.found-list{overscroll-behavior:contain}
+.field-help p,.field-help summary,.hint,.meta,.xs-explain,.xs-status,.xs-symmetry-rays,.xs-camera-note,.xs-sequence [data-status]{white-space:normal;overflow-wrap:anywhere}
+.field-help table{table-layout:fixed;max-width:100%;overflow-wrap:anywhere}
+.field-help td,.field-help th{white-space:normal}
+.xs-sequence-position{flex-wrap:wrap}
+.xs-sequence-position input{flex:1 1 128px;min-width:0}
+.xs-sequence-position output{flex:0 1 auto;max-width:100%}
+.xor-space .xs-main{height:auto;aspect-ratio:2/1;min-height:256px;max-width:100%}
+.xor-space .xs-projection canvas{height:auto;aspect-ratio:1;max-width:100%}
+#audioFile,#gifPreview,#videoPreview{max-width:100%}
+#gifStatus,#videoStatus,#audioInfo{overflow-wrap:anywhere}
+
+@media(max-width:1040px){
+ main{width:1024px}
+ .layout,body.row-layout .layout{grid-template-columns:minmax(0,1fr)}
+ .controls,body.row-layout .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .xor-space .xs-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .xor-space .xs-projections{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .xor-space .xs-projection{max-width:none}
+}
+
+@media(max-width:640px){
+ .controls,body.row-layout .controls,.xor-space .xs-controls{grid-template-columns:minmax(0,1fr)}
+ .xor-space .xs-main{aspect-ratio:1;min-height:0}
+ .xor-space .xs-projections{grid-template-columns:minmax(0,1fr);gap:8px}
+ .xor-space .xs-projection{width:100%;max-width:512px;justify-self:center}
+ .color-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .color-grid label{white-space:normal}
+ .legend{gap:4px 8px}
+ .field-help details{min-width:0}
+ #zerkBitoteka{inset:max(4px,env(safe-area-inset-top,0px)) max(4px,env(safe-area-inset-right,0px)) max(4px,env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));width:auto;height:auto;max-height:calc(100dvh - max(4px,env(safe-area-inset-top,0px)) - max(4px,env(safe-area-inset-bottom,0px)));padding:8px}
+ #zerkBitoteka[open]{gap:8px}
+ #zerkBitoteka header{height:auto;min-height:32px;flex-wrap:wrap;gap:4px}
+ #zerkBitoteka h2{font-size:16px}
+ #zerkBitoteka .zbt-grid{grid-template-columns:minmax(0,1fr);padding-right:0;gap:8px}
+ #zerkBitoteka .zbt-card{padding:8px}
+ #zerkBitoteka .zbt-actions{flex-wrap:wrap}
+}
+
+@media(any-pointer:coarse){
+ main button{height:32px!important;min-height:32px!important;max-height:32px!important;line-height:30px!important}
+ main button.step,main .thumb-play,.frame-range .thumb-play{--compact-w:32px!important}
+ main button[data-compact]::after{line-height:30px!important}
+ .slider-row,.x-range,.x-thumb,.frame-range{height:32px;min-height:32px}
+ .slider-row .step{flex-basis:32px}
+ .x-range{flex:1 1 0;min-width:0}
+ .x-range input[type=range]::-webkit-slider-thumb{height:32px}
+ .x-range input[type=range]::-moz-range-thumb{height:32px}
+ .x-number{font-size:16px;line-height:32px}
+ .x-bracket{font-size:32px;line-height:32px}
+ .frame-range .x-thumb{max-width:100%;left:min(calc(50% + 64px),100%)!important}
+ main input:not([type=hidden]),main select{font-size:16px!important;min-height:32px!important;height:32px!important;line-height:30px}
+ main input[type=number],main .row-track input[type=number],main .xs-shift input,main .xs-sequence-controls input,main .xs-export-range input{width:64px!important;min-width:64px;max-width:128px;padding:0 2px}
+ main select,.xor-space .xs-figure select{width:128px;min-width:64px;max-width:128px;flex:0 1 128px;height:32px;min-height:32px;padding:0 2px}
+ .color-grid input[type=color]{flex:0 0 32px;width:32px;min-width:32px;height:32px;min-height:32px}
+ .xs-centres{flex-wrap:wrap;min-height:32px}
+ .xs-centres input{width:32px;min-width:32px;flex:0 0 32px}
+ .xs-sequence-position{min-height:32px}
+ .xs-sequence-position input{height:32px}
+ .xs-sequence-position input::-webkit-slider-thumb{width:32px;height:32px}
+ .xs-sequence-position input::-moz-range-thumb{width:32px;height:32px}
+ .row-track{height:auto;min-height:32px;gap:2px}
+ .row-track label,.xs-offset-label,.xs-distance-label,.xs-sequence-controls label,.xs-export-range label{min-height:32px;align-items:center}
+ .row-track .row-name{width:16px;flex:none}
+ .xs-shift,.xs-symmetry,.xs-actions,.xs-export-range,.xs-export-actions,.xs-sequence-controls{flex-wrap:wrap}
+ .search-input-wrap textarea,.search-highlight{font-size:16px;line-height:32px;padding:0 2px}
+ .search-highlight .line{line-height:32px;min-height:32px}
+ .search-input-wrap,.search-input-wrap textarea{min-height:128px}
+ .found-list{max-height:256px}
+ #audioFile{height:auto!important;min-height:32px;font-size:16px;line-height:32px}
+ #audioFile::file-selector-button{width:128px;height:32px;line-height:30px;font-size:16px}
+ #film summary,.field-help summary{min-height:32px;line-height:32px}
+ .hub-link,#gifLink,#videoLink,.xs-export [data-export-download]{display:inline-flex;align-items:center;min-height:32px}
+}
+
+.field-touch-target{fill:transparent;stroke:none;pointer-events:none}.mobile-gesture-note{display:none}
+@media(any-pointer:coarse){#field{touch-action:pan-y pinch-zoom}#field.mask-editing{touch-action:pinch-zoom}.field-touch-target{pointer-events:all;touch-action:pinch-zoom}.mobile-gesture-note{display:block}}
