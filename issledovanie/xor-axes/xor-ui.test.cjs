@@ -279,6 +279,30 @@ test('layout readout keeps its right edge while the number grows',async()=>{
  assert(playing.page<=1100);
 });
 
+test('the square field size can grow to keep the shifted figures inside',async()=>{
+ await page.evaluate(()=>{if(animation)stopFilm();state.radius=7;state.selected=null;state.mode='xor';state.offsets=Array.from({length:4},()=>({x:0,y:0}));render();});
+ const small=await page.evaluate(()=>({ones:[...fieldCells(state.variant,7,state.selected,state.mode,state.offsets)].filter(value=>value===1).length,label:document.getElementById('fieldLabel').textContent}));
+ await page.locator('[data-field-size="41"]').click();
+ await page.waitForTimeout(250);
+ const big=await page.evaluate(()=>{
+  const cells=fieldCells(state.variant,7,state.selected,state.mode,state.offsets);
+  return {viewBox:document.getElementById('field').getAttribute('viewBox'),label:document.getElementById('fieldLabel').textContent,cells:cells.length,ones:[...cells].filter(value=>value===1).length,pressed:document.querySelector('[data-field-size="41"]').getAttribute('aria-pressed'),tiles:[...document.querySelectorAll('#tiles svg')].every(svg=>svg.getAttribute('viewBox')==='0 0 41 41')};
+ });
+ assert.equal(big.viewBox,'0 0 41 41');
+ assert.equal(big.label,'Поле / 41 x 41');
+ assert.equal(big.cells,1681);
+ assert(big.ones>small.ones,'the far arms leave the compact field but fit the larger one');
+ assert.equal(big.pressed,'true');
+ assert.equal(big.tiles,true);
+ await page.locator('[data-field-size="29"]').click();
+ await page.evaluate(()=>{state.radius=0;render();});
+ await page.waitForTimeout(200);
+ const back=await page.evaluate(()=>({viewBox:document.getElementById('field').getAttribute('viewBox'),label:document.getElementById('fieldLabel').textContent,pressed:document.querySelector('[data-field-size="29"]').getAttribute('aria-pressed')}));
+ assert.equal(back.viewBox,'0 0 29 29');
+ assert.equal(back.label,'Поле / 29 x 29');
+ assert.equal(back.pressed,'true');
+});
+
 test('the redesign fits a 390 px phone without sideways scrolling',async()=>{
  await page.setViewportSize({width:390,height:844});
  await page.waitForTimeout(250);
