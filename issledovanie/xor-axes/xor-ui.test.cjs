@@ -147,6 +147,26 @@ test('random playback is a default-on toggle with a remaining count',async()=>{
  assert.equal(await page.evaluate(()=>document.getElementById('random').getAttribute('aria-pressed')),'true');
 });
 
+test('the layout strip has a 6144 all-variants play toggle',async()=>{
+ await page.evaluate(()=>{if(animation)stopFilm();});
+ const initial=await page.evaluate(()=>({text:document.getElementById('allVariants').textContent.trim(),pressed:document.getElementById('allVariants').getAttribute('aria-pressed')}));
+ assert.equal(initial.text,'6144Перебор');
+ assert.equal(initial.pressed,'false');
+ await page.locator('#allVariants').click();
+ await page.waitForTimeout(600);
+ const playing=await page.evaluate(()=>({pressed:document.getElementById('allVariants').getAttribute('aria-pressed'),play:document.getElementById('play').getAttribute('aria-pressed'),anim:!!animation,motion:filmMotion}));
+ assert.equal(playing.motion,'variants');
+ assert.equal(playing.anim,true);
+ assert.equal(playing.pressed,'true');
+ assert.equal(playing.play,'true');
+ await page.locator('#allVariants').click();
+ await page.waitForTimeout(200);
+ const stopped=await page.evaluate(()=>({pressed:document.getElementById('allVariants').getAttribute('aria-pressed'),play:document.getElementById('play').getAttribute('aria-pressed'),anim:!!animation}));
+ assert.equal(stopped.anim,false);
+ assert.equal(stopped.pressed,'false');
+ assert.equal(stopped.play,'false');
+});
+
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
  const state=await page.evaluate(()=>({
   select:getComputedStyle(document.querySelector('.xs-figure select')).fontFamily,
