@@ -9,7 +9,7 @@
   const previewUrls=new Set();
   const uid=()=>root.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
   function stylesheet(){
-    const href=new URL('bitoteka.css?v=2',base).href;
+    const href=new URL('bitoteka.css?v=3',base).href;
     if([...document.querySelectorAll('link[rel="stylesheet"]')].some(link=>link.href===href))return;
     const link=document.createElement('link');link.rel='stylesheet';link.href=href;document.head.appendChild(link);
   }
@@ -93,7 +93,7 @@
   async function importProjectSources(){
     if(sourceImport)return sourceImport;
     sourceImport=(async()=>{
-      const catalogUrl=new URL('../sources/kraftwerk/catalog.json',base),response=await fetch(catalogUrl,{cache:'no-cache'});
+      const catalogUrl=new URL('../sources/catalog.json',base),response=await fetch(catalogUrl,{cache:'no-cache'});
       if(!response.ok)throw Error('Каталог источников: HTTP '+response.status);
       const catalog=await response.json();
       if(!catalog||!Array.isArray(catalog.entries)||!Number.isInteger(catalog.version)||catalog.version<1)throw Error('Некорректный каталог источников');
@@ -202,6 +202,7 @@
         const details=document.createElement('p');details.className='zbt-details';details.textContent=new Date(item.createdAt).toLocaleString('ru-RU')+' · '+bytes(item.size);
         const source=document.createElement('p');source.className='zbt-source';source.textContent=sourceName(item.source);source.title=source.textContent;
         const collection=document.createElement('p');collection.className='zbt-collection';collection.textContent=[item.meta?.folder,item.meta?.paletteName].filter(Boolean).join(' · ');collection.title=collection.textContent;collection.hidden=!collection.textContent;
+        const summary=document.createElement('p');summary.className='zbt-summary';summary.textContent=String(item.meta?.description||'');summary.hidden=!summary.textContent;
         const actions=document.createElement('div');actions.className='zbt-actions';
         const down=button('Скачать «'+item.name+'»','↓',()=>download(item.id).catch(()=>{}),true);
         const del=button('Удалить «'+item.name+'» из Битотеки','×',async()=>{del.disabled=true;try{await remove(item.id);}catch(_){del.disabled=false;}},true);
@@ -210,7 +211,7 @@
           let destination=null;try{const url=new URL(item.meta.openUrl,location.href);if(['http:','https:'].includes(url.protocol)&&url.origin===location.origin)destination=url.href;}catch(_){}
           if(destination){const label=String(item.id).startsWith('mayatnik:')?'Открыть в Маятнике':'Открыть в исходной странице';actions.appendChild(button(label,'⇗',()=>location.assign(destination),true));}
         }
-        card.append(media,name,file,details,collection,source,actions);view.grid.appendChild(card);
+        card.append(media,name,file,details,collection,source,summary,actions);view.grid.appendChild(card);
         if(observer)observer.observe(card);else preview(card,item,serial);
       }
     }catch(error){if(serial!==viewSerial)return;view.status.textContent='Записи не удалось открыть.';lastError=message(error);retryAction=()=>render();retryAction.bitotekaReadRetry=true;paintError();}

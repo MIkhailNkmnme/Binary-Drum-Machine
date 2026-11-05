@@ -36,3 +36,5 @@
 
 #zerkBitoteka .zbt-folders{min-height:32px;border-bottom:1px solid #344356}
 #zerkBitoteka .zbt-card .zbt-collection{color:#8ed1ff}
+
+#zerkBitoteka .zbt-card .zbt-summary{white-space:normal;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;line-height:16px;color:#d1dce7}

@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "entries": [
+    {
+      "id": "source:kraftwerk:cover",
+      "kind": "image",
+      "name": "Kraftwerk — 3-D The Catalogue: обложка",
+      "filename": "3d-the-catalogue-cover.png",
+      "url": "kraftwerk/3d-the-catalogue-cover.png",
+      "source": {
+        "name": "Kraftwerk · изображение предоставлено пользователем",
+        "page": "https://en.wikipedia.org/wiki/3-D_The_Catalogue"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "Kraftwerk",
+        "openUrl": "/sources/kraftwerk/3d-the-catalogue-cover.png",
+        "reference": "https://en.wikipedia.org/wiki/3-D_The_Catalogue"
+      }
+    },
+    {
+      "id": "source:kraftwerk:palettes",
+      "kind": "image",
+      "name": "Kraftwerk — обложка и цветовые варианты",
+      "filename": "3d-der-katalog-palettes.png",
+      "url": "kraftwerk/3d-der-katalog-palettes.png",
+      "source": {
+        "name": "Kraftwerk · изображение предоставлено пользователем",
+        "page": "https://en.wikipedia.org/wiki/3-D_The_Catalogue"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "Kraftwerk",
+        "openUrl": "/sources/kraftwerk/3d-der-katalog-palettes.png",
+        "reference": "https://en.wikipedia.org/wiki/3-D_The_Catalogue"
+      }
+    },
+    {
+      "id": "source:perception:collin-2006-16491707",
+      "kind": "work",
+      "name": "Узнавание без мелких деталей · Collin, 2006",
+      "filename": "collin-2006-spatial-frequency.reference.json",
+      "url": "perception/collin-2006-spatial-frequency/reference.json",
+      "source": {
+        "name": "Charles A. Collin · Perception, 2006",
+        "page": "https://pubmed.ncbi.nlm.nih.gov/16491707/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "Восприятие",
+        "openUrl": "/sources/perception/collin-2006-spatial-frequency/",
+        "reference": "https://pubmed.ncbi.nlm.nih.gov/16491707/",
+        "description": "Участники узнавали объекты на изображениях с отфильтрованными крупными или мелкими деталями. Они меняли границу фильтра и выбирали название из шести категорий. Работа измеряет, какие пространственные частоты нужны для распознавания. Связь с проектом: узнаваемость битглифов при уменьшении и взгляде издалека."
+      }
+    }
+  ]
+}
