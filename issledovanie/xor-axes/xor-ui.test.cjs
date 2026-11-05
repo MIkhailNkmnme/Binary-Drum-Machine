@@ -120,6 +120,33 @@ test('field search finds 0/1 sequences along axes and through loops',async()=>{
  assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchBits .search-cell').length),0);
 });
 
+test('random playback is a default-on toggle with a remaining count',async()=>{
+ assert.equal(await page.locator('#random').getAttribute('aria-pressed'),'true');
+ await page.locator('#play').click();
+ await page.waitForTimeout(900);
+ const playing=await page.evaluate(()=>({hidden:document.getElementById('randomLeft').hidden,text:document.getElementById('randomLeft').textContent,pressed:document.getElementById('random').getAttribute('aria-pressed')}));
+ assert.equal(playing.pressed,'true');
+ assert.equal(playing.hidden,false);
+ assert.match(playing.text,/^осталось \d+ \(\d+%\)$/);
+ await page.locator('#play').click();
+ assert.equal(await page.evaluate(()=>document.getElementById('randomLeft').hidden),true);
+ await page.locator('#random').click();
+ assert.equal(await page.evaluate(()=>document.getElementById('random').getAttribute('aria-pressed')),'false');
+ const plans=await page.evaluate(()=>{
+  const scrambled={...settings(),randomPlay:true,variant:100,motion:'variants'};
+  const sequential={...settings(),randomPlay:false,variant:100,motion:'variants'};
+  return {scrambled:plan(scrambled).slice(0,3).map(frame=>frame.variant),sequential:plan(sequential).slice(0,3).map(frame=>frame.variant)};
+ });
+ assert.deepEqual(plans.sequential,[100,101,102]);
+ assert.notDeepEqual(plans.scrambled,plans.sequential);
+ await page.locator('#play').click();
+ await page.waitForTimeout(500);
+ assert.equal(await page.evaluate(()=>document.getElementById('randomLeft').hidden),true);
+ await page.locator('#play').click();
+ await page.locator('#random').click();
+ assert.equal(await page.evaluate(()=>document.getElementById('random').getAttribute('aria-pressed')),'true');
+});
+
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
  const state=await page.evaluate(()=>({
   select:getComputedStyle(document.querySelector('.xs-figure select')).fontFamily,
