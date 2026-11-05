@@ -167,6 +167,40 @@ test('the layout strip has a 6144 all-variants play toggle',async()=>{
  assert.equal(stopped.play,'false');
 });
 
+test('the shift button plays all 6144 with a uniform centre shift',async()=>{
+ await page.evaluate(()=>{if(animation)stopFilm();});
+ const initial=await page.evaluate(()=>({text:document.getElementById('allVariantsShift').textContent.trim(),pressed:document.getElementById('allVariantsShift').getAttribute('aria-pressed')}));
+ assert.equal(initial.text,'+-Сдвиг');
+ assert.equal(initial.pressed,'false');
+ await page.locator('#allVariantsShift').click();
+ await page.waitForTimeout(500);
+ const playing=await page.evaluate(()=>({
+  shift:document.getElementById('allVariantsShift').getAttribute('aria-pressed'),
+  plain:document.getElementById('allVariants').getAttribute('aria-pressed'),
+  auto:state.radiusAuto,
+  radiusDisabled:document.getElementById('radius').disabled,
+  switchHidden:document.getElementById('radiusSwitch').hidden,
+  motion:filmMotion,
+  anim:!!animation,
+  radius:displayRadius(),
+  expected:autoRadius(sequenceIndex(state.variant),sequenceTotal())
+ }));
+ assert.equal(playing.shift,'true');
+ assert.equal(playing.plain,'false');
+ assert.equal(playing.auto,true);
+ assert.equal(playing.radiusDisabled,true);
+ assert.equal(playing.switchHidden,false);
+ assert.equal(playing.motion,'variants');
+ assert.equal(playing.anim,true);
+ assert.equal(playing.radius,playing.expected);
+ await page.locator('#allVariantsShift').click();
+ await page.waitForTimeout(200);
+ const stopped=await page.evaluate(()=>({shift:document.getElementById('allVariantsShift').getAttribute('aria-pressed'),anim:!!animation}));
+ assert.equal(stopped.shift,'false');
+ assert.equal(stopped.anim,false);
+ await page.evaluate(()=>{state.radiusAuto=false;render();});
+});
+
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
  const state=await page.evaluate(()=>({
   select:getComputedStyle(document.querySelector('.xs-figure select')).fontFamily,
