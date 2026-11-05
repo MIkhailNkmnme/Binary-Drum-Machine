@@ -1,12 +1,13 @@
-﻿<!-- === МАРКЕР 00: СТАРТ === -->
+<!-- === МАРКЕР 00: СТАРТ === -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.659</title>
-<link rel="stylesheet" href="fold-ink.css?v=1659">
+<title>Zerkalius Layers — v1.660</title>
+<link rel="stylesheet" href="../_js/grozd.css?v=1660">
+<link rel="stylesheet" href="fold-ink.css?v=1660">
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -5365,13 +5366,17 @@ body.menubar-bottom .controls.drag-target::after{ top:auto; bottom:0; }
    Картинки переворачиваются обратно, чтобы остались как есть. Окна панелей получают тот же класс (см. applyLightBg). */
 html.light-bg{ filter: invert(1) hue-rotate(180deg); }
 html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
+/* Новая команда использует общий шестиугольник, без изменения остального пульта. */
+#bRetriangle{--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;--c:#5aa9ff;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex:none!important;border:0!important;border-radius:0!important;justify-content:center;user-select:none;-webkit-user-select:none;font:inherit}
+#bRetriangle::before,#bRetriangle:hover::before,#bRetriangle:active::before{background:#1b2430!important}
+#bRetriangle:hover,#bRetriangle:focus-visible{background:#5aa9ff}
 </style>
 <!-- === МАРКЕР 03: HEADER_UI === -->
 <div id="menuBar">
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.659</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.660</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5591,6 +5596,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
     <div class="pr"><button id="bGenNumbers" title="Построить двоичные номера: 0, 1, 10, 11, 100, 101… — строка i это число i в двоичном виде, от 0 до N включительно">🔢 Номера</button><input type="number" id="numbersN" min="2" max="4096" step="1" value="128" title="До какого числа строить"></div>
     <button id="bSierpNext" title="Вставить под ВЫДЕЛЕННОЙ строкой (ничего не выделено — под последней) новую; строки ниже сдвигаются, ничего не затирается. Из строки длиной T получается строка длиной T+1 по правилу Серпинского: каждый новый бит — XOR двух соседних бит над ним (за краями строки — нули). На треугольнике Паскаля это ровно его следующая строка, но работает от ЛЮБОЙ последней строки. Клик — одна строка; удобно жать подряд">🔺+1 ниже</button><button id="bSierpPrev" title="ОБРАТНЫЙ шаг Паскаля: над ВЫДЕЛЕННОЙ строкой (ничего не выделено — над последней) встаёт та строка, из которой она получилась бы кнопкой «🔺+1», — на бит КОРОЧЕ. Строки от места вставки съезжают вниз, ничего не затирается. Считается однозначно: первый бит тот же, дальше каждый — XOR с уже полученным соседом слева. Последний бит служит проверкой: если он не сошёлся, родителя у строки нет вовсе — шагом «🔺+1» её не получить (так у половины всех строк). В режиме «⊕» ложится XOR-ом в строку НАД источником">🔻−1 выше</button>
     <button id="bNumNext" title="Вставить под ВЫДЕЛЕННОЙ строкой (ничего не выделено — под последней) следующий номер: строка читается как двоичное число, новая — на единицу больше. Строки ниже сдвигаются, ничего не затирается; выделение переходит на новую, так что жать можно подряд. Ведущие нули сохраняются: 0011 → 0100">🔢+1 ниже</button><button id="bNumPrev" title="Над ВЫДЕЛЕННОЙ строкой встаёт предыдущий номер: строка читается как двоичное число, новая — на единицу меньше. Ширина сохраняется (0100 → 0011); у нуля предшественника нет. В режиме «⊕» ложится XOR-ом в строку НАД источником">🔢−1 выше</button>
+    <button id="bRetriangle" class="gz-hx" aria-label="Перестроить в треугольник" title="Перестроить в треугольник всю текущую цепочку: биты 0 и 1 сверху вниз, слева направо → строки 1, 3, 5… Пустоты пропускаются. Неполная последняя строка центрируется. Изменяет родное поле; прежнее возвращается Отменой."><span>Треугъ</span></button>
     <div class="pr pw"><button id="bFoldTri" title="⊿ СЛОЖИТЬ ТРЕУГОЛЬНИКОМ: выделенные строки из 0 и 1 склеиваются в ленту (одна выделенная — она сама) и режутся на куски длиной «первая», первая+шаг, первая+2·шаг… — при 1 и 1 это треугольник 1, 2, 3, 4… бита, при шаге 0 — прямоугольник ширины «первая». Куски ложатся в НОВУЮ цепочку с первой строки, источник не трогается. В сообщении — сколько строк выводится из предыдущей: «+1 бит», «🔺+1», повтор, и сколько бит в этой форме новых">⊿ Сложить лентой</button><input type="number" id="foldTriFirst" min="1" max="100000" step="1" value="1" title="Длина первой строки. При шаге 0 — ширина прямоугольника"><input type="number" id="foldTriStep" min="0" max="1000" step="1" value="1" title="На сколько бит каждая следующая строка длиннее: 1 — треугольник, 0 — прямоугольник, 2 и больше — крутые лесенки"></div>
   </div>
   <div class="psec"><div class="psec-h">Куда класть</div>
@@ -6195,17 +6201,19 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="../_js/initial-rows.js?v=2"></script>   <!-- v1.659: общая начальная последовательность (из _pzl.txt) — первый запуск и «★ По умолчанию» -->
-<script src="fold-1-core.js?v=1659"></script>
-<script src="fold-2-render.js?v=1659"></script>
-<script src="fold-3-ops.js?v=1659"></script>
-<script src="fold-4-tools.js?v=1659"></script>
-<script src="fold-5-ui.js?v=1659"></script>
-<script src="horrohorius-128.js?v=1659"></script>
-<script src="fold-6-ink.js?v=1659"></script>
-<script src="fold-anim-core.js?v=1659"></script>
-<script src="fold-anim-ui.js?v=1659"></script>
-<script src="fold-wheel.js?v=1659"></script>
+<script src="../_js/initial-rows.js?v=2"></script>   <!-- v1.660: общая начальная последовательность (из _pzl.txt) — первый запуск и «★ По умолчанию» -->
+<script src="fold-1-core.js?v=1660"></script>
+<script src="fold-2-render.js?v=1660"></script>
+<script src="fold-3-ops.js?v=1660"></script>
+<script src="fold-4-tools.js?v=1660"></script>
+<script src="fold-5-ui.js?v=1660"></script>
+<script src="horrohorius-128.js?v=1660"></script>
+<script src="fold-6-ink.js?v=1660"></script>
+<script src="fold-anim-core.js?v=1660"></script>
+<script src="fold-anim-ui.js?v=1660"></script>
+<script src="fold-wheel.js?v=1660"></script>
+<script src="../_js/retriangle.js?v=1"></script>
+<script src="fold-retriangle.js?v=1660"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;

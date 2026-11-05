@@ -1,0 +1,13 @@
+{
+  "centre": [
+    0,
+    0
+  ],
+  "orientations": 256,
+  "orders": 24,
+  "configurations": 6144,
+  "distinctMasksFixedCoordinates": 256,
+  "orderMultiplicity": 24,
+  "duplicateOrientationGroups": [],
+  "note": "Order-independent XOR at coincident pivots; neutral origin excluded. No quotient by rotation or translation."
+}

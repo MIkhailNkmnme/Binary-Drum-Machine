@@ -34,7 +34,7 @@
       <article><h3>256 готовых сочетаний</h3>
         <div class="triangle-stage"><canvas id="triCatalogue" width="920" height="920" role="img" aria-label="256 сочетаний треугольником; выберите фигуру щелчком"></canvas></div>
         <p>Ряды 1…22: 253 сочетания; последний ряд: ещё 3. Пустые места не заполняются копиями. Нажмите на фигуру, чтобы взять её для маятника.</p>
-        <div class="triangle-controls"><button type="button" id="triSaveCatalogue">SVG раскладки</button></div>
+        <div class="triangle-controls"><button type="button" id="triSaveCatalogue">SVG раскладки</button><button type="button" id="triOpenCanvas">На холст</button></div>
       </article>
       <article><h3>Маятник по правилу XOR</h3>
         <div class="triangle-controls">
@@ -137,6 +137,7 @@
   get('triNext').addEventListener('click', () => choose((selected+1)%256));
   for (const id of ['triMode','triRow','triRows','triFit']) get(id).addEventListener('change', drawEvolution);
   get('triZoom').addEventListener('change', () => { get('triFit').checked = false; drawEvolution(); });
+  get('triOpenCanvas').addEventListener('click', () => { location.href = 'canvas/?source=original'; });
   get('triSaveEvolution').addEventListener('click', () => download(currentSVG, `xor-pendulum-${selected+1}.svg`));
   get('triSaveCatalogue').addEventListener('click', () => {
     const parts = [openSVG(920, 920, '256 сочетаний поворотов четырёх битглифов')];

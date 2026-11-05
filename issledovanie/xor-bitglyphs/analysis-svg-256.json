@@ -1,0 +1,17 @@
+{
+  "file": "xor-256-triangle.svg",
+  "figures": 256,
+  "distinctFixedCentre": 256,
+  "rotationClasses": 64,
+  "closestPairDifferingCells": 10,
+  "svgWidth": "920",
+  "svgHeight": "920",
+  "unitRectWidth": 1,
+  "unitRectHeight": 1,
+  "occupiedRange": [
+    13,
+    113
+  ],
+  "sourceSha256": "c13d74ceec04a2353e009ab2907b1e2eca12325f89874c41ca9db778d70c9295",
+  "comparison": "Exact local occupied-cell sets, common centre and orientation fixed; text labels, background and placement translations excluded."
+}

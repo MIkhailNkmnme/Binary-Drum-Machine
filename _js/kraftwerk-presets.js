@@ -57,5 +57,24 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width*s}" height="${height*s}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${m.name}; ${p.name}"><title>${m.name} · ${p.name}</title><rect width="100%" height="100%" fill="${p.background}"/><path d="${path}" fill="${p.light}" transform="translate(-.22,-.22)"/><path d="${path}" fill="${p.dark}" transform="translate(.28,.28)"/><path d="${path}" fill="${p.bit}"/>${cap}</svg>`;
   }
   function portable(entries){return {format:'mayatnik-templates',version:1,templates:entries};}
-  root.ZerkKraftwerk={palettes,masks,palette,mask,entry,svg,portable};
+  function permutations(left){return left.length?left.flatMap(i=>permutations(left.filter(j=>j!==i)).map(tail=>[i,...tail])):[[]];}
+  const orders=permutations([0,1,2,3]);
+  function layout(options={}){
+    const count=Number(options.count)===6144?6144:256,arrangement=options.arrangement==='grid'?'grid':'triangle';
+    const paletteId=options.paletteId||'cover',p=palette(paletteId),step=40;
+    let columns,rows;
+    if(arrangement==='grid'){columns=Math.ceil(Math.sqrt(count));rows=Math.ceil(count/columns);}
+    else{rows=Math.ceil((Math.sqrt(8*count+1)-1)/2);columns=rows;}
+    const width=columns*step,height=rows*step,placements=[];
+    let index=0;
+    for(let row=0;row<rows;row++){
+      const rowCount=Math.min(arrangement==='grid'?columns:row+1,count-index),left=(width-rowCount*step)/2;
+      for(let col=0;col<rowCount;col++,index++){
+        const orientation=count===6144?Math.floor(index/24):index,turns=[0,1,2,3].map(i=>Math.floor(orientation/4**i)%4);
+        placements.push({index,x:left+col*step+8,y:row*step+1,maskId:'combination:'+String(orientation+1).padStart(3,'0'),order:orders[count===6144?index%24:0].slice(),turns});
+      }
+    }
+    return {width,height,background:p.background,paletteId,placements,count,arrangement,centre:[0,0]};
+  }
+  root.ZerkKraftwerk={palettes,masks,palette,mask,entry,svg,portable,layout};
 })(window);

@@ -111,7 +111,7 @@
   const rowsMax = () => Math.max(8, +$('rows').value || 512);
   const groups = [
     { id: 'build', title: 'Поле', color: GROUP_COLOURS['rail:build'], open: true, items: [
-      button('bBuild', 'field'), button('bThird', 'tri'), button('bFour', 'plusRing'),
+      button('bBuild', 'field'), button('bRetriangle', 'tri'), button('bThird', 'tri'), button('bFour', 'plusRing'),
       num('steps', { name: 'Вершин', tip: 'Вершин (шагов маятника) · двойной щелчок — наименьшее', log: true, fmt: v => v + ' вершин' }),
       num('rows', { name: 'Строк', tip: 'Строк в поле (построение — кнопкой «Построить») · двойной щелчок — наименьшее', log: true, fmt: v => v + ' строк' }),
     // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»).
