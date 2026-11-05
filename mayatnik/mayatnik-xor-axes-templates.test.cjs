@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const pack=require('./mayatnik-xor-axes-templates.js');
-const html=fs.readFileSync(path.join(__dirname,'../issledovanie/xor-axes/index.html'),'utf8');
+const html=fs.readFileSync(path.join(__dirname,'../kraftwerk/glyphen/index.html'),'utf8');
 // Use the research page itself as the oracle, including its real variant codec,
 // cross24 enumeration, rotation direction and neutral-pivot sentinel.
 function declaration(name){

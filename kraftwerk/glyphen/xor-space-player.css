@@ -1,0 +1,16 @@
+.xs-sequence{width:1024px;border-top:1px solid #49423d;border-bottom:1px solid #49423d;padding:4px 0;margin:4px 0}
+.xs-sequence h3{font:400 12px/16px "AzBuk Thin",monospace;margin:0}
+.xs-sequence-controls{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+.xs-sequence-controls label{display:flex;gap:4px;align-items:center;font:12px/16px "AzBuk Thin",monospace}
+.xs-sequence-controls input{width:32px!important;height:16px;border:1px solid #58616c;border-radius:0;background:#1b2430;color:var(--xs-ink);font:12px/14px "AzBuk Thin",monospace;padding:0 2px}
+.xs-centres{display:flex;align-items:center;gap:4px;margin:4px 0;font:12px/16px "AzBuk Thin",monospace}
+.xs-centres input{width:16px;height:16px;margin:0}
+.xs-sequence-position{display:flex;align-items:center;gap:4px;width:512px}
+.xs-sequence-position .xs-rail{color:#fd0000;font:16px/16px "AzBuk Thin",monospace}
+.xs-sequence-position input{flex:1;min-width:0;appearance:none;-webkit-appearance:none;height:16px;background:linear-gradient(#49423d,#49423d) center/100% 1px no-repeat;border:0;margin:0}
+.xs-sequence-position input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1px solid #e4b870;border-radius:0;background:#1b2430}
+.xs-sequence-position input::-moz-range-thumb{width:16px;height:16px;border:1px solid #e4b870;border-radius:0;background:#1b2430}
+.xs-sequence-position output{min-width:128px;text-align:right;font:12px/16px "AzBuk Thin",monospace}
+.xs-sequence [data-status]{font:12px/16px "AzBuk Thin",monospace;margin:4px 0 0;color:var(--mut,#b5aca3)}
+.xs-variant-explanation{margin-top:4px;font:12px/16px "AzBuk Thin",monospace}.xs-variant-explanation summary{list-style:none;cursor:pointer;color:#eee6d8}.xs-variant-explanation summary::-webkit-details-marker{display:none}.xs-variant-explanation summary::before{content:"[+] "}.xs-variant-explanation[open] summary::before{content:"[-] "}.xs-variant-explanation p{color:#b5aca3;line-height:16px}.xs-variant-explanation table{width:100%;border-collapse:collapse;font:12px/16px "AzBuk Thin",monospace}.xs-variant-explanation th,.xs-variant-explanation td{padding:2px;text-align:left;border-bottom:1px solid #49423d}.xs-variant-explanation th{font-weight:400}
+@media(max-width:1040px){.xs-sequence{width:512px}}@media(max-width:528px){.xs-sequence,.xs-sequence-position{width:256px}.xs-sequence-position output{min-width:64px}}

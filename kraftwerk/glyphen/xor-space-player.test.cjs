@@ -9,7 +9,7 @@ test('3D player worker, fixed centres, strict/shared pivots, every counter, gest
  try{
   const page=await browser.newPage({viewport:{width:1100,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{window.__raf=new Map();let id=0;requestAnimationFrame=f=>{__raf.set(++id,f);return id;};cancelAnimationFrame=id=>__raf.delete(id);});
-  await page.goto('http://127.0.0.1:'+server.address().port+'/issledovanie/xor-axes/index.html');
+  await page.goto('http://127.0.0.1:'+server.address().port+'/kraftwerk/glyphen/index.html');
   const play=page.locator('.xs-sequence [data-action=play]'),allow=page.locator('[data-centres]');
   const captureCheck=await page.evaluate(async()=>{
    const stateBefore=JSON.stringify(xorSpaceView.getState()),source=xorSpaceView.getSnapshot(),stored=localStorage.getItem('zerk_xor_space');

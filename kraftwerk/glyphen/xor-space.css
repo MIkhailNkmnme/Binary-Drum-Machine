@@ -1,0 +1,35 @@
+/* XOR-044: compact local controls; presentation does not change axis geometry. */
+.xor-space{--xs-line:#49423d;--xs-ink:#f4f0e8;--xs-font:"AzBuk Thin",monospace;color:var(--xs-ink);width:1024px;border-top:1px solid var(--xs-line);padding:4px 0 0;margin:8px 0 0;min-width:0;font:12px/16px var(--xs-font)}
+.xor-space *{box-sizing:border-box}
+.xor-space .xs-heading{display:flex;align-items:center;gap:8px;min-height:16px;flex-wrap:wrap}
+.xor-space h2{font:400 12px/16px var(--xs-font);margin:0;border:0;padding:0;color:var(--xs-ink)}
+.xor-space .xs-actions{display:flex;gap:2px;flex-wrap:wrap}
+.xor-space .xs-controls{display:grid;grid-template-columns:repeat(4,256px);gap:4px 0;margin:4px 0}
+.xor-space .xs-symmetry{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:4px 0}
+.xor-space .xs-distance-label{display:flex;align-items:center;gap:4px;font:12px/16px var(--xs-font);user-select:none}
+.xor-space .xs-distance{width:64px;height:16px;border:1px solid #5a5148;border-radius:0;background:#211d1a;color:var(--xs-ink);font:12px/14px var(--xs-font);padding:0 2px;user-select:text}
+.xor-space .xs-symmetry-rays{font:12px/16px var(--xs-font);color:#b4aaa0}
+.xor-space input:disabled{opacity:.5;cursor:not-allowed}
+.xor-space .xs-figure{display:flex;align-items:center;flex-wrap:wrap;gap:2px;width:256px;min-width:0}
+.xor-space .xs-figure label{display:flex;align-items:center;gap:2px;flex:none;min-width:0;color:var(--xs-figure-color);font-weight:400;white-space:nowrap}
+.xor-space .xs-figure select{width:128px;min-width:128px;max-width:128px;height:16px;background:#211d1a;color:var(--xs-ink);font:12px/14px var(--xs-font);border:1px solid #5a5148;border-radius:0;padding:0 2px;cursor:pointer}
+.xor-space .xs-shift{display:flex;align-items:center;gap:2px;width:256px;min-width:0}
+.xor-space .xs-shift .xs-offset-label{gap:2px;font:12px/16px var(--xs-font);user-select:none}
+.xor-space .xs-shift input{width:32px;min-width:32px;height:16px;border:1px solid #5a5148;border-radius:0;background:#211d1a;color:var(--xs-ink);font:12px/14px var(--xs-font);padding:0 2px;user-select:text}
+.xor-space .xs-shift input:focus-visible{outline:1px solid var(--xs-figure-color);outline-offset:0}
+.xor-space button.gz-hx{position:relative;border:1px solid #5a5148;background:#211d1a;color:var(--xs-ink);font-family:var(--xs-font);text-shadow:none;box-shadow:none;user-select:none;cursor:pointer}
+.xor-space button.gz-hx:hover,.xor-space button.gz-hx:focus-visible{border-color:var(--xs-figure-color,#e4b870);background:#302923}
+.xor-space button.gz-hx[aria-pressed=true]{background:var(--xs-ink);color:#131619;border-color:var(--xs-ink)}
+.xor-space button.gz-hx:disabled{opacity:.4;cursor:default}
+.xor-space .xs-status{font:12px/16px var(--xs-font);margin:4px 0;color:#d7cabe;min-height:16px}
+.xor-space .xs-stage{position:relative;width:1024px;background:#131619;outline:1px solid #343b42}
+.xor-space .xs-main{display:block;width:1024px;height:512px;touch-action:none;cursor:grab}
+.xor-space .xs-main.xs-dragging{cursor:grabbing}
+.xor-space .xs-main:focus-visible{outline:1px solid #e4b870;outline-offset:0}
+.xor-space .xs-projections{display:grid;grid-template-columns:repeat(3,256px);gap:8px;margin-top:8px}
+.xor-space .xs-projection{width:256px;min-width:0;margin:0;padding:0}
+.xor-space .xs-projection figcaption{margin:0;font:12px/16px var(--xs-font);color:#b4aaa0;min-height:16px}
+.xor-space .xs-projection canvas{width:256px;height:256px;display:block;outline:1px solid #343b42}
+.xs-collision-key{color:#ffb5a3}.xs-depth-key{color:#66dcff}
+@media(max-width:1040px){.xor-space{width:512px}.xor-space .xs-controls{grid-template-columns:repeat(2,256px)}.xor-space .xs-stage,.xor-space .xs-main{width:512px}.xor-space .xs-main{height:256px}.xor-space .xs-projections{grid-template-columns:repeat(2,256px);gap:8px 0}}
+@media(max-width:528px){.xor-space{width:256px}.xor-space .xs-controls{grid-template-columns:256px}.xor-space .xs-stage,.xor-space .xs-main{width:256px}.xor-space .xs-main{height:256px}.xor-space .xs-projections{grid-template-columns:256px;gap:8px}}

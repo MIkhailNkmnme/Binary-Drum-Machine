@@ -16,7 +16,7 @@ test('actual 3D GIF + WebM decode every chosen frame and all three projections; 
  const server=http.createServer((req,res)=>{const file=path.join(root,decodeURIComponent(new URL(req.url,'http://localhost').pathname));fs.readFile(file,(e,data)=>{if(e)return res.writeHead(404).end();res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(data);});});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--disable-gpu']});
  try{
-  const page=await browser.newPage({viewport:{width:1000,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/issledovanie/xor-axes/index.html');
+  const page=await browser.newPage({viewport:{width:1000,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/kraftwerk/glyphen/index.html');
   await page.evaluate(()=>{xorSpacePlayer.pause();});
   const exports=await page.evaluate(async()=>{
    const snapshot=await xorSpacePlayer.ensureSequence(),initial=JSON.stringify(xorSpaceView.getState()),start=39,count=3,prepared=XorAxesSequence.prepare(snapshot.source,snapshot.assignments),capture=xorSpaceView.createCapture({source:snapshot.source}),expected=[],parts=capture.parts,width=capture.width,height=capture.height;

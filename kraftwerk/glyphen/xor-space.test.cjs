@@ -173,7 +173,7 @@ test('browser on actual page: each figure drags on every axis, picking, keyboard
  const {chromium}=require('playwright-core'),browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
  try{
   const page=await browser.newPage({viewport:{width:1100,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  const url='http://127.0.0.1:'+server.address().port+'/issledovanie/xor-axes/index.html';await page.goto(url);await page.waitForFunction(()=>window.xorSpaceView);
+  const url='http://127.0.0.1:'+server.address().port+'/kraftwerk/glyphen/index.html';await page.goto(url);await page.waitForFunction(()=>window.xorSpaceView);
   const canvas=page.locator('.xs-main');
   async function screenGeometry(id,axis){
    await canvas.scrollIntoViewIfNeeded();return page.evaluate(({id,axis})=>{
