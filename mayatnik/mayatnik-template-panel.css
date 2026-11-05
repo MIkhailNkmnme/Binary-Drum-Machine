@@ -63,6 +63,11 @@ body>[data-library-folded-popup]{display:none!important}
 #mayatnikTemplatePanel .mtp-template-pane .mtp-dark-preview .mtp-preview{background:#fff}
 #mayatnikTemplatePanel .mtp-selection input[type=color]{width:40px;height:24px;padding:2px;background:#1b2430;border:1px solid #334052;border-radius:0}
 #mayatnikTemplatePanel .mtp-status{display:block;flex:none;min-height:28px;color:#b7c5d7;overflow-wrap:anywhere}
+#mayatnikTemplatePanel [data-template-frame-search][aria-pressed=true]::after{opacity:1}
+#mayatnikTemplatePanel .mtp-frame-search-status{align-self:center;min-width:0;color:#b7c5d7;overflow-wrap:anywhere}
+#mayatnikTemplatePanel .mtp-frame-search-result .mtp-metrics{height:42px}
+#mayatnikTemplatePanel [data-template-frame-count]{color:#d9b9ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mayatnikTemplatePanel [data-template-id^="xor-axes:"] .mtp-preview{background:#e8edf5}
 #mayatnikTemplatePanel .mtp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-content:start;align-items:start;gap:6px 2px;flex:1;min-height:100px;padding-bottom:12px}
 #mayatnikTemplatePanel .mtp-card{position:relative;min-width:0;background:transparent;border:0;margin:0;padding:0}
 #mayatnikTemplatePanel .mtp-preview{position:relative;display:block;aspect-ratio:1;width:100%;min-width:0;min-height:0;height:auto;padding:3px;background:#1b2430;border:1px solid transparent;border-radius:0;box-shadow:none!important;outline:none;overflow:hidden}
@@ -311,7 +316,7 @@ body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>.mtp-command
 /* 265: backup commands in the title; sequence actions in the editor corner. */
 #mayatnikTemplatePanel .mtp-heading .mtp-header-path{flex:1 1 0}
 #mayatnikTemplatePanel .mtp-heading .mtp-file-commands{flex:0 0 184px}
-#mayatnikTemplatePanel .mtp-toolbar:not(:has(>[data-window-notice]:not([hidden]))){display:none}
+#mayatnikTemplatePanel .mtp-toolbar:not(:has(>[data-window-notice]:not([hidden]),>[data-template-frame-search]:not([hidden]))){display:none}
 #mayatnikTemplatePanel[data-tab=sequences] .mtp-main{position:relative}
 #mayatnikTemplatePanel[data-tab=sequences] .mtp-section-commands{position:absolute;top:2px;right:2px;z-index:2;flex-wrap:nowrap;background:#111823}
 #mayatnikTemplatePanel[data-tab=sequences] .mtp-sequences textarea{padding-right:106px}

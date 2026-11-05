@@ -4,6 +4,7 @@
   const KEY='mayatnik-template-folders-v1';
   function normalise(value){
     const result={version:1,nodes:[]},seen=new Set();
+    if(Array.isArray(value?.seededGroups))result.seededGroups=[...new Set(value.seededGroups.filter(id=>typeof id==='string'))];
     for(const n of Array.isArray(value?.nodes)?value.nodes:[]){
       if(!n||!['folder','template'].includes(n.kind)||typeof n.id!=='string'||seen.has(n.kind+':'+n.id))continue;
       seen.add(n.kind+':'+n.id);result.nodes.push({kind:n.kind,id:n.id,parent:typeof n.parent==='string'?n.parent:'',...(n.kind==='folder'?{name:String(n.name||'Папка').slice(0,100)}:{})});
@@ -26,6 +27,13 @@
       get persistenceError(){return error;},
       children:parent=>state.nodes.filter(n=>n.parent===(parent||'')).map(n=>({...n})),
       reconcile(ids){const known=new Set(ids.map(String)),present=new Set();state.nodes=state.nodes.filter(n=>n.kind==='folder'||known.has(n.id));for(const n of state.nodes)if(n.kind==='template')present.add(n.id);for(const id of known)if(!present.has(id))state.nodes.push({kind:'template',id,parent:''});save();},
+      // Seeding is a migration, not a permanent constraint on user organisation.
+      seedGroup(id,name,ids){
+        if(!ids.length||state.seededGroups?.includes(id))return false;
+        if(!state.nodes.some(n=>n.kind==='folder'&&n.id===id))state.nodes.push({kind:'folder',id,parent:'',name:String(name)});
+        for(const templateId of new Set(ids.map(String))){const node=state.nodes.find(n=>n.kind==='template'&&n.id===templateId);if(!node)state.nodes.push({kind:'template',id:templateId,parent:id});else if(!node.parent)node.parent=id;}
+        (state.seededGroups||(state.seededGroups=[])).push(id);save();return true;
+      },
       addFolder(name,parent=''){
         name=String(name||'').trim().slice(0,100);if(!name||parent&&!state.nodes.some(n=>n.kind==='folder'&&n.id===parent))return null;
         const id='folder:'+Date.now().toString(36)+':'+Math.random().toString(36).slice(2,10);state.nodes.push({kind:'folder',id,parent,name});save();return id;

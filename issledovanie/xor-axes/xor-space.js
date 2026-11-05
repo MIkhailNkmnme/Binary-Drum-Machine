@@ -61,6 +61,13 @@
   else if(action==='flip'){
    const right=orientation(before.direction,before.roll).right;setting.direction=(before.direction[0]==='+'?'-':'+')+before.direction[1];
    setting.roll=[0,1,2,3].find(roll=>key(orientation(setting.direction,roll).right)===key(right));
+  }else if(/^axis:[XYZ]$/.test(action)){
+   // Positive world-axis quarter turn (right-hand rule), with the grey pivot fixed.
+   const axis='XYZ'.indexOf(action.slice(-1)),normal=[0,0,0];normal[axis]=1;
+   const turn=v=>add(cross(normal,v),scale(normal,v[axis]));
+   const basis=orientation(before.direction,before.roll),down=turn(basis.down),right=turn(basis.right);
+   setting.direction=Object.keys(DIRECTIONS).find(name=>key(DIRECTIONS[name])===key(down));
+   setting.roll=[0,1,2,3].find(roll=>key(orientation(setting.direction,roll).right)===key(right));
   }else if(action==='auto'||DIRECTIONS[action])setting.direction=action;
   const after=buildModel(snapshot,next).figures[id];
   setting.offset=setting.offset.map((v,i)=>v+before.anchor[i]-after.anchor[i]);
@@ -110,11 +117,12 @@
   let symmetry=normalizeSymmetry(options.symmetry);
   if(!options.capture&&!options.symmetry)try{symmetry=normalizeSymmetry(JSON.parse(localStorage.getItem('zerk_xor_space_symmetry')||'null'));}catch(_){}
   let snapshot=initialSnapshot||{},model=buildModel(snapshot,assignments),camera={...DEFAULT_CAMERA,...options.camera},drag=null,destroyed=false,selected=Number.isInteger(options.selected)?options.selected:0;
-  let hitFaces=[],handles=[],view=null,bodyClick=null;
+  let hitFaces=[],handles=[],view=null,bodyClick=null,selectedAxis=null;
   const host=doc.createElement('div');host.className='xor-space';
   host.innerHTML='<div class="xs-heading"><h2>3D / ось Z</h2><div class="xs-actions"><button class="gz-hx xs-reset" type="button" title="Сбросить направления и сдвиги всех четырёх фигур в исходное 2D-состояние" aria-label="Вернуть все фигуры в 2D">< 2D</button><button class="gz-hx xs-camera" type="button" title="Сбросить только положение камеры" aria-label="Сбросить камеру">+ Видъ</button></div></div><p class="xs-explain">Те же четыре фигуры. +Z - к нам, -Z - за экран. Выберите фигуру на поле или кнопкой I-IV, затем тяните её стрелку X, Y или Z. Числа - сдвиг в клетках от положения на основном поле. R меняет плоскость.</p><div class="xs-controls" role="group" aria-label="Направления и сдвиги четырёх фигур"></div><p class="xs-status" role="status"></p><div class="xs-stage"><canvas class="xs-main" role="img" aria-label="Объём четырёх фигур: выберите фигуру, тяните стрелку оси для перемещения; пустое место вращает камеру" tabindex="0"></canvas><span class="xs-camera-note">Стрелка оси - сдвиг / пустое место - камера / колесо - масштаб / Shift + <- -> / ^ v / PageUp PageDown - X / Y / Z</span></div><div class="xs-projections"></div><p class="xs-explain xs-bottom">XOR считается в одинаковых (X, Y, Z). Серые центры вне XOR. Проекции показывают занятые клетки по глубине, без повторного XOR. Режим наложения и рисунки берутся с основного поля.</p>';
   container.appendChild(host);
   host.querySelector('.xs-camera-note').append(' / 2x по фигуре - 90o вокруг своей оси; 2x по крайнему кубику - переворот 180o; ПКМ - +X -> +Y -> +Z -> -X -> -Y -> -Z');
+  host.querySelector('.xs-camera-note').append(' / клик по X, Y или Z - выбрать ось; повторный клик по выбранной оси - поворот 90o');
   const overlapNote=doc.createElement('p');overlapNote.className='xs-explain xs-overlap-note';overlapNote.innerHTML='<span class="xs-collision-key"># XYZ</span> - кубики разных фигур в одном месте, даже если XOR их убрал; <span class="xs-depth-key">o Глубина</span> - кубики на разных глубинах одной клетки проекции. Число в крупной клетке - всего исходных кубиков.';host.querySelector('.xs-projections').after(overlapNote);
   const controls=host.querySelector('.xs-controls'),main=host.querySelector('.xs-main'),status=host.querySelector('.xs-status');
   const symmetryControls=doc.createElement('div');symmetryControls.className='xs-symmetry';symmetryControls.setAttribute('role','group');symmetryControls.setAttribute('aria-label','Общий центр и симметричное перемещение');
@@ -174,9 +182,17 @@
     ctx.strokeStyle=tint;ctx.globalAlpha=.7;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(back[0],back[1]);ctx.lineTo(origin[0],origin[1]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(origin[0],origin[1]);ctx.lineTo(end[0],end[1]);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle=tint;
     ctx.fillText('+'+axis+(axis==='Z'?' к нам':''),end[0]+5,end[1]-5);ctx.fillText('-'+axis+(axis==='Z'?' за экран':''),back[0]+5,back[1]-5);
    }
-   const voxels=model.cells.map(v=>({p:v.p,color:color(v.members),members:v.members,selected:v.members.includes(selected)}));
+   const moving=drag&&drag.kind==='axis'&&drag.figure===selected;
+   const axisHighlight=(p,members)=>{
+    if(!moving||!members.includes(selected)||p.filter(v=>v!==0).length>1)return null;
+    return p.every(v=>v===0)?'#ff4fcb':'#fff36a';
+   };
+   const voxels=model.cells.map(v=>({p:v.p,color:axisHighlight(v.p,v.members)||color(v.members),axisHighlight:axisHighlight(v.p,v.members),members:v.members,selected:v.members.includes(selected)}));
    const uniqueCentres=new Map(model.centres.map(c=>[key(c.p),c]));
-   for(const c of uniqueCentres.values())voxels.push({p:c.p,color:'#858c8c',neutral:true,members:model.centres.filter(other=>key(other.p)===key(c.p)).map(other=>other.id)});
+   for(const c of uniqueCentres.values()){
+    const members=model.centres.filter(other=>key(other.p)===key(c.p)).map(other=>other.id),highlight=axisHighlight(c.p,members);
+    voxels.push({p:c.p,color:highlight||'#858c8c',axisHighlight:highlight,selected:!!moving&&members.includes(selected),neutral:true,members});
+   }
    const occupied=new Set(voxels.map(v=>key(v.p))),faces=[];
    for(const voxel of voxels)for(const face of faceDefs){
     if(cameraPoint(face.n,camera)[2]<=0||occupied.has(key(add(voxel.p,face.n))))continue;
@@ -186,7 +202,11 @@
    faces.sort((a,b)=>a.depth-b.depth);
    hitFaces=faces;
    for(const face of faces){
-    ctx.beginPath();face.vertices.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=face.voxel.color;ctx.fill();ctx.fillStyle='rgba(0,0,0,'+(1-face.shade)+')';ctx.fill();ctx.strokeStyle=face.voxel.selected?'#fff6b0':'#121519';ctx.lineWidth=face.voxel.selected?1.1:.45;ctx.stroke();
+    ctx.beginPath();face.vertices.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=face.voxel.color;ctx.fill();ctx.fillStyle='rgba(0,0,0,'+(1-face.shade)+')';ctx.fill();ctx.strokeStyle=face.voxel.axisHighlight|| (face.voxel.selected?'#fff6b0':'#121519');ctx.lineWidth=face.voxel.axisHighlight?2:face.voxel.selected?1.1:.45;ctx.stroke();
+   }
+   if(moving){
+    // A display-only origin marker remains visible even when XOR leaves it empty.
+    const zero=screen([0,0,0]);ctx.strokeStyle='#131619';ctx.lineWidth=5;ctx.beginPath();ctx.arc(zero[0],zero[1],6,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#ff4fcb';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.moveTo(zero[0]-9,zero[1]);ctx.lineTo(zero[0]+9,zero[1]);ctx.moveTo(zero[0],zero[1]-9);ctx.lineTo(zero[0],zero[1]+9);ctx.stroke();
    }
    drawHandles(ctx,screen,unit,width,height);
   }
@@ -198,14 +218,21 @@
     const ray=symmetry.enabled?DIRECTIONS[symmetry.rays[selected]]:null;if(ray&&!ray[axis])continue;
     const basis=[0,0,0];basis[axis]=ray?ray[axis]:1;const p=screen(add(figure.anchor,basis)),vector=[p[0]-origin[0],p[1]-origin[1]],length=Math.hypot(...vector);
     if(length<unit*.12)continue; // Looking directly down this axis: numeric/keyboard movement stays available.
-    const u=vector.map(v=>v/length),limits=u.map((v,i)=>Math.abs(v)<.001?72:((v>0?(i===0?width:height)-18:18)-origin[i])/v),handleLength=Math.max(24,Math.min(72,...limits));
+    const u=vector.map(v=>v/length);
+    // Project the actual voxel bounds onto this handle's screen direction.
+    // The arrow ends two source cells beyond the figure, at every camera/zoom.
+    let edge=0;
+    for(const cell of [figure.anchor,...figure.cells])for(const dx of [-.5,.5])for(const dy of [-.5,.5])for(const dz of [-.5,.5]){
+     const corner=screen(add(cell,[dx,dy,dz]));edge=Math.max(edge,(corner[0]-origin[0])*u[0]+(corner[1]-origin[1])*u[1]);
+    }
+    const handleLength=edge+2*length;
     const end=[origin[0]+u[0]*handleLength,origin[1]+u[1]*handleLength];
     handles.push({axis,origin:origin.slice(0,2),end,vector,symmetric:!!ray});
     ctx.strokeStyle='#131619';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(origin[0],origin[1]);ctx.lineTo(...end);ctx.stroke();
-    ctx.strokeStyle=AXIS_COLORS[axis];ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=AXIS_COLORS[axis];ctx.beginPath();ctx.moveTo(...end);ctx.lineTo(end[0]-u[0]*11-u[1]*5,end[1]-u[1]*11+u[0]*5);ctx.lineTo(end[0]-u[0]*11+u[1]*5,end[1]-u[1]*11-u[0]*5);ctx.closePath();ctx.fill();ctx.fillText(ray?'R':'XYZ'[axis],end[0]+u[0]*12-4,end[1]+u[1]*12+4);
+    ctx.strokeStyle=AXIS_COLORS[axis];ctx.lineWidth=selectedAxis&&selectedAxis.figure===selected&&selectedAxis.axis===axis?3:2;ctx.stroke();ctx.fillStyle=AXIS_COLORS[axis];ctx.beginPath();ctx.moveTo(...end);ctx.lineTo(end[0]-u[0]*11-u[1]*5,end[1]-u[1]*11+u[0]*5);ctx.lineTo(end[0]-u[0]*11+u[1]*5,end[1]-u[1]*11-u[0]*5);ctx.closePath();ctx.fill();ctx.fillText(ray?'R':'XYZ'[axis],end[0]+u[0]*12-4,end[1]+u[1]*12+4);
    }
   }
-  function choose(id){selected=id;refresh(false);}
+  function choose(id){selectedAxis=null;selected=id;refresh(false);}
   function reorient(id,action){selected=id;assignments=orientFigure(snapshot,assignments,id,action);bodyClick=null;refresh(true,'orientation');}
   function pointInFace(p,vertices){let inside=false;for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){const a=vertices[i],b=vertices[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])inside=!inside;}return inside;}
   function hitHandle(p){
@@ -256,9 +283,10 @@
    const repeat=bodyClick&&hit&&bodyClick.id===hit.id&&e.timeStamp-bodyClick.time<600&&Math.hypot(p[0]-bodyClick.point[0],p[1]-bodyClick.point[1])<6;
    if(hit&&(!h||repeat)){bodyClick={id:hit.id,point:p,time:e.timeStamp};choose(hit.id);return;}
    bodyClick=null;
-   if(h)drag={kind:'axis',id:e.pointerId,x:e.clientX,y:e.clientY,figure:selected,axis:h.axis,vector:h.vector.slice(),offset:assignments[selected].offset.slice(),unit:view.unit,symmetric:h.symmetric,distance:symmetry.distance};
-   else drag={kind:'camera',id:e.pointerId,x:e.clientX,y:e.clientY};
+   if(h)drag={kind:'axis',id:e.pointerId,x:e.clientX,y:e.clientY,figure:selected,axis:h.axis,vector:h.vector.slice(),offset:assignments[selected].offset.slice(),unit:view.unit,symmetric:h.symmetric,distance:symmetry.distance,moved:false,repeat:!!selectedAxis&&selectedAxis.figure===selected&&selectedAxis.axis===h.axis};
+   else{selectedAxis=null;drag={kind:'camera',id:e.pointerId,x:e.clientX,y:e.clientY};}
    main.setPointerCapture(e.pointerId);main.classList.add('xs-dragging');
+   if(h)draw();
   });
   main.addEventListener('dblclick',e=>{
    if(e.button!==0||drag||!bodyClick)return;const p=local(e),hit=hitVoxel(p);
@@ -268,10 +296,17 @@
   main.addEventListener('contextmenu',e=>{e.preventDefault();if(drag)return;const hit=hitVoxel(local(e));if(hit)reorient(hit.id,'cycle');});
   main.addEventListener('pointermove',e=>{
    if(!drag){const p=local(e);main.style.cursor=hitHandle(p)?'move':hitFigure(p)!==null?'pointer':'';return;}if(drag.id!==e.pointerId)return;
-   if(drag.kind==='axis'){const delta=axisDragSteps([e.clientX-drag.x,e.clientY-drag.y],drag.vector);if(drag.symmetric){const next=Math.max(0,drag.distance+delta);if(next!==symmetry.distance)setDistance(next,false);}else{const next=drag.offset[drag.axis]+delta;if(next!==assignments[drag.figure].offset[drag.axis]){assignments[drag.figure].offset[drag.axis]=next;refresh(false);}}return;}
+   if(drag.kind==='axis'){const delta=axisDragSteps([e.clientX-drag.x,e.clientY-drag.y],drag.vector);if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>4||delta!==0){drag.moved=true;selectedAxis=null;}if(drag.symmetric){const next=Math.max(0,drag.distance+delta);if(next!==symmetry.distance)setDistance(next,false);}else{const next=drag.offset[drag.axis]+delta;if(next!==assignments[drag.figure].offset[drag.axis]){assignments[drag.figure].offset[drag.axis]=next;refresh(false);}}return;}
    camera.yaw+=(e.clientX-drag.x)*.009;camera.pitch=Math.max(-1.5,Math.min(1.5,camera.pitch+(e.clientY-drag.y)*.009));drag.x=e.clientX;drag.y=e.clientY;draw();
   });
-  const endDrag=e=>{if(!drag||e&&e.pointerId!==drag.id)return;const moved=drag.kind==='axis';drag=null;main.classList.remove('xs-dragging');if(moved)refresh(true);};
+  const endDrag=e=>{
+   if(!drag||e&&e.pointerId!==drag.id)return;const ended=drag;drag=null;main.classList.remove('xs-dragging');
+   if(ended.kind!=='axis')return;
+   const tap=e&&e.type==='pointerup'&&!ended.moved&&Math.hypot(e.clientX-ended.x,e.clientY-ended.y)<=4;
+   if(tap){selectedAxis={figure:ended.figure,axis:ended.axis};if(ended.repeat){reorient(ended.figure,'axis:'+'XYZ'[ended.axis]);return;}}
+   else selectedAxis=null;
+   refresh(true);
+  };
   main.addEventListener('pointerup',endDrag);main.addEventListener('pointercancel',endDrag);main.addEventListener('lostpointercapture',endDrag);
   main.addEventListener('wheel',e=>{e.preventDefault();if(drag)return;camera.zoom=Math.max(.25,Math.min(4,camera.zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});
   main.addEventListener('keydown',e=>{
