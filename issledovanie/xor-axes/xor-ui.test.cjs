@@ -110,6 +110,10 @@ test('field search finds 0/1 sequences along axes and through loops',async()=>{
  assert(axes.cells>0);
  assert.match(axes.info,/Найдено/);
  assert.equal(axes.pressed,'true');
+ const yellow=await page.evaluate(()=>({chips:document.querySelectorAll('#searchPatternHits .search-pattern').length,found:document.querySelectorAll('#searchPatternHits .search-pattern.found').length,bg:getComputedStyle(document.querySelector('#searchPatternHits .search-pattern.found')).backgroundColor}));
+ assert(yellow.chips>0);
+ assert(yellow.found>0);
+ assert.equal(yellow.bg,'rgb(255, 225, 77)');
  await page.locator('#searchLoops').click();
  await page.waitForTimeout(200);
  const loops=await page.evaluate(()=>({cells:document.querySelectorAll('#searchBits .search-cell').length,info:document.getElementById('searchInfo').textContent,pressed:document.getElementById('searchLoops').getAttribute('aria-pressed')}));
@@ -118,6 +122,7 @@ test('field search finds 0/1 sequences along axes and through loops',async()=>{
  assert.equal(loops.pressed,'true');
  await page.locator('#searchClear').click();
  assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchBits .search-cell').length),0);
+ assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchPatternHits .search-pattern.found').length),0);
 });
 
 test('random playback is a default-on toggle with a remaining count',async()=>{
@@ -216,6 +221,8 @@ test('search accepts pasted lines and a dropped file, scans every frame and list
  assert.equal(scan.hidden,false);
  assert.match(scan.info,/Готово/);
  assert.match(scan.title,/Найденные кадры: \d+/);
+ const scanYellow=await page.evaluate(()=>({found:[...document.querySelectorAll('#searchPatternHits .search-pattern.found')].map(span=>span.textContent)}));
+ assert.deepEqual(scanYellow.found.slice().sort(),['1','11'].sort());
  await page.locator('#searchFound .found-chip').first().click();
  await page.waitForTimeout(150);
  const jumped=await page.evaluate(()=>({variant:state.variant,frame:document.getElementById('frame').value,highlight:document.querySelectorAll('#searchBits .search-cell').length}));
@@ -232,6 +239,7 @@ test('search accepts pasted lines and a dropped file, scans every frame and list
   await new Promise(resolve=>setTimeout(resolve,300));
  });
  assert.equal(await page.locator('#searchPattern').inputValue(),'101\n001');
+ assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchPatternHits .search-pattern.found').length),0);
 });
 
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
