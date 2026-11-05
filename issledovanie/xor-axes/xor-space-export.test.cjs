@@ -14,7 +14,7 @@ test('GIF quantization preserves exact small palettes and reduces shaded RGB ras
 test('actual 3D GIF + WebM decode every chosen frame and all three projections; cancel restores controls',async()=>{
  const {chromium}=require('playwright-core'),root=path.resolve(__dirname,'../..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'xor-3d-export-'));
  const server=http.createServer((req,res)=>{const file=path.join(root,decodeURIComponent(new URL(req.url,'http://localhost').pathname));fs.readFile(file,(e,data)=>{if(e)return res.writeHead(404).end();res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(data);});});await new Promise(r=>server.listen(0,'127.0.0.1',r));
- const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+ const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--disable-gpu']});
  try{
   const page=await browser.newPage({viewport:{width:1000,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/issledovanie/xor-axes/index.html');
   await page.evaluate(()=>{xorSpacePlayer.pause();});
@@ -32,7 +32,7 @@ test('actual 3D GIF + WebM decode every chosen frame and all three projections; 
   for(const file of exports.files){
    const target=path.join(temp,'actual-'+file.kind+'.'+file.extension),raw=path.join(temp,file.kind+'.rgba');fs.writeFileSync(target,Buffer.from(file.base64,'base64'));
    const probe=JSON.parse(execFileSync(ffprobe,['-v','error','-count_frames','-show_streams','-show_format','-of','json',target],{encoding:'utf8'}));
-   assert.equal(probe.streams[0].width,exports.width);assert.equal(probe.streams[0].height,exports.height);assert.equal(Number(probe.streams[0].nb_read_frames),exports.count);if(file.kind!=='fallback')assert.ok(Math.abs(Number(probe.format.duration)-exports.count/exports.rate)<.03,JSON.stringify(probe.format));
+   assert.equal(probe.streams[0].width,exports.width);assert.equal(probe.streams[0].height,exports.height);assert.equal(Number(probe.streams[0].nb_read_frames),exports.count,file.kind+' frames');if(file.kind!=='fallback')assert.ok(Math.abs(Number(probe.format.duration)-exports.count/exports.rate)<.03,JSON.stringify(probe.format));
    execFileSync(ffmpeg,['-v','error','-i',target,'-fps_mode','passthrough','-f','rawvideo','-pix_fmt','rgba',raw]);const actual=fs.readFileSync(raw);assert.equal(actual.length,expected.length);
    const metrics=[];for(let frame=0;frame<exports.count;frame++)for(const part of exports.parts){let error=0,n=0,detail=0;for(let y=part.y;y<part.y+part.height;y++)for(let x=part.x;x<part.x+part.width;x++){const at=frame*frameSize+(y*exports.width+x)*4;for(let c=0;c<3;c++){error+=Math.abs(actual[at+c]-expected[at+c]);n++;}if(expected[at]>90||expected[at+1]>90||expected[at+2]>90)detail++;}assert.ok(detail>30,file.kind+' '+part.name+' must contain visible geometry');metrics.push({frame,part:part.name,meanError:error/n});assert.ok(error/n<(file.kind==='gif'?5:9),file.kind+JSON.stringify(metrics.at(-1)));}
    if(file.kind==='gif')for(let f=0;f<exports.count;f++){const colours=new Set();for(let at=f*frameSize;at<(f+1)*frameSize;at+=4)colours.add(actual.readUIntBE(at,3));assert.ok(colours.size<=256);}

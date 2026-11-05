@@ -26,9 +26,10 @@ before(async()=>{
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server.close(resolve));assert.deepEqual(errors,[]);});
 
-test('only the thin AzBuk face is delivered and every text style stays thin',async()=>{
+test('only the thin AzBuk faces are delivered and every text style stays thin',async()=>{
  const fonts=await page.evaluate(()=>({
   thin:document.fonts.check('16px "AzBuk Thin"'),
+  mono:document.fonts.check('12px "AzBuk Mono"'),
   faces:[...document.fonts].filter(f=>f.family.startsWith('AzBuk')).map(f=>f.family+':'+f.status),
   body:getComputedStyle(document.body).fontFamily,
   heading:getComputedStyle(document.querySelector('h1')).fontFamily,
@@ -38,7 +39,8 @@ test('only the thin AzBuk face is delivered and every text style stays thin',asy
   headWeight:getComputedStyle(document.querySelector('.xs-variant-explanation th')).fontWeight
  }));
  assert.equal(fonts.thin,true);
- assert.deepEqual(fonts.faces,['AzBuk Thin:loaded']);
+ assert.equal(fonts.mono,true);
+ assert.deepEqual(fonts.faces,['AzBuk Thin:loaded','AzBuk Mono:loaded']);
  assert.match(fonts.body,/AzBuk Thin/);
  assert.match(fonts.heading,/AzBuk Thin/);
  assert.match(fonts.icon,/AzBuk Thin/);
@@ -110,22 +112,11 @@ test('field search finds 0/1 sequences along axes and through loops',async()=>{
  assert(axes.cells>0);
  assert.match(axes.info,/Найдено/);
  assert.equal(axes.pressed,'true');
- const yellow=await page.evaluate(()=>({chips:document.querySelectorAll('#searchPatternHits .search-pattern').length,found:document.querySelectorAll('#searchPatternHits .search-pattern.found').length,bg:getComputedStyle(document.querySelector('#searchPatternHits .search-pattern.found')).backgroundColor}));
- assert(yellow.chips>0);
- assert(yellow.found>0);
- assert.equal(yellow.bg,'rgb(255, 225, 77)');
- const chip=page.locator('#searchPatternHits .search-pattern.found').first();
- await chip.click();
- await page.waitForTimeout(150);
- const firstFind=await page.evaluate(()=>({cells:[...document.querySelectorAll('#searchBits .search-cell')].map(rect=>rect.getAttribute('x')+','+rect.getAttribute('y')),info:document.getElementById('searchInfo').textContent,selected:document.querySelector('#searchPatternHits .search-pattern.selected')?.textContent}));
- assert.equal(firstFind.cells.length,1,'one find of the selected line');
- assert.match(firstFind.info,/находка 1 \//);
- assert.equal(firstFind.selected,'1');
- await chip.click();
- await page.waitForTimeout(150);
- const nextFind=await page.evaluate(()=>({cells:[...document.querySelectorAll('#searchBits .search-cell')].map(rect=>rect.getAttribute('x')+','+rect.getAttribute('y')),info:document.getElementById('searchInfo').textContent}));
- assert.match(nextFind.info,/находка 2 \//);
- assert.notDeepEqual(nextFind.cells,firstFind.cells,'the next click cycles to another find');
+ const inline=await page.evaluate(()=>({lines:document.querySelectorAll('#searchHighlight .line').length,found:[...document.querySelectorAll('#searchHighlight .line.found')].map(span=>span.textContent),bg:getComputedStyle(document.querySelector('#searchHighlight .line.found')).backgroundColor,chips:document.querySelectorAll('#searchPatternHits').length}));
+ assert.equal(inline.lines,1);
+ assert.deepEqual(inline.found,['1']);
+ assert.equal(inline.bg,'rgb(255, 225, 77)');
+ assert.equal(inline.chips,0,'the found line is not duplicated below the input');
  await page.locator('#searchLoops').click();
  await page.waitForTimeout(200);
  const loops=await page.evaluate(()=>({cells:document.querySelectorAll('#searchBits .search-cell').length,info:document.getElementById('searchInfo').textContent,pressed:document.getElementById('searchLoops').getAttribute('aria-pressed')}));
@@ -134,7 +125,20 @@ test('field search finds 0/1 sequences along axes and through loops',async()=>{
  assert.equal(loops.pressed,'true');
  await page.locator('#searchClear').click();
  assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchBits .search-cell').length),0);
- assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchPatternHits .search-pattern.found').length),0);
+ assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchHighlight .line.found').length),0);
+});
+
+test('the search input uses the monospaced AzBuk font',async()=>{
+ const mono=await page.evaluate(async()=>{
+  await document.fonts.ready;
+  const ctx=document.createElement('canvas').getContext('2d');
+  ctx.font='12px "AzBuk Mono"';
+  return {loaded:document.fonts.check('12px "AzBuk Mono"'),family:getComputedStyle(document.getElementById('searchPattern')).fontFamily,w0:ctx.measureText('0').width,w1:ctx.measureText('1').width,w00:ctx.measureText('00').width,w11:ctx.measureText('11').width};
+ });
+ assert.equal(mono.loaded,true);
+ assert.match(mono.family,/AzBuk Mono/);
+ assert.equal(mono.w0,mono.w1,'the 0 and 1 glyphs have the same advance');
+ assert.equal(mono.w00,mono.w11,'two-character 0/1 runs have the same width');
 });
 
 test('random playback is a default-on toggle with a remaining count',async()=>{
@@ -233,7 +237,7 @@ test('search accepts pasted lines and a dropped file, scans every frame and list
  assert.equal(scan.hidden,false);
  assert.match(scan.info,/Готово/);
  assert.match(scan.title,/Найденные кадры: \d+/);
- const scanYellow=await page.evaluate(()=>({found:[...document.querySelectorAll('#searchPatternHits .search-pattern.found')].map(span=>span.textContent)}));
+ const scanYellow=await page.evaluate(()=>({found:[...document.querySelectorAll('#searchHighlight .line.found')].map(span=>span.textContent)}));
  assert.deepEqual(scanYellow.found.slice().sort(),['1','11'].sort());
  await page.locator('#searchFound .found-chip').first().click();
  await page.waitForTimeout(150);
@@ -251,7 +255,27 @@ test('search accepts pasted lines and a dropped file, scans every frame and list
   await new Promise(resolve=>setTimeout(resolve,300));
  });
  assert.equal(await page.locator('#searchPattern').inputValue(),'101\n001');
- assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchPatternHits .search-pattern.found').length),0);
+ assert.equal(await page.evaluate(()=>document.querySelectorAll('#searchHighlight .line.found').length),0);
+});
+
+test('the search text, found lines and found frames survive a reload',async()=>{
+ await page.evaluate(()=>{if(animation)stopFilm();state.variant=0;state.radius=0;state.selected=null;state.mode='xor';state.offsets=Array.from({length:4},()=>({x:0,y:0}));render();});
+ await page.locator('#searchPattern').fill('1\n11');
+ await page.locator('#searchAll').click();
+ await page.waitForFunction(()=>!document.getElementById('searchAll').disabled&&document.getElementById('searchInfo').textContent.includes('Готово'),null,{timeout:120000});
+ const before=await page.evaluate(()=>({frames:document.querySelectorAll('#searchFound .found-chip').length,lines:document.querySelectorAll('#searchHighlight .line.found').length}));
+ assert(before.frames>0);
+ assert(before.lines>0);
+ await page.reload();
+ await page.waitForTimeout(800);
+ const after=await page.evaluate(()=>({value:document.getElementById('searchPattern').value,lines:document.querySelectorAll('#searchHighlight .line.found').length,frames:document.querySelectorAll('#searchFound .found-chip').length,info:document.getElementById('searchInfo').textContent}));
+ assert.equal(after.value,'1\n11');
+ assert.equal(after.lines,before.lines);
+ assert.equal(after.frames,before.frames);
+ assert.match(after.info,/Восстановлено/);
+ await page.evaluate(()=>{localStorage.removeItem('xor_axes_search_v1');});
+ await page.reload();
+ await page.waitForTimeout(600);
 });
 
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
