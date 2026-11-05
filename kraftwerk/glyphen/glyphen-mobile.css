@@ -89,3 +89,5 @@ main button{white-space:nowrap}
 
 .field-touch-target{fill:transparent;stroke:none;pointer-events:none}.mobile-gesture-note{display:none}
 @media(any-pointer:coarse){#field{touch-action:pan-y pinch-zoom}#field.mask-editing{touch-action:pinch-zoom}.field-touch-target{pointer-events:all;touch-action:pinch-zoom}.mobile-gesture-note{display:block}}
+
+#fitFieldTop{--compact-w:64px!important;flex:0 0 64px}.caption #fieldLabel,.caption #count{white-space:nowrap}
