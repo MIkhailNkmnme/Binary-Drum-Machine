@@ -201,6 +201,39 @@ test('the shift button plays all 6144 with a uniform centre shift',async()=>{
  await page.evaluate(()=>{state.radiusAuto=false;render();});
 });
 
+test('search accepts pasted lines and a dropped file, scans every frame and lists the found ones',async()=>{
+ await page.evaluate(()=>{if(animation)stopFilm();state.variant=0;state.radius=0;state.selected=null;state.mode='xor';state.offsets=Array.from({length:4},()=>({x:0,y:0}));render();});
+ await page.locator('#searchPattern').fill('1\n11');
+ await page.locator('#searchRun').click();
+ await page.waitForTimeout(150);
+ const current=await page.evaluate(()=>({cells:document.querySelectorAll('#searchBits .search-cell').length,info:document.getElementById('searchInfo').textContent}));
+ assert(current.cells>0);
+ assert.match(current.info,/Найдено/);
+ await page.locator('#searchAll').click();
+ await page.waitForFunction(()=>!document.getElementById('searchAll').disabled&&document.getElementById('searchInfo').textContent.includes('Готово'),null,{timeout:120000});
+ const scan=await page.evaluate(()=>({chips:document.querySelectorAll('#searchFound .found-chip').length,hidden:document.getElementById('searchFound').hidden,info:document.getElementById('searchInfo').textContent,title:document.getElementById('foundTitle').textContent,first:document.querySelector('#searchFound .found-chip')?.textContent}));
+ assert(scan.chips>100);
+ assert.equal(scan.hidden,false);
+ assert.match(scan.info,/Готово/);
+ assert.match(scan.title,/Найденные кадры: \d+/);
+ await page.locator('#searchFound .found-chip').first().click();
+ await page.waitForTimeout(150);
+ const jumped=await page.evaluate(()=>({variant:state.variant,frame:document.getElementById('frame').value,highlight:document.querySelectorAll('#searchBits .search-cell').length}));
+ assert.equal(jumped.variant,Number(scan.first)-1);
+ assert(jumped.highlight>0);
+ await page.locator('#searchFoundClear').click();
+ const cleared=await page.evaluate(()=>({chips:document.querySelectorAll('#searchFound .found-chip').length,hidden:document.getElementById('searchFound').hidden}));
+ assert.equal(cleared.chips,0);
+ assert.equal(cleared.hidden,true);
+ await page.evaluate(async()=>{
+  const transfer=new DataTransfer();
+  transfer.items.add(new File(['101\n001'],'bits.txt',{type:'text/plain'}));
+  document.getElementById('searchPattern').dispatchEvent(new DragEvent('drop',{dataTransfer:transfer,bubbles:true}));
+  await new Promise(resolve=>setTimeout(resolve,300));
+ });
+ assert.equal(await page.locator('#searchPattern').inputValue(),'101\n001');
+});
+
 test('the glyph face reaches the 3D controls and canvas too',async()=>{
  const state=await page.evaluate(()=>({
   select:getComputedStyle(document.querySelector('.xs-figure select')).fontFamily,

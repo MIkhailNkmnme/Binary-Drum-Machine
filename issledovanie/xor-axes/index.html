@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#181614">
-<title>Оси XOR / опыт 01 / v0.037</title>
+<title>Оси XOR / опыт 01 / v0.038</title>
 <link rel="preload" href="fonts/xor-azbuk-thin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:"AzBuk Thin";src:url("fonts/xor-azbuk-thin.woff2") format("woff2");font-weight:400;font-display:block}
@@ -74,10 +74,16 @@ b,strong{font-weight:400}summary{font-weight:400}
 #fieldBg{fill:var(--field-bg)}#bits{fill:var(--bit)}#ghostBits{fill:var(--ghost)}#pivotBits{fill:var(--pivot)}#symAxes{stroke:var(--axes)}.grid{stroke:var(--axes)}
 .tile svg>rect{fill:var(--field-bg)}.tile .x-live{fill:var(--bit)}.tile .x-ghost{fill:var(--ghost)}.tile .x-pivot{fill:var(--pivot)}
 .color-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:4px}.color-grid label{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;color:var(--mut)}.color-grid input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);border-radius:0;background:none;cursor:pointer}
-.search-field{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
-.search-field label{font-size:11px;color:var(--mut)}
-.search-field input{flex:1 1 120px;min-width:0;height:26px;padding:0 8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:12px/1.4 var(--font);border-radius:0}
+.search-field{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;margin-bottom:4px}
+.search-field textarea{flex:1 1 100%;min-height:56px;resize:vertical;padding:6px 8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:12px/1.4 var(--font);border-radius:0}
+.search-field textarea.drag{outline:2px dashed var(--red);outline-offset:-3px}
+.search-actions{display:flex;gap:6px;flex-wrap:wrap}
 .search-field button{min-height:26px;height:26px;padding:0 10px}
+.found-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:11px;color:var(--mut)}
+.found-head button{min-height:26px;height:26px;padding:0 8px;color:var(--ink);background:var(--btn);border:1px solid var(--line);cursor:pointer;font:inherit}
+.found-list{display:flex;flex-wrap:wrap;gap:4px;max-height:150px;overflow:auto;margin-top:4px}
+.found-list button{min-height:22px;height:22px;padding:0 5px;font-size:11px;border:1px solid var(--line);background:var(--btn);color:var(--ink);cursor:pointer}
+.found-list button:hover{background:var(--btn-hover)}
 .search-cell{fill:#ffe14d;fill-opacity:.42;stroke:#ffe14d;stroke-width:.08;pointer-events:none}
 .random-left{color:var(--mut);font-size:11px;margin-left:8px}
 .playback-row{margin-top:6px}
@@ -88,7 +94,7 @@ b,strong{font-weight:400}summary{font-weight:400}
 <link rel="stylesheet" href="xor-space-export.css?v=019">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="figOutline" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/></filter><filter id="fig3d" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/><feDropShadow dx=".28" dy=".28" stdDeviation="0" flood-color="#2b2d34"/></filter></defs></svg>
 <main>
-<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.037">v0.037</small></div></header>
+<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Оси <b>XOR</b></h1><small class="version" aria-label="Версия 0.038">v0.038</small></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span id="fieldLabel">Поле / 29 x 29</span><span id="count"></span></figcaption>
 <div class="field-scroll"><svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 x 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect id="fieldBg" width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="pivotBits" fill="#717777" pointer-events="none"/><g id="digitBits" aria-hidden="true" pointer-events="none"></g><g id="searchBits" aria-hidden="true" pointer-events="none"></g></svg></div>
@@ -111,7 +117,7 @@ b,strong{font-weight:400}summary{font-weight:400}
 <p class="hint">Выберите фигуру под полем. Повторный щелчок по миниатюре, пустое поле, ПКМ или Escape снимают выделение. «Перебор» работает со всеми фигурами. «Крест 90o» соединяет серые центры, расставляет фигуры по четырём направлениям и вращает всю расстановку вместе.</p></section>
 <section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">3</span><span class="x-bracket">]</span></div><input id="radius" type="range" min="-7" max="7" value="0" aria-valuetext="0 клеток от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">&gt;</button></div><div class="group role radius-switch" id="radiusSwitch" hidden><button type="button" data-radius="manual" aria-pressed="true">Вручную</button><button type="button" data-radius="auto" aria-pressed="false">Авто</button></div><p class="hint">В «256 без повторов», «Все 24 креста» и в переборе всех 6144 расстояние можно вести вручную ползунком или включить «Авто» — оно пройдёт весь диапазон за цикл; кнопка «Сдвиг» запускает перебор всех 6144 сразу с авто-сдвигом. При нуле верхние серые клетки всех четырёх фигур соединены в общем центре. Каждая фигура поворачивается вокруг своей серой клетки. Положительные значения уводят их по лучам ^ -> v <-, отрицательные - на противоположные.</p></section>
 <section><h2>Наложение</h2><div class="group"><button id="xor">XOR</button><button id="union"><span class="ico">+</span>Вместе</button><button id="solo"><span class="ico">1</span>Одна</button></div><p id="rule" class="hint"></p></section>
-<section><h2>Поиск</h2><div class="search-field"><label for="searchPattern">0/1</label><input id="searchPattern" type="text" value="101" autocomplete="off" spellcheck="false" placeholder="например 1011"><button id="searchRun" type="button">Искать</button><button id="searchClear" type="button">Сброс</button></div><div class="group role"><button id="searchAxes" type="button" aria-pressed="true">Оси</button><button id="searchLoops" type="button" aria-pressed="false">Сквозные</button></div><p class="hint" id="searchInfo">0/1 по строкам, столбцам и диагоналям; «Сквозные» замыкает линии.</p></section>
+<section><h2>Поиск</h2><div class="search-field" id="searchField"><textarea id="searchPattern" rows="3" spellcheck="false" autocomplete="off" placeholder="0/1-строки; вставьте текст или перетащите .txt">101</textarea><div class="search-actions"><button id="searchRun" type="button">Искать</button><button id="searchAll" type="button">Все кадры</button><button id="searchClear" type="button">Сброс</button></div></div><div class="group role"><button id="searchAxes" type="button" aria-pressed="true">Оси</button><button id="searchLoops" type="button" aria-pressed="false">Сквозные</button></div><p class="hint" id="searchInfo">0/1-строки; «Оси» — строки, столбцы и диагонали, «Сквозные» — кольца. «Все кадры» ищет на каждой из 6144 раскладок.</p><div class="found-head"><span id="foundTitle">Найденные кадры</span><button id="searchFoundClear" type="button">Сброс найденных</button></div><div class="found-list" id="searchFound" hidden></div></section>
 <section><h2>Цифры</h2><div class="bar"><label for="digitSize">Размер</label><small><output id="digitSizeNow">0,70</output></small></div><div class="slider-row"><button class="step" id="digitSizeDown" type="button" aria-label="Уменьшить размер цифр" aria-controls="digitSize">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">0,70</span><span class="x-bracket">]</span></div><input id="digitSize" type="range" min="0.4" max="1.2" step="0.05" value="0.7" aria-valuetext="Размер цифр 0,70 клетки"></div><button class="step" id="digitSizeUp" type="button" aria-label="Увеличить размер цифр" aria-controls="digitSize">&gt;</button></div><p class="hint">1 и 0 появляются только в клетках результата XOR; пустые клетки остаются без цифр, серые центры тоже.</p></section>
 <section><h2>Поле</h2><div class="bar"><span class="field-label">Сторона</span><small>клеток</small></div><div class="group role" id="fieldSize"><button type="button" data-field-size="29" aria-pressed="true">29</button><button type="button" data-field-size="41" aria-pressed="false">41</button><button type="button" data-field-size="49" aria-pressed="false">49</button></div><p class="hint">29 — компактное поле под общий центр; 41 и 49 — фигуры не выходят за край при сдвиге ±7.</p><div class="bar"><label for="cellSize">Ячейка</label><small><output id="cellSizeNow">20 px</output></small></div><div class="slider-row"><button class="step" id="cellSizeDown" type="button" aria-label="Уменьшить ячейку" aria-controls="cellSize">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">20 px</span><span class="x-bracket">]</span></div><input id="cellSize" type="range" min="4" max="48" step="1" value="20" aria-valuetext="Размер ячейки 20 пикселей"></div><button class="step" id="cellSizeUp" type="button" aria-label="Увеличить ячейку" aria-controls="cellSize">&gt;</button></div><div class="group role"><button id="cellAuto" type="button" aria-pressed="true">По ширине</button></div><p class="hint">Размер одной клетки поля в пикселях. «По ширине» подгоняет поле под колонку, иначе поле прокручивается вбок.</p></section>
 <section><h2>Цвета</h2><div class="color-grid"><label>фон поля<input type="color" id="colorFieldBg" value="#fd0000" aria-label="Цвет фона поля"></label><label>клетка 1<input type="color" id="colorBit" value="#000000" aria-label="Цвет клетки 1"></label><label>цифра 1<input type="color" id="colorDigitOne" value="#f4f0e8" aria-label="Цвет цифры 1"></label><label>цифра 0<input type="color" id="colorDigitZero" value="#000000" aria-label="Цвет цифры 0"></label><label>силуэт<input type="color" id="colorGhost" value="#7c3aed" aria-label="Цвет силуэта"></label><label>центры<input type="color" id="colorPivot" value="#717777" aria-label="Цвет серых центров"></label><label>оси и сетка<input type="color" id="colorAxes" value="#f4f0e8" aria-label="Цвет осей и сетки"></label></div><div class="group role"><button id="resetColors" type="button">Сбросить цвета</button></div><p class="hint">Цвета действуют на поле, миниатюры, GIF и видео.</p></section>
@@ -127,7 +133,7 @@ b,strong{font-weight:400}summary{font-weight:400}
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Загрузите MP3: покажу длительность, число кадров и кадров в секунду.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать<span class="ico r">MP4</span></button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF / 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> / <a href="xor.gif">С XOR</a> / <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.037</small></footer></main>
+</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.038</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script>
 'use strict';
@@ -1118,11 +1124,11 @@ $('makeVideo').onclick=async()=>{
  }
 };
 
-// --- search 0/1 sequences over the current 29x29 field -------------------
+// --- search 0/1 lines over the current field and over every frame --------
 var searchActive=false,searchStateKey='';
 let searchMode='axes';
-const SEARCH_HINT='0/1 по строкам, столбцам и диагоналям; «Сквозные» замыкает линии.';
-function fieldSearchKey(){return JSON.stringify([state.variant,state.radius,state.radiusAuto,state.selected,state.mode,state.offsets,state.topCells]);}
+const SEARCH_HINT='0/1-строки: вставьте текст или перетащите .txt; «Оси» — строки, столбцы и диагонали, «Сквозные» — кольца. «Все кадры» ищет на каждой из 6144 раскладок и отмечает найденные.';
+function fieldSearchKey(){return JSON.stringify([state.variant,state.radius,state.radiusAuto,state.selected,state.mode,state.offsets,state.topCells,size]);}
 function fieldSearchBits(){
  const radius=displayRadius();
  const cells=fieldCells(state.variant,radius,state.selected,state.mode,state.offsets,points,state.topCells);
@@ -1148,10 +1154,10 @@ function searchSegments(line,bits,loops){
  if(runs.length>1&&bits[line[0]]>=0&&bits[line[line.length-1]]>=0)return [runs[runs.length-1].concat(runs[0]),...runs.slice(1,-1)];
  return runs;
 }
-function searchFieldMatches(patterns){
- const bits=fieldSearchBits(),lines=fieldSearchLines(),cells=new Set();let occurrences=0;
+function searchBitsMatches(bits,patterns){
+ const lines=fieldSearchLines(),cells=new Set();let occurrences=0;
  for(const pattern of patterns){
-  const nums=Array.from(pattern,ch=>Number(ch)),L=Array.from(pattern).length;
+  const nums=Array.from(pattern,ch=>Number(ch)),L=nums.length;
   for(const line of lines){
    for(const segment of searchSegments(line,bits,searchMode==='loops')){
     const n=segment.length;if(!n||L>n)continue;
@@ -1169,15 +1175,24 @@ function searchFieldMatches(patterns){
  }
  return {occurrences,cells};
 }
+function searchFieldMatches(patterns){return searchBitsMatches(fieldSearchBits(),patterns);}
+function parseSearchPatterns(){
+ const raw=$('searchPattern').value,out=[];
+ for(const line of raw.split(/\r?\n/)){
+  const text=line.trim();if(!text)continue;
+  if(/^[01]+$/.test(text))out.push(text);
+  else for(const token of text.split(/[\s,;]+/))if(/^[01]+$/.test(token))out.push(token);
+ }
+ return [...new Set(out)];
+}
 function clearFieldSearch(){
  searchActive=false;searchStateKey='';
  const layer=$('searchBits');if(layer)layer.innerHTML='';
  const info=$('searchInfo');if(info)info.textContent=SEARCH_HINT;
 }
 function runFieldSearch(){
- const raw=$('searchPattern').value.trim();
- const patterns=raw.split(/[\s,;]+/).filter(p=>/^[01]+$/.test(p));
- if(!patterns.length){$('searchInfo').textContent='Введите 0 и 1 (можно несколько через пробел).';return;}
+ const patterns=parseSearchPatterns();
+ if(!patterns.length){$('searchInfo').textContent='Вставьте 0/1-строки или перетащите .txt.';return;}
  const {occurrences,cells}=searchFieldMatches(patterns);
  const layer=$('searchBits');layer.innerHTML='';
  for(const q of cells){
@@ -1195,11 +1210,63 @@ function setSearchMode(mode){
  $('searchLoops').setAttribute('aria-pressed',String(mode==='loops'));
  if(searchActive)runFieldSearch();
 }
+function clearFoundFrames(){
+ const list=$('searchFound');if(list){list.innerHTML='';list.hidden=true;}
+ const title=$('foundTitle');if(title)title.textContent='Найденные кадры';
+}
+function addFoundFrame(value){
+ const list=$('searchFound');if(!list)return;
+ list.hidden=false;
+ const button=document.createElement('button');button.type='button';button.className='found-chip';button.dataset.frame=value;button.textContent=value;
+ button.onclick=()=>{state.variant=value-1;state.selected=null;state.edit=null;render();runFieldSearch();};
+ list.append(button);
+ const title=$('foundTitle');if(title)title.textContent='Найденные кадры: '+list.children.length;
+}
+let searchScan=0;
+async function scanAllFrames(){
+ const patterns=parseSearchPatterns();
+ if(!patterns.length){$('searchInfo').textContent='Вставьте 0/1-строки или перетащите .txt.';return;}
+ if(searchScan)return;
+ if(animation)stopFilm();
+ const token=++searchScan,all=$('searchAll'),run=$('searchRun');
+ all.disabled=true;run.disabled=true;
+ clearFoundFrames();$('searchInfo').textContent='Проверено 0 / 6144, найдено 0';
+ const radius=state.radius,selected=state.selected,mode=state.mode,top=state.topCells,offsets=state.offsets.map(offset=>({...offset}));
+ const total=6144;let found=0;
+ try{
+  for(let v=0;v<total;v++){
+   if(token!==searchScan)break;
+   const cells=fieldCells(v,radius,selected,mode,offsets,points,top);
+   const bits=new Int8Array(cells.length);
+   for(let i=0;i<cells.length;i++)bits[i]=cells[i]===0?0:cells[i]===1?1:-1;
+   if(searchBitsMatches(bits,patterns).occurrences){found++;addFoundFrame(v+1);}
+   if((v&63)===0){$('searchInfo').textContent='Проверено '+v+' / '+total+', найдено '+found;await new Promise(resolve=>setTimeout(resolve,0));}
+  }
+  if(token===searchScan)$('searchInfo').textContent='Готово: найдено '+found+' кадров';
+ }finally{
+  all.disabled=false;run.disabled=false;if(token===searchScan)searchScan=0;
+ }
+}
 $('searchRun').onclick=runFieldSearch;
 $('searchClear').onclick=clearFieldSearch;
+$('searchAll').onclick=scanAllFrames;
+$('searchFoundClear').onclick=()=>{clearFoundFrames();$('searchInfo').textContent=SEARCH_HINT;};
 $('searchAxes').onclick=()=>setSearchMode('axes');
 $('searchLoops').onclick=()=>setSearchMode('loops');
-$('searchPattern').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runFieldSearch();}});
+$('searchPattern').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runFieldSearch();}});
+// drop a text file straight into the search field
+for(const el of [$('searchField'),$('searchPattern')]){
+ if(!el)continue;
+ el.addEventListener('dragover',e=>{e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='copy';el.classList.add('drag');});
+ el.addEventListener('dragleave',()=>el.classList.remove('drag'));
+ el.addEventListener('drop',e=>{
+  e.preventDefault();el.classList.remove('drag');
+  const file=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{$('searchPattern').value=String(reader.result||'');$('searchInfo').textContent='Файл загружен: '+file.name;};
+  reader.readAsText(file);
+ });
+}
 
 </script>
 <script src="xor-space.js?v=020"></script>
