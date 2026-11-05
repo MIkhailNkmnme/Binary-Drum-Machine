@@ -1311,7 +1311,7 @@ header #paintTools.pt-dd .may-heat-period-control>.zcf-side{position:absolute!im
 header #paintTools.pt-dd .may-heat-period-control>.zcf-left{left:0;width:calc(24px + var(--heat-thumb-left))!important}
 header #paintTools.pt-dd .may-heat-period-control>.zcf-right{right:0;width:calc(52px - var(--heat-thumb-left))!important}
 .may-heat-period-control>.zcf-side>.may-control-chevron{position:absolute;top:0;width:24px!important;height:24px!important}
-.may-heat-period-control>.zcf-left>.may-control-chevron{left:0}.may-heat-period-control>.zcf-right>.may-control-chevron{right:0}
+.may-heat-period-control>.zcf-left>.may-control-chevron{left:0!important;right:auto!important}.may-heat-period-control>.zcf-right>.may-control-chevron{left:auto!important;right:0!important}
 .may-heat-period-control .zcf-outline{display:none}
 .may-heat-period-control .zcf-input{cursor:grab}
 .may-heat-period-control .zcf-input:active{cursor:grabbing}
@@ -1325,14 +1325,21 @@ header #paintTools.pt-dd .may-heat-period-control .zcf-value{top:0!important;rig
 .may-heat-period-outline path{fill:transparent;stroke:#394657;stroke-width:2px;stroke-linejoin:miter}
 .may-heat-period-outline .may-heat-period-grip{stroke:var(--c,#7cbcff)}
 .may-heat-period-control:has(.zcf-left:is(:hover,:focus-visible,.zcf-held)) .may-heat-period-left,.may-heat-period-control:has(.zcf-right:is(:hover,:focus-visible,.zcf-held)) .may-heat-period-right{stroke:var(--c,#7cbcff);fill:color-mix(in srgb,var(--c,#7cbcff) 18%,transparent)}
-.may-heat-period-control:has(.zcf-held) .may-heat-period-outline path{stroke-width:3px}
+.may-heat-period-control:has(.zcf-left.zcf-held) :is(.may-heat-period-left,.may-heat-period-left-frame),.may-heat-period-control:has(.zcf-right.zcf-held) :is(.may-heat-period-right,.may-heat-period-right-frame){stroke-width:3px}
 
 /* The heat thumb is only the separated halves of one X: ) value (. */
 header #paintTools.pt-dd .may-heat-period-control{background:transparent!important;clip-path:none!important}
-.may-heat-period-control>.zcf-side>.may-control-chevron,.may-heat-period-control>.may-standard-outline,.may-heat-period-control>.may-standard-roof{display:none!important}
+.may-heat-period-control>.may-standard-outline,.may-heat-period-control>.may-standard-roof{display:none!important}
 .may-heat-period-control::before,.may-heat-period-control::after,.may-heat-period-control>.zcf-middle::before,.may-heat-period-control>.zcf-middle::after{display:none!important}
 .may-heat-period-outline path{fill:none!important}
 .may-heat-period-control:has(.zcf-input:is(:hover,:focus-visible,:active)) :is(.may-heat-period-left,.may-heat-period-right){stroke:var(--c,#7cbcff)}
 
 .may-heat-period-control .zcf-middle>.zcf-input::-webkit-slider-thumb{width:44px!important;background:transparent!important;mask:none!important;cursor:grab}
 .may-heat-period-control .zcf-middle>.zcf-input::-moz-range-thumb{width:44px!important;background:transparent!important;mask:none!important;cursor:grab}
+
+/* Heat: the 44px split X masks the centre rail; hover frames belong to one side. */
+.may-heat-period-control>.zcf-side>.may-control-chevron{display:block!important;color:#7cbcff!important;stroke:#7cbcff!important;opacity:1;visibility:visible}
+.may-heat-period-outline .may-heat-period-rail{stroke:#8d9bb0;stroke-width:1px;stroke-dasharray:2 3}
+.may-heat-period-outline :is(.may-heat-period-left-frame,.may-heat-period-right-frame){display:none;stroke:var(--c,#7cbcff)}
+.may-heat-period-control:has(.zcf-left:is(:hover,:focus-visible,.zcf-held)) .may-heat-period-left-frame,
+.may-heat-period-control:has(.zcf-right:is(:hover,:focus-visible,.zcf-held)) .may-heat-period-right-frame{display:block}

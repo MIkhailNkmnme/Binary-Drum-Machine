@@ -82,7 +82,7 @@ function scrollFixture(){
  c.fitAxis=()=>true;c.displayAnchorX=()=>42;c.fitCenterY=()=>{};
  vm.runInContext([fn('midScroll'),fn('fitHold'),fn('cssLayout')].join('\n'),c);
  c.layout=c.cssLayout;c.cssLayout();
- return {c,w,cv,setPanel(width){panel=width;},center:()=>35+(panel??w.clientWidth)/2};
+ return {c,w,cv,setPanel(width){panel=width;},center:()=>35+w.clientWidth/2};
 }
 
 test('at each zoom either canvas boundary can reach the visible midpoint, including an open library',()=>{
@@ -103,7 +103,7 @@ test('free repositioning survives layout, resize, leaving the axis pin, and curs
  w.scrollLeft=31;setPanel(440);c.cssLayout();w.clientWidth=1100;c.cssLayout();
  assert.equal(cellAt(center()),31);
  c.st.zMid=true;c.cssLayout();const before=cellAt(center());c.st.zMid=false;c.cssLayout();
- // A pinned short field can place the library midpoint outside the field; the reachable
+ // A pinned short field can place the viewport midpoint outside the field; the reachable
  // free centre in that case is the nearest edge.
  assert.ok(Math.abs(cellAt(center())-Math.max(0,Math.min(127,before)))<1);
  w.scrollLeft=52;const cursor=center()+14,cell=cellAt(cursor);c.zoomTo(8,cursor,50,true);
@@ -170,14 +170,10 @@ test('axis pin permits horizontal overflow pan and restores centring when the fi
   assert.ok(Math.abs(cv.getBoundingClientRect().left+c.displayAnchorX()*c.scale()-center())<1);
  }
 });
-test('an open library releases the axis pin as soon as actual field width overflows its viewport',()=>{
+test('library overlay never changes the viewport centre, axis pin or camera',()=>{
  const {c,w,cv,setPanel,center}=scrollFixture();c.st.zMid=true;c.st.zoom=4;c.cssLayout();
- assert.equal(c.horizontalAxisPinned(),true);
- setPanel(440);c.cssLayout();assert.equal(c.horizontalAxisPinned(),false);
- const before=(center()-cv.getBoundingClientRect().left)/c.scale();
- w.scrollLeft+=50;c.fitHold();c.cssLayout();assert.ok(Math.abs((center()-cv.getBoundingClientRect().left)/c.scale()-before-12.5)<1e-6);
- setPanel(null);c.cssLayout();assert.equal(c.horizontalAxisPinned(),true);
- assert.ok(Math.abs(cv.getBoundingClientRect().left+c.displayAnchorX()*c.scale()-center())<1);
+ assert.equal(c.horizontalAxisPinned(),true);const before=cv.getBoundingClientRect().left,anchor=before+c.displayAnchorX()*c.scale();
+ for(const panelLeft of [440,250,700,null]){setPanel(panelLeft);c.cssLayout();assert.equal(c.horizontalAxisPinned(),true);assert.ok(Math.abs(cv.getBoundingClientRect().left-before)<1);assert.ok(Math.abs(anchor-center())<1);}
 });
 
 
