@@ -1,0 +1,35 @@
+/* Shared component, scoped so existing page controls keep their own layout. */
+#zerkBitoteka{box-sizing:border-box;position:fixed;inset:16px;margin:auto;width:min(1024px,calc(100vw - 32px));height:min(768px,calc(100dvh - 32px));max-width:none;max-height:none;padding:16px;border:1px solid #64768e;background:#111820;color:#e3e9f1;font:14px/1.4 "Segoe UI",Arial,sans-serif;z-index:2147483646;overflow:hidden;color-scheme:dark}
+#zerkBitoteka[open]{display:flex;flex-direction:column;gap:16px}
+#zerkBitoteka::backdrop{background:#0009}
+#zerkBitoteka *{box-sizing:border-box}
+#zerkBitoteka header{display:flex;align-items:center;gap:16px;flex:none;height:32px}
+#zerkBitoteka h2{flex:1;margin:0;font:600 20px/32px "Segoe UI",Arial,sans-serif;color:inherit}
+#zerkBitoteka .zbt-filters{display:flex;gap:0;flex:none;overflow-x:auto;min-height:32px;padding:0;background:none}
+#zerkBitoteka .zbt-button,#zerkBitotekaAccess.zbt-access{--zbt-edge:transparent;position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;flex:0 0 128px;width:128px;height:32px;min-width:0;max-width:128px;min-height:32px;max-height:32px;padding:0 16px;margin:0;border:0;border-radius:0;clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);background:var(--zbt-edge);box-shadow:none;color:#e3e9f1;font:600 13px/32px "Segoe UI",Arial,sans-serif;white-space:nowrap;text-decoration:none;text-shadow:none;text-transform:none;user-select:none;-webkit-user-select:none;cursor:pointer;vertical-align:middle;opacity:1}
+#zerkBitoteka .zbt-button::before,#zerkBitotekaAccess.zbt-access::before{content:"";position:absolute;z-index:-1;inset:1px;background:#1b2430;clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,15px 100%,0 50%);pointer-events:none}
+#zerkBitoteka .zbt-button>span,#zerkBitotekaAccess.zbt-access>span{position:relative;z-index:1;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#zerkBitoteka .zbt-button:hover,#zerkBitotekaAccess.zbt-access:hover{--zbt-edge:#78c8fa}
+#zerkBitoteka .zbt-button:hover::before,#zerkBitotekaAccess.zbt-access:hover::before{inset:0 1px;clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,15px 100%,0 50%)}
+#zerkBitoteka .zbt-button[aria-pressed=true]{--zbt-edge:#78c8fa}
+#zerkBitoteka .zbt-button[aria-pressed=true]::before{inset:2px;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%)}
+#zerkBitoteka .zbt-button:focus-visible,#zerkBitotekaAccess.zbt-access:focus-visible{--zbt-edge:#fff;outline:none}
+#zerkBitoteka .zbt-button:active,#zerkBitotekaAccess.zbt-access:active{--zbt-edge:#78c8fa}
+#zerkBitoteka .zbt-button:active::before,#zerkBitotekaAccess.zbt-access:active::before{inset:3px;clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,13px 100%,0 50%)}
+#zerkBitoteka .zbt-button:disabled{cursor:wait;opacity:.5}
+#zerkBitoteka .zbt-small{flex-basis:32px;width:32px;max-width:32px;padding:0;font-size:20px}
+#zerkBitoteka .zbt-filters .zbt-button{flex-basis:128px}
+#zerkBitoteka .zbt-status,#zerkBitoteka .zbt-error{flex:none;margin:0;min-height:16px;font:13px/16px "Segoe UI",Arial,sans-serif}
+#zerkBitoteka .zbt-error{color:#ffb4a8;line-height:24px;white-space:pre-wrap}
+#zerkBitoteka [hidden]{display:none!important}
+#zerkBitoteka .zbt-grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(256px,1fr));grid-auto-rows:min-content;align-content:start;gap:16px;padding:0 16px 16px 0;overscroll-behavior:contain}
+#zerkBitoteka .zbt-card{min-width:0;margin:0;padding:16px;background:#18212b;border:1px solid #344356;overflow:hidden;color:inherit}
+#zerkBitoteka .zbt-preview{display:flex;align-items:center;justify-content:center;width:100%;height:160px;overflow:hidden;background:#080d12;color:#a0b0c4;font-size:13px}
+#zerkBitoteka .zbt-preview video,#zerkBitoteka .zbt-preview img{display:block;width:100%;height:100%;max-width:100%;object-fit:contain;background:#080d12}
+#zerkBitoteka .zbt-card h3{margin:16px 0 0;font:600 14px/16px "Segoe UI",Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit}
+#zerkBitoteka .zbt-card p{margin:8px 0 0;font:12px/16px "Segoe UI",Arial,sans-serif;color:#b4c2d2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#zerkBitoteka .zbt-actions{display:flex;gap:0;margin-top:16px}
+#zerkBitoteka footer{flex:none;font:12px/16px "Segoe UI",Arial,sans-serif;color:#a0b0c4}
+#zerkBitotekaAccess.zbt-access{margin:0 16px 0 0}
+#zerkBitotekaAccess.zbt-corner{position:fixed;left:48px;top:16px;z-index:99999}
+@media(max-width:400px){#zerkBitoteka{inset:0;width:100vw;height:100dvh;padding:16px}#zerkBitoteka .zbt-grid{grid-template-columns:minmax(0,1fr);padding-right:0}#zerkBitoteka header{gap:0}}

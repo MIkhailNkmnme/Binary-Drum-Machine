@@ -1,0 +1,8 @@
+{
+  "timescale": 1000,
+  "durationTicks": 0,
+  "sizeBytes": 7407680,
+  "headerDurationSeconds": 0.0,
+  "approximateDurationFromFilenameSeconds": 381,
+  "note": "Фрагментированный MP4: mvhd содержит0, это не длительность ролика. Длительность воспроизведения определяется плеером по фрагментам; в названии около381с."
+}

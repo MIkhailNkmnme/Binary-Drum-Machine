@@ -25,6 +25,43 @@
     const root = new URL('../', document.currentScript.src);
     const href = new URL('index.html', root).href, logo = new URL('oktaedr/zerkalius-mark.svg', root).href;
 
+    // The common library is local to this origin and available from every machine.
+    // Keep a real standalone link as a fallback if the optional script cannot load.
+    let bitotekaLoading = null;
+    function loadBitoteka() {
+        if (window.ZerkBitoteka) return Promise.resolve(window.ZerkBitoteka);
+        if (bitotekaLoading) return bitotekaLoading;
+        bitotekaLoading = new Promise((resolve, reject) => {
+            const url = new URL('_js/bitoteka.js', root).href;
+            let script = [...document.scripts].find(item => item.src === url);
+            const loaded = () => window.ZerkBitoteka ? resolve(window.ZerkBitoteka) : reject(Error('Битотека не загрузилась'));
+            if (!script) { script = document.createElement('script'); script.src = url; script.async = true; }
+            script.addEventListener('load', loaded, { once: true });
+            script.addEventListener('error', () => { script.remove(); reject(Error('Битотека не загрузилась')); }, { once: true });
+            if (!script.isConnected) document.head.appendChild(script);
+        }).catch(error => { bitotekaLoading = null; throw error; });
+        return bitotekaLoading;
+    }
+    function bitotekaAccess(hub) {
+        if (document.getElementById('zerkBitotekaAccess')) return;
+        const link = document.createElement('a'); link.id = 'zerkBitotekaAccess';
+        link.className = 'gz-hx zbt-access'; link.href = new URL('bitoteka/', root).href;
+        link.title = 'Битотека — общая библиотека Зеркалиуса'; link.setAttribute('aria-label', link.title);
+        const text = document.createElement('span'); text.dataset.userLabel = ''; text.textContent = 'Битотека'; link.appendChild(text);
+        if (hub.classList.contains('zh-corner')) { link.classList.add('zbt-corner'); document.body.appendChild(link); }
+        else hub.insertAdjacentElement('afterend', link);
+        link.addEventListener('click', async event => {
+            event.stopPropagation(); if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+            event.preventDefault(); try { const library = await loadBitoteka(); await library.open(); }
+            catch (_) { location.href = link.href; }
+        });
+        const css = new URL('_js/bitoteka.css', root).href;
+        if (![...document.querySelectorAll('link[rel="stylesheet"]')].some(item => item.href === css)) {
+            const style = document.createElement('link'); style.rel = 'stylesheet'; style.href = css; document.head.appendChild(style);
+        }
+        loadBitoteka().catch(() => {});
+    }
+
     function favicon() {
         const old = document.querySelector('link[rel~="icon"]');
         if (old && old.getAttribute('href') && old.getAttribute('href') !== 'data:,') return;   // свой значок у страницы — не трогаем
@@ -101,6 +138,7 @@
         const t = slot();
         if (t) t.insertBefore(a, t.firstChild);
         else { a.classList.add('zh-corner'); document.body.appendChild(a); }
+        bitotekaAccess(a);
 
         if (!window.zerkHubNoKey) document.addEventListener('keydown', e => {
             if (e.ctrlKey || e.metaKey || e.altKey) return;
