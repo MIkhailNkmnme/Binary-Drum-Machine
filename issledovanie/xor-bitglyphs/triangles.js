@@ -39,7 +39,7 @@
       <article><h3>Маятник по правилу XOR</h3>
         <div class="triangle-controls">
           <label>Начало <select id="triMode"><option value="row">Строка битов</option><option value="glyph">Целый битглиф</option></select></label>
-          <label id="triRowLabel">Строка Y <input id="triRow" type="number" min="-11" max="11" value="5"></label>
+          <label id="triRowLabel">Строка Y <input id="triRow" type="number" min="-11" max="11" value="1"></label>
           <label>Высота <input id="triRows" type="number" min="8" max="512" value="256"></label>
           <label>Масштаб <select id="triZoom"><option value="1">×1</option><option value="2">×2</option><option value="4">×4</option><option value="8">×8</option></select></label>
           <label><input id="triFit" type="checkbox" checked>По ширине</label>
@@ -83,7 +83,7 @@
   }
   function drawEvolution() {
     const combo = combinations[selected], glyphMode = get('triMode').value === 'glyph';
-    const sourceY = integer(get('triRow'), -11, 11, 5), rows = integer(get('triRows'), 8, 512, 256);
+    const sourceY = integer(get('triRow'), -11, 11, 1), rows = integer(get('triRows'), 8, 512, 256);
     const zoom = Number(get('triZoom').value), fit = get('triFit').checked;
     get('triRowLabel').hidden = glyphMode;
     const source = get('triSource').getContext('2d');
