@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Зеркалиус — Стенд — v0.001</title>
+<!-- Стенд вариантов (v0.001, 2026-11-05): все предложения по росту и вложению треугольника.
+     Ничего не удаляется: новые варианты добавляются новыми разделами. -->
+<!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
+<style>
+  :root{
+    --bg:#07090d; --panel:#0d1117; --panel2:#111823; --line:#232c3a;
+    --text:#cfd6e2; --muted:#8b95a6; --gold:#ffc45c; --blue:#78a0d8; --cyan:#6ee1eb;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+  a{color:var(--gold);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:16px;
+    padding:10px 18px;background:rgba(9,12,17,.94);border-bottom:1px solid var(--line);
+    backdrop-filter:blur(6px)}
+  header.top h1{font-size:18px;margin:0;letter-spacing:.12em;text-transform:uppercase}
+  header.top .ver{margin-left:auto;color:var(--muted);font:12px ui-monospace,Consolas,monospace}
+  .back{color:var(--muted);font-size:13px}
+  main{max-width:1180px;margin:0 auto;padding:22px 18px 80px}
+  .lead{color:var(--muted);max-width:900px;margin:0 0 22px}
+  section.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:18px 20px;margin:0 0 22px}
+  section.card h2{margin:0 0 6px;font-size:19px;color:var(--gold)}
+  section.card h2 small{color:var(--muted);font-weight:400;font-size:13px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.cols{grid-template-columns:1fr}}
+  .sub{color:var(--muted);font-size:13px;margin:6px 0 14px}
+  canvas{width:100%;display:block;background:#04060a;border:1px solid var(--line);border-radius:8px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 0;font-size:13px}
+  .controls button{background:#182130;color:var(--text);border:1px solid #2c3a4e;border-radius:6px;
+    padding:6px 12px;font:inherit;cursor:pointer}
+  .controls button:hover{background:#1f2b3d}
+  .controls button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+  .controls label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+  .controls input[type=color]{width:34px;height:26px;padding:0;border:1px solid #2c3a4e;background:none;border-radius:4px}
+  .controls output{font-family:ui-monospace,Consolas,monospace;color:var(--gold)}
+  figure{margin:14px 0 0}
+  figure img{width:100%;display:block;border:1px solid var(--line);border-radius:8px}
+  figcaption{color:var(--muted);font-size:12px;margin-top:6px}
+  table{border-collapse:collapse;font-size:13px;width:100%;margin:10px 0}
+  th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.mono{font-family:ui-monospace,Consolas,monospace;color:var(--gold)}
+  .note{border-left:3px solid var(--gold);padding:8px 12px;background:#12161c;border-radius:0 6px 6px 0;
+    color:var(--muted);font-size:13px;margin:12px 0 0}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+  .chip{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:2px 10px}
+  .tag{color:var(--muted);font-size:12px}
+  footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 18px;color:var(--muted);font-size:13px}
+  footer a{margin-right:14px}
+</style>
+<!-- === МАРКЕР: CSS СТИЛИ КОНЕЦ === -->
+</head>
+<body>
+<header class="top">
+  <a class="back" href="../index.html">← Хаб</a>
+  <h1>Стенд</h1>
+  <span class="ver">v0.001 · 05.11.2026</span>
+</header>
+<main>
+  <p class="lead">
+    Все варианты продолжения треугольника из обсуждения — на одной странице, чтобы ничего не потерялось.
+    Ни один вариант отсюда не удаляется: новые добавляются новыми разделами.
+    Цифры — для окна 1608×798, как на скриншоте; на 4K видимых уровней примерно на два больше.
+  </p>
+
+  <section class="card" id="growth">
+    <h2>1. Рост и уменьшение масштаба <small>октавы N → 2N, клетка → клетка/2</small></h2>
+    <p class="sub">
+      Поле 2N−1 в ширину; на скриншоте N≈32: 63 клетки × 25,5 px = 1608 px, высота 817 px — база уже на ~19 px ниже окна.
+      Если каждый раз удваивать N и вдвое уменьшать масштаб, треугольник остаётся того же размера, а чёрные впадины
+      уменьшаются вдвое: <b>790 → 395 → 197 → 98 → 49 → 25 → 12 → 6 → 3 → 1,5 px</b>. Видимых уровней ~9–10;
+      новый уровень всегда одна клетка: 25,5 → 12,7 → 6,3 → 3,1 → 1,6 → 0,79 px.
+    </p>
+    <div class="cols">
+      <div>
+        <canvas id="cvGrowth" style="aspect-ratio:2/1"></canvas>
+        <div class="controls">
+          <button id="growthPlay" type="button" aria-pressed="true">Пауза</button>
+          <button id="growthMode" type="button" aria-pressed="true">Вписывать</button>
+          <button id="growthReset" type="button">Сначала</button>
+        </div>
+        <div class="controls"><output id="growthInfo"></output></div>
+      </div>
+      <div>
+        <p class="sub" style="margin-top:0">Правило 90 от одной вершины: <code>b(2r,2c) = b(2r+1,2c+1) = b(r,c)</code>
+          (проверено на 512 строках: 32 896 / 32 896). Поэтому каждый новый уровень — та же картинка,
+          разложенная на две подрешётки, и при постоянном видимом размере картинка сходится.</p>
+        <table>
+          <thead><tr><th>N</th><th>2N−1</th><th>клетка</th><th>высота</th></tr></thead>
+          <tbody>
+            <tr><td>32</td><td>63</td><td class="mono">25,5 px</td><td>817 px</td></tr>
+            <tr><td>64</td><td>127</td><td class="mono">12,7 px</td><td>810 px</td></tr>
+            <tr><td>128</td><td>255</td><td class="mono">6,3 px</td><td>807 px</td></tr>
+            <tr><td>256</td><td>511</td><td class="mono">3,1 px</td><td>806 px</td></tr>
+            <tr><td>512</td><td>1023</td><td class="mono">1,6 px</td><td>805 px</td></tr>
+            <tr><td>1024</td><td>2047</td><td class="mono">0,79 px</td><td>804 px</td></tr>
+          </tbody>
+        </table>
+        <p class="sub">Режим «Держать масштаб» показывает другую сторону: рост виден бесконечно, но поле уходит за кадр
+          (при N=512 это 26 087 px в ширину — 16 экранов).</p>
+      </div>
+    </div>
+    <div class="cols">
+      <figure>
+        <img src="assets/growth-zoom.gif" alt="Рост и уменьшение масштаба: октавы N=32…1024">
+        <figcaption>Октавы 32 → 1024 с плавным отъездом камеры: чёрные впадины уменьшаются вдвое за октаву.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/octaves-1608.png" alt="Октавы N=32…512, вписанные в окно 1608×798">
+        <figcaption>Октавы N=32…512 в том же окне: треугольник одного размера, клетка 25,5 → 1,57 px.</figcaption>
+      </figure>
+    </div>
+    <div class="note">«Вверх» здесь — только у камеры: у конструкции вершина в строке 0, поле растёт вниз от неё.
+      Если наращивать новую вершину сверху — это уже другое правило.</div>
+  </section>
+
+  <section class="card" id="nesting">
+    <h2>2. Копии в чёрных впадинах <small>вложение уменьшенных копий, другой цвет</small></h2>
+    <p class="sub">
+      Чёрная перевёрнутая впадина — та же картинка, повёрнутая на 180°, и по клеткам она равна предыдущей октаве
+      (у 32-строчной картинки самая большая впадина — ~16 строк × 31 колонка, то есть 16-строчная картинка).
+      Вкладываем в каждую впадину уменьшенную копию: мастер — своим цветом, копии — другим.
+      Чёрные треугольники уменьшаются вдвое за уровень, видимых уровней ~9–10; чёрная площадь падает ×1/4 за уровень
+      (1/4 → 1/16 → 1/64 → …), предел — сплошной залитый треугольник. Вложение — это затягивание, а не бесконечный рост.
+    </p>
+    <div class="cols">
+      <div>
+        <canvas id="cvNest" style="aspect-ratio:2/1"></canvas>
+        <div class="controls">
+          <button id="nestPlay" type="button" aria-pressed="true">Пауза</button>
+          <label>уровень <input id="nestLevel" type="range" min="0" max="4" step="1" value="1"><output id="nestLevelOut">1</output></label>
+        </div>
+        <div class="controls">
+          <label>мастер <input id="nestMaster" type="color" value="#ffc45c"></label>
+          <label>копии <input id="nestCopy" type="color" value="#6ee1eb"></label>
+        </div>
+      </div>
+      <figure style="margin:0">
+        <img src="assets/vlozhenie.png" alt="Вложение копий в чёрные впадины: уровни 0–3">
+        <figcaption>Уровни вложения 0–3: жёлтый мастер, синие/оранжевые/зелёные копии в каждой впадине.</figcaption>
+      </figure>
+    </div>
+    <figure>
+      <img src="assets/vlozhenie-colours.png" alt="Варианты цвета копий">
+      <figcaption>Цвета копий: голубые, белые, красные, инверсия, циан, оранжевые — все сохранены.</figcaption>
+    </figure>
+    <div class="cols">
+      <figure><img src="assets/vlozhenie.gif" alt="Анимация вложения 0→4"><figcaption>Вложение 0→4.</figcaption></figure>
+      <figure><img src="assets/vlozhenie-white.gif" alt="Вложение 0→3, белые копии"><figcaption>Белые копии, вложение 0→3.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="card" id="zoom">
+    <h2>3. Бесконечный зум в чёрную впадину <small>петля ×2 с переворотом</small></h2>
+    <p class="sub">
+      Так как впадина содержит ту же картинку, в неё можно влетать камерой: зум ×2 — и кадр повторяется
+      (повёрнутый на 180°; на стыке камера поворачивается на 180°, поэтому петля бесшовная).
+      Это единственный вариант, который не насыщается: детали не уходят в пиксель, а приходят изнутри.
+      Тот же принцип без переворота — копия вдвое меньше впадины и без поворота, тогда повтор ×4.
+    </p>
+    <div class="cols">
+      <div>
+        <canvas id="cvZoom" style="aspect-ratio:2/1"></canvas>
+        <div class="controls">
+          <button id="zoomPlay" type="button" aria-pressed="true">Пауза</button>
+          <button id="zoomFlip" type="button" aria-pressed="true">Переворот на стыке</button>
+        </div>
+      </div>
+      <div>
+        <p class="sub" style="margin-top:0">Что происходит в петле:</p>
+        <ul class="sub" style="margin:0 0 10px 18px;padding:0">
+          <li>камера летит в центральную впадину;</li>
+          <li>через ×2 в кадре та же картинка, но перевёрнутая на 180°;</li>
+          <li>на стыке камера добавляет 180° — кадр совпадает, петля замкнута.</li>
+        </ul>
+        <p class="sub">На 4K тот же приём даёт ещё более глубокий зум без потери деталей — детали не уменьшаются,
+          а приходят из копии.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="calc">
+    <h2>4. Что установлено расчётом <small>чтобы не пересчитывать заново</small></h2>
+    <div class="cols">
+      <div>
+        <p class="sub">Самоподобие правила 90 (одна вершина):</p>
+        <pre class="sub" style="background:#0a0e14;border:1px solid var(--line);border-radius:6px;padding:10px;overflow:auto">b(2r, 2c)   = b(r, c)
+b(2r+1,2c+1) = b(r, c)</pre>
+        <p class="sub">Проверка: N=512, все клетки — 32 896 / 32 896 совпадений. Поэтому удвоенный
+          треугольник — старая картинка, разложенная на две подрешётки.</p>
+        <p class="sub">Отсюда пределы:</p>
+        <ul class="sub" style="margin:0 0 0 18px;padding:0">
+          <li>рост + вписывание: ~4–5 видимых удвоений, потом новые уровни меньше пикселя;</li>
+          <li>вложение копий: ~9–10 уровней (чёрные впадины 790 → 395 → 197… px), предел — сплошной;</li>
+          <li>зум в впадину: не сходится, петля ×2;</li>
+          <li>держать масштаб: видно бесконечно, поле уходит за кадр (N=512 — 16 экранов).</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sub">Ключевые числа окна 1608×798:</p>
+        <table>
+          <tbody>
+            <tr><td>клетка при N=32</td><td class="mono">25,52 px</td></tr>
+            <tr><td>высота поля при N=32</td><td class="mono">816,8 px</td></tr>
+            <tr><td>высота окна</td><td class="mono">798 px</td></tr>
+            <tr><td>срез базы</td><td class="mono">≈19 px</td></tr>
+            <tr><td>бит при N=32 / N=512</td><td class="mono">243 / 19 683</td></tr>
+            <tr><td>клеток при N=1024</td><td class="mono">2 096 128</td></tr>
+          </tbody>
+        </table>
+        <div class="note">Все варианты этого стенда — предложения, а не принятое поведение страниц сайта.
+          Ничего из показанного не удаляется; новые варианты добавляются сюда.</div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>
+  <a href="../index.html">← Хаб</a>
+  <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
+  <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
+  <span class="tag">Стенд v0.001 · проверки оставлены пользователю</span>
+</footer>
+<!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const SQ3 = Math.sqrt(3);
+
+  /* ---------- общий рендер: треугольник Серпинского (цепочка/вложение) ---------- */
+  function tri(cx, cy, size, up) {
+    const h = size * SQ3 / 2;
+    if (up) return [[cx, cy - 2 * h / 3], [cx - size / 2, cy + h / 3], [cx + size / 2, cy + h / 3]];
+    return [[cx, cy + 2 * h / 3], [cx - size / 2, cy - h / 3], [cx + size / 2, cy - h / 3]];
+  }
+  function sub(cx, cy, size, up) {
+    const [A, B, C] = tri(cx, cy, size, up);
+    const MAB = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+    const MBC = [(B[0] + C[0]) / 2, (B[1] + C[1]) / 2];
+    const MCA = [(C[0] + A[0]) / 2, (C[1] + A[1]) / 2];
+    const corners = [
+      [(A[0] + MAB[0] + MCA[0]) / 3, (A[1] + MAB[1] + MCA[1]) / 3],
+      [(B[0] + MBC[0] + MAB[0]) / 3, (B[1] + MBC[1] + MAB[1]) / 3],
+      [(C[0] + MCA[0] + MBC[0]) / 3, (C[1] + MCA[1] + MBC[1]) / 3]
+    ];
+    const hole = [(MAB[0] + MBC[0] + MCA[0]) / 3, (MAB[1] + MBC[1] + MCA[1]) / 3];
+    return { corners, hole };
+  }
+
+  /* ================= 1. Рост и уменьшение масштаба ================= */
+  (() => {
+    const cv = $('cvGrowth'), info = $('growthInfo');
+    if (!cv) return;
+    const MAXN = 1024, W = 2 * MAXN - 1, C = (W - 1) >> 1;
+    const field = new Uint8Array(MAXN * W);
+    field[C] = 1;
+    for (let r = 1; r < MAXN; r++) {
+      const base = r * W, up = base - W;
+      for (let c = 0; c < W; c++) field[base + c] = (c > 0 ? field[up + c - 1] : 0) ^ (c + 1 < W ? field[up + c + 1] : 0);
+    }
+    const ctx = cv.getContext('2d');
+    const GOLD = (255 << 24 | 92 << 16 | 196 << 8 | 255) >>> 0;  // ABGR
+    let iw = 0, ih = 0, img = null, buf = null;
+    function resize() {
+      const r = cv.getBoundingClientRect();
+      iw = Math.max(300, Math.round(r.width)); ih = Math.max(150, Math.round(r.height));
+      cv.width = iw; cv.height = ih;
+      img = ctx.createImageData(iw, ih);
+      buf = new Uint32Array(img.data.buffer);
+    }
+    resize();
+    addEventListener('resize', () => { resize(); });
+    let playing = true, mode = 'fit', t0 = performance.now(), pausedAt = 0;
+    const playBtn = $('growthPlay'), modeBtn = $('growthMode'), resetBtn = $('growthReset');
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      playBtn.textContent = playing ? 'Пауза' : 'Дальше';
+      playBtn.setAttribute('aria-pressed', String(!playing));
+      if (playing) t0 = performance.now() - pausedAt;
+    });
+    modeBtn.addEventListener('click', () => {
+      mode = mode === 'fit' ? 'fixed' : 'fit';
+      modeBtn.textContent = mode === 'fit' ? 'Вписывать' : 'Держать масштаб';
+      modeBtn.setAttribute('aria-pressed', String(mode === 'fit'));
+      t0 = performance.now(); pausedAt = 0;
+    });
+    resetBtn.addEventListener('click', () => { t0 = performance.now(); pausedAt = 0; });
+    function draw(now) {
+      const cw = cv.width, ch = cv.height;
+      let n, dcell, x0, y0 = 0, zoom = 1, octave = 0;
+      if (mode === 'fit') {
+        const period = 1600;
+        const elapsed = Math.max(0, now - t0);
+        octave = Math.floor(elapsed / period) % 5;
+        n = 32 << octave;
+        const t = (elapsed % period) / period;
+        zoom = 2 - t;
+        const cell = Math.min(cw / (2 * n - 1), ch / n);
+        dcell = cell * zoom;
+        x0 = cw / 2 - (2 * n - 1) * dcell / 2;
+      } else {
+        octave = Math.floor(Math.max(0, now - t0) / 900) % 6;
+        n = 32 << octave;
+        dcell = cw / (2 * 32 - 1);
+        x0 = cw / 2 - (2 * n - 1) * dcell / 2;
+      }
+      buf.fill(0);
+      const row0 = C - (n - 1);
+      const top = Math.max(0, Math.floor(y0));
+      for (let py = top; py < ch; py++) {
+        const fr = Math.floor((py - y0) / dcell);
+        if (fr < 0 || fr >= n) continue;
+        const base = fr * W + row0;
+        const cLo = Math.max(0, Math.floor((0 - x0) / dcell));
+        const cHi = Math.min(2 * n - 1, Math.ceil((cw - x0) / dcell));
+        for (let c = cLo; c < cHi; c++) {
+          if (!field[base + c]) continue;
+          const px0 = Math.max(0, Math.round(x0 + c * dcell));
+          const px1 = Math.min(cw, Math.max(px0 + 1, Math.round(x0 + (c + 1) * dcell)));
+          for (let px = px0; px < px1; px++) buf[py * cw + px] = GOLD;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      if (mode === 'fit') {
+        info.textContent = `N = ${n} · 2N−1 = ${2 * n - 1} · клетка ${dcell.toFixed(2)} px · поле ${(n * dcell).toFixed(0)} px (окно ${ch} px) · отъезд ×${zoom.toFixed(2)}`;
+      } else {
+        info.textContent = `N = ${n} · 2N−1 = ${2 * n - 1} · масштаб держим: клетка ${dcell.toFixed(1)} px · поле на экране ${((2 * n - 1) * dcell).toFixed(0)} px в ширину`;
+      }
+      return octave;
+    }
+    let last = 0;
+    function loop(now) {
+      if (playing) { draw(now); last = now; }
+      else if (last) { /* кадр на паузе уже нарисован */ }
+      requestAnimationFrame(loop);
+    }
+    draw(performance.now());
+    requestAnimationFrame(loop);
+    addEventListener('resize', () => { t0 = performance.now(); pausedAt = 0; });
+  })();
+
+  /* ================= 2. Вложение копий в чёрные впадины ================= */
+  (() => {
+    const cv = $('cvNest');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const playBtn = $('nestPlay'), levelIn = $('nestLevel'), levelOut = $('nestLevelOut'),
+      masterIn = $('nestMaster'), copyIn = $('nestCopy');
+    const ORDER = 2;
+    let fill = 1, playing = true, t0 = performance.now();
+    function size() { const r = cv.getBoundingClientRect(); const d = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); return { w: cv.width, h: cv.height, d }; }
+    function render(cx, cy, s, up, order, depth, colour) {
+      if (order <= 0) {
+        ctx.beginPath();
+        const p = tri(cx, cy, s, up);
+        ctx.moveTo(p[0][0], p[0][1]); ctx.lineTo(p[1][0], p[1][1]); ctx.lineTo(p[2][0], p[2][1]); ctx.closePath();
+        ctx.fillStyle = colour; ctx.fill();
+        return;
+      }
+      const { corners, hole } = sub(cx, cy, s, up);
+      for (const [x, y] of corners) render(x, y, s / 2, up, order - 1, depth, colour);
+      if (depth > 0) render(hole[0], hole[1], s / 2, -up, order, depth - 1, copyIn.value);
+    }
+    function draw() {
+      const { w, h, d } = size();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#04060a'; ctx.fillRect(0, 0, w, h);
+      d;
+      const s = h / (SQ3 / 2) * 0.95;
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      render(0, 0, s, 1, ORDER, fill, masterIn.value);
+      ctx.restore();
+      levelOut.textContent = String(fill);
+      levelIn.value = String(fill);
+    }
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      playBtn.textContent = playing ? 'Пауза' : 'Дальше';
+      playBtn.setAttribute('aria-pressed', String(!playing));
+      if (playing) t0 = performance.now();
+    });
+    levelIn.addEventListener('input', () => { fill = Number(levelIn.value); playing = false; playBtn.textContent = 'Дальше'; playBtn.setAttribute('aria-pressed', 'true'); draw(); });
+    masterIn.addEventListener('input', draw);
+    copyIn.addEventListener('input', draw);
+    function loop(now) {
+      if (playing) {
+        const step = 700;
+        const f = Math.floor((now - t0) / step) % 5;
+        if (f !== fill) { fill = f; draw(); }
+      }
+      requestAnimationFrame(loop);
+    }
+    draw();
+    requestAnimationFrame(loop);
+    addEventListener('resize', draw);
+  })();
+
+  /* ================= 3. Бесконечный зум в чёрную впадину ================= */
+  (() => {
+    const cv = $('cvZoom');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const playBtn = $('zoomPlay'), flipBtn = $('zoomFlip');
+    let playing = true, flipOn = true, t0 = performance.now(), pausedAt = 0;
+    const CHAIN = 7, PERIOD = 5200;
+    const MASTER = '#ffc45c', COPY = '#6ee1eb';
+    function size() { const r = cv.getBoundingClientRect(); const d = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); return { w: cv.width, h: cv.height }; }
+    function gasket(cx, cy, s, up, colour) {
+      const { corners, hole } = sub(cx, cy, s, up);
+      for (const [x, y] of corners) {
+        const p = tri(x, y, s / 2, up);
+        ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]); ctx.lineTo(p[1][0], p[1][1]); ctx.lineTo(p[2][0], p[2][1]); ctx.closePath();
+        ctx.fillStyle = colour; ctx.fill();
+      }
+      return hole;
+    }
+    function draw() {
+      const { w, h } = size();
+      const now = playing ? performance.now() : pausedAt;
+      const elapsed = Math.max(0, now - t0);
+      const cycles = elapsed / PERIOD;
+      const cycle = Math.floor(cycles);
+      const frac = cycles - cycle;
+      const z = 1 + frac;
+      const flip = flipOn && (cycle % 2) ? Math.PI : 0;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#04060a'; ctx.fillRect(0, 0, w, h);
+      const s = Math.min(w, h / (SQ3 / 2) * 0.95) * 0.95;
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      ctx.scale(z, z);
+      ctx.rotate(flip);
+      let size = s, up = 1;
+      // на стыке цикла меняются и переворот, и цвета: кадр на стыке совпадает
+      const swap = flipOn && (cycle % 2) ? 1 : 0;
+      for (let depth = 0; depth < CHAIN; depth++) {
+        const colour = (depth % 2) === swap ? MASTER : COPY;
+        gasket(0, 0, size, up, colour);
+        size /= 2; up = -up;
+      }
+      ctx.restore();
+      return z;
+    }
+    function loop() {
+      if (playing) draw();
+      requestAnimationFrame(loop);
+    }
+    playBtn.addEventListener('click', () => {
+      if (playing) { pausedAt = performance.now(); playing = false; }
+      else { t0 = performance.now() - (pausedAt - t0); playing = true; }
+      playBtn.textContent = playing ? 'Пауза' : 'Дальше';
+      playBtn.setAttribute('aria-pressed', String(!playing));
+    });
+    flipBtn.addEventListener('click', () => {
+      flipOn = !flipOn;
+      flipBtn.setAttribute('aria-pressed', String(flipOn));
+      flipBtn.textContent = flipOn ? 'Переворот на стыке' : 'Без переворота';
+    });
+    draw();
+    requestAnimationFrame(loop);
+    addEventListener('resize', draw);
+  })();
+})();
+</script>
+<!-- === МАРКЕР: СКРИПТЫ КОНЕЦ === -->
+</body>
+</html>
