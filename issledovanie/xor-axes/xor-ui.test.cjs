@@ -114,6 +114,18 @@ test('field search finds 0/1 sequences along axes and through loops',async()=>{
  assert(yellow.chips>0);
  assert(yellow.found>0);
  assert.equal(yellow.bg,'rgb(255, 225, 77)');
+ const chip=page.locator('#searchPatternHits .search-pattern.found').first();
+ await chip.click();
+ await page.waitForTimeout(150);
+ const firstFind=await page.evaluate(()=>({cells:[...document.querySelectorAll('#searchBits .search-cell')].map(rect=>rect.getAttribute('x')+','+rect.getAttribute('y')),info:document.getElementById('searchInfo').textContent,selected:document.querySelector('#searchPatternHits .search-pattern.selected')?.textContent}));
+ assert.equal(firstFind.cells.length,1,'one find of the selected line');
+ assert.match(firstFind.info,/находка 1 \//);
+ assert.equal(firstFind.selected,'1');
+ await chip.click();
+ await page.waitForTimeout(150);
+ const nextFind=await page.evaluate(()=>({cells:[...document.querySelectorAll('#searchBits .search-cell')].map(rect=>rect.getAttribute('x')+','+rect.getAttribute('y')),info:document.getElementById('searchInfo').textContent}));
+ assert.match(nextFind.info,/находка 2 \//);
+ assert.notDeepEqual(nextFind.cells,firstFind.cells,'the next click cycles to another find');
  await page.locator('#searchLoops').click();
  await page.waitForTimeout(200);
  const loops=await page.evaluate(()=>({cells:document.querySelectorAll('#searchBits .search-cell').length,info:document.getElementById('searchInfo').textContent,pressed:document.getElementById('searchLoops').getAttribute('aria-pressed')}));
