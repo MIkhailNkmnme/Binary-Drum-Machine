@@ -133,6 +133,39 @@ test('field cell size is settable in pixels and never widens the page',async()=>
  await page.setViewportSize({width:1100,height:900});
 });
 
+test('layout readout stays centred while scrubbing and during playback',async()=>{
+ const geom=()=>page.evaluate(()=>{
+  const range=document.querySelector('.frame-range'),thumb=range.querySelector('.x-thumb');
+  const rb=range.getBoundingClientRect(),tb=thumb.getBoundingClientRect();
+  return {value:Number(document.getElementById('frame').value),number:range.querySelector('.x-number').textContent,center:Math.round(tb.left+tb.width/2),rangeCenter:Math.round(rb.left+rb.width/2),plus:range.querySelector('.x-center').textContent,dash:getComputedStyle(range.querySelector('.x-track')).borderTopStyle,page:document.documentElement.scrollWidth};
+ });
+ await page.evaluate(()=>{const frame=document.getElementById('frame');frame.value='4000';frame.dispatchEvent(new Event('input'));});
+ await page.waitForTimeout(150);
+ const shown=await geom();
+ assert.equal(shown.center,shown.rangeCenter);
+ assert.equal(shown.number,'4000');
+ assert.equal(shown.plus,'+');
+ assert.equal(shown.dash,'dashed');
+ const box=await page.locator('.frame-range').scrollIntoViewIfNeeded().then(()=>page.locator('.frame-range').boundingBox());
+ await page.mouse.move(box.x+box.width/2,box.y+20);
+ await page.mouse.down();
+ await page.mouse.move(box.x+box.width/2+50,box.y+20,{steps:4});
+ await page.mouse.up();
+ await page.waitForTimeout(150);
+ const dragged=await geom();
+ assert.notEqual(dragged.value,shown.value);
+ assert.equal(dragged.center,dragged.rangeCenter);
+ await page.evaluate(()=>{const frame=document.getElementById('frame');frame.value='1';frame.dispatchEvent(new Event('input'));});
+ await page.locator('#play').click();
+ await page.waitForTimeout(700);
+ const playing=await geom();
+ await page.locator('#play').click();
+ assert.equal(playing.center,playing.rangeCenter);
+ assert.notEqual(playing.number,'1');
+ assert.equal(playing.plus,'+');
+ assert(playing.page<=1100);
+});
+
 test('the redesign fits a 390 px phone without sideways scrolling',async()=>{
  await page.setViewportSize({width:390,height:844});
  await page.waitForTimeout(250);
