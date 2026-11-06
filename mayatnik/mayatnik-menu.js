@@ -1866,13 +1866,13 @@
     // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
     // «↶ Отм. | ↷ Повт.» uses the original history commands, fixed below the three branding rows.
     const ud = gHistory.parentElement, udL = ud.querySelector('.pt-l');
-    { ud.classList.add('pt-btn'); ud.dataset.k = 'Правка'; udL.textContent = '';
-      const half = (src, glyph, name) => { const e = $(src), s = document.createElement('span'), a = document.createElement('span'), n = document.createElement('span');
-        s.className = 'pt-ud'; s.setAttribute('role', 'button'); s.tabIndex = 0; a.className = 'pt-ud-g'; a.textContent = glyph; n.className = 'pt-ud-n'; n.textContent = name; s.append(a, n);
+    { ud.classList.add('pt-btn'); ud.dataset.k = 'Правка'; udL.textContent = ''; udL.classList.add('gz-hx','gz-pair','gz-split','may-history-pair');
+      const half = (src, glyph, name, index) => { const e = $(src), s = document.createElement('span'), a = document.createElement('span'), n = document.createElement('span');
+        s.className = 'gz-half gz-h'+index+' may-history-half'; s.setAttribute('role', 'button'); s.setAttribute('aria-label',index===0?'Отмена':'Повтор'); s.tabIndex = 0; a.className = 'pt-ud-g'; a.textContent = glyph; n.className = 'may-history-name'; n.textContent = name; s.append(a, n);
         const go = () => { if (!e.disabled) { e.click(); placeTools(); } };
         s.addEventListener('click', go); s.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
-        toolSync.push(() => { const off = !!e.disabled; s.classList.toggle('dis', off); s.title = tip(e) + (off ? ' — пока нечего' : ''); }); return s; };
-      udL.append(half('bFillUndo', '↶', 'Отм.'), half('bFillRedo', '↷', 'Повт.')); }
+        toolSync.push(() => { const off = !!e.disabled; s.classList.toggle('dis', off); s.setAttribute('aria-disabled',String(off)); s.title = tip(e) + (off ? ' — пока нечего' : ''); }); return s; };
+      udL.append(half('bFillUndo', '↶', 'Отмена',0), half('bFillRedo', '↷', 'Повтор',1)); }
     for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
       if(g.classList.contains('pt-lib')&&window.MayatnikTemplatePanel){

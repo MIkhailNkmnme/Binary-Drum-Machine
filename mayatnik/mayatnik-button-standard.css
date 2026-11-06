@@ -57,6 +57,8 @@ body.mayatnik-menu-ready #mayatnikRail .gz-group.gz-mini.gz-open>.may-rail-list{
 :is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list{padding:0!important;margin:0!important;background:#0e1116!important;clip-path:none!important;filter:none!important;isolation:isolate;overflow:visible!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair{padding:0!important;gap:0!important}
 .may-standard-pair>.may-standard-outline{display:none}
+/* МАЯ-573: history shares the ordinary pair geometry and state outlines. */
+#paintTools .may-history-half.dis{opacity:.35;cursor:default}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-half{--may-outline:#394657;--may-stroke:1px;position:relative!important;display:flex;align-items:center;justify-content:center;flex:0 0 64px!important;width:64px!important;min-width:64px!important;height:24px;margin:0!important;padding:0 5px!important;background:transparent!important;clip-path:polygon(12px 0,56px 0,64px 24px,12px 24px,0 12px)!important;color:#dfe6f5!important;overflow:hidden;font-size:11px!important;isolation:isolate}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-h1{margin-left:-8px!important;clip-path:polygon(0 0,52px 0,64px 12px,52px 24px,8px 24px)!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-reverse>.gz-h0{clip-path:polygon(12px 0,64px 0,56px 24px,12px 24px,0 12px)!important}
