@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.019</title>
+<title>Зеркалиус — Стенд — v0.020</title>
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
      v0.012: по просьбе «и балансы 0 и 1 в кадре» — в плеере и под каждой мини-картинкой показаны
@@ -32,6 +32,9 @@
      v0.019: по просьбе «при выборе перемещай наверх поле с данным заголовком, внизу которые после
      плеера» — выбор мини-картинки способа теперь плавно поднимает наверх его раздел с заголовком
      (рост → раздел 1, копии в впадинах → раздел 2, вложение битов → раздел 3, старая запись → #old).
+     v0.020: по уточнению «перестановку разделов местами» — вместо прокрутки выбранный раздел
+     теперь физически переставляется первым под плеером (moveSection), остальные разделы остаются ниже
+     в исходном порядке. Для «старой записи» первым встаёт раздел 1, где она лежит.
 
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
@@ -121,7 +124,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.019 · 06.11.2026</span>
+  <span class="ver">v0.020 · 06.11.2026</span>
 </header>
 <main>
   <section class="card player-sticky" id="player">
@@ -346,7 +349,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.019 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.020 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -1050,7 +1053,19 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (on) { acc = 0; last = performance.now(); }
     }
     function setStep(k) { step = Math.max(0, Math.min(METHODS[method].steps - 1, k)); STEPS[method] = step; render(); }
-    const SECTION_OF = { growth: 'growth', holes: 'nesting', nest: 'zoom', old: 'old' };
+    const SECTION_OF = { growth: 'growth', holes: 'nesting', nest: 'zoom', old: 'growth' };
+    const METHOD_SECTIONS = ['growth', 'nesting', 'zoom'];
+    // Перестановка разделов: выбранный способ встаёт первым под плеером, остальные — ниже.
+    function moveSection(m) {
+      const player = $('player');
+      if (!player) return;
+      const parent = player.parentElement;
+      const target = document.getElementById(SECTION_OF[m] || m);
+      if (!target) return;
+      const order = [target, ...METHOD_SECTIONS.map((id) => document.getElementById(id)).filter((el) => el && el !== target)];
+      let ref = player.nextSibling;
+      for (const el of order) { parent.insertBefore(el, ref); ref = el.nextSibling; }
+    }
     function setMethod(m) {
       if (!METHODS[m]) return;
       method = m; step = STEPS[m];
@@ -1058,9 +1073,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.method === m)));
       setAuto(false);
       render();
-      // При выборе способа поднимаем наверх его раздел с заголовком (разделы ниже плеера).
-      const sec = document.getElementById(SECTION_OF[m] || m);
-      if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      moveSection(m);
     }
     play.addEventListener('click', () => setAuto(!auto));
     prev.addEventListener('click', () => { setAuto(false); setStep(step - 1); });
