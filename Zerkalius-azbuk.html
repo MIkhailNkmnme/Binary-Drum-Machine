@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.053</title>
+<title>Zerkalius АзъБукъ v0.054</title>
+<!-- v0.054 · АЗБ-055: ПКМ сразу закрашивает клетку последним выбранным цветом, без переключения палитры и стирания повторным нажатием. -->
 <!-- v0.053 · АЗБ-054: Canvas в физических пикселях, линии и внешняя рамка по одному пикселю; «Размеры» считает RGB каждой клетки из отображаемого bitmap. -->
 <!-- v0.052 · АЗБ-053: карандаш, палитра 32 цветов с множественным выбором и циклом ПКМ; повторное нажатие своим цветом стирает, цветные рисунки сохраняются с переносом прежних. -->
 <!-- v0.051 · АЗБ-052: поле по центру, целые размеры ячеек, рамка снаружи и точные размеры/количество пикселей. -->
@@ -253,7 +254,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.053"></span>
+    <span class="pbtn ver" aria-label="v0.054"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -343,7 +344,7 @@
       <button type="button" data-pixel-size="128" title="Поле 128 × 128">128</button>
     </div>
     <div class="tools pixel-actions" role="group" aria-label="Рисование по клеткам">
-      <button id="pixelDraw" type="button" aria-pressed="true" title="Карандаш: рисовать активным цветом; повторное нажатие на клетку этого цвета стирает. Правая кнопка на поле выбирает следующий из выбранных цветов по кругу">Карандаш</button>
+      <button id="pixelDraw" type="button" aria-pressed="true" title="Карандаш: рисовать активным цветом; повторное нажатие на клетку этого цвета стирает. Правая кнопка сразу закрашивает последним выбранным цветом">Карандаш</button>
       <button id="pixelErase" type="button" aria-pressed="false" title="Ластик: возвращать клетки к фону нажатием и протяжкой">Ластик</button>
       <button id="pixelUndo" type="button" title="Отменить последний штрих или очистку этого размера">Отмена</button>
       <button id="pixelRedo" type="button" title="Повторить отменённое действие этого размера">Повтор</button>
@@ -353,9 +354,9 @@
   </div>
   <div id="pixelPalette" class="pixel-palette" role="group" aria-label="Палитра 32 цветов: выберите один или несколько"></div>
   <div id="pixelActive" role="status"><span id="pixelActiveColor" aria-hidden="true"></span><span id="pixelActiveLabel"></span></div>
-  <div class="pixel-viewport"><canvas id="pixelGrid" width="642" height="642" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp pixelSelection" title="Карандаш: повторное нажатие своим цветом стирает. Правая кнопка переключает активный цвет по выбранным по кругу">Карандаш рисует по клеткам.</canvas></div>
+  <div class="pixel-viewport"><canvas id="pixelGrid" width="642" height="642" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp pixelSelection" title="Карандаш: повторное нажатие своим цветом стирает. Правая кнопка сразу закрашивает последним выбранным цветом">Карандаш рисует по клеткам.</canvas></div>
   <div id="pixelSelection"></div>
-  <p id="pixelHelp" hidden>Карандаш рисует активным цветом; на клетке того же цвета начинает стирающий штрих. Ластик возвращает фон. Правая кнопка переключает выбранные цвета по кругу, не меняя рисунок. Стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</p>
+  <p id="pixelHelp" hidden>Карандаш рисует активным цветом; на клетке того же цвета начинает стирающий штрих. Ластик возвращает фон. Правая кнопка сразу закрашивает клетку последним выбранным цветом палитры, включая протяжку; повтор не стирает. Стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</p>
   <div id="pixelMetrics"></div>
   <div id="pixelNotice" role="status" aria-live="polite"></div>
   <div id="pixelDimensions" hidden>
@@ -1410,7 +1411,7 @@ renderEditor();
       const valid = [...new Set(saved.selected.filter(value => Number.isInteger(value) && value >= 0 && value < 32))];
       if (valid.length) selected = valid;
     }
-    activeColor = selected.includes(saved?.activeColor) ? saved.activeColor : selected[selected.length - 1];
+    activeColor = selected[selected.length - 1];
     erase = saved?.erase === true;
     for (const n of sizes) {
       const bits = saved?.drawings?.[n];
@@ -1433,7 +1434,7 @@ renderEditor();
     button.type = 'button'; button.className = 'pixel-swatch'; button.dataset.pixelColor = index;
     button.style.setProperty('--pixel-color', color);
     button.setAttribute('aria-label', colorLabel(index));
-    button.title = colorLabel(index) + '. Нажатие добавляет или убирает цвет из выбранных; последний выбранный — активный. Правая кнопка на поле — следующий выбранный по кругу.';
+    button.title = colorLabel(index) + '. Нажатие добавляет или убирает цвет из выбранных; последний выбранный — активный. Правая кнопка на поле сразу красит этим цветом.';
     palette.append(button);
     return button;
   });
@@ -1443,7 +1444,7 @@ renderEditor();
       button.dataset.active = String(index === activeColor);
     });
     document.getElementById('pixelActiveColor').style.setProperty('--pixel-color', colors[activeColor]);
-    document.getElementById('pixelActiveLabel').textContent = 'Карандаш: ' + colorLabel(activeColor).toLowerCase() + ' · выбрано ' + selected.length + ' из 32 · ПКМ — следующий по кругу';
+    document.getElementById('pixelActiveLabel').textContent = 'Карандаш: ' + colorLabel(activeColor).toLowerCase() + ' · выбрано ' + selected.length + ' из 32 · ПКМ — сразу красить';
     document.getElementById('pixelDraw').setAttribute('aria-pressed', String(!erase));
     document.getElementById('pixelErase').setAttribute('aria-pressed', String(erase));
   }
@@ -1637,12 +1638,8 @@ renderEditor();
     const start = point(event); if (!start) return;
     event.preventDefault();
     grid.focus({preventScroll: true});
-    if (event.button === 2) {
-      const cycle = selected.slice().sort((a, b) => a - b);
-      activeColor = cycle[(cycle.indexOf(activeColor) + 1) % cycle.length];
-      renderPalette(); save(); return;
-    }
-    const value = erase || drawings[size][start.y * size + start.x] === activeColor ? 0 : activeColor;
+    const value = event.button === 2 ? activeColor :
+      erase || drawings[size][start.y * size + start.x] === activeColor ? 0 : activeColor;
     stroke = {id: event.pointerId, before: snapshot(), value, last: null};
     grid.setPointerCapture(event.pointerId);
     paintTo(start); renderInk();
