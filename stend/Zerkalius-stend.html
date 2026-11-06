@@ -3,18 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.009</title>
-<!-- Стенд вариантов (v0.009, 2026-11-06): все предложения по росту и вложению треугольника.
-     v0.002: варианты «копия вдвое меньше впадины» и «×4 без переворота», раздел «Как встроить».
-     v0.003: петля ×4 признана бесшовной; видео бесшовной петли.
-     v0.004: демо-страница «Рост треугольника» и 4K-ролик роста 32→2048.
-     v0.005: ссылка на «Маятник — тестовый треугольник: рост».
-     v0.006: отмечено сделанное — режим «Рост» в фоне Хаба и страница роста Маятника.
-     v0.007: исправлено демо зума (тень size→sz, выравнивание кадра).
-     v0.008: разделы 1 и 3 переведены на полотно «1 бит = 1 пиксель» без камеры.
-     v0.009: по просьбе пользователя у шагов появился бегунок с стрелками и счётчиком,
-     «Авто»/«Плей» и «Сначала» — у роста битов (раздел 1), вложения битов (раздел 3) и
-     покадрово у старой записи с камерой (72 кадра).
+<title>Зеркалиус — Стенд — v0.010</title>
+<!-- Стенд вариантов (v0.010, 2026-11-06): все предложения по росту и вложению треугольника.
+     v0.002–v0.009: варианты цвета, бесшовная петля ×4, демо-страница роста, 4K-ролик, режим «Рост»
+     в фоне Хаба, страница роста Маятника, полотно «1 бит = 1 пиксель», транспорт шагов.
+     v0.010: по просьбе пользователя — одно окно плеера для всех способов: сверху закреплённый (sticky)
+     плеер, внизу переключатель по мини-картинкам способов, под каждой — ссылка к заголовку раздела;
+     интерактив из разделов собран в плеер.
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
 <style>
@@ -60,6 +55,22 @@
   .transport input[type=range]{flex:1;min-width:160px;accent-color:var(--gold)}
   .transport output{font-family:ui-monospace,Consolas,monospace;color:var(--gold);min-width:3.4em;text-align:center}
   .transport label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+  html{scroll-behavior:smooth}
+  section.card{scroll-margin-top:500px}
+  figure#old{scroll-margin-top:500px}
+  .player-sticky{position:sticky;top:49px;z-index:8;background:var(--bg);padding-top:6px}
+  .player-body{display:grid;grid-template-columns:minmax(0,720px) minmax(250px,1fr);gap:14px;align-items:start}
+  @media(max-width:900px){.player-body{grid-template-columns:1fr} section.card,figure#old{scroll-margin-top:740px}}
+  .player-side{display:flex;flex-direction:column;gap:8px}
+  .player-side .info{font-size:12px;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
+  .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .thumb{display:flex;flex-direction:column;align-items:center;gap:2px;width:118px}
+  .thumb button{display:flex;flex-direction:column;align-items:center;gap:1px;background:#0a0e14;border:1px solid var(--line);
+    border-radius:6px;padding:3px;cursor:pointer;color:var(--text);font:11px/1.2 "Segoe UI",system-ui,sans-serif;width:100%}
+  .thumb button canvas{width:108px;height:54px;display:block;background:#04060a;border-radius:3px}
+  .thumb button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+  .thumb a{font-size:10px;color:var(--muted);text-decoration:none}
+  .thumb a:hover{color:var(--gold);text-decoration:underline}
   figure{margin:14px 0 0}
   figure img{width:100%;display:block;border:1px solid var(--line);border-radius:8px}
   figcaption{color:var(--muted);font-size:12px;margin-top:6px}
@@ -81,14 +92,53 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.009 · 06.11.2026</span>
+  <span class="ver">v0.010 · 06.11.2026</span>
 </header>
 <main>
   <p class="lead">
     Все варианты продолжения треугольника из обсуждения — на одной странице, чтобы ничего не потерялось.
     Ни один вариант отсюда не удаляется: новые добавляются новыми разделами.
-    Цифры — для окна 1608×798, как на скриншоте; на 4K видимых уровней примерно на два больше.
+    Вверху — одно окно плеера: все способы в одном месте, внизу под ним — мини-картинки способов
+    и ссылки к их разделам. Цифры — для окна 1608×798, как на скриншоте; на 4K видимых уровней примерно на два больше.
   </p>
+
+  <section class="card player-sticky" id="player">
+    <h2>Плеер <small>все способы в одном окне; внизу — мини-картинки способов и ссылки к разделам</small></h2>
+    <div class="player-body">
+      <canvas id="cvPlayer" class="bits" style="aspect-ratio:2/1;width:100%"></canvas>
+      <div class="player-side">
+        <div class="controls">
+          <button id="pPrev" type="button" aria-label="Шаг назад" title="Шаг назад">◀</button>
+          <button id="pPlay" type="button" aria-pressed="true" title="Авто: шаги идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
+          <button id="pNext" type="button" aria-label="Шаг вперёд" title="Шаг вперёд">▶</button>
+          <button id="pReset" type="button">Сначала</button>
+        </div>
+        <div class="controls">
+          <input id="pRange" type="range" min="0" max="4" step="1" value="0" aria-label="Шаг">
+          <output id="pStep">1/5</output>
+        </div>
+        <div class="info" id="pInfo"></div>
+        <div class="thumbs" role="group" aria-label="Способы">
+          <div class="thumb">
+            <button type="button" data-method="growth" aria-pressed="true"><canvas id="thGrowth" width="108" height="54"></canvas><span>Рост битов</span></button>
+            <a href="#growth">к заголовку →</a>
+          </div>
+          <div class="thumb">
+            <button type="button" data-method="holes"><canvas id="thHoles" width="108" height="54"></canvas><span>Копии в впадинах</span></button>
+            <a href="#nesting">к заголовку →</a>
+          </div>
+          <div class="thumb">
+            <button type="button" data-method="nest"><canvas id="thNest" width="108" height="54"></canvas><span>Вложение битов</span></button>
+            <a href="#zoom">к заголовку →</a>
+          </div>
+          <div class="thumb">
+            <button type="button" data-method="old"><canvas id="thOld" width="108" height="54"></canvas><span>Старая запись</span></button>
+            <a href="#old">к заголовку →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="card" id="growth">
     <h2>1. Рост без камеры — только биты <small>1 бит = 1 пиксель, шаг дискретный</small></h2>
@@ -97,17 +147,7 @@
       Каждый шаг — следующая октава (N = 32 → 64 → 128 → 256 → 512); биты встают на целые пиксели,
       без округлений и приблизительных положений. Шаг дискретный: рисунок сразу переставляется, без плавности.
     </p>
-    <canvas id="cvBits" class="bits" style="aspect-ratio:2/1;max-width:1024px;margin:0 auto"></canvas>
-    <div class="transport" role="group" aria-label="Управление шагами">
-      <button id="bitsPrev" type="button" aria-label="Шаг назад" title="Шаг назад">◀</button>
-      <button id="bitsPlay" type="button" aria-pressed="true" title="Авто: шаги идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
-      <button id="bitsNext" type="button" aria-label="Шаг вперёд" title="Шаг вперёд">▶</button>
-      <input id="bitsRange" type="range" min="0" max="4" step="1" value="0" list="bitsTicks" aria-label="Шаг">
-      <datalist id="bitsTicks"><option value="0"></option><option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option></datalist>
-      <output id="bitsStep">1/5</output>
-      <button id="bitsReset" type="button">Сначала</button>
-    </div>
-    <div class="controls" style="justify-content:center"><output id="bitsInfo"></output></div>
+    <p class="sub" style="margin:0 0 6px"><a href="#player">↑ Этот способ — в плеере выше</a>: бегунок, стрелки, «Авто».</p>
     <div class="cols">
       <div>
         <p class="sub" style="margin-top:0">Правило 90 от одной вершины: <code>b(2r,2c) = b(2r+1,2c+1) = b(r,c)</code>
@@ -130,17 +170,9 @@
       </div>
     </div>
     <div class="cols">
-      <figure>
-        <canvas id="cvOldGrowth" style="aspect-ratio:2/1;width:100%;background:#04060a;border:1px solid var(--line);border-radius:8px"></canvas>
-        <div class="transport" role="group" aria-label="Покадровое управление записью">
-          <button id="oldPrev" type="button" aria-label="Кадр назад" title="Кадр назад">◀</button>
-          <button id="oldPlay" type="button" aria-pressed="true" title="Авто: кадры идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
-          <button id="oldNext" type="button" aria-label="Кадр вперёд" title="Кадр вперёд">▶</button>
-          <input id="oldRange" type="range" min="0" max="71" step="1" value="0" aria-label="Кадр записи">
-          <output id="oldStep">1/72</output>
-          <button id="oldReset" type="button">Сначала</button>
-        </div>
-        <figcaption>Старый опыт с камерой: октавы 32 → 1024 с плавным отъездом; камера двигалась. Бегунок — по кадрам записи, стрелки — ручной шаг.</figcaption>
+      <figure id="old">
+        <img src="assets/growth-zoom.gif" alt="Старый опыт: рост с плавным отъездом камеры">
+        <figcaption>Старый опыт с камерой: октавы 32 → 1024 с плавным отъездом. В плеере выше — по кадрам.</figcaption>
       </figure>
       <figure>
         <img src="assets/octaves-1608.png" alt="Старый опыт: октавы в окне 1608×798">
@@ -161,24 +193,11 @@
       Чёрные треугольники уменьшаются вдвое за уровень, видимых уровней ~9–10; чёрная площадь падает ×1/4 за уровень
       (1/4 → 1/16 → 1/64 → …), предел — сплошной залитый треугольник. Вложение — это затягивание, а не бесконечный рост.
     </p>
-    <div class="cols">
-      <div>
-        <canvas id="cvNest" style="aspect-ratio:2/1"></canvas>
-        <div class="controls">
-          <button id="nestPlay" type="button" aria-pressed="true">Пауза</button>
-          <button id="nestFit" type="button" aria-pressed="true">Копия = впадина</button>
-          <label>уровень <input id="nestLevel" type="range" min="0" max="4" step="1" value="1"><output id="nestLevelOut">1</output></label>
-        </div>
-        <div class="controls">
-          <label>мастер <input id="nestMaster" type="color" value="#ffc45c"></label>
-          <label>копии <input id="nestCopy" type="color" value="#6ee1eb"></label>
-        </div>
-      </div>
-      <figure style="margin:0">
-        <img src="assets/vlozhenie.png" alt="Вложение копий в чёрные впадины: уровни 0–3">
-        <figcaption>Уровни вложения 0–3: жёлтый мастер, синие/оранжевые/зелёные копии в каждой впадине.</figcaption>
-      </figure>
-    </div>
+    <figure>
+      <img src="assets/vlozhenie.png" alt="Вложение копий в чёрные впадины: уровни 0–3">
+      <figcaption>Уровни вложения 0–3: жёлтый мастер, синие/оранжевые/зелёные копии в каждой впадине.</figcaption>
+    </figure>
+    <p class="sub"><a href="#player">↑ Этот способ — в плеере выше</a>: бегунок, стрелки, «Авто».</p>
     <figure>
       <img src="assets/vlozhenie-colours.png" alt="Варианты цвета копий">
       <figcaption>Цвета копий: голубые, белые, красные, инверсия, циан, оранжевые — все сохранены.</figcaption>
@@ -201,32 +220,7 @@
       в неё целыми клетками — без масштаба, без округлений. Следующая впадина вдвое меньше, и так до одной
       клетки. Шаг дискретный: уровень 0 → 4, без плавности.
     </p>
-    <div class="cols">
-      <div>
-        <canvas id="cvBitsNest" class="bits" style="aspect-ratio:63/32"></canvas>
-        <div class="transport" role="group" aria-label="Управление шагами">
-          <button id="nestBitsPrev" type="button" aria-label="Шаг назад" title="Шаг назад">◀</button>
-          <button id="nestBitsPlay" type="button" aria-pressed="true" title="Авто: шаги идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
-          <button id="nestBitsNext" type="button" aria-label="Шаг вперёд" title="Шаг вперёд">▶</button>
-          <input id="nestBitsRange" type="range" min="0" max="5" step="1" value="0" list="nestBitsTicks" aria-label="Уровень">
-          <datalist id="nestBitsTicks"><option value="0"></option><option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"></option></datalist>
-          <output id="nestBitsStep">0/5</output>
-          <button id="nestBitsReset" type="button">Сначала</button>
-          <label><input id="nestBitsGrid" type="checkbox"> сетка клеток</label>
-        </div>
-        <div class="controls"><output id="nestBitsInfo"></output></div>
-      </div>
-      <div>
-        <p class="sub" style="margin-top:0">Что происходит:</p>
-        <ul class="sub" style="margin:0 0 10px 18px;padding:0">
-          <li>внешняя картинка — 63×32 клетки;</li>
-          <li>в её перевёрнутую впадину встаёт картинка N=16 (31×16) — ровно в размер;</li>
-          <li>в её впадину — N=8, затем N=4, N=2, N=1;</li>
-          <li>ни одна клетка не масштабируется и не округляется.</li>
-        </ul>
-        <p class="sub">Старый опыт с камерой (бесшовная петля ×4) сохранён ниже как запись.</p>
-      </div>
-    </div>
+    <p class="sub" style="margin:0 0 12px"><a href="#player">↑ Этот способ — в плеере выше</a>: бегунок, стрелки, «Авто».</p>
     <figure>
       <video src="assets/loop-zoom-x4.mp4" controls muted loop playsinline style="width:100%;border:1px solid var(--line);border-radius:8px;background:#04060a"></video>
       <figcaption>Старый опыт с камерой: бесшовная петля ×4 (1920×1080, 8 с).</figcaption>
@@ -322,7 +316,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.009 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.010 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -725,68 +719,185 @@ b(2r+1,2c+1) = b(r, c)</pre>
     requestAnimationFrame(loop);
   })();
 
-  /* ================= 6. Запись старого роста с камерой: покадровый плеер ================= */
+  /* ================= 6. Одно окно плеера: все способы, мини-картинки, ссылки ================= */
   (() => {
-    const cv = $('cvOldGrowth');
+    const cv = $('cvPlayer');
     if (!cv) return;
-    const CW = 800, CH = 400;
-    cv.width = CW; cv.height = CH;
-    const ctx = cv.getContext('2d');
-    const MAXN = 1024, W = 2 * MAXN - 1, C = (W - 1) >> 1;
-    const field = new Uint8Array(MAXN * W);
-    field[C] = 1;
-    for (let r = 1; r < MAXN; r++) {
-      const base = r * W, up = base - W;
-      for (let c = 0; c < W; c++) field[base + c] = (c > 0 ? field[up + c - 1] : 0) ^ (c + 1 < W ? field[up + c + 1] : 0);
-    }
-    const img = ctx.createImageData(CW, CH);
-    const buf = new Uint32Array(img.data.buffer);
+    const PW = 1024, PH = 512;
+    cv.width = PW; cv.height = PH;
+    const pctx = cv.getContext('2d');
+    const scene = document.createElement('canvas');
+    scene.width = PW; scene.height = PH;
+    const sctx = scene.getContext('2d');
+    const imgG = sctx.createImageData(PW, PH);
+    const bufG = new Uint32Array(imgG.data.buffer);
     const GOLD = (255 << 24 | 92 << 16 | 196 << 8 | 255) >>> 0;
-    const PERIOD = 12, FRAMES = 6 * PERIOD;   // 6 октав по 12 кадров — как в записи
-    const info = $('oldStep'), play = $('oldPlay'), prev = $('oldPrev'), next = $('oldNext'),
-      range = $('oldRange'), reset = $('oldReset');
-    let frame = 0, auto = true, last = performance.now(), acc = 0;
-    function paint() {
-      buf.fill(0);
-      const octave = Math.floor(frame / PERIOD);
-      const t = (frame % PERIOD) / PERIOD;
-      const n = 32 << octave;
-      const zoom = 2 - t;
-      const cell = Math.min(CW / (2 * n - 1), CH / n) * zoom;
-      const x0 = CW / 2 - (2 * n - 1) * cell / 2;
-      for (let py = 0; py < CH; py++) {
-        const fr = Math.floor(py / cell);
-        if (fr < 0 || fr >= n) continue;
-        const base = fr * W + (C - (n - 1));
-        for (let px = 0; px < CW; px++) {
-          const c = Math.floor((px - x0) / cell);
-          if (c < 0 || c >= 2 * n - 1) continue;
-          if (field[base + c]) buf[py * CW + px] = GOLD;
+    const BLACK = (255 << 24 | 10 << 16 | 6 << 8 | 4) >>> 0;
+    const MAXN = 512, GW = 2 * MAXN - 1, GC = (GW - 1) >> 1;
+    const gfield = new Uint8Array(MAXN * GW);
+    gfield[GC] = 1;
+    for (let r = 1; r < MAXN; r++) {
+      const base = r * GW, up = base - GW;
+      for (let c = 0; c < GW; c++) gfield[base + c] = (c > 0 ? gfield[up + c - 1] : 0) ^ (c + 1 < GW ? gfield[up + c + 1] : 0);
+    }
+    const N0 = 32, NW = 2 * N0 - 1, NC = (NW - 1) >> 1;
+    const nfield = new Uint8Array(N0 * NW);
+    nfield[NC] = 1;
+    for (let r = 1; r < N0; r++) {
+      const base = r * NW, up = base - NW;
+      for (let c = 0; c < NW; c++) nfield[base + c] = (c > 0 ? nfield[up + c - 1] : 0) ^ (c + 1 < NW ? nfield[up + c + 1] : 0);
+    }
+    function nbit(n, r, c) { return nfield[r * NW + (NC - (n - 1)) + c]; }
+    const holesMap = {
+      32: { r: 16, c: 16, h: 16, w: 31 }, 16: { r: 8, c: 8, h: 8, w: 15 },
+      8: { r: 4, c: 4, h: 4, w: 7 }, 4: { r: 2, c: 2, h: 2, w: 3 }, 2: { r: 1, c: 1, h: 1, w: 1 }
+    };
+    const OMAXN = 1024, OW = 2 * OMAXN - 1, OC = (OW - 1) >> 1;
+    const ofield = new Uint8Array(OMAXN * OW);
+    ofield[OC] = 1;
+    for (let r = 1; r < OMAXN; r++) {
+      const base = r * OW, up = base - OW;
+      for (let c = 0; c < OW; c++) ofield[base + c] = (c > 0 ? ofield[up + c - 1] : 0) ^ (c + 1 < OW ? ofield[up + c + 1] : 0);
+    }
+    const oldCv = document.createElement('canvas');
+    oldCv.width = 800; oldCv.height = 400;
+    const octx = oldCv.getContext('2d');
+    const oldImg = octx.createImageData(800, 400);
+    const oldBuf = new Uint32Array(oldImg.data.buffer);
+    const METHODS = {
+      growth: { steps: 5, ms: 1100, name: 'рост битов', text: (s) => `шаг ${s + 1}/5` },
+      holes: { steps: 5, ms: 800, name: 'копии в впадинах', text: (s) => `уровень ${s}/4` },
+      nest: { steps: 6, ms: 900, name: 'вложение битов', text: (s) => `уровень ${s}/5` },
+      old: { steps: 72, ms: 90, name: 'старая запись с камерой', text: (s) => `кадр ${s + 1}/72` }
+    };
+    let method = 'growth', step = 0, auto = true, last = performance.now(), acc = 0;
+    function drawGrowth() {
+      bufG.fill(BLACK);
+      const n = 32 << step, w = 2 * n - 1, x0 = Math.floor((PW - w) / 2);
+      for (let r = 0; r < n; r++) {
+        const base = r * GW + (GC - (n - 1)), off = r * PW + x0;
+        for (let c = 0; c < w; c++) if (gfield[base + c]) bufG[off + c] = GOLD;
+      }
+      sctx.putImageData(imgG, 0, 0);
+    }
+    function holesTree(cx, cy, s, up, order, depth, master, copy) {
+      if (order <= 0) {
+        const p = tri(cx, cy, s, up);
+        sctx.beginPath(); sctx.moveTo(p[0][0], p[0][1]); sctx.lineTo(p[1][0], p[1][1]); sctx.lineTo(p[2][0], p[2][1]); sctx.closePath();
+        sctx.fillStyle = master; sctx.fill();
+        return;
+      }
+      const r = sub(cx, cy, s, up);
+      for (const [x, y] of r.corners) holesTree(x, y, s / 2, up, order - 1, depth, master, copy);
+      if (depth > 0) holesTree(r.hole[0], r.hole[1], s / 2, -up, order, depth - 1, copy, copy);
+    }
+    function drawHoles() {
+      sctx.fillStyle = '#04060a'; sctx.fillRect(0, 0, PW, PH);
+      const h = 430, s = h / (SQ3 / 2);
+      sctx.save();
+      sctx.translate(PW / 2, PH / 2 + h / 6);
+      holesTree(0, 0, s, 1, 2, step, '#ffc45c', '#6ee1eb');
+      sctx.restore();
+    }
+    function placementsNest() {
+      const list = [];
+      let n = N0, R = 0, Cc = 0, rot = 0;
+      for (let l = 0; l <= step && n >= 1; l++) {
+        list.push({ n, R, C: Cc, rot });
+        const h = holesMap[n];
+        if (!h) break;
+        if (rot === 0) { R += h.r; Cc += h.c; } else { R += n - h.r - h.h; Cc += (2 * n - 2) - h.c - h.w + 1; }
+        n /= 2; rot = 1 - rot;
+      }
+      return list;
+    }
+    function drawNest() {
+      sctx.fillStyle = '#04060a'; sctx.fillRect(0, 0, PW, PH);
+      const K = 8, ox = Math.floor((PW - NW * K) / 2), oy = Math.floor((PH - N0 * K) / 2);
+      for (const p of placementsNest()) {
+        sctx.fillStyle = p.n === N0 ? '#ffc45c' : '#6ee1eb';
+        const w = 2 * p.n - 1;
+        for (let i = 0; i < p.n; i++) for (let j = 0; j < w; j++) {
+          const v = p.rot ? nbit(p.n, p.n - 1 - i, w - 1 - j) : nbit(p.n, i, j);
+          if (v) sctx.fillRect(ox + (p.C + j) * K, oy + (p.R + i) * K, K, K);
         }
       }
-      ctx.putImageData(img, 0, 0);
-      range.value = String(frame);
-      info.textContent = `${frame + 1}/${FRAMES}`;
+    }
+    function drawOld() {
+      oldBuf.fill(BLACK);
+      const octave = Math.floor(step / 12), t = (step % 12) / 12;
+      const n = 32 << octave, zoom = 2 - t;
+      const cell = Math.min(800 / (2 * n - 1), 400 / n) * zoom;
+      const x0 = 400 - (2 * n - 1) * cell / 2;
+      for (let py = 0; py < 400; py++) {
+        const fr = Math.floor(py / cell);
+        if (fr < 0 || fr >= n) continue;
+        const base = fr * OW + (OC - (n - 1));
+        for (let px = 0; px < 800; px++) {
+          const c = Math.floor((px - x0) / cell);
+          if (c < 0 || c >= 2 * n - 1) continue;
+          if (ofield[base + c]) oldBuf[py * 800 + px] = GOLD;
+        }
+      }
+      octx.putImageData(oldImg, 0, 0);
+      sctx.fillStyle = '#04060a'; sctx.fillRect(0, 0, PW, PH);
+      sctx.drawImage(oldCv, Math.floor((PW - 800) / 2), Math.floor((PH - 400) / 2));
+    }
+    const info = $('pInfo'), play = $('pPlay'), prev = $('pPrev'), next = $('pNext'),
+      range = $('pRange'), stepOut = $('pStep'), reset = $('pReset');
+    function render() {
+      if (method === 'growth') drawGrowth();
+      else if (method === 'holes') drawHoles();
+      else if (method === 'nest') drawNest();
+      else drawOld();
+      pctx.clearRect(0, 0, PW, PH);
+      pctx.drawImage(scene, 0, 0);
+      range.value = String(step);
+      stepOut.textContent = METHODS[method].text(step);
+      info.textContent = `${METHODS[method].name} · ${METHODS[method].text(step)}`;
     }
     function setAuto(on) {
       auto = on;
       play.setAttribute('aria-pressed', String(on));
       play.textContent = on ? '⏸ Авто' : '▶ Плей';
-      play.title = on ? 'Авто: кадры идут сами' : 'Плей: пустить кадры автоматически';
+      play.title = on ? 'Авто: шаги идут сами' : 'Плей: пустить шаги автоматически';
       if (on) { acc = 0; last = performance.now(); }
     }
-    function setFrame(k) { frame = Math.max(0, Math.min(FRAMES - 1, k)); paint(); }
+    function setStep(k) { step = Math.max(0, Math.min(METHODS[method].steps - 1, k)); render(); }
+    function setMethod(m) {
+      if (!METHODS[m]) return;
+      method = m; step = 0;
+      range.max = String(METHODS[m].steps - 1);
+      document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.method === m)));
+      setAuto(false);
+      render();
+    }
     play.addEventListener('click', () => setAuto(!auto));
-    prev.addEventListener('click', () => { setAuto(false); setFrame(frame - 1); });
-    next.addEventListener('click', () => { setAuto(false); setFrame(frame + 1); });
-    range.addEventListener('input', () => { setAuto(false); setFrame(Number(range.value)); });
-    reset.addEventListener('click', () => { setAuto(false); setFrame(0); });
+    prev.addEventListener('click', () => { setAuto(false); setStep(step - 1); });
+    next.addEventListener('click', () => { setAuto(false); setStep(step + 1); });
+    range.addEventListener('input', () => { setAuto(false); setStep(Number(range.value)); });
+    reset.addEventListener('click', () => { setAuto(false); setStep(0); });
+    document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.addEventListener('click', () => setMethod(b.dataset.method)));
+    // Мини-картинки: рисуем сцену в показательном состоянии и уменьшаем в 108×54.
+    const THUMB_STEP = { growth: 4, holes: 2, nest: 5, old: 47 };
+    for (const m of Object.keys(METHODS)) {
+      method = m; step = THUMB_STEP[m];
+      if (m === 'growth') drawGrowth(); else if (m === 'holes') drawHoles(); else if (m === 'nest') drawNest(); else drawOld();
+      const tc = $('th' + m.charAt(0).toUpperCase() + m.slice(1));
+      if (tc) { const t = tc.getContext('2d'); t.clearRect(0, 0, 108, 54); t.drawImage(scene, 0, 0, PW, PH, 0, 0, 108, 54); }
+    }
+    method = 'growth'; step = 0;
+    setAuto(true);
+    render();
     function loop(now) {
       const dt = now - last; last = now;
-      if (auto) { acc += dt; if (acc >= 90) { acc = 0; setFrame((frame + 1) % FRAMES); } }
+      if (auto) {
+        const ms = METHODS[method].ms;
+        acc += dt;
+        if (acc >= ms) { acc = 0; setStep((step + 1) % METHODS[method].steps); }
+      }
       requestAnimationFrame(loop);
     }
-    paint(); setAuto(true);
     requestAnimationFrame(loop);
   })();
 })();
