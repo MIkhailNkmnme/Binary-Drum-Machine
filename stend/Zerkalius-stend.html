@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.014</title>
+<title>Зеркалиус — Стенд — v0.015</title>
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
      v0.012: по просьбе «и балансы 0 и 1 в кадре» — в плеере и под каждой мини-картинкой показаны
@@ -17,6 +17,9 @@
      линией, серые линии примагничивания для длин 2n−1 / 4n−1 / 8n−1» — в плеере две красные
      пунктирные линии краёв, их можно тянуть мышью/пальцем, вторая идёт зеркально; серые пунктирные —
      кандидаты примагничивания для ширин 2n−1, 4n−1, 8n−1; строка «края: …» показывает ширину.
+     v0.015: по просьбе «зумить внутри плеера по колёсику и двигать положение» — колесо мыши зумит
+     полотно (1…16×) к курсору, перетаскивание мышью/пальцем двигает вид (сдвиг), двойной щелчок
+     возвращает 1×; края и серые линии пересчитываются в экранные координаты.
 
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
@@ -105,7 +108,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.014 · 06.11.2026</span>
+  <span class="ver">v0.015 · 06.11.2026</span>
 </header>
 <main>
   <p class="lead">
@@ -336,7 +339,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.014 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.015 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -945,9 +948,18 @@ b(2r+1,2c+1) = b(r, c)</pre>
     }
     const info = $('pInfo'), play = $('pPlay'), prev = $('pPrev'), next = $('pNext'),
       range = $('pRange'), stepOut = $('pStep'), reset = $('pReset'), edgesOut = $('pEdges');
-    // Края: две тонкие пунктирные линии по 1 px. Тянешь одну — вторая идёт зеркально.
-    // Серые линии — возможные примагничивания для ширин 2n−1, 4n−1, 8n−1.
-    let edgeW = 0, edgeDrag = null;
+    // Края: две тонкие пунктирные линии по 1 px; тянешь одну — вторая зеркально.
+    // Серые — возможные примагничивания 2n−1 / 4n−1 / 8n−1. Колесо — зум, перетаскивание — сдвиг.
+    let edgeW = 0, edgeDrag = null, panDrag = null;
+    let viewScale = 1, viewX = 0, viewY = 0;
+    function clampView() {
+      viewScale = Math.max(1, Math.min(16, viewScale));
+      if (viewScale <= 1.0001) { viewX = 0; viewY = 0; return; }
+      viewX = Math.min(0, Math.max(PW - PW * viewScale, viewX));
+      viewY = Math.min(0, Math.max(PH - PH * viewScale, viewY));
+    }
+    function toSceneX(sx) { return (sx - viewX) / viewScale; }
+    function toSceneY(sy) { return (sy - viewY) / viewScale; }
     function naturalWidth() {
       if (method === 'growth') return 2 * (32 << step) - 1;
       if (method === 'nest') return (2 * N0 - 1) * 8;
@@ -975,32 +987,40 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function drawEdges() {
       const cxp = PW / 2;
       pctx.save();
+      pctx.setTransform(1, 0, 0, 1, 0, 0);
       pctx.lineWidth = 1;
       pctx.strokeStyle = 'rgba(150,160,175,.55)';   // серые — куда примагнитится
       pctx.setLineDash([2, 5]);
       for (const w of snapWidths()) {
         for (const x of [cxp - w / 2, cxp + w / 2]) {
-          if (x < 0.5 || x > PW - 0.5) continue;
-          pctx.beginPath(); pctx.moveTo(Math.round(x) + 0.5, 0); pctx.lineTo(Math.round(x) + 0.5, PH); pctx.stroke();
+          const sxp = viewX + x * viewScale;
+          if (sxp < 0.5 || sxp > PW - 0.5) continue;
+          pctx.beginPath(); pctx.moveTo(Math.round(sxp) + 0.5, 0); pctx.lineTo(Math.round(sxp) + 0.5, PH); pctx.stroke();
         }
       }
       pctx.strokeStyle = '#e05a4e';                 // красные — сами края
       pctx.setLineDash([6, 4]);
       for (const x of [cxp - edgeW / 2, cxp + edgeW / 2]) {
-        if (x < 0.5 || x > PW - 0.5) continue;
-        pctx.beginPath(); pctx.moveTo(Math.round(x) + 0.5, 0); pctx.lineTo(Math.round(x) + 0.5, PH); pctx.stroke();
+        const sxp = viewX + x * viewScale;
+        if (sxp < 0.5 || sxp > PW - 0.5) continue;
+        pctx.beginPath(); pctx.moveTo(Math.round(sxp) + 0.5, 0); pctx.lineTo(Math.round(sxp) + 0.5, PH); pctx.stroke();
       }
       pctx.restore();
     }
     function updateEdgesText() {
       if (!edgesOut) return;
       const cands = snapWidths().filter((c) => c <= PW).map((c) => Math.round(c));
-      edgesOut.textContent = `края: ${Math.round(edgeW)} px · примагничивание: ${cands.join(' / ')} px · тяни за пунктир`;
+      edgesOut.textContent = `края: ${Math.round(edgeW)} px · примагничивание: ${cands.join(' / ')} px · зум ×${viewScale.toFixed(2)} · колесо — зум, перетаскивание — сдвиг`;
     }
     function paintPlayer() {
+      pctx.setTransform(1, 0, 0, 1, 0, 0);
       pctx.clearRect(0, 0, PW, PH);
+      pctx.save();
+      pctx.setTransform(viewScale, 0, 0, viewScale, viewX, viewY);
       pctx.drawImage(scene, 0, 0);
+      pctx.restore();
       drawEdges();
+      updateEdgesText();
     }
     function render() {
       edgeW = naturalWidth();
@@ -1013,7 +1033,6 @@ b(2r+1,2c+1) = b(r, c)</pre>
       stepOut.textContent = METHODS[method].text(step);
       info.textContent = `${METHODS[method].name} · ${METHODS[method].text(step)}`;
       updateStats();
-      updateEdgesText();
     }
     function setAuto(on) {
       auto = on;
@@ -1047,36 +1066,71 @@ b(2r+1,2c+1) = b(r, c)</pre>
     }
     // Края: захват мышью/пальцем, вторая линия зеркально, примагничивание к 2n−1 / 4n−1 / 8n−1.
     function canvasX(e) { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) * (PW / r.width); }
-    function edgeHit(x) {
+    function canvasY(e) { const r = cv.getBoundingClientRect(); return (e.clientY - r.top) * (PH / r.height); }
+    function edgeHit(sx) {
       const cxp = PW / 2;
-      if (Math.abs(x - (cxp - edgeW / 2)) <= 10) return 'L';
-      if (Math.abs(x - (cxp + edgeW / 2)) <= 10) return 'R';
+      const sL = viewX + (cxp - edgeW / 2) * viewScale;
+      const sR = viewX + (cxp + edgeW / 2) * viewScale;
+      if (Math.abs(sx - sL) <= 10) return 'L';
+      if (Math.abs(sx - sR) <= 10) return 'R';
       return null;
     }
     cv.style.touchAction = 'none';
+    // Колесо — зум внутри плеера, к курсору.
+    cv.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const mx = canvasX(e), my = canvasY(e);
+      const sxp = toSceneX(mx), syp = toSceneY(my);
+      viewScale *= e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      clampView();
+      viewX = mx - sxp * viewScale;
+      viewY = my - syp * viewScale;
+      clampView();
+      paintPlayer();
+    }, { passive: false });
+    cv.addEventListener('dblclick', () => { viewScale = 1; viewX = 0; viewY = 0; paintPlayer(); });
     cv.addEventListener('pointerdown', (e) => {
       const side = edgeHit(canvasX(e));
-      if (!side) return;
-      edgeDrag = side;
-      setAuto(false);
+      if (side) {
+        edgeDrag = side;
+        setAuto(false);
+        cv.setPointerCapture(e.pointerId);
+        cv.style.cursor = 'ew-resize';
+        e.preventDefault();
+        return;
+      }
+      panDrag = { x: e.clientX, y: e.clientY, vx: viewX, vy: viewY };
       cv.setPointerCapture(e.pointerId);
+      cv.style.cursor = 'grabbing';
       e.preventDefault();
     });
     cv.addEventListener('pointermove', (e) => {
-      const x = canvasX(e);
-      if (!edgeDrag) { cv.style.cursor = edgeHit(x) ? 'ew-resize' : 'default'; return; }
-      const cxp = PW / 2;
-      let w = edgeDrag === 'L' ? 2 * (cxp - x) : 2 * (x - cxp);
-      w = Math.max(8, Math.min(PW, w));
-      let best = null, bd = 1e9;
-      for (const c of snapWidths()) { const d = Math.abs(w - c); if (d < bd) { bd = d; best = c; } }
-      if (best !== null && bd <= 12) w = best;
-      edgeW = w;
-      paintPlayer();
-      updateEdgesText();
+      if (edgeDrag) {
+        const sceneX = toSceneX(canvasX(e));
+        const cxp = PW / 2;
+        let w = edgeDrag === 'L' ? 2 * (cxp - sceneX) : 2 * (sceneX - cxp);
+        w = Math.max(8, Math.min(PW, w));
+        let best = null, bd = 1e9;
+        for (const c of snapWidths()) { const d = Math.abs(w - c); if (d < bd) { bd = d; best = c; } }
+        if (best !== null && bd <= 12 / viewScale) w = best;
+        edgeW = w;
+        paintPlayer();
+        return;
+      }
+      if (panDrag) {
+        const r = cv.getBoundingClientRect();
+        viewX = panDrag.vx + (e.clientX - panDrag.x) * (PW / r.width);
+        viewY = panDrag.vy + (e.clientY - panDrag.y) * (PH / r.height);
+        clampView();
+        paintPlayer();
+        return;
+      }
+      cv.style.cursor = edgeHit(canvasX(e)) ? 'ew-resize' : 'grab';
     });
-    cv.addEventListener('pointerup', () => { edgeDrag = null; });
-    cv.addEventListener('pointercancel', () => { edgeDrag = null; });
+    function endDrag() { edgeDrag = null; panDrag = null; cv.style.cursor = 'grab'; }
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+    cv.addEventListener('pointerleave', () => { if (!edgeDrag && !panDrag) cv.style.cursor = 'default'; });
     method = 'growth'; step = STEPS.growth;
     setAuto(true);
     render();
