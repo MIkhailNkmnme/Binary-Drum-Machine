@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.022</title>
+<title>Зеркалиус — Стенд — v0.023</title>
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
      v0.012: по просьбе «и балансы 0 и 1 в кадре» — в плеере и под каждой мини-картинкой показаны
@@ -41,6 +41,8 @@
 
      v0.022: квадратные превью с картинкой и названием; выбранное открыто вниз и соединено
      боковыми линиями с описанием. Высота, баланс и ссылка перенесены в соответствующий раздел.
+     v0.023: отдельная ступенчатая петля: целочисленная выборка бесконечного правила90,
+     стягивание к вершине, один выходной бит на физический пиксель. Старые варианты сохранены.
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
 <style>
@@ -70,6 +72,7 @@
   .sub{color:var(--muted);font-size:13px;margin:2px 0 5px}
   canvas{width:100%;display:block;background:#04060a;border:1px solid var(--line);border-radius:8px}
   canvas.bits{image-rendering:pixelated}
+  #cvPlayer.pixel-loop{border:0;border-radius:0}
   .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:3px 0 0;font-size:13px}
   .controls button{background:#182130;color:var(--text);border:1px solid #2c3a4e;border-radius:6px;
     padding:6px 12px;font:inherit;cursor:pointer}
@@ -94,7 +97,7 @@
   .player-body{display:block}
   .player-side{display:flex;flex-direction:column;gap:8px}
   .info{font-size:12px;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
-  .thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,118px));gap:8px;margin-top:4px}
+  .thumbs{display:grid;grid-template-columns:repeat(5,minmax(0,118px));gap:8px;margin-top:4px}
   .thumb{position:relative;display:flex;min-width:0}
   .thumb button{display:flex;flex-direction:column;align-items:center;gap:1px;background:#0a0e14;border:1px solid var(--line);
     border-radius:0;padding:3px;cursor:pointer;color:var(--text);font:11px/1.2 "Segoe UI",system-ui,sans-serif;width:100%}
@@ -135,7 +138,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.022 · 06.11.2026</span>
+  <span class="ver">v0.023 · 06.11.2026</span>
 </header>
 <main>
   <section class="card player-sticky" id="player">
@@ -158,6 +161,9 @@
     <div class="thumbs" role="group" aria-label="Способы">
       <div class="thumb">
         <button type="button" data-method="growth" aria-pressed="true"><canvas id="thGrowth" width="108" height="54"></canvas><span>Рост битов</span></button>
+      </div>
+      <div class="thumb">
+        <button type="button" data-method="loop" title="Ступенчатая петля: стягивание к вершине, один выходной бит на физический пиксель"><canvas id="thLoop" width="108" height="54"></canvas><span>Петля по пикселям</span></button>
       </div>
       <div class="thumb">
         <button type="button" data-method="holes"><canvas id="thHoles" width="108" height="54"></canvas><span>Копии в впадинах</span></button>
@@ -213,6 +219,23 @@
     <div class="note">«Вверх» здесь — только у камеры (старый опыт): у конструкции вершина в строке 0, поле растёт
       вниз от неё. Если наращивать новую вершину сверху — это уже другое правило.</div>
     <p class="sub" style="margin-top:12px"><a href="Zerkalius-rost.html">Отдельная демо-страница «Рост треугольника» →</a> · <a href="../mayatnik/Zerkalius-mayatnik-rost.html">Маятник, тестовый треугольник: рост →</a></p>
+  </section>
+
+  <section class="card" id="pixel-loop">
+    <h2>1а. Петля по пикселям <small>ступенчатое стягивание к вершине</small></h2>
+    <p class="sub">Отдельный вариант: рисунок стягивается к вершине на центральной оси. Для каждого
+      экранного пикселя выбирается один целый бит продолжающегося правила90; часть исходных битов
+      пропускается. Продолжение приходит с краёв, поэтому конечного треугольника, который нужно
+      сбрасывать с512 до32строк, здесь нет. Это выборка с пропусками, а не сохранение всех исходных битов.</p>
+    <p class="sub">Цикл состоит из256ступеней от выборки1:1 до2:1. При удвоении координат
+      <code>b(2r,2c)=b(r,c)</code>, поэтому фаза256 точно совпадает с фазой0. После неё меняется только
+      номер фазы. Каждый выходной бит занимает один физический пиксель; сглаживания и растягивания
+      растра нет. Масштаб страницы учитывается. Колесо над полем прокручивает страницу, масштаб этого
+      варианта фиксирован. Шаги, пауза и бегунок работают как обычно.</p>
+    <p class="sub">Счётчики этого варианта относятся ко всему физическому растру окна: цветной пиксель —1,
+      чёрный —0. Это счётчики изображения после выборки.</p>
+    <p class="sub">У прежнего «Роста битов» остаются его пять размеров32→64→128→256→512 и возврат
+      к началу: он показывает рост целого конечного треугольника.</p>
   </section>
 
   <section class="card" id="nesting">
@@ -348,7 +371,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.022 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.023 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -798,17 +821,20 @@ b(2r+1,2c+1) = b(r, c)</pre>
     const oldBuf = new Uint32Array(oldImg.data.buffer);
     const METHODS = {
       growth: { steps: 5, ms: 1100, name: 'рост битов', text: (s) => `шаг ${s + 1}/5` },
+      loop: { steps: 257, ms: 60, name: 'петля по пикселям', text: (s) => `фаза ${s}/256` },
       holes: { steps: 5, ms: 800, name: 'копии в впадинах', text: (s) => `уровень ${s}/4` },
       nest: { steps: 6, ms: 900, name: 'вложение битов', text: (s) => `уровень ${s}/5` },
       old: { steps: 72, ms: 90, name: 'старая запись с камерой', text: (s) => `кадр ${s + 1}/72` }
     };
-    const STEPS = { growth: 0, holes: 0, nest: 0, old: 0 };
+    const STEPS = { growth: 0, loop: 0, holes: 0, nest: 0, old: 0 };
+    let loopImage = null, loopStats = null;
     const pHeight = $('pHeight'), pBalance = $('pBalance');
     let method = 'growth', step = 0, auto = true, last = performance.now(), acc = 0;
     // Текущая высота у каждого способа: рост — поле в px; вложение — высота вставленной копии в строках;
     // старая запись — высота поля в строках текущего кадра.
     function heightOf(m, s) {
       if (m === 'growth') return `поле ${32 << s} px`;
+      if (m === 'loop') return 'без конечного края · выходная клетка 1 физ. px';
       if (m === 'holes') return `копия ${32 >> s} строк`;
       if (m === 'nest') return `копия ${32 >> s} строк`;
       return `поле ${32 << Math.floor(s / 12)} строк`;
@@ -817,6 +843,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     // Балансы 0 и 1 в кадре: считаем клетки картинки (решётка 2N−1×N), как в Маятнике,
     // а не весь прямоугольник: у роста и старой записи — поле кадра, у вложения — база + копии.
     function countsOf(m, s) {
+      if (m === 'loop') return loopStats;
       if (m === 'holes') return null;                       // цветное вложение: 0/1 нет
       if (m === 'growth') {
         const n = 32 << s, total = n * (n + 1) / 2, o = POW3[5 + s];
@@ -891,6 +918,45 @@ b(2r+1,2c+1) = b(r, c)</pre>
         for (let c = 0; c < w; c++) if (gfield[base + c]) bufG[off + c] = GOLD;
       }
       sctx.putImageData(imgG, 0, 0);
+    }
+    // R90 от одной вершины: b(r,c) = binom(r,(r+c)/2) mod2.
+    // Целые адреса источника, без смешивания пикселей. При s=256 источник
+    // (2r,2c) даёт ровно ту же картинку, что (r,c) при s=0.
+    function drawPixelLoop(context, width, height, phase, reusable) {
+      const image = reusable && reusable.width === width && reusable.height === height
+        ? reusable : context.createImageData(width, height);
+      const pixels = new Uint32Array(image.data.buffer), centre = Math.floor(width / 2);
+      pixels.fill(BLACK);
+      const numerator = 256 + phase;
+      const columns = new Int32Array(width);
+      for (let x = 0; x < width; x++) columns[x] = Math.round((x - centre) * numerator / 256);
+      let o = 0;
+      for (let y = 0; y < height; y++) {
+        const r = Math.floor(y * numerator / 256), offset = y * width;
+        for (let x = 0; x < width; x++) {
+          const c = columns[x];
+          if (Math.abs(c) > r || ((r + c) & 1)) continue;
+          const k = (r + c) / 2;
+          if ((r & k) === k) { pixels[offset + x] = GOLD; o++; }
+        }
+      }
+      context.putImageData(image, 0, 0);
+      return { image, stats: { o, z: width * height - o } };
+    }
+    function paintPixelLoop() {
+      const player = $('player'), css = getComputedStyle(player);
+      const density = (devicePixelRatio || 1) * (window.visualViewport?.scale || 1);
+      const available = player.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight);
+      const width = Math.max(1, Math.floor(available * density)), height = Math.max(1, Math.floor(width / 2));
+      cv.classList.add('pixel-loop');
+      cv.style.width = (width / density) + 'px';
+      cv.style.height = (height / density) + 'px';
+      if (cv.width !== width) cv.width = width;
+      if (cv.height !== height) cv.height = height;
+      pctx.setTransform(1, 0, 0, 1, 0, 0);
+      const output = drawPixelLoop(pctx, width, height, step, loopImage);
+      loopImage = output.image; loopStats = output.stats;
+      if (edgesOut) edgesOut.textContent = `поле ${width}×${height} физ. px · выходная клетка 1 px · вершина на центральной оси`;
     }
     function holesTree(cx, cy, s, up, order, depth, master, copy) {
       if (order <= 0) {
@@ -970,6 +1036,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function toSceneX(sx) { return (sx - viewX) / viewScale; }
     function toSceneY(sy) { return (sy - viewY) / viewScale; }
     function naturalWidth() {
+      if (method === 'loop') return PW - 1;
       if (method === 'growth') return 2 * (32 << step) - 1;
       if (method === 'nest') return (2 * N0 - 1) * 8;
       if (method === 'old') {
@@ -1022,6 +1089,12 @@ b(2r+1,2c+1) = b(r, c)</pre>
       edgesOut.textContent = `края: ${Math.round(edgeW)} px · примагничивание: ${cands.join(' / ')} px · зум ×${viewScale.toFixed(2)} · колесо — зум, перетаскивание — сдвиг`;
     }
     function paintPlayer() {
+      if (method === 'loop') { paintPixelLoop(); return; }
+      if (cv.classList.contains('pixel-loop')) {
+        cv.classList.remove('pixel-loop'); cv.style.width = '100%'; cv.style.height = '';
+      }
+      if (cv.width !== PW) cv.width = PW;
+      if (cv.height !== PH) cv.height = PH;
       pctx.setTransform(1, 0, 0, 1, 0, 0);
       pctx.clearRect(0, 0, PW, PH);
       pctx.imageSmoothingEnabled = false;   // при зуме ячейки остаются чёткими, без размытия
@@ -1037,7 +1110,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (method === 'growth') drawGrowth();
       else if (method === 'holes') drawHoles();
       else if (method === 'nest') drawNest();
-      else drawOld();
+      else if (method === 'old') drawOld();
       paintPlayer();
       range.value = String(step);
       stepOut.textContent = METHODS[method].text(step);
@@ -1052,9 +1125,9 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (on) { acc = 0; last = performance.now(); }
     }
     function setStep(k) { step = Math.max(0, Math.min(METHODS[method].steps - 1, k)); STEPS[method] = step; render(); }
-    const SECTION_OF = { growth: 'growth', holes: 'nesting', nest: 'zoom', old: 'growth' };
-    const METHOD_SECTIONS = ['growth', 'nesting', 'zoom'];
-    const METHOD_ANCHOR = { growth: 'growth', holes: 'nesting', nest: 'zoom', old: 'old' };
+    const SECTION_OF = { growth: 'growth', loop: 'pixel-loop', holes: 'nesting', nest: 'zoom', old: 'growth' };
+    const METHOD_SECTIONS = ['growth', 'pixel-loop', 'nesting', 'zoom'];
+    const METHOD_ANCHOR = { growth: 'growth', loop: 'pixel-loop', holes: 'nesting', nest: 'zoom', old: 'old' };
     // Сведения живут в описаниях, миниатюры содержат только картинку и название.
     for (const m of Object.keys(METHODS)) {
       const section = $(SECTION_OF[m]);
@@ -1090,6 +1163,9 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (!joinFrame) joinFrame = requestAnimationFrame(() => { joinFrame = 0; joinPreview(); });
     }
     addEventListener('resize', scheduleJoin);
+    function resizePixelLoop() { if (method === 'loop') { paintPlayer(); updateStats(); } }
+    addEventListener('resize', resizePixelLoop);
+    window.visualViewport?.addEventListener('resize', resizePixelLoop);
     addEventListener('scroll', scheduleJoin, { passive: true });
     if (typeof ResizeObserver !== 'undefined') {
       const observer = new ResizeObserver(scheduleJoin);
@@ -1117,6 +1193,8 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function setMethod(m) {
       if (!METHODS[m]) return;
       method = m; step = STEPS[m];
+      cv.style.touchAction = m === 'loop' ? 'auto' : 'none';
+      cv.style.cursor = m === 'loop' ? 'default' : 'grab';
       range.max = String(METHODS[m].steps - 1);
       document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.method === m)));
       setAuto(false);
@@ -1146,10 +1224,11 @@ b(2r+1,2c+1) = b(r, c)</pre>
     }
     document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.addEventListener('click', () => setMethod(b.dataset.method)));
     // Мини-картинки: рисуем сцену в показательном состоянии и уменьшаем в 108×54.
-    const THUMB_STEP = { growth: 4, holes: 2, nest: 5, old: 47 };
+    const THUMB_STEP = { growth: 4, loop: 128, holes: 2, nest: 5, old: 47 };
     for (const m of Object.keys(METHODS)) {
       method = m; step = THUMB_STEP[m];
-      if (m === 'growth') drawGrowth(); else if (m === 'holes') drawHoles(); else if (m === 'nest') drawNest(); else drawOld();
+      if (m === 'growth') drawGrowth(); else if (m === 'loop') loopStats = drawPixelLoop(sctx, PW, PH, step, imgG).stats;
+      else if (m === 'holes') drawHoles(); else if (m === 'nest') drawNest(); else drawOld();
       const tc = $('th' + m.charAt(0).toUpperCase() + m.slice(1));
       if (tc) { const t = tc.getContext('2d'); t.clearRect(0, 0, 108, 54); t.drawImage(scene, 0, 0, PW, PH, 0, 0, 108, 54); }
     }
@@ -1167,6 +1246,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     cv.style.touchAction = 'none';
     // Колесо — зум внутри плеера, к курсору.
     cv.addEventListener('wheel', (e) => {
+      if (method === 'loop') return;
       e.preventDefault();
       const mx = canvasX(e), my = canvasY(e);
       const sxp = toSceneX(mx), syp = toSceneY(my);
@@ -1179,6 +1259,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     }, { passive: false });
     cv.addEventListener('dblclick', () => { viewScale = 1; viewX = 0; viewY = 0; paintPlayer(); });
     cv.addEventListener('pointerdown', (e) => {
+      if (method === 'loop') return;
       const side = edgeHit(canvasX(e));
       if (side) {
         edgeDrag = side;
@@ -1194,6 +1275,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       e.preventDefault();
     });
     cv.addEventListener('pointermove', (e) => {
+      if (method === 'loop') return;
       if (edgeDrag) {
         const sceneX = toSceneX(canvasX(e));
         const cxp = PW / 2;
