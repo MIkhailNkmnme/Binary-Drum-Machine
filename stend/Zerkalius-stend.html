@@ -3,17 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.008</title>
-<!-- Стенд вариантов (v0.008, 2026-11-06): все предложения по росту и вложению треугольника.
+<title>Зеркалиус — Стенд — v0.009</title>
+<!-- Стенд вариантов (v0.009, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.002: варианты «копия вдвое меньше впадины» и «×4 без переворота», раздел «Как встроить».
      v0.003: петля ×4 признана бесшовной; видео бесшовной петли.
      v0.004: демо-страница «Рост треугольника» и 4K-ролик роста 32→2048.
      v0.005: ссылка на «Маятник — тестовый треугольник: рост».
      v0.006: отмечено сделанное — режим «Рост» в фоне Хаба и страница роста Маятника.
      v0.007: исправлено демо зума (тень size→sz, выравнивание кадра).
-     v0.008: по слову пользователя «без движения камеры, только биты, дискретно, без округлений» —
-     разделы 1 и 3 переведены на живое полотно «1 бит = 1 пиксель»: рост октав шагами и вложение
-     копий целыми клетками (63×32, копии 31×16, 15×8…). Старые опыты с камерой сохранены как записи.
+     v0.008: разделы 1 и 3 переведены на полотно «1 бит = 1 пиксель» без камеры.
+     v0.009: по просьбе пользователя у шагов появился бегунок с стрелками и счётчиком,
+     «Авто»/«Плей» и «Сначала» — у роста битов (раздел 1), вложения битов (раздел 3) и
+     покадрово у старой записи с камерой (72 кадра).
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
 <style>
@@ -51,6 +52,14 @@
   .controls label{display:flex;align-items:center;gap:6px;color:var(--muted)}
   .controls input[type=color]{width:34px;height:26px;padding:0;border:1px solid #2c3a4e;background:none;border-radius:4px}
   .controls output{font-family:ui-monospace,Consolas,monospace;color:var(--gold)}
+  .transport{display:flex;align-items:center;gap:8px;margin:11px 0 0;flex-wrap:wrap}
+  .transport button{background:#182130;color:var(--text);border:1px solid #2c3a4e;border-radius:6px;
+    padding:5px 10px;font:inherit;cursor:pointer;line-height:1.1;white-space:nowrap}
+  .transport button:hover{background:#1f2b3d}
+  .transport button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+  .transport input[type=range]{flex:1;min-width:160px;accent-color:var(--gold)}
+  .transport output{font-family:ui-monospace,Consolas,monospace;color:var(--gold);min-width:3.4em;text-align:center}
+  .transport label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
   figure{margin:14px 0 0}
   figure img{width:100%;display:block;border:1px solid var(--line);border-radius:8px}
   figcaption{color:var(--muted);font-size:12px;margin-top:6px}
@@ -72,7 +81,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.008 · 06.11.2026</span>
+  <span class="ver">v0.009 · 06.11.2026</span>
 </header>
 <main>
   <p class="lead">
@@ -89,8 +98,13 @@
       без округлений и приблизительных положений. Шаг дискретный: рисунок сразу переставляется, без плавности.
     </p>
     <canvas id="cvBits" class="bits" style="aspect-ratio:2/1;max-width:1024px;margin:0 auto"></canvas>
-    <div class="controls" style="justify-content:center">
-      <button id="bitsPlay" type="button" aria-pressed="true">Пауза</button>
+    <div class="transport" role="group" aria-label="Управление шагами">
+      <button id="bitsPrev" type="button" aria-label="Шаг назад" title="Шаг назад">◀</button>
+      <button id="bitsPlay" type="button" aria-pressed="true" title="Авто: шаги идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
+      <button id="bitsNext" type="button" aria-label="Шаг вперёд" title="Шаг вперёд">▶</button>
+      <input id="bitsRange" type="range" min="0" max="4" step="1" value="0" list="bitsTicks" aria-label="Шаг">
+      <datalist id="bitsTicks"><option value="0"></option><option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option></datalist>
+      <output id="bitsStep">1/5</output>
       <button id="bitsReset" type="button">Сначала</button>
     </div>
     <div class="controls" style="justify-content:center"><output id="bitsInfo"></output></div>
@@ -117,8 +131,16 @@
     </div>
     <div class="cols">
       <figure>
-        <img src="assets/growth-zoom.gif" alt="Старый опыт: рост с плавным отъездом камеры">
-        <figcaption>Старый опыт с камерой: октавы 32 → 1024 с плавным отъездом; камера двигалась.</figcaption>
+        <canvas id="cvOldGrowth" style="aspect-ratio:2/1;width:100%;background:#04060a;border:1px solid var(--line);border-radius:8px"></canvas>
+        <div class="transport" role="group" aria-label="Покадровое управление записью">
+          <button id="oldPrev" type="button" aria-label="Кадр назад" title="Кадр назад">◀</button>
+          <button id="oldPlay" type="button" aria-pressed="true" title="Авто: кадры идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
+          <button id="oldNext" type="button" aria-label="Кадр вперёд" title="Кадр вперёд">▶</button>
+          <input id="oldRange" type="range" min="0" max="71" step="1" value="0" aria-label="Кадр записи">
+          <output id="oldStep">1/72</output>
+          <button id="oldReset" type="button">Сначала</button>
+        </div>
+        <figcaption>Старый опыт с камерой: октавы 32 → 1024 с плавным отъездом; камера двигалась. Бегунок — по кадрам записи, стрелки — ручной шаг.</figcaption>
       </figure>
       <figure>
         <img src="assets/octaves-1608.png" alt="Старый опыт: октавы в окне 1608×798">
@@ -182,8 +204,13 @@
     <div class="cols">
       <div>
         <canvas id="cvBitsNest" class="bits" style="aspect-ratio:63/32"></canvas>
-        <div class="controls">
-          <button id="nestBitsPlay" type="button" aria-pressed="true">Пауза</button>
+        <div class="transport" role="group" aria-label="Управление шагами">
+          <button id="nestBitsPrev" type="button" aria-label="Шаг назад" title="Шаг назад">◀</button>
+          <button id="nestBitsPlay" type="button" aria-pressed="true" title="Авто: шаги идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
+          <button id="nestBitsNext" type="button" aria-label="Шаг вперёд" title="Шаг вперёд">▶</button>
+          <input id="nestBitsRange" type="range" min="0" max="5" step="1" value="0" list="nestBitsTicks" aria-label="Уровень">
+          <datalist id="nestBitsTicks"><option value="0"></option><option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"></option></datalist>
+          <output id="nestBitsStep">0/5</output>
           <button id="nestBitsReset" type="button">Сначала</button>
           <label><input id="nestBitsGrid" type="checkbox"> сетка клеток</label>
         </div>
@@ -295,7 +322,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.008 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.009 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -570,9 +597,11 @@ b(2r+1,2c+1) = b(r, c)</pre>
     const img = ctx.createImageData(CW, CH);
     const buf = new Uint32Array(img.data.buffer);
     const GOLD = (255 << 24 | 92 << 16 | 196 << 8 | 255) >>> 0;
-    const info = $('bitsInfo'), play = $('bitsPlay'), reset = $('bitsReset');
-    let level = 0, playing = true, last = performance.now(), acc = 0;
-    function draw() {
+    const info = $('bitsInfo'), play = $('bitsPlay'), prev = $('bitsPrev'), next = $('bitsNext'),
+      range = $('bitsRange'), stepOut = $('bitsStep'), reset = $('bitsReset');
+    const LEVELS = 5;
+    let level = 0, auto = true, last = performance.now(), acc = 0;
+    function paint() {
       buf.fill(0);
       const n = 32 << level, w = 2 * n - 1;
       const x0 = Math.floor((CW - w) / 2);
@@ -582,20 +611,29 @@ b(2r+1,2c+1) = b(r, c)</pre>
         for (let c = 0; c < w; c++) if (field[base + c]) buf[off + c] = GOLD;
       }
       ctx.putImageData(img, 0, 0);
-      info.textContent = `уровень ${level + 1}/5 · N = ${n} · 2N−1 = ${w} · 1 бит = 1 пиксель · кадр ${CW}×${CH} · без камеры`;
+      info.textContent = `шаг ${level + 1}/${LEVELS} · N = ${n} · 2N−1 = ${w} · 1 бит = 1 пиксель · кадр ${CW}×${CH} · без камеры`;
+      range.value = String(level);
+      stepOut.textContent = `${level + 1}/${LEVELS}`;
     }
-    play.addEventListener('click', () => {
-      playing = !playing;
-      play.textContent = playing ? 'Пауза' : 'Дальше';
-      play.setAttribute('aria-pressed', String(!playing));
-    });
-    reset.addEventListener('click', () => { level = 0; acc = 0; draw(); });
+    function setAuto(on) {
+      auto = on;
+      play.setAttribute('aria-pressed', String(on));
+      play.textContent = on ? '⏸ Авто' : '▶ Плей';
+      play.title = on ? 'Авто: шаги идут сами' : 'Плей: пустить шаги автоматически';
+      if (on) { acc = 0; last = performance.now(); }
+    }
+    function setLevel(k) { level = Math.max(0, Math.min(LEVELS - 1, k)); paint(); }
+    play.addEventListener('click', () => setAuto(!auto));
+    prev.addEventListener('click', () => { setAuto(false); setLevel(level - 1); });
+    next.addEventListener('click', () => { setAuto(false); setLevel(level + 1); });
+    range.addEventListener('input', () => { setAuto(false); setLevel(Number(range.value)); });
+    reset.addEventListener('click', () => { setAuto(false); setLevel(0); });
     function loop(now) {
       const dt = now - last; last = now;
-      if (playing) { acc += dt; if (acc >= 1100) { acc = 0; level = (level + 1) % 5; draw(); } }
+      if (auto) { acc += dt; if (acc >= 1100) { acc = 0; setLevel((level + 1) % LEVELS); } }
       requestAnimationFrame(loop);
     }
-    draw();
+    paint(); setAuto(true);
     requestAnimationFrame(loop);
   })();
 
@@ -623,9 +661,10 @@ b(2r+1,2c+1) = b(r, c)</pre>
       4: { r: 2, c: 2, h: 2, w: 3 },
       2: { r: 1, c: 1, h: 1, w: 1 }
     };
-    const info = $('nestBitsInfo'), play = $('nestBitsPlay'), reset = $('nestBitsReset'), grid = $('nestBitsGrid');
+    const info = $('nestBitsInfo'), play = $('nestBitsPlay'), prev = $('nestBitsPrev'), next = $('nestBitsNext'),
+      range = $('nestBitsRange'), stepOut = $('nestBitsStep'), reset = $('nestBitsReset'), grid = $('nestBitsGrid');
     const LEVELS = 5;
-    let level = 0, playing = true, last = performance.now(), acc = 0;
+    let level = 0, auto = true, last = performance.now(), acc = 0;
     function placements() {
       const list = [];
       let n = N0, R = 0, Cc = 0, rot = 0;
@@ -660,20 +699,94 @@ b(2r+1,2c+1) = b(r, c)</pre>
         for (let y = 0; y <= N0; y++) { ctx.beginPath(); ctx.moveTo(0, y * K + 0.5); ctx.lineTo(CW, y * K + 0.5); ctx.stroke(); }
       }
       info.textContent = `уровень ${level}/${LEVELS} · клеток ${W0}×${N0} по ${K} px · копии целыми клетками · без камеры`;
+      range.value = String(level);
+      stepOut.textContent = `${level}/${LEVELS}`;
     }
-    play.addEventListener('click', () => {
-      playing = !playing;
-      play.textContent = playing ? 'Пауза' : 'Дальше';
-      play.setAttribute('aria-pressed', String(!playing));
-    });
-    reset.addEventListener('click', () => { level = 0; acc = 0; draw(); });
+    function setAuto(on) {
+      auto = on;
+      play.setAttribute('aria-pressed', String(on));
+      play.textContent = on ? '⏸ Авто' : '▶ Плей';
+      play.title = on ? 'Авто: шаги идут сами' : 'Плей: пустить шаги автоматически';
+      if (on) { acc = 0; last = performance.now(); }
+    }
+    function setLevel(k) { level = Math.max(0, Math.min(LEVELS, k)); draw(); }
+    play.addEventListener('click', () => setAuto(!auto));
+    prev.addEventListener('click', () => { setAuto(false); setLevel(level - 1); });
+    next.addEventListener('click', () => { setAuto(false); setLevel(level + 1); });
+    range.addEventListener('input', () => { setAuto(false); setLevel(Number(range.value)); });
+    reset.addEventListener('click', () => { setAuto(false); setLevel(0); });
     grid.addEventListener('change', draw);
     function loop(now) {
       const dt = now - last; last = now;
-      if (playing) { acc += dt; if (acc >= 900) { acc = 0; level = (level + 1) % (LEVELS + 1); draw(); } }
+      if (auto) { acc += dt; if (acc >= 900) { acc = 0; setLevel((level + 1) % (LEVELS + 1)); } }
       requestAnimationFrame(loop);
     }
-    draw();
+    draw(); setAuto(true);
+    requestAnimationFrame(loop);
+  })();
+
+  /* ================= 6. Запись старого роста с камерой: покадровый плеер ================= */
+  (() => {
+    const cv = $('cvOldGrowth');
+    if (!cv) return;
+    const CW = 800, CH = 400;
+    cv.width = CW; cv.height = CH;
+    const ctx = cv.getContext('2d');
+    const MAXN = 1024, W = 2 * MAXN - 1, C = (W - 1) >> 1;
+    const field = new Uint8Array(MAXN * W);
+    field[C] = 1;
+    for (let r = 1; r < MAXN; r++) {
+      const base = r * W, up = base - W;
+      for (let c = 0; c < W; c++) field[base + c] = (c > 0 ? field[up + c - 1] : 0) ^ (c + 1 < W ? field[up + c + 1] : 0);
+    }
+    const img = ctx.createImageData(CW, CH);
+    const buf = new Uint32Array(img.data.buffer);
+    const GOLD = (255 << 24 | 92 << 16 | 196 << 8 | 255) >>> 0;
+    const PERIOD = 12, FRAMES = 6 * PERIOD;   // 6 октав по 12 кадров — как в записи
+    const info = $('oldStep'), play = $('oldPlay'), prev = $('oldPrev'), next = $('oldNext'),
+      range = $('oldRange'), reset = $('oldReset');
+    let frame = 0, auto = true, last = performance.now(), acc = 0;
+    function paint() {
+      buf.fill(0);
+      const octave = Math.floor(frame / PERIOD);
+      const t = (frame % PERIOD) / PERIOD;
+      const n = 32 << octave;
+      const zoom = 2 - t;
+      const cell = Math.min(CW / (2 * n - 1), CH / n) * zoom;
+      const x0 = CW / 2 - (2 * n - 1) * cell / 2;
+      for (let py = 0; py < CH; py++) {
+        const fr = Math.floor(py / cell);
+        if (fr < 0 || fr >= n) continue;
+        const base = fr * W + (C - (n - 1));
+        for (let px = 0; px < CW; px++) {
+          const c = Math.floor((px - x0) / cell);
+          if (c < 0 || c >= 2 * n - 1) continue;
+          if (field[base + c]) buf[py * CW + px] = GOLD;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      range.value = String(frame);
+      info.textContent = `${frame + 1}/${FRAMES}`;
+    }
+    function setAuto(on) {
+      auto = on;
+      play.setAttribute('aria-pressed', String(on));
+      play.textContent = on ? '⏸ Авто' : '▶ Плей';
+      play.title = on ? 'Авто: кадры идут сами' : 'Плей: пустить кадры автоматически';
+      if (on) { acc = 0; last = performance.now(); }
+    }
+    function setFrame(k) { frame = Math.max(0, Math.min(FRAMES - 1, k)); paint(); }
+    play.addEventListener('click', () => setAuto(!auto));
+    prev.addEventListener('click', () => { setAuto(false); setFrame(frame - 1); });
+    next.addEventListener('click', () => { setAuto(false); setFrame(frame + 1); });
+    range.addEventListener('input', () => { setAuto(false); setFrame(Number(range.value)); });
+    reset.addEventListener('click', () => { setAuto(false); setFrame(0); });
+    function loop(now) {
+      const dt = now - last; last = now;
+      if (auto) { acc += dt; if (acc >= 90) { acc = 0; setFrame((frame + 1) % FRAMES); } }
+      requestAnimationFrame(loop);
+    }
+    paint(); setAuto(true);
     requestAnimationFrame(loop);
   })();
 })();
