@@ -9,7 +9,7 @@
   const NEW_STATE_KEYS=new Set('templateFrameSearch templateFrameSearchName ochkiThrough ochkiSkipSpaces ochkiEveryFrame ochkiRowReverseMask gifScaleStack gifScaleStackStep zLimit zOverview paintFrameMode fillWholeColour rowStepOutline ochkiHalf joined180 manualSnake lineFamilies autoAxes triangleMapSource triangleMapAxes triangleMapMask triangleMapMirror axisPalette crossMirror crossLabels crossMirrorMode crossMirrorSector viewUpsideDown axesFillColour autoFillColour growFillColour meetFillColour axisFillColour isolatedOneColour isolatedZeroColour autoFillPalette growOwnColour'.split(' '));
   const THROUGH_DEFAULTS={templateFrameSearch:null,templateFrameSearchName:'',ochkiThrough:false,ochkiSkipSpaces:false,ochkiEveryFrame:false,ochkiRowReverseMask:false,gifScaleStack:false,gifScaleStackStep:8,gifScaleStackMethod:'canvas',gifScaleStackMode:'rows',gifScaleStackBase:2,gifScaleStackHeight:'original'};
   const INVERT_DEFAULTS={invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null};
-  const ISOLATED_DEFAULTS={paintIsolated0:false,paintIsolated1:false};
+  const ISOLATED_DEFAULTS={paintIsolated0:false,paintIsolated1:false,paintEmptyNeighbours:false};
   for(const key of ['heatHoldZero','heatMode','heatPeriod','edgeRhombOn','romboRow','romboAngle','romboAssembly','romboSeam',...Object.keys(INVERT_DEFAULTS),...Object.keys(ISOLATED_DEFAULTS)]){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   STATE_KEYS.push('gifScaleStackHeight','gifScaleStackMethod','gifScaleStackMode','gifScaleStackBase');NEW_STATE_KEYS.add('gifScaleStackHeight');NEW_STATE_KEYS.add('gifScaleStackMethod');NEW_STATE_KEYS.add('gifScaleStackMode');NEW_STATE_KEYS.add('gifScaleStackBase');
   const TOOL_KEYS=['fillMode','autoVertical','axisPicking','axisLineMode','rulerMode','mirrorLine','mirrorAxis','templatePickEnabled','templatePickMode','templateDragEnabled'];
@@ -25,7 +25,7 @@
   function validate(value){
     if(!value||value.version!==1||!value.state||!value.tools||!value.parity||!/^#[0-9a-f]{6}$/i.test(value.controls?.fillColour))throw Error('Повреждён набор настроек');
     if(value.state.ochkiThrough!==undefined&&typeof value.state.ochkiThrough!=='boolean')throw Error('Некорректный режим Все сквозные');
-    for(const key of Object.keys(ISOLATED_DEFAULTS))if(value.state[key]!==undefined&&typeof value.state[key]!=='boolean')throw Error('Некорректная окраска одиночных: '+key);
+    for(const key of Object.keys(ISOLATED_DEFAULTS))if(value.state[key]!==undefined&&typeof value.state[key]!=='boolean')throw Error('Некорректная настройка окраски: '+key);
     for(const key of ['inverted','invertAuto'])if(value.state[key]!==undefined&&typeof value.state[key]!=='boolean')throw Error('Некорректная инверсия: '+key);
     if(value.state.invertKind!==undefined&&!['bits','colour'].includes(value.state.invertKind))throw Error('Некорректный вид инверсии');
     if(value.state.invertFrame!=null&&(!Number.isSafeInteger(value.state.invertFrame)||value.state.invertFrame<0))throw Error('Некорректный кадр инверсии');
