@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.050</title>
+<title>Zerkalius АзъБукъ v0.051</title>
+<!-- v0.051 · АЗБ-052: поле по центру, целые размеры ячеек, рамка снаружи и точные размеры/количество пикселей. -->
 <!-- v0.050 · АЗБ-051: квадратное пиксельное поле 2–128, рисование и ластик, отмена/повтор; отдельный сохранённый рисунок для каждого размера. -->
 <!-- АзъБукъ — v0.049. Формы кнопок: пустые примеры (кнопка, ромб, рейка, прямоугольник) из символов шрифта; палитра символов, цвет, покраска отдельной клетки и всей формы, очистка и сброс; состояние в localStorage. v0.048. Поле текста растягивается вниз по содержимому: минимум три строки, при четырёх и больше высота растёт по тексту без внутренней прокрутки; пересчёт при вводе, загрузке сохранённого текста и изменении ширины. v0.047. Символы выровнены по вертикали: у минуса, плюса, равно, тильды, каретки, звёздочки, двоеточия, кавычек, решётки, процента, косых черт и «» появилась полная высота 7 строк; минус теперь на середине строки, а не внизу. v0.046. Переключатель «моно / по буквам»: моно — клетка 8 у всех, буква центрируется, зазор между клетками; по буквам — шаг по ширине рисунка, зазор между буквами, 0 — буквы касаются. v0.045. Моноширинный набор: каждая буква в клетке 8, буквы центрируются, общая базовая линия строчных, выносные уходят вниз; зазор одинаковый у всех, включая узкие i, j и l. У р, у, ф, g, p, q и y тело строчной дотянуто до пяти клеток, как у остальных. v0.044. Толстое начертание удалено: осталась только тонкая гарнитура, выбор толщины снят. v0.043. Прямоугольные кнопки кратны ячейке, ссылка в хаб.  Палитры квадратами цвета букв внутри цвета фона, без подписей. v0.042. Палитра и свои цвета справа в редакторе буквы. v0.041. Чёрный контур выбранной буквы, полосы прокрутки скрыты. v0.040. Настройки слева от сетки в поле, выбранная буква жёлтая. v0.039. Обводка версии трапецией по рисунку пользователя. v0.038. Нулевой зазор до касания клеток; сетка в правом верхнем углу поля. v0.037. Набор текста с изображением и JSON, цвет сетки, точный шаг зазора, выделение размера. v0.036. Буквы и промежутки на общей сетке; кнопка сетки внутри поля справа. v0.035. Действия справа от заголовка, выбор размера по образцам буквы. v0.034. Переключатель фоновой сетки поля букв. v0.033. Заголовки разделов алфавита сняты. v0.032. Редактор от 4×4, форма сетки, подсчёт битов и замкнутых пустот, все размеры справа. v0.031. Буквы разделены при любом зазоре, включая нулевой. v0.030. Знаки изменения строк и столбцов над сеткой, действия редактора сверху. v0.029. Выбранная буква выделяется цветом и свечением. v0.028. Число внутри X только при значении по умолчанию 1, иначе сбоку. v0.027. Число зазора зелёное, в покое между половинами X. v0.026. Число сбоку появляется сразу при первом нажатии стрелки. v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
      v0.006: ромбосетка из треугольников (строки сдвинуты на полклетки) и один общий блок знаков.
@@ -215,26 +216,28 @@
   .gap-step::before{inset:2px}
   #track,.gap-thumb,.gap-thumb i{height:var(--control-h)}
   .pixel-toolbar,.pixel-sizes,.pixel-actions{display:flex;align-items:center;flex-wrap:wrap;gap:2px;max-width:100%}
-  .pixel-toolbar{gap:10px;margin-bottom:10px}
+  .pixel-toolbar{gap:10px;margin-bottom:10px;justify-content:center}
   .pixel-sizes button{width:calc(2 * var(--tiny-size));min-width:0;padding:0 4px;display:inline-flex;align-items:center;justify-content:center}
   .pixel-toolbar button{user-select:none}
   .pixel-actions button{max-width:100%}
   .pixel-sizes button[aria-pressed="true"],.pixel-actions button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
   .pixel-toolbar button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
   .pixel-toolbar button:disabled{opacity:.35;cursor:default}
-  #pixelGrid{width:min(100%,640px);height:auto;aspect-ratio:1;display:block;background:var(--bg);border:1px solid var(--line);touch-action:none;user-select:none;cursor:crosshair;shape-rendering:crispEdges}
+  #pixelGrid{width:min(100%,640px);height:auto;aspect-ratio:1;display:block;margin-inline:auto;background:var(--bg);border:0;outline:1px solid var(--line);touch-action:none;user-select:none;cursor:crosshair;shape-rendering:crispEdges}
   #pixelGrid:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
   #pixelInk{fill:var(--ink)}
   #pixelLines{fill:none;stroke:var(--line);stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
   #pixelCursor{fill:none;stroke:var(--edit-ink,var(--ink));stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none;display:none}
   #pixelGrid:focus-visible #pixelCursor{display:block}
   #pixelNotice{min-height:1.4em;margin-top:8px;font-size:11px;color:var(--dim)}
+  #pixelHeading,#pixelNotice,#pixelMetrics{text-align:center}
+  #pixelMetrics{margin-top:10px;color:var(--dim);font-size:11px;line-height:1.6}
 </style>
 
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.050"></span>
+    <span class="pbtn ver" aria-label="v0.051"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -336,6 +339,7 @@
     <desc id="pixelHelp">Нажмите и ведите для рисования. Ластик или правая кнопка мыши стирает. С клавиатуры: стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</desc>
     <path id="pixelInk"></path><path id="pixelLines"></path><rect id="pixelCursor" width="1" height="1"></rect>
   </svg>
+  <div id="pixelMetrics"></div>
   <div id="pixelNotice" role="status" aria-live="polite"></div>
 </section>
   </div>
@@ -1355,11 +1359,12 @@ renderEditor();
 (() => {
   const key = 'azbuk-pixel-field-v1', sizes = [2, 4, 8, 16, 32, 64, 128];
   const grid = document.getElementById('pixelGrid');
+  const field = document.getElementById('pixelField'), metrics = document.getElementById('pixelMetrics');
   const ink = document.getElementById('pixelInk'), lines = document.getElementById('pixelLines');
   const cursor = document.getElementById('pixelCursor'), notice = document.getElementById('pixelNotice');
   const undoButton = document.getElementById('pixelUndo'), redoButton = document.getElementById('pixelRedo');
   const drawings = Object.create(null), histories = Object.create(null);
-  let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false;
+  let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false, cellPixels = 40;
   try {
     const saved = JSON.parse(localStorage.getItem(key) || 'null');
     if (saved && sizes.includes(saved.size)) size = saved.size;
@@ -1375,6 +1380,22 @@ renderEditor();
     histories[n] = {undo: [], redo: []};
   }
   const snapshot = () => drawings[size].join('');
+  function measure() {
+    const pixels = size * cellPixels;
+    metrics.textContent = size + ' × ' + size + ' = ' + (size * size).toLocaleString('ru-RU') +
+      ' ячеек · ячейка ' + cellPixels + ' × ' + cellPixels + ' px · поле ' + pixels + ' × ' + pixels +
+      ' px = ' + (pixels * pixels).toLocaleString('ru-RU') + ' пикселей · рамка снаружи';
+  }
+  function fit(available) {
+    if (available === undefined) {
+      const style = getComputedStyle(field);
+      available = field.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    }
+    cellPixels = Math.max(1, Math.floor(Math.min(640, available) / size));
+    const pixels = size * cellPixels;
+    grid.style.width = pixels + 'px'; grid.style.height = pixels + 'px';
+    measure();
+  }
   function status() {
     undoButton.disabled = !histories[size].undo.length;
     redoButton.disabled = !histories[size].redo.length;
@@ -1401,12 +1422,12 @@ renderEditor();
     grid.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
     grid.setAttribute('aria-label', 'Квадратное поле ' + size + ' на ' + size + ' клеток для рисования');
     let path = '';
-    for (let i = 0; i <= size; i++) path += 'M' + i + ' 0V' + size + 'M0 ' + i + 'H' + size;
+    for (let i = 1; i < size; i++) path += 'M' + i + ' 0V' + size + 'M0 ' + i + 'H' + size;
     lines.setAttribute('d', path);
     document.querySelectorAll('[data-pixel-size]').forEach(button => {
       button.setAttribute('aria-pressed', String(Number(button.dataset.pixelSize) === size));
     });
-    renderInk(); status();
+    fit(); renderInk(); status();
   }
   function commit(before) {
     if (before === snapshot()) return;
@@ -1424,9 +1445,9 @@ renderEditor();
   }
   function point(event) {
     const bounds = grid.getBoundingClientRect();
-    // The one-pixel CSS border is outside the square SVG drawing viewport.
-    const x = (event.clientX - bounds.left - grid.clientLeft) / grid.clientWidth * size;
-    const y = (event.clientY - bounds.top - grid.clientTop) / grid.clientHeight * size;
+    // The outline is outside the raster and does not consume any cell pixels.
+    const x = (event.clientX - bounds.left) / bounds.width * size;
+    const y = (event.clientY - bounds.top) / bounds.height * size;
     return x >= 0 && y >= 0 && x < size && y < size ? {x: Math.floor(x), y: Math.floor(y)} : null;
   }
   function paintTo(next) {
@@ -1511,6 +1532,12 @@ renderEditor();
     }
   });
   render();
+  let fieldWidth = -1;
+  new ResizeObserver(([entry]) => {
+    if (entry.contentRect.width === fieldWidth) return;
+    fieldWidth = entry.contentRect.width;
+    fit(fieldWidth);
+  }).observe(field);
 })();
 
 </script>
