@@ -32,7 +32,7 @@
         if (window.ZerkBitoteka) return Promise.resolve(window.ZerkBitoteka);
         if (bitotekaLoading) return bitotekaLoading;
         bitotekaLoading = new Promise((resolve, reject) => {
-            const url = new URL('_js/bitoteka.js?v=3', root).href;
+            const url = new URL('_js/bitoteka.js?v=4', root).href;
             let script = [...document.scripts].find(item => item.src === url);
             const loaded = () => window.ZerkBitoteka ? resolve(window.ZerkBitoteka) : reject(Error('Битотека не загрузилась'));
             if (!script) { script = document.createElement('script'); script.src = url; script.async = true; }
@@ -43,6 +43,10 @@
         return bitotekaLoading;
     }
     function bitotekaAccess(hub) {
+        // The existing library launcher is the Bitoteka on these pages.
+        if (window.MayatnikTemplatePanel || document.querySelector('#mayatnikRail, #bTemplatePanel') || /\/mayatnik\/mayatnik-library\.html$/.test(location.pathname)) {
+            loadBitoteka().catch(() => {}); return;
+        }
         if (document.getElementById('zerkBitotekaAccess')) return;
         const link = document.createElement('a'); link.id = 'zerkBitotekaAccess';
         link.className = 'gz-hx zbt-access'; link.href = new URL('bitoteka/', root).href;
@@ -55,7 +59,7 @@
             event.preventDefault(); try { const library = await loadBitoteka(); await library.open(); }
             catch (_) { location.href = link.href; }
         });
-        const css = new URL('_js/bitoteka.css?v=3', root).href;
+        const css = new URL('_js/bitoteka.css?v=4', root).href;
         if (![...document.querySelectorAll('link[rel="stylesheet"]')].some(item => item.href === css)) {
             const style = document.createElement('link'); style.rel = 'stylesheet'; style.href = css; document.head.appendChild(style);
         }

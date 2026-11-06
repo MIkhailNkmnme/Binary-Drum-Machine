@@ -10,7 +10,7 @@
     root.mayTemplateLibrary=api;root.mayFrameLibrary=source.mayFrameLibrary;root.mayLayers=source.mayLayers;root.maySettingsLibrary=source.maySettingsLibrary;root.mayLinkLibrary=source.mayLinkLibrary;root.mayTemplateLimit=source.mayTemplateLimit;root.mayBackup=source.mayBackup;root.maySequences=source.maySequences;root.MayatnikSequences=source.MayatnikSequences;
     root.MayatnikTemplateFolderStore=source.MayatnikTemplatePanel.getFolderStore();
     root.mayTemplateUnselect=()=>source.mayTemplateUnselect?.()||false;
-  }catch(_){disconnected('Откройте это окно кнопкой «Окно» в Библиотеке работающего Маятника.');return;}
+  }catch(_){disconnected('Откройте это окно кнопкой «Окно» в Битотеке работающего Маятника.');return;}
   const proxy=doc.getElementById('bTemplateSave'),original=source.document.getElementById('bTemplateSave');
   const syncSave=()=>{proxy.disabled=!original||original.disabled;};syncSave();proxy.onclick=()=>{if(!proxy.disabled)original.click();};
   if(original){saveObserver=new root.MutationObserver(syncSave);saveObserver.observe(original,{attributes:true,attributeFilter:['disabled']});}
@@ -21,6 +21,6 @@
   // This bridge is deferred before the panel script: "interactive" is still
   // too early. DOMContentLoaded waits for both deferred scripts to finish.
   if(doc.readyState!=='complete')doc.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
-  timer=root.setInterval(()=>{try{if(source.closed||source.mayTemplateLibrary!==api)disconnected('Маятник закрыт или перезагружен. Откройте Библиотеку заново из его окна.');}catch(_){disconnected('Связь с Маятником потеряна. Откройте Библиотеку заново из его окна.');}},1000);
+  timer=root.setInterval(()=>{try{if(source.closed||source.mayTemplateLibrary!==api)disconnected('Маятник закрыт или перезагружен. Откройте Битотеку заново из его окна.');}catch(_){disconnected('Связь с Маятником потеряна. Откройте Битотеку заново из его окна.');}},1000);
   root.addEventListener('pagehide',()=>{root.clearInterval(timer);saveObserver?.disconnect();for(const [type,listener]of listeners)try{source.removeEventListener(type,listener);}catch(_){}},{once:true});
 })(window);

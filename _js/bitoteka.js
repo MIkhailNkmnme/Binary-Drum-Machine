@@ -9,7 +9,7 @@
   const previewUrls=new Set();
   const uid=()=>root.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
   function stylesheet(){
-    const href=new URL('bitoteka.css?v=3',base).href;
+    const href=new URL('bitoteka.css?v=4',base).href;
     if([...document.querySelectorAll('link[rel="stylesheet"]')].some(link=>link.href===href))return;
     const link=document.createElement('link');link.rel='stylesheet';link.href=href;document.head.appendChild(link);
   }
@@ -156,7 +156,7 @@
   }
   function releasePreviews(){observer?.disconnect();observer=null;if(view)for(const video of view.grid.querySelectorAll('video')){video.pause();video.removeAttribute('src');video.load();}
     for(const url of previewUrls)URL.revokeObjectURL(url);previewUrls.clear();}
-  function close(){if(!view)return;viewSerial++;releasePreviews();view.dialog.close();if(returnFocus?.isConnected)returnFocus.focus?.();}
+  function close(){if(!view)return;if(view.embedded){root.MayatnikTemplatePanel?.setOpen(false);return;}viewSerial++;releasePreviews();view.dialog.close();if(returnFocus?.isConnected)returnFocus.focus?.();}
   function build(){
     if(view)return;const dialog=document.createElement('dialog');dialog.id='zerkBitoteka';dialog.className='zbt';dialog.setAttribute('aria-labelledby','zbt-title');
     const header=document.createElement('header'),title=document.createElement('h2');title.id='zbt-title';title.textContent='Битотека';header.appendChild(title);
@@ -216,12 +216,23 @@
       }
     }catch(error){if(serial!==viewSerial)return;view.status.textContent='Записи не удалось открыть.';lastError=message(error);retryAction=()=>render();retryAction.bitotekaReadRetry=true;paintError();}
   }
+  async function mount(host,options={}){
+    if(!host||host.ownerDocument!==document)throw Error('Не найден раздел Битотеки');
+    build();
+    if(view.dialog.open&&!view.embedded)view.dialog.close();
+    view.embedded=true;view.dialog.classList.add('zbt-embedded');
+    if(view.dialog.parentElement!==host)host.appendChild(view.dialog);
+    view.dialog.setAttribute('open','');
+    if(view.mountOptions!==options){filter=options.kind||'';folder=options.folder==='Все'?'':String(options.folder||'');view.mountOptions=options;}
+    await render();await refreshSources();
+  }
   async function open(options={}){
+    if(root.MayatnikTemplatePanel?.openShared){root.MayatnikTemplatePanel.openShared(options);return;}
     if(options.kind&&!KINDS.includes(options.kind))throw Error('Неизвестный раздел Битотеки');
     if(!document.body)await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
     build();filter=options.kind||'';folder=options.folder==='Все'?'':String(options.folder||'');if(!view.dialog.open){returnFocus=document.activeElement;view.dialog.showModal();}await render();await refreshSources();
   }
   const readyPromise=db();readyPromise.catch(()=>{});
-  root.ZerkBitoteka={get readyPromise(){return db();},get ready(){return db();},save,list,get,remove,download,open,close,subscribe(fn){if(typeof fn!=='function')throw TypeError('Ожидается обработчик');listeners.add(fn);return()=>listeners.delete(fn);},kinds:KINDS.slice()};
+  root.ZerkBitoteka={get readyPromise(){return db();},get ready(){return db();},save,list,get,remove,download,open,mount,close,subscribe(fn){if(typeof fn!=='function')throw TypeError('Ожидается обработчик');listeners.add(fn);return()=>listeners.delete(fn);},kinds:KINDS.slice()};
   root.dispatchEvent(new CustomEvent('zerk-bitoteka-ready'));
 })(window);

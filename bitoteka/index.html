@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Битотека — Зеркалиус</title>
-  <link rel="stylesheet" href="../_js/bitoteka.css?v=3">
+  <link rel="stylesheet" href="../_js/bitoteka.css?v=4">
   <style>html{color-scheme:dark}body{margin:32px;background:#111820;color:#e3e9f1;font:16px/1.5 "Segoe UI",Arial,sans-serif}h1{display:flex;align-items:center;font-size:24px}a{color:#8ed1ff}#bitotekaOpen{display:inline-flex;width:128px;height:32px;align-items:center;justify-content:center;border:0;background:#1b2430;color:inherit;clip-path:polygon(16px 0,112px 0,128px 16px,112px 32px,16px 32px,0 16px);font:600 14px "Segoe UI",sans-serif;cursor:pointer;user-select:none}#bitotekaOpen:focus-visible{outline:2px solid #8ed1ff;outline-offset:2px}</style>
 </head>
 <body>
@@ -12,8 +12,8 @@
   <p>Видео, GIF, изображения, шаблоны, кадры и работы всех страниц Зеркалиуса в этом браузере.</p>
   <p><button id="bitotekaOpen" type="button" aria-label="Открыть Битотеку" data-user-label>Битотека</button></p>
   <p><a href="../index.html">В Хаб Зеркалиуса</a></p>
-  <script src="../_js/bitoteka.js?v=3"></script>
+  <script src="../_js/bitoteka.js?v=4"></script>
   <script>window.zerkHubStill=true;const bitotekaQuery=new URLSearchParams(location.search),bitotekaOptions={folder:bitotekaQuery.get('folder')||'',kind:bitotekaQuery.get('kind')||''};document.getElementById('bitotekaOpen').onclick=()=>ZerkBitoteka.open(bitotekaOptions);ZerkBitoteka.open(bitotekaOptions);</script>
-  <script src="../_js/hub-link.js"></script>
+  <script src="../_js/hub-link.js?v=4"></script>
 </body>
 </html>

@@ -1883,10 +1883,10 @@
         launcher.id='mayTemplateLauncher';launcher.setAttribute('data-no-mini','');
         launch.type='button';launch.id='bTemplatePanel';launch.setAttribute('aria-controls','mayatnikTemplatePanel');
         launcher.append(launch);document.body.append(launcher);
-        launch.className='pt-l';launch.title='Библиотека';launch.setAttribute('aria-label','Библиотека');
+        launch.className='pt-l';launch.title='Битотека';launch.setAttribute('aria-label','Битотека');
         launch.innerHTML='<svg class="may-template-diamond" viewBox="0 0 24 48" aria-hidden="true"><path d="M23.5 1V47L1 24Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg><svg class="may-template-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 12h9m-4-4 4 4-4 4"/></svg>';
 
-        const sync=()=>{const open=window.MayatnikTemplatePanel.isOpen(),on=String(open);launch.setAttribute('aria-expanded',on);launch.setAttribute('aria-pressed',on);launch.title=open?'Свернуть окно библиотеки вправо':'Открыть библиотеку';launch.setAttribute('aria-label',launch.title);};
+        const sync=()=>{const open=window.MayatnikTemplatePanel.isOpen(),on=String(open);launch.setAttribute('aria-expanded',on);launch.setAttribute('aria-pressed',on);launch.title=open?'Свернуть Битотеку вправо':'Открыть Битотеку';launch.setAttribute('aria-label',launch.title);};
         launch.onclick=()=>{window.MayatnikTemplatePanel.toggle();sync();};
         addEventListener('mayatnik-template-panel-change',sync);sync();
       }

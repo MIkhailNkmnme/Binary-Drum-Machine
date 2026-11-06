@@ -126,7 +126,7 @@ svg.zico{width:1.15em;height:1.15em;vertical-align:-0.22em;margin-right:0.25em;f
 #field > #rowList{position:relative;z-index:1}
 #cutAsk input{width:64px;height:22px;box-sizing:border-box;font-size:12px;padding:0 4px}
 #cutAsk button{height:22px;padding:0 7px;font-size:12px;line-height:1}
-/* v0.321, по снимку значка ⌂ в левом нижнем углу — «это наверх, перед заголовком»: значок «в Хаб» (общий _js/hub-link.js) переставлен
+/* v0.321, по снимку значка ⌂ в левом нижнем углу — «это наверх, перед заголовком»: значок «в Хаб» (общий _js/hub-link.js?v=4) переставлен
    в шапку перед «Zazerkalius» (скрипт в конце страницы) — в ряд с шапкой, поменьше, не висит поверх холста. В дзене — вместе с шапкой */
 #top > #zerkHubBtn{position:static;flex:0 0 auto;width:26px;height:26px;font-size:15px;opacity:.8}
 #top .ver{color:var(--dim);font-size:12px}
@@ -3621,7 +3621,7 @@ body.bgmode #coneTransportTempo{display:none!important}
 <script src="../mayatnik/mirror-pendulum.js?v=1"></script>
 <script src="../_js/bit-symmetry.js?v=2"></script>
 <script src="zz-zerkalius.js?v=1210"></script>
-<script src="../_js/hub-link.js"></script>
+<script src="../_js/hub-link.js?v=4"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
