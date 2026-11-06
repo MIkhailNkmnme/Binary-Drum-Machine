@@ -4,6 +4,7 @@
   const Follow=typeof module==='object'&&module.exports?require('./mayatnik-template-follow.js'):globalThis.MayatnikTemplateFollow;
   const Batch=typeof module==='object'&&module.exports?require('./mayatnik-template-batch.js'):globalThis.MayatnikTemplateBatch;
   const Parity=typeof module==='object'&&module.exports?require('../_js/grid-parity.js'):globalThis.ZerkGridParity;
+  const Pit=typeof module==='object'&&module.exports?require('./mayatnik-pit-copies.js'):globalThis.MayatnikPitCopies;
   const KEY='settings-library-v1';
   const STATE_KEYS=('rowStepOutline joined180 templateFindAll templateFrameSearch templateFrameSearchName speed outline sym symBits symRowsMin symRowsMax symBitsMin symBitsMax symV symH symD symPlainV symPlainH symPlainD symTriangles symTriangleRows frozen ochki ochkiThrough ochkiSkipSpaces ochkiEveryFrame ochkiRowReverseMask gifScaleStack gifScaleStackStep ochkiSnake manualSnake ochkiMode ochkiInv ochkiRev ochkiHalf ochkiPattern ochkiLength bitOneColour bitZeroColour bitContourColour1 bitContourColour2 bitContourMode bitContourColours overOneColour overZeroColour digitOneColour digitZeroColour digitFont digitSize geomCenter fixLines blackMirror animHl fillArea fillWholeColour paintFrameMode paintSame paintSymmetric fillGrow paintMeet paintAxis paintMid midOneOn midZeroOn midWide midOneColour midZeroColour verticalFillColour stolbFillColour axesFillColour autoFillColour growFillColour meetFillColour axisFillColour isolatedOneColour isolatedZeroColour autoFillPalette growOwnColour triTop thirds zsnap zbase zLock zLimit zOverview zoom zMid ztop zBot linesOn lineFamilies contour mirCol mirOp rowLab heat sectors areas fixWide fixLow fixLowOut fixMirror fixFold fixRot fixHor fixCross fixAxis fixDown fixDragK sawFull saw lineMeasures templateMaxArea viewUpsideDown autoAxes triangleMapSource triangleMapAxes triangleMapMask triangleMapMirror axisPalette crossMirror crossLabels crossMirrorMode crossMirrorSector').split(' ');
   const NEW_STATE_KEYS=new Set('templateFrameSearch templateFrameSearchName ochkiThrough ochkiSkipSpaces ochkiEveryFrame ochkiRowReverseMask gifScaleStack gifScaleStackStep zLimit zOverview paintFrameMode fillWholeColour rowStepOutline ochkiHalf joined180 manualSnake lineFamilies autoAxes triangleMapSource triangleMapAxes triangleMapMask triangleMapMirror axisPalette crossMirror crossLabels crossMirrorMode crossMirrorSector viewUpsideDown axesFillColour autoFillColour growFillColour meetFillColour axisFillColour isolatedOneColour isolatedZeroColour autoFillPalette growOwnColour'.split(' '));
@@ -12,18 +13,21 @@
   const ISOLATED_DEFAULTS={paintIsolated0:false,paintIsolated1:false,paintEmptyNeighbours:false};
   for(const key of ['heatHoldZero','heatMode','heatPeriod','edgeRhombOn','romboRow','romboAngle','romboAssembly','romboSeam',...Object.keys(INVERT_DEFAULTS),...Object.keys(ISOLATED_DEFAULTS)]){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   STATE_KEYS.push('gifScaleStackHeight','gifScaleStackMethod','gifScaleStackMode','gifScaleStackBase');NEW_STATE_KEYS.add('gifScaleStackHeight');NEW_STATE_KEYS.add('gifScaleStackMethod');NEW_STATE_KEYS.add('gifScaleStackMode');NEW_STATE_KEYS.add('gifScaleStackBase');
+  for(const key of Object.keys(Pit.DEFAULTS)){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   const TOOL_KEYS=['fillMode','autoVertical','axisPicking','axisLineMode','rulerMode','mirrorLine','mirrorAxis','templatePickEnabled','templatePickMode','templateDragEnabled'];
   const clone=value=>JSON.parse(JSON.stringify(value));
   function pick(state,tools={},controls={},colourAuto={}){
     const values={};for(const key of STATE_KEYS){const v=state[key];values[key]=v===undefined?null:key==='lineFamilies'||key==='templateFindAll'||key==='templateFrameSearch'?clone(v):v;}
     for(const [key,value]of Object.entries({...INVERT_DEFAULTS,...THROUGH_DEFAULTS}))if(state[key]===undefined)values[key]=value;
     for(const [key,value]of Object.entries(ISOLATED_DEFAULTS))if(state[key]===undefined)values[key]=value;
+    Object.assign(values,Pit.normalize(state));
     const modes={};for(const key of TOOL_KEYS)modes[key]=tools[key]??(key==='templatePickMode'?'one':key==='autoVertical'?0:false);
     const clocks={};for(const key of ['fillColour','verticalFillColour','stolbFillColour','midZeroColour','midOneColour','axesFillColour','autoFillColour','growFillColour','meetFillColour','axisFillColour','isolatedOneColour','isolatedZeroColour']){const q=colourAuto[key];if(q&&['off','build','frame'].includes(q.mode)&&/^#[0-9a-f]{6}$/i.test(q.color))clocks[key]={mode:q.mode,color:q.color};}
     return {version:1,colourAuto:clocks,state:values,parity:Parity.normalize(state.parity),tools:modes,controls:{fillColour:controls.fillColour||'#ff7f27',fillMirror:controls.fillMirror!==false}};
   }
   function validate(value){
     if(!value||value.version!==1||!value.state||!value.tools||!value.parity||!/^#[0-9a-f]{6}$/i.test(value.controls?.fillColour))throw Error('Повреждён набор настроек');
+    Pit.normalize(value.state,true);
     if(value.state.ochkiThrough!==undefined&&typeof value.state.ochkiThrough!=='boolean')throw Error('Некорректный режим Все сквозные');
     for(const key of Object.keys(ISOLATED_DEFAULTS))if(value.state[key]!==undefined&&typeof value.state[key]!=='boolean')throw Error('Некорректная настройка окраски: '+key);
     for(const key of ['inverted','invertAuto'])if(value.state[key]!==undefined&&typeof value.state[key]!=='boolean')throw Error('Некорректная инверсия: '+key);

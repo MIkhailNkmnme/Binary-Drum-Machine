@@ -1,3 +1,4 @@
+/* v0.939: копии текущего рисунка / двоичного образца во впадинах. */
 /* v0.936: живая окраска пустот по четырём одинаковым соседям. */
 /* v0.669: варианты решётки и инверсии для обычного Маятника. */
 /* Маятник v0.665 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
@@ -151,7 +152,7 @@
       { type: 'vpair', name: 'Строк', tip: 'Длина оси: строк от · до', parts: [{ ...num('symRowsMin', {}), name: 'строк ≥' }, { ...num('symRowsMax', { inf: true, fromInf: () => +$('symRowsMin').value || 2 }), name: '≤' }] },
       { type: 'vpair', name: 'Бит', tip: 'Ширина оси: бит от · до', parts: [{ ...num('symBitsMin', {}), name: 'бит ≥' }, { ...num('symBitsMax', { inf: true, fromInf: () => +$('symBitsMin').value || 2 }), name: '≤' }] }, button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
     { id: 'paint', title: 'Раскраска', color: GROUP_COLOURS['rail:paint'], items: [
-      withColour('bFill','fillColour','Заливка'),button('bPaintEmpty','colour'),check('fillWholeColour','colour'),{...selectSegments('paintFrameMode',{off:'Выкл',colour:'Цвет',cells:'Биты'}),src:'paintFrameMode',cls:'may-segments gz-split gz-split3'},withColour('bAutoVertical','verticalFillColour','Столб'),
+      withColour('bFill','fillColour','Заливка'),button('bPaintEmpty','colour'),withColour('bPitCopies','pitCopyColour','Копии в ямах'),{...select('pitCopySource','copy'),disabled:()=>$('pitCopySource').disabled},num('pitCopyLevels',{name:'Вложенность',zero:1}),control('pitCopySeed'),num('pitCopyRows',{name:'Строк образца',zero:32}),check('fillWholeColour','colour'),{...selectSegments('paintFrameMode',{off:'Выкл',colour:'Цвет',cells:'Биты'}),src:'paintFrameMode',cls:'may-segments gz-split gz-split3'},withColour('bAutoVertical','verticalFillColour','Столб'),
       button('bPaintSame','copy'),button('bPaintSymmetric','mirror'),withColour('bPaintIsolated1','isolatedOneColour','Одиночные 1'),withColour('bPaintIsolated0','isolatedZeroColour','Одиночные 0'),
       select('fillArea','grid4'),check('fillMirror','mirror'),
       button('bPaintMid','line'),withColour('midOneOn','midOneColour','Центр 1'),withColour('midZeroOn','midZeroColour','Центр 0'),check('midWide','line'),

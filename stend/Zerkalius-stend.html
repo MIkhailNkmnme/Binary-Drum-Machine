@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.023</title>
+<title>Зеркалиус — Стенд — v0.024</title>
+<!-- v0.024 · СТЕНД-024: отдельный Маятник вверх на родном ядре, боковые обрезки транслируются к оси и вверх; повторные выходы тем же переносом, швы XOR, ход без автоматического сброса. -->
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
      v0.012: по просьбе «и балансы 0 и 1 в кадре» — в плеере и под каждой мини-картинкой показаны
@@ -97,7 +98,7 @@
   .player-body{display:block}
   .player-side{display:flex;flex-direction:column;gap:8px}
   .info{font-size:12px;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
-  .thumbs{display:grid;grid-template-columns:repeat(5,minmax(0,118px));gap:8px;margin-top:4px}
+  .thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,118px));gap:8px;margin-top:4px}
   .thumb{position:relative;display:flex;min-width:0}
   .thumb button{display:flex;flex-direction:column;align-items:center;gap:1px;background:#0a0e14;border:1px solid var(--line);
     border-radius:0;padding:3px;cursor:pointer;color:var(--text);font:11px/1.2 "Segoe UI",system-ui,sans-serif;width:100%}
@@ -138,7 +139,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.023 · 06.11.2026</span>
+  <span class="ver">v0.024 · 06.11.2026</span>
 </header>
 <main>
   <section class="card player-sticky" id="player">
@@ -164,6 +165,9 @@
       </div>
       <div class="thumb">
         <button type="button" data-method="loop" title="Ступенчатая петля: стягивание к вершине, один выходной бит на физический пиксель"><canvas id="thLoop" width="108" height="54"></canvas><span>Петля по пикселям</span></button>
+      </div>
+      <div class="thumb">
+        <button type="button" data-method="up" title="Маятник: боковые обрезки переносятся к центральной оси над прежней вершиной"><canvas id="thUp" width="108" height="54"></canvas><span>Маятник вверх</span></button>
       </div>
       <div class="thumb">
         <button type="button" data-method="holes"><canvas id="thHoles" width="108" height="54"></canvas><span>Копии в впадинах</span></button>
@@ -219,6 +223,15 @@
     <div class="note">«Вверх» здесь — только у камеры (старый опыт): у конструкции вершина в строке 0, поле растёт
       вниз от неё. Если наращивать новую вершину сверху — это уже другое правило.</div>
     <p class="sub" style="margin-top:12px"><a href="Zerkalius-rost.html">Отдельная демо-страница «Рост треугольника» →</a> · <a href="../mayatnik/Zerkalius-mayatnik-rost.html">Маятник, тестовый треугольник: рост →</a></p>
+  </section>
+
+  <section class="card" id="pendulum-up">
+    <h2>1б. Маятник вверх <small>обрезки к центральной оси</small></h2>
+    <p class="sub">Настоящее ядро Маятника: после центрального конуса ход t одновременно пересчитывает пару вершин −t и +t. Чётный и нечётный ходы идут по разным подрешёткам. Это последовательные XOR-конусы, а не правило90 от одной вершины.</p>
+    <p class="sub">Оба боковых обрезка собираются над прежней вершиной: левый сдвигается на A клеток вправо и A строк вверх, правый — на A клеток влево и A строк вверх. Ширина мастера W=2A+1, его высота A+1. Поворота и уменьшения нет; каждый бит остаётся одним физическим пикселем.</p>
+    <p class="sub">Если фрагмент снова выходит за боковую границу, к нему повторяется тот же перенос. На швах совпавшие 0/1 складываются через XOR, фон −1 не участвует. Перенесённые фрагменты не возвращаются в исходную матрицу расчёта.</p>
+    <p class="sub">Верхняя зона находится над исходной вершиной на центральной оси; её координаты показаны под полем. Единицы золотые, внутренние нули чёрные, фон тёмно-синий; счётчики различают все три состояния. Источник расширяется блоками по64хода, плеер продолжает вперёд без сброса на0. Высота поля увеличивается при заполнении следующей верхней полосы. При нехватке памяти воспроизведение останавливается с сообщением.</p>
+    <p class="sub">Колесо прокручивает страницу, камера и экранный зум здесь выключены. Назад и «Сначала» — явный пересчёт ядра, а не автоматический цикл.</p>
   </section>
 
   <section class="card" id="pixel-loop">
@@ -371,9 +384,11 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.023 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.024 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
+<script src="../mayatnik/mayatnik-core.js"></script>
+<script src="stend-up.js?v=024"></script>
 <script>
 (() => {
   'use strict';
@@ -822,12 +837,14 @@ b(2r+1,2c+1) = b(r, c)</pre>
     const METHODS = {
       growth: { steps: 5, ms: 1100, name: 'рост битов', text: (s) => `шаг ${s + 1}/5` },
       loop: { steps: 257, ms: 60, name: 'петля по пикселям', text: (s) => `фаза ${s}/256` },
+      up: { steps: 65, ms: 300, name: 'Маятник вверх', text: (s) => `ход ${s}` },
       holes: { steps: 5, ms: 800, name: 'копии в впадинах', text: (s) => `уровень ${s}/4` },
       nest: { steps: 6, ms: 900, name: 'вложение битов', text: (s) => `уровень ${s}/5` },
       old: { steps: 72, ms: 90, name: 'старая запись с камерой', text: (s) => `кадр ${s + 1}/72` }
     };
-    const STEPS = { growth: 0, loop: 0, holes: 0, nest: 0, old: 0 };
+    const STEPS = { growth: 0, loop: 0, up: 0, holes: 0, nest: 0, old: 0 };
     let loopImage = null, loopStats = null;
+    let upView = null, upStats = null, upInfo = '';
     const pHeight = $('pHeight'), pBalance = $('pBalance');
     let method = 'growth', step = 0, auto = true, last = performance.now(), acc = 0;
     // Текущая высота у каждого способа: рост — поле в px; вложение — высота вставленной копии в строках;
@@ -835,6 +852,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function heightOf(m, s) {
       if (m === 'growth') return `поле ${32 << s} px`;
       if (m === 'loop') return 'без конечного края · выходная клетка 1 физ. px';
+      if (m === 'up') return upView ? `мастер ${upView.H} строк · верх ${Math.max(upView.A, Math.ceil(s / upView.A) * upView.A)} строк · 1 бит = 1 физ. px` : 'мастер и верхняя зона · 1 бит = 1 физ. px';
       if (m === 'holes') return `копия ${32 >> s} строк`;
       if (m === 'nest') return `копия ${32 >> s} строк`;
       return `поле ${32 << Math.floor(s / 12)} строк`;
@@ -844,6 +862,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     // а не весь прямоугольник: у роста и старой записи — поле кадра, у вложения — база + копии.
     function countsOf(m, s) {
       if (m === 'loop') return loopStats;
+      if (m === 'up') return upStats;
       if (m === 'holes') return null;                       // цветное вложение: 0/1 нет
       if (m === 'growth') {
         const n = 32 << s, total = n * (n + 1) / 2, o = POW3[5 + s];
@@ -901,13 +920,13 @@ b(2r+1,2c+1) = b(r, c)</pre>
       });
       document.querySelectorAll('.th-balance').forEach((el) => {
         const m = el.dataset.b, c = countsOf(m, STEPS[m]);
-        el.textContent = c ? `0 ${c.z} · 1 ${c.o}` : '0/1: —';
+        el.textContent = c ? `0 ${c.z} · 1 ${c.o}` + (m === 'up' ? ` · фон ${c.bg}` : '') : '0/1: —';
       });
       if (pHeight) pHeight.textContent = 'высота: ' + heightOf(method, step);
       if (pBalance) {
         const c = countsOf(method, step);
         pBalance.classList.toggle('bal', !!(c && c.z === c.o));
-        pBalance.textContent = c ? `0: ${c.z} · 1: ${c.o}` + (c.z === c.o ? ' · БАЛАНС' : '') : '0 и 1: — (цветное вложение)';
+        pBalance.textContent = c ? `0: ${c.z} · 1: ${c.o}` + (method === 'up' ? ` · фон −1: ${c.bg}` : '') + (c.z === c.o ? ' · БАЛАНС' : '') : '0 и 1: — (цветное вложение)';
       }
     }
     function drawGrowth() {
@@ -949,6 +968,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       const available = player.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight);
       const width = Math.max(1, Math.floor(available * density)), height = Math.max(1, Math.floor(width / 2));
       cv.classList.add('pixel-loop');
+      cv.style.aspectRatio = '2/1';
       cv.style.width = (width / density) + 'px';
       cv.style.height = (height / density) + 'px';
       if (cv.width !== width) cv.width = width;
@@ -957,6 +977,23 @@ b(2r+1,2c+1) = b(r, c)</pre>
       const output = drawPixelLoop(pctx, width, height, step, loopImage);
       loopImage = output.image; loopStats = output.stats;
       if (edgesOut) edgesOut.textContent = `поле ${width}×${height} физ. px · выходная клетка 1 px · вершина на центральной оси`;
+    }
+    function paintPendulumUp() {
+      const player = $('player'), css = getComputedStyle(player);
+      const density = (devicePixelRatio || 1) * (window.visualViewport?.scale || 1);
+      const available = player.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight);
+      const A = Math.max(1, Math.floor((available * density - 1) / 2));
+      if (!upView || upView.A !== A) upView = window.StendUp.create(A);
+      const height = Math.max(A, Math.ceil(step / A) * A) + A + 1;
+      cv.classList.add('pixel-loop'); cv.style.aspectRatio = 'auto';
+      cv.style.width = upView.W / density + 'px'; cv.style.height = height / density + 'px';
+      if (cv.width !== upView.W) cv.width = upView.W;
+      if (cv.height !== height) cv.height = height;
+      pctx.setTransform(1, 0, 0, 1, 0, 0);
+      const output = upView.draw(pctx, step); upStats = output.stats;
+      METHODS.up.steps = output.reserve + 1; range.max = String(output.reserve);
+      upInfo = `Маятник вверх · ход ${step} (${step % 2 ? 'нечётный' : 'чётный'}) · запас до ${output.reserve} · перенесено ${upStats.transferred} клеток · совмещений XOR ${upStats.seamWrites}`;
+      if (edgesOut) edgesOut.textContent = `поле ${output.width}×${output.height} физ. px · края x=0…${output.width - 1} · исходная вершина (${A}, ${output.topReserve}) · верхняя зона y=0…${output.topReserve - 1} · 1 бит = 1 px`;
     }
     function holesTree(cx, cy, s, up, order, depth, master, copy) {
       if (order <= 0) {
@@ -1090,8 +1127,9 @@ b(2r+1,2c+1) = b(r, c)</pre>
     }
     function paintPlayer() {
       if (method === 'loop') { paintPixelLoop(); return; }
+      if (method === 'up') { paintPendulumUp(); return; }
       if (cv.classList.contains('pixel-loop')) {
-        cv.classList.remove('pixel-loop'); cv.style.width = '100%'; cv.style.height = '';
+        cv.classList.remove('pixel-loop'); cv.style.width = '100%'; cv.style.height = ''; cv.style.aspectRatio = '2/1';
       }
       if (cv.width !== PW) cv.width = PW;
       if (cv.height !== PH) cv.height = PH;
@@ -1114,7 +1152,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       paintPlayer();
       range.value = String(step);
       stepOut.textContent = METHODS[method].text(step);
-      info.textContent = `${METHODS[method].name} · ${METHODS[method].text(step)}`;
+      info.textContent = method === 'up' ? upInfo : `${METHODS[method].name} · ${METHODS[method].text(step)}`;
       updateStats();
     }
     function setAuto(on) {
@@ -1124,10 +1162,17 @@ b(2r+1,2c+1) = b(r, c)</pre>
       play.title = on ? 'Авто: шаги идут сами' : 'Плей: пустить шаги автоматически';
       if (on) { acc = 0; last = performance.now(); }
     }
-    function setStep(k) { step = Math.max(0, Math.min(METHODS[method].steps - 1, k)); STEPS[method] = step; render(); }
-    const SECTION_OF = { growth: 'growth', loop: 'pixel-loop', holes: 'nesting', nest: 'zoom', old: 'growth' };
-    const METHOD_SECTIONS = ['growth', 'pixel-loop', 'nesting', 'zoom'];
-    const METHOD_ANCHOR = { growth: 'growth', loop: 'pixel-loop', holes: 'nesting', nest: 'zoom', old: 'old' };
+    function renderSafely() {
+      try { render(); }
+      catch (error) {
+        if (method !== 'up') throw error;
+        setAuto(false); info.textContent = 'Маятник вверх остановлен: ' + error.message + '. Ход ' + step + ' не сброшен; можно вернуться назад или выбрать другой вариант.';
+      }
+    }
+    function setStep(k) { step = method === 'up' ? Math.max(0, k) : Math.max(0, Math.min(METHODS[method].steps - 1, k)); STEPS[method] = step; renderSafely(); }
+    const SECTION_OF = { growth: 'growth', loop: 'pixel-loop', up: 'pendulum-up', holes: 'nesting', nest: 'zoom', old: 'growth' };
+    const METHOD_SECTIONS = ['growth', 'pixel-loop', 'pendulum-up', 'nesting', 'zoom'];
+    const METHOD_ANCHOR = { growth: 'growth', loop: 'pixel-loop', up: 'pendulum-up', holes: 'nesting', nest: 'zoom', old: 'old' };
     // Сведения живут в описаниях, миниатюры содержат только картинку и название.
     for (const m of Object.keys(METHODS)) {
       const section = $(SECTION_OF[m]);
@@ -1163,7 +1208,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (!joinFrame) joinFrame = requestAnimationFrame(() => { joinFrame = 0; joinPreview(); });
     }
     addEventListener('resize', scheduleJoin);
-    function resizePixelLoop() { if (method === 'loop') { paintPlayer(); updateStats(); } }
+    function resizePixelLoop() { if (method === 'loop') { paintPlayer(); updateStats(); } else if (method === 'up') renderSafely(); }
     addEventListener('resize', resizePixelLoop);
     window.visualViewport?.addEventListener('resize', resizePixelLoop);
     addEventListener('scroll', scheduleJoin, { passive: true });
@@ -1193,12 +1238,12 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function setMethod(m) {
       if (!METHODS[m]) return;
       method = m; step = STEPS[m];
-      cv.style.touchAction = m === 'loop' ? 'auto' : 'none';
-      cv.style.cursor = m === 'loop' ? 'default' : 'grab';
+      cv.style.touchAction = m === 'loop' || m === 'up' ? 'auto' : 'none';
+      cv.style.cursor = m === 'loop' || m === 'up' ? 'default' : 'grab';
       range.max = String(METHODS[m].steps - 1);
       document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.method === m)));
       setAuto(false);
-      render();
+      renderSafely();
       moveSection(m);
     }
     play.addEventListener('click', () => setAuto(!auto));
@@ -1224,10 +1269,16 @@ b(2r+1,2c+1) = b(r, c)</pre>
     }
     document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.addEventListener('click', () => setMethod(b.dataset.method)));
     // Мини-картинки: рисуем сцену в показательном состоянии и уменьшаем в 108×54.
-    const THUMB_STEP = { growth: 4, loop: 128, holes: 2, nest: 5, old: 47 };
+    const THUMB_STEP = { growth: 4, loop: 128, up: 8, holes: 2, nest: 5, old: 47 };
     for (const m of Object.keys(METHODS)) {
       method = m; step = THUMB_STEP[m];
       if (m === 'growth') drawGrowth(); else if (m === 'loop') loopStats = drawPixelLoop(sctx, PW, PH, step, imgG).stats;
+      else if (m === 'up') {
+        const preview = document.createElement('canvas'); preview.width = 63; preview.height = 63;
+        window.StendUp.create(31).draw(preview.getContext('2d'), step);
+        sctx.fillStyle = '#04060a'; sctx.fillRect(0, 0, PW, PH); sctx.imageSmoothingEnabled = false;
+        sctx.drawImage(preview, (PW - PH) / 2, 0, PH, PH);
+      }
       else if (m === 'holes') drawHoles(); else if (m === 'nest') drawNest(); else drawOld();
       const tc = $('th' + m.charAt(0).toUpperCase() + m.slice(1));
       if (tc) { const t = tc.getContext('2d'); t.clearRect(0, 0, 108, 54); t.drawImage(scene, 0, 0, PW, PH, 0, 0, 108, 54); }
@@ -1246,7 +1297,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     cv.style.touchAction = 'none';
     // Колесо — зум внутри плеера, к курсору.
     cv.addEventListener('wheel', (e) => {
-      if (method === 'loop') return;
+      if (method === 'loop' || method === 'up') return;
       e.preventDefault();
       const mx = canvasX(e), my = canvasY(e);
       const sxp = toSceneX(mx), syp = toSceneY(my);
@@ -1257,9 +1308,9 @@ b(2r+1,2c+1) = b(r, c)</pre>
       clampView();
       paintPlayer();
     }, { passive: false });
-    cv.addEventListener('dblclick', () => { viewScale = 1; viewX = 0; viewY = 0; paintPlayer(); });
+    cv.addEventListener('dblclick', () => { if (method === 'up') return; viewScale = 1; viewX = 0; viewY = 0; paintPlayer(); });
     cv.addEventListener('pointerdown', (e) => {
-      if (method === 'loop') return;
+      if (method === 'loop' || method === 'up') return;
       const side = edgeHit(canvasX(e));
       if (side) {
         edgeDrag = side;
@@ -1275,7 +1326,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       e.preventDefault();
     });
     cv.addEventListener('pointermove', (e) => {
-      if (method === 'loop') return;
+      if (method === 'loop' || method === 'up') return;
       if (edgeDrag) {
         const sceneX = toSceneX(canvasX(e));
         const cxp = PW / 2;
@@ -1298,7 +1349,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       }
       cv.style.cursor = edgeHit(canvasX(e)) ? 'ew-resize' : 'grab';
     });
-    function endDrag() { edgeDrag = null; panDrag = null; cv.style.cursor = 'grab'; }
+    function endDrag() { edgeDrag = null; panDrag = null; cv.style.cursor = method === 'up' || method === 'loop' ? 'default' : 'grab'; }
     cv.addEventListener('pointerup', endDrag);
     cv.addEventListener('pointercancel', endDrag);
     cv.addEventListener('pointerleave', () => { if (!edgeDrag && !panDrag) cv.style.cursor = 'default'; });
@@ -1311,7 +1362,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (auto) {
         const ms = METHODS[method].ms;
         acc += dt;
-        if (acc >= ms) { acc = 0; setStep((step + 1) % METHODS[method].steps); }
+        if (acc >= ms) { acc = 0; setStep(method === 'up' ? step + 1 : (step + 1) % METHODS[method].steps); }
       }
       requestAnimationFrame(loop);
     }
