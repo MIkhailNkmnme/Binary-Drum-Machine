@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.051</title>
+<title>Zerkalius АзъБукъ v0.052</title>
+<!-- v0.052 · АЗБ-053: карандаш, палитра 32 цветов с множественным выбором и циклом ПКМ; повторное нажатие своим цветом стирает, цветные рисунки сохраняются с переносом прежних. -->
 <!-- v0.051 · АЗБ-052: поле по центру, целые размеры ячеек, рамка снаружи и точные размеры/количество пикселей. -->
 <!-- v0.050 · АЗБ-051: квадратное пиксельное поле 2–128, рисование и ластик, отмена/повтор; отдельный сохранённый рисунок для каждого размера. -->
 <!-- АзъБукъ — v0.049. Формы кнопок: пустые примеры (кнопка, ромб, рейка, прямоугольник) из символов шрифта; палитра символов, цвет, покраска отдельной клетки и всей формы, очистка и сброс; состояние в localStorage. v0.048. Поле текста растягивается вниз по содержимому: минимум три строки, при четырёх и больше высота растёт по тексту без внутренней прокрутки; пересчёт при вводе, загрузке сохранённого текста и изменении ширины. v0.047. Символы выровнены по вертикали: у минуса, плюса, равно, тильды, каретки, звёздочки, двоеточия, кавычек, решётки, процента, косых черт и «» появилась полная высота 7 строк; минус теперь на середине строки, а не внизу. v0.046. Переключатель «моно / по буквам»: моно — клетка 8 у всех, буква центрируется, зазор между клетками; по буквам — шаг по ширине рисунка, зазор между буквами, 0 — буквы касаются. v0.045. Моноширинный набор: каждая буква в клетке 8, буквы центрируются, общая базовая линия строчных, выносные уходят вниз; зазор одинаковый у всех, включая узкие i, j и l. У р, у, ф, g, p, q и y тело строчной дотянуто до пяти клеток, как у остальных. v0.044. Толстое начертание удалено: осталась только тонкая гарнитура, выбор толщины снят. v0.043. Прямоугольные кнопки кратны ячейке, ссылка в хаб.  Палитры квадратами цвета букв внутри цвета фона, без подписей. v0.042. Палитра и свои цвета справа в редакторе буквы. v0.041. Чёрный контур выбранной буквы, полосы прокрутки скрыты. v0.040. Настройки слева от сетки в поле, выбранная буква жёлтая. v0.039. Обводка версии трапецией по рисунку пользователя. v0.038. Нулевой зазор до касания клеток; сетка в правом верхнем углу поля. v0.037. Набор текста с изображением и JSON, цвет сетки, точный шаг зазора, выделение размера. v0.036. Буквы и промежутки на общей сетке; кнопка сетки внутри поля справа. v0.035. Действия справа от заголовка, выбор размера по образцам буквы. v0.034. Переключатель фоновой сетки поля букв. v0.033. Заголовки разделов алфавита сняты. v0.032. Редактор от 4×4, форма сетки, подсчёт битов и замкнутых пустот, все размеры справа. v0.031. Буквы разделены при любом зазоре, включая нулевой. v0.030. Знаки изменения строк и столбцов над сеткой, действия редактора сверху. v0.029. Выбранная буква выделяется цветом и свечением. v0.028. Число внутри X только при значении по умолчанию 1, иначе сбоку. v0.027. Число зазора зелёное, в покое между половинами X. v0.026. Число сбоку появляется сразу при первом нажатии стрелки. v0.025. Выбор буквы для правки прямо из алфавита. v0.024. Зазор до стрелок 2 px, левая и правая части разного цвета. v0.023. Составные кнопки сетки и ромбы Зазеркалиуса влево/вправо. v0.022. Барабан сворачивается при уходе мыши; стрелки и захват X разделены. v0.021. Клик по заголовку палитры вращает барабан. v0.020. Раздвижной X-бегунок с числом внутри и сбоку при наведении. v0.019. Неоновые, монохромные и радужная палитры; кнопка правки буквы. v0.018. Битовый номер версии высотой 8 px. v0.017. Заголовок АЗЪ-БУКЪ в общей рамке, рабочие кнопки с ячейкой 1 px. v0.016. Зазор шагает по клеткам, в кнопках всегда одна клетка. v0.015. Рабочие кнопки набраны выбранным битовым шрифтом. v0.014. Клетки непрерывных штрихов соприкасаются и при наклоне. v0.013. Межбуквенный зазор считается по закрашенным клеткам на обеих сетках. v0.012. Зазор задаётся в долях ширины буквы от 0 до 1. v0.011: Ползунок «зазор» — расстояние между буквами от 0 до одной ширины буквы. v0.010: исправлены исходные тонкие буквы и знаки. v0.009: В образцах кнопок добавлена ячейка 1 px, уточнено название тонкого начертания. v0.008: раздел «В кнопках» — битовые подписи внутри кнопок-ромбоидов разной высоты. v0.007: v0.007: пресеты цветов — кнопка «цвет» переключает фиолетовый, золото, бирюзу, алый и день; выбор запоминается.
@@ -223,9 +224,15 @@
   .pixel-sizes button[aria-pressed="true"],.pixel-actions button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
   .pixel-toolbar button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
   .pixel-toolbar button:disabled{opacity:.35;cursor:default}
-  #pixelGrid{width:min(100%,640px);height:auto;aspect-ratio:1;display:block;margin-inline:auto;background:var(--bg);border:0;outline:1px solid var(--line);touch-action:none;user-select:none;cursor:crosshair;shape-rendering:crispEdges}
-  #pixelGrid:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
-  #pixelInk{fill:var(--ink)}
+  #pixelGrid{width:min(100%,640px);height:auto;aspect-ratio:1;display:block;margin-inline:auto;background:var(--bg);border:0;outline:1px solid var(--edit-ink,var(--ink));touch-action:none;user-select:none;cursor:crosshair;shape-rendering:crispEdges}
+  #pixelGrid:focus-visible{outline:2px solid var(--edit-ink,var(--ink));outline-offset:3px}
+  .pixel-palette{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:550px;margin:0 auto 12px;padding:4px}
+  .pixel-swatch,.pixel-swatch:hover{position:relative;flex:0 0 28px;width:28px;min-width:28px;height:28px;padding:0;background:var(--pixel-color);border:1px solid #888;cursor:pointer}
+  .pixel-swatch[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
+  .pixel-swatch[data-active="true"]::after{content:"";position:absolute;inset:6px;border:2px solid white;box-shadow:0 0 0 1px black,inset 0 0 0 1px black;pointer-events:none}
+  .pixel-swatch:focus-visible{outline:2px dashed var(--ink);outline-offset:3px}
+  #pixelActive{display:flex;justify-content:center;align-items:center;gap:8px;margin:0 0 8px;color:var(--dim);font-size:11px}
+  #pixelActiveColor{display:inline-block;width:20px;height:20px;border:1px solid #888;background:var(--pixel-color)}
   #pixelLines{fill:none;stroke:var(--line);stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
   #pixelCursor{fill:none;stroke:var(--edit-ink,var(--ink));stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none;display:none}
   #pixelGrid:focus-visible #pixelCursor{display:block}
@@ -237,7 +244,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.051"></span>
+    <span class="pbtn ver" aria-label="v0.052"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -327,17 +334,19 @@
       <button type="button" data-pixel-size="128" title="Поле 128 × 128">128</button>
     </div>
     <div class="tools pixel-actions" role="group" aria-label="Рисование по клеткам">
-      <button id="pixelDraw" type="button" aria-pressed="true" title="Рисовать: закрашивать клетки нажатием и протяжкой">Рисовать</button>
-      <button id="pixelErase" type="button" aria-pressed="false" title="Ластик: стирать клетки нажатием и протяжкой; мышью также правая кнопка">Ластик</button>
+      <button id="pixelDraw" type="button" aria-pressed="true" title="Карандаш: рисовать активным цветом; повторное нажатие на клетку этого цвета стирает. Правая кнопка на поле выбирает следующий из выбранных цветов по кругу">Карандаш</button>
+      <button id="pixelErase" type="button" aria-pressed="false" title="Ластик: возвращать клетки к фону нажатием и протяжкой">Ластик</button>
       <button id="pixelUndo" type="button" title="Отменить последний штрих или очистку этого размера">Отмена</button>
       <button id="pixelRedo" type="button" title="Повторить отменённое действие этого размера">Повтор</button>
       <button id="pixelClear" type="button" title="Очистить поле текущего размера; действие можно отменить">Очистить</button>
     </div>
   </div>
-  <svg id="pixelGrid" viewBox="0 0 16 16" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp">
+  <div id="pixelPalette" class="pixel-palette" role="group" aria-label="Палитра 32 цветов: выберите один или несколько"></div>
+  <div id="pixelActive" role="status"><span id="pixelActiveColor" aria-hidden="true"></span><span id="pixelActiveLabel"></span></div>
+  <svg id="pixelGrid" viewBox="0 0 16 16" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp" title="Карандаш: повторное нажатие своим цветом стирает. Правая кнопка переключает активный цвет по выбранным по кругу">
     <title>Пиксельное поле</title>
-    <desc id="pixelHelp">Нажмите и ведите для рисования. Ластик или правая кнопка мыши стирает. С клавиатуры: стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</desc>
-    <path id="pixelInk"></path><path id="pixelLines"></path><rect id="pixelCursor" width="1" height="1"></rect>
+    <desc id="pixelHelp">Карандаш рисует активным цветом; на клетке того же цвета начинает стирающий штрих. Ластик возвращает фон. Правая кнопка переключает выбранные цвета по кругу, не меняя рисунок. Стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</desc>
+    <g id="pixelInk"></g><path id="pixelLines"></path><rect id="pixelCursor" width="1" height="1"></rect>
   </svg>
   <div id="pixelMetrics"></div>
   <div id="pixelNotice" role="status" aria-live="polite"></div>
@@ -1357,21 +1366,42 @@ renderEditor();
 
 // Independent square raster: each dimension keeps its drawing and editing history.
 (() => {
-  const key = 'azbuk-pixel-field-v1', sizes = [2, 4, 8, 16, 32, 64, 128];
+  const key = 'azbuk-pixel-field-v2', legacyKey = 'azbuk-pixel-field-v1', sizes = [2, 4, 8, 16, 32, 64, 128];
+  const colors = ['var(--bg)', '#ffffff', '#fff2cc', '#ffe08a', '#ffc857', '#ff9f43', '#ff744f', '#ef5350',
+    '#d83f67', '#f48fb1', '#f26dc1', '#d76deb', '#b388eb', '#9163cb', '#6657c4', '#5068d9',
+    '#5395ee', '#72bdf2', '#a1dce8', '#63cfc5', '#36b6a2', '#269984', '#3baf65', '#7acb62',
+    '#b2df72', '#d9e88b', '#c7ab88', '#96765b', '#b9c1c9', '#788693', '#424b57', '#000000'];
+  const encode = cells => Array.from(cells, value => value.toString(32)).join('');
+  const decode = text => Uint8Array.from(text, value => parseInt(value, 32));
   const grid = document.getElementById('pixelGrid');
   const field = document.getElementById('pixelField'), metrics = document.getElementById('pixelMetrics');
   const ink = document.getElementById('pixelInk'), lines = document.getElementById('pixelLines');
   const cursor = document.getElementById('pixelCursor'), notice = document.getElementById('pixelNotice');
   const undoButton = document.getElementById('pixelUndo'), redoButton = document.getElementById('pixelRedo');
+  const palette = document.getElementById('pixelPalette');
   const drawings = Object.create(null), histories = Object.create(null);
   let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false, cellPixels = 40;
+  let selected = [1], activeColor = 1;
+  function readSaved(storageKey) {
+    try { return JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch { return null; }
+  }
+  const saved = readSaved(key), legacy = readSaved(legacyKey);
   try {
-    const saved = JSON.parse(localStorage.getItem(key) || 'null');
-    if (saved && sizes.includes(saved.size)) size = saved.size;
+    if (sizes.includes(saved?.size)) size = saved.size;
+    else if (sizes.includes(legacy?.size)) size = legacy.size;
+    if (Array.isArray(saved?.selected)) {
+      const valid = [...new Set(saved.selected.filter(value => Number.isInteger(value) && value >= 0 && value < 32))];
+      if (valid.length) selected = valid;
+    }
+    activeColor = selected.includes(saved?.activeColor) ? saved.activeColor : selected[selected.length - 1];
+    erase = saved?.erase === true;
     for (const n of sizes) {
       const bits = saved?.drawings?.[n];
-      if (typeof bits === 'string' && bits.length === n * n && /^[01]+$/.test(bits)) {
-        drawings[n] = Uint8Array.from(bits, bit => Number(bit));
+      const oldBits = legacy?.drawings?.[n];
+      if (typeof bits === 'string' && bits.length === n * n && /^[0-9a-v]+$/.test(bits)) {
+        drawings[n] = decode(bits);
+      } else if (typeof oldBits === 'string' && oldBits.length === n * n && /^[01]+$/.test(oldBits)) {
+        drawings[n] = decode(oldBits);
       }
     }
   } catch {}
@@ -1379,12 +1409,37 @@ renderEditor();
     drawings[n] ||= new Uint8Array(n * n);
     histories[n] = {undo: [], redo: []};
   }
-  const snapshot = () => drawings[size].join('');
+  const snapshot = () => encode(drawings[size]);
+  const colorLabel = index => 'Цвет ' + (index + 1) + (index === 0 ? ' — фон темы' : index === 1 ? ' — белый' : index === 31 ? ' — чёрный' : ' — ' + colors[index]);
+  const swatches = colors.map((color, index) => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'pixel-swatch'; button.dataset.pixelColor = index;
+    button.style.setProperty('--pixel-color', color);
+    button.setAttribute('aria-label', colorLabel(index));
+    button.title = colorLabel(index) + '. Нажатие добавляет или убирает цвет из выбранных; последний выбранный — активный. Правая кнопка на поле — следующий выбранный по кругу.';
+    palette.append(button);
+    return button;
+  });
+  const inkPaths = colors.map((color, index) => {
+    if (index === 0) return null;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('fill', color); ink.append(path); return path;
+  });
+  function renderPalette() {
+    swatches.forEach((button, index) => {
+      button.setAttribute('aria-pressed', String(selected.includes(index)));
+      button.dataset.active = String(index === activeColor);
+    });
+    document.getElementById('pixelActiveColor').style.setProperty('--pixel-color', colors[activeColor]);
+    document.getElementById('pixelActiveLabel').textContent = 'Карандаш: ' + colorLabel(activeColor).toLowerCase() + ' · выбрано ' + selected.length + ' из 32 · ПКМ — следующий по кругу';
+    document.getElementById('pixelDraw').setAttribute('aria-pressed', String(!erase));
+    document.getElementById('pixelErase').setAttribute('aria-pressed', String(erase));
+  }
   function measure() {
     const pixels = size * cellPixels;
     metrics.textContent = size + ' × ' + size + ' = ' + (size * size).toLocaleString('ru-RU') +
       ' ячеек · ячейка ' + cellPixels + ' × ' + cellPixels + ' px · поле ' + pixels + ' × ' + pixels +
-      ' px = ' + (pixels * pixels).toLocaleString('ru-RU') + ' пикселей · рамка снаружи';
+      ' px = ' + (pixels * pixels).toLocaleString('ru-RU') + ' пикселей · линии внутри ячеек; рамка снаружи';
   }
   function fit(available) {
     if (available === undefined) {
@@ -1405,17 +1460,17 @@ renderEditor();
   }
   function save() {
     try {
-      localStorage.setItem(key, JSON.stringify({size, drawings: Object.fromEntries(sizes.map(n => [n, drawings[n].join('')]))}));
+      localStorage.setItem(key, JSON.stringify({size, selected, activeColor, erase, drawings: Object.fromEntries(sizes.map(n => [n, encode(drawings[n])]))}));
       saveFailed = false;
     } catch { saveFailed = true; }
     status();
   }
   function renderInk() {
-    let path = '';
+    const paths = colors.map(() => '');
     drawings[size].forEach((bit, index) => {
-      if (bit) path += 'M' + (index % size) + ' ' + Math.floor(index / size) + 'h1v1h-1z';
+      if (bit) paths[bit] += 'M' + (index % size) + ' ' + Math.floor(index / size) + 'h1v1h-1z';
     });
-    ink.setAttribute('d', path);
+    inkPaths.forEach((path, index) => { if (path) path.setAttribute('d', paths[index]); });
     cursor.setAttribute('x', cursorX); cursor.setAttribute('y', cursorY);
   }
   function render() {
@@ -1473,7 +1528,13 @@ renderEditor();
     const start = point(event); if (!start) return;
     event.preventDefault();
     grid.focus({preventScroll: true});
-    stroke = {id: event.pointerId, before: snapshot(), value: event.button === 2 || erase ? 0 : 1, last: null};
+    if (event.button === 2) {
+      const cycle = selected.slice().sort((a, b) => a - b);
+      activeColor = cycle[(cycle.indexOf(activeColor) + 1) % cycle.length];
+      renderPalette(); save(); return;
+    }
+    const value = erase || drawings[size][start.y * size + start.x] === activeColor ? 0 : activeColor;
+    stroke = {id: event.pointerId, before: snapshot(), value, last: null};
     grid.setPointerCapture(event.pointerId);
     paintTo(start); renderInk();
   });
@@ -1500,16 +1561,26 @@ renderEditor();
   });
   function setMode(value) {
     finish(); erase = value;
-    document.getElementById('pixelDraw').setAttribute('aria-pressed', String(!erase));
-    document.getElementById('pixelErase').setAttribute('aria-pressed', String(erase));
+    renderPalette(); save();
   }
+  palette.addEventListener('click', event => {
+    const button = event.target.closest('[data-pixel-color]'); if (!button) return;
+    finish();
+    const color = Number(button.dataset.pixelColor);
+    if (selected.includes(color)) {
+      if (selected.length === 1) return;
+      selected = selected.filter(value => value !== color);
+      if (activeColor === color) activeColor = selected[selected.length - 1];
+    } else { selected.push(color); activeColor = color; }
+    renderPalette(); save();
+  });
   document.getElementById('pixelDraw').addEventListener('click', () => setMode(false));
   document.getElementById('pixelErase').addEventListener('click', () => setMode(true));
   function travel(from, to) {
     finish();
     const history = histories[size]; if (!history[from].length) return;
     history[to].push(snapshot());
-    drawings[size] = Uint8Array.from(history[from].pop(), bit => Number(bit));
+    drawings[size] = decode(history[from].pop());
     renderInk(); save();
   }
   undoButton.addEventListener('click', () => travel('undo', 'redo'));
@@ -1527,11 +1598,14 @@ renderEditor();
       renderInk();
     } else if (event.key === ' ' || event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault(); const before = snapshot();
-      drawings[size][cursorY * size + cursorX] = erase || event.key !== ' ' ? 0 : 1;
+      const index = cursorY * size + cursorX;
+      drawings[size][index] = erase || event.key !== ' ' || drawings[size][index] === activeColor ? 0 : activeColor;
       commit(before); renderInk();
     }
   });
-  render();
+  renderPalette(); render();
+  // Keep the legacy key intact; write a separate validated colour model.
+  save();
   let fieldWidth = -1;
   new ResizeObserver(([entry]) => {
     if (entry.contentRect.width === fieldWidth) return;
