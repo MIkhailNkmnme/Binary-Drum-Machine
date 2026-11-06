@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.013</title>
+<title>Зеркалиус — Стенд — v0.014</title>
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
      v0.012: по просьбе «и балансы 0 и 1 в кадре» — в плеере и под каждой мини-картинкой показаны
@@ -13,6 +13,10 @@
      ниже кнопок» — плеер перестроен в столбик: полотно на всю ширину колонки, под ним кнопки управления,
      бегунок, высота и балансы, ниже — мини-картинки способов со ссылками; закрепление снято, чтобы
      полотно не закрывало страницу.
+     v0.014: по просьбе «пунктирные тонкие в 1 px линии краёв, ручное перемещение с зеркальной второй
+     линией, серые линии примагничивания для длин 2n−1 / 4n−1 / 8n−1» — в плеере две красные
+     пунктирные линии краёв, их можно тянуть мышью/пальцем, вторая идёт зеркально; серые пунктирные —
+     кандидаты примагничивания для ширин 2n−1, 4n−1, 8n−1; строка «края: …» показывает ширину.
 
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
@@ -79,6 +83,7 @@
   .p-height{font:600 16px ui-monospace,Consolas,monospace;color:var(--gold)}
   .p-balance{font:600 13px ui-monospace,Consolas,monospace;color:var(--muted)}
   .p-balance.bal{color:var(--gold)}
+  .p-edges{font:600 12px ui-monospace,Consolas,monospace;color:var(--muted)}
   figure{margin:14px 0 0}
   figure img{width:100%;display:block;border:1px solid var(--line);border-radius:8px}
   figcaption{color:var(--muted);font-size:12px;margin-top:6px}
@@ -100,7 +105,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.013 · 06.11.2026</span>
+  <span class="ver">v0.014 · 06.11.2026</span>
 </header>
 <main>
   <p class="lead">
@@ -125,6 +130,7 @@
     </div>
     <div class="p-height" id="pHeight">высота: поле 32 px</div>
     <div class="p-balance" id="pBalance">0: … · 1: …</div>
+    <div class="p-edges" id="pEdges">края: …</div>
     <div class="info" id="pInfo"></div>
     <div class="thumbs" role="group" aria-label="Способы">
       <div class="thumb">
@@ -330,7 +336,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.013 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.014 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -938,18 +944,76 @@ b(2r+1,2c+1) = b(r, c)</pre>
       sctx.drawImage(oldCv, Math.floor((PW - 800) / 2), Math.floor((PH - 400) / 2));
     }
     const info = $('pInfo'), play = $('pPlay'), prev = $('pPrev'), next = $('pNext'),
-      range = $('pRange'), stepOut = $('pStep'), reset = $('pReset');
+      range = $('pRange'), stepOut = $('pStep'), reset = $('pReset'), edgesOut = $('pEdges');
+    // Края: две тонкие пунктирные линии по 1 px. Тянешь одну — вторая идёт зеркально.
+    // Серые линии — возможные примагничивания для ширин 2n−1, 4n−1, 8n−1.
+    let edgeW = 0, edgeDrag = null;
+    function naturalWidth() {
+      if (method === 'growth') return 2 * (32 << step) - 1;
+      if (method === 'nest') return (2 * N0 - 1) * 8;
+      if (method === 'old') {
+        const oc = Math.floor(step / 12), n = 32 << oc;
+        const cell = Math.min(800 / (2 * n - 1), 400 / n) * (2 - (step % 12) / 12);
+        return (2 * n - 1) * cell;
+      }
+      return 430 / (SQ3 / 2);            // цветное вложение: ширина треугольника
+    }
+    function snapWidths() {              // 2n−1, 4n−1, 8n−1 в пикселях канвы
+      if (method === 'nest') {
+        const k = 8, wc = 2 * N0 - 1;
+        return [wc * k, (2 * wc + 1) * k, (4 * wc + 3) * k];
+      }
+      if (method === 'old') {
+        const oc = Math.floor(step / 12), n = 32 << oc;
+        const cell = Math.min(800 / (2 * n - 1), 400 / n) * (2 - (step % 12) / 12);
+        const wc = 2 * n - 1;
+        return [wc * cell, (2 * wc + 1) * cell, (4 * wc + 3) * cell];
+      }
+      const w = naturalWidth();
+      return [w, 2 * w + 1, 4 * w + 3];
+    }
+    function drawEdges() {
+      const cxp = PW / 2;
+      pctx.save();
+      pctx.lineWidth = 1;
+      pctx.strokeStyle = 'rgba(150,160,175,.55)';   // серые — куда примагнитится
+      pctx.setLineDash([2, 5]);
+      for (const w of snapWidths()) {
+        for (const x of [cxp - w / 2, cxp + w / 2]) {
+          if (x < 0.5 || x > PW - 0.5) continue;
+          pctx.beginPath(); pctx.moveTo(Math.round(x) + 0.5, 0); pctx.lineTo(Math.round(x) + 0.5, PH); pctx.stroke();
+        }
+      }
+      pctx.strokeStyle = '#e05a4e';                 // красные — сами края
+      pctx.setLineDash([6, 4]);
+      for (const x of [cxp - edgeW / 2, cxp + edgeW / 2]) {
+        if (x < 0.5 || x > PW - 0.5) continue;
+        pctx.beginPath(); pctx.moveTo(Math.round(x) + 0.5, 0); pctx.lineTo(Math.round(x) + 0.5, PH); pctx.stroke();
+      }
+      pctx.restore();
+    }
+    function updateEdgesText() {
+      if (!edgesOut) return;
+      const cands = snapWidths().filter((c) => c <= PW).map((c) => Math.round(c));
+      edgesOut.textContent = `края: ${Math.round(edgeW)} px · примагничивание: ${cands.join(' / ')} px · тяни за пунктир`;
+    }
+    function paintPlayer() {
+      pctx.clearRect(0, 0, PW, PH);
+      pctx.drawImage(scene, 0, 0);
+      drawEdges();
+    }
     function render() {
+      edgeW = naturalWidth();
       if (method === 'growth') drawGrowth();
       else if (method === 'holes') drawHoles();
       else if (method === 'nest') drawNest();
       else drawOld();
-      pctx.clearRect(0, 0, PW, PH);
-      pctx.drawImage(scene, 0, 0);
+      paintPlayer();
       range.value = String(step);
       stepOut.textContent = METHODS[method].text(step);
       info.textContent = `${METHODS[method].name} · ${METHODS[method].text(step)}`;
       updateStats();
+      updateEdgesText();
     }
     function setAuto(on) {
       auto = on;
@@ -981,6 +1045,38 @@ b(2r+1,2c+1) = b(r, c)</pre>
       const tc = $('th' + m.charAt(0).toUpperCase() + m.slice(1));
       if (tc) { const t = tc.getContext('2d'); t.clearRect(0, 0, 108, 54); t.drawImage(scene, 0, 0, PW, PH, 0, 0, 108, 54); }
     }
+    // Края: захват мышью/пальцем, вторая линия зеркально, примагничивание к 2n−1 / 4n−1 / 8n−1.
+    function canvasX(e) { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) * (PW / r.width); }
+    function edgeHit(x) {
+      const cxp = PW / 2;
+      if (Math.abs(x - (cxp - edgeW / 2)) <= 10) return 'L';
+      if (Math.abs(x - (cxp + edgeW / 2)) <= 10) return 'R';
+      return null;
+    }
+    cv.style.touchAction = 'none';
+    cv.addEventListener('pointerdown', (e) => {
+      const side = edgeHit(canvasX(e));
+      if (!side) return;
+      edgeDrag = side;
+      setAuto(false);
+      cv.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    cv.addEventListener('pointermove', (e) => {
+      const x = canvasX(e);
+      if (!edgeDrag) { cv.style.cursor = edgeHit(x) ? 'ew-resize' : 'default'; return; }
+      const cxp = PW / 2;
+      let w = edgeDrag === 'L' ? 2 * (cxp - x) : 2 * (x - cxp);
+      w = Math.max(8, Math.min(PW, w));
+      let best = null, bd = 1e9;
+      for (const c of snapWidths()) { const d = Math.abs(w - c); if (d < bd) { bd = d; best = c; } }
+      if (best !== null && bd <= 12) w = best;
+      edgeW = w;
+      paintPlayer();
+      updateEdgesText();
+    });
+    cv.addEventListener('pointerup', () => { edgeDrag = null; });
+    cv.addEventListener('pointercancel', () => { edgeDrag = null; });
     method = 'growth'; step = STEPS.growth;
     setAuto(true);
     render();
