@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.010</title>
-<!-- Стенд вариантов (v0.010, 2026-11-06): все предложения по росту и вложению треугольника.
-     v0.002–v0.009: варианты цвета, бесшовная петля ×4, демо-страница роста, 4K-ролик, режим «Рост»
-     в фоне Хаба, страница роста Маятника, полотно «1 бит = 1 пиксель», транспорт шагов.
-     v0.010: по просьбе пользователя — одно окно плеера для всех способов: сверху закреплённый (sticky)
-     плеер, внизу переключатель по мини-картинкам способов, под каждой — ссылка к заголовку раздела;
-     интерактив из разделов собран в плеер.
+<title>Зеркалиус — Стенд — v0.011</title>
+<!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
+     v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
+     v0.011: по просьбе пользователя «у всех показывай текущую высоту» — высота видна в плеере
+     крупно и под каждой мини-картинкой: рост — поле в px (32…512), вложение — высота вставленной
+     копии в строках (32…1), старая запись — высота поля в строках текущего кадра (32…1024);
+     у каждого способа свой текущий шаг, высота обновляется при шаге и при переключении.
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
 <style>
@@ -71,6 +71,8 @@
   .thumb button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
   .thumb a{font-size:10px;color:var(--muted);text-decoration:none}
   .thumb a:hover{color:var(--gold);text-decoration:underline}
+  .thumb .th-height{font-size:10px;color:var(--muted)}
+  .p-height{font:600 16px ui-monospace,Consolas,monospace;color:var(--gold)}
   figure{margin:14px 0 0}
   figure img{width:100%;display:block;border:1px solid var(--line);border-radius:8px}
   figcaption{color:var(--muted);font-size:12px;margin-top:6px}
@@ -92,7 +94,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.010 · 06.11.2026</span>
+  <span class="ver">v0.011 · 06.11.2026</span>
 </header>
 <main>
   <p class="lead">
@@ -117,23 +119,28 @@
           <input id="pRange" type="range" min="0" max="4" step="1" value="0" aria-label="Шаг">
           <output id="pStep">1/5</output>
         </div>
+        <div class="p-height" id="pHeight">высота: поле 32 px</div>
         <div class="info" id="pInfo"></div>
         <div class="thumbs" role="group" aria-label="Способы">
           <div class="thumb">
             <button type="button" data-method="growth" aria-pressed="true"><canvas id="thGrowth" width="108" height="54"></canvas><span>Рост битов</span></button>
             <a href="#growth">к заголовку →</a>
+            <span class="th-height" data-h="growth"></span>
           </div>
           <div class="thumb">
             <button type="button" data-method="holes"><canvas id="thHoles" width="108" height="54"></canvas><span>Копии в впадинах</span></button>
             <a href="#nesting">к заголовку →</a>
+            <span class="th-height" data-h="holes"></span>
           </div>
           <div class="thumb">
             <button type="button" data-method="nest"><canvas id="thNest" width="108" height="54"></canvas><span>Вложение битов</span></button>
             <a href="#zoom">к заголовку →</a>
+            <span class="th-height" data-h="nest"></span>
           </div>
           <div class="thumb">
             <button type="button" data-method="old"><canvas id="thOld" width="108" height="54"></canvas><span>Старая запись</span></button>
             <a href="#old">к заголовку →</a>
+            <span class="th-height" data-h="old"></span>
           </div>
         </div>
       </div>
@@ -316,7 +323,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.010 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.011 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -770,7 +777,24 @@ b(2r+1,2c+1) = b(r, c)</pre>
       nest: { steps: 6, ms: 900, name: 'вложение битов', text: (s) => `уровень ${s}/5` },
       old: { steps: 72, ms: 90, name: 'старая запись с камерой', text: (s) => `кадр ${s + 1}/72` }
     };
+    const STEPS = { growth: 0, holes: 0, nest: 0, old: 0 };
+    const pHeight = $('pHeight');
     let method = 'growth', step = 0, auto = true, last = performance.now(), acc = 0;
+    // Текущая высота у каждого способа: рост — поле в px; вложение — высота вставленной копии в строках;
+    // старая запись — высота поля в строках текущего кадра.
+    function heightOf(m, s) {
+      if (m === 'growth') return `поле ${32 << s} px`;
+      if (m === 'holes') return `копия ${32 >> s} строк`;
+      if (m === 'nest') return `копия ${32 >> s} строк`;
+      return `поле ${32 << Math.floor(s / 12)} строк`;
+    }
+    function updateHeights() {
+      document.querySelectorAll('.th-height').forEach((el) => {
+        const m = el.dataset.h;
+        el.textContent = 'выс. ' + heightOf(m, STEPS[m]);
+      });
+      if (pHeight) pHeight.textContent = 'высота: ' + heightOf(method, step);
+    }
     function drawGrowth() {
       bufG.fill(BLACK);
       const n = 32 << step, w = 2 * n - 1, x0 = Math.floor((PW - w) / 2);
@@ -855,6 +879,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       range.value = String(step);
       stepOut.textContent = METHODS[method].text(step);
       info.textContent = `${METHODS[method].name} · ${METHODS[method].text(step)}`;
+      updateHeights();
     }
     function setAuto(on) {
       auto = on;
@@ -863,10 +888,10 @@ b(2r+1,2c+1) = b(r, c)</pre>
       play.title = on ? 'Авто: шаги идут сами' : 'Плей: пустить шаги автоматически';
       if (on) { acc = 0; last = performance.now(); }
     }
-    function setStep(k) { step = Math.max(0, Math.min(METHODS[method].steps - 1, k)); render(); }
+    function setStep(k) { step = Math.max(0, Math.min(METHODS[method].steps - 1, k)); STEPS[method] = step; render(); }
     function setMethod(m) {
       if (!METHODS[m]) return;
-      method = m; step = 0;
+      method = m; step = STEPS[m];
       range.max = String(METHODS[m].steps - 1);
       document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.method === m)));
       setAuto(false);
@@ -886,7 +911,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       const tc = $('th' + m.charAt(0).toUpperCase() + m.slice(1));
       if (tc) { const t = tc.getContext('2d'); t.clearRect(0, 0, 108, 54); t.drawImage(scene, 0, 0, PW, PH, 0, 0, 108, 54); }
     }
-    method = 'growth'; step = 0;
+    method = 'growth'; step = STEPS.growth;
     setAuto(true);
     render();
     function loop(now) {
