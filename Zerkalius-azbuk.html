@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.055</title>
+<title>Zerkalius АзъБукъ v0.056</title>
+<!-- v0.056 · АЗБ-057: палитра в одну полосу, чистые R/G/B отмечены; строка активного цвета убрана. Прежние оттенки рисунков перенесены без перекраски в отдельные внутренние слоты хранилища v3. -->
 <!-- v0.055 · АЗБ-056: ПКМ по закрашенной ячейке циклически меняет её цвет среди выбранных в палитре; по пустой сразу красит последним выбранным. -->
 <!-- v0.054 · АЗБ-055: ПКМ сразу закрашивает клетку последним выбранным цветом, без переключения палитры и стирания повторным нажатием. -->
 <!-- v0.053 · АЗБ-054: Canvas в физических пикселях, линии и внешняя рамка по одному пикселю; «Размеры» считает RGB каждой клетки из отображаемого bitmap. -->
@@ -231,13 +232,13 @@
   #pixelGrid{display:block;margin-inline:auto;border:0;outline:none;touch-action:none;user-select:none;cursor:crosshair;image-rendering:pixelated}
   #pixelSelection{text-align:center;color:var(--dim);font-size:11px;margin-top:6px}
   .pixel-viewport:has(#pixelGrid:focus-visible) + #pixelSelection{color:var(--edit-ink,var(--ink));text-decoration:underline}
-  .pixel-palette{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:550px;margin:0 auto 12px;padding:4px}
+  .pixel-palette{display:flex;flex-wrap:nowrap;justify-content:flex-start;gap:6px;width:max-content;max-width:100%;overflow-x:auto;margin:0 auto 12px;padding:4px}
   .pixel-swatch,.pixel-swatch:hover{position:relative;flex:0 0 28px;width:28px;min-width:28px;height:28px;padding:0;background:var(--pixel-color);border:1px solid #888;cursor:pointer}
   .pixel-swatch[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
   .pixel-swatch[data-active="true"]::after{content:"";position:absolute;inset:6px;border:2px solid white;box-shadow:0 0 0 1px black,inset 0 0 0 1px black;pointer-events:none}
+  .pixel-swatch[data-primary]::before{content:attr(data-primary);position:absolute;left:0;top:0;width:9px;height:9px;background:#000;color:#fff;font:bold 8px/9px "Segoe UI",sans-serif;text-align:center;pointer-events:none}
+  .pixel-swatch[data-primary][data-active="true"]::after{inset:10px 6px 6px 10px}
   .pixel-swatch:focus-visible{outline:2px dashed var(--ink);outline-offset:3px}
-  #pixelActive{display:flex;justify-content:center;align-items:center;gap:8px;margin:0 0 8px;color:var(--dim);font-size:11px}
-  #pixelActiveColor{display:inline-block;width:20px;height:20px;border:1px solid #888;background:var(--pixel-color)}
   #pixelNotice{min-height:1.4em;margin-top:8px;font-size:11px;color:var(--dim)}
   #pixelHeading,#pixelNotice,#pixelMetrics{text-align:center}
   #pixelMetrics{margin-top:10px;color:var(--dim);font-size:11px;line-height:1.6}
@@ -255,7 +256,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.055"></span>
+    <span class="pbtn ver" aria-label="v0.056"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -354,7 +355,6 @@
     </div>
   </div>
   <div id="pixelPalette" class="pixel-palette" role="group" aria-label="Палитра 32 цветов: выберите один или несколько"></div>
-  <div id="pixelActive" role="status"><span id="pixelActiveColor" aria-hidden="true"></span><span id="pixelActiveLabel"></span></div>
   <div class="pixel-viewport"><canvas id="pixelGrid" width="642" height="642" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp pixelSelection" title="ЛКМ: карандаш с повторным стиранием. ПКМ: пустую красит последним выбранным, закрашенную переключает по выбранным цветам по кругу">Карандаш рисует по клеткам.</canvas></div>
   <div id="pixelSelection"></div>
   <p id="pixelHelp" hidden>Карандаш рисует активным цветом; на клетке того же цвета начинает стирающий штрих. Ластик возвращает фон. ПКМ по пустой клетке красит последним выбранным цветом, по закрашенной меняет её цвет на следующий выбранный в порядке палитры, по кругу. При протяжке каждая клетка меняется один раз за штрих. Стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</p>
@@ -1381,13 +1381,18 @@ renderEditor();
 
 // Independent square raster: each dimension keeps its drawing and editing history.
 (() => {
-  const key = 'azbuk-pixel-field-v2', legacyKey = 'azbuk-pixel-field-v1', sizes = [2, 4, 8, 16, 32, 64, 128];
-  const colors = ['var(--bg)', '#ffffff', '#fff2cc', '#ffe08a', '#ffc857', '#ff9f43', '#ff744f', '#ef5350',
+  const key = 'azbuk-pixel-field-v3', previousKey = 'azbuk-pixel-field-v2', legacyKey = 'azbuk-pixel-field-v1', sizes = [2, 4, 8, 16, 32, 64, 128];
+  const colors = ['var(--bg)', '#ffffff', '#fff2cc', '#ffe08a', '#ffc857', '#ff9f43', '#ff744f', '#ff0000',
     '#d83f67', '#f48fb1', '#f26dc1', '#d76deb', '#b388eb', '#9163cb', '#6657c4', '#5068d9',
-    '#5395ee', '#72bdf2', '#a1dce8', '#63cfc5', '#36b6a2', '#269984', '#3baf65', '#7acb62',
-    '#b2df72', '#d9e88b', '#c7ab88', '#96765b', '#b9c1c9', '#788693', '#424b57', '#000000'];
-  const encode = cells => Array.from(cells, value => value.toString(32)).join('');
-  const decode = text => Uint8Array.from(text, value => parseInt(value, 32));
+    '#0000ff', '#72bdf2', '#a1dce8', '#63cfc5', '#36b6a2', '#269984', '#00ff00', '#7acb62',
+    '#b2df72', '#d9e88b', '#c7ab88', '#96765b', '#b9c1c9', '#788693', '#424b57', '#000000',
+    '#ef5350', '#5395ee', '#3baf65']; // Internal slots 32–34 preserve former RGB values.
+  const encode = cells => Array.from(cells, value => value.toString(36)).join('');
+  const decode = text => Uint8Array.from(text, value => parseInt(value, 36));
+  const decodePrevious = text => Uint8Array.from(text, value => {
+    const index = parseInt(value, 32);
+    return index === 7 ? 32 : index === 16 ? 33 : index === 22 ? 34 : index;
+  });
   const grid = document.getElementById('pixelGrid');
   const field = document.getElementById('pixelField'), metrics = document.getElementById('pixelMetrics');
   const ctx = grid.getContext('2d', {alpha: false});
@@ -1404,21 +1409,26 @@ renderEditor();
   function readSaved(storageKey) {
     try { return JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch { return null; }
   }
-  const saved = readSaved(key), legacy = readSaved(legacyKey);
+  const saved = readSaved(key), previous = readSaved(previousKey), legacy = readSaved(legacyKey);
+  const settings = saved ?? previous;
   try {
     if (sizes.includes(saved?.size)) size = saved.size;
+    else if (sizes.includes(previous?.size)) size = previous.size;
     else if (sizes.includes(legacy?.size)) size = legacy.size;
-    if (Array.isArray(saved?.selected)) {
-      const valid = [...new Set(saved.selected.filter(value => Number.isInteger(value) && value >= 0 && value < 32))];
+    if (Array.isArray(settings?.selected)) {
+      const valid = [...new Set(settings.selected.filter(value => Number.isInteger(value) && value >= 0 && value < 32))];
       if (valid.length) selected = valid;
     }
     activeColor = selected[selected.length - 1];
-    erase = saved?.erase === true;
+    erase = settings?.erase === true;
     for (const n of sizes) {
       const bits = saved?.drawings?.[n];
+      const previousBits = previous?.drawings?.[n];
       const oldBits = legacy?.drawings?.[n];
-      if (typeof bits === 'string' && bits.length === n * n && /^[0-9a-v]+$/.test(bits)) {
+      if (typeof bits === 'string' && bits.length === n * n && /^[0-9a-y]+$/.test(bits)) {
         drawings[n] = decode(bits);
+      } else if (typeof previousBits === 'string' && previousBits.length === n * n && /^[0-9a-v]+$/.test(previousBits)) {
+        drawings[n] = decodePrevious(previousBits);
       } else if (typeof oldBits === 'string' && oldBits.length === n * n && /^[01]+$/.test(oldBits)) {
         drawings[n] = decode(oldBits);
       }
@@ -1429,11 +1439,15 @@ renderEditor();
     histories[n] = {undo: [], redo: []};
   }
   const snapshot = () => encode(drawings[size]);
-  const colorLabel = index => 'Цвет ' + (index + 1) + (index === 0 ? ' — фон темы' : index === 1 ? ' — белый' : index === 31 ? ' — чёрный' : ' — ' + colors[index]);
-  const swatches = colors.map((color, index) => {
+  const primaryColors = {7: ['R', '255, 0, 0'], 16: ['B', '0, 0, 255'], 22: ['G', '0, 255, 0']};
+  const colorLabel = index => 'Цвет ' + (index + 1) + (primaryColors[index] ?
+    ' — чистый ' + primaryColors[index][0] + ', ' + colors[index].toUpperCase() + ', RGB(' + primaryColors[index][1] + ')' :
+    index === 0 ? ' — фон темы' : index === 1 ? ' — белый' : index === 31 ? ' — чёрный' : ' — ' + colors[index]);
+  const swatches = colors.slice(0, 32).map((color, index) => {
     const button = document.createElement('button');
     button.type = 'button'; button.className = 'pixel-swatch'; button.dataset.pixelColor = index;
     button.style.setProperty('--pixel-color', color);
+    if (primaryColors[index]) button.dataset.primary = primaryColors[index][0];
     button.setAttribute('aria-label', colorLabel(index));
     button.title = colorLabel(index) + '. Нажатие добавляет или убирает цвет из выбранных; последний выбранный — активный. ПКМ: пустую клетку красит активным, закрашенную переключает по выбранным цветам по кругу.';
     palette.append(button);
@@ -1444,8 +1458,6 @@ renderEditor();
       button.setAttribute('aria-pressed', String(selected.includes(index)));
       button.dataset.active = String(index === activeColor);
     });
-    document.getElementById('pixelActiveColor').style.setProperty('--pixel-color', colors[activeColor]);
-    document.getElementById('pixelActiveLabel').textContent = 'Карандаш: ' + colorLabel(activeColor).toLowerCase() + ' · выбрано ' + selected.length + ' из 32 · ПКМ: пустую красит, цветную — по кругу';
     document.getElementById('pixelDraw').setAttribute('aria-pressed', String(!erase));
     document.getElementById('pixelErase').setAttribute('aria-pressed', String(erase));
   }
@@ -1630,8 +1642,9 @@ renderEditor();
       else if (!stroke.visited.has(index)) {
         stroke.visited.add(index);
         const current = drawings[size][index];
+        const palettePosition = current >= 32 ? [7, 16, 22][current - 32] : current;
         drawings[size][index] = current === 0 ? stroke.color :
-          (stroke.cycle.find(color => color > current) ?? stroke.cycle[0]);
+          (stroke.cycle.find(color => color > palettePosition) ?? stroke.cycle[0]);
       }
       if (x === next.x && y === next.y) break;
       const twice = 2 * error;
@@ -1719,7 +1732,7 @@ renderEditor();
     }
   });
   renderPalette(); render();
-  // Keep the legacy key intact; write a separate validated colour model.
+  // Keep both older storage keys intact; write the extended colour model separately.
   save();
   try { if (localStorage.getItem(dimensionsKey) === '1') setDimensionsOpen(true); } catch {}
   new ResizeObserver(([entry]) => {
