@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.016</title>
+<title>Зеркалиус — Стенд — v0.017</title>
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
      v0.012: по просьбе «и балансы 0 и 1 в кадре» — в плеере и под каждой мини-картинкой показаны
@@ -22,6 +22,10 @@
      возвращает 1×; края и серые линии пересчитываются в экранные координаты.
      v0.016: по просьбе «при масштабе не замутняй ячейки» — в плеере imageSmoothingEnabled = false,
      поэтому при зуме ячейки остаются чёткими, без билинейного размытия.
+     v0.017: по просьбе «Стенд — пиши и номер версии, текст убери в подвал, плеер без заголовка, кнопка
+     закрепа сверху» — номер версии теперь рядом с «Стенд» в шапке; вступительный текст убран в подвал;
+     у плеера убран заголовок; кнопка «Закрепить/Открепить» делает плеер sticky сверху (top 49px),
+     разделы получают scroll-margin по высоте закреплённого плеера.
 
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
@@ -39,7 +43,7 @@
     padding:10px 18px;background:rgba(9,12,17,.94);border-bottom:1px solid var(--line);
     backdrop-filter:blur(6px)}
   header.top h1{font-size:18px;margin:0;letter-spacing:.12em;text-transform:uppercase}
-  header.top .ver{margin-left:auto;color:var(--muted);font:12px ui-monospace,Consolas,monospace}
+  header.top .ver{color:var(--muted);font:12px ui-monospace,Consolas,monospace}
   .back{color:var(--muted);font-size:13px}
   main{max-width:1180px;margin:0 auto;padding:22px 18px 80px}
   .lead{color:var(--muted);max-width:900px;margin:0 0 22px}
@@ -69,9 +73,10 @@
   .transport output{font-family:ui-monospace,Consolas,monospace;color:var(--gold);min-width:3.4em;text-align:center}
   .transport label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
   html{scroll-behavior:smooth}
-  section.card{scroll-margin-top:60px}
-  figure#old{scroll-margin-top:60px}
+  section.card{scroll-margin-top:var(--pin-h,60px)}
+  figure#old{scroll-margin-top:var(--pin-h,60px)}
   .player-sticky{background:var(--bg);padding-top:6px}
+  #player.pinned{position:sticky;top:49px;z-index:8;box-shadow:0 10px 26px rgba(0,0,0,.5)}
   .player-body{display:block}
   .player-side{display:flex;flex-direction:column;gap:8px}
   .info{font-size:12px;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
@@ -110,24 +115,17 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.016 · 06.11.2026</span>
+  <span class="ver">v0.017 · 06.11.2026</span>
 </header>
 <main>
-  <p class="lead">
-    Все варианты продолжения треугольника из обсуждения — на одной странице, чтобы ничего не потерялось.
-    Ни один вариант отсюда не удаляется: новые добавляются новыми разделами.
-    Вверху — одно окно плеера: все способы в одном месте, внизу под ним — мини-картинки способов
-    и ссылки к их разделам. Цифры — для окна 1608×798, как на скриншоте; на 4K видимых уровней примерно на два больше.
-  </p>
-
   <section class="card player-sticky" id="player">
-    <h2>Плеер <small>все способы в одном окне; внизу — кнопки, под ними — мини-картинки способов и ссылки к разделам</small></h2>
     <canvas id="cvPlayer" class="bits" style="aspect-ratio:2/1;width:100%"></canvas>
     <div class="controls" style="margin-top:10px">
       <button id="pPrev" type="button" aria-label="Шаг назад" title="Шаг назад">◀</button>
       <button id="pPlay" type="button" aria-pressed="true" title="Авто: шаги идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
       <button id="pNext" type="button" aria-label="Шаг вперёд" title="Шаг вперёд">▶</button>
       <button id="pReset" type="button">Сначала</button>
+      <button id="pPin" type="button" aria-pressed="false" title="Закрепить плеер сверху, чтобы не скроллился">Закрепить</button>
     </div>
     <div class="controls">
       <input id="pRange" type="range" min="0" max="4" step="1" value="0" aria-label="Шаг" style="flex:1;min-width:200px">
@@ -338,10 +336,11 @@ b(2r+1,2c+1) = b(r, c)</pre>
   </section>
 </main>
 <footer>
+  <p class="lead" style="margin:0 0 10px;max-width:900px">Все варианты продолжения треугольника из обсуждения — на одной странице, чтобы ничего не потерялось. Ни один вариант отсюда не удаляется: новые добавляются новыми разделами. Вверху — одно окно плеера: все способы в одном месте, внизу под ним — мини-картинки способов и ссылки к их разделам. Цифры — для окна 1608×798, как на скриншоте; на 4K видимых уровней примерно на два больше.</p>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.016 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.017 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -1058,6 +1057,21 @@ b(2r+1,2c+1) = b(r, c)</pre>
     next.addEventListener('click', () => { setAuto(false); setStep(step + 1); });
     range.addEventListener('input', () => { setAuto(false); setStep(Number(range.value)); });
     reset.addEventListener('click', () => { setAuto(false); setStep(0); });
+    // Закрепление плеера сверху: кнопка «Закрепить/Открепить».
+    const pin = $('pPin'), playerCard = $('player');
+    function pinHeight() {
+      if (!playerCard || !playerCard.classList.contains('pinned')) { document.documentElement.style.setProperty('--pin-h', '60px'); return; }
+      document.documentElement.style.setProperty('--pin-h', Math.round(playerCard.getBoundingClientRect().height + 10) + 'px');
+    }
+    if (pin && playerCard) {
+      pin.addEventListener('click', () => {
+        const on = playerCard.classList.toggle('pinned');
+        pin.textContent = on ? 'Открепить' : 'Закрепить';
+        pin.setAttribute('aria-pressed', String(on));
+        pinHeight();
+      });
+      addEventListener('resize', pinHeight);
+    }
     document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.addEventListener('click', () => setMethod(b.dataset.method)));
     // Мини-картинки: рисуем сцену в показательном состоянии и уменьшаем в 108×54.
     const THUMB_STEP = { growth: 4, holes: 2, nest: 5, old: 47 };
