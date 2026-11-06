@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.056</title>
+<title>Zerkalius АзъБукъ v0.057</title>
+<!-- v0.057 · АЗБ-058: заголовок пиксельного поля слева в одной строке с кнопками. -->
 <!-- v0.056 · АЗБ-057: палитра в одну полосу, чистые R/G/B отмечены; строка активного цвета убрана. Прежние оттенки рисунков перенесены без перекраски в отдельные внутренние слоты хранилища v3. -->
 <!-- v0.055 · АЗБ-056: ПКМ по закрашенной ячейке циклически меняет её цвет среди выбранных в палитре; по пустой сразу красит последним выбранным. -->
 <!-- v0.054 · АЗБ-055: ПКМ сразу закрашивает клетку последним выбранным цветом, без переключения палитры и стирания повторным нажатием. -->
@@ -221,7 +222,9 @@
   .gap-step::before{inset:2px}
   #track,.gap-thumb,.gap-thumb i{height:var(--control-h)}
   .pixel-toolbar,.pixel-sizes,.pixel-actions{display:flex;align-items:center;flex-wrap:wrap;gap:2px;max-width:100%}
-  .pixel-toolbar{gap:10px;margin-bottom:10px;justify-content:center}
+  .pixel-toolbar{gap:10px;margin-bottom:10px;padding:4px;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto}
+  .pixel-toolbar .pixel-sizes,.pixel-toolbar .pixel-actions{flex-wrap:nowrap;flex-shrink:0;max-width:none}
+  #pixelHeading{flex:none;margin:0;white-space:nowrap;text-align:left}
   .pixel-sizes button{width:calc(2 * var(--tiny-size));min-width:0;padding:0 4px;display:inline-flex;align-items:center;justify-content:center}
   .pixel-toolbar button{user-select:none}
   .pixel-actions button{max-width:100%}
@@ -240,7 +243,7 @@
   .pixel-swatch[data-primary][data-active="true"]::after{inset:10px 6px 6px 10px}
   .pixel-swatch:focus-visible{outline:2px dashed var(--ink);outline-offset:3px}
   #pixelNotice{min-height:1.4em;margin-top:8px;font-size:11px;color:var(--dim)}
-  #pixelHeading,#pixelNotice,#pixelMetrics{text-align:center}
+  #pixelNotice,#pixelMetrics{text-align:center}
   #pixelMetrics{margin-top:10px;color:var(--dim);font-size:11px;line-height:1.6}
   #pixelDimensions{margin-top:12px;font-size:11px;color:var(--dim)}
   #pixelDimensions[hidden]{display:none}
@@ -256,7 +259,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.056"></span>
+    <span class="pbtn ver" aria-label="v0.057"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -334,8 +337,8 @@
   <div class="form-samples" id="formSamples"></div>
 </section>
 <section id="pixelField" aria-labelledby="pixelHeading">
-  <h2 id="pixelHeading">Пиксельное поле</h2>
   <div class="pixel-toolbar">
+    <h2 id="pixelHeading">Пиксельное поле</h2>
     <div class="pixel-sizes" id="pixelSizes" role="group" aria-label="Размер квадратного поля">
       <button type="button" data-pixel-size="2" title="Поле 2 × 2">2</button>
       <button type="button" data-pixel-size="4" title="Поле 4 × 4">4</button>
