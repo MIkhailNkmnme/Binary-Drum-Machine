@@ -32,10 +32,12 @@
   try { const saved = localStorage.getItem(menuKey); if (saved === '' || definitions.some(([,key]) => key === saved)) opened = saved; } catch {}
   const panels = [];
   for (const [section,key,title,description] of definitions) {
+   section.dataset.menuGroup = key;
    const heading = section.querySelector('h2');
    heading.textContent = '';
    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'menu-heading';
    toggle.dataset.menuNavigation = ''; toggle.textContent = title;
+   toggle.title = description; toggle.setAttribute('aria-label', title);
    toggle.setAttribute('aria-controls', 'glyphen-menu-' + key);
    toggle.setAttribute('aria-expanded', String(opened === key)); heading.append(toggle);
    const body = document.createElement('div'); body.id = 'glyphen-menu-' + key; body.className = 'menu-body';
@@ -53,6 +55,19 @@
     for (const panel of panels) { panel.body.hidden = panel.key !== opened; panel.toggle.setAttribute('aria-expanded', String(panel.key === opened)); }
     try { localStorage.setItem(menuKey, opened); } catch {}
    });
+  }
+  document.querySelector('.layout > figure').dataset.menuGroup = 'figures';
+  document.getElementById('spaceMount').dataset.menuGroup = 'space';
+  document.querySelector('header').dataset.menuGroup = 'library';
+  const palette = colors.querySelector('.color-grid');
+  for (const [title, ids] of [
+   ['Поле и фигуры', ['colorFieldBg','colorBit','colorGhost','colorPivot']],
+   ['Цифры и линии', ['colorDigitOne','colorDigitZero','colorAxes']]
+  ]) {
+   const group = document.createElement('fieldset'); group.className = 'menu-color-family';
+   const legend = document.createElement('legend'); legend.textContent = title; group.append(legend);
+   for (const id of ids) group.append(document.getElementById(id).closest('label'));
+   palette.append(group);
   }
   // Keep film controls inside #film: its event delegation and animation guards depend on it.
   const exportBar = document.getElementById('exportScope').previousElementSibling;
@@ -72,7 +87,7 @@
   const labels = {
    openBitoteka:'Битотека',random:'Случайный порядок',resetAll:'Сброс',ghostToggle:'Силуэты',allVariants:'Все 6144',allVariantsShift:'Перебор + сдвиг',
    gridToggle:'Сетка',shadowToggle:'Тени',zerosToggle:'Нули под единицами',topToggle:'Верхняя клетка',left:'Влево 90',right:'Вправо 90',swap:'Обмен',
-   allLeft:'Все влево',allRight:'Все вправо',resetPositions:'Вернуть на лучи',xor:'XOR',union:'Объединить',solo:'Выбранная',
+   allLeft:'Все влево',allRight:'Все вправо',resetPositions:'Вернуть на лучи',xor:'XOR',union:'Объединить',solo:'Только выбранная',
    searchRun:'Поиск в кадре',searchAll:'По всем кадрам',searchClear:'Очистить',searchAxes:'По осям',searchLoops:'Сквозные линии',searchFoundClear:'Очистить найденное',
    cellAuto:'Вписать по ширине',resetColors:'Сбросить цвета',makeGif:'Сохранить GIF',cancelGif:'Отмена GIF',makeVideo:'Сохранить видео',cancelVideo:'Отмена видео',
    layoutCenter:'Общий центр',layoutRow:'В ряд',rowOriginal:'Исходные позиции',rowPalette:'Синяя палитра',fitFieldTop:'Вписать',fieldZoomOut:'−',fieldZoomIn:'+'
@@ -100,7 +115,7 @@
    if (button.classList.contains('xs-center')) label = 'В общий центр';
    if (button.classList.contains('xs-symmetric')) label = 'Симметрично';
    if (button.classList.contains('xs-roll')) label = 'Поворот 90';
-   if (button.classList.contains('xs-pick')) label = 'Выбрать ' + full.replace(/^>\s*/, '');
+   if (button.classList.contains('xs-pick')) label = 'Фигура ' + full.replace(/^>\s*/, '');
    if (button.dataset.action === 'play') label = full.includes('Отмена') ? 'Отмена расчёта' : button.getAttribute('aria-pressed') === 'true' ? 'Пауза 3D' : 'Перебор 3D';
    if (button.dataset.action === 'prev') label = 'Предыдущий';
    if (button.dataset.action === 'next') label = 'Следующий';
@@ -113,12 +128,20 @@
    const accessible = button.hasAttribute('data-edit') ? 'Правка клеток фигуры ' + ['I','II','III','IV'][Number(button.dataset.edit)] : dynamic ? label : originalNames.get(button) || label;
    if (button.getAttribute('aria-label') !== accessible) button.setAttribute('aria-label', accessible);
    if (!button.title) button.title = label;
-   const mini = button.hasAttribute('data-edit') || (button.closest('#rates') && full.length <= 3) || id === 'thumbPlay';
+   const mini = button.hasAttribute('data-edit') || (button.closest('#rates') && full.length <= 3);
    const arrow = button.classList.contains('step') || ['fieldZoomOut','fieldZoomIn'].includes(id) || (button.closest('.row-track') && ['−','+'].includes(full));
    const width = arrow ? 'arrow' : mini ? 'mini' : label.length > 14 ? 'wide' : 'normal';
    if (button.dataset.menuWidth !== width) button.dataset.menuWidth = width;
   }
   document.querySelectorAll('main button').forEach(readable);
+  document.querySelector('main').addEventListener('click', event => {
+   const button = event.target.closest('button');
+   if (!button || button.disabled || button.hasAttribute('data-hover-off')) return;
+   if (button.getAttribute('aria-pressed') === 'false' || button.getAttribute('aria-expanded') === 'false') {
+    button.dataset.hoverOff = '';
+    button.addEventListener('pointerleave', () => delete button.dataset.hoverOff, {once:true});
+   }
+  });
   const observer = new MutationObserver(records => {
    const buttons = new Set();
    for (const record of records) {

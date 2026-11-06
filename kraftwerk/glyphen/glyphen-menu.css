@@ -1,4 +1,4 @@
-/* XOR-051: readable rectangular modules; keep the existing AzBuk font families. */
+/* Readable module sizes from XOR-051; XOR-052 group surfaces and outlines follow below. */
 html body main{width:1280px;max-width:calc(100% - 16px);padding:8px 0 24px;font-size:16px;line-height:24px}
 html body .layout,html body.row-layout .layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 html body .layout>figure,html body .field-scroll,html body.row-layout .layout>figure,html body.row-layout .field-scroll{width:100%;min-width:0;max-width:100%}
@@ -77,3 +77,57 @@ html body #film select{max-width:100%;min-height:32px}
 html body .page-footer{height:auto;min-height:32px}
 @media(max-width:900px){html body .layout,html body.row-layout .layout{grid-template-columns:minmax(0,1fr);gap:16px}html body .controls,html body.row-layout .controls{grid-template-columns:minmax(0,1fr);width:100%}html body .xor-space .xs-controls{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:420px){html body main{max-width:calc(100% - 8px)}html body .menu-body{padding:4px}html body .xor-space .xs-main{aspect-ratio:1;min-height:0}html body .xor-space .xs-projections{grid-template-columns:minmax(0,1fr)}}
+
+/* XOR-052: group colours stay constant; only the outline shows interaction. */
+html body main{--menu-accent:#8dbafa;--menu-text:#e6edfa;--menu-btn:#1b2430;--menu-base:#0e1116}
+[data-menu-group=layout]{--menu-accent:#72caff;--menu-text:#d8efff;--menu-btn:#182a36;--menu-base:#101c25}
+[data-menu-group=figures]{--menu-accent:#ffc478;--menu-text:#fff0db;--menu-btn:#30271d;--menu-base:#201a13}
+[data-menu-group=view]{--menu-accent:#7ee1b3;--menu-text:#d6f8e8;--menu-btn:#1a2d27;--menu-base:#111e1a}
+[data-menu-group=position]{--menu-accent:#8cc5f6;--menu-text:#dfedff;--menu-btn:#1b2938;--menu-base:#121c26}
+[data-menu-group=overlay]{--menu-accent:#d3acff;--menu-text:#f0e3ff;--menu-btn:#2a2238;--menu-base:#1b1625}
+[data-menu-group=search]{--menu-accent:#ffe28a;--menu-text:#fff5d9;--menu-btn:#302b1d;--menu-base:#201d14}
+[data-menu-group=field]{--menu-accent:#8cddd9;--menu-text:#daf4f3;--menu-btn:#1a2d30;--menu-base:#121e20}
+[data-menu-group=colors]{--menu-accent:#f6a9ce;--menu-text:#ffe0ee;--menu-btn:#322333;--menu-base:#211822}
+[data-menu-group=film]{--menu-accent:#ffab92;--menu-text:#ffe7df;--menu-btn:#32241f;--menu-base:#211915}
+[data-menu-group=space]{--menu-accent:#b4baff;--menu-text:#e8e9ff;--menu-btn:#25273a;--menu-base:#191a27}
+[data-menu-group=library]{--menu-accent:#9bd3b4;--menu-text:#e4f6eb;--menu-btn:#203028;--menu-base:#152019}
+html body main .controls>section{border:0;border-top:2px solid var(--menu-accent);background:var(--menu-base);color:var(--menu-text);padding:2px;gap:2px}
+html body main .controls{gap:6px}
+html body main .controls h2{margin:0}
+html body main .controls button.menu-heading{color:var(--menu-accent)!important;font-weight:bold!important;text-align:center;justify-content:center;padding:0 24px!important}
+html body main button.menu-heading::after{position:absolute;right:12px;color:var(--menu-accent);font-size:20px}
+html body main button.menu-heading[aria-expanded=true]{background:transparent!important}
+html body main button{position:relative;isolation:isolate;border:0!important;outline:0!important;border-radius:0!important;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)!important;background:var(--menu-btn)!important;color:var(--menu-text)!important;box-shadow:none!important;text-shadow:none!important;padding:0 10px!important;user-select:none;--menu-stroke:0px}
+html body main button:hover,html body main button:focus-visible{--menu-stroke:1px;background:var(--menu-btn)!important;color:var(--menu-text)!important}
+html body main button[aria-pressed=true],html body main button[aria-expanded=true]{--menu-stroke:2px;box-shadow:none!important}
+html body main button:active:not(:disabled){--menu-stroke:3px;box-shadow:none!important}
+html body main button::before{content:'';position:absolute;inset:0;pointer-events:none;background:var(--menu-accent);clip-path:polygon(evenodd,0 50%,8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%,var(--menu-stroke) 50%,calc(8px + var(--menu-stroke) * .5) var(--menu-stroke),calc(100% - 8px - var(--menu-stroke) * .5) var(--menu-stroke),calc(100% - var(--menu-stroke)) 50%,calc(100% - 8px - var(--menu-stroke) * .5) calc(100% - var(--menu-stroke)),calc(8px + var(--menu-stroke) * .5) calc(100% - var(--menu-stroke)),var(--menu-stroke) 50%);mask-image:linear-gradient(90deg,#000 12px,transparent 12px,transparent calc(100% - 12px),#000 calc(100% - 12px))}
+html body main button[aria-pressed=true]::before,html body main button[aria-expanded=true]::before,html body main button:active:not(:disabled)::before{mask-image:none}
+html body main button:focus-visible::before{mask-image:none}
+html body main button:disabled{--menu-stroke:0px;opacity:.4}
+html body main button[data-compact]::after{color:var(--menu-text);text-shadow:none}
+html body main .ico,html body main button[aria-pressed=true] .ico{color:var(--menu-accent)}
+html body main .menu-body{padding:8px 4px}
+html body main .menu-summary{color:var(--menu-text);opacity:.85;margin-bottom:8px}
+html body main .menu-body h3,html body main .menu-body summary,html body main .menu-body .field-label,html body main .menu-body .bar>label{color:var(--menu-accent)}
+html body main .menu-body h3{border-top:1px solid var(--menu-accent);padding-top:8px}
+html body main .group,html body main .group.role,html body main .search-actions,html body main .playback-row{gap:2px}
+html body main .color-grid{grid-template-columns:minmax(0,1fr);gap:8px}
+html body main .menu-color-family{margin:0;padding:4px;border:0;border-top:1px solid var(--menu-accent);display:grid;gap:4px;min-width:0}
+html body main .menu-color-family legend{color:var(--menu-accent);padding:0 4px}
+html body main .menu-color-family label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+html body main .menu-color-family input[type=color]{margin-left:auto}
+html body main input:not([type=range]):not([type=checkbox]):not([type=color]),html body main select{background:var(--menu-btn)!important;color:var(--menu-text)!important;border-color:var(--menu-accent)!important}
+html body main #spaceMount{border-top:2px solid var(--menu-accent)}
+html body main .xor-space .xs-figure{background:var(--menu-base);border-color:var(--menu-accent)}
+html body main .xor-space .xs-figure label{color:var(--menu-text)}
+html body main .xs-heading h2,html body main .xs-sequence h3,html body main .xs-export h3{color:var(--menu-accent)}
+html body main #thumbPlay{--compact-w:128px!important}
+html body main .menu-body [hidden]{display:none!important}
+@media(max-width:420px){html body main .menu-body{padding:4px 2px}}
+html body main button[data-hover-off]:not(:focus-visible):not(:active){--menu-stroke:0px}
+html body main .controls button.menu-heading[aria-expanded=true]::before{mask-image:linear-gradient(#000 50%,transparent 50%)}
+html body main .menu-body{position:relative;padding-bottom:14px}
+html body main .menu-body::after{content:'';position:absolute;left:0;right:0;bottom:0;height:10px;pointer-events:none;border-bottom:2px solid var(--menu-accent);clip-path:polygon(0 0,8px 100%,calc(100% - 8px) 100%,100% 0,calc(100% - 2px) 0,calc(100% - 9px) calc(100% - 2px),9px calc(100% - 2px),2px 0);background:var(--menu-accent)}
+html body main textarea,html body main #audioFile::file-selector-button{background:var(--menu-btn)!important;color:var(--menu-text)!important;border-color:var(--menu-accent)!important}
+html body main #audioFile::file-selector-button:hover{background:var(--menu-btn)!important}
