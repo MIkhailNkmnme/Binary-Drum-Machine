@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.057</title>
+<title>Zerkalius АзъБукъ v0.058</title>
+<!-- v0.058 · АЗБ-059: половины «Цвет / В угол» задают перенос рисунка при смене размера; общая отмена/повтор восстанавливает размер и рисунки всех размерностей. -->
 <!-- v0.057 · АЗБ-058: заголовок пиксельного поля слева в одной строке с кнопками. -->
 <!-- v0.056 · АЗБ-057: палитра в одну полосу, чистые R/G/B отмечены; строка активного цвета убрана. Прежние оттенки рисунков перенесены без перекраски в отдельные внутренние слоты хранилища v3. -->
 <!-- v0.055 · АЗБ-056: ПКМ по закрашенной ячейке циклически меняет её цвет среди выбранных в палитре; по пустой сразу красит последним выбранным. -->
@@ -228,6 +229,9 @@
   .pixel-sizes button{width:calc(2 * var(--tiny-size));min-width:0;padding:0 4px;display:inline-flex;align-items:center;justify-content:center}
   .pixel-toolbar button{user-select:none}
   .pixel-actions button{max-width:100%}
+  .pixel-transfer{display:flex;flex:0 0 var(--tool-w);width:var(--tool-w);gap:0}
+  .tools.pixel-transfer button{display:inline-flex;align-items:center;justify-content:center;width:50%;flex:0 0 50%;min-width:0;padding:0 3px;background:var(--btn)}
+  .pixel-transfer button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
   .pixel-sizes button[aria-pressed="true"],.pixel-actions button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
   .pixel-toolbar button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
   .pixel-toolbar button:disabled{opacity:.35;cursor:default}
@@ -259,7 +263,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.057"></span>
+    <span class="pbtn ver" aria-label="v0.058"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -348,11 +352,15 @@
       <button type="button" data-pixel-size="64" title="Поле 64 × 64">64</button>
       <button type="button" data-pixel-size="128" title="Поле 128 × 128">128</button>
     </div>
+    <div class="tools pixel-transfer" id="pixelTransfer" role="group" aria-label="Перенос рисунка при смене размера">
+      <button id="pixelResizeScale" type="button" data-resize-mode="scale" aria-pressed="true" title="Цвет: при смене размера растянуть или уменьшить весь рисунок ближайшими клетками, без смешивания цветов; 4×4 → 8×8 превращает каждую клетку в блок 2×2">Цвет</button>
+      <button id="pixelResizeCorner" type="button" data-resize-mode="corner" aria-pressed="false" title="В угол: при смене размера перенести клетки в левый верхний угол без масштабирования; новые клетки пустые, при уменьшении виден верхний левый фрагмент. Перенос можно отменить">В угол</button>
+    </div>
     <div class="tools pixel-actions" role="group" aria-label="Рисование по клеткам">
       <button id="pixelDraw" type="button" aria-pressed="true" title="Карандаш: рисовать активным цветом; повторное нажатие на клетку этого цвета стирает. ПКМ: пустую красит последним выбранным цветом, закрашенную переключает по выбранным цветам по кругу">Карандаш</button>
       <button id="pixelErase" type="button" aria-pressed="false" title="Ластик: возвращать клетки к фону нажатием и протяжкой">Ластик</button>
-      <button id="pixelUndo" type="button" title="Отменить последний штрих или очистку этого размера">Отмена</button>
-      <button id="pixelRedo" type="button" title="Повторить отменённое действие этого размера">Повтор</button>
+      <button id="pixelUndo" type="button" title="Отменить последний штрих, очистку или перенос; восстановить размер и рисунки">Отмена</button>
+      <button id="pixelRedo" type="button" title="Повторить отменённый штрих, очистку или перенос вместе с размером и рисунками">Повтор</button>
       <button id="pixelClear" type="button" title="Очистить поле текущего размера; действие можно отменить">Очистить</button>
       <button id="pixelDimensionsToggle" type="button" aria-expanded="false" aria-controls="pixelDimensions" title="Размеры в физических пикселях экрана и количество каждого RGB-цвета в каждой клетке, включая сетку">Размеры</button>
     </div>
@@ -1382,7 +1390,7 @@ initForms();
 
 renderEditor();
 
-// Independent square raster: each dimension keeps its drawing and editing history.
+// Square raster: stored drawings per dimension, shared reversible scene history.
 (() => {
   const key = 'azbuk-pixel-field-v3', previousKey = 'azbuk-pixel-field-v2', legacyKey = 'azbuk-pixel-field-v1', sizes = [2, 4, 8, 16, 32, 64, 128];
   const colors = ['var(--bg)', '#ffffff', '#fff2cc', '#ffe08a', '#ffc857', '#ff9f43', '#ff744f', '#ff0000',
@@ -1403,8 +1411,8 @@ renderEditor();
   const dimensions = document.getElementById('pixelDimensions'), dimensionsToggle = document.getElementById('pixelDimensionsToggle');
   const undoButton = document.getElementById('pixelUndo'), redoButton = document.getElementById('pixelRedo');
   const palette = document.getElementById('pixelPalette');
-  const drawings = Object.create(null), histories = Object.create(null);
-  let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false;
+  const drawings = Object.create(null), history = {undo: [], redo: []};
+  let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false, resizeMode = 'scale';
   let side = 640, ratio = 1, dpr = 1, viewportScale = 1, boundaries = [], auditFrame = 0, auditPage = 0, auditCells = [], alignmentFrame = 0;
   let fieldWidth = -1, densityQuery;
   const auditPageSize = 64, dimensionsKey = 'azbuk-pixel-dimensions-open';
@@ -1424,6 +1432,7 @@ renderEditor();
     }
     activeColor = selected[selected.length - 1];
     erase = settings?.erase === true;
+    resizeMode = settings?.resizeMode === 'corner' ? 'corner' : 'scale';
     for (const n of sizes) {
       const bits = saved?.drawings?.[n];
       const previousBits = previous?.drawings?.[n];
@@ -1439,9 +1448,9 @@ renderEditor();
   } catch {}
   for (const n of sizes) {
     drawings[n] ||= new Uint8Array(n * n);
-    histories[n] = {undo: [], redo: []};
   }
-  const snapshot = () => encode(drawings[size]);
+  const savedDrawings = () => Object.fromEntries(sizes.map(n => [n, encode(drawings[n])]));
+  const snapshot = () => JSON.stringify({size, drawings: savedDrawings()});
   const primaryColors = {7: ['R', '255, 0, 0'], 16: ['B', '0, 0, 255'], 22: ['G', '0, 255, 0']};
   const colorLabel = index => 'Цвет ' + (index + 1) + (primaryColors[index] ?
     ' — чистый ' + primaryColors[index][0] + ', ' + colors[index].toUpperCase() + ', RGB(' + primaryColors[index][1] + ')' :
@@ -1487,15 +1496,15 @@ renderEditor();
     measure(); renderInk(); alignRaster();
   }
   function status() {
-    undoButton.disabled = !histories[size].undo.length;
-    redoButton.disabled = !histories[size].redo.length;
+    undoButton.disabled = !history.undo.length;
+    redoButton.disabled = !history.redo.length;
     notice.textContent = size + ' × ' + size + ' · ' +
       (saveFailed ? 'Не удалось сохранить в браузере. Рисунок остаётся на странице.' :
-        'Рисунок каждого размера сохраняется отдельно в этом браузере.');
+        'Рисунок и режим переноса сохраняются в этом браузере.');
   }
   function save() {
     try {
-      localStorage.setItem(key, JSON.stringify({size, selected, activeColor, erase, drawings: Object.fromEntries(sizes.map(n => [n, encode(drawings[n])]))}));
+      localStorage.setItem(key, JSON.stringify({size, selected, activeColor, erase, resizeMode, drawings: savedDrawings()}));
       saveFailed = false;
     } catch { saveFailed = true; }
     status();
@@ -1603,7 +1612,6 @@ renderEditor();
   document.getElementById('pixelAuditNext').addEventListener('click', () => { auditPage++; renderAuditPage(); });
   function commit(before) {
     if (before === snapshot()) return;
-    const history = histories[size];
     history.undo.push(before);
     if (history.undo.length > 100) history.undo.shift();
     history.redo.length = 0;
@@ -1686,9 +1694,33 @@ renderEditor();
   window.addEventListener('pagehide', finish);
   document.getElementById('pixelSizes').addEventListener('click', event => {
     const button = event.target.closest('[data-pixel-size]'); if (!button) return;
-    finish(); size = Number(button.dataset.pixelSize);
+    const nextSize = Number(button.dataset.pixelSize);
+    if (nextSize === size) return;
+    finish();
+    const before = snapshot(), sourceSize = size, source = drawings[size].slice();
+    const target = new Uint8Array(nextSize * nextSize);
+    if (resizeMode === 'scale') {
+      for (let row = 0; row < nextSize; row++) for (let col = 0; col < nextSize; col++) {
+        const sourceRow = Math.floor((row + .5) * sourceSize / nextSize);
+        const sourceCol = Math.floor((col + .5) * sourceSize / nextSize);
+        target[row * nextSize + col] = source[sourceRow * sourceSize + sourceCol];
+      }
+    } else {
+      const extent = Math.min(sourceSize, nextSize);
+      for (let row = 0; row < extent; row++) target.set(source.subarray(row * sourceSize, row * sourceSize + extent), row * nextSize);
+    }
+    drawings[nextSize] = target; size = nextSize;
     cursorX = Math.min(cursorX, size - 1); cursorY = Math.min(cursorY, size - 1);
-    render(); save();
+    commit(before); render();
+  });
+  function renderResizeMode() {
+    document.querySelectorAll('[data-resize-mode]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.resizeMode === resizeMode));
+    });
+  }
+  document.getElementById('pixelTransfer').addEventListener('click', event => {
+    const button = event.target.closest('[data-resize-mode]'); if (!button) return;
+    finish(); resizeMode = button.dataset.resizeMode; renderResizeMode(); save();
   });
   function setMode(value) {
     finish(); erase = value;
@@ -1709,10 +1741,13 @@ renderEditor();
   document.getElementById('pixelErase').addEventListener('click', () => setMode(true));
   function travel(from, to) {
     finish();
-    const history = histories[size]; if (!history[from].length) return;
+    if (!history[from].length) return;
     history[to].push(snapshot());
-    drawings[size] = decode(history[from].pop());
-    renderInk(); save();
+    const scene = JSON.parse(history[from].pop());
+    size = scene.size;
+    for (const n of sizes) drawings[n] = decode(scene.drawings[n]);
+    cursorX = Math.min(cursorX, size - 1); cursorY = Math.min(cursorY, size - 1);
+    render(); save();
   }
   undoButton.addEventListener('click', () => travel('undo', 'redo'));
   redoButton.addEventListener('click', () => travel('redo', 'undo'));
@@ -1734,7 +1769,7 @@ renderEditor();
       commit(before); renderInk();
     }
   });
-  renderPalette(); render();
+  renderPalette(); renderResizeMode(); render();
   // Keep both older storage keys intact; write the extended colour model separately.
   save();
   try { if (localStorage.getItem(dimensionsKey) === '1') setDimensionsOpen(true); } catch {}
