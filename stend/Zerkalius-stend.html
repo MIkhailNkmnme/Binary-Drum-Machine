@@ -3,12 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.012</title>
+<title>Зеркалиус — Стенд — v0.013</title>
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
      v0.012: по просьбе «и балансы 0 и 1 в кадре» — в плеере и под каждой мини-картинкой показаны
      балансы 0 и 1 по клеткам картинки (решётка 2N−1×N, как в Маятнике), у каждого способа свой шаг;
      у цветного вложения 0/1 нет — там прочерк. Баланс подсвечивается, когда 0 и 1 равны.
+     v0.013: по просьбе «кнопки плеера снизу поля, поля на всю ширину колонки страницы, превью вариантов
+     ниже кнопок» — плеер перестроен в столбик: полотно на всю ширину колонки, под ним кнопки управления,
+     бегунок, высота и балансы, ниже — мини-картинки способов со ссылками; закрепление снято, чтобы
+     полотно не закрывало страницу.
 
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
@@ -56,14 +60,13 @@
   .transport output{font-family:ui-monospace,Consolas,monospace;color:var(--gold);min-width:3.4em;text-align:center}
   .transport label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
   html{scroll-behavior:smooth}
-  section.card{scroll-margin-top:500px}
-  figure#old{scroll-margin-top:500px}
-  .player-sticky{position:sticky;top:49px;z-index:8;background:var(--bg);padding-top:6px}
-  .player-body{display:grid;grid-template-columns:minmax(0,720px) minmax(250px,1fr);gap:14px;align-items:start}
-  @media(max-width:900px){.player-body{grid-template-columns:1fr} section.card,figure#old{scroll-margin-top:740px}}
+  section.card{scroll-margin-top:60px}
+  figure#old{scroll-margin-top:60px}
+  .player-sticky{background:var(--bg);padding-top:6px}
+  .player-body{display:block}
   .player-side{display:flex;flex-direction:column;gap:8px}
-  .player-side .info{font-size:12px;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
-  .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .info{font-size:12px;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
+  .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   .thumb{display:flex;flex-direction:column;align-items:center;gap:2px;width:118px}
   .thumb button{display:flex;flex-direction:column;align-items:center;gap:1px;background:#0a0e14;border:1px solid var(--line);
     border-radius:6px;padding:3px;cursor:pointer;color:var(--text);font:11px/1.2 "Segoe UI",system-ui,sans-serif;width:100%}
@@ -97,7 +100,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.012 · 06.11.2026</span>
+  <span class="ver">v0.013 · 06.11.2026</span>
 </header>
 <main>
   <p class="lead">
@@ -108,49 +111,45 @@
   </p>
 
   <section class="card player-sticky" id="player">
-    <h2>Плеер <small>все способы в одном окне; внизу — мини-картинки способов и ссылки к разделам</small></h2>
-    <div class="player-body">
-      <canvas id="cvPlayer" class="bits" style="aspect-ratio:2/1;width:100%"></canvas>
-      <div class="player-side">
-        <div class="controls">
-          <button id="pPrev" type="button" aria-label="Шаг назад" title="Шаг назад">◀</button>
-          <button id="pPlay" type="button" aria-pressed="true" title="Авто: шаги идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
-          <button id="pNext" type="button" aria-label="Шаг вперёд" title="Шаг вперёд">▶</button>
-          <button id="pReset" type="button">Сначала</button>
-        </div>
-        <div class="controls">
-          <input id="pRange" type="range" min="0" max="4" step="1" value="0" aria-label="Шаг">
-          <output id="pStep">1/5</output>
-        </div>
-        <div class="p-height" id="pHeight">высота: поле 32 px</div>
-        <div class="p-balance" id="pBalance">0: … · 1: …</div>
-        <div class="info" id="pInfo"></div>
-        <div class="thumbs" role="group" aria-label="Способы">
-          <div class="thumb">
-            <button type="button" data-method="growth" aria-pressed="true"><canvas id="thGrowth" width="108" height="54"></canvas><span>Рост битов</span></button>
-            <a href="#growth">к заголовку →</a>
-            <span class="th-height" data-h="growth"></span>
-            <span class="th-balance" data-b="growth"></span>
-          </div>
-          <div class="thumb">
-            <button type="button" data-method="holes"><canvas id="thHoles" width="108" height="54"></canvas><span>Копии в впадинах</span></button>
-            <a href="#nesting">к заголовку →</a>
-            <span class="th-height" data-h="holes"></span>
-            <span class="th-balance" data-b="holes"></span>
-          </div>
-          <div class="thumb">
-            <button type="button" data-method="nest"><canvas id="thNest" width="108" height="54"></canvas><span>Вложение битов</span></button>
-            <a href="#zoom">к заголовку →</a>
-            <span class="th-height" data-h="nest"></span>
-            <span class="th-balance" data-b="nest"></span>
-          </div>
-          <div class="thumb">
-            <button type="button" data-method="old"><canvas id="thOld" width="108" height="54"></canvas><span>Старая запись</span></button>
-            <a href="#old">к заголовку →</a>
-            <span class="th-height" data-h="old"></span>
-            <span class="th-balance" data-b="old"></span>
-          </div>
-        </div>
+    <h2>Плеер <small>все способы в одном окне; внизу — кнопки, под ними — мини-картинки способов и ссылки к разделам</small></h2>
+    <canvas id="cvPlayer" class="bits" style="aspect-ratio:2/1;width:100%"></canvas>
+    <div class="controls" style="margin-top:10px">
+      <button id="pPrev" type="button" aria-label="Шаг назад" title="Шаг назад">◀</button>
+      <button id="pPlay" type="button" aria-pressed="true" title="Авто: шаги идут сами; стрелки и бегунок — ручной шаг">⏸ Авто</button>
+      <button id="pNext" type="button" aria-label="Шаг вперёд" title="Шаг вперёд">▶</button>
+      <button id="pReset" type="button">Сначала</button>
+    </div>
+    <div class="controls">
+      <input id="pRange" type="range" min="0" max="4" step="1" value="0" aria-label="Шаг" style="flex:1;min-width:200px">
+      <output id="pStep">1/5</output>
+    </div>
+    <div class="p-height" id="pHeight">высота: поле 32 px</div>
+    <div class="p-balance" id="pBalance">0: … · 1: …</div>
+    <div class="info" id="pInfo"></div>
+    <div class="thumbs" role="group" aria-label="Способы">
+      <div class="thumb">
+        <button type="button" data-method="growth" aria-pressed="true"><canvas id="thGrowth" width="108" height="54"></canvas><span>Рост битов</span></button>
+        <a href="#growth">к заголовку →</a>
+        <span class="th-height" data-h="growth"></span>
+        <span class="th-balance" data-b="growth"></span>
+      </div>
+      <div class="thumb">
+        <button type="button" data-method="holes"><canvas id="thHoles" width="108" height="54"></canvas><span>Копии в впадинах</span></button>
+        <a href="#nesting">к заголовку →</a>
+        <span class="th-height" data-h="holes"></span>
+        <span class="th-balance" data-b="holes"></span>
+      </div>
+      <div class="thumb">
+        <button type="button" data-method="nest"><canvas id="thNest" width="108" height="54"></canvas><span>Вложение битов</span></button>
+        <a href="#zoom">к заголовку →</a>
+        <span class="th-height" data-h="nest"></span>
+        <span class="th-balance" data-b="nest"></span>
+      </div>
+      <div class="thumb">
+        <button type="button" data-method="old"><canvas id="thOld" width="108" height="54"></canvas><span>Старая запись</span></button>
+        <a href="#old">к заголовку →</a>
+        <span class="th-height" data-h="old"></span>
+        <span class="th-balance" data-b="old"></span>
       </div>
     </div>
   </section>
@@ -331,7 +330,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.012 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.013 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
