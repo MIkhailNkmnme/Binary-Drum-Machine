@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.052</title>
+<title>Zerkalius АзъБукъ v0.053</title>
+<!-- v0.053 · АЗБ-054: Canvas в физических пикселях, линии и внешняя рамка по одному пикселю; «Размеры» считает RGB каждой клетки из отображаемого bitmap. -->
 <!-- v0.052 · АЗБ-053: карандаш, палитра 32 цветов с множественным выбором и циклом ПКМ; повторное нажатие своим цветом стирает, цветные рисунки сохраняются с переносом прежних. -->
 <!-- v0.051 · АЗБ-052: поле по центру, целые размеры ячеек, рамка снаружи и точные размеры/количество пикселей. -->
 <!-- v0.050 · АЗБ-051: квадратное пиксельное поле 2–128, рисование и ластик, отмена/повтор; отдельный сохранённый рисунок для каждого размера. -->
@@ -224,8 +225,10 @@
   .pixel-sizes button[aria-pressed="true"],.pixel-actions button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
   .pixel-toolbar button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
   .pixel-toolbar button:disabled{opacity:.35;cursor:default}
-  #pixelGrid{width:min(100%,640px);height:auto;aspect-ratio:1;display:block;margin-inline:auto;background:var(--bg);border:0;outline:1px solid var(--edit-ink,var(--ink));touch-action:none;user-select:none;cursor:crosshair;shape-rendering:crispEdges}
-  #pixelGrid:focus-visible{outline:2px solid var(--edit-ink,var(--ink));outline-offset:3px}
+  .pixel-viewport{max-width:100%;overflow:auto;padding:4px}
+  #pixelGrid{display:block;margin-inline:auto;border:0;outline:none;touch-action:none;user-select:none;cursor:crosshair;image-rendering:pixelated}
+  #pixelSelection{text-align:center;color:var(--dim);font-size:11px;margin-top:6px}
+  .pixel-viewport:has(#pixelGrid:focus-visible) + #pixelSelection{color:var(--edit-ink,var(--ink));text-decoration:underline}
   .pixel-palette{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:550px;margin:0 auto 12px;padding:4px}
   .pixel-swatch,.pixel-swatch:hover{position:relative;flex:0 0 28px;width:28px;min-width:28px;height:28px;padding:0;background:var(--pixel-color);border:1px solid #888;cursor:pointer}
   .pixel-swatch[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
@@ -233,18 +236,24 @@
   .pixel-swatch:focus-visible{outline:2px dashed var(--ink);outline-offset:3px}
   #pixelActive{display:flex;justify-content:center;align-items:center;gap:8px;margin:0 0 8px;color:var(--dim);font-size:11px}
   #pixelActiveColor{display:inline-block;width:20px;height:20px;border:1px solid #888;background:var(--pixel-color)}
-  #pixelLines{fill:none;stroke:var(--line);stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
-  #pixelCursor{fill:none;stroke:var(--edit-ink,var(--ink));stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none;display:none}
-  #pixelGrid:focus-visible #pixelCursor{display:block}
   #pixelNotice{min-height:1.4em;margin-top:8px;font-size:11px;color:var(--dim)}
   #pixelHeading,#pixelNotice,#pixelMetrics{text-align:center}
   #pixelMetrics{margin-top:10px;color:var(--dim);font-size:11px;line-height:1.6}
+  #pixelDimensions{margin-top:12px;font-size:11px;color:var(--dim)}
+  #pixelDimensions[hidden]{display:none}
+  #pixelAuditSummary{line-height:1.7;overflow-wrap:anywhere}
+  .pixel-audit-scroll{max-width:100%;overflow:auto;margin-top:8px}
+  #pixelAuditTable{border-collapse:collapse;width:100%;color:var(--ink);font-variant-numeric:tabular-nums}
+  #pixelAuditTable th,#pixelAuditTable td{text-align:left;vertical-align:top;padding:6px;border:1px solid var(--line)}
+  .pixel-rgb{display:inline-block;white-space:nowrap;margin-right:12px}
+  .pixel-rgb i{display:inline-block;width:10px;height:10px;margin-right:4px;border:1px solid #888}
+  .pixel-audit-pages{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px}
 </style>
 
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.052"></span>
+    <span class="pbtn ver" aria-label="v0.053"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -339,17 +348,21 @@
       <button id="pixelUndo" type="button" title="Отменить последний штрих или очистку этого размера">Отмена</button>
       <button id="pixelRedo" type="button" title="Повторить отменённое действие этого размера">Повтор</button>
       <button id="pixelClear" type="button" title="Очистить поле текущего размера; действие можно отменить">Очистить</button>
+      <button id="pixelDimensionsToggle" type="button" aria-expanded="false" aria-controls="pixelDimensions" title="Размеры в физических пикселях экрана и количество каждого RGB-цвета в каждой клетке, включая сетку">Размеры</button>
     </div>
   </div>
   <div id="pixelPalette" class="pixel-palette" role="group" aria-label="Палитра 32 цветов: выберите один или несколько"></div>
   <div id="pixelActive" role="status"><span id="pixelActiveColor" aria-hidden="true"></span><span id="pixelActiveLabel"></span></div>
-  <svg id="pixelGrid" viewBox="0 0 16 16" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp" title="Карандаш: повторное нажатие своим цветом стирает. Правая кнопка переключает активный цвет по выбранным по кругу">
-    <title>Пиксельное поле</title>
-    <desc id="pixelHelp">Карандаш рисует активным цветом; на клетке того же цвета начинает стирающий штрих. Ластик возвращает фон. Правая кнопка переключает выбранные цвета по кругу, не меняя рисунок. Стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</desc>
-    <g id="pixelInk"></g><path id="pixelLines"></path><rect id="pixelCursor" width="1" height="1"></rect>
-  </svg>
+  <div class="pixel-viewport"><canvas id="pixelGrid" width="642" height="642" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp pixelSelection" title="Карандаш: повторное нажатие своим цветом стирает. Правая кнопка переключает активный цвет по выбранным по кругу">Карандаш рисует по клеткам.</canvas></div>
+  <div id="pixelSelection"></div>
+  <p id="pixelHelp" hidden>Карандаш рисует активным цветом; на клетке того же цвета начинает стирающий штрих. Ластик возвращает фон. Правая кнопка переключает выбранные цвета по кругу, не меняя рисунок. Стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</p>
   <div id="pixelMetrics"></div>
   <div id="pixelNotice" role="status" aria-live="polite"></div>
+  <div id="pixelDimensions" hidden>
+    <div id="pixelAuditSummary"></div>
+    <div class="pixel-audit-scroll"><table id="pixelAuditTable"><thead><tr><th>Строка / столбец</th><th>Номера пикселей, включая крайние</th><th>Ширина × высота, px</th><th>Площадь, px²</th><th>Сетка, px</th><th>Цвета и количество пикселей</th></tr></thead><tbody id="pixelAuditRows"></tbody></table></div>
+    <div class="tools pixel-audit-pages"><button id="pixelAuditPrev" type="button">Назад</button><span id="pixelAuditPage"></span><button id="pixelAuditNext" type="button">Далее</button></div>
+  </div>
 </section>
   </div>
 </main>
@@ -1375,12 +1388,16 @@ renderEditor();
   const decode = text => Uint8Array.from(text, value => parseInt(value, 32));
   const grid = document.getElementById('pixelGrid');
   const field = document.getElementById('pixelField'), metrics = document.getElementById('pixelMetrics');
-  const ink = document.getElementById('pixelInk'), lines = document.getElementById('pixelLines');
-  const cursor = document.getElementById('pixelCursor'), notice = document.getElementById('pixelNotice');
+  const ctx = grid.getContext('2d', {alpha: false});
+  const notice = document.getElementById('pixelNotice'), selectionLabel = document.getElementById('pixelSelection');
+  const dimensions = document.getElementById('pixelDimensions'), dimensionsToggle = document.getElementById('pixelDimensionsToggle');
   const undoButton = document.getElementById('pixelUndo'), redoButton = document.getElementById('pixelRedo');
   const palette = document.getElementById('pixelPalette');
   const drawings = Object.create(null), histories = Object.create(null);
-  let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false, cellPixels = 40;
+  let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false;
+  let side = 640, ratio = 1, dpr = 1, viewportScale = 1, boundaries = [], auditFrame = 0, auditPage = 0, auditCells = [], alignmentFrame = 0;
+  let fieldWidth = -1, densityQuery;
+  const auditPageSize = 64, dimensionsKey = 'azbuk-pixel-dimensions-open';
   let selected = [1], activeColor = 1;
   function readSaved(storageKey) {
     try { return JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch { return null; }
@@ -1420,11 +1437,6 @@ renderEditor();
     palette.append(button);
     return button;
   });
-  const inkPaths = colors.map((color, index) => {
-    if (index === 0) return null;
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('fill', color); ink.append(path); return path;
-  });
   function renderPalette() {
     swatches.forEach((button, index) => {
       button.setAttribute('aria-pressed', String(selected.includes(index)));
@@ -1435,21 +1447,27 @@ renderEditor();
     document.getElementById('pixelDraw').setAttribute('aria-pressed', String(!erase));
     document.getElementById('pixelErase').setAttribute('aria-pressed', String(erase));
   }
+  const number = value => value.toLocaleString('ru-RU');
   function measure() {
-    const pixels = size * cellPixels;
-    metrics.textContent = size + ' × ' + size + ' = ' + (size * size).toLocaleString('ru-RU') +
-      ' ячеек · ячейка ' + cellPixels + ' × ' + cellPixels + ' px · поле ' + pixels + ' × ' + pixels +
-      ' px = ' + (pixels * pixels).toLocaleString('ru-RU') + ' пикселей · линии внутри ячеек; рамка снаружи';
+    const min = Math.floor(side / size), max = Math.ceil(side / size);
+    metrics.textContent = size + ' × ' + size + ' = ' + number(size * size) + ' ячеек · ячейка ' +
+      (min === max ? min : min + '–' + max) + ' физических px по стороне · поле ' + side + ' × ' + side +
+      ' = ' + number(side * side) + ' px · сетка 1 px внутри, рамка 1 px снаружи';
   }
   function fit(available) {
     if (available === undefined) {
       const style = getComputedStyle(field);
       available = field.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
     }
-    cellPixels = Math.max(1, Math.floor(Math.min(640, available) / size));
-    const pixels = size * cellPixels;
-    grid.style.width = pixels + 'px'; grid.style.height = pixels + 'px';
-    measure();
+    dpr = window.devicePixelRatio || 1;
+    viewportScale = window.visualViewport?.scale || 1;
+    ratio = dpr * viewportScale;
+    const contentCss = Math.min(640, Math.max(0, available - 8 - 2 / ratio));
+    side = Math.max(size, Math.floor(contentCss * ratio));
+    boundaries = Array.from({length: size + 1}, (_, i) => Math.round(i * side / size));
+    grid.width = side + 2; grid.height = side + 2;
+    grid.style.width = (side + 2) / ratio + 'px'; grid.style.height = (side + 2) / ratio + 'px';
+    measure(); renderInk(); alignRaster();
   }
   function status() {
     undoButton.disabled = !histories[size].undo.length;
@@ -1466,24 +1484,106 @@ renderEditor();
     status();
   }
   function renderInk() {
-    const paths = colors.map(() => '');
-    drawings[size].forEach((bit, index) => {
-      if (bit) paths[bit] += 'M' + (index % size) + ' ' + Math.floor(index / size) + 'h1v1h-1z';
-    });
-    inkPaths.forEach((path, index) => { if (path) path.setAttribute('d', paths[index]); });
-    cursor.setAttribute('x', cursorX); cursor.setAttribute('y', cursorY);
+    const theme = getComputedStyle(document.documentElement);
+    const background = theme.getPropertyValue('--bg').trim();
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = theme.getPropertyValue('--edit-ink').trim() || theme.getPropertyValue('--ink').trim();
+    ctx.fillRect(0, 0, side + 2, side + 2);
+    ctx.fillStyle = background; ctx.fillRect(1, 1, side, side);
+    for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
+      const color = drawings[size][row * size + col];
+      if (!color) continue;
+      ctx.fillStyle = colors[color];
+      ctx.fillRect(1 + boundaries[col], 1 + boundaries[row], boundaries[col + 1] - boundaries[col], boundaries[row + 1] - boundaries[row]);
+    }
+    ctx.fillStyle = theme.getPropertyValue('--line').trim();
+    for (let i = 1; i < size; i++) {
+      ctx.fillRect(1 + boundaries[i], 1, 1, side);
+      ctx.fillRect(1, 1 + boundaries[i], side, 1);
+    }
+    selectionLabel.textContent = 'Выбранная клетка: строка ' + (cursorY + 1) + ', столбец ' + (cursorX + 1) + '. Стрелки — выбор, пробел — карандаш / ластик, Delete — стереть.';
+    scheduleAudit();
+    alignRaster();
   }
   function render() {
-    grid.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
     grid.setAttribute('aria-label', 'Квадратное поле ' + size + ' на ' + size + ' клеток для рисования');
-    let path = '';
-    for (let i = 1; i < size; i++) path += 'M' + i + ' 0V' + size + 'M0 ' + i + 'H' + size;
-    lines.setAttribute('d', path);
     document.querySelectorAll('[data-pixel-size]').forEach(button => {
       button.setAttribute('aria-pressed', String(Number(button.dataset.pixelSize) === size));
     });
-    fit(); renderInk(); status();
+    auditPage = 0; fit(); status();
   }
+  function rgbCounts(counts) {
+    return [...counts].sort((a, b) => b[1] - a[1]).map(([rgb, count]) => {
+      const hex = '#' + rgb.toString(16).padStart(6, '0').toUpperCase();
+      const channels = [(rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255];
+      return '<span class="pixel-rgb"><i style="background:' + hex + '"></i>' + hex + ' · RGB(' + channels.join(', ') + ') — ' + number(count) + '</span>';
+    }).join(' ');
+  }
+  function renderAuditPage() {
+    const pages = Math.max(1, Math.ceil(auditCells.length / auditPageSize));
+    auditPage = Math.max(0, Math.min(auditPage, pages - 1));
+    const start = auditPage * auditPageSize, end = Math.min(start + auditPageSize, auditCells.length);
+    document.getElementById('pixelAuditRows').innerHTML = auditCells.slice(start, end).map(cell =>
+      '<tr><td>' + (cell.row + 1) + ' / ' + (cell.col + 1) + '</td><td>x: ' + cell.x + '–' + (cell.x + cell.w - 1) + ', y: ' + cell.y + '–' + (cell.y + cell.h - 1) + '</td>' +
+      '<td>' + cell.w + ' × ' + cell.h + '</td><td>' + number(cell.w * cell.h) + '</td><td>' + number(cell.gridPixels) + '</td><td>' + rgbCounts(cell.counts) + '</td></tr>'
+    ).join('');
+    document.getElementById('pixelAuditPage').textContent = 'Клетки ' + (start + 1) + '–' + end + ' из ' + number(auditCells.length) + ' · страница ' + (auditPage + 1) + ' / ' + pages;
+    document.getElementById('pixelAuditPrev').disabled = auditPage === 0;
+    document.getElementById('pixelAuditNext').disabled = auditPage >= pages - 1;
+  }
+  function updateAudit() {
+    if (dimensions.hidden) return;
+    // One read of the displayed native bitmap; every cell owns a half-open region.
+    const bitmap = ctx.getImageData(0, 0, grid.width, grid.height), data = bitmap.data;
+    const totals = new Map(), frame = new Map();
+    const rgbAt = (x, y) => {
+      const index = (y * bitmap.width + x) * 4;
+      return (data[index] << 16) | (data[index + 1] << 8) | data[index + 2];
+    };
+    const increment = (map, rgb, count = 1) => map.set(rgb, (map.get(rgb) || 0) + count);
+    let consistent = true;
+    auditCells = [];
+    for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
+      const x = boundaries[col], y = boundaries[row], w = boundaries[col + 1] - x, h = boundaries[row + 1] - y;
+      const counts = new Map();
+      for (let py = y; py < y + h; py++) for (let px = x; px < x + w; px++) increment(counts, rgbAt(px + 1, py + 1));
+      let sum = 0;
+      for (const [rgb, count] of counts) { sum += count; increment(totals, rgb, count); }
+      if (sum !== w * h) consistent = false;
+      // A vertical line belongs to the right cell; a horizontal line to the lower cell.
+      const gridPixels = (col > 0 ? h : 0) + (row > 0 ? w : 0) - (row > 0 && col > 0 ? 1 : 0);
+      auditCells.push({row, col, x, y, w, h, counts, gridPixels});
+    }
+    for (let x = 0; x < bitmap.width; x++) {
+      increment(frame, rgbAt(x, 0)); increment(frame, rgbAt(x, bitmap.height - 1));
+    }
+    for (let y = 1; y < bitmap.height - 1; y++) {
+      increment(frame, rgbAt(0, y)); increment(frame, rgbAt(bitmap.width - 1, y));
+    }
+    const totalArea = [...totals.values()].reduce((sum, count) => sum + count, 0);
+    consistent &&= totalArea === side * side;
+    document.getElementById('pixelAuditSummary').innerHTML =
+      '<strong>' + size + ' × ' + size + ' = ' + number(size * size) + ' ячеек. Физические px по масштабу браузера.</strong><br>' +
+      'Масштаб экрана и браузера: ' + dpr + ' · увеличение жестом: ' + viewportScale + ' · общий коэффициент: ' + ratio + '.<br>' +
+      'Поле без рамки: ' + side + ' × ' + side + ' = ' + number(side * side) + ' px; полотно с рамкой: ' + bitmap.width + ' × ' + bitmap.height + ' px.<br>' +
+      'Сетка — 1 px: вертикальная линия входит в первый столбец правой клетки, горизонтальная — в первый ряд нижней; пересечение считается один раз. Номера пикселей даны от начала поля без рамки, включая крайние.<br>' +
+      'RGB считаны из видимого растра; совпадающие цвета объединены. ' + (consistent ? 'Суммы цветов совпадают с площадями клеток и поля.' : 'Ошибка: сумма цветов не совпадает с площадью.') + '<br>' +
+      '<strong>Цвета всего поля:</strong> ' + rgbCounts(totals) + '<br><strong>Рамка снаружи: 1 px, ' + number(4 * side + 4) + ' пикселей:</strong> ' + rgbCounts(frame);
+    renderAuditPage();
+  }
+  function scheduleAudit() {
+    if (dimensions.hidden || stroke || auditFrame) return;
+    auditFrame = requestAnimationFrame(() => { auditFrame = 0; if (!stroke) updateAudit(); });
+  }
+  function setDimensionsOpen(open) {
+    dimensions.hidden = !open;
+    dimensionsToggle.setAttribute('aria-expanded', String(open));
+    try { localStorage.setItem(dimensionsKey, open ? '1' : '0'); } catch {}
+    if (open) updateAudit();
+  }
+  dimensionsToggle.addEventListener('click', () => setDimensionsOpen(dimensions.hidden));
+  document.getElementById('pixelAuditPrev').addEventListener('click', () => { auditPage--; renderAuditPage(); });
+  document.getElementById('pixelAuditNext').addEventListener('click', () => { auditPage++; renderAuditPage(); });
   function commit(before) {
     if (before === snapshot()) return;
     const history = histories[size];
@@ -1496,14 +1596,23 @@ renderEditor();
     if (!stroke) return;
     const ended = stroke; stroke = null;
     commit(ended.before);
+    scheduleAudit();
     if (grid.hasPointerCapture(ended.id)) grid.releasePointerCapture(ended.id);
   }
   function point(event) {
     const bounds = grid.getBoundingClientRect();
-    // The outline is outside the raster and does not consume any cell pixels.
-    const x = (event.clientX - bounds.left) / bounds.width * size;
-    const y = (event.clientY - bounds.top) / bounds.height * size;
-    return x >= 0 && y >= 0 && x < size && y < size ? {x: Math.floor(x), y: Math.floor(y)} : null;
+    const x = Math.floor((event.clientX - bounds.left) / bounds.width * grid.width) - 1;
+    const y = Math.floor((event.clientY - bounds.top) / bounds.height * grid.height) - 1;
+    if (x < 0 || y < 0 || x >= side || y >= side) return null;
+    const locate = pixel => {
+      let low = 0, high = size;
+      while (low + 1 < high) {
+        const middle = (low + high) >> 1;
+        if (boundaries[middle] <= pixel) low = middle; else high = middle;
+      }
+      return low;
+    };
+    return {x: locate(x), y: locate(y)};
   }
   function paintTo(next) {
     if (!next) { stroke.last = null; return; }
@@ -1606,12 +1715,44 @@ renderEditor();
   renderPalette(); render();
   // Keep the legacy key intact; write a separate validated colour model.
   save();
-  let fieldWidth = -1;
+  try { if (localStorage.getItem(dimensionsKey) === '1') setDimensionsOpen(true); } catch {}
   new ResizeObserver(([entry]) => {
     if (entry.contentRect.width === fieldWidth) return;
     fieldWidth = entry.contentRect.width;
     fit(fieldWidth);
   }).observe(field);
+  // Theme changes repaint the same native bitmap, including its background and frame.
+  new MutationObserver(() => renderInk()).observe(document.documentElement, {attributes: true, attributeFilter: ['style', 'class']});
+  function refreshScale() {
+    const nextDpr = window.devicePixelRatio || 1, nextViewport = window.visualViewport?.scale || 1;
+    if (nextDpr !== dpr || nextViewport !== viewportScale) { finish(); fit(); }
+    alignRaster();
+  }
+  function alignRaster() {
+    if (alignmentFrame) return;
+    alignmentFrame = requestAnimationFrame(() => {
+      alignmentFrame = 0;
+      // Snap the origin to the same browser-reported physical pixel grid as its extent.
+      grid.style.transform = 'none';
+      const bounds = grid.getBoundingClientRect(), viewport = window.visualViewport;
+      const x = (bounds.left - (viewport?.offsetLeft || 0)) * ratio;
+      const y = (bounds.top - (viewport?.offsetTop || 0)) * ratio;
+      grid.style.transform = 'translate(' + (Math.round(x) - x) / ratio + 'px,' + (Math.round(y) - y) / ratio + 'px)';
+    });
+  }
+  function watchDensity() {
+    densityQuery?.removeEventListener('change', densityChanged);
+    densityQuery = matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
+    densityQuery.addEventListener('change', densityChanged);
+  }
+  function densityChanged() { refreshScale(); watchDensity(); }
+  window.addEventListener('resize', refreshScale);
+  window.addEventListener('scroll', alignRaster, {passive: true});
+  grid.parentElement.addEventListener('scroll', alignRaster, {passive: true});
+  grid.parentElement.addEventListener('scroll', alignRaster, {passive: true});
+  window.visualViewport?.addEventListener('resize', refreshScale);
+  window.visualViewport?.addEventListener('scroll', alignRaster, {passive: true});
+  watchDensity(); alignRaster();
 })();
 
 </script>
