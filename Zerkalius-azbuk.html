@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.058</title>
+<title>Zerkalius АзъБукъ v0.059</title>
+<!-- v0.059 · АЗБ-060: внешняя рамка пиксельного поля убрана из растра и подсчёта. -->
 <!-- v0.058 · АЗБ-059: половины «Цвет / В угол» задают перенос рисунка при смене размера; общая отмена/повтор восстанавливает размер и рисунки всех размерностей. -->
 <!-- v0.057 · АЗБ-058: заголовок пиксельного поля слева в одной строке с кнопками. -->
 <!-- v0.056 · АЗБ-057: палитра в одну полосу, чистые R/G/B отмечены; строка активного цвета убрана. Прежние оттенки рисунков перенесены без перекраски в отдельные внутренние слоты хранилища v3. -->
@@ -263,7 +264,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.058"></span>
+    <span class="pbtn ver" aria-label="v0.059"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -366,7 +367,7 @@
     </div>
   </div>
   <div id="pixelPalette" class="pixel-palette" role="group" aria-label="Палитра 32 цветов: выберите один или несколько"></div>
-  <div class="pixel-viewport"><canvas id="pixelGrid" width="642" height="642" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp pixelSelection" title="ЛКМ: карандаш с повторным стиранием. ПКМ: пустую красит последним выбранным, закрашенную переключает по выбранным цветам по кругу">Карандаш рисует по клеткам.</canvas></div>
+  <div class="pixel-viewport"><canvas id="pixelGrid" width="640" height="640" tabindex="0" role="application" aria-label="Квадратное поле для рисования по клеткам" aria-describedby="pixelHelp pixelSelection" title="ЛКМ: карандаш с повторным стиранием. ПКМ: пустую красит последним выбранным, закрашенную переключает по выбранным цветам по кругу">Карандаш рисует по клеткам.</canvas></div>
   <div id="pixelSelection"></div>
   <p id="pixelHelp" hidden>Карандаш рисует активным цветом; на клетке того же цвета начинает стирающий штрих. Ластик возвращает фон. ПКМ по пустой клетке красит последним выбранным цветом, по закрашенной меняет её цвет на следующий выбранный в порядке палитры, по кругу. При протяжке каждая клетка меняется один раз за штрих. Стрелки — выбрать клетку, пробел — применить инструмент, Delete — стереть.</p>
   <div id="pixelMetrics"></div>
@@ -1478,7 +1479,7 @@ renderEditor();
     const min = Math.floor(side / size), max = Math.ceil(side / size);
     metrics.textContent = size + ' × ' + size + ' = ' + number(size * size) + ' ячеек · ячейка ' +
       (min === max ? min : min + '–' + max) + ' физических px по стороне · поле ' + side + ' × ' + side +
-      ' = ' + number(side * side) + ' px · сетка 1 px внутри, рамка 1 px снаружи';
+      ' = ' + number(side * side) + ' px · сетка 1 px';
   }
   function fit(available) {
     if (available === undefined) {
@@ -1488,11 +1489,11 @@ renderEditor();
     dpr = window.devicePixelRatio || 1;
     viewportScale = window.visualViewport?.scale || 1;
     ratio = dpr * viewportScale;
-    const contentCss = Math.min(640, Math.max(0, available - 8 - 2 / ratio));
+    const contentCss = Math.min(640, Math.max(0, available - 8));
     side = Math.max(size, Math.floor(contentCss * ratio));
     boundaries = Array.from({length: size + 1}, (_, i) => Math.round(i * side / size));
-    grid.width = side + 2; grid.height = side + 2;
-    grid.style.width = (side + 2) / ratio + 'px'; grid.style.height = (side + 2) / ratio + 'px';
+    grid.width = side; grid.height = side;
+    grid.style.width = side / ratio + 'px'; grid.style.height = side / ratio + 'px';
     measure(); renderInk(); alignRaster();
   }
   function status() {
@@ -1513,19 +1514,17 @@ renderEditor();
     const theme = getComputedStyle(document.documentElement);
     const background = theme.getPropertyValue('--bg').trim();
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = theme.getPropertyValue('--edit-ink').trim() || theme.getPropertyValue('--ink').trim();
-    ctx.fillRect(0, 0, side + 2, side + 2);
-    ctx.fillStyle = background; ctx.fillRect(1, 1, side, side);
+    ctx.fillStyle = background; ctx.fillRect(0, 0, side, side);
     for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
       const color = drawings[size][row * size + col];
       if (!color) continue;
       ctx.fillStyle = colors[color];
-      ctx.fillRect(1 + boundaries[col], 1 + boundaries[row], boundaries[col + 1] - boundaries[col], boundaries[row + 1] - boundaries[row]);
+      ctx.fillRect(boundaries[col], boundaries[row], boundaries[col + 1] - boundaries[col], boundaries[row + 1] - boundaries[row]);
     }
     ctx.fillStyle = theme.getPropertyValue('--line').trim();
     for (let i = 1; i < size; i++) {
-      ctx.fillRect(1 + boundaries[i], 1, 1, side);
-      ctx.fillRect(1, 1 + boundaries[i], side, 1);
+      ctx.fillRect(boundaries[i], 0, 1, side);
+      ctx.fillRect(0, boundaries[i], side, 1);
     }
     selectionLabel.textContent = 'Выбранная клетка: строка ' + (cursorY + 1) + ', столбец ' + (cursorX + 1) + '. Стрелки — выбор, пробел — карандаш / ластик, Delete — стереть.';
     scheduleAudit();
@@ -1561,7 +1560,7 @@ renderEditor();
     if (dimensions.hidden) return;
     // One read of the displayed native bitmap; every cell owns a half-open region.
     const bitmap = ctx.getImageData(0, 0, grid.width, grid.height), data = bitmap.data;
-    const totals = new Map(), frame = new Map();
+    const totals = new Map();
     const rgbAt = (x, y) => {
       const index = (y * bitmap.width + x) * 4;
       return (data[index] << 16) | (data[index + 1] << 8) | data[index + 2];
@@ -1572,7 +1571,7 @@ renderEditor();
     for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
       const x = boundaries[col], y = boundaries[row], w = boundaries[col + 1] - x, h = boundaries[row + 1] - y;
       const counts = new Map();
-      for (let py = y; py < y + h; py++) for (let px = x; px < x + w; px++) increment(counts, rgbAt(px + 1, py + 1));
+      for (let py = y; py < y + h; py++) for (let px = x; px < x + w; px++) increment(counts, rgbAt(px, py));
       let sum = 0;
       for (const [rgb, count] of counts) { sum += count; increment(totals, rgb, count); }
       if (sum !== w * h) consistent = false;
@@ -1580,21 +1579,15 @@ renderEditor();
       const gridPixels = (col > 0 ? h : 0) + (row > 0 ? w : 0) - (row > 0 && col > 0 ? 1 : 0);
       auditCells.push({row, col, x, y, w, h, counts, gridPixels});
     }
-    for (let x = 0; x < bitmap.width; x++) {
-      increment(frame, rgbAt(x, 0)); increment(frame, rgbAt(x, bitmap.height - 1));
-    }
-    for (let y = 1; y < bitmap.height - 1; y++) {
-      increment(frame, rgbAt(0, y)); increment(frame, rgbAt(bitmap.width - 1, y));
-    }
     const totalArea = [...totals.values()].reduce((sum, count) => sum + count, 0);
     consistent &&= totalArea === side * side;
     document.getElementById('pixelAuditSummary').innerHTML =
       '<strong>' + size + ' × ' + size + ' = ' + number(size * size) + ' ячеек. Физические px по масштабу браузера.</strong><br>' +
       'Масштаб экрана и браузера: ' + dpr + ' · увеличение жестом: ' + viewportScale + ' · общий коэффициент: ' + ratio + '.<br>' +
-      'Поле без рамки: ' + side + ' × ' + side + ' = ' + number(side * side) + ' px; полотно с рамкой: ' + bitmap.width + ' × ' + bitmap.height + ' px.<br>' +
-      'Сетка — 1 px: вертикальная линия входит в первый столбец правой клетки, горизонтальная — в первый ряд нижней; пересечение считается один раз. Номера пикселей даны от начала поля без рамки, включая крайние.<br>' +
+      'Поле: ' + side + ' × ' + side + ' = ' + number(side * side) + ' px.<br>' +
+      'Сетка — 1 px: вертикальная линия входит в первый столбец правой клетки, горизонтальная — в первый ряд нижней; пересечение считается один раз. Номера пикселей даны от начала поля, включая крайние.<br>' +
       'RGB считаны из видимого растра; совпадающие цвета объединены. ' + (consistent ? 'Суммы цветов совпадают с площадями клеток и поля.' : 'Ошибка: сумма цветов не совпадает с площадью.') + '<br>' +
-      '<strong>Цвета всего поля:</strong> ' + rgbCounts(totals) + '<br><strong>Рамка снаружи: 1 px, ' + number(4 * side + 4) + ' пикселей:</strong> ' + rgbCounts(frame);
+      '<strong>Цвета всего поля:</strong> ' + rgbCounts(totals);
     renderAuditPage();
   }
   function scheduleAudit() {
@@ -1626,8 +1619,8 @@ renderEditor();
   }
   function point(event) {
     const bounds = grid.getBoundingClientRect();
-    const x = Math.floor((event.clientX - bounds.left) / bounds.width * grid.width) - 1;
-    const y = Math.floor((event.clientY - bounds.top) / bounds.height * grid.height) - 1;
+    const x = Math.floor((event.clientX - bounds.left) / bounds.width * grid.width);
+    const y = Math.floor((event.clientY - bounds.top) / bounds.height * grid.height);
     if (x < 0 || y < 0 || x >= side || y >= side) return null;
     const locate = pixel => {
       let low = 0, high = size;
@@ -1778,7 +1771,7 @@ renderEditor();
     fieldWidth = entry.contentRect.width;
     fit(fieldWidth);
   }).observe(field);
-  // Theme changes repaint the same native bitmap, including its background and frame.
+  // Theme changes repaint the same native bitmap, including its background and grid.
   new MutationObserver(() => renderInk()).observe(document.documentElement, {attributes: true, attributeFilter: ['style', 'class']});
   function refreshScale() {
     const nextDpr = window.devicePixelRatio || 1, nextViewport = window.visualViewport?.scale || 1;
