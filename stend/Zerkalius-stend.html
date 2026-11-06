@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.011</title>
+<title>Зеркалиус — Стенд — v0.012</title>
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
-     v0.011: по просьбе пользователя «у всех показывай текущую высоту» — высота видна в плеере
-     крупно и под каждой мини-картинкой: рост — поле в px (32…512), вложение — высота вставленной
-     копии в строках (32…1), старая запись — высота поля в строках текущего кадра (32…1024);
-     у каждого способа свой текущий шаг, высота обновляется при шаге и при переключении.
+     v0.012: по просьбе «и балансы 0 и 1 в кадре» — в плеере и под каждой мини-картинкой показаны
+     балансы 0 и 1 по клеткам картинки (решётка 2N−1×N, как в Маятнике), у каждого способа свой шаг;
+     у цветного вложения 0/1 нет — там прочерк. Баланс подсвечивается, когда 0 и 1 равны.
+
      Ничего не удаляется: новые варианты добавляются новыми разделами. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
 <style>
@@ -72,7 +72,10 @@
   .thumb a{font-size:10px;color:var(--muted);text-decoration:none}
   .thumb a:hover{color:var(--gold);text-decoration:underline}
   .thumb .th-height{font-size:10px;color:var(--muted)}
+  .thumb .th-balance{font-size:10px;color:var(--muted)}
   .p-height{font:600 16px ui-monospace,Consolas,monospace;color:var(--gold)}
+  .p-balance{font:600 13px ui-monospace,Consolas,monospace;color:var(--muted)}
+  .p-balance.bal{color:var(--gold)}
   figure{margin:14px 0 0}
   figure img{width:100%;display:block;border:1px solid var(--line);border-radius:8px}
   figcaption{color:var(--muted);font-size:12px;margin-top:6px}
@@ -94,7 +97,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.011 · 06.11.2026</span>
+  <span class="ver">v0.012 · 06.11.2026</span>
 </header>
 <main>
   <p class="lead">
@@ -120,27 +123,32 @@
           <output id="pStep">1/5</output>
         </div>
         <div class="p-height" id="pHeight">высота: поле 32 px</div>
+        <div class="p-balance" id="pBalance">0: … · 1: …</div>
         <div class="info" id="pInfo"></div>
         <div class="thumbs" role="group" aria-label="Способы">
           <div class="thumb">
             <button type="button" data-method="growth" aria-pressed="true"><canvas id="thGrowth" width="108" height="54"></canvas><span>Рост битов</span></button>
             <a href="#growth">к заголовку →</a>
             <span class="th-height" data-h="growth"></span>
+            <span class="th-balance" data-b="growth"></span>
           </div>
           <div class="thumb">
             <button type="button" data-method="holes"><canvas id="thHoles" width="108" height="54"></canvas><span>Копии в впадинах</span></button>
             <a href="#nesting">к заголовку →</a>
             <span class="th-height" data-h="holes"></span>
+            <span class="th-balance" data-b="holes"></span>
           </div>
           <div class="thumb">
             <button type="button" data-method="nest"><canvas id="thNest" width="108" height="54"></canvas><span>Вложение битов</span></button>
             <a href="#zoom">к заголовку →</a>
             <span class="th-height" data-h="nest"></span>
+            <span class="th-balance" data-b="nest"></span>
           </div>
           <div class="thumb">
             <button type="button" data-method="old"><canvas id="thOld" width="108" height="54"></canvas><span>Старая запись</span></button>
             <a href="#old">к заголовку →</a>
             <span class="th-height" data-h="old"></span>
+            <span class="th-balance" data-b="old"></span>
           </div>
         </div>
       </div>
@@ -323,7 +331,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.011 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.012 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script>
@@ -778,7 +786,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       old: { steps: 72, ms: 90, name: 'старая запись с камерой', text: (s) => `кадр ${s + 1}/72` }
     };
     const STEPS = { growth: 0, holes: 0, nest: 0, old: 0 };
-    const pHeight = $('pHeight');
+    const pHeight = $('pHeight'), pBalance = $('pBalance');
     let method = 'growth', step = 0, auto = true, last = performance.now(), acc = 0;
     // Текущая высота у каждого способа: рост — поле в px; вложение — высота вставленной копии в строках;
     // старая запись — высота поля в строках текущего кадра.
@@ -788,12 +796,75 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (m === 'nest') return `копия ${32 >> s} строк`;
       return `поле ${32 << Math.floor(s / 12)} строк`;
     }
-    function updateHeights() {
+    const POW3 = [1, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049];
+    // Балансы 0 и 1 в кадре: считаем клетки картинки (решётка 2N−1×N), как в Маятнике,
+    // а не весь прямоугольник: у роста и старой записи — поле кадра, у вложения — база + копии.
+    function countsOf(m, s) {
+      if (m === 'holes') return null;                       // цветное вложение: 0/1 нет
+      if (m === 'growth') {
+        const n = 32 << s, total = n * (n + 1) / 2, o = POW3[5 + s];
+        return { o, z: total - o };
+      }
+      if (m === 'old') {
+        const oc = Math.floor(s / 12), n = 32 << oc, wn = 2 * n - 1;
+        const Cc = (wn - 1) >> 1;
+        const cell = Math.min(800 / wn, 400 / n) * (2 - (s % 12) / 12);
+        const x0 = 400 - wn * cell / 2;
+        const maxRow = Math.min(n - 1, Math.floor(399 / cell));
+        const cLo = Math.max(0, Math.ceil((0 - x0) / cell));
+        const cHi = Math.min(wn - 1, Math.floor((799 - x0) / cell));
+        let o = 0, total = 0;
+        for (let r = 0; r <= maxRow; r++) {
+          const lo = Math.max(cLo, Cc - r), hi = Math.min(cHi, Cc + r);
+          for (let c = lo; c <= hi; c++) {
+            if (((c - Cc - r) % 2 + 2) % 2) continue;
+            total++;
+            if (ofield[r * OW + (OC - (n - 1)) + c]) o++;
+          }
+        }
+        return { o, z: total - o };
+      }
+      if (m === 'nest') {
+        const vals = new Int8Array(N0 * NW).fill(-1);
+        for (let r = 0; r < N0; r++) {
+          const base = r * NW + (NC - (N0 - 1));
+          for (let c = 0; c < NW; c++) {
+            if (Math.abs(c - (N0 - 1)) > r) continue;
+            if (((c - (N0 - 1) - r) % 2 + 2) % 2) continue;
+            vals[r * NW + c] = nbit(N0, r, c);
+          }
+        }
+        for (const p of placementsNest(s)) {
+          if (p.n === N0) continue;
+          const n = p.n, w = 2 * n - 1;
+          for (let i = 0; i < n; i++) for (let j = 0; j < w; j++) {
+            const sr = p.rot ? n - 1 - i : i, sc = p.rot ? w - 1 - j : j;
+            if (Math.abs(sc - (n - 1)) > sr) continue;
+            if (((sc - (n - 1) - sr) % 2 + 2) % 2) continue;
+            vals[(p.R + i) * NW + (p.C + j)] = nbit(n, sr, sc);
+          }
+        }
+        let o = 0, total = 0;
+        for (let k = 0; k < vals.length; k++) if (vals[k] >= 0) { total++; if (vals[k]) o++; }
+        return { o, z: total - o };
+      }
+      return null;
+    }
+    function updateStats() {
       document.querySelectorAll('.th-height').forEach((el) => {
         const m = el.dataset.h;
         el.textContent = 'выс. ' + heightOf(m, STEPS[m]);
       });
+      document.querySelectorAll('.th-balance').forEach((el) => {
+        const m = el.dataset.b, c = countsOf(m, STEPS[m]);
+        el.textContent = c ? `0 ${c.z} · 1 ${c.o}` : '0/1: —';
+      });
       if (pHeight) pHeight.textContent = 'высота: ' + heightOf(method, step);
+      if (pBalance) {
+        const c = countsOf(method, step);
+        pBalance.classList.toggle('bal', !!(c && c.z === c.o));
+        pBalance.textContent = c ? `0: ${c.z} · 1: ${c.o}` + (c.z === c.o ? ' · БАЛАНС' : '') : '0 и 1: — (цветное вложение)';
+      }
     }
     function drawGrowth() {
       bufG.fill(BLACK);
@@ -823,10 +894,10 @@ b(2r+1,2c+1) = b(r, c)</pre>
       holesTree(0, 0, s, 1, 2, step, '#ffc45c', '#6ee1eb');
       sctx.restore();
     }
-    function placementsNest() {
+    function placementsNest(s) {
       const list = [];
       let n = N0, R = 0, Cc = 0, rot = 0;
-      for (let l = 0; l <= step && n >= 1; l++) {
+      for (let l = 0; l <= s && n >= 1; l++) {
         list.push({ n, R, C: Cc, rot });
         const h = holesMap[n];
         if (!h) break;
@@ -838,7 +909,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function drawNest() {
       sctx.fillStyle = '#04060a'; sctx.fillRect(0, 0, PW, PH);
       const K = 8, ox = Math.floor((PW - NW * K) / 2), oy = Math.floor((PH - N0 * K) / 2);
-      for (const p of placementsNest()) {
+      for (const p of placementsNest(step)) {
         sctx.fillStyle = p.n === N0 ? '#ffc45c' : '#6ee1eb';
         const w = 2 * p.n - 1;
         for (let i = 0; i < p.n; i++) for (let j = 0; j < w; j++) {
@@ -879,7 +950,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       range.value = String(step);
       stepOut.textContent = METHODS[method].text(step);
       info.textContent = `${METHODS[method].name} · ${METHODS[method].text(step)}`;
-      updateHeights();
+      updateStats();
     }
     function setAuto(on) {
       auto = on;
