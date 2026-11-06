@@ -1,7 +1,8 @@
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.059</title>
+<title>Zerkalius АзъБукъ v0.060</title>
+<!-- v0.060 · АЗБ-061: «Череда» рисует линии попеременно цветами соседних клеток по одному физическому пикселю; узлы 2×2 сохраняют четыре соседних цвета. -->
 <!-- v0.059 · АЗБ-060: внешняя рамка пиксельного поля убрана из растра и подсчёта. -->
 <!-- v0.058 · АЗБ-059: половины «Цвет / В угол» задают перенос рисунка при смене размера; общая отмена/повтор восстанавливает размер и рисунки всех размерностей. -->
 <!-- v0.057 · АЗБ-058: заголовок пиксельного поля слева в одной строке с кнопками. -->
@@ -230,6 +231,7 @@
   .pixel-sizes button{width:calc(2 * var(--tiny-size));min-width:0;padding:0 4px;display:inline-flex;align-items:center;justify-content:center}
   .pixel-toolbar button{user-select:none}
   .pixel-actions button{max-width:100%}
+  #pixelGridAlternating{background:var(--btn)}
   .pixel-transfer{display:flex;flex:0 0 var(--tool-w);width:var(--tool-w);gap:0}
   .tools.pixel-transfer button{display:inline-flex;align-items:center;justify-content:center;width:50%;flex:0 0 50%;min-width:0;padding:0 3px;background:var(--btn)}
   .pixel-transfer button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
@@ -264,7 +266,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.059"></span>
+    <span class="pbtn ver" aria-label="v0.060"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -360,6 +362,7 @@
     <div class="tools pixel-actions" role="group" aria-label="Рисование по клеткам">
       <button id="pixelDraw" type="button" aria-pressed="true" title="Карандаш: рисовать активным цветом; повторное нажатие на клетку этого цвета стирает. ПКМ: пустую красит последним выбранным цветом, закрашенную переключает по выбранным цветам по кругу">Карандаш</button>
       <button id="pixelErase" type="button" aria-pressed="false" title="Ластик: возвращать клетки к фону нажатием и протяжкой">Ластик</button>
+      <button id="pixelGridAlternating" type="button" aria-pressed="false" title="Череда: линия толщиной 1 физический пиксель чередует цвета двух соседних клеток. В узле 2×2 пикселя каждый берёт цвет ближайшей из четырёх клеток. При одинаковом RGB граница сливается. Выключено — обычная сетка">Череда</button>
       <button id="pixelUndo" type="button" title="Отменить последний штрих, очистку или перенос; восстановить размер и рисунки">Отмена</button>
       <button id="pixelRedo" type="button" title="Повторить отменённый штрих, очистку или перенос вместе с размером и рисунками">Повтор</button>
       <button id="pixelClear" type="button" title="Очистить поле текущего размера; действие можно отменить">Очистить</button>
@@ -374,7 +377,7 @@
   <div id="pixelNotice" role="status" aria-live="polite"></div>
   <div id="pixelDimensions" hidden>
     <div id="pixelAuditSummary"></div>
-    <div class="pixel-audit-scroll"><table id="pixelAuditTable"><thead><tr><th>Строка / столбец</th><th>Номера пикселей, включая крайние</th><th>Ширина × высота, px</th><th>Площадь, px²</th><th>Сетка, px</th><th>Цвета и количество пикселей</th></tr></thead><tbody id="pixelAuditRows"></tbody></table></div>
+    <div class="pixel-audit-scroll"><table id="pixelAuditTable"><thead><tr><th>Строка / столбец</th><th>Номера пикселей, включая крайние</th><th>Ширина × высота, px</th><th>Площадь, px²</th><th title="Площадь линий сетки внутри клетки; в Череде учитывается также её пиксель узла 2×2 за пределами линий. Совпадение RGB не меняет геометрическую площадь">Сетка, px</th><th>Цвета и количество пикселей</th></tr></thead><tbody id="pixelAuditRows"></tbody></table></div>
     <div class="tools pixel-audit-pages"><button id="pixelAuditPrev" type="button">Назад</button><span id="pixelAuditPage"></span><button id="pixelAuditNext" type="button">Далее</button></div>
   </div>
 </section>
@@ -1413,7 +1416,9 @@ renderEditor();
   const undoButton = document.getElementById('pixelUndo'), redoButton = document.getElementById('pixelRedo');
   const palette = document.getElementById('pixelPalette');
   const drawings = Object.create(null), history = {undo: [], redo: []};
-  let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false, resizeMode = 'scale';
+  let size = 16, erase = false, stroke = null, cursorX = 0, cursorY = 0, saveFailed = false, resizeMode = 'scale', gridStyle = 'solid';
+  const alternatingButton = document.getElementById('pixelGridAlternating'), patternCache = new Map();
+  let patternBackground = '';
   let side = 640, ratio = 1, dpr = 1, viewportScale = 1, boundaries = [], auditFrame = 0, auditPage = 0, auditCells = [], alignmentFrame = 0;
   let fieldWidth = -1, densityQuery;
   const auditPageSize = 64, dimensionsKey = 'azbuk-pixel-dimensions-open';
@@ -1434,6 +1439,7 @@ renderEditor();
     activeColor = selected[selected.length - 1];
     erase = settings?.erase === true;
     resizeMode = settings?.resizeMode === 'corner' ? 'corner' : 'scale';
+    gridStyle = settings?.gridStyle === 'alternating' ? 'alternating' : 'solid';
     for (const n of sizes) {
       const bits = saved?.drawings?.[n];
       const previousBits = previous?.drawings?.[n];
@@ -1479,7 +1485,8 @@ renderEditor();
     const min = Math.floor(side / size), max = Math.ceil(side / size);
     metrics.textContent = size + ' × ' + size + ' = ' + number(size * size) + ' ячеек · ячейка ' +
       (min === max ? min : min + '–' + max) + ' физических px по стороне · поле ' + side + ' × ' + side +
-      ' = ' + number(side * side) + ' px · сетка 1 px';
+      ' = ' + number(side * side) + ' px · сетка 1 px' +
+      (gridStyle === 'alternating' ? ', узлы 2×2; одинаковые цвета сливаются' : '');
   }
   function fit(available) {
     if (available === undefined) {
@@ -1505,10 +1512,49 @@ renderEditor();
   }
   function save() {
     try {
-      localStorage.setItem(key, JSON.stringify({size, selected, activeColor, erase, resizeMode, drawings: savedDrawings()}));
+      localStorage.setItem(key, JSON.stringify({size, selected, activeColor, erase, resizeMode, gridStyle, drawings: savedDrawings()}));
       saveFailed = false;
     } catch { saveFailed = true; }
     status();
+  }
+  function alternatingPattern(first, second, vertical) {
+    const key = (vertical ? 'v:' : 'h:') + first + ':' + second;
+    if (patternCache.has(key)) return patternCache.get(key);
+    const tile = document.createElement('canvas');
+    tile.width = vertical ? 1 : 2; tile.height = vertical ? 2 : 1;
+    const tileContext = tile.getContext('2d', {alpha: false});
+    tileContext.fillStyle = first; tileContext.fillRect(0, 0, tile.width, tile.height);
+    tileContext.fillStyle = second; tileContext.fillRect(vertical ? 0 : 1, vertical ? 1 : 0, 1, 1);
+    const pattern = ctx.createPattern(tile, 'repeat');
+    patternCache.set(key, pattern);
+    return pattern;
+  }
+  function renderAlternatingGrid(background) {
+    if (patternBackground !== background) { patternCache.clear(); patternBackground = background; }
+    const resolved = colors.map((color, index) => index === 0 ? background : color), cells = drawings[size];
+    // Repeating native 1×2 / 2×1 tiles keep the absolute even/odd phase without per-pixel draws.
+    for (let row = 0; row < size; row++) for (let col = 1; col < size; col++) {
+      const left = resolved[cells[row * size + col - 1]], right = resolved[cells[row * size + col]];
+      if (left === right) continue;
+      ctx.fillStyle = alternatingPattern(left, right, true);
+      ctx.fillRect(boundaries[col], boundaries[row], 1, boundaries[row + 1] - boundaries[row]);
+    }
+    for (let row = 1; row < size; row++) for (let col = 0; col < size; col++) {
+      const top = resolved[cells[(row - 1) * size + col]], bottom = resolved[cells[row * size + col]];
+      if (top === bottom) continue;
+      ctx.fillStyle = alternatingPattern(top, bottom, false);
+      ctx.fillRect(boundaries[col], boundaries[row], boundaries[col + 1] - boundaries[col], 1);
+    }
+    // Each node restores the nearest four source colours; batch all squares by colour.
+    const nodes = colors.map(() => new Path2D());
+    for (let row = 1; row < size; row++) for (let col = 1; col < size; col++) {
+      const x = boundaries[col], y = boundaries[row];
+      nodes[cells[(row - 1) * size + col - 1]].rect(x - 1, y - 1, 1, 1);
+      nodes[cells[(row - 1) * size + col]].rect(x, y - 1, 1, 1);
+      nodes[cells[row * size + col - 1]].rect(x - 1, y, 1, 1);
+      nodes[cells[row * size + col]].rect(x, y, 1, 1);
+    }
+    nodes.forEach((path, color) => { ctx.fillStyle = resolved[color]; ctx.fill(path); });
   }
   function renderInk() {
     const theme = getComputedStyle(document.documentElement);
@@ -1521,10 +1567,13 @@ renderEditor();
       ctx.fillStyle = colors[color];
       ctx.fillRect(boundaries[col], boundaries[row], boundaries[col + 1] - boundaries[col], boundaries[row + 1] - boundaries[row]);
     }
-    ctx.fillStyle = theme.getPropertyValue('--line').trim();
-    for (let i = 1; i < size; i++) {
-      ctx.fillRect(boundaries[i], 0, 1, side);
-      ctx.fillRect(0, boundaries[i], side, 1);
+    if (gridStyle === 'alternating') renderAlternatingGrid(background);
+    else {
+      ctx.fillStyle = theme.getPropertyValue('--line').trim();
+      for (let i = 1; i < size; i++) {
+        ctx.fillRect(boundaries[i], 0, 1, side);
+        ctx.fillRect(0, boundaries[i], side, 1);
+      }
     }
     selectionLabel.textContent = 'Выбранная клетка: строка ' + (cursorY + 1) + ', столбец ' + (cursorX + 1) + '. Стрелки — выбор, пробел — карандаш / ластик, Delete — стереть.';
     scheduleAudit();
@@ -1576,7 +1625,9 @@ renderEditor();
       for (const [rgb, count] of counts) { sum += count; increment(totals, rgb, count); }
       if (sum !== w * h) consistent = false;
       // A vertical line belongs to the right cell; a horizontal line to the lower cell.
-      const gridPixels = (col > 0 ? h : 0) + (row > 0 ? w : 0) - (row > 0 && col > 0 ? 1 : 0);
+      let gridPixels = (col > 0 ? h : 0) + (row > 0 ? w : 0) - (row > 0 && col > 0 ? 1 : 0);
+      if (gridStyle === 'alternating' && row < size - 1 && col < size - 1 &&
+          !(col > 0 && w === 1) && !(row > 0 && h === 1)) gridPixels++;
       auditCells.push({row, col, x, y, w, h, counts, gridPixels});
     }
     const totalArea = [...totals.values()].reduce((sum, count) => sum + count, 0);
@@ -1586,6 +1637,7 @@ renderEditor();
       'Масштаб экрана и браузера: ' + dpr + ' · увеличение жестом: ' + viewportScale + ' · общий коэффициент: ' + ratio + '.<br>' +
       'Поле: ' + side + ' × ' + side + ' = ' + number(side * side) + ' px.<br>' +
       'Сетка — 1 px: вертикальная линия входит в первый столбец правой клетки, горизонтальная — в первый ряд нижней; пересечение считается один раз. Номера пикселей даны от начала поля, включая крайние.<br>' +
+      (gridStyle === 'alternating' ? 'Череда: цвета соседей меняются через 1 физический пиксель; в узлах 2×2 каждый пиксель цвета ближайшей клетки. При одинаковом RGB граница сливается; маленькие узлы могут соприкасаться.<br>' : '') +
       'RGB считаны из видимого растра; совпадающие цвета объединены. ' + (consistent ? 'Суммы цветов совпадают с площадями клеток и поля.' : 'Ошибка: сумма цветов не совпадает с площадью.') + '<br>' +
       '<strong>Цвета всего поля:</strong> ' + rgbCounts(totals);
     renderAuditPage();
@@ -1719,6 +1771,11 @@ renderEditor();
     finish(); erase = value;
     renderPalette(); save();
   }
+  alternatingButton.addEventListener('click', () => {
+    gridStyle = gridStyle === 'solid' ? 'alternating' : 'solid';
+    alternatingButton.setAttribute('aria-pressed', String(gridStyle === 'alternating'));
+    measure(); renderInk(); save();
+  });
   palette.addEventListener('click', event => {
     const button = event.target.closest('[data-pixel-color]'); if (!button) return;
     finish();
@@ -1762,6 +1819,7 @@ renderEditor();
       commit(before); renderInk();
     }
   });
+  alternatingButton.setAttribute('aria-pressed', String(gridStyle === 'alternating'));
   renderPalette(); renderResizeMode(); render();
   // Keep both older storage keys intact; write the extended colour model separately.
   save();
