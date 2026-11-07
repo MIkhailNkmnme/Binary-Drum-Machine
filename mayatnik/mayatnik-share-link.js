@@ -62,6 +62,10 @@
     if(value.v!==VERSION)throw Error('Ссылка сделана другой версией Маятника (формат '+value.v+')');
     if(!isPlainObject(value.state))throw Error('В ссылке нет настроек Маятника');
     const state=value.state,pit=Pit.normalize(value.state,true);
+    if(state.sequenceApexSides!=null&&!['one','both','alternate'].includes(state.sequenceApexSides))throw Error('В ссылке некорректные стороны Хода XOR');
+    if(state.sequenceApexZeroTwice!=null&&typeof state.sequenceApexZeroTwice!=='boolean')throw Error('В ссылке некорректный XOR общей вершины');
+    if(state.apexWalkMax!=null&&(!Number.isSafeInteger(state.apexWalkMax)||state.apexWalkMax<0))throw Error('В ссылке некорректный предел ходов');
+    if(state.sequenceApexStart!=null&&!['seed','empty','skip'].includes(state.sequenceApexStart))throw Error('В ссылке некорректное начало Хода XOR');
     if(state.sequenceApexWalk!==undefined&&typeof state.sequenceApexWalk!=='boolean')throw Error('В ссылке некорректный Ход XOR');
     if(state.ochkiThrough!==undefined&&typeof state.ochkiThrough!=='boolean')throw Error('В ссылке некорректный режим Все сквозные');
     if(state.gifScaleStack!==undefined&&typeof state.gifScaleStack!=='boolean')throw Error('В ссылке некорректный режим масштабов под полем');
@@ -83,7 +87,7 @@
     if(state.sequenceSource!=null){if(!isPlainObject(state.sequenceSource)||state.sequenceSource.version!==1||!Array.isArray(state.sequenceSource.rows)||!state.sequenceSource.rows.length)throw Error('В ссылке повреждён свой исходный рисунок');if(state.sequenceSource.rows.length>4096||state.sequenceSource.rows.some(row=>typeof row!=='string'||!/^[01]+$/.test(row)))throw Error('В ссылке повреждены строки своего рисунка');if(state.sequenceSourceOn&&state.compareSource)throw Error('В ссылке два источника поля');}
     if(state.animatrixOn)animatrix.assertState(state);
     edge.validate(state);
-    const limit=state.animatrixOn&&animatrix.unlimited(state)?animatrix.frames(state):MAX_FRAME;
+    const limit=state.animatrixOn&&animatrix.unlimited(state)?animatrix.frames(state):state.sequenceApexWalk?Math.max(MAX_FRAME,state.apexWalkMax||0):MAX_FRAME;
     const k=integer(Number(value.k),0,limit,'В ссылке некорректный кадр');
     const tools=isPlainObject(value.tools)?{...value.tools}:{};
     const colours=isPlainObject(value.colours)?{...value.colours}:{};
@@ -98,7 +102,7 @@
       if(!isPlainObject(value.display)||![scrollLeft,scrollTop].every(n=>Number.isFinite(n)&&n>=0))throw Error('В ссылке повреждено положение просмотра');
       display={scrollLeft,scrollTop};
     }
-    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,sequenceApexWalk:state.sequenceApexWalk===true,...inversion,...isolated,...pit,rows,steps},tools,colours,colourAuto,paint,...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
+    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,sequenceApexStart:state.sequenceApexStart||'seed',sequenceApexWalk:state.sequenceApexWalk===true,...inversion,...isolated,...pit,rows,steps},tools,colours,colourAuto,paint,...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
   }
   function pack(value){return JSON.stringify(normalizePayload(value));}
   function unpack(text){let data;try{data=JSON.parse(text);}catch(_){throw Error('Ссылка повреждена: данные не читаются');}return normalizePayload(data);}
