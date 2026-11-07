@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.028</title>
-<!-- v0.028 · СТЕНД-028: числовой треугольник пользователя, точные номера строк и видимый фрагмент без полного массива. -->
+<title>Зеркалиус — Стенд — v0.027</title>
 <!-- v0.027 · СТЕНД-027: физическая пиксельная сетка, единый зум/сдвиг всех способов, красное предупреждение при клетке меньше1px. -->
 <!-- v0.026 · СТЕНД-026: редактируемая высота поля и индикатор точности отображения битовой сетки. Проверки пользователем. -->
 <!-- v0.025 · СТЕНД-025: копии со сдвигом вниз-вправо по рисунку пользователя; один шаг — один уровень, без поворота и изменения размера источника. -->
@@ -144,46 +143,14 @@
   footer a{margin-right:14px}
 </style>
 <!-- === МАРКЕР: CSS СТИЛИ КОНЕЦ === -->
-<link rel="stylesheet" href="../_js/grozd.css">
-<style>
-#number-triangle .nt-controls{display:flex;flex-wrap:wrap;gap:2px;align-items:center;margin:4px 0;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;--c:#ffc343;font:12px Segoe UI,sans-serif}
-#number-triangle .gz-hx{width:120px;justify-content:center;user-select:none}
-#ntLimit{width:180px;max-width:50vw;background:#1b2430;color:#ffc343;border:1px solid #344157;padding:4px;font:14px Consolas,monospace}
-#ntCanvas{height:420px;touch-action:none;cursor:grab;border-radius:0}
-#ntCanvas:active{cursor:grabbing}
-#ntError{color:#ff5252}
-#ntRow{white-space:pre-wrap;overflow-wrap:anywhere;color:#ffc343;font:13px Consolas,monospace;max-height:100px;overflow:auto}
-</style>
 </head>
 <body>
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.028 · 07.11.2026</span>
+  <span class="ver">v0.027 · 07.11.2026</span>
 </header>
 <main>
-  <section class="card" id="number-triangle">
-    <h2>Чётные / нечётные <small>числовой треугольник</small></h2>
-    <p class="sub">Слева чётные по убыванию, справа нечётные по возрастанию. В нечётной строке между ними стоит 1, в чётной — нет.</p>
-    <form id="ntForm" class="nt-controls">
-      <label for="ntLimit">До строки </label><input id="ntLimit" type="text" inputmode="numeric" value="15" autocomplete="off" aria-describedby="ntError">
-      <button class="gz-hx" type="submit" title="Построить до заданной строки"><span>Построить</span></button>
-      <span id="ntError" role="alert"></span>
-    </form>
-    <canvas id="ntCanvas" aria-label="Числовой треугольник: чётные слева, нечётные справа"></canvas>
-    <div class="nt-controls">
-      <button class="gz-hx" id="ntFirst" type="button" title="Показать начало треугольника"><span>Начало</span></button>
-      <button class="gz-hx" id="ntLast" type="button" title="Показать последние строки"><span>Последние</span></button>
-      <button class="gz-hx" id="ntLeft" type="button" title="Показать левый край последней строки"><span>Слева</span></button>
-      <button class="gz-hx" id="ntCenter" type="button" title="Вернуться к центральной оси"><span>Центр</span></button>
-      <button class="gz-hx" id="ntRight" type="button" title="Показать правый край последней строки"><span>Справа</span></button>
-    </div>
-    <p class="info" id="ntStatus" role="status"></p>
-    <p class="sub">Колесо — масштаб, перетаскивание — перемещение, двойной щелчок — исходный вид. На больших номерах показан видимый фрагмент; числа вычисляются точно.</p>
-    <div id="ntRow" aria-label="Последняя строка текстом"></div>
-    <p class="sub">Название здесь описательное. Нечётные строки совпадают с <a href="https://oeis.org/A220073" target="_blank" rel="noopener">OEIS A220073</a>; чётные строки в том треугольнике другие.</p>
-  </section>
-
   <section class="card player-sticky" id="player">
     <canvas id="cvPlayer" class="bits" style="aspect-ratio:2/1;width:100%"></canvas>
     <div class="controls" style="margin-top:10px">
@@ -446,12 +413,11 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.028 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.027 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script src="../mayatnik/mayatnik-core.js"></script>
 <script src="stend-up.js?v=024"></script>
-<script src="stend-number-triangle.js?v=028"></script>
 <script>
 (() => {
   'use strict';
