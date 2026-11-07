@@ -470,6 +470,13 @@
         invAbove.title=!supported?'Инверсия сверху недоступна для сравнений и тестовых фигур.':'Инверсия сверху: '+(on?'включена':'выключена')+'. '+(state.on?'В кадре 0 заполняет внутренние промежутки выбранных исходных строк.':'После расчёта каждой строки обычного Маятника заполняет внутренние промежутки конуса.')+' Пустая клетка получает инверсию бита прямо сверху: 0→1, 1→0. Если сверху пусто, заполнения нет. Уже записанные биты сохраняются; на полностью заполненном фоне пустот нет. Переключение возвращает кадр 0; работает с шагом 1 и 2.';invAbove.setAttribute('aria-label',invAbove.title);};
       invAbove.onclick=event=>{event.stopPropagation();const api=window.maySequenceField;api?.setInverseAbove(!api.get().inverseAbove);invAbove.gzSync();rail.refresh();};
       toolSync.push(invAbove.gzSync);addEventListener('may-compare-change',invAbove.gzSync);invAbove.gzSync();pop.append(section(invAbove,'fields'));
+      { const button=document.createElement('button');button.type='button';button.id='mayApexWalk';button.dataset.n='mayApexWalk';button.className='gz-hx';
+        const name=document.createElement('span');name.className='gz-nm';name.textContent='Ход XOR';button.append(name);
+        button.dataset.maySearchAliases='Проход вершин|Расширяющийся маятник|XOR вершин';
+        button.gzSync=()=>{const state=window.maySequenceField?.get(),on=!!state?.apexWalk;button.disabled=!state?.apexWalkSupported;button.classList.toggle('gz-on',on);button.setAttribute('aria-pressed',String(on));button.title='Ход XOR: −1, 0, +1, 0, −1, −2, −1, 0, +1, +2… Размах растёт при развороте. Вершина переключается по XOR с 1, ниже старое ⊕ левый ⊕ правый от обновлённой вершины. Щелчок перестраивает поле. Для обычного Маятника без своего источника и Перескока.';button.setAttribute('aria-label',button.title);};
+        button.onclick=e=>{e.stopPropagation();const api=window.maySequenceField;api?.setApexWalk(!api.get().apexWalk);button.gzSync();rail.refresh();};
+        toolSync.push(button.gzSync);addEventListener('may-compare-change',button.gzSync);button.gzSync();pop.append(section(button,'fields'));
+      }
       pair('mayCompareSources', 'Построение: конусы 5.7 или всё поле 5.8', [
         { id: 'mayCompareCones', label: 'Конусы', tip: 'Конусы 5.7: XOR применяется внутри каждого нового конуса; конечное поле N × (2N−1)', on: () => state().source === 'cone', click: () => choose('cone') },
         { id: 'mayCompareField', label: 'Поле', tip: 'Всё поле 5.8: XOR применяется ко всему существующему полю N × (2N−1), без замыкания краёв', on: () => state().source === 'field', click: () => choose('field') }

@@ -62,6 +62,7 @@
     if(value.v!==VERSION)throw Error('Ссылка сделана другой версией Маятника (формат '+value.v+')');
     if(!isPlainObject(value.state))throw Error('В ссылке нет настроек Маятника');
     const state=value.state,pit=Pit.normalize(value.state,true);
+    if(state.sequenceApexWalk!==undefined&&typeof state.sequenceApexWalk!=='boolean')throw Error('В ссылке некорректный Ход XOR');
     if(state.ochkiThrough!==undefined&&typeof state.ochkiThrough!=='boolean')throw Error('В ссылке некорректный режим Все сквозные');
     if(state.gifScaleStack!==undefined&&typeof state.gifScaleStack!=='boolean')throw Error('В ссылке некорректный режим масштабов под полем');
     const inversion={invertKind:state.invertKind===undefined?'bits':state.invertKind,inverted:state.inverted===undefined?false:state.inverted,invertAuto:state.invertAuto===undefined?false:state.invertAuto,invertFrame:state.invertFrame===undefined?null:state.invertFrame};
@@ -97,7 +98,7 @@
       if(!isPlainObject(value.display)||![scrollLeft,scrollTop].every(n=>Number.isFinite(n)&&n>=0))throw Error('В ссылке повреждено положение просмотра');
       display={scrollLeft,scrollTop};
     }
-    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,...inversion,...isolated,...pit,rows,steps},tools,colours,colourAuto,paint,...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
+    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,sequenceApexWalk:state.sequenceApexWalk===true,...inversion,...isolated,...pit,rows,steps},tools,colours,colourAuto,paint,...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
   }
   function pack(value){return JSON.stringify(normalizePayload(value));}
   function unpack(text){let data;try{data=JSON.parse(text);}catch(_){throw Error('Ссылка повреждена: данные не читаются');}return normalizePayload(data);}
