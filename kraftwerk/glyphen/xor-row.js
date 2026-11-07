@@ -7,7 +7,7 @@
  function slotX(geometry,slot){return slot*10+Math.floor(geometry.side/2);}
  function offsetAt(snapshot,id,slot,seconds){
   const g=snapshot.geometry,track=snapshot.tracks[id],margin=snapshot.margin;
-  const lo=margin,hi=g.width-1-margin,span=Math.max(0,hi-lo),base=slotX(g,slot);
+  const lo=margin,hi=g.width-1-margin,span=Math.max(0,hi-lo),base=snapshot.centres?.[slot]??slotX(g,slot);
   const velocity=track.auto?track.speed*track.direction:0;
   const raw=base+track.x+velocity*Math.max(0,seconds);
   if(!span)return {x:lo,integerX:Math.round(lo),offset:lo-base,direction:track.direction};

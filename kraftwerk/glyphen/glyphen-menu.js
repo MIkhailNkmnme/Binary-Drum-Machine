@@ -62,7 +62,8 @@
   const palette = colors.querySelector('.color-grid');
   for (const [title, ids] of [
    ['Поле и фигуры', ['colorFieldBg','colorBit','colorGhost','colorPivot']],
-   ['Цифры и линии', ['colorDigitOne','colorDigitZero','colorAxes']]
+   ['Цифры и линии', ['colorDigitOne','colorDigitZero','colorAxes']],
+   ['Контур и тень', ['colorShadowLight','colorShadowDark']]
   ]) {
    const group = document.createElement('fieldset'); group.className = 'menu-color-family';
    const legend = document.createElement('legend'); legend.textContent = title; group.append(legend);
@@ -109,6 +110,7 @@
    if (button.hasAttribute('data-edit')) label = 'Правка';
    if (button.dataset.fieldSize) label = button.dataset.fieldSize + '×' + button.dataset.fieldSize;
    if (button.dataset.exportScope) label = ({player:'Фрагмент плеера',current:'Текущий кадр',unique:'Все 256',all:'Все 6144',cross24:'Все 24 креста'})[button.dataset.exportScope];
+   if (button.dataset.kraftPalette) label = window.ZerkKraftwerk.palette(button.dataset.kraftPalette).name;
    if (/^rowAuto\d+$/.test(id)) label = 'Автодвижение';
    if (button.classList.contains('xs-reset')) label = 'Вернуть в 2D';
    if (button.classList.contains('xs-camera')) label = 'Сброс камеры';
@@ -130,7 +132,7 @@
    if (!button.title) button.title = label;
    const mini = button.hasAttribute('data-edit') || (button.closest('#rates') && full.length <= 3);
    const arrow = button.classList.contains('step') || ['fieldZoomOut','fieldZoomIn'].includes(id) || (button.closest('.row-track') && ['−','+'].includes(full));
-   const width = arrow ? 'arrow' : mini ? 'mini' : label.length > 14 ? 'wide' : 'normal';
+   const width = arrow ? 'arrow' : mini ? 'mini' : label.length > 10 ? 'wide' : 'normal';
    if (button.dataset.menuWidth !== width) button.dataset.menuWidth = width;
   }
   document.querySelectorAll('main button').forEach(readable);

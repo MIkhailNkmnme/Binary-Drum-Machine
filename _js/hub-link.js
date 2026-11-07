@@ -43,6 +43,7 @@
         return bitotekaLoading;
     }
     function bitotekaAccess(hub) {
+        if (window.zerkBitotekaHeader === false) return;
         // The existing library launcher is the Bitoteka on these pages.
         if (window.MayatnikTemplatePanel || document.querySelector('#mayatnikRail, #bTemplatePanel') || /\/mayatnik\/mayatnik-library\.html$/.test(location.pathname)) {
             loadBitoteka().catch(() => {}); return;

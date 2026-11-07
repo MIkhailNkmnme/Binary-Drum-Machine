@@ -1,30 +1,30 @@
 /* Readable module sizes from XOR-051; XOR-052 group surfaces and outlines follow below. */
-html body main{width:1280px;max-width:calc(100% - 16px);padding:8px 0 24px;font-size:16px;line-height:24px}
+html body main{width:1280px;max-width:calc(100% - 16px);padding:8px 0 24px;font-size:14px;line-height:20px}
 html body .layout,html body.row-layout .layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 html body .layout>figure,html body .field-scroll,html body.row-layout .layout>figure,html body.row-layout .field-scroll{width:100%;min-width:0;max-width:100%}
 html body .controls,html body.row-layout .controls{display:grid;width:100%;grid-template-columns:minmax(0,1fr);gap:4px}
 html body .controls>section{padding:0;border:1px solid var(--line2);width:100%;min-width:0}
-html body main .controls h2{margin:0;font-size:16px;line-height:32px}
+html body main .controls h2{margin:0;font-size:14px;line-height:32px}
 html body main button{--compact-w:128px!important;width:var(--compact-w)!important;min-width:var(--compact-w)!important;max-width:var(--compact-w)!important;flex:0 0 var(--compact-w)!important;height:32px!important;min-height:32px!important;max-height:32px!important;line-height:30px!important;padding:0 8px!important;background:var(--btn)!important;color:var(--ink)!important;border:1px solid var(--line)!important;box-shadow:none;text-shadow:none}
 html body main button:hover,html body main button:focus-visible{border-color:var(--mut)!important}
 html body main button[aria-pressed=true]{border-color:var(--red)!important;box-shadow:inset 0 0 0 1px var(--red)}
 html body main button:active{box-shadow:inset 0 0 0 2px var(--red)}
 html body main button[data-compact]{font-size:0!important}
-html body main button[data-compact]::after{font:16px/30px var(--font)!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+html body main button[data-compact]::after{font:14px/30px var(--font)!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 html body main button[data-menu-width][data-menu-width=wide]{--compact-w:256px!important}
 html body main button[data-menu-width][data-menu-width=mini]{--compact-w:64px!important}
 html body main button[data-menu-width][data-menu-width=arrow],html body main button.step{--compact-w:32px!important}
 html body main #thumbPlay{--compact-w:64px!important}
 html body main #fitFieldTop{--compact-w:128px!important}
 html body main button[data-menu-width][data-menu-width=wide]{max-width:100%!important;min-width:0!important}
-html body main .controls button.menu-heading{--compact-w:100%!important;display:flex;justify-content:space-between;text-align:left;font:16px/30px var(--font)!important;padding:0 8px!important}
-html body main button.menu-heading::after{content:'+';font:16px/30px var(--font);pointer-events:none}
+html body main .controls button.menu-heading{--compact-w:100%!important;display:flex;justify-content:space-between;text-align:left;font:14px/30px var(--font)!important;padding:0 8px!important}
+html body main button.menu-heading::after{content:'+';font:14px/30px var(--font);pointer-events:none}
 html body main button.menu-heading[aria-expanded=true]::after{content:'−'}
 .menu-body{padding:8px}.menu-body[hidden]{display:none!important}
-.menu-summary{font-size:16px;line-height:24px;margin:0 0 8px;color:var(--mut)}
+.menu-summary{font-size:14px;line-height:20px;margin:0 0 8px;color:var(--mut)}
 html body .group,html body .group.role,html body .search-actions,html body .playback-row{gap:4px;margin-top:4px;flex-wrap:wrap}
-html body main .bar{height:auto;min-height:32px;font-size:16px;line-height:24px;gap:4px;flex-wrap:wrap}
-html body main small,html body main .caption,html body main .meta,html body main output{font-size:16px;line-height:24px}
+html body main .bar{height:auto;min-height:32px;font-size:14px;line-height:20px;gap:4px;flex-wrap:wrap}
+html body main small,html body main .caption,html body main .meta,html body main output{font-size:14px;line-height:20px}
 html body .caption{height:auto;gap:4px;justify-content:flex-start;margin-bottom:8px}
 html body .caption #count{margin-left:auto}
 html body .layout-strip{padding:8px 0;margin-top:8px;border-bottom:1px solid var(--line2)}
@@ -32,47 +32,47 @@ html body .layout-strip .playback-row{margin-top:4px}
 html body .slider-row,html body .x-range,html body .frame-range,html body .x-thumb{height:32px;min-height:32px}
 html body .slider-row{width:100%;gap:4px}
 html body .x-range{width:auto;flex:1 1 0;min-width:0}
-html body .x-number{font-size:16px;line-height:32px}
+html body .x-number{font-size:14px;line-height:32px}
 html body .x-bracket{font-size:24px;line-height:32px}
 html body .frame-range .x-thumb{left:min(calc(50% + 64px),100%)!important}
 html body main .preview-row,html body main .edit-row{display:grid;width:256px;max-width:100%;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:8px auto 0}
 html body main .preview-row .tile{--compact-w:64px!important;width:64px!important;min-width:0!important;max-width:100%!important;height:64px!important;min-height:64px!important;max-height:64px!important;flex:none!important;padding:0!important;gap:0}
 html body main .preview-row .tile svg{width:40px;height:40px}
-html body main .preview-row .tile span{font-size:16px;line-height:20px;height:20px}
+html body main .preview-row .tile span{font-size:14px;line-height:20px;height:20px}
 html body main .edit-row button{--compact-w:64px!important;padding:0!important}
-html body .legend{font-size:16px;line-height:24px;gap:8px;margin-top:8px}
+html body .legend{font-size:14px;line-height:20px;gap:8px;margin-top:8px}
 html body .field-help{width:100%;max-width:100%;margin-top:12px}
-html body main .hint,html body main .sym-note,html body main .field-help p,html body main summary,html body main .xs-explain,html body main .xs-camera-note{font-size:16px;line-height:24px;white-space:normal;overflow-wrap:anywhere}
+html body main .hint,html body main .sym-note,html body main .field-help p,html body main summary,html body main .xs-explain,html body main .xs-camera-note{font-size:14px;line-height:20px;white-space:normal;overflow-wrap:anywhere}
 html body main details{margin-top:8px}
 html body main summary{min-height:32px;cursor:pointer;color:var(--ink)}
-html body main h3{font:16px/24px var(--font);margin:12px 0 4px}
-html body main input:not([type=range]):not([type=checkbox]):not([type=file]),html body main select{height:32px!important;min-height:32px!important;font-size:16px!important;line-height:30px;padding:0 4px}
+html body main h3{font:14px/20px var(--font);margin:12px 0 4px}
+html body main input:not([type=range]):not([type=checkbox]):not([type=file]),html body main select{height:32px!important;min-height:32px!important;font-size:14px!important;line-height:30px;padding:0 4px}
 html body main input[type=number]{width:64px!important;max-width:128px}
 html body main input[type=checkbox]{width:24px;height:24px;flex:none}
 html body .color-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-html body .color-grid label{font-size:16px;line-height:24px;gap:4px;flex-wrap:wrap}
+html body .color-grid label{font-size:14px;line-height:20px;gap:4px;flex-wrap:wrap}
 html body .color-grid input[type=color]{width:32px!important;min-width:32px;flex:0 0 32px;padding:0!important}
 html body .search-input-wrap,html body .search-input-wrap textarea{min-height:128px;width:100%;flex-basis:100%}
-html body .search-input-wrap textarea,html body .search-highlight{font-size:16px;line-height:24px;padding:4px}
-html body .search-highlight .line{font-size:16px;line-height:24px;min-height:24px}
+html body .search-input-wrap textarea,html body .search-highlight{font-size:14px;line-height:20px;padding:4px}
+html body .search-highlight .line{font-size:14px;line-height:20px;min-height:24px}
 html body .found-list{max-height:256px}
-html body main .found-chip{--compact-w:64px!important;font-size:16px!important}
+html body main .found-chip{--compact-w:64px!important;font-size:14px!important}
 html body .row-track{height:auto;gap:4px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line2)}
-html body .row-track .row-name{width:100%;font-size:16px}
+html body .row-track .row-name{width:100%;font-size:14px}
 html body main .row-track button{--compact-w:128px!important}
 html body main .row-track button[data-menu-width=arrow]{--compact-w:32px!important}
-html body main .row-track input{height:32px;font-size:16px}
+html body main .row-track input{height:32px;font-size:14px}
 html body #spaceMount{margin-top:24px}
-html body main .xor-space h2,html body main .xs-status,html body main .xs-symmetry-rays,html body main .xs-distance-label,html body main .xs-sequence [data-status]{font-size:16px;line-height:24px}
+html body main .xor-space h2,html body main .xs-status,html body main .xs-symmetry-rays,html body main .xs-distance-label,html body main .xs-sequence [data-status]{font-size:14px;line-height:20px}
 html body .xor-space .xs-controls{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 html body .xor-space .xs-actions,html body .xor-space .xs-symmetry,html body .xor-space .xs-shift,html body .xs-sequence-controls,html body .xs-export-range,html body .xs-export-actions{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
 html body .xor-space .xs-figure{padding:8px;border:1px solid var(--line2);gap:4px}
 html body .xor-space .xs-figure select{width:128px;max-width:100%;min-width:0}
-html body .xor-space .xs-figure label,html body .xs-export-range label,html body .xs-sequence-controls label,html body .xs-centres{font-size:16px;line-height:24px;min-height:32px}
+html body .xor-space .xs-figure label,html body .xs-export-range label,html body .xs-sequence-controls label,html body .xs-centres{font-size:14px;line-height:20px;min-height:32px}
 html body .xor-space .xs-main{width:100%;height:auto;aspect-ratio:2/1;min-height:256px}
 html body .xs-sequence-position{min-height:32px}
-html body #audioFile{height:auto;font-size:16px;line-height:24px}
-html body #audioFile::file-selector-button{width:128px;height:32px;font-size:16px;line-height:30px}
+html body #audioFile{height:auto;font-size:14px;line-height:20px}
+html body #audioFile::file-selector-button{width:128px;height:32px;font-size:14px;line-height:30px}
 html body #film select{max-width:100%;min-height:32px}
 html body .page-footer{height:auto;min-height:32px}
 @media(max-width:900px){html body .layout,html body.row-layout .layout{grid-template-columns:minmax(0,1fr);gap:16px}html body .controls,html body.row-layout .controls{grid-template-columns:minmax(0,1fr);width:100%}html body .xor-space .xs-controls{grid-template-columns:minmax(0,1fr)}}
@@ -131,3 +131,16 @@ html body main .menu-body{position:relative;padding-bottom:14px}
 html body main .menu-body::after{content:'';position:absolute;left:0;right:0;bottom:0;height:10px;pointer-events:none;border-bottom:2px solid var(--menu-accent);clip-path:polygon(0 0,8px 100%,calc(100% - 8px) 100%,100% 0,calc(100% - 2px) 0,calc(100% - 9px) calc(100% - 2px),9px calc(100% - 2px),2px 0);background:var(--menu-accent)}
 html body main textarea,html body main #audioFile::file-selector-button{background:var(--menu-btn)!important;color:var(--menu-text)!important;border-color:var(--menu-accent)!important}
 html body main #audioFile::file-selector-button:hover{background:var(--menu-btn)!important}
+
+/* XOR-053: explicit normal widths beat the older [data-compact] 32px rule. */
+html body{font-size:14px;line-height:20px}
+html body header h1{font-size:clamp(24px,5vw,36px)}
+html body .hub-link,html body .version,html body .page-footer{font-size:14px}
+html body main button[data-compact][data-menu-width=normal]{--compact-w:128px!important}
+html body main button[data-compact]::after{white-space:normal;overflow:visible;text-overflow:clip;font-size:14px!important;line-height:14px!important;overflow-wrap:anywhere}
+html body main .edit-row button[data-compact]{padding:0 3px!important}
+html body main .edit-row button[data-compact]::after{font-size:12px!important}
+html body main .kraft-palettes{display:flex;flex-wrap:wrap;gap:4px}
+html body main .kraft-palettes button{padding-left:26px!important}
+html body main .kraft-palettes button::after{max-width:100%;font-size:12px!important;line-height:14px!important}
+html body main .kraft-palettes button{background:linear-gradient(90deg,var(--palette-bg) 10px,var(--palette-bg) 17px,var(--palette-bit) 17px,var(--palette-bit) 24px,var(--menu-btn) 24px)!important}
