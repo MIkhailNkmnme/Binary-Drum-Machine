@@ -45,6 +45,13 @@
     if(s.edgeWrap&&!s.sequenceSourceOn&&!s.compareSource){const edge=Math.floor((s.rows-1)/stride(s))*stride(s);return [-edge,edge];}
     return (walk(s)?walkBounds(s,frames):s.pair&&s.mode==='pend'?[-frames,frames]:Core.span(s.mode,frames)).map(n=>n*stride(s));
   }
+  function apexSpan(s,count){
+    if(!walk(s))return null;
+    const seeded=!['empty','skip'].includes(s.sequenceApexStart);
+    if(count<1)return seeded?[0,0]:null;
+    if(count===1&&!seeded&&s.sequenceApexSides!=='both')return [-stride(s),-stride(s)];
+    return span(s,count);
+  }
   function geometry(s,vertices=s.steps,rows=s.rows){
     if(walk(s))vertices=Math.max(vertices,frames(s));
     if(s.edgeWrap&&!s.sequenceSourceOn&&!s.compareSource)return {W:2*rows-1,anchor:rows-1};
@@ -76,5 +83,5 @@
   function run(field,apices,depth,invert=false,lastAt,stamp,xorApex=false){for(const r of rows(field,apices,depth,invert,lastAt,stamp,xorApex)){/* shared full and manual pass */}return field;}
   function step(field,geo,s,index,lastAt,stamp=index+1){return run(field,offsets(s,index).map(n=>geo.anchor+n),s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,stamp,walk(s));}
   function initial(field,geo,s,lastAt){if(walk(s)&&!['empty','skip'].includes(s.sequenceApexStart)){const a=geo.anchor,old=field.val[a];field.val[a]=1;if(lastAt&&old!==1)lastAt[a]=0;run(field,[a],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);}else if(s.pair&&s.mode==='pend')run(field,[geo.anchor],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);return field;}
-  return {active,walk,walkOffset,rangeKey,frames,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
+  return {active,walk,walkOffset,rangeKey,frames,apexSpan,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
 });
