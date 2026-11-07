@@ -43,7 +43,7 @@
     for(const key of ['ochkiThrough','ochkiSkipSpaces','ochkiEveryFrame','ochkiRowReverseMask','gifScaleStack','zLimit','zOverview','fillWholeColour','rowStepOutline','ochkiHalf','joined180','autoAxes','triangleMapAxes','triangleMapMask','triangleMapMirror','crossMirror','crossLabels','viewUpsideDown','autoFillPalette','growOwnColour'])if(value.state[key]!=null&&typeof value.state[key]!=='boolean')throw Error('Некорректная настройка: '+key);
     for(const key of ['axesFillColour','autoFillColour','growFillColour','meetFillColour','axisFillColour','isolatedOneColour','isolatedZeroColour'])if(value.state[key]!=null&&!/^#[0-9a-f]{6}$/i.test(value.state[key]))throw Error('Некорректный цвет: '+key);
     if(value.state.gifScaleStackMethod==='nearest')value.state.gifScaleStackMethod='canvas';
-    if(value.state.gifScaleStackMethod!=null&&!['canvas','average'].includes(value.state.gifScaleStackMethod))throw Error('Некорректный способ уменьшения');
+    if(value.state.gifScaleStackMethod!=null&&!['viewport','canvas','average'].includes(value.state.gifScaleStackMethod))throw Error('Некорректный способ уменьшения');
     if(value.state.gifScaleStackHeight!=null&&!['original','cell','native','integer'].includes(value.state.gifScaleStackHeight))throw Error('Некорректная высота нижних построений');
     if(value.state.gifScaleStackMode!=null&&!['rows','powers','multiples'].includes(value.state.gifScaleStackMode))throw Error('Некорректный вариант уменьшения');
     if(value.state.gifScaleStackBase!=null&&(!Number.isInteger(value.state.gifScaleStackBase)||value.state.gifScaleStackBase<2||value.state.gifScaleStackBase>10000))throw Error('Некорректное число x');

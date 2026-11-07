@@ -18,11 +18,12 @@
   const controls=doc.createElement('div'),input=doc.createElement('input'),list=doc.createElement('div');
   controls.className='may-scale-stack__controls';controls.addEventListener('pointerdown',e=>e.stopPropagation());controls.addEventListener('pointerup',e=>e.stopPropagation());
   const mode=doc.createElement('select'),baseInput=doc.createElement('input');
-  const method=doc.createElement('select');method.setAttribute('aria-label','Способ уменьшения');for(const [value,text]of [['canvas','Как на холсте'],['average','Средний цвет']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;method.append(opt);}method.value=['canvas','average'].includes(o.method?.())?o.method():'canvas';
+  const method=doc.createElement('select');method.setAttribute('aria-label','Способ уменьшения');for(const [value,text]of [['viewport','Как верхнее'],['canvas','Как на холсте'],['average','Средний цвет']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;method.append(opt);}method.value=['viewport','canvas','average'].includes(o.method?.())?o.method():'canvas';
 
   for(const [value,text]of [['powers','Степени x'],['multiples','Кратно x'],['rows','По строкам']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;mode.append(opt);}
   mode.value=o.mode?.()||'rows';mode.setAttribute('aria-label','Вариант уменьшения');baseInput.type='number';baseInput.min='2';baseInput.max='10000';baseInput.step='1';baseInput.value=String(o.base?.()||2);baseInput.setAttribute('aria-label','Число x');baseInput.title='Число x';
-  const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value),method:method.value});}finally{exportButton.disabled=false;}};
+  let exporting=false;
+  const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exporting=true;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value),method:method.value});}finally{exporting=false;exportButton.disabled=method.value==='viewport';}};
   const heightMode=doc.createElement('select');heightMode.setAttribute('aria-label','Высота нижних построений');heightMode.title='Высота нижних построений';for(const [value,text]of [['original','Высота оригинала'],['cell','Высота ячейки'],['native','Истинный размер'],['integer','Целое ≥ оригинала']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;heightMode.append(opt);}heightMode.value=['original','cell','native','integer'].includes(o.heightMode?.())?o.heightMode():'original';
   const field=(control,caption)=>{
    const box=doc.createElement('div');box.className='gz-hx may-standard may-scale-stack__field';
@@ -46,8 +47,20 @@
    let smallest=h;for(const item of heightMode.value==='native'?[]:items){const rows=item.size.height,size=heightMode.value==='original'?h:rows*p*(heightMode.value==='integer'?Math.ceil(source.height/rows):1);smallest=Math.min(smallest,size);}
    return Math.min(512,8/(dpr*Math.max(.000001,smallest)));
   }
+  function viewportPlan(rows){
+   const Grid=win.MayatnikPixelGrid,dpr=win.devicePixelRatio||1;
+   const policy=layout.pixelPolicy||Grid?.policy({width:source.width,height:source.height,dpr,viewport:true,overview:true,minRows:8});
+   if(!Grid||!policy?.ok)throw Error(policy?.reason||'Недоступна сетка верхнего поля');
+   const density=Number(layout.sourceDensity)||1;
+   const cssScale=Grid.snap(rows/source.height*density/policy.dpr,policy);
+   const raster=Grid.raster(cssScale,policy);
+   if(!raster)throw Error('Не удалось получить масштаб верхнего поля');
+   const scale=raster.quality/density,extent=n=>Math.max(1,Math.ceil(n-16*Number.EPSILON*Math.max(1,Math.abs(n))));
+   return {key:'viewport:'+rows,requestedHeight:rows,width:extent(source.width*scale),height:extent(source.height*scale),scale,caption:Grid.format(cssScale,policy)};
+  }
   function geometry(){
    if(!source)return;zoom=Math.max(zoom,minDisplayZoom());
+   const viewport=method.value==='viewport';heightMode.disabled=viewport;for(const option of heightMode.options)option.disabled=viewport;if(viewport)heightMode.value='native';exportButton.disabled=viewport||exporting;exportButton.title=viewport?'Для «Как верхнее» доступен живой просмотр. Для переноса в Гиф-Масштаб выберите другой способ уменьшения.':'Перенести все построения в окно Гиф-Масштаб';
    const pixelScale=(Number(layout.pixelScale)||1/(win.devicePixelRatio||1))*zoom;
    const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
@@ -55,21 +68,23 @@
    controls.style.marginLeft=(width*(Number.isFinite(layout.axisFraction)?layout.axisFraction:.5))+'px';controls.style.transform='translateX(-50%)';
    for(const item of items){
     const trueSize=heightMode.value==='native'||heightMode.value==='integer',factor=heightMode.value==='integer'?Math.ceil(source.height/item.size.height):1;
-    const cellScale=heightMode.value==='native'?1/(win.devicePixelRatio||1):pixelScale;
-    const w=trueSize?item.size.width*cellScale*factor:width,h=trueSize||heightMode.value==='cell'?item.size.height*cellScale*factor:height,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*axis-w*smallAxis;
+    const cellScale=viewport?1/(win.devicePixelRatio||1):heightMode.value==='native'?1/(win.devicePixelRatio||1):pixelScale;
+    const w=viewport?item.size.width/(win.devicePixelRatio||1):trueSize?item.size.width*cellScale*factor:width,h=viewport?item.size.height/(win.devicePixelRatio||1):trueSize||heightMode.value==='cell'?item.size.height*cellScale*factor:height,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=viewport?source.width*axis*item.size.scale/item.size.width:method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*axis-w*smallAxis;
     item.element.style.width=w+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);
     const warning=doc.createElement('span');warning.className='may-scale-stack__warning';
-    const fractional=source.width%item.size.width!==0||source.height%item.size.height!==0;
-    warning.hidden=!fractional;warning.textContent=' · Нецелое число исходных ячеек';
-    warning.title='Исходных ячеек на одну нижнюю: по ширине '+source.width+'/'+item.size.width+', по высоте '+source.height+'/'+item.size.height;
+    const fractional=viewport?item.size.scale<1:source.width%item.size.width!==0||source.height%item.size.height!==0;
+    warning.hidden=!fractional;warning.textContent=viewport?' · Обзор: часть битов пропускается':' · Нецелое число исходных ячеек';
+    warning.title=viewport?'Тот же масштаб и выбор по центрам физических пикселей, что у верхнего поля. Высота округлена вверх; исходные биты не изменены.':'Исходных ячеек на одну нижнюю: по ширине '+source.width+'/'+item.size.width+', по высоте '+source.height+'/'+item.size.height;
     const dpr=win.devicePixelRatio||1,screenRows=Math.max(1,Math.ceil(h*dpr-1e-9)),screenColumns=Math.max(1,Math.ceil(w*dpr-1e-9)),screenInfo=screenRows!==item.size.height||screenColumns!==item.size.width?' · сейчас '+screenRows+' строк × '+screenColumns:'';
-    item.label.replaceChildren(doc.createTextNode(item.size.height+' строк · ширина '+item.size.width+' · часть ×'+fmt(source.height/item.size.height)+' · показ ×'+fmt(h/item.size.height*dpr)+screenInfo),warning);
+    item.label.replaceChildren(doc.createTextNode(item.size.height+' строк · ширина '+item.size.width+(viewport?' · масштаб '+item.size.caption+' · запрос '+item.size.requestedHeight+' строк':' · часть ×'+fmt(source.height/item.size.height))+' · показ ×'+fmt(h/item.size.height*dpr)+screenInfo),warning);
     item.headerHeight=Math.max(24,item.label.offsetHeight+8);item.element.style.paddingTop=item.headerHeight+'px';item.element.style.height=(h+item.headerHeight)+'px';
     if(!item.axis){item.axis=doc.createElement('div');item.axis.className='may-scale-stack__axis';item.axis.setAttribute('aria-hidden','true');item.element.append(item.axis);}
     Object.assign(item.axis.style,{display:layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',top:item.headerHeight+'px',height:h+'px'});
     if(!item.axisBand){item.axisBand=doc.createElement('div');item.axisBand.className='may-scale-stack__axis-band';item.axisBand.setAttribute('aria-hidden','true');item.element.append(item.axisBand);}
     const center=smallAxis*item.size.width-.5,col=win.MayatnikAxisColumn?.column(center,item.size.width)??null;Object.assign(item.axisBand.style,{display:layout.axisEnabled===false||col===null?'none':'',left:(col*w/item.size.width)+'px',top:item.headerHeight+'px',width:(w/item.size.width)+'px',height:h+'px'});
-    if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';}
+    if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';
+     item.canvas.style.translate='';if(viewport){const r=item.canvas.getBoundingClientRect(),d=win.devicePixelRatio||1,shift=(Math.round(r.left*d)/d-r.left)+'px '+(Math.round(r.top*d)/d-r.top)+'px';item.canvas.style.translate=shift;item.axis.style.translate=shift;item.axisBand.style.translate=shift;}else{item.axis.style.translate='';item.axisBand.style.translate='';}
+    }
    }
    overlays();
   }
@@ -87,9 +102,9 @@
    }
   }
   function rebuild(){
-   job=null;if(!source)return;const previous=new Map(items.map(item=>[item.size.height,item]));items=[];input.max=String(Math.max(1,source.height));
-   const sizes=levels(source.width,source.height,Number(input.value),mode.value,Number(baseInput.value));if(method.value!=='canvas')for(const size of sizes)size.width=Math.max(1,Math.round(source.width*size.height/source.height));
-   for(const size of sizes){let item=previous.get(size.height);if(item){previous.delete(size.height);item.size=size;if(item.canvas&&(item.canvas.width!==size.width||item.canvas.height!==size.height))drop(item);item.revision=-1;}else{const el=doc.createElement('div'),label=doc.createElement('span');el.className='may-scale-stack__level';label.className='may-scale-stack__label';el.append(label);item={element:el,label,size,canvas:null,revision:-1};}list.append(item.element);items.push(item);}
+   job=null;if(!source)return;const previous=new Map(items.map(item=>[item.size.key??item.size.height,item]));items=[];input.max=String(Math.max(1,source.height));
+   let sizes=levels(source.width,source.height,Number(input.value),mode.value,Number(baseInput.value));if(method.value==='viewport'){const seen=new Set();sizes=sizes.map(size=>viewportPlan(size.height)).filter(size=>{if(seen.has(size.scale))return false;seen.add(size.scale);return true;});}else if(method.value!=='canvas')for(const size of sizes)size.width=Math.max(1,Math.round(source.width*size.height/source.height));
+   for(const size of sizes){let item=previous.get(size.key??size.height);if(item){previous.delete(size.key??size.height);item.size=size;if(item.canvas&&(item.canvas.width!==size.width||item.canvas.height!==size.height))drop(item);item.revision=-1;}else{const el=doc.createElement('div'),label=doc.createElement('span');el.className='may-scale-stack__level';label.className='may-scale-stack__label';el.append(label);item={element:el,label,size,canvas:null,revision:-1};}list.append(item.element);items.push(item);}
    for(const item of previous.values()){drop(item);item.element.remove();}
    geometry();
   }
@@ -112,10 +127,14 @@
      if(bytes>LIMIT)throw Error('Для видимого масштаба недостаточно памяти');
      job={item,at:0,pixels:new Uint8ClampedArray(item.size.width*item.size.height*4)};
     }}
-    if(job){const {item,pixels}=job,{width,height}=item.size,ratio=height/source.height,end=method.value==='canvas'?Math.min(width*height,job.at+1048576):width*height;
+    if(job){const {item,pixels}=job,{width,height}=item.size,ratio=method.value==='viewport'?item.size.scale:height/source.height,end=method.value==='canvas'?Math.min(width*height,job.at+1048576):width*height;
      const output=new Uint32Array(pixels.buffer),input=new Uint32Array(source.pixels.buffer,source.pixels.byteOffset,source.width*source.height);
      if(method.value==='canvas')for(let i=job.at;i<end;i++){const x=i%width,y=Math.floor(i/width),sx=Math.floor((x+.5)/ratio),sy=Math.floor((y+.5)/ratio);if(sx<source.width&&sy<source.height)output[i]=input[sy*source.width+sx];}
-     if(method.value!=='canvas'){const reduce=o.reduce||win.MayatnikGifScale?.reduce;if(!reduce)throw Error('Модуль уменьшения не загружен');const reduced=reduce(source.pixels,source.width,source.height,height,method.value,source.bits);pixels.set(reduced.pixels);job.bits=reduced.bits;}
+     if(method.value==='viewport'){
+      const sample=win.MayatnikPixelExactHost?.sampleViewport;if(!sample)throw Error('Модуль верхнего поля не загружен');
+      const sampled=sample({width:source.width,height:source.height,data:source.pixels},width,height,{scale:ratio,x:0,y:0});pixels.set(sampled.data);
+     }
+     if(method.value!=='canvas'&&method.value!=='viewport'){const reduce=o.reduce||win.MayatnikGifScale?.reduce;if(!reduce)throw Error('Модуль уменьшения не загружен');const reduced=reduce(source.pixels,source.width,source.height,height,method.value,source.bits);pixels.set(reduced.pixels);job.bits=reduced.bits;}
      job.at=end;if(end<width*height){later();return;}
      if(!item.canvas){item.canvas=doc.createElement('canvas');item.canvas.className='may-scale-stack__canvas';item.element.append(item.canvas);}
      if(source.bits&&!job.bits){job.bits=new Int8Array(width*height).fill(-1);for(let q=0;q<job.bits.length;q++){const sx=Math.floor((q%width+.5)/ratio),sy=Math.floor((Math.floor(q/width)+.5)/ratio);if(sx<source.width&&sy<source.height)job.bits[q]=source.bits[sy*source.width+sx];}}item.bits=job.bits||null;const cv=item.canvas;cv.width=width;cv.height=height;const ctx=cv.getContext('2d'),image=ctx.createImageData(width,height);image.data.set(pixels);ctx.putImageData(image,0,0);item.revision=revision;job=null;geometry();o.onPaint?.({key:lastKey,levels:shown.map(i=>i.size)});
@@ -124,14 +143,14 @@
    }catch(e){fail(e);}
   }
   function requestFrame(s,meta={}){if(!enabled||destroyed)return false;pending={source:job?undefined:s,key:meta.key};later();return true;}
-  function refreshLayout(value={}){layout={...layout,...value};geometry();later();}
+  function refreshLayout(value={}){try{const before=JSON.stringify([layout.pixelPolicy,layout.sourceDensity]);layout={...layout,...value};if(source&&method.value==='viewport'&&before!==JSON.stringify([layout.pixelPolicy,layout.sourceDensity]))rebuild();else geometry();later();}catch(e){fail(e);}}
   function setZoom(value){zoom=Math.max(minDisplayZoom(),Math.min(512,Number(value)||1));geometry();later();return zoom;}
   function setEnabled(value){if(destroyed)return false;const next=!!value;if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);const selectedHeight=o.heightMode?.();if(['original','cell','native','integer'].includes(selectedHeight))heightMode.value=selectedHeight;requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
   function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));baseField.hidden=baseInput.hidden=mode.value==='rows';stepField.hidden=stepLabel.hidden=input.hidden=mode.value!=='rows';o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
   baseField.hidden=baseInput.hidden=mode.value==='rows';stepField.hidden=stepLabel.hidden=input.hidden=mode.value!=='rows';
   heightMode.addEventListener('change',()=>{o.onHeightMode?.(heightMode.value);geometry();later();});
-  method.addEventListener('change',()=>{o.onMethod?.(method.value);rebuild();later();});
+  method.addEventListener('change',()=>{if(method.value!=='viewport')heightMode.value=o.heightMode?.()||'original';o.onMethod?.(method.value);try{rebuild();later();}catch(e){fail(e);}});
   mode.addEventListener('change',sequenceChange);baseInput.addEventListener('change',sequenceChange);
   input.addEventListener('change',change);
   const scroll=()=>{overlays();later();};host.addEventListener('scroll',scroll,{passive:true});win.addEventListener('resize',scroll);
