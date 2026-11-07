@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.024</title>
+<title>Зеркалиус — Стенд — v0.025</title>
+<!-- v0.025 · СТЕНД-025: копии со сдвигом вниз-вправо по рисунку пользователя; один шаг — один уровень, без поворота и изменения размера источника. -->
 <!-- v0.024 · СТЕНД-024: отдельный Маятник вверх на родном ядре, боковые обрезки транслируются к оси и вверх; повторные выходы тем же переносом, швы XOR, ход без автоматического сброса. -->
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
      v0.010: одно закреплённое окно плеера, мини-картинки способов, ссылки к заголовкам.
@@ -139,7 +140,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.024 · 06.11.2026</span>
+  <span class="ver">v0.025 · 07.11.2026</span>
 </header>
 <main>
   <section class="card player-sticky" id="player">
@@ -173,12 +174,26 @@
         <button type="button" data-method="holes"><canvas id="thHoles" width="108" height="54"></canvas><span>Копии в впадинах</span></button>
       </div>
       <div class="thumb">
+        <button type="button" data-method="shift" title="Исходники остаются; копии сдвигаются вниз и вправо без поворота и уменьшения. Один шаг — один уровень."><canvas id="thShift" width="108" height="54"></canvas><span>Сдвиг копий</span></button>
+      </div>
+      <div class="thumb">
         <button type="button" data-method="nest"><canvas id="thNest" width="108" height="54"></canvas><span>Вложение битов</span></button>
       </div>
       <div class="thumb">
         <button type="button" data-method="old"><canvas id="thOld" width="108" height="54"></canvas><span>Старая запись</span></button>
       </div>
     </div>
+  </section>
+
+  <section class="card" id="shift-copies">
+    <h2>Копии со сдвигом <small>вниз и вправо · шаг — уровень</small></h2>
+    <p class="sub">Как на рисунке: треугольник над левым краем чёрной впадины остаётся на месте,
+      его точная копия сдвигается вниз и вправо. Вершина копии попадает в середину верхнего края впадины,
+      основание — на половину её высоты. Поворота и изменения размера нет.</p>
+    <p class="sub">Уровень 0 — исходное поле высотой 512 строк. Уровень 1 добавляет копию высотой 128 строк
+      в самую большую впадину. Каждый следующий уровень добавляет копии следующего, вдвое меньшего размера
+      во всех впадинах этого размера, включая впадины уже добавленных копий. Прежние уровни сохраняются.
+      Уровень 8 доходит до однобитных копий. Стрелки и бегунок выбирают уровень, Плей показывает уровни по очереди.</p>
   </section>
 
   <section class="card" id="growth">
@@ -384,7 +399,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.024 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.025 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script src="../mayatnik/mayatnik-core.js"></script>
@@ -839,10 +854,12 @@ b(2r+1,2c+1) = b(r, c)</pre>
       loop: { steps: 257, ms: 60, name: 'петля по пикселям', text: (s) => `фаза ${s}/256` },
       up: { steps: 65, ms: 300, name: 'Маятник вверх', text: (s) => `ход ${s}` },
       holes: { steps: 5, ms: 800, name: 'копии в впадинах', text: (s) => `уровень ${s}/4` },
+      shift: { steps: 9, ms: 1100, name: 'сдвиг копий', text: (s) => `уровень ${s}/8` },
       nest: { steps: 6, ms: 900, name: 'вложение битов', text: (s) => `уровень ${s}/5` },
       old: { steps: 72, ms: 90, name: 'старая запись с камерой', text: (s) => `кадр ${s + 1}/72` }
     };
-    const STEPS = { growth: 0, loop: 0, up: 0, holes: 0, nest: 0, old: 0 };
+    const STEPS = { growth: 0, loop: 0, up: 0, holes: 0, shift: 0, nest: 0, old: 0 };
+    const shiftFrames = new Map();
     let loopImage = null, loopStats = null;
     let upView = null, upStats = null, upInfo = '';
     const pHeight = $('pHeight'), pBalance = $('pBalance');
@@ -851,6 +868,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     // старая запись — высота поля в строках текущего кадра.
     function heightOf(m, s) {
       if (m === 'growth') return `поле ${32 << s} px`;
+      if (m === 'shift') return s ? `поле 512 строк · новые копии ${128 >> (s - 1)} строк` : 'поле 512 строк · без копий';
       if (m === 'loop') return 'без конечного края · выходная клетка 1 физ. px';
       if (m === 'up') return upView ? `мастер ${upView.H} строк · верх ${Math.max(upView.A, Math.ceil(s / upView.A) * upView.A)} строк · 1 бит = 1 физ. px` : 'мастер и верхняя зона · 1 бит = 1 физ. px';
       if (m === 'holes') return `копия ${32 >> s} строк`;
@@ -863,6 +881,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function countsOf(m, s) {
       if (m === 'loop') return loopStats;
       if (m === 'up') return upStats;
+      if (m === 'shift') return shiftFrame(s).stats;
       if (m === 'holes') return null;                       // цветное вложение: 0/1 нет
       if (m === 'growth') {
         const n = 32 << s, total = n * (n + 1) / 2, o = POW3[5 + s];
@@ -929,6 +948,41 @@ b(2r+1,2c+1) = b(r, c)</pre>
         pBalance.textContent = c ? `0: ${c.z} · 1: ${c.o}` + (method === 'up' ? ` · фон −1: ${c.bg}` : '') + (c.z === c.o ? ' · БАЛАНС' : '') : '0 и 1: — (цветное вложение)';
       }
     }
+    // У каждого исходного треугольника высотой n чёрная впадина начинается на n/2.
+    // Источник — её верхний левый сосед высотой q=n/4; перенос (+q,+q)
+    // ставит вершину копии в центр верхней грани впадины. Только целые координаты.
+    function shiftFrame(level) {
+      if (shiftFrames.has(level)) return shiftFrames.get(level);
+      const image = sctx.createImageData(PW, PH), pixels = new Uint32Array(image.data.buffer);
+      pixels.fill(BLACK);
+      let ones = 0, copies = 0;
+      function stamp(n, cx, top) {
+        for (let r = 0; r < n; r++) {
+          const source = r * GW + GC;
+          for (let dx = -r; dx <= r; dx += 2) {
+            if (!gfield[source + dx]) continue;
+            const at = (top + r) * PW + cx + dx;
+            if (pixels[at] !== GOLD) { pixels[at] = GOLD; ones++; }
+          }
+        }
+      }
+      function fill(n, cx, top, depth) {
+        if (depth >= level || n < 4) return;
+        const half = n / 2, q = n / 4;
+        stamp(q, cx, top + half); copies++;
+        fill(half, cx, top, depth + 1);
+        fill(half, cx - half, top + half, depth + 1);
+        fill(half, cx + half, top + half, depth + 1);
+        // Впадины новой копии на два масштаба мельче впадины её родителя.
+        fill(q, cx, top + half, depth + 2);
+      }
+      stamp(MAXN, GC, 0);
+      fill(MAXN, GC, 0, 0);
+      const frame = { image, copies, stats: { o: ones, z: MAXN * (MAXN + 1) / 2 - ones } };
+      shiftFrames.set(level, frame);
+      return frame;
+    }
+    function drawShift() { sctx.putImageData(shiftFrame(step).image, 0, 0); }
     function drawGrowth() {
       bufG.fill(BLACK);
       const n = 32 << step, w = 2 * n - 1, x0 = Math.floor((PW - w) / 2);
@@ -1075,6 +1129,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function naturalWidth() {
       if (method === 'loop') return PW - 1;
       if (method === 'growth') return 2 * (32 << step) - 1;
+      if (method === 'shift') return GW;
       if (method === 'nest') return (2 * N0 - 1) * 8;
       if (method === 'old') {
         const oc = Math.floor(step / 12), n = 32 << oc;
@@ -1146,20 +1201,26 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function render() {
       edgeW = naturalWidth();
       if (method === 'growth') drawGrowth();
+      else if (method === 'shift') drawShift();
       else if (method === 'holes') drawHoles();
       else if (method === 'nest') drawNest();
       else if (method === 'old') drawOld();
       paintPlayer();
       range.value = String(step);
       stepOut.textContent = METHODS[method].text(step);
-      info.textContent = method === 'up' ? upInfo : `${METHODS[method].name} · ${METHODS[method].text(step)}`;
+      const unit = method === 'shift' ? 'Уровень' : 'Шаг';
+      range.setAttribute('aria-label', unit);
+      prev.setAttribute('aria-label', unit + ' назад'); prev.title = unit + ' назад';
+      next.setAttribute('aria-label', unit + ' вперёд'); next.title = unit + ' вперёд';
+      info.textContent = method === 'up' ? upInfo : `${METHODS[method].name} · ${METHODS[method].text(step)}` +
+        (method === 'shift' ? ` · копий ${shiftFrame(step).copies} · без поворота и уменьшения` : '');
       updateStats();
     }
     function setAuto(on) {
       auto = on;
       play.setAttribute('aria-pressed', String(on));
       play.textContent = on ? '⏸ Авто' : '▶ Плей';
-      play.title = on ? 'Авто: шаги идут сами' : 'Плей: пустить шаги автоматически';
+      play.title = method === 'shift' ? (on ? 'Авто: уровни идут по очереди' : 'Плей: показывать уровни автоматически') : (on ? 'Авто: шаги идут сами' : 'Плей: пустить шаги автоматически');
       if (on) { acc = 0; last = performance.now(); }
     }
     function renderSafely() {
@@ -1170,9 +1231,9 @@ b(2r+1,2c+1) = b(r, c)</pre>
       }
     }
     function setStep(k) { step = method === 'up' ? Math.max(0, k) : Math.max(0, Math.min(METHODS[method].steps - 1, k)); STEPS[method] = step; renderSafely(); }
-    const SECTION_OF = { growth: 'growth', loop: 'pixel-loop', up: 'pendulum-up', holes: 'nesting', nest: 'zoom', old: 'growth' };
-    const METHOD_SECTIONS = ['growth', 'pixel-loop', 'pendulum-up', 'nesting', 'zoom'];
-    const METHOD_ANCHOR = { growth: 'growth', loop: 'pixel-loop', up: 'pendulum-up', holes: 'nesting', nest: 'zoom', old: 'old' };
+    const SECTION_OF = { growth: 'growth', loop: 'pixel-loop', up: 'pendulum-up', holes: 'nesting', shift: 'shift-copies', nest: 'zoom', old: 'growth' };
+    const METHOD_SECTIONS = ['growth', 'pixel-loop', 'pendulum-up', 'nesting', 'shift-copies', 'zoom'];
+    const METHOD_ANCHOR = { growth: 'growth', loop: 'pixel-loop', up: 'pendulum-up', holes: 'nesting', shift: 'shift-copies', nest: 'zoom', old: 'old' };
     // Сведения живут в описаниях, миниатюры содержат только картинку и название.
     for (const m of Object.keys(METHODS)) {
       const section = $(SECTION_OF[m]);
@@ -1269,7 +1330,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
     }
     document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.addEventListener('click', () => setMethod(b.dataset.method)));
     // Мини-картинки: рисуем сцену в показательном состоянии и уменьшаем в 108×54.
-    const THUMB_STEP = { growth: 4, loop: 128, up: 8, holes: 2, nest: 5, old: 47 };
+    const THUMB_STEP = { growth: 4, loop: 128, up: 8, holes: 2, shift: 3, nest: 5, old: 47 };
     for (const m of Object.keys(METHODS)) {
       method = m; step = THUMB_STEP[m];
       if (m === 'growth') drawGrowth(); else if (m === 'loop') loopStats = drawPixelLoop(sctx, PW, PH, step, imgG).stats;
@@ -1279,6 +1340,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
         sctx.fillStyle = '#04060a'; sctx.fillRect(0, 0, PW, PH); sctx.imageSmoothingEnabled = false;
         sctx.drawImage(preview, (PW - PH) / 2, 0, PH, PH);
       }
+      else if (m === 'shift') drawShift();
       else if (m === 'holes') drawHoles(); else if (m === 'nest') drawNest(); else drawOld();
       const tc = $('th' + m.charAt(0).toUpperCase() + m.slice(1));
       if (tc) { const t = tc.getContext('2d'); t.clearRect(0, 0, 108, 54); t.drawImage(scene, 0, 0, PW, PH, 0, 0, 108, 54); }
@@ -1353,9 +1415,14 @@ b(2r+1,2c+1) = b(r, c)</pre>
     cv.addEventListener('pointerup', endDrag);
     cv.addEventListener('pointercancel', endDrag);
     cv.addEventListener('pointerleave', () => { if (!edgeDrag && !panDrag) cv.style.cursor = 'default'; });
-    method = 'growth'; step = STEPS.growth;
+    const requestedMethod = new URLSearchParams(location.search).get('method');
+    method = requestedMethod && METHODS[requestedMethod] ? requestedMethod : 'growth';
+    if (method === 'shift') STEPS.shift = 1;
+    step = STEPS[method];
+    range.max = String(METHODS[method].steps - 1);
+    document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.method === method)));
     moveSection(method);
-    setAuto(true);
+    setAuto(method !== 'shift');
     render();
     function loop(now) {
       const dt = now - last; last = now;
