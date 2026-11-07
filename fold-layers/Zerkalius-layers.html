@@ -5,10 +5,11 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.661</title>
+<title>Zerkalius Layers — v1.662</title>
+<!-- v1.662: масштабирование колесом удалено по просьбе пользователя; колесо прокручивает поле. -->
 <!-- v1.661: направление колеса исправлено — от себя увеличивает, к себе уменьшает. -->
-<link rel="stylesheet" href="../_js/grozd.css?v=1660">
-<link rel="stylesheet" href="fold-ink.css?v=1660">
+<link rel="stylesheet" href="../_js/grozd.css?v=1662">
+<link rel="stylesheet" href="fold-ink.css?v=1662">
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -5377,7 +5378,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.661</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.662</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -6203,18 +6204,17 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v1.660: общая начальная последовательность (из _pzl.txt) — первый запуск и «★ По умолчанию» -->
-<script src="fold-1-core.js?v=1660"></script>
-<script src="fold-2-render.js?v=1660"></script>
-<script src="fold-3-ops.js?v=1660"></script>
-<script src="fold-4-tools.js?v=1660"></script>
-<script src="fold-5-ui.js?v=1660"></script>
-<script src="horrohorius-128.js?v=1660"></script>
-<script src="fold-6-ink.js?v=1660"></script>
-<script src="fold-anim-core.js?v=1660"></script>
-<script src="fold-anim-ui.js?v=1660"></script>
-<script src="fold-wheel.js?v=1661"></script>
+<script src="fold-1-core.js?v=1662"></script>
+<script src="fold-2-render.js?v=1662"></script>
+<script src="fold-3-ops.js?v=1662"></script>
+<script src="fold-4-tools.js?v=1662"></script>
+<script src="fold-5-ui.js?v=1662"></script>
+<script src="horrohorius-128.js?v=1662"></script>
+<script src="fold-6-ink.js?v=1662"></script>
+<script src="fold-anim-core.js?v=1662"></script>
+<script src="fold-anim-ui.js?v=1662"></script>
 <script src="../_js/retriangle.js?v=1"></script>
-<script src="fold-retriangle.js?v=1660"></script>
+<script src="fold-retriangle.js?v=1662"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
