@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зеркалиус — Стенд — v0.025</title>
+<title>Зеркалиус — Стенд — v0.026</title>
+<!-- v0.026 · СТЕНД-026: редактируемая высота поля и индикатор точности отображения битовой сетки. Проверки пользователем. -->
 <!-- v0.025 · СТЕНД-025: копии со сдвигом вниз-вправо по рисунку пользователя; один шаг — один уровень, без поворота и изменения размера источника. -->
 <!-- v0.024 · СТЕНД-024: отдельный Маятник вверх на родном ядре, боковые обрезки транслируются к оси и вверх; повторные выходы тем же переносом, швы XOR, ход без автоматического сброса. -->
 <!-- Стенд вариантов (v0.011, 2026-11-06): все предложения по росту и вложению треугольника.
@@ -117,6 +118,10 @@
   .method-meta[hidden]{display:none}
   .p-height{font:600 16px ui-monospace,Consolas,monospace;color:var(--gold)}
   .p-balance{font:600 13px ui-monospace,Consolas,monospace;color:var(--muted)}
+  .p-height input{width:84px;height:24px;box-sizing:border-box;background:#1b2430;color:var(--gold);border:1px solid var(--line);font:inherit;padding:0 4px}
+  .p-height input:focus{outline:1px solid var(--gold)}
+  .p-accuracy{font:600 12px ui-monospace,Consolas,monospace;color:#e7aa79}
+  .p-accuracy[data-exact="true"]{color:#9bd7af}
   .p-balance.bal{color:var(--gold)}
   .p-edges{font:600 12px ui-monospace,Consolas,monospace;color:var(--muted)}
   figure{margin:14px 0 0}
@@ -140,7 +145,7 @@
 <header class="top">
   <a class="back" href="../index.html">← Хаб</a>
   <h1>Стенд</h1>
-  <span class="ver">v0.025 · 07.11.2026</span>
+  <span class="ver">v0.026 · 07.11.2026</span>
 </header>
 <main>
   <section class="card player-sticky" id="player">
@@ -156,7 +161,8 @@
       <input id="pRange" type="range" min="0" max="4" step="1" value="0" aria-label="Шаг" style="flex:1;min-width:200px">
       <output id="pStep">1/5</output>
     </div>
-    <div class="p-height" id="pHeight">высота: поле 32 px</div>
+    <div class="p-height" id="pHeight"><label id="pHeightEdit">высота: поле <input id="pFieldHeight" type="number" min="1" max="2048" step="1" value="32" aria-label="Высота поля в строках" title="Высота поля от 1 до 2048 строк. Enter или выход из поля применяет значение."> строк</label><span id="pHeightText" hidden></span></div>
+    <div class="p-accuracy" id="pAccuracy" role="status" aria-live="polite"></div>
     <div class="p-balance" id="pBalance">0: … · 1: …</div>
     <div class="p-edges" id="pEdges">края: …</div>
     <div class="info" id="pInfo"></div>
@@ -190,10 +196,14 @@
     <p class="sub">Как на рисунке: треугольник над левым краем чёрной впадины остаётся на месте,
       его точная копия сдвигается вниз и вправо. Вершина копии попадает в середину верхнего края впадины,
       основание — на половину её высоты. Поворота и изменения размера нет.</p>
-    <p class="sub">Уровень 0 — исходное поле высотой 512 строк. Уровень 1 добавляет копию высотой 128 строк
+    <p class="sub">Высота исходного поля меняется числом под бегунком (1–2048 строк) отдельно для роста и сдвига копий.
+      Значение сохраняется. В росте стрелки и Плей возвращают прежнюю последовательность высот 32→512.
+      При высоте между степенями двойки поле обрезается по выбранной строке, биты не растягиваются.</p>
+    <p class="sub">По умолчанию уровень 0 — исходное поле высотой 512 строк. Уровень 1 добавляет копию высотой 128 строк
       в самую большую впадину. Каждый следующий уровень добавляет копии следующего, вдвое меньшего размера
       во всех впадинах этого размера, включая впадины уже добавленных копий. Прежние уровни сохраняются.
-      Уровень 8 доходит до однобитных копий. Стрелки и бегунок выбирают уровень, Плей показывает уровни по очереди.</p>
+      При высоте 512 уровень 8 доходит до однобитных копий; при другой высоте число уровней пересчитывается.
+      Стрелки и бегунок выбирают уровень, Плей показывает уровни по очереди.</p>
   </section>
 
   <section class="card" id="growth">
@@ -399,7 +409,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
   <a href="../index.html">← Хаб</a>
   <a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
   <a href="../issledovanie/Zerkalius-issledovanie.html">Исследование</a>
-  <span class="tag">Стенд v0.025 · проверки оставлены пользователю</span>
+  <span class="tag">Стенд v0.026 · проверки оставлены пользователю</span>
 </footer>
 <!-- === МАРКЕР: СКРИПТЫ НАЧАЛО === -->
 <script src="../mayatnik/mayatnik-core.js"></script>
@@ -808,22 +818,31 @@ b(2r+1,2c+1) = b(r, c)</pre>
   (() => {
     const cv = $('cvPlayer');
     if (!cv) return;
-    const PW = 1024, PH = 512;
+    let PW = 1024, PH = 512;
     cv.width = PW; cv.height = PH;
     const pctx = cv.getContext('2d');
     const scene = document.createElement('canvas');
     scene.width = PW; scene.height = PH;
     const sctx = scene.getContext('2d');
-    const imgG = sctx.createImageData(PW, PH);
-    const bufG = new Uint32Array(imgG.data.buffer);
+    let imgG = sctx.createImageData(PW, PH);
+    let bufG = new Uint32Array(imgG.data.buffer);
     const GOLD = (255 << 24 | 92 << 16 | 196 << 8 | 255) >>> 0;
     const BLACK = (255 << 24 | 10 << 16 | 6 << 8 | 4) >>> 0;
-    const MAXN = 512, GW = 2 * MAXN - 1, GC = (GW - 1) >> 1;
-    const gfield = new Uint8Array(MAXN * GW);
-    gfield[GC] = 1;
-    for (let r = 1; r < MAXN; r++) {
-      const base = r * GW, up = base - GW;
-      for (let c = 0; c < GW; c++) gfield[base + c] = (c > 0 ? gfield[up + c - 1] : 0) ^ (c + 1 < GW ? gfield[up + c + 1] : 0);
+    const fieldHeights = { growth: null, shift: 512 };
+    try {
+      const saved = JSON.parse(localStorage.getItem('stend-field-height-v1') || '{}');
+      for (const m of ['growth', 'shift']) if (Number.isInteger(saved[m]) && saved[m] >= 1 && saved[m] <= 2048) fieldHeights[m] = saved[m];
+    } catch (_) {}
+    function growthHeight(s) { return fieldHeights.growth ?? (32 << s); }
+    function shiftLevels() { return Math.max(0, Math.ceil(Math.log2(fieldHeights.shift)) - 1); }
+    function nativeBit(r, dx) { const k = (r + dx) / 2; return (k & r) === k; }
+    function sizeScene() {
+      const height = method === 'shift' ? fieldHeights.shift : method === 'growth' && fieldHeights.growth !== null ? growthHeight(step) : 512;
+      if (PH === height) return;
+      PH = height; PW = 2 * height;
+      scene.width = PW; scene.height = PH;
+      imgG = sctx.createImageData(PW, PH); bufG = new Uint32Array(imgG.data.buffer);
+      viewScale = 1; viewX = 0; viewY = 0;
     }
     const N0 = 32, NW = 2 * N0 - 1, NC = (NW - 1) >> 1;
     const nfield = new Uint8Array(N0 * NW);
@@ -854,7 +873,7 @@ b(2r+1,2c+1) = b(r, c)</pre>
       loop: { steps: 257, ms: 60, name: 'петля по пикселям', text: (s) => `фаза ${s}/256` },
       up: { steps: 65, ms: 300, name: 'Маятник вверх', text: (s) => `ход ${s}` },
       holes: { steps: 5, ms: 800, name: 'копии в впадинах', text: (s) => `уровень ${s}/4` },
-      shift: { steps: 9, ms: 1100, name: 'сдвиг копий', text: (s) => `уровень ${s}/8` },
+      shift: { steps: shiftLevels() + 1, ms: 1100, name: 'сдвиг копий', text: (s) => `уровень ${s}/${shiftLevels()}` },
       nest: { steps: 6, ms: 900, name: 'вложение битов', text: (s) => `уровень ${s}/5` },
       old: { steps: 72, ms: 90, name: 'старая запись с камерой', text: (s) => `кадр ${s + 1}/72` }
     };
@@ -862,13 +881,13 @@ b(2r+1,2c+1) = b(r, c)</pre>
     const shiftFrames = new Map();
     let loopImage = null, loopStats = null;
     let upView = null, upStats = null, upInfo = '';
-    const pHeight = $('pHeight'), pBalance = $('pBalance');
+    const pHeight = $('pHeight'), pBalance = $('pBalance'), heightInput = $('pFieldHeight');
     let method = 'growth', step = 0, auto = true, last = performance.now(), acc = 0;
     // Текущая высота у каждого способа: рост — поле в px; вложение — высота вставленной копии в строках;
     // старая запись — высота поля в строках текущего кадра.
     function heightOf(m, s) {
-      if (m === 'growth') return `поле ${32 << s} px`;
-      if (m === 'shift') return s ? `поле 512 строк · новые копии ${128 >> (s - 1)} строк` : 'поле 512 строк · без копий';
+      if (m === 'growth') return `поле ${growthHeight(s)} строк`;
+      if (m === 'shift') return `поле ${fieldHeights.shift} строк · уровень ${s}`;
       if (m === 'loop') return 'без конечного края · выходная клетка 1 физ. px';
       if (m === 'up') return upView ? `мастер ${upView.H} строк · верх ${Math.max(upView.A, Math.ceil(s / upView.A) * upView.A)} строк · 1 бит = 1 физ. px` : 'мастер и верхняя зона · 1 бит = 1 физ. px';
       if (m === 'holes') return `копия ${32 >> s} строк`;
@@ -884,7 +903,9 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (m === 'shift') return shiftFrame(s).stats;
       if (m === 'holes') return null;                       // цветное вложение: 0/1 нет
       if (m === 'growth') {
-        const n = 32 << s, total = n * (n + 1) / 2, o = POW3[5 + s];
+        const n = growthHeight(s), total = n * (n + 1) / 2;
+        let o = 0;
+        for (let r = 0; r < n; r++) { let bits = 0; for (let v = r; v; v &= v - 1) bits++; o += 2 ** bits; }
         return { o, z: total - o };
       }
       if (m === 'old') {
@@ -941,7 +962,12 @@ b(2r+1,2c+1) = b(r, c)</pre>
         const m = el.dataset.b, c = countsOf(m, STEPS[m]);
         el.textContent = c ? `0 ${c.z} · 1 ${c.o}` + (m === 'up' ? ` · фон ${c.bg}` : '') : '0/1: —';
       });
-      if (pHeight) pHeight.textContent = 'высота: ' + heightOf(method, step);
+      if (pHeight) {
+        const editable = method === 'growth' || method === 'shift';
+        $('pHeightEdit').hidden = !editable; $('pHeightText').hidden = editable;
+        if (editable && document.activeElement !== heightInput) heightInput.value = String(method === 'growth' ? growthHeight(step) : fieldHeights.shift);
+        if (!editable) $('pHeightText').textContent = 'высота: ' + heightOf(method, step);
+      }
       if (pBalance) {
         const c = countsOf(method, step);
         pBalance.classList.toggle('bal', !!(c && c.z === c.o));
@@ -952,43 +978,45 @@ b(2r+1,2c+1) = b(r, c)</pre>
     // Источник — её верхний левый сосед высотой q=n/4; перенос (+q,+q)
     // ставит вершину копии в центр верхней грани впадины. Только целые координаты.
     function shiftFrame(level) {
-      if (shiftFrames.has(level)) return shiftFrames.get(level);
-      const image = sctx.createImageData(PW, PH), pixels = new Uint32Array(image.data.buffer);
+      const height = fieldHeights.shift, width = 2 * height, centre = height - 1;
+      const key = height + ':' + level;
+      if (shiftFrames.has(key)) return shiftFrames.get(key);
+      const image = sctx.createImageData(width, height), pixels = new Uint32Array(image.data.buffer);
       pixels.fill(BLACK);
       let ones = 0, copies = 0;
       function stamp(n, cx, top) {
-        for (let r = 0; r < n; r++) {
-          const source = r * GW + GC;
+        for (let r = 0; r < n && top + r < height; r++) {
           for (let dx = -r; dx <= r; dx += 2) {
-            if (!gfield[source + dx]) continue;
-            const at = (top + r) * PW + cx + dx;
+            if (!nativeBit(r, dx) || cx + dx < 0 || cx + dx >= width) continue;
+            const at = (top + r) * width + cx + dx;
             if (pixels[at] !== GOLD) { pixels[at] = GOLD; ones++; }
           }
         }
       }
       function fill(n, cx, top, depth) {
-        if (depth >= level || n < 4) return;
+        if (depth >= level || n < 4 || top >= height || cx + n < 0 || cx - n >= width) return;
         const half = n / 2, q = n / 4;
-        stamp(q, cx, top + half); copies++;
+        if (top + half < height) { stamp(q, cx, top + half); copies++; }
         fill(half, cx, top, depth + 1);
         fill(half, cx - half, top + half, depth + 1);
         fill(half, cx + half, top + half, depth + 1);
         // Впадины новой копии на два масштаба мельче впадины её родителя.
         fill(q, cx, top + half, depth + 2);
       }
-      stamp(MAXN, GC, 0);
-      fill(MAXN, GC, 0, 0);
-      const frame = { image, copies, stats: { o: ones, z: MAXN * (MAXN + 1) / 2 - ones } };
-      shiftFrames.set(level, frame);
+      stamp(height, centre, 0);
+      fill(2 ** Math.ceil(Math.log2(height)), centre, 0, 0);
+      const frame = { image, copies, stats: { o: ones, z: height * (height + 1) / 2 - ones } };
+      if (shiftFrames.size >= 3) shiftFrames.delete(shiftFrames.keys().next().value);
+      shiftFrames.set(key, frame);
       return frame;
     }
     function drawShift() { sctx.putImageData(shiftFrame(step).image, 0, 0); }
     function drawGrowth() {
       bufG.fill(BLACK);
-      const n = 32 << step, w = 2 * n - 1, x0 = Math.floor((PW - w) / 2);
+      const n = growthHeight(step), w = 2 * n - 1, x0 = Math.floor((PW - w) / 2);
       for (let r = 0; r < n; r++) {
-        const base = r * GW + (GC - (n - 1)), off = r * PW + x0;
-        for (let c = 0; c < w; c++) if (gfield[base + c]) bufG[off + c] = GOLD;
+        const off = r * PW + x0;
+        for (let dx = -r; dx <= r; dx += 2) if (nativeBit(r, dx)) bufG[off + n - 1 + dx] = GOLD;
       }
       sctx.putImageData(imgG, 0, 0);
     }
@@ -1128,8 +1156,8 @@ b(2r+1,2c+1) = b(r, c)</pre>
     function toSceneY(sy) { return (sy - viewY) / viewScale; }
     function naturalWidth() {
       if (method === 'loop') return PW - 1;
-      if (method === 'growth') return 2 * (32 << step) - 1;
-      if (method === 'shift') return GW;
+      if (method === 'growth') return 2 * growthHeight(step) - 1;
+      if (method === 'shift') return 2 * fieldHeights.shift - 1;
       if (method === 'nest') return (2 * N0 - 1) * 8;
       if (method === 'old') {
         const oc = Math.floor(step / 12), n = 32 << oc;
@@ -1180,9 +1208,50 @@ b(2r+1,2c+1) = b(r, c)</pre>
       const cands = snapWidths().filter((c) => c <= PW).map((c) => Math.round(c));
       edgesOut.textContent = `края: ${Math.round(edgeW)} px · примагничивание: ${cands.join(' / ')} px · зум ×${viewScale.toFixed(2)} · колесо — зум, перетаскивание — сдвиг`;
     }
+    function updateBitAccuracy() {
+      const out = $('pAccuracy');
+      if (!out) return;
+      function show(exact, text) { out.dataset.exact = String(exact); out.textContent = text; }
+      if (method === 'holes') { show(false, 'Точность битов: неприменима — геометрическая цветная картинка'); return; }
+      const rect = cv.getBoundingClientRect(), css = getComputedStyle(cv);
+      const left = parseFloat(css.borderLeftWidth) + parseFloat(css.paddingLeft);
+      const top = parseFloat(css.borderTopWidth) + parseFloat(css.paddingTop);
+      const width = rect.width - left - parseFloat(css.borderRightWidth) - parseFloat(css.paddingRight);
+      const height = rect.height - top - parseFloat(css.borderBottomWidth) - parseFloat(css.paddingBottom);
+      const viewport = window.visualViewport, density = (devicePixelRatio || 1) * (viewport?.scale || 1);
+      const sx = width / cv.width * density, sy = height / cv.height * density;
+      const physical = method === 'loop' || method === 'up';
+      const scale = physical ? 1 : viewScale, panX = physical ? 0 : viewX, panY = physical ? 0 : viewY;
+      let bit = method === 'nest' ? 8 : 1, offsetX = 0, offsetY = 0;
+      if (method === 'nest') { offsetX = Math.floor((PW - NW * 8) / 2); offsetY = Math.floor((PH - N0 * 8) / 2); }
+      const nearInteger = (v) => Math.abs(v - Math.round(v)) < 0.02;
+      if (method === 'old') {
+        const n = 32 << Math.floor(step / 12);
+        bit = Math.min(800 / (2 * n - 1), 400 / n) * (2 - (step % 12) / 12);
+        const sourceX = 400 - (2 * n - 1) * bit / 2;
+        if (!nearInteger(bit) || !nearInteger(sourceX)) { show(false, 'Неточно: запись камеры уже содержит неравномерную пиксельную сетку битов'); return; }
+        offsetX = Math.floor((PW - 800) / 2) + sourceX; offsetY = Math.floor((PH - 400) / 2);
+      }
+      const pitchX = bit * scale * sx, pitchY = bit * scale * sy;
+      const originX = ((rect.left + left - (viewport?.offsetLeft || 0)) * density) + (panX + offsetX * scale) * sx;
+      const originY = ((rect.top + top - (viewport?.offsetTop || 0)) * density) + (panY + offsetY * scale) * sy;
+      const size = `${pitchX.toFixed(3)} × ${pitchY.toFixed(3)} физ. px/бит`;
+      const rasterInteger = (v) => Math.abs(v - Math.round(v)) < 1e-7;
+      const internal = rasterInteger(bit * scale) && rasterInteger(panX + offsetX * scale) && rasterInteger(panY + offsetY * scale);
+      // Проверяем накопленную ошибку по всей ширине/высоте сетки, а не только округление одной клетки.
+      const uniform = pitchX >= 0.99999 && pitchY >= 0.99999 &&
+        Math.abs(pitchX - Math.round(pitchX)) * cv.width / bit < 0.02 &&
+        Math.abs(pitchY - Math.round(pitchY)) * cv.height / bit < 0.02;
+      const aligned = nearInteger(originX) && nearInteger(originY);
+      const exact = internal && uniform && aligned;
+      const reason = pitchX < 0.99999 || pitchY < 0.99999 ? 'бит меньше физического пикселя' :
+        !internal || !uniform ? 'дробный масштаб, размеры битов неравномерны' : 'сетка смещена относительно физических пикселей';
+      show(exact, exact ? `Точно: ${Math.round(pitchX)} × ${Math.round(pitchY)} физ. px/бит · сетка совмещена` : `Неточно: ${size} · ${reason}`);
+      out.title = method === 'loop' ? 'Оценка относится к выходным битам петли после дискретной выборки; исходные пропущенные биты не восстанавливаются.' : 'Оценка по сетке Canvas и физическим пикселям экрана; учитываются масштаб, сдвиг, плотность экрана и положение полотна.';
+    }
     function paintPlayer() {
-      if (method === 'loop') { paintPixelLoop(); return; }
-      if (method === 'up') { paintPendulumUp(); return; }
+      if (method === 'loop') { paintPixelLoop(); updateBitAccuracy(); return; }
+      if (method === 'up') { paintPendulumUp(); updateBitAccuracy(); return; }
       if (cv.classList.contains('pixel-loop')) {
         cv.classList.remove('pixel-loop'); cv.style.width = '100%'; cv.style.height = ''; cv.style.aspectRatio = '2/1';
       }
@@ -1197,8 +1266,10 @@ b(2r+1,2c+1) = b(r, c)</pre>
       pctx.restore();
       drawEdges();
       updateEdgesText();
+      updateBitAccuracy();
     }
     function render() {
+      sizeScene();
       edgeW = naturalWidth();
       if (method === 'growth') drawGrowth();
       else if (method === 'shift') drawShift();
@@ -1230,7 +1301,29 @@ b(2r+1,2c+1) = b(r, c)</pre>
         setAuto(false); info.textContent = 'Маятник вверх остановлен: ' + error.message + '. Ход ' + step + ' не сброшен; можно вернуться назад или выбрать другой вариант.';
       }
     }
-    function setStep(k) { step = method === 'up' ? Math.max(0, k) : Math.max(0, Math.min(METHODS[method].steps - 1, k)); STEPS[method] = step; renderSafely(); }
+    function setStep(k) {
+      if (method === 'growth') {
+        fieldHeights.growth = null;
+        try { localStorage.setItem('stend-field-height-v1', JSON.stringify(fieldHeights)); } catch (_) {}
+      }
+      step = method === 'up' ? Math.max(0, k) : Math.max(0, Math.min(METHODS[method].steps - 1, k)); STEPS[method] = step; renderSafely();
+    }
+    function applyFieldHeight() {
+      if (method !== 'growth' && method !== 'shift') return;
+      const raw = Number(heightInput.value);
+      if (!Number.isFinite(raw) || heightInput.value.trim() === '') { heightInput.value = String(method === 'growth' ? growthHeight(step) : fieldHeights.shift); return; }
+      const height = Math.max(1, Math.min(2048, Math.round(raw)));
+      fieldHeights[method] = height;
+      try { localStorage.setItem('stend-field-height-v1', JSON.stringify(fieldHeights)); } catch (_) {}
+      heightInput.value = String(height);
+      shiftFrames.clear();
+      if (method === 'shift') { METHODS.shift.steps = shiftLevels() + 1; step = Math.min(step, shiftLevels()); STEPS.shift = step; range.max = String(shiftLevels()); }
+      viewScale = 1; viewX = 0; viewY = 0;
+      setAuto(false); renderSafely();
+    }
+    heightInput.addEventListener('change', applyFieldHeight);
+    heightInput.addEventListener('focus', () => setAuto(false));
+    heightInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyFieldHeight(); heightInput.blur(); } });
     const SECTION_OF = { growth: 'growth', loop: 'pixel-loop', up: 'pendulum-up', holes: 'nesting', shift: 'shift-copies', nest: 'zoom', old: 'growth' };
     const METHOD_SECTIONS = ['growth', 'pixel-loop', 'pendulum-up', 'nesting', 'shift-copies', 'zoom'];
     const METHOD_ANCHOR = { growth: 'growth', loop: 'pixel-loop', up: 'pendulum-up', holes: 'nesting', shift: 'shift-copies', nest: 'zoom', old: 'old' };
@@ -1269,6 +1362,10 @@ b(2r+1,2c+1) = b(r, c)</pre>
       if (!joinFrame) joinFrame = requestAnimationFrame(() => { joinFrame = 0; joinPreview(); });
     }
     addEventListener('resize', scheduleJoin);
+    addEventListener('resize', updateBitAccuracy);
+    window.visualViewport?.addEventListener('resize', updateBitAccuracy);
+    window.visualViewport?.addEventListener('scroll', updateBitAccuracy);
+    addEventListener('scroll', updateBitAccuracy, { passive: true });
     function resizePixelLoop() { if (method === 'loop') { paintPlayer(); updateStats(); } else if (method === 'up') renderSafely(); }
     addEventListener('resize', resizePixelLoop);
     window.visualViewport?.addEventListener('resize', resizePixelLoop);
@@ -1333,6 +1430,8 @@ b(2r+1,2c+1) = b(r, c)</pre>
     const THUMB_STEP = { growth: 4, loop: 128, up: 8, holes: 2, shift: 3, nest: 5, old: 47 };
     for (const m of Object.keys(METHODS)) {
       method = m; step = THUMB_STEP[m];
+      if (m === 'shift') step = Math.min(step, shiftLevels());
+      sizeScene();
       if (m === 'growth') drawGrowth(); else if (m === 'loop') loopStats = drawPixelLoop(sctx, PW, PH, step, imgG).stats;
       else if (m === 'up') {
         const preview = document.createElement('canvas'); preview.width = 63; preview.height = 63;
@@ -1417,12 +1516,12 @@ b(2r+1,2c+1) = b(r, c)</pre>
     cv.addEventListener('pointerleave', () => { if (!edgeDrag && !panDrag) cv.style.cursor = 'default'; });
     const requestedMethod = new URLSearchParams(location.search).get('method');
     method = requestedMethod && METHODS[requestedMethod] ? requestedMethod : 'growth';
-    if (method === 'shift') STEPS.shift = 1;
+    if (method === 'shift') STEPS.shift = Math.min(1, shiftLevels());
     step = STEPS[method];
     range.max = String(METHODS[method].steps - 1);
     document.querySelectorAll('.thumb button[data-method]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.method === method)));
     moveSection(method);
-    setAuto(method !== 'shift');
+    setAuto(method !== 'shift' && !(method === 'growth' && fieldHeights.growth !== null));
     render();
     function loop(now) {
       const dt = now - last; last = now;
