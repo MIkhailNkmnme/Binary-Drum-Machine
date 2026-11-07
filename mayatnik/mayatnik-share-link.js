@@ -11,6 +11,7 @@
   const inNode=typeof module==='object'&&module.exports;
   const animatrix=inNode?require('./mayatnik-animatrix-source.js'):globalThis.MayatnikAnimatrixSource;
   const edge=inNode?require('./mayatnik-edge-flow.js'):globalThis.MayatnikEdgeFlow;
+  const construction=typeof module==='object'&&module.exports?require('./mayatnik-construction.js'):globalThis.MayatnikConstruction;
   const MODES=['pend','pendR','left','right','one'];
   const BACKGROUNDS=['empty','0','1','chess'];
   const COMPARE_SOURCES=['','cone','field','pair','p12','p23','p31','p123','a12','a23','a31','a123','xor','and'];
@@ -87,7 +88,7 @@
     if(state.sequenceSource!=null){if(!isPlainObject(state.sequenceSource)||state.sequenceSource.version!==1||!Array.isArray(state.sequenceSource.rows)||!state.sequenceSource.rows.length)throw Error('В ссылке повреждён свой исходный рисунок');if(state.sequenceSource.rows.length>4096||state.sequenceSource.rows.some(row=>typeof row!=='string'||!/^[01]+$/.test(row)))throw Error('В ссылке повреждены строки своего рисунка');if(state.sequenceSourceOn&&state.compareSource)throw Error('В ссылке два источника поля');}
     if(state.animatrixOn)animatrix.assertState(state);
     edge.validate(state);
-    const limit=state.animatrixOn&&animatrix.unlimited(state)?animatrix.frames(state):state.sequenceApexWalk?Math.max(MAX_FRAME,state.apexWalkMax||0):MAX_FRAME;
+    const limit=state.animatrixOn&&animatrix.unlimited(state)?animatrix.frames(state):construction.walk(state)?Math.max(MAX_FRAME,construction.frames(state)):MAX_FRAME;
     const k=integer(Number(value.k),0,limit,'В ссылке некорректный кадр');
     const tools=isPlainObject(value.tools)?{...value.tools}:{};
     const colours=isPlainObject(value.colours)?{...value.colours}:{};

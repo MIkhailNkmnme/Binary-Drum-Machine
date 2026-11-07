@@ -40,7 +40,19 @@
     return s.pair&&s.mode==='pend'?[wrap(s,-(index+1)*stride(s)),wrap(s,(index+1)*stride(s))]:[offset(s,index)];
   }
   function rangeKey(s){return [s.rows,s.steps,s.mode,s.bg,+!!s.sequenceOwnGrid,+!!s.sequenceInverseAbove,s.sequenceApexStart||'seed',s.sequenceApexSides||'one',+!!s.sequenceApexZeroTwice].join(':');}
-  function frames(s){return walk(s)&&s.apexWalkRangeKey===rangeKey(s)&&Number.isSafeInteger(s.apexWalkMax)?Math.max(s.steps,s.apexWalkMax):s.steps;}
+  const baseFrameCache=new WeakMap();
+  function baseFrames(s){
+    if(!walk(s))return s.steps;
+    const goal=Math.max(1,s.steps),cacheKey=[goal,stride(s),s.sequenceApexStart||'seed',s.sequenceApexSides||'one'].join(':'),cached=baseFrameCache.get(s);
+    if(cached?.key===cacheKey)return cached.frames;
+    const reached=count=>{const bounds=apexSpan(s,count);return bounds?bounds[1]-bounds[0]+1:0;};
+    let lo=0,hi=Math.max(1,goal);
+    while(reached(hi)<goal){hi*=2;if(!Number.isSafeInteger(hi))throw Error('Размах требует слишком большого номера хода');}
+    while(lo<hi){const mid=lo+Math.floor((hi-lo)/2);if(reached(mid)>=goal)hi=mid;else lo=mid+1;}
+    let result=Math.max(1,lo);if(s.sequenceApexSides==='alternate'&&result%2)result++;
+    baseFrameCache.set(s,{key:cacheKey,frames:result});return result;
+  }
+  function frames(s){const base=baseFrames(s);return walk(s)&&s.apexWalkRangeKey===rangeKey(s)&&Number.isSafeInteger(s.apexWalkMax)?Math.max(base,s.apexWalkMax):base;}
   function span(s,frames){
     if(s.edgeWrap&&!s.sequenceSourceOn&&!s.compareSource){const edge=Math.floor((s.rows-1)/stride(s))*stride(s);return [-edge,edge];}
     return (walk(s)?walkBounds(s,frames):s.pair&&s.mode==='pend'?[-frames,frames]:Core.span(s.mode,frames)).map(n=>n*stride(s));
@@ -83,5 +95,5 @@
   function run(field,apices,depth,invert=false,lastAt,stamp,xorApex=false){for(const r of rows(field,apices,depth,invert,lastAt,stamp,xorApex)){/* shared full and manual pass */}return field;}
   function step(field,geo,s,index,lastAt,stamp=index+1){return run(field,offsets(s,index).map(n=>geo.anchor+n),s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,stamp,walk(s));}
   function initial(field,geo,s,lastAt){if(walk(s)&&!['empty','skip'].includes(s.sequenceApexStart)){const a=geo.anchor,old=field.val[a];field.val[a]=1;if(lastAt&&old!==1)lastAt[a]=0;run(field,[a],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);}else if(s.pair&&s.mode==='pend')run(field,[geo.anchor],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);return field;}
-  return {active,walk,walkOffset,rangeKey,frames,apexSpan,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
+  return {active,walk,walkOffset,rangeKey,baseFrames,frames,apexSpan,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
 });
