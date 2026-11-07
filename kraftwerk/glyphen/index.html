@@ -3,7 +3,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#181614">
-<title>Kraftwerk / Glyphen — Оси XOR / v0.054</title>
+<title>Kraftwerk / Glyphen — Оси XOR / v0.055</title>
+<!-- XOR-058/БИТ-003/XOR-059 · v0.055: прямоугольные кнопки, ровные ряды, короткие подписи и контрастные цифры; вход в Битотеку только с Хаба/Маятника. -->
 <!-- XOR-057 · v0.054: позиции ряда рассчитываются для каждого проверяемого кадра; полный поиск останавливает автосдвиги. -->
 <!-- XOR-055/056 · v0.053: две независимые кнопки цифр и все девять палитр прямо в Расстановке. -->
 <!-- XOR-053/054 · v0.052: полные подписи, шрифт14px, девять палитр и исходный ряд с зазором в одну клетку. Проверки этого изменения разрешены запросом пользователя. -->
@@ -153,12 +154,12 @@ body.row-layout .layout{grid-template-columns:1024px}body.row-layout .layout>fig
 <link rel="stylesheet" href="../../_js/bitoteka.css?v=4">
 <link rel="stylesheet" href="glyphen-layout.css?v=046">
 <link rel="stylesheet" href="glyphen-mobile.css?v=049">
-<link rel="stylesheet" href="glyphen-menu.css?v=053">
+<link rel="stylesheet" href="glyphen-menu.css?v=055">
 <script src="../../_js/bitoteka.js?v=4"></script>
 <script src="../../_js/kraftwerk-presets.js?v=1"></script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="figOutline" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/></filter><filter id="fig3d" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/><feDropShadow dx=".28" dy=".28" stdDeviation="0" flood-color="#2b2d34"/></filter></defs></svg>
 <main>
-<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Kraftwerk / Glyphen <b>XOR</b></h1><small class="version" aria-label="Версия 0.054">v0.054</small><button id="openBitoteka" type="button" title="Открыть общую Битотеку GIF и видео" aria-label="Открыть общую Битотеку GIF и видео">Битотека</button></div></header>
+<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Kraftwerk / Glyphen <b>XOR</b></h1><small class="version" aria-label="Версия 0.055">v0.055</small></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span id="fieldLabel">Поле / 29 x 29</span><button id="fieldZoomOut" type="button" title="Уменьшить поле вдвое" aria-label="Уменьшить поле">−</button><button id="fieldZoomIn" type="button" title="Увеличить поле вдвое" aria-label="Увеличить поле">+</button><span id="fieldZoomLevel" aria-live="polite">100%</span><button id="fitFieldTop" type="button" title="Вписать всё поле по ширине экрана" aria-label="Вписать всё поле по ширине экрана">Вписать</button><span id="count"></span></figcaption>
 <div class="field-scroll"><svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 x 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect id="fieldBg" width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="pivotBits" fill="#717777" pointer-events="none"/><g id="digitBits" aria-hidden="true" pointer-events="none"></g><g id="searchBits" aria-hidden="true" pointer-events="none"></g></svg></div>
@@ -167,7 +168,7 @@ body.row-layout .layout{grid-template-columns:1024px}body.row-layout .layout>fig
 <div class="group role"><button id="gridToggle" type="button" aria-pressed="false"><span class="ico">#</span>Сетка</button><button id="digitsToggle" type="button" aria-pressed="false" title="Включить или выключить цифры 1 и 0 в клетках результата XOR"><span class="ico">1/0</span>Цифры XOR</button><button id="emptyZerosToggle" type="button" aria-pressed="false" title="Независимо показывать нули во всех пустых клетках, без единиц"><span class="ico">0</span>Нули в пустых</button><button id="shadowToggle" type="button" aria-pressed="true"><span class="ico">T</span>Тени</button></div><div class="group role"><button id="zerosToggle" type="button" aria-pressed="false" title="0 под 1: 0 только в клетках, где 1 уже были; никогда не занятые клетки без цифр"><span class="ico">0</span>0 под 1</button><button id="topToggle" type="button" aria-pressed="false" title="Верхняя клетка каждой фигуры входит в XOR как обычная 1"><span class="ico">1</span>Верхняя 1</button></div>
 <div class="group preview-row" id="tiles" role="group" aria-label="Фигуры отдельно"></div>
 <div class="group edit-row" role="group" aria-label="Редактирование клеток фигур"><button type="button" data-edit="0" aria-label="Редактировать клетки фигуры I" aria-pressed="false" title="Редактировать клетки фигуры I"><span class="ico">E</span></button><button type="button" data-edit="1" aria-label="Редактировать клетки фигуры II" aria-pressed="false" title="Редактировать клетки фигуры II"><span class="ico">E</span></button><button type="button" data-edit="2" aria-label="Редактировать клетки фигуры III" aria-pressed="false" title="Редактировать клетки фигуры III"><span class="ico">E</span></button><button type="button" data-edit="3" aria-label="Редактировать клетки фигуры IV" aria-pressed="false" title="Редактировать клетки фигуры IV"><span class="ico">E</span></button></div>
-<div class="field-help"><h2>Инструкция</h2><p class="mobile-gesture-note">При открытии на телефоне всё поле вписывается по ширине; крупный сохранённый размер клетки не восстанавливается. Кнопка «Вписать» над полем возвращает этот вид после ручного увеличения. На телефоне: тяните фигуру для перемещения; с пустого места поля прокручивается страница. При редактировании маски касание меняет клетку — прокручивайте рядом с полем. Двумя пальцами — увеличение/уменьшение и перемещение самого поля. Кнопки −/+ меняют масштаб поля, «Вписать» возвращает весь рисунок. Это не масштаб браузера.</p><p><a href="../../issledovanie/xor-bitglyphs/">Исследование битглифов: обложка, ролик, числа клеток, симметрии и тени</a>. Шаблоны I–IV и24креста доступны в Маятнике в папке «Оси XOR». «Битотека» открывает общую библиотеку GIF и видео.</p>
+<div class="field-help"><h2>Инструкция</h2><p class="mobile-gesture-note">При открытии на телефоне всё поле вписывается по ширине; крупный сохранённый размер клетки не восстанавливается. Кнопка «Вписать» над полем возвращает этот вид после ручного увеличения. На телефоне: тяните фигуру для перемещения; с пустого места поля прокручивается страница. При редактировании маски касание меняет клетку — прокручивайте рядом с полем. Двумя пальцами — увеличение/уменьшение и перемещение самого поля. Кнопки −/+ меняют масштаб поля, «Вписать» возвращает весь рисунок. Это не масштаб браузера.</p><p><a href="../../issledovanie/xor-bitglyphs/">Исследование битглифов: обложка, ролик, числа клеток, симметрии и тени</a>. Шаблоны I–IV и24креста доступны в Маятнике в папке «Оси XOR». Битотека доступна с Хаба и в Маятнике.</p>
 <p class="hint" id="sequenceHint">24 перестановки на четырёх лучах x 256 сочетаний поворотов. Рисунки могут совпадать.</p>
 <p class="hint">Тяните фигуру по полю. Кнопки 90o поворачивают выбранную, «Все» - сразу четыре. «Цифры XOR» включает 1 и 0 в клетках результата XOR; отдельная кнопка «Нули в пустых» показывает 0 в пустых клетках. Обе кнопки независимы; «0 под 1» показывает 0 только там, где 1 уже были. «Верхняя 1» добавляет верхние клетки фигур в XOR. Цвета — в «Цветах», размер цифр — в «Поле и цифры».</p>
 <p class="hint">В режиме XOR фиолетовый силуэт - вся фигура, чёрное - её вклад в результат. В режиме «Вместе» миниатюры показывают фигуры целиком. Белый контур и тёмная тень - как на обложке; «Тени» отключают белую и тёмную тени, «Сетка» показывает клетки. «Правка» под миниатюрой - редактировать: кликай по клеткам на большом поле (или в миниатюре) - убирает или ставит бит.</p>
@@ -199,7 +200,7 @@ body.row-layout .layout{grid-template-columns:1024px}body.row-layout .layout>fig
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Загрузите MP3: покажу длительность, число кадров и кадров в секунду.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать<span class="ico r">MP4</span></button><button id="cancelVideo" type="button" disabled title="Отменить подготовку или запись видео" aria-label="Отменить подготовку или запись видео">Отмена</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF / 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> / <a href="xor.gif">С XOR</a> / <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.054</small></footer></main>
+</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.055</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script src="xor-row.js?v=052"></script>
 <script src="glyphen-camera.js?v=049"></script>
@@ -223,6 +224,9 @@ const fieldSizeOptions=[29,41,49];
 const savedFieldSize=Number(localStorage.getItem('xor_axes_field_n'));
 let size=fieldSizeOptions.includes(savedFieldSize)?savedFieldSize:29,center=(size-1)/2;
 const $=id=>document.getElementById(id);
+const searchTextCacheKey='glyphen-search-text-v1';
+let searchStorageReady=false,savedSearchDraft=null;
+try{savedSearchDraft=localStorage.getItem(searchTextCacheKey);}catch(_){}
 let fieldCamera=null;
 const initialVariant=24*(2+3*4+0*16+1*64); // turns: up, right, down, left
 const digitSizeKey='xor_axes_digit_size';
@@ -258,7 +262,18 @@ try{const saved=JSON.parse(localStorage.getItem('xor_axes_colors')||'null');if(s
 const rowDefaultColors={...defaultColors,fieldBg:'#056ac7',bit:'#ffffff',pivot:'#ffffff',digitOne:'#000000',digitZero:'#ffffff'};
 function loadLayoutColors(){colors={...(rowLayout?rowDefaultColors:defaultColors)};try{const saved=JSON.parse(localStorage.getItem(rowLayout?'xor_axes_row_colors':'xor_axes_colors')||'null');if(saved)Object.assign(colors,saved);}catch{}applyColors();}
 if(rowLayout){colors={...rowDefaultColors};try{Object.assign(colors,JSON.parse(localStorage.getItem('xor_axes_row_colors')||'null')||{});}catch{}}
+function luminance(hex){
+ const rgb=hex.slice(1).match(/../g).map(value=>{const s=parseInt(value,16)/255;return s<=.04045?s/12.92:((s+.055)/1.055)**2.4;});
+ return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];
+}
+function readableDigit(ink,bg){
+ const a=luminance(ink),b=luminance(bg),contrast=(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+ if(contrast>=4.5)return ink;
+ return (b+.05)/.05>=1.05/(b+.05)?'#000000':'#ffffff';
+}
 function applyColors(){
+ colors.digitOne=readableDigit(colors.digitOne,colors.bit);
+ colors.digitZero=readableDigit(colors.digitZero,colors.fieldBg);
  document.documentElement.style.setProperty('--field-bg',colors.fieldBg);
  document.documentElement.style.setProperty('--bit',colors.bit);
  document.documentElement.style.setProperty('--ghost',colors.ghost);
@@ -1133,7 +1148,6 @@ async function saveMediaInBitoteka(kind,name,blob,meta){
  const api=window.ZerkBitoteka;if(!api)throw new Error('Битотека недоступна');
  await api.ready;return api.save({kind,name,blob,source:location.pathname,meta});
 }
-$('openBitoteka').onclick=async()=>{try{const api=window.ZerkBitoteka;if(!api)throw new Error('Битотека недоступна');await api.ready;api.open({});}catch(error){$('videoStatus').textContent='Не удалось открыть Битотеку: '+(error.message||error);}};
 let gifUrl=null,gifJob=null;
 $('cancelGif').onclick=()=>{if(gifJob)gifJob.cancelled=true;};
 $('makeGif').onclick=async()=>{
@@ -1321,11 +1335,11 @@ function searchSegments(line,bits,loops){
  if(runs.length>1&&bits[line[0]]>=0&&bits[line[line.length-1]]>=0)return [runs[runs.length-1].concat(runs[0]),...runs.slice(1,-1)];
  return runs;
 }
-function searchBitsMatches(bits,patterns,geometry=fieldGeometry()){
+function searchBitsMatches(bits,patterns,geometry=fieldGeometry(),firstOnly=false){
  const lines=fieldSearchLines(geometry),cells=new Set(),found=new Set(),matches=[];let occurrences=0;
  for(const pattern of patterns){
   const nums=Array.from(pattern,ch=>Number(ch)),L=nums.length;let matched=false;
-  for(const line of lines){
+  patternLines: for(const line of lines){
    for(const segment of searchSegments(line,bits,searchMode==='loops')){
     const n=segment.length;if(!n||L>n)continue;
     const circular=searchMode==='loops'&&segment===line;
@@ -1338,6 +1352,7 @@ function searchBitsMatches(bits,patterns,geometry=fieldGeometry()){
      const hit=[];
      for(let j=0;j<L;j++){const q=segment[(s+j)%n];cells.add(q);hit.push(q);}
      matches.push({pattern,cells:hit});
+     if(firstOnly)break patternLines;
     }
    }
   }
@@ -1423,26 +1438,30 @@ async function scanAllFrames(){
  all.disabled=true;run.disabled=true;
  clearFoundFrames();renderSearchHighlight();$('searchInfo').textContent='Проверено 0 / 6144, найдено 0';
  const scan=settings(),radius=scan.radius,selected=scan.selected,mode=scan.mode,top=scan.topCells,offsets=scan.offsets,scanRow=scan.row?{snapshot:scan.row,seconds:0}:null;
- const total=6144;let found=0;const foundPatterns=new Set();
+ const total=6144;let found=0,checked=0;const foundPatterns=new Set(),pending=new Set(patterns);
  try{
   for(let v=0;v<total;v++){
    if(token!==searchScan)break;
    const cells=fieldCells(v,radius,selected,mode,offsets,scan.points,top,scan.geometry,scanRow);
    const bits=new Int8Array(cells.length);
    for(let i=0;i<cells.length;i++)bits[i]=cells[i]===0?0:cells[i]===1?1:-1;
-   const result=searchBitsMatches(bits,patterns,scan.geometry);
+   const result=searchBitsMatches(bits,[...pending],scan.geometry,true);
+   checked=v+1;
    if(result.occurrences){found++;addFoundFrame(v+1);}
-   for(const pattern of result.found)foundPatterns.add(pattern);
-   if((v&63)===0){$('searchInfo').textContent='Проверено '+v+' / '+total+', найдено '+found;await new Promise(resolve=>setTimeout(resolve,0));}
+   for(const pattern of result.found){foundPatterns.add(pattern);pending.delete(pattern);}
+   if(!pending.size)break;
+   if((v&63)===0){$('searchInfo').textContent='Кадров '+checked+' / '+total+' · строк '+foundPatterns.size+' / '+patterns.length;await new Promise(resolve=>setTimeout(resolve,0));}
   }
-  if(token===searchScan){foundSearchPatterns=foundPatterns;renderSearchHighlight();$('searchInfo').textContent='Готово: найдено '+found+' кадров';saveSearchState();}
+  if(token===searchScan){foundSearchPatterns=foundPatterns;renderSearchHighlight();$('searchInfo').textContent='Готово: строк '+foundPatterns.size+' / '+patterns.length+' · кадров '+checked+' / '+total+' · кадров с находками '+found+(pending.size?' · не найдено строк: '+pending.size:' · все строки найдены');saveSearchState();}
  }finally{
   all.disabled=false;run.disabled=false;if(token===searchScan)searchScan=0;
  }
 }
 const SEARCH_SAVE_KEY='xor_axes_search_v1';
 function saveSearchState(){
+ if(!searchStorageReady)return;
  try{
+  localStorage.setItem(searchTextCacheKey,$('searchPattern').value);
   const frames=[...document.querySelectorAll('#searchFound .found-chip')].map(button=>Number(button.dataset.frame));
   localStorage.setItem(SEARCH_SAVE_KEY,JSON.stringify({text:$('searchPattern').value,patterns:[...foundSearchPatterns],frames,mode:searchMode}));
  }catch(error){}
@@ -1483,7 +1502,9 @@ for(const el of [$('searchField'),$('searchPattern')]){
  });
 }
 restoreSearchState();
-
+if(savedSearchDraft!==null){$('searchPattern').value=savedSearchDraft;renderSearchHighlight();}
+searchStorageReady=true;
+addEventListener('pagehide',saveSearchState);
 
 scheduleRow();
 if(window.XorFieldCameraModule){
@@ -1499,7 +1520,7 @@ if(window.XorFieldCameraModule){
 <script src="xor-space-sequence.js?v=019"></script>
 <script src="xor-space-player.js?v=019"></script>
 <script src="xor-space-export.js?v=019"></script>
-<script src="glyphen-menu.js?v=053"></script>
+<script src="glyphen-menu.js?v=055"></script>
 <script>
 window.xorSpaceView=window.XorAxesSpace.mount(document.getElementById('spaceMount'),window.xorSpaceSnapshot);
 window.xorSpacePlayer=window.mountXorSpacePlayer(document.getElementById('spaceMount'),window.xorSpaceView);

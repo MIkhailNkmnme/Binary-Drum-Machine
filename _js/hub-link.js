@@ -1,5 +1,5 @@
 /* ===========================================================================
-   ЗНАЧОК «В ХАБ» — v0.002, один и тот же во всех машинах Зеркалиуса.
+   ЗНАЧОК «В ХАБ» — v0.003, один и тот же во всех машинах Зеркалиуса.
    Подключается одной строкой:  <script src="_js/hub-link.js"></script>
 
    Путь до хаба вычисляется сам, поэтому модуль одинаково работает и в корне,
@@ -42,7 +42,12 @@
         }).catch(error => { bitotekaLoading = null; throw error; });
         return bitotekaLoading;
     }
+    // 2026-11-07: вход в общую библиотеку только на Хабе и в Маятнике.
     function bitotekaAccess(hub) {
+        const page = location.pathname;
+        const isHub = page === root.pathname || page === new URL('index.html',root).pathname;
+        const isPendulum = page.startsWith(new URL('mayatnik/',root).pathname);
+        if (!isHub && !isPendulum) return;
         if (window.zerkBitotekaHeader === false) return;
         // The existing library launcher is the Bitoteka on these pages.
         if (window.MayatnikTemplatePanel || document.querySelector('#mayatnikRail, #bTemplatePanel') || /\/mayatnik\/mayatnik-library\.html$/.test(location.pathname)) {

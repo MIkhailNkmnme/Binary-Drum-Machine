@@ -2,6 +2,20 @@
 (function () {
  'use strict';
  window.GlyphenMenu = {mount() {
+  const compactNames = {
+   'Случайный порядок':'Вразброс','Исходные позиции':'Исходные','Синяя палитра':'Палитры',
+   'Нули под единицами':'Нули под 1','Верхняя клетка':'Верхняя 1','Только выбранная':'Выбранная',
+   'Поиск в кадре':'В кадре','По всем кадрам':'Все кадры','Сквозные линии':'Сквозные','Очистить найденное':'Очистить',
+   'Вписать по ширине':'Вписать','Сбросить цвета':'Сброс цветов','Сохранить GIF':'GIF','Сохранить видео':'Видео',
+   'Общий центр':'Центр','Вернуть на лучи':'На лучи','Вернуть в 2D':'В 2D','Сброс камеры':'Камера',
+   'В общий центр':'В центр','Фрагмент плеера':'Фрагмент','Текущий кадр':'Текущий','С текущего кадра':'С текущего',
+   'Сохранить GIF 3D':'GIF 3D','Сохранить видео 3D':'Видео 3D','Отмена экспорта':'Отмена',
+   'Перебор 6144':'Все 6144','256 поворотов':'Повороты 256','Нули в пустых':'Пустые 0',
+   'Анимация и сохранение':'Пуск / запись','Поле и цифры':'Поле / цифры',
+   'Обложка · красный / чёрный':'Обложка','Серый / белый · красный центр':'Серый / белый',
+   'Белый / чёрный · красный центр':'Белый / чёрный'
+  };
+  const compactName = text => compactNames[text] || text;
   const controls = document.querySelector('.controls'), sections = [...controls.children];
   const [row, figures, position, overlay, search, digits, field, colors, film] = sections;
   const view = document.createElement('section');
@@ -36,7 +50,7 @@
    const heading = section.querySelector('h2');
    heading.textContent = '';
    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'menu-heading';
-   toggle.dataset.menuNavigation = ''; toggle.textContent = title;
+   toggle.dataset.menuNavigation = ''; toggle.textContent = compactName(title);
    toggle.title = description; toggle.setAttribute('aria-label', title);
    toggle.setAttribute('aria-controls', 'glyphen-menu-' + key);
    toggle.setAttribute('aria-expanded', String(opened === key)); heading.append(toggle);
@@ -125,18 +139,32 @@
    for (const [attribute,caption] of [['data-export-current','С текущего кадра'],['data-export-all','Весь цикл'],['data-export-gif','Сохранить GIF 3D'],['data-export-video','Сохранить видео 3D'],['data-export-cancel','Отмена экспорта']]) if (button.hasAttribute(attribute)) label = caption;
    if (label === undefined) label = full || button.getAttribute('aria-label') || button.title;
    if (!label) return;
+   const fullLabel = label; label = compactName(label);
    // The source text remains untouched (e.g. #rates reads Number(event.target.textContent)).
    if (button.dataset.compact !== label) button.dataset.compact = label;
    const dynamic = ['digitsToggle','play','thumbPlay'].includes(id) || button.dataset.action === 'play';
-   const accessible = button.hasAttribute('data-edit') ? 'Правка клеток фигуры ' + ['I','II','III','IV'][Number(button.dataset.edit)] : dynamic ? label : originalNames.get(button) || label;
+   const accessible = button.hasAttribute('data-edit') ? 'Правка клеток фигуры ' + ['I','II','III','IV'][Number(button.dataset.edit)] : dynamic ? fullLabel : originalNames.get(button) || fullLabel;
    if (button.getAttribute('aria-label') !== accessible) button.setAttribute('aria-label', accessible);
-   if (!button.title) button.title = label;
+   if (!button.title) button.title = fullLabel;
    const mini = button.hasAttribute('data-edit') || (button.closest('#rates') && full.length <= 3);
    const arrow = button.classList.contains('step') || ['fieldZoomOut','fieldZoomIn'].includes(id) || (button.closest('.row-track') && ['−','+'].includes(full));
    const width = arrow ? 'arrow' : mini ? 'mini' : label.length > 10 ? 'wide' : 'normal';
    if (button.dataset.menuWidth !== width) button.dataset.menuWidth = width;
   }
-  document.querySelectorAll('main button').forEach(readable);
+  const preview = document.getElementById('tiles'), editRow = document.querySelector('.edit-row');
+  if (preview && editRow) {
+   [...preview.children].forEach((tile,id) => {
+    const pair = document.createElement('div'); pair.className = 'figure-pair';
+    preview.insertBefore(pair,tile); pair.append(tile,editRow.querySelector('[data-edit="'+id+'"]'));
+   });
+   editRow.remove();
+  }
+  function arrangeButtons(parent) {
+   if (!parent?.matches('.group,.search-actions,.xs-actions,.xs-sequence-controls,.xs-export-actions,.xs-symmetry')) return;
+   const children = [...parent.children];
+   if (children.length && children.every(child => child.tagName === 'BUTTON')) parent.classList.add('menu-button-grid');
+  }
+  document.querySelectorAll('main button').forEach(button => { readable(button); arrangeButtons(button.parentElement); });
   document.querySelector('main').addEventListener('click', event => {
    const button = event.target.closest('button');
    if (!button || button.disabled || button.hasAttribute('data-hover-off')) return;
@@ -155,7 +183,7 @@
      node.querySelectorAll('button').forEach(button => buttons.add(button));
     }
    }
-   buttons.forEach(readable);
+   buttons.forEach(button => { readable(button); arrangeButtons(button.parentElement); });
   });
   observer.observe(document.querySelector('main'), {subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-pressed']});
  }};

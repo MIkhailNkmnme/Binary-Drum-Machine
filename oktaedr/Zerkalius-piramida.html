@@ -1432,7 +1432,7 @@ $("bLink").onclick = async () => {
     const b = m[1].replace(/-/g, "+").replace(/_/g, "/"), json = decodeURIComponent(escape(atob(b + "===".slice((b.length + 3) % 4))));
     applyState(JSON.parse(json)); } catch (e) { console.warn("Пирамида: ссылка не прочиталась", e); } } }
 </script>
-<script src="../_js/hub-link.js?v=4"></script>
+<script src="../_js/hub-link.js?v=6"></script>
 <script src="../_js/recorder.js?v=099"></script>
 <script>
 // v0.092: видеозапись со звуком — свой ромб ⏺; запись — общим recorder.js, звук — из захвата экрана / вкладки

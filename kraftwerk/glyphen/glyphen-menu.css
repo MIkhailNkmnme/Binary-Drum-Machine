@@ -144,3 +144,47 @@ html body main .kraft-palettes{display:flex;flex-wrap:wrap;gap:4px}
 html body main .kraft-palettes button{padding-left:26px!important}
 html body main .kraft-palettes button::after{max-width:100%;font-size:12px!important;line-height:14px!important}
 html body main .kraft-palettes button{background:linear-gradient(90deg,var(--palette-bg) 10px,var(--palette-bg) 17px,var(--palette-bit) 17px,var(--palette-bit) 24px,var(--menu-btn) 24px)!important}
+
+/* XOR-058: rectangular controls, filled rows, two columns or a full-width singleton. */
+html body main button{clip-path:none!important;border-radius:0!important;border:1px solid transparent!important;box-shadow:none!important}
+html body main button::before{display:none!important}
+html body main button:hover,html body main button:focus-visible{border-color:var(--menu-accent)!important}
+html body main button[aria-pressed=true],html body main button[aria-expanded=true]{border-color:var(--menu-accent)!important;box-shadow:inset 0 0 0 1px var(--menu-accent)!important}
+html body main button:active:not(:disabled){border-color:var(--menu-accent)!important;box-shadow:inset 0 0 0 2px var(--menu-accent)!important}
+html body main button[data-hover-off]:not(:focus-visible):not(:active){border-color:transparent!important;box-shadow:none!important}
+html body main button[data-compact][data-menu-width]{--compact-w:100%!important;width:100%!important;min-width:0!important;max-width:100%!important;flex:1 1 0!important;padding:0 6px!important}
+html body main button.step[data-menu-width=arrow]{--compact-w:32px!important;width:32px!important;min-width:32px!important;max-width:32px!important;flex:0 0 32px!important}
+html body main #thumbPlay[data-compact]{--compact-w:96px!important;width:96px!important;min-width:96px!important;max-width:96px!important;flex:0 0 96px!important}
+html body main .menu-button-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:2px!important;margin:2px 0 0!important;align-items:stretch}
+html body main .menu-button-grid>button:last-child:nth-child(odd){grid-column:1/-1}
+html body main .menu-button-grid>button{width:100%!important;min-width:0!important;max-width:100%!important}
+html body main .menu-body{padding:4px;gap:2px}
+html body main .menu-body::after{display:none!important}
+html body main .menu-summary{margin:0 0 4px}
+html body main .controls{gap:2px}
+html body main .controls>section{padding:2px}
+html body main .preview-row{width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;margin:4px 0}
+html body main .figure-pair{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;min-width:0}
+html body main .preview-row .figure-pair .tile{width:100%!important;max-width:100%!important;min-width:0!important}
+html body main .figure-pair button[data-compact]::after{font-size:14px!important}
+html body main .xs-figure{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:4px}
+html body main .xs-figure>label,html body main .xs-figure>.xs-roll,html body main .xs-shift{grid-column:1/-1}
+html body main .xs-shift{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+html body main .xs-shift>.xs-pick{grid-column:1/-1}
+html body main .xs-shift label{width:100%;min-width:0}
+html body main .xs-symmetry{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+html body main .xs-symmetry>label,html body main .xs-symmetry>span{grid-column:1/-1}
+html body main .row-track{padding:4px 0;gap:2px}
+html body main #audioFile::file-selector-button{border-radius:0;clip-path:none}
+html body main .kraft-palettes button[data-compact]{padding-left:26px!important}
+@media(max-width:340px){html body main .menu-button-grid{grid-template-columns:minmax(0,1fr)}}
+
+html body main .row-track{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+html body main .row-track>.row-name,html body main .row-track>label,html body main .row-track>button[id^=rowAuto]{grid-column:1/-1}
+html body main .row-track>label{display:flex;gap:4px}
+html body main .xs-sequence-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+html body main .xs-sequence-controls>label{grid-column:1/-1}
+html body main .caption #fitFieldTop[data-compact]{width:112px!important;min-width:112px!important;max-width:112px!important;flex:0 0 112px!important}
+html body main .xs-export-range{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+html body main .xs-export-range>label{grid-column:1/-1}
+html body main .preview-row>.figure-pair{padding:0!important;margin:0!important;gap:2px!important;align-content:start}
