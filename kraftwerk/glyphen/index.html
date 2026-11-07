@@ -3,7 +3,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#181614">
-<title>Kraftwerk / Glyphen — Оси XOR / v0.055</title>
+<title>Kraftwerk / Glyphen — Оси XOR / v0.056</title>
+<!-- XOR-062 · v0.056: найденные строки открывают свой кадр, повторный щелчок переключает единственное яркое вхождение; прочие находки приглушены. -->
 <!-- XOR-058/БИТ-003/XOR-059 · v0.055: прямоугольные кнопки, ровные ряды, короткие подписи и контрастные цифры; вход в Битотеку только с Хаба/Маятника. -->
 <!-- XOR-057 · v0.054: позиции ряда рассчитываются для каждого проверяемого кадра; полный поиск останавливает автосдвиги. -->
 <!-- XOR-055/056 · v0.053: две независимые кнопки цифр и все девять палитр прямо в Расстановке. -->
@@ -154,12 +155,12 @@ body.row-layout .layout{grid-template-columns:1024px}body.row-layout .layout>fig
 <link rel="stylesheet" href="../../_js/bitoteka.css?v=4">
 <link rel="stylesheet" href="glyphen-layout.css?v=046">
 <link rel="stylesheet" href="glyphen-mobile.css?v=049">
-<link rel="stylesheet" href="glyphen-menu.css?v=055">
+<link rel="stylesheet" href="glyphen-menu.css?v=056">
 <script src="../../_js/bitoteka.js?v=4"></script>
 <script src="../../_js/kraftwerk-presets.js?v=1"></script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="figOutline" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/></filter><filter id="fig3d" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="-.22" dy="-.22" stdDeviation="0" flood-color="#e9e9e9"/><feDropShadow dx=".28" dy=".28" stdDeviation="0" flood-color="#2b2d34"/></filter></defs></svg>
 <main>
-<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Kraftwerk / Glyphen <b>XOR</b></h1><small class="version" aria-label="Версия 0.055">v0.055</small></div></header>
+<header><div class="head-left"><a class="hub-link" href="../../index.html">Хаб</a><h1>Kraftwerk / Glyphen <b>XOR</b></h1><small class="version" aria-label="Версия 0.056">v0.056</small></div></header>
 <div class="layout">
 <figure><figcaption class="caption"><span id="fieldLabel">Поле / 29 x 29</span><button id="fieldZoomOut" type="button" title="Уменьшить поле вдвое" aria-label="Уменьшить поле">−</button><button id="fieldZoomIn" type="button" title="Увеличить поле вдвое" aria-label="Увеличить поле">+</button><span id="fieldZoomLevel" aria-live="polite">100%</span><button id="fitFieldTop" type="button" title="Вписать всё поле по ширине экрана" aria-label="Вписать всё поле по ширине экрана">Вписать</button><span id="count"></span></figcaption>
 <div class="field-scroll"><svg id="field" viewBox="0 0 29 29" role="img" aria-label="Поле 29 x 29: результат наложения четырёх фигур; фигуры можно перетаскивать" shape-rendering="crispEdges"><rect id="fieldBg" width="29" height="29" fill="#fd0000"/><path id="ghostBits" fill="#7c3aed"/><path id="bits" fill="#000"/><path id="symAxesGlow" fill="none" stroke="#181614" stroke-width=".34" stroke-dasharray=".55 .4" opacity=".35" pointer-events="none" shape-rendering="geometricPrecision"/><path id="symAxes" fill="none" stroke="#f4f0e8" stroke-width=".15" stroke-dasharray=".55 .4" stroke-linecap="round" opacity=".95" pointer-events="none" shape-rendering="geometricPrecision"/><path class="grid" fill="none" stroke="#f4f0e8" stroke-width="1" stroke-opacity=".6" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="pivotBits" fill="#717777" pointer-events="none"/><g id="digitBits" aria-hidden="true" pointer-events="none"></g><g id="searchBits" aria-hidden="true" pointer-events="none"></g></svg></div>
@@ -183,7 +184,7 @@ body.row-layout .layout{grid-template-columns:1024px}body.row-layout .layout>fig
 <p class="hint">Выберите фигуру под полем. Повторный щелчок по миниатюре, пустое поле, ПКМ или Escape снимают выделение. «Перебор» работает со всеми фигурами. «Крест 90o» соединяет серые центры, расставляет фигуры по четырём направлениям и вращает всю расстановку вместе.</p></section>
 <section><div class="bar"><label for="radius">От центра</label><small>кл.</small></div><div class="slider-row"><button class="step" id="radiusDown" type="button" aria-label="Уменьшить значение" aria-controls="radius">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">3</span><span class="x-bracket">]</span></div><input id="radius" type="range" min="-7" max="7" value="0" aria-valuetext="0 клеток от центра"></div><button class="step" id="radiusUp" type="button" aria-label="Увеличить значение" aria-controls="radius">&gt;</button></div><div class="group role radius-switch" id="radiusSwitch" hidden><button type="button" data-radius="manual" aria-pressed="true">Вручную</button><button type="button" data-radius="auto" aria-pressed="false">Авто</button></div><p class="hint">В «256 без повторов», «Все 24 креста» и в переборе всех 6144 расстояние можно вести вручную ползунком или включить «Авто» — оно пройдёт весь диапазон за цикл; кнопка «Сдвиг» запускает перебор всех 6144 сразу с авто-сдвигом. При нуле верхние серые клетки всех четырёх фигур соединены в общем центре. Каждая фигура поворачивается вокруг своей серой клетки. Положительные значения уводят их по лучам ^ -> v <-, отрицательные - на противоположные.</p></section>
 <section><h2>Наложение</h2><div class="group"><button id="xor">XOR</button><button id="union"><span class="ico">+</span>Вместе</button><button id="solo"><span class="ico">1</span>Одна</button></div><p id="rule" class="hint"></p></section>
-<section><h2>Поиск</h2><div class="search-field" id="searchField"><div class="search-input-wrap"><div class="search-highlight" id="searchHighlight" aria-hidden="true"></div><textarea id="searchPattern" rows="3" spellcheck="false" autocomplete="off" placeholder="0/1-строки; вставьте текст или перетащите .txt">101</textarea></div><div class="search-actions"><button id="searchRun" type="button">Искать</button><button id="searchAll" type="button">Все кадры</button><button id="searchClear" type="button">Сброс</button></div></div><div class="group role"><button id="searchAxes" type="button" aria-pressed="true">Оси</button><button id="searchLoops" type="button" aria-pressed="false">Сквозные</button></div><p class="hint" id="searchInfo">0/1 · ?0 — текущий · ?* — все кадры</p><div class="found-head"><span id="foundTitle">Найденные кадры</span><button id="searchFoundClear" type="button">Сброс найденных</button></div><div class="found-list" id="searchFound" hidden></div></section>
+<section><h2>Поиск</h2><div class="search-field" id="searchField"><div class="search-input-wrap"><div class="search-highlight" id="searchHighlight" aria-hidden="true"></div><textarea id="searchPattern" rows="3" spellcheck="false" autocomplete="off" placeholder="0/1-строки; вставьте текст или перетащите .txt">101</textarea></div><div class="search-actions"><button id="searchRun" type="button">Искать</button><button id="searchAll" type="button">Все кадры</button><button id="searchClear" type="button">Сброс</button></div></div><div id="searchPatternList" class="search-pattern-list" role="group" aria-label="Строки поиска и найденные кадры"></div><div class="group role"><button id="searchAxes" type="button" aria-pressed="true">Оси</button><button id="searchLoops" type="button" aria-pressed="false">Сквозные</button></div><p class="hint" id="searchInfo">0/1 · ?0 — текущий · ?* — все кадры</p><div class="found-head"><span id="foundTitle">Найденные кадры</span><button id="searchFoundClear" type="button">Сброс найденных</button></div><div class="found-list" id="searchFound" hidden></div></section>
 <section><h2>Цифры</h2><div class="bar"><label for="digitSize">Размер</label><small><output id="digitSizeNow">0,70</output></small></div><div class="slider-row"><button class="step" id="digitSizeDown" type="button" aria-label="Уменьшить размер цифр" aria-controls="digitSize">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">0,70</span><span class="x-bracket">]</span></div><input id="digitSize" type="range" min="0.4" max="1.2" step="0.05" value="0.7" aria-valuetext="Размер цифр 0,70 клетки"></div><button class="step" id="digitSizeUp" type="button" aria-label="Увеличить размер цифр" aria-controls="digitSize">&gt;</button></div><p class="hint">1 и 0 появляются только в клетках результата XOR; пустые клетки остаются без цифр, серые центры тоже.</p></section>
 <section><h2>Поле</h2><div class="bar"><span class="field-label">Размер</span><small>клеток</small></div><div class="group role" id="fieldSize"><button type="button" data-field-size="29" aria-pressed="true">29</button><button type="button" data-field-size="41" aria-pressed="false">41</button><button type="button" data-field-size="49" aria-pressed="false">49</button></div><p class="hint">В центре размеры 29×29, 41×41 и 49×49; в ряду — 59×29, 71×41 и 79×49. У ряда запас для всех четверть-поворотов исходных фигур, в исходной раскладке между краями фигур ровно одна пустая клетка. 41 и 49 в центре вмещают сдвиги ±7.</p><div class="bar"><label for="cellSize">Ячейка</label><small><output id="cellSizeNow">20 px</output></small></div><div class="slider-row"><button class="step" id="cellSizeDown" type="button" aria-label="Уменьшить ячейку" aria-controls="cellSize">&lt;</button><div class="x-range"><div class="x-track" aria-hidden="true"></div><div class="x-thumb" aria-hidden="true"><span class="x-bracket">[</span><span class="x-number">20 px</span><span class="x-bracket">]</span></div><input id="cellSize" type="range" min="4" max="48" step="1" value="20" aria-valuetext="Размер ячейки 20 пикселей"></div><button class="step" id="cellSizeUp" type="button" aria-label="Увеличить ячейку" aria-controls="cellSize">&gt;</button></div><div class="group role"><button id="cellAuto" type="button" aria-pressed="true">По ширине</button></div><p class="hint">Размер одной клетки поля в пикселях. «По ширине» подгоняет поле под колонку, иначе поле прокручивается вбок.</p></section>
 <section><h2>Цвета</h2><div class="group kraft-palettes" id="kraftPalettes" role="group" aria-label="Все палитры 3-D Der Katalog"></div><div class="color-grid"><label>фон поля<input type="color" id="colorFieldBg" value="#fd0000" aria-label="Цвет фона поля"></label><label>клетка 1<input type="color" id="colorBit" value="#000000" aria-label="Цвет клетки 1"></label><label>цифра 1<input type="color" id="colorDigitOne" value="#f4f0e8" aria-label="Цвет цифры 1"></label><label>цифра 0<input type="color" id="colorDigitZero" value="#000000" aria-label="Цвет цифры 0"></label><label>силуэт<input type="color" id="colorGhost" value="#7c3aed" aria-label="Цвет силуэта"></label><label>центры<input type="color" id="colorPivot" value="#717777" aria-label="Цвет серых центров"></label><label>оси и сетка<input type="color" id="colorAxes" value="#f4f0e8" aria-label="Цвет осей и сетки"></label><label>светлый контур<input type="color" id="colorShadowLight" value="#e9e9e9" aria-label="Светлый контур фигур"></label><label>тёмная тень<input type="color" id="colorShadowDark" value="#2b2d34" aria-label="Тёмная тень фигур"></label></div><div class="group role"><button id="resetColors" type="button">Сбросить цвета</button></div><p class="hint">Цвета действуют на поле, миниатюры, GIF и видео.</p></section>
@@ -200,7 +201,7 @@ body.row-layout .layout{grid-template-columns:1024px}body.row-layout .layout>fig
 <div class="video-export"><h3>Видео с музыкой</h3><label for="audioFile">MP3-файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/mp3,audio/*"><p id="audioInfo" class="meta">Длительность не определена</p><p id="videoInfo" class="hint">Загрузите MP3: покажу длительность, число кадров и кадров в секунду.</p><div class="group role"><button id="makeVideo" type="button" disabled>Создать<span class="ico r">MP4</span></button><button id="cancelVideo" type="button" disabled title="Отменить подготовку или запись видео" aria-label="Отменить подготовку или запись видео">Отмена</button></div><output id="videoStatus" aria-live="polite"></output><a id="videoLink" hidden download>Скачать видео</a><video id="videoPreview" controls hidden></video></div>
 <details><summary>Готовые GIF / 4 раскладки/с</summary><p><a href="union.gif">Без XOR</a> / <a href="xor.gif">С XOR</a> / <a href="compare.gif">Сравнение</a></p></details>
 </section>
-</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.055</small></footer></main>
+</div></div><section id="spaceMount" aria-label="Третья ось, 3D и проекции"></section><footer class="page-footer"><small>ОПЫТ 01 / v0.056</small></footer></main>
 <script src="../../mayatnik/mayatnik-gif.js"></script>
 <script src="xor-row.js?v=052"></script>
 <script src="glyphen-camera.js?v=049"></script>
@@ -1307,7 +1308,8 @@ $('makeVideo').onclick=async()=>{
 
 // --- search 0/1 lines over the current field and over every frame --------
 var searchActive=false,searchStateKey='';let foundSearchPatterns=new Set(),selectedSearchPattern=null,selectedOccurrence=0;
-let searchMode='axes';
+let searchMode='axes',searchContext=null,searchNavigating=false;
+const searchPatternFrames=new Map();
 const SEARCH_HINT='0/1 · ?0 — текущий · ?* — все кадры';
 function fieldSearchKey(){return JSON.stringify([state.variant,state.radius,state.radiusAuto,state.selected,state.mode,state.offsets,state.topCells,size,rowLayout,rowLayout?unpack(state.variant).order.map((id,slot)=>XorRow.offsetAt(rowSnapshot(),id,slot,(rowRenderTime-rowEpoch)/1000).integerX):null]);}
 function fieldSearchBits(){
@@ -1375,39 +1377,101 @@ function syncSearchHighlightScroll(){
  if(!area||!textarea)return;
  area.scrollTop=textarea.scrollTop;area.scrollLeft=textarea.scrollLeft;
 }
+function renderPatternList(){
+ const list=$('searchPatternList');if(!list)return;
+ const scroll=list.scrollTop,focused=document.activeElement?.classList.contains('search-pattern')?document.activeElement.dataset.pattern:null;
+ list.replaceChildren();let focusTarget=null;
+ for(const pattern of parseSearchPatterns()){
+  const frame=searchPatternFrames.get(pattern),button=document.createElement('button');
+  button.type='button';button.className='search-pattern'+(frame?' found':'');button.dataset.pattern=pattern;
+  button.setAttribute('aria-pressed',String(selectedSearchPattern===pattern));button.disabled=!frame||!!searchScan;
+  const text=document.createElement('span');text.className='search-pattern-text';text.textContent=pattern;
+  const note=document.createElement('small');note.textContent=frame?'кадр '+frame:'не найдена';
+  button.append(text,note);button.title=frame?'Показать '+pattern+' в кадре '+frame+'. Повторный щелчок — следующее вхождение.':'Строка ещё не найдена';
+  button.onclick=()=>selectSearchPattern(pattern);list.append(button);
+  if(pattern===focused&&!button.disabled)focusTarget=button;
+ }
+ list.scrollTop=scroll;focusTarget?.focus({preventScroll:true});
+}
 function renderSearchHighlight(){
  const area=$('searchHighlight'),textarea=$('searchPattern');
  if(!area||!textarea)return;
- const found=foundSearchPatterns,lines=textarea.value.split(/\r?\n/);
- area.innerHTML='';
+ const lines=textarea.value.split(/\r?\n/);area.innerHTML='';
  for(const line of lines){
-  const span=document.createElement('span');
-  span.className='line'+(found.has(line.trim())?' found':'');
-  span.textContent=line||' ';
-  area.append(span);
+  const tokens=line.trim().split(/[\s,;]+/),isFound=tokens.some(t=>foundSearchPatterns.has(t));
+  const span=document.createElement('span');span.className='line'+(isFound?' found':'')+(tokens.includes(selectedSearchPattern)?' current':'');
+  span.textContent=line||' ';area.append(span);
  }
- syncSearchHighlightScroll();
+ syncSearchHighlightScroll();renderPatternList();
 }
-function clearFieldSearch(){
- searchActive=false;searchStateKey='';foundSearchPatterns=new Set();
+function clearFieldSearch(forget=false){
+ searchActive=false;searchStateKey='';
+ if(forget){searchPatternFrames.clear();searchContext=null;clearFoundFrames();}
+ foundSearchPatterns=new Set(searchPatternFrames.keys());
+ if(!searchNavigating){selectedSearchPattern=null;selectedOccurrence=0;}
  const layer=$('searchBits');if(layer)layer.innerHTML='';
  const info=$('searchInfo');if(info)info.textContent=SEARCH_HINT;
  renderSearchHighlight();saveSearchState();
 }
-function runFieldSearch(){
- const patterns=parseSearchPatterns();
- if(!patterns.length){$('searchInfo').textContent='Вставьте 0/1-строки или перетащите .txt.';return;}
- const {occurrences,cells,found}=searchFieldMatches(patterns);
- const layer=$('searchBits');layer.innerHTML='';
- for(const q of cells){
-  const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
-  rect.setAttribute('x',q%fieldGeometry().width);rect.setAttribute('y',Math.floor(q/fieldGeometry().width));
-  rect.setAttribute('width','1');rect.setAttribute('height','1');rect.setAttribute('class','search-cell');
-  layer.append(rect);
+function freezeSearchField(){
+ if(animation)stopFilm();
+ if(rowLayout){settleRow();rowTracks.forEach(t=>{t.auto=false;});saveRow();render();}
+}
+function captureSearchContext(){return {...settings(),radius:displayRadius(),searchMode,sourceSignature:JSON.stringify(points)};}
+function restoreSearchFrame(frame){
+ const config=searchContext;
+ if(config?.sourceSignature&&config.sourceSignature!==JSON.stringify(points)){$('searchInfo').textContent='Исходные фигуры изменились. Повторите поиск.';return false;}
+ if(animation)stopFilm();
+ searchNavigating=true;
+ try{
+  if(config){
+   const layoutChanged=rowLayout!==!!config.row;rowLayout=!!config.row;
+   size=config.geometry.side||config.geometry.height;center=(size-1)/2;
+   state.selected=config.selected;state.mode=config.mode;state.radius=config.radius;state.radiusAuto=false;state.topCells=config.topCells;
+   state.offsets=config.offsets.map(o=>({...o}));
+   if(config.row)rowTracks=config.row.tracks.map(t=>({...t,auto:false}));
+   else rowTracks.forEach(t=>{t.auto=false;});
+   rowEpoch=performance.now();rowRenderTime=rowEpoch;
+   searchMode=config.searchMode||searchMode;
+   $('searchAxes').setAttribute('aria-pressed',String(searchMode==='axes'));$('searchLoops').setAttribute('aria-pressed',String(searchMode==='loops'));
+   if(layoutChanged)loadLayoutColors();
+   syncFieldGeometry();clearGeometryLayers();applyFieldSize();
+  }
+  state.variant=frame-1;state.edit=null;render();saveRow();
+ }finally{searchNavigating=false;}
+ return true;
+}
+function paintSearchSelection(pattern=null,occurrence=0){
+ const result=searchFieldMatches(parseSearchPatterns()),unique=new Map();
+ const chosen=pattern&&result.found.has(pattern)?pattern:[...result.found][0]||null;
+ for(const match of result.matches)if(match.pattern===chosen){const key=match.cells.join(',');if(!unique.has(key))unique.set(key,match);}
+ const hits=[...unique.values()];selectedSearchPattern=chosen;selectedOccurrence=hits.length?((occurrence%hits.length)+hits.length)%hits.length:0;
+ const active=new Set(hits[selectedOccurrence]?.cells||[]),layer=$('searchBits');layer.replaceChildren();
+ function addCells(cells,current){
+  const group=document.createElementNS('http://www.w3.org/2000/svg','g');
+  if(current){group.id='searchActiveMatch';group.dataset.pattern=chosen;group.dataset.occurrence=String(selectedOccurrence);}
+  for(const q of cells){const rect=document.createElementNS(group.namespaceURI,'rect');rect.setAttribute('x',q%fieldGeometry().width);rect.setAttribute('y',Math.floor(q/fieldGeometry().width));rect.setAttribute('width','1');rect.setAttribute('height','1');rect.setAttribute('class','search-cell '+(current?'search-cell-current':'search-cell-other'));group.append(rect);}
+  if(group.childNodes.length)layer.append(group);
  }
- foundSearchPatterns=found;renderSearchHighlight();
- $('searchInfo').textContent=occurrences?'Найдено '+occurrences+' вхождений '+(searchMode==='loops'?'по сквозным':'по осям'):'Нет вхождений.';
- searchActive=true;searchStateKey=fieldSearchKey();saveSearchState();
+ addCells([...result.cells].filter(q=>!active.has(q)),false);addCells(active,true);
+ searchActive=true;searchStateKey=fieldSearchKey();renderSearchHighlight();
+ $('searchInfo').textContent=hits.length?'Строка '+chosen+' · кадр '+(state.variant+1)+' · вхождение '+(selectedOccurrence+1)+' / '+hits.length:'Нет вхождений в этом кадре.';
+ saveSearchState();return hits.length;
+}
+function selectSearchPattern(pattern,advance=true){
+ const frame=searchPatternFrames.get(pattern);if(!frame||searchScan)return;
+ const same=selectedSearchPattern===pattern&&state.variant===frame-1&&searchActive&&searchStateKey===fieldSearchKey();
+ const next=same&&advance?selectedOccurrence+1:0;
+ if(!same&&!restoreSearchFrame(frame))return;
+ paintSearchSelection(pattern,next);
+}
+function runFieldSearch(){
+ const patterns=parseSearchPatterns();if(!patterns.length){$('searchInfo').textContent='Вставьте 0/1-строки или перетащите .txt.';return;}
+ freezeSearchField();clearFieldSearch(true);searchContext=captureSearchContext();
+ const result=searchFieldMatches(patterns);
+ for(const pattern of result.found)searchPatternFrames.set(pattern,state.variant+1);
+ foundSearchPatterns=new Set(searchPatternFrames.keys());
+ paintSearchSelection();
 }
 function setSearchMode(mode){
  searchMode=mode;
@@ -1423,7 +1487,7 @@ function addFoundFrame(value){
  const list=$('searchFound');if(!list)return;
  list.hidden=false;
  const button=document.createElement('button');button.type='button';button.className='found-chip';button.dataset.frame=value;button.textContent=value;
- button.onclick=()=>{state.variant=value-1;state.selected=null;state.edit=null;render();runFieldSearch();};
+ button.onclick=()=>{if(restoreSearchFrame(value))paintSearchSelection(selectedSearchPattern);};
  list.append(button);
  const title=$('foundTitle');if(title)title.textContent='Найденные кадры: '+list.children.length;
 }
@@ -1436,8 +1500,9 @@ async function scanAllFrames(){
  if(rowLayout){settleRow();rowTracks.forEach(track=>{track.auto=false;});saveRow();render();}
  const token=++searchScan,all=$('searchAll'),run=$('searchRun');
  all.disabled=true;run.disabled=true;
- clearFoundFrames();renderSearchHighlight();$('searchInfo').textContent='Проверено 0 / 6144, найдено 0';
- const scan=settings(),radius=scan.radius,selected=scan.selected,mode=scan.mode,top=scan.topCells,offsets=scan.offsets,scanRow=scan.row?{snapshot:scan.row,seconds:0}:null;
+ clearFieldSearch(true);renderSearchHighlight();$('searchInfo').textContent='Проверено 0 / 6144, найдено 0';
+ const scan=captureSearchContext();searchContext=scan;
+ const radius=scan.radius,selected=scan.selected,mode=scan.mode,top=scan.topCells,offsets=scan.offsets,scanRow=scan.row?{snapshot:scan.row,seconds:0}:null;
  const total=6144;let found=0,checked=0;const foundPatterns=new Set(),pending=new Set(patterns);
  try{
   for(let v=0;v<total;v++){
@@ -1448,13 +1513,13 @@ async function scanAllFrames(){
    const result=searchBitsMatches(bits,[...pending],scan.geometry,true);
    checked=v+1;
    if(result.occurrences){found++;addFoundFrame(v+1);}
-   for(const pattern of result.found){foundPatterns.add(pattern);pending.delete(pattern);}
+   for(const pattern of result.found){foundPatterns.add(pattern);searchPatternFrames.set(pattern,v+1);pending.delete(pattern);}
    if(!pending.size)break;
    if((v&63)===0){$('searchInfo').textContent='Кадров '+checked+' / '+total+' · строк '+foundPatterns.size+' / '+patterns.length;await new Promise(resolve=>setTimeout(resolve,0));}
   }
   if(token===searchScan){foundSearchPatterns=foundPatterns;renderSearchHighlight();$('searchInfo').textContent='Готово: строк '+foundPatterns.size+' / '+patterns.length+' · кадров '+checked+' / '+total+' · кадров с находками '+found+(pending.size?' · не найдено строк: '+pending.size:' · все строки найдены');saveSearchState();}
  }finally{
-  all.disabled=false;run.disabled=false;if(token===searchScan)searchScan=0;
+  all.disabled=false;run.disabled=false;if(token===searchScan)searchScan=0;renderPatternList();
  }
 }
 const SEARCH_SAVE_KEY='xor_axes_search_v1';
@@ -1463,7 +1528,7 @@ function saveSearchState(){
  try{
   localStorage.setItem(searchTextCacheKey,$('searchPattern').value);
   const frames=[...document.querySelectorAll('#searchFound .found-chip')].map(button=>Number(button.dataset.frame));
-  localStorage.setItem(SEARCH_SAVE_KEY,JSON.stringify({text:$('searchPattern').value,patterns:[...foundSearchPatterns],frames,mode:searchMode}));
+  localStorage.setItem(SEARCH_SAVE_KEY,JSON.stringify({text:$('searchPattern').value,patterns:[...foundSearchPatterns],frames,mode:searchMode,patternFrames:[...searchPatternFrames],context:searchContext,selectedPattern:selectedSearchPattern,occurrence:selectedOccurrence}));
  }catch(error){}
 }
 function restoreSearchState(){
@@ -1474,20 +1539,41 @@ function restoreSearchState(){
   searchMode=data.mode==='loops'?'loops':'axes';
   $('searchAxes').setAttribute('aria-pressed',String(searchMode==='axes'));
   $('searchLoops').setAttribute('aria-pressed',String(searchMode==='loops'));
-  foundSearchPatterns=new Set(Array.isArray(data.patterns)?data.patterns:[]);
+  searchContext=data.context&&data.context.geometry?data.context:null;
+  if(Array.isArray(data.patternFrames))for(const [pattern,frame] of data.patternFrames)if(/^[01]+$/.test(pattern)&&Number.isInteger(frame)&&frame>=1&&frame<=6144)searchPatternFrames.set(pattern,frame);
+  if(!searchContext&&Array.isArray(data.frames)&&Array.isArray(data.patterns)&&data.patterns.length){
+   searchContext=captureSearchContext();const config=searchContext,pending=new Set(data.patterns.filter(p=>/^[01]+$/.test(p)));
+   for(const frame of data.frames){
+    if(!Number.isInteger(frame)||frame<1||frame>6144)continue;
+    const cells=fieldCells(frame-1,config.radius,config.selected,config.mode,config.offsets,config.points,config.topCells,config.geometry,config.row?{snapshot:config.row,seconds:0}:null);
+    const bits=Int8Array.from(cells,v=>v===0?0:v===1?1:-1),result=searchBitsMatches(bits,[...pending],config.geometry,true);
+    for(const pattern of result.found){searchPatternFrames.set(pattern,frame);pending.delete(pattern);}
+    if(!pending.size)break;
+   }
+  }
+  foundSearchPatterns=new Set(searchPatternFrames.keys());
+  selectedSearchPattern=searchPatternFrames.has(data.selectedPattern)?data.selectedPattern:null;selectedOccurrence=Math.max(0,Number(data.occurrence)||0);
   if(Array.isArray(data.frames))for(const frame of data.frames)addFoundFrame(frame);
   renderSearchHighlight();
   $('searchInfo').textContent=data.frames&&data.frames.length?'Восстановлено: найдено '+data.frames.length+' кадров':SEARCH_HINT;
  }catch(error){}
 }
 $('searchRun').onclick=runFieldSearch;
-$('searchClear').onclick=clearFieldSearch;
+$('searchClear').onclick=()=>clearFieldSearch(true);
 $('searchAll').onclick=scanAllFrames;
-$('searchFoundClear').onclick=()=>{clearFoundFrames();$('searchInfo').textContent=SEARCH_HINT;saveSearchState();};
+$('searchFoundClear').onclick=()=>clearFieldSearch(true);
 $('searchAxes').onclick=()=>setSearchMode('axes');
 $('searchLoops').onclick=()=>setSearchMode('loops');
 $('searchPattern').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runFieldSearch();}});
-$('searchPattern').addEventListener('input',()=>{clearFieldSearch();});
+$('searchPattern').addEventListener('input',()=>{clearFieldSearch(true);});
+$('searchPattern').addEventListener('click',event=>{
+ if(event.ctrlKey||event.metaKey||event.shiftKey)return;
+ const area=$('searchPattern'),start=area.selectionStart;
+ if(event.detail===1&&start!==area.selectionEnd)return;
+ const from=area.value.lastIndexOf('\n',Math.max(0,start-1))+1,to=area.value.indexOf('\n',start);
+ const pattern=area.value.slice(from,to<0?area.value.length:to).trim();
+ if(searchPatternFrames.has(pattern))selectSearchPattern(pattern);
+});
 $('searchPattern').addEventListener('scroll',syncSearchHighlightScroll);
 for(const el of [$('searchField'),$('searchPattern')]){
  if(!el)continue;
@@ -1497,12 +1583,16 @@ for(const el of [$('searchField'),$('searchPattern')]){
   e.preventDefault();el.classList.remove('drag');
   const file=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=()=>{$('searchPattern').value=String(reader.result||'');clearFieldSearch();$('searchInfo').textContent='Файл загружен: '+file.name;};
+  reader.onload=()=>{$('searchPattern').value=String(reader.result||'');clearFieldSearch(true);$('searchInfo').textContent='Файл загружен: '+file.name;};
   reader.readAsText(file);
  });
 }
 restoreSearchState();
 if(savedSearchDraft!==null){$('searchPattern').value=savedSearchDraft;renderSearchHighlight();}
+if(selectedSearchPattern&&searchPatternFrames.has(selectedSearchPattern)){
+ const pattern=selectedSearchPattern,occurrence=selectedOccurrence;
+ if(restoreSearchFrame(searchPatternFrames.get(pattern)))paintSearchSelection(pattern,occurrence);
+}
 searchStorageReady=true;
 addEventListener('pagehide',saveSearchState);
 
@@ -1520,7 +1610,7 @@ if(window.XorFieldCameraModule){
 <script src="xor-space-sequence.js?v=019"></script>
 <script src="xor-space-player.js?v=019"></script>
 <script src="xor-space-export.js?v=019"></script>
-<script src="glyphen-menu.js?v=055"></script>
+<script src="glyphen-menu.js?v=056"></script>
 <script>
 window.xorSpaceView=window.XorAxesSpace.mount(document.getElementById('spaceMount'),window.xorSpaceSnapshot);
 window.xorSpacePlayer=window.mountXorSpacePlayer(document.getElementById('spaceMount'),window.xorSpaceView);

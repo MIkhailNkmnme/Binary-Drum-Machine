@@ -113,7 +113,7 @@
   };
   const originalNames = new WeakMap();
   function readable(button) {
-   if (button.classList.contains('tile') || button.classList.contains('found-chip') || button.hasAttribute('data-menu-navigation')) return;
+   if (button.classList.contains('tile') || button.classList.contains('found-chip') || button.classList.contains('search-pattern') || button.hasAttribute('data-menu-navigation')) return;
    if (!originalNames.has(button)) originalNames.set(button, button.getAttribute('aria-label') || button.title || '');
    const full = plain(button), id = button.id;
    let label = labels[id];

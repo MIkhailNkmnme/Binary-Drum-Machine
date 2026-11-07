@@ -188,3 +188,20 @@ html body main .caption #fitFieldTop[data-compact]{width:112px!important;min-wid
 html body main .xs-export-range{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
 html body main .xs-export-range>label{grid-column:1/-1}
 html body main .preview-row>.figure-pair{padding:0!important;margin:0!important;gap:2px!important;align-content:start}
+
+/* XOR-062: one selected occurrence, other hits remain quiet. */
+html body main .search-pattern-list{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;max-height:240px;overflow:auto;margin:2px 0}
+html body main .search-pattern-list:empty{display:none}
+html body main button.search-pattern{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%!important;min-width:0!important;max-width:100%!important;padding:0 6px!important;font:14px/20px "AzBuk Mono",var(--font)!important;text-align:left}
+html body main .search-pattern-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+html body main .search-pattern small{flex:none;font-size:12px;line-height:16px}
+html body main button.search-pattern.found{border-color:#ffe14d66!important;color:#e4ce73!important}
+html body main button.search-pattern[aria-pressed=true]{border-color:#ffe14d!important;box-shadow:inset 0 0 0 1px #ffe14d!important;color:#ffe14d!important}
+html body main .search-highlight .line.found{background:#ffe14d24;color:var(--ink)}
+html body main .search-highlight .line.current{background:#ffe14d70;color:var(--ink)}
+html body main .search-cell-other{fill:#ffe14d;fill-opacity:.12;stroke:#ffe14d;stroke-opacity:.25;stroke-width:.04}
+html body main .search-cell-current{fill:#ffe14d;fill-opacity:.78;stroke:#fff5a5;stroke-opacity:1;stroke-width:.14}
+html body main .search-input-wrap{background:var(--menu-btn)}
+html body main #searchPattern{background:transparent!important;color:transparent!important;caret-color:var(--menu-text)}
+html body main #searchPattern,html body main .search-highlight{font-family:"AzBuk Mono",var(--font),monospace;font-size:14px;line-height:20px;padding:4px}
+html body main .search-highlight .line{line-height:20px;min-height:20px}
