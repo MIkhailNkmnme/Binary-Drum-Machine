@@ -6,7 +6,7 @@
   const [row, figures, position, overlay, search, digits, field, colors, film] = sections;
   const view = document.createElement('section');
   view.innerHTML = '<h2>Вид</h2><div class="group role"></div>';
-  for (const id of ['ghostToggle','gridToggle','digitsToggle','shadowToggle','zerosToggle','topToggle']) {
+  for (const id of ['ghostToggle','gridToggle','digitsToggle','emptyZerosToggle','shadowToggle','zerosToggle','topToggle']) {
    const button = document.getElementById(id), previous = button.parentElement;
    view.querySelector('.group').append(button);
    if (!previous.children.length) previous.remove();
@@ -91,7 +91,7 @@
    allLeft:'Все влево',allRight:'Все вправо',resetPositions:'Вернуть на лучи',xor:'XOR',union:'Объединить',solo:'Только выбранная',
    searchRun:'Поиск в кадре',searchAll:'По всем кадрам',searchClear:'Очистить',searchAxes:'По осям',searchLoops:'Сквозные линии',searchFoundClear:'Очистить найденное',
    cellAuto:'Вписать по ширине',resetColors:'Сбросить цвета',makeGif:'Сохранить GIF',cancelGif:'Отмена GIF',makeVideo:'Сохранить видео',cancelVideo:'Отмена видео',
-   layoutCenter:'Общий центр',layoutRow:'В ряд',rowOriginal:'Исходные позиции',rowPalette:'Синяя палитра',fitFieldTop:'Вписать',fieldZoomOut:'−',fieldZoomIn:'+'
+   layoutCenter:'Общий центр',layoutRow:'В ряд',rowOriginal:'Исходные позиции',rowPalette:'Палитры',fitFieldTop:'Вписать',fieldZoomOut:'−',fieldZoomIn:'+'
   };
   const plain = button => {
    const copy = button.cloneNode(true); copy.querySelectorAll('.ico').forEach(icon => icon.remove());
@@ -103,7 +103,8 @@
    if (!originalNames.has(button)) originalNames.set(button, button.getAttribute('aria-label') || button.title || '');
    const full = plain(button), id = button.id;
    let label = labels[id];
-   if (id === 'digitsToggle') label = button.getAttribute('aria-pressed') !== 'true' ? 'Цифры выкл' : button.querySelector('.ico')?.textContent === '0/1' ? 'Только нули' : 'Цифры 1/0';
+   if (id === 'digitsToggle') label = 'Цифры XOR';
+   if (id === 'emptyZerosToggle') label = 'Нули в пустых';
    if (id === 'play' || id === 'thumbPlay') label = button.getAttribute('aria-pressed') === 'true' ? 'Пауза' : 'Пуск';
    if (button.dataset.motion) label = ({variants:'Перебор 6144',spin:'Поворот',cross:'Крест 90',unique:'256 поворотов',cross24:'24 креста'})[button.dataset.motion];
    if (button.dataset.radius) label = button.dataset.radius === 'auto' ? 'Авто-сдвиг' : 'Вручную';
