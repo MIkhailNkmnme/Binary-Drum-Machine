@@ -473,7 +473,7 @@
       { const button=document.createElement('button');button.type='button';button.id='mayApexWalk';button.dataset.n='mayApexWalk';button.className='gz-hx';
         const name=document.createElement('span');name.className='gz-nm';name.textContent='Ход XOR';button.append(name);
         button.dataset.maySearchAliases='Проход вершин|Расширяющийся маятник|XOR вершин';
-        button.gzSync=()=>{const state=window.maySequenceField?.get(),on=!!state?.apexWalk;button.disabled=!state?.apexWalkSupported;button.classList.toggle('gz-on',on);button.setAttribute('aria-pressed',String(on));button.title='Ход XOR: −1, 0, +1, 0, −1, −2, −1, 0, +1, +2… Размах растёт при развороте. Вершина переключается по XOR с 1, ниже старое ⊕ левый ⊕ правый от обновлённой вершины. Щелчок перестраивает поле. Для обычного Маятника без своего источника и Перескока.';button.setAttribute('aria-label',button.title);};
+        button.gzSync=()=>{const state=window.maySequenceField?.get(),on=!!state?.apexWalk;button.disabled=!state?.apexWalkSupported;button.classList.toggle('gz-on',on);button.setAttribute('aria-pressed',String(on));button.title='Ход XOR: сначала исходный конус в 0 с вершиной 1; затем −1, 0, +1, 0, −1, −2, −1, 0, +1, +2… Размах растёт при развороте. Вершина переключается по XOR с 1, ниже старое ⊕ левый ⊕ правый от обновлённой вершины. Щелчок перестраивает поле. Для обычного Маятника без своего источника и Перескока.';button.setAttribute('aria-label',button.title);};
         button.onclick=e=>{e.stopPropagation();const api=window.maySequenceField;api?.setApexWalk(!api.get().apexWalk);button.gzSync();rail.refresh();};
         toolSync.push(button.gzSync);addEventListener('may-compare-change',button.gzSync);button.gzSync();pop.append(section(button,'fields'));
       }

@@ -4,9 +4,9 @@
   const walk=s=>!!s&&s.sequenceApexWalk===true&&!s.sequenceSourceOn&&!s.compareSource&&!s.edgeWrap&&!s.pair&&s.mode==='pend';
   const active=s=>!!s&&!s.sequenceSourceOn&&!s.compareSource&&(s.sequenceOwnGrid===true||s.sequenceInverseAbove===true||walk(s));
   const stride=s=>active(s)&&s.sequenceOwnGrid?2:1;
-  const key=s=>active(s)?'ordinary-v1:'+stride(s)+':'+Number(!!s.sequenceInverseAbove)+':'+Number(!!s.edgeWrap)+(walk(s)?':apex-walk-xor-v1':''):s&&!s.sequenceSourceOn&&!s.compareSource&&s.edgeWrap?'ordinary-edge-v1':'';
-  const LEGACY_MESSAGE='Работа обычного Маятника сохранена до включения вариантов решётки и инверсии. Перестройте поле; исходные файлы сохранены.';
-  const legacy=s=>active(s)&&s.constructionEvolution!==1;
+  const key=s=>active(s)?'ordinary-v1:'+stride(s)+':'+Number(!!s.sequenceInverseAbove)+':'+Number(!!s.edgeWrap)+(walk(s)?':apex-walk-xor-v2-seeded':''):s&&!s.sequenceSourceOn&&!s.compareSource&&s.edgeWrap?'ordinary-edge-v1':'';
+  const LEGACY_MESSAGE='Работа Маятника сохранена другой версией построения. Перестройте поле; исходные файлы сохранены.';
+  const legacy=s=>active(s)&&(s.constructionEvolution!==1||walk(s)&&s.apexWalkEvolution!==2);
   function assertCompatible(s){if(legacy(s))throw Error(LEGACY_MESSAGE);}
   function wrap(s,offset){
     if(!s.edgeWrap||s.sequenceSourceOn||s.compareSource)return offset;
@@ -59,6 +59,6 @@
   }
   function run(field,apices,depth,invert=false,lastAt,stamp,xorApex=false){for(const r of rows(field,apices,depth,invert,lastAt,stamp,xorApex)){/* shared full and manual pass */}return field;}
   function step(field,geo,s,index,lastAt,stamp=index+1){return run(field,offsets(s,index).map(n=>geo.anchor+n),s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,stamp,walk(s));}
-  function initial(field,geo,s,lastAt){if(s.pair&&s.mode==='pend')run(field,[geo.anchor],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);return field;}
+  function initial(field,geo,s,lastAt){if(walk(s)){const a=geo.anchor,old=field.val[a];field.val[a]=1;if(lastAt&&old!==1)lastAt[a]=0;run(field,[a],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);}else if(s.pair&&s.mode==='pend')run(field,[geo.anchor],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);return field;}
   return {active,walk,walkOffset,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
 });
