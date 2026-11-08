@@ -293,3 +293,7 @@ body.mayatnik-menu-ready>header>.may-brand{position:fixed;left:var(--may-brand-l
 .may-header-triangle.may-standard-open>.may-standard-outline{display:none!important}
 
 .may-header-triangle.zgh-head>.zgh-icon.may-header-abbrev{top:2px!important;height:11px!important;font-size:10px!important;line-height:11px!important}
+
+/* Числовые поля стандартных кнопок: только боковые стрелки, без системного вертикального счётчика. */
+:is(body.mayatnik-menu-ready,#paintTools) .gz-control input[type=number]{-moz-appearance:textfield;appearance:textfield}
+:is(body.mayatnik-menu-ready,#paintTools) .gz-control input[type=number]::-webkit-inner-spin-button,:is(body.mayatnik-menu-ready,#paintTools) .gz-control input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;display:none;margin:0}
