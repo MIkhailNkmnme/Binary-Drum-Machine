@@ -39,7 +39,7 @@
   for(const [value,text]of [['powers','Степени x'],['multiples','Кратно x'],['rows','По строкам']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;mode.append(opt);}
   mode.value=o.mode?.()||'rows';mode.setAttribute('aria-label','Вариант уменьшения');baseInput.type='number';baseInput.min='2';baseInput.max='10000';baseInput.step='1';baseInput.value=String(o.base?.()||2);baseInput.setAttribute('aria-label','Число x');baseInput.title='Число x';
   let exporting=false;
-  const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exporting=true;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value),method:method.value});}finally{exporting=false;exportButton.disabled=['viewport','phases'].includes(method.value);}};
+  const exportButton=doc.createElement('button');exportButton.type='button';exportButton.textContent='В Гиф-Масштаб';exportButton.title='Перенести все построения в окно Гиф-Масштаб';exportButton.onclick=async()=>{if(!source||exportButton.disabled)return;exporting=true;exportButton.disabled=true;try{await o.onExport?.({mode:mode.value,base:Number(baseInput.value),step:Number(input.value),method:method.value,page:phasePage});}finally{exporting=false;exportButton.disabled=method.value==='viewport';}};
   const heightMode=doc.createElement('select');heightMode.setAttribute('aria-label','Высота нижних построений');heightMode.title='Высота нижних построений';for(const [value,text]of [['original','Высота оригинала'],['cell','Высота ячейки'],['native','Истинный размер'],['integer','Целое ≥ оригинала']]){const opt=doc.createElement('option');opt.value=value;opt.textContent=text;heightMode.append(opt);}heightMode.value=['original','cell','native','integer'].includes(o.heightMode?.())?o.heightMode():'original';
   const field=(control,caption)=>{
    const box=doc.createElement('div');box.className='gz-hx may-standard may-scale-stack__field';
@@ -93,7 +93,7 @@
    syncPhaseControls();
    const dpr=win.devicePixelRatio||1,w=Math.max(240,host.clientWidth-16),centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||w)/2;
    element.style.width=w+'px';element.style.marginLeft=Math.max(0,centre-w/2)+'px';controls.style.marginLeft='0px';controls.style.transform='none';
-   exportButton.disabled=true;exportButton.title='Все фазы показаны в живой ленте; это набор изображений, а не один GIF.';
+   exportButton.disabled=exporting;exportButton.title='Перенести все фазы текущей страницы в окно Гиф-Масштаб';
    for(const item of items){
     const cw=item.size.width/dpr,ch=item.size.height/dpr;
     item.element.style.width=Math.max(140,cw+8)+'px';item.element.style.height=(ch+56)+'px';item.element.style.paddingTop='0px';item.element.style.marginLeft='0px';

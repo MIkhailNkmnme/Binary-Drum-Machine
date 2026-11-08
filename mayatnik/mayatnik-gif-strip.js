@@ -121,7 +121,7 @@
   const frameTrack=group?.track||track,frameUrls=group?.urls||urls;
   const cell=doc.createElement('div');cell.className='may-gif-strip-frame';
   const imageBox=doc.createElement('div');imageBox.className='may-gif-strip-image';
-  const button=doc.createElement('button');button.type='button';button.className='may-gif-strip-select';button.title='Выбрать кадр '+(index+1)+', строк: '+entry.rows;button.setAttribute('aria-label',button.title);
+  const button=doc.createElement('button');button.type='button';button.className='may-gif-strip-select';button.title='Выбрать кадр '+(index+1)+(entry.label?', '+entry.label:', строк: '+entry.rows);button.setAttribute('aria-label',button.title);
   const img=doc.createElement('img');img.loading='lazy';img.decoding='async';img.dataset.frameUrl=frameUrls[index];if(observer)observer.observe(img);else img.src=frameUrls[index];img.alt='Кадр '+(index+1);img.draggable=false;button.append(img);
   button.addEventListener('click',()=>{if(group)activate(group,index);else select(index);});
   button.addEventListener('keydown',event=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;if(group&&activeGroup!==group)activate(group,index);let next=index;if(event.key==='ArrowRight')next++;else if(event.key==='ArrowLeft')next--;else if(event.key==='Home')next=0;else if(event.key==='End')next=items.length-1;else return;event.preventDefault();select(next,true);});
@@ -129,7 +129,7 @@
   handle.addEventListener('pointerdown',event=>{if((event.button!==undefined&&event.button!==0)||event.isPrimary===false)return;event.preventDefault();finish();if(group)activate(group,index);else select(index);drag={id:event.pointerId,x:event.clientX,y:event.clientY,edge,handle};section.classList.add('may-gif-resizing');try{handle.setPointerCapture(event.pointerId);}catch{}});
   handle.addEventListener('keydown',event=>{const step=event.shiftKey?32:8;let value=edge;if(event.key==='ArrowRight'||event.key==='ArrowDown')value+=step;else if(event.key==='ArrowLeft'||event.key==='ArrowUp')value-=step;else if(event.key==='Home')value=64;else if(event.key==='End')value=maxEdge();else return;event.preventDefault();resize(value);});
   handle.addEventListener('lostpointercapture',finish);
-  const caption=doc.createElement('div');caption.className='may-gif-strip-caption';caption.textContent=(index+1)+' · '+entry.rows+' строк';
+  const caption=doc.createElement('div');caption.className='may-gif-strip-caption';caption.textContent=(index+1)+' · '+(entry.label||entry.rows+' строк');
   const checkLabel=doc.createElement('label'),checkbox=doc.createElement('input');checkbox.type='checkbox';checkbox.checked=true;checkbox.className='may-gif-frame-check';checkbox.setAttribute('aria-label','Включить кадр '+(index+1)+' в GIF и XOR');checkLabel.className='may-gif-frame-check-label';checkLabel.append(checkbox);checkLabel.append('В GIF / XOR');
   const item={cell,button,handle,checkbox,included:true,caption,captionText:caption.textContent,rows:entry.rows,entry};checkbox.addEventListener('change',()=>{item.included=checkbox.checked;if(group&&activeGroup!==group)activate(group,index);selectionStatus();});
   imageBox.append(button,handle);cell.append(imageBox,caption,checkLabel);frameTrack.append(cell);return item;
@@ -224,7 +224,7 @@
   release();setDelay(options.delay??variants[0].delay??100);groups=next;searchOptions=options;tracksArea.replaceChildren();tracksArea.classList.add('may-gif-strip-tracks-many');searchBar.hidden=false;configure(options);
   overlay=doc.createElement('canvas');overlay.className='may-gif-strip-overlay';overlay.setAttribute('aria-hidden','true');display.append(overlay);
   if(observer){observer.disconnect();observer=new win.IntersectionObserver(entries=>{for(const e of entries){if(e.isIntersecting&&tracksArea.contains(e.target))e.target.src=e.target.dataset.frameUrl;else e.target.removeAttribute('src');}},{root:tracksArea,rootMargin:'200px'});}
-  const names={canvas:'Как на холсте',nearest:'Ближайший',majority:'Большинство',average:'Средний цвет',pixels:'На весь кадр',scale:'Уменьшать'};
+  const names={canvas:'Как на холсте',nearest:'Ближайший',majority:'Большинство',average:'Средний цвет',pixels:'На весь кадр',scale:'Уменьшать',phases:'Все фазы'};
   for(const group of groups){group.label=(names[group.variant.method]||group.variant.method)+' · '+(names[group.variant.presentation]||group.variant.presentation);group.element=doc.createElement('div');group.element.className='may-gif-strip-variant';group.element.dataset.variant=String(group.variant.id);group.heading=doc.createElement('button');group.heading.type='button';group.heading.className='may-gif-strip-variant-label';group.heading.textContent=group.label;group.heading.title=group.label;group.heading.addEventListener('click',()=>activate(group));group.track=doc.createElement('div');group.track.className='may-gif-strip-track';group.track.setAttribute('aria-label',group.label);group.track.tabIndex=0;group.element.append(group.heading,group.track);tracksArea.append(group.element);group.items=group.variant.frames.map((f,i)=>frame(f,i,group));}
   setBusy(busy);reveal();activate(groups.find(g=>g.variant.id===options.selectedVariant)||groups[0],Number.isInteger(options.selectedIndex)?options.selectedIndex:0);refreshSearch();return true;
  }
