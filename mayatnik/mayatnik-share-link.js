@@ -77,6 +77,7 @@
     const axisColour=(obj,key)=>{if(obj[key]!==undefined&&(typeof obj[key]!=='string'||!/^#[0-9a-f]{6}$/i.test(obj[key])))throw Error('В ссылке некорректный цвет оси: '+key);};
     for(const key of ['ztPaintColour1','ztPaintColour0'])axisColour(state,key);
     if(Array.isArray(state.zl))for(const axis of state.zl)if(isPlainObject(axis))for(const key of ['paintColour1','paintColour0'])axisColour(axis,key);
+    if(state.gifScaleStackPhasePage!=null)integer(state.gifScaleStackPhasePage,0,1562499,'В ссылке неверная страница фаз');
     if(state.gifScaleStackStep!=null)integer(state.gifScaleStackStep,1,65535,'В ссылке неверный шаг высоты нижних треугольников');
     for(const key of ['ochkiSkipSpaces','ochkiEveryFrame'])if(state[key]!=null&&typeof state[key]!=='boolean')throw Error('В ссылке неверная настройка поиска: '+key);
     if(state.ochkiRowReverseMask!=null&&typeof state.ochkiRowReverseMask!=='boolean')throw Error('В ссылке неверный режим пустот реверса');

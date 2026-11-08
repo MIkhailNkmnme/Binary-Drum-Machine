@@ -35,3 +35,11 @@
 .may-scale-stack__controls .may-scale-stack__field .gz-nm{font:10px/1.2 sans-serif;flex:none}
 .may-scale-stack__controls>.may-standard{justify-content:center}
 .may-scale-stack__controls select option{background:#1b2430;color:#dfe6f5}
+
+/* All residue classes of one integer factor, in a horizontal strip. */
+.may-scale-stack__phase-note{font:12px/1.4 sans-serif;color:#b7cadf;margin:4px 0;max-width:100%;white-space:normal}
+.may-scale-stack--phases .may-scale-stack__controls{width:100%;height:auto;flex-wrap:wrap}
+.may-scale-stack--phases .may-scale-stack__list{display:flex;flex-flow:row nowrap;align-items:flex-start;gap:8px;overflow-x:auto;overflow-y:hidden;max-width:100%;padding-bottom:8px;overscroll-behavior-x:contain}
+.may-scale-stack--phases .may-scale-stack__level{display:flex!important;flex-direction:column;align-items:center;gap:4px;flex:none;position:relative;min-width:140px;padding:0!important}
+.may-scale-stack--phases .may-scale-stack__label{position:static;transform:none;white-space:normal;width:100%;max-width:100%;min-height:36px;text-align:center}
+.may-scale-stack--phases .may-scale-stack__canvas{max-width:none;image-rendering:pixelated;flex:none}

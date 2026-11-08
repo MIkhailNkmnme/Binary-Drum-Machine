@@ -5,7 +5,7 @@
  const state=()=>o.state(),report=text=>o.report?.(text);
  function sync(){o.onState?.({recording:!!job||starting||finishing,starting,finishing,stack:enabled,pending:job?.pending||0});}
  function source(){try{const captured=o.capture();lastSource=captured;return captured;}catch(error){if(o.sourcePending?.()&&lastSource)return lastSource;throw error;}}
- const stack=o.Stack.create({host:o.host,fillWidth:true,heightMode:o.heightMode,onHeightMode:o.onHeightMode,method:o.method,onMethod:o.onMethod,reduce:o.reduce,mode:o.mode,base:o.base,onSequence:o.onSequence,onExport:o.onExport,stepRows:o.stepRows,onStepRows:o.onStepRows,captureSource:source,onError:error=>{enabled=false;stack.setEnabled(false);if(!job)lastSource=null;o.onStackError?.(error);report(error.message||String(error));sync();},onPaint:o.onPaint});
+ const stack=o.Stack.create({host:o.host,fillWidth:true,heightMode:o.heightMode,onHeightMode:o.onHeightMode,method:o.method,onMethod:o.onMethod,phasePage:o.phasePage,onPhasePage:o.onPhasePage,reduce:o.reduce,mode:o.mode,base:o.base,onSequence:o.onSequence,onExport:o.onExport,stepRows:o.stepRows,onStepRows:o.onStepRows,captureSource:source,onError:error=>{enabled=false;stack.setEnabled(false);if(!job)lastSource=null;o.onStackError?.(error);report(error.message||String(error));sync();},onPaint:o.onPaint});
  function layout(){if(o.layout)stack.refreshLayout(o.layout());}
  function setStack(value){enabled=!!value;stack.setEnabled(enabled);if(!enabled&&!job)lastSource=null;layout();sync();if(enabled)o.redraw?.();return enabled;}
  function failed(error,current=job){
