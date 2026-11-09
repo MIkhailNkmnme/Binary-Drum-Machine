@@ -103,7 +103,7 @@
   const picker = src => { const c = document.createElement('input'); c.type = 'color'; c.tabIndex = -1; c.setAttribute('aria-hidden', 'true');
     Object.assign(c.style, { position: 'fixed', width: '1px', height: '1px', opacity: '0', pointerEvents: 'none', left: '0', top: '0' }); document.body.append(c);
     c.addEventListener('input', () => { src.value = c.value; fire(src); });
-    return a => { const r = a.getBoundingClientRect(); c.style.left = Math.round(r.right) + 'px'; c.style.top = Math.round(r.top) + 'px'; c.value = src.value; try { c.showPicker(); } catch (_) { c.click(); } }; };
+    return (a, value=src.value) => { const r = a.getBoundingClientRect(); c.style.left = Math.round(r.right) + 'px'; c.style.top = Math.round(r.top) + 'px'; c.value = value; try { c.showPicker(); } catch (_) { c.click(); } }; };
   const tgl = id => { const e = $(id); return { tip: tip(e), on: () => e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"],.on'), click: () => e.click(), dis: () => e.disabled }; };
   const pair = (a, b, la, lb, o = {}) => ({ type: 'pair', cls: 'gz-split gz-bs' + (o.cls ? ' ' + o.cls : ''), name: o.name || la + ' · ' + lb, mid: '', tip: o.tip || (a.tip + ' · ' + b.tip),
     ...(o.dis ? { disabled: o.dis } : {}), parts: [{ label: la, tip: a.tip, on: a.on, click: a.click, ...(a.open ? { open: a.open, ink: a.ink } : {}) }, { label: lb, tip: b.tip, on: b.on, click: b.click, ...(b.open ? { open: b.open, ink: b.ink } : {}) }] });
@@ -253,7 +253,7 @@
     if(mid){
       const frame=$('frame'),P=$('bPlay'),[previous,next]=cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)');
       const thumb=document.createElement('span'),tail=document.createElement('span'),value=document.createElement('span');
-      const glyph=document.createElement('span'),caption=document.createElement('span');
+      const glyph=document.createElement('span'),caption=document.createElement('span'),stopButton=document.createElement('button');
       cell.classList.add('may-frame-slider');
       cell.style.setProperty('background','transparent','important');
       cell.style.setProperty('clip-path','none','important');
@@ -267,12 +267,12 @@
       glyph.className='may-frame-play-glyph';glyph.setAttribute('aria-hidden','true');
       tail.append(value,glyph);
       thumb.append(tail);cell.append(thumb);caption.className='may-frame-caption';cell.parentElement.append(caption);
+      stopButton.type='button';stopButton.className='may-bb-rs may-frame-stop';stopButton.textContent='×';stopButton.hidden=true;
+      stopButton.setAttribute('aria-label','Остановить и вернуться на кадр 0');cell.append(stopButton);
       const track=MayatnikHeatPeriodControl.attachTrack(cell,'may-frame-track');
-      const ns=track.svg.namespaceURI;
-      for(const [side,d]of [['start','M12 1L1 12L12 23'],['end','M108 1L119 12L108 23']]){
-        const path=document.createElementNS(ns,'path');
-        path.setAttribute('class','may-frame-track-'+side);path.setAttribute('d',d);track.svg.append(path);
-      }
+      const startArrow=document.createElementNS(track.svg.namespaceURI,'path'),endArrow=document.createElementNS(track.svg.namespaceURI,'path');
+      startArrow.setAttribute('class','may-frame-track-start');startArrow.setAttribute('d','M12 1L1 12L12 23');
+      endArrow.setAttribute('class','may-frame-track-end');track.svg.append(startArrow,endArrow);
       const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
       const playing=()=>P.getAttribute('aria-pressed')==='true';
       const playSync=()=>{
@@ -280,25 +280,19 @@
         cell.classList.toggle('may-frame-running',on);
         glyph.textContent=on?'Ⅱ':'▶';
         tail.setAttribute('aria-description',on?'Enter или пробел — пауза.':'Enter или пробел — пуск.');
-        previous.title=on?'Остановить и вернуться на кадр 0':'На предыдущий кадр';
-        next.title=on?'Пауза':'На следующий кадр';
-        for(const arrow of [previous,next])arrow.setAttribute('aria-label',arrow.title);
+        endArrow.setAttribute('d',on?'M108 1L119 12L108 23':'M119 1L108 12L119 23');
       };
-      const togglePlay=()=>{P.click();playSync();rail.refresh();};
+      const togglePlay=()=>{P.click();playSync();rail.refresh();side();};
       const resetFrame=()=>{if(playing())P.click();frame.value='0';fire(frame);rail.refresh();side();};
-      for(const arrow of [previous,next]){
-        arrow.setAttribute('role','button');arrow.tabIndex=0;
-        arrow.addEventListener('click',event=>{
-          if(frame.disabled||playing()){
-            event.preventDefault();event.stopImmediatePropagation();
-            if(!frame.disabled){if(arrow===previous)resetFrame();else togglePlay();}
-          }
-        },true);
+      stopButton.addEventListener('pointerdown',event=>event.stopPropagation());
+      stopButton.addEventListener('click',event=>{event.stopPropagation();resetFrame();});
+      for(const [arrow,title] of [[previous,'На предыдущий кадр'],[next,'На следующий кадр']]){
+        arrow.setAttribute('role','button');arrow.tabIndex=0;arrow.title=title;arrow.setAttribute('aria-label',title);
         arrow.addEventListener('keydown',event=>{
           if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopImmediatePropagation();arrow.click();}
         },true);
       }
-      new MutationObserver(playSync).observe(P,{attributes:true,attributeFilter:['aria-pressed']});playSync();
+      new MutationObserver(()=>{playSync();side();}).observe(P,{attributes:true,attributeFilter:['aria-pressed']});playSync();
       const playPlace=()=>{
         if(window.mayFramePlace){window.mayFramePlace();return;}
         const bar=$('mayBottomBar'),ax=window.mayAxisX?.(),cur=parseFloat(bar.style.getPropertyValue('--axdx'))||0,C=cell.getBoundingClientRect(),BR=bar.getBoundingClientRect(),c0=C.left+C.width/2-cur;
@@ -358,7 +352,8 @@
       const side=()=>{
         const low=Number(frame.min),high=Number(frame.max),current=Number(frame.value);
         thumbWidth=Math.min(64,Math.max(44,20+String(frame.max).length*7));
-        const left=track.sync(high>low?(current-low)/(high-low):0,thumbWidth);
+        const on=playing(),left=track.sync(high>low?(current-low)/(high-low):0,thumbWidth,on?108:119);
+        stopButton.hidden=on||current<=low;
         cell.classList.toggle('may-frame-at-start',current===low);
         cell.classList.toggle('may-frame-at-end',high>low&&current===high);
         for(const [prop,px]of [['--may-thumb-left',left],['--may-thumb-right',120-left-thumbWidth],['--may-thumb-width',thumbWidth]]){
@@ -1259,6 +1254,21 @@
     toolSync.push(sync);sync();
   }
   installHeatChoices(gModes);
+  {
+    const api=window.mayKraftShadows,help='Тени Kraftwerk: светлый кант и тёмная тень видимых единиц';
+    const probe=document.createElement('button');probe.title=help;
+    const b=ptBtn('kraftShadows','copy',probe,()=>{api.toggle();placeTools();});
+    b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
+    const label=document.createElement('span');label.className='gz-nm';label.textContent='Тени';label.dataset.userLabel='';b.append(label);
+    gModes.append(b);
+    toolSync.push(()=>{
+      const available=api.available(),on=available&&api.get();
+      b.disabled=!available;b.classList.toggle('on',on);b.classList.toggle('gz-on',on);
+      b.setAttribute('aria-pressed',String(on));
+      b.title=available?help:help+' · для плоского поля на процессоре';
+      b.setAttribute('aria-label',b.title);
+    });
+  }
   { const owner=gModes.querySelector('[data-view-overlay="contours"]'),mode=gModes.querySelector('[data-n="bitContourMode"]'),colours=gModes.querySelector('[data-n="bitContourColours"]');
     if(owner&&mode&&colours){const group=document.createElement('div');group.className='may-contours-group';group.setAttribute('role','group');group.setAttribute('aria-label','Контуры: включение, способ обводки и цвета');
       const frame=document.createElementNS('http://www.w3.org/2000/svg','svg');frame.classList.add('may-contours-frame');frame.setAttribute('viewBox','0 0 124 80');frame.setAttribute('aria-hidden','true');frame.innerHTML='<path d="M14 1H110L123 14 117 27 123 40 117 53 123 66 110 79H14L1 66 7 53 1 40 7 27 1 14Z"/>';
@@ -2287,6 +2297,18 @@
       option.setAttribute('aria-label',option.title);
     }
   }
+  function syncViewSwatches(row){
+    const palette=row.dataset.viewOverlay==='contours'?window.mayBitContourPalette?.():null;
+    for(const [index,dot] of [...row.querySelectorAll('.may-view-swatch')].entries()){
+      const src=$(dot.dataset.source),colour=palette?palette.colours[index]:src.value;
+      if(palette){
+        dot.style.visibility=colour?'':'hidden';dot.disabled=!colour;
+        const title=palette.auto?'Цвет линии «Авто». Изменение включает «Свои».':src.title;
+        dot.title=title;dot.setAttribute('aria-label',title);
+      }
+      if(colour&&dot.dataset.colour!==colour){dot.dataset.colour=colour;dot.style.backgroundColor=colour;}
+    }
+  }
   function decorateViewPalette(list,owner){
     if(!owner?.dataset.viewMode)return;
     const options=[...$('view').options].filter(o=>!o.hidden&&!o.disabled&&['col','bits','rgbNeighbours'].includes(o.value));
@@ -2322,16 +2344,18 @@
         ids.forEach((id,j)=>{const src=$(id),dot=document.createElement('button');dot.type='button';dot.className='may-view-swatch';dot.dataset.noMini='';dot.dataset.source=id;dot.title=src.title||src.getAttribute('aria-label');dot.setAttribute('aria-label',dot.title);
           if(!viewPalettePickers.has(id))viewPalettePickers.set(id,picker(src));
           dot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();});
-          dot.addEventListener('click',e=>{e.stopPropagation();if(viewModeButtons.has(mode)&&$('view').value!==mode){$('view').value=mode;$('view').dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();return;}viewPalettePickers.get(id)(dot);});
+          dot.addEventListener('click',e=>{e.stopPropagation();if(viewModeButtons.has(mode)&&$('view').value!==mode){$('view').value=mode;$('view').dispatchEvent(new Event('change',{bubbles:true}));rail.refresh();placeTools();return;}viewPalettePickers.get(id)(dot,mode==='overlay-contours'?window.mayBitContourPalette?.().colours[j]:undefined);});
           if(j)row.append(dot);else row.prepend(dot);
         });
       }
-      for(const dot of row.querySelectorAll('.may-view-swatch')){const colour=$(dot.dataset.source).value;if(dot.dataset.colour!==colour){dot.dataset.colour=colour;dot.style.backgroundColor=colour;}}
+      syncViewSwatches(row);
     });
   }
    window.addEventListener('may-rgb-neighbours-update',()=>document.querySelectorAll('.may-rgb-palette').forEach(syncRGBPalette));
    $('view').addEventListener('change',()=>document.querySelectorAll('.may-rgb-palette').forEach(syncRGBPalette));
    decorateViewPalette(gModes,viewModeButtons.get('rgbNeighbours'));
+   const contourSwatches=gModes.querySelector('[data-view-overlay="contours"]');
+   if(contourSwatches)toolSync.push(()=>syncViewSwatches(contourSwatches));
   function nameListButton(b){
     const names={viewCycle:'Виды поля',fontCycle:'Шрифт',fixMirror:'Зеркало ↑',fixAxis:'Ось',mirCol:'Цвет зеркал',noband:'Полосы',layerSelect:'Слои',paintColourReset:'Сброс цветов'};
     const title=b.dataset.listTitle||names[b.dataset.n]||b.querySelector('.gz-nm')?.textContent.trim()||b.title||'Варианты';b.dataset.listTitle=title;b.classList.add('may-named-list');b.setAttribute('aria-label',title);
