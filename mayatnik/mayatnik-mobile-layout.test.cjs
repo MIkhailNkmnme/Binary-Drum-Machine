@@ -50,11 +50,12 @@ test('assembly placement keeps every option reachable above a keyboard and overr
  assert.match(menu,/visualViewport\?\.addEventListener\('resize',reflowAssembly\)/);assert.match(menu,/visualViewport\?\.addEventListener\('scroll',reflowAssembly\)/);
 });
 
-test('touch target and generator adapt only their intended geometry; captions can scroll without reaching Play',()=>{
- assert.match(css,/@media\(pointer:coarse\)\{\s*#mayBottomBar>\.may-frame-tail\{width:24px;margin-left:-12px\}\s*#mayBottomBar>\.may-frame-tail::before,#mayBottomBar>\.may-frame-tail::after\{left:12px\}/);
- assert.equal(-12+12,0,'visible line stays at the previous pointer coordinate');
- const caption=rule(css,'body.may-mobile-menu #mayBottomBar>.may-frame-caption');assert.equal(caption['overflow-x'],'auto');assert.equal(caption['pointer-events'],'auto');assert.equal(caption['touch-action'],'pan-x');assert.equal(caption['z-index'],'9');assert.equal(rule(css,'#mayBottomBar>.may-frame-tail')['z-index'],'10');
- assert.match(menu,/cell\.parentElement\.append\(caption,tail\)/);assert.match(menu,/cell\.addEventListener\('pointerdown'/,'Play handling belongs to the sibling cell, not the caption parent');
+test('the split grip remains draggable on touch and the caption scrolls independently',()=>{
+ assert.match(css,/\.may-frame-thumb\{[^}]*width:var\(--may-thumb-width\)[^}]*z-index:7/);
+ const grip=rule(css,'.may-frame-tail');assert.equal(grip.inset,'0');assert.equal(grip['touch-action'],'none');
+ const caption=rule(css,'body.may-mobile-menu #mayBottomBar>.may-frame-caption');assert.equal(caption['overflow-x'],'auto');assert.equal(caption['pointer-events'],'auto');assert.equal(caption['touch-action'],'pan-x');assert.equal(caption['z-index'],'9');
+ assert.match(menu,/thumb\.append\(tail,pl\);cell\.append\(thumb\)/);
+ assert.match(menu,/cell\.parentElement\.append\(caption\)/);
  assert.equal(rule(css,'body.may-mobile-menu .may-rombo-row .may-rows-line input')['font-size'],'16px');
  assert.equal(rule(panel,'body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator')['grid-template-columns'],'repeat(4,minmax(0,1fr))');assert.equal(rule(panel,'body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>label:nth-child(-n+4)')['grid-column'],'span 2');assert.equal(rule(panel,'body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>label:nth-child(5)')['grid-row'],'3');assert.equal(rule(panel,'body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>.mtp-command')['grid-row'],'3');
  for(const width of [320,360,390,430]){const inner=width-24,track=(inner-6)/4;assert.ok(2*track+2>=120);assert.ok(track>=60,'60px standard commands fit the separate third row');}

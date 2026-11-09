@@ -248,87 +248,114 @@
     // v0.358: «эти тоже» — кнопки «Поля» (Построить, N/3, 4N, Построчно, До N/3) — в список «Хорр»
     bbCells.btns = [...(box?.querySelectorAll('.gz-soty > .gz-hx') || [])].filter(c => ['Построить', 'N/3', '4N', 'Построчно', 'До N/3'].includes(c.querySelector('.gz-nm')?.textContent.trim()));
     const cell = box?.querySelectorAll('.gz-wide > .gz-hx')[i]; if (cell) { bar.style.setProperty('--c', g.color); bar.append(cell); } }
-  // v0.330: «помести туда Сброс — в 0 с очисткой от всего»: свёртки, окраска, зеркала, выделение шаблонов — выкл, затем «Очистить» (поле с кадра 0)
-  {
-    // v0.335: «Сброс прямо в ползунке рядом с плеем». v0.339: «ширину в 2 раза меньше, плей всегда по центру, бегунок текущего кадра — вертикальная линия
-    // в 2 px, за неё перемещать, и поверх всех»: ▶ / ❚❚ и «✖» стоят в середине дорожки, линия-бегунок (grozd .gz-th без thumb) — над ними
-    const cell = $('mayBottomBar').querySelector('.gz-sl'), mid = cell?.querySelector('.gz-mid'), th = mid?.querySelector('.gz-th');
-    if (mid) { const stop=e=>e.stopPropagation();let scrubPointer=null,playPress=null;
-      const pl = document.createElement('button'); pl.type = 'button'; pl.className = 'may-bb-play'; pl.addEventListener('pointerdown',stop); pl.addEventListener('pointerup',stop); pl.addEventListener('click',stop);
-      const transportArrows=[...cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)')];
-      const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true';cell.classList.toggle('may-frame-running',on);pl.textContent=on?'Ⅱ':'▶';pl.title=on?'Анимация: пауза':'Анимация: пуск';pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on));for(const [i,arrow]of transportArrows.entries()){if(on)arrow.dataset.transportGlyph=i===0?'✕':'Ⅱ';else delete arrow.dataset.transportGlyph;const title=on?(i===0?'Остановить и вернуться на кадр 0':'Пауза'):(i===0?'На предыдущий кадр':'На следующий кадр');arrow.title=title;arrow.setAttribute('aria-label',title);} };
-      for(const [i,arrow]of transportArrows.entries()){arrow.setAttribute('role','button');arrow.tabIndex=0;arrow.addEventListener('click',event=>{if(P.getAttribute('aria-pressed')!=='true')return;event.preventDefault();event.stopImmediatePropagation();P.click();if(i===0){$('frame').value='0';fire($('frame'));}plSync();rail.refresh();},true);arrow.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopImmediatePropagation();arrow.click();}},true);}
-      pl.addEventListener('pointerdown',event=>{playPress=event.button===0&&scrubPointer===null&&cell.classList.contains('may-frame-play-reveal')&&pl.getClientRects().length?{id:event.pointerId,x:event.clientX,y:event.clientY,released:false}:null;});
-      pl.addEventListener('pointerup',event=>{if(playPress?.id===event.pointerId)playPress.released=Math.hypot(event.clientX-playPress.x,event.clientY-playPress.y)<=3;});
-      pl.addEventListener('pointercancel',()=>{playPress=null;});
-      addEventListener('pointermove',event=>{if(playPress&&playPress.id===event.pointerId&&Math.hypot(event.clientX-playPress.x,event.clientY-playPress.y)>3)playPress=null;},true);
-      pl.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&cell.classList.contains('may-frame-play-reveal')&&pl.getClientRects().length){event.preventDefault();event.stopPropagation();playPress={keyboard:true,released:true};pl.click();}});
-      pl.onclick=event=>{event.preventDefault();event.stopPropagation();const explicit=playPress?.released;playPress=null;if(!explicit||scrubPointer!==null||!cell.classList.contains('may-frame-play-reveal')||!pl.getClientRects().length)return;P.click();plSync();rail.refresh();};
-      new MutationObserver(plSync).observe(P,{attributes:true,attributeFilter:['aria-pressed']});plSync();mid.append(pl);
-      // подпись «кадр N» — в 6 px от линии (слева, нет места — справа)
-      // v0.348: «не видно номера кадра» — подпись обходит середину (▶ и «✖»): слева от линии, нет места или налезает — справа, иначе — сразу за краем ▶ / ✖ со стороны линии
-      // v0.395: «плей по центру оси»: ▶ и «✖» — на оси якоря (window.mayAxisX), прижаты к краям дорожки; страница зовёт при прокрутке и масштабе (window.mayPlayPlace)
-      // v0.399: «плей по середине ползунка, и ползунок по середине — на оси»: ▶ / ✖ — снова в середине дорожки; на ось ставится середина ползунка —
-      // сдвигом всей связки «×N | ползунок | время | Хорр» (--axdx у полосы), не дальше краёв полосы
-      const pcx = () => mid.clientWidth / 2, playPlace = () => { if(window.mayFramePlace){window.mayFramePlace();return;}const bar = $('mayBottomBar'), ax = window.mayAxisX?.(); if (!bar) return;
-        const cur = parseFloat(bar.style.getPropertyValue('--axdx')) || 0, C = cell.getBoundingClientRect(), BR = bar.getBoundingClientRect(), c0 = C.left + C.width / 2 - cur;
-        const grp = [...bar.children].filter(e => e.matches('.may-bb-half, .gz-sl, #mayBbHorr')).map(e => e.getBoundingClientRect()), L0 = Math.min(...grp.map(r => r.left)) - cur, R0 = Math.max(...grp.map(r => r.right)) - cur;
-        let dx = Number.isFinite(ax) ? ax - c0 : 0; dx = Math.max(BR.left + 4 - L0, Math.min(BR.right - 4 - R0, dx)); const v = Math.round(dx) + 'px'; if (bar.style.getPropertyValue('--axdx') !== v) { bar.style.setProperty('--axdx', v); window.mayBotPlace?.(); } };   // v0.406: связка сдвинулась — группы внизу обходят её заново
-      window.mayPlayPlace = playPlace;
-      // v0.442: число сразу под линией бегунка; вне шестиугольника, чтобы его не обрезало.
-      cell.classList.add('may-rows-slider','may-frame-slider');
-      const fieldOutline=document.createElementNS('http://www.w3.org/2000/svg','svg');fieldOutline.classList.add('may-frame-field-outline');fieldOutline.setAttribute('viewBox','0 0 120 24');fieldOutline.setAttribute('aria-hidden','true');const fieldPath=document.createElementNS(fieldOutline.namespaceURI,'path');fieldPath.setAttribute('d','M12 1H108L97 12 108 23H12L23 12Z');fieldOutline.append(fieldPath);cell.append(fieldOutline);
-      const vl = mid.querySelector('.gz-vl'),caption=document.createElement('span'),tail=document.createElement('span');caption.className='may-frame-caption';tail.className='may-frame-tail';tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');tail.setAttribute('aria-orientation','horizontal');tail.title='Тянуть пунктир, в том числе под кнопкой, — выбрать кадр';cell.parentElement.append(caption,tail);
+  // The frame player uses the same split X as the heat period.
+  { const cell=$('mayBottomBar').querySelector('.gz-sl'),mid=cell?.querySelector('.gz-mid');
+    if(mid){
+      const frame=$('frame'),P=$('bPlay'),[previous,next]=cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)');
+      const thumb=document.createElement('span'),tail=document.createElement('span'),value=document.createElement('span');
+      const pl=document.createElement('button'),unit=document.createElement('span'),glyph=document.createElement('span'),caption=document.createElement('span');
+      cell.classList.add('may-frame-slider');
+      cell.style.setProperty('background','transparent','important');
+      cell.style.setProperty('clip-path','none','important');
+      cell.style.setProperty('padding','0','important');
+      cell.title='Кадр: тянуть бегунок; двойной щелчок — кадр 0; ▶ — пуск / пауза';
+      previous.classList.add('may-frame-prev');next.classList.add('may-frame-next');
+      mid.hidden=true;mid.setAttribute('aria-hidden','true');mid.tabIndex=-1;
+      thumb.className='may-frame-thumb';tail.className='may-frame-tail';value.className='may-frame-value';
+      tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');
+      tail.title='Тянуть, чтобы выбрать кадр; двойной щелчок — кадр 0';
+      tail.append(value);
+      pl.type='button';pl.className='may-bb-play';unit.textContent='кд';unit.setAttribute('data-user-label','');pl.append(unit,glyph);
+      thumb.append(tail,pl);cell.append(thumb);caption.className='may-frame-caption';cell.parentElement.append(caption);
+      const track=MayatnikHeatPeriodControl.attachTrack(cell,'may-frame-track');
+      const ns=track.svg.namespaceURI;
+      for(const [side,d]of [['start','M12 1L1 12L12 23'],['end','M108 1L119 12L108 23']]){
+        const path=document.createElementNS(ns,'path');
+        path.setAttribute('class','may-frame-track-'+side);path.setAttribute('d',d);track.svg.append(path);
+      }
       const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
-      const startFrameScrub=event=>{
-        const frame=$('frame');if(event.button!==0||frame.disabled)return;
-        event.preventDefault();event.stopPropagation();hideFramePlay();if(P.getAttribute('aria-pressed')==='true')P.click();
-        tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);tail.classList.add('may-frame-dragging');
-        const low=Number(frame.min)||0,high=Number(frame.max),start=(Number(frame.value)-low)/Math.max(1,high-low),origin=event.clientX,span=Math.max(1,mid.getBoundingClientRect().width-16);
-        const move=e=>{if(e.pointerId!==event.pointerId)return;e.preventDefault();frameModel.setFrac(Math.max(0,Math.min(1,start+(e.clientX-origin)/span)));rail.refresh();side();};
-        const end=e=>{if(e.pointerId!==event.pointerId)return;tail.removeEventListener('pointermove',move);tail.removeEventListener('pointerup',end);tail.removeEventListener('pointercancel',end);tail.removeEventListener('lostpointercapture',end);tail.classList.remove('may-frame-dragging');if(tail.hasPointerCapture(event.pointerId))tail.releasePointerCapture(event.pointerId);finishFrameScrub(e);};
-        tail.addEventListener('pointermove',move);tail.addEventListener('pointerup',end);tail.addEventListener('pointercancel',end);tail.addEventListener('lostpointercapture',end);
+      const playing=()=>P.getAttribute('aria-pressed')==='true';
+      const playSync=()=>{
+        const on=playing();
+        cell.classList.toggle('may-frame-running',on);
+        glyph.textContent=on?'Ⅱ':'▶';
+        pl.title=on?'Анимация: пауза':'Анимация: пуск';
+        pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on));
+        previous.title=on?'Остановить и вернуться на кадр 0':'На предыдущий кадр';
+        next.title=on?'Пауза':'На следующий кадр';
+        for(const arrow of [previous,next])arrow.setAttribute('aria-label',arrow.title);
       };
-      tail.addEventListener('pointerdown',startFrameScrub);
-      tail.addEventListener('keydown',event=>{const frame=$('frame'),low=Number(frame.min)||0,high=Number(frame.max),next=event.key==='Home'?low:event.key==='End'?high:event.key==='ArrowLeft'?Number(frame.value)-1:event.key==='ArrowRight'?Number(frame.value)+1:null;if(next===null)return;event.preventDefault();event.stopPropagation();hideFramePlay();frame.value=String(Math.max(low,Math.min(high,next)));fire(frame);rail.refresh();side();});
-      const hideFramePlay=()=>cell.classList.remove('may-frame-play-reveal');
-      const onFrameThumb=event=>{const t=th.getBoundingClientRect();return Math.abs(event.clientX-t.left-t.width/2)<=6&&event.clientY>=t.top-3&&event.clientY<=t.bottom;};
-      const revealFramePlay=event=>{
-        if(event.buttons||scrubPointer!==null)return;
-        const thumb=onFrameThumb(event);cell.classList.toggle('may-frame-thumb-hover',thumb);
-        cell.classList.toggle('may-frame-play-reveal',!thumb);
+      const togglePlay=()=>{P.click();playSync();rail.refresh();};
+      const resetFrame=()=>{if(playing())P.click();frame.value='0';fire(frame);rail.refresh();side();};
+      for(const type of ['pointerdown','pointerup'])pl.addEventListener(type,event=>event.stopPropagation());
+      pl.addEventListener('click',event=>{event.stopPropagation();togglePlay();});
+      for(const arrow of [previous,next]){
+        arrow.setAttribute('role','button');arrow.tabIndex=0;
+        arrow.addEventListener('click',event=>{
+          if(frame.disabled||playing()){
+            event.preventDefault();event.stopImmediatePropagation();
+            if(!frame.disabled){if(arrow===previous)resetFrame();else togglePlay();}
+          }
+        },true);
+        arrow.addEventListener('keydown',event=>{
+          if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopImmediatePropagation();arrow.click();}
+        },true);
+      }
+      new MutationObserver(playSync).observe(P,{attributes:true,attributeFilter:['aria-pressed']});playSync();
+      const playPlace=()=>{
+        if(window.mayFramePlace){window.mayFramePlace();return;}
+        const bar=$('mayBottomBar'),ax=window.mayAxisX?.(),cur=parseFloat(bar.style.getPropertyValue('--axdx'))||0,C=cell.getBoundingClientRect(),BR=bar.getBoundingClientRect(),c0=C.left+C.width/2-cur;
+        const grp=[...bar.children].filter(e=>e.matches('.may-bb-half, .gz-sl, #mayBbHorr')).map(e=>e.getBoundingClientRect()),L0=Math.min(...grp.map(r=>r.left))-cur,R0=Math.max(...grp.map(r=>r.right))-cur;
+        const dx=Math.max(BR.left+4-L0,Math.min(BR.right-4-R0,Number.isFinite(ax)?ax-c0:0)),v=Math.round(dx)+'px';
+        if(bar.style.getPropertyValue('--axdx')!==v){bar.style.setProperty('--axdx',v);window.mayBotPlace?.();}
       };
-      cell.addEventListener('pointerenter',revealFramePlay);cell.addEventListener('pointermove',revealFramePlay);
-      cell.addEventListener('pointerleave',()=>{hideFramePlay();cell.classList.remove('may-frame-thumb-hover');});cell.addEventListener('pointercancel',hideFramePlay);addEventListener('blur',hideFramePlay);
-      const beginFrameScrub=event=>{scrubPointer=event.pointerId;playPress=null;cell.classList.add('may-frame-scrubbing');hideFramePlay();};
-      const isPlayerField=target=>cell.contains(target)&&!target.closest('.gz-a');
-      cell.addEventListener('pointerdown',event=>{
-        if(event.button!==0||!isPlayerField(event.target))return;
-        if(onFrameThumb(event)){beginFrameScrub(event);startFrameScrub(event);return;}
-        event.preventDefault();event.stopImmediatePropagation();
-        playPress={id:event.pointerId,x:event.clientX,y:event.clientY,field:true};mid.focus({preventScroll:true});cell.classList.add('may-frame-play-reveal');
-      },true);
-      addEventListener('pointerup',event=>{
-        if(playPress?.id!==event.pointerId||!playPress.field)return;
-        const press=playPress;playPress=null;
-        if(scrubPointer!==null||Math.hypot(event.clientX-press.x,event.clientY-press.y)>3||!isPlayerField(event.target)||onFrameThumb(event))return;
-        P.click();plSync();rail.refresh();
-      },true);
-      cell.addEventListener('click',event=>{if(isPlayerField(event.target)&&!(event.detail===0&&event.target.closest('.may-bb-play'))){event.preventDefault();event.stopImmediatePropagation();}},true);
-      mid.addEventListener('keydown',event=>{if(event.target===mid&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopImmediatePropagation();cell.classList.add('may-frame-play-reveal');P.click();plSync();rail.refresh();}},true);
-      tail.addEventListener('pointerdown',event=>{if(event.button===0)beginFrameScrub(event);},true);
-      tail.addEventListener('pointerenter',()=>{if(scrubPointer===null)hideFramePlay();});
-      const finishFrameScrub=event=>{if(scrubPointer!==event.pointerId)return;scrubPointer=null;cell.classList.remove('may-frame-scrubbing');hideFramePlay();};
-      const resetFrameToZero=event=>{event.preventDefault();event.stopImmediatePropagation();playPress=null;hideFramePlay();if(P.getAttribute('aria-pressed')==='true')P.click();$('frame').value='0';fire($('frame'));rail.refresh();side();};
-      tail.addEventListener('dblclick',resetFrameToZero);cell.addEventListener('dblclick',event=>{if(onFrameThumb(event))resetFrameToZero(event);});
-      addEventListener('pointerup',finishFrameScrub,true);addEventListener('pointercancel',event=>{playPress=null;finishFrameScrub(event);},true);addEventListener('blur',()=>{scrubPointer=null;playPress=null;cell.classList.remove('may-frame-scrubbing','may-frame-thumb-hover');hideFramePlay();});
-      const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect();
-        const track=mid.getBoundingClientRect(),thumbX=t.left+t.width/2-track.left,valueWidth=vl.offsetWidth;
-        const valueX=Math.round(Math.max(0,Math.min(track.width-valueWidth,thumbX+6+valueWidth<=track.width?thumbX+6:thumbX-6-valueWidth)))+'px';
-        if(cell.style.getPropertyValue('--may-frame-value-left')!==valueX)cell.style.setProperty('--may-frame-value-left',valueX);
-        const x=Math.round(t.left+t.width/2-b.left-bar.clientLeft),y=c.bottom-b.top-bar.clientTop;
-        tail.style.left=x+'px';tail.style.top=(c.top-b.top-bar.clientTop+3)+'px';tail.style.height=(c.height*1.5-3)+'px';
-        for(const [key,value]of Object.entries({'aria-valuemin':$('frame').min,'aria-valuemax':$('frame').max,'aria-valuenow':$('frame').value}))if(tail.getAttribute(key)!==value)tail.setAttribute(key,value);
+      window.mayPlayPlace=playPlace;
+      let thumbWidth=44;
+      tail.addEventListener('pointerdown',event=>{
+        if(event.button!==0||!event.isPrimary||frame.disabled)return;
+        event.preventDefault();event.stopPropagation();
+        if(playing())P.click();
+        tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);cell.classList.add('may-frame-scrubbing');
+        const origin=event.clientX,start=frameModel.frac(),span=(72-thumbWidth)*cell.getBoundingClientRect().width/120;
+        const listeners=new AbortController(),options={signal:listeners.signal};
+        let last=frame.value;
+        tail.addEventListener('pointermove',e=>{
+          if(e.pointerId!==event.pointerId)return;
+          const fraction=Math.max(0,Math.min(1,start+(e.clientX-origin)/Math.max(1,span)));
+          const low=Number(frame.min),high=Number(frame.max),target=String(Math.round(low+(high-low)*fraction));
+          if(target===last)return;
+          last=target;frameModel.setFrac(fraction);rail.refresh();side();
+        },options);
+        const end=e=>{
+          if(e.pointerId!==event.pointerId)return;
+          listeners.abort();cell.classList.remove('may-frame-scrubbing');
+        };
+        for(const type of ['pointerup','pointercancel','lostpointercapture'])tail.addEventListener(type,end,options);
+      });
+      tail.addEventListener('keydown',event=>{
+        if(frame.disabled)return;
+        const low=Number(frame.min),high=Number(frame.max),current=Number(frame.value);
+        const target=event.key==='Home'?low:event.key==='End'?high:event.key==='ArrowLeft'?current-1:event.key==='ArrowRight'?current+1:null;
+        if(target===null&&event.key!=='Enter'&&event.key!==' ')return;
+        event.preventDefault();event.stopPropagation();
+        if(target===null){togglePlay();return;}
+        frame.value=String(Math.max(low,Math.min(high,target)));fire(frame);rail.refresh();side();
+      });
+      tail.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();if(!frame.disabled)resetFrame();});
+      const vl=mid.querySelector('.gz-vl');
+      const side=()=>{
+        const low=Number(frame.min),high=Number(frame.max),current=Number(frame.value);
+        thumbWidth=Math.min(64,Math.max(44,20+String(frame.max).length*7));
+        const left=track.sync(high>low?(current-low)/(high-low):0,thumbWidth);
+        for(const [prop,px]of [['--may-thumb-left',left],['--may-thumb-right',120-left-thumbWidth],['--may-thumb-width',thumbWidth]]){
+          const length=px+'px';if(cell.style.getPropertyValue(prop)!==length)cell.style.setProperty(prop,length);
+        }
+        if(value.textContent!==frame.value)value.textContent=frame.value;
+        const fontSize=Number(Math.min(11,(thumbWidth-14)/Math.max(1,frame.value.length)/.61).toFixed(2))+'px';
+        if(value.style.fontSize!==fontSize)value.style.fontSize=fontSize;
+        for(const [key,number]of [['aria-valuemin',frame.min],['aria-valuemax',frame.max],['aria-valuenow',frame.value]])
+          if(tail.getAttribute(key)!==number)tail.setAttribute(key,number);
+        const bar=cell.parentElement,c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect(),y=c.bottom-b.top-bar.clientTop;
         const center=Math.round(c.left+c.width/2-b.left-bar.clientLeft);
         caption.style.left=center+'px';caption.style.top=y+'px';
         const rows=Number($('frame').dataset.fieldRows)||Number($('rows').value)||0,width=Number($('frame').dataset.fieldWidth)||2*rows-1,factor=(width+1)/rows;
@@ -344,8 +371,10 @@
         const reduced=$('frame').dataset.renderedReduced==='true',shownRows=reduced?Number($('frame').dataset.renderedRows)||rows:rows,shownWidth=reduced?Number($('frame').dataset.renderedColumns)||width:Number($('frame').dataset.visibleFieldWidth)||width;
         renderFrameCaption(caption,[...type.split(' · '),...($('frame').dataset.apexWidth!==undefined?['по вершинам '+$('frame').dataset.apexWidth+' / '+$('frame').dataset.apexTargetWidth]:[]),shownRows+' строк',($('frame').dataset.apexWidth!==undefined?'поле ':reduced?'ширина ':([2,4,6,8].includes(factor)?factor+'N−1=':'ширина '))+shownWidth,...(frameAccuracyLabel($('frame'))?[frameAccuracyLabel($('frame'))]:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
       };
-      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style'],childList:true,characterData:true,subtree:true});valueObserver.observe($('frame'),{attributes:true,attributeFilter:['data-apex-width','data-apex-target-width','data-apex-min','data-apex-max','data-visible-field-width','data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
-      new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
+      const valueObserver=new MutationObserver(side);if(vl)valueObserver.observe(vl,{childList:true,characterData:true,subtree:true});valueObserver.observe(frame,{attributes:true,attributeFilter:['min','max','data-apex-width','data-apex-target-width','data-apex-min','data-apex-max','data-visible-field-width','data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side();
+    }
+  }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
   { const pres = [...source.querySelectorAll('button.pre')], wrapH = rail.el.querySelector('.gz-group[data-id="horr"]');
