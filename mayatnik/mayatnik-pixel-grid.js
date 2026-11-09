@@ -17,7 +17,7 @@
     return w<=MAX_SIDE&&h<=MAX_SIDE&&w*h<=MAX_PIXELS;
   }
 
-  function policy({angle=0,pieceTurns=[0],width,height,dpr=1,maxZoom=512,oneToOne=false,halfCells=false,viewport=false,overview=false,minRows=0}={}){
+  function policy({angle=0,pieceTurns=[0],width,height,dpr=1,maxZoom=512,oneToOne=false,halfCells=false,evenCells=false,viewport=false,overview=false,minRows=0}={}){
     if(!positive(width)||!positive(height)||!positive(dpr)||!positive(maxZoom))
       return fail('Неверные размеры поля, масштаб или плотность экрана.');
     if(!Number.isSafeInteger(angle/45)||!Array.isArray(pieceTurns)||!pieceTurns.length||
@@ -25,7 +25,7 @@
     const pieceParity=pieceTurns[0]&1,parity=((angle/45)&1)^pieceParity;
     if(!pieceTurns.every(t=>(t&1)===pieceParity))
       return fail('У частей разные направления сетки: общая точная ступень масштаба невозможна.');
-    const quantum=parity?Math.SQRT2:1,minK=halfCells&&!parity?2:1;
+    const quantum=parity?Math.SQRT2:evenCells?2:1,minK=halfCells&&!parity&&!evenCells?2:1;
     if(oneToOne&&(quantum!==1||minK!==1))
       return fail('Для этой сборки точный режим несовместим с 1:1.');
     const limit=viewport?maxZoom*dpr:Math.min(maxZoom*dpr,MAX_SIDE/width,MAX_SIDE/height);
@@ -84,8 +84,8 @@
   function format(scale,p){
     const r=raster(scale,p);
     if(!r)return '';
-    let n=r.k,d=r.divisor||1,a=n,b=d;while(b){const rest=a%b;a=b;b=rest;}n/=a;d/=a;
-    const numerator=p.quantum===1?String(n):(n===1?'':String(n))+'√2';
+    let n=r.k*(p.quantum===2?2:1),d=r.divisor||1,a=n,b=d;while(b){const rest=a%b;a=b;b=rest;}n/=a;d/=a;
+    const numerator=p.quantum===Math.SQRT2?(n===1?'':String(n))+'√2':String(n);
     return numerator+'/'+d;
   }
   return {policy,snap,step,raster,format,MAX_SIDE,MAX_PIXELS};

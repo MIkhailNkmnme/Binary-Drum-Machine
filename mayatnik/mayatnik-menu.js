@@ -1269,6 +1269,22 @@
       b.setAttribute('aria-label',b.title);
     });
   }
+  {
+    const api=window.mayStaggeredGrid,probe=document.createElement('button');
+    const help='Одна решётка: квадратные биты встык и сдвиг каждого второго ряда на половину бита.';
+    probe.title=help;
+    const b=ptBtn('staggeredGrid','grid4',probe,()=>{api.toggle();placeTools();});
+    b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
+    const label=document.createElement('span');label.className='gz-nm';label.textContent='Встык';label.dataset.userLabel='';b.append(label);
+    gModes.append(b);
+    toolSync.push(()=>{
+      const available=api.available(),on=api.get();
+      b.disabled=!available;b.classList.toggle('on',on);b.classList.toggle('gz-on',on);
+      b.setAttribute('aria-pressed',String(on));
+      b.title=available?help:help+' Для обычного плоского поля Маятника.';
+      b.setAttribute('aria-label',b.title);
+    });
+  }
   { const owner=gModes.querySelector('[data-view-overlay="contours"]'),mode=gModes.querySelector('[data-n="bitContourMode"]'),colours=gModes.querySelector('[data-n="bitContourColours"]');
     if(owner&&mode&&colours){const group=document.createElement('div');group.className='may-contours-group';group.setAttribute('role','group');group.setAttribute('aria-label','Контуры: включение, способ обводки и цвета');
       const frame=document.createElementNS('http://www.w3.org/2000/svg','svg');frame.classList.add('may-contours-frame');frame.setAttribute('viewBox','0 0 124 80');frame.setAttribute('aria-hidden','true');frame.innerHTML='<path d="M14 1H110L123 14 117 27 123 40 117 53 123 66 110 79H14L1 66 7 53 1 40 7 27 1 14Z"/>';

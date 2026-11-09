@@ -2,9 +2,11 @@
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-core.js'):MAYATNIK);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikConstruction=api;})(globalThis,function(Core){
   'use strict';
   const walk=s=>!!s&&s.sequenceApexWalk===true&&!s.sequenceSourceOn&&!s.compareSource&&!s.edgeWrap&&!s.pair&&s.mode==='pend';
-  const active=s=>!!s&&!s.sequenceSourceOn&&!s.compareSource&&(s.sequenceOwnGrid===true||s.sequenceInverseAbove===true||walk(s));
-  const stride=s=>active(s)&&s.sequenceOwnGrid?2:1;
-  const key=s=>active(s)?'ordinary-v1:'+stride(s)+':'+Number(!!s.sequenceInverseAbove)+':'+Number(!!s.edgeWrap)+(walk(s)?':apex-walk-xor-v2-'+(s.sequenceApexStart||'seed')+':'+(s.sequenceApexSides||'one')+':'+Number(!!s.sequenceApexZeroTwice):''):s&&!s.sequenceSourceOn&&!s.compareSource&&s.edgeWrap?'ordinary-edge-v1':'';
+  const staggered=s=>!!s?.staggeredGrid&&!s.animatrixOn&&!s.sequenceSourceOn&&!s.compareSource&&!s.edgeWrap;
+  const inverseAbove=s=>!!s.sequenceInverseAbove&&!staggered(s);
+  const active=s=>!!s&&!s.sequenceSourceOn&&!s.compareSource&&(staggered(s)||s.sequenceOwnGrid===true||s.sequenceInverseAbove===true||walk(s));
+  const stride=s=>active(s)&&(s.sequenceOwnGrid||staggered(s))?2:1;
+  const key=s=>active(s)?'ordinary-v1:'+stride(s)+':'+Number(inverseAbove(s))+':'+Number(!!s.edgeWrap)+(walk(s)?':apex-walk-xor-v2-'+(s.sequenceApexStart||'seed')+':'+(s.sequenceApexSides||'one')+':'+Number(!!s.sequenceApexZeroTwice):''):s&&!s.sequenceSourceOn&&!s.compareSource&&s.edgeWrap?'ordinary-edge-v1':'';
   const LEGACY_MESSAGE='Работа Маятника сохранена другой версией построения. Перестройте поле; исходные файлы сохранены.';
   const legacy=s=>active(s)&&(s.constructionEvolution!==1||walk(s)&&s.apexWalkEvolution!==2);
   function assertCompatible(s){if(legacy(s))throw Error(LEGACY_MESSAGE);}
@@ -39,7 +41,7 @@
     if(walk(s)&&s.sequenceApexSides==='both'){const n=offset(s,index);return n===0&&!s.sequenceApexZeroTwice?[0]:[n,-n];}
     return s.pair&&s.mode==='pend'?[wrap(s,-(index+1)*stride(s)),wrap(s,(index+1)*stride(s))]:[offset(s,index)];
   }
-  function rangeKey(s){return [s.rows,s.steps,s.mode,s.bg,+!!s.sequenceOwnGrid,+!!s.sequenceInverseAbove,s.sequenceApexStart||'seed',s.sequenceApexSides||'one',+!!s.sequenceApexZeroTwice].join(':');}
+  function rangeKey(s){return [s.rows,s.steps,s.mode,s.bg,+(stride(s)===2),+inverseAbove(s),s.sequenceApexStart||'seed',s.sequenceApexSides||'one',+!!s.sequenceApexZeroTwice].join(':');}
   const baseFrameCache=new WeakMap();
   function baseFrames(s){
     if(!walk(s))return s.steps;
@@ -93,7 +95,7 @@
     }
   }
   function run(field,apices,depth,invert=false,lastAt,stamp,xorApex=false){for(const r of rows(field,apices,depth,invert,lastAt,stamp,xorApex)){/* shared full and manual pass */}return field;}
-  function step(field,geo,s,index,lastAt,stamp=index+1){return run(field,offsets(s,index).map(n=>geo.anchor+n),s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,stamp,walk(s));}
-  function initial(field,geo,s,lastAt){if(walk(s)&&!['empty','skip'].includes(s.sequenceApexStart)){const a=geo.anchor,old=field.val[a];field.val[a]=1;if(lastAt&&old!==1)lastAt[a]=0;run(field,[a],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);}else if(s.pair&&s.mode==='pend')run(field,[geo.anchor],s.rows,active(s)&&!!s.sequenceInverseAbove,lastAt,0);return field;}
-  return {active,walk,walkOffset,rangeKey,baseFrames,frames,apexSpan,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
+  function step(field,geo,s,index,lastAt,stamp=index+1){return run(field,offsets(s,index).map(n=>geo.anchor+n),s.rows,active(s)&&inverseAbove(s),lastAt,stamp,walk(s));}
+  function initial(field,geo,s,lastAt){if(walk(s)&&!['empty','skip'].includes(s.sequenceApexStart)){const a=geo.anchor,old=field.val[a];field.val[a]=1;if(lastAt&&old!==1)lastAt[a]=0;run(field,[a],s.rows,active(s)&&inverseAbove(s),lastAt,0);}else if(s.pair&&s.mode==='pend')run(field,[geo.anchor],s.rows,active(s)&&inverseAbove(s),lastAt,0);return field;}
+  return {active,staggered,inverseAbove,walk,walkOffset,rangeKey,baseFrames,frames,apexSpan,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
 });
