@@ -7,10 +7,9 @@ test('frame and heat use the same split X geometry',()=>{
  assert.match(css,/\.may-frame-track-rail\{[^}]*stroke-dasharray:2 3/);
 });
 
-test('play stays on the thumb and has a separate target from dragging and reset',()=>{
+test('the entire grip toggles play on click and suppresses play after a drag',()=>{
  const source=read('mayatnik-menu.js');
- assert.match(source,/thumb\.append\(tail,pl\)/);
- assert.match(source,/pl\.addEventListener\('click',event=>\{event\.stopPropagation\(\);togglePlay\(\);\}\)/);
+ assert.match(source,/tail\.append\(value,glyph\)/);
  assert.match(source,/tail\.addEventListener\('pointerdown'/);
- assert.match(source,/tail\.addEventListener\('dblclick',[^\n]*resetFrame\(\)/);
+ assert.match(source,/tail\.addEventListener\('click',[\s\S]*?suppressClick[\s\S]*?togglePlay\(\)/);
 });

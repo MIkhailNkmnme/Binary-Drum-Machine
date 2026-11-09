@@ -253,20 +253,20 @@
     if(mid){
       const frame=$('frame'),P=$('bPlay'),[previous,next]=cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)');
       const thumb=document.createElement('span'),tail=document.createElement('span'),value=document.createElement('span');
-      const pl=document.createElement('button'),unit=document.createElement('span'),glyph=document.createElement('span'),caption=document.createElement('span');
+      const glyph=document.createElement('span'),caption=document.createElement('span');
       cell.classList.add('may-frame-slider');
       cell.style.setProperty('background','transparent','important');
       cell.style.setProperty('clip-path','none','important');
       cell.style.setProperty('padding','0','important');
-      cell.title='Кадр: тянуть бегунок; двойной щелчок — кадр 0; ▶ — пуск / пауза';
+      cell.title='Кадр: щелчок — пуск / пауза; тянуть бегунок — перемотка; двойной щелчок — кадр 0';
       previous.classList.add('may-frame-prev');next.classList.add('may-frame-next');
       mid.hidden=true;mid.setAttribute('aria-hidden','true');mid.tabIndex=-1;
       thumb.className='may-frame-thumb';tail.className='may-frame-tail';value.className='may-frame-value';
       tail.tabIndex=0;tail.setAttribute('role','slider');tail.setAttribute('aria-label','Бегунок кадра');
-      tail.title='Тянуть, чтобы выбрать кадр; двойной щелчок — кадр 0';
-      tail.append(value);
-      pl.type='button';pl.className='may-bb-play';unit.textContent='кд';unit.setAttribute('data-user-label','');pl.append(unit,glyph);
-      thumb.append(tail,pl);cell.append(thumb);caption.className='may-frame-caption';cell.parentElement.append(caption);
+      tail.title=cell.title;
+      glyph.className='may-frame-play-glyph';glyph.setAttribute('aria-hidden','true');
+      tail.append(value,glyph);
+      thumb.append(tail);cell.append(thumb);caption.className='may-frame-caption';cell.parentElement.append(caption);
       const track=MayatnikHeatPeriodControl.attachTrack(cell,'may-frame-track');
       const ns=track.svg.namespaceURI;
       for(const [side,d]of [['start','M12 1L1 12L12 23'],['end','M108 1L119 12L108 23']]){
@@ -279,16 +279,13 @@
         const on=playing();
         cell.classList.toggle('may-frame-running',on);
         glyph.textContent=on?'Ⅱ':'▶';
-        pl.title=on?'Анимация: пауза':'Анимация: пуск';
-        pl.setAttribute('aria-label',pl.title);pl.setAttribute('aria-pressed',String(on));
+        tail.setAttribute('aria-description',on?'Enter или пробел — пауза.':'Enter или пробел — пуск.');
         previous.title=on?'Остановить и вернуться на кадр 0':'На предыдущий кадр';
         next.title=on?'Пауза':'На следующий кадр';
         for(const arrow of [previous,next])arrow.setAttribute('aria-label',arrow.title);
       };
       const togglePlay=()=>{P.click();playSync();rail.refresh();};
       const resetFrame=()=>{if(playing())P.click();frame.value='0';fire(frame);rail.refresh();side();};
-      for(const type of ['pointerdown','pointerup'])pl.addEventListener(type,event=>event.stopPropagation());
-      pl.addEventListener('click',event=>{event.stopPropagation();togglePlay();});
       for(const arrow of [previous,next]){
         arrow.setAttribute('role','button');arrow.tabIndex=0;
         arrow.addEventListener('click',event=>{
@@ -310,27 +307,43 @@
         if(bar.style.getPropertyValue('--axdx')!==v){bar.style.setProperty('--axdx',v);window.mayBotPlace?.();}
       };
       window.mayPlayPlace=playPlace;
-      let thumbWidth=44;
+      let thumbWidth=44,scrubbing=false,suppressClick=false;
       tail.addEventListener('pointerdown',event=>{
-        if(event.button!==0||!event.isPrimary||frame.disabled)return;
+        if(event.button!==0||!event.isPrimary||frame.disabled||scrubbing)return;
         event.preventDefault();event.stopPropagation();
-        if(playing())P.click();
-        tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);cell.classList.add('may-frame-scrubbing');
-        const origin=event.clientX,start=frameModel.frac(),span=(72-thumbWidth)*cell.getBoundingClientRect().width/120;
+        scrubbing=true;suppressClick=false;
+        tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);
+        const x=event.clientX,y=event.clientY,span=(72-thumbWidth)*cell.getBoundingClientRect().width/120;
         const listeners=new AbortController(),options={signal:listeners.signal};
-        let last=frame.value;
+        let dragging=false,start,last;
         tail.addEventListener('pointermove',e=>{
           if(e.pointerId!==event.pointerId)return;
-          const fraction=Math.max(0,Math.min(1,start+(e.clientX-origin)/Math.max(1,span)));
+          const dx=e.clientX-x;
+          if(Math.hypot(dx,e.clientY-y)>=4)suppressClick=true;
+          if(!dragging){
+            if(Math.abs(dx)<4)return;
+            dragging=true;
+            if(playing())P.click();
+            start=frameModel.frac();last=frame.value;
+            cell.classList.add('may-frame-scrubbing');
+          }
+          const fraction=Math.max(0,Math.min(1,start+dx/Math.max(1,span)));
           const low=Number(frame.min),high=Number(frame.max),target=String(Math.round(low+(high-low)*fraction));
           if(target===last)return;
           last=target;frameModel.setFrac(fraction);rail.refresh();side();
         },options);
         const end=e=>{
           if(e.pointerId!==event.pointerId)return;
-          listeners.abort();cell.classList.remove('may-frame-scrubbing');
+          suppressClick ||= e.type!=='pointerup'||Math.hypot(e.clientX-x,e.clientY-y)>=4;
+          listeners.abort();scrubbing=false;cell.classList.remove('may-frame-scrubbing');
         };
         for(const type of ['pointerup','pointercancel','lostpointercapture'])tail.addEventListener(type,end,options);
+      });
+      tail.addEventListener('click',event=>{
+        event.stopPropagation();
+        if(frame.disabled||(event.detail!==0&&suppressClick))return;
+        if(event.detail===2)resetFrame();
+        else if(event.detail<2)togglePlay();
       });
       tail.addEventListener('keydown',event=>{
         if(frame.disabled)return;
@@ -341,12 +354,13 @@
         if(target===null){togglePlay();return;}
         frame.value=String(Math.max(low,Math.min(high,target)));fire(frame);rail.refresh();side();
       });
-      tail.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();if(!frame.disabled)resetFrame();});
       const vl=mid.querySelector('.gz-vl');
       const side=()=>{
         const low=Number(frame.min),high=Number(frame.max),current=Number(frame.value);
         thumbWidth=Math.min(64,Math.max(44,20+String(frame.max).length*7));
         const left=track.sync(high>low?(current-low)/(high-low):0,thumbWidth);
+        cell.classList.toggle('may-frame-at-start',current===low);
+        cell.classList.toggle('may-frame-at-end',high>low&&current===high);
         for(const [prop,px]of [['--may-thumb-left',left],['--may-thumb-right',120-left-thumbWidth],['--may-thumb-width',thumbWidth]]){
           const length=px+'px';if(cell.style.getPropertyValue(prop)!==length)cell.style.setProperty(prop,length);
         }

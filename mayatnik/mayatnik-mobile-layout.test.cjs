@@ -54,7 +54,7 @@ test('the split grip remains draggable on touch and the caption scrolls independ
  assert.match(css,/\.may-frame-thumb\{[^}]*width:var\(--may-thumb-width\)[^}]*z-index:7/);
  const grip=rule(css,'.may-frame-tail');assert.equal(grip.inset,'0');assert.equal(grip['touch-action'],'none');
  const caption=rule(css,'body.may-mobile-menu #mayBottomBar>.may-frame-caption');assert.equal(caption['overflow-x'],'auto');assert.equal(caption['pointer-events'],'auto');assert.equal(caption['touch-action'],'pan-x');assert.equal(caption['z-index'],'9');
- assert.match(menu,/thumb\.append\(tail,pl\);cell\.append\(thumb\)/);
+ assert.match(menu,/tail\.append\(value,glyph\);\s*thumb\.append\(tail\);cell\.append\(thumb\)/);
  assert.match(menu,/cell\.parentElement\.append\(caption\)/);
  assert.equal(rule(css,'body.may-mobile-menu .may-rombo-row .may-rows-line input')['font-size'],'16px');
  assert.equal(rule(panel,'body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator')['grid-template-columns'],'repeat(4,minmax(0,1fr))');assert.equal(rule(panel,'body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>label:nth-child(-n+4)')['grid-column'],'span 2');assert.equal(rule(panel,'body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>label:nth-child(5)')['grid-row'],'3');assert.equal(rule(panel,'body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>.mtp-command')['grid-row'],'3');
