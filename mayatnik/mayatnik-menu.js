@@ -272,7 +272,8 @@
       const track=MayatnikHeatPeriodControl.attachTrack(cell,'may-frame-track');
       const startArrow=document.createElementNS(track.svg.namespaceURI,'path'),endArrow=document.createElementNS(track.svg.namespaceURI,'path');
       startArrow.setAttribute('class','may-frame-track-start');startArrow.setAttribute('d','M12 1L1 12L12 23');
-      endArrow.setAttribute('class','may-frame-track-end');track.svg.append(startArrow,endArrow);
+      endArrow.setAttribute('class','may-frame-track-end');endArrow.setAttribute('d','M108 1L119 12L108 23');
+      track.svg.append(startArrow,endArrow);
       const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
       const playing=()=>P.getAttribute('aria-pressed')==='true';
       const playSync=()=>{
@@ -280,7 +281,6 @@
         cell.classList.toggle('may-frame-running',on);
         glyph.textContent=on?'Ⅱ':'▶';
         tail.setAttribute('aria-description',on?'Enter или пробел — пауза.':'Enter или пробел — пуск.');
-        endArrow.setAttribute('d',on?'M108 1L119 12L108 23':'M119 1L108 12L119 23');
       };
       const togglePlay=()=>{P.click();playSync();rail.refresh();side();};
       const resetFrame=()=>{if(playing())P.click();frame.value='0';fire(frame);rail.refresh();side();};
@@ -352,7 +352,7 @@
       const side=()=>{
         const low=Number(frame.min),high=Number(frame.max),current=Number(frame.value);
         thumbWidth=Math.min(64,Math.max(44,20+String(frame.max).length*7));
-        const on=playing(),left=track.sync(high>low?(current-low)/(high-low):0,thumbWidth,on?108:119);
+        const on=playing(),left=track.sync(high>low?(current-low)/(high-low):0,thumbWidth,!on);
         stopButton.hidden=on||current<=low;
         cell.classList.toggle('may-frame-at-start',current===low);
         cell.classList.toggle('may-frame-at-end',high>low&&current===high);
