@@ -79,7 +79,6 @@
     return out;
   }
   const firstScanRow = s => s.algorithm === 'copyRows' ? 2 : 1;
-  const copyRowsFrames = height => Math.ceil((Math.sqrt(1 + 8 * (height - 2)) - 1) / 2);
   function resetProgress(s) {
     const first = firstScanRow(s);
     s.stepCount = s.rowCount = s.cycle = 0;
@@ -289,29 +288,27 @@
   }
   function scanCopyRows(s, capture) {
     if (s.height < 3) { s.done = true; return; }
-    const start = s.cursorRow, width = s.width;
-    const count = Math.floor((1 + Math.sqrt(1 + 8 * (start - 2))) / 2);
-    const end = Math.min(start + count, s.height);
-    const sourceStart = count - 1;
-    const first = sourceStart + ((start - sourceStart) & 1);
+    const y = s.cursorRow, width = s.width;
+    const groupSize = Math.floor((1 + Math.sqrt(1 + 8 * (y - 2))) / 2);
+    const groupStart = 2 + groupSize * (groupSize - 1) / 2;
+    const sourceStart = groupSize - 1;
+    const first = sourceStart + ((groupStart - sourceStart) & 1);
+    const from = (first - (y - groupStart)) * width, to = y * width;
     if (s.copyMarkRange) s.copyMarks.fill(0, ...s.copyMarkRange);
-    s.copyMarkRange = [start * width, end * width];
-    // Each receiving row uses an earlier row of the same parity at identical columns.
-    for (let y = start; y < end; y++) {
-      const from = (first - (y - start)) * width, to = y * width;
-      capture(y);
-      for (let x = 0; x < width; x++) {
-        const source = from + x, target = to + x;
-        if (!s.present[source] || !s.present[target]) continue;
-        const toggle = s.bits[source];
-        s.bits[target] ^= toggle;
-        s.copyMarks[target] = toggle ? 1 : 2;
-      }
+    s.copyMarkRange = [to, to + width];
+    capture(y);
+    // The receiving row uses an earlier row of the same parity at identical columns.
+    for (let x = 0; x < width; x++) {
+      const source = from + x, target = to + x;
+      if (!s.present[source] || !s.present[target]) continue;
+      const toggle = s.bits[source];
+      s.bits[target] ^= toggle;
+      s.copyMarks[target] = toggle ? 1 : 2;
     }
     s.stepCount++;
-    s.rowCount += end - start;
-    s.cursorRow = end;
-    if (end === s.height) { s.cursorRow = 2; s.cycle++; }
+    s.rowCount++;
+    s.cursorRow++;
+    if (s.cursorRow === s.height) { s.cursorRow = 2; s.cycle++; }
     s.done = false;
   }
   function scanRow(s, capture) {
@@ -442,5 +439,5 @@
   }
   function seek(s, frame) { count(frame); reset(s); return advance(s, frame); }
   return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds, forkInitial, sameState,
-    copyRowsFrames, algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
+    algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
 });

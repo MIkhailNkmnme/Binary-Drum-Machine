@@ -117,6 +117,14 @@
     assertSource(source);return source;
   }
   function active(state){return state?.animatrixOn===true;}
+  function restoreFrame(state,frame,unit=state?.animatrixCopyRowsUnit){
+    if(!active(state)||state.animatrixAlgorithm!=='copyRows'||unit==='row'||!Number.isSafeInteger(frame)||frame<=0)return frame;
+    const height=state.animatrixSource?.height??state.rows;
+    if(!Number.isSafeInteger(height)||height<3)return frame;
+    // v0.959 counted a growing group of rows as one frame.
+    const rows=height-2,batches=Math.ceil((Math.sqrt(1+8*rows)-1)/2),partial=frame%batches;
+    return Math.min(Number.MAX_SAFE_INTEGER,Math.floor(frame/batches)*rows+partial*(partial+1)/2);
+  }
   function normalize(state){
     if(!state||typeof state!=='object'||Array.isArray(state))fail('Не заданы параметры Аниматрицы.');
     const next={...defaults(),...state};
@@ -125,7 +133,12 @@
     if(!['finite','infinite','repeat'].includes(next.animatrixCycleMode))fail('Неизвестный режим циклов Аниматрицы.');
     if(!Number.isSafeInteger(next.animatrixFrameMax)||next.animatrixFrameMax<0)fail('Некорректная граница кадров Аниматрицы.');
     if(next.animatrixEvolution!==EVOLUTION)fail('Работа сохранена с другой версией расчёта Аниматрицы.');
-    if(next.animatrixAlgorithm==='copyRows')next.animatrixTiming='rows';
+    if(next.animatrixAlgorithm==='copyRows'){
+      next.animatrixFrameMax=restoreFrame(next,next.animatrixFrameMax);
+      if(Number.isSafeInteger(next.invertFrame))next.invertFrame=restoreFrame(next,next.invertFrame);
+      next.animatrixCopyRowsUnit='row';
+      next.animatrixTiming='rows';
+    }
     if(next.animatrixTiming==='rows')next.animatrixDirection='down';
     if(active(next)){
       if(next.sequenceSourceOn||next.compareSource)fail('В Аниматрице одновременно включены разные источники поля.');
@@ -139,7 +152,7 @@
   function assertState(state){return normalize(state);}
   function geometry(state){const s=normalize(state),source=assertSource(s.animatrixSource);return {W:source.width,H:source.height,anchor:source.anchor};}
   const unlimited=state=>!!state&&['infinite','repeat'].includes(state.animatrixCycleMode);
-  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return s.animatrixAlgorithm==='copyRows'?Core.copyRowsFrames(source.height):s.animatrixTiming==='rows'?source.height-1:source.height;}
+  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return s.animatrixAlgorithm==='copyRows'?source.height-2:s.animatrixTiming==='rows'?source.height-1:source.height;}
   function frames(state){const s=normalize(state),cycle=cycleFrames(s);return unlimited(s)?Math.max(cycle,s.animatrixFrameMax):cycle*s.animatrixCycles;}
   function extend(state,requested){
     frameCount(requested);const cycle=cycleFrames(state);
@@ -230,5 +243,5 @@
     }
     return encode(seed,{anchor});
   }
-  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo};
+  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame};
 });
