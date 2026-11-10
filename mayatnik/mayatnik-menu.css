@@ -25,7 +25,7 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 .mayatnik-menu-ready #wrap{grid-column:2;grid-row:4;min-width:0;min-height:0}
 #mayBottomBar{display:none}
 .mayatnik-menu-ready #mayBottomBar{display:flex;grid-column:1/-1;grid-row:6;justify-content:center;align-items:center;min-width:0;padding:3px 8px;border-top:1px solid var(--line);background:#0d1119}   /* v0.327: нижняя полоса меню */
-#mayBottomBar{--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#121a30;--gz-txt:#dfe6f5;--gz-mut:#8592ad;color:var(--gz-txt);font:12px/1.2 "Segoe UI",Roboto,Arial,sans-serif;position:relative;min-height:0;padding:3px 4px!important;box-sizing:border-box}   /* v0.334: отступы вдвое меньше, кнопки — стандартной высоты 24 */
+#mayBottomBar{--may-frame-stop-width:18px;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#121a30;--gz-txt:#dfe6f5;--gz-mut:#8592ad;color:var(--gz-txt);font:12px/1.2 "Segoe UI",Roboto,Arial,sans-serif;position:relative;min-height:0;padding:3px 4px!important;box-sizing:border-box}   /* v0.334: отступы вдвое меньше, кнопки — стандартной высоты 24 */
 #mayBottomBar .gz-hx{background:color-mix(in srgb,var(--c) 75%,#000)}   /* v0.334: обводка кнопок полосы — яркая, как у «Прозр.» */   /* v0.330: переменные grozd (как в рейке) — ползунок не прозрачный; выше */
 #mayBottomBar>.gz-hx{width:min(260px,calc(100% - 270px));box-sizing:border-box}   /* v0.339: вдвое уже */
 /* v0.335: «Сброс прямо в ползунке рядом с плеем; плей побольше, ромб за границы немного»: ползунку полосы клип — шестиугольник плюс полосы над и под
@@ -774,7 +774,7 @@ header #paintTools .gz-group.pt-bot::after{display:none}
 .may-hp-pop .gz-sl .gz-vl{z-index:1}
 .may-hp-pop .gz-sl .gz-th{z-index:5}   /* v0.393: «бегунок вперёд текста» — ромб бегунка поверх подписи (в полосе и в списке «Хорр») */
 /* v0.399: середина ползунка кадра — на оси: связка нижней полосы сдвигается целиком (--axdx), ▶ / ✖ — в середине дорожки */
-#mayBottomBar>.may-bb-half,#mayBottomBar>.gz-sl,#mayBottomBar>#mayBbHorr{transform:translateX(var(--axdx,0px))}
+#mayBottomBar>.may-bb-half,#mayBottomBar>.may-frame-stop,#mayBottomBar>.gz-sl,#mayBottomBar>#mayBbHorr{transform:translateX(var(--axdx,0px))}
 #mayBottomBar .may-bb-rs{left:calc(50% + 21px)!important}
 header #paintTools.pt-dd .pt-view .pt-sec{background:transparent!important;border-radius:0}   /* v0.403: «отступы поправь, как в выпадающем списке» — без цветной подложки блоков: кнопки стоят ровно, кайма видна одинаково */
 
@@ -882,11 +882,11 @@ header #paintTools.pt-dd .pt-r{padding:0 2px;margin-left:-2px}
 /* v0.441: управление кадром занимает прежнее место правки; правка — внизу на оси. */
 .mayatnik-menu-ready #mayFooterBar{display:block;position:relative;grid-column:1/-1;grid-row:6;min-height:30px;border-top:1px solid var(--line);background:#000;z-index:9}
 #mayFooterBar>.pt-gridbg{position:absolute;pointer-events:none;background:#ffffff0b}
-header #paintTools.pt-grid>#mayBottomBar{position:absolute;top:0;width:calc(var(--may-frame-width,160px) + 180px);height:24px;min-height:24px;padding:0!important;border:0;background:transparent;overflow:visible}
+header #paintTools.pt-grid>#mayBottomBar{position:absolute;top:0;width:calc(var(--may-frame-width,160px) + 180px + var(--may-frame-stop-width));height:24px;min-height:24px;padding:0!important;border:0;background:transparent;overflow:visible}
 header #paintTools.pt-grid{min-height:42px}
 header #mayBottomBar>.gz-sl{flex:none;min-width:0;width:var(--may-frame-width,160px);max-width:none}
 #mayBottomBar>.may-frame-value{position:absolute;transform:translateX(-50%);padding:0 2px;color:var(--gz-txt,#dfe6f5);background:#000;font:10px/12px var(--mono,monospace);white-space:nowrap;pointer-events:none;z-index:11}
-header #mayBottomBar>.may-bb-half,header #mayBottomBar>.gz-sl{transform:none!important}
+header #mayBottomBar>:is(.may-bb-half,.may-frame-stop,.gz-sl){transform:none!important}
 #mayFooterBar.may-bbdrop{box-shadow:inset 0 0 0 2px color-mix(in srgb,#7cbcff 70%,transparent)}
 body.may-zen #mayFooterBar{display:none!important}
 @media(max-width:600px){
@@ -1055,7 +1055,7 @@ body.may-mobile-menu #mayMobileBar :is(.may-brand,.sub,#mayMenu,.pt-gridbg,.pt-g
 body.may-mobile-menu :is(#mayFooterBar,.may-menu-side-scroll,#mayMenuDockGrid){display:none!important}
 body.may-mobile-menu #mayBottomBar{display:flex!important;align-items:center!important;justify-content:flex-start!important;order:-3;width:340px!important;min-width:340px!important;max-width:340px!important;padding:0!important;border:0!important;overflow:visible!important;--may-frame-width:160px}
 /* The same live player escapes menu scrolling; desktop DOM homes stay untouched. */
-body.may-mobile-menu #mayMobileBar #mayBottomBar{position:fixed!important;inset:auto!important;left:calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2)!important;top:calc(36px + env(safe-area-inset-top))!important;transform:translateX(-50%)!important;translate:none!important;width:288px!important;min-width:288px!important;max-width:288px!important;--may-frame-width:120px!important;z-index:2}
+body.may-mobile-menu #mayMobileBar #mayBottomBar{position:fixed!important;inset:auto!important;left:calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2)!important;top:calc(36px + env(safe-area-inset-top))!important;transform:translateX(-50%)!important;translate:none!important;width:calc(288px + var(--may-frame-stop-width))!important;min-width:0!important;max-width:none!important;--may-frame-width:120px!important;z-index:2}
 body.may-mobile-menu #mayMobileBar #mayBottomBar>.gz-sl{width:120px!important;min-width:120px!important;max-width:120px!important}
 body.may-mobile-menu #mayBottomBar>.may-frame-caption{overflow-x:auto;overflow-y:hidden;max-width:calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right)));height:16px;box-sizing:border-box;pointer-events:auto;touch-action:pan-x;scrollbar-width:none;z-index:9}
 body.may-mobile-menu #mayBottomBar>.may-frame-caption::-webkit-scrollbar{display:none}
@@ -1155,13 +1155,12 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-frame-slider:is(.may-frame-scrubbing,:has(.may-frame-thumb:is(:hover,:focus-within))) :is(.may-frame-track-left,.may-frame-track-right){display:block;stroke:var(--c)}
 .may-frame-slider:has(.may-frame-prev:active) :is(.may-frame-track-left,.may-frame-track-left-frame),
 .may-frame-slider:has(.may-frame-next:active) :is(.may-frame-track-right,.may-frame-track-right-frame){stroke-width:3px}
-#mayBottomBar>.may-frame-slider>.may-frame-stop{
-  position:absolute;top:0;left:max(12px,calc(var(--may-thumb-left) - 20px))!important;
-  width:min(20px,calc(var(--may-thumb-left) - 12px));height:24px;margin:0;padding:0;border:0;
-  color:#ff4040;background:transparent;clip-path:none;z-index:9;font:700 21px/24px sans-serif
+#mayBottomBar>.may-frame-stop{
+  flex:0 0 var(--may-frame-stop-width);width:var(--may-frame-stop-width);height:24px;margin:0;padding:0;border:0;
+  color:#ff4040;background:transparent;cursor:pointer;font:700 21px/24px sans-serif
 }
-#mayBottomBar>.may-frame-slider>.may-frame-stop[hidden]{display:none!important}
-#mayBottomBar>.may-frame-slider>.may-frame-stop:is(:hover,:focus-visible){background:transparent;color:#ff7878}
+#mayBottomBar>.may-frame-stop[hidden]{display:block!important;visibility:hidden}
+#mayBottomBar>.may-frame-stop:is(:hover,:focus-visible){background:transparent;color:#ff7878}
 .may-frame-thumb{position:absolute;left:var(--may-thumb-left);top:0;width:var(--may-thumb-width);height:24px;z-index:7}
 .may-frame-tail{position:absolute;inset:0;display:block;text-align:center;cursor:pointer;touch-action:none;outline:0}
 .may-frame-scrubbing .may-frame-tail{cursor:grabbing}

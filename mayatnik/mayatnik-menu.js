@@ -267,7 +267,7 @@
       glyph.className='may-frame-play-glyph';glyph.setAttribute('aria-hidden','true');
       tail.append(value,glyph);
       thumb.append(tail);cell.append(thumb);caption.className='may-frame-caption';cell.parentElement.append(caption);
-      stopButton.type='button';stopButton.className='may-bb-rs may-frame-stop';stopButton.textContent='×';stopButton.hidden=true;
+      stopButton.type='button';stopButton.className='may-frame-stop';stopButton.textContent='×';stopButton.hidden=true;
       stopButton.setAttribute('aria-label','Остановить и вернуться на кадр 0');cell.append(stopButton);
       const track=MayatnikHeatPeriodControl.attachTrack(cell,'may-frame-track');
       const startArrow=document.createElementNS(track.svg.namespaceURI,'path'),endArrow=document.createElementNS(track.svg.namespaceURI,'path');
@@ -778,7 +778,14 @@
     document.addEventListener('keydown',event=>{if(popup&&event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);}},true);
     addEventListener('resize',place);window.visualViewport?.addEventListener('resize',place);window.visualViewport?.addEventListener('scroll',place);document.addEventListener('scroll',event=>{if(popup&&!popup.contains(event.target))place();},true);
     addEventListener('may-transport-change',sync);toolSync.push(sync);
-    const slider=$('mayBottomBar').querySelector(':scope > .gz-sl');if(slider){slider.before(bs);slider.after(bf);}else $('mayBottomBar').append(bs,bf);sync();
+    const bar=$('mayBottomBar'),slider=bar.querySelector(':scope > .gz-sl');
+    if(slider){
+      slider.before(bs);
+      const stop=slider.querySelector(':scope > .may-frame-stop');
+      if(stop)slider.before(stop);
+      slider.after(bf);
+    }else bar.append(bs,bf);
+    sync();
     const hr=$('mayBbHorr');if(hr)bf.after(hr);
   }
   rail.el.querySelector('.gz-group[data-id="build"]')?.remove(); // Управление полем уже перенесено в нижний пульт.
