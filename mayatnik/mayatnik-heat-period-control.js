@@ -1,10 +1,12 @@
 /* Heat period: open split X, masked dashed rail and independent side frames. */
 (function(root){
  'use strict';
- function attachTrack(host,variant){
+ function attachTrack(host,variant,{thumbFrame=false}={}){
   const doc=host.ownerDocument,ns='http://www.w3.org/2000/svg',svg=doc.createElementNS(ns,'svg');
   svg.classList.add('may-split-track',variant+'-outline');svg.setAttribute('viewBox','0 0 120 24');svg.setAttribute('aria-hidden','true');
-  const paths=['left','right','rail','left-frame','right-frame'].map(name=>{
+  const names=['left','right','rail','left-frame','right-frame'];
+  if(thumbFrame)names.push('thumb-frame');
+  const paths=names.map(name=>{
    const p=doc.createElementNS(ns,'path');p.setAttribute('class',variant+'-'+name);svg.append(p);return p;
   });
   host.append(svg);
@@ -19,6 +21,7 @@
     paths[2].setAttribute('d',`M12 12H${left}M${right} 12H108`);
     paths[3].setAttribute('d',`M12 1H${left+1}M12 23H${left+1}`);
     paths[4].setAttribute('d',`M${rightEdge} 1H108M${rightEdge} 23H108`);
+    paths[5]?.setAttribute('d',`M${left+1} 1H${rightEdge}M${left+1} 23H${rightEdge}`);
    }
    return left;
   }
