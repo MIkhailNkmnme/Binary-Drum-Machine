@@ -79,8 +79,8 @@
     return out;
   }
   const firstScanRow = s => s.algorithm === 'copyRows' ? 2 : 1;
-  function copyRowsCycleFrames(height, mirror) {
-    if (!mirror) return height - 2;
+  function copyRowsCycleFrames(height, mirror, byAxis) {
+    if (!mirror || byAxis) return height - 2;
     const lastAxis = Math.floor(height / 2);
     return lastAxis * (lastAxis - 1) / 2 + height - lastAxis - 1;
   }
@@ -106,6 +106,7 @@
     const initial = cloneSeed(seed), state = cloneSeed(initial);
     state.algorithm = algorithm; state.direction = direction; state.scan = scan;
     state.copyRowsMirror = algorithm === 'copyRows' && options.copyRowsMirror === true;
+    state.copyRowsByAxis = state.copyRowsMirror && options.copyRowsByAxis === true;
     Object.defineProperty(state, '_seed', { value: initial });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -113,7 +114,7 @@
   function snapshot(s) {
     return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
       stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done,
-      ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror } : {}) });
+      ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis } : {}) });
   }
   function reset(s) {
     const initial = cloneSeed(s._seed);
@@ -124,7 +125,7 @@
   // Independent calculator at the same immutable seed, without duplicating it.
   function forkInitial(s) {
     const state = cloneSeed(s._seed);
-    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror });
+    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis });
     Object.defineProperty(state, '_seed', { value: s._seed });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -139,7 +140,7 @@
     for (const key of KEYS) for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) return false;
     if (!!a.copyMarks !== !!b.copyMarks) return false;
     if (a.copyMarks) {
-      if (a.copyRowsMirror !== b.copyRowsMirror || a.copyAxis !== b.copyAxis || a.copyMarks.length !== b.copyMarks.length) return false;
+      if (a.copyRowsMirror !== b.copyRowsMirror || a.copyRowsByAxis !== b.copyRowsByAxis || a.copyAxis !== b.copyAxis || a.copyMarks.length !== b.copyMarks.length) return false;
       for (let i = 0; i < a.copyMarks.length; i++) if (a.copyMarks[i] !== b.copyMarks[i]) return false;
     }
     return true;
@@ -306,10 +307,8 @@
     const first = sourceStart + ((groupStart - sourceStart) & 1);
     return first - (y - groupStart);
   }
-  function scanCopyRows(s, capture) {
-    if (s.height < 3) { s.done = true; return; }
-    const y = s.cursorRow, width = s.width;
-    const from = copySourceRow(s, y) * width, to = y * width;
+  function xorCopyRow(s, sourceRow, y, capture) {
+    const width = s.width, from = sourceRow * width, to = y * width;
     capture(y);
     // The receiving row uses an earlier row of the same parity at identical columns.
     for (let x = 0; x < width; x++) {
@@ -319,17 +318,32 @@
       s.bits[target] ^= toggle;
       s.copyMarks[target] = toggle ? 1 : 2;
     }
-    s.stepCount++;
-    s.rowCount++;
-    s.cursorRow++;
-    if (s.cursorRow === s.height) {
-      s.copyAxis = 1;
-      s.cursorRow = 2;
-      s.cycle++;
-    } else if (s.copyRowsMirror && s.cursorRow > 2 * s.copyAxis) {
+  }
+  function scanCopyRows(s, capture) {
+    if (s.height < 3) { s.done = true; return; }
+    if (s.copyRowsByAxis) {
+      const axis = s.copyAxis, last = Math.min(2 * axis, s.height - 1);
+      // All source rows are above this axis and all targets are below it.
+      for (let y = axis + 1; y <= last; y++) xorCopyRow(s, 2 * axis - y, y, capture);
+      s.rowCount += last - axis;
       s.copyAxis++;
+      if (s.copyAxis === s.height - 1) { s.copyAxis = 1; s.cycle++; }
       s.cursorRow = s.copyAxis + 1;
+    } else {
+      const y = s.cursorRow;
+      xorCopyRow(s, copySourceRow(s, y), y, capture);
+      s.rowCount++;
+      s.cursorRow++;
+      if (s.cursorRow === s.height) {
+        s.copyAxis = 1;
+        s.cursorRow = 2;
+        s.cycle++;
+      } else if (s.copyRowsMirror && s.cursorRow > 2 * s.copyAxis) {
+        s.copyAxis++;
+        s.cursorRow = s.copyAxis + 1;
+      }
     }
+    s.stepCount++;
     s.done = false;
   }
   function scanRow(s, capture) {
@@ -412,10 +426,11 @@
     // Save each touched row once per call. A one-frame advance copies/compares
     // only the receiving row and previous selection row, never the whole field.
     const beforeRows = new Map();
+    const keys = s.algorithm === 'copyRows' && !s.trackChanges ? ['bits'] : KEYS;
     const capture = row => {
       if (beforeRows.has(row)) return;
       const start = row * s.width, end = start + s.width, copy = {};
-      for (const key of KEYS) copy[key] = s[key].slice(start, end);
+      for (const key of keys) copy[key] = s[key].slice(start, end);
       beforeRows.set(row, copy);
     };
     for (let i = 0; i < n; i++) {
@@ -428,7 +443,7 @@
     for (const [row, before] of beforeRows) {
       const start = row * s.width; let dirty = false;
       for (let x = 0; x < s.width; x++) {
-        for (const key of KEYS) if (before[key][x] !== s[key][start + x]) {
+        for (const key of keys) if (before[key][x] !== s[key][start + x]) {
           changed++; dirty = true; break;
         }
         if(changedCells&&visualChanged(s,before,start+x,x))changedCells.push(start+x);

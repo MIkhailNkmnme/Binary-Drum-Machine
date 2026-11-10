@@ -118,7 +118,7 @@
   }
   function active(state){return state?.animatrixOn===true;}
   function restoreFrame(state,frame,unit=state?.animatrixCopyRowsUnit){
-    if(!active(state)||state.animatrixAlgorithm!=='copyRows'||state.animatrixCopyRowsLayout==='mirror'||unit==='row'||!Number.isSafeInteger(frame)||frame<=0)return frame;
+    if(!active(state)||state.animatrixAlgorithm!=='copyRows'||state.animatrixCopyRowsLayout!==undefined||unit==='row'||!Number.isSafeInteger(frame)||frame<=0)return frame;
     const height=state.animatrixSource?.height??state.rows;
     if(!Number.isSafeInteger(height)||height<3)return frame;
     // v0.959 counted a growing group of rows as one frame.
@@ -137,7 +137,7 @@
       next.animatrixFrameMax=restoreFrame(next,next.animatrixFrameMax);
       if(Number.isSafeInteger(next.invertFrame))next.invertFrame=restoreFrame(next,next.invertFrame);
       next.animatrixCopyRowsUnit='row';
-      if(next.animatrixCopyRowsLayout!==undefined&&next.animatrixCopyRowsLayout!=='mirror')
+      if(next.animatrixCopyRowsLayout!==undefined&&!['mirror','mirrorByAxis'].includes(next.animatrixCopyRowsLayout))
         fail('Неизвестный порядок «Копии XOR».');
       next.animatrixTiming='rows';
     }
@@ -154,7 +154,7 @@
   function assertState(state){return normalize(state);}
   function geometry(state){const s=normalize(state),source=assertSource(s.animatrixSource);return {W:source.width,H:source.height,anchor:source.anchor};}
   const unlimited=state=>!!state&&['infinite','repeat'].includes(state.animatrixCycleMode);
-  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return s.animatrixAlgorithm==='copyRows'?Core.copyRowsCycleFrames(source.height,s.animatrixCopyRowsLayout==='mirror'):s.animatrixTiming==='rows'?source.height-1:source.height;}
+  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return s.animatrixAlgorithm==='copyRows'?Core.copyRowsCycleFrames(source.height,!!s.animatrixCopyRowsLayout,s.animatrixCopyRowsLayout==='mirrorByAxis'):s.animatrixTiming==='rows'?source.height-1:source.height;}
   function frames(state){const s=normalize(state),cycle=cycleFrames(s);return unlimited(s)?Math.max(cycle,s.animatrixFrameMax):cycle*s.animatrixCycles;}
   function extend(state,requested){
     frameCount(requested);const cycle=cycleFrames(state);
@@ -166,14 +166,14 @@
     const s=normalize(state),source=assertSource(s.animatrixSource),record=checked.get(source);
     if(!record.key)record.key=hash(record.stamp.join('|'));
     const key=['animatrix-v'+EVOLUTION,record.key,s.animatrixAlgorithm,s.animatrixTiming,s.animatrixDirection,s.animatrixCycles,s.animatrixCycleMode].join(':');
-    return s.animatrixAlgorithm==='copyRows'&&s.animatrixCopyRowsLayout==='mirror'?key+':mirror':key;
+    return s.animatrixAlgorithm==='copyRows'&&s.animatrixCopyRowsLayout?key+':'+s.animatrixCopyRowsLayout:key;
   }
   function same(a,b){return active(a)===active(b)&&(!active(a)||stateKey(a)===stateKey(b));}
   function repeatReset(engine){
     engine._repeat=engine._cycleMode==='finite'?null:{phase:'period',power:1,length:0,checkpoint:Core.snapshot(engine),period:0,first:0,lead:0,pairSteps:0,a:null,b:null,detectedCycle:null};
   }
   function create(state){
-    const s=normalize(state),engine=Core.create(decode(s.animatrixSource),{algorithm:s.animatrixAlgorithm,direction:s.animatrixDirection,scan:s.animatrixTiming==='rows',copyRowsMirror:s.animatrixCopyRowsLayout==='mirror'});
+    const s=normalize(state),engine=Core.create(decode(s.animatrixSource),{algorithm:s.animatrixAlgorithm,direction:s.animatrixDirection,scan:s.animatrixTiming==='rows',copyRowsMirror:!!s.animatrixCopyRowsLayout,copyRowsByAxis:s.animatrixCopyRowsLayout==='mirrorByAxis'});
     engine.sourceFrame=0;
     Object.defineProperties(engine,{_sourceLimit:{value:unlimited(s)?Number.MAX_SAFE_INTEGER:frames(s)},_cycleFrames:{value:cycleFrames(s)},_cycleMode:{value:s.animatrixCycleMode},_repeat:{value:null,writable:true}});
     repeatReset(engine);return engine;
