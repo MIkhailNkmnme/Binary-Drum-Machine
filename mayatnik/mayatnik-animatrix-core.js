@@ -79,6 +79,11 @@
     return out;
   }
   const firstScanRow = s => s.algorithm === 'copyRows' ? 2 : 1;
+  function copyRowsCycleFrames(height, mirror) {
+    if (!mirror) return height - 2;
+    const lastAxis = Math.floor(height / 2);
+    return lastAxis * (lastAxis - 1) / 2 + height - lastAxis - 1;
+  }
   function resetProgress(s) {
     const first = firstScanRow(s);
     s.stepCount = s.rowCount = s.cycle = 0;
@@ -88,7 +93,7 @@
     if (s.algorithm === 'copyRows') {
       s.copyMarks ??= new Uint8Array(s.bits.length);
       s.copyMarks.fill(0);
-      s.copyMarkRange = null;
+      s.copyAxis = 1;
     }
     return s;
   }
@@ -100,13 +105,15 @@
     if (scan && direction !== 'down') throw new RangeError('Row scan supports down only');
     const initial = cloneSeed(seed), state = cloneSeed(initial);
     state.algorithm = algorithm; state.direction = direction; state.scan = scan;
+    state.copyRowsMirror = algorithm === 'copyRows' && options.copyRowsMirror === true;
     Object.defineProperty(state, '_seed', { value: initial });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
   }
   function snapshot(s) {
     return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
-      stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done });
+      stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done,
+      ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror } : {}) });
   }
   function reset(s) {
     const initial = cloneSeed(s._seed);
@@ -117,7 +124,7 @@
   // Independent calculator at the same immutable seed, without duplicating it.
   function forkInitial(s) {
     const state = cloneSeed(s._seed);
-    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan });
+    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror });
     Object.defineProperty(state, '_seed', { value: s._seed });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -130,6 +137,11 @@
     for (let i = 0; i < a.areas.length; i++) for (const key of ['x', 'y', 'width', 'height'])
       if (a.areas[i][key] !== b.areas[i][key]) return false;
     for (const key of KEYS) for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) return false;
+    if (!!a.copyMarks !== !!b.copyMarks) return false;
+    if (a.copyMarks) {
+      if (a.copyRowsMirror !== b.copyRowsMirror || a.copyAxis !== b.copyAxis || a.copyMarks.length !== b.copyMarks.length) return false;
+      for (let i = 0; i < a.copyMarks.length; i++) if (a.copyMarks[i] !== b.copyMarks[i]) return false;
+    }
     return true;
   }
   function index(s, x, y) { return x < 0 || y < 0 || x >= s.width || y >= s.height ? -1 : y * s.width + x; }
@@ -286,16 +298,18 @@
     if (isShift(s)) markYellow(s);
     s.stepCount++; s.done = !worked;
   }
-  function scanCopyRows(s, capture) {
-    if (s.height < 3) { s.done = true; return; }
-    const y = s.cursorRow, width = s.width;
+  function copySourceRow(s, y) {
+    if (s.copyRowsMirror) return 2 * s.copyAxis - y;
     const groupSize = Math.floor((1 + Math.sqrt(1 + 8 * (y - 2))) / 2);
     const groupStart = 2 + groupSize * (groupSize - 1) / 2;
     const sourceStart = groupSize - 1;
     const first = sourceStart + ((groupStart - sourceStart) & 1);
-    const from = (first - (y - groupStart)) * width, to = y * width;
-    if (s.copyMarkRange) s.copyMarks.fill(0, ...s.copyMarkRange);
-    s.copyMarkRange = [to, to + width];
+    return first - (y - groupStart);
+  }
+  function scanCopyRows(s, capture) {
+    if (s.height < 3) { s.done = true; return; }
+    const y = s.cursorRow, width = s.width;
+    const from = copySourceRow(s, y) * width, to = y * width;
     capture(y);
     // The receiving row uses an earlier row of the same parity at identical columns.
     for (let x = 0; x < width; x++) {
@@ -308,7 +322,14 @@
     s.stepCount++;
     s.rowCount++;
     s.cursorRow++;
-    if (s.cursorRow === s.height) { s.cursorRow = 2; s.cycle++; }
+    if (s.cursorRow === s.height) {
+      s.copyAxis = 1;
+      s.cursorRow = 2;
+      s.cycle++;
+    } else if (s.copyRowsMirror && s.cursorRow > 2 * s.copyAxis) {
+      s.copyAxis++;
+      s.cursorRow = s.copyAxis + 1;
+    }
     s.done = false;
   }
   function scanRow(s, capture) {
@@ -439,5 +460,5 @@
   }
   function seek(s, frame) { count(frame); reset(s); return advance(s, frame); }
   return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds, forkInitial, sameState,
-    algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
+    copyRowsCycleFrames, algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
 });
