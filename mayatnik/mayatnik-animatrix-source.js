@@ -10,6 +10,8 @@
   'use strict';
   const VERSION=1,EVOLUTION=1,MAX_CELLS=2100000,MAX_ROWS=4096,MAX_AREAS=65536;
   const ALGORITHMS=Core.algorithms;
+  const excelMode=algorithm=>Core.excelAlgorithms.includes(algorithm);
+  const interxorMode=algorithm=>algorithm==='excelChain'||algorithm==='excelChainDown';
   const DIRECTIONS=['down','up','left','right'];
   const checked=new WeakMap();
   const fail=message=>{throw Error(message);};
@@ -141,6 +143,13 @@
         fail('Неизвестный порядок отражения строк Аниматрицы.');
       next.animatrixTiming='rows';
     }
+    if(excelMode(next.animatrixAlgorithm)){
+      next.animatrixTiming='matrix';
+      next.animatrixDirection='down';
+      next.animatrixExcelDepth=next.animatrixExcelDepth??128;
+      if(!Number.isSafeInteger(next.animatrixExcelDepth)||next.animatrixExcelDepth<1||next.animatrixExcelDepth>MAX_ROWS)
+        fail('Глубина треугольника должна быть от 1 до 4096 строк.');
+    }
     if(next.animatrixTiming==='rows')next.animatrixDirection='down';
     if(active(next)){
       if(next.sequenceSourceOn||next.compareSource)fail('В Аниматрице одновременно включены разные источники поля.');
@@ -155,7 +164,41 @@
   function geometry(state){const s=normalize(state),source=assertSource(s.animatrixSource);return {W:source.width,H:source.height,anchor:source.anchor};}
   const unlimited=state=>!!state&&['infinite','repeat'].includes(state.animatrixCycleMode);
   const copyRowsByAxis=layout=>layout==='mirrorByAxis'||layout==='mirrorWrap'||layout==='mirrorExcel';
-  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource),layout=s.animatrixCopyRowsLayout;return s.animatrixAlgorithm==='copyRows'?Core.copyRowsCycleFrames(source.height,!!layout,copyRowsByAxis(layout),layout==='mirrorWrap'):s.animatrixTiming==='rows'?source.height-1:source.height;}
+  function excelOptions(source,algorithm,depth){
+    return {algorithm,excelAnchor:source.anchor,excelDepth:depth};
+  }
+  function prepareExcel(source,algorithm,{resetFonts=true}={}){
+    const seed=decode(source);
+    if(resetFonts){seed.colours.fill(0);seed.bold.fill(0);seed.automatic.fill(1);}
+    const width=seed.width,height=seed.height;
+    const required=interxorMode(algorithm)?Core.interxorWidth(seed,excelOptions(source,algorithm)):width;
+    const capacity=Math.floor(MAX_CELLS/height);
+    const room=Math.min(source.anchor,width-1-source.anchor);
+    const pad=interxorMode(algorithm)?Math.min(Math.floor((capacity-width)/2),Math.max(0,Math.ceil((required-1)/2-room))):0;
+    if(!pad)return encode(seed,{anchor:source.anchor});
+    const expandedWidth=width+2*pad,expanded={width:expandedWidth,height};
+    for(const [key,values] of Object.entries(seed)){
+      if(!ArrayBuffer.isView(values))continue;
+      const target=new values.constructor(expandedWidth*height);
+      for(let y=0;y<height;y++)target.set(values.subarray(y*width,(y+1)*width),y*expandedWidth+pad);
+      expanded[key]=target;
+    }
+    if(seed.areas)expanded.areas=seed.areas.map(a=>a.x===0&&a.width===width?{...a,width:expandedWidth}:{...a,x:a.x+pad});
+    return encode(expanded,{anchor:source.anchor+pad});
+  }
+  function cycleFrames(state){
+    const s=normalize(state),source=assertSource(s.animatrixSource),layout=s.animatrixCopyRowsLayout;
+    const algorithm=s.animatrixAlgorithm;
+    if(excelMode(algorithm)){
+      const record=checked.get(source),options=excelOptions(source,algorithm,s.animatrixExcelDepth);
+      const key=algorithm+':'+s.animatrixExcelDepth;
+      record.excelCycles??=new Map();
+      if(!record.excelCycles.has(key))record.excelCycles.set(key,Core.excelCycleFrames(decode(source),options));
+      return record.excelCycles.get(key);
+    }
+    if(algorithm==='copyRows')return Core.copyRowsCycleFrames(source.height,!!layout,copyRowsByAxis(layout),layout==='mirrorWrap');
+    return s.animatrixTiming==='rows'?source.height-1:source.height;
+  }
   function frames(state){const s=normalize(state),cycle=cycleFrames(s);return unlimited(s)?Math.max(cycle,s.animatrixFrameMax):cycle*s.animatrixCycles;}
   function extend(state,requested){
     frameCount(requested);const cycle=cycleFrames(state);
@@ -167,6 +210,7 @@
     const s=normalize(state),source=assertSource(s.animatrixSource),record=checked.get(source);
     if(!record.key)record.key=hash(record.stamp.join('|'));
     const key=['animatrix-v'+EVOLUTION,record.key,s.animatrixAlgorithm,s.animatrixTiming,s.animatrixDirection,s.animatrixCycles,s.animatrixCycleMode].join(':');
+    if(excelMode(s.animatrixAlgorithm))return key+':'+s.animatrixExcelDepth;
     return s.animatrixAlgorithm==='copyRows'&&s.animatrixCopyRowsLayout?key+':'+s.animatrixCopyRowsLayout:key;
   }
   function same(a,b){return active(a)===active(b)&&(!active(a)||stateKey(a)===stateKey(b));}
@@ -174,12 +218,13 @@
     engine._repeat=engine._cycleMode==='finite'?null:{phase:'period',power:1,length:0,checkpoint:Core.snapshot(engine),period:0,first:0,lead:0,pairSteps:0,a:null,b:null,detectedCycle:null};
   }
   function create(state){
-    const s=normalize(state),layout=s.animatrixCopyRowsLayout;
-    const engine=Core.create(decode(s.animatrixSource),{algorithm:s.animatrixAlgorithm,direction:s.animatrixDirection,
+    const s=normalize(state),layout=s.animatrixCopyRowsLayout,source=s.animatrixSource,cycle=cycleFrames(s);
+    const engine=Core.create(decode(source),{...excelOptions(source,s.animatrixAlgorithm,s.animatrixExcelDepth),direction:s.animatrixDirection,
+      excelCycleFrames:cycle,
       scan:s.animatrixTiming==='rows',copyRowsMirror:!!layout,copyRowsByAxis:copyRowsByAxis(layout),
       copyRowsWrap:layout==='mirrorWrap',copyRowsExcel:layout==='mirrorExcel'});
     engine.sourceFrame=0;
-    Object.defineProperties(engine,{_sourceLimit:{value:unlimited(s)?Number.MAX_SAFE_INTEGER:frames(s)},_cycleFrames:{value:cycleFrames(s)},_cycleMode:{value:s.animatrixCycleMode},_repeat:{value:null,writable:true}});
+    Object.defineProperties(engine,{_sourceLimit:{value:unlimited(s)?Number.MAX_SAFE_INTEGER:frames(s)},_cycleFrames:{value:cycle},_cycleMode:{value:s.animatrixCycleMode},_repeat:{value:null,writable:true}});
     repeatReset(engine);return engine;
   }
   function reset(engine){Core.reset(engine);engine.sourceFrame=0;repeatReset(engine);return engine;}
@@ -221,11 +266,15 @@
     let report=null,changed=0;const dirty=new Set(),changedCells=engine.trackChanges?new Set():null;
     do{
       const n=Math.min(remaining,engine._cycleFrames-engine.sourceFrame%engine._cycleFrames);
-      report=Core.advance(engine,n);engine.sourceFrame+=n;remaining-=n;changed+=report.changed;
+      const before=engine.stepCount;
+      report=Core.advance(engine,n);
+      const advanced=engine.excelCycleFrames?engine.stepCount-before:n;
+      engine.sourceFrame+=advanced;remaining-=advanced;changed+=report.changed;
       for(const row of report.dirtyRows||[])dirty.add(row);
       if(changedCells)for(const q of report.changedCells||[])changedCells.add(q);
-      if(n&&engine.sourceFrame%engine._cycleFrames===0)repeatBoundary(engine);
-      repeatWork(engine,Math.max(1,n));
+      if(advanced&&engine.sourceFrame%engine._cycleFrames===0)repeatBoundary(engine);
+      if(engine.excelCycleFrames&&report.done)break;
+      repeatWork(engine,Math.max(1,advanced));
     }while(remaining);
     return {...report,changed,...(engine.scan?{dirtyRows:[...dirty].sort((a,b)=>a-b)}:{}),...(changedCells?{changedCells:[...changedCells]}:{}),frame:engine.sourceFrame,repeat:repeatInfo(engine)};
   }
@@ -234,7 +283,7 @@
     if(!Number.isSafeInteger(rows)||!['one','example'].includes(type)||!ALGORITHMS.includes(algorithm))fail('Неизвестный пример Аниматрицы.');
     const width=2*rows-1,n=dimensions(width,rows),anchor=rows-1;
     const seed={width,height:rows,bits:new Uint8Array(n),present:new Uint8Array(n),colours:new Uint32Array(n),bold:new Uint8Array(n),automatic:new Uint8Array(n),filled:new Uint8Array(n),fills:new Uint32Array(n),selection:new Uint8Array(n)};
-    if(algorithm==='copyRows'){
+    if(algorithm==='copyRows'||excelMode(algorithm)){
       for(let r=0;r<rows;r++)for(let x=0;x<=r;x++){
         const q=r*width+anchor-r+2*x,bit=Number((x&(r-x))===0);
         seed.present[q]=1;seed.bits[q]=bit;seed.colours[q]=bit?0xe8edf5:0x5b6475;
@@ -248,7 +297,8 @@
       for(let j=0;j<targets.length;j++){const q=width+anchor-3+j;seed.present[q]=1;seed.bits[q]=targets[j];seed.colours[q]=targetColours[j];if(algorithm==='background'){seed.filled[q]=1;seed.fills[q]=0x008000;}}
       seed.areas=[{x:anchor-2,y:0,width:5,height:1}];
     }
-    return encode(seed,{anchor});
+    const source=encode(seed,{anchor});
+    return excelMode(algorithm)?prepareExcel(source,algorithm):source;
   }
-  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame};
+  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,prepareExcel};
 });

@@ -42,23 +42,43 @@
     command('copy-rows','Копии XOR','Взять текущее поле одной решётки. Отражать верхний треугольник через новую строку-ось на каждом кадре и накладывать XOR всех её пар.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows'&&!s.copyRowsWrap&&!s.copyRowsExcel);
     command('copy-rows-wrap','Край XOR','Отражать верхний треугольник. Строки за нижним краем переносить наверх с сохранением чётности и накладывать XOR.',a=>a?.startCopyRows?.({wrap:true}),s=>s.on&&s.copyRowsWrap);
     command('copy-rows-excel','Зеркалиус','Версия из Excel: новая строка-ось за кадр; результат NAND симметричных битов записывается в верхнюю строку. Цифра 1 синяя жирная, 0 светло-серая обычная.',a=>a?.startCopyRows?.({excel:true}),s=>s.on&&s.copyRowsExcel);
+    const excelPart=(value,caption,title)=>({label:caption,title,selected:s=>s.on&&s.algorithm===value,action:a=>a?.startExcel?.(value)});
+    segments('excel-rows','Строки из Excel',[
+      excelPart('excelBounce','Отскок','Xoroorius: копия первой строки проходит вторую через XOR, отражаясь от краёв. Синий — ход вперёд, красный — обратный.'),
+      excelPart('excelChain','ИнтерXOR','InterXoroorius: соседние строки накладываются XOR при чётной разности длин и переплетаются при нечётной. Последняя строка замыкается с первой.'),
+      excelPart('excelChainDown','Цепь XOR','InterXoroorius: в XOR-ветке накладываются все строки сверху до цели, в ветке переплетения только соседняя пара.')
+    ]);
+    segments('excel-cones','Треугсжатия из Excel',[
+      excelPart('excelTriangleDown','Конус ↓','От вершины вниз. Цель XOR два диагональных родителя. Повторное наложение чередует цвет цифры с чёрным.'),
+      excelPart('excelTriangleUp','Конус ↑','От вершины вверх, родители из строки ниже.'),
+      excelPart('excelTriangleBoth','Ромб','Конусы вверх и вниз. Следующая вершина на один столбец правее.')
+    ]);
+    segments('excel-motion','Качание и столкновение из Excel',[
+      excelPart('excelTrianglePend','Качание','Конусы из вершин 0, −1, +1, −2, +2 и далее. Один ромб за кадр.'),
+      excelPart('excelCollision','Столкн.','XOR прямоугольника с его поворотом на 180°. Две пустые клетки считаются нулями.')
+    ]);
+    const depthRow=doc.createElement('label');depthRow.className='gz-hx';depthRow.dataset.n='animatrix:excel-depth';
+    describe(depthRow,'Глубина конуса Excel в строках, включая вершину. Для ромба глубина применяется в каждом направлении.');
+    label(depthRow,'Глубина');const depth=doc.createElement('input');depth.type='number';depth.min='1';depth.max='4096';depth.step='1';depth.style.width='52px';depth.setAttribute('aria-label','Глубина конуса Excel');
+    depth.addEventListener('change',()=>{const n=Math.max(1,Math.min(4096,Math.round(Number(depth.value)||128)));depth.value=String(n);run(a=>a?.set?.({excelDepth:n}));});
+    depthRow.append(depth);bindings.push({node:depth,selected:()=>false,unavailable:s=>!s.on||!s.algorithm?.startsWith('excelTriangle')});append(depthRow);
     command('pendulum','Маятник','Вернуться к обычному Маятнику: выключить Аниматрицу',a=>a?.set?.({on:false}),s=>!s.on);
     segments('timing','Порядок расчёта Аниматрицы',[
       {label:'Матрица',title:'Пересчитывать матрицу',selected:s=>s.timing!=='rows',unavailable:s=>s.algorithm==='copyRows',action:pick('timing','matrix')},
       {label:'Строки',title:'Аниматрица по строкам сверху вниз, без добавления вершин',selected:s=>s.timing==='rows',action:pick('timing','rows')}
-    ]);
+    ],s=>!!s.excelMode);
     for(const [id,parts]of [['vertical',[['down','Вниз'],['up','Вверх']]],['horizontal',[['left','Влево'],['right','Вправо']]]])
-      segments('direction:'+id,'Направление расчёта',parts.map(([value,caption])=>({label:caption,title:'Направление: '+caption.toLowerCase(),selected:s=>s.timing==='rows'?value==='down':s.direction===value,action:pick('direction',value)})),s=>s.timing==='rows');
+      segments('direction:'+id,'Направление расчёта',parts.map(([value,caption])=>({label:caption,title:'Направление: '+caption.toLowerCase(),selected:s=>s.timing==='rows'?value==='down':s.direction===value,action:pick('direction',value)})),s=>s.timing==='rows'||s.excelMode);
     segments('colours','Цвета Аниматрицы',[
       {label:'Исходные',title:'Наследовать исходные цвета',selected:s=>!s.colours||s.colours==='inherit',action:pick('colours','inherit')},
       {label:'Биты',title:'Цвета битов 0 и 1',selected:s=>s.colours==='bits',action:pick('colours','bits')}
-    ],s=>!!s.copyRowsExcel);
+    ],s=>!!s.copyRowsExcel||!!s.excelMode);
     segments('capture','Взять исходник Аниматрицы',[
       {label:'Всё поле',title:'Взять текущее поле как исходник',action:a=>a?.capture?.({scope:'field'})},
       {label:'Выделение',title:'Взять выделенную область для режима «Матрица»',unavailable:s=>s.timing==='rows',action:a=>a?.capture?.({scope:'selection'})}
     ]);
     segments('seed','Начальный рисунок',[
-      {label:'1',title:'Исходник из одной верхней единицы. В «Копии XOR» строится весь треугольник.',action:a=>a?.seed?.('one')},
+      {label:'1',title:'Исходник из одной верхней единицы. Для отражений и режимов Excel строится весь треугольник.',action:a=>a?.seed?.('one')},
       {label:'Пример',title:'Исходник: учебный пример',action:a=>a?.seed?.('example')}
     ]);
     segments('cycle-mode','Повторение циклов Аниматрицы',[
@@ -76,6 +96,8 @@
       if(destroyed)return;const s=state(),busy=pending||!!s.busy,available=!!service();
       for(const binding of bindings){const on=!!binding.selected(s);binding.node.disabled=!available||busy||binding.unavailable(s);binding.node.classList.toggle('gz-on',on);binding.node.classList.toggle('on',on);if(binding.node.tagName==='BUTTON')binding.node.setAttribute('aria-pressed',String(on));}
       if(doc.activeElement!==input)input.value=String(Math.max(1,Math.min(64,Math.round(Number(s.cycles)||1))));
+      if(doc.activeElement!==depth)depth.value=String(s.excelDepth??128);
+      depthRow.style.display=s.on&&s.algorithm?.startsWith('excelTriangle')?'':'none';
       const enable=nodes[0].querySelector('.gz-nm');enable.textContent=s.on?'Выключить':'Включить';
       const repeat=s.repeat;
       infoLabel.textContent=repeat?.complete?'С '+repeat.firstCycle+' · T '+repeat.periodCycles:(s.frame??0)+' / '+(s.cycleMode==='infinite'||s.cycleMode==='repeat'?'∞':s.total??0);

@@ -4,15 +4,25 @@
  * RGB values are 0xRRGGBB. Empty and bit 0 are distinguished by present.
  */
 (function (root, factory) {
-  const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api;
+  const node = typeof module === 'object' && module.exports;
+  const api = factory(
+    node ? require('./mayatnik-animatrix-xoroorius.js') : root.MayatnikAnimatrixXoroorius,
+    node ? require('./mayatnik-animatrix-interxor.js') : root.MayatnikAnimatrixInterxor,
+    node ? require('./mayatnik-animatrix-excel-shapes.js') : root.MayatnikAnimatrixExcelShapes);
+  if (node) module.exports = api;
   else root.MayatnikAnimatrixCore = api;
-})(typeof globalThis === 'object' ? globalThis : this, function () {
+})(typeof globalThis === 'object' ? globalThis : this, function (Xoroorius, Interxor, Shapes) {
   'use strict';
   const TYPES = { bits: Uint8Array, present: Uint8Array, colours: Uint32Array,
     bold: Uint8Array, automatic: Uint8Array, fills: Uint32Array, filled: Uint8Array, selection: Uint8Array };
   const KEYS = Object.keys(TYPES);
-  const ALGORITHMS = ['two', 'three', 'shift', 'horr', 'zero', 'background', 'copyRows'];
+  const EXCEL = {
+    excelBounce: Xoroorius, excelChain: Interxor, excelChainDown: Interxor,
+    excelTriangleDown: Shapes, excelTriangleUp: Shapes, excelTriangleBoth: Shapes,
+    excelTrianglePend: Shapes, excelCollision: Shapes
+  };
+  const EXCEL_ALGORITHMS = Object.keys(EXCEL);
+  const ALGORITHMS = ['two', 'three', 'shift', 'horr', 'zero', 'background', 'copyRows', ...EXCEL_ALGORITHMS];
   const DIRECTIONS = ['down', 'up', 'left', 'right'];
   const EMPTY = Object.freeze([0, 0, 0, 0, 0]); // present, bit, RGB, bold, colour participates
 
@@ -91,6 +101,7 @@
     s.cursorRow = s.height > first ? first : 0;
     s.done = s.scan && s.height <= first;
     s._scanSelectionRows = null;
+    if (s.excelCycleFrames) s.excelPhase = 0;
     if (s.algorithm === 'copyRows') {
       s.copyMarks ??= new Uint8Array(s.bits.length);
       s.copyMarks.fill(0);
@@ -102,7 +113,8 @@
     const algorithm = options.algorithm || 'two', direction = options.direction || 'down';
     if (!ALGORITHMS.includes(algorithm)) throw new RangeError('Unknown algorithm');
     if (!DIRECTIONS.includes(direction)) throw new RangeError('Unknown direction');
-    const scan = !!options.scan || algorithm === 'copyRows';
+    const excel = EXCEL[algorithm];
+    const scan = !excel && (!!options.scan || algorithm === 'copyRows');
     if (scan && direction !== 'down') throw new RangeError('Row scan supports down only');
     const initial = cloneSeed(seed), state = cloneSeed(initial);
     state.algorithm = algorithm; state.direction = direction; state.scan = scan;
@@ -110,6 +122,11 @@
     state.copyRowsByAxis = state.copyRowsMirror && options.copyRowsByAxis === true;
     state.copyRowsExcel = state.copyRowsByAxis && options.copyRowsExcel === true;
     state.copyRowsWrap = state.copyRowsByAxis && !state.copyRowsExcel && options.copyRowsWrap === true;
+    if (excel) {
+      state.excelAnchor = options.excelAnchor ?? Math.floor((initial.width - 1) / 2);
+      state.excelDepth = options.excelDepth ?? 128;
+      state.excelCycleFrames = options.excelCycleFrames ?? excel.cycleFrames(initial, state);
+    }
     Object.defineProperty(state, '_seed', { value: initial });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -117,6 +134,7 @@
   function snapshot(s) {
     return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
       stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done,
+      ...(s.excelCycleFrames ? { excelPhase: s.excelPhase, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth } : {}),
       ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel } : {}) });
   }
   function reset(s) {
@@ -129,6 +147,7 @@
   function forkInitial(s) {
     const state = cloneSeed(s._seed);
     Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel });
+    if (s.excelCycleFrames) Object.assign(state, { excelCycleFrames: s.excelCycleFrames, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth });
     Object.defineProperty(state, '_seed', { value: s._seed });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -138,6 +157,10 @@
   function sameState(a, b) {
     if (a.width !== b.width || a.height !== b.height || a.cursorRow !== b.cursorRow ||
         a.done !== b.done || a.areas.length !== b.areas.length) return false;
+    if (a.excelPhase !== undefined || b.excelPhase !== undefined) {
+      if (a.algorithm !== b.algorithm || a.excelPhase !== b.excelPhase || a.excelAnchor !== b.excelAnchor || a.excelDepth !== b.excelDepth) return false;
+      if (a.algorithm === 'excelBounce' && (a.stepCount === 0) !== (b.stepCount === 0)) return false;
+    }
     for (let i = 0; i < a.areas.length; i++) for (const key of ['x', 'y', 'width', 'height'])
       if (a.areas[i][key] !== b.areas[i][key]) return false;
     for (const key of KEYS) for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) return false;
@@ -296,6 +319,14 @@
     return areas.length > 0;
   }
   function matrixStep(s) {
+    const excel = EXCEL[s.algorithm];
+    if (excel) {
+      if (s.done || excel.step(s) === false) { s.done = true; return; }
+      s.stepCount++;
+      s.excelPhase = (s.excelPhase + 1) % s.excelCycleFrames;
+      if (s.excelPhase === 0) s.cycle++;
+      return;
+    }
     if (isShift(s)) s.filled.fill(0); // VBA clears backgrounds across the active sheet.
     let worked;
     if (s.algorithm === 'zero' || s.algorithm === 'background') worked = snapshotStep(s);
@@ -504,5 +535,8 @@
   }
   function seek(s, frame) { count(frame); reset(s); return advance(s, frame); }
   return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds, forkInitial, sameState,
-    copyRowsCycleFrames, algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
+    copyRowsCycleFrames, excelAlgorithms: EXCEL_ALGORITHMS.slice(),
+    excelCycleFrames: (seed, options) => EXCEL[options.algorithm].cycleFrames(seed, options),
+    interxorWidth: (seed, options) => Interxor.requiredWidth(seed, options),
+    algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
 });
