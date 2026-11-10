@@ -39,7 +39,8 @@
       ['zero','00','Нулевой вариант'],['background','Фон','Фоновый вариант']
     ];
     for(let i=0;i<algorithms.length;i+=2)segments('algorithm:'+i,'Алгоритм Аниматрицы',algorithms.slice(i,i+2).map(([value,caption,title])=>({label:caption,title,selected:s=>s.algorithm===value,action:pick('algorithm',value)})));
-    command('copy-rows','Копии XOR','Взять текущее поле одной решётки. Отражать верхний треугольник через новую строку-ось на каждом кадре и накладывать XOR всех её пар.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows');
+    command('copy-rows','Копии XOR','Взять текущее поле одной решётки. Отражать верхний треугольник через новую строку-ось на каждом кадре и накладывать XOR всех её пар.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows'&&!s.copyRowsWrap);
+    command('copy-rows-wrap','Край XOR','Отражать верхний треугольник. Строки за нижним краем переносить наверх с сохранением чётности и накладывать XOR.',a=>a?.startCopyRows?.({wrap:true}),s=>s.on&&s.copyRowsWrap);
     command('pendulum','Маятник','Вернуться к обычному Маятнику: выключить Аниматрицу',a=>a?.set?.({on:false}),s=>!s.on);
     segments('timing','Порядок расчёта Аниматрицы',[
       {label:'Матрица',title:'Пересчитывать матрицу',selected:s=>s.timing!=='rows',unavailable:s=>s.algorithm==='copyRows',action:pick('timing','matrix')},
