@@ -108,7 +108,8 @@
     state.algorithm = algorithm; state.direction = direction; state.scan = scan;
     state.copyRowsMirror = algorithm === 'copyRows' && options.copyRowsMirror === true;
     state.copyRowsByAxis = state.copyRowsMirror && options.copyRowsByAxis === true;
-    state.copyRowsWrap = state.copyRowsByAxis && options.copyRowsWrap === true;
+    state.copyRowsExcel = state.copyRowsByAxis && options.copyRowsExcel === true;
+    state.copyRowsWrap = state.copyRowsByAxis && !state.copyRowsExcel && options.copyRowsWrap === true;
     Object.defineProperty(state, '_seed', { value: initial });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -116,7 +117,7 @@
   function snapshot(s) {
     return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
       stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done,
-      ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap } : {}) });
+      ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel } : {}) });
   }
   function reset(s) {
     const initial = cloneSeed(s._seed);
@@ -127,7 +128,7 @@
   // Independent calculator at the same immutable seed, without duplicating it.
   function forkInitial(s) {
     const state = cloneSeed(s._seed);
-    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap });
+    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel });
     Object.defineProperty(state, '_seed', { value: s._seed });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -142,7 +143,8 @@
     for (const key of KEYS) for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) return false;
     if (!!a.copyMarks !== !!b.copyMarks) return false;
     if (a.copyMarks) {
-      if (a.copyRowsMirror !== b.copyRowsMirror || a.copyRowsByAxis !== b.copyRowsByAxis || a.copyRowsWrap !== b.copyRowsWrap || a.copyAxis !== b.copyAxis || a.copyMarks.length !== b.copyMarks.length) return false;
+      if (a.copyRowsMirror !== b.copyRowsMirror || a.copyRowsByAxis !== b.copyRowsByAxis || a.copyRowsWrap !== b.copyRowsWrap ||
+          a.copyRowsExcel !== b.copyRowsExcel || a.copyAxis !== b.copyAxis || a.copyMarks.length !== b.copyMarks.length) return false;
       for (let i = 0; i < a.copyMarks.length; i++) if (a.copyMarks[i] !== b.copyMarks[i]) return false;
     }
     return true;
@@ -309,16 +311,20 @@
     const first = sourceStart + ((groupStart - sourceStart) & 1);
     return first - (y - groupStart);
   }
-  function xorCopyRow(s, sourceRow, y, capture, sourceBits = s.bits) {
+  function mergeCopyRow(s, sourceRow, y, capture, sourceBits = s.bits) {
     const width = s.width, from = sourceRow * width, to = y * width;
     capture(y);
-    // The receiving row uses an earlier row of the same parity at identical columns.
+    // Reflected rows of the same parity share their column coordinates.
     for (let x = 0; x < width; x++) {
       const source = from + x, target = to + x;
       if (!s.present[source] || !s.present[target]) continue;
-      const toggle = sourceBits[source];
-      s.bits[target] ^= toggle;
-      s.copyMarks[target] = toggle ? 1 : 2;
+      const bit = sourceBits[source];
+      if (s.copyRowsExcel) {
+        s.bits[target] = 1 - (s.bits[target] & bit);
+      } else {
+        s.bits[target] ^= bit;
+        s.copyMarks[target] = bit ? 1 : 2;
+      }
     }
   }
   function wrapCopyRow(y, height) {
@@ -326,23 +332,35 @@
     const parity = y & 1, count = Math.floor((height + 1 - parity) / 2);
     return parity + 2 * (Math.floor(y / 2) % count);
   }
+  function hasCopyRow(s, row) {
+    const start = row * s.width;
+    return s.present.subarray(start, start + s.width).includes(1);
+  }
   function scanCopyRows(s, capture) {
     if (s.height < 3) { s.done = true; return; }
     if (s.copyRowsByAxis) {
-      const axis = s.copyAxis, last = s.copyRowsWrap ? 2 * axis : Math.min(2 * axis, s.height - 1);
+      const axis = s.copyAxis;
+      const last = s.copyRowsExcel && !hasCopyRow(s, axis) ? axis :
+        s.copyRowsWrap ? 2 * axis : Math.min(2 * axis, s.height - 1);
       // Wrapped destinations may also be sources for this frame.
       const sourceBits = last >= s.height ? s.bits.slice(0, axis * s.width) : s.bits;
       for (let y = axis + 1; y <= last; y++) {
+        const upper = 2 * axis - y;
         const target = y < s.height ? y : wrapCopyRow(y, s.height);
-        xorCopyRow(s, 2 * axis - y, target, capture, sourceBits);
+        if (s.copyRowsExcel) {
+          if (!hasCopyRow(s, upper) || !hasCopyRow(s, y)) break;
+          mergeCopyRow(s, y, upper, capture);
+        } else {
+          mergeCopyRow(s, upper, target, capture, sourceBits);
+        }
+        s.rowCount++;
       }
-      s.rowCount += last - axis;
       s.copyAxis++;
       if (s.copyAxis === s.height - (s.copyRowsWrap ? 0 : 1)) { s.copyAxis = 1; s.cycle++; }
       s.cursorRow = s.copyRowsWrap ? wrapCopyRow(s.copyAxis + 1, s.height) : s.copyAxis + 1;
     } else {
       const y = s.cursorRow;
-      xorCopyRow(s, copySourceRow(s, y), y, capture);
+      mergeCopyRow(s, copySourceRow(s, y), y, capture);
       s.rowCount++;
       s.cursorRow++;
       if (s.cursorRow === s.height) {

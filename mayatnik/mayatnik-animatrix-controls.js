@@ -39,8 +39,9 @@
       ['zero','00','Нулевой вариант'],['background','Фон','Фоновый вариант']
     ];
     for(let i=0;i<algorithms.length;i+=2)segments('algorithm:'+i,'Алгоритм Аниматрицы',algorithms.slice(i,i+2).map(([value,caption,title])=>({label:caption,title,selected:s=>s.algorithm===value,action:pick('algorithm',value)})));
-    command('copy-rows','Копии XOR','Взять текущее поле одной решётки. Отражать верхний треугольник через новую строку-ось на каждом кадре и накладывать XOR всех её пар.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows'&&!s.copyRowsWrap);
+    command('copy-rows','Копии XOR','Взять текущее поле одной решётки. Отражать верхний треугольник через новую строку-ось на каждом кадре и накладывать XOR всех её пар.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows'&&!s.copyRowsWrap&&!s.copyRowsExcel);
     command('copy-rows-wrap','Край XOR','Отражать верхний треугольник. Строки за нижним краем переносить наверх с сохранением чётности и накладывать XOR.',a=>a?.startCopyRows?.({wrap:true}),s=>s.on&&s.copyRowsWrap);
+    command('copy-rows-excel','Зеркалиус','Версия из Excel: новая строка-ось за кадр; результат NAND симметричных битов записывается в верхнюю строку. Цифра 1 синяя жирная, 0 светло-серая обычная.',a=>a?.startCopyRows?.({excel:true}),s=>s.on&&s.copyRowsExcel);
     command('pendulum','Маятник','Вернуться к обычному Маятнику: выключить Аниматрицу',a=>a?.set?.({on:false}),s=>!s.on);
     segments('timing','Порядок расчёта Аниматрицы',[
       {label:'Матрица',title:'Пересчитывать матрицу',selected:s=>s.timing!=='rows',unavailable:s=>s.algorithm==='copyRows',action:pick('timing','matrix')},
@@ -51,7 +52,7 @@
     segments('colours','Цвета Аниматрицы',[
       {label:'Исходные',title:'Наследовать исходные цвета',selected:s=>!s.colours||s.colours==='inherit',action:pick('colours','inherit')},
       {label:'Биты',title:'Цвета битов 0 и 1',selected:s=>s.colours==='bits',action:pick('colours','bits')}
-    ]);
+    ],s=>!!s.copyRowsExcel);
     segments('capture','Взять исходник Аниматрицы',[
       {label:'Всё поле',title:'Взять текущее поле как исходник',action:a=>a?.capture?.({scope:'field'})},
       {label:'Выделение',title:'Взять выделенную область для режима «Матрица»',unavailable:s=>s.timing==='rows',action:a=>a?.capture?.({scope:'selection'})}

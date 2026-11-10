@@ -137,8 +137,8 @@
       next.animatrixFrameMax=restoreFrame(next,next.animatrixFrameMax);
       if(Number.isSafeInteger(next.invertFrame))next.invertFrame=restoreFrame(next,next.invertFrame);
       next.animatrixCopyRowsUnit='row';
-      if(next.animatrixCopyRowsLayout!==undefined&&!['mirror','mirrorByAxis','mirrorWrap'].includes(next.animatrixCopyRowsLayout))
-        fail('Неизвестный порядок «Копии XOR».');
+      if(next.animatrixCopyRowsLayout!==undefined&&!['mirror','mirrorByAxis','mirrorWrap','mirrorExcel'].includes(next.animatrixCopyRowsLayout))
+        fail('Неизвестный порядок отражения строк Аниматрицы.');
       next.animatrixTiming='rows';
     }
     if(next.animatrixTiming==='rows')next.animatrixDirection='down';
@@ -146,7 +146,7 @@
       if(next.sequenceSourceOn||next.compareSource)fail('В Аниматрице одновременно включены разные источники поля.');
       assertSource(next.animatrixSource);
       if(next.animatrixAlgorithm==='copyRows'&&!checked.get(next.animatrixSource).singleGrid)
-        fail('Для «Копии XOR» возьмите поле с одной решёткой, например треугольник в виде «Встык».');
+        fail('Для отражения строк возьмите поле с одной решёткой, например треугольник в виде «Встык».');
       if(next.rows!==undefined&&next.rows!==next.animatrixSource.height)fail('Число строк не совпадает с исходником Аниматрицы.');
     }
     return next;
@@ -154,7 +154,8 @@
   function assertState(state){return normalize(state);}
   function geometry(state){const s=normalize(state),source=assertSource(s.animatrixSource);return {W:source.width,H:source.height,anchor:source.anchor};}
   const unlimited=state=>!!state&&['infinite','repeat'].includes(state.animatrixCycleMode);
-  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return s.animatrixAlgorithm==='copyRows'?Core.copyRowsCycleFrames(source.height,!!s.animatrixCopyRowsLayout,s.animatrixCopyRowsLayout==='mirrorByAxis',s.animatrixCopyRowsLayout==='mirrorWrap'):s.animatrixTiming==='rows'?source.height-1:source.height;}
+  const copyRowsByAxis=layout=>layout==='mirrorByAxis'||layout==='mirrorWrap'||layout==='mirrorExcel';
+  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource),layout=s.animatrixCopyRowsLayout;return s.animatrixAlgorithm==='copyRows'?Core.copyRowsCycleFrames(source.height,!!layout,copyRowsByAxis(layout),layout==='mirrorWrap'):s.animatrixTiming==='rows'?source.height-1:source.height;}
   function frames(state){const s=normalize(state),cycle=cycleFrames(s);return unlimited(s)?Math.max(cycle,s.animatrixFrameMax):cycle*s.animatrixCycles;}
   function extend(state,requested){
     frameCount(requested);const cycle=cycleFrames(state);
@@ -173,9 +174,10 @@
     engine._repeat=engine._cycleMode==='finite'?null:{phase:'period',power:1,length:0,checkpoint:Core.snapshot(engine),period:0,first:0,lead:0,pairSteps:0,a:null,b:null,detectedCycle:null};
   }
   function create(state){
-    const s=normalize(state),layout=s.animatrixCopyRowsLayout,wrap=layout==='mirrorWrap';
+    const s=normalize(state),layout=s.animatrixCopyRowsLayout;
     const engine=Core.create(decode(s.animatrixSource),{algorithm:s.animatrixAlgorithm,direction:s.animatrixDirection,
-      scan:s.animatrixTiming==='rows',copyRowsMirror:!!layout,copyRowsByAxis:wrap||layout==='mirrorByAxis',copyRowsWrap:wrap});
+      scan:s.animatrixTiming==='rows',copyRowsMirror:!!layout,copyRowsByAxis:copyRowsByAxis(layout),
+      copyRowsWrap:layout==='mirrorWrap',copyRowsExcel:layout==='mirrorExcel'});
     engine.sourceFrame=0;
     Object.defineProperties(engine,{_sourceLimit:{value:unlimited(s)?Number.MAX_SAFE_INTEGER:frames(s)},_cycleFrames:{value:cycleFrames(s)},_cycleMode:{value:s.animatrixCycleMode},_repeat:{value:null,writable:true}});
     repeatReset(engine);return engine;
