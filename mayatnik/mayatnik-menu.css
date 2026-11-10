@@ -1050,6 +1050,8 @@ body.may-mobile-menu #mayMobileBar::-webkit-scrollbar{display:none}
 body.may-mobile-menu #mayMobileBar :is(#paintTools,#mayatnikSidebar,#mayatnikRail,#mayatnikRailR,#mayatnikRail>.gz-rail,#mayatnikRailR>.gz-rail){display:contents!important}
 body.may-mobile-menu #mayMobileBar :is(.pt-g,.gz-group,#mayCorner,#mayBottomBar,#mayTemplateLauncher){position:relative!important;inset:auto!important;transform:none!important;translate:none!important;flex:0 0 auto!important;margin:0!important;height:24px!important;min-height:24px!important;max-height:24px!important;clip-path:none!important}
 body.may-mobile-menu #mayMobileBar :is(.pt-g,.gz-group){width:max-content!important;max-width:none!important;overflow:visible!important}
+/* The group is a stacking context: raise it as a unit above the fixed mobile player. */
+body.may-mobile-menu #mayMobileBar :is(.pt-g.pt-open,.gz-group.gz-open){z-index:60!important}
 body.may-mobile-menu #mayMobileBar :is(.pt-l,.gz-head){touch-action:pan-x!important;height:24px!important;min-height:24px!important;max-height:24px!important}
 body.may-mobile-menu #mayMobileBar :is(.may-brand,.sub,#mayMenu,.pt-gridbg,.pt-ghost,.may-closed-back){display:none!important}
 body.may-mobile-menu :is(#mayFooterBar,.may-menu-side-scroll,#mayMenuDockGrid){display:none!important}
