@@ -9,7 +9,7 @@
 })(typeof globalThis==='object'?globalThis:this,function(Core){
   'use strict';
   const VERSION=1,EVOLUTION=1,MAX_CELLS=2100000,MAX_ROWS=4096,MAX_AREAS=65536;
-  const ALGORITHMS=['two','three','shift','horr','zero','background'];
+  const ALGORITHMS=Core.algorithms;
   const DIRECTIONS=['down','up','left','right'];
   const checked=new WeakMap();
   const fail=message=>{throw Error(message);};
@@ -71,8 +71,10 @@
     const areas=validateAreas(source.areas,source.width,source.height),stamp=signature(source,areas),old=checked.get(source);
     if(old&&old.stamp.every((value,index)=>value===stamp[index]))return source;
     const words=unpack(source.words,n),fills=source.fills==null?null:unpack(source.fills,n);
+    let singleGrid=true;
     for(let i=0;i<n;i++){
       const flags=words[i]>>>24;
+      if((flags&17)&&((i%source.width-source.anchor-Math.floor(i/source.width))&1))singleGrid=false;
       if(flags&192||!(flags&1)&&(flags&2))fail('Повреждены состояния клеток Аниматрицы.');
       if(fills&&fills[i]>0xffffff)fail('Повреждён цвет заливки Аниматрицы.');
     }
@@ -81,7 +83,7 @@
       for(const a of areas)for(let y=a.y;y<a.y+a.height;y++)mask.fill(1,y*source.width+a.x,y*source.width+a.x+a.width);
       for(let i=0;i<n;i++)if(mask[i]!==((words[i]>>>29)&1))fail('Области выделения не совпадают с маской Аниматрицы.');
     }
-    checked.set(source,{stamp,key:null});return source;
+    checked.set(source,{stamp,key:null,singleGrid});return source;
   }
   function decode(source){
     assertSource(source);const n=source.width*source.height,words=unpack(source.words,n),fills=source.fills?unpack(source.fills,n):new Uint32Array(n);
@@ -123,10 +125,13 @@
     if(!['finite','infinite','repeat'].includes(next.animatrixCycleMode))fail('Неизвестный режим циклов Аниматрицы.');
     if(!Number.isSafeInteger(next.animatrixFrameMax)||next.animatrixFrameMax<0)fail('Некорректная граница кадров Аниматрицы.');
     if(next.animatrixEvolution!==EVOLUTION)fail('Работа сохранена с другой версией расчёта Аниматрицы.');
+    if(next.animatrixAlgorithm==='copyRows')next.animatrixTiming='rows';
     if(next.animatrixTiming==='rows')next.animatrixDirection='down';
     if(active(next)){
       if(next.sequenceSourceOn||next.compareSource)fail('В Аниматрице одновременно включены разные источники поля.');
       assertSource(next.animatrixSource);
+      if(next.animatrixAlgorithm==='copyRows'&&!checked.get(next.animatrixSource).singleGrid)
+        fail('Для «Копии XOR» возьмите поле с одной решёткой, например треугольник в виде «Встык».');
       if(next.rows!==undefined&&next.rows!==next.animatrixSource.height)fail('Число строк не совпадает с исходником Аниматрицы.');
     }
     return next;
@@ -134,7 +139,7 @@
   function assertState(state){return normalize(state);}
   function geometry(state){const s=normalize(state),source=assertSource(s.animatrixSource);return {W:source.width,H:source.height,anchor:source.anchor};}
   const unlimited=state=>!!state&&['infinite','repeat'].includes(state.animatrixCycleMode);
-  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return s.animatrixTiming==='rows'?source.height-1:source.height;}
+  function cycleFrames(state){const s=normalize(state),source=assertSource(s.animatrixSource);return s.animatrixAlgorithm==='copyRows'?Core.copyRowsFrames(source.height):s.animatrixTiming==='rows'?source.height-1:source.height;}
   function frames(state){const s=normalize(state),cycle=cycleFrames(s);return unlimited(s)?Math.max(cycle,s.animatrixFrameMax):cycle*s.animatrixCycles;}
   function extend(state,requested){
     frameCount(requested);const cycle=cycleFrames(state);
@@ -209,7 +214,14 @@
     if(!Number.isSafeInteger(rows)||!['one','example'].includes(type)||!ALGORITHMS.includes(algorithm))fail('Неизвестный пример Аниматрицы.');
     const width=2*rows-1,n=dimensions(width,rows),anchor=rows-1;
     const seed={width,height:rows,bits:new Uint8Array(n),present:new Uint8Array(n),colours:new Uint32Array(n),bold:new Uint8Array(n),automatic:new Uint8Array(n),filled:new Uint8Array(n),fills:new Uint32Array(n),selection:new Uint8Array(n)};
-    if(type==='one'){seed.bits[anchor]=seed.present[anchor]=seed.selection[anchor]=1;seed.colours[anchor]=0xffffff;seed.areas=[{x:anchor,y:0,width:1,height:1}];}
+    if(algorithm==='copyRows'){
+      for(let r=0;r<rows;r++)for(let x=0;x<=r;x++){
+        const q=r*width+anchor-r+2*x,bit=Number((x&(r-x))===0);
+        seed.present[q]=1;seed.bits[q]=bit;seed.colours[q]=bit?0xe8edf5:0x5b6475;
+      }
+      seed.areas=[{x:0,y:0,width,height:rows}];
+    }
+    else if(type==='one'){seed.bits[anchor]=seed.present[anchor]=seed.selection[anchor]=1;seed.colours[anchor]=0xffffff;seed.areas=[{x:anchor,y:0,width:1,height:1}];}
     else{
       const bits=[1,0,1,1,0],colours=[0xff0000,0xff0000,0x0070c0,0x0070c0,0],targets=[0,1,1,1,0,1,0],targetColours=[0,0x008000,0xff0000,0,0xff0000,0,0x0070c0];
       for(let j=0;j<bits.length;j++){const q=anchor-2+j;seed.present[q]=seed.selection[q]=1;seed.bits[q]=bits[j];seed.colours[q]=colours[j];seed.bold[q]=j%2;if(algorithm==='background'&&j<4){seed.filled[q]=1;seed.fills[q]=colours[j];}}

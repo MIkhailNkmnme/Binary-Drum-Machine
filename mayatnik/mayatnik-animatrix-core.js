@@ -12,7 +12,7 @@
   const TYPES = { bits: Uint8Array, present: Uint8Array, colours: Uint32Array,
     bold: Uint8Array, automatic: Uint8Array, fills: Uint32Array, filled: Uint8Array, selection: Uint8Array };
   const KEYS = Object.keys(TYPES);
-  const ALGORITHMS = ['two', 'three', 'shift', 'horr', 'zero', 'background'];
+  const ALGORITHMS = ['two', 'three', 'shift', 'horr', 'zero', 'background', 'copyRows'];
   const DIRECTIONS = ['down', 'up', 'left', 'right'];
   const EMPTY = Object.freeze([0, 0, 0, 0, 0]); // present, bit, RGB, bold, colour participates
 
@@ -78,18 +78,32 @@
     }
     return out;
   }
+  const firstScanRow = s => s.algorithm === 'copyRows' ? 2 : 1;
+  const copyRowsFrames = height => Math.ceil((Math.sqrt(1 + 8 * (height - 2)) - 1) / 2);
+  function resetProgress(s) {
+    const first = firstScanRow(s);
+    s.stepCount = s.rowCount = s.cycle = 0;
+    s.cursorRow = s.height > first ? first : 0;
+    s.done = s.scan && s.height <= first;
+    s._scanSelectionRows = null;
+    if (s.algorithm === 'copyRows') {
+      s.copyMarks ??= new Uint8Array(s.bits.length);
+      s.copyMarks.fill(0);
+      s.copyMarkRange = null;
+    }
+    return s;
+  }
   function create(seed, options = {}) {
     const algorithm = options.algorithm || 'two', direction = options.direction || 'down';
     if (!ALGORITHMS.includes(algorithm)) throw new RangeError('Unknown algorithm');
     if (!DIRECTIONS.includes(direction)) throw new RangeError('Unknown direction');
-    if (options.scan && direction !== 'down') throw new RangeError('Row scan supports down only');
+    const scan = !!options.scan || algorithm === 'copyRows';
+    if (scan && direction !== 'down') throw new RangeError('Row scan supports down only');
     const initial = cloneSeed(seed), state = cloneSeed(initial);
-    state.algorithm = algorithm; state.direction = direction; state.scan = !!options.scan;
-    state.stepCount = 0; state.rowCount = 0; state.cursorRow = state.height > 1 ? 1 : 0;
-    state.cycle = 0; state.done = state.height < 2 && state.scan;
+    state.algorithm = algorithm; state.direction = direction; state.scan = scan;
     Object.defineProperty(state, '_seed', { value: initial });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
-    return state;
+    return resetProgress(state);
   }
   function snapshot(s) {
     return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
@@ -98,20 +112,16 @@
   function reset(s) {
     const initial = cloneSeed(s._seed);
     for (const key of KEYS) s[key].set(initial[key]);
-    s.areas = initial.areas; s.stepCount = s.rowCount = s.cycle = 0;
-    s.cursorRow = s.height > 1 ? 1 : 0; s.done = s.scan && s.height < 2;
-    s._scanSelectionRows = null;
-    return s;
+    s.areas = initial.areas;
+    return resetProgress(s);
   }
   // Independent calculator at the same immutable seed, without duplicating it.
   function forkInitial(s) {
     const state = cloneSeed(s._seed);
-    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
-      stepCount: 0, rowCount: 0, cursorRow: s.height > 1 ? 1 : 0, cycle: 0,
-      done: s.scan && s.height < 2 });
+    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan });
     Object.defineProperty(state, '_seed', { value: s._seed });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
-    return state;
+    return resetProgress(state);
   }
   // Counters are excluded: they cannot affect the next transformation. Areas'
   // order is included because VBA processes overlapping Areas in that order.
@@ -277,6 +287,33 @@
     if (isShift(s)) markYellow(s);
     s.stepCount++; s.done = !worked;
   }
+  function scanCopyRows(s, capture) {
+    if (s.height < 3) { s.done = true; return; }
+    const start = s.cursorRow, width = s.width;
+    const count = Math.floor((1 + Math.sqrt(1 + 8 * (start - 2))) / 2);
+    const end = Math.min(start + count, s.height);
+    const sourceStart = count - 1;
+    const first = sourceStart + ((start - sourceStart) & 1);
+    if (s.copyMarkRange) s.copyMarks.fill(0, ...s.copyMarkRange);
+    s.copyMarkRange = [start * width, end * width];
+    // Each receiving row uses an earlier row of the same parity at identical columns.
+    for (let y = start; y < end; y++) {
+      const from = (first - (y - start)) * width, to = y * width;
+      capture(y);
+      for (let x = 0; x < width; x++) {
+        const source = from + x, target = to + x;
+        if (!s.present[source] || !s.present[target]) continue;
+        const toggle = s.bits[source];
+        s.bits[target] ^= toggle;
+        s.copyMarks[target] = toggle ? 1 : 2;
+      }
+    }
+    s.stepCount++;
+    s.rowCount += end - start;
+    s.cursorRow = end;
+    if (end === s.height) { s.cursorRow = 2; s.cycle++; }
+    s.done = false;
+  }
   function scanRow(s, capture) {
     if (s.height < 2) { s.done = true; return; }
     const y = s.cursorRow;
@@ -364,7 +401,8 @@
       beforeRows.set(row, copy);
     };
     for (let i = 0; i < n; i++) {
-      scanRow(s, capture);
+      if (s.algorithm === 'copyRows') scanCopyRows(s, capture);
+      else scanRow(s, capture);
       if (s.done) break;
     }
     let changed = 0;const changedCells=s.trackChanges?[]:null;
@@ -404,5 +442,5 @@
   }
   function seek(s, frame) { count(frame); reset(s); return advance(s, frame); }
   return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds, forkInitial, sameState,
-    algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
+    copyRowsFrames, algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
 });

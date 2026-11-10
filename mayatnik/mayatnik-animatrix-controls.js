@@ -39,9 +39,10 @@
       ['zero','00','Нулевой вариант'],['background','Фон','Фоновый вариант']
     ];
     for(let i=0;i<algorithms.length;i+=2)segments('algorithm:'+i,'Алгоритм Аниматрицы',algorithms.slice(i,i+2).map(([value,caption,title])=>({label:caption,title,selected:s=>s.algorithm===value,action:pick('algorithm',value)})));
+    command('copy-rows','Копии XOR','Взять текущее поле одной решётки. Накладывать строки XOR пачками, нечётные на нечётные и чётные на чётные.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows');
     command('pendulum','Маятник','Вернуться к обычному Маятнику: выключить Аниматрицу',a=>a?.set?.({on:false}),s=>!s.on);
     segments('timing','Порядок расчёта Аниматрицы',[
-      {label:'Матрица',title:'Пересчитывать матрицу',selected:s=>s.timing!=='rows',action:pick('timing','matrix')},
+      {label:'Матрица',title:'Пересчитывать матрицу',selected:s=>s.timing!=='rows',unavailable:s=>s.algorithm==='copyRows',action:pick('timing','matrix')},
       {label:'Строки',title:'Аниматрица по строкам сверху вниз, без добавления вершин',selected:s=>s.timing==='rows',action:pick('timing','rows')}
     ]);
     for(const [id,parts]of [['vertical',[['down','Вниз'],['up','Вверх']]],['horizontal',[['left','Влево'],['right','Вправо']]]])
@@ -55,7 +56,7 @@
       {label:'Выделение',title:'Взять выделенную область для режима «Матрица»',unavailable:s=>s.timing==='rows',action:a=>a?.capture?.({scope:'selection'})}
     ]);
     segments('seed','Начальный рисунок',[
-      {label:'1',title:'Исходник: одна единица',action:a=>a?.seed?.('one')},
+      {label:'1',title:'Исходник из одной верхней единицы. В «Копии XOR» строится весь треугольник.',action:a=>a?.seed?.('one')},
       {label:'Пример',title:'Исходник: учебный пример',action:a=>a?.seed?.('example')}
     ]);
     segments('cycle-mode','Повторение циклов Аниматрицы',[
