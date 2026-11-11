@@ -35,11 +35,12 @@
     const [lo,hi]=span(state,frame),radius=rows-1;return {left:Math.min(b.left,lo-radius),right:Math.max(b.right,hi+radius),rows};
   }
   function geometry(state,base){if(!active(state))return base;const b=extent(state),left=Math.min(-base.anchor,b.left),right=Math.max(base.W-1-base.anchor,b.right),result={W:right-left+1,anchor:-left};if(!Number.isSafeInteger(result.W*state.rows)||result.W*state.rows>MAX_CELLS)throw Error('Свой маятник превышает безопасный размер поля 100 миллионов клеток.');return result;}
-  function seed(field,geo,source,rowLimit=field.H,fillInverseAbove=false){source=normalize(source);if(!Number.isInteger(field.W)||!Number.isInteger(field.H)||field.W<1||field.H<1||field.val?.length!==field.W*field.H)throw Error('Неверный размер исходного поля.');const b=bounds(source,Math.min(field.H,rowLimit));if(geo.anchor+b.left<0||geo.anchor+b.right>=field.W)throw Error('Поле не вмещает все биты исходных строк.');field.val.fill(-1);
+  function seed(field,geo,source,rowLimit=field.H,fillInverseAbove=false,frameZeroFill='off'){source=normalize(source);if(!Number.isInteger(field.W)||!Number.isInteger(field.H)||field.W<1||field.H<1||field.val?.length!==field.W*field.H)throw Error('Неверный размер исходного поля.');const b=bounds(source,Math.min(field.H,rowLimit));if(geo.anchor+b.left<0||geo.anchor+b.right>=field.W)throw Error('Поле не вмещает все биты исходных строк.');field.val.fill(-1);
     for(let r=0;r<b.rows;r++){const word=source.rows[r],start=geo.anchor-(word.length-1);for(let i=0;i<word.length;i++)field.val[r*field.W+start+2*i]=word.charCodeAt(i)-48;}
     // Fill only internal gaps of the selected source rows, once at frame zero.
     // Read the current row directly above: empty is not a bit to invert.
-    if(fillInverseAbove)for(let r=1;r<b.rows;r++){
+    if(Core.seedGapDirection(frameZeroFill)!=='off')Core.fillSeedGaps(field,geo.anchor,b.rows,r=>source.rows[r].length-1,frameZeroFill);
+    else if(fillInverseAbove)for(let r=1;r<b.rows;r++){
       const half=source.rows[r].length-1,row=r*field.W,up=row-field.W;
       for(let c=geo.anchor-half+1;c<geo.anchor+half;c+=2){const q=row+c,v=field.val[up+c];if(field.val[q]===-1&&v>=0)field.val[q]=1-v;}
     }

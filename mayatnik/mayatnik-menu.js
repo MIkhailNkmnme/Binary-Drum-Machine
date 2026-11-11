@@ -90,10 +90,11 @@
   // v0.174: «проверь кнопки, чтобы всё соответствовало логике как в хабе»: числа — ползунками (значение на дорожке),
   // связанные пары — одной кнопкой пополам, включатель с цветом — «кнопка | ●», включатель со своей скоростью — внутри ползунка
   const fire = e => { e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); };
+  const playerFirstFrame = frame => Number(frame.dataset.playerFirstFrame || frame.min);
   function seekFrame(requested){
     const frame=$('frame');
     if(frame.disabled)return;
-    const low=Number(frame.min),high=Number(frame.max);
+    const low=playerFirstFrame(frame),high=Number(frame.max);
     const next=Math.max(low,Math.round(requested));
     if(next>high&&window.mayAnimatrix?.continueFrame?.(next))return;
     const value=String(Math.min(high,next));
@@ -154,7 +155,7 @@
         head: { label: '▶ Анимация', on: () => $('bPlay').getAttribute('aria-pressed') === 'true', click: () => $('bPlay').click() } },
       num('frameT', { name: 'Кадр, с', tip: 'Сколько длится каждый кадр анимации · шаг 0,05 с · двойной щелчок — 0 (как успевает экран)', fmt: v => v ? String(+(v * .05).toFixed(2)).replace('.', ',') + ' с / кадр' : 'кадр — без паузы', zero: 0 }),   // v0.263
       button('bFrameDrift','arrowR'),num('frameDriftStep',{name:'Сдвиг/кадр',tip:'Сдвиг всего маятника вправо, битов на шаг плеера',fmt:v=>v+' бит / кадр'}),
-      { ...num('frame', { name: 'Кадр', fmt: v => String(v), zero: 0 }), tip: 'Кадр = вершина · −N / +N — на столько вершин, какая скорость анимации (×N; в паре — пар) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — к любой · двойной щелчок — 0',
+      { ...num('frame', { name: 'Кадр', fmt: v => String(v), zero: 0 }), tip: 'Кадр = вершина · −N / +N — на столько вершин, какая скорость анимации (×N; в паре — пар) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — перемотка · двойной щелчок — к началу',
         // v0.317: «если ставлю ×2 — в стрелках кадра также пиши +2»: стрелки шагают на скорость анимации (подписи −N / +N обновляет toolSync ниже)
         step: d => { if (window.mayThirds?.on() && Math.abs(d) !== 2) { window.mayThirds.step(Math.sign(d)); return; }   // v0.318: «Трети»
           const e=$('frame'),N=Math.abs(d)===2?Math.max(1,Math.round((Number(e.max)-Number(e.min))/20)):Math.max(1,Number($('speed').value)||1);
@@ -284,7 +285,7 @@
       cell.style.setProperty('background','transparent','important');
       cell.style.setProperty('clip-path','none','important');
       cell.style.setProperty('padding','0','important');
-      cell.title='Кадр: щелчок — пуск / пауза; тянуть бегунок — перемотка; двойной щелчок — кадр 0';
+      cell.title='Кадр: щелчок — пуск / пауза; тянуть бегунок — перемотка; двойной щелчок — к началу';
       previous.classList.add('may-frame-prev');next.classList.add('may-frame-next');
       mid.hidden=true;mid.setAttribute('aria-hidden','true');mid.tabIndex=-1;
       thumb.className='may-frame-thumb';tail.className='may-frame-tail';value.className='may-frame-value';
@@ -294,39 +295,44 @@
       tail.append(value,glyph);
       thumb.append(tail);cell.append(thumb);caption.className='may-frame-caption';cell.parentElement.append(caption);
       stopButton.type='button';stopButton.className='may-frame-stop';stopButton.textContent='×';stopButton.hidden=true;
-      stopButton.setAttribute('aria-label','Остановить и вернуться на кадр 0');cell.append(stopButton);
+      stopButton.setAttribute('aria-label','Остановить и вернуться к началу');cell.append(stopButton);
       const track=MayatnikHeatPeriodControl.attachTrack(cell,'may-frame-track',{thumbFrame:true,inset:16});
       const startArrow=document.createElementNS(track.svg.namespaceURI,'path'),endArrow=document.createElementNS(track.svg.namespaceURI,'path');
       startArrow.setAttribute('class','may-frame-track-start');startArrow.setAttribute('d','M12 1L1 12L12 23');
       endArrow.setAttribute('class','may-frame-track-end');endArrow.setAttribute('d','M108 1L119 12L108 23');
       track.svg.append(startArrow,endArrow);
       const playing=()=>P.getAttribute('aria-pressed')==='true';
+      const arrowBlocked=(arrow,on=playing())=>on||arrow===previous&&Number(frame.value)<=playerFirstFrame(frame);
+      const syncArrows=on=>{
+        for(const arrow of [previous,next]){
+          const disabled=arrowBlocked(arrow,on);
+          arrow.tabIndex=disabled?-1:0;
+          arrow.setAttribute('aria-disabled',String(disabled));
+          if(disabled&&document.activeElement===arrow)tail.focus({preventScroll:true});
+        }
+      };
       const playSync=()=>{
         const on=playing();
         cell.classList.toggle('may-frame-running',on);
         startArrow.setAttribute('d',on?'M1 1L12 12L1 23':'M12 1L1 12L12 23');
         endArrow.setAttribute('d',on?'M119 1L108 12L119 23':'M108 1L119 12L108 23');
-        for(const arrow of [previous,next]){
-          arrow.tabIndex=on?-1:0;
-          arrow.setAttribute('aria-disabled',String(on));
-          if(on&&document.activeElement===arrow)tail.focus({preventScroll:true});
-        }
+        syncArrows(on);
         glyph.textContent=on?'Ⅱ':'▶';
         tail.setAttribute('aria-description',on?'Enter или пробел — пауза.':'Enter или пробел — пуск.');
       };
       const togglePlay=()=>{P.click();playSync();rail.refresh();side();};
-      const resetFrame=()=>{if(playing())P.click();frame.value='0';fire(frame);rail.refresh();side();};
+      const resetFrame=()=>{if(playing())P.click();seekFrame(playerFirstFrame(frame));rail.refresh();side();};
       stopButton.addEventListener('pointerdown',event=>event.stopPropagation());
       stopButton.addEventListener('click',event=>{event.stopPropagation();resetFrame();});
       for(const [arrow,title] of [[previous,'На предыдущий кадр'],[next,'На следующий кадр']]){
         arrow.setAttribute('role','button');arrow.tabIndex=0;arrow.title=title;arrow.setAttribute('aria-label',title);
         arrow.addEventListener('click',event=>{
-          if(playing()){event.preventDefault();event.stopImmediatePropagation();}
+          if(arrowBlocked(arrow)){event.preventDefault();event.stopImmediatePropagation();}
         },true);
         arrow.addEventListener('keydown',event=>{
           if(event.key==='Enter'||event.key===' '){
             event.preventDefault();event.stopImmediatePropagation();
-            if(!playing())arrow.click();
+            if(!arrowBlocked(arrow))arrow.click();
           }
         },true);
       }
@@ -348,7 +354,7 @@
         scrubbing=true;
         tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);
         const x=event.clientX,y=event.clientY,span=track.travel(thumbWidth)*cell.getBoundingClientRect().width/120;
-        const start=Number(frame.value),range=Number(frame.max)-Number(frame.min);
+        const low=playerFirstFrame(frame),start=Math.max(low,Number(frame.value)),range=Number(frame.max)-low;
         const listeners=new AbortController(),options={signal:listeners.signal};
         let dragging=false,last=start;
         tail.addEventListener('pointermove',e=>{
@@ -380,21 +386,22 @@
       });
       tail.addEventListener('keydown',event=>{
         if(frame.disabled)return;
-        const low=Number(frame.min),high=Number(frame.max),current=Number(frame.value);
+        const low=playerFirstFrame(frame),high=Number(frame.max),current=Number(frame.value);
         const target=event.key==='Home'?low:event.key==='End'?high:event.key==='ArrowLeft'?current-1:event.key==='ArrowRight'?current+1:null;
         if(target===null&&event.key!=='Enter'&&event.key!==' ')return;
         event.preventDefault();event.stopPropagation();
         if(target===null){togglePlay();return;}
-        if(playing())return;
+        if(playing()||event.key==='ArrowLeft'&&current<=low)return;
         seekFrame(target);rail.refresh();side();
       });
       const vl=mid.querySelector('.gz-vl');
       const side=()=>{
-        const low=Number(frame.min),high=Number(frame.max),current=Number(frame.value);
+        const low=playerFirstFrame(frame),high=Number(frame.max),current=Number(frame.value);
         thumbWidth=Math.min(64,Math.max(44,20+String(frame.max).length*7));
-        const on=playing(),left=track.sync(high>low?(current-low)/(high-low):0,thumbWidth,!on);
+        const on=playing(),left=track.sync(high>low?(Math.max(current,low)-low)/(high-low):0,thumbWidth,!on);
+        syncArrows(on);
         stopButton.hidden=on||current<=low;
-        cell.classList.toggle('may-frame-at-start',current===low);
+        cell.classList.toggle('may-frame-at-start',current<=low);
         cell.classList.toggle('may-frame-at-end',high>low&&current===high);
         for(const [prop,px]of [['--may-thumb-left',left],['--may-thumb-right',120-left-thumbWidth],['--may-thumb-width',thumbWidth]]){
           const length=px+'px';if(cell.style.getPropertyValue(prop)!==length)cell.style.setProperty(prop,length);
@@ -402,8 +409,10 @@
         if(value.textContent!==frame.value)value.textContent=frame.value;
         const fontSize=Number(Math.min(11,(thumbWidth-14)/Math.max(1,frame.value.length)/.61).toFixed(2))+'px';
         if(value.style.fontSize!==fontSize)value.style.fontSize=fontSize;
-        for(const [key,number]of [['aria-valuemin',frame.min],['aria-valuemax',frame.max],['aria-valuenow',frame.value]])
-          if(tail.getAttribute(key)!==number)tail.setAttribute(key,number);
+        for(const [key,number]of [['aria-valuemin',low],['aria-valuemax',high],['aria-valuenow',Math.max(current,low)]])
+          if(tail.getAttribute(key)!==String(number))tail.setAttribute(key,String(number));
+        if(current<low)tail.setAttribute('aria-valuetext','Кадр 0, поле пустое');
+        else tail.removeAttribute('aria-valuetext');
         const bar=cell.parentElement,c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect(),y=c.bottom-b.top-bar.clientTop;
         const center=Math.round(c.left+c.width/2-b.left-bar.clientLeft);
         caption.style.left=center+'px';caption.style.top=y+'px';
@@ -420,7 +429,7 @@
         const reduced=$('frame').dataset.renderedReduced==='true',shownRows=reduced?Number($('frame').dataset.renderedRows)||rows:rows,shownWidth=reduced?Number($('frame').dataset.renderedColumns)||width:Number($('frame').dataset.visibleFieldWidth)||width;
         renderFrameCaption(caption,[...type.split(' · '),...($('frame').dataset.apexWidth!==undefined?['по вершинам '+$('frame').dataset.apexWidth+' / '+$('frame').dataset.apexTargetWidth]:[]),shownRows+' строк',($('frame').dataset.apexWidth!==undefined?'поле ':reduced?'ширина ':([2,4,6,8].includes(factor)?factor+'N−1=':'ширина '))+shownWidth,...(frameAccuracyLabel($('frame'))?[frameAccuracyLabel($('frame'))]:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
       };
-      const valueObserver=new MutationObserver(side);if(vl)valueObserver.observe(vl,{childList:true,characterData:true,subtree:true});valueObserver.observe(frame,{attributes:true,attributeFilter:['min','max','data-apex-width','data-apex-target-width','data-apex-min','data-apex-max','data-visible-field-width','data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);if(vl)valueObserver.observe(vl,{childList:true,characterData:true,subtree:true});valueObserver.observe(frame,{attributes:true,attributeFilter:['min','max','data-player-first-frame','data-apex-width','data-apex-target-width','data-apex-min','data-apex-max','data-visible-field-width','data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side();
     }
   }
@@ -555,6 +564,38 @@
         invAbove.title=!supported?'Инверсия сверху недоступна для сравнений и тестовых фигур.':'Инверсия сверху: '+(on?'включена':'выключена')+'. '+(state.on?'В кадре 0 заполняет внутренние промежутки выбранных исходных строк.':'После расчёта каждой строки обычного Маятника заполняет внутренние промежутки конуса.')+' Пустая клетка получает инверсию бита прямо сверху: 0→1, 1→0. Если сверху пусто, заполнения нет. Уже записанные биты сохраняются; на полностью заполненном фоне пустот нет. Переключение возвращает кадр 0; работает с шагом 1 и 2.';invAbove.setAttribute('aria-label',invAbove.title);};
       invAbove.onclick=event=>{event.stopPropagation();const api=window.maySequenceField;api?.setInverseAbove(!api.get().inverseAbove);invAbove.gzSync();rail.refresh();};
       toolSync.push(invAbove.gzSync);addEventListener('may-compare-change',invAbove.gzSync);invAbove.gzSync();pop.append(section(invAbove,'fields'));
+      {
+        const button=document.createElement('button');
+        button.type='button';button.className='gz-hx';button.dataset.n='mayFrameZeroFill';
+        button.dataset.listTitle='Пустоты 0';
+        button.dataset.maySearchAliases='Инверсия кадра 0|Сверху|Слева|Справа|Снизу';
+        const label=document.createElement('span');label.className='gz-nm';label.textContent='Пустоты 0';
+        const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(button,'grid');glyph.setAttribute('aria-hidden','true');
+        button.append(glyph,label);
+        const choices=[['off','Выкл'],['above','Сверху'],['left','Слева'],['right','Справа'],['below','Снизу']];
+        const state=()=>window.maySequenceField.frameZeroFill();
+        button.gzSync=()=>{
+          const {value,available}=state();
+          button.disabled=!available;
+          button.classList.toggle('gz-on',available&&value!=='off');
+          button.title=available
+            ? 'Пустоты кадра 0. '+choices.find(([id])=>id===value)[1]+'. Берётся инверсия соседнего бита исходного кадра, 0 → 1 и 1 → 0.'
+            : 'Пустоты кадра 0 доступны для своего исходника, парного Маятника и Хода XOR с начальным конусом.';
+          button.setAttribute('aria-label',button.title);
+        };
+        ZerkGrozd.listHover(button,{
+          options:()=>state().available?choices.map(([id,name])=>({
+            key:id,name,on:state().value===id,pick:()=>window.maySequenceField.setFrameZeroFill(id)
+          })):[],
+          color:()=>getComputedStyle(button).getPropertyValue('--c').trim()||'#93d971',
+          after:()=>{button.gzSync();rail.refresh();}
+        });
+        button.addEventListener('pointerenter',event=>{if(button.disabled)event.stopImmediatePropagation();},true);
+        toolSync.push(button.gzSync);
+        addEventListener('may-compare-change',button.gzSync);
+        button.gzSync();
+        pop.append(section(button,'fields'));
+      }
       { const button=document.createElement('button');button.type='button';button.id='mayApexWalk';button.dataset.n='mayApexWalk';button.className='gz-hx';
         const name=document.createElement('span');name.className='gz-nm';name.textContent='Ход XOR';button.append(name);
         button.dataset.maySearchAliases='Проход вершин|Расширяющийся маятник|XOR вершин';

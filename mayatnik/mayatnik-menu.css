@@ -1169,7 +1169,7 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-frame-slider .may-frame-track-outline :is(.may-frame-track-start,.may-frame-track-end){stroke:var(--c)}
 .may-frame-slider .may-frame-track-outline :is(.may-frame-track-left-frame,.may-frame-track-right-frame,.may-frame-track-thumb-frame){display:none}
 .may-frame-slider:not(.may-frame-running,:has(.may-frame-tail:is(:hover,:focus-visible))) .may-frame-track-outline :is(.may-frame-track-left-frame,.may-frame-track-right-frame){display:block;stroke:var(--c)}
-.may-frame-slider.may-frame-running :is(.may-frame-prev,.may-frame-next){pointer-events:none}
+.may-frame-slider :is(.may-frame-prev,.may-frame-next)[aria-disabled="true"]{pointer-events:none}
 .may-frame-slider:has(.may-frame-tail:is(:hover,:focus-visible)) .may-frame-track-thumb-frame{display:block;stroke:var(--c)}
 .may-frame-slider:not(.may-frame-running):is(.may-frame-at-start,:has(.may-frame-prev:is(:hover,:focus-visible,:active))) .may-frame-track-left,
 .may-frame-slider:not(.may-frame-running):is(.may-frame-at-end,:has(.may-frame-next:is(:hover,:focus-visible,:active))) .may-frame-track-right,

@@ -9,6 +9,27 @@ const MAYATNIK = (() => {
     if (bg === 'chess') for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) val[r * W + c] = (c - anchor - r) & 1 ? 0 : 1;
     return { W, H, val };
   }
+  const seedGapDirection = value => ['above', 'left', 'right', 'below'].includes(value) ? value : 'off';
+  function fillSeedGaps({W, val}, anchor, rows, halfWidth, direction, lastAt) {
+    if (rows < 1 || seedGapDirection(direction) === 'off') return;
+    const rowStep = direction === 'above' ? -1 : 1;
+    const columnStep = direction === 'left' ? -1 : 1;
+    const offset = {above: -W, left: -1, right: 1, below: W}[direction];
+    const firstRow = direction === 'above' ? rows - 1 : 0;
+    const endRow = direction === 'above' ? 0 : direction === 'below' ? rows - 1 : rows;
+    // Visit each cell before its source neighbour so only the original seed is read.
+    for (let r = firstRow; r !== endRow; r += rowStep) {
+      const half = halfWidth(r);
+      const left = Math.max(0, anchor - half) + 1;
+      const right = Math.min(W - 1, anchor + half) - 1;
+      for (let c = columnStep < 0 ? right : left; c >= left && c <= right; c += columnStep) {
+        const q = r * W + c, neighbour = val[q + offset];
+        if (val[q] !== -1 || neighbour < 0) continue;
+        val[q] = 1 - neighbour;
+        if (lastAt) lastAt[q] = 0;
+      }
+    }
+  }
   // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
   function cone(f, a, D, lastAt, stamp, mark, markValue) {
     for (const row of coneRows(f, a, D, lastAt, stamp, mark, markValue)) { /* полный проход */ }
@@ -125,6 +146,6 @@ const MAYATNIK = (() => {
     for (let j = 0; j < k; j++) { const o = offset(mode, j); if (o < lo) lo = o; if (o > hi) hi = o; }
     return [lo, hi];
   }
-  return { field, cone, conePair, coneRows, conePairRows, offset, geometry, tint, tintPair, span };
+  return { field, seedGapDirection, fillSeedGaps, cone, conePair, coneRows, conePairRows, offset, geometry, tint, tintPair, span };
 })();
 if (typeof module !== 'undefined') module.exports = MAYATNIK;
