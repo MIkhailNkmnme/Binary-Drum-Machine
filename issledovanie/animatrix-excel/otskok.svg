@@ -1,1 +1,98 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="395" viewBox="0 0 960 395" role="img" aria-labelledby="title desc"><title id="title">Отскок: исходник и кадр 2</title><desc id="desc">Копия идёт по полосе и отражается, повторяя крайние клетки. Две копии строки. Синий — вперёд; красный — после разворота. Прошлая копия становится чёрной.</desc><rect width="960" height="395" rx="12" fill="#0c131d"/><g font-family="Arial, sans-serif"><text x="24" y="34" font-size="24" fill="#e4edf8" >Отскок</text><text x="24" y="61" font-size="17" fill="#a9bdd4" >Копия идёт по полосе и отражается, повторяя крайние клетки.</text><rect x="20" y="80" width="440" height="220" rx="8" fill="#17212e" stroke="#314155"/><text x="36" y="108" font-size="15" fill="#e4edf8" >Исходник · кадр 0</text><text x="32" y="149.82" font-size="12" fill="#a9bdd4" >1</text><rect x="128.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#edf2f8"/><text x="141.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">1</text><rect x="182.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="195.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">0</text><rect x="236.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#edf2f8"/><text x="249.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">1</text><rect x="290.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#edf2f8"/><text x="303.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">1</text><rect x="344.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="357.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">0</text><text x="32" y="176.82" font-size="12" fill="#a9bdd4" >2</text><rect x="155.5" y="159" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="168.7" y="178.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">0</text><rect x="209.5" y="159" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="222.7" y="178.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">0</text><rect x="263.5" y="159" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="276.7" y="178.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">0</text><rect x="317.5" y="159" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="330.7" y="178.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">0</text><rect x="500" y="80" width="440" height="220" rx="8" fill="#17212e" stroke="#314155"/><text x="516" y="108" font-size="15" fill="#e4edf8" >Кадр 2 · Две копии строки</text><text x="512" y="149.82" font-size="12" fill="#a9bdd4" >1</text><rect x="608.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#edf2f8"/><text x="621.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">1</text><rect x="662.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="675.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">0</text><rect x="716.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#edf2f8"/><text x="729.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">1</text><rect x="770.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#edf2f8"/><text x="783.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">1</text><rect x="824.5" y="132" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="837.7" y="151.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400">0</text><text x="512" y="176.82" font-size="12" fill="#a9bdd4" >2</text><rect x="635.5" y="159" width="26.4" height="26.4" rx="1.5" fill="#edf2f8"/><text x="648.7" y="178.44" font-size="18" fill="#0000ff" text-anchor="middle" font-family="Consolas, monospace" font-weight="700">1</text><rect x="689.5" y="159" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="702.7" y="178.44" font-size="18" fill="#0000ff" text-anchor="middle" font-family="Consolas, monospace" font-weight="700">0</text><rect x="743.5" y="159" width="26.4" height="26.4" rx="1.5" fill="#b9c7d5"/><text x="756.7" y="178.44" font-size="18" fill="#ff0000" text-anchor="middle" font-family="Consolas, monospace" font-weight="700">0</text><rect x="797.5" y="159" width="26.4" height="26.4" rx="1.5" fill="#edf2f8"/><text x="810.7" y="178.44" font-size="18" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="700">1</text><text x="480" y="190" font-size="26" fill="#6fc7ff" text-anchor="middle">→</text><text x="24" y="330" font-size="15" fill="#bdd0e4" >Синий — вперёд; красный — после разворота. Прошлая копия становится чёрной.</text><text x="24" y="360" font-size="14" fill="#8ea6bf" >Пусто ≠ 0. Положение и значения клеток взяты из расчёта приложения.</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="414" viewBox="0 0 960 414" role="img" aria-labelledby="title desc">
+<title id="title">Отскок XOR · поле 511 × 256</title>
+<desc id="desc">Верхняя часть показывает всё поле. Нижняя увеличивает выделенные строки и показывает цифры.</desc>
+<rect x="0" y="0" width="960" height="414" fill="#0c131d" rx="10"/>
+<g font-family="Arial, sans-serif">
+<text x="20" y="22" font-size="15" fill="#aebfd2" >Полное поле · 511 × 256</text>
+<text x="20" y="288.3972602739726" font-size="15" fill="#aebfd2" >Увеличение · строки 1–2</text>
+<text x="57" y="47" font-size="20" fill="#e6eef7" >Исходник · кадр 0</text>
+<rect x="57" y="63" width="406" height="203.3972602739726" fill="#101a25" stroke="#556d85"/>
+<svg x="57" y="63" width="406" height="203.3972602739726" viewBox="0 0 511 256" shape-rendering="crispEdges">
+<rect x="251" y="0" width="1" height="1" fill="#edf2f8" />
+<rect x="253" y="0" width="1" height="1" fill="#b9c7d5" />
+<rect x="255" y="0" width="1" height="1" fill="#edf2f8" />
+<rect x="257" y="0" width="1" height="1" fill="#edf2f8" />
+<rect x="259" y="0" width="1" height="1" fill="#b9c7d5" />
+<rect x="252" y="1" width="1" height="1" fill="#b9c7d5" />
+<rect x="254" y="1" width="1" height="1" fill="#b9c7d5" />
+<rect x="256" y="1" width="1" height="1" fill="#b9c7d5" />
+<rect x="258" y="1" width="1" height="1" fill="#b9c7d5" />
+</svg>
+<text x="50" y="67.3972602739726" font-size="14" fill="#b9cce0" text-anchor="end">1</text>
+<path d="M52 63.397260273972606h5" stroke="#768da6"/>
+<text x="50" y="117.45205479452054" font-size="14" fill="#b9cce0" text-anchor="end">64</text>
+<path d="M52 113.45205479452054h5" stroke="#768da6"/>
+<text x="50" y="168.3013698630137" font-size="14" fill="#b9cce0" text-anchor="end">128</text>
+<path d="M52 164.3013698630137h5" stroke="#768da6"/>
+<text x="50" y="219.15068493150685" font-size="14" fill="#b9cce0" text-anchor="end">192</text>
+<path d="M52 215.15068493150685h5" stroke="#768da6"/>
+<text x="50" y="270" font-size="14" fill="#b9cce0" text-anchor="end">256</text>
+<path d="M52 266h5" stroke="#768da6"/>
+<rect x="254.42465753424653" y="61" width="11.150684931506849" height="5.589041095890411" fill="none" stroke="#65baf4" stroke-width="1.6"/>
+<rect x="57" y="319.3972602739726" width="406" height="80" fill="#172331" rx="6" stroke="#405b75"/>
+<text x="50" y="350.43726027397264" font-size="15" fill="#b9cce0" text-anchor="end">1</text>
+<text x="50" y="382.43726027397264" font-size="15" fill="#b9cce0" text-anchor="end">2</text>
+<rect x="116" y="327.3972602739726" width="31.3" height="31.3" fill="#edf2f8" rx="1"/>
+<text x="132" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">1</text>
+<rect x="180" y="327.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="196" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="244" y="327.3972602739726" width="31.3" height="31.3" fill="#edf2f8" rx="1"/>
+<text x="260" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">1</text>
+<rect x="308" y="327.3972602739726" width="31.3" height="31.3" fill="#edf2f8" rx="1"/>
+<text x="324" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">1</text>
+<rect x="372" y="327.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="388" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="148" y="359.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="164" y="382.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="212" y="359.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="228" y="382.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="276" y="359.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="292" y="382.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="340" y="359.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="356" y="382.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<text x="523" y="47" font-size="20" fill="#e6eef7" >Результат · кадр 2</text>
+<rect x="523" y="63" width="406" height="203.3972602739726" fill="#101a25" stroke="#556d85"/>
+<svg x="523" y="63" width="406" height="203.3972602739726" viewBox="0 0 511 256" shape-rendering="crispEdges">
+<rect x="251" y="0" width="1" height="1" fill="#edf2f8" />
+<rect x="253" y="0" width="1" height="1" fill="#b9c7d5" />
+<rect x="255" y="0" width="1" height="1" fill="#edf2f8" />
+<rect x="257" y="0" width="1" height="1" fill="#edf2f8" />
+<rect x="259" y="0" width="1" height="1" fill="#b9c7d5" />
+<rect x="252" y="1" width="1" height="1" fill="#edf2f8" />
+<rect x="254" y="1" width="1" height="1" fill="#b9c7d5" />
+<rect x="256" y="1" width="1" height="1" fill="#b9c7d5" />
+<rect x="258" y="1" width="1" height="1" fill="#edf2f8" />
+</svg>
+<text x="516" y="67.3972602739726" font-size="14" fill="#b9cce0" text-anchor="end">1</text>
+<path d="M518 63.397260273972606h5" stroke="#768da6"/>
+<text x="516" y="117.45205479452054" font-size="14" fill="#b9cce0" text-anchor="end">64</text>
+<path d="M518 113.45205479452054h5" stroke="#768da6"/>
+<text x="516" y="168.3013698630137" font-size="14" fill="#b9cce0" text-anchor="end">128</text>
+<path d="M518 164.3013698630137h5" stroke="#768da6"/>
+<text x="516" y="219.15068493150685" font-size="14" fill="#b9cce0" text-anchor="end">192</text>
+<path d="M518 215.15068493150685h5" stroke="#768da6"/>
+<text x="516" y="270" font-size="14" fill="#b9cce0" text-anchor="end">256</text>
+<path d="M518 266h5" stroke="#768da6"/>
+<rect x="720.4246575342465" y="61" width="11.150684931506849" height="5.589041095890411" fill="none" stroke="#65baf4" stroke-width="1.6"/>
+<rect x="523" y="319.3972602739726" width="406" height="80" fill="#172331" rx="6" stroke="#405b75"/>
+<text x="516" y="350.43726027397264" font-size="15" fill="#b9cce0" text-anchor="end">1</text>
+<text x="516" y="382.43726027397264" font-size="15" fill="#b9cce0" text-anchor="end">2</text>
+<rect x="582" y="327.3972602739726" width="31.3" height="31.3" fill="#edf2f8" rx="1"/>
+<text x="598" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">1</text>
+<rect x="646" y="327.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="662" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="710" y="327.3972602739726" width="31.3" height="31.3" fill="#edf2f8" rx="1"/>
+<text x="726" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">1</text>
+<rect x="774" y="327.3972602739726" width="31.3" height="31.3" fill="#edf2f8" rx="1"/>
+<text x="790" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">1</text>
+<rect x="838" y="327.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="854" y="350.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="400" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="614" y="359.3972602739726" width="31.3" height="31.3" fill="#edf2f8" rx="1"/>
+<text x="630" y="382.75726027397263" font-size="24" fill="#0000ff" text-anchor="middle" font-family="Consolas, monospace" font-weight="700" stroke="#ffffff" stroke-width=".8" paint-order="stroke">1</text>
+<rect x="678" y="359.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="694" y="382.75726027397263" font-size="24" fill="#0000ff" text-anchor="middle" font-family="Consolas, monospace" font-weight="700" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="742" y="359.3972602739726" width="31.3" height="31.3" fill="#b9c7d5" rx="1"/>
+<text x="758" y="382.75726027397263" font-size="24" fill="#ff0000" text-anchor="middle" font-family="Consolas, monospace" font-weight="700" stroke="#ffffff" stroke-width=".8" paint-order="stroke">0</text>
+<rect x="806" y="359.3972602739726" width="31.3" height="31.3" fill="#edf2f8" rx="1"/>
+<text x="822" y="382.75726027397263" font-size="24" fill="#000000" text-anchor="middle" font-family="Consolas, monospace" font-weight="700" stroke="#ffffff" stroke-width=".8" paint-order="stroke">1</text>
+</g></svg>

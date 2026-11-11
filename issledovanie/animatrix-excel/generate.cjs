@@ -1,90 +1,162 @@
-/* Regenerate the illustrative arrays and SVGs using the application's modules.
+/* Render the exact Animatrix states linked in the Research page.
  * Run: node issledovanie/animatrix-excel/generate.cjs
- * Share-link metadata is written to the system temporary directory.
  */
-const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
-const Source=require('../../mayatnik/mayatnik-animatrix-source.js');
-const Core=require('../../mayatnik/mayatnik-animatrix-core.js');
-const Share=require('../../mayatnik/mayatnik-share-link.js');
-function blank(width=19,height=9){
-  const s={width,height,areas:[{x:0,y:0,width,height}]};
-  for(const k of ['bits','present','bold','automatic','filled','selection'])s[k]=new Uint8Array(width*height);
-  s.colours=new Uint32Array(width*height);s.fills=new Uint32Array(width*height);s.automatic.fill(1);return s;
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const Source = require('../../mayatnik/mayatnik-animatrix-source.js');
+const Core = require('../../mayatnik/mayatnik-animatrix-core.js');
+const Share = require('../../mayatnik/mayatnik-share-link.js');
+
+const page = path.join(__dirname, '..', 'Zerkalius-issledovanie.html');
+const escape = value => String(value).replace(/[&<>"']/g, c => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;'
+})[c]);
+const hex = value => '#' + value.toString(16).padStart(6, '0');
+
+function cells(s) {
+  const result = [];
+  for (let q = 0; q < s.present.length; q++) {
+    if (!s.present[q] && !s.filled[q]) continue;
+    result.push({
+      x: q % s.width,
+      y: Math.floor(q / s.width),
+      bit: s.present[q] ? s.bits[q] : null,
+      fill: s.filled[q] ? hex(s.fills[q]) : null,
+      colour: s.automatic[q] ? '#000000' : hex(s.colours[q]),
+      bold: !!s.bold[q]
+    });
+  }
+  return result;
 }
-function put(s,x,y,v){const q=y*s.width+x;s.bits[q]=+v;s.present[q]=1;}
-function strings(values,width=25,height=8){
-  const s=blank(width,height),anchor=(width-1)/2;
-  values.forEach((row,y)=>{let x=anchor-row.length+1;if(((x-anchor-y)%2+2)%2)x--;[...row].forEach((v,j)=>put(s,x+2*j,y,v));});return s;
+
+function bounds(panels) {
+  const box = { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity };
+  for (const { entries } of panels) for (const { x, y } of entries) {
+    box.left = Math.min(box.left, x);
+    box.right = Math.max(box.right, x + 1);
+    box.top = Math.min(box.top, y);
+    box.bottom = Math.max(box.bottom, y + 1);
+  }
+  if (!Number.isFinite(box.left)) throw Error('В примере нет клеток для увеличения.');
+  return box;
 }
-function coneSeed(algorithm){const s=blank(19,9),y=algorithm==='excelTriangleDown'?0:algorithm==='excelTriangleUp'?8:4;put(s,9,y,1);return s;}
-const specs=[
-  {id:'zerkalius',name:'Зеркалиус',algorithm:'copyRows',frame:2,source:Source.demo(8,'one','copyRows'),
-    stage:'Оси 2 и 3',caption:'NAND симметричных битов записывается в верхнюю строку.',note:'Синий жирный 1; светло-серый обычный 0. Биты вычислены общим ядром.'},
-  {id:'otskok',name:'Отскок',algorithm:'excelBounce',frame:2,seed:strings(['10110','0000']),
-    stage:'Две копии строки',caption:'Копия идёт по полосе и отражается, повторяя крайние клетки.',note:'Синий — вперёд; красный — после разворота. Прошлая копия становится чёрной.'},
-  {id:'interxor',name:'ИнтерXOR',algorithm:'excelChain',frame:3,seed:strings(['10','101','11','100']),
-    stage:'Пары 1→2, 2→3, 3→4',caption:'Нечётная разность длин: переплетение. Чётная: XOR пары.',note:'После последней пары следующая операция замкнёт строку 4 со строкой 1.'},
-  {id:'tsep-xor',name:'Цепь XOR',algorithm:'excelChainDown',frame:3,seed:strings(['10','101','11','100']),
-    stage:'Те же три пары',caption:'В XOR-ветке участвуют все строки сверху до цели включительно.',note:'Исходник тот же, что у ИнтерXOR; результат строки 4 отличается.'},
-  {id:'konus-vniz',name:'Конус вниз',algorithm:'excelTriangleDown',frame:1,seed:coneSeed('excelTriangleDown'),
-    stage:'Один конус, глубина 9',caption:'Каждая цель XOR два диагональных родителя сверху.',note:'Начальные пустые клетки показаны фоном; появившиеся нули — полноценные биты.'},
-  {id:'konus-vverh',name:'Конус вверх',algorithm:'excelTriangleUp',frame:1,seed:coneSeed('excelTriangleUp'),
-    stage:'Один конус, глубина 9',caption:'Тот же расчёт вверх: родители находятся в строке ниже.',note:'Показан настоящий результат ядра, а не поворот готовой картинки.'},
-  {id:'romb',name:'Ромб',algorithm:'excelTriangleBoth',frame:3,seed:coneSeed('excelTriangleBoth'),
-    stage:'Вершины 0, +1, +2',caption:'Из каждой вершины строятся конусы вверх и вниз.',note:'В следующем кадре вершина на один столбец правее; цвет сохраняет правило Excel.'},
-  {id:'kachanie',name:'Качание',algorithm:'excelTrianglePend',frame:5,seed:coneSeed('excelTrianglePend'),
-    stage:'Вершины 0, −1, +1, −2, +2',caption:'Один двусторонний конус за кадр, размах растёт.',note:'Синий и красный — собственные отметки алгоритма, чёрный — его обычный шрифт.'},
-  {id:'stolknovenie',name:'Столкновение',algorithm:'excelCollision',frame:1,
-    stage:'Один поворот на 180° и XOR',caption:'Обе клетки пары получают XOR исходных значений.',note:'Центральная клетка сталкивается сама с собой и становится нулём.'}
-];
-const collision=blank(15,9);collision.areas=[{x:5,y:2,width:5,height:5}];
-['10010','01000','00100','10010','00101'].forEach((row,y)=>[...row].forEach((v,x)=>put(collision,5+x,2+y,v)));
-specs.at(-1).seed=collision;
-const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
-const hex=n=>'#'+(n>>>0).toString(16).padStart(6,'0');
-function rowRecords(s){
-  const out=[];for(let y=0;y<s.height;y++){const cells=[];for(let x=0;x<s.width;x++){const q=y*s.width+x;if(s.present[q])cells.push({x,bit:s.bits[q]});}if(cells.length)out.push({row:y+1,bits:cells.map(c=>c.bit).join(''),cells});}return out;
+
+function panelsFor(id, state, frame) {
+  const engine = Source.create(state);
+  const advance = at => {
+    Source.advance(engine, at - engine.sourceFrame);
+    if (engine.sourceFrame !== at) throw Error('Не построен кадр ' + at + ' для ' + id);
+    return cells(Core.snapshot(engine));
+  };
+  if (id === 'excel-zero-palette') {
+    const entries = advance(frame);
+    return [
+      { title: 'Красный', zero: '#ff0000', entries },
+      { title: 'Синий', zero: '#0000ff', entries },
+      { title: 'Зелёный', zero: '#008000', entries }
+    ];
+  }
+  if (id === 'excel-pattern-colours') return [
+    { title: '1 · Прямое', entries: advance(1) },
+    { title: '2 · Инверсия', entries: advance(2) },
+    { title: '3 · Реверс', entries: advance(frame) }
+  ];
+  return [
+    { title: 'Исходник · кадр 0', entries: advance(0) },
+    { title: 'Результат · кадр ' + frame, entries: advance(frame) }
+  ];
 }
-function svg(spec,before,after){
-  const positions=[];for(const s of [before,after])for(let q=0;q<s.present.length;q++)if(s.present[q])positions.push([q%s.width,Math.floor(q/s.width)]);
-  const minX=Math.min(...positions.map(p=>p[0])),maxX=Math.max(...positions.map(p=>p[0])),minY=Math.min(...positions.map(p=>p[1])),maxY=Math.max(...positions.map(p=>p[1]));
-  const cell=Math.min(27,390/(maxX-minX+1)),plotHeight=(maxY-minY+1)*cell,panelHeight=Math.max(220,plotHeight+72),H=panelHeight+175;
-  const text=(x,y,s,size=16,fill='#e4edf8',extra='')=>`<text x="${x}" y="${y}" font-size="${size}" fill="${fill}" ${extra}>${escape(s)}</text>`;
-  let out=`<svg xmlns="http://www.w3.org/2000/svg" width="960" height="${H}" viewBox="0 0 960 ${H}" role="img" aria-labelledby="title desc"><title id="title">${escape(spec.name)}: исходник и кадр ${spec.frame}</title><desc id="desc">${escape(spec.caption+' '+spec.stage+'. '+spec.note)}</desc><rect width="960" height="${H}" rx="12" fill="#0c131d"/><g font-family="Arial, sans-serif">`;
-  out+=text(24,34,spec.name,24)+text(24,61,spec.caption,17,'#a9bdd4');
-  for(const [index,s]of [before,after].entries()){
-    const panelX=20+index*480,ox=panelX+35+(390-(maxX-minX+1)*cell)/2,oy=132;
-    out+=`<rect x="${panelX}" y="80" width="440" height="${panelHeight}" rx="8" fill="#17212e" stroke="#314155"/>`;
-    out+=text(panelX+16,108,index?'Кадр '+spec.frame+' · '+spec.stage:'Исходник · кадр 0',15);
-    for(let y=minY;y<=maxY;y++){
-      out+=text(panelX+12,oy+(y-minY+.66)*cell,y+1,12,'#a9bdd4');
-      for(let x=minX;x<=maxX;x++){
-        const q=y*s.width+x;if(!s.present[q])continue;
-        const bit=s.bits[q],px=ox+(x-minX)*cell,py=oy+(y-minY)*cell;
-        const fill=s.filled[q]?hex(s.fills[q]):bit?'#edf2f8':'#b9c7d5';
-        const colour=spec.id==='zerkalius'?(bit?'#0066cc':'#dcdcdc'):s.automatic[q]?'#000000':hex(s.colours[q]);
-        const weight=spec.id==='zerkalius'?(bit?700:400):(s.bold[q]?700:400);
-        out+=`<rect x="${px}" y="${py}" width="${cell-.6}" height="${cell-.6}" rx="1.5" fill="${fill}"/>`;
-        out+=text(px+(cell-.6)/2,py+cell*.72,bit,Math.min(18,cell*.74),colour,`text-anchor="middle" font-family="Consolas, monospace" font-weight="${weight}"${spec.id==='zerkalius'&&!bit?' stroke="#17202d" stroke-width=".8" paint-order="stroke"':''}`);
-      }
+
+function figure(name, state, panels) {
+  const { width, height } = state.animatrixSource;
+  const W = 960, gap = 12, margin = 20;
+  const panelWidth = (W - 2 * margin - gap * (panels.length - 1)) / panels.length;
+  const plotWidth = panelWidth - 48, scale = plotWidth / width;
+  const overviewY = 63, overviewHeight = height * scale;
+  const box = bounds(panels), cols = box.right - box.left, rows = box.bottom - box.top;
+  const size = Math.min(32, plotWidth / cols);
+  const detailY = overviewY + overviewHeight + 61;
+  const H = Math.ceil(detailY + rows * size + 22);
+  const text = (x, y, value, font = 17, fill = '#e6eef7', attr = '') =>
+    `<text x="${x}" y="${y}" font-size="${font}" fill="${fill}" ${attr}>${escape(value)}</text>`;
+  const rect = (x, y, w, h, fill, attr = '') =>
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${attr}/>`;
+  const bitFill = entry => entry.fill || (entry.bit ? state.bitOneColour : state.bitZeroColour);
+  const digits = (entry, zero) => {
+    if (zero) return entry.bit ? '#000000' : zero;
+    if (state.animatrixCopyRowsLayout === 'mirrorExcel') return entry.bit ? '#0066cc' : '#dcdcdc';
+    return entry.colour;
+  };
+
+  const out = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="title desc">`,
+    `<title id="title">${escape(name)} · поле ${width} × ${height}</title>`,
+    '<desc id="desc">Верхняя часть показывает всё поле. Нижняя увеличивает выделенные строки и показывает цифры.</desc>',
+    rect(0, 0, W, H, '#0c131d', 'rx="10"'),
+    '<g font-family="Arial, sans-serif">',
+    text(margin, 22, 'Полное поле · ' + width + ' × ' + height, 15, '#aebfd2'),
+    text(margin, detailY - 39, 'Увеличение · строки ' + (box.top + 1) + '–' + box.bottom, 15, '#aebfd2')
+  ];
+
+  for (const [index, { title, entries, zero }] of panels.entries()) {
+    const x = margin + index * (panelWidth + gap), fieldX = x + 37;
+    const plotX = fieldX + (plotWidth - cols * size) / 2;
+    out.push(text(fieldX, 47, title, 20));
+    out.push(rect(fieldX, overviewY, plotWidth, overviewHeight, '#101a25', 'stroke="#556d85"'));
+    out.push(`<svg x="${fieldX}" y="${overviewY}" width="${plotWidth}" height="${overviewHeight}" viewBox="0 0 ${width} ${height}" shape-rendering="crispEdges">`);
+    for (const entry of entries) out.push(rect(entry.x, entry.y, 1, 1, bitFill(entry)));
+    out.push('</svg>');
+    for (const row of [1, 64, 128, 192, height]) {
+      const y = overviewY + (row - .5) * scale;
+      out.push(text(fieldX - 7, y + 4, row, 14, '#b9cce0', 'text-anchor="end"'));
+      out.push(`<path d="M${fieldX - 5} ${y}h5" stroke="#768da6"/>`);
+    }
+    out.push(rect(fieldX + box.left * scale - 2, overviewY + box.top * scale - 2,
+      cols * scale + 4, rows * scale + 4, 'none', 'stroke="#65baf4" stroke-width="1.6"'));
+    out.push(rect(fieldX, detailY - 8, plotWidth, rows * size + 16, '#172331', 'rx="6" stroke="#405b75"'));
+    for (let row = box.top; row < box.bottom; row++) {
+      out.push(text(fieldX - 7, detailY + (row - box.top + .72) * size,
+        row + 1, Math.min(15, size * .72), '#b9cce0', 'text-anchor="end"'));
+    }
+    for (const entry of entries) {
+      const px = plotX + (entry.x - box.left) * size, py = detailY + (entry.y - box.top) * size;
+      out.push(rect(px, py, size - .7, size - .7, bitFill(entry), 'rx="1"'));
+      if (entry.bit === null) continue;
+      const colour = digits(entry, zero);
+      const weight = entry.bold || state.animatrixCopyRowsLayout === 'mirrorExcel' && entry.bit ? 700 : 400;
+      const stroke = colour === '#dcdcdc' ? '#17202d' : '#ffffff';
+      out.push(text(px + size / 2, py + size * .73, entry.bit, Math.min(24, size * .76), colour,
+        `text-anchor="middle" font-family="Consolas, monospace" font-weight="${weight}" stroke="${stroke}" stroke-width=".8" paint-order="stroke"`));
     }
   }
-  out+=text(480,80+panelHeight/2,'→',26,'#6fc7ff','text-anchor="middle"');
-  out+=text(24,panelHeight+110,spec.note,15,'#bdd0e4');
-  out+=text(24,panelHeight+140,'Пусто ≠ 0. Положение и значения клеток взяты из расчёта приложения.',14,'#8ea6bf');
-  return out+'</g></svg>\n';
+  out.push('</g></svg>', '');
+  return { markup: out.join('\n'), width: W, height: H };
 }
-(async()=>{
-  const metadata=[];
-  for(const spec of specs){
-    let source=spec.source||Source.encode(spec.seed,{anchor:Math.floor((spec.seed.width-1)/2)});
-    if(spec.algorithm!=='copyRows')source=Source.prepareExcel(source,spec.algorithm);
-    const state=Source.normalize({...Source.defaults(),animatrixOn:true,animatrixAlgorithm:spec.algorithm,animatrixSource:source,animatrixCopyRowsUnit:'row',...(spec.algorithm==='copyRows'?{animatrixCopyRowsLayout:'mirrorExcel'}:{}),animatrixCycleMode:'infinite',animatrixColours:'inherit',animatrixExcelDepth:9,rows:source.height,steps:source.height,mode:'one',bg:'empty',view:'bits',viewDigits:true,staggeredGrid:false,zoom:'fit',speed:1,bitOneColour:'#edf2f8',bitZeroColour:'#b9c7d5',digitOneColour:'#000000',digitZeroColour:'#000000',digitSize:80,anchorAxis:false,sequenceSourceOn:false,compareSource:''});
-    const engine=Source.create(state),before=Core.snapshot(engine);Source.advance(engine,spec.frame);const after=Core.snapshot(engine);
-    const filename=spec.id+'.svg';fs.writeFileSync(path.join(__dirname,filename),svg(spec,before,after));
-    const code=await Share.encode({v:1,k:engine.sourceFrame,state,tools:{},colours:{},colourAuto:{}});
-    metadata.push({id:spec.id,name:spec.name,algorithm:spec.algorithm,image:'animatrix-excel/'+filename,frame:engine.sourceFrame,stage:spec.stage,caption:spec.caption,note:spec.note,link:'../mayatnik/Zerkalius-mayatnik.html#s='+code,code,beforeRows:rowRecords(before),afterRows:rowRecords(after),width:engine.width,height:engine.height,cycleFrames:Source.cycleFrames(state)});
+
+async function main() {
+  const html = fs.readFileSync(page, 'utf8');
+  const articles = [...html.matchAll(/<article id="(excel-[^"]+)" class="excel-example">([\s\S]*?)<\/article>/g)];
+  if (articles.length !== 11) throw Error('Ожидались 11 примеров Аниматрицы.');
+  const figures = [];
+  for (const [, id, article] of articles) {
+    const name = article.match(/<h3>([^<]+)<\/h3>/)[1];
+    const filename = article.match(/src="animatrix-excel\/([\w-]+\.svg)/)[1];
+    const code = article.match(/mayatnik\.html\?v=\d+#s=([^"]+)"/)[1];
+    const { k, state } = await Share.decode(code);
+    if (state.rows !== 256 || state.animatrixSource.height !== 256) throw Error(id + ' не на 256 строках.');
+    const { markup, width, height } = figure(name, state, panelsFor(id, state, k));
+    figures.push({ filename, markup, width, height, frame: k, field: [state.animatrixSource.width, state.rows] });
   }
-  const target=path.join(os.tmpdir(),'codex-animatrix-excel-research.json');fs.writeFileSync(target,JSON.stringify(metadata,null,2));
-  console.log(JSON.stringify({metadata:target,assets:metadata.map(({id,frame,width,height,beforeRows,afterRows})=>({id,frame,width,height,before:beforeRows.map(r=>r.bits),after:afterRows.map(r=>r.bits)}))},null,2));
-})();
+  for (const { filename, markup } of figures) fs.writeFileSync(path.join(__dirname, filename), markup);
+  const metadata = figures.map(({ markup, ...figure }) => figure);
+  fs.writeFileSync(path.join(os.tmpdir(), 'codex-animatrix-excel-figures.json'), JSON.stringify(metadata, null, 2));
+  for (const { filename, frame, field, height } of metadata) {
+    console.log(filename + ' · кадр ' + frame + ' · поле ' + field.join('×') + ' · SVG 960×' + height);
+  }
+}
+
+main().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});
