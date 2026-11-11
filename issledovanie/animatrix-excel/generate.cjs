@@ -7,6 +7,7 @@ const path = require('node:path');
 const Source = require('../../mayatnik/mayatnik-animatrix-source.js');
 const Core = require('../../mayatnik/mayatnik-animatrix-core.js');
 const Share = require('../../mayatnik/mayatnik-share-link.js');
+const { encoder } = require('../../mayatnik/mayatnik-gif.js');
 
 const page = path.join(__dirname, '..', 'Zerkalius-issledovanie.html');
 const escape = value => String(value).replace(/[&<>"']/g, c => ({
@@ -68,13 +69,46 @@ function panelsFor(id, state, frame) {
   ];
 }
 
-function figure(name, state, panels) {
+function detailFor(state, panels) {
+  const { height, areas } = state.animatrixSource;
+  const { animatrixAlgorithm: algorithm } = state;
+  const limits = {
+    copyRows: [0, 8],
+    excelBounce: [0, 2],
+    excelChain: [0, 4],
+    excelChainDown: [0, 4],
+    excelTriangleDown: [0, 9],
+    excelTriangleUp: [height - 9, height],
+    excelTriangleBoth: [Math.floor((height - 1) / 2) - 4, Math.floor((height - 1) / 2) + 5],
+    excelTrianglePend: [Math.floor((height - 1) / 2) - 4, Math.floor((height - 1) / 2) + 5]
+  };
+  const selection = algorithm === 'excelCollision' ? areas[0] : null;
+  const [top, bottom] = selection ? [selection.y, selection.y + selection.height] : limits[algorithm];
+  return panels.map(({ entries }) => ({ entries: entries.filter(({ x, y }) =>
+    y >= top && y < bottom && (!selection || (x >= selection.x && x < selection.x + selection.width))) }));
+}
+
+async function overview(entries, width, height, fillFor) {
+  const pixels = new Uint8Array(width * height * 4);
+  const background = [16, 26, 37, 255];
+  for (let i = 0; i < pixels.length; i += 4) pixels.set(background, i);
+  for (const entry of entries) {
+    const rgb = Number.parseInt(fillFor(entry).slice(1), 16);
+    pixels.set([rgb >>> 16, rgb >>> 8 & 255, rgb & 255, 255], (entry.y * width + entry.x) * 4);
+  }
+  const gif = encoder(width, height);
+  gif.add(pixels, 1);
+  return 'data:image/gif;base64,' + Buffer.from(await gif.frame().arrayBuffer()).toString('base64');
+}
+
+async function figure(name, state, panels) {
   const { width, height } = state.animatrixSource;
   const W = 960, gap = 12, margin = 20;
   const panelWidth = (W - 2 * margin - gap * (panels.length - 1)) / panels.length;
   const plotWidth = panelWidth - 48, scale = plotWidth / width;
   const overviewY = 63, overviewHeight = height * scale;
-  const box = bounds(panels), cols = box.right - box.left, rows = box.bottom - box.top;
+  const detail = detailFor(state, panels);
+  const box = bounds(detail), cols = box.right - box.left, rows = box.bottom - box.top;
   const size = Math.min(32, plotWidth / cols);
   const detailY = overviewY + overviewHeight + 61;
   const H = Math.ceil(detailY + rows * size + 22);
@@ -99,14 +133,14 @@ function figure(name, state, panels) {
     text(margin, detailY - 39, 'Увеличение · строки ' + (box.top + 1) + '–' + box.bottom, 15, '#aebfd2')
   ];
 
+  const overviews = new Map();
   for (const [index, { title, entries, zero }] of panels.entries()) {
     const x = margin + index * (panelWidth + gap), fieldX = x + 37;
     const plotX = fieldX + (plotWidth - cols * size) / 2;
     out.push(text(fieldX, 47, title, 20));
     out.push(rect(fieldX, overviewY, plotWidth, overviewHeight, '#101a25', 'stroke="#556d85"'));
-    out.push(`<svg x="${fieldX}" y="${overviewY}" width="${plotWidth}" height="${overviewHeight}" viewBox="0 0 ${width} ${height}" shape-rendering="crispEdges">`);
-    for (const entry of entries) out.push(rect(entry.x, entry.y, 1, 1, bitFill(entry)));
-    out.push('</svg>');
+    if (!overviews.has(entries)) overviews.set(entries, await overview(entries, width, height, bitFill));
+    out.push(`<image x="${fieldX}" y="${overviewY}" width="${plotWidth}" height="${overviewHeight}" href="${overviews.get(entries)}" style="image-rendering:pixelated"/>`);
     for (const row of [1, 64, 128, 192, height]) {
       const y = overviewY + (row - .5) * scale;
       out.push(text(fieldX - 7, y + 4, row, 14, '#b9cce0', 'text-anchor="end"'));
@@ -119,7 +153,7 @@ function figure(name, state, panels) {
       out.push(text(fieldX - 7, detailY + (row - box.top + .72) * size,
         row + 1, Math.min(15, size * .72), '#b9cce0', 'text-anchor="end"'));
     }
-    for (const entry of entries) {
+    for (const entry of detail[index].entries) {
       const px = plotX + (entry.x - box.left) * size, py = detailY + (entry.y - box.top) * size;
       out.push(rect(px, py, size - .7, size - .7, bitFill(entry), 'rx="1"'));
       if (entry.bit === null) continue;
@@ -145,7 +179,7 @@ async function main() {
     const code = article.match(/mayatnik\.html\?v=\d+#s=([^"]+)"/)[1];
     const { k, state } = await Share.decode(code);
     if (state.rows !== 256 || state.animatrixSource.height !== 256) throw Error(id + ' не на 256 строках.');
-    const { markup, width, height } = figure(name, state, panelsFor(id, state, k));
+    const { markup, width, height } = await figure(name, state, panelsFor(id, state, k));
     figures.push({ filename, markup, width, height, frame: k, field: [state.animatrixSource.width, state.rows] });
   }
   for (const { filename, markup } of figures) fs.writeFileSync(path.join(__dirname, filename), markup);
