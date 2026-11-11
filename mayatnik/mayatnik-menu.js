@@ -1109,6 +1109,40 @@
   { const done = b => { b.classList.add('gz-hx'); b.querySelector('i')?.classList.add('gz-ic'); const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return b; };   // эти встают после общей раздачи надписей
     for (const [id, title] of [['digitOneColour', 'Цвет цифры 1'], ['digitZeroColour', 'Цвет цифры 0'], ['bitOneColour', 'Цвет клетки 1'], ['bitZeroColour', 'Цвет клетки 0']]) {
       const b = ptBtn('c_' + id, 'colour', $(id), null), d = dotIn(b, id, title); b.onclick = () => d.click(); b.title = title + ' · щелчок — палитра'; gView.append(done(b)); }
+    Object.assign(ptNames, { excelZeroColour: '0 Excel', excelZeroAuto: 'Цвет авто' });
+    const paletteSource = document.createElement('span');
+    const excelZero = done(ptBtn('excelZeroColour', 'colour', paletteSource, () => window.mayExcelDigits?.next()));
+    const excelAuto = done(ptBtn('excelZeroAuto', 'reset', paletteSource, () => window.mayExcelDigits?.reset()));
+    excelZero.querySelector('.gz-nm').dataset.userLabel = '';
+    excelAuto.querySelector('.gz-nm').dataset.userLabel = '';
+    const excelSwatch = document.createElement('span');
+    excelSwatch.className = 'pt-dot';
+    excelSwatch.setAttribute('aria-hidden', 'true');
+    excelZero.append(excelSwatch);
+    excelAuto.title = 'Вернуть автоматический цвет цифры 0 в режимах Excel';
+    excelAuto.setAttribute('aria-label', excelAuto.title);
+    let paletteTitle = '';
+    const syncExcelDigits = () => {
+      const palette = window.mayExcelDigits?.get();
+      const active = !!palette?.on;
+      excelZero.disabled = !palette;
+      excelAuto.disabled = !active;
+      excelZero.classList.toggle('on', active);
+      excelZero.classList.toggle('gz-on', active);
+      excelZero.setAttribute('aria-pressed', String(active));
+      const title = (active ? 'Цвет цифры 0 в Excel — ' + palette.name + '. ' : 'Цвет цифры 0 в Excel выбирается автоматически. ') + 'Щелчок выбирает следующий цвет.';
+      if (paletteTitle !== title) {
+        paletteTitle = title;
+        excelZero.title = title;
+        excelZero.setAttribute('aria-label', title);
+      }
+      excelSwatch.style.visibility = active ? '' : 'hidden';
+      excelSwatch.style.backgroundColor = active ? palette.color : '';
+    };
+    toolSync.push(syncExcelDigits);
+    addEventListener('may-excel-digits-change', syncExcelDigits);
+    syncExcelDigits();
+    gView.append(excelZero, excelAuto);
     const fnt = $('digitFont'), fb = ptBtn('fontCycle', 'steps', fnt, () => { fnt.selectedIndex = (fnt.selectedIndex + 1) % fnt.options.length; fnt.dispatchEvent(new Event('change', { bubbles: true })); });
     fb.oncontextmenu = ev => { ev.preventDefault(); const n = fnt.options.length; fnt.selectedIndex = (fnt.selectedIndex - 1 + n) % n; fnt.dispatchEvent(new Event('change', { bubbles: true })); };
     toolSync.push(() => { const t = fnt.selectedOptions[0]?.textContent || '', sh = { mono: 'Моно', sans: 'Без засечек', serif: 'С засечками' }[fnt.value] || t; fb.title = 'Шрифт цифр: ' + t + ' · щелчок — следующий, правый — предыдущий'; const nm = fb.querySelector('.gz-nm'); if (nm && nm.textContent !== sh) nm.textContent = sh; }); gView.append(done(fb));
@@ -1301,7 +1335,7 @@
   { const VIEW_COLS = [
        [['Показ поля', '#7cbcff', ['lg', 'parityCells', 'parityRows', 'parityCols', 'parityRowFill', 'parityRowsLevels', 'parityCellsLevels', 'noband', 'outline', 'geomCenter', 'rowLab']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
-       ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
+       ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'excelZeroColour', 'excelZeroAuto', 'fontCycle', 'sizeCtl']]],
       [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'lineMeasures', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'fixWide', 'fixRot', 'fixDragK']],
        ['Зеркало ↓', '#ff87cf', ['fixLow', 'fixLowOut']],
        ['Все зеркала: цвет и наложение', '#ff9b50', ['mirCol', 'mirOp']],

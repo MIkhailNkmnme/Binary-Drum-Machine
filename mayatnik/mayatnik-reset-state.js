@@ -9,7 +9,7 @@
     zOverview:true,zoom:'fit',zMid:true,ztop:true,zBot:false,zLock:false,zsnap:true,zbase:2,ztopPin:false,ztlMain:false,ztlZen:false,zlSelected:null,ztMirOp:'',
     invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null,heatHoldZero:false,heatMode:"all",heatPeriod:1,fixAxis:1,fixLockX:null,axisPalette:'purple-black',triangleMapSource:'static',crossMirrorMode:'lr',crossMirrorSector:'A1',
     pitCopySource:'current',pitCopySeed:'1',pitCopyRows:32,pitCopyLevels:1,pitCopyColour:'#44d9ff',fillArea:'sides',fillWholeColour:false,paintFrameMode:'off',fillGrow:false,symRowsMin:2,symRowsMax:0,symBitsMin:2,symBitsMax:0,symTriangleRows:16,
-    bitOneColour:'#e8edf5',bitZeroColour:'#5b6475',overOneColour:'#4f9bff',overZeroColour:'#ff5a4f',digitOneColour:'#e8edf5',digitZeroColour:'#7cbcff',
+    bitOneColour:'#e8edf5',bitZeroColour:'#5b6475',overOneColour:'#4f9bff',overZeroColour:'#ff5a4f',digitOneColour:'#e8edf5',digitZeroColour:'#7cbcff',excelDigitPalette:null,
     bitContourColour1:'#ffe969',bitContourColour2:'#ffffff',bitContourMode:'single',bitContourColours:'auto',digitFont:'mono',digitSize:80,
     midOneColour:'#ff7f27',midZeroColour:'#4f9bff',verticalFillColour:'#ff7f27',stolbFillColour:'#ff7f27',axesFillColour:'#ff7f27',autoFillColour:'#ff7f27',growFillColour:'#ff7f27',meetFillColour:'#ff7f27',axisFillColour:'#ff7f27',isolatedOneColour:'#ff7f27',isolatedZeroColour:'#ff7f27',autoFillPalette:true,growOwnColour:false,
     frameDrift:false,frameDriftStep:1,noband:2,gifScaleStackStep:8,gifScaleStackPhasePage:0,gifScaleStackMethod:'canvas',gifScaleStackHeight:'original',gifScaleStackMode:'rows',gifScaleStackBase:2,ochkiMode:'diag',ochkiPattern:'initial',ochkiLength:5,templateMaxArea:4096,templateFocusMargins:null,

@@ -48,6 +48,79 @@
       excelPart('excelChain','ИнтерXOR','InterXoroorius: соседние строки накладываются XOR при чётной разности длин и переплетаются при нечётной. Последняя строка замыкается с первой.'),
       excelPart('excelChainDown','Цепь XOR','InterXoroorius: в XOR-ветке накладываются все строки сверху до цели, в ветке переплетения только соседняя пара.')
     ]);
+    const interxorActive = s => s.on && (s.algorithm === 'excelChain' || s.algorithm === 'excelChainDown');
+    const patternHelp = 'Введите двоичные шаблоны от двух бит через пробел или запятую и нажмите Enter. Поиск идёт по кольцу из активной пары и полностью серых использованных строк. Первый бит шаблона может отличаться. Каждый шаблон ищется один раз за прогон. На поле видна последняя находка. Красный — прямое совпадение, фиолетовый — инверсия, зелёный — реверс.';
+    const patternRow = doc.createElement('label');
+    patternRow.className = 'gz-hx';
+    patternRow.dataset.n = 'animatrix:interxor-patterns';
+    describe(patternRow, patternHelp);
+    label(patternRow, 'Шаблоны').dataset.userLabel = '';
+    const patterns = doc.createElement('input');
+    patterns.type = 'text';
+    patterns.autocomplete = 'off';
+    patterns.spellcheck = false;
+    patterns.enterKeyHint = 'done';
+    patterns.placeholder = '01, 101';
+    Object.assign(patterns.style, { flex: '1', width: '0', minWidth: '0', height: '18px', boxSizing: 'border-box', padding: '0 2px' });
+    describe(patterns, patternHelp);
+    patternRow.append(patterns);
+    bindings.push({ node: patterns, selected: () => false, unavailable: s => !interxorActive(s) });
+    append(patternRow);
+
+    const found = doc.createElement('output');
+    found.className = 'gz-hx';
+    found.dataset.n = 'animatrix:interxor-found';
+    found.setAttribute('aria-live', 'polite');
+    const foundLabel = label(found, 'Найдено 0 / 0');
+    foundLabel.dataset.userLabel = '';
+    append(found);
+
+    let patternError = '', foundTitle = '';
+    patterns.addEventListener('input', () => {
+      if (!patternError) return;
+      patternError = '';
+      sync();
+    });
+    patterns.addEventListener('keydown', event => {
+      event.stopPropagation();
+      if (event.isComposing) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        patternError = '';
+        patterns.value = state().interxorPatterns ?? '';
+        sync();
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        const draft = patterns.value;
+        run(async a => {
+          try {
+            await a?.set?.({ interxorPatterns: draft });
+            patternError = '';
+            patterns.value = state().interxorPatterns ?? '';
+          } catch (reason) {
+            patternError = reason?.message || String(reason);
+            patterns.value = draft;
+          }
+        });
+      }
+    });
+    function syncInterxor(s) {
+      const visible = interxorActive(s);
+      patternRow.style.display = found.style.display = visible ? '' : 'none';
+      if (!visible) patternError = '';
+      const canonical = s.interxorPatterns ?? '';
+      if (!patternError && doc.activeElement !== patterns) patterns.value = canonical;
+      patterns.setAttribute('aria-invalid', String(!!patternError));
+      const count = canonical ? canonical.split(' ').length : 0;
+      const { direct = 0, inverse = 0, reverse = 0, total = 0 } = s.interxorFound || {};
+      const text = patternError ? 'Исправьте ввод' : 'Найдено ' + total + ' / ' + count;
+      if (foundLabel.textContent !== text) foundLabel.textContent = text;
+      const title = patternError || text + '. Прямых ' + direct + ', инверсий ' + inverse + ', реверсов ' + reverse + '.';
+      if (foundTitle !== title) {
+        foundTitle = title;
+        describe(found, title);
+      }
+    }
     segments('excel-cones','Треугсжатия из Excel',[
       excelPart('excelTriangleDown','Конус ↓','От вершины вниз. Цель XOR два диагональных родителя. Повторное наложение чередует цвет цифры с чёрным.'),
       excelPart('excelTriangleUp','Конус ↑','От вершины вверх, родители из строки ниже.'),
@@ -98,6 +171,7 @@
       if(doc.activeElement!==input)input.value=String(Math.max(1,Math.min(64,Math.round(Number(s.cycles)||1))));
       if(doc.activeElement!==depth)depth.value=String(s.excelDepth??128);
       depthRow.style.display=s.on&&s.algorithm?.startsWith('excelTriangle')?'':'none';
+      syncInterxor(s);
       const enable=nodes[0].querySelector('.gz-nm');enable.textContent=s.on?'Выключить':'Включить';
       const repeat=s.repeat;
       infoLabel.textContent=repeat?.complete?'С '+repeat.firstCycle+' · T '+repeat.periodCycles:(s.frame??0)+' / '+(s.cycleMode==='infinite'||s.cycleMode==='repeat'?'∞':s.total??0);

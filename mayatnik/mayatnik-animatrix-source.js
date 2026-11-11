@@ -15,6 +15,14 @@
   const DIRECTIONS=['down','up','left','right'];
   const checked=new WeakMap();
   const fail=message=>{throw Error(message);};
+  function patternText(value){
+    if(value==null||value==='')return '';
+    if(typeof value!=='string')fail('Шаблоны Excel должны быть двоичными строками.');
+    const patterns=value.split(/[\s,;]+/).filter(Boolean);
+    if(patterns.some(pattern=>!/^[01]{2,32767}$/.test(pattern)))
+      fail('Введите двоичные шаблоны от двух бит, разделяя их пробелами или запятыми.');
+    return [...new Set(patterns)].join(' ');
+  }
   function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixEvolution:EVOLUTION};}
   function dimensions(width,height){
     if(!Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(height)||height<8||height>MAX_ROWS)fail('Некорректный размер исходника Аниматрицы: высота от 8 до 4096 строк.');
@@ -135,6 +143,8 @@
     if(!['finite','infinite','repeat'].includes(next.animatrixCycleMode))fail('Неизвестный режим циклов Аниматрицы.');
     if(!Number.isSafeInteger(next.animatrixFrameMax)||next.animatrixFrameMax<0)fail('Некорректная граница кадров Аниматрицы.');
     if(next.animatrixEvolution!==EVOLUTION)fail('Работа сохранена с другой версией расчёта Аниматрицы.');
+    if(next.animatrixInterxorPatterns!==undefined)
+      next.animatrixInterxorPatterns=patternText(next.animatrixInterxorPatterns);
     if(next.animatrixAlgorithm==='copyRows'){
       next.animatrixFrameMax=restoreFrame(next,next.animatrixFrameMax);
       if(Number.isSafeInteger(next.invertFrame))next.invertFrame=restoreFrame(next,next.invertFrame);
@@ -210,7 +220,10 @@
     const s=normalize(state),source=assertSource(s.animatrixSource),record=checked.get(source);
     if(!record.key)record.key=hash(record.stamp.join('|'));
     const key=['animatrix-v'+EVOLUTION,record.key,s.animatrixAlgorithm,s.animatrixTiming,s.animatrixDirection,s.animatrixCycles,s.animatrixCycleMode].join(':');
-    if(excelMode(s.animatrixAlgorithm))return key+':'+s.animatrixExcelDepth;
+    if(excelMode(s.animatrixAlgorithm)){
+      const patterns=interxorMode(s.animatrixAlgorithm)&&s.animatrixInterxorPatterns;
+      return key+':'+s.animatrixExcelDepth+(patterns?':'+patterns:'');
+    }
     return s.animatrixAlgorithm==='copyRows'&&s.animatrixCopyRowsLayout?key+':'+s.animatrixCopyRowsLayout:key;
   }
   function same(a,b){return active(a)===active(b)&&(!active(a)||stateKey(a)===stateKey(b));}
@@ -219,8 +232,9 @@
   }
   function create(state){
     const s=normalize(state),layout=s.animatrixCopyRowsLayout,source=s.animatrixSource,cycle=cycleFrames(s);
+    const patterns=interxorMode(s.animatrixAlgorithm)&&s.animatrixInterxorPatterns;
     const engine=Core.create(decode(source),{...excelOptions(source,s.animatrixAlgorithm,s.animatrixExcelDepth),direction:s.animatrixDirection,
-      excelCycleFrames:cycle,
+      excelCycleFrames:cycle,interxorPatterns:patterns?patterns.split(' '):undefined,
       scan:s.animatrixTiming==='rows',copyRowsMirror:!!layout,copyRowsByAxis:copyRowsByAxis(layout),
       copyRowsWrap:layout==='mirrorWrap',copyRowsExcel:layout==='mirrorExcel'});
     engine.sourceFrame=0;

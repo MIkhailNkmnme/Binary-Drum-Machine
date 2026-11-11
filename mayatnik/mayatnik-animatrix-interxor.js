@@ -1,8 +1,10 @@
 /* InterXoroorius.xlsm / InterleavingCore: RunXorPasses and RunChainDown.
  * One pair per frame, downward, then last -> first (at least three rows).
  * Strings include their leading/trailing zeroes. Empty lattice cells are not
- * string characters. Worksheet patterns/search and their stopping conditions
- * are not part of this port; the chosen nonempty rows form one data column.
+ * string characters. The chosen nonempty rows form one data column. Optional
+ * pattern search joins the current pair and previously used gray rows into a
+ * ring, as ScanChain does. Worksheet pattern-row movement and search-driven
+ * stops are not part of this port; found flags persist until the owner resets.
  * Excel centre alignment is floor((long-short)/2). A centred result is packed
  * onto the receiving row's fixed parity; a tie moves half a bit to the left.
  * Fonts/fills retain the no-pattern worksheet semantics, not change markers.
@@ -15,6 +17,7 @@
 })(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
   const GRAY=0x969696,INTERLEAVE_FILL=0xc6efce,CELL_LIMIT=32767;
+  const MATCH_COLOURS=[0,0xff0000,0x800080,0x008000];
   const ARRAY_KEYS=['bits','present','colours','bold','automatic','fills','filled','selection'];
   const rowCache=new WeakMap();
   function seedOf(s){return s._seed||s;}
@@ -95,6 +98,45 @@
       s.selection[q]=1;s.areas.push({x:c,y:r,width:1,height:1});
     }
   }
+  function searchPatterns(s,p){
+    const patterns=s.interxorPatterns,found=s.interxorFound;
+    if(!Array.isArray(patterns)||!patterns.length||!found||found.length!==patterns.length)return;
+    if(!patterns.some((pattern,i)=>!found[i]&&typeof pattern==='string'&&pattern.length>=2))return;
+    const parts=[],positions=[];
+    // ScanChain includes the current pair and the entirely gray, previously
+    // used worksheet rows. Retain their ascending order and physical indices.
+    for(let r=0;r<s.height;r++){
+      const rowPositions=[];let gray=true,text='';
+      for(let c=0;c<s.width;c++){
+        const q=r*s.width+c;if(!s.present[q])continue;
+        rowPositions.push(q);text+=s.bits[q]?'1':'0';
+        if(s.colours[q]!==GRAY||s.automatic[q])gray=false;
+      }
+      if(rowPositions.length&&(r===p.top||r===p.bottom||gray)){
+        parts.push(text);for(const q of rowPositions)positions.push(q);
+      }
+    }
+    const text=parts.join('');if(!text.length)return;
+    for(let i=0;i<patterns.length;i++){
+      if(found[i]||typeof patterns[i]!=='string'||patterns[i].length<2)continue;
+      const tail=patterns[i].slice(1);
+      if(tail.length>text.length)continue;
+      const forms=[tail,tail.replace(/[01]/g,bit=>bit==='0'?'1':'0'),[...tail].reverse().join('')];
+      const ring=text+text.slice(0,tail.length-1);
+      for(let kind=0;kind<forms.length;kind++){
+        const at=ring.indexOf(forms[kind]);
+        if(at<0)continue;
+        found[i]=kind+1;
+        for(let j=0;j<tail.length;j++){
+          const q=positions[(at+j)%positions.length];
+          s.colours[q]=MATCH_COLOURS[kind+1];s.automatic[q]=0;
+        }
+        // Like CollectPatternMatches: only the first matching, still-unfound
+        // pattern is marked this frame. Existing fills and bit values survive.
+        return;
+      }
+    }
+  }
   function step(s){
     const rows=dataRows(seedOf(s)),phase=Math.max(0,Math.trunc(s.excelPhase||0)),p=pair(rows,phase);
     if(!p)return false;
@@ -122,6 +164,7 @@
     for(let i=0;i<result.length;i++){
       const q=targetStart+left+2*i;s.bits[q]=result[i];s.present[q]=1;s.automatic[q]=1;
     }
+    searchPatterns(s,p);
     selectPair(s,pair(rows,(phase+1)%cycleFrames(s)));
     return true;
   }

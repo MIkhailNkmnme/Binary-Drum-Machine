@@ -102,6 +102,10 @@
     s.done = s.scan && s.height <= first;
     s._scanSelectionRows = null;
     if (s.excelCycleFrames) s.excelPhase = 0;
+    if (s.interxorPatterns) {
+      s.interxorFound ??= new Uint8Array(s.interxorPatterns.length);
+      s.interxorFound.fill(0);
+    }
     if (s.algorithm === 'copyRows') {
       s.copyMarks ??= new Uint8Array(s.bits.length);
       s.copyMarks.fill(0);
@@ -127,6 +131,9 @@
       state.excelDepth = options.excelDepth ?? 128;
       state.excelCycleFrames = options.excelCycleFrames ?? excel.cycleFrames(initial, state);
     }
+    if (excel === Interxor && options.interxorPatterns?.length) {
+      state.interxorPatterns = Object.freeze(options.interxorPatterns.slice());
+    }
     Object.defineProperty(state, '_seed', { value: initial });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -135,6 +142,7 @@
     return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
       stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done,
       ...(s.excelCycleFrames ? { excelPhase: s.excelPhase, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth } : {}),
+      ...(s.interxorFound ? { interxorPatterns: s.interxorPatterns, interxorFound: s.interxorFound.slice() } : {}),
       ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel } : {}) });
   }
   function reset(s) {
@@ -148,6 +156,7 @@
     const state = cloneSeed(s._seed);
     Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel });
     if (s.excelCycleFrames) Object.assign(state, { excelCycleFrames: s.excelCycleFrames, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth });
+    if (s.interxorPatterns) state.interxorPatterns = s.interxorPatterns;
     Object.defineProperty(state, '_seed', { value: s._seed });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
     return resetProgress(state);
@@ -161,6 +170,9 @@
       if (a.algorithm !== b.algorithm || a.excelPhase !== b.excelPhase || a.excelAnchor !== b.excelAnchor || a.excelDepth !== b.excelDepth) return false;
       if (a.algorithm === 'excelBounce' && (a.stepCount === 0) !== (b.stepCount === 0)) return false;
     }
+    if (!!a.interxorFound !== !!b.interxorFound) return false;
+    if (a.interxorFound && (a.interxorFound.length !== b.interxorFound.length ||
+        a.interxorFound.some((value, i) => value !== b.interxorFound[i] || a.interxorPatterns[i] !== b.interxorPatterns[i]))) return false;
     for (let i = 0; i < a.areas.length; i++) for (const key of ['x', 'y', 'width', 'height'])
       if (a.areas[i][key] !== b.areas[i][key]) return false;
     for (const key of KEYS) for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) return false;
