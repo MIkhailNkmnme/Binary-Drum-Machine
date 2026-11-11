@@ -11,6 +11,7 @@
   const VERSION=1,EVOLUTION=1,MAX_CELLS=2100000,MAX_ROWS=4096,MAX_AREAS=65536;
   const ALGORITHMS=Core.algorithms;
   const excelMode=algorithm=>Core.excelAlgorithms.includes(algorithm);
+  const coneMode=algorithm=>algorithm.startsWith('excelTriangle');
   const interxorMode=algorithm=>algorithm==='excelChain'||algorithm==='excelChainDown';
   const DIRECTIONS=['down','up','left','right'];
   const checked=new WeakMap();
@@ -23,7 +24,7 @@
       fail('Введите двоичные шаблоны от двух бит, разделяя их пробелами или запятыми.');
     return [...new Set(patterns)].join(' ');
   }
-  function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixStaggeredGrid:null,animatrixEvolution:EVOLUTION};}
+  function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixExcelColourChangesOnly:true,animatrixStaggeredGrid:null,animatrixEvolution:EVOLUTION};}
   function dimensions(width,height){
     if(!Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(height)||height<8||height>MAX_ROWS)fail('Некорректный размер исходника Аниматрицы: высота от 8 до 4096 строк.');
     const n=width*height;if(!Number.isSafeInteger(n)||n>MAX_CELLS)fail('Исходник Аниматрицы превышает 2 100 000 клеток.');return n;
@@ -169,6 +170,7 @@
     if(!Number.isSafeInteger(next.animatrixCycles)||next.animatrixCycles<1||next.animatrixCycles>64)fail('Число циклов Аниматрицы должно быть от 1 до 64.');
     if(!['finite','infinite','repeat'].includes(next.animatrixCycleMode))fail('Неизвестный режим циклов Аниматрицы.');
     if(!Number.isSafeInteger(next.animatrixFrameMax)||next.animatrixFrameMax<0)fail('Некорректная граница кадров Аниматрицы.');
+    if(typeof next.animatrixExcelColourChangesOnly!=='boolean')fail('Неизвестное правило раскраски конуса.');
     if(next.animatrixEvolution!==EVOLUTION)fail('Работа сохранена с другой версией расчёта Аниматрицы.');
     if(next.animatrixInterxorPatterns!==undefined)
       next.animatrixInterxorPatterns=patternText(next.animatrixInterxorPatterns);
@@ -267,7 +269,8 @@
     const key=['animatrix-v'+EVOLUTION,record.key,s.animatrixAlgorithm,s.animatrixTiming,s.animatrixDirection,s.animatrixCycles,s.animatrixCycleMode].join(':');
     if(excelMode(s.animatrixAlgorithm)){
       const patterns=interxorMode(s.animatrixAlgorithm)&&s.animatrixInterxorPatterns;
-      return key+':'+s.animatrixExcelDepth+(patterns?':'+patterns:'');
+      const fullColour=coneMode(s.animatrixAlgorithm)&&s.animatrixExcelColourChangesOnly===false;
+      return key+':'+s.animatrixExcelDepth+(patterns?':'+patterns:'')+(fullColour?':full-colour':'');
     }
     return s.animatrixAlgorithm==='copyRows'&&s.animatrixCopyRowsLayout?key+':'+s.animatrixCopyRowsLayout:key;
   }
@@ -280,6 +283,7 @@
     const patterns=interxorMode(s.animatrixAlgorithm)&&s.animatrixInterxorPatterns;
     const engine=Core.create(decode(source),{...excelOptions(source,s.animatrixAlgorithm,s.animatrixExcelDepth),direction:s.animatrixDirection,
       excelCycleFrames:cycle,interxorPatterns:patterns?patterns.split(' '):undefined,
+      excelColourChangesOnly:coneMode(s.animatrixAlgorithm)&&s.animatrixExcelColourChangesOnly!==false,
       scan:s.animatrixTiming==='rows',copyRowsMirror:!!layout,copyRowsByAxis:copyRowsByAxis(layout),
       copyRowsWrap:layout==='mirrorWrap',copyRowsExcel:layout==='mirrorExcel'});
     engine.sourceFrame=0;

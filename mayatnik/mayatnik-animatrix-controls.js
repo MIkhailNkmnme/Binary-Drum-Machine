@@ -130,6 +130,11 @@
       excelPart('excelTrianglePend','Качание','Конусы из вершин 0, −1, +1, −2, +2 и далее. Один ромб за кадр.'),
       excelPart('excelCollision','Столкн.','XOR прямоугольника с его поворотом на 180°. Две пустые клетки считаются нулями.')
     ]);
+    const coneActive=s=>s.on&&s.algorithm?.startsWith('excelTriangle');
+    const coneColours=segments('excel-cone-colours','Раскраска конусов',[
+      {label:'Смена',title:'Перекрашивать только клетки, где изменился бит. Неизменившиеся цифры сохраняют цвет.',selected:s=>s.excelColourChangesOnly!==false,action:pick('excelColourChangesOnly',true)},
+      {label:'Excel',title:'Перекрашивать все посещённые клетки по правилу макроса Excel.',selected:s=>s.excelColourChangesOnly===false,action:pick('excelColourChangesOnly',false)}
+    ],s=>!coneActive(s));
     const depthRow=doc.createElement('label');depthRow.className='gz-hx';depthRow.dataset.n='animatrix:excel-depth';
     describe(depthRow,'Глубина конуса Excel в строках, включая вершину. Для ромба глубина применяется в каждом направлении.');
     label(depthRow,'Глубина');const depth=doc.createElement('input');depth.type='number';depth.min='1';depth.max='4096';depth.step='1';depth.style.width='52px';depth.setAttribute('aria-label','Глубина конуса Excel');
@@ -170,7 +175,7 @@
       for(const binding of bindings){const on=!!binding.selected(s);binding.node.disabled=!available||busy||binding.unavailable(s);binding.node.classList.toggle('gz-on',on);binding.node.classList.toggle('on',on);if(binding.node.tagName==='BUTTON')binding.node.setAttribute('aria-pressed',String(on));}
       if(doc.activeElement!==input)input.value=String(Math.max(1,Math.min(64,Math.round(Number(s.cycles)||1))));
       if(doc.activeElement!==depth)depth.value=String(s.excelDepth??128);
-      depthRow.style.display=s.on&&s.algorithm?.startsWith('excelTriangle')?'':'none';
+      depthRow.style.display=coneColours.style.display=coneActive(s)?'':'none';
       syncInterxor(s);
       const enable=nodes[0].querySelector('.gz-nm');enable.textContent=s.on?'Выключить':'Включить';
       const repeat=s.repeat;

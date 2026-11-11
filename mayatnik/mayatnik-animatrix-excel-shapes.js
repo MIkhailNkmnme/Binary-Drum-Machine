@@ -58,6 +58,7 @@
           continue;
         }
         const result = bits[i] ^ parentBit(s, col - 1, previous, apex) ^ parentBit(s, col + 1, previous, apex);
+        if (s.excelColourChangesOnly && present[i] && bits[i] === result) continue;
         const overlap = present[i] && colours[i] !== RED && colours[i] !== BLUE;
         bits[i] = result;
         present[i] = 1;

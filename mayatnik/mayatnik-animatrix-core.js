@@ -129,6 +129,7 @@
     if (excel) {
       state.excelAnchor = options.excelAnchor ?? Math.floor((initial.width - 1) / 2);
       state.excelDepth = options.excelDepth ?? 128;
+      state.excelColourChangesOnly = options.excelColourChangesOnly === true;
       state.excelCycleFrames = options.excelCycleFrames ?? excel.cycleFrames(initial, state);
     }
     if (excel === Interxor && options.interxorPatterns?.length) {
@@ -141,7 +142,7 @@
   function snapshot(s) {
     return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
       stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done,
-      ...(s.excelCycleFrames ? { excelPhase: s.excelPhase, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth } : {}),
+      ...(s.excelCycleFrames ? { excelPhase: s.excelPhase, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly } : {}),
       ...(s.interxorFound ? { interxorPatterns: s.interxorPatterns, interxorFound: s.interxorFound.slice() } : {}),
       ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel } : {}) });
   }
@@ -155,7 +156,7 @@
   function forkInitial(s) {
     const state = cloneSeed(s._seed);
     Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel });
-    if (s.excelCycleFrames) Object.assign(state, { excelCycleFrames: s.excelCycleFrames, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth });
+    if (s.excelCycleFrames) Object.assign(state, { excelCycleFrames: s.excelCycleFrames, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly });
     if (s.interxorPatterns) state.interxorPatterns = s.interxorPatterns;
     Object.defineProperty(state, '_seed', { value: s._seed });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
@@ -167,7 +168,7 @@
     if (a.width !== b.width || a.height !== b.height || a.cursorRow !== b.cursorRow ||
         a.done !== b.done || a.areas.length !== b.areas.length) return false;
     if (a.excelPhase !== undefined || b.excelPhase !== undefined) {
-      if (a.algorithm !== b.algorithm || a.excelPhase !== b.excelPhase || a.excelAnchor !== b.excelAnchor || a.excelDepth !== b.excelDepth) return false;
+      if (a.algorithm !== b.algorithm || a.excelPhase !== b.excelPhase || a.excelAnchor !== b.excelAnchor || a.excelDepth !== b.excelDepth || a.excelColourChangesOnly !== b.excelColourChangesOnly) return false;
       if (a.algorithm === 'excelBounce' && (a.stepCount === 0) !== (b.stepCount === 0)) return false;
     }
     if (!!a.interxorFound !== !!b.interxorFound) return false;
