@@ -681,18 +681,21 @@
       let meetingState='';
       window.mayMeetingHorizon={
         hide(){meetingSizes.hidden=meetingModes.hidden=true;},
-        place(left,top,width,height,y){
-          const gutter=8,gap=12,buttonWidth=120,half=12;
-          if(width<2*(gutter+buttonWidth+gap)+16||y<half||y+half>height||document.body.matches('.may-zen,.may-embed,.may-rombo-active'))return null;
+        place({left,top,width,height,x,y,fieldLeft,fieldRight}){
+          const gutter=8,gap=12,buttonWidth=120,half=12,minHalf=gutter+buttonWidth+gap+8;
+          if(width<2*minHalf||y<half||y+half>height||document.body.matches('.may-zen,.may-embed,.may-rombo-active'))return null;
+          const center=Math.max(minHalf,Math.min(width-minHalf,x));
+          const sizesX=Math.max(gutter,Math.min(fieldLeft-gap-buttonWidth,center-gap-buttonWidth-8));
+          const modesX=Math.min(width-gutter-buttonWidth,Math.max(fieldRight+gap,center+gap+8));
           const rows=Math.min(3,Math.floor((height-y+half+2)/26));
           for(let i=0;i<meetingSizes.children.length;i++)meetingSizes.children[i].hidden=i>=rows;
-          meetingSizes.style.left=left+gutter+'px';
-          meetingModes.style.left=left+width-gutter-buttonWidth+'px';
+          meetingSizes.style.left=left+sizesX+'px';
+          meetingModes.style.left=left+modesX+'px';
           meetingSizes.style.top=meetingModes.style.top=top+y-half+'px';
           meetingSizes.hidden=meetingModes.hidden=false;
           const state=cur()+':'+(V()?.get()||'');
           if(state!==meetingState){meetingState=state;sizeRows.forEach(row=>row.gzSync());vsync();}
-          return {start:gutter+buttonWidth+gap,end:width-gutter-buttonWidth-gap};
+          return {start:sizesX+buttonWidth+gap,end:modesX-gap};
         }
       };
       queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(section(vm, 'size')); }   // v0.819: «N/3 | 4N» — в раздел «Размер», самым верхом (автор: «перемести в Размер в верх самый»)   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
