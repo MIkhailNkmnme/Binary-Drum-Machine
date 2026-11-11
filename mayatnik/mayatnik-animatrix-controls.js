@@ -128,7 +128,7 @@
     ]);
     segments('excel-motion','Качание и столкновение из Excel',[
       excelPart('excelTrianglePend','Качание','Конусы из вершин 0, −1, +1, −2, +2 и далее. Один ромб за кадр.'),
-      excelPart('excelCollision','Столкн.','XOR прямоугольника с его поворотом на 180°. Две пустые клетки считаются нулями.')
+      excelPart('excelCollision','Столкн.','Один проход XOR с поворотом на 180°. Выделение задаёт прямоугольник. Без выделения пары из двух пустых клеток остаются пустыми.')
     ]);
     const coneActive=s=>s.on&&s.algorithm?.startsWith('excelTriangle');
     const coneColours=segments('excel-cone-colours','Раскраска конусов',[
@@ -159,15 +159,16 @@
       {label:'1',title:'Исходник из одной верхней единицы. Для отражений и режимов Excel строится весь треугольник.',action:a=>a?.seed?.('one')},
       {label:'Пример',title:'Исходник: учебный пример',action:a=>a?.seed?.('example')}
     ]);
-    segments('cycle-mode','Повторение циклов Аниматрицы',[
+    const collisionActive=s=>s.on&&s.algorithm==='excelCollision';
+    const cycleMode=segments('cycle-mode','Повторение циклов Аниматрицы',[
       {label:'Число',title:'Выполнить заданное число циклов от 1 до 64',selected:s=>!s.cycleMode||s.cycleMode==='finite',action:pick('cycleMode','finite')},
       {label:'∞',title:'Повторять Аниматрицу без ограничения циклов',selected:s=>s.cycleMode==='infinite',action:pick('cycleMode','infinite')},
       {label:'Повтор',title:'Рассчитать точное начало и период повторения состояния, затем остановиться',selected:s=>s.cycleMode==='repeat',action:pick('cycleMode','repeat')}
-    ]);
+    ],collisionActive);
     const cycles=doc.createElement('label');cycles.className='gz-hx';cycles.dataset.n='animatrix:cycles';describe(cycles,'Количество циклов Аниматрицы: от 1 до 64. Для бесконечного повтора выберите ∞; для вычисления начала и периода — «Повтор».');
     label(cycles,'Циклы');const input=doc.createElement('input');input.type='number';input.min='1';input.max='64';input.step='1';input.style.width='44px';input.style.minWidth='0';input.setAttribute('aria-label','Количество циклов Аниматрицы');
     input.addEventListener('change',()=>{const n=Math.max(1,Math.min(64,Math.round(Number(input.value)||1)));input.value=String(n);run(a=>a?.set?.({cycles:n}));});
-    cycles.append(input);bindings.push({node:input,selected:()=>false,unavailable:s=>!!s.cycleMode&&s.cycleMode!=='finite'});append(cycles);
+    cycles.append(input);bindings.push({node:input,selected:()=>false,unavailable:s=>collisionActive(s)||!!s.cycleMode&&s.cycleMode!=='finite'});append(cycles);
     command('reset','Сброс исходн.','Вернуться к исходному рисунку Аниматрицы',a=>a?.reset?.());
     const info=doc.createElement('output');info.className='gz-hx';info.dataset.n='animatrix:status';info.setAttribute('aria-live','polite');const infoLabel=label(info,'0 / 0');append(info);
     function sync(){
@@ -176,6 +177,7 @@
       if(doc.activeElement!==input)input.value=String(Math.max(1,Math.min(64,Math.round(Number(s.cycles)||1))));
       if(doc.activeElement!==depth)depth.value=String(s.excelDepth??128);
       depthRow.style.display=coneColours.style.display=coneActive(s)?'':'none';
+      cycles.style.display=cycleMode.style.display=collisionActive(s)?'none':'';
       syncInterxor(s);
       const enable=nodes[0].querySelector('.gz-nm');enable.textContent=s.on?'Выключить':'Включить';
       const repeat=s.repeat;

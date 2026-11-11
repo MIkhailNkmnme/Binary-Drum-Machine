@@ -81,10 +81,12 @@ function detailFor(state, panels, { phase, stride }) {
     excelChainDown: [0, 4],
     excelTriangleDown: [0, 9],
     excelTriangleUp: [height - 9, height],
+    excelCollision: [0, 9],
     excelTriangleBoth: [Math.floor((height - 1) / 2) - 4, Math.floor((height - 1) / 2) + 5],
     excelTrianglePend: [Math.floor((height - 1) / 2) - 4, Math.floor((height - 1) / 2) + 5]
   };
-  const selection = algorithm === 'excelCollision' ? areas[0] : null;
+  const area = algorithm === 'excelCollision' ? areas[0] : null;
+  const selection = area && (area.width !== state.animatrixSource.width || area.height !== height) ? area : null;
   const [top, bottom] = selection ? [selection.y, selection.y + selection.height] : limits[algorithm];
   return panels.map(({ entries }) => ({ entries: entries.filter(({ x, y }) =>
     y >= top && y < bottom && (!selection || (x >= selection.x && x < selection.x + selection.width)))
@@ -193,7 +195,7 @@ async function figure(name, state, panels) {
 async function main() {
   const html = fs.readFileSync(page, 'utf8');
   const articles = [...html.matchAll(/<article id="(excel-[^"]+)" class="excel-example">([\s\S]*?)<\/article>/g)];
-  if (articles.length !== 11) throw Error('Ожидались 11 примеров Аниматрицы.');
+  if (articles.length !== 12) throw Error('Ожидались 12 примеров Аниматрицы.');
   const figures = [];
   for (const [, id, article] of articles) {
     const name = article.match(/<h3>([^<]+)<\/h3>/)[1];

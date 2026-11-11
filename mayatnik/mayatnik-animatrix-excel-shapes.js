@@ -71,10 +71,12 @@
   function collide(s) {
     const { x, y, width, height } = s._seed.areas?.[0] || { x: 0, y: 0, width: s.width, height: s.height };
     const size = width * height;
+    const fillEmpty = s.collisionFillEmpty ?? (width !== s.width || height !== s.height);
     for (let q = 0; q < Math.ceil(size / 2); q++) {
       const row = Math.floor(q / width), col = q % width;
       const a = (y + row) * s.width + x + col;
       const b = (y + height - 1 - row) * s.width + x + width - 1 - col;
+      if (!fillEmpty && !s.present[a] && !s.present[b]) continue;
       // Both cells receive the same XOR of the two original values.
       s.bits[a] = s.bits[b] = s.bits[a] ^ s.bits[b];
       s.present[a] = s.present[b] = 1;
@@ -85,6 +87,7 @@
   function step(s) {
     if (s.algorithm === 'excelCollision') {
       collide(s);
+      s.done = true;
       return true;
     }
     const { x: anchor, y } = coneOrigin(s._seed, s);

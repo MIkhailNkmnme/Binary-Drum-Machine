@@ -132,6 +132,7 @@
       state.excelColourChangesOnly = options.excelColourChangesOnly === true;
       state.excelCycleFrames = options.excelCycleFrames ?? excel.cycleFrames(initial, state);
     }
+    if (algorithm === 'excelCollision') state.collisionFillEmpty = options.collisionFillEmpty;
     if (excel === Interxor && options.interxorPatterns?.length) {
       state.interxorPatterns = Object.freeze(options.interxorPatterns.slice());
     }
@@ -143,6 +144,7 @@
     return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
       stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done,
       ...(s.excelCycleFrames ? { excelPhase: s.excelPhase, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly } : {}),
+      ...(s.algorithm === 'excelCollision' ? { collisionFillEmpty: s.collisionFillEmpty } : {}),
       ...(s.interxorFound ? { interxorPatterns: s.interxorPatterns, interxorFound: s.interxorFound.slice() } : {}),
       ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel } : {}) });
   }
@@ -157,6 +159,7 @@
     const state = cloneSeed(s._seed);
     Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel });
     if (s.excelCycleFrames) Object.assign(state, { excelCycleFrames: s.excelCycleFrames, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly });
+    if (s.algorithm === 'excelCollision') state.collisionFillEmpty = s.collisionFillEmpty;
     if (s.interxorPatterns) state.interxorPatterns = s.interxorPatterns;
     Object.defineProperty(state, '_seed', { value: s._seed });
     Object.defineProperty(state, '_scanSelectionRows', { value: null, writable: true });
@@ -170,6 +173,7 @@
     if (a.excelPhase !== undefined || b.excelPhase !== undefined) {
       if (a.algorithm !== b.algorithm || a.excelPhase !== b.excelPhase || a.excelAnchor !== b.excelAnchor || a.excelDepth !== b.excelDepth || a.excelColourChangesOnly !== b.excelColourChangesOnly) return false;
       if (a.algorithm === 'excelBounce' && (a.stepCount === 0) !== (b.stepCount === 0)) return false;
+      if (a.algorithm === 'excelCollision' && a.collisionFillEmpty !== b.collisionFillEmpty) return false;
     }
     if (!!a.interxorFound !== !!b.interxorFound) return false;
     if (a.interxorFound && (a.interxorFound.length !== b.interxorFound.length ||

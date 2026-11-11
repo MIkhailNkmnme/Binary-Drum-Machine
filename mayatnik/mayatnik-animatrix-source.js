@@ -156,7 +156,9 @@
   }
   function active(state){return state?.animatrixOn===true;}
   function restoreFrame(state,frame,unit=state?.animatrixCopyRowsUnit){
-    if(!active(state)||state.animatrixAlgorithm!=='copyRows'||state.animatrixCopyRowsLayout!==undefined||unit==='row'||!Number.isSafeInteger(frame)||frame<=0)return frame;
+    if(!active(state)||!Number.isSafeInteger(frame)||frame<=0)return frame;
+    if(state.animatrixAlgorithm==='excelCollision')return 1;
+    if(state.animatrixAlgorithm!=='copyRows'||state.animatrixCopyRowsLayout!==undefined||unit==='row')return frame;
     const height=state.animatrixSource?.height??state.rows;
     if(!Number.isSafeInteger(height)||height<3)return frame;
     // v0.959 counted a growing group of rows as one frame.
@@ -182,6 +184,11 @@
         fail('Неизвестный порядок отражения строк Аниматрицы.');
       next.animatrixTiming='rows';
     }
+    if(next.animatrixAlgorithm==='excelCollision'){
+      if(next.animatrixCollisionFillEmpty!=null&&typeof next.animatrixCollisionFillEmpty!=='boolean')fail('Неизвестный режим пустых клеток столкновения.');
+      next.animatrixCycles=1;next.animatrixCycleMode='finite';next.animatrixFrameMax=0;
+      if(Number.isSafeInteger(next.invertFrame))next.invertFrame=restoreFrame(next,next.invertFrame);
+    }
     if(excelMode(next.animatrixAlgorithm)){
       next.animatrixTiming='matrix';
       next.animatrixDirection='down';
@@ -201,7 +208,7 @@
   }
   function assertState(state){return normalize(state);}
   function geometry(state){const s=normalize(state),source=assertSource(s.animatrixSource);return {W:source.width,H:source.height,anchor:source.anchor};}
-  const unlimited=state=>!!state&&['infinite','repeat'].includes(state.animatrixCycleMode);
+  const unlimited=state=>!!state&&state.animatrixAlgorithm!=='excelCollision'&&['infinite','repeat'].includes(state.animatrixCycleMode);
   const copyRowsByAxis=layout=>layout==='mirrorByAxis'||layout==='mirrorWrap'||layout==='mirrorExcel';
   function excelOptions(source,algorithm,depth){
     return {algorithm,excelAnchor:source.anchor,excelDepth:depth};
@@ -258,7 +265,8 @@
   }
   function frames(state){const s=normalize(state),cycle=cycleFrames(s);return unlimited(s)?Math.max(cycle,s.animatrixFrameMax):cycle*s.animatrixCycles;}
   function extend(state,requested){
-    frameCount(requested);const cycle=cycleFrames(state);
+    frameCount(requested);if(state.animatrixAlgorithm==='excelCollision')return {animatrixFrameMax:0};
+    const cycle=cycleFrames(state);
     return {animatrixFrameMax:Math.max(frames(state),Math.min(Number.MAX_SAFE_INTEGER,Math.ceil(requested/cycle)*cycle))};
   }
   function hash(text){let a=2166136261,b=5381;for(let i=0;i<text.length;i++){const c=text.charCodeAt(i);a=Math.imul(a^c,16777619)>>>0;b=(Math.imul(b,33)^c)>>>0;}return text.length+':'+a.toString(16)+':'+b.toString(16);}
@@ -267,6 +275,7 @@
     const s=normalize(state),source=assertSource(s.animatrixSource),record=checked.get(source);
     if(!record.key)record.key=hash(record.stamp.join('|'));
     const key=['animatrix-v'+EVOLUTION,record.key,s.animatrixAlgorithm,s.animatrixTiming,s.animatrixDirection,s.animatrixCycles,s.animatrixCycleMode].join(':');
+    if(s.animatrixAlgorithm==='excelCollision')return key+':'+(s.animatrixCollisionFillEmpty??'auto');
     if(excelMode(s.animatrixAlgorithm)){
       const patterns=interxorMode(s.animatrixAlgorithm)&&s.animatrixInterxorPatterns;
       const fullColour=coneMode(s.animatrixAlgorithm)&&s.animatrixExcelColourChangesOnly===false;
@@ -284,6 +293,7 @@
     const engine=Core.create(decode(source),{...excelOptions(source,s.animatrixAlgorithm,s.animatrixExcelDepth),direction:s.animatrixDirection,
       excelCycleFrames:cycle,interxorPatterns:patterns?patterns.split(' '):undefined,
       excelColourChangesOnly:coneMode(s.animatrixAlgorithm)&&s.animatrixExcelColourChangesOnly!==false,
+      collisionFillEmpty:s.animatrixCollisionFillEmpty,
       scan:s.animatrixTiming==='rows',copyRowsMirror:!!layout,copyRowsByAxis:copyRowsByAxis(layout),
       copyRowsWrap:layout==='mirrorWrap',copyRowsExcel:layout==='mirrorExcel'});
     engine.sourceFrame=0;
