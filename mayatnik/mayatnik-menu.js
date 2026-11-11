@@ -1144,7 +1144,7 @@
   const longGroups=new Set(['Точка Ось','Правка','Очистка','Оси','Виды поля','Вид','Зеркала','Шаблон']);
   for (const g of tools.querySelectorAll('.pt-g'))if(longGroups.has(g.querySelector('.pt-l').textContent))g.classList.add('pt-long');
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
-    if (b.id === 'lg' || b.classList.contains('may-vis-triple')) return;   // v0.566: у тройки видимости свои подписи 100 | 50 | 0
+    if (b === animatrixHost || b.id === 'lg' || b.classList.contains('may-vis-triple')) return;   // v0.566: у тройки видимости свои подписи 100 | 50 | 0
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
       b.classList.add('gz-hx'); b.querySelector('i').classList.add('gz-ic');
       const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return; }
