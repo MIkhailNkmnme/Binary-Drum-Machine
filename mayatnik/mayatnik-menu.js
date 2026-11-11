@@ -1387,7 +1387,7 @@
         const available=api.available(),on=api.get()&&api.blocks()===blocks;
         b.disabled=!available;b.classList.toggle('on',on);b.classList.toggle('gz-on',on);
         b.setAttribute('aria-pressed',String(on));
-        b.title=available?help:help+' Доступно в плоском виде «Биты» или «Цвет».';
+        b.title=available?help:help+' Доступно в плоских видах «Биты», «Цвет» и «RGB-соседи».';
         b.setAttribute('aria-label',b.title);
       });
     }

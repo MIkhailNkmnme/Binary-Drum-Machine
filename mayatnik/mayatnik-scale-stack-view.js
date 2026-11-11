@@ -215,14 +215,17 @@
    syncPhaseControls();zoom=Math.max(zoom,minDisplayZoom());
    const viewport=method.value==='viewport';heightMode.disabled=viewport;for(const option of heightMode.options)option.disabled=viewport;if(viewport)heightMode.value='native';exportButton.disabled=viewport||exporting;exportButton.title=viewport?'Для «Как верхнее» доступен живой просмотр. Для переноса в Гиф-Масштаб выберите другой способ уменьшения.':'Перенести все построения в окно Гиф-Масштаб';
    const pixelScale=(Number(layout.pixelScale)||1/(win.devicePixelRatio||1))*zoom;
-   const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
-   const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
-   element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
-   for(const row of controlRows){row.style.marginLeft=(width*(Number.isFinite(layout.axisFraction)?layout.axisFraction:.5))+'px';row.style.transform='translateX(-50%)';}
+   const upperWidth=Number(layout.width)>0?Number(layout.width):source.width*pixelScale/zoom;
+   const width=upperWidth*zoom,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
+   const axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5;
+   const left=Number.isFinite(layout.center)?layout.center-upperWidth/2:Number(layout.left)||0;
+   const anchor=left+upperWidth*axis;
+   element.style.width=width+'px';element.style.marginLeft=(anchor-width*axis)+'px';
+   for(const row of controlRows){row.style.marginLeft=(width*axis)+'px';row.style.transform='translateX(-50%)';}
    for(const item of items){
     const trueSize=heightMode.value==='native'||heightMode.value==='integer',factor=heightMode.value==='integer'?Math.ceil(source.height/item.size.height):1;
     const cellScale=viewport?1/(win.devicePixelRatio||1):heightMode.value==='native'?1/(win.devicePixelRatio||1):pixelScale;
-    const w=viewport?item.size.width/(win.devicePixelRatio||1):trueSize?item.size.width*cellScale*factor:width,h=viewport?item.size.height/(win.devicePixelRatio||1):trueSize||heightMode.value==='cell'?item.size.height*cellScale*factor:height,axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5,smallAxis=viewport?source.width*axis*item.size.scale/item.size.width:method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*axis-w*smallAxis;
+    const w=viewport?item.size.width/(win.devicePixelRatio||1):trueSize?item.size.width*cellScale*factor:width,h=viewport?item.size.height/(win.devicePixelRatio||1):trueSize||heightMode.value==='cell'?item.size.height*cellScale*factor:height,smallAxis=viewport?source.width*axis*item.size.scale/item.size.width:method.value==='canvas'?source.width*axis*item.size.height/source.height/item.size.width:axis,offset=width*axis-w*smallAxis;
     item.element.style.width=w+'px';item.element.style.marginLeft=offset+'px';item.element.dataset.axisFraction=String(smallAxis);
     const warning=doc.createElement('span');warning.className='may-scale-stack__warning';
     const fractional=viewport?item.size.scale<1:source.width%item.size.width!==0||source.height%item.size.height!==0;
@@ -232,11 +235,11 @@
     item.label.replaceChildren(doc.createTextNode(item.size.height+' строк · ширина '+item.size.width+(viewport?' · масштаб '+item.size.caption+' · запрос '+item.size.requestedHeight+' строк':' · часть ×'+fmt(source.height/item.size.height))+' · показ ×'+fmt(h/item.size.height*dpr)+screenInfo),warning);
     item.headerHeight=Math.max(24,item.label.offsetHeight+8);item.element.style.paddingTop=item.headerHeight+'px';item.element.style.height=(h+item.headerHeight)+'px';
     if(!item.axis){item.axis=doc.createElement('div');item.axis.className='may-scale-stack__axis';item.axis.setAttribute('aria-hidden','true');item.element.append(item.axis);}
-    Object.assign(item.axis.style,{display:layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',top:item.headerHeight+'px',height:h+'px'});
+    Object.assign(item.axis.style,{display:layout.sharedAxis||layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',top:item.headerHeight+'px',height:h+'px'});
     if(!item.axisBand){item.axisBand=doc.createElement('div');item.axisBand.className='may-scale-stack__axis-band';item.axisBand.setAttribute('aria-hidden','true');item.element.append(item.axisBand);}
     const center=smallAxis*item.size.width-.5,col=win.MayatnikAxisColumn?.column(center,item.size.width)??null;Object.assign(item.axisBand.style,{display:layout.axisEnabled===false||col===null?'none':'',left:(col*w/item.size.width)+'px',top:item.headerHeight+'px',width:(w/item.size.width)+'px',height:h+'px'});
     if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';
-     item.canvas.style.translate='';if(viewport){const r=item.canvas.getBoundingClientRect(),d=win.devicePixelRatio||1,shift=(Math.round(r.left*d)/d-r.left)+'px '+(Math.round(r.top*d)/d-r.top)+'px';item.canvas.style.translate=shift;item.axis.style.translate=shift;item.axisBand.style.translate=shift;}else{item.axis.style.translate='';item.axisBand.style.translate='';}
+     item.canvas.style.translate='';if(viewport){const r=item.canvas.getBoundingClientRect(),d=win.devicePixelRatio||1,dx=Math.round(r.left*d)/d-r.left,dy=Math.round(r.top*d)/d-r.top;item.canvas.style.translate=dx+'px '+dy+'px';item.axis.style.translate='0px '+dy+'px';item.axisBand.style.translate=item.canvas.style.translate;}else{item.axis.style.translate='';item.axisBand.style.translate='';}
     }
    }
    overlays();
