@@ -105,5 +105,5 @@
     return true;
   }
 
-  return { cycleFrames, step };
+  return { coneOrigin, cycleFrames, step };
 });

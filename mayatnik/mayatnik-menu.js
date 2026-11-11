@@ -1315,7 +1315,7 @@
   }
   {
     const api=window.mayStaggeredGrid,probe=document.createElement('button');
-    const help='Одна решётка: квадратные биты встык и сдвиг каждого второго ряда на половину бита.';
+    const help='Квадратные биты встык. Каждый второй ряд сдвинут на половину бита. Если в строке заняты обе решётки, вид сохраняет все столбцы.';
     probe.title=help;
     const b=ptBtn('staggeredGrid','grid4',probe,()=>{api.toggle();placeTools();});
     b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
@@ -1325,7 +1325,7 @@
       const available=api.available(),on=api.get();
       b.disabled=!available;b.classList.toggle('on',on);b.classList.toggle('gz-on',on);
       b.setAttribute('aria-pressed',String(on));
-      b.title=available?help:help+' Для обычного плоского поля Маятника.';
+      b.title=available?help:help+' Доступно в плоском виде «Биты» или «Цвет».';
       b.setAttribute('aria-label',b.title);
     });
   }

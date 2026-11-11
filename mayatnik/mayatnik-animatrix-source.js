@@ -23,7 +23,7 @@
       fail('Введите двоичные шаблоны от двух бит, разделяя их пробелами или запятыми.');
     return [...new Set(patterns)].join(' ');
   }
-  function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixEvolution:EVOLUTION};}
+  function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixStaggeredGrid:null,animatrixEvolution:EVOLUTION};}
   function dimensions(width,height){
     if(!Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(height)||height<8||height>MAX_ROWS)fail('Некорректный размер исходника Аниматрицы: высота от 8 до 4096 строк.');
     const n=width*height;if(!Number.isSafeInteger(n)||n>MAX_CELLS)fail('Исходник Аниматрицы превышает 2 100 000 клеток.');return n;
@@ -81,10 +81,10 @@
     const areas=validateAreas(source.areas,source.width,source.height),stamp=signature(source,areas),old=checked.get(source);
     if(old&&old.stamp.every((value,index)=>value===stamp[index]))return source;
     const words=unpack(source.words,n),fills=source.fills==null?null:unpack(source.fills,n);
-    let singleGrid=true;
+    let phases=0;
     for(let i=0;i<n;i++){
       const flags=words[i]>>>24;
-      if((flags&17)&&((i%source.width-source.anchor-Math.floor(i/source.width))&1))singleGrid=false;
+      if(flags&17)phases|=1<<((i%source.width-Math.floor(i/source.width))&1);
       if(flags&192||!(flags&1)&&(flags&2))fail('Повреждены состояния клеток Аниматрицы.');
       if(fills&&fills[i]>0xffffff)fail('Повреждён цвет заливки Аниматрицы.');
     }
@@ -93,7 +93,8 @@
       for(const a of areas)for(let y=a.y;y<a.y+a.height;y++)mask.fill(1,y*source.width+a.x,y*source.width+a.x+a.width);
       for(let i=0;i<n;i++)if(mask[i]!==((words[i]>>>29)&1))fail('Области выделения не совпадают с маской Аниматрицы.');
     }
-    checked.set(source,{stamp,key:null,singleGrid});return source;
+    const singleGrid=(phases&~(1<<(source.anchor&1)))===0;
+    checked.set(source,{stamp,key:null,singleGrid,phases});return source;
   }
   function decode(source){
     assertSource(source);const n=source.width*source.height,words=unpack(source.words,n),fills=source.fills?unpack(source.fills,n):new Uint32Array(n);
@@ -202,6 +203,24 @@
   const copyRowsByAxis=layout=>layout==='mirrorByAxis'||layout==='mirrorWrap'||layout==='mirrorExcel';
   function excelOptions(source,algorithm,depth){
     return {algorithm,excelAnchor:source.anchor,excelDepth:depth};
+  }
+  function staggeredLayout(state){
+    const {animatrixSource:source,animatrixAlgorithm:algorithm}=state;
+    const record=checked.get(source)||checked.get(assertSource(source));
+    record.staggeredLayouts??=new Map();
+    if(record.staggeredLayouts.has(algorithm))return record.staggeredLayouts.get(algorithm);
+    let phase=source.anchor&1, stride=1;
+    if(algorithm==='copyRows'||algorithm==='excelBounce'||interxorMode(algorithm)){
+      if(algorithm==='excelBounce'&&record.phases===(1<<(phase^1)))phase^=1;
+      if((record.phases&~(1<<phase))===0)stride=2;
+    }else if(algorithm==='excelTriangleDown'||algorithm==='excelTriangleUp'){
+      const {x,y}=Core.excelConeOrigin(decode(source),excelOptions(source,algorithm,state.animatrixExcelDepth));
+      phase=(x-y)&1;
+      if((record.phases&~(1<<phase))===0)stride=2;
+    }
+    const layout={phase,stride};
+    record.staggeredLayouts.set(algorithm,layout);
+    return layout;
   }
   function prepareExcel(source,algorithm,{resetFonts=true}={}){
     const seed=decode(source);
@@ -340,5 +359,5 @@
     const source=encode(seed,{anchor});
     return excelMode(algorithm)?prepareExcel(source,algorithm):source;
   }
-  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,prepareExcel,resizeRows};
+  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,prepareExcel,resizeRows,staggeredLayout};
 });

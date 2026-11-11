@@ -549,6 +549,7 @@
   return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds, forkInitial, sameState,
     copyRowsCycleFrames, excelAlgorithms: EXCEL_ALGORITHMS.slice(),
     excelCycleFrames: (seed, options) => EXCEL[options.algorithm].cycleFrames(seed, options),
+    excelConeOrigin: Shapes.coneOrigin,
     interxorWidth: (seed, options) => Interxor.requiredWidth(seed, options),
     algorithms: ALGORITHMS.slice(), directions: DIRECTIONS.slice() };
 });

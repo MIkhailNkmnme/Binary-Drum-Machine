@@ -1,29 +1,36 @@
-/* Each source row uses one parity. Expand its cells into squares on the half-bit raster. */
+/* Map single-parity and dense rows to staggered squares on the half-bit raster. */
 (function(root){
   'use strict';
 
-  function column(x,row,phase){
-    const parity=(phase+row)&1;
-    return x-((x-parity)&1);
+  function halfWidth(width,stride=2){return stride===1?2*width+1:width+1;}
+
+  function leftHalf(column,row,phase,stride=2){
+    return stride===1?2*column+((phase+row)&1):column;
   }
 
-  function sample(source,width,height,phase,step,x,y,empty){
+  function column(x,row,phase,stride=2){
+    const parity=(phase+row)&1;
+    return stride===1?Math.floor((x-parity)/2):x-((x-parity)&1);
+  }
+
+  function sample(source,width,height,phase,step,x,y,empty,stride=2){
     const input=new Uint32Array(source.data.buffer,source.data.byteOffset,source.width*source.height);
     const data=new Uint8ClampedArray(width*height*4),output=new Uint32Array(data.buffer);
-    const columns=new Int32Array(width);
+    const columns=new Int32Array(width),limit=halfWidth(source.width,stride);
     for(let i=0;i<width;i++)columns[i]=Math.floor((x+i+.5)/step);
 
     for(let j=0;j<height;j++){
       const row=Math.floor((y+j+.5)/(2*step)),start=j*width;
       if(row<0||row>=source.height)continue;
       for(let i=0;i<width;i++){
-        const col=column(columns[i],row,phase);
-        if(columns[i]<0||columns[i]>source.width)continue;
+        const col=column(columns[i],row,phase,stride);
+        if(columns[i]<0||columns[i]>=limit)continue;
         output[start+i]=col>=0&&col<source.width?input[row*source.width+col]:empty;
       }
     }
     return data;
   }
 
-  root.MayatnikStaggeredGrid={column,sample};
+  const api={column,halfWidth,leftHalf,sample};
+  if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikStaggeredGrid=api;
 })(globalThis);
