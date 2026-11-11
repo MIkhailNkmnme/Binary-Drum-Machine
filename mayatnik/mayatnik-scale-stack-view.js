@@ -28,6 +28,42 @@
   return sx<size.sourceWidth&&sy<size.sourceHeight?sy*size.sourceWidth+sx:-1;
  }
 
+ // Use the reduction's coordinate grid, even when its thumbnail is shown at native size.
+ function overlayPixels(result,source,small,size,method,operation,palette,lowerPixels){
+  const bounds=source.overlayBounds||{left:0,top:0,width:source.width,height:source.height};
+  const W=result.width,H=result.height,data=result.data,w=size.width,h=size.height;
+  const uniform=method==='viewport'?size.scale:method==='canvas'?h/source.height:0;
+  const rx=uniform||w/source.width,ry=uniform||h/source.height;
+  const colours=operation==='rgb'?(lowerPixels||small.canvas.getContext('2d').getImageData(0,0,w,h).data):null;
+  const columns=Int32Array.from({length:W},(_,x)=>Math.floor((bounds.left+(x+.5)*bounds.width/W)*rx));
+  const original=Int32Array.from({length:W},(_,x)=>Math.floor(bounds.left+(x+.5)*bounds.width/W));
+  for(let y=0;y<H;y++){
+   const fy=bounds.top+(y+.5)*bounds.height/H,sy=Math.floor(fy*ry),row=Math.floor(fy)*source.width;
+   for(let x=0;x<W;x++){
+    const at=row+original[x],bit=source.bits[at];
+    if(bit!==0&&bit!==1)continue;
+    const sx=columns[x],q=sx>=0&&sx<w&&sy>=0&&sy<h?sy*w+sx:-1,i=(y*W+x)*4;
+    let lower=q>=0?small.bits[q]:-1;
+    if(colours){
+     if(lower!==-1&&q>=0&&colours[q*4+3]){
+      data[i]=colours[q*4];data[i+1]=colours[q*4+1];data[i+2]=colours[q*4+2];data[i+3]=source.pixels[at*4+3];
+     }
+     continue;
+    }
+    // An averaged RGB value can cover several different bits. Its centre is the binary sample.
+    if(lower===-2&&method==='average'){
+     const cx=Math.floor((sx+.5)/rx),cy=Math.floor((sy+.5)/ry);
+     lower=source.bits[cy*source.width+cx];
+    }
+    if(lower===-1)lower=0;
+    if(lower!==0&&lower!==1)continue;
+    const value=operation==='xor'?bit^lower:bit&lower;
+    if(value===bit)continue;
+    const rgb=palette[value];data[i]=rgb[0];data[i+1]=rgb[1];data[i+2]=rgb[2];data[i+3]=source.pixels[at*4+3];
+   }
+  }
+ }
+
  function create(o){
   const host=o.host,doc=host.ownerDocument,win=doc.defaultView,element=doc.createElement('div');
   element.className='may-scale-stack may-scale-stack--window';element.hidden=true;host.append(element);
@@ -52,15 +88,84 @@
    return box;
   };
   const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';const baseField=field(baseInput,'x'),stepField=field(input,'стр');exportButton.classList.add('gz-hx','may-standard');const methodField=field(method),heightField=field(heightMode),sequenceField=field(mode);controls.append(methodField,heightField,sequenceField,baseField,stepField,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
+  const overlayControls=doc.createElement('div'),operation=doc.createElement('select'),copy=doc.createElement('select');
+  overlayControls.className='may-scale-stack__controls may-scale-stack__mix-controls';
+  overlayControls.addEventListener('pointerdown',e=>e.stopPropagation());overlayControls.addEventListener('pointerup',e=>e.stopPropagation());
+  operation.setAttribute('aria-label','Наложение нижнего построения');operation.title='Наложить одну нижнюю копию на оригинал';
+  for(const [value,label,title]of [['off','Наложение','Наложение выключено'],['xor','XOR','Исключающее ИЛИ битов'],['and','AND','Логическое И битов'],['rgb','RGB','Заменить цвета цветами нижней копии']]){
+   const option=doc.createElement('option');option.value=value;option.textContent=label;option.title=title;operation.append(option);
+  }
+  copy.setAttribute('aria-label','Нижняя копия для наложения');copy.title='Выберите одну копию по её месту в списке';
+  const operationField=field(operation),copyField=field(copy);
+  const controlRows=o.overlayTarget?[controls,overlayControls]:[controls];
+  if(o.overlayTarget){overlayControls.append(operationField,copyField);element.insertBefore(overlayControls,list);}
+  let copyIndex=0,overlayHost=null,overlayCanvas=null,overlayPaint=null,sourceFrame=null,requestedFrame=null;
+  const sameFrame=(a,b)=>a?.owner===b?.owner&&a?.key===b?.key;
+  const selectedCopy=()=>o.overlayTarget&&operation.value!=='off'?items[Math.min(copyIndex,items.length-1)]:null;
+  function readOverlaySettings(){
+   const settings=o.overlaySettings?.();
+   operation.value=['xor','and','rgb'].includes(settings?.operation)?settings.operation:'off';
+   copyIndex=Math.max(0,Math.trunc(Number(settings?.index)||0));
+  }
+  function syncOverlayOptions(){
+   if(!o.overlayTarget)return;
+   const active=operation.value!=='off';
+   operation.disabled=!items.length&&!active;operationField.classList.toggle('on',active);copyField.hidden=!active;copy.disabled=!items.length;
+   copy.value=String(Math.min(copyIndex,items.length-1));
+  }
+  function listOverlayCopies(){
+   if(!o.overlayTarget)return;
+   copy.replaceChildren(...items.map(({size},i)=>{
+    const option=doc.createElement('option');option.value=String(i);
+    option.textContent=method.value==='phases'?'Фаза '+(size.index+1):(i+1)+' · '+size.height+' стр';
+    return option;
+   }));
+   syncOverlayOptions();
+  }
+  function hideOverlay(){
+   overlayPaint=null;
+   if(overlayHost)overlayHost.hidden=true;
+  }
+  function positionOverlay(){
+   if(!overlayHost||!overlayPaint)return;
+   const target=o.overlayTarget();
+   if(!target||!target.rect.width||!target.rect.height||!sameFrame(sourceFrame,requestedFrame)){overlayHost.hidden=true;return;}
+   const {rect,clip,rotated}=target;
+   overlayHost.hidden=false;
+   Object.assign(overlayHost.style,{left:clip.left+'px',top:clip.top+'px',width:clip.width+'px',height:clip.height+'px'});
+   Object.assign(overlayCanvas.style,{left:(rect.left-clip.left)+'px',top:(rect.top-clip.top)+'px',width:rect.width+'px',height:rect.height+'px',rotate:rotated?'180deg':''});
+  }
+  function paintOverlay(lowerPixels){
+   const item=selectedCopy(),op=operation.value;
+   if(!item?.bits||!source?.bits||item.revision!==revision||!sameFrame(sourceFrame,requestedFrame)){hideOverlay();return;}
+   if(overlayPaint?.item!==item||overlayPaint.op!==op||overlayPaint.revision!==revision){
+    if(!overlayCanvas){
+     overlayHost=doc.createElement('div');overlayHost.className='may-scale-stack__overlay';overlayHost.hidden=true;overlayHost.setAttribute('aria-hidden','true');
+     overlayCanvas=doc.createElement('canvas');overlayHost.append(overlayCanvas);doc.body.append(overlayHost);
+    }
+    const w=Math.ceil(source.overlayBounds?.width??source.width),h=Math.ceil(source.overlayBounds?.height??source.height);
+    if(overlayCanvas.width!==w)overlayCanvas.width=w;if(overlayCanvas.height!==h)overlayCanvas.height=h;
+    const ctx=overlayCanvas.getContext('2d'),image=ctx.createImageData(w,h);
+    overlayPixels(image,source,item,item.size,method.value,op,o.overlayPalette(),lowerPixels);
+    ctx.putImageData(image,0,0);overlayPaint={item,op,revision};
+   }
+   positionOverlay();
+  }
+  const overlayChange=()=>{
+   if(copy.value!=='')copyIndex=Number(copy.value);
+   o.onOverlaySettings?.({operation:operation.value,index:copyIndex});syncOverlayOptions();paintOverlay();later();
+  };
+  operation.addEventListener('change',overlayChange);copy.addEventListener('change',overlayChange);
   const phasePageInput=doc.createElement('input');phasePageInput.type='number';phasePageInput.min='1';phasePageInput.step='1';phasePageInput.value=String(Math.max(0,Number(o.phasePage?.())||0)+1);phasePageInput.setAttribute('aria-label','Страница фаз');
   const phasePageField=field(phasePageInput,'фазы');phasePageField.hidden=true;controls.append(phasePageField);
   const phaseNote=doc.createElement('div');phaseNote.className='may-scale-stack__phase-note';phaseNote.hidden=true;element.insertBefore(phaseNote,list);
   let phasePage=Math.max(0,Math.floor(Number(o.phasePage?.())||0)),phaseInfo=null;
   let enabled=false,destroyed=false,source=null,pending=null,job=null,timer=null,layout={},zoom=1,items=[],revision=0,lastKey,error=null;
   const schedule=o.schedule||(fn=>win.setTimeout(fn,0)),cancel=o.cancel||(id=>win.clearTimeout(id));
+  readOverlaySettings();syncOverlayOptions();
   const fmt=n=>Number(n.toFixed(4)).toLocaleString('ru-RU');
   function drop(item){if(item.canvas){item.canvas.width=item.canvas.height=0;item.canvas.remove();item.canvas=null;}if(item.overlay){item.overlay.width=item.overlay.height=0;item.overlay.remove();item.overlay=null;}item.bits=null;item.revision=-1;}
-  function clear(){for(const item of items)drop(item);items=[];list.replaceChildren();job=null;}
+  function clear(){for(const item of items)drop(item);items=[];list.replaceChildren();job=null;sourceFrame=requestedFrame=null;hideOverlay();if(overlayCanvas)overlayCanvas.width=overlayCanvas.height=0;listOverlayCopies();}
   function later(){if(timer===null&&!destroyed&&enabled)timer=schedule(tick);}
   function minDisplayZoom(){
    if(method.value==='phases')return 1/512;
@@ -92,7 +197,7 @@
   function phaseGeometry(){
    syncPhaseControls();
    const dpr=win.devicePixelRatio||1,w=Math.max(240,host.clientWidth-16),centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||w)/2;
-   element.style.width=w+'px';element.style.marginLeft=Math.max(0,centre-w/2)+'px';controls.style.marginLeft='0px';controls.style.transform='none';
+   element.style.width=w+'px';element.style.marginLeft=Math.max(0,centre-w/2)+'px';for(const row of controlRows){row.style.marginLeft='0px';row.style.transform='none';}
    exportButton.disabled=exporting;exportButton.title='Перенести все фазы текущей страницы в окно Гиф-Масштаб';
    for(const item of items){
     const cw=item.size.width/dpr,ch=item.size.height/dpr;
@@ -112,7 +217,7 @@
    const width=Number(layout.width)>0?Number(layout.width)*zoom:source.width*pixelScale,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const centre=Number.isFinite(layout.center)?layout.center:(Number(layout.left)||0)+(Number(layout.width)||source.width)/2;
    element.style.width=width+'px';element.style.marginLeft=(centre-width/2)+'px';
-   controls.style.marginLeft=(width*(Number.isFinite(layout.axisFraction)?layout.axisFraction:.5))+'px';controls.style.transform='translateX(-50%)';
+   for(const row of controlRows){row.style.marginLeft=(width*(Number.isFinite(layout.axisFraction)?layout.axisFraction:.5))+'px';row.style.transform='translateX(-50%)';}
    for(const item of items){
     const trueSize=heightMode.value==='native'||heightMode.value==='integer',factor=heightMode.value==='integer'?Math.ceil(source.height/item.size.height):1;
     const cellScale=viewport?1/(win.devicePixelRatio||1):heightMode.value==='native'?1/(win.devicePixelRatio||1):pixelScale;
@@ -161,7 +266,7 @@
    if(method.value==='viewport'){const seen=new Set();sizes=sizes.map(size=>viewportPlan(size.height)).filter(size=>{if(seen.has(size.scale))return false;seen.add(size.scale);return true;});}else if(method.value!=='canvas'&&method.value!=='phases')for(const size of sizes)size.width=Math.max(1,Math.round(source.width*size.height/source.height));
    for(const size of sizes){let item=previous.get(size.key??size.height);if(item){previous.delete(size.key??size.height);item.size=size;if(item.canvas&&(item.canvas.width!==size.width||item.canvas.height!==size.height))drop(item);item.revision=-1;}else{const el=doc.createElement('div'),label=doc.createElement('span');el.className='may-scale-stack__level';label.className='may-scale-stack__label';el.append(label);item={element:el,label,size,canvas:null,revision:-1};}list.append(item.element);items.push(item);}
    for(const item of previous.values()){drop(item);item.element.remove();}
-   geometry();
+   hideOverlay();listOverlayCopies();geometry();
   }
   function visible(){const rect=host.getBoundingClientRect(),strip=list.getBoundingClientRect(),phases=method.value==='phases';return items.filter(item=>{const r=item.element.getBoundingClientRect();return r.bottom>=rect.top-100&&r.top<=rect.bottom+100&&(!phases||r.right>=Math.max(rect.left,strip.left)-100&&r.left<=Math.min(rect.right,strip.right)+100);});}
   function fail(e){error=e;enabled=false;source=pending=null;clear();element.hidden=true;o.onError?.(e);}
@@ -172,12 +277,13 @@
     if(!job&&pending&&(!source||visible().every(item=>item.revision===revision))){const next=pending;pending=null;const s=next.source||o.captureSource?.();
      if(!s||!Number.isSafeInteger(s.width)||!Number.isSafeInteger(s.height)||s.width<1||s.height<1||!ArrayBuffer.isView(s.pixels)||s.pixels.byteLength!==s.width*s.height*4||s.pixels.byteOffset%4!==0||s.pixels.length!==s.width*s.height*4)throw Error('Повреждён кадр масштабов под полем');
      if(s.pixels.byteLength+(s.bits?.byteLength||0)>LIMIT/2)throw Error('Для масштабов под полем недостаточно памяти');
-     const changed=!source||source.width!==s.width||source.height!==s.height;source=s;lastKey=next.key;revision++;if(changed)rebuild();
+     const changed=!source||source.width!==s.width||source.height!==s.height;source=s;sourceFrame=next.frame;lastKey=next.key;revision++;if(changed)rebuild();
     }
     if(!source)return;
-    const shown=visible(),set=new Set(shown);for(const item of items)if(!set.has(item))drop(item);
+    const shown=visible(),selected=selectedCopy(),needed=selected?[selected,...shown.filter(item=>item!==selected)]:shown;
+    const set=new Set(needed);for(const item of items)if(!set.has(item))drop(item);
     if(job&&!set.has(job.item))job=null;
-    if(!job){const item=shown.find(item=>item.revision!==revision);if(item){
+    if(!job){const item=needed.find(item=>item.revision!==revision);if(item){
      const bytes=source.pixels.byteLength+(source.bits?.byteLength||0)+items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0),0)+item.size.width*item.size.height*12;
      if(bytes>(method.value==='phases'?64*1024*1024:LIMIT))throw Error('Для видимого масштаба недостаточно памяти');
      job={item,at:0,pixels:new Uint8ClampedArray(item.size.width*item.size.height*4)};
@@ -193,15 +299,15 @@
      if(!['canvas','viewport','phases'].includes(method.value)){const reduce=o.reduce||win.MayatnikGifScale?.reduce;if(!reduce)throw Error('Модуль уменьшения не загружен');const reduced=reduce(source.pixels,source.width,source.height,height,method.value,source.bits);pixels.set(reduced.pixels);job.bits=reduced.bits;}
      job.at=end;if(end<width*height){later();return;}
      if(!item.canvas){item.canvas=doc.createElement('canvas');item.canvas.className='may-scale-stack__canvas';item.element.append(item.canvas);}
-     if(source.bits&&!job.bits){job.bits=new Int8Array(width*height).fill(-1);for(let q=0;q<job.bits.length;q++){if(method.value==='phases'){const at=phaseSourceIndex(item.size,q%width,Math.floor(q/width));if(at>=0)job.bits[q]=source.bits[at];}else{const sx=Math.floor((q%width+.5)/ratio),sy=Math.floor((Math.floor(q/width)+.5)/ratio);if(sx<source.width&&sy<source.height)job.bits[q]=source.bits[sy*source.width+sx];}}}item.bits=job.bits||null;item.empty=method.value==='phases'&&!!item.bits&&!item.bits.some(value=>value!==-1);const cv=item.canvas;cv.width=width;cv.height=height;const ctx=cv.getContext('2d'),image=ctx.createImageData(width,height);image.data.set(pixels);ctx.putImageData(image,0,0);item.revision=revision;job=null;geometry();o.onPaint?.({key:lastKey,levels:shown.map(i=>i.size)});
+     if(source.bits&&!job.bits){job.bits=new Int8Array(width*height).fill(-1);for(let q=0;q<job.bits.length;q++){if(method.value==='phases'){const at=phaseSourceIndex(item.size,q%width,Math.floor(q/width));if(at>=0)job.bits[q]=source.bits[at];}else{const sx=Math.floor((q%width+.5)/ratio),sy=Math.floor((Math.floor(q/width)+.5)/ratio);if(sx<source.width&&sy<source.height)job.bits[q]=source.bits[sy*source.width+sx];}}}item.bits=job.bits||null;item.empty=method.value==='phases'&&!!item.bits&&!item.bits.some(value=>value!==-1);const cv=item.canvas;cv.width=width;cv.height=height;const ctx=cv.getContext('2d'),image=ctx.createImageData(width,height);image.data.set(pixels);ctx.putImageData(image,0,0);item.revision=revision;job=null;geometry();if(item===selected)paintOverlay(pixels);o.onPaint?.({key:lastKey,levels:shown.map(i=>i.size)});
     }
-    error=null;if(pending||shown.some(item=>item.revision!==revision))later();
+    error=null;if(pending||needed.some(item=>item.revision!==revision))later();
    }catch(e){fail(e);}
   }
-  function requestFrame(s,meta={}){if(!enabled||destroyed)return false;pending={source:job?undefined:s,key:meta.key};later();return true;}
-  function refreshLayout(value={}){try{const before=JSON.stringify([layout.pixelPolicy,layout.sourceDensity]);layout={...layout,...value};if(source&&method.value==='viewport'&&before!==JSON.stringify([layout.pixelPolicy,layout.sourceDensity]))rebuild();else geometry();later();}catch(e){fail(e);}}
+  function requestFrame(s,meta={}){if(!enabled||destroyed)return false;requestedFrame=meta.frame;if(!sameFrame(sourceFrame,requestedFrame))hideOverlay();pending={source:job?undefined:s,key:meta.key,frame:requestedFrame};later();return true;}
+  function refreshLayout(value={}){try{const before=JSON.stringify([layout.pixelPolicy,layout.sourceDensity]);layout={...layout,...value};if(source&&method.value==='viewport'&&before!==JSON.stringify([layout.pixelPolicy,layout.sourceDensity]))rebuild();else geometry();positionOverlay();later();}catch(e){fail(e);}}
   function setZoom(value){zoom=Math.max(minDisplayZoom(),Math.min(512,Number(value)||1));geometry();later();return zoom;}
-  function setEnabled(value){if(destroyed)return false;const next=!!value;if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);const selectedHeight=o.heightMode?.();if(['original','cell','native','integer'].includes(selectedHeight))heightMode.value=selectedHeight;requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
+  function setEnabled(value){if(destroyed)return false;const next=!!value;if(next){const before=operation.value,index=copyIndex;readOverlaySettings();syncOverlayOptions();if(next===enabled&&(before!==operation.value||index!==copyIndex)){paintOverlay();later();}}if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);const selectedHeight=o.heightMode?.();if(['original','cell','native','integer'].includes(selectedHeight))heightMode.value=selectedHeight;requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
   function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));phasePage=0;syncPhaseControls();o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
   syncPhaseControls();
@@ -212,7 +318,7 @@
   phasePageInput.addEventListener('change',()=>{phasePage=Math.max(0,Math.floor(Number(phasePageInput.value)||1)-1);try{rebuild();list.scrollLeft=0;later();}catch(e){fail(e);}});
   list.addEventListener('scroll',()=>later(),{passive:true});
   const scroll=()=>{overlays();later();};host.addEventListener('scroll',scroll,{passive:true});win.addEventListener('resize',scroll);
-  function destroy(){setEnabled(false);destroyed=true;host.removeEventListener('scroll',scroll);win.removeEventListener('resize',scroll);element.remove();}
+  function destroy(){setEnabled(false);destroyed=true;host.removeEventListener('scroll',scroll);win.removeEventListener('resize',scroll);overlayHost?.remove();element.remove();}
   return {element,setEnabled,requestFrame,refreshLayout,setZoom,getZoom:()=>zoom,destroy,inspect:()=>({enabled,destroyed,busy:!!job,pending:!!pending,canvases:items.filter(i=>i.canvas).length,levels:items.length,canvasBytes:items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0)+(i.bits?.byteLength||0)+(i.overlay?i.overlay.width*i.overlay.height*4:0),0),key:lastKey,error})};
  }
  return {create,levels,phasePlan,phaseSourceIndex};

@@ -43,3 +43,8 @@
 .may-scale-stack--phases .may-scale-stack__level{display:flex!important;flex-direction:column;align-items:center;gap:4px;flex:none;position:relative;min-width:140px;padding:0!important}
 .may-scale-stack--phases .may-scale-stack__label{position:static;transform:none;white-space:normal;width:100%;max-width:100%;min-height:36px;text-align:center}
 .may-scale-stack--phases .may-scale-stack__canvas{max-width:none;image-rendering:pixelated;flex:none}
+
+.may-scale-stack__overlay{position:fixed;z-index:1;pointer-events:none;overflow:hidden}
+.may-scale-stack__overlay[hidden],body.may-fold-active .may-scale-stack__overlay,body.may-cells-collapsed .may-scale-stack__overlay{display:none}
+.may-scale-stack__overlay canvas{position:absolute;max-width:none;margin:0;image-rendering:pixelated}
+.may-scale-stack--phases .may-scale-stack__mix-controls{justify-content:flex-start}
