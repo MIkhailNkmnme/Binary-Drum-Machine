@@ -90,6 +90,15 @@
   // v0.174: «проверь кнопки, чтобы всё соответствовало логике как в хабе»: числа — ползунками (значение на дорожке),
   // связанные пары — одной кнопкой пополам, включатель с цветом — «кнопка | ●», включатель со своей скоростью — внутри ползунка
   const fire = e => { e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); };
+  function seekFrame(requested){
+    const frame=$('frame');
+    if(frame.disabled)return;
+    const low=Number(frame.min),high=Number(frame.max);
+    const next=Math.max(low,Math.round(requested));
+    if(next>high&&window.mayAnimatrix?.continueFrame?.(next))return;
+    const value=String(Math.min(high,next));
+    if(value!==frame.value){frame.value=value;fire(frame);}
+  }
   const num = (id, o = {}) => { const e = $(id), lo = () => +e.min || 0, hi = () => o.max ? o.max() : +e.max, inf = o.inf;
     const cur = () => e.value === '' ? null : +e.value, put = v => { if (e.disabled) return; e.value = v == null ? '' : String(Math.round(v)); fire(e); };
     const lg = o.log, a = () => Math.max(1, lo()), F = v => lg ? Math.log(v / a()) / Math.log(hi() / a()) : (v - lo()) / ((hi() - lo()) || 1);
@@ -132,7 +141,8 @@
       { ...num('frame', { name: 'Кадр', fmt: v => String(v), zero: 0 }), tip: 'Кадр = вершина · −N / +N — на столько вершин, какая скорость анимации (×N; в паре — пар) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — к любой · двойной щелчок — 0',
         // v0.317: «если ставлю ×2 — в стрелках кадра также пиши +2»: стрелки шагают на скорость анимации (подписи −N / +N обновляет toolSync ниже)
         step: d => { if (window.mayThirds?.on() && Math.abs(d) !== 2) { window.mayThirds.step(Math.sign(d)); return; }   // v0.318: «Трети»
-          const e = $('frame'), N = Math.abs(d) === 2 ? Math.max(1, Math.round(((+e.max || 0) - (+e.min || 0)) / 20)) : Math.max(1, +$('speed').value || 1), v = Math.max(+e.min || 0, Math.min(+e.max, +e.value + Math.sign(d) * N)); if (String(v) !== e.value) { e.value = String(v); fire(e); } },
+          const e=$('frame'),N=Math.abs(d)===2?Math.max(1,Math.round((Number(e.max)-Number(e.min))/20)):Math.max(1,Number($('speed').value)||1);
+          seekFrame(Number(e.value)+Math.sign(d)*N); },
         arrows: ['−1', '+1'] } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: GROUP_COLOURS['rail:ochki'], items: [
@@ -274,7 +284,6 @@
       startArrow.setAttribute('class','may-frame-track-start');startArrow.setAttribute('d','M12 1L1 12L12 23');
       endArrow.setAttribute('class','may-frame-track-end');endArrow.setAttribute('d','M108 1L119 12L108 23');
       track.svg.append(startArrow,endArrow);
-      const frameModel=groups.find(group=>group.id==='build').items.find(item=>item.name==='Кадр');
       const playing=()=>P.getAttribute('aria-pressed')==='true';
       const playSync=()=>{
         const on=playing();
@@ -323,8 +332,9 @@
         scrubbing=true;
         tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);
         const x=event.clientX,y=event.clientY,span=track.travel(thumbWidth)*cell.getBoundingClientRect().width/120;
+        const start=Number(frame.value),range=Number(frame.max)-Number(frame.min);
         const listeners=new AbortController(),options={signal:listeners.signal};
-        let dragging=false,start,last;
+        let dragging=false,last=start;
         tail.addEventListener('pointermove',e=>{
           if(e.pointerId!==event.pointerId)return;
           const dx=e.clientX-x;
@@ -333,13 +343,11 @@
             if(Math.abs(dx)<4)return;
             if(playing())return;
             dragging=true;
-            start=frameModel.frac();last=frame.value;
             cell.classList.add('may-frame-scrubbing');
           }
-          const fraction=Math.max(0,Math.min(1,start+dx/Math.max(1,span)));
-          const low=Number(frame.min),high=Number(frame.max),target=String(Math.round(low+(high-low)*fraction));
-          if(target===last)return;
-          last=target;frameModel.setFrac(fraction);rail.refresh();side();
+          const requested=Math.round(start+dx*range/Math.max(1,span));
+          if(requested===last)return;
+          last=requested;seekFrame(requested);rail.refresh();side();
         },options);
         const end=e=>{
           if(e.pointerId!==event.pointerId)return;
@@ -362,7 +370,7 @@
         event.preventDefault();event.stopPropagation();
         if(target===null){togglePlay();return;}
         if(playing())return;
-        frame.value=String(Math.max(low,Math.min(high,target)));fire(frame);rail.refresh();side();
+        seekFrame(target);rail.refresh();side();
       });
       const vl=mid.querySelector('.gz-vl');
       const side=()=>{
