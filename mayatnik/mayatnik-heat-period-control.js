@@ -11,17 +11,18 @@
   });
   host.append(svg);
   let previousLeft,previousWidth,previousDirection;
-  function sync(fraction,width=44,rightOutward=false){
+  function sync(fraction,width=44,outward=false){
    const left=24+(72-width)*Math.max(0,Math.min(1,fraction)),right=left+width;
-   if(left!==previousLeft||width!==previousWidth||rightOutward!==previousDirection){
-    previousLeft=left;previousWidth=width;previousDirection=rightOutward;
-    paths[0].setAttribute('d',`M${left+1} 1L${left+10} 12L${left+1} 23`);
-    const rightEdge=right-(rightOutward?10:1),rightTip=right-(rightOutward?1:10);
+   if(left!==previousLeft||width!==previousWidth||outward!==previousDirection){
+    previousLeft=left;previousWidth=width;previousDirection=outward;
+    const leftEdge=left+(outward?10:1),leftTip=left+(outward?1:10);
+    paths[0].setAttribute('d',`M${leftEdge} 1L${leftTip} 12L${leftEdge} 23`);
+    const rightEdge=right-(outward?10:1),rightTip=right-(outward?1:10);
     paths[1].setAttribute('d',`M${rightEdge} 1L${rightTip} 12L${rightEdge} 23`);
     paths[2].setAttribute('d',`M12 12H${left}M${right} 12H108`);
-    paths[3].setAttribute('d',`M12 1H${left+1}M12 23H${left+1}`);
+    paths[3].setAttribute('d',`M12 1H${leftEdge}M12 23H${leftEdge}`);
     paths[4].setAttribute('d',`M${rightEdge} 1H108M${rightEdge} 23H108`);
-    paths[5]?.setAttribute('d',`M${left+1} 1H${rightEdge}M${left+1} 23H${rightEdge}`);
+    paths[5]?.setAttribute('d',`M${leftEdge} 1H${rightEdge}M${leftEdge} 23H${rightEdge}`);
    }
    return left;
   }
