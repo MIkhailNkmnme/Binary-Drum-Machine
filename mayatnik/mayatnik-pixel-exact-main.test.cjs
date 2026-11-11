@@ -9,8 +9,8 @@ function fixture(dpr=1){
  cv.style.width='31px';cv.style.height='8px';cv.getBoundingClientRect=()=>{const t=cv.style.translate.split(' ');return rect(17.3+(parseFloat(t[0])||0),18.7+(parseFloat(t[1])||0),parseFloat(cv.style.width),parseFloat(cv.style.height));};
  const c={window:win,document:doc,wrap,cv,st:{zoom:1,zsnap:true,zbase:2,zLimit:false,zLock:false,edgeRhombOn:false,romboAssembly:16,romboAngle:0,edgeWrap:true},geo:{anchor:15},f:{W:31,H:8},VX:0,VW:31,VH:8,gpuBig:null,
   MayatnikPixelGrid:require('./mayatnik-pixel-grid.js'),MayatnikPixelExactHost:require('./mayatnik-pixel-exact-host.js'),MayatnikRombo:require('./mayatnik-rombo.js'),MayatnikViewRotation:require('./mayatnik-view-rotation.js'),
-  dispW:()=>c.VW,dispH:()=>c.VH,compareOn:()=>false,animatrixOn:()=>false,rombP:()=>-1,joinedOn:()=>false,bothOn:()=>false,ovlLinked:()=>false,fitAxis:()=>false,wrapPadX:()=>32,panCenterX:()=>wrap.clientWidth/2,
-  freePanScale:0,freePanInset:0,zWant:0,VTX_H:16,save(){},present(){},imageStats(){},queueDigits(){},thick(){},fitHold(){},fitCenterY(){},midScroll(){},zBotScroll(){},zTopScroll(){},zTopLine(){},drawEdgeRhomb(){},getComputedStyle:win.getComputedStyle.bind(win),requestAnimationFrame:()=>1,
+  dispW:()=>c.VW,dispH:()=>c.VH,compareOn:()=>false,animatrixOn:()=>false,staggeredOn:()=>false,rombP:()=>-1,joinedOn:()=>false,bothOn:()=>false,ovlLinked:()=>false,fitAxis:()=>false,wrapPadX:()=>32,panCenterX:()=>wrap.clientWidth/2,
+  freePanScale:0,freePanInset:0,zWant:0,VTX_H:16,save(){},present(){},imageStats(){},queueDigits(){},thick(){},fitHold(){},fitCenterY(){},midScroll(){},axesScaleSync(){},showWheelZoomCursor(){},zBotScroll(){},zTopScroll(){},zTopLine(){},drawEdgeRhomb(){},getComputedStyle:win.getComputedStyle.bind(win),requestAnimationFrame:()=>1,
   viewRotation:{enabled:false,physicalRect:()=>cv.getBoundingClientRect(),isFieldEvent:()=>true},$:id=>{let n=doc.getElementById(id);if(!n){n=doc.createElement('span');n.id=id;doc.body.append(n);}return n;}};
  vm.createContext(c);const pixel=html.slice(html.indexOf('  function pixelGeometry('),html.indexOf('  // v0.201: «масштаб кратный 2, 3, 4, 5'));
  const decl=['DPR','zB','snap2','fitScale','fitHRow','fitHScale','MAX_ZOOM','baseMinScale','minScale','scale'].map(name=>lines.find(l=>l.trimStart().startsWith('const '+name+' =')));
@@ -64,7 +64,7 @@ test('physical 1:1 persists through zoom requests; release restores minification
  for(const dpr of [1,1.25,2])for(const rombo of [false,true]){
   const {c,close}=fixture(dpr);
   try{
-   c.st.edgeRhombOn=rombo;c.st.zsnap=false;c.st.zOverview=false;
+   c.st.edgeRhombOn=rombo;c.st.zsnap=false;c.st.zOverview=false;c.VH=c.f.H=16;
    vm.runInContext(lines.find(l=>l.includes("$('zLimit').onclick =")),c);
    vm.runInContext(lines.find(l=>l.includes('const zoomStep ='))+"\nthis.stepZoom=zoomStep;",c);
    c.$('zLimit').onclick();assert.equal(c.st.zLimit,true);
@@ -87,6 +87,19 @@ test('saved fit bindings survive minification and viewport resize without an ove
  }
 });
 
+test('fit by width chooses a physical scale that stays inside the viewport',()=>{
+ const {c,close}=fixture(2.75);
+ try{
+  c.VW=c.f.W=511;c.VH=c.f.H=256;c.st.zsnap=false;c.st.zoom='fit';
+  for(const width of [360,390]){
+   c.wrap.clientWidth=width;c.cssLayout();
+   const available=width-c.wrapPadX(),drawn=parseFloat(c.cv.style.width);
+   assert.ok(drawn<=available,drawn+' > '+available);
+   assert.ok(c.window.mayPixelExact.policyFor().ok);
+  }
+ }finally{close();}
+});
+
 test('overview has no DOM button, menu descriptor or public toggle API',()=>{
  const dom=new JSDOM(html);
  try{assert.equal(dom.window.document.getElementById('zOverview'),null);}finally{dom.window.close();}
@@ -107,7 +120,7 @@ test('overview layer copies physical pixel centres directly and never rescales a
  const image={width:3,height:2,data:Uint8ClampedArray.from({length:24},(_,i)=>i)},owner={},cv={getBoundingClientRect:()=>({left:0,top:0,width:2,height:4/3})};let shown;
  const G={setTransform(){},putImageData(value){shown=value;},drawImage(){throw Error('intermediate rescale forbidden');}},canvas={getContext:()=>G};
  const c={window:{mayLayers:{},mayPixelExact:{policyFor:()=>({overview:true})}},DPR:()=>1,RK:1,cv,img:owner,present:{romboNative:{owner,pic:image}},layerBase:null,layerViewport:()=>({left:0,top:0,width:2,height:1}),
-  scale:()=>2/3,layerCanvas:(old,width,height)=>Object.assign(canvas,{width,height}),layerOriginalCompose(){},MayatnikPixelExactHost:require('./mayatnik-pixel-exact-host.js'),ImageData:class{constructor(data,width,height){Object.assign(this,{data,width,height});}}};
+  scale:()=>2/3,layerCanvas:(old,width,height)=>Object.assign(canvas,{width,height}),layerOriginalCompose(){},st:{kraftShadows:false},staggeredOn:()=>false,MayatnikPixelExactHost:require('./mayatnik-pixel-exact-host.js'),ImageData:class{constructor(data,width,height){Object.assign(this,{data,width,height});}}};
  vm.runInNewContext(fn('layerOriginalBase'),c);c.layerOriginalBase(cv);assert.deepEqual(Array.from(shown.data),[...image.data.subarray(0,4),...image.data.subarray(8,12)]);
 });
 
