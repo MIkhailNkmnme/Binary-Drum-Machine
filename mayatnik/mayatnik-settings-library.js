@@ -14,9 +14,11 @@
   for(const key of ['kraftShadows','heatHoldZero','heatMode','heatPeriod','edgeRhombOn','romboRow','romboAngle','romboAssembly','romboSeam',...Object.keys(INVERT_DEFAULTS),...Object.keys(ISOLATED_DEFAULTS)]){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   STATE_KEYS.push('gifScaleStackPhasePage','gifScaleStackHeight','gifScaleStackMethod','gifScaleStackMode','gifScaleStackBase');NEW_STATE_KEYS.add('gifScaleStackPhasePage');NEW_STATE_KEYS.add('gifScaleStackHeight');NEW_STATE_KEYS.add('gifScaleStackMethod');NEW_STATE_KEYS.add('gifScaleStackMode');NEW_STATE_KEYS.add('gifScaleStackBase');
   for(const key of Object.keys(Pit.DEFAULTS)){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
-  STATE_KEYS.push('excelDigitPalette','animatrixStaggeredGrid');
+  STATE_KEYS.push('excelDigitPalette','animatrixStaggeredGrid','staggeredGrid','staggeredBlocks');
   NEW_STATE_KEYS.add('excelDigitPalette');
   NEW_STATE_KEYS.add('animatrixStaggeredGrid');
+  NEW_STATE_KEYS.add('staggeredGrid');
+  NEW_STATE_KEYS.add('staggeredBlocks');
   const TOOL_KEYS=['fillMode','autoVertical','axisPicking','axisLineMode','rulerMode','mirrorLine','mirrorAxis','templatePickEnabled','templatePickMode','templateDragEnabled'];
   const clone=value=>JSON.parse(JSON.stringify(value));
   function pick(state,tools={},controls={},colourAuto={}){

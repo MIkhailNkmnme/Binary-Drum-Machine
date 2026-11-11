@@ -1314,20 +1314,25 @@
     });
   }
   {
-    const api=window.mayStaggeredGrid,probe=document.createElement('button');
-    const help='Квадратные биты встык. Каждый второй ряд сдвинут на половину бита. Если в строке заняты обе решётки, вид сохраняет все столбцы.';
-    probe.title=help;
-    const b=ptBtn('staggeredGrid','grid4',probe,()=>{api.toggle();placeTools();});
-    b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
-    const label=document.createElement('span');label.className='gz-nm';label.textContent='Встык';label.dataset.userLabel='';b.append(label);
-    gModes.append(b);
-    toolSync.push(()=>{
-      const available=api.available(),on=api.get();
-      b.disabled=!available;b.classList.toggle('on',on);b.classList.toggle('gz-on',on);
-      b.setAttribute('aria-pressed',String(on));
-      b.title=available?help:help+' Доступно в плоском виде «Биты» или «Цвет».';
-      b.setAttribute('aria-label',b.title);
-    });
+    const api=window.mayStaggeredGrid;
+    const variants=[
+      ['staggeredGrid','Встык',false,'Квадратные биты встык. Каждый второй ряд сдвинут на половину бита. Если в строке заняты обе решётки, вид сохраняет все столбцы.'],
+      ['staggeredBlocks','Встык 2×2',true,'Каждый бит занимает четыре клетки с одинаковым значением. Строки выровнены по общей сетке.']
+    ];
+    for(const [id,name,blocks,help] of variants){
+      const probe=document.createElement('button');probe.title=help;
+      const b=ptBtn(id,'grid4',probe,()=>{api.toggle(blocks);placeTools();});
+      b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
+      const label=document.createElement('span');label.className='gz-nm';label.textContent=name;label.dataset.userLabel='';b.append(label);
+      gModes.append(b);
+      toolSync.push(()=>{
+        const available=api.available(),on=api.get()&&api.blocks()===blocks;
+        b.disabled=!available;b.classList.toggle('on',on);b.classList.toggle('gz-on',on);
+        b.setAttribute('aria-pressed',String(on));
+        b.title=available?help:help+' Доступно в плоском виде «Биты» или «Цвет».';
+        b.setAttribute('aria-label',b.title);
+      });
+    }
   }
   { const owner=gModes.querySelector('[data-view-overlay="contours"]'),mode=gModes.querySelector('[data-n="bitContourMode"]'),colours=gModes.querySelector('[data-n="bitContourColours"]');
     if(owner&&mode&&colours){const group=document.createElement('div');group.className='may-contours-group';group.setAttribute('role','group');group.setAttribute('aria-label','Контуры: включение, способ обводки и цвета');
