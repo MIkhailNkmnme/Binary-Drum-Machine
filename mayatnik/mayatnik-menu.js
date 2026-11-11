@@ -17,7 +17,7 @@
     'rail:paint':'#ff9b50','rail:template':'#e3c56f','rail:gifscale':'#41d6bd','rail:library':'#d9b9ff',
     'rail:export':'#ffd166','rail:xorrom':'#c29bff','rail:horr':'#88db72','rail:edge':'#78a8ec',
     'pt:Очистка':'#ffe17a','pt:Оси':'#ff87cf','pt:Правка':'#d4c27b','pt:Точка Ось':'#d292ff',
-    'pt:Виды поля':'#5cbce8','pt:Вид':'#91a5ff','pt:Зеркала':'#b48cff','pt:Шаблон':'#e3ad73',
+    'pt:Аниматрица':'#88db72','pt:Виды поля':'#5cbce8','pt:Вид':'#91a5ff','pt:Зеркала':'#b48cff','pt:Шаблон':'#e3ad73',
     'pt:Видео':'#f49d99','pt:Площади':'#b99de9','pt:Слои':'#63cbb3','pt:Ручные оси':'#ffbf73',
     'pt:Шаблоны':'#ceb6ed','pt:Свёртки':'#91d4a1','pt:Ячейки':'#a4d374','pt:Наложение':'#75c9dc'
   });
@@ -402,8 +402,6 @@
     const section = (node, key) => { node.dataset.horrSection = key; return node; };
     { const host=document.createElement('div');host.className='may-rombo-controls';pop.append(section(host,'rombo'));
       const rombo=mountRomboControls(host,{after:()=>{rail.refresh();placeTools();}});toolSync.push(rombo.sync); }
-    { const host=document.createElement('div');host.className='may-animatrix-controls';pop.append(section(host,'animatrix'));
-      window.MayatnikAnimatrixControls?.mount({host,api:()=>window.mayAnimatrix,after:()=>{rail.refresh();placeTools();}}); }
     const sizeRows = [];
     for (let i = 0; i < pres.length; i += 2) { const row = gzPair(pres.slice(i, i + 2).map(e => ({ label: e.textContent, tip: e.title || ('Построить ' + e.textContent), data: { n: e.dataset.n },
         on: () => cur() === e.dataset.n, click: () => { e.click(); sync(); } }))); sizeRows.push(row); pop.append(section(row, 'size')); }
@@ -845,6 +843,12 @@
     const l = ZerkGroupHeader.create({title:name==='👓 Очки'?'👓 Поиск':name,dualPins:true,className:'pt-l',titleClass:'may-group-title',pinClass:'pt-pin',iconClass:'pt-ico'}).head; const row = document.createElement('div'); row.className = 'pt-r';
     g.append(l, row); tools.append(g); return row; };
   // v0.478: одна «Раскраска» — группа paint в общей рейке; её исходные контролы и обработчики сохранены.
+  const gAnimatrix=ptGroup('Аниматрица');
+  gAnimatrix.parentElement.dataset.k='Аниматрица';
+  const animatrixHost=document.createElement('div');
+  animatrixHost.className='may-animatrix-controls';gAnimatrix.append(animatrixHost);
+  const animatrixControls=window.MayatnikAnimatrixControls?.mount({host:animatrixHost,api:()=>window.mayAnimatrix,
+    after:()=>{rail.refresh();placeTools();window.mayButtonStandardRefresh?.();}});
   const gEdit = ptGroup('Очистка'), gAxis = ptGroup('Оси'),gHistory=ptGroup('Правка'), gMeet = ptGroup('Точка Ось');   // v0.318: «отдельная кнопка Точка Ось меню — туда все её кнопки и заливки»
   gHistory.parentElement.classList.add('pt-history');
   for (const id of ['bPaintMeet','bPaintAxis','bThirds','bTriTop']) groupOf[id] = gMeet;
@@ -1853,7 +1857,7 @@
   function mountHorrSections(group, { storage = localStorage, after = () => {}, openGroup = () => {} } = {}) {
     if (!group) return null;
     const doc = group.ownerDocument, win = doc.defaultView;
-    const sections = [['size', 'Размер', 'line'], ['build', 'Построение', 'steps'], ['fields', 'Поля', 'field'], ['rombo', 'Ромбо', 'tri'], ['overlay', 'Наложение', 'plusRing'], ['run', 'Прогон', 'play'], ['animatrix', 'Аниматрица', 'grid4']];
+    const sections = [['size', 'Размер', 'line'], ['build', 'Построение', 'steps'], ['fields', 'Поля', 'field'], ['rombo', 'Ромбо', 'tri'], ['overlay', 'Наложение', 'plusRing'], ['run', 'Прогон', 'play']];
     const key = 'mayatnik-horr-section-v1', openKey = 'mayatnik-horr-section-open-v1';
     const controls = [...group.querySelectorAll('[data-horr-section]')], host = controls[0]?.closest('.gz-wide');
     if (!host || !controls.length) return null;
@@ -2004,7 +2008,8 @@
     const show = (g,explicit=false) => { const k=keyOf(g);if(folds.has(k)){if(!explicit)return;folds.delete(k);saveDd();}if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
     // Temporary discovery does not alter explicit folds, pins or saved opening.
     window.mayMenuSearchReveal=(target,control)=>{const releaseHorr=window.mayHorrSections?.reveal(control);if(releaseHorr)return releaseHorr;const g=target?.matches('.pt-g')?target:target?.closest('.pt-g');if(!g||g.classList.contains('pt-btn')||!g.querySelector('.pt-r'))return null;
-      searchRevealGroups.add(g);setOpen(g,true);let active=true;return()=>{if(!active)return;active=false;searchRevealGroups.delete(g);setOpen(g,stay(g)||g===open);};};
+      const releaseAnimatrix=animatrixControls?.reveal(control);
+      searchRevealGroups.add(g);setOpen(g,true);let active=true;return()=>{if(!active)return;active=false;releaseAnimatrix?.();searchRevealGroups.delete(g);setOpen(g,stay(g)||g===open);};};
     // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
     // «↶ Отм. | ↷ Повт.» uses the original history commands, fixed below the three branding rows.
     const ud = gHistory.parentElement, udL = ud.querySelector('.pt-l');
@@ -2247,7 +2252,7 @@
       buttonLayoutRestorers.push(values=>{gw=layoutValue(values,GRID,null);up=layoutValue(values,UPK,[]);bot=layoutValue(values,'mayatnik-bot',[]);botX=layoutValue(values,'mayatnik-botx',{});repairPending=false;arrange(layoutValue(values,ORDER,[]));placeUps();domSort();shown=new Map();sig='';dock?.restoreLayout(layoutValue(values,'mayatnik-menu-dock-v509',{}));relayout();}); }
     // Group headers toggle their compact form. History keeps its separate mini mode.
     { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
-      ICO['\u042f\u0447\u0435\u0439\u043a\u0438']='\u042f\u0427\u041a';
+      ICO['\u042f\u0447\u0435\u0439\u043a\u0438']='\u042f\u0427\u041a';ICO['Аниматрица']='▦';
       let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = ZerkGroupHeader.parts(l).icon;ic.textContent = glyph(k);ic.classList.toggle('may-header-abbrev',ic.textContent.length>1);if(!ic.parentNode)l.append(ic);

@@ -1,6 +1,12 @@
 /* Маятник v0.622 — page layout only; button geometry, colours and groups come from grozd.css. */
-.may-animatrix-controls{display:flex;flex-direction:column;gap:2px;width:120px;max-width:120px;flex:none}
-.may-animatrix-controls>.gz-hx{margin:0;flex:none}
+.may-animatrix-controls,.may-animatrix-section-body{display:flex;flex-direction:column;gap:2px;width:120px;max-width:120px;flex:none}
+.may-animatrix-controls [hidden],.may-animatrix-section-body:not(.may-animatrix-section-open){display:none!important}
+.may-animatrix-controls .gz-hx{margin:0;flex:none}
+.may-animatrix-controls .may-animatrix-section{position:relative;padding-right:18px}
+.may-animatrix-chevron{position:absolute;right:10px;width:6px;height:6px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(-45deg)}
+.may-animatrix-section[aria-expanded="true"] .may-animatrix-chevron{transform:rotate(45deg)}
+.may-animatrix-status{padding:1px 6px 3px;color:#dfe6f5;text-align:center;font:11px/1.25 "Segoe UI",sans-serif}
+.may-animatrix-status .gz-nm{white-space:normal}
 .may-animatrix-controls input[type=number]{box-sizing:border-box;height:18px;max-width:44px;padding:0 2px;text-align:center}
 .may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
