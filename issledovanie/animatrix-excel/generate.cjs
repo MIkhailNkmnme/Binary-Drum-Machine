@@ -6,6 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const Source = require('../../mayatnik/mayatnik-animatrix-source.js');
 const Core = require('../../mayatnik/mayatnik-animatrix-core.js');
+const Shapes = require('../../mayatnik/mayatnik-animatrix-excel-shapes.js');
 const Share = require('../../mayatnik/mayatnik-share-link.js');
 const Grid = require('../../mayatnik/mayatnik-staggered-grid.js');
 const { encoder } = require('../../mayatnik/mayatnik-gif.js');
@@ -124,8 +125,18 @@ async function figure(name, state, panels) {
     `<text x="${x}" y="${y}" font-size="${font}" fill="${fill}" ${attr}>${escape(value)}</text>`;
   const rect = (x, y, w, h, fill, attr = '') =>
     `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${attr}/>`;
-  const bitFill = entry => entry.fill || (entry.bit ? state.bitOneColour : state.bitZeroColour);
+  const coneBackground = Source.coneMode(state.animatrixAlgorithm);
+  const bitFill = (entry, zero) => {
+    if (entry.fill) return entry.fill;
+    if (coneBackground) {
+      const colour = Shapes.cellBackground(entry.bit, Number.parseInt(entry.colour.slice(1), 16),
+        zero ? Number.parseInt(zero.slice(1), 16) : null);
+      if (colour !== null) return hex(colour);
+    }
+    return entry.bit ? state.bitOneColour : state.bitZeroColour;
+  };
   const digits = (entry, zero) => {
+    if (coneBackground) return entry.bit ? state.digitOneColour : state.digitZeroColour;
     if (zero) return entry.bit ? '#000000' : zero;
     if (state.animatrixCopyRowsLayout === 'mirrorExcel') return entry.bit ? '#0066cc' : '#dcdcdc';
     return entry.colour;
@@ -147,8 +158,11 @@ async function figure(name, state, panels) {
     const plotX = fieldX + (plotWidth - cols * size) / 2;
     out.push(text(fieldX, 47, title, 20));
     out.push(rect(fieldX, overviewY, plotWidth, overviewHeight, '#101a25', 'stroke="#556d85"'));
-    if (!overviews.has(entries)) overviews.set(entries, await overview(entries, width, height, bitFill, layout));
-    out.push(`<image x="${fieldX}" y="${overviewY}" width="${plotWidth}" height="${overviewHeight}" href="${overviews.get(entries)}" style="image-rendering:pixelated"/>`);
+    const overviewKey = coneBackground && zero ? zero : entries;
+    if (!overviews.has(overviewKey)) {
+      overviews.set(overviewKey, await overview(entries, width, height, entry => bitFill(entry, zero), layout));
+    }
+    out.push(`<image x="${fieldX}" y="${overviewY}" width="${plotWidth}" height="${overviewHeight}" href="${overviews.get(overviewKey)}" style="image-rendering:pixelated"/>`);
     for (const row of [1, 64, 128, 192, height]) {
       const y = overviewY + (row - .5) * 2 * scale;
       out.push(text(fieldX - 7, y + 4, row, 14, '#b9cce0', 'text-anchor="end"'));
@@ -163,7 +177,7 @@ async function figure(name, state, panels) {
     }
     for (const entry of detail[index].entries) {
       const px = plotX + (entry.x - box.left) * size, py = detailY + (entry.y - box.top) * size;
-      out.push(rect(px, py, size - .7, size - .7, bitFill(entry), 'rx="1"'));
+      out.push(rect(px, py, size - .7, size - .7, bitFill(entry, zero), 'rx="1"'));
       if (entry.bit === null) continue;
       const colour = digits(entry, zero);
       const weight = entry.bold || state.animatrixCopyRowsLayout === 'mirrorExcel' && entry.bit ? 700 : 400;

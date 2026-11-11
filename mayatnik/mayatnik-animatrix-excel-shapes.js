@@ -106,5 +106,10 @@
     return true;
   }
 
-  return { coneOrigin, cycleFrames, step };
+  function cellBackground(bit, colour, zeroColour) {
+    if (zeroColour !== null) return bit === 0 ? zeroColour : null;
+    return colour === BLACK ? null : colour;
+  }
+
+  return { coneOrigin, cycleFrames, step, cellBackground };
 });

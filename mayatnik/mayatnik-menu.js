@@ -1122,8 +1122,6 @@
     excelSwatch.className = 'pt-dot';
     excelSwatch.setAttribute('aria-hidden', 'true');
     excelZero.append(excelSwatch);
-    excelAuto.title = 'Вернуть автоматический цвет цифры 0 в режимах Excel';
-    excelAuto.setAttribute('aria-label', excelAuto.title);
     let paletteTitle = '';
     const syncExcelDigits = () => {
       const palette = window.mayExcelDigits?.get();
@@ -1133,7 +1131,11 @@
       excelZero.classList.toggle('on', active);
       excelZero.classList.toggle('gz-on', active);
       excelZero.setAttribute('aria-pressed', String(active));
-      const title = (active ? 'Цвет цифры 0 в Excel — ' + palette.name + '. ' : 'Цвет цифры 0 в Excel выбирается автоматически. ') + 'Щелчок выбирает следующий цвет.';
+      const subject = palette?.background ? 'Цвет фона клетки 0' : 'Цвет цифры 0';
+      const title = (active ? subject + ' — ' + palette.name + '. ' : subject + ' выбирается автоматически. ') + 'Щелчок выбирает следующий цвет.';
+      const autoTitle = 'Вернуть автоматический ' + subject.toLowerCase();
+      excelAuto.title = autoTitle;
+      excelAuto.setAttribute('aria-label', autoTitle);
       if (paletteTitle !== title) {
         paletteTitle = title;
         excelZero.title = title;
@@ -1144,6 +1146,7 @@
     };
     toolSync.push(syncExcelDigits);
     addEventListener('may-excel-digits-change', syncExcelDigits);
+    addEventListener('may-animatrix-change', syncExcelDigits);
     syncExcelDigits();
     gView.append(excelZero, excelAuto);
     const fnt = $('digitFont'), fb = ptBtn('fontCycle', 'steps', fnt, () => { fnt.selectedIndex = (fnt.selectedIndex + 1) % fnt.options.length; fnt.dispatchEvent(new Event('change', { bubbles: true })); });
