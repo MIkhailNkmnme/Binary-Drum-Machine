@@ -111,7 +111,7 @@
     const directions=[['vertical',[['down','Вниз'],['up','Вверх']]],['horizontal',[['left','Влево'],['right','Вправо']]]].map(([id,parts])=>
       segments('direction:'+id,'Направление расчёта',parts.map(([value,caption])=>({label:caption,title:'Направление: '+caption.toLowerCase(),selected:s=>s.direction===value,action:pick('direction',value)})),s=>!directionActive(s)));
     section('reflections','Отражения');
-    command('copy-rows','Копии XOR','Взять текущее поле одной решётки. Отражать верхний треугольник через новую строку-ось на каждом кадре и накладывать XOR всех её пар.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows'&&!s.copyRowsWrap&&!s.copyRowsExcel);
+    command('copy-rows','Копии XOR','Отражать верхний треугольник через новую ось на каждом кадре. Продолжать отражение ниже исходных строк через XOR. Ось остаётся в пределах исходного поля.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows'&&!s.copyRowsWrap&&!s.copyRowsExcel);
     command('copy-rows-wrap','Край XOR','Отражать верхний треугольник. Строки за нижним краем переносить наверх с сохранением чётности и накладывать XOR.',a=>a?.startCopyRows?.({wrap:true}),s=>s.on&&s.copyRowsWrap);
     command('copy-rows-excel','Зеркалиус','Версия из Excel: новая строка-ось за кадр; результат NAND симметричных битов записывается в верхнюю строку. Цифра 1 синяя жирная, 0 светло-серая обычная.',a=>a?.startCopyRows?.({excel:true}),s=>s.on&&s.copyRowsExcel);
     const edgeModes=segments('edge-colours','Раскраска «Край XOR»',[

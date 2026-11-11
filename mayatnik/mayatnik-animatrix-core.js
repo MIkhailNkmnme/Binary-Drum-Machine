@@ -98,6 +98,7 @@
   function resetProgress(s) {
     const first = firstScanRow(s);
     s.stepCount = s.rowCount = s.cycle = 0;
+    if (s.copyRowsOriginalHeight) s.copyRowsVisibleHeight = s.copyRowsOriginalHeight;
     s.cursorRow = s.height > first ? first : 0;
     s.done = s.scan && s.height <= first;
     s._scanSelectionRows = null;
@@ -126,6 +127,8 @@
     state.copyRowsByAxis = state.copyRowsMirror && options.copyRowsByAxis === true;
     state.copyRowsExcel = state.copyRowsByAxis && options.copyRowsExcel === true;
     state.copyRowsWrap = state.copyRowsByAxis && !state.copyRowsExcel && options.copyRowsWrap === true;
+    if (state.copyRowsByAxis && !state.copyRowsWrap && !state.copyRowsExcel && options.copyRowsOriginalHeight)
+      state.copyRowsOriginalHeight = options.copyRowsOriginalHeight;
     if (excel) {
       state.excelAnchor = options.excelAnchor ?? Math.floor((initial.width - 1) / 2);
       state.excelDepth = options.excelDepth ?? 128;
@@ -146,7 +149,7 @@
       ...(s.excelCycleFrames ? { excelPhase: s.excelPhase, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly } : {}),
       ...(s.algorithm === 'excelCollision' ? { collisionFillEmpty: s.collisionFillEmpty } : {}),
       ...(s.interxorFound ? { interxorPatterns: s.interxorPatterns, interxorFound: s.interxorFound.slice() } : {}),
-      ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel } : {}) });
+      ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel, copyRowsOriginalHeight: s.copyRowsOriginalHeight } : {}) });
   }
   function reset(s) {
     const initial = cloneSeed(s._seed);
@@ -157,7 +160,7 @@
   // Independent calculator at the same immutable seed, without duplicating it.
   function forkInitial(s) {
     const state = cloneSeed(s._seed);
-    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel });
+    Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel, copyRowsOriginalHeight: s.copyRowsOriginalHeight });
     if (s.excelCycleFrames) Object.assign(state, { excelCycleFrames: s.excelCycleFrames, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly });
     if (s.algorithm === 'excelCollision') state.collisionFillEmpty = s.collisionFillEmpty;
     if (s.interxorPatterns) state.interxorPatterns = s.interxorPatterns;
@@ -184,7 +187,7 @@
     if (!!a.copyMarks !== !!b.copyMarks) return false;
     if (a.copyMarks) {
       if (a.copyRowsMirror !== b.copyRowsMirror || a.copyRowsByAxis !== b.copyRowsByAxis || a.copyRowsWrap !== b.copyRowsWrap ||
-          a.copyRowsExcel !== b.copyRowsExcel || a.copyAxis !== b.copyAxis || a.copyMarks.length !== b.copyMarks.length) return false;
+          a.copyRowsExcel !== b.copyRowsExcel || a.copyRowsOriginalHeight !== b.copyRowsOriginalHeight || a.copyAxis !== b.copyAxis || a.copyMarks.length !== b.copyMarks.length) return false;
       for (let i = 0; i < a.copyMarks.length; i++) if (a.copyMarks[i] !== b.copyMarks[i]) return false;
     }
     return true;
@@ -365,7 +368,12 @@
     // Reflected rows of the same parity share their column coordinates.
     for (let x = 0; x < width; x++) {
       const source = from + x, target = to + x;
-      if (!s.present[source] || !s.present[target]) continue;
+      if (!s.present[source]) continue;
+      if (!s.present[target]) {
+        if (!s.copyRowsOriginalHeight || y < s.copyRowsOriginalHeight) continue;
+        s.present[target] = 1;
+        s.copyRowsVisibleHeight = Math.max(s.copyRowsVisibleHeight, y + 1);
+      }
       const bit = sourceBits[source];
       if (s.copyRowsExcel) {
         s.bits[target] = 1 - (s.bits[target] & bit);
@@ -389,7 +397,7 @@
     if (s.copyRowsByAxis) {
       const axis = s.copyAxis;
       const last = s.copyRowsExcel && !hasCopyRow(s, axis) ? axis :
-        s.copyRowsWrap ? 2 * axis : Math.min(2 * axis, s.height - 1);
+        s.copyRowsWrap || s.copyRowsOriginalHeight ? 2 * axis : Math.min(2 * axis, s.height - 1);
       // Wrapped destinations may also be sources for this frame.
       const sourceBits = last >= s.height ? s.bits.slice(0, axis * s.width) : s.bits;
       for (let y = axis + 1; y <= last; y++) {
@@ -404,7 +412,7 @@
         s.rowCount++;
       }
       s.copyAxis++;
-      if (s.copyAxis === s.height - (s.copyRowsWrap ? 0 : 1)) { s.copyAxis = 1; s.cycle++; }
+      if (s.copyAxis === (s.copyRowsOriginalHeight || s.height) - (s.copyRowsWrap ? 0 : 1)) { s.copyAxis = 1; s.cycle++; }
       s.cursorRow = s.copyRowsWrap ? wrapCopyRow(s.copyAxis + 1, s.height) : s.copyAxis + 1;
     } else {
       const y = s.cursorRow;
@@ -503,7 +511,7 @@
     // Save each touched row once per call. A one-frame advance copies/compares
     // only the receiving row and previous selection row, never the whole field.
     const beforeRows = new Map();
-    const keys = s.algorithm === 'copyRows' && !s.trackChanges ? ['bits'] : KEYS;
+    const keys = s.algorithm === 'copyRows' && !s.trackChanges ? (s.copyRowsOriginalHeight ? ['bits', 'present'] : ['bits']) : KEYS;
     const capture = row => {
       if (beforeRows.has(row)) return;
       const start = row * s.width, end = start + s.width, copy = {};
