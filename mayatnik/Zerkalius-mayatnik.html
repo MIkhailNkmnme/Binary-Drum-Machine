@@ -598,8 +598,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-gif-scale.js?v=921"></script>
 <script src="mayatnik-gif-scale-record.js?v=926"></script>
 <script src="mayatnik-scale-stack.js?v=900"></script>
-<script src="mayatnik-scale-stack-view.js?v=991"></script>
-<link rel="stylesheet" href="mayatnik-scale-stack.css?v=991">
+<script src="mayatnik-scale-stack-view.js?v=991b"></script>
+<link rel="stylesheet" href="mayatnik-scale-stack.css?v=991b">
 <script src="mayatnik-gif-live-host.js?v=991"></script>
 <script src="mayatnik-gif-frame.js?v=896"></script>
 <script src="mayatnik-fill.js?v=599"></script>
@@ -9126,7 +9126,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(original&&(!original.visible||!original.opacity))return null;
       const figure=st.edgeRhombOn&&window.mayRombo?.get().available?$('edgeBelowWrap'):cv;
       const rect=viewRotation.physicalRect(figure),outer=viewRotation.physicalRect(wrap);
-      return {rect,clip:{left:outer.left+wrap.clientLeft,top:outer.top+wrap.clientTop,width:wrap.clientWidth,height:wrap.clientHeight},rotated:viewRotation.enabled};
+      const scene=document.querySelector('.may-layer-scene');
+      return {rect,clip:{left:outer.left+wrap.clientLeft,top:outer.top+wrap.clientTop,width:wrap.clientWidth,height:wrap.clientHeight},rotated:viewRotation.enabled,after:scene?.closest('.may-rotation-world')||scene};
     },
     capture:()=>captureScaleGifFrame(),ready:gifScaleSourceReady,sourcePending:()=>!!gpuBig&&(!gpuBig.fresh||gpuBig.k!==k),
     state:()=>({owner:f,key:JSON.stringify([k,st.vrows,third?.part||0,st.view,st.edgeRhombOn,st.romboAngle,st.romboAssembly,st.romboRow]),frame:k}),

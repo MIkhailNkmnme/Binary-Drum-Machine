@@ -130,7 +130,8 @@
    if(!overlayHost||!overlayPaint)return;
    const target=o.overlayTarget();
    if(!target||!target.rect.width||!target.rect.height||!sameFrame(sourceFrame,requestedFrame)){overlayHost.hidden=true;return;}
-   const {rect,clip,rotated}=target;
+   const {rect,clip,rotated,after}=target;
+   if(after&&(overlayHost.compareDocumentPosition(after)&win.Node.DOCUMENT_POSITION_FOLLOWING))after.after(overlayHost);
    overlayHost.hidden=false;
    Object.assign(overlayHost.style,{left:clip.left+'px',top:clip.top+'px',width:clip.width+'px',height:clip.height+'px'});
    Object.assign(overlayCanvas.style,{left:(rect.left-clip.left)+'px',top:(rect.top-clip.top)+'px',width:rect.width+'px',height:rect.height+'px',rotate:rotated?'180deg':''});
