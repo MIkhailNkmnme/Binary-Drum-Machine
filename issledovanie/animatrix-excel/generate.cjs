@@ -86,7 +86,8 @@ function detailFor(state, panels, { phase, stride }) {
     excelTrianglePend: [Math.floor((height - 1) / 2) - 4, Math.floor((height - 1) / 2) + 5]
   };
   const area = algorithm === 'excelCollision' ? areas[0] : null;
-  const selection = area && (area.width !== state.animatrixSource.width || area.height !== height) ? area : null;
+  const fullCollision = area && area.width === state.animatrixSource.width && area.height === height;
+  const selection = fullCollision ? { x: state.animatrixSource.anchor - 10, y: 0, width: 21, height: 9 } : area;
   const [top, bottom] = selection ? [selection.y, selection.y + selection.height] : limits[algorithm];
   return panels.map(({ entries }) => ({ entries: entries.filter(({ x, y }) =>
     y >= top && y < bottom && (!selection || (x >= selection.x && x < selection.x + selection.width)))
