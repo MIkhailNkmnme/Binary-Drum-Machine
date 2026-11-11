@@ -48,3 +48,8 @@
 .may-scale-stack__overlay[hidden],body.may-fold-active .may-scale-stack__overlay,body.may-cells-collapsed .may-scale-stack__overlay{display:none}
 .may-scale-stack__overlay canvas{position:absolute;max-width:none;margin:0;background:transparent;image-rendering:pixelated}
 .may-scale-stack--phases .may-scale-stack__mix-controls{justify-content:flex-start}
+
+.may-scale-stack__paint-controls[hidden]{display:none}
+.may-scale-stack__paint-palette>.gz-half{gap:4px;cursor:pointer}
+.may-scale-stack__paint-palette input[type=color]{flex:0 0 18px;width:18px;min-width:18px;height:16px;margin:0;padding:0;border:0;background:transparent;cursor:pointer}
+.may-scale-stack__paint-palette input[type=color]::-webkit-color-swatch-wrapper{padding:1px}

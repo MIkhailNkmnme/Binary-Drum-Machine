@@ -31,7 +31,7 @@
  // Use the reduction's coordinate grid, even when its thumbnail is shown at native size.
  function overlayPixels(result,source,small,size,method,operation,palette,lowerPixels){
   const bounds=source.overlayBounds||{left:0,top:0,width:source.width,height:source.height};
-  const W=result.width,H=result.height,data=result.data,w=size.width,h=size.height;
+  const W=result.width,H=result.height,data=result.data,w=size.width,h=size.height,paint=operation==='paint';
   const uniform=method==='viewport'?size.scale:method==='canvas'?h/source.height:0;
   const rx=uniform||w/source.width,ry=uniform||h/source.height;
   const colours=operation==='rgb'?(lowerPixels||small.canvas.getContext('2d').getImageData(0,0,w,h).data):null;
@@ -56,9 +56,9 @@
      lower=source.bits[cy*source.width+cx];
     }
     if(lower===-1)lower=0;
-    if(lower!==0&&lower!==1)continue;
-    const value=operation==='xor'?bit^lower:bit&lower;
-    if(value===bit)continue;
+    if(!paint&&lower!==0&&lower!==1)continue;
+    const value=paint?Number(lower===1):operation==='xor'?bit^lower:bit&lower;
+    if(!paint&&value===bit)continue;
     const rgb=palette[value];data[i]=rgb[0];data[i+1]=rgb[1];data[i+2]=rgb[2];data[i+3]=source.pixels[at*4+3];
    }
   }
@@ -92,25 +92,44 @@
   overlayControls.className='may-scale-stack__controls may-scale-stack__mix-controls';
   overlayControls.addEventListener('pointerdown',e=>e.stopPropagation());overlayControls.addEventListener('pointerup',e=>e.stopPropagation());
   operation.setAttribute('aria-label','Наложение нижнего построения');operation.title='Наложить одну нижнюю копию на оригинал';
-  for(const [value,label,title]of [['off','Без наложения','Наложение выключено'],['xor','XOR','Исключающее ИЛИ битов'],['and','AND','Логическое И битов'],['rgb','RGB','Заменить цвета цветами нижней копии']]){
+  for(const [value,label,title]of [['off','Без наложения','Наложение выключено'],['xor','XOR','Исключающее ИЛИ битов'],['and','AND','Логическое И битов'],['rgb','RGB','Заменить цвета цветами нижней копии'],['paint','Раскраска','Раскрасить оригинал по битам нижней копии']]){
    const option=doc.createElement('option');option.value=value;option.textContent=label;option.title=title;operation.append(option);
   }
   copy.setAttribute('aria-label','Нижняя копия для наложения');copy.title='Выберите одну копию по её месту в списке';
   const operationField=field(operation),copyField=field(copy);
-  const controlRows=o.overlayTarget?[controls,overlayControls]:[controls];
-  if(o.overlayTarget){overlayControls.append(operationField,copyField);element.insertBefore(overlayControls,list);}
+  const paintControls=doc.createElement('div'),paintPair=doc.createElement('div');
+  paintControls.className='may-scale-stack__controls may-scale-stack__mix-controls may-scale-stack__paint-controls';
+  paintControls.addEventListener('pointerdown',e=>e.stopPropagation());paintControls.addEventListener('pointerup',e=>e.stopPropagation());
+  paintPair.className='gz-hx gz-pair gz-split may-scale-stack__paint-palette';
+  paintPair.dataset.mayStandardKey='1';paintPair.setAttribute('role','group');paintPair.setAttribute('aria-label','Цвета раскраски по нижней копии');
+  const paintDefaults=['#5b6475','#e8edf5'];
+  const paintInputs=paintDefaults.map((colour,bit)=>{
+   const label=doc.createElement('label'),control=doc.createElement('input'),caption=doc.createElement('span');
+   label.className='gz-half gz-h'+bit;label.dataset.mayStandardKey='1';caption.textContent=String(bit);
+   control.type='color';control.value=colour;control.title='Цвет бита '+bit+' нижней копии';control.setAttribute('aria-label',control.title);
+   label.append(caption,control);paintPair.append(label);return control;
+  });
+  paintControls.append(paintPair);
+  const controlRows=o.overlayTarget?[controls,overlayControls,paintControls]:[controls];
+  if(o.overlayTarget){overlayControls.append(operationField,copyField);element.insertBefore(overlayControls,list);element.insertBefore(paintControls,list);}
+  const paintColours=()=>paintInputs.map(input=>input.value);
   let copyIndex=0,overlayHost=null,overlayCanvas=null,overlayPaint=null,sourceFrame=null,requestedFrame=null;
   const sameFrame=(a,b)=>a?.owner===b?.owner&&a?.key===b?.key;
   const selectedCopy=()=>o.overlayTarget&&operation.value!=='off'?items[Math.min(copyIndex,items.length-1)]:null;
   function readOverlaySettings(){
    const settings=o.overlaySettings?.();
-   operation.value=['xor','and','rgb'].includes(settings?.operation)?settings.operation:'off';
+   operation.value=['xor','and','rgb','paint'].includes(settings?.operation)?settings.operation:'off';
    copyIndex=Math.max(0,Math.trunc(Number(settings?.index)||0));
+   paintInputs.forEach((input,bit)=>{
+    const colour=settings?.paintColours?.[bit];
+    input.value=/^#[0-9a-f]{6}$/i.test(colour)?colour:paintDefaults[bit];
+   });
   }
   function syncOverlayOptions(){
    if(!o.overlayTarget)return;
    const active=operation.value!=='off';
    operation.disabled=!items.length&&!active;operationField.classList.toggle('on',active);copyField.hidden=!active;copy.disabled=!items.length;
+   paintControls.hidden=operation.value!=='paint';
    copy.value=String(Math.min(copyIndex,items.length-1));
   }
   function listOverlayCopies(){
@@ -139,7 +158,8 @@
   function paintOverlay(lowerPixels){
    const item=selectedCopy(),op=operation.value;
    if(!item?.bits||!source?.bits||item.revision!==revision||!sameFrame(sourceFrame,requestedFrame)){hideOverlay();return;}
-   if(overlayPaint?.item!==item||overlayPaint.op!==op||overlayPaint.revision!==revision){
+   const colours=op==='paint'?paintColours():null,paletteKey=colours?.join('')||'';
+   if(overlayPaint?.item!==item||overlayPaint.op!==op||overlayPaint.revision!==revision||overlayPaint.paletteKey!==paletteKey){
     if(!overlayCanvas){
      overlayHost=doc.createElement('div');overlayHost.className='may-scale-stack__overlay';overlayHost.hidden=true;overlayHost.setAttribute('aria-hidden','true');
      overlayCanvas=doc.createElement('canvas');overlayHost.append(overlayCanvas);doc.body.append(overlayHost);
@@ -147,16 +167,22 @@
     const w=Math.ceil(source.overlayBounds?.width??source.width),h=Math.ceil(source.overlayBounds?.height??source.height);
     if(overlayCanvas.width!==w)overlayCanvas.width=w;if(overlayCanvas.height!==h)overlayCanvas.height=h;
     const ctx=overlayCanvas.getContext('2d'),image=ctx.createImageData(w,h);
-    overlayPixels(image,source,item,item.size,method.value,op,o.overlayPalette(),lowerPixels);
-    ctx.putImageData(image,0,0);overlayPaint={item,op,revision};
+    const palette=colours?colours.map(colour=>[1,3,5].map(i=>parseInt(colour.slice(i,i+2),16))):o.overlayPalette();
+    overlayPixels(image,source,item,item.size,method.value,op,palette,lowerPixels);
+    ctx.putImageData(image,0,0);overlayPaint={item,op,revision,paletteKey};
    }
    positionOverlay();
   }
+  const saveOverlaySettings=()=>o.onOverlaySettings?.({operation:operation.value,index:copyIndex,paintColours:paintColours()});
   const overlayChange=()=>{
    if(copy.value!=='')copyIndex=Number(copy.value);
-   o.onOverlaySettings?.({operation:operation.value,index:copyIndex});syncOverlayOptions();paintOverlay();later();
+   saveOverlaySettings();syncOverlayOptions();paintOverlay();later();
   };
   operation.addEventListener('change',overlayChange);copy.addEventListener('change',overlayChange);
+  for(const control of paintInputs){
+   control.addEventListener('input',()=>paintOverlay());
+   control.addEventListener('change',()=>{saveOverlaySettings();paintOverlay();});
+  }
   const phasePageInput=doc.createElement('input');phasePageInput.type='number';phasePageInput.min='1';phasePageInput.step='1';phasePageInput.value=String(Math.max(0,Number(o.phasePage?.())||0)+1);phasePageInput.setAttribute('aria-label','Страница фаз');
   const phasePageField=field(phasePageInput,'фазы');phasePageField.hidden=true;controls.append(phasePageField);
   const phaseNote=doc.createElement('div');phaseNote.className='may-scale-stack__phase-note';phaseNote.hidden=true;element.insertBefore(phaseNote,list);
@@ -311,7 +337,26 @@
   function requestFrame(s,meta={}){if(!enabled||destroyed)return false;requestedFrame=meta.frame;if(!sameFrame(sourceFrame,requestedFrame))hideOverlay();pending={source:job?undefined:s,key:meta.key,frame:requestedFrame};later();return true;}
   function refreshLayout(value={}){try{const before=JSON.stringify([layout.pixelPolicy,layout.sourceDensity]);layout={...layout,...value};if(source&&method.value==='viewport'&&before!==JSON.stringify([layout.pixelPolicy,layout.sourceDensity]))rebuild();else geometry();positionOverlay();later();}catch(e){fail(e);}}
   function setZoom(value){zoom=Math.max(minDisplayZoom(),Math.min(512,Number(value)||1));geometry();later();return zoom;}
-  function setEnabled(value){if(destroyed)return false;const next=!!value;if(next){const before=operation.value,index=copyIndex;readOverlaySettings();syncOverlayOptions();if(next===enabled&&(before!==operation.value||index!==copyIndex)){paintOverlay();later();}}if(next===enabled)return enabled;enabled=next;element.hidden=!enabled;if(enabled){input.value=String(o.stepRows?.()||input.value);const selectedHeight=o.heightMode?.();if(['original','cell','native','integer'].includes(selectedHeight))heightMode.value=selectedHeight;requestFrame();}else{if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;}return enabled;}
+  function setEnabled(value){
+   if(destroyed)return false;
+   const next=!!value;
+   if(next){
+    const key=()=>[operation.value,copyIndex,...paintColours()].join(':');
+    const previous=key();readOverlaySettings();syncOverlayOptions();
+    if(enabled&&previous!==key()){paintOverlay();later();}
+   }
+   if(next===enabled)return enabled;
+   enabled=next;element.hidden=!enabled;
+   if(enabled){
+    input.value=String(o.stepRows?.()||input.value);
+    const selectedHeight=o.heightMode?.();
+    if(['original','cell','native','integer'].includes(selectedHeight))heightMode.value=selectedHeight;
+    requestFrame();
+   }else{
+    if(timer!==null)cancel(timer);timer=null;source=pending=null;clear();zoom=1;
+   }
+   return enabled;
+  }
   function change(){const step=Math.max(1,Math.min(Number(input.max)||65535,Math.floor(Number(input.value)||1)));input.value=String(step);o.onStepRows?.(step);rebuild();later();}
   function sequenceChange(){if(!['rows','powers','multiples'].includes(mode.value))mode.value='rows';baseInput.value=String(Math.max(2,Math.min(10000,Math.floor(Number(baseInput.value)||2))));phasePage=0;syncPhaseControls();o.onSequence?.({mode:mode.value,base:Number(baseInput.value)});rebuild();later();}
   syncPhaseControls();
