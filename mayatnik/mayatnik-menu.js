@@ -1317,7 +1317,7 @@
     const api=window.mayStaggeredGrid;
     const variants=[
       ['staggeredGrid','Встык',false,'Квадратные биты встык. Каждый второй ряд сдвинут на половину бита. Если в строке заняты обе решётки, вид сохраняет все столбцы.'],
-      ['staggeredBlocks','Встык 2×2',true,'Каждый бит занимает четыре клетки с одинаковым значением. Строки выровнены по общей сетке.']
+      ['staggeredBlocks','Встык 2×2',true,'Каждый бит занимает четыре клетки с одинаковым значением. Ряды треугольника выровнены по общей оси.']
     ];
     for(const [id,name,blocks,help] of variants){
       const probe=document.createElement('button');probe.title=help;

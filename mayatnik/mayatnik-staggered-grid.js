@@ -3,19 +3,18 @@
   'use strict';
 
   function halfWidth(width,stride=2,blocks=false){
-    return blocks?2*Math.ceil(width/stride):stride===1?2*width+1:width+1;
+    return stride===2?width+1:2*width+(blocks?0:1);
   }
 
   function leftHalf(column,row,phase,stride=2,blocks=false){
-    const parity=(phase+row)&1;
-    if(blocks)return stride===1?2*column:column-parity;
-    return stride===1?2*column+parity:column;
+    if(stride===2)return column;
+    return 2*column+(blocks?0:(phase+row)&1);
   }
 
   function column(x,row,phase,stride=2,blocks=false){
     const parity=(phase+row)&1;
-    if(blocks)return Math.floor(x/2)*stride+(stride===2?parity:0);
-    return stride===1?Math.floor((x-parity)/2):x-((x-parity)&1);
+    if(stride===2)return x-((x-parity)&1);
+    return Math.floor((x-(blocks?0:parity))/2);
   }
 
   function sample(source,width,height,phase,step,x,y,empty,stride=2,blocks=false){
