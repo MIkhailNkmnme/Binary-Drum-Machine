@@ -9,6 +9,9 @@
 .may-animatrix-section[data-list-side="left"] .may-animatrix-chevron{transform:rotate(135deg)}
 .may-animatrix-status{padding:1px 6px 3px;color:#dfe6f5;text-align:center;font:11px/1.25 "Segoe UI",sans-serif}
 .may-animatrix-status .gz-nm{white-space:normal}
+.may-animatrix-legend{display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;padding:3px 6px;font:11px/1.2 var(--mono,monospace)}
+.may-animatrix-legend>span{display:flex;align-items:center;gap:4px}
+.may-animatrix-legend i{width:9px;height:9px;border:1px solid #8592ad}
 .may-animatrix-controls input[type=number],.may-animatrix-popup input[type=number]{box-sizing:border-box;height:18px;max-width:44px;padding:0 2px;text-align:center}
 .may-meeting-controls{--c:#88db72;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#1b2430;--gz-txt:#dfe6f5;--gz-mut:#8592ad;position:fixed;z-index:8;display:flex;flex-direction:column;gap:2px;width:120px;overflow:hidden;color:var(--gz-txt);font:12px/1.2 "Segoe UI",sans-serif}
 .may-meeting-controls[hidden],.may-meeting-controls [hidden]{display:none!important}
@@ -1148,7 +1151,7 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 /* Shared split X for the heat period and the frame player. */
 .may-split-track{position:absolute;inset:0;width:120px;height:24px;pointer-events:none;z-index:8}
 #mayBottomBar>.may-frame-slider{
-  --may-thumb-left:24px;--may-thumb-right:52px;--may-thumb-width:44px;--c:#7cbcff;
+  --may-thumb-left:16px;--may-thumb-right:60px;--may-thumb-width:44px;--c:#7cbcff;
   position:relative;width:120px!important;min-width:120px;max-width:120px;height:24px;
   padding:0!important;gap:0!important;background:transparent!important;clip-path:none!important;user-select:none
 }

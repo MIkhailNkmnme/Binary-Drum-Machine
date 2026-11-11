@@ -269,7 +269,7 @@
       thumb.append(tail);cell.append(thumb);caption.className='may-frame-caption';cell.parentElement.append(caption);
       stopButton.type='button';stopButton.className='may-frame-stop';stopButton.textContent='×';stopButton.hidden=true;
       stopButton.setAttribute('aria-label','Остановить и вернуться на кадр 0');cell.append(stopButton);
-      const track=MayatnikHeatPeriodControl.attachTrack(cell,'may-frame-track',{thumbFrame:true});
+      const track=MayatnikHeatPeriodControl.attachTrack(cell,'may-frame-track',{thumbFrame:true,inset:16});
       const startArrow=document.createElementNS(track.svg.namespaceURI,'path'),endArrow=document.createElementNS(track.svg.namespaceURI,'path');
       startArrow.setAttribute('class','may-frame-track-start');startArrow.setAttribute('d','M12 1L1 12L12 23');
       endArrow.setAttribute('class','may-frame-track-end');endArrow.setAttribute('d','M108 1L119 12L108 23');
@@ -322,7 +322,7 @@
         event.preventDefault();event.stopPropagation();
         scrubbing=true;
         tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);
-        const x=event.clientX,y=event.clientY,span=(72-thumbWidth)*cell.getBoundingClientRect().width/120;
+        const x=event.clientX,y=event.clientY,span=track.travel(thumbWidth)*cell.getBoundingClientRect().width/120;
         const listeners=new AbortController(),options={signal:listeners.signal};
         let dragging=false,start,last;
         tail.addEventListener('pointermove',e=>{

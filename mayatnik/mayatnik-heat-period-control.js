@@ -1,7 +1,7 @@
 /* Heat period: open split X, masked dashed rail and independent side frames. */
 (function(root){
  'use strict';
- function attachTrack(host,variant,{thumbFrame=false}={}){
+ function attachTrack(host,variant,{thumbFrame=false,inset=24}={}){
   const doc=host.ownerDocument,ns='http://www.w3.org/2000/svg',svg=doc.createElementNS(ns,'svg');
   svg.classList.add('may-split-track',variant+'-outline');svg.setAttribute('viewBox','0 0 120 24');svg.setAttribute('aria-hidden','true');
   const names=['left','right','rail','left-frame','right-frame'];
@@ -11,8 +11,9 @@
   });
   host.append(svg);
   let previousLeft,previousWidth,previousDirection;
+  const travel=width=>120-2*inset-width;
   function sync(fraction,width=44,outward=false){
-   const left=24+(72-width)*Math.max(0,Math.min(1,fraction)),right=left+width;
+   const left=inset+travel(width)*Math.max(0,Math.min(1,fraction)),right=left+width;
    if(left!==previousLeft||width!==previousWidth||outward!==previousDirection){
     previousLeft=left;previousWidth=width;previousDirection=outward;
     const leftEdge=left+(outward?10:1),leftTip=left+(outward?1:10);
@@ -26,7 +27,7 @@
    }
    return left;
   }
-  return {svg,sync};
+  return {svg,sync,travel};
  }
  function attach(host,left,middle,right,input,output){
   root.ZerkControlFrame.attach(host,left,middle,right);

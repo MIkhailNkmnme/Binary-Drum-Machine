@@ -24,7 +24,7 @@
       fail('Введите двоичные шаблоны от двух бит, разделяя их пробелами или запятыми.');
     return [...new Set(patterns)].join(' ');
   }
-  function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixSourceKind:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixExcelColourChangesOnly:true,animatrixStaggeredGrid:null,animatrixEvolution:EVOLUTION};}
+  function defaults(){return {animatrixOn:false,animatrixSource:null,animatrixSourceKind:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixEdgeColourMode:'change',animatrixEdgePalette:0,animatrixExcelColourChangesOnly:true,animatrixStaggeredGrid:null,animatrixEvolution:EVOLUTION};}
   function dimensions(width,height){
     if(!Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(height)||height<8||height>MAX_ROWS)fail('Некорректный размер исходника Аниматрицы: высота от 8 до 4096 строк.');
     const n=width*height;if(!Number.isSafeInteger(n)||n>MAX_CELLS)fail('Исходник Аниматрицы превышает 2 100 000 клеток.');return n;
@@ -173,6 +173,7 @@
     if(!['finite','infinite','repeat'].includes(next.animatrixCycleMode))fail('Неизвестный режим циклов Аниматрицы.');
     if(!Number.isSafeInteger(next.animatrixFrameMax)||next.animatrixFrameMax<0)fail('Некорректная граница кадров Аниматрицы.');
     if(next.animatrixSourceKind!==null&&!['clean','frame','selection','example'].includes(next.animatrixSourceKind))fail('Неизвестный тип исходника Аниматрицы.');
+    if(!['change','transitions','patterns'].includes(next.animatrixEdgeColourMode)||!Number.isInteger(next.animatrixEdgePalette)||next.animatrixEdgePalette<0||next.animatrixEdgePalette>=EDGE_PATTERN_PALETTES.length)fail('Неизвестная раскраска «Край XOR».');
     if(typeof next.animatrixExcelColourChangesOnly!=='boolean')fail('Неизвестное правило раскраски конуса.');
     if(next.animatrixEvolution!==EVOLUTION)fail('Работа сохранена с другой версией расчёта Аниматрицы.');
     if(next.animatrixInterxorPatterns!==undefined)
@@ -383,5 +384,30 @@
     const source=encode(seed,{anchor});
     return excelMode(algorithm)?prepareExcel(source,algorithm):source;
   }
-  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,coneMode,prepareExcel,resizeRows,staggeredLayout};
+  const EDGE_TRANSITION_COLOURS=Object.freeze([0x258447,0x165dbb,0x873eb0,0xad263e]);
+  // Excel background colours, ordered as 0110, 1001, 01, 10.
+  const EDGE_PATTERN_PALETTES=Object.freeze([
+    [0x000080,0x006400,0x6495ed,0x90ee90],
+    [0xc71585,0x008b8b,0xffb6c1,0xe0ffff],
+    [0x8b4513,0xffd700,0xf4a460,0xfffacd],
+    [0x4b0082,0xff4500,0x9370db,0xffa07a],
+    [0x000000,0x505050,0xff0000,0x0000ff]
+  ].map(Object.freeze));
+  function edgePatternMarks({width,height,present,bits},stride){
+    const marks=new Uint8Array(bits.length);
+    for(let row=0;row<height;row++){
+      const start=row*width;
+      for(let x=0;x+stride<width;){
+        const i=start+x,second=i+stride,firstBit=bits[i];
+        if(!present[i]||!present[second]||firstBit===bits[second]){x++;continue;}
+        const third=second+stride,fourth=third+stride;
+        const quartet=x+3*stride<width&&present[third]&&present[fourth]&&bits[third]===bits[second]&&bits[fourth]===firstBit;
+        const length=quartet?4:2,mark=(quartet?1:3)+firstBit;
+        for(let offset=0;offset<length;offset++)marks[i+offset*stride]=mark;
+        x+=length*stride;
+      }
+    }
+    return marks;
+  }
+  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,EDGE_TRANSITION_COLOURS,EDGE_PATTERN_PALETTES,edgePatternMarks,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,coneMode,prepareExcel,resizeRows,staggeredLayout};
 });

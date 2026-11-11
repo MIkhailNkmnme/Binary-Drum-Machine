@@ -114,6 +114,31 @@
     command('copy-rows','Копии XOR','Взять текущее поле одной решётки. Отражать верхний треугольник через новую строку-ось на каждом кадре и накладывать XOR всех её пар.',a=>a?.startCopyRows?.(),s=>s.on&&s.algorithm==='copyRows'&&!s.copyRowsWrap&&!s.copyRowsExcel);
     command('copy-rows-wrap','Край XOR','Отражать верхний треугольник. Строки за нижним краем переносить наверх с сохранением чётности и накладывать XOR.',a=>a?.startCopyRows?.({wrap:true}),s=>s.on&&s.copyRowsWrap);
     command('copy-rows-excel','Зеркалиус','Версия из Excel: новая строка-ось за кадр; результат NAND симметричных битов записывается в верхнюю строку. Цифра 1 синяя жирная, 0 светло-серая обычная.',a=>a?.startCopyRows?.({excel:true}),s=>s.on&&s.copyRowsExcel);
+    const edgeModes=segments('edge-colours','Раскраска «Край XOR»',[
+      {label:'2 цвета',title:'Синий — бит изменился, красный — сохранился.',selected:s=>s.edgeColourMode==='change',action:pick('edgeColourMode','change')},
+      {label:'4 цвета',title:'Отдельный цвет для переходов 0→0, 0→1, 1→0 и 1→1.',selected:s=>s.edgeColourMode==='transitions',action:pick('edgeColourMode','transitions')},
+      {label:'Excel',title:'Четвёрки 0110 и 1001, пары 01 и 10. Пять палитр Excel.',selected:s=>s.edgeColourMode==='patterns',action:pick('edgeColourMode','patterns')}
+    ],s=>!s.copyRowsWrap);
+    const edgePalette=command('edge-palette','Палитра 1/5','Следующая палитра Excel',a=>a?.set?.({edgePalette:(state().edgePalette+1)%5}));
+    const edgeLegend=doc.createElement('div');edgeLegend.className='may-animatrix-legend';edgeLegend.setAttribute('role','group');edgeLegend.setAttribute('aria-label','Обозначения цветов');
+    const edgeLabels=Array.from({length:4},()=>{
+      const entry=doc.createElement('span'),swatch=doc.createElement('i'),caption=doc.createElement('span');
+      swatch.setAttribute('aria-hidden','true');entry.append(swatch,caption);edgeLegend.append(entry);return {swatch,caption};
+    });
+    append(edgeLegend);
+    function syncEdgeColours(s){
+      const patterns=s.edgeColourMode==='patterns',visible=s.copyRowsWrap&&(patterns||s.edgeColourMode==='transitions');
+      edgeModes.hidden=!s.copyRowsWrap;edgePalette.hidden=!s.copyRowsWrap||!patterns;edgeLegend.hidden=!visible;
+      if(!visible)return;
+      const palette=globalThis.MayatnikAnimatrixSource,index=s.edgePalette;
+      const names=patterns?['0110','1001','01','10']:['0→0','0→1','1→0','1→1'];
+      const colours=patterns?palette.EDGE_PATTERN_PALETTES[index]:palette.EDGE_TRANSITION_COLOURS;
+      if(patterns){const title='Палитра '+(index+1)+'/5';if(edgePalette.firstElementChild.textContent!==title)edgePalette.firstElementChild.textContent=title;}
+      edgeLabels.forEach(({swatch,caption},i)=>{
+        swatch.style.backgroundColor='#'+colours[i].toString(16).padStart(6,'0');
+        if(caption.textContent!==names[i])caption.textContent=names[i];
+      });
+    }
     section('excel-rows','Строки Excel');
     const excelPart=(value,caption,title)=>({label:caption,title,selected:s=>s.on&&s.algorithm===value,action:a=>a?.startExcel?.(value)});
     command('excel-bounce','Отскок','Xoroorius: копия первой строки проходит вторую через XOR, отражаясь от краёв. Синий показывает ход вперёд, красный — обратный.',a=>a?.startExcel?.('excelBounce'),s=>s.on&&s.algorithm==='excelBounce');
@@ -268,6 +293,7 @@
       for(const row of directions)row.hidden=!directionActive(s);
       cycles.hidden=s.cycleMode!=='finite'||collisionActive(s);
       syncInterxor(s);
+      syncEdgeColours(s);
       const enableText=s.on?'Выключить':'Включить';
       if(enable.firstElementChild.textContent!==enableText)enable.firstElementChild.textContent=enableText;
       enable.classList.toggle('gz-on',!!s.on);
