@@ -2399,25 +2399,28 @@
   tools.querySelector('[data-n="c2_digitOneColour"]')?.style.setProperty('display','none','important');
   const rgbChoices=[[0,'Чёрный','#000000'],[4,'Красный','#ff0000'],[2,'Зелёный','#00ff00'],[1,'Синий','#0000ff'],[6,'Жёлтый','#ffff00'],[5,'Пурпурный','#ff00ff'],[3,'Голубой','#00ffff'],[7,'Белый','#ffffff']];
   const rgbHint='RGB-соседи: R — ячейка, G — слева, B — справа. Щелчок включает или снимает цветовой фильтр; пустой выбор показывает все цвета.';
+  const rgbActive=()=>$('view').value==='rgbNeighbours'&&!!window.mayRGBNeighbours;
   function syncRGBPalette(panel){
-    panel.hidden=$('view').value!=='rgbNeighbours';
+    const active=rgbActive();
+    panel.dataset.active=String(active);
     const api=window.mayRGBNeighbours,counts=api?.counts?.()||[],selected=api?.filters?.()||[];
+    const unavailable=' Доступно в режиме «RGB-соседи».';
     for(const chip of panel.querySelectorAll('.may-rgb-choice')){
       const code=Number(chip.dataset.rgbCode),choice=rgbChoices.find(x=>x[0]===code),count=counts[code]||0,on=selected.includes(code);
       chip.setAttribute('aria-pressed',String(on));chip.classList.toggle('gz-on',on);
-      chip.disabled=api?.canToggleFilter?.(code)===false;
+      chip.disabled=!active||api.canToggleFilter?.(code)===false;
       const state=on?'Выбран. ':selected.length?'Не выбран. ':'Фильтр не задан: показаны все цвета. ';
-      chip.title=`${choice[1]} · RGB ${code.toString(2).padStart(3,'0')} · ${count.toLocaleString('ru-RU')} клеток. ${state}${rgbHint}`;
-      if(chip.disabled)chip.title+=' Недоступно: поле станет сплошным чёрным или белым.';
+      chip.title=active?`${choice[1]} · RGB ${code.toString(2).padStart(3,'0')} · ${count.toLocaleString('ru-RU')} клеток. ${state}${rgbHint}`:choice[1]+'.'+unavailable;
+      if(active&&chip.disabled)chip.title+=' Недоступно: поле станет сплошным чёрным или белым.';
       chip.setAttribute('aria-label',chip.title);
     }
     const mode=api?.bw?.()||0;
     for(const option of panel.querySelectorAll('.may-rgb-bw-option')){
       const optionMode=Number(option.dataset.mode),on=optionMode===mode;
       option.setAttribute('aria-pressed',String(on));option.classList.toggle('gz-on',on);
-      option.disabled=api?.canSetBW?.(optionMode)===false;
+      option.disabled=!active||api.canSetBW?.(optionMode)===false;
       option.title=optionMode===1?'ЧБ: выбранные цвета белые, остальные биты чёрные.':optionMode===0?'Цвт: цветной режим RGB без чёрно-белого преобразования.':'БЧ: выбранные цвета чёрные, остальные биты белые.';
-      if(option.disabled)option.title+=' Недоступно: поле станет сплошным чёрным или белым.';
+      if(!active)option.title+=unavailable;else if(option.disabled)option.title+=' Недоступно: поле станет сплошным чёрным или белым.';
       option.setAttribute('aria-label',option.title);
     }
   }
@@ -2478,6 +2481,25 @@
    window.addEventListener('may-rgb-neighbours-update',()=>document.querySelectorAll('.may-rgb-palette').forEach(syncRGBPalette));
    $('view').addEventListener('change',()=>document.querySelectorAll('.may-rgb-palette').forEach(syncRGBPalette));
    decorateViewPalette(gModes,viewModeButtons.get('rgbNeighbours'));
+   const rgbPanel=gModes.querySelector('.may-rgb-palette');
+   if(rgbPanel)toolSync.push(()=>{if(rgbPanel.dataset.active!==String(rgbActive()))syncRGBPalette(rgbPanel);});
+   {
+     const bit=viewModeButtons.get('bits'),rgb=viewModeButtons.get('rgbNeighbours');
+     if(bit&&rgb){
+       const pair=document.createElement('div');pair.className='gz-hx gz-pair gz-split may-segments may-bit-rgb-pair';
+       pair.dataset.n='bitRgbView';pair.dataset.mayStandardKey='1';pair.setAttribute('role','group');pair.setAttribute('aria-label','Бит или RGB-соседи');
+       const dots=[...bit.querySelectorAll(':scope > .may-view-swatch')];
+       bit.before(pair);
+       for(const [index,mode,label] of [[0,bit,'Бит'],[1,rgb,'RGB']]){
+         mode.classList.remove('pt-b','gz-hx','may-view-palette');mode.classList.add('gz-half','gz-h'+index);
+         mode.querySelector(':scope > .gz-ic')?.remove();
+         const text=mode.querySelector('.gz-nm');text.textContent=label;text.dataset.userLabel='';
+         pair.append(mode);
+       }
+       pair.append(...dots);
+       toolSync.push(()=>syncViewSwatches(pair));
+     }
+   }
    const contourSwatches=gModes.querySelector('[data-view-overlay="contours"]');
    if(contourSwatches)toolSync.push(()=>syncViewSwatches(contourSwatches));
   function nameListButton(b){

@@ -92,7 +92,7 @@
   overlayControls.className='may-scale-stack__controls may-scale-stack__mix-controls';
   overlayControls.addEventListener('pointerdown',e=>e.stopPropagation());overlayControls.addEventListener('pointerup',e=>e.stopPropagation());
   operation.setAttribute('aria-label','Наложение нижнего построения');operation.title='Наложить одну нижнюю копию на оригинал';
-  for(const [value,label,title]of [['off','Наложение','Наложение выключено'],['xor','XOR','Исключающее ИЛИ битов'],['and','AND','Логическое И битов'],['rgb','RGB','Заменить цвета цветами нижней копии']]){
+  for(const [value,label,title]of [['off','Без наложения','Наложение выключено'],['xor','XOR','Исключающее ИЛИ битов'],['and','AND','Логическое И битов'],['rgb','RGB','Заменить цвета цветами нижней копии']]){
    const option=doc.createElement('option');option.value=value;option.textContent=label;option.title=title;operation.append(option);
   }
   copy.setAttribute('aria-label','Нижняя копия для наложения');copy.title='Выберите одну копию по её месту в списке';

@@ -466,7 +466,8 @@ header #paintTools.pt-dd .pt-lib #templateLibraryChoices{display:flex;flex-direc
 #mayTip[hidden]{display:none}
 /* RGB: borderless palette, large paired triangles, and three independent diamonds. */
 .may-rgb-panel.may-rgb-palette{display:flex;flex-direction:column;gap:2px;grid-column:1/-1;min-width:0;height:76px;box-sizing:border-box;padding:0;background:transparent;border:0}
-.may-rgb-panel[hidden]{display:none!important}
+#paintTools .may-bit-rgb-pair>.may-view-swatch{position:absolute;top:7px;left:10px;width:10px;min-width:10px;height:10px;z-index:4}
+#paintTools .may-bit-rgb-pair>.may-view-swatch[data-source="lgBitOne"]{left:46px}
 .may-rgb-bw{display:flex;flex:none;justify-content:center;gap:2px;height:24px;border:0;background:transparent}
 .may-rgb-bw-option{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;flex:0 0 36px;width:36px;min-width:36px;height:24px;padding:0;border:0;border-radius:0;background:#1b2430;color:#dce7f5;font:600 9px/1 ui-monospace,Consolas,monospace;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);cursor:pointer}
 .may-rgb-bw-option>svg{position:absolute;inset:0;width:36px;height:24px;fill:none;stroke:#586b83;stroke-width:1;pointer-events:none}
