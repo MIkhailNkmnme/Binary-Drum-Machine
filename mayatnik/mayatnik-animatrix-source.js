@@ -126,6 +126,32 @@
     if(seed.areas!=null)source.areas=copy.areas.map(a=>({...a}));
     assertSource(source);return source;
   }
+  function resizeRows(source,height,algorithm){
+    assertSource(source);
+    const {width, height:oldHeight, anchor}=source;
+    if(height===oldHeight)return source;
+    dimensions(width,height);
+    const seed=decode(source);
+    // Change the height only. Keeping the width makes successive size choices independent.
+    const entire=area=>area.x===0&&area.y===0&&area.width===width&&area.height===oldHeight;
+    const defaultOrigin=seed.areas?.length===1&&entire(seed.areas[0]);
+    const offset=!defaultOrigin?0:algorithm==='excelTriangleUp'?height-oldHeight:
+      ['excelTriangleBoth','excelTrianglePend'].includes(algorithm)?Math.floor((height-1)/2)-Math.floor((oldHeight-1)/2):0;
+    const start=Math.max(0,-offset),end=Math.min(oldHeight,height-offset);
+    const next={width,height};
+    for(const [key,values] of Object.entries(seed)){
+      if(!ArrayBuffer.isView(values))continue;
+      const resized=new values.constructor(width*height);
+      for(let y=start;y<end;y++)resized.set(values.subarray(y*width,(y+1)*width),(y+offset)*width);
+      next[key]=resized;
+    }
+    if(seed.areas)next.areas=seed.areas.flatMap(area=>{
+      if(entire(area))return [{x:0,y:0,width,height}];
+      const first=Math.max(0,area.y+offset),last=Math.min(height,area.y+offset+area.height);
+      return first<last?[{x:area.x,y:first,width:area.width,height:last-first}]:[];
+    });
+    return encode(next,{anchor});
+  }
   function active(state){return state?.animatrixOn===true;}
   function restoreFrame(state,frame,unit=state?.animatrixCopyRowsUnit){
     if(!active(state)||state.animatrixAlgorithm!=='copyRows'||state.animatrixCopyRowsLayout!==undefined||unit==='row'||!Number.isSafeInteger(frame)||frame<=0)return frame;
@@ -314,5 +340,5 @@
     const source=encode(seed,{anchor});
     return excelMode(algorithm)?prepareExcel(source,algorithm):source;
   }
-  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,prepareExcel};
+  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,prepareExcel,resizeRows};
 });

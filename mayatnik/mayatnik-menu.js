@@ -115,13 +115,13 @@
     { id: 'build', title: 'Поле', color: GROUP_COLOURS['rail:build'], open: true, items: [
       button('bBuild', 'field'), button('bRetriangle', 'tri'), button('bThird', 'tri'), button('bFour', 'plusRing'),
       num('steps', { name: 'Вершин', tip: 'Вершин (шагов маятника) · двойной щелчок — наименьшее', log: true, fmt: v => v + ' вершин' }),
-      num('rows', { name: 'Строк', tip: 'Строк в поле (построение — кнопкой «Построить») · двойной щелчок — наименьшее', log: true, fmt: v => v + ' строк' }),
+      num('rows', { name: 'Строк', tip: 'Число строк поля. В Аниматрице смена высоты пересчитывает текущий кадр. Двойной щелчок выбирает минимум.', log: true, fmt: v => v + ' строк' }),
     // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»).
     // v0.115: и «По очереди» убрана — «не нужна теперь, и так автоматом по очереди»
     // v0.247: «это объедини в одно меню» — «Поле» и «Анимация» одной группой «Поле» (кнопки анимации — после настроек поля)
       button('bRowRun', 'down'), check('third', 'tri'),   // «До N/3 — в правую рейку вверх»: вторая по счёту — правый столбец, первая строка   // «+1 / −1 вершина — объедини стрелки»: отдельной «+1 вершина» нет — это стрелки ползунка кадра
       // v0.248: «объедини 2 кнопки в одну, все»: размеры хорра (256 … 4096) — одной кнопкой-списком: выбор — построить N строк и вершин (или до N/3)
-      { type: 'list', icon: icon(source.querySelector('button.pre'), 'field'), name: 'Хорр', tip: 'Сразу построить маятник: строк = N, вершин = N (или N/3 при «До N/3») · наведение — список размеров',
+      { type: 'list', icon: icon(source.querySelector('button.pre'), 'field'), name: 'Хорр', tip: 'Выбрать высоту поля. В Аниматрице режим сохраняется. В Маятнике число вершин зависит от N, N/3 или 4N.',
         options: [...source.querySelectorAll('button.pre')].map(e => ({ v: e.dataset.n, name: e.textContent })),
         get: () => { const n = String(+$('rows').value || ''); return [...source.querySelectorAll('button.pre')].some(e => e.dataset.n === n) ? n : ''; },
         set: v => source.querySelector('button.pre[data-n="' + v + '"]')?.click() },
@@ -388,7 +388,7 @@
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
   { const pres = [...source.querySelectorAll('button.pre')], wrapH = rail.el.querySelector('.gz-group[data-id="horr"]');
     const b = wrapH.querySelector('.gz-head');b.querySelector('.gz-nm').append(' ',document.createElement('b'));
-    b.title = 'Сразу построить маятник: строк = N, вершин = N (или N/3 при «До N/3») · щелчок — список размеров';
+    b.title = 'Открыть меню «Хорр». В разделе «Размер» меняется высота поля, в том числе у Аниматрицы.';
     const pop = document.createElement('div'); pop.className = 'gz-wide';
     const cur = () => String(+$('rows').value || '');
     // v0.380: «один стандарт кнопок» — пары размеров и «N/3 | 4N» — стандартная пара grozd (gz-pair gz-split, как «✛ 2 ось | ∆3» в Хабе):
@@ -413,7 +413,10 @@
       customInput.value = cur() || '128'; customInput.title = 'Любое число строк от 8 до 4096 · Enter — задать и перестроить поле';
       customInput.setAttribute('aria-label', 'Любое число строк');
       const apply = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128))); customInput.value = String(v);
-        const r = $('rows'); r.value = v; r.dispatchEvent(new Event('change', { bubbles: true })); $('bBuild')?.click(); sync(); };
+        const matrix = window.mayAnimatrix?.get().on, r = $('rows');
+        r.value = v; r.dispatchEvent(new Event('change', { bubbles: true }));
+        if (!matrix) $('bBuild')?.click();
+        customInput.value = r.value; sync(); };
       const step = d => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128) + d)); customInput.value = String(v); syncRowsThumb(); };
       const arrow = (d, tip) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-rows-step'; b.dataset.dir = d < 0 ? 'left' : 'right'; b.title = tip; b.setAttribute('aria-label', tip);
         b.onclick = ev => { ev.stopPropagation(); step(d); }; return b; };
