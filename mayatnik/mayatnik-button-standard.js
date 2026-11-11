@@ -213,7 +213,7 @@
     tintIcons();
     const ladders=[...document.querySelectorAll('.gz-ladder')];
     document.querySelectorAll('.may-options-owner').forEach(b=>{if(!ladders.some(l=>l.owner===b)){b.classList.remove('may-options-owner','may-standard-open');b.querySelector('.may-standard-roof')?.remove();}});
-    document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,.gz-ladder .gz-hx,.may-horr-popup .gz-hx,#mayatnikTemplatePanel .pt-r .gz-hx,.may-scale-stack__controls .gz-hx').forEach(b=>{
+    document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,.gz-ladder .gz-hx,.may-horr-popup .gz-hx,.may-animatrix-popup .gz-hx,.may-meeting-controls .gz-hx,#mayatnikTemplatePanel .pt-r .gz-hx,.may-scale-stack__controls .gz-hx').forEach(b=>{
       if(b.closest('#mayInfoDiamond')||b.closest('.pt-btn')&&!b.classList.contains('may-history-pair')||b.closest('#mayBottomBar')&&!b.classList.contains('gz-head'))return;
       if(b.querySelector('#templateLibraryChoices'))return;   // v0.471: список шаблонов — не кнопка; кнопки — его записи (иначе список сжимался в одну строку 24 px и вылезал вверх)
       const mini=!b.classList.contains('may-history-pair')&&(b.matches('.gz-head')&&b.closest('.gz-mini')||b.matches('.pt-l')&&b.closest('.pt-mini')||b.id==='mayAbout'&&b.classList.contains('pt-mini'));b.classList.toggle('may-standard-mini',!!mini);b.classList.toggle('may-header-triangle',!!mini&&b.matches('.pt-l,.gz-head'));

@@ -4,6 +4,9 @@
   function mount({host,api,after=()=>{}}){
     if(!host)throw Error('Нет контейнера Аниматрицы');
     const doc=host.ownerDocument,win=doc.defaultView||root,nodes=[],bindings=[];
+    const group=host.closest('.pt-g');
+    const popup=doc.createElement('div');popup.className='may-animatrix-popup';
+    popup.hidden=true;popup.mayAnimatrixOwner=group;doc.body.append(popup);
     const sections=new Map(),storageKey='mayatnik-animatrix-section-v1';
     let pending=false,error='',destroyed=false,container=host,openSection=null,previousFamily=null,revision=0;
     let preferredSection;
@@ -21,6 +24,26 @@
     const describe=(node,title)=>{node.title=title;node.setAttribute('aria-label',title);};
     const append=node=>{nodes.push(node);container.append(node);return node;};
     const label=(node,value)=>{const span=doc.createElement('span');span.className='gz-nm';span.textContent=value;node.append(span);return span;};
+    function place(){
+      const section=sections.get(openSection),head=section?.head;
+      const visible=!!(head?.getClientRects().length&&group?.classList.contains('pt-open'));
+      for(const {head:owner,body} of sections.values()){
+        if((!visible||owner!==head)&&body.parentNode===popup)owner.after(body);
+      }
+      if(!visible){popup.hidden=true;return;}
+      if(section.body.parentNode!==popup)popup.append(section.body);
+      popup.hidden=false;
+      const viewport=win.visualViewport;
+      const left=(viewport?.offsetLeft||0)+4,top=(viewport?.offsetTop||0)+4;
+      const right=left+(viewport?.width||win.innerWidth)-8,bottom=top+(viewport?.height||win.innerHeight)-8;
+      const owner=head.getBoundingClientRect(),width=popup.offsetWidth,gap=6;
+      const onRight=owner.right+gap+width<=right||(owner.left-gap-width<left&&right-owner.right>=owner.left-left);
+      popup.style.maxHeight=Math.max(24,bottom-top)+'px';
+      const height=popup.offsetHeight;
+      popup.style.left=Math.max(left,Math.min(onRight?owner.right+gap:owner.left-gap-width,right-width))+'px';
+      popup.style.top=Math.max(top,Math.min(owner.top,bottom-height))+'px';
+      head.dataset.listSide=onRight?'right':'left';
+    }
     function showSection(id){
       openSection=id;
       for(const [key,{head,body}] of sections){
@@ -29,6 +52,7 @@
         body.inert=!open;
         body.classList.toggle('may-animatrix-section-open',open);
       }
+      place();
     }
     function section(id,caption){
       container=host;
@@ -37,7 +61,7 @@
       label(head,caption).dataset.userLabel='';
       const body=doc.createElement('div');body.className='may-animatrix-section-body';
       body.id='may-animatrix-'+id;body.dataset.animatrixSection=id;
-      head.setAttribute('aria-controls',body.id);describe(head,caption+' Аниматрицы');
+      head.setAttribute('aria-controls',body.id);head.setAttribute('aria-haspopup','true');describe(head,caption+' Аниматрицы');
       const arrow=doc.createElement('span');arrow.className='may-animatrix-chevron';arrow.setAttribute('aria-hidden','true');head.append(arrow);
       head.addEventListener('click',()=>{
         revision++;preferredSection=openSection===id?'':id;
@@ -189,12 +213,13 @@
     depth.addEventListener('change',()=>{const n=Math.max(1,Math.min(4096,Math.round(Number(depth.value)||128)));depth.value=String(n);run(a=>a?.set?.({excelDepth:n}));});
     depthRow.append(depth);bindings.push({node:depth,selected:()=>false,unavailable:s=>!s.on||!s.algorithm?.startsWith('excelTriangle')});append(depthRow);
     section('source','Исходник');
+    const sourceInfo=doc.createElement('output');sourceInfo.className='may-animatrix-status';append(sourceInfo);
     segments('capture','Взять исходник Аниматрицы',[
-      {label:'Всё поле',title:'Взять текущее поле как исходник',action:a=>a?.capture?.({scope:'field'})},
+      {label:'Весь кадр',title:'Взять все строки и столбцы текущего кадра как исходник. У конуса глубина равна высоте поля.',action:a=>a?.capture?.({scope:'field'})},
       {label:'Область',title:'Взять выделенный прямоугольник. Сначала выделите область в меню «Ячейки». В построчном расчёте и отражениях используется всё поле.',unavailable:s=>!selectionSupported(s)||!s.hasSelection,action:a=>a?.capture?.({scope:'selection'})}
     ]);
     segments('seed','Начальный рисунок',[
-      {label:'Начало',title:'Создать начальный рисунок для текущего построения',action:a=>a?.seed?.('one')},
+      {label:'С нуля',title:'Начать текущее построение с чистого исходника',action:a=>a?.seed?.('one')},
       {label:'Пример',title:'Открыть учебный исходник для текущего построения',action:a=>a?.seed?.('example')}
     ]);
     command('reset','Кадр 0','Вернуться к исходному рисунку Аниматрицы',a=>a?.reset?.(),null,s=>!s.on||s.frame===0);
@@ -252,21 +277,46 @@
       const count=repeat?.complete?'С '+repeat.firstCycle+' · T '+repeat.periodCycles:(s.frame??0)+' / '+(s.cycleMode==='infinite'||s.cycleMode==='repeat'?'∞':s.total??0);
       const status=error||(s.on?mode+' · '+count:'Выключена');
       if(infoLabel.textContent!==status)infoLabel.textContent=status;
+      const inputKind=({clean:'С нуля',frame:'Весь кадр',selection:'Выделенная область',example:'Учебный пример'})[s.sourceKind]||(s.on?'Сохранённый исходник':'С нуля');
+      if(sourceInfo.textContent!==inputKind)sourceInfo.textContent=inputKind;
       const repetition=repeat?.complete?'Повтор состояния: начало с цикла '+repeat.firstCycle+', период '+repeat.periodCycles+' циклов; первое совпадение на цикле '+repeat.repeatCycle+'. Состояние сравнивается полностью, включая цвета и выделение.':s.cycleMode==='infinite'||s.cycleMode==='repeat'?'Поиск точного повтора: '+(repeat?.periodCycles?'период '+repeat.periodCycles+' найден, вычисляется начало.':'начало и период ещё не найдены.'):' ';
       describe(info,error||repetition+' Кадр '+(s.frame??0)+(s.cycle!=null?' · цикл '+s.cycle:'')+(s.cursor!=null?' · строка '+s.cursor:'')+(s.message?' · '+s.message:''));
       host.setAttribute('aria-busy',String(busy));
     }
     const changes=['may-animatrix-change','may-compare-change','may-reset-complete','may-cell-selection-change'];
-    for(const name of changes)win.addEventListener(name,sync);sync();
-    return {sync,
+    for(const name of changes)win.addEventListener(name,sync);
+    const layout=new win.MutationObserver(place);if(group)layout.observe(group,{attributes:true,attributeFilter:['class','style']});
+    const sizes=new win.ResizeObserver(place);sizes.observe(host);sizes.observe(popup);
+    win.addEventListener('resize',place);doc.addEventListener('scroll',place,true);
+    win.visualViewport?.addEventListener('resize',place);win.visualViewport?.addEventListener('scroll',place);
+    popup.addEventListener('pointerenter',()=>clearTimeout(group?._leave));
+    popup.addEventListener('pointerleave',()=>group?._popupLeave?.());
+    const keys=event=>{
+      if(event.key!=='Escape'||popup.hidden||!popup.contains(event.target)&&!host.contains(event.target))return;
+      const search=win.mayButtonSearch?.getState();
+      if(search?.open||search?.current)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      const head=sections.get(openSection)?.head;
+      head?.click();head?.focus({preventScroll:true});
+    };
+    doc.addEventListener('keydown',keys,true);sync();
+    return {sync,popup,place,
+      contains(owner,target){return owner===group&&!popup.hidden&&(target?popup.contains(target):popup.matches(':hover'));},
       reveal(control){
         const body=control?.closest('[data-animatrix-section]');
-        if(!body||!host.contains(body))return null;
+        if(!body||sections.get(body.dataset.animatrixSection)?.body!==body)return null;
         const previous=openSection,stamp=revision;
         showSection(body.dataset.animatrixSection);
         return ()=>{if(stamp===revision)showSection(previous);};
       },
-      destroy(){destroyed=true;for(const name of changes)win.removeEventListener(name,sync);for(const node of nodes)node.remove();host.removeAttribute('aria-busy');}
+      destroy(){
+        destroyed=true;layout.disconnect();sizes.disconnect();
+        for(const name of changes)win.removeEventListener(name,sync);
+        win.removeEventListener('resize',place);doc.removeEventListener('scroll',place,true);
+        win.visualViewport?.removeEventListener('resize',place);win.visualViewport?.removeEventListener('scroll',place);
+        doc.removeEventListener('keydown',keys,true);
+        for(const node of nodes)node.remove();popup.remove();host.removeAttribute('aria-busy');
+      }
     };
   }
   root.MayatnikAnimatrixControls={mount};

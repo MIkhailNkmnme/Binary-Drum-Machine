@@ -5,7 +5,7 @@
   const doc=host.ownerDocument,ns='http://www.w3.org/2000/svg',svg=doc.createElementNS(ns,'svg');
   svg.classList.add('may-split-track',variant+'-outline');svg.setAttribute('viewBox','0 0 120 24');svg.setAttribute('aria-hidden','true');
   const names=['left','right','rail','left-frame','right-frame'];
-  if(thumbFrame)names.push('thumb-frame');
+  if(thumbFrame)names.push('thumb-frame','left-top','right-top');
   const paths=names.map(name=>{
    const p=doc.createElementNS(ns,'path');p.setAttribute('class',variant+'-'+name);svg.append(p);return p;
   });
@@ -23,6 +23,8 @@
     paths[3].setAttribute('d',`M12 1H${leftEdge}M12 23H${leftEdge}`);
     paths[4].setAttribute('d',`M${rightEdge} 1H108M${rightEdge} 23H108`);
     paths[5]?.setAttribute('d',`M${leftEdge} 1H${rightEdge}M${leftEdge} 23H${rightEdge}`);
+    paths[6]?.setAttribute('d',`M12 1H${leftEdge}`);
+    paths[7]?.setAttribute('d',`M${rightEdge} 1H108`);
    }
    return left;
   }

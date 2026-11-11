@@ -279,6 +279,13 @@
       const playSync=()=>{
         const on=playing();
         cell.classList.toggle('may-frame-running',on);
+        startArrow.setAttribute('d',on?'M1 1L12 12L1 23':'M12 1L1 12L12 23');
+        endArrow.setAttribute('d',on?'M119 1L108 12L119 23':'M108 1L119 12L108 23');
+        for(const arrow of [previous,next]){
+          arrow.tabIndex=on?-1:0;
+          arrow.setAttribute('aria-disabled',String(on));
+          if(on&&document.activeElement===arrow)tail.focus({preventScroll:true});
+        }
         glyph.textContent=on?'Ⅱ':'▶';
         tail.setAttribute('aria-description',on?'Enter или пробел — пауза.':'Enter или пробел — пуск.');
       };
@@ -288,8 +295,14 @@
       stopButton.addEventListener('click',event=>{event.stopPropagation();resetFrame();});
       for(const [arrow,title] of [[previous,'На предыдущий кадр'],[next,'На следующий кадр']]){
         arrow.setAttribute('role','button');arrow.tabIndex=0;arrow.title=title;arrow.setAttribute('aria-label',title);
+        arrow.addEventListener('click',event=>{
+          if(playing()){event.preventDefault();event.stopImmediatePropagation();}
+        },true);
         arrow.addEventListener('keydown',event=>{
-          if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopImmediatePropagation();arrow.click();}
+          if(event.key==='Enter'||event.key===' '){
+            event.preventDefault();event.stopImmediatePropagation();
+            if(!playing())arrow.click();
+          }
         },true);
       }
       new MutationObserver(()=>{playSync();side();}).observe(P,{attributes:true,attributeFilter:['aria-pressed']});playSync();
@@ -301,11 +314,13 @@
         if(bar.style.getPropertyValue('--axdx')!==v){bar.style.setProperty('--axdx',v);window.mayBotPlace?.();}
       };
       window.mayPlayPlace=playPlace;
-      let thumbWidth=44,scrubbing=false,suppressClick=false;
+      let thumbWidth=44,scrubbing=false,suppressClick=false,pausedByClick=false;
       tail.addEventListener('pointerdown',event=>{
         if(event.button!==0||!event.isPrimary||frame.disabled||scrubbing)return;
+        suppressClick=false;
+        if(playing())return;
         event.preventDefault();event.stopPropagation();
-        scrubbing=true;suppressClick=false;
+        scrubbing=true;
         tail.focus({preventScroll:true});tail.setPointerCapture(event.pointerId);
         const x=event.clientX,y=event.clientY,span=(72-thumbWidth)*cell.getBoundingClientRect().width/120;
         const listeners=new AbortController(),options={signal:listeners.signal};
@@ -316,8 +331,8 @@
           if(Math.hypot(dx,e.clientY-y)>=4)suppressClick=true;
           if(!dragging){
             if(Math.abs(dx)<4)return;
+            if(playing())return;
             dragging=true;
-            if(playing())P.click();
             start=frameModel.frac();last=frame.value;
             cell.classList.add('may-frame-scrubbing');
           }
@@ -336,8 +351,8 @@
       tail.addEventListener('click',event=>{
         event.stopPropagation();
         if(frame.disabled||(event.detail!==0&&suppressClick))return;
-        if(event.detail===2)resetFrame();
-        else if(event.detail<2)togglePlay();
+        if(event.detail===2&&!pausedByClick&&!playing())resetFrame();
+        else if(event.detail<2){pausedByClick=playing();togglePlay();}
       });
       tail.addEventListener('keydown',event=>{
         if(frame.disabled)return;
@@ -346,6 +361,7 @@
         if(target===null&&event.key!=='Enter'&&event.key!==' ')return;
         event.preventDefault();event.stopPropagation();
         if(target===null){togglePlay();return;}
+        if(playing())return;
         frame.value=String(Math.max(low,Math.min(high,target)));fire(frame);rail.refresh();side();
       });
       const vl=mid.querySelector('.gz-vl');
@@ -393,18 +409,24 @@
     const cur = () => String(+$('rows').value || '');
     // v0.380: «один стандарт кнопок» — пары размеров и «N/3 | 4N» — стандартная пара grozd (gz-pair gz-split, как «✛ 2 ось | ∆3» в Хабе):
     // одна кнопка, косая черта посередине, у каждой половины своя кайма; включённая половина — кайма цветом (--gz-rI), прочая — 30 %
-    const gzPair = (parts) => { const row = document.createElement('div'); row.className = 'gz-hx gz-pair gz-split';
-      const hs = parts.map((pt, j) => { const h = document.createElement('span'); h.className = 'gz-half gz-h' + j; h.textContent = pt.label; h.title = pt.tip || ''; Object.assign(h.dataset, pt.data || {});
+    const gzPair = (parts, buttons=false) => { const row = document.createElement('div'); row.className = 'gz-hx gz-pair gz-split';
+      const hs = parts.map((pt, j) => { const h = document.createElement(buttons?'button':'span'); if(buttons)h.type='button';h.className = 'gz-half gz-h' + j; h.textContent = pt.label; h.title = pt.tip || ''; Object.assign(h.dataset, pt.data || {});
         h.onclick = ev => { ev.stopPropagation(); pt.click(); }; return h; });
       const pm = document.createElement('span'); pm.className = 'gz-pm'; row.append(hs[0], pm, ...hs.slice(1));
-      row.gzSync = () => parts.forEach((pt, j) => { const on = !!pt.on(); hs[j].classList.toggle('gz-on', on); row.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); });
+      row.gzSync = () => parts.forEach((pt, j) => { const on = !!pt.on(); hs[j].classList.toggle('gz-on', on); if(buttons&&hs[j].getAttribute('aria-pressed')!==String(on))hs[j].setAttribute('aria-pressed',String(on));row.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); });
       return row; };
     const section = (node, key) => { node.dataset.horrSection = key; return node; };
     { const host=document.createElement('div');host.className='may-rombo-controls';pop.append(section(host,'rombo'));
       const rombo=mountRomboControls(host,{after:()=>{rail.refresh();placeTools();}});toolSync.push(rombo.sync); }
+    const meetingControls=label=>{const node=document.createElement('div');node.className='may-meeting-controls';node.hidden=true;node.setAttribute('role','group');node.setAttribute('aria-label',label);document.body.append(node);return node;};
+    const meetingSizes=meetingControls('Размер поля на линии встречи'),meetingModes=meetingControls('Число вершин на линии встречи');
     const sizeRows = [];
-    for (let i = 0; i < pres.length; i += 2) { const row = gzPair(pres.slice(i, i + 2).map(e => ({ label: e.textContent, tip: e.title || ('Построить ' + e.textContent), data: { n: e.dataset.n },
-        on: () => cur() === e.dataset.n, click: () => { e.click(); sync(); } }))); sizeRows.push(row); pop.append(section(row, 'size')); }
+    for (let i = 0; i < pres.length; i += 2) {
+      const parts=pres.slice(i, i + 2).map(e=>({label:e.textContent,tip:e.title||('Построить '+e.textContent),data:{n:e.dataset.n},
+        on:()=>cur()===e.dataset.n,click:()=>{e.click();sync();}}));
+      const row=gzPair(parts),copy=gzPair(parts,true);
+      sizeRows.push(row,copy);pop.append(section(row,'size'));meetingSizes.append(copy);
+    }
     let customInput = null, syncRowsThumb = () => {};   // draft applies only with Enter / Задать
     { const cr = document.createElement('div'); cr.className = 'may-rows-custom';
       customInput = document.createElement('input'); customInput.type = 'number'; customInput.min = '8'; customInput.max = '4096'; customInput.step = '1';
@@ -643,10 +665,28 @@
     const nm = c => c.querySelector('.gz-nm')?.textContent.trim(); for (const c of (bbCells.btns || [])) if (['N/3', '4N', 'До N/3'].includes(nm(c))) c.remove();
     bbCells.btns = (bbCells.btns || []).filter(c => c.isConnected);
     { const V = () => window.mayVMode, pickV = v => { V()?.pick(v); vsync(); rail.refresh(); placeTools(); };
-      const vm = gzPair([{ label: 'N/3', data: { v: 'n3' }, on: () => (V()?.get() || '') === 'n3', click: () => pickV('n3') }, { label: '4N', data: { v: '4n' }, on: () => (V()?.get() || '') === '4n', click: () => pickV('4n') }]);
-      vm.classList.add('may-hp-vm');
-      function vsync() { vm.gzSync(); const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.gz-half')) {
+      const modeParts=[{ label: 'N/3', data: { v: 'n3' }, on: () => (V()?.get() || '') === 'n3', click: () => pickV('n3') }, { label: '4N', data: { v: '4n' }, on: () => (V()?.get() || '') === '4n', click: () => pickV('4n') }];
+      const vm=gzPair(modeParts),meetingMode=gzPair(modeParts,true);
+      vm.classList.add('may-hp-vm');meetingMode.classList.add('may-hp-vm');meetingModes.append(meetingMode);
+      function vsync() { vm.gzSync();meetingMode.gzSync();for (const h of [vm,meetingMode].flatMap(row=>[...row.querySelectorAll('.gz-half')])) {
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : window.mayComparison?.get().source ? 'Конечное поле: до последней вершины внутри рамки 2N−1' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
+      let meetingState='';
+      window.mayMeetingHorizon={
+        hide(){meetingSizes.hidden=meetingModes.hidden=true;},
+        place(left,top,width,height,y){
+          const gutter=8,gap=12,buttonWidth=120,half=12;
+          if(width<2*(gutter+buttonWidth+gap)+16||y<half||y+half>height||document.body.matches('.may-zen,.may-embed,.may-rombo-active'))return null;
+          const rows=Math.min(3,Math.floor((height-y+half+2)/26));
+          for(let i=0;i<meetingSizes.children.length;i++)meetingSizes.children[i].hidden=i>=rows;
+          meetingSizes.style.left=left+gutter+'px';
+          meetingModes.style.left=left+width-gutter-buttonWidth+'px';
+          meetingSizes.style.top=meetingModes.style.top=top+y-half+'px';
+          meetingSizes.hidden=meetingModes.hidden=false;
+          const state=cur()+':'+(V()?.get()||'');
+          if(state!==meetingState){meetingState=state;sizeRows.forEach(row=>row.gzSync());vsync();}
+          return {start:gutter+buttonWidth+gap,end:width-gutter-buttonWidth-gap};
+        }
+      };
       queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(section(vm, 'size')); }   // v0.819: «N/3 | 4N» — в раздел «Размер», самым верхом (автор: «перемести в Размер в верх самый»)   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
     // v0.391: «по 2 в одну кнопку шириной по стандарту»: «Построить | Построчно» — одна пара (как «N/3 | 4N»); ячейки сот из рейки убраны
     { const bt = bbCells.btns || [], sot = bt[0]?.parentElement; for (const c of bt) c.remove(); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0';
@@ -2456,7 +2496,7 @@
   let activeList=null;
   // v0.497: only the popup escapes group stacking contexts; its owner stays in place.
   function popupContains(group, target) {
-    if(window.mayHorrSections?.contains(group,target))return true;
+    if(window.mayHorrSections?.contains(group,target)||animatrixControls?.contains(group,target))return true;
     if(window.MayatnikColourAuto?.contains(group,target))return true;
     const list=activeList?.group===group && activeList.list;
     return !!(list?.isConnected && (target ? list.contains(target) : list.matches(':hover')));
@@ -2799,7 +2839,7 @@
   const collectLateMenu=()=>{mountViewUtilities(gView);mobileMenu.add([$('zerkHubBtn')]);};
   new MutationObserver(collectLateMenu).observe(document.body,{childList:true});collectLateMenu();
   window.mayMobileMenu=mobileMenu;
-  const mountLibraryFold=()=>window.MayatnikLibraryMenuFold?.mount({groups:()=>document.querySelectorAll('#paintTools .pt-g,#paintTools .gz-group,#mayatnikRail .gz-group,#mayatnikRailR .gz-group'),panel:()=>window.MayatnikMusicPanel?.isOpen()?window.MayatnikMusicPanel.getElement():$('mayatnikTemplatePanel'),popups:()=>[...(activeList?[{node:activeList.list,group:activeList.group}]:[]),...[...document.querySelectorAll('.may-horr-popup')].map(node=>({node,group:node.mayHorrOwner}))],onLayout:()=>{syncRailFlyouts();libraryMenuFold?.syncHeads();scheduleGroups();window.mayFramePlace?.();}});
+  const mountLibraryFold=()=>window.MayatnikLibraryMenuFold?.mount({groups:()=>document.querySelectorAll('#paintTools .pt-g,#paintTools .gz-group,#mayatnikRail .gz-group,#mayatnikRailR .gz-group'),panel:()=>window.MayatnikMusicPanel?.isOpen()?window.MayatnikMusicPanel.getElement():$('mayatnikTemplatePanel'),popups:()=>[...(activeList?[{node:activeList.list,group:activeList.group}]:[]),...[...document.querySelectorAll('.may-horr-popup,.may-animatrix-popup')].map(node=>({node,group:node.mayHorrOwner||node.mayAnimatrixOwner}))],onLayout:()=>{syncRailFlyouts();libraryMenuFold?.syncHeads();scheduleGroups();window.mayFramePlace?.();}});
   libraryMenuFold=mountLibraryFold();
   window.mayMenuApplyButtonLayout=values=>{
     // Rebuild only the menu's temporary panel mask; the library itself stays open.
