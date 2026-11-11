@@ -196,14 +196,14 @@
  }
  function release(){pause();clearSearch();finish();observer?.disconnect();stage?.removeAttribute('src');tracksArea?.querySelectorAll('img').forEach(img=>img.removeAttribute('src'));urls.forEach(url=>win.URL.revokeObjectURL(url));for(const group of groups){group.urls.forEach(url=>win.URL.revokeObjectURL(url));if(group.downloadUrl)win.URL.revokeObjectURL(group.downloadUrl);}groups=[];activeGroup=null;urls=[];if(downloadUrl)win.URL.revokeObjectURL(downloadUrl);downloadUrl=null;items=[];track?.replaceChildren();tracksArea?.replaceChildren(track);searchOptions={};searchBar&&(searchBar.hidden=true);settingsBar&&(settingsBar.hidden=true);overlay?.remove();overlay=null;}
  function activate(group,index=selected){
-  pause();activeGroup=group;items=group.items;track=group.track;width=group.variant.plan.width;height=group.variant.plan.height;download.hidden=!group.downloadUrl&&!searchOptions.onDownload;download.dataset.filename=group.variant.name||'Гиф-Масштаб.gif';
+  pause();activeGroup=group;items=group.items;track=group.track;width=group.variant.plan.width;height=group.variant.plan.height;download.hidden=!!group.variant.previewOnly||!group.downloadUrl&&!searchOptions.onDownload;download.dataset.filename=group.variant.name||'Гиф-Масштаб.gif';
   title.textContent=group.label+' · '+items.length+' кадров';title.title=title.textContent;range.max=String(items.length-1);previousButton.disabled=nextButton.disabled=playButton.disabled=range.disabled=items.length<2;
   for(const g of groups){g.element.setAttribute('data-selected',String(g===group));g.heading.setAttribute('aria-pressed',String(g===group));g.track.style.setProperty('--may-gif-width',(edge*g.variant.plan.width/Math.max(g.variant.plan.width,g.variant.plan.height))+'px');g.track.style.setProperty('--may-gif-height',(edge*g.variant.plan.height/Math.max(g.variant.plan.width,g.variant.plan.height))+'px');}
-  for(const [b,key]of [[libraryButton,'onSaveLibrary'],[frameButton,'onSaveFrame'],[applyButton,'onApplyFrame']])b.hidden=typeof searchOptions[key]!=='function';
+  for(const [b,key]of [[libraryButton,'onSaveLibrary'],[frameButton,'onSaveFrame'],[applyButton,'onApplyFrame']])b.hidden=typeof searchOptions[key]!=='function'||b===libraryButton&&!!group.variant.previewOnly;
   select(index);resize(edge,false);syncLiveButtons();selectionStatus();
  }
  function syncLiveButtons(){
-  if(recordButton){recordButton.hidden=typeof searchOptions.onRecord!=='function';recordButton.setAttribute('aria-pressed',String(recording));recordButton.disabled=busy||!!recordInfo.starting||!!recordInfo.finishing||(!recording&&!items.length);recordButton.querySelector('.may-gif-button-caption').textContent=recording?'■ Завершить':'● Кадры GIF';}
+  if(recordButton){recordButton.hidden=typeof searchOptions.onRecord!=='function'||!!activeGroup?.variant.previewOnly&&!recording;recordButton.setAttribute('aria-pressed',String(recording));recordButton.disabled=busy||!!recordInfo.starting||!!recordInfo.finishing||(!recording&&!items.length);recordButton.querySelector('.may-gif-button-caption').textContent=recording?'■ Завершить':'● Кадры GIF';}
   if(stackButton){stackButton.hidden=typeof searchOptions.onStackToggle!=='function';stackButton.setAttribute('aria-pressed',String(stackEnabled));}
  }
  function setRecording(value,info={}){recording=!!value;recordInfo=info||{};syncLiveButtons();}

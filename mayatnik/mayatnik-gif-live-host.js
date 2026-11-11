@@ -41,8 +41,8 @@
    if(enabled){if(!captured&&!stack.inspect().busy)captured=source();stack.requestFrame(captured,{key:++serial,frame:s});}
   }catch(error){if(needed){const current=job;current?.cancel();failed(error,current);}else report(error.message||String(error));}
  }
- function wait(){
-  if(starting)return true;
+ function wait(overlay=false){
+  if(starting||overlay&&stack.waitForOverlay?.())return true;
   if(job&&!finishing&&(!job.canPush||lastSource&&job.capacity&&!job.capacity(lastSource))){if(job.pending===0)stop();return true;}
   return false;
  }

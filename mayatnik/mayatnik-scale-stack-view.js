@@ -28,12 +28,19 @@
   return sx<size.sourceWidth&&sy<size.sourceHeight?sy*size.sourceWidth+sx:-1;
  }
 
- // Use the reduction's coordinate grid, even when its thumbnail is shown at native size.
- function overlayPixels(result,source,small,size,method,operation,palette,lowerPixels){
+ // Both renderers use the coordinate grid of the selected reduction.
+ function overlayGeometry(source,size,method){
   const bounds=source.overlayBounds||{left:0,top:0,width:source.width,height:source.height};
+  const uniform=method==='viewport'?size.scale:method==='canvas'?size.height/source.height:0;
+  return {bounds,rx:uniform||size.width/source.width,ry:uniform||size.height/source.height};
+ }
+ function averageBit(source,x,y,rx,ry){
+  const cx=Math.floor((x+.5)/rx),cy=Math.floor((y+.5)/ry);
+  return source.bits[cy*source.width+cx];
+ }
+ function overlayPixels(result,source,small,size,method,operation,palette,lowerPixels){
+  const {bounds,rx,ry}=overlayGeometry(source,size,method);
   const W=result.width,H=result.height,data=result.data,w=size.width,h=size.height,paint=operation==='paint';
-  const uniform=method==='viewport'?size.scale:method==='canvas'?h/source.height:0;
-  const rx=uniform||w/source.width,ry=uniform||h/source.height;
   const colours=operation==='rgb'?(lowerPixels||small.canvas.getContext('2d').getImageData(0,0,w,h).data):null;
   const columns=Int32Array.from({length:W},(_,x)=>Math.floor((bounds.left+(x+.5)*bounds.width/W)*rx));
   const original=Int32Array.from({length:W},(_,x)=>Math.floor(bounds.left+(x+.5)*bounds.width/W));
@@ -51,10 +58,7 @@
      continue;
     }
     // An averaged RGB value can cover several different bits. Its centre is the binary sample.
-    if(lower===-2&&method==='average'){
-     const cx=Math.floor((sx+.5)/rx),cy=Math.floor((sy+.5)/ry);
-     lower=source.bits[cy*source.width+cx];
-    }
+    if(lower===-2&&method==='average')lower=averageBit(source,sx,sy,rx,ry);
     if(lower===-1)lower=0;
     if(!paint&&lower!==0&&lower!==1)continue;
     const value=paint?Number(lower===1):operation==='xor'?bit^lower:bit&lower;
@@ -62,6 +66,39 @@
     const rgb=palette[value];data[i]=rgb[0];data[i+1]=rgb[1];data[i+2]=rgb[2];data[i+3]=source.pixels[at*4+3];
    }
   }
+ }
+
+ // Adjacent bits share an edge. Trace runs of visible edges to keep large grids bounded.
+ function outlineEdges(first,last,start,end,covered,line){
+  for(let i=first;i<=last;i++){
+   let from=-1;
+   for(let j=start;j<=end;j++){
+    if(j<end&&covered(i,j)){if(from<0)from=j;}
+    else if(from>=0){line(i,from,j);from=-1;}
+   }
+  }
+ }
+ function drawOverlayOutline(ctx,source,item,method,view){
+  const {originX,originY,stepX,stepY,width,height,dpr}=view,{rx,ry}=overlayGeometry(source,item.size,method);
+  const w=item.size.width,h=item.size.height;
+  const range=(origin,step,length,max)=>{
+   const a=-origin/step,b=(length-origin)/step;
+   return [Math.max(0,Math.floor(Math.min(a,b))),Math.min(max,Math.ceil(Math.max(a,b)))];
+  };
+  const [x0,x1]=range(originX,stepX,width,w),[y0,y1]=range(originY,stepY,height,h);
+  const hasBit=(x,y)=>{
+   if(x<0||x>=w||y<0||y>=h)return false;
+   let bit=item.bits[y*w+x];
+   if(bit===-2&&method==='average')bit=averageBit(source,x,y,rx,ry);
+   return bit===0||bit===1;
+  };
+  const snap=v=>(Math.round(v*dpr)+.5)/dpr;
+  const X=x=>snap(originX+x*stepX),Y=y=>snap(originY+y*stepY);
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
+  ctx.strokeStyle='#ffd35b';ctx.lineWidth=1/dpr;ctx.beginPath();
+  outlineEdges(y0,y1,x0,x1,(y,x)=>hasBit(x,y-1)||hasBit(x,y),(y,a,b)=>{const py=Y(y);ctx.moveTo(X(a),py);ctx.lineTo(X(b),py);});
+  outlineEdges(x0,x1,y0,y1,(x,y)=>hasBit(x-1,y)||hasBit(x,y),(x,a,b)=>{const px=X(x);ctx.moveTo(px,Y(a));ctx.lineTo(px,Y(b));});
+  ctx.stroke();
  }
 
  function create(o){
@@ -89,7 +126,7 @@
   };
   const stepLabel=doc.createElement('span');stepLabel.textContent='Шаг, строк';const baseField=field(baseInput,'x'),stepField=field(input,'стр');exportButton.classList.add('gz-hx','may-standard');const methodField=field(method),heightField=field(heightMode),sequenceField=field(mode);controls.append(methodField,heightField,sequenceField,baseField,stepField,exportButton);input.type='number';input.min='1';input.step='1';input.value=String(o.stepRows?.()||8);input.setAttribute('aria-label','Шаг высоты нижних треугольников, строк');list.className='may-scale-stack__list';element.append(controls,list);
   const overlayControls=doc.createElement('div'),operation=doc.createElement('select'),copy=doc.createElement('select');
-  overlayControls.className='may-scale-stack__controls may-scale-stack__mix-controls';
+  overlayControls.className='may-scale-stack__controls may-scale-stack__mix-controls may-scale-stack__operation-controls';
   overlayControls.addEventListener('pointerdown',e=>e.stopPropagation());overlayControls.addEventListener('pointerup',e=>e.stopPropagation());
   operation.setAttribute('aria-label','Наложение нижнего построения');operation.title='Наложить одну нижнюю копию на оригинал';
   for(const [value,label,title]of [['off','Без наложения','Наложение выключено'],['xor','XOR','Исключающее ИЛИ битов'],['and','AND','Логическое И битов'],['rgb','RGB','Заменить цвета цветами нижней копии'],['paint','Раскраска','Раскрасить оригинал по битам нижней копии']]){
@@ -97,6 +134,8 @@
   }
   copy.setAttribute('aria-label','Нижняя копия для наложения');copy.title='Выберите одну копию по её месту в списке';
   const operationField=field(operation),copyField=field(copy);
+  const outlineButton=doc.createElement('button');outlineButton.type='button';outlineButton.className='gz-hx may-standard may-scale-stack__outline-button';
+  outlineButton.textContent='Обводка';outlineButton.title='Показать границы всех битов выбранной копии на оригинале';outlineButton.setAttribute('aria-label',outlineButton.title);
   const paintControls=doc.createElement('div'),paintPair=doc.createElement('div');
   paintControls.className='may-scale-stack__controls may-scale-stack__mix-controls may-scale-stack__paint-controls';
   paintControls.addEventListener('pointerdown',e=>e.stopPropagation());paintControls.addEventListener('pointerup',e=>e.stopPropagation());
@@ -111,15 +150,16 @@
   });
   paintControls.append(paintPair);
   const controlRows=o.overlayTarget?[controls,overlayControls,paintControls]:[controls];
-  if(o.overlayTarget){overlayControls.append(operationField,copyField);element.insertBefore(overlayControls,list);element.insertBefore(paintControls,list);}
+  if(o.overlayTarget){overlayControls.append(operationField,copyField,outlineButton);element.insertBefore(overlayControls,list);element.insertBefore(paintControls,list);}
   const paintColours=()=>paintInputs.map(input=>input.value);
-  let copyIndex=0,overlayHost=null,overlayCanvas=null,overlayPaint=null,sourceFrame=null,requestedFrame=null;
+  let copyIndex=0,outlineOn=false,overlayHost=null,overlayCanvas=null,overlayPaint=null,sourceFrame=null,requestedFrame=null;
+  let outlineCanvas=null,outlinePaint=null,presentedOverlay=null;
   const sameFrame=(a,b)=>a?.owner===b?.owner&&a?.key===b?.key;
   const selectedCopy=()=>o.overlayTarget&&operation.value!=='off'?items[Math.min(copyIndex,items.length-1)]:null;
   function readOverlaySettings(){
    const settings=o.overlaySettings?.();
    operation.value=['xor','and','rgb','paint'].includes(settings?.operation)?settings.operation:'off';
-   copyIndex=Math.max(0,Math.trunc(Number(settings?.index)||0));
+   copyIndex=Math.max(0,Math.trunc(Number(settings?.index)||0));outlineOn=settings?.outline===true;
    paintInputs.forEach((input,bit)=>{
     const colour=settings?.paintColours?.[bit];
     input.value=/^#[0-9a-f]{6}$/i.test(colour)?colour:paintDefaults[bit];
@@ -130,6 +170,8 @@
    const active=operation.value!=='off';
    operation.disabled=!items.length&&!active;operationField.classList.toggle('on',active);copyField.hidden=!active;copy.disabled=!items.length;
    paintControls.hidden=operation.value!=='paint';
+   outlineButton.hidden=!active;outlineButton.disabled=!items.length;
+   outlineButton.classList.toggle('gz-on',outlineOn);outlineButton.setAttribute('aria-pressed',String(outlineOn));
    copy.value=String(Math.min(copyIndex,items.length-1));
   }
   function listOverlayCopies(){
@@ -142,8 +184,30 @@
    syncOverlayOptions();
   }
   function hideOverlay(){
-   overlayPaint=null;
+   overlayPaint=presentedOverlay=null;
    if(overlayHost)overlayHost.hidden=true;
+  }
+  function positionOutline(rect,clip,rotated){
+   if(!outlineOn){
+    outlineCanvas?.remove();outlineCanvas=outlinePaint=null;
+    return;
+   }
+   const left=Math.max(rect.left,clip.left),top=Math.max(rect.top,clip.top);
+   const width=Math.min(rect.left+rect.width,clip.left+clip.width)-left,height=Math.min(rect.top+rect.height,clip.top+clip.height)-top;
+   if(width<=0||height<=0){if(outlineCanvas)outlineCanvas.hidden=true;return;}
+   const item=overlayPaint.item,{bounds,rx,ry}=overlayGeometry(source,item.size,method.value);
+   const sign=rotated?-1:1,sx=sign*rect.width/bounds.width,sy=sign*rect.height/bounds.height,dpr=Math.min(2,win.devicePixelRatio||1);
+   const originX=rect.left+(rotated?rect.width:0)-left-bounds.left*sx,originY=rect.top+(rotated?rect.height:0)-top-bounds.top*sy,stepX=sx/rx,stepY=sy/ry;
+   const key=[method.value,revision,originX,originY,stepX,stepY,width,height,dpr].join(':');
+   if(!outlineCanvas){
+    outlineCanvas=doc.createElement('canvas');outlineCanvas.className='may-scale-stack__overlay-outline';overlayHost.append(outlineCanvas);
+   }
+   outlineCanvas.hidden=false;
+   Object.assign(outlineCanvas.style,{left:(left-clip.left)+'px',top:(top-clip.top)+'px',width:width+'px',height:height+'px'});
+   if(outlinePaint?.item===item&&outlinePaint.key===key)return;
+   outlineCanvas.width=Math.max(1,Math.ceil(width*dpr));outlineCanvas.height=Math.max(1,Math.ceil(height*dpr));
+   drawOverlayOutline(outlineCanvas.getContext('2d'),source,item,method.value,{originX,originY,stepX,stepY,width,height,dpr});
+   outlinePaint={item,key};
   }
   function positionOverlay(){
    if(!overlayHost||!overlayPaint)return;
@@ -154,6 +218,7 @@
    overlayHost.hidden=false;
    Object.assign(overlayHost.style,{left:clip.left+'px',top:clip.top+'px',width:clip.width+'px',height:clip.height+'px'});
    Object.assign(overlayCanvas.style,{left:(rect.left-clip.left)+'px',top:(rect.top-clip.top)+'px',width:rect.width+'px',height:rect.height+'px',rotate:rotated?'180deg':''});
+   positionOutline(rect,clip,rotated);
   }
   function paintOverlay(lowerPixels){
    const item=selectedCopy(),op=operation.value;
@@ -170,15 +235,21 @@
     const palette=colours?colours.map(colour=>[1,3,5].map(i=>parseInt(colour.slice(i,i+2),16))):o.overlayPalette();
     overlayPixels(image,source,item,item.size,method.value,op,palette,lowerPixels);
     ctx.putImageData(image,0,0);overlayPaint={item,op,revision,paletteKey};
+    const painted=overlayPaint;
+    if(doc.hidden||!win.requestAnimationFrame)presentedOverlay=painted;
+    else win.requestAnimationFrame(()=>{
+     if(overlayPaint===painted)win.requestAnimationFrame(()=>{if(overlayPaint===painted)presentedOverlay=painted;});
+    });
    }
    positionOverlay();
   }
-  const saveOverlaySettings=()=>o.onOverlaySettings?.({operation:operation.value,index:copyIndex,paintColours:paintColours()});
+  const saveOverlaySettings=()=>o.onOverlaySettings?.({operation:operation.value,index:copyIndex,paintColours:paintColours(),outline:outlineOn});
   const overlayChange=()=>{
    if(copy.value!=='')copyIndex=Number(copy.value);
    saveOverlaySettings();syncOverlayOptions();paintOverlay();later();
   };
   operation.addEventListener('change',overlayChange);copy.addEventListener('change',overlayChange);
+  outlineButton.addEventListener('click',()=>{outlineOn=!outlineOn;saveOverlaySettings();syncOverlayOptions();positionOverlay();});
   for(const control of paintInputs){
    control.addEventListener('input',()=>paintOverlay());
    control.addEventListener('change',()=>{saveOverlaySettings();paintOverlay();});
@@ -192,7 +263,7 @@
   readOverlaySettings();syncOverlayOptions();
   const fmt=n=>Number(n.toFixed(4)).toLocaleString('ru-RU');
   function drop(item){if(item.canvas){item.canvas.width=item.canvas.height=0;item.canvas.remove();item.canvas=null;}if(item.overlay){item.overlay.width=item.overlay.height=0;item.overlay.remove();item.overlay=null;}item.bits=null;item.revision=-1;}
-  function clear(){for(const item of items)drop(item);items=[];list.replaceChildren();job=null;sourceFrame=requestedFrame=null;hideOverlay();if(overlayCanvas)overlayCanvas.width=overlayCanvas.height=0;listOverlayCopies();}
+  function clear(){for(const item of items)drop(item);items=[];list.replaceChildren();job=null;sourceFrame=requestedFrame=null;hideOverlay();if(overlayCanvas)overlayCanvas.width=overlayCanvas.height=0;if(outlineCanvas){outlineCanvas.remove();outlineCanvas=outlinePaint=null;}listOverlayCopies();}
   function later(){if(timer===null&&!destroyed&&enabled)timer=schedule(tick);}
   function minDisplayZoom(){
    if(method.value==='phases')return 1/512;
@@ -245,7 +316,7 @@
    const width=upperWidth*zoom,height=Number(layout.height)>0?Number(layout.height)*zoom:width*source.height/source.width;
    const axis=Number.isFinite(layout.axisFraction)?layout.axisFraction:.5;
    const left=Number.isFinite(layout.center)?layout.center-upperWidth/2:Number(layout.left)||0;
-   const anchor=left+upperWidth*axis;
+   const anchor=left+upperWidth*axis,guideOffset=Number.isFinite(layout.guideFraction)?upperWidth*(layout.guideFraction-axis):0;
    element.style.width=width+'px';element.style.marginLeft=(anchor-width*axis)+'px';
    for(const row of controlRows){row.style.marginLeft=(width*axis)+'px';row.style.transform='translateX(-50%)';}
    for(const item of items){
@@ -263,7 +334,7 @@
     if(!item.axis){item.axis=doc.createElement('div');item.axis.className='may-scale-stack__axis';item.axis.setAttribute('aria-hidden','true');item.element.append(item.axis);}
     Object.assign(item.axis.style,{display:layout.sharedAxis||layout.axisEnabled===false?'none':'',left:(smallAxis*w)+'px',top:item.headerHeight+'px',height:h+'px'});
     if(!item.axisBand){item.axisBand=doc.createElement('div');item.axisBand.className='may-scale-stack__axis-band';item.axisBand.setAttribute('aria-hidden','true');item.element.append(item.axisBand);}
-    const center=smallAxis*item.size.width-.5,col=win.MayatnikAxisColumn?.column(center,item.size.width)??null;Object.assign(item.axisBand.style,{display:layout.axisEnabled===false||col===null?'none':'',left:(col*w/item.size.width)+'px',top:item.headerHeight+'px',width:(w/item.size.width)+'px',height:h+'px'});
+    const center=(smallAxis+guideOffset/w)*item.size.width-.5,col=win.MayatnikAxisColumn?.column(center,item.size.width)??null;Object.assign(item.axisBand.style,{display:layout.axisEnabled===false||col===null?'none':'',left:(col*w/item.size.width)+'px',top:item.headerHeight+'px',width:(w/item.size.width)+'px',height:h+'px'});
     if(item.canvas){item.canvas.style.width=w+'px';item.canvas.style.height=h+'px';
      item.canvas.style.translate='';if(viewport){const r=item.canvas.getBoundingClientRect(),d=win.devicePixelRatio||1,dx=Math.round(r.left*d)/d-r.left,dy=Math.round(r.top*d)/d-r.top;item.canvas.style.translate=dx+'px '+dy+'px';item.axis.style.translate='0px '+dy+'px';item.axisBand.style.translate=item.canvas.style.translate;}else{item.axis.style.translate='';item.axisBand.style.translate='';}
     }
@@ -304,7 +375,9 @@
    timer=null;if(!enabled||destroyed)return;
    try{
     // Complete a visible paint before accepting another frame; playback cannot starve it.
-    if(!job&&pending&&(!source||visible().every(item=>item.revision===revision))){const next=pending;pending=null;const s=next.source||o.captureSource?.();
+    const previousSelection=selectedCopy();
+    const currentDone=previousSelection?previousSelection.revision===revision:!source||visible().every(item=>item.revision===revision);
+    if(!job&&pending&&currentDone){const next=pending;pending=null;const s=next.source||o.captureSource?.();
      if(!s||!Number.isSafeInteger(s.width)||!Number.isSafeInteger(s.height)||s.width<1||s.height<1||!ArrayBuffer.isView(s.pixels)||s.pixels.byteLength!==s.width*s.height*4||s.pixels.byteOffset%4!==0||s.pixels.length!==s.width*s.height*4)throw Error('Повреждён кадр масштабов под полем');
      if(s.pixels.byteLength+(s.bits?.byteLength||0)>LIMIT/2)throw Error('Для масштабов под полем недостаточно памяти');
      const changed=!source||source.width!==s.width||source.height!==s.height;source=s;sourceFrame=next.frame;lastKey=next.key;revision++;if(changed)rebuild();
@@ -334,6 +407,12 @@
     error=null;if(pending||needed.some(item=>item.revision!==revision))later();
    }catch(e){fail(e);}
   }
+  function waitForOverlay(){
+   if(!enabled||operation.value==='off')return false;
+   const item=selectedCopy();
+   if(item&&item.revision===revision&&overlayPaint?.item===item&&overlayPaint.revision===revision&&sameFrame(sourceFrame,requestedFrame))return !doc.hidden&&presentedOverlay!==overlayPaint;
+   return !!(pending||job||item&&item.revision!==revision);
+  }
   function requestFrame(s,meta={}){if(!enabled||destroyed)return false;requestedFrame=meta.frame;if(!sameFrame(sourceFrame,requestedFrame))hideOverlay();pending={source:job?undefined:s,key:meta.key,frame:requestedFrame};later();return true;}
   function refreshLayout(value={}){try{const before=JSON.stringify([layout.pixelPolicy,layout.sourceDensity]);layout={...layout,...value};if(source&&method.value==='viewport'&&before!==JSON.stringify([layout.pixelPolicy,layout.sourceDensity]))rebuild();else geometry();positionOverlay();later();}catch(e){fail(e);}}
   function setZoom(value){zoom=Math.max(minDisplayZoom(),Math.min(512,Number(value)||1));geometry();later();return zoom;}
@@ -341,7 +420,7 @@
    if(destroyed)return false;
    const next=!!value;
    if(next){
-    const key=()=>[operation.value,copyIndex,...paintColours()].join(':');
+    const key=()=>[operation.value,copyIndex,outlineOn,...paintColours()].join(':');
     const previous=key();readOverlaySettings();syncOverlayOptions();
     if(enabled&&previous!==key()){paintOverlay();later();}
    }
@@ -368,7 +447,7 @@
   list.addEventListener('scroll',()=>later(),{passive:true});
   const scroll=()=>{overlays();later();};host.addEventListener('scroll',scroll,{passive:true});win.addEventListener('resize',scroll);
   function destroy(){setEnabled(false);destroyed=true;host.removeEventListener('scroll',scroll);win.removeEventListener('resize',scroll);overlayHost?.remove();element.remove();}
-  return {element,setEnabled,requestFrame,refreshLayout,setZoom,getZoom:()=>zoom,destroy,inspect:()=>({enabled,destroyed,busy:!!job,pending:!!pending,canvases:items.filter(i=>i.canvas).length,levels:items.length,canvasBytes:items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0)+(i.bits?.byteLength||0)+(i.overlay?i.overlay.width*i.overlay.height*4:0),0),key:lastKey,error})};
+  return {element,setEnabled,requestFrame,refreshLayout,waitForOverlay,setZoom,getZoom:()=>zoom,destroy,inspect:()=>({enabled,destroyed,busy:!!job,pending:!!pending,canvases:items.filter(i=>i.canvas).length,levels:items.length,canvasBytes:items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0)+(i.bits?.byteLength||0)+(i.overlay?i.overlay.width*i.overlay.height*4:0),0),key:lastKey,error})};
  }
  return {create,levels,phasePlan,phaseSourceIndex};
 });

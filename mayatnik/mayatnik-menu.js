@@ -109,10 +109,26 @@
       zero: () => put(o.zero != null ? o.zero : lo()),
       ...(o.slider === false ? {} : { frac: () => { const v = cur(); return v == null || (inf && v === 0) ? 1 : Math.max(0, Math.min(1, F(v))); },
         setFrac: f => { if (o.allAtMax && f >= .999) return put(null); put(lg ? a() * Math.pow(hi() / a(), f) : lo() + f * (hi() - lo())); } }) }; };
-  const picker = src => { const c = document.createElement('input'); c.type = 'color'; c.tabIndex = -1; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { position: 'fixed', width: '1px', height: '1px', opacity: '0', pointerEvents: 'none', left: '0', top: '0' }); document.body.append(c);
-    c.addEventListener('input', () => { src.value = c.value; fire(src); });
-    return (a, value=src.value) => { const r = a.getBoundingClientRect(); c.style.left = Math.round(r.right) + 'px'; c.style.top = Math.round(r.top) + 'px'; c.value = value; try { c.showPicker(); } catch (_) { c.click(); } }; };
+  function colourInput(){
+    const input=document.createElement('input');input.type='color';input.tabIndex=-1;input.setAttribute('aria-hidden','true');
+    Object.assign(input.style,{position:'fixed',width:'12px',height:'12px',opacity:'0',pointerEvents:'none',left:'0',top:'0',padding:'0',border:'0'});
+    document.body.append(input);return input;
+  }
+  function openColourPicker(input,anchor){
+    const rect=anchor.getBoundingClientRect(),viewport=document.documentElement;
+    if(!rect.width||!rect.height)return;
+    const left=Math.max(0,Math.min(viewport.clientWidth-12,rect.left+(rect.width-12)/2));
+    const top=Math.max(0,Math.min(viewport.clientHeight-12,rect.top+(rect.height-12)/2));
+    input.style.left=left+'px';input.style.top=top+'px';
+    // Commit the anchor layout before the native popup reads it.
+    if(!input.getBoundingClientRect().width)return;
+    try{input.showPicker();}catch(_){input.click();}
+  }
+  const picker=src=>{
+    const input=colourInput();
+    input.addEventListener('input',()=>{src.value=input.value;fire(src);});
+    return (anchor,value=src.value)=>{input.value=value;openColourPicker(input,anchor);};
+  };
   const tgl = id => { const e = $(id); return { tip: tip(e), on: () => e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"],.on'), click: () => e.click(), dis: () => e.disabled }; };
   const pair = (a, b, la, lb, o = {}) => ({ type: 'pair', cls: 'gz-split gz-bs' + (o.cls ? ' ' + o.cls : ''), name: o.name || la + ' · ' + lb, mid: '', tip: o.tip || (a.tip + ' · ' + b.tip),
     ...(o.dis ? { disabled: o.dis } : {}), parts: [{ label: la, tip: a.tip, on: a.on, click: a.click, ...(a.open ? { open: a.open, ink: a.ink } : {}) }, { label: lb, tip: b.tip, on: b.on, click: b.click, ...(b.open ? { open: b.open, ink: b.ink } : {}) }] });
@@ -1454,10 +1470,10 @@
     const choose=command('layerSelect','grid4','Выбрать содержательный слой: оригинал, наложение, фиксацию или шаблон.',()=>{});
     choose.onclick=()=>window.MayatnikTemplatePanel?.openTab('layers');choose.setAttribute('aria-controls','mayLayerPane');row.append(choose);
     const visible=command('layerVisible','eye','Показать или скрыть выбранный слой без изменения его исходника.',()=>{const layer=current();if(layer)change({visible:!layer.visible});});row.append(visible);
-    const colour=document.createElement('input');colour.type='color';colour.className='may-layer-colour';colour.tabIndex=-1;colour.setAttribute('aria-label','Цвет выбранного слоя');
+    const colour=colourInput();
     colour.addEventListener('input',()=>change({tint:colour.value}));
-    const tint=command('layerTint','colour','Оттенки выбранного цвета для слоя. Исходные пиксели и родные цвета не переписываются.',()=>{const layer=current();if(!layer)return;colour.value=layer.tint||'#73e4a5';try{colour.showPicker();}catch(_){colour.click();}});
-    const native=command('layerNative','reset','Родные цвета выбранного слоя: снять цветовой оттенок.',()=>change({tint:null}));row.append(pair(tint,native));group.append(colour);
+    const tint=command('layerTint','colour','Оттенки выбранного цвета для слоя. Исходные пиксели и родные цвета не переписываются.',()=>{const layer=current();if(!layer)return;colour.value=layer.tint||'#73e4a5';openColourPicker(colour,tint);});
+    const native=command('layerNative','reset','Родные цвета выбранного слоя: снять цветовой оттенок.',()=>change({tint:null}));row.append(pair(tint,native));
     const valueControl=(key,label,type)=>{
       const box=document.createElement('div');box.className='gz-hx gz-control gz-val may-layer-value may-standard';box.dataset.n='layer-'+key;describe(box,label);
       const input=document.createElement('input');input.type=type;input.id='mayLayer-'+key;input.setAttribute('aria-label',label);input.step=type==='range'?'1':'any';

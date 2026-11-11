@@ -103,7 +103,7 @@
   }
 
   // Serialized into the Blob worker along with the sampling functions and encoder.
-  function renderJob({source,plan:p,methods,presentations,delay,background,all}){
+  async function renderJob({source,plan:p,methods,presentations,delay,background,all,averagePreview}){
     const pixels=prepare(source,p,background);
     let bits=null;
     if(source.bits){
@@ -139,10 +139,28 @@
         if(error.code!=='GIF_PALETTE_OVERFLOW')throw error;
         const warning={method,rows:currentRows,code:error.code,colourCount:error.colourCount,message:error.message};
         if(!all)throw Object.assign(error,{method,rows:currentRows});
-        // Earlier levels of this method are incomplete as an animation. Drop
-        // their accounting and tell the host to release their already sent blobs.
-        encodedBytes=methodBytes;done=methodStart+p.levels.length*presentations.length;
-        postMessage({variantError:warning,done,total});
+        // A direct request for Average keeps its exact colours in the viewer.
+        // GIF encoding still requires a palette of at most 256 colours per frame.
+        encodedBytes=methodBytes;
+        if(averagePreview&&method==='average'&&typeof OffscreenCanvas==='function'){
+          postMessage({previewFallback:warning});
+          done=methodStart;
+          const canvas=new OffscreenCanvas(p.width,p.height),ctx=canvas.getContext('2d');
+          if(!ctx)throw Error('Не удалось открыть точный просмотр среднего цвета');
+          for(const rows of p.levels){
+            const small=rows===p.height?{pixels,width:p.width,height:rows,bits}:reduce(pixels,p.width,p.height,rows,method,bits);
+            const raster=rows===p.height?pixels:enlarge(small,p.width,p.height);
+            ctx.putImageData(new ImageData(raster,p.width,p.height),0,0);
+            const blob=await canvas.convertToBlob({type:'image/png'}),grid=small.bits===bits&&bits?bits.slice():small.bits;
+            encodedBytes+=blob.size;
+            if(encodedBytes>256*1024*1024)throw Error('Просмотр превышает 256 МиБ. Выберите степени 2 или уменьшите число строк');
+            const frames=[{presentation:'pixels',blob,bounds:{left:0,top:0,width:p.width,height:p.height}}];
+            postMessage({method,rows,width:small.width,frames,bits:grid,done:++done,total},grid?[grid.buffer]:[]);
+          }
+        }else{
+          done=methodStart+p.levels.length*presentations.length;
+          postMessage({variantError:warning,done,total});
+        }
       }
     }
     postMessage({complete:true});
@@ -154,7 +172,7 @@
     const delay=delayTicks(options.delay);
     if(!globalThis.MayatnikGif?.encoder)throw Error('Кодировщик GIF не загружен');
     const code=[prepare,reduceCanvas,reduce,enlarge,center,globalThis.MayatnikGif.encoder,renderJob].map(fn=>fn.toString()).join('\n')+
-      '\nonmessage=e=>{try{renderJob(e.data);}catch(error){postMessage({error:error.message||String(error),code:error.code,colourCount:error.colourCount,method:error.method,rows:error.rows});}};';
+      '\nonmessage=e=>{renderJob(e.data).catch(error=>postMessage({error:error.message||String(error),code:error.code,colourCount:error.colourCount,method:error.method,rows:error.rows}));};';
     const url=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));let worker;try{worker=new Worker(url);}finally{URL.revokeObjectURL(url);}
     const variants=new Map(),warnings=[];
     for(const method of methods)for(const presentation of presentations){
@@ -172,6 +190,11 @@
       if(settled)return;const message=e.data;
       try{
         if(message.error){finish(Object.assign(Error(message.error),{code:message.code,colourCount:message.colourCount,method:message.method,rows:message.rows}));return;}
+        if(message.previewFallback){
+          const variant=variants.get(message.previewFallback.method+'-pixels');
+          variant.frames=[];variant.previewOnly=true;variant.label='Средний цвет · просмотр PNG';
+          return;
+        }
         if(message.variantError){
           const warning=message.variantError;warnings.push(warning);
           for(const presentation of presentations)variants.delete(warning.method+'-'+presentation);
@@ -192,7 +215,7 @@
     worker.onmessageerror=()=>finish(Error('Ошибка передачи кадра GIF'));
     try{
       const pixels=new Uint8ClampedArray(source.pixels),bits=source.bits?new Int8Array(source.bits):null;
-      worker.postMessage({source:{width:source.width,height:source.height,pixels,bits},plan:p,methods,presentations,delay,background:Array.from(options.background||[0,0,0]),all},bits?[pixels.buffer,bits.buffer]:[pixels.buffer]);
+      worker.postMessage({source:{width:source.width,height:source.height,pixels,bits},plan:p,methods,presentations,delay,background:Array.from(options.background||[0,0,0]),all,averagePreview:options.averagePreview===true},bits?[pixels.buffer,bits.buffer]:[pixels.buffer]);
     }catch(error){finish(error);}
     const job={promise,plan:p,cancel(){finish(Object.assign(Error('Генерация отменена'),{name:'AbortError'}));}};
     if(!all)job.presentation=presentations[0];return job;
