@@ -9849,7 +9849,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // v0.230: «если включаю сдвиг кадром, то с неё же и начинает — надо возвращать сначала на реальный кадр»: ручной сдвиг центра
   // (st.fixDy / st.fixDx) кадрам не соответствует — при «Сдвиге кадром» он снимается, точка встаёт на настоящее место в этом кадре
   const fixReal=()=>{if(!(st.fixDy|0)&&!(st.fixDx|0))return false;st.fixDy=st.fixDx=0;save();if(f)draw();return true;};
-  wrap.addEventListener('pointerdown',e=>{if(e.button!==0||rulerMode||document.body.classList.contains('may-rombo-active')&&!window.mayRombo?.physicalPoint(e)||!fixNear(e.clientX,e.clientY))return;
+  wrap.addEventListener('pointerdown',e=>{if(e.button!==0||rulerMode||e.target.closest?.('.may-scale-stack__controls')||document.body.classList.contains('may-rombo-active')&&!window.mayRombo?.physicalPoint(e)||!fixNear(e.clientX,e.clientY))return;
     if(animatrixGuideHit(e.clientX,e.clientY)){
       stop();const row=animatrixReflectionRow();
       animatrixGuideDrag={row,startRow:row,y:e.clientY,scale:scale(),base:k>0?k-row:0,owner:f};
