@@ -2195,7 +2195,19 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function drawLargeField(){
     if(gpuBig.error){$('stat').textContent='Ошибка WebGPU. '+gpuBig.error;return;}
-    if(updWin()){canvasSize();cssLayout();}
+    const screenAnchor=()=>cv.getBoundingClientRect().left+displayAnchorX()*scale();
+    const before=screenAnchor(),previous=gpuBig.cameraAnchor;
+    if(updWin()){
+      canvasSize();cssLayout();
+      if(!st.frameDrift&&!ovlLinked()&&!horizontalAxisPinned()){
+        // Expanding VX moves the origin of the scrollable canvas. Keep the
+        // same screen anchor, carrying subpixel rounding between frames.
+        const targetX=previous&&Math.abs(previous.actual-before)<.01?previous.target:before;
+        wrap.scrollBy({left:screenAnchor()-targetX,behavior:'instant'});
+        pixelAlignSource();
+        gpuBig.cameraAnchor={target:targetX,actual:screenAnchor()};
+      }else gpuBig.cameraAnchor=null;
+    }
     if(largeFindSelection){
       if(largeFindSelection.owner!==f||largeFindSelection.frame!==target||!st.ochki)largeFindSelection=null;
       else if(k===target&&!largeFindSelection.placed){
