@@ -1,9 +1,9 @@
-/* Маятник · Синтез 0.001. A bounded companion field; source v0.999 stays intact.
+/* Маятник · Синтез 0.002. A bounded companion field; source v0.999 stays intact.
  * Source redraws are observations, never an animation clock. Only successive
  * source frames or explicit independent ticks advance experimental history. */
 (function(root){
   'use strict';
-  const KEY='synthesis-controls-v1',MAX=512;
+  const KEY='synthesis-controls-v1',POSITION_KEY='synthesis-window-position-v1',MAX=512;
   const defaults={mode:'trail',rule:'circuit',trailFrames:8,recoveryFrames:6,wrap:false,
     mix:'overlay',link:true,rate:8,colourOne:'#ffd35b',colourZero:'#5ce1e6',visible:true,expanded:false,
     weightsOpen:true,stateWeights:[0,1,2,1,0,0,1],positionWeights:[2,1,2,1,1,2,1,2]};
@@ -24,6 +24,8 @@
     return p;
   }
   try{prefs=readPrefs(JSON.parse(localStorage.getItem(KEY)||'null'));}catch(_){}
+  let panelPosition=null,positionFrame=0,panelDrag=null;
+  try{const saved=JSON.parse(localStorage.getItem(POSITION_KEY)||'null');if(saved&&Number.isFinite(saved.left)&&Number.isFinite(saved.top))panelPosition={left:saved.left,top:saved.top};}catch(_){}
   let engine=null,sourceBits=null,crop=null,sourceOwner=null,sourceMode='',sourceFrame=null,sourceSize='',
     panel=null,canvas=null,ctx=null,status=null,notice=null,toolbar=null,bindings=[],after=()=>{},timer=null,
     ticks=0,message='',pendingSave=null,dbPromise=null,restoring=true,detached=false,dirty=false,weightPanel=null,legend=null;
@@ -170,6 +172,7 @@
   function refresh(){
     if(!panel)return;
     panel.hidden=!prefs.visible;panel.classList.toggle('synthesis-expanded',prefs.expanded);
+    schedulePanelPosition();
     if(weightPanel){weightPanel.hidden=prefs.rule!=='weighted'||!cellular();weightPanel.open=prefs.weightsOpen;}
     if(legend)legend.textContent=prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Отдельно: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
     status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'');
@@ -274,6 +277,66 @@
     button(host,'help','Инструкция','Описание пяти этапов, правила аналогов и ограничения',()=>root.open('synthesis-instruction.html','_blank','noopener'));
     createPanel();start();return {refresh};
   }
+  function savePanelPosition(){
+    if(!panelPosition)return;
+    try{localStorage.setItem(POSITION_KEY,JSON.stringify(panelPosition));}catch(error){fail(Error('Положение окна не сохранено: '+error.message));}
+  }
+  function placePanel(persist=false){
+    if(!panel||!panel.getClientRects().length)return;
+    const viewport=root.visualViewport;
+    const left=(viewport?.offsetLeft||0)+8,top=(viewport?.offsetTop||0)+8;
+    const right=(viewport?.offsetLeft||0)+(viewport?.width||innerWidth)-8;
+    const bottom=(viewport?.offsetTop||0)+(viewport?.height||innerHeight)-8;
+    panel.style.setProperty('--synthesis-available-width',Math.max(1,right-left)+'px');
+    panel.style.setProperty('--synthesis-available-height',Math.max(1,bottom-top)+'px');
+    const rect=panel.getBoundingClientRect();
+    const before=panelPosition;
+    const next={left:Math.max(left,Math.min(before?.left??rect.left,Math.max(left,right-rect.width))),
+      top:Math.max(top,Math.min(before?.top??rect.top,Math.max(top,bottom-rect.height)))};
+    panelPosition=next;panel.style.right='auto';panel.style.bottom='auto';
+    panel.style.left=next.left+'px';panel.style.top=next.top+'px';
+    if(persist&&(!before||before.left!==next.left||before.top!==next.top))savePanelPosition();
+  }
+  function schedulePanelPosition(){
+    if(positionFrame)return;
+    positionFrame=requestAnimationFrame(()=>{positionFrame=0;placePanel(true);});
+  }
+  function movablePanel(head){
+    head.tabIndex=0;head.setAttribute('role','group');
+    head.setAttribute('aria-label','Положение окна Синтеза. Перетащите заголовок или двигайте стрелками клавиатуры; Shift — шаг один пиксель.');
+    head.title='Перетащите окно. Стрелки — 10 пикселей, Shift со стрелками — 1 пиксель.';
+    head.addEventListener('pointerdown',event=>{
+      if(event.button!==0||event.isPrimary===false)return;
+      event.preventDefault();event.stopPropagation();placePanel();
+      head.focus({preventScroll:true});
+      panelDrag={id:event.pointerId,x:event.clientX,y:event.clientY,left:panelPosition.left,top:panelPosition.top};
+      head.setPointerCapture(event.pointerId);panel.classList.add('synthesis-dragging');
+    });
+    head.addEventListener('pointermove',event=>{
+      if(!panelDrag||event.pointerId!==panelDrag.id)return;
+      event.preventDefault();event.stopPropagation();
+      panelPosition={left:panelDrag.left+event.clientX-panelDrag.x,top:panelDrag.top+event.clientY-panelDrag.y};placePanel();
+    });
+    const finish=event=>{
+      if(!panelDrag||event.pointerId!==panelDrag.id)return;
+      const id=panelDrag.id;panelDrag=null;panel.classList.remove('synthesis-dragging');
+      if(head.hasPointerCapture(id))head.releasePointerCapture(id);
+      placePanel();savePanelPosition();event.stopPropagation();
+    };
+    for(const name of ['pointerup','pointercancel','lostpointercapture'])head.addEventListener(name,finish);
+    head.addEventListener('keydown',event=>{
+      const movement={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[event.key];
+      if(!movement)return;
+      event.preventDefault();event.stopPropagation();placePanel();
+      const step=event.shiftKey?1:10;
+      panelPosition={left:panelPosition.left+movement[0]*step,top:panelPosition.top+movement[1]*step};
+      placePanel();savePanelPosition();
+    });
+    root.addEventListener('resize',schedulePanelPosition);
+    root.visualViewport?.addEventListener('resize',schedulePanelPosition);
+    root.visualViewport?.addEventListener('scroll',schedulePanelPosition);
+    if(root.ResizeObserver)new ResizeObserver(schedulePanelPosition).observe(panel);
+  }
   function createPanel(){
     panel=el('aside','synthesis-panel');panel.id='synthesisPanel';panel.setAttribute('aria-label','Поле Маятника · Синтез');
     const head=el('div','synthesis-heading');head.append(el('strong','','Маятник · Синтез'));
@@ -300,7 +363,7 @@
     const states=el('div','synthesis-state-grid');for(let i=0;i<7;i++)weightButton(states,'stateWeights',i,'Состояние '+i);
     weightPanel.append(states);
     button(weightPanel,'weights-reset','WG084','Вернуть исходные веса WG Rule084',()=>{pause();prefs.stateWeights=defaults.stateWeights.slice();prefs.positionWeights=defaults.positionWeights.slice();if(engine){engine.configure(engineOptions());engine.reset(sourceBits);if(autonomous())engine.seed(sourceBits);ticks=0;}dirty=true;remember();render();scheduleSave();});
-    panel.append(head,toolbar,status,viewport,notice,legend,weightPanel);document.body.append(panel);refresh();
+    panel.append(head,toolbar,status,viewport,notice,legend,weightPanel);document.body.append(panel);movablePanel(head);refresh();
   }
   async function start(){
     try{
