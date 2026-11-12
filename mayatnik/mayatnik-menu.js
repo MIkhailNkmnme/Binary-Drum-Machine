@@ -968,6 +968,11 @@
     const l = ZerkGroupHeader.create({title:name==='👓 Очки'?'👓 Поиск':name,dualPins:true,className:'pt-l',titleClass:'may-group-title',pinClass:'pt-pin',iconClass:'pt-ico'}).head; const row = document.createElement('div'); row.className = 'pt-r';
     g.append(l, row); tools.append(g); return row; };
   // v0.478: одна «Раскраска» — группа paint в общей рейке; её исходные контролы и обработчики сохранены.
+  if(window.MayatnikSynthesis){
+    const synthesisRow=ptGroup('Синтез');synthesisRow.parentElement.dataset.k='Синтез';
+    synthesisRow.parentElement.style.setProperty('--c','#63d9d0');
+    window.MayatnikSynthesis.mount({host:synthesisRow,after:()=>{rail.refresh();placeTools();window.mayButtonStandardRefresh?.();}});
+  }
   const gAnimatrix=ptGroup('Аниматрица');
   gAnimatrix.parentElement.dataset.k='Аниматрица';
   const animatrixHost=document.createElement('div');
@@ -1229,7 +1234,7 @@
   const longGroups=new Set(['Точка Ось','Правка','Очистка','Оси','Виды поля','Вид','Зеркала','Шаблон']);
   for (const g of tools.querySelectorAll('.pt-g'))if(longGroups.has(g.querySelector('.pt-l').textContent))g.classList.add('pt-long');
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
-    if (b === animatrixHost || b.id === 'lg' || b.classList.contains('may-vis-triple')) return;   // v0.566: у тройки видимости свои подписи 100 | 50 | 0
+    if (b === animatrixHost || b.id === 'lg' || b.classList.contains('may-vis-triple') || b.classList.contains('synthesis-button')) return;   // Custom controllers already own their labels.
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
       b.classList.add('gz-hx'); b.querySelector('i').classList.add('gz-ic');
       const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return; }
