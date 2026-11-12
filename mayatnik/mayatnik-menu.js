@@ -872,11 +872,11 @@
       const zoomBody = rail.el.querySelector('.gz-group[data-id="zoom"] > .gz-soty');
       if (zoomBody) { zoomBody.append(row, back); rail.refresh(); } else pop.append(section(row, 'build'), section(back, 'build')); }
     { const button=document.createElement('button');button.type='button';button.id='mayRowStepOutline';button.dataset.n='mayRowStepOutline';button.className='gz-hx';
-      button.dataset.maySearchAliases='Рамка шага|Рамка новых битов|Выделение строки';
+      button.dataset.maySearchAliases='Рамка шага|Рамка новых битов|Выделение строки|Контуры отражения';
       const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(button,'outline');glyph.setAttribute('aria-hidden','true');
       const label=document.createElement('span');label.className='gz-nm';label.textContent='Рамка шага';button.append(glyph,label);
       button.gzSync=()=>{const api=window.mayRowStepOutline,on=!!api?.get();button.disabled=!api;button.classList.toggle('gz-on',on);button.setAttribute('aria-pressed',String(on));
-        button.title='Рамка шага: '+(on?'включена — нажать, чтобы скрыть':'выключена — нажать, чтобы показать')+'. Тонкая рамка вокруг рассчитанных битов последнего шага «Строка +1». Настройка сохраняется.';button.setAttribute('aria-label',button.title);};
+        button.title='Рамка шага: '+(on?'включена — нажать, чтобы скрыть':'выключена — нажать, чтобы показать')+'. В отражениях Аниматрицы жёлтый контур отмечает источник следующего шага, голубой — цель. В «Строка +1» рамка отмечает рассчитанные биты. Настройка сохраняется.';button.setAttribute('aria-label',button.title);};
       button.onclick=event=>{event.stopPropagation();const api=window.mayRowStepOutline;api?.set(!api.get());button.gzSync();rail.refresh();};
       toolSync.push(button.gzSync);addEventListener('may-row-step-outline-change',button.gzSync);button.gzSync();pop.append(section(button,'build')); }
     // v0.634: opt-in continuation belongs to construction, with a stable control key.

@@ -370,15 +370,17 @@
     const first = sourceStart + ((groupStart - sourceStart) & 1);
     return first - (y - groupStart);
   }
+  function copyTargetAvailable(s, row, target) {
+    return s.present[target] || (s.copyRowsOriginalHeight && row >= s.copyRowsOriginalHeight);
+  }
   function mergeCopyRow(s, sourceRow, y, capture, sourceBits = s.bits) {
     const width = s.width, from = sourceRow * width, to = y * width;
     capture(y);
     // Reflected rows of the same parity share their column coordinates.
     for (let x = 0; x < width; x++) {
       const source = from + x, target = to + x;
-      if (!s.present[source]) continue;
+      if (!s.present[source] || !copyTargetAvailable(s, y, target)) continue;
       if (!s.present[target]) {
-        if (!s.copyRowsOriginalHeight || y < s.copyRowsOriginalHeight) continue;
         s.present[target] = 1;
         s.copyRowsVisibleHeight = Math.max(s.copyRowsVisibleHeight, y + 1);
       }
@@ -400,32 +402,52 @@
     const start = row * s.width;
     return s.present.subarray(start, start + s.width).includes(1);
   }
+  function copyLastRow(s) {
+    if (!s.copyRowsByAxis) return s.cursorRow;
+    const axis = s.copyAxis;
+    if (s.copyRowsExcel && !hasCopyRow(s, axis)) return axis;
+    return s.copyRowsWrap || s.copyRowsOriginalHeight ? 2 * axis : Math.min(2 * axis, s.height - 1);
+  }
+  function visitCopyRows(s, last, visit) {
+    if (!s.copyRowsByAxis) {
+      visit(copySourceRow(s, last), last);
+      return;
+    }
+    const axis = s.copyAxis;
+    for (let y = axis + 1; y <= last; y++) {
+      const upper = 2 * axis - y;
+      if (s.copyRowsExcel) {
+        if (!hasCopyRow(s, upper) || !hasCopyRow(s, y)) break;
+        visit(y, upper);
+      } else {
+        visit(upper, y < s.height ? y : wrapCopyRow(y, s.height));
+      }
+    }
+  }
+  function visitNextCopyCells(s, { left, right, top, bottom }, visit) {
+    if (s.algorithm !== 'copyRows' || s.height < 3 || left >= right || top >= bottom) return;
+    visitCopyRows(s, copyLastRow(s), (sourceRow, targetRow) => {
+      if ((sourceRow < top || sourceRow >= bottom) && (targetRow < top || targetRow >= bottom)) return;
+      const from = sourceRow * s.width, to = targetRow * s.width;
+      for (let x = left; x < right; x++) {
+        if (s.present[from + x] && copyTargetAvailable(s, targetRow, to + x)) visit(sourceRow, targetRow, x);
+      }
+    });
+  }
   function scanCopyRows(s, capture) {
     if (s.height < 3) { s.done = true; return; }
+    const last = copyLastRow(s);
+    // Wrapped destinations may also be sources for this frame.
+    const sourceBits = last >= s.height ? s.bits.slice(0, s.copyAxis * s.width) : s.bits;
+    visitCopyRows(s, last, (from, to) => {
+      mergeCopyRow(s, from, to, capture, sourceBits);
+      s.rowCount++;
+    });
     if (s.copyRowsByAxis) {
-      const axis = s.copyAxis;
-      const last = s.copyRowsExcel && !hasCopyRow(s, axis) ? axis :
-        s.copyRowsWrap || s.copyRowsOriginalHeight ? 2 * axis : Math.min(2 * axis, s.height - 1);
-      // Wrapped destinations may also be sources for this frame.
-      const sourceBits = last >= s.height ? s.bits.slice(0, axis * s.width) : s.bits;
-      for (let y = axis + 1; y <= last; y++) {
-        const upper = 2 * axis - y;
-        const target = y < s.height ? y : wrapCopyRow(y, s.height);
-        if (s.copyRowsExcel) {
-          if (!hasCopyRow(s, upper) || !hasCopyRow(s, y)) break;
-          mergeCopyRow(s, y, upper, capture);
-        } else {
-          mergeCopyRow(s, upper, target, capture, sourceBits);
-        }
-        s.rowCount++;
-      }
       s.copyAxis++;
       if (s.copyAxis === (s.copyRowsOriginalHeight || s.height) - (s.copyRowsWrap ? 0 : 1)) { s.copyAxis = 1; s.cycle++; }
       s.cursorRow = s.copyRowsWrap ? wrapCopyRow(s.copyAxis + 1, s.height) : s.copyAxis + 1;
     } else {
-      const y = s.cursorRow;
-      mergeCopyRow(s, copySourceRow(s, y), y, capture);
-      s.rowCount++;
       s.cursorRow++;
       if (s.cursorRow === s.height) {
         s.copyAxis = 1;
@@ -572,7 +594,7 @@
   }
   function seek(s, frame) { count(frame); reset(s); return advance(s, frame); }
   return { create, cloneSeed, snapshot, reset, advance, stepRows, seek, bounds, forkInitial, sameState,
-    copyRowsCycleFrames, excelAlgorithms: EXCEL_ALGORITHMS.slice(),
+    copyRowsCycleFrames, visitNextCopyCells, excelAlgorithms: EXCEL_ALGORITHMS.slice(),
     excelCycleFrames: (seed, options) => EXCEL[options.algorithm].cycleFrames(seed, options),
     excelConeOrigin: Shapes.coneOrigin,
     interxorWidth: (seed, options) => Interxor.requiredWidth(seed, options),
