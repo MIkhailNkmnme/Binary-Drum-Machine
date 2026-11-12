@@ -172,6 +172,7 @@ fn search(@builtin(workgroup_id) group:vec3<u32>,@builtin(local_invocation_id) l
   }
   async function search({device,bits,present,width:W,height:H,stride},options={},current=()=>true,onProgress=()=>{}){
     if(!supports(options)||W*H>0xffffffff)return null;
+    onProgress({phase:'gpu-search'});
     const started=performance.now(),prepared=plan(W,H,options),allocated=[];
     const check=()=>{if(!current())throw new DOMException('Поиск отменён','AbortError');};
     let readbackBytes=0,dispatches=0,occurrenceCount=0;

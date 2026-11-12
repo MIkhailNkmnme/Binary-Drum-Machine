@@ -10,7 +10,7 @@ function archiveMetadata(snapshot,blob,format){
   return {kind:'packed-ochki-v1',format,width:snapshot.width,height:snapshot.height,stride:snapshot.stride,blob};
 }
 
-async function archiveFrame(snapshot,spool){
+async function archiveFrame(snapshot,spool,progress=()=>{}){
   const format=typeof CompressionStream==='function'?'deflate':'raw';
   let planeIndex=0,y=0;
   const input=new ReadableStream({
@@ -22,10 +22,14 @@ async function archiveFrame(snapshot,spool){
       controller.enqueue(new Uint8Array(words.buffer,words.byteOffset,words.byteLength));
       y+=rows;
       if(y===snapshot.height){y=0;planeIndex++;}
+      if(planeIndex===planes.length)progress({phase:'archive-finish'});
+      else progress({phase:'archive',done:planeIndex*snapshot.height+y,total:snapshot.height*2});
     }
   });
   const stream=format==='deflate'?input.pipeThrough(new CompressionStream('deflate')):input;
-  return archiveMetadata(snapshot,await new Response(stream).blob(),format);
+  const blob=await new Response(stream).blob();
+  progress({phase:'archive-finish'});
+  return archiveMetadata(snapshot,blob,format);
 }
 
 
@@ -74,7 +78,7 @@ async function searchFrame(spool,{options,snake,archive,catalog,query,archiveOnl
   if(archiveOnly){
     progress({phase:'archive'});
     const started=performance.now();
-    try{return {result:{complete:true},archive:await archiveFrame(snapshot,spool),metrics:{archiveMs:performance.now()-started,searchMs:0}};}
+    try{return {result:{complete:true},archive:await archiveFrame(snapshot,spool,progress),metrics:{archiveMs:performance.now()-started,searchMs:0}};}
     catch(error){return {result:{complete:true},archiveError:error.message||String(error),metrics:{archiveMs:performance.now()-started,searchMs:0}};}
   }
   if(query){
@@ -82,11 +86,12 @@ async function searchFrame(spool,{options,snake,archive,catalog,query,archiveOnl
     return {result};
   }
   if(catalog){
+    if(catalog.search.withoutBands)progress({phase:'bands'});
     const mask=catalog.search.withoutBands?bandBounds(snapshot,spool,catalog.search.bounds.height):null;
     const result=catalogEngine().compile({...catalog,snapshot,search:{...catalog.search,...mask}},progress);
     if(!result.complete)throw Error('Кадр проверен не полностью');
     progress({phase:'archive'});
-    return {result,archive:await archiveFrame(snapshot,spool)};
+    return {result,archive:await archiveFrame(snapshot,spool,progress)};
   }
   if(snake&&!self.MayatnikLargeSnake){
     importScripts('mayatnik-large-snake.js?v=1001');
@@ -94,6 +99,7 @@ async function searchFrame(spool,{options,snake,archive,catalog,query,archiveOnl
   }
   const engine=snake?self.MayatnikLargeSnake:self.MayatnikLargeSearch;
   const searchStarted=performance.now();
+  if(options.withoutBands)progress({phase:'bands'});
   const mask=options.withoutBands?bandBounds(snapshot,spool,options.bounds.height):null;
   const result=engine.search(snapshot,{...options,...mask},progress);
   const searchMs=performance.now()-searchStarted;
@@ -101,7 +107,7 @@ async function searchFrame(spool,{options,snake,archive,catalog,query,archiveOnl
   if(archive&&result.complete&&result.found.length){
     progress({phase:'archive'});
     const archiveStarted=performance.now();
-    try{saved=await archiveFrame(snapshot,spool);}
+    try{saved=await archiveFrame(snapshot,spool,progress);}
     catch(error){archiveError=error.message||String(error);}
     archiveMs=performance.now()-archiveStarted;
   }
