@@ -1170,7 +1170,7 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 /* Shared split X for the heat period and the frame player. */
 .may-split-track{position:absolute;inset:0;width:120px;height:24px;pointer-events:none;z-index:8}
 #mayBottomBar>.may-frame-slider{
-  --may-thumb-left:16px;--may-thumb-right:60px;--may-thumb-width:44px;--c:#7cbcff;
+  --may-thumb-left:16px;--may-thumb-right:60px;--may-thumb-width:44px;--c:#7cbcff;--may-frame-idle:#394657;
   position:relative;width:120px!important;min-width:120px;max-width:120px;height:24px;
   padding:0!important;gap:0!important;background:transparent!important;clip-path:none!important;user-select:none
 }
@@ -1182,7 +1182,7 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-slider>.may-frame-prev{left:0;right:auto;width:var(--may-thumb-left)!important}
 #mayBottomBar>.may-frame-slider>.may-frame-next{right:0;left:auto;width:var(--may-thumb-right)!important}
 #mayBottomBar>.may-frame-slider>.gz-a::before,#mayBottomBar>.may-frame-slider>.gz-a::after{display:none}
-.may-frame-slider .may-frame-track-outline path{fill:none;stroke:#394657;stroke-width:2px;stroke-linejoin:miter}
+.may-frame-slider .may-frame-track-outline path{fill:none;stroke:var(--may-frame-idle);stroke-width:2px;stroke-linejoin:miter}
 .may-frame-slider .may-frame-track-outline .may-frame-track-rail{stroke:#8d9bb0;stroke-width:1px;stroke-dasharray:2 3}
 .may-frame-slider .may-frame-track-outline :is(.may-frame-track-start,.may-frame-track-end){stroke:var(--c)}
 .may-frame-slider .may-frame-track-outline :is(.may-frame-track-left-frame,.may-frame-track-right-frame,.may-frame-track-thumb-frame){display:none}
@@ -1194,6 +1194,8 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-frame-slider:is(.may-frame-scrubbing,:has(.may-frame-thumb:is(:hover,:focus-within))) :is(.may-frame-track-left,.may-frame-track-right){display:block;stroke:var(--c)}
 .may-frame-slider:has(.may-frame-prev:active) :is(.may-frame-track-left,.may-frame-track-left-frame),
 .may-frame-slider:has(.may-frame-next:active) :is(.may-frame-track-right,.may-frame-track-right-frame){stroke-width:3px}
+.may-frame-slider:has(>.may-frame-prev[aria-disabled="true"]) .may-frame-track-outline :is(.may-frame-track-start,.may-frame-track-left,.may-frame-track-left-frame){stroke:var(--may-frame-idle);stroke-width:2px}
+.may-frame-slider.may-frame-running .may-frame-track-outline :is(.may-frame-track-start,.may-frame-track-end){display:none}
 #mayBottomBar>.may-frame-stop{
   flex:0 0 var(--may-frame-stop-width);width:var(--may-frame-stop-width);height:24px;margin:0;padding:0;border:0;
   color:#ff4040;background:transparent;cursor:pointer;font:700 21px/24px sans-serif
