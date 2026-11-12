@@ -66,17 +66,35 @@
       return select;
     };
     const operation=make('meetingContinuationOperation','Наложение: A — бит Маятника, B — бит продолжения',control.modes,control.setMode);
-    const direction=make('meetingContinuationDirection','Направление продолжения',control.directions,control.setDirection);
+    const directions=document.createElement('div');
+    directions.className='may-continuation-directions';directions.dataset.n='meetingContinuationDirection';
+    directions.setAttribute('role','group');directions.setAttribute('aria-label','Направления продолжения');
+    const checkDirection=(caption,onChange)=>{
+      const label=document.createElement('label'),input=document.createElement('input');
+      input.type='checkbox';
+      input.onchange=()=>{onChange(input.checked);placeTools();};
+      label.append(input,document.createTextNode(caption));directions.append(label);
+      return input;
+    };
+    const checks=control.directions.map(([flag,caption])=>[flag,checkDirection(caption,checked=>{
+      const current=control.direction();
+      control.setDirection(checked?current|flag:current&~flag);
+    })]);
+    const allMask=checks.reduce((mask,[flag])=>mask|flag,0);
+    const all=checkDirection('Все',checked=>control.setDirection(checked?allMask:0));
+    all.parentElement.className='may-continuation-all';
+    all.title='Включить или выключить все направления продолжения';
     const edge=make('meetingContinuationEdge','Нижний край: прямо, отражение от последней строки или перенос вверх в тот же столбец',control.edges,control.setEdge);
-    const nodes=[operation,direction,edge];
-    return {nodes,sync(max=3){
-      const on=control.get(),down=!!(control.direction()&1);
-      [control.mode(),control.direction(),control.edge()].forEach((value,i)=>{
-        const select=nodes[i];
-        if(select.value!==String(value))select.value=String(value);
-        select.hidden=!on||i>=max;
-      });
-      edge.disabled=!down;
+    const nodes=[operation,directions,edge];
+    return {nodes,sync(){
+      const on=control.get(),mask=control.direction();
+      for(const node of nodes)node.hidden=!on;
+      if(operation.value!==String(control.mode()))operation.value=String(control.mode());
+      if(edge.value!==String(control.edge()))edge.value=String(control.edge());
+      for(const [flag,input] of checks)input.checked=!!(mask&flag);
+      all.checked=mask===allMask;
+      all.indeterminate=mask!==0&&mask!==allMask;
+      edge.disabled=!(mask&1);
     }};
   }
   const name = e => ({ochkiSkipSpaces:'Без пробелов',ochkiEveryFrame:'Каждый кадр',ochkiHalf:'Полуинверсия',ochkiRowReverseMask:'Пустоты реверса',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
