@@ -188,7 +188,7 @@ body.may-fold-active #cvGpu{opacity:0}
 <!-- v0.162: пока не собралось меню (скрипты в конце страницы), сырая панель кнопок не мелькает; не соберётся — покажется после загрузки -->
 <style>html.may-boot .bar,html.may-boot header .sub,html.may-boot #mayatnikStatus{visibility:hidden}</style>
 <script>document.documentElement.classList.add('may-boot');addEventListener('load',()=>setTimeout(()=>document.documentElement.classList.remove('may-boot'),0));</script>
-<link rel="stylesheet" href="mayatnik-menu.css?v=1020">
+<link rel="stylesheet" href="mayatnik-menu.css?v=1021">
 <link rel="stylesheet" href="mayatnik-axis-style.css?v=600">
 <link rel="stylesheet" href="mayatnik-manual-lines.css?v=914">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=1017">
@@ -7927,7 +7927,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     let controlsVisible=false;
     const placeMeeting=(x,y,fieldLeft,fieldRight)=>{
       o.meeting??={owner:f,frame:k,x:(x-origin[0])/s,y:(y-origin[1])/s};
-      const edges=window.mayMeetingHorizon?.place({left:host.left,top:host.top,width:w,height:h,x,y,fieldLeft,fieldRight});
+      const edges=window.mayMeetingHorizon?.place({left:host.left,top:host.top,width:w,height:h,x,y,fieldLeft,fieldRight,redraw:fixOvDraw});
       if(edges)controlsVisible=true;
       return edges;
     };
@@ -8548,11 +8548,18 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // прежде перерисовка съедала почти всё время, и 2024 вершины шли ~8 минут. Считается при этом каждая вершина;
   // «▶ Анимация» по-прежнему показывает каждый кадр (скорость 1 = вершина на кадр).
   let fast = false, t0 = 0, lastDraw = 0, drawMs = 0, edgeLooping = false;
-  function build() {
+  function build({paused=false}={}) {
     if(animatrixOn()&&clampInt($('rows').value,8,4096,st.rows)!==st.rows)return animatrixResizeRows($('rows').value);
     // v0.407: новое построение показывает все строки; прежний «Показ = 128» не обрезает новый маятник.
     rowRunEnd(); st.vrows = 0; $('vrows').value = '';
     foldSuspend();   // v0.129
+    if(paused){
+      if(reset(false)===false)return false;
+      if($('frame').dataset.playerFirstFrame==='1'&&addOne())advancePaintColour('frame');
+      target=k;t0=0;
+      draw();queueSession();
+      return true;
+    }
     if(reset()===false)return false; fast = true; t0 = performance.now(); play();
   }
   function coneAutoExtend(){if(coneAutoRun&&coneContinueAllowed()&&k>=target&&target>=total()&&coneContinueExtend(k+1)){target=total();return true;}return false;}
@@ -11458,7 +11465,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(document.body.classList.contains('may-zen'))zenToggle(false);
       writeUI();applyBitColours();lgSync();blackMirrorSync();animHlSync();growSync();meetSync();triTopSync();thirdsSync();axisPaintSync();zSnapSync();zTopSync();zLockSync();$('zLimit').setAttribute('aria-pressed',String(!!st.zLimit));zLinesSync();triangleMapSync();crossMirrorSync();
       autoSync();fillSync();axisLinesSync();rulerSync();templatePickSync();templateSync();$('bAxisPick').setAttribute('aria-pressed','false');$('bMirrorLine').setAttribute('aria-pressed','false');
-      build();while(playing)await new Promise(resolve=>setTimeout(resolve,20));
+      if(build({paused:true})===false)return false;
       sessionReady=true;save();saveSession();savePaint();await cacheWrites;layout();centerAnchor();zTopScroll();queueDigits();
       $('fillInfo').textContent='Всё сброшено: чёрно-белый Хорр 512, режим 4N, по ширине оси, вверх, кратный ×2. Сохранённые библиотеки остаются.';dispatchEvent(new Event('may-reset-complete'));return true;
     }finally{sessionReady=true;resetAllBusy=false;}
@@ -11792,7 +11799,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1017"></script>
 <script src="mayatnik-axes-panel.js?v=895"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=synthesis3"></script>
+<script src="mayatnik-menu.js?v=1021"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=949">
 <script src="mayatnik-button-standard.js?v=synthesis1"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">

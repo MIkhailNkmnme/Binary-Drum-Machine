@@ -451,8 +451,25 @@
     const section = (node, key) => { node.dataset.horrSection = key; return node; };
     { const host=document.createElement('div');host.className='may-rombo-controls';pop.append(section(host,'rombo'));
       const rombo=mountRomboControls(host,{after:()=>{rail.refresh();placeTools();}});toolSync.push(rombo.sync); }
-    const meetingControls=label=>{const node=document.createElement('div');node.className='may-meeting-controls';node.hidden=true;node.setAttribute('role','group');node.setAttribute('aria-label',label);document.body.append(node);return node;};
-    const meetingSizes=meetingControls('Размер поля на линии встречи'),meetingModes=meetingControls('Число вершин и продолжение на линии встречи');
+    let redrawMeeting=null;
+    const meetingControls=(id,label)=>{
+      const panel=document.createElement('div'),toggle=document.createElement('button');
+      panel.id=id;panel.className='may-meeting-controls';panel.hidden=true;
+      panel.setAttribute('role','group');panel.setAttribute('aria-label',label);
+      toggle.type='button';toggle.className='may-meeting-toggle';toggle.hidden=true;
+      toggle.title=label;toggle.setAttribute('aria-label',label);
+      toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls',id);
+      toggle.addEventListener('click',event=>{
+        event.stopPropagation();
+        toggle.setAttribute('aria-expanded',String(toggle.getAttribute('aria-expanded')!=='true'));
+        redrawMeeting?.();
+      });
+      document.body.append(toggle,panel);
+      return {panel,toggle};
+    };
+    const meetingLeft=meetingControls('mayMeetingSizes','Размер поля на линии встречи');
+    const meetingRight=meetingControls('mayMeetingModes','Число вершин и продолжение на линии встречи');
+    const meetingSizes=meetingLeft.panel,meetingModes=meetingRight.panel;
     const sizeRows = [];
     for (let i = 0; i < pres.length; i += 2) {
       const parts=pres.slice(i, i + 2).map(e=>({label:e.textContent,tip:e.title||('Построить '+e.textContent),data:{n:e.dataset.n},
@@ -777,25 +794,35 @@
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : window.mayComparison?.get().source ? 'Конечное поле: до последней вершины внутри рамки 2N−1' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
       let meetingState='';
       window.mayMeetingHorizon={
-        hide(){meetingSizes.hidden=meetingModes.hidden=true;},
-        place({left,top,width,height,x,y,fieldLeft,fieldRight}){
-          const gutter=8,gap=12,buttonWidth=120,half=12,minHalf=gutter+buttonWidth+gap+8;
+        hide(){
+          for(const {panel,toggle} of [meetingLeft,meetingRight])panel.hidden=toggle.hidden=true;
+          redrawMeeting=null;
+        },
+        place({left,top,width,height,x,y,fieldLeft,fieldRight,redraw}){
+          const gutter=8,gap=12,buttonWidth=120,half=12,minHalf=gutter+buttonWidth+gap+half;
           if(width<2*minHalf||y<half||y+half>height||document.body.matches('.may-zen,.may-embed,.may-rombo-active'))return null;
           const center=Math.max(minHalf,Math.min(width-minHalf,x));
-          const sizesX=Math.max(gutter,Math.min(fieldLeft-gap-buttonWidth,center-gap-buttonWidth-8));
-          const modesX=Math.min(width-gutter-buttonWidth,Math.max(fieldRight+gap,center+gap+8));
-          const rows=Math.min(3,Math.floor((height-y+half+2)/26));
-          for(let i=0;i<meetingSizes.children.length;i++)meetingSizes.children[i].hidden=i>=rows;
-          continuation.hidden=rows<2||!window.mayMeetingContinuation;
+          const sizesX=Math.max(gutter,Math.min(fieldLeft-gap-buttonWidth,center-gap-buttonWidth-half));
+          const modesX=Math.min(width-gutter-buttonWidth,Math.max(fieldRight+gap,center+gap+half));
+          const start=sizesX+buttonWidth+gap,end=modesX-gap;
+          redrawMeeting=redraw;
+          continuation.hidden=!window.mayMeetingContinuation;
           syncContinuation();
-          meetingSizes.style.left=left+sizesX+'px';
-          meetingModes.style.left=left+modesX+'px';
-          meetingSizes.style.top=meetingModes.style.top=top+y-half+'px';
-          meetingSizes.hidden=meetingModes.hidden=false;
+          const position=({panel,toggle},panelX,dotX,rows)=>{
+            const panelHeight=Math.min(rows*26-2,height-2*gutter);
+            const panelTop=Math.max(gutter,Math.min(y-half,height-gutter-panelHeight));
+            toggle.style.left=left+dotX+'px';toggle.style.top=top+y+'px';toggle.hidden=false;
+            panel.style.left=left+panelX+'px';panel.style.top=top+panelTop+'px';
+            panel.style.maxHeight=panelHeight+'px';panel.hidden=toggle.getAttribute('aria-expanded')!=='true';
+            return panel.hidden
+              ? {left:dotX-5,right:dotX+5,top:y-5,bottom:y+5}
+              : {left:panelX,right:Math.max(panelX+buttonWidth,dotX+5),top:Math.min(panelTop,y-5),bottom:Math.max(panelTop+panelHeight,y+5)};
+          };
+          const sizePanel=position(meetingLeft,sizesX,start,meetingSizes.children.length);
+          position(meetingRight,modesX,end,continuation.hidden?1:2);
           const state=cur()+':'+(V()?.get()||'');
           if(state!==meetingState){meetingState=state;sizeRows.forEach(row=>row.gzSync());vsync();}
-          const sizePanel={left:sizesX,right:sizesX+buttonWidth,top:y-half,bottom:y-half+rows*26-2};
-          return {start:sizePanel.right+gap,end:modesX-gap,sizePanel};
+          return {start,end,sizePanel};
         }
       };
       queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(section(vm, 'size')); }   // v0.819: «N/3 | 4N» — в раздел «Размер», самым верхом (автор: «перемести в Размер в верх самый»)   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
