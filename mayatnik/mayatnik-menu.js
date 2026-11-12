@@ -474,7 +474,13 @@
       };
       large.onclick=async event=>{
         event.stopPropagation();
-        await window.mayBuildLarge?.(rows);
+        if(window.mayBuildLarge)await window.mayBuildLarge(rows);
+        else{
+          const url=new URL('Zerkalius-mayatnik-gpu.html',location.href);
+          const pair=$('bPair').getAttribute('aria-pressed')==='true';
+          url.search=new URLSearchParams({preview:String(rows),range:window.mayVMode?.get()||'n',mode:$('mode').value,pair:pair?'1':'0'}).toString();
+          window.open(url,'_blank','noopener');
+        }
         sync();
       };
       sizeRows.push(large);
@@ -1237,7 +1243,7 @@
   const longGroups=new Set(['Точка Ось','Правка','Очистка','Оси','Виды поля','Вид','Зеркала','Шаблон']);
   for (const g of tools.querySelectorAll('.pt-g'))if(longGroups.has(g.querySelector('.pt-l').textContent))g.classList.add('pt-long');
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
-    if (b === animatrixHost || b.id === 'lg' || b.classList.contains('may-vis-triple') || b.classList.contains('synthesis-button')) return;   // Custom controllers already own their labels.
+    if (b === animatrixHost || b.id === 'lg' || b.classList.contains('may-vis-triple') || b.classList.contains('synthesis-button') || b.classList.contains('synthesis-info')) return;   // Custom controllers already own their labels.
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
       b.classList.add('gz-hx'); b.querySelector('i').classList.add('gz-ic');
       const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return; }

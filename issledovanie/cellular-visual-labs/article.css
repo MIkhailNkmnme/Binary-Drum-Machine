@@ -1,0 +1,33 @@
+:root{color-scheme:dark;--bg:#12141a;--panel:#1a1d26;--line:#343c4d;--text:#d8dce6;--muted:#a8b1c4;--link:#7cd4ff;--gold:#ffcf6b}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 "Segoe UI",system-ui,sans-serif}
+main{max-width:1120px;margin:auto;padding:28px 24px 64px}
+header,nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px}
+header{padding-bottom:18px;border-bottom:1px solid var(--line);font-size:14px}
+header span{margin-left:auto;color:var(--muted)}
+a{color:var(--link);text-underline-offset:3px}
+a:hover{color:var(--gold)}
+a:focus-visible,.table-scroll:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+.eyebrow{margin:32px 0 8px;color:var(--gold);font-size:13px;letter-spacing:1px}
+h1{font-size:clamp(28px,5vw,44px);font-weight:400;line-height:1.15;margin:0 0 20px}
+h2{font-size:25px;line-height:1.3;font-weight:500;color:var(--gold);margin:0 0 18px}
+p{margin:12px 0;max-width:86ch}
+.lead{font-size:19px;color:var(--muted);max-width:80ch}
+nav{padding:18px 0 6px;font-size:14px}
+section{margin-top:36px;padding-top:26px;border-top:1px solid var(--line)}
+.table-scroll{max-width:100%;overflow-x:auto;margin:22px 0;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:660px;font-size:15px}
+caption{text-align:left;padding:14px 16px;color:var(--muted);background:var(--panel)}
+th,td{text-align:left;vertical-align:top;padding:15px 16px;border-top:1px solid var(--line)}
+thead{background:var(--panel);color:var(--gold)}
+th[scope=row]{width:18%;font-weight:500}
+td{width:41%}
+li{padding-left:4px;margin:10px 0}
+ol,ul{padding-left:24px}
+dl{display:grid;grid-template-columns:minmax(210px,1fr) 2fr;margin:20px 0;border-top:1px solid var(--line)}
+dt,dd{margin:0;padding:16px 12px;border-bottom:1px solid var(--line)}
+dt{color:var(--gold);font-weight:500;background:var(--panel)}
+footer{border-top:1px solid var(--line);margin-top:36px;padding-top:24px;color:var(--muted);font-size:14px}
+@media(max-width:640px){main{padding:20px 16px 48px}header span{margin-left:0;width:100%}.lead{font-size:17px}dl{display:block}dt{border-bottom:0;padding-bottom:6px}dd{padding-top:6px}h2{font-size:22px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
