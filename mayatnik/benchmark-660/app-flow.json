@@ -1,0 +1,153 @@
+{
+  "rows": 8192,
+  "width": 16398,
+  "first": {
+    "engine": "webgpu",
+    "readbackBytes": 256,
+    "searchMs": 239.20000000298023,
+    "dispatches": 16,
+    "countOccurrences": false,
+    "workingBytes": 254176,
+    "archiveMs": 1147.9000000059605,
+    "archiveReadbackBytes": 33685504,
+    "archiveTransferMs": 1566.7000000029802,
+    "snapshotMs": 3478.8000000044703,
+    "totalMs": 3719.3000000044703
+  },
+  "second": {
+    "engine": "webgpu",
+    "readbackBytes": 24636,
+    "searchMs": 53.19999999552965,
+    "dispatches": 2,
+    "countOccurrences": false,
+    "workingBytes": 221260,
+    "archiveMs": 1051.0999999940395,
+    "archiveReadbackBytes": 33685504,
+    "archiveTransferMs": 1636.5,
+    "snapshotMs": 3491,
+    "totalMs": 3545.10000000149
+  },
+  "everyFrame": {
+    "engine": "webgpu",
+    "readbackBytes": 64,
+    "searchMs": 48.80000000447035,
+    "dispatches": 4,
+    "countOccurrences": false,
+    "workingBytes": 254176,
+    "archiveMs": 987.3999999985099,
+    "archiveReadbackBytes": 33685504,
+    "archiveTransferMs": 1596.7000000029802,
+    "snapshotMs": 3378.4000000059605,
+    "totalMs": 3428
+  },
+  "onceIndices": [
+    0,
+    1
+  ],
+  "searchInputs": {
+    "first": [
+      {
+        "frame": 7,
+        "activeIndices": [
+          0,
+          1
+        ],
+        "skip": []
+      }
+    ],
+    "second": [
+      {
+        "frame": 7,
+        "activeIndices": [
+          0,
+          1
+        ],
+        "skip": []
+      },
+      {
+        "frame": 8,
+        "activeIndices": [
+          1
+        ],
+        "skip": [
+          0
+        ]
+      }
+    ],
+    "exhausted": [
+      {
+        "frame": 7,
+        "activeIndices": [
+          0,
+          1
+        ],
+        "skip": []
+      },
+      {
+        "frame": 8,
+        "activeIndices": [
+          1
+        ],
+        "skip": [
+          0
+        ]
+      }
+    ],
+    "everyFrame": [
+      {
+        "frame": 7,
+        "activeIndices": [
+          0,
+          1
+        ],
+        "skip": []
+      },
+      {
+        "frame": 8,
+        "activeIndices": [
+          0,
+          1
+        ],
+        "skip": []
+      }
+    ]
+  },
+  "replayBits": [
+    1,
+    0,
+    1
+  ],
+  "playerWaiting": true,
+  "playerRetainedPlay": true,
+  "yellowRows": [
+    {
+      "index": 0,
+      "colour": "rgb(255, 214, 70)",
+      "background": "rgb(69, 48, 22)"
+    },
+    {
+      "index": 1,
+      "colour": "rgb(255, 214, 70)",
+      "background": "rgb(69, 48, 22)"
+    }
+  ],
+  "supersededFrame": 9,
+  "replacementFrame": 10,
+  "cancelled": true,
+  "progress": {
+    "phases": [
+      "gpu-search",
+      "read",
+      "archive",
+      "archive-finish",
+      "finish"
+    ],
+    "held": {
+      "hidden": false,
+      "phase": "gpu-search",
+      "text": "Кадр 9 · Поиск на GPU · 100% · 0.0 с"
+    },
+    "hiddenAfterOff": true
+  },
+  "pageErrors": []
+}

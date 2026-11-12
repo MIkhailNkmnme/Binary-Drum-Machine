@@ -59,8 +59,9 @@ fn search(@builtin(workgroup_id) group:vec3<u32>,@builtin(local_invocation_id) l
   for(var k=lane;k<p.need+2;k+=64){atomicStore(&out[base+k],select(0xffffffffu,0u,k==1));}
   storageBarrier();
   let r0=lines[li*5];let c0=lines[li*5+1];let dr=lines[li*5+2];let dc=lines[li*5+3];let n=lines[li*5+4];
-  var firstAt=0xffffffffu;var matches=0u;
-  for(var at=lane;at<n;at+=64){
+  var firstAt=0xffffffffu;var matches=0u;var end=n;
+  if(r0>p.a){end=0;}else if(dr>0){end=min(n,(p.a-r0)/dr+1);}
+  for(var at=lane;at<end;at+=64){
     let r=r0+at*dr;let c=c0+at*dc;let first=value(r,c);
     if(first<0){continue;}
     firstAt=min(firstAt,u32(at));
@@ -81,9 +82,121 @@ fn search(@builtin(workgroup_id) group:vec3<u32>,@builtin(local_invocation_id) l
       if(previous==0xffffffffu){break;}
       position=max(position,previous);
     }
+    if((p.b&4)==0&&matches>=u32(p.need)){break;}
   }
-  atomicMin(&out[base],firstAt);atomicAdd(&out[base+1],matches);
+  atomicMin(&out[base],firstAt);if((p.b&4)!=0){atomicAdd(&out[base+1],matches);}
 }`;
+  // МАЯ-660: literal words share one trie traversal per start. Each line
+  // keeps bounded top-k; a second pass reduces line summaries on the GPU.
+  const MULTI_SOURCE=SOURCE+`
+@group(0) @binding(7) var<storage,read_write> reduced:array<u32>;
+var<workgroup> localHits:array<atomic<u32>,4096>;
+@compute @workgroup_size(64)
+fn searchMany(@builtin(workgroup_id) group:vec3<u32>,@builtin(local_invocation_id) local:vec3<u32>){
+  let li=i32(group.x);let lane=i32(local.x);let slots=word[2];
+  for(var k=lane;k<slots;k+=64){atomicStore(&localHits[k],0xffffffffu);}
+  workgroupBarrier();
+  for(var k=lane;k<word[1];k+=64){atomicStore(&localHits[word[4+k*4]],0u);}
+  workgroupBarrier();
+  let r0=lines[li*5];let c0=lines[li*5+1];let dr=lines[li*5+2];let dc=lines[li*5+3];let n=lines[li*5+4];
+  var firstAt=0xffffffffu;var end=n;
+  if(r0>p.a){end=0;}else if(dr>0){end=min(n,(p.a-r0)/dr+1);}
+  for(var at=lane;at<end;at+=64){
+    let r=r0+at*dr;let c=c0+at*dc;
+    if(value(r,c)<0){continue;}firstAt=min(firstAt,u32(at));
+    var node=0;
+    for(var j=0;at+j<n;j++){
+      let v=value(r+j*dr,c+j*dc);if(v<0){break;}
+      node=word[word[0]+node*4+v];if(node<0){break;}
+      if(r>word[word[0]+node*4+3]){break;}
+      let record=word[word[0]+node*4+2];if(record<0||r>word[7+record*4]){continue;}
+      let base=word[4+record*4];let need=word[5+record*4];
+      if((p.b&4)!=0){atomicAdd(&localHits[base],1u);}
+      // Starts in a lane increase; no late position can replace an earlier
+      // retained one. This also avoids atomics for dense repetitive matches.
+      if(u32(at)>=atomicLoad(&localHits[base+need])){continue;}
+      var position=u32(at);
+      for(var k=1;k<=need;k++){
+        let previous=atomicMin(&localHits[base+k],position);
+        if(previous==0xffffffffu){break;}position=max(position,previous);
+      }
+    }
+  }
+  atomicMin(&localHits[0],firstAt);workgroupBarrier();
+  for(var k=lane;k<slots;k+=64){atomicStore(&out[li*slots+k],atomicLoad(&localHits[k]));}
+}
+fn earlier(li:u32,at:u32,first:u32,other:u32,oa:u32,otherFirst:u32)->bool{
+  if(other==0xffffffffu){return true;}
+  let row=lines[li*5]+i32(at)*lines[li*5+2];let otherRow=lines[other*5]+i32(oa)*lines[other*5+2];
+  if(row!=otherRow){return row<otherRow;}
+  let cell=u32(lines[li*5]+i32(first)*lines[li*5+2])*u32(p.W)+u32(lines[li*5+1]+i32(first)*lines[li*5+3]);
+  let otherCell=u32(lines[other*5]+i32(otherFirst)*lines[other*5+2])*u32(p.W)+u32(lines[other*5+1]+i32(otherFirst)*lines[other*5+3]);
+  if(cell!=otherCell){return cell<otherCell;}
+  let parity=select(0,(lines[li*5+1]-p.c-lines[li*5])&1,(p.b&3)==2);
+  let otherParity=select(0,(lines[other*5+1]-p.c-lines[other*5])&1,(p.b&3)==2);
+  if(parity!=otherParity){return parity<otherParity;}
+  if(li!=other){return li<other;}return at<oa;
+}
+@compute @workgroup_size(64)
+fn reduceMany(@builtin(global_invocation_id) id:vec3<u32>){
+  let record=i32(id.x);if(record>=word[1]){return;}
+  let lineOffset=word[4+record*4];let need=word[5+record*4];let resultBase=word[6+record*4];let slots=word[2];
+  for(var k=0;k<1+need*3;k++){reduced[resultBase+k]=0xffffffffu;}
+  var count=0u;
+  for(var li=0;li<p.lines;li++){
+    let base=li*slots;count+=atomicLoad(&out[base+lineOffset]);
+    let first=atomicLoad(&out[base]);
+    for(var k=0;k<need;k++){
+      var at=atomicLoad(&out[base+lineOffset+1+k]);if(at==0xffffffffu){break;}
+      var index=u32(li);var firstAt=first;
+      for(var slot=0;slot<need;slot++){
+        let dest=resultBase+1+slot*3;let prior=reduced[dest];let pa=reduced[dest+1];let pf=reduced[dest+2];
+        if(earlier(index,at,firstAt,prior,pa,pf)){
+          reduced[dest]=index;reduced[dest+1]=at;reduced[dest+2]=firstAt;
+          if(prior==0xffffffffu){break;}index=prior;at=pa;firstAt=pf;
+        }
+      }
+    }
+  }
+  reduced[resultBase]=count;
+}`;
+  function trieGroups(records){
+    const groups=[];let group=null;
+    for(const record of records.values()){
+      if(record.word.includes(' ')||record.need+2>4096||record.word.length>4096){groups.push({records:[record],single:true});continue;}
+      if(!group||group.slots+record.need+1>4096||group.characters+record.word.length>262144){
+        group={records:[],slots:1,characters:0};groups.push(group);
+      }
+      group.records.push(record);group.slots+=record.need+1;group.characters+=record.word.length;
+    }
+    for(const group of groups){
+      if(group.records.length===1){group.single=true;continue;}
+      const nodes=[[-1,-1,-1,-1]],meta=[];let lineOffset=1,resultOffset=0;
+      for(let index=0;index<group.records.length;index++){
+        const record=group.records[index];let node=0;
+        for(const bit of record.word){const child=bit==='1'?1:0;if(nodes[node][child]<0){nodes[node][child]=nodes.length;nodes.push([-1,-1,-1,-1]);}node=nodes[node][child];}
+        nodes[node][2]=index;meta.push(lineOffset,record.need,resultOffset,record.word.length);
+        record.resultOffset=resultOffset;lineOffset+=record.need+1;resultOffset+=1+record.need*3;
+      }
+      group.resultSlots=resultOffset;
+      group.encoded=new Int32Array(4+meta.length+nodes.length*4);
+      group.encoded.set([4+meta.length,group.records.length,lineOffset,resultOffset]);group.encoded.set(meta,4);
+      for(let j=0;j<nodes.length;j++)group.encoded.set(nodes[j],4+meta.length+j*4);
+    }
+    return groups;
+  }
+  function cutoff(record,H,countOccurrences){return countOccurrences||record.hits.length<record.need?H:record.hits[0].row;}
+  function updateTrie(group,H,countOccurrences){
+    const data=group.encoded,base=data[0];
+    for(let index=0;index<group.records.length;index++)data[7+index*4]=cutoff(group.records[index],H,countOccurrences);
+    for(let node=(data.length-base)/4-1;node>=0;node--){
+      const at=base+node*4,left=data[at],right=data[at+1],record=data[at+2];let max=-1;
+      if(record>=0)max=data[7+record*4];
+      if(left>=0)max=Math.max(max,data[base+left*4+3]);if(right>=0)max=Math.max(max,data[base+right*4+3]);
+      data[at+3]=max;
+    }
+    return data[base+3];
+  }
   const pipelines=new WeakMap();
   function supports(options={}){
     return !!MODES[options.mode||'diag']&&!options.through&&!options.skipSpaces&&!options.overlayGrid&&
@@ -165,8 +278,13 @@ fn search(@builtin(workgroup_id) group:vec3<u32>,@builtin(local_invocation_id) l
         buffer:{type:binding===0?'uniform':binding>=5?'storage':'read-only-storage'}}))});
       const pipelineLayout=device.createPipelineLayout({bindGroupLayouts:[layout]});
       const make=entryPoint=>device.createComputePipelineAsync({layout:pipelineLayout,compute:{module,entryPoint}});
-      const [search,bands,fillBands]=await Promise.all(['search','bands','fillBands'].map(make));
-      return {layout,search,bands,fillBands};
+      const multiModule=device.createShaderModule({code:MULTI_SOURCE});
+      const multiLayout=device.createBindGroupLayout({entries:Array.from({length:8},(_,binding)=>({binding,visibility:GPUShaderStage.COMPUTE,
+        buffer:{type:binding===0?'uniform':binding>=5?'storage':'read-only-storage'}}))});
+      const multiPipelineLayout=device.createPipelineLayout({bindGroupLayouts:[multiLayout]});
+      const makeMulti=entryPoint=>device.createComputePipelineAsync({layout:multiPipelineLayout,compute:{module:multiModule,entryPoint}});
+      const [search,bands,fillBands,many,reduce]=await Promise.all([...['search','bands','fillBands'].map(make),...['searchMany','reduceMany'].map(makeMulti)]);
+      return {layout,multiLayout,search,bands,fillBands,many,reduce};
     })();
     pipelines.set(device,pending);try{return await pending;}catch(error){pipelines.delete(device);throw error;}
   }
@@ -175,6 +293,7 @@ fn search(@builtin(workgroup_id) group:vec3<u32>,@builtin(local_invocation_id) l
     onProgress({phase:'gpu-search'});
     const started=performance.now(),prepared=plan(W,H,options),allocated=[];
     const check=()=>{if(!current())throw new DOMException('Поиск отменён','AbortError');};
+    const countOccurrences=options.countOccurrences===true;
     let readbackBytes=0,dispatches=0,occurrenceCount=0;
     const buffer=(size,usage)=>{const b=device.createBuffer({size:Math.max(4,size),usage});allocated.push(b);return b;};
     const S=GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST;
@@ -186,17 +305,27 @@ fn search(@builtin(workgroup_id) group:vec3<u32>,@builtin(local_invocation_id) l
     // Exceptional query size uses the established bounded CPU fallback.
     const memoryLimit=Math.min(16*1048576,device.limits.maxStorageBufferBindingSize,device.limits.maxBufferSize);
     if((maxNeed+2)*4>memoryLimit||maxWord*4>memoryLimit)return null;
-    const batch=Math.max(1,Math.min(2048,Math.floor(memoryLimit/((maxNeed+2)*4))));
+    let maxSlots=maxNeed+2,maxEncodedBytes=maxWord*4,maxResultSlots=1;
+    for(const set of prepared.sets){
+      set.groups=trieGroups(set.records);
+      for(const group of set.groups)if(!group.single){
+        maxSlots=Math.max(maxSlots,group.slots);maxEncodedBytes=Math.max(maxEncodedBytes,group.encoded.byteLength);maxResultSlots=Math.max(maxResultSlots,group.resultSlots);
+      }
+    }
+    if(maxEncodedBytes>memoryLimit||maxResultSlots*4>memoryLimit)return null;
+    const batch=Math.max(1,Math.min(2048,Math.floor(memoryLimit/(maxSlots*4))));
     try{
       check();const pipes=await getPipelines(device);check();
-      const params=buffer(64,GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST),lineBuffer=buffer(batch*20,S),wordBuffer=buffer(maxWord*4,S);
+      const params=buffer(64,GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST),lineBuffer=buffer(batch*20,S),wordBuffer=buffer(maxEncodedBytes,S);
       const clips=new Int32Array(H*4),lo=options.rowLo?.length?options.rowLo:null,hi=options.rowHi?.length?options.rowHi:null;
       if(lo&&lo.length<H||hi&&hi.length<H)throw RangeError('Неполные границы строк снимка.');
       for(let r=0;r<H;r++){clips[2*H+2*r]=lo?lo[r]:-1;clips[2*H+2*r+1]=hi?hi[r]:W-1;}
-      const clipBuffer=buffer(clips.byteLength,S),outBytes=batch*(maxNeed+2)*4;
-      const output=buffer(outBytes,S|GPUBufferUsage.COPY_SRC),staging=buffer(outBytes,GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ);
+      const clipBuffer=buffer(clips.byteLength,S),outBytes=batch*maxSlots*4;
+      const output=buffer(outBytes,S|GPUBufferUsage.COPY_SRC),summary=buffer(maxResultSlots*4,S|GPUBufferUsage.COPY_SRC),staging=buffer(Math.max(outBytes,maxResultSlots*4),GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ);
       device.queue.writeBuffer(clipBuffer,0,clips);device.queue.writeBuffer(params,0,values);
       const bind=device.createBindGroup({layout:pipes.layout,entries:[params,bits,present,lineBuffer,wordBuffer,clipBuffer,output].map((b,binding)=>({binding,resource:{buffer:b}}))});
+      const multiBind=device.createBindGroup({layout:pipes.multiLayout,entries:[params,bits,present,lineBuffer,wordBuffer,clipBuffer,output,summary].map((b,binding)=>({binding,resource:{buffer:b}}))});
+      values[14]=(options.latticeStride??2)|(countOccurrences?4:0);values[15]=Number.isFinite(options.anchor)?Math.trunc(options.anchor):0;
       if(options.withoutBands){
         device.queue.writeBuffer(output,0,new Uint32Array([H]));
         const encoder=device.createCommandEncoder();
@@ -204,38 +333,59 @@ fn search(@builtin(workgroup_id) group:vec3<u32>,@builtin(local_invocation_id) l
         device.queue.submit([encoder.finish()]);dispatches+=2;
       }
       let total=0,done=0;
-      for(const set of prepared.sets)for(const record of set.records.values()){
-        // Keep long/repetitive queries in cancellable submissions as well.
-        const work=set.maxLength+Math.max(0,set.maxLength-record.word.length+1)*record.word.length;
-        record.batch=Math.max(1,Math.min(batch,Math.floor(1073741824/Math.max(1,work))));
-        total+=Math.ceil(set.lines.length/record.batch);
+      for(const set of prepared.sets)for(const group of set.groups){
+        const length=group.records.reduce((n,record)=>Math.max(n,record.word.length),0);
+        const work=set.maxLength+Math.max(0,set.maxLength-length+1)*length;
+        // Each reduced count is <= batch * maxLength, safely below u32.
+        group.batch=Math.max(1,Math.min(batch,Math.floor(1073741824/Math.max(1,work)),Math.floor(0xffffffff/Math.max(1,set.maxLength))));
+        total+=Math.ceil(set.lines.length/group.batch);
       }
-      for(const set of prepared.sets)for(const record of set.records.values()){
-        check();
-        const encoded=Int32Array.from(record.word,ch=>ch===' '?-1:ch==='1'?1:0);device.queue.writeBuffer(wordBuffer,0,encoded);
-        for(let start=0;start<set.lines.length;start+=record.batch){
-          check();const count=Math.min(record.batch,set.lines.length-start),descriptors=new Int32Array(count*5);
-          for(let j=0;j<count;j++){const L=set.lines[start+j];descriptors.set([L.r,L.c,L.dr,L.dc,L.n],j*5);}
+      for(const set of prepared.sets)for(const group of set.groups){
+        check();const record=group.records[0];
+        const encoded=group.single?Int32Array.from(record.word,ch=>ch===' '?-1:ch==='1'?1:0):group.encoded;
+        device.queue.writeBuffer(wordBuffer,0,encoded);
+        for(let start=0;start<set.lines.length;start+=group.batch){
+          check();values[13]=group.single?cutoff(record,H,countOccurrences):updateTrie(group,H,countOccurrences);
+          if(!group.single)device.queue.writeBuffer(wordBuffer,0,encoded);
+          const selected=set.lines.slice(start,start+group.batch).filter(L=>L.r<=values[13]),count=selected.length;
+          if(!count){onProgress({phase:'gpu-search',done:++done,total});continue;}
+          const descriptors=new Int32Array(count*5);
+          for(let j=0;j<count;j++){const L=selected[j];descriptors.set([L.r,L.c,L.dr,L.dc,L.n],j*5);}
           values[3]=count;values[9]=record.word.length;values[10]=record.need;
           device.queue.writeBuffer(params,0,values);device.queue.writeBuffer(lineBuffer,0,descriptors);
-          const encoder=device.createCommandEncoder(),pass=encoder.beginComputePass();pass.setPipeline(pipes.search);pass.setBindGroup(0,bind);pass.dispatchWorkgroups(count);pass.end();
-          const bytes=count*(record.need+2)*4;encoder.copyBufferToBuffer(output,0,staging,0,bytes);device.queue.submit([encoder.finish()]);dispatches++;
-          await staging.mapAsync(GPUMapMode.READ,0,bytes);
+          const encoder=device.createCommandEncoder(),pass=encoder.beginComputePass();
+          pass.setPipeline(group.single?pipes.search:pipes.many);pass.setBindGroup(0,group.single?bind:multiBind);pass.dispatchWorkgroups(count);pass.end();dispatches++;
+          let bytes;
+          if(group.single){bytes=count*(record.need+2)*4;encoder.copyBufferToBuffer(output,0,staging,0,bytes);}
+          else{
+            const reduction=encoder.beginComputePass();reduction.setPipeline(pipes.reduce);reduction.setBindGroup(0,multiBind);reduction.dispatchWorkgroups(Math.ceil(group.records.length/64));reduction.end();dispatches++;
+            bytes=group.resultSlots*4;encoder.copyBufferToBuffer(summary,0,staging,0,bytes);
+          }
+          device.queue.submit([encoder.finish()]);await staging.mapAsync(GPUMapMode.READ,0,bytes);
           try{
             check();const data=new Uint32Array(staging.getMappedRange(0,bytes));readbackBytes+=bytes;
-            for(let j=0;j<count;j++){
-              const offset=j*(record.need+2),L=set.lines[start+j],first=data[offset];record.count+=data[offset+1];
+            if(group.single)for(let j=0;j<count;j++){
+              const offset=j*(record.need+2),L=selected[j],first=data[offset];record.count+=data[offset+1];
               if(first===0xffffffff)continue;
               const firstCell=(L.r+first*L.dr)*W+L.c+first*L.dc;
               for(let k=0;k<record.need;k++){const at=data[offset+2+k];if(at===0xffffffff)break;retain(record,{L,at,row:L.r+at*L.dr,firstCell});}
             }
+            else for(const item of group.records){
+              const offset=item.resultOffset;item.count+=data[offset];
+              for(let k=0;k<item.need;k++){
+                const j=data[offset+1+k*3];if(j===0xffffffff)break;
+                const at=data[offset+2+k*3],first=data[offset+3+k*3],L=selected[j];
+                const firstCell=(L.r+first*L.dr)*W+L.c+first*L.dc;
+                retain(item,{L,at,row:L.r+at*L.dr,firstCell});
+              }
+            }
           }finally{staging.unmap();}
           onProgress({phase:'gpu-search',done:++done,total});
         }
-        occurrenceCount+=record.count;
+        for(const item of group.records)occurrenceCount+=item.count;
       }
       check();const result=finish(prepared,options),searchMs=performance.now()-started;
-      return {...result,occurrenceCount,gpu:{readbackBytes,searchMs,dispatches,workingBytes:allocated.reduce((n,b)=>n+b.size,0)}};
+      return {...result,...(countOccurrences?{occurrenceCount}:{}),gpu:{readbackBytes,searchMs,dispatches,countOccurrences,workingBytes:allocated.reduce((n,b)=>n+b.size,0)}};
     }finally{for(const b of allocated)b.destroy();}
   }
   return {supports,search};

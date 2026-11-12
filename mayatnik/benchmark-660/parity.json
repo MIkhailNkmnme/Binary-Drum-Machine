@@ -1,0 +1,815 @@
+{
+  "adapter": {
+    "vendor": "nvidia",
+    "architecture": "ampere",
+    "description": ""
+  },
+  "width": 131,
+  "height": 270,
+  "passed": [
+    {
+      "i": 0,
+      "mode": "row",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 1,
+      "mode": "row",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 2,
+      "mode": "row",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 3,
+      "mode": "row",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 4,
+      "mode": "row",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 5,
+      "mode": "row",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 6,
+      "mode": "row",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8
+    },
+    {
+      "i": 7,
+      "mode": "row",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8
+    },
+    {
+      "i": 8,
+      "mode": "col",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 9,
+      "mode": "col",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 10,
+      "mode": "col",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 11,
+      "mode": "col",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 12,
+      "mode": "col",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 13,
+      "mode": "col",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 14,
+      "mode": "col",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8
+    },
+    {
+      "i": 15,
+      "mode": "col",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8
+    },
+    {
+      "i": 16,
+      "mode": "diag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 17,
+      "mode": "diag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 18,
+      "mode": "diag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 19,
+      "mode": "diag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 20,
+      "mode": "diag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 21,
+      "mode": "diag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 22,
+      "mode": "diag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8
+    },
+    {
+      "i": 23,
+      "mode": "diag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8
+    },
+    {
+      "i": 24,
+      "mode": "antidiag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 25,
+      "mode": "antidiag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 26,
+      "mode": "antidiag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 27,
+      "mode": "antidiag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 28,
+      "mode": "antidiag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 29,
+      "mode": "antidiag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 30,
+      "mode": "antidiag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8
+    },
+    {
+      "i": 31,
+      "mode": "antidiag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8
+    },
+    {
+      "i": 32,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 33,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 34,
+      "mode": "all",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 35,
+      "mode": "all",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 36,
+      "mode": "all",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 37,
+      "mode": "all",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4
+    },
+    {
+      "i": 38,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8
+    },
+    {
+      "i": 39,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8
+    },
+    {
+      "i": 40,
+      "mode": "row",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 41,
+      "mode": "col",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 5
+    },
+    {
+      "i": 42,
+      "mode": "diag",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 43,
+      "mode": "antidiag",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 44,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 5
+    },
+    {
+      "i": 45,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 2
+    },
+    {
+      "i": 46,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 47,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 48,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4
+    },
+    {
+      "i": 49,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 0
+    },
+    {
+      "i": 50,
+      "mode": "row",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 15
+    },
+    {
+      "i": 51,
+      "mode": "row",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 12
+    },
+    {
+      "i": 52,
+      "mode": "row",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 13
+    },
+    {
+      "i": 53,
+      "mode": "row",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 12
+    },
+    {
+      "i": 54,
+      "mode": "row",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 15
+    },
+    {
+      "i": 55,
+      "mode": "row",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 12
+    },
+    {
+      "i": 56,
+      "mode": "row",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 28
+    },
+    {
+      "i": 57,
+      "mode": "row",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 24
+    },
+    {
+      "i": 58,
+      "mode": "col",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 14
+    },
+    {
+      "i": 59,
+      "mode": "col",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 14
+    },
+    {
+      "i": 60,
+      "mode": "col",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 13
+    },
+    {
+      "i": 61,
+      "mode": "col",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 14
+    },
+    {
+      "i": 62,
+      "mode": "col",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 13
+    },
+    {
+      "i": 63,
+      "mode": "col",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 13
+    },
+    {
+      "i": 64,
+      "mode": "col",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 26
+    },
+    {
+      "i": 65,
+      "mode": "col",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 27
+    },
+    {
+      "i": 66,
+      "mode": "diag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 13
+    },
+    {
+      "i": 67,
+      "mode": "diag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 14
+    },
+    {
+      "i": 68,
+      "mode": "diag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 13
+    },
+    {
+      "i": 69,
+      "mode": "diag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 13
+    },
+    {
+      "i": 70,
+      "mode": "diag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 13
+    },
+    {
+      "i": 71,
+      "mode": "diag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 12
+    },
+    {
+      "i": 72,
+      "mode": "diag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 26
+    },
+    {
+      "i": 73,
+      "mode": "diag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 25
+    },
+    {
+      "i": 74,
+      "mode": "antidiag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 15
+    },
+    {
+      "i": 75,
+      "mode": "antidiag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 15
+    },
+    {
+      "i": 76,
+      "mode": "antidiag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 14
+    },
+    {
+      "i": 77,
+      "mode": "antidiag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 13
+    },
+    {
+      "i": 78,
+      "mode": "antidiag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 14
+    },
+    {
+      "i": 79,
+      "mode": "antidiag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 14
+    },
+    {
+      "i": 80,
+      "mode": "antidiag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 28
+    },
+    {
+      "i": 81,
+      "mode": "antidiag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 27
+    },
+    {
+      "i": 82,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 16
+    },
+    {
+      "i": 83,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 15
+    },
+    {
+      "i": 84,
+      "mode": "all",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 15
+    },
+    {
+      "i": 85,
+      "mode": "all",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 15
+    },
+    {
+      "i": 86,
+      "mode": "all",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 15
+    },
+    {
+      "i": 87,
+      "mode": "all",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 15
+    },
+    {
+      "i": 88,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 30
+    },
+    {
+      "i": 89,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 30
+    },
+    {
+      "i": 90,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 16
+    },
+    {
+      "i": 91,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 14
+    },
+    {
+      "i": 92,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 0
+    },
+    {
+      "i": 93,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 0
+    },
+    {
+      "i": "withoutBands",
+      "found": 4
+    },
+    {
+      "i": "dense-overflow",
+      "occurrenceCount": 69660,
+      "retained": 4
+    },
+    {
+      "i": "dense-prefix-0-all--1",
+      "words": 73,
+      "found": 73
+    },
+    {
+      "i": "dense-prefix-0-all-2",
+      "words": 73,
+      "found": 146
+    },
+    {
+      "i": "dense-prefix-0-row--1",
+      "words": 73,
+      "found": 69
+    },
+    {
+      "i": "dense-prefix-1-all--1",
+      "words": 73,
+      "found": 73
+    },
+    {
+      "i": "dense-prefix-1-all-2",
+      "words": 73,
+      "found": 146
+    },
+    {
+      "i": "dense-prefix-1-row--1",
+      "words": 73,
+      "found": 69
+    }
+  ],
+  "failures": [],
+  "readbackBytes": 411348,
+  "cancelled": true,
+  "mutationCancelled": true,
+  "mutationDuringProgress": true,
+  "fallbacks": {
+    "{\"through\":true}": true,
+    "{\"skipSpaces\":true}": true,
+    "{\"pattern\":\"zeros\"}": true,
+    "{\"mode\":\"v\"}": true,
+    "{\"mode\":\"loop\"}": true
+  },
+  "errors": []
+}

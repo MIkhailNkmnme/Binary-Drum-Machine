@@ -46,19 +46,19 @@ async function main(){
    for(let i=0;i<cases.length;i++){
     const options=cases[i],cpu=MayatnikLargeSearch.search(snapshot,options),actual=await f.searchExact(options);
     if(!actual){failures.push({i,reason:'unsupported',options});continue;}
-    const {gpu:metrics,occurrenceCount,...exact}=actual;readbackBytes+=metrics.readbackBytes;
+    const {gpu:metrics,occurrenceCount,occurrenceCountComplete,...exact}=actual;readbackBytes+=metrics.readbackBytes;
     if(JSON.stringify(exact)!==JSON.stringify(cpu))failures.push({i,options,cpu,gpu:exact});else passed.push({i,mode:options.mode,parity:options.parity,latticeStride:options.latticeStride,invertBits:!!options.invertBits,found:exact.found.length,occurrenceCount});
    }
    // Use the real worker as oracle for automatic band clipping.
    const options={...base,withoutBands:true,bounds:{x:0,y:0,width:W,height:H}};
    const cpu=await MayatnikLargeSearchHost.start({...MayatnikLargeSearchHost.fromPacked(snapshot),request:{options,archive:false}}).result;
-   const actual=await f.searchExact(options);const {gpu:metrics,occurrenceCount,...exact}=actual||{};
+   const actual=await f.searchExact(options);const {gpu:metrics,occurrenceCount,occurrenceCountComplete,...exact}=actual||{};
    if(JSON.stringify(exact)!==JSON.stringify(cpu.result))failures.push({i:'withoutBands',options,cpu:cpu.result,gpu:exact});else passed.push({i:'withoutBands',found:exact.found.length});
    let cancelled=false;try{await f.searchExact(base,()=>false);}catch(e){cancelled=e.name==='AbortError';}
    const fallbacks={};for(const setting of [{through:true},{skipSpaces:true},{pattern:'zeros'},{mode:'v'},{mode:'loop'}])fallbacks[JSON.stringify(setting)]=(await f.searchExact({...base,...setting}))===null;
    for(let r=0;r<H;r++)for(let c=0;c<W;c++)put(r,c,1);f.writePacked(snapshot);await f.done();
-   const denseOptions={...base,mode:'row',vsets:[[['1','first']],[['1','second']],[['1','third']],[['111','triple']]]};
-   const denseCPU=MayatnikLargeSearch.search(snapshot,denseOptions),denseGPU=await f.searchExact(denseOptions),{gpu:denseMetrics,occurrenceCount:denseCount,...denseExact}=denseGPU;
+   const denseOptions={...base,mode:'row',countOccurrences:true,vsets:[[['1','first']],[['1','second']],[['1','third']],[['111','triple']]]};
+   const denseCPU=MayatnikLargeSearch.search(snapshot,denseOptions),denseGPU=await f.searchExact(denseOptions),{gpu:denseMetrics,occurrenceCount:denseCount,occurrenceCountComplete:denseCountComplete,...denseExact}=denseGPU;
    const expectedDenseCount=W*H+(W-4)*H;
    if(JSON.stringify(denseExact)!==JSON.stringify(denseCPU)||denseCount!==expectedDenseCount)failures.push({i:'dense-overflow',expectedDenseCount,denseCount,cpu:denseCPU,gpu:denseExact});else passed.push({i:'dense-overflow',occurrenceCount:denseCount,retained:denseExact.found.length});
    let mutationCancelled=false;try{await f.searchExact(denseOptions,()=>true,()=>f.reset());}catch(e){mutationCancelled=e.name==='AbortError';}

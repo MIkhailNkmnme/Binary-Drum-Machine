@@ -1,0 +1,10 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const suffix=process.argv[2]||'';
+const before=JSON.parse(fs.readFileSync(path.join(__dirname,'baseline'+suffix+'.json'))),after=JSON.parse(fs.readFileSync(path.join(__dirname,'current'+suffix+'.json')));
+for(const key of ['H','W','stride','anchor','frame','plannedVertices','mode','pair','range'])assert.deepEqual(after.setup[key],before.setup[key],key);
+assert.deepEqual(after.errors,[]);assert.deepEqual(before.errors,[]);assert.deepEqual(after.querySeed,before.querySeed);
+const a=before.results[0],b=after.results[0],{gpu:oldMetrics,occurrenceCount:oldCount,occurrenceCountComplete:oldCountComplete,...oldSemantic}=a.result,{gpu:newMetrics,occurrenceCount:newCount,occurrenceCountComplete:newCountComplete,...newSemantic}=b.result;
+assert.deepEqual(a.options,b.options);assert.deepEqual(newSemantic,oldSemantic);
+const comparison={baseline:before.baseline,beforeShaderSha256:before.shaderSha256,afterShaderSha256:after.shaderSha256,height:before.setup.H,width:before.setup.W,frame:before.setup.frame,querySeed:before.querySeed,queries:a.options.vsets.length,direction:a.options.mode,withoutBands:a.options.withoutBands,semanticResultEqual:true,occurrenceCountCompared:false,found:a.result.found.length,beforeOccurrenceCount:oldCount,afterOccurrenceCount:newCount??null,beforeSearchMs:a.metrics.searchWallMs,afterSearchMs:b.metrics.searchWallMs,searchSpeedup:a.metrics.searchWallMs/b.metrics.searchWallMs,beforeTotalMs:a.metrics.totalMs,afterTotalMs:b.metrics.totalMs,totalSpeedup:a.metrics.totalMs/b.metrics.totalMs,beforeReadbackBytes:a.metrics.readbackBytes,afterReadbackBytes:b.metrics.readbackBytes,readbackReduction:a.metrics.readbackBytes/b.metrics.readbackBytes,beforeDispatches:a.metrics.dispatches,afterDispatches:b.metrics.dispatches,archiveBytesBefore:a.archiveBytes,archiveBytesAfter:b.archiveBytes};
+fs.writeFileSync(path.join(__dirname,'comparison'+suffix+'.json'),JSON.stringify(comparison,null,2));console.log(JSON.stringify(comparison,null,2));
