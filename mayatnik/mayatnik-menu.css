@@ -1189,6 +1189,10 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 #mayBottomBar>.may-frame-slider>.gz-a::before,#mayBottomBar>.may-frame-slider>.gz-a::after{display:none}
 .may-frame-slider .may-frame-track-outline path{fill:none;stroke:var(--may-frame-idle);stroke-width:2px;stroke-linejoin:miter}
 .may-frame-slider .may-frame-track-outline .may-frame-track-rail{stroke:#8d9bb0;stroke-width:1px;stroke-dasharray:2 3}
+.may-frame-slider.may-frame-open-ended .may-frame-track-rail{animation:may-frame-open-rail .65s linear infinite paused}
+.may-frame-slider.may-frame-open-ended.may-frame-running .may-frame-track-rail{animation-play-state:running}
+@keyframes may-frame-open-rail{to{stroke-dashoffset:5px}}
+@media(prefers-reduced-motion:reduce){.may-frame-slider.may-frame-open-ended .may-frame-track-rail{animation:none}}
 .may-frame-slider .may-frame-track-outline :is(.may-frame-track-start,.may-frame-track-end){stroke:var(--c)}
 .may-frame-slider .may-frame-track-outline :is(.may-frame-track-left-frame,.may-frame-track-right-frame,.may-frame-track-thumb-frame){display:none}
 .may-frame-slider:not(.may-frame-running,:has(.may-frame-tail:is(:hover,:focus-visible))) .may-frame-track-outline :is(.may-frame-track-left-frame,.may-frame-track-right-frame){display:block;stroke:var(--c)}

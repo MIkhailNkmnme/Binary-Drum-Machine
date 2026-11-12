@@ -397,12 +397,15 @@
       const vl=mid.querySelector('.gz-vl');
       const side=()=>{
         const low=playerFirstFrame(frame),high=Number(frame.max),current=Number(frame.value);
-        thumbWidth=Math.min(64,Math.max(44,20+String(frame.max).length*7));
-        const on=playing(),left=track.sync(high>low?(Math.max(current,low)-low)/(high-low):0,thumbWidth,!on);
+        const openEnded=frame.dataset.playerOpenEnded==='true';
+        thumbWidth=Math.min(64,Math.max(44,20+String(openEnded?current:high).length*7));
+        const fraction=openEnded ? 0.5 : high>low ? (Math.max(current,low)-low)/(high-low) : 0;
+        const on=playing(),left=track.sync(fraction,thumbWidth,!on);
+        cell.classList.toggle('may-frame-open-ended',openEnded);
         syncArrows(on);
         stopButton.hidden=on||current<=low;
         cell.classList.toggle('may-frame-at-start',current<=low);
-        cell.classList.toggle('may-frame-at-end',high>low&&current===high);
+        cell.classList.toggle('may-frame-at-end',!openEnded&&high>low&&current===high);
         for(const [prop,px]of [['--may-thumb-left',left],['--may-thumb-right',120-left-thumbWidth],['--may-thumb-width',thumbWidth]]){
           const length=px+'px';if(cell.style.getPropertyValue(prop)!==length)cell.style.setProperty(prop,length);
         }
@@ -411,7 +414,8 @@
         if(value.style.fontSize!==fontSize)value.style.fontSize=fontSize;
         for(const [key,number]of [['aria-valuemin',low],['aria-valuemax',high],['aria-valuenow',Math.max(current,low)]])
           if(tail.getAttribute(key)!==String(number))tail.setAttribute(key,String(number));
-        if(current<low)tail.setAttribute('aria-valuetext','Кадр 0, поле пустое');
+        const valueText=current<low?'Кадр 0, поле пустое':openEnded?'Кадр '+current+', без заданного конца':'';
+        if(valueText){if(tail.getAttribute('aria-valuetext')!==valueText)tail.setAttribute('aria-valuetext',valueText);}
         else tail.removeAttribute('aria-valuetext');
         const bar=cell.parentElement,c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect(),y=c.bottom-b.top-bar.clientTop;
         const center=Math.round(c.left+c.width/2-b.left-bar.clientLeft);
@@ -429,7 +433,7 @@
         const reduced=$('frame').dataset.renderedReduced==='true',shownRows=reduced?Number($('frame').dataset.renderedRows)||rows:rows,shownWidth=reduced?Number($('frame').dataset.renderedColumns)||width:Number($('frame').dataset.visibleFieldWidth)||width;
         renderFrameCaption(caption,[...type.split(' · '),...($('frame').dataset.apexWidth!==undefined?['по вершинам '+$('frame').dataset.apexWidth+' / '+$('frame').dataset.apexTargetWidth]:[]),shownRows+' строк',($('frame').dataset.apexWidth!==undefined?'поле ':reduced?'ширина ':([2,4,6,8].includes(factor)?factor+'N−1=':'ширина '))+shownWidth,...(frameAccuracyLabel($('frame'))?[frameAccuracyLabel($('frame'))]:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
       };
-      const valueObserver=new MutationObserver(side);if(vl)valueObserver.observe(vl,{childList:true,characterData:true,subtree:true});valueObserver.observe(frame,{attributes:true,attributeFilter:['min','max','data-player-first-frame','data-apex-width','data-apex-target-width','data-apex-min','data-apex-max','data-visible-field-width','data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);if(vl)valueObserver.observe(vl,{childList:true,characterData:true,subtree:true});valueObserver.observe(frame,{attributes:true,attributeFilter:['min','max','data-player-first-frame','data-player-open-ended','data-apex-width','data-apex-target-width','data-apex-min','data-apex-max','data-visible-field-width','data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side();
     }
   }
