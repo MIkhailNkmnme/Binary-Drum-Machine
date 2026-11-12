@@ -789,7 +789,8 @@
           meetingSizes.hidden=meetingModes.hidden=false;
           const state=cur()+':'+(V()?.get()||'');
           if(state!==meetingState){meetingState=state;sizeRows.forEach(row=>row.gzSync());vsync();}
-          return {start:sizesX+buttonWidth+gap,end:modesX-gap};
+          const sizePanel={left:sizesX,right:sizesX+buttonWidth,top:y-half,bottom:y-half+rows*26-2};
+          return {start:sizePanel.right+gap,end:modesX-gap,sizePanel};
         }
       };
       queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(section(vm, 'size')); }   // v0.819: «N/3 | 4N» — в раздел «Размер», самым верхом (автор: «перемести в Размер в верх самый»)   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
