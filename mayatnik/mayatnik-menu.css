@@ -31,6 +31,7 @@
 .may-continuation-highlight:has(input:checked){border-color:#ffd35b}
 .may-continuation-highlight:has(input:disabled){opacity:.45}
 .may-continuation-highlight input{margin:0;accent-color:#ffd35b}
+[data-n=meetingContinuationAxes][hidden]{display:none!important}
 .may-continuation-gif{width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-sizing:border-box;padding:16px;border:1px solid #526d88;border-radius:8px;background:#131a24;color:#e3ebf6;font:13px "Segoe UI",sans-serif}
 .may-continuation-gif::backdrop{background:#0009}
 .may-continuation-gif [hidden]{display:none!important}

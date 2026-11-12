@@ -2185,10 +2185,21 @@
     squares.classList.add('gz-hx');squares.querySelector('i').classList.add('gz-ic');
     const squaresName=document.createElement('span');squaresName.className='gz-nm';squaresName.textContent='GIF квадраты';squares.append(squaresName);
     squares.title='Собрать GIF квадратов от точки оси по всем кадрам';squares.setAttribute('aria-label',squares.title);
-    row.append(b,...options.nodes,gif,squares);
+    const axes=ptBtn('meetingContinuationAxes','axes',probe,()=>{
+      const control=window.mayMeetingContinuation;
+      control.setAxesHidden(!control.axesHidden());placeTools();
+    });
+    axes.classList.add('gz-hx');axes.querySelector('i').classList.add('gz-ic');
+    const axesName=document.createElement('span');axesName.className='gz-nm';axes.append(axesName);
+    row.append(b,...options.nodes,axes,gif,squares);
     toolSync.push(()=>{
-      const on=!!window.mayMeetingContinuation.get(),text=on?'Выключить':'Включить';
+      const control=window.mayMeetingContinuation,on=control.get(),hidden=control.axesHidden();
+      const text=on?'Выключить':'Включить',axesText=hidden?'Показать оси':'Скрыть оси';
       if(name.textContent!==text)name.textContent=text;
+      if(axesName.textContent!==axesText)axesName.textContent=axesText;
+      axes.hidden=!on;axes.classList.toggle('on',hidden);axes.setAttribute('aria-pressed',String(hidden));
+      axes.title=hidden?'Показать точку встречи и оси':'Скрыть точку встречи и оси';
+      axes.setAttribute('aria-label',axes.title);
       b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));options.sync();
     }); }
   const axesPanel=window.MayatnikAxesPanel?.mount(gAxis,{icon,short:text=>window.HubButtonText?.shortCaption(text)||text,after:()=>{rail.refresh();placeTools();}});
