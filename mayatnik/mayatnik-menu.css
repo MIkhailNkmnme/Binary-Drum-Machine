@@ -34,6 +34,7 @@
 .may-continuation-gif output{display:block;min-height:2.2em;margin:10px 0;color:#bcd1e9}
 .may-continuation-gif-links{display:flex;flex-wrap:wrap;gap:8px 14px}
 .may-continuation-gif-links a{color:#9ed4ff}
+.may-continuation-gif-item{display:flex;align-items:center;gap:6px}
 .may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
 body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}

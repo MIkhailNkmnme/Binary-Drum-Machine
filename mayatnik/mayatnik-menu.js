@@ -2165,6 +2165,11 @@
     };
     const toggle=command('meetingContinuation','steps','Включить','Включить продолжение битов от точки встречи',
       update(()=>control.set(!control.get())));
+    const rectangle=command('meetingContinuationRectangle','square','Прямоугольник',
+      'Начать Маятник с текущего рисунка в прямоугольнике постоянного размера',async()=>{
+        rectangle.disabled=true;
+        try{await control.startRectangle();}finally{rectangle.disabled=false;placeTools();}
+      });
     const operation=list('meetingContinuationOperation','copy','Наложение','Наложение: A — бит Маятника, B — бит продолжения',
       control.modes,control.mode,control.setMode);
     const edge=list('meetingContinuationEdge','mirror','Нижний край','Нижний край: прямо, отражение от последней строки или перенос вверх в тот же столбец',
@@ -2195,10 +2200,14 @@
     const squares=command('meetingContinuationSquareGif','grid4','GIF квадраты','Собрать GIF квадратов от точки оси по всем кадрам',()=>control.openSquareGif());
     const settings=[operation,pair('Вертикальные направления',directions.slice(0,2)),
       pair('Горизонтальные направления',directions.slice(2)),all,edge,highlight,axes];
-    row.append(toggle,...settings,gif,squares);
+    row.append(toggle,...settings,rectangle,gif,squares);
     toolSync.push(()=>{
       const on=control.get(),mask=control.direction(),hidden=control.axesHidden();
       const label=on?'Выключить':'Включить',axesLabel=hidden?'Показать оси':'Скрыть оси';
+      const fixed=control.rectangle();
+      setLabel(rectangle,fixed?'Обычное поле':'Прямоугольник');
+      describe(rectangle,fixed?'Вернуться к обычному полю Маятника':'Начать Маятник с текущего рисунка в прямоугольнике постоянного размера');
+      pressed(rectangle,fixed);
       setLabel(toggle,label);describe(toggle,label+' продолжение битов от точки встречи');pressed(toggle,on);
       for(const button of settings)button.hidden=!on;
       for(const {flag,button} of directions)pressed(button,!!(mask&flag));

@@ -1,4 +1,4 @@
-<!-- СИН-002 · Маятник · Синтез v0.003. Основа v0.999. Перемещаемое окно; браузерный отчёт synthesis-browser-check.md. -->
+<!-- СИН-002 · Маятник · Синтез v0.004. Основа v0.999. Перемещаемое окно; браузерный отчёт synthesis-browser-check.md. -->
 <!-- МАЯ-652 · v0.999. Поле 16384 строки в GPU-просмотре. -->
 <!-- МАЯ-642 · v0.995. «Раскраска» под полем берёт маску 0 и 1 из выбранной копии. -->
 <!-- МАЯ-640–641 · v0.994. «Бит | RGB», постоянная палитра RGB и пункт «Без наложения». -->
@@ -63,7 +63,7 @@
 <script src="mayatnik-synthesis-storage.js?v=1"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Маятник · Синтез v0.003 · база v0.999</title>
+<title>Маятник · Синтез v0.004 · база v0.999</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -214,7 +214,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятник · Синтез</h1><span class="ver" title="На основе Маятника v0.999">0.003 · база 0.999</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятник · Синтез</h1><span class="ver" title="На основе Маятника v0.999">0.004 · база 0.999</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -550,7 +550,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-edge-copy.js?v=719"></script>
 <script src="mayatnik-construction.js?v=997"></script>
 <script src="mayatnik-staggered-grid.js?v=973"></script>
-<script src="mayatnik-sequence-field.js?v=997"></script>
+<script src="mayatnik-sequence-field.js?v=1015"></script>
 <script src="mayatnik-edge-flow.js?v=825"></script>
 <script src="mayatnik-animatrix-xoroorius.js?v=965"></script>
 <script src="mayatnik-animatrix-interxor.js?v=967"></script>
@@ -589,7 +589,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-work-file.js?v=140"></script>
 <script src="mayatnik-xorrom-visual.js?v=867"></script>
 <script src="mayatnik-frame-library.js?v=623"></script>
-<script src="mayatnik-share-link.js?v=948"></script>
+<script src="mayatnik-share-link.js?v=1015"></script>
 <script src="mayatnik-link-library.js?v=783"></script>
 <link rel="stylesheet" href="mayatnik-ochki-log.css?v=647">
 <script src="mayatnik-ochki-method.js?v=652"></script>
@@ -1771,7 +1771,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function clampInt(v, a, b, d) { v = Math.round(Number(v)); return Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : d; }
   function readUI(restoredSteps=null) {
     // v0.405: «неправильно строит маятник»: ползунка «Вершин» нет (v0.372) — вершин всегда от строк и выбора N / N/3 / 4N, иначе «Строк» + «Построить» брали прежнее число вершин
-    st.rows = clampInt($('rows').value, 8, 4096, 512);
+    st.rows = MayatnikSequenceField.fixed(st)?st.sequenceSource.rows.length:clampInt($('rows').value, 8, 4096, 512);
     st.steps = Number.isSafeInteger(restoredSteps)&&restoredSteps>=1&&restoredSteps<=16384 ? restoredSteps : st.edgeWrap ? clampInt(edgeWidthFactor() * st.rows, 1, 16384, 2048) : clampInt(vSteps(st.rows), 1, 16384, 512);
     { let mv = $('mode').value; if (mv !== 'pend' && mv !== 'pendR') mv = 'pend'; st.both = false; st.mode = mv; }   // v0.397: «оставь две — ЛевПрав, ПравЛев»; прочие ходы — «лево-право»   // v0.249: «оба рядом» — строится «лево-право», справа его зеркало
     $('bg').value = 'empty'; st.bg = 'empty'; st.view = $('view').value;   // v0.396: «всегда пустое — удали кнопки и список»
@@ -2758,6 +2758,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function animatrixDisplayHeight(){return animatrixEngine?.copyRowsVisibleHeight??f.H;}
   function updWin() {
+    if(MayatnikSequenceField.fixed(st)){
+      if(VX===0&&VW===f.W&&VH===f.H)return false;
+      VX=0;VW=f.W;VH=f.H;triangleSides=[];
+      return true;
+    }
     if(animatrixOn()){if(ZL.length){ZL=new Int32Array(0);ZR=new Int32Array(0);}const height=animatrixDisplayHeight(),R=st.vrows>0?Math.min(height,st.vrows):height;if(VX===0&&VW===f.W&&VH===R)return false;VX=0;VW=f.W;VH=R;return true;}
     if (st.edgeWrap && !compareOn() && !st.sequenceSourceOn) {   // v0.708: «Край» — всегда всё поле выбранной ширины
       if (VX === 0 && VW === f.W && VH === f.H) return false;

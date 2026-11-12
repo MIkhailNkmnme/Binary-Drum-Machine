@@ -11,6 +11,7 @@
   const inNode=typeof module==='object'&&module.exports;
   const animatrix=inNode?require('./mayatnik-animatrix-source.js'):globalThis.MayatnikAnimatrixSource;
   const edge=inNode?require('./mayatnik-edge-flow.js'):globalThis.MayatnikEdgeFlow;
+  const sequenceField=inNode?require('./mayatnik-sequence-field.js'):globalThis.MayatnikSequenceField;
   const construction=typeof module==='object'&&module.exports?require('./mayatnik-construction.js'):globalThis.MayatnikConstruction;
   const MODES=['pend','pendR','left','right','one'];
   const BACKGROUNDS=['empty','0','1','chess'];
@@ -86,7 +87,17 @@
     if(!MODES.includes(state.mode))throw Error('В ссылке некорректный ход маятника');
     if(!BACKGROUNDS.includes(state.bg))throw Error('В ссылке некорректный фон поля');
     if(!COMPARE_SOURCES.includes(state.compareSource??''))throw Error('В ссылке неизвестное построение');
-    if(state.sequenceSource!=null){if(!isPlainObject(state.sequenceSource)||state.sequenceSource.version!==1||!Array.isArray(state.sequenceSource.rows)||!state.sequenceSource.rows.length)throw Error('В ссылке повреждён свой исходный рисунок');if(state.sequenceSource.rows.length>4096||state.sequenceSource.rows.some(row=>typeof row!=='string'||!/^[01]+$/.test(row)))throw Error('В ссылке повреждены строки своего рисунка');if(state.sequenceSourceOn&&state.compareSource)throw Error('В ссылке два источника поля');}
+    if(state.sequenceSource!=null){
+      if(!isPlainObject(state.sequenceSource))throw Error('В ссылке повреждён свой исходный рисунок');
+      const source=state.sequenceSource;
+      if(source.version===2)sequenceField.normalize(source);
+      else{
+        if(source.version!==1||!Array.isArray(source.rows)||!source.rows.length)throw Error('В ссылке повреждён свой исходный рисунок');
+        if(source.rows.length>4096||source.rows.some(row=>typeof row!=='string'||!/^[01]+$/.test(row)))throw Error('В ссылке повреждены строки своего рисунка');
+      }
+      if(state.sequenceSourceOn&&state.compareSource)throw Error('В ссылке два источника поля');
+      if(sequenceField.fixed(state)&&state.sequenceSource.rows.length!==rows)throw Error('Высота ссылки не совпадает с исходным прямоугольником.');
+    }
     if(state.animatrixOn)animatrix.assertState(state);
     edge.validate(state);
     const limit=state.animatrixOn&&animatrix.unlimited(state)?animatrix.frames(state):construction.walk(state)?Math.max(MAX_FRAME,construction.frames(state)):MAX_FRAME;
@@ -134,7 +145,8 @@
   function describe(payload){
     const state=payload?.state||{},rows=Number(state.rows)||0,k=Number(payload?.k)||0,steps=Number(state.steps)||0;
     const pair=!!state.pair&&state.mode==='pend';
-    const construction=state.animatrixOn?'Аниматрица'+(state.animatrixTiming==='rows'?' по строкам':''):state.compareSource==='cone'?'Конусы':state.compareSource?'Сравнение':state.sequenceSourceOn?'Свой маятник':state.edgeWrap?(state.edgeBounce?'Отскок':'Перескок')+(state.edgeContinuous?' без сброса':''):'Маятник';
+    const fixed=sequenceField.fixed(state);
+    const construction=state.animatrixOn?'Аниматрица'+(state.animatrixTiming==='rows'?' по строкам':''):state.compareSource==='cone'?'Конусы':state.compareSource?'Сравнение':fixed?'Прямоугольник':state.sequenceSourceOn?'Свой маятник':state.edgeWrap?(state.edgeBounce?'Отскок':'Перескок')+(state.edgeContinuous?' без сброса':''):'Маятник';
     const view=VIEWS[state.view]||'Биты';
     let maximum=pair?Math.floor(steps/2):steps;
     if(state.animatrixOn)maximum=animatrix.frames(state);
@@ -144,6 +156,7 @@
       const key=[rows,state.mode==='pendR'?'pendR':'pend',Number(pair)].join(':');
       if(state.compareSource==='cone'&&state.coneContinueKey===key&&Number.isSafeInteger(state.coneContinueMax))maximum=Math.max(maximum,state.coneContinueMax);
     }
+    else if(fixed)maximum=sequenceField.frames(state);
     else if(edge.active(state))maximum=edge.limit(state);
     else if(state.mode==='one')maximum=state.sequenceSourceOn?0:1;
     const summary=[rows+' строк','кадр '+k+' из '+maximum,(pair?'пара · ':'')+construction,view].filter(Boolean).join(' · ');
