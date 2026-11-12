@@ -22,7 +22,7 @@
           try{
             acquired=await host.acquire(frame,clone(job));const current=()=>acquired.current?.()!==false;
             if(cancel||!current())throw Error('Поиск отменён или поле изменилось');
-            const catalog=await calculate({nodes:acquired.nodes,sequence:job.sequence,variants:job.variants,settings:job.settings,frame,geometry:acquired.geometry||'',chunkOperations:32768},current);
+            const catalog=acquired.catalog||await calculate({nodes:acquired.nodes,sequence:job.sequence,variants:job.variants,settings:job.settings,frame,geometry:acquired.geometry||'',chunkOperations:32768},current);
             if(cancel||!current()||catalog.complete!==true)throw Error('Кадр не проверен полностью');
             if(!acquired.frameSnapshot?.blob)throw Error('Нет точного сохранённого кадра');
             // The durable frame acknowledgement precedes advancing contiguous coverage.

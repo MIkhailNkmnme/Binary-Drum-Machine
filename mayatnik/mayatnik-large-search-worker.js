@@ -1,6 +1,6 @@
 /* Run exact large-field search and freeze successful frames for the journal. */
 'use strict';
-importScripts('mayatnik-large-search.js?v=1000-dev2');
+importScripts('mayatnik-large-search.js?v=1000-dev3');
 
 async function archiveFrame({width,height,stride,bits,present}){
   const format=typeof CompressionStream==='function'?'deflate':'raw';
@@ -55,9 +55,19 @@ function bandBounds({height,stride,width,bits,present},visibleRows){
   return {rowLo:lo,rowHi:hi};
 }
 
-async function runSearch({data:{snapshot,options,snake,archive}}){
+async function runSearch({data:{snapshot,options,snake,archive,catalog}}){
   const progress=value=>self.postMessage({progress:value});
   try{
+    if(catalog){
+      importScripts('mayatnik-large-snake-catalog.js?v=1000-dev3');
+      self.onmessage=runSearch;
+      const mask=catalog.search.withoutBands?bandBounds(snapshot,catalog.search.bounds.height):null;
+      const result=self.MayatnikLargeSnakeCatalog.compile({...catalog,snapshot,search:{...catalog.search,...mask}},progress);
+      if(!result.complete)throw Error('Кадр проверен не полностью');
+      progress({phase:'archive'});
+      self.postMessage({result,archive:await archiveFrame(snapshot)});
+      return;
+    }
     if(snake&&!self.MayatnikLargeSnake){
       importScripts('mayatnik-large-snake.js?v=1000-dev2');
       self.onmessage=runSearch;

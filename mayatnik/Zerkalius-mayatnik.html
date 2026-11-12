@@ -566,7 +566,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-manual-lines-view.js?v=914"></script>
 <script src="mayatnik-n-axes-control.js?v=600"></script>
 <script src="../_js/grid-parity.js?v=654"></script>
-<script src="mayatnik-gpu.js?v=1000-dev2"></script>
+<script src="mayatnik-gpu.js?v=1000-dev3"></script>
 <script src="mayatnik-gpu-snapshot.js?v=642"></script>
 <script src="mayatnik-manual-mirror-raster.js?v=644"></script>
 <script src="mayatnik-center.js?v=848"></script>
@@ -591,7 +591,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-link-library.js?v=783"></script>
 <link rel="stylesheet" href="mayatnik-ochki-log.css?v=647">
 <script src="mayatnik-ochki-method.js?v=652"></script>
-<script src="mayatnik-ochki-log.js?v=1000-dev2"></script>
+<script src="mayatnik-ochki-log.js?v=1000-dev3"></script>
 <script src="mayatnik-search-frame-store.js?v=1000-dev2"></script>
 <script src="mayatnik-template-follow.js?v=651"></script>
 <script src="mayatnik-template-batch.js?v=931"></script>
@@ -676,11 +676,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 
 <script src="mayatnik-gif-search.js?v=929"></script>
 <script src="mayatnik-snake.js?v=902"></script>
-<script src="mayatnik-manual-snake.js?v=902"></script>
+<script src="mayatnik-manual-snake.js?v=1000-dev3"></script>
 <script src="mayatnik-manual-snake-follow.js?v=658"></script>
 <script src="mayatnik-snake-catalog.js?v=902"></script>
-<script src="mayatnik-snake-scan.js?v=652"></script>
-<script src="mayatnik-snake-scan-host.js?v=652"></script>
+<script src="mayatnik-large-overlay.js?v=1000-dev3"></script>
+<script src="mayatnik-large-snake-catalog.js?v=1000-dev3"></script>
+<script src="mayatnik-snake-scan.js?v=1000-dev3"></script>
+<script src="mayatnik-snake-scan-host.js?v=1000-dev3"></script>
 <script src="mayatnik-visible-cell-graph.js?v=893"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Поиска» -->
 <script src="mayatnik-layers.js?v=600"></script>
@@ -2086,7 +2088,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       return true;
     }
     if(gpuBig.seekTarget===target&&k!==target)return true;
-    const owner=f,key=ochkiKey(),gpu=gpuBig;
+    const wantOverlay=st.ochkiOverlay&&!st.ochkiCode&&!(st.ochkiSnake&&!st.ochkiThrough)&&!ovlFrozen;
+    const overlay=wantOverlay&&ovlSource?.packedSource?ovlSource:null;
+    if(overlay&&!overlay.bits&&!overlay.captureError){cancelLargeSearch();return false;}
+    const grid=overlay?.bits,owner=f,key=grid?ochkiOverlayKey():ochkiKey(),gpu=gpuBig;
+    if(overlay?.captureError){
+      cancelLargeSearch();
+      largeSearchNotice('Поиск не завершён: '+overlay.captureError);
+      if(playing)stopFrameTransports();
+      return false;
+    }
     if(ochki?.owner===owner&&ochki.key===key){ochkiShow();publishOchki(ochki);return true;}
     if(largeSearchJob?.owner===owner&&largeSearchJob.key===key)return false;
     if(largeSearchError?.owner===owner&&largeSearchError.key===key){
@@ -2097,8 +2108,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const code=!!st.ochkiCode,pattern=code?'initial':st.ochkiPattern||'initial';
     const snake=!!st.ochkiSnake&&!st.ochkiThrough;
     const mode=st.ochkiThrough?'through':st.ochkiMode;
-    if(st.ochkiOverlay||parityPlan().active||!['row','col','diag','antidiag','all','loop','through','v'].includes(mode)){
-      const message='Поиск не завершён: на большом поле выберите «Бит» без наложения и фильтров чётности.';
+    if(parityPlan().active||!['row','col','diag','antidiag','all','loop','through','v'].includes(mode)){
+      const message='Поиск не завершён: на большом поле выберите «Бит» без фильтров чётности.';
       largeSearchError={owner,key,message};
       if(playing)stopFrameTransports();
       largeSearchNotice(message);
@@ -2109,7 +2120,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const count=sequences.rows.length;
     const codeStart=code?(every?sequences.codeStartGet?.()??1:ochkiCodeNext(scope)):0;
     const finished=code?codeStart<0:!every&&(snake?skipByHalf.every(rows=>rows.length===count):consumed.size===count);
-    if(pattern==='initial'&&finished){
+    if(pattern==='initial'&&finished&&!grid){
       const summary=snake?ochkiSnakeSummary([],scope,true):{
         foundIndices:[...(code?ochkiUnionFor(scope):consumed)],foundCount:consumed.size,foundEver:consumed.size,newCount:0};
       ochki={owner,key,found:[],...summary,snake,codeMode:code,codeNext:-1,
@@ -2131,7 +2142,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       parities:snake?[0,1]:undefined,halves:snake?2:undefined,skipByHalf,
       minimumLength:st.ochkiLength,inverse:!!st.ochkiInv,invertBits:!!st.inverted&&st.invertKind!=='colour',skipSpaces:!!st.ochkiSkipSpaces};
     const job=largeSearchJob={owner,key,worker:null};
-    const current=()=>largeSearchJob===job&&f===owner&&gpuBig===gpu&&st.ochki&&ochkiKey()===key;
+    const current=()=>largeSearchJob===job&&f===owner&&gpuBig===gpu&&st.ochki&&
+      (grid?ovlSource===overlay&&st.ochkiOverlay&&!ovlFrozen&&ochkiOverlayKey()===key:ochkiKey()===key);
     const fail=error=>{
       if(!current())return;
       cancelLargeSearch();
@@ -2140,18 +2152,18 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(playing)stopFrameTransports();
       largeSearchNotice(message);
     };
-    largeSearchNotice('Читаю биты кадра '+k+' с видеокарты…');
+    largeSearchNotice(grid?'Ищу по снятой области наложения…':'Читаю биты кадра '+k+' с видеокарты…');
     (async()=>{
       try{
-        const snapshot=await gpu.fld.readPacked(current);
+        const snapshot=grid?MayatnikLargeOverlay.cloneSnapshot(grid):await gpu.fld.readPacked(current);
         if(!snapshot||!current())return;
-        const worker=job.worker=new Worker('mayatnik-large-search-worker.js?v=1000-dev2');
+        const worker=job.worker=new Worker('mayatnik-large-search-worker.js?v=1000-dev3');
         worker.onerror=event=>fail(event.message||'не удалось запустить поиск');
         worker.onmessage=({data})=>{
           if(!current())return;
           if(data.error){fail(data.error);return;}
           if(data.progress){
-            const phase=data.progress.phase==='archive'?'Сохраняю точный снимок':'Ищу в кадре '+k;
+            const phase=data.progress.phase==='archive'?'Сохраняю точный снимок':grid?'Ищу по наложению':'Ищу в кадре '+k;
             $('ochkiSum').textContent=phase+'…';
             return;
           }
@@ -2178,19 +2190,24 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
             ochkiFoundCount.set(scope,consumed.size);
             result.foundIndices=[...union];result.foundEver=union.size;result.foundCount=consumed.size;
           }
-          ochki={...result,owner,key,frame:k,packed:true};
+          ochki={...result,owner,key,frame:grid?.frame??k,packed:true};
+          if(grid){
+            ochki.local=true;ochki.grid=grid;ochki.counts=grid.counts;
+            if(grid.sampling==='visible-raster')ochki.reason=[ochki.reason,'По пикселям снимка при уменьшении'].filter(Boolean).join(' · ');
+          }
           if(data.archive&&result.found.length&&!ochkiLogSuppressed())ochkiRecordFrame(k,ochki,data.archive);
           if(data.archiveError&&result.found.length)ochkiToast('Снимок кадра не сохранён: '+data.archiveError);
-          ochkiShow();publishOchki(ochki);gpuQueue();
+          ochkiShow();publishOchki(ochki);if(grid)ovlDraw();else gpuQueue();
         };
-        worker.postMessage({snapshot,options,snake,archive:!!ochkiFrameStore&&!ochkiLogSuppressed()},
+        const searchOptions=grid?MayatnikLargeOverlay.searchOptions(grid,options):options;
+        worker.postMessage({snapshot,options:searchOptions,snake,archive:!grid&&!!ochkiFrameStore&&!ochkiLogSuppressed()},
           [snapshot.bits.buffer,snapshot.present.buffer]);
       }catch(error){fail(error);}
     })();
     return false;
   }
   function largeSearchOverlay(left,top,width,height,x,y,scale,dpr){
-    const result=st.ochki&&ochki?.owner===f&&ochki.key===ochkiKey()?ochki:null;
+    const result=st.ochki&&!ochki?.local&&ochki?.owner===f&&ochki.key===ochkiKey()?ochki:null;
     const previous=st.ochki&&largeFindSelection?.owner===f&&largeFindSelection.frame===k?largeFindSelection.hit:null;
     if(!result?.found.length&&!previous){if(largeOverlay)largeOverlay.hidden=true;return;}
     if(!largeOverlay){
@@ -2242,7 +2259,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       }
     }
     gpuFlush();status();imageStats();present();
-    largeSearchFrameReady();
+    if(st.manualSnake&&!(gpuBig.seekTarget===target&&k!==target)){
+      manualSnakeFrameSync();manualSnakeShown();
+    }
+    largeSearchFrameReady();snakeCatalogOverlayDraw();
   }
   let ochkiCleared=null,ochkiSearchView=null,ochkiFoundOwner=null,ochkiActiveScope='',ochkiSearchSerial=0;
   function ochkiFindingsSuppressed(){
@@ -2271,7 +2291,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   let ochkiLog = [];
   try { const savedLog = JSON.parse(localStorage.getItem('mayatnik_ochki_log') || '[]'); if (Array.isArray(savedLog)) ochkiLog = savedLog.slice(-500); } catch (_) {}
   const ochkiSequenceKey = () => {let h=2166136261;for(const row of sequences.rows){for(let j=0;j<row.length;j++)h=Math.imul(h^row.charCodeAt(j),16777619);h=Math.imul(h^10,16777619);}return (h>>>0).toString(36);};
-  const ochkiScope = () => JSON.stringify([st.compareSource || '',fieldSourceKey(), !!st.compareMirror, st.mode, st.bg, pairOn(), f.W, f.H, st.steps, st.view,rgbNeighbourFilters(),rgbNeighbourBWMode(), !!st.joined180, st.noband, st.parity, st.ochkiMode, !!st.ochkiThrough, st.ochkiPattern || 'initial', st.ochkiLength, !!st.ochkiInv, !!st.ochkiRev, !!st.ochkiHalf,!!st.ochkiRowReverseMask,!!st.ochkiSkipSpaces,!!st.ochkiEveryFrame, !!st.ochkiSnake, !!st.ochkiCode, ochkiSequenceKey(),ochkiVSettings(), typeof testPattern!=='undefined'?testPattern?.kind:null])+(f.packed?'|'+JSON.stringify([st.vrows,st.ochkiCodeStart,!!st.ochkiOverlay]):'')+(st.inverted===true&&st.invertKind!=='colour'?'|invert-bits':'');
+  const ochkiScope = () => JSON.stringify([st.compareSource || '',fieldSourceKey(), !!st.compareMirror, st.mode, st.bg, pairOn(), f.W, f.H, st.steps, st.view,rgbNeighbourFilters(),rgbNeighbourBWMode(), !!st.joined180, st.noband, st.parity, st.ochkiMode, !!st.ochkiThrough, st.ochkiPattern || 'initial', st.ochkiLength, !!st.ochkiInv, !!st.ochkiRev, !!st.ochkiHalf,!!st.ochkiRowReverseMask,!!st.ochkiSkipSpaces,!!st.ochkiEveryFrame, !!st.ochkiSnake, !!st.ochkiCode, ochkiSequenceKey(),ochkiVSettings(), typeof testPattern!=='undefined'?testPattern?.kind:null])+(f.packed?'|'+JSON.stringify([st.vrows,st.ochkiCodeStart,!!st.ochkiOverlay,st.ochkiOverlay&&!ovlFrozen?ovlSource?.packedSerial:null]):'')+(st.inverted===true&&st.invertKind!=='colour'?'|invert-bits':'');
   const ochkiSrcKey = (i, hit, scope=ochkiScope(),frameNo=k) => JSON.stringify([scope, i, hit.p, hit.text??sequences.rows[i],hit.n,hit.dir,...(st.ochkiEveryFrame?["frame",frameNo]:[])]);
   const ochkiFoundIdx = new Set(ochkiLog.filter(e => e?.key).map(e => e.key));
   // v0.625: строка последовательности ищется один раз за сеанс в своём
@@ -2785,7 +2805,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(snakePathOwner!==f){snakePathOwner=f;snakePathEpoch++;snakePathOverlay?.clear();}
     snakePathOverlay??=MayatnikSnakePaths.create({document,window,onSelect:value=>sequences.selectSnakePath?.(value)});
     const wr=wrap.getBoundingClientRect(),viewport={left:wr.left+wrap.clientLeft,top:wr.top+wrap.clientTop,width:wrap.clientWidth,height:wrap.clientHeight},rect=cv.getBoundingClientRect(),unit=scale(),physical=p=>viewRotation.logicalPoint(p),project=(x,y)=>{const p=physical({x:rect.left+x*unit,y:rect.top+y*unit});return {x:p.x-viewport.left,y:p.y-viewport.top};},unproject=(x,y)=>{const p=physical({x:x+viewport.left,y:y+viewport.top});return {x:(p.x-rect.left)/unit,y:(p.y-rect.top)/unit};},paths=[];
-    const a=manualSnakeLayer;if(st.manualSnake&&a?.path&&a.owner===f&&a.key===manualPaintKey()&&a.geometry===manualPatternGeometry())paths.push(a.path);
+    const a=manualSnakeLayer;if(st.manualSnake&&a?.path&&a.owner===f&&a.key===manualPaintKey()&&a.geometry===manualSnakeGeometry())paths.push(a.path);
     if(st.ochki&&st.ochkiSnake&&ochki?.snake&&ochki.owner===f&&ochki.key===key)for(let index=0;index<ochki.found.length;index++){
       const hit=ochki.found[index];if(!Number.isInteger(hit.i)||!hit.cells?.length)continue;
       const points=joinedWhole()&&hit.displayCells?.length?hit.displayCells.map(q=>joinedGeometry().fromDisplay(q)).filter(Boolean).map(cell=>({x:cell.x+.5,y:cell.y+.5})):[];for(const q of points.length?[]:hit.cells){const r=Math.floor(q/f.W),c=q%f.W;if(c<VX||c>=VX+VW||r<0||r>=VH||!parityVisible(r,c)||outZone(r,c))continue;const p=rombP()<0?-1:(c-geo.anchor-r)&1;if(!joinedOn()&&rombP()>=0&&rombP()!==2&&p!==rombP())continue;points.push(displayPoint(c,r,p));}
@@ -2830,7 +2850,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   // v0.564: Очки по битам наложения. Источник — биты, снятые вместе с увеличенной копией; найденное
   // подсвечивается на самой копии, а не на поле. Работает до фиксации, вне ромбов и без gpuBig.
-  const ochkiOverlayReady = () => !!st.ochkiOverlay && !!ovlSource?.bits && !ovlFrozen && !gpuBig && rombP() < 0;
+  const ochkiOverlayReady = () => !!st.ochkiOverlay && !!ovlSource?.bits && !ovlSource.bits.packed && !ovlFrozen && !gpuBig && rombP() < 0;
   const ochkiOverlayKey = () => ['ovl', ovlSerial, st.view,JSON.stringify(rgbNeighbourFilters()),rgbNeighbourBWMode(),st.ochkiMode, !!st.ochkiThrough, st.ochkiPattern || 'initial', st.ochkiLength || 5, st.ochkiInv ? 1 : 0, st.ochkiRev ? 1 : 0, st.ochkiHalf ? 1 : 0, st.ochkiRowReverseMask ? 1 : 0, st.ochkiSkipSpaces ? 1 : 0, st.ochkiEveryFrame ? 1 : 0, sequences.revision].join('|');
   function ochkiGridLines(g) {
     if(st.ochkiSkipSpaces)return ochkiCompactLines(g);
@@ -6180,14 +6200,30 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
     queueDigits();cv.scrollIntoView({block:'nearest',inline:'nearest'});
   }
+  async function decodePackedSearchSnapshot({blob,width,height,stride,format}){
+    const words=stride*height,bytes=words*4;
+    if(!Number.isSafeInteger(width)||width<1||!largeRows(height)||!Number.isSafeInteger(stride)||
+      stride<Math.ceil(width/32)||!Number.isSafeInteger(bytes)||bytes>(gpuApi?.fieldBufferLimit||0)||
+      !['deflate','raw'].includes(format))throw Error('Некорректный размер упакованного снимка или превышен лимит GPU');
+    const data=format==='deflate'
+      ?await new Response(blob.stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer()
+      :await blob.arrayBuffer();
+    if(data.byteLength!==bytes*2)throw Error('Неполный сохранённый снимок большого поля');
+    return {width,height,stride,bits:new Uint32Array(data,0,words),present:new Uint32Array(data,bytes,words)};
+  }
+  function packedFrameState(build,settings={}){
+    return {...st,...settings,...build,ochkiOverlay:false,
+      animatrixOn:false,compareSource:'',compareMirror:false,sequenceSourceOn:false,edgeWrap:false,
+      sequenceOwnGrid:false,sequenceInverseAbove:false,sequenceApexWalk:false,staggeredGrid:false,
+      frameZeroFill:'off',joined180:false,joined180Whole:false,parity:null,view:'bits',bg:'empty'};
+  }
   async function openPackedSearchFrame(stored,detail){
     const {record,snapshot}=stored,build=record.packedBuild;
-    const {blob,width,height,stride,format}=snapshot;
+    const {width,height}=snapshot;
     if(ochkiRestoringFrame)throw Error('Открытие найденного кадра уже выполняется');
     if(!build||!largeRows(height)||height!==build.rows||height!==record.height||width!==record.width||
-      !Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(stride)||stride<Math.ceil(width/32)||
-      !Number.isSafeInteger(build.steps)||build.steps<1||build.steps>4*height||
-      !['pend','pendR'].includes(build.mode)||!['deflate','raw'].includes(format)||
+      !Number.isSafeInteger(width)||width<1||!Number.isSafeInteger(build.steps)||build.steps<1||build.steps>4*height||
+      !['pend','pendR'].includes(build.mode)||
       !Number.isSafeInteger(record.frame)||record.frame<0||record.frame>fieldFrames({...build,edgeWrap:false})||
       snapshot.frame!==record.frame)throw Error('Некорректный снимок большого поля');
     const origin=f,originFrame=k;
@@ -6196,25 +6232,15 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     try{
       await gpuReady;
       if(!gpuApi)throw Error('Для открытия этого кадра нужен WebGPU');
-      const words=stride*height,bytes=words*4;
-      if(!Number.isSafeInteger(bytes)||bytes>gpuApi.fieldBufferLimit)throw Error('Снимок превышает лимит GPU-буфера');
-      const state={...st,...record.settings,...build,invertFrame:record.frame,ochki:true,ochkiOverlay:false,
-        animatrixOn:false,compareSource:'',compareMirror:false,sequenceSourceOn:false,edgeWrap:false,
-        sequenceOwnGrid:false,sequenceInverseAbove:false,sequenceApexWalk:false,staggeredGrid:false,
-        frameZeroFill:'off',joined180:false,joined180Whole:false,parity:null,view:'bits',bg:'empty'};
-      const geometry=fieldGeometry(state);
-      if(geometry.W!==width)throw Error('Размер сохранённого поля не совпадает с построением');
-      const data=format==='deflate'
-        ?await new Response(blob.stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer()
-        :await blob.arrayBuffer();
-      if(data.byteLength!==bytes*2)throw Error('Неполный сохранённый снимок большого поля');
+      const state={...packedFrameState(build,record.settings),invertFrame:record.frame,ochki:!detail.catalog};
+      if(fieldGeometry(state).W!==width)throw Error('Размер сохранённого поля не совпадает с построением');
+      const packed=await decodePackedSearchSnapshot(snapshot);
       if(f!==origin||k!==originFrame||playing)throw Error('Текущий кадр изменился во время открытия');
       const previousState=st;
       st=state;
       try{
         applyBitColours();writeUI();
-        if(reset(false,build.steps,{frame:record.frame,
-          snapshot:{width,height,stride,bits:new Uint32Array(data,0,words),present:new Uint32Array(data,bytes,words)}})===false)
+        if(reset(false,build.steps,{frame:record.frame,snapshot:packed})===false)
           throw Error($('stat').textContent||'Не удалось открыть сохранённое поле');
       }catch(error){
         st=previousState;applyBitColours();writeUI();save();throw error;
@@ -6222,6 +6248,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(Array.isArray(record.sequence)&&record.sequence.join('\n')!==sequences.rows.join('\n'))
         sequences.setText(record.sequence.join('\n'));
       ochkiFindingsSuppressed();
+      if(detail.catalog){ochkiRestoringFrame=false;draw();save();queueSession();return true;}
       const found=structuredClone(record.finds),key=ochkiKey();
       ochki={...record,found,key,owner:f,packed:true,count:record.matchCount??record.count};
       if(!st.ochkiEveryFrame&&!ochki.simple){
@@ -6254,6 +6281,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   window.addEventListener('may-ochki-sequence-open',event=>{const detail=event.detail;if(!detail)return;
     const snapshotId=detail.context?.snapshotId||detail.hit?.context?.snapshotId||detail.hit?.snapshotId;
     const packedSnapshot=typeof snapshotId==='string'&&snapshotId.startsWith('["packed-v1",');
+    if(gpuBig?.large&&detail.context?.local){
+      const result=ochki,index=result?.local&&result.grid===ovlSource?.bits&&detail.frame===result.grid.frame
+        ?result.found.findIndex(hit=>hit.i===detail.hit?.i&&hit.r===detail.hit?.r&&hit.c===detail.hit?.c&&hit.dir===detail.hit?.dir):-1;
+      if(index>=0){
+        ovlSource.selected=index;
+        sequences.selectMatches({matchIndices:[index],rowIndices:Number.isInteger(detail.i)?[detail.i]:[],key:result.key});
+        ovlDraw();detail.handled=Promise.resolve(true);
+      }else detail.handled=Promise.reject(Error('Снимок этой находки по наложению уже сменился.'));
+      return;
+    }
     const sameLargeField=gpuBig?.large&&Number.isSafeInteger(detail.frame)&&detail.frame>=0&&detail.frame<=total()&&
       detail.context?.searchScope===ochkiScope()+'|'+ochkiSearchSerial&&detail.hit?.cells?.length;
     if(sameLargeField){
@@ -8932,7 +8969,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     raf = 0; timer = 0; if (!playing) return;
     if(gpuBig?.large){
       if(gpuBig.error){stopFrameTransports();return;}
-      if(ochkiFrameWait()){if(playing)next();return;}
+      const seeking=gpuBig.seekTarget===target&&k!==target;
+      if((!seeking&&manualSnakeFrameWait())||ochkiFrameWait()){if(playing)next();return;}
     }else{
       if(window.mayGifScaleFrameWait?.()){if(playing)next();return;}
       if((gpuManualCpu()||gpuPaintCpu()||gpuBig&&st.heat&&rombP()<0)&&gpuBig.snapshotPending){next();return;}
@@ -8941,7 +8979,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if (gpuBig && gpuBig.busy) { next(); return; }   // v0.468: видеокарта ещё считает прошлую пачку — не копить очередь
     const colourFrameBefore=k;
     if(templateFollowActive()||gpuBig&&st.heat&&rombP()<0){if(!more())stop(false);}
-    else if(st.ochki&&gpuBig?.large&&gpuBig.seekTarget!==target){if(!more())stop(false);}
+    else if((st.ochki||st.manualSnake&&manualSnakeSession.current()?.anchor)&&gpuBig?.large&&gpuBig.seekTarget!==target){if(!more())stop(false);}
     else if(st.ochki&&!gpuBig?.large){for(let n=0;n<Math.max(1,stepSpeed());n++)if(!more()){stop(false);break;}}
     else if (fast&&gpuBig?.large) {for(let n=0;n<(f.H===16384?256:512);n++)if(!more()){stop(false);break;}}
     else if (fast) { const t = performance.now(), budget = document.hidden ? 400 : 40; while (performance.now() - t < budget) if (!more()) { stop(false); break; } }
@@ -9076,17 +9114,20 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function manualSnakeApply(px){const a=manualSnakeLayer;if(!st.manualSnake||!a||a.overlay||a.owner!==f||a.key!==manualPaintKey()||a.geometry!==manualPatternGeometry()||a.size!==px.length)return;const colour=rgba(a.partial?[255,64,64]:[255,214,70]);if(a.indices){for(const q of a.indices)px[q]=colour;}else for(let q=0;q<px.length;q++)if(a.mask[q])px[q]=colour;}
   function manualSnakeOverlayDraw(){
     snakePathRefresh();const a=manualSnakeLayer;let canvas=manualSnakeOverlayDraw.canvas;
-    if(!st.manualSnake||!a?.overlay||a.owner!==f||a.key!==manualPaintKey()||a.geometry!==manualPatternGeometry()){if(canvas){canvas.hidden=true;canvas.style.display='none';}return;}
+    if(!st.manualSnake||!a?.overlay||a.owner!==f||a.key!==manualPaintKey()||a.geometry!==manualSnakeGeometry()){if(canvas){canvas.hidden=true;canvas.style.display='none';}return;}
     if(!canvas){canvas=manualSnakeOverlayDraw.canvas=document.createElement('canvas');canvas.id='mayManualSnakeHighlight';canvas.setAttribute('aria-hidden','true');Object.assign(canvas.style,{position:'fixed',pointerEvents:'none',background:'transparent',zIndex:12});document.body.append(canvas);}
     const wr=wrap.getBoundingClientRect(),left=wr.left+wrap.clientLeft,top=wr.top+wrap.clientTop,width=wrap.clientWidth,height=wrap.clientHeight,d=DPR(),r=cv.getBoundingClientRect(),unit=scale()/a.rasterScale;
     canvas.hidden=false;canvas.style.display='';Object.assign(canvas.style,{left:left+'px',top:top+'px',width:width+'px',height:height+'px'});canvas.width=Math.max(1,Math.round(width*d));canvas.height=Math.max(1,Math.round(height*d));
     const ctx=canvas.getContext('2d');ctx.fillStyle=a.partial?'rgb(255,64,64)':'rgb(255,214,70)';
-    for(const q of a.indices){const px=r.left+(q%a.width)*unit,py=r.top+Math.floor(q/a.width)*unit,P=viewRotation.logicalPoint({x:px,y:py}),Q=viewRotation.logicalPoint({x:px+unit,y:py+unit}),x=(Math.min(P.x,Q.x)-left)*d,y=(Math.min(P.y,Q.y)-top)*d,s=unit*d;if(x+s<=0||y+s<=0||x>=canvas.width||y>=canvas.height)continue;if(s<1)ctx.fillRect(Math.floor(x+s/2),Math.floor(y+s/2),1,1);else ctx.fillRect(Math.floor(x),Math.floor(y),Math.ceil(x+s)-Math.floor(x),Math.ceil(y+s)-Math.floor(y));}
+    for(const q of a.indices){const px=r.left+(q%a.width-(a.packed?VX:0))*unit,py=r.top+Math.floor(q/a.width)*unit,P=viewRotation.logicalPoint({x:px,y:py}),Q=viewRotation.logicalPoint({x:px+unit,y:py+unit}),x=(Math.min(P.x,Q.x)-left)*d,y=(Math.min(P.y,Q.y)-top)*d,s=unit*d;if(x+s<=0||y+s<=0||x>=canvas.width||y>=canvas.height)continue;if(s<1)ctx.fillRect(Math.floor(x+s/2),Math.floor(y+s/2),1,1);else ctx.fillRect(Math.floor(x),Math.floor(y),Math.ceil(x+s)-Math.floor(x),Math.ceil(y+s)-Math.floor(y));}
   }
   var manualSnakeDisplayed=null;
   function manualSnakeFrameId(){return typeof testPattern!=='undefined'&&testPattern?.kind==='xor'&&typeof testXorInfo!=='undefined'&&testXorInfo?'xor:'+testXorInfo.frame:k;}
-  function manualSnakeModel(){return {owner:f,frame:manualSnakeFrameId(),key:manualPaintKey()+'|'+manualPatternGeometry(),revision:sequences.revision,variantKey:[!!st.ochkiInv,!!st.ochkiRev,!!st.ochkiHalf,!!st.ochkiRowReverseMask].join(''),length:sequences.rows.length};}
-  function manualSnakeReady(){return !!f&&(!gpuBig||gpuBig.fresh&&gpuBig.k===k&&!gpuBig.pend?.length&&!gpuBig.snapshotPending)&&(!!img||!!gpuBig);}
+  function manualSnakeGeometry(){
+    return gpuBig?.large?JSON.stringify([VX,VW,VH,MayatnikInvert.bits(st)]):manualPatternGeometry();
+  }
+  function manualSnakeModel(){return {owner:f,frame:manualSnakeFrameId(),key:manualPaintKey()+'|'+manualSnakeGeometry(),revision:sequences.revision,variantKey:[!!st.ochkiInv,!!st.ochkiRev,!!st.ochkiHalf,!!st.ochkiRowReverseMask].join(''),length:sequences.rows.length};}
+  function manualSnakeReady(){if(gpuBig?.large)return !gpuBig.error&&!gpuBig.pend.length;return !!f&&(!gpuBig||gpuBig.fresh&&gpuBig.k===k&&!gpuBig.pend?.length&&!gpuBig.snapshotPending)&&(!!img||!!gpuBig);}
   function manualSnakeShown(rendered=true){
     if(!manualSnakeSession||!st.manualSnake||!manualSnakeSession.current()?.anchor)return;
     const model=manualSnakeModel();if(rendered)manualSnakeDisplayed={owner:f,frame:model.frame};
@@ -9113,15 +9154,92 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(!manualSnakeSession)return;const state=manualSnakeSession.current(),model=manualSnakeModel(),next=nextFrame!==k;
     if(next)snakePathClear(nextFrame);
     const sourceChanged=state&&state.owner!==f,modelChanged=state&&(state.revision!==model.revision||state.variantKey!==model.variantKey),request=manualSnakeRequest;
-    const staleRequest=request&&(request.owner!==f||request.key!==manualPaintKey()||request.variantKey!==model.variantKey||request.revision!==model.revision||request.paintRevision!==manualPaintRevision);
-    const staleLayer=manualSnakeLayer&&(manualSnakeLayer.owner!==f||manualSnakeLayer.key!==manualPaintKey()||manualSnakeLayer.geometry!==manualPatternGeometry());
+    const staleRequest=request&&(request.owner!==f||request.key!==manualPaintKey()||request.variantKey!==model.variantKey||request.revision!==model.revision||request.paintRevision!==manualPaintRevision||
+      request.geometry!==undefined&&request.geometry!==manualSnakeGeometry());
+    const staleLayer=manualSnakeLayer&&(manualSnakeLayer.owner!==f||manualSnakeLayer.key!==manualPaintKey()||manualSnakeLayer.geometry!==manualSnakeGeometry());
     if(!st.manualSnake||sourceChanged){manualSnakeClearPin();manualSnakeSync();return;}
     if(next||staleRequest||staleLayer||modelChanged){manualSnakeSerial++;manualSnakeSession.cancel(!!modelChanged||!next&&state?.frame===model.frame);manualSnakeLayer=null;sequences.setManualMatch?.(null);manualSnakeOverlayDraw();$('manualSnakeInfo').textContent=state?.anchor?'Начало змеи сохранено; ожидаю показанный кадр.':'Выберите начало змеи — строка 1.';}
     else if(manualSnakeLayer?.overlay)requestAnimationFrame(manualSnakeOverlayDraw);
     snakePathRefresh();manualSnakeSync();
   }
   function manualSnakeSync(){$('bManualSnake').setAttribute('aria-pressed',String(!!st.manualSnake));$('manualSnakeInfo').hidden=!st.manualSnake;}
+  function packedBitAt(region,r,c){
+    const y=r-region.y,x=c-region.x;
+    if(y<0||y>=region.height||x<0||x>=region.width)return -1;
+    const word=y*region.stride+Math.floor(x/32),shift=x&31;
+    return region.present[word]>>>shift&1?region.bits[word]>>>shift&1:-1;
+  }
+  async function packedManualSnakeClick(fx,fy,options){
+    if(!st.manualSnake||manualSnakeBusy&&options.automatic)return;
+    if(manualSnakeBusy)manualSnakeSession.cancel();
+    if(!options.automatic)stopFrameTransports();
+    gpuFlush();
+    const owner=f,gpu=gpuBig,frame=k,model=manualSnakeModel(),paintRevision=manualPaintRevision;
+    const serial=++manualSnakeSerial,info=$('manualSnakeInfo');
+    let state=options.state||null;
+    const c=state?.anchor?.source?.c??VX+Math.floor(fx),r=state?.anchor?.source?.r??Math.floor(fy);
+    const point={x:c-VX+.5,y:r+.5},source={r,c,q:r*f.W+c};
+    const follow=MayatnikManualSnakeFollow,anchor=follow.anchor(point,source,point.x,point.y),start=follow.identity(anchor);
+    const prior=manualSnakeSession.current();
+    const index=state?.index??(prior?.owner===f&&prior.start===start&&prior.revision===model.revision?prior.index+1:0);
+    const depth=sequences.rows[index]?.length||1,inverted=MayatnikInvert.bits(st);
+    const current=()=>f===owner&&gpuBig===gpu&&k===frame&&st.manualSnake&&serial===manualSnakeSerial&&
+      paintRevision===manualPaintRevision&&model.key===manualSnakeModel().key&&
+      model.revision===sequences.revision&&model.variantKey===manualSnakeModel().variantKey;
+    const missing=options.automatic?'Начальный бит не виден в этом кадре; начало сохранено.':'Выберите видимый бит.';
+    if(c<VX||c>=VX+VW||r<0||r>=VH){manualSnakeUnavailable(state,missing);return;}
+    const left=Math.max(VX,c-depth+1),right=Math.min(VX+VW,c+depth);
+    manualSnakeBusy=true;
+    manualSnakeRequest={serial,owner,key:manualPaintKey(),geometry:manualSnakeGeometry(),
+      variantKey:model.variantKey,revision:model.revision,paintRevision};
+    info.textContent='Ручная змея: читаю биты от выбранной клетки…';
+    try{
+      const region=await gpu.fld.readPackedRegion({x:left,y:r,width:right-left,height:Math.min(VH-r,depth)},current);
+      if(!region||!current())return;
+      if(packedBitAt(region,r,c)<0){manualSnakeUnavailable(state,missing);return;}
+      if(!options.automatic){
+        state=manualSnakeSession.choose({...model,start,anchor});
+        manualSnakeDisplayed={owner,frame:model.frame};
+      }
+      if(state.done){info.textContent=state.length?'Ручная змея: все строки проверены. Выберите другой бит для начала.':'Ручная змея: список строк пуст; начало сохранено.';return;}
+      const readBit=(row,col)=>{
+        if(col<left||col>=right)return -1;
+        const bit=packedBitAt(region,row,col);return bit<0||!inverted?bit:1-bit;
+      };
+      info.textContent='Ручная змея: строка '+(state.index+1)+' из '+state.length+'…';
+      const steps=MayatnikManualSnake.findSteps({width:f.W,height:VH,readBit,start:source.q,
+        text:sequences.rows[state.index],inverse:!!st.ochkiInv,reverse:!!st.ochkiRev,half:!!st.ochkiHalf,
+        rowReverseMask:!!st.ochkiRowReverseMask,cancelled:()=>!current()});
+      let step;
+      do{step=steps.next();if(!step.done)await new Promise(resolve=>setTimeout(resolve,0));if(!current())return;}while(!step.done);
+      const result=step.value;
+      if(!manualSnakeSession.complete(state.token,result))return;
+      const indices=result.found?result.cells:result.prefixCells;
+      const points=indices.map(q=>({x:q%f.W-VX+.5,y:Math.floor(q/f.W)+.5}));
+      const sourceStart=snakeStartMetadata({cells:indices}),sourceEnd=snakeStartMetadata({cells:indices.slice(-1)});
+      const path={id:'manual:'+serial+':'+state.index,i:state.index,point:points[0],originalStart:[point.x,point.y],
+        geometry:MayatnikSnakeSource.cells(points,false),sourceStart,sourceEnd,
+        partial:!!result.partial,found:!!result.found,complete:result.complete};
+      manualSnakeLayer={packed:true,partial:!!result.partial,owner,key:manualPaintKey(),geometry:manualSnakeGeometry(),
+        width:f.W,rasterScale:1,overlay:true,indices,path};
+      sequences.setManualMatch?.({i:state.index,frame:k,...result,start:sourceStart,end:sourceEnd});
+      ochkiRecordManualSnake(state.index,result,point,path);
+      info.textContent='Ручная змея: строка '+(state.index+1)+' из '+state.length+' · '+
+        (result.found?'найдена, '+result.n+' из '+result.n+' битов':result.partial?
+          'максимальный префикс '+result.matched+' из '+result.n+' битов (красным)':result.reason);
+      manualSnakeOverlayDraw();
+      return result;
+    }catch(error){
+      if(current()){
+        if(state)manualSnakeSession.complete(state.token,{found:false,complete:false,reason:error.message});
+        info.textContent=error.message;manualSnakeLayer=null;sequences.setManualMatch?.(null);manualSnakeOverlayDraw();
+      }
+    }finally{
+      if(manualSnakeRequest?.serial===serial){manualSnakeBusy=false;manualSnakeRequest=null;manualSnakeShown(false);}
+    }
+  }
   async function manualSnakeClick(fx,fy,options){
+    if(gpuBig?.large)return packedManualSnakeClick(fx,fy,options||{});
     options=options||{};if(!st.manualSnake||manualSnakeBusy&&options.automatic)return;if(manualSnakeBusy)manualSnakeSession.cancel();const serial=++manualSnakeSerial,info=$('manualSnakeInfo'),sequenceRevision=sequences.revision,paintRevision=manualPaintRevision,variantKey=[!!st.ochkiInv,!!st.ochkiRev,!!st.ochkiHalf,!!st.ochkiRowReverseMask].join('');let snapshot,state=options.state||null;
     manualSnakeBusy=true;manualSnakeRequest={serial,owner:f,key:manualPaintKey(),variantKey,revision:sequenceRevision,paintRevision};info.textContent='Ручная змея: читаю видимые биты…';
     try{
@@ -9149,8 +9267,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }catch(error){const message=error?.message||String(error);if(st.manualSnake&&serial===manualSnakeSerial&&sequenceRevision===sequences.revision&&paintRevision===manualPaintRevision&&variantKey===[!!st.ochkiInv,!!st.ochkiRev,!!st.ochkiHalf,!!st.ochkiRowReverseMask].join('')&&(!snapshot||snapshot.current())){if(state)manualSnakeSession.complete(state.token,{found:false,complete:false,reason:message});info.textContent=message;const old=manualSnakeLayer;manualSnakeLayer=null;sequences.setManualMatch?.(null);if(old?.overlay)manualSnakeOverlayDraw();else if(old)draw();}return {error:message};}
     finally{snapshot?.release();if(manualSnakeRequest?.serial===serial){manualSnakeBusy=false;manualSnakeRequest=null;manualSnakeShown(false);}}
   }
-  $('bManualSnake').onclick=()=>{if(!st.manualSnake&&largeToolUnavailable('Ручная змея'))return;const cpuBefore=gpuCpuDisplay();st.manualSnake=!st.manualSnake;manualSnakeSerial++;manualSnakeSession.clear();manualSnakeDisplayed=null;const baked=manualSnakeLayer&&!manualSnakeLayer.overlay;manualSnakeLayer=null;sequences.setManualMatch?.(null);manualSnakeOverlayDraw();manualSnakeSync();if(st.manualSnake){stopFrameTransports();openSequences();$('manualSnakeInfo').textContent='Выберите начало змеи — строка 1.';}else $('manualSnakeInfo').textContent='';save();if(f&&(baked||cpuBefore!==gpuCpuDisplay()||!visibleSemanticCanLazy()))draw();};
-  function manualSnakePointerPoint(e){if(gpuBig?.large||!st.manualSnake||e.button!==0||!f||e.target.closest?.('button,input,select,textarea,.zl-hd,#zTopLine,#mayAxisHandles'))return null;const r=cv.getBoundingClientRect(),unit=scale(),x=(e.clientX-r.left)/unit,y=(e.clientY-r.top)/unit;return x>=0&&y>=0&&x<dispW()&&y<dispH()?[x,y]:null;}
+  $('bManualSnake').onclick=()=>{const cpuBefore=gpuCpuDisplay();st.manualSnake=!st.manualSnake;manualSnakeSerial++;manualSnakeSession.clear();manualSnakeDisplayed=null;const baked=manualSnakeLayer&&!manualSnakeLayer.overlay;manualSnakeLayer=null;sequences.setManualMatch?.(null);manualSnakeOverlayDraw();manualSnakeSync();if(st.manualSnake){stopFrameTransports();openSequences();$('manualSnakeInfo').textContent='Выберите начало змеи — строка 1.';}else $('manualSnakeInfo').textContent='';save();if(f&&(baked||cpuBefore!==gpuCpuDisplay()||!visibleSemanticCanLazy()))draw();};
+  function manualSnakePointerPoint(e){if(!st.manualSnake||e.button!==0||!f||e.target.closest?.('button,input,select,textarea,.zl-hd,#zTopLine,#mayAxisHandles'))return null;const r=cv.getBoundingClientRect(),unit=scale(),x=(e.clientX-r.left)/unit,y=(e.clientY-r.top)/unit;return x>=0&&y>=0&&x<dispW()&&y<dispH()?[x,y]:null;}
   // Mouse keeps its immediate pick. Touch belongs to the shared pan/pinch
   // collector below and commits only after a single stationary finger lifts.
   wrap.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||snakePathHit(e.clientX,e.clientY))return;const p=manualSnakePointerPoint(e);if(!p)return;e.preventDefault();e.stopImmediatePropagation();manualSnakeClick(...p);},true);
@@ -10738,11 +10856,48 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return {q,layers:[],bits:{W:Wq,H:Hq,val:bits,anchor:Aq,anchorRaw:A,frame:k,stride:1,q,meetingPoints:ochkiMeetingPoints().map(p=>({x:(p.x+.5)/q-.5,y:(p.y+.5)/q-.5}))},cell:scale(),
       ax:r.left-L+(A+.5)*scale(),ay:r.top-T,frame:k};
   }
+  function capturePackedOverlay(source){
+    const owner=f,gpu=gpuBig,frame=k,{cell}=source;
+    const viewport=layerViewport(),{left:fieldLeft,top:fieldTop}=cv.getBoundingClientRect();
+    const dims={W:VW,H:VH,cell,fieldLeft,fieldTop,viewport,sourceX:VX};
+    const area=MayatnikLargeOverlay.region(dims),inverted=MayatnikInvert.bits(st);
+    const args={region:area,anchor:geo.anchor,frame,sourceX:VX,sourceWidth:VW,sourceHeight:VH,cell,fieldLeft,fieldTop,
+      meetingPoints:ochkiMeetingPoints().map(p=>({x:p.x+VX,y:p.y})),invertBits:inverted,maxDenseCells:0};
+    source.packedSource=true;source.sourceHeight=VH;source.packedSerial=++ovlSerial;
+    let raster;
+    if(area&&cell<1){
+      const copy=document.createElement('canvas');copy.width=gpuCv.width;copy.height=gpuCv.height;
+      const ctx=copy.getContext('2d');ctx.drawImage(gpuCv,0,0);
+      raster={width:copy.width,height:copy.height,data:ctx.getImageData(0,0,copy.width,copy.height).data,rect:viewport,
+        zero:rgba(PAL.bits[inverted?1:0][0]),one:rgba(PAL.bits[inverted?0:1][0])};
+    }
+    queueMicrotask(async()=>{
+      const current=()=>ovlSource===source&&f===owner&&gpuBig===gpu&&k===frame;
+      try{
+        if(!current())throw Error('Кадр сменился до снимка наложения. Снимите копию заново.');
+        if(!area)throw Error('В окне нет клеток для снимка наложения.');
+        const regionSnapshot=raster?null:await gpu.fld.readPackedRegion(area,current);
+        if(!current()||!raster&&!regionSnapshot)throw Error('Кадр сменился до снимка наложения. Снимите копию заново.');
+        source.bits=MayatnikLargeOverlay.capture({...args,regionSnapshot,raster});
+      }catch(error){source.captureError=error.message||String(error);}
+      if(ovlSource===source){ovlDraw();if(st.ochki&&st.ochkiOverlay&&f===owner)draw();}
+    });
+    return source;
+  }
   function ovlCapture() {
     const Q=ovlState().q;
-    if(Q>1)return ovlCoarseSource(Q);
+    if(Q>1){
+      if(gpuBig?.large){ovlMessage='Блочное уменьшение наложения доступно на поле до 4096 строк.';return null;}
+      return ovlCoarseSource(Q);
+    }
     if (!f || !geo || (!img && !gpuBig) || rombP() >= 0 || document.body.classList.contains('may-fold-active')) return null;
-    if(window.mayLayers){if(gpuDisplay()){if(gpuRaf){cancelAnimationFrame(gpuRaf);gpuRaf=0;}gpuRender();}const s=layerSceneSource();if(s)s.bits=ovlBitsNow();return s;}
+    if(window.mayLayers){
+      if(gpuDisplay()){if(gpuRaf){cancelAnimationFrame(gpuRaf);gpuRaf=0;}if(gpuBig?.large)gpuFlush();gpuRender();}
+      const source=layerSceneSource();
+      if(!source)return null;
+      if(gpuBig?.large)return capturePackedOverlay(source);
+      source.bits=ovlBitsNow();return source;
+    }
     const w = wrap.clientWidth, h = wrap.clientHeight, d = DPR(); if (!w || !h) return null;
     const wr = wrap.getBoundingClientRect(), L = wr.left + wrap.clientLeft, T = wr.top + wrap.clientTop, r = cv.getBoundingClientRect(), cell = scale();
     if (!r.width || !r.height) return null;
@@ -10767,8 +10922,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       const tg = tc.getContext('2d'); tg.setTransform(tc.width/w,0,0,tc.height/h,0,0); tg.imageSmoothingEnabled = false;
       paintTemplate(tg,r.left-L,r.top-T,cell,true); layers.push({c:tc,x:0,y:0,w,h});
     }
-    return { layers, bits:ovlBitsNow(), ax:r.left-L+(geo.anchor-VX+.5)*cell, ay:r.top-T, cell, frame:k,
-      max:Math.max(1,Math.floor(Math.min(VH,st.rows)/ovlState().h0)-1) };
+    const source={layers,ax:r.left-L+(geo.anchor-VX+.5)*cell,ay:r.top-T,cell,frame:k,
+      max:Math.max(1,Math.floor(Math.min(VH,st.rows)/ovlState().h0)-1)};
+    if(gpuBig?.large)return capturePackedOverlay(source);
+    source.bits=ovlBitsNow();return source;
   }
   window.mayOvl = { get: ovlStatus,
     center() { return window.mayLayers?.center(ovlFrozen?.layerId||'overlay')||false; },
@@ -10878,25 +11035,37 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(bins)paintOchkiBins(G,bins,PW,185/255);
       else if(OK&&OK.local&&OK.grid===S.bits)for(let t=0;t<OK.hl.length;t++)if(OK.hl[t]){
         const I=t%Wq,J=(t/Wq)|0;G.fillStyle=S.bits.val[t]?'rgba(255,214,70,.72)':'rgba(150,86,30,.72)';G.fillRect(bx+I*cq,by+J*cq,cq,cq);}
-      if(st.ochkiOverlay&&OK&&OK.local){const K=OK.counts||{};ovlDebug(`уменьшение q=${S.q} · клетка ${cq.toFixed(2)} px\nсетка ${Wq}×${Hq}, вершина ${A} · 1:${K.n1??'—'} 0:${K.n0??'—'} пусто:${K.ne??'—'} · находок ${OK.found.length}`);}
+      if(st.ochkiOverlay&&OK&&OK.local&&OK.grid===S.bits){const K=OK.counts||{};ovlDebug(`уменьшение q=${S.q} · клетка ${cq.toFixed(2)} px\nсетка ${Wq}×${Hq}, вершина ${A} · 1:${K.n1??'—'} 0:${K.n0??'—'} пусто:${K.ne??'—'} · находок ${OK.found.length}`);}
       else if(ovlDebug.el)ovlDebug.el.textContent='';
       G.restore?.(); return;
     }
     const total = O.n+1, ratio = total/O.n, shifts = O.pos === 'RGB' ? ['R','G','B'] : [O.pos];
     // v0.564: оси совмещения — вершина по X, середина по Y: масштаб идёт вокруг центра высоты копии.
-    const oy = S.ay + (S.bits ? S.bits.H : (S.layers[0] ? S.layers[0].h / S.cell : 0)) * S.cell / 2;
+    const oy = S.ay + (S.sourceHeight??S.bits?.H??(S.layers[0] ? S.layers[0].h/S.cell : 0))*S.cell/2;
     // Сдвиг прежнего отношения (k−1)/2 в клетках предыдущего размера; цвета и прозрачность исходника сохраняются.
     const dx = (ratio-1)/2 * O.n * S.cell;
     for (const p of shifts) for (const layer of S.layers) G.drawImage(layer.c,
       S.ax+(layer.x-S.ax)*total+(p === 'R' ? dx : p === 'B' ? -dx : 0),
       oy+(layer.y-oy)*total,layer.w*total,layer.h*total);
     // v0.564: найденное Очками по битам наложения — в пикселях того же слоя и с тем же масштабом, что и копия.
-    const bins=OK&&OK.local&&OK.grid===S.bits&&!ovlFrozen?ochkiOverlayBins(OK,S,PW,PH,PW/w,PH/h,ox,oyOff,total):null;
+    const overlayResult=OK?.local&&OK.grid===S.bits&&!ovlFrozen&&(!S.packedSource||OK.key===ochkiOverlayKey());
+    if(overlayResult&&S.packedSource){
+      const grid=S.bits,size=S.cell*total,ink=Math.max(1/d,size);
+      for(const [index,hit] of OK.found.entries()){
+        G.fillStyle=index===S.selected?'rgba(105,237,255,.85)':'rgba(255,214,70,.72)';
+        for(const q of hit.cells||[]){
+          const col=q%grid.W,row=Math.floor(q/grid.W);
+          const x=S.ax+(col-grid.anchor)*size-size/2,y=oy+(S.ay+(row+grid.offsetY)*S.cell-oy)*total;
+          for(const shift of shifts)G.fillRect(x+(shift==='R'?dx:shift==='B'?-dx:0),y,ink,ink);
+        }
+      }
+    }
+    const bins=overlayResult&&!S.packedSource?ochkiOverlayBins(OK,S,PW,PH,PW/w,PH/h,ox,oyOff,total):null;
     if(bins)paintOchkiBins(G,bins,PW,185/255);
-    else if(OK&&OK.local&&OK.grid===S.bits&&!ovlFrozen)
+    else if(overlayResult&&!S.packedSource)
       for(const layer of S.layers){const hc=ochkiHlCanvas(OK,S,layer);
         if(hc)G.drawImage(hc,S.ax+(layer.x-S.ax)*total,oy+(layer.y-oy)*total,layer.w*total,layer.h*total);}
-    if(st.ochkiOverlay&&OK&&OK.local){const L=S.layers[0]||{},cell=S.cell,T2=O.n+1,A=S.bits.anchor,K=OK.counts||{};
+    if(st.ochkiOverlay&&OK&&OK.local&&OK.grid===S.bits){const L=S.layers[0]||{},cell=S.cell,T2=O.n+1,A=S.bits.anchor,K=OK.counts||{};
       ovlDebug(`подсветка наложения: клетка ${cell.toFixed(2)} px · ×${T2} = ${(cell*T2).toFixed(2)} px/бит · ось Y ${(oy+oyOff).toFixed(1)}\nслоёв ${S.layers.length} · слой ${L.w?L.w.toFixed(0):'—'}×${L.h?L.h.toFixed(0):'—'} · бит в слое ${L.w?(L.w/cell).toFixed(1):'—'}×${L.h?(L.h/cell).toFixed(1):'—'}\nсетка ${S.bits.W}×${S.bits.H}, вершина ${A} · 1:${K.n1??'—'} 0:${K.n0??'—'} пусто:${K.ne??'—'} · находок ${OK.found.length}`);}
     else if(ovlDebug.el)ovlDebug.el.textContent='';
     G.restore?.();
@@ -11972,19 +12141,61 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const snakeSandbox=new URLSearchParams(location.search).has('snakeSandbox')&&CHISTO;
   let snakeScanJob=null;
   let snakeCatalogStamp=null,snakeCatalogLayer=null,snakeCatalogRequest=0;
-  const snakeCatalogKey=()=>f?manualPaintKey()+'|'+manualPatternGeometry()+'|'+manualPaintRevision:'';
+  const snakeCatalogKey=()=>f?manualPaintKey()+'|'+manualSnakeGeometry()+'|'+manualPaintRevision:'';
+  function packedCatalogBounds(width,height){
+    const view=wrap.getBoundingClientRect(),field=cv.getBoundingClientRect(),unit=scale();
+    const x=Math.max(0,Math.min(width-1,VX+Math.floor((view.left+wrap.clientLeft-field.left)/unit)));
+    const y=Math.max(0,Math.min(height-1,Math.floor((view.top+wrap.clientTop-field.top)/unit)));
+    return {x,y,width:Math.min(width-x,Math.ceil(wrap.clientWidth/unit)+1),
+      height:Math.min(height-y,Math.ceil(wrap.clientHeight/unit)+1)};
+  }
+  async function querySnakeCatalog(method,catalog,snapshot,options){
+    if(catalog.kind!=='packed-all-snake-routes')return MayatnikSnakeCatalog.query(method,catalog,options);
+    if(!snapshot?.blob)throw Error('Точный снимок маршрутов не сохранён');
+    await gpuReady;
+    const packed=await decodePackedSearchSnapshot(snapshot);
+    const bounds=method==='union'?(options.bounds||packedCatalogBounds(snapshot.width,snapshot.height)):undefined;
+    return MayatnikLargeSnakeCatalog.query(method,catalog,{...options,snapshot:packed,bounds,maxCells:4194304},
+      {transferSnapshot:true});
+  }
+  async function querySavedSnakeCatalog(id,frame,method,options){
+    const stored=await MayatnikOchkiLog.readScanFrame(id,frame);
+    if(!stored)throw Error('Нет сохранённого кадра');
+    return querySnakeCatalog(method,stored.catalog,stored.snapshot,options);
+  }
   function snakeCatalogOverlayDraw(){
     let canvas=snakeCatalogOverlayDraw.canvas;const layer=snakeCatalogLayer;
     if(!layer||layer.owner!==f||layer.key!==snakeCatalogKey()){snakeCatalogLayer=null;if(canvas)canvas.hidden=true;return;}
     if(!canvas){canvas=snakeCatalogOverlayDraw.canvas=document.createElement('canvas');canvas.id='maySnakeCatalogHighlight';canvas.setAttribute('aria-hidden','true');Object.assign(canvas.style,{position:'fixed',pointerEvents:'none',zIndex:12});document.body.append(canvas);}
     const wr=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),left=wr.left+wrap.clientLeft,top=wr.top+wrap.clientTop,d=DPR(),unit=scale();canvas.hidden=false;Object.assign(canvas.style,{left:left+'px',top:top+'px',width:wrap.clientWidth+'px',height:wrap.clientHeight+'px'});canvas.width=Math.max(1,Math.round(wrap.clientWidth*d));canvas.height=Math.max(1,Math.round(wrap.clientHeight*d));const ctx=canvas.getContext('2d');
-    if(layer.pixels){for(const [q,overlap]of layer.pixels){const size=unit/layer.rasterScale*d,x=(r.left-left+(q%layer.width)*unit/layer.rasterScale)*d,y=(r.top-top+Math.floor(q/layer.width)*unit/layer.rasterScale)*d;if(x+size<0||y+size<0||x>=canvas.width||y>=canvas.height)continue;ctx.fillStyle=overlap?'rgba(230,90,255,.8)':'rgba(255,214,70,.8)';ctx.fillRect(Math.floor(x),Math.floor(y),Math.max(1,Math.ceil(size)),Math.max(1,Math.ceil(size)));}}
+    if(layer.packed){
+      const s=unit*d;
+      for(const {node,count} of layer.chosen){
+        const x=(r.left-left+(node%f.W-VX)*unit)*d,y=(r.top-top+Math.floor(node/f.W)*unit)*d;
+        if(x+s<=0||y+s<=0||x>=canvas.width||y>=canvas.height)continue;
+        ctx.fillStyle=BigInt(count)>1n?'rgba(230,90,255,.8)':'rgba(255,214,70,.8)';
+        ctx.fillRect(Math.floor(x),Math.floor(y),Math.max(1,Math.ceil(x+s)-Math.floor(x)),Math.max(1,Math.ceil(y+s)-Math.floor(y)));
+      }
+    }
+    else if(layer.pixels){for(const [q,overlap]of layer.pixels){const size=unit/layer.rasterScale*d,x=(r.left-left+(q%layer.width)*unit/layer.rasterScale)*d,y=(r.top-top+Math.floor(q/layer.width)*unit/layer.rasterScale)*d;if(x+size<0||y+size<0||x>=canvas.width||y>=canvas.height)continue;ctx.fillStyle=overlap?'rgba(230,90,255,.8)':'rgba(255,214,70,.8)';ctx.fillRect(Math.floor(x),Math.floor(y),Math.max(1,Math.ceil(size)),Math.max(1,Math.ceil(size)));}}
     else for(const chosen of layer.chosen){const node=layer.catalog.nodes[chosen.node],x=(r.left-left+node.x*unit)*d,y=(r.top-top+node.y*unit)*d,s=unit*d;if(x+s<0||y+s<0||x-s>=canvas.width||y-s>=canvas.height)continue;ctx.fillStyle=BigInt(chosen.count)>1n?'rgba(230,90,255,.8)':'rgba(255,214,70,.65)';ctx.beginPath();ctx.moveTo(x,y-s);ctx.lineTo(x+s,y);ctx.lineTo(x,y+s);ctx.lineTo(x-s,y);ctx.closePath();ctx.fill();}
   }
   async function snakeCatalogShow(jobId,frame,choice,union=false,render=true){
     const active=window.maySnakeCatalog,stamp=snakeCatalogStamp,serial=++snakeCatalogRequest;if(!active||active.jobId!==jobId||active.catalog.frame!==frame||stamp?.owner!==f||stamp.key!==snakeCatalogKey())throw Error('Сначала откройте этот кадр из журнала поиска');
     const current=()=>serial===snakeCatalogRequest&&stamp===snakeCatalogStamp&&stamp.owner===f&&stamp.key===snakeCatalogKey(),row=union?choice:choice.i;
-    const result=await MayatnikSnakeCatalog.query(union?'union':'page',active.catalog,union?{row}:{row,offset:String(choice.rank),limit:1});if(!current())throw Error('Кадр изменился во время выбора маршрута');
+    const packed=active.catalog.kind==='packed-all-snake-routes';
+    const result=await querySnakeCatalog(union?'union':'page',active.catalog,active.snapshot,
+      union?{row}:{row,offset:String(choice.rank),limit:1});
+    if(!current())throw Error('Кадр изменился во время выбора маршрута');
+    if(packed){
+      const path=union?null:result.items[0];
+      if(!union&&(!path||path.id!==choice.id))throw Error('Маршрут не принадлежит этому кадру');
+      const chosen=union?result.cells:path.cells.map(node=>({node,count:'1'}));
+      if(render){snakeCatalogLayer={packed:true,owner:f,key:snakeCatalogKey(),chosen};snakeCatalogOverlayDraw();}
+      const nodes=chosen.map(({node,count})=>({id:node,x:node%f.W-VX+.5,y:Math.floor(node/f.W)+.5,count}));
+      return {selected:render,path,frameKey:snakeCatalogKey(),overlay:{nodes,indices:null,width:VW,height:VH,
+        scale:1,start:path?nodes[0]:null,sourceStart:path?.start||null,sourceEnd:path?.end||null}};
+    }
     const path=union?null:result.items[0];if(!union&&(!path||path.id!==choice.id))throw Error('Маршрут не принадлежит этому кадру');const chosen=union?result.cells:path.cells.map(node=>({node,count:'1'}));let pixels=null,width=0,height=0,rasterScale=1;
     if(chosen.some(item=>active.catalog.nodes[item.node].fragment!=null)){const graph=await snakeCatalogGraph(()=>!current());try{if(!current()||!graph.rasterOwnerIds||graph.nodes.length!==active.catalog.nodes.length||graph.nodes.some((node,i)=>{const old=active.catalog.nodes[i];return node.x!==old.x||node.y!==old.y||node.bit!==old.bit;}))throw Error('Нет точной геометрии сохранённых фрагментов');const colours=new Map(chosen.map(item=>[item.node,BigInt(item.count)>1n]));pixels=[];for(let q=0;q<graph.rasterOwnerIds.length;q++)if(colours.has(graph.rasterOwnerIds[q]))pixels.push([q,colours.get(graph.rasterOwnerIds[q])]);width=graph.width;height=graph.height;rasterScale=graph.rasterScale;}finally{graph.release();}}
     if(!current())throw Error('Кадр изменился');if(render){snakeCatalogLayer={owner:f,key:snakeCatalogKey(),catalog:active.catalog,chosen,pixels,width,rasterScale};snakeCatalogOverlayDraw();}
@@ -11993,8 +12204,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const snakeViewAPI={showPath:(id,frame,path)=>snakeCatalogShow(id,frame,path),pathOverlay:async(id,frame,path)=>(await snakeCatalogShow(id,frame,path,false,false)).overlay,showUnion:(id,frame,row)=>snakeCatalogShow(id,frame,row,true),refresh:snakeCatalogOverlayDraw,clear(){snakeCatalogRequest++;snakeCatalogLayer=null;snakeCatalogOverlayDraw();}};
   wrap.addEventListener('scroll',snakeCatalogOverlayDraw,{passive:true});addEventListener('resize',snakeCatalogOverlayDraw);
   async function snakeOpenStored(entry,stored){
-    ochkiViewingLog=true;try{await restoreLibraryFrame(stored.snapshot.blob);if(entry.sequence)sequences.setText(entry.sequence.join('\n'));
-      if(stored.catalog){window.maySnakeCatalog={catalog:stored.catalog,jobId:entry.scanJob};snakeCatalogStamp={owner:f,key:snakeCatalogKey()};dispatchEvent(new CustomEvent('may-snake-catalog',{detail:window.maySnakeCatalog}));}
+    ochkiViewingLog=true;try{
+      if(stored.snapshot.kind==='packed-ochki-v1'){
+        const snapshot=stored.snapshot;
+        await openPackedSearchFrame({snapshot,record:{frame:snapshot.frame,width:snapshot.width,height:snapshot.height,
+          packedBuild:snapshot.packedBuild,sequence:entry.sequence,settings:entry.settings}},{catalog:true});
+      }else{
+        await restoreLibraryFrame(stored.snapshot.blob);
+        if(entry.sequence)sequences.setText(entry.sequence.join('\n'));
+      }
+      if(stored.catalog){window.maySnakeCatalog={catalog:stored.catalog,jobId:entry.scanJob,snapshot:stored.snapshot};snakeCatalogStamp={owner:f,key:snakeCatalogKey()};dispatchEvent(new CustomEvent('may-snake-catalog',{detail:window.maySnakeCatalog}));}
       else if(stored.finds){ochkiSnakeStop();const found=structuredClone(stored.finds),hl=new Uint8Array(f.W*f.H);for(const hit of found)for(const q of hit.cells||[])hl[q]=Math.min(2,hl[q]+1);ochki={found,hl,key:ochkiKey(),owner:f,complete:true,snake:true,total:(entry.sequence?.length||0)*(entry.halves||1),halves:entry.halves,joined:entry.joined};ochkiReplay={owner:f,key:ochkiKey()};draw();}openSequences();
     }finally{ochkiViewingLog=false;}
   }
@@ -12009,7 +12228,6 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     ochkiSnakeSavePending=task;task.catch(error=>{stopFrameTransports();ochkiToast('Кадр змеи не сохранён: '+error.message);}).finally(()=>{if(ochkiSnakeSavePending===task)ochkiSnakeSavePending=null;});return task;
   }
   async function snakeCatalogGraph(cancelled=()=>false){
-    if(gpuBig?.large)throw Error('Каталог всех маршрутов доступен на поле до 4096 строк. На большом поле используйте «Змею».');
     visibleGraphKnown();if(!ochkiSnakeView())throw Error('Змеи доступны в ромбах: обе рядом или соединённый ромб');
     let snapshot;
     try{
@@ -12028,10 +12246,42 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(!current())throw Error('Кадр изменился');return {nodes,geometry:snapshot.geometry,current,rasterOwnerIds:fragments?.rasterOwnerIds,width:fragments?.width,height:fragments?.height,rasterScale:fragments?.scale,release:()=>snapshot.release()};
     }catch(error){snapshot?.release();throw error;}
   }
+  async function acquirePackedCatalogFrame(frame,job,cancelled){
+    const owner=f,gpu=gpuBig,current=()=>!cancelled()&&f===owner&&gpuBig===gpu&&k===frame;
+    if(!gpu?.large||gpu.error||!current())throw Error(gpu?.error||'Большой кадр недоступен');
+    gpuFlush();
+    const snapshot=await gpu.fld.readPacked(current);
+    if(!snapshot||!current())throw Error('Прогон отменён или кадр изменился');
+    const worker=new Worker('mayatnik-large-search-worker.js?v=1000-dev3');
+    try{
+      const {result,archive}=await new Promise((resolve,reject)=>{
+        worker.onerror=event=>reject(Error(event.message||'Ошибка поиска маршрутов'));
+        worker.onmessage=({data})=>{
+          if(!current())reject(Error('Прогон отменён или кадр изменился'));
+          else if(data.error)reject(Error(data.error));
+          else if(data.result)resolve(data);
+        };
+        worker.postMessage({snapshot,catalog:{sequence:job.sequence,variants:job.variants,frame,
+          geometry:JSON.stringify([f.W,f.H,geo.anchor,VX,VW,VH]),settings:job.settings,
+          search:{anchor:geo.anchor,bounds:{x:VX,y:0,width:VW,height:VH},withoutBands:!!st.noband,
+            invertBits:MayatnikInvert.bits(st),parities:[0,1]}}},[snapshot.bits.buffer,snapshot.present.buffer]);
+      });
+      if(!current()||!result.complete||!archive?.blob)throw Error('Кадр не проверен или не сохранён полностью');
+      return {catalog:result,frameSnapshot:{...archive,frame,rows:f.H,sourceWidth:f.W,packedBuild:job.settings},current};
+    }finally{worker.terminate();}
+  }
   window.maySnakeScanLocal={ready:()=>sessionReady&&!playing,
     async captureRun(){
       if(!sessionReady||!f)throw Error('Дождитесь готовности кадра');
-      if(gpuBig?.large)throw Error('Для покадрового поиска на большом поле включите «Змею» и запустите плеер.');
+      if(gpuBig?.large){
+        const build=Object.fromEntries(packedBuildSettings.map(name=>[name,st[name]]));
+        const settings={...build,ochkiInv:!!st.ochkiInv,ochkiRev:!!st.ochkiRev,ochkiHalf:!!st.ochkiHalf,
+          ochkiRowReverseMask:!!st.ochkiRowReverseMask};
+        const sequence=sequences.rows.slice(),lastFrame=total();
+        return {packed:true,total:lastFrame+1,range:{first:0,last:lastFrame},sequence,settings,
+          variants:sequence.map(word=>MayatnikVariants.generate(word,{inverse:settings.ochkiInv,reverse:settings.ochkiRev,
+            half:settings.ochkiHalf,rowReverseMask:settings.ochkiRowReverseMask}))};
+      }
       visibleGraphKnown();if(!ochkiSnakeView())throw Error('Выберите ромбы: обе рядом или соединённый ромб');
       stopFrameTransports();const settings=structuredClone(st),sequence=sequences.rows.slice(),lastFrame=total(),finiteTotal=lastFrame+1,paintRevision=manualPaintRevision,owner=f;let semantic;try{
         semantic=await window.mayVisibleSemantic.acquire();if(owner!==f||paintRevision!==manualPaintRevision)throw Error('Исходное поле изменилось во время чтения');const data=frameWorkOnly(paintSnapshot());if(!data)throw Error('Кадр недоступен');
@@ -12042,6 +12292,15 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     },
     async load(job){
       if(!snakeSandbox)throw Error('Изолированное открытие разрешено только странице прогона');
+      if(job.packed){
+        await gpuReady;
+        snakeScanJob={id:job.id};
+        st={...packedFrameState(job.settings),ochki:false,manualSnake:false,invertAuto:false};
+        writeUI();applyBitColours();
+        if(reset(false,st.steps)===false)throw Error($('stat').textContent||'Не удалось построить исходное GPU-поле');
+        stopFrameTransports();templateFollow.off();
+        return;
+      }
       const parsed=await MayatnikWorkFile.run('decode',job.source),data=frameWorkOnly(validateFrameWork(parsed));
       snakeScanJob={id:job.id};data.st.ochki=false;data.st.manualSnake=false;
       if(!await restorePaint(data))throw Error('Не удалось восстановить исходный кадр прогона');
@@ -12052,6 +12311,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(cancelled())throw Error('Прогон отменён');goToImmediate(frame);
       while(playing){if(cancelled()){stopFrameTransports();throw Error('Прогон отменён');}await new Promise(r=>setTimeout(r,10));}
       if(k!==frame)throw Error('Не удалось открыть точный кадр');
+      if(job.packed)return acquirePackedCatalogFrame(frame,job,cancelled);
       const graph=await snakeCatalogGraph(cancelled);
       try{const data=frameWorkOnly(paintSnapshot());data.st.ochki=!!job.settings.ochki;data.st.manualSnake=!!job.settings.manualSnake;data.st.templateFindAll=structuredClone(job.settings.templateFindAll);data.frameHost=frameHostSnapshot();
         const preview=wholeFrameThumbnail();data.libraryKind='frame';data.frameBounds=preview.bounds;
@@ -12066,14 +12326,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   };
   if(!snakeSandbox){
     const scanHost=MayatnikSnakeScanHost.create(window.maySnakeScanLocal),scan=MayatnikSnakeScan.create(scanHost,MayatnikOchkiLog);
-    window.maySnakeFullScan={...scan,...snakeViewAPI,pause(){scan.pause();scanHost.cancel();},async page(id,frame,options){const stored=await MayatnikOchkiLog.readScanFrame(id,frame);if(!stored)throw Error('Нет сохранённого кадра');return MayatnikSnakeCatalog.query('page',stored.catalog,options);},async union(id,frame,options){const stored=await MayatnikOchkiLog.readScanFrame(id,frame);if(!stored)throw Error('Нет сохранённого кадра');return MayatnikSnakeCatalog.query('union',stored.catalog,options);}};
+    window.maySnakeFullScan={...scan,...snakeViewAPI,pause(){scan.pause();scanHost.cancel();},page:(id,frame,options)=>querySavedSnakeCatalog(id,frame,'page',options),union:(id,frame,options)=>querySavedSnakeCatalog(id,frame,'union',options)};
     addEventListener('may-ochki-scan-prepare-open',event=>{const detail=event.detail;if(!detail?.entry?.scanKey)return;try{if(snakeNeedsWindow(detail.entry))detail.ticket=MayatnikSnakeScanHost.prepareOpen(window);}catch(error){detail.error=error;}});
     addEventListener('may-ochki-scan-open',event=>{const detail=event.detail;if(!detail?.stored?.snapshot?.blob)return;if(detail.stored.record){detail.handled=detail.ticket?MayatnikSnakeScanHost.deliverOpen(detail.ticket,detail.entry,detail.stored,{root:window}):ochkiOpenStored(detail.stored);return;}detail.handled=detail.ticket||snakeNeedsWindow(detail.entry)?MayatnikSnakeScanHost.deliverOpen(detail.ticket,detail.entry,detail.stored,{root:window}):snakeOpenStored(detail.entry,detail.stored);});
     const scanInfo=$('snakeScanInfo');scan.subscribe(({job,busy})=>{if(scanInfo)scanInfo.textContent=job?'Все кадры: '+job.next+' / '+job.total+' · '+(busy?'проверка':job.status==='complete'?'готово':job.status==='paused'?'пауза':job.error||job.status):'';for(const id of ['bSnakeScanAll','bSnakeScanResume'])if($(id))$(id).disabled=busy;if($('bSnakeScanPause'))$('bSnakeScanPause').disabled=!busy;dispatchEvent(new CustomEvent('may-snake-scan-progress',{detail:{job,busy}}));});
     if($('bSnakeScanAll'))$('bSnakeScanAll').onclick=()=>scan.start().catch(error=>{scanInfo.textContent=error.message;});
     if($('bSnakeScanPause'))$('bSnakeScanPause').onclick=()=>window.maySnakeFullScan.pause();
     if($('bSnakeScanResume'))$('bSnakeScanResume').onclick=async()=>{try{const jobs=await MayatnikOchkiLog.listScanJobs(),job=jobs.reverse().find(job=>!job.complete);if(!job)throw Error('Нет незавершённых прогонов');await scan.resume(job.id);}catch(error){scanInfo.textContent=error.message;}};
-  }else {window.maySnakeFullScan={...snakeViewAPI,get:()=>({job:null,busy:false}),subscribe:()=>()=>{},async page(id,frame,options){const active=window.maySnakeCatalog;if(!active||active.jobId!==id||active.catalog.frame!==frame)throw Error('Другой кадр');return MayatnikSnakeCatalog.query('page',active.catalog,options);},async union(id,frame,options){const active=window.maySnakeCatalog;if(!active||active.jobId!==id||active.catalog.frame!==frame)throw Error('Другой кадр');return MayatnikSnakeCatalog.query('union',active.catalog,options);}};
+  }else {window.maySnakeFullScan={...snakeViewAPI,get:()=>({job:null,busy:false}),subscribe:()=>()=>{},async page(id,frame,options){const active=window.maySnakeCatalog;if(!active||active.jobId!==id||active.catalog.frame!==frame)throw Error('Другой кадр');return querySnakeCatalog('page',active.catalog,active.snapshot,options);},async union(id,frame,options){const active=window.maySnakeCatalog;if(!active||active.jobId!==id||active.catalog.frame!==frame)throw Error('Другой кадр');return querySnakeCatalog('union',active.catalog,active.snapshot,options);}};
     for(const id of ['bSnakeScanAll','bSnakeScanResume','bSnakeScanPause'])if($(id))$(id).disabled=true;
   }
 

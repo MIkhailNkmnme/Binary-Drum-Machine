@@ -62,7 +62,7 @@
       if(catalog?.complete!==true||!snapshot?.blob||!Number.isSafeInteger(catalog.frame)||catalog.frame<0||catalog.frame>=job.total)throw Error('Неполный кадр прогона');
       const stored=structuredClone({catalog,snapshot}),key=scanFrameKey(job.id,catalog.frame);await ready;const storage=await host.storage();await storage.write(stored,key);
       const count=String(catalog.rows.reduce((sum,row)=>sum+BigInt(row.count),0n));
-      await record({id:key,scanKey:key,scanJob:job.id,status:'saved',frame:catalog.frame,rows:snapshot.rows,width:snapshot.sourceWidth,openInWindow:!!job.openInWindow,at:Date.now(),settings:job.settings,sequence:job.sequence,count,complete:true,catalogRows:catalog.rows.map(row=>({i:row.i,count:row.count})),src:job.settings?.compareSource,mirror:job.settings?.compareMirror});
+      await record({id:key,scanKey:key,scanJob:job.id,status:'saved',frame:catalog.frame,rows:snapshot.rows,width:snapshot.sourceWidth,openInWindow:!!job.openInWindow,...(job.packed?{packed:true}:{}),at:Date.now(),settings:job.settings,sequence:job.sequence,count,complete:true,catalogRows:catalog.rows.map(row=>({i:row.i,count:row.count})),src:job.settings?.compareSource,mirror:job.settings?.compareMirror});
       return key;
     }
     async function commitSnakeFrame(detail,snapshot){if(!snapshot?.blob||detail.complete!==true)throw Error('Неполный кадр змеи');const stored=structuredClone({snapshot,finds:detail.finds,complete:true}),key='ochki-snake-frame:'+detail.id;await ready;const storage=await host.storage();await storage.write(stored,key);await record({...detail,scanKey:key,status:'saved'});return key;}

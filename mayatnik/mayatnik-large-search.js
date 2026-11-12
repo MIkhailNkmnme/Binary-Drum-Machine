@@ -34,6 +34,8 @@
     const anchor=Number.isFinite(options.anchor)?Math.trunc(options.anchor):0;
     const parity=options.parity??-1;
     if(![-1,0,1,2].includes(parity))throw new RangeError('Неизвестный режим половин поля.');
+    const latticeStride=options.latticeStride??2,overlayGrid=!!options.overlayGrid;
+    if(latticeStride!==1&&latticeStride!==2)throw new RangeError('Неизвестный шаг решётки поиска.');
     // Optional clipping avoids copying or editing the immutable presence plane.
     const bounds=options.bounds||{},x0=Math.max(0,Math.floor(bounds.x||0)),y0=Math.max(0,Math.floor(bounds.y||0));
     const x1=Math.min(W,bounds.width==null?W:x0+Math.max(0,Math.floor(bounds.width)));
@@ -45,7 +47,7 @@
       const q=r*stride+Math.floor(c/32),shift=c&31;
       return ((present[q]>>>shift)&1)?((bits[q]>>>shift)&1)^invert:-1;
     }
-    return {W,H,anchor,parity,value,loop,vRoute,skipSpaces:!!options.skipSpaces,
+    return {W,H,anchor,parity,value,loop,vRoute,latticeStride,overlayGrid,skipSpaces:!!options.skipSpaces||overlayGrid,
       dirs:loop?(options.through?[0,2,1,-1]:[0]):vRoute?['v']:options.skipSpaces&&options.mode==='all'?[0,2,1,-1]:MODES[options.mode||'diag']};
   }
 
@@ -53,9 +55,9 @@
   // ochkiLines sorts these by FIRST PRESENT cell before splitting into runs.
   // Keeping that order is essential for equal-row ties after a hole.
   function descriptors(ctx,progress){
-    const {W,H,anchor,parity,value,dirs}=ctx,out=[];
+    const {W,H,anchor,parity,value,dirs,latticeStride}=ctx,out=[];
     let order=0;
-    const parities=parity===0?[0]:parity===1?[1]:[0,1];
+    const parities=latticeStride===1?[0]:parity===0?[0]:parity===1?[1]:[0,1];
     function add(p,dir,r,c,dr,dc,n){
       const serial=order++;
       let first=0;
@@ -66,26 +68,26 @@
     for(const p of parities)for(const dir of dirs){
       if(dir===0){
         for(let r=0;r<H;r++){
-          const c=(-anchor-r-p)&1;
-          add(p,dir,r,c,0,2,Math.max(0,Math.ceil((W-c)/2)));
+          const c=latticeStride===1?0:(-anchor-r-p)&1;
+          add(p,dir,r,c,0,latticeStride,Math.max(0,Math.ceil((W-c)/latticeStride)));
           if((r&255)===0)progress('lines',r,H);
         }
       }else if(dir===2){
         for(let c=0;c<W;c++){
-          const r=(c-anchor-p)&1;
-          add(p,dir,r,c,2,0,Math.max(0,Math.ceil((H-r)/2)));
+          const r=latticeStride===1?0:(c-anchor-p)&1;
+          add(p,dir,r,c,latticeStride,0,Math.max(0,Math.ceil((H-r)/latticeStride)));
           if((c&255)===0)progress('lines',c,W);
         }
       }else if(dir===1){
         for(let k=1-H;k<W;k++){
-          if(((k-anchor)&1)!==p)continue;
+          if(latticeStride===2&&((k-anchor)&1)!==p)continue;
           const r=Math.max(0,-k),c=r+k;
           add(p,dir,r,c,1,1,Math.min(H-r,W-c));
           if((k&255)===0)progress('lines',k+H-1,W+H-1);
         }
       }else{
         for(let k=0;k<W+H-1;k++){
-          if(((k-anchor)&1)!==p)continue;
+          if(latticeStride===2&&((k-anchor)&1)!==p)continue;
           const r=Math.max(0,k-W+1),c=k-r;
           add(p,dir,r,c,1,-1,Math.min(H-r,c+1));
           if((k&255)===0)progress('lines',k,W+H-1);
@@ -591,6 +593,9 @@
     let count=0,longest=0;
     for(let li=0;li<lines.length;li++){
       const L=lines[li];let start=-1,previous=-1,firstBit=0;
+      // Preserve ochkiOverlayGet's current physical-connectivity predicate:
+      // its diagonal delta is dir * grid.stride, unlike ordinary field runs.
+      const overlayDiagonalBreak=ctx.overlayGrid&&Math.abs(L.dir)===1&&ctx.latticeStride!==1;
       function emit(end){
         if(start<0||end-start<minimumLength)return;
         const n=end-start;count++;longest=Math.max(longest,n);
@@ -605,7 +610,7 @@
       for(let j=L.first,r=L.r+j*L.dr,c=L.c+j*L.dc;j<L.n;j++,r+=L.dr,c+=L.dc){
         const v=ctx.value(r,c),allowed=v>=0&&(alternating||options.inverse||v===wanted);
         if(!allowed){emit(j);start=-1;previous=-1;continue;}
-        if(start>=0&&(alternating?v===previous:v!==previous)){emit(j);start=-1;}
+        if(start>=0&&(overlayDiagonalBreak||(alternating?v===previous:v!==previous))){emit(j);start=-1;}
         if(start<0){start=j;firstBit=v;}
         previous=v;
       }
@@ -622,6 +627,7 @@
    * skipSpaces (omit absent cells within each straight line),
    * through (four cyclic circuits), mode:'loop' (row-major cyclic circuit),
    * mode:'v', meetingPoints (absolute field coordinates of meeting axes),
+   * overlayGrid (legacy local-grid gap semantics), latticeStride (1 or 2),
    * independentWords (let different input rows reuse the earliest match).
    * Optional bounds {x,y,width,height}, inclusive rowLo / rowHi clipping.
    * Presence must describe the searchable geometry: joined and transformed
