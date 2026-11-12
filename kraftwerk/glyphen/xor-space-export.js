@@ -6,6 +6,7 @@
  if(root){root.XorSpaceExport=api;root.mountXorSpaceExport=api.mount;}
 })(typeof globalThis!=='undefined'?globalThis:this,function(root){
  'use strict';
+ const scriptURL=root.document?.currentScript?.src;
  const abortError=()=>Object.assign(new Error('Экспорт отменён.'),{name:'AbortError'});
  const check=signal=>{if(signal?.aborted)throw abortError();};
  function delay(ms,signal){return new Promise((resolve,reject)=>{
@@ -195,6 +196,123 @@
    return {blob,extension:kind==='gif'?'gif':writer.extension,mode:kind==='gif'?'gif':writer.mode,range,width:capture.width,height:capture.height};
   }finally{writer?.close();capture.destroy();}
  }
+ function mountProjectionTools(host,player){
+  const details=document.createElement('details');
+  details.className='xs-projection-tools';
+  details.innerHTML=`<summary>Строки проекций 3D</summary>
+   <form class="xs-projection-query">
+    <label>Строка <input type="text" placeholder="101" aria-label="Строка из 0, 1 и C" spellcheck="false" autocapitalize="characters" data-projection-pattern></label>
+    <button type="submit" class="gz-hx" data-projection-find title="Искать во всех допустимых вариантах XY, XZ и YZ">Поиск</button>
+    <button type="button" class="gz-hx" data-projection-text title="Выгрузить полные строки проекций XY, XZ и YZ всех допустимых вариантов">Текст</button>
+    <button type="button" class="gz-hx" data-projection-stop disabled>Отмена</button>
+   </form>
+   <p>0 — пусто, 1 — фигура, C — серый центр. Поиск идёт слева направо в границах каждой проекции. Текст сохраняет все строки и координаты.</p>
+   <p data-projection-status role="status"></p>
+   <a data-projection-download hidden></a>
+   <ol data-projection-results hidden></ol>`;
+  host.append(details);
+  const find=selector=>details.querySelector(selector),form=find('form');
+  const input=find('[data-projection-pattern]'),search=find('[data-projection-find]'),text=find('[data-projection-text]');
+  const stop=find('[data-projection-stop]'),status=find('[data-projection-status]'),download=find('[data-projection-download]'),results=find('[data-projection-results]');
+  const storageKey='zerk_xor_3d_projection_pattern';
+  try{input.value=localStorage.getItem(storageKey)||'';}catch(_){}
+  let controller=null,fileURL=null,resultGeneration=null;
+  const controls=busy=>{input.disabled=search.disabled=text.disabled=busy;stop.disabled=!busy;};
+  function clearResults(){
+   results.replaceChildren();results.hidden=true;resultGeneration=null;
+  }
+  function revoke(){
+   if(fileURL)URL.revokeObjectURL(fileURL);
+   fileURL=null;download.hidden=true;download.removeAttribute('href');
+  }
+  function workerTask(snapshot,pattern,signal){
+   return new Promise((resolve,reject)=>{
+    check(signal);
+    const worker=new Worker(new URL('xor-space-projection-rows-worker.js?v=060',scriptURL));
+    function settle(callback,value){
+     worker.terminate();signal.removeEventListener('abort',abort);callback(value);
+    }
+    function abort(){settle(reject,abortError());}
+    signal.addEventListener('abort',abort,{once:true});
+    worker.onmessage=({data})=>{
+     if(data.error)settle(reject,Error(data.error));
+     else if(data.done)status.textContent='Варианты '+data.done.toLocaleString('ru-RU')+' / '+data.total.toLocaleString('ru-RU');
+     else settle(resolve,data);
+    };
+    worker.onerror=event=>settle(reject,Error(event.message||'Ошибка обработки строк проекций.'));
+    const codes=snapshot.codes.slice();
+    try{worker.postMessage({snapshot:{...snapshot,codes},pattern},[codes.buffer]);}
+    catch(error){settle(reject,error);}
+   });
+  }
+  function showMatches(report,pattern,generation){
+   resultGeneration=generation;
+   const formatter=new Intl.NumberFormat('ru-RU'),count=formatter.format(report.count);
+   status.textContent='«'+pattern+'» · совпадений '+count+' · проверено '+formatter.format(report.total)+' вариантов.';
+   if(report.count>BigInt(report.results.length))status.textContent+=' Показаны первые '+report.results.length+'.';
+   const items=document.createDocumentFragment();
+   for(const hit of report.results){
+    const li=document.createElement('li'),button=document.createElement('button');
+    button.type='button';button.className='gz-hx';
+    button.textContent=hit.variant+' · '+hit.plane;
+    button.title='Показать вариант '+hit.variant+' · проекция '+hit.plane;
+    button.addEventListener('click',()=>{
+     if(player.selectVariant(hit.variant,generation))return;
+     clearResults();status.textContent='Перебор изменился. Запустите поиск по текущим фигурам.';
+    });
+    li.append(button,document.createTextNode(' Строка '+hit.row+', столбец '+hit.column+' · '+hit.plane[0]+' '+hit.x+', '+hit.plane[1]+' '+hit.y));
+    items.append(li);
+   }
+   results.replaceChildren(items);results.hidden=!report.results.length;
+  }
+  async function runProjection(kind){
+   if(controller)return;
+   let pattern=null;
+   if(kind==='search'){
+    try{pattern=root.XorProjectionRows.parsePattern(input.value);}catch(error){status.textContent=error.message;input.focus();return;}
+   }
+   controller=new AbortController();
+   const signal=controller.signal,ownsCalculation=!player.getState().busy;
+   let generation;
+   const cancelCalculation=()=>{const state=player.getState();if(ownsCalculation&&state.busy&&state.generation===generation)player.cancelSequence();};
+   signal.addEventListener('abort',cancelCalculation,{once:true});
+   player.pause();controls(true);clearResults();revoke();status.textContent='Расчёт допустимых вариантов…';
+   try{
+    const pending=player.ensureSequence();generation=player.getState().generation;
+    const snapshot=await pending;check(signal);
+    if(!snapshot.codes?.length)throw Error('Для текущих фигур и центров нет допустимых вариантов.');
+    const report=await workerTask(snapshot,pattern,signal);check(signal);
+    if(pattern){
+     if(player.getState().generation!==snapshot.generation)throw Error('Перебор изменился. Запустите поиск по текущим фигурам.');
+     showMatches(report,pattern,snapshot.generation);
+    }else{
+     fileURL=URL.createObjectURL(report.blob);download.href=fileURL;
+     download.download='glyphen-3d-projections.tsv'+(report.compressed?'.gz':'');
+     download.textContent='Скачать '+(report.compressed?'TSV.GZ':'TSV');
+     download.hidden=false;download.click();
+     status.textContent='Готово · '+report.total.toLocaleString('ru-RU')+' вариантов · '+report.rows.toLocaleString('ru-RU')+' строк в трёх проекциях.';
+    }
+   }catch(error){
+    status.textContent=error.name==='AbortError'?'Обработка строк остановлена.':error.message;
+   }finally{
+    signal.removeEventListener('abort',cancelCalculation);
+    controller=null;controls(false);
+   }
+  }
+  form.addEventListener('submit',event=>{event.preventDefault();runProjection('search');});
+  text.addEventListener('click',()=>runProjection('text'));
+  stop.addEventListener('click',()=>controller?.abort());
+  input.addEventListener('input',()=>{
+   try{localStorage.setItem(storageKey,input.value);}catch(_){}
+   clearResults();status.textContent='';
+  });
+  return {refresh(){
+   if(resultGeneration!==null&&player.getState().generation!==resultGeneration){
+    clearResults();status.textContent='Перебор изменился. Запустите поиск по текущим фигурам.';
+   }
+  },destroy(){controller?.abort();revoke();details.remove();}};
+ }
+
  function mount(container,view,player,{audioInput,getAudio=()=>null,onAudioState=()=>{}}={}){
   const panel=document.createElement('section');panel.className='xs-export';panel.setAttribute('aria-label','Экспорт анимации 3D');
   panel.innerHTML=`
@@ -219,6 +337,7 @@
    <progress data-export-progress max="1" value="0" hidden></progress>
    <p data-export-status role="status">3D + MP3 записывает сцену на всю длину трека.</p>`;
   const host=container.querySelector('.xor-space'),anchor=host.querySelector('.xs-sequence')||host.querySelector('.xs-controls');anchor.after(panel);
+  const projectionTools=root.XorProjectionRows?mountProjectionTools(panel,player):null;
   const find=s=>panel.querySelector(s),startInput=find('[data-export-start]'),countInput=find('[data-export-count]'),estimate=find('[data-export-estimate]'),status=find('[data-export-status]'),progress=find('[data-export-progress]'),cancelButton=find('[data-export-cancel]'),download=find('[data-export-download]');
   const orbitButton=find('[data-export-orbit]'),orbitKey='zerk_xor_space_export_orbit';
   const pickMp3=find('[data-export-pick-mp3]'),videoMp3=find('[data-export-video-mp3]'),audioInfo=find('[data-export-audio-info]');
@@ -238,8 +357,8 @@
    if(track&&Number(countInput.value)>Math.max(1,Math.ceil(track.duration*audioFps)))text+=' При 30 кадрах/с часть вариантов будет пропущена.';
    if(audioInfo.textContent!==text)audioInfo.textContent=text;
   }
-  function refresh(){if(controller||destroyed)return;const state=player.getState(),rate=Number(player.getExportSnapshot().rate)||4;if(!rangeTouched){startInput.value=String(state.index+1);countInput.value=String(state.count?Math.min(64,state.count-state.index):64);}startInput.max=String(state.count||331776);countInput.max=String(state.count||331776);const n=Number(countInput.value);estimate.textContent=n+' кадров / '+formatDuration(n/rate)+' / '+rate+' вариантов/с'+(state.count?' / всего '+state.count:' / число допустимых вариантов ещё не рассчитано')+(dimensions?' / '+dimensions.width+' x '+dimensions.height+' px / исходные кадры '+Math.ceil(dimensions.width*dimensions.height*4*n/1048576)+' МиБ; размер файла зависит от сжатия':'');refreshAudio();}
-  function controls(busy){for(const input of panel.querySelectorAll('input,button'))input.disabled=busy;cancelButton.disabled=!busy;progress.hidden=!busy;refreshAudio();}
+  function refresh(){if(destroyed)return;projectionTools?.refresh();if(controller)return;const state=player.getState(),rate=Number(player.getExportSnapshot().rate)||4;if(!rangeTouched){startInput.value=String(state.index+1);countInput.value=String(state.count?Math.min(64,state.count-state.index):64);}startInput.max=String(state.count||331776);countInput.max=String(state.count||331776);const n=Number(countInput.value);estimate.textContent=n+' кадров / '+formatDuration(n/rate)+' / '+rate+' вариантов/с'+(state.count?' / всего '+state.count:' / число допустимых вариантов ещё не рассчитано')+(dimensions?' / '+dimensions.width+' x '+dimensions.height+' px / исходные кадры '+Math.ceil(dimensions.width*dimensions.height*4*n/1048576)+' МиБ; размер файла зависит от сжатия':'');refreshAudio();}
+  function controls(busy){for(const input of panel.querySelectorAll('input,button'))if(!input.closest('.xs-projection-tools'))input.disabled=busy;cancelButton.disabled=!busy;progress.hidden=!busy;refreshAudio();}
   function revoke(){if(downloadURL)URL.revokeObjectURL(downloadURL);downloadURL=null;download.hidden=true;download.removeAttribute('href');}
   async function prepare(signal){const snapshot=player.getExportSnapshot();if(snapshot.codes?.length)return snapshot;status.textContent='Расчёт допустимых вариантов для текущих фигур...';const ownsCalculation=!player.getState().busy,stop=()=>{if(ownsCalculation)player.cancelSequence();};signal.addEventListener('abort',stop,{once:true});try{await player.ensureSequence();check(signal);return player.getExportSnapshot();}finally{signal.removeEventListener('abort',stop);}}
   async function start(kind){
@@ -292,7 +411,7 @@
    try{const snapshot=await prepare(signal);check(signal);if(!snapshot.count)throw Error('Нет допустимых вариантов для экспорта.');rangeTouched=true;startInput.value='1';countInput.value=String(snapshot.count);const capture=view.createCapture({source:snapshot.source});dimensions={width:capture.width,height:capture.height};capture.destroy();status.textContent='Выбран весь цикл. Кадры кодируются по одному. Проверьте длительность и объём, затем нажмите GIF 3D или Видео 3D.';}catch(error){status.textContent=error.name==='AbortError'?'Выбор отменён.':error.message;}finally{controller=null;if(!destroyed){controls(false);refresh();}}
   });
   const timer=setInterval(refresh,1000);refresh();
-  return {start,cancel,getState:()=>({busy:!!controller,withAudio,result:lastResult}),destroy(){destroyed=true;cancel();clearInterval(timer);revoke();panel.remove();}};
+  return {start,cancel,getState:()=>({busy:!!controller,withAudio,result:lastResult}),destroy(){destroyed=true;cancel();clearInterval(timer);projectionTools?.destroy();revoke();panel.remove();}};
  }
  return {quantize,selectRange,formatDuration,webmMuxer,run,mount};
 });

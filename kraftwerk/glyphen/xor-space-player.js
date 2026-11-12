@@ -52,8 +52,12 @@ play.textContent=busy?'Отмена':playing?'|| Пауза':'|> Перебор'
   allow.addEventListener('change',()=>{try{localStorage.setItem('zerk_xor_space_allow_centres',String(allow.checked));}catch(_){}invalidate();});
   rate.addEventListener('change',()=>{rate.value=String(Math.max(1,Math.min(25,Math.round(Number(rate.value)||4))));nextDue=performance.now()+1000/Number(rate.value);buttons();});
   container.addEventListener('xor-space-change',event=>{if(event.detail?.reason==='interaction')pause();else if(event.detail?.reason!=='sequence')invalidate();});
-  function getExportSnapshot(){return {source:JSON.parse(JSON.stringify(sequenceSource||view.getSnapshot())),assignments:JSON.parse(JSON.stringify(sequenceAssignments||view.getState().assignments)),codes:sequence?sequence.codes.slice():null,index,count:sequence?.codes.length||0,rate:Math.max(1,Math.min(25,Number(rate.value)||4)),allowSharedCentres:allow.checked};}
+  function getExportSnapshot(){return {source:JSON.parse(JSON.stringify(sequenceSource||view.getSnapshot())),assignments:JSON.parse(JSON.stringify(sequenceAssignments||view.getState().assignments)),codes:sequence?sequence.codes.slice():null,generation:request,index,count:sequence?.codes.length||0,rate:Math.max(1,Math.min(25,Number(rate.value)||4)),allowSharedCentres:allow.checked};}
   function ensureSequence(){if(sequence)return Promise.resolve(getExportSnapshot());if(calculation)return calculation;return calculate(false);}
-  buttons();return {pause,invalidate,ensureSequence,cancelSequence:cancel,getExportSnapshot,getState:()=>({playing,busy,index,count:sequence?.codes.length||0,total:sequence?.total||331776}),destroy(){cancel();panel.remove();}};
+  function selectVariant(number,generation){
+   if(generation!==request||!Number.isInteger(number)||number<1||number>(sequence?.codes.length||0))return false;
+   pause(false);show(number-1,true);return true;
+  }
+  buttons();return {pause,invalidate,ensureSequence,cancelSequence:cancel,getExportSnapshot,selectVariant,getState:()=>({playing,busy,index,generation:request,count:sequence?.codes.length||0,total:sequence?.total||331776}),destroy(){cancel();panel.remove();}};
  };
 })();

@@ -12,6 +12,20 @@
  const AUTO=['-Y','-X','+Y','+X'],RAYS=[[0,1,0],[1,0,0],[0,-1,0],[-1,0,0]];
  const DEFAULT_CAMERA={yaw:-.56,pitch:.38,zoom:1};
  const AXIS_COLORS=['#dd8178','#96bd79','#80b4e8'];
+ const DEFAULT_COLOURS=Object.freeze({
+  fieldBg:'#131619',bit:null,pivot:'#858c8c',axes:null,shadowLight:null,shadowDark:'#000000',
+  digitOne:'#ffffff',ghost:'#ff6657',depth:'#66dcff'
+ });
+ const colourKey='zerk_xor_space_colours';
+ const collisionTint=colours=>colours.ghost===DEFAULT_COLOURS.ghost?'#ffb5a3':colours.ghost;
+ function normalizeColours(values){
+  const result={...DEFAULT_COLOURS};
+  for(const key of Object.keys(result)){
+   const value=values?.[key];
+   if(typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value))result[key]=value.toLowerCase();
+  }
+  return result;
+ }
  const key=p=>p.join(','),add=(a,b)=>a.map((v,i)=>v+b[i]),scale=(a,s)=>a.map(v=>v*s);
  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
  const int=n=>Number.isFinite(Number(n))?Math.round(Number(n)):0;
@@ -117,6 +131,8 @@
   let symmetry=normalizeSymmetry(options.symmetry);
   if(!options.capture&&!options.symmetry)try{symmetry=normalizeSymmetry(JSON.parse(localStorage.getItem('zerk_xor_space_symmetry')||'null'));}catch(_){}
   let snapshot=initialSnapshot||{},model=buildModel(snapshot,assignments),camera={...DEFAULT_CAMERA,...options.camera},drag=null,destroyed=false,selected=Number.isInteger(options.selected)?options.selected:0;
+  let colours=normalizeColours(options.colours);
+  if(!options.capture&&!options.colours)try{colours=normalizeColours(JSON.parse(localStorage.getItem(colourKey)||'null'));}catch(_){}
   let hitFaces=[],handles=[],view=null,bodyClick=null,selectedAxis=null;
   const host=doc.createElement('div');host.className='xor-space';
   host.innerHTML='<div class="xs-heading"><h2>3D / ось Z</h2><div class="xs-actions"><button class="gz-hx xs-reset" type="button" title="Сбросить направления и сдвиги всех четырёх фигур в исходное 2D-состояние" aria-label="Вернуть все фигуры в 2D">< 2D</button><button class="gz-hx xs-camera" type="button" title="Сбросить только положение камеры" aria-label="Сбросить камеру">+ Видъ</button></div></div><p class="xs-explain">Те же четыре фигуры. +Z - к нам, -Z - за экран. Выберите фигуру на поле или кнопкой I-IV, затем тяните её стрелку X, Y или Z. Числа - сдвиг в клетках от положения на основном поле. R меняет плоскость.</p><div class="xs-controls" role="group" aria-label="Направления и сдвиги четырёх фигур"></div><p class="xs-status" role="status"></p><div class="xs-stage"><canvas class="xs-main" role="img" aria-label="Объём четырёх фигур: выберите фигуру, тяните стрелку оси для перемещения; пустое место вращает камеру" tabindex="0"></canvas><span class="xs-camera-note">Стрелка оси - сдвиг / пустое место - камера / колесо - масштаб / Shift + <- -> / ^ v / PageUp PageDown - X / Y / Z</span></div><div class="xs-projections"></div><p class="xs-explain xs-bottom">XOR считается в одинаковых (X, Y, Z). Серые центры вне XOR. Проекции показывают занятые клетки по глубине, без повторного XOR. Режим наложения и рисунки берутся с основного поля.</p>';
@@ -178,11 +194,11 @@
    const rect=canvas.getBoundingClientRect(),width=Math.max(1,Math.round(rect.width)),height=Math.max(1,Math.round(rect.height||(canvas===main?Math.min(560,Math.max(280,width*.58)):width)));
    const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(width*dpr),h=Math.round(height*dpr);
    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
-   const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);
+   const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle=colours.fieldBg;ctx.fillRect(0,0,width,height);
    return {ctx,width,height};
   }
   function extent(){let e=14;for(const f of model.figures)if(f.active)for(const p of [f.anchor,...f.cells])for(const v of p)e=Math.max(e,Math.abs(v)+1);return e;}
-  function color(members){return members.length===1?COLORS[members[0]]:'#eee6d8';}
+  function color(members){return colours.bit||(members.length===1?COLORS[members[0]]:'#eee6d8');}
   const faceDefs=[{n:[1,0,0],v:[[1,-1,-1],[1,1,-1],[1,1,1],[1,-1,1]],shade:.78},{n:[-1,0,0],v:[[-1,-1,1],[-1,1,1],[-1,1,-1],[-1,-1,-1]],shade:.7},{n:[0,1,0],v:[[-1,1,-1],[-1,1,1],[1,1,1],[1,1,-1]],shade:1},{n:[0,-1,0],v:[[-1,-1,1],[-1,-1,-1],[1,-1,-1],[1,-1,1]],shade:.64},{n:[0,0,1],v:[[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]],shade:.9},{n:[0,0,-1],v:[[1,-1,-1],[-1,-1,-1],[-1,1,-1],[1,1,-1]],shade:.75}];
   function draw3D(){
    const {ctx,width,height}=prepare(main),unit=drag&&drag.kind==='axis'?drag.unit:Math.min(width,height)/(extent()*3.1)*camera.zoom;
@@ -190,7 +206,8 @@
    view={unit,screen};
    const origin=screen([0,0,0]),axisLength=Math.max(6,extent()*.95);
    ctx.lineWidth=1;ctx.font='12px "AzBuk Thin", monospace';
-   for(const [axis,vector,tint] of [['X',[1,0,0],'#dd8178'],['Y',[0,1,0],'#96bd79'],['Z',[0,0,1],'#80b4e8']]){
+   for(let i=0;i<3;i++){
+    const axis='XYZ'[i],vector=[0,0,0],tint=colours.axes||AXIS_COLORS[i];vector[i]=1;
     const end=screen(scale(vector,axisLength)),back=screen(scale(vector,-axisLength));
     ctx.strokeStyle=tint;ctx.globalAlpha=.7;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(back[0],back[1]);ctx.lineTo(origin[0],origin[1]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(origin[0],origin[1]);ctx.lineTo(end[0],end[1]);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle=tint;
     ctx.fillText('+'+axis+(axis==='Z'?' к нам':''),end[0]+5,end[1]-5);ctx.fillText('-'+axis+(axis==='Z'?' за экран':''),back[0]+5,back[1]-5);
@@ -204,7 +221,7 @@
    const uniqueCentres=new Map(model.centres.map(c=>[key(c.p),c]));
    for(const c of uniqueCentres.values()){
     const members=model.centres.filter(other=>key(other.p)===key(c.p)).map(other=>other.id),highlight=axisHighlight(c.p,members);
-    voxels.push({p:c.p,color:highlight||'#858c8c',axisHighlight:highlight,selected:!!moving&&members.includes(selected),neutral:true,members});
+    voxels.push({p:c.p,color:highlight||colours.pivot,axisHighlight:highlight,selected:!!moving&&members.includes(selected),neutral:true,members});
    }
    const occupied=new Set(voxels.map(v=>key(v.p))),faces=[];
    for(const voxel of voxels)for(const face of faceDefs){
@@ -215,18 +232,22 @@
    faces.sort((a,b)=>a.depth-b.depth);
    hitFaces=faces;
    for(const face of faces){
-    ctx.beginPath();face.vertices.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=face.voxel.color;ctx.fill();ctx.fillStyle='rgba(0,0,0,'+(1-face.shade)+')';ctx.fill();ctx.strokeStyle=face.voxel.axisHighlight|| (face.voxel.selected?'#fff6b0':'#121519');ctx.lineWidth=face.voxel.axisHighlight?2:face.voxel.selected?1.1:.45;ctx.stroke();
+    ctx.beginPath();face.vertices.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();
+    ctx.fillStyle=face.voxel.color;ctx.fill();
+    ctx.fillStyle=colours.shadowDark;ctx.globalAlpha=1-face.shade;ctx.fill();ctx.globalAlpha=1;
+    ctx.strokeStyle=face.voxel.axisHighlight||(face.voxel.selected?'#fff6b0':colours.shadowLight||'#121519');
+    ctx.lineWidth=face.voxel.axisHighlight?2:face.voxel.selected?1.1:.45;ctx.stroke();
    }
    if(moving){
     // A display-only origin marker remains visible even when XOR leaves it empty.
-    const zero=screen([0,0,0]);ctx.strokeStyle='#131619';ctx.lineWidth=5;ctx.beginPath();ctx.arc(zero[0],zero[1],6,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#ff4fcb';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.moveTo(zero[0]-9,zero[1]);ctx.lineTo(zero[0]+9,zero[1]);ctx.moveTo(zero[0],zero[1]-9);ctx.lineTo(zero[0],zero[1]+9);ctx.stroke();
+    const zero=screen([0,0,0]);ctx.strokeStyle=colours.fieldBg;ctx.lineWidth=5;ctx.beginPath();ctx.arc(zero[0],zero[1],6,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#ff4fcb';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.moveTo(zero[0]-9,zero[1]);ctx.lineTo(zero[0]+9,zero[1]);ctx.moveTo(zero[0],zero[1]-9);ctx.lineTo(zero[0],zero[1]+9);ctx.stroke();
    }
    if(!options.sceneOnly)drawHandles(ctx,screen,unit,width,height);
   }
   function drawHandles(ctx,screen,unit,width,height){
    handles=[];const figure=model.figures[selected];if(!figure||!figure.active)return;
    const origin=screen(figure.anchor);ctx.font='12px "AzBuk Thin", monospace';ctx.lineWidth=2;
-   ctx.fillStyle=COLORS[selected];ctx.fillText(NAMES[selected],origin[0]+7,origin[1]+17);
+   ctx.fillStyle=colours.axes||COLORS[selected];ctx.fillText(NAMES[selected],origin[0]+7,origin[1]+17);
    for(let axis=0;axis<3;axis++){
     const ray=symmetry.enabled?DIRECTIONS[symmetry.rays[selected]]:null;if(ray&&!ray[axis])continue;
     const basis=[0,0,0];basis[axis]=ray?ray[axis]:1;const p=screen(add(figure.anchor,basis)),vector=[p[0]-origin[0],p[1]-origin[1]],length=Math.hypot(...vector);
@@ -241,8 +262,9 @@
     const handleLength=edge+2*length;
     const end=[origin[0]+u[0]*handleLength,origin[1]+u[1]*handleLength];
     handles.push({axis,origin:origin.slice(0,2),end,vector,symmetric:!!ray});
-    ctx.strokeStyle='#131619';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(origin[0],origin[1]);ctx.lineTo(...end);ctx.stroke();
-    ctx.strokeStyle=AXIS_COLORS[axis];ctx.lineWidth=selectedAxis&&selectedAxis.figure===selected&&selectedAxis.axis===axis?3:2;ctx.stroke();ctx.fillStyle=AXIS_COLORS[axis];ctx.beginPath();ctx.moveTo(...end);ctx.lineTo(end[0]-u[0]*11-u[1]*5,end[1]-u[1]*11+u[0]*5);ctx.lineTo(end[0]-u[0]*11+u[1]*5,end[1]-u[1]*11-u[0]*5);ctx.closePath();ctx.fill();ctx.fillText(ray?'R':'XYZ'[axis],end[0]+u[0]*12-4,end[1]+u[1]*12+4);
+    ctx.strokeStyle=colours.fieldBg;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(origin[0],origin[1]);ctx.lineTo(...end);ctx.stroke();
+    const tint=colours.axes||AXIS_COLORS[axis];
+    ctx.strokeStyle=tint;ctx.lineWidth=selectedAxis&&selectedAxis.figure===selected&&selectedAxis.axis===axis?3:2;ctx.stroke();ctx.fillStyle=tint;ctx.beginPath();ctx.moveTo(...end);ctx.lineTo(end[0]-u[0]*11-u[1]*5,end[1]-u[1]*11+u[0]*5);ctx.lineTo(end[0]-u[0]*11+u[1]*5,end[1]-u[1]*11-u[0]*5);ctx.closePath();ctx.fill();ctx.fillText(ray?'R':'XYZ'[axis],end[0]+u[0]*12-4,end[1]+u[1]*12+4);
    }
   }
   function choose(id){selectedAxis=null;selected=id;refresh(false);}
@@ -258,22 +280,31 @@
   function drawProjection(canvas,plane){
    const {ctx,width,height}=prepare(canvas),projection=project(model,plane),e=extent(),unit=(width-28)/(e*2+1);
    const xy=p=>[width/2+p[0]*unit,height/2-p[1]*unit];
-   ctx.strokeStyle='#343b42';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(14,height/2);ctx.lineTo(width-14,height/2);ctx.moveTo(width/2,14);ctx.lineTo(width/2,height-14);ctx.stroke();
+   ctx.strokeStyle=colours.axes||'#343b42';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(14,height/2);ctx.lineTo(width-14,height/2);ctx.moveTo(width/2,14);ctx.lineTo(width/2,height-14);ctx.stroke();
    for(const cell of projection.cells){const p=xy(cell.p);ctx.fillStyle=color(cell.members);ctx.fillRect(p[0]-unit/2,p[1]-unit/2,Math.max(.7,unit-.25),Math.max(.7,unit-.25));}
-   for(const centre of projection.centres){const p=xy(centre.p);ctx.fillStyle='#858c8c';ctx.fillRect(p[0]-unit/2,p[1]-unit/2,unit,unit);}
+   for(const centre of projection.centres){const p=xy(centre.p);ctx.fillStyle=colours.pivot;ctx.fillRect(p[0]-unit/2,p[1]-unit/2,unit,unit);}
    for(const overlap of projection.overlaps){
     const p=xy(overlap.p),size=Math.max(1,unit-.25),left=p[0]-unit/2,top=p[1]-unit/2;
-    if(overlap.collisionCount){ctx.fillStyle='rgba(255,102,87,.68)';ctx.fillRect(left,top,size,size);ctx.strokeStyle='#ffb5a3';ctx.lineWidth=Math.min(1.3,unit/4);ctx.beginPath();ctx.moveTo(left,top+size);ctx.lineTo(left+size,top);ctx.stroke();}
-    if(overlap.depth>1){ctx.strokeStyle='#66dcff';ctx.lineWidth=Math.min(1.5,unit/3);ctx.strokeRect(left+.3,top+.3,Math.max(.4,size-.6),Math.max(.4,size-.6));}
-    if(unit>=12){ctx.fillStyle='#fff';ctx.font=Math.min(12,Math.floor(unit*.7))+'px "AzBuk Thin",monospace';ctx.textAlign='center';ctx.fillText(String(overlap.voxelCount),p[0],p[1]+Math.min(4,unit*.25));ctx.textAlign='left';}
+    if(overlap.collisionCount){ctx.fillStyle=colours.ghost;ctx.globalAlpha=.68;ctx.fillRect(left,top,size,size);ctx.globalAlpha=1;ctx.strokeStyle=collisionTint(colours);ctx.lineWidth=Math.min(1.3,unit/4);ctx.beginPath();ctx.moveTo(left,top+size);ctx.lineTo(left+size,top);ctx.stroke();}
+    if(overlap.depth>1){ctx.strokeStyle=colours.depth;ctx.lineWidth=Math.min(1.5,unit/3);ctx.strokeRect(left+.3,top+.3,Math.max(.4,size-.6),Math.max(.4,size-.6));}
+    if(unit>=12){ctx.fillStyle=colours.digitOne;ctx.font=Math.min(12,Math.floor(unit*.7))+'px "AzBuk Thin",monospace';ctx.textAlign='center';ctx.fillText(String(overlap.voxelCount),p[0],p[1]+Math.min(4,unit*.25));ctx.textAlign='left';}
    }
-   ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle='#b4bac0';ctx.fillText('+'+projection.axes[0],width-25,height/2-5);ctx.fillText('+'+projection.axes[1],width/2+5,14);
+   ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle=colours.axes||'#b4bac0';ctx.fillText('+'+projection.axes[0],width-25,height/2-5);ctx.fillText('+'+projection.axes[1],width/2+5,14);
    canvas.dataset.cells=String(projection.cells.length);
    const collisions=projection.overlaps.filter(c=>c.collisionCount).length,depths=projection.overlaps.filter(c=>c.depth>1).length;
    canvas.dataset.collisions=String(collisions);canvas.dataset.depthOverlaps=String(depths);
    canvas.previousElementSibling.textContent=plane+' / '+plane[0]+' -> / '+plane[1]+' ^ / XYZ: '+collisions+' / глубина: '+depths;
   }
   function draw(){if(destroyed)return;draw3D();for(const p of projections)drawProjection(p.canvas,p.plane);}
+  function setColours(values){
+   colours=normalizeColours(values);
+   if(!options.capture)try{localStorage.setItem(colourKey,JSON.stringify(colours));}catch(_){}
+   syncLegendColours();draw();
+  }
+  function syncLegendColours(){
+   overlapNote.querySelector('.xs-collision-key').style.color=collisionTint(colours);
+   overlapNote.querySelector('.xs-depth-key').style.color=colours.depth;
+  }
   function refresh(save,reason='translation'){
    if(symmetry.enabled)assignments=symmetricAssignments(snapshot,assignments,symmetry);
    model=buildModel(snapshot,assignments);
@@ -333,9 +364,9 @@
    const frozen=JSON.parse(JSON.stringify(captureOptions.source||snapshot));
    const layoutWidth=host.getBoundingClientRect().width,width=Math.max(1,Math.round(layoutWidth));
    const box=doc.createElement('div');box.setAttribute('aria-hidden','true');box.style.cssText='position:fixed;left:-100000px;top:0;pointer-events:none;width:'+layoutWidth+'px;';doc.body.appendChild(box);
-   const frozenCamera={...camera};
+   const frozenCamera={...camera},frozenColours={...colours};
    const sceneOnly=!!captureOptions.sceneOnly;
-   const captureView=mount(box,frozen,{capture:true,sceneOnly,assignments:JSON.parse(JSON.stringify(assignments)),camera:frozenCamera,selected,symmetry:JSON.parse(JSON.stringify(symmetry))});
+   const captureView=mount(box,frozen,{capture:true,sceneOnly,assignments:JSON.parse(JSON.stringify(assignments)),camera:frozenCamera,colours:frozenColours,selected,symmetry:JSON.parse(JSON.stringify(symmetry))});
    const captureHost=box.querySelector('.xor-space');captureHost.style.margin='0';captureHost.style.padding='0';captureHost.style.border='0';
    const mainCanvas=box.querySelector('.xs-main'),projectionCanvases=[...box.querySelectorAll('.xs-projection canvas')];
    // Use the same canvas renderers, current width and camera; controls are not in the movie.
@@ -357,20 +388,20 @@
    const parts=[{name:'3D',x:Math.round(mainRect.left-hostRect.left),y:header,width:Math.round(mainRect.width),height:mainHeight},...projectionCanvases.map(c=>{const r=c.getBoundingClientRect(),h=captureHost.getBoundingClientRect();return {name:c.dataset.plane,x:Math.round(r.left-h.left),y:projectionTop,width:Math.round(r.width),height:Math.round(r.height)};})];
    function render(next,label='',orbitTurn=0){
     drawScene(next,orbitTurn);
-    const ctx=output.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);ctx.fillStyle='#eee6d8';ctx.font='bold 12px ui-monospace,monospace';ctx.textBaseline='top';ctx.fillText('3D / XY / XZ / YZ',8,8);
+    const ctx=output.getContext('2d',{willReadFrequently:true});ctx.fillStyle=frozenColours.fieldBg;ctx.fillRect(0,0,width,height);ctx.fillStyle=frozenColours.axes||'#eee6d8';ctx.font='bold 12px ui-monospace,monospace';ctx.textBaseline='top';ctx.fillText('3D / XY / XZ / YZ',8,8);
     ctx.textAlign='right';ctx.fillText(String(label),width-8,8);ctx.textAlign='left';
     const canvases=[mainCanvas,...projectionCanvases];for(let i=0;i<parts.length;i++){const p=parts[i];ctx.drawImage(canvases[i],p.x,p.y,p.width,p.height);}
     for(let i=0;i<projectionCanvases.length;i++){
-     const c=projectionCanvases[i],p=parts[i+1];ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle='#b4bac0';ctx.fillText(p.name,p.x+3,projectionTop-caption+3);ctx.font='12px "AzBuk Thin", monospace';
+     const c=projectionCanvases[i],p=parts[i+1];ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle=frozenColours.axes||'#b4bac0';ctx.fillText(p.name,p.x+3,projectionTop-caption+3);ctx.font='12px "AzBuk Thin", monospace';
      ctx.fillText('XYZ: '+c.dataset.collisions,p.x+3,projectionTop-caption+17);ctx.fillText('Глубина: '+c.dataset.depthOverlaps,p.x+3,projectionTop-caption+28);
     }
-    ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle='#ffb5a3';ctx.fillText('# XYZ - совпадение кубиков',8,height-footer+7);ctx.fillStyle='#66dcff';ctx.fillText('o Глубина - перекрытие в проекции',8,height-footer+21);
+    ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle=collisionTint(frozenColours);ctx.fillText('# XYZ - совпадение кубиков',8,height-footer+7);ctx.fillStyle=frozenColours.depth;ctx.fillText('o Глубина - перекрытие в проекции',8,height-footer+21);
     return output;
    }
    return {width,height,parts:parts.map(p=>({...p})),render,destroy};
   }
-  refresh(false);
-  return {createCapture,update(next){snapshot=next||{};refresh(false);host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'source'}}));},getSnapshot(){return JSON.parse(JSON.stringify(snapshot));},setAssignments(next,{save=false,yaw=camera.yaw}={}){assignments=normalizeAssignments(next);camera.yaw=yaw;refresh(save,'sequence');},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected,symmetry:JSON.parse(JSON.stringify(symmetry))};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
+  syncLegendColours();refresh(false);
+  return {createCapture,getColours:()=>({...colours}),setColours,update(next){snapshot=next||{};refresh(false);host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'source'}}));},getSnapshot(){return JSON.parse(JSON.stringify(snapshot));},setAssignments(next,{save=false,yaw=camera.yaw}={}){assignments=normalizeAssignments(next);camera.yaw=yaw;refresh(save,'sequence');},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected,symmetry:JSON.parse(JSON.stringify(symmetry))};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
  }
  return {mount,buildModel,project,orientation,cameraPoint,axisDragSteps,orientFigure,isEndVoxel,alignAnchors,symmetricAssignments};
 });

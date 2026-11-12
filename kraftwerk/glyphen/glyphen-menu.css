@@ -205,3 +205,8 @@ html body main .search-input-wrap{background:var(--menu-btn)}
 html body main #searchPattern{background:transparent!important;color:transparent!important;caret-color:var(--menu-text)}
 html body main #searchPattern,html body main .search-highlight{font-family:"AzBuk Mono",var(--font),monospace;font-size:14px;line-height:20px;padding:4px}
 html body main .search-highlight .line{line-height:20px;min-height:20px}
+
+/* Glyphen 3D shares the original swatches and compact colour panel. */
+html body main .xs-colours{width:320px;max-width:100%;margin-top:4px;padding:2px;border-top:2px solid var(--menu-accent);background:var(--menu-base);color:var(--menu-text)}
+html body main .xs-colours>h3{margin:0}
+html body main .xs-colours .menu-heading{--compact-w:100%!important;display:block;color:var(--menu-accent)!important;font:700 14px/30px var(--font)!important;padding:0 24px!important}

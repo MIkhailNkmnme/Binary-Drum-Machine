@@ -1,7 +1,61 @@
 /* Readable presentation only: original controls, numeric text and mathematical state stay intact. */
 (function () {
  'use strict';
- window.GlyphenMenu = {mount() {
+ function mountSpaceColours(view,mountKraftPalettes,readableDigit) {
+  const stage = document.querySelector('#spaceMount .xor-space');
+  const panel = document.createElement('section');
+  panel.className = 'xs-colours';
+  panel.dataset.menuGroup = 'colors';
+  panel.innerHTML = '<h3><button type="button" class="menu-heading" data-menu-navigation aria-controls="glyphen-space-colours" aria-label="Цвета 3D">Цвета</button></h3><div id="glyphen-space-colours" class="menu-body"><p class="menu-summary">Палитры Kraftwerk и отдельные цвета сцены 3D и проекций.</p><div class="group kraft-palettes" role="group" aria-label="Палитры 3D"></div><div class="color-grid"></div><div class="group role"><button type="button" class="xs-colours-reset" title="Вернуть исходные отдельные цвета фигур I–IV">Сбросить цвета</button></div></div>';
+  stage.querySelector('.xs-heading').after(panel);
+
+  const toggle = panel.querySelector('.menu-heading'), body = panel.querySelector('.menu-body');
+  const openedKey = 'glyphen-space-colours-open';
+  let opened = false;
+  try { opened = localStorage.getItem(openedKey) === '1'; } catch {}
+  const setOpened = () => { body.hidden = !opened; toggle.setAttribute('aria-expanded',String(opened)); };
+  toggle.onclick = () => { opened = !opened; setOpened(); try { localStorage.setItem(openedKey,opened?'1':'0'); } catch {} };
+  setOpened();
+
+  const grid = panel.querySelector('.color-grid'), inputs = new Map();
+  for (const [title,fields] of [
+   ['Поле и фигуры',[['fieldBg','Фон поля'],['bit','Фигуры','#efad62'],['pivot','Центры']]],
+   ['Цифры и линии',[['digitOne','Цифры'],['axes','Оси и сетка','#dd8178']]],
+   ['Контур и тень',[['shadowLight','Контур','#121519'],['shadowDark','Тень граней']]],
+   ['Проекции',[['ghost','Пересечения'],['depth','Глубина']]]
+  ]) {
+   const family = document.createElement('fieldset'), legend = document.createElement('legend');
+   family.className = 'menu-color-family'; legend.textContent = title; family.append(legend);
+   for (const [key,name,fallback] of fields) {
+    const label = document.createElement('label'), input = document.createElement('input');
+    label.textContent = name; input.type = 'color'; input.dataset.spaceColour = key; label.append(input); family.append(label);
+    inputs.set(key,{input,fallback});
+    input.addEventListener('input',()=>{view.setColours({...view.getColours(),[key]:input.value});sync();});
+   }
+   grid.append(family);
+  }
+
+  const paletteColours = palette => ({
+   fieldBg:palette.background,bit:palette.bit,pivot:palette.pivot,
+   shadowLight:palette.light,shadowDark:palette.dark,axes:readableDigit(palette.light,palette.background)
+  });
+  const buttons = mountKraftPalettes(panel.querySelector('.kraft-palettes'),palette=>{
+   view.setColours({...view.getColours(),...paletteColours(palette),digitOne:readableDigit(palette.light,palette.bit)});
+   sync();
+  });
+  function sync() {
+   const colours = view.getColours();
+   for (const [key,{input,fallback}] of inputs) input.value = colours[key] || fallback;
+   for (const button of buttons) {
+    const preset = paletteColours(window.ZerkKraftwerk.palette(button.dataset.kraftPalette));
+    button.setAttribute('aria-pressed',String(Object.entries(preset).every(([key,value])=>colours[key]===value)));
+   }
+  }
+  panel.querySelector('.xs-colours-reset').onclick = () => { view.setColours(); sync(); };
+  sync();
+ }
+ window.GlyphenMenu = {mount({spaceView,mountKraftPalettes,readableDigit}={}) {
+  if (spaceView) mountSpaceColours(spaceView,mountKraftPalettes,readableDigit);
   const compactNames = {
    'Случайный порядок':'Вразброс','Исходные позиции':'Исходные','Синяя палитра':'Палитры',
    'Нули под единицами':'Нули под 1','Верхняя клетка':'Верхняя 1','Только выбранная':'Выбранная',
