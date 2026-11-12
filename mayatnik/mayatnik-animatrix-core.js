@@ -74,10 +74,15 @@
       const values = seed.bits || [];
       for (let i = 0; i < size; i++) out.present[i] = values[i] != null && values[i] >= 0 ? 1 : 0;
     }
+    const {bits,present,bold,automatic,filled,selection,colours,fills}=out;
     for (let i = 0; i < size; i++) {
-      out.bits[i] = out.present[i] && out.bits[i] === 1 ? 1 : 0;
-      for (const key of ['present', 'bold', 'automatic', 'filled', 'selection']) out[key][i] = out[key][i] ? 1 : 0;
-      out.colours[i] &= 0xffffff; out.fills[i] &= 0xffffff;
+      bits[i] = present[i] && bits[i] === 1 ? 1 : 0;
+      present[i] = +!!present[i];
+      bold[i] = +!!bold[i];
+      automatic[i] = +!!automatic[i];
+      filled[i] = +!!filled[i];
+      selection[i] = +!!selection[i];
+      colours[i] &= 0xffffff; fills[i] &= 0xffffff;
     }
     if (Array.isArray(seed.areas)) {
       out.areas = seed.areas.map(a => clip(out, a)).filter(a => a.width && a.height);
@@ -86,6 +91,11 @@
       if (seed.selection == null) out.selection.set(out.present);
       out.areas = maskAreas(out, out.selection);
     }
+    return out;
+  }
+  function copySeed(seed) {
+    const out = { width: seed.width, height: seed.height, areas: seed.areas.map(area => ({ ...area })) };
+    for (const key of KEYS) out[key] = seed[key].slice();
     return out;
   }
   const firstScanRow = s => s.algorithm === 'copyRows' ? 2 : 1;
@@ -121,7 +131,7 @@
     const excel = EXCEL[algorithm];
     const scan = !excel && (!!options.scan || algorithm === 'copyRows');
     if (scan && direction !== 'down') throw new RangeError('Row scan supports down only');
-    const initial = cloneSeed(seed), state = cloneSeed(initial);
+    const initial = cloneSeed(seed), state = copySeed(initial);
     state.algorithm = algorithm; state.direction = direction; state.scan = scan;
     state.copyRowsMirror = algorithm === 'copyRows' && options.copyRowsMirror === true;
     state.copyRowsByAxis = state.copyRowsMirror && options.copyRowsByAxis === true;
@@ -152,14 +162,14 @@
       ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel, copyRowsOriginalHeight: s.copyRowsOriginalHeight } : {}) });
   }
   function reset(s) {
-    const initial = cloneSeed(s._seed);
+    const initial = s._seed;
     for (const key of KEYS) s[key].set(initial[key]);
-    s.areas = initial.areas;
+    s.areas = initial.areas.map(area => ({ ...area }));
     return resetProgress(s);
   }
   // Independent calculator at the same immutable seed, without duplicating it.
   function forkInitial(s) {
-    const state = cloneSeed(s._seed);
+    const state = copySeed(s._seed);
     Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel, copyRowsOriginalHeight: s.copyRowsOriginalHeight });
     if (s.excelCycleFrames) Object.assign(state, { excelCycleFrames: s.excelCycleFrames, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly });
     if (s.algorithm === 'excelCollision') state.collisionFillEmpty = s.collisionFillEmpty;
@@ -206,12 +216,10 @@
   }
   function calculate(kind, a, b, c = EMPTY, vertical = true) {
     const sum = a[1] + b[1] + c[1];
-    let colour = 0, seen = false, mixed = false;
-    for (const v of [a, b, c]) if (v[4]) {
-      if (!seen) { colour = v[2]; seen = true; } else if (colour !== v[2]) mixed = true;
-    }
+    const colour = a[4] ? a[2] : b[4] ? b[2] : c[4] ? c[2] : 0;
+    const mixed = b[4] && b[2] !== colour || c[4] && c[2] !== colour;
     const bit = kind === 'three' ? (vertical ? +(sum === 1 || sum === 2) : +(sum === 1)) : sum % 2;
-    return [1, bit, seen && !mixed ? colour : 0, a[3] ^ b[3] ^ c[3], 0];
+    return [1, bit, mixed ? 0 : colour, a[3] ^ b[3] ^ c[3], 0];
   }
   function calculateZero(a, b, vertical) {
     if (!a[0] && !b[0]) return [0, 0, a[2], a[3] ^ b[3], 0];
@@ -234,7 +242,7 @@
     // Insertion order: VBA Selection.Areas order, then rows, columns, left/right target.
     for (const area of s.areas) each(s, area, (i, x, y) => {
       if (!s.selection[i]) return;
-      for (const dx of [-1, 1]) {
+      for (let dx = -1; dx <= 1; dx += 2) {
         const t = index(s, x + dx, y + dy);
         if (t >= 0 && !seen[t]) { seen[t] = 1; order.push(t); }
       }
@@ -485,8 +493,11 @@
   }
   function report(s, before) {
     let changed = 0;const changedCells=s.trackChanges?[]:null;
+    const {bits,present,colours,bold,automatic,fills,filled,selection}=s;
     for (let i = 0; i < s.bits.length; i++) {
-      for (const key of KEYS) if (before[key][i] !== s[key][i]) { changed++; break; }
+      if (before.bits[i] !== bits[i] || before.present[i] !== present[i] || before.colours[i] !== colours[i] ||
+          before.bold[i] !== bold[i] || before.automatic[i] !== automatic[i] || before.fills[i] !== fills[i] ||
+          before.filled[i] !== filled[i] || before.selection[i] !== selection[i]) changed++;
       if(changedCells&&visualChanged(s,before,i,i))changedCells.push(i);
     }
     return { changed, done: s.done, rows: s.rowCount, steps: s.stepCount,
@@ -494,7 +505,8 @@
   }
   function visualChanged(s,before,i,j){
     if(s.present[i]!==before.present[j]||s.filled[i]!==before.filled[j])return true;
-    if(s.present[i])for(const key of ['bits','colours','bold','automatic'])if(s[key][i]!==before[key][j])return true;
+    if(s.present[i]&&(s.bits[i]!==before.bits[j]||s.colours[i]!==before.colours[j]||
+        s.bold[i]!==before.bold[j]||s.automatic[i]!==before.automatic[j]))return true;
     return !!s.filled[i]&&s.fills[i]!==before.fills[j];
   }
   function advance(s, n = 1) {

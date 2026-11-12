@@ -73,7 +73,10 @@
     async function run(action){
       if(pending||state().busy||destroyed)return;
       pending=true;error='';sync();
-      try{await action(service());}
+      try{
+        if(!doc.hidden)await new Promise(resolve=>win.requestAnimationFrame(()=>win.setTimeout(resolve,0)));
+        if(!destroyed)await action(service());
+      }
       catch(reason){error=reason?.message||String(reason);}
       finally{pending=false;if(!destroyed){sync();after();}}
     }
@@ -301,7 +304,7 @@
       const repeat=s.repeat;
       const mode=s.algorithm==='copyRows'?(s.copyRowsExcel?'Зеркалиус':s.copyRowsWrap?'Край XOR':'Копии XOR'):names[s.algorithm];
       const count=repeat?.complete?'С '+repeat.firstCycle+' · T '+repeat.periodCycles:(s.frame??0)+' / '+(s.cycleMode==='infinite'||s.cycleMode==='repeat'?'∞':s.total??0);
-      const status=error||(s.on?mode+' · '+count:'Выключена');
+      const status=error||(busy?'Подготовка…':s.on?mode+' · '+count:'Выключена');
       if(infoLabel.textContent!==status)infoLabel.textContent=status;
       const inputKind=({clean:'С нуля',frame:'Весь кадр',selection:'Выделенная область',example:'Учебный пример'})[s.sourceKind]||(s.on?'Сохранённый исходник':'С нуля');
       if(sourceInfo.textContent!==inputKind)sourceInfo.textContent=inputKind;

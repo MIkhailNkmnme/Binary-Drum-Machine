@@ -113,7 +113,7 @@
       if(values.length!==n)fail('Неверная длина массива '+key+' исходника Аниматрицы.');
       for(let i=0;i<n;i++){
         const v=values[i];
-        if(!Number.isInteger(v)||(key==='bits'?![-1,0,1].includes(v):key==='colours'||key==='fills'?v<0||v>0xffffff:v!==0&&v!==1))fail('Некорректный массив '+key+' исходника Аниматрицы.');
+        if(!Number.isInteger(v)||(key==='bits'?v< -1||v>1:key==='colours'||key==='fills'?v<0||v>0xffffff:v!==0&&v!==1))fail('Некорректный массив '+key+' исходника Аниматрицы.');
       }
     }
     validateAreas(seed.areas,seed.width,seed.height);
