@@ -30,7 +30,7 @@
         else box={left:0,top:0,right:1,bottom:1,empty:true};
       }
       const frameWidth=box.right-box.left,frameHeight=box.bottom-box.top;
-      const pixels=new Uint8Array(frameWidth*frameHeight),indices=new Map(),colours=[];let same=!!previous&&previous.box.left===box.left&&previous.box.top===box.top&&previous.box.right===box.right&&previous.box.bottom===box.bottom&&previous.box.empty===box.empty;
+      const pixels=new Uint8Array(frameWidth*frameHeight),indices=new Map(),colours=[];let same=mergeEqual&&!!previous&&previous.box.left===box.left&&previous.box.top===box.top&&previous.box.right===box.right&&previous.box.bottom===box.bottom&&previous.box.empty===box.empty;
       for(let i=0;i<pixels.length;i++){
         const j=((Math.floor(i/frameWidth)+box.top)*width+i%frameWidth+box.left)*4,rgb=(rgba[j]<<16)|(rgba[j+1]<<8)|rgba[j+2];let index=indices.get(rgb);
         if(index===undefined){
@@ -39,7 +39,7 @@
         }
         pixels[i]=index;
         // Indices alone are insufficient: a new palette can recolour the same pattern.
-        if(previous&&rgb!==previous.colours[previous.pixels[i]])same=false;
+        if(same&&rgb!==previous.colours[previous.pixels[i]])same=false;
       }
       delay=Math.max(1,Math.min(65535,Math.round(delay)));
       if(mergeEqual&&same&&lastControl){const total=lastControl[4]+(lastControl[5]<<8)+delay;if(total<=65535){lastControl[4]=total&255;lastControl[5]=total>>8;return;}}
@@ -69,7 +69,12 @@
       for(;measuredChunks<chunks.length;measuredChunks++)encodedBytes+=chunks[measuredChunks].byteLength;
       return encodedBytes;
     }
-    return {add,frame,dimensions,byteLength,finish(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([...output(),Uint8Array.of(59)],{type:'image/gif'});}};
+    function drain(){
+      if(trim||mergeEqual)throw Error('Поток GIF требует фиксированного размера и отдельных кадров.');
+      descriptors.length=0;
+      return new Blob(chunks.splice(0));
+    }
+    return {add,frame,dimensions,byteLength,drain,finish(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([...output(),Uint8Array.of(59)],{type:'image/gif'});}};
   }
   function record({width,height,capture,onDone,onError}){
     const ratio=Math.min(1,1024/width,1024/height),w=Math.max(1,Math.round(width*ratio)),h=Math.max(1,Math.round(height*ratio));
@@ -90,16 +95,23 @@
     try{pending=take();}catch(error){Promise.resolve().then(()=>fail(error));}
     return {width:w,height:h,stop(){if(stopping||closed)return;stopping=true;stopAt=performance.now();clearTimeout(timer);finish();}};
   }
-  async function batch(sizes){
+  async function batch(sizes,{stream=false}={}){
     const code=`const encoder=(${encoder.toString()});
-      let gifs;
+      let gifs,stream;
       onmessage=e=>{try{
         const {type,sizes,frames,delay}=e.data;
-        if(type==='start'){gifs=sizes.map(({width,height})=>encoder(width,height,{trim:true,mergeEqual:false}));postMessage({});}
+        if(type==='start'){
+          stream=e.data.stream;
+          gifs=sizes.map(({width,height})=>encoder(width,height,{trim:!stream,mergeEqual:false}));
+          postMessage({});
+        }
         else if(type==='frame'){
           for(let i=0;i<gifs.length;i++)gifs[i].add(frames[i],delay);
-          if(gifs.reduce((total,gif)=>total+gif.byteLength(),0)>256*1048576)throw Error('Четыре GIF превысили 256 МиБ. Выберите меньше кадров.');
-          postMessage({});
+          if(stream)postMessage({blobs:gifs.map(gif=>gif.drain())});
+          else{
+            if(gifs.reduce((total,gif)=>total+gif.byteLength(),0)>256*1048576)throw Error('Четыре GIF превысили 256 МиБ. Выберите меньше кадров.');
+            postMessage({});
+          }
         }
         else postMessage({blobs:gifs.map(gif=>gif.finish())});
       }catch(error){postMessage({error:String(error.message||error)});}};`;
@@ -126,12 +138,53 @@
     };
     worker.onerror=event=>close(Error(event.message||'Ошибка кодировщика GIF.'));
     worker.onmessageerror=()=>close(Error('Ошибка передачи кадра GIF.'));
-    await exchange({type:'start',sizes});
+    await exchange({type:'start',sizes,stream});
     return {
       add(frames,delay){return exchange({type:'frame',frames,delay},frames.map(frame=>frame.buffer));},
       async finish(){try{return (await exchange({type:'stop'})).blobs;}finally{close();}},
       cancel(){close(new DOMException('Запись GIF отменена.','AbortError'));}
     };
   }
-  const api={encoder,record,batch};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikGif=api;
+  async function squareSink(sizes){
+    const paths=sizes.map(size=>size+'x'+size+'.gif'),files=[],writers=[];
+    let parent,name;
+    async function dispose(){
+      await Promise.allSettled(writers.map(writer=>writer?.abort()));
+      if(parent&&name)await parent.removeEntry(name,{recursive:true}).catch(()=>{});
+    }
+    try{
+      const directory=await navigator.storage.getDirectory();
+      parent=await directory.getDirectoryHandle('mayatnik-square-gifs',{create:true});
+      name=Date.now()+'-'+crypto.randomUUID();
+      const job=await parent.getDirectoryHandle(name,{create:true});
+      for(const path of paths){
+        const file=await job.getFileHandle(path,{create:true});
+        files.push(file);writers.push(await file.createWritable());
+      }
+      return {
+        append:blobs=>Promise.all(blobs.map((blob,i)=>writers[i].write(blob))),
+        async finish(){
+          await Promise.all(writers.map(writer=>writer.close()));
+          writers.length=0;
+          return Promise.all(files.map(file=>file.getFile()));
+        },
+        dispose
+      };
+    }catch(_){
+      await dispose();
+      const chunks=sizes.map(()=>[]);let bytes=0;
+      return {
+        async append(blobs){
+          for(let i=0;i<blobs.length;i++){
+            bytes+=blobs[i].size;
+            if(bytes>256*1048576)throw Error('Браузер не предоставил временное хранилище, а GIF заняли больше 256 МиБ.');
+            chunks[i].push(blobs[i]);
+          }
+        },
+        async finish(){return chunks.map(parts=>new Blob(parts,{type:'image/gif'}));},
+        async dispose(){for(const parts of chunks)parts.length=0;}
+      };
+    }
+  }
+  const api={encoder,record,batch,squareSink};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikGif=api;
 })(typeof globalThis==='object'?globalThis:this);

@@ -26,8 +26,14 @@
 .may-continuation-directions label:has(input:checked),.may-continuation-directions label:has(input:indeterminate){border-color:var(--c,#9ad985)}
 .may-continuation-directions input{width:12px;height:12px;flex:none;margin:0;accent-color:var(--c,#9ad985)}
 .may-continuation-all{grid-column:1/-1;justify-content:center}
+.may-continuation-highlight{box-sizing:border-box;display:flex;align-items:center;gap:6px;width:120px;height:24px;padding:0 6px;border:1px solid #526d88;border-radius:3px;background:#1b2430;color:#dfe6f5;font:11px "Segoe UI",sans-serif;cursor:pointer}
+.may-continuation-highlight[hidden]{display:none!important}
+.may-continuation-highlight:has(input:checked){border-color:#ffd35b}
+.may-continuation-highlight:has(input:disabled){opacity:.45}
+.may-continuation-highlight input{margin:0;accent-color:#ffd35b}
 .may-continuation-gif{width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-sizing:border-box;padding:16px;border:1px solid #526d88;border-radius:8px;background:#131a24;color:#e3ebf6;font:13px "Segoe UI",sans-serif}
 .may-continuation-gif::backdrop{background:#0009}
+.may-continuation-gif [hidden]{display:none!important}
 .may-continuation-gif h2{font-size:16px;margin:0 0 12px}
 .may-continuation-gif label,.may-continuation-gif-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
 .may-continuation-gif input{width:96px;color:inherit;background:#0e141d;border:1px solid #526d88;border-radius:3px;padding:4px}

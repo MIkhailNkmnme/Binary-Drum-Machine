@@ -515,12 +515,17 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
     else { result = (params.operation >> u32(original * 2 + result)) & 1; }
   }
   var colour = previewColour(select(params.zero, params.one, result == 1)) / 255.0;
-  if ((params.flags & 8u) != 0u && original >= 0 && params.operation < 0) {
+  colour *= alpha;
+  if ((params.flags & 16u) != 0u && original >= 0) {
+    colour = colour * 0.6 + vec3<f32>(255.0, 211.0, 91.0) * (0.4 / 255.0);
+    alpha = alpha * 0.6 + 0.4;
+  }
+  if ((params.flags & 8u) != 0u && original >= 0) {
     let base = previewColour(select(params.zero, params.one, original == 1)) / 255.0;
-    colour = mix(base, colour, alpha);
+    colour += base * (1.0 - alpha);
     alpha = 1.0;
   }
-  return vec4<f32>(colour * alpha, alpha);
+  return vec4<f32>(colour, alpha);
 }`;
 
   const BG = { empty: 0, '1': 1, '0': 2, chess: 3 };
@@ -847,7 +852,7 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
         pass.end();
         device.queue.submit([encoder.finish()]);
       }
-      function renderContinuation(context, {x,y,step,left,right,bottom,zero,one,anchor,meeting,rows,mode,directions,edge,invert,exportFrame=false}) {
+      function renderContinuation(context, {x,y,step,left,right,bottom,zero,one,anchor,meeting,rows,mode,directions,edge,invert,highlight=false,exportFrame=false}) {
         if(dead)return;
         if(!continuationPipeline){
           previewModule ||= device.createShaderModule({code:PREVIEW_WGSL});
@@ -864,7 +869,7 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
         }
         const buffer=new ArrayBuffer(64);
         new Float32Array(buffer).set([x,y,step]);
-        new Int32Array(buffer).set([WW,right,bottom,left,zero,one,0,anchor,meeting,rows,mode,directions,invert|(edge<<1)|(exportFrame?8:0)],3);
+        new Int32Array(buffer).set([WW,right,bottom,left,zero,one,0,anchor,meeting,rows,mode,directions,invert|(edge<<1)|(exportFrame?8:0)|(highlight?16:0)],3);
         device.queue.writeBuffer(continuationParams,0,buffer);
         const encoder=device.createCommandEncoder();
         const pass=encoder.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),
