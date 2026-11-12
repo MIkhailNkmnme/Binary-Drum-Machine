@@ -1,11 +1,11 @@
-/* Маятник · Синтез 0.002. A bounded companion field; source v0.999 stays intact.
+/* Маятник · Синтез 0.003. A bounded experimental field; source v0.999 stays intact.
  * Source redraws are observations, never an animation clock. Only successive
  * source frames or explicit independent ticks advance experimental history. */
 (function(root){
   'use strict';
-  const KEY='synthesis-controls-v1',POSITION_KEY='synthesis-window-position-v1',MAX=512;
+  const KEY='synthesis-controls-v1',MAX=512;
   const defaults={mode:'trail',rule:'circuit',trailFrames:8,recoveryFrames:6,wrap:false,
-    mix:'overlay',link:true,rate:8,colourOne:'#ffd35b',colourZero:'#5ce1e6',visible:true,expanded:false,
+    mix:'overlay',link:true,rate:8,colourOne:'#ffd35b',colourZero:'#5ce1e6',visible:true,
     weightsOpen:true,stateWeights:[0,1,2,1,0,0,1],positionWeights:[2,1,2,1,1,2,1,2]};
   const modes={trail:'След',waves:'Волны',recovery:'Восстановление',grow:'Отпечаток',weights:'Веса соседей'};
   const rules={circuit:'Circuit Genesis',fireworks:'Fireworks',replicator:'Replicator',weighted:'WG Rule084'};
@@ -16,7 +16,7 @@
     if(!value||typeof value!=='object')return {...defaults};
     const p={...defaults};
     for(const [key,allowed] of Object.entries({mode:Object.keys(modes),rule:Object.keys(rules),mix:['overlay','only','xor','and']}))if(allowed.includes(value[key]))p[key]=value[key];
-    for(const key of ['wrap','link','visible','expanded','weightsOpen'])if(typeof value[key]==='boolean')p[key]=value[key];
+    for(const key of ['wrap','link','visible','weightsOpen'])if(typeof value[key]==='boolean')p[key]=value[key];
     for(const [key,lo,hi] of [['trailFrames',1,64],['recoveryFrames',0,64],['rate',1,30]])if(Number.isInteger(value[key])&&value[key]>=lo&&value[key]<=hi)p[key]=value[key];
     for(const key of ['colourOne','colourZero'])if(/^#[0-9a-f]{6}$/i.test(value[key]||''))p[key]=value[key];
     for(const [key,n]of [['stateWeights',7],['positionWeights',8]])p[key]=Array.isArray(value[key])&&value[key].length===n&&value[key].every(v=>Number.isInteger(v)&&v>=0&&v<=10)?value[key].slice():defaults[key].slice();
@@ -24,11 +24,9 @@
     return p;
   }
   try{prefs=readPrefs(JSON.parse(localStorage.getItem(KEY)||'null'));}catch(_){}
-  let panelPosition=null,positionFrame=0,panelDrag=null;
-  try{const saved=JSON.parse(localStorage.getItem(POSITION_KEY)||'null');if(saved&&Number.isFinite(saved.left)&&Number.isFinite(saved.top))panelPosition={left:saved.left,top:saved.top};}catch(_){}
   let engine=null,sourceBits=null,crop=null,sourceOwner=null,sourceMode='',sourceFrame=null,sourceSize='',
-    panel=null,canvas=null,ctx=null,status=null,notice=null,toolbar=null,bindings=[],after=()=>{},timer=null,
-    ticks=0,message='',pendingSave=null,dbPromise=null,restoring=true,detached=false,dirty=false,weightPanel=null,legend=null;
+    panel=null,canvas=null,ctx=null,status=null,notice=null,bindings=[],after=()=>{},timer=null,
+    ticks=0,message='',pendingSave=null,dbPromise=null,restoring=true,detached=false,dirty=false,weightPanel=null,legend=null,workInput=null,layerData=null;
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;};
   function fail(error){message=error?.message||String(error);refresh();}
   function run(action){try{const result=action();if(result?.catch)result.catch(fail);}catch(error){fail(error);}}
@@ -75,7 +73,7 @@
     if(kind==='cross')for(let d=-12;d<=12;d++){bits[cy*w+cx+d]=1;bits[(cy+d)*w+cx]=1;}
     else bits[cy*w+cx]=1;
     prefs.mode='grow';prefs.link=false;detached=true;
-    build(bits,{x:0,y:0,w,h});engine.seed(bits);sourceOwner=null;sourceFrame=null;sourceSize='';
+    const anchor=source()?.anchor||0;build(bits,{x:Math.max(0,Math.round(anchor-w/2)),y:0,w,h});engine.seed(bits);sourceOwner=null;sourceFrame=null;sourceSize='';
     message=kind==='cross'?'Крест 25 × 25 · 49 единиц. Поле 129 × 129.':'Одна клетка в центре поля 129 × 129.';
     remember();render();scheduleSave();
   }
@@ -123,7 +121,7 @@
     if(autonomous())prefs.link=false;
     if(mode==='weights')prefs.rule='weighted';
     if(engine){engine.configure(engineOptions());engine.reset(sourceBits);ticks=0;if(autonomous())engine.seed(sourceBits);dirty=true;}
-    message=mode==='recovery'?'Отдельное поле принимает изменение бита и удерживает его на время восстановления.':mode==='weights'?'Веса состояний × веса направлений. Рождение при сумме 5; сохранение при 5 или 6.':mode==='grow'?'Отпечаток развивается самостоятельно. Выберите правило и нажмите «Пуск».':'';
+    message=mode==='recovery'?'Слой Синтеза принимает изменение бита и удерживает его на время восстановления.':mode==='weights'?'Веса состояний × веса направлений. Рождение при сумме 5; сохранение при 5 или 6.':mode==='grow'?'Отпечаток развивается самостоятельно. Выберите правило и нажмите «Пуск».':'';
     remember();render();scheduleSave();
   }
   function setOption(key,value){
@@ -165,16 +163,32 @@
       const w=engine.width,h=engine.height;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
       const img=ctx.createImageData(w,h),data=img.data;
       paintPixels(data);
-      ctx.putImageData(img,0,0);canvas.style.aspectRatio=w+' / '+h;
+      ctx.putImageData(img,0,0);
+      if(!layerData||layerData.length!==data.length)layerData=new Uint8ClampedArray(data.length);
+      if(prefs.mix!=='overlay')layerData.set(data);else paintLayerPixels(layerData);
     }
     refresh();
+    root.maySynthesisPresent?.();
+  }
+  function paintLayerPixels(data){
+    data.fill(0);
+    const one=rgb(prefs.colourOne),zero=rgb(prefs.colourZero),count=root.MayatnikSynthesisCore.rules[prefs.rule].states,lut=[[0,0,0],one];
+    for(let s=2;s<count;s++){const t=(s-2)/Math.max(1,count-3);lut.push(one.map((v,i)=>Math.round((v*(1-t)+zero[i]*t)*(1-.8*t))));}
+    for(let q=0;q<sourceBits.length;q++){
+      let col,alpha;
+      if(prefs.mode==='trail'){col=engine.direction[q]?one:zero;alpha=Math.min(1,engine.trail[q]/prefs.trailFrames);}
+      else if(prefs.mode==='recovery'){col=engine.recovered[q]===1?one:zero;alpha=engine.recovered[q]!==sourceBits[q]?1:0;}
+      else{col=lut[engine.state[q]];alpha=engine.state[q]?1:0;}
+      const p=q*4;data[p]=col[0];data[p+1]=col[1];data[p+2]=col[2];data[p+3]=Math.round(alpha*255);
+    }
+  }
+  function getLayer(){
+    return !prefs.visible||!engine||!layerData?null:{width:engine.width,height:engine.height,crop:{...crop},data:layerData,only:prefs.mix==='only'};
   }
   function refresh(){
     if(!panel)return;
-    panel.hidden=!prefs.visible;panel.classList.toggle('synthesis-expanded',prefs.expanded);
-    schedulePanelPosition();
     if(weightPanel){weightPanel.hidden=prefs.rule!=='weighted'||!cellular();weightPanel.open=prefs.weightsOpen;}
-    if(legend)legend.textContent=prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Отдельно: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
+    if(legend)legend.textContent=prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Только Синтез: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
     status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'');
     notice.textContent=message;notice.hidden=!message;
     for(const binding of bindings){
@@ -230,8 +244,7 @@
     message='Опыт сохранён в Битотеке. Кнопка перехода в карточке возвращает к этому опыту.';refresh();return item;
   }
   function importWork(){
-    const input=el('input');input.type='file';input.accept='.json,application/json';
-    input.onchange=()=>run(async()=>{const file=input.files?.[0];if(!file)return;if(file.size>24000000)throw Error('Файл опыта больше 24 МБ.');load(JSON.parse(await file.text()));prefs.link=false;detached=true;dirty=true;remember();scheduleSave();message='Опыт открыт независимо от текущего исходника. Для нового захвата нажмите «Кадр».';refresh();});input.click();
+    workInput.value='';workInput.click();
   }
   function describe(node,title){node.title=title;node.setAttribute('aria-label',title);}
   function button(host,id,caption,title,action,options={}){
@@ -253,12 +266,12 @@
   }
   function mount({host,after:notify=()=>{}}){
     after=notify;host.classList.add('synthesis-controls');
-    button(host,'visible','Результат','Показать отдельное поле Синтеза',()=>setOption('visible',!prefs.visible),{selected:()=>prefs.visible});
+    button(host,'visible','Результат','Показать результат Синтеза на основном поле Маятника',()=>setOption('visible',!prefs.visible),{selected:()=>prefs.visible});
     choices(host,'mode','Этап Синтеза',Object.entries(modes).map(([v,name],i)=>({v,name:(i+1)+'. '+name})),'mode');
     choices(host,'rule','Клеточное правило',Object.entries(rules).map(([v,name])=>({v,name})),'rule',()=>prefs.mode==='waves'||prefs.mode==='grow');
     choices(host,'trail','Длина следа в кадрах',[4,8,16,32,64].map(v=>({v,name:'След '+v})),'trailFrames',()=>prefs.mode==='trail');
     choices(host,'recovery','Кадров восстановления',[0,1,2,4,6,8,16,19,32,64].map(v=>({v,name:'Пауза '+v})),'recoveryFrames',()=>prefs.mode==='recovery');
-    choices(host,'mix','Совмещение результата с исходником',[{v:'overlay',name:'Поверх'},{v:'only',name:'Отдельно'},{v:'xor',name:'XOR'},{v:'and',name:'AND'}],'mix');
+    choices(host,'mix','Совмещение результата с исходником',[{v:'overlay',name:'Поверх'},{v:'only',name:'Только Синтез'},{v:'xor',name:'XOR'},{v:'and',name:'AND'}],'mix');
     button(host,'link','Связь','Один шаг Синтеза на каждый последовательный кадр Маятника',()=>setOption('link',!prefs.link),{selected:()=>prefs.link,disabled:autonomous});
     button(host,'wrap','Замкнуть','Соединить противоположные края экспериментального поля',()=>setOption('wrap',!prefs.wrap),{selected:()=>prefs.wrap,show:cellular});
     button(host,'frame','Кадр','Взять текущий кадр Маятника; для большого CPU-поля — центральная область до 512 × 512',()=>capture(false));
@@ -275,80 +288,18 @@
     button(host,'png','PNG','Скачать текущее поле результата в точном размере клеток',exportPNG);
     button(host,'bitoteka','В Битотеку','Сохранить опыт с миниатюрой в общую Битотеку',toLibrary);
     button(host,'help','Инструкция','Описание пяти этапов, правила аналогов и ограничения',()=>root.open('synthesis-instruction.html','_blank','noopener'));
-    createPanel();start();return {refresh};
+    createPanel(host);start();return {refresh};
   }
-  function savePanelPosition(){
-    if(!panelPosition)return;
-    try{localStorage.setItem(POSITION_KEY,JSON.stringify(panelPosition));}catch(error){fail(Error('Положение окна не сохранено: '+error.message));}
-  }
-  function placePanel(persist=false){
-    if(!panel||!panel.getClientRects().length)return;
-    const viewport=root.visualViewport;
-    const left=(viewport?.offsetLeft||0)+8,top=(viewport?.offsetTop||0)+8;
-    const right=(viewport?.offsetLeft||0)+(viewport?.width||innerWidth)-8;
-    const bottom=(viewport?.offsetTop||0)+(viewport?.height||innerHeight)-8;
-    panel.style.setProperty('--synthesis-available-width',Math.max(1,right-left)+'px');
-    panel.style.setProperty('--synthesis-available-height',Math.max(1,bottom-top)+'px');
-    const rect=panel.getBoundingClientRect();
-    const before=panelPosition;
-    const next={left:Math.max(left,Math.min(before?.left??rect.left,Math.max(left,right-rect.width))),
-      top:Math.max(top,Math.min(before?.top??rect.top,Math.max(top,bottom-rect.height)))};
-    panelPosition=next;panel.style.right='auto';panel.style.bottom='auto';
-    panel.style.left=next.left+'px';panel.style.top=next.top+'px';
-    if(persist&&(!before||before.left!==next.left||before.top!==next.top))savePanelPosition();
-  }
-  function schedulePanelPosition(){
-    if(positionFrame)return;
-    positionFrame=requestAnimationFrame(()=>{positionFrame=0;placePanel(true);});
-  }
-  function movablePanel(head){
-    head.tabIndex=0;head.setAttribute('role','group');
-    head.setAttribute('aria-label','Положение окна Синтеза. Перетащите заголовок или двигайте стрелками клавиатуры; Shift — шаг один пиксель.');
-    head.title='Перетащите окно. Стрелки — 10 пикселей, Shift со стрелками — 1 пиксель.';
-    head.addEventListener('pointerdown',event=>{
-      if(event.button!==0||event.isPrimary===false)return;
-      event.preventDefault();event.stopPropagation();placePanel();
-      head.focus({preventScroll:true});
-      panelDrag={id:event.pointerId,x:event.clientX,y:event.clientY,left:panelPosition.left,top:panelPosition.top};
-      head.setPointerCapture(event.pointerId);panel.classList.add('synthesis-dragging');
-    });
-    head.addEventListener('pointermove',event=>{
-      if(!panelDrag||event.pointerId!==panelDrag.id)return;
-      event.preventDefault();event.stopPropagation();
-      panelPosition={left:panelDrag.left+event.clientX-panelDrag.x,top:panelDrag.top+event.clientY-panelDrag.y};placePanel();
-    });
-    const finish=event=>{
-      if(!panelDrag||event.pointerId!==panelDrag.id)return;
-      const id=panelDrag.id;panelDrag=null;panel.classList.remove('synthesis-dragging');
-      if(head.hasPointerCapture(id))head.releasePointerCapture(id);
-      placePanel();savePanelPosition();event.stopPropagation();
-    };
-    for(const name of ['pointerup','pointercancel','lostpointercapture'])head.addEventListener(name,finish);
-    head.addEventListener('keydown',event=>{
-      const movement={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[event.key];
-      if(!movement)return;
-      event.preventDefault();event.stopPropagation();placePanel();
-      const step=event.shiftKey?1:10;
-      panelPosition={left:panelPosition.left+movement[0]*step,top:panelPosition.top+movement[1]*step};
-      placePanel();savePanelPosition();
-    });
-    root.addEventListener('resize',schedulePanelPosition);
-    root.visualViewport?.addEventListener('resize',schedulePanelPosition);
-    root.visualViewport?.addEventListener('scroll',schedulePanelPosition);
-    if(root.ResizeObserver)new ResizeObserver(schedulePanelPosition).observe(panel);
-  }
-  function createPanel(){
-    panel=el('aside','synthesis-panel');panel.id='synthesisPanel';panel.setAttribute('aria-label','Поле Маятника · Синтез');
-    const head=el('div','synthesis-heading');head.append(el('strong','','Маятник · Синтез'));
-    toolbar=el('div','synthesis-toolbar');
-    button(toolbar,'expand','Размер','Развернуть или уменьшить поле Синтеза',()=>setOption('expanded',!prefs.expanded),{selected:()=>prefs.expanded});
-    button(toolbar,'close','Скрыть','Скрыть результат; вернуть через группу Синтез',()=>setOption('visible',false));
+  function createPanel(host){
+    workInput=el('input');workInput.id='synthesisWorkInput';workInput.type='file';workInput.accept='.json,application/json';workInput.hidden=true;
+    workInput.addEventListener('change',()=>run(async()=>{const file=workInput.files?.[0];if(!file)return;if(file.size>24000000)throw Error('Файл опыта больше 24 МБ.');load(JSON.parse(await file.text()));prefs.link=false;detached=true;dirty=true;remember();scheduleSave();message='Опыт открыт независимо от текущего исходника. Для нового захвата нажмите «Кадр».';refresh();}));
+    document.body.append(workInput);
+    panel=el('section','synthesis-info');panel.id='synthesisPanel';panel.setAttribute('aria-label','Сведения и настройки Синтеза');
     status=el('p','synthesis-status');status.setAttribute('aria-live','polite');notice=el('p','synthesis-notice');notice.setAttribute('role','status');
     canvas=el('canvas','synthesis-canvas');canvas.width=129;canvas.height=129;canvas.setAttribute('aria-label','Результат клеточного Синтеза');ctx=canvas.getContext('2d');
-    const viewport=el('div','synthesis-viewport');viewport.append(canvas);
     legend=el('p','synthesis-legend');
     weightPanel=el('details','synthesis-weights');weightPanel.append(el('summary','','Веса соседей и состояний'));
-    weightPanel.addEventListener('toggle',()=>{if(prefs.weightsOpen!==weightPanel.open){prefs.weightsOpen=weightPanel.open;dirty=true;remember();scheduleSave();}});
+    weightPanel.addEventListener('toggle',()=>{if(prefs.weightsOpen!==weightPanel.open){prefs.weightsOpen=weightPanel.open;dirty=true;remember();scheduleSave();}after();});
     weightPanel.append(el('p','','Вес соседа = вес его состояния × вес направления. Рождение: сумма 5. Сохранение: 5 или 6.'));
     const directions=el('div','synthesis-weight-grid');
     const names=['↖','↑','↗','←','→','↙','↓','↘'];
@@ -358,12 +309,12 @@
         dirty=true;message='Вес изменён: расчёт начат с исходного отпечатка.';remember();render();scheduleSave();};
       const b=button(container,key+index,name+' '+prefs[key][index],'Вес '+name+' от 0 до 10; нажатие — следующий',update,{caption:()=>name+' '+prefs[key][index]});b.dataset.noMini='';
     }
-    for(let i=0;i<8;i++){if(i===4)directions.append(el('span','synthesis-weight-center','·'));weightButton(directions,'positionWeights',i,names[i]);}
+    for(let i=0;i<8;i++){weightButton(directions,'positionWeights',i,names[i]);}
     weightPanel.append(directions,el('p','','Влияние каждой стадии 0…6:'));
     const states=el('div','synthesis-state-grid');for(let i=0;i<7;i++)weightButton(states,'stateWeights',i,'Состояние '+i);
     weightPanel.append(states);
     button(weightPanel,'weights-reset','WG084','Вернуть исходные веса WG Rule084',()=>{pause();prefs.stateWeights=defaults.stateWeights.slice();prefs.positionWeights=defaults.positionWeights.slice();if(engine){engine.configure(engineOptions());engine.reset(sourceBits);if(autonomous())engine.seed(sourceBits);ticks=0;}dirty=true;remember();render();scheduleSave();});
-    panel.append(head,toolbar,status,viewport,notice,legend,weightPanel);document.body.append(panel);movablePanel(head);refresh();
+    panel.append(status,notice,legend,weightPanel);host.append(panel);refresh();
   }
   async function start(){
     try{
@@ -384,5 +335,5 @@
     addEventListener('pagehide',()=>{pause();run(storeNow);});
     document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();run(storeNow);}});
   }
-  root.MayatnikSynthesis={mount,observeSource};
+  root.MayatnikSynthesis={mount,observeSource,getLayer};
 })(window);

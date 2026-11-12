@@ -1,27 +1,17 @@
-/* Companion result uses the page's shared hexagonal controls. */
+/* СИН-003. Shared controls; the result is composited in the main Mayatnik field. */
 .synthesis-controls{display:flex;flex-direction:column;gap:2px;--c:#63d9d0}
-.synthesis-controls .gz-hx,.synthesis-toolbar .gz-hx{position:relative;flex:none;width:120px;height:24px;min-height:24px;box-sizing:border-box;background:#1b2430;color:#dceaf4;border:0;cursor:pointer;font:11px system-ui;user-select:none}
-.synthesis-controls [hidden],.synthesis-panel[hidden]{display:none!important}
+.synthesis-controls .gz-hx{position:relative;flex:none;width:120px;height:24px;min-height:24px;box-sizing:border-box;background:#1b2430;color:#dceaf4;border:0;cursor:pointer;font:11px system-ui;user-select:none}
+.synthesis-controls [hidden]{display:none!important}
 .synthesis-button .gz-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .synthesis-button:disabled{opacity:.45;cursor:default}
-.synthesis-panel{position:fixed;right:8px;bottom:36px;z-index:90;width:min(440px,calc(100vw - 16px));max-width:var(--synthesis-available-width,calc(100vw - 16px));max-height:min(calc(100dvh - 100px),var(--synthesis-available-height,100dvh));box-sizing:border-box;overflow:auto;padding:10px;background:#101923f5;color:#dceaf4;border:1px solid #63d9d0;font:12px/1.45 system-ui;box-shadow:0 6px 22px #0006;--c:#63d9d0}
-.synthesis-panel.synthesis-expanded{width:min(820px,calc(100vw - 16px));max-height:min(calc(100dvh - 70px),var(--synthesis-available-height,100dvh))}
-.synthesis-panel{z-index:2147483643;background:#101923}
-.synthesis-heading{position:sticky;top:-10px;z-index:2;display:flex;align-items:center;min-height:24px;margin:-10px -10px 8px;padding:8px 10px;background:#101923;color:#8de9df;border-bottom:1px solid #354653;font-size:14px;cursor:grab;touch-action:none;user-select:none}
-.synthesis-heading:focus-visible{outline:2px solid #63d9d0;outline-offset:-3px}
-.synthesis-dragging .synthesis-heading{cursor:grabbing}
-.synthesis-toolbar{display:flex;gap:2px;margin-top:6px}
-.synthesis-status{margin:8px 0;color:#c7dbe7;font-variant-numeric:tabular-nums}
-.synthesis-viewport{background:#0a0e14;overflow:auto;max-height:58dvh;min-height:80px;display:grid;place-items:start center}
-.synthesis-canvas{display:block;width:100%;height:auto;image-rendering:pixelated;object-fit:contain}
-.synthesis-notice{margin:8px 0 0;color:#ffe1a0;overflow-wrap:anywhere}
-.synthesis-legend{margin:8px 0 0;color:#9aafbc;font-size:11px}
+.synthesis-info{width:120px;min-width:0;max-width:100%;box-sizing:border-box;color:#c7dbe7;font:11px/1.4 system-ui;overflow-wrap:anywhere}
+body.mayatnik-menu-ready header #paintTools.pt-dd .pt-r>.synthesis-info{margin:0!important;align-self:flex-start}
+.synthesis-info p{margin:6px 0}
+.synthesis-status{font-variant-numeric:tabular-nums}
+.synthesis-notice{color:#ffe1a0}
+.synthesis-legend{color:#9aafbc}
 .synthesis-colour-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
-.synthesis-weights{margin-top:10px;border-top:1px solid #354653;padding-top:8px}
-.synthesis-weights[hidden]{display:none}
+.synthesis-weights{margin-top:6px;border-top:1px solid #354653;padding-top:6px;min-width:0;max-width:100%}
 .synthesis-weights summary{cursor:pointer;color:#8de9df}
-.synthesis-weight-grid{display:grid;grid-template-columns:repeat(3,120px);gap:2px;max-width:100%;overflow:auto}
-.synthesis-weight-center{display:grid;place-items:center}
-.synthesis-state-grid{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:6px}
-body.may-zen .synthesis-panel{display:none}
-@media(max-width:600px){.synthesis-panel{max-height:min(45dvh,var(--synthesis-available-height,100dvh));bottom:34px}.synthesis-panel.synthesis-expanded{max-height:min(75dvh,var(--synthesis-available-height,100dvh))}.synthesis-viewport{max-height:28dvh}.synthesis-expanded .synthesis-viewport{max-height:55dvh}}
+.synthesis-weight-grid,.synthesis-state-grid{display:flex;flex-direction:column;gap:2px;width:120px;max-width:100%}
+.synthesis-state-grid{margin-bottom:6px}

@@ -7669,7 +7669,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         const[,X,Y]=D[i];if(!Number.isFinite(segs[i][6])||Y<=FH-1&&!overviewMeeting)continue;
         const key=X+':'+Y;if(marked.has(key))continue;marked.add(key);
         const[mx,my]=P(X,Y);G.save();G.setLineDash([]);G.fillStyle='#b48cff';G.beginPath();G.arc(mx,my,Math.max(3,c*.6),0,7);G.fill();
-        G.font='11px system-ui,sans-serif';G.textBaseline='top';G.lineWidth=3;G.strokeStyle='#05070d';const tx='встреча · строка '+Math.round(Y+1);G.strokeText(tx,mx+8,my+15);G.fillText(tx,mx+8,my+15);G.restore();}
+        if(!placeMeeting){
+          G.font='11px system-ui,sans-serif';G.textBaseline='top';G.lineWidth=3;G.strokeStyle='#05070d';
+          const tx='встреча · строка '+Math.round(Y+1);G.strokeText(tx,mx+8,my+15);G.fillText(tx,mx+8,my+15);
+        }
+        G.restore();}
       if(!captureOnly&&!mir){
         let reserve=need;
         if(cr&&manualMeetingRange()&&total()>=manualMeetingLimit()){
@@ -7695,11 +7699,15 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     G.strokeStyle='#b48cff';if(cr)for(const[,,,x]of pts.values()){if(skip(x%1!==0))continue;const X=P(x,0)[0];G.lineWidth=lw(x);G.beginPath();G.moveTo(X,y0);G.lineTo(X,y0+measureH*c);axisStroke(G,{unit:u});}
     // В живом окне номера рисует отдельный слой; в экспортных контекстах сохраняем подписи.
     const labelTarget=G.measureTarget||G;if(guides&&!captureOnly&&md!==2&&labelTarget!==g&&labelTarget!==digitG&&labelTarget!==fixOvDraw.o?.g&&labelTarget.canvas!==bothDraw.c)vtxLabels(G,x0,y0,c,mir);
+    const numberedRows=new Set();
     G.strokeStyle='#b48cff';if(cr)for(const[x,,y]of pts.values()){
       if(skip(y%1!==0))continue;
       const Y=P(x,y)[1],edges=horizon?.y===Y?horizon:null;
       if(edges)G.recordLine?.([x0,Y],[x0+VW*c,Y],{replace:true,color:'#b48cff'});
       G.lineWidth=lw(y);G.beginPath();G.moveTo(edges?.start??x0,Y);G.lineTo(edges?.end??x0+VW*c,Y);axisStroke(G,{unit:u});
+      if(placeMeeting&&!numberedRows.has(y)){
+        numberedRows.add(y);paintMeetingRowNumber(G,x0,Y,Math.round(y),c);
+      }
     }G.lineWidth=u;
     // v0.273: «вот так дополни оси» (рисунок): на горизонтали — края поля (крайние биты строки встречи); от них вниз — вертикали (фиолетовые)
     // и диагонали внутрь под 45° (чёрные), как стороны поля, отражённые горизонталью
@@ -8319,6 +8327,25 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(rowBuildHighlight?.owner===f&&rowBuildHighlight.frame===k)return rowBuildHighlight.row;
     return animatrixEngine.cursorRow;
   }
+  function paintMeetingRowNumber(G,x0,y,row,s){
+    let left=0;
+    if(row>=0&&row<VH){
+      if(gpuBig?.large||gpuDisplay()&&!gpuBig.fresh){
+        const [lo]=fieldSpan(k);
+        left=Math.max(0,geo.anchor+lo-row-VX);
+      }else{
+        const values=parityValues(),base=row*f.W;
+        for(let col=VX;col<VX+VW;col++){
+          if(values[base+col]>=0&&!outShow(row,col)&&parityVisible(row,col)){left=col-VX;break;}
+        }
+      }
+    }
+    const x=x0+left*s-6,label=String(row+1);
+    G.save();
+    G.font='11px system-ui,sans-serif';G.textAlign='right';G.textBaseline='middle';
+    G.lineWidth=3;G.strokeStyle='#05070d';G.fillStyle='#b48cff';
+    G.strokeText(label,x,y);G.fillText(label,x,y);G.restore();
+  }
   function paintMeetingContinuation(G,x,y,s,w,h,rows,d){
     const firstTop=y+s/2;
     const invert=Number(MayatnikInvert.bits(st)),colours=[bitColour(invert),bitColour(invert^1)];
@@ -8377,6 +8404,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       const y=top+(row+.5)*s;
       if(row>=0&&row<VH){path.moveTo(left,y);path.lineTo(left+r.width,y);}
       axisStroke(o.g,{path,unit:1/d,width:1/d});
+      if(row>=0&&row<VH)paintMeetingRowNumber(o.g,left,y,row,s);
       if((animatrixGuideHover||animatrixGuideDrag)&&row>=0&&row<VH){
         o.g.beginPath();o.g.arc(x,y,5,0,2*Math.PI);
         o.g.fillStyle='#ffd35b';o.g.fill();

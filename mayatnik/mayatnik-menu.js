@@ -466,7 +466,14 @@
       const parts=[8192,16384].map(rows=>({label:String(rows),tip:'Построить '+rows+' строк на видеокарте',
         data:{n:'mayGpuRows'+rows},on:()=>cur()===String(rows),click:async()=>{
           note.hidden=true;
-          await window.mayBuildLarge?.(rows);
+          if(!window.mayBuildLarge){
+            const url=new URL('Zerkalius-mayatnik-gpu.html',location.href);
+            const pair=$('bPair').getAttribute('aria-pressed')==='true';
+            url.search=new URLSearchParams({preview:String(rows),range:window.mayVMode?.get()||'n',mode:$('mode').value,pair:pair?'1':'0'}).toString();
+            window.open(url,'_blank','noopener');
+            return;
+          }
+          await window.mayBuildLarge(rows);
           const message=window.mayBuildLargeStatus?.()||'';
           note.textContent=message;note.hidden=!message;
           sync();
@@ -754,7 +761,8 @@
       continuation.type='button';continuation.className='gz-hx';continuation.dataset.n='meetingContinuationHorizon';
       continuation.title='Продолжение битов вниз от точки встречи по XOR';
       continuation.setAttribute('aria-label',continuation.title);
-      const label=document.createElement('span');label.className='gz-nm';label.textContent='Продолжение';continuation.append(label);
+      const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(continuation,'steps');glyph.setAttribute('aria-hidden','true');
+      const label=document.createElement('span');label.className='gz-nm';label.textContent='Продолжение';continuation.append(glyph,label);
       continuation.onclick=()=>{const control=window.mayMeetingContinuation;control?.set(!control.get());placeTools();};
       const syncContinuation=()=>{
         const on=!!window.mayMeetingContinuation?.get();
@@ -774,7 +782,7 @@
           const modesX=Math.min(width-gutter-buttonWidth,Math.max(fieldRight+gap,center+gap+8));
           const rows=Math.min(3,Math.floor((height-y+half+2)/26));
           for(let i=0;i<meetingSizes.children.length;i++)meetingSizes.children[i].hidden=i>=rows;
-          continuation.hidden=rows<2;syncContinuation();
+          continuation.hidden=rows<2||!window.mayMeetingContinuation;syncContinuation();
           meetingSizes.style.left=left+sizesX+'px';
           meetingModes.style.left=left+modesX+'px';
           meetingSizes.style.top=meetingModes.style.top=top+y-half+'px';
@@ -1246,7 +1254,7 @@
   const longGroups=new Set(['Точка Ось','Правка','Очистка','Оси','Виды поля','Вид','Зеркала','Шаблон']);
   for (const g of tools.querySelectorAll('.pt-g'))if(longGroups.has(g.querySelector('.pt-l').textContent))g.classList.add('pt-long');
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
-    if (b === animatrixHost || b.id === 'lg' || b.classList.contains('may-vis-triple') || b.classList.contains('synthesis-button')) return;   // Custom controllers already own their labels.
+    if (b === animatrixHost || b.id === 'lg' || b.classList.contains('may-vis-triple') || b.classList.contains('synthesis-button') || b.classList.contains('synthesis-info')) return;   // Custom controllers already own their labels.
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
       b.classList.add('gz-hx'); b.querySelector('i').classList.add('gz-ic');
       const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return; }
@@ -2107,7 +2115,7 @@
     }return row;
   }
   // All canonical axes controls and cleanup actions now exist; keep the rail group/key.
-  { const probe=document.createElement('button');probe.title='Продолжение битов вниз от точки встречи по XOR';
+  if(window.mayMeetingContinuation){const probe=document.createElement('button');probe.title='Продолжение битов вниз от точки встречи по XOR';
     const b=ptBtn('meetingContinuation','steps',probe,()=>{const control=window.mayMeetingContinuation;control?.set(!control.get());placeTools();});
     b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
     const name=document.createElement('span');name.className='gz-nm';name.textContent='Продолжение';b.append(name);
