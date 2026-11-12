@@ -168,7 +168,7 @@
    roll.addEventListener('click',()=>reorient(id,'roll'));
    selects.push(select);rollButtons.push(roll);
   }
-  const projections=['XY','XZ','YZ'].map(plane=>{
+  const projections=(options.sceneOnly?[]:['XY','XZ','YZ']).map(plane=>{
    const figure=doc.createElement('figure');figure.className='xs-projection';
    const caption=doc.createElement('figcaption');caption.textContent=plane+' / '+plane[0]+' -> / '+plane[1]+' ^';
    const canvas=doc.createElement('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Ортографическая проекция '+plane);canvas.dataset.plane=plane;
@@ -200,7 +200,7 @@
     if(!moving||!members.includes(selected)||p.filter(v=>v!==0).length>1)return null;
     return p.every(v=>v===0)?'#ff4fcb':'#fff36a';
    };
-   const voxels=model.cells.map(v=>({p:v.p,color:axisHighlight(v.p,v.members)||color(v.members),axisHighlight:axisHighlight(v.p,v.members),members:v.members,selected:v.members.includes(selected)}));
+   const voxels=model.cells.map(v=>({p:v.p,color:axisHighlight(v.p,v.members)||color(v.members),axisHighlight:axisHighlight(v.p,v.members),members:v.members,selected:!options.sceneOnly&&v.members.includes(selected)}));
    const uniqueCentres=new Map(model.centres.map(c=>[key(c.p),c]));
    for(const c of uniqueCentres.values()){
     const members=model.centres.filter(other=>key(other.p)===key(c.p)).map(other=>other.id),highlight=axisHighlight(c.p,members);
@@ -221,7 +221,7 @@
     // A display-only origin marker remains visible even when XOR leaves it empty.
     const zero=screen([0,0,0]);ctx.strokeStyle='#131619';ctx.lineWidth=5;ctx.beginPath();ctx.arc(zero[0],zero[1],6,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#ff4fcb';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.moveTo(zero[0]-9,zero[1]);ctx.lineTo(zero[0]+9,zero[1]);ctx.moveTo(zero[0],zero[1]-9);ctx.lineTo(zero[0],zero[1]+9);ctx.stroke();
    }
-   drawHandles(ctx,screen,unit,width,height);
+   if(!options.sceneOnly)drawHandles(ctx,screen,unit,width,height);
   }
   function drawHandles(ctx,screen,unit,width,height){
    handles=[];const figure=model.figures[selected];if(!figure||!figure.active)return;
@@ -277,6 +277,7 @@
   function refresh(save,reason='translation'){
    if(symmetry.enabled)assignments=symmetricAssignments(snapshot,assignments,symmetry);
    model=buildModel(snapshot,assignments);
+   if(options.sceneOnly){draw();return;}
    for(let i=0;i<4;i++){selects[i].value=assignments[i].direction;rollButtons[i].textContent='R '+assignments[i].roll*90+'o';rollButtons[i].setAttribute('aria-pressed',String(assignments[i].roll!==0));pickButtons[i].setAttribute('aria-pressed',String(i===selected));for(let axis=0;axis<3;axis++){offsetInputs[i][axis].disabled=symmetry.enabled;if(doc.activeElement!==offsetInputs[i][axis])offsetInputs[i][axis].value=String(assignments[i].offset[axis]);}}
    symmetryButton.setAttribute('aria-pressed',String(symmetry.enabled));distanceInput.disabled=!symmetry.enabled;if(doc.activeElement!==distanceInput)distanceInput.value=String(symmetry.distance);raysLabel.textContent=symmetry.enabled?'Общий разнос / '+symmetry.rays.map((ray,i)=>NAMES[i]+': '+ray).join(' / '):'В центр - совместить серые кубики. Симметр - снять ограничение.';
    const mode=model.mode==='xor'?'XOR':model.mode==='solo'?'Одна':'Вместе';
@@ -333,20 +334,29 @@
    const layoutWidth=host.getBoundingClientRect().width,width=Math.max(1,Math.round(layoutWidth));
    const box=doc.createElement('div');box.setAttribute('aria-hidden','true');box.style.cssText='position:fixed;left:-100000px;top:0;pointer-events:none;width:'+layoutWidth+'px;';doc.body.appendChild(box);
    const frozenCamera={...camera};
-   const captureView=mount(box,frozen,{capture:true,assignments:JSON.parse(JSON.stringify(assignments)),camera:frozenCamera,selected,symmetry:JSON.parse(JSON.stringify(symmetry))});
+   const sceneOnly=!!captureOptions.sceneOnly;
+   const captureView=mount(box,frozen,{capture:true,sceneOnly,assignments:JSON.parse(JSON.stringify(assignments)),camera:frozenCamera,selected,symmetry:JSON.parse(JSON.stringify(symmetry))});
    const captureHost=box.querySelector('.xor-space');captureHost.style.margin='0';captureHost.style.padding='0';captureHost.style.border='0';
    const mainCanvas=box.querySelector('.xs-main'),projectionCanvases=[...box.querySelectorAll('.xs-projection canvas')];
    // Use the same canvas renderers, current width and camera; controls are not in the movie.
    captureView.setAssignments(assignments);
+   let disposed=false;
+   const destroy=()=>{if(disposed)return;disposed=true;captureView.destroy();box.remove();};
+   const drawScene=(next,orbitTurn)=>{
+    if(disposed)throw new Error('Capture renderer is closed');
+    captureView.setAssignments(next,{yaw:frozenCamera.yaw+2*Math.PI*orbitTurn});
+   };
+   if(sceneOnly){
+    const width=mainCanvas.width,height=mainCanvas.height;
+    return {width,height,parts:[{name:'3D',x:0,y:0,width,height}],render(next,label,orbitTurn=0){drawScene(next,orbitTurn);return mainCanvas;},destroy};
+   }
    const mainHeight=Math.round(mainCanvas.getBoundingClientRect().height),gap=12,caption=40,header=32,footer=38;
    const projectionTop=header+mainHeight+gap+caption,projectHeight=Math.max(...projectionCanvases.map(c=>Math.round(c.getBoundingClientRect().height)));
    const height=projectionTop+projectHeight+footer,output=doc.createElement('canvas');output.width=width;output.height=height;
    const mainRect=mainCanvas.getBoundingClientRect(),hostRect=captureHost.getBoundingClientRect();
    const parts=[{name:'3D',x:Math.round(mainRect.left-hostRect.left),y:header,width:Math.round(mainRect.width),height:mainHeight},...projectionCanvases.map(c=>{const r=c.getBoundingClientRect(),h=captureHost.getBoundingClientRect();return {name:c.dataset.plane,x:Math.round(r.left-h.left),y:projectionTop,width:Math.round(r.width),height:Math.round(r.height)};})];
-   let disposed=false;
    function render(next,label='',orbitTurn=0){
-    if(disposed)throw new Error('Capture renderer is closed');
-    captureView.setAssignments(next,{yaw:frozenCamera.yaw+2*Math.PI*orbitTurn});
+    drawScene(next,orbitTurn);
     const ctx=output.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);ctx.fillStyle='#eee6d8';ctx.font='bold 12px ui-monospace,monospace';ctx.textBaseline='top';ctx.fillText('3D / XY / XZ / YZ',8,8);
     ctx.textAlign='right';ctx.fillText(String(label),width-8,8);ctx.textAlign='left';
     const canvases=[mainCanvas,...projectionCanvases];for(let i=0;i<parts.length;i++){const p=parts[i];ctx.drawImage(canvases[i],p.x,p.y,p.width,p.height);}
@@ -357,7 +367,7 @@
     ctx.font='12px "AzBuk Thin", monospace';ctx.fillStyle='#ffb5a3';ctx.fillText('# XYZ - совпадение кубиков',8,height-footer+7);ctx.fillStyle='#66dcff';ctx.fillText('o Глубина - перекрытие в проекции',8,height-footer+21);
     return output;
    }
-   return {width,height,parts:parts.map(p=>({...p})),render,destroy(){if(disposed)return;disposed=true;captureView.destroy();box.remove();}};
+   return {width,height,parts:parts.map(p=>({...p})),render,destroy};
   }
   refresh(false);
   return {createCapture,update(next){snapshot=next||{};refresh(false);host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'source'}}));},getSnapshot(){return JSON.parse(JSON.stringify(snapshot));},setAssignments(next,{save=false,yaw=camera.yaw}={}){assignments=normalizeAssignments(next);camera.yaw=yaw;refresh(save,'sequence');},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected,symmetry:JSON.parse(JSON.stringify(symmetry))};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
