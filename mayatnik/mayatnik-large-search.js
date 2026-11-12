@@ -38,7 +38,7 @@
     const bounds=options.bounds||{},x0=Math.max(0,Math.floor(bounds.x||0)),y0=Math.max(0,Math.floor(bounds.y||0));
     const x1=Math.min(W,bounds.width==null?W:x0+Math.max(0,Math.floor(bounds.width)));
     const y1=Math.min(H,bounds.height==null?H:y0+Math.max(0,Math.floor(bounds.height)));
-    const lo=options.rowLo,hi=options.rowHi,invert=options.invertBits?1:0;
+    const lo=options.rowLo?.length?options.rowLo:null,hi=options.rowHi?.length?options.rowHi:null,invert=options.invertBits?1:0;
     if(lo&&lo.length<H||hi&&hi.length<H)throw new RangeError('Неполные границы строк снимка.');
     function value(r,c){
       if(r<y0||r>=y1||c<x0||c>=x1||lo&&c<lo[r]||hi&&c>hi[r])return -1;
@@ -98,20 +98,24 @@
 
   // Bounded maximum heap: memory depends on requested sequence rows, never
   // on the number of occurrences in a highly repetitive field.
-  function compare(a,b){return a.row-b.row||a.li-b.li||a.at-b.at;}
+  function lineCompare(a,b){
+    if(a.lineCell!==undefined&&b.lineCell!==undefined)return a.lineCell-b.lineCell||a.lineParity-b.lineParity||a.meetingY-b.meetingY||a.meetingX-b.meetingX||a.at-b.at;
+    return a.li-b.li||a.at-b.at;
+  }
+  function compare(a,b){return a.row-b.row||lineCompare(a,b);}
   function keep(record,hit){
-    const heap=record.heap;
+    const heap=record.heap,order=record.compare||compare;
     if(heap.length<record.need){
       let i=heap.length;heap.push(hit);
-      while(i){const p=(i-1)>>>1;if(compare(heap[p],hit)>=0)break;heap[i]=heap[p];i=p;}
+      while(i){const p=(i-1)>>>1;if(order(heap[p],hit)>=0)break;heap[i]=heap[p];i=p;}
       heap[i]=hit;return;
     }
-    if(compare(hit,heap[0])>=0)return;
+    if(order(hit,heap[0])>=0)return;
     let i=0;
     while(i*2+1<heap.length){
       let child=i*2+1;
-      if(child+1<heap.length&&compare(heap[child+1],heap[child])>0)child++;
-      if(compare(heap[child],hit)<=0)break;
+      if(child+1<heap.length&&order(heap[child+1],heap[child])>0)child++;
+      if(order(heap[child],hit)<=0)break;
       heap[i]=heap[child];i=child;
     }
     heap[i]=hit;
@@ -338,7 +342,7 @@
   }
 
   function loopSearch(ctx,options,progress){
-    if(['ones','zeros','alternating'].includes(options.pattern))throw new RangeError('Циклический поиск серий большого поля ещё не поддерживается.');
+    if(['ones','zeros','alternating'].includes(options.pattern))return loopSimpleSearch(ctx,options,progress);
     const vsets=options.vsets||[],records=variants(vsets,new Set(options.skip||[]));
     if(options.independentWords)for(const record of records.values())record.need=1;
     const empty={found:[],foundIndices:[],foundByHalf:null,foundEver:0,foundCount:0,newCount:0,total:vsets.length,halves:1,loop:true};
@@ -418,58 +422,61 @@
 
   function vRouteAPI(){
     if(typeof module==='object'&&module.exports&&typeof require==='function')return require('./mayatnik-ochki-v-route.js');
-    if(!globalThis.MayatnikOchkiVRoute&&typeof importScripts==='function')importScripts('mayatnik-ochki-v-route.js');
+    if(!globalThis.MayatnikOchkiVRoute&&typeof importScripts==='function')importScripts('mayatnik-ochki-v-route.js'+(globalThis.location?.search||''));
     if(!globalThis.MayatnikOchkiVRoute)throw new Error('Не загружен построитель V-маршрутов.');
     return globalThis.MayatnikOchkiVRoute;
   }
 
-  function vSearch(ctx,options,progress){
-    if(['ones','zeros','alternating'].includes(options.pattern))throw new RangeError('Поиск серий по V-маршрутам большого поля ещё не поддерживается.');
-    const api=vRouteAPI(),{W,H,anchor,parity}=ctx,meetingPoints=options.meetingPoints||[];
-    const points=api.verticalPoints(meetingPoints,H);
-    progress('routes',0,points.length);
-    const lines=api.lines({width:W,height:H,points,pack:false,read:(r,c)=>{
+  function vRoutes(ctx,options,progress){
+    const {W,H,anchor,parity}=ctx;
+    return vRouteAPI().verticalRoutes({width:W,height:H,points:options.meetingPoints||[],read:(r,c)=>{
       if((parity===0||parity===1)&&((c-anchor-r)&1)!==parity)return -1;
       return ctx.value(r,c);
-    },partition:parity<0?null:(r,c)=>(c-anchor-r)&1});
-    progress('routes',points.length,points.length);
-    const vsets=options.vsets||[],halves=parity===2?2:1,found=[];
-    const lineSets=halves===2?[0,1].map(p=>({p,lines:lines.filter(L=>L.p===p)})):[{p:null,lines}];
-    for(const set of lineSets){
-      const skip=new Set(set.p===null?options.skip||[]:options.skipByHalf?.[set.p]||options.skip||[]),records=variants(vsets,skip);
+    },partition:parity<0?null:(r,c)=>(c-anchor-r)&1,onProgress:(done,total)=>progress('routes',done,total)});
+  }
+  function vPosition(L,at){const c=L.left+at;return {r:L.meeting.y-Math.abs(c-L.meeting.x),c};}
+  function vOccurrence(L,at){
+    return {row:vPosition(L,at).r,at,route:L,lineCell:L.firstCell,lineParity:L.p??-1,meetingY:L.meeting.y,meetingX:L.meeting.x};
+  }
+  function vCells(ctx,L,at,n){
+    const cells=new Array(n);for(let j=0;j<n;j++){const {r,c}=vPosition(L,at+j);cells[j]=r*ctx.W+c;}return cells;
+  }
+  function vReason(options,routeCount){return !(options.meetingPoints||[]).length?'На этом кадре нет точки встречи диагональных осей.':!routeCount?'Нет непрерывного маршрута ↘↗ вдоль вертикальных осей.':'';}
+
+  function vSearch(ctx,options,progress){
+    if(['ones','zeros','alternating'].includes(options.pattern))return vSimpleSearch(ctx,options,progress);
+    const vsets=options.vsets||[],halves=ctx.parity===2?2:1,found=[];
+    const sets=(halves===2?[0,1]:[null]).map(p=>{
+      const skip=new Set(p===null?options.skip||[]:options.skipByHalf?.[p]||options.skip||[]),records=variants(vsets,skip);
       if(options.independentWords)for(const record of records.values())record.need=1;
-      const groups=circuitAnchors(records);
-      for(let li=0;li<set.lines.length;li++){
-        const L=set.lines[li];let hash=0;
-        for(let end=0;end<L.n;end++){
-          hash=((hash<<1)|(L.str.charCodeAt(end)&1))&MASK;
-          for(const group of groups){
-            if(end+1<group.length)continue;
-            const key=hash&group.mask,bucket=group.buckets.get(key);if(!bucket)continue;
-            for(let b=0;b<bucket.length;){
-              const record=bucket[b],word=record.word,at=end-word.length+1;
-              if(at>=0){
-                const row=Math.floor(L.cells[at]/W);
-                if(record.heap.length<record.need||record.heap[0].row>row){
-                  let j=0;while(j<word.length&&(word[j]===' '||L.str[at+j]===word[j]))j++;
-                  if(j===word.length)keep(record,{li,at,row});
-                }
-              }
-              // The ascending arm makes row order nonmonotonic. Only zero
-              // proves that a later start/line cannot improve a full heap.
-              if(record.heap.length===record.need&&record.heap[0].row===0){bucket[b]=bucket[bucket.length-1];bucket.pop();}
-              else b++;
-            }
-            if(!bucket.length)group.buckets.delete(key);
+      return {p,skip,records,groups:circuitAnchors(records)};
+    });
+    let routeCount=0;
+    for(const L of vRoutes(ctx,options,progress)){
+      routeCount++;const set=sets[halves===2?L.p:0];let hash=0;
+      for(let end=0;end<L.n;end++){
+        const endPoint=vPosition(L,end);hash=((hash<<1)|ctx.value(endPoint.r,endPoint.c))&MASK;
+        for(const group of set.groups){
+          if(end+1<group.length)continue;
+          const bucket=group.buckets.get(hash&group.mask);if(!bucket)continue;
+          for(const record of bucket){
+            const word=record.word,at=end-word.length+1;if(at<0)continue;
+            const hit=vOccurrence(L,at);
+            // Vertices stream in axis/height order, not sorted line order.
+            // Compare complete legacy line keys; equal-row early retirement
+            // would incorrectly discard a better line encountered later.
+            if(record.heap.length===record.need&&compare(hit,record.heap[0])>=0)continue;
+            let j=0;
+            while(j<word.length){const {r,c}=vPosition(L,at+j);if(word[j]!==' '&&ctx.value(r,c)!==(word.charCodeAt(j)&1))break;j++;}
+            if(j===word.length)keep(record,hit);
           }
         }
-        if((li&31)===0)progress('search',li,set.lines.length);
-        if(groups.every(group=>!group.buckets.size))break;
       }
+    }
+    for(const {skip,records} of sets){
       for(const record of records.values())record.heap.sort(compare);
       for(let i=0;i<vsets.length;i++){
-        if(skip.has(i))continue;
-        let best=null;
+        if(skip.has(i))continue;let best=null;
         for(const entry of vsets[i]||[]){
           const tuple=Array.isArray(entry),word=tuple?entry[0]:entry.word,variant=tuple?entry[2]||{}:entry;
           const record=records.get(word),occurrence=record?.heap[record.next];
@@ -477,15 +484,105 @@
         }
         if(!best)continue;
         const {record,occurrence,word,variant,vn}=best;if(!options.independentWords)record.next++;
-        const L=set.lines[occurrence.li],cells=Array.from(L.cells.subarray(occurrence.at,occurrence.at+word.length));
-        found.push({i,r:occurrence.row,c:cells[0]%W,n:word.length,p:L.p,dir:'v',start:cells[0],step:null,cells,text:word,vn:vn||'',
+        const L=occurrence.route,cells=vCells(ctx,L,occurrence.at,word.length);
+        found.push({i,r:occurrence.row,c:cells[0]%ctx.W,n:word.length,p:L.p,dir:'v',start:cells[0],step:null,cells,text:word,vn:vn||'',
           variantFlags:variant.flags,variantIndex:variant.index,variantLabel:variant.label});
       }
     }
     const foundIndices=Array.from(new Set(found.map(hit=>hit.i)));
     return {found,foundIndices,foundByHalf:halves===2?[0,1].map(p=>found.filter(hit=>hit.p===p).map(hit=>hit.i)):null,
-      foundEver:foundIndices.length,foundCount:found.length,newCount:found.length,total:vsets.length*halves,halves,
-      reason:!meetingPoints.length?'На этом кадре нет точки встречи диагональных осей.':!lines.length?'Нет непрерывного маршрута ↘↗ вдоль вертикальных осей.':''};
+      foundEver:foundIndices.length,foundCount:found.length,newCount:found.length,total:vsets.length*halves,halves,reason:vReason(options,routeCount)};
+  }
+
+  function seriesSettings(options){
+    const alternating=options.pattern==='alternating',wanted=options.pattern==='zeros'?0:1;
+    return {alternating,wanted,min:Math.max(2,Math.min(4096,Math.trunc(Number(options.minimumLength)||5))),
+      allowed:v=>v>=0&&(alternating||options.inverse||v===wanted),joins:(a,b)=>alternating?a!==b:a===b};
+  }
+  function seriesCollector(settings,order){
+    const retained={need:100,heap:[],compare:order},types=new Map();let count=0,longest=0;
+    return {
+      add(run){
+        if(run.n<settings.min)return;
+        count++;longest=Math.max(longest,run.n);keep(retained,run);
+        const key=[run.n,run.p,run.dir,run.startBit].join('|'),prior=types.get(key);
+        if(!prior||order(run,prior)<0)types.set(key,run);
+      },
+      finish(){return {runs:retained.heap.sort(order),types:Array.from(types.values()).sort(order),count,longest};}
+    };
+  }
+  function seriesText(run,settings){return settings.alternating?(run.startBit?'10':'01').repeat(Math.ceil(run.n/2)).slice(0,run.n):String(run.startBit).repeat(run.n);}
+  function seriesVariant(run,settings){return !settings.alternating&&run.startBit!==settings.wanted?'инв':'';}
+  function vRunSummary(ctx,run,settings){
+    const L=run.route,{r,c}=vPosition(L,run.at);
+    return {r,c,n:run.n,p:L.p,dir:'v',start:r*ctx.W+c,step:null,startBit:run.startBit,alternating:settings.alternating,
+      route:{kind:'v',x:L.meeting.x,y:L.meeting.y,firstColumn:c}};
+  }
+  function vSimpleSearch(ctx,options,progress){
+    const settings=seriesSettings(options),collector=seriesCollector(settings,lineCompare);let routeCount=0;
+    for(const L of vRoutes(ctx,options,progress)){
+      routeCount++;let start=-1,startBit=0,previous=-1;
+      function emit(end){if(start>=0)collector.add({...vOccurrence(L,start),n:end-start,p:L.p,dir:'v',startBit});}
+      for(let j=0;j<L.n;j++){
+        const {r,c}=vPosition(L,j),v=ctx.value(r,c);
+        if(!settings.allowed(v)){emit(j);start=-1;previous=-1;continue;}
+        if(start>=0&&!settings.joins(previous,v)){emit(j);start=-1;}
+        if(start<0){start=j;startBit=v;}previous=v;
+      }
+      emit(L.n);
+    }
+    const {runs,types,count,longest}=collector.finish();
+    const found=runs.map(run=>({...vRunSummary(ctx,run,settings),cells:vCells(ctx,run.route,run.at,run.n),text:seriesText(run,settings),vn:seriesVariant(run,settings)}));
+    return {found,typeRuns:types.map(run=>vRunSummary(ctx,run,settings)),count,longest,simple:true,halves:ctx.parity===2?2:1,reason:vReason(options,routeCount)};
+  }
+  function loopRunSummary(ctx,run,settings,cycleSize){
+    return {r:Math.floor(run.cell/ctx.W),c:run.cell%ctx.W,n:run.n,p:null,dir:run.dir,start:run.cell,step:null,startBit:run.startBit,alternating:settings.alternating,
+      route:{kind:'loop',family:ctx.dirs[run.li],offset:run.at,cycleSize}};
+  }
+  function loopSimpleSearch(ctx,options,progress){
+    const settings=seriesSettings(options),order=(a,b)=>a.cell-b.cell||a.li-b.li||a.at-b.at,collector=seriesCollector(settings,order);
+    const names={0:'row',2:'col',1:'diag','-1':'antidiag'};let cycleSize=0;
+    for(let li=0;li<ctx.dirs.length;li++){
+      const family=ctx.dirs[li],dir=options.through?'loop-'+names[family]:'loop';let first=null,current=null,ordinal=0;
+      function flush(){if(!current)return;if(current.at===0)first=current;else collector.add(current);current=null;}
+      circuit(ctx,family,(cell,v)=>{
+        if(!settings.allowed(v))flush();
+        else if(current&&settings.joins(current.lastBit,v)){current.n++;current.lastBit=v;}
+        else{flush();current={cell,li,at:ordinal,n:1,p:null,dir,startBit:v,lastBit:v};}
+        ordinal++;if(ordinal%262144===0)progress('series',li*ctx.W*ctx.H+ordinal,ctx.dirs.length*ctx.W*ctx.H);
+      });
+      cycleSize=ordinal;
+      // The first and last linear runs form one cyclic run when the seam
+      // joins. Its start remains the last run's start, as in Loop.runs().
+      if(first&&current&&current.at>0&&settings.joins(current.lastBit,first.startBit)){current.n+=first.n;first=null;}
+      if(current)collector.add(current);if(first)collector.add(first);
+    }
+    const {runs,types,count,longest}=collector.finish(),found=runs.map(run=>({...loopRunSummary(ctx,run,settings,cycleSize),
+      cells:new Array(run.n),text:seriesText(run,settings),vn:seriesVariant(run,settings)}));
+    // Split selected wraparound runs into at most two source intervals.
+    // Recover them in one circuit pass, without retaining a cycle-sized
+    // prefix just to cross the seam. Only the 100 output paths own cells.
+    for(let li=0;li<ctx.dirs.length;li++){
+      const events=[];
+      for(let i=0;i<runs.length;i++){
+        const run=runs[i];if(run.li!==li)continue;
+        const end=run.at+run.n;
+        events.push({start:run.at,end:Math.min(end,cycleSize),offset:-run.at,hit:found[i]});
+        if(end>cycleSize)events.push({start:0,end:end-cycleSize,offset:cycleSize-run.at,hit:found[i]});
+      }
+      if(!events.length)continue;events.sort((a,b)=>a.start-b.start);
+      const active=[];let next=0,ordinal=0;
+      circuit(ctx,ctx.dirs[li],cell=>{
+        while(next<events.length&&events[next].start===ordinal)active.push(events[next++]);
+        for(let j=0;j<active.length;){
+          const event=active[j];event.hit.cells[ordinal+event.offset]=cell;
+          if(ordinal+1===event.end){active[j]=active[active.length-1];active.pop();}else j++;
+        }
+        ordinal++;if(ordinal%262144===0)progress('paths',ordinal,cycleSize);
+        if(next===events.length&&!active.length)return false;
+      });
+    }
+    return {found,typeRuns:types.map(run=>loopRunSummary(ctx,run,settings,cycleSize)),count,longest,simple:true,halves:1,loop:true};
   }
 
   function simpleSearch(ctx,lines,options,progress){
@@ -502,7 +599,7 @@
         if(!types.has(type))types.set(type,run);
         if(found.length<100){
           const text=alternating?(firstBit?'10':'01').repeat(Math.ceil(n/2)).slice(0,n):String(firstBit).repeat(n);
-          found.push({...geometry(ctx,L,start,n,!!options.compact),text,vn:!alternating&&firstBit!==wanted?'инв':''});
+          found.push({...geometry(ctx,L,start,n,false),text,vn:!alternating&&firstBit!==wanted?'инв':''});
         }
       }
       for(let j=L.first,r=L.r+j*L.dr,c=L.c+j*L.dc;j<L.n;j++,r+=L.dr,c+=L.dc){
@@ -528,11 +625,16 @@
    * independentWords (let different input rows reuse the earliest match).
    * Optional bounds {x,y,width,height}, inclusive rowLo / rowHi clipping.
    * Presence must describe the searchable geometry: joined and transformed
-   * parity views need their own adapter. V uses the existing route budget.
+   * parity views need their own adapter. V streams compact route descriptors;
+   * it does not materialize all routes or impose the old CPU route budgets.
    * Results deliberately contain no dense highlight raster. Compact hits
    * describe cells as start + j*step, 0 <= j < n; typeRuns always compact.
    * A skipSpaces hit spanning holes, loop or V hit always carries explicit
-   * cells, step:null. Simple-series patterns currently support straight lines.
+   * cells, step:null. Series count/longest are exhaustive; their first 100
+   * hits always include full cells. Remaining typeRuns are compact: straight
+   * start/step/n, V route:{kind:'v',x,y,firstColumn}, or cyclic
+   * route:{kind:'loop',family,offset,cycleSize}. Output path storage is separate
+   * from the bounded working memory of the scan itself.
    */
   function search(snapshot,options={},onProgress){
     let lastProgress=0;

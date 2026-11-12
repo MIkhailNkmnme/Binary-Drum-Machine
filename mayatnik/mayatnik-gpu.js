@@ -558,6 +558,13 @@ fn previewColour(colour: u32) -> vec3<f32> {
         for (let r = 0; r < H; r++) { const row = r * W, wr = r * WW; for (let c = 0; c < W; c++) { const v = val[row + c]; if (v < 0) continue; const q = wr + (c >> 5), m = 1 << (c & 31); h[q] |= m; if (v) b[q] |= m; } }
         device.queue.writeBuffer(bitsBuf, 0, b); device.queue.writeBuffer(hasBuf, 0, h);
       }
+      function writePacked({width,height,stride,bits,present}) {
+        if(dead||width!==W||height!==H||stride!==WW||
+          !(bits instanceof Uint32Array)||!(present instanceof Uint32Array)||
+          bits.length!==words||present.length!==words)throw Error('Размер сохранённого снимка не совпадает с GPU-полем');
+        device.queue.writeBuffer(bitsBuf,0,bits);
+        device.queue.writeBuffer(hasBuf,0,present);
+      }
       // Видеокарта → поле ядра; into — Int8Array W*H (по умолчанию новый)
       async function read(into) {
         const n = W * H, outBytes = Math.ceil(n / 4) * 4;
@@ -706,7 +713,7 @@ fn previewColour(colour: u32) -> vec3<f32> {
         device.queue.submit([encoder.finish()]);
       }
       reset();
-      return { W, H, WW, anchor, reset, run, write, read, readPacked, picture, readPic, writePic, render, renderPreview, done: () => device.queue.onSubmittedWorkDone(),
+      return { W, H, WW, anchor, reset, run, write, writePacked, read, readPacked, picture, readPic, writePic, render, renderPreview, done: () => device.queue.onSubmittedWorkDone(),
         destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf,previewParams]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту

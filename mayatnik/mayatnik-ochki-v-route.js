@@ -51,6 +51,42 @@
     if(pack){unique.all=unique.map(L=>L.str+',').join('');unique.bytes=Uint8Array.from(unique.all,ch=>ch.charCodeAt(0));}unique.width=width;
     return unique;
   }
+  // Stream one compact route at a time. A continuous fragment crossing both
+  // arms is uniquely identified by its first/last cells: those endpoints
+  // determine X and Y. Distinct axes/vertices therefore cannot duplicate it.
+  // No vertex-count or total-route-cell limit is needed for this API.
+  function* verticalRoutes({width,height,val,read=null,points,allowed=null,partition=null,onProgress=null}){
+    if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||!Number.isSafeInteger(width*height)||
+      (typeof read!=='function'&&(!val||val.length<width*height)))throw new RangeError('Incomplete V-route field');
+    const value=typeof read==='function'?read:(r,c)=>val[r*width+c];
+    const axes=[...new Set((points||[]).map(point=>point.x))].sort((a,b)=>a-b);
+    if(axes.some(x=>!Number.isFinite(x)))throw new RangeError('Invalid V-route axis');
+    let visited=0;const total=axes.length*height*2;
+    for(const X of axes){
+      const coreLeft=Math.ceil(X)-1,coreRight=Math.floor(X)+1;
+      if(coreLeft<0||coreRight>=width){visited+=height*2;continue;}
+      for(let Y=0;Y<=height-.5;Y+=.5){
+        if(onProgress&&(visited++&255)===0)onProgress(visited,total);
+        function valid(c,p,checkPartition=true){
+          const r=Y-Math.abs(c-X),q=r*width+c;
+          if(!Number.isInteger(r)||r<0||r>=height)return false;
+          const v=value(r,c);if(v<0||allowed&&!allowed(r,c,q))return false;
+          if(v!==0&&v!==1)throw new RangeError('Invalid V-route bit');
+          return !checkPartition||!partition||partition(r,c,q)===p;
+        }
+        if(!valid(coreLeft,null,false))continue;
+        const firstRow=Y-Math.abs(coreLeft-X),p=partition?partition(firstRow,coreLeft,firstRow*width+coreLeft):null;
+        let connected=true;
+        for(let c=coreLeft+1;c<=coreRight;c++)if(!valid(c,p)){connected=false;break;}
+        if(!connected)continue;
+        let left=coreLeft,right=coreRight;
+        while(left>0&&valid(left-1,p))left--;
+        while(right+1<width&&valid(right+1,p))right++;
+        yield {dir:'v',p,left,right,n:right-left+1,firstCell:(Y-Math.abs(left-X))*width+left,meeting:{x:X,y:Y}};
+      }
+    }
+    if(onProgress)onProgress(total,total);
+  }
   // Cell rows decrease after the turn. A binary search on source indices would
   // omit valid occurrences on that arm, including the highest occurrence.
   function firstOccurrence(line,pattern,width,used=null){
@@ -74,5 +110,5 @@
     }
     return found;
   }
-  return {lines,verticalPoints,firstOccurrence,recoverRuns};
+  return {lines,verticalPoints,verticalRoutes,firstOccurrence,recoverRuns};
 });
