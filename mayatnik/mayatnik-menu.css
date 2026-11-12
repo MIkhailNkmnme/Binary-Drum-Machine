@@ -17,6 +17,9 @@
 .may-meeting-controls[hidden],.may-meeting-controls [hidden]{display:none!important}
 .may-meeting-controls .gz-hx{width:120px;flex:none}
 .may-meeting-controls button.gz-half{padding:0;border:0;background:none;font:inherit;color:inherit}
+.may-continuation-select{box-sizing:border-box;display:block;width:120px;height:24px;flex:none;padding:0 8px;background:#1b2430;color:#dfe6f5;border:1px solid #526d88;border-radius:3px;font:12px "Segoe UI",sans-serif}
+.may-continuation-select[hidden]{display:none!important}
+.may-continuation-select:disabled{opacity:.45}
 .may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
 body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}

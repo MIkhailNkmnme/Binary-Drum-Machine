@@ -54,6 +54,31 @@
   const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
+  function continuationSettings(){
+    const control=window.mayMeetingContinuation;
+    if(!control)return null;
+    const make=(key,tip,entries,onChange)=>{
+      const select=document.createElement('select');
+      select.className='may-continuation-select';select.dataset.n=key;select.title=tip;
+      select.setAttribute('aria-label',tip);
+      for(const [value,label] of entries)select.add(new Option(label,String(value)));
+      select.onchange=()=>{onChange(Number(select.value));placeTools();};
+      return select;
+    };
+    const operation=make('meetingContinuationOperation','Наложение: A — бит Маятника, B — бит продолжения',control.modes,control.setMode);
+    const direction=make('meetingContinuationDirection','Направление продолжения',control.directions,control.setDirection);
+    const edge=make('meetingContinuationEdge','Нижний край: прямо, отражение от последней строки или перенос вверх в тот же столбец',control.edges,control.setEdge);
+    const nodes=[operation,direction,edge];
+    return {nodes,sync(max=3){
+      const on=control.get(),down=!!(control.direction()&1);
+      [control.mode(),control.direction(),control.edge()].forEach((value,i)=>{
+        const select=nodes[i];
+        if(select.value!==String(value))select.value=String(value);
+        select.hidden=!on||i>=max;
+      });
+      edge.disabled=!down;
+    }};
+  }
   const name = e => ({ochkiSkipSpaces:'Без пробелов',ochkiEveryFrame:'Каждый кадр',ochkiHalf:'Полуинверсия',ochkiRowReverseMask:'Пустоты реверса',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);if(!e)return null;
@@ -763,7 +788,7 @@
       vm.classList.add('may-hp-vm');meetingMode.classList.add('may-hp-vm');
       const continuation=document.createElement('button');
       continuation.type='button';continuation.className='gz-hx';continuation.dataset.n='meetingContinuationHorizon';
-      continuation.title='Продолжение битов вниз от точки встречи по XOR';
+      continuation.title='Продолжение битов от точки встречи';
       continuation.setAttribute('aria-label',continuation.title);
       const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(continuation,'steps');glyph.setAttribute('aria-hidden','true');
       const label=document.createElement('span');label.className='gz-nm';label.textContent='Продолжение';continuation.append(glyph,label);
@@ -772,7 +797,9 @@
         const on=!!window.mayMeetingContinuation?.get();
         continuation.classList.toggle('gz-on',on);continuation.setAttribute('aria-pressed',String(on));
       };
-      meetingModes.append(meetingMode,continuation);syncContinuation();
+      const continuationOptions=continuationSettings();
+      meetingModes.append(meetingMode,continuation,...(continuationOptions?.nodes||[]));
+      syncContinuation();continuationOptions?.sync();
       function vsync() { vm.gzSync();meetingMode.gzSync();for (const h of [vm,meetingMode].flatMap(row=>[...row.querySelectorAll('.gz-half')])) {
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : window.mayComparison?.get().source ? 'Конечное поле: до последней вершины внутри рамки 2N−1' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
       let meetingState='';
@@ -784,9 +811,10 @@
           const center=Math.max(minHalf,Math.min(width-minHalf,x));
           const sizesX=Math.max(gutter,Math.min(fieldLeft-gap-buttonWidth,center-gap-buttonWidth-8));
           const modesX=Math.min(width-gutter-buttonWidth,Math.max(fieldRight+gap,center+gap+8));
-          const rows=Math.min(3,Math.floor((height-y+half+2)/26));
+          const availableRows=Math.floor((height-y+half+2)/26),rows=Math.min(3,availableRows);
           for(let i=0;i<meetingSizes.children.length;i++)meetingSizes.children[i].hidden=i>=rows;
-          continuation.hidden=rows<2||!window.mayMeetingContinuation;syncContinuation();
+          continuation.hidden=rows<2||!window.mayMeetingContinuation;
+          syncContinuation();continuationOptions?.sync(Math.max(0,availableRows-2));
           meetingSizes.style.left=left+sizesX+'px';
           meetingModes.style.left=left+modesX+'px';
           meetingSizes.style.top=meetingModes.style.top=top+y-half+'px';
@@ -2120,12 +2148,13 @@
     }return row;
   }
   // All canonical axes controls and cleanup actions now exist; keep the rail group/key.
-  if(window.mayMeetingContinuation){const probe=document.createElement('button');probe.title='Продолжение битов вниз от точки встречи по XOR';
+  if(window.mayMeetingContinuation){const probe=document.createElement('button');probe.title='Продолжение битов от точки встречи';
     const b=ptBtn('meetingContinuation','steps',probe,()=>{const control=window.mayMeetingContinuation;control?.set(!control.get());placeTools();});
     b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
     const name=document.createElement('span');name.className='gz-nm';name.textContent='Продолжение';b.append(name);
-    b.title=probe.title;b.setAttribute('aria-label',probe.title);gAxis.append(b);
-    toolSync.push(()=>{const on=!!window.mayMeetingContinuation?.get();b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}); }
+    b.title=probe.title;b.setAttribute('aria-label',probe.title);
+    const options=continuationSettings();gAxis.append(b,...options.nodes);
+    toolSync.push(()=>{const on=!!window.mayMeetingContinuation?.get();b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));options.sync();}); }
   const axesPanel=window.MayatnikAxesPanel?.mount(gAxis,{icon,short:text=>window.HubButtonText?.shortCaption(text)||text,after:()=>{rail.refresh();placeTools();}});
   if(axesPanel)toolSync.push(axesPanel.sync);
   mountViewUtilities(gView);

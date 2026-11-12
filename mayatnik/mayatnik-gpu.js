@@ -422,7 +422,8 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
   // proportional to the field dimensions is allocated.
   const PREVIEW_WGSL = /* wgsl */`
 struct View { x: f32, y: f32, step: f32, stride: u32, right: i32, bottom: i32,
-  left: i32, zero: u32, one: u32, empty: u32 }
+  left: i32, zero: u32, one: u32, empty: u32,
+  anchor: i32, meeting: i32, rows: i32, operation: i32, directions: u32, flags: u32 }
 @group(0) @binding(0) var<uniform> params: View;
 @group(0) @binding(1) var<storage, read> bits: array<u32>;
 @group(0) @binding(2) var<storage, read> present: array<u32>;
@@ -466,6 +467,55 @@ fn previewColour(colour: u32) -> vec3<f32> {
   let sum = previewColour(params.one) * f32(ones) + previewColour(params.zero) * f32(occupied - ones)
     + previewColour(params.empty) * f32(area - occupied);
   return vec4<f32>(sum / (255.0 * f32(area)), 1.0);
+}
+
+fn coneBit(depth: i32, cross: i32) -> i32 {
+  let cell = depth + cross;
+  if (depth < 0 || depth >= params.rows || cell < 0 || cell > depth * 2 || cell % 2 != 0) { return -1; }
+  let col = cell / 2;
+  return select(0, 1, (depth & col) == col);
+}
+
+@fragment fn continuationMain(@builtin(position) pixel: vec4<f32>) -> @location(0) vec4<f32> {
+  let pos = vec2<i32>(floor(vec2<f32>(params.x, params.y) + pixel.xy * params.step));
+  let col = pos.x;
+  let row = pos.y;
+  let dx = col - params.anchor;
+  let dy = row - params.meeting;
+  let invert = i32(params.flags & 1u);
+  var original = -1;
+  if (col >= params.left && col < params.right && row >= 0 && row < params.bottom) {
+    let index = u32(row) * params.stride + u32(col / 32);
+    let bitMask = 1u << u32(col % 32);
+    if ((present[index] & bitMask) != 0u) { original = select(0, 1, (bits[index] & bitMask) != 0u) ^ invert; }
+  }
+  var bit = -1;
+  if ((params.directions & 1u) != 0u) {
+    let edge = params.flags >> 1u;
+    let reflected = edge == 1u && row < params.bottom - 1;
+    if (edge == 2u) {
+      if (row >= 0 && row < params.bottom) {
+        let delta = max(0, params.meeting + 1 - row);
+        let sourceRow = row + ((delta + params.bottom - 1) / params.bottom) * params.bottom;
+        bit = coneBit(sourceRow - params.meeting - 1, dx);
+      }
+    } else if (!reflected || original >= 0) {
+      let sourceRow = select(row, 2 * (params.bottom - 1) - row, reflected);
+      bit = coneBit(sourceRow - params.meeting - 1, dx);
+    }
+  }
+  if (bit < 0 && (params.directions & 2u) != 0u) { bit = coneBit(-dy - 1, dx); }
+  if (bit < 0 && (params.directions & 4u) != 0u) { bit = coneBit(-dx - 1, dy); }
+  if (bit < 0 && (params.directions & 8u) != 0u) { bit = coneBit(dx - 1, dy); }
+  if (bit < 0) { discard; }
+  var result = bit ^ invert;
+  var alpha = 1.0;
+  if (original >= 0) {
+    if (params.operation < 0) { alpha = 128.0 / 255.0; }
+    else { result = (params.operation >> u32(original * 2 + result)) & 1; }
+  }
+  let colour = previewColour(select(params.zero, params.one, result == 1)) / 255.0;
+  return vec4<f32>(colour * alpha, alpha);
 }`;
 
   const BG = { empty: 0, '1': 1, '0': 2, chess: 3 };
@@ -520,7 +570,7 @@ fn previewColour(colour: u32) -> vec3<f32> {
     const format = navigator.gpu.getPreferredCanvasFormat(), renderModule = device.createShaderModule({ code: RENDER_WGSL });
     const pipeRender = device.createRenderPipeline({ layout: 'auto', vertex: { module: renderModule, entryPoint: 'vs' },
       fragment: { module: renderModule, entryPoint: 'fs', targets: [{ format }] }, primitive: { topology: 'triangle-list' } });
-    let previewPipeline;
+    let previewModule, previewPipeline, continuationPipeline;
     const picModule = device.createShaderModule({ code: PIC_WGSL });
     const picLayout = device.createBindGroupLayout({ entries: [0, 1, 2, 3, 4, 5, 6].map(b => ({ binding: b, visibility: GPUShaderStage.COMPUTE,
       buffer: { type: b === 5 ? 'storage' : 'read-only-storage', hasDynamicOffset: b === 1 } })) });
@@ -543,7 +593,7 @@ fn previewColour(colour: u32) -> vec3<f32> {
       const PBuf = device.createBuffer({ size: 41 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       let tBuf = null, apBuf = null, bind = null, tCap = 0, apCap = 0, renderBind = null, dead = false;
       let pic = null, pic2 = null, picN = 0, zBuf = null, zCap = 0, qBuf = null, qCap = 0, picBind = null, win = null;
-      let previewParams, previewBind;
+      let previewParams, previewBind, continuationParams, continuationBind;
       const Q_INTS = 64;   // запись прохода: 8 чисел + до 14 центров по 4
       const setP = K => device.queue.writeBuffer(pBuf, 0, new Uint32Array([W, WW, H, K, anchor, BG[bg] ?? 0, 0, 0]));
       const bindFor = () => device.createBindGroup({ layout, entries: [
@@ -755,12 +805,12 @@ fn previewColour(colour: u32) -> vec3<f32> {
         zero = 0x75645b, one = 0xf5ede8, empty = 0}) {
         if (dead) return;
         if (!previewPipeline) {
-          const module = device.createShaderModule({code: PREVIEW_WGSL});
-          previewPipeline = device.createRenderPipeline({layout: 'auto', vertex: {module, entryPoint: 'vertexMain'},
-            fragment: {module, entryPoint: 'fragmentMain', targets: [{format}]}});
+          previewModule ||= device.createShaderModule({code: PREVIEW_WGSL});
+          previewPipeline = device.createRenderPipeline({layout: 'auto', vertex: {module:previewModule, entryPoint: 'vertexMain'},
+            fragment: {module:previewModule, entryPoint: 'fragmentMain', targets: [{format}]}});
         }
         if (!previewBind) {
-          previewParams = device.createBuffer({size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST});
+          previewParams = device.createBuffer({size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST});
           previewBind = device.createBindGroup({layout: previewPipeline.getBindGroupLayout(0), entries: [
             {binding: 0, resource: {buffer: previewParams}}, {binding: 1, resource: {buffer: bitsBuf}},
             {binding: 2, resource: {buffer: hasBuf}}]});
@@ -778,9 +828,34 @@ fn previewColour(colour: u32) -> vec3<f32> {
         pass.end();
         device.queue.submit([encoder.finish()]);
       }
+      function renderContinuation(context, {x,y,step,left,right,bottom,zero,one,anchor,meeting,rows,mode,directions,edge,invert}) {
+        if(dead)return;
+        if(!continuationPipeline){
+          previewModule ||= device.createShaderModule({code:PREVIEW_WGSL});
+          const over={srcFactor:'one',dstFactor:'one-minus-src-alpha'};
+          continuationPipeline=device.createRenderPipeline({layout:'auto',
+            vertex:{module:previewModule,entryPoint:'vertexMain'},
+            fragment:{module:previewModule,entryPoint:'continuationMain',targets:[{format,blend:{color:over,alpha:over}}]}});
+        }
+        if(!continuationBind){
+          continuationParams=device.createBuffer({size:64,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+          continuationBind=device.createBindGroup({layout:continuationPipeline.getBindGroupLayout(0),entries:[
+            {binding:0,resource:{buffer:continuationParams}},{binding:1,resource:{buffer:bitsBuf}},
+            {binding:2,resource:{buffer:hasBuf}}]});
+        }
+        const buffer=new ArrayBuffer(64);
+        new Float32Array(buffer).set([x,y,step]);
+        new Int32Array(buffer).set([WW,right,bottom,left,zero,one,0,anchor,meeting,rows,mode,directions,invert|(edge<<1)],3);
+        device.queue.writeBuffer(continuationParams,0,buffer);
+        const encoder=device.createCommandEncoder();
+        const pass=encoder.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),
+          loadOp:'load',storeOp:'store'}]});
+        pass.setPipeline(continuationPipeline);pass.setBindGroup(0,continuationBind);pass.draw(3);pass.end();
+        device.queue.submit([encoder.finish()]);
+      }
       reset();
-      return { W, H, WW, anchor, reset, run, write, writePacked, writePackedPlaneRows, read, readPacked, readPackedRegion, readPackedStrips, picture, readPic, writePic, render, renderPreview, done: () => device.queue.onSubmittedWorkDone(),
-        destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf,previewParams]) x?.destroy(); } };
+      return { W, H, WW, anchor, reset, run, write, writePacked, writePackedPlaneRows, read, readPacked, readPackedRegion, readPackedStrips, picture, readPic, writePic, render, renderPreview, renderContinuation, done: () => device.queue.onSubmittedWorkDone(),
+        destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf,previewParams,continuationParams]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту
     function attach(canvas) { const ctx = canvas.getContext('webgpu'); ctx.configure({ device, format, alphaMode: 'premultiplied' }); return ctx; }
