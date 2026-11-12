@@ -54,55 +54,6 @@
   const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  function continuationSettings(){
-    const control=window.mayMeetingContinuation;
-    if(!control)return null;
-    const make=(key,tip,entries,onChange)=>{
-      const select=document.createElement('select');
-      select.className='may-continuation-select';select.dataset.n=key;select.title=tip;
-      select.setAttribute('aria-label',tip);
-      for(const [value,label] of entries)select.add(new Option(label,String(value)));
-      select.onchange=()=>{onChange(Number(select.value));placeTools();};
-      return select;
-    };
-    const operation=make('meetingContinuationOperation','Наложение: A — бит Маятника, B — бит продолжения',control.modes,control.setMode);
-    const directions=document.createElement('div');
-    directions.className='may-continuation-directions';directions.dataset.n='meetingContinuationDirection';
-    directions.setAttribute('role','group');directions.setAttribute('aria-label','Направления продолжения');
-    const checkDirection=(caption,onChange)=>{
-      const label=document.createElement('label'),input=document.createElement('input');
-      input.type='checkbox';
-      input.onchange=()=>{onChange(input.checked);placeTools();};
-      label.append(input,document.createTextNode(caption));directions.append(label);
-      return input;
-    };
-    const checks=control.directions.map(([flag,caption])=>[flag,checkDirection(caption,checked=>{
-      const current=control.direction();
-      control.setDirection(checked?current|flag:current&~flag);
-    })]);
-    const allMask=checks.reduce((mask,[flag])=>mask|flag,0);
-    const all=checkDirection('Все',checked=>control.setDirection(checked?allMask:0));
-    all.parentElement.className='may-continuation-all';
-    all.title='Включить или выключить все направления продолжения';
-    const edge=make('meetingContinuationEdge','Нижний край: прямо, отражение от последней строки или перенос вверх в тот же столбец',control.edges,control.setEdge);
-    const highlight=document.createElement('label'),highlightCheck=document.createElement('input');
-    highlight.className='may-continuation-highlight';highlight.dataset.n='meetingContinuationHighlight';
-    highlight.title='Подсветить клетки, где присутствуют и бит Маятника, и бит продолжения';
-    highlightCheck.type='checkbox';highlightCheck.onchange=()=>{control.setHighlight(highlightCheck.checked);placeTools();};
-    highlight.append(highlightCheck,document.createTextNode('Пересечение'));
-    const nodes=[operation,directions,edge,highlight];
-    return {nodes,sync(){
-      const on=control.get(),mask=control.direction();
-      for(const node of nodes)node.hidden=!on;
-      if(operation.value!==String(control.mode()))operation.value=String(control.mode());
-      if(edge.value!==String(control.edge()))edge.value=String(control.edge());
-      for(const [flag,input] of checks)input.checked=!!(mask&flag);
-      all.checked=mask===allMask;
-      all.indeterminate=mask!==0&&mask!==allMask;
-      edge.disabled=!(mask&1);
-      highlightCheck.checked=control.highlight();highlightCheck.disabled=!mask;
-    }};
-  }
   const name = e => ({ochkiSkipSpaces:'Без пробелов',ochkiEveryFrame:'Каждый кадр',ochkiHalf:'Полуинверсия',ochkiRowReverseMask:'Пустоты реверса',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);if(!e)return null;
@@ -2170,38 +2121,93 @@
     }return row;
   }
   // All canonical axes controls and cleanup actions now exist; keep the rail group/key.
-  if(window.mayMeetingContinuation){const probe=document.createElement('button');probe.title='Продолжение битов от точки встречи';
-    const b=ptBtn('meetingContinuation','steps',probe,()=>{const control=window.mayMeetingContinuation;control?.set(!control.get());placeTools();});
-    b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
-    const name=document.createElement('span');name.className='gz-nm';b.append(name);
-    b.title=probe.title;b.setAttribute('aria-label',probe.title);
-    const row=ptGroup('Продолжение'),options=continuationSettings();
-    row.parentElement.dataset.k='Продолжение';row.parentElement.classList.add('pt-long');
-    const gif=ptBtn('meetingContinuationGif','record',probe,()=>window.mayMeetingContinuation.openGif());
-    gif.classList.add('gz-hx');gif.querySelector('i').classList.add('gz-ic');
-    const gifName=document.createElement('span');gifName.className='gz-nm';gifName.textContent='4 GIF';gif.append(gifName);
-    gif.title='Собрать четыре GIF по направлениям продолжения';gif.setAttribute('aria-label',gif.title);
-    const squares=ptBtn('meetingContinuationSquareGif','grid4',probe,()=>window.mayMeetingContinuation.openSquareGif());
-    squares.classList.add('gz-hx');squares.querySelector('i').classList.add('gz-ic');
-    const squaresName=document.createElement('span');squaresName.className='gz-nm';squaresName.textContent='GIF квадраты';squares.append(squaresName);
-    squares.title='Собрать GIF квадратов от точки оси по всем кадрам';squares.setAttribute('aria-label',squares.title);
-    const axes=ptBtn('meetingContinuationAxes','axes',probe,()=>{
-      const control=window.mayMeetingContinuation;
-      control.setAxesHidden(!control.axesHidden());placeTools();
+  if(window.mayMeetingContinuation){
+    const control=window.mayMeetingContinuation, row=ptGroup('Продолжение');
+    row.parentElement.dataset.k='Продолжение';
+    row.parentElement.classList.add('may-continuation-group');
+    const probe=document.createElement('button');
+    const describe=(button,title)=>{
+      button.title=title;
+      if(button.getAttribute('aria-label')!==title)button.setAttribute('aria-label',title);
+    };
+    const command=(key,kind,label,title,action)=>{
+      const button=ptBtn(key,kind,probe,action);
+      button.classList.add('gz-hx');
+      button.querySelector('i').classList.add('gz-ic');
+      const name=document.createElement('span');
+      name.className='gz-nm';name.textContent=label;button.append(name);
+      describe(button,title);
+      return button;
+    };
+    const update=action=>()=>{action();placeTools();};
+    const pressed=(button,state)=>{
+      button.classList.toggle('gz-on',state===true);
+      if(button.getAttribute('aria-pressed')!==String(state))button.setAttribute('aria-pressed',String(state));
+    };
+    const setLabel=(button,label)=>{
+      const name=button.querySelector('.gz-nm');
+      if(name.dataset.continuationLabel!==label){name.dataset.continuationLabel=label;name.textContent=label;}
+    };
+    const list=(key,kind,label,title,entries,current,set)=>{
+      const owner=command(key,kind,label,title,null);
+      owner.dataset.listTitle=label;
+      ZerkGrozd.listHover(owner,{
+        options:()=>entries.map(([value,name])=>({
+          key:value,name,on:current()===value,
+          pick:()=>{if(!owner.disabled&&current()!==value)set(value);}
+        })),
+        color:()=>getComputedStyle(owner).getPropertyValue('--c').trim(),
+        host:()=>row.parentElement,
+        col:()=>row,
+        after:()=>placeTools()
+      });
+      return owner;
+    };
+    const toggle=command('meetingContinuation','steps','Включить','Включить продолжение битов от точки встречи',
+      update(()=>control.set(!control.get())));
+    const operation=list('meetingContinuationOperation','copy','Наложение','Наложение: A — бит Маятника, B — бит продолжения',
+      control.modes,control.mode,control.setMode);
+    const edge=list('meetingContinuationEdge','mirror','Нижний край','Нижний край: прямо, отражение от последней строки или перенос вверх в тот же столбец',
+      control.edges,control.edge,control.setEdge);
+    const directions=control.directions.map(([flag,label],index)=>{
+      const button=document.createElement('button');
+      button.type='button';button.className='gz-half gz-h'+(index%2);
+      describe(button,'Продолжение: '+label.toLowerCase());
+      button.append(document.createTextNode(label));
+      button.onclick=update(()=>control.setDirection(control.direction()^flag));
+      return {flag,button};
     });
-    axes.classList.add('gz-hx');axes.querySelector('i').classList.add('gz-ic');
-    const axesName=document.createElement('span');axesName.className='gz-nm';axes.append(axesName);
-    row.append(b,...options.nodes,axes,gif,squares);
+    const pair=(label,items)=>{
+      const line=document.createElement('div');
+      line.className='gz-hx gz-pair gz-split may-continuation-pair';
+      line.setAttribute('role','group');line.setAttribute('aria-label',label);
+      line.append(...items.map(({button})=>button));
+      return line;
+    };
+    const allMask=directions.reduce((mask,{flag})=>mask|flag,0);
+    const all=command('meetingContinuationDirection','grid4','Все','Включить или выключить все направления продолжения',
+      update(()=>control.setDirection(control.direction()===allMask?0:allMask)));
+    const highlight=command('meetingContinuationHighlight','target','Пересечение','Подсветить клетки, где присутствуют и бит Маятника, и бит продолжения',
+      update(()=>control.setHighlight(!control.highlight())));
+    const axes=command('meetingContinuationAxes','axes','Скрыть оси','Скрыть точку встречи и оси',
+      update(()=>control.setAxesHidden(!control.axesHidden())));
+    const gif=command('meetingContinuationGif','record','4 GIF','Собрать четыре GIF по направлениям продолжения',()=>control.openGif());
+    const squares=command('meetingContinuationSquareGif','grid4','GIF квадраты','Собрать GIF квадратов от точки оси по всем кадрам',()=>control.openSquareGif());
+    const settings=[operation,pair('Вертикальные направления',directions.slice(0,2)),
+      pair('Горизонтальные направления',directions.slice(2)),all,edge,highlight,axes];
+    row.append(toggle,...settings,gif,squares);
     toolSync.push(()=>{
-      const control=window.mayMeetingContinuation,on=control.get(),hidden=control.axesHidden();
-      const text=on?'Выключить':'Включить',axesText=hidden?'Показать оси':'Скрыть оси';
-      if(name.textContent!==text)name.textContent=text;
-      if(axesName.textContent!==axesText)axesName.textContent=axesText;
-      axes.hidden=!on;axes.classList.toggle('on',hidden);axes.setAttribute('aria-pressed',String(hidden));
-      axes.title=hidden?'Показать точку встречи и оси':'Скрыть точку встречи и оси';
-      axes.setAttribute('aria-label',axes.title);
-      b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));options.sync();
-    }); }
+      const on=control.get(),mask=control.direction(),hidden=control.axesHidden();
+      const label=on?'Выключить':'Включить',axesLabel=hidden?'Показать оси':'Скрыть оси';
+      setLabel(toggle,label);describe(toggle,label+' продолжение битов от точки встречи');pressed(toggle,on);
+      for(const button of settings)button.hidden=!on;
+      for(const {flag,button} of directions)pressed(button,!!(mask&flag));
+      pressed(all,mask===allMask?true:mask?'mixed':false);
+      edge.disabled=!(mask&1);
+      highlight.disabled=!mask;pressed(highlight,control.highlight());
+      setLabel(axes,axesLabel);describe(axes,(hidden?'Показать':'Скрыть')+' точку встречи и оси');pressed(axes,hidden);
+    });
+  }
   const axesPanel=window.MayatnikAxesPanel?.mount(gAxis,{icon,short:text=>window.HubButtonText?.shortCaption(text)||text,after:()=>{rail.refresh();placeTools();}});
   if(axesPanel)toolSync.push(axesPanel.sync);
   mountViewUtilities(gView);
