@@ -17,7 +17,7 @@
     'rail:paint':'#ff9b50','rail:template':'#e3c56f','rail:gifscale':'#41d6bd','rail:library':'#d9b9ff',
     'rail:export':'#ffd166','rail:xorrom':'#c29bff','rail:horr':'#88db72','rail:edge':'#78a8ec',
     'pt:Очистка':'#ffe17a','pt:Оси':'#ff87cf','pt:Правка':'#d4c27b','pt:Точка Ось':'#d292ff',
-    'pt:Аниматрица':'#88db72','pt:Виды поля':'#5cbce8','pt:Вид':'#91a5ff','pt:Зеркала':'#b48cff','pt:Шаблон':'#e3ad73',
+    'pt:Аниматрица':'#88db72','pt:Продолжение':'#9ad985','pt:Виды поля':'#5cbce8','pt:Вид':'#91a5ff','pt:Зеркала':'#b48cff','pt:Шаблон':'#e3ad73',
     'pt:Видео':'#f49d99','pt:Площади':'#b99de9','pt:Слои':'#63cbb3','pt:Ручные оси':'#ffbf73',
     'pt:Шаблоны':'#ceb6ed','pt:Свёртки':'#91d4a1','pt:Ячейки':'#a4d374','pt:Наложение':'#75c9dc'
   });
@@ -797,9 +797,7 @@
         const on=!!window.mayMeetingContinuation?.get();
         continuation.classList.toggle('gz-on',on);continuation.setAttribute('aria-pressed',String(on));
       };
-      const continuationOptions=continuationSettings();
-      meetingModes.append(meetingMode,continuation,...(continuationOptions?.nodes||[]));
-      syncContinuation();continuationOptions?.sync();
+      meetingModes.append(meetingMode,continuation);syncContinuation();
       function vsync() { vm.gzSync();meetingMode.gzSync();for (const h of [vm,meetingMode].flatMap(row=>[...row.querySelectorAll('.gz-half')])) {
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : window.mayComparison?.get().source ? 'Конечное поле: до последней вершины внутри рамки 2N−1' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
       let meetingState='';
@@ -811,10 +809,10 @@
           const center=Math.max(minHalf,Math.min(width-minHalf,x));
           const sizesX=Math.max(gutter,Math.min(fieldLeft-gap-buttonWidth,center-gap-buttonWidth-8));
           const modesX=Math.min(width-gutter-buttonWidth,Math.max(fieldRight+gap,center+gap+8));
-          const availableRows=Math.floor((height-y+half+2)/26),rows=Math.min(3,availableRows);
+          const rows=Math.min(3,Math.floor((height-y+half+2)/26));
           for(let i=0;i<meetingSizes.children.length;i++)meetingSizes.children[i].hidden=i>=rows;
           continuation.hidden=rows<2||!window.mayMeetingContinuation;
-          syncContinuation();continuationOptions?.sync(Math.max(0,availableRows-2));
+          syncContinuation();
           meetingSizes.style.left=left+sizesX+'px';
           meetingModes.style.left=left+modesX+'px';
           meetingSizes.style.top=meetingModes.style.top=top+y-half+'px';
@@ -2151,10 +2149,20 @@
   if(window.mayMeetingContinuation){const probe=document.createElement('button');probe.title='Продолжение битов от точки встречи';
     const b=ptBtn('meetingContinuation','steps',probe,()=>{const control=window.mayMeetingContinuation;control?.set(!control.get());placeTools();});
     b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
-    const name=document.createElement('span');name.className='gz-nm';name.textContent='Продолжение';b.append(name);
+    const name=document.createElement('span');name.className='gz-nm';b.append(name);
     b.title=probe.title;b.setAttribute('aria-label',probe.title);
-    const options=continuationSettings();gAxis.append(b,...options.nodes);
-    toolSync.push(()=>{const on=!!window.mayMeetingContinuation?.get();b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));options.sync();}); }
+    const row=ptGroup('Продолжение'),options=continuationSettings();
+    row.parentElement.dataset.k='Продолжение';row.parentElement.classList.add('pt-long');
+    const gif=ptBtn('meetingContinuationGif','record',probe,()=>window.mayMeetingContinuation.openGif());
+    gif.classList.add('gz-hx');gif.querySelector('i').classList.add('gz-ic');
+    const gifName=document.createElement('span');gifName.className='gz-nm';gifName.textContent='4 GIF';gif.append(gifName);
+    gif.title='Собрать четыре GIF по направлениям продолжения';gif.setAttribute('aria-label',gif.title);
+    row.append(b,...options.nodes,gif);
+    toolSync.push(()=>{
+      const on=!!window.mayMeetingContinuation.get(),text=on?'Выключить':'Включить';
+      if(name.textContent!==text)name.textContent=text;
+      b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));options.sync();
+    }); }
   const axesPanel=window.MayatnikAxesPanel?.mount(gAxis,{icon,short:text=>window.HubButtonText?.shortCaption(text)||text,after:()=>{rail.refresh();placeTools();}});
   if(axesPanel)toolSync.push(axesPanel.sync);
   mountViewUtilities(gView);

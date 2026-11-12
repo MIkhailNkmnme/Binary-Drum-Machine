@@ -2,7 +2,7 @@
    Encoding runs in a Worker, one frame in flight. Equal frames extend delay. */
 (function(root){
   'use strict';
-  function encoder(width,height,{trim=false}={}){
+  function encoder(width,height,{trim=false,mergeEqual=true}={}){
     if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>65535||height>65535)throw Error('Некорректный размер GIF.');
     const chunks=[],word=n=>[n&255,n>>8&255];
     // Every image owns its palette, including independently exported frame().
@@ -42,7 +42,7 @@
         if(previous&&rgb!==previous.colours[previous.pixels[i]])same=false;
       }
       delay=Math.max(1,Math.min(65535,Math.round(delay)));
-      if(same&&lastControl){const total=lastControl[4]+(lastControl[5]<<8)+delay;if(total<=65535){lastControl[4]=total&255;lastControl[5]=total>>8;return;}}
+      if(mergeEqual&&same&&lastControl){const total=lastControl[4]+(lastControl[5]<<8)+delay;if(total<=65535){lastControl[4]=total&255;lastControl[5]=total>>8;return;}}
       previous={pixels,colours,box};lastControl=Uint8Array.from([33,249,4,trim?8:4,...word(delay),0,0]);chunks.push(lastControl);
       lastImageStart=chunks.length;
       const tableBits=Math.max(1,Math.ceil(Math.log2(colours.length))),palette=new Uint8Array(3*(1<<tableBits));
@@ -64,7 +64,12 @@
     // A static, independently decodable copy of the last image, using the exact
     // palette and LZW bytes already encoded. No re-sampling or second encoder.
     function frame(){if(!previous)throw Error('В GIF нет кадров.');const out=output();return new Blob([out[0],...out.slice(lastImageStart),Uint8Array.of(59)],{type:'image/gif'});}
-    return {add,frame,dimensions,finish(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([...output(),Uint8Array.of(59)],{type:'image/gif'});}};
+    let measuredChunks=0,encodedBytes=0;
+    function byteLength(){
+      for(;measuredChunks<chunks.length;measuredChunks++)encodedBytes+=chunks[measuredChunks].byteLength;
+      return encodedBytes;
+    }
+    return {add,frame,dimensions,byteLength,finish(){if(!previous)throw Error('В GIF нет кадров.');return new Blob([...output(),Uint8Array.of(59)],{type:'image/gif'});}};
   }
   function record({width,height,capture,onDone,onError}){
     const ratio=Math.min(1,1024/width,1024/height),w=Math.max(1,Math.round(width*ratio)),h=Math.max(1,Math.round(height*ratio));
@@ -85,5 +90,48 @@
     try{pending=take();}catch(error){Promise.resolve().then(()=>fail(error));}
     return {width:w,height:h,stop(){if(stopping||closed)return;stopping=true;stopAt=performance.now();clearTimeout(timer);finish();}};
   }
-  const api={encoder,record};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikGif=api;
+  async function batch(sizes){
+    const code=`const encoder=(${encoder.toString()});
+      let gifs;
+      onmessage=e=>{try{
+        const {type,sizes,frames,delay}=e.data;
+        if(type==='start'){gifs=sizes.map(({width,height})=>encoder(width,height,{trim:true,mergeEqual:false}));postMessage({});}
+        else if(type==='frame'){
+          for(let i=0;i<gifs.length;i++)gifs[i].add(frames[i],delay);
+          if(gifs.reduce((total,gif)=>total+gif.byteLength(),0)>256*1048576)throw Error('Четыре GIF превысили 256 МиБ. Выберите меньше кадров.');
+          postMessage({});
+        }
+        else postMessage({blobs:gifs.map(gif=>gif.finish())});
+      }catch(error){postMessage({error:String(error.message||error)});}};`;
+    const url=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));
+    let worker;
+    try{worker=new Worker(url);}finally{URL.revokeObjectURL(url);}
+    let pending=null,closed=false;
+    function close(error){
+      if(closed)return;
+      closed=true;worker.terminate();
+      const request=pending;pending=null;
+      if(request)request.reject(error||Error('Запись GIF завершена.'));
+    }
+    function exchange(message,transfer=[]){
+      if(closed||pending)return Promise.reject(Error('Кодировщик GIF недоступен.'));
+      return new Promise((resolve,reject)=>{
+        pending={resolve,reject};
+        try{worker.postMessage(message,transfer);}catch(error){close(error);}
+      });
+    }
+    worker.onmessage=({data})=>{
+      if(data.error){close(Error(data.error));return;}
+      const request=pending;pending=null;request?.resolve(data);
+    };
+    worker.onerror=event=>close(Error(event.message||'Ошибка кодировщика GIF.'));
+    worker.onmessageerror=()=>close(Error('Ошибка передачи кадра GIF.'));
+    await exchange({type:'start',sizes});
+    return {
+      add(frames,delay){return exchange({type:'frame',frames,delay},frames.map(frame=>frame.buffer));},
+      async finish(){try{return (await exchange({type:'stop'})).blobs;}finally{close();}},
+      cancel(){close(new DOMException('Запись GIF отменена.','AbortError'));}
+    };
+  }
+  const api={encoder,record,batch};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikGif=api;
 })(typeof globalThis==='object'?globalThis:this);

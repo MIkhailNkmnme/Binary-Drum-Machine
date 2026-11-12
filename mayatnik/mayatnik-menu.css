@@ -20,6 +20,16 @@
 .may-continuation-select{box-sizing:border-box;display:block;width:120px;height:24px;flex:none;padding:0 8px;background:#1b2430;color:#dfe6f5;border:1px solid #526d88;border-radius:3px;font:12px "Segoe UI",sans-serif}
 .may-continuation-select[hidden]{display:none!important}
 .may-continuation-select:disabled{opacity:.45}
+.may-continuation-gif{width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-sizing:border-box;padding:16px;border:1px solid #526d88;border-radius:8px;background:#131a24;color:#e3ebf6;font:13px "Segoe UI",sans-serif}
+.may-continuation-gif::backdrop{background:#0009}
+.may-continuation-gif h2{font-size:16px;margin:0 0 12px}
+.may-continuation-gif label,.may-continuation-gif-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.may-continuation-gif input{width:96px;color:inherit;background:#0e141d;border:1px solid #526d88;border-radius:3px;padding:4px}
+.may-continuation-gif button{color:inherit;background:#233247;border:1px solid #526d88;border-radius:4px;padding:5px 9px;cursor:pointer}
+.may-continuation-gif button:disabled{opacity:.5;cursor:default}
+.may-continuation-gif output{display:block;min-height:2.2em;margin:10px 0;color:#bcd1e9}
+.may-continuation-gif-links{display:flex;flex-wrap:wrap;gap:8px 14px}
+.may-continuation-gif-links a{color:#9ed4ff}
 .may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
 body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}
