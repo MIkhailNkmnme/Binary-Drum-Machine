@@ -1235,6 +1235,7 @@ body.may-mobile-menu.may-zen #mayMobileBar #mayRhombs>.may-rh:not(#mayRhZen){dis
 .may-transport-surface>button{position:relative;box-sizing:border-box;height:24px;margin:0;padding:0;border:0;border-radius:0;outline:0;background:#1b2430;color:inherit;font:inherit;cursor:pointer;user-select:none;--transport-outline:#40516b;--transport-stroke:2px}
 .may-transport-center{display:flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;min-width:24px;border:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .may-transport-value{display:block;flex:none;white-space:nowrap;font:inherit;line-height:10px;transform:scaleX(var(--transport-value-scale,1))}
+.may-transport-value.may-transport-default{color:#73e4a5}
 .may-transport-nudge{display:block;flex:0 0 24px;width:24px;min-width:24px;font-size:16px!important}
 .may-transport-surface .may-transport-outline,.may-transport-surface .may-transport-chevron{position:absolute;inset:0;width:100%;height:24px;pointer-events:none;fill:none}
 .may-transport-outline path{stroke:var(--transport-outline);stroke-width:var(--transport-stroke);stroke-linejoin:miter}

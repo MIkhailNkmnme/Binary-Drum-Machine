@@ -480,9 +480,13 @@
     {
       const note=document.createElement('div');
       note.className='may-gpu-size-note';note.hidden=true;note.setAttribute('role','status');
+      const syncGpuSizeNote=()=>{
+        const message=window.mayBuildLargeStatus?.()||'';
+        note.textContent=message;note.hidden=!message;
+      };
+      addEventListener('may-gpu-size-status',syncGpuSizeNote);syncGpuSizeNote();
       const parts=[8192,16384].map(rows=>({label:String(rows),tip:'Построить '+rows+' строк на видеокарте',
         data:{n:'mayGpuRows'+rows},on:()=>cur()===String(rows),click:async()=>{
-          note.hidden=true;
           if(!window.mayBuildLarge){
             const url=new URL('Zerkalius-mayatnik-gpu.html',location.href);
             const pair=$('bPair').getAttribute('aria-pressed')==='true';
@@ -491,8 +495,6 @@
             return;
           }
           await window.mayBuildLarge(rows);
-          const message=window.mayBuildLargeStatus?.()||'';
-          note.textContent=message;note.hidden=!message;
           sync();
         }}));
       const row=gzPair(parts,true);row.classList.add('may-gpu-sizes');
@@ -890,13 +892,20 @@
   {
     const sp=$('speed'),ft=$('frameT');let popup=null,active=null;
     const values=input=>{const min=Number(input.min),max=Number(input.max),step=Number(input.step)||1;const all=Array.from({length:Math.floor((max-min)/step)+1},(_,i)=>min+i*step);return all.filter(value=>input===sp?value>=1&&value<=64:value%2===0);};
+    const defaultValue=input=>input===sp?1:0;
     const label=(input,value)=>input===sp?'×'+value:value===0?'0 с · без паузы':({1:'1/20 с',2:'1/10 с',4:'1/5 с',10:'1/2 с',20:'1 с'}[value]||String(+(value*.05).toFixed(2)).replace('.',',')+' с');
     const make=(letter,input,name)=>{
       const svg=(node,width,path,cls)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(s.namespaceURI,'path');s.classList.add(cls);s.setAttribute('viewBox','0 0 '+width+' 24');s.setAttribute('aria-hidden','true');p.setAttribute('d',path);s.append(p);node.append(s);};
       const box=document.createElement('div');box.className='may-bb-half may-transport-diamond';box.dataset.k=input===sp?'sp':'ft';box.dataset.noMini='';box.setAttribute('role','group');box.setAttribute('aria-label',name);
       const surface=document.createElement('div');surface.className='may-transport-surface';const button=document.createElement('button');button.type='button';button.className='may-transport-center';const glyph=document.createElement('span');glyph.className='may-transport-value';glyph.textContent=letter;button.append(glyph);button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
       svg(button,24,'M12 0L24 12 12 24 0 12Z','may-transport-outline');
-      button.onclick=event=>{event.stopPropagation();if(active?.button===button){const all=values(input),current=Number(input.value),next=all.find(value=>value>current)??all[0];setValue(input,next);}else open(button,input,name);};button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();button.click();return;}if(event.key==='ArrowDown'){event.preventDefault();if(active?.button!==button)open(button,input,name);(popup?.querySelector('[aria-checked="true"]')||popup?.querySelector('[data-value]'))?.focus();}});
+      button.onclick=event=>{event.stopPropagation();if(event.detail>1)return;if(active?.button===button){const all=values(input),current=Number(input.value),next=all.find(value=>value>current)??all[0];setValue(input,next);}else open(button,input,name);};button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();button.click();return;}if(event.key==='ArrowDown'){event.preventDefault();if(active?.button!==button)open(button,input,name);(popup?.querySelector('[aria-checked="true"]')||popup?.querySelector('[data-value]'))?.focus();}});
+      button.ondblclick=event=>{
+        event.preventDefault();event.stopPropagation();
+        close();
+        if(input===sp&&sp.disabled)$('bTurbo')?.click();
+        setValue(input,defaultValue(input));
+      };
       const arrow=direction=>{const b=document.createElement('button');b.type='button';b.className='may-transport-nudge';b.dataset.direction=String(direction);svg(b,24,direction<0?'M13 8L9 12 13 16':'M11 8L15 12 11 16','may-transport-chevron');svg(b,24,'M12 0L24 12 12 24 0 12Z','may-transport-outline');b.setAttribute('aria-label',(direction<0?'Уменьшить: ':'Увеличить: ')+name);b.onclick=event=>{event.stopPropagation();const value=Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+direction*(Number(input.step)||1)));setValue(input,value);};return b;};
       surface.append(arrow(-1),button,arrow(1));box.append(surface);return box;
     };
@@ -951,7 +960,21 @@
       suppressPlayerTips(popup);document.body.append(popup);button.setAttribute('aria-expanded','true');place();selected();popup.querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest'});
       popup.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();document.activeElement?.click();return;}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);return;}const delta={ArrowDown:columns,ArrowUp:-columns,ArrowRight:1,ArrowLeft:-1}[event.key]||0;if(delta){event.preventDefault();event.stopPropagation();const all=[...popup.querySelectorAll('[data-value]')],index=all.indexOf(document.activeElement);all[(index+delta+all.length)%all.length]?.focus();}});
     }
-    const sync=()=>{for(const [button,input,name]of [[bs,sp,'Вершин за кадр'],[bf,ft,'Длительность кадра']]){const value=input===sp?'x'+input.value:'t'+String(+(Number(input.value)*.05).toFixed(2)).replace('.',',');const text=button.querySelector('.may-transport-value');if(text.textContent!==value)text.textContent=value;text.style.setProperty('--transport-value-scale',String(Math.min(1,14/(value.length*6.1))));button.querySelector('.may-transport-center').setAttribute('aria-label',name+': '+label(input,Number(input.value))+'. Нажать — список; повторное нажатие — следующий вариант.');for(const arrow of button.querySelectorAll('.may-transport-nudge'))arrow.disabled=Number(arrow.dataset.direction)<0?Number(input.value)<=Number(input.min):Number(input.value)>=Number(input.max);}selected();place();};
+    const sync=()=>{
+      for(const [box,input,name]of [[bs,sp,'Вершин за кадр'],[bf,ft,'Длительность кадра']]){
+        const number=input===sp&&sp.disabled?1024:Number(input.value);
+        const value=input===sp?'x'+number:'t'+String(+(number*.05).toFixed(2)).replace('.',',');
+        const button=box.querySelector('.may-transport-center'),text=button.querySelector('.may-transport-value');
+        if(text.textContent!==value)text.textContent=value;
+        text.classList.toggle('may-transport-default',number===defaultValue(input));
+        text.style.setProperty('--transport-value-scale',String(Math.min(1,14/(value.length*6.1))));
+        const title=name+': '+label(input,number)+'. Нажать — список; двойной щелчок — исходное значение.';
+        if(button.title!==title){button.title=title;button.setAttribute('aria-label',title);}
+        for(const arrow of box.querySelectorAll('.may-transport-nudge'))
+          arrow.disabled=input.disabled||(Number(arrow.dataset.direction)<0?number<=Number(input.min):number>=Number(input.max));
+      }
+      selected();place();
+    };
     for(const input of [sp,ft])for(const event of ['input','change'])input.addEventListener(event,sync);
     document.addEventListener('pointerdown',event=>{if(popup&&!popup.contains(event.target)&&!active.button.contains(event.target))close();},true);
     document.addEventListener('keydown',event=>{if(popup&&event.key==='Escape'){event.preventDefault();event.stopPropagation();close(true);}},true);
