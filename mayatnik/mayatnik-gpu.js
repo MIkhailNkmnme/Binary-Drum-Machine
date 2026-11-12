@@ -465,6 +465,8 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
 }`;
 
   const BG = { empty: 0, '1': 1, '0': 2, chess: 3 };
+  const fieldStride = width => Math.ceil(width / 32) + 1;
+  const fieldBufferBytes = (width, height) => fieldStride(width) * height * 4;
 
   async function create() {
     if (!navigator.gpu) throw new Error('В этом браузере нет WebGPU');
@@ -472,6 +474,7 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
     if (!adapter) throw new Error('WebGPU: видеокарта не найдена');
     const L = adapter.limits;
     const device = await adapter.requestDevice({ requiredLimits: { maxStorageBufferBindingSize: L.maxStorageBufferBindingSize, maxBufferSize: L.maxBufferSize } });
+    const fieldBufferLimit = Math.min(device.limits.maxStorageBufferBindingSize, device.limits.maxBufferSize);
     const stepModule = device.createShaderModule({ code: STEP_WGSL });
     const layout = device.createBindGroupLayout({ entries: [
       { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
@@ -499,8 +502,8 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
 
     // Поле W × H на видеокарте, сразу с фоном bg
     function field({ W, H, anchor = 0, bg = 'empty' }) {
-      const WW = Math.ceil(W / 32) + 1, words = WW * H, bytes = words * 4;
-      if (bytes > Math.min(device.limits.maxStorageBufferBindingSize, device.limits.maxBufferSize)) throw new Error(`Поле ${W}×${H} не помещается в один буфер видеокарты (${Math.ceil(bytes / 2 ** 20)} МиБ)`);
+      const WW = fieldStride(W), words = WW * H, bytes = fieldBufferBytes(W, H);
+      if (bytes > fieldBufferLimit) throw new Error(`Поле ${W}×${H} не помещается в один буфер видеокарты (${Math.ceil(bytes / 2 ** 20)} МиБ)`);
       const pBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       const bitsBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
       const hasBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
@@ -677,7 +680,7 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
       const t0 = performance.now(), steps = fl.run(apexes); await fl.done();
       return { W, H, WW: fl.WW, K: apexes.length, steps, ms: performance.now() - t0, read: () => fl.read(), destroy: fl.destroy, field: fl };
     }
-    return { device, adapter: { vendor: info.vendor || '', architecture: info.architecture || '', description: info.description || '' }, field, attach, build };
+    return { device, fieldBufferLimit, adapter: { vendor: info.vendor || '', architecture: info.architecture || '', description: info.description || '' }, field, attach, build };
   }
 
   // Вершины в том же порядке, что addOne страницы: обычный ход — anchor + offset(mode, k); пара — anchor ∓ (k + 1)
@@ -689,6 +692,6 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
     }
     return out;
   }
-  const api = { create, apexList };
+  const api = { create, apexList, fieldBufferBytes };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.MayatnikGPU = api;
 })(typeof window !== 'undefined' ? window : globalThis);

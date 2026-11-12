@@ -1,15 +1,24 @@
 (() => {
   'use strict';
   const query = new URLSearchParams(location.search);
-  if (query.get('preview') !== '8192') return;
+  const rows = Number(query.get('preview'));
+  if (![8192, 16384].includes(rows)) return;
 
-  const rows = 8192, batchSize = 512;
+  const batchSize = rows === 16384 ? 256 : 512;
   const $ = id => document.getElementById(id);
   const canvas = $('largeField'), range = $('largeRange'), build = $('largeBuild'), status = $('largeStatus');
   const overview = $('largeFit'), exact = $('largeExact');
   const mode = query.get('mode') === 'pendR' ? 'pendR' : 'pend';
   const pair = mode === 'pend' && query.get('pair') === '1';
+  const vertexCounts = {n3: Math.ceil(rows / 3) + Math.ceil(rows / 64), n: rows, '4n': 4 * rows};
+  const plans = new Map([...range.options].map(option => {
+    const vertices = vertexCounts[option.value];
+    const steps = pair ? Math.floor(vertices / 2) : vertices;
+    const geometry = MAYATNIK.geometry(mode, pair ? 2 * steps + 1 : vertices, rows);
+    return [option.value, {geometry, steps, bytes: MayatnikGPU.fieldBufferBytes(geometry.W, rows)}];
+  }));
   range.value = ['n3', 'n', '4n'].includes(query.get('range')) ? query.get('range') : 'n';
+  $('largeTitle').textContent = rows + ' строки на видеокарте';
   $('gpuDiagnostics').hidden = true;
   $('largePreview').hidden = false;
   build.disabled = overview.disabled = exact.disabled = true;
@@ -67,7 +76,7 @@
     queueRender();
   }
 
-  async function buildField() {
+  async function buildField(fallbackNote = '') {
     if (!gpu || deviceFailed) return;
     if (building) {
       cancelled = true;
@@ -80,10 +89,8 @@
     build.textContent = 'Стоп';
     range.disabled = true;
     status.textContent = 'Готовлю поле на видеокарте…';
-    const rangeMode = range.value;
-    const vertices = rangeMode === 'n3' ? Math.ceil(rows / 3) + Math.ceil(rows / 64) : rangeMode === '4n' ? 4 * rows : rows;
-    const steps = pair ? Math.floor(vertices / 2) : vertices;
-    const geometry = MAYATNIK.geometry(mode, pair ? 2 * steps + 1 : vertices, rows);
+    const rangeMode = range.value, rangeLabel = range.selectedOptions[0].textContent;
+    const {geometry, steps} = plans.get(rangeMode);
     let done = 0;
     try {
       if (animation) cancelAnimationFrame(animation);
@@ -105,9 +112,12 @@
         if (error) throw Error(error.message);
       }
       overview.disabled = exact.disabled = false;
+      const url = new URL(location.href);
+      url.searchParams.set('range', rangeMode);
+      history.replaceState(null, '', url);
       const apexes = MayatnikGPU.apexList(MAYATNIK, {mode, pair, anchor: geometry.anchor, steps});
       if (pair) field.run([[geometry.anchor, geometry.anchor]]);
-      const progress = () => `${geometry.W} × ${rows} · ${pair ? 'пар' : 'вершин'} ${done} / ${steps}`;
+      const progress = () => `${geometry.W} × ${rows} · ${rangeLabel} · ${pair ? 'пар' : 'вершин'} ${done} / ${steps}`;
       status.textContent = progress();
       while (done < steps && !cancelled && !deviceFailed) {
         const next = Math.min(done + batchSize, steps);
@@ -120,7 +130,7 @@
         // Give the browser a turn for drawing and for the stop button.
         await new Promise(resolve => setTimeout(resolve, 0));
       }
-      if (!deviceFailed) status.textContent = progress() + (done === steps ? ' · готово' : ' · остановлено');
+      if (!deviceFailed) status.textContent = progress() + (done === steps ? ' · готово' : ' · остановлено') + fallbackNote;
     } catch (error) {
       field?.destroy();
       field = null;
@@ -133,7 +143,7 @@
     }
   }
 
-  build.onclick = buildField;
+  build.onclick = () => buildField();
   overview.onclick = fit;
   exact.onclick = () => {
     const pixelsWide = Math.max(1, Math.round(canvas.clientWidth * physicalRatio()));
@@ -181,10 +191,23 @@
       context = gpu.attach(canvas);
       gpu.device.lost.then(info => fail('Потеряно подключение к видеокарте. ' + (info.message || 'Перезагрузите страницу.')));
       gpu.device.addEventListener('uncapturederror', event => fail('Ошибка WebGPU. ' + event.error.message));
+      const limit = gpu.fieldBufferLimit;
+      const requested = range.selectedOptions[0];
+      for (const option of range.options) {
+        const {bytes} = plans.get(option.value);
+        option.disabled = bytes > limit;
+        if (option.disabled) {
+          option.title = `На буфер нужно ${Math.ceil(bytes / 1048576)} МиБ, WebGPU даёт ${Math.floor(limit / 1048576)} МиБ`;
+          option.textContent += ' · лимит WebGPU';
+        }
+      }
+      const fallback = ['n', 'n3', '4n'].find(value => plans.get(value).bytes <= limit);
+      if (!fallback) throw Error('Ни один режим не помещается в доступный буфер WebGPU.');
+      if (requested.disabled) range.value = fallback;
       build.disabled = false;
-      await buildField();
+      await buildField(requested.disabled ? ' · выбран доступный режим' : '');
     } catch (error) {
-      fail('Для поля 8192 требуется WebGPU. ' + error.message);
+      fail('Поле ' + rows + '. ' + error.message);
     }
   })();
 })();
