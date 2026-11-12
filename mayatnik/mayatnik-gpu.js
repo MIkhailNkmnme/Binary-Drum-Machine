@@ -408,7 +408,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
   if(mode>=2u){let bit=antiContour(pos.xy,mode);if(bit>=0){return packedColour(select(u.contour0,u.contour1,bit==1));}}
   let fx = u.x0 + floor(pos.x) * u.step; let fy = u.y0 + floor(pos.y) * u.step;
   var c0: i32; var c1: i32; var r0: i32; var r1: i32;
-  if (u.step < 1.0) { c0 = i32(floor(fx + u.step * 0.5)); c1 = c0 + 1; r0 = i32(floor(fy + u.step * 0.5)); r1 = r0 + 1; }
+  if (u.step <= 1.0) { c0 = i32(floor(fx + u.step * 0.5)); c1 = c0 + 1; r0 = i32(floor(fy + u.step * 0.5)); r1 = r0 + 1; }
   else { c0 = i32(floor(fx)); c1 = max(c0 + 1, i32(ceil(fx + u.step))); r0 = i32(floor(fy)); r1 = max(r0 + 1, i32(ceil(fy + u.step))); }
   c0 = max(c0, u.VX); c1 = min(c1, u.VX + u.VW); r0 = max(r0, 0); r1 = min(r1, u.VH);
   if (c0 >= c1 || r0 >= r1) { return vec4<f32>(0.0); }

@@ -490,10 +490,14 @@
       customInput.value = cur() || '128'; customInput.title = 'Любое число строк от 8 до 4096 · Enter — задать и перестроить поле';
       customInput.setAttribute('aria-label', 'Любое число строк');
       const apply = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128))); customInput.value = String(v);
-        const matrix = window.mayAnimatrix?.get().on, r = $('rows');
-        r.value = v; r.dispatchEvent(new Event('change', { bubbles: true }));
-        if (!matrix) $('bBuild')?.click();
-        customInput.value = r.value; sync(); };
+        const r=$('rows');
+        if(window.mayBuildSize)window.mayBuildSize(v);
+        else{
+          const matrix=window.mayAnimatrix?.get().on;
+          r.value=v;r.dispatchEvent(new Event('change',{bubbles:true}));
+          if(!matrix)$('bBuild')?.click();
+        }
+        customInput.value=r.value;sync(); };
       const step = d => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128) + d)); customInput.value = String(v); syncRowsThumb(); };
       const arrow = (d, tip) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-rows-step'; b.dataset.dir = d < 0 ? 'left' : 'right'; b.title = tip; b.setAttribute('aria-label', tip);
         b.onclick = ev => { ev.stopPropagation(); step(d); }; return b; };
