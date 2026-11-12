@@ -150,6 +150,164 @@
     const val=dense(snapshot,options.maxDenseCells??DEFAULT_DENSE_LIMIT);if(val)grid.val=val;
     return grid;
   }
+  function intervalMask(wordColumn,left,right){
+    const first=Math.max(0,left-wordColumn),last=Math.min(32,right-wordColumn+1);
+    return last>first?maskRange(first,last)>>>0:0;
+  }
+  function checkRegion(snapshot,area){
+    if(!snapshot||!Number.isSafeInteger(snapshot.x)||!Number.isSafeInteger(snapshot.y)||!Number.isSafeInteger(snapshot.width)||!Number.isSafeInteger(snapshot.height)||
+      !Number.isSafeInteger(snapshot.stride)||snapshot.stride<Math.ceil(snapshot.width/32)||
+      !(snapshot.bits instanceof Uint32Array)||!(snapshot.present instanceof Uint32Array)||
+      snapshot.bits.length<snapshot.stride*snapshot.height||snapshot.present.length<snapshot.stride*snapshot.height||
+      snapshot.x>area.x||snapshot.y>area.y||snapshot.x+snapshot.width<area.x+area.width||snapshot.y+snapshot.height<area.y+area.height)
+      throw new RangeError('Неполная полоса GPU для блочного наложения.');
+    return snapshot;
+  }
+  /**
+   * Exact q×q unanimity reduction. readRegion(rect,current) returns the GPU
+   * packed region, with its absolute x/y (x may be aligned down to 32).
+   * sourceHeight must be divisible by q; trailing source columns are dropped.
+   * withoutBands: 0/off, 1/noise bounds, 2/noise bounds + parity triangles.
+   * Noise bounds inspect fieldWidth, not merely the visible source window.
+   * background follows bgNoise: '0' means ones, 'chess' means parity bits,
+   * all other backgrounds mean zeros. occupiedBounds uses present cells.
+   * Supplied nonempty rowLo/rowHi are inclusive absolute-source bounds;
+   * triangleSides may likewise supply [[leftPlusRow,rightMinusRow],...].
+   * Inversion changes the result value, not unanimity or raw noise bounds.
+   * Returns null on cancellation; never publishes a partially reduced grid.
+   */
+  async function reduce(options){
+    const {q,sourceX=0,sourceWidth,sourceHeight,anchor,frame,readRegion}=options;
+    integer(q,'размер блока',2);integer(sourceX,'начальный столбец');integer(sourceWidth,'ширина исходника',1);integer(sourceHeight,'высота исходника',1);
+    if(sourceHeight%q||sourceWidth<q)throw new RangeError('Размер блока должен делить высоту и помещаться по ширине наложения.');
+    if(!Number.isSafeInteger(sourceX+sourceWidth)||!Number.isFinite(anchor)||typeof readRegion!=='function')throw new RangeError('Нет геометрии или чтения GPU для уменьшения.');
+    const current=typeof options.current==='function'?options.current:()=>true;
+    if(!current())return null;
+    const mode=options.withoutBands===true?1:Number(options.withoutBands)||0;
+    if(![0,1,2].includes(mode))throw new RangeError('Неизвестный режим «Без полос».');
+    const supplied=!!(options.rowLo?.length||options.rowHi?.length);
+    if(supplied&&(!options.rowLo||!options.rowHi||options.rowLo.length<sourceHeight||options.rowHi.length<sourceHeight))throw new RangeError('Неполные границы строк уменьшения.');
+    const fieldWidth=options.fieldWidth??sourceX+sourceWidth;
+    integer(fieldWidth,'полная ширина исходника',1);
+    if(fieldWidth<sourceX+sourceWidth)throw new RangeError('Окно уменьшения выходит за исходное поле.');
+    if(mode&&!supplied&&options.fieldWidth==null)throw new RangeError('Для точных границ «Без полос» нужна полная fieldWidth.');
+    const byteBudget=Number.isFinite(options.stripBytes)&&options.stripBytes>0?options.stripBytes:8*1048576;
+    const stripeRows=width=>Math.min(sourceHeight,Math.max(q,Math.floor(byteBudget/((Math.ceil(width/32)+1)*8)/q)*q));
+    const notify=(phase,done)=>options.onProgress?.({phase,done,total:sourceHeight});
+    let lastYield=Date.now();
+    async function yieldIfNeeded(){if(Date.now()-lastYield>=16){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}return current();}
+    async function readStripe(x,y,width,height){
+      if(!current())return null;
+      const area={x,y,width,height},snapshot=await readRegion(area,current);
+      if(!current()||!snapshot)return null;
+      return checkRegion(snapshot,area);
+    }
+    let bounds=supplied?{lo:Float64Array.from(options.rowLo).subarray(0,sourceHeight),hi:Float64Array.from(options.rowHi).subarray(0,sourceHeight)}:null;
+    if(bounds)for(let r=0;r<sourceHeight;r++)if(!Number.isFinite(bounds.lo[r])||!Number.isFinite(bounds.hi[r]))throw new RangeError('Некорректная граница строки уменьшения.');
+
+    if(mode&&!supplied){
+      const lo=new Float64Array(sourceHeight).fill(-1),hi=new Float64Array(sourceHeight).fill(-1),rows=stripeRows(fieldWidth);
+      let first=-1;
+      for(let y=0;y<sourceHeight;y+=rows){
+        const height=Math.min(rows,sourceHeight-y),snapshot=await readStripe(0,y,fieldWidth,height);if(!snapshot)return null;
+        const lastWord=Math.floor((fieldWidth-1-snapshot.x)/32);
+        for(let r=y;r<y+height;r++){
+          const base=(r-snapshot.y)*snapshot.stride;
+          function candidates(word){
+            const col=snapshot.x+word*32,p=snapshot.present[base+word]&intervalMask(col,0,fieldWidth-1),b=snapshot.bits[base+word];
+            if(options.occupiedBounds)return p>>>0;
+            if(options.background==='0')return (p&b)>>>0;
+            if(options.background==='chess'){
+              const ones=((col-anchor-r)&1)?0x55555555:0xaaaaaaaa;
+              return (p&~(b^ones))>>>0;
+            }
+            return (p&~b)>>>0;
+          }
+          for(let word=0;word<=lastWord;word++){
+            const value=candidates(word);if(!value)continue;
+            lo[r]=snapshot.x+word*32+31-Math.clz32((value&-value)>>>0);if(first<0)first=r;break;
+          }
+          if(lo[r]<0)continue;
+          for(let word=lastWord;word>=0;word--){const value=candidates(word);if(value){hi[r]=snapshot.x+word*32+31-Math.clz32(value);break;}}
+        }
+        notify('overlay-bounds',y+height);if(!await yieldIfNeeded())return null;
+      }
+      if(first>=0){
+        if(!options.occupiedBounds)for(let r=0;r<sourceHeight;r++)if(lo[r]<0){const from=r<first?first:r-1;lo[r]=lo[from];hi[r]=hi[from];}
+        bounds={lo,hi};
+      }
+      // zoneCalc with no noise has empty ZL/ZR: the entire field remains
+      // eligible. An all-empty occupied field will fail presence below.
+    }
+
+    let sides=null;
+    if(mode===2&&bounds&&!options.occupiedBounds){
+      if(options.triangleSides){
+        if(!Array.isArray(options.triangleSides)||options.triangleSides.length!==2||options.triangleSides.some(pair=>!Array.isArray(pair)||pair.length!==2))throw new RangeError('Некорректные стороны треугольников.');
+        sides=options.triangleSides.map(pair=>pair.slice());
+      }else{
+        sides=[[Infinity,-Infinity],[Infinity,-Infinity]];const rows=stripeRows(fieldWidth);
+        for(let y=0;y<sourceHeight;y+=rows){
+          const height=Math.min(rows,sourceHeight-y),snapshot=await readStripe(0,y,fieldWidth,height);if(!snapshot)return null;
+          for(let r=y;r<y+height;r++){
+            const left=Math.max(0,bounds.lo[r]),right=Math.min(fieldWidth-1,bounds.hi[r]);if(right<left)continue;
+            const base=(r-snapshot.y)*snapshot.stride;
+            for(let word=Math.floor((left-snapshot.x)/32),last=Math.floor((right-snapshot.x)/32);word<=last;word++){
+              const col=snapshot.x+word*32,mask=snapshot.present[base+word]&intervalMask(col,left,right),firstParity=(col-anchor-r)&1;
+              for(let p=0;p<2;p++){
+                const visible=(mask&(firstParity===p?0x55555555:0xaaaaaaaa))>>>0;if(!visible)continue;
+                const firstCol=col+31-Math.clz32((visible&-visible)>>>0),lastCol=col+31-Math.clz32(visible);
+                sides[p][0]=Math.min(sides[p][0],firstCol+r);sides[p][1]=Math.max(sides[p][1],lastCol-r);
+              }
+            }
+          }
+          notify('overlay-sides',y+height);if(!await yieldIfNeeded())return null;
+        }
+      }
+    }
+    function allowedMask(row,col){
+      if(!bounds)return 0xffffffff;
+      let allowed=intervalMask(col,bounds.lo[row],bounds.hi[row]);
+      if(sides)for(let p=0;p<2;p++)if(Number.isFinite(sides[p][0])&&Number.isFinite(sides[p][1])){
+        const triangle=intervalMask(col,sides[p][0]-row,sides[p][1]+row),parity=(col-anchor-row)&1;
+        allowed|=triangle&(parity===p?0x55555555:0xaaaaaaaa);
+      }
+      return allowed>>>0;
+    }
+
+    const W=Math.floor(sourceWidth/q),H=sourceHeight/q,snapshot=packed(W,H),sourceUsed=W*q,rows=stripeRows(sourceUsed);
+    let n0=0,n1=0;
+    for(let y=0;y<sourceHeight;y+=rows){
+      const height=Math.min(rows,sourceHeight-y),source=await readStripe(sourceX,y,sourceUsed,height);if(!source)return null;
+      for(let blockY=0;blockY<height;blockY+=q){
+        const outputRow=(y+blockY)/q;
+        for(let blockX=0;blockX<W;blockX++){
+          const left=sourceX+blockX*q,right=left+q-1,firstWord=Math.floor((left-source.x)/32),lastWord=Math.floor((right-source.x)/32);
+          const firstIndex=(y+blockY-source.y)*source.stride+firstWord,firstShift=(left-source.x)&31;
+          if(!(source.present[firstIndex]>>>firstShift&1))continue;
+          const value=source.bits[firstIndex]>>>firstShift&1;let uniform=true;
+          for(let dy=0;dy<q&&uniform;dy++){
+            const row=y+blockY+dy,base=(row-source.y)*source.stride;
+            for(let word=firstWord;word<=lastWord;word++){
+              const col=source.x+word*32,mask=intervalMask(col,left,right),p=source.present[base+word],b=source.bits[base+word];
+              if(((p&mask)>>>0)!==mask||((allowedMask(row,col)&mask)>>>0)!==mask||((b&mask)>>>0)!==(value?mask:0)){uniform=false;break;}
+            }
+          }
+          if(!uniform)continue;
+          const at=outputRow*snapshot.stride+Math.floor(blockX/32),bit=1<<(blockX&31),outValue=value^(options.invertBits?1:0);
+          snapshot.present[at]|=bit;if(outValue){snapshot.bits[at]|=bit;n1++;}else n0++;
+        }
+        if(!await yieldIfNeeded())return null;
+      }
+      notify('overlay-reduce',y+height);
+    }
+    if(!current())return null;
+    const anchorRaw=anchor-sourceX,grid={W,H,anchor:Math.floor(anchorRaw/q),anchorRaw,frame,q,stride:1,packed:true,packedSnapshot:snapshot,
+      offsetX:0,offsetY:0,sourceX,sourceWidth,sourceHeight,sampling:'block-unanimity',counts:{n1,n0,ne:W*H-n1-n0},
+      meetingPoints:(options.meetingPoints||[]).map(point=>({x:(point.x-sourceX+.5)/q-.5,y:(point.y+.5)/q-.5}))};
+    const val=dense(snapshot,options.maxDenseCells??DEFAULT_DENSE_LIMIT);if(val)grid.val=val;
+    return current()?grid:null;
+  }
   function cloneSnapshot(grid){
     const s=grid.packedSnapshot;return {width:s.width,height:s.height,stride:s.stride,bits:s.bits.slice(),present:s.present.slice()};
   }
@@ -157,5 +315,5 @@
     return {...options,overlayGrid:true,latticeStride:grid.stride||2,anchor:grid.anchor,parity:-1,meetingPoints:grid.meetingPoints,
       bounds:{x:0,y:0,width:grid.W,height:grid.H},rowLo:null,rowHi:null,withoutBands:false,invertBits:false};
   }
-  return {region,capture,read,counts,dense,cloneSnapshot,searchOptions};
+  return {region,capture,reduce,read,counts,dense,cloneSnapshot,searchOptions};
 });

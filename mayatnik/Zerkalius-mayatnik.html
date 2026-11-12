@@ -8970,6 +8970,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(gpuBig?.large){
       if(gpuBig.error){stopFrameTransports();return;}
       const seeking=gpuBig.seekTarget===target&&k!==target;
+      if(!seeking&&ovlSource?.packedPending&&ovlSource.owner===f&&ovlSource.frame===k){next();return;}
       if((!seeking&&manualSnakeFrameWait())||ochkiFrameWait()){if(playing)next();return;}
     }else{
       if(window.mayGifScaleFrameWait?.()){if(playing)next();return;}
@@ -10864,6 +10865,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const args={region:area,anchor:geo.anchor,frame,sourceX:VX,sourceWidth:VW,sourceHeight:VH,cell,fieldLeft,fieldTop,
       meetingPoints:ochkiMeetingPoints().map(p=>({x:p.x+VX,y:p.y})),invertBits:inverted,maxDenseCells:0};
     source.packedSource=true;source.sourceHeight=VH;source.packedSerial=++ovlSerial;
+    source.owner=owner;source.packedPending=true;
     let raster;
     if(area&&cell<1){
       const copy=document.createElement('canvas');copy.width=gpuCv.width;copy.height=gpuCv.height;
@@ -10880,16 +10882,34 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         if(!current()||!raster&&!regionSnapshot)throw Error('Кадр сменился до снимка наложения. Снимите копию заново.');
         source.bits=MayatnikLargeOverlay.capture({...args,regionSnapshot,raster});
       }catch(error){source.captureError=error.message||String(error);}
+      source.packedPending=false;
       if(ovlSource===source){ovlDraw();if(st.ochki&&st.ochkiOverlay&&f===owner)draw();}
     });
     return source;
   }
-  function ovlCapture() {
-    const Q=ovlState().q;
-    if(Q>1){
-      if(gpuBig?.large){ovlMessage='Блочное уменьшение наложения доступно на поле до 4096 строк.';return null;}
-      return ovlCoarseSource(Q);
-    }
+  function capturePackedReducedOverlay(q){
+    if(!f||!geo||q<2||VH%q||VW<q)return null;
+    gpuFlush();
+    const owner=f,gpu=gpuBig,frame=k,cell=scale(),viewport=layerViewport(),rect=cv.getBoundingClientRect();
+    const source={q,layers:[],frame,cell,owner,packedSource:true,packedPending:true,packedSerial:++ovlSerial,
+      ax:rect.left-viewport.left+(geo.anchor-VX+.5)*cell,ay:rect.top-viewport.top};
+    const request={q,sourceX:VX,sourceWidth:VW,sourceHeight:VH,fieldWidth:f.W,background:st.bg,anchor:geo.anchor,frame,
+      meetingPoints:ochkiMeetingPoints().map(p=>({x:p.x+VX,y:p.y})),invertBits:MayatnikInvert.bits(st),withoutBands:st.noband,maxDenseCells:0,
+      readRegion:(area,current)=>gpu.fld.readPackedRegion(area,current)};
+    queueMicrotask(async()=>{
+      const current=()=>ovlSource===source&&f===owner&&gpuBig===gpu&&k===frame&&!gpu.error;
+      try{
+        if(!current())throw Error('Кадр сменился до уменьшения наложения. Снимите копию заново.');
+        source.bits=await MayatnikLargeOverlay.reduce({...request,current});
+        if(!source.bits||!current())throw Error('Кадр сменился до уменьшения наложения. Снимите копию заново.');
+      }catch(error){source.captureError=error.message||String(error);}
+      source.packedPending=false;
+      if(ovlSource===source){ovlDraw();if(st.ochki&&st.ochkiOverlay&&f===owner)draw();}
+    });
+    return source;
+  }
+  function ovlCapture(Q=ovlState().q) {
+    if(Q>1)return gpuBig?.large?capturePackedReducedOverlay(Q):ovlCoarseSource(Q);
     if (!f || !geo || (!img && !gpuBig) || rombP() >= 0 || document.body.classList.contains('may-fold-active')) return null;
     if(window.mayLayers){
       if(gpuDisplay()){if(gpuRaf){cancelAnimationFrame(gpuRaf);gpuRaf=0;}if(gpuBig?.large)gpuFlush();gpuRender();}
@@ -10949,8 +10969,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     reduce() { const o = ovlState(); if(ovlFrozen)return o;
       const H=Math.min(VH,st.rows), ds=[2,4,5,8,10,16,20,25,32,40,50,64,80,100,128,160,200,256].filter(q=>q<H&&H%q===0);
       const at=ds.indexOf(o.q), next=at>=0&&at+1<ds.length?ds[at+1]:at>=0?0:(ds.length?ds[0]:0);
-      o.q=next; o.n=0; ovlSource=null; ovlOchkiClear(); ovlSerial=0;
-      if(next){ const src=ovlCapture(); if(!src){o.q=0;} else o.n=1; }
+      o.q=next; o.n=0; ovlSource=null; ovlOchkiClear();
+      if(next){
+        ovlSource=ovlCapture(next);
+        if(ovlSource)o.n=1;else o.q=0;
+      }
       st.ovl=o; save(); ovlDraw(); if(st.ochki&&st.ochkiOverlay&&f)draw(); return o; },
     step() { const o = ovlState(); if(ovlFrozen||o.q>1)return o;
       if (!o.n || !ovlSource) { const source = ovlCapture(); if (!source) return o; ovlSource = source; o.n = 1; }
@@ -11027,8 +11050,34 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     G.setTransform(c.width/w, 0, 0, c.height/h, 0, 0); G.clearRect(0, 0, w, h); G.imageSmoothingEnabled = false; G.globalAlpha = 1;
     G.save?.(); if (ox || oyOff) G.translate?.(ox, oyOff);
     if(S.q>1){
+      if(!S.bits){
+        if(S.packedSource)ovlDebug(S.captureError||'Уменьшаю наложение блоками '+S.q+'×'+S.q+'…');
+        G.restore?.();if(window.mayLayers)layerOverlay(c);return;
+      }
       const cq=S.cell*S.q,A=S.bits.anchor,Araw=S.bits.anchorRaw??A,Wq=S.bits.W,Hq=S.bits.H;
       const bx=S.ax+(A*S.q-Araw-0.5)*S.cell, by=S.ay;
+      if(S.packedSource){
+        const x0=Math.max(0,Math.floor((-ox-bx)/cq)),x1=Math.min(Wq,Math.ceil((w-ox-bx)/cq));
+        const y0=Math.max(0,Math.floor((-oyOff-by)/cq)),y1=Math.min(Hq,Math.ceil((h-oyOff-by)/cq));
+        const colours=[bitColour(0),bitColour(1)];
+        for(let j=y0;j<y1;j++)for(let i=x0;i<x1;i++){
+          const value=MayatnikLargeOverlay.read(S.bits,j,i);
+          if(value<0)continue;
+          G.fillStyle=colours[value];G.fillRect(bx+i*cq,by+j*cq,cq,cq);
+        }
+        if(st.ochki&&st.ochkiOverlay&&OK?.local&&OK.grid===S.bits&&OK.key===ochkiOverlayKey()){
+          for(const [index,hit] of OK.found.entries()){
+            G.fillStyle=index===S.selected?'rgba(105,237,255,.85)':'rgba(255,214,70,.72)';
+            for(const cell of hit.cells||[]){
+              const i=cell%Wq,j=Math.floor(cell/Wq);
+              if(i>=x0&&i<x1&&j>=y0&&j<y1)G.fillRect(bx+i*cq,by+j*cq,cq,cq);
+            }
+          }
+        }
+        const {n0,n1,ne}=S.bits.counts;
+        ovlDebug('Уменьшение '+S.q+'×'+S.q+' · '+Wq+'×'+Hq+' · 0: '+n0+' · 1: '+n1+' · пусто: '+ne);
+        G.restore?.();if(window.mayLayers)layerOverlay(c);return;
+      }
       for(let J=0;J<Hq;J++)for(let I=0;I<Wq;I++){const v=S.bits.val[J*Wq+I];if(v<0)continue;
         G.fillStyle=bitColour(v);G.fillRect(bx+I*cq,by+J*cq,cq,cq);}
       const bins=OK&&OK.local&&OK.grid===S.bits?ochkiOverlayBins(OK,S,PW,PH,PW/w,PH/h,ox,oyOff):null;
