@@ -154,12 +154,22 @@
       const mk = (id, text, src) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'hubZenSave'; b.textContent = text;
         b.addEventListener('click', () => document.getElementById(src)?.click()); document.body.append(b); return b; };
       saves = [mk('hubZenPng', 'PNG', 'hubPNG'), mk('hubZenRec', '⏺'+String.fromCharCode(10)+'Видео', 'hubRec'), mk('hubZenSys', '🔊'+String.fromCharCode(10)+'ПК', 'hubRecSys')];   // v0.389: звук компьютера в видео
+      if (document.getElementById('hubRecMp3')) saves.push(mk('hubZenMp3', 'MP3', 'hubRecMp3'));
     }
-    const [png, rec, sys] = saves, r = z.getBoundingClientRect(), w = r.width || 48, gap = 6, below = r.bottom + saves.length * (w + gap) <= innerHeight;
+    const [png, rec, sys, mp3] = saves, r = z.getBoundingClientRect(), w = r.width || 48, gap = 6, below = r.bottom + saves.length * (w + gap) <= innerHeight;
     saves.forEach((b, i) => { b.style.left = Math.round(r.left) + 'px'; b.style.top = Math.round(below ? r.bottom + gap + i * (w + gap) : r.top - (i + 1) * (w + gap)) + 'px'; });
     const o = document.getElementById('hubRec'), on = !!o?.classList.contains('on');
     rec.classList.toggle('on', on); if (o && rec.title !== o.title) { rec.title = o.title; rec.setAttribute('aria-label', 'Видео: старт / стоп'); }
     const so = document.getElementById('hubRecSys'); if (so) { sys.classList.toggle('on', so.getAttribute('aria-pressed') === 'true'); if (sys.title !== so.title) { sys.title = so.title; sys.setAttribute('aria-label', 'Звук ПК в видео: вкл / выкл'); } }
+    const audio = document.getElementById('hubRecMp3');
+    if (audio && mp3) {
+      const selected = audio.getAttribute('aria-pressed') === 'true';
+      mp3.disabled = audio.disabled;
+      mp3.classList.toggle('on', selected);
+      if (mp3.title !== audio.title) mp3.title = audio.title;
+      const label = selected ? 'Снять выбранный MP3' : 'Выбрать MP3 для записи видео';
+      if (mp3.getAttribute('aria-label') !== label) mp3.setAttribute('aria-label', label);
+    }
     const p = document.getElementById('hubPNG'); if (p && png.title !== p.title) { png.title = p.title; png.setAttribute('aria-label', p.getAttribute('aria-label') || 'PNG'); }
   }
 

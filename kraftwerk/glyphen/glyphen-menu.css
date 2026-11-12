@@ -173,7 +173,7 @@ html body main .xs-shift{display:grid;grid-template-columns:repeat(2,minmax(0,1f
 html body main .xs-shift>.xs-pick{grid-column:1/-1}
 html body main .xs-shift label{width:100%;min-width:0}
 html body main .xs-symmetry{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
-html body main .xs-symmetry>label,html body main .xs-symmetry>span{grid-column:1/-1}
+html body main .xs-symmetry>span{grid-column:1/-1}
 html body main .row-track{padding:4px 0;gap:2px}
 html body main #audioFile::file-selector-button{border-radius:0;clip-path:none}
 html body main .kraft-palettes button[data-compact]{padding-left:26px!important}

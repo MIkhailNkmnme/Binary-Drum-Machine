@@ -276,11 +276,12 @@
   function edgeCommands(){
     const commands=['hubZenToggle','hubZenPng','hubZenRec','hubZenSys'].map(id=>document.getElementById(id));
     if(commands.some(x=>!x))return;
-    const blockHeight=198,x=innerWidth-56;
+    const mp3=document.getElementById('hubZenMp3');if(mp3)commands.push(mp3);
+    const blockHeight=commands.length*50-2,x=innerWidth-56;
     const obstacles=['#hubPult .hpZoom','#hubPultBot','#hubMobSwitch'].map(q=>document.querySelector(q)).filter(e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height&&r.right>x&&r.left<innerWidth-8);
     const zoom=document.querySelector('#hubPult .hpZoom')?.getBoundingClientRect();
     let y=Math.max(8,Math.min(innerHeight-blockHeight-8,zoom?.height?zoom.bottom+2:innerHeight-blockHeight-8));
-    // Four compact diamonds, kept clear of zoom and the transport.
+    // Keep the command diamonds clear of zoom and the transport.
     for(let i=0;i<obstacles.length+1;i++){
       const hit=obstacles.find(r=>y<r.bottom+2&&y+blockHeight>r.top-2);
       if(!hit)break;
@@ -291,7 +292,7 @@
       if(i>1)sa(b,'aria-pressed',String(b.classList.contains('on')));
       if(!b.querySelector('.hub-command-icon')){
         const ic=svg('hub-command-icon');sa(ic,'viewBox','0 0 24 24');
-        shape(ic,'path',{d:['M3 12q9-12 18 0-9 12-18 0M15 12a3 3 0 11-6 0 3 3 0 016 0','M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.1','M18 12a6 6 0 11-12 0 6 6 0 0112 0','M5 9h4l5-4v14l-5-4H5zM17 8q5 4 0 8'][i]});b.prepend(ic);
+        shape(ic,'path',{d:['M3 12q9-12 18 0-9 12-18 0M15 12a3 3 0 11-6 0 3 3 0 016 0','M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.1','M18 12a6 6 0 11-12 0 6 6 0 0112 0','M5 9h4l5-4v14l-5-4H5zM17 8q5 4 0 8','M1 16V8l3 4 3-4v8m3 0V8h4v4h-4m7-4h5l-3 4h3v4h-5'][i]});b.prepend(ic);
       }
       if(!b.querySelector(':scope > .hub-command-outline')){const s=svg('hub-command-outline');sa(s,'viewBox','0 0 48 48');shape(s,'polygon',{points:'24,0 48,24 24,48 0,24'});b.append(s);}
     });

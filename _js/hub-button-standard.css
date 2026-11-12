@@ -89,12 +89,12 @@ body.hubSidebarCollapsed .hub-navigation-outline{display:none}
 :is(#hubPult,#hubPultBot) .hpB:active{--hub-stroke:3px}
 @media(max-width:1100px){#hubRail{left:4px!important;transform:none;top:64px;max-height:calc(100dvh - 72px);overflow:auto;width:calc(100vw - 8px);padding:1px 1px 12px}#hubRail>.gz-rail{width:max-content;min-width:120px}#hubRail .gz-group.gz-open{height:var(--hub-height,24px)}#hubRail .gz-rail{font-size:12px}}
 /* User-selected compact right-edge diamonds; original click handlers stay in place. */
-body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys){--command-stroke:1px;--command-outline:#394657;--c:var(--hub-theme-accent,#8fd3ff);box-sizing:border-box;position:fixed!important;left:auto!important;right:8px!important;top:var(--hub-command-y,calc(100dvh - 206px))!important;bottom:auto!important;width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;min-height:48px!important;max-height:48px!important;display:flex;align-items:center;justify-content:center;padding:0!important;margin:0!important;gap:0;border:0!important;border-radius:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:var(--hub-surface)!important;color:#dfe6f5!important;font:0/0 "Segoe UI",sans-serif!important;white-space:nowrap!important;outline:none!important;text-shadow:none!important;box-shadow:none!important;filter:none!important;animation:none!important;opacity:1!important;isolation:isolate}
-body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys)::after,body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys)::before{display:none!important}
-body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys)>.hubIc{display:none!important}
-body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys):is(:hover,:focus-visible){--command-outline:var(--c)}
-body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys):is(.on,[aria-pressed=true]){--command-outline:var(--c);--command-stroke:2px}
-body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys):active{--command-outline:var(--c);--command-stroke:3px}
+body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys,#hubZenMp3){--command-stroke:1px;--command-outline:#394657;--c:var(--hub-theme-accent,#8fd3ff);box-sizing:border-box;position:fixed!important;left:auto!important;right:8px!important;top:var(--hub-command-y,calc(100dvh - 206px))!important;bottom:auto!important;width:48px!important;min-width:48px!important;max-width:48px!important;height:48px!important;min-height:48px!important;max-height:48px!important;display:flex;align-items:center;justify-content:center;padding:0!important;margin:0!important;gap:0;border:0!important;border-radius:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:var(--hub-surface)!important;color:#dfe6f5!important;font:0/0 "Segoe UI",sans-serif!important;white-space:nowrap!important;outline:none!important;text-shadow:none!important;box-shadow:none!important;filter:none!important;animation:none!important;opacity:1!important;isolation:isolate}
+body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys,#hubZenMp3)::after,body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys,#hubZenMp3)::before{display:none!important}
+body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys,#hubZenMp3)>.hubIc{display:none!important}
+body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys,#hubZenMp3):is(:hover,:focus-visible){--command-outline:var(--c)}
+body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys,#hubZenMp3):is(.on,[aria-pressed=true]){--command-outline:var(--c);--command-stroke:2px}
+body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys,#hubZenMp3):active{--command-outline:var(--c);--command-stroke:3px}
 .hub-command-outline{position:absolute!important;inset:0;width:100%;height:100%;pointer-events:none}
 .hub-command-outline polygon{fill:none;stroke:var(--command-outline);stroke-width:calc(2 * var(--command-stroke));stroke-linejoin:miter}
 
@@ -166,3 +166,5 @@ body.hub-quiet-hover.hubRailOn #hubRail :is(.gz-half,.gz-hx:not(.gz-head):not(.g
 #hubRail .gz-sl > .gz-vt,#hubRail .gz-vt{display:none!important}
 /* v0.440, В10 v25: наведение обводит только боковые углы, не всю кнопку */
 body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx:hover:not(.gz-on):not([aria-pressed=true]):not(:active):not(.gz-press):not(.hub-held):not(.gz-mini):not(.hub-mini){background:linear-gradient(90deg,var(--c) 0 12px,#394657 12px calc(100% - 12px),var(--c) calc(100% - 12px))!important}
+
+body.hubRailOn #hubZenMp3:disabled{opacity:.48!important;cursor:default}

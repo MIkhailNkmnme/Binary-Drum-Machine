@@ -126,12 +126,25 @@
   const overlapNote=doc.createElement('p');overlapNote.className='xs-explain xs-overlap-note';overlapNote.innerHTML='<span class="xs-collision-key"># XYZ</span> - кубики разных фигур в одном месте, даже если XOR их убрал; <span class="xs-depth-key">o Глубина</span> - кубики на разных глубинах одной клетки проекции. Число в крупной клетке - всего исходных кубиков.';host.querySelector('.xs-projections').after(overlapNote);
   const controls=host.querySelector('.xs-controls'),main=host.querySelector('.xs-main'),status=host.querySelector('.xs-status');
   const symmetryControls=doc.createElement('div');symmetryControls.className='xs-symmetry';symmetryControls.setAttribute('role','group');symmetryControls.setAttribute('aria-label','Общий центр и симметричное перемещение');
-  symmetryControls.innerHTML='<button class="gz-hx xs-center" type="button" title="Совместить четыре серых центра в начале координат и включить симметричное перемещение">+ В центръ</button><button class="gz-hx xs-symmetric" type="button" title="Включить симметричный разнос от центра или снять ограничение, сохранив положения"><> Симметр</button><label class="xs-distance-label">R <input class="xs-distance" type="number" min="0" step="1" value="0" aria-label="Общий разнос серых центров в клетках"></label><span class="xs-symmetry-rays"></span>';
+  symmetryControls.innerHTML='<button class="gz-hx xs-center" type="button" title="Совместить четыре серых центра в начале координат и включить симметричное перемещение">+ В центръ</button><button class="gz-hx xs-spread" type="button" title="Отодвинуть все четыре фигуры от начала координат на одну клетку">Разнести</button><button class="gz-hx xs-symmetric" type="button" title="Включить симметричный разнос от центра или снять ограничение, сохранив положения"><> Симметр</button><label class="xs-distance-label">R <input class="xs-distance" type="number" min="0" step="1" value="0" aria-label="Общий разнос серых центров в клетках"></label><span class="xs-symmetry-rays"></span>';
   controls.before(symmetryControls);
   const distanceInput=symmetryControls.querySelector('.xs-distance'),symmetryButton=symmetryControls.querySelector('.xs-symmetric'),raysLabel=symmetryControls.querySelector('.xs-symmetry-rays');
   function centreFigures(){symmetry={enabled:true,distance:0,rays:model.figures.map(f=>f.direction)};bodyClick=null;refresh(true,'symmetry');}
   function setDistance(value,save=true){if(!symmetry.enabled)return;symmetry.distance=Math.max(0,int(value));refresh(save,'translation');}
+  function spreadFigures(){
+   const figures=model.figures;
+   if(!symmetry.enabled&&figures.every(f=>f.anchor.every(v=>v===0))){
+    symmetry={enabled:true,distance:0,rays:figures.map(f=>f.direction)};
+   }
+   if(symmetry.enabled){setDistance(symmetry.distance+1);return;}
+   const anchors=figures.map(({anchor,direction})=>{
+    const axis=anchor.reduce((far,v,i)=>Math.abs(v)>Math.abs(anchor[far])?i:far,0);
+    return anchor[axis]?anchor.map((v,i)=>i===axis?v+Math.sign(v):v):DIRECTIONS[direction];
+   });
+   assignments=alignAnchors(snapshot,assignments,anchors);refresh(true,'translation');
+  }
   symmetryControls.querySelector('.xs-center').addEventListener('click',centreFigures);
+  symmetryControls.querySelector('.xs-spread').addEventListener('click',spreadFigures);
   symmetryButton.addEventListener('click',()=>{if(symmetry.enabled){symmetry.enabled=false;refresh(true,'symmetry');}else centreFigures();});
   distanceInput.addEventListener('input',()=>{if(distanceInput.value!==''&&Number.isFinite(distanceInput.valueAsNumber))setDistance(distanceInput.valueAsNumber);});distanceInput.addEventListener('change',()=>{distanceInput.value=String(symmetry.distance);});
   const selects=[],rollButtons=[],pickButtons=[],offsetInputs=[];
@@ -319,7 +332,8 @@
    const frozen=JSON.parse(JSON.stringify(captureOptions.source||snapshot));
    const layoutWidth=host.getBoundingClientRect().width,width=Math.max(1,Math.round(layoutWidth));
    const box=doc.createElement('div');box.setAttribute('aria-hidden','true');box.style.cssText='position:fixed;left:-100000px;top:0;pointer-events:none;width:'+layoutWidth+'px;';doc.body.appendChild(box);
-   const captureView=mount(box,frozen,{capture:true,assignments:JSON.parse(JSON.stringify(assignments)),camera:{...camera},selected,symmetry:JSON.parse(JSON.stringify(symmetry))});
+   const frozenCamera={...camera};
+   const captureView=mount(box,frozen,{capture:true,assignments:JSON.parse(JSON.stringify(assignments)),camera:frozenCamera,selected,symmetry:JSON.parse(JSON.stringify(symmetry))});
    const captureHost=box.querySelector('.xor-space');captureHost.style.margin='0';captureHost.style.padding='0';captureHost.style.border='0';
    const mainCanvas=box.querySelector('.xs-main'),projectionCanvases=[...box.querySelectorAll('.xs-projection canvas')];
    // Use the same canvas renderers, current width and camera; controls are not in the movie.
@@ -330,8 +344,9 @@
    const mainRect=mainCanvas.getBoundingClientRect(),hostRect=captureHost.getBoundingClientRect();
    const parts=[{name:'3D',x:Math.round(mainRect.left-hostRect.left),y:header,width:Math.round(mainRect.width),height:mainHeight},...projectionCanvases.map(c=>{const r=c.getBoundingClientRect(),h=captureHost.getBoundingClientRect();return {name:c.dataset.plane,x:Math.round(r.left-h.left),y:projectionTop,width:Math.round(r.width),height:Math.round(r.height)};})];
    let disposed=false;
-   function render(next,label=''){
-    if(disposed)throw new Error('Capture renderer is closed');captureView.setAssignments(next);
+   function render(next,label='',orbitTurn=0){
+    if(disposed)throw new Error('Capture renderer is closed');
+    captureView.setAssignments(next,{yaw:frozenCamera.yaw+2*Math.PI*orbitTurn});
     const ctx=output.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#131619';ctx.fillRect(0,0,width,height);ctx.fillStyle='#eee6d8';ctx.font='bold 12px ui-monospace,monospace';ctx.textBaseline='top';ctx.fillText('3D / XY / XZ / YZ',8,8);
     ctx.textAlign='right';ctx.fillText(String(label),width-8,8);ctx.textAlign='left';
     const canvases=[mainCanvas,...projectionCanvases];for(let i=0;i<parts.length;i++){const p=parts[i];ctx.drawImage(canvases[i],p.x,p.y,p.width,p.height);}
@@ -345,7 +360,7 @@
    return {width,height,parts:parts.map(p=>({...p})),render,destroy(){if(disposed)return;disposed=true;captureView.destroy();box.remove();}};
   }
   refresh(false);
-  return {createCapture,update(next){snapshot=next||{};refresh(false);host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'source'}}));},getSnapshot(){return JSON.parse(JSON.stringify(snapshot));},setAssignments(next,{save=false}={}){assignments=normalizeAssignments(next);refresh(save,'sequence');},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected,symmetry:JSON.parse(JSON.stringify(symmetry))};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
+  return {createCapture,update(next){snapshot=next||{};refresh(false);host.dispatchEvent(new CustomEvent('xor-space-change',{bubbles:true,detail:{reason:'source'}}));},getSnapshot(){return JSON.parse(JSON.stringify(snapshot));},setAssignments(next,{save=false,yaw=camera.yaw}={}){assignments=normalizeAssignments(next);camera.yaw=yaw;refresh(save,'sequence');},getModel(){return buildModel(snapshot,assignments);},getState(){return {assignments:assignments.map(a=>({...a,offset:a.offset.slice()})),camera:{...camera},selected,symmetry:JSON.parse(JSON.stringify(symmetry))};},destroy(){destroyed=true;if(resize)resize.disconnect();else window.removeEventListener('resize',draw);host.remove();}};
  }
  return {mount,buildModel,project,orientation,cameraPoint,axisDragSteps,orientFigure,isEndVoxel,alignAnchors,symmetricAssignments};
 });
