@@ -40,6 +40,7 @@
   }
   function bytesToBase64(bytes){
     if(typeof Buffer!=='undefined')return Buffer.from(bytes).toString('base64');
+    if(typeof bytes.toBase64==='function')return bytes.toBase64();
     let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(binary);
   }
   function base64ToBytes(text,maxBytes){
@@ -47,6 +48,7 @@
     let bytes;
     try{
       if(typeof Buffer!=='undefined')bytes=Uint8Array.from(Buffer.from(text,'base64'));
+      else if(typeof Uint8Array.fromBase64==='function')bytes=Uint8Array.fromBase64(text);
       else{const binary=atob(text);bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);}
     }catch(_){fail('Повреждён код исходника Аниматрицы.');}
     if(bytes.length>maxBytes)fail('Код исходника Аниматрицы превышает размер поля.');return bytes;
