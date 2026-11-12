@@ -463,18 +463,21 @@
     for(const rows of [8192,16384]){
       const large=document.createElement('button');
       large.type='button';large.className='gz-hx';large.dataset.n='mayGpuRows'+rows;
-      large.title='Открыть пробное поле на '+rows+' строки в GPU-просмотре';
+      large.title='Построить поле на '+rows+' строки на видеокарте';
       large.setAttribute('aria-label',large.title);
       const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(large,'grid');glyph.setAttribute('aria-hidden','true');
       const label=document.createElement('span');label.className='gz-nm';label.textContent=String(rows);
       large.append(glyph,label);
-      large.onclick=event=>{
-        event.stopPropagation();
-        const url=new URL('Zerkalius-mayatnik-gpu.html',location.href);
-        const pair=$('bPair').getAttribute('aria-pressed')==='true';
-        url.search=new URLSearchParams({preview:String(rows),range:window.mayVMode?.get()||'n',mode:$('mode').value,pair:pair?'1':'0'}).toString();
-        window.open(url,'_blank','noopener');
+      large.gzSync=()=>{
+        const selected=cur()===String(rows);
+        large.classList.toggle('gz-on',selected);large.setAttribute('aria-pressed',String(selected));
       };
+      large.onclick=async event=>{
+        event.stopPropagation();
+        await window.mayBuildLarge?.(rows);
+        sync();
+      };
+      sizeRows.push(large);
       pop.append(section(large,'size'));
     }
     let customInput = null, syncRowsThumb = () => {};   // draft applies only with Enter / Задать
