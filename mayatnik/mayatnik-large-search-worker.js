@@ -69,8 +69,14 @@ function catalogEngine(){
   return self.MayatnikLargeSnakeCatalog;
 }
 
-async function searchFrame(spool,{options,snake,archive,catalog,query},progress){
+async function searchFrame(spool,{options,snake,archive,catalog,query,archiveOnly},progress){
   const snapshot=spool.snapshot;
+  if(archiveOnly){
+    progress({phase:'archive'});
+    const started=performance.now();
+    try{return {result:{complete:true},archive:await archiveFrame(snapshot,spool),metrics:{archiveMs:performance.now()-started,searchMs:0}};}
+    catch(error){return {result:{complete:true},archiveError:error.message||String(error),metrics:{archiveMs:performance.now()-started,searchMs:0}};}
+  }
   if(query){
     const result=await catalogEngine().query(query.method,query.catalog,{...query.options,snapshot},{worker:false,onProgress:progress});
     return {result};
@@ -87,16 +93,20 @@ async function searchFrame(spool,{options,snake,archive,catalog,query},progress)
     self.onmessage=receive;
   }
   const engine=snake?self.MayatnikLargeSnake:self.MayatnikLargeSearch;
+  const searchStarted=performance.now();
   const mask=options.withoutBands?bandBounds(snapshot,spool,options.bounds.height):null;
   const result=engine.search(snapshot,{...options,...mask},progress);
-  let saved,archiveError;
+  const searchMs=performance.now()-searchStarted;
+  let saved,archiveError,archiveMs=0;
   if(archive&&result.complete&&result.found.length){
     progress({phase:'archive'});
+    const archiveStarted=performance.now();
     try{saved=await archiveFrame(snapshot,spool);}
     catch(error){archiveError=error.message||String(error);}
+    archiveMs=performance.now()-archiveStarted;
   }
   const {typeRuns,...visible}=result;
-  return {result:visible,archive:saved,archiveError};
+  return {result:visible,archive:saved,archiveError,metrics:{searchMs,archiveMs}};
 }
 
 async function handle(message){

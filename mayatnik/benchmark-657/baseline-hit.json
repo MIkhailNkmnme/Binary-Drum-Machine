@@ -1,0 +1,95 @@
+{
+  "baseline": "b5ab4369",
+  "setup": {
+    "adapter": {
+      "vendor": "nvidia",
+      "architecture": "ampere",
+      "description": ""
+    },
+    "H": 16384,
+    "W": 38484,
+    "stride": 1204,
+    "anchor": 19242,
+    "frame": 5718,
+    "mode": "pend",
+    "pair": false,
+    "range": "N/3",
+    "buildMs": 3423.39999999851
+  },
+  "results": [
+    {
+      "options": {
+        "mode": "row",
+        "anchor": 19242,
+        "parity": -1,
+        "latticeStride": 2,
+        "pattern": "initial",
+        "vsets": [
+          [
+            [
+              "101",
+              "",
+              {
+                "index": 0,
+                "label": "original"
+              }
+            ]
+          ]
+        ],
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 38484,
+          "height": 16384
+        },
+        "withoutBands": true,
+        "compact": true,
+        "invertBits": false,
+        "skipSpaces": false,
+        "through": false
+      },
+      "result": {
+        "found": [
+          {
+            "r": 9,
+            "c": 19239,
+            "n": 3,
+            "p": 0,
+            "dir": 0,
+            "start": 365595,
+            "step": 2,
+            "i": 0,
+            "vn": "",
+            "text": "101",
+            "variantIndex": 0,
+            "variantLabel": "original"
+          }
+        ],
+        "foundIndices": [
+          0
+        ],
+        "foundByHalf": null,
+        "foundEver": 1,
+        "foundCount": 1,
+        "newCount": 1,
+        "total": 1,
+        "halves": 1,
+        "directions": 1,
+        "complete": true,
+        "packed": true,
+        "width": 38484,
+        "height": 16384,
+        "reason": ""
+      },
+      "metrics": {
+        "searchMs": 743.7000000029802,
+        "archiveMs": 4632.89999999851,
+        "readbackBytes": 157810688,
+        "totalMs": 17171.10000000149,
+        "transferMs": 7389.39999999851
+      },
+      "archiveBytes": 28913468
+    }
+  ],
+  "errors": []
+}

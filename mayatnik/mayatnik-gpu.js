@@ -598,6 +598,7 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
       const PBuf = device.createBuffer({ size: 41 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       let tBuf = null, apBuf = null, bind = null, tCap = 0, apCap = 0, renderBind = null, dead = false;
       let pic = null, pic2 = null, picN = 0, zBuf = null, zCap = 0, qBuf = null, qCap = 0, picBind = null, win = null;
+      let searchRevision = 0;
       let previewParams, previewBind, continuationParams, continuationBind;
       const Q_INTS = 64;   // запись прохода: 8 чисел + до 14 центров по 4
       const setP = K => device.queue.writeBuffer(pBuf, 0, new Uint32Array([W, WW, H, K, anchor, BG[bg] ?? 0, 0, 0]));
@@ -610,6 +611,7 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
         if (!bind) bind = bindFor();
       };
       function reset() {
+        searchRevision++;
         setP(0); ensure(1, 1);
         const enc = device.createCommandEncoder(), pass = enc.beginComputePass(), [gx, gy] = grid(Math.ceil(words / 64));
         pass.setPipeline(pipeInit); pass.setBindGroup(0, bind, [0]); pass.dispatchWorkgroups(gx, gy); pass.end(); device.queue.submit([enc.finish()]);
@@ -617,6 +619,7 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
       // Поставить вершины apexes ([a1, a2] на вершину, одиночная — a2 = a1) по порядку поверх текущего поля
       function run(apexes) {
         const K = apexes.length; if (!K || dead) return 0;
+        searchRevision++;
         const T = 2 * (K - 1) + H; ensure(T, K); setP(K);
         const tData = new Uint32Array(T * ALIGN / 4), tInfo = new Array(T);
         let span = 0; for (const [a1, a2] of apexes) span = Math.max(span, a2 - a1);
@@ -636,6 +639,7 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
       }
       // Поле ядра (Int8: −1, 0, 1) → видеокарта
       function write(val) {
+        searchRevision++;
         const b = new Uint32Array(words), h = new Uint32Array(words);
         for (let r = 0; r < H; r++) { const row = r * W, wr = r * WW; for (let c = 0; c < W; c++) { const v = val[row + c]; if (v < 0) continue; const q = wr + (c >> 5), m = 1 << (c & 31); h[q] |= m; if (v) b[q] |= m; } }
         device.queue.writeBuffer(bitsBuf, 0, b); device.queue.writeBuffer(hasBuf, 0, h);
@@ -644,6 +648,7 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
         if(dead||width!==W||height!==H||stride!==WW||
           !(bits instanceof Uint32Array)||!(present instanceof Uint32Array)||
           bits.length!==words||present.length!==words)throw Error('Размер сохранённого снимка не совпадает с GPU-полем');
+        searchRevision++;
         device.queue.writeBuffer(bitsBuf,0,bits);
         device.queue.writeBuffer(hasBuf,0,present);
       }
@@ -651,7 +656,16 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
         if(dead||!['bits','present'].includes(plane)||!Number.isSafeInteger(y)||!Number.isSafeInteger(rows)||
           y<0||rows<1||y+rows>H||!(data instanceof Uint32Array)||data.length!==rows*WW)
           throw Error('Некорректная полоса для восстановления GPU-поля');
+        searchRevision++;
         device.queue.writeBuffer(plane==='bits'?bitsBuf:hasBuf,y*WW*4,data);
+      }
+      // Exact search keeps both planes resident; mutations invalidate an in-flight query.
+      async function searchExact(options={},current=()=>true,onProgress) {
+        const engine=root.MayatnikGPUSearch;
+        if(!engine)return null;
+        const revision=searchRevision;
+        return engine.search({device,bits:bitsBuf,present:hasBuf,width:W,height:H,stride:WW},options,
+          ()=>!dead&&searchRevision===revision&&current(),onProgress);
       }
       // Видеокарта → поле ядра; into — Int8Array W*H (по умолчанию новый)
       async function read(into) {
@@ -859,7 +873,7 @@ fn coneBit(depth: i32, cross: i32) -> i32 {
         device.queue.submit([encoder.finish()]);
       }
       reset();
-      return { W, H, WW, anchor, reset, run, write, writePacked, writePackedPlaneRows, read, readPacked, readPackedRegion, readPackedStrips, picture, readPic, writePic, render, renderPreview, renderContinuation, done: () => device.queue.onSubmittedWorkDone(),
+      return { W, H, WW, anchor, reset, run, write, writePacked, writePackedPlaneRows, read, readPacked, readPackedRegion, readPackedStrips, searchExact, picture, readPic, writePic, render, renderPreview, renderContinuation, done: () => device.queue.onSubmittedWorkDone(),
         destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf,previewParams,continuationParams]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту

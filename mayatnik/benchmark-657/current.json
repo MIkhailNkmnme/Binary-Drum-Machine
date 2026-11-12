@@ -1,0 +1,86 @@
+{
+  "baseline": "b5ab4369",
+  "setup": {
+    "adapter": {
+      "vendor": "nvidia",
+      "architecture": "ampere",
+      "description": ""
+    },
+    "H": 16384,
+    "W": 38484,
+    "stride": 1204,
+    "anchor": 19242,
+    "frame": 5718,
+    "mode": "pend",
+    "pair": false,
+    "range": "N/3",
+    "buildMs": 3455
+  },
+  "results": [
+    {
+      "options": {
+        "mode": "row",
+        "anchor": 19242,
+        "parity": -1,
+        "latticeStride": 2,
+        "pattern": "initial",
+        "vsets": [
+          [
+            [
+              "10011001100110011001100110011001",
+              "",
+              {
+                "index": 0,
+                "label": "original"
+              }
+            ]
+          ]
+        ],
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 38484,
+          "height": 16384
+        },
+        "withoutBands": true,
+        "compact": true,
+        "invertBits": false,
+        "skipSpaces": false,
+        "through": false
+      },
+      "result": {
+        "found": [],
+        "foundIndices": [],
+        "foundByHalf": null,
+        "foundEver": 0,
+        "foundCount": 0,
+        "newCount": 0,
+        "total": 1,
+        "halves": 1,
+        "directions": 1,
+        "complete": true,
+        "packed": true,
+        "width": 38484,
+        "height": 16384,
+        "reason": "",
+        "occurrenceCount": 0,
+        "gpu": {
+          "readbackBytes": 393216,
+          "searchMs": 102,
+          "dispatches": 18,
+          "workingBytes": 352448
+        }
+      },
+      "metrics": {
+        "searchWallMs": 102.39999999850988,
+        "readbackBytes": 393216,
+        "searchMs": 102,
+        "dispatches": 18,
+        "workingBytes": 352448,
+        "totalMs": 102.39999999850988
+      },
+      "archiveBytes": 0
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,67 @@
+{
+  "rows": 8192,
+  "width": 16398,
+  "first": {
+    "engine": "webgpu",
+    "readbackBytes": 393216,
+    "searchMs": 182.70000000298023,
+    "dispatches": 16,
+    "workingBytes": 221260,
+    "archiveMs": 984.5,
+    "archiveReadbackBytes": 33685504,
+    "archiveTransferMs": 1272.1000000014901,
+    "snapshotMs": 2931,
+    "totalMs": 3114.8000000044703
+  },
+  "second": {
+    "engine": "webgpu",
+    "readbackBytes": 196608,
+    "searchMs": 67.79999999701977,
+    "dispatches": 8,
+    "workingBytes": 221256,
+    "archiveMs": 882,
+    "archiveReadbackBytes": 33685504,
+    "archiveTransferMs": 1386.6000000014901,
+    "snapshotMs": 2926.7000000029802,
+    "totalMs": 2995.2999999970198
+  },
+  "everyFrame": {
+    "engine": "webgpu",
+    "readbackBytes": 393216,
+    "searchMs": 124,
+    "dispatches": 16,
+    "workingBytes": 221260,
+    "archiveMs": 894,
+    "archiveReadbackBytes": 33685504,
+    "archiveTransferMs": 1350.3999999985099,
+    "snapshotMs": 2903.1999999955297,
+    "totalMs": 3027.7999999970198
+  },
+  "onceIndices": [
+    0,
+    1
+  ],
+  "replayBits": [
+    1,
+    0,
+    1
+  ],
+  "playerWaiting": true,
+  "playerRetainedPlay": true,
+  "yellowRows": [
+    {
+      "index": 0,
+      "colour": "rgb(255, 214, 70)",
+      "background": "rgb(69, 48, 22)"
+    },
+    {
+      "index": 1,
+      "colour": "rgb(255, 214, 70)",
+      "background": "rgb(69, 48, 22)"
+    }
+  ],
+  "supersededFrame": 9,
+  "replacementFrame": 10,
+  "cancelled": true,
+  "pageErrors": []
+}

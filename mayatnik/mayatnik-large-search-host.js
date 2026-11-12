@@ -23,7 +23,9 @@
 
   function start({header,strips,archived,request,current=()=>true,onProgress=()=>{}}){
     const token=Array.from(crypto.getRandomValues(new Uint32Array(4)),x=>x.toString(36)).join('-');
-    const name='mayatnik-spool-'+token+'.bin',worker=new Worker('mayatnik-large-search-worker.js?v=1001');
+    const name='mayatnik-spool-'+token+'.bin',worker=new Worker('mayatnik-large-search-worker.js?v=1007');
+    const started=performance.now();
+    let readbackBytes=0,transferMs=0;
     let pending=null,settled=false,resolveDone,rejectDone;
     const result=new Promise((resolve,reject)=>{resolveDone=resolve;rejectDone=reject;});
     function finish(error,value){
@@ -32,7 +34,7 @@
       worker.terminate();
       if(pending){pending.reject(error||abort());pending=null;}
       if(error){removeScratch(name).catch(()=>{});rejectDone(error);}
-      else resolveDone(value);
+      else resolveDone({...value,metrics:{...value.metrics,readbackBytes,transferMs,totalMs:performance.now()-started}});
     }
     function send(message,type,y){
       return new Promise((resolve,reject)=>{
@@ -62,11 +64,13 @@
       if(!archived){
         for await(const strip of strips(()=>!settled&&current())){
           if(settled||!current())throw abort();
+          readbackBytes+=strip.bits.byteLength+strip.present.byteLength;
           await send({type:'strip',strip},'ack',strip.y);
           onProgress({phase:'read',done:strip.y+strip.rows,total:header.height});
         }
       }
       if(settled||!current())throw abort();
+      transferMs=performance.now()-started;
       worker.postMessage({type:'run'});
     })().catch(error=>finish(error));
     return {name,result,cancel:()=>finish(abort())};

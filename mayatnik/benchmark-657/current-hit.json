@@ -1,0 +1,111 @@
+{
+  "baseline": "b5ab4369",
+  "shaderSha256": "5021271f086eaaa7964236bf269a7d7632be68ea5e8ce3cb2127320e5b0f9380",
+  "setup": {
+    "adapter": {
+      "vendor": "nvidia",
+      "architecture": "ampere",
+      "description": ""
+    },
+    "H": 16384,
+    "W": 38484,
+    "stride": 1204,
+    "anchor": 19242,
+    "frame": 5718,
+    "mode": "pend",
+    "pair": false,
+    "range": "N/3",
+    "buildMs": 3407.9000000059605
+  },
+  "results": [
+    {
+      "options": {
+        "mode": "row",
+        "anchor": 19242,
+        "parity": -1,
+        "latticeStride": 2,
+        "pattern": "initial",
+        "vsets": [
+          [
+            [
+              "101",
+              "",
+              {
+                "index": 0,
+                "label": "original"
+              }
+            ]
+          ]
+        ],
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 38484,
+          "height": 16384
+        },
+        "withoutBands": true,
+        "compact": true,
+        "invertBits": false,
+        "skipSpaces": false,
+        "through": false
+      },
+      "result": {
+        "found": [
+          {
+            "r": 9,
+            "c": 19239,
+            "n": 3,
+            "p": 0,
+            "dir": 0,
+            "start": 365595,
+            "step": 2,
+            "i": 0,
+            "vn": "",
+            "text": "101",
+            "variantIndex": 0,
+            "variantLabel": "original"
+          }
+        ],
+        "foundIndices": [
+          0
+        ],
+        "foundByHalf": null,
+        "foundEver": 1,
+        "foundCount": 1,
+        "newCount": 1,
+        "total": 1,
+        "halves": 1,
+        "directions": 1,
+        "complete": true,
+        "packed": true,
+        "width": 38484,
+        "height": 16384,
+        "reason": "",
+        "occurrenceCount": 32405284,
+        "gpu": {
+          "readbackBytes": 393216,
+          "searchMs": 103.80000000447035,
+          "dispatches": 18,
+          "workingBytes": 352332
+        }
+      },
+      "metrics": {
+        "searchWallMs": 104.40000000596046,
+        "readbackBytes": 393216,
+        "searchMs": 103.80000000447035,
+        "dispatches": 18,
+        "workingBytes": 352332,
+        "totalMs": 13092.5,
+        "archive": {
+          "archiveMs": 4930.29999999702,
+          "searchMs": 0,
+          "readbackBytes": 157810688,
+          "transferMs": 7335.5,
+          "totalMs": 12987.69999999553
+        }
+      },
+      "archiveBytes": 28913468
+    }
+  ],
+  "errors": []
+}

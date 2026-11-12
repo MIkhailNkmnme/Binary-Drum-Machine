@@ -1,0 +1,482 @@
+{
+  "adapter": {
+    "vendor": "nvidia",
+    "architecture": "ampere",
+    "description": ""
+  },
+  "width": 131,
+  "height": 270,
+  "passed": [
+    {
+      "i": 0,
+      "mode": "row",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 9586
+    },
+    {
+      "i": 1,
+      "mode": "row",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 9600
+    },
+    {
+      "i": 2,
+      "mode": "row",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 4729
+    },
+    {
+      "i": 3,
+      "mode": "row",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 4836
+    },
+    {
+      "i": 4,
+      "mode": "row",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 4857
+    },
+    {
+      "i": 5,
+      "mode": "row",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 4764
+    },
+    {
+      "i": 6,
+      "mode": "row",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8,
+      "occurrenceCount": 9586
+    },
+    {
+      "i": 7,
+      "mode": "row",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8,
+      "occurrenceCount": 9600
+    },
+    {
+      "i": 8,
+      "mode": "col",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 9751
+    },
+    {
+      "i": 9,
+      "mode": "col",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 9828
+    },
+    {
+      "i": 10,
+      "mode": "col",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 4850
+    },
+    {
+      "i": 11,
+      "mode": "col",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 4937
+    },
+    {
+      "i": 12,
+      "mode": "col",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 4901
+    },
+    {
+      "i": 13,
+      "mode": "col",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 4891
+    },
+    {
+      "i": 14,
+      "mode": "col",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8,
+      "occurrenceCount": 9751
+    },
+    {
+      "i": 15,
+      "mode": "col",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8,
+      "occurrenceCount": 9828
+    },
+    {
+      "i": 16,
+      "mode": "diag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 9758
+    },
+    {
+      "i": 17,
+      "mode": "diag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 9696
+    },
+    {
+      "i": 18,
+      "mode": "diag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 4879
+    },
+    {
+      "i": 19,
+      "mode": "diag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 4872
+    },
+    {
+      "i": 20,
+      "mode": "diag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 4879
+    },
+    {
+      "i": 21,
+      "mode": "diag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 4824
+    },
+    {
+      "i": 22,
+      "mode": "diag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8,
+      "occurrenceCount": 9758
+    },
+    {
+      "i": 23,
+      "mode": "diag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8,
+      "occurrenceCount": 9696
+    },
+    {
+      "i": 24,
+      "mode": "antidiag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 9896
+    },
+    {
+      "i": 25,
+      "mode": "antidiag",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 9636
+    },
+    {
+      "i": 26,
+      "mode": "antidiag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 4924
+    },
+    {
+      "i": 27,
+      "mode": "antidiag",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 4848
+    },
+    {
+      "i": 28,
+      "mode": "antidiag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 4972
+    },
+    {
+      "i": 29,
+      "mode": "antidiag",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 4788
+    },
+    {
+      "i": 30,
+      "mode": "antidiag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8,
+      "occurrenceCount": 9896
+    },
+    {
+      "i": 31,
+      "mode": "antidiag",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8,
+      "occurrenceCount": 9636
+    },
+    {
+      "i": 32,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 38991
+    },
+    {
+      "i": 33,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 38760
+    },
+    {
+      "i": 34,
+      "mode": "all",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 19382
+    },
+    {
+      "i": 35,
+      "mode": "all",
+      "parity": 0,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 19493
+    },
+    {
+      "i": 36,
+      "mode": "all",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 19609
+    },
+    {
+      "i": 37,
+      "mode": "all",
+      "parity": 1,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 4,
+      "occurrenceCount": 19267
+    },
+    {
+      "i": 38,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 8,
+      "occurrenceCount": 38991
+    },
+    {
+      "i": 39,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": true,
+      "found": 8,
+      "occurrenceCount": 38760
+    },
+    {
+      "i": 40,
+      "mode": "row",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 3124
+    },
+    {
+      "i": 41,
+      "mode": "col",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 5,
+      "occurrenceCount": 3132
+    },
+    {
+      "i": 42,
+      "mode": "diag",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 3050
+    },
+    {
+      "i": 43,
+      "mode": "antidiag",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 3110
+    },
+    {
+      "i": 44,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 1,
+      "invertBits": false,
+      "found": 5,
+      "occurrenceCount": 12416
+    },
+    {
+      "i": 45,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 2,
+      "occurrenceCount": 32689
+    },
+    {
+      "i": 46,
+      "mode": "all",
+      "parity": 2,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 22593
+    },
+    {
+      "i": 47,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 38991
+    },
+    {
+      "i": 48,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 4,
+      "occurrenceCount": 38991
+    },
+    {
+      "i": 49,
+      "mode": "all",
+      "parity": -1,
+      "latticeStride": 2,
+      "invertBits": false,
+      "found": 0,
+      "occurrenceCount": 0
+    },
+    {
+      "i": "withoutBands",
+      "found": 4
+    },
+    {
+      "i": "dense-overflow",
+      "occurrenceCount": 69660,
+      "retained": 4
+    }
+  ],
+  "failures": [],
+  "readbackBytes": 1746116,
+  "cancelled": true,
+  "mutationCancelled": true,
+  "fallbacks": {
+    "{\"through\":true}": true,
+    "{\"skipSpaces\":true}": true,
+    "{\"pattern\":\"zeros\"}": true,
+    "{\"mode\":\"v\"}": true,
+    "{\"mode\":\"loop\"}": true
+  },
+  "errors": []
+}
