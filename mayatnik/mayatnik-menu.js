@@ -460,25 +460,22 @@
       const row=gzPair(parts),copy=gzPair(parts,true);
       sizeRows.push(row,copy);pop.append(section(row,'size'));meetingSizes.append(copy);
     }
-    for(const rows of [8192,16384]){
-      const large=document.createElement('button');
-      large.type='button';large.className='gz-hx';large.dataset.n='mayGpuRows'+rows;
-      large.title='Построить поле на '+rows+' строки на видеокарте';
-      large.setAttribute('aria-label',large.title);
-      const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(large,'grid');glyph.setAttribute('aria-hidden','true');
-      const label=document.createElement('span');label.className='gz-nm';label.textContent=String(rows);
-      large.append(glyph,label);
-      large.gzSync=()=>{
-        const selected=cur()===String(rows);
-        large.classList.toggle('gz-on',selected);large.setAttribute('aria-pressed',String(selected));
-      };
-      large.onclick=async event=>{
-        event.stopPropagation();
-        await window.mayBuildLarge?.(rows);
-        sync();
-      };
-      sizeRows.push(large);
-      pop.append(section(large,'size'));
+    {
+      const note=document.createElement('div');
+      note.className='may-gpu-size-note';note.hidden=true;note.setAttribute('role','status');
+      const parts=[8192,16384].map(rows=>({label:String(rows),tip:'Построить '+rows+' строк на видеокарте',
+        data:{n:'mayGpuRows'+rows},on:()=>cur()===String(rows),click:async()=>{
+          note.hidden=true;
+          await window.mayBuildLarge?.(rows);
+          const message=window.mayBuildLargeStatus?.()||'';
+          note.textContent=message;note.hidden=!message;
+          sync();
+        }}));
+      const row=gzPair(parts,true);row.classList.add('may-gpu-sizes');
+      row.setAttribute('role','group');row.setAttribute('aria-label','Большие поля на видеокарте');
+      for(const [index,half] of [...row.querySelectorAll('button')].entries())
+        half.setAttribute('aria-label',parts[index].tip);
+      sizeRows.push(row);pop.append(section(row,'size'),section(note,'size'));
     }
     let customInput = null, syncRowsThumb = () => {};   // draft applies only with Enter / Задать
     { const cr = document.createElement('div'); cr.className = 'may-rows-custom';

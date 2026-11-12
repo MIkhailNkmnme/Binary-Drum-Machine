@@ -565,6 +565,12 @@ fn previewColour(colour: u32) -> vec3<f32> {
         device.queue.writeBuffer(bitsBuf,0,bits);
         device.queue.writeBuffer(hasBuf,0,present);
       }
+      function writePackedPlaneRows({plane,y,rows,data}) {
+        if(dead||!['bits','present'].includes(plane)||!Number.isSafeInteger(y)||!Number.isSafeInteger(rows)||
+          y<0||rows<1||y+rows>H||!(data instanceof Uint32Array)||data.length!==rows*WW)
+          throw Error('Некорректная полоса для восстановления GPU-поля');
+        device.queue.writeBuffer(plane==='bits'?bitsBuf:hasBuf,y*WW*4,data);
+      }
       // Видеокарта → поле ядра; into — Int8Array W*H (по умолчанию новый)
       async function read(into) {
         const n = W * H, outBytes = Math.ceil(n / 4) * 4;
@@ -616,36 +622,39 @@ fn previewColour(colour: u32) -> vec3<f32> {
           return present?{x:left,y,width:right-left,height,stride,bits,present}:null;
         }finally{staging.destroy();}
       }
-      async function readPacked(current = () => true) {
-        const rowsPerCopy = Math.max(1, Math.floor((8 * 1048576) / (WW * 4)));
-        const staging = device.createBuffer({size: Math.min(H, rowsPerCopy) * WW * 4,
-          usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ});
-        async function copyPlane(source) {
-          const plane = new Uint32Array(words);
-          for (let row = 0; row < H; row += rowsPerCopy) {
-            if (!current() || dead) return null;
-            const start = row * WW, count = Math.min(rowsPerCopy, H - row) * WW;
-            const encoder = device.createCommandEncoder();
-            encoder.copyBufferToBuffer(source, start * 4, staging, 0, count * 4);
-            device.queue.submit([encoder.finish()]);
-            await staging.mapAsync(GPUMapMode.READ, 0, count * 4);
-            try {
-              if (!current() || dead) return null;
-              plane.set(new Uint32Array(staging.getMappedRange(0, count * 4)), start);
-            } finally {
-              staging.unmap();
-            }
+      async function* readPackedStrips(current=()=>true) {
+        const stripeRows=128,bytesPerRow=WW*4;
+        const staging=device.createBuffer({size:Math.min(H,stripeRows)*bytesPerRow,
+          usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+        async function readPlane(source,y,rows) {
+          if(dead||!current())return null;
+          const bytes=rows*bytesPerRow,encoder=device.createCommandEncoder();
+          encoder.copyBufferToBuffer(source,y*bytesPerRow,staging,0,bytes);
+          device.queue.submit([encoder.finish()]);
+          await staging.mapAsync(GPUMapMode.READ,0,bytes);
+          try{
+            if(dead||!current())return null;
+            return new Uint32Array(staging.getMappedRange(0,bytes)).slice();
+          }finally{staging.unmap();}
+        }
+        try{
+          for(let y=0;y<H;y+=stripeRows){
+            const rows=Math.min(stripeRows,H-y),bits=await readPlane(bitsBuf,y,rows);
+            if(!bits)return;
+            const present=await readPlane(hasBuf,y,rows);
+            if(!present)return;
+            yield {y,rows,bits,present};
           }
-          return plane;
+        }finally{staging.destroy();}
+      }
+      async function readPacked(current=()=>true) {
+        const bits=new Uint32Array(words),present=new Uint32Array(words);
+        let read=0;
+        for await(const strip of readPackedStrips(current)){
+          bits.set(strip.bits,strip.y*WW);present.set(strip.present,strip.y*WW);
+          read+=strip.rows;
         }
-        try {
-          const bits = await copyPlane(bitsBuf);
-          if (!bits) return null;
-          const present = await copyPlane(hasBuf);
-          return present ? {width: W, height: H, stride: WW, bits, present} : null;
-        } finally {
-          staging.destroy();
-        }
+        return read===H&&current()&&!dead?{width:W,height:H,stride:WW,bits,present}:null;
       }
       // Картинка окна (буфер pic, как img страницы): o = { VX, VW, VH — окно; tint: 0 — нет, 1 — по размаху lo…hi, 2 — пара (k); filled;
       // T — 6 цветов u32 (как rgba страницы), empty; zl — Int32Array ZL, затем ZR (или null); nb2 — «до треугольника», sides — [L0, R0, L1, R1];
@@ -743,7 +752,7 @@ fn previewColour(colour: u32) -> vec3<f32> {
         device.queue.submit([encoder.finish()]);
       }
       reset();
-      return { W, H, WW, anchor, reset, run, write, writePacked, read, readPacked, readPackedRegion, picture, readPic, writePic, render, renderPreview, done: () => device.queue.onSubmittedWorkDone(),
+      return { W, H, WW, anchor, reset, run, write, writePacked, writePackedPlaneRows, read, readPacked, readPackedRegion, readPackedStrips, picture, readPic, writePic, render, renderPreview, done: () => device.queue.onSubmittedWorkDone(),
         destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf,previewParams]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту

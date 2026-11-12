@@ -57,7 +57,7 @@
         catch(error){remove();throw error;}
       },
       async acquire(frame,job){if(cancelled||!child)throw Error('Прогон отменён');const owner=child,localChild=owner.contentWindow.maySnakeScanLocal;return cancellable(owner,()=>localChild.acquire(frame,job,()=>cancelled||child!==owner));},
-      async end(){remove();},cancel(){cancelled=true;for(const abort of [...pending])abort();remove();}
+      async end(){remove();},cancel(){cancelled=true;const name=child?.contentWindow?.maySnakeScanLocal?.cancelPacked?.();if(name)local.cleanupPacked?.(name);for(const abort of [...pending])abort();remove();}
     };
   }
   return {wholeGraph,downward,create,prepareOpen,deliverOpen};

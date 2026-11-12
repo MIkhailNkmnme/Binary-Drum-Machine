@@ -40,9 +40,11 @@
   }
   function context(snapshot,search={}){
     const {width:W,height:H,stride,bits,present}=snapshot||{};
+    // A row-backed reader stays in its owning worker; it returns raw bits.
+    const readValue=typeof snapshot?.readValue==='function'?snapshot.readValue.bind(snapshot):null;
+    const packed=bits instanceof Uint32Array&&present instanceof Uint32Array&&bits.length>=stride*H&&present.length>=stride*H;
     if(!Number.isSafeInteger(W)||W<1||!Number.isSafeInteger(H)||H<1||!Number.isSafeInteger(W*H)||
-      !Number.isSafeInteger(stride)||stride<Math.ceil(W/32)||!(bits instanceof Uint32Array)||!(present instanceof Uint32Array)||
-      bits.length<stride*H||present.length<stride*H)throw Error('Неполный упакованный снимок каталога');
+      !Number.isSafeInteger(stride)||stride<Math.ceil(W/32)||(!readValue&&!packed))throw Error('Неполный упакованный снимок каталога');
     if(search.joined||search.through||search.skipSpaces)throw Error('Каталог поддерживает обычные решётки без составной проекции и пропуска пустот');
     const anchor=search.anchor??0;
     if(!Number.isSafeInteger(anchor))throw Error('Некорректная ось каталога');
@@ -53,6 +55,11 @@
     if(lo&&lo.length<H||hi&&hi.length<H)throw Error('Неполные построчные границы каталога');
     const value=(r,c)=>{
       if(r<y0||r>=y1||c<x0||c>=x1||lo&&c<lo[r]||hi&&c>hi[r]||parities.length===1&&((c-anchor-r)&1)!==parities[0])return -1;
+      if(readValue){
+        const bit=readValue(r,c);
+        if(bit!==-1&&bit!==0&&bit!==1)throw new TypeError('Чтение снимка должно синхронно вернуть -1, 0 или 1.');
+        return bit<0?-1:bit^invert;
+      }
       const q=r*stride+Math.floor(c/32),shift=c&31;
       return present[q]>>>shift&1?(bits[q]>>>shift&1)^invert:-1;
     };
@@ -229,7 +236,9 @@
   async function query(method,catalog,options,{signal,onProgress=()=>{},worker=true,transferSnapshot=false}={}){
     if(!['compile','page','union'].includes(method))throw Error('Неизвестный запрос каталога');
     if(signal?.aborted)throw Error('Запрос отменён');
-    if(worker&&typeof Worker!=='undefined')return new Promise((resolve,reject)=>{
+    // Functions/OPFS access handles cannot be structured-cloned. A reader
+    // snapshot must execute in the realm where its bounded cache was opened.
+    if(worker&&typeof Worker!=='undefined'&&typeof options?.snapshot?.readValue!=='function')return new Promise((resolve,reject)=>{
       let instance,settled=false;
       const finish=(error,result)=>{if(settled)return;settled=true;signal?.removeEventListener('abort',abort);instance?.terminate();error?reject(error):resolve(result);};
       const abort=()=>finish(Error('Запрос отменён'));

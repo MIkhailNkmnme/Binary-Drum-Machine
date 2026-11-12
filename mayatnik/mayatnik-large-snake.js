@@ -22,9 +22,11 @@
   'use strict';
   function prepare(snapshot,options){
     const {width:W,height:H,stride,bits,present}=snapshot||{};
+    // A row-backed reader stays in its owning worker; it returns raw bits.
+    const readValue=typeof snapshot?.readValue==='function'?snapshot.readValue.bind(snapshot):null;
+    const packed=bits instanceof Uint32Array&&present instanceof Uint32Array&&bits.length>=stride*H&&present.length>=stride*H;
     if(!Number.isSafeInteger(W)||W<1||!Number.isSafeInteger(H)||H<1||!Number.isSafeInteger(W*H)||
-      !Number.isSafeInteger(stride)||stride<Math.ceil(W/32)||!(bits instanceof Uint32Array)||
-      !(present instanceof Uint32Array)||bits.length<stride*H||present.length<stride*H)
+      !Number.isSafeInteger(stride)||stride<Math.ceil(W/32)||(!readValue&&!packed))
       throw Error('Неполный упакованный снимок для поиска змеи.');
     if(options.skipSpaces||options.through||options.joined)throw Error('Упакованная змея требует обычные две решётки без пропуска пустот или составной проекции.');
     const anchor=options.anchor??0;
@@ -39,6 +41,11 @@
     if(lo&&lo.length<H||hi&&hi.length<H)throw Error('Неполные построчные границы поиска змеи.');
     const value=(r,c)=>{
       if(r<y0||r>=y1||c<x0||c>=x1||lo&&c<lo[r]||hi&&c>hi[r])return -1;
+      if(readValue){
+        const bit=readValue(r,c);
+        if(bit!==-1&&bit!==0&&bit!==1)throw new TypeError('Чтение снимка должно синхронно вернуть -1, 0 или 1.');
+        return bit<0?-1:bit^invert;
+      }
       const q=r*stride+Math.floor(c/32),shift=c&31;
       return present[q]>>>shift&1?(bits[q]>>>shift&1)^invert:-1;
     };

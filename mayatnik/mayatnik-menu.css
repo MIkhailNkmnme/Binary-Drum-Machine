@@ -1353,3 +1353,7 @@ header #paintTools.pt-dd .may-heat-period-control{background:transparent!importa
 .may-heat-period-outline :is(.may-heat-period-left-frame,.may-heat-period-right-frame){display:none;stroke:var(--c,#7cbcff)}
 .may-heat-period-control:has(.zcf-left:is(:hover,:focus-visible,.zcf-held)) .may-heat-period-left-frame,
 .may-heat-period-control:has(.zcf-right:is(:hover,:focus-visible,.zcf-held)) .may-heat-period-right-frame{display:block}
+
+.may-gpu-sizes button.gz-half{font:inherit;color:inherit;border:0}
+.may-gpu-size-note{max-width:120px;padding:3px 5px;white-space:normal;font-size:11px;line-height:1.25;color:var(--gz-txt,#dfe6f5)}
+.may-gpu-size-note[hidden]{display:none!important}
