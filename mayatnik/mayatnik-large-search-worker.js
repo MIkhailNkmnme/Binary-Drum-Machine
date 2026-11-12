@@ -1,6 +1,6 @@
 /* Acknowledge each packed strip before the host reads the next one. */
 'use strict';
-importScripts('mayatnik-packed-spool.js?v=1001-dev','mayatnik-packed-archive.js?v=1001-dev','mayatnik-large-search.js?v=1001-dev');
+importScripts('mayatnik-packed-spool.js?v=1001','mayatnik-packed-archive.js?v=1001','mayatnik-large-search.js?v=1001');
 
 const planes=['bits','present'];
 const stripeRows=128;
@@ -65,7 +65,7 @@ function bandBounds(snapshot,spool,visibleRows){
 }
 
 function catalogEngine(){
-  if(!self.MayatnikLargeSnakeCatalog)importScripts('mayatnik-large-snake-catalog.js?v=1001-dev');
+  if(!self.MayatnikLargeSnakeCatalog)importScripts('mayatnik-large-snake-catalog.js?v=1001');
   return self.MayatnikLargeSnakeCatalog;
 }
 
@@ -83,7 +83,7 @@ async function searchFrame(spool,{options,snake,archive,catalog,query},progress)
     return {result,archive:await archiveFrame(snapshot,spool)};
   }
   if(snake&&!self.MayatnikLargeSnake){
-    importScripts('mayatnik-large-snake.js?v=1001-dev');
+    importScripts('mayatnik-large-snake.js?v=1001');
     self.onmessage=receive;
   }
   const engine=snake?self.MayatnikLargeSnake:self.MayatnikLargeSearch;

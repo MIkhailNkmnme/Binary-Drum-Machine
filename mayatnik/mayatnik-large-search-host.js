@@ -23,7 +23,7 @@
 
   function start({header,strips,archived,request,current=()=>true,onProgress=()=>{}}){
     const token=Array.from(crypto.getRandomValues(new Uint32Array(4)),x=>x.toString(36)).join('-');
-    const name='mayatnik-spool-'+token+'.bin',worker=new Worker('mayatnik-large-search-worker.js?v=1001-dev');
+    const name='mayatnik-spool-'+token+'.bin',worker=new Worker('mayatnik-large-search-worker.js?v=1001');
     let pending=null,settled=false,resolveDone,rejectDone;
     const result=new Promise((resolve,reject)=>{resolveDone=resolve;rejectDone=reject;});
     function finish(error,value){

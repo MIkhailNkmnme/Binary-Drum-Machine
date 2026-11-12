@@ -30,6 +30,8 @@ const MAYATNIK = (() => {
       }
     }
   }
+  // В конусе одной вершины XOR даёт нечётность коэффициента C(row, column).
+  const seedConeBit = (row, column) => Number((row & column) === column);
   // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
   function cone(f, a, D, lastAt, stamp, mark, markValue) {
     for (const row of coneRows(f, a, D, lastAt, stamp, mark, markValue)) { /* полный проход */ }
@@ -146,6 +148,6 @@ const MAYATNIK = (() => {
     for (let j = 0; j < k; j++) { const o = offset(mode, j); if (o < lo) lo = o; if (o > hi) hi = o; }
     return [lo, hi];
   }
-  return { field, seedGapDirection, fillSeedGaps, cone, conePair, coneRows, conePairRows, offset, geometry, tint, tintPair, span };
+  return { field, seedGapDirection, fillSeedGaps, seedConeBit, cone, conePair, coneRows, conePairRows, offset, geometry, tint, tintPair, span };
 })();
 if (typeof module !== 'undefined') module.exports = MAYATNIK;

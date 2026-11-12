@@ -474,10 +474,37 @@ fn previewColour(colour: u32) -> vec3<f32> {
 
   async function create() {
     if (!navigator.gpu) throw new Error('В этом браузере нет WebGPU');
-    const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
-    if (!adapter) throw new Error('WebGPU: видеокарта не найдена');
-    const L = adapter.limits;
-    const device = await adapter.requestDevice({ requiredLimits: { maxStorageBufferBindingSize: L.maxStorageBufferBindingSize, maxBufferSize: L.maxBufferSize } });
+    const failures = [], describe = error => error?.message || String(error);
+    const unavailable = cause => {
+      const error = new Error('WebGPU: не удалось открыть видеокарту. ' + failures.join(' · '));
+      if (cause) error.cause = cause;
+      return error;
+    };
+    let adapter, device;
+    try {
+      adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+      if (!adapter) failures.push('Высокая производительность: адаптер не найден');
+    } catch (error) { failures.push('Высокая производительность: ' + describe(error)); }
+    if (!adapter) {
+      try { adapter = await navigator.gpu.requestAdapter(); }
+      catch (error) { failures.push('Адаптер по умолчанию: ' + describe(error)); throw unavailable(error); }
+      if (!adapter) { failures.push('Адаптер по умолчанию не найден'); throw unavailable(); }
+    }
+    try {
+      const L = adapter.limits;
+      device = await adapter.requestDevice({ requiredLimits: { maxStorageBufferBindingSize: L.maxStorageBufferBindingSize, maxBufferSize: L.maxBufferSize } });
+    } catch (maximumError) {
+      failures.push('Устройство с максимальными лимитами: ' + describe(maximumError));
+      // requestDevice can consume an adapter even when it rejects. Acquire
+      // a fresh default adapter for the one standard-limits fallback.
+      let fallback;
+      try { fallback = await navigator.gpu.requestAdapter(); }
+      catch (error) { failures.push('Повторный адаптер по умолчанию: ' + describe(error)); throw unavailable(error); }
+      if (!fallback) { failures.push('Повторный адаптер по умолчанию не найден'); throw unavailable(maximumError); }
+      try { device = await fallback.requestDevice(); }
+      catch (error) { failures.push('Устройство со стандартными лимитами: ' + describe(error)); throw unavailable(error); }
+      adapter = fallback;
+    }
     const fieldBufferLimit = Math.min(device.limits.maxStorageBufferBindingSize, device.limits.maxBufferSize);
     const stepModule = device.createShaderModule({ code: STEP_WGSL });
     const layout = device.createBindGroupLayout({ entries: [

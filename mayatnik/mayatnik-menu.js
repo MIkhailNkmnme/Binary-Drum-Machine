@@ -452,7 +452,7 @@
     { const host=document.createElement('div');host.className='may-rombo-controls';pop.append(section(host,'rombo'));
       const rombo=mountRomboControls(host,{after:()=>{rail.refresh();placeTools();}});toolSync.push(rombo.sync); }
     const meetingControls=label=>{const node=document.createElement('div');node.className='may-meeting-controls';node.hidden=true;node.setAttribute('role','group');node.setAttribute('aria-label',label);document.body.append(node);return node;};
-    const meetingSizes=meetingControls('Размер поля на линии встречи'),meetingModes=meetingControls('Число вершин на линии встречи');
+    const meetingSizes=meetingControls('Размер поля на линии встречи'),meetingModes=meetingControls('Число вершин и продолжение на линии встречи');
     const sizeRows = [];
     for (let i = 0; i < pres.length; i += 2) {
       const parts=pres.slice(i, i + 2).map(e=>({label:e.textContent,tip:e.title||('Построить '+e.textContent),data:{n:e.dataset.n},
@@ -749,7 +749,18 @@
     { const V = () => window.mayVMode, pickV = v => { V()?.pick(v); vsync(); rail.refresh(); placeTools(); };
       const modeParts=[{ label: 'N/3', data: { v: 'n3' }, on: () => (V()?.get() || '') === 'n3', click: () => pickV('n3') }, { label: '4N', data: { v: '4n' }, on: () => (V()?.get() || '') === '4n', click: () => pickV('4n') }];
       const vm=gzPair(modeParts),meetingMode=gzPair(modeParts,true);
-      vm.classList.add('may-hp-vm');meetingMode.classList.add('may-hp-vm');meetingModes.append(meetingMode);
+      vm.classList.add('may-hp-vm');meetingMode.classList.add('may-hp-vm');
+      const continuation=document.createElement('button');
+      continuation.type='button';continuation.className='gz-hx';continuation.dataset.n='meetingContinuationHorizon';
+      continuation.title='Продолжение битов вниз от точки встречи по XOR';
+      continuation.setAttribute('aria-label',continuation.title);
+      const label=document.createElement('span');label.className='gz-nm';label.textContent='Продолжение';continuation.append(label);
+      continuation.onclick=()=>{const control=window.mayMeetingContinuation;control?.set(!control.get());placeTools();};
+      const syncContinuation=()=>{
+        const on=!!window.mayMeetingContinuation?.get();
+        continuation.classList.toggle('gz-on',on);continuation.setAttribute('aria-pressed',String(on));
+      };
+      meetingModes.append(meetingMode,continuation);syncContinuation();
       function vsync() { vm.gzSync();meetingMode.gzSync();for (const h of [vm,meetingMode].flatMap(row=>[...row.querySelectorAll('.gz-half')])) {
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : window.mayComparison?.get().source ? 'Конечное поле: до последней вершины внутри рамки 2N−1' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
       let meetingState='';
@@ -763,6 +774,7 @@
           const modesX=Math.min(width-gutter-buttonWidth,Math.max(fieldRight+gap,center+gap+8));
           const rows=Math.min(3,Math.floor((height-y+half+2)/26));
           for(let i=0;i<meetingSizes.children.length;i++)meetingSizes.children[i].hidden=i>=rows;
+          continuation.hidden=rows<2;syncContinuation();
           meetingSizes.style.left=left+sizesX+'px';
           meetingModes.style.left=left+modesX+'px';
           meetingSizes.style.top=meetingModes.style.top=top+y-half+'px';
@@ -2095,6 +2107,12 @@
     }return row;
   }
   // All canonical axes controls and cleanup actions now exist; keep the rail group/key.
+  { const probe=document.createElement('button');probe.title='Продолжение битов вниз от точки встречи по XOR';
+    const b=ptBtn('meetingContinuation','steps',probe,()=>{const control=window.mayMeetingContinuation;control?.set(!control.get());placeTools();});
+    b.classList.add('gz-hx');b.querySelector('i').classList.add('gz-ic');
+    const name=document.createElement('span');name.className='gz-nm';name.textContent='Продолжение';b.append(name);
+    b.title=probe.title;b.setAttribute('aria-label',probe.title);gAxis.append(b);
+    toolSync.push(()=>{const on=!!window.mayMeetingContinuation?.get();b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}); }
   const axesPanel=window.MayatnikAxesPanel?.mount(gAxis,{icon,short:text=>window.HubButtonText?.shortCaption(text)||text,after:()=>{rail.refresh();placeTools();}});
   if(axesPanel)toolSync.push(axesPanel.sync);
   mountViewUtilities(gView);
