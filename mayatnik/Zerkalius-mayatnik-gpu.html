@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник на видеокарте — v0.004. v0.004: модуль v4. v0.003: модуль v3 (картинка и зеркала на видеокарте). v0.002: проверка и дочёта кусками (как при анимации). Проверка счёта WebGPU (mayatnik-gpu.js) против ядра MAYATNIK бит в бит и замер скорости. -->
+<!-- Zerkalius Маятник на видеокарте — v0.005. Просмотр поля 8192 строки из упакованных битов. v0.004: модуль v4. v0.003: модуль v3 (картинка и зеркала на видеокарте). v0.002: проверка и дочёта кусками (как при анимации). Проверка счёта WebGPU (mayatnik-gpu.js) против ядра MAYATNIK бит в бит и замер скорости. -->
 <!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник GPU — v0.004</title>
+<title>Zerkalius Маятник GPU — v0.005</title>
 <style>
   :root { color-scheme: dark; --bg: #0d1117; --fg: #d6dde8; --dim: #7d8899; --ok: #5fd38d; --bad: #ff6b6b; --acc: #7cbcff; }
   body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, sans-serif; }
@@ -15,10 +15,27 @@
   pre { background: #111823; border: 1px solid #222c3c; padding: 10px; white-space: pre-wrap; margin: 0; min-height: 40px; }
   .ok { color: var(--ok); } .bad { color: var(--bad); } .dim { color: var(--dim); }
   canvas { display: block; margin-top: 12px; max-width: 100%; image-rendering: pixelated; background: #000; }
+  #largeField { width: 100%; height: max(240px, calc(100dvh - 150px)); margin-top: 4px; touch-action: none; cursor: grab; }
+  #largeField:active { cursor: grabbing; }
+  #largePreview a { color: var(--acc); }
+  #largePreview select { font: inherit; color: var(--fg); background: #1a2230; border: 1px solid #2c3850; padding: 4px 8px; }
 </style>
 </head>
 <body>
-<h1>Маятник на видеокарте <span class="ver">v0.004</span></h1>
+<section id="largePreview" hidden>
+  <a href="Zerkalius-mayatnik.html">← Маятник</a>
+  <h1>8192 строки на видеокарте</h1>
+  <div class="row">
+    <label>Вершины <select id="largeRange"><option value="n3">N/3</option><option value="n">N</option><option value="4n">4N</option></select></label>
+    <button id="largeBuild" type="button">Построить</button>
+    <button id="largeFit" type="button" title="Показать всё поле">Обзор</button>
+    <button id="largeExact" type="button" title="Одна клетка на пиксель холста">1:1</button>
+  </div>
+  <div id="largeStatus" role="status">Подключаю WebGPU…</div>
+  <canvas id="largeField" tabindex="0" aria-label="Поле Маятника. Колесо или плюс и минус меняют масштаб. Перетаскивание или клавиши со стрелками двигают поле."></canvas>
+</section>
+<section id="gpuDiagnostics">
+<h1>Маятник на видеокарте <span class="ver">v0.005</span></h1>
 <div class="dim" id="gpuInfo">видеокарта: …</div>
 <div class="row">
   <button id="bCheck" title="Сверить счёт видеокарты с ядром MAYATNIK бит в бит на малых полях">Сверка с ядром</button>
@@ -28,10 +45,13 @@
 </div>
 <pre id="log"></pre>
 <canvas id="cv"></canvas>
+</section>
 <script src="mayatnik-core.js?v=5"></script>
-<script src="mayatnik-gpu.js?v=4"></script>
+<script src="mayatnik-gpu.js?v=998"></script>
+<script src="mayatnik-gpu-preview.js?v=998"></script>
 <script>
 (() => {
+  if (new URLSearchParams(location.search).get('preview') === '8192') return;
   const $ = id => document.getElementById(id), log = (s, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = s; $('log').append(d); };
   let gpu = null;
   const ready = (async () => { try { gpu = await MayatnikGPU.create(); const a = gpu.adapter; $('gpuInfo').textContent = 'видеокарта: ' + ([a.vendor, a.architecture, a.description].filter(Boolean).join(' · ') || 'есть'); }

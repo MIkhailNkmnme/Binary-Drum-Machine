@@ -418,6 +418,52 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
   return vec4<f32>(acc / n, 1.0);
 }`;
 
+  // Large-field preview reads the packed masks directly. No colour image
+  // proportional to the field dimensions is allocated.
+  const PREVIEW_WGSL = /* wgsl */`
+struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
+@group(0) @binding(0) var<uniform> params: View;
+@group(0) @binding(1) var<storage, read> bits: array<u32>;
+@group(0) @binding(2) var<storage, read> present: array<u32>;
+
+@vertex fn vertexMain(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
+  let x = f32((i << 1u) & 2u) * 2.0 - 1.0;
+  let y = f32(i & 2u) * 2.0 - 1.0;
+  return vec4<f32>(x, y, 0.0, 1.0);
+}
+
+@fragment fn fragmentMain(@builtin(position) pixel: vec4<f32>) -> @location(0) vec4<f32> {
+  let origin = vec2<f32>(params.x, params.y) + floor(pixel.xy) * params.step;
+  var lo = vec2<i32>(floor(origin));
+  var hi = vec2<i32>(ceil(origin + params.step));
+  if (params.step <= 1.0) {
+    lo = vec2<i32>(floor(origin + params.step * 0.5));
+    hi = lo + vec2<i32>(1);
+  }
+  lo = max(vec2<i32>(0), lo);
+  hi = min(vec2<i32>(params.width, params.height), hi);
+  if (any(hi <= lo)) { return vec4<f32>(0.0, 0.0, 0.0, 1.0); }
+  let first = lo.x / 32;
+  let last = (hi.x - 1) / 32;
+  let startMask = 0xffffffffu << u32(lo.x & 31);
+  let endMask = 0xffffffffu >> u32(31 - ((hi.x - 1) & 31));
+  var occupied = 0u;
+  var ones = 0u;
+  for (var row = lo.y; row < hi.y; row++) {
+    for (var word = first; word <= last; word++) {
+      let index = u32(row) * params.stride + u32(word);
+      let mask = select(0xffffffffu, startMask, word == first) & select(0xffffffffu, endMask, word == last);
+      let written = present[index] & mask;
+      occupied += countOneBits(written);
+      ones += countOneBits(written & bits[index]);
+    }
+  }
+  let one = vec3<f32>(232.0, 237.0, 245.0);
+  let zero = vec3<f32>(91.0, 100.0, 117.0);
+  let area = f32((hi.x - lo.x) * (hi.y - lo.y));
+  return vec4<f32>((one * f32(ones) + zero * f32(occupied - ones)) / (255.0 * area), 1.0);
+}`;
+
   const BG = { empty: 0, '1': 1, '0': 2, chess: 3 };
 
   async function create() {
@@ -440,6 +486,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
     const format = navigator.gpu.getPreferredCanvasFormat(), renderModule = device.createShaderModule({ code: RENDER_WGSL });
     const pipeRender = device.createRenderPipeline({ layout: 'auto', vertex: { module: renderModule, entryPoint: 'vs' },
       fragment: { module: renderModule, entryPoint: 'fs', targets: [{ format }] }, primitive: { topology: 'triangle-list' } });
+    let previewPipeline;
     const picModule = device.createShaderModule({ code: PIC_WGSL });
     const picLayout = device.createBindGroupLayout({ entries: [0, 1, 2, 3, 4, 5, 6].map(b => ({ binding: b, visibility: GPUShaderStage.COMPUTE,
       buffer: { type: b === 5 ? 'storage' : 'read-only-storage', hasDynamicOffset: b === 1 } })) });
@@ -453,7 +500,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
     // Поле W × H на видеокарте, сразу с фоном bg
     function field({ W, H, anchor = 0, bg = 'empty' }) {
       const WW = Math.ceil(W / 32) + 1, words = WW * H, bytes = words * 4;
-      if (bytes > device.limits.maxStorageBufferBindingSize) throw new Error(`Поле ${W}×${H} не помещается в один буфер видеокарты (${(bytes / 2 ** 20) | 0} МБ)`);
+      if (bytes > Math.min(device.limits.maxStorageBufferBindingSize, device.limits.maxBufferSize)) throw new Error(`Поле ${W}×${H} не помещается в один буфер видеокарты (${Math.ceil(bytes / 2 ** 20)} МиБ)`);
       const pBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       const bitsBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
       const hasBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
@@ -462,6 +509,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
       const PBuf = device.createBuffer({ size: 41 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       let tBuf = null, apBuf = null, bind = null, tCap = 0, apCap = 0, renderBind = null, dead = false;
       let pic = null, pic2 = null, picN = 0, zBuf = null, zCap = 0, qBuf = null, qCap = 0, picBind = null, win = null;
+      let previewParams, previewBind;
       const Q_INTS = 64;   // запись прохода: 8 чисел + до 14 центров по 4
       const setP = K => device.queue.writeBuffer(pBuf, 0, new Uint32Array([W, WW, H, K, anchor, BG[bg] ?? 0, 0, 0]));
       const bindFor = () => device.createBindGroup({ layout, entries: [
@@ -489,7 +537,7 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
           tInfo[t] = [khi - klo + 1, Math.ceil((Math.min(W, span + 2 * rmax + 1) + 64) / 32 / 64)];
         }
         device.queue.writeBuffer(tBuf, 0, tData); device.queue.writeBuffer(apBuf, 0, new Int32Array(apexes.flat()));
-        const CHUNK = 2048;   // шагов на одну отправку
+        const CHUNK = H >= 8192 ? 128 : 2048;   // шагов на одну отправку
         for (let c = 0; c < T; c += CHUNK) {
           const enc = device.createCommandEncoder(), pass = enc.beginComputePass(); pass.setPipeline(pipeStep);
           for (let t = c; t < Math.min(T, c + CHUNK); t++) { const [n, gx] = tInfo[t]; pass.setBindGroup(0, bind, [t * ALIGN]); pass.dispatchWorkgroups(gx, n); }
@@ -590,9 +638,35 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
         const enc = device.createCommandEncoder(), pass = enc.beginRenderPass({ colorAttachments: [{ view: context.getCurrentTexture().createView(), loadOp: 'clear', clearValue: { r: 0, g: 0, b: 0, a: 0 }, storeOp: 'store' }] });
         pass.setPipeline(pipeRender); pass.setBindGroup(0, renderBind); pass.draw(3); pass.end(); device.queue.submit([enc.finish()]);
       }
+      function renderPreview(context, {x, y, step}) {
+        if (dead) return;
+        if (!previewPipeline) {
+          const module = device.createShaderModule({code: PREVIEW_WGSL});
+          previewPipeline = device.createRenderPipeline({layout: 'auto', vertex: {module, entryPoint: 'vertexMain'},
+            fragment: {module, entryPoint: 'fragmentMain', targets: [{format}]}});
+        }
+        if (!previewBind) {
+          previewParams = device.createBuffer({size: 24, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST});
+          previewBind = device.createBindGroup({layout: previewPipeline.getBindGroupLayout(0), entries: [
+            {binding: 0, resource: {buffer: previewParams}}, {binding: 1, resource: {buffer: bitsBuf}},
+            {binding: 2, resource: {buffer: hasBuf}}]});
+        }
+        const data = new Float32Array(6);
+        data.set([x, y, step]);
+        new Uint32Array(data.buffer).set([WW, W, H], 3);
+        device.queue.writeBuffer(previewParams, 0, data);
+        const encoder = device.createCommandEncoder();
+        const pass = encoder.beginRenderPass({colorAttachments: [{view: context.getCurrentTexture().createView(),
+          loadOp: 'clear', clearValue: {r: 0, g: 0, b: 0, a: 1}, storeOp: 'store'}]});
+        pass.setPipeline(previewPipeline);
+        pass.setBindGroup(0, previewBind);
+        pass.draw(3);
+        pass.end();
+        device.queue.submit([encoder.finish()]);
+      }
       reset();
-      return { W, H, WW, anchor, reset, run, write, read, picture, readPic, writePic, render, done: () => device.queue.onSubmittedWorkDone(),
-        destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf]) x?.destroy(); } };
+      return { W, H, WW, anchor, reset, run, write, read, picture, readPic, writePic, render, renderPreview, done: () => device.queue.onSubmittedWorkDone(),
+        destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf,previewParams]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту
     function attach(canvas) { const ctx = canvas.getContext('webgpu'); ctx.configure({ device, format, alphaMode: 'premultiplied' }); return ctx; }

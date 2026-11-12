@@ -460,6 +460,23 @@
       const row=gzPair(parts),copy=gzPair(parts,true);
       sizeRows.push(row,copy);pop.append(section(row,'size'));meetingSizes.append(copy);
     }
+    {
+      const large=document.createElement('button');
+      large.type='button';large.className='gz-hx';large.dataset.n='mayGpuRows8192';
+      large.title='Открыть пробное поле на 8192 строки в GPU-просмотре';
+      large.setAttribute('aria-label',large.title);
+      const glyph=document.createElement('i');glyph.className='gz-ic';glyph.style.backgroundImage=icon(large,'grid');glyph.setAttribute('aria-hidden','true');
+      const label=document.createElement('span');label.className='gz-nm';label.textContent='8192';
+      large.append(glyph,label);
+      large.onclick=event=>{
+        event.stopPropagation();
+        const url=new URL('Zerkalius-mayatnik-gpu.html',location.href);
+        const pair=$('bPair').getAttribute('aria-pressed')==='true';
+        url.search=new URLSearchParams({preview:'8192',range:window.mayVMode?.get()||'n',mode:$('mode').value,pair:pair?'1':'0'}).toString();
+        window.open(url,'_blank','noopener');
+      };
+      pop.append(section(large,'size'));
+    }
     let customInput = null, syncRowsThumb = () => {};   // draft applies only with Enter / Задать
     { const cr = document.createElement('div'); cr.className = 'may-rows-custom';
       customInput = document.createElement('input'); customInput.type = 'number'; customInput.min = '8'; customInput.max = '4096'; customInput.step = '1';
