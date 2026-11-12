@@ -27,10 +27,11 @@
     if(best)return {...empty('Полная строка не найдена; показан максимальный префикс.'),partial:true,matched:best.matched,prefixCells:path(best.tail),variant:best.variant,variantFlags:best.variantFlags,variantIndex:best.variantIndex,variantLabel:best.variantLabel,text:best.text};
     return empty('От выбранного бита эта строка не найдена.');
   }
-  function* findSteps({width:W,height:H,val,start,text,inverse=false,reverse=false,half=false,rowReverseMask=false,allowed,chunkOperations=32768,maxOperations=Infinity,cancelled}){
-    if(!Number.isSafeInteger(W)||!Number.isSafeInteger(H)||W<1||H<1||!Number.isSafeInteger(W*H)||!val||val.length<W*H||!Number.isSafeInteger(start)||start<0||start>=W*H||typeof text!=='string'||!/^[01]+$/.test(text))throw new RangeError('Некорректные данные ручного поиска змеи.');
+  function* findSteps({width:W,height:H,val,readBit,start,text,inverse=false,reverse=false,half=false,rowReverseMask=false,allowed,chunkOperations=32768,maxOperations=Infinity,cancelled}){
+    if(!Number.isSafeInteger(W)||!Number.isSafeInteger(H)||W<1||H<1||!Number.isSafeInteger(W*H)||
+      (typeof readBit!=='function'&&(!val||val.length<W*H))||!Number.isSafeInteger(start)||start<0||start>=W*H||typeof text!=='string'||!/^[01]+$/.test(text))throw new RangeError('Некорректные данные ручного поиска змеи.');
     if(!(chunkOperations>0)||!(maxOperations>=0))throw new RangeError('Некорректный предел ручного поиска змеи.');
-    const readNode=q=>{const r=Math.floor(q/W),c=q%W;return {x:c,y:r,bit:allowed&&!allowed(q,r,c)?-1:val[q],edges:r+1<H?[...(c>0?[q+W-1]:[]),...(c+1<W?[q+W+1]:[])]:[]};};
+    const readNode=q=>{const r=Math.floor(q/W),c=q%W;return {x:c,y:r,bit:allowed&&!allowed(q,r,c)?-1:readBit?readBit(r,c):val[q],edges:r+1<H?[...(c>0?[q+W-1]:[]),...(c+1<W?[q+W+1]:[])]:[]};};
     return yield* anchoredSteps({readNode,size:W*H,start,text,inverse,reverse,half,rowReverseMask,chunkOperations,maxOperations,cancelled});
   }
   function findFrom(options){const steps=findSteps(options);let result;do{result=steps.next();}while(!result.done);return result.value;}

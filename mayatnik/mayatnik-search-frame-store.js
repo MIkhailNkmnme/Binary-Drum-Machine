@@ -52,7 +52,14 @@
       if(value!=null){const saved=clone(validateStored(value));entry.saved=saved;entry.snapshot=saved.snapshot;entry.anchor=clone(saved.record);}
       entry.loaded=true;
     }
-    function ensure(key,record){
+    function forgetPacked(entry,key,operation){
+      const forget=()=>{
+        if(entry.tail===operation&&entry.snapshot?.kind==='packed-ochki-v1')entries.delete(key);
+      };
+      operation.then(forget,forget);
+      return track(operation);
+    }
+    function ensure(key,record,captureFrame=capture){
       let entry,frozen,captured;
       try{
         keyOf(key);frozen=clone(validateRecord(record));entry=entryFor(key);
@@ -60,7 +67,7 @@
         // This invocation must stay synchronous: capture's host freezes the live field now.
         // A cold instance may discover an older persisted snapshot afterwards and prefer it.
         if(!entry.snapshot&&!entry.capture){
-          let candidate;try{candidate=capture(clone(frozen));}catch(error){candidate=Promise.reject(error);}
+          let candidate;try{candidate=captureFrame(clone(frozen));}catch(error){candidate=Promise.reject(error);}
           entry.capture=Promise.resolve(candidate).then(value=>({value:clone(validateSnapshot(value,frozen))}),error=>({error})).catch(error=>({error}));
         }
         captured=entry.capture;
@@ -78,12 +85,12 @@
         await cache.write(clone(stored),keyOf(key));entry.saved=stored;
         return clone(stored);
       });
-      entry.tail=operation;return track(operation);
+      entry.tail=operation;return forgetPacked(entry,key,operation);
     }
     function load(key){
       try{keyOf(key);}catch(error){return Promise.reject(error);}
       const entry=entryFor(key),operation=entry.tail.then(async()=>{const cache=await storage();await read(entry,key,cache);return entry.saved?clone(entry.saved):null;});
-      entry.tail=operation;return track(operation);
+      entry.tail=operation;return forgetPacked(entry,key,operation);
     }
     async function idle(){while(pending.size)await Promise.all([...pending]);}
     return {ensure,load,idle};

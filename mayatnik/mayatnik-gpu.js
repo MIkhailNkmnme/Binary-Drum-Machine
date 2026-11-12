@@ -421,7 +421,8 @@ fn packedColour(p:u32)->vec4<f32>{return vec4<f32>(vec3<f32>(f32(p&255u),f32((p>
   // Large-field preview reads the packed masks directly. No colour image
   // proportional to the field dimensions is allocated.
   const PREVIEW_WGSL = /* wgsl */`
-struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
+struct View { x: f32, y: f32, step: f32, stride: u32, right: i32, bottom: i32,
+  left: i32, zero: u32, one: u32, empty: u32 }
 @group(0) @binding(0) var<uniform> params: View;
 @group(0) @binding(1) var<storage, read> bits: array<u32>;
 @group(0) @binding(2) var<storage, read> present: array<u32>;
@@ -430,6 +431,9 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
   let x = f32((i << 1u) & 2u) * 2.0 - 1.0;
   let y = f32(i & 2u) * 2.0 - 1.0;
   return vec4<f32>(x, y, 0.0, 1.0);
+}
+fn previewColour(colour: u32) -> vec3<f32> {
+  return vec3<f32>(f32(colour & 255u), f32((colour >> 8u) & 255u), f32((colour >> 16u) & 255u));
 }
 
 @fragment fn fragmentMain(@builtin(position) pixel: vec4<f32>) -> @location(0) vec4<f32> {
@@ -440,9 +444,9 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
     lo = vec2<i32>(floor(origin + params.step * 0.5));
     hi = lo + vec2<i32>(1);
   }
-  lo = max(vec2<i32>(0), lo);
-  hi = min(vec2<i32>(params.width, params.height), hi);
-  if (any(hi <= lo)) { return vec4<f32>(0.0, 0.0, 0.0, 1.0); }
+  lo = max(vec2<i32>(params.left, 0), lo);
+  hi = min(vec2<i32>(params.right, params.bottom), hi);
+  if (any(hi <= lo)) { return vec4<f32>(0.0); }
   let first = lo.x / 32;
   let last = (hi.x - 1) / 32;
   let startMask = 0xffffffffu << u32(lo.x & 31);
@@ -458,10 +462,10 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
       ones += countOneBits(written & bits[index]);
     }
   }
-  let one = vec3<f32>(232.0, 237.0, 245.0);
-  let zero = vec3<f32>(91.0, 100.0, 117.0);
-  let area = f32((hi.x - lo.x) * (hi.y - lo.y));
-  return vec4<f32>((one * f32(ones) + zero * f32(occupied - ones)) / (255.0 * area), 1.0);
+  let area = u32((hi.x - lo.x) * (hi.y - lo.y));
+  let sum = previewColour(params.one) * f32(ones) + previewColour(params.zero) * f32(occupied - ones)
+    + previewColour(params.empty) * f32(area - occupied);
+  return vec4<f32>(sum / (255.0 * f32(area)), 1.0);
 }`;
 
   const BG = { empty: 0, '1': 1, '0': 2, chess: 3 };
@@ -554,6 +558,13 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
         for (let r = 0; r < H; r++) { const row = r * W, wr = r * WW; for (let c = 0; c < W; c++) { const v = val[row + c]; if (v < 0) continue; const q = wr + (c >> 5), m = 1 << (c & 31); h[q] |= m; if (v) b[q] |= m; } }
         device.queue.writeBuffer(bitsBuf, 0, b); device.queue.writeBuffer(hasBuf, 0, h);
       }
+      function writePacked({width,height,stride,bits,present}) {
+        if(dead||width!==W||height!==H||stride!==WW||
+          !(bits instanceof Uint32Array)||!(present instanceof Uint32Array)||
+          bits.length!==words||present.length!==words)throw Error('Размер сохранённого снимка не совпадает с GPU-полем');
+        device.queue.writeBuffer(bitsBuf,0,bits);
+        device.queue.writeBuffer(hasBuf,0,present);
+      }
       // Видеокарта → поле ядра; into — Int8Array W*H (по умолчанию новый)
       async function read(into) {
         const n = W * H, outBytes = Math.ceil(n / 4) * 4;
@@ -572,6 +583,69 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
         const val = into || new Int8Array(n); val.set(new Int8Array(rb.getMappedRange(), 0, n));
         return val;
         }finally{if(mapped)rb.unmap();rb?.destroy();out?.destroy();}
+      }
+      // Keep both bit planes packed. Map a short strip at a time, including
+      // the padding word of each row so readers keep the same GPU stride.
+      async function readPackedRegion({x,y,width,height},current=()=>true) {
+        if(![x,y,width,height].every(Number.isSafeInteger)||x<0||y<0||width<1||height<1||x+width>W||y+height>H)
+          throw Error('Область чтения вышла за пределы GPU-поля');
+        const firstWord=Math.floor(x/32),left=firstWord*32,right=x+width;
+        const stride=Math.ceil(right/32)-firstWord,bytes=stride*4;
+        const rowsPerCopy=Math.max(1,Math.floor((8*1048576)/bytes));
+        const staging=device.createBuffer({size:Math.min(height,rowsPerCopy)*bytes,
+          usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+        async function readPlane(source) {
+          const plane=new Uint32Array(stride*height);
+          for(let row=0;row<height;row+=rowsPerCopy){
+            if(dead||!current())return null;
+            const count=Math.min(rowsPerCopy,height-row),size=count*bytes,encoder=device.createCommandEncoder();
+            for(let i=0;i<count;i++)encoder.copyBufferToBuffer(source,((y+row+i)*WW+firstWord)*4,staging,i*bytes,bytes);
+            device.queue.submit([encoder.finish()]);
+            await staging.mapAsync(GPUMapMode.READ,0,size);
+            try{
+              if(dead||!current())return null;
+              plane.set(new Uint32Array(staging.getMappedRange(0,size)),row*stride);
+            }finally{staging.unmap();}
+          }
+          return plane;
+        }
+        try{
+          const bits=await readPlane(bitsBuf);
+          if(!bits)return null;
+          const present=await readPlane(hasBuf);
+          return present?{x:left,y,width:right-left,height,stride,bits,present}:null;
+        }finally{staging.destroy();}
+      }
+      async function readPacked(current = () => true) {
+        const rowsPerCopy = Math.max(1, Math.floor((8 * 1048576) / (WW * 4)));
+        const staging = device.createBuffer({size: Math.min(H, rowsPerCopy) * WW * 4,
+          usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ});
+        async function copyPlane(source) {
+          const plane = new Uint32Array(words);
+          for (let row = 0; row < H; row += rowsPerCopy) {
+            if (!current() || dead) return null;
+            const start = row * WW, count = Math.min(rowsPerCopy, H - row) * WW;
+            const encoder = device.createCommandEncoder();
+            encoder.copyBufferToBuffer(source, start * 4, staging, 0, count * 4);
+            device.queue.submit([encoder.finish()]);
+            await staging.mapAsync(GPUMapMode.READ, 0, count * 4);
+            try {
+              if (!current() || dead) return null;
+              plane.set(new Uint32Array(staging.getMappedRange(0, count * 4)), start);
+            } finally {
+              staging.unmap();
+            }
+          }
+          return plane;
+        }
+        try {
+          const bits = await copyPlane(bitsBuf);
+          if (!bits) return null;
+          const present = await copyPlane(hasBuf);
+          return present ? {width: W, height: H, stride: WW, bits, present} : null;
+        } finally {
+          staging.destroy();
+        }
       }
       // Картинка окна (буфер pic, как img страницы): o = { VX, VW, VH — окно; tint: 0 — нет, 1 — по размаху lo…hi, 2 — пара (k); filled;
       // T — 6 цветов u32 (как rgba страницы), empty; zl — Int32Array ZL, затем ZR (или null); nb2 — «до треугольника», sides — [L0, R0, L1, R1];
@@ -641,7 +715,8 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
         const enc = device.createCommandEncoder(), pass = enc.beginRenderPass({ colorAttachments: [{ view: context.getCurrentTexture().createView(), loadOp: 'clear', clearValue: { r: 0, g: 0, b: 0, a: 0 }, storeOp: 'store' }] });
         pass.setPipeline(pipeRender); pass.setBindGroup(0, renderBind); pass.draw(3); pass.end(); device.queue.submit([enc.finish()]);
       }
-      function renderPreview(context, {x, y, step}) {
+      function renderPreview(context, {x, y, step, left = 0, right = W, bottom = H,
+        zero = 0x75645b, one = 0xf5ede8, empty = 0}) {
         if (dead) return;
         if (!previewPipeline) {
           const module = device.createShaderModule({code: PREVIEW_WGSL});
@@ -649,14 +724,14 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
             fragment: {module, entryPoint: 'fragmentMain', targets: [{format}]}});
         }
         if (!previewBind) {
-          previewParams = device.createBuffer({size: 24, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST});
+          previewParams = device.createBuffer({size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST});
           previewBind = device.createBindGroup({layout: previewPipeline.getBindGroupLayout(0), entries: [
             {binding: 0, resource: {buffer: previewParams}}, {binding: 1, resource: {buffer: bitsBuf}},
             {binding: 2, resource: {buffer: hasBuf}}]});
         }
-        const data = new Float32Array(6);
+        const data = new Float32Array(10);
         data.set([x, y, step]);
-        new Uint32Array(data.buffer).set([WW, W, H], 3);
+        new Uint32Array(data.buffer).set([WW, right, bottom, left, zero, one, empty], 3);
         device.queue.writeBuffer(previewParams, 0, data);
         const encoder = device.createCommandEncoder();
         const pass = encoder.beginRenderPass({colorAttachments: [{view: context.getCurrentTexture().createView(),
@@ -668,7 +743,7 @@ struct View { x: f32, y: f32, step: f32, stride: u32, width: i32, height: i32 }
         device.queue.submit([encoder.finish()]);
       }
       reset();
-      return { W, H, WW, anchor, reset, run, write, read, picture, readPic, writePic, render, renderPreview, done: () => device.queue.onSubmittedWorkDone(),
+      return { W, H, WW, anchor, reset, run, write, writePacked, read, readPacked, readPackedRegion, picture, readPic, writePic, render, renderPreview, done: () => device.queue.onSubmittedWorkDone(),
         destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf,axesBuf,previewParams]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту

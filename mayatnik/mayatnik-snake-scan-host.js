@@ -51,7 +51,7 @@
     return {
       captureRun:()=>local.captureRun(),
       async begin(job){
-        remove();cancelled=false;const url=new URL(root.location.href);url.search='?chisto=1&gpu=0&snakeSandbox=1';url.hash='';
+        remove();cancelled=false;const url=new URL(root.location.href);url.search=job.packed?'?chisto=1&gpu=1&snakeSandbox=1&n=8&k=0':'?chisto=1&gpu=0&snakeSandbox=1';url.hash='';
         const frame=root.document.createElement('iframe');frame.title='Изолированный расчёт кадров';frame.tabIndex=-1;frame.setAttribute('aria-hidden','true');Object.assign(frame.style,{position:'fixed',left:'-100000px',top:'0',width:Math.max(1,root.innerWidth)+'px',height:Math.max(1,root.innerHeight)+'px',visibility:'hidden',pointerEvents:'none',border:'0'});child=frame;frame.src=url.href;root.document.body.append(frame);
         try{const deadline=Date.now()+120000;while(!frame.contentWindow?.maySnakeScanLocal?.ready()){if(cancelled||child!==frame)throw Error('Прогон отменён');if(Date.now()>deadline)throw Error('Не загрузилась изолированная страница');await new Promise(r=>root.setTimeout(r,20));}await cancellable(frame,()=>frame.contentWindow.maySnakeScanLocal.load(job));}
         catch(error){remove();throw error;}
