@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import zipfile
 import hashlib
+import sys
 
 ROOT = Path(__file__).resolve().parent
 
@@ -25,10 +26,17 @@ def main():
             notices.append((src, 'Notifications/'+Path(src).name))
     for p in art['wallpapers']:
         walls.append((p['src'], 'Wallpapers/'+p['variant']+'/'+Path(p['src']).name))
+    geometric=[(p['src'], 'Wallpapers/'+p['category']+'/'+Path(p['src']).name)
+               for p in art['wallpapers'] if p.get('category')]
     groups={'zerkalius-music':sound, 'zerkalius-notifications':notices,
             'zerkalius-wallpapers':walls, 'zerkalius-phone-theme':sound+notices+walls}
+    if geometric: groups['zerkalius-geometric-wallpapers']=geometric
     instructions=(ROOT/'DOWNLOADS.txt').read_bytes()
     report=[]
+    if '--wallpapers-only' in sys.argv:
+        groups={key:value for key,value in groups.items() if key not in ['zerkalius-music','zerkalius-notifications']}
+        previous=json.loads((downloads/'manifest.json').read_text(encoding='utf-8'))
+        report=[row for row in previous if Path(row['file']).stem not in groups]
     for name,files in groups.items():
         target=downloads/(name+'.zip')
         with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:

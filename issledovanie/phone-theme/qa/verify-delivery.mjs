@@ -4,6 +4,8 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 const repo=path.resolve(import.meta.dirname,'../../..');
 const commit=process.argv[2];
+const reportName=process.argv[3]||'delivery.json';
+if(!/^[a-z0-9-]+\.json$/.test(reportName))throw new Error('Report filename required');
 if(!/^[0-9a-f]{8,40}$/.test(commit||''))throw new Error('Commit required');
 const git=(args)=>execFileSync('git',args,{cwd:repo,maxBuffer:80*1024*1024});
 const full=git(['rev-parse',commit]).toString().trim();
@@ -27,6 +29,6 @@ for(let i=0;i<paths.length;i+=6){
 }
 rows.sort((a,b)=>a.path.localeCompare(b.path));
 const report={commit:full,checkedAt:new Date().toISOString(),deployment:{id:deployment.id,url:deployment.html_url,status:deployment.conclusion},files:rows.length,matched:rows.filter(r=>r.match).length,rows};
-await fs.writeFile(repo+'/issledovanie/phone-theme/qa/delivery.json',JSON.stringify(report,null,2)+'\n');
+await fs.writeFile(repo+'/issledovanie/phone-theme/qa/'+reportName,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({commit,files:report.files,matched:report.matched,failures:rows.filter(r=>!r.match),deployment:deployment.id}));
 process.exitCode=report.files===report.matched?0:1;

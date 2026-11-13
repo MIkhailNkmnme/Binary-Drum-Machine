@@ -1,0 +1,35 @@
+{
+  "viewports": [
+    {
+      "client": 305,
+      "columns": "132.5px 132.5px",
+      "content": 305,
+      "wallpapers": 27,
+      "width": 320
+    },
+    {
+      "client": 375,
+      "columns": "161.5px 161.5px",
+      "content": 375,
+      "wallpapers": 27,
+      "width": 390
+    },
+    {
+      "client": 1425,
+      "columns": "394.656px 394.672px 394.656px",
+      "content": 1425,
+      "wallpapers": 27,
+      "width": 1440
+    }
+  ],
+  "observed": {
+    "rgbAnchor": true,
+    "rgbPreviewsLoaded": 3,
+    "fullPng": [
+      1440,
+      3200
+    ],
+    "archiveDownloaded": true
+  },
+  "physicalPhoneInstallationTested": false
+}

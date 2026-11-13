@@ -1,0 +1,19 @@
+{
+  "localReferences": 265,
+  "brokenReferences": [],
+  "uniqueIds": 39,
+  "images": 30,
+  "wallpapers": 27,
+  "newWallpapers": 15,
+  "categories": {
+    "sierpinski": 3,
+    "animatrix": 3,
+    "pendulums": 3,
+    "rhombi": 3,
+    "rgb": 3
+  },
+  "originalArtFilesUnchanged": 36,
+  "audioUnchanged": true,
+  "physicalPhoneInstallationTested": false,
+  "downloadMatchesArchive": true
+}

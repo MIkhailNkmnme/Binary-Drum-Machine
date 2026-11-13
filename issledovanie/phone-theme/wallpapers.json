@@ -587,6 +587,1388 @@
           358
         ]
       }
+    },
+    {
+      "id": "geometric-sierpinski-solar",
+      "title": "Солнечный Серпинский",
+      "variant": "color",
+      "category": "sierpinski",
+      "description": "Единственная единица рождает 32 строки по правилу 90. Каждый бит — XOR двух верхних соседей, цвет меняется по высоте.",
+      "src": "wallpapers/geometric-sierpinski-solar.png",
+      "thumb": "wallpapers/geometric-sierpinski-solar-thumb.png",
+      "svg": "art/geometric-sierpinski-solar.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "rule": 90,
+        "equation": "left XOR right",
+        "seeds": [
+          0
+        ],
+        "anchor": 31,
+        "boundary": "zero",
+        "field": {
+          "width": 63,
+          "height": 32,
+          "sha256": "112710630f64be13f91d6f183d5d2ec155d443d3b374a59781de45e4d5466f54",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "triangle",
+        "palette": [
+          [
+            "#fff68a",
+            "#ffe04c",
+            "#ffac25",
+            "#ff573d",
+            "#ed3976"
+          ]
+        ],
+        "placement": [
+          {
+            "x": 65,
+            "y": 570,
+            "w": 590,
+            "h": 674
+          }
+        ],
+        "transforms": [
+          "translate(65 570) scale(9.365 21.063)"
+        ],
+        "binomialParityCheck": true,
+        "background": {
+          "ground": "#16072a",
+          "halo": "#612233"
+        },
+        "interaction": "Единственная единица рождает 32 строки по правилу 90. Каждый бит — XOR двух верхних соседей, цвет меняется по высоте."
+      }
+    },
+    {
+      "id": "geometric-sierpinski-electric",
+      "title": "Электрический Серпинский",
+      "variant": "color",
+      "category": "sierpinski",
+      "description": "Один кадр правила 90 повторён дважды. Нижняя копия отражена относительно общей базы, оттенки обеих половин различаются.",
+      "src": "wallpapers/geometric-sierpinski-electric.png",
+      "thumb": "wallpapers/geometric-sierpinski-electric-thumb.png",
+      "svg": "art/geometric-sierpinski-electric.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "rule": 90,
+        "equation": "left XOR right",
+        "seeds": [
+          0
+        ],
+        "anchor": 63,
+        "boundary": "zero",
+        "field": {
+          "width": 127,
+          "height": 64,
+          "sha256": "5e3a8cf45a367814ded641e1ef38d50559dcb33746527a66a0f86bc1eaab8e4f",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "diamond",
+        "palette": [
+          [
+            "#f3ff88",
+            "#81f94d",
+            "#34f4c9",
+            "#23d8ff"
+          ],
+          [
+            "#ffffff",
+            "#a9a9ff",
+            "#6673ff",
+            "#3b53fa"
+          ]
+        ],
+        "placement": [
+          {
+            "x": 50,
+            "y": 450,
+            "w": 620,
+            "h": 476
+          },
+          {
+            "x": 50,
+            "y": 930,
+            "w": 620,
+            "h": 476,
+            "flipY": true
+          }
+        ],
+        "transforms": [
+          "translate(50 450) scale(4.882 7.438)",
+          "translate(50 1406) scale(4.882 -7.438)"
+        ],
+        "binomialParityCheck": true,
+        "background": {
+          "ground": "#040d29",
+          "halo": "#213a70"
+        },
+        "interaction": "Один кадр правила 90 повторён дважды. Нижняя копия отражена относительно общей базы, оттенки обеих половин различаются."
+      }
+    },
+    {
+      "id": "geometric-sierpinski-interference",
+      "title": "Серпинский в три голоса",
+      "variant": "color",
+      "category": "sierpinski",
+      "description": "Правило 90 одновременно развивает три единичных затравки. В местах встречи пары единиц взаимно гасятся по XOR.",
+      "src": "wallpapers/geometric-sierpinski-interference.png",
+      "thumb": "wallpapers/geometric-sierpinski-interference-thumb.png",
+      "svg": "art/geometric-sierpinski-interference.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "rule": 90,
+        "equation": "left XOR right",
+        "seeds": [
+          -36,
+          0,
+          36
+        ],
+        "anchor": 112,
+        "boundary": "zero",
+        "field": {
+          "width": 225,
+          "height": 78,
+          "sha256": "00ec1b18e8c4627462a98c82fa76c01234702a6b070f04a87a4da8f63c2aa6be",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "squares",
+        "palette": [
+          [
+            "#6cf8e8",
+            "#68eeff",
+            "#bb9bff",
+            "#ff6fcf",
+            "#ff9d95",
+            "#ffe787"
+          ]
+        ],
+        "placement": [
+          {
+            "x": -30,
+            "y": 512,
+            "w": 780,
+            "h": 825
+          }
+        ],
+        "transforms": [
+          "translate(-30 512) scale(3.467 10.577)"
+        ],
+        "binomialParityCheck": true,
+        "background": {
+          "ground": "#26071f",
+          "halo": "#823553"
+        },
+        "interaction": "Правило 90 одновременно развивает три единичных затравки. В местах встречи пары единиц взаимно гасятся по XOR."
+      }
+    },
+    {
+      "id": "geometric-animatrix-gaps",
+      "title": "Аниматрица · Пустоты",
+      "variant": "color",
+      "category": "animatrix",
+      "description": "Режим «Пустоты ↓» отражает строки через межстрочные оси и складывает копии XOR в свободных клетках. Цвет отмечает разницу с исходником.",
+      "src": "wallpapers/geometric-animatrix-gaps.png",
+      "thumb": "wallpapers/geometric-animatrix-gaps-thumb.png",
+      "svg": "art/geometric-animatrix-gaps.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "modules": [
+          "mayatnik/mayatnik-animatrix-source.js",
+          "mayatnik/mayatnik-animatrix-core.js"
+        ],
+        "seed": {
+          "factory": "MayatnikAnimatrixSource.demo",
+          "rows": 48,
+          "type": "clean",
+          "algorithm": "copyRows"
+        },
+        "sourceFrame": 47,
+        "cycleFrames": 47,
+        "sha256Seed": "f816841a2233ac37aa99f6ad93e4a537441f5212a9490123b115d7a71fe12591",
+        "options": {
+          "animatrixOn": true,
+          "animatrixSourceKind": null,
+          "animatrixAlgorithm": "copyRows",
+          "animatrixTiming": "rows",
+          "animatrixDirection": "down",
+          "animatrixCycles": 4,
+          "animatrixCycleMode": "finite",
+          "animatrixFrameMax": 0,
+          "animatrixColours": "inherit",
+          "animatrixEdgeColourMode": "change",
+          "animatrixEdgePalette": 0,
+          "animatrixExcelColourChangesOnly": true,
+          "animatrixStaggeredGrid": null,
+          "animatrixEvolution": 1,
+          "animatrixCopyRowsLayout": "mirrorGaps"
+        },
+        "field": {
+          "width": 95,
+          "height": 48,
+          "sha256": "979e5cbc99d9f9df43b53187f0d0f2c9afab15e6ee5f2894dc0f543e471123d7",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "diamond",
+        "palette": [
+          [
+            "#54ffac",
+            "#f8e35e",
+            "#ff748c",
+            "#174a51"
+          ]
+        ],
+        "placement": [
+          {
+            "x": 47,
+            "y": 535,
+            "w": 626,
+            "h": 732
+          }
+        ],
+        "transforms": [
+          "translate(47 535) scale(6.589 15.25)"
+        ],
+        "background": {
+          "ground": "#071e1b",
+          "halo": "#15534e"
+        },
+        "interaction": "Режим «Пустоты ↓» отражает строки через межстрочные оси и складывает копии XOR в свободных клетках. Цвет отмечает разницу с исходником."
+      }
+    },
+    {
+      "id": "geometric-animatrix-wave",
+      "title": "Аниматрица · Два соседа",
+      "variant": "color",
+      "category": "animatrix",
+      "description": "Исходник «Пример» проходит 110 шагов построчной волны «Клетки XOR». Цвета различают новые, сохранённые и погасшие единицы. Вторая панель зеркальна.",
+      "src": "wallpapers/geometric-animatrix-wave.png",
+      "thumb": "wallpapers/geometric-animatrix-wave-thumb.png",
+      "svg": "art/geometric-animatrix-wave.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "modules": [
+          "mayatnik/mayatnik-animatrix-source.js",
+          "mayatnik/mayatnik-animatrix-core.js"
+        ],
+        "seed": {
+          "factory": "MayatnikAnimatrixSource.demo",
+          "rows": 64,
+          "type": "example",
+          "algorithm": "two"
+        },
+        "sourceFrame": 110,
+        "cycleFrames": 63,
+        "sha256Seed": "3a66f84dda7d2a1729b2059d5f6adf2b4dd920ea966381fd1c6db159e8a6bd2d",
+        "options": {
+          "animatrixOn": true,
+          "animatrixSourceKind": null,
+          "animatrixAlgorithm": "two",
+          "animatrixTiming": "rows",
+          "animatrixDirection": "down",
+          "animatrixCycles": 4,
+          "animatrixCycleMode": "finite",
+          "animatrixFrameMax": 0,
+          "animatrixColours": "inherit",
+          "animatrixEdgeColourMode": "change",
+          "animatrixEdgePalette": 0,
+          "animatrixExcelColourChangesOnly": true,
+          "animatrixStaggeredGrid": null,
+          "animatrixEvolution": 1
+        },
+        "field": {
+          "width": 127,
+          "height": 64,
+          "sha256": "4b143e1677463f57b4ddecededab45408f81f6ad5aaf1a5d5cce538c7fa1d448",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "squares",
+        "palette": [
+          [
+            "#ff9f2f",
+            "#fff376",
+            "#fd54b9",
+            "#411263"
+          ],
+          [
+            "#43eeff",
+            "#dafdff",
+            "#bb70ff",
+            "#211a60"
+          ]
+        ],
+        "placement": [
+          {
+            "x": 50,
+            "y": 454,
+            "w": 620,
+            "h": 466
+          },
+          {
+            "x": 50,
+            "y": 949,
+            "w": 620,
+            "h": 466,
+            "flipX": true,
+            "flipY": true
+          }
+        ],
+        "transforms": [
+          "translate(50 454) scale(4.882 7.281)",
+          "translate(670 1415) scale(-4.882 -7.281)"
+        ],
+        "background": {
+          "ground": "#13052f",
+          "halo": "#4e2866"
+        },
+        "interaction": "Исходник «Пример» проходит 110 шагов построчной волны «Клетки XOR». Цвета различают новые, сохранённые и погасшие единицы. Вторая панель зеркальна."
+      }
+    },
+    {
+      "id": "geometric-animatrix-excel",
+      "title": "Аниматрица · Excel-маятник",
+      "variant": "color",
+      "category": "animatrix",
+      "description": "Один бит в середине запускает режим Excel «Треугольник Маятник». В кадре 75 верхняя и нижняя части растут от движущейся вершины.",
+      "src": "wallpapers/geometric-animatrix-excel.png",
+      "thumb": "wallpapers/geometric-animatrix-excel-thumb.png",
+      "svg": "art/geometric-animatrix-excel.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "modules": [
+          "mayatnik/mayatnik-animatrix-source.js",
+          "mayatnik/mayatnik-animatrix-core.js"
+        ],
+        "seed": {
+          "factory": "MayatnikAnimatrixSource.demo",
+          "rows": 64,
+          "type": "clean",
+          "algorithm": "excelTrianglePend"
+        },
+        "sourceFrame": 75,
+        "cycleFrames": 127,
+        "sha256Seed": "468941cd37c3344e7e23ecd40927d51f39d1641e9bb33c52cacab21952e8dafe",
+        "options": {
+          "animatrixOn": true,
+          "animatrixSourceKind": null,
+          "animatrixAlgorithm": "excelTrianglePend",
+          "animatrixTiming": "rows",
+          "animatrixDirection": "down",
+          "animatrixCycles": 4,
+          "animatrixCycleMode": "finite",
+          "animatrixFrameMax": 0,
+          "animatrixColours": "inherit",
+          "animatrixEdgeColourMode": "change",
+          "animatrixEdgePalette": 0,
+          "animatrixExcelColourChangesOnly": true,
+          "animatrixStaggeredGrid": null,
+          "animatrixEvolution": 1,
+          "animatrixExcelDepth": 64
+        },
+        "field": {
+          "width": 127,
+          "height": 64,
+          "sha256": "a91519c5c9aac1d92df20d5d6c1986b56ca0260ec7b4c613a3e684281f8fb767",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "squares",
+        "palette": [
+          [
+            "#40b4ff",
+            "#fff9b3",
+            "#ff58ab",
+            "#2d214f"
+          ]
+        ],
+        "placement": [
+          {
+            "x": 53,
+            "y": 503,
+            "w": 614,
+            "h": 841
+          }
+        ],
+        "transforms": [
+          "translate(53 503) scale(4.835 13.141)"
+        ],
+        "background": {
+          "ground": "#070827",
+          "halo": "#313c8a"
+        },
+        "interaction": "Один бит в середине запускает режим Excel «Треугольник Маятник». В кадре 75 верхняя и нижняя части растут от движущейся вершины."
+      }
+    },
+    {
+      "id": "geometric-pendulums-duet",
+      "title": "Маятники · Зеркальный дуэт",
+      "variant": "color",
+      "category": "pendulums",
+      "description": "Обычный и обратный маятники встречаются после вертикального отражения и сдвига B. XOR оставляет единицы, присутствующие только в одном поле.",
+      "src": "wallpapers/geometric-pendulums-duet.png",
+      "thumb": "wallpapers/geometric-pendulums-duet-thumb.png",
+      "svg": "art/geometric-pendulums-duet.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "module": "mayatnik/mayatnik-synthesis-pendulums.js",
+        "tick": 49,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pendR",
+          "depth": 64,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 19,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "xor",
+          "history": "none",
+          "trailLength": 8
+        },
+        "anchor": 84,
+        "sha256A": "a1de8e9fb2406b2f951da74b3435137df8088248d18342b78fa520d75931e360",
+        "sha256B": "866a3b6ff1578c15a0145d697ef709a186dc1e75a6892febdac317907122418c",
+        "field": {
+          "width": 169,
+          "height": 64,
+          "sha256": "d38cb288ff2aa0c35d4c3bb6c1f20d8ad75d32bc5375740540aff9d39ce6e604",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "squares",
+        "palette": [
+          [
+            "#3cf6ff",
+            "#ffb02b",
+            "#fff68c",
+            "#b289ff",
+            "#7257e0",
+            "#412f9a"
+          ]
+        ],
+        "placement": [
+          {
+            "x": -5,
+            "y": 562,
+            "w": 730,
+            "h": 711
+          }
+        ],
+        "transforms": [
+          "translate(-5 562) scale(4.32 11.109)"
+        ],
+        "background": {
+          "ground": "#080c2b",
+          "halo": "#303a79"
+        },
+        "interaction": "Обычный и обратный маятники встречаются после вертикального отражения и сдвига B. XOR оставляет единицы, присутствующие только в одном поле."
+      }
+    },
+    {
+      "id": "geometric-pendulums-counter",
+      "title": "Маятники · Встречный ход",
+      "variant": "color",
+      "category": "pendulums",
+      "description": "Левая и правая последовательности вершин встречаются после поворота B на 180°. OR сохраняет объединение, совпадения окрашены светлее.",
+      "src": "wallpapers/geometric-pendulums-counter.png",
+      "thumb": "wallpapers/geometric-pendulums-counter-thumb.png",
+      "svg": "art/geometric-pendulums-counter.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "module": "mayatnik/mayatnik-synthesis-pendulums.js",
+        "tick": 62,
+        "options": {
+          "sourceA": "left",
+          "sourceB": "right",
+          "depth": 64,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "rotate180",
+          "shiftX": 20,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "or",
+          "history": "none",
+          "trailLength": 8
+        },
+        "anchor": 87,
+        "sha256A": "09cab8fe0ec284ef08b6931c8e8513e26968f1854c96ab212a08ca6a254bd74d",
+        "sha256B": "07ad792ef32e843aa6476b7c68aae211eb78d6441d097cf5e1fb6fe29335d3d2",
+        "field": {
+          "width": 175,
+          "height": 64,
+          "sha256": "a77807e8feb6112e0cb929576b6a8f7d9741e327e62c61cf4f14ca9222deed55",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "squares",
+        "palette": [
+          [
+            "#fa7832",
+            "#ff5bb2",
+            "#ffe16d",
+            "#ffd59a",
+            "#98455e",
+            "#723e60"
+          ]
+        ],
+        "placement": [
+          {
+            "x": 39,
+            "y": 501,
+            "w": 642,
+            "h": 850
+          }
+        ],
+        "transforms": [
+          "translate(39 501) scale(3.669 13.281)"
+        ],
+        "background": {
+          "ground": "#270a0b",
+          "halo": "#6f331e"
+        },
+        "interaction": "Левая и правая последовательности вершин встречаются после поворота B на 180°. OR сохраняет объединение, совпадения окрашены светлее."
+      }
+    },
+    {
+      "id": "geometric-pendulums-trail",
+      "title": "Маятники · Восемь кадров следа",
+      "variant": "color",
+      "category": "pendulums",
+      "description": "Обычный маятник сравнивается XOR с отражённой и задержанной последовательностью парных вершин. Яркость следа отмечает возраст клетки за восемь кадров.",
+      "src": "wallpapers/geometric-pendulums-trail.png",
+      "thumb": "wallpapers/geometric-pendulums-trail-thumb.png",
+      "svg": "art/geometric-pendulums-trail.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "module": "mayatnik/mayatnik-synthesis-pendulums.js",
+        "tick": 59,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pair",
+          "depth": 64,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 13,
+          "delayB": 5,
+          "transformB": "mirrorY",
+          "shiftX": -34,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "xor",
+          "history": "trail",
+          "trailLength": 8
+        },
+        "anchor": 91,
+        "sha256A": "2de08b10311d4a1dfcdef3e6d7c0ce79a5eef6813cf0c9a88cd241e399ca0bb6",
+        "sha256B": "a4fc45a37e77fa74b248b514f871acbcab8f94006130ac072f19c7c5b4a98428",
+        "field": {
+          "width": 183,
+          "height": 64,
+          "sha256": "a012ffbada75dc1bb9ffcf3e95cab13e9831848cc1ac455d084044b67dbfaa4e",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "squares",
+        "palette": [
+          [
+            "#96e4ff",
+            "#ff84fd",
+            "#fff2a8",
+            "#a5aaff",
+            "#915cf5",
+            "#542db1"
+          ]
+        ],
+        "placement": [
+          {
+            "x": 14,
+            "y": 518,
+            "w": 692,
+            "h": 842
+          }
+        ],
+        "transforms": [
+          "translate(14 518) scale(3.781 13.156)"
+        ],
+        "background": {
+          "ground": "#0a0928",
+          "halo": "#403173"
+        },
+        "interaction": "Обычный маятник сравнивается XOR с отражённой и задержанной последовательностью парных вершин. Яркость следа отмечает возраст клетки за восемь кадров."
+      }
+    },
+    {
+      "id": "geometric-rhombi-aurora",
+      "title": "Ромбы · Полярный свет",
+      "variant": "color",
+      "category": "rhombi",
+      "description": "Четыре копии треугольника Серпинского образуют два ромба. Каждая пара зеркальна по горизонтальному стыку.",
+      "src": "wallpapers/geometric-rhombi-aurora.png",
+      "thumb": "wallpapers/geometric-rhombi-aurora-thumb.png",
+      "svg": "art/geometric-rhombi-aurora.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "rule": 90,
+        "equation": "left XOR right",
+        "seeds": [
+          0
+        ],
+        "anchor": 31,
+        "boundary": "zero",
+        "field": {
+          "width": 63,
+          "height": 32,
+          "sha256": "112710630f64be13f91d6f183d5d2ec155d443d3b374a59781de45e4d5466f54",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "triangle",
+        "palette": [
+          [
+            "#f7ff9d",
+            "#b2ff76",
+            "#62ffb4",
+            "#34e4d5"
+          ],
+          [
+            "#e6eaff",
+            "#9cbbff",
+            "#8375ff",
+            "#6135ed"
+          ],
+          [
+            "#81ffd4",
+            "#59ddf8",
+            "#57acff",
+            "#6183ff"
+          ],
+          [
+            "#fff49d",
+            "#ffd76a",
+            "#ff9967",
+            "#ff6985"
+          ]
+        ],
+        "placement": [
+          {
+            "x": 65,
+            "y": 466,
+            "w": 590,
+            "h": 316
+          },
+          {
+            "x": 65,
+            "y": 782,
+            "w": 590,
+            "h": 316,
+            "flipY": true
+          },
+          {
+            "x": 155,
+            "y": 1000,
+            "w": 410,
+            "h": 224
+          },
+          {
+            "x": 155,
+            "y": 1224,
+            "w": 410,
+            "h": 224,
+            "flipY": true
+          }
+        ],
+        "transforms": [
+          "translate(65 466) scale(9.365 9.875)",
+          "translate(65 1098) scale(9.365 -9.875)",
+          "translate(155 1000) scale(6.508 7)",
+          "translate(155 1448) scale(6.508 -7)"
+        ],
+        "binomialParityCheck": true,
+        "background": {
+          "ground": "#081f24",
+          "halo": "#26587d"
+        },
+        "interaction": "Четыре копии треугольника Серпинского образуют два ромба. Каждая пара зеркальна по горизонтальному стыку."
+      }
+    },
+    {
+      "id": "geometric-rhombi-mosaic",
+      "title": "Ромбы · Плитка XOR",
+      "variant": "color",
+      "category": "rhombi",
+      "description": "Четыре треугольных поля с тремя затравками правила 90. Отражённые пары образуют два ромба с разной высотой и палитрой.",
+      "src": "wallpapers/geometric-rhombi-mosaic.png",
+      "thumb": "wallpapers/geometric-rhombi-mosaic-thumb.png",
+      "svg": "art/geometric-rhombi-mosaic.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "rule": 90,
+        "equation": "left XOR right",
+        "seeds": [
+          -6,
+          0,
+          6
+        ],
+        "anchor": 54,
+        "boundary": "zero",
+        "field": {
+          "width": 109,
+          "height": 48,
+          "sha256": "af62d954183bfb45387fc648bb5531dbb4288b4e7a8a6e949126c6de168aa25d",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "diamond",
+        "palette": [
+          [
+            "#f4ff77",
+            "#ffbf4c",
+            "#fda344",
+            "#ff587a"
+          ],
+          [
+            "#ffd09c",
+            "#ff75aa",
+            "#f54ec1",
+            "#b841eb"
+          ],
+          [
+            "#fff9ad",
+            "#a1ec82",
+            "#59ecc3",
+            "#36cbda"
+          ],
+          [
+            "#e2ebff",
+            "#baa5ff",
+            "#a785ff",
+            "#694eff"
+          ]
+        ],
+        "placement": [
+          {
+            "x": -6,
+            "y": 540,
+            "w": 521,
+            "h": 336
+          },
+          {
+            "x": -6,
+            "y": 876,
+            "w": 521,
+            "h": 336,
+            "flipX": true,
+            "flipY": true
+          },
+          {
+            "x": 206,
+            "y": 760,
+            "w": 520,
+            "h": 327
+          },
+          {
+            "x": 206,
+            "y": 1087,
+            "w": 520,
+            "h": 327,
+            "flipX": true,
+            "flipY": true
+          }
+        ],
+        "transforms": [
+          "translate(-6 540) scale(4.78 7)",
+          "translate(515 1212) scale(-4.78 -7)",
+          "translate(206 760) scale(4.771 6.813)",
+          "translate(726 1414) scale(-4.771 -6.813)"
+        ],
+        "binomialParityCheck": true,
+        "background": {
+          "ground": "#220c23",
+          "halo": "#6e2854"
+        },
+        "interaction": "Четыре треугольных поля с тремя затравками правила 90. Отражённые пары образуют два ромба с разной высотой и палитрой."
+      }
+    },
+    {
+      "id": "geometric-rhombi-axes",
+      "title": "Ромбы · Две оси",
+      "variant": "color",
+      "category": "rhombi",
+      "description": "Повороты и отражения четырёх копий правила 90 сводят их широкие основания к центру. Каждая грань имеет свою палитру.",
+      "src": "wallpapers/geometric-rhombi-axes.png",
+      "thumb": "wallpapers/geometric-rhombi-axes-thumb.png",
+      "svg": "art/geometric-rhombi-axes.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "rule": 90,
+        "equation": "left XOR right",
+        "seeds": [
+          0
+        ],
+        "anchor": 63,
+        "boundary": "zero",
+        "field": {
+          "width": 127,
+          "height": 64,
+          "sha256": "5e3a8cf45a367814ded641e1ef38d50559dcb33746527a66a0f86bc1eaab8e4f",
+          "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+        },
+        "renderer": "art/build-geometric-wallpapers.cjs",
+        "cellShape": "triangle",
+        "palette": [
+          [
+            "#fff37c",
+            "#eaff6b",
+            "#a3ff71",
+            "#53e1ab"
+          ],
+          [
+            "#ffaabd",
+            "#fb83d8",
+            "#d26ff6",
+            "#9a66ff"
+          ],
+          [
+            "#adf2ff",
+            "#59e1ff",
+            "#5496ff",
+            "#6470ff"
+          ],
+          [
+            "#fff2bc",
+            "#ffd56a",
+            "#ffa050",
+            "#ff6c60"
+          ]
+        ],
+        "transforms": [
+          "translate(122 485) scale(3.75 7.7)",
+          "translate(122 1469) scale(3.75 -7.7)",
+          "translate(28 1267) rotate(-90) scale(4.6 5.15)",
+          "translate(692 687) rotate(90) scale(4.6 5.15)"
+        ],
+        "binomialParityCheck": true,
+        "background": {
+          "ground": "#0e1334",
+          "halo": "#343a83"
+        },
+        "interaction": "Повороты и отражения четырёх копий правила 90 сводят их широкие основания к центру. Каждая грань имеет свою палитру."
+      }
+    },
+    {
+      "id": "geometric-rgb-prism",
+      "title": "RGB · Призма Серпинского",
+      "variant": "color",
+      "category": "rgb",
+      "description": "Три копии правила 90 разнесены по горизонтали и высоте. Красный, зелёный и синий складываются до жёлтого, пурпурного, голубого и белого.",
+      "src": "wallpapers/geometric-rgb-prism.png",
+      "thumb": "wallpapers/geometric-rgb-prism-thumb.png",
+      "svg": "art/geometric-rgb-prism.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "grid": {
+          "width": 152,
+          "height": 208,
+          "x": 56,
+          "y": 502,
+          "scale": 4
+        },
+        "equation": "[255R,255G,255B]",
+        "masksCombinedBy": "OR within each channel",
+        "additiveRgb": [
+          "#000000",
+          "#ff0000",
+          "#00ff00",
+          "#ffff00",
+          "#0000ff",
+          "#ff00ff",
+          "#00ffff",
+          "#ffffff"
+        ],
+        "counts": [
+          29519,
+          575,
+          559,
+          153,
+          657,
+          55,
+          71,
+          27
+        ],
+        "sha256": "a5f0c3677619f5722058b9f0dd56531d28719d67ed60ca2a5cb2311bafb9b33c",
+        "encoding": "row-major uint8 channel flags R=1, G=2, B=4",
+        "layers": [
+          {
+            "channel": "R",
+            "source": {
+              "rule": 90,
+              "equation": "left XOR right",
+              "seeds": [
+                0
+              ],
+              "anchor": 47,
+              "boundary": "zero"
+            },
+            "field": {
+              "width": 95,
+              "height": 48,
+              "sha256": "9931653d8b503ed1a709cc0390dab1aae8b0bf53e5cf15690103ed723eea5de7",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 11,
+                "y": 20
+              },
+              {
+                "x": 11,
+                "y": 98,
+                "flipY": true
+              }
+            ],
+            "maskSha256": "09f4683fd82b38d2eae179ce0f20dbc67c163bcbfc7c9a1a4e7c9f1fccd16319"
+          },
+          {
+            "channel": "G",
+            "source": {
+              "rule": 90,
+              "equation": "left XOR right",
+              "seeds": [
+                0
+              ],
+              "anchor": 47,
+              "boundary": "zero"
+            },
+            "field": {
+              "width": 95,
+              "height": 48,
+              "sha256": "9931653d8b503ed1a709cc0390dab1aae8b0bf53e5cf15690103ed723eea5de7",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 27,
+                "y": 28
+              },
+              {
+                "x": 27,
+                "y": 106,
+                "flipY": true
+              }
+            ],
+            "maskSha256": "ee971fd2250afe29f8f73c4213f3d74ecb7e95c25111dbc98e2baf8e94d28f7a"
+          },
+          {
+            "channel": "B",
+            "source": {
+              "rule": 90,
+              "equation": "left XOR right",
+              "seeds": [
+                0
+              ],
+              "anchor": 47,
+              "boundary": "zero"
+            },
+            "field": {
+              "width": 95,
+              "height": 48,
+              "sha256": "9931653d8b503ed1a709cc0390dab1aae8b0bf53e5cf15690103ed723eea5de7",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 45,
+                "y": 20
+              },
+              {
+                "x": 45,
+                "y": 98,
+                "flipY": true
+              }
+            ],
+            "maskSha256": "952643baadbf09d4ae4e2eb670ffecbbd701a21f7f54f25bb67761abf5e93153"
+          }
+        ],
+        "background": {
+          "ground": "#0b0823",
+          "halo": "#302353"
+        },
+        "interaction": "Три копии правила 90 разнесены по горизонтали и высоте. Красный, зелёный и синий складываются до жёлтого, пурпурного, голубого и белого."
+      }
+    },
+    {
+      "id": "geometric-rgb-stereo",
+      "title": "RGB · Три встречных поля",
+      "variant": "color",
+      "category": "rgb",
+      "description": "Каждый канал берёт своё поле. Красный — два маятника XOR, зелёный — отражённые «Пустоты» Аниматрицы, синий — Серпинский с тремя затравками.",
+      "src": "wallpapers/geometric-rgb-stereo.png",
+      "thumb": "wallpapers/geometric-rgb-stereo-thumb.png",
+      "svg": "art/geometric-rgb-stereo.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "grid": {
+          "width": 152,
+          "height": 208,
+          "x": 56,
+          "y": 502,
+          "scale": 4
+        },
+        "equation": "[255R,255G,255B]",
+        "masksCombinedBy": "OR within each channel",
+        "additiveRgb": [
+          "#000000",
+          "#ff0000",
+          "#00ff00",
+          "#ffff00",
+          "#0000ff",
+          "#ff00ff",
+          "#00ffff",
+          "#ffffff"
+        ],
+        "counts": [
+          24932,
+          1608,
+          2266,
+          395,
+          1459,
+          290,
+          499,
+          167
+        ],
+        "sha256": "9137cb9e8390bbf4fc94de9d932cd959a9ae97b841955dccef15ef84e06ae87e",
+        "encoding": "row-major uint8 channel flags R=1, G=2, B=4",
+        "layers": [
+          {
+            "channel": "R",
+            "source": {
+              "module": "mayatnik/mayatnik-synthesis-pendulums.js",
+              "tick": 39,
+              "options": {
+                "sourceA": "pend",
+                "sourceB": "pendR",
+                "depth": 32,
+                "rateA": 1,
+                "rateB": 1,
+                "phaseB": 11,
+                "delayB": 0,
+                "transformB": "identity",
+                "shiftX": 3,
+                "shiftY": 0,
+                "invertB": false,
+                "operation": "xor",
+                "history": "none",
+                "trailLength": 8
+              },
+              "anchor": 67,
+              "sha256A": "27a1b74ff49df7f43919cb6559e3002e4ef93cd35fbc944811016f377de71018",
+              "sha256B": "ffa5afd2f94114cdd79df1aab8f214e22b1644b18f732f0db1f9a8e0b7425ca4"
+            },
+            "field": {
+              "width": 135,
+              "height": 48,
+              "sha256": "2f1f4f852ba140426af91ca3f172c9522ea953c037016476fc1ad18b31afd4f4",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 0,
+                "y": 34
+              },
+              {
+                "x": 9,
+                "y": 84,
+                "flipX": true,
+                "flipY": true
+              },
+              {
+                "x": 0,
+                "y": 125
+              }
+            ],
+            "maskSha256": "040a035a6d2b2e2c8bf937cad68219e3bf5a601b11bea3e42d95d75695724d63"
+          },
+          {
+            "channel": "G",
+            "source": {
+              "modules": [
+                "mayatnik/mayatnik-animatrix-source.js",
+                "mayatnik/mayatnik-animatrix-core.js"
+              ],
+              "seed": {
+                "factory": "MayatnikAnimatrixSource.demo",
+                "rows": 48,
+                "type": "clean",
+                "algorithm": "copyRows"
+              },
+              "sourceFrame": 47,
+              "cycleFrames": 47,
+              "sha256Seed": "f816841a2233ac37aa99f6ad93e4a537441f5212a9490123b115d7a71fe12591",
+              "options": {
+                "animatrixOn": true,
+                "animatrixSourceKind": null,
+                "animatrixAlgorithm": "copyRows",
+                "animatrixTiming": "rows",
+                "animatrixDirection": "down",
+                "animatrixCycles": 4,
+                "animatrixCycleMode": "finite",
+                "animatrixFrameMax": 0,
+                "animatrixColours": "inherit",
+                "animatrixEdgeColourMode": "change",
+                "animatrixEdgePalette": 0,
+                "animatrixExcelColourChangesOnly": true,
+                "animatrixStaggeredGrid": null,
+                "animatrixEvolution": 1,
+                "animatrixCopyRowsLayout": "mirrorGaps"
+              }
+            },
+            "field": {
+              "width": 95,
+              "height": 48,
+              "sha256": "979e5cbc99d9f9df43b53187f0d0f2c9afab15e6ee5f2894dc0f543e471123d7",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 29,
+                "y": 19,
+                "flipY": true
+              },
+              {
+                "x": 30,
+                "y": 67
+              },
+              {
+                "x": 27,
+                "y": 132,
+                "flipY": true
+              }
+            ],
+            "maskSha256": "5eb51f308f1f9b024563ba58512db15c7af87e875555a60266aae84acfe2ec06"
+          },
+          {
+            "channel": "B",
+            "source": {
+              "rule": 90,
+              "equation": "left XOR right",
+              "seeds": [
+                -10,
+                0,
+                10
+              ],
+              "anchor": 60,
+              "boundary": "zero"
+            },
+            "field": {
+              "width": 121,
+              "height": 48,
+              "sha256": "92f6ad3263bcca1010a737c6498e4ae96b876b2905aec5d6b8410c7a4f89de5b",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 12,
+                "y": 23
+              },
+              {
+                "x": 12,
+                "y": 72,
+                "flipY": true
+              },
+              {
+                "x": 12,
+                "y": 116
+              }
+            ],
+            "maskSha256": "a210a2df9fefe376b0533059d803fd69145b89716cfb3f2211c41f913421a325"
+          }
+        ],
+        "background": {
+          "ground": "#051b2a",
+          "halo": "#164861"
+        },
+        "interaction": "Каждый канал берёт своё поле. Красный — два маятника XOR, зелёный — отражённые «Пустоты» Аниматрицы, синий — Серпинский с тремя затравками."
+      }
+    },
+    {
+      "id": "geometric-rgb-triad",
+      "title": "RGB · Три оси",
+      "variant": "color",
+      "category": "rgb",
+      "description": "Три направления одной двоичной маски. Красный канал остаётся вертикальным, зелёный и синий поворачиваются на четверть оборота в разные стороны.",
+      "src": "wallpapers/geometric-rgb-triad.png",
+      "thumb": "wallpapers/geometric-rgb-triad-thumb.png",
+      "svg": "art/geometric-rgb-triad.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "grid": {
+          "width": 152,
+          "height": 208,
+          "x": 56,
+          "y": 502,
+          "scale": 4
+        },
+        "equation": "[255R,255G,255B]",
+        "masksCombinedBy": "OR within each channel",
+        "additiveRgb": [
+          "#000000",
+          "#ff0000",
+          "#00ff00",
+          "#ffff00",
+          "#0000ff",
+          "#ff00ff",
+          "#00ffff",
+          "#ffffff"
+        ],
+        "counts": [
+          26641,
+          2087,
+          1169,
+          109,
+          1086,
+          192,
+          305,
+          27
+        ],
+        "sha256": "9d8e1393685bbd4dc3fa85a0e8018af97d266abfaad944bdccb10b43c6f67772",
+        "encoding": "row-major uint8 channel flags R=1, G=2, B=4",
+        "layers": [
+          {
+            "channel": "R",
+            "source": {
+              "rule": 90,
+              "equation": "left XOR right",
+              "seeds": [
+                -10,
+                0,
+                10
+              ],
+              "anchor": 60,
+              "boundary": "zero"
+            },
+            "field": {
+              "width": 121,
+              "height": 48,
+              "sha256": "92f6ad3263bcca1010a737c6498e4ae96b876b2905aec5d6b8410c7a4f89de5b",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 12,
+                "y": 17
+              },
+              {
+                "x": 12,
+                "y": 77,
+                "flipY": true
+              },
+              {
+                "x": 12,
+                "y": 137
+              }
+            ],
+            "maskSha256": "2adc2d599dc0de0fdffae54460e644b7ea5fb8a67baf67a7b7814dbc0fecf934"
+          },
+          {
+            "channel": "G",
+            "source": {
+              "rule": 90,
+              "equation": "left XOR right",
+              "seeds": [
+                -10,
+                0,
+                10
+              ],
+              "anchor": 60,
+              "boundary": "zero"
+            },
+            "field": {
+              "width": 121,
+              "height": 48,
+              "sha256": "92f6ad3263bcca1010a737c6498e4ae96b876b2905aec5d6b8410c7a4f89de5b",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 34,
+                "y": 40,
+                "turn": 1
+              },
+              {
+                "x": 88,
+                "y": 61,
+                "turn": 1
+              }
+            ],
+            "maskSha256": "f6ee558f64eb209d729a02f0f226ee5ce63e51bb1318c2fe454f59e134bf152c"
+          },
+          {
+            "channel": "B",
+            "source": {
+              "rule": 90,
+              "equation": "left XOR right",
+              "seeds": [
+                -10,
+                0,
+                10
+              ],
+              "anchor": 60,
+              "boundary": "zero"
+            },
+            "field": {
+              "width": 121,
+              "height": 48,
+              "sha256": "92f6ad3263bcca1010a737c6498e4ae96b876b2905aec5d6b8410c7a4f89de5b",
+              "encoding": "row-major uint8, 255=absent, 0=zero, 1=one"
+            },
+            "poses": [
+              {
+                "x": 14,
+                "y": 61,
+                "turn": -1
+              },
+              {
+                "x": 66,
+                "y": 34,
+                "turn": -1
+              }
+            ],
+            "maskSha256": "5c5e51f70ffbdafd275d1fbff2cf696ae8b6199f6b32fe3d07b5c8d282f72842"
+          }
+        ],
+        "background": {
+          "ground": "#240713",
+          "halo": "#592341"
+        },
+        "interaction": "Три направления одной двоичной маски. Красный канал остаётся вертикальным, зелёный и синий поворачиваются на четверть оборота в разные стороны."
+      }
     }
   ]
 }
