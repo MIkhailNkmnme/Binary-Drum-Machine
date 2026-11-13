@@ -1,0 +1,93 @@
+{
+  "sourceTracks": [
+    {
+      "id": "pendulum-drive",
+      "title": "Маятниковый привод",
+      "src": "../../mayatnik/synthesis-album/pendulum-drive.mp3",
+      "bpm": 128,
+      "sha256": "d1c685e148d286a18cb95f83013e2fea5444a3abb7da7c26ed1c91f83397c2b9"
+    },
+    {
+      "id": "two-shores-canon",
+      "title": "Канон двух берегов",
+      "src": "../../mayatnik/synthesis-album/two-shores-canon.mp3",
+      "bpm": 84,
+      "sha256": "1cd471eea135646abe50938ad5311b3f35bf377458cd43155818d4703219706e"
+    },
+    {
+      "id": "eight-winds-pulse",
+      "title": "Импульс восьми ветров",
+      "description": "Техно с ясным трёхнотным зовом, воздушной серединой и возвращением полного ритма.",
+      "bpm": 126,
+      "duration": 78.19047619047619,
+      "src": "audio/eight-winds-pulse.mp3",
+      "ringtone": {
+        "mp3": "audio/eight-winds-pulse-ringtone.mp3",
+        "m4r": "audio/eight-winds-pulse-ringtone.m4r",
+        "duration": 22.857142857142858,
+        "start": 15.238095238095237,
+        "end": 38.095238095238095
+      },
+      "recipe": "music/eight-winds-pulse-score.json",
+      "sha256": "cd977a2f3a47b74032f7bc15b1a5a5f0eb2e9b0ef0b6725505d2cb8b0e4cb75b"
+    },
+    {
+      "id": "copper-orbit",
+      "title": "Медная орбита",
+      "description": "Более медленный пружинистый грув: короткий вопрос, ответ в верхнем регистре и медное эхо.",
+      "bpm": 118,
+      "duration": 83.35593220338983,
+      "src": "audio/copper-orbit.mp3",
+      "ringtone": {
+        "mp3": "audio/copper-orbit-ringtone.mp3",
+        "m4r": "audio/copper-orbit-ringtone.m4r",
+        "duration": 24.406779661016948,
+        "start": 16.271186440677965,
+        "end": 40.67796610169491
+      },
+      "recipe": "music/copper-orbit-score.json",
+      "sha256": "04f4fc1fdf79763ce6047ec5ddc498bd65b2b17d74f7b0d83b7e47e323915e5e"
+    },
+    {
+      "id": "letter-of-two-rivers",
+      "title": "Письмо двух рек",
+      "description": "Камерная пьеса для синтетического фортепиано и струнных: плавная тема, тихий ответ и светлая реприза.",
+      "bpm": 88,
+      "duration": 78.36363636363636,
+      "src": "audio/letter-of-two-rivers.mp3",
+      "ringtone": {
+        "mp3": "audio/letter-of-two-rivers-ringtone.mp3",
+        "m4r": "audio/letter-of-two-rivers-ringtone.m4r",
+        "duration": 21.818181818181817,
+        "start": 10.909090909090908,
+        "end": 32.72727272727273
+      },
+      "recipe": "music/letter-of-two-rivers-score.json",
+      "sha256": "2c18e7e0ca23d7db8d8dd48aaf273e74826bf23d7d0d21577d9ab9d3715650f0"
+    },
+    {
+      "id": "thin-ice-nocturne",
+      "title": "Тонкий лёд",
+      "description": "Спокойный минорный ноктюрн: редкие высокие ноты над прозрачным арпеджио, затем тёплый ответ.",
+      "bpm": 76,
+      "duration": 77.78947368421052,
+      "src": "audio/thin-ice-nocturne.mp3",
+      "ringtone": {
+        "mp3": "audio/thin-ice-nocturne-ringtone.mp3",
+        "m4r": "audio/thin-ice-nocturne-ringtone.m4r",
+        "duration": 25.263157894736842,
+        "start": 12.631578947368421,
+        "end": 37.89473684210526
+      },
+      "recipe": "music/thin-ice-nocturne-score.json",
+      "sha256": "70ffdc963440b7d4b3b3011d9dea4dce700d5870ee7ef71ffdb92cc78f4108f8"
+    }
+  ],
+  "codec": {
+    "mp3": "libmp3lame quality 2",
+    "m4r": "AAC 192 kbit/s stereo",
+    "notificationWav": "PCM 16 bit / 22050 Hz / mono"
+  },
+  "created": "2026-11-13",
+  "buildCommand": "node issledovanie/phone-theme/music/build-music.cjs"
+}

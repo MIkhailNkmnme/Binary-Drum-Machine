@@ -1,0 +1,3617 @@
+{
+  "version": 1,
+  "id": "thin-ice-nocturne",
+  "title": "Тонкий лёд",
+  "description": "Спокойный минорный ноктюрн: редкие высокие ноты над прозрачным арпеджио, затем тёплый ответ.",
+  "bpm": 76,
+  "root": 50,
+  "scale": "minor",
+  "style": "classic",
+  "work": "thin-ice",
+  "bars": 24,
+  "ringBar": 4,
+  "ringBars": 8,
+  "motif": [
+    7,
+    4,
+    2,
+    0,
+    2,
+    4,
+    3,
+    2
+  ],
+  "rhythm": [
+    0,
+    4,
+    8,
+    10,
+    12,
+    14
+  ],
+  "options": {
+    "style": "classic",
+    "tempo": 76,
+    "root": 50,
+    "scale": "minor",
+    "density": 4,
+    "volume": 0.59
+  },
+  "duration": 77.78947368421052,
+  "field": {
+    "width": 385,
+    "height": 128,
+    "anchor": 192,
+    "options": {
+      "sourceA": "pend",
+      "sourceB": "pendR",
+      "depth": 128,
+      "rateA": 1,
+      "rateB": 1,
+      "phaseB": 0,
+      "delayB": 0,
+      "transformB": "mirrorY",
+      "shiftX": 1,
+      "shiftY": 0,
+      "invertB": false,
+      "operation": "and",
+      "history": "none",
+      "trailLength": 8
+    },
+    "initialTick": 0,
+    "tickPerSixteenth": 1,
+    "sha256": "f350cc6cbb08ad31567695ec6ef5800bcfcbdc20b064c0c2d584319b1f4d9451"
+  },
+  "sourceFiles": [
+    {
+      "file": "mayatnik/mayatnik-core.js",
+      "sha256": "dfd8ceff7b8a32868933b323129ba56563eca520a2a636b8f5f0b0b3f33e8aa1",
+      "normalization": "LF"
+    },
+    {
+      "file": "mayatnik/mayatnik-synthesis-pendulums.js",
+      "sha256": "86733e1985cb731351ad551e453109b3afb6b4e99f14179ecf964e0be01bf085",
+      "normalization": "LF"
+    },
+    {
+      "file": "mayatnik/mayatnik-synthesis-music.js",
+      "sha256": "2127fedcdd4394e86e590add39dac5df208768ec8264b8c4988bfd5f0647bde9",
+      "normalization": "LF"
+    },
+    {
+      "file": "mayatnik/synthesis-gallery.js",
+      "sha256": "1738546685a379dae434955d5b7643b7116ee4e40428fef25393a575182807d4",
+      "normalization": "LF"
+    },
+    {
+      "file": "mayatnik/synthesis-album/construction-parameters.json",
+      "sha256": "5521fdc30739b1d43f95330c9c0286fe4f3d8598dac2777e267c779a136c54b5",
+      "normalization": "LF"
+    }
+  ],
+  "form": [
+    {
+      "title": "Вступление",
+      "startBar": 1,
+      "startSeconds": 0
+    },
+    {
+      "title": "Тема A",
+      "startBar": 5,
+      "startSeconds": 12.631578947368421
+    },
+    {
+      "title": "Ответ B",
+      "startBar": 13,
+      "startSeconds": 37.89473684210526
+    },
+    {
+      "title": "Реприза A′",
+      "startBar": 17,
+      "startSeconds": 50.526315789473685
+    },
+    {
+      "title": "Кода",
+      "startBar": 21,
+      "startSeconds": 63.1578947368421
+    }
+  ],
+  "mapping": "Авторские мотив, лад, гармонический цикл и форма; поле маятников задаёт часть событий сопровождения через frameEvents, плотность единиц задаёт динамику новой темы, поле задаёт стереопозицию через исходный сонификатор. Гармония не выведена из физики.",
+  "motifDegrees": [
+    7,
+    4,
+    2,
+    0,
+    2,
+    4,
+    3,
+    2
+  ],
+  "harmonyDegrees": [
+    0,
+    5,
+    2,
+    6,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mastering": {
+    "filter": "highpass=f=45,aecho=0.85:0.90:37|79|137:0.13|0.09|0.045,volume=2.7563981693610593,afade=t=in:d=0.025,afade=t=out:st=77.13947368421051:d=0.65,atrim=duration=77.78947368421052",
+    "rawStats": {
+      "duration": 77.78947845804989,
+      "peak": 0.198455810546875,
+      "peakDb": -14.046723619036388,
+      "rmsDb": -28.806839056193503,
+      "clipped": 0,
+      "leadingSilence": 0.00009070294784580499,
+      "trailingSilence": 1.4868820861678005,
+      "firstSample": 0,
+      "lastSample": 0
+    },
+    "gain": 2.7563981693610593,
+    "targetRmsDb": -20
+  },
+  "ringtone": {
+    "mp3": "audio/thin-ice-nocturne-ringtone.mp3",
+    "m4r": "audio/thin-ice-nocturne-ringtone.m4r",
+    "duration": 25.263157894736842,
+    "start": 12.631578947368421,
+    "end": 37.89473684210526,
+    "filter": "atrim=start=12.631578947368421:end=37.89473684210526,asetpts=PTS-STARTPTS,afade=t=in:d=0.025,afade=t=out:st=24.613157894736844:d=0.65",
+    "source": "audio/thin-ice-nocturne.mp3"
+  },
+  "barTrace": [
+    {
+      "bar": 1,
+      "engineTick": 0,
+      "ones": 128,
+      "occupied": 4160,
+      "ratio": 0.03076923076923077,
+      "section": "Вступление",
+      "fieldSha256": "628f9b913068a091d1799c58c982b35470f2161834aa66cd83943c4d00503655"
+    },
+    {
+      "bar": 2,
+      "engineTick": 16,
+      "ones": 2356,
+      "occupied": 10240,
+      "ratio": 0.230078125,
+      "section": "Вступление",
+      "fieldSha256": "9697de38973d422dccdf422c086398e9a08dfcdf0047f0ff8725bf2d154d67ad"
+    },
+    {
+      "bar": 3,
+      "engineTick": 32,
+      "ones": 3936,
+      "occupied": 12288,
+      "ratio": 0.3203125,
+      "section": "Вступление",
+      "fieldSha256": "952c614be2751b7a3c8e497850d98248c01e4b506a3b2aec5106c9122a791cb3"
+    },
+    {
+      "bar": 4,
+      "engineTick": 48,
+      "ones": 5738,
+      "occupied": 14336,
+      "ratio": 0.40025111607142855,
+      "section": "Вступление",
+      "fieldSha256": "20ce5aaa34a66be604ff771b034926a3c1784371e6eab37c6665d223109aec24"
+    },
+    {
+      "bar": 5,
+      "engineTick": 64,
+      "ones": 7062,
+      "occupied": 16384,
+      "ratio": 0.4310302734375,
+      "section": "Тема A",
+      "fieldSha256": "724297a07d0ee7f7dd14f4034374672a5e9173713fccee2e795d544969e7ca6a"
+    },
+    {
+      "bar": 6,
+      "engineTick": 80,
+      "ones": 8378,
+      "occupied": 18432,
+      "ratio": 0.4545355902777778,
+      "section": "Тема A",
+      "fieldSha256": "8bcf4d04bf69490284c2cad3bc18443f9478daf60cca7c02b1a2e06337dbfe83"
+    },
+    {
+      "bar": 7,
+      "engineTick": 96,
+      "ones": 10002,
+      "occupied": 20480,
+      "ratio": 0.48837890625,
+      "section": "Тема A",
+      "fieldSha256": "0804fc7939c0afd02c2f4f7c1fd27bdcbd3d9866c1cecfbbe2143ad852732d4b"
+    },
+    {
+      "bar": 8,
+      "engineTick": 112,
+      "ones": 11320,
+      "occupied": 22528,
+      "ratio": 0.5024857954545454,
+      "section": "Тема A",
+      "fieldSha256": "a55a7985fb1cda43ca9891e0621df4010006e40d92634f9bae33b7177977f20c"
+    },
+    {
+      "bar": 9,
+      "engineTick": 128,
+      "ones": 128,
+      "occupied": 4160,
+      "ratio": 0.03076923076923077,
+      "section": "Тема A",
+      "fieldSha256": "628f9b913068a091d1799c58c982b35470f2161834aa66cd83943c4d00503655"
+    },
+    {
+      "bar": 10,
+      "engineTick": 144,
+      "ones": 2356,
+      "occupied": 10240,
+      "ratio": 0.230078125,
+      "section": "Тема A",
+      "fieldSha256": "9697de38973d422dccdf422c086398e9a08dfcdf0047f0ff8725bf2d154d67ad"
+    },
+    {
+      "bar": 11,
+      "engineTick": 160,
+      "ones": 3936,
+      "occupied": 12288,
+      "ratio": 0.3203125,
+      "section": "Тема A",
+      "fieldSha256": "952c614be2751b7a3c8e497850d98248c01e4b506a3b2aec5106c9122a791cb3"
+    },
+    {
+      "bar": 12,
+      "engineTick": 176,
+      "ones": 5738,
+      "occupied": 14336,
+      "ratio": 0.40025111607142855,
+      "section": "Тема A",
+      "fieldSha256": "20ce5aaa34a66be604ff771b034926a3c1784371e6eab37c6665d223109aec24"
+    },
+    {
+      "bar": 13,
+      "engineTick": 192,
+      "ones": 7062,
+      "occupied": 16384,
+      "ratio": 0.4310302734375,
+      "section": "Ответ B",
+      "fieldSha256": "724297a07d0ee7f7dd14f4034374672a5e9173713fccee2e795d544969e7ca6a"
+    },
+    {
+      "bar": 14,
+      "engineTick": 208,
+      "ones": 8378,
+      "occupied": 18432,
+      "ratio": 0.4545355902777778,
+      "section": "Ответ B",
+      "fieldSha256": "8bcf4d04bf69490284c2cad3bc18443f9478daf60cca7c02b1a2e06337dbfe83"
+    },
+    {
+      "bar": 15,
+      "engineTick": 224,
+      "ones": 10002,
+      "occupied": 20480,
+      "ratio": 0.48837890625,
+      "section": "Ответ B",
+      "fieldSha256": "0804fc7939c0afd02c2f4f7c1fd27bdcbd3d9866c1cecfbbe2143ad852732d4b"
+    },
+    {
+      "bar": 16,
+      "engineTick": 240,
+      "ones": 11320,
+      "occupied": 22528,
+      "ratio": 0.5024857954545454,
+      "section": "Ответ B",
+      "fieldSha256": "a55a7985fb1cda43ca9891e0621df4010006e40d92634f9bae33b7177977f20c"
+    },
+    {
+      "bar": 17,
+      "engineTick": 256,
+      "ones": 128,
+      "occupied": 4160,
+      "ratio": 0.03076923076923077,
+      "section": "Реприза A′",
+      "fieldSha256": "628f9b913068a091d1799c58c982b35470f2161834aa66cd83943c4d00503655"
+    },
+    {
+      "bar": 18,
+      "engineTick": 272,
+      "ones": 2356,
+      "occupied": 10240,
+      "ratio": 0.230078125,
+      "section": "Реприза A′",
+      "fieldSha256": "9697de38973d422dccdf422c086398e9a08dfcdf0047f0ff8725bf2d154d67ad"
+    },
+    {
+      "bar": 19,
+      "engineTick": 288,
+      "ones": 3936,
+      "occupied": 12288,
+      "ratio": 0.3203125,
+      "section": "Реприза A′",
+      "fieldSha256": "952c614be2751b7a3c8e497850d98248c01e4b506a3b2aec5106c9122a791cb3"
+    },
+    {
+      "bar": 20,
+      "engineTick": 304,
+      "ones": 5738,
+      "occupied": 14336,
+      "ratio": 0.40025111607142855,
+      "section": "Реприза A′",
+      "fieldSha256": "20ce5aaa34a66be604ff771b034926a3c1784371e6eab37c6665d223109aec24"
+    },
+    {
+      "bar": 21,
+      "engineTick": 320,
+      "ones": 7062,
+      "occupied": 16384,
+      "ratio": 0.4310302734375,
+      "section": "Кода",
+      "fieldSha256": "724297a07d0ee7f7dd14f4034374672a5e9173713fccee2e795d544969e7ca6a"
+    },
+    {
+      "bar": 22,
+      "engineTick": 336,
+      "ones": 8378,
+      "occupied": 18432,
+      "ratio": 0.4545355902777778,
+      "section": "Кода",
+      "fieldSha256": "8bcf4d04bf69490284c2cad3bc18443f9478daf60cca7c02b1a2e06337dbfe83"
+    },
+    {
+      "bar": 23,
+      "engineTick": 352,
+      "ones": 10002,
+      "occupied": 20480,
+      "ratio": 0.48837890625,
+      "section": "Кода",
+      "fieldSha256": "0804fc7939c0afd02c2f4f7c1fd27bdcbd3d9866c1cecfbbe2143ad852732d4b"
+    },
+    {
+      "bar": 24,
+      "engineTick": 368,
+      "ones": 11320,
+      "occupied": 22528,
+      "ratio": 0.5024857954545454,
+      "section": "Кода",
+      "fieldSha256": "a55a7985fb1cda43ca9891e0621df4010006e40d92634f9bae33b7177977f20c"
+    }
+  ],
+  "events": [
+    {
+      "beat": 0,
+      "duration": 1.3,
+      "midi": 38,
+      "velocity": 0.30114228426293704,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 0,
+      "duration": 3.9,
+      "midi": 50,
+      "velocity": 0.3059227273846154,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 0,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.2812515396923077,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 0,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.25164611446153845,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 0,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6288,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 0.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.20879795249999997,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 1,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.3082404369247159,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 1.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.21555889100649347,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 2,
+      "duration": 0.58,
+      "midi": 50,
+      "velocity": 0.3118671471328125,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 2,
+      "duration": 1.35,
+      "midi": 65,
+      "velocity": 0.6489505208333334,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 2.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.21507326977886976,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 3,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.31241089738636363,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 3,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.6497861842105264,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 3.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.21710909493094402,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 4,
+      "duration": 1.3,
+      "midi": 46,
+      "velocity": 0.3179214830735796,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 4,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.32012257725,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 4,
+      "duration": 3.9,
+      "midi": 65,
+      "velocity": 0.294306240375,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 4,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.263326636125,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 4,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6598921875000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 4.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.22217716476718402,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.32306859757000805,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 5.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.22305742314878435,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 6,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.3223172589330449,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 6,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6674041193181819,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 6.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2239124649340909,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 7,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.32397075174475054,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 7,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.6700740489130436,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 7.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.22571383612064794,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 8,
+      "duration": 1.3,
+      "midi": 41,
+      "velocity": 0.32633247845454544,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 8,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.326551365,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 8,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.30021657749999997,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 8,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.2686148325,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 8,
+      "duration": 1.35,
+      "midi": 77,
+      "velocity": 0.6739687500000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 8.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.22834167576136366,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 9,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.33167768102181816,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 9,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.683085,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 9.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.22995091315257352,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 10,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.3316899838428213,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 10,
+      "duration": 1.35,
+      "midi": 69,
+      "velocity": 0.6826640625000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 10.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.23165651701302525,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 10.5,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.6852824292452832,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 11,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.3332838991491477,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 11,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6850052083333334,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 11.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.2320970454743802,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 11.5,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6856909090909091,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 12,
+      "duration": 1.3,
+      "midi": 48,
+      "velocity": 0.33437536455818784,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 12,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.332246626875,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 12,
+      "duration": 3.9,
+      "midi": 67,
+      "velocity": 0.30545254406249994,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 12,
+      "duration": 3.9,
+      "midi": 64,
+      "velocity": 0.2732996446875,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 12,
+      "duration": 1.35,
+      "midi": 76,
+      "velocity": 0.6864391741071428,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 12.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.23267046548863635,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 13,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.334673905265478,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 13,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6864924568965518,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 13.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.23291564794356706,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 14,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.3353178005386363,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 14,
+      "duration": 1.35,
+      "midi": 76,
+      "velocity": 0.6871312500000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 14.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.23420842083811472,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 14.5,
+      "duration": 0.7,
+      "midi": 79,
+      "velocity": 0.6886137295081968,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 15,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.33714666415482947,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 15,
+      "duration": 0.7,
+      "midi": 77,
+      "velocity": 0.6897535282258066,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 15.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.2355202596148539,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 15.5,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.6908764880952382,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 16,
+      "duration": 1.3,
+      "midi": 38,
+      "velocity": 0.4027635578037807,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 16,
+      "duration": 3.9,
+      "midi": 50,
+      "velocity": 0.39814226367187505,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 16,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.3660340166015625,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 16,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.32750412011718755,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 16,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.69124072265625,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 16.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.28085075269621007,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 17,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.40356941044126327,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 17,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6918806818181819,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 17.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.28236800607327606,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 18,
+      "duration": 0.58,
+      "midi": 50,
+      "velocity": 0.40435530437729783,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 18,
+      "duration": 1.35,
+      "midi": 65,
+      "velocity": 0.6924829963235295,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 18.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.2821423184288538,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 18.5,
+      "duration": 0.7,
+      "midi": 62,
+      "velocity": 0.692179347826087,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 19,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.40485537074226,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 19,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.6926852678571429,
+      "voice": "piano",
+      "pan": -3.1086244689504386e-17
+    },
+    {
+      "beat": 19.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.28297147769700587,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 19.5,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6930224471830986,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 20,
+      "duration": 1.3,
+      "midi": 46,
+      "velocity": 0.4068484761173397,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 20,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.400135890625,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 20,
+      "duration": 3.9,
+      "midi": 65,
+      "velocity": 0.3678668671875,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 20,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.32914403906250006,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 20,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6949075520833334,
+      "voice": "piano",
+      "pan": -3.1086244689504386e-17
+    },
+    {
+      "beat": 20.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2848968445166563,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 21,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.40801897456028974,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 21,
+      "duration": 0.7,
+      "midi": 70,
+      "velocity": 0.6959885979729731,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 21.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2855718009350649,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 22,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.4087141506087662,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 22,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.696419407894737,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 22.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.28639484219316597,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 22.5,
+      "duration": 0.7,
+      "midi": 77,
+      "velocity": 0.6970458603896105,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 23,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.41013072945296886,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 23,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.6977968750000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 23.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2881289612867058,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 23.5,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.699331091772152,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 24,
+      "duration": 1.3,
+      "midi": 43,
+      "velocity": 0.4123375798946074,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 24,
+      "duration": 3.9,
+      "midi": 55,
+      "velocity": 0.40300634531249996,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 24,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.37050583359375,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 24,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.33150521953125,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 24,
+      "duration": 1.35,
+      "midi": 79,
+      "velocity": 0.7001871093750001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 24.5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.28880312276785713,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 25,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.41338544689789064,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 25,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.7010339176829269,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 25.5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.2905468061262909,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 26,
+      "duration": 0.58,
+      "midi": 55,
+      "velocity": 0.4146487554658511,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 26,
+      "duration": 1.35,
+      "midi": 70,
+      "velocity": 0.7021450892857144,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 26.5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.2907682307955739,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 26.5,
+      "duration": 0.7,
+      "midi": 67,
+      "velocity": 0.7017275735294118,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 27,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.4144877930271491,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 27,
+      "duration": 0.7,
+      "midi": 70,
+      "velocity": 0.7014189680232559,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 27.5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.2915667168649239,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 27.5,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.7023642241379311,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 28,
+      "duration": 1.3,
+      "midi": 45,
+      "velocity": 0.41565411999151414,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 28,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.40420283522727274,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 28,
+      "duration": 3.9,
+      "midi": 64,
+      "velocity": 0.3716058323863636,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 28,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.33248942897727274,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 28,
+      "duration": 1.35,
+      "midi": 72,
+      "velocity": 0.7023877840909091,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 28.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.29179030487297986,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 29,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.41689482497159086,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 29,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.7034354166666668,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 29.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.2934378231839589,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 30,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.4175706808239739,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 30,
+      "duration": 1.35,
+      "midi": 72,
+      "velocity": 0.7037618885869567,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 30.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.29437921464573735,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 30.5,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.7048568548387097,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 31,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.41850069864959677,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 31,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.7043986037234043,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 31.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.293773342426948,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 31.5,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.7032572368421054,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 32,
+      "duration": 1.3,
+      "midi": 38,
+      "velocity": 0.3585027193606393,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 32,
+      "duration": 3.9,
+      "midi": 50,
+      "velocity": 0.3641937230769231,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 32,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.33482326153846154,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 32,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.2995787076923077,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 32,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6288,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 32.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.24856899107142855,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 33,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.3669529011008523,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 33,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6421737132352942,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 33.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.2566177273886827,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 34,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.3712704132533482,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 34,
+      "duration": 1.35,
+      "midi": 65,
+      "velocity": 0.6489505208333334,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 34.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.25603960687960686,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 34.5,
+      "duration": 0.7,
+      "midi": 62,
+      "velocity": 0.6482432432432433,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 35,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.37191773498376623,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 35,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.6497861842105264,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 35.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.25846320825112384,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 35.5,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6531875,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 36,
+      "duration": 1.3,
+      "midi": 46,
+      "velocity": 0.3784779560399757,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 36,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.38109830625,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 36,
+      "duration": 3.9,
+      "midi": 65,
+      "velocity": 0.350364571875,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 36,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.31348409062500004,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 36,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6598921875000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 36.5,
+      "duration": 0.58,
+      "midi": 69,
+      "velocity": 0.26449662472283814,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 37,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.3846054732976286,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 37,
+      "duration": 0.7,
+      "midi": 70,
+      "velocity": 0.6691227678571429,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 37.5,
+      "duration": 0.58,
+      "midi": 69,
+      "velocity": 0.2655445513676004,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 38,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.3837110225393392,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 38,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6674041193181819,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 38.5,
+      "duration": 0.58,
+      "midi": 69,
+      "velocity": 0.2665624582548701,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 38.5,
+      "duration": 0.7,
+      "midi": 77,
+      "velocity": 0.6690125000000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 39,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.38567946636279826,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 39,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.6700740489130436,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 39.5,
+      "duration": 0.58,
+      "midi": 69,
+      "velocity": 0.2687069477626761,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 39.5,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.6729055851063831,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 40,
+      "duration": 1.3,
+      "midi": 41,
+      "velocity": 0.3884910457792208,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 40,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.388751625,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 40,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.3574006875,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 40,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.3197795625,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 40,
+      "duration": 1.35,
+      "midi": 77,
+      "velocity": 0.6739687500000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 40.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.2718353282873377,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 41,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.3948543821688312,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 41,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.683085,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 41.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.27375108708639706,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 42,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.39486902838431104,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 42,
+      "duration": 1.35,
+      "midi": 69,
+      "velocity": 0.6826640625000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 42.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.2757815678726491,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 42.5,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.6852824292452832,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 43,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.3967665466061282,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 43,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6850052083333334,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 43.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.2763060065171193,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 43.5,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6856909090909091,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 44,
+      "duration": 1.3,
+      "midi": 48,
+      "velocity": 0.3980659101883189,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 44,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.3955316986607143,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 44,
+      "duration": 3.9,
+      "midi": 67,
+      "velocity": 0.3636339810267857,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 44,
+      "duration": 3.9,
+      "midi": 64,
+      "velocity": 0.32535671986607145,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 44,
+      "duration": 1.35,
+      "midi": 76,
+      "velocity": 0.6864391741071428,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 44.5,
+      "duration": 0.58,
+      "midi": 70,
+      "velocity": 0.27698864939123374,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 45,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.3984213157922358,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 45,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6864924568965518,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 45.5,
+      "duration": 0.58,
+      "midi": 70,
+      "velocity": 0.27728053326615126,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 46,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.3991878577840909,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 46,
+      "duration": 1.35,
+      "midi": 76,
+      "velocity": 0.6871312500000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 46.5,
+      "duration": 0.58,
+      "midi": 70,
+      "velocity": 0.27881954861680325,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 46.5,
+      "duration": 0.7,
+      "midi": 79,
+      "velocity": 0.6886137295081968,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 47,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.401365076374797,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 47,
+      "duration": 0.7,
+      "midi": 77,
+      "velocity": 0.6897535282258066,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 47.5,
+      "duration": 0.58,
+      "midi": 70,
+      "velocity": 0.28038126144625464,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 47.5,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.6908764880952382,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 48,
+      "duration": 1.3,
+      "midi": 38,
+      "velocity": 0.3383213885551758,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 48,
+      "duration": 3.9,
+      "midi": 50,
+      "velocity": 0.334439501484375,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 48,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.30746857394531246,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 48,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.2751034608984375,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 48,
+      "duration": 1.35,
+      "midi": 65,
+      "velocity": 0.594467021484375,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 49,
+      "duration": 1.35,
+      "midi": 53,
+      "velocity": 0.28,
+      "voice": "piano",
+      "pan": -0.3
+    },
+    {
+      "beat": 48.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.23591463226481646,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 49,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.3389983047706611,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 49,
+      "duration": 0.7,
+      "midi": 67,
+      "velocity": 0.5950173863636364,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 49.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.23718912510155188,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 50,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.33965845567693015,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 50,
+      "duration": 1.35,
+      "midi": 69,
+      "velocity": 0.5955353768382353,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 50.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.23699954748023716,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 50.5,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.5952742391304349,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 51,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.34007851142349843,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 51,
+      "duration": 0.7,
+      "midi": 62,
+      "velocity": 0.5957093303571429,
+      "voice": "piano",
+      "pan": -3.1086244689504386e-17
+    },
+    {
+      "beat": 51.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.2376960412654849,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 51.5,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.5959993045774648,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 52,
+      "duration": 1.3,
+      "midi": 46,
+      "velocity": 0.3417527199385653,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 52,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.33611414812499996,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 52,
+      "duration": 3.9,
+      "midi": 65,
+      "velocity": 0.3090081684375,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 52,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.27648099281250005,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 52,
+      "duration": 1.35,
+      "midi": 77,
+      "velocity": 0.5976204947916668,
+      "voice": "piano",
+      "pan": -3.1086244689504386e-17
+    },
+    {
+      "beat": 53,
+      "duration": 1.35,
+      "midi": 65,
+      "velocity": 0.28,
+      "voice": "piano",
+      "pan": -0.3
+    },
+    {
+      "beat": 52.5,
+      "duration": 0.58,
+      "midi": 69,
+      "velocity": 0.2393133493939913,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 53,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.3427359386306434,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 53,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.5985501942567568,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 53.5,
+      "duration": 0.58,
+      "midi": 69,
+      "velocity": 0.23988031278545452,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 54,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.3433198865113636,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 54,
+      "duration": 1.35,
+      "midi": 70,
+      "velocity": 0.5989206907894739,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 54.5,
+      "duration": 0.58,
+      "midi": 69,
+      "velocity": 0.2405716674422594,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 54.5,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.599459439935065,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 55,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.3445098127404938,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 55,
+      "duration": 0.7,
+      "midi": 77,
+      "velocity": 0.6001053125000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 55.5,
+      "duration": 0.58,
+      "midi": 69,
+      "velocity": 0.24202832748083286,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 55.5,
+      "duration": 0.7,
+      "midi": 82,
+      "velocity": 0.6014247389240507,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 56,
+      "duration": 1.3,
+      "midi": 43,
+      "velocity": 0.3463635671114702,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 56,
+      "duration": 3.9,
+      "midi": 55,
+      "velocity": 0.33852533006249996,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 56,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.31122490021875,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 56,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.27846438440625,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 56,
+      "duration": 1.35,
+      "midi": 70,
+      "velocity": 0.6021609140625,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 57,
+      "duration": 1.35,
+      "midi": 58,
+      "velocity": 0.28,
+      "voice": "piano",
+      "pan": -0.3
+    },
+    {
+      "beat": 56.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.242594623125,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 57,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.3472437753942281,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 57,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6028891692073172,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 57.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.24405931714608436,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 58,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.34830495459131494,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 58,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6038447767857144,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 58.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.24424531386828208,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 58.5,
+      "duration": 0.7,
+      "midi": 70,
+      "velocity": 0.6034857132352942,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 59,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.3481697461428052,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 59,
+      "duration": 0.7,
+      "midi": 67,
+      "velocity": 0.6032203125000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 59.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2449160421665361,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 59.5,
+      "duration": 0.7,
+      "midi": 70,
+      "velocity": 0.6040332327586208,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 60,
+      "duration": 1.3,
+      "midi": 45,
+      "velocity": 0.34914946079287185,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 60,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.3395303815909091,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 60,
+      "duration": 3.9,
+      "midi": 64,
+      "velocity": 0.3121488992045454,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 60,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.2792911203409091,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 60,
+      "duration": 1.35,
+      "midi": 76,
+      "velocity": 0.6040534943181818,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 61,
+      "duration": 1.35,
+      "midi": 64,
+      "velocity": 0.28,
+      "voice": "piano",
+      "pan": -0.3
+    },
+    {
+      "beat": 60.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.24510385609330307,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 61,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.3501916529761363,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 61,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6049544583333334,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 61.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.24648777147452547,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 62,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.35075937189213807,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 62,
+      "duration": 1.35,
+      "midi": 69,
+      "velocity": 0.6052352241847827,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 62.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.24727854030241936,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 62.5,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6061768951612904,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 63,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.35154058686566125,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 63,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.6057827992021277,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 63.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.24676960763863634,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 63.5,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6048012236842106,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 64,
+      "duration": 1.3,
+      "midi": 38,
+      "velocity": 0.3585027193606393,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 64,
+      "duration": 3.9,
+      "midi": 50,
+      "velocity": 0.3641937230769231,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 64,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.33482326153846154,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 64,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.2995787076923077,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 64,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6288,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 64,
+      "duration": 1.35,
+      "midi": 86,
+      "velocity": 0.13833600000000001,
+      "voice": "piano",
+      "pan": 0.25
+    },
+    {
+      "beat": 64.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.24856899107142855,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 65,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.3669529011008523,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 65,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6421737132352942,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 65.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.2566177273886827,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 66,
+      "duration": 0.58,
+      "midi": 50,
+      "velocity": 0.3712704132533482,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 66,
+      "duration": 1.35,
+      "midi": 65,
+      "velocity": 0.6489505208333334,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 66.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.25603960687960686,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 66.5,
+      "duration": 0.7,
+      "midi": 62,
+      "velocity": 0.6482432432432433,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 67,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.37191773498376623,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 67,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.6497861842105264,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 67.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.25846320825112384,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 67.5,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6531875,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 68,
+      "duration": 1.3,
+      "midi": 46,
+      "velocity": 0.3784779560399757,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 68,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.38109830625,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 68,
+      "duration": 3.9,
+      "midi": 65,
+      "velocity": 0.350364571875,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 68,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.31348409062500004,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 68,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6598921875000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 68,
+      "duration": 1.35,
+      "midi": 86,
+      "velocity": 0.14517628125000004,
+      "voice": "piano",
+      "pan": 0.25
+    },
+    {
+      "beat": 68.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.26449662472283814,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 69,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.3846054732976286,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 69,
+      "duration": 0.7,
+      "midi": 70,
+      "velocity": 0.6691227678571429,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 69.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2655445513676004,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 70,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.3837110225393392,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 70,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.6674041193181819,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 70.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2665624582548701,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 70.5,
+      "duration": 0.7,
+      "midi": 77,
+      "velocity": 0.6690125000000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 71,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.38567946636279826,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 71,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.6700740489130436,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 71.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2687069477626761,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 71.5,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.6729055851063831,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 72,
+      "duration": 1.3,
+      "midi": 41,
+      "velocity": 0.3884910457792208,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 72,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.388751625,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 72,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.3574006875,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 72,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.3197795625,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 72,
+      "duration": 1.35,
+      "midi": 77,
+      "velocity": 0.6739687500000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 72,
+      "duration": 1.35,
+      "midi": 89,
+      "velocity": 0.14827312500000003,
+      "voice": "piano",
+      "pan": 0.25
+    },
+    {
+      "beat": 72.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.2718353282873377,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 73,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.3948543821688312,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 73,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.683085,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 73.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.27375108708639706,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 74,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.39486902838431104,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 74,
+      "duration": 1.35,
+      "midi": 69,
+      "velocity": 0.6826640625000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 74.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.2757815678726491,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 74.5,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.6852824292452832,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 75,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.3967665466061282,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 75,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.6850052083333334,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 75.5,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.2763060065171193,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 75.5,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6856909090909091,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 76,
+      "duration": 1.3,
+      "midi": 48,
+      "velocity": 0.3980659101883189,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 76,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.3955316986607143,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 76,
+      "duration": 3.9,
+      "midi": 67,
+      "velocity": 0.3636339810267857,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 76,
+      "duration": 3.9,
+      "midi": 64,
+      "velocity": 0.32535671986607145,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 76,
+      "duration": 1.35,
+      "midi": 76,
+      "velocity": 0.6864391741071428,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 76,
+      "duration": 1.35,
+      "midi": 88,
+      "velocity": 0.15101661830357144,
+      "voice": "piano",
+      "pan": 0.25
+    },
+    {
+      "beat": 76.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.27698864939123374,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 77,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.3984213157922358,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 77,
+      "duration": 0.7,
+      "midi": 72,
+      "velocity": 0.6864924568965518,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 77.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.27728053326615126,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 78,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.3991878577840909,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 78,
+      "duration": 1.35,
+      "midi": 76,
+      "velocity": 0.6871312500000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 78.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.27881954861680325,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 78.5,
+      "duration": 0.7,
+      "midi": 79,
+      "velocity": 0.6886137295081968,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 79,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.401365076374797,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 79,
+      "duration": 0.7,
+      "midi": 77,
+      "velocity": 0.6897535282258066,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 79.5,
+      "duration": 0.58,
+      "midi": 67,
+      "velocity": 0.28038126144625464,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 79.5,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.6908764880952382,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 80,
+      "duration": 1.3,
+      "midi": 38,
+      "velocity": 0.3020726683528355,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 80,
+      "duration": 3.9,
+      "midi": 50,
+      "velocity": 0.2986066977539063,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 80,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.27452551245117185,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 80,
+      "duration": 3.9,
+      "midi": 53,
+      "velocity": 0.24562809008789066,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 80,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.4976933203125,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 80.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.21063806452215755,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 81,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.30267705783094745,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 81,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.4981540909090909,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 81.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.21177600455495704,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 82,
+      "duration": 0.58,
+      "midi": 50,
+      "velocity": 0.3032664782829734,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 82,
+      "duration": 1.35,
+      "midi": 65,
+      "velocity": 0.4985877573529412,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 82.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.21160673882164033,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 82.5,
+      "duration": 0.7,
+      "midi": 62,
+      "velocity": 0.49836913043478265,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 83,
+      "duration": 0.58,
+      "midi": 53,
+      "velocity": 0.30364152805669503,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 83,
+      "duration": 0.7,
+      "midi": 65,
+      "velocity": 0.49873339285714285,
+      "voice": "piano",
+      "pan": -3.1086244689504386e-17
+    },
+    {
+      "beat": 83.5,
+      "duration": 0.58,
+      "midi": 57,
+      "velocity": 0.21222860827275442,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 83.5,
+      "duration": 0.7,
+      "midi": 69,
+      "velocity": 0.498976161971831,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 84,
+      "duration": 1.3,
+      "midi": 46,
+      "velocity": 0.3051363570880048,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 84,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.30010191796874996,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 84,
+      "duration": 3.9,
+      "midi": 65,
+      "velocity": 0.275900150390625,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 84,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.24685802929687506,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 84,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.5003334375,
+      "voice": "piano",
+      "pan": -3.1086244689504386e-17
+    },
+    {
+      "beat": 84.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.21367263338749223,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 85,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.3060142309202173,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 85,
+      "duration": 0.7,
+      "midi": 70,
+      "velocity": 0.5011117905405406,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 85.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.21417885070129866,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 86,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.30653561295657467,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 86,
+      "duration": 1.35,
+      "midi": 74,
+      "velocity": 0.5014219736842106,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 86.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.2147961316448745,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 86.5,
+      "duration": 0.7,
+      "midi": 77,
+      "velocity": 0.5018730194805195,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 87,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.30759804708972666,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 87,
+      "duration": 0.7,
+      "midi": 76,
+      "velocity": 0.5024137500000001,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 87.5,
+      "duration": 0.58,
+      "midi": 65,
+      "velocity": 0.21609672096502935,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 87.5,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.5035183860759495,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 88,
+      "duration": 1.3,
+      "midi": 43,
+      "velocity": 0.30925318492095555,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 88,
+      "duration": 3.9,
+      "midi": 55,
+      "velocity": 0.302254758984375,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 88,
+      "duration": 3.9,
+      "midi": 62,
+      "velocity": 0.2778793751953125,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 88,
+      "duration": 3.9,
+      "midi": 58,
+      "velocity": 0.2486289146484375,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 88,
+      "duration": 1.35,
+      "midi": 79,
+      "velocity": 0.50413471875,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 88.5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.21660234207589285,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 89,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.310039085173418,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 89,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.5047444207317073,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 89.5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.21791010459471818,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 90,
+      "duration": 0.58,
+      "midi": 55,
+      "velocity": 0.31098656659938834,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 90,
+      "duration": 1.35,
+      "midi": 70,
+      "velocity": 0.5055444642857143,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 90.5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.21807617309668043,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 90.5,
+      "duration": 0.7,
+      "midi": 67,
+      "velocity": 0.5052438529411765,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 91,
+      "duration": 0.58,
+      "midi": 58,
+      "velocity": 0.31086584477036183,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 91,
+      "duration": 0.7,
+      "midi": 70,
+      "velocity": 0.5050216569767442,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 91.5,
+      "duration": 0.58,
+      "midi": 62,
+      "velocity": 0.21867503764869295,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 91.5,
+      "duration": 0.7,
+      "midi": 74,
+      "velocity": 0.5057022413793104,
+      "voice": "piano",
+      "pan": 0
+    },
+    {
+      "beat": 92,
+      "duration": 1.3,
+      "midi": 45,
+      "velocity": 0.31174058999363563,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 92,
+      "duration": 3.9,
+      "midi": 57,
+      "velocity": 0.3031521264204545,
+      "voice": "strings",
+      "pan": -0.38
+    },
+    {
+      "beat": 92,
+      "duration": 3.9,
+      "midi": 64,
+      "velocity": 0.2787043742897727,
+      "voice": "strings",
+      "pan": 0.34
+    },
+    {
+      "beat": 92,
+      "duration": 3.9,
+      "midi": 60,
+      "velocity": 0.24936707173295455,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 92.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.2188427286547349,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 93,
+      "duration": 0.58,
+      "midi": 60,
+      "velocity": 0.31267111872869313,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 93.5,
+      "duration": 0.58,
+      "midi": 64,
+      "velocity": 0.22007836738796915,
+      "voice": "piano",
+      "pan": -0.22
+    },
+    {
+      "beat": 94,
+      "duration": 2.6,
+      "midi": 50,
+      "velocity": 0.55,
+      "voice": "piano",
+      "pan": -0.27
+    },
+    {
+      "beat": 94,
+      "duration": 2.6,
+      "midi": 53,
+      "velocity": 0.37,
+      "voice": "piano",
+      "pan": -0.09
+    },
+    {
+      "beat": 94,
+      "duration": 2.6,
+      "midi": 57,
+      "velocity": 0.37,
+      "voice": "piano",
+      "pan": 0.09
+    },
+    {
+      "beat": 94,
+      "duration": 2.6,
+      "midi": 62,
+      "velocity": 0.37,
+      "voice": "piano",
+      "pan": 0.27
+    }
+  ]
+}

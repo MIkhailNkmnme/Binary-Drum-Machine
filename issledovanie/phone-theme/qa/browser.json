@@ -1,0 +1,39 @@
+{
+  "viewports": [
+    {
+      "client": 305,
+      "content": 305,
+      "trackColumns": "277px",
+      "wallpaperColumns": "132.5px 132.5px",
+      "width": 320
+    },
+    {
+      "client": 375,
+      "content": 375,
+      "trackColumns": "339px",
+      "wallpaperColumns": "161.5px 161.5px",
+      "width": 390
+    },
+    {
+      "client": 753,
+      "content": 753,
+      "trackColumns": "338.5px 338.5px",
+      "wallpaperColumns": "221.656px 221.672px 221.672px",
+      "width": 768
+    },
+    {
+      "client": 1425,
+      "content": 1425,
+      "trackColumns": "598px 598px",
+      "wallpaperColumns": "394.656px 394.672px 394.656px",
+      "width": 1440
+    }
+  ],
+  "observed": {
+    "trackAdvances": true,
+    "secondTrackPausesFirst": true,
+    "notificationEndsAt2s": true,
+    "ringtoneDisclosure": true
+  },
+  "physicalPhoneInstallationTested": false
+}

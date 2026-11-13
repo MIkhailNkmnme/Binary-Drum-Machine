@@ -1,0 +1,30 @@
+[
+  {
+    "file": "downloads/zerkalius-music.zip",
+    "bytes": 11492327,
+    "files": 15,
+    "sha256": "4419b89ef3dca2c56fa049d02dfeb0e87855ca33dac03e057a0006eeaf1709a1",
+    "verifiedAgainstSources": true
+  },
+  {
+    "file": "downloads/zerkalius-notifications.zip",
+    "bytes": 2387915,
+    "files": 41,
+    "sha256": "8b107654013a0cab93b43afba42e868774c066ba07fc55f7920aa06b70e14049",
+    "verifiedAgainstSources": true
+  },
+  {
+    "file": "downloads/zerkalius-wallpapers.zip",
+    "bytes": 19051515,
+    "files": 13,
+    "sha256": "555ce5974168d6feb690ebe7b1a3fb42b00a6756cd5063d62d5cd50de6aeb681",
+    "verifiedAgainstSources": true
+  },
+  {
+    "file": "downloads/zerkalius-phone-theme.zip",
+    "bytes": 32929097,
+    "files": 67,
+    "sha256": "d47fa27602b089634fab0d9446985d2cc4deab075f81db16b15107d07c1429a3",
+    "verifiedAgainstSources": true
+  }
+]

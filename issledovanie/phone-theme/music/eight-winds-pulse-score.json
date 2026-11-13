@@ -1,0 +1,9272 @@
+{
+  "version": 1,
+  "id": "eight-winds-pulse",
+  "title": "Импульс восьми ветров",
+  "description": "Техно с ясным трёхнотным зовом, воздушной серединой и возвращением полного ритма.",
+  "bpm": 126,
+  "root": 50,
+  "scale": "minor",
+  "style": "techno",
+  "work": "eight-winds",
+  "bars": 40,
+  "ringBar": 8,
+  "ringBars": 12,
+  "motif": [
+    0,
+    4,
+    7,
+    6,
+    4,
+    2,
+    0,
+    4
+  ],
+  "rhythm": [
+    0,
+    3,
+    6,
+    8,
+    10,
+    12,
+    14,
+    15
+  ],
+  "options": {
+    "style": "techno",
+    "tempo": 126,
+    "root": 50,
+    "scale": "minor",
+    "density": 4,
+    "volume": 0.59
+  },
+  "duration": 78.19047619047619,
+  "field": {
+    "width": 385,
+    "height": 128,
+    "anchor": 192,
+    "options": {
+      "sourceA": "pend",
+      "sourceB": "pendR",
+      "depth": 128,
+      "rateA": 1,
+      "rateB": 1,
+      "phaseB": 0,
+      "delayB": 0,
+      "transformB": "mirrorY",
+      "shiftX": 45,
+      "shiftY": 0,
+      "invertB": false,
+      "operation": "xor",
+      "history": "trail",
+      "trailLength": 8
+    },
+    "initialTick": 0,
+    "tickPerSixteenth": 1,
+    "sha256": "87b6e13fd3485132751f387e2672d4e9ba8d46d7eb47cdd8ade1e2df2edd1146"
+  },
+  "sourceFiles": [
+    {
+      "file": "mayatnik/mayatnik-core.js",
+      "sha256": "dfd8ceff7b8a32868933b323129ba56563eca520a2a636b8f5f0b0b3f33e8aa1",
+      "normalization": "LF"
+    },
+    {
+      "file": "mayatnik/mayatnik-synthesis-pendulums.js",
+      "sha256": "86733e1985cb731351ad551e453109b3afb6b4e99f14179ecf964e0be01bf085",
+      "normalization": "LF"
+    },
+    {
+      "file": "mayatnik/mayatnik-synthesis-music.js",
+      "sha256": "2127fedcdd4394e86e590add39dac5df208768ec8264b8c4988bfd5f0647bde9",
+      "normalization": "LF"
+    },
+    {
+      "file": "mayatnik/synthesis-gallery.js",
+      "sha256": "1738546685a379dae434955d5b7643b7116ee4e40428fef25393a575182807d4",
+      "normalization": "LF"
+    },
+    {
+      "file": "mayatnik/synthesis-album/construction-parameters.json",
+      "sha256": "5521fdc30739b1d43f95330c9c0286fe4f3d8598dac2777e267c779a136c54b5",
+      "normalization": "LF"
+    }
+  ],
+  "form": [
+    {
+      "title": "Вступление",
+      "startBar": 1,
+      "startSeconds": 0
+    },
+    {
+      "title": "Тема A",
+      "startBar": 5,
+      "startSeconds": 7.619047619047619
+    },
+    {
+      "title": "Ответ B",
+      "startBar": 13,
+      "startSeconds": 22.857142857142858
+    },
+    {
+      "title": "Разрежение",
+      "startBar": 21,
+      "startSeconds": 38.095238095238095
+    },
+    {
+      "title": "Реприза A′",
+      "startBar": 25,
+      "startSeconds": 45.714285714285715
+    },
+    {
+      "title": "Кода",
+      "startBar": 37,
+      "startSeconds": 68.57142857142857
+    }
+  ],
+  "mapping": "Авторские мотив, лад, гармонический цикл и форма; поле маятников задаёт часть событий сопровождения через frameEvents, плотность единиц задаёт динамику новой темы, поле задаёт стереопозицию через исходный сонификатор. Гармония не выведена из физики.",
+  "motifDegrees": [
+    0,
+    4,
+    7,
+    6,
+    4,
+    2,
+    0,
+    4
+  ],
+  "harmonyDegrees": [
+    0,
+    5,
+    2,
+    6,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mastering": {
+    "filter": "highpass=f=32,aecho=0.88:0.90:119|238:0.10|0.045,volume=1.385873965319316,afade=t=in:d=0.025,afade=t=out:st=77.54047619047618:d=0.65,atrim=duration=78.19047619047619",
+    "rawStats": {
+      "duration": 78.19047619047619,
+      "peak": 0.505096435546875,
+      "peakDb": -5.932513925646311,
+      "rmsDb": -21.247484522955258,
+      "clipped": 0,
+      "leadingSilence": 0.00022675736961451248,
+      "trailingSilence": 1.4128004535147392,
+      "firstSample": 0,
+      "lastSample": 0
+    },
+    "gain": 1.385873965319316,
+    "targetRmsDb": -17.5
+  },
+  "ringtone": {
+    "mp3": "audio/eight-winds-pulse-ringtone.mp3",
+    "m4r": "audio/eight-winds-pulse-ringtone.m4r",
+    "duration": 22.857142857142858,
+    "start": 15.238095238095237,
+    "end": 38.095238095238095,
+    "filter": "atrim=start=15.238095238095237:end=38.095238095238095,asetpts=PTS-STARTPTS,afade=t=in:d=0.025,afade=t=out:st=22.20714285714286:d=0.65",
+    "source": "audio/eight-winds-pulse.mp3"
+  },
+  "barTrace": [
+    {
+      "bar": 1,
+      "engineTick": 0,
+      "ones": 4118,
+      "occupied": 12858,
+      "ratio": 0.32026753771970756,
+      "section": "Вступление",
+      "fieldSha256": "55397291785452eb8912669a2edfbb5156e7ee9d624c6f6473aa1e8cb7d54cea"
+    },
+    {
+      "bar": 2,
+      "engineTick": 16,
+      "ones": 23550,
+      "occupied": 27636,
+      "ratio": 0.8521493703864524,
+      "section": "Вступление",
+      "fieldSha256": "cdde61ff15e10a1659548cd11e33cae8f120cb65fb832d9bc22b32aa57283d09"
+    },
+    {
+      "bar": 3,
+      "engineTick": 32,
+      "ones": 27790,
+      "occupied": 29684,
+      "ratio": 0.9361945829403046,
+      "section": "Вступление",
+      "fieldSha256": "ae0c982f219bf52e3c72f5a1072865648065135dc694b2651bb84be6109211c4"
+    },
+    {
+      "bar": 4,
+      "engineTick": 48,
+      "ones": 29484,
+      "occupied": 31722,
+      "ratio": 0.92944959334216,
+      "section": "Вступление",
+      "fieldSha256": "8f3c74e793b3c3bb5a6c818ed0b0f5dca528d1cbad9444b7bbb5d5f7bfe058ac"
+    },
+    {
+      "bar": 5,
+      "engineTick": 64,
+      "ones": 30796,
+      "occupied": 33702,
+      "ratio": 0.913773663284078,
+      "section": "Тема A",
+      "fieldSha256": "0a84c4f0b9acdab3b242bd14118c0aa4f7abf336d70284458b097df8f9e5a846"
+    },
+    {
+      "bar": 6,
+      "engineTick": 80,
+      "ones": 31914,
+      "occupied": 35618,
+      "ratio": 0.8960076365882419,
+      "section": "Тема A",
+      "fieldSha256": "44fc648ea695de35a46e6cec56cfa2b7e3ea8218d3fa48052c1bbb6695ae8e2e"
+    },
+    {
+      "bar": 7,
+      "engineTick": 96,
+      "ones": 32844,
+      "occupied": 37470,
+      "ratio": 0.8765412329863891,
+      "section": "Тема A",
+      "fieldSha256": "c9531efcbc8a94912cab61ccebf226df7abe6a776f5a14d5aa5f4a1ddfbf8a1d"
+    },
+    {
+      "bar": 8,
+      "engineTick": 112,
+      "ones": 33306,
+      "occupied": 39258,
+      "ratio": 0.8483875897906159,
+      "section": "Тема A",
+      "fieldSha256": "c607a92fc17be3ecee5af859ae9a8b0ec03bfcdf4e132cda58cfecfd583f3c97"
+    },
+    {
+      "bar": 9,
+      "engineTick": 128,
+      "ones": 33668,
+      "occupied": 35044,
+      "ratio": 0.9607350759045771,
+      "section": "Тема A",
+      "fieldSha256": "e6dd169d89eac115884ca4a86ac03c60e361e4ee9108eca33ecc36e71314195d"
+    },
+    {
+      "bar": 10,
+      "engineTick": 144,
+      "ones": 23550,
+      "occupied": 27636,
+      "ratio": 0.8521493703864524,
+      "section": "Тема A",
+      "fieldSha256": "cdde61ff15e10a1659548cd11e33cae8f120cb65fb832d9bc22b32aa57283d09"
+    },
+    {
+      "bar": 11,
+      "engineTick": 160,
+      "ones": 27790,
+      "occupied": 29684,
+      "ratio": 0.9361945829403046,
+      "section": "Тема A",
+      "fieldSha256": "ae0c982f219bf52e3c72f5a1072865648065135dc694b2651bb84be6109211c4"
+    },
+    {
+      "bar": 12,
+      "engineTick": 176,
+      "ones": 29484,
+      "occupied": 31722,
+      "ratio": 0.92944959334216,
+      "section": "Тема A",
+      "fieldSha256": "8f3c74e793b3c3bb5a6c818ed0b0f5dca528d1cbad9444b7bbb5d5f7bfe058ac"
+    },
+    {
+      "bar": 13,
+      "engineTick": 192,
+      "ones": 30796,
+      "occupied": 33702,
+      "ratio": 0.913773663284078,
+      "section": "Ответ B",
+      "fieldSha256": "0a84c4f0b9acdab3b242bd14118c0aa4f7abf336d70284458b097df8f9e5a846"
+    },
+    {
+      "bar": 14,
+      "engineTick": 208,
+      "ones": 31914,
+      "occupied": 35618,
+      "ratio": 0.8960076365882419,
+      "section": "Ответ B",
+      "fieldSha256": "44fc648ea695de35a46e6cec56cfa2b7e3ea8218d3fa48052c1bbb6695ae8e2e"
+    },
+    {
+      "bar": 15,
+      "engineTick": 224,
+      "ones": 32844,
+      "occupied": 37470,
+      "ratio": 0.8765412329863891,
+      "section": "Ответ B",
+      "fieldSha256": "c9531efcbc8a94912cab61ccebf226df7abe6a776f5a14d5aa5f4a1ddfbf8a1d"
+    },
+    {
+      "bar": 16,
+      "engineTick": 240,
+      "ones": 33306,
+      "occupied": 39258,
+      "ratio": 0.8483875897906159,
+      "section": "Ответ B",
+      "fieldSha256": "c607a92fc17be3ecee5af859ae9a8b0ec03bfcdf4e132cda58cfecfd583f3c97"
+    },
+    {
+      "bar": 17,
+      "engineTick": 256,
+      "ones": 33668,
+      "occupied": 35044,
+      "ratio": 0.9607350759045771,
+      "section": "Ответ B",
+      "fieldSha256": "e6dd169d89eac115884ca4a86ac03c60e361e4ee9108eca33ecc36e71314195d"
+    },
+    {
+      "bar": 18,
+      "engineTick": 272,
+      "ones": 23550,
+      "occupied": 27636,
+      "ratio": 0.8521493703864524,
+      "section": "Ответ B",
+      "fieldSha256": "cdde61ff15e10a1659548cd11e33cae8f120cb65fb832d9bc22b32aa57283d09"
+    },
+    {
+      "bar": 19,
+      "engineTick": 288,
+      "ones": 27790,
+      "occupied": 29684,
+      "ratio": 0.9361945829403046,
+      "section": "Ответ B",
+      "fieldSha256": "ae0c982f219bf52e3c72f5a1072865648065135dc694b2651bb84be6109211c4"
+    },
+    {
+      "bar": 20,
+      "engineTick": 304,
+      "ones": 29484,
+      "occupied": 31722,
+      "ratio": 0.92944959334216,
+      "section": "Ответ B",
+      "fieldSha256": "8f3c74e793b3c3bb5a6c818ed0b0f5dca528d1cbad9444b7bbb5d5f7bfe058ac"
+    },
+    {
+      "bar": 21,
+      "engineTick": 320,
+      "ones": 30796,
+      "occupied": 33702,
+      "ratio": 0.913773663284078,
+      "section": "Разрежение",
+      "fieldSha256": "0a84c4f0b9acdab3b242bd14118c0aa4f7abf336d70284458b097df8f9e5a846"
+    },
+    {
+      "bar": 22,
+      "engineTick": 336,
+      "ones": 31914,
+      "occupied": 35618,
+      "ratio": 0.8960076365882419,
+      "section": "Разрежение",
+      "fieldSha256": "44fc648ea695de35a46e6cec56cfa2b7e3ea8218d3fa48052c1bbb6695ae8e2e"
+    },
+    {
+      "bar": 23,
+      "engineTick": 352,
+      "ones": 32844,
+      "occupied": 37470,
+      "ratio": 0.8765412329863891,
+      "section": "Разрежение",
+      "fieldSha256": "c9531efcbc8a94912cab61ccebf226df7abe6a776f5a14d5aa5f4a1ddfbf8a1d"
+    },
+    {
+      "bar": 24,
+      "engineTick": 368,
+      "ones": 33306,
+      "occupied": 39258,
+      "ratio": 0.8483875897906159,
+      "section": "Разрежение",
+      "fieldSha256": "c607a92fc17be3ecee5af859ae9a8b0ec03bfcdf4e132cda58cfecfd583f3c97"
+    },
+    {
+      "bar": 25,
+      "engineTick": 384,
+      "ones": 33668,
+      "occupied": 35044,
+      "ratio": 0.9607350759045771,
+      "section": "Реприза A′",
+      "fieldSha256": "e6dd169d89eac115884ca4a86ac03c60e361e4ee9108eca33ecc36e71314195d"
+    },
+    {
+      "bar": 26,
+      "engineTick": 400,
+      "ones": 23550,
+      "occupied": 27636,
+      "ratio": 0.8521493703864524,
+      "section": "Реприза A′",
+      "fieldSha256": "cdde61ff15e10a1659548cd11e33cae8f120cb65fb832d9bc22b32aa57283d09"
+    },
+    {
+      "bar": 27,
+      "engineTick": 416,
+      "ones": 27790,
+      "occupied": 29684,
+      "ratio": 0.9361945829403046,
+      "section": "Реприза A′",
+      "fieldSha256": "ae0c982f219bf52e3c72f5a1072865648065135dc694b2651bb84be6109211c4"
+    },
+    {
+      "bar": 28,
+      "engineTick": 432,
+      "ones": 29484,
+      "occupied": 31722,
+      "ratio": 0.92944959334216,
+      "section": "Реприза A′",
+      "fieldSha256": "8f3c74e793b3c3bb5a6c818ed0b0f5dca528d1cbad9444b7bbb5d5f7bfe058ac"
+    },
+    {
+      "bar": 29,
+      "engineTick": 448,
+      "ones": 30796,
+      "occupied": 33702,
+      "ratio": 0.913773663284078,
+      "section": "Реприза A′",
+      "fieldSha256": "0a84c4f0b9acdab3b242bd14118c0aa4f7abf336d70284458b097df8f9e5a846"
+    },
+    {
+      "bar": 30,
+      "engineTick": 464,
+      "ones": 31914,
+      "occupied": 35618,
+      "ratio": 0.8960076365882419,
+      "section": "Реприза A′",
+      "fieldSha256": "44fc648ea695de35a46e6cec56cfa2b7e3ea8218d3fa48052c1bbb6695ae8e2e"
+    },
+    {
+      "bar": 31,
+      "engineTick": 480,
+      "ones": 32844,
+      "occupied": 37470,
+      "ratio": 0.8765412329863891,
+      "section": "Реприза A′",
+      "fieldSha256": "c9531efcbc8a94912cab61ccebf226df7abe6a776f5a14d5aa5f4a1ddfbf8a1d"
+    },
+    {
+      "bar": 32,
+      "engineTick": 496,
+      "ones": 33306,
+      "occupied": 39258,
+      "ratio": 0.8483875897906159,
+      "section": "Реприза A′",
+      "fieldSha256": "c607a92fc17be3ecee5af859ae9a8b0ec03bfcdf4e132cda58cfecfd583f3c97"
+    },
+    {
+      "bar": 33,
+      "engineTick": 512,
+      "ones": 33668,
+      "occupied": 35044,
+      "ratio": 0.9607350759045771,
+      "section": "Реприза A′",
+      "fieldSha256": "e6dd169d89eac115884ca4a86ac03c60e361e4ee9108eca33ecc36e71314195d"
+    },
+    {
+      "bar": 34,
+      "engineTick": 528,
+      "ones": 23550,
+      "occupied": 27636,
+      "ratio": 0.8521493703864524,
+      "section": "Реприза A′",
+      "fieldSha256": "cdde61ff15e10a1659548cd11e33cae8f120cb65fb832d9bc22b32aa57283d09"
+    },
+    {
+      "bar": 35,
+      "engineTick": 544,
+      "ones": 27790,
+      "occupied": 29684,
+      "ratio": 0.9361945829403046,
+      "section": "Реприза A′",
+      "fieldSha256": "ae0c982f219bf52e3c72f5a1072865648065135dc694b2651bb84be6109211c4"
+    },
+    {
+      "bar": 36,
+      "engineTick": 560,
+      "ones": 29484,
+      "occupied": 31722,
+      "ratio": 0.92944959334216,
+      "section": "Реприза A′",
+      "fieldSha256": "8f3c74e793b3c3bb5a6c818ed0b0f5dca528d1cbad9444b7bbb5d5f7bfe058ac"
+    },
+    {
+      "bar": 37,
+      "engineTick": 576,
+      "ones": 30796,
+      "occupied": 33702,
+      "ratio": 0.913773663284078,
+      "section": "Кода",
+      "fieldSha256": "0a84c4f0b9acdab3b242bd14118c0aa4f7abf336d70284458b097df8f9e5a846"
+    },
+    {
+      "bar": 38,
+      "engineTick": 592,
+      "ones": 31914,
+      "occupied": 35618,
+      "ratio": 0.8960076365882419,
+      "section": "Кода",
+      "fieldSha256": "44fc648ea695de35a46e6cec56cfa2b7e3ea8218d3fa48052c1bbb6695ae8e2e"
+    },
+    {
+      "bar": 39,
+      "engineTick": 608,
+      "ones": 32844,
+      "occupied": 37470,
+      "ratio": 0.8765412329863891,
+      "section": "Кода",
+      "fieldSha256": "c9531efcbc8a94912cab61ccebf226df7abe6a776f5a14d5aa5f4a1ddfbf8a1d"
+    },
+    {
+      "bar": 40,
+      "engineTick": 624,
+      "ones": 33306,
+      "occupied": 39258,
+      "ratio": 0.8483875897906159,
+      "section": "Кода",
+      "fieldSha256": "c607a92fc17be3ecee5af859ae9a8b0ec03bfcdf4e132cda58cfecfd583f3c97"
+    }
+  ],
+  "events": [
+    {
+      "beat": 0,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.4217928954855132,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 0,
+      "duration": 0.62,
+      "midi": 62,
+      "velocity": 0.5702753149790014,
+      "voice": "lead",
+      "pan": -0.025435367121874827
+    },
+    {
+      "beat": 0.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.27289036580082093,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 0.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4306931822408578,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 1,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.44438577654805644,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 1.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2704609820230606,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 1.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4540811703681136,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 1.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6135025041736227,
+      "voice": "lead",
+      "pan": -0.02905151907664852
+    },
+    {
+      "beat": 2,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.46122594221378266,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 2.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2761457926102949,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 2.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4633919014912502,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 2.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6260419830281376,
+      "voice": "lead",
+      "pan": -0.021487500465143177
+    },
+    {
+      "beat": 2.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27541946447410276,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 3,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.4700773533598725,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 3.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27151324841010355,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 3.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.27398474030876174,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 3.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.47295779609535826,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 3.5,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.6379775018261505,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 3.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27369938202128163,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 3.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4740688126646915,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 4,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.4763149398208958,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 4,
+      "duration": 0.62,
+      "midi": 82,
+      "velocity": 0.6404837168910118,
+      "voice": "lead",
+      "pan": -0.008097911922659141
+    },
+    {
+      "beat": 4.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28277379842793304,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 4.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4799673879775824,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 5,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.481710257616992,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 5.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2791349346569511,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 5.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4840300654854246,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 5.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6498504435994931,
+      "voice": "lead",
+      "pan": -0.0021367982336901294
+    },
+    {
+      "beat": 6,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.484523683888213,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 6.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28194179990175505,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 6.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4853049627376476,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 6.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6504683912021026,
+      "voice": "lead",
+      "pan": 0.00015977932252141615
+    },
+    {
+      "beat": 6.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.28104937791383877,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 7,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.4864546217619012,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 7.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.28104008406510617,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 7.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28238970986189005,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 7.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.48702214627647444,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 7.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6516120701372843,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 7.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2821822474870696,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 7.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4872589777607656,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 8,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8298166554372726,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 8,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.4875972761619298,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 8,
+      "duration": 0.62,
+      "midi": 65,
+      "velocity": 0.6515776849481203,
+      "voice": "lead",
+      "pan": 0.0021104360879210353
+    },
+    {
+      "beat": 8.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28209687481938245,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 8.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.4887883105687376,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 8.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6523466826060969,
+      "voice": "lead",
+      "pan": -0.001609476857044041
+    },
+    {
+      "beat": 9,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7471711537952047,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 9,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.4902681046054023,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 9.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28077558326422986,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 9.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.4902219422336881,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 9.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6519461447523973,
+      "voice": "lead",
+      "pan": 0.0005608988990610531
+    },
+    {
+      "beat": 10,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7466541383352873,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 10,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.4903927277838378,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 10,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6514114888628371,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 10.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28133130690268043,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 10.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.49115788659819787,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 10.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6513372735200078,
+      "voice": "lead",
+      "pan": -0.0015671316374916478
+    },
+    {
+      "beat": 10.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2808966279930128,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 11,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7466500791235545,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 11,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.49124483063564434,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 11,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6514077585930744,
+      "voice": "lead",
+      "pan": -0.0009596065034241176
+    },
+    {
+      "beat": 11.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.28091953830638605,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 11.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2814017490421823,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 11.5,
+      "duration": 0.36,
+      "midi": 53,
+      "velocity": 0.49133258549528563,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 11.5,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6509483317445186,
+      "voice": "lead",
+      "pan": -0.001796239088726286
+    },
+    {
+      "beat": 11.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2812074883648202,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 11.75,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.4918403236298644,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 11.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6510970922882429,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 12,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8287401550974087,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 12,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.4918328369064515,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 12,
+      "duration": 0.62,
+      "midi": 84,
+      "velocity": 0.6506873463211652,
+      "voice": "lead",
+      "pan": -0.0029963946162125947
+    },
+    {
+      "beat": 12.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28104798475998627,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 12.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.4923513107474146,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 12.75,
+      "duration": 0.31,
+      "midi": 82,
+      "velocity": 0.651005880339753,
+      "voice": "lead",
+      "pan": -0.006350139207156946
+    },
+    {
+      "beat": 13,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7453193855320734,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 13,
+      "duration": 0.31,
+      "midi": 55,
+      "velocity": 0.49194574810200503,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 13.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28133680155585405,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 13.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.492198483937202,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 13.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6500081300813009,
+      "voice": "lead",
+      "pan": -0.005953499470109863
+    },
+    {
+      "beat": 14,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.744436804400978,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 14,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.4924388901769254,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 14,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6493738386308069,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 14.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2815319376859731,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 14.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.4931555486456292,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 14.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6496616616616617,
+      "voice": "lead",
+      "pan": -0.0073600004824951265
+    },
+    {
+      "beat": 14.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2810426799255501,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 15,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7444614000541957,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 15,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.49321907891536443,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 15,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6493964411525608,
+      "voice": "lead",
+      "pan": -0.0069402285545433935
+    },
+    {
+      "beat": 15.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2800435796422735,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 15.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2808772759722024,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 15.5,
+      "duration": 0.36,
+      "midi": 60,
+      "velocity": 0.49373341357490264,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 15.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6494898678940763,
+      "voice": "lead",
+      "pan": -0.006750427741409696
+    },
+    {
+      "beat": 15.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.28041415776988626,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 15.75,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.4942056328638312,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 15.75,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6496111838191553,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 16,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9836169960239749,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 16,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5876222463672818,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 16,
+      "duration": 0.62,
+      "midi": 62,
+      "velocity": 0.6486181235534983,
+      "voice": "lead",
+      "pan": -0.007924867505422177
+    },
+    {
+      "beat": 16.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33502023799442515,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 16.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5879365062429868,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 16.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6489693593314764,
+      "voice": "lead",
+      "pan": -0.01118419960443804
+    },
+    {
+      "beat": 17,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8843540527100945,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 17,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.756614022874192,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 17,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5884376856041771,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 17.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33542204081632654,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 17.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5888145198675497,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 17.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6473935169048449,
+      "voice": "lead",
+      "pan": -0.010003858507680189
+    },
+    {
+      "beat": 18,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8832294911734165,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 18,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5887560312983717,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 18,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.64705434406369,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 18.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33504910771384844,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 18.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5891686226739679,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 18.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6469539060933338,
+      "voice": "lead",
+      "pan": -0.010784165765444671
+    },
+    {
+      "beat": 18.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33382169217818936,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 19,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8827856594110115,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 19,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7552721752738655,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 19,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5890887302854778,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 19,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6467117370892019,
+      "voice": "lead",
+      "pan": -0.010470360112228825
+    },
+    {
+      "beat": 19.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33355484295678156,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 19.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33457684106270175,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 19.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.588939341557891,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 19.5,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.6465246735628286,
+      "voice": "lead",
+      "pan": -0.010540475519631986
+    },
+    {
+      "beat": 19.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3333811070557854,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 19.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5897343079719415,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 19.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6470733903647007,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 20,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9802414509517661,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 20,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5896578477897868,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 20,
+      "duration": 0.62,
+      "midi": 82,
+      "velocity": 0.646273008029648,
+      "voice": "lead",
+      "pan": -0.010731518497993099
+    },
+    {
+      "beat": 20.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3341150854192603,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 20.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5903325981858101,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 20.75,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.6468531592834329,
+      "voice": "lead",
+      "pan": -0.012436545564196325
+    },
+    {
+      "beat": 21,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8817944966331367,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 21,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7544241804527947,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 21,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.5904155097073397,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 21.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33360926406205577,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 21.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5908268922528106,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 21.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6457823788546256,
+      "voice": "lead",
+      "pan": -0.011771500533881776
+    },
+    {
+      "beat": 22,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8808846027577151,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 22,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5909131057230956,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 22,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6452442547603415,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 22.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3333515675578471,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 22.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5912854915879142,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 22.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6450785417176413,
+      "voice": "lead",
+      "pan": -0.01211129575930596
+    },
+    {
+      "beat": 22.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33172727295632937,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 23,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8800323670061871,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 23,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.752916580660849,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 23,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.5914901673140642,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 23,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6445863885661796,
+      "voice": "lead",
+      "pan": -0.012719671757284605
+    },
+    {
+      "beat": 23.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33191969275924865,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 23.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33297177529646327,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 23.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.5923203706496366,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 23.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6443409054293541,
+      "voice": "lead",
+      "pan": -0.013633129534686412
+    },
+    {
+      "beat": 23.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3324840828368353,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 23.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5933694203740106,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 23.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6446209478977213,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 24,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.976542834267414,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 24,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.5924882903482787,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 24,
+      "duration": 0.62,
+      "midi": 67,
+      "velocity": 0.6437034427542034,
+      "voice": "lead",
+      "pan": -0.014200123953480893
+    },
+    {
+      "beat": 24.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3334668314414449,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 24.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5924159416433807,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 24.75,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6433748579582993,
+      "voice": "lead",
+      "pan": -0.016179378499265498
+    },
+    {
+      "beat": 25,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8774182422276718,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 25,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7506800516836748,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 25,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.592844569659813,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 25.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33366754815280475,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 25.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.593154681960689,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 25.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6420138408304499,
+      "voice": "lead",
+      "pan": -0.015759437729204486
+    },
+    {
+      "beat": 26,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8756592828103826,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 26,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.5929641819112895,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 26,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.64121067445012,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 26.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3343038100745466,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 26.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5927318781845018,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 26.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6407856976292267,
+      "voice": "lead",
+      "pan": -0.015553878743859936
+    },
+    {
+      "beat": 26.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33321652241330946,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 27,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8745638766519824,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 27,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7482379833578072,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 27,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5928023797139107,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 27,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6403650977664426,
+      "voice": "lead",
+      "pan": -0.015662146598991067
+    },
+    {
+      "beat": 27.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.333144520286895,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 27.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33346048066379363,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 27.5,
+      "duration": 0.36,
+      "midi": 55,
+      "velocity": 0.5936020783589233,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 27.5,
+      "duration": 0.31,
+      "midi": 67,
+      "velocity": 0.6402192735283571,
+      "voice": "lead",
+      "pan": -0.016293695042737404
+    },
+    {
+      "beat": 27.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3323534234047438,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 27.75,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5943594719820842,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 27.75,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6405180722891567,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 28,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9711936420602171,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 28,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5939043675249251,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 28,
+      "duration": 0.62,
+      "midi": 81,
+      "velocity": 0.6399871618523614,
+      "voice": "lead",
+      "pan": -0.01658886978790203
+    },
+    {
+      "beat": 28.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3327138340284776,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 28.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5939258639753249,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 28.75,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.639819958094565,
+      "voice": "lead",
+      "pan": -0.018663314991430188
+    },
+    {
+      "beat": 29,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8731879581811312,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 29,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7470608086660789,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 29,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.5947772067627348,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 29.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3321155484132254,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 29.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5951601936020529,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 29.5,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6390120264582081,
+      "voice": "lead",
+      "pan": -0.016170938558359854
+    },
+    {
+      "beat": 30,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8720795454545455,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 30,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5950570913997933,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 30,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6384473684210527,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 30.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3324073514743488,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 30.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5956298870194736,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 30.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6379667352452719,
+      "voice": "lead",
+      "pan": -0.016445645060065364
+    },
+    {
+      "beat": 30.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.332463884420319,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 31,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8704353872327835,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 31,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7447058312991592,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 31,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5950653650366696,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 31,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6371781936533768,
+      "voice": "lead",
+      "pan": -0.016121940000582882
+    },
+    {
+      "beat": 31.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3316628759110557,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 31.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3324026125082903,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 31.5,
+      "duration": 0.36,
+      "midi": 57,
+      "velocity": 0.5948599483326963,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 31.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6368571008094187,
+      "voice": "lead",
+      "pan": -0.016251028644740862
+    },
+    {
+      "beat": 31.75,
+      "duration": 0.19,
+      "midi": 38,
+      "velocity": 0.3286278728606357,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 31.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3319410629616135,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 31.75,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5948371774092656,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 31.75,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6367628361858191,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 32,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9925396644218697,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 32,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5723004329257321,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 32,
+      "duration": 3.5,
+      "midi": 65,
+      "velocity": 0.43671745234562265,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 32,
+      "duration": 3.5,
+      "midi": 69,
+      "velocity": 0.43671745234562265,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 32,
+      "duration": 0.62,
+      "midi": 62,
+      "velocity": 0.6548170300194043,
+      "voice": "lead",
+      "pan": -0.004717789431469775
+    },
+    {
+      "beat": 32.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.34200094074394466,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 32.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5676966662337662,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 32.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6473387755102041,
+      "voice": "lead",
+      "pan": -0.013996932698413334
+    },
+    {
+      "beat": 33,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8817061224489796,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 33,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7543485714285715,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 33,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5671528670699708,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 33.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3405145948379352,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 33.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5657860549864168,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 33.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6437374865735769,
+      "voice": "lead",
+      "pan": -0.01781894494692241
+    },
+    {
+      "beat": 34,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.853311062678491,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 34,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5490785026354555,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 34,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6239594168044492,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 34.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.32874499120273204,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 34.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5516570255848217,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 34.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6260419830281376,
+      "voice": "lead",
+      "pan": -0.021487500465143177
+    },
+    {
+      "beat": 34.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32788031485012237,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 35,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8670533107211327,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 35,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7418122769503024,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 35,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5596158968569911,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 35,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6345674679250849,
+      "voice": "lead",
+      "pan": -0.0172566108029871
+    },
+    {
+      "beat": 35.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32323005763107565,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 35.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.32617230989138307,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 35.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.563044995351617,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 35.5,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.6379775018261505,
+      "voice": "lead",
+      "pan": -0.014500036728285674
+    },
+    {
+      "beat": 35.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32583259764438294,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 35.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5643676341246328,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 35.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6384231690498658,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 36,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9719083803734261,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 36,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5670415950248759,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 36,
+      "duration": 3.5,
+      "midi": 74,
+      "velocity": 0.42763968736430746,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 36,
+      "duration": 3.5,
+      "midi": 77,
+      "velocity": 0.42763968736430746,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 36,
+      "duration": 0.62,
+      "midi": 82,
+      "velocity": 0.6404837168910118,
+      "voice": "lead",
+      "pan": -0.008097911922659141
+    },
+    {
+      "beat": 36.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33663547431896795,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 36.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.57138974759236,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 36.75,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.644874510083375,
+      "voice": "lead",
+      "pan": -0.007049439014264852
+    },
+    {
+      "beat": 37,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8820422054852921,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 37,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7546361091374165,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 37,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.573464592401181,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 37.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3323034936392275,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 37.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5762262684350293,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 37.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6498504435994931,
+      "voice": "lead",
+      "pan": -0.0021367982336901294
+    },
+    {
+      "beat": 38,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8873271458478718,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 38,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5768139093907297,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 38,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6502174459176553,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 38.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33564499988304175,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 38.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5777440032591044,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 38.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6504683912021026,
+      "voice": "lead",
+      "pan": 0.00015977932252141615
+    },
+    {
+      "beat": 38.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33458259275457,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 39,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8890970793911972,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 39,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7606719457013575,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 39,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.5791126449546443,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 39,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.65158371040724,
+      "voice": "lead",
+      "pan": 0.0029833762953760928
+    },
+    {
+      "beat": 39.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3345715286489359,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 39.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33617822602605957,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 39.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.5797882693767553,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 39.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6516120701372843,
+      "voice": "lead",
+      "pan": 0.003021258184736047
+    },
+    {
+      "beat": 39.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3359312470084162,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 39.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5800702116199591,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 39.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6517327207621108,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 40,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9878769707586579,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 40,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5804729478118212,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 40,
+      "duration": 3.5,
+      "midi": 69,
+      "velocity": 0.43466586713380945,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 40,
+      "duration": 3.5,
+      "midi": 72,
+      "velocity": 0.43466586713380945,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 40,
+      "duration": 0.62,
+      "midi": 65,
+      "velocity": 0.6515776849481203,
+      "voice": "lead",
+      "pan": 0.0021104360879210353
+    },
+    {
+      "beat": 40.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33582961288021723,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 40.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5818908459151638,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 40.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6523466826060969,
+      "voice": "lead",
+      "pan": -0.001609476857044041
+    },
+    {
+      "beat": 41,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8894894688038152,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 41,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7610076566432641,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 41,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5836525054826218,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 41.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33425664674313077,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 41.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5835975502782002,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 41.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6519461447523973,
+      "voice": "lead",
+      "pan": 0.0005608988990610531
+    },
+    {
+      "beat": 42,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8888739742086753,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 42,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5838008664093307,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 42,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6514114888628371,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 42.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33491822250319103,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 42.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5847117697597594,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 42.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6513372735200078,
+      "voice": "lead",
+      "pan": -0.0015671316374916478
+    },
+    {
+      "beat": 42.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3344007476107295,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 43,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8888691418137554,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 43,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7604769324406574,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 43,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5848152745662433,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 43,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6514077585930744,
+      "voice": "lead",
+      "pan": -0.0009596065034241176
+    },
+    {
+      "beat": 43.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3344280217933167,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 43.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33500208219307415,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 43.5,
+      "duration": 0.36,
+      "midi": 53,
+      "velocity": 0.5849197446372448,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 43.5,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6509483317445186,
+      "voice": "lead",
+      "pan": -0.001796239088726286
+    },
+    {
+      "beat": 43.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3347708194819288,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 43.75,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5855241947974577,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 43.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6510970922882429,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 44,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9865954227350104,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 44,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.58551528203149,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 44,
+      "duration": 3.5,
+      "midi": 76,
+      "velocity": 0.4341019860034046,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 44,
+      "duration": 3.5,
+      "midi": 79,
+      "velocity": 0.4341019860034046,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 44,
+      "duration": 0.62,
+      "midi": 84,
+      "velocity": 0.6506873463211652,
+      "voice": "lead",
+      "pan": -0.0029963946162125947
+    },
+    {
+      "beat": 44.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3345809342380789,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 44.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5861325127945413,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 44.75,
+      "duration": 0.31,
+      "midi": 82,
+      "velocity": 0.651005880339753,
+      "voice": "lead",
+      "pan": -0.006350139207156946
+    },
+    {
+      "beat": 45,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8872849827762779,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 45,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.75912159637526,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 45,
+      "duration": 0.31,
+      "midi": 55,
+      "velocity": 0.5856497001214346,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 45.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3349247637569691,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 45.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5859505761157167,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 45.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6500081300813009,
+      "voice": "lead",
+      "pan": -0.005953499470109863
+    },
+    {
+      "beat": 46,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8862342909535453,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 46,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5862367740201493,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 46,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6493738386308069,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 46.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33515706867377754,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 46.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5870899388638443,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 46.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6496616616616617,
+      "voice": "lead",
+      "pan": -0.0073600004824951265
+    },
+    {
+      "beat": 46.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3345746189589882,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 47,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8862635714930901,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 47,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7582477222774215,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 47,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.5871655701373386,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 47,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6493964411525608,
+      "voice": "lead",
+      "pan": -0.0069402285545433935
+    },
+    {
+      "beat": 47.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3333852138598494,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 47.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33437770949071716,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 47.5,
+      "duration": 0.36,
+      "midi": 60,
+      "velocity": 0.5877778733034555,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 47.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6494898678940763,
+      "voice": "lead",
+      "pan": -0.006750427741409696
+    },
+    {
+      "beat": 47.75,
+      "duration": 0.19,
+      "midi": 38,
+      "velocity": 0.33491577632361696,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 47.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3338263782974837,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 47.75,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5883400391236085,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 47.75,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6496111838191553,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 48,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8262382766601389,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 48,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.49360268694851667,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 48,
+      "duration": 3.5,
+      "midi": 65,
+      "velocity": 0.36354484173046114,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 48,
+      "duration": 3.5,
+      "midi": 69,
+      "velocity": 0.36354484173046114,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 48,
+      "duration": 0.62,
+      "midi": 69,
+      "velocity": 0.5578115862560086,
+      "voice": "lead",
+      "pan": -0.007924867505422177
+    },
+    {
+      "beat": 48.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2814169999153171,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 48.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4938666652441089,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 48.75,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.5581136490250697,
+      "voice": "lead",
+      "pan": -0.01118419960443804
+    },
+    {
+      "beat": 49,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7428574042764794,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 49,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6355557792143213,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 49,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.4942876559075087,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 49.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2817545142857143,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 49.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4946041966887418,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 49.5,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.5567584245381666,
+      "voice": "lead",
+      "pan": -0.010003858507680189
+    },
+    {
+      "beat": 50,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7419127725856699,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 50,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.49455506629063223,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 50,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.5564667358947734,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 50.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2814412504796327,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 50.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.494901643046133,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 50.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.5563803592402671,
+      "voice": "lead",
+      "pan": -0.010784165765444671
+    },
+    {
+      "beat": 50.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.28041022142967903,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 51,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7415399539052496,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 51,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.634428627230047,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 51,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.4948345334398013,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 51,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.5561720938967136,
+      "voice": "lead",
+      "pan": -0.010470360112228825
+    },
+    {
+      "beat": 51.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2801860680836965,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 51.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28104454649266947,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 51.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.4947090469086284,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 51.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.5560112192640326,
+      "voice": "lead",
+      "pan": -0.010540475519631986
+    },
+    {
+      "beat": 51.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2800401299268597,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 51.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.49537681869643085,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 51.75,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.5564831157136426,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 52,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8234028187994835,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 52,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.4953125921434209,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 52,
+      "duration": 3.5,
+      "midi": 74,
+      "velocity": 0.36229724027177274,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 52,
+      "duration": 3.5,
+      "midi": 77,
+      "velocity": 0.36229724027177274,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 52,
+      "duration": 0.62,
+      "midi": 74,
+      "velocity": 0.5557947869054973,
+      "voice": "lead",
+      "pan": -0.010731518497993099
+    },
+    {
+      "beat": 52.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2806566717521787,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 52.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.49587938247608043,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 52.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.5562937169837523,
+      "voice": "lead",
+      "pan": -0.012436545564196325
+    },
+    {
+      "beat": 53,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7407073771718348,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 53,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6337163115803475,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 53,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.4959490281541653,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 53.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2802317818121268,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 53.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4962945894923609,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 53.5,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.555372845814978,
+      "voice": "lead",
+      "pan": -0.011771500533881776
+    },
+    {
+      "beat": 54,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7399430663164807,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 54,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.4963670088074003,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 54,
+      "duration": 0.31,
+      "midi": 82,
+      "velocity": 0.5549100590938937,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 54.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2800153167485916,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 54.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.49667981293384794,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 54.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.5547675458771716,
+      "voice": "lead",
+      "pan": -0.01211129575930596
+    },
+    {
+      "beat": 54.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27865090928331665,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 55,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7392271882851972,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 55,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6324499277551131,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 55,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.4968517405438139,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 55,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.5543442941669144,
+      "voice": "lead",
+      "pan": -0.012719671757284605
+    },
+    {
+      "beat": 55.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27881254191776883,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 55.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2796962912490291,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 55.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.49754911134569474,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 55.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.5541331786692445,
+      "voice": "lead",
+      "pan": -0.013633129534686412
+    },
+    {
+      "beat": 55.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27928662958294165,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 55.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4984303131141689,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 55.75,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.5543740151920403,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 56,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8202959807846277,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 56,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.49769016389255405,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 56,
+      "duration": 3.5,
+      "midi": 70,
+      "velocity": 0.3609302315452362,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 56,
+      "duration": 3.5,
+      "midi": 74,
+      "velocity": 0.3609302315452362,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 56,
+      "duration": 0.62,
+      "midi": 74,
+      "velocity": 0.553584960768615,
+      "voice": "lead",
+      "pan": -0.014200123953480893
+    },
+    {
+      "beat": 56.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2801121384108137,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 56.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.4976293909804398,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 56.75,
+      "duration": 0.31,
+      "midi": 67,
+      "velocity": 0.5533023778441374,
+      "voice": "lead",
+      "pan": -0.016179378499265498
+    },
+    {
+      "beat": 57,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7370313234712443,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 57,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6305712434142868,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 57,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.49798943851424293,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 57.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.280280740448356,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 57.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.4982499328469787,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 57.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.5521319031141869,
+      "voice": "lead",
+      "pan": -0.015759437729204486
+    },
+    {
+      "beat": 58,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7355537975607214,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 58,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.4980899128054832,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 58,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.5514411800271032,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 58.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28081520046261915,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 58.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.49789477767498147,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 58.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.5510756999611349,
+      "voice": "lead",
+      "pan": -0.015553878743859936
+    },
+    {
+      "beat": 58.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27990187882717993,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 59,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7346336563876652,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 59,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6285199060205581,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 59,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.49795399895968495,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 59,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.5507139840791406,
+      "voice": "lead",
+      "pan": -0.015662146598991067
+    },
+    {
+      "beat": 59.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2798413970409918,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 59.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2801068037575866,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 59.5,
+      "duration": 0.36,
+      "midi": 55,
+      "velocity": 0.49862574582149555,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 59.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.5505885752343871,
+      "voice": "lead",
+      "pan": -0.016293695042737404
+    },
+    {
+      "beat": 59.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2791768756599848,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 59.75,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.4992619564649507,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 59.75,
+      "duration": 0.31,
+      "midi": 67,
+      "velocity": 0.5508455421686748,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 60,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8158026593305823,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 60,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.4988796687209371,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 60,
+      "duration": 3.5,
+      "midi": 72,
+      "velocity": 0.35895317010545624,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 60,
+      "duration": 3.5,
+      "midi": 76,
+      "velocity": 0.35895317010545624,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 60,
+      "duration": 0.62,
+      "midi": 72,
+      "velocity": 0.5503889591930308,
+      "voice": "lead",
+      "pan": -0.01658886978790203
+    },
+    {
+      "beat": 60.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2794796205839212,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 60.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.4988977257392729,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 60.75,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.550245163961326,
+      "voice": "lead",
+      "pan": -0.018663314991430188
+    },
+    {
+      "beat": 61,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7334778848721502,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 61,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6275310792795062,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 61,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.49961285368069724,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 61.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2789770606671093,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 61.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.4999345626257244,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 61.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.549550342754059,
+      "voice": "lead",
+      "pan": -0.016170938558359854
+    },
+    {
+      "beat": 62,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7325468181818182,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 62,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.4998479567758264,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 62,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.5490647368421053,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 62.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.279222175238453,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 62.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5003291050963579,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 62.5,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.5486513923109338,
+      "voice": "lead",
+      "pan": -0.016445645060065364
+    },
+    {
+      "beat": 62.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27926966291306793,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 63,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7311657252755381,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 63,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6255528982912938,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 63,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.49985490663080245,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 63,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.547973246541904,
+      "voice": "lead",
+      "pan": -0.016121940000582882
+    },
+    {
+      "beat": 63.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.2785968157652868,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 63.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.27921819450696383,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 63.5,
+      "duration": 0.36,
+      "midi": 57,
+      "velocity": 0.49968235659946486,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 63.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.5476971066961001,
+      "voice": "lead",
+      "pan": -0.016251028644740862
+    },
+    {
+      "beat": 63.75,
+      "duration": 0.19,
+      "midi": 38,
+      "velocity": 0.27604741320293397,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 63.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.27883049288775535,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 63.75,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.4996632290237831,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 63.75,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.5476160391198044,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 64,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8337333181143705,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 64,
+      "duration": 0.62,
+      "midi": 69,
+      "velocity": 0.5631426458166877,
+      "voice": "lead",
+      "pan": -0.004717789431469775
+    },
+    {
+      "beat": 64.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2872807902249135,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 64.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.47686519963636365,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 64.75,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.5567113469387756,
+      "voice": "lead",
+      "pan": -0.013996932698413334
+    },
+    {
+      "beat": 65,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6336528,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 65.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2860322596638656,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 65.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.47526028618859006,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 65.5,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.5536142384532761,
+      "voice": "lead",
+      "pan": -0.01781894494692241
+    },
+    {
+      "beat": 66,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7167812926499324,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 66,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.5366050984518264,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 66.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2761457926102949,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 66.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4633919014912502,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 66.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.5383961054041984,
+      "voice": "lead",
+      "pan": -0.021487500465143177
+    },
+    {
+      "beat": 67,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.623122312638254,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 67,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.545728022415573,
+      "voice": "lead",
+      "pan": -0.0172566108029871
+    },
+    {
+      "beat": 67.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.27398474030876174,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 67.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.47295779609535826,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 67.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.5486606515704895,
+      "voice": "lead",
+      "pan": -0.014500036728285674
+    },
+    {
+      "beat": 67.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4740688126646915,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 67.75,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.5490439253828846,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 68,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8164030395136779,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 68,
+      "duration": 0.62,
+      "midi": 74,
+      "velocity": 0.5508159965262701,
+      "voice": "lead",
+      "pan": -0.008097911922659141
+    },
+    {
+      "beat": 68.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28277379842793304,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 68.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4799673879775824,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 68.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.5545920786717026,
+      "voice": "lead",
+      "pan": -0.007049439014264852
+    },
+    {
+      "beat": 69,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6338943316754299,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 69.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2791349346569511,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 69.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4840300654854246,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 69.5,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.558871381495564,
+      "voice": "lead",
+      "pan": -0.0021367982336901294
+    },
+    {
+      "beat": 70,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7453548025122122,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 70,
+      "duration": 0.31,
+      "midi": 82,
+      "velocity": 0.5591870034891835,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 70.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28194179990175505,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 70.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4853049627376476,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 70.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.5594028164338083,
+      "voice": "lead",
+      "pan": 0.00015977932252141615
+    },
+    {
+      "beat": 71,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6389644343891403,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 71,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.5603619909502263,
+      "voice": "lead",
+      "pan": 0.0029833762953760928
+    },
+    {
+      "beat": 71.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28238970986189005,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 71.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.48702214627647444,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 71.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.5603863803180644,
+      "voice": "lead",
+      "pan": 0.003021258184736047
+    },
+    {
+      "beat": 71.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.4872589777607656,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 71.75,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.5604901398554153,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 72,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8298166554372726,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 72,
+      "duration": 0.62,
+      "midi": 72,
+      "velocity": 0.5603568090553834,
+      "voice": "lead",
+      "pan": 0.0021104360879210353
+    },
+    {
+      "beat": 72.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28209687481938245,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 72.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.4887883105687376,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 72.75,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.5610181470412433,
+      "voice": "lead",
+      "pan": -0.001609476857044041
+    },
+    {
+      "beat": 73,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6392464315803418,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 73.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28077558326422986,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 73.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.4902219422336881,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 73.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.5606736844870617,
+      "voice": "lead",
+      "pan": 0.0005608988990610531
+    },
+    {
+      "beat": 74,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7466541383352873,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 74,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.5602138804220399,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 74.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28133130690268043,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 74.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.49115788659819787,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 74.5,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.5601500552272067,
+      "voice": "lead",
+      "pan": -0.0015671316374916478
+    },
+    {
+      "beat": 75,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6388006232501522,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.560210672390044,
+      "voice": "lead",
+      "pan": -0.0009596065034241176
+    },
+    {
+      "beat": 75.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2814017490421823,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 75.5,
+      "duration": 0.36,
+      "midi": 53,
+      "velocity": 0.49133258549528563,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 75.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.559815565300286,
+      "voice": "lead",
+      "pan": -0.001796239088726286
+    },
+    {
+      "beat": 75.75,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.4918403236298644,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 75.75,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.5599434993678889,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 76,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8287401550974087,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 76,
+      "duration": 0.62,
+      "midi": 76,
+      "velocity": 0.5595911178362021,
+      "voice": "lead",
+      "pan": -0.0029963946162125947
+    },
+    {
+      "beat": 76.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28104798475998627,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 76.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.4923513107474146,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 76.75,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.5598650570921876,
+      "voice": "lead",
+      "pan": -0.006350139207156946
+    },
+    {
+      "beat": 77,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.6376621409552183,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 77.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.28133680155585405,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 77.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.492198483937202,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 77.5,
+      "duration": 0.31,
+      "midi": 82,
+      "velocity": 0.5590069918699188,
+      "voice": "lead",
+      "pan": -0.005953499470109863
+    },
+    {
+      "beat": 78,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.744436804400978,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 78,
+      "duration": 0.31,
+      "midi": 84,
+      "velocity": 0.5584615012224939,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 78.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2815319376859731,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 78.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.4931555486456292,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 78.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.5587090290290291,
+      "voice": "lead",
+      "pan": -0.0073600004824951265
+    },
+    {
+      "beat": 79,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.636928086713034,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 79,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.5584809393912022,
+      "voice": "lead",
+      "pan": -0.0069402285545433935
+    },
+    {
+      "beat": 79.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.2808772759722024,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 79.5,
+      "duration": 0.36,
+      "midi": 60,
+      "velocity": 0.49373341357490264,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 79.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.5585612863889056,
+      "voice": "lead",
+      "pan": -0.006750427741409696
+    },
+    {
+      "beat": 79.75,
+      "duration": 0.19,
+      "midi": 38,
+      "velocity": 0.28132925211183823,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 79.75,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.4942056328638312,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 79.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.5586656180844736,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 80,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5876222463672818,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 80,
+      "duration": 0.62,
+      "midi": 62,
+      "velocity": 0.6486181235534983,
+      "voice": "lead",
+      "pan": -0.007924867505422177
+    },
+    {
+      "beat": 80.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5879365062429868,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 80.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6489693593314764,
+      "voice": "lead",
+      "pan": -0.01118419960443804
+    },
+    {
+      "beat": 81,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5884376856041771,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 81.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5888145198675497,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 81.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6473935169048449,
+      "voice": "lead",
+      "pan": -0.010003858507680189
+    },
+    {
+      "beat": 82,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5887560312983717,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 82,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.64705434406369,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 82.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5891686226739679,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 82.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6469539060933338,
+      "voice": "lead",
+      "pan": -0.010784165765444671
+    },
+    {
+      "beat": 83,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5890887302854778,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 83,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6467117370892019,
+      "voice": "lead",
+      "pan": -0.010470360112228825
+    },
+    {
+      "beat": 83.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.588939341557891,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 83.5,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.6465246735628286,
+      "voice": "lead",
+      "pan": -0.010540475519631986
+    },
+    {
+      "beat": 83.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5897343079719415,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 83.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6470733903647007,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 84,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5896578477897868,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 84,
+      "duration": 0.62,
+      "midi": 82,
+      "velocity": 0.646273008029648,
+      "voice": "lead",
+      "pan": -0.010731518497993099
+    },
+    {
+      "beat": 84.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5903325981858101,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 84.75,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.6468531592834329,
+      "voice": "lead",
+      "pan": -0.012436545564196325
+    },
+    {
+      "beat": 85,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.5904155097073397,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 85.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5908268922528106,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 85.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6457823788546256,
+      "voice": "lead",
+      "pan": -0.011771500533881776
+    },
+    {
+      "beat": 86,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5909131057230956,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 86,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6452442547603415,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 86.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5912854915879142,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 86.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6450785417176413,
+      "voice": "lead",
+      "pan": -0.01211129575930596
+    },
+    {
+      "beat": 87,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.5914901673140642,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 87,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6445863885661796,
+      "voice": "lead",
+      "pan": -0.012719671757284605
+    },
+    {
+      "beat": 87.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.5923203706496366,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 87.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6443409054293541,
+      "voice": "lead",
+      "pan": -0.013633129534686412
+    },
+    {
+      "beat": 87.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5933694203740106,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 87.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6446209478977213,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 88,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.5924882903482787,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 88,
+      "duration": 0.62,
+      "midi": 67,
+      "velocity": 0.6437034427542034,
+      "voice": "lead",
+      "pan": -0.014200123953480893
+    },
+    {
+      "beat": 88.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5924159416433807,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 88.75,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6433748579582993,
+      "voice": "lead",
+      "pan": -0.016179378499265498
+    },
+    {
+      "beat": 89,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.592844569659813,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 89.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.593154681960689,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 89.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6420138408304499,
+      "voice": "lead",
+      "pan": -0.015759437729204486
+    },
+    {
+      "beat": 90,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.5929641819112895,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 90,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.64121067445012,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 90.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5927318781845018,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 90.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6407856976292267,
+      "voice": "lead",
+      "pan": -0.015553878743859936
+    },
+    {
+      "beat": 91,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5928023797139107,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 91,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6403650977664426,
+      "voice": "lead",
+      "pan": -0.015662146598991067
+    },
+    {
+      "beat": 91.5,
+      "duration": 0.36,
+      "midi": 55,
+      "velocity": 0.5936020783589233,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 91.5,
+      "duration": 0.31,
+      "midi": 67,
+      "velocity": 0.6402192735283571,
+      "voice": "lead",
+      "pan": -0.016293695042737404
+    },
+    {
+      "beat": 91.75,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5943594719820842,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 91.75,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6405180722891567,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 92,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5939043675249251,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 92,
+      "duration": 0.62,
+      "midi": 81,
+      "velocity": 0.6399871618523614,
+      "voice": "lead",
+      "pan": -0.01658886978790203
+    },
+    {
+      "beat": 92.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5939258639753249,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 92.75,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.639819958094565,
+      "voice": "lead",
+      "pan": -0.018663314991430188
+    },
+    {
+      "beat": 93,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.5947772067627348,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 93.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5951601936020529,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 93.5,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6390120264582081,
+      "voice": "lead",
+      "pan": -0.016170938558359854
+    },
+    {
+      "beat": 94,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5950570913997933,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 94,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6384473684210527,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 94.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5956298870194736,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 94.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6379667352452719,
+      "voice": "lead",
+      "pan": -0.016445645060065364
+    },
+    {
+      "beat": 95,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5950653650366696,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 95,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6371781936533768,
+      "voice": "lead",
+      "pan": -0.016121940000582882
+    },
+    {
+      "beat": 95.5,
+      "duration": 0.36,
+      "midi": 57,
+      "velocity": 0.5948599483326963,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 95.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6368571008094187,
+      "voice": "lead",
+      "pan": -0.016251028644740862
+    },
+    {
+      "beat": 95.75,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5948371774092656,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 95.75,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6367628361858191,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 96,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9925396644218697,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 96,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5723004329257321,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 96,
+      "duration": 3.5,
+      "midi": 65,
+      "velocity": 0.43671745234562265,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 96,
+      "duration": 3.5,
+      "midi": 69,
+      "velocity": 0.43671745234562265,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 96,
+      "duration": 0.62,
+      "midi": 62,
+      "velocity": 0.6548170300194043,
+      "voice": "lead",
+      "pan": -0.004717789431469775
+    },
+    {
+      "beat": 96,
+      "duration": 0.62,
+      "midi": 74,
+      "velocity": 0.14405974660426893,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 96.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.34200094074394466,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 96.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5676966662337662,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 96.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6473387755102041,
+      "voice": "lead",
+      "pan": -0.013996932698413334
+    },
+    {
+      "beat": 97,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8817061224489796,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 97,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7543485714285715,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 97,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5671528670699708,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 97.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3405145948379352,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 97.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5657860549864168,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 97.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6437374865735769,
+      "voice": "lead",
+      "pan": -0.01781894494692241
+    },
+    {
+      "beat": 98,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.853311062678491,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 98,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5490785026354555,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 98,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6239594168044492,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 98.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.32874499120273204,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 98.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5516570255848217,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 98.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6260419830281376,
+      "voice": "lead",
+      "pan": -0.021487500465143177
+    },
+    {
+      "beat": 98.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32788031485012237,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 99,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8670533107211327,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 99,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7418122769503024,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 99,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5596158968569911,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 99,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6345674679250849,
+      "voice": "lead",
+      "pan": -0.0172566108029871
+    },
+    {
+      "beat": 99.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32323005763107565,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 99.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.32617230989138307,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 99.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.563044995351617,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 99.5,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.6379775018261505,
+      "voice": "lead",
+      "pan": -0.014500036728285674
+    },
+    {
+      "beat": 99.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32583259764438294,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 99.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5643676341246328,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 99.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6384231690498658,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 100,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9719083803734261,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 100,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5670415950248759,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 100,
+      "duration": 3.5,
+      "midi": 74,
+      "velocity": 0.42763968736430746,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 100,
+      "duration": 3.5,
+      "midi": 77,
+      "velocity": 0.42763968736430746,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 100,
+      "duration": 0.62,
+      "midi": 82,
+      "velocity": 0.6404837168910118,
+      "voice": "lead",
+      "pan": -0.008097911922659141
+    },
+    {
+      "beat": 100,
+      "duration": 0.62,
+      "midi": 94,
+      "velocity": 0.1409064177160226,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 100.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33663547431896795,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 100.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.57138974759236,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 100.75,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.644874510083375,
+      "voice": "lead",
+      "pan": -0.007049439014264852
+    },
+    {
+      "beat": 101,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8820422054852921,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 101,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7546361091374165,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 101,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.573464592401181,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 101.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3323034936392275,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 101.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5762262684350293,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 101.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6498504435994931,
+      "voice": "lead",
+      "pan": -0.0021367982336901294
+    },
+    {
+      "beat": 102,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8873271458478718,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 102,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5768139093907297,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 102,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6502174459176553,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 102.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33564499988304175,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 102.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5777440032591044,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 102.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6504683912021026,
+      "voice": "lead",
+      "pan": 0.00015977932252141615
+    },
+    {
+      "beat": 102.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33458259275457,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 103,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8890970793911972,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 103,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7606719457013575,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 103,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.5791126449546443,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 103,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.65158371040724,
+      "voice": "lead",
+      "pan": 0.0029833762953760928
+    },
+    {
+      "beat": 103.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3345715286489359,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 103.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33617822602605957,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 103.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.5797882693767553,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 103.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6516120701372843,
+      "voice": "lead",
+      "pan": 0.003021258184736047
+    },
+    {
+      "beat": 103.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3359312470084162,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 103.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5800702116199591,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 103.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6517327207621108,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 104,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9878769707586579,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 104,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5804729478118212,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 104,
+      "duration": 3.5,
+      "midi": 69,
+      "velocity": 0.43466586713380945,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 104,
+      "duration": 3.5,
+      "midi": 72,
+      "velocity": 0.43466586713380945,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 104,
+      "duration": 0.62,
+      "midi": 65,
+      "velocity": 0.6515776849481203,
+      "voice": "lead",
+      "pan": 0.0021104360879210353
+    },
+    {
+      "beat": 104,
+      "duration": 0.62,
+      "midi": 77,
+      "velocity": 0.14334709068858648,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 104.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33582961288021723,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 104.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5818908459151638,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 104.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6523466826060969,
+      "voice": "lead",
+      "pan": -0.001609476857044041
+    },
+    {
+      "beat": 105,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8894894688038152,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 105,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7610076566432641,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 105,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5836525054826218,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 105.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33425664674313077,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 105.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5835975502782002,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 105.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6519461447523973,
+      "voice": "lead",
+      "pan": 0.0005608988990610531
+    },
+    {
+      "beat": 106,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8888739742086753,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 106,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5838008664093307,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 106,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6514114888628371,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 106.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33491822250319103,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 106.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5847117697597594,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 106.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6513372735200078,
+      "voice": "lead",
+      "pan": -0.0015671316374916478
+    },
+    {
+      "beat": 106.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3344007476107295,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 107,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8888691418137554,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 107,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7604769324406574,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 107,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5848152745662433,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 107,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6514077585930744,
+      "voice": "lead",
+      "pan": -0.0009596065034241176
+    },
+    {
+      "beat": 107.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3344280217933167,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 107.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33500208219307415,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 107.5,
+      "duration": 0.36,
+      "midi": 53,
+      "velocity": 0.5849197446372448,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 107.5,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6509483317445186,
+      "voice": "lead",
+      "pan": -0.001796239088726286
+    },
+    {
+      "beat": 107.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3347708194819288,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 107.75,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5855241947974577,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 107.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6510970922882429,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 108,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9865954227350104,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 108,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.58551528203149,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 108,
+      "duration": 3.5,
+      "midi": 76,
+      "velocity": 0.4341019860034046,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 108,
+      "duration": 3.5,
+      "midi": 79,
+      "velocity": 0.4341019860034046,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 108,
+      "duration": 0.62,
+      "midi": 84,
+      "velocity": 0.6506873463211652,
+      "voice": "lead",
+      "pan": -0.0029963946162125947
+    },
+    {
+      "beat": 108,
+      "duration": 0.62,
+      "midi": 96,
+      "velocity": 0.14315121619065635,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 108.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3345809342380789,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 108.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5861325127945413,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 108.75,
+      "duration": 0.31,
+      "midi": 82,
+      "velocity": 0.651005880339753,
+      "voice": "lead",
+      "pan": -0.006350139207156946
+    },
+    {
+      "beat": 109,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8872849827762779,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 109,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.75912159637526,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 109,
+      "duration": 0.31,
+      "midi": 55,
+      "velocity": 0.5856497001214346,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 109.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3349247637569691,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 109.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5859505761157167,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 109.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6500081300813009,
+      "voice": "lead",
+      "pan": -0.005953499470109863
+    },
+    {
+      "beat": 110,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8862342909535453,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 110,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5862367740201493,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 110,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6493738386308069,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 110.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33515706867377754,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 110.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5870899388638443,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 110.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6496616616616617,
+      "voice": "lead",
+      "pan": -0.0073600004824951265
+    },
+    {
+      "beat": 110.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3345746189589882,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 111,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8862635714930901,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 111,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7582477222774215,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 111,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.5871655701373386,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 111,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6493964411525608,
+      "voice": "lead",
+      "pan": -0.0069402285545433935
+    },
+    {
+      "beat": 111.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3333852138598494,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 111.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33437770949071716,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 111.5,
+      "duration": 0.36,
+      "midi": 60,
+      "velocity": 0.5877778733034555,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 111.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6494898678940763,
+      "voice": "lead",
+      "pan": -0.006750427741409696
+    },
+    {
+      "beat": 111.75,
+      "duration": 0.19,
+      "midi": 38,
+      "velocity": 0.33491577632361696,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 111.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3338263782974837,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 111.75,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5883400391236085,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 111.75,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6496111838191553,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 112,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9836169960239749,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 112,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5876222463672818,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 112,
+      "duration": 3.5,
+      "midi": 65,
+      "velocity": 0.432791478250549,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 112,
+      "duration": 3.5,
+      "midi": 69,
+      "velocity": 0.432791478250549,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 112,
+      "duration": 0.62,
+      "midi": 62,
+      "velocity": 0.6486181235534983,
+      "voice": "lead",
+      "pan": -0.007924867505422177
+    },
+    {
+      "beat": 112,
+      "duration": 0.62,
+      "midi": 74,
+      "velocity": 0.14269598718176965,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 112.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33502023799442515,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 112.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5879365062429868,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 112.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6489693593314764,
+      "voice": "lead",
+      "pan": -0.01118419960443804
+    },
+    {
+      "beat": 113,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8843540527100945,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 113,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.756614022874192,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 113,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5884376856041771,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 113.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33542204081632654,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 113.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5888145198675497,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 113.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6473935169048449,
+      "voice": "lead",
+      "pan": -0.010003858507680189
+    },
+    {
+      "beat": 114,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8832294911734165,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 114,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5887560312983717,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 114,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.64705434406369,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 114.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33504910771384844,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 114.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5891686226739679,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 114.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6469539060933338,
+      "voice": "lead",
+      "pan": -0.010784165765444671
+    },
+    {
+      "beat": 114.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33382169217818936,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 115,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8827856594110115,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 115,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7552721752738655,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 115,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5890887302854778,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 115,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6467117370892019,
+      "voice": "lead",
+      "pan": -0.010470360112228825
+    },
+    {
+      "beat": 115.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33355484295678156,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 115.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33457684106270175,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 115.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.588939341557891,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 115.5,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.6465246735628286,
+      "voice": "lead",
+      "pan": -0.010540475519631986
+    },
+    {
+      "beat": 115.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3333811070557854,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 115.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5897343079719415,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 115.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6470733903647007,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 116,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9802414509517661,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 116,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5896578477897868,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 116,
+      "duration": 3.5,
+      "midi": 74,
+      "velocity": 0.4313062384187771,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 116,
+      "duration": 3.5,
+      "midi": 77,
+      "velocity": 0.4313062384187771,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 116,
+      "duration": 0.62,
+      "midi": 82,
+      "velocity": 0.646273008029648,
+      "voice": "lead",
+      "pan": -0.010731518497993099
+    },
+    {
+      "beat": 116,
+      "duration": 0.62,
+      "midi": 94,
+      "velocity": 0.14218006176652256,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 116.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3341150854192603,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 116.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5903325981858101,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 116.75,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.6468531592834329,
+      "voice": "lead",
+      "pan": -0.012436545564196325
+    },
+    {
+      "beat": 117,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8817944966331367,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 117,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7544241804527947,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 117,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.5904155097073397,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 117.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33360926406205577,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 117.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5908268922528106,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 117.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6457823788546256,
+      "voice": "lead",
+      "pan": -0.011771500533881776
+    },
+    {
+      "beat": 118,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8808846027577151,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 118,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5909131057230956,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 118,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6452442547603415,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 118.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3333515675578471,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 118.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5912854915879142,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 118.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6450785417176413,
+      "voice": "lead",
+      "pan": -0.01211129575930596
+    },
+    {
+      "beat": 118.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33172727295632937,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 119,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8800323670061871,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 119,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.752916580660849,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 119,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.5914901673140642,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 119,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6445863885661796,
+      "voice": "lead",
+      "pan": -0.012719671757284605
+    },
+    {
+      "beat": 119.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33191969275924865,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 119.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33297177529646327,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 119.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.5923203706496366,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 119.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6443409054293541,
+      "voice": "lead",
+      "pan": -0.013633129534686412
+    },
+    {
+      "beat": 119.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3324840828368353,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 119.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5933694203740106,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 119.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6446209478977213,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 120,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.976542834267414,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 120,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.5924882903482787,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 120,
+      "duration": 3.5,
+      "midi": 70,
+      "velocity": 0.42967884707766213,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 120,
+      "duration": 3.5,
+      "midi": 74,
+      "velocity": 0.42967884707766213,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 120,
+      "duration": 0.62,
+      "midi": 67,
+      "velocity": 0.6437034427542034,
+      "voice": "lead",
+      "pan": -0.014200123953480893
+    },
+    {
+      "beat": 120,
+      "duration": 0.62,
+      "midi": 79,
+      "velocity": 0.14161475740592475,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 120.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3334668314414449,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 120.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5924159416433807,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 120.75,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6433748579582993,
+      "voice": "lead",
+      "pan": -0.016179378499265498
+    },
+    {
+      "beat": 121,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8774182422276718,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 121,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7506800516836748,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 121,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.592844569659813,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 121.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33366754815280475,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 121.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.593154681960689,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 121.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6420138408304499,
+      "voice": "lead",
+      "pan": -0.015759437729204486
+    },
+    {
+      "beat": 122,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8756592828103826,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 122,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.5929641819112895,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 122,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.64121067445012,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 122.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3343038100745466,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 122.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5927318781845018,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 122.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6407856976292267,
+      "voice": "lead",
+      "pan": -0.015553878743859936
+    },
+    {
+      "beat": 122.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33321652241330946,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 123,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8745638766519824,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 123,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7482379833578072,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 123,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5928023797139107,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 123,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6403650977664426,
+      "voice": "lead",
+      "pan": -0.015662146598991067
+    },
+    {
+      "beat": 123.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.333144520286895,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 123.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33346048066379363,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 123.5,
+      "duration": 0.36,
+      "midi": 55,
+      "velocity": 0.5936020783589233,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 123.5,
+      "duration": 0.31,
+      "midi": 67,
+      "velocity": 0.6402192735283571,
+      "voice": "lead",
+      "pan": -0.016293695042737404
+    },
+    {
+      "beat": 123.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3323534234047438,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 123.75,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.5943594719820842,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 123.75,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6405180722891567,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 124,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9711936420602171,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 124,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5939043675249251,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 124,
+      "duration": 3.5,
+      "midi": 72,
+      "velocity": 0.4273252025064955,
+      "voice": "strings",
+      "pan": -0.24
+    },
+    {
+      "beat": 124,
+      "duration": 3.5,
+      "midi": 76,
+      "velocity": 0.4273252025064955,
+      "voice": "strings",
+      "pan": 0.24
+    },
+    {
+      "beat": 124,
+      "duration": 0.62,
+      "midi": 81,
+      "velocity": 0.6399871618523614,
+      "voice": "lead",
+      "pan": -0.01658886978790203
+    },
+    {
+      "beat": 124,
+      "duration": 0.62,
+      "midi": 93,
+      "velocity": 0.1407971756075195,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 124.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3327138340284776,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 124.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5939258639753249,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 124.75,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.639819958094565,
+      "voice": "lead",
+      "pan": -0.018663314991430188
+    },
+    {
+      "beat": 125,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8731879581811312,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 125,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7470608086660789,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 125,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.5947772067627348,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 125.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3321155484132254,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 125.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5951601936020529,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 125.5,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6390120264582081,
+      "voice": "lead",
+      "pan": -0.016170938558359854
+    },
+    {
+      "beat": 126,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8720795454545455,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 126,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5950570913997933,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 126,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6384473684210527,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 126.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3324073514743488,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 126.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5956298870194736,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 126.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6379667352452719,
+      "voice": "lead",
+      "pan": -0.016445645060065364
+    },
+    {
+      "beat": 126.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.332463884420319,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 127,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8704353872327835,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 127,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7447058312991592,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 127,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5950653650366696,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 127,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6371781936533768,
+      "voice": "lead",
+      "pan": -0.016121940000582882
+    },
+    {
+      "beat": 127.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3316628759110557,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 127.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3324026125082903,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 127.5,
+      "duration": 0.36,
+      "midi": 57,
+      "velocity": 0.5948599483326963,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 127.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6368571008094187,
+      "voice": "lead",
+      "pan": -0.016251028644740862
+    },
+    {
+      "beat": 127.75,
+      "duration": 0.19,
+      "midi": 38,
+      "velocity": 0.3286278728606357,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 127.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3319410629616135,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 127.75,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.5948371774092656,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 127.75,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6367628361858191,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 128,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9925396644218697,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 128,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5723004329257321,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 128,
+      "duration": 0.62,
+      "midi": 62,
+      "velocity": 0.6548170300194043,
+      "voice": "lead",
+      "pan": -0.004717789431469775
+    },
+    {
+      "beat": 128,
+      "duration": 0.62,
+      "midi": 74,
+      "velocity": 0.14405974660426893,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 128.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.34200094074394466,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 128.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5676966662337662,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 128.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6473387755102041,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 129,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8817061224489796,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 129,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7543485714285715,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 129,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5671528670699708,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 129.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3405145948379352,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 129.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5657860549864168,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 129.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6437374865735769,
+      "voice": "lead",
+      "pan": -0.01781894494692241
+    },
+    {
+      "beat": 130,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.853311062678491,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 130,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.5490785026354555,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 130,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6239594168044492,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 130.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.32874499120273204,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 130.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5516570255848217,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 130.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6260419830281376,
+      "voice": "lead",
+      "pan": -0.021487500465143177
+    },
+    {
+      "beat": 130.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32788031485012237,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 131,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8670533107211327,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 131,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7418122769503024,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 131,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5596158968569911,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 131,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6345674679250849,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 131.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32323005763107565,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 131.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.32617230989138307,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 131.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.563044995351617,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 131.5,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.6379775018261505,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 131.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.32583259764438294,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 131.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.5643676341246328,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 131.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6384231690498658,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 132,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9719083803734261,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 132,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5670415950248759,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 132,
+      "duration": 0.62,
+      "midi": 82,
+      "velocity": 0.6404837168910118,
+      "voice": "lead",
+      "pan": -0.008097911922659141
+    },
+    {
+      "beat": 132,
+      "duration": 0.62,
+      "midi": 94,
+      "velocity": 0.1409064177160226,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 132.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33663547431896795,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 132.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.57138974759236,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 132.75,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.644874510083375,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 133,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8820422054852921,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 133,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7546361091374165,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 133,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.573464592401181,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 133.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3323034936392275,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 133.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5762262684350293,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 133.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6498504435994931,
+      "voice": "lead",
+      "pan": -0.0021367982336901294
+    },
+    {
+      "beat": 134,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8873271458478718,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 134,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.5768139093907297,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 134,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.6502174459176553,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 134.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33564499988304175,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 134.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5777440032591044,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 134.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6504683912021026,
+      "voice": "lead",
+      "pan": 0.00015977932252141615
+    },
+    {
+      "beat": 134.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.33458259275457,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 135,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8890970793911972,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 135,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7606719457013575,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 135,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.5791126449546443,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 135,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.65158371040724,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 135.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3345715286489359,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 135.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33617822602605957,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 135.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.5797882693767553,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 135.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.6516120701372843,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 135.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3359312470084162,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 135.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.5800702116199591,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 135.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6517327207621108,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 136,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9878769707586579,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 136,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5804729478118212,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 136,
+      "duration": 0.62,
+      "midi": 65,
+      "velocity": 0.6515776849481203,
+      "voice": "lead",
+      "pan": 0.0021104360879210353
+    },
+    {
+      "beat": 136,
+      "duration": 0.62,
+      "midi": 77,
+      "velocity": 0.14334709068858648,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 136.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33582961288021723,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 136.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5818908459151638,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 136.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6523466826060969,
+      "voice": "lead",
+      "pan": -0.001609476857044041
+    },
+    {
+      "beat": 137,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8894894688038152,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 137,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7610076566432641,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 137,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5836525054826218,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 137.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33425664674313077,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 137.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5835975502782002,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 137.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.6519461447523973,
+      "voice": "lead",
+      "pan": 0.0005608988990610531
+    },
+    {
+      "beat": 138,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8888739742086753,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 138,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.5838008664093307,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 138,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6514114888628371,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 138.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33491822250319103,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 138.5,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5847117697597594,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 138.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6513372735200078,
+      "voice": "lead",
+      "pan": -0.0015671316374916478
+    },
+    {
+      "beat": 138.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3344007476107295,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 139,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8888691418137554,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 139,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7604769324406574,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 139,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.5848152745662433,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 139,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.6514077585930744,
+      "voice": "lead",
+      "pan": -0.0009596065034241176
+    },
+    {
+      "beat": 139.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3344280217933167,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 139.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33500208219307415,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 139.5,
+      "duration": 0.36,
+      "midi": 53,
+      "velocity": 0.5849197446372448,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 139.5,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.6509483317445186,
+      "voice": "lead",
+      "pan": -0.001796239088726286
+    },
+    {
+      "beat": 139.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3347708194819288,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 139.75,
+      "duration": 0.36,
+      "midi": 41,
+      "velocity": 0.5855241947974577,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 139.75,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6510970922882429,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 140,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.9865954227350104,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 140,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.58551528203149,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 140,
+      "duration": 0.62,
+      "midi": 84,
+      "velocity": 0.6506873463211652,
+      "voice": "lead",
+      "pan": -0.0029963946162125947
+    },
+    {
+      "beat": 140,
+      "duration": 0.62,
+      "midi": 96,
+      "velocity": 0.14315121619065635,
+      "voice": "lead",
+      "pan": 0.25
+    },
+    {
+      "beat": 140.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3345809342380789,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 140.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5861325127945413,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 140.75,
+      "duration": 0.31,
+      "midi": 82,
+      "velocity": 0.651005880339753,
+      "voice": "lead",
+      "pan": -0.006350139207156946
+    },
+    {
+      "beat": 141,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8872849827762779,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 141,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.75912159637526,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 141,
+      "duration": 0.31,
+      "midi": 55,
+      "velocity": 0.5856497001214346,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 141.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.3349247637569691,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 141.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5859505761157167,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 141.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6500081300813009,
+      "voice": "lead",
+      "pan": -0.005953499470109863
+    },
+    {
+      "beat": 142,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8862342909535453,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 142,
+      "duration": 0.31,
+      "midi": 48,
+      "velocity": 0.5862367740201493,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 142,
+      "duration": 0.31,
+      "midi": 76,
+      "velocity": 0.6493738386308069,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 142.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33515706867377754,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 142.5,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5870899388638443,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 142.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6496616616616617,
+      "voice": "lead",
+      "pan": -0.0073600004824951265
+    },
+    {
+      "beat": 142.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3345746189589882,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 143,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.8862635714930901,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 143,
+      "duration": 0.34,
+      "midi": 38,
+      "velocity": 0.7582477222774215,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 143,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.5871655701373386,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 143,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6493964411525608,
+      "voice": "lead",
+      "pan": -0.0069402285545433935
+    },
+    {
+      "beat": 143.25,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3333852138598494,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 143.5,
+      "duration": 0.2,
+      "midi": 46,
+      "velocity": 0.33437770949071716,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 143.5,
+      "duration": 0.36,
+      "midi": 60,
+      "velocity": 0.5877778733034555,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 143.5,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.6494898678940763,
+      "voice": "lead",
+      "pan": -0.006750427741409696
+    },
+    {
+      "beat": 143.75,
+      "duration": 0.19,
+      "midi": 38,
+      "velocity": 0.33491577632361696,
+      "voice": "snare",
+      "pan": -0.09
+    },
+    {
+      "beat": 143.75,
+      "duration": 0.09,
+      "midi": 42,
+      "velocity": 0.3338263782974837,
+      "voice": "hat",
+      "pan": 0.25
+    },
+    {
+      "beat": 143.75,
+      "duration": 0.36,
+      "midi": 48,
+      "velocity": 0.5883400391236085,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 143.75,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.6496111838191553,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 144,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7377127470179812,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 144,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.44071668477546133,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 144,
+      "duration": 0.62,
+      "midi": 62,
+      "velocity": 0.4670050489585188,
+      "voice": "lead",
+      "pan": -0.007924867505422177
+    },
+    {
+      "beat": 144.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4409523796822401,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 144.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.46725793871866295,
+      "voice": "lead",
+      "pan": -0.01118419960443804
+    },
+    {
+      "beat": 145,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6632655395325708,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 145,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.4413282642031328,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 145.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.44161088990066233,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 145.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.4661233321714883,
+      "voice": "lead",
+      "pan": -0.010003858507680189
+    },
+    {
+      "beat": 146,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6624221183800624,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 146,
+      "duration": 0.31,
+      "midi": 38,
+      "velocity": 0.4415670234737788,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 146,
+      "duration": 0.31,
+      "midi": 72,
+      "velocity": 0.46587912772585677,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 146.5,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4418764670054759,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 146.5,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.46580681238720034,
+      "voice": "lead",
+      "pan": -0.010784165765444671
+    },
+    {
+      "beat": 147,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6620892445582587,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 147,
+      "duration": 0.31,
+      "midi": 41,
+      "velocity": 0.4418165477141084,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 147,
+      "duration": 0.31,
+      "midi": 65,
+      "velocity": 0.4656324507042254,
+      "voice": "lead",
+      "pan": -0.010470360112228825
+    },
+    {
+      "beat": 147.5,
+      "duration": 0.36,
+      "midi": 50,
+      "velocity": 0.4417045061684182,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 147.5,
+      "duration": 0.31,
+      "midi": 62,
+      "velocity": 0.4654977649652366,
+      "voice": "lead",
+      "pan": -0.010540475519631986
+    },
+    {
+      "beat": 147.75,
+      "duration": 0.36,
+      "midi": 38,
+      "velocity": 0.4423007309789561,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 147.75,
+      "duration": 0.31,
+      "midi": 69,
+      "velocity": 0.4658928410625845,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 148,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7351810882138246,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 148,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.44224338584234013,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 148,
+      "duration": 0.62,
+      "midi": 82,
+      "velocity": 0.46531656578134656,
+      "voice": "lead",
+      "pan": -0.010731518497993099
+    },
+    {
+      "beat": 148.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.44274944863935756,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 148.75,
+      "duration": 0.31,
+      "midi": 81,
+      "velocity": 0.4657342746840717,
+      "voice": "lead",
+      "pan": -0.012436545564196325
+    },
+    {
+      "beat": 149,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6613458724748525,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 149,
+      "duration": 0.31,
+      "midi": 53,
+      "velocity": 0.4428116322805048,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 149.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.44312016918960795,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 149.5,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.46496331277533043,
+      "voice": "lead",
+      "pan": -0.011771500533881776
+    },
+    {
+      "beat": 150,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6606634520682864,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 150,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.4431848292923217,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 150,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.4645758634274459,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 150.5,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.44346411869093566,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 150.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.4644565500367017,
+      "voice": "lead",
+      "pan": -0.01211129575930596
+    },
+    {
+      "beat": 151,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6600242752546404,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 151,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.4436176254855482,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 151,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.46410219976764927,
+      "voice": "lead",
+      "pan": -0.012719671757284605
+    },
+    {
+      "beat": 151.5,
+      "duration": 0.36,
+      "midi": 58,
+      "velocity": 0.4442402779872274,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 151.5,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.4639254519091349,
+      "voice": "lead",
+      "pan": -0.013633129534686412
+    },
+    {
+      "beat": 151.75,
+      "duration": 0.36,
+      "midi": 46,
+      "velocity": 0.44502706528050795,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 151.75,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.4641270824863593,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 152,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7324071257005604,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 152,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.444366217761209,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 152,
+      "duration": 0.62,
+      "midi": 67,
+      "velocity": 0.46346647878302644,
+      "voice": "lead",
+      "pan": -0.014200123953480893
+    },
+    {
+      "beat": 152.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.44431195623253555,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 152.75,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.46322989772997547,
+      "voice": "lead",
+      "pan": -0.016179378499265498
+    },
+    {
+      "beat": 153,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6580636816707539,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 153,
+      "duration": 0.31,
+      "midi": 50,
+      "velocity": 0.44463342724485977,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 153.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.44486601147051674,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 153.5,
+      "duration": 0.31,
+      "midi": 79,
+      "velocity": 0.4622499653979239,
+      "voice": "lead",
+      "pan": -0.015759437729204486
+    },
+    {
+      "beat": 154,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6567444621077869,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 154,
+      "duration": 0.31,
+      "midi": 43,
+      "velocity": 0.44472313643346717,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 154,
+      "duration": 0.31,
+      "midi": 77,
+      "velocity": 0.4616716856040864,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 154.5,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.44454890863837637,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 154.5,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.4613657022930432,
+      "voice": "lead",
+      "pan": -0.015553878743859936
+    },
+    {
+      "beat": 155,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6559229074889869,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 155,
+      "duration": 0.31,
+      "midi": 46,
+      "velocity": 0.444601784785433,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 155,
+      "duration": 0.31,
+      "midi": 70,
+      "velocity": 0.46106287039183863,
+      "voice": "lead",
+      "pan": -0.015662146598991067
+    },
+    {
+      "beat": 155.5,
+      "duration": 0.36,
+      "midi": 55,
+      "velocity": 0.4452015587691925,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 155.5,
+      "duration": 0.31,
+      "midi": 67,
+      "velocity": 0.46095787694041707,
+      "voice": "lead",
+      "pan": -0.016293695042737404
+    },
+    {
+      "beat": 155.75,
+      "duration": 0.36,
+      "midi": 43,
+      "velocity": 0.4457696039865631,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 155.75,
+      "duration": 0.31,
+      "midi": 74,
+      "velocity": 0.4611730120481928,
+      "voice": "lead",
+      "pan": 0
+    },
+    {
+      "beat": 156,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.7283952315451628,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 156,
+      "duration": 0.31,
+      "midi": 45,
+      "velocity": 0.44542827564369386,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 156.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.44544439798149366,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 157,
+      "duration": 0.47,
+      "midi": 36,
+      "velocity": 0.6548909686358484,
+      "voice": "kick",
+      "pan": 0
+    },
+    {
+      "beat": 157,
+      "duration": 0.31,
+      "midi": 52,
+      "velocity": 0.4460829050720511,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 157.5,
+      "duration": 0.36,
+      "midi": 45,
+      "velocity": 0.4463701452015396,
+      "voice": "bass",
+      "pan": 0
+    },
+    {
+      "beat": 158,
+      "duration": 2.6,
+      "midi": 50,
+      "velocity": 0.55,
+      "voice": "strings",
+      "pan": -0.27
+    },
+    {
+      "beat": 158,
+      "duration": 2.6,
+      "midi": 53,
+      "velocity": 0.37,
+      "voice": "strings",
+      "pan": -0.09
+    },
+    {
+      "beat": 158,
+      "duration": 2.6,
+      "midi": 57,
+      "velocity": 0.37,
+      "voice": "strings",
+      "pan": 0.09
+    },
+    {
+      "beat": 158,
+      "duration": 2.6,
+      "midi": 62,
+      "velocity": 0.37,
+      "voice": "strings",
+      "pan": 0.27
+    }
+  ]
+}

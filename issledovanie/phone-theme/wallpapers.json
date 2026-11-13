@@ -1,0 +1,592 @@
+{
+  "wallpapers": [
+    {
+      "id": "meridian-color",
+      "title": "Северный меридиан",
+      "variant": "color",
+      "description": "Два потока XOR замыкаются в кольцо вокруг тёмного центра.",
+      "src": "wallpapers/meridian-color.png",
+      "thumb": "wallpapers/meridian-color-thumb.png",
+      "svg": "art/meridian-color.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "northern-current",
+        "recipe": "polyrhythm",
+        "tick": 51,
+        "projection": "orbit",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pendR",
+          "depth": 128,
+          "rateA": 2,
+          "rateB": 3,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 22,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "xor",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#020612",
+          "halo": "#16304e",
+          "a": "#54c9d1",
+          "b": "#e6a45e",
+          "both": "#ffe0a2",
+          "echo": "#4b65ae"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          14,
+          370
+        ]
+      }
+    },
+    {
+      "id": "meridian-mono",
+      "title": "Северный меридиан",
+      "variant": "mono",
+      "description": "Два потока XOR замыкаются в кольцо вокруг тёмного центра.",
+      "src": "wallpapers/meridian-mono.png",
+      "thumb": "wallpapers/meridian-mono-thumb.png",
+      "svg": "art/meridian-mono.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "northern-current",
+        "recipe": "polyrhythm",
+        "tick": 51,
+        "projection": "orbit",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pendR",
+          "depth": 128,
+          "rateA": 2,
+          "rateB": 3,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 22,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "xor",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#000000",
+          "halo": "#101010",
+          "a": "#535353",
+          "b": "#b2b2b2",
+          "both": "#eeeeee",
+          "echo": "#3c3c3c"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          14,
+          370
+        ]
+      }
+    },
+    {
+      "id": "fault-color",
+      "title": "Киноварный разлом",
+      "variant": "color",
+      "description": "Две диагональные ленты из несовпадающих клеток расходятся вдоль разлома.",
+      "src": "wallpapers/fault-color.png",
+      "thumb": "wallpapers/fault-color-thumb.png",
+      "svg": "art/fault-color.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "red-canon",
+        "recipe": "canon",
+        "tick": 38,
+        "projection": "fault",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pend",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 16,
+          "delayB": 0,
+          "transformB": "rotate180",
+          "shiftX": 78,
+          "shiftY": -22,
+          "invertB": false,
+          "operation": "xor",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#110710",
+          "halo": "#50203a",
+          "a": "#ef795e",
+          "b": "#b67bdd",
+          "both": "#ffb574",
+          "echo": "#873c67"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          46,
+          384
+        ]
+      }
+    },
+    {
+      "id": "fault-mono",
+      "title": "Киноварный разлом",
+      "variant": "mono",
+      "description": "Две диагональные ленты из несовпадающих клеток расходятся вдоль разлома.",
+      "src": "wallpapers/fault-mono.png",
+      "thumb": "wallpapers/fault-mono-thumb.png",
+      "svg": "art/fault-mono.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "red-canon",
+        "recipe": "canon",
+        "tick": 38,
+        "projection": "fault",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pend",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 16,
+          "delayB": 0,
+          "transformB": "rotate180",
+          "shiftX": 78,
+          "shiftY": -22,
+          "invertB": false,
+          "operation": "xor",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#000000",
+          "halo": "#181818",
+          "a": "#555555",
+          "b": "#9d9d9d",
+          "both": "#ededed",
+          "echo": "#3d3d3d"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          46,
+          384
+        ]
+      }
+    },
+    {
+      "id": "crystal-color",
+      "title": "Ледяная линза",
+      "variant": "color",
+      "description": "Совпадения AND образуют ступенчатую линзу с зеркальными гранями.",
+      "src": "wallpapers/crystal-color.png",
+      "thumb": "wallpapers/crystal-color-thumb.png",
+      "svg": "art/crystal-color.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "thin-ice",
+        "recipe": "weave",
+        "tick": 63,
+        "projection": "lens",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pendR",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 1,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "and",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#010c18",
+          "halo": "#11394c",
+          "a": "#42c5be",
+          "b": "#849ee8",
+          "both": "#c5edc8",
+          "echo": "#346386"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          98,
+          287
+        ]
+      }
+    },
+    {
+      "id": "crystal-mono",
+      "title": "Ледяная линза",
+      "variant": "mono",
+      "description": "Совпадения AND образуют ступенчатую линзу с зеркальными гранями.",
+      "src": "wallpapers/crystal-mono.png",
+      "thumb": "wallpapers/crystal-mono-thumb.png",
+      "svg": "art/crystal-mono.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "thin-ice",
+        "recipe": "weave",
+        "tick": 63,
+        "projection": "lens",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pendR",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 1,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "and",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#000000",
+          "halo": "#101010",
+          "a": "#626262",
+          "b": "#a0a0a0",
+          "both": "#eeeeee",
+          "echo": "#474747"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          98,
+          287
+        ]
+      }
+    },
+    {
+      "id": "eight-winds-color",
+      "title": "Роза восьми ветров",
+      "variant": "color",
+      "description": "Восемь секторов раскрывают след Маятника, от свежих клеток до угасающих.",
+      "src": "wallpapers/eight-winds-color.png",
+      "thumb": "wallpapers/eight-winds-color-thumb.png",
+      "svg": "art/eight-winds-color.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "eight-winds",
+        "recipe": "trail",
+        "tick": 92,
+        "projection": "rosette",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pendR",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 45,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "xor",
+          "history": "trail",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#09051a",
+          "halo": "#301947",
+          "a": "#a59af8",
+          "b": "#e6819e",
+          "both": "#f5b6cd",
+          "echo": "#65588f"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          19,
+          384
+        ]
+      }
+    },
+    {
+      "id": "eight-winds-mono",
+      "title": "Роза восьми ветров",
+      "variant": "mono",
+      "description": "Восемь секторов раскрывают след Маятника, от свежих клеток до угасающих.",
+      "src": "wallpapers/eight-winds-mono.png",
+      "thumb": "wallpapers/eight-winds-mono-thumb.png",
+      "svg": "art/eight-winds-mono.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "eight-winds",
+        "recipe": "trail",
+        "tick": 92,
+        "projection": "rosette",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "pendR",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 45,
+          "shiftY": 0,
+          "invertB": false,
+          "operation": "xor",
+          "history": "trail",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#070707",
+          "halo": "#202020",
+          "a": "#555555",
+          "b": "#bbbbbb",
+          "both": "#f5f5f5",
+          "echo": "#3f3f3f"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          19,
+          384
+        ]
+      }
+    },
+    {
+      "id": "two-rivers-color",
+      "title": "Два русла",
+      "variant": "color",
+      "description": "Объединение встречных полей ложится на светлый фон двумя волнистыми берегами.",
+      "src": "wallpapers/two-rivers-color.png",
+      "thumb": "wallpapers/two-rivers-color-thumb.png",
+      "svg": "art/two-rivers-color.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "two-rivers",
+        "recipe": "counter",
+        "tick": 38,
+        "projection": "banks",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "left",
+          "sourceB": "right",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 74,
+          "shiftY": 29,
+          "invertB": false,
+          "operation": "or",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#faf0d7",
+          "halo": "#d9c39a",
+          "a": "#205f69",
+          "b": "#a64431",
+          "both": "#5d3934",
+          "echo": "#98875d"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          27,
+          384
+        ]
+      }
+    },
+    {
+      "id": "two-rivers-mono",
+      "title": "Два русла",
+      "variant": "mono",
+      "description": "Объединение встречных полей ложится на светлый фон двумя волнистыми берегами.",
+      "src": "wallpapers/two-rivers-mono.png",
+      "thumb": "wallpapers/two-rivers-mono-thumb.png",
+      "svg": "art/two-rivers-mono.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "two-rivers",
+        "recipe": "counter",
+        "tick": 38,
+        "projection": "banks",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "left",
+          "sourceB": "right",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "mirrorY",
+          "shiftX": 74,
+          "shiftY": 29,
+          "invertB": false,
+          "operation": "or",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#f4f4f4",
+          "halo": "#c7c7c7",
+          "a": "#292929",
+          "b": "#555555",
+          "both": "#0b0b0b",
+          "echo": "#626262"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          27,
+          384
+        ]
+      }
+    },
+    {
+      "id": "shadow-color",
+      "title": "Тень конуса",
+      "variant": "color",
+      "description": "Вычитание конуса открывает ступенчатые прорези в двух гранях.",
+      "src": "wallpapers/shadow-color.png",
+      "thumb": "wallpapers/shadow-color-thumb.png",
+      "svg": "art/shadow-color.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "shadow-of-cone",
+        "recipe": "cone",
+        "tick": 78,
+        "projection": "monolith",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "cone",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "rotate180",
+          "shiftX": 0,
+          "shiftY": 60,
+          "invertB": false,
+          "operation": "subtract",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#140807",
+          "halo": "#482517",
+          "a": "#ef795e",
+          "b": "#b67bdd",
+          "both": "#ffb574",
+          "echo": "#873c67"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          26,
+          358
+        ]
+      }
+    },
+    {
+      "id": "shadow-mono",
+      "title": "Тень конуса",
+      "variant": "mono",
+      "description": "Вычитание конуса открывает ступенчатые прорези в двух гранях.",
+      "src": "wallpapers/shadow-mono.png",
+      "thumb": "wallpapers/shadow-mono-thumb.png",
+      "svg": "art/shadow-mono.svg",
+      "width": 1440,
+      "height": 3200,
+      "recipe": {
+        "atlas": "shadow-of-cone",
+        "recipe": "cone",
+        "tick": 78,
+        "projection": "monolith",
+        "width": 385,
+        "height": 128,
+        "anchor": 192,
+        "options": {
+          "sourceA": "pend",
+          "sourceB": "cone",
+          "depth": 128,
+          "rateA": 1,
+          "rateB": 1,
+          "phaseB": 0,
+          "delayB": 0,
+          "transformB": "rotate180",
+          "shiftX": 0,
+          "shiftY": 60,
+          "invertB": false,
+          "operation": "subtract",
+          "history": "none",
+          "trailLength": 8
+        },
+        "palette": {
+          "ground": "#000000",
+          "halo": "#151515",
+          "a": "#575757",
+          "b": "#a2a2a2",
+          "both": "#efefef",
+          "echo": "#3f3f3f"
+        },
+        "renderer": "art/build-wallpapers.cjs",
+        "sourceColumns": [
+          26,
+          358
+        ]
+      }
+    }
+  ]
+}
