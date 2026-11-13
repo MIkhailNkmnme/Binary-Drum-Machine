@@ -1,0 +1,140 @@
+{
+  "commit": "fea94d31",
+  "checkedAt": "2026-11-13T13:52:40.505Z",
+  "runs": [
+    {
+      "id": 43437220911,
+      "sha": "fea94d31",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43431893892,
+      "sha": "3ec6a30c",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43431390317,
+      "sha": "50dd6dad",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43431195272,
+      "sha": "63261797",
+      "status": "completed",
+      "conclusion": "cancelled"
+    },
+    {
+      "id": 43430309073,
+      "sha": "715c1833",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1062871,
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1405756,
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 928023,
+      "match": true
+    },
+    {
+      "path": "РЕШЕНИЯ.md",
+      "status": 200,
+      "bytes": 234918,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/build-page.py",
+      "status": 200,
+      "bytes": 17943,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/curve-analysis.zip",
+      "status": 200,
+      "bytes": 6835495,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread-checked.jpg",
+      "status": 200,
+      "bytes": 105592,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread-two-lines-draft.png",
+      "status": 200,
+      "bytes": 23017,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread.html",
+      "status": 200,
+      "bytes": 7974,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread.json",
+      "status": 200,
+      "bytes": 3380,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread.py",
+      "status": 200,
+      "bytes": 4521,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread.svg",
+      "status": 200,
+      "bytes": 8993,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/index.html",
+      "status": 200,
+      "bytes": 20025,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/publication-preflight.json",
+      "status": 200,
+      "bytes": 651,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/README.md",
+      "status": 200,
+      "bytes": 11266,
+      "match": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 498319,
+      "match": true
+    },
+    {
+      "path": "Zerkalius-dnevnik.html",
+      "status": 200,
+      "bytes": 3096437,
+      "match": true
+    }
+  ]
+}
