@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Белая нить и XOR · 0.001</title>
+<style>
+:root{color-scheme:dark;font:16px/1.55 system-ui,sans-serif;background:#141922;color:#f7f7f9}
+body{margin:0}main{max-width:960px;margin:auto;padding:clamp(16px,4vw,36px)}a{color:#b9d9ff}
+h1{margin:.5em 0}p{max-width:68ch}.experiment{display:grid;grid-template-columns:minmax(200px,360px) minmax(0,1fr);gap:24px;align-items:start}
+svg{display:block;width:100%;max-height:72vh;background:#000;border:1px solid #3e4653;border-radius:8px}
+.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}button,select{font:inherit;padding:.32em .66em}
+input[type=range]{display:block;width:100%;margin:.5rem 0;accent-color:#b9d9ff}.metrics{margin-top:1em;font-variant-numeric:tabular-nums}
+.metrics div{display:flex;justify-content:space-between;gap:10px;padding:.3em 0;border-bottom:1px solid #414854}.metrics dd{margin:0;font-weight:600}
+th,td{text-align:left;padding:.38em .6em;border-bottom:1px solid #414854}caption{text-align:left;font-weight:600}
+@media(max-width:640px){.experiment{grid-template-columns:1fr}.experiment svg{max-height:52vh}}
+</style>
+<script defer src="thread-xor.js?v=1"></script>
+</head>
+<body><main>
+<a href="./">← Кривые четырёх глифов</a>
+<h1>Белая нить и XOR</h1>
+<p><small>13 ноября 2026 · 0.001 · исследовательский черновик</small></p>
+<p>Белая нить идёт по замкнутому маршруту третьего глифа из кадра 06 (около 6,9 с). Маршрут проходит по всем 48 рёбрам восстановленного контура один раз за круг. Две точки пересечения встречаются по два раза за круг.</p>
+<div class="experiment">
+<svg id="drawing" viewBox="0 0 10 14" role="img" aria-label="Белая нить на чёрном поле"></svg>
+<section aria-label="Управление маршрутом">
+<div class="controls">
+<label for="laps">Круги</label>
+<select id="laps"><option value="1">1 круг</option><option value="2">2 круга</option><option value="3">3 круга</option></select>
+<button id="play" type="button">Пуск</button>
+<button id="reset" type="button">Сначала</button>
+</div>
+<p><label for="position">Рёбра от начала маршрута</label><input id="position" type="range" min="0" max="48" step="1" value="48"></p>
+<dl class="metrics">
+<div><dt>Пройдено</dt><dd id="progress">48 / 48</dd></div>
+<div><dt>Белых рёбер</dt><dd id="white">48</dd></div>
+<div><dt>Точка J1</dt><dd id="first-crossing">2 · чёрная</dd></div>
+<div><dt>Точка J2</dt><dd id="second-crossing">2 · чёрная</dd></div>
+</dl>
+</section>
+</div>
+<p>XOR переключает цвет при каждом проходе. Нечётное число проходов даёт белый, чётное — чёрный. Для узла считаем каждый выход из него по очередному ребру. Конец круга совпадает с началом и отдельно не прибавляется.</p>
+<p>Точки J1 и J2 в модели имеют нулевой размер. В рисунке чёрные точки увеличены, чтобы показать их поверх белых рёбер. Во время незаконченного круга точка может быть белой после первого посещения.</p>
+<table>
+<caption>После полных кругов</caption>
+<thead><tr><th>Кругов</th><th>Белых рёбер</th><th>Посещений обычного узла</th><th>Посещений точки X</th></tr></thead>
+<tbody><tr><td>1</td><td>48</td><td>1</td><td>2</td></tr><tr><td>2</td><td>0</td><td>2</td><td>4</td></tr><tr><td>3</td><td>48</td><td>3</td><td>6</td></tr></tbody>
+</table>
+<p>Две одинаковые нити, уложенные по одному маршруту, дают ту же чётность, что два полных прохода одной нити. Это опыт с графом восстановленного контура. <a href="thread-xor-check.json">Данные проверки</a>.</p>
+</main></body></html>

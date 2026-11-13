@@ -1,0 +1,43 @@
+{
+  "source": "analysis.json",
+  "state": 6,
+  "slot": 3,
+  "closed": true,
+  "edgeCount": 48,
+  "addedEdges": 0,
+  "crossings": [
+    "3,4",
+    "7,4"
+  ],
+  "countRule": "Departure node of each traversed edge. The repeated closure endpoint is excluded.",
+  "prefixesChecked": 145,
+  "fullLaps": [
+    {
+      "laps": 1,
+      "whiteEdges": 48,
+      "ordinaryNodeVisits": 1,
+      "crossingVisits": [
+        2,
+        2
+      ]
+    },
+    {
+      "laps": 2,
+      "whiteEdges": 0,
+      "ordinaryNodeVisits": 2,
+      "crossingVisits": [
+        4,
+        4
+      ]
+    },
+    {
+      "laps": 3,
+      "whiteEdges": 48,
+      "ordinaryNodeVisits": 3,
+      "crossingVisits": [
+        6,
+        6
+      ]
+    }
+  ]
+}

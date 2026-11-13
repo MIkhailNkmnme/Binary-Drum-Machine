@@ -1,0 +1,5256 @@
+{
+  "schemaVersion": 1,
+  "source": "graphs.json",
+  "sourceSha256": "55297748e79c3fa0948683283d13a89fc050312201ed3e84f1e2d03bf3c11753",
+  "graphs": [
+    {
+      "row": 1,
+      "state": 1,
+      "witness": "0538.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 1,
+      "state": 1,
+      "witness": "0538.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 1,
+      "state": 1,
+      "witness": "0538.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 1,
+      "state": 1,
+      "witness": "0538.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 2,
+      "state": 2,
+      "witness": "0561.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 60,
+          "components": 2,
+          "odd": 8,
+          "minimumTrails": 5,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 60,
+          "components": 2,
+          "odd": 8,
+          "minimumTrails": 5,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 59,
+          "components": 2,
+          "odd": 10,
+          "minimumTrails": 6,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 2,
+      "state": 2,
+      "witness": "0561.png",
+      "slot": 2,
+      "confidence": "low",
+      "uncertainEdges": 4,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 57,
+          "components": 2,
+          "odd": 12,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 57,
+          "components": 2,
+          "odd": 12,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 53,
+          "components": 3,
+          "odd": 18,
+          "minimumTrails": 9,
+          "junctions": 12,
+          "crossings": 0,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 2,
+      "state": 2,
+      "witness": "0561.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 57,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 2,
+      "state": 2,
+      "witness": "0561.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 53,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 12,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 53,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 12,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 51,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 12,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 3,
+      "state": 3,
+      "witness": "0028.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 3,
+      "state": 3,
+      "witness": "0028.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 3,
+      "state": 3,
+      "witness": "0028.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 5,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 5,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 5,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 3,
+      "state": 3,
+      "witness": "0028.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "path",
+          "single": true,
+          "edges": 49,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 4,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 49,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 4,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "path",
+          "single": true,
+          "edges": 49,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 4,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 4,
+      "state": 4,
+      "witness": "0067.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 4,
+      "state": 4,
+      "witness": "0067.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 59,
+          "components": 2,
+          "odd": 10,
+          "minimumTrails": 6,
+          "junctions": 13,
+          "crossings": 5,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 60,
+          "components": 2,
+          "odd": 8,
+          "minimumTrails": 5,
+          "junctions": 13,
+          "crossings": 5,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 58,
+          "components": 2,
+          "odd": 12,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 4,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 4,
+      "state": 4,
+      "witness": "0067.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 61,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 61,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 61,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 4,
+      "state": 4,
+      "witness": "0067.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 59,
+          "components": 2,
+          "odd": 6,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 6,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 59,
+          "components": 2,
+          "odd": 6,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 6,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 59,
+          "components": 2,
+          "odd": 6,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 6,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 5,
+      "state": 5,
+      "witness": "0095.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 42,
+          "components": 2,
+          "odd": 0,
+          "minimumTrails": 2,
+          "junctions": 0,
+          "crossings": 0,
+          "closedTrails": 2,
+          "closureVisits": 2
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 43,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 0,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 42,
+          "components": 2,
+          "odd": 0,
+          "minimumTrails": 2,
+          "junctions": 0,
+          "crossings": 0,
+          "closedTrails": 2,
+          "closureVisits": 2
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 5,
+      "state": 5,
+      "witness": "0095.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 62,
+          "components": 1,
+          "odd": 20,
+          "minimumTrails": 10,
+          "junctions": 22,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 62,
+          "components": 1,
+          "odd": 20,
+          "minimumTrails": 10,
+          "junctions": 22,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 24,
+          "minimumTrails": 12,
+          "junctions": 22,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 5,
+      "state": 5,
+      "witness": "0095.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 50,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 50,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 50,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 5,
+      "state": 5,
+      "witness": "0095.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 6,
+      "state": 6,
+      "witness": "0117.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 0,
+          "crossings": 0,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 0,
+          "crossings": 0,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 0,
+          "crossings": 0,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 6,
+      "state": 6,
+      "witness": "0117.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 62,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 16,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 62,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 16,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 6,
+      "state": 6,
+      "witness": "0117.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 6,
+      "state": 6,
+      "witness": "0117.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "path",
+          "single": true,
+          "edges": 49,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 49,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "path",
+          "single": true,
+          "edges": 49,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 7,
+      "state": 7,
+      "witness": "0149.png",
+      "slot": 1,
+      "confidence": "low",
+      "uncertainEdges": 4,
+      "variants": {
+        "primary": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 45,
+          "components": 2,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 7,
+      "state": 7,
+      "witness": "0149.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 3,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 47,
+          "components": 2,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 50,
+          "components": 2,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 8,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 47,
+          "components": 2,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 7,
+      "state": 7,
+      "witness": "0149.png",
+      "slot": 3,
+      "confidence": "low",
+      "uncertainEdges": 4,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 48,
+          "components": 2,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 51,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 47,
+          "components": 3,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 7,
+      "state": 7,
+      "witness": "0149.png",
+      "slot": 4,
+      "confidence": "low",
+      "uncertainEdges": 4,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 9,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 54,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 12,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 50,
+          "components": 2,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 9,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 8,
+      "state": 8,
+      "witness": "0196.png",
+      "slot": 1,
+      "confidence": "low",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 46,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 1,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 46,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 1,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 8,
+      "state": 8,
+      "witness": "0196.png",
+      "slot": 2,
+      "confidence": "low",
+      "uncertainEdges": 3,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 16,
+          "minimumTrails": 8,
+          "junctions": 17,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 8,
+      "state": 8,
+      "witness": "0196.png",
+      "slot": 3,
+      "confidence": "low",
+      "uncertainEdges": 6,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 53,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 12,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 8,
+      "state": 8,
+      "witness": "0196.png",
+      "slot": 4,
+      "confidence": "low",
+      "uncertainEdges": 6,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 46,
+          "components": 2,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 50,
+          "components": 2,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 44,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 2,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 9,
+      "state": 9,
+      "witness": "0226.png",
+      "slot": 1,
+      "confidence": "low",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 9,
+      "state": 9,
+      "witness": "0226.png",
+      "slot": 2,
+      "confidence": "low",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 1,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 1,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 1,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 9,
+      "state": 9,
+      "witness": "0226.png",
+      "slot": 3,
+      "confidence": "low",
+      "uncertainEdges": 3,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 51,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 54,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 13,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 51,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 9,
+      "state": 9,
+      "witness": "0226.png",
+      "slot": 4,
+      "confidence": "low",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 50,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 9,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 10,
+      "state": 10,
+      "witness": "0248.png",
+      "slot": 1,
+      "confidence": "low",
+      "uncertainEdges": 3,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 58,
+          "components": 2,
+          "odd": 8,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 60,
+          "components": 2,
+          "odd": 10,
+          "minimumTrails": 6,
+          "junctions": 14,
+          "crossings": 4,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 57,
+          "components": 2,
+          "odd": 10,
+          "minimumTrails": 6,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 10,
+      "state": 10,
+      "witness": "0248.png",
+      "slot": 2,
+      "confidence": "low",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 58,
+          "components": 2,
+          "odd": 10,
+          "minimumTrails": 6,
+          "junctions": 13,
+          "crossings": 3,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 59,
+          "components": 2,
+          "odd": 12,
+          "minimumTrails": 7,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 58,
+          "components": 2,
+          "odd": 10,
+          "minimumTrails": 6,
+          "junctions": 13,
+          "crossings": 3,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 10,
+      "state": 10,
+      "witness": "0248.png",
+      "slot": 3,
+      "confidence": "low",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 16,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 61,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 16,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 10,
+      "state": 10,
+      "witness": "0248.png",
+      "slot": 4,
+      "confidence": "low",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 53,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 12,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 53,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 12,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 11,
+      "state": 11,
+      "witness": "0287.png",
+      "slot": 1,
+      "confidence": "low",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 47,
+          "components": 3,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 9,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 49,
+          "components": 2,
+          "odd": 18,
+          "minimumTrails": 9,
+          "junctions": 13,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 47,
+          "components": 3,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 9,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 11,
+      "state": 11,
+      "witness": "0287.png",
+      "slot": 2,
+      "confidence": "low",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 51,
+          "components": 3,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 53,
+          "components": 2,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 51,
+          "components": 3,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 11,
+      "state": 11,
+      "witness": "0287.png",
+      "slot": 3,
+      "confidence": "low",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 48,
+          "components": 2,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 5,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 50,
+          "components": 2,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 9,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 48,
+          "components": 2,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 5,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 11,
+      "state": 11,
+      "witness": "0287.png",
+      "slot": 4,
+      "confidence": "low",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 48,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 4,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 50,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 8,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 48,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 4,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 12,
+      "state": 12,
+      "witness": "0319.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 0,
+          "crossings": 0,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 0,
+          "crossings": 0,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 0,
+          "crossings": 0,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 12,
+      "state": 12,
+      "witness": "0319.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 12,
+      "state": 12,
+      "witness": "0319.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "path",
+          "single": true,
+          "edges": 51,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 4,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 51,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 4,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "path",
+          "single": true,
+          "edges": 51,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 4,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 12,
+      "state": 12,
+      "witness": "0319.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 48,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 48,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 48,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 13,
+      "state": 13,
+      "witness": "0334.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 13,
+      "state": 13,
+      "witness": "0334.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 58,
+          "components": 3,
+          "odd": 12,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 5,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 58,
+          "components": 3,
+          "odd": 12,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 5,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 57,
+          "components": 4,
+          "odd": 14,
+          "minimumTrails": 8,
+          "junctions": 13,
+          "crossings": 5,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 13,
+      "state": 13,
+      "witness": "0334.png",
+      "slot": 3,
+      "confidence": "low",
+      "uncertainEdges": 4,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 16,
+          "minimumTrails": 8,
+          "junctions": 16,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 17,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 56,
+          "components": 2,
+          "odd": 20,
+          "minimumTrails": 10,
+          "junctions": 16,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 13,
+      "state": 13,
+      "witness": "0334.png",
+      "slot": 4,
+      "confidence": "low",
+      "uncertainEdges": 7,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 57,
+          "components": 2,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 12,
+          "crossings": 5,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 14,
+          "crossings": 6,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 53,
+          "components": 4,
+          "odd": 16,
+          "minimumTrails": 8,
+          "junctions": 10,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 14,
+      "state": 14,
+      "witness": "0382.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 44,
+          "components": 2,
+          "odd": 2,
+          "minimumTrails": 2,
+          "junctions": 2,
+          "crossings": 0,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 46,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 6,
+          "crossings": 0,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 44,
+          "components": 2,
+          "odd": 2,
+          "minimumTrails": 2,
+          "junctions": 2,
+          "crossings": 0,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 14,
+      "state": 14,
+      "witness": "0382.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 20,
+          "minimumTrails": 10,
+          "junctions": 23,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 20,
+          "minimumTrails": 10,
+          "junctions": 23,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 20,
+          "minimumTrails": 10,
+          "junctions": 23,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 14,
+      "state": 14,
+      "witness": "0382.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 50,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 50,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 50,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 14,
+      "state": 14,
+      "witness": "0382.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 54,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 54,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 54,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 15,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 15,
+      "state": 15,
+      "witness": "0408.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 60,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 12,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 15,
+      "state": 15,
+      "witness": "0408.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 1,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 1,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 44,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 1,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 15,
+      "state": 15,
+      "witness": "0408.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 52,
+          "components": 2,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 53,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 51,
+          "components": 3,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 6,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 15,
+      "state": 15,
+      "witness": "0408.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 49,
+          "components": 1,
+          "odd": 6,
+          "minimumTrails": 3,
+          "junctions": 7,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 16,
+      "state": null,
+      "witness": "0422.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 1,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 18,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 64,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 18,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 63,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 16,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 16,
+      "state": null,
+      "witness": "0422.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 60,
+          "components": 2,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 60,
+          "components": 2,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 58,
+          "components": 2,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 9,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 16,
+      "state": null,
+      "witness": "0422.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 61,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 14,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 61,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 14,
+          "crossings": 4,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 59,
+          "components": 1,
+          "odd": 12,
+          "minimumTrails": 6,
+          "junctions": 13,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 16,
+      "state": null,
+      "witness": "0422.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 2,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 15,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 15,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 14,
+          "minimumTrails": 7,
+          "junctions": 13,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": false
+    },
+    {
+      "row": 17,
+      "state": 16,
+      "witness": "0444.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 52,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 6,
+          "crossings": 2,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 17,
+      "state": 16,
+      "witness": "0444.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 58,
+          "components": 1,
+          "odd": 8,
+          "minimumTrails": 4,
+          "junctions": 11,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 17,
+      "state": 16,
+      "witness": "0444.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "path",
+          "single": true,
+          "edges": 53,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 5,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 53,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 5,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "path",
+          "single": true,
+          "edges": 53,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 5,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 17,
+      "state": 16,
+      "witness": "0444.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 51,
+          "components": 2,
+          "odd": 2,
+          "minimumTrails": 2,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 51,
+          "components": 2,
+          "odd": 2,
+          "minimumTrails": 2,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "disconnected",
+          "single": false,
+          "edges": 51,
+          "components": 2,
+          "odd": 2,
+          "minimumTrails": 2,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 18,
+      "state": null,
+      "witness": "0457.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 18,
+      "state": null,
+      "witness": "0457.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 18,
+      "state": null,
+      "witness": "0457.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 18,
+      "state": null,
+      "witness": "0457.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 19,
+      "state": 17,
+      "witness": "0461.png",
+      "slot": 1,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 56,
+          "components": 1,
+          "odd": 4,
+          "minimumTrails": 2,
+          "junctions": 7,
+          "crossings": 3,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 19,
+      "state": 17,
+      "witness": "0461.png",
+      "slot": 2,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "too-many-odd",
+          "single": false,
+          "edges": 55,
+          "components": 1,
+          "odd": 10,
+          "minimumTrails": 5,
+          "junctions": 11,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 19,
+      "state": 17,
+      "witness": "0461.png",
+      "slot": 3,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "low": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        },
+        "high": {
+          "classification": "circuit",
+          "single": true,
+          "edges": 48,
+          "components": 1,
+          "odd": 0,
+          "minimumTrails": 1,
+          "junctions": 2,
+          "crossings": 2,
+          "closedTrails": 1,
+          "closureVisits": 1
+        }
+      },
+      "thresholdTopologyStable": true
+    },
+    {
+      "row": 19,
+      "state": 17,
+      "witness": "0461.png",
+      "slot": 4,
+      "confidence": "medium",
+      "uncertainEdges": 0,
+      "variants": {
+        "primary": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "low": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        },
+        "high": {
+          "classification": "path",
+          "single": true,
+          "edges": 47,
+          "components": 1,
+          "odd": 2,
+          "minimumTrails": 1,
+          "junctions": 3,
+          "crossings": 1,
+          "closedTrails": 0,
+          "closureVisits": 0
+        }
+      },
+      "thresholdTopologyStable": true
+    }
+  ],
+  "summary": {
+    "variants": 228,
+    "glyphs": 76,
+    "byVariant": {
+      "primary": {
+        "single": 18,
+        "disconnected": 19,
+        "tooManyOdd": 39,
+        "edges": 4015,
+        "minimumTrails": 282,
+        "crossings": 169,
+        "junctions": 631
+      },
+      "low": {
+        "single": 17,
+        "disconnected": 14,
+        "tooManyOdd": 45,
+        "edges": 4068,
+        "minimumTrails": 310,
+        "crossings": 173,
+        "junctions": 715
+      },
+      "high": {
+        "single": 17,
+        "disconnected": 21,
+        "tooManyOdd": 38,
+        "edges": 3980,
+        "minimumTrails": 300,
+        "crossings": 160,
+        "junctions": 618
+      }
+    },
+    "thresholdTopologyStable": 41,
+    "thresholdSensitive": [
+      {
+        "row": 2,
+        "slot": 1,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 60,
+            "components": 2,
+            "odd": 8,
+            "minimumTrails": 5,
+            "junctions": 12,
+            "crossings": 4,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 60,
+            "components": 2,
+            "odd": 8,
+            "minimumTrails": 5,
+            "junctions": 12,
+            "crossings": 4,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 59,
+            "components": 2,
+            "odd": 10,
+            "minimumTrails": 6,
+            "junctions": 12,
+            "crossings": 4,
+            "closedTrails": 1,
+            "closureVisits": 1
+          }
+        }
+      },
+      {
+        "row": 2,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 57,
+            "components": 2,
+            "odd": 12,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 1,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 57,
+            "components": 2,
+            "odd": 12,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 1,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 53,
+            "components": 3,
+            "odd": 18,
+            "minimumTrails": 9,
+            "junctions": 12,
+            "crossings": 0,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 2,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 58,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 15,
+            "crossings": 3,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 58,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 15,
+            "crossings": 3,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 57,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 15,
+            "crossings": 3,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 2,
+        "slot": 4,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 53,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 12,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 53,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 12,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 51,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 12,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 4,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 59,
+            "components": 2,
+            "odd": 10,
+            "minimumTrails": 6,
+            "junctions": 13,
+            "crossings": 5,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 60,
+            "components": 2,
+            "odd": 8,
+            "minimumTrails": 5,
+            "junctions": 13,
+            "crossings": 5,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 58,
+            "components": 2,
+            "odd": 12,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 4,
+            "closedTrails": 1,
+            "closureVisits": 1
+          }
+        }
+      },
+      {
+        "row": 5,
+        "slot": 1,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 42,
+            "components": 2,
+            "odd": 0,
+            "minimumTrails": 2,
+            "junctions": 0,
+            "crossings": 0,
+            "closedTrails": 2,
+            "closureVisits": 2
+          },
+          "low": {
+            "classification": "path",
+            "single": true,
+            "edges": 43,
+            "components": 1,
+            "odd": 2,
+            "minimumTrails": 1,
+            "junctions": 2,
+            "crossings": 0,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 42,
+            "components": 2,
+            "odd": 0,
+            "minimumTrails": 2,
+            "junctions": 0,
+            "crossings": 0,
+            "closedTrails": 2,
+            "closureVisits": 2
+          }
+        }
+      },
+      {
+        "row": 5,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 62,
+            "components": 1,
+            "odd": 20,
+            "minimumTrails": 10,
+            "junctions": 22,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 62,
+            "components": 1,
+            "odd": 20,
+            "minimumTrails": 10,
+            "junctions": 22,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 60,
+            "components": 1,
+            "odd": 24,
+            "minimumTrails": 12,
+            "junctions": 22,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 6,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 62,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 16,
+            "crossings": 5,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 64,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 17,
+            "crossings": 5,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 62,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 16,
+            "crossings": 5,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 7,
+        "slot": 1,
+        "variants": {
+          "primary": {
+            "classification": "path",
+            "single": true,
+            "edges": 47,
+            "components": 1,
+            "odd": 2,
+            "minimumTrails": 1,
+            "junctions": 3,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 49,
+            "components": 1,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 7,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 45,
+            "components": 2,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 3,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 7,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 47,
+            "components": 2,
+            "odd": 4,
+            "minimumTrails": 2,
+            "junctions": 2,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 50,
+            "components": 2,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 8,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 47,
+            "components": 2,
+            "odd": 4,
+            "minimumTrails": 2,
+            "junctions": 2,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 7,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 48,
+            "components": 2,
+            "odd": 4,
+            "minimumTrails": 2,
+            "junctions": 2,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 51,
+            "components": 1,
+            "odd": 8,
+            "minimumTrails": 4,
+            "junctions": 6,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 47,
+            "components": 3,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 2,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 7,
+        "slot": 4,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 52,
+            "components": 1,
+            "odd": 8,
+            "minimumTrails": 4,
+            "junctions": 9,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 54,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 12,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 50,
+            "components": 2,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 9,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 8,
+        "slot": 1,
+        "variants": {
+          "primary": {
+            "classification": "circuit",
+            "single": true,
+            "edges": 46,
+            "components": 1,
+            "odd": 0,
+            "minimumTrails": 1,
+            "junctions": 1,
+            "crossings": 1,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "path",
+            "single": true,
+            "edges": 47,
+            "components": 1,
+            "odd": 2,
+            "minimumTrails": 1,
+            "junctions": 3,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "circuit",
+            "single": true,
+            "edges": 46,
+            "components": 1,
+            "odd": 0,
+            "minimumTrails": 1,
+            "junctions": 1,
+            "crossings": 1,
+            "closedTrails": 1,
+            "closureVisits": 1
+          }
+        }
+      },
+      {
+        "row": 8,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 55,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 11,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 58,
+            "components": 1,
+            "odd": 16,
+            "minimumTrails": 8,
+            "junctions": 17,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 55,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 11,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 8,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "circuit",
+            "single": true,
+            "edges": 48,
+            "components": 1,
+            "odd": 0,
+            "minimumTrails": 1,
+            "junctions": 2,
+            "crossings": 2,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 53,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 12,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "path",
+            "single": true,
+            "edges": 47,
+            "components": 1,
+            "odd": 2,
+            "minimumTrails": 1,
+            "junctions": 2,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 8,
+        "slot": 4,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 46,
+            "components": 2,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 3,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 50,
+            "components": 2,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 11,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 44,
+            "components": 1,
+            "odd": 4,
+            "minimumTrails": 2,
+            "junctions": 2,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 9,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 51,
+            "components": 1,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 7,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 54,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 13,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 51,
+            "components": 1,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 7,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 9,
+        "slot": 4,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 49,
+            "components": 1,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 7,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 50,
+            "components": 1,
+            "odd": 8,
+            "minimumTrails": 4,
+            "junctions": 9,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 49,
+            "components": 1,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 7,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 10,
+        "slot": 1,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 58,
+            "components": 2,
+            "odd": 8,
+            "minimumTrails": 5,
+            "junctions": 11,
+            "crossings": 3,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 60,
+            "components": 2,
+            "odd": 10,
+            "minimumTrails": 6,
+            "junctions": 14,
+            "crossings": 4,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 57,
+            "components": 2,
+            "odd": 10,
+            "minimumTrails": 6,
+            "junctions": 11,
+            "crossings": 3,
+            "closedTrails": 1,
+            "closureVisits": 1
+          }
+        }
+      },
+      {
+        "row": 10,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 58,
+            "components": 2,
+            "odd": 10,
+            "minimumTrails": 6,
+            "junctions": 13,
+            "crossings": 3,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 59,
+            "components": 2,
+            "odd": 12,
+            "minimumTrails": 7,
+            "junctions": 15,
+            "crossings": 3,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 58,
+            "components": 2,
+            "odd": 10,
+            "minimumTrails": 6,
+            "junctions": 13,
+            "crossings": 3,
+            "closedTrails": 1,
+            "closureVisits": 1
+          }
+        }
+      },
+      {
+        "row": 10,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 60,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 16,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 61,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 17,
+            "crossings": 5,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 60,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 16,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 10,
+        "slot": 4,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 53,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 12,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 55,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 15,
+            "crossings": 3,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 53,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 12,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 11,
+        "slot": 1,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 47,
+            "components": 3,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 9,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 49,
+            "components": 2,
+            "odd": 18,
+            "minimumTrails": 9,
+            "junctions": 13,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 47,
+            "components": 3,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 9,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 11,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 51,
+            "components": 3,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 11,
+            "crossings": 3,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 53,
+            "components": 2,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 3,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 51,
+            "components": 3,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 11,
+            "crossings": 3,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 11,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 48,
+            "components": 2,
+            "odd": 8,
+            "minimumTrails": 4,
+            "junctions": 5,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 50,
+            "components": 2,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 9,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 48,
+            "components": 2,
+            "odd": 8,
+            "minimumTrails": 4,
+            "junctions": 5,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 11,
+        "slot": 4,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 48,
+            "components": 1,
+            "odd": 4,
+            "minimumTrails": 2,
+            "junctions": 4,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 50,
+            "components": 1,
+            "odd": 8,
+            "minimumTrails": 4,
+            "junctions": 8,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 48,
+            "components": 1,
+            "odd": 4,
+            "minimumTrails": 2,
+            "junctions": 4,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 13,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 58,
+            "components": 3,
+            "odd": 12,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 5,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 58,
+            "components": 3,
+            "odd": 12,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 5,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 57,
+            "components": 4,
+            "odd": 14,
+            "minimumTrails": 8,
+            "junctions": 13,
+            "crossings": 5,
+            "closedTrails": 1,
+            "closureVisits": 1
+          }
+        }
+      },
+      {
+        "row": 13,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 58,
+            "components": 1,
+            "odd": 16,
+            "minimumTrails": 8,
+            "junctions": 16,
+            "crossings": 5,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 60,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 17,
+            "crossings": 5,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 56,
+            "components": 2,
+            "odd": 20,
+            "minimumTrails": 10,
+            "junctions": 16,
+            "crossings": 3,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 13,
+        "slot": 4,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 57,
+            "components": 2,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 12,
+            "crossings": 5,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 60,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 14,
+            "crossings": 6,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 53,
+            "components": 4,
+            "odd": 16,
+            "minimumTrails": 8,
+            "junctions": 10,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 14,
+        "slot": 1,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 44,
+            "components": 2,
+            "odd": 2,
+            "minimumTrails": 2,
+            "junctions": 2,
+            "crossings": 0,
+            "closedTrails": 1,
+            "closureVisits": 1
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 46,
+            "components": 1,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 6,
+            "crossings": 0,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 44,
+            "components": 2,
+            "odd": 2,
+            "minimumTrails": 2,
+            "junctions": 2,
+            "crossings": 0,
+            "closedTrails": 1,
+            "closureVisits": 1
+          }
+        }
+      },
+      {
+        "row": 15,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 52,
+            "components": 2,
+            "odd": 8,
+            "minimumTrails": 4,
+            "junctions": 6,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 53,
+            "components": 1,
+            "odd": 6,
+            "minimumTrails": 3,
+            "junctions": 6,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 51,
+            "components": 3,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 6,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 16,
+        "slot": 1,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 64,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 18,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 64,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 18,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 63,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 16,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 16,
+        "slot": 2,
+        "variants": {
+          "primary": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 60,
+            "components": 2,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 60,
+            "components": 2,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "disconnected",
+            "single": false,
+            "edges": 58,
+            "components": 2,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 9,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 16,
+        "slot": 3,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 61,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 14,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 61,
+            "components": 1,
+            "odd": 10,
+            "minimumTrails": 5,
+            "junctions": 14,
+            "crossings": 4,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 59,
+            "components": 1,
+            "odd": 12,
+            "minimumTrails": 6,
+            "junctions": 13,
+            "crossings": 2,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      },
+      {
+        "row": 16,
+        "slot": 4,
+        "variants": {
+          "primary": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 58,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 15,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "low": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 58,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 15,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          },
+          "high": {
+            "classification": "too-many-odd",
+            "single": false,
+            "edges": 56,
+            "components": 1,
+            "odd": 14,
+            "minimumTrails": 7,
+            "junctions": 13,
+            "crossings": 1,
+            "closedTrails": 0,
+            "closureVisits": 0
+          }
+        }
+      }
+    ],
+    "singleAtAllThresholds": [
+      [
+        1,
+        3
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        6,
+        4
+      ],
+      [
+        8,
+        1
+      ],
+      [
+        9,
+        2
+      ],
+      [
+        12,
+        1
+      ],
+      [
+        12,
+        3
+      ],
+      [
+        15,
+        2
+      ],
+      [
+        17,
+        3
+      ],
+      [
+        18,
+        3
+      ],
+      [
+        18,
+        4
+      ],
+      [
+        19,
+        3
+      ],
+      [
+        19,
+        4
+      ]
+    ],
+    "singleAnswerSensitive": [
+      [
+        5,
+        1
+      ],
+      [
+        7,
+        1
+      ],
+      [
+        8,
+        3
+      ]
+    ],
+    "thresholdTopologyMetrics": [
+      "classification",
+      "components",
+      "odd",
+      "minimumTrails",
+      "junctions",
+      "crossings"
+    ]
+  },
+  "failures": [],
+  "visualNotes": [
+    {
+      "row": 5,
+      "slot": 1,
+      "overlay": "overlays/05.jpg",
+      "finding": "Visible dark gap separates the small head loop from the main body; the primary/high graph has two disjoint cycles. The magenta uncertain edge would bridge this gap at the low threshold, making a one-stroke answer. The source image supports retaining the primary separation; sensitivity does not prove a real bridge."
+    }
+  ],
+  "limitations": [
+    "Validation proves properties of supplied lattice graphs, not exact topology hidden by blur, yellow line thickness, red halo or camera registration.",
+    "Unused lattice nodes are grid placeholders, not observed isolated points. Edge-connected components determine strokes.",
+    "Degree-four crossing counts refer to four cardinal centerline arms meeting at one supplied vertex; they do not infer over/under or path order from photographs."
+  ],
+  "rows18and19": [
+    {
+      "slot": 1,
+      "sameTopologyAfterTranslation": true,
+      "row18Origin": [
+        1,
+        0
+      ],
+      "row19Origin": [
+        0,
+        1
+      ],
+      "edgeCount": 56
+    },
+    {
+      "slot": 2,
+      "sameTopologyAfterTranslation": true,
+      "row18Origin": [
+        0,
+        1
+      ],
+      "row19Origin": [
+        1,
+        1
+      ],
+      "edgeCount": 55
+    },
+    {
+      "slot": 3,
+      "sameTopologyAfterTranslation": true,
+      "row18Origin": [
+        0,
+        1
+      ],
+      "row19Origin": [
+        1,
+        0
+      ],
+      "edgeCount": 48
+    },
+    {
+      "slot": 4,
+      "sameTopologyAfterTranslation": true,
+      "row18Origin": [
+        1,
+        0
+      ],
+      "row19Origin": [
+        0,
+        0
+      ],
+      "edgeCount": 47
+    }
+  ],
+  "invariants": {
+    "allEdgesCoveredOnce": true,
+    "noArtificialEdges": true,
+    "orderedTrailsContinuous": true,
+    "minimalTrailCount": true,
+    "independentDegreeAndConnectivity": true,
+    "closureCutEndpointsExcludedFromCyclicVisits": true,
+    "visitIncidenceIdentity": "degree = 2 * cyclicVisitCount - numberOfOpenTrailEndpoints",
+    "visitIncidenceIdentityPass": true
+  },
+  "definitions": {
+    "junctions": "J: distinct supplied vertices of degree at least 3; includes degree-3 endpoint contact in a single Euler path",
+    "crossings": "X: degree-4 vertices with two opposite tangent pairs; subset of J",
+    "repeatedPoints": "For a single edge-once Euler path/circuit J equals the number of geometric points visited more than once when the closure cut duplicate is excluded. This assumes all geometric contacts are split into shared vertices."
+  }
+}

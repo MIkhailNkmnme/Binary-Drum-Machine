@@ -1,0 +1,528 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1060" viewBox="0 0 1680 1060" role="img"><title>Глифы и развёртки линий</title><rect width="100%" height="100%" fill="#10151f"/>
+<text x="38.00" y="50.00" font-family="Segoe UI, sans-serif" font-size="32" fill="#ffe0a3">Кадр 11 · 13.770 с · состояние 11</text>
+<text x="40.00" y="82.00" font-family="Segoe UI, sans-serif" font-size="20" fill="#e1e7f0">Четыре строки: один глиф → минимальный набор непрерывных проходов, каждое ребро ровно один раз.</text>
+<text x="40.00" y="110.00" font-family="Segoe UI, sans-serif" font-size="17" fill="#9caabf">Общие точки J = X + B. X: четыре ветви; B: другие стыки. Повтор метки = та же точка. Цвет = отдельный штрих.</text>
+<text x="40.00" y="135.00" font-family="Segoe UI, sans-serif" font-size="16" fill="#ff8bb3">Числа точны для восстановленного графа. Связи на видеозаписи местами неоднозначны; оригинал рядом в просмотрщике.</text>
+<path d="M36.00 160.00L1644.00 160.00" stroke="#303a4b" stroke-width="1" fill="none"/>
+<text x="42.00" y="193.00" font-family="Segoe UI, sans-serif" font-size="24" fill="#ffe0a3">Глиф 1</text>
+<text x="277.00" y="189.00" font-family="Segoe UI, sans-serif" font-size="20" fill="#e1e7f0">Один штрих: НЕТ · Общих точек J: 9 · X: 1 · Компонент: 3 · Нечётных: 14</text>
+<text x="277.00" y="218.00" font-family="Segoe UI, sans-serif" font-size="18" fill="#ff8bb3">Минимум штрихов: 7 · Развилок B: 8 · Длина: 47 клеточных рёбер · низкая различимость</text>
+<path d="M85.00 209.00L75.00 209.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 209.00L75.00 219.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 219.00L75.00 229.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 229.00L85.00 229.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M85.00 229.00L85.00 239.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M85.00 239.00L75.00 239.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 239.00L65.00 239.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 209.00L105.00 209.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 209.00L105.00 219.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 219.00L115.00 219.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 219.00L115.00 229.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 229.00L105.00 229.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 229.00L105.00 239.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 239.00L115.00 239.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 239.00L115.00 229.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 229.00L125.00 229.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M125.00 229.00L125.00 239.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M125.00 239.00L135.00 239.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M135.00 239.00L135.00 249.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M135.00 249.00L125.00 249.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M125.00 249.00L115.00 249.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 249.00L105.00 249.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 249.00L105.00 259.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 259.00L95.00 259.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 259.00L85.00 259.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M85.00 259.00L85.00 249.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M85.00 249.00L75.00 249.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M75.00 249.00L65.00 249.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M85.00 259.00L85.00 269.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M85.00 269.00L95.00 269.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M95.00 269.00L105.00 269.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M105.00 269.00L105.00 259.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M85.00 269.00L85.00 279.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M85.00 279.00L85.00 289.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M85.00 289.00L85.00 299.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M85.00 299.00L95.00 299.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M95.00 299.00L105.00 299.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M105.00 299.00L105.00 289.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M105.00 289.00L95.00 289.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M95.00 289.00L95.00 279.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M95.00 279.00L105.00 279.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M105.00 279.00L105.00 269.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M105.00 279.00L105.00 289.00" stroke="#9ae799" stroke-width="3" fill="none"/>
+<path d="M85.00 299.00L85.00 309.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M85.00 309.00L95.00 309.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M95.00 309.00L95.00 299.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M155.00 239.00L155.00 249.00" stroke="#f7ab7e" stroke-width="3" fill="none"/>
+<circle cx="85.00" cy="209.00" r="3" fill="#e1e7f0"/>
+<circle cx="95.00" cy="209.00" r="3" fill="#e1e7f0"/>
+<circle cx="115.00" cy="229.00" r="3" fill="#ffe0a3"/>
+<text x="119.00" y="228.00" font-family="Segoe UI, sans-serif" font-size="11" fill="#ffe0a3">X1</text>
+<circle cx="65.00" cy="239.00" r="3" fill="#e1e7f0"/>
+<circle cx="155.00" cy="239.00" r="3" fill="#e1e7f0"/>
+<circle cx="65.00" cy="249.00" r="3" fill="#e1e7f0"/>
+<circle cx="155.00" cy="249.00" r="3" fill="#e1e7f0"/>
+<circle cx="85.00" cy="259.00" r="3" fill="#ff8bb3"/>
+<circle cx="105.00" cy="259.00" r="3" fill="#ff8bb3"/>
+<circle cx="85.00" cy="269.00" r="3" fill="#ff8bb3"/>
+<circle cx="105.00" cy="269.00" r="3" fill="#ff8bb3"/>
+<circle cx="105.00" cy="279.00" r="3" fill="#ff8bb3"/>
+<circle cx="105.00" cy="289.00" r="3" fill="#ff8bb3"/>
+<circle cx="85.00" cy="299.00" r="3" fill="#ff8bb3"/>
+<circle cx="95.00" cy="299.00" r="3" fill="#ff8bb3"/>
+<path d="M285.00 292.00L472.66 292.00" stroke="#75e2dc" stroke-width="4" fill="none"/>
+<circle cx="285.00" cy="292.00" r="3" fill="#75e2dc"/>
+<circle cx="472.66" cy="292.00" r="3" fill="#75e2dc"/>
+<text x="372.83" y="355.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#75e2dc">1</text>
+<path d="M487.66 292.00L1050.64 292.00" stroke="#ffcf78" stroke-width="4" fill="none"/>
+<circle cx="487.66" cy="292.00" r="3" fill="#ffcf78"/>
+<circle cx="1050.64" cy="292.00" r="3" fill="#ffcf78"/>
+<text x="763.15" y="355.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffcf78">2</text>
+<circle cx="594.89" cy="292.00" r="4" fill="#ffe0a3"/>
+<path d="M594.89 292.00L594.89 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="585.89" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X1</text>
+<circle cx="702.13" cy="292.00" r="4" fill="#ffe0a3"/>
+<path d="M702.13 292.00L702.13 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="693.13" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X1</text>
+<circle cx="916.60" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M916.60 292.00L916.60 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="907.60" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B2</text>
+<circle cx="970.21" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M970.21 292.00L970.21 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="961.21" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B1</text>
+<path d="M1065.64 292.00L1172.87 292.00" stroke="#c4a3ff" stroke-width="4" fill="none"/>
+<circle cx="1065.64" cy="292.00" r="3" fill="#c4a3ff"/>
+<circle cx="1172.87" cy="292.00" r="3" fill="#c4a3ff"/>
+<text x="1113.26" y="355.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#c4a3ff">3</text>
+<circle cx="1065.64" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1065.64 292.00L1065.64 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1056.64" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B1</text>
+<circle cx="1092.45" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1092.45 292.00L1092.45 282.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1083.45" y="280.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B3</text>
+<circle cx="1146.06" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1146.06 292.00L1146.06 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1137.06" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B4</text>
+<circle cx="1172.87" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1172.87 292.00L1172.87 282.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1163.87" y="280.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B2</text>
+<path d="M1187.87 292.00L1455.96 292.00" stroke="#ff96c5" stroke-width="4" fill="none"/>
+<circle cx="1187.87" cy="292.00" r="3" fill="#ff96c5"/>
+<circle cx="1455.96" cy="292.00" r="3" fill="#ff96c5"/>
+<text x="1315.91" y="355.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff96c5">4</text>
+<circle cx="1187.87" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1187.87 292.00L1187.87 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1178.87" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B3</text>
+<circle cx="1268.30" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1268.30 292.00L1268.30 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1259.30" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B7</text>
+<circle cx="1295.11" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1295.11 292.00L1295.11 282.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1286.11" y="280.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B8</text>
+<circle cx="1348.72" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1348.72 292.00L1348.72 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1339.72" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B6</text>
+<circle cx="1429.15" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1429.15 292.00L1429.15 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1420.15" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B5</text>
+<circle cx="1455.96" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1455.96 292.00L1455.96 282.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1446.96" y="280.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B4</text>
+<path d="M1470.96 292.00L1497.77 292.00" stroke="#9ae799" stroke-width="4" fill="none"/>
+<circle cx="1470.96" cy="292.00" r="3" fill="#9ae799"/>
+<circle cx="1497.77" cy="292.00" r="3" fill="#9ae799"/>
+<text x="1478.36" y="355.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#9ae799">5</text>
+<circle cx="1470.96" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1470.96 292.00L1470.96 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1461.96" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B5</text>
+<circle cx="1497.77" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1497.77 292.00L1497.77 282.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1488.77" y="280.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B6</text>
+<path d="M1512.77 292.00L1593.19 292.00" stroke="#9cc5ff" stroke-width="4" fill="none"/>
+<circle cx="1512.77" cy="292.00" r="3" fill="#9cc5ff"/>
+<circle cx="1593.19" cy="292.00" r="3" fill="#9cc5ff"/>
+<text x="1546.98" y="355.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#9cc5ff">6</text>
+<circle cx="1512.77" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1512.77 292.00L1512.77 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1503.77" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B7</text>
+<circle cx="1593.19" cy="292.00" r="4" fill="#ff8bb3"/>
+<path d="M1593.19 292.00L1593.19 264.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1584.19" y="262.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B8</text>
+<path d="M1608.19 292.00L1635.00 292.00" stroke="#f7ab7e" stroke-width="4" fill="none"/>
+<circle cx="1608.19" cy="292.00" r="3" fill="#f7ab7e"/>
+<circle cx="1635.00" cy="292.00" r="3" fill="#f7ab7e"/>
+<text x="1615.60" y="355.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#f7ab7e">7</text>
+<text x="277.00" y="370.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#9caabf">Номера внизу — штрихи; к = замкнутый. * — повтор точки разреза замкнутого штриха, не новое пересечение.</text>
+<path d="M36.00 374.00L1644.00 374.00" stroke="#303a4b" stroke-width="1" fill="none"/>
+<text x="42.00" y="407.00" font-family="Segoe UI, sans-serif" font-size="24" fill="#ffe0a3">Глиф 2</text>
+<text x="277.00" y="403.00" font-family="Segoe UI, sans-serif" font-size="20" fill="#e1e7f0">Один штрих: НЕТ · Общих точек J: 11 · X: 3 · Компонент: 3 · Нечётных: 14</text>
+<text x="277.00" y="432.00" font-family="Segoe UI, sans-serif" font-size="18" fill="#ff8bb3">Минимум штрихов: 7 · Развилок B: 8 · Длина: 51 клеточных рёбер · низкая различимость</text>
+<path d="M85.00 423.00L85.00 433.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M85.00 433.00L75.00 433.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 433.00L75.00 443.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 443.00L75.00 453.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 453.00L85.00 453.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M85.00 453.00L85.00 463.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M85.00 463.00L75.00 463.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 463.00L75.00 453.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 453.00L65.00 453.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M65.00 453.00L65.00 463.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 423.00L95.00 433.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 433.00L105.00 433.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 433.00L105.00 443.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 443.00L95.00 443.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 443.00L95.00 453.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 453.00L105.00 453.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 453.00L105.00 463.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 463.00L95.00 463.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 463.00L95.00 453.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 463.00L115.00 463.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M115.00 463.00L125.00 463.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M125.00 463.00L135.00 463.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M135.00 463.00L135.00 473.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M135.00 473.00L125.00 473.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M125.00 473.00L115.00 473.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M115.00 473.00L105.00 473.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M105.00 473.00L95.00 473.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M95.00 473.00L95.00 483.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M95.00 483.00L105.00 483.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M105.00 483.00L105.00 473.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M65.00 473.00L75.00 473.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M75.00 473.00L85.00 473.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M85.00 473.00L85.00 483.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M85.00 483.00L85.00 493.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M85.00 493.00L95.00 493.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M95.00 493.00L105.00 493.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M105.00 493.00L105.00 483.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<path d="M95.00 483.00L95.00 493.00" stroke="#9ae799" stroke-width="3" fill="none"/>
+<path d="M95.00 493.00L95.00 503.00" stroke="#9ae799" stroke-width="3" fill="none"/>
+<path d="M95.00 503.00L85.00 503.00" stroke="#9ae799" stroke-width="3" fill="none"/>
+<path d="M85.00 503.00L85.00 493.00" stroke="#9ae799" stroke-width="3" fill="none"/>
+<path d="M85.00 503.00L85.00 513.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M85.00 513.00L85.00 523.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M85.00 523.00L95.00 523.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M95.00 523.00L105.00 523.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M105.00 523.00L105.00 533.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M105.00 533.00L95.00 533.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M95.00 533.00L95.00 523.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M95.00 523.00L95.00 513.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M95.00 513.00L95.00 503.00" stroke="#9cc5ff" stroke-width="3" fill="none"/>
+<path d="M155.00 463.00L155.00 473.00" stroke="#f7ab7e" stroke-width="3" fill="none"/>
+<circle cx="85.00" cy="423.00" r="3" fill="#e1e7f0"/>
+<circle cx="95.00" cy="423.00" r="3" fill="#e1e7f0"/>
+<circle cx="75.00" cy="453.00" r="3" fill="#ffe0a3"/>
+<text x="79.00" y="452.00" font-family="Segoe UI, sans-serif" font-size="11" fill="#ffe0a3">X1</text>
+<circle cx="95.00" cy="453.00" r="3" fill="#ff8bb3"/>
+<circle cx="65.00" cy="463.00" r="3" fill="#e1e7f0"/>
+<circle cx="105.00" cy="463.00" r="3" fill="#ff8bb3"/>
+<circle cx="155.00" cy="463.00" r="3" fill="#e1e7f0"/>
+<circle cx="65.00" cy="473.00" r="3" fill="#e1e7f0"/>
+<circle cx="105.00" cy="473.00" r="3" fill="#ff8bb3"/>
+<circle cx="155.00" cy="473.00" r="3" fill="#e1e7f0"/>
+<circle cx="95.00" cy="483.00" r="3" fill="#ff8bb3"/>
+<circle cx="105.00" cy="483.00" r="3" fill="#ff8bb3"/>
+<circle cx="85.00" cy="493.00" r="3" fill="#ff8bb3"/>
+<circle cx="95.00" cy="493.00" r="3" fill="#ffe0a3"/>
+<text x="99.00" y="492.00" font-family="Segoe UI, sans-serif" font-size="11" fill="#ffe0a3">X2</text>
+<circle cx="85.00" cy="503.00" r="3" fill="#ff8bb3"/>
+<circle cx="95.00" cy="503.00" r="3" fill="#ff8bb3"/>
+<circle cx="95.00" cy="523.00" r="3" fill="#ffe0a3"/>
+<text x="99.00" y="522.00" font-family="Segoe UI, sans-serif" font-size="11" fill="#ffe0a3">X3</text>
+<path d="M285.00 506.00L532.06 506.00" stroke="#75e2dc" stroke-width="4" fill="none"/>
+<circle cx="285.00" cy="506.00" r="3" fill="#75e2dc"/>
+<circle cx="532.06" cy="506.00" r="3" fill="#75e2dc"/>
+<text x="402.53" y="569.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#75e2dc">1</text>
+<circle cx="383.82" cy="506.00" r="4" fill="#ffe0a3"/>
+<path d="M383.82 506.00L383.82 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="374.82" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X1</text>
+<circle cx="482.65" cy="506.00" r="4" fill="#ffe0a3"/>
+<path d="M482.65 506.00L482.65 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="473.65" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X1</text>
+<path d="M547.06 506.00L769.41 506.00" stroke="#ffcf78" stroke-width="4" fill="none"/>
+<circle cx="547.06" cy="506.00" r="3" fill="#ffcf78"/>
+<circle cx="769.41" cy="506.00" r="3" fill="#ffcf78"/>
+<text x="652.24" y="569.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffcf78">2</text>
+<circle cx="670.59" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M670.59 506.00L670.59 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="661.59" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B1</text>
+<circle cx="720.00" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M720.00 506.00L720.00 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="711.00" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B2</text>
+<circle cx="769.41" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M769.41 506.00L769.41 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="760.41" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B1</text>
+<path d="M784.41 506.00L1056.18 506.00" stroke="#c4a3ff" stroke-width="4" fill="none"/>
+<circle cx="784.41" cy="506.00" r="3" fill="#c4a3ff"/>
+<circle cx="1056.18" cy="506.00" r="3" fill="#c4a3ff"/>
+<text x="914.29" y="569.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#c4a3ff">3</text>
+<circle cx="784.41" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M784.41 506.00L784.41 496.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="775.41" y="494.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B2</text>
+<circle cx="957.35" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M957.35 506.00L957.35 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="948.35" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B3</text>
+<circle cx="1006.76" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1006.76 506.00L1006.76 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="997.76" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B4</text>
+<circle cx="1031.47" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1031.47 506.00L1031.47 496.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1022.47" y="494.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B5</text>
+<circle cx="1056.18" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1056.18 506.00L1056.18 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1047.18" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B3</text>
+<path d="M1071.18 506.00L1244.12 506.00" stroke="#ff96c5" stroke-width="4" fill="none"/>
+<circle cx="1071.18" cy="506.00" r="3" fill="#ff96c5"/>
+<circle cx="1244.12" cy="506.00" r="3" fill="#ff96c5"/>
+<text x="1151.65" y="569.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff96c5">4</text>
+<circle cx="1170.00" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1170.00 506.00L1170.00 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1161.00" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B6</text>
+<circle cx="1194.71" cy="506.00" r="4" fill="#ffe0a3"/>
+<path d="M1194.71 506.00L1194.71 496.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1185.71" y="494.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X2</text>
+<circle cx="1244.12" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1244.12 506.00L1244.12 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1235.12" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B5</text>
+<path d="M1259.12 506.00L1357.94 506.00" stroke="#9ae799" stroke-width="4" fill="none"/>
+<circle cx="1259.12" cy="506.00" r="3" fill="#9ae799"/>
+<circle cx="1357.94" cy="506.00" r="3" fill="#9ae799"/>
+<text x="1302.53" y="569.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#9ae799">5</text>
+<circle cx="1259.12" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1259.12 506.00L1259.12 496.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1250.12" y="494.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B4</text>
+<circle cx="1283.82" cy="506.00" r="4" fill="#ffe0a3"/>
+<path d="M1283.82 506.00L1283.82 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1274.82" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X2</text>
+<circle cx="1308.53" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1308.53 506.00L1308.53 496.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1299.53" y="494.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B8</text>
+<circle cx="1333.24" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1333.24 506.00L1333.24 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1324.24" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B7</text>
+<circle cx="1357.94" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1357.94 506.00L1357.94 496.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1348.94" y="494.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B6</text>
+<path d="M1372.94 506.00L1595.29 506.00" stroke="#9cc5ff" stroke-width="4" fill="none"/>
+<circle cx="1372.94" cy="506.00" r="3" fill="#9cc5ff"/>
+<circle cx="1595.29" cy="506.00" r="3" fill="#9cc5ff"/>
+<text x="1478.12" y="569.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#9cc5ff">6</text>
+<circle cx="1372.94" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1372.94 506.00L1372.94 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1363.94" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B7</text>
+<circle cx="1447.06" cy="506.00" r="4" fill="#ffe0a3"/>
+<path d="M1447.06 506.00L1447.06 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1438.06" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X3</text>
+<circle cx="1545.88" cy="506.00" r="4" fill="#ffe0a3"/>
+<path d="M1545.88 506.00L1545.88 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1536.88" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X3</text>
+<circle cx="1595.29" cy="506.00" r="4" fill="#ff8bb3"/>
+<path d="M1595.29 506.00L1595.29 478.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1586.29" y="476.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B8</text>
+<path d="M1610.29 506.00L1635.00 506.00" stroke="#f7ab7e" stroke-width="4" fill="none"/>
+<circle cx="1610.29" cy="506.00" r="3" fill="#f7ab7e"/>
+<circle cx="1635.00" cy="506.00" r="3" fill="#f7ab7e"/>
+<text x="1616.65" y="569.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#f7ab7e">7</text>
+<text x="277.00" y="584.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#9caabf">Номера внизу — штрихи; к = замкнутый. * — повтор точки разреза замкнутого штриха, не новое пересечение.</text>
+<path d="M36.00 588.00L1644.00 588.00" stroke="#303a4b" stroke-width="1" fill="none"/>
+<text x="42.00" y="621.00" font-family="Segoe UI, sans-serif" font-size="24" fill="#ffe0a3">Глиф 3</text>
+<text x="277.00" y="617.00" font-family="Segoe UI, sans-serif" font-size="20" fill="#e1e7f0">Один штрих: НЕТ · Общих точек J: 5 · X: 1 · Компонент: 2 · Нечётных: 8</text>
+<text x="277.00" y="646.00" font-family="Segoe UI, sans-serif" font-size="18" fill="#ff8bb3">Минимум штрихов: 4 · Развилок B: 4 · Длина: 48 клеточных рёбер · низкая различимость</text>
+<path d="M105.00 637.00L105.00 647.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 647.00L95.00 647.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 647.00L95.00 657.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 657.00L95.00 667.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 667.00L105.00 667.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 667.00L105.00 677.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 677.00L95.00 677.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 677.00L95.00 667.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 667.00L85.00 667.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M85.00 667.00L85.00 677.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M85.00 677.00L75.00 677.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 677.00L65.00 677.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 637.00L115.00 647.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 647.00L125.00 647.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M125.00 647.00L125.00 657.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M125.00 657.00L125.00 667.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M125.00 667.00L115.00 667.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 667.00L115.00 677.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 677.00L125.00 677.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M125.00 677.00L135.00 677.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M135.00 677.00L145.00 677.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M145.00 677.00L145.00 687.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M145.00 687.00L135.00 687.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M135.00 687.00L125.00 687.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M125.00 687.00L115.00 687.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 687.00L115.00 697.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 697.00L115.00 707.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 707.00L115.00 717.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 717.00L115.00 727.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 727.00L115.00 737.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 737.00L115.00 747.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M115.00 747.00L105.00 747.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 747.00L95.00 747.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 747.00L95.00 737.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 737.00L105.00 737.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 737.00L105.00 727.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 727.00L95.00 727.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 727.00L95.00 717.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 717.00L105.00 717.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 717.00L105.00 707.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M105.00 707.00L95.00 707.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 707.00L95.00 697.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 697.00L95.00 687.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 687.00L85.00 687.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M85.00 687.00L75.00 687.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M75.00 687.00L65.00 687.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 707.00L95.00 717.00" stroke="#c4a3ff" stroke-width="3" fill="none"/>
+<path d="M105.00 717.00L105.00 727.00" stroke="#ff96c5" stroke-width="3" fill="none"/>
+<circle cx="105.00" cy="637.00" r="3" fill="#e1e7f0"/>
+<circle cx="115.00" cy="637.00" r="3" fill="#e1e7f0"/>
+<circle cx="95.00" cy="667.00" r="3" fill="#ffe0a3"/>
+<text x="99.00" y="666.00" font-family="Segoe UI, sans-serif" font-size="11" fill="#ffe0a3">X1</text>
+<circle cx="65.00" cy="677.00" r="3" fill="#e1e7f0"/>
+<circle cx="65.00" cy="687.00" r="3" fill="#e1e7f0"/>
+<circle cx="95.00" cy="707.00" r="3" fill="#ff8bb3"/>
+<circle cx="95.00" cy="717.00" r="3" fill="#ff8bb3"/>
+<circle cx="105.00" cy="717.00" r="3" fill="#ff8bb3"/>
+<circle cx="105.00" cy="727.00" r="3" fill="#ff8bb3"/>
+<path d="M285.00 720.00L611.25 720.00" stroke="#75e2dc" stroke-width="4" fill="none"/>
+<circle cx="285.00" cy="720.00" r="3" fill="#75e2dc"/>
+<circle cx="611.25" cy="720.00" r="3" fill="#75e2dc"/>
+<text x="442.12" y="783.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#75e2dc">1</text>
+<circle cx="393.75" cy="720.00" r="4" fill="#ffe0a3"/>
+<path d="M393.75 720.00L393.75 692.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="384.75" y="690.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X1</text>
+<circle cx="502.50" cy="720.00" r="4" fill="#ffe0a3"/>
+<path d="M502.50 720.00L502.50 692.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="493.50" y="690.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X1</text>
+<path d="M626.25 720.00L1550.62 720.00" stroke="#ffcf78" stroke-width="4" fill="none"/>
+<circle cx="626.25" cy="720.00" r="3" fill="#ffcf78"/>
+<circle cx="1550.62" cy="720.00" r="3" fill="#ffcf78"/>
+<text x="1082.44" y="783.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffcf78">2</text>
+<circle cx="1278.75" cy="720.00" r="4" fill="#ff8bb3"/>
+<path d="M1278.75 720.00L1278.75 692.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1269.75" y="690.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B4</text>
+<circle cx="1333.12" cy="720.00" r="4" fill="#ff8bb3"/>
+<path d="M1333.12 720.00L1333.12 692.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1324.12" y="690.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B2</text>
+<circle cx="1360.31" cy="720.00" r="4" fill="#ff8bb3"/>
+<path d="M1360.31 720.00L1360.31 710.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1351.31" y="708.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B3</text>
+<circle cx="1414.69" cy="720.00" r="4" fill="#ff8bb3"/>
+<path d="M1414.69 720.00L1414.69 692.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1405.69" y="690.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B1</text>
+<path d="M1565.62 720.00L1592.81 720.00" stroke="#c4a3ff" stroke-width="4" fill="none"/>
+<circle cx="1565.62" cy="720.00" r="3" fill="#c4a3ff"/>
+<circle cx="1592.81" cy="720.00" r="3" fill="#c4a3ff"/>
+<text x="1573.22" y="783.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#c4a3ff">3</text>
+<circle cx="1565.62" cy="720.00" r="4" fill="#ff8bb3"/>
+<path d="M1565.62 720.00L1565.62 692.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1556.62" y="690.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B1</text>
+<circle cx="1592.81" cy="720.00" r="4" fill="#ff8bb3"/>
+<path d="M1592.81 720.00L1592.81 710.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1583.81" y="708.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B2</text>
+<path d="M1607.81 720.00L1635.00 720.00" stroke="#ff96c5" stroke-width="4" fill="none"/>
+<circle cx="1607.81" cy="720.00" r="3" fill="#ff96c5"/>
+<circle cx="1635.00" cy="720.00" r="3" fill="#ff96c5"/>
+<text x="1615.41" y="783.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff96c5">4</text>
+<circle cx="1607.81" cy="720.00" r="4" fill="#ff8bb3"/>
+<path d="M1607.81 720.00L1607.81 692.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1598.81" y="690.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B3</text>
+<circle cx="1635.00" cy="720.00" r="4" fill="#ff8bb3"/>
+<path d="M1635.00 720.00L1635.00 710.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1626.00" y="708.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B4</text>
+<text x="277.00" y="798.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#9caabf">Номера внизу — штрихи; к = замкнутый. * — повтор точки разреза замкнутого штриха, не новое пересечение.</text>
+<path d="M36.00 802.00L1644.00 802.00" stroke="#303a4b" stroke-width="1" fill="none"/>
+<text x="42.00" y="835.00" font-family="Segoe UI, sans-serif" font-size="24" fill="#ffe0a3">Глиф 4</text>
+<text x="277.00" y="831.00" font-family="Segoe UI, sans-serif" font-size="20" fill="#e1e7f0">Один штрих: НЕТ · Общих точек J: 4 · X: 2 · Компонент: 1 · Нечётных: 4</text>
+<text x="277.00" y="860.00" font-family="Segoe UI, sans-serif" font-size="18" fill="#ff8bb3">Минимум штрихов: 2 · Развилок B: 2 · Длина: 48 клеточных рёбер · низкая различимость</text>
+<path d="M65.00 901.00L75.00 901.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M75.00 901.00L85.00 901.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M85.00 901.00L95.00 901.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 901.00L95.00 891.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 891.00L95.00 881.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 881.00L95.00 871.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 871.00L105.00 871.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 871.00L105.00 861.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 861.00L105.00 851.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 851.00L115.00 851.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 851.00L115.00 861.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 861.00L115.00 871.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 871.00L125.00 871.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M125.00 871.00L125.00 881.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M125.00 881.00L125.00 891.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M125.00 891.00L115.00 891.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 891.00L115.00 901.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 901.00L125.00 901.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M125.00 901.00L125.00 891.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M125.00 891.00L135.00 891.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M135.00 891.00L135.00 901.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M135.00 901.00L145.00 901.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M145.00 901.00L145.00 911.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M145.00 911.00L135.00 911.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M135.00 911.00L125.00 911.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M125.00 911.00L115.00 911.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 911.00L115.00 921.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 921.00L115.00 931.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 931.00L115.00 941.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 941.00L105.00 941.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 941.00L95.00 941.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 941.00L95.00 931.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 931.00L105.00 931.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 931.00L105.00 941.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 941.00L105.00 951.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 951.00L115.00 951.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 951.00L115.00 961.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 961.00L115.00 971.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M115.00 971.00L105.00 971.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 971.00L105.00 961.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M105.00 961.00L95.00 961.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 961.00L95.00 951.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M95.00 951.00L95.00 941.00" stroke="#75e2dc" stroke-width="3" fill="none"/>
+<path d="M65.00 911.00L75.00 911.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M75.00 911.00L85.00 911.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M85.00 911.00L95.00 911.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 911.00L95.00 921.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<path d="M95.00 921.00L95.00 931.00" stroke="#ffcf78" stroke-width="3" fill="none"/>
+<circle cx="125.00" cy="891.00" r="3" fill="#ffe0a3"/>
+<text x="129.00" y="890.00" font-family="Segoe UI, sans-serif" font-size="11" fill="#ffe0a3">X1</text>
+<circle cx="65.00" cy="901.00" r="3" fill="#e1e7f0"/>
+<circle cx="65.00" cy="911.00" r="3" fill="#e1e7f0"/>
+<circle cx="95.00" cy="931.00" r="3" fill="#ff8bb3"/>
+<circle cx="95.00" cy="941.00" r="3" fill="#ff8bb3"/>
+<circle cx="105.00" cy="941.00" r="3" fill="#ffe0a3"/>
+<text x="109.00" y="940.00" font-family="Segoe UI, sans-serif" font-size="11" fill="#ffe0a3">X2</text>
+<path d="M285.00 934.00L1480.94 934.00" stroke="#75e2dc" stroke-width="4" fill="none"/>
+<circle cx="285.00" cy="934.00" r="3" fill="#75e2dc"/>
+<circle cx="1480.94" cy="934.00" r="3" fill="#75e2dc"/>
+<text x="876.97" y="997.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#75e2dc">1</text>
+<circle cx="702.19" cy="934.00" r="4" fill="#ffe0a3"/>
+<path d="M702.19 934.00L702.19 906.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="693.19" y="904.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X1</text>
+<circle cx="813.44" cy="934.00" r="4" fill="#ffe0a3"/>
+<path d="M813.44 934.00L813.44 906.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="804.44" y="904.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X1</text>
+<circle cx="1119.38" cy="934.00" r="4" fill="#ffe0a3"/>
+<path d="M1119.38 934.00L1119.38 906.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1110.38" y="904.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X2</text>
+<circle cx="1147.19" cy="934.00" r="4" fill="#ff8bb3"/>
+<path d="M1147.19 934.00L1147.19 924.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1138.19" y="922.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B2</text>
+<circle cx="1175.00" cy="934.00" r="4" fill="#ff8bb3"/>
+<path d="M1175.00 934.00L1175.00 906.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1166.00" y="904.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B1</text>
+<circle cx="1230.62" cy="934.00" r="4" fill="#ffe0a3"/>
+<path d="M1230.62 934.00L1230.62 906.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1221.62" y="904.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffe0a3">X2</text>
+<circle cx="1480.94" cy="934.00" r="4" fill="#ff8bb3"/>
+<path d="M1480.94 934.00L1480.94 906.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1471.94" y="904.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B2</text>
+<path d="M1495.94 934.00L1635.00 934.00" stroke="#ffcf78" stroke-width="4" fill="none"/>
+<circle cx="1495.94" cy="934.00" r="3" fill="#ffcf78"/>
+<circle cx="1635.00" cy="934.00" r="3" fill="#ffcf78"/>
+<text x="1559.47" y="997.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffcf78">2</text>
+<circle cx="1635.00" cy="934.00" r="4" fill="#ff8bb3"/>
+<path d="M1635.00 934.00L1635.00 906.00" stroke="#9caabf" stroke-width="1" fill="none"/>
+<text x="1626.00" y="904.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#ff8bb3">B1</text>
+<text x="277.00" y="1012.00" font-family="Segoe UI, sans-serif" font-size="12" fill="#9caabf">Номера внизу — штрихи; к = замкнутый. * — повтор точки разреза замкнутого штриха, не новое пересечение.</text>
+</svg>

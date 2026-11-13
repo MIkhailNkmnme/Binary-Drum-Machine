@@ -1,0 +1,20 @@
+{
+  "relativeLinksChecked": 17,
+  "missing": [],
+  "frames": 19,
+  "glyphs": 76,
+  "allSvgParsed": true,
+  "exactEdgeCoverage": true,
+  "sourceGraphHashMatchesValidation": true,
+  "totals": {
+    "frames": 19,
+    "glyphs": 76,
+    "singleTrail": 18,
+    "notSingleTrail": 58,
+    "thresholdStableTopology": 41,
+    "thresholdStableDecision": 73,
+    "lowConfidence": 22
+  },
+  "threadBrowser": "Chrome: laps1/2/3 = white48/0/48, crossings2/4/6; reset, slider step, play and auto-stop; screenshot thread-xor-viewer-checked.jpg.",
+  "browser": "Chrome: selected frames19/06; zoom toggle; SVG loaded; J/41 text checked; screenshot viewer-checked.jpg."
+}

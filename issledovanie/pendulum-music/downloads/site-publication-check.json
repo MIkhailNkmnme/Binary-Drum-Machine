@@ -1,0 +1,116 @@
+{
+  "commit": "a70c8c94",
+  "checkedAt": "2026-11-13T12:15:15.255Z",
+  "runs": [
+    {
+      "id": 43423288220,
+      "sha": "a70c8c94",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43422364727,
+      "sha": "67dbc6eb",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43419375897,
+      "sha": "4b2a86c2",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43418497846,
+      "sha": "7915a048",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43390568164,
+      "sha": "6231f7bb",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1052857,
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1397616,
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 918422,
+      "match": true
+    },
+    {
+      "path": "РЕШЕНИЯ.md",
+      "status": 200,
+      "bytes": 229106,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/publication-check.json",
+      "status": 200,
+      "bytes": 14068,
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/downloads/pendulum-atlas-v006.zip",
+      "status": 200,
+      "bytes": 37846475,
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/downloads/pendulum-videos-and-bases.zip",
+      "status": 200,
+      "bytes": 54484585,
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/downloads/youtube-canon-published.jpg",
+      "status": 200,
+      "bytes": 104656,
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/downloads/youtube-drive-published.jpg",
+      "status": 200,
+      "bytes": 104012,
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/downloads/youtube-publication-check.json",
+      "status": 200,
+      "bytes": 458,
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/downloads/youtube-publication.txt",
+      "status": 200,
+      "bytes": 4753,
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/index.html",
+      "status": 200,
+      "bytes": 16207,
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/README.md",
+      "status": 200,
+      "bytes": 4452,
+      "match": true
+    }
+  ]
+}

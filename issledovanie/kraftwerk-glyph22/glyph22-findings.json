@@ -5,8 +5,12 @@
     22
   ],
   "sampledScreenshots": 568,
+  "sampleSet": "published witnesses or supplied captures",
   "stableStates": 17,
-  "intermediateStates": 2,
+  "intermediateStates": 1,
+  "candidateTransitionFrames": 2,
+  "publishedReferenceFrames": 19,
+  "errata": "Уточнение 2026-11-13: графы кадра 20,464 с совпали со следующим кадром. Второй смешанный переход не подтверждён; подтверждён один смешанный набор около 19,189 с. Сохранены все 19 опорных кадров.",
   "rows": [
     {
       "state": 1,
@@ -881,8 +885,8 @@
       },
       "transitionWindowSeconds": null,
       "intermediate": [
-        "Переход 16–17",
-        "Слоты 3 и 4 сменились раньше"
+        "Кадр у перехода",
+        "Граф совпал со следующим"
       ],
       "glyphs": [
         {

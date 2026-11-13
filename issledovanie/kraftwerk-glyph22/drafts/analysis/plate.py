@@ -36,7 +36,7 @@ onsets=[None,(1.63,1.77),(2.96,3.08),(4.15,4.29),(5.35,5.47),(6.67,6.78),
  (14.12,14.36),(15.43,15.58),(16.51,16.76),(17.84,17.95),(19.16,19.27),(20.35,20.46)]
 mixed={
   15:((422,373,212,265,530),'Переход 15–16', 'Слоты 2 и 4 сменились раньше'),
-  16:((457,230,305,263,651),'Переход 16–17', 'Слоты 3 и 4 сменились раньше'),
+  16:((457,230,305,263,651),'Кадр у перехода', 'Граф совпал со следующим'),
 }
 evidence=[]
 for i,v in enumerate(views):
@@ -111,7 +111,7 @@ def export():
         draw.line((x,y,x2,y2),fill=c)
         svg.append(f'<path d="M{x} {y}L{x2} {y2}" stroke="{c}"/>')
     txt(52,82,'Четыре глифа',62,'#ffe0a3',serif,'Georgia')
-    txt(56,117,'Первые 22 секунды · 17 устойчивых состояний и 2 переходных · обводки опорных кадров')
+    txt(56,117,'Первые 22 секунды · 19 опорных кадров; 17 устойчивых эпизодов · обводки опорных кадров')
     rows=[]
     for i,(state,v,interval,transition) in enumerate(evidence):
         top=150+i*rowsize
@@ -162,7 +162,7 @@ def export():
     x=np.arange(len(y))
     period,offset=np.polyfit(x,y,1)
     result={'source':'https://www.youtube.com/watch?v=BNYdUn7gmmI','seconds':[0,22],
-        'sampledScreenshots':len(samples), 'sampleSet':'published witnesses or supplied captures','stableStates':len(views),'intermediateStates':len(mixed),'rows':rows,
+        'sampledScreenshots':len(samples), 'sampleSet':'published witnesses or supplied captures','stableStates':len(views),'intermediateStates':1,'candidateTransitionFrames':len(mixed),'publishedReferenceFrames':len(evidence),'errata':'Уточнение 2026-11-13: графы кадра 20,464 с совпали со следующим кадром. Второй смешанный переход не подтверждён; подтверждён один смешанный набор около 19,189 с. Сохранены все 19 опорных кадров.','rows':rows,
         'timingFit':{'periodSeconds':round(float(period),4),'firstTransitionSeconds':round(float(offset),4),
             'maximumResidualSeconds':round(float(np.max(np.abs(y-(period*x+offset)))),4),
             'basis':'Центры 16 наблюдаемых интервалов смены. Номер первой смены равен нулю.'},
