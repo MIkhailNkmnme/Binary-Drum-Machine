@@ -1,0 +1,1157 @@
+{
+  "version": 1,
+  "signals": [
+    {
+      "id": "sms-01",
+      "title": "Тик",
+      "duration": 0.18,
+      "src": "audio/sms-01.mp3",
+      "wav": "audio/sms-01.wav",
+      "sourceTitle": "Импульс восьми ветров",
+      "description": "Одиночная короткая атака синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "eight-winds-pulse",
+        "sourceScore": "music/eight-winds-pulse-score.json",
+        "sourceScoreSha256": "f2f8ae6aacbfc3cb1df1761f8f3dd96dbc72811fe8a3f75249e8c4cf88947b5c",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 7938,
+        "wavDuration": 0.18,
+        "decodedMp3Samples": 7938,
+        "notes": [
+          {
+            "sourceEventIndex": 107,
+            "sourceBeat": 17.5,
+            "sourceSeconds": 8.333333333333334,
+            "sourceEvent": {
+              "beat": 17.5,
+              "duration": 0.31,
+              "midi": 74,
+              "velocity": 0.6473935169048449,
+              "voice": "lead",
+              "pan": -0.010003858507680189
+            },
+            "onset": 0.01,
+            "midi": 74,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.16999999999999998
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7492458079572352
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-02",
+      "title": "Искра",
+      "duration": 0.2100453514739229,
+      "src": "audio/sms-02.mp3",
+      "wav": "audio/sms-02.wav",
+      "sourceTitle": "Импульс восьми ветров",
+      "description": "Одиночная короткая атака синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "eight-winds-pulse",
+        "sourceScore": "music/eight-winds-pulse-score.json",
+        "sourceScoreSha256": "f2f8ae6aacbfc3cb1df1761f8f3dd96dbc72811fe8a3f75249e8c4cf88947b5c",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 9261,
+        "wavDuration": 0.21,
+        "decodedMp3Samples": 9263,
+        "notes": [
+          {
+            "sourceEventIndex": 137,
+            "sourceBeat": 21.5,
+            "sourceSeconds": 10.238095238095237,
+            "sourceEvent": {
+              "beat": 21.5,
+              "duration": 0.31,
+              "midi": 77,
+              "velocity": 0.6457823788546256,
+              "voice": "lead",
+              "pan": -0.011771500533881776
+            },
+            "onset": 0.01,
+            "midi": 77,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.19999999999999998
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7448037645736914
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-03",
+      "title": "Свет",
+      "duration": 0.24,
+      "src": "audio/sms-03.mp3",
+      "wav": "audio/sms-03.wav",
+      "sourceTitle": "Импульс восьми ветров",
+      "description": "Одиночная короткая атака синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "eight-winds-pulse",
+        "sourceScore": "music/eight-winds-pulse-score.json",
+        "sourceScoreSha256": "f2f8ae6aacbfc3cb1df1761f8f3dd96dbc72811fe8a3f75249e8c4cf88947b5c",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 10584,
+        "wavDuration": 0.24,
+        "decodedMp3Samples": 10584,
+        "notes": [
+          {
+            "sourceEventIndex": 131,
+            "sourceBeat": 20.75,
+            "sourceSeconds": 9.880952380952381,
+            "sourceEvent": {
+              "beat": 20.75,
+              "duration": 0.31,
+              "midi": 81,
+              "velocity": 0.6468531592834329,
+              "voice": "lead",
+              "pan": -0.012436545564196325
+            },
+            "onset": 0.01,
+            "midi": 81,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.22999999999999998
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7364798979003089
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-04",
+      "title": "Пик",
+      "duration": 0.28,
+      "src": "audio/sms-04.mp3",
+      "wav": "audio/sms-04.wav",
+      "sourceTitle": "Импульс восьми ветров",
+      "description": "Одиночная короткая атака синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "eight-winds-pulse",
+        "sourceScore": "music/eight-winds-pulse-score.json",
+        "sourceScoreSha256": "f2f8ae6aacbfc3cb1df1761f8f3dd96dbc72811fe8a3f75249e8c4cf88947b5c",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 12348,
+        "wavDuration": 0.28,
+        "decodedMp3Samples": 12348,
+        "notes": [
+          {
+            "sourceEventIndex": 317,
+            "sourceBeat": 44,
+            "sourceSeconds": 20.952380952380953,
+            "sourceEvent": {
+              "beat": 44,
+              "duration": 0.62,
+              "midi": 84,
+              "velocity": 0.6506873463211652,
+              "voice": "lead",
+              "pan": -0.0029963946162125947
+            },
+            "onset": 0.01,
+            "midi": 84,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.27
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7286413853899492
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-05",
+      "title": "Два импульса",
+      "duration": 0.42,
+      "src": "audio/sms-05.mp3",
+      "wav": "audio/sms-05.wav",
+      "sourceTitle": "Импульс восьми ветров",
+      "description": "Две короткие атаки синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "eight-winds-pulse",
+        "sourceScore": "music/eight-winds-pulse-score.json",
+        "sourceScoreSha256": "f2f8ae6aacbfc3cb1df1761f8f3dd96dbc72811fe8a3f75249e8c4cf88947b5c",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 18522,
+        "wavDuration": 0.42,
+        "decodedMp3Samples": 18522,
+        "notes": [
+          {
+            "sourceEventIndex": 107,
+            "sourceBeat": 17.5,
+            "sourceSeconds": 8.333333333333334,
+            "sourceEvent": {
+              "beat": 17.5,
+              "duration": 0.31,
+              "midi": 74,
+              "velocity": 0.6473935169048449,
+              "voice": "lead",
+              "pan": -0.010003858507680189
+            },
+            "onset": 0.01,
+            "midi": 74,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.18501133786848073
+          },
+          {
+            "sourceEventIndex": 110,
+            "sourceBeat": 18,
+            "sourceSeconds": 8.571428571428571,
+            "sourceEvent": {
+              "beat": 18,
+              "duration": 0.31,
+              "midi": 72,
+              "velocity": 0.64705434406369,
+              "voice": "lead",
+              "pan": 0
+            },
+            "onset": 0.14,
+            "midi": 72,
+            "voice": "lead",
+            "gain": 0.88,
+            "duration": 0.27999999999999997
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7438164456360286
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-06",
+      "title": "Медь",
+      "duration": 0.19,
+      "src": "audio/sms-06.mp3",
+      "wav": "audio/sms-06.wav",
+      "sourceTitle": "Медная орбита",
+      "description": "Одиночная короткая атака синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "copper-orbit",
+        "sourceScore": "music/copper-orbit-score.json",
+        "sourceScoreSha256": "679d14ce00e0f234d2f87c766ce0854d145bb2f4d8bd6b95f1aadac98a1ae5f4",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 8379,
+        "wavDuration": 0.19,
+        "decodedMp3Samples": 8379,
+        "notes": [
+          {
+            "sourceEventIndex": 135,
+            "sourceBeat": 19,
+            "sourceSeconds": 9.661016949152541,
+            "sourceEvent": {
+              "beat": 19,
+              "duration": 0.31,
+              "midi": 72,
+              "velocity": 0.5880511385515879,
+              "voice": "lead",
+              "pan": 0.17682761409150144
+            },
+            "onset": 0.01,
+            "midi": 72,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.18
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7534525080915209
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-07",
+      "title": "Знак",
+      "duration": 0.22,
+      "src": "audio/sms-07.mp3",
+      "wav": "audio/sms-07.wav",
+      "sourceTitle": "Медная орбита",
+      "description": "Одиночная короткая атака синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "copper-orbit",
+        "sourceScore": "music/copper-orbit-score.json",
+        "sourceScoreSha256": "679d14ce00e0f234d2f87c766ce0854d145bb2f4d8bd6b95f1aadac98a1ae5f4",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 9702,
+        "wavDuration": 0.22,
+        "decodedMp3Samples": 9702,
+        "notes": [
+          {
+            "sourceEventIndex": 154,
+            "sourceBeat": 21.25,
+            "sourceSeconds": 10.805084745762711,
+            "sourceEvent": {
+              "beat": 21.25,
+              "duration": 0.31,
+              "midi": 75,
+              "velocity": 0.5881506427121702,
+              "voice": "lead",
+              "pan": 0
+            },
+            "onset": 0.01,
+            "midi": 75,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.21
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7354849194666934
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-08",
+      "title": "Луч",
+      "duration": 0.26,
+      "src": "audio/sms-08.mp3",
+      "wav": "audio/sms-08.wav",
+      "sourceTitle": "Медная орбита",
+      "description": "Одиночная короткая атака синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "copper-orbit",
+        "sourceScore": "music/copper-orbit-score.json",
+        "sourceScoreSha256": "679d14ce00e0f234d2f87c766ce0854d145bb2f4d8bd6b95f1aadac98a1ae5f4",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 11466,
+        "wavDuration": 0.26,
+        "decodedMp3Samples": 11466,
+        "notes": [
+          {
+            "sourceEventIndex": 164,
+            "sourceBeat": 22.5,
+            "sourceSeconds": 11.440677966101696,
+            "sourceEvent": {
+              "beat": 22.5,
+              "duration": 0.31,
+              "midi": 79,
+              "velocity": 0.5888369401231668,
+              "voice": "lead",
+              "pan": 0.16531102388221067
+            },
+            "onset": 0.01,
+            "midi": 79,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.25
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7268813663648651
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-09",
+      "title": "Блик",
+      "duration": 0.3,
+      "src": "audio/sms-09.mp3",
+      "wav": "audio/sms-09.wav",
+      "sourceTitle": "Медная орбита",
+      "description": "Одиночная короткая атака синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "copper-orbit",
+        "sourceScore": "music/copper-orbit-score.json",
+        "sourceScoreSha256": "679d14ce00e0f234d2f87c766ce0854d145bb2f4d8bd6b95f1aadac98a1ae5f4",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 13230,
+        "wavDuration": 0.3,
+        "decodedMp3Samples": 13230,
+        "notes": [
+          {
+            "sourceEventIndex": 371,
+            "sourceBeat": 45.75,
+            "sourceSeconds": 23.26271186440678,
+            "sourceEvent": {
+              "beat": 45.75,
+              "duration": 0.31,
+              "midi": 82,
+              "velocity": 0.5752453944592885,
+              "voice": "lead",
+              "pan": 0
+            },
+            "onset": 0.01,
+            "midi": 82,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.29
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7246284352477153
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-10",
+      "title": "Двойная медь",
+      "duration": 0.46,
+      "src": "audio/sms-10.mp3",
+      "wav": "audio/sms-10.wav",
+      "sourceTitle": "Медная орбита",
+      "description": "Две короткие атаки синтетического lead.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "copper-orbit",
+        "sourceScore": "music/copper-orbit-score.json",
+        "sourceScoreSha256": "679d14ce00e0f234d2f87c766ce0854d145bb2f4d8bd6b95f1aadac98a1ae5f4",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 20286,
+        "wavDuration": 0.46,
+        "decodedMp3Samples": 20286,
+        "notes": [
+          {
+            "sourceEventIndex": 135,
+            "sourceBeat": 19,
+            "sourceSeconds": 9.661016949152541,
+            "sourceEvent": {
+              "beat": 19,
+              "duration": 0.31,
+              "midi": 72,
+              "velocity": 0.5880511385515879,
+              "voice": "lead",
+              "pan": 0.17682761409150144
+            },
+            "onset": 0.01,
+            "midi": 72,
+            "voice": "lead",
+            "gain": 1,
+            "duration": 0.20501133786848072
+          },
+          {
+            "sourceEventIndex": 139,
+            "sourceBeat": 19.5,
+            "sourceSeconds": 9.915254237288135,
+            "sourceEvent": {
+              "beat": 19.5,
+              "duration": 0.31,
+              "midi": 70,
+              "velocity": 0.5879044532346562,
+              "voice": "lead",
+              "pan": 0.17374835971882385
+            },
+            "onset": 0.16,
+            "midi": 70,
+            "voice": "lead",
+            "gain": 0.88,
+            "duration": 0.30000000000000004
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7447762568641324
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-11",
+      "title": "Капля",
+      "duration": 0.2,
+      "src": "audio/sms-11.mp3",
+      "wav": "audio/sms-11.wav",
+      "sourceTitle": "Письмо двух рек",
+      "description": "Одиночная короткая атака синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "letter-of-two-rivers",
+        "sourceScore": "music/letter-of-two-rivers-score.json",
+        "sourceScoreSha256": "28c7c4eace12492a1b4a7a5455337fa0dc7c518c1bad2576bf0513d4e7e78f89",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 8820,
+        "wavDuration": 0.2,
+        "decodedMp3Samples": 8820,
+        "notes": [
+          {
+            "sourceEventIndex": 73,
+            "sourceBeat": 18,
+            "sourceSeconds": 12.272727272727273,
+            "sourceEvent": {
+              "beat": 18,
+              "duration": 1.35,
+              "midi": 76,
+              "velocity": 0.768992235390274,
+              "voice": "piano",
+              "pan": -0.010675095641251435
+            },
+            "onset": 0.01,
+            "midi": 76,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.19
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.8112789691936666
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-12",
+      "title": "Нота",
+      "duration": 0.23,
+      "src": "audio/sms-12.mp3",
+      "wav": "audio/sms-12.wav",
+      "sourceTitle": "Письмо двух рек",
+      "description": "Одиночная короткая атака синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "letter-of-two-rivers",
+        "sourceScore": "music/letter-of-two-rivers-score.json",
+        "sourceScoreSha256": "28c7c4eace12492a1b4a7a5455337fa0dc7c518c1bad2576bf0513d4e7e78f89",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 10143,
+        "wavDuration": 0.23,
+        "decodedMp3Samples": 10143,
+        "notes": [
+          {
+            "sourceEventIndex": 90,
+            "sourceBeat": 22,
+            "sourceSeconds": 15,
+            "sourceEvent": {
+              "beat": 22,
+              "duration": 1.35,
+              "midi": 79,
+              "velocity": 0.7734221486406085,
+              "voice": "piano",
+              "pan": -0.008005661063479682
+            },
+            "onset": 0.01,
+            "midi": 79,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.22
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7829835217333707
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-13",
+      "title": "Кристалл",
+      "duration": 0.27,
+      "src": "audio/sms-13.mp3",
+      "wav": "audio/sms-13.wav",
+      "sourceTitle": "Письмо двух рек",
+      "description": "Одиночная короткая атака синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "letter-of-two-rivers",
+        "sourceScore": "music/letter-of-two-rivers-score.json",
+        "sourceScoreSha256": "28c7c4eace12492a1b4a7a5455337fa0dc7c518c1bad2576bf0513d4e7e78f89",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 11907,
+        "wavDuration": 0.27,
+        "decodedMp3Samples": 11907,
+        "notes": [
+          {
+            "sourceEventIndex": 105,
+            "sourceBeat": 25.5,
+            "sourceSeconds": 17.386363636363637,
+            "sourceEvent": {
+              "beat": 25.5,
+              "duration": 0.7,
+              "midi": 84,
+              "velocity": 0.7762581515628514,
+              "voice": "piano",
+              "pan": -0.006023062271578335
+            },
+            "onset": 0.01,
+            "midi": 84,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.26
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7495236809393057
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-14",
+      "title": "Стекло",
+      "duration": 0.31,
+      "src": "audio/sms-14.mp3",
+      "wav": "audio/sms-14.wav",
+      "sourceTitle": "Письмо двух рек",
+      "description": "Одиночная короткая атака синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "letter-of-two-rivers",
+        "sourceScore": "music/letter-of-two-rivers-score.json",
+        "sourceScoreSha256": "28c7c4eace12492a1b4a7a5455337fa0dc7c518c1bad2576bf0513d4e7e78f89",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 13671,
+        "wavDuration": 0.31,
+        "decodedMp3Samples": 13671,
+        "notes": [
+          {
+            "sourceEventIndex": 383,
+            "sourceBeat": 88,
+            "sourceSeconds": 60,
+            "sourceEvent": {
+              "beat": 88,
+              "duration": 1.35,
+              "midi": 88,
+              "velocity": 0.17042938725862858,
+              "voice": "piano",
+              "pan": 0.25
+            },
+            "onset": 0.01,
+            "midi": 88,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.3
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7129282820469472
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-15",
+      "title": "Две капли",
+      "duration": 0.5,
+      "src": "audio/sms-15.mp3",
+      "wav": "audio/sms-15.wav",
+      "sourceTitle": "Письмо двух рек",
+      "description": "Две короткие атаки синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "letter-of-two-rivers",
+        "sourceScore": "music/letter-of-two-rivers-score.json",
+        "sourceScoreSha256": "28c7c4eace12492a1b4a7a5455337fa0dc7c518c1bad2576bf0513d4e7e78f89",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 22050,
+        "wavDuration": 0.5,
+        "decodedMp3Samples": 22050,
+        "notes": [
+          {
+            "sourceEventIndex": 73,
+            "sourceBeat": 18,
+            "sourceSeconds": 12.272727272727273,
+            "sourceEvent": {
+              "beat": 18,
+              "duration": 1.35,
+              "midi": 76,
+              "velocity": 0.768992235390274,
+              "voice": "piano",
+              "pan": -0.010675095641251435
+            },
+            "onset": 0.01,
+            "midi": 76,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.22501133786848074
+          },
+          {
+            "sourceEventIndex": 76,
+            "sourceBeat": 19,
+            "sourceSeconds": 12.954545454545455,
+            "sourceEvent": {
+              "beat": 19,
+              "duration": 0.7,
+              "midi": 72,
+              "velocity": 0.7703403238366318,
+              "voice": "piano",
+              "pan": -0.009883837863977792
+            },
+            "onset": 0.18000000000000002,
+            "midi": 72,
+            "voice": "piano",
+            "gain": 0.88,
+            "duration": 0.31999999999999995
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7973706158588156
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-16",
+      "title": "Льдинка",
+      "duration": 0.2100453514739229,
+      "src": "audio/sms-16.mp3",
+      "wav": "audio/sms-16.wav",
+      "sourceTitle": "Тонкий лёд",
+      "description": "Одиночная короткая атака синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "thin-ice-nocturne",
+        "sourceScore": "music/thin-ice-nocturne-score.json",
+        "sourceScoreSha256": "3bee216528543c077dbc94bbd271c8e46c57bb0951ee30c1093f8a1d9958c281",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 9261,
+        "wavDuration": 0.21,
+        "decodedMp3Samples": 9263,
+        "notes": [
+          {
+            "sourceEventIndex": 66,
+            "sourceBeat": 16,
+            "sourceSeconds": 12.631578947368421,
+            "sourceEvent": {
+              "beat": 16,
+              "duration": 1.35,
+              "midi": 74,
+              "velocity": 0.69124072265625,
+              "voice": "piano",
+              "pan": 0
+            },
+            "onset": 0.01,
+            "midi": 74,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.19999999999999998
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7987150766882488
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-17",
+      "title": "Точка",
+      "duration": 0.25,
+      "src": "audio/sms-17.mp3",
+      "wav": "audio/sms-17.wav",
+      "sourceTitle": "Тонкий лёд",
+      "description": "Одиночная короткая атака синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "thin-ice-nocturne",
+        "sourceScore": "music/thin-ice-nocturne-score.json",
+        "sourceScoreSha256": "3bee216528543c077dbc94bbd271c8e46c57bb0951ee30c1093f8a1d9958c281",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 11025,
+        "wavDuration": 0.25,
+        "decodedMp3Samples": 11025,
+        "notes": [
+          {
+            "sourceEventIndex": 91,
+            "sourceBeat": 22.5,
+            "sourceSeconds": 17.763157894736842,
+            "sourceEvent": {
+              "beat": 22.5,
+              "duration": 0.7,
+              "midi": 77,
+              "velocity": 0.6970458603896105,
+              "voice": "piano",
+              "pan": 0
+            },
+            "onset": 0.01,
+            "midi": 77,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.24
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7866739343631334
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-18",
+      "title": "Снежинка",
+      "duration": 0.29,
+      "src": "audio/sms-18.mp3",
+      "wav": "audio/sms-18.wav",
+      "sourceTitle": "Тонкий лёд",
+      "description": "Одиночная короткая атака синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "thin-ice-nocturne",
+        "sourceScore": "music/thin-ice-nocturne-score.json",
+        "sourceScoreSha256": "3bee216528543c077dbc94bbd271c8e46c57bb0951ee30c1093f8a1d9958c281",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 12789,
+        "wavDuration": 0.29,
+        "decodedMp3Samples": 12789,
+        "notes": [
+          {
+            "sourceEventIndex": 233,
+            "sourceBeat": 55.5,
+            "sourceSeconds": 43.81578947368421,
+            "sourceEvent": {
+              "beat": 55.5,
+              "duration": 0.7,
+              "midi": 82,
+              "velocity": 0.6014247389240507,
+              "voice": "piano",
+              "pan": 0
+            },
+            "onset": 0.01,
+            "midi": 82,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.27999999999999997
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7570568866648576
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-19",
+      "title": "Звезда",
+      "duration": 0.33,
+      "src": "audio/sms-19.mp3",
+      "wav": "audio/sms-19.wav",
+      "sourceTitle": "Тонкий лёд",
+      "description": "Одиночная короткая атака синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "thin-ice-nocturne",
+        "sourceScore": "music/thin-ice-nocturne-score.json",
+        "sourceScoreSha256": "3bee216528543c077dbc94bbd271c8e46c57bb0951ee30c1093f8a1d9958c281",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 14553,
+        "wavDuration": 0.33,
+        "decodedMp3Samples": 14553,
+        "notes": [
+          {
+            "sourceEventIndex": 275,
+            "sourceBeat": 64,
+            "sourceSeconds": 50.526315789473685,
+            "sourceEvent": {
+              "beat": 64,
+              "duration": 1.35,
+              "midi": 86,
+              "velocity": 0.13833600000000001,
+              "voice": "piano",
+              "pan": 0.25
+            },
+            "onset": 0.01,
+            "midi": 86,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.32
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.720321586857755
+        },
+        "effects": []
+      }
+    },
+    {
+      "id": "sms-20",
+      "title": "Два кристалла",
+      "duration": 0.54,
+      "src": "audio/sms-20.mp3",
+      "wav": "audio/sms-20.wav",
+      "sourceTitle": "Тонкий лёд",
+      "description": "Две короткие атаки синтетического фортепиано.",
+      "recipe": {
+        "kind": "isolated-score-note-adaptation",
+        "sourceId": "thin-ice-nocturne",
+        "sourceScore": "music/thin-ice-nocturne-score.json",
+        "sourceScoreSha256": "3bee216528543c077dbc94bbd271c8e46c57bb0951ee30c1093f8a1d9958c281",
+        "sourceHashNormalization": "LF",
+        "sourceInstrument": "mayatnik/mayatnik-synthesis-music.js",
+        "method": "Высоты и тип тембра взяты из конкретных событий партитуры. Пересинтез с новой короткой огибающей; сопровождение и эхо отсутствуют. Не вырезка из готового MP3.",
+        "sampleRate": 44100,
+        "channels": 1,
+        "totalSamples": 23814,
+        "wavDuration": 0.54,
+        "decodedMp3Samples": 23814,
+        "notes": [
+          {
+            "sourceEventIndex": 66,
+            "sourceBeat": 16,
+            "sourceSeconds": 12.631578947368421,
+            "sourceEvent": {
+              "beat": 16,
+              "duration": 1.35,
+              "midi": 74,
+              "velocity": 0.69124072265625,
+              "voice": "piano",
+              "pan": 0
+            },
+            "onset": 0.01,
+            "midi": 74,
+            "voice": "piano",
+            "gain": 1,
+            "duration": 0.24501133786848073
+          },
+          {
+            "sourceEventIndex": 69,
+            "sourceBeat": 17,
+            "sourceSeconds": 13.421052631578947,
+            "sourceEvent": {
+              "beat": 17,
+              "duration": 0.7,
+              "midi": 69,
+              "velocity": 0.6918806818181819,
+              "voice": "piano",
+              "pan": 0
+            },
+            "onset": 0.2,
+            "midi": 69,
+            "voice": "piano",
+            "gain": 0.88,
+            "duration": 0.34
+          }
+        ],
+        "envelope": {
+          "attackSeconds": 0.003,
+          "releaseSeconds": 0.018,
+          "exponentialDecay": 4.8,
+          "formula": "min(1,t/attack) * exp(-4.8*t/noteDuration) * sin(pi/2 * min(1,(noteDuration-t)/release))^2"
+        },
+        "normalization": {
+          "samplePeakTarget": 0.6,
+          "gain": 0.7874558276393148
+        },
+        "effects": []
+      }
+    }
+  ]
+}

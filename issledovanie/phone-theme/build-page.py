@@ -10,6 +10,8 @@ def read(name):
     return json.loads((ROOT / name).read_text(encoding='utf-8-sig'))
 
 def duration(seconds):
+    if seconds < 1:
+        return f'{round(seconds*1000)} мс'
     return f'{int(seconds)//60}:{int(seconds)%60:02d}' if seconds >= 10 else f'{seconds:.1f} с'.replace('.', ',')
 
 def link(path, label, download=True):
@@ -20,6 +22,7 @@ def player(path, title):
 
 def main():
     music, art = read('music.json'), read('wallpapers.json')
+    sms = read('sms.json')['signals']
     tracks, signals, papers = music['tracks'], music['notifications'], art['wallpapers']
     track_html = []
     for i, t in enumerate(tracks):
@@ -40,6 +43,16 @@ def main():
           <p>{e(s['sourceTitle'])} · {duration(s['duration'])}</p></div></div>
           {player(s['src'], s['title'])}<p class="links">{link(s['src'], 'MP3')} {link(s['wav'], 'WAV')}
           <span class="source-time">Фрагмент {float(s['start']):.2f}–{float(s['end']):.2f} с</span></p></article>''')
+    sms_html = []
+    for i, s in enumerate(sms):
+        notes = s['recipe']['notes']
+        sound_label = ('Две электронные ноты' if len(notes)>1 else 'Короткая электронная нота') if notes[0]['voice']=='lead' else ('Две фортепианные ноты' if len(notes)>1 else 'Короткая фортепианная нота')
+        sms_html.append(f'''<article class="signal" id="{e(s['id'])}">
+          <div class="signal-heading"><span class="number">{i+1:02d}</span><div><h3>{e(s['title'])}</h3>
+          <p>{duration(s['duration'])} · {sound_label}</p></div></div>
+          {player(s['src'], s['title'] + ' — короткий SMS')}
+          <p class="links">{link(s['src'], 'MP3')} {link(s['wav'], 'WAV')}</p>
+          <p class="small">Ноты из «{e(s['sourceTitle'])}»</p></article>''')
     def gallery(variant, category=None):
         items=[]
         for p in papers:
@@ -66,17 +79,17 @@ def main():
     hero_html=''.join(f'<div class="phone phone-{i}"><img src="{e(p["thumb"])}" alt="{e(p["title"])}" width="360" height="800"><span class="phone-clock" aria-hidden="true">13:13</span></div>' for i,p in enumerate(hero))
     html = f'''<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#101719"><meta name="description" content="Зеркалиус на телефоне: четыре новых трека, рингтоны, 20 звуков уведомлений и {count} обоев. Серпинский, Аниматрицы, маятники, ромбы и RGB. Слушать и скачать бесплатно.">
+<meta name="theme-color" content="#101719"><meta name="description" content="Зеркалиус на телефоне: 20 коротких SMS короче секунды, 20 музыкальных уведомлений, четыре новых трека, рингтоны и {count} обоев. Слушать и скачать бесплатно.">
 <title>Зеркалиус — тема на телефон</title><link rel="stylesheet" href="page.css?v=2">
 </head><body><a class="skip" href="#tracks">К музыке</a>
 <header class="masthead"><a class="wordmark" href="../../index.html"><span aria-hidden="true">◇</span> ЗЕРКАЛИУС</a>
-<nav aria-label="На странице"><a href="#tracks">Музыка</a><a href="#signals">Сигналы</a><a href="#wallpapers">Обои</a></nav></header>
-<main><section class="hero" aria-labelledby="title"><div class="hero-copy"><p class="eyebrow">ТЕМА НА ТЕЛЕФОН / ВЫПУСК 02</p>
+<nav aria-label="На странице"><a href="#tracks">Музыка</a><a href="#sms">Сигналы</a><a href="#wallpapers">Обои</a></nav></header>
+<main><section class="hero" aria-labelledby="title"><div class="hero-copy"><p class="eyebrow">ТЕМА НА ТЕЛЕФОН / ВЫПУСК 03</p>
 <h1 id="title">Зеркалиус.<br><em>В кармане.</em></h1>
 <p class="lead">Маятниковый ритм на звонок.<br>Несколько нот — на сообщение.<br>Движение, остановленное на экране.</p>
-<p class="hero-count">4 новых трека <span>·</span> 20 сигналов <span>·</span> {count} обоев</p>
+<p class="hero-count">4 новых трека <span>·</span> 20 SMS + 20 уведомлений <span>·</span> {count} обоев</p>
 <div class="hero-actions"><a href="downloads/zerkalius-phone-theme.zip" download>↓ Скачать весь набор</a><a href="#tracks">Сначала послушать ↘</a></div>
-<p class="small">MP3 · M4R · WAV · PNG. Без регистрации.</p><p class="new-release"><a href="#geometric">Новое: 15 цветных обоев — Серпинский, Аниматрицы и RGB ↓</a></p></div><div class="hero-art" aria-label="Примеры обоев на экране телефона">{hero_html}</div></section>
+<p class="small">MP3 · M4R · WAV · PNG. Без регистрации.</p><p class="new-release"><a href="#sms">Новое: 20 коротких, чётких SMS ↓</a><br><a href="#geometric">15 цветных обоев — Серпинский, Аниматрицы и RGB ↓</a></p></div><div class="hero-art" aria-label="Примеры обоев на экране телефона">{hero_html}</div></section>
 
 <section id="tracks" class="section"><header class="section-heading"><div><p class="eyebrow">01 / МУЗЫКА И ЗВОНКИ</p><h2>Ещё один оборот.</h2></div><p>Две электронные и две камерные композиции. Внутри каждой — короткая версия на звонок.</p></header>
 <div class="tracks">{''.join(track_html)}</div>
@@ -85,7 +98,12 @@ def main():
 <article><h3>Канон двух берегов</h3><p>Камерная вариация · 84 BPM</p>{player('../../mayatnik/synthesis-album/two-shores-canon.mp3','Канон двух берегов')}{link('../../mayatnik/synthesis-album/two-shores-canon.mp3','Скачать MP3')}</article></div></details>
 <p class="section-download">{link('downloads/zerkalius-music.zip','↓ Музыка и рингтоны одним архивом')}</p></section>
 
-<section id="signals" class="section"><header class="section-heading"><div><p class="eyebrow">02 / SMS И УВЕДОМЛЕНИЯ</p><h2>Маленькие вести.</h2></div><p>Двадцать коротких фрагментов из шести мелодий. Название исходного трека и место вырезки указаны рядом.</p></header>
+<section id="sms" class="section"><header class="section-heading"><div><p class="eyebrow">02 / КОРОТКИЕ SMS</p><h2>Коротко. Чётко.</h2></div><p>Двадцать сигналов короче секунды. Одна ясная нота или два быстрых удара: резкое начало, короткий спад, без длинного эха.</p></header>
+<p class="gallery-note">Ноты взяты из наших мелодий и заново озвучены с короткой огибающей. Длительность указана в миллисекундах: 250 мс — четверть секунды.</p>
+<div class="signals">{''.join(sms_html)}</div><p class="section-download">{link('downloads/zerkalius-sms.zip','↓ Все 20 коротких SMS · MP3 + WAV')}</p>
+<p class="small"><a href="#signals">Более длинные музыкальные уведомления ↓</a></p></section>
+
+<section id="signals" class="section"><header class="section-heading"><div><p class="eyebrow">МУЗЫКАЛЬНЫЕ УВЕДОМЛЕНИЯ</p><h2>Маленькие вести.</h2></div><p>Двадцать фрагментов из шести мелодий, 1,25–3,6 секунды. Название исходного трека и место вырезки указаны рядом.</p></header>
 <div class="signals">{''.join(notification_html)}</div><p class="section-download">{link('downloads/zerkalius-notifications.zip','↓ Все 20 сигналов · MP3 + WAV')}</p></section>
 
 <section id="wallpapers" class="section"><header class="section-heading"><div><p class="eyebrow">03 / ОБОИ</p><h2>Геометрия в цвете.</h2></div><p>{count} изображений 1440 × 3200. Верхняя часть свободнее — под часы. Картинки без надписей; часы выше показаны только в примере.</p></header>
@@ -102,14 +120,14 @@ def main():
 
 <section class="about section" id="logic"><p class="eyebrow">ЧТО С ЧЕМ ВЗАИМОДЕЙСТВУЕТ</p><h2>У звука и рисунка<br>общие корни.</h2>
 <div class="about-copy"><p>Два маятника создают клеточные поля A и B. Сдвиг, отражение, задержка и операция наложения меняют общий рисунок. Например, XOR оставляет несовпадения, а AND — общие единицы.</p>
-<p>В музыке гармония, мотивы и форма сочинены отдельно. Данные полей участвуют в изменении нот, акцентов и звучания. Короткие сигналы — вырезки из готовых композиций с мягкими краями. Обои используют геометрию тех же построений в вертикальной художественной композиции.</p>
+<p>В музыке гармония, мотивы и форма сочинены отдельно. Данные полей участвуют в изменении нот, акцентов и звучания. Музыкальные уведомления — вырезки из готовых композиций с мягкими краями. Короткие SMS — отдельные ноты этих мелодий, заново синтезированные с быстрым затуханием. Обои используют геометрию тех же построений в вертикальной художественной композиции.</p>
 <p><a href="../pendulum-music/">Предыдущие композиции и видео с маятниками ↗</a><br><a href="../../mayatnik/synthesis-gallery.html">Маятниковый атлас ↗</a><br><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html">Открыть Синтез ↗</a></p></div></section>
-</main><footer><a class="wordmark" href="../Zerkalius-issledovanie.html">◇ В исследования</a><p>Зеркалиус · тема на телефон · 02</p><p><a href="music.json">Происхождение музыки</a> · <a href="wallpapers.json">Рецепты обоев</a> · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/tree/main/issledovanie/phone-theme">Исходники</a></p></footer>
+</main><footer><a class="wordmark" href="../Zerkalius-issledovanie.html">◇ В исследования</a><p>Зеркалиус · тема на телефон · 03</p><p><a href="music.json">Происхождение музыки</a> · <a href="sms.json">Короткие SMS</a> · <a href="wallpapers.json">Рецепты обоев</a> · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/tree/main/issledovanie/phone-theme">Исходники</a></p></footer>
 <p id="playback-status" class="sr-only" role="status" aria-live="polite"></p>
 '''
     html += '<scr' + 'ipt src="page.js?v=1" defer></scr' + 'ipt></body></html>\n'
     (ROOT / 'index.html').write_text('\n'.join(line.rstrip() for line in html.splitlines())+'\n', encoding='utf-8')
-    print(f'Built page: {len(tracks)} new tracks, {len(signals)} notifications, {len(papers)} wallpapers')
+    print(f'Built page: {len(tracks)} new tracks, {len(sms)} SMS, {len(signals)} notifications, {len(papers)} wallpapers')
 
 if __name__ == '__main__':
     main()

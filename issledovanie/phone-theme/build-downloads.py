@@ -10,9 +10,10 @@ ROOT = Path(__file__).resolve().parent
 def main():
     music = json.loads((ROOT/'music.json').read_text(encoding='utf-8-sig'))
     art = json.loads((ROOT/'wallpapers.json').read_text(encoding='utf-8-sig'))
+    sms = json.loads((ROOT/'sms.json').read_text(encoding='utf-8-sig'))['signals']
     downloads = ROOT/'downloads'
     downloads.mkdir(exist_ok=True)
-    sound, notices, walls = [], [], []
+    sound, notices, walls, short = [], [], [], []
     for t in music['tracks']:
         sound.append((t['src'], 'Tracks/'+Path(t['src']).name))
         for fmt in ['mp3','m4r']:
@@ -26,15 +27,21 @@ def main():
             notices.append((src, 'Notifications/'+Path(src).name))
     for p in art['wallpapers']:
         walls.append((p['src'], 'Wallpapers/'+p['variant']+'/'+Path(p['src']).name))
+    for s in sms:
+        for fmt in ['src','wav']:
+            src=s[fmt]
+            short.append((src, 'SMS/'+Path(src).name))
     geometric=[(p['src'], 'Wallpapers/'+p['category']+'/'+Path(p['src']).name)
                for p in art['wallpapers'] if p.get('category')]
     groups={'zerkalius-music':sound, 'zerkalius-notifications':notices,
-            'zerkalius-wallpapers':walls, 'zerkalius-phone-theme':sound+notices+walls}
+            'zerkalius-wallpapers':walls, 'zerkalius-sms':short,
+            'zerkalius-phone-theme':sound+notices+short+walls}
     if geometric: groups['zerkalius-geometric-wallpapers']=geometric
     instructions=(ROOT/'DOWNLOADS.txt').read_bytes()
     report=[]
-    if '--wallpapers-only' in sys.argv:
-        groups={key:value for key,value in groups.items() if key not in ['zerkalius-music','zerkalius-notifications']}
+    if '--wallpapers-only' in sys.argv or '--sms-only' in sys.argv:
+        allowed = ['zerkalius-sms','zerkalius-phone-theme'] if '--sms-only' in sys.argv else ['zerkalius-wallpapers','zerkalius-geometric-wallpapers','zerkalius-phone-theme']
+        groups={key:value for key,value in groups.items() if key in allowed}
         previous=json.loads((downloads/'manifest.json').read_text(encoding='utf-8'))
         report=[row for row in previous if Path(row['file']).stem not in groups]
     for name,files in groups.items():

@@ -1,0 +1,19 @@
+{
+  "localReferences": 346,
+  "brokenReferences": [],
+  "uniqueIds": 60,
+  "signals": 20,
+  "durationRange": [
+    0.18,
+    0.54
+  ],
+  "noteCounts": {
+    "1": 16,
+    "2": 4
+  },
+  "archivesChecked": 6,
+  "smsArchiveCopiesChecked": 80,
+  "oldAssetsUnchanged": 138,
+  "baseline": "bcef7e553aac516af59aed6508d7f406a1d9b931",
+  "physicalPhoneInstallationTested": false
+}

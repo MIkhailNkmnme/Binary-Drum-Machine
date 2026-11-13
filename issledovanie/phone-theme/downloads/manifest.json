@@ -21,17 +21,24 @@
     "verifiedAgainstSources": true
   },
   {
-    "file": "downloads/zerkalius-phone-theme.zip",
-    "bytes": 39653819,
-    "files": 82,
-    "sha256": "010b3d2a5c7b58336cfec4dcc902d77242d070529cfd95a343ba5d27c8c3b97d",
-    "verifiedAgainstSources": true
-  },
-  {
     "file": "downloads/zerkalius-geometric-wallpapers.zip",
     "bytes": 6726124,
     "files": 16,
     "sha256": "7506743eb208984f1a54350af57f2866e5b1945a97168a31d5bcea90f0b56e57",
+    "verifiedAgainstSources": true
+  },
+  {
+    "file": "downloads/zerkalius-sms.zip",
+    "bytes": 501488,
+    "files": 41,
+    "sha256": "30565ac13444bbe37ebd42c265496a07ac43e8b9368e5d52692041185d28fdfe",
+    "verifiedAgainstSources": true
+  },
+  {
+    "file": "downloads/zerkalius-phone-theme.zip",
+    "bytes": 40153905,
+    "files": 122,
+    "sha256": "f2001ffb36fb2ddbf7105cd477302fb70585246d6409d549144b1be2e23866ba",
     "verifiedAgainstSources": true
   }
 ]

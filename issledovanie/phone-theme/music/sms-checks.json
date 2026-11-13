@@ -1,0 +1,2605 @@
+{
+  "passed": true,
+  "files": 40,
+  "singleSignals": 16,
+  "doubleSignals": 4,
+  "checks": [
+    {
+      "file": "audio/sms-01.mp3",
+      "bytes": 2896,
+      "sha256": "ba34197febb754c1d7ae520a7dcd732ad475ad0adae82a063a6c21a762f6dc96",
+      "pcmSha256": "624be12e3375e9b909da22e4cbb61e8416e712f43cdc83539fe8d6f78fd57567",
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.180000"
+        }
+      },
+      "peak": 0.5995543599128723,
+      "peakDb": -4.443428690337855,
+      "rmsDb": -16.381741444205215,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006281179138321996,
+      "firstSample": 0.0000013172907529224176,
+      "lastSample": -0.000007636872396687977,
+      "maxAdjacentStep": 0.12481740117073059,
+      "oversampledPeak": 0.5995874404907227,
+      "oversampledPeakDb": -4.4429494571923716,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-01.wav",
+      "bytes": 15920,
+      "sha256": "a16198673ee7136281ed1cd16fc02e0ad94046e5d8658db1e9649377a3de38cf",
+      "pcmSha256": "86ccf4e3e7d07dec0ae84ac09c99c8a979b7c445f91431dda1a1fbc9e818e181",
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.180000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.376716098915274,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006258503401360544,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.12493896484375,
+      "oversampledPeak": 0.5999755859375,
+      "oversampledPeakDb": -4.437328429272022,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-02.mp3",
+      "bytes": 3265,
+      "sha256": "530b8e16a8883fbba41583720f90cc9d839765f86af7b42fafc3515788827216",
+      "pcmSha256": "2258e6c68aa847c781487ad985f9844c6267e28aa0630bf3ae5306fd42cf1828",
+      "sampleCount": 9263,
+      "duration": 0.2100453514739229,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.210045"
+        }
+      },
+      "peak": 0.6001532077789307,
+      "peakDb": -4.434757365680649,
+      "rmsDb": -16.391566995946366,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006598639455782313,
+      "firstSample": 0.000002135399427061202,
+      "lastSample": -0.0000016069950561359292,
+      "maxAdjacentStep": 0.1486067920923233,
+      "oversampledPeak": 0.6008102297782898,
+      "oversampledPeakDb": -4.425253627320114,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-02.wav",
+      "bytes": 18566,
+      "sha256": "4660098df17409d65a3030cafe614adde9fee4d44e9339d355c853b4f87afe99",
+      "pcmSha256": "ad104fcce12a8a4f3d1ca1cb08f021bc716b2c67bd1bed24ae3bf63965b2a150",
+      "sampleCount": 9261,
+      "duration": 0.21,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.210000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.39233116268022,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006893424036281179,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.14892578125,
+      "oversampledPeak": 0.6005913019180298,
+      "oversampledPeakDb": -4.4284192354932275,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-03.mp3",
+      "bytes": 3365,
+      "sha256": "8c36362417c1969c7e68100fa6a236d48e3e606293b6af0731e03bf90829e8e8",
+      "pcmSha256": "d7cab4c4e036c5d4aa4b3f3b6492a85b0f8c5335f6ae7819e15616c00241f30b",
+      "sampleCount": 10584,
+      "duration": 0.24,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.240000"
+        }
+      },
+      "peak": 0.5997560620307922,
+      "peakDb": -4.44050707418164,
+      "rmsDb": -16.52356356576304,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006802721088435374,
+      "firstSample": -0.0000021504272353922715,
+      "lastSample": 0.0000013528679119190201,
+      "maxAdjacentStep": 0.1847910527139902,
+      "oversampledPeak": 0.6008211374282837,
+      "oversampledPeakDb": -4.425095937288635,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-03.wav",
+      "bytes": 21212,
+      "sha256": "15a1e08479b9b11c6128914ccfdf7aeab6f745598edc69c1389b82f6469c072e",
+      "pcmSha256": "3605e5d722a8a88f1add4549177ebe5457dd6b23ae7405274e1fcc7e244da730",
+      "sampleCount": 10584,
+      "duration": 0.24,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.240000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.524424940132736,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006802721088435374,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.184967041015625,
+      "oversampledPeak": 0.6009404063224792,
+      "oversampledPeakDb": -4.42337187403994,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-04.mp3",
+      "bytes": 3886,
+      "sha256": "af7eac0275ab97e83be30a43e811543a03c1cb480057f3e30c7ca7c8899e5a1c",
+      "pcmSha256": "491546c948dbbb86d419ec9258afb512b674845143227c83a7114cd6496538da",
+      "sampleCount": 12348,
+      "duration": 0.28,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.280000"
+        }
+      },
+      "peak": 0.6006933450698853,
+      "peakDb": -4.426943589301143,
+      "rmsDb": -16.703900976661497,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.005873015873015873,
+      "firstSample": -0.0000010139464166059042,
+      "lastSample": 0.000008930833246267866,
+      "maxAdjacentStep": 0.2214118391275406,
+      "oversampledPeak": 0.6007885932922363,
+      "oversampledPeakDb": -4.425566430772362,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-04.wav",
+      "bytes": 24740,
+      "sha256": "f9b3b77b3e77398cdf74c81f7265ffee62509babc6df3eacd3b8c1c7421e5cdb",
+      "pcmSha256": "e63acf06e916595461e7430de159b78288f828df744739e2d89971b916557a63",
+      "sampleCount": 12348,
+      "duration": 0.28,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.280000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.7069026533229,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.005873015873015873,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.221282958984375,
+      "oversampledPeak": 0.6001209020614624,
+      "oversampledPeakDb": -4.435224932037992,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-05.mp3",
+      "bytes": 5598,
+      "sha256": "9a8ffd180bff4f7638a796a9de7901207221cc7af387cf46ac01e6588e61e18f",
+      "pcmSha256": "f5784002954ba0a9e1e768af4b811c1633d6625d8be0eb9d19e2e099198158a3",
+      "sampleCount": 18522,
+      "duration": 0.42,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.420000"
+        }
+      },
+      "peak": 0.6004254221916199,
+      "peakDb": -4.43081855762926,
+      "rmsDb": -16.362284823877463,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.008344671201814058,
+      "firstSample": 0.0000013126154954079539,
+      "lastSample": -0.000013545262845582329,
+      "maxAdjacentStep": 0.12482114881277084,
+      "oversampledPeak": 0.6004738807678223,
+      "oversampledPeakDb": -4.430117573218489,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-05.wav",
+      "bytes": 37088,
+      "sha256": "a1d41f3786f47d322f888bb42331fd74c3ce5374a61a83db0d369a1ccbbef280",
+      "pcmSha256": "9124b59f821f295fb760a4e58a7c92813eb0caf4f61d58f6be21aa9662b37907",
+      "sampleCount": 18522,
+      "duration": 0.42,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.420000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.362645867440122,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007936507936507936,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.125,
+      "oversampledPeak": 0.5999755859375,
+      "oversampledPeakDb": -4.437328429272022,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-06.mp3",
+      "bytes": 3108,
+      "sha256": "78819bbb6f0888faea73f2bce3e7b15600f9d13b3b9733111ee3924f36c9ef0c",
+      "pcmSha256": "4e8d14e3d5b43b271d93de1053fe5f9273bcaba75cf843724b271e2fa2fb6f1f",
+      "sampleCount": 8379,
+      "duration": 0.19,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.190000"
+        }
+      },
+      "peak": 0.5994119644165039,
+      "peakDb": -4.445491853492868,
+      "rmsDb": -16.297083723777696,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.005873015873015873,
+      "firstSample": -0.0000012336824966041604,
+      "lastSample": 0.000013954260793980211,
+      "maxAdjacentStep": 0.11042162030935287,
+      "oversampledPeak": 0.5996085405349731,
+      "oversampledPeakDb": -4.442643797969631,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-06.wav",
+      "bytes": 16802,
+      "sha256": "2cf86b6afc781fdb297df13c21d311eb491a6b132688ca2100949d0730262287",
+      "pcmSha256": "564787b292a11f058fa3ae56ec60081ffd5491e0f21bc77ef9b928569562c2ff",
+      "sampleCount": 8379,
+      "duration": 0.19,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.190000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.294275851343098,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.005850340136054422,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.11065673828125,
+      "oversampledPeak": 0.6001379489898682,
+      "oversampledPeakDb": -4.434978205694453,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-07.mp3",
+      "bytes": 3237,
+      "sha256": "fc4802a4a944d673064925deb8500585813b7fc97c571d34b492079a00136233",
+      "pcmSha256": "4afb7743f9efc4592f57dc20d60562bb41aae36ce2d7fac8e0025e8bb9e4f80c",
+      "sampleCount": 9702,
+      "duration": 0.22,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.220000"
+        }
+      },
+      "peak": 0.6005841493606567,
+      "peakDb": -4.42852267804012,
+      "rmsDb": -16.46711925460835,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.0069387755102040816,
+      "firstSample": 3.361285223490995e-7,
+      "lastSample": 0.000001760081431712024,
+      "maxAdjacentStep": 0.13299834728240967,
+      "oversampledPeak": 0.601904034614563,
+      "oversampledPeakDb": -4.4094549110430385,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-07.wav",
+      "bytes": 19448,
+      "sha256": "999628d0e8aba00c689d6a9e434d7e2cae0503b7e29788caf20cb89c8cb792dd",
+      "pcmSha256": "08962fd540d4896a85090a334201eea7f382f24ba341ae1cf0a7d0f62b46e0ca",
+      "sampleCount": 9702,
+      "duration": 0.22,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.220000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.470696651928495,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006530612244897959,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.13275146484375,
+      "oversampledPeak": 0.6011307239532471,
+      "oversampledPeakDb": -4.420621491122982,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-08.mp3",
+      "bytes": 3653,
+      "sha256": "12667ba9f1f61e25189a1cb8fb0a6baf4e349bb5602c96c26bd8b0c7831a729c",
+      "pcmSha256": "fca00560a33a8d9ff9fce142c0b66b07af2e14a85da75adab72396d76802cae1",
+      "sampleCount": 11466,
+      "duration": 0.26,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.260000"
+        }
+      },
+      "peak": 0.5992897748947144,
+      "peakDb": -4.447262643790507,
+      "rmsDb": -16.60270299600057,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007142857142857143,
+      "firstSample": 0.0000033764952149795135,
+      "lastSample": 0.000021685706087737344,
+      "maxAdjacentStep": 0.16663327813148499,
+      "oversampledPeak": 0.5992897748947144,
+      "oversampledPeakDb": -4.447262643790507,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-08.wav",
+      "bytes": 22976,
+      "sha256": "1f188a08ea3aa8581fbb8cc432c2ed3ed734132910e50598b1bc18da147d78e5",
+      "pcmSha256": "8fbf03c0f9c40642ebfeb31c6d8b083f668607758978198fe68ef4215df4ba3b",
+      "sampleCount": 11466,
+      "duration": 0.26,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.260000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.60406531467464,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007120181405895692,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.166717529296875,
+      "oversampledPeak": 0.5999755859375,
+      "oversampledPeakDb": -4.437328429272022,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-09.mp3",
+      "bytes": 4150,
+      "sha256": "1b6d6d863ddf9db418ce9afb5aaf4d2d0924bbd38ad4707215bfafa4d2fd2e1e",
+      "pcmSha256": "5dfc0888693abb4dffd974f609756fe055dabfd8582f2e5f458a7449e9a42541",
+      "sampleCount": 13230,
+      "duration": 0.3,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.300000"
+        }
+      },
+      "peak": 0.5995613932609558,
+      "peakDb": -4.443326797113488,
+      "rmsDb": -16.721076959201433,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.005873015873015873,
+      "firstSample": 6.975097477379677e-8,
+      "lastSample": -0.000007584734703414142,
+      "maxAdjacentStep": 0.1994345635175705,
+      "oversampledPeak": 0.6012882590293884,
+      "oversampledPeakDb": -4.41834552523641,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-09.wav",
+      "bytes": 26504,
+      "sha256": "a07308bed9057aac84c755f4e848dae7f39c74b890a8217992daf9d209214e86",
+      "pcmSha256": "0e30d1ed98751624b6116e6756f42a55b43e326ffc6b4b2dcdddf7fdc9c33f39",
+      "sampleCount": 13230,
+      "duration": 0.3,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.300000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.720060286246166,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.005873015873015873,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.199554443359375,
+      "oversampledPeak": 0.6014882326126099,
+      "oversampledPeakDb": -4.415457293711327,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-10.mp3",
+      "bytes": 6041,
+      "sha256": "262bf7d13dc2b9a622789a1877a8917842bc281169e928c766139aef7fca4eba",
+      "pcmSha256": "a1f5535f4bb020abf77ddcddd0807f3bff35e6de617344d9ef69f63f53df5f88",
+      "sampleCount": 20286,
+      "duration": 0.46,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.460000"
+        }
+      },
+      "peak": 0.599399745464325,
+      "peakDb": -4.445668916278038,
+      "rmsDb": -16.358214129466727,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.00798185941043084,
+      "firstSample": -0.0000013223641417425824,
+      "lastSample": 0.000003669571924547199,
+      "maxAdjacentStep": 0.11045923829078674,
+      "oversampledPeak": 0.599604606628418,
+      "oversampledPeakDb": -4.442700784466595,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-10.wav",
+      "bytes": 40616,
+      "sha256": "9417374b6546be3af2ebb6aab73928a30ee1c66749ba95bd3893b10e1afd19ad",
+      "pcmSha256": "f835dca07b3f4738201c1e5126fc3828b8512057a3af206b5b54609ed79918d1",
+      "sampleCount": 20286,
+      "duration": 0.46,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.460000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -16.3562570436463,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.00798185941043084,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.110748291015625,
+      "oversampledPeak": 0.6001420021057129,
+      "oversampledPeakDb": -4.43491954451814,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-11.mp3",
+      "bytes": 3162,
+      "sha256": "a1203136ffc7c9af34582bd6225ad501fd4a13a63a0646121145d58705dd68d6",
+      "pcmSha256": "6922f419b0ab25ec1a53206749779535e462fbbc8f4f0baf78507a9c06456cee",
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.200000"
+        }
+      },
+      "peak": 0.6006995439529419,
+      "peakDb": -4.426853955319451,
+      "rmsDb": -18.757608697616256,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.0067346938775510205,
+      "firstSample": 4.1730763200575893e-7,
+      "lastSample": 0.000004400386842462467,
+      "maxAdjacentStep": 0.15616698563098907,
+      "oversampledPeak": 0.6028183698654175,
+      "oversampledPeakDb": -4.396270435388795,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-11.wav",
+      "bytes": 17684,
+      "sha256": "822470a92deda08aa490101f0c0e0134c5ba277acc2f2dc6bcdbae68dfb31399",
+      "pcmSha256": "abb965fe1493922451e61fbbef69aa4590207f81e84686a035de73b843e09669",
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.200000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -18.758484869519698,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.0067346938775510205,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.15625,
+      "oversampledPeak": 0.6021039485931396,
+      "oversampledPeakDb": -4.406570493671728,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-12.mp3",
+      "bytes": 3368,
+      "sha256": "ec088be80fa9ab85faea61a062d19eb8bfdaf34cc8ebbe7c2d546ee3210df1a1",
+      "pcmSha256": "18f92bab878129fa124e61c315a2373b2290df3a089e027ed04194ab172ad7bf",
+      "sampleCount": 10143,
+      "duration": 0.23,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.230000"
+        }
+      },
+      "peak": 0.6005600690841675,
+      "peakDb": -4.428870943670269,
+      "rmsDb": -19.05059252601586,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.00655328798185941,
+      "firstSample": -0.0000013955183248981484,
+      "lastSample": 0.000007359808932960732,
+      "maxAdjacentStep": 0.17643289268016815,
+      "oversampledPeak": 0.6012982130050659,
+      "oversampledPeakDb": -4.418201736600487,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-12.wav",
+      "bytes": 20330,
+      "sha256": "0d2928c3e0f4f5e807064b02c352373cf37858f7398c45906ebfafca7bb16d6e",
+      "pcmSha256": "38bb49c57711e42a782f1c388d599f9826e0a82db68ef9809d4a8c7b1e43731f",
+      "sampleCount": 10143,
+      "duration": 0.23,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.230000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -19.053174276829814,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006575963718820862,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.176605224609375,
+      "oversampledPeak": 0.6006952524185181,
+      "oversampledPeakDb": -4.42691600951595,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-13.mp3",
+      "bytes": 3843,
+      "sha256": "0fd7ba1c896f31be2ec5c029e82c973b9d763a8495677149fce9b57ba380d5f5",
+      "pcmSha256": "38dddb7a2ad416ba75134f089a7e8f4855aa7b9903d24845b59a2e279ac8e2a4",
+      "sampleCount": 11907,
+      "duration": 0.27,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.270000"
+        }
+      },
+      "peak": 0.6006007790565491,
+      "peakDb": -4.428282176016115,
+      "rmsDb": -19.427070181894024,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007414965986394558,
+      "firstSample": 0.0000010959976179947262,
+      "lastSample": -0.000007960850780364126,
+      "maxAdjacentStep": 0.2261059284210205,
+      "oversampledPeak": 0.6006007790565491,
+      "oversampledPeakDb": -4.428282176016115,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-13.wav",
+      "bytes": 23858,
+      "sha256": "6fc2596273aad4ee528a4c9618b391cb833376fc4022a012727c1957f7dfbc90",
+      "pcmSha256": "9ef0de4854b527738bc25a52d7d0707ad241142252201d3006878207dc0e13bc",
+      "sampleCount": 11907,
+      "duration": 0.27,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.270000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -19.4273669123131,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007414965986394558,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.225677490234375,
+      "oversampledPeak": 0.5999755859375,
+      "oversampledPeakDb": -4.437328429272022,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-14.mp3",
+      "bytes": 4309,
+      "sha256": "fb82b628b26fa53e872a124841e07cd6d10e95cefc5356371e6617e95b3fcea9",
+      "pcmSha256": "5217bea36bd23c9a1488e1b7814d775224f496c02c84767a067f48fdae65ebe5",
+      "sampleCount": 13671,
+      "duration": 0.31,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.310000"
+        }
+      },
+      "peak": 0.6004595756530762,
+      "peakDb": -4.430324500000794,
+      "rmsDb": -19.88112800399818,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.008117913832199546,
+      "firstSample": -0.0000014064428341953317,
+      "lastSample": -0.0000031139525162870996,
+      "maxAdjacentStep": 0.26476243138313293,
+      "oversampledPeak": 0.6007351875305176,
+      "oversampledPeakDb": -4.426338577874291,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-14.wav",
+      "bytes": 27386,
+      "sha256": "4728bd75278240c4086a36103e4af70ebcc3897d2c5608799da2796eb21b12f5",
+      "pcmSha256": "fc02293aa5d9433d6a2378584910ac4c99f6d155a3317054bc59865963caa00a",
+      "sampleCount": 13671,
+      "duration": 0.31,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.310000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -19.882310242606525,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007392290249433106,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.26495361328125,
+      "oversampledPeak": 0.6003279685974121,
+      "oversampledPeakDb": -4.432228457734432,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-15.mp3",
+      "bytes": 6297,
+      "sha256": "c2576efbf3d28c082358349c3ec6607c7d6462ee8c4d07ee0f0888d96b7764e5",
+      "pcmSha256": "20a4e6c2c9d9ec9590eaf464781d21aeb40e080b88a8dc2031f8c6faf7ba3028",
+      "sampleCount": 22050,
+      "duration": 0.5,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.500000"
+        }
+      },
+      "peak": 0.6002066135406494,
+      "peakDb": -4.433984469846595,
+      "rmsDb": -18.99520340173966,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.008888888888888889,
+      "firstSample": -3.2877701983125007e-7,
+      "lastSample": -0.0000039798346733732615,
+      "maxAdjacentStep": 0.15537355840206146,
+      "oversampledPeak": 0.602289080619812,
+      "oversampledPeakDb": -4.403900208597324,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-15.wav",
+      "bytes": 44144,
+      "sha256": "d62af27597585203e19e5733494e53f3dcfeafc478431346bd50eaec844b4a96",
+      "pcmSha256": "9bc3444c4d9d2663ed51320c40de76d32286fabe01e2250ee54b72f1da39f408",
+      "sampleCount": 22050,
+      "duration": 0.5,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.500000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -18.995078986795825,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.008888888888888889,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.1553955078125,
+      "oversampledPeak": 0.6020939350128174,
+      "oversampledPeakDb": -4.406714949752821,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-16.mp3",
+      "bytes": 3190,
+      "sha256": "b243ec03f83df7441f761bba515c7011afbb9c81b814624b326364d97a14c547",
+      "pcmSha256": "161d7d71c64a31ea55c5061be9204327e870718e1e886a0f60eedff218247551",
+      "sampleCount": 9263,
+      "duration": 0.2100453514739229,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.210045"
+        }
+      },
+      "peak": 0.5997468829154968,
+      "peakDb": -4.440640010549604,
+      "rmsDb": -18.88693159520578,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006394557823129252,
+      "firstSample": 3.6482350651567685e-7,
+      "lastSample": -0.000005223645530350041,
+      "maxAdjacentStep": 0.13758253678679466,
+      "oversampledPeak": 0.600103497505188,
+      "oversampledPeakDb": -4.4354768416893275,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-16.wav",
+      "bytes": 18566,
+      "sha256": "079196a33048ffe36f3e68bfd80f3289b052a60ca04c40394bbf7164d75c1772",
+      "pcmSha256": "1a0a7a4963074e04fb9bd7749ca41dbf1ac37e0b301a6c9bbf75e66abca8ff71",
+      "sampleCount": 9261,
+      "duration": 0.21,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.210000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -18.88766454337834,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006326530612244898,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.137603759765625,
+      "oversampledPeak": 0.6003173589706421,
+      "oversampledPeakDb": -4.432381965260946,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-17.mp3",
+      "bytes": 3683,
+      "sha256": "2bf8053af6a2cbff149cd1bb99c5066ad64d847deda4e23292995797c8d29226",
+      "pcmSha256": "6fd9a58f3a99cf6ef7f74e7e1762989c3723dda1a8c52c8e42a9a7e4ccc82db6",
+      "sampleCount": 11025,
+      "duration": 0.25,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.250000"
+        }
+      },
+      "peak": 0.5992652773857117,
+      "peakDb": -4.447617709098905,
+      "rmsDb": -19.00091873007993,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006961451247165533,
+      "firstSample": -7.659079983568517e-7,
+      "lastSample": -0.00001411139419360552,
+      "maxAdjacentStep": 0.15792136639356613,
+      "oversampledPeak": 0.6003652811050415,
+      "oversampledPeakDb": -4.431688615733034,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-17.wav",
+      "bytes": 22094,
+      "sha256": "5803ee74f58213e7d055f09040f480e7e2a4396d87b3c8faa4a198e38097cbf9",
+      "pcmSha256": "54b68a5608133e9046a8e9914ee2a7e9999d5cba8da3393c79cbf73a3e528773",
+      "sampleCount": 11025,
+      "duration": 0.25,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.250000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -19.001539556675688,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.006961451247165533,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.15765380859375,
+      "oversampledPeak": 0.6010170578956604,
+      "oversampledPeakDb": -4.4222640359908265,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-18.mp3",
+      "bytes": 4027,
+      "sha256": "7daaa89cfdc271e20db99272e0fe85c2d18275a630b5928fa1e4ff2f3cb6201f",
+      "pcmSha256": "d9dbc905e043468bdad7e3113661c0c5a66512c4f1c07a73a1bb88bb3479ee09",
+      "sampleCount": 12789,
+      "duration": 0.29,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.290000"
+        }
+      },
+      "peak": 0.5995519757270813,
+      "peakDb": -4.443463230685182,
+      "rmsDb": -19.352062674383085,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007233560090702948,
+      "firstSample": 0.0000012102777873224113,
+      "lastSample": 0.0000052424629757297225,
+      "maxAdjacentStep": 0.20666616410017014,
+      "oversampledPeak": 0.6003139019012451,
+      "oversampledPeakDb": -4.432431985153368,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-18.wav",
+      "bytes": 25622,
+      "sha256": "30da8d646ade125580bfd43b0f22e9231370e40a0ebbf1690e17f190bc0721ad",
+      "pcmSha256": "754df019a6781c5ef4ca837d233e2fd4fcd1c8feac3e94768d158c2c18199d5c",
+      "sampleCount": 12789,
+      "duration": 0.29,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.290000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -19.348494208708424,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007233560090702948,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.20654296875,
+      "oversampledPeak": 0.6012612581253052,
+      "oversampledPeakDb": -4.418735574660054,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-19.mp3",
+      "bytes": 4230,
+      "sha256": "c8d4a5c2840b855e8babeb77cde6dea9e846c930c169a71a7fd674180cc92dae",
+      "pcmSha256": "e5039336941d5cd268fb2093e064736e9ee147b9ecaad97236b2e31f5fb72ab3",
+      "sampleCount": 14553,
+      "duration": 0.33,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.330000"
+        }
+      },
+      "peak": 0.5982706546783447,
+      "peakDb": -4.462045977717659,
+      "rmsDb": -19.812550249781506,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007709750566893424,
+      "firstSample": -0.0000013551410802392638,
+      "lastSample": 0.00000768492100178264,
+      "maxAdjacentStep": 0.24791473150253296,
+      "oversampledPeak": 0.5993374586105347,
+      "oversampledPeakDb": -4.446571560721829,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-19.wav",
+      "bytes": 29150,
+      "sha256": "e6d76e2e508a7232c46961257f88d40c77c61089477f6cb22488fe2c8d955ee3",
+      "pcmSha256": "75e97dec7ef5886e64ec1b1f55e67b0addbb13039e08d2c7b86d95c2ebf78afb",
+      "sampleCount": 14553,
+      "duration": 0.33,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.330000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -19.810383375018628,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.007709750566893424,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.24700927734375,
+      "oversampledPeak": 0.6000599265098572,
+      "oversampledPeakDb": -4.436107510562345,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-20.mp3",
+      "bytes": 6619,
+      "sha256": "2394600143946d683c80df817c036b040d68f46969206db511ae1e3effd73c75",
+      "pcmSha256": "6ccc0e0e4938a889c2a076fe7aba4ad8f876fdf51c2c1fdd9ad2427647f2df8c",
+      "sampleCount": 23814,
+      "duration": 0.54,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.540000"
+        }
+      },
+      "peak": 0.600236177444458,
+      "peakDb": -4.433556646367238,
+      "rmsDb": -19.13916684591152,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.008684807256235827,
+      "firstSample": 3.654468514469045e-7,
+      "lastSample": -0.000009251040864910465,
+      "maxAdjacentStep": 0.1377250999212265,
+      "oversampledPeak": 0.6006184816360474,
+      "oversampledPeakDb": -4.428026165049801,
+      "oversampleRate": 176400
+    },
+    {
+      "file": "audio/sms-20.wav",
+      "bytes": 47672,
+      "sha256": "fdd96f3de6367b47ce71680626aee1f428306b52acf48c7d5c2fd47966367476",
+      "pcmSha256": "15ac226dcd5bb904903fa23d3580177214c1af1ebb5a3fcf153943e7081191fc",
+      "sampleCount": 23814,
+      "duration": 0.54,
+      "sampleRate": 44100,
+      "channels": 1,
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "0.540000"
+        }
+      },
+      "peak": 0.5999755859375,
+      "peakDb": -4.437328429272022,
+      "rmsDb": -19.139113641507503,
+      "clippedSamples": 0,
+      "leadingSilence": 0.010022675736961452,
+      "trailingSilence": 0.008684807256235827,
+      "firstSample": 0,
+      "lastSample": 0,
+      "maxAdjacentStep": 0.1376953125,
+      "oversampledPeak": 0.6003324389457703,
+      "oversampledPeakDb": -4.4321637784092225,
+      "oversampleRate": 176400
+    }
+  ],
+  "distinctness": {
+    "pairs": 190,
+    "uniqueWavPcmHashes": 20,
+    "minFullDifferenceRatio": 0.0994889985725947,
+    "comparisons": [
+      {
+        "a": "sms-01",
+        "b": "sms-02",
+        "attackAbsCorrelation": 0.06029265064651715,
+        "fullDifferenceRatio": 1.06010528542232
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-03",
+        "attackAbsCorrelation": 0.007306061401334697,
+        "fullDifferenceRatio": 0.9927660912375701
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-04",
+        "attackAbsCorrelation": 0.0028823552336439866,
+        "fullDifferenceRatio": 1.0028128533493372
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-05",
+        "attackAbsCorrelation": 0.9992542414596317,
+        "fullDifferenceRatio": 0.379624119538863
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-06",
+        "attackAbsCorrelation": 0.07632759562972326,
+        "fullDifferenceRatio": 1.0762995789209704
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-07",
+        "attackAbsCorrelation": 0.04796012838991342,
+        "fullDifferenceRatio": 1.0477325015825867
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-08",
+        "attackAbsCorrelation": 0.015142887328653178,
+        "fullDifferenceRatio": 1.014916280117252
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-09",
+        "attackAbsCorrelation": 0.004571328994743269,
+        "fullDifferenceRatio": 0.9955236324773034
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.07268026247553977,
+        "fullDifferenceRatio": 1.0449633623121828
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.0727485518701257,
+        "fullDifferenceRatio": 1.071021215401353
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.016885611857360316,
+        "fullDifferenceRatio": 1.0165711276449294
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.002357922493685439,
+        "fullDifferenceRatio": 1.0023117893692335
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.0002850665406842423,
+        "fullDifferenceRatio": 1.0002826877235362
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.06819207656386102,
+        "fullDifferenceRatio": 1.0463332246126889
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.9209962472558867,
+        "fullDifferenceRatio": 0.0994889985725947
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.054819242473990185,
+        "fullDifferenceRatio": 1.0542511308057079
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.0006953771754190126,
+        "fullDifferenceRatio": 1.0006550925824902
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.0005256029830165889,
+        "fullDifferenceRatio": 0.9995009691410205
+      },
+      {
+        "a": "sms-01",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.9118751551564366,
+        "fullDifferenceRatio": 0.38020327493260053
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-03",
+        "attackAbsCorrelation": 0.021024220700650898,
+        "fullDifferenceRatio": 1.0209392346565784
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-04",
+        "attackAbsCorrelation": 0.005342693207187526,
+        "fullDifferenceRatio": 0.9947381089968367
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-05",
+        "attackAbsCorrelation": 0.058037473636125804,
+        "fullDifferenceRatio": 1.037267981184214
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-06",
+        "attackAbsCorrelation": 0.026563648093895754,
+        "fullDifferenceRatio": 1.0264987469372073
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-07",
+        "attackAbsCorrelation": 0.06762404072839819,
+        "fullDifferenceRatio": 1.067473791171172
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-08",
+        "attackAbsCorrelation": 0.059525283569628,
+        "fullDifferenceRatio": 1.0593128632713993
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-09",
+        "attackAbsCorrelation": 0.0021228850105033206,
+        "fullDifferenceRatio": 1.002135670373935
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.024950312323168754,
+        "fullDifferenceRatio": 1.015860000118833
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.054863050731269604,
+        "fullDifferenceRatio": 1.0525753600713794
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.0613279261054144,
+        "fullDifferenceRatio": 1.0592744208785558
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.09831485793534347,
+        "fullDifferenceRatio": 0.9042560066853804
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.00038554954957459607,
+        "fullDifferenceRatio": 0.9996050209791595
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.05345891104468103,
+        "fullDifferenceRatio": 1.0368190075234212
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.05523012447434926,
+        "fullDifferenceRatio": 1.0529883402608804
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.9129085533204966,
+        "fullDifferenceRatio": 0.1078115608801119
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.002206646249344094,
+        "fullDifferenceRatio": 1.0022141279549066
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.0031394865222458,
+        "fullDifferenceRatio": 1.0030432741923418
+      },
+      {
+        "a": "sms-02",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.05064937313987037,
+        "fullDifferenceRatio": 1.0349050399185522
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-04",
+        "attackAbsCorrelation": 0.02477749340567833,
+        "fullDifferenceRatio": 1.02461660746654
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-05",
+        "attackAbsCorrelation": 0.00706342262911383,
+        "fullDifferenceRatio": 0.9955880261320814
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-06",
+        "attackAbsCorrelation": 0.003994336052678914,
+        "fullDifferenceRatio": 0.9960389711570321
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-07",
+        "attackAbsCorrelation": 0.0033145907861586764,
+        "fullDifferenceRatio": 0.9966900388470319
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-08",
+        "attackAbsCorrelation": 0.05397612756206906,
+        "fullDifferenceRatio": 1.0538710099193507
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-09",
+        "attackAbsCorrelation": 0.05922090313460411,
+        "fullDifferenceRatio": 1.0585031119610602
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.00365910096924384,
+        "fullDifferenceRatio": 0.9976961024112841
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.016520238395509857,
+        "fullDifferenceRatio": 0.9844147714685203
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.054394451651616126,
+        "fullDifferenceRatio": 1.0517468496819762
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.024650711326889528,
+        "fullDifferenceRatio": 1.0236115854305303
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.09247102006076276,
+        "fullDifferenceRatio": 0.910713487538982
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.01577681274785919,
+        "fullDifferenceRatio": 0.9889992911041989
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.009247441516319859,
+        "fullDifferenceRatio": 0.9912910108406179
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.02068109497751252,
+        "fullDifferenceRatio": 1.019867077590753
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.0562850855620981,
+        "fullDifferenceRatio": 1.0542473622893669
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.006074805037121258,
+        "fullDifferenceRatio": 0.9941888218816438
+      },
+      {
+        "a": "sms-03",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.008558642583542645,
+        "fullDifferenceRatio": 0.9934349604889774
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-05",
+        "attackAbsCorrelation": 0.002783487361660928,
+        "fullDifferenceRatio": 1.0019055991296018
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-06",
+        "attackAbsCorrelation": 0.0027791772010700207,
+        "fullDifferenceRatio": 1.002742250281662
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-07",
+        "attackAbsCorrelation": 0.0030619481837542996,
+        "fullDifferenceRatio": 1.0030634710038016
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-08",
+        "attackAbsCorrelation": 0.0035748779986836702,
+        "fullDifferenceRatio": 0.9964799409414115
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-09",
+        "attackAbsCorrelation": 0.04235508252678967,
+        "fullDifferenceRatio": 1.0419810041003623
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.0026208735582784496,
+        "fullDifferenceRatio": 1.0017443764102765
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.0033136702899874016,
+        "fullDifferenceRatio": 0.9969681096887862
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.020257184776190446,
+        "fullDifferenceRatio": 0.981155746253699
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.8931506548884549,
+        "fullDifferenceRatio": 0.15386368179347232
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.0029988351734956207,
+        "fullDifferenceRatio": 0.9972366181872374
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.003109670997091968,
+        "fullDifferenceRatio": 0.9950790690172197
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.01790295396238299,
+        "fullDifferenceRatio": 1.0165067670530357
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.0065703536208423915,
+        "fullDifferenceRatio": 0.9938251756349072
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.04130082288378788,
+        "fullDifferenceRatio": 1.0392766881294546
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.034525353913626565,
+        "fullDifferenceRatio": 1.0328686817832635
+      },
+      {
+        "a": "sms-04",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.016438974733245293,
+        "fullDifferenceRatio": 1.0113787910436216
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-06",
+        "attackAbsCorrelation": 0.07396898280133117,
+        "fullDifferenceRatio": 1.0343621768621678
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-07",
+        "attackAbsCorrelation": 0.04825554517961844,
+        "fullDifferenceRatio": 1.0314337165467418
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-08",
+        "attackAbsCorrelation": 0.014506810023559873,
+        "fullDifferenceRatio": 1.0096642697075964
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-09",
+        "attackAbsCorrelation": 0.004398522761263208,
+        "fullDifferenceRatio": 0.9971498998365889
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.07041507770801667,
+        "fullDifferenceRatio": 1.0083399612554111
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.07035260402648308,
+        "fullDifferenceRatio": 1.038851121276892
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.016168389825967553,
+        "fullDifferenceRatio": 1.0076970618415488
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.002277144255722849,
+        "fullDifferenceRatio": 1.0013975084413742
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.00027616032432184934,
+        "fullDifferenceRatio": 1.0003776987216881
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.06592543241946451,
+        "fullDifferenceRatio": 0.8232735930863774
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.9217785676410294,
+        "fullDifferenceRatio": 0.48422503060763655
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.052761597376856324,
+        "fullDifferenceRatio": 1.030984877672431
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.0006856913785385959,
+        "fullDifferenceRatio": 1.000488922050737
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.0005182644926732099,
+        "fullDifferenceRatio": 0.9997357377117447
+      },
+      {
+        "a": "sms-05",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.9155913423128792,
+        "fullDifferenceRatio": 0.5738282937291137
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-07",
+        "attackAbsCorrelation": 0.06112247347328411,
+        "fullDifferenceRatio": 1.0609279901426918
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-08",
+        "attackAbsCorrelation": 0.0025467629574754667,
+        "fullDifferenceRatio": 0.9974543372909724
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-09",
+        "attackAbsCorrelation": 0.0006261933851669779,
+        "fullDifferenceRatio": 0.9993979170844466
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.9982722704137763,
+        "fullDifferenceRatio": 0.3764223643773806
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.04538233990319428,
+        "fullDifferenceRatio": 1.0438597552620283
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.09543837978649734,
+        "fullDifferenceRatio": 0.9068956549391188
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.003102788801803773,
+        "fullDifferenceRatio": 1.0030419376198545
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.0016881034122196337,
+        "fullDifferenceRatio": 0.9983434216358776
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.04215529698581562,
+        "fullDifferenceRatio": 1.0285059207185605
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.06878481042932065,
+        "fullDifferenceRatio": 1.0667526762025146
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.026642071993007187,
+        "fullDifferenceRatio": 1.0261522592495893
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.0011867114336535267,
+        "fullDifferenceRatio": 0.9988372621560033
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.0012403656107169508,
+        "fullDifferenceRatio": 0.9987722317057499
+      },
+      {
+        "a": "sms-06",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.06389008365277082,
+        "fullDifferenceRatio": 1.0438224393701019
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-08",
+        "attackAbsCorrelation": 0.028318148074877914,
+        "fullDifferenceRatio": 1.028212425816927
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-09",
+        "attackAbsCorrelation": 0.006692150192229975,
+        "fullDifferenceRatio": 0.9934199526864321
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.057749059451263365,
+        "fullDifferenceRatio": 1.0364960872359457
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.04770866932821318,
+        "fullDifferenceRatio": 1.0452489995613092
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.02842557639056578,
+        "fullDifferenceRatio": 1.0273364890610042
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.0029720048677362478,
+        "fullDifferenceRatio": 1.0028952665424826
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.0007658403430429718,
+        "fullDifferenceRatio": 0.9992595514802195
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.04742204202753807,
+        "fullDifferenceRatio": 1.0322790427691246
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.04653991383786584,
+        "fullDifferenceRatio": 1.0443911887341841
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.06164938364738334,
+        "fullDifferenceRatio": 1.0598224107673655
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.09888020898191988,
+        "fullDifferenceRatio": 0.9031602751542088
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.0008581380450391732,
+        "fullDifferenceRatio": 1.0008067622757006
+      },
+      {
+        "a": "sms-07",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.04609835312423584,
+        "fullDifferenceRatio": 1.0317119849744125
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-09",
+        "attackAbsCorrelation": 0.030001278546320745,
+        "fullDifferenceRatio": 1.0299696255125033
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.0024472355475049314,
+        "fullDifferenceRatio": 0.9982773571181993
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.044906367779782276,
+        "fullDifferenceRatio": 1.0418724804569062
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.9075279557967678,
+        "fullDifferenceRatio": 0.14345457386864444
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.004190318800372219,
+        "fullDifferenceRatio": 0.9960563878495189
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.0018625683931665343,
+        "fullDifferenceRatio": 1.001787781394446
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.04164759413947072,
+        "fullDifferenceRatio": 1.028852528543903
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.010598906026834819,
+        "fullDifferenceRatio": 0.9900510815059171
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.0525753866571157,
+        "fullDifferenceRatio": 1.0503918656358229
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.02991387967191349,
+        "fullDifferenceRatio": 1.0289377214049107
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.09419294792093798,
+        "fullDifferenceRatio": 0.9088352600020363
+      },
+      {
+        "a": "sms-08",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.010325368512878295,
+        "fullDifferenceRatio": 0.9928953034652328
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-10",
+        "attackAbsCorrelation": 0.000593745950210945,
+        "fullDifferenceRatio": 0.9996626083608784
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.005320871767291389,
+        "fullDifferenceRatio": 0.995163319025397
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.02977022632503064,
+        "fullDifferenceRatio": 1.0275295581000887
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.04156364589492439,
+        "fullDifferenceRatio": 1.0385587436603703
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.0006113270821522968,
+        "fullDifferenceRatio": 1.00068467733279
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.005028909316412549,
+        "fullDifferenceRatio": 0.9962579024742413
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.004837066921447645,
+        "fullDifferenceRatio": 0.9955461463582258
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.015606013663740795,
+        "fullDifferenceRatio": 0.9854072662792357
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.8968008424329666,
+        "fullDifferenceRatio": 0.14716827721421946
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.0006106960258305312,
+        "fullDifferenceRatio": 1.0006008029256777
+      },
+      {
+        "a": "sms-09",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.004442642532418983,
+        "fullDifferenceRatio": 0.9973635811619326
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-11",
+        "attackAbsCorrelation": 0.042761727148492794,
+        "fullDifferenceRatio": 1.023535131098023
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.09532498786008588,
+        "fullDifferenceRatio": 0.9466428140244797
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.0029253706676278884,
+        "fullDifferenceRatio": 1.0016901526744397
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.0014983580603400298,
+        "fullDifferenceRatio": 0.9996435822975753
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.039727816734781596,
+        "fullDifferenceRatio": 0.9862444502346976
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.06548779435133358,
+        "fullDifferenceRatio": 1.0365360512123332
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.02502822802118846,
+        "fullDifferenceRatio": 1.0139038673605183
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.0011239130231312819,
+        "fullDifferenceRatio": 0.9994023721054948
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.0011687146709510312,
+        "fullDifferenceRatio": 0.9993388241042996
+      },
+      {
+        "a": "sms-10",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.06077912244059848,
+        "fullDifferenceRatio": 0.9908544353487607
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-12",
+        "attackAbsCorrelation": 0.04607149533846733,
+        "fullDifferenceRatio": 1.046052474488074
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.0015756616939686316,
+        "fullDifferenceRatio": 1.001585870461707
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.29391523497134814,
+        "fullDifferenceRatio": 0.7087386293755498
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.9972946331093164,
+        "fullDifferenceRatio": 0.36756332328803976
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.07154299896581273,
+        "fullDifferenceRatio": 1.0715663751699052
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.05776286425320092,
+        "fullDifferenceRatio": 1.0575737121719702
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.0007902494507351714,
+        "fullDifferenceRatio": 1.0007986590587
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.013525695974940223,
+        "fullDifferenceRatio": 1.013316045547448
+      },
+      {
+        "a": "sms-11",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.06609140636805337,
+        "fullDifferenceRatio": 1.0418209234883908
+      },
+      {
+        "a": "sms-12",
+        "b": "sms-13",
+        "attackAbsCorrelation": 0.02730244038426805,
+        "fullDifferenceRatio": 0.9728585417856613
+      },
+      {
+        "a": "sms-12",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.0006021750345777418,
+        "fullDifferenceRatio": 1.0005672591279737
+      },
+      {
+        "a": "sms-12",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.042734175911894295,
+        "fullDifferenceRatio": 1.0271071057873782
+      },
+      {
+        "a": "sms-12",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.010787304279369019,
+        "fullDifferenceRatio": 0.9892002010042412
+      },
+      {
+        "a": "sms-12",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.057323735611698776,
+        "fullDifferenceRatio": 1.0572588739501374
+      },
+      {
+        "a": "sms-12",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.028687219807719173,
+        "fullDifferenceRatio": 1.0285972109755301
+      },
+      {
+        "a": "sms-12",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.040764848101582304,
+        "fullDifferenceRatio": 0.9595205229607305
+      },
+      {
+        "a": "sms-12",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.011581127511846638,
+        "fullDifferenceRatio": 0.9926579375015445
+      },
+      {
+        "a": "sms-13",
+        "b": "sms-14",
+        "attackAbsCorrelation": 0.003121406254727267,
+        "fullDifferenceRatio": 0.9970063350615691
+      },
+      {
+        "a": "sms-13",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.0014417788594598868,
+        "fullDifferenceRatio": 0.9970338020977615
+      },
+      {
+        "a": "sms-13",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.017040778322001494,
+        "fullDifferenceRatio": 1.0168980763320044
+      },
+      {
+        "a": "sms-13",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.05176004315867537,
+        "fullDifferenceRatio": 0.948454351105153
+      },
+      {
+        "a": "sms-13",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.040938930978513956,
+        "fullDifferenceRatio": 1.0404067206491194
+      },
+      {
+        "a": "sms-13",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.033018881929533485,
+        "fullDifferenceRatio": 1.0324629281388027
+      },
+      {
+        "a": "sms-13",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.015656500321321012,
+        "fullDifferenceRatio": 1.0101464209136488
+      },
+      {
+        "a": "sms-14",
+        "b": "sms-15",
+        "attackAbsCorrelation": 0.2922363321078375,
+        "fullDifferenceRatio": 0.8096073484464542
+      },
+      {
+        "a": "sms-14",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.012332062965831784,
+        "fullDifferenceRatio": 1.012263725938314
+      },
+      {
+        "a": "sms-14",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.01922547997507515,
+        "fullDifferenceRatio": 1.0190956670204288
+      },
+      {
+        "a": "sms-14",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.0009350811538324968,
+        "fullDifferenceRatio": 1.001063008452921
+      },
+      {
+        "a": "sms-14",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.025839509590039517,
+        "fullDifferenceRatio": 1.0252285107595411
+      },
+      {
+        "a": "sms-14",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.011254425946156074,
+        "fullDifferenceRatio": 1.0098452682953085
+      },
+      {
+        "a": "sms-15",
+        "b": "sms-16",
+        "attackAbsCorrelation": 0.0669637486497055,
+        "fullDifferenceRatio": 1.0423582629043675
+      },
+      {
+        "a": "sms-15",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.05597917963440577,
+        "fullDifferenceRatio": 1.0366757536753282
+      },
+      {
+        "a": "sms-15",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.0006728297220405771,
+        "fullDifferenceRatio": 1.0001300631572765
+      },
+      {
+        "a": "sms-15",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.012559471988149438,
+        "fullDifferenceRatio": 1.0080047368252474
+      },
+      {
+        "a": "sms-15",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.06181029007051147,
+        "fullDifferenceRatio": 1.021635599438262
+      },
+      {
+        "a": "sms-16",
+        "b": "sms-17",
+        "attackAbsCorrelation": 0.05037770153509118,
+        "fullDifferenceRatio": 1.0501781410813005
+      },
+      {
+        "a": "sms-16",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.000039683697028436305,
+        "fullDifferenceRatio": 0.9998989341209756
+      },
+      {
+        "a": "sms-16",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.2961761746383669,
+        "fullDifferenceRatio": 0.7078012442263245
+      },
+      {
+        "a": "sms-16",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.9962350832464008,
+        "fullDifferenceRatio": 0.3673463365030335
+      },
+      {
+        "a": "sms-17",
+        "b": "sms-18",
+        "attackAbsCorrelation": 0.02070634092744667,
+        "fullDifferenceRatio": 0.9794464934779338
+      },
+      {
+        "a": "sms-17",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.003346649716363858,
+        "fullDifferenceRatio": 1.003311651481209
+      },
+      {
+        "a": "sms-17",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.04616582379501596,
+        "fullDifferenceRatio": 1.0301028218703017
+      },
+      {
+        "a": "sms-18",
+        "b": "sms-19",
+        "attackAbsCorrelation": 0.00022388764628734876,
+        "fullDifferenceRatio": 1.0002383360562532
+      },
+      {
+        "a": "sms-18",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.00002219215520573652,
+        "fullDifferenceRatio": 1.0004698447536295
+      },
+      {
+        "a": "sms-19",
+        "b": "sms-20",
+        "attackAbsCorrelation": 0.29471848947424467,
+        "fullDifferenceRatio": 0.8060045090102819
+      }
+    ]
+  },
+  "sourceNoteChecks": "Every source event index, pitch, voice and complete event matches its referenced unchanged JSON score.",
+  "limits": {
+    "maxPcmSeconds": 0.7,
+    "minPcmSeconds": 0.16,
+    "maxPeakDb": -3,
+    "maxLeadingSilenceSeconds": 0.012,
+    "maxTrailingSilenceSeconds": 0.04,
+    "minFullDifferenceRatio": 0.025
+  },
+  "limitations": "Инструментальные проверки. Пересчёт 176,4 кГц — практическая проверка межотсчётных пиков. Субъективное прослушивание и установка на физический телефон не выполнялись."
+}
