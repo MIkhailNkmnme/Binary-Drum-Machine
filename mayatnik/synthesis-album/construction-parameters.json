@@ -1,0 +1,273 @@
+{
+  "version": "0.006",
+  "date": "2026-11-13",
+  "art": [
+    {
+      "id": "northern-current",
+      "recipe": "polyrhythm",
+      "title": "Северное течение",
+      "tick": 51,
+      "palette": "nocturne",
+      "style": "strokes",
+      "pose": {
+        "transformB": "mirrorY",
+        "shiftX": 22
+      },
+      "operation": "XOR · темпы 2:3 · отражение и сдвиг",
+      "caption": "Обычный A идёт в темпе 2, обратный B — в темпе 3. Отражённый и сдвинутый B пересекает A. XOR оставляет бирюзовые и медные несовпадения.",
+      "width": 385,
+      "height": 128,
+      "anchor": 192,
+      "options": {
+        "sourceA": "pend",
+        "sourceB": "pendR",
+        "depth": 128,
+        "rateA": 2,
+        "rateB": 3,
+        "phaseB": 0,
+        "delayB": 0,
+        "transformB": "mirrorY",
+        "shiftX": 22,
+        "shiftY": 0,
+        "invertB": false,
+        "operation": "xor",
+        "history": "none",
+        "trailLength": 8
+      }
+    },
+    {
+      "id": "red-canon",
+      "recipe": "canon",
+      "title": "Киноварный канон",
+      "tick": 38,
+      "palette": "ember",
+      "style": "weave",
+      "pose": {
+        "transformB": "rotate180",
+        "shiftX": 78,
+        "shiftY": -22
+      },
+      "operation": "XOR · фаза +16 · поворот и сдвиг",
+      "caption": "Оба маятника обычные. B опережает A на шестнадцать шагов, повёрнут на 180° и сдвинут. XOR оставляет два косых потока несовпадений.",
+      "width": 385,
+      "height": 128,
+      "anchor": 192,
+      "options": {
+        "sourceA": "pend",
+        "sourceB": "pend",
+        "depth": 128,
+        "rateA": 1,
+        "rateB": 1,
+        "phaseB": 16,
+        "delayB": 0,
+        "transformB": "rotate180",
+        "shiftX": 78,
+        "shiftY": -22,
+        "invertB": false,
+        "operation": "xor",
+        "history": "none",
+        "trailLength": 8
+      }
+    },
+    {
+      "id": "thin-ice",
+      "recipe": "weave",
+      "title": "Тонкий лёд",
+      "tick": 63,
+      "palette": "polar",
+      "style": "bits",
+      "pose": {
+        "transformB": "mirrorY",
+        "shiftX": 1
+      },
+      "operation": "AND · отражение и сдвиг на клетку",
+      "caption": "Обратный B отражён и сдвинут на одну клетку относительно обычного A. AND оставляет единицы там, где встретились единицы обоих.",
+      "width": 385,
+      "height": 128,
+      "anchor": 192,
+      "options": {
+        "sourceA": "pend",
+        "sourceB": "pendR",
+        "depth": 128,
+        "rateA": 1,
+        "rateB": 1,
+        "phaseB": 0,
+        "delayB": 0,
+        "transformB": "mirrorY",
+        "shiftX": 1,
+        "shiftY": 0,
+        "invertB": false,
+        "operation": "and",
+        "history": "none",
+        "trailLength": 8
+      }
+    },
+    {
+      "id": "eight-winds",
+      "recipe": "trail",
+      "title": "Восемь ветров",
+      "tick": 92,
+      "palette": "orchid",
+      "style": "strokes",
+      "pose": {
+        "transformB": "mirrorY",
+        "shiftX": 45
+      },
+      "operation": "XOR · след 8 кадров · отражение и сдвиг",
+      "caption": "XOR обычного A и обратного B выявляет несовпадения после отражения и сдвига B. На поле остаются единицы последних восьми кадров. Чем старше след, тем он темнее.",
+      "width": 385,
+      "height": 128,
+      "anchor": 192,
+      "options": {
+        "sourceA": "pend",
+        "sourceB": "pendR",
+        "depth": 128,
+        "rateA": 1,
+        "rateB": 1,
+        "phaseB": 0,
+        "delayB": 0,
+        "transformB": "mirrorY",
+        "shiftX": 45,
+        "shiftY": 0,
+        "invertB": false,
+        "operation": "xor",
+        "history": "trail",
+        "trailLength": 8
+      }
+    },
+    {
+      "id": "two-rivers",
+      "recipe": "counter",
+      "title": "Две реки",
+      "tick": 38,
+      "palette": "vellum",
+      "style": "strokes",
+      "pose": {
+        "transformB": "mirrorY",
+        "shiftX": 74,
+        "shiftY": 29
+      },
+      "operation": "OR · встречный ход · отражение и сдвиг",
+      "caption": "A наращивает вершины влево, B вправо. После отражения и сдвига B их объединение OR оставляет на светлом листе оба плотных берега.",
+      "width": 385,
+      "height": 128,
+      "anchor": 192,
+      "options": {
+        "sourceA": "left",
+        "sourceB": "right",
+        "depth": 128,
+        "rateA": 1,
+        "rateB": 1,
+        "phaseB": 0,
+        "delayB": 0,
+        "transformB": "mirrorY",
+        "shiftX": 74,
+        "shiftY": 29,
+        "invertB": false,
+        "operation": "or",
+        "history": "none",
+        "trailLength": 8
+      }
+    },
+    {
+      "id": "copper-echo",
+      "recipe": "accumulate",
+      "title": "Медное эхо",
+      "tick": 63,
+      "palette": "nocturne",
+      "style": "weave",
+      "pose": {
+        "transformB": "mirrorY",
+        "shiftX": -70
+      },
+      "operation": "Накопление XOR · отражение и сдвиг",
+      "caption": "A строится обычным маятником, B — парами вершин после отражения и сдвига. XOR каждого кадра переключает накопленные биты. Стежки проходят через оставшиеся единицы.",
+      "width": 385,
+      "height": 128,
+      "anchor": 192,
+      "options": {
+        "sourceA": "pend",
+        "sourceB": "pair",
+        "depth": 128,
+        "rateA": 1,
+        "rateB": 1,
+        "phaseB": 0,
+        "delayB": 0,
+        "transformB": "mirrorY",
+        "shiftX": -70,
+        "shiftY": 0,
+        "invertB": false,
+        "operation": "xor",
+        "history": "accumulate",
+        "trailLength": 8
+      }
+    },
+    {
+      "id": "shadow-of-cone",
+      "recipe": "cone",
+      "title": "Тень конуса",
+      "tick": 78,
+      "palette": "ember",
+      "style": "bits",
+      "pose": {
+        "transformB": "rotate180",
+        "shiftY": 60
+      },
+      "operation": "A \\ B · неподвижный B · поворот и сдвиг",
+      "caption": "Из растущего маятника вычитается повёрнутый неподвижный конус. По краям остаются прорези с чёткими ступенями.",
+      "width": 385,
+      "height": 128,
+      "anchor": 192,
+      "options": {
+        "sourceA": "pend",
+        "sourceB": "cone",
+        "depth": 128,
+        "rateA": 1,
+        "rateB": 1,
+        "phaseB": 0,
+        "delayB": 0,
+        "transformB": "rotate180",
+        "shiftX": 0,
+        "shiftY": 60,
+        "invertB": false,
+        "operation": "subtract",
+        "history": "none",
+        "trailLength": 8
+      }
+    }
+  ],
+  "music": [
+    {
+      "file": "pendulum-drive",
+      "title": "Маятниковый привод",
+      "options": {
+        "style": "techno",
+        "tempo": 128,
+        "volume": 0.62,
+        "root": 48,
+        "scale": "minor",
+        "density": 4
+      },
+      "steps": 512,
+      "seconds": 64,
+      "events": 897,
+      "work": "northern-current"
+    },
+    {
+      "file": "two-shores-canon",
+      "title": "Канон двух берегов",
+      "options": {
+        "style": "classic",
+        "tempo": 84,
+        "volume": 0.62,
+        "root": 50,
+        "scale": "major",
+        "density": 3
+      },
+      "steps": 384,
+      "seconds": 72.57142857142857,
+      "events": 387,
+      "work": "two-rivers"
+    }
+  ]
+}

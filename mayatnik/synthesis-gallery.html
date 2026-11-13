@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Семь картин, рассчитанных двумя точными маятниками.">
+  <title>Маятниковый атлас · Зеркалиус</title>
+  <link rel="stylesheet" href="../_js/grozd.css">
+  <link rel="stylesheet" href="synthesis-gallery.css?v=1">
+  <script defer src="../_js/menu-icons.js"></script>
+  <script defer src="../_js/hub-button-text.js"></script>
+  <script defer src="mayatnik-core.js?v=997"></script>
+  <script defer src="mayatnik-synthesis-pendulums.js?v=004"></script>
+  <script defer src="mayatnik-synthesis-art.js?v=004"></script>
+  <script defer src="mayatnik-synthesis-music.js?v=004"></script>
+  <script defer src="synthesis-gallery.js?v=1"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="../index.html"><i aria-hidden="true"></i>Зеркалиус</a>
+    <nav class="controls" aria-label="Разделы Маятника" id="navigation"></nav>
+  </header>
+  <main>
+    <header class="intro">
+      <h1>Маятниковый<br><em>атлас</em></h1>
+      <p>Семь картин из движения двух маятников. Зеркало, сдвиг и разница темпов меняют рисунок. Цвет различает вклад каждого маятника, пересечения и след предыдущих кадров.</p>
+    </header>
+    <div id="exhibits" class="exhibits" aria-label="Семь картин"></div>
+    <section class="album" aria-labelledby="album-title">
+      <h2 id="album-title">Две законченные композиции</h2>
+      <div class="album-tracks">
+        <article><h3>Маятниковый привод</h3><p>Робо-техно · 128 BPM · 1:04. Полиритм 2:3, отражённый B и XOR; четыре секции с развитием баса и ведущего мотива.</p><audio controls preload="none" src="synthesis-album/pendulum-drive.mp3" aria-label="Маятниковый привод — робо-техно"></audio><p><a href="synthesis-album/pendulum-drive.mp3" download>Скачать MP3</a></p></article>
+        <article><h3>Канон двух берегов</h3><p>Камерная вариация · 84 BPM · 1:13. Встречные маятники, отражение и объединение; клавишный мотив, арпеджио и струны.</p><audio controls preload="none" src="synthesis-album/two-shores-canon.mp3" aria-label="Канон двух берегов — камерная вариация"></audio><p><a href="synthesis-album/two-shores-canon.mp3" download>Скачать MP3</a></p></article>
+      </div>
+      <p>Обе композиции рассчитаны из тех же построений, что картины. <a href="synthesis-album/construction-parameters.json">Параметры и происхождение</a>. Свои WAV и MIDI можно создать в разделе «Музыка» Синтеза.</p>
+    </section>
+    <section class="sound" aria-labelledby="sound-title">
+      <div>
+        <h2 id="sound-title">Как звучит поле</h2>
+        <p>Первые 64 шага «Северного течения» звучат в двух аранжировках. Ритм и гармония заданы заранее. Плотность единиц в полосах поля меняет отдельные ноты и громкость, совпадения A и B влияют на акценты, а переходы между нулём и единицей слышны в электронных тарелках.</p>
+      </div>
+      <div class="sound-controls">
+        <div class="controls" id="transport" role="group" aria-label="Два музыкальных прочтения"></div>
+        <p class="status" id="sound-state" role="status"></p>
+      </div>
+    </section>
+    <noscript><p>Для построения картин требуется JavaScript.</p></noscript>
+    <p class="status" id="export-state" role="status"></p>
+  </main>
+  <footer>
+    <p>Биты показывают точную сетку. В «Ткачестве» и «Мазках» линии проходят через координаты единиц, при этом сами данные поля сохраняются.</p>
+    <a href="synthesis-instruction.html">Как работает синтез</a>
+  </footer>
+</body>
+</html>

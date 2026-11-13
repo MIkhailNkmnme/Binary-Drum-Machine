@@ -1,4 +1,4 @@
-<!-- СИН-002 · Маятник · Синтез v0.005. Основа v0.999. Перемещаемое окно; браузерный отчёт synthesis-browser-check.md. -->
+<!-- СИН-004 · Маятник · Синтез v0.006. Два маятника, обратная связь, музыка и картины. -->
 <!-- МАЯ-652 · v0.999. Поле 16384 строки в GPU-просмотре. -->
 <!-- МАЯ-642 · v0.995. «Раскраска» под полем берёт маску 0 и 1 из выбранной копии. -->
 <!-- МАЯ-640–641 · v0.994. «Бит | RGB», постоянная палитра RGB и пункт «Без наложения». -->
@@ -63,7 +63,7 @@
 <script src="mayatnik-synthesis-storage.js?v=1"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Маятник · Синтез v0.005 · база v0.999</title>
+<title>Маятник · Синтез v0.006 · база v0.999</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -214,7 +214,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятник · Синтез</h1><span class="ver" title="На основе Маятника v0.999">0.005 · база 0.999</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятник · Синтез</h1><span class="ver" title="На основе Маятника v0.999">0.006 · база 0.999</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -687,9 +687,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Поиска» -->
 <script src="mayatnik-layers.js?v=600"></script>
 <link rel="stylesheet" href="mayatnik-layers.css?v=517">
-<link rel="stylesheet" href="mayatnik-synthesis.css?v=3a">
+<link rel="stylesheet" href="mayatnik-synthesis.css?v=6">
 <script src="mayatnik-synthesis-core.js?v=1"></script>
-<script src="mayatnik-synthesis.js?v=3a"></script>
+<script src="mayatnik-synthesis-pendulums.js?v=6"></script>
+<script src="mayatnik-synthesis-music.js?v=6"></script>
+<script src="mayatnik-synthesis-art.js?v=6"></script>
+<script src="mayatnik-synthesis.js?v=6"></script>
 <script>
 (() => {
   'use strict';
@@ -8394,10 +8397,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     };
     if(RK===1&&rombP()<0&&!joinedOn()){
       const x0=Math.max(0,cx-VX),x1=Math.min(pic.width,cx+w-VX),y0=Math.max(0,cy),y1=Math.min(pic.height,cy+h);
-      for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)if(parityVisible(y,x+VX)&&!outShow(y,x+VX))blend((y*pic.width+x)*4,y,x+VX);
+      for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)if(layer.only||parityVisible(y,x+VX)&&!outShow(y,x+VX))blend((y*pic.width+x)*4,y,x+VX);
     }else{
       for(let y=0;y<pic.height;y++)for(let x=0;x<pic.width;x++){
-        const cell=fieldCellAt(x,y);if(cell&&!outShow(cell.r,cell.c))blend((y*pic.width+x)*4,cell.r,cell.c);
+        const cell=fieldCellAt(x,y);if(cell&&(layer.only||!outShow(cell.r,cell.c)))blend((y*pic.width+x)*4,cell.r,cell.c);
       }
     }
     return result;
@@ -11031,6 +11034,18 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const SESSION_KEY='zerk_mayatnik_session';let sessionReady=false,sessionQueued=false,previousSession=null;
   window.maySynthesisPresent=()=>{
     if(!synthesisPresentFrame)synthesisPresentFrame=requestAnimationFrame(()=>{synthesisPresentFrame=0;if(img&&f&&!gpuDisplay())present();});
+  };
+  window.maySynthesisFocus=rect=>{
+    if(!rect||!geo||!f||gpuDisplay())return;
+    if(rombP()>=0||joinedOn()||staggeredOn()||st.edgeRhombOn)return;
+    const wr=wrap.getBoundingClientRect(),available=Math.max(160,wrap.clientWidth-(wrap.clientWidth<600?24:280));
+    const desired=Math.min(available/rect.w,Math.max(100,wrap.clientHeight-160)/rect.h);
+    st.zLimit=false;st.zLock=false;st.zMid=false;st.ztop=false;st.zBot=false;
+    st.zoom=window.mayPixelExact?.snap(Math.max(.25,desired),'down')||Math.max(.25,desired);
+    layout();const cr=cv.getBoundingClientRect(),s=scale();
+    wrap.scrollLeft+=cr.left+(rect.x-VX+rect.w/2)*s-(wr.left+wrap.clientWidth/2);
+    wrap.scrollTop+=cr.top+(rect.y+rect.h/2)*s-(wr.top+Math.min(wrap.clientHeight/2,rect.h*s/2+80));
+    save();queueAlign();
   };
   window.maySynthesisSource=()=>{
     if(!sessionReady||!f||!geo)return null;
