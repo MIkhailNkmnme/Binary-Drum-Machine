@@ -41,3 +41,6 @@ python issledovanie/phone-theme/build-downloads.py
 - [Архивы](downloads/manifest.json): CRC и содержимое каждой записи сверены с исходниками.
 
 Установка на физические Android/iPhone и субъективная оценка всей музыки не выполнялись. Технические проверки не заменяют музыкальный вкус пользователя. Краткие инструкции установки на странице опираются на [Google](https://support.google.com/android/answer/9082609?hl=ru) и [Apple](https://support.apple.com/ru-ru/120692).
+
+
+Публикация подтверждена: коммит `45436ca1`, GitHub Pages `43450543645` завершён успешно, **126/126 файлов** совпали с сайтом. [Отчёт доставки](qa/delivery.json), [скрипт сверки](qa/verify-delivery.mjs).

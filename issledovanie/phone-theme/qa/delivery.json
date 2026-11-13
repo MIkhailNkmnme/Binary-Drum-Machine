@@ -1,0 +1,895 @@
+{
+  "commit": "45436ca1b4143d17a76bf9c6f09503f9a3e8c6a0",
+  "checkedAt": "2026-11-13T15:16:29.322Z",
+  "deployment": {
+    "id": 43450543645,
+    "url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/43450543645",
+    "status": "success"
+  },
+  "files": 126,
+  "matched": 126,
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1071119,
+      "sha256": "dc7b925c5ec9237813b63fec93cd6fb49f8a1bf3c18784fcb6104a55175be29c",
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1412907,
+      "sha256": "9dd98f35304f88e9b6334a2bf7c7d11cf11a20f47c62364dc04df04493c4fcb4",
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 936117,
+      "sha256": "07d540b395f50636516bf9953673cb245e6c2d6da56d69a0459278b610b0fd79",
+      "match": true
+    },
+    {
+      "path": "issledovanie/pendulum-music/index.html",
+      "status": 200,
+      "bytes": 16443,
+      "sha256": "3dbd6bc7825565a009e7ee1112bde5194e79729d605795b42473f5cd66ad7fb9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/build-wallpapers.cjs",
+      "status": 200,
+      "bytes": 12328,
+      "sha256": "ebc9ec9a9d6adf9f30e2f4ce3dfeca4765b8c18e623f4c416189d1f8dd730939",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/contact-sheet.jpg",
+      "status": 200,
+      "bytes": 144850,
+      "sha256": "d475e7feedcf79b2c42aabb5762f6586ef71d46bda53cf9b9a0739d2e4f51c0f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/crystal-color.svg",
+      "status": 200,
+      "bytes": 702174,
+      "sha256": "48e7f33ecfe580bc32c11ea4bebfc5b4c69652709f14e9e7dab243a6323e417b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/crystal-mono.svg",
+      "status": 200,
+      "bytes": 702174,
+      "sha256": "1fa458671b396888c5ad825c433e1b66510f6000bc89250ca012446d402cbbef",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/eight-winds-color.svg",
+      "status": 200,
+      "bytes": 3137076,
+      "sha256": "88a9e25f75e3b3d956b87295982736d466e6e4e87f21c0267d4e65f9fd903020",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/eight-winds-mono.svg",
+      "status": 200,
+      "bytes": 3137076,
+      "sha256": "f67557eda3dfcd2100bf31abf6cf5ebfdde3b757bb7e2bde44bfc23e4d7acb6e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/fault-color.svg",
+      "status": 200,
+      "bytes": 1782246,
+      "sha256": "36f2446c51fd7f6089a191627fa88525aae4fa9080657f640f00187aee47e1d5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/fault-mono.svg",
+      "status": 200,
+      "bytes": 1782246,
+      "sha256": "bdfbed81f7334b156c462e6956232f2f4c5986d26832724a920ef3d100665b6a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/meridian-color.svg",
+      "status": 200,
+      "bytes": 1041580,
+      "sha256": "6196153043d6897bb6ce8eeb95e6cdd9689a62045762ca8337a00492b6bd556e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/meridian-mono.svg",
+      "status": 200,
+      "bytes": 1041580,
+      "sha256": "6efb82842594a80046c35f325610126ee1a7f527635d4959d33f4a4d02159874",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/shadow-color.svg",
+      "status": 200,
+      "bytes": 1739618,
+      "sha256": "75200678cf74eff31e4abcb97cda8872d6e1aa950a42989ae2523680cd0ab9ce",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/shadow-mono.svg",
+      "status": 200,
+      "bytes": 1739618,
+      "sha256": "b9e10da58d11288511cd29dc8710d1daf3a87df101e51afbe5136a7bc59f61fb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/two-rivers-color.svg",
+      "status": 200,
+      "bytes": 2612945,
+      "sha256": "ae3801789d46c0f8bfa3fbd599f9bc1343e03e758637533b30dbeb4e4d8e02b1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/two-rivers-mono.svg",
+      "status": 200,
+      "bytes": 2612945,
+      "sha256": "bcb4f01021c111778aa8f339858466f603af5c7d60cce1cd9553ec5b0f07087d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/copper-orbit-ringtone.m4r",
+      "status": 200,
+      "bytes": 607695,
+      "sha256": "ea4923fd67d457f549f4a147d21b3825223fc9e4a65638dcc493f889924f517e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/copper-orbit-ringtone.mp3",
+      "status": 200,
+      "bytes": 560140,
+      "sha256": "b6a550c455215b456d350d262c15609222d707df4112fc987d99e4f35f1d9639",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/copper-orbit.mp3",
+      "status": 200,
+      "bytes": 1727655,
+      "sha256": "04f4fc1fdf79763ce6047ec5ddc498bd65b2b17d74f7b0d83b7e47e323915e5e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/eight-winds-pulse-ringtone.m4r",
+      "status": 200,
+      "bytes": 570091,
+      "sha256": "f16a3653988bb9bd05d1f225d6fc11fb7ef85662a79af768dd84b6bebba19a85",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/eight-winds-pulse-ringtone.mp3",
+      "status": 200,
+      "bytes": 515560,
+      "sha256": "54314a38f4935208cb02ac598bd6ae82afb40885091acb2ccbf629c98b348bab",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/eight-winds-pulse.mp3",
+      "status": 200,
+      "bytes": 1562858,
+      "sha256": "cd977a2f3a47b74032f7bc15b1a5a5f0eb2e9b0ef0b6725505d2cb8b0e4cb75b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/letter-of-two-rivers-ringtone.m4r",
+      "status": 200,
+      "bytes": 528824,
+      "sha256": "8008fc2a74692f345c19bca59dd05c13e3ac447ffc606203cb03eafe21f269a3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/letter-of-two-rivers-ringtone.mp3",
+      "status": 200,
+      "bytes": 318582,
+      "sha256": "53d17d0be0b55450793860a996ee31535fde5806e3ef8413020a1a7bd6bd2fc4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/letter-of-two-rivers.mp3",
+      "status": 200,
+      "bytes": 1134236,
+      "sha256": "2c18e7e0ca23d7db8d8dd48aaf273e74826bf23d7d0d21577d9ab9d3715650f0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-01.mp3",
+      "status": 200,
+      "bytes": 22566,
+      "sha256": "926cd021eaff79bb3abb86bb07937319c3a1a203260a8af33770285a95086bd9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-01.wav",
+      "status": 200,
+      "bytes": 88348,
+      "sha256": "6e2a39eff57b59a54ec1e5e0f51d6c2b4a4c9544b4d5150604b0c68a3e77ec32",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-02.mp3",
+      "status": 200,
+      "bytes": 17705,
+      "sha256": "2f493ac5e1a17bf60b4250cc3f00c6b243329eb917b32ea5873d0e57b2abdfdb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-02.wav",
+      "status": 200,
+      "bytes": 66284,
+      "sha256": "f1664da5a55aac7967887fc1462f2b02b94750682dd79616a4e116d91c05e51f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-03.mp3",
+      "status": 200,
+      "bytes": 28164,
+      "sha256": "650e9a0734ca85338d9bbffa637a74d9860e0ee62f8ac7356ada4cd32b762f44",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-03.wav",
+      "status": 200,
+      "bytes": 110392,
+      "sha256": "87c6902bc264fc0c27e0cbe0e50ed73832d0dfd1c2884e28ff72319ac6dea127",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-04.mp3",
+      "status": 200,
+      "bytes": 13917,
+      "sha256": "fc100dba5880434b9550e99426e3a39983ca28679485c4dde363121d9b53ba09",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-04.wav",
+      "status": 200,
+      "bytes": 55258,
+      "sha256": "3aded7578e96724ea4c05d39f83b087c7db403f309d53002834218ebf7a754a1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-05.mp3",
+      "status": 200,
+      "bytes": 18450,
+      "sha256": "e14d8fb3551f164c027141b8f524524415e6d38643d9b5cac320a7c7b3103201",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-05.wav",
+      "status": 200,
+      "bytes": 123620,
+      "sha256": "c0380e48af96bcedccc01b1a979ddb40d8aa489cd65c22800fb6bbe353b246e1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-06.mp3",
+      "status": 200,
+      "bytes": 10247,
+      "sha256": "5a2a4d16806e389bc3816fcc98edd74fe60f04956336d342798963e58a0fcfec",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-06.wav",
+      "status": 200,
+      "bytes": 70692,
+      "sha256": "366ec616f70c1d3c4674a611e523ae9056f6c1387ea9264fe3ca42f15e6c7d46",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-07.mp3",
+      "status": 200,
+      "bytes": 21706,
+      "sha256": "096cb83ad36a53a6f9d3feccc72988773df1e2947045db66b68d413b4f8107a3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-07.wav",
+      "status": 200,
+      "bytes": 141260,
+      "sha256": "bc7c5e370ac584d9907a41adae7a69314593b3673018a2333b4e1aa38364c1e2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-08.mp3",
+      "status": 200,
+      "bytes": 15590,
+      "sha256": "d539cd2e8e61df2f9adc357ed4f1293e13041eddbc18c847c9e63367b14ce019",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-08.wav",
+      "status": 200,
+      "bytes": 105982,
+      "sha256": "db2cb14dc7d736995c4496ddb83c956c074eee077bd98f9e3b627bdc52cef558",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-09.mp3",
+      "status": 200,
+      "bytes": 32897,
+      "sha256": "dd412eb342d51e3b852f9c9bd9fa26f40223413678428520d34860023c342178",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-09.wav",
+      "status": 200,
+      "bytes": 105986,
+      "sha256": "21be637cc8ac7200d5164c16abbc4c0f613f89836c91f211fd509399bc615c73",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-10.mp3",
+      "status": 200,
+      "bytes": 21094,
+      "sha256": "9ec9f4113089ddbf339011c404dba50a604266aa094e0cf31878c3b566f37981",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-10.wav",
+      "status": 200,
+      "bytes": 66282,
+      "sha256": "7251063553b0ab9c43debdc692ea3b383e1ee9553cefa33600176ebcfb6304d0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-11.mp3",
+      "status": 200,
+      "bytes": 40954,
+      "sha256": "b9187bb9b79d00d0b7615489a1a7be6518bd485ca82dc2945c8c7930c395445d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-11.wav",
+      "status": 200,
+      "bytes": 132444,
+      "sha256": "b925a20c6851cc38e095fb070b5cf18d6de410f4c5c308ae954847bd431892d0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-12.mp3",
+      "status": 200,
+      "bytes": 31425,
+      "sha256": "3a9d21633856d439dc34243509782f448d4d9f8a0653339478cd2ad603648c84",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-12.wav",
+      "status": 200,
+      "bytes": 97150,
+      "sha256": "594c41ef4318cb610b6a04af8fcb56ec44897974f09ff1a38ec425c902592068",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-13.mp3",
+      "status": 200,
+      "bytes": 21069,
+      "sha256": "2e5c51b2315dc07bf5da2cca78d28e752fd19e1d7983c64e640349b752995092",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-13.wav",
+      "status": 200,
+      "bytes": 70694,
+      "sha256": "f994d37c46f95e9aa2606b8265bf5e3a572c47b9956d7f53c82bc91427bbb6a7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-14.mp3",
+      "status": 200,
+      "bytes": 45987,
+      "sha256": "b36e008ba9fe9738f596bde1f01c34b9cd0e6be848aaf992ea35b922f5e80844",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-14.wav",
+      "status": 200,
+      "bytes": 141264,
+      "sha256": "822d04fe1dc200b4a64b411c4fb2c4ef388232dcfc40f3c242650331dc773579",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-15.mp3",
+      "status": 200,
+      "bytes": 23447,
+      "sha256": "f2c51d6a397df7e814d60bfb90189082550f08b9cd608b511b3350a80926bbb6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-15.wav",
+      "status": 200,
+      "bytes": 123614,
+      "sha256": "7bf8283c0dcf9782160df45644fb2199e7bae22b466be35dba862767da93867c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-16.mp3",
+      "status": 200,
+      "bytes": 11980,
+      "sha256": "5c2f8f159919b96f90d2ac57290bc01979d50cdeb4ee79c41bfe22f91ce2c5a0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-16.wav",
+      "status": 200,
+      "bytes": 61884,
+      "sha256": "bd3de57aa6f657e2a2235e1c9a5bbdcf31f6dad4f8c179acefd6f0cabad862fd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-17.mp3",
+      "status": 200,
+      "bytes": 28966,
+      "sha256": "e56a11f5f6631966f3b903ff1a36471c2a8be3473405a991fe92d46cb40b211b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-17.wav",
+      "status": 200,
+      "bytes": 150076,
+      "sha256": "eb3469a1104cae85c238ffb0b4995989d990c21261b1296a12ac7c4e44debb62",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-18.mp3",
+      "status": 200,
+      "bytes": 23305,
+      "sha256": "e666bc5834219818155463077e8262308c11df8d1ecb764a35d00ffe48f2171d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-18.wav",
+      "status": 200,
+      "bytes": 132428,
+      "sha256": "46d478e26cdda9bb785d900ceacc30a0bf88ae688a5ba7bc5f3c6665deea542f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-19.mp3",
+      "status": 200,
+      "bytes": 14836,
+      "sha256": "39205683188ffce2ddf04d8037480f44555b0d2ccc96b84496c5a0dd37a7b8a9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-19.wav",
+      "status": 200,
+      "bytes": 79518,
+      "sha256": "8a4dcdd999c31d56edb405a6232c2887e2fd11718ab4b9539f65f4af1aaad73f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-20.mp3",
+      "status": 200,
+      "bytes": 27969,
+      "sha256": "c73376b92dec681f475e98251dbc3ab0a1db586ca321e78132ddf0166c166441",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/notice-20.wav",
+      "status": 200,
+      "bytes": 158896,
+      "sha256": "6cdf48fe7e2319e17b8033afe0a367bc8f22cad5caac37c66700629d35b4787e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/thin-ice-nocturne-ringtone.m4r",
+      "status": 200,
+      "bytes": 613261,
+      "sha256": "35d0911b84b274c6db26ebfa7a15cd95a72fa232018952b4ed6491bb0fa7040f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/thin-ice-nocturne-ringtone.mp3",
+      "status": 200,
+      "bytes": 376667,
+      "sha256": "9c4c656daab5ccd57f0427d10de33b902c20c7250278cf71672585d179b96330",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/thin-ice-nocturne.mp3",
+      "status": 200,
+      "bytes": 1148552,
+      "sha256": "70ffdc963440b7d4b3b3011d9dea4dce700d5870ee7ef71ffdb92cc78f4108f8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/build-downloads.py",
+      "status": 200,
+      "bytes": 2293,
+      "sha256": "0c8c1a03f2a7e396358bd5d4a25a3815983e249e18dbbe2d3e92d6b5a2e7c3f5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/build-page.py",
+      "status": 200,
+      "bytes": 11861,
+      "sha256": "8ed88c6bd83b0525bc324dba1044dfe87064e42c10b035005bd7fdbd431961d2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/DOWNLOADS.txt",
+      "status": 200,
+      "bytes": 2546,
+      "sha256": "07cdff785c213e3ad85d635ea6d9d5ce512a85ce9f956a563d4782464a898318",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/manifest.json",
+      "status": 200,
+      "bytes": 865,
+      "sha256": "5eb69051c6f71f10a96e819afecbee1680ed022e21d1d2aeaae97dd326de27a6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-music.zip",
+      "status": 200,
+      "bytes": 11492327,
+      "sha256": "4419b89ef3dca2c56fa049d02dfeb0e87855ca33dac03e057a0006eeaf1709a1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-notifications.zip",
+      "status": 200,
+      "bytes": 2387915,
+      "sha256": "8b107654013a0cab93b43afba42e868774c066ba07fc55f7920aa06b70e14049",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-phone-theme.zip",
+      "status": 200,
+      "bytes": 32929097,
+      "sha256": "d47fa27602b089634fab0d9446985d2cc4deab075f81db16b15107d07c1429a3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-wallpapers.zip",
+      "status": 200,
+      "bytes": 19051515,
+      "sha256": "555ce5974168d6feb690ebe7b1a3fb42b00a6756cd5063d62d5cd50de6aeb681",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/index.html",
+      "status": 200,
+      "bytes": 34394,
+      "sha256": "54ea5f79c1a7f6dd4a790109c65636627ccdacf8f9921cb3afa4e424260ac07e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music.json",
+      "status": 200,
+      "bytes": 15503,
+      "sha256": "8b94c155e837e346b9a79131c85b086c3957820e161b5ddb2b6c0eac7b759bd3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/audio-checks.json",
+      "status": 200,
+      "bytes": 47286,
+      "sha256": "53043258309246126b036c67233898e0e70aa4ea970084d33a157e3dd3322e14",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/build-music.cjs",
+      "status": 200,
+      "bytes": 13127,
+      "sha256": "1c930d500e11e05679b5968b0847ea766647264542a63f8abe910c09e87ed470",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/check-music.cjs",
+      "status": 200,
+      "bytes": 5217,
+      "sha256": "6b79df1c3ecbb2d9134160d8ad2c821cf3cf6610049077ab2d14f0e9891ad41b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/copper-orbit-score.json",
+      "status": 200,
+      "bytes": 189284,
+      "sha256": "679d14ce00e0f234d2f87c766ce0854d145bb2f4d8bd6b95f1aadac98a1ae5f4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/copper-orbit.mid",
+      "status": 200,
+      "bytes": 9908,
+      "sha256": "31f821843b5cbe4dc78961b974f32ef052dad3060343fa4aba6347d2e6352a3a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/eight-winds-pulse-score.json",
+      "status": 200,
+      "bytes": 184709,
+      "sha256": "f2f8ae6aacbfc3cb1df1761f8f3dd96dbc72811fe8a3f75249e8c4cf88947b5c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/eight-winds-pulse.mid",
+      "status": 200,
+      "bytes": 9596,
+      "sha256": "b164d93e4c9ff5aebed7d697983ac16eb769f3a5a2c9d1df72f4f17fddf11f67",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/letter-of-two-rivers-score.json",
+      "status": 200,
+      "bytes": 87543,
+      "sha256": "28c7c4eace12492a1b4a7a5455337fa0dc7c518c1bad2576bf0513d4e7e78f89",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/letter-of-two-rivers.mid",
+      "status": 200,
+      "bytes": 4086,
+      "sha256": "9b378f9a5370a92b6ac23cc020f30db632c7bbb02a4cd7b0bf78fc0c95df2f86",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/README-music.md",
+      "status": 200,
+      "bytes": 7690,
+      "sha256": "bf385ee99dd447cfc85759302c46bf26dae5d60ab39f8674ee99d4f9ddb2edf1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/source-index.json",
+      "status": 200,
+      "bytes": 3870,
+      "sha256": "bf49c452780a6dc4752404cd02ecbca3faacce6eb498fd454dd7aa236aa4bc3c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/thin-ice-nocturne-score.json",
+      "status": 200,
+      "bytes": 72223,
+      "sha256": "3bee216528543c077dbc94bbd271c8e46c57bb0951ee30c1093f8a1d9958c281",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/thin-ice-nocturne.mid",
+      "status": 200,
+      "bytes": 3473,
+      "sha256": "dc2c5609f0497515c7b17f53bf05f1de237e7c92a4cbaaeb58cfb11cc20fd0be",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/page.css",
+      "status": 200,
+      "bytes": 8592,
+      "sha256": "2bafa2f4f2d926c3c60e62efe5c1531abc93376ff5e660b69c15b3cfb774234e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/page.js",
+      "status": 200,
+      "bytes": 684,
+      "sha256": "9a888189e1ef9205c81c053ee704ff19798015d5829412523e73d4504b3d6229",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/browser.json",
+      "status": 200,
+      "bytes": 867,
+      "sha256": "15d7f9e658d11a3dafed3f56a3f84a0cdc6cf11481e93b44cf02092a5eb7c176",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/desktop.png",
+      "status": 200,
+      "bytes": 86243,
+      "sha256": "5fdc66189d9ccf0624d3fc34c37607dde3abc9d14a6873ef1c70fd54937cd44c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/files.json",
+      "status": 200,
+      "bytes": 280,
+      "sha256": "58dd2e3ddc1a642996c880e681c680ca9020b826ebf1f1e47f312ae706ae4b68",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/mobile.png",
+      "status": 200,
+      "bytes": 38122,
+      "sha256": "caeaf38db1edf4b51bbdf8c4a159c85ecd6478f7bf6a65b547f6ec646267a48e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/README.md",
+      "status": 200,
+      "bytes": 5466,
+      "sha256": "dedd8acaa5ed41e5ce706943fe46111b012e055318e78db5e309b23df01fda45",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers.json",
+      "status": 200,
+      "bytes": 16415,
+      "sha256": "5519769d21d0210e3c66ac1946420cc638bd7f36f2c85edc77d781ad64995e29",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/crystal-color-thumb.png",
+      "status": 200,
+      "bytes": 239256,
+      "sha256": "993ae7288668eb2d2919b2737b08b1cc7185b44cb43ca820b0cc32fe39880244",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/crystal-color.png",
+      "status": 200,
+      "bytes": 1522997,
+      "sha256": "cc0202c557634704461bbb09b294b869aabcc78aef169036a81d4ef6b57be654",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/crystal-mono-thumb.png",
+      "status": 200,
+      "bytes": 175013,
+      "sha256": "d4eb60b973eee8bfe257948cbcd3b801caa6219f7cefe102adc71b585be94f11",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/crystal-mono.png",
+      "status": 200,
+      "bytes": 1215303,
+      "sha256": "217127f9491e8ed2ccfb95f4ff213daf8524b2a52f6fd607de355c4e1f694ca2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/eight-winds-color-thumb.png",
+      "status": 200,
+      "bytes": 217267,
+      "sha256": "c5955da360807b8cacf85bbb707b5f782381680003b89722cf206ffd266bf590",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/eight-winds-color.png",
+      "status": 200,
+      "bytes": 2726070,
+      "sha256": "31c5f5201dd68358228013f9d401f249b858e4862be961c326a8bfaefbbfb58c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/eight-winds-mono-thumb.png",
+      "status": 200,
+      "bytes": 121937,
+      "sha256": "3da5670743a62cc82df7cd913ee052a2690eec1caa434254ee64f8107ebca720",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/eight-winds-mono.png",
+      "status": 200,
+      "bytes": 1716288,
+      "sha256": "727a016d53bd739b960f8a84ac54d9a014301cfe3ff9688be68b70bbb5ee97b3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/fault-color-thumb.png",
+      "status": 200,
+      "bytes": 137569,
+      "sha256": "dbcf17ffbaf489bcdac1ebb8e5c6c48ff22057ae890f0bba0cc45fadb57989dd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/fault-color.png",
+      "status": 200,
+      "bytes": 1468355,
+      "sha256": "984c23fdf3d6dfb8579b3fbae687c96d1164cee88e7831ae7ab0434480a015cb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/fault-mono-thumb.png",
+      "status": 200,
+      "bytes": 82676,
+      "sha256": "103b09b510e6d0510d7fdaf14fdca6e5b2dceeee41a959b9fca9e7193d168393",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/fault-mono.png",
+      "status": 200,
+      "bytes": 1001094,
+      "sha256": "c8f6484f15fc2a09620aa740478a652cdf16c1d074dfc29371787e8e84563eb0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/meridian-color-thumb.png",
+      "status": 200,
+      "bytes": 221306,
+      "sha256": "fcea2c035032aa846f85917fe3dd1538877d57def0143a9ddc32da54c1a41e8b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/meridian-color.png",
+      "status": 200,
+      "bytes": 1885005,
+      "sha256": "ac180e3e197630e6904e4d1226b3cc3338f3faf3483f07e96b7c59bc907febed",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/meridian-mono-thumb.png",
+      "status": 200,
+      "bytes": 117308,
+      "sha256": "dc4b42f5dc9c333e7ca65abad32a3cabefb37507a83543d884ff9bfb32324169",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/meridian-mono.png",
+      "status": 200,
+      "bytes": 1145946,
+      "sha256": "14f7bf18df0f12c58f8b79d02f8abc73f73d150baafcbfaccc51e1cd6af417a5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/shadow-color-thumb.png",
+      "status": 200,
+      "bytes": 214941,
+      "sha256": "639ea3698208e2f8a0639aa249b35f9a8a6c381e057bc8ae139d3ff03e282ae1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/shadow-color.png",
+      "status": 200,
+      "bytes": 1715676,
+      "sha256": "78404adde9cd4169a512e545b61d132d32e37a8402163cba85f09fb1d21a340f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/shadow-mono-thumb.png",
+      "status": 200,
+      "bytes": 134329,
+      "sha256": "c2ad30151507e1087dd7c7dcbf95694fead28b5f63ef5f9a8ee4872db421f94e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/shadow-mono.png",
+      "status": 200,
+      "bytes": 1179418,
+      "sha256": "dd1eef6a65202a4acea24ff8a0756a5c36b2fd0f739977e554e15a2559275cb9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/two-rivers-color-thumb.png",
+      "status": 200,
+      "bytes": 176553,
+      "sha256": "ec3f550bb103e98937cc366e8bc4145edf30b9cf639157a99a1c157469385efc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/two-rivers-color.png",
+      "status": 200,
+      "bytes": 2138855,
+      "sha256": "7bbf6c5f503a27a86bc7e0c0d5713799eab9bb3ea48acfbca58ca9b777809262",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/two-rivers-mono-thumb.png",
+      "status": 200,
+      "bytes": 113228,
+      "sha256": "d1bf09f227703303e52e7672394b2ddd637140724d82c3c6c82ccf6d456d34d3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/two-rivers-mono.png",
+      "status": 200,
+      "bytes": 1592110,
+      "sha256": "d75c29b3c734e448f12cdcaf82307c0c7befac778408e55563aa1edfe64712b1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 499695,
+      "sha256": "189365e51e3bb84ea67547bc7b34190a17c4f4536fe1bc709594ad547c043c5d",
+      "match": true
+    }
+  ]
+}
