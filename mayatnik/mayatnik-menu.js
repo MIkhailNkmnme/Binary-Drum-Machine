@@ -420,7 +420,8 @@
         const bar=cell.parentElement,c=cell.getBoundingClientRect(),b=bar.getBoundingClientRect(),y=c.bottom-b.top-bar.clientTop;
         const center=Math.round(c.left+c.width/2-b.left-bar.clientLeft);
         caption.style.left=center+'px';caption.style.top=y+'px';
-        const rows=Number($('frame').dataset.fieldRows)||Number($('rows').value)||0,width=Number($('frame').dataset.fieldWidth)||2*rows-1,factor=(width+1)/rows;
+        // Берём геометрию уже построенного поля: st.rows может быть fallback-значением GPU-пути.
+        const field=window.mayField?.(),rows=Number(field?.H)||Number($('frame').dataset.fieldRows)||Number($('rows').value)||0,width=Number(field?.W)||Number($('frame').dataset.fieldWidth)||2*rows-1,factor=(width+1)/rows;
         const zoom=frameZoomLabel($('frame'));
         let type=$('frame').dataset.buildType||'Маятник';   // v0.717: режимы края — в подписи над кадром
         if($('edgeWrapTop')?.getAttribute('aria-pressed')==='true'){
@@ -430,10 +431,10 @@
         }
         if($('edgeEndsTop')?.getAttribute('aria-pressed')==='true')type+=' · Края';
         if($('edgeRhombTop')?.getAttribute('aria-pressed')==='true')type+=' · Ромбы';
-        const reduced=$('frame').dataset.renderedReduced==='true',shownRows=reduced?Number($('frame').dataset.renderedRows)||rows:rows,shownWidth=reduced?Number($('frame').dataset.renderedColumns)||width:Number($('frame').dataset.visibleFieldWidth)||width;
-        renderFrameCaption(caption,[...type.split(' · '),...($('frame').dataset.apexWidth!==undefined?['по вершинам '+$('frame').dataset.apexWidth+' / '+$('frame').dataset.apexTargetWidth]:[]),shownRows+' строк',($('frame').dataset.apexWidth!==undefined?'поле ':reduced?'ширина ':([2,4,6,8].includes(factor)?factor+'N−1=':'ширина '))+shownWidth,...(frameAccuracyLabel($('frame'))?[frameAccuracyLabel($('frame'))]:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
+        const reduced=$('frame').dataset.renderedReduced==='true',shownRows=Number($('frame').dataset.renderedRows)||rows,shownWidth=Number($('frame').dataset.renderedColumns)||width;
+        renderFrameCaption(caption,[...type.split(' · '),...($('frame').dataset.apexWidth!==undefined?['по вершинам '+$('frame').dataset.apexWidth+' / '+$('frame').dataset.apexTargetWidth]:[]),rows+' строк',($('frame').dataset.apexWidth!==undefined?'поле ':([2,4,6,8].includes(factor)?factor+'N−1=':'ширина '))+width,...(reduced&&(shownRows!==rows||shownWidth!==width)?['показ '+shownRows+'×'+shownWidth]:[]),...(frameAccuracyLabel($('frame'))?[frameAccuracyLabel($('frame'))]:[]),...(zoom?['масштаб '+zoom]:[])]);if($('frame').dataset.pixelExactError)caption.setAttribute('aria-label',$('frame').dataset.pixelExactError);else caption.removeAttribute('aria-label');
       };
-      const valueObserver=new MutationObserver(side);if(vl)valueObserver.observe(vl,{childList:true,characterData:true,subtree:true});valueObserver.observe(frame,{attributes:true,attributeFilter:['min','max','data-player-first-frame','data-player-open-ended','data-apex-width','data-apex-target-width','data-apex-min','data-apex-max','data-visible-field-width','data-build-type','data-field-width','data-field-rows','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
+      const valueObserver=new MutationObserver(side);if(vl)valueObserver.observe(vl,{childList:true,characterData:true,subtree:true});valueObserver.observe(frame,{attributes:true,attributeFilter:['min','max','data-player-first-frame','data-player-open-ended','data-apex-width','data-apex-target-width','data-apex-min','data-apex-max','data-visible-field-width','data-build-type','data-field-width','data-field-rows','data-rendered-reduced','data-rendered-rows','data-rendered-columns','data-zoom-width','data-zoom-columns','data-zoom-dpr','data-pixel-exact','data-zoom-exact','data-zoom-overview','data-zoom-lossy','data-pixel-exact-error']});for(const id of ['edgeWrapTop','edgeEndsTop','edgeRhombTop']){const b=$(id);if(b)valueObserver.observe(b,{attributes:true,attributeFilter:['aria-pressed']});}
       new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side();
     }
   }
