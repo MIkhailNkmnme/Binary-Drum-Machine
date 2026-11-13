@@ -1,0 +1,245 @@
+{
+  "version": "0.001",
+  "status": "Illustration of an agreed rule; not a reconstruction of the target glyph.",
+  "rule": "One transition to a neighbouring cell is one step, including diagonal; bit(n)=1-(n mod 2).",
+  "positions": [
+    [
+      0,
+      0
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      -1,
+      1
+    ]
+  ],
+  "directions": [
+    "H",
+    "D",
+    "V",
+    "D",
+    "D"
+  ],
+  "junctionRule": "No direct H to V or V to H, including the cycle closure.",
+  "counting": "Sample the departure cell once per step. A return cell belongs to the next lap, so a cycle boundary is not counted twice.",
+  "closedLoopPhaseRule": "A return flips phase iff its number of steps is odd. On the eight-neighbour lattice this is equivalent to an odd number of diagonal steps.",
+  "lapResults": [
+    {
+      "laps": 1,
+      "steps": 5,
+      "visits": [
+        [
+          1
+        ],
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          0
+        ],
+        [
+          1
+        ]
+      ],
+      "litVisits": [
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "or": [
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "xor": [
+        1,
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "laps": 2,
+      "steps": 10,
+      "visits": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "litVisits": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "or": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "xor": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "laps": 3,
+      "steps": 15,
+      "visits": [
+        [
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "litVisits": [
+        2,
+        1,
+        2,
+        1,
+        2
+      ],
+      "or": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "xor": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "laps": 4,
+      "steps": 20,
+      "visits": [
+        [
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          1,
+          0
+        ]
+      ],
+      "litVisits": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "or": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "xor": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "checks": {
+    "allowedTransitions": true,
+    "cycleClosureAllowed": true,
+    "fiveDistinctCells": true,
+    "threeDiagonalSteps": true,
+    "twoLapsFillAllFiveCells": true,
+    "fourLapsXorClearsAll": true
+  }
+}
