@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-13",
+  "visibility": "public",
+  "verification": "YouTube Studio publication success dialogs and checks",
+  "videos": [
+    {
+      "title": "Маятниковый привод",
+      "url": "https://youtu.be/5O2JiIOLhQA",
+      "proof": "youtube-drive-published.jpg"
+    },
+    {
+      "title": "Канон двух берегов",
+      "url": "https://youtu.be/EimTXk9Bz_s",
+      "proof": "youtube-canon-published.jpg"
+    }
+  ]
+}

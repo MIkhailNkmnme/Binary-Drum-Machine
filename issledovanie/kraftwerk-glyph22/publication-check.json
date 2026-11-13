@@ -1,0 +1,590 @@
+{
+  "commit": "67dbc6eb",
+  "checkedAt": "2026-11-13T12:10:13.581Z",
+  "runs": [
+    {
+      "id": 43422364727,
+      "sha": "67dbc6eb",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43419375897,
+      "sha": "4b2a86c2",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43418497846,
+      "sha": "7915a048",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43390568164,
+      "sha": "6231f7bb",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43390460791,
+      "sha": "4fdd5593",
+      "status": "completed",
+      "conclusion": "cancelled"
+    }
+  ],
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1052073,
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1394992,
+      "match": true
+    },
+    {
+      "path": "КООРДИНАТОР.md",
+      "status": 200,
+      "bytes": 15745,
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 917638,
+      "match": true
+    },
+    {
+      "path": "РЕШЕНИЯ.md",
+      "status": 200,
+      "bytes": 228448,
+      "match": true
+    },
+    {
+      "path": "AGENTS.md",
+      "status": 200,
+      "bytes": 8993,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/analysis/build-clip.py",
+      "status": 200,
+      "bytes": 2399,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/analysis/build-viewer.py",
+      "status": 200,
+      "bytes": 13491,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/analysis/colour.py",
+      "status": 200,
+      "bytes": 1502,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/analysis/plate.py",
+      "status": 200,
+      "bytes": 12719,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/analysis/register.py",
+      "status": 200,
+      "bytes": 1743,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/box-382.jpg",
+      "status": 200,
+      "bytes": 21314,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/box-408.jpg",
+      "status": 200,
+      "bytes": 21402,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/box-424.jpg",
+      "status": 200,
+      "bytes": 21103,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/box-444.jpg",
+      "status": 200,
+      "bytes": 23202,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/box-461.jpg",
+      "status": 200,
+      "bytes": 28511,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/box-462.jpg",
+      "status": 200,
+      "bytes": 28522,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/box-463.jpg",
+      "status": 200,
+      "bytes": 28142,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/candidates.jpg",
+      "status": 200,
+      "bytes": 127743,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/close-417.jpg",
+      "status": 200,
+      "bytes": 29363,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/close-429.jpg",
+      "status": 200,
+      "bytes": 32083,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/close-444.jpg",
+      "status": 200,
+      "bytes": 34602,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/close-455.jpg",
+      "status": 200,
+      "bytes": 37068,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/close-466.jpg",
+      "status": 200,
+      "bytes": 32801,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/contact-late.jpg",
+      "status": 200,
+      "bytes": 139582,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/contact.jpg",
+      "status": 200,
+      "bytes": 190090,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/draft-crops.jpg",
+      "status": 200,
+      "bytes": 110711,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/draft-paths.jpg",
+      "status": 200,
+      "bytes": 120354,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/early.jpg",
+      "status": 200,
+      "bytes": 148688,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/last.png",
+      "status": 200,
+      "bytes": 117770,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/law-review/0538.png",
+      "status": 200,
+      "bytes": 296111,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/law-review/0561.png",
+      "status": 200,
+      "bytes": 397491,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/plate-preview.png",
+      "status": 200,
+      "bytes": 344414,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/repeated.jpg",
+      "status": 200,
+      "bytes": 83172,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/series-0.jpg",
+      "status": 200,
+      "bytes": 115528,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/series-1.jpg",
+      "status": 200,
+      "bytes": 126184,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/series-2.jpg",
+      "status": 200,
+      "bytes": 126898,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/series-3.jpg",
+      "status": 200,
+      "bytes": 134758,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/transitional.jpg",
+      "status": 200,
+      "bytes": 140895,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/wide-late.jpg",
+      "status": 200,
+      "bytes": 144657,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/wide.jpg",
+      "status": 200,
+      "bytes": 122893,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0028.png",
+      "status": 200,
+      "bytes": 748664,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0067.png",
+      "status": 200,
+      "bytes": 765910,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0095.png",
+      "status": 200,
+      "bytes": 769608,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0117.png",
+      "status": 200,
+      "bytes": 773535,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0149.png",
+      "status": 200,
+      "bytes": 845603,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0196.png",
+      "status": 200,
+      "bytes": 1072185,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0226.png",
+      "status": 200,
+      "bytes": 1077567,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0248.png",
+      "status": 200,
+      "bytes": 1068628,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0287.png",
+      "status": 200,
+      "bytes": 991801,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0319.png",
+      "status": 200,
+      "bytes": 854775,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0334.png",
+      "status": 200,
+      "bytes": 718134,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0382.png",
+      "status": 200,
+      "bytes": 410849,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0408.png",
+      "status": 200,
+      "bytes": 412936,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0422.png",
+      "status": 200,
+      "bytes": 421176,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0444.png",
+      "status": 200,
+      "bytes": 421284,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0457.png",
+      "status": 200,
+      "bytes": 455950,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0461.png",
+      "status": 200,
+      "bytes": 499334,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0538.png",
+      "status": 200,
+      "bytes": 514023,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/0561.png",
+      "status": 200,
+      "bytes": 662309,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/drafts/witnesses/samples.json",
+      "status": 200,
+      "bytes": 2131,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-clip-provenance.json",
+      "status": 200,
+      "bytes": 84318,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-01.jpg",
+      "status": 200,
+      "bytes": 161330,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-02.jpg",
+      "status": 200,
+      "bytes": 198629,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-03.jpg",
+      "status": 200,
+      "bytes": 226397,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-04.jpg",
+      "status": 200,
+      "bytes": 227726,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-05.jpg",
+      "status": 200,
+      "bytes": 226422,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-06.jpg",
+      "status": 200,
+      "bytes": 225474,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-07.jpg",
+      "status": 200,
+      "bytes": 245598,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-08.jpg",
+      "status": 200,
+      "bytes": 313674,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-09.jpg",
+      "status": 200,
+      "bytes": 312663,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-10.jpg",
+      "status": 200,
+      "bytes": 309630,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-11.jpg",
+      "status": 200,
+      "bytes": 286812,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-12.jpg",
+      "status": 200,
+      "bytes": 246225,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-13.jpg",
+      "status": 200,
+      "bytes": 208829,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-14.jpg",
+      "status": 200,
+      "bytes": 134204,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-15.jpg",
+      "status": 200,
+      "bytes": 131222,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-16.jpg",
+      "status": 200,
+      "bytes": 127494,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-17.jpg",
+      "status": 200,
+      "bytes": 126830,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-18.jpg",
+      "status": 200,
+      "bytes": 131894,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-evidence-19.jpg",
+      "status": 200,
+      "bytes": 139674,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-findings.json",
+      "status": 200,
+      "bytes": 22086,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-four-glyphs.png",
+      "status": 200,
+      "bytes": 560626,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-four-glyphs.svg",
+      "status": 200,
+      "bytes": 293480,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-screen-excerpt-silent.mp4",
+      "status": 200,
+      "bytes": 16130198,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-study.zip",
+      "status": 200,
+      "bytes": 20856401,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/glyph22-viewer-checked.jpg",
+      "status": 200,
+      "bytes": 141802,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/index.html",
+      "status": 200,
+      "bytes": 307315,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/README.md",
+      "status": 200,
+      "bytes": 5223,
+      "match": true
+    },
+    {
+      "path": "issledovanie/xor-bitglyphs/index.html",
+      "status": 200,
+      "bytes": 206792,
+      "match": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 496691,
+      "match": true
+    },
+    {
+      "path": "Zerkalius-dnevnik.html",
+      "status": 200,
+      "bytes": 3092720,
+      "match": true
+    }
+  ]
+}
