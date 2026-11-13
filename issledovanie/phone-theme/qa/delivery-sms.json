@@ -1,0 +1,447 @@
+{
+  "commit": "8dcda9a787ced7fe465722be1c0b97a48a4d44a7",
+  "checkedAt": "2026-11-13T16:19:27.767Z",
+  "deployment": {
+    "id": 43461187284,
+    "url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/43461187284",
+    "status": "success"
+  },
+  "files": 62,
+  "matched": 62,
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1075320,
+      "sha256": "ac1034288c25971c0a32b248606f74dfae2fab6c3c71a5b277c71d9a725c8d6d",
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1416550,
+      "sha256": "c65bfa6761afff07b06f353d991c834e88038d0ae6ad3aad24de034c43a1c667",
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 940318,
+      "sha256": "3e3d9462cef3852a600e7cb51bf93202db708e7798f1c9c36e493c902eef07bc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-01.mp3",
+      "status": 200,
+      "bytes": 2896,
+      "sha256": "ba34197febb754c1d7ae520a7dcd732ad475ad0adae82a063a6c21a762f6dc96",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-01.wav",
+      "status": 200,
+      "bytes": 15920,
+      "sha256": "a16198673ee7136281ed1cd16fc02e0ad94046e5d8658db1e9649377a3de38cf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-02.mp3",
+      "status": 200,
+      "bytes": 3265,
+      "sha256": "530b8e16a8883fbba41583720f90cc9d839765f86af7b42fafc3515788827216",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-02.wav",
+      "status": 200,
+      "bytes": 18566,
+      "sha256": "4660098df17409d65a3030cafe614adde9fee4d44e9339d355c853b4f87afe99",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-03.mp3",
+      "status": 200,
+      "bytes": 3365,
+      "sha256": "8c36362417c1969c7e68100fa6a236d48e3e606293b6af0731e03bf90829e8e8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-03.wav",
+      "status": 200,
+      "bytes": 21212,
+      "sha256": "15a1e08479b9b11c6128914ccfdf7aeab6f745598edc69c1389b82f6469c072e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-04.mp3",
+      "status": 200,
+      "bytes": 3886,
+      "sha256": "af7eac0275ab97e83be30a43e811543a03c1cb480057f3e30c7ca7c8899e5a1c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-04.wav",
+      "status": 200,
+      "bytes": 24740,
+      "sha256": "f9b3b77b3e77398cdf74c81f7265ffee62509babc6df3eacd3b8c1c7421e5cdb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-05.mp3",
+      "status": 200,
+      "bytes": 5598,
+      "sha256": "9a8ffd180bff4f7638a796a9de7901207221cc7af387cf46ac01e6588e61e18f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-05.wav",
+      "status": 200,
+      "bytes": 37088,
+      "sha256": "a1d41f3786f47d322f888bb42331fd74c3ce5374a61a83db0d369a1ccbbef280",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-06.mp3",
+      "status": 200,
+      "bytes": 3108,
+      "sha256": "78819bbb6f0888faea73f2bce3e7b15600f9d13b3b9733111ee3924f36c9ef0c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-06.wav",
+      "status": 200,
+      "bytes": 16802,
+      "sha256": "2cf86b6afc781fdb297df13c21d311eb491a6b132688ca2100949d0730262287",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-07.mp3",
+      "status": 200,
+      "bytes": 3237,
+      "sha256": "fc4802a4a944d673064925deb8500585813b7fc97c571d34b492079a00136233",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-07.wav",
+      "status": 200,
+      "bytes": 19448,
+      "sha256": "999628d0e8aba00c689d6a9e434d7e2cae0503b7e29788caf20cb89c8cb792dd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-08.mp3",
+      "status": 200,
+      "bytes": 3653,
+      "sha256": "12667ba9f1f61e25189a1cb8fb0a6baf4e349bb5602c96c26bd8b0c7831a729c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-08.wav",
+      "status": 200,
+      "bytes": 22976,
+      "sha256": "1f188a08ea3aa8581fbb8cc432c2ed3ed734132910e50598b1bc18da147d78e5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-09.mp3",
+      "status": 200,
+      "bytes": 4150,
+      "sha256": "1b6d6d863ddf9db418ce9afb5aaf4d2d0924bbd38ad4707215bfafa4d2fd2e1e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-09.wav",
+      "status": 200,
+      "bytes": 26504,
+      "sha256": "a07308bed9057aac84c755f4e848dae7f39c74b890a8217992daf9d209214e86",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-10.mp3",
+      "status": 200,
+      "bytes": 6041,
+      "sha256": "262bf7d13dc2b9a622789a1877a8917842bc281169e928c766139aef7fca4eba",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-10.wav",
+      "status": 200,
+      "bytes": 40616,
+      "sha256": "9417374b6546be3af2ebb6aab73928a30ee1c66749ba95bd3893b10e1afd19ad",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-11.mp3",
+      "status": 200,
+      "bytes": 3162,
+      "sha256": "a1203136ffc7c9af34582bd6225ad501fd4a13a63a0646121145d58705dd68d6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-11.wav",
+      "status": 200,
+      "bytes": 17684,
+      "sha256": "822470a92deda08aa490101f0c0e0134c5ba277acc2f2dc6bcdbae68dfb31399",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-12.mp3",
+      "status": 200,
+      "bytes": 3368,
+      "sha256": "ec088be80fa9ab85faea61a062d19eb8bfdaf34cc8ebbe7c2d546ee3210df1a1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-12.wav",
+      "status": 200,
+      "bytes": 20330,
+      "sha256": "0d2928c3e0f4f5e807064b02c352373cf37858f7398c45906ebfafca7bb16d6e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-13.mp3",
+      "status": 200,
+      "bytes": 3843,
+      "sha256": "0fd7ba1c896f31be2ec5c029e82c973b9d763a8495677149fce9b57ba380d5f5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-13.wav",
+      "status": 200,
+      "bytes": 23858,
+      "sha256": "6fc2596273aad4ee528a4c9618b391cb833376fc4022a012727c1957f7dfbc90",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-14.mp3",
+      "status": 200,
+      "bytes": 4309,
+      "sha256": "fb82b628b26fa53e872a124841e07cd6d10e95cefc5356371e6617e95b3fcea9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-14.wav",
+      "status": 200,
+      "bytes": 27386,
+      "sha256": "4728bd75278240c4086a36103e4af70ebcc3897d2c5608799da2796eb21b12f5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-15.mp3",
+      "status": 200,
+      "bytes": 6297,
+      "sha256": "c2576efbf3d28c082358349c3ec6607c7d6462ee8c4d07ee0f0888d96b7764e5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-15.wav",
+      "status": 200,
+      "bytes": 44144,
+      "sha256": "d62af27597585203e19e5733494e53f3dcfeafc478431346bd50eaec844b4a96",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-16.mp3",
+      "status": 200,
+      "bytes": 3190,
+      "sha256": "b243ec03f83df7441f761bba515c7011afbb9c81b814624b326364d97a14c547",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-16.wav",
+      "status": 200,
+      "bytes": 18566,
+      "sha256": "079196a33048ffe36f3e68bfd80f3289b052a60ca04c40394bbf7164d75c1772",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-17.mp3",
+      "status": 200,
+      "bytes": 3683,
+      "sha256": "2bf8053af6a2cbff149cd1bb99c5066ad64d847deda4e23292995797c8d29226",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-17.wav",
+      "status": 200,
+      "bytes": 22094,
+      "sha256": "5803ee74f58213e7d055f09040f480e7e2a4396d87b3c8faa4a198e38097cbf9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-18.mp3",
+      "status": 200,
+      "bytes": 4027,
+      "sha256": "7daaa89cfdc271e20db99272e0fe85c2d18275a630b5928fa1e4ff2f3cb6201f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-18.wav",
+      "status": 200,
+      "bytes": 25622,
+      "sha256": "30da8d646ade125580bfd43b0f22e9231370e40a0ebbf1690e17f190bc0721ad",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-19.mp3",
+      "status": 200,
+      "bytes": 4230,
+      "sha256": "c8d4a5c2840b855e8babeb77cde6dea9e846c930c169a71a7fd674180cc92dae",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-19.wav",
+      "status": 200,
+      "bytes": 29150,
+      "sha256": "e6d76e2e508a7232c46961257f88d40c77c61089477f6cb22488fe2c8d955ee3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-20.mp3",
+      "status": 200,
+      "bytes": 6619,
+      "sha256": "2394600143946d683c80df817c036b040d68f46969206db511ae1e3effd73c75",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/audio/sms-20.wav",
+      "status": 200,
+      "bytes": 47672,
+      "sha256": "fdd96f3de6367b47ce71680626aee1f428306b52acf48c7d5c2fd47966367476",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/build-downloads.py",
+      "status": 200,
+      "bytes": 3267,
+      "sha256": "395e02cd1506649f3518844ba88aad8da5be47ada7ff782b15768b258b29ba62",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/build-page.py",
+      "status": 200,
+      "bytes": 16751,
+      "sha256": "0bb69ec72103ca9a44d4a4392699c910e91b6e1fd6faf3fe6321cdb8cfb27b79",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/DOWNLOADS.txt",
+      "status": 200,
+      "bytes": 2887,
+      "sha256": "20ea2bcbd332adb0900fbe120fd7b4faa2dda901692dea53df428c47220ec6dd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/manifest.json",
+      "status": 200,
+      "bytes": 1298,
+      "sha256": "3dc0e8b101031ec2c6f343f83a2264ba9d636c0655d4733ce87a49be31d22198",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-phone-theme.zip",
+      "status": 200,
+      "bytes": 40153905,
+      "sha256": "f2001ffb36fb2ddbf7105cd477302fb70585246d6409d549144b1be2e23866ba",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-sms.zip",
+      "status": 200,
+      "bytes": 501488,
+      "sha256": "30565ac13444bbe37ebd42c265496a07ac43e8b9368e5d52692041185d28fdfe",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/index.html",
+      "status": 200,
+      "bytes": 68153,
+      "sha256": "045577593a475404cb7bb721ab797bf708dde9a474a8b2f3a1132a3b0c0fcafd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/build-sms.cjs",
+      "status": 200,
+      "bytes": 5956,
+      "sha256": "7a06f5189c6034748598a0a8fef206f819f1276608e5a2e5ab14a6b2d6d44f64",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/check-sms.cjs",
+      "status": 200,
+      "bytes": 5799,
+      "sha256": "dab3022560d46fe6a8e9556be73fe5df0012f9cb66061e8fb14e8efbe55e51a0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/README-sms.md",
+      "status": 200,
+      "bytes": 4239,
+      "sha256": "7c7a4da7e276df7855d680cebb063e37271d6efd33afb054c921504adbf59ff7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/music/sms-checks.json",
+      "status": 200,
+      "bytes": 76374,
+      "sha256": "1bb98980f948d694d14e93d298918655801d497df2e1a9f261857706f1431180",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/check-sms-files.py",
+      "status": 200,
+      "bytes": 3183,
+      "sha256": "4872e750ced01d3428c4a800cc8ad25b544abaa85103d2623d0ca08ab356236a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/sms-browser.json",
+      "status": 200,
+      "bytes": 688,
+      "sha256": "b7ca02565b4883da8ede40fa3ce7f35bf1e41e4d92dd4c302ddc085d6fbb7c15",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/sms-desktop.png",
+      "status": 200,
+      "bytes": 74339,
+      "sha256": "2b1b036c74ef9b0b80fbe9a999684e1da3e009fe5ea294ccecaf0abe939cf01b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/sms-files.json",
+      "status": 200,
+      "bytes": 371,
+      "sha256": "7988ddf6a81055e7ca1afe2f1a6d8e2f24b41b64e4cd2afba032c98cd3379654",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/sms-mobile.png",
+      "status": 200,
+      "bytes": 32641,
+      "sha256": "da02888ad2371586d5cfba30e27a2b30b9b71edce28f641cd5c2086294008289",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/README.md",
+      "status": 200,
+      "bytes": 12075,
+      "sha256": "2d2dc68c7c5fae13e733ba481ac8febd3e4b0e659c1787ab6c875f5fa4506e2b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/sms.json",
+      "status": 200,
+      "bytes": 44027,
+      "sha256": "3cf7272410194920dbabf58a1d2fd77013c46f4d39462a9cb1975c7599c48fe3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 499811,
+      "sha256": "0dce3b1191a6bd1787bf003d7c3c03b77460cf056a6999b612825e97ebb34668",
+      "match": true
+    }
+  ]
+}
