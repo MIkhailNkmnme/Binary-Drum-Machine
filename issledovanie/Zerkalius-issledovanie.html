@@ -1,4 +1,4 @@
-<!-- Zerkalius Исследование — v0.112. Обзор шести клеточных и визуальных лабораторий: MCell, Golly, CelLab, Visions of Chaos, Hydra, NoteCraft. Центрирование Встык 2×2. Примеры Аниматрицы заполняют все 256 строк. Раздел 7.13: цвета цифр и совпадений из Excel. Раздел 7.12: примеры Аниматрицы из Excel. Раздел8: Xorrom и Музыкальный ковёр, воспроизводимое озвучивание битов.  Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
+<!-- Zerkalius Исследование — v0.113. Обзор шести клеточных и визуальных лабораторий: MCell, Golly, CelLab, Visions of Chaos, Hydra, NoteCraft. Центрирование Встык 2×2. Примеры Аниматрицы заполняют все 256 строк. Раздел 7.13: цвета цифр и совпадений из Excel. Раздел 7.12: примеры Аниматрицы из Excel. Раздел8: Xorrom и Музыкальный ковёр, воспроизводимое озвучивание битов.  Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
      законы и картинки. Страница-отчёт: считается не здесь — картинки собраны вне страницы по журналу Аниматрицы
      (35.49) тем же правилом волны, что в Code; те же выводы кратко записаны в борт-журнале (v0.090).
      v0.001: заведена 2026-09-24 по слову пользователя («картинки — в отдельную папку сайта и в индекс»).
@@ -78,7 +78,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Исследования · v0.112</title>
+<title>Zerkalius Исследования · v0.113</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --dn:#ffcf6b; --mem:#ff5d5d; --pink:#ff8a8a; --gold:#ffcc00; }
@@ -225,6 +225,7 @@
     #viewer .bar button{ font-size:15px; padding:7px 12px; }
   }
 </style>
+<script defer src="pendulum-music/page.js?v=1"></script>
 </head>
 <body>
 <div class="wrap">
@@ -243,7 +244,7 @@
 </div>
 <div class="novoe">
   <div><p class="sub nv-h">Новое:</p>
-  <ol><li><a href="#excel-vstyk-2x2">7.14. Встык 2 × 2</a> <span>11.11.2026</span></li><li><a href="#excel-colours">7.13. Цвета клеток и совпадений из Excel</a> <span>11.11.2026</span></li><li><a href="#excel-animatrix">7.12. Аниматрица из Excel: девять построений</a> <span>10.11.2026</span></li><li><a href="#xorrom-music-carpet">8.1. Xorrom: от битового поля к музыке</a> <span>03.11.2026</span></li><li><a href="#zerkalno-dvoichny-ekran">7.10. Зеркально-двоичный экран: возникающие образы</a> <span>27.10.2026</span></li><li><a href="#mayatnik-1093-places">7.9. Маятник: найденная карта 1093 мест и сроки жизни</a> <span>27.10.2026</span></li><li><a href="#mayatnik-auto-axes">7.8. Маятник: автооси между нулевыми треугольниками</a> <span>27.10.2026</span></li><li><a href="#serpinski-pikseli">7.7. Серпинский: увеличение и наложение</a> <span>23.10.2026</span></li><li><a href="#tochka-os-1">7.6. Маятник: раскраска по Точке Оси — вариант 1</a> <span>21.10.2026</span></li><li><a href="#mayatnik-boka">7.5. Маятник: одинаковые узоры по бокам по всей длине</a> <span>20.10.2026</span></li><li><a href="#mayatnik-zerkala">7.4. Маятник: подсветка, зеркало в чёрных треугольниках и застывшая зона</a> <span>17.10.2026</span></li></ol></div>
+  <ol><li><a href="#pendulum-scores">8.2. Маятники, мелодии и картины</a> <span>13.11.2026</span></li><li><a href="#excel-vstyk-2x2">7.14. Встык 2 × 2</a> <span>11.11.2026</span></li><li><a href="#excel-colours">7.13. Цвета клеток и совпадений из Excel</a> <span>11.11.2026</span></li><li><a href="#excel-animatrix">7.12. Аниматрица из Excel: девять построений</a> <span>10.11.2026</span></li><li><a href="#xorrom-music-carpet">8.1. Xorrom: от битового поля к музыке</a> <span>03.11.2026</span></li><li><a href="#zerkalno-dvoichny-ekran">7.10. Зеркально-двоичный экран: возникающие образы</a> <span>27.10.2026</span></li><li><a href="#mayatnik-1093-places">7.9. Маятник: найденная карта 1093 мест и сроки жизни</a> <span>27.10.2026</span></li><li><a href="#mayatnik-auto-axes">7.8. Маятник: автооси между нулевыми треугольниками</a> <span>27.10.2026</span></li><li><a href="#serpinski-pikseli">7.7. Серпинский: увеличение и наложение</a> <span>23.10.2026</span></li><li><a href="#tochka-os-1">7.6. Маятник: раскраска по Точке Оси — вариант 1</a> <span>21.10.2026</span></li><li><a href="#mayatnik-boka">7.5. Маятник: одинаковые узоры по бокам по всей длине</a> <span>20.10.2026</span></li><li><a href="#mayatnik-zerkala">7.4. Маятник: подсветка, зеркало в чёрных треугольниках и застывшая зона</a> <span>17.10.2026</span></li></ol></div>
   <div class="nv-pic"><a class="nv-image-link" href="#mayatnik-1093-places" title="7.9. Маятник: найденная карта 1093 мест и сроки жизни"><img src="mayatnik-1093-places/all-1093-places.svg" alt="Предоставленная пользователем карта всех 1093 исходных мест треугольных пустот"></a><video class="nv-video" controls playsinline muted loop preload="metadata" hidden></video></div>
 </div>
 
@@ -289,9 +290,9 @@
   <ol><li><a href="#mayatnik-ekran"><i>7.1</i>Claude: что показывает экран — оси, лица A/B и баланс 0/1</a></li><li><a href="#mayatnik-balans"><i>7.2</i>Claude: баланс 0 и 1, заливка, красный треугольник и лужи на плечах</a></li><li><a href="#horrorius-neizmennye"><i>7.3</i>Claude: что не меняется, когда Хоррориус растёт</a></li><li><a href="#mayatnik-zerkala"><i>7.4</i>Маятник: подсветка, зеркало в чёрных треугольниках и застывшая зона</a></li><li><a href="#mayatnik-boka"><i>7.5</i>Маятник: одинаковые узоры по бокам по всей длине</a></li><li><a href="#tochka-os-1"><i>7.6</i>Маятник: раскраска по Точке Оси — вариант 1</a></li><li><a href="#serpinski-pikseli"><i>7.7</i>Серпинский: увеличение и наложение</a></li><li><a href="#mayatnik-auto-axes"><i>7.8</i>Маятник: автооси между нулевыми треугольниками</a></li><li><a href="#mayatnik-1093-places"><i>7.9</i>Маятник: найденная карта 1093 мест и сроки жизни</a></li><li><a href="#zerkalno-dvoichny-ekran"><i>7.10</i>Зеркально-двоичный экран: возникающие образы</a></li><li><a href="#xor-walk-observations"><i>7.11</i>Ход XOR: треугольные структуры, записи и проход через0</a></li><li><a href="#excel-animatrix"><i>7.12</i>Аниматрица из Excel: девять построений</a></li><li><a href="#excel-colours"><i>7.13</i>Цвета клеток и совпадений из Excel</a></li><li><a href="#excel-vstyk-2x2"><i>7.14</i>Встык 2 × 2</a></li></ol>
 </section>
 <section class="tema">
-  <a class="tema-h" href="#tema-8"><b><i class="tn">8</i>Музыка из битов</b><span>Xorrom, RGB, рисунок как партитура, четыре записи и синхронная подсветка</span></a>
+  <a class="tema-h" href="#tema-8"><b><i class="tn">8</i>Музыка из битов</b><span>Xorrom и Синтез: партитуры, маятники A/B, музыкальная основа и синхронные видео</span></a>
   <div class="tema-pics"><a href="#xorrom-music-carpet" title="8.1 Xorrom и Музыкальный ковёр"><img src="../mayatnik/audio-examples/source-field.svg" alt="Исходное XOR-поле четырёх музыкальных примеров" width="285" height="128" loading="lazy"></a></div>
-  <ol><li><a href="#xorrom-music-carpet"><i>8.1</i>Xorrom: от битового поля к музыке</a></li></ol>
+  <ol><li><a href="#xorrom-music-carpet"><i>8.1</i>Xorrom: от битового поля к музыке</a></li><li><a href="#pendulum-scores"><i>8.2</i>Маятники, мелодии и картины: что зависит от битов</a></li></ol>
 </section>
 </div>
 </nav>
@@ -1734,6 +1735,7 @@ const result = A.analyze(f, {minHeight: 4});
 </section>
 
 <h2 class="tema-title" id="tema-8">8. Музыка из битов</h2>
+<p><a href="#pendulum-scores">Новое: два видео Синтеза и сравнение мелодий с основой без поля</a>.</p>
 <h2 id="xorrom-music-carpet"><span class="n">8.1</span>Xorrom: от битового поля к музыке</h2>
 <p class="sub"><b>03.11.2026 · воспроизводимый опыт</b> · Маятник 0.868 · Музыкальный ковёр 0.002</p>
 <p>Один и тот же рисунок может звучать по-разному. В этом опыте сохранён один исходный кадр Маятника: <b>128 строк, кадр31, ширина285 клеток</b>. Меняются музыкальные правила, а не исходные биты. Четыре записи ниже показывают влияние выбора нот, ритма, тембра и второй партии.</p>
@@ -1761,6 +1763,15 @@ const result = A.analyze(f, {minHeight: 4});
 <p>В Библиотеке → Музыка нажмите «Применить», затем «Старт» в Xorrom. Файл кадра содержит исходное поле и настройки; музыкальный JSON из42полей содержит настройки и сам по себе не заменяет поле. В ковре щелчок или протяжка по рисунку выбирает строку, ↑/↓ меняют её, Home/End переходят к первой/последней; на паузе перемотка не включает звук.</p>
 <p>Все четыре исходных кадра и их восстановление проверены в браузере. Проверки подсветки охватили352события строк четырёх партитур, включая усечение времени. Для четырёхMP4 проверены полное декодирование, переход к концу и12декодированных кадров: подсвеченные клетки совпадают с настоящими единицами. Формат видео —1280×720,30кадров/с. Браузерные пуск, пауза и перемотка подтверждены. Эти проверки устанавливают соответствие данных и воспроизведения; художественную оценку музыки они не заменяют.</p>
 <p class="sub">Исходники: <a href="../mayatnik/mayatnik-xorrom.js">аудиоядро и scoreTimeline</a> · <a href="../mayatnik/mayatnik-xorrom-visual.js">подсветка реальных битов</a> · <a href="../mayatnik/audio-examples/build-video.cjs">сборка видео</a> · <a href="../mayatnik/music-carpet/page.js">проигрыватель ковра</a>. История выпуска — <a href="../Zerkalius-dnevnik.html#music-carpet">в борт-журнале</a>.</p>
+
+
+<h2 id="pendulum-scores"><span class="n">8.2</span>Маятники, мелодии и картины</h2>
+<p>В Синтезе0.006 два точных маятника A/B соединяются через XOR или OR. Музыка использует заранее сочинённые гармонию, мотив и ритм; данные полей меняют отдельные высоты, акценты, панораму и дополнительные басовые ноты. Даже при пустом поле остаётся узнаваемая основа. Это проверено подменой входов при тех же настройках.</p>
+<p><a href="pendulum-music/"><b>Открыть полное исследование: видео, оригиналы и основа без поля</b></a> · <a href="../mayatnik/synthesis-gallery.html">Все семь картин</a> · <a href="../mayatnik/synthesis-instruction.html#plan">План и логика Синтеза</a>.</p>
+<figure><video controls playsinline preload="none" width="960" style="display:block;width:100%;height:auto" poster="../mayatnik/synthesis-album/pendulum-drive-cover.jpg" aria-label="Маятниковый привод: синхронные треугольники и музыка"><source src="../mayatnik/synthesis-album/pendulum-drive.mp4" type="video/mp4"></video><figcaption>«Маятниковый привод» · 128 BPM · 1:04. Обычный A и обратный B в темпах2:3; отражение, сдвиг и XOR. Поле меняет88 высот и добавляет32 басовых события по сравнению с пустым контролем.</figcaption></figure>
+<figure><video controls playsinline preload="none" width="960" style="display:block;width:100%;height:auto" poster="../mayatnik/synthesis-album/two-shores-canon-cover.jpg" aria-label="Канон двух берегов: синхронные треугольники и музыка"><source src="../mayatnik/synthesis-album/two-shores-canon.mp4" type="video/mp4"></video><figcaption>«Канон двух берегов» · 84 BPM · около1:13. Встречные маятники1:1, отражение/сдвиг B и OR.39 высот отличаются от основы. «Канон» — название произведения, не буквальная имитационная форма.</figcaption></figure>
+<p>Каждая шестнадцатая соответствует одному шагу Синтеза. Видео показывает собственные A/B и результат каждого трека, а на добавленном финальном аккорде удерживает последний рисунок. Формат1920×1080/30fps; проверены12 декодированных кадров, длительности и соответствие звука исходным WAV. Картины «Северное течение» и «Две реки» — отдельные состояния этих же опытов. Пять остальных работ доступны в галерее.</p>
+<p class="sub"><a href="pendulum-music/#mapping">Точная таблица взаимодействий</a> · <a href="pendulum-music/#experiment">Численная проверка</a> · <a href="../mayatnik/synthesis-album/video-sync.json">Время и параметры видео</a>. Остальные инструменты Xorrom и предыдущие исследования сохраняются отдельно.</p>
 
 </section>
 </div>

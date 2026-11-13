@@ -1,0 +1,974 @@
+[
+  {
+    "file": "pendulum-drive",
+    "title": "Маятниковый привод",
+    "options": {
+      "style": "techno",
+      "tempo": 128,
+      "volume": 0.62,
+      "root": 48,
+      "scale": "minor",
+      "density": 4
+    },
+    "steps": 512,
+    "seconds": 64,
+    "events": 897,
+    "work": "northern-current",
+    "cadence": [
+      {
+        "beat": 128,
+        "duration": 2.4,
+        "midi": 48,
+        "velocity": 0.4,
+        "voice": "strings",
+        "pan": -0.35
+      },
+      {
+        "beat": 128,
+        "duration": 2.4,
+        "midi": 55,
+        "velocity": 0.4,
+        "voice": "strings",
+        "pan": 0
+      },
+      {
+        "beat": 128,
+        "duration": 2.4,
+        "midi": 60,
+        "velocity": 0.4,
+        "voice": "strings",
+        "pan": 0.25
+      }
+    ],
+    "midiMatches": true,
+    "wavMatches": true,
+    "summary": {
+      "empty": {
+        "all": {
+          "matched": 865,
+          "realOnly": 32,
+          "controlOnly": 0,
+          "midi": 88,
+          "velocity": 862,
+          "pan": 186,
+          "duration": 0,
+          "unchanged": 3,
+          "maxDelta": {
+            "midi": 12,
+            "velocity": 0.2389062168123574,
+            "pan": 0.06027436539808573,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "kick": {
+            "matched": 120,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 120,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.12095123664460794,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "bass": {
+            "matched": 240,
+            "realOnly": 32,
+            "controlOnly": 0,
+            "midi": 32,
+            "velocity": 240,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 12,
+              "velocity": 0.11862470388780033,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "lead": {
+            "matched": 186,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 56,
+            "velocity": 186,
+            "pan": 186,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.2389062168123574,
+              "pan": 0.06027436539808573,
+              "duration": 0
+            }
+          },
+          "hat": {
+            "matched": 212,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 212,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.11349456290343196,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "snare": {
+            "matched": 72,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 72,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.09187517728251238,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 35,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 32,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 3,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.053218544123627476,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      },
+      "zero": {
+        "all": {
+          "matched": 865,
+          "realOnly": 32,
+          "controlOnly": 0,
+          "midi": 88,
+          "velocity": 862,
+          "pan": 186,
+          "duration": 0,
+          "unchanged": 3,
+          "maxDelta": {
+            "midi": 12,
+            "velocity": 0.2389062168123574,
+            "pan": 0.06027436539808573,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "kick": {
+            "matched": 120,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 120,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.12095123664460794,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "bass": {
+            "matched": 240,
+            "realOnly": 32,
+            "controlOnly": 0,
+            "midi": 32,
+            "velocity": 240,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 12,
+              "velocity": 0.11862470388780033,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "lead": {
+            "matched": 186,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 56,
+            "velocity": 186,
+            "pan": 186,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.2389062168123574,
+              "pan": 0.06027436539808573,
+              "duration": 0
+            }
+          },
+          "hat": {
+            "matched": 212,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 212,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.11349456290343196,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "snare": {
+            "matched": 72,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 72,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.09187517728251238,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 35,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 32,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 3,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.053218544123627476,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      },
+      "ones": {
+        "all": {
+          "matched": 897,
+          "realOnly": 0,
+          "controlOnly": 0,
+          "midi": 64,
+          "velocity": 894,
+          "pan": 186,
+          "duration": 0,
+          "unchanged": 3,
+          "maxDelta": {
+            "midi": 2,
+            "velocity": 0.27357845203488373,
+            "pan": 0.06027436539808573,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "kick": {
+            "matched": 120,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 120,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.13966933139534876,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "bass": {
+            "matched": 272,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 272,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.27357845203488373,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "lead": {
+            "matched": 186,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 64,
+            "velocity": 186,
+            "pan": 186,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.19254972205644527,
+              "pan": 0.06027436539808573,
+              "duration": 0
+            }
+          },
+          "hat": {
+            "matched": 212,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 212,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.052694562903431996,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "snare": {
+            "matched": 72,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 72,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.07563878160919535,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 35,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 32,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 3,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.06145450581395345,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      },
+      "other": {
+        "all": {
+          "matched": 897,
+          "realOnly": 0,
+          "controlOnly": 0,
+          "midi": 63,
+          "velocity": 894,
+          "pan": 186,
+          "duration": 0,
+          "unchanged": 3,
+          "maxDelta": {
+            "midi": 2,
+            "velocity": 0.14634894270290166,
+            "pan": 0.0520798697485329,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "kick": {
+            "matched": 120,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 120,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.0715482832713702,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "bass": {
+            "matched": 272,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 272,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.07048644767007328,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "lead": {
+            "matched": 186,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 63,
+            "velocity": 186,
+            "pan": 186,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.14634894270290166,
+              "pan": 0.0520798697485329,
+              "duration": 0
+            }
+          },
+          "hat": {
+            "matched": 212,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 212,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.06104251153187856,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "snare": {
+            "matched": 72,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 72,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.05551825543626865,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 35,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 32,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 3,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.03148124463940288,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      },
+      "mirror": {
+        "all": {
+          "matched": 897,
+          "realOnly": 0,
+          "controlOnly": 0,
+          "midi": 3,
+          "velocity": 186,
+          "pan": 186,
+          "duration": 0,
+          "unchanged": 711,
+          "maxDelta": {
+            "midi": 2,
+            "velocity": 0.03157970584677783,
+            "pan": 0.12345646277909846,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "kick": {
+            "matched": 120,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 0,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 120,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "bass": {
+            "matched": 272,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 0,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 272,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "lead": {
+            "matched": 186,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 3,
+            "velocity": 186,
+            "pan": 186,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.03157970584677783,
+              "pan": 0.12345646277909846,
+              "duration": 0
+            }
+          },
+          "hat": {
+            "matched": 212,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 0,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 212,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "snare": {
+            "matched": 72,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 0,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 72,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0,
+              "pan": 0,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 35,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 0,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 35,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      }
+    },
+    "pitchExample": {
+      "tick": 35,
+      "seconds": 4.1015625,
+      "real": {
+        "beat": 8.75,
+        "duration": 0.27,
+        "midi": 68,
+        "velocity": 0.665562915695163,
+        "voice": "lead",
+        "pan": -0.04126767845845495
+      },
+      "empty": {
+        "beat": 8.75,
+        "duration": 0.27,
+        "midi": 67,
+        "velocity": 0.42930000000000007,
+        "voice": "lead",
+        "pan": 0
+      }
+    }
+  },
+  {
+    "file": "two-shores-canon",
+    "title": "Канон двух берегов",
+    "options": {
+      "style": "classic",
+      "tempo": 84,
+      "volume": 0.62,
+      "root": 50,
+      "scale": "major",
+      "density": 3
+    },
+    "steps": 384,
+    "seconds": 72.57142857142857,
+    "events": 387,
+    "work": "two-rivers",
+    "cadence": [
+      {
+        "beat": 96,
+        "duration": 2.4,
+        "midi": 50,
+        "velocity": 0.4,
+        "voice": "piano",
+        "pan": -0.35
+      },
+      {
+        "beat": 96,
+        "duration": 2.4,
+        "midi": 57,
+        "velocity": 0.4,
+        "voice": "piano",
+        "pan": 0
+      },
+      {
+        "beat": 96,
+        "duration": 2.4,
+        "midi": 62,
+        "velocity": 0.4,
+        "voice": "piano",
+        "pan": 0.25
+      }
+    ],
+    "midiMatches": true,
+    "wavMatches": true,
+    "summary": {
+      "empty": {
+        "all": {
+          "matched": 387,
+          "realOnly": 0,
+          "controlOnly": 0,
+          "midi": 39,
+          "velocity": 384,
+          "pan": 144,
+          "duration": 0,
+          "unchanged": 3,
+          "maxDelta": {
+            "midi": 2,
+            "velocity": 0.3416985638384794,
+            "pan": 0.028269821681986246,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "piano": {
+            "matched": 339,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 39,
+            "velocity": 336,
+            "pan": 144,
+            "duration": 0,
+            "unchanged": 3,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.3416985638384794,
+              "pan": 0.028269821681986246,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 48,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 48,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.11573090660012719,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      },
+      "zero": {
+        "all": {
+          "matched": 387,
+          "realOnly": 0,
+          "controlOnly": 0,
+          "midi": 39,
+          "velocity": 384,
+          "pan": 144,
+          "duration": 0,
+          "unchanged": 3,
+          "maxDelta": {
+            "midi": 2,
+            "velocity": 0.3416985638384794,
+            "pan": 0.028269821681986246,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "piano": {
+            "matched": 339,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 39,
+            "velocity": 336,
+            "pan": 144,
+            "duration": 0,
+            "unchanged": 3,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.3416985638384794,
+              "pan": 0.028269821681986246,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 48,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 48,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.11573090660012719,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      },
+      "ones": {
+        "all": {
+          "matched": 387,
+          "realOnly": 0,
+          "controlOnly": 0,
+          "midi": 6,
+          "velocity": 384,
+          "pan": 144,
+          "duration": 0,
+          "unchanged": 3,
+          "maxDelta": {
+            "midi": 2,
+            "velocity": 0.21875836526726866,
+            "pan": 0.028269821681986246,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "piano": {
+            "matched": 339,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 6,
+            "velocity": 336,
+            "pan": 144,
+            "duration": 0,
+            "unchanged": 3,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.21875836526726866,
+              "pan": 0.028269821681986246,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 48,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 48,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.07962497925311196,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      },
+      "other": {
+        "all": {
+          "matched": 387,
+          "realOnly": 0,
+          "controlOnly": 0,
+          "midi": 24,
+          "velocity": 384,
+          "pan": 144,
+          "duration": 0,
+          "unchanged": 3,
+          "maxDelta": {
+            "midi": 2,
+            "velocity": 0.16650663734569215,
+            "pan": 0.0520798697485329,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "piano": {
+            "matched": 339,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 24,
+            "velocity": 336,
+            "pan": 144,
+            "duration": 0,
+            "unchanged": 3,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.16650663734569215,
+              "pan": 0.0520798697485329,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 48,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 48,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 0,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0.04435993562824958,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      },
+      "mirror": {
+        "all": {
+          "matched": 387,
+          "realOnly": 0,
+          "controlOnly": 0,
+          "midi": 3,
+          "velocity": 144,
+          "pan": 144,
+          "duration": 0,
+          "unchanged": 243,
+          "maxDelta": {
+            "midi": 2,
+            "velocity": 0.04594574771582216,
+            "pan": 0.06247223208875124,
+            "duration": 0
+          }
+        },
+        "byVoice": {
+          "piano": {
+            "matched": 339,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 3,
+            "velocity": 144,
+            "pan": 144,
+            "duration": 0,
+            "unchanged": 195,
+            "maxDelta": {
+              "midi": 2,
+              "velocity": 0.04594574771582216,
+              "pan": 0.06247223208875124,
+              "duration": 0
+            }
+          },
+          "strings": {
+            "matched": 48,
+            "realOnly": 0,
+            "controlOnly": 0,
+            "midi": 0,
+            "velocity": 0,
+            "pan": 0,
+            "duration": 0,
+            "unchanged": 48,
+            "maxDelta": {
+              "midi": 0,
+              "velocity": 0,
+              "pan": 0,
+              "duration": 0
+            }
+          }
+        }
+      }
+    },
+    "pitchExample": {
+      "tick": 22,
+      "seconds": 3.9285714285714284,
+      "real": {
+        "beat": 5.5,
+        "duration": 0.34,
+        "midi": 79,
+        "velocity": 0.773836832156961,
+        "voice": "piano",
+        "pan": -0.023526332697187017
+      },
+      "empty": {
+        "beat": 5.5,
+        "duration": 0.34,
+        "midi": 78,
+        "velocity": 0.5346000000000001,
+        "voice": "piano",
+        "pan": 0
+      }
+    }
+  }
+]

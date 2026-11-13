@@ -1,0 +1,166 @@
+[
+  {
+    "title": "Маятниковый привод",
+    "file": "pendulum-drive-base.mp3",
+    "original": "pendulum-drive.mp3",
+    "field": {
+      "width": 385,
+      "height": 128,
+      "value": -1,
+      "operands": [
+        "a",
+        "b",
+        "result"
+      ]
+    },
+    "options": {
+      "style": "techno",
+      "tempo": 128,
+      "volume": 0.62,
+      "root": 48,
+      "scale": "minor",
+      "density": 4
+    },
+    "steps": 512,
+    "seconds": 64,
+    "events": 865,
+    "cadence": [
+      {
+        "beat": 128,
+        "duration": 2.4,
+        "midi": 48,
+        "velocity": 0.4,
+        "voice": "strings",
+        "pan": -0.35
+      },
+      {
+        "beat": 128,
+        "duration": 2.4,
+        "midi": 55,
+        "velocity": 0.4,
+        "voice": "strings",
+        "pan": 0
+      },
+      {
+        "beat": 128,
+        "duration": 2.4,
+        "midi": 60,
+        "velocity": 0.4,
+        "voice": "strings",
+        "pan": 0.25
+      }
+    ],
+    "mp3Encoding": [
+      "-c:a",
+      "libmp3lame",
+      "-q:a",
+      "2"
+    ],
+    "normalization": false,
+    "originalMp3ReencodedByteForByte": true,
+    "originalChecksums": {
+      "wav": "68038587376b9d9b44868140611ed93355d4af72e30a440ec13fda734d3cc789",
+      "mp3": "d1c685e148d286a18cb95f83013e2fea5444a3abb7da7c26ed1c91f83397c2b9"
+    },
+    "base": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 2,
+          "duration": "64.000000",
+          "bit_rate": "142500"
+        }
+      ],
+      "format": {
+        "duration": "64.000000",
+        "bit_rate": "142578"
+      },
+      "sha256": "dee206f2e158ea14543d54d3815f89d70cef5f3f104650e4ef04fe7f08e122de"
+    }
+  },
+  {
+    "title": "Канон двух берегов",
+    "file": "two-shores-canon-base.mp3",
+    "original": "two-shores-canon.mp3",
+    "field": {
+      "width": 385,
+      "height": 128,
+      "value": -1,
+      "operands": [
+        "a",
+        "b",
+        "result"
+      ]
+    },
+    "options": {
+      "style": "classic",
+      "tempo": 84,
+      "volume": 0.62,
+      "root": 50,
+      "scale": "major",
+      "density": 3
+    },
+    "steps": 384,
+    "seconds": 72.57142857142857,
+    "events": 387,
+    "cadence": [
+      {
+        "beat": 96,
+        "duration": 2.4,
+        "midi": 50,
+        "velocity": 0.4,
+        "voice": "piano",
+        "pan": -0.35
+      },
+      {
+        "beat": 96,
+        "duration": 2.4,
+        "midi": 57,
+        "velocity": 0.4,
+        "voice": "piano",
+        "pan": 0
+      },
+      {
+        "beat": 96,
+        "duration": 2.4,
+        "midi": 62,
+        "velocity": 0.4,
+        "voice": "piano",
+        "pan": 0.25
+      }
+    ],
+    "mp3Encoding": [
+      "-c:a",
+      "libmp3lame",
+      "-q:a",
+      "2"
+    ],
+    "normalization": false,
+    "originalMp3ReencodedByteForByte": true,
+    "originalChecksums": {
+      "wav": "34e6db70250f662c1d364b01a80b5a6061dc42ac76f33dc79994f2c2356ebcfa",
+      "mp3": "1cd471eea135646abe50938ad5311b3f35bf377458cd43155818d4703219706e"
+    },
+    "base": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 2,
+          "duration": "72.571429",
+          "bit_rate": "87148"
+        }
+      ],
+      "format": {
+        "duration": "72.571429",
+        "bit_rate": "87224"
+      },
+      "sha256": "02b4ee367e7abbf1fbadb9fee7a584d45588f0875c46619e0f56f8128bd5682f"
+    }
+  }
+]

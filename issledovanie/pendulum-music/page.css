@@ -1,0 +1,11 @@
+/* СИН-005 · built-in media controls and responsive research article. */
+video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#0b111c;border:1px solid var(--line);margin:20px 0}
+audio{display:block;width:100%;max-width:100%;margin:12px 0}
+.listening{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;margin:26px 0}
+.listening>div{background:var(--panel);padding:20px;min-width:0;border:1px solid var(--line)}
+h3{font-size:18px;font-weight:500;margin:0 0 12px;color:var(--gold)}
+.example,.flow{border-left:3px solid var(--gold);padding:14px 20px;background:var(--panel)}
+.flow{font-size:19px}
+code{overflow-wrap:anywhere;color:var(--gold)}
+#experiment table td,#experiment table th{width:auto}
+@media(max-width:680px){.listening{grid-template-columns:minmax(0,1fr);gap:12px}.listening>div{padding:16px}.flow{font-size:17px}video{margin:16px 0}}
