@@ -98,9 +98,9 @@
     for (const key of KEYS) out[key] = seed[key].slice();
     return out;
   }
-  const firstScanRow = s => s.algorithm === 'copyRows' ? 2 : 1;
-  function copyRowsCycleFrames(height, mirror, byAxis, wrap) {
-    if (wrap) return height - 1;
+  const firstScanRow = s => s.algorithm === 'copyRows' && !s.copyRowsGaps ? 2 : 1;
+  function copyRowsCycleFrames(height, mirror, byAxis, wrap, gaps) {
+    if (wrap || gaps) return height - 1;
     if (!mirror || byAxis) return height - 2;
     const lastAxis = Math.floor(height / 2);
     return lastAxis * (lastAxis - 1) / 2 + height - lastAxis - 1;
@@ -120,7 +120,8 @@
     if (s.algorithm === 'copyRows') {
       s.copyMarks ??= new Uint8Array(s.bits.length);
       s.copyMarks.fill(0);
-      s.copyAxis = 1;
+      s.copyAxis = s.copyRowsGaps ? (s.direction === 'up' ? s.height - 1.5 : 0.5) : 1;
+      if (s.copyRowsGaps && !s.done) s.cursorRow = s.direction === 'up' ? s.height - 2 : 1;
     }
     return s;
   }
@@ -130,14 +131,17 @@
     if (!DIRECTIONS.includes(direction)) throw new RangeError('Unknown direction');
     const excel = EXCEL[algorithm];
     const scan = !excel && (!!options.scan || algorithm === 'copyRows');
-    if (scan && direction !== 'down') throw new RangeError('Row scan supports down only');
+    const gaps = algorithm === 'copyRows' && options.copyRowsGaps === true;
+    if (scan && direction !== 'down' && !(gaps && direction === 'up')) throw new RangeError('Row scan supports down only');
     const initial = cloneSeed(seed), state = copySeed(initial);
     state.algorithm = algorithm; state.direction = direction; state.scan = scan;
-    state.copyRowsMirror = algorithm === 'copyRows' && options.copyRowsMirror === true;
-    state.copyRowsByAxis = state.copyRowsMirror && options.copyRowsByAxis === true;
-    state.copyRowsExcel = state.copyRowsByAxis && options.copyRowsExcel === true;
-    state.copyRowsWrap = state.copyRowsByAxis && !state.copyRowsExcel && options.copyRowsWrap === true;
-    if (state.copyRowsByAxis && !state.copyRowsWrap && !state.copyRowsExcel && options.copyRowsOriginalHeight)
+    state.copyRowsGaps = gaps;
+    if (gaps) state.copyRowsProtected = initial.present;
+    state.copyRowsMirror = gaps || algorithm === 'copyRows' && options.copyRowsMirror === true;
+    state.copyRowsByAxis = gaps || state.copyRowsMirror && options.copyRowsByAxis === true;
+    state.copyRowsExcel = !gaps && state.copyRowsByAxis && options.copyRowsExcel === true;
+    state.copyRowsWrap = !gaps && state.copyRowsByAxis && !state.copyRowsExcel && options.copyRowsWrap === true;
+    if (!gaps && state.copyRowsByAxis && !state.copyRowsWrap && !state.copyRowsExcel && options.copyRowsOriginalHeight)
       state.copyRowsOriginalHeight = options.copyRowsOriginalHeight;
     if (excel) {
       state.excelAnchor = options.excelAnchor ?? Math.floor((initial.width - 1) / 2);
@@ -159,6 +163,7 @@
       ...(s.excelCycleFrames ? { excelPhase: s.excelPhase, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly } : {}),
       ...(s.algorithm === 'excelCollision' ? { collisionFillEmpty: s.collisionFillEmpty } : {}),
       ...(s.interxorFound ? { interxorPatterns: s.interxorPatterns, interxorFound: s.interxorFound.slice() } : {}),
+      ...(s.copyRowsGaps ? { copyRowsGaps: true, copyRowsProtected: s.copyRowsProtected.slice() } : {}),
       ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel, copyRowsOriginalHeight: s.copyRowsOriginalHeight } : {}) });
   }
   function reset(s) {
@@ -171,6 +176,8 @@
   function forkInitial(s) {
     const state = copySeed(s._seed);
     Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel, copyRowsOriginalHeight: s.copyRowsOriginalHeight });
+    state.copyRowsGaps = s.copyRowsGaps;
+    if (s.copyRowsGaps) state.copyRowsProtected = s._seed.present;
     if (s.excelCycleFrames) Object.assign(state, { excelCycleFrames: s.excelCycleFrames, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly });
     if (s.algorithm === 'excelCollision') state.collisionFillEmpty = s.collisionFillEmpty;
     if (s.interxorPatterns) state.interxorPatterns = s.interxorPatterns;
@@ -181,6 +188,11 @@
   // Counters are excluded: they cannot affect the next transformation. Areas'
   // order is included because VBA processes overlapping Areas in that order.
   function sameState(a, b) {
+    if (!!a.copyRowsGaps !== !!b.copyRowsGaps) return false;
+    if (a.copyRowsGaps) {
+      if (a.direction !== b.direction || a.copyRowsProtected.length !== b.copyRowsProtected.length) return false;
+      for (let i = 0; i < a.copyRowsProtected.length; i++) if (a.copyRowsProtected[i] !== b.copyRowsProtected[i]) return false;
+    }
     if (a.width !== b.width || a.height !== b.height || a.cursorRow !== b.cursorRow ||
         a.done !== b.done || a.areas.length !== b.areas.length) return false;
     if (a.excelPhase !== undefined || b.excelPhase !== undefined) {
@@ -371,18 +383,19 @@
     return first - (y - groupStart);
   }
   function copyTargetAvailable(s, row, target) {
+    if (s.copyRowsGaps) return !s.copyRowsProtected[target];
     return s.present[target] || (s.copyRowsOriginalHeight && row >= s.copyRowsOriginalHeight);
   }
   function mergeCopyRow(s, sourceRow, y, capture, sourceBits = s.bits) {
     const width = s.width, from = sourceRow * width, to = y * width;
     capture(y);
-    // Reflected rows of the same parity share their column coordinates.
+    // Reflection keeps the column; a half-row axis crosses the two parities.
     for (let x = 0; x < width; x++) {
       const source = from + x, target = to + x;
       if (!s.present[source] || !copyTargetAvailable(s, y, target)) continue;
       if (!s.present[target]) {
         s.present[target] = 1;
-        s.copyRowsVisibleHeight = Math.max(s.copyRowsVisibleHeight, y + 1);
+        if (s.copyRowsOriginalHeight) s.copyRowsVisibleHeight = Math.max(s.copyRowsVisibleHeight, y + 1);
       }
       const bit = sourceBits[source];
       if (s.copyRowsExcel) {
@@ -403,12 +416,21 @@
     return s.present.subarray(start, start + s.width).includes(1);
   }
   function copyLastRow(s) {
+    if (s.copyRowsGaps) return s.direction === 'up' ? Math.max(0, 2 * s.copyAxis - s.height + 1) : Math.min(2 * s.copyAxis, s.height - 1);
     if (!s.copyRowsByAxis) return s.cursorRow;
     const axis = s.copyAxis;
     if (s.copyRowsExcel && !hasCopyRow(s, axis)) return axis;
     return s.copyRowsWrap || s.copyRowsOriginalHeight ? 2 * axis : Math.min(2 * axis, s.height - 1);
   }
   function visitCopyRows(s, last, visit) {
+    if (s.copyRowsGaps) {
+      const direction = s.direction === 'up' ? -1 : 1;
+      // Sources and destinations are on opposite sides of this half-row axis,
+      // so writes cannot become sources until the next frame.
+      for (let y = s.cursorRow; direction > 0 ? y <= last : y >= last; y += direction)
+        visit(2 * s.copyAxis - y, y);
+      return;
+    }
     if (!s.copyRowsByAxis) {
       visit(copySourceRow(s, last), last);
       return;
@@ -425,7 +447,7 @@
     }
   }
   function visitNextCopyCells(s, { left, right, top, bottom }, visit) {
-    if (s.algorithm !== 'copyRows' || s.height < 3 || left >= right || top >= bottom) return;
+    if (s.algorithm !== 'copyRows' || s.height < (s.copyRowsGaps ? 2 : 3) || left >= right || top >= bottom) return;
     visitCopyRows(s, copyLastRow(s), (sourceRow, targetRow) => {
       if ((sourceRow < top || sourceRow >= bottom) && (targetRow < top || targetRow >= bottom)) return;
       const from = sourceRow * s.width, to = targetRow * s.width;
@@ -435,7 +457,7 @@
     });
   }
   function scanCopyRows(s, capture) {
-    if (s.height < 3) { s.done = true; return; }
+    if (s.height < (s.copyRowsGaps ? 2 : 3)) { s.done = true; return; }
     const last = copyLastRow(s);
     // Wrapped destinations may also be sources for this frame.
     const sourceBits = last >= s.height ? s.bits.slice(0, s.copyAxis * s.width) : s.bits;
@@ -443,7 +465,14 @@
       mergeCopyRow(s, from, to, capture, sourceBits);
       s.rowCount++;
     });
-    if (s.copyRowsByAxis) {
+    if (s.copyRowsGaps) {
+      s.copyAxis += s.direction === 'up' ? -1 : 1;
+      if (s.copyAxis < 0 || s.copyAxis > s.height - 1) {
+        s.copyAxis = s.direction === 'up' ? s.height - 1.5 : 0.5;
+        s.cycle++;
+      }
+      s.cursorRow = s.direction === 'up' ? Math.floor(s.copyAxis) : Math.ceil(s.copyAxis);
+    } else if (s.copyRowsByAxis) {
       s.copyAxis++;
       if (s.copyAxis === (s.copyRowsOriginalHeight || s.height) - (s.copyRowsWrap ? 0 : 1)) { s.copyAxis = 1; s.cycle++; }
       s.cursorRow = s.copyRowsWrap ? wrapCopyRow(s.copyAxis + 1, s.height) : s.copyAxis + 1;
@@ -526,6 +555,7 @@
       cursorRow: s.cursorRow, cycle: s.cycle, bounds: bounds(s),...(changedCells?{changedCells}:{}) };
   }
   function visualChanged(s,before,i,j){
+    if(s.copyRowsGaps&&before.copyMarks&&s.copyMarks[i]!==before.copyMarks[j])return true;
     if(s.present[i]!==before.present[j]||s.filled[i]!==before.filled[j])return true;
     if(s.present[i]&&(s.bits[i]!==before.bits[j]||s.colours[i]!==before.colours[j]||
         s.bold[i]!==before.bold[j]||s.automatic[i]!==before.automatic[j]))return true;
@@ -545,7 +575,8 @@
     // Save each touched row once per call. A one-frame advance copies/compares
     // only the receiving row and previous selection row, never the whole field.
     const beforeRows = new Map();
-    const keys = s.algorithm === 'copyRows' && !s.trackChanges ? (s.copyRowsOriginalHeight ? ['bits', 'present'] : ['bits']) : KEYS;
+    const keys = s.copyRowsGaps ? (s.trackChanges ? [...KEYS, 'copyMarks'] : ['bits', 'present', 'copyMarks']) :
+      s.algorithm === 'copyRows' && !s.trackChanges ? (s.copyRowsOriginalHeight ? ['bits', 'present'] : ['bits']) : KEYS;
     const capture = row => {
       if (beforeRows.has(row)) return;
       const start = row * s.width, end = start + s.width, copy = {};
@@ -571,7 +602,8 @@
     }
     dirtyRows.sort((a, b) => a - b);
     return { changed, done: s.done, rows: s.rowCount, steps: s.stepCount,
-      cursorRow: s.cursorRow, cycle: s.cycle, bounds: areaBounds(s.areas), dirtyRows,...(changedCells?{changedCells}:{}) };
+      cursorRow: s.cursorRow, cycle: s.cycle, bounds: areaBounds(s.areas), dirtyRows,
+      ...(s.copyRowsGaps ? { copyRowsGaps: true, copyAxis: s.copyAxis } : {}),...(changedCells?{changedCells}:{}) };
   }
   function areaBounds(areas) {
     let selectedBounds = null;

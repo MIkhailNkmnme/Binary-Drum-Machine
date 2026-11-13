@@ -184,7 +184,7 @@
       next.animatrixFrameMax=restoreFrame(next,next.animatrixFrameMax);
       if(Number.isSafeInteger(next.invertFrame))next.invertFrame=restoreFrame(next,next.invertFrame);
       next.animatrixCopyRowsUnit='row';
-      if(next.animatrixCopyRowsLayout!==undefined&&!['mirror','mirrorByAxis','mirrorExtend','mirrorWrap','mirrorExcel'].includes(next.animatrixCopyRowsLayout))
+      if(next.animatrixCopyRowsLayout!==undefined&&!['mirror','mirrorByAxis','mirrorExtend','mirrorWrap','mirrorExcel','mirrorGaps'].includes(next.animatrixCopyRowsLayout))
         fail('Неизвестный порядок отражения строк Аниматрицы.');
       next.animatrixTiming='rows';
     }
@@ -200,28 +200,31 @@
       if(!Number.isSafeInteger(next.animatrixExcelDepth)||next.animatrixExcelDepth<1||next.animatrixExcelDepth>MAX_ROWS)
         fail('Глубина треугольника должна быть от 1 до 4096 строк.');
     }
-    if(next.animatrixTiming==='rows')next.animatrixDirection='down';
+    if(next.animatrixTiming==='rows'&&!(copyRowsGaps(next)&&next.animatrixDirection==='up'))next.animatrixDirection='down';
     if(active(next)){
       if(next.sequenceSourceOn||next.compareSource)fail('В Аниматрице одновременно включены разные источники поля.');
       assertSource(next.animatrixSource);
-      if(next.animatrixAlgorithm==='copyRows'&&!checked.get(next.animatrixSource).singleGrid)
+      if(next.animatrixAlgorithm==='copyRows'&&!copyRowsGaps(next)&&!checked.get(next.animatrixSource).singleGrid)
         fail('Для отражения строк возьмите поле с одной решёткой, например треугольник в виде «Встык».');
       if(next.rows!==undefined&&next.rows!==next.animatrixSource.height)fail('Число строк не совпадает с исходником Аниматрицы.');
     }
     return next;
   }
   function assertState(state){return normalize(state);}
+  const copyRowsGaps=state=>state.animatrixAlgorithm==='copyRows'&&state.animatrixCopyRowsLayout==='mirrorGaps';
   const copyRowsExtend=state=>state.animatrixAlgorithm==='copyRows'&&state.animatrixCopyRowsLayout==='mirrorExtend';
   const displayCapacity=(state,height)=>copyRowsExtend(state)?2*height-3:height;
   function geometry(state){const s=normalize(state),source=assertSource(s.animatrixSource);return {W:source.width,H:displayCapacity(s,source.height),anchor:source.anchor};}
   const unlimited=state=>!!state&&state.animatrixAlgorithm!=='excelCollision'&&['infinite','repeat'].includes(state.animatrixCycleMode);
-  const copyRowsByAxis=layout=>['mirrorByAxis','mirrorExtend','mirrorWrap','mirrorExcel'].includes(layout);
+  const copyRowsByAxis=layout=>['mirrorByAxis','mirrorExtend','mirrorWrap','mirrorExcel','mirrorGaps'].includes(layout);
   function excelOptions(source,algorithm,depth){
     return {algorithm,excelAnchor:source.anchor,excelDepth:depth};
   }
   function staggeredLayout(state){
     const {animatrixSource:source,animatrixAlgorithm:algorithm}=state;
     const record=checked.get(source)||checked.get(assertSource(source));
+    // Filled gaps occupy both phases even when the immutable source has one.
+    if(copyRowsGaps(state))return {phase:source.anchor&1,stride:1};
     record.staggeredLayouts??=new Map();
     if(record.staggeredLayouts.has(algorithm))return record.staggeredLayouts.get(algorithm);
     let phase=source.anchor&1, stride=1;
@@ -266,7 +269,7 @@
       if(!record.excelCycles.has(key))record.excelCycles.set(key,Core.excelCycleFrames(decode(source),options));
       return record.excelCycles.get(key);
     }
-    if(algorithm==='copyRows')return Core.copyRowsCycleFrames(source.height,!!layout,copyRowsByAxis(layout),layout==='mirrorWrap');
+    if(algorithm==='copyRows')return Core.copyRowsCycleFrames(source.height,!!layout,copyRowsByAxis(layout),layout==='mirrorWrap',layout==='mirrorGaps');
     return s.animatrixTiming==='rows'?source.height-1:source.height;
   }
   function frames(state){const s=normalize(state),cycle=cycleFrames(s);return unlimited(s)?Math.max(cycle,s.animatrixFrameMax):cycle*s.animatrixCycles;}
@@ -312,7 +315,7 @@
       excelColourChangesOnly:coneMode(s.animatrixAlgorithm)&&s.animatrixExcelColourChangesOnly!==false,
       collisionFillEmpty:s.animatrixCollisionFillEmpty,
       scan:s.animatrixTiming==='rows',copyRowsMirror:!!layout,copyRowsByAxis:copyRowsByAxis(layout),
-      copyRowsWrap:layout==='mirrorWrap',copyRowsExcel:layout==='mirrorExcel'});
+      copyRowsWrap:layout==='mirrorWrap',copyRowsExcel:layout==='mirrorExcel',copyRowsGaps:layout==='mirrorGaps'});
     engine.sourceFrame=0;
     Object.defineProperties(engine,{_sourceLimit:{value:unlimited(s)?Number.MAX_SAFE_INTEGER:frames(s)},_cycleFrames:{value:cycle},_cycleMode:{value:s.animatrixCycleMode},_repeat:{value:null,writable:true}});
     repeatReset(engine);return engine;
