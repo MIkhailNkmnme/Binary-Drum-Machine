@@ -1,0 +1,998 @@
+{
+  "commit": "5ef0a505",
+  "checkedAt": "2026-11-13T14:46:54.833Z",
+  "runs": [
+    {
+      "id": 43445665551,
+      "sha": "5ef0a505",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43445552690,
+      "sha": "790c8ab8",
+      "status": "completed",
+      "conclusion": "cancelled"
+    },
+    {
+      "id": 43437630186,
+      "sha": "fd16bfd8",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43437220911,
+      "sha": "fea94d31",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 43431893892,
+      "sha": "3ec6a30c",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1066991,
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1407426,
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 932143,
+      "match": true
+    },
+    {
+      "path": "РЕШЕНИЯ.md",
+      "status": 200,
+      "bytes": 237733,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/build-page.py",
+      "status": 200,
+      "bytes": 18270,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/curve-analysis.zip",
+      "status": 200,
+      "bytes": 7996217,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread.html",
+      "status": 200,
+      "bytes": 8032,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/index.html",
+      "status": 200,
+      "bytes": 20352,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/pixel-border-check.json",
+      "status": 200,
+      "bytes": 972,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/pixel-border-inspect.py",
+      "status": 200,
+      "bytes": 5787,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/pixel-border-source.png",
+      "status": 200,
+      "bytes": 818,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/pixel-borders.html",
+      "status": 200,
+      "bytes": 8802,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/pixel-subpixel-diagram.png",
+      "status": 200,
+      "bytes": 108141,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/pixel-subpixel-diagram.svg",
+      "status": 200,
+      "bytes": 9287,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/README.md",
+      "status": 200,
+      "bytes": 14983,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-atlas-checked.jpg",
+      "status": 200,
+      "bytes": 134724,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-01.svg",
+      "status": 200,
+      "bytes": 195251,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-02.svg",
+      "status": 200,
+      "bytes": 175420,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-03.svg",
+      "status": 200,
+      "bytes": 79106,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-04.svg",
+      "status": 200,
+      "bytes": 127490,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-05.svg",
+      "status": 200,
+      "bytes": 191679,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-06.svg",
+      "status": 200,
+      "bytes": 107918,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-07.svg",
+      "status": 200,
+      "bytes": 153374,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-08.svg",
+      "status": 200,
+      "bytes": 149883,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-09.svg",
+      "status": 200,
+      "bytes": 193595,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-10.svg",
+      "status": 200,
+      "bytes": 130798,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-11.svg",
+      "status": 200,
+      "bytes": 78114,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-12.svg",
+      "status": 200,
+      "bytes": 198663,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-13.svg",
+      "status": 200,
+      "bytes": 174695,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-14.svg",
+      "status": 200,
+      "bytes": 203077,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-15.svg",
+      "status": 200,
+      "bytes": 157909,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-16.svg",
+      "status": 200,
+      "bytes": 184385,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-17.svg",
+      "status": 200,
+      "bytes": 121507,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-18.svg",
+      "status": 200,
+      "bytes": 195251,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-frames/frame-19.svg",
+      "status": 200,
+      "bytes": 194051,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-publication-preflight.json",
+      "status": 200,
+      "bytes": 1987,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/find-routes.py",
+      "status": 200,
+      "bytes": 8792,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/README.md",
+      "status": 200,
+      "bytes": 7631,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/retry-batch.py",
+      "status": 200,
+      "bytes": 3154,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/reuse-isometries.py",
+      "status": 200,
+      "bytes": 3879,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/batch.json",
+      "status": 200,
+      "bytes": 1459844,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/first-pass-summary.json",
+      "status": 200,
+      "bytes": 16049,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-01-glyph-1.json",
+      "status": 200,
+      "bytes": 12616,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-01-glyph-2.json",
+      "status": 200,
+      "bytes": 12166,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-01-glyph-3.json",
+      "status": 200,
+      "bytes": 11182,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-01-glyph-4.json",
+      "status": 200,
+      "bytes": 11034,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-02-glyph-1.json",
+      "status": 200,
+      "bytes": 3862,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-02-glyph-2.json",
+      "status": 200,
+      "bytes": 12784,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-02-glyph-3.json",
+      "status": 200,
+      "bytes": 12797,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-02-glyph-4.json",
+      "status": 200,
+      "bytes": 11805,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-03-glyph-1.json",
+      "status": 200,
+      "bytes": 3477,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-03-glyph-2.json",
+      "status": 200,
+      "bytes": 3609,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-03-glyph-3.json",
+      "status": 200,
+      "bytes": 3493,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-03-glyph-4.json",
+      "status": 200,
+      "bytes": 11347,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-04-glyph-1.json",
+      "status": 200,
+      "bytes": 11339,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-04-glyph-2.json",
+      "status": 200,
+      "bytes": 12942,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-04-glyph-3.json",
+      "status": 200,
+      "bytes": 3807,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-04-glyph-4.json",
+      "status": 200,
+      "bytes": 3737,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-05-glyph-1.json",
+      "status": 200,
+      "bytes": 10106,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-05-glyph-2.json",
+      "status": 200,
+      "bytes": 13128,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-05-glyph-3.json",
+      "status": 200,
+      "bytes": 11453,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-05-glyph-4.json",
+      "status": 200,
+      "bytes": 12255,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-06-glyph-1.json",
+      "status": 200,
+      "bytes": 10469,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-06-glyph-2.json",
+      "status": 200,
+      "bytes": 3914,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-06-glyph-3.json",
+      "status": 200,
+      "bytes": 11262,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-06-glyph-4.json",
+      "status": 200,
+      "bytes": 3352,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-07-glyph-1.json",
+      "status": 200,
+      "bytes": 11001,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-07-glyph-2.json",
+      "status": 200,
+      "bytes": 11264,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-07-glyph-3.json",
+      "status": 200,
+      "bytes": 3356,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-07-glyph-4.json",
+      "status": 200,
+      "bytes": 11863,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-08-glyph-1.json",
+      "status": 200,
+      "bytes": 3194,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-08-glyph-2.json",
+      "status": 200,
+      "bytes": 12289,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-08-glyph-3.json",
+      "status": 200,
+      "bytes": 11153,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-08-glyph-4.json",
+      "status": 200,
+      "bytes": 11066,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-09-glyph-1.json",
+      "status": 200,
+      "bytes": 13275,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-09-glyph-2.json",
+      "status": 200,
+      "bytes": 10446,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-09-glyph-3.json",
+      "status": 200,
+      "bytes": 11610,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-09-glyph-4.json",
+      "status": 200,
+      "bytes": 11212,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-10-glyph-1.json",
+      "status": 200,
+      "bytes": 3751,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-10-glyph-2.json",
+      "status": 200,
+      "bytes": 3697,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-10-glyph-3.json",
+      "status": 200,
+      "bytes": 13064,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-10-glyph-4.json",
+      "status": 200,
+      "bytes": 11754,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-11-glyph-1.json",
+      "status": 200,
+      "bytes": 6885,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-11-glyph-2.json",
+      "status": 200,
+      "bytes": 7279,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-11-glyph-3.json",
+      "status": 200,
+      "bytes": 3268,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-11-glyph-4.json",
+      "status": 200,
+      "bytes": 11221,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-12-glyph-1.json",
+      "status": 200,
+      "bytes": 10595,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-12-glyph-2.json",
+      "status": 200,
+      "bytes": 13775,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-12-glyph-3.json",
+      "status": 200,
+      "bytes": 11736,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-12-glyph-4.json",
+      "status": 200,
+      "bytes": 11376,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-13-glyph-1.json",
+      "status": 200,
+      "bytes": 11283,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-13-glyph-2.json",
+      "status": 200,
+      "bytes": 12830,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-13-glyph-3.json",
+      "status": 200,
+      "bytes": 3716,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-13-glyph-4.json",
+      "status": 200,
+      "bytes": 12835,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-14-glyph-1.json",
+      "status": 200,
+      "bytes": 10500,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-14-glyph-2.json",
+      "status": 200,
+      "bytes": 13578,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-14-glyph-3.json",
+      "status": 200,
+      "bytes": 11489,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-14-glyph-4.json",
+      "status": 200,
+      "bytes": 11838,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-15-glyph-1.json",
+      "status": 200,
+      "bytes": 13268,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-15-glyph-2.json",
+      "status": 200,
+      "bytes": 10443,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-15-glyph-3.json",
+      "status": 200,
+      "bytes": 3523,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-15-glyph-4.json",
+      "status": 200,
+      "bytes": 11304,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-16-glyph-1.json",
+      "status": 200,
+      "bytes": 13772,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-16-glyph-2.json",
+      "status": 200,
+      "bytes": 13418,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-16-glyph-3.json",
+      "status": 200,
+      "bytes": 13325,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-16-glyph-4.json",
+      "status": 200,
+      "bytes": 3709,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-17-glyph-1.json",
+      "status": 200,
+      "bytes": 11938,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-17-glyph-2.json",
+      "status": 200,
+      "bytes": 3737,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-17-glyph-3.json",
+      "status": 200,
+      "bytes": 3528,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-17-glyph-4.json",
+      "status": 200,
+      "bytes": 11955,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-18-glyph-1.json",
+      "status": 200,
+      "bytes": 12722,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-18-glyph-2.json",
+      "status": 200,
+      "bytes": 12241,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-18-glyph-3.json",
+      "status": 200,
+      "bytes": 11154,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-18-glyph-4.json",
+      "status": 200,
+      "bytes": 11077,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-19-glyph-1.json",
+      "status": 200,
+      "bytes": 12703,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-19-glyph-2.json",
+      "status": 200,
+      "bytes": 12450,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-19-glyph-3.json",
+      "status": 200,
+      "bytes": 11273,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/routes/frame-19-glyph-4.json",
+      "status": 200,
+      "bytes": 11035,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-search/strict-user-glyph-route.json",
+      "status": 200,
+      "bytes": 13700,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-atlas.py",
+      "status": 200,
+      "bytes": 5527,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-batch-check.json",
+      "status": 200,
+      "bytes": 532389,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-batch.json",
+      "status": 200,
+      "bytes": 1459844,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-check.json",
+      "status": 200,
+      "bytes": 6479,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-check.py",
+      "status": 200,
+      "bytes": 3675,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-checked.jpg",
+      "status": 200,
+      "bytes": 102606,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-page.py",
+      "status": 200,
+      "bytes": 19993,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-render.py",
+      "status": 200,
+      "bytes": 3576,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-result.png",
+      "status": 200,
+      "bytes": 47227,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-route.json",
+      "status": 200,
+      "bytes": 13700,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread-route.mp4",
+      "status": 200,
+      "bytes": 218477,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread.html",
+      "status": 200,
+      "bytes": 17438,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-1.png",
+      "status": 200,
+      "bytes": 690,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-2.png",
+      "status": 200,
+      "bytes": 715,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-3.png",
+      "status": 200,
+      "bytes": 675,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-4.png",
+      "status": 200,
+      "bytes": 714,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-5.png",
+      "status": 200,
+      "bytes": 681,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-6.png",
+      "status": 200,
+      "bytes": 704,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-7.png",
+      "status": 200,
+      "bytes": 708,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-8.png",
+      "status": 200,
+      "bytes": 703,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digit-sheet.png",
+      "status": 200,
+      "bytes": 7547,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/digits.json",
+      "status": 200,
+      "bytes": 1115,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/frame-1.png",
+      "status": 200,
+      "bytes": 287616,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/frame-2.png",
+      "status": 200,
+      "bytes": 133829,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/frame-3.png",
+      "status": 200,
+      "bytes": 113020,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/frame-4.png",
+      "status": 200,
+      "bytes": 430510,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/frame-5.png",
+      "status": 200,
+      "bytes": 119618,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/frame-6.png",
+      "status": 200,
+      "bytes": 94846,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/frame-7.png",
+      "status": 200,
+      "bytes": 177044,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/frame-8.png",
+      "status": 200,
+      "bytes": 187220,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/README.md",
+      "status": 200,
+      "bytes": 1776,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/square-1.png",
+      "status": 200,
+      "bytes": 40881,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/square-2.png",
+      "status": 200,
+      "bytes": 44254,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/square-3.png",
+      "status": 200,
+      "bytes": 46330,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/square-4.png",
+      "status": 200,
+      "bytes": 33219,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/square-5.png",
+      "status": 200,
+      "bytes": 33845,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/square-6.png",
+      "status": 200,
+      "bytes": 24836,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/square-7.png",
+      "status": 200,
+      "bytes": 30057,
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-shrift/square-8.png",
+      "status": 200,
+      "bytes": 35544,
+      "match": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 498921,
+      "match": true
+    },
+    {
+      "path": "Zerkalius-dnevnik.html",
+      "status": 200,
+      "bytes": 3097598,
+      "match": true
+    }
+  ]
+}
