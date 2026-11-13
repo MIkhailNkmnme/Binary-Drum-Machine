@@ -1,0 +1,724 @@
+{
+  "sourceFile": "graphs.json",
+  "secondsPerVariant": 2.0,
+  "model": "Filled square cells at active nodes scaled2 and unit-edge midpoints. Paint even positions only; blanks do not erase. Eight-neighbour transitions; no direct H/V class change. No further bound on oriented turn angle. Every target cell painted once and every geometric segment used at most once.",
+  "results": [
+    {
+      "frame": 1,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 107,
+      "moves": 212,
+      "calls": 116,
+      "seconds": 0.019900500017683953,
+      "file": "frame-01-glyph-1.json"
+    },
+    {
+      "frame": 1,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 104,
+      "calls": 107,
+      "seconds": 2.0016442999767605,
+      "file": "frame-01-glyph-2.json"
+    },
+    {
+      "frame": 1,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 94,
+      "calls": 119,
+      "seconds": 2.001645299984375,
+      "file": "frame-01-glyph-3.json"
+    },
+    {
+      "frame": 1,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 92,
+      "moves": 182,
+      "calls": 92,
+      "seconds": 0.008050699980231002,
+      "file": "frame-01-glyph-4.json"
+    },
+    {
+      "frame": 2,
+      "slot": 1,
+      "status": "time_limit",
+      "targetCount": 112,
+      "calls": 144,
+      "seconds": 2.0017827000119723,
+      "file": "frame-02-glyph-1.json"
+    },
+    {
+      "frame": 2,
+      "slot": 2,
+      "status": "found",
+      "targetCount": 107,
+      "moves": 212,
+      "calls": 110,
+      "seconds": 0.014322200004244223,
+      "file": "frame-02-glyph-2.json"
+    },
+    {
+      "frame": 2,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 107,
+      "calls": 100000,
+      "seconds": 2.0084462000231724,
+      "file": "frame-02-glyph-3.json"
+    },
+    {
+      "frame": 2,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 99,
+      "calls": 7647,
+      "seconds": 2.0134457999956794,
+      "file": "frame-02-glyph-4.json"
+    },
+    {
+      "frame": 3,
+      "slot": 1,
+      "status": "time_limit",
+      "targetCount": 100,
+      "calls": 73000,
+      "seconds": 2.0093837000022177,
+      "file": "frame-03-glyph-1.json"
+    },
+    {
+      "frame": 3,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 105,
+      "calls": 106,
+      "seconds": 2.0020774000149686,
+      "file": "frame-03-glyph-2.json"
+    },
+    {
+      "frame": 3,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 101,
+      "calls": 106,
+      "seconds": 2.0021214000007603,
+      "file": "frame-03-glyph-3.json"
+    },
+    {
+      "frame": 3,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 95,
+      "moves": 188,
+      "calls": 107,
+      "seconds": 0.00835910000023432,
+      "file": "frame-03-glyph-4.json"
+    },
+    {
+      "frame": 4,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 94,
+      "moves": 186,
+      "calls": 101,
+      "seconds": 0.00740649999352172,
+      "file": "frame-04-glyph-1.json"
+    },
+    {
+      "frame": 4,
+      "slot": 2,
+      "status": "found",
+      "targetCount": 110,
+      "moves": 218,
+      "calls": 110,
+      "seconds": 0.011238999984925613,
+      "file": "frame-04-glyph-2.json"
+    },
+    {
+      "frame": 4,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 111,
+      "calls": 126,
+      "seconds": 2.001996600010898,
+      "file": "frame-04-glyph-3.json"
+    },
+    {
+      "frame": 4,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 109,
+      "calls": 110,
+      "seconds": 2.0019693999784067,
+      "file": "frame-04-glyph-4.json"
+    },
+    {
+      "frame": 5,
+      "slot": 1,
+      "status": "time_limit",
+      "targetCount": 84,
+      "calls": 103,
+      "seconds": 2.0016554000030737,
+      "file": "frame-05-glyph-1.json"
+    },
+    {
+      "frame": 5,
+      "slot": 2,
+      "status": "found",
+      "targetCount": 112,
+      "moves": 222,
+      "calls": 112,
+      "seconds": 0.016323999996529892,
+      "file": "frame-05-glyph-2.json"
+    },
+    {
+      "frame": 5,
+      "slot": 3,
+      "status": "found",
+      "targetCount": 96,
+      "moves": 190,
+      "calls": 103,
+      "seconds": 0.009391700004925951,
+      "file": "frame-05-glyph-3.json"
+    },
+    {
+      "frame": 5,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 103,
+      "calls": 118,
+      "seconds": 2.000286700000288,
+      "file": "frame-05-glyph-4.json"
+    },
+    {
+      "frame": 6,
+      "slot": 1,
+      "status": "time_limit",
+      "targetCount": 88,
+      "calls": 125,
+      "seconds": 2.000844899972435,
+      "file": "frame-06-glyph-1.json"
+    },
+    {
+      "frame": 6,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 115,
+      "calls": 115,
+      "seconds": 2.0025330999924336,
+      "file": "frame-06-glyph-2.json"
+    },
+    {
+      "frame": 6,
+      "slot": 3,
+      "status": "found",
+      "targetCount": 94,
+      "moves": 186,
+      "calls": 94,
+      "seconds": 0.007387899997411296,
+      "file": "frame-06-glyph-3.json"
+    },
+    {
+      "frame": 6,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 96,
+      "calls": 113,
+      "seconds": 2.002291699987836,
+      "file": "frame-06-glyph-4.json"
+    },
+    {
+      "frame": 7,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 92,
+      "moves": 182,
+      "calls": 101,
+      "seconds": 0.011592499999096617,
+      "file": "frame-07-glyph-1.json"
+    },
+    {
+      "frame": 7,
+      "slot": 2,
+      "status": "found",
+      "targetCount": 94,
+      "moves": 186,
+      "calls": 94,
+      "seconds": 0.010173299990128726,
+      "file": "frame-07-glyph-2.json"
+    },
+    {
+      "frame": 7,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 96,
+      "calls": 96,
+      "seconds": 2.002953699993668,
+      "file": "frame-07-glyph-3.json"
+    },
+    {
+      "frame": 7,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 99,
+      "calls": 6580,
+      "seconds": 2.0010703000007197,
+      "file": "frame-07-glyph-4.json"
+    },
+    {
+      "frame": 8,
+      "slot": 1,
+      "status": "time_limit",
+      "targetCount": 91,
+      "calls": 101,
+      "seconds": 2.0016593000036664,
+      "file": "frame-08-glyph-1.json"
+    },
+    {
+      "frame": 8,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 104,
+      "calls": 107,
+      "seconds": 2.002457800001139,
+      "file": "frame-08-glyph-2.json"
+    },
+    {
+      "frame": 8,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 94,
+      "calls": 119,
+      "seconds": 2.0013828999944963,
+      "file": "frame-08-glyph-3.json"
+    },
+    {
+      "frame": 8,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 92,
+      "moves": 182,
+      "calls": 101,
+      "seconds": 0.007828600006178021,
+      "file": "frame-08-glyph-4.json"
+    },
+    {
+      "frame": 9,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 112,
+      "moves": 222,
+      "calls": 112,
+      "seconds": 0.04804529997636564,
+      "file": "frame-09-glyph-1.json"
+    },
+    {
+      "frame": 9,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 87,
+      "calls": 87,
+      "seconds": 2.0032677999988664,
+      "file": "frame-09-glyph-2.json"
+    },
+    {
+      "frame": 9,
+      "slot": 3,
+      "status": "found",
+      "targetCount": 98,
+      "moves": 194,
+      "calls": 113,
+      "seconds": 0.012937999999849126,
+      "file": "frame-09-glyph-3.json"
+    },
+    {
+      "frame": 9,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 94,
+      "moves": 186,
+      "calls": 111,
+      "seconds": 0.010638200008543208,
+      "file": "frame-09-glyph-4.json"
+    },
+    {
+      "frame": 10,
+      "slot": 1,
+      "status": "time_limit",
+      "targetCount": 109,
+      "calls": 113,
+      "seconds": 2.0005757000180893,
+      "file": "frame-10-glyph-1.json"
+    },
+    {
+      "frame": 10,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 108,
+      "calls": 116,
+      "seconds": 2.001583599980222,
+      "file": "frame-10-glyph-2.json"
+    },
+    {
+      "frame": 10,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 110,
+      "calls": 44000,
+      "seconds": 2.015091300010681,
+      "file": "frame-10-glyph-3.json"
+    },
+    {
+      "frame": 10,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 99,
+      "calls": 6736,
+      "seconds": 2.0046578999899793,
+      "file": "frame-10-glyph-4.json"
+    },
+    {
+      "frame": 11,
+      "slot": 1,
+      "status": "disconnected_paint_graph",
+      "targetCount": 92,
+      "file": "frame-11-glyph-1.json"
+    },
+    {
+      "frame": 11,
+      "slot": 2,
+      "status": "disconnected_paint_graph",
+      "targetCount": 98,
+      "file": "frame-11-glyph-2.json"
+    },
+    {
+      "frame": 11,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 95,
+      "calls": 106,
+      "seconds": 2.0008324999944307,
+      "file": "frame-11-glyph-3.json"
+    },
+    {
+      "frame": 11,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 94,
+      "calls": 117,
+      "seconds": 2.001527599990368,
+      "file": "frame-11-glyph-4.json"
+    },
+    {
+      "frame": 12,
+      "slot": 1,
+      "status": "time_limit",
+      "targetCount": 88,
+      "calls": 125,
+      "seconds": 2.0021627999958582,
+      "file": "frame-12-glyph-1.json"
+    },
+    {
+      "frame": 12,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 117,
+      "calls": 6671,
+      "seconds": 2.0002606000052765,
+      "file": "frame-12-glyph-2.json"
+    },
+    {
+      "frame": 12,
+      "slot": 3,
+      "status": "found",
+      "targetCount": 99,
+      "moves": 196,
+      "calls": 99,
+      "seconds": 0.009213000012096018,
+      "file": "frame-12-glyph-3.json"
+    },
+    {
+      "frame": 12,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 95,
+      "moves": 188,
+      "calls": 97,
+      "seconds": 0.00895920000039041,
+      "file": "frame-12-glyph-4.json"
+    },
+    {
+      "frame": 13,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 94,
+      "moves": 186,
+      "calls": 101,
+      "seconds": 0.010075600002892315,
+      "file": "frame-13-glyph-1.json"
+    },
+    {
+      "frame": 13,
+      "slot": 2,
+      "status": "found",
+      "targetCount": 109,
+      "moves": 216,
+      "calls": 109,
+      "seconds": 0.011779299995396286,
+      "file": "frame-13-glyph-2.json"
+    },
+    {
+      "frame": 13,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 108,
+      "calls": 121,
+      "seconds": 2.0004834000137635,
+      "file": "frame-13-glyph-3.json"
+    },
+    {
+      "frame": 13,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 108,
+      "calls": 109,
+      "seconds": 2.0015045999898575,
+      "file": "frame-13-glyph-4.json"
+    },
+    {
+      "frame": 14,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 87,
+      "moves": 172,
+      "calls": 105,
+      "seconds": 0.0073779000085778534,
+      "file": "frame-14-glyph-1.json"
+    },
+    {
+      "frame": 14,
+      "slot": 2,
+      "status": "found",
+      "targetCount": 115,
+      "moves": 228,
+      "calls": 116,
+      "seconds": 0.010639099986292422,
+      "file": "frame-14-glyph-2.json"
+    },
+    {
+      "frame": 14,
+      "slot": 3,
+      "status": "found",
+      "targetCount": 96,
+      "moves": 190,
+      "calls": 103,
+      "seconds": 0.008593700011260808,
+      "file": "frame-14-glyph-3.json"
+    },
+    {
+      "frame": 14,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 99,
+      "calls": 44557,
+      "seconds": 2.0137119999853894,
+      "file": "frame-14-glyph-4.json"
+    },
+    {
+      "frame": 15,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 112,
+      "moves": 222,
+      "calls": 112,
+      "seconds": 0.047009300003992394,
+      "file": "frame-15-glyph-1.json"
+    },
+    {
+      "frame": 15,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 87,
+      "calls": 87,
+      "seconds": 2.000173200009158,
+      "file": "frame-15-glyph-2.json"
+    },
+    {
+      "frame": 15,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 102,
+      "calls": 102,
+      "seconds": 2.0004647000168916,
+      "file": "frame-15-glyph-3.json"
+    },
+    {
+      "frame": 15,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 94,
+      "moves": 186,
+      "calls": 111,
+      "seconds": 0.011139400012325495,
+      "file": "frame-15-glyph-4.json"
+    },
+    {
+      "frame": 16,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 117,
+      "moves": 232,
+      "calls": 117,
+      "seconds": 0.011901100020622835,
+      "file": "frame-16-glyph-1.json"
+    },
+    {
+      "frame": 16,
+      "slot": 2,
+      "status": "found",
+      "targetCount": 114,
+      "moves": 226,
+      "calls": 117,
+      "seconds": 0.010431000002427027,
+      "file": "frame-16-glyph-2.json"
+    },
+    {
+      "frame": 16,
+      "slot": 3,
+      "status": "found",
+      "targetCount": 113,
+      "moves": 224,
+      "calls": 129,
+      "seconds": 0.010542500007431954,
+      "file": "frame-16-glyph-3.json"
+    },
+    {
+      "frame": 16,
+      "slot": 4,
+      "status": "time_limit",
+      "targetCount": 108,
+      "calls": 3293,
+      "seconds": 2.003094100015005,
+      "file": "frame-16-glyph-4.json"
+    },
+    {
+      "frame": 17,
+      "slot": 1,
+      "status": "time_limit",
+      "targetCount": 100,
+      "calls": 103,
+      "seconds": 2.0001792999973986,
+      "file": "frame-17-glyph-1.json"
+    },
+    {
+      "frame": 17,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 109,
+      "calls": 113,
+      "seconds": 2.002383999992162,
+      "file": "frame-17-glyph-2.json"
+    },
+    {
+      "frame": 17,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 102,
+      "calls": 118,
+      "seconds": 2.0046168999979272,
+      "file": "frame-17-glyph-3.json"
+    },
+    {
+      "frame": 17,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 100,
+      "moves": 198,
+      "calls": 112,
+      "seconds": 0.010505200014449656,
+      "file": "frame-17-glyph-4.json"
+    },
+    {
+      "frame": 18,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 107,
+      "moves": 212,
+      "calls": 116,
+      "seconds": 0.010475999995833263,
+      "file": "frame-18-glyph-1.json"
+    },
+    {
+      "frame": 18,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 104,
+      "calls": 107,
+      "seconds": 2.001588399987668,
+      "file": "frame-18-glyph-2.json"
+    },
+    {
+      "frame": 18,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 94,
+      "calls": 119,
+      "seconds": 2.0025292999926023,
+      "file": "frame-18-glyph-3.json"
+    },
+    {
+      "frame": 18,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 92,
+      "moves": 182,
+      "calls": 92,
+      "seconds": 0.009319600008893758,
+      "file": "frame-18-glyph-4.json"
+    },
+    {
+      "frame": 19,
+      "slot": 1,
+      "status": "found",
+      "targetCount": 107,
+      "moves": 212,
+      "calls": 116,
+      "seconds": 0.01033419999293983,
+      "file": "frame-19-glyph-1.json"
+    },
+    {
+      "frame": 19,
+      "slot": 2,
+      "status": "time_limit",
+      "targetCount": 104,
+      "calls": 107,
+      "seconds": 2.0024065999896266,
+      "file": "frame-19-glyph-2.json"
+    },
+    {
+      "frame": 19,
+      "slot": 3,
+      "status": "time_limit",
+      "targetCount": 94,
+      "calls": 119,
+      "seconds": 2.0027783999976236,
+      "file": "frame-19-glyph-3.json"
+    },
+    {
+      "frame": 19,
+      "slot": 4,
+      "status": "found",
+      "targetCount": 92,
+      "moves": 182,
+      "calls": 92,
+      "seconds": 0.012821500014979392,
+      "file": "frame-19-glyph-4.json"
+    }
+  ],
+  "counts": {
+    "disconnected_paint_graph": 2,
+    "found": 32,
+    "time_limit": 42
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "source": "pixel-border-source.png",
+  "sha256": "bc147f780594a2efaadae843f8c865334314aa6c0b4dbc06aeeda326ada9c690",
+  "size": [
+    154,
+    228
+  ],
+  "colorCount": 3,
+  "colors": [
+    {
+      "rgba": [
+        232,
+        237,
+        245,
+        255
+      ],
+      "hex": "#E8EDF5",
+      "pixels": 19010
+    },
+    {
+      "rgba": [
+        44,
+        47,
+        53,
+        255
+      ],
+      "hex": "#2C2F35",
+      "pixels": 12072
+    },
+    {
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "hex": "#000000",
+      "pixels": 4030
+    }
+  ],
+  "allOpaque": true,
+  "interpretation": "Only source PNG values. Does not measure display subpixels or optical fringes.",
+  "diagram": "Illustrative horizontal RGB-stripe LCD. Gaps exaggerated; actual panel unknown.",
+  "references": [
+    "https://learn.microsoft.com/en-us/typography/cleartype/truetypecleartype",
+    "https://learn.microsoft.com/en-us/typography/cleartype/"
+  ]
+}

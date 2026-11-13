@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1150" viewBox="0 0 1500 1150">
+<title>Пиксель, RGB-субпиксели и промежутки — условная схема LCD</title>
+<rect width="1500" height="1150" fill="#111722"/>
+<text x="55" y="68.6" font-family="Arial,DejaVu Sans,sans-serif" font-size="42" fill="#e8edf5">ПИКСЕЛЬ → СУБПИКСЕЛИ → ГРАНИЦА</text>
+<text x="55" y="114.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#b4c1d3">Условная RGB-полоса LCD. Это схема, а не микрофотография вашего экрана.</text>
+<rect x="40" y="145" width="1420" height="325" fill="#1c2635"/>
+<text x="65" y="191.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="30" fill="#e8edf5">1. ОДИН ПИКСЕЛЬ ЭКРАНА</text>
+<rect x="80" y="230" width="160" height="160" fill="#e8edf5"/>
+<text x="66" y="432.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#e8edf5">Издали: один цвет</text>
+<polyline points="270,310 415,310" fill="none" stroke="#adc0d7" stroke-width="3"/>
+<polyline points="404.4690092573155,315.75310646325045 415,310 404.4690092573155,304.24689353674955" fill="none" stroke="#adc0d7" stroke-width="3"/>
+<text x="290" y="277.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="23" fill="#e8edf5">увеличим</text>
+<rect x="451" y="226" width="294" height="168" fill="#000000"/>
+<rect x="455" y="230" width="90" height="160" fill="#e80000"/>
+<text x="488" y="316.8" font-family="Arial,DejaVu Sans,sans-serif" font-size="31" fill="#ffffff">R</text>
+<rect x="553" y="230" width="90" height="160" fill="#00ed00"/>
+<text x="586" y="316.8" font-family="Arial,DejaVu Sans,sans-serif" font-size="31" fill="#0b3010">G</text>
+<rect x="651" y="230" width="90" height="160" fill="#0000f5"/>
+<text x="684" y="316.8" font-family="Arial,DejaVu Sans,sans-serif" font-size="31" fill="#ffffff">B</text>
+<polyline points="455,217 455,205 741,205 741,217" fill="none" stroke="#efcc79" stroke-width="3"/>
+<text x="527" y="193.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#efcc79">Пиксель 1</text>
+<rect x="745" y="226" width="294" height="168" fill="#000000"/>
+<rect x="749" y="230" width="90" height="160" fill="#e80000"/>
+<text x="782" y="316.8" font-family="Arial,DejaVu Sans,sans-serif" font-size="31" fill="#ffffff">R</text>
+<rect x="847" y="230" width="90" height="160" fill="#00ed00"/>
+<text x="880" y="316.8" font-family="Arial,DejaVu Sans,sans-serif" font-size="31" fill="#0b3010">G</text>
+<rect x="945" y="230" width="90" height="160" fill="#0000f5"/>
+<text x="978" y="316.8" font-family="Arial,DejaVu Sans,sans-serif" font-size="31" fill="#ffffff">B</text>
+<polyline points="749,217 749,205 1035,205 1035,217" fill="none" stroke="#efcc79" stroke-width="3"/>
+<text x="821" y="193.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#efcc79">Пиксель 2</text>
+<text x="1100" y="265.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#ffb3ad">R = 232</text>
+<text x="1100" y="302.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#baffba">G = 237</text>
+<text x="1100" y="339.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#b6caff">B = 245</text>
+<text x="1080" y="389.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#e8edf5">Вместе: #E8EDF5</text>
+<polyline points="510,425 549,370" fill="none" stroke="#adc0d7" stroke-width="3"/>
+<polyline points="547.6015700687991,381.9182378616774 549,370 538.2155737329366,375.2627131871568" fill="none" stroke="#adc0d7" stroke-width="3"/>
+<text x="505" y="447.6" font-family="Arial,DejaVu Sans,sans-serif" font-size="22" fill="#e8edf5">зазор внутри пикселя</text>
+<polyline points="875,425 745,370" fill="none" stroke="#adc0d7" stroke-width="3"/>
+<polyline points="756.940337944942,368.8048724919164 745,370 752.4570572456951,379.4017177810454" fill="none" stroke="#adc0d7" stroke-width="3"/>
+<text x="835" y="447.6" font-family="Arial,DejaVu Sans,sans-serif" font-size="22" fill="#e8edf5">зазор между пикселями</text>
+<rect x="40" y="490" width="1420" height="400" fill="#1c2635"/>
+<text x="65" y="535.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="30" fill="#e8edf5">2. СВЕТЛАЯ ПОЛОСА МЕЖДУ ТЁМНЫМИ ПИКСЕЛЯМИ</text>
+<text x="233" y="590.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#b4c1d3">тёмный</text>
+<rect x="190" y="615" width="280" height="145" fill="#000000"/>
+<rect x="194" y="619" width="84" height="137" fill="#2c0000"/>
+<text x="218" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">R</text>
+<rect x="286" y="619" width="84" height="137" fill="#002f00"/>
+<text x="310" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">G</text>
+<rect x="378" y="619" width="84" height="137" fill="#000035"/>
+<text x="402" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">B</text>
+<polyline points="190,768 190,779 466,779 466,768" fill="none" stroke="#8494aa" stroke-width="2"/>
+<text x="513" y="590.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#b4c1d3">светлый</text>
+<rect x="470" y="615" width="280" height="145" fill="#000000"/>
+<rect x="474" y="619" width="84" height="137" fill="#e80000"/>
+<text x="498" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">R</text>
+<rect x="566" y="619" width="84" height="137" fill="#00ed00"/>
+<text x="590" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">G</text>
+<rect x="658" y="619" width="84" height="137" fill="#0000f5"/>
+<text x="682" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">B</text>
+<polyline points="470,768 470,779 746,779 746,768" fill="none" stroke="#8494aa" stroke-width="2"/>
+<text x="793" y="590.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#b4c1d3">светлый</text>
+<rect x="750" y="615" width="280" height="145" fill="#000000"/>
+<rect x="754" y="619" width="84" height="137" fill="#e80000"/>
+<text x="778" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">R</text>
+<rect x="846" y="619" width="84" height="137" fill="#00ed00"/>
+<text x="870" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">G</text>
+<rect x="938" y="619" width="84" height="137" fill="#0000f5"/>
+<text x="962" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">B</text>
+<polyline points="750,768 750,779 1026,779 1026,768" fill="none" stroke="#8494aa" stroke-width="2"/>
+<text x="1073" y="590.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#b4c1d3">тёмный</text>
+<rect x="1030" y="615" width="280" height="145" fill="#000000"/>
+<rect x="1034" y="619" width="84" height="137" fill="#2c0000"/>
+<text x="1058" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">R</text>
+<rect x="1126" y="619" width="84" height="137" fill="#002f00"/>
+<text x="1150" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">G</text>
+<rect x="1218" y="619" width="84" height="137" fill="#000035"/>
+<text x="1242" y="687.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#ffffff">B</text>
+<polyline points="1030,768 1030,779 1306,779 1306,768" fill="none" stroke="#8494aa" stroke-width="2"/>
+<polyline points="435,840 474,730" fill="none" stroke="#ff6e65" stroke-width="3"/>
+<polyline points="475.9033064802637,741.8480979250759 474,730 465.0585302509463,738.0031318074087" fill="none" stroke="#ff6e65" stroke-width="3"/>
+<text x="90" y="860.6" font-family="Arial,DejaVu Sans,sans-serif" font-size="27" fill="#ffada6">Первый яркий субпиксель — R</text>
+<polyline points="1060,840 1022,730" fill="none" stroke="#779bff" stroke-width="3"/>
+<polyline points="1030.8763616395943,738.0752835271053 1022,730 1020.000801879436,741.8322950806145" fill="none" stroke="#779bff" stroke-width="3"/>
+<text x="910" y="860.6" font-family="Arial,DejaVu Sans,sans-serif" font-size="27" fill="#adc3ff">Последний яркий — B</text>
+<text x="60" y="944.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="30" fill="#e8edf5">3. ЧТО ОЗНАЧАЮТ ТЁМНЫЕ ЩЕЛИ</text>
+<text x="60" y="995.4" font-family="Arial,DejaVu Sans,sans-serif" font-size="28" fill="#e8edf5">Это промежутки между светящимися областями, а не ещё один «междупиксель».</text>
+<text x="60" y="1035.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#b4c1d3">Щели здесь увеличены для ясности. У реальных экранов форма и порядок RGB различаются.</text>
+<text x="60" y="1077.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" fill="#b4c1d3">Обычное увеличение PNG увеличивает его пиксели; субпиксели панели оно не фотографирует.</text>
+</svg>

@@ -1,0 +1,61 @@
+{
+  "relativeLinksChecked": 93,
+  "svgParsed": 20,
+  "totals": {
+    "found": 56,
+    "time_limit": 18,
+    "proven_disconnected": 2
+  },
+  "sourceHashMatches": true,
+  "independentValidation": "square-thread-check.py and square-thread-atlas.py: 56 routes and 2 disconnected white-reachability graphs checked.",
+  "browser": "Chrome: native MP4 started, advanced 1.1536 to 8.7898 seconds and ended at20.7 paused=true; frame01 and frame11 SVG visually inspected; crispEdges update inspected on frame11; pixel-borders.html and RGB diagram inspected. Screenshots square-thread-checked.jpg and square-atlas-checked.jpg; latter predates only crispEdges rendering adjustment.",
+  "pixelSource": {
+    "source": "pixel-border-source.png",
+    "sha256": "bc147f780594a2efaadae843f8c865334314aa6c0b4dbc06aeeda326ada9c690",
+    "size": [
+      154,
+      228
+    ],
+    "colorCount": 3,
+    "colors": [
+      {
+        "rgba": [
+          232,
+          237,
+          245,
+          255
+        ],
+        "hex": "#E8EDF5",
+        "pixels": 19010
+      },
+      {
+        "rgba": [
+          44,
+          47,
+          53,
+          255
+        ],
+        "hex": "#2C2F35",
+        "pixels": 12072
+      },
+      {
+        "rgba": [
+          0,
+          0,
+          0,
+          255
+        ],
+        "hex": "#000000",
+        "pixels": 4030
+      }
+    ],
+    "allOpaque": true,
+    "interpretation": "Only source PNG values. Does not measure display subpixels or optical fringes.",
+    "diagram": "Illustrative horizontal RGB-stripe LCD. Gaps exaggerated; actual panel unknown.",
+    "references": [
+      "https://learn.microsoft.com/en-us/typography/cleartype/truetypecleartype",
+      "https://learn.microsoft.com/en-us/typography/cleartype/"
+    ]
+  },
+  "limitations": "56 witnesses;18 time-limited unknowns;2 barriers only for selected half-pitch raster and no extra paint. Original generator, native-pitch routes,45-degree-only model and physical monitor cause not established."
+}

@@ -1,0 +1,516 @@
+{
+  "paintedCells": 94,
+  "blankVisits": 93,
+  "positions": 187,
+  "moves": 186,
+  "blankVisitsOnTarget": 9,
+  "repeatedPaintCells": 0,
+  "repeatedSegments": 0,
+  "directHVTurns": 0,
+  "orEqualsTarget": true,
+  "xorEqualsTarget": true,
+  "geometricMeetingPoints": 49,
+  "meetingPoints": [
+    {
+      "point": [
+        0.5,
+        10.5
+      ],
+      "positions": [
+        179.5,
+        184.5
+      ]
+    },
+    {
+      "point": [
+        1.0,
+        10.0
+      ],
+      "positions": [
+        176,
+        185
+      ]
+    },
+    {
+      "point": [
+        1.0,
+        11.0
+      ],
+      "positions": [
+        175,
+        179,
+        183
+      ]
+    },
+    {
+      "point": [
+        1.5,
+        11.5
+      ],
+      "positions": [
+        173.5,
+        178.5
+      ]
+    },
+    {
+      "point": [
+        2.0,
+        11.0
+      ],
+      "positions": [
+        173,
+        177
+      ]
+    },
+    {
+      "point": [
+        3.5,
+        10.5
+      ],
+      "positions": [
+        166.5,
+        171.5
+      ]
+    },
+    {
+      "point": [
+        3.5,
+        11.5
+      ],
+      "positions": [
+        167.5,
+        170.5
+      ]
+    },
+    {
+      "point": [
+        4.0,
+        11.0
+      ],
+      "positions": [
+        163,
+        171
+      ]
+    },
+    {
+      "point": [
+        4.5,
+        10.5
+      ],
+      "positions": [
+        162.5,
+        165.5
+      ]
+    },
+    {
+      "point": [
+        5.0,
+        11.0
+      ],
+      "positions": [
+        159,
+        165
+      ]
+    },
+    {
+      "point": [
+        5.5,
+        5.5
+      ],
+      "positions": [
+        122.5,
+        150.5
+      ]
+    },
+    {
+      "point": [
+        5.5,
+        8.5
+      ],
+      "positions": [
+        153.5,
+        156.5
+      ]
+    },
+    {
+      "point": [
+        5.5,
+        10.5
+      ],
+      "positions": [
+        158.5,
+        161.5
+      ]
+    },
+    {
+      "point": [
+        5.5,
+        14.5
+      ],
+      "positions": [
+        38.5,
+        42.5
+      ]
+    },
+    {
+      "point": [
+        5.5,
+        15.5
+      ],
+      "positions": [
+        37.5,
+        43.5
+      ]
+    },
+    {
+      "point": [
+        6.5,
+        21.5
+      ],
+      "positions": [
+        24.5,
+        27.5
+      ]
+    },
+    {
+      "point": [
+        7.0,
+        4.0
+      ],
+      "positions": [
+        120,
+        149
+      ]
+    },
+    {
+      "point": [
+        7.0,
+        22.0
+      ],
+      "positions": [
+        16,
+        27
+      ]
+    },
+    {
+      "point": [
+        7.0,
+        23.0
+      ],
+      "positions": [
+        17,
+        23
+      ]
+    },
+    {
+      "point": [
+        7.5,
+        3.5
+      ],
+      "positions": [
+        125.5,
+        148.5
+      ]
+    },
+    {
+      "point": [
+        8.0,
+        17.0
+      ],
+      "positions": [
+        46,
+        55
+      ]
+    },
+    {
+      "point": [
+        8.0,
+        23.0
+      ],
+      "positions": [
+        15,
+        22
+      ]
+    },
+    {
+      "point": [
+        8.5,
+        0.5
+      ],
+      "positions": [
+        134.5,
+        140.5
+      ]
+    },
+    {
+      "point": [
+        8.5,
+        23.5
+      ],
+      "positions": [
+        14.5,
+        18.5
+      ]
+    },
+    {
+      "point": [
+        9.0,
+        0.0
+      ],
+      "positions": [
+        135,
+        138
+      ]
+    },
+    {
+      "point": [
+        9.0,
+        1.0
+      ],
+      "positions": [
+        133,
+        141,
+        145
+      ]
+    },
+    {
+      "point": [
+        9.0,
+        3.0
+      ],
+      "positions": [
+        127,
+        143,
+        147
+      ]
+    },
+    {
+      "point": [
+        9.0,
+        15.0
+      ],
+      "positions": [
+        57,
+        61
+      ]
+    },
+    {
+      "point": [
+        9.0,
+        17.0
+      ],
+      "positions": [
+        53,
+        59
+      ]
+    },
+    {
+      "point": [
+        9.0,
+        22.0
+      ],
+      "positions": [
+        9,
+        21
+      ]
+    },
+    {
+      "point": [
+        9.0,
+        23.0
+      ],
+      "positions": [
+        13,
+        19
+      ]
+    },
+    {
+      "point": [
+        9.5,
+        13.5
+      ],
+      "positions": [
+        0.5,
+        62.5
+      ]
+    },
+    {
+      "point": [
+        9.5,
+        14.5
+      ],
+      "positions": [
+        1.5,
+        61.5
+      ]
+    },
+    {
+      "point": [
+        9.5,
+        19.5
+      ],
+      "positions": [
+        6.5,
+        49.5
+      ]
+    },
+    {
+      "point": [
+        9.5,
+        22.5
+      ],
+      "positions": [
+        9.5,
+        19.5
+      ]
+    },
+    {
+      "point": [
+        10.0,
+        9.0
+      ],
+      "positions": [
+        95,
+        102
+      ]
+    },
+    {
+      "point": [
+        10.5,
+        18.5
+      ],
+      "positions": [
+        5.5,
+        51.5
+      ]
+    },
+    {
+      "point": [
+        11.0,
+        3.0
+      ],
+      "positions": [
+        115,
+        129
+      ]
+    },
+    {
+      "point": [
+        11.0,
+        9.0
+      ],
+      "positions": [
+        93,
+        97,
+        101
+      ]
+    },
+    {
+      "point": [
+        11.5,
+        5.5
+      ],
+      "positions": [
+        109.5,
+        112.5
+      ]
+    },
+    {
+      "point": [
+        11.5,
+        9.5
+      ],
+      "positions": [
+        91.5,
+        97.5
+      ]
+    },
+    {
+      "point": [
+        12.0,
+        9.0
+      ],
+      "positions": [
+        91,
+        100
+      ]
+    },
+    {
+      "point": [
+        13.0,
+        7.0
+      ],
+      "positions": [
+        89,
+        107
+      ]
+    },
+    {
+      "point": [
+        13.0,
+        9.0
+      ],
+      "positions": [
+        85,
+        99
+      ]
+    },
+    {
+      "point": [
+        14.0,
+        11.0
+      ],
+      "positions": [
+        71,
+        83
+      ]
+    },
+    {
+      "point": [
+        14.5,
+        11.5
+      ],
+      "positions": [
+        71.5,
+        78.5
+      ]
+    },
+    {
+      "point": [
+        15.0,
+        11.0
+      ],
+      "positions": [
+        75,
+        79
+      ]
+    },
+    {
+      "point": [
+        15.0,
+        12.0
+      ],
+      "positions": [
+        72,
+        77
+      ]
+    },
+    {
+      "point": [
+        15.5,
+        11.5
+      ],
+      "positions": [
+        74.5,
+        76.5
+      ]
+    }
+  ],
+  "turnAnglesDegrees": {
+    "0": 25,
+    "45": 37,
+    "90": 61,
+    "135": 62
+  },
+  "minimality": "With N different required white cells and strict alternating 1/0, an open route starting and ending on 1 needs at least 2N-1 positions. This witness attains the bound."
+}
