@@ -93,9 +93,11 @@
     }
     return out;
   }
-  function copySeed(seed) {
+  function copySeed(seed, shareMetadata = false) {
     const out = { width: seed.width, height: seed.height, areas: seed.areas.map(area => ({ ...area })) };
-    for (const key of KEYS) out[key] = seed[key].slice();
+    // copyRows changes only bits/presence/marks. Font, fill and selection data
+    // stay immutable and can be shared by its calculators and checkpoints.
+    for (const key of KEYS) out[key] = shareMetadata && key !== 'bits' && key !== 'present' ? seed[key] : seed[key].slice();
     return out;
   }
   const firstScanRow = s => s.algorithm === 'copyRows' && !s.copyRowsGaps ? 2 : 1;
@@ -133,7 +135,10 @@
     const scan = !excel && (!!options.scan || algorithm === 'copyRows');
     const gaps = algorithm === 'copyRows' && options.copyRowsGaps === true;
     if (scan && direction !== 'down' && !(gaps && direction === 'up')) throw new RangeError('Row scan supports down only');
-    const initial = cloneSeed(seed), state = copySeed(initial);
+    // Source owns freshly generated procedural seeds; adopting one avoids a
+    // second full allocation. Ordinary callers retain the cloning contract.
+    const initial = algorithm === 'copyRows' && options.copyRowsOwnedSeed ? seed : cloneSeed(seed);
+    const state = copySeed(initial, algorithm === 'copyRows');
     state.algorithm = algorithm; state.direction = direction; state.scan = scan;
     state.copyRowsGaps = gaps;
     if (gaps) state.copyRowsProtected = initial.present;
@@ -158,23 +163,23 @@
     return resetProgress(state);
   }
   function snapshot(s) {
-    return Object.assign(cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
+    return Object.assign(s.algorithm === 'copyRows' ? copySeed(s, true) : cloneSeed(s), { algorithm: s.algorithm, direction: s.direction, scan: s.scan,
       stepCount: s.stepCount, rowCount: s.rowCount, cursorRow: s.cursorRow, cycle: s.cycle, done: s.done,
       ...(s.excelCycleFrames ? { excelPhase: s.excelPhase, excelAnchor: s.excelAnchor, excelDepth: s.excelDepth, excelColourChangesOnly: s.excelColourChangesOnly } : {}),
       ...(s.algorithm === 'excelCollision' ? { collisionFillEmpty: s.collisionFillEmpty } : {}),
       ...(s.interxorFound ? { interxorPatterns: s.interxorPatterns, interxorFound: s.interxorFound.slice() } : {}),
-      ...(s.copyRowsGaps ? { copyRowsGaps: true, copyRowsProtected: s.copyRowsProtected.slice() } : {}),
+      ...(s.copyRowsGaps ? { copyRowsGaps: true, copyRowsProtected: s.copyRowsProtected } : {}),
       ...(s.copyMarks ? { copyMarks: s.copyMarks.slice(), copyAxis: s.copyAxis, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel, copyRowsOriginalHeight: s.copyRowsOriginalHeight } : {}) });
   }
   function reset(s) {
     const initial = s._seed;
-    for (const key of KEYS) s[key].set(initial[key]);
+    for (const key of KEYS) if(s[key] !== initial[key]) s[key].set(initial[key]);
     s.areas = initial.areas.map(area => ({ ...area }));
     return resetProgress(s);
   }
   // Independent calculator at the same immutable seed, without duplicating it.
   function forkInitial(s) {
-    const state = copySeed(s._seed);
+    const state = copySeed(s._seed, s.algorithm === 'copyRows');
     Object.assign(state, { algorithm: s.algorithm, direction: s.direction, scan: s.scan, copyRowsMirror: s.copyRowsMirror, copyRowsByAxis: s.copyRowsByAxis, copyRowsWrap: s.copyRowsWrap, copyRowsExcel: s.copyRowsExcel, copyRowsOriginalHeight: s.copyRowsOriginalHeight });
     state.copyRowsGaps = s.copyRowsGaps;
     if (s.copyRowsGaps) state.copyRowsProtected = s._seed.present;
@@ -191,7 +196,8 @@
     if (!!a.copyRowsGaps !== !!b.copyRowsGaps) return false;
     if (a.copyRowsGaps) {
       if (a.direction !== b.direction || a.copyRowsProtected.length !== b.copyRowsProtected.length) return false;
-      for (let i = 0; i < a.copyRowsProtected.length; i++) if (a.copyRowsProtected[i] !== b.copyRowsProtected[i]) return false;
+      if(a.copyRowsProtected !== b.copyRowsProtected)
+        for (let i = 0; i < a.copyRowsProtected.length; i++) if (a.copyRowsProtected[i] !== b.copyRowsProtected[i]) return false;
     }
     if (a.width !== b.width || a.height !== b.height || a.cursorRow !== b.cursorRow ||
         a.done !== b.done || a.areas.length !== b.areas.length) return false;
@@ -205,7 +211,8 @@
         a.interxorFound.some((value, i) => value !== b.interxorFound[i] || a.interxorPatterns[i] !== b.interxorPatterns[i]))) return false;
     for (let i = 0; i < a.areas.length; i++) for (const key of ['x', 'y', 'width', 'height'])
       if (a.areas[i][key] !== b.areas[i][key]) return false;
-    for (const key of KEYS) for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) return false;
+    for (const key of KEYS) if(a[key] !== b[key])
+      for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) return false;
     if (!!a.copyMarks !== !!b.copyMarks) return false;
     if (a.copyMarks) {
       if (a.copyRowsMirror !== b.copyRowsMirror || a.copyRowsByAxis !== b.copyRowsByAxis || a.copyRowsWrap !== b.copyRowsWrap ||
@@ -574,10 +581,14 @@
   function advanceScan(s, n) {
     // Save each touched row once per call. A one-frame advance copies/compares
     // only the receiving row and previous selection row, never the whole field.
+    // Replay consumes no intermediate raster reports and materializes the
+    // complete final field. Keep its exact steps while omitting row snapshots.
+    const trackDirty = !(s.algorithm === 'copyRows' && s.trackDirtyRows === false && !s.trackChanges);
     const beforeRows = new Map();
     const keys = s.copyRowsGaps ? (s.trackChanges ? [...KEYS, 'copyMarks'] : ['bits', 'present', 'copyMarks']) :
       s.algorithm === 'copyRows' && !s.trackChanges ? (s.copyRowsOriginalHeight ? ['bits', 'present'] : ['bits']) : KEYS;
     const capture = row => {
+      if (!trackDirty) return;
       if (beforeRows.has(row)) return;
       const start = row * s.width, end = start + s.width, copy = {};
       for (const key of keys) copy[key] = s[key].slice(start, end);
@@ -601,8 +612,9 @@
       if (dirty) dirtyRows.push(row);
     }
     dirtyRows.sort((a, b) => a - b);
-    return { changed, done: s.done, rows: s.rowCount, steps: s.stepCount,
-      cursorRow: s.cursorRow, cycle: s.cycle, bounds: areaBounds(s.areas), dirtyRows,
+    return { changed: trackDirty ? changed : null, done: s.done, rows: s.rowCount, steps: s.stepCount,
+      cursorRow: s.cursorRow, cycle: s.cycle, bounds: areaBounds(s.areas), dirtyRows: trackDirty ? dirtyRows : null,
+      ...(!trackDirty ? { dirtyTracking: false } : {}),
       ...(s.copyRowsGaps ? { copyRowsGaps: true, copyAxis: s.copyAxis } : {}),...(changedCells?{changedCells}:{}) };
   }
   function areaBounds(areas) {

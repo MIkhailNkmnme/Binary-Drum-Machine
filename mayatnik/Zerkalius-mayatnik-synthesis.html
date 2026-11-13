@@ -555,8 +555,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-xoroorius.js?v=965"></script>
 <script src="mayatnik-animatrix-interxor.js?v=967"></script>
 <script src="mayatnik-animatrix-excel-shapes.js?v=976"></script>
-<script src="mayatnik-animatrix-core.js?v=1017"></script>
-<script src="mayatnik-animatrix-source.js?v=1019"></script>
+<script src="mayatnik-animatrix-core.js?v=1028"></script>
+<script src="mayatnik-animatrix-source.js?v=1028"></script>
 <script src="mayatnik-compare.js?v=1"></script>
 <script src="mayatnik-cone-continuation.js?v=634"></script>
 <script src="mayatnik-compare-analysis.js?v=1"></script>
@@ -1573,9 +1573,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function animatrixNotice(){dispatchEvent(new Event('may-animatrix-change'));}
   var animatrixReplayBusy=false;
-  async function animatrixReplay(frame){const owner=f,engine=animatrixEnsure();animatrixReplayBusy=true;try{MayatnikAnimatrixSource.reset(engine);engine.trackChanges=false;let nextYield=performance.now()+25;while(engine.sourceFrame<frame){MayatnikAnimatrixSource.advance(engine,engine.done&&!engine.scan?frame-engine.sourceFrame:1);if(engine.excelCycleFrames&&engine.done){k=target=engine.sourceFrame;break;}if(performance.now()>nextYield){$('paintCacheInfo').textContent='Восстанавливаю Аниматрицу: '+engine.sourceFrame+' / '+frame;await new Promise(resolve=>setTimeout(resolve,0));if(f!==owner||!animatrixOn())throw Error('Восстановление Аниматрицы отменено сменой поля');nextYield=performance.now()+25;}}animatrixMaterialize(Math.min(frame,engine.sourceFrame));}finally{animatrixReplayBusy=false;}}
-  function animatrixReference(source,key){return {storageKey:key,version:1,width:source.width,height:source.height,anchor:source.anchor};}
-  function animatrixRecord(source){let record=animatrixRecords.get(source);if(!record){const key='animatrix-source:'+MayatnikAnimatrixSource.stateKey({...MayatnikAnimatrixSource.defaults(),rows:source.height,animatrixOn:true,animatrixSource:source});record={key,ready:false};animatrixRecords.set(source,record);record.promise=MayatnikPaintCache.write(source,key).then(()=>{record.ready=true;save();}).catch(error=>{animatrixRecords.delete(source);if(st.animatrixSource===source)$('paintCacheInfo').textContent='Исходник Аниматрицы не сохранён в браузере: '+error.message+'. Сохраните работу файлом.';throw error;});record.promise.catch(()=>{});}return record;}
+  async function animatrixReplay(frame){const owner=f,engine=animatrixEnsure(),dirtyTracking=engine.trackDirtyRows;animatrixReplayBusy=true;try{MayatnikAnimatrixSource.reset(engine);engine.trackChanges=false;engine.trackDirtyRows=false;let nextYield=performance.now()+25;while(engine.sourceFrame<frame){MayatnikAnimatrixSource.advance(engine,engine.done&&!engine.scan?frame-engine.sourceFrame:1);if(engine.excelCycleFrames&&engine.done){k=target=engine.sourceFrame;break;}if(performance.now()>nextYield){$('paintCacheInfo').textContent='Восстанавливаю Аниматрицу: '+engine.sourceFrame+' / '+frame;await new Promise(resolve=>setTimeout(resolve,0));if(f!==owner||!animatrixOn())throw Error('Восстановление Аниматрицы отменено сменой поля');nextYield=performance.now()+25;}}animatrixMaterialize(Math.min(frame,engine.sourceFrame));}finally{engine.trackDirtyRows=dirtyTracking;animatrixReplayBusy=false;}}
+  function animatrixReference(source,key){return {storageKey:key,version:source.version,width:source.width,height:source.height,anchor:source.anchor};}
+  function animatrixRecord(source){let record=animatrixRecords.get(source);if(!record){const key='animatrix-source:'+MayatnikAnimatrixSource.stateKey({...MayatnikAnimatrixSource.defaults(),animatrixAlgorithm:MayatnikAnimatrixSource.proceduralTriangle(source)?'copyRows':'two',rows:source.height,animatrixOn:true,animatrixSource:source});record={key,ready:false};animatrixRecords.set(source,record);record.promise=MayatnikPaintCache.write(source,key).then(()=>{record.ready=true;save();}).catch(error=>{animatrixRecords.delete(source);if(st.animatrixSource===source)$('paintCacheInfo').textContent='Исходник Аниматрицы не сохранён в браузере: '+error.message+'. Сохраните работу файлом.';throw error;});record.promise.catch(()=>{});}return record;}
   function animatrixNewWork(){animatrixDeferred=null;animatrixDeferredReady=true;}
 
   const animatrixEdgePatterns=new WeakMap();

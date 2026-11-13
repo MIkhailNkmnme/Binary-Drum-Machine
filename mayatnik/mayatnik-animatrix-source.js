@@ -9,6 +9,7 @@
 })(typeof globalThis==='object'?globalThis:this,function(Core){
   'use strict';
   const VERSION=1,EVOLUTION=1,MAX_CELLS=2100000,MAX_ROWS=4096,MAX_AREAS=65536;
+  const TRIANGLE_VERSION=2,TRIANGLE_GENERATOR='pascal-triangle-v1',MAX_REFLECTION_CELLS=(2*MAX_ROWS-1)*MAX_ROWS;
   const ALGORITHMS=Core.algorithms;
   const excelMode=algorithm=>Core.excelAlgorithms.includes(algorithm);
   const coneMode=algorithm=>algorithm.startsWith('excelTriangle');
@@ -77,9 +78,27 @@
     }
     return words;
   }
-  function signature(source,areas){return [source.version,source.width,source.height,source.anchor,source.words?.mode,source.words?.data,source.fills?.mode??'',source.fills?.data??'',JSON.stringify(areas)];}
+  function proceduralTriangle(source){return source?.version===TRIANGLE_VERSION&&source.generator===TRIANGLE_GENERATOR;}
+  function triangleSource(height){
+    const source={version:TRIANGLE_VERSION,generator:TRIANGLE_GENERATOR,width:2*height-1,height,anchor:height-1};
+    return assertSource(source);
+  }
+  function signature(source,areas){
+    const stamp=[source.version,source.width,source.height,source.anchor,source.words?.mode,source.words?.data,source.fills?.mode??'',source.fills?.data??'',JSON.stringify(areas)];
+    if(source.generator!==undefined)stamp.push(source.generator);
+    return stamp;
+  }
   function assertSource(source){
-    if(!source||typeof source!=='object'||Array.isArray(source)||source.version!==VERSION)fail('Неизвестная версия исходника Аниматрицы.');
+    if(!source||typeof source!=='object'||Array.isArray(source))fail('Неизвестная версия исходника Аниматрицы.');
+    if(proceduralTriangle(source)){
+      const {width,height,anchor}=source;
+      if(!Number.isSafeInteger(height)||height<8||height>MAX_ROWS||width!==2*height-1||anchor!==height-1||width*height>MAX_REFLECTION_CELLS||source.words!==undefined||source.fills!==undefined||source.areas!==undefined)
+        fail('Некорректный полный треугольник отражения.');
+      const stamp=signature(source,null),old=checked.get(source);
+      if(!old||!old.stamp.every((value,index)=>value===stamp[index]))checked.set(source,{stamp,key:null,singleGrid:true,phases:1<<(anchor&1)});
+      return source;
+    }
+    if(source.version!==VERSION||source.generator!==undefined)fail('Неизвестная версия исходника Аниматрицы.');
     const n=dimensions(source.width,source.height);anchorValue(source.anchor,source.width);
     const areas=validateAreas(source.areas,source.width,source.height),stamp=signature(source,areas),old=checked.get(source);
     if(old&&old.stamp.every((value,index)=>value===stamp[index]))return source;
@@ -99,8 +118,22 @@
     const singleGrid=(phases&~(1<<(source.anchor&1)))===0;
     checked.set(source,{stamp,key:null,singleGrid,phases});return source;
   }
+  function decodeTriangle(source,height=source.height){
+    const width=source.width,n=width*height;
+    const seed={width,height,bits:new Uint8Array(n),present:new Uint8Array(n),colours:new Uint32Array(n),bold:new Uint8Array(n),automatic:new Uint8Array(n),fills:new Uint32Array(n),filled:new Uint8Array(n),selection:new Uint8Array(n),areas:[{x:0,y:0,width,height:source.height}]};
+    seed.selection.fill(1,0,width*source.height);
+    for(let row=0;row<source.height;row++){
+      const first=row*width+source.anchor-row;
+      for(let x=0;x<=row;x++){
+        const q=first+2*x,bit=Number((x&(row-x))===0);
+        seed.present[q]=1;seed.bits[q]=bit;seed.colours[q]=bit?0xe8edf5:0x5b6475;
+      }
+    }
+    return seed;
+  }
   function decode(source){
-    assertSource(source);const n=source.width*source.height,words=unpack(source.words,n),fills=source.fills?unpack(source.fills,n):new Uint32Array(n);
+    assertSource(source);if(proceduralTriangle(source))return decodeTriangle(source);
+    const n=source.width*source.height,words=unpack(source.words,n),fills=source.fills?unpack(source.fills,n):new Uint32Array(n);
     const seed={width:source.width,height:source.height,bits:new Uint8Array(n),present:new Uint8Array(n),colours:new Uint32Array(n),bold:new Uint8Array(n),automatic:new Uint8Array(n),filled:new Uint8Array(n),fills,selection:new Uint8Array(n)};
     for(let i=0;i<n;i++){const flags=words[i]>>>24;seed.present[i]=flags&1;seed.bits[i]=(flags>>>1)&1;seed.bold[i]=(flags>>>2)&1;seed.automatic[i]=(flags>>>3)&1;seed.filled[i]=(flags>>>4)&1;seed.selection[i]=(flags>>>5)&1;seed.colours[i]=words[i]&0xffffff;}
     if(source.areas!=null)seed.areas=validateAreas(source.areas,source.width,source.height);
@@ -132,6 +165,10 @@
   }
   function resizeRows(source,height,algorithm){
     assertSource(source);
+    if(proceduralTriangle(source)){
+      if(algorithm!=='copyRows')fail('Полный треугольник предназначен для отражения строк.');
+      return height===source.height?source:triangleSource(height);
+    }
     const {width, height:oldHeight, anchor}=source;
     if(height===oldHeight)return source;
     dimensions(width,height);
@@ -204,6 +241,7 @@
     if(active(next)){
       if(next.sequenceSourceOn||next.compareSource)fail('В Аниматрице одновременно включены разные источники поля.');
       assertSource(next.animatrixSource);
+      if(proceduralTriangle(next.animatrixSource)&&next.animatrixAlgorithm!=='copyRows')fail('Полный треугольник предназначен для отражения строк.');
       if(next.animatrixAlgorithm==='copyRows'&&!copyRowsGaps(next)&&!checked.get(next.animatrixSource).singleGrid)
         fail('Для отражения строк возьмите поле с одной решёткой, например треугольник в виде «Встык».');
       if(next.rows!==undefined&&next.rows!==next.animatrixSource.height)fail('Число строк не совпадает с исходником Аниматрицы.');
@@ -299,9 +337,10 @@
   function create(state){
     const s=normalize(state),layout=s.animatrixCopyRowsLayout,source=s.animatrixSource,cycle=cycleFrames(s);
     const patterns=interxorMode(s.animatrixAlgorithm)&&s.animatrixInterxorPatterns;
-    const seed=decode(source);
     const extended=copyRowsExtend(s);
-    if(extended){
+    const procedural=proceduralTriangle(source);
+    const seed=procedural?decodeTriangle(source,displayCapacity(s,source.height)):decode(source);
+    if(extended&&!procedural){
       seed.height=displayCapacity(s,source.height);
       for(const [key,values] of Object.entries(seed)){
         if(!ArrayBuffer.isView(values))continue;
@@ -310,6 +349,7 @@
       }
     }
     const engine=Core.create(seed,{...excelOptions(source,s.animatrixAlgorithm,s.animatrixExcelDepth),direction:s.animatrixDirection,
+      copyRowsOwnedSeed:procedural,
       copyRowsOriginalHeight:extended?source.height:undefined,
       excelCycleFrames:cycle,interxorPatterns:patterns?patterns.split(' '):undefined,
       excelColourChangesOnly:coneMode(s.animatrixAlgorithm)&&s.animatrixExcelColourChangesOnly!==false,
@@ -356,11 +396,12 @@
   function seek(engine,frame){frameCount(frame);if(frame>engine._sourceLimit)fail('Кадр Аниматрицы за пределами выбранных циклов.');reset(engine);return advance(engine,frame);}
   function advance(engine,count=1){
     frameCount(count);let remaining=Math.min(count,Math.max(0,engine._sourceLimit-engine.sourceFrame));
-    let report=null,changed=0;const dirty=new Set(),changedCells=engine.trackChanges?new Set():null;
+    let report=null,changed=0,dirtyTracking=true;const dirty=new Set(),changedCells=engine.trackChanges?new Set():null;
     do{
       const n=Math.min(remaining,engine._cycleFrames-engine.sourceFrame%engine._cycleFrames);
       const before=engine.stepCount;
       report=Core.advance(engine,n);
+      if(report.dirtyTracking===false)dirtyTracking=false;
       const advanced=engine.excelCycleFrames?engine.stepCount-before:n;
       engine.sourceFrame+=advanced;remaining-=advanced;changed+=report.changed;
       for(const row of report.dirtyRows||[])dirty.add(row);
@@ -369,11 +410,12 @@
       if(engine.excelCycleFrames&&report.done)break;
       repeatWork(engine,Math.max(1,advanced));
     }while(remaining);
-    return {...report,changed,...(engine.scan?{dirtyRows:[...dirty].sort((a,b)=>a-b)}:{}),...(changedCells?{changedCells:[...changedCells]}:{}),frame:engine.sourceFrame,repeat:repeatInfo(engine)};
+    return {...report,changed:dirtyTracking?changed:null,...(engine.scan?{dirtyRows:dirtyTracking?[...dirty].sort((a,b)=>a-b):null}:{}),...(!dirtyTracking?{dirtyTracking:false}:{}),...(changedCells?{changedCells:[...changedCells]}:{}),frame:engine.sourceFrame,repeat:repeatInfo(engine)};
   }
   function copyTo(engine,values){if(!values||values.length!==engine.width*engine.height)fail('Размер поля не совпадает с Аниматрицей.');for(let i=0;i<values.length;i++)values[i]=engine.present[i]?engine.bits[i]:-1;return values;}
   function demo(rows=32,type='one',algorithm='two'){
     if(!Number.isSafeInteger(rows)||!['one','example','clean'].includes(type)||!ALGORITHMS.includes(algorithm))fail('Неизвестный пример Аниматрицы.');
+    if(type==='clean'&&algorithm==='copyRows'&&(2*rows-1)*rows>MAX_CELLS)return triangleSource(rows);
     const capacity=Math.floor(MAX_CELLS/rows),width=type==='clean'?Math.min(2*rows-1,capacity-(1-(capacity&1))):2*rows-1;
     const n=dimensions(width,rows),anchor=(width-1)/2;
     const seed={width,height:rows,bits:new Uint8Array(n),present:new Uint8Array(n),colours:new Uint32Array(n),bold:new Uint8Array(n),automatic:new Uint8Array(n),filled:new Uint8Array(n),fills:new Uint32Array(n),selection:new Uint8Array(n)};
@@ -427,5 +469,5 @@
     }
     return marks;
   }
-  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,EDGE_TRANSITION_COLOURS,EDGE_PATTERN_PALETTES,edgePatternMarks,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,coneMode,prepareExcel,resizeRows,staggeredLayout};
+  return {VERSION,EVOLUTION,MAX_CELLS,MAX_ROWS,MAX_REFLECTION_CELLS,proceduralTriangle,EDGE_TRANSITION_COLOURS,EDGE_PATTERN_PALETTES,edgePatternMarks,defaults,active,normalize,assertState,validate:assertState,assertSource,validateSource:assertSource,encode,decode,geometry,frames,cycleFrames,unlimited,extend,repeatInfo,stateKey,same,create,reset,seek,advance,copyTo,demo,restoreFrame,excelMode,coneMode,prepareExcel,resizeRows,staggeredLayout};
 });
