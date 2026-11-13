@@ -1,0 +1,3320 @@
+{
+  "source": "https://www.youtube.com/watch?v=BNYdUn7gmmI",
+  "start": 0,
+  "end": 22,
+  "duration": 22,
+  "audio": false,
+  "native_source_download": false,
+  "method": "Nearest timestamped browser screenshot resampled at 30 fps; source playback time preserved. Existing camera movement/crossfades remain.",
+  "captures": 568,
+  "output_frames": 660,
+  "max_sample_time_error": 0.039916500000000354,
+  "crop_screenshot_pixels": [
+    23,
+    67,
+    1327,
+    801
+  ],
+  "frames": [
+    {
+      "output_time": 0.0,
+      "source_capture_midpoint": 0.0,
+      "source_file": "0499.jpg"
+    },
+    {
+      "output_time": 0.03333333333333333,
+      "source_capture_midpoint": 0.021766,
+      "source_file": "0502.jpg"
+    },
+    {
+      "output_time": 0.06666666666666667,
+      "source_capture_midpoint": 0.0574885,
+      "source_file": "0503.jpg"
+    },
+    {
+      "output_time": 0.1,
+      "source_capture_midpoint": 0.0924305,
+      "source_file": "0504.jpg"
+    },
+    {
+      "output_time": 0.13333333333333333,
+      "source_capture_midpoint": 0.130409,
+      "source_file": "0505.jpg"
+    },
+    {
+      "output_time": 0.16666666666666666,
+      "source_capture_midpoint": 0.1665185,
+      "source_file": "0506.jpg"
+    },
+    {
+      "output_time": 0.2,
+      "source_capture_midpoint": 0.2073215,
+      "source_file": "0507.jpg"
+    },
+    {
+      "output_time": 0.23333333333333334,
+      "source_capture_midpoint": 0.24956650000000002,
+      "source_file": "0508.jpg"
+    },
+    {
+      "output_time": 0.26666666666666666,
+      "source_capture_midpoint": 0.27995499999999995,
+      "source_file": "0509.jpg"
+    },
+    {
+      "output_time": 0.3,
+      "source_capture_midpoint": 0.315473,
+      "source_file": "0510.jpg"
+    },
+    {
+      "output_time": 0.3333333333333333,
+      "source_capture_midpoint": 0.315473,
+      "source_file": "0510.jpg"
+    },
+    {
+      "output_time": 0.36666666666666664,
+      "source_capture_midpoint": 0.355392,
+      "source_file": "0511.jpg"
+    },
+    {
+      "output_time": 0.4,
+      "source_capture_midpoint": 0.393273,
+      "source_file": "0512.jpg"
+    },
+    {
+      "output_time": 0.43333333333333335,
+      "source_capture_midpoint": 0.426319,
+      "source_file": "0513.jpg"
+    },
+    {
+      "output_time": 0.4666666666666667,
+      "source_capture_midpoint": 0.469734,
+      "source_file": "0514.jpg"
+    },
+    {
+      "output_time": 0.5,
+      "source_capture_midpoint": 0.5080285,
+      "source_file": "0515.jpg"
+    },
+    {
+      "output_time": 0.5333333333333333,
+      "source_capture_midpoint": 0.5419865,
+      "source_file": "0516.jpg"
+    },
+    {
+      "output_time": 0.5666666666666667,
+      "source_capture_midpoint": 0.5818755,
+      "source_file": "0517.jpg"
+    },
+    {
+      "output_time": 0.6,
+      "source_capture_midpoint": 0.5818755,
+      "source_file": "0517.jpg"
+    },
+    {
+      "output_time": 0.6333333333333333,
+      "source_capture_midpoint": 0.6191635,
+      "source_file": "0518.jpg"
+    },
+    {
+      "output_time": 0.6666666666666666,
+      "source_capture_midpoint": 0.6549235,
+      "source_file": "0519.jpg"
+    },
+    {
+      "output_time": 0.7,
+      "source_capture_midpoint": 0.6940580000000001,
+      "source_file": "0520.jpg"
+    },
+    {
+      "output_time": 0.7333333333333333,
+      "source_capture_midpoint": 0.7307075000000001,
+      "source_file": "0521.jpg"
+    },
+    {
+      "output_time": 0.7666666666666667,
+      "source_capture_midpoint": 0.7624085,
+      "source_file": "0522.jpg"
+    },
+    {
+      "output_time": 0.8,
+      "source_capture_midpoint": 0.800789,
+      "source_file": "0523.jpg"
+    },
+    {
+      "output_time": 0.8333333333333334,
+      "source_capture_midpoint": 0.840705,
+      "source_file": "0524.jpg"
+    },
+    {
+      "output_time": 0.8666666666666667,
+      "source_capture_midpoint": 0.8771199999999999,
+      "source_file": "0525.jpg"
+    },
+    {
+      "output_time": 0.9,
+      "source_capture_midpoint": 0.912215,
+      "source_file": "0526.jpg"
+    },
+    {
+      "output_time": 0.9333333333333333,
+      "source_capture_midpoint": 0.9416655,
+      "source_file": "0527.jpg"
+    },
+    {
+      "output_time": 0.9666666666666667,
+      "source_capture_midpoint": 0.9722535000000001,
+      "source_file": "0528.jpg"
+    },
+    {
+      "output_time": 1.0,
+      "source_capture_midpoint": 1.0072635,
+      "source_file": "0529.jpg"
+    },
+    {
+      "output_time": 1.0333333333333334,
+      "source_capture_midpoint": 1.0447315,
+      "source_file": "0530.jpg"
+    },
+    {
+      "output_time": 1.0666666666666667,
+      "source_capture_midpoint": 1.0447315,
+      "source_file": "0530.jpg"
+    },
+    {
+      "output_time": 1.1,
+      "source_capture_midpoint": 1.101117,
+      "source_file": "0531.jpg"
+    },
+    {
+      "output_time": 1.1333333333333333,
+      "source_capture_midpoint": 1.14765,
+      "source_file": "0532.jpg"
+    },
+    {
+      "output_time": 1.1666666666666667,
+      "source_capture_midpoint": 1.14765,
+      "source_file": "0532.jpg"
+    },
+    {
+      "output_time": 1.2,
+      "source_capture_midpoint": 1.1920410000000001,
+      "source_file": "0533.jpg"
+    },
+    {
+      "output_time": 1.2333333333333334,
+      "source_capture_midpoint": 1.2381815,
+      "source_file": "0534.jpg"
+    },
+    {
+      "output_time": 1.2666666666666666,
+      "source_capture_midpoint": 1.2820195,
+      "source_file": "0535.jpg"
+    },
+    {
+      "output_time": 1.3,
+      "source_capture_midpoint": 1.2820195,
+      "source_file": "0535.jpg"
+    },
+    {
+      "output_time": 1.3333333333333333,
+      "source_capture_midpoint": 1.327103,
+      "source_file": "0536.jpg"
+    },
+    {
+      "output_time": 1.3666666666666667,
+      "source_capture_midpoint": 1.3661634999999999,
+      "source_file": "0537.jpg"
+    },
+    {
+      "output_time": 1.4,
+      "source_capture_midpoint": 1.39662,
+      "source_file": "0538.jpg"
+    },
+    {
+      "output_time": 1.4333333333333333,
+      "source_capture_midpoint": 1.4271695,
+      "source_file": "0539.jpg"
+    },
+    {
+      "output_time": 1.4666666666666666,
+      "source_capture_midpoint": 1.458064,
+      "source_file": "0540.jpg"
+    },
+    {
+      "output_time": 1.5,
+      "source_capture_midpoint": 1.4981605,
+      "source_file": "0541.jpg"
+    },
+    {
+      "output_time": 1.5333333333333334,
+      "source_capture_midpoint": 1.5438725,
+      "source_file": "0542.jpg"
+    },
+    {
+      "output_time": 1.5666666666666667,
+      "source_capture_midpoint": 1.5814175000000001,
+      "source_file": "0543.jpg"
+    },
+    {
+      "output_time": 1.6,
+      "source_capture_midpoint": 1.614263,
+      "source_file": "0544.jpg"
+    },
+    {
+      "output_time": 1.6333333333333333,
+      "source_capture_midpoint": 1.647311,
+      "source_file": "0545.jpg"
+    },
+    {
+      "output_time": 1.6666666666666667,
+      "source_capture_midpoint": 1.6856425000000002,
+      "source_file": "0546.jpg"
+    },
+    {
+      "output_time": 1.7,
+      "source_capture_midpoint": 1.6856425000000002,
+      "source_file": "0546.jpg"
+    },
+    {
+      "output_time": 1.7333333333333334,
+      "source_capture_midpoint": 1.7226385,
+      "source_file": "0547.jpg"
+    },
+    {
+      "output_time": 1.7666666666666666,
+      "source_capture_midpoint": 1.757449,
+      "source_file": "0548.jpg"
+    },
+    {
+      "output_time": 1.8,
+      "source_capture_midpoint": 1.7934945,
+      "source_file": "0549.jpg"
+    },
+    {
+      "output_time": 1.8333333333333333,
+      "source_capture_midpoint": 1.8303604999999998,
+      "source_file": "0550.jpg"
+    },
+    {
+      "output_time": 1.8666666666666667,
+      "source_capture_midpoint": 1.8729930000000001,
+      "source_file": "0551.jpg"
+    },
+    {
+      "output_time": 1.9,
+      "source_capture_midpoint": 1.9196055,
+      "source_file": "0552.jpg"
+    },
+    {
+      "output_time": 1.9333333333333333,
+      "source_capture_midpoint": 1.9196055,
+      "source_file": "0552.jpg"
+    },
+    {
+      "output_time": 1.9666666666666666,
+      "source_capture_midpoint": 1.9625050000000002,
+      "source_file": "0553.jpg"
+    },
+    {
+      "output_time": 2.0,
+      "source_capture_midpoint": 2.0007835,
+      "source_file": "0554.jpg"
+    },
+    {
+      "output_time": 2.033333333333333,
+      "source_capture_midpoint": 2.045557,
+      "source_file": "0555.jpg"
+    },
+    {
+      "output_time": 2.066666666666667,
+      "source_capture_midpoint": 2.045557,
+      "source_file": "0555.jpg"
+    },
+    {
+      "output_time": 2.1,
+      "source_capture_midpoint": 2.088116,
+      "source_file": "0556.jpg"
+    },
+    {
+      "output_time": 2.1333333333333333,
+      "source_capture_midpoint": 2.122101,
+      "source_file": "0557.jpg"
+    },
+    {
+      "output_time": 2.1666666666666665,
+      "source_capture_midpoint": 2.1528695,
+      "source_file": "0558.jpg"
+    },
+    {
+      "output_time": 2.2,
+      "source_capture_midpoint": 2.185469,
+      "source_file": "0559.jpg"
+    },
+    {
+      "output_time": 2.2333333333333334,
+      "source_capture_midpoint": 2.2219055,
+      "source_file": "0560.jpg"
+    },
+    {
+      "output_time": 2.2666666666666666,
+      "source_capture_midpoint": 2.2667025,
+      "source_file": "0561.jpg"
+    },
+    {
+      "output_time": 2.3,
+      "source_capture_midpoint": 2.308058,
+      "source_file": "0562.jpg"
+    },
+    {
+      "output_time": 2.3333333333333335,
+      "source_capture_midpoint": 2.3401544999999997,
+      "source_file": "0563.jpg"
+    },
+    {
+      "output_time": 2.3666666666666667,
+      "source_capture_midpoint": 2.372288,
+      "source_file": "0564.jpg"
+    },
+    {
+      "output_time": 2.4,
+      "source_capture_midpoint": 2.4064125,
+      "source_file": "0565.jpg"
+    },
+    {
+      "output_time": 2.433333333333333,
+      "source_capture_midpoint": 2.4428780000000003,
+      "source_file": "0566.jpg"
+    },
+    {
+      "output_time": 2.466666666666667,
+      "source_capture_midpoint": 2.4519595,
+      "source_file": "0003.jpg"
+    },
+    {
+      "output_time": 2.5,
+      "source_capture_midpoint": 2.49417,
+      "source_file": "0004.jpg"
+    },
+    {
+      "output_time": 2.533333333333333,
+      "source_capture_midpoint": 2.5303225,
+      "source_file": "0005.jpg"
+    },
+    {
+      "output_time": 2.566666666666667,
+      "source_capture_midpoint": 2.5728635,
+      "source_file": "0006.jpg"
+    },
+    {
+      "output_time": 2.6,
+      "source_capture_midpoint": 2.6222174999999996,
+      "source_file": "0007.jpg"
+    },
+    {
+      "output_time": 2.6333333333333333,
+      "source_capture_midpoint": 2.6222174999999996,
+      "source_file": "0007.jpg"
+    },
+    {
+      "output_time": 2.6666666666666665,
+      "source_capture_midpoint": 2.6675484999999997,
+      "source_file": "0008.jpg"
+    },
+    {
+      "output_time": 2.7,
+      "source_capture_midpoint": 2.710249,
+      "source_file": "0009.jpg"
+    },
+    {
+      "output_time": 2.7333333333333334,
+      "source_capture_midpoint": 2.751787,
+      "source_file": "0010.jpg"
+    },
+    {
+      "output_time": 2.7666666666666666,
+      "source_capture_midpoint": 2.751787,
+      "source_file": "0010.jpg"
+    },
+    {
+      "output_time": 2.8,
+      "source_capture_midpoint": 2.786125,
+      "source_file": "0011.jpg"
+    },
+    {
+      "output_time": 2.8333333333333335,
+      "source_capture_midpoint": 2.8280469999999998,
+      "source_file": "0012.jpg"
+    },
+    {
+      "output_time": 2.8666666666666667,
+      "source_capture_midpoint": 2.876599,
+      "source_file": "0013.jpg"
+    },
+    {
+      "output_time": 2.9,
+      "source_capture_midpoint": 2.914714,
+      "source_file": "0014.jpg"
+    },
+    {
+      "output_time": 2.933333333333333,
+      "source_capture_midpoint": 2.9483435,
+      "source_file": "0015.jpg"
+    },
+    {
+      "output_time": 2.966666666666667,
+      "source_capture_midpoint": 2.9839184999999997,
+      "source_file": "0016.jpg"
+    },
+    {
+      "output_time": 3.0,
+      "source_capture_midpoint": 2.9839184999999997,
+      "source_file": "0016.jpg"
+    },
+    {
+      "output_time": 3.033333333333333,
+      "source_capture_midpoint": 3.0259805,
+      "source_file": "0017.jpg"
+    },
+    {
+      "output_time": 3.066666666666667,
+      "source_capture_midpoint": 3.0674095,
+      "source_file": "0018.jpg"
+    },
+    {
+      "output_time": 3.1,
+      "source_capture_midpoint": 3.1038835,
+      "source_file": "0019.jpg"
+    },
+    {
+      "output_time": 3.1333333333333333,
+      "source_capture_midpoint": 3.14372,
+      "source_file": "0020.jpg"
+    },
+    {
+      "output_time": 3.1666666666666665,
+      "source_capture_midpoint": 3.179522,
+      "source_file": "0021.jpg"
+    },
+    {
+      "output_time": 3.2,
+      "source_capture_midpoint": 3.213749,
+      "source_file": "0022.jpg"
+    },
+    {
+      "output_time": 3.2333333333333334,
+      "source_capture_midpoint": 3.249492,
+      "source_file": "0023.jpg"
+    },
+    {
+      "output_time": 3.2666666666666666,
+      "source_capture_midpoint": 3.249492,
+      "source_file": "0023.jpg"
+    },
+    {
+      "output_time": 3.3,
+      "source_capture_midpoint": 3.291221,
+      "source_file": "0024.jpg"
+    },
+    {
+      "output_time": 3.3333333333333335,
+      "source_capture_midpoint": 3.3301605,
+      "source_file": "0025.jpg"
+    },
+    {
+      "output_time": 3.3666666666666667,
+      "source_capture_midpoint": 3.3666295,
+      "source_file": "0026.jpg"
+    },
+    {
+      "output_time": 3.4,
+      "source_capture_midpoint": 3.4028585,
+      "source_file": "0027.jpg"
+    },
+    {
+      "output_time": 3.433333333333333,
+      "source_capture_midpoint": 3.4028585,
+      "source_file": "0027.jpg"
+    },
+    {
+      "output_time": 3.466666666666667,
+      "source_capture_midpoint": 3.4790265,
+      "source_file": "0028.jpg"
+    },
+    {
+      "output_time": 3.5,
+      "source_capture_midpoint": 3.4790265,
+      "source_file": "0028.jpg"
+    },
+    {
+      "output_time": 3.533333333333333,
+      "source_capture_midpoint": 3.524948,
+      "source_file": "0029.jpg"
+    },
+    {
+      "output_time": 3.566666666666667,
+      "source_capture_midpoint": 3.565176,
+      "source_file": "0030.jpg"
+    },
+    {
+      "output_time": 3.6,
+      "source_capture_midpoint": 3.6031180000000003,
+      "source_file": "0031.jpg"
+    },
+    {
+      "output_time": 3.6333333333333333,
+      "source_capture_midpoint": 3.6437904999999997,
+      "source_file": "0032.jpg"
+    },
+    {
+      "output_time": 3.6666666666666665,
+      "source_capture_midpoint": 3.682705,
+      "source_file": "0033.jpg"
+    },
+    {
+      "output_time": 3.7,
+      "source_capture_midpoint": 3.682705,
+      "source_file": "0033.jpg"
+    },
+    {
+      "output_time": 3.7333333333333334,
+      "source_capture_midpoint": 3.7201940000000002,
+      "source_file": "0034.jpg"
+    },
+    {
+      "output_time": 3.7666666666666666,
+      "source_capture_midpoint": 3.7610465,
+      "source_file": "0035.jpg"
+    },
+    {
+      "output_time": 3.8,
+      "source_capture_midpoint": 3.7964705,
+      "source_file": "0036.jpg"
+    },
+    {
+      "output_time": 3.8333333333333335,
+      "source_capture_midpoint": 3.829304,
+      "source_file": "0037.jpg"
+    },
+    {
+      "output_time": 3.8666666666666667,
+      "source_capture_midpoint": 3.8631124999999997,
+      "source_file": "0038.jpg"
+    },
+    {
+      "output_time": 3.9,
+      "source_capture_midpoint": 3.9007285,
+      "source_file": "0039.jpg"
+    },
+    {
+      "output_time": 3.933333333333333,
+      "source_capture_midpoint": 3.940776,
+      "source_file": "0040.jpg"
+    },
+    {
+      "output_time": 3.966666666666667,
+      "source_capture_midpoint": 3.9816735,
+      "source_file": "0041.jpg"
+    },
+    {
+      "output_time": 4.0,
+      "source_capture_midpoint": 3.9816735,
+      "source_file": "0041.jpg"
+    },
+    {
+      "output_time": 4.033333333333333,
+      "source_capture_midpoint": 4.023375,
+      "source_file": "0042.jpg"
+    },
+    {
+      "output_time": 4.066666666666666,
+      "source_capture_midpoint": 4.0589315,
+      "source_file": "0043.jpg"
+    },
+    {
+      "output_time": 4.1,
+      "source_capture_midpoint": 4.0955505,
+      "source_file": "0044.jpg"
+    },
+    {
+      "output_time": 4.133333333333334,
+      "source_capture_midpoint": 4.1320250000000005,
+      "source_file": "0045.jpg"
+    },
+    {
+      "output_time": 4.166666666666667,
+      "source_capture_midpoint": 4.164540000000001,
+      "source_file": "0046.jpg"
+    },
+    {
+      "output_time": 4.2,
+      "source_capture_midpoint": 4.1963675,
+      "source_file": "0047.jpg"
+    },
+    {
+      "output_time": 4.233333333333333,
+      "source_capture_midpoint": 4.232631,
+      "source_file": "0048.jpg"
+    },
+    {
+      "output_time": 4.266666666666667,
+      "source_capture_midpoint": 4.2765325,
+      "source_file": "0049.jpg"
+    },
+    {
+      "output_time": 4.3,
+      "source_capture_midpoint": 4.3123059999999995,
+      "source_file": "0050.jpg"
+    },
+    {
+      "output_time": 4.333333333333333,
+      "source_capture_midpoint": 4.345254499999999,
+      "source_file": "0051.jpg"
+    },
+    {
+      "output_time": 4.366666666666666,
+      "source_capture_midpoint": 4.379685500000001,
+      "source_file": "0052.jpg"
+    },
+    {
+      "output_time": 4.4,
+      "source_capture_midpoint": 4.4171245,
+      "source_file": "0053.jpg"
+    },
+    {
+      "output_time": 4.433333333333334,
+      "source_capture_midpoint": 4.4171245,
+      "source_file": "0053.jpg"
+    },
+    {
+      "output_time": 4.466666666666667,
+      "source_capture_midpoint": 4.4631295,
+      "source_file": "0054.jpg"
+    },
+    {
+      "output_time": 4.5,
+      "source_capture_midpoint": 4.514823,
+      "source_file": "0055.jpg"
+    },
+    {
+      "output_time": 4.533333333333333,
+      "source_capture_midpoint": 4.514823,
+      "source_file": "0055.jpg"
+    },
+    {
+      "output_time": 4.566666666666666,
+      "source_capture_midpoint": 4.5569855,
+      "source_file": "0056.jpg"
+    },
+    {
+      "output_time": 4.6,
+      "source_capture_midpoint": 4.5931845,
+      "source_file": "0057.jpg"
+    },
+    {
+      "output_time": 4.633333333333334,
+      "source_capture_midpoint": 4.6269335,
+      "source_file": "0058.jpg"
+    },
+    {
+      "output_time": 4.666666666666667,
+      "source_capture_midpoint": 4.663343,
+      "source_file": "0059.jpg"
+    },
+    {
+      "output_time": 4.7,
+      "source_capture_midpoint": 4.7136405,
+      "source_file": "0060.jpg"
+    },
+    {
+      "output_time": 4.733333333333333,
+      "source_capture_midpoint": 4.7507875,
+      "source_file": "0061.jpg"
+    },
+    {
+      "output_time": 4.766666666666667,
+      "source_capture_midpoint": 4.7507875,
+      "source_file": "0061.jpg"
+    },
+    {
+      "output_time": 4.8,
+      "source_capture_midpoint": 4.7844155,
+      "source_file": "0062.jpg"
+    },
+    {
+      "output_time": 4.833333333333333,
+      "source_capture_midpoint": 4.8220975,
+      "source_file": "0063.jpg"
+    },
+    {
+      "output_time": 4.866666666666666,
+      "source_capture_midpoint": 4.8584245,
+      "source_file": "0064.jpg"
+    },
+    {
+      "output_time": 4.9,
+      "source_capture_midpoint": 4.894771,
+      "source_file": "0065.jpg"
+    },
+    {
+      "output_time": 4.933333333333334,
+      "source_capture_midpoint": 4.9375885,
+      "source_file": "0066.jpg"
+    },
+    {
+      "output_time": 4.966666666666667,
+      "source_capture_midpoint": 4.979096999999999,
+      "source_file": "0067.jpg"
+    },
+    {
+      "output_time": 5.0,
+      "source_capture_midpoint": 5.0124435,
+      "source_file": "0068.jpg"
+    },
+    {
+      "output_time": 5.033333333333333,
+      "source_capture_midpoint": 5.0460294999999995,
+      "source_file": "0069.jpg"
+    },
+    {
+      "output_time": 5.066666666666666,
+      "source_capture_midpoint": 5.079203,
+      "source_file": "0070.jpg"
+    },
+    {
+      "output_time": 5.1,
+      "source_capture_midpoint": 5.1137060000000005,
+      "source_file": "0071.jpg"
+    },
+    {
+      "output_time": 5.133333333333334,
+      "source_capture_midpoint": 5.1465510000000005,
+      "source_file": "0072.jpg"
+    },
+    {
+      "output_time": 5.166666666666667,
+      "source_capture_midpoint": 5.185205,
+      "source_file": "0073.jpg"
+    },
+    {
+      "output_time": 5.2,
+      "source_capture_midpoint": 5.185205,
+      "source_file": "0073.jpg"
+    },
+    {
+      "output_time": 5.233333333333333,
+      "source_capture_midpoint": 5.2231815,
+      "source_file": "0074.jpg"
+    },
+    {
+      "output_time": 5.266666666666667,
+      "source_capture_midpoint": 5.260887,
+      "source_file": "0075.jpg"
+    },
+    {
+      "output_time": 5.3,
+      "source_capture_midpoint": 5.299043,
+      "source_file": "0076.jpg"
+    },
+    {
+      "output_time": 5.333333333333333,
+      "source_capture_midpoint": 5.3317605,
+      "source_file": "0077.jpg"
+    },
+    {
+      "output_time": 5.366666666666666,
+      "source_capture_midpoint": 5.363646,
+      "source_file": "0078.jpg"
+    },
+    {
+      "output_time": 5.4,
+      "source_capture_midpoint": 5.4154955000000005,
+      "source_file": "0079.jpg"
+    },
+    {
+      "output_time": 5.433333333333334,
+      "source_capture_midpoint": 5.4154955000000005,
+      "source_file": "0079.jpg"
+    },
+    {
+      "output_time": 5.466666666666667,
+      "source_capture_midpoint": 5.4566315,
+      "source_file": "0080.jpg"
+    },
+    {
+      "output_time": 5.5,
+      "source_capture_midpoint": 5.4937505,
+      "source_file": "0081.jpg"
+    },
+    {
+      "output_time": 5.533333333333333,
+      "source_capture_midpoint": 5.5330645,
+      "source_file": "0082.jpg"
+    },
+    {
+      "output_time": 5.566666666666666,
+      "source_capture_midpoint": 5.5713415,
+      "source_file": "0083.jpg"
+    },
+    {
+      "output_time": 5.6,
+      "source_capture_midpoint": 5.608829500000001,
+      "source_file": "0084.jpg"
+    },
+    {
+      "output_time": 5.633333333333334,
+      "source_capture_midpoint": 5.608829500000001,
+      "source_file": "0084.jpg"
+    },
+    {
+      "output_time": 5.666666666666667,
+      "source_capture_midpoint": 5.661944,
+      "source_file": "0085.jpg"
+    },
+    {
+      "output_time": 5.7,
+      "source_capture_midpoint": 5.7044975,
+      "source_file": "0086.jpg"
+    },
+    {
+      "output_time": 5.733333333333333,
+      "source_capture_midpoint": 5.7388765,
+      "source_file": "0087.jpg"
+    },
+    {
+      "output_time": 5.766666666666667,
+      "source_capture_midpoint": 5.774119499999999,
+      "source_file": "0088.jpg"
+    },
+    {
+      "output_time": 5.8,
+      "source_capture_midpoint": 5.8172965,
+      "source_file": "0089.jpg"
+    },
+    {
+      "output_time": 5.833333333333333,
+      "source_capture_midpoint": 5.8172965,
+      "source_file": "0089.jpg"
+    },
+    {
+      "output_time": 5.866666666666666,
+      "source_capture_midpoint": 5.873692500000001,
+      "source_file": "0090.jpg"
+    },
+    {
+      "output_time": 5.9,
+      "source_capture_midpoint": 5.873692500000001,
+      "source_file": "0090.jpg"
+    },
+    {
+      "output_time": 5.933333333333334,
+      "source_capture_midpoint": 5.927080500000001,
+      "source_file": "0091.jpg"
+    },
+    {
+      "output_time": 5.966666666666667,
+      "source_capture_midpoint": 5.968155,
+      "source_file": "0092.jpg"
+    },
+    {
+      "output_time": 6.0,
+      "source_capture_midpoint": 6.0043880000000005,
+      "source_file": "0093.jpg"
+    },
+    {
+      "output_time": 6.033333333333333,
+      "source_capture_midpoint": 6.043273,
+      "source_file": "0094.jpg"
+    },
+    {
+      "output_time": 6.066666666666666,
+      "source_capture_midpoint": 6.075709,
+      "source_file": "0095.jpg"
+    },
+    {
+      "output_time": 6.1,
+      "source_capture_midpoint": 6.10826,
+      "source_file": "0096.jpg"
+    },
+    {
+      "output_time": 6.133333333333334,
+      "source_capture_midpoint": 6.145687000000001,
+      "source_file": "0097.jpg"
+    },
+    {
+      "output_time": 6.166666666666667,
+      "source_capture_midpoint": 6.145687000000001,
+      "source_file": "0097.jpg"
+    },
+    {
+      "output_time": 6.2,
+      "source_capture_midpoint": 6.187867499999999,
+      "source_file": "0098.jpg"
+    },
+    {
+      "output_time": 6.233333333333333,
+      "source_capture_midpoint": 6.2299545,
+      "source_file": "0099.jpg"
+    },
+    {
+      "output_time": 6.266666666666667,
+      "source_capture_midpoint": 6.264894999999999,
+      "source_file": "0100.jpg"
+    },
+    {
+      "output_time": 6.3,
+      "source_capture_midpoint": 6.296911,
+      "source_file": "0101.jpg"
+    },
+    {
+      "output_time": 6.333333333333333,
+      "source_capture_midpoint": 6.333502,
+      "source_file": "0102.jpg"
+    },
+    {
+      "output_time": 6.366666666666666,
+      "source_capture_midpoint": 6.373282,
+      "source_file": "0103.jpg"
+    },
+    {
+      "output_time": 6.4,
+      "source_capture_midpoint": 6.41629,
+      "source_file": "0104.jpg"
+    },
+    {
+      "output_time": 6.433333333333334,
+      "source_capture_midpoint": 6.41629,
+      "source_file": "0104.jpg"
+    },
+    {
+      "output_time": 6.466666666666667,
+      "source_capture_midpoint": 6.454733,
+      "source_file": "0105.jpg"
+    },
+    {
+      "output_time": 6.5,
+      "source_capture_midpoint": 6.4892275,
+      "source_file": "0106.jpg"
+    },
+    {
+      "output_time": 6.533333333333333,
+      "source_capture_midpoint": 6.532192,
+      "source_file": "0107.jpg"
+    },
+    {
+      "output_time": 6.566666666666666,
+      "source_capture_midpoint": 6.5822575,
+      "source_file": "0108.jpg"
+    },
+    {
+      "output_time": 6.6,
+      "source_capture_midpoint": 6.5822575,
+      "source_file": "0108.jpg"
+    },
+    {
+      "output_time": 6.633333333333334,
+      "source_capture_midpoint": 6.619953000000001,
+      "source_file": "0109.jpg"
+    },
+    {
+      "output_time": 6.666666666666667,
+      "source_capture_midpoint": 6.658457,
+      "source_file": "0110.jpg"
+    },
+    {
+      "output_time": 6.7,
+      "source_capture_midpoint": 6.694321,
+      "source_file": "0111.jpg"
+    },
+    {
+      "output_time": 6.733333333333333,
+      "source_capture_midpoint": 6.731249,
+      "source_file": "0112.jpg"
+    },
+    {
+      "output_time": 6.766666666666667,
+      "source_capture_midpoint": 6.767355500000001,
+      "source_file": "0113.jpg"
+    },
+    {
+      "output_time": 6.8,
+      "source_capture_midpoint": 6.80265,
+      "source_file": "0114.jpg"
+    },
+    {
+      "output_time": 6.833333333333333,
+      "source_capture_midpoint": 6.8418695,
+      "source_file": "0115.jpg"
+    },
+    {
+      "output_time": 6.866666666666666,
+      "source_capture_midpoint": 6.8797415,
+      "source_file": "0116.jpg"
+    },
+    {
+      "output_time": 6.9,
+      "source_capture_midpoint": 6.919459,
+      "source_file": "0117.jpg"
+    },
+    {
+      "output_time": 6.933333333333334,
+      "source_capture_midpoint": 6.919459,
+      "source_file": "0117.jpg"
+    },
+    {
+      "output_time": 6.966666666666667,
+      "source_capture_midpoint": 6.959563,
+      "source_file": "0118.jpg"
+    },
+    {
+      "output_time": 7.0,
+      "source_capture_midpoint": 6.994004500000001,
+      "source_file": "0119.jpg"
+    },
+    {
+      "output_time": 7.033333333333333,
+      "source_capture_midpoint": 7.018204,
+      "source_file": "0120.jpg"
+    },
+    {
+      "output_time": 7.066666666666666,
+      "source_capture_midpoint": 7.0495825,
+      "source_file": "0121.jpg"
+    },
+    {
+      "output_time": 7.1,
+      "source_capture_midpoint": 7.092345999999999,
+      "source_file": "0122.jpg"
+    },
+    {
+      "output_time": 7.133333333333334,
+      "source_capture_midpoint": 7.127055,
+      "source_file": "0123.jpg"
+    },
+    {
+      "output_time": 7.166666666666667,
+      "source_capture_midpoint": 7.161059,
+      "source_file": "0124.jpg"
+    },
+    {
+      "output_time": 7.2,
+      "source_capture_midpoint": 7.1981005,
+      "source_file": "0125.jpg"
+    },
+    {
+      "output_time": 7.233333333333333,
+      "source_capture_midpoint": 7.235877,
+      "source_file": "0126.jpg"
+    },
+    {
+      "output_time": 7.266666666666667,
+      "source_capture_midpoint": 7.273683,
+      "source_file": "0127.jpg"
+    },
+    {
+      "output_time": 7.3,
+      "source_capture_midpoint": 7.3156285,
+      "source_file": "0128.jpg"
+    },
+    {
+      "output_time": 7.333333333333333,
+      "source_capture_midpoint": 7.3156285,
+      "source_file": "0128.jpg"
+    },
+    {
+      "output_time": 7.366666666666666,
+      "source_capture_midpoint": 7.358587,
+      "source_file": "0129.jpg"
+    },
+    {
+      "output_time": 7.4,
+      "source_capture_midpoint": 7.409787,
+      "source_file": "0130.jpg"
+    },
+    {
+      "output_time": 7.433333333333334,
+      "source_capture_midpoint": 7.409787,
+      "source_file": "0130.jpg"
+    },
+    {
+      "output_time": 7.466666666666667,
+      "source_capture_midpoint": 7.473242,
+      "source_file": "0131.jpg"
+    },
+    {
+      "output_time": 7.5,
+      "source_capture_midpoint": 7.473242,
+      "source_file": "0131.jpg"
+    },
+    {
+      "output_time": 7.533333333333333,
+      "source_capture_midpoint": 7.535363,
+      "source_file": "0132.jpg"
+    },
+    {
+      "output_time": 7.566666666666666,
+      "source_capture_midpoint": 7.586377499999999,
+      "source_file": "0133.jpg"
+    },
+    {
+      "output_time": 7.6,
+      "source_capture_midpoint": 7.586377499999999,
+      "source_file": "0133.jpg"
+    },
+    {
+      "output_time": 7.633333333333334,
+      "source_capture_midpoint": 7.6241175000000005,
+      "source_file": "0134.jpg"
+    },
+    {
+      "output_time": 7.666666666666667,
+      "source_capture_midpoint": 7.660971,
+      "source_file": "0135.jpg"
+    },
+    {
+      "output_time": 7.7,
+      "source_capture_midpoint": 7.696957,
+      "source_file": "0136.jpg"
+    },
+    {
+      "output_time": 7.733333333333333,
+      "source_capture_midpoint": 7.7331775,
+      "source_file": "0137.jpg"
+    },
+    {
+      "output_time": 7.766666666666667,
+      "source_capture_midpoint": 7.7707844999999995,
+      "source_file": "0138.jpg"
+    },
+    {
+      "output_time": 7.8,
+      "source_capture_midpoint": 7.8105045,
+      "source_file": "0139.jpg"
+    },
+    {
+      "output_time": 7.833333333333333,
+      "source_capture_midpoint": 7.845025,
+      "source_file": "0140.jpg"
+    },
+    {
+      "output_time": 7.866666666666666,
+      "source_capture_midpoint": 7.8808869999999995,
+      "source_file": "0141.jpg"
+    },
+    {
+      "output_time": 7.9,
+      "source_capture_midpoint": 7.8808869999999995,
+      "source_file": "0141.jpg"
+    },
+    {
+      "output_time": 7.933333333333334,
+      "source_capture_midpoint": 7.9209675,
+      "source_file": "0142.jpg"
+    },
+    {
+      "output_time": 7.966666666666667,
+      "source_capture_midpoint": 7.9618375,
+      "source_file": "0143.jpg"
+    },
+    {
+      "output_time": 8.0,
+      "source_capture_midpoint": 8.0006445,
+      "source_file": "0144.jpg"
+    },
+    {
+      "output_time": 8.033333333333333,
+      "source_capture_midpoint": 8.037643,
+      "source_file": "0145.jpg"
+    },
+    {
+      "output_time": 8.066666666666666,
+      "source_capture_midpoint": 8.079692,
+      "source_file": "0146.jpg"
+    },
+    {
+      "output_time": 8.1,
+      "source_capture_midpoint": 8.117466,
+      "source_file": "0147.jpg"
+    },
+    {
+      "output_time": 8.133333333333333,
+      "source_capture_midpoint": 8.117466,
+      "source_file": "0147.jpg"
+    },
+    {
+      "output_time": 8.166666666666666,
+      "source_capture_midpoint": 8.1549355,
+      "source_file": "0148.jpg"
+    },
+    {
+      "output_time": 8.2,
+      "source_capture_midpoint": 8.193867999999998,
+      "source_file": "0149.jpg"
+    },
+    {
+      "output_time": 8.233333333333333,
+      "source_capture_midpoint": 8.234033499999999,
+      "source_file": "0150.jpg"
+    },
+    {
+      "output_time": 8.266666666666667,
+      "source_capture_midpoint": 8.272147,
+      "source_file": "0151.jpg"
+    },
+    {
+      "output_time": 8.3,
+      "source_capture_midpoint": 8.306277000000001,
+      "source_file": "0152.jpg"
+    },
+    {
+      "output_time": 8.333333333333334,
+      "source_capture_midpoint": 8.3436035,
+      "source_file": "0153.jpg"
+    },
+    {
+      "output_time": 8.366666666666667,
+      "source_capture_midpoint": 8.389337,
+      "source_file": "0154.jpg"
+    },
+    {
+      "output_time": 8.4,
+      "source_capture_midpoint": 8.389337,
+      "source_file": "0154.jpg"
+    },
+    {
+      "output_time": 8.433333333333334,
+      "source_capture_midpoint": 8.435750500000001,
+      "source_file": "0155.jpg"
+    },
+    {
+      "output_time": 8.466666666666667,
+      "source_capture_midpoint": 8.4755905,
+      "source_file": "0156.jpg"
+    },
+    {
+      "output_time": 8.5,
+      "source_capture_midpoint": 8.517655,
+      "source_file": "0157.jpg"
+    },
+    {
+      "output_time": 8.533333333333333,
+      "source_capture_midpoint": 8.517655,
+      "source_file": "0157.jpg"
+    },
+    {
+      "output_time": 8.566666666666666,
+      "source_capture_midpoint": 8.5563485,
+      "source_file": "0158.jpg"
+    },
+    {
+      "output_time": 8.6,
+      "source_capture_midpoint": 8.594798,
+      "source_file": "0159.jpg"
+    },
+    {
+      "output_time": 8.633333333333333,
+      "source_capture_midpoint": 8.6390595,
+      "source_file": "0160.jpg"
+    },
+    {
+      "output_time": 8.666666666666666,
+      "source_capture_midpoint": 8.675363,
+      "source_file": "0161.jpg"
+    },
+    {
+      "output_time": 8.7,
+      "source_capture_midpoint": 8.71091,
+      "source_file": "0162.jpg"
+    },
+    {
+      "output_time": 8.733333333333333,
+      "source_capture_midpoint": 8.7483665,
+      "source_file": "0163.jpg"
+    },
+    {
+      "output_time": 8.766666666666667,
+      "source_capture_midpoint": 8.7483665,
+      "source_file": "0163.jpg"
+    },
+    {
+      "output_time": 8.8,
+      "source_capture_midpoint": 8.786348499999999,
+      "source_file": "0164.jpg"
+    },
+    {
+      "output_time": 8.833333333333334,
+      "source_capture_midpoint": 8.821778,
+      "source_file": "0165.jpg"
+    },
+    {
+      "output_time": 8.866666666666667,
+      "source_capture_midpoint": 8.861846,
+      "source_file": "0166.jpg"
+    },
+    {
+      "output_time": 8.9,
+      "source_capture_midpoint": 8.9277365,
+      "source_file": "0167.jpg"
+    },
+    {
+      "output_time": 8.933333333333334,
+      "source_capture_midpoint": 8.9277365,
+      "source_file": "0167.jpg"
+    },
+    {
+      "output_time": 8.966666666666667,
+      "source_capture_midpoint": 8.993644499999998,
+      "source_file": "0168.jpg"
+    },
+    {
+      "output_time": 9.0,
+      "source_capture_midpoint": 8.993644499999998,
+      "source_file": "0168.jpg"
+    },
+    {
+      "output_time": 9.033333333333333,
+      "source_capture_midpoint": 9.031979,
+      "source_file": "0169.jpg"
+    },
+    {
+      "output_time": 9.066666666666666,
+      "source_capture_midpoint": 9.0661585,
+      "source_file": "0170.jpg"
+    },
+    {
+      "output_time": 9.1,
+      "source_capture_midpoint": 9.1008985,
+      "source_file": "0171.jpg"
+    },
+    {
+      "output_time": 9.133333333333333,
+      "source_capture_midpoint": 9.1340145,
+      "source_file": "0172.jpg"
+    },
+    {
+      "output_time": 9.166666666666666,
+      "source_capture_midpoint": 9.165845999999998,
+      "source_file": "0173.jpg"
+    },
+    {
+      "output_time": 9.2,
+      "source_capture_midpoint": 9.206215,
+      "source_file": "0174.jpg"
+    },
+    {
+      "output_time": 9.233333333333333,
+      "source_capture_midpoint": 9.2557465,
+      "source_file": "0175.jpg"
+    },
+    {
+      "output_time": 9.266666666666667,
+      "source_capture_midpoint": 9.2557465,
+      "source_file": "0175.jpg"
+    },
+    {
+      "output_time": 9.3,
+      "source_capture_midpoint": 9.299326,
+      "source_file": "0176.jpg"
+    },
+    {
+      "output_time": 9.333333333333334,
+      "source_capture_midpoint": 9.335232000000001,
+      "source_file": "0177.jpg"
+    },
+    {
+      "output_time": 9.366666666666667,
+      "source_capture_midpoint": 9.3793685,
+      "source_file": "0178.jpg"
+    },
+    {
+      "output_time": 9.4,
+      "source_capture_midpoint": 9.3793685,
+      "source_file": "0178.jpg"
+    },
+    {
+      "output_time": 9.433333333333334,
+      "source_capture_midpoint": 9.4232485,
+      "source_file": "0179.jpg"
+    },
+    {
+      "output_time": 9.466666666666667,
+      "source_capture_midpoint": 9.461900499999999,
+      "source_file": "0180.jpg"
+    },
+    {
+      "output_time": 9.5,
+      "source_capture_midpoint": 9.5024315,
+      "source_file": "0181.jpg"
+    },
+    {
+      "output_time": 9.533333333333333,
+      "source_capture_midpoint": 9.538703,
+      "source_file": "0182.jpg"
+    },
+    {
+      "output_time": 9.566666666666666,
+      "source_capture_midpoint": 9.5763115,
+      "source_file": "0183.jpg"
+    },
+    {
+      "output_time": 9.6,
+      "source_capture_midpoint": 9.616125499999999,
+      "source_file": "0184.jpg"
+    },
+    {
+      "output_time": 9.633333333333333,
+      "source_capture_midpoint": 9.6499025,
+      "source_file": "0185.jpg"
+    },
+    {
+      "output_time": 9.666666666666666,
+      "source_capture_midpoint": 9.6499025,
+      "source_file": "0185.jpg"
+    },
+    {
+      "output_time": 9.7,
+      "source_capture_midpoint": 9.683889,
+      "source_file": "0186.jpg"
+    },
+    {
+      "output_time": 9.733333333333333,
+      "source_capture_midpoint": 9.7297075,
+      "source_file": "0187.jpg"
+    },
+    {
+      "output_time": 9.766666666666667,
+      "source_capture_midpoint": 9.7746885,
+      "source_file": "0188.jpg"
+    },
+    {
+      "output_time": 9.8,
+      "source_capture_midpoint": 9.809354500000001,
+      "source_file": "0189.jpg"
+    },
+    {
+      "output_time": 9.833333333333334,
+      "source_capture_midpoint": 9.8444195,
+      "source_file": "0190.jpg"
+    },
+    {
+      "output_time": 9.866666666666667,
+      "source_capture_midpoint": 9.8816525,
+      "source_file": "0191.jpg"
+    },
+    {
+      "output_time": 9.9,
+      "source_capture_midpoint": 9.9160685,
+      "source_file": "0192.jpg"
+    },
+    {
+      "output_time": 9.933333333333334,
+      "source_capture_midpoint": 9.9160685,
+      "source_file": "0192.jpg"
+    },
+    {
+      "output_time": 9.966666666666667,
+      "source_capture_midpoint": 9.955542,
+      "source_file": "0193.jpg"
+    },
+    {
+      "output_time": 10.0,
+      "source_capture_midpoint": 9.996482,
+      "source_file": "0194.jpg"
+    },
+    {
+      "output_time": 10.033333333333333,
+      "source_capture_midpoint": 10.029166,
+      "source_file": "0195.jpg"
+    },
+    {
+      "output_time": 10.066666666666666,
+      "source_capture_midpoint": 10.061273499999999,
+      "source_file": "0196.jpg"
+    },
+    {
+      "output_time": 10.1,
+      "source_capture_midpoint": 10.106941500000001,
+      "source_file": "0197.jpg"
+    },
+    {
+      "output_time": 10.133333333333333,
+      "source_capture_midpoint": 10.1481275,
+      "source_file": "0198.jpg"
+    },
+    {
+      "output_time": 10.166666666666666,
+      "source_capture_midpoint": 10.1481275,
+      "source_file": "0198.jpg"
+    },
+    {
+      "output_time": 10.2,
+      "source_capture_midpoint": 10.1852445,
+      "source_file": "0199.jpg"
+    },
+    {
+      "output_time": 10.233333333333333,
+      "source_capture_midpoint": 10.231411999999999,
+      "source_file": "0200.jpg"
+    },
+    {
+      "output_time": 10.266666666666667,
+      "source_capture_midpoint": 10.275981,
+      "source_file": "0201.jpg"
+    },
+    {
+      "output_time": 10.3,
+      "source_capture_midpoint": 10.3074955,
+      "source_file": "0202.jpg"
+    },
+    {
+      "output_time": 10.333333333333334,
+      "source_capture_midpoint": 10.344574,
+      "source_file": "0203.jpg"
+    },
+    {
+      "output_time": 10.366666666666667,
+      "source_capture_midpoint": 10.388732000000001,
+      "source_file": "0204.jpg"
+    },
+    {
+      "output_time": 10.4,
+      "source_capture_midpoint": 10.388732000000001,
+      "source_file": "0204.jpg"
+    },
+    {
+      "output_time": 10.433333333333334,
+      "source_capture_midpoint": 10.447091,
+      "source_file": "0205.jpg"
+    },
+    {
+      "output_time": 10.466666666666667,
+      "source_capture_midpoint": 10.447091,
+      "source_file": "0205.jpg"
+    },
+    {
+      "output_time": 10.5,
+      "source_capture_midpoint": 10.494274,
+      "source_file": "0206.jpg"
+    },
+    {
+      "output_time": 10.533333333333333,
+      "source_capture_midpoint": 10.535614500000001,
+      "source_file": "0207.jpg"
+    },
+    {
+      "output_time": 10.566666666666666,
+      "source_capture_midpoint": 10.5758635,
+      "source_file": "0208.jpg"
+    },
+    {
+      "output_time": 10.6,
+      "source_capture_midpoint": 10.613605,
+      "source_file": "0209.jpg"
+    },
+    {
+      "output_time": 10.633333333333333,
+      "source_capture_midpoint": 10.648053999999998,
+      "source_file": "0210.jpg"
+    },
+    {
+      "output_time": 10.666666666666666,
+      "source_capture_midpoint": 10.648053999999998,
+      "source_file": "0210.jpg"
+    },
+    {
+      "output_time": 10.7,
+      "source_capture_midpoint": 10.6908,
+      "source_file": "0211.jpg"
+    },
+    {
+      "output_time": 10.733333333333333,
+      "source_capture_midpoint": 10.737276000000001,
+      "source_file": "0212.jpg"
+    },
+    {
+      "output_time": 10.766666666666667,
+      "source_capture_midpoint": 10.772513,
+      "source_file": "0213.jpg"
+    },
+    {
+      "output_time": 10.8,
+      "source_capture_midpoint": 10.810772,
+      "source_file": "0214.jpg"
+    },
+    {
+      "output_time": 10.833333333333334,
+      "source_capture_midpoint": 10.849228499999999,
+      "source_file": "0215.jpg"
+    },
+    {
+      "output_time": 10.866666666666667,
+      "source_capture_midpoint": 10.849228499999999,
+      "source_file": "0215.jpg"
+    },
+    {
+      "output_time": 10.9,
+      "source_capture_midpoint": 10.887736,
+      "source_file": "0216.jpg"
+    },
+    {
+      "output_time": 10.933333333333334,
+      "source_capture_midpoint": 10.931378,
+      "source_file": "0217.jpg"
+    },
+    {
+      "output_time": 10.966666666666667,
+      "source_capture_midpoint": 10.9814795,
+      "source_file": "0218.jpg"
+    },
+    {
+      "output_time": 11.0,
+      "source_capture_midpoint": 10.9814795,
+      "source_file": "0218.jpg"
+    },
+    {
+      "output_time": 11.033333333333333,
+      "source_capture_midpoint": 11.027750999999999,
+      "source_file": "0219.jpg"
+    },
+    {
+      "output_time": 11.066666666666666,
+      "source_capture_midpoint": 11.0618205,
+      "source_file": "0220.jpg"
+    },
+    {
+      "output_time": 11.1,
+      "source_capture_midpoint": 11.102078,
+      "source_file": "0221.jpg"
+    },
+    {
+      "output_time": 11.133333333333333,
+      "source_capture_midpoint": 11.1433445,
+      "source_file": "0222.jpg"
+    },
+    {
+      "output_time": 11.166666666666666,
+      "source_capture_midpoint": 11.180577,
+      "source_file": "0223.jpg"
+    },
+    {
+      "output_time": 11.2,
+      "source_capture_midpoint": 11.2162805,
+      "source_file": "0224.jpg"
+    },
+    {
+      "output_time": 11.233333333333333,
+      "source_capture_midpoint": 11.2162805,
+      "source_file": "0224.jpg"
+    },
+    {
+      "output_time": 11.266666666666667,
+      "source_capture_midpoint": 11.258238,
+      "source_file": "0225.jpg"
+    },
+    {
+      "output_time": 11.3,
+      "source_capture_midpoint": 11.3000445,
+      "source_file": "0226.jpg"
+    },
+    {
+      "output_time": 11.333333333333334,
+      "source_capture_midpoint": 11.33319,
+      "source_file": "0227.jpg"
+    },
+    {
+      "output_time": 11.366666666666667,
+      "source_capture_midpoint": 11.3659435,
+      "source_file": "0228.jpg"
+    },
+    {
+      "output_time": 11.4,
+      "source_capture_midpoint": 11.407508,
+      "source_file": "0229.jpg"
+    },
+    {
+      "output_time": 11.433333333333334,
+      "source_capture_midpoint": 11.452013,
+      "source_file": "0230.jpg"
+    },
+    {
+      "output_time": 11.466666666666667,
+      "source_capture_midpoint": 11.452013,
+      "source_file": "0230.jpg"
+    },
+    {
+      "output_time": 11.5,
+      "source_capture_midpoint": 11.490448,
+      "source_file": "0231.jpg"
+    },
+    {
+      "output_time": 11.533333333333333,
+      "source_capture_midpoint": 11.536307,
+      "source_file": "0232.jpg"
+    },
+    {
+      "output_time": 11.566666666666666,
+      "source_capture_midpoint": 11.577538,
+      "source_file": "0233.jpg"
+    },
+    {
+      "output_time": 11.6,
+      "source_capture_midpoint": 11.577538,
+      "source_file": "0233.jpg"
+    },
+    {
+      "output_time": 11.633333333333333,
+      "source_capture_midpoint": 11.622533,
+      "source_file": "0234.jpg"
+    },
+    {
+      "output_time": 11.666666666666666,
+      "source_capture_midpoint": 11.665039499999999,
+      "source_file": "0235.jpg"
+    },
+    {
+      "output_time": 11.7,
+      "source_capture_midpoint": 11.7025735,
+      "source_file": "0236.jpg"
+    },
+    {
+      "output_time": 11.733333333333333,
+      "source_capture_midpoint": 11.7438805,
+      "source_file": "0237.jpg"
+    },
+    {
+      "output_time": 11.766666666666667,
+      "source_capture_midpoint": 11.7841185,
+      "source_file": "0238.jpg"
+    },
+    {
+      "output_time": 11.8,
+      "source_capture_midpoint": 11.7841185,
+      "source_file": "0238.jpg"
+    },
+    {
+      "output_time": 11.833333333333334,
+      "source_capture_midpoint": 11.821599500000001,
+      "source_file": "0239.jpg"
+    },
+    {
+      "output_time": 11.866666666666667,
+      "source_capture_midpoint": 11.859784999999999,
+      "source_file": "0240.jpg"
+    },
+    {
+      "output_time": 11.9,
+      "source_capture_midpoint": 11.8997485,
+      "source_file": "0241.jpg"
+    },
+    {
+      "output_time": 11.933333333333334,
+      "source_capture_midpoint": 11.937093999999998,
+      "source_file": "0242.jpg"
+    },
+    {
+      "output_time": 11.966666666666667,
+      "source_capture_midpoint": 11.980599,
+      "source_file": "0243.jpg"
+    },
+    {
+      "output_time": 12.0,
+      "source_capture_midpoint": 11.980599,
+      "source_file": "0243.jpg"
+    },
+    {
+      "output_time": 12.033333333333333,
+      "source_capture_midpoint": 12.0215265,
+      "source_file": "0244.jpg"
+    },
+    {
+      "output_time": 12.066666666666666,
+      "source_capture_midpoint": 12.0564565,
+      "source_file": "0245.jpg"
+    },
+    {
+      "output_time": 12.1,
+      "source_capture_midpoint": 12.087442,
+      "source_file": "0246.jpg"
+    },
+    {
+      "output_time": 12.133333333333333,
+      "source_capture_midpoint": 12.1326105,
+      "source_file": "0247.jpg"
+    },
+    {
+      "output_time": 12.166666666666666,
+      "source_capture_midpoint": 12.177728,
+      "source_file": "0248.jpg"
+    },
+    {
+      "output_time": 12.2,
+      "source_capture_midpoint": 12.177728,
+      "source_file": "0248.jpg"
+    },
+    {
+      "output_time": 12.233333333333333,
+      "source_capture_midpoint": 12.2352095,
+      "source_file": "0249.jpg"
+    },
+    {
+      "output_time": 12.266666666666667,
+      "source_capture_midpoint": 12.291033500000001,
+      "source_file": "0250.jpg"
+    },
+    {
+      "output_time": 12.3,
+      "source_capture_midpoint": 12.291033500000001,
+      "source_file": "0250.jpg"
+    },
+    {
+      "output_time": 12.333333333333334,
+      "source_capture_midpoint": 12.328024,
+      "source_file": "0251.jpg"
+    },
+    {
+      "output_time": 12.366666666666667,
+      "source_capture_midpoint": 12.378615,
+      "source_file": "0252.jpg"
+    },
+    {
+      "output_time": 12.4,
+      "source_capture_midpoint": 12.414244,
+      "source_file": "0253.jpg"
+    },
+    {
+      "output_time": 12.433333333333334,
+      "source_capture_midpoint": 12.450541999999999,
+      "source_file": "0254.jpg"
+    },
+    {
+      "output_time": 12.466666666666667,
+      "source_capture_midpoint": 12.450541999999999,
+      "source_file": "0254.jpg"
+    },
+    {
+      "output_time": 12.5,
+      "source_capture_midpoint": 12.495197000000001,
+      "source_file": "0255.jpg"
+    },
+    {
+      "output_time": 12.533333333333333,
+      "source_capture_midpoint": 12.537357,
+      "source_file": "0256.jpg"
+    },
+    {
+      "output_time": 12.566666666666666,
+      "source_capture_midpoint": 12.572875,
+      "source_file": "0257.jpg"
+    },
+    {
+      "output_time": 12.6,
+      "source_capture_midpoint": 12.6093405,
+      "source_file": "0258.jpg"
+    },
+    {
+      "output_time": 12.633333333333333,
+      "source_capture_midpoint": 12.643647,
+      "source_file": "0259.jpg"
+    },
+    {
+      "output_time": 12.666666666666666,
+      "source_capture_midpoint": 12.684118,
+      "source_file": "0260.jpg"
+    },
+    {
+      "output_time": 12.7,
+      "source_capture_midpoint": 12.684118,
+      "source_file": "0260.jpg"
+    },
+    {
+      "output_time": 12.733333333333333,
+      "source_capture_midpoint": 12.725856499999999,
+      "source_file": "0261.jpg"
+    },
+    {
+      "output_time": 12.766666666666667,
+      "source_capture_midpoint": 12.764471,
+      "source_file": "0262.jpg"
+    },
+    {
+      "output_time": 12.8,
+      "source_capture_midpoint": 12.8018185,
+      "source_file": "0263.jpg"
+    },
+    {
+      "output_time": 12.833333333333334,
+      "source_capture_midpoint": 12.844015500000001,
+      "source_file": "0264.jpg"
+    },
+    {
+      "output_time": 12.866666666666667,
+      "source_capture_midpoint": 12.844015500000001,
+      "source_file": "0264.jpg"
+    },
+    {
+      "output_time": 12.9,
+      "source_capture_midpoint": 12.8904325,
+      "source_file": "0265.jpg"
+    },
+    {
+      "output_time": 12.933333333333334,
+      "source_capture_midpoint": 12.930544000000001,
+      "source_file": "0266.jpg"
+    },
+    {
+      "output_time": 12.966666666666667,
+      "source_capture_midpoint": 12.96599,
+      "source_file": "0267.jpg"
+    },
+    {
+      "output_time": 13.0,
+      "source_capture_midpoint": 13.0025865,
+      "source_file": "0268.jpg"
+    },
+    {
+      "output_time": 13.033333333333333,
+      "source_capture_midpoint": 13.0454455,
+      "source_file": "0269.jpg"
+    },
+    {
+      "output_time": 13.066666666666666,
+      "source_capture_midpoint": 13.0454455,
+      "source_file": "0269.jpg"
+    },
+    {
+      "output_time": 13.1,
+      "source_capture_midpoint": 13.088986,
+      "source_file": "0270.jpg"
+    },
+    {
+      "output_time": 13.133333333333333,
+      "source_capture_midpoint": 13.1266115,
+      "source_file": "0271.jpg"
+    },
+    {
+      "output_time": 13.166666666666666,
+      "source_capture_midpoint": 13.16331,
+      "source_file": "0272.jpg"
+    },
+    {
+      "output_time": 13.2,
+      "source_capture_midpoint": 13.2009085,
+      "source_file": "0273.jpg"
+    },
+    {
+      "output_time": 13.233333333333333,
+      "source_capture_midpoint": 13.248383,
+      "source_file": "0274.jpg"
+    },
+    {
+      "output_time": 13.266666666666667,
+      "source_capture_midpoint": 13.248383,
+      "source_file": "0274.jpg"
+    },
+    {
+      "output_time": 13.3,
+      "source_capture_midpoint": 13.288272,
+      "source_file": "0275.jpg"
+    },
+    {
+      "output_time": 13.333333333333334,
+      "source_capture_midpoint": 13.329183,
+      "source_file": "0276.jpg"
+    },
+    {
+      "output_time": 13.366666666666667,
+      "source_capture_midpoint": 13.367578,
+      "source_file": "0277.jpg"
+    },
+    {
+      "output_time": 13.4,
+      "source_capture_midpoint": 13.4083545,
+      "source_file": "0278.jpg"
+    },
+    {
+      "output_time": 13.433333333333334,
+      "source_capture_midpoint": 13.447753500000001,
+      "source_file": "0279.jpg"
+    },
+    {
+      "output_time": 13.466666666666667,
+      "source_capture_midpoint": 13.4830085,
+      "source_file": "0280.jpg"
+    },
+    {
+      "output_time": 13.5,
+      "source_capture_midpoint": 13.4830085,
+      "source_file": "0280.jpg"
+    },
+    {
+      "output_time": 13.533333333333333,
+      "source_capture_midpoint": 13.5244185,
+      "source_file": "0281.jpg"
+    },
+    {
+      "output_time": 13.566666666666666,
+      "source_capture_midpoint": 13.566592499999999,
+      "source_file": "0282.jpg"
+    },
+    {
+      "output_time": 13.6,
+      "source_capture_midpoint": 13.606593,
+      "source_file": "0283.jpg"
+    },
+    {
+      "output_time": 13.633333333333333,
+      "source_capture_midpoint": 13.647446500000001,
+      "source_file": "0284.jpg"
+    },
+    {
+      "output_time": 13.666666666666666,
+      "source_capture_midpoint": 13.6828365,
+      "source_file": "0285.jpg"
+    },
+    {
+      "output_time": 13.7,
+      "source_capture_midpoint": 13.6828365,
+      "source_file": "0285.jpg"
+    },
+    {
+      "output_time": 13.733333333333333,
+      "source_capture_midpoint": 13.718231,
+      "source_file": "0286.jpg"
+    },
+    {
+      "output_time": 13.766666666666667,
+      "source_capture_midpoint": 13.7704165,
+      "source_file": "0287.jpg"
+    },
+    {
+      "output_time": 13.8,
+      "source_capture_midpoint": 13.825550499999999,
+      "source_file": "0288.jpg"
+    },
+    {
+      "output_time": 13.833333333333334,
+      "source_capture_midpoint": 13.825550499999999,
+      "source_file": "0288.jpg"
+    },
+    {
+      "output_time": 13.866666666666667,
+      "source_capture_midpoint": 13.860866999999999,
+      "source_file": "0289.jpg"
+    },
+    {
+      "output_time": 13.9,
+      "source_capture_midpoint": 13.896141,
+      "source_file": "0290.jpg"
+    },
+    {
+      "output_time": 13.933333333333334,
+      "source_capture_midpoint": 13.9295105,
+      "source_file": "0291.jpg"
+    },
+    {
+      "output_time": 13.966666666666667,
+      "source_capture_midpoint": 13.97026,
+      "source_file": "0292.jpg"
+    },
+    {
+      "output_time": 14.0,
+      "source_capture_midpoint": 14.0098455,
+      "source_file": "0293.jpg"
+    },
+    {
+      "output_time": 14.033333333333333,
+      "source_capture_midpoint": 14.0098455,
+      "source_file": "0293.jpg"
+    },
+    {
+      "output_time": 14.066666666666666,
+      "source_capture_midpoint": 14.090223,
+      "source_file": "0294.jpg"
+    },
+    {
+      "output_time": 14.1,
+      "source_capture_midpoint": 14.090223,
+      "source_file": "0294.jpg"
+    },
+    {
+      "output_time": 14.133333333333333,
+      "source_capture_midpoint": 14.1541995,
+      "source_file": "0295.jpg"
+    },
+    {
+      "output_time": 14.166666666666666,
+      "source_capture_midpoint": 14.1541995,
+      "source_file": "0295.jpg"
+    },
+    {
+      "output_time": 14.2,
+      "source_capture_midpoint": 14.203972499999999,
+      "source_file": "0296.jpg"
+    },
+    {
+      "output_time": 14.233333333333333,
+      "source_capture_midpoint": 14.244046,
+      "source_file": "0297.jpg"
+    },
+    {
+      "output_time": 14.266666666666667,
+      "source_capture_midpoint": 14.244046,
+      "source_file": "0297.jpg"
+    },
+    {
+      "output_time": 14.3,
+      "source_capture_midpoint": 14.290062500000001,
+      "source_file": "0298.jpg"
+    },
+    {
+      "output_time": 14.333333333333334,
+      "source_capture_midpoint": 14.3412675,
+      "source_file": "0299.jpg"
+    },
+    {
+      "output_time": 14.366666666666667,
+      "source_capture_midpoint": 14.385514,
+      "source_file": "0300.jpg"
+    },
+    {
+      "output_time": 14.4,
+      "source_capture_midpoint": 14.385514,
+      "source_file": "0300.jpg"
+    },
+    {
+      "output_time": 14.433333333333334,
+      "source_capture_midpoint": 14.42283,
+      "source_file": "0301.jpg"
+    },
+    {
+      "output_time": 14.466666666666667,
+      "source_capture_midpoint": 14.4643055,
+      "source_file": "0302.jpg"
+    },
+    {
+      "output_time": 14.5,
+      "source_capture_midpoint": 14.502536,
+      "source_file": "0303.jpg"
+    },
+    {
+      "output_time": 14.533333333333333,
+      "source_capture_midpoint": 14.544099,
+      "source_file": "0304.jpg"
+    },
+    {
+      "output_time": 14.566666666666666,
+      "source_capture_midpoint": 14.586844,
+      "source_file": "0305.jpg"
+    },
+    {
+      "output_time": 14.6,
+      "source_capture_midpoint": 14.586844,
+      "source_file": "0305.jpg"
+    },
+    {
+      "output_time": 14.633333333333333,
+      "source_capture_midpoint": 14.62684,
+      "source_file": "0306.jpg"
+    },
+    {
+      "output_time": 14.666666666666666,
+      "source_capture_midpoint": 14.668227,
+      "source_file": "0307.jpg"
+    },
+    {
+      "output_time": 14.7,
+      "source_capture_midpoint": 14.7096965,
+      "source_file": "0308.jpg"
+    },
+    {
+      "output_time": 14.733333333333333,
+      "source_capture_midpoint": 14.754247,
+      "source_file": "0309.jpg"
+    },
+    {
+      "output_time": 14.766666666666667,
+      "source_capture_midpoint": 14.754247,
+      "source_file": "0309.jpg"
+    },
+    {
+      "output_time": 14.8,
+      "source_capture_midpoint": 14.7971285,
+      "source_file": "0310.jpg"
+    },
+    {
+      "output_time": 14.833333333333334,
+      "source_capture_midpoint": 14.837659,
+      "source_file": "0311.jpg"
+    },
+    {
+      "output_time": 14.866666666666667,
+      "source_capture_midpoint": 14.8779825,
+      "source_file": "0312.jpg"
+    },
+    {
+      "output_time": 14.9,
+      "source_capture_midpoint": 14.9162675,
+      "source_file": "0313.jpg"
+    },
+    {
+      "output_time": 14.933333333333334,
+      "source_capture_midpoint": 14.9162675,
+      "source_file": "0313.jpg"
+    },
+    {
+      "output_time": 14.966666666666667,
+      "source_capture_midpoint": 14.9541785,
+      "source_file": "0314.jpg"
+    },
+    {
+      "output_time": 15.0,
+      "source_capture_midpoint": 14.989756,
+      "source_file": "0315.jpg"
+    },
+    {
+      "output_time": 15.033333333333333,
+      "source_capture_midpoint": 15.02967,
+      "source_file": "0316.jpg"
+    },
+    {
+      "output_time": 15.066666666666666,
+      "source_capture_midpoint": 15.0744915,
+      "source_file": "0317.jpg"
+    },
+    {
+      "output_time": 15.1,
+      "source_capture_midpoint": 15.115004500000001,
+      "source_file": "0318.jpg"
+    },
+    {
+      "output_time": 15.133333333333333,
+      "source_capture_midpoint": 15.115004500000001,
+      "source_file": "0318.jpg"
+    },
+    {
+      "output_time": 15.166666666666666,
+      "source_capture_midpoint": 15.152512999999999,
+      "source_file": "0319.jpg"
+    },
+    {
+      "output_time": 15.2,
+      "source_capture_midpoint": 15.214671,
+      "source_file": "0320.jpg"
+    },
+    {
+      "output_time": 15.233333333333333,
+      "source_capture_midpoint": 15.214671,
+      "source_file": "0320.jpg"
+    },
+    {
+      "output_time": 15.266666666666667,
+      "source_capture_midpoint": 15.288057,
+      "source_file": "0321.jpg"
+    },
+    {
+      "output_time": 15.3,
+      "source_capture_midpoint": 15.288057,
+      "source_file": "0321.jpg"
+    },
+    {
+      "output_time": 15.333333333333334,
+      "source_capture_midpoint": 15.328723,
+      "source_file": "0322.jpg"
+    },
+    {
+      "output_time": 15.366666666666667,
+      "source_capture_midpoint": 15.375086,
+      "source_file": "0323.jpg"
+    },
+    {
+      "output_time": 15.4,
+      "source_capture_midpoint": 15.414897,
+      "source_file": "0324.jpg"
+    },
+    {
+      "output_time": 15.433333333333334,
+      "source_capture_midpoint": 15.4476275,
+      "source_file": "0325.jpg"
+    },
+    {
+      "output_time": 15.466666666666667,
+      "source_capture_midpoint": 15.482473500000001,
+      "source_file": "0326.jpg"
+    },
+    {
+      "output_time": 15.5,
+      "source_capture_midpoint": 15.482473500000001,
+      "source_file": "0326.jpg"
+    },
+    {
+      "output_time": 15.533333333333333,
+      "source_capture_midpoint": 15.520618500000001,
+      "source_file": "0327.jpg"
+    },
+    {
+      "output_time": 15.566666666666666,
+      "source_capture_midpoint": 15.563053499999999,
+      "source_file": "0328.jpg"
+    },
+    {
+      "output_time": 15.6,
+      "source_capture_midpoint": 15.5975685,
+      "source_file": "0329.jpg"
+    },
+    {
+      "output_time": 15.633333333333333,
+      "source_capture_midpoint": 15.6317115,
+      "source_file": "0330.jpg"
+    },
+    {
+      "output_time": 15.666666666666666,
+      "source_capture_midpoint": 15.665442,
+      "source_file": "0331.jpg"
+    },
+    {
+      "output_time": 15.7,
+      "source_capture_midpoint": 15.6962355,
+      "source_file": "0332.jpg"
+    },
+    {
+      "output_time": 15.733333333333333,
+      "source_capture_midpoint": 15.733096,
+      "source_file": "0333.jpg"
+    },
+    {
+      "output_time": 15.766666666666667,
+      "source_capture_midpoint": 15.774589500000001,
+      "source_file": "0334.jpg"
+    },
+    {
+      "output_time": 15.8,
+      "source_capture_midpoint": 15.813407,
+      "source_file": "0335.jpg"
+    },
+    {
+      "output_time": 15.833333333333334,
+      "source_capture_midpoint": 15.848809500000002,
+      "source_file": "0336.jpg"
+    },
+    {
+      "output_time": 15.866666666666667,
+      "source_capture_midpoint": 15.848809500000002,
+      "source_file": "0336.jpg"
+    },
+    {
+      "output_time": 15.9,
+      "source_capture_midpoint": 15.8848615,
+      "source_file": "0337.jpg"
+    },
+    {
+      "output_time": 15.933333333333334,
+      "source_capture_midpoint": 15.927892,
+      "source_file": "0338.jpg"
+    },
+    {
+      "output_time": 15.966666666666667,
+      "source_capture_midpoint": 15.9715565,
+      "source_file": "0339.jpg"
+    },
+    {
+      "output_time": 16.0,
+      "source_capture_midpoint": 16.028063,
+      "source_file": "0340.jpg"
+    },
+    {
+      "output_time": 16.033333333333335,
+      "source_capture_midpoint": 16.028063,
+      "source_file": "0340.jpg"
+    },
+    {
+      "output_time": 16.066666666666666,
+      "source_capture_midpoint": 16.0777455,
+      "source_file": "0341.jpg"
+    },
+    {
+      "output_time": 16.1,
+      "source_capture_midpoint": 16.114667,
+      "source_file": "0342.jpg"
+    },
+    {
+      "output_time": 16.133333333333333,
+      "source_capture_midpoint": 16.114667,
+      "source_file": "0342.jpg"
+    },
+    {
+      "output_time": 16.166666666666668,
+      "source_capture_midpoint": 16.157865,
+      "source_file": "0343.jpg"
+    },
+    {
+      "output_time": 16.2,
+      "source_capture_midpoint": 16.213037999999997,
+      "source_file": "0344.jpg"
+    },
+    {
+      "output_time": 16.233333333333334,
+      "source_capture_midpoint": 16.213037999999997,
+      "source_file": "0344.jpg"
+    },
+    {
+      "output_time": 16.266666666666666,
+      "source_capture_midpoint": 16.2635935,
+      "source_file": "0345.jpg"
+    },
+    {
+      "output_time": 16.3,
+      "source_capture_midpoint": 16.296902,
+      "source_file": "0346.jpg"
+    },
+    {
+      "output_time": 16.333333333333332,
+      "source_capture_midpoint": 16.32824,
+      "source_file": "0347.jpg"
+    },
+    {
+      "output_time": 16.366666666666667,
+      "source_capture_midpoint": 16.363121,
+      "source_file": "0348.jpg"
+    },
+    {
+      "output_time": 16.4,
+      "source_capture_midpoint": 16.3972445,
+      "source_file": "0349.jpg"
+    },
+    {
+      "output_time": 16.433333333333334,
+      "source_capture_midpoint": 16.426631,
+      "source_file": "0350.jpg"
+    },
+    {
+      "output_time": 16.466666666666665,
+      "source_capture_midpoint": 16.4593725,
+      "source_file": "0351.jpg"
+    },
+    {
+      "output_time": 16.5,
+      "source_capture_midpoint": 16.4961355,
+      "source_file": "0352.jpg"
+    },
+    {
+      "output_time": 16.533333333333335,
+      "source_capture_midpoint": 16.5334485,
+      "source_file": "0353.jpg"
+    },
+    {
+      "output_time": 16.566666666666666,
+      "source_capture_midpoint": 16.5725995,
+      "source_file": "0354.jpg"
+    },
+    {
+      "output_time": 16.6,
+      "source_capture_midpoint": 16.611587999999998,
+      "source_file": "0355.jpg"
+    },
+    {
+      "output_time": 16.633333333333333,
+      "source_capture_midpoint": 16.645415,
+      "source_file": "0356.jpg"
+    },
+    {
+      "output_time": 16.666666666666668,
+      "source_capture_midpoint": 16.6768285,
+      "source_file": "0357.jpg"
+    },
+    {
+      "output_time": 16.7,
+      "source_capture_midpoint": 16.707171000000002,
+      "source_file": "0358.jpg"
+    },
+    {
+      "output_time": 16.733333333333334,
+      "source_capture_midpoint": 16.742232,
+      "source_file": "0359.jpg"
+    },
+    {
+      "output_time": 16.766666666666666,
+      "source_capture_midpoint": 16.7877865,
+      "source_file": "0360.jpg"
+    },
+    {
+      "output_time": 16.8,
+      "source_capture_midpoint": 16.7877865,
+      "source_file": "0360.jpg"
+    },
+    {
+      "output_time": 16.833333333333332,
+      "source_capture_midpoint": 16.829763,
+      "source_file": "0361.jpg"
+    },
+    {
+      "output_time": 16.866666666666667,
+      "source_capture_midpoint": 16.861155500000002,
+      "source_file": "0362.jpg"
+    },
+    {
+      "output_time": 16.9,
+      "source_capture_midpoint": 16.893228,
+      "source_file": "0363.jpg"
+    },
+    {
+      "output_time": 16.933333333333334,
+      "source_capture_midpoint": 16.9283135,
+      "source_file": "0364.jpg"
+    },
+    {
+      "output_time": 16.966666666666665,
+      "source_capture_midpoint": 16.960326000000002,
+      "source_file": "0365.jpg"
+    },
+    {
+      "output_time": 17.0,
+      "source_capture_midpoint": 16.994531000000002,
+      "source_file": "0366.jpg"
+    },
+    {
+      "output_time": 17.033333333333335,
+      "source_capture_midpoint": 17.033485499999998,
+      "source_file": "0367.jpg"
+    },
+    {
+      "output_time": 17.066666666666666,
+      "source_capture_midpoint": 17.0722455,
+      "source_file": "0368.jpg"
+    },
+    {
+      "output_time": 17.1,
+      "source_capture_midpoint": 17.1156115,
+      "source_file": "0369.jpg"
+    },
+    {
+      "output_time": 17.133333333333333,
+      "source_capture_midpoint": 17.1156115,
+      "source_file": "0369.jpg"
+    },
+    {
+      "output_time": 17.166666666666668,
+      "source_capture_midpoint": 17.152558,
+      "source_file": "0370.jpg"
+    },
+    {
+      "output_time": 17.2,
+      "source_capture_midpoint": 17.191228,
+      "source_file": "0371.jpg"
+    },
+    {
+      "output_time": 17.233333333333334,
+      "source_capture_midpoint": 17.2284155,
+      "source_file": "0372.jpg"
+    },
+    {
+      "output_time": 17.266666666666666,
+      "source_capture_midpoint": 17.2644255,
+      "source_file": "0373.jpg"
+    },
+    {
+      "output_time": 17.3,
+      "source_capture_midpoint": 17.300053,
+      "source_file": "0374.jpg"
+    },
+    {
+      "output_time": 17.333333333333332,
+      "source_capture_midpoint": 17.339161,
+      "source_file": "0375.jpg"
+    },
+    {
+      "output_time": 17.366666666666667,
+      "source_capture_midpoint": 17.3762745,
+      "source_file": "0376.jpg"
+    },
+    {
+      "output_time": 17.4,
+      "source_capture_midpoint": 17.411035499999997,
+      "source_file": "0377.jpg"
+    },
+    {
+      "output_time": 17.433333333333334,
+      "source_capture_midpoint": 17.4476775,
+      "source_file": "0378.jpg"
+    },
+    {
+      "output_time": 17.466666666666665,
+      "source_capture_midpoint": 17.483598999999998,
+      "source_file": "0379.jpg"
+    },
+    {
+      "output_time": 17.5,
+      "source_capture_midpoint": 17.483598999999998,
+      "source_file": "0379.jpg"
+    },
+    {
+      "output_time": 17.533333333333335,
+      "source_capture_midpoint": 17.519985,
+      "source_file": "0380.jpg"
+    },
+    {
+      "output_time": 17.566666666666666,
+      "source_capture_midpoint": 17.557830000000003,
+      "source_file": "0381.jpg"
+    },
+    {
+      "output_time": 17.6,
+      "source_capture_midpoint": 17.59449,
+      "source_file": "0382.jpg"
+    },
+    {
+      "output_time": 17.633333333333333,
+      "source_capture_midpoint": 17.629169,
+      "source_file": "0383.jpg"
+    },
+    {
+      "output_time": 17.666666666666668,
+      "source_capture_midpoint": 17.6600835,
+      "source_file": "0384.jpg"
+    },
+    {
+      "output_time": 17.7,
+      "source_capture_midpoint": 17.6600835,
+      "source_file": "0384.jpg"
+    },
+    {
+      "output_time": 17.733333333333334,
+      "source_capture_midpoint": 17.747473,
+      "source_file": "0385.jpg"
+    },
+    {
+      "output_time": 17.766666666666666,
+      "source_capture_midpoint": 17.747473,
+      "source_file": "0385.jpg"
+    },
+    {
+      "output_time": 17.8,
+      "source_capture_midpoint": 17.79036,
+      "source_file": "0386.jpg"
+    },
+    {
+      "output_time": 17.833333333333332,
+      "source_capture_midpoint": 17.824652,
+      "source_file": "0387.jpg"
+    },
+    {
+      "output_time": 17.866666666666667,
+      "source_capture_midpoint": 17.86214,
+      "source_file": "0388.jpg"
+    },
+    {
+      "output_time": 17.9,
+      "source_capture_midpoint": 17.899998500000002,
+      "source_file": "0389.jpg"
+    },
+    {
+      "output_time": 17.933333333333334,
+      "source_capture_midpoint": 17.934732500000003,
+      "source_file": "0390.jpg"
+    },
+    {
+      "output_time": 17.966666666666665,
+      "source_capture_midpoint": 17.9746415,
+      "source_file": "0391.jpg"
+    },
+    {
+      "output_time": 18.0,
+      "source_capture_midpoint": 18.015285,
+      "source_file": "0392.jpg"
+    },
+    {
+      "output_time": 18.033333333333335,
+      "source_capture_midpoint": 18.015285,
+      "source_file": "0392.jpg"
+    },
+    {
+      "output_time": 18.066666666666666,
+      "source_capture_midpoint": 18.056979,
+      "source_file": "0393.jpg"
+    },
+    {
+      "output_time": 18.1,
+      "source_capture_midpoint": 18.1007535,
+      "source_file": "0394.jpg"
+    },
+    {
+      "output_time": 18.133333333333333,
+      "source_capture_midpoint": 18.1433075,
+      "source_file": "0395.jpg"
+    },
+    {
+      "output_time": 18.166666666666668,
+      "source_capture_midpoint": 18.1878975,
+      "source_file": "0396.jpg"
+    },
+    {
+      "output_time": 18.2,
+      "source_capture_midpoint": 18.1878975,
+      "source_file": "0396.jpg"
+    },
+    {
+      "output_time": 18.233333333333334,
+      "source_capture_midpoint": 18.232016,
+      "source_file": "0397.jpg"
+    },
+    {
+      "output_time": 18.266666666666666,
+      "source_capture_midpoint": 18.270333,
+      "source_file": "0398.jpg"
+    },
+    {
+      "output_time": 18.3,
+      "source_capture_midpoint": 18.315505,
+      "source_file": "0399.jpg"
+    },
+    {
+      "output_time": 18.333333333333332,
+      "source_capture_midpoint": 18.315505,
+      "source_file": "0399.jpg"
+    },
+    {
+      "output_time": 18.366666666666667,
+      "source_capture_midpoint": 18.351318,
+      "source_file": "0400.jpg"
+    },
+    {
+      "output_time": 18.4,
+      "source_capture_midpoint": 18.389211500000002,
+      "source_file": "0401.jpg"
+    },
+    {
+      "output_time": 18.433333333333334,
+      "source_capture_midpoint": 18.428807499999998,
+      "source_file": "0402.jpg"
+    },
+    {
+      "output_time": 18.466666666666665,
+      "source_capture_midpoint": 18.461579,
+      "source_file": "0403.jpg"
+    },
+    {
+      "output_time": 18.5,
+      "source_capture_midpoint": 18.4964365,
+      "source_file": "0404.jpg"
+    },
+    {
+      "output_time": 18.533333333333335,
+      "source_capture_midpoint": 18.5316555,
+      "source_file": "0405.jpg"
+    },
+    {
+      "output_time": 18.566666666666666,
+      "source_capture_midpoint": 18.566853000000002,
+      "source_file": "0406.jpg"
+    },
+    {
+      "output_time": 18.6,
+      "source_capture_midpoint": 18.6060515,
+      "source_file": "0407.jpg"
+    },
+    {
+      "output_time": 18.633333333333333,
+      "source_capture_midpoint": 18.649293999999998,
+      "source_file": "0408.jpg"
+    },
+    {
+      "output_time": 18.666666666666668,
+      "source_capture_midpoint": 18.649293999999998,
+      "source_file": "0408.jpg"
+    },
+    {
+      "output_time": 18.7,
+      "source_capture_midpoint": 18.6925285,
+      "source_file": "0409.jpg"
+    },
+    {
+      "output_time": 18.733333333333334,
+      "source_capture_midpoint": 18.735672,
+      "source_file": "0410.jpg"
+    },
+    {
+      "output_time": 18.766666666666666,
+      "source_capture_midpoint": 18.774055,
+      "source_file": "0411.jpg"
+    },
+    {
+      "output_time": 18.8,
+      "source_capture_midpoint": 18.812055,
+      "source_file": "0412.jpg"
+    },
+    {
+      "output_time": 18.833333333333332,
+      "source_capture_midpoint": 18.812055,
+      "source_file": "0412.jpg"
+    },
+    {
+      "output_time": 18.866666666666667,
+      "source_capture_midpoint": 18.856583,
+      "source_file": "0413.jpg"
+    },
+    {
+      "output_time": 18.9,
+      "source_capture_midpoint": 18.897060500000002,
+      "source_file": "0414.jpg"
+    },
+    {
+      "output_time": 18.933333333333334,
+      "source_capture_midpoint": 18.9272285,
+      "source_file": "0415.jpg"
+    },
+    {
+      "output_time": 18.966666666666665,
+      "source_capture_midpoint": 18.960365000000003,
+      "source_file": "0416.jpg"
+    },
+    {
+      "output_time": 19.0,
+      "source_capture_midpoint": 18.995925,
+      "source_file": "0417.jpg"
+    },
+    {
+      "output_time": 19.033333333333335,
+      "source_capture_midpoint": 19.032901000000003,
+      "source_file": "0418.jpg"
+    },
+    {
+      "output_time": 19.066666666666666,
+      "source_capture_midpoint": 19.0749335,
+      "source_file": "0419.jpg"
+    },
+    {
+      "output_time": 19.1,
+      "source_capture_midpoint": 19.10914,
+      "source_file": "0420.jpg"
+    },
+    {
+      "output_time": 19.133333333333333,
+      "source_capture_midpoint": 19.1422995,
+      "source_file": "0421.jpg"
+    },
+    {
+      "output_time": 19.166666666666668,
+      "source_capture_midpoint": 19.175424,
+      "source_file": "0422.jpg"
+    },
+    {
+      "output_time": 19.2,
+      "source_capture_midpoint": 19.2123065,
+      "source_file": "0423.jpg"
+    },
+    {
+      "output_time": 19.233333333333334,
+      "source_capture_midpoint": 19.252311,
+      "source_file": "0424.jpg"
+    },
+    {
+      "output_time": 19.266666666666666,
+      "source_capture_midpoint": 19.252311,
+      "source_file": "0424.jpg"
+    },
+    {
+      "output_time": 19.3,
+      "source_capture_midpoint": 19.291325,
+      "source_file": "0425.jpg"
+    },
+    {
+      "output_time": 19.333333333333332,
+      "source_capture_midpoint": 19.327789,
+      "source_file": "0426.jpg"
+    },
+    {
+      "output_time": 19.366666666666667,
+      "source_capture_midpoint": 19.3639075,
+      "source_file": "0427.jpg"
+    },
+    {
+      "output_time": 19.4,
+      "source_capture_midpoint": 19.400737,
+      "source_file": "0428.jpg"
+    },
+    {
+      "output_time": 19.433333333333334,
+      "source_capture_midpoint": 19.433024500000002,
+      "source_file": "0429.jpg"
+    },
+    {
+      "output_time": 19.466666666666665,
+      "source_capture_midpoint": 19.4693745,
+      "source_file": "0430.jpg"
+    },
+    {
+      "output_time": 19.5,
+      "source_capture_midpoint": 19.510973999999997,
+      "source_file": "0431.jpg"
+    },
+    {
+      "output_time": 19.533333333333335,
+      "source_capture_midpoint": 19.54824,
+      "source_file": "0432.jpg"
+    },
+    {
+      "output_time": 19.566666666666666,
+      "source_capture_midpoint": 19.581981,
+      "source_file": "0433.jpg"
+    },
+    {
+      "output_time": 19.6,
+      "source_capture_midpoint": 19.6131685,
+      "source_file": "0434.jpg"
+    },
+    {
+      "output_time": 19.633333333333333,
+      "source_capture_midpoint": 19.643284,
+      "source_file": "0435.jpg"
+    },
+    {
+      "output_time": 19.666666666666668,
+      "source_capture_midpoint": 19.675196,
+      "source_file": "0436.jpg"
+    },
+    {
+      "output_time": 19.7,
+      "source_capture_midpoint": 19.712961,
+      "source_file": "0437.jpg"
+    },
+    {
+      "output_time": 19.733333333333334,
+      "source_capture_midpoint": 19.712961,
+      "source_file": "0437.jpg"
+    },
+    {
+      "output_time": 19.766666666666666,
+      "source_capture_midpoint": 19.759301999999998,
+      "source_file": "0438.jpg"
+    },
+    {
+      "output_time": 19.8,
+      "source_capture_midpoint": 19.795233000000003,
+      "source_file": "0439.jpg"
+    },
+    {
+      "output_time": 19.833333333333332,
+      "source_capture_midpoint": 19.8251475,
+      "source_file": "0440.jpg"
+    },
+    {
+      "output_time": 19.866666666666667,
+      "source_capture_midpoint": 19.860374999999998,
+      "source_file": "0441.jpg"
+    },
+    {
+      "output_time": 19.9,
+      "source_capture_midpoint": 19.901707000000002,
+      "source_file": "0442.jpg"
+    },
+    {
+      "output_time": 19.933333333333334,
+      "source_capture_midpoint": 19.943842,
+      "source_file": "0443.jpg"
+    },
+    {
+      "output_time": 19.966666666666665,
+      "source_capture_midpoint": 19.9786585,
+      "source_file": "0444.jpg"
+    },
+    {
+      "output_time": 20.0,
+      "source_capture_midpoint": 20.010119500000002,
+      "source_file": "0445.jpg"
+    },
+    {
+      "output_time": 20.033333333333335,
+      "source_capture_midpoint": 20.0408975,
+      "source_file": "0446.jpg"
+    },
+    {
+      "output_time": 20.066666666666666,
+      "source_capture_midpoint": 20.0718995,
+      "source_file": "0447.jpg"
+    },
+    {
+      "output_time": 20.1,
+      "source_capture_midpoint": 20.110417499999997,
+      "source_file": "0448.jpg"
+    },
+    {
+      "output_time": 20.133333333333333,
+      "source_capture_midpoint": 20.110417499999997,
+      "source_file": "0448.jpg"
+    },
+    {
+      "output_time": 20.166666666666668,
+      "source_capture_midpoint": 20.1576005,
+      "source_file": "0449.jpg"
+    },
+    {
+      "output_time": 20.2,
+      "source_capture_midpoint": 20.198013500000002,
+      "source_file": "0450.jpg"
+    },
+    {
+      "output_time": 20.233333333333334,
+      "source_capture_midpoint": 20.234299,
+      "source_file": "0451.jpg"
+    },
+    {
+      "output_time": 20.266666666666666,
+      "source_capture_midpoint": 20.266346,
+      "source_file": "0452.jpg"
+    },
+    {
+      "output_time": 20.3,
+      "source_capture_midpoint": 20.296253,
+      "source_file": "0453.jpg"
+    },
+    {
+      "output_time": 20.333333333333332,
+      "source_capture_midpoint": 20.33335,
+      "source_file": "0454.jpg"
+    },
+    {
+      "output_time": 20.366666666666667,
+      "source_capture_midpoint": 20.373701,
+      "source_file": "0455.jpg"
+    },
+    {
+      "output_time": 20.4,
+      "source_capture_midpoint": 20.410615,
+      "source_file": "0456.jpg"
+    },
+    {
+      "output_time": 20.433333333333334,
+      "source_capture_midpoint": 20.4483605,
+      "source_file": "0457.jpg"
+    },
+    {
+      "output_time": 20.466666666666665,
+      "source_capture_midpoint": 20.4841035,
+      "source_file": "0458.jpg"
+    },
+    {
+      "output_time": 20.5,
+      "source_capture_midpoint": 20.4841035,
+      "source_file": "0458.jpg"
+    },
+    {
+      "output_time": 20.533333333333335,
+      "source_capture_midpoint": 20.5166965,
+      "source_file": "0459.jpg"
+    },
+    {
+      "output_time": 20.566666666666666,
+      "source_capture_midpoint": 20.550929500000002,
+      "source_file": "0460.jpg"
+    },
+    {
+      "output_time": 20.6,
+      "source_capture_midpoint": 20.5865505,
+      "source_file": "0461.jpg"
+    },
+    {
+      "output_time": 20.633333333333333,
+      "source_capture_midpoint": 20.619096,
+      "source_file": "0462.jpg"
+    },
+    {
+      "output_time": 20.666666666666668,
+      "source_capture_midpoint": 20.658887,
+      "source_file": "0463.jpg"
+    },
+    {
+      "output_time": 20.7,
+      "source_capture_midpoint": 20.6970345,
+      "source_file": "0464.jpg"
+    },
+    {
+      "output_time": 20.733333333333334,
+      "source_capture_midpoint": 20.7306915,
+      "source_file": "0465.jpg"
+    },
+    {
+      "output_time": 20.766666666666666,
+      "source_capture_midpoint": 20.769790999999998,
+      "source_file": "0466.jpg"
+    },
+    {
+      "output_time": 20.8,
+      "source_capture_midpoint": 20.813764,
+      "source_file": "0467.jpg"
+    },
+    {
+      "output_time": 20.833333333333332,
+      "source_capture_midpoint": 20.813764,
+      "source_file": "0467.jpg"
+    },
+    {
+      "output_time": 20.866666666666667,
+      "source_capture_midpoint": 20.8571675,
+      "source_file": "0468.jpg"
+    },
+    {
+      "output_time": 20.9,
+      "source_capture_midpoint": 20.8991555,
+      "source_file": "0469.jpg"
+    },
+    {
+      "output_time": 20.933333333333334,
+      "source_capture_midpoint": 20.936677,
+      "source_file": "0470.jpg"
+    },
+    {
+      "output_time": 20.966666666666665,
+      "source_capture_midpoint": 20.977384999999998,
+      "source_file": "0471.jpg"
+    },
+    {
+      "output_time": 21.0,
+      "source_capture_midpoint": 21.012784,
+      "source_file": "0472.jpg"
+    },
+    {
+      "output_time": 21.033333333333335,
+      "source_capture_midpoint": 21.044155500000002,
+      "source_file": "0473.jpg"
+    },
+    {
+      "output_time": 21.066666666666666,
+      "source_capture_midpoint": 21.074887,
+      "source_file": "0474.jpg"
+    },
+    {
+      "output_time": 21.1,
+      "source_capture_midpoint": 21.1109785,
+      "source_file": "0475.jpg"
+    },
+    {
+      "output_time": 21.133333333333333,
+      "source_capture_midpoint": 21.1109785,
+      "source_file": "0475.jpg"
+    },
+    {
+      "output_time": 21.166666666666668,
+      "source_capture_midpoint": 21.1558735,
+      "source_file": "0476.jpg"
+    },
+    {
+      "output_time": 21.2,
+      "source_capture_midpoint": 21.1995255,
+      "source_file": "0477.jpg"
+    },
+    {
+      "output_time": 21.233333333333334,
+      "source_capture_midpoint": 21.234834499999998,
+      "source_file": "0478.jpg"
+    },
+    {
+      "output_time": 21.266666666666666,
+      "source_capture_midpoint": 21.268333,
+      "source_file": "0479.jpg"
+    },
+    {
+      "output_time": 21.3,
+      "source_capture_midpoint": 21.299974,
+      "source_file": "0480.jpg"
+    },
+    {
+      "output_time": 21.333333333333332,
+      "source_capture_midpoint": 21.342277000000003,
+      "source_file": "0481.jpg"
+    },
+    {
+      "output_time": 21.366666666666667,
+      "source_capture_midpoint": 21.342277000000003,
+      "source_file": "0481.jpg"
+    },
+    {
+      "output_time": 21.4,
+      "source_capture_midpoint": 21.391609,
+      "source_file": "0482.jpg"
+    },
+    {
+      "output_time": 21.433333333333334,
+      "source_capture_midpoint": 21.4289695,
+      "source_file": "0483.jpg"
+    },
+    {
+      "output_time": 21.466666666666665,
+      "source_capture_midpoint": 21.462401999999997,
+      "source_file": "0484.jpg"
+    },
+    {
+      "output_time": 21.5,
+      "source_capture_midpoint": 21.499271,
+      "source_file": "0485.jpg"
+    },
+    {
+      "output_time": 21.533333333333335,
+      "source_capture_midpoint": 21.537956,
+      "source_file": "0486.jpg"
+    },
+    {
+      "output_time": 21.566666666666666,
+      "source_capture_midpoint": 21.5772495,
+      "source_file": "0487.jpg"
+    },
+    {
+      "output_time": 21.6,
+      "source_capture_midpoint": 21.614089,
+      "source_file": "0488.jpg"
+    },
+    {
+      "output_time": 21.633333333333333,
+      "source_capture_midpoint": 21.650072,
+      "source_file": "0489.jpg"
+    },
+    {
+      "output_time": 21.666666666666668,
+      "source_capture_midpoint": 21.682717,
+      "source_file": "0490.jpg"
+    },
+    {
+      "output_time": 21.7,
+      "source_capture_midpoint": 21.682717,
+      "source_file": "0490.jpg"
+    },
+    {
+      "output_time": 21.733333333333334,
+      "source_capture_midpoint": 21.723803,
+      "source_file": "0491.jpg"
+    },
+    {
+      "output_time": 21.766666666666666,
+      "source_capture_midpoint": 21.764885,
+      "source_file": "0492.jpg"
+    },
+    {
+      "output_time": 21.8,
+      "source_capture_midpoint": 21.7968555,
+      "source_file": "0493.jpg"
+    },
+    {
+      "output_time": 21.833333333333332,
+      "source_capture_midpoint": 21.831783,
+      "source_file": "0494.jpg"
+    },
+    {
+      "output_time": 21.866666666666667,
+      "source_capture_midpoint": 21.8758545,
+      "source_file": "0495.jpg"
+    },
+    {
+      "output_time": 21.9,
+      "source_capture_midpoint": 21.920454499999998,
+      "source_file": "0496.jpg"
+    },
+    {
+      "output_time": 21.933333333333334,
+      "source_capture_midpoint": 21.920454499999998,
+      "source_file": "0496.jpg"
+    },
+    {
+      "output_time": 21.966666666666665,
+      "source_capture_midpoint": 21.9620355,
+      "source_file": "0497.jpg"
+    }
+  ]
+}

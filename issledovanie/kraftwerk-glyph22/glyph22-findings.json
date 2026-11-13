@@ -1,0 +1,1022 @@
+{
+  "source": "https://www.youtube.com/watch?v=BNYdUn7gmmI",
+  "seconds": [
+    0,
+    22
+  ],
+  "sampledScreenshots": 568,
+  "stableStates": 17,
+  "intermediateStates": 2,
+  "rows": [
+    {
+      "state": 1,
+      "witness": {
+        "file": "0538.jpg",
+        "before": 1.384079,
+        "after": 1.409161
+      },
+      "transitionWindowSeconds": null,
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            528,
+            606
+          ],
+          "yellowPixels": 1904,
+          "redPixels": 191
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            609,
+            687
+          ],
+          "yellowPixels": 1829,
+          "redPixels": 123
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            690,
+            768
+          ],
+          "yellowPixels": 1576,
+          "redPixels": 344
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            771,
+            849
+          ],
+          "yellowPixels": 1583,
+          "redPixels": 346
+        }
+      ]
+    },
+    {
+      "state": 2,
+      "witness": {
+        "file": "0561.jpg",
+        "before": 2.243768,
+        "after": 2.289637
+      },
+      "transitionWindowSeconds": [
+        1.63,
+        1.77
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            529,
+            607
+          ],
+          "yellowPixels": 1971,
+          "redPixels": 340
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            610,
+            688
+          ],
+          "yellowPixels": 1868,
+          "redPixels": 339
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            691,
+            769
+          ],
+          "yellowPixels": 1852,
+          "redPixels": 476
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            772,
+            850
+          ],
+          "yellowPixels": 1606,
+          "redPixels": 441
+        }
+      ]
+    },
+    {
+      "state": 3,
+      "witness": {
+        "file": "0028.jpg",
+        "before": 3.464884,
+        "after": 3.493169
+      },
+      "transitionWindowSeconds": [
+        2.96,
+        3.08
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            519,
+            597
+          ],
+          "yellowPixels": 1724,
+          "redPixels": 476
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            601,
+            679
+          ],
+          "yellowPixels": 1837,
+          "redPixels": 628
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            683,
+            761
+          ],
+          "yellowPixels": 1832,
+          "redPixels": 484
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            765,
+            843
+          ],
+          "yellowPixels": 1724,
+          "redPixels": 315
+        }
+      ]
+    },
+    {
+      "state": 4,
+      "witness": {
+        "file": "0067.jpg",
+        "before": 4.964264,
+        "after": 4.99393
+      },
+      "transitionWindowSeconds": [
+        4.15,
+        4.29
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            511,
+            589
+          ],
+          "yellowPixels": 1806,
+          "redPixels": 69
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            592,
+            670
+          ],
+          "yellowPixels": 2171,
+          "redPixels": 71
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            673,
+            751
+          ],
+          "yellowPixels": 2163,
+          "redPixels": 178
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            754,
+            832
+          ],
+          "yellowPixels": 2042,
+          "redPixels": 201
+        }
+      ]
+    },
+    {
+      "state": 5,
+      "witness": {
+        "file": "0095.jpg",
+        "before": 6.063297,
+        "after": 6.088121
+      },
+      "transitionWindowSeconds": [
+        5.35,
+        5.47
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            521,
+            599
+          ],
+          "yellowPixels": 1574,
+          "redPixels": 38
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            602,
+            680
+          ],
+          "yellowPixels": 2129,
+          "redPixels": 112
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            683,
+            761
+          ],
+          "yellowPixels": 1776,
+          "redPixels": 135
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            764,
+            842
+          ],
+          "yellowPixels": 1919,
+          "redPixels": 10
+        }
+      ]
+    },
+    {
+      "state": 6,
+      "witness": {
+        "file": "0117.jpg",
+        "before": 6.900263,
+        "after": 6.938655
+      },
+      "transitionWindowSeconds": [
+        6.67,
+        6.78
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            525,
+            603
+          ],
+          "yellowPixels": 1441,
+          "redPixels": 604
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            607,
+            685
+          ],
+          "yellowPixels": 2047,
+          "redPixels": 576
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            689,
+            767
+          ],
+          "yellowPixels": 1530,
+          "redPixels": 628
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            771,
+            849
+          ],
+          "yellowPixels": 1663,
+          "redPixels": 314
+        }
+      ]
+    },
+    {
+      "state": 7,
+      "witness": {
+        "file": "0149.jpg",
+        "before": 8.177615,
+        "after": 8.210121
+      },
+      "transitionWindowSeconds": [
+        7.9,
+        8.02
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            547,
+            615
+          ],
+          "yellowPixels": 1303,
+          "redPixels": 281
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            618,
+            686
+          ],
+          "yellowPixels": 1372,
+          "redPixels": 361
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            689,
+            757
+          ],
+          "yellowPixels": 1459,
+          "redPixels": 364
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            760,
+            828
+          ],
+          "yellowPixels": 1480,
+          "redPixels": 179
+        }
+      ]
+    },
+    {
+      "state": 8,
+      "witness": {
+        "file": "0196.jpg",
+        "before": 10.047675,
+        "after": 10.074872
+      },
+      "transitionWindowSeconds": [
+        9.08,
+        9.18
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            590,
+            630
+          ],
+          "yellowPixels": 360,
+          "redPixels": 10
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            631,
+            671
+          ],
+          "yellowPixels": 488,
+          "redPixels": 4
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            672,
+            712
+          ],
+          "yellowPixels": 453,
+          "redPixels": 66
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            713,
+            753
+          ],
+          "yellowPixels": 407,
+          "redPixels": 46
+        }
+      ]
+    },
+    {
+      "state": 9,
+      "witness": {
+        "file": "0226.jpg",
+        "before": 11.285175,
+        "after": 11.314914
+      },
+      "transitionWindowSeconds": [
+        10.41,
+        10.51
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            606,
+            646
+          ],
+          "yellowPixels": 459,
+          "redPixels": 5
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            647,
+            687
+          ],
+          "yellowPixels": 352,
+          "redPixels": 10
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            688,
+            728
+          ],
+          "yellowPixels": 437,
+          "redPixels": 38
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            729,
+            769
+          ],
+          "yellowPixels": 417,
+          "redPixels": 28
+        }
+      ]
+    },
+    {
+      "state": 10,
+      "witness": {
+        "file": "0248.jpg",
+        "before": 12.161962,
+        "after": 12.193494
+      },
+      "transitionWindowSeconds": [
+        11.59,
+        11.72
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            611,
+            651
+          ],
+          "yellowPixels": 509,
+          "redPixels": 0
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            652,
+            692
+          ],
+          "yellowPixels": 526,
+          "redPixels": 0
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            693,
+            733
+          ],
+          "yellowPixels": 517,
+          "redPixels": 0
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            734,
+            774
+          ],
+          "yellowPixels": 458,
+          "redPixels": 0
+        }
+      ]
+    },
+    {
+      "state": 11,
+      "witness": {
+        "file": "0287.jpg",
+        "before": 13.738707,
+        "after": 13.802126
+      },
+      "transitionWindowSeconds": [
+        12.91,
+        13.02
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            596,
+            642
+          ],
+          "yellowPixels": 552,
+          "redPixels": 115
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            643,
+            689
+          ],
+          "yellowPixels": 538,
+          "redPixels": 161
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            690,
+            736
+          ],
+          "yellowPixels": 497,
+          "redPixels": 246
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            737,
+            783
+          ],
+          "yellowPixels": 529,
+          "redPixels": 132
+        }
+      ]
+    },
+    {
+      "state": 12,
+      "witness": {
+        "file": "0319.jpg",
+        "before": 15.136866,
+        "after": 15.16816
+      },
+      "transitionWindowSeconds": [
+        14.12,
+        14.36
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            544,
+            614
+          ],
+          "yellowPixels": 1064,
+          "redPixels": 126
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            616,
+            686
+          ],
+          "yellowPixels": 1503,
+          "redPixels": 136
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            688,
+            758
+          ],
+          "yellowPixels": 1188,
+          "redPixels": 252
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            760,
+            830
+          ],
+          "yellowPixels": 1068,
+          "redPixels": 233
+        }
+      ]
+    },
+    {
+      "state": 13,
+      "witness": {
+        "file": "0334.jpg",
+        "before": 15.757858,
+        "after": 15.791321
+      },
+      "transitionWindowSeconds": [
+        15.43,
+        15.58
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            524,
+            604
+          ],
+          "yellowPixels": 1053,
+          "redPixels": 1811
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            608,
+            688
+          ],
+          "yellowPixels": 1609,
+          "redPixels": 1699
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            692,
+            772
+          ],
+          "yellowPixels": 1559,
+          "redPixels": 1590
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            776,
+            856
+          ],
+          "yellowPixels": 1686,
+          "redPixels": 1140
+        }
+      ]
+    },
+    {
+      "state": 14,
+      "witness": {
+        "file": "0382.jpg",
+        "before": 17.578395,
+        "after": 17.610585
+      },
+      "transitionWindowSeconds": [
+        16.51,
+        16.76
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            412,
+            544
+          ],
+          "yellowPixels": 3187,
+          "redPixels": 4129
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            549,
+            681
+          ],
+          "yellowPixels": 4590,
+          "redPixels": 4530
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            686,
+            818
+          ],
+          "yellowPixels": 3551,
+          "redPixels": 4181
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            823,
+            955
+          ],
+          "yellowPixels": 4251,
+          "redPixels": 3155
+        }
+      ]
+    },
+    {
+      "state": 15,
+      "witness": {
+        "file": "0408.jpg",
+        "before": 18.632551,
+        "after": 18.666037
+      },
+      "transitionWindowSeconds": [
+        17.84,
+        17.95
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            311,
+            487
+          ],
+          "yellowPixels": 9511,
+          "redPixels": 1834
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            494,
+            670
+          ],
+          "yellowPixels": 7324,
+          "redPixels": 1645
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            677,
+            853
+          ],
+          "yellowPixels": 8919,
+          "redPixels": 3036
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            860,
+            1036
+          ],
+          "yellowPixels": 7789,
+          "redPixels": 2823
+        }
+      ]
+    },
+    {
+      "state": null,
+      "witness": {
+        "file": "0422.jpg",
+        "before": 19.161738,
+        "after": 19.18911
+      },
+      "transitionWindowSeconds": null,
+      "intermediate": [
+        "Переход 15–16",
+        "Слоты 2 и 4 сменились раньше"
+      ],
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            271,
+            475
+          ],
+          "yellowPixels": 11257,
+          "redPixels": 7904
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            483,
+            687
+          ],
+          "yellowPixels": 9526,
+          "redPixels": 8808
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            695,
+            899
+          ],
+          "yellowPixels": 10304,
+          "redPixels": 7927
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            907,
+            1111
+          ],
+          "yellowPixels": 10633,
+          "redPixels": 4558
+        }
+      ]
+    },
+    {
+      "state": 16,
+      "witness": {
+        "file": "0444.jpg",
+        "before": 19.96552,
+        "after": 19.991797
+      },
+      "transitionWindowSeconds": [
+        19.16,
+        19.27
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            164,
+            416
+          ],
+          "yellowPixels": 17052,
+          "redPixels": 3401
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            426,
+            678
+          ],
+          "yellowPixels": 19003,
+          "redPixels": 6039
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            688,
+            940
+          ],
+          "yellowPixels": 18266,
+          "redPixels": 4486
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            950,
+            1202
+          ],
+          "yellowPixels": 18207,
+          "redPixels": 3747
+        }
+      ]
+    },
+    {
+      "state": null,
+      "witness": {
+        "file": "0457.jpg",
+        "before": 20.432695,
+        "after": 20.464026
+      },
+      "transitionWindowSeconds": null,
+      "intermediate": [
+        "Переход 16–17",
+        "Слоты 3 и 4 сменились раньше"
+      ],
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            84,
+            376
+          ],
+          "yellowPixels": 20871,
+          "redPixels": 12652
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            389,
+            681
+          ],
+          "yellowPixels": 19933,
+          "redPixels": 17155
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            694,
+            986
+          ],
+          "yellowPixels": 18989,
+          "redPixels": 10982
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            999,
+            1291
+          ],
+          "yellowPixels": 19076,
+          "redPixels": 7197
+        }
+      ]
+    },
+    {
+      "state": 17,
+      "witness": {
+        "file": "0461.jpg",
+        "before": 20.571928,
+        "after": 20.601173
+      },
+      "transitionWindowSeconds": [
+        20.35,
+        20.46
+      ],
+      "intermediate": null,
+      "glyphs": [
+        {
+          "slot": 1,
+          "sourceX": [
+            62,
+            364
+          ],
+          "yellowPixels": 14959,
+          "redPixels": 33731
+        },
+        {
+          "slot": 2,
+          "sourceX": [
+            377,
+            679
+          ],
+          "yellowPixels": 15979,
+          "redPixels": 30974
+        },
+        {
+          "slot": 3,
+          "sourceX": [
+            692,
+            994
+          ],
+          "yellowPixels": 12031,
+          "redPixels": 30332
+        },
+        {
+          "slot": 4,
+          "sourceX": [
+            1007,
+            1309
+          ],
+          "yellowPixels": 13658,
+          "redPixels": 26557
+        }
+      ]
+    }
+  ],
+  "timingFit": {
+    "periodSeconds": 1.2472,
+    "firstTransitionSeconds": 1.717,
+    "maximumResidualSeconds": 0.0704,
+    "basis": "Центры 16 наблюдаемых интервалов смены. Номер первой смены равен нулю."
+  },
+  "comparisons": [
+    {
+      "states": [
+        4,
+        13
+      ],
+      "finding": "Визуально возвращается весь набор из четырёх глифов, вплоть до сходных квадратных просветов и кончиков. Цвет каймы заметно различается."
+    },
+    {
+      "states": [
+        6,
+        12
+      ],
+      "finding": "Верхние ступени похожи, но у третьего глифа во втором наборе появляется нижний просвет. Сдвиг целого контура этого не объясняет."
+    },
+    {
+      "state": 14,
+      "sampleRange": [
+        380,
+        389
+      ],
+      "finding": "Красная кайма несколько раз меняет интенсивность при той же геометрии. Длительность её общего цикла по выборке не установлена."
+    }
+  ],
+  "method": "Фигуры выровнены по четырём позициям и масштабированы по высоте. Яркие жёлтые и красные области выделены из указанных JPEG; SVG обводит эти области как замкнутые векторные контуры.",
+  "limits": [
+    "Время JPEG известно в пределах before…after, а границы смены оценены по выборке.",
+    "Переходные смеси, изменения цвета внутри устойчивого рисунка, вход из темноты и монтажная склейка не считаются устойчивыми состояниями.",
+    "Тонкие края местами сливаются из-за свечения, JPEG и уменьшения сцены в 8,5–14 с. Это трассировка наблюдаемого контура, а точная исходная квадратная сетка не восстановлена.",
+    "После примерно 20,8 с крайние глифы обрезаются и накладывается следующий план. Последний ряд взят из более раннего кадра.",
+    "Клеточная маска на сетке согласуется с формой. Неподвижные части и меняющиеся клетки видны, но операция выбора следующей маски не определяется по записи.",
+    "Красный цвет выделен по JPEG. Нельзя отделить вклад экранной анимации от захвата камеры без исходного слоя."
+  ],
+  "findings": [
+    "Ось, поперечина и положение каждого из четырёх глифов сохраняются. Ступени по бокам, квадратные просветы и нижний край меняются.",
+    "Устойчивая геометрия меняется примерно каждые 1,25 с, красная кайма пульсирует чаще и может исчезать при той же жёлтой геометрии.",
+    "На отдельных переходах глифы меняются в соседних кадрах, поэтому краткие смешанные наборы возможны."
+  ]
+}
