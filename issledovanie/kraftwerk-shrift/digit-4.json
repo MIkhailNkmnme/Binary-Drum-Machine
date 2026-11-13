@@ -1,0 +1,19 @@
+{
+  "font": "kraftwerk-shrift",
+  "status": "draft",
+  "source": "1993-05-27 Stadthalle Osnabruck, frame 1:41",
+  "grid": [
+    5,
+    6
+  ],
+  "glyphs": {
+    "4": [
+      "00010",
+      "00110",
+      "01110",
+      "11010",
+      "11111",
+      "00010"
+    ]
+  }
+}
