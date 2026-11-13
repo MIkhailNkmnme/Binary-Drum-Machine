@@ -1,0 +1,503 @@
+{
+  "commit": "ff9d073b7d0c17e57d9f450d86d9671f897066f1",
+  "checkedAt": "2026-11-13T16:04:45.774Z",
+  "deployment": {
+    "id": 43458596460,
+    "url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/43458596460",
+    "status": "success"
+  },
+  "files": 70,
+  "matched": 70,
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1073565,
+      "sha256": "b74130fd2eaa70fc4067c78b752d2cf32c25ba0cceec04d04e694e3ba146e856",
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1414467,
+      "sha256": "a47febc5198d83849e269da0f8aacb0e50531e7f50d71384cf29e65b3e6e2c6e",
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 938563,
+      "sha256": "d0b054f8c033f778eab4bc180c1baf0d293ccf50f34e5f0290b7e7f011f4580d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/build-geometric-wallpapers.cjs",
+      "status": 200,
+      "bytes": 28148,
+      "sha256": "9b0caa85a7904098300951950c895c84da6b708b160264ace29095c45f845c80",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-animatrix-excel.svg",
+      "status": 200,
+      "bytes": 181202,
+      "sha256": "4ba14654a07be9312ae7571e8db0ed618c629fba39735c0685adcba78b106c12",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-animatrix-gaps.svg",
+      "status": 200,
+      "bytes": 99259,
+      "sha256": "e7ceb31dad3478a4d9a96a41109af2ae9ec9192999d6b6a6f9273c23524050ab",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-animatrix-wave.svg",
+      "status": 200,
+      "bytes": 233861,
+      "sha256": "7a04ca7a612bfda0d5815ba81e28b3397652d02f4bc923d2bbdb263d468b69c0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-checks.json",
+      "status": 200,
+      "bytes": 7675,
+      "sha256": "ec93d93f2f162d8592636e62e3b457ec7c321cabe23186ca19d1e1261f3d298f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-contact-sheet.jpg",
+      "status": 200,
+      "bytes": 138205,
+      "sha256": "c7c9a5aa08fb8fe8153bd0794ea6270675f529d46bef567197e7678bcd0ca8fb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-pendulums-counter.svg",
+      "status": 200,
+      "bytes": 232725,
+      "sha256": "e8776788df628bcacd3c8b07a3f4271f82f1779547cb1ed3996fddb92dad32f7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-pendulums-duet.svg",
+      "status": 200,
+      "bytes": 145658,
+      "sha256": "b020602f32f904c92ded92830837cceca4115012919203c390cf98de90ede22e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-pendulums-trail.svg",
+      "status": 200,
+      "bytes": 199775,
+      "sha256": "e904e318ad312b81b863c7b0190bb930e65898a57fe0b11581a38fab5417282f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-rgb-prism.svg",
+      "status": 200,
+      "bytes": 33576,
+      "sha256": "c218f5bfe3977078232dbcc525a3ea9db5a766b5a035de36ff3f2613312902ec",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-rgb-stereo.svg",
+      "status": 200,
+      "bytes": 108529,
+      "sha256": "146623b7f68834dce1c275eb53abefd3d3db4df6f494d5e3dce8d5a167baa0bc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-rgb-triad.svg",
+      "status": 200,
+      "bytes": 76573,
+      "sha256": "43e25705562c82e99e2f206a5ca89a5845deb024ad243da124bfc28061c73a56",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-rhombi-aurora.svg",
+      "status": 200,
+      "bytes": 31892,
+      "sha256": "d8beb658c5c29a667b9b504b2b4b379d8d6c22839be44366f3723b65bcc2b367",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-rhombi-axes.svg",
+      "status": 200,
+      "bytes": 93306,
+      "sha256": "5b93cc4074b74702d80b50dc4e675542d41fd9f3ffb617180433060c02f4a763",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-rhombi-mosaic.svg",
+      "status": 200,
+      "bytes": 120771,
+      "sha256": "400d16deefe4627acfccf8cb418dc4f89c218158975d9d98d7c3301d9096983e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-sierpinski-electric.svg",
+      "status": 200,
+      "bytes": 62001,
+      "sha256": "e449b1ff52e10e051add4533bad1c58d04564b1eaca16862bc43a815f36d0753",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-sierpinski-interference.svg",
+      "status": 200,
+      "bytes": 50900,
+      "sha256": "cd1c6dcd0ae3be02a5a225b1316783d2a765476fbd7b555cb6c1f20fc75dd845",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/art/geometric-sierpinski-solar.svg",
+      "status": 200,
+      "bytes": 9273,
+      "sha256": "16340468ed9e33647455e07377d04738416de695342a91373ea5eaf713f213f5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/build-downloads.py",
+      "status": 200,
+      "bytes": 2841,
+      "sha256": "483d19136f3de9fa6d74abc17731e8d11f32d92c5aad3492ac2f935f268d753b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/build-page.py",
+      "status": 200,
+      "bytes": 14509,
+      "sha256": "428460f682dc27753714af90504df1679883a9f3e74986169768c0e4cecda56f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/DOWNLOADS.txt",
+      "status": 200,
+      "bytes": 2676,
+      "sha256": "caa46d2e469b7f3cf87320b74b35184319dfdec056cb0fbe9f6c7d2c87154dfb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/manifest.json",
+      "status": 200,
+      "bytes": 1090,
+      "sha256": "abc580f9bfb6af387d5609bd4ea1e8b11199826b181ea3a565925b805fc264f6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-geometric-wallpapers.zip",
+      "status": 200,
+      "bytes": 6726124,
+      "sha256": "7506743eb208984f1a54350af57f2866e5b1945a97168a31d5bcea90f0b56e57",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-phone-theme.zip",
+      "status": 200,
+      "bytes": 39653819,
+      "sha256": "010b3d2a5c7b58336cfec4dcc902d77242d070529cfd95a343ba5d27c8c3b97d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/downloads/zerkalius-wallpapers.zip",
+      "status": 200,
+      "bytes": 25776237,
+      "sha256": "e7de2e88d7584071afb8c1b1f8c877b9bd80a5913baaf6f4e7e1e3c027aae710",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/index.html",
+      "status": 200,
+      "bytes": 54446,
+      "sha256": "8163d7222af8d699381b9ef364e03dccf09a574f93a0842d4a9d3da9213ddcd4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/merge-wallpapers.py",
+      "status": 200,
+      "bytes": 697,
+      "sha256": "fe9132e93b9767ca949684d9222251d093fa291799e83bd6cce1a710282d0636",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/page.css",
+      "status": 200,
+      "bytes": 9244,
+      "sha256": "1ce28dd0cc7b30341551b6c846856f7999d105a6d4376917bdb0f17f0fe76e41",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/geometric-browser.json",
+      "status": 200,
+      "bytes": 638,
+      "sha256": "53e3e4735dfd18c4dc22ef6775d273f1105531dec140fddee05bb8ae98f56e07",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/geometric-desktop.png",
+      "status": 200,
+      "bytes": 112378,
+      "sha256": "3334d59253cfcb64abf4f9b3a96cfacb1a58808e74ef6226f44a0479905cf18f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/geometric-files.json",
+      "status": 200,
+      "bytes": 386,
+      "sha256": "15c5e202e3502f8a39b9ef02673b0c724bd6490c5751cfa123da880929e961ca",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/geometric-mobile.png",
+      "status": 200,
+      "bytes": 39496,
+      "sha256": "2ad50b3f7e9d0fcebacb59c8610b74227d6be63a2404fcca69547b1bd7d59e0d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/qa/verify-delivery.mjs",
+      "status": 200,
+      "bytes": 2453,
+      "sha256": "32c8a6a36be00dc5c27dfeeb72e53f368742d71ca68e893cd934b3b08e301fcf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/README.md",
+      "status": 200,
+      "bytes": 9535,
+      "sha256": "efa2a16f9de53bbe7ddbde5417407df6f720228d7e77b53ec39b8e511174027b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers-geometric.json",
+      "status": 200,
+      "bytes": 45525,
+      "sha256": "fce7353d961297f4113ce05c441aa2603bce6403356fce70a076f753180e9d03",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers.json",
+      "status": 200,
+      "bytes": 61915,
+      "sha256": "07bb8ff33ad5347aeab65b3160e4bfdc26f483e759e645e576d98f78fff8c5cd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-animatrix-excel-thumb.png",
+      "status": 200,
+      "bytes": 208649,
+      "sha256": "5adfd3910984429a80433a38e04f74bab08547108240dce52e1449f5d6234e8a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-animatrix-excel.png",
+      "status": 200,
+      "bytes": 373198,
+      "sha256": "461047e2037eaef1bbec0f2ed65593421c3542ec8bfda47309aa1e60a002f761",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-animatrix-gaps-thumb.png",
+      "status": 200,
+      "bytes": 180213,
+      "sha256": "981eb57e2b947fc21f1c3fc57fed7379e2109cfd36c0792eedb5bc69a5a265fb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-animatrix-gaps.png",
+      "status": 200,
+      "bytes": 874817,
+      "sha256": "0823b3f523c0d804a75ec4c47f7e897de86162b93b39ee018bc00d7839eb4048",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-animatrix-wave-thumb.png",
+      "status": 200,
+      "bytes": 170895,
+      "sha256": "196e80668c2d0c5fe37371321eb73b9ca44bd093ffff87b4f9dcf3cdac66fdee",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-animatrix-wave.png",
+      "status": 200,
+      "bytes": 316364,
+      "sha256": "96e4fb7e1a8746ff8ca6a7d64c7d8662986e3874c0b09a9eb628a8be3a088c1d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-pendulums-counter-thumb.png",
+      "status": 200,
+      "bytes": 184425,
+      "sha256": "09b02ef859247c8477bebc574e2236fee4c9f6702e92f928f377fd23504254a3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-pendulums-counter.png",
+      "status": 200,
+      "bytes": 324218,
+      "sha256": "e423e9996fc82821f60e685f1ad53d7646ac01efc6aa41380ac9d00844fd8a10",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-pendulums-duet-thumb.png",
+      "status": 200,
+      "bytes": 226696,
+      "sha256": "5fc3e6f8983840ed8723865d3178f794266abc9c0de38ad4d773ee59550370d3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-pendulums-duet.png",
+      "status": 200,
+      "bytes": 318685,
+      "sha256": "6d44e90b6480949185c0ed5140b0f6e9ab582a72703b9d2aa46fe895d3cd617a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-pendulums-trail-thumb.png",
+      "status": 200,
+      "bytes": 232119,
+      "sha256": "d8be613937be183b26fc78a639fe091735559cb3773b0cd411621540d18e8389",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-pendulums-trail.png",
+      "status": 200,
+      "bytes": 422485,
+      "sha256": "f9150f488f6f3df86cc17545e9d528e0aeb9bc3f88e0c033194e33a33cf570cd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rgb-prism-thumb.png",
+      "status": 200,
+      "bytes": 79637,
+      "sha256": "2b648180009cc785a2f0a29b3ae8c67e9a131e0a9c390b94ec72578735c86f01",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rgb-prism.png",
+      "status": 200,
+      "bytes": 241374,
+      "sha256": "7f2688509ffc261dc3813d17e7556d1a9a24dd6e420f06cbe8b3f57484b6d9ad",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rgb-stereo-thumb.png",
+      "status": 200,
+      "bytes": 96796,
+      "sha256": "ed9770dca414c08108c3f4dcb638cb73b9c4113f9f3257544c070f1626791e7c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rgb-stereo.png",
+      "status": 200,
+      "bytes": 149548,
+      "sha256": "d3bbae5392c57eb6485e452b68cb7f93949fdd6aebbb0a59a1455633c8cb5b87",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rgb-triad-thumb.png",
+      "status": 200,
+      "bytes": 137258,
+      "sha256": "592eb2186dca8bff81dd3bd93c44ddd6fb1c649db372ca7c0160f0e570785b38",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rgb-triad.png",
+      "status": 200,
+      "bytes": 318764,
+      "sha256": "50d62a9075db8e0df39643a3685877807416fbd5c58074f77d0d44a9b6b8462c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rhombi-aurora-thumb.png",
+      "status": 200,
+      "bytes": 146625,
+      "sha256": "cc9b2aa2e6b26d11b075f2b08654c1a355db1f2aa13b7abdd8ceb2eafe0c7688",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rhombi-aurora.png",
+      "status": 200,
+      "bytes": 557013,
+      "sha256": "103afc734f5cd1e79307ee125518eee3534dc2188b19f0f37ec8d90c42f47bfc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rhombi-axes-thumb.png",
+      "status": 200,
+      "bytes": 164660,
+      "sha256": "ed691394f6c655551a279abcddf4be0e4094d9214ba494701b782a1b504ec06f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rhombi-axes.png",
+      "status": 200,
+      "bytes": 591342,
+      "sha256": "f35562097cdc9247adc0edaa15fbd49dc53d40438918d32d806652d5137f6570",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rhombi-mosaic-thumb.png",
+      "status": 200,
+      "bytes": 193423,
+      "sha256": "f0a2110c8467f6913e738265096aa8d78928ddf85fe15209ec8f6910edf895e7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-rhombi-mosaic.png",
+      "status": 200,
+      "bytes": 971132,
+      "sha256": "eee8ef0b4cc2d5242f0598527d1e81965ba635e8ef363bb67783c7ab8e20c391",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-sierpinski-electric-thumb.png",
+      "status": 200,
+      "bytes": 146922,
+      "sha256": "3ab41af758d1f702b7b82d12e058f799fa9a13a2e575f1e4a5977209d308c638",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-sierpinski-electric.png",
+      "status": 200,
+      "bytes": 642378,
+      "sha256": "798e2bd025bc1957bfd3616fb8329f856e098469c15b679d2ad9a5074497b4b0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-sierpinski-interference-thumb.png",
+      "status": 200,
+      "bytes": 157693,
+      "sha256": "42a214e90c7888d1db50353bbe2ed66a3449d399ec25673e1595ef46c28429c8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-sierpinski-interference.png",
+      "status": 200,
+      "bytes": 339671,
+      "sha256": "b80fa8af6b0f8690990eb1203f1afc2f50f7520659e3258f6ad3f272192a85db",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-sierpinski-solar-thumb.png",
+      "status": 200,
+      "bytes": 101647,
+      "sha256": "465ad789fe7e1d6555317767b77e36c77a667104a75edbbab6f2a266fb6f0722",
+      "match": true
+    },
+    {
+      "path": "issledovanie/phone-theme/wallpapers/geometric-sierpinski-solar.png",
+      "status": 200,
+      "bytes": 376494,
+      "sha256": "bd4dbc10fb2029ba31427959889c4d78753291975f4277af9e9233aec2b3fbc9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 499776,
+      "sha256": "bca8de1b68737258b3cfcf595cc726c8048ebb3032400fcdc1c7926e095f26f4",
+      "match": true
+    }
+  ]
+}
