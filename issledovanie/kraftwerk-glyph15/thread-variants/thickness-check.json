@@ -1,0 +1,143 @@
+{
+  "sourceAnalysisSha256": "fa08dcac66df732c705a0500c09eeaf854075b781961b9b43ed59780b8cbda7f",
+  "cases": 60,
+  "edgeOccurrences": 3188,
+  "sampleCount": 45,
+  "constructedRoutes": 70,
+  "allConstructedRoutesVerified": true,
+  "exhaustiveSmallGraphCases": 2186,
+  "allCrossSectionsAgreeOnWidthClass": true,
+  "allSampleMediansAgreeOnWidthClass": true,
+  "classification": {
+    "thresholdPx": 4.7,
+    "thinCount": 612,
+    "thickCount": 2576,
+    "medianGap": [
+      3.9524,
+      5.7516
+    ],
+    "allSampleMediansGap": [
+      4.0166,
+      5.6458
+    ],
+    "allCrossSectionsGap": [
+      4.1408,
+      5.58
+    ],
+    "interpretation": "Two well-separated raster width groups are observed in both orientations, with a small tail of extra-wide strokes. Thickness alone does not establish repeat count or authoring intent."
+  },
+  "summary": {
+    "A": {
+      "possible": 49,
+      "impossible": 11,
+      "disconnected": 11,
+      "parityObstruction": 0,
+      "closedRoutes": 39,
+      "addedPossibleOverNoRepeats": 32
+    },
+    "B": {
+      "possible": 21,
+      "impossible": 39,
+      "disconnected": 11,
+      "parityObstruction": 28,
+      "closedRoutes": 11,
+      "addedPossibleOverNoRepeats": 4
+    }
+  },
+  "uniqueGeometrySummary": {
+    "count": 45,
+    "varyingWidthMasks": 1,
+    "distinctGeometryAndWidthMasks": 46,
+    "variants": {
+      "A": {
+        "possibleAny": 36,
+        "possibleAll": 36,
+        "impossibleAll": 9
+      },
+      "B": {
+        "possibleAny": 16,
+        "possibleAll": 16,
+        "impossibleAll": 29
+      }
+    }
+  },
+  "geometryWithChangingWidthMask": [
+    {
+      "graphId": 19,
+      "caseRefs": [
+        {
+          "state": 3,
+          "slot": 1
+        },
+        {
+          "state": 12,
+          "slot": 1
+        }
+      ],
+      "distinctWidthMasks": 2,
+      "classChangingEdges": [
+        "V0,5"
+      ],
+      "widthChanges": [
+        {
+          "edge": "V0,5",
+          "observations": [
+            {
+              "state": 3,
+              "slot": 1,
+              "width": 3.5749,
+              "widthClass": "thin"
+            },
+            {
+              "state": 12,
+              "slot": 1,
+              "width": 5.8796,
+              "widthClass": "thick"
+            }
+          ]
+        }
+      ],
+      "variants": {
+        "A": {
+          "possibleAny": true,
+          "possibleAll": true
+        },
+        "B": {
+          "possibleAny": false,
+          "possibleAll": false
+        }
+      }
+    }
+  ],
+  "strictSummary": {
+    "A": {
+      "possible": 0,
+      "impossible": 60,
+      "disconnected": 11,
+      "oddCountHistogram": {
+        "6": 3,
+        "8": 19,
+        "10": 11,
+        "12": 17,
+        "14": 3,
+        "16": 7
+      }
+    },
+    "B": {
+      "possible": 0,
+      "impossible": 60,
+      "disconnected": 11,
+      "oddCountHistogram": {
+        "8": 5,
+        "10": 8,
+        "12": 6,
+        "14": 11,
+        "16": 8,
+        "18": 11,
+        "20": 9,
+        "24": 2
+      }
+    }
+  },
+  "strictRoutesVerified": true
+}

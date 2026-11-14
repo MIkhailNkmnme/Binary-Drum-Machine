@@ -1,0 +1,450 @@
+{
+  "passed": true,
+  "solid": {
+    "A_possible": 49,
+    "impossibilityCertificates": 50,
+    "B_possible": 21,
+    "solidRoutes": 70
+  },
+  "uniqueGeometryPossible": {
+    "A": 36,
+    "B": 16
+  },
+  "dashed": {
+    "found": 41,
+    "time_limit": 4
+  },
+  "dashedGraphs": [
+    {
+      "id": 9,
+      "status": "found",
+      "paintedSquares": 99,
+      "blankVisits": 98,
+      "moves": 196,
+      "blankVisitsOnTarget": 7,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 10,
+      "status": "found",
+      "paintedSquares": 112,
+      "blankVisits": 111,
+      "moves": 222,
+      "blankVisitsOnTarget": 17,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 11,
+      "status": "found",
+      "paintedSquares": 107,
+      "blankVisits": 106,
+      "moves": 212,
+      "blankVisitsOnTarget": 13,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 12,
+      "status": "found",
+      "paintedSquares": 107,
+      "blankVisits": 106,
+      "moves": 212,
+      "blankVisitsOnTarget": 12,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 13,
+      "status": "time_limit"
+    },
+    {
+      "id": 14,
+      "status": "found",
+      "paintedSquares": 105,
+      "blankVisits": 104,
+      "moves": 208,
+      "blankVisitsOnTarget": 14,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 15,
+      "status": "found",
+      "paintedSquares": 101,
+      "blankVisits": 100,
+      "moves": 200,
+      "blankVisitsOnTarget": 5,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 16,
+      "status": "found",
+      "paintedSquares": 95,
+      "blankVisits": 94,
+      "moves": 188,
+      "blankVisitsOnTarget": 10,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 19,
+      "status": "found",
+      "paintedSquares": 94,
+      "blankVisits": 93,
+      "moves": 186,
+      "blankVisitsOnTarget": 9,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 20,
+      "status": "found",
+      "paintedSquares": 111,
+      "blankVisits": 110,
+      "moves": 220,
+      "blankVisitsOnTarget": 20,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 21,
+      "status": "time_limit"
+    },
+    {
+      "id": 22,
+      "status": "found",
+      "paintedSquares": 109,
+      "blankVisits": 108,
+      "moves": 216,
+      "blankVisitsOnTarget": 16,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 23,
+      "status": "found",
+      "paintedSquares": 84,
+      "blankVisits": 83,
+      "moves": 166,
+      "blankVisitsOnTarget": 5,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 24,
+      "status": "found",
+      "paintedSquares": 112,
+      "blankVisits": 111,
+      "moves": 222,
+      "blankVisitsOnTarget": 12,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 25,
+      "status": "found",
+      "paintedSquares": 96,
+      "blankVisits": 95,
+      "moves": 190,
+      "blankVisitsOnTarget": 9,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 26,
+      "status": "found",
+      "paintedSquares": 103,
+      "blankVisits": 102,
+      "moves": 204,
+      "blankVisitsOnTarget": 8,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 27,
+      "status": "found",
+      "paintedSquares": 88,
+      "blankVisits": 87,
+      "moves": 174,
+      "blankVisitsOnTarget": 6,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 28,
+      "status": "found",
+      "paintedSquares": 117,
+      "blankVisits": 116,
+      "moves": 232,
+      "blankVisitsOnTarget": 16,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 29,
+      "status": "found",
+      "paintedSquares": 94,
+      "blankVisits": 93,
+      "moves": 186,
+      "blankVisitsOnTarget": 6,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 30,
+      "status": "found",
+      "paintedSquares": 96,
+      "blankVisits": 95,
+      "moves": 190,
+      "blankVisitsOnTarget": 6,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 31,
+      "status": "found",
+      "paintedSquares": 92,
+      "blankVisits": 91,
+      "moves": 182,
+      "blankVisitsOnTarget": 9,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 32,
+      "status": "found",
+      "paintedSquares": 94,
+      "blankVisits": 93,
+      "moves": 186,
+      "blankVisitsOnTarget": 6,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 33,
+      "status": "time_limit"
+    },
+    {
+      "id": 34,
+      "status": "found",
+      "paintedSquares": 99,
+      "blankVisits": 98,
+      "moves": 196,
+      "blankVisitsOnTarget": 10,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 35,
+      "status": "found",
+      "paintedSquares": 91,
+      "blankVisits": 90,
+      "moves": 180,
+      "blankVisitsOnTarget": 7,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 36,
+      "status": "found",
+      "paintedSquares": 104,
+      "blankVisits": 103,
+      "moves": 206,
+      "blankVisitsOnTarget": 9,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 37,
+      "status": "found",
+      "paintedSquares": 94,
+      "blankVisits": 93,
+      "moves": 186,
+      "blankVisitsOnTarget": 8,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 38,
+      "status": "found",
+      "paintedSquares": 92,
+      "blankVisits": 91,
+      "moves": 182,
+      "blankVisitsOnTarget": 4,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 41,
+      "status": "found",
+      "paintedSquares": 112,
+      "blankVisits": 111,
+      "moves": 222,
+      "blankVisitsOnTarget": 16,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 42,
+      "status": "found",
+      "paintedSquares": 87,
+      "blankVisits": 86,
+      "moves": 172,
+      "blankVisitsOnTarget": 5,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 43,
+      "status": "found",
+      "paintedSquares": 98,
+      "blankVisits": 97,
+      "moves": 194,
+      "blankVisitsOnTarget": 10,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 44,
+      "status": "found",
+      "paintedSquares": 94,
+      "blankVisits": 93,
+      "moves": 186,
+      "blankVisitsOnTarget": 8,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 45,
+      "status": "found",
+      "paintedSquares": 109,
+      "blankVisits": 108,
+      "moves": 216,
+      "blankVisitsOnTarget": 7,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 46,
+      "status": "found",
+      "paintedSquares": 108,
+      "blankVisits": 107,
+      "moves": 214,
+      "blankVisitsOnTarget": 12,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 47,
+      "status": "found",
+      "paintedSquares": 110,
+      "blankVisits": 109,
+      "moves": 218,
+      "blankVisitsOnTarget": 14,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 48,
+      "status": "found",
+      "paintedSquares": 103,
+      "blankVisits": 102,
+      "moves": 204,
+      "blankVisitsOnTarget": 12,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 49,
+      "status": "found",
+      "paintedSquares": 99,
+      "blankVisits": 98,
+      "moves": 196,
+      "blankVisitsOnTarget": 8,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 52,
+      "status": "found",
+      "paintedSquares": 87,
+      "blankVisits": 86,
+      "moves": 172,
+      "blankVisitsOnTarget": 4,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 53,
+      "status": "found",
+      "paintedSquares": 115,
+      "blankVisits": 114,
+      "moves": 228,
+      "blankVisitsOnTarget": 15,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 54,
+      "status": "found",
+      "paintedSquares": 99,
+      "blankVisits": 98,
+      "moves": 196,
+      "blankVisitsOnTarget": 19,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 55,
+      "status": "time_limit"
+    },
+    {
+      "id": 56,
+      "status": "found",
+      "paintedSquares": 100,
+      "blankVisits": 99,
+      "moves": 198,
+      "blankVisitsOnTarget": 9,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 57,
+      "status": "found",
+      "paintedSquares": 109,
+      "blankVisits": 108,
+      "moves": 216,
+      "blankVisitsOnTarget": 12,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 58,
+      "status": "found",
+      "paintedSquares": 102,
+      "blankVisits": 101,
+      "moves": 202,
+      "blankVisitsOnTarget": 7,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    },
+    {
+      "id": 59,
+      "status": "found",
+      "paintedSquares": 100,
+      "blankVisits": 99,
+      "moves": 198,
+      "blankVisitsOnTarget": 10,
+      "repeatedPaintedSquares": 0,
+      "repeatedSegments": 0
+    }
+  ],
+  "inputSha256": {
+    "thickness.json": "cf2844346f1f20403c2cc78462f8f914b8294bde0f65e7b29e58a90ec3042475",
+    "dashed.json": "7302198eabccdc9b6c7cf60d31f1d9eb178b741527cc0ef1f56fbf069538cc59"
+  },
+  "scope": "Route and impossibility checks independent of solver implementations; the image measurement has its separate sensitivity report."
+}

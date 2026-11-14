@@ -1,0 +1,30 @@
+{
+  "checked": "2026-11-14",
+  "browser": "Chrome",
+  "viewports": [
+    {
+      "viewport": 1440,
+      "width": 1425
+    },
+    {
+      "viewport": 320,
+      "width": 305
+    },
+    {
+      "links": 120,
+      "rows": 15,
+      "viewport": 390,
+      "width": 375
+    }
+  ],
+  "matrixRows": 15,
+  "matrixLinks": 120,
+  "comparisonSvgOpened": true,
+  "dashedDetailsExpanded": true,
+  "dashedSvgOpened": true,
+  "svgTextAndGeometryVisuallyInspected": true,
+  "limitations": [
+    "Physical phones and other browser engines not tested",
+    "Wide SVG plates open at full vector size; narrow-page table scrolls horizontally"
+  ]
+}
