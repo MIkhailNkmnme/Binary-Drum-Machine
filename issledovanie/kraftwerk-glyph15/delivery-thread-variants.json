@@ -1,0 +1,937 @@
+{
+  "commit": "7ecbbc9de5c79deb63bd9e8e618393dbc5eed95e",
+  "checkedAt": "2026-11-14T13:15:37.671Z",
+  "deployment": {
+    "id": 43598619357,
+    "url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/43598619357",
+    "status": "success"
+  },
+  "files": 132,
+  "matched": 132,
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1080349,
+      "sha256": "59fb94d7fb2bfd5c24264427eacc894c8301107defcfaa477cbac6d6ca897c9a",
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1421231,
+      "sha256": "9cd87bff6ef98060d8ce74953409cf909c761ba7aeccb4f8c2000cd28c17a202",
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 945347,
+      "sha256": "f237b805550d792e6e3660361efc88ba7b42f42890937f4929cd4162f9dbf12e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/build-page.py",
+      "status": 200,
+      "bytes": 17906,
+      "sha256": "c2eef03489ba98b0ed3834b6bb76b01f436fbf4c7ccd7aa66ad6849568831feb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/bundle-check.json",
+      "status": 200,
+      "bytes": 228,
+      "sha256": "8302707af6c59fb2621b75554b0e0c1f3ab0fa2e4d7a851786deb8419683f3c9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/glyph15-study.zip",
+      "status": 200,
+      "bytes": 5181241,
+      "sha256": "5173f74083b9e92254f6b90b89f9ca7eb8c27e2d0ed3d4f652e4c3c216c029ff",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/index.html",
+      "status": 200,
+      "bytes": 289429,
+      "sha256": "253c2cf4f8a02533614642e6252d6d8b91990cf2133801684d0c6508c39a0ff1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/README.md",
+      "status": 200,
+      "bytes": 6274,
+      "sha256": "0f3b0cbd8a5b52b2de3e7d53eef4f4891b8c2ffd28224469b12eb11ced7fe3cc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/browser-check.json",
+      "status": 200,
+      "bytes": 630,
+      "sha256": "dd6fb1f82a9073e523035dcc2ee8a74c70a9c0cc91d9447cc97a5346ffa30593",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/build-report.py",
+      "status": 200,
+      "bytes": 20707,
+      "sha256": "058a8c35d56aca08daaac4c575476903880fc2b3a17b07bc38e6c31bd4f91ee7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/check-variants.py",
+      "status": 200,
+      "bytes": 4632,
+      "sha256": "31e6cfcda7768bdee5510636f3da6e479b0950bb319817df9b3e479766f9d121",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/dashed-after-12s.json",
+      "status": 200,
+      "bytes": 1106270,
+      "sha256": "b08d95a06eeafbaf0543348c5d8ff4012a057109f1cb1771bb560244ac267cc1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/dashed.json",
+      "status": 200,
+      "bytes": 1106270,
+      "sha256": "fad957e2f0bbc99187da5315d5d5521bebfc80106a145733a767dc1f82682768",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/dashed.py",
+      "status": 200,
+      "bytes": 5272,
+      "sha256": "3b4419cd87954b328ae6c8a913588d94604fd41e48a07e3c5f0b4c9eb5bc2061",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/independent-check.json",
+      "status": 200,
+      "bytes": 10017,
+      "sha256": "c9e9c681298d693e06b4b5e60723eff8d807c08db3d3dabefea27ffc5bca6c07",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/index.html",
+      "status": 200,
+      "bytes": 21406,
+      "sha256": "bde31869b2ce91ad03f5f04230c4c4e60737436c64be6fd437ae9e76274b25f3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g10.svg",
+      "status": 200,
+      "bytes": 63130,
+      "sha256": "0c10a2881e3d6305a5a562bbc77018f67bfa91f60d8ffc953b372c525a9a11b6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g11.svg",
+      "status": 200,
+      "bytes": 60510,
+      "sha256": "daf7f154f66ac25dedae73a31b4e3794ab00a9cd3bb3ed558057c97f92e19314",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g12.svg",
+      "status": 200,
+      "bytes": 61621,
+      "sha256": "cbf45168ea9ac2e9ba20e3a49d838d30cf95010b6587b56077d8344a80f9a258",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g13.svg",
+      "status": 200,
+      "bytes": 8099,
+      "sha256": "edb7b68a24caf4e307ed85882c98dd5c1ec486955e6a59ae8b7bdeb2bf573d56",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g14.svg",
+      "status": 200,
+      "bytes": 59851,
+      "sha256": "645f82303925a1be4777fb048b7b71559eda18ecd6593394b245a59d03bf46be",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g15.svg",
+      "status": 200,
+      "bytes": 58786,
+      "sha256": "fbefc830948fccc52f065591b0498ad6331074608897b610995035139ad85643",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g16.svg",
+      "status": 200,
+      "bytes": 55477,
+      "sha256": "b8825aad967e599d35b6c6acfcba95d68967ee4166bc257862164593fb16d613",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g19.svg",
+      "status": 200,
+      "bytes": 54398,
+      "sha256": "61ffcebe68215a05e78d6ba776456eb31c808bdb27be1f50379bd4035afdee8d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g20.svg",
+      "status": 200,
+      "bytes": 62934,
+      "sha256": "92f56bce3e000c9941f006dc64440ce7e1712448d9b1943422d6339af8dcd36e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g21.svg",
+      "status": 200,
+      "bytes": 8814,
+      "sha256": "91431a6bd246c3c01483f5ee70c4874c63ec4b56a4a5185b93629518fb0aad28",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g22.svg",
+      "status": 200,
+      "bytes": 62203,
+      "sha256": "3121f5256b0f054f147642ddd5c9b74aca670624d1222c5c311636e5ccb01b5a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g23.svg",
+      "status": 200,
+      "bytes": 49621,
+      "sha256": "bada543b05cca16184a3b011cb639a5bbde4c676dcd9910c04d73eb8e705d57c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g24.svg",
+      "status": 200,
+      "bytes": 64404,
+      "sha256": "8e44839eca78147cc4a92159b20ce796b7bd1cb84adbe5ca3e850e742a7782a2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g25.svg",
+      "status": 200,
+      "bytes": 55759,
+      "sha256": "3905f7229ad88b75ff9dd7abe34751baf65d0c1926b7d0957f66291b1b4404ae",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g26.svg",
+      "status": 200,
+      "bytes": 59280,
+      "sha256": "5c3975473e221a35d771b14f2f7c1f3736f229006a0ffb3b0e2be5292e59513b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g27.svg",
+      "status": 200,
+      "bytes": 51958,
+      "sha256": "e72c6eb0af8dbe6ba5c88069742809453b13633d0cd7a33156096762612b2e86",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g28.svg",
+      "status": 200,
+      "bytes": 66634,
+      "sha256": "38e9b09cc06d4bf1faf9bf60014c86b51827778ab0efbca58b99f375f56ce629",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g29.svg",
+      "status": 200,
+      "bytes": 55576,
+      "sha256": "2418ec995774702d950cde6b4645295f514a3cd969732bc450dc2a7a1b79bc97",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g30.svg",
+      "status": 200,
+      "bytes": 56632,
+      "sha256": "86a5980b4368f21fc0944f30106542c70bf4e0e14fbedeef4893e7072550f06f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g31.svg",
+      "status": 200,
+      "bytes": 53741,
+      "sha256": "61581bb028d57547ec7bd3631cf4e911e480cc5422772f7c2f5619f178d08eb4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g32.svg",
+      "status": 200,
+      "bytes": 55583,
+      "sha256": "4a25bcb0266880f37dfcec5b207874602c0bba4c763fab57dbac2ee5c4959f89",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g33.svg",
+      "status": 200,
+      "bytes": 7967,
+      "sha256": "2b0d829b1b2b5c61e656b71696b3af22571c5c08aa122c8b401be1ddb3c19b0f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g34.svg",
+      "status": 200,
+      "bytes": 57181,
+      "sha256": "2ebc1d97889eb49ec528f4bdb6b0ddd041389ee0f05d641c1c7e65b40924aa93",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g35.svg",
+      "status": 200,
+      "bytes": 53219,
+      "sha256": "a0c97f59f0562e003c1bcaf286ff453d4cb9998e507d2260fc406a17f4c0103f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g36.svg",
+      "status": 200,
+      "bytes": 59321,
+      "sha256": "b247094a8dcc9595741c92f2bee5199ff9f5b1efde5514d248deae29af15ae56",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g37.svg",
+      "status": 200,
+      "bytes": 54866,
+      "sha256": "3d9d0cce61ab6639b626ee3f622c8d7aad6e6587dd4470335a7588a2428866e9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g38.svg",
+      "status": 200,
+      "bytes": 54377,
+      "sha256": "d39c369a7cf4965a0ae03352b507c5d05a60948d77db0de5bebefd27cc915945",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g41.svg",
+      "status": 200,
+      "bytes": 63772,
+      "sha256": "d9ab50b7cecaaf3d7718f47759d9cfecb708772a2ade01f94410eec695658804",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g42.svg",
+      "status": 200,
+      "bytes": 51748,
+      "sha256": "3fe480d8e605c4a628abfe6c0d9077bb9375cc6762f63f3f84b8810de32f1e06",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g43.svg",
+      "status": 200,
+      "bytes": 57205,
+      "sha256": "30a1f760c77ec15238c3a01fa6f97563709fdd662a8f3156bb57789fb170b472",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g44.svg",
+      "status": 200,
+      "bytes": 54953,
+      "sha256": "40f2adf6b0adff9a07f0ad9695b6e192509478cfb0671189019320d1396a7379",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g45.svg",
+      "status": 200,
+      "bytes": 62816,
+      "sha256": "d332f9b13235f6d537931cedd1b5edeea081a3d2af9769c4debc6bc87a149fc6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g46.svg",
+      "status": 200,
+      "bytes": 61112,
+      "sha256": "41bb337625be9c00ff95b6e3d6a2b53ef57c81e408c0186d17150ede9584dbff",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g47.svg",
+      "status": 200,
+      "bytes": 62953,
+      "sha256": "061e1394ac0c91088a09c37d7c95e99530dd96889fe7112337d9cbd8c5d24a70",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g48.svg",
+      "status": 200,
+      "bytes": 59125,
+      "sha256": "a7a52ae8d632587c8fc0e99eaefc5e65ff88487cefe63770ce7c4d6947ac88cb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g49.svg",
+      "status": 200,
+      "bytes": 57806,
+      "sha256": "25b43d3dd429e588fcf2ead706aa0b92345fab16b3d88d34d09127c9be552dbf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g52.svg",
+      "status": 200,
+      "bytes": 51351,
+      "sha256": "d2752779b630e07e73e770c2695de60f283a93487bc70fd364677ba2040ed04e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g53.svg",
+      "status": 200,
+      "bytes": 65182,
+      "sha256": "c6749300b0eb30dd8937d590081f0910e00f2eeaaa62abf4b7131d0b79ce002e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g54.svg",
+      "status": 200,
+      "bytes": 56155,
+      "sha256": "063dac3baa97f69f6feefe6e3061e367ca124c22e296085d14820e39c76ec6e0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g55.svg",
+      "status": 200,
+      "bytes": 8357,
+      "sha256": "f94a01de75f91755468c44aa0e422f8eea4a64fbda187c62dacf6a0fa36d0f6d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g56.svg",
+      "status": 200,
+      "bytes": 57783,
+      "sha256": "91411b8456a8ffdb06d56a87f9b95d3fa77f09ce9100773baaea6fc1776a2c5a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g57.svg",
+      "status": 200,
+      "bytes": 63066,
+      "sha256": "9763d8a2749d0bbe80b683de0f3129600ad01524a0114aa5f445628fe2d16a19",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g58.svg",
+      "status": 200,
+      "bytes": 59062,
+      "sha256": "a1efd71bcbe51221fcf6da8a77da58d5d9cda5f9488e1b91087a25990c150eee",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g59.svg",
+      "status": 200,
+      "bytes": 57942,
+      "sha256": "6d3d5ecbd681479a929c8aa56da605046d949f8702ad5b08ad043829380370dd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/dashed-g9.svg",
+      "status": 200,
+      "bytes": 56774,
+      "sha256": "3483b5cbb5e857f83f5e5479de44540c6d61de095e8ba039d505ce6a25facec1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-01-slot-1.svg",
+      "status": 200,
+      "bytes": 19671,
+      "sha256": "2f3f8d9d110faf71306bb8ad686e62accbc4ffd4ebf0ce0b6a139630e671000e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-01-slot-2.svg",
+      "status": 200,
+      "bytes": 18775,
+      "sha256": "0163dc81e77119b0dd7e7ca5b0b8f480f7384c2826304a40523e1a250f77c32e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-01-slot-3.svg",
+      "status": 200,
+      "bytes": 19288,
+      "sha256": "f5a7c96435cf89632ec34b53a7a040af2cac73843addfbb1210955e7c88bc9f7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-01-slot-4.svg",
+      "status": 200,
+      "bytes": 17786,
+      "sha256": "efc3f1f404debf1b71dc2b3546442426b77e15da037b0444c7a63668b802f235",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-02-slot-1.svg",
+      "status": 200,
+      "bytes": 17487,
+      "sha256": "240466ed4b3b6980422b34f36cce195b0d162ded2c0d2b0c3352d53aecd82ac5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-02-slot-2.svg",
+      "status": 200,
+      "bytes": 18685,
+      "sha256": "3a29fb134278d094dbd94b8e7c93b57f1cb78cb57ca33754a189458db66f276f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-02-slot-3.svg",
+      "status": 200,
+      "bytes": 17661,
+      "sha256": "8d2a325bfbdfce82719a76f1d4c952bc6b953de53a7c01e69bed2c7cc7487f83",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-02-slot-4.svg",
+      "status": 200,
+      "bytes": 16761,
+      "sha256": "cedc8e0dc74907705cca6d9519415451fb0ae0773e69ece946a5effca91d0c91",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-03-slot-1.svg",
+      "status": 200,
+      "bytes": 16587,
+      "sha256": "003f42df6a65382bb1786843dfb91189437f5c6fe5ff82d1f10e0baf8e5b82e5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-03-slot-2.svg",
+      "status": 200,
+      "bytes": 19673,
+      "sha256": "422dfaa01972c268b5a71673cf36cd8160f4102fd3624f677a589aa12d031870",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-03-slot-3.svg",
+      "status": 200,
+      "bytes": 20187,
+      "sha256": "008b71a2e72ebc8c527ebd3467ad51677912dc8184461502d8179f7a037fd2cc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-03-slot-4.svg",
+      "status": 200,
+      "bytes": 19375,
+      "sha256": "2c5596efd883977f3e8d939eb67e1f850ce7b787ad197645ae8fb218b48a76e5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-04-slot-1.svg",
+      "status": 200,
+      "bytes": 14275,
+      "sha256": "76fee97c5212525f31d0b6ce777ea3fab3d4c1726f6637518a27431d4ffbdce6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-04-slot-2.svg",
+      "status": 200,
+      "bytes": 20488,
+      "sha256": "a6e7529733a87867970655117186983fe20c746a96f635e20ba2a135539c5168",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-04-slot-3.svg",
+      "status": 200,
+      "bytes": 16885,
+      "sha256": "ccbb419b1b5fecc7a0a451345808a3eeb9c4eeeb9f81cee111459f944cf90cdd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-04-slot-4.svg",
+      "status": 200,
+      "bytes": 18688,
+      "sha256": "9a2947ff7b29756d6c5fc981d90678a95df18e64c532b83fcf9ba458782dcb5d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-05-slot-1.svg",
+      "status": 200,
+      "bytes": 15261,
+      "sha256": "1734341fd267707e3bbe7b6386707676698850aae89670e4d879a33c526a5681",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-05-slot-2.svg",
+      "status": 200,
+      "bytes": 21088,
+      "sha256": "82fdb93beb259f753dd61a86ba11805547ef7c4b0345281c1b0e779fe2206012",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-05-slot-3.svg",
+      "status": 200,
+      "bytes": 16459,
+      "sha256": "740cf38fe7d4c858d5c749d4e3df1bc39d8f3c5086acf9f17179f2997fe931e4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-05-slot-4.svg",
+      "status": 200,
+      "bytes": 16761,
+      "sha256": "d834f671e3a8d759346ff47b0f904c740fbf1fc141fc9d5ede2aa81ec34483f9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-06-slot-1.svg",
+      "status": 200,
+      "bytes": 16159,
+      "sha256": "4952ed946ad4c196db272a369458a0d99c007ef08c359a448e09909500b70090",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-06-slot-2.svg",
+      "status": 200,
+      "bytes": 16459,
+      "sha256": "01f730d1d31b51f77f2c5b34d28772f9a9003af688199ff9a960ca00a04c8ac1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-06-slot-3.svg",
+      "status": 200,
+      "bytes": 17059,
+      "sha256": "e5cb9d342fda80f00dbd9141d322a541047fa4aca90437b8dcab73c7b6847231",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-06-slot-4.svg",
+      "status": 200,
+      "bytes": 17487,
+      "sha256": "0d3b7ab3745bcf2b28a30fdae17408d23c7269806172fe4e30b306f4eebde7cd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-07-slot-1.svg",
+      "status": 200,
+      "bytes": 15861,
+      "sha256": "603a4584a7a51ceb8ee657808633b22c354d93b99db85f5f7f8ec9eeecf702ba",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-07-slot-2.svg",
+      "status": 200,
+      "bytes": 18559,
+      "sha256": "ba08ebef2a99e2983d25b4c3b6c7960d8529a3309cfc70007031ffe32f1e3275",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-07-slot-3.svg",
+      "status": 200,
+      "bytes": 16459,
+      "sha256": "23e2e5a7cead80046a6540f7a27c8dcc4cbba4d7a62314a969c15a186bd66aa3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-07-slot-4.svg",
+      "status": 200,
+      "bytes": 16161,
+      "sha256": "c6eb6b6edc26b4eed41afe0827a66a018712a1811ee4702cc78f3cbe437c5bc7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-08-slot-1.svg",
+      "status": 200,
+      "bytes": 19885,
+      "sha256": "2a54b4ef7d2dc5a1de596199e59d9c4636d0d50604cea3664f429928e57b09a7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-08-slot-2.svg",
+      "status": 200,
+      "bytes": 15259,
+      "sha256": "42fff1250f24875581d1fa72f2f141828928eaa85ef294f504dc2ad44a9e89e6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-08-slot-3.svg",
+      "status": 200,
+      "bytes": 17359,
+      "sha256": "9b9732e88ef097fd018ed2fd28e2ac325e107e6c761e70f2dc7e41db15fffd3d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-08-slot-4.svg",
+      "status": 200,
+      "bytes": 16587,
+      "sha256": "535eee6b9832828b07c8c724ba3c31005bedb4f252e53b86b3638cf73296ff9a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-09-slot-1.svg",
+      "status": 200,
+      "bytes": 19071,
+      "sha256": "86026f8828ec73c0f09de0a83c4a8bebebc96b65a6b54ec22b4caf777a1fbfbb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-09-slot-2.svg",
+      "status": 200,
+      "bytes": 19075,
+      "sha256": "7ac6d1741748a88a3cdb66e94c474fa3f43963ef947a1ac6b068dda29b2fe4d5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-09-slot-3.svg",
+      "status": 200,
+      "bytes": 19885,
+      "sha256": "616f264c42b9de5613052b160934a80f6b9f8aedb2d727d0c94836c8392a9d35",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-09-slot-4.svg",
+      "status": 200,
+      "bytes": 17786,
+      "sha256": "bcb82cbbc33643eb48b591d360baab79024d21fe4b4f6da6816520c47bd66362",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-10-slot-1.svg",
+      "status": 200,
+      "bytes": 18087,
+      "sha256": "663cded178cf60529e21aada03a296395c6d18268700db927393eb6078602e6f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-10-slot-2.svg",
+      "status": 200,
+      "bytes": 18685,
+      "sha256": "60d62650bdee31b4ffbc6a3377613461728bafbe8898991034c4e0ce21664ae5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-10-slot-3.svg",
+      "status": 200,
+      "bytes": 17661,
+      "sha256": "4186f586108d334d3c9496b37973176b81bf1fabf49f637423bf20aeb91733bf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-10-slot-4.svg",
+      "status": 200,
+      "bytes": 16761,
+      "sha256": "70d352e2139749ae44da2cfb575de439e96f5efb9d72894ba142a362e2e66c97",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-11-slot-1.svg",
+      "status": 200,
+      "bytes": 15261,
+      "sha256": "5c9d60803246145e30b3e2aff707da4b3c2de856c13c5600e07bbff9fa4b123d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-11-slot-2.svg",
+      "status": 200,
+      "bytes": 21088,
+      "sha256": "cba89acfd0e1d094ab3b39d32fdece3ab3e9a984df718cf975fe7df44a07a23c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-11-slot-3.svg",
+      "status": 200,
+      "bytes": 17359,
+      "sha256": "b7e894d996470917c29db543e5a05cffa77de870b49950ac2cd3a3f058d3acb6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-11-slot-4.svg",
+      "status": 200,
+      "bytes": 16761,
+      "sha256": "c07a32ddfcbd7ef133a8f51272c14d9b90cc3cb53fed1c865d37d7e39c89848e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-12-slot-1.svg",
+      "status": 200,
+      "bytes": 16587,
+      "sha256": "38ff09652e3cd9f7bbc6a3b14fde3864755d91a3db5bae186343971208355a04",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-12-slot-2.svg",
+      "status": 200,
+      "bytes": 19673,
+      "sha256": "0a4c5cf88290588b82beb9830abfe7082574e497335ac17640bb4be57af741ee",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-12-slot-3.svg",
+      "status": 200,
+      "bytes": 20187,
+      "sha256": "249a37c8ecded52a77372fc86a854afc233350816b0d3df1e9bc21b100a4058e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-12-slot-4.svg",
+      "status": 200,
+      "bytes": 19375,
+      "sha256": "76c419eaeea694edd9c28b5efbe06f008f3e71d5b55f3686d2f1934caa96f2c6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-13-slot-1.svg",
+      "status": 200,
+      "bytes": 14875,
+      "sha256": "1c15533c0f31559b3f39cd022b724db3356c9b244870e5c8120562834b3db5e6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-13-slot-2.svg",
+      "status": 200,
+      "bytes": 21086,
+      "sha256": "9c402e09abf0203e8f3c3056b1d87b4d489e33e66428dfcb381ffb2fd66e8488",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-13-slot-3.svg",
+      "status": 200,
+      "bytes": 16885,
+      "sha256": "61073a401c011fe44b032ff9adea43104aff74253d8c472ebdc762652c6b0878",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-13-slot-4.svg",
+      "status": 200,
+      "bytes": 18088,
+      "sha256": "dea68659355234df8817ee4ba5f45ac36c52ecdfb4ae961b657b514dc0a3a8fa",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-14-slot-1.svg",
+      "status": 200,
+      "bytes": 19885,
+      "sha256": "e1749503fcc6bf1ef28a71b992f0b3f8b0b7aa4e3229aab4c62b36166ec0e3c0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-14-slot-2.svg",
+      "status": 200,
+      "bytes": 15259,
+      "sha256": "8b1832f537af249e24b3278a56160ce77ca596c07ba632eba466f83ca6864c28",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-14-slot-3.svg",
+      "status": 200,
+      "bytes": 18085,
+      "sha256": "b3165c1bc9ebc80582fa1397c6b3a297ae417fc99f29869ae889989dd1030da3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-14-slot-4.svg",
+      "status": 200,
+      "bytes": 16587,
+      "sha256": "459c5d69cfce4798270d22df3c667c3537fccf48a12d84119605dfcd8cee723e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-15-slot-1.svg",
+      "status": 200,
+      "bytes": 17487,
+      "sha256": "0ca46f053585a1fb20b4826e0657a5f73b3199d49737c1dff7c0f83e1b44fc6a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-15-slot-2.svg",
+      "status": 200,
+      "bytes": 19285,
+      "sha256": "2aa86f67af0549431b70f9d2a0f45588d701d91dce5968bc4805ff2136e1d842",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-15-slot-3.svg",
+      "status": 200,
+      "bytes": 17959,
+      "sha256": "f698105894bac89c9558d7a8076fe25a0f9f6d9ca43ea0a77b7e0acabeec4f9d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/plates/state-15-slot-4.svg",
+      "status": 200,
+      "bytes": 16975,
+      "sha256": "564c844c14c0a6d11e702f5db752f658753030b5320efbbd861921d8f7cce186",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/README.md",
+      "status": 200,
+      "bytes": 9999,
+      "sha256": "e90318afa2bc48b66e7d60f89ea478b5d474cdf95ad6701c8210205d024ba2e7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/source-thickness-change.png",
+      "status": 200,
+      "bytes": 28101,
+      "sha256": "ba13712e7b775901df3dbf3c0c782b49b264d79ec2debfc1105e6e7f5b17cc28",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/static-check.json",
+      "status": 200,
+      "bytes": 72,
+      "sha256": "833c1c9804cc2fa8dc65acc972dc715da824d214acb950261ff2115e58cd349b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/thickness-atlas.png",
+      "status": 200,
+      "bytes": 154776,
+      "sha256": "3ce114eda7f042c9d37251304150657fbffddaf0a23bc4b1d3ef13ab2f44b3be",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/thickness-atlas.svg",
+      "status": 200,
+      "bytes": 599412,
+      "sha256": "d6bdd7316c53b0b5fb3aad41061a68a396acdb9c183838dbc1bfa377102cc90d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/thickness-check.json",
+      "status": 200,
+      "bytes": 3051,
+      "sha256": "fedc0243b334c229cf1cd655be9c58c14ab1e371d5f7d31d15587e51d2004e2d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/thickness.json",
+      "status": 200,
+      "bytes": 1164116,
+      "sha256": "cf2844346f1f20403c2cc78462f8f914b8294bde0f65e7b29e58a90ec3042475",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/thickness.py",
+      "status": 200,
+      "bytes": 19338,
+      "sha256": "f98bf040878dd7e6d65a1a550fd768ca7ff3c9857aebe875f51b8374205fcf89",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/viewer-comparison.png",
+      "status": 200,
+      "bytes": 61577,
+      "sha256": "3e23be5854050e6f20d412d80f23c685062acb18fbb1fe0756e08241d79b9f42",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/thread-variants/viewer-mobile.png",
+      "status": 200,
+      "bytes": 15954,
+      "sha256": "e14902e17a62115349c0f8fe7cd3062f98ed86e364cc5c1fcc709d384d73c379",
+      "match": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 500350,
+      "sha256": "7732860a34e2e10ff49b3b0531cdb47ee646cb4cedbb74efb2320133fafba091",
+      "match": true
+    }
+  ]
+}
