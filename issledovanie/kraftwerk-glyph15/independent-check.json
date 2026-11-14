@@ -1,0 +1,604 @@
+{
+  "passed": true,
+  "sourceImageHashesChecked": 446,
+  "graphsChecked": 59,
+  "transitionsChecked": 56,
+  "summary": {
+    "stableGraphs": 45,
+    "oneStroke": 13,
+    "disconnected": 9
+  },
+  "graphs": [
+    {
+      "id": 1,
+      "stable": false,
+      "edges": 0,
+      "components": 0,
+      "oddVertices": 0,
+      "minimumStrokes": 0,
+      "oneStroke": false,
+      "squares": 0
+    },
+    {
+      "id": 2,
+      "stable": false,
+      "edges": 59,
+      "components": 2,
+      "oddVertices": 10,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 7
+    },
+    {
+      "id": 3,
+      "stable": false,
+      "edges": 53,
+      "components": 3,
+      "oddVertices": 18,
+      "minimumStrokes": 10,
+      "oneStroke": false,
+      "squares": 5
+    },
+    {
+      "id": 4,
+      "stable": false,
+      "edges": 57,
+      "components": 1,
+      "oddVertices": 12,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 7
+    },
+    {
+      "id": 5,
+      "stable": false,
+      "edges": 50,
+      "components": 3,
+      "oddVertices": 16,
+      "minimumStrokes": 8,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 6,
+      "stable": false,
+      "edges": 59,
+      "components": 2,
+      "oddVertices": 10,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 7,
+      "stable": false,
+      "edges": 55,
+      "components": 2,
+      "oddVertices": 16,
+      "minimumStrokes": 9,
+      "oneStroke": false,
+      "squares": 5
+    },
+    {
+      "id": 8,
+      "stable": false,
+      "edges": 58,
+      "components": 1,
+      "oddVertices": 16,
+      "minimumStrokes": 8,
+      "oneStroke": false,
+      "squares": 8
+    },
+    {
+      "id": 9,
+      "stable": true,
+      "edges": 53,
+      "components": 1,
+      "oddVertices": 10,
+      "minimumStrokes": 5,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 10,
+      "stable": true,
+      "edges": 60,
+      "components": 2,
+      "oddVertices": 8,
+      "minimumStrokes": 5,
+      "oneStroke": false,
+      "squares": 7
+    },
+    {
+      "id": 11,
+      "stable": true,
+      "edges": 57,
+      "components": 2,
+      "oddVertices": 12,
+      "minimumStrokes": 7,
+      "oneStroke": false,
+      "squares": 7
+    },
+    {
+      "id": 12,
+      "stable": true,
+      "edges": 58,
+      "components": 1,
+      "oddVertices": 12,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 8
+    },
+    {
+      "id": 13,
+      "stable": true,
+      "edges": 52,
+      "components": 1,
+      "oddVertices": 6,
+      "minimumStrokes": 3,
+      "oneStroke": false,
+      "squares": 2
+    },
+    {
+      "id": 14,
+      "stable": true,
+      "edges": 56,
+      "components": 1,
+      "oddVertices": 8,
+      "minimumStrokes": 4,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 15,
+      "stable": true,
+      "edges": 52,
+      "components": 1,
+      "oddVertices": 4,
+      "minimumStrokes": 2,
+      "oneStroke": false,
+      "squares": 3
+    },
+    {
+      "id": 16,
+      "stable": true,
+      "edges": 49,
+      "components": 1,
+      "oddVertices": 2,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 17,
+      "stable": false,
+      "edges": 57,
+      "components": 1,
+      "oddVertices": 10,
+      "minimumStrokes": 5,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 18,
+      "stable": false,
+      "edges": 53,
+      "components": 1,
+      "oddVertices": 6,
+      "minimumStrokes": 3,
+      "oneStroke": false,
+      "squares": 3
+    },
+    {
+      "id": 19,
+      "stable": true,
+      "edges": 49,
+      "components": 1,
+      "oddVertices": 6,
+      "minimumStrokes": 3,
+      "oneStroke": false,
+      "squares": 4
+    },
+    {
+      "id": 20,
+      "stable": true,
+      "edges": 60,
+      "components": 2,
+      "oddVertices": 8,
+      "minimumStrokes": 5,
+      "oneStroke": false,
+      "squares": 9
+    },
+    {
+      "id": 21,
+      "stable": true,
+      "edges": 61,
+      "components": 1,
+      "oddVertices": 12,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 11
+    },
+    {
+      "id": 22,
+      "stable": true,
+      "edges": 59,
+      "components": 2,
+      "oddVertices": 6,
+      "minimumStrokes": 4,
+      "oneStroke": false,
+      "squares": 10
+    },
+    {
+      "id": 23,
+      "stable": true,
+      "edges": 42,
+      "components": 2,
+      "oddVertices": 0,
+      "minimumStrokes": 2,
+      "oneStroke": false,
+      "squares": 1
+    },
+    {
+      "id": 24,
+      "stable": true,
+      "edges": 62,
+      "components": 1,
+      "oddVertices": 20,
+      "minimumStrokes": 10,
+      "oneStroke": false,
+      "squares": 11
+    },
+    {
+      "id": 25,
+      "stable": true,
+      "edges": 50,
+      "components": 1,
+      "oddVertices": 4,
+      "minimumStrokes": 2,
+      "oneStroke": false,
+      "squares": 4
+    },
+    {
+      "id": 26,
+      "stable": true,
+      "edges": 56,
+      "components": 1,
+      "oddVertices": 12,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 8
+    },
+    {
+      "id": 27,
+      "stable": true,
+      "edges": 44,
+      "components": 1,
+      "oddVertices": 0,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 0
+    },
+    {
+      "id": 28,
+      "stable": true,
+      "edges": 64,
+      "components": 1,
+      "oddVertices": 12,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 10
+    },
+    {
+      "id": 29,
+      "stable": true,
+      "edges": 48,
+      "components": 1,
+      "oddVertices": 0,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 30,
+      "stable": true,
+      "edges": 49,
+      "components": 1,
+      "oddVertices": 2,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 31,
+      "stable": true,
+      "edges": 47,
+      "components": 1,
+      "oddVertices": 2,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 32,
+      "stable": true,
+      "edges": 48,
+      "components": 1,
+      "oddVertices": 0,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 33,
+      "stable": true,
+      "edges": 50,
+      "components": 1,
+      "oddVertices": 0,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 34,
+      "stable": true,
+      "edges": 52,
+      "components": 1,
+      "oddVertices": 8,
+      "minimumStrokes": 4,
+      "oneStroke": false,
+      "squares": 5
+    },
+    {
+      "id": 35,
+      "stable": true,
+      "edges": 46,
+      "components": 1,
+      "oddVertices": 0,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 1
+    },
+    {
+      "id": 36,
+      "stable": true,
+      "edges": 55,
+      "components": 1,
+      "oddVertices": 10,
+      "minimumStrokes": 5,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 37,
+      "stable": true,
+      "edges": 48,
+      "components": 1,
+      "oddVertices": 0,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 38,
+      "stable": true,
+      "edges": 47,
+      "components": 1,
+      "oddVertices": 2,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 39,
+      "stable": false,
+      "edges": 56,
+      "components": 1,
+      "oddVertices": 12,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 40,
+      "stable": false,
+      "edges": 49,
+      "components": 1,
+      "oddVertices": 2,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 2
+    },
+    {
+      "id": 41,
+      "stable": true,
+      "edges": 60,
+      "components": 1,
+      "oddVertices": 8,
+      "minimumStrokes": 4,
+      "oneStroke": false,
+      "squares": 7
+    },
+    {
+      "id": 42,
+      "stable": true,
+      "edges": 44,
+      "components": 1,
+      "oddVertices": 0,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 1
+    },
+    {
+      "id": 43,
+      "stable": true,
+      "edges": 51,
+      "components": 1,
+      "oddVertices": 6,
+      "minimumStrokes": 3,
+      "oneStroke": false,
+      "squares": 4
+    },
+    {
+      "id": 44,
+      "stable": true,
+      "edges": 49,
+      "components": 1,
+      "oddVertices": 6,
+      "minimumStrokes": 3,
+      "oneStroke": false,
+      "squares": 4
+    },
+    {
+      "id": 45,
+      "stable": true,
+      "edges": 58,
+      "components": 2,
+      "oddVertices": 8,
+      "minimumStrokes": 5,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 46,
+      "stable": true,
+      "edges": 58,
+      "components": 2,
+      "oddVertices": 10,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 8
+    },
+    {
+      "id": 47,
+      "stable": true,
+      "edges": 60,
+      "components": 1,
+      "oddVertices": 12,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 9
+    },
+    {
+      "id": 48,
+      "stable": true,
+      "edges": 54,
+      "components": 1,
+      "oddVertices": 8,
+      "minimumStrokes": 4,
+      "oneStroke": false,
+      "squares": 3
+    },
+    {
+      "id": 49,
+      "stable": true,
+      "edges": 51,
+      "components": 1,
+      "oddVertices": 2,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 3
+    },
+    {
+      "id": 50,
+      "stable": false,
+      "edges": 61,
+      "components": 2,
+      "oddVertices": 10,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 9
+    },
+    {
+      "id": 51,
+      "stable": false,
+      "edges": 62,
+      "components": 1,
+      "oddVertices": 14,
+      "minimumStrokes": 7,
+      "oneStroke": false,
+      "squares": 11
+    },
+    {
+      "id": 52,
+      "stable": true,
+      "edges": 44,
+      "components": 2,
+      "oddVertices": 2,
+      "minimumStrokes": 2,
+      "oneStroke": false,
+      "squares": 2
+    },
+    {
+      "id": 53,
+      "stable": true,
+      "edges": 64,
+      "components": 1,
+      "oddVertices": 20,
+      "minimumStrokes": 10,
+      "oneStroke": false,
+      "squares": 12
+    },
+    {
+      "id": 54,
+      "stable": true,
+      "edges": 54,
+      "components": 1,
+      "oddVertices": 12,
+      "minimumStrokes": 6,
+      "oneStroke": false,
+      "squares": 8
+    },
+    {
+      "id": 55,
+      "stable": true,
+      "edges": 54,
+      "components": 1,
+      "oddVertices": 4,
+      "minimumStrokes": 2,
+      "oneStroke": false,
+      "squares": 4
+    },
+    {
+      "id": 56,
+      "stable": true,
+      "edges": 52,
+      "components": 1,
+      "oddVertices": 4,
+      "minimumStrokes": 2,
+      "oneStroke": false,
+      "squares": 3
+    },
+    {
+      "id": 57,
+      "stable": true,
+      "edges": 58,
+      "components": 1,
+      "oddVertices": 8,
+      "minimumStrokes": 4,
+      "oneStroke": false,
+      "squares": 6
+    },
+    {
+      "id": 58,
+      "stable": true,
+      "edges": 53,
+      "components": 1,
+      "oddVertices": 2,
+      "minimumStrokes": 1,
+      "oneStroke": true,
+      "squares": 4
+    },
+    {
+      "id": 59,
+      "stable": true,
+      "edges": 51,
+      "components": 2,
+      "oddVertices": 2,
+      "minimumStrokes": 2,
+      "oneStroke": false,
+      "squares": 3
+    }
+  ],
+  "scope": "Independent graph topology and set differences. Image extraction confidence is reported separately in validation.json."
+}

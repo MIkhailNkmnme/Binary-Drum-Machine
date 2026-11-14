@@ -1,0 +1,10 @@
+{
+  "states": 15,
+  "glyphs": 60,
+  "localReferences": 55,
+  "zipFiles": 33,
+  "zipFilesCompared": 32,
+  "zipBytes": 5180479,
+  "zipSha256": "30f4fab5fb926bd939490f4aa6ad0adb21fefcc2b6349d9301bce77797c3bd86",
+  "passed": true
+}

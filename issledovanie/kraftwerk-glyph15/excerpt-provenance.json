@@ -1,0 +1,4520 @@
+{
+  "source": "https://www.youtube.com/watch?v=72x7kbeeGwQ",
+  "method": "Nearest timestamp-bracket midpoint, browser screenshots; no native-source download. Not every decoded source frame is guaranteed captured.",
+  "duration": 15,
+  "fps": 30,
+  "frames": 450,
+  "audio": false,
+  "cropWithinVideoScreenshot": [
+    0,
+    70,
+    1337,
+    650
+  ],
+  "width": 1338,
+  "height": 580,
+  "sha256": "f39c511251a2cd9086e67531986305b1bf1a1a7d7a58db23d48f6bc7789b2b65",
+  "maxMidpointError": 0.024983333333333343,
+  "mapping": [
+    {
+      "frame": 0,
+      "outputTime": 0.0,
+      "source": "s0000.png",
+      "captureBracket": [
+        0,
+        0.003018
+      ],
+      "midpointError": 0.001509
+    },
+    {
+      "frame": 1,
+      "outputTime": 0.03333333333333333,
+      "source": "s0001.png",
+      "captureBracket": [
+        0.003981,
+        0.065592
+      ],
+      "midpointError": 0.001453166666666665
+    },
+    {
+      "frame": 2,
+      "outputTime": 0.06666666666666667,
+      "source": "s0002.png",
+      "captureBracket": [
+        0.07538,
+        0.10792
+      ],
+      "midpointError": 0.024983333333333343
+    },
+    {
+      "frame": 3,
+      "outputTime": 0.1,
+      "source": "s0002.png",
+      "captureBracket": [
+        0.07538,
+        0.10792
+      ],
+      "midpointError": 0.008349999999999996
+    },
+    {
+      "frame": 4,
+      "outputTime": 0.13333333333333333,
+      "source": "s0003.png",
+      "captureBracket": [
+        0.115413,
+        0.148399
+      ],
+      "midpointError": 0.001427333333333336
+    },
+    {
+      "frame": 5,
+      "outputTime": 0.16666666666666666,
+      "source": "s0004.png",
+      "captureBracket": [
+        0.154725,
+        0.182085
+      ],
+      "midpointError": 0.0017383333333333417
+    },
+    {
+      "frame": 6,
+      "outputTime": 0.2,
+      "source": "s0005.png",
+      "captureBracket": [
+        0.18942,
+        0.230971
+      ],
+      "midpointError": 0.010195499999999996
+    },
+    {
+      "frame": 7,
+      "outputTime": 0.23333333333333334,
+      "source": "s0006.png",
+      "captureBracket": [
+        0.237159,
+        0.263141
+      ],
+      "midpointError": 0.016816666666666646
+    },
+    {
+      "frame": 8,
+      "outputTime": 0.26666666666666666,
+      "source": "s0006.png",
+      "captureBracket": [
+        0.237159,
+        0.263141
+      ],
+      "midpointError": 0.01651666666666668
+    },
+    {
+      "frame": 9,
+      "outputTime": 0.3,
+      "source": "s0007.png",
+      "captureBracket": [
+        0.275857,
+        0.303079
+      ],
+      "midpointError": 0.010531999999999986
+    },
+    {
+      "frame": 10,
+      "outputTime": 0.3333333333333333,
+      "source": "s0008.png",
+      "captureBracket": [
+        0.309369,
+        0.334261
+      ],
+      "midpointError": 0.011518333333333353
+    },
+    {
+      "frame": 11,
+      "outputTime": 0.36666666666666664,
+      "source": "s0009.png",
+      "captureBracket": [
+        0.340169,
+        0.364316
+      ],
+      "midpointError": 0.014424166666666627
+    },
+    {
+      "frame": 12,
+      "outputTime": 0.4,
+      "source": "s0011.png",
+      "captureBracket": [
+        0.400768,
+        0.425071
+      ],
+      "midpointError": 0.012919499999999973
+    },
+    {
+      "frame": 13,
+      "outputTime": 0.43333333333333335,
+      "source": "s0012.png",
+      "captureBracket": [
+        0.431282,
+        0.456442
+      ],
+      "midpointError": 0.01052866666666663
+    },
+    {
+      "frame": 14,
+      "outputTime": 0.4666666666666667,
+      "source": "s0013.png",
+      "captureBracket": [
+        0.462989,
+        0.486989
+      ],
+      "midpointError": 0.00832233333333332
+    },
+    {
+      "frame": 15,
+      "outputTime": 0.5,
+      "source": "s0014.png",
+      "captureBracket": [
+        0.494757,
+        0.529081
+      ],
+      "midpointError": 0.011919000000000013
+    },
+    {
+      "frame": 16,
+      "outputTime": 0.5333333333333333,
+      "source": "s0015.png",
+      "captureBracket": [
+        0.535137,
+        0.558828
+      ],
+      "midpointError": 0.013649166666666601
+    },
+    {
+      "frame": 17,
+      "outputTime": 0.5666666666666667,
+      "source": "s0016.png",
+      "captureBracket": [
+        0.56534,
+        0.595966
+      ],
+      "midpointError": 0.013986333333333323
+    },
+    {
+      "frame": 18,
+      "outputTime": 0.6,
+      "source": "s0017.png",
+      "captureBracket": [
+        0.603037,
+        0.627556
+      ],
+      "midpointError": 0.015296500000000046
+    },
+    {
+      "frame": 19,
+      "outputTime": 0.6333333333333333,
+      "source": "s0018.png",
+      "captureBracket": [
+        0.633571,
+        0.659153
+      ],
+      "midpointError": 0.013028666666666688
+    },
+    {
+      "frame": 20,
+      "outputTime": 0.6666666666666666,
+      "source": "s0019.png",
+      "captureBracket": [
+        0.666217,
+        0.690622
+      ],
+      "midpointError": 0.011752833333333323
+    },
+    {
+      "frame": 21,
+      "outputTime": 0.7,
+      "source": "s0020.png",
+      "captureBracket": [
+        0.697814,
+        0.732154
+      ],
+      "midpointError": 0.014984000000000108
+    },
+    {
+      "frame": 22,
+      "outputTime": 0.7333333333333333,
+      "source": "s0021.png",
+      "captureBracket": [
+        0.738517,
+        0.761417
+      ],
+      "midpointError": 0.01663366666666677
+    },
+    {
+      "frame": 23,
+      "outputTime": 0.7666666666666667,
+      "source": "s0022.png",
+      "captureBracket": [
+        0.767117,
+        0.790956
+      ],
+      "midpointError": 0.012369833333333302
+    },
+    {
+      "frame": 24,
+      "outputTime": 0.8,
+      "source": "s0023.png",
+      "captureBracket": [
+        0.796804,
+        0.822261
+      ],
+      "midpointError": 0.009532499999999944
+    },
+    {
+      "frame": 25,
+      "outputTime": 0.8333333333333334,
+      "source": "s0024.png",
+      "captureBracket": [
+        0.834281,
+        0.861496
+      ],
+      "midpointError": 0.014555166666666675
+    },
+    {
+      "frame": 26,
+      "outputTime": 0.8666666666666667,
+      "source": "s0025.png",
+      "captureBracket": [
+        0.867331,
+        0.891323
+      ],
+      "midpointError": 0.012660333333333273
+    },
+    {
+      "frame": 27,
+      "outputTime": 0.9,
+      "source": "s0026.png",
+      "captureBracket": [
+        0.897973,
+        0.92597
+      ],
+      "midpointError": 0.011971499999999913
+    },
+    {
+      "frame": 28,
+      "outputTime": 0.9333333333333333,
+      "source": "s0027.png",
+      "captureBracket": [
+        0.933351,
+        0.962974
+      ],
+      "midpointError": 0.014829166666666671
+    },
+    {
+      "frame": 29,
+      "outputTime": 0.9666666666666667,
+      "source": "s0028.png",
+      "captureBracket": [
+        0.969531,
+        0.994363
+      ],
+      "midpointError": 0.01528033333333334
+    },
+    {
+      "frame": 30,
+      "outputTime": 1.0,
+      "source": "s0029.png",
+      "captureBracket": [
+        1.000077,
+        1.024023
+      ],
+      "midpointError": 0.012049999999999894
+    },
+    {
+      "frame": 31,
+      "outputTime": 1.0333333333333334,
+      "source": "s0030.png",
+      "captureBracket": [
+        1.030269,
+        1.057007
+      ],
+      "midpointError": 0.010304666666666629
+    },
+    {
+      "frame": 32,
+      "outputTime": 1.0666666666666667,
+      "source": "s0031.png",
+      "captureBracket": [
+        1.063911,
+        1.088586
+      ],
+      "midpointError": 0.009581833333333512
+    },
+    {
+      "frame": 33,
+      "outputTime": 1.1,
+      "source": "s0032.png",
+      "captureBracket": [
+        1.095369,
+        1.12767
+      ],
+      "midpointError": 0.011519499999999905
+    },
+    {
+      "frame": 34,
+      "outputTime": 1.1333333333333333,
+      "source": "s0033.png",
+      "captureBracket": [
+        1.133463,
+        1.161133
+      ],
+      "midpointError": 0.013964666666666847
+    },
+    {
+      "frame": 35,
+      "outputTime": 1.1666666666666667,
+      "source": "s0034.png",
+      "captureBracket": [
+        1.169661,
+        1.200425
+      ],
+      "midpointError": 0.018376333333333328
+    },
+    {
+      "frame": 36,
+      "outputTime": 1.2,
+      "source": "s0034.png",
+      "captureBracket": [
+        1.169661,
+        1.200425
+      ],
+      "midpointError": 0.014956999999999887
+    },
+    {
+      "frame": 37,
+      "outputTime": 1.2333333333333334,
+      "source": "s0035.png",
+      "captureBracket": [
+        1.206083,
+        1.233519
+      ],
+      "midpointError": 0.01353233333333348
+    },
+    {
+      "frame": 38,
+      "outputTime": 1.2666666666666666,
+      "source": "s0036.png",
+      "captureBracket": [
+        1.239341,
+        1.264893
+      ],
+      "midpointError": 0.014549666666666461
+    },
+    {
+      "frame": 39,
+      "outputTime": 1.3,
+      "source": "s0038.png",
+      "captureBracket": [
+        1.30031,
+        1.330766
+      ],
+      "midpointError": 0.015538000000000052
+    },
+    {
+      "frame": 40,
+      "outputTime": 1.3333333333333333,
+      "source": "s0039.png",
+      "captureBracket": [
+        1.336571,
+        1.360093
+      ],
+      "midpointError": 0.014998666666666827
+    },
+    {
+      "frame": 41,
+      "outputTime": 1.3666666666666667,
+      "source": "s0040.png",
+      "captureBracket": [
+        1.367362,
+        1.399155
+      ],
+      "midpointError": 0.01659183333333325
+    },
+    {
+      "frame": 42,
+      "outputTime": 1.4,
+      "source": "s0040.png",
+      "captureBracket": [
+        1.367362,
+        1.399155
+      ],
+      "midpointError": 0.016741499999999965
+    },
+    {
+      "frame": 43,
+      "outputTime": 1.4333333333333333,
+      "source": "s0041.png",
+      "captureBracket": [
+        1.405876,
+        1.431569
+      ],
+      "midpointError": 0.014610833333333462
+    },
+    {
+      "frame": 44,
+      "outputTime": 1.4666666666666666,
+      "source": "s0042.png",
+      "captureBracket": [
+        1.438224,
+        1.464474
+      ],
+      "midpointError": 0.015317666666666563
+    },
+    {
+      "frame": 45,
+      "outputTime": 1.5,
+      "source": "s0044.png",
+      "captureBracket": [
+        1.502239,
+        1.52552
+      ],
+      "midpointError": 0.013879500000000045
+    },
+    {
+      "frame": 46,
+      "outputTime": 1.5333333333333334,
+      "source": "s0045.png",
+      "captureBracket": [
+        1.531534,
+        1.556406
+      ],
+      "midpointError": 0.010636666666666406
+    },
+    {
+      "frame": 47,
+      "outputTime": 1.5666666666666667,
+      "source": "s0046.png",
+      "captureBracket": [
+        1.562775,
+        1.589973
+      ],
+      "midpointError": 0.00970733333333329
+    },
+    {
+      "frame": 48,
+      "outputTime": 1.6,
+      "source": "s0047.png",
+      "captureBracket": [
+        1.596947,
+        1.623057
+      ],
+      "midpointError": 0.010001999999999844
+    },
+    {
+      "frame": 49,
+      "outputTime": 1.6333333333333333,
+      "source": "s0047.png",
+      "captureBracket": [
+        1.596947,
+        1.623057
+      ],
+      "midpointError": 0.02333133333333337
+    },
+    {
+      "frame": 50,
+      "outputTime": 1.6666666666666667,
+      "source": "s0048.png",
+      "captureBracket": [
+        1.65182,
+        1.678428
+      ],
+      "midpointError": 0.0015426666666666922
+    },
+    {
+      "frame": 51,
+      "outputTime": 1.7,
+      "source": "s0049.png",
+      "captureBracket": [
+        1.684493,
+        1.716622
+      ],
+      "midpointError": 0.0005574999999999886
+    },
+    {
+      "frame": 52,
+      "outputTime": 1.7333333333333334,
+      "source": "s0050.png",
+      "captureBracket": [
+        1.722939,
+        1.757806
+      ],
+      "midpointError": 0.007039166666666485
+    },
+    {
+      "frame": 53,
+      "outputTime": 1.7666666666666666,
+      "source": "s0051.png",
+      "captureBracket": [
+        1.764203,
+        1.791387
+      ],
+      "midpointError": 0.011128333333333407
+    },
+    {
+      "frame": 54,
+      "outputTime": 1.8,
+      "source": "s0052.png",
+      "captureBracket": [
+        1.797634,
+        1.821393
+      ],
+      "midpointError": 0.009513499999999953
+    },
+    {
+      "frame": 55,
+      "outputTime": 1.8333333333333333,
+      "source": "s0053.png",
+      "captureBracket": [
+        1.827468,
+        1.853794
+      ],
+      "midpointError": 0.007297666666666869
+    },
+    {
+      "frame": 56,
+      "outputTime": 1.8666666666666667,
+      "source": "s0054.png",
+      "captureBracket": [
+        1.860531,
+        1.88737
+      ],
+      "midpointError": 0.007283833333333156
+    },
+    {
+      "frame": 57,
+      "outputTime": 1.9,
+      "source": "s0055.png",
+      "captureBracket": [
+        1.900301,
+        1.9339
+      ],
+      "midpointError": 0.017100500000000185
+    },
+    {
+      "frame": 58,
+      "outputTime": 1.9333333333333333,
+      "source": "s0055.png",
+      "captureBracket": [
+        1.900301,
+        1.9339
+      ],
+      "midpointError": 0.016232833333333252
+    },
+    {
+      "frame": 59,
+      "outputTime": 1.9666666666666666,
+      "source": "s0056.png",
+      "captureBracket": [
+        1.939842,
+        1.964714
+      ],
+      "midpointError": 0.014388666666666383
+    },
+    {
+      "frame": 60,
+      "outputTime": 2.0,
+      "source": "s0057.png",
+      "captureBracket": [
+        1.971068,
+        2.004416
+      ],
+      "midpointError": 0.012258000000000102
+    },
+    {
+      "frame": 61,
+      "outputTime": 2.033333333333333,
+      "source": "s0058.png",
+      "captureBracket": [
+        2.011368,
+        2.036138
+      ],
+      "midpointError": 0.00958033333333308
+    },
+    {
+      "frame": 62,
+      "outputTime": 2.066666666666667,
+      "source": "s0059.png",
+      "captureBracket": [
+        2.043665,
+        2.071012
+      ],
+      "midpointError": 0.009328166666666693
+    },
+    {
+      "frame": 63,
+      "outputTime": 2.1,
+      "source": "s0060.png",
+      "captureBracket": [
+        2.076882,
+        2.101784
+      ],
+      "midpointError": 0.010667000000000204
+    },
+    {
+      "frame": 64,
+      "outputTime": 2.1333333333333333,
+      "source": "s0061.png",
+      "captureBracket": [
+        2.108459,
+        2.134272
+      ],
+      "midpointError": 0.011967833333333289
+    },
+    {
+      "frame": 65,
+      "outputTime": 2.1666666666666665,
+      "source": "s0062.png",
+      "captureBracket": [
+        2.140729,
+        2.165792
+      ],
+      "midpointError": 0.013406166666666497
+    },
+    {
+      "frame": 66,
+      "outputTime": 2.2,
+      "source": "s0063.png",
+      "captureBracket": [
+        2.171479,
+        2.204409
+      ],
+      "midpointError": 0.012056000000000289
+    },
+    {
+      "frame": 67,
+      "outputTime": 2.2333333333333334,
+      "source": "s0064.png",
+      "captureBracket": [
+        2.211855,
+        2.241395
+      ],
+      "midpointError": 0.006708333333333538
+    },
+    {
+      "frame": 68,
+      "outputTime": 2.2666666666666666,
+      "source": "s0065.png",
+      "captureBracket": [
+        2.247919,
+        2.273235
+      ],
+      "midpointError": 0.006089666666666549
+    },
+    {
+      "frame": 69,
+      "outputTime": 2.3,
+      "source": "s0066.png",
+      "captureBracket": [
+        2.278926,
+        2.305244
+      ],
+      "midpointError": 0.007914999999999672
+    },
+    {
+      "frame": 70,
+      "outputTime": 2.3333333333333335,
+      "source": "s0067.png",
+      "captureBracket": [
+        2.311129,
+        2.33961
+      ],
+      "midpointError": 0.007963833333333614
+    },
+    {
+      "frame": 71,
+      "outputTime": 2.3666666666666667,
+      "source": "s0068.png",
+      "captureBracket": [
+        2.347795,
+        2.372857
+      ],
+      "midpointError": 0.00634066666666655
+    },
+    {
+      "frame": 72,
+      "outputTime": 2.4,
+      "source": "s0069.png",
+      "captureBracket": [
+        2.380155,
+        2.404479
+      ],
+      "midpointError": 0.007683000000000106
+    },
+    {
+      "frame": 73,
+      "outputTime": 2.433333333333333,
+      "source": "s0070.png",
+      "captureBracket": [
+        2.412534,
+        2.439841
+      ],
+      "midpointError": 0.007145833333332963
+    },
+    {
+      "frame": 74,
+      "outputTime": 2.466666666666667,
+      "source": "s0071.png",
+      "captureBracket": [
+        2.449586,
+        2.478828
+      ],
+      "midpointError": 0.002459666666666749
+    },
+    {
+      "frame": 75,
+      "outputTime": 2.5,
+      "source": "s0072.png",
+      "captureBracket": [
+        2.484448,
+        2.51798
+      ],
+      "midpointError": 0.0012140000000000484
+    },
+    {
+      "frame": 76,
+      "outputTime": 2.533333333333333,
+      "source": "s0073.png",
+      "captureBracket": [
+        2.523885,
+        2.549693
+      ],
+      "midpointError": 0.0034556666666665237
+    },
+    {
+      "frame": 77,
+      "outputTime": 2.566666666666667,
+      "source": "s0074.png",
+      "captureBracket": [
+        2.556298,
+        2.580185
+      ],
+      "midpointError": 0.001574833333333192
+    },
+    {
+      "frame": 78,
+      "outputTime": 2.6,
+      "source": "s0075.png",
+      "captureBracket": [
+        2.586861,
+        2.614596
+      ],
+      "midpointError": 0.0007284999999996877
+    },
+    {
+      "frame": 79,
+      "outputTime": 2.6333333333333333,
+      "source": "s0076.png",
+      "captureBracket": [
+        2.620375,
+        2.665197
+      ],
+      "midpointError": 0.009452666666666776
+    },
+    {
+      "frame": 80,
+      "outputTime": 2.6666666666666665,
+      "source": "s0077.png",
+      "captureBracket": [
+        2.672443,
+        2.697377
+      ],
+      "midpointError": 0.01824333333333339
+    },
+    {
+      "frame": 81,
+      "outputTime": 2.7,
+      "source": "s0077.png",
+      "captureBracket": [
+        2.672443,
+        2.697377
+      ],
+      "midpointError": 0.01509000000000027
+    },
+    {
+      "frame": 82,
+      "outputTime": 2.7333333333333334,
+      "source": "s0079.png",
+      "captureBracket": [
+        2.733892,
+        2.757644
+      ],
+      "midpointError": 0.012434666666666594
+    },
+    {
+      "frame": 83,
+      "outputTime": 2.7666666666666666,
+      "source": "s0080.png",
+      "captureBracket": [
+        2.764456,
+        2.79719
+      ],
+      "midpointError": 0.014156333333333215
+    },
+    {
+      "frame": 84,
+      "outputTime": 2.8,
+      "source": "s0081.png",
+      "captureBracket": [
+        2.802843,
+        2.828735
+      ],
+      "midpointError": 0.015789000000000275
+    },
+    {
+      "frame": 85,
+      "outputTime": 2.8333333333333335,
+      "source": "s0081.png",
+      "captureBracket": [
+        2.802843,
+        2.828735
+      ],
+      "midpointError": 0.017544333333333384
+    },
+    {
+      "frame": 86,
+      "outputTime": 2.8666666666666667,
+      "source": "s0082.png",
+      "captureBracket": [
+        2.837012,
+        2.871704
+      ],
+      "midpointError": 0.012308666666666745
+    },
+    {
+      "frame": 87,
+      "outputTime": 2.9,
+      "source": "s0083.png",
+      "captureBracket": [
+        2.880239,
+        2.911929
+      ],
+      "midpointError": 0.0039159999999998085
+    },
+    {
+      "frame": 88,
+      "outputTime": 2.933333333333333,
+      "source": "s0084.png",
+      "captureBracket": [
+        2.917486,
+        2.941295
+      ],
+      "midpointError": 0.003942833333332896
+    },
+    {
+      "frame": 89,
+      "outputTime": 2.966666666666667,
+      "source": "s0085.png",
+      "captureBracket": [
+        2.94703,
+        2.977903
+      ],
+      "midpointError": 0.004200166666667116
+    },
+    {
+      "frame": 90,
+      "outputTime": 3.0,
+      "source": "s0086.png",
+      "captureBracket": [
+        2.983879,
+        3.007414
+      ],
+      "midpointError": 0.004353500000000121
+    },
+    {
+      "frame": 91,
+      "outputTime": 3.033333333333333,
+      "source": "s0087.png",
+      "captureBracket": [
+        3.013141,
+        3.035944
+      ],
+      "midpointError": 0.008790833333333303
+    },
+    {
+      "frame": 92,
+      "outputTime": 3.066666666666667,
+      "source": "s0088.png",
+      "captureBracket": [
+        3.041768,
+        3.064766
+      ],
+      "midpointError": 0.01339966666666692
+    },
+    {
+      "frame": 93,
+      "outputTime": 3.1,
+      "source": "s0089.png",
+      "captureBracket": [
+        3.070863,
+        3.103175
+      ],
+      "midpointError": 0.012981000000000353
+    },
+    {
+      "frame": 94,
+      "outputTime": 3.1333333333333333,
+      "source": "s0090.png",
+      "captureBracket": [
+        3.110306,
+        3.142255
+      ],
+      "midpointError": 0.007052833333333286
+    },
+    {
+      "frame": 95,
+      "outputTime": 3.1666666666666665,
+      "source": "s0091.png",
+      "captureBracket": [
+        3.148243,
+        3.17337
+      ],
+      "midpointError": 0.005860166666666888
+    },
+    {
+      "frame": 96,
+      "outputTime": 3.2,
+      "source": "s0092.png",
+      "captureBracket": [
+        3.179825,
+        3.203718
+      ],
+      "midpointError": 0.008228500000000416
+    },
+    {
+      "frame": 97,
+      "outputTime": 3.2333333333333334,
+      "source": "s0093.png",
+      "captureBracket": [
+        3.209097,
+        3.232806
+      ],
+      "midpointError": 0.012381833333333425
+    },
+    {
+      "frame": 98,
+      "outputTime": 3.2666666666666666,
+      "source": "s0094.png",
+      "captureBracket": [
+        3.238982,
+        3.274089
+      ],
+      "midpointError": 0.01013116666666658
+    },
+    {
+      "frame": 99,
+      "outputTime": 3.3,
+      "source": "s0095.png",
+      "captureBracket": [
+        3.279737,
+        3.303984
+      ],
+      "midpointError": 0.008139499999999966
+    },
+    {
+      "frame": 100,
+      "outputTime": 3.3333333333333335,
+      "source": "s0096.png",
+      "captureBracket": [
+        3.310982,
+        3.340596
+      ],
+      "midpointError": 0.007544333333333153
+    },
+    {
+      "frame": 101,
+      "outputTime": 3.3666666666666667,
+      "source": "s0097.png",
+      "captureBracket": [
+        3.347155,
+        3.372071
+      ],
+      "midpointError": 0.007053666666666736
+    },
+    {
+      "frame": 102,
+      "outputTime": 3.4,
+      "source": "s0098.png",
+      "captureBracket": [
+        3.379357,
+        3.406943
+      ],
+      "midpointError": 0.006849999999999579
+    },
+    {
+      "frame": 103,
+      "outputTime": 3.433333333333333,
+      "source": "s0099.png",
+      "captureBracket": [
+        3.414587,
+        3.446231
+      ],
+      "midpointError": 0.0029243333333330845
+    },
+    {
+      "frame": 104,
+      "outputTime": 3.466666666666667,
+      "source": "s0100.png",
+      "captureBracket": [
+        3.452242,
+        3.476651
+      ],
+      "midpointError": 0.0022201666666665787
+    },
+    {
+      "frame": 105,
+      "outputTime": 3.5,
+      "source": "s0101.png",
+      "captureBracket": [
+        3.482605,
+        3.506257
+      ],
+      "midpointError": 0.005568999999999935
+    },
+    {
+      "frame": 106,
+      "outputTime": 3.533333333333333,
+      "source": "s0102.png",
+      "captureBracket": [
+        3.512995,
+        3.538254
+      ],
+      "midpointError": 0.007708833333333054
+    },
+    {
+      "frame": 107,
+      "outputTime": 3.566666666666667,
+      "source": "s0103.png",
+      "captureBracket": [
+        3.545121,
+        3.573917
+      ],
+      "midpointError": 0.007147666666666996
+    },
+    {
+      "frame": 108,
+      "outputTime": 3.6,
+      "source": "s0104.png",
+      "captureBracket": [
+        3.579517,
+        3.603644
+      ],
+      "midpointError": 0.008419500000000024
+    },
+    {
+      "frame": 109,
+      "outputTime": 3.6333333333333333,
+      "source": "s0105.png",
+      "captureBracket": [
+        3.60958,
+        3.635389
+      ],
+      "midpointError": 0.01084883333333364
+    },
+    {
+      "frame": 110,
+      "outputTime": 3.6666666666666665,
+      "source": "s0106.png",
+      "captureBracket": [
+        3.640874,
+        3.666385
+      ],
+      "midpointError": 0.013037166666666433
+    },
+    {
+      "frame": 111,
+      "outputTime": 3.7,
+      "source": "s0107.png",
+      "captureBracket": [
+        3.673042,
+        3.696016
+      ],
+      "midpointError": 0.01547099999999979
+    },
+    {
+      "frame": 112,
+      "outputTime": 3.7333333333333334,
+      "source": "s0109.png",
+      "captureBracket": [
+        3.735666,
+        3.760641
+      ],
+      "midpointError": 0.014820166666666523
+    },
+    {
+      "frame": 113,
+      "outputTime": 3.7666666666666666,
+      "source": "s0110.png",
+      "captureBracket": [
+        3.767747,
+        3.7963
+      ],
+      "midpointError": 0.015356833333333597
+    },
+    {
+      "frame": 114,
+      "outputTime": 3.8,
+      "source": "s0111.png",
+      "captureBracket": [
+        3.802165,
+        3.832199
+      ],
+      "midpointError": 0.01718200000000003
+    },
+    {
+      "frame": 115,
+      "outputTime": 3.8333333333333335,
+      "source": "s0111.png",
+      "captureBracket": [
+        3.802165,
+        3.832199
+      ],
+      "midpointError": 0.01615133333333363
+    },
+    {
+      "frame": 116,
+      "outputTime": 3.8666666666666667,
+      "source": "s0112.png",
+      "captureBracket": [
+        3.837534,
+        3.873528
+      ],
+      "midpointError": 0.011135666666666655
+    },
+    {
+      "frame": 117,
+      "outputTime": 3.9,
+      "source": "s0113.png",
+      "captureBracket": [
+        3.881495,
+        3.908126
+      ],
+      "midpointError": 0.005189499999999736
+    },
+    {
+      "frame": 118,
+      "outputTime": 3.933333333333333,
+      "source": "s0114.png",
+      "captureBracket": [
+        3.915472,
+        3.938712
+      ],
+      "midpointError": 0.006241333333333099
+    },
+    {
+      "frame": 119,
+      "outputTime": 3.966666666666667,
+      "source": "s0115.png",
+      "captureBracket": [
+        3.944328,
+        3.969028
+      ],
+      "midpointError": 0.009988666666666646
+    },
+    {
+      "frame": 120,
+      "outputTime": 4.0,
+      "source": "s0116.png",
+      "captureBracket": [
+        3.976396,
+        4.005426
+      ],
+      "midpointError": 0.009089000000000347
+    },
+    {
+      "frame": 121,
+      "outputTime": 4.033333333333333,
+      "source": "s0117.png",
+      "captureBracket": [
+        4.012035,
+        4.036624
+      ],
+      "midpointError": 0.009003833333332878
+    },
+    {
+      "frame": 122,
+      "outputTime": 4.066666666666666,
+      "source": "s0118.png",
+      "captureBracket": [
+        4.043629,
+        4.067446
+      ],
+      "midpointError": 0.011129166666666634
+    },
+    {
+      "frame": 123,
+      "outputTime": 4.1,
+      "source": "s0120.png",
+      "captureBracket": [
+        4.10204,
+        4.126214
+      ],
+      "midpointError": 0.014127000000000223
+    },
+    {
+      "frame": 124,
+      "outputTime": 4.133333333333334,
+      "source": "s0121.png",
+      "captureBracket": [
+        4.132705,
+        4.157281
+      ],
+      "midpointError": 0.011659666666665736
+    },
+    {
+      "frame": 125,
+      "outputTime": 4.166666666666667,
+      "source": "s0122.png",
+      "captureBracket": [
+        4.163801,
+        4.189917
+      ],
+      "midpointError": 0.010192333333333359
+    },
+    {
+      "frame": 126,
+      "outputTime": 4.2,
+      "source": "s0123.png",
+      "captureBracket": [
+        4.197418,
+        4.22749
+      ],
+      "midpointError": 0.012453999999999965
+    },
+    {
+      "frame": 127,
+      "outputTime": 4.233333333333333,
+      "source": "s0124.png",
+      "captureBracket": [
+        4.23484,
+        4.259972
+      ],
+      "midpointError": 0.0140726666666664
+    },
+    {
+      "frame": 128,
+      "outputTime": 4.266666666666667,
+      "source": "s0125.png",
+      "captureBracket": [
+        4.265411,
+        4.290796
+      ],
+      "midpointError": 0.011436833333333674
+    },
+    {
+      "frame": 129,
+      "outputTime": 4.3,
+      "source": "s0126.png",
+      "captureBracket": [
+        4.296803,
+        4.322075
+      ],
+      "midpointError": 0.009438999999999531
+    },
+    {
+      "frame": 130,
+      "outputTime": 4.333333333333333,
+      "source": "s0127.png",
+      "captureBracket": [
+        4.328193,
+        4.352161
+      ],
+      "midpointError": 0.006843666666666692
+    },
+    {
+      "frame": 131,
+      "outputTime": 4.366666666666666,
+      "source": "s0128.png",
+      "captureBracket": [
+        4.358255,
+        4.386216
+      ],
+      "midpointError": 0.005568833333334133
+    },
+    {
+      "frame": 132,
+      "outputTime": 4.4,
+      "source": "s0129.png",
+      "captureBracket": [
+        4.392423,
+        4.424901
+      ],
+      "midpointError": 0.008661999999999281
+    },
+    {
+      "frame": 133,
+      "outputTime": 4.433333333333334,
+      "source": "s0130.png",
+      "captureBracket": [
+        4.432178,
+        4.462588
+      ],
+      "midpointError": 0.014049666666666738
+    },
+    {
+      "frame": 134,
+      "outputTime": 4.466666666666667,
+      "source": "s0131.png",
+      "captureBracket": [
+        4.468309,
+        4.493056
+      ],
+      "midpointError": 0.01401583333333356
+    },
+    {
+      "frame": 135,
+      "outputTime": 4.5,
+      "source": "s0132.png",
+      "captureBracket": [
+        4.499312,
+        4.524815
+      ],
+      "midpointError": 0.012063500000000005
+    },
+    {
+      "frame": 136,
+      "outputTime": 4.533333333333333,
+      "source": "s0133.png",
+      "captureBracket": [
+        4.530325,
+        4.555243
+      ],
+      "midpointError": 0.00945066666666694
+    },
+    {
+      "frame": 137,
+      "outputTime": 4.566666666666666,
+      "source": "s0134.png",
+      "captureBracket": [
+        4.561039,
+        4.588104
+      ],
+      "midpointError": 0.007904833333333805
+    },
+    {
+      "frame": 138,
+      "outputTime": 4.6,
+      "source": "s0135.png",
+      "captureBracket": [
+        4.594975,
+        4.617914
+      ],
+      "midpointError": 0.00644450000000063
+    },
+    {
+      "frame": 139,
+      "outputTime": 4.633333333333334,
+      "source": "s0136.png",
+      "captureBracket": [
+        4.624292,
+        4.65299
+      ],
+      "midpointError": 0.005307666666666044
+    },
+    {
+      "frame": 140,
+      "outputTime": 4.666666666666667,
+      "source": "s0137.png",
+      "captureBracket": [
+        4.664314,
+        4.690983
+      ],
+      "midpointError": 0.010981833333333135
+    },
+    {
+      "frame": 141,
+      "outputTime": 4.7,
+      "source": "s0138.png",
+      "captureBracket": [
+        4.697086,
+        4.719981
+      ],
+      "midpointError": 0.008533499999999528
+    },
+    {
+      "frame": 142,
+      "outputTime": 4.733333333333333,
+      "source": "s0139.png",
+      "captureBracket": [
+        4.72606,
+        4.750887
+      ],
+      "midpointError": 0.005140166666666168
+    },
+    {
+      "frame": 143,
+      "outputTime": 4.766666666666667,
+      "source": "s0140.png",
+      "captureBracket": [
+        4.756756,
+        4.804832
+      ],
+      "midpointError": 0.014127333333333603
+    },
+    {
+      "frame": 144,
+      "outputTime": 4.8,
+      "source": "s0140.png",
+      "captureBracket": [
+        4.756756,
+        4.804832
+      ],
+      "midpointError": 0.019205999999999612
+    },
+    {
+      "frame": 145,
+      "outputTime": 4.833333333333333,
+      "source": "s0141.png",
+      "captureBracket": [
+        4.810237,
+        4.836842
+      ],
+      "midpointError": 0.009793833333333168
+    },
+    {
+      "frame": 146,
+      "outputTime": 4.866666666666666,
+      "source": "s0142.png",
+      "captureBracket": [
+        4.84328,
+        4.871877
+      ],
+      "midpointError": 0.009088166666666453
+    },
+    {
+      "frame": 147,
+      "outputTime": 4.9,
+      "source": "s0143.png",
+      "captureBracket": [
+        4.881067,
+        4.909793
+      ],
+      "midpointError": 0.004570000000001073
+    },
+    {
+      "frame": 148,
+      "outputTime": 4.933333333333334,
+      "source": "s0144.png",
+      "captureBracket": [
+        4.91558,
+        4.93927
+      ],
+      "midpointError": 0.00590833333333407
+    },
+    {
+      "frame": 149,
+      "outputTime": 4.966666666666667,
+      "source": "s0145.png",
+      "captureBracket": [
+        4.944814,
+        4.969243
+      ],
+      "midpointError": 0.009638166666666947
+    },
+    {
+      "frame": 150,
+      "outputTime": 5.0,
+      "source": "s0146.png",
+      "captureBracket": [
+        4.976473,
+        5.000355
+      ],
+      "midpointError": 0.01158599999999943
+    },
+    {
+      "frame": 151,
+      "outputTime": 5.033333333333333,
+      "source": "s0147.png",
+      "captureBracket": [
+        5.006363,
+        5.029724
+      ],
+      "midpointError": 0.015289833333333114
+    },
+    {
+      "frame": 152,
+      "outputTime": 5.066666666666666,
+      "source": "s0148.png",
+      "captureBracket": [
+        5.036704,
+        5.064609
+      ],
+      "midpointError": 0.01601016666666588
+    },
+    {
+      "frame": 153,
+      "outputTime": 5.1,
+      "source": "s0149.png",
+      "captureBracket": [
+        5.070387,
+        5.097029
+      ],
+      "midpointError": 0.016291999999999973
+    },
+    {
+      "frame": 154,
+      "outputTime": 5.133333333333334,
+      "source": "s0150.png",
+      "captureBracket": [
+        5.104495,
+        5.137359
+      ],
+      "midpointError": 0.012406333333333741
+    },
+    {
+      "frame": 155,
+      "outputTime": 5.166666666666667,
+      "source": "s0151.png",
+      "captureBracket": [
+        5.144172,
+        5.169374
+      ],
+      "midpointError": 0.00989366666666669
+    },
+    {
+      "frame": 156,
+      "outputTime": 5.2,
+      "source": "s0152.png",
+      "captureBracket": [
+        5.175655,
+        5.199336
+      ],
+      "midpointError": 0.012504500000000363
+    },
+    {
+      "frame": 157,
+      "outputTime": 5.233333333333333,
+      "source": "s0153.png",
+      "captureBracket": [
+        5.204937,
+        5.232534
+      ],
+      "midpointError": 0.014597833333333199
+    },
+    {
+      "frame": 158,
+      "outputTime": 5.266666666666667,
+      "source": "s0154.png",
+      "captureBracket": [
+        5.240309,
+        5.266892
+      ],
+      "midpointError": 0.01306616666666649
+    },
+    {
+      "frame": 159,
+      "outputTime": 5.3,
+      "source": "s0155.png",
+      "captureBracket": [
+        5.272918,
+        5.298312
+      ],
+      "midpointError": 0.01438499999999987
+    },
+    {
+      "frame": 160,
+      "outputTime": 5.333333333333333,
+      "source": "s0156.png",
+      "captureBracket": [
+        5.306494,
+        5.335493
+      ],
+      "midpointError": 0.012339833333332884
+    },
+    {
+      "frame": 161,
+      "outputTime": 5.366666666666666,
+      "source": "s0157.png",
+      "captureBracket": [
+        5.342616,
+        5.373964
+      ],
+      "midpointError": 0.008376666666666033
+    },
+    {
+      "frame": 162,
+      "outputTime": 5.4,
+      "source": "s0158.png",
+      "captureBracket": [
+        5.382499,
+        5.409255
+      ],
+      "midpointError": 0.004122999999999877
+    },
+    {
+      "frame": 163,
+      "outputTime": 5.433333333333334,
+      "source": "s0159.png",
+      "captureBracket": [
+        5.41571,
+        5.442049
+      ],
+      "midpointError": 0.004453833333333712
+    },
+    {
+      "frame": 164,
+      "outputTime": 5.466666666666667,
+      "source": "s0160.png",
+      "captureBracket": [
+        5.448256,
+        5.476691
+      ],
+      "midpointError": 0.004193166666667025
+    },
+    {
+      "frame": 165,
+      "outputTime": 5.5,
+      "source": "s0161.png",
+      "captureBracket": [
+        5.483265,
+        5.50909
+      ],
+      "midpointError": 0.003822500000000062
+    },
+    {
+      "frame": 166,
+      "outputTime": 5.533333333333333,
+      "source": "s0162.png",
+      "captureBracket": [
+        5.515078,
+        5.542008
+      ],
+      "midpointError": 0.00479033333333323
+    },
+    {
+      "frame": 167,
+      "outputTime": 5.566666666666666,
+      "source": "s0163.png",
+      "captureBracket": [
+        5.548819,
+        5.5754
+      ],
+      "midpointError": 0.00455716666666639
+    },
+    {
+      "frame": 168,
+      "outputTime": 5.6,
+      "source": "s0164.png",
+      "captureBracket": [
+        5.581252,
+        5.605406
+      ],
+      "midpointError": 0.006670999999998983
+    },
+    {
+      "frame": 169,
+      "outputTime": 5.633333333333334,
+      "source": "s0165.png",
+      "captureBracket": [
+        5.611785,
+        5.637696
+      ],
+      "midpointError": 0.008592833333334049
+    },
+    {
+      "frame": 170,
+      "outputTime": 5.666666666666667,
+      "source": "s0166.png",
+      "captureBracket": [
+        5.643743,
+        5.666855
+      ],
+      "midpointError": 0.011367666666667553
+    },
+    {
+      "frame": 171,
+      "outputTime": 5.7,
+      "source": "s0167.png",
+      "captureBracket": [
+        5.672758,
+        5.696163
+      ],
+      "midpointError": 0.01553950000000004
+    },
+    {
+      "frame": 172,
+      "outputTime": 5.733333333333333,
+      "source": "s0169.png",
+      "captureBracket": [
+        5.73651,
+        5.761447
+      ],
+      "midpointError": 0.015645166666666377
+    },
+    {
+      "frame": 173,
+      "outputTime": 5.766666666666667,
+      "source": "s0169.png",
+      "captureBracket": [
+        5.73651,
+        5.761447
+      ],
+      "midpointError": 0.017688166666666838
+    },
+    {
+      "frame": 174,
+      "outputTime": 5.8,
+      "source": "s0170.png",
+      "captureBracket": [
+        5.770072,
+        5.801348
+      ],
+      "midpointError": 0.014289999999999914
+    },
+    {
+      "frame": 175,
+      "outputTime": 5.833333333333333,
+      "source": "s0171.png",
+      "captureBracket": [
+        5.807149,
+        5.830271
+      ],
+      "midpointError": 0.014623333333333655
+    },
+    {
+      "frame": 176,
+      "outputTime": 5.866666666666666,
+      "source": "s0173.png",
+      "captureBracket": [
+        5.86669,
+        5.890422
+      ],
+      "midpointError": 0.011889333333333418
+    },
+    {
+      "frame": 177,
+      "outputTime": 5.9,
+      "source": "s0174.png",
+      "captureBracket": [
+        5.89622,
+        5.924397
+      ],
+      "midpointError": 0.010308499999998944
+    },
+    {
+      "frame": 178,
+      "outputTime": 5.933333333333334,
+      "source": "s0175.png",
+      "captureBracket": [
+        5.930248,
+        5.955743
+      ],
+      "midpointError": 0.00966216666666675
+    },
+    {
+      "frame": 179,
+      "outputTime": 5.966666666666667,
+      "source": "s0176.png",
+      "captureBracket": [
+        5.962898,
+        5.989711
+      ],
+      "midpointError": 0.00963783333333268
+    },
+    {
+      "frame": 180,
+      "outputTime": 6.0,
+      "source": "s0177.png",
+      "captureBracket": [
+        5.996626,
+        6.022631
+      ],
+      "midpointError": 0.009628499999999818
+    },
+    {
+      "frame": 181,
+      "outputTime": 6.033333333333333,
+      "source": "s0178.png",
+      "captureBracket": [
+        6.028646,
+        6.056101
+      ],
+      "midpointError": 0.009040166666666849
+    },
+    {
+      "frame": 182,
+      "outputTime": 6.066666666666666,
+      "source": "s0179.png",
+      "captureBracket": [
+        6.061903,
+        6.086563
+      ],
+      "midpointError": 0.0075663333333331195
+    },
+    {
+      "frame": 183,
+      "outputTime": 6.1,
+      "source": "s0180.png",
+      "captureBracket": [
+        6.092632,
+        6.120622
+      ],
+      "midpointError": 0.0066269999999999385
+    },
+    {
+      "frame": 184,
+      "outputTime": 6.133333333333334,
+      "source": "s0181.png",
+      "captureBracket": [
+        6.127638,
+        6.150891
+      ],
+      "midpointError": 0.00593116666666571
+    },
+    {
+      "frame": 185,
+      "outputTime": 6.166666666666667,
+      "source": "s0182.png",
+      "captureBracket": [
+        6.159413,
+        6.188611
+      ],
+      "midpointError": 0.007345333333332427
+    },
+    {
+      "frame": 186,
+      "outputTime": 6.2,
+      "source": "s0183.png",
+      "captureBracket": [
+        6.194765,
+        6.222827
+      ],
+      "midpointError": 0.00879599999999936
+    },
+    {
+      "frame": 187,
+      "outputTime": 6.233333333333333,
+      "source": "s0184.png",
+      "captureBracket": [
+        6.231041,
+        6.258229
+      ],
+      "midpointError": 0.01130166666666721
+    },
+    {
+      "frame": 188,
+      "outputTime": 6.266666666666667,
+      "source": "s0185.png",
+      "captureBracket": [
+        6.263779,
+        6.28802
+      ],
+      "midpointError": 0.0092328333333338
+    },
+    {
+      "frame": 189,
+      "outputTime": 6.3,
+      "source": "s0186.png",
+      "captureBracket": [
+        6.293961,
+        6.322238
+      ],
+      "midpointError": 0.008099500000000148
+    },
+    {
+      "frame": 190,
+      "outputTime": 6.333333333333333,
+      "source": "s0187.png",
+      "captureBracket": [
+        6.328631,
+        6.3529
+      ],
+      "midpointError": 0.007432166666666795
+    },
+    {
+      "frame": 191,
+      "outputTime": 6.366666666666666,
+      "source": "s0188.png",
+      "captureBracket": [
+        6.358986,
+        6.387361
+      ],
+      "midpointError": 0.006506833333333795
+    },
+    {
+      "frame": 192,
+      "outputTime": 6.4,
+      "source": "s0189.png",
+      "captureBracket": [
+        6.394174,
+        6.428049
+      ],
+      "midpointError": 0.011111499999999275
+    },
+    {
+      "frame": 193,
+      "outputTime": 6.433333333333334,
+      "source": "s0190.png",
+      "captureBracket": [
+        6.435084,
+        6.464036
+      ],
+      "midpointError": 0.01622666666666639
+    },
+    {
+      "frame": 194,
+      "outputTime": 6.466666666666667,
+      "source": "s0191.png",
+      "captureBracket": [
+        6.469799,
+        6.493967
+      ],
+      "midpointError": 0.015216333333333054
+    },
+    {
+      "frame": 195,
+      "outputTime": 6.5,
+      "source": "s0192.png",
+      "captureBracket": [
+        6.501623,
+        6.525413
+      ],
+      "midpointError": 0.013518000000000363
+    },
+    {
+      "frame": 196,
+      "outputTime": 6.533333333333333,
+      "source": "s0193.png",
+      "captureBracket": [
+        6.531164,
+        6.557799
+      ],
+      "midpointError": 0.011148166666666626
+    },
+    {
+      "frame": 197,
+      "outputTime": 6.566666666666666,
+      "source": "s0194.png",
+      "captureBracket": [
+        6.564672,
+        6.58813
+      ],
+      "midpointError": 0.00973433333333329
+    },
+    {
+      "frame": 198,
+      "outputTime": 6.6,
+      "source": "s0195.png",
+      "captureBracket": [
+        6.594453,
+        6.617951
+      ],
+      "midpointError": 0.006202000000000041
+    },
+    {
+      "frame": 199,
+      "outputTime": 6.633333333333334,
+      "source": "s0196.png",
+      "captureBracket": [
+        6.624265,
+        6.651271
+      ],
+      "midpointError": 0.004434666666666587
+    },
+    {
+      "frame": 200,
+      "outputTime": 6.666666666666667,
+      "source": "s0197.png",
+      "captureBracket": [
+        6.662732,
+        6.690942
+      ],
+      "midpointError": 0.010170333333332948
+    },
+    {
+      "frame": 201,
+      "outputTime": 6.7,
+      "source": "s0198.png",
+      "captureBracket": [
+        6.698512,
+        6.698512
+      ],
+      "midpointError": 0.0014880000000001559
+    },
+    {
+      "frame": 202,
+      "outputTime": 6.733333333333333,
+      "source": "s0200.png",
+      "captureBracket": [
+        6.722214,
+        6.753909
+      ],
+      "midpointError": 0.0047281666666671995
+    },
+    {
+      "frame": 203,
+      "outputTime": 6.766666666666667,
+      "source": "s0201.png",
+      "captureBracket": [
+        6.759698,
+        6.783114
+      ],
+      "midpointError": 0.004739333333334095
+    },
+    {
+      "frame": 204,
+      "outputTime": 6.8,
+      "source": "s0202.png",
+      "captureBracket": [
+        6.788697,
+        6.815472
+      ],
+      "midpointError": 0.0020844999999996006
+    },
+    {
+      "frame": 205,
+      "outputTime": 6.833333333333333,
+      "source": "s0203.png",
+      "captureBracket": [
+        6.822597,
+        6.848756
+      ],
+      "midpointError": 0.002343166666666896
+    },
+    {
+      "frame": 206,
+      "outputTime": 6.866666666666666,
+      "source": "s0204.png",
+      "captureBracket": [
+        6.855407,
+        6.880967
+      ],
+      "midpointError": 0.0015203333333335678
+    },
+    {
+      "frame": 207,
+      "outputTime": 6.9,
+      "source": "s0205.png",
+      "captureBracket": [
+        6.886594,
+        6.909971
+      ],
+      "midpointError": 0.0017175000000007046
+    },
+    {
+      "frame": 208,
+      "outputTime": 6.933333333333334,
+      "source": "s0206.png",
+      "captureBracket": [
+        6.917302,
+        6.947424
+      ],
+      "midpointError": 0.0009703333333330733
+    },
+    {
+      "frame": 209,
+      "outputTime": 6.966666666666667,
+      "source": "s0207.png",
+      "captureBracket": [
+        6.953742,
+        6.991282
+      ],
+      "midpointError": 0.005845333333333258
+    },
+    {
+      "frame": 210,
+      "outputTime": 7.0,
+      "source": "s0208.png",
+      "captureBracket": [
+        6.997163,
+        7.022478
+      ],
+      "midpointError": 0.00982050000000001
+    },
+    {
+      "frame": 211,
+      "outputTime": 7.033333333333333,
+      "source": "s0209.png",
+      "captureBracket": [
+        7.028296,
+        7.052733
+      ],
+      "midpointError": 0.007181166666667238
+    },
+    {
+      "frame": 212,
+      "outputTime": 7.066666666666666,
+      "source": "s0210.png",
+      "captureBracket": [
+        7.058558,
+        7.085724
+      ],
+      "midpointError": 0.005474333333333803
+    },
+    {
+      "frame": 213,
+      "outputTime": 7.1,
+      "source": "s0211.png",
+      "captureBracket": [
+        7.091397,
+        7.11778
+      ],
+      "midpointError": 0.0045885000000005505
+    },
+    {
+      "frame": 214,
+      "outputTime": 7.133333333333334,
+      "source": "s0212.png",
+      "captureBracket": [
+        7.124893,
+        7.151724
+      ],
+      "midpointError": 0.0049751666666661976
+    },
+    {
+      "frame": 215,
+      "outputTime": 7.166666666666667,
+      "source": "s0213.png",
+      "captureBracket": [
+        7.164884,
+        7.193932
+      ],
+      "midpointError": 0.012741333333333493
+    },
+    {
+      "frame": 216,
+      "outputTime": 7.2,
+      "source": "s0214.png",
+      "captureBracket": [
+        7.200671,
+        7.226113
+      ],
+      "midpointError": 0.013391999999999626
+    },
+    {
+      "frame": 217,
+      "outputTime": 7.233333333333333,
+      "source": "s0215.png",
+      "captureBracket": [
+        7.232723,
+        7.25872
+      ],
+      "midpointError": 0.012388166666666756
+    },
+    {
+      "frame": 218,
+      "outputTime": 7.266666666666667,
+      "source": "s0216.png",
+      "captureBracket": [
+        7.264373,
+        7.288652
+      ],
+      "midpointError": 0.009845833333333331
+    },
+    {
+      "frame": 219,
+      "outputTime": 7.3,
+      "source": "s0217.png",
+      "captureBracket": [
+        7.294249,
+        7.318808
+      ],
+      "midpointError": 0.006528499999999937
+    },
+    {
+      "frame": 220,
+      "outputTime": 7.333333333333333,
+      "source": "s0218.png",
+      "captureBracket": [
+        7.324937,
+        7.34916
+      ],
+      "midpointError": 0.003715166666666825
+    },
+    {
+      "frame": 221,
+      "outputTime": 7.366666666666666,
+      "source": "s0219.png",
+      "captureBracket": [
+        7.354752,
+        7.381016
+      ],
+      "midpointError": 0.0012173333333338476
+    },
+    {
+      "frame": 222,
+      "outputTime": 7.4,
+      "source": "s0220.png",
+      "captureBracket": [
+        7.3895,
+        7.418005
+      ],
+      "midpointError": 0.0037524999999991593
+    },
+    {
+      "frame": 223,
+      "outputTime": 7.433333333333334,
+      "source": "s0221.png",
+      "captureBracket": [
+        7.423612,
+        7.447365
+      ],
+      "midpointError": 0.002155166666666375
+    },
+    {
+      "frame": 224,
+      "outputTime": 7.466666666666667,
+      "source": "s0222.png",
+      "captureBracket": [
+        7.454219,
+        7.478274
+      ],
+      "midpointError": 0.00042016666666633284
+    },
+    {
+      "frame": 225,
+      "outputTime": 7.5,
+      "source": "s0223.png",
+      "captureBracket": [
+        7.484332,
+        7.508224
+      ],
+      "midpointError": 0.003721999999999781
+    },
+    {
+      "frame": 226,
+      "outputTime": 7.533333333333333,
+      "source": "s0224.png",
+      "captureBracket": [
+        7.513664,
+        7.538552
+      ],
+      "midpointError": 0.007225333333332529
+    },
+    {
+      "frame": 227,
+      "outputTime": 7.566666666666666,
+      "source": "s0225.png",
+      "captureBracket": [
+        7.544441,
+        7.569293
+      ],
+      "midpointError": 0.009799666666665985
+    },
+    {
+      "frame": 228,
+      "outputTime": 7.6,
+      "source": "s0226.png",
+      "captureBracket": [
+        7.575028,
+        7.604684
+      ],
+      "midpointError": 0.010144000000000375
+    },
+    {
+      "frame": 229,
+      "outputTime": 7.633333333333334,
+      "source": "s0227.png",
+      "captureBracket": [
+        7.611481,
+        7.6403
+      ],
+      "midpointError": 0.007442833333333176
+    },
+    {
+      "frame": 230,
+      "outputTime": 7.666666666666667,
+      "source": "s0228.png",
+      "captureBracket": [
+        7.645651,
+        7.670741
+      ],
+      "midpointError": 0.008470666666666737
+    },
+    {
+      "frame": 231,
+      "outputTime": 7.7,
+      "source": "s0229.png",
+      "captureBracket": [
+        7.676503,
+        7.699782
+      ],
+      "midpointError": 0.01185750000000052
+    },
+    {
+      "frame": 232,
+      "outputTime": 7.733333333333333,
+      "source": "s0230.png",
+      "captureBracket": [
+        7.705753,
+        7.731458
+      ],
+      "midpointError": 0.014727833333333606
+    },
+    {
+      "frame": 233,
+      "outputTime": 7.766666666666667,
+      "source": "s0231.png",
+      "captureBracket": [
+        7.738601,
+        7.763609
+      ],
+      "midpointError": 0.015561666666666696
+    },
+    {
+      "frame": 234,
+      "outputTime": 7.8,
+      "source": "s0233.png",
+      "captureBracket": [
+        7.800508,
+        7.828288
+      ],
+      "midpointError": 0.014397999999999911
+    },
+    {
+      "frame": 235,
+      "outputTime": 7.833333333333333,
+      "source": "s0233.png",
+      "captureBracket": [
+        7.800508,
+        7.828288
+      ],
+      "midpointError": 0.018935333333333304
+    },
+    {
+      "frame": 236,
+      "outputTime": 7.866666666666666,
+      "source": "s0234.png",
+      "captureBracket": [
+        7.838635,
+        7.874579
+      ],
+      "midpointError": 0.010059666666665912
+    },
+    {
+      "frame": 237,
+      "outputTime": 7.9,
+      "source": "s0235.png",
+      "captureBracket": [
+        7.881105,
+        7.908844
+      ],
+      "midpointError": 0.005025500000000349
+    },
+    {
+      "frame": 238,
+      "outputTime": 7.933333333333334,
+      "source": "s0236.png",
+      "captureBracket": [
+        7.915745,
+        7.939456
+      ],
+      "midpointError": 0.005732833333333076
+    },
+    {
+      "frame": 239,
+      "outputTime": 7.966666666666667,
+      "source": "s0237.png",
+      "captureBracket": [
+        7.944979,
+        7.967562
+      ],
+      "midpointError": 0.010396166666666318
+    },
+    {
+      "frame": 240,
+      "outputTime": 8.0,
+      "source": "s0238.png",
+      "captureBracket": [
+        7.973289,
+        7.997103
+      ],
+      "midpointError": 0.014803999999999817
+    },
+    {
+      "frame": 241,
+      "outputTime": 8.033333333333333,
+      "source": "s0240.png",
+      "captureBracket": [
+        8.034443,
+        8.062738
+      ],
+      "midpointError": 0.015257166666666322
+    },
+    {
+      "frame": 242,
+      "outputTime": 8.066666666666666,
+      "source": "s0241.png",
+      "captureBracket": [
+        8.068608,
+        8.09314
+      ],
+      "midpointError": 0.014207333333333239
+    },
+    {
+      "frame": 243,
+      "outputTime": 8.1,
+      "source": "s0242.png",
+      "captureBracket": [
+        8.098967,
+        8.125731
+      ],
+      "midpointError": 0.012349000000000387
+    },
+    {
+      "frame": 244,
+      "outputTime": 8.133333333333333,
+      "source": "s0243.png",
+      "captureBracket": [
+        8.13249,
+        8.157881
+      ],
+      "midpointError": 0.01185216666666733
+    },
+    {
+      "frame": 245,
+      "outputTime": 8.166666666666666,
+      "source": "s0244.png",
+      "captureBracket": [
+        8.166337,
+        8.193502
+      ],
+      "midpointError": 0.01325283333333438
+    },
+    {
+      "frame": 246,
+      "outputTime": 8.2,
+      "source": "s0245.png",
+      "captureBracket": [
+        8.19949,
+        8.224768
+      ],
+      "midpointError": 0.01212900000000161
+    },
+    {
+      "frame": 247,
+      "outputTime": 8.233333333333333,
+      "source": "s0246.png",
+      "captureBracket": [
+        8.230461,
+        8.257339
+      ],
+      "midpointError": 0.010566666666667501
+    },
+    {
+      "frame": 248,
+      "outputTime": 8.266666666666667,
+      "source": "s0247.png",
+      "captureBracket": [
+        8.263718,
+        8.291706
+      ],
+      "midpointError": 0.011045333333333573
+    },
+    {
+      "frame": 249,
+      "outputTime": 8.3,
+      "source": "s0248.png",
+      "captureBracket": [
+        8.297228,
+        8.32169
+      ],
+      "midpointError": 0.009458999999999662
+    },
+    {
+      "frame": 250,
+      "outputTime": 8.333333333333334,
+      "source": "s0249.png",
+      "captureBracket": [
+        8.327413,
+        8.351086
+      ],
+      "midpointError": 0.005916166666667166
+    },
+    {
+      "frame": 251,
+      "outputTime": 8.366666666666667,
+      "source": "s0250.png",
+      "captureBracket": [
+        8.356903,
+        8.381254
+      ],
+      "midpointError": 0.0024118333333333908
+    },
+    {
+      "frame": 252,
+      "outputTime": 8.4,
+      "source": "s0251.png",
+      "captureBracket": [
+        8.38855,
+        8.41302
+      ],
+      "midpointError": 0.0007849999999987034
+    },
+    {
+      "frame": 253,
+      "outputTime": 8.433333333333334,
+      "source": "s0252.png",
+      "captureBracket": [
+        8.420672,
+        8.446642
+      ],
+      "midpointError": 0.00032366666666661104
+    },
+    {
+      "frame": 254,
+      "outputTime": 8.466666666666667,
+      "source": "s0253.png",
+      "captureBracket": [
+        8.455338,
+        8.484728
+      ],
+      "midpointError": 0.003366333333334026
+    },
+    {
+      "frame": 255,
+      "outputTime": 8.5,
+      "source": "s0254.png",
+      "captureBracket": [
+        8.491192,
+        8.518325
+      ],
+      "midpointError": 0.00475850000000122
+    },
+    {
+      "frame": 256,
+      "outputTime": 8.533333333333333,
+      "source": "s0255.png",
+      "captureBracket": [
+        8.52448,
+        8.548541
+      ],
+      "midpointError": 0.0031771666666671194
+    },
+    {
+      "frame": 257,
+      "outputTime": 8.566666666666666,
+      "source": "s0256.png",
+      "captureBracket": [
+        8.554123,
+        8.577833
+      ],
+      "midpointError": 0.0006886666666652275
+    },
+    {
+      "frame": 258,
+      "outputTime": 8.6,
+      "source": "s0257.png",
+      "captureBracket": [
+        8.583491,
+        8.606976
+      ],
+      "midpointError": 0.004766500000000562
+    },
+    {
+      "frame": 259,
+      "outputTime": 8.633333333333333,
+      "source": "s0258.png",
+      "captureBracket": [
+        8.612744,
+        8.637337
+      ],
+      "midpointError": 0.008292833333332084
+    },
+    {
+      "frame": 260,
+      "outputTime": 8.666666666666666,
+      "source": "s0259.png",
+      "captureBracket": [
+        8.643461,
+        8.667516
+      ],
+      "midpointError": 0.01117816666666549
+    },
+    {
+      "frame": 261,
+      "outputTime": 8.7,
+      "source": "s0260.png",
+      "captureBracket": [
+        8.673067,
+        8.711524
+      ],
+      "midpointError": 0.007704499999999115
+    },
+    {
+      "frame": 262,
+      "outputTime": 8.733333333333333,
+      "source": "s0261.png",
+      "captureBracket": [
+        8.718622,
+        8.778099
+      ],
+      "midpointError": 0.015027166666667924
+    },
+    {
+      "frame": 263,
+      "outputTime": 8.766666666666667,
+      "source": "s0261.png",
+      "captureBracket": [
+        8.718622,
+        8.778099
+      ],
+      "midpointError": 0.018306166666667067
+    },
+    {
+      "frame": 264,
+      "outputTime": 8.8,
+      "source": "s0262.png",
+      "captureBracket": [
+        8.786466,
+        8.811477
+      ],
+      "midpointError": 0.0010285000000003208
+    },
+    {
+      "frame": 265,
+      "outputTime": 8.833333333333334,
+      "source": "s0263.png",
+      "captureBracket": [
+        8.817215,
+        8.843941
+      ],
+      "midpointError": 0.002755333333334775
+    },
+    {
+      "frame": 266,
+      "outputTime": 8.866666666666667,
+      "source": "s0264.png",
+      "captureBracket": [
+        8.850292,
+        8.877926
+      ],
+      "midpointError": 0.0025576666666680126
+    },
+    {
+      "frame": 267,
+      "outputTime": 8.9,
+      "source": "s0265.png",
+      "captureBracket": [
+        8.885327,
+        8.912882
+      ],
+      "midpointError": 0.0008955000000003821
+    },
+    {
+      "frame": 268,
+      "outputTime": 8.933333333333334,
+      "source": "s0266.png",
+      "captureBracket": [
+        8.94219,
+        8.970361
+      ],
+      "midpointError": 0.022942166666666708
+    },
+    {
+      "frame": 269,
+      "outputTime": 8.966666666666667,
+      "source": "s0266.png",
+      "captureBracket": [
+        8.94219,
+        8.970361
+      ],
+      "midpointError": 0.010391166666666507
+    },
+    {
+      "frame": 270,
+      "outputTime": 9.0,
+      "source": "s0267.png",
+      "captureBracket": [
+        8.976632,
+        9.005319
+      ],
+      "midpointError": 0.00902449999999888
+    },
+    {
+      "frame": 271,
+      "outputTime": 9.033333333333333,
+      "source": "s0268.png",
+      "captureBracket": [
+        9.011657,
+        9.037244
+      ],
+      "midpointError": 0.00888283333333284
+    },
+    {
+      "frame": 272,
+      "outputTime": 9.066666666666666,
+      "source": "s0269.png",
+      "captureBracket": [
+        9.043227,
+        9.069607
+      ],
+      "midpointError": 0.010249666666666712
+    },
+    {
+      "frame": 273,
+      "outputTime": 9.1,
+      "source": "s0270.png",
+      "captureBracket": [
+        9.075554,
+        9.101605
+      ],
+      "midpointError": 0.011420499999999834
+    },
+    {
+      "frame": 274,
+      "outputTime": 9.133333333333333,
+      "source": "s0271.png",
+      "captureBracket": [
+        9.107667,
+        9.135973
+      ],
+      "midpointError": 0.011513333333333264
+    },
+    {
+      "frame": 275,
+      "outputTime": 9.166666666666666,
+      "source": "s0272.png",
+      "captureBracket": [
+        9.145076,
+        9.17854
+      ],
+      "midpointError": 0.0048586666666654565
+    },
+    {
+      "frame": 276,
+      "outputTime": 9.2,
+      "source": "s0273.png",
+      "captureBracket": [
+        9.18518,
+        9.213308
+      ],
+      "midpointError": 0.0007559999999990907
+    },
+    {
+      "frame": 277,
+      "outputTime": 9.233333333333333,
+      "source": "s0274.png",
+      "captureBracket": [
+        9.219872,
+        9.246281
+      ],
+      "midpointError": 0.00025683333333326175
+    },
+    {
+      "frame": 278,
+      "outputTime": 9.266666666666667,
+      "source": "s0275.png",
+      "captureBracket": [
+        9.252527,
+        9.281132
+      ],
+      "midpointError": 0.00016283333333255712
+    },
+    {
+      "frame": 279,
+      "outputTime": 9.3,
+      "source": "s0276.png",
+      "captureBracket": [
+        9.287253,
+        9.314915
+      ],
+      "midpointError": 0.0010839999999987526
+    },
+    {
+      "frame": 280,
+      "outputTime": 9.333333333333334,
+      "source": "s0277.png",
+      "captureBracket": [
+        9.321748,
+        9.346663
+      ],
+      "midpointError": 0.0008721666666655636
+    },
+    {
+      "frame": 281,
+      "outputTime": 9.366666666666667,
+      "source": "s0278.png",
+      "captureBracket": [
+        9.352575,
+        9.380503
+      ],
+      "midpointError": 0.00012766666666763626
+    },
+    {
+      "frame": 282,
+      "outputTime": 9.4,
+      "source": "s0279.png",
+      "captureBracket": [
+        9.387518,
+        9.413616
+      ],
+      "midpointError": 0.0005669999999984299
+    },
+    {
+      "frame": 283,
+      "outputTime": 9.433333333333334,
+      "source": "s0280.png",
+      "captureBracket": [
+        9.419254,
+        9.442876
+      ],
+      "midpointError": 0.0022683333333333167
+    },
+    {
+      "frame": 284,
+      "outputTime": 9.466666666666667,
+      "source": "s0281.png",
+      "captureBracket": [
+        9.448242,
+        9.472076
+      ],
+      "midpointError": 0.006507666666665912
+    },
+    {
+      "frame": 285,
+      "outputTime": 9.5,
+      "source": "s0282.png",
+      "captureBracket": [
+        9.477578,
+        9.501007
+      ],
+      "midpointError": 0.010707500000000536
+    },
+    {
+      "frame": 286,
+      "outputTime": 9.533333333333333,
+      "source": "s0283.png",
+      "captureBracket": [
+        9.506736,
+        9.531064
+      ],
+      "midpointError": 0.014433333333332854
+    },
+    {
+      "frame": 287,
+      "outputTime": 9.566666666666666,
+      "source": "s0285.png",
+      "captureBracket": [
+        9.566747,
+        9.594767
+      ],
+      "midpointError": 0.014090333333331984
+    },
+    {
+      "frame": 288,
+      "outputTime": 9.6,
+      "source": "s0286.png",
+      "captureBracket": [
+        9.601605,
+        9.62889
+      ],
+      "midpointError": 0.015247499999999192
+    },
+    {
+      "frame": 289,
+      "outputTime": 9.633333333333333,
+      "source": "s0287.png",
+      "captureBracket": [
+        9.634737,
+        9.660447
+      ],
+      "midpointError": 0.014258666666666642
+    },
+    {
+      "frame": 290,
+      "outputTime": 9.666666666666666,
+      "source": "s0288.png",
+      "captureBracket": [
+        9.666549,
+        9.694038
+      ],
+      "midpointError": 0.013626833333335142
+    },
+    {
+      "frame": 291,
+      "outputTime": 9.7,
+      "source": "s0289.png",
+      "captureBracket": [
+        9.69954,
+        9.723386
+      ],
+      "midpointError": 0.01146300000000089
+    },
+    {
+      "frame": 292,
+      "outputTime": 9.733333333333333,
+      "source": "s0290.png",
+      "captureBracket": [
+        9.729956,
+        9.75468
+      ],
+      "midpointError": 0.008984666666668417
+    },
+    {
+      "frame": 293,
+      "outputTime": 9.766666666666667,
+      "source": "s0291.png",
+      "captureBracket": [
+        9.760937,
+        9.791968
+      ],
+      "midpointError": 0.009785833333333827
+    },
+    {
+      "frame": 294,
+      "outputTime": 9.8,
+      "source": "s0292.png",
+      "captureBracket": [
+        9.797984,
+        9.827467
+      ],
+      "midpointError": 0.012725499999998391
+    },
+    {
+      "frame": 295,
+      "outputTime": 9.833333333333334,
+      "source": "s0293.png",
+      "captureBracket": [
+        9.833919,
+        9.860796
+      ],
+      "midpointError": 0.01402416666666717
+    },
+    {
+      "frame": 296,
+      "outputTime": 9.866666666666667,
+      "source": "s0294.png",
+      "captureBracket": [
+        9.867151,
+        9.893057
+      ],
+      "midpointError": 0.013437333333332191
+    },
+    {
+      "frame": 297,
+      "outputTime": 9.9,
+      "source": "s0295.png",
+      "captureBracket": [
+        9.898821,
+        9.923004
+      ],
+      "midpointError": 0.01091249999999988
+    },
+    {
+      "frame": 298,
+      "outputTime": 9.933333333333334,
+      "source": "s0296.png",
+      "captureBracket": [
+        9.929835,
+        9.954333
+      ],
+      "midpointError": 0.008750666666667684
+    },
+    {
+      "frame": 299,
+      "outputTime": 9.966666666666667,
+      "source": "s0297.png",
+      "captureBracket": [
+        9.960041,
+        9.986154
+      ],
+      "midpointError": 0.006430833333334718
+    },
+    {
+      "frame": 300,
+      "outputTime": 10.0,
+      "source": "s0298.png",
+      "captureBracket": [
+        9.992485,
+        10.015866
+      ],
+      "midpointError": 0.004175500000000554
+    },
+    {
+      "frame": 301,
+      "outputTime": 10.033333333333333,
+      "source": "s0299.png",
+      "captureBracket": [
+        10.02182,
+        10.051417
+      ],
+      "midpointError": 0.0032851666666662283
+    },
+    {
+      "frame": 302,
+      "outputTime": 10.066666666666666,
+      "source": "s0300.png",
+      "captureBracket": [
+        10.059357,
+        10.084906
+      ],
+      "midpointError": 0.0054648333333346955
+    },
+    {
+      "frame": 303,
+      "outputTime": 10.1,
+      "source": "s0301.png",
+      "captureBracket": [
+        10.090582,
+        10.114541
+      ],
+      "midpointError": 0.0025615000000005494
+    },
+    {
+      "frame": 304,
+      "outputTime": 10.133333333333333,
+      "source": "s0302.png",
+      "captureBracket": [
+        10.119944,
+        10.145788
+      ],
+      "midpointError": 0.00046733333333293103
+    },
+    {
+      "frame": 305,
+      "outputTime": 10.166666666666666,
+      "source": "s0303.png",
+      "captureBracket": [
+        10.151476,
+        10.176594
+      ],
+      "midpointError": 0.0026316666666659216
+    },
+    {
+      "frame": 306,
+      "outputTime": 10.2,
+      "source": "s0304.png",
+      "captureBracket": [
+        10.18244,
+        10.207843
+      ],
+      "midpointError": 0.004858499999999211
+    },
+    {
+      "frame": 307,
+      "outputTime": 10.233333333333333,
+      "source": "s0305.png",
+      "captureBracket": [
+        10.214287,
+        10.244747
+      ],
+      "midpointError": 0.003816333333331201
+    },
+    {
+      "frame": 308,
+      "outputTime": 10.266666666666667,
+      "source": "s0306.png",
+      "captureBracket": [
+        10.251867,
+        10.284436
+      ],
+      "midpointError": 0.0014848333333326025
+    },
+    {
+      "frame": 309,
+      "outputTime": 10.3,
+      "source": "s0307.png",
+      "captureBracket": [
+        10.290174,
+        10.315894
+      ],
+      "midpointError": 0.003033999999999537
+    },
+    {
+      "frame": 310,
+      "outputTime": 10.333333333333334,
+      "source": "s0308.png",
+      "captureBracket": [
+        10.321857,
+        10.345431
+      ],
+      "midpointError": 0.0003106666666656821
+    },
+    {
+      "frame": 311,
+      "outputTime": 10.366666666666667,
+      "source": "s0309.png",
+      "captureBracket": [
+        10.351092,
+        10.376998
+      ],
+      "midpointError": 0.0026216666666663
+    },
+    {
+      "frame": 312,
+      "outputTime": 10.4,
+      "source": "s0310.png",
+      "captureBracket": [
+        10.383609,
+        10.407902
+      ],
+      "midpointError": 0.0042445000000004285
+    },
+    {
+      "frame": 313,
+      "outputTime": 10.433333333333334,
+      "source": "s0311.png",
+      "captureBracket": [
+        10.413631,
+        10.437456
+      ],
+      "midpointError": 0.007789833333333718
+    },
+    {
+      "frame": 314,
+      "outputTime": 10.466666666666667,
+      "source": "s0312.png",
+      "captureBracket": [
+        10.443169,
+        10.470384
+      ],
+      "midpointError": 0.009890166666666644
+    },
+    {
+      "frame": 315,
+      "outputTime": 10.5,
+      "source": "s0313.png",
+      "captureBracket": [
+        10.477289,
+        10.506668
+      ],
+      "midpointError": 0.008021499999999904
+    },
+    {
+      "frame": 316,
+      "outputTime": 10.533333333333333,
+      "source": "s0314.png",
+      "captureBracket": [
+        10.512483,
+        10.536831
+      ],
+      "midpointError": 0.00867633333333373
+    },
+    {
+      "frame": 317,
+      "outputTime": 10.566666666666666,
+      "source": "s0315.png",
+      "captureBracket": [
+        10.542704,
+        10.56652
+      ],
+      "midpointError": 0.01205466666666588
+    },
+    {
+      "frame": 318,
+      "outputTime": 10.6,
+      "source": "s0316.png",
+      "captureBracket": [
+        10.572015,
+        10.596316
+      ],
+      "midpointError": 0.01583449999999864
+    },
+    {
+      "frame": 319,
+      "outputTime": 10.633333333333333,
+      "source": "s0317.png",
+      "captureBracket": [
+        10.624224,
+        10.64766
+      ],
+      "midpointError": 0.0026086666666671476
+    },
+    {
+      "frame": 320,
+      "outputTime": 10.666666666666666,
+      "source": "s0318.png",
+      "captureBracket": [
+        10.653344,
+        10.679897
+      ],
+      "midpointError": 4.616666666557023e-05
+    },
+    {
+      "frame": 321,
+      "outputTime": 10.7,
+      "source": "s0319.png",
+      "captureBracket": [
+        10.686526,
+        10.714855
+      ],
+      "midpointError": 0.0006905000000010375
+    },
+    {
+      "frame": 322,
+      "outputTime": 10.733333333333333,
+      "source": "s0320.png",
+      "captureBracket": [
+        10.722263,
+        10.751452
+      ],
+      "midpointError": 0.0035241666666667726
+    },
+    {
+      "frame": 323,
+      "outputTime": 10.766666666666667,
+      "source": "s0321.png",
+      "captureBracket": [
+        10.757359,
+        10.785579
+      ],
+      "midpointError": 0.004802333333332243
+    },
+    {
+      "frame": 324,
+      "outputTime": 10.8,
+      "source": "s0322.png",
+      "captureBracket": [
+        10.791784,
+        10.815869
+      ],
+      "midpointError": 0.0038264999999988447
+    },
+    {
+      "frame": 325,
+      "outputTime": 10.833333333333334,
+      "source": "s0323.png",
+      "captureBracket": [
+        10.821806,
+        10.84616
+      ],
+      "midpointError": 0.0006496666666659934
+    },
+    {
+      "frame": 326,
+      "outputTime": 10.866666666666667,
+      "source": "s0324.png",
+      "captureBracket": [
+        10.852371,
+        10.877971
+      ],
+      "midpointError": 0.001495666666667006
+    },
+    {
+      "frame": 327,
+      "outputTime": 10.9,
+      "source": "s0325.png",
+      "captureBracket": [
+        10.883894,
+        10.909712
+      ],
+      "midpointError": 0.0031970000000001164
+    },
+    {
+      "frame": 328,
+      "outputTime": 10.933333333333334,
+      "source": "s0326.png",
+      "captureBracket": [
+        10.91601,
+        10.94701
+      ],
+      "midpointError": 0.0018233333333341761
+    },
+    {
+      "frame": 329,
+      "outputTime": 10.966666666666667,
+      "source": "s0327.png",
+      "captureBracket": [
+        10.952847,
+        10.977483
+      ],
+      "midpointError": 0.0015016666666678447
+    },
+    {
+      "frame": 330,
+      "outputTime": 11.0,
+      "source": "s0328.png",
+      "captureBracket": [
+        10.983984,
+        11.011181
+      ],
+      "midpointError": 0.0024174999999999613
+    },
+    {
+      "frame": 331,
+      "outputTime": 11.033333333333333,
+      "source": "s0329.png",
+      "captureBracket": [
+        11.017373,
+        11.041735
+      ],
+      "midpointError": 0.003779333333334023
+    },
+    {
+      "frame": 332,
+      "outputTime": 11.066666666666666,
+      "source": "s0330.png",
+      "captureBracket": [
+        11.04801,
+        11.072413
+      ],
+      "midpointError": 0.0064551666666670116
+    },
+    {
+      "frame": 333,
+      "outputTime": 11.1,
+      "source": "s0331.png",
+      "captureBracket": [
+        11.079356,
+        11.104904
+      ],
+      "midpointError": 0.007869999999998711
+    },
+    {
+      "frame": 334,
+      "outputTime": 11.133333333333333,
+      "source": "s0332.png",
+      "captureBracket": [
+        11.110673,
+        11.137704
+      ],
+      "midpointError": 0.009144833333333935
+    },
+    {
+      "frame": 335,
+      "outputTime": 11.166666666666666,
+      "source": "s0333.png",
+      "captureBracket": [
+        11.14429,
+        11.172119
+      ],
+      "midpointError": 0.008462166666665993
+    },
+    {
+      "frame": 336,
+      "outputTime": 11.2,
+      "source": "s0334.png",
+      "captureBracket": [
+        11.178399,
+        11.204653
+      ],
+      "midpointError": 0.008473999999999648
+    },
+    {
+      "frame": 337,
+      "outputTime": 11.233333333333333,
+      "source": "s0335.png",
+      "captureBracket": [
+        11.210664,
+        11.233834
+      ],
+      "midpointError": 0.011084333333332808
+    },
+    {
+      "frame": 338,
+      "outputTime": 11.266666666666667,
+      "source": "s0336.png",
+      "captureBracket": [
+        11.239883,
+        11.274806
+      ],
+      "midpointError": 0.009322166666667187
+    },
+    {
+      "frame": 339,
+      "outputTime": 11.3,
+      "source": "s0337.png",
+      "captureBracket": [
+        11.280319,
+        11.304057
+      ],
+      "midpointError": 0.007812000000001262
+    },
+    {
+      "frame": 340,
+      "outputTime": 11.333333333333334,
+      "source": "s0338.png",
+      "captureBracket": [
+        11.309727,
+        11.333435
+      ],
+      "midpointError": 0.011752333333333809
+    },
+    {
+      "frame": 341,
+      "outputTime": 11.366666666666667,
+      "source": "s0339.png",
+      "captureBracket": [
+        11.339063,
+        11.369378
+      ],
+      "midpointError": 0.012446166666666869
+    },
+    {
+      "frame": 342,
+      "outputTime": 11.4,
+      "source": "s0340.png",
+      "captureBracket": [
+        11.375982,
+        11.407084
+      ],
+      "midpointError": 0.008467000000001335
+    },
+    {
+      "frame": 343,
+      "outputTime": 11.433333333333334,
+      "source": "s0341.png",
+      "captureBracket": [
+        11.412655,
+        11.43561
+      ],
+      "midpointError": 0.00920083333333288
+    },
+    {
+      "frame": 344,
+      "outputTime": 11.466666666666667,
+      "source": "s0342.png",
+      "captureBracket": [
+        11.441643,
+        11.467939
+      ],
+      "midpointError": 0.011875666666666618
+    },
+    {
+      "frame": 345,
+      "outputTime": 11.5,
+      "source": "s0343.png",
+      "captureBracket": [
+        11.474221,
+        11.501133
+      ],
+      "midpointError": 0.012323000000000306
+    },
+    {
+      "frame": 346,
+      "outputTime": 11.533333333333333,
+      "source": "s0344.png",
+      "captureBracket": [
+        11.508053,
+        11.535663
+      ],
+      "midpointError": 0.011475333333333282
+    },
+    {
+      "frame": 347,
+      "outputTime": 11.566666666666666,
+      "source": "s0345.png",
+      "captureBracket": [
+        11.542021,
+        11.568725
+      ],
+      "midpointError": 0.01129366666666698
+    },
+    {
+      "frame": 348,
+      "outputTime": 11.6,
+      "source": "s0346.png",
+      "captureBracket": [
+        11.575127,
+        11.604638
+      ],
+      "midpointError": 0.01011749999999978
+    },
+    {
+      "frame": 349,
+      "outputTime": 11.633333333333333,
+      "source": "s0347.png",
+      "captureBracket": [
+        11.611146,
+        11.63681
+      ],
+      "midpointError": 0.009355333333331828
+    },
+    {
+      "frame": 350,
+      "outputTime": 11.666666666666666,
+      "source": "s0351.png",
+      "captureBracket": [
+        11.648547,
+        11.681568
+      ],
+      "midpointError": 0.0016091666666664395
+    },
+    {
+      "frame": 351,
+      "outputTime": 11.7,
+      "source": "s0352.png",
+      "captureBracket": [
+        11.68736,
+        11.711142
+      ],
+      "midpointError": 0.0007489999999990005
+    },
+    {
+      "frame": 352,
+      "outputTime": 11.733333333333333,
+      "source": "s0353.png",
+      "captureBracket": [
+        11.717082,
+        11.741722
+      ],
+      "midpointError": 0.0039313333333321765
+    },
+    {
+      "frame": 353,
+      "outputTime": 11.766666666666667,
+      "source": "s0354.png",
+      "captureBracket": [
+        11.747687,
+        11.773019
+      ],
+      "midpointError": 0.006313666666667217
+    },
+    {
+      "frame": 354,
+      "outputTime": 11.8,
+      "source": "s0355.png",
+      "captureBracket": [
+        11.783426,
+        11.834827
+      ],
+      "midpointError": 0.009126500000000703
+    },
+    {
+      "frame": 355,
+      "outputTime": 11.833333333333334,
+      "source": "s0356.png",
+      "captureBracket": [
+        11.841728,
+        11.872149
+      ],
+      "midpointError": 0.023605166666666122
+    },
+    {
+      "frame": 356,
+      "outputTime": 11.866666666666667,
+      "source": "s0356.png",
+      "captureBracket": [
+        11.841728,
+        11.872149
+      ],
+      "midpointError": 0.009728166666667093
+    },
+    {
+      "frame": 357,
+      "outputTime": 11.9,
+      "source": "s0357.png",
+      "captureBracket": [
+        11.878783,
+        11.901926
+      ],
+      "midpointError": 0.00964549999999953
+    },
+    {
+      "frame": 358,
+      "outputTime": 11.933333333333334,
+      "source": "s0358.png",
+      "captureBracket": [
+        11.9079,
+        11.932329
+      ],
+      "midpointError": 0.01321883333333318
+    },
+    {
+      "frame": 359,
+      "outputTime": 11.966666666666667,
+      "source": "s0359.png",
+      "captureBracket": [
+        11.940652,
+        11.964981
+      ],
+      "midpointError": 0.013850166666665942
+    },
+    {
+      "frame": 360,
+      "outputTime": 12.0,
+      "source": "s0361.png",
+      "captureBracket": [
+        12.000729,
+        12.025176
+      ],
+      "midpointError": 0.01295250000000081
+    },
+    {
+      "frame": 361,
+      "outputTime": 12.033333333333333,
+      "source": "s0362.png",
+      "captureBracket": [
+        12.031459,
+        12.063531
+      ],
+      "midpointError": 0.014161666666666406
+    },
+    {
+      "frame": 362,
+      "outputTime": 12.066666666666666,
+      "source": "s0362.png",
+      "captureBracket": [
+        12.031459,
+        12.063531
+      ],
+      "midpointError": 0.01917166666666681
+    },
+    {
+      "frame": 363,
+      "outputTime": 12.1,
+      "source": "s0363.png",
+      "captureBracket": [
+        12.07077,
+        12.102708
+      ],
+      "midpointError": 0.013260999999999967
+    },
+    {
+      "frame": 364,
+      "outputTime": 12.133333333333333,
+      "source": "s0364.png",
+      "captureBracket": [
+        12.110373,
+        12.146673
+      ],
+      "midpointError": 0.004810333333333361
+    },
+    {
+      "frame": 365,
+      "outputTime": 12.166666666666666,
+      "source": "s0365.png",
+      "captureBracket": [
+        12.153524,
+        12.189279
+      ],
+      "midpointError": 0.004734833333335686
+    },
+    {
+      "frame": 366,
+      "outputTime": 12.2,
+      "source": "s0366.png",
+      "captureBracket": [
+        12.197618,
+        12.238669
+      ],
+      "midpointError": 0.018143500000000756
+    },
+    {
+      "frame": 367,
+      "outputTime": 12.233333333333333,
+      "source": "s0366.png",
+      "captureBracket": [
+        12.197618,
+        12.238669
+      ],
+      "midpointError": 0.015189833333332459
+    },
+    {
+      "frame": 368,
+      "outputTime": 12.266666666666667,
+      "source": "s0367.png",
+      "captureBracket": [
+        12.246196,
+        12.297347
+      ],
+      "midpointError": 0.005104833333332337
+    },
+    {
+      "frame": 369,
+      "outputTime": 12.3,
+      "source": "s0368.png",
+      "captureBracket": [
+        12.303575,
+        12.33071
+      ],
+      "midpointError": 0.017142499999998506
+    },
+    {
+      "frame": 370,
+      "outputTime": 12.333333333333334,
+      "source": "s0368.png",
+      "captureBracket": [
+        12.303575,
+        12.33071
+      ],
+      "midpointError": 0.01619083333333471
+    },
+    {
+      "frame": 371,
+      "outputTime": 12.366666666666667,
+      "source": "s0369.png",
+      "captureBracket": [
+        12.337534,
+        12.373494
+      ],
+      "midpointError": 0.011152666666667699
+    },
+    {
+      "frame": 372,
+      "outputTime": 12.4,
+      "source": "s0370.png",
+      "captureBracket": [
+        12.379983,
+        12.409452
+      ],
+      "midpointError": 0.005282500000001633
+    },
+    {
+      "frame": 373,
+      "outputTime": 12.433333333333334,
+      "source": "s0371.png",
+      "captureBracket": [
+        12.415743,
+        12.442233
+      ],
+      "midpointError": 0.004345333333333201
+    },
+    {
+      "frame": 374,
+      "outputTime": 12.466666666666667,
+      "source": "s0372.png",
+      "captureBracket": [
+        12.448663,
+        12.475656
+      ],
+      "midpointError": 0.004507166666666507
+    },
+    {
+      "frame": 375,
+      "outputTime": 12.5,
+      "source": "s0373.png",
+      "captureBracket": [
+        12.481987,
+        12.53003
+      ],
+      "midpointError": 0.006008500000000083
+    },
+    {
+      "frame": 376,
+      "outputTime": 12.533333333333333,
+      "source": "s0374.png",
+      "captureBracket": [
+        12.53643,
+        12.564648
+      ],
+      "midpointError": 0.01720566666666734
+    },
+    {
+      "frame": 377,
+      "outputTime": 12.566666666666666,
+      "source": "s0374.png",
+      "captureBracket": [
+        12.53643,
+        12.564648
+      ],
+      "midpointError": 0.016127666666665874
+    },
+    {
+      "frame": 378,
+      "outputTime": 12.6,
+      "source": "s0375.png",
+      "captureBracket": [
+        12.570656,
+        12.598469
+      ],
+      "midpointError": 0.015437499999999105
+    },
+    {
+      "frame": 379,
+      "outputTime": 12.633333333333333,
+      "source": "s0376.png",
+      "captureBracket": [
+        12.60573,
+        12.63307
+      ],
+      "midpointError": 0.01393333333333402
+    },
+    {
+      "frame": 380,
+      "outputTime": 12.666666666666666,
+      "source": "s0377.png",
+      "captureBracket": [
+        12.639418,
+        12.671407
+      ],
+      "midpointError": 0.011254166666665455
+    },
+    {
+      "frame": 381,
+      "outputTime": 12.7,
+      "source": "s0378.png",
+      "captureBracket": [
+        12.678156,
+        12.709951
+      ],
+      "midpointError": 0.005946500000000299
+    },
+    {
+      "frame": 382,
+      "outputTime": 12.733333333333333,
+      "source": "s0379.png",
+      "captureBracket": [
+        12.717116,
+        12.745884
+      ],
+      "midpointError": 0.0018333333333320212
+    },
+    {
+      "frame": 383,
+      "outputTime": 12.766666666666667,
+      "source": "s0380.png",
+      "captureBracket": [
+        12.75192,
+        12.78038
+      ],
+      "midpointError": 0.000516666666667831
+    },
+    {
+      "frame": 384,
+      "outputTime": 12.8,
+      "source": "s0381.png",
+      "captureBracket": [
+        12.788424,
+        12.812537
+      ],
+      "midpointError": 0.0004804999999983295
+    },
+    {
+      "frame": 385,
+      "outputTime": 12.833333333333334,
+      "source": "s0382.png",
+      "captureBracket": [
+        12.81812,
+        12.844268
+      ],
+      "midpointError": 0.002139333333333937
+    },
+    {
+      "frame": 386,
+      "outputTime": 12.866666666666667,
+      "source": "s0383.png",
+      "captureBracket": [
+        12.850037,
+        12.878663
+      ],
+      "midpointError": 0.0023166666666671887
+    },
+    {
+      "frame": 387,
+      "outputTime": 12.9,
+      "source": "s0384.png",
+      "captureBracket": [
+        12.885815,
+        12.917731
+      ],
+      "midpointError": 0.0017729999999982482
+    },
+    {
+      "frame": 388,
+      "outputTime": 12.933333333333334,
+      "source": "s0385.png",
+      "captureBracket": [
+        12.925029,
+        12.960653
+      ],
+      "midpointError": 0.009507666666667802
+    },
+    {
+      "frame": 389,
+      "outputTime": 12.966666666666667,
+      "source": "s0385.png",
+      "captureBracket": [
+        12.925029,
+        12.960653
+      ],
+      "midpointError": 0.023825666666665413
+    },
+    {
+      "frame": 390,
+      "outputTime": 13.0,
+      "source": "s0386.png",
+      "captureBracket": [
+        12.970096,
+        13.022999
+      ],
+      "midpointError": 0.0034524999999998585
+    },
+    {
+      "frame": 391,
+      "outputTime": 13.033333333333333,
+      "source": "s0387.png",
+      "captureBracket": [
+        13.032539,
+        13.075163
+      ],
+      "midpointError": 0.020517666666666656
+    },
+    {
+      "frame": 392,
+      "outputTime": 13.066666666666666,
+      "source": "s0387.png",
+      "captureBracket": [
+        13.032539,
+        13.075163
+      ],
+      "midpointError": 0.012815666666666559
+    },
+    {
+      "frame": 393,
+      "outputTime": 13.1,
+      "source": "s0388.png",
+      "captureBracket": [
+        13.084613,
+        13.130899
+      ],
+      "midpointError": 0.007755999999998764
+    },
+    {
+      "frame": 394,
+      "outputTime": 13.133333333333333,
+      "source": "s0389.png",
+      "captureBracket": [
+        13.140034,
+        13.173725
+      ],
+      "midpointError": 0.02354616666666587
+    },
+    {
+      "frame": 395,
+      "outputTime": 13.166666666666666,
+      "source": "s0389.png",
+      "captureBracket": [
+        13.140034,
+        13.173725
+      ],
+      "midpointError": 0.009787166666667346
+    },
+    {
+      "frame": 396,
+      "outputTime": 13.2,
+      "source": "s0390.png",
+      "captureBracket": [
+        13.187421,
+        13.242759
+      ],
+      "midpointError": 0.015090000000000714
+    },
+    {
+      "frame": 397,
+      "outputTime": 13.233333333333333,
+      "source": "s0390.png",
+      "captureBracket": [
+        13.187421,
+        13.242759
+      ],
+      "midpointError": 0.0182433333333325
+    },
+    {
+      "frame": 398,
+      "outputTime": 13.266666666666667,
+      "source": "s0391.png",
+      "captureBracket": [
+        13.25114,
+        13.284143
+      ],
+      "midpointError": 0.00097483333333237
+    },
+    {
+      "frame": 399,
+      "outputTime": 13.3,
+      "source": "s0392.png",
+      "captureBracket": [
+        13.29504,
+        13.326575
+      ],
+      "midpointError": 0.010807499999998527
+    },
+    {
+      "frame": 400,
+      "outputTime": 13.333333333333334,
+      "source": "s0393.png",
+      "captureBracket": [
+        13.334865,
+        13.361003
+      ],
+      "midpointError": 0.014600666666666484
+    },
+    {
+      "frame": 401,
+      "outputTime": 13.366666666666667,
+      "source": "s0394.png",
+      "captureBracket": [
+        13.366825,
+        13.392376
+      ],
+      "midpointError": 0.012933833333333311
+    },
+    {
+      "frame": 402,
+      "outputTime": 13.4,
+      "source": "s0395.png",
+      "captureBracket": [
+        13.399361,
+        13.427078
+      ],
+      "midpointError": 0.01321949999999994
+    },
+    {
+      "frame": 403,
+      "outputTime": 13.433333333333334,
+      "source": "s0396.png",
+      "captureBracket": [
+        13.433356,
+        13.457526
+      ],
+      "midpointError": 0.012107666666665295
+    },
+    {
+      "frame": 404,
+      "outputTime": 13.466666666666667,
+      "source": "s0397.png",
+      "captureBracket": [
+        13.463202,
+        13.487861
+      ],
+      "midpointError": 0.008864833333333877
+    },
+    {
+      "frame": 405,
+      "outputTime": 13.5,
+      "source": "s0398.png",
+      "captureBracket": [
+        13.493735,
+        13.519936
+      ],
+      "midpointError": 0.006835499999999328
+    },
+    {
+      "frame": 406,
+      "outputTime": 13.533333333333333,
+      "source": "s0399.png",
+      "captureBracket": [
+        13.526228,
+        13.55149
+      ],
+      "midpointError": 0.00552566666666543
+    },
+    {
+      "frame": 407,
+      "outputTime": 13.566666666666666,
+      "source": "s0400.png",
+      "captureBracket": [
+        13.557032,
+        13.580596
+      ],
+      "midpointError": 0.002147333333333279
+    },
+    {
+      "frame": 408,
+      "outputTime": 13.6,
+      "source": "s0401.png",
+      "captureBracket": [
+        13.586584,
+        13.614072
+      ],
+      "midpointError": 0.00032800000000143825
+    },
+    {
+      "frame": 409,
+      "outputTime": 13.633333333333333,
+      "source": "s0402.png",
+      "captureBracket": [
+        13.620835,
+        13.64904
+      ],
+      "midpointError": 0.0016041666666666288
+    },
+    {
+      "frame": 410,
+      "outputTime": 13.666666666666666,
+      "source": "s0403.png",
+      "captureBracket": [
+        13.65477,
+        13.681243
+      ],
+      "midpointError": 0.0013398333333345391
+    },
+    {
+      "frame": 411,
+      "outputTime": 13.7,
+      "source": "s0404.png",
+      "captureBracket": [
+        13.687182,
+        13.711184
+      ],
+      "midpointError": 0.0008169999999996236
+    },
+    {
+      "frame": 412,
+      "outputTime": 13.733333333333333,
+      "source": "s0405.png",
+      "captureBracket": [
+        13.716622,
+        13.739846
+      ],
+      "midpointError": 0.005099333333332012
+    },
+    {
+      "frame": 413,
+      "outputTime": 13.766666666666667,
+      "source": "s0406.png",
+      "captureBracket": [
+        13.745789,
+        13.769744
+      ],
+      "midpointError": 0.008900166666668596
+    },
+    {
+      "frame": 414,
+      "outputTime": 13.8,
+      "source": "s0407.png",
+      "captureBracket": [
+        13.775886,
+        13.801626
+      ],
+      "midpointError": 0.011244000000001364
+    },
+    {
+      "frame": 415,
+      "outputTime": 13.833333333333334,
+      "source": "s0408.png",
+      "captureBracket": [
+        13.807964,
+        13.834522
+      ],
+      "midpointError": 0.012090333333334868
+    },
+    {
+      "frame": 416,
+      "outputTime": 13.866666666666667,
+      "source": "s0409.png",
+      "captureBracket": [
+        13.841255,
+        13.869849
+      ],
+      "midpointError": 0.011114666666667716
+    },
+    {
+      "frame": 417,
+      "outputTime": 13.9,
+      "source": "s0410.png",
+      "captureBracket": [
+        13.875662,
+        13.900098
+      ],
+      "midpointError": 0.012120000000001241
+    },
+    {
+      "frame": 418,
+      "outputTime": 13.933333333333334,
+      "source": "s0411.png",
+      "captureBracket": [
+        13.906103,
+        13.931257
+      ],
+      "midpointError": 0.014653333333333407
+    },
+    {
+      "frame": 419,
+      "outputTime": 13.966666666666667,
+      "source": "s0413.png",
+      "captureBracket": [
+        13.968302,
+        13.991421
+      ],
+      "midpointError": 0.013194833333333378
+    },
+    {
+      "frame": 420,
+      "outputTime": 14.0,
+      "source": "s0414.png",
+      "captureBracket": [
+        13.997506,
+        14.022754
+      ],
+      "midpointError": 0.010130000000000194
+    },
+    {
+      "frame": 421,
+      "outputTime": 14.033333333333333,
+      "source": "s0415.png",
+      "captureBracket": [
+        14.028482,
+        14.056505
+      ],
+      "midpointError": 0.009160166666665859
+    },
+    {
+      "frame": 422,
+      "outputTime": 14.066666666666666,
+      "source": "s0416.png",
+      "captureBracket": [
+        14.063833,
+        14.091374
+      ],
+      "midpointError": 0.01093683333333395
+    },
+    {
+      "frame": 423,
+      "outputTime": 14.1,
+      "source": "s0417.png",
+      "captureBracket": [
+        14.097097,
+        14.123288
+      ],
+      "midpointError": 0.010192500000000493
+    },
+    {
+      "frame": 424,
+      "outputTime": 14.133333333333333,
+      "source": "s0418.png",
+      "captureBracket": [
+        14.130111,
+        14.156749
+      ],
+      "midpointError": 0.010096666666665755
+    },
+    {
+      "frame": 425,
+      "outputTime": 14.166666666666666,
+      "source": "s0419.png",
+      "captureBracket": [
+        14.162601,
+        14.188744
+      ],
+      "midpointError": 0.009005833333334934
+    },
+    {
+      "frame": 426,
+      "outputTime": 14.2,
+      "source": "s0420.png",
+      "captureBracket": [
+        14.19564,
+        14.219828
+      ],
+      "midpointError": 0.0077339999999992415
+    },
+    {
+      "frame": 427,
+      "outputTime": 14.233333333333333,
+      "source": "s0421.png",
+      "captureBracket": [
+        14.225144,
+        14.248816
+      ],
+      "midpointError": 0.003646666666666576
+    },
+    {
+      "frame": 428,
+      "outputTime": 14.266666666666667,
+      "source": "s0422.png",
+      "captureBracket": [
+        14.254602,
+        14.284448
+      ],
+      "midpointError": 0.002858333333332297
+    },
+    {
+      "frame": 429,
+      "outputTime": 14.3,
+      "source": "s0423.png",
+      "captureBracket": [
+        14.291193,
+        14.323784
+      ],
+      "midpointError": 0.007488499999999121
+    },
+    {
+      "frame": 430,
+      "outputTime": 14.333333333333334,
+      "source": "s0424.png",
+      "captureBracket": [
+        14.33098,
+        14.357249
+      ],
+      "midpointError": 0.010781166666665953
+    },
+    {
+      "frame": 431,
+      "outputTime": 14.366666666666667,
+      "source": "s0425.png",
+      "captureBracket": [
+        14.364183,
+        14.390556
+      ],
+      "midpointError": 0.010702833333333217
+    },
+    {
+      "frame": 432,
+      "outputTime": 14.4,
+      "source": "s0426.png",
+      "captureBracket": [
+        14.396984,
+        14.421145
+      ],
+      "midpointError": 0.009064499999999143
+    },
+    {
+      "frame": 433,
+      "outputTime": 14.433333333333334,
+      "source": "s0427.png",
+      "captureBracket": [
+        14.427494,
+        14.45197
+      ],
+      "midpointError": 0.0063986666666657754
+    },
+    {
+      "frame": 434,
+      "outputTime": 14.466666666666667,
+      "source": "s0428.png",
+      "captureBracket": [
+        14.45854,
+        14.488629
+      ],
+      "midpointError": 0.006917833333332624
+    },
+    {
+      "frame": 435,
+      "outputTime": 14.5,
+      "source": "s0429.png",
+      "captureBracket": [
+        14.495252,
+        14.522212
+      ],
+      "midpointError": 0.008732000000000184
+    },
+    {
+      "frame": 436,
+      "outputTime": 14.533333333333333,
+      "source": "s0430.png",
+      "captureBracket": [
+        14.529047,
+        14.552754
+      ],
+      "midpointError": 0.007567166666666125
+    },
+    {
+      "frame": 437,
+      "outputTime": 14.566666666666666,
+      "source": "s0431.png",
+      "captureBracket": [
+        14.558416,
+        14.581371
+      ],
+      "midpointError": 0.003226833333332735
+    },
+    {
+      "frame": 438,
+      "outputTime": 14.6,
+      "source": "s0432.png",
+      "captureBracket": [
+        14.586778,
+        14.610812
+      ],
+      "midpointError": 0.0012050000000005667
+    },
+    {
+      "frame": 439,
+      "outputTime": 14.633333333333333,
+      "source": "s0433.png",
+      "captureBracket": [
+        14.616697,
+        14.641208
+      ],
+      "midpointError": 0.00438083333333239
+    },
+    {
+      "frame": 440,
+      "outputTime": 14.666666666666666,
+      "source": "s0434.png",
+      "captureBracket": [
+        14.648422,
+        14.671765
+      ],
+      "midpointError": 0.006573166666665742
+    },
+    {
+      "frame": 441,
+      "outputTime": 14.7,
+      "source": "s0435.png",
+      "captureBracket": [
+        14.677788,
+        14.703189
+      ],
+      "midpointError": 0.009511499999998563
+    },
+    {
+      "frame": 442,
+      "outputTime": 14.733333333333333,
+      "source": "s0436.png",
+      "captureBracket": [
+        14.709734,
+        14.738557
+      ],
+      "midpointError": 0.009187833333333728
+    },
+    {
+      "frame": 443,
+      "outputTime": 14.766666666666667,
+      "source": "s0437.png",
+      "captureBracket": [
+        14.745267,
+        14.771456
+      ],
+      "midpointError": 0.008305166666668029
+    },
+    {
+      "frame": 444,
+      "outputTime": 14.8,
+      "source": "s0438.png",
+      "captureBracket": [
+        14.7772,
+        14.801089
+      ],
+      "midpointError": 0.010855500000001683
+    },
+    {
+      "frame": 445,
+      "outputTime": 14.833333333333334,
+      "source": "s0439.png",
+      "captureBracket": [
+        14.807184,
+        14.830924
+      ],
+      "midpointError": 0.01427933333333442
+    },
+    {
+      "frame": 446,
+      "outputTime": 14.866666666666667,
+      "source": "s0440.png",
+      "captureBracket": [
+        14.839334,
+        14.864184
+      ],
+      "midpointError": 0.014907666666667652
+    },
+    {
+      "frame": 447,
+      "outputTime": 14.9,
+      "source": "s0442.png",
+      "captureBracket": [
+        14.899196,
+        14.926097
+      ],
+      "midpointError": 0.012646500000000671
+    },
+    {
+      "frame": 448,
+      "outputTime": 14.933333333333334,
+      "source": "s0443.png",
+      "captureBracket": [
+        14.932877,
+        14.962174
+      ],
+      "midpointError": 0.014192166666665784
+    },
+    {
+      "frame": 449,
+      "outputTime": 14.966666666666667,
+      "source": "s0444.png",
+      "captureBracket": [
+        14.968049,
+        14.992142
+      ],
+      "midpointError": 0.013428833333334111
+    }
+  ]
+}

@@ -1,0 +1,1235 @@
+{
+  "stats": {
+    "sampleCount": 446,
+    "observedUntil": 15.020583,
+    "visibleFrames": 440,
+    "confidentFrames": 413,
+    "episodes": 15,
+    "uniqueStableGraphs": 45,
+    "allCandidateGraphs": 59,
+    "stableConnected": 36,
+    "stableEulerTrail": 13,
+    "stableEulerCircuit": 7,
+    "exactOldMatches": 40,
+    "repeatedFourGlyphStates": [
+      [
+        3,
+        12
+      ]
+    ]
+  },
+  "checks": {
+    "allInputsRead": true,
+    "allEdgeScoresInUnitInterval": true,
+    "allGraphsOn8x12Grid": true,
+    "handshakeLemma": true,
+    "noTopologyRepair": true,
+    "allWitnessesUnchangedUnderOnePixelShiftAndThreshold03to07": true
+  },
+  "inputManifestSha256": "64dea0f9a01b54b0a2cce2c1d70689f4bd52efa691ba34f7d6b2b0a8df18c93b",
+  "limits": [
+    "Screenshot timing brackets are not native frame PTS.",
+    "Underexposed initial frames are retained but not assigned stable episodes.",
+    "Intermediate-threshold edges are retained explicitly; no Euler or contour correction.",
+    "Grid calibrated from bright frames; geometry represents visible stroke centerlines, not the artist source code.",
+    "Topology treats every visible crossing as a joined vertex."
+  ],
+  "witnessSensitivity": [
+    {
+      "state": 1,
+      "witness": "s0024.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 2,
+      "witness": "s0038.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 3,
+      "witness": "s0072.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 4,
+      "witness": "s0101.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 5,
+      "witness": "s0131.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 6,
+      "witness": "s0161.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 7,
+      "witness": "s0187.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 8,
+      "witness": "s0223.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 9,
+      "witness": "s0253.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 10,
+      "witness": "s0283.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 11,
+      "witness": "s0313.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 12,
+      "witness": "s0338.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 13,
+      "witness": "s0374.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 14,
+      "witness": "s0400.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    },
+    {
+      "state": 15,
+      "witness": "s0430.png",
+      "measurements": [
+        {
+          "offset": [
+            0,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            -1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            1,
+            0
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            -1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        },
+        {
+          "offset": [
+            0,
+            1
+          ],
+          "changedEdgesAtThresholds": {
+            "0.3": 0,
+            "0.4": 0,
+            "0.5": 0,
+            "0.6": 0,
+            "0.7": 0
+          }
+        }
+      ]
+    }
+  ],
+  "empirical": {
+    "transitionFit": {
+      "formula": "time = intercept + period * transitionIndex",
+      "periodSeconds": 1.002259335164835,
+      "interceptSeconds": -0.005735192307688559,
+      "maximumResidualSeconds": 0.02197015384615586,
+      "timingCaveat": "Regression of screenshot bracket midpoints; approximate 1 Hz, not native-frame precision."
+    },
+    "allFourSlotsChangeAtEveryObservedTransition": true,
+    "degreeParityPatternsPerSlot": [
+      10,
+      9,
+      8,
+      7
+    ],
+    "unitSquareCycleCountRange": [
+      0,
+      12
+    ],
+    "conclusions": [
+      "The visible reconstruction lies on an 8 by 12 square-cell lattice in every slot.",
+      "Four slots update together at approximately one-second intervals.",
+      "One exact four-glyph state repeats at 2-3 and 11-12 seconds; this does not establish a global period.",
+      "Changing odd-degree vertex sets rule out a fixed graph modified ONLY by XOR of complete cycles, including unit squares.",
+      "Unit square cycles are present in many states, but no authoring algorithm is identified."
+    ],
+    "cycleXorHypothesis": {
+      "testedSlotTransitions": 56,
+      "allEvenDegreeDifferences": 5,
+      "oddDegreeDifferences": 51,
+      "interpretation": "An XOR of complete cycles has even degree at every vertex. Odd vertices in the measured symmetric difference refute a cycle-only update for that transition; even degree is necessary and sufficient for decomposition into grid face boundaries, but does not identify the authoring algorithm."
+    },
+    "lagNineStateComparisons": [
+      {
+        "fromState": 1,
+        "toState": 10,
+        "identicalSlots": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "xorCounts": [
+          14,
+          15,
+          6,
+          8
+        ]
+      },
+      {
+        "fromState": 2,
+        "toState": 11,
+        "identicalSlots": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "xorCounts": [
+          16,
+          20,
+          23,
+          26
+        ]
+      },
+      {
+        "fromState": 3,
+        "toState": 12,
+        "identicalSlots": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "xorCounts": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "fromState": 4,
+        "toState": 13,
+        "identicalSlots": [
+          false,
+          false,
+          true,
+          false
+        ],
+        "xorCounts": [
+          2,
+          4,
+          0,
+          18
+        ]
+      },
+      {
+        "fromState": 5,
+        "toState": 14,
+        "identicalSlots": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "xorCounts": [
+          28,
+          28,
+          14,
+          22
+        ]
+      },
+      {
+        "fromState": 6,
+        "toState": 15,
+        "identicalSlots": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "xorCounts": [
+          15,
+          32,
+          7,
+          23
+        ]
+      }
+    ]
+  }
+}

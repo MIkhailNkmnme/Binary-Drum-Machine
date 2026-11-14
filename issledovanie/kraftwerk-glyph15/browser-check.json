@@ -1,0 +1,41 @@
+{
+  "checked": "2026-11-14",
+  "surface": "Chrome local HTTP",
+  "states": 15,
+  "inlineGlyphs": 60,
+  "viewports": [
+    {
+      "width": 320,
+      "scrollWidth": 305
+    },
+    {
+      "width": 390,
+      "scrollWidth": 375
+    },
+    {
+      "width": 1440,
+      "scrollWidth": 1425
+    }
+  ],
+  "pageOverflow": false,
+  "firstSourceImage": {
+    "expanded": true,
+    "naturalWidth": 1337
+  },
+  "video": {
+    "duration": 15,
+    "observedPlaybackFrom": 0,
+    "observedPlaybackTo": 1.1881,
+    "error": null
+  },
+  "archiveDownload": {
+    "file": "glyph15-study.zip",
+    "completed": true,
+    "sha256": "30f4fab5fb926bd939490f4aa6ad0adb21fefcc2b6349d9301bce77797c3bd86",
+    "matchesSource": true
+  },
+  "limitations": [
+    "Physical phone and other browser engines not tested",
+    "Per-row horizontal scrolling is intentional on narrow screens"
+  ]
+}
