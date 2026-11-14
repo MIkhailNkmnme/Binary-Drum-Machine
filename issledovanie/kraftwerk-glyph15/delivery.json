@@ -1,0 +1,3345 @@
+{
+  "commit": "53403d6d34d21b2f34ec75b08e80b380938b3ce6",
+  "checkedAt": "2026-11-14T11:09:31.237Z",
+  "deployment": {
+    "id": 43588438749,
+    "url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/43588438749",
+    "status": "success"
+  },
+  "files": 476,
+  "matched": 476,
+  "rows": [
+    {
+      "path": "ЖУРНАЛ.md",
+      "status": 200,
+      "bytes": 1077458,
+      "sha256": "bb9ff9abb3fc61742fe4adf3cb972b4ca74293cd94c9f59739712514f7e61e30",
+      "match": true
+    },
+    {
+      "path": "ЗАДАЧИ.md",
+      "status": 200,
+      "bytes": 1419005,
+      "sha256": "c2a51041105e21a83a620810f47a6868918d2b4cf7ba3407b30d6432229ec8e9",
+      "match": true
+    },
+    {
+      "path": "ПРОДОЛЖИТЬ.md",
+      "status": 200,
+      "bytes": 942456,
+      "sha256": "db9ec87f994961fe3774fb96bc1826b12cd280e360407510c59bd3c5db17a76d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/analysis.json",
+      "status": 200,
+      "bytes": 2592884,
+      "sha256": "fa08dcac66df732c705a0500c09eeaf854075b781961b9b43ed59780b8cbda7f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/analyze.py",
+      "status": 200,
+      "bytes": 18776,
+      "sha256": "df707d2411af5acad49652c69d96cd850aca20e2baa7b8679ea756a9d8b6df2d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/atlas.png",
+      "status": 200,
+      "bytes": 154977,
+      "sha256": "e7cf2954ac155ed702c78476b190361b8373a39e103dc1c7c882c6c8e0301dc8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/atlas.svg",
+      "status": 200,
+      "bytes": 191458,
+      "sha256": "d8d6cf1f89aebb711a9d956e93f59af584ca3a6c2848cde36c4b1ff5fc4faca4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/browser-check.json",
+      "status": 200,
+      "bytes": 864,
+      "sha256": "735c1d458905af4253d772fca158dc314dffa89a1ce0498f64b58e30bf60e0e0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/build-excerpt.py",
+      "status": 200,
+      "bytes": 2370,
+      "sha256": "f060837848e5f2bbadbda1066b632fe64ea7fb1197a629c63896774121d2eae3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/build-page.py",
+      "status": 200,
+      "bytes": 17225,
+      "sha256": "c69addd7938ea64bb952f38f58702aa05be236e93a2ebf7eb9fd3e919cfd0101",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/bundle-check.json",
+      "status": 200,
+      "bytes": 228,
+      "sha256": "4891c1b405e6184a4b854751c82a7998e7d7add7aefdea8d3e174af1e2778a0f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0000.png",
+      "status": 200,
+      "bytes": 28564,
+      "sha256": "619587a524650135468bd3f7eee4a36d20215ce3df026af9032d4e7645104348",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0001.png",
+      "status": 200,
+      "bytes": 31327,
+      "sha256": "5dec45eb1668df3e2af8399d99c54325fbc6381fb3657c8f0b5756594d88cc4e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0002.png",
+      "status": 200,
+      "bytes": 64667,
+      "sha256": "efe41ae03720fe63240b225ba1e89846950e4e81b5aabeac1ae2815acee764c5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0003.png",
+      "status": 200,
+      "bytes": 94341,
+      "sha256": "fe1498149d1b3166de5da1cc2ad76758862de10b9e38edc3fa93fc75bec5165c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0004.png",
+      "status": 200,
+      "bytes": 94341,
+      "sha256": "fe1498149d1b3166de5da1cc2ad76758862de10b9e38edc3fa93fc75bec5165c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0005.png",
+      "status": 200,
+      "bytes": 111510,
+      "sha256": "25fd1fde883653c1dfb1ecd341150f0423936a1a932bfbc88814c25fada79033",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0006.png",
+      "status": 200,
+      "bytes": 116717,
+      "sha256": "f0d21445737ed57b660aae1f3b148e8877b251fb6c181b35a692d3b256d95465",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0007.png",
+      "status": 200,
+      "bytes": 120228,
+      "sha256": "66fecf8a0b0f5a94c17d6b6ff8b4e9f71ed3315bbf67c77a905342ce10219484",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0008.png",
+      "status": 200,
+      "bytes": 121194,
+      "sha256": "c8df47e1b1d72649fc31f591daa1b1e8f935d04d25e744d4b7e9f97d11e7b8a6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0009.png",
+      "status": 200,
+      "bytes": 129452,
+      "sha256": "4a36d17df13e7ac9029b49d6e6afc406a199ead7bd54a1e1944645064e37d3a6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0010.png",
+      "status": 200,
+      "bytes": 128754,
+      "sha256": "6c73fa7a9b4942aa2574e9c25c1bbbde9f6c8390484c5c629fb0326a6ed7e6bb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0011.png",
+      "status": 200,
+      "bytes": 143521,
+      "sha256": "4be4f699b68332cc03e024974aad382642be4b29129b41e4daf771d52020a23c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0012.png",
+      "status": 200,
+      "bytes": 141250,
+      "sha256": "afd0a4a3ac3a47e05af283e917852442c2692aa4161d94ba07a25242c168665b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0013.png",
+      "status": 200,
+      "bytes": 147492,
+      "sha256": "2317a6547a35d3f74b8d1d138303aa575ece1fbd3b531859e14ed6ad85f8f243",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0014.png",
+      "status": 200,
+      "bytes": 150220,
+      "sha256": "3b067a9a7addbb6082edc56127da0ff198925c31cacfb66fbd14bcc29a7888c9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0015.png",
+      "status": 200,
+      "bytes": 146354,
+      "sha256": "c3c1b278ce397384dfd9703908e4d1478e211f22e81131a27bdc7abbdda04dd6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0016.png",
+      "status": 200,
+      "bytes": 153896,
+      "sha256": "415ef069214da2ef12524ca26ca50a962cbb2272160a784133a5a6a2dbf9d207",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0017.png",
+      "status": 200,
+      "bytes": 150967,
+      "sha256": "abc5e2b086ef49b56c5242e364b6b7c25cd17473c6697370e937c166455a192a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0018.png",
+      "status": 200,
+      "bytes": 154272,
+      "sha256": "e10bd438caeac68d803537f255618b86dcf0c94f3e8b237ff0b4616128239146",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0019.png",
+      "status": 200,
+      "bytes": 160130,
+      "sha256": "b3234ba3d75586bbb906040f7d52caa0417b299ad540b6c53126dceee7ff961b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0020.png",
+      "status": 200,
+      "bytes": 168535,
+      "sha256": "fc0c62ae05b555aa0252ab7718e3e03bef8a79a726456d93f4dc1e1524a86dcb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0021.png",
+      "status": 200,
+      "bytes": 162659,
+      "sha256": "0989c26870f60137c29ab66733695aea951ca9f4a526d65ceddd0cbb541d04c5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0022.png",
+      "status": 200,
+      "bytes": 170342,
+      "sha256": "f60fa9a87c82ca2f36d9664ec4087432aa9a27a75b41407582faf96f4bb7f71d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0023.png",
+      "status": 200,
+      "bytes": 175393,
+      "sha256": "211e28076c3ac60c1d5ee2b734b3f6d756a10fe29cfb0d680550e9ff1bc167e8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0024.png",
+      "status": 200,
+      "bytes": 174426,
+      "sha256": "e6285a35cc23d350bb69e581b7892aa46cbd1729513f84fdc2ed0539c6c43ea7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0025.png",
+      "status": 200,
+      "bytes": 178080,
+      "sha256": "636b2645a400b9ec0a5301dd79ebceb62738c5ef1af2e5518e685ca77dcc0f31",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0026.png",
+      "status": 200,
+      "bytes": 173721,
+      "sha256": "1d632295bdabc17d6455a4beae02d9ec4eed63d3c2b638dd670e08d804960b1e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0027.png",
+      "status": 200,
+      "bytes": 179907,
+      "sha256": "2abe30a39e110f165d0ccc6c55513dc44d0cad50c76c2f1dc98f0d668d8055a8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0028.png",
+      "status": 200,
+      "bytes": 183084,
+      "sha256": "acf0746ef48dc83338f4682c8eb86676fb4d8d412e0d4362b5695486ada5f876",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0029.png",
+      "status": 200,
+      "bytes": 165574,
+      "sha256": "e32557e7859a59417d81da774e14ba71db87d5e4098a52700eae71b9015f885f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0030.png",
+      "status": 200,
+      "bytes": 170192,
+      "sha256": "d7b447de75e4f8e5b9c89b1976ae753c9d33bf8f47009f7aab2c0387634d564e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0031.png",
+      "status": 200,
+      "bytes": 167744,
+      "sha256": "814de0dcc36184bcad05682b9e6c84d5066c908e7a8ec29fb5628d45e99554ae",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0032.png",
+      "status": 200,
+      "bytes": 167241,
+      "sha256": "801c013f0fc0a1c474d37e495a4b5002eec91884c92e131bbe488e11c6bb8a89",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0033.png",
+      "status": 200,
+      "bytes": 170127,
+      "sha256": "3c7e06a67b6b8413b203851b3e6cd8d383d263f3496d4bfc67edba1004d8f5ab",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0034.png",
+      "status": 200,
+      "bytes": 177044,
+      "sha256": "da5c03cd12e0743c1546a7bf62803e3f1b6fa462170a5594117dad34c736a057",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0035.png",
+      "status": 200,
+      "bytes": 172542,
+      "sha256": "213a02cbfd87ee242d84c21e8cebd27f8afed1ac07755981ed39d4d7d8adef36",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0036.png",
+      "status": 200,
+      "bytes": 173393,
+      "sha256": "a8a9e252c1778307d3ec060916a4561c8bc0b7d87c5b2dc0bdbb2b86c6fe3f74",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0037.png",
+      "status": 200,
+      "bytes": 171735,
+      "sha256": "e6e2c6205aed9db530fbc22198d8192bdf58f1f223fab862f22c1f241544a4e0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0038.png",
+      "status": 200,
+      "bytes": 175462,
+      "sha256": "28471dbe3b489ce86c213d6d14dc9117ec49eeba50831cbaeed2f077961d387b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0039.png",
+      "status": 200,
+      "bytes": 177154,
+      "sha256": "5fbb91f6545bedea90855799fa9c013abedb5e3b13ccca5c6cf4dc0650b23f78",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0040.png",
+      "status": 200,
+      "bytes": 176588,
+      "sha256": "95b0b2b6cd4fde47a1acedad6f5be6d17e50ef2597e0ae9f3c6211e128fce93d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0041.png",
+      "status": 200,
+      "bytes": 175593,
+      "sha256": "22cefdc2c7b545e6dfc234171a6b8ca7c6a594ca1df82d9fdcef49f727a2914d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0042.png",
+      "status": 200,
+      "bytes": 185395,
+      "sha256": "fa4dd2f1ddaff65c7b89196183290bed56c6d937d50b9793119f742758f23405",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0043.png",
+      "status": 200,
+      "bytes": 181402,
+      "sha256": "5dbcad1fa8ca081f80110d9e28ac574b018493c8306df96ba05da20574eb03be",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0044.png",
+      "status": 200,
+      "bytes": 182506,
+      "sha256": "724328f047390aea3c4cd619305f94237f9290b1d4aed34980b3ba35f8527761",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0045.png",
+      "status": 200,
+      "bytes": 180388,
+      "sha256": "9508c14479a272a18cea121192f60063f7003fc84be4a511c972e6b8e59935d1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0046.png",
+      "status": 200,
+      "bytes": 184934,
+      "sha256": "b866af7317dc1c2e8bc28a669ec2b2572564ed72ff1fe485ba26ac99fb3a0bcb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0047.png",
+      "status": 200,
+      "bytes": 182085,
+      "sha256": "c8b9a42cb33b211b12f6e80f74b6fada2d859d5f7a604eaba28a157669806502",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0048.png",
+      "status": 200,
+      "bytes": 184774,
+      "sha256": "e8f30b27427fc63a8dbd1fc966e8d36e173effeb978ee0ca358f2251be9bdc53",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0049.png",
+      "status": 200,
+      "bytes": 196389,
+      "sha256": "a426bae4fe70c21a9eb150e600a7f93bbe89dc974b1d9db6724ff3dbb046f660",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0050.png",
+      "status": 200,
+      "bytes": 196978,
+      "sha256": "e8725cad24e8787e6c1bcb0a4ea89e05c377274c7eff05a947ca1e4b75a85727",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0051.png",
+      "status": 200,
+      "bytes": 201251,
+      "sha256": "48fe9e37c43a88f0abf84b7126f24c9918cf8a513eb38e35470064ee1a72436a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0052.png",
+      "status": 200,
+      "bytes": 200324,
+      "sha256": "1171d2e4ea293dc04857eba785fc3c219c966b6fb183ac0ca983cf0ad91bad24",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0053.png",
+      "status": 200,
+      "bytes": 203228,
+      "sha256": "a13d964b131f96274ac797117aabc4c5dd6ecfdba67060f5c04bfc348bcc444d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0054.png",
+      "status": 200,
+      "bytes": 191287,
+      "sha256": "e8643381af5eea36cce3919fd8aff7226ed9b405f23f446cbf9261dbdc6d096f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0055.png",
+      "status": 200,
+      "bytes": 194576,
+      "sha256": "b9a4d5b361429bb50f4813b507e208eb872c51581a07c0d43fc91ac75f10afcc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0056.png",
+      "status": 200,
+      "bytes": 197930,
+      "sha256": "db2657ac2ab163a62f093123557b2349fcb70ee350b11fccb7cce17dd131ec86",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0057.png",
+      "status": 200,
+      "bytes": 196310,
+      "sha256": "d8386b80029b24ac7e45022226350cf8c7dad5a8339090bdddf73ee9172c8eaf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0058.png",
+      "status": 200,
+      "bytes": 361181,
+      "sha256": "d5f1a84fc9c1b82316348d6f4f3344b022b9c5021d5c838dde725b638cd659b5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0059.png",
+      "status": 200,
+      "bytes": 207397,
+      "sha256": "41ca599f56507c88ce76a53a123fa5dd337fec44642d26c4aaa395ebd6282797",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0060.png",
+      "status": 200,
+      "bytes": 209165,
+      "sha256": "23e657ddedd0398f4f324d4889dc576f33525ee664ce3be4942e150a4aaf2962",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0061.png",
+      "status": 200,
+      "bytes": 211779,
+      "sha256": "8772b19b9adbca0ed0035f9a4e48bf88cc6271d7964c9e41fe0ddc7941fd007e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0062.png",
+      "status": 200,
+      "bytes": 205744,
+      "sha256": "572e89f6992f37c4e4261ea9ff4c11fc78ae032df8fd80647e0cc32365e0e751",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0063.png",
+      "status": 200,
+      "bytes": 214228,
+      "sha256": "6c1d7342d0b684cfe48a5bf37e8fd0251a14e756a186ec7c30e67cb4919510b4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0064.png",
+      "status": 200,
+      "bytes": 210422,
+      "sha256": "6959aaba8f1162b63fe05169dbdaefa3e34b5608510315f48c35a84a33898a9c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0065.png",
+      "status": 200,
+      "bytes": 209416,
+      "sha256": "34a190f260f83b4c2534024d69df75ad34ae9026d9d374bfaf74fa9ba9a2b053",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0066.png",
+      "status": 200,
+      "bytes": 220125,
+      "sha256": "8fa9b0171fee2548a6c0603299c41394c66222f11e04410d8b96966e90ea2a69",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0067.png",
+      "status": 200,
+      "bytes": 223135,
+      "sha256": "08c925984979bfe5941eb112633a40b790a70ed4126f013158e56afea09d0eef",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0068.png",
+      "status": 200,
+      "bytes": 209985,
+      "sha256": "a8ac9d9fd1136522cc7add576e0e6886b54769b41e6e9f54d3360e5effd4b5f2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0069.png",
+      "status": 200,
+      "bytes": 213265,
+      "sha256": "0e7c536c624902b5122275c308a8c2fda9ddd795e9b88727746f9790209e4080",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0070.png",
+      "status": 200,
+      "bytes": 213365,
+      "sha256": "337623f8c3ef67f8653ce13906e0d9151f2bea59ebea0a0b670a849f092159a5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0071.png",
+      "status": 200,
+      "bytes": 214670,
+      "sha256": "682e987ba86e0ee480113055d2506728c468facb3b836963da6faa972ee5b0ee",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0072.png",
+      "status": 200,
+      "bytes": 225343,
+      "sha256": "759655cae55dee3d42bad942abf16e256d702822d3386702e9b0c6f37180e4c9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0073.png",
+      "status": 200,
+      "bytes": 225343,
+      "sha256": "cc5eeb200fb07a9919e2614fcad3059e24fbe6f089fca2aea324156a94f9f00c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0074.png",
+      "status": 200,
+      "bytes": 218586,
+      "sha256": "82d46267d0a12a1ec59e9bc7808713c6b977a1c9767964fafb7fc9f103bca2e0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0075.png",
+      "status": 200,
+      "bytes": 220819,
+      "sha256": "ddbc8c303f5f6e77e61922033bb05c2c7e114738746c6c1780bc1096c3c7b2d0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0076.png",
+      "status": 200,
+      "bytes": 220404,
+      "sha256": "1f6258c0c4918bf46926947a76cd802026a4e7c9db8bd32988da5a27eee6bbc0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0077.png",
+      "status": 200,
+      "bytes": 220939,
+      "sha256": "4afeb4b08f4e956ebfbedf5e5ae3bb3580dc95242b358633ecdb0b1f85e3ba95",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0078.png",
+      "status": 200,
+      "bytes": 219397,
+      "sha256": "01e78e1473a6c414bb8d060239bd615181cd8c65f954384e796c59e5164448cc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0079.png",
+      "status": 200,
+      "bytes": 215495,
+      "sha256": "349d0648e53b7a8293e77f3cd2d5a7588962b7db7d48abf6c906775ec8387192",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0080.png",
+      "status": 200,
+      "bytes": 219788,
+      "sha256": "4eacee584fd276da4a7af5f4c608aba9d151997a9837f95a528049c1097753b5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0081.png",
+      "status": 200,
+      "bytes": 223276,
+      "sha256": "9b528dd4938e13b61398374a1f3cd071935d15f4fee1ee8db2674341e72438f9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0082.png",
+      "status": 200,
+      "bytes": 224986,
+      "sha256": "4d4a294fb16053d6b15ad1dce1fe04cbff7bfddbf9b8b9c666b6619825840008",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0083.png",
+      "status": 200,
+      "bytes": 221097,
+      "sha256": "26504b26559b8a5f1b83911d071c80b5a294071cc35f68db5a8faacfac538ed2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0084.png",
+      "status": 200,
+      "bytes": 223366,
+      "sha256": "9293b2f60c59b98905339cc751ff30916bdb216a964d6cbc159ed7942be9a01f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0085.png",
+      "status": 200,
+      "bytes": 227697,
+      "sha256": "8dccf75ca4e2465d2f4706c2f9dd8347fddc7defdec4e732362d83f812be76d2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0086.png",
+      "status": 200,
+      "bytes": 224561,
+      "sha256": "d481b209083f4f568d777e53f55155832636cd59f0f81372bedf36b45fdf4c50",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0087.png",
+      "status": 200,
+      "bytes": 202527,
+      "sha256": "ebddc038168f95fd5a272e5c50f01a141b25e33367149497969d013dca3d2f63",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0088.png",
+      "status": 200,
+      "bytes": 204237,
+      "sha256": "78634d06eb5e9565b844b772594e64fcd2901fef898d9a353c9ed431b8d0083e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0089.png",
+      "status": 200,
+      "bytes": 204275,
+      "sha256": "7fbb08f56df1e063b00cfb8e7ee8d6d974d89ae97c77ab757d45e270dafecabb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0090.png",
+      "status": 200,
+      "bytes": 204322,
+      "sha256": "e8e1e01b74966767434214aa9e60a20f8480f69f54e82261eb3d4b56a3f4f86f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0091.png",
+      "status": 200,
+      "bytes": 204341,
+      "sha256": "57de10c3c101eaf1d422d7ca598a80a8501a2e369d3717e9c0e056c631c637d7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0092.png",
+      "status": 200,
+      "bytes": 203821,
+      "sha256": "272324fad55d2ed850e7da6ab4287629f9462d420c267b308b26fa4a93784939",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0093.png",
+      "status": 200,
+      "bytes": 203678,
+      "sha256": "23648efc6f372d5e665ab6ddd4245404a756e3dc64bb10095d2ef8836a5d3e31",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0094.png",
+      "status": 200,
+      "bytes": 203682,
+      "sha256": "3ce24785517e52ae466bc9dc1b0c73fb02cee06482568a33e241e81009e36eb5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0095.png",
+      "status": 200,
+      "bytes": 203682,
+      "sha256": "3ce24785517e52ae466bc9dc1b0c73fb02cee06482568a33e241e81009e36eb5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0096.png",
+      "status": 200,
+      "bytes": 203854,
+      "sha256": "4650ed3abc8c97b29cb46af324f71ce1dbfdd437fe415c152007b5821eaf859c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0097.png",
+      "status": 200,
+      "bytes": 203803,
+      "sha256": "9c9c67951335e559ce3deca047cfc9aa3ecade7a3b8809531d6570d81d96d050",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0098.png",
+      "status": 200,
+      "bytes": 203748,
+      "sha256": "54bd4542eb107c1368bb952efde1ecfa473ce0b3d6000f063a5d764fc2919421",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0099.png",
+      "status": 200,
+      "bytes": 203748,
+      "sha256": "54bd4542eb107c1368bb952efde1ecfa473ce0b3d6000f063a5d764fc2919421",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0100.png",
+      "status": 200,
+      "bytes": 203388,
+      "sha256": "b90c4b1aa2ffeed963d6bc10693bafd7f6bb6e281b06aab6518813530dc0c613",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0101.png",
+      "status": 200,
+      "bytes": 203610,
+      "sha256": "b4f29b15e39e282e649f444fe59b27b972d248aa0e27f8b38419377c24a7c872",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0102.png",
+      "status": 200,
+      "bytes": 203359,
+      "sha256": "92b880541ed6991eaf2e760ad2a72fc29662e4bcd3c2e35ea775a6d4d7743054",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0103.png",
+      "status": 200,
+      "bytes": 203497,
+      "sha256": "5ab39c705f086d8eacf7cb2b37b93d059052fb71eb0b01dce6da8f89a6047f50",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0104.png",
+      "status": 200,
+      "bytes": 203305,
+      "sha256": "3ce25d15d83852bf74c3db6d41a1776c415756445f233ed338675615ac1d2bce",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0105.png",
+      "status": 200,
+      "bytes": 203653,
+      "sha256": "8ca70d8123fb3c586d3a6d7d10811253cbe220b5a6d1afb91f9c8816e16c479f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0106.png",
+      "status": 200,
+      "bytes": 203597,
+      "sha256": "97b18668c7d3d4e82140fcdeed45360106bed5d74ca0c5b44ea72d3d7c1f597c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0107.png",
+      "status": 200,
+      "bytes": 203597,
+      "sha256": "97b18668c7d3d4e82140fcdeed45360106bed5d74ca0c5b44ea72d3d7c1f597c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0108.png",
+      "status": 200,
+      "bytes": 203197,
+      "sha256": "885907d05e3ca350ec3429bb6112cdef6012bf7beb978d49a4aa5952808164fc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0109.png",
+      "status": 200,
+      "bytes": 203740,
+      "sha256": "7323a61803fedea0e80bc2cf3f05ca361fb8c0c37407469f69b0995077749618",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0110.png",
+      "status": 200,
+      "bytes": 203300,
+      "sha256": "ebfd40e58b2a5c731d5c36a6855420f6aadb5504d269d69db5db80521a0bd212",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0111.png",
+      "status": 200,
+      "bytes": 203060,
+      "sha256": "3f95911088b6a20f3b0fbf5d5fdd01434ac261e8ecae2533c51093c0cffd85d9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0112.png",
+      "status": 200,
+      "bytes": 203425,
+      "sha256": "9bc3ea08b2f3079d312a26f290851f99ed192fab125abdfd0c845dcb8f86f604",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0113.png",
+      "status": 200,
+      "bytes": 203180,
+      "sha256": "299fd18968cf524075733ab43854c97aa77f32a6f0bf4182fdb1d7a061d05822",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0114.png",
+      "status": 200,
+      "bytes": 203165,
+      "sha256": "4fa7c300950e69d6a4399a2603b2758769579c8bb1b09e37bae9ee1f798f1674",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0115.png",
+      "status": 200,
+      "bytes": 203165,
+      "sha256": "4fa7c300950e69d6a4399a2603b2758769579c8bb1b09e37bae9ee1f798f1674",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0116.png",
+      "status": 200,
+      "bytes": 202932,
+      "sha256": "78feb4cbf4b2de4f91a0a7818ecdc281827d73786286f47c9ff9ac85a0bb9c05",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0117.png",
+      "status": 200,
+      "bytes": 395923,
+      "sha256": "70a96ae43358757e6bab4ccf0ea1a60f4f05b35695b0a16bac7ef22728af99b6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0118.png",
+      "status": 200,
+      "bytes": 202615,
+      "sha256": "1696142e3df42b0fd696cb2002260ffe54a782a04db1db8f410760ac000cb2d1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0119.png",
+      "status": 200,
+      "bytes": 202432,
+      "sha256": "e66cdeee10e513b8d9bede4cc99ae598ff0c09d373a7cdeb2a823dafdf6e957c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0120.png",
+      "status": 200,
+      "bytes": 202667,
+      "sha256": "c91f6f19c34065bccd7794d96c460aec9b8ba9de6ca626c945e7a5eb34572fc4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0121.png",
+      "status": 200,
+      "bytes": 202625,
+      "sha256": "4b9952729c0bf28c53084fd8bce21e8e8014a765fe3c666e501a55fa68fb094b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0122.png",
+      "status": 200,
+      "bytes": 202670,
+      "sha256": "534272d9fa00fec8d87abc6293fa6a7867a6d87dc7f225ac7b8c34954d05572f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0123.png",
+      "status": 200,
+      "bytes": 202441,
+      "sha256": "33486585d37f4ad2da5275259ddc3cf72b4725a3e7c4f137e3dd5a938cf9b6a4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0124.png",
+      "status": 200,
+      "bytes": 202450,
+      "sha256": "c6a4a1a194958c403f03112fedc58e4c75890554139b132f9ba98fca7709c60c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0125.png",
+      "status": 200,
+      "bytes": 202267,
+      "sha256": "c9b008f569e113549e1d74742288fa7b242d516799fd0eac84a890af8d006895",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0126.png",
+      "status": 200,
+      "bytes": 202291,
+      "sha256": "da1a149609b22805586656d5d7f09ce1adfc60cb897bbba186be2f1c60b76627",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0127.png",
+      "status": 200,
+      "bytes": 202421,
+      "sha256": "cc875a6db195a5ff9ee2c0e21d121dae992e37955c3c46d75f717cf1c1be37ab",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0128.png",
+      "status": 200,
+      "bytes": 202373,
+      "sha256": "54195278235234fa3a8f081eac59fe7b18ef0143c9931b3b2bfef9dccb8476bf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0129.png",
+      "status": 200,
+      "bytes": 202402,
+      "sha256": "73b9ae1a4e6c2fa5280628b8a1f05d91042af97242d43751fa2e574ba1fd9460",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0130.png",
+      "status": 200,
+      "bytes": 202363,
+      "sha256": "caba2ed630ee58f7d10af425319b7e378cec53886c776a61cf9405a4dee46102",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0131.png",
+      "status": 200,
+      "bytes": 202285,
+      "sha256": "c16eea9872aa3101e158c1d7f59f03d9d6e6df88505b0f26027feb3412c8f50a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0132.png",
+      "status": 200,
+      "bytes": 202370,
+      "sha256": "faa9b3b46760b2d9049e2d4dc0633147f188c56ba8de8b2979e5dde91039bb7a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0133.png",
+      "status": 200,
+      "bytes": 202398,
+      "sha256": "09f953d5efd7e76f0bed046e870792a8dc206ed25a72df8dd4455addc2e534e4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0134.png",
+      "status": 200,
+      "bytes": 202410,
+      "sha256": "99aa51bcdd043c403806a9b45a77bc61a138835674b3747ce06febd05bdce1c2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0135.png",
+      "status": 200,
+      "bytes": 202253,
+      "sha256": "75323dcba5f200bfb356cf2aa2d303cb8237e0fe915a4b8580d130459d5df0cd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0136.png",
+      "status": 200,
+      "bytes": 202285,
+      "sha256": "e8806e3681a04cc72b7e68d339494ba8a177fdca58353c2872dbe916aac310f9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0137.png",
+      "status": 200,
+      "bytes": 202268,
+      "sha256": "a4f4031c3e25f7e341dfd5af1fdf286ae66a799aa7aa39082d4b49f47d2fe434",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0138.png",
+      "status": 200,
+      "bytes": 202484,
+      "sha256": "775f5b1e13a10ff87e79d7bd0a1f67d913823b35b9260640b9be4469cea15f06",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0139.png",
+      "status": 200,
+      "bytes": 202429,
+      "sha256": "658a64490cba1cb0d86e3f3b7931a84cca74263aaf32784b8816735368ae3184",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0140.png",
+      "status": 200,
+      "bytes": 202433,
+      "sha256": "f214be2a7d48f462ed9829284342e579f2f30e61cfb0fb32d3099bda5998455f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0141.png",
+      "status": 200,
+      "bytes": 202433,
+      "sha256": "f214be2a7d48f462ed9829284342e579f2f30e61cfb0fb32d3099bda5998455f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0142.png",
+      "status": 200,
+      "bytes": 204080,
+      "sha256": "2b4c2576d39c4e1471f8f687fe3b95b2ba834dc5cc6c90af68b48f73ba6b788f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0143.png",
+      "status": 200,
+      "bytes": 207928,
+      "sha256": "6c11c8435ab2e839f8e6a12fa2925ddb8163c66d9425e38f69dc83fb8810fdce",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0144.png",
+      "status": 200,
+      "bytes": 211638,
+      "sha256": "d26ec135fe3760235b8e9d736d4d9edfe772d77d5dc4e4fda377c86fbfdf93cf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0145.png",
+      "status": 200,
+      "bytes": 214253,
+      "sha256": "6abb44ea2c3a9088fa8d6416736905fd9f2868d9b4ccbae03606fc4477005ea5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0146.png",
+      "status": 200,
+      "bytes": 214960,
+      "sha256": "f4377626924cd8634888a8d06a17849f8d50bf132e2ffef7c611dd3d5cbc1715",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0147.png",
+      "status": 200,
+      "bytes": 213866,
+      "sha256": "e6bfd31a1ad5f286356027c7e6b0bb91688b8a71415af9fd8bcc78e01300e128",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0148.png",
+      "status": 200,
+      "bytes": 215457,
+      "sha256": "784eb60703de2aa073dd302559655b838fae7ddf2b976318824c918102442e38",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0149.png",
+      "status": 200,
+      "bytes": 216745,
+      "sha256": "f4c0a38b33ab135d5c1c172ef7a9393c9a40897e28351d6a138acc6db2e6abec",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0150.png",
+      "status": 200,
+      "bytes": 219027,
+      "sha256": "1e87961de4c5c1fa3f5fbf7540d3ebd1da07a11516b00948d3a73988d8186f95",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0151.png",
+      "status": 200,
+      "bytes": 219596,
+      "sha256": "2b216a4f180faa0989f11def884fd5e348a57994075d4c92b8ebce2844eabd20",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0152.png",
+      "status": 200,
+      "bytes": 218356,
+      "sha256": "fd4019ecceb2ec145c3949d43799b73e13fc582b6d7c28672d43ce5b572cbe5a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0153.png",
+      "status": 200,
+      "bytes": 219405,
+      "sha256": "88d312294bcfd7448915d06389062058887ed94c0cf21c6b740994d6f83b6879",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0154.png",
+      "status": 200,
+      "bytes": 200216,
+      "sha256": "734379b4abdd0d9d8f334529b7035e06e82ccc88b0ad89076dc37a02dd68c7cb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0155.png",
+      "status": 200,
+      "bytes": 200885,
+      "sha256": "b7902a31c0ea54364dab37cddbe2ba5cb94858f19e494a7ecb8c1bae71881c04",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0156.png",
+      "status": 200,
+      "bytes": 203902,
+      "sha256": "88a20e2fc0fd1beca1019d0317bac98f6f2038689b959adbe0958d4989429a31",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0157.png",
+      "status": 200,
+      "bytes": 204341,
+      "sha256": "3fca5c48943b43df196530e67c9240b47d8c0645feeffb1fb5c8a6b5b1c8b3e5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0158.png",
+      "status": 200,
+      "bytes": 205558,
+      "sha256": "7fc0a51818a73d34f6c18cb937e023d4cd0137e90e805224d37dc3f2cbb6c839",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0159.png",
+      "status": 200,
+      "bytes": 204565,
+      "sha256": "55640a2e6f367a88ff72b1c179be8ba8dff253d155fb764344c1b91eb58d7a11",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0160.png",
+      "status": 200,
+      "bytes": 209222,
+      "sha256": "8fd2aec805fb3af8f76ced45a88d201e21f692e6b523e6b66e3f0c2d88873b75",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0161.png",
+      "status": 200,
+      "bytes": 203994,
+      "sha256": "5160370b510fe87038a36b49392b72a022f3a7471feaa6ff18fd520bed868f75",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0162.png",
+      "status": 200,
+      "bytes": 204903,
+      "sha256": "cc2fcb751357345c1c21cb64bb3caa3e245a1a534fdad09d29ba527b6934d1a1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0163.png",
+      "status": 200,
+      "bytes": 208188,
+      "sha256": "ef3a9a0c7db12a9ffc598e4d0e27eef198220c1338b4b5910eb8f1642b7c6cf1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0164.png",
+      "status": 200,
+      "bytes": 211417,
+      "sha256": "aae1db5def25a2d54aeb34a96dd228112cc6e15f7ae0030ffbccc582ee64bdca",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0165.png",
+      "status": 200,
+      "bytes": 205906,
+      "sha256": "c71b31e8a89eaf4d884b2e1d718ef6ab61a0ca90b19d1da156a02932bcc829f3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0166.png",
+      "status": 200,
+      "bytes": 213242,
+      "sha256": "9b2844e6b022d255da30a2ec3957f38e2e2ebf02bcfb209d795989a7123283e3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0167.png",
+      "status": 200,
+      "bytes": 209003,
+      "sha256": "e4554ed6330398d3858403c10e699d0b06feae44088e51ccbffdbfd740b95498",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0168.png",
+      "status": 200,
+      "bytes": 211557,
+      "sha256": "b665091d05425843289348ccdc3baf4fc1a4af2d782341b8049c2fd20c8aa1f0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0169.png",
+      "status": 200,
+      "bytes": 209270,
+      "sha256": "2bd121ccea42959764eff2433edf671fccf1d7f3a47345033aa516c15dc471e7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0170.png",
+      "status": 200,
+      "bytes": 213420,
+      "sha256": "ca6789b43a8a652f0cc0d435936c450cc7e8b222e1baea25881c9fdff1cbeacf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0171.png",
+      "status": 200,
+      "bytes": 211049,
+      "sha256": "fd115e2e2de3c1403a7a13cba4b608a8566fd76d27a813dfac062d1ed82ce5ab",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0172.png",
+      "status": 200,
+      "bytes": 217599,
+      "sha256": "fbbf60cdeba7d3d3d3238cdb5b6a5b6a79fe5b6eb5d04e60356e770ebe57d386",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0173.png",
+      "status": 200,
+      "bytes": 217942,
+      "sha256": "adb4b7b649f73c9950b3cea7ad6e0addd188506022eeedf000544153943377d4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0174.png",
+      "status": 200,
+      "bytes": 214512,
+      "sha256": "2ded58c38c5c8202567a4d88d80cc7b18c6a653ce3f0d4ead63a0f6a440195ee",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0175.png",
+      "status": 200,
+      "bytes": 213697,
+      "sha256": "5098061e40efc9e4c70be0feb82bb1e926fe46749db1a27a9119c50d5d8832e5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0176.png",
+      "status": 200,
+      "bytes": 215669,
+      "sha256": "22ea311fb95b4f00d678cc7b5ae2ceded1f36af50d27e237204ccaaa64ceae5f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0177.png",
+      "status": 200,
+      "bytes": 426021,
+      "sha256": "64058b2683b270c8fbca4905b0ca630f748c45b7a703364917cf71a2979946a9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0178.png",
+      "status": 200,
+      "bytes": 214796,
+      "sha256": "8d8a79853cd344d9652516400b692301324c395a62a27eee768e37e24ac18814",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0179.png",
+      "status": 200,
+      "bytes": 215712,
+      "sha256": "058f407bb39df2dd6cb57e35590da2a7e02e4a117469a94388a3d1ac1a043023",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0180.png",
+      "status": 200,
+      "bytes": 211554,
+      "sha256": "d3b82cbef24bb3b03152047426aa2411bb6b1cccdc7d423ef47024b12097bf43",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0181.png",
+      "status": 200,
+      "bytes": 216555,
+      "sha256": "4ff1c486c41e5da0601eae1c59fd453f795df43b8b44e70bc0aff464d50b2175",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0182.png",
+      "status": 200,
+      "bytes": 212146,
+      "sha256": "0a8903975fefc070ec485afd9bca9355747f6216582e1792130b3ebf5a58c928",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0183.png",
+      "status": 200,
+      "bytes": 215380,
+      "sha256": "c785e2755d3144b3f1b864a22ba32ce6b0672696154c53ed2d4e4abe1705c641",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0184.png",
+      "status": 200,
+      "bytes": 213507,
+      "sha256": "2f86b3723f9f66feb7891839a9afe960ecf1a6524c6f6cf8596ffef994fc5e30",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0185.png",
+      "status": 200,
+      "bytes": 213939,
+      "sha256": "ccbd1ba3e26edf64876168bfb2db009359df39a006410fd541c33fa05bed1d48",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0186.png",
+      "status": 200,
+      "bytes": 214217,
+      "sha256": "88c44abe4cd7b5ca02abfdb58a83d9954db3e06d70b2532812181b1d0dc0daba",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0187.png",
+      "status": 200,
+      "bytes": 219578,
+      "sha256": "6909086b4f75183821e258482eaf609fda72cf8815461c1c967b4ec6bece0bf0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0188.png",
+      "status": 200,
+      "bytes": 214170,
+      "sha256": "e890747544c246181b89973c3fd212a1097a3fc5c3c49b5073db6ad393a33c1c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0189.png",
+      "status": 200,
+      "bytes": 217119,
+      "sha256": "d3e2d4df29f01afcabc1379f0f6578716d8deb18521130259f9a5cf202812d3a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0190.png",
+      "status": 200,
+      "bytes": 219763,
+      "sha256": "ddca24d86f35574eb0fe2682346477d9dba800d96c78fd3dd50d80ed5428e54c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0191.png",
+      "status": 200,
+      "bytes": 230432,
+      "sha256": "68b30b3e10093672e3e4efc635787aff132791e6b9dd02bbdbb268e0e83d492d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0192.png",
+      "status": 200,
+      "bytes": 230435,
+      "sha256": "ab0ff7e8fcbcb32df5505b99f24ee4eda9502135d817a9ac40b00accc7f7d392",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0193.png",
+      "status": 200,
+      "bytes": 238954,
+      "sha256": "522b4059779fba3c0b029f8960bb7a6d34df1ae3a861822327a41fbbbb743139",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0194.png",
+      "status": 200,
+      "bytes": 237389,
+      "sha256": "49b1a6fd09ce34b2c655a7db35dfd6f11f8990a487fa42cf7949d0d4fc7c1db4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0195.png",
+      "status": 200,
+      "bytes": 247426,
+      "sha256": "89c33ee3b80f76a9fcbf4d108124f8ad0577f09d09a19bdc42c9055acc38b9fd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0196.png",
+      "status": 200,
+      "bytes": 246034,
+      "sha256": "b1bfbe9b5590d17f18caf3cdeb8acdc5f7fa3a0e54f61a8b4bcf1c8cb026c415",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0197.png",
+      "status": 200,
+      "bytes": 248640,
+      "sha256": "952087a4708dd1f27fcac2806aa006c36aae6f0777eec10fd3ce9a03f865f187",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0198.png",
+      "status": 200,
+      "bytes": 248004,
+      "sha256": "c0a1500e056eee08fe71edead8f8c3296a4fc86379da6fa9264fd5cb93084904",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0199.png",
+      "status": 200,
+      "bytes": 258927,
+      "sha256": "a4018a68eaec5eca773d52b98542962fefbc1e1d68ea22df2e14d5f7982d91cb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0200.png",
+      "status": 200,
+      "bytes": 265518,
+      "sha256": "1a3aabdeb8c48386b760134d629d20edac2c4e9a9ce37f861c57ca61d7e2c995",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0201.png",
+      "status": 200,
+      "bytes": 265558,
+      "sha256": "ac12fd0a988025ab78f3c2f45fec38cda48360b5bb1d0d59e337777044fb7ee1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0202.png",
+      "status": 200,
+      "bytes": 266117,
+      "sha256": "5e41b4c7aab81dd1879c109e12f6f1373b073778c003a0951c15473a7a669171",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0203.png",
+      "status": 200,
+      "bytes": 259416,
+      "sha256": "4376a39f1f995fa8e9620cecefbb3f01044c975952181ea4c56e2d2d0569ccff",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0204.png",
+      "status": 200,
+      "bytes": 249749,
+      "sha256": "48e5f27e8d7661b7e78f6a909fcc1ac5a97f8b13e9316fb38533323895a0001e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0205.png",
+      "status": 200,
+      "bytes": 254269,
+      "sha256": "66183f8236692c26d6723a4cb563937a26a6530ce6d273a118e130d6eea50eb9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0206.png",
+      "status": 200,
+      "bytes": 253520,
+      "sha256": "61ea5cd48698be4ad041bc794a0ae8d0bf79936f5df06fe9196ddc19b5a9ec25",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0207.png",
+      "status": 200,
+      "bytes": 253255,
+      "sha256": "218e0a36beb8b38eefb01eb42c5369ee0a68da656a155c3a8fa713b48a634084",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0208.png",
+      "status": 200,
+      "bytes": 262623,
+      "sha256": "7a2b88c05413ec9325dc8ffd21b5aeaca4cec898120280a520119c538733e4db",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0209.png",
+      "status": 200,
+      "bytes": 262623,
+      "sha256": "7a2b88c05413ec9325dc8ffd21b5aeaca4cec898120280a520119c538733e4db",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0210.png",
+      "status": 200,
+      "bytes": 259927,
+      "sha256": "54821fdb0f1d9426cdc813ae9ab7250cd14f886a3fb31ead55bb0b7ff381f2b7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0211.png",
+      "status": 200,
+      "bytes": 262011,
+      "sha256": "3548e15aa374ebee8d1f371bf978c022609b4800326849da28ea68ba3d68dad9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0212.png",
+      "status": 200,
+      "bytes": 258388,
+      "sha256": "d603a0ce628978491c26630788bad1defcdc3d9726716edac66c9c1ffba48dd7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0213.png",
+      "status": 200,
+      "bytes": 261096,
+      "sha256": "7063e92b5cfb6ab0380ac241c357fe62af4cc9bc22ba9cd15b1ae0e5cf77cf2c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0214.png",
+      "status": 200,
+      "bytes": 261096,
+      "sha256": "3c26b7f07aece07e4a9e8580e41f59d55aa92d7d3d7f9c3c9528a8fd6747e59f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0215.png",
+      "status": 200,
+      "bytes": 265299,
+      "sha256": "0d43e6b5ac2a516f239b929d67377e33f5a380a284f0e886a93ec8fc91092a42",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0216.png",
+      "status": 200,
+      "bytes": 260701,
+      "sha256": "36a17a0f71dd32d7150d6da55623ed632006e1d661e9906fd1b596b21294a753",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0217.png",
+      "status": 200,
+      "bytes": 264875,
+      "sha256": "f854471090bde4bb9515f048cd016c7d4004a2d38d0e1efdf62b0bdc3b78a652",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0218.png",
+      "status": 200,
+      "bytes": 265818,
+      "sha256": "d09e6f7c8f2ecc4ce074f7df2e332060d9fb6ac92360f7d9d65276b756a8c5e8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0219.png",
+      "status": 200,
+      "bytes": 266346,
+      "sha256": "0d0e6608a18ed16039888b80a13be57919d7ef654dda4c14b40f9e8ac84b4c0e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0220.png",
+      "status": 200,
+      "bytes": 266322,
+      "sha256": "5cd50765264dd374f76bcfb1f98f1fc01f1f642f396b9dc919d8fdd2cb8ba813",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0221.png",
+      "status": 200,
+      "bytes": 268390,
+      "sha256": "c2cdeccb74f98ec510a15e29bc57884297b8b008c94b245060b600569ed6f6e2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0222.png",
+      "status": 200,
+      "bytes": 266559,
+      "sha256": "493be146d4f27f2688754dcef1f6d06bab88116ebeb9cf8e005e8de0eab81509",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0223.png",
+      "status": 200,
+      "bytes": 266618,
+      "sha256": "bc4caee7567c40bd224881aee3e9075fed7cc0516eabaa744ddee30bda02f687",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0224.png",
+      "status": 200,
+      "bytes": 264981,
+      "sha256": "fdcb6260a92abddd2cef188ac7010aa94e8b2d5dbfd92129f78e6d576aaf930d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0225.png",
+      "status": 200,
+      "bytes": 264979,
+      "sha256": "6e4aecfa1f794149a69203dbac13ce97c1162ff53652a6dad5788ebb60bd67a8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0226.png",
+      "status": 200,
+      "bytes": 267619,
+      "sha256": "20a28510c162fc7e825dc3284413ffb75021073c3f6f86f2b6d0730ae9dd9cdf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0227.png",
+      "status": 200,
+      "bytes": 264607,
+      "sha256": "04daf41073830d0c89495f5348fa17aa52de522376771bd3f88f19c661b3a936",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0228.png",
+      "status": 200,
+      "bytes": 270804,
+      "sha256": "71a1a091e1de1462db84a3703debca7738c9f326d04d8ed49bf5f8949967060b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0229.png",
+      "status": 200,
+      "bytes": 270640,
+      "sha256": "3338face7fa62acae3bb6a626d56e7a381d8f08d77999a76e242a45b882ea1cc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0230.png",
+      "status": 200,
+      "bytes": 270640,
+      "sha256": "3338face7fa62acae3bb6a626d56e7a381d8f08d77999a76e242a45b882ea1cc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0231.png",
+      "status": 200,
+      "bytes": 268853,
+      "sha256": "a6bfb75d68cc5c2ab3dc81bbdaa57ca9dc57c3245f28a9baa801af32948a161d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0232.png",
+      "status": 200,
+      "bytes": 271013,
+      "sha256": "0c9a380bc799a7f4f0b9f43f1f429b4875255a7b36c3e3276a07da6aa7d4c269",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0233.png",
+      "status": 200,
+      "bytes": 269875,
+      "sha256": "c85146ae0ad0f8e6dd1a87e325998e84ac0261ee09cf2188ee46328efe190309",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0234.png",
+      "status": 200,
+      "bytes": 264597,
+      "sha256": "60a258d100f3d68c5746a90e1b4ea13869078302205cbff42a86564e59e3a7bc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0235.png",
+      "status": 200,
+      "bytes": 264627,
+      "sha256": "e11459ab130c58021219e0d268b480538c10add23178276f304d9e522c2b4b4a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0236.png",
+      "status": 200,
+      "bytes": 265111,
+      "sha256": "916ca7e6436e329f1eb9312e80cc6eedf552f18d9c3a353375e1601dac9d4b13",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0237.png",
+      "status": 200,
+      "bytes": 265228,
+      "sha256": "7f8604ac8c907701e3a15005c0273f8161108795c59aa887a35ee1967a7a5840",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0238.png",
+      "status": 200,
+      "bytes": 265228,
+      "sha256": "7f8604ac8c907701e3a15005c0273f8161108795c59aa887a35ee1967a7a5840",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0239.png",
+      "status": 200,
+      "bytes": 265249,
+      "sha256": "5d25910171340169def966c09da75a140c8029ec40ed477e890f7d7cedca289d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0240.png",
+      "status": 200,
+      "bytes": 465758,
+      "sha256": "dd627f88325662e6feed344723f0a2e21cbcffd4fbb3e22376b86d01d5fd8e3a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0241.png",
+      "status": 200,
+      "bytes": 290356,
+      "sha256": "23e83a17da77b0422e1d8091ba444f72272ac40eb57ce1e59785dfae5efbd2d9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0242.png",
+      "status": 200,
+      "bytes": 290519,
+      "sha256": "800a44898c27814c2598bdb2734d8b8ec38108bae11849c7440bc5b53c233560",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0243.png",
+      "status": 200,
+      "bytes": 290793,
+      "sha256": "ebe8ce7dd1117661d2e9bbf92d98f18c717116ee7b0a53d54f418931a7c93d65",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0244.png",
+      "status": 200,
+      "bytes": 290605,
+      "sha256": "4245815a8797bb2a6bbf822d0c3e550f536b784ddcc1bb62f22fc676f5efa21f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0245.png",
+      "status": 200,
+      "bytes": 290246,
+      "sha256": "c8f53f88caefe3e95653792c53c6cccbb86094456a401f9c0bfcde654e61c5de",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0246.png",
+      "status": 200,
+      "bytes": 290871,
+      "sha256": "8e948b902156a30b10763a200a80a5f9a756805ded7feb72db62de13549fc006",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0247.png",
+      "status": 200,
+      "bytes": 290779,
+      "sha256": "5612169d8e9d11b6e21d9eb93a3ea20655532b07c941078b1f8e94140db3977b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0248.png",
+      "status": 200,
+      "bytes": 290932,
+      "sha256": "3d5f1e5687969f5408d46af9c8e83b1423c6527bf1bdb09898a6bb58c3e1f72c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0249.png",
+      "status": 200,
+      "bytes": 290997,
+      "sha256": "913a1f17f12442e692ecdcc1b56358c44dabb54df1aba72145bb2b21bfd4f5bf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0250.png",
+      "status": 200,
+      "bytes": 290915,
+      "sha256": "8bb95f11fe800a8c6b08a80e08b85d33d567f0ecf9ef49bd88c4683036c150df",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0251.png",
+      "status": 200,
+      "bytes": 290972,
+      "sha256": "34b804dde023a25d6dc5a77927dda380d01c150ebb03ab3a60ad6148572ad441",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0252.png",
+      "status": 200,
+      "bytes": 291374,
+      "sha256": "6a1fbcfddd49b531036c92164f641c071b05c31ae51e7990cdda002d2e0d53f9",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0253.png",
+      "status": 200,
+      "bytes": 291055,
+      "sha256": "2fc681f360e6d6cebc8510c728b7e9a7f4a0ebad85bcf8c55981adce2356def1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0254.png",
+      "status": 200,
+      "bytes": 290919,
+      "sha256": "5d2ca7e5409151eed8c5bf256b78560c9fce8e6b763a7be1910a74ed70afba94",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0255.png",
+      "status": 200,
+      "bytes": 291038,
+      "sha256": "97e513d08187365d4af5dee009dd464e1bc1c4ffc8651b18e0b20da8c4c56a74",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0256.png",
+      "status": 200,
+      "bytes": 290691,
+      "sha256": "b09490d27db9378b41f3886414d02852ae05a614184793afbc690fccf53306ec",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0257.png",
+      "status": 200,
+      "bytes": 290867,
+      "sha256": "804990dd391b1dc2f9dd9e13c7d7592f9952e331122e5b1f68a98ba535bab961",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0258.png",
+      "status": 200,
+      "bytes": 290944,
+      "sha256": "7fa35540af978a2dca68302812d578a6b2ec7b767b2ed4867a7307e838ed318b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0259.png",
+      "status": 200,
+      "bytes": 291233,
+      "sha256": "4d07f5970fe4cb0bf41466716bd59c0a7bd0d4121eabab72a2f6f2b847606dca",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0260.png",
+      "status": 200,
+      "bytes": 291088,
+      "sha256": "2131d4518cd68bf523a5ef2f4a799903e1da8c1b912cca52cb90c67895e67836",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0261.png",
+      "status": 200,
+      "bytes": 291663,
+      "sha256": "3cacd0eefe218553153d11b881b8db282022e95f122d419fd0811f0792a13cf7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0262.png",
+      "status": 200,
+      "bytes": 291690,
+      "sha256": "821bf3cbcfd8381e7c08d77cda2662aff58b22ffea62bea7af51f10683be153d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0263.png",
+      "status": 200,
+      "bytes": 291512,
+      "sha256": "39aa9486142d55e2533c92de4202684e87110dd970043d3a1b3c5aa911031a36",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0264.png",
+      "status": 200,
+      "bytes": 291780,
+      "sha256": "bcfe0956bcc99726219b840c90459e6f57229cf8cc8c7dd529dff26d6fc0f529",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0265.png",
+      "status": 200,
+      "bytes": 291587,
+      "sha256": "1fc0711bf96ad74bf951c76b5d1897126c11b6f14631de6fe0d25ad06deecfee",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0266.png",
+      "status": 200,
+      "bytes": 291744,
+      "sha256": "35b17f9bbd492046a655c4ab231820a12025d78c93f4b6261f0f7a76a51efe56",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0267.png",
+      "status": 200,
+      "bytes": 291744,
+      "sha256": "35b17f9bbd492046a655c4ab231820a12025d78c93f4b6261f0f7a76a51efe56",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0268.png",
+      "status": 200,
+      "bytes": 279190,
+      "sha256": "de0d82c0eb0807a50e5dda125d96094bf8660a3481f830c2f4e387a34cbf768c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0269.png",
+      "status": 200,
+      "bytes": 279162,
+      "sha256": "881389b166cbf58ec51b104a52dd82cbf0b78907c05bafe818ff2404e6097838",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0270.png",
+      "status": 200,
+      "bytes": 279155,
+      "sha256": "2c0c9004ac34edd9ebd176da52840e66ee6536c5575e91a37fba83ccff3e66d8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0271.png",
+      "status": 200,
+      "bytes": 279117,
+      "sha256": "32c89691a6c5d3dfe289f4f33f249b2b4afe57d01e276e7671371c26b77ccc8d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0272.png",
+      "status": 200,
+      "bytes": 279136,
+      "sha256": "3f694478d3a0c61992916432172a331315c9f13236347c123083068e0c83ba4a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0273.png",
+      "status": 200,
+      "bytes": 278790,
+      "sha256": "84df0063bc1332d593a978177222231356231fa96f37cb2484f450776fb72ca6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0274.png",
+      "status": 200,
+      "bytes": 278730,
+      "sha256": "268ab25862539582cefce1efb27acc7949a7ad7a5ed5b7d1813bad93e2d73105",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0275.png",
+      "status": 200,
+      "bytes": 278717,
+      "sha256": "eb29b624350e4fb7f1e4d59f14f347838a28ee453788034702bb27bd532d4b96",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0276.png",
+      "status": 200,
+      "bytes": 278759,
+      "sha256": "a732784271b1b2dbbdaddcee77ebe279917bae5bc744637fd090269767d77548",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0277.png",
+      "status": 200,
+      "bytes": 278795,
+      "sha256": "52e25e7ef0a33dd58581773176e59a07ec75f9b399a7184a0405880bb856f9cc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0278.png",
+      "status": 200,
+      "bytes": 278795,
+      "sha256": "52e25e7ef0a33dd58581773176e59a07ec75f9b399a7184a0405880bb856f9cc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0279.png",
+      "status": 200,
+      "bytes": 278735,
+      "sha256": "11a9c7672bdf0e2bc9f41cc7623b859c561f7ca3fab9f23142e4108782104f20",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0280.png",
+      "status": 200,
+      "bytes": 278791,
+      "sha256": "618d69a4196e48fd154a33493845b09796db2d134d0d4cfeca8075ceb5db6250",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0281.png",
+      "status": 200,
+      "bytes": 278712,
+      "sha256": "1861074ffca69a006561fb23bff3af5afb34444c00189ec74a3cd1a7d32b5f86",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0282.png",
+      "status": 200,
+      "bytes": 278697,
+      "sha256": "2b35b88616e75ef8b8b50fc72755092eb919d9b6c09c3b7732982acbf343dc38",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0283.png",
+      "status": 200,
+      "bytes": 278697,
+      "sha256": "2b35b88616e75ef8b8b50fc72755092eb919d9b6c09c3b7732982acbf343dc38",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0284.png",
+      "status": 200,
+      "bytes": 278757,
+      "sha256": "c4ef2aa7edb05cc105399439eab70b1ae8a8ee48d549ebb1ea5cebf38505db3e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0285.png",
+      "status": 200,
+      "bytes": 278696,
+      "sha256": "4d5e963f749629c8b6763d2a16feba12c57bcdefd154367d1665ab717d8c6e04",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0286.png",
+      "status": 200,
+      "bytes": 278707,
+      "sha256": "e7f4eddb114db8777477d05245eb04385e1891f98b6e68504eaee48c7566dad8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0287.png",
+      "status": 200,
+      "bytes": 278707,
+      "sha256": "e7f4eddb114db8777477d05245eb04385e1891f98b6e68504eaee48c7566dad8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0288.png",
+      "status": 200,
+      "bytes": 278691,
+      "sha256": "fbd77c0ff47b7106ed9e4cd81e0f5527a2ca505a9ee2375622c8e16425c47dd1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0289.png",
+      "status": 200,
+      "bytes": 278694,
+      "sha256": "78a63e673bc1e00c2a1b05154bdca31e1557b6169b91e53301889e9d0d968ef3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0290.png",
+      "status": 200,
+      "bytes": 278690,
+      "sha256": "431ec55f160d5dfb334b25fdc2cf0ae924ab3cf5f9a125957a28b88599dde429",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0291.png",
+      "status": 200,
+      "bytes": 278690,
+      "sha256": "431ec55f160d5dfb334b25fdc2cf0ae924ab3cf5f9a125957a28b88599dde429",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0292.png",
+      "status": 200,
+      "bytes": 278690,
+      "sha256": "e33c83190dd8af5a108442102cd88897a0cb47512bc9a93557af310cf071020c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0293.png",
+      "status": 200,
+      "bytes": 278707,
+      "sha256": "7474d15ae778c3a6c44087451d115b63b7397cca2fb99bcf1e6bc3ada8380bfe",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0294.png",
+      "status": 200,
+      "bytes": 278574,
+      "sha256": "125b200e492a1dc303bf467e5c79545c93ad9b64ebd4319e8ffa7067c7b64b58",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0295.png",
+      "status": 200,
+      "bytes": 278640,
+      "sha256": "f0e94450b198a4f5f5c1c66f8e1e73bcf32d4ae72e4061ecc5785e2b66fba94d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0296.png",
+      "status": 200,
+      "bytes": 278600,
+      "sha256": "0be45828aba130c67b65f27026105e0de7a90e52fd476c021f8680eef344ebaf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0297.png",
+      "status": 200,
+      "bytes": 278623,
+      "sha256": "b6a5c8a43a20177d00be26c694730a937bbc468b1bd70e79976651e43011dfca",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0298.png",
+      "status": 200,
+      "bytes": 278627,
+      "sha256": "e07e64e7e0720a7f52aabe7e0b0ae1ee157f1bd8fa94eeeba32c7167e8bb2a59",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0299.png",
+      "status": 200,
+      "bytes": 453215,
+      "sha256": "6a681b10862ad99c7a9ca9c8219e384e8a6b6e6dda6ec2641c5e4857fb006cde",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0300.png",
+      "status": 200,
+      "bytes": 275354,
+      "sha256": "343138da866f999d73d2667eef557a3047f5b9249c4d9ae45f247dab81f833d6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0301.png",
+      "status": 200,
+      "bytes": 275224,
+      "sha256": "d2e81ced67e902ed2de0f9c482b93fa2257f42556f6ecd3996a2a5b7283f108e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0302.png",
+      "status": 200,
+      "bytes": 275479,
+      "sha256": "f7ecba0f52469d2887c28d908f5965815f9a6c60c447ce81061be3e473dfb8e0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0303.png",
+      "status": 200,
+      "bytes": 275423,
+      "sha256": "adfea9014d52bd69dc4926870750b8c2c1570abb7452a98f0567cedf5441d9c4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0304.png",
+      "status": 200,
+      "bytes": 275438,
+      "sha256": "8640f16b33cb1247b757d6cfae84a7d00ec88412e51734e56c1520b99a8b652a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0305.png",
+      "status": 200,
+      "bytes": 275447,
+      "sha256": "0f8e519d6a7d9d82885bed564b287b0adad2f0a6d4a1ac3aaf872e1c792527b3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0306.png",
+      "status": 200,
+      "bytes": 275633,
+      "sha256": "3d7c06b332b3cc58ca00a02ead8c91ce5fdd7e4ff9a663f11c809aead19b80ea",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0307.png",
+      "status": 200,
+      "bytes": 275633,
+      "sha256": "3d7c06b332b3cc58ca00a02ead8c91ce5fdd7e4ff9a663f11c809aead19b80ea",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0308.png",
+      "status": 200,
+      "bytes": 275631,
+      "sha256": "c4bbb9fe6ad032ca34cd979992d990138e967dbc6cc7369818ddaf764ef4eb78",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0309.png",
+      "status": 200,
+      "bytes": 275683,
+      "sha256": "2e9397f3449f53c3c6a79b818d875c928b3a428b3f1bd6e1f7da9ba2e05bd675",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0310.png",
+      "status": 200,
+      "bytes": 265999,
+      "sha256": "3f83ff420342a5b0a95c292f006a79888564acab5a8704a45a2ebead85dcbce7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0311.png",
+      "status": 200,
+      "bytes": 265978,
+      "sha256": "a21e37230ff2568ab602ed6e256306791b3c5bba399b4af920aff134078bb33d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0312.png",
+      "status": 200,
+      "bytes": 265790,
+      "sha256": "c74cee4277b311dffbfbfb58ab2710de45b2669e08b66d41acb6f83c44d1c2ef",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0313.png",
+      "status": 200,
+      "bytes": 265822,
+      "sha256": "dca8ad0bbe493f8a329ce6f0881216b46c8ed2b40adbd1732775761704b730f3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0314.png",
+      "status": 200,
+      "bytes": 265822,
+      "sha256": "dca8ad0bbe493f8a329ce6f0881216b46c8ed2b40adbd1732775761704b730f3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0315.png",
+      "status": 200,
+      "bytes": 265744,
+      "sha256": "d8b676d17ae3f9257dc319ea03c7059c7ebc5643acc13ff1b5d0766abe8442cf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0316.png",
+      "status": 200,
+      "bytes": 265730,
+      "sha256": "038544ece50bf03170a85117a7ac46b2e8e0676f589a1fea204497fe1b9aa9f8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0317.png",
+      "status": 200,
+      "bytes": 265755,
+      "sha256": "0842dd24c063b43a99147da08f41d832c2884ca12287c02d9f69ed20ba4ba21d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0318.png",
+      "status": 200,
+      "bytes": 265755,
+      "sha256": "0842dd24c063b43a99147da08f41d832c2884ca12287c02d9f69ed20ba4ba21d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0319.png",
+      "status": 200,
+      "bytes": 265499,
+      "sha256": "94757dd04f118eb470c0a58ea9ec72efe31ef31e708ef6578c84021acff7b102",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0320.png",
+      "status": 200,
+      "bytes": 265500,
+      "sha256": "3731cba01cf6c6b25a98ef66f6520265336eed3a1712cbbadbe1485ad63dee56",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0321.png",
+      "status": 200,
+      "bytes": 265500,
+      "sha256": "3731cba01cf6c6b25a98ef66f6520265336eed3a1712cbbadbe1485ad63dee56",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0322.png",
+      "status": 200,
+      "bytes": 265499,
+      "sha256": "7e97f32c3845fff9267ea24cffc97154e387681e41f2208ed48fd998897893fd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0323.png",
+      "status": 200,
+      "bytes": 265476,
+      "sha256": "41ed1e1d7817f660d2f6bfb46d0ef9b47509c87e51756d0145104ae6cd6cc2eb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0324.png",
+      "status": 200,
+      "bytes": 265476,
+      "sha256": "41ed1e1d7817f660d2f6bfb46d0ef9b47509c87e51756d0145104ae6cd6cc2eb",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0325.png",
+      "status": 200,
+      "bytes": 265497,
+      "sha256": "e50b5170d606a4acc3b28ba2f785b883150d22dbc7851100a6ed271f5b1b9a8d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0326.png",
+      "status": 200,
+      "bytes": 265846,
+      "sha256": "2707ea7bf04c10a561bf8ee8ae595a02dd70028e16ab5a319901312110c1f31e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0327.png",
+      "status": 200,
+      "bytes": 267290,
+      "sha256": "592d9ae818c51efe4ac14f4058c19748bf794183f6c6f49f366786f2e7c23821",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0328.png",
+      "status": 200,
+      "bytes": 270561,
+      "sha256": "301a81a0a925b471fbfc445656156662c4ab29a7e1f1b026ca7f885f3a2b24c4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0329.png",
+      "status": 200,
+      "bytes": 289459,
+      "sha256": "a001cd4e044d0a3dbb73e894ddcdb06a2e10e172ba221669cee1dab4dff886c1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0330.png",
+      "status": 200,
+      "bytes": 292081,
+      "sha256": "d8ecbe7619b5c281df7a8596703719e7a82fcbfb351606e682757878272ad55f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0331.png",
+      "status": 200,
+      "bytes": 292028,
+      "sha256": "be6c732785ec345c39c094ab2460c7f2ad7598d78fa7f7927eb28f08b4bf46f8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0332.png",
+      "status": 200,
+      "bytes": 296982,
+      "sha256": "93d143319e2bd97aea568ba05fcefc3eceeb9b4b5ffd99b351a2b72558e646c8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0333.png",
+      "status": 200,
+      "bytes": 295535,
+      "sha256": "4a36f6c9664a0ef2301f2345d28788be02a32ba81b18318a7ee3e92cdba18f28",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0334.png",
+      "status": 200,
+      "bytes": 301659,
+      "sha256": "19a56f8273c44005960ef3abba76fc4332a1881c597d0918b9826c9cf02ed7b8",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0335.png",
+      "status": 200,
+      "bytes": 295027,
+      "sha256": "125e0adc8fc158c6b2c06cf002241f5fe8cc74999470638baf90e522f70dad07",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0336.png",
+      "status": 200,
+      "bytes": 295027,
+      "sha256": "125e0adc8fc158c6b2c06cf002241f5fe8cc74999470638baf90e522f70dad07",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0337.png",
+      "status": 200,
+      "bytes": 295630,
+      "sha256": "82c66e7762e97c7ac998459c985a40d7602f0fc9dd3ed7c4f7b8e27c6adb6755",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0338.png",
+      "status": 200,
+      "bytes": 296774,
+      "sha256": "8da697031df5d81c4e293015d36dc79229b2936e1a6c1fd0c06f19e061cce98a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0339.png",
+      "status": 200,
+      "bytes": 296777,
+      "sha256": "de2fa43dadfa2f88d5320a53f99b380656a711b28d3b6df7704a4e4705125191",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0340.png",
+      "status": 200,
+      "bytes": 298593,
+      "sha256": "180fd1187b9aa850263a0f41925c1784903ccc878d645769ffaa5e9d53fc65ed",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0341.png",
+      "status": 200,
+      "bytes": 296082,
+      "sha256": "c7f597188a5af4c9a6f3772948b648ee8c750f309477d25934e8b146905d7ef1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0342.png",
+      "status": 200,
+      "bytes": 296082,
+      "sha256": "c7f597188a5af4c9a6f3772948b648ee8c750f309477d25934e8b146905d7ef1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0343.png",
+      "status": 200,
+      "bytes": 299501,
+      "sha256": "68c21140be8a63a994109191f4baae0c8f785b3b346a963c253cf3aa332e1b8c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0344.png",
+      "status": 200,
+      "bytes": 296811,
+      "sha256": "575c3d1cefec9199039430213f6a25f8feea04eeeb52cbade2b616f2b75e6b0f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0345.png",
+      "status": 200,
+      "bytes": 292727,
+      "sha256": "36a996c8dc8ac8628ba6f2c587de49fc4b2fa42cce5badd03253ab24706e4962",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0346.png",
+      "status": 200,
+      "bytes": 297223,
+      "sha256": "77f1a365881ea2fea051fed132f2b5a858b902fca331b31e0b88daa8443462a5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0347.png",
+      "status": 200,
+      "bytes": 293700,
+      "sha256": "b6032b62129a6ffaf72f17cc5da57af2e65a2ab3b7262ec73891e1efada57016",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0348.png",
+      "status": 200,
+      "bytes": 291366,
+      "sha256": "dc57d7e7ad96330ca7a81c3c2dac6731f6f164f5d74f57f3130a451af4e33e97",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0349.png",
+      "status": 200,
+      "bytes": 301620,
+      "sha256": "8dfc440b5afc5a850b10ade3acb595a0801c52a316db35d1abbdcf779450b966",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0350.png",
+      "status": 200,
+      "bytes": 308808,
+      "sha256": "eb6d6141fdc22203ed72df636d88106dfd9c05479d08b55919d20eeb8a5a04be",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0351.png",
+      "status": 200,
+      "bytes": 309109,
+      "sha256": "42215668ae4611bf7acb5ec076def2eba904249a623fa735bc8ee9646c2390c3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0352.png",
+      "status": 200,
+      "bytes": 302394,
+      "sha256": "1a2a7c5395ee1614a219cf1705b242d91e6717c08fdbd724864db4450d739688",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0353.png",
+      "status": 200,
+      "bytes": 305683,
+      "sha256": "777fba8d203cc93798462de4dcf3a718b0330435618ac32f6a5e6101cf742ba0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0354.png",
+      "status": 200,
+      "bytes": 303286,
+      "sha256": "e509079076d54b5d89c0c01099c57142885e5415a9524222842c694a1af0fae2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0355.png",
+      "status": 200,
+      "bytes": 295004,
+      "sha256": "a1423a8c99dfada07f785f6b026ea085e39d4cdd3e2af2252306653907ba189a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0356.png",
+      "status": 200,
+      "bytes": 293405,
+      "sha256": "1a356484f69ce5a92459fbb072226d60bec71090766b75d502b42a81e720d444",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0357.png",
+      "status": 200,
+      "bytes": 292116,
+      "sha256": "cc78c992cda0bdb44ed8ce3643b2584a9ac82129264bb8d8d086a7e064ea1597",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0358.png",
+      "status": 200,
+      "bytes": 293215,
+      "sha256": "c08946f20b799ed4c75dd8a6c0b1abd67b530651c674e6153c157f6e871d9cc0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0359.png",
+      "status": 200,
+      "bytes": 294538,
+      "sha256": "d469596f1280d2c84190b158f145274f2eed229b5c405f7f26bdb1dddeb87394",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0360.png",
+      "status": 200,
+      "bytes": 294916,
+      "sha256": "fad4bd89dd7a5489118382cba0253eea4104f20200e676226212dc4846f97e6d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0361.png",
+      "status": 200,
+      "bytes": 288524,
+      "sha256": "b2278cdc110ed90b1a99406f9cfedf96c4e897c0519e93b0a2b3510b5ef1afb5",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0362.png",
+      "status": 200,
+      "bytes": 416906,
+      "sha256": "a20d29a5caa3254610f3ec5782618ccd616ef7ba6b6af2114237dde47c04998d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0363.png",
+      "status": 200,
+      "bytes": 272906,
+      "sha256": "4c26f3a9661477498bac90198348ee29aaf0f12d0e100b1999d39b138a556241",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0364.png",
+      "status": 200,
+      "bytes": 272109,
+      "sha256": "3a207eba899341494bb1c457f4aa9924d5e11195a4b0f2d23ea826eef9fdf890",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0365.png",
+      "status": 200,
+      "bytes": 277468,
+      "sha256": "2b4ca498b07606c48fe2d12ed3a120d88d3da1f8351681ffe93ac18e4b7c81dc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0366.png",
+      "status": 200,
+      "bytes": 283326,
+      "sha256": "3a3d6a14988af44c9ae82285b01825d77fcd11d240c75f960db50a83d8b79791",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0367.png",
+      "status": 200,
+      "bytes": 268401,
+      "sha256": "52b97f0bd7c63c88884a02a41630abeee3df57696948022f6e5faeb80dbf7994",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0368.png",
+      "status": 200,
+      "bytes": 274211,
+      "sha256": "843fa132b8893b8c49162194278210ba10c445bb8038f70e5478b67ffb96253c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0369.png",
+      "status": 200,
+      "bytes": 274342,
+      "sha256": "d8236d6b5fcd3bc98ab40bb52bedec6d8fdd3d4d54f0968326a1c230d4c1bb86",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0370.png",
+      "status": 200,
+      "bytes": 275543,
+      "sha256": "f040005ba760d771a75a8df243a5c3f3a77299bc877f65d489ba1aa4bf0c0119",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0371.png",
+      "status": 200,
+      "bytes": 277859,
+      "sha256": "c3c02c6952d7bc9b909656d05fbfbba62cab80ce0fe43be88e049675a733614f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0372.png",
+      "status": 200,
+      "bytes": 274856,
+      "sha256": "8adffe8544bf00dc95b73a6b48ad474f8383c657645fbb495617cfd19e2280ef",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0373.png",
+      "status": 200,
+      "bytes": 274863,
+      "sha256": "52e03143b0c43bf42295ffbe431a3775f72523e8cb6a646a5ce06d3b3c78c676",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0374.png",
+      "status": 200,
+      "bytes": 271366,
+      "sha256": "b050b2e98b2085f223a2c3e36baf5523502a490401f3dbdf1e728eba3c2ed7c4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0375.png",
+      "status": 200,
+      "bytes": 269361,
+      "sha256": "2d0dc22cb6fbabb7523b313bf7abdaa214b85081e850e397e2dec8d5e9c59b5b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0376.png",
+      "status": 200,
+      "bytes": 269365,
+      "sha256": "ad065a4b04dc2b854d5feea3a38d8cccffbbf2c2ab8cf20da36a707e0c0f1ee2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0377.png",
+      "status": 200,
+      "bytes": 269459,
+      "sha256": "391cfd3c2d4337b5e6483a0aaf851bd9a05a81fbf020943b6f7adbb1447e8625",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0378.png",
+      "status": 200,
+      "bytes": 266946,
+      "sha256": "0828fc2ffc93106eb5fa07c8d508768cc6f99131985e4b685323b997a844f5ad",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0379.png",
+      "status": 200,
+      "bytes": 271785,
+      "sha256": "d4b44cdf117de8424ee81459562cec76cb70d50b9e0847627c10d2fd964efad7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0380.png",
+      "status": 200,
+      "bytes": 271782,
+      "sha256": "8463ad5830cc58c58be96b441e4d8b89f230393436646fb75d459256d4c1f328",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0381.png",
+      "status": 200,
+      "bytes": 268358,
+      "sha256": "33c689689afca2310eb784b4306c64a68e09206e06cdfec8a835091402425462",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0382.png",
+      "status": 200,
+      "bytes": 267442,
+      "sha256": "01964f70adc7c3f939e25562bf40865ffd123ab781635e49abe993a612bc65de",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0383.png",
+      "status": 200,
+      "bytes": 265865,
+      "sha256": "7b66bd1f45600962cf68e875d82bc6c130e3f182346ea65da1ddba35272c48e4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0384.png",
+      "status": 200,
+      "bytes": 262780,
+      "sha256": "dd60016fa9a7853a24593c8cb7c3fbb4cb4931335b81a8d2fd1fa4ffb429f416",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0385.png",
+      "status": 200,
+      "bytes": 267060,
+      "sha256": "98091643279752d6fea114f9a42aa6b729b134dc0c6a2f5f6d18d6439fd54055",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0386.png",
+      "status": 200,
+      "bytes": 266626,
+      "sha256": "91f644399b7866762eb43ba8fb3c0631b562d554e97f074a344d71b7a087323f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0387.png",
+      "status": 200,
+      "bytes": 254642,
+      "sha256": "c22e3c4a0cde1f91184c8fbe60ce8072e6e9bea9fe67b21d1910301b075ff6b3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0388.png",
+      "status": 200,
+      "bytes": 254687,
+      "sha256": "4e007b6c2933000d5c7d6f2860067ce990a7c1fbe1d29112c95c52570249fb3e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0389.png",
+      "status": 200,
+      "bytes": 268062,
+      "sha256": "76df004c2bed762f4dae2e409e49fcf3ee56cbef0d1b0438ab2849cd592a0350",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0390.png",
+      "status": 200,
+      "bytes": 262828,
+      "sha256": "1359734d8a4e09861d576afc86bc3e7fc09b76d4279d8018f162049b1f380f18",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0391.png",
+      "status": 200,
+      "bytes": 259841,
+      "sha256": "e6ea7f869c467c6490dd5f39bd481b224091c8877e95f892cd2c4010bd1be7a0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0392.png",
+      "status": 200,
+      "bytes": 257145,
+      "sha256": "ed3aea0e0381bae87b9dcad9ae73ea456d652c0528fdad397498b8b61a8ef10e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0393.png",
+      "status": 200,
+      "bytes": 257146,
+      "sha256": "6a1e5871ccea0e0086f0b96591b06d8db516d53ffa42a629157bc542fdf98e0b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0394.png",
+      "status": 200,
+      "bytes": 262133,
+      "sha256": "5afd6ce08fbb77e90a9c22f3469dea278949a64655a3a4c110fbf5ec928a8b9a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0395.png",
+      "status": 200,
+      "bytes": 262128,
+      "sha256": "64df1119c6d73efe9796e33f1c0b2136b28f7333c41e71f085af54fd26c32d2e",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0396.png",
+      "status": 200,
+      "bytes": 264473,
+      "sha256": "79c8bee58af9b1ad603b1a66ea702973fe621b9f7ee7e39e4461d4e1eaafedc4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0397.png",
+      "status": 200,
+      "bytes": 268731,
+      "sha256": "066ed870ddbf018047e0f1dd3c7195fe137edaebbaa3b4089d0e2098c91cf71b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0398.png",
+      "status": 200,
+      "bytes": 262109,
+      "sha256": "eda60b004e6aa48fee3bd11539605a6207349642b904c45185762337bf777e28",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0399.png",
+      "status": 200,
+      "bytes": 261617,
+      "sha256": "5e9e507a40e816c5b0c0a5e43f6a972c44c0265b3925115f2a985614be26d896",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0400.png",
+      "status": 200,
+      "bytes": 263924,
+      "sha256": "c94e75619aae4652cbf8ee748e893588555eb6187976dc0df4e555167ce5e307",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0401.png",
+      "status": 200,
+      "bytes": 261477,
+      "sha256": "1431f28552654dd1f57db45c123a2213caa1c3bf999be39e31a4d7de0abf198c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0402.png",
+      "status": 200,
+      "bytes": 258426,
+      "sha256": "10ae0ce03764f22739c9627a5088ca0e4f9e9b277e63728d784f7c360b9bdfcc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0403.png",
+      "status": 200,
+      "bytes": 256351,
+      "sha256": "e0ca7bba196a9ce3be6de6db36ae91a120052aad55c964ba0d4121c46085e15d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0404.png",
+      "status": 200,
+      "bytes": 252915,
+      "sha256": "f64b338d73c6e190c7e1e6fdccb7aeca4041310f8005e8eeed2afea553864fef",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0405.png",
+      "status": 200,
+      "bytes": 255388,
+      "sha256": "17aca056ee999d0769f5060a3b0e0ec3047688e4383babfc28dd1ced7eee5800",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0406.png",
+      "status": 200,
+      "bytes": 255363,
+      "sha256": "6a2004eac404805ed5453534e10c6a75f857ca010aff328e0915237764059bee",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0407.png",
+      "status": 200,
+      "bytes": 262906,
+      "sha256": "e95c83f3807852ee7e8d76ed2cf6ae45cc717e73b7df0c8f032d3a72b5d4a179",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0408.png",
+      "status": 200,
+      "bytes": 255656,
+      "sha256": "8387555cdb7376e609202d0a974e6a5a0ad5d99df8f6153870fbe7b410fb4a12",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0409.png",
+      "status": 200,
+      "bytes": 252313,
+      "sha256": "92075a849b0fd46d6c0bc5e30e104f5d2e6327e8dfaa84cf24bd48c8842c59d7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0410.png",
+      "status": 200,
+      "bytes": 250266,
+      "sha256": "4fc3707494392195266d1042f6804c91feeedd86599a405863b961cf6b5ac0d6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0411.png",
+      "status": 200,
+      "bytes": 246572,
+      "sha256": "aaf26bc90c03afb0b3caabd8b1aefa7f913468194ea3a97b24e74e5b759c0666",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0412.png",
+      "status": 200,
+      "bytes": 250647,
+      "sha256": "f897975173d824d65dcc8099f9e00d65782284f93ac86d71b6319aeb5a68f10c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0413.png",
+      "status": 200,
+      "bytes": 251025,
+      "sha256": "29292dc60093030d9b5dca2126e40a757ab3fb213f406fcb6d79e52b22a42d3c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0414.png",
+      "status": 200,
+      "bytes": 247037,
+      "sha256": "5ba6baed77a4008b05c885333544433691f809b140813d37ae83e1eeb168bd35",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0415.png",
+      "status": 200,
+      "bytes": 445001,
+      "sha256": "86d4e61fc09dee42a2453d4cd51b8f9e19a7443215c54d9085c94d8dab8f400a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0416.png",
+      "status": 200,
+      "bytes": 276926,
+      "sha256": "0b36f8be62890a1ceeae9ae9180a0e9f32139ee1fd50d79eb2905ba587c439b7",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0417.png",
+      "status": 200,
+      "bytes": 255721,
+      "sha256": "ec62da6a63ec116a47db93cc983cfd7f4a852566d2a7ba23be2a99a251a39e6d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0418.png",
+      "status": 200,
+      "bytes": 247403,
+      "sha256": "fb1c78c35d8b5d85ffa4a2afea95677d9cd39c889fbd38ea48d2d92a64cdb0cc",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0419.png",
+      "status": 200,
+      "bytes": 244996,
+      "sha256": "9b985314da0d93f08f36c5fdcada1ef643f6416151818243037e9d2c02bb1619",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0420.png",
+      "status": 200,
+      "bytes": 244704,
+      "sha256": "80a75569c0c213ec222c4ac868c99cc0a71a5a8f84f27ba12fdba634282414fe",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0421.png",
+      "status": 200,
+      "bytes": 243730,
+      "sha256": "5dbbd7aa58dadae3c7dc861bdc7a85091d7a3d9d37e74b8b48cf6504539656fd",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0422.png",
+      "status": 200,
+      "bytes": 241851,
+      "sha256": "fe28a52226b0773a4c433993a34f41aa349bccb4a5687ca478de8c3419eb6e6f",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0423.png",
+      "status": 200,
+      "bytes": 244996,
+      "sha256": "f3ea1ea23e836f5b7b5bd424fa4152183bdf32ae551b3b7504dbac9c1afc5e71",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0424.png",
+      "status": 200,
+      "bytes": 240755,
+      "sha256": "b8f9d2fa6bfb3f0b9f212f8cf4b05557b963d7654df044e6e05f73681f236796",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0425.png",
+      "status": 200,
+      "bytes": 240456,
+      "sha256": "ef759d6d12a7fce85ec85e4c05adb92a3231b2e857597ff2f5b657819025d4ab",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0426.png",
+      "status": 200,
+      "bytes": 237039,
+      "sha256": "e8c2137b8a4daf60c5bb15c3356be7d416d577556e08ebcc0b93d505c3cd7606",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0427.png",
+      "status": 200,
+      "bytes": 238453,
+      "sha256": "05a9bcd57fce38f4b4a61d05b6929a7728d9c392c4a1591e16d3b94e3db53d67",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0428.png",
+      "status": 200,
+      "bytes": 238822,
+      "sha256": "0f40202791a15be93ac5248b7253cff91cf09c91d804bc1b2f06d2fbe3d41ec6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0429.png",
+      "status": 200,
+      "bytes": 236865,
+      "sha256": "207cf53ccb40cc1aa1689e22145140ca96e0d03e95c49a601196e2d53ce254cf",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0430.png",
+      "status": 200,
+      "bytes": 228860,
+      "sha256": "7e1966be2d85f53aab3d7bc9342f10ab67dbf4fe3dece0e6f24cc0af68801705",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0431.png",
+      "status": 200,
+      "bytes": 228369,
+      "sha256": "41e261a418b65b4ad3f0bc1d12e2526652e9972982045bc43e3aa1767882e01a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0432.png",
+      "status": 200,
+      "bytes": 225408,
+      "sha256": "312c3b35b604bf0ae992a4b20c2f72742c88247d6c08482fb9367dc9190ca578",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0433.png",
+      "status": 200,
+      "bytes": 237337,
+      "sha256": "ecf4c2b773a45a3385ad4d915d28cfcd2fcad692c38289c8156ec3da8d8eb8de",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0434.png",
+      "status": 200,
+      "bytes": 223867,
+      "sha256": "febdf91a8d77890d8b1907d53448ec7e5388010720acc7657a431cf185aa6ba1",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0435.png",
+      "status": 200,
+      "bytes": 223859,
+      "sha256": "b0387b6115f544e932fa7d2f72e3e86f68ebef915f1d330d4ae390b6f367c477",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0436.png",
+      "status": 200,
+      "bytes": 223462,
+      "sha256": "ad0e06e5f20cf04b75faae685228c970eac9671b866677382b7cfeb6a6b61f9a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0437.png",
+      "status": 200,
+      "bytes": 212835,
+      "sha256": "ced9599c831986bdff44a108ce81ea95423509f1b365771b76ec7bd86783e638",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0438.png",
+      "status": 200,
+      "bytes": 210153,
+      "sha256": "7e4d58b0486f9d6f44d5ccdb43e117e7a73fa52114751fdab68f89e952b8d980",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0439.png",
+      "status": 200,
+      "bytes": 210173,
+      "sha256": "775cc6d0c18dad00c6cbb69f48db51061ec48fd14bca1095eea306856ec50ca0",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0440.png",
+      "status": 200,
+      "bytes": 210017,
+      "sha256": "c1245a3e0b81bf025ebe7c2cebb132010a52fc005afe5ea9513cf2c888b70a45",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0441.png",
+      "status": 200,
+      "bytes": 200522,
+      "sha256": "a9ec6e45a8e5780382fbd25aaebbc6b3c4dfda28d63b7f1d5a78a16467143038",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0442.png",
+      "status": 200,
+      "bytes": 196771,
+      "sha256": "c3a69e3cc74f5a305e972dd476a0df23754a18daa544595305eff755f288ef9a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0443.png",
+      "status": 200,
+      "bytes": 195261,
+      "sha256": "dfb64fc6e02d11939bfe4faf12fbb7811da414beca85dc108011b64c67a8815d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0444.png",
+      "status": 200,
+      "bytes": 195835,
+      "sha256": "33a95bd2c644f1d2bfa391bbe46b87d52fa10d93e87e585ad0a59ee146dfc98b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/s0445.png",
+      "status": 200,
+      "bytes": 194860,
+      "sha256": "42bce927a72baf343956f0649d457a00bf23b8b906252e08660c1a4eec76891c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/captures/samples.json",
+      "status": 200,
+      "bytes": 78433,
+      "sha256": "44227b99829ae0d0b07b60b93c21aa68caf59a860995e115f72ea6b91fadea68",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/check-bundle.py",
+      "status": 200,
+      "bytes": 2048,
+      "sha256": "1acc2006ffdd0c3b26cb2c845fa9a7a08a0e6b0d001aac075a81506641af676c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/check-independent.py",
+      "status": 200,
+      "bytes": 3429,
+      "sha256": "5c222584ff25eb4b3447a5b0975dc23bc14c4a46aa3cb8289ea1ff8bf91a5405",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/excerpt-provenance.json",
+      "status": 200,
+      "bytes": 95473,
+      "sha256": "3c85c6d131a3efa74108157a50263cd45f3ab9c5e8cb3b4349710530a08f4ea6",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/glyph15-study.zip",
+      "status": 200,
+      "bytes": 5180479,
+      "sha256": "30f4fab5fb926bd939490f4aa6ad0adb21fefcc2b6349d9301bce77797c3bd86",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/independent-check.json",
+      "status": 200,
+      "bytes": 11518,
+      "sha256": "fd435bbaf3568d0c62c281fafdb2699166661099e63c4480ac2ff9de5ee28270",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/index.html",
+      "status": 200,
+      "bytes": 288748,
+      "sha256": "a210bb5e550e12d0dcef8cda95f267c424fa4cfe15b14c34940c2ba5acbb7ea4",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/overlay-check.png",
+      "status": 200,
+      "bytes": 213384,
+      "sha256": "a1c48a790da48219fc506a94fa7895eb5a78f06abf53bc68d68bc72bb816908b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/page.css",
+      "status": 200,
+      "bytes": 2867,
+      "sha256": "d47c5337a99c27b9a766abe3516ea837b370a413062d8ec1e71a5611acfe9a9a",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/prepare-captures.py",
+      "status": 200,
+      "bytes": 1785,
+      "sha256": "d17ef87fa2e8bbc67a345ecdf3dd1d94d5903b3d598288b9a6196d3b53fe95e3",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/README.md",
+      "status": 200,
+      "bytes": 5419,
+      "sha256": "1d0d717fea718b6d614a4f52076f6376590e796cc6607a794d33a90733bc3b04",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/source-excerpt-silent.mp4",
+      "status": 200,
+      "bytes": 1026737,
+      "sha256": "f39c511251a2cd9086e67531986305b1bf1a1a7d7a58db23d48f6bc7789b2b65",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/validation.json",
+      "status": 200,
+      "bytes": 24201,
+      "sha256": "b9af3b6508dfd0d729d05b8a8ca27d3c848b4c0981db52280bf50c4b426d801c",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/verify-delivery.mjs",
+      "status": 200,
+      "bytes": 2750,
+      "sha256": "ef69ea9848967ddf2acffadf23d2015b90463a6f7386045b2e79a54722ef7b7b",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/viewer-desktop.png",
+      "status": 200,
+      "bytes": 90229,
+      "sha256": "e4aa9c15176ae8352a0ad51d9699710ebe700a6627e864dc70d9258b5905d22d",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph15/viewer-mobile.png",
+      "status": 200,
+      "bytes": 46934,
+      "sha256": "ed6ac45a2df1be07afd234829c3c7822106b1dbe18e55c9581a8c9bc19ad3cbe",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/index.html",
+      "status": 200,
+      "bytes": 308395,
+      "sha256": "b410cee2dcfd8ff805bdae56ec924be5a4406371c3effbacc84dcbe8cfaf43d2",
+      "match": true
+    },
+    {
+      "path": "issledovanie/kraftwerk-glyph22/README.md",
+      "status": 200,
+      "bytes": 6343,
+      "sha256": "d2dc838d683e44d9738e2f68e950987f81909e7ef8bc8193b0167c2855986734",
+      "match": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 500185,
+      "sha256": "2da68689b7a9d68baac0696934146b78728c626cb609c3aeac4086b36973cbbe",
+      "match": true
+    }
+  ]
+}
