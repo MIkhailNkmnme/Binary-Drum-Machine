@@ -1,23 +1,48 @@
-.may-template-inline{--c:#ffd35b;--may-surface:#1b2430;--gz-w:120px;--gz-h:24px;--gz-n:12px;position:fixed;z-index:15;display:flex;flex-direction:column;gap:2px;padding:1px;background:#0e1116;color:#dfe6f5;font:12px/1.2 "Segoe UI",sans-serif;pointer-events:auto;user-select:none;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
-.may-template-inline::-webkit-scrollbar{display:none}
-.may-template-inline[hidden],.may-template-inline-palette[hidden]{display:none!important}
-.may-template-inline-group{display:grid;grid-template-columns:repeat(var(--inline-columns,3),120px);column-gap:6px;row-gap:2px;margin:0;padding:0;min-width:0}
-.may-template-inline-heading{grid-column:1/-1;font-size:11px;line-height:14px;min-height:14px;color:#ffd35b;padding-left:12px;white-space:nowrap}
+/* МАЯ-683: anchored, persistent groups beside the selected template. */
+.may-template-inline{--c:#ffd35b;--gz-w:120px;--gz-h:24px;--gz-n:12px;position:fixed;left:0;top:0;width:0;height:0;z-index:15;background:none;color:#dfe6f5;font:12px/1.2 "Segoe UI",sans-serif;pointer-events:none;user-select:none}
+.may-template-inline[hidden],.may-template-inline [hidden]{display:none!important}
+.may-template-inline-bank{position:fixed;box-sizing:border-box;width:124px;padding:0 2px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;pointer-events:auto;overscroll-behavior:contain}
+.may-template-inline-bank::-webkit-scrollbar,.may-template-inline.inline-narrow::-webkit-scrollbar{display:none}
+.may-template-inline-group{position:relative;isolation:isolate;display:flex;flex-direction:column;flex:none;gap:2px;width:120px;margin:0;padding:0;min-width:0}
+.may-template-inline-group::before{content:"";position:absolute;z-index:-1;inset:0 -2px;pointer-events:none;background:#0e1116;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='124' height='26' viewBox='0 0 124 26'%3E%3Cpath d='M6 0H118L124 12L118 26H6L0 12Z' fill='white'/%3E%3C/svg%3E") 0 0/124px 26px repeat-y}
+.may-template-inline-items{display:flex;flex-direction:column;gap:2px;width:120px}
+.may-template-inline-heading{touch-action:none;cursor:grab}
+.may-template-inline-heading.inline-dragging{cursor:grabbing;opacity:.6}
+.may-template-inline-heading>.zgh-title{font-size:11px;left:10px;right:22px;text-align:center}
+.may-template-inline-heading>.zgh-pin{cursor:pointer}
+:is(body.mayatnik-menu-ready,#paintTools) .may-template-inline .inline-open>.may-standard.may-template-inline-heading:not(:active):not(.gz-press){background:transparent!important}
+.may-template-inline-roof{display:none;position:absolute;inset:0;width:100%;height:24px;pointer-events:none}
+.inline-open>.may-template-inline-heading>.may-template-inline-roof{display:block}
+.may-template-inline-roof path,.may-template-inline-cap path{fill:none;stroke:var(--c);stroke-width:2;stroke-linejoin:miter}
+.may-template-inline-heading:is(:active,.gz-press)>.may-template-inline-roof{display:none}
+.may-template-inline-cap{display:none;width:124px;height:14px;flex:none;margin-left:-2px;pointer-events:none}
+.inline-open>.may-template-inline-cap{display:block}
 .may-template-inline-button{touch-action:manipulation}
 .may-template-inline-button:disabled{opacity:.4;cursor:default}
-.may-template-inline-button>.gz-nm{overflow:visible;text-overflow:clip;white-space:nowrap;font-size:11px}
-.may-template-inline-button>.gz-ic{width:12px;font-size:12px}
+.may-template-inline-button>.gz-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.may-template-inline-button>.gz-ic{width:12px;font-size:12px;color:var(--c)}
+.may-template-inline-button.may-standard-mini>.gz-nm{display:none}
+.may-template-inline-button.may-standard-mini{justify-content:center}
+.may-template-inline-heading.may-standard-mini>.zgh-title,.may-template-inline-heading.may-standard-mini>.zgh-pin{display:none!important}
+.may-template-inline-heading.may-standard-mini>.zgh-icon{display:block!important}
 .may-template-inline-button[data-command=remove]{--c:#ff4040}
 .may-template-inline-button[data-command=colour]>.gz-ic{color:var(--sample,#fff)}
-.may-template-inline-palette{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:2px}
+.may-template-inline-palette{display:flex;flex-wrap:wrap;gap:2px;padding:0 9px}
 .may-template-inline-swatch{position:relative;width:24px;height:24px;min-width:24px;padding:0;border:0;background:transparent;box-shadow:none;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);cursor:pointer}
 .may-template-inline-swatch>svg{position:absolute;inset:0;width:24px;height:24px;pointer-events:none}
 .may-template-inline-swatch .inline-face{fill:var(--sample);stroke:#596371;stroke-width:1}
 .may-template-inline-swatch .inline-hover{fill:none;stroke:transparent;stroke-width:1}
-.may-template-inline-swatch:hover .inline-hover{stroke:#ffd35b}.may-template-inline-swatch:focus-visible .inline-face{stroke:#ffd35b}.may-template-inline-swatch:active .inline-face{stroke:#ffd35b;stroke-width:3}
+.may-template-inline-swatch:hover .inline-hover{stroke:var(--c)}.may-template-inline-swatch:focus-visible .inline-face{stroke:var(--c)}.may-template-inline-swatch:active .inline-face{stroke:var(--c);stroke-width:3}
 .may-template-inline-palette>input{width:24px;height:24px;padding:0;border:0;background:transparent}
-.may-template-inline-field{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:4px;min-height:24px;flex-wrap:wrap;font-size:11px}
-.may-template-inline-field input{width:60px;min-width:0;height:24px;box-sizing:border-box;background:#1b2430;color:#e7edf5;border:1px solid #596371;border-radius:0;text-align:center;user-select:text}
+:is(body.mayatnik-menu-ready,#paintTools) .may-template-inline .may-standard.may-template-inline-field{padding:0!important;gap:0!important}
+.may-template-inline-field .zcf-middle{background:transparent!important}
+.may-template-inline-field input{width:48px;min-width:0;height:24px;box-sizing:border-box;padding:0;border:0;border-radius:0;background:transparent;color:#e7edf5;text-align:center;font:11px "Segoe UI",sans-serif;user-select:text;appearance:textfield}
+.may-template-inline-field input::-webkit-inner-spin-button,.may-template-inline-field input::-webkit-outer-spin-button{appearance:none;margin:0}
+.may-template-inline-field .zcf-middle>span{font-size:10px;pointer-events:none}
+.may-template-inline-field .inline-step-icon{width:24px;height:24px;pointer-events:none}
+.inline-step-icon path{fill:none;stroke:var(--c);stroke-width:3;stroke-linejoin:miter}
+.may-template-inline.inline-narrow{width:124px;height:auto;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;pointer-events:auto}
+.may-template-inline.inline-narrow>.may-template-inline-bank{position:relative;left:auto!important;top:auto!important;overflow:visible;flex:none}
 .may-template-translate-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}.may-template-translate-grip{stroke:transparent;stroke-width:10;pointer-events:stroke;touch-action:none;outline:none}
 .may-template-translate-grip[data-direction=h]{cursor:ew-resize}.may-template-translate-grip[data-direction=v]{cursor:ns-resize}.may-template-translate-grip:focus-visible{stroke:#b48cff66;stroke-width:5}
 .may-template-translate .may-template-axis-grab{pointer-events:none}
