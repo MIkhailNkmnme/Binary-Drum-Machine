@@ -3188,7 +3188,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   const wr = win.getBoundingClientRect(), left = Math.round(R.left - wr.left + win.scrollLeft - win.clientLeft), top = Math.round(R.top - wr.top + win.scrollTop - win.clientTop);
   layer.style.left = left + "px"; layer.style.top = top + "px"; layer.style.width = R.width + "px"; layer.style.height = R.height + "px";
   if (layer.width !== W) layer.width = W; if (layer.height !== H) layer.height = H;
-  const g = layer.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
+  const g = layer.getContext("2d", ZZ_BG ? { willReadFrequently: true } : undefined); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
   const probe = coneTopArtSync._probe || (coneTopArtSync._probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true }));
   if (coneTopArtSync._bgCol !== bgCol) { probe.fillStyle = bgCol; probe.fillRect(0, 0, 1, 1); coneTopArtSync._bg = probe.getImageData(0, 0, 1, 1).data; coneTopArtSync._bgCol = bgCol; }
   // Свечение и полупрозрачная 3D-графика остаются на точном CPU-пути:
