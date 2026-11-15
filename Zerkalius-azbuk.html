@@ -1,7 +1,9 @@
+<!-- v0.062 · АУДИТ-004: ширина экрана телефона. -->
 ﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
-<title>Zerkalius АзъБукъ v0.061</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerkalius АзъБукъ v0.062</title>
 <!-- v0.061 · АЗБ-062: возвращено толстое начертание (штрих в две клетки) с переключателем «обычная / тонкая»; поле правки буквы больше не меняет размер — постоянная рамка по самой крупной букве набора, буква центрируется, образцы размеров выровнены по общей высоте. -->
 <!-- v0.060 · АЗБ-061: «Череда» рисует линии попеременно цветами соседних клеток по одному физическому пикселю; узлы 2×2 сохраняют четыре соседних цвета. -->
 <!-- v0.059 · АЗБ-060: внешняя рамка пиксельного поля убрана из растра и подсчёта. -->
@@ -263,12 +265,14 @@
   .pixel-rgb{display:inline-block;white-space:nowrap;margin-right:12px}
   .pixel-rgb i{display:inline-block;width:10px;height:10px;margin-right:4px;border:1px solid #888}
   .pixel-audit-pages{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px}
+
+@media (max-width:700px){#textJson{max-width:100%}}
 </style>
 
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.061"></span>
+    <span class="pbtn ver" aria-label="v0.062"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>

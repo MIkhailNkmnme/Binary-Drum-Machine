@@ -13,10 +13,12 @@ td{padding:8px 10px;text-align:center;vertical-align:top}td small{display:block;
 .b.sw2{background:linear-gradient(90deg,#8ff0ff 0 50%,#ff5fb0 50% 100%)}
 .b .k,.b .w{position:absolute;inset:0;pointer-events:none}.b .k{background:#000}.b .w{background:#fff}
 .big .b{width:96px;height:96px;font-size:20px}.big .b i{font-size:28px}
+
+.table-scroll{max-width:100%;overflow-x:auto}
 </style></head><body>
 <h1>Внутренняя обводка включённой кнопки</h1>
 <p>Варианты: столбцы — толщина белой обводки, строки — отступ от края ромба. Снаружи и внутри белой — по 1 px чёрного, чтобы её было видно и на светлом. В каждой ячейке: выключенная кнопка, включённая кнопка, включённая на светлой заготовке, включённая на яркой. Назовите вариант буквой и цифрой, например «Б2».</p>
-<table id="t"></table>
+<div class="table-scroll" role="region" aria-label="Варианты обводки" tabindex="0"><table id="t"></table></div>
 <h1 style="margin-top:22px">Крупно (×2), вариант выбирается щелчком по ячейке выше</h1>
 <div class="row big" id="big"></div>
 <script>

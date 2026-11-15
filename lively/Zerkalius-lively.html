@@ -1,4 +1,4 @@
-<!-- Zerkalius Lively — v0.010. Все сцены обоев Lively в одной странице: Холм, Серпинский, Радар, Воронка.
+<!-- Zerkalius Lively — v0.011. Все сцены обоев Lively в одной странице: Холм, Серпинский, Радар, Воронка.
      Движок — копия _lively\Zerkalius\js (обои 1.9), панель — из «Настройка.html».
      Звук: трек с диска или звук ПК (_js/zvuk.js → livelyAudioListener). Запись видео — ../_js/recorder.js,
      кадр сводит _js/zvuk.js (часы, дождь, контраст и полосы экрана тоже попадают в запись).
@@ -14,9 +14,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="UTF-8">
 <link rel="icon" href="data:,">
-<title>Zerkalius Lively — v0.010</title>
+<title>Zerkalius Lively — v0.011</title>
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Segoe UI,Arial,sans-serif}
   canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -101,7 +102,7 @@
 
 <div id="panel">
   <div id="panelHead">
-    <b>Zerkalius Lively <span style="color:#8fe3b4;font-weight:normal">v0.010</span></b>
+    <b>Zerkalius Lively <span style="color:#8fe3b4;font-weight:normal">v0.011</span></b>
     <button id="btnHide" title="Спрятать панель (клавиша P)">скрыть</button>
     <button id="btnSave" title="Скачать LivelyProperties.json с этими значениями — для обоев в Lively">в Lively</button>
     <button id="btnCopy">копировать</button>
@@ -128,11 +129,11 @@
 </div>
 
 <script src="_js/three.min.js"></script>
-<script src="_js/props.js?v=010"></script>
-<script src="_js/main.js?v=010"></script>
-<script src="_js/settings.js?v=010"></script>
+<script src="_js/props.js?v=011"></script>
+<script src="_js/main.js?v=011"></script>
+<script src="_js/settings.js?v=011"></script>
 <script src="../_js/recorder.js"></script>
-<script src="_js/zvuk.js?v=010"></script>
+<script src="_js/zvuk.js?v=011"></script>
 <script src="../_js/hub-link.js?v=6"></script>
 <script src="../_js/slider-arrows.js"></script>
 </body>

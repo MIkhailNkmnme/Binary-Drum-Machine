@@ -5,7 +5,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 ВЕРСИЯ ФАЙЛА (правь вручную при каждом сохранении, чтобы не путать копии между компьютерами):
-LAST EDIT: 2026-10-10 — v0.429: кнопка «★ По умолчанию» под «пирамидой из сида» — начальная последовательность (Ctrl+Z вернёт).
+LAST EDIT: 2026-11-15 — v0.430: меню помещается на мобильном экране.
 LAST EDIT: 2026-10-10 — v0.428: начальная последовательность из 71 строки, обновление автосохранения с резервной копией.
 LAST EDIT: 2026-07-17 — Добавлено правило расстановки маркеров (см. ниже).
 LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 тулбара слева (Undo/Redo, Центр/Радар/Поворот, Вставить), счётчик кадра у правой панели, Зеркало ←/→ приклеивает к строке.
@@ -24,19 +24,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
-        /* Мобильный режим: на сенсорных устройствах открываем страницу в "десктопной" ширине
-           (весь интерфейс уменьшается целиком — панели не перекрывают экран) и разрешаем pinch-zoom.
-           На десктопе viewport остаётся обычным и ни на что не влияет. */
+        /* Мобильный режим использует ширину экрана и отмечает сенсорный ввод. */
         (function () {
             var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
             if (coarse || ('ontouchstart' in window && navigator.maxTouchPoints > 0)) {
-                var v = document.querySelector('meta[name="viewport"]');
-                if (v) v.content = 'width=1200, user-scalable=yes';
                 document.documentElement.classList.add('touch-device');
             }
         })();
     </script>
-    <title>Zerkalius: Interleaving Genesis — v0.429</title>
+    <title>Zerkalius: Interleaving Genesis — v0.430</title>
     <!-- WebGL-рендер "чистого движения" (см. галка "⚡ WebGL-рендер") — только для этого режима, остальной движок на Canvas2D не тронут -->
     <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
 <!-- === МАРКЕР 02: HEAD И НАСТРОЙКИ КОНЕЦ === -->
@@ -453,7 +449,15 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
         .dragging { transition: none !important; }
         #turboSlider { accent-color: #ff3333; }
-    </style>
+
+@media (max-width:780px){
+  #menuBar{height:auto;min-height:34px;grid-template-columns:minmax(0,1fr) auto;gap:2px}
+  #menuBar>div{min-width:0}
+  #menuTabs{grid-column:1/-1;grid-row:2;justify-self:stretch;flex-wrap:wrap;gap:2px}
+  #appTitle{white-space:normal}
+  .floating-panel{max-width:calc(100vw - 8px)}
+}
+</style>
 <!-- === МАРКЕР 05: CSS СТИЛИ КОНЕЦ === -->
 </head>
 <body>
@@ -461,7 +465,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 06: ЗАГОЛОВОК НАЧАЛО === -->
     <div id="menuBar">
         <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
-            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.429 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.430 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
             <a id="hubLink" href="index.html" title="К Хабу" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
         </div>
         <div id="menuTabs">
@@ -10705,9 +10709,10 @@ safeBind('stopBtn', 'click', () => {
             let controlsPanel = document.querySelector('.controls');
             if (!controlsPanel) return;
             let rect = controlsPanel.getBoundingClientRect();
-            if (toolbar) toolbar.style.left = (rect.right + 10) + 'px';
-            if (undoToolbar) undoToolbar.style.left = (rect.right + 10) + 'px';
-            if (pasteToolbar) pasteToolbar.style.left = (rect.right + 10) + 'px';
+            for (const bar of [toolbar, undoToolbar, pasteToolbar]) {
+                if (!bar) continue;
+                bar.style.left = Math.min(rect.right + 10, Math.max(0, window.innerWidth - bar.offsetWidth - 4)) + 'px';
+            }
             if (toolbar) {
                 let toolbarRect = toolbar.getBoundingClientRect();
                 if (undoToolbar) undoToolbar.style.top = (toolbarRect.top - undoToolbar.getBoundingClientRect().height - 10) + 'px';

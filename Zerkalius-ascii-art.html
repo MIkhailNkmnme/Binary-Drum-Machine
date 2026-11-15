@@ -88,12 +88,18 @@
   .item .rm { color:var(--dim); padding:0 3px; border-radius:4px; flex:none }
   .item .rm:hover { color:#f77; background:#33262a }
   small { color:var(--dim) }
+
+@media (max-width:720px){
+  body{display:flex;flex-direction:column;height:auto;min-height:100svh;overflow:auto}
+  body>main{order:-1;flex:auto;min-height:55svh}
+  body>aside,body>aside.right{width:100%;min-width:0;max-height:75svh;box-sizing:border-box}
+}
 </style>
 </head>
 <body>
 <aside>
 <div class="panel">
-  <h1>ASCII-арт студия <span class="ver" title="клик по выбранной картинке: оригинал ↔ ASCII">v1.1</span></h1>
+  <h1>ASCII-арт студия <span class="ver" title="клик по выбранной картинке: оригинал ↔ ASCII">v1.2</span></h1>
   <label><span>Пресет</span><select id="preset"><option value="">— выбрать —</option></select></label>
 
   <h2>Режим</h2>
