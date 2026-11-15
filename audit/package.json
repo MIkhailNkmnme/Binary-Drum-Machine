@@ -1,0 +1,13 @@
+{
+  "name": "zerkalius-site-audit",
+  "private": true,
+  "scripts": {
+    "check": "node check.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright-core": "1.58.2"
+  }
+}
