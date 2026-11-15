@@ -1,9 +1,10 @@
+<!doctype html>
 <!-- v0.062 · АУДИТ-004: ширина экрана телефона. -->
-﻿<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius АзъБукъ v0.062</title>
+<title>Zerkalius АзъБукъ v0.063</title>
+<!-- v0.063 · АЗБ-063: 8-bit Operator из TTF в редактируемых клетках; отдельный эскиз цифр Kraftwerk по кадру. -->
 <!-- v0.061 · АЗБ-062: возвращено толстое начертание (штрих в две клетки) с переключателем «обычная / тонкая»; поле правки буквы больше не меняет размер — постоянная рамка по самой крупной букве набора, буква центрируется, образцы размеров выровнены по общей высоте. -->
 <!-- v0.060 · АЗБ-061: «Череда» рисует линии попеременно цветами соседних клеток по одному физическому пикселю; узлы 2×2 сохраняют четыре соседних цвета. -->
 <!-- v0.059 · АЗБ-060: внешняя рамка пиксельного поля убрана из растра и подсчёта. -->
@@ -84,6 +85,18 @@
   #textJsonDetails summary{cursor:pointer}
   #textJson{max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.4 monospace;color:var(--ink)}
   #textNotice{margin-top:6px;color:var(--dim);font-size:11px}
+  .font-library{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .font-library select{max-width:100%;min-height:26px;padding:2px 8px;background:var(--btn);color:var(--ink);border:1px solid var(--line);font:inherit}
+  #fontInfo{flex-basis:100%;margin:0;color:var(--dim);font-size:12px}
+  .local-font-preview{border-top:1px solid var(--line)}
+  .local-font-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .local-font-tools button,.local-font-load{width:120px;height:24px;position:relative;display:inline-flex;align-items:center;justify-content:center;background:var(--btn);color:var(--ink);border:1px solid var(--line);font:12px/1 sans-serif;user-select:none;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 50%,calc(100% - 9px) 100%,9px 100%,0 50%)}
+  .local-font-load input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+  .local-font-load:focus-within,.local-font-tools button:focus-visible{outline:2px solid var(--ink);outline-offset:-3px}
+  #localFontStatus{font-size:12px;color:var(--dim)}
+  #localFontText{width:100%;padding:8px;color:var(--ink);background:var(--bg);border:1px solid var(--line);font:inherit;resize:vertical}
+  #localFontCanvas{display:block;max-width:100%;height:auto;margin-top:10px}
+  #localFontCanvas[hidden]{display:none}
   .button-forms .form-note{color:var(--dim);font-size:11px;line-height:1.5;margin:0 0 10px}
   .forms-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
   .forms-toolbar .lbl{margin:0 2px 0 0}
@@ -272,13 +285,19 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.062"></span>
+    <span class="pbtn ver" aria-label="v0.063"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
 </header>
 
 <main>
+  <section class="font-library" aria-label="Шрифт для клеточного редактора">
+    <label for="fontSelect">Шрифт</label>
+    <select id="fontSelect" aria-describedby="fontInfo"><option value="thin">АзъБукъ · тонкая</option></select>
+    <p id="fontInfo" role="status"></p>
+    <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/azbuk/README.md">Источники и сравнение структуры</a>
+  </section>
   <section id="editor">
     <div class="editor-head">
     <h2><button id="editLabel" class="pbtn" type="button" title="Выбрать другую букву">Правка буквы А</button></h2>
@@ -286,7 +305,7 @@
           <button id="resetChar">Сбросить букву</button>
           <button id="save">Сохранить</button>
           <button id="download">Скачать JSON</button>
-          <button id="resetAll">Сбросить всё</button>
+          <button id="resetAll">Сбросить шрифт</button>
         </div>
   <div class="editor-palette" id="paletteSwatches" role="group" aria-label="Палитры">
     <span class="palette-swatch" id="customPalette" role="group" aria-label="Своя палитра" title="Свои цвета: внешний квадрат — фон, внутренний — буквы">
@@ -311,7 +330,7 @@
     </div>
   </section>
 
-  <div id="sheet"><div class="sheet-toolbar"><div class="bar field-controls"><span class="lbl">толщина</span><span class="spacing-switch weight-switch" role="group" aria-label="Толщина"><button id="weightBold" type="button" aria-pressed="true" title="Толстое начертание: штрих шириной в две клетки">обычная</button><button id="weightThin" type="button" aria-pressed="false" title="Тонкое начертание: штрих шириной в одну клетку">тонкая</button></span>    <span class="gap-slider" id="trackControl" title="Пустые ячейки между буквами; 0 — клетки букв касаются">
+  <div id="sheet"><div class="sheet-toolbar"><div class="bar field-controls"><span id="azbukWeightControls"><span class="lbl">толщина</span><span class="spacing-switch weight-switch" role="group" aria-label="Толщина"><button id="weightBold" type="button" aria-pressed="true" title="Толстое начертание: штрих шириной в две клетки">обычная</button><button id="weightThin" type="button" aria-pressed="false" title="Тонкое начертание: штрих шириной в одну клетку">тонкая</button></span></span>    <span class="gap-slider" id="trackControl" title="Пустые ячейки между буквами; 0 — клетки букв касаются">
       <span class="gap-rail" aria-hidden="true"></span>
       <button class="gap-step prev" type="button" aria-label="Уменьшить зазор"></button>
       <input id="track" type="range" aria-label="Зазор в ячейках" min="0" max="8" step="1" value="1">
@@ -334,6 +353,17 @@
       </div>
     </section>
 
+<section id="localFontPreview" class="local-font-preview" aria-label="Просмотр шрифта из файла">
+  <h2>Шрифт из файла · Vegas Neon / Karmatic Arcade</h2>
+  <div class="local-font-tools">
+    <label class="local-font-load gz-hx">Открыть TTF<input id="localFontFile" type="file" accept=".ttf,.otf,.woff,.woff2" aria-label="Открыть файл шрифта"></label>
+    <button id="localFontPng" class="gz-hx" type="button" disabled>PNG</button>
+  </div>
+  <p id="localFontStatus" role="status">Выберите VegasNeon.ttf или ka1.ttf из распакованного архива. Файл остаётся в браузере. Здесь — просмотр и PNG; клетки и подсчёт доступны выше для 8-bit Operator.</p>
+  <textarea id="localFontText" rows="2" maxlength="2000" aria-label="Текст для шрифта из файла" spellcheck="false">NUMMERN
+12345678</textarea>
+  <canvas id="localFontCanvas" hidden aria-label="Образец шрифта"></canvas>
+</section>
 <section class="button-forms" aria-label="Формы кнопок">
   <h2>Формы кнопок</h2>
   <p class="form-note">Пустые примеры: кнопка, ромб, рейка, прямоугольник. Символы берутся из шрифта АзъБукъ; каждый можно покрасить отдельно или всю форму сразу. Функции появятся позже.</p>
@@ -390,6 +420,7 @@
   </div>
 </main>
 
+<script src="azbuk/fonts/operator-masks.js?v=063"></script>
 <script>
 const BASE = { bold: {
   "0": ["0000000","0011100","0100110","1100011","1100011","1100011","0110010","0011100"],
@@ -718,13 +749,25 @@ const BASE = { bold: {
   "^": ["00100", "01010", "10001", "00000", "00000", "00000", "00000"],
   "$": ["00100", "01111", "10100", "01110", "00101", "11110", "00100"]
 } };
+// Photo-derived drafts are kept apart from both established Azbuka sets.
+BASE['kraftwerk-frame'] = {...BASE.thin, ...{"1": ["0001111000", "0111111000", "0001111000", "0001111000", "0001111000", "1111111111"], "2": ["011110", "110011", "000110", "001100", "011000", "111111"], "3": ["111111", "000110", "001100", "000110", "110011", "011110"], "4": ["000110", "001110", "011110", "110110", "111111", "000110"], "5": ["111111", "110000", "111110", "000011", "000011", "111111"], "6": ["001110", "111000", "110000", "111111", "110011", "011110"], "7": ["111111", "000011", "000110", "001100", "011000", "011000"], "8": ["011110", "110011", "011110", "110011", "110011", "011110"]}};
+const FONT_INFO = {
+  bold: {id: 'bold', label: 'АзъБукъ · обычная', box: 8},
+  thin: {id: 'thin', label: 'АзъБукъ · тонкая', box: 8},
+  'kraftwerk-frame': {id: 'kraftwerk-frame', label: 'Kraftwerk · цифры по кадру (эскиз)', box: 10, cellAspect: 1}
+};
+for (const font of window.AzbukImportedFonts || []) {
+  if (!font.id || !font.masks || Object.hasOwn(BASE, font.id)) continue;
+  BASE[font.id] = font.masks;
+  FONT_INFO[font.id] = font;
+}
 const KEY = 'azbuk-edits-v2';
-const SETS = ['bold', 'thin'];
 let EDITS = { bold: {}, thin: {} };
 try { EDITS = Object.assign(EDITS, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
-EDITS = { bold: EDITS.bold || {}, thin: EDITS.thin || {} };
-const G = { bold: {}, thin: {} };
-for (const set of SETS) {
+const G = {};
+for (const set of Object.keys(BASE)) {
+  EDITS[set] = EDITS[set] || {};
+  G[set] = {};
   for (const [ch, rows] of Object.entries(BASE[set])) {
     G[set][ch] = (EDITS[set] && EDITS[set][ch]) ? EDITS[set][ch].slice() : rows.slice();
   }
@@ -739,9 +782,39 @@ const DIGIT = '0123456789';
 const SYM = '.,:;!?-+=/\\%()[]{}<>«»"\'№#@&*_|~^$';
 let uid = 0;
 let cellSize = 4;
-let activeSet = localStorage.getItem('azbuk-weight') === 'thin' ? 'thin' : 'bold';
+const savedFont = localStorage.getItem('azbuk-font');
+let activeSet = Object.hasOwn(BASE, savedFont) ? savedFont : (localStorage.getItem('azbuk-weight') === 'thin' ? 'thin' : 'bold');
 const savedEditChar = localStorage.getItem('azbuk-edit-char');
-let editChar = Object.hasOwn(G[activeSet], savedEditChar) ? savedEditChar : 'А';
+let editChar = Object.hasOwn(G[activeSet], savedEditChar) ? savedEditChar : (G[activeSet]['А'] ? 'А' : 'A');
+const fontSelect = document.getElementById('fontSelect');
+for (const [id, info] of Object.entries(FONT_INFO)) {
+  if (id === 'thin') continue;
+  const option = document.createElement('option');
+  option.value = id; option.textContent = info.label; fontSelect.append(option);
+}
+fontSelect.value = activeSet;
+function updateFontInfo() {
+  const note = document.getElementById('fontInfo');
+  note.textContent = activeSet === 'kraftwerk-frame'
+    ? 'Цифры 1–8 — эскиз клеток по кадру, точная сетка не подтверждена. 0, 9 и буквы взяты из тонкой Азбуки. Это не установленный оригинальный шрифт Kraftwerk.'
+    : activeSet === 'thin' || activeSet === 'bold'
+    ? 'АзъБукъ · ' + (activeSet === 'bold' ? 'обычное' : 'тонкое') + ' начертание. Правки сохраняются отдельно для каждого шрифта.'
+    : '8-bit Operator · ' + Object.keys(BASE[activeSet]).length + ' символов из TTF. Кириллицы в файле нет. 1 — заполненная клетка, 0 — пустая. Правки и сброс относятся только к выбранному начертанию.';
+}
+function selectFont(set) {
+  if (!Object.hasOwn(BASE, set)) return;
+  activeSet = set;
+  fontSelect.value = set;
+  localStorage.setItem('azbuk-font', set);
+  if (set === 'thin' || set === 'bold') localStorage.setItem('azbuk-weight', set);
+  if (!Object.hasOwn(G[set], editChar)) editChar = G[set]['А'] ? 'А' : 'A';
+  localStorage.setItem('azbuk-edit-char', editChar);
+  updateFontInfo();
+  renderEditor(); renderSheet(cellSize);
+  if (formsReady) renderPalette();
+}
+fontSelect.addEventListener('change', () => selectFont(fontSelect.value));
+updateFontInfo();
 
 let fieldGridVisible = localStorage.getItem('azbuk-field-grid') === '1';
 const savedGridColor = localStorage.getItem('azbuk-field-grid-color');
@@ -796,6 +869,7 @@ function updateTrackDisplay() {
 
 
 function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
+  rows = rows || G[activeSet]['?'] || BASE.thin['?'];
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
   // Zazerkalius rmbLayout: полширины на ряд; высота ромба = ширина * √3/2.
   const slope = lattice === 'sq' ? 0 : lattice === 'rmbr' ? -0.5 : 0.5;
@@ -850,17 +924,20 @@ function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
 }
 
 const DESCEND = {'р': 2, 'у': 2, 'ф': 2, 'ц': 1, 'щ': 1, 'д': 1, 'g': 2, 'j': 1, 'p': 2, 'q': 2, 'y': 2};
+function fontAspect(font = activeSet) {
+  return lattice === 'rmbl' || lattice === 'rmbr' ? 2 / Math.sqrt(3) : (FONT_INFO[font].cellAspect || AR);
+}
 function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[activeSet], editable = false, options = {}) {
-  const aspect = lattice === 'rmbl' || lattice === 'rmbr' ? 2 / Math.sqrt(3) : AR;
+  const font = options.font || activeSet;
+  const aspect = fontAspect(font);
   const lines = [];
   const setText = editable || options.snap;
   const mono = setText && spacing === 'mono';
   const minHeight = options.lineHeight || 0;
-  // «моно» — одна клетка 8 у всех, буква центрируется; «по буквам» — шаг по ширине рисунка.
-  const box = 8;
+  // «моно» — общее знакоместо по самой широкой маске; «по буквам» — шаг по рисунку.
+  const box = Math.max(FONT_INFO[font].box || 8, ...Object.values(masks).map(rows => Math.max(...rows.map(row => row.length))));
   const pitch = box + gapCells;
-  // Толстый набор уже восьмирядный: выносные элементы заложены в сами маски.
-  const depth = ch => activeSet === 'bold' ? 0 : (DESCEND[ch] || 0);
+  const depth = ch => (font === 'thin' || font === 'kraftwerk-frame' ? DESCEND : FONT_INFO[font].descend || {})[ch] || 0;
   let placed = [], width = 0, asc = 0, below = 0, cursor = 0, gap = 0;
   function finishLine() {
     const height = Math.max(minHeight, asc + below, 1);
@@ -902,7 +979,8 @@ function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[acti
 
 const row = text => '<div class="row">' + text.replaceAll('&', '&amp;').replaceAll('<', '&lt;') + '</div>';
 function renderHeading() {
-  const masks = G[activeSet];
+  const uiFont = activeSet === 'bold' ? 'bold' : 'thin';
+  const masks = G[uiFont];
   const dash = masks['-'];
   const first = dash.findIndex(row => row.includes('1'));
   let centered = dash;
@@ -911,7 +989,7 @@ function renderHeading() {
     const below = Math.max(0, Math.floor((masks['Б'].length - centered.length) / 2));
     centered = centered.concat(Array(below).fill(''));
   }
-  document.getElementById('head').innerHTML = lettering('АЗЪ-БУКЪ', 4, 1, Infinity, { ...masks, '-': centered });
+  document.getElementById('head').innerHTML = lettering('АЗЪ-БУКЪ', 4, 1, Infinity, { ...masks, '-': centered }, false, {font: uiFont});
   const version = document.querySelector('.ver');
   const label = version.getAttribute('aria-label');
   const versionMasks = Object.fromEntries([...label].map(ch => {
@@ -920,12 +998,13 @@ function renderHeading() {
     return [ch, rows.slice(Math.max(0, firstInk))];
   }));
   const height = Math.max(...Object.values(versionMasks).map(rows => rows.length));
-  version.innerHTML = lettering(label, 8 / height, 1, Infinity, versionMasks);
+  version.innerHTML = lettering(label, 8 / height, 1, Infinity, versionMasks, false, {font: uiFont});
 }
 
 function renderButtonLabel(button, label) {
+  const uiFont = activeSet === 'bold' ? 'bold' : 'thin';
   button.setAttribute('aria-label', label);
-  button.innerHTML = lettering(label.replaceAll('−', '-'), 1);
+  button.innerHTML = lettering(label.replaceAll('−', '-'), 1, 1, Infinity, G[uiFont], false, {font: uiFont});
 }
 
 function sizeControls(cell) {
@@ -946,7 +1025,7 @@ function renderSheet(cell) {
     button.setAttribute('aria-pressed', String(selected));
     button.closest('.grid-pair').classList.toggle('gz-bs', button.closest('.grid-pair').querySelector('.gz-h1').dataset.lat === lattice);
   });
-  const letterWidths = [...(UPPER + LOWER + LATU + LATL)].map(ch =>
+  const letterWidths = [...(UPPER + LOWER + LATU + LATL)].filter(ch => G[activeSet][ch]).map(ch =>
     Math.max(...G[activeSet][ch].map(row => row.length)));
   trk.max = Math.max(1, ...letterWidths);
   trk.value = track;
@@ -963,7 +1042,7 @@ function renderSheet(cell) {
 function fieldGrid(cell, patternId = 'alphabet-field-grid') {
   if (!fieldGridVisible) return '';
   const slope = lattice === 'sq' ? 0 : lattice === 'rmbr' ? -.5 : .5;
-  const aspect = lattice === 'rmbl' || lattice === 'rmbr' ? 2 / Math.sqrt(3) : AR;
+  const aspect = fontAspect();
   const w = aspect * cell, h = cell;
   let lines = 'M0,0H' + w + 'M0,' + h + 'H' + w;
   for (let i = -1; i <= 2; i++) lines += 'M' + (i * w) + ',0l' + (-2 * slope * w) + ',' + (2 * h);
@@ -979,17 +1058,21 @@ function renderAlphabet(cell) {
   gridButton.setAttribute('aria-pressed', String(fieldGridVisible));
   gridButton.title = (fieldGridVisible ? 'Скрыть' : 'Показать') + ' сетку поля с буквами';
   const alphabet = document.getElementById('alphabet');
-  const aspect = lattice === 'rmbl' || lattice === 'rmbr' ? 2 / Math.sqrt(3) : AR;
+  const aspect = fontAspect();
   const pitch = cell * aspect;
   alphabet.style.setProperty('--field-pad-x', Math.ceil(18 / pitch) * pitch + 'px');
   alphabet.style.setProperty('--field-gap', Math.ceil(14 / (2 * cell)) * 2 * cell + 'px');
+  const supported = text => [...text].filter(ch => Object.hasOwn(G[activeSet], ch)).join('');
+  const shown = new Set(UPPER + LOWER + LATU + LATL + DIGIT + SYM);
+  const additional = Object.keys(G[activeSet]).filter(ch => !shown.has(ch) && ch.trim()).join('');
   alphabet.innerHTML = fieldGrid(cell) + [
-    '<section aria-label="Кириллица">' + row(UPPER) + row(LOWER) + '</section>',
-    '<section aria-label="Латиница">' + row(LATU) + row(LATL) + '</section>',
-    '<section aria-label="Цифры и знаки">' + row(DIGIT) + row(SYM) + '</section>',
-  ].join('');
+    ['Кириллица', UPPER, LOWER], ['Латиница', LATU, LATL], ['Цифры и знаки', DIGIT, SYM]
+  ].map(([label, ...lines]) => {
+    const visible = lines.map(supported).filter(Boolean);
+    return visible.length ? '<section aria-label="' + label + '">' + visible.map(row).join('') + '</section>' : '';
+  }).join('') + (additional ? '<section aria-label="Другие символы">' + row(additional) + '</section>' : '');
   const rows = document.querySelectorAll('#sheet .row');
-  const maxWidth = rows[0].getBoundingClientRect().width;
+  const maxWidth = rows[0]?.getBoundingClientRect().width || alphabet.clientWidth;
   rows.forEach(el => { el.innerHTML = lettering(el.textContent, cell, trk.valueAsNumber, maxWidth, G[activeSet], true); });
   updateSelectedGlyph();
   renderTextPreview();
@@ -1017,10 +1100,10 @@ function renderTextPreview() {
     if (ch === '\n' || ch === ' ' || Object.hasOwn(masks, ch)) return ch;
     unsupported.add(ch); return '?';
   }).join('');
-  const aspect = lattice === 'rmbl' || lattice === 'rmbr' ? 2 / Math.sqrt(3) : AR;
+  const aspect = fontAspect();
   const pitch = aspect * cellSize, lineGap = 2, padX = 1, padY = 2;
   const available = Math.max(pitch * 12, document.getElementById('textPreview').clientWidth - padX * 2 * pitch);
-  const lineHeight = Math.max(4, masks['А'].length);
+  const lineHeight = Math.max(4, (masks['А'] || masks['A'] || masks['0'] || ['0']).length);
   const layouts = [];
   for (const line of text.split('\n')) {
     if (!line) {
@@ -1132,9 +1215,11 @@ document.getElementById('sheet').addEventListener('keydown', event => {
   }
 });
 
+function minimumGlyphSize() { return activeSet === 'thin' || activeSet === 'bold' ? 4 : 1; }
 function normalize(rows) {
-  const w = Math.max(4, ...rows.map(r => r.length));
-  return Array.from({length: Math.max(4, rows.length)}, (_, y) => (rows[y] || '').padEnd(w, '0'));
+  const minimum = minimumGlyphSize();
+  const w = Math.max(minimum, ...rows.map(r => r.length));
+  return Array.from({length: Math.max(minimum, rows.length)}, (_, y) => (rows[y] || '').padEnd(w, '0'));
 }
 
 function glyphCounts(rows) {
@@ -1185,7 +1270,7 @@ function renderEditor() {
   const h = rows.length, w = rows[0].length;
   const grid = document.getElementById('grid');
   const slope = lattice === 'sq' ? 0 : lattice === 'rmbr' ? -0.5 : 0.5;
-  const aspect = lattice === 'sq' ? 1 : lattice === 'tri' ? AR : 2 / Math.sqrt(3);
+  const aspect = lattice === 'sq' ? 1 : fontAspect();
   const pitchY = 24, pitchX = pitchY * aspect, offset = h * Math.max(0, slope);
   const width = (w + h * Math.abs(slope)) * pitchX, height = h * pitchY;
   // Постоянное поле: размер задаёт самая крупная буква набора, поэтому смена буквы
@@ -1209,8 +1294,8 @@ function renderEditor() {
     return '<polygon class="cell' + (v === '1' ? ' on' : '') + '" data-x="' + x + '" data-y="' + y +
       '" points="' + [point(.045, .045), point(.955, .045), point(.955, .955), point(.045, .955)].join(' ') + '"/>';
   }).join('')).join('');
-  document.getElementById('delCol').disabled = w <= 4;
-  document.getElementById('delRow').disabled = h <= 4;
+  document.getElementById('delCol').disabled = w <= minimumGlyphSize();
+  document.getElementById('delRow').disabled = h <= minimumGlyphSize();
   // протяжка: тянем мышь — все клетки под курсором меняются в одну сторону
   let drag = null;
   const setBit = (x, y, val) => {
@@ -1264,16 +1349,16 @@ function commit() {
 
 const mod = (fn) => () => { G[activeSet][editChar] = fn(normalize(G[activeSet][editChar] || ['0'])); commit(); renderEditor(); renderSheet(cellSize); };
 document.getElementById('addCol').onclick = mod(r => normalize(r.map(x => x + '0')));
-document.getElementById('delCol').onclick = mod(r => normalize(r.map(x => x.slice(0, Math.max(4, x.length - 1)))));
+document.getElementById('delCol').onclick = mod(r => normalize(r.map(x => x.slice(0, Math.max(minimumGlyphSize(), x.length - 1)))));
 document.getElementById('addRow').onclick = mod(r => normalize([...r, '0'.repeat(r[0].length)]));
-document.getElementById('delRow').onclick = mod(r => normalize(r.length > 4 ? r.slice(0, -1) : r));
+document.getElementById('delRow').onclick = mod(r => normalize(r.length > minimumGlyphSize() ? r.slice(0, -1) : r));
 document.getElementById('resetChar').onclick = () => { if (BASE[activeSet][editChar]) { G[activeSet][editChar] = BASE[activeSet][editChar].slice(); delete EDITS[activeSet][editChar]; localStorage.setItem(KEY, JSON.stringify(EDITS)); } renderEditor(); renderSheet(cellSize); };
-document.getElementById('resetAll').onclick = () => { EDITS = { bold: {}, thin: {} }; localStorage.removeItem(KEY); for (const s of SETS) for (const [ch, rows] of Object.entries(BASE[s])) G[s][ch] = rows.slice(); renderEditor(); renderSheet(cellSize); };
+document.getElementById('resetAll').onclick = () => { EDITS[activeSet] = {}; localStorage.setItem(KEY, JSON.stringify(EDITS)); for (const [ch, rows] of Object.entries(BASE[activeSet])) G[activeSet][ch] = rows.slice(); renderEditor(); renderSheet(cellSize); };
 document.getElementById('save').onclick = () => { commit(); const b = document.getElementById('save'); renderButtonLabel(b, 'Сохранено'); setTimeout(() => renderButtonLabel(b, 'Сохранить'), 1200); };
 document.getElementById('download').onclick = () => {
   const a = document.createElement('a');
-  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({ bold: G.bold, thin: G.thin }));
-  a.download = 'azbuk-glyphs.json';
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({[activeSet]: G[activeSet], format: 'azbuk-glyphs', font: activeSet, label: FONT_INFO[activeSet].label, masks: G[activeSet]}));
+  a.download = 'azbuk-' + activeSet + '-glyphs.json';
   a.click();
 };
 
@@ -1301,17 +1386,11 @@ document.getElementById('fieldGridToggle').addEventListener('click', () => {
 function syncWeightUI() {
   const bold = document.getElementById('weightBold'), thin = document.getElementById('weightThin');
   if (!bold || !thin) return;
+  document.getElementById('azbukWeightControls').hidden = activeSet !== 'bold' && activeSet !== 'thin';
   bold.setAttribute('aria-pressed', String(activeSet === 'bold'));
   thin.setAttribute('aria-pressed', String(activeSet === 'thin'));
 }
-function setWeight(set) {
-  if ((set !== 'bold' && set !== 'thin') || set === activeSet) return;
-  activeSet = set;
-  localStorage.setItem('azbuk-weight', activeSet);
-  if (!Object.hasOwn(G[activeSet], editChar)) editChar = 'А';
-  renderEditor();
-  renderSheet(cellSize);
-}
+function setWeight(set) { if (set === 'bold' || set === 'thin') selectFont(set); }
 document.getElementById('weightBold').addEventListener('click', () => setWeight('bold'));
 document.getElementById('weightThin').addEventListener('click', () => setWeight('thin'));
 let editorFitFrame = 0;
@@ -2074,4 +2153,5 @@ renderEditor();
 })();
 
 </script>
+<script src="azbuk/local-font-preview.js?v=063"></script>
 </html>
