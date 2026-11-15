@@ -14514,6 +14514,13 @@ function lpWin(col, vis){
 /* v0.543, по снимку «⇤ ▬ ⟲ Roboto ◀ 12 ▶ колонками ◫◧◨ 01 цифры» — «здесь кнопки в треугольную форму, как и те»: полоса над полем строк — кнопки, списки и
    ползунок размера цепочкой, как в шапках окон (lpWin): первая остриём, следующие выемкой на остриё соседки. Три кнопки над столбиками (⇤ ▬ ⟲) стоят над
    своими столбиками (fieldInfoFit двигает их отступом) — каждая сама по себе, шестигранником, её отступ не трогается */
+function lpBorderColors(buttons){
+  // Сначала снимаем декор со всей полосы, затем читаем цвета за один проход стилей.
+  for (const button of buttons) button.classList.remove("tz");
+  const colors = new Map(buttons.map(button => [button, getComputedStyle(button).borderTopColor]));
+  for (const button of buttons) button.classList.add("tz");
+  return colors;
+}
 function lpBar(col, vis){
   const bar = document.getElementById("rowInputBar"); if (!bar) return;
   bar.classList.add("lpt");
@@ -14527,8 +14534,9 @@ function lpBar(col, vis){
     if (vis(el)) end();
   };
   [...bar.children].forEach(walk); end();
+  const borders = lpBorderColors(runs.flat());
   runs.forEach(r => r.forEach((b, i) => {
-    b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
+    const bc = borders.get(b);
     let tw = 0;
     if (b.tagName === "SELECT") { const o = b.options[b.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
     else { const rg = document.createRange(); rg.selectNodeContents(b); tw = rg.getBoundingClientRect().width; }
@@ -14550,9 +14558,10 @@ function lpTools(col, vis){
     if (!vis(bar)) return;
     const flat = (els) => els.flatMap(el => el.tagName === "SPAN" && !el.classList.contains("zerk-range-wrap") && getComputedStyle(el).display === "contents" ? flat([...el.children]) : [el]);   // v0.798: растворённая обёртка (display: contents) — её кнопки в общей цепочке
     const its = flat([...bar.children]).filter(el => vis(el) && (el.tagName === "BUTTON" || el.tagName === "SELECT" || el.tagName === "LABEL"));
+    const borders = lpBorderColors(its);
     its.forEach((b, i) => {
       const compact=!!bar.closest("#w-rmb")&&(parseFloat(getComputedStyle(b).height)||24)<=24,step=compact?Math.min(parseFloat(getComputedStyle(b).height)||24,TZC_H)/Math.sqrt(3):sd;
-      b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
+      const bc = borders.get(b);
       let tw = 0;
       /* v0.799, по снимку «👓 возраст» — «не меняй ширину кнопок»: кнопка, чья надпись меняется по кругу (data-labels — все надписи через «|»), и список —
          шириной по самой длинной надписи, а не по нынешней: переключение не двигает соседей */
