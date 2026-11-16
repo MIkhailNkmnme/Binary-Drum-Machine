@@ -8,4 +8,11 @@ h3{font-size:18px;font-weight:500;margin:0 0 12px;color:var(--gold)}
 .flow{font-size:19px}
 code{overflow-wrap:anywhere;color:var(--gold)}
 #experiment table td,#experiment table th{width:auto}
+.reference-frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:14px;margin:20px 0}
+.reference-frames figure{margin:0;background:var(--panel);border:1px solid var(--line)}
+.reference-frames img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;background:#0b111c}
+.reference-frames figcaption{padding:6px 10px;color:var(--muted);font-size:14px}
+.reference-player{margin:20px 0 26px}
+.reference-player summary{cursor:pointer;color:var(--link);width:fit-content}
+.reference-player iframe{display:block;width:100%;max-width:960px;height:auto;aspect-ratio:16/9;border:1px solid var(--line);margin-top:12px;background:#0b111c}
 @media(max-width:680px){.listening{grid-template-columns:minmax(0,1fr);gap:12px}.listening>div{padding:16px}.flow{font-size:17px}video{margin:16px 0}}
