@@ -183,6 +183,28 @@ h2, .stats caption {
 .commands .gz-hx:enabled:active::before { inset: 3px; }
 .commands .gz-hx:disabled { opacity: .5; cursor: default; }
 
+.commands .axis-pair { --gz-r0: transparent; --gz-r1: transparent; }
+.commands .axis-pair .gz-half {
+  border: 0;
+  isolation: isolate;
+  gap: 2px;
+  font: 10px/1 "Segoe UI", sans-serif;
+  color: var(--text);
+  text-shadow: none;
+  user-select: none;
+  outline: none;
+}
+.commands .axis-pair .gz-ic { color: var(--cyan); }
+.commands .axis-pair .gz-half::before { inset: 0; }
+.commands .axis-pair .gz-half:hover:not([data-pointer-off]),
+.commands .axis-pair .gz-half[aria-pressed="true"],
+.commands .axis-pair .gz-half:focus-visible,
+.commands .axis-pair .gz-half:active { background: var(--cyan); }
+.commands .axis-pair .gz-half:hover:not([data-pointer-off])::before { inset: 1px; }
+.commands .axis-pair .gz-half[aria-pressed="true"]::before { inset: 2px; }
+.commands .axis-pair .gz-half:focus-visible::before,
+.commands .axis-pair .gz-half:active::before { inset: 3px; }
+
 #exclude-form {
   display: grid;
   gap: 5px;

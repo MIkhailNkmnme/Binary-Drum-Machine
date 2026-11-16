@@ -506,8 +506,14 @@
     applyLayout();
   }
 
-  byId("flip-horizontal").addEventListener("click", () => flip(true, false));
-  byId("flip-vertical").addEventListener("click", () => flip(false, true));
+  for (const [id, horizontal, vertical] of [["flip-horizontal", true, false], ["flip-vertical", false, true]]) {
+    const control = byId(id);
+    control.addEventListener("click", event => {
+      flip(horizontal, vertical);
+      if (event.detail > 0 && control.getAttribute("aria-pressed") === "false") control.dataset.pointerOff = "";
+    });
+    control.addEventListener("pointerleave", () => { delete control.dataset.pointerOff; });
+  }
   byId("flip-both").addEventListener("click", () => flip(true, true));
   byId("reset-layout").addEventListener("click", () => {
     layout = { horizontal: false, vertical: false };
