@@ -1,0 +1,78 @@
+<!-- Bit-Byte v0.001 · 256 байтов, ручное исключение и живая статистика. -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bit-Byte v0.001 — Зеркалиус</title>
+  <link rel="stylesheet" href="../_js/grozd.css">
+  <link rel="stylesheet" href="style.css?v=001">
+
+  <script defer src="app.js?v=001"></script>
+  <script defer src="../_js/hub-link.js?v=7"></script>
+</head>
+<body>
+  <main>
+    <header class="page-head">
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.001</small></h1>
+      <p>Щёлкните по байту, чтобы исключить или вернуть его. Стрелки перемещают фокус, Enter и пробел меняют состояние.</p>
+    </header>
+
+    <div class="workspace">
+      <section class="field" aria-label="Поле байтов">
+        <div class="field-scroll">
+          <table id="byte-field" aria-label="Все 256 байтов по порядку. Строка задаёт старшую тетраду, столбец задаёт младшую."></table>
+        </div>
+      </section>
+
+      <aside class="sidebar" aria-label="Управление и итоги">
+        <section class="panel">
+          <h2>Итоги</h2>
+          <table class="stats totals">
+            <thead>
+              <tr><th scope="col">Показатель</th><th scope="col">Осталось</th><th scope="col">Исключено</th></tr>
+            </thead>
+            <tbody id="totals"></tbody>
+          </table>
+          <p id="announcement" class="visually-hidden" role="status"></p>
+          <p class="hint legend"><span aria-hidden="true">╱</span> Исключённый байт</p>
+        </section>
+
+        <section class="panel">
+          <h2>Ручное исключение</h2>
+          <div class="commands">
+            <button id="restore" class="gz-hx" type="button" title="Вернуть все байты" aria-label="Вернуть все байты"><span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Вернть все</span></button>
+            <button id="invert" class="gz-hx" type="button" title="Инвертировать выбор" aria-label="Инвертировать выбор"><span class="gz-ic" aria-hidden="true">⇄</span><span class="gz-nm">Инверсия</span></button>
+            <button id="undo" class="gz-hx" type="button" title="Отменить последнее изменение" aria-label="Отменить последнее изменение"><span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Отмена</span></button>
+          </div>
+          <form id="exclude-form">
+            <label for="exclude-list">Список 8-битных слов</label>
+            <textarea id="exclude-list" rows="3" spellcheck="false" autocapitalize="off" aria-describedby="list-hint"></textarea>
+            <p id="list-hint" class="hint">Например, 00000001 11110000</p>
+            <div class="commands">
+              <button id="exclude" class="gz-hx" type="submit" title="Исключить байты из списка" aria-label="Исключить байты из списка"><span class="gz-ic" aria-hidden="true">−</span><span class="gz-nm">Исклчть</span></button>
+            </div>
+            <p id="list-result" class="hint" role="status"></p>
+          </form>
+          <p class="hint auto-note">Правило автоматического исключения ещё не определено.</p>
+        </section>
+      </aside>
+    </div>
+
+    <section class="breakdown" aria-label="Подробная статистика">
+      <div class="panel">
+        <table class="stats"><caption>По строкам</caption><thead></thead><tbody id="rows"></tbody></table>
+      </div>
+      <div class="panel">
+        <table class="stats"><caption>По столбцам</caption><thead></thead><tbody id="columns"></tbody></table>
+      </div>
+      <div class="panel">
+        <table class="stats"><caption>По числу единиц в байте</caption><thead><tr><th scope="col">Единиц</th><th scope="col">Осталось</th><th scope="col">Исключено</th></tr></thead><tbody id="popcounts"></tbody></table>
+      </div>
+      <div class="panel">
+        <table class="stats"><caption>По разрядам</caption><thead></thead><tbody id="positions"></tbody></table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
