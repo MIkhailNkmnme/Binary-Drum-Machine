@@ -383,7 +383,6 @@
     byId("columns").append(...columns.map(index => axisColumns[index][0].parentElement));
     byId("flip-horizontal").setAttribute("aria-pressed", String(layout.horizontal));
     byId("flip-vertical").setAttribute("aria-pressed", String(layout.vertical));
-    byId("flip-both").setAttribute("aria-pressed", String(layout.horizontal && layout.vertical));
     byId("reset-layout").disabled = !layout.horizontal && !layout.vertical;
     const direction = reverse => reverse ? "F → 0" : "0 → F";
     byId("layout-status").textContent = `Столбцы слева направо: ${direction(layout.horizontal)}.\nСтроки сверху вниз: ${direction(layout.vertical)}.`;
@@ -514,7 +513,6 @@
     });
     control.addEventListener("pointerleave", () => { delete control.dataset.pointerOff; });
   }
-  byId("flip-both").addEventListener("click", () => flip(true, true));
   byId("reset-layout").addEventListener("click", () => {
     layout = { horizontal: false, vertical: false };
     saveLayout();

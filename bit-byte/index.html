@@ -1,20 +1,20 @@
-<!-- Bit-Byte v0.004 · столбцы и строки в одной стандартной кнопке с двумя половинами. -->
+<!-- Bit-Byte v0.005 · два независимых разворота в одной кнопке; команда «Вместе» убрана. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.004 — Зеркалиус</title>
+  <title>Bit-Byte v0.005 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=004">
+  <link rel="stylesheet" href="style.css?v=005">
 
-  <script defer src="app.js?v=004"></script>
+  <script defer src="app.js?v=005"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.004</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.005</small></h1>
       <p>Щёлкните по байту, чтобы исключить или вернуть его. Стрелки перемещают фокус, Enter и пробел меняют состояние.</p>
     </header>
 
@@ -103,7 +103,6 @@
               <button id="flip-horizontal" class="gz-half gz-h0" type="button" aria-pressed="false" title="Развернуть порядок столбцов: 0 → F или F → 0" aria-label="Развернуть порядок столбцов"><span class="gz-ic" aria-hidden="true">↔</span><span>Стлб</span></button>
               <button id="flip-vertical" class="gz-half gz-h1" type="button" aria-pressed="false" title="Развернуть порядок строк: 0 → F или F → 0" aria-label="Развернуть порядок строк"><span class="gz-ic" aria-hidden="true">↕</span><span>Стр</span></button>
             </div>
-            <button id="flip-both" class="gz-hx" type="button" aria-pressed="false" title="Развернуть обе оси сразу, поменять противоположные углы местами" aria-label="Развернуть обе оси сразу"><span class="gz-ic" aria-hidden="true">⤡</span><span class="gz-nm">Вместе</span></button>
             <button id="reset-layout" class="gz-hx" type="button" title="Исходное расположение: обе оси от 0 к F. Исключённые байты сохраняются." aria-label="Вернуть исходное расположение"><span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Исходно</span></button>
           </div>
           <p id="layout-status" class="hint layout-status" role="status"></p>
