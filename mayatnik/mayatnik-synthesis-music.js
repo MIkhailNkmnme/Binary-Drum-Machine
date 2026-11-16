@@ -281,6 +281,7 @@
       }
       if (Number.isFinite(event.f0)) clean.f0 = event.f0;
       if (Number.isFinite(event.tau)) clean.tau = event.tau;
+      if (Number.isFinite(event.tilt)) clean.tilt = clamp(event.tilt, .1, 1);
       cleaned.push(clean);
     }
     return cleaned;

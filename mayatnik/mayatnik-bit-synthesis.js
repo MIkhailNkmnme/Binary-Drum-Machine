@@ -232,7 +232,7 @@
           duration,
           rate,
           tau: event?.tau ?? spec.tau,
-          tilt: spec.tilt,
+          tilt: event?.tilt ?? spec.tilt,
           gain: spec.gain,
           f0: event?.f0
         })

@@ -156,6 +156,22 @@ test('голоса битов работают через renderWav и exportMid
   assert.equal(Buffer.from(midi.subarray(14, 18)).toString(), 'MTrk');
 });
 
+test('наклон партиал проходит через событие и меняет тембр', () => {
+  const bits = [1, 1, 1, 1];
+  const dark = Bit.renderBitVoice({ bits, f0: 220, rate: 22050, duration: .6, tau: .5, gain: .5, tilt: .45 });
+  const bright = Bit.renderBitVoice({ bits, f0: 220, rate: 22050, duration: .6, tau: .5, gain: .5, tilt: .95 });
+  assert.notDeepEqual(dark, bright);
+
+  const event = tilt => ({
+    voice: 'bitsHarmonic', midi: 57, duration: .5, velocity: .6, beat: 0, pan: 0,
+    bits, f0: 220, tau: .4, tilt
+  });
+  const format = { durationSeconds: 1, sampleRate: 22050 };
+  const a = Buffer.from(Music.renderWav([event(.4)], { tempo: 120 }, format)).toString('hex');
+  const b = Buffer.from(Music.renderWav([event(.95)], { tempo: 120 }, format)).toString('hex');
+  assert.notEqual(a, b);
+});
+
 test('регистрация не трогает прежние голоса', () => {
   assert.equal(typeof Music.registerVoice, 'function');
   const ok = Bit.registerVoices(Music);
