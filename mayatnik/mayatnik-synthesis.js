@@ -1,17 +1,19 @@
-/* Маятник · Синтез 0.012. Exact pendulum duet, score and computational art.
+/* Маятник · Синтез 0.013. Exact pendulum duet, score and computational art.
  * Source redraws are observations, never an animation clock. Only successive
  * source frames or explicit independent ticks advance experimental history. */
 (function(root){
   'use strict';
   const KEY='synthesis-controls-v1',MAX=512;
   const openingExample=root.MayatnikSynthesisExample;
+  const VOICE_MAX=48,voiceTempos=[60,80,100,120,140];
+  function voiceText(value){return value.normalize('NFC').toUpperCase().replace(/[^А-ЯЁA-Z0-9 ]/gu,' ').slice(0,VOICE_MAX);}
   const defaults={mode:'pendulums',rule:'circuit',trailFrames:8,recoveryFrames:6,wrap:false,
     mix:'only',link:false,rate:8,colourOne:'#ffd35b',colourZero:'#5ce1e6',visible:true,
     weightsOpen:true,stateWeights:[0,1,2,1,0,0,1],positionWeights:[2,1,2,1,1,2,1,2],
     studioSection:'sources',palette:'nocturne',artStyle:'bits',musicStyle:'techno',tempo:120,volume:0.45,musicRoot:48,musicScale:'minor',density:3,bitVoice:'off',musicBars:16,recipe:'',pendulumOptions:{},
     fractalKind:'arrowhead',fractalDepth:4,chaosVertices:12,chaosJump:.8,chaosNoRepeat:false,chaosSeed:1,chaosBatch:32,
-    cellularRule:'231123',cellularSeed:'single',cellularBits:''};
-  const modes={pendulums:'Маятники A + B',trail:'След',waves:'Волны',recovery:'Восстановление',grow:'Отпечаток',weights:'Веса соседей',fractal:'Фракталы'};
+    cellularRule:'231123',cellularSeed:'single',cellularBits:'',voiceText:'ЗЕРКАЛИУС 0101',voiceTempo:100};
+  const modes={pendulums:'Маятники A + B',trail:'След',waves:'Волны',recovery:'Восстановление',grow:'Отпечаток',weights:'Веса соседей',fractal:'Фракталы',voice:'Голос знаков'};
   const fractalNames={arrowhead:'Стрелка',rule90:'Правило 90',chaos:'Игра хаоса',cellular:'Клеточные ряды'};
   const cellularRules=[
     {v:'231123',name:'Deckard 231123'},{v:'222111',name:'Deckard 222111'},
@@ -22,6 +24,7 @@
   const chaosCorners=[3,4,5,12],chaosSeeds=[1,2,3,17,41],chaosBatches=[1,8,32];
   const duetMode=()=>prefs.mode==='pendulums';
   const fractalMode=()=>prefs.mode==='fractal';
+  const voiceMode=()=>prefs.mode==='voice';
   const chaosMode=()=>fractalMode()&&prefs.fractalKind==='chaos';
   const rowMode=()=>fractalMode()&&prefs.fractalKind==='cellular';
   const rules={circuit:'Circuit Genesis',fireworks:'Fireworks',replicator:'Replicator',weighted:'WG Rule084'};
@@ -51,14 +54,16 @@
     if(cellularRules.some(it=>it.v===value.cellularRule))p.cellularRule=value.cellularRule;
     if(typeof value.cellularBits==='string'&&/^[01]{1,128}$/.test(value.cellularBits))p.cellularBits=value.cellularBits;
     if(['single','pair'].includes(value.cellularSeed)||value.cellularSeed==='captured'&&p.cellularBits)p.cellularSeed=value.cellularSeed;
-    if(p.mode==='fractal')p.link=false;
+    if(typeof value.voiceText==='string')p.voiceText=voiceText(value.voiceText);
+    if(voiceTempos.includes(value.voiceTempo))p.voiceTempo=value.voiceTempo;
+    if(p.mode==='fractal'||p.mode==='voice')p.link=false;
     return p;
   }
   try{prefs=readPrefs(JSON.parse(localStorage.getItem(KEY)||'null'));}catch(_){}
   let engine=null,sourceBits=null,crop=null,sourceOwner=null,sourceMode='',sourceFrame=null,sourceSize='',
     panel=null,canvas=null,ctx=null,status=null,notice=null,bindings=[],after=()=>{},timer=null,
     ticks=0,message='',pendingSave=null,dbPromise=null,restoring=true,detached=false,dirty=false,weightPanel=null,legend=null,workInput=null,layerData=null,
-    duet=null,music=null,exporting=false,fractalModel=null,fractalKey='';
+    duet=null,music=null,exporting=false,fractalModel=null,fractalKey='',voiceClock=null,voiceField=null,voiceInput=null;
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;};
   function fail(error){message=error?.message||String(error);refresh();}
   function run(action){try{const result=action();if(result?.catch)result.catch(fail);}catch(error){fail(error);}}
@@ -149,27 +154,56 @@
     message=(selection?'Захвачена область':'Захвачен кадр')+' '+s.k+'. '+(rect.w<s.W||rect.h<s.H?'Показана область '+rect.w+' × '+rect.h+' без уменьшения клеток.':'');
     render();scheduleSave();
   }
-  function openFractalExample(example){
+  function openExample(example){
     const s=availableSource(),rect=chooseCrop(s);
-    prefs=readPrefs({...defaults,...example.prefs,mode:'fractal',visible:true,link:false});
+    prefs=readPrefs({...defaults,...example.prefs,mode:example.prefs.mode||'fractal',visible:true,link:false});
     build(readBits(s,rect),rect);
     bindSource(s);
-    ticks=fractalLimit(getFractal());
+    ticks=voiceMode()?0:fractalLimit(getFractal());
     message=example.label+' · '+example.settings;
     render();
     root.maySynthesisFocus?.(crop);
   }
-  function captureCellularRow(){
+  function selectedRowBits(limit){
     const s=availableSource(),selection=s.selection;
     if(s.selectionUnsupported||!selection)throw Error('Выделите строку на обычном прямоугольном поле. Из области берётся её верхняя строка.');
     const x=selection.c0,y=selection.r0,w=selection.c1-x+1;
-    if(w<1||w>128||x<0||x+w>s.W||y<0||y>=s.H)throw Error('Выделите от 1 до 128 клеток внутри поля.');
-    const bits=readBits(s,{x,y,w,h:1});
+    if(w<1||w>limit||x<0||x+w>s.W||y<0||y>=s.H)throw Error('Выделите от 1 до '+limit+' клеток внутри поля.');
+    return readBits(s,{x,y,w,h:1});
+  }
+  function captureCellularRow(){
+    const bits=selectedRowBits(128);
     prefs.cellularBits=Array.from(bits,value=>value===1?'1':'0').join('');
     prefs.visible=true;
     setOption('cellularSeed','captured');
-    message='Взята верхняя строка выделения · '+w+' битов.';
+    message='Взята верхняя строка выделения · '+bits.length+' битов.';
     refresh();
+  }
+  function setVoiceText(value){
+    const next=voiceText(value);
+    pause();ticks=0;prefs.voiceText=next;voiceInput.value=next;
+    message='';dirty=true;remember();render();scheduleSave();
+  }
+  function captureVoiceRow(){
+    const bits=selectedRowBits(VOICE_MAX);
+    prefs.visible=true;
+    setVoiceText(Array.from(bits,bit=>bit<0?' ':String(bit)).join(''));
+  }
+  function playSigns(single=false){
+    if(voiceClock?.running){pause();if(!single)return;}
+    const signs=Array.from(prefs.voiceText);
+    if(!signs.some(sign=>sign!==' '))throw Error('Введите хотя бы одну букву или цифру.');
+    if(!engine)capture(false);
+    if(ticks>=signs.length){ticks=0;render();}
+    message='';
+    voiceClock??=root.MayatnikSynthesisSignClock.create();
+    const playback=voiceClock.play({
+      signs,start:ticks,count:single?1:signs.length-ticks,bpm:prefs.voiceTempo,
+      onBeat(index){ticks=index+1;dirty=true;render(true);scheduleSave();},
+      onFinish(){refresh();}
+    });
+    refresh();
+    return playback.catch(error=>{if(error?.name!=='AbortError')throw error;});
   }
   function preset(kind){
     pause();const w=129,h=129,bits=new Int8Array(w*h),cx=64,cy=64;
@@ -207,6 +241,7 @@
     });
   }
   function step(){
+    if(voiceMode())return playSigns(true);
     if(!engine){capture(false);if(!engine)return;}
     if(fractalMode()){
       const model=getFractal(),limit=fractalLimit(model),advanced=ticks<limit;
@@ -225,8 +260,10 @@
     if(cellular())engine.step({injectChanges:false});
     ticks++;dirty=true;render();scheduleSave();
   }
-  function pause(){if(timer!==null){clearInterval(timer);timer=null;}music?.silence();refresh();}
+  const running=()=>timer!==null||!!voiceClock?.running;
+  function pause(){if(timer!==null){clearInterval(timer);timer=null;}music?.silence();voiceClock?.stop();refresh();}
   function play(){
+    if(voiceMode())return playSigns();
     if(timer!==null){pause();return;}
     if(prefs.link&&!autonomous())throw Error('Включена «Связь»: запустите плеер исходного Маятника или отключите связь для самостоятельного хода.');
     if(!engine)capture(false);
@@ -238,11 +275,11 @@
     pause();
     if(chaosMode()&&mode!=='fractal')music?.disable();
     prefs.mode=mode;
-    if(autonomous()||duetMode()||fractalMode())prefs.link=false;
+    if(autonomous()||duetMode()||fractalMode()||voiceMode())prefs.link=false;
     if(mode==='weights')prefs.rule='weighted';
     if(engine){engine.configure(engineOptions());engine.reset(sourceBits);ticks=0;if(autonomous())engine.seed(sourceBits);dirty=true;}
     if(duetMode()){if(!engine)capture(false);else createDuet();prefs.mix='only';prefs.visible=true;}else{duet=null;music?.disable();}
-    if(fractalMode()){
+    if(fractalMode()||voiceMode()){
       if(!engine)capture(false);
       prefs.visible=true;
       root.maySynthesisFocus?.(crop);
@@ -253,6 +290,7 @@
   function setOption(key,value){
     const wasPlaying=timer!==null;
     if(key==='mode'){setMode(value);return;}
+    if(key==='voiceTempo')pause();
     if(key==='fractalKind'||key==='fractalDepth'||key.startsWith('chaos')||key.startsWith('cellular')){
       pause();ticks=0;
       message='';
@@ -290,9 +328,13 @@
       data[q*4+3]=255;
     }
   }
-  function render(){
+  function render(immediate=false){
     if(engine&&canvas){
       const w=engine.width,h=engine.height;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+      if(voiceMode()){
+        paintVoice(w,h);layerData=ctx.getImageData(0,0,w,h).data;
+        refresh();root.maySynthesisPresent?.(immediate);return;
+      }
       if(fractalMode()){
         const model=getFractal();
         root.MayatnikSynthesisFractals.paint(ctx,model,ticks+(model.rows?1:0),w,h,prefs.colourOne);
@@ -313,6 +355,26 @@
     refresh();
     root.maySynthesisPresent?.();
   }
+  function paintVoice(w,h){
+    ctx.fillStyle='#0a0e14';ctx.fillRect(0,0,w,h);
+    const signs=Array.from(prefs.voiceText),active=ticks-1;
+    if(!signs.length)return;
+    const cols=Math.min(12,signs.length,Math.max(1,Math.round(Math.sqrt(signs.length*w/h*2))));
+    const rows=Math.ceil(signs.length/cols),unit=Math.min(w*.9/cols,h*.43/rows);
+    const left=(w-unit*cols)/2,top=h*.53+(h*.43-unit*rows)/2;
+    ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle=prefs.colourOne;ctx.font='700 '+Math.max(1,Math.min(w*.42,h*.40))+'px system-ui';
+    ctx.fillText(signs[active]===' '?'·':signs[active]||'—',w/2,h*.27,w*.88);
+    ctx.font='600 '+Math.max(1,unit*.62)+'px system-ui';
+    for(let i=0;i<signs.length;i++){
+      const x=left+(i%cols)*unit,y=top+Math.floor(i/cols)*unit;
+      ctx.fillStyle=i===active?prefs.colourOne:'#23323e';
+      ctx.fillRect(x+unit*.06,y+unit*.06,unit*.88,unit*.88);
+      ctx.fillStyle=i===active?'#101820':'#cedee9';
+      ctx.fillText(signs[i]===' '?'·':signs[i],x+unit/2,y+unit*.52,unit*.82);
+    }
+    ctx.restore();
+  }
   function paintLayerPixels(data){
     data.fill(0);
     const one=rgb(prefs.colourOne),zero=rgb(prefs.colourZero),count=root.MayatnikSynthesisCore.rules[prefs.rule].states,lut=[[0,0,0],one];
@@ -326,12 +388,14 @@
     }
   }
   function getLayer(){
-    return !prefs.visible||!engine||!layerData?null:{width:engine.width,height:engine.height,crop:{...crop},data:layerData,only:fractalMode()||prefs.mix==='only'};
+    return !prefs.visible||!engine||!layerData?null:{width:engine.width,height:engine.height,crop:{...crop},data:layerData,only:fractalMode()||voiceMode()||prefs.mix==='only'};
   }
   function refresh(){
     if(!panel)return;
+    voiceField.hidden=!voiceMode();
+    if(document.activeElement!==voiceInput&&voiceInput.value!==prefs.voiceText)voiceInput.value=prefs.voiceText;
     if(weightPanel){weightPanel.hidden=prefs.rule!=='weighted'||!cellular();weightPanel.open=prefs.weightsOpen;}
-    if(legend)legend.textContent=fractalMode()?{
+    if(legend)legend.textContent=voiceMode()?'Буква или цифра звучит на доле. Пробел — пауза.':fractalMode()?{
       chaos:'Белым отмечена последняя выбранная вершина и текущая точка.',
       arrowhead:'Один шаг — один отрезок непрерывной линии.',
       rule90:'Один шаг — одна строка клеток.',
@@ -339,7 +403,10 @@
     }[prefs.fractalKind]:duetMode()?'A · B · '+(duet?.options.operation||'XOR').toUpperCase()+(music?.enabled?' · ♫':''):prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Только Синтез: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
     const bit=root.MayatnikBitSynthesis,bitInfo=prefs.bitVoice!=='off'&&bit&&duet?bit.describeFrame(musicFrame(),musicOptions()):null;
     status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'')+(bitInfo?' · n = '+bitInfo.n+' ('+bitInfo.binary+') · '+bitInfo.f0+' Гц · партиал '+bitInfo.partials:'');
-    if(fractalMode()&&engine){
+    if(voiceMode()&&engine){
+      const sign=prefs.voiceText[ticks-1];
+      status.textContent=prefs.voiceTempo+' BPM · '+ticks+' / '+prefs.voiceText.length+(sign?(sign===' '?' · пауза':' · '+sign):'');
+    }else if(fractalMode()&&engine){
       const model=getFractal(),rows=!!model.rows;
       if(model.kind==='chaos'){
         const note=root.MayatnikSynthesisFractals.chaosNote(model,ticks);
@@ -378,7 +445,7 @@
     pause();music?.disable();engine=next;sourceBits=Int8Array.from(data.sourceBits);crop={...r};prefs=nextPrefs;duet=nextDuet;
     const opt=next.options;prefs.rule=opt.rule;prefs.wrap=opt.wrap;prefs.trailFrames=Math.max(1,Math.min(64,opt.trailFrames));prefs.recoveryFrames=Math.min(64,opt.recoveryFrames);prefs.stateWeights=opt.stateWeights.slice();prefs.positionWeights=opt.positionWeights.slice();engine.configure(engineOptions());
     sourceFrame=data.sourceFrame;sourceMode=String(data.sourceMode||'');sourceSize=String(data.sourceSize||'');sourceOwner=null;
-    ticks=fractalMode()?Math.min(data.ticks,fractalLimit(getFractal())):data.ticks;
+    ticks=voiceMode()?Math.min(data.ticks,prefs.voiceText.length):fractalMode()?Math.min(data.ticks,fractalLimit(getFractal())):data.ticks;
     detached=!!data.detached;dirty=false;message='Опыт восстановлен на паузе.';remember();render();
   }
   function database(){
@@ -466,7 +533,7 @@
   function mountStudio(host){
     const section=name=>()=>duetMode()&&prefs.studioSection===name;
     choices(host,'studio-section','Раздел мастерской',[['sources','Исходники'],['motion','Движение'],['combine','Сочетание'],['music','Музыка'],['art','Картины'],['files','Сохранение']].map(([v,name])=>({v,name})),'studioSection',duetMode);
-    button(host,'focus','К построению','Поместить область Синтеза в экран крупно',()=>root.maySynthesisFocus?.(crop),{show:()=>duetMode()||fractalMode()});
+    button(host,'focus','К построению','Поместить область Синтеза в экран крупно',()=>root.maySynthesisFocus?.(crop),{show:()=>duetMode()||fractalMode()||voiceMode()});
     const recipeLabel=()=>root.MayatnikSynthesisPendulums.recipes.find(r=>r.id===prefs.recipe)?.name||'Опыты';
     const recipeButton=button(host,'recipes',recipeLabel(),'Готовые опыты: исходные построения и их синтез',()=>applyRecipe(root.MayatnikSynthesisPendulums.recipes[(root.MayatnikSynthesisPendulums.recipes.findIndex(r=>r.id===prefs.recipe)+1)%root.MayatnikSynthesisPendulums.recipes.length].id),{show:duetMode,caption:recipeLabel});
     recipeButton.setAttribute('aria-haspopup','true');root.ZerkGrozd.listHover(recipeButton,{options:()=>root.MayatnikSynthesisPendulums.recipes.map(r=>({key:r.id,name:r.name,on:prefs.recipe===r.id,pick:()=>run(()=>{applyRecipe(r.id);after();})}))});
@@ -515,6 +582,16 @@
     after=notify;host.classList.add('synthesis-controls');
     button(host,'visible','Результат','Показать результат Синтеза на основном поле Маятника',()=>setOption('visible',!prefs.visible),{selected:()=>prefs.visible});
     choices(host,'mode','Режим Синтеза',Object.entries(modes).map(([v,name])=>({v,name})),'mode');
+    voiceField=el('label','synthesis-voice-field','Текст');
+    voiceInput=el('input');voiceInput.type='text';voiceInput.maxLength=VOICE_MAX;
+    voiceInput.autocomplete='off';voiceInput.spellcheck=false;
+    voiceInput.value=prefs.voiceText;
+    describe(voiceInput,'Последовательность для голоса: до 48 букв, цифр и пробелов');
+    voiceInput.addEventListener('change',()=>setVoiceText(voiceInput.value));
+    voiceInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();voiceInput.blur();}});
+    voiceField.append(voiceInput);host.append(voiceField);
+    choices(host,'voice-tempo','Темп голоса: один знак на четверть',voiceTempos.map(v=>({v,name:v+' BPM'})),'voiceTempo',voiceMode);
+    button(host,'voice-row','Взять ряд','Взять верхнюю строку выделения: до 48 клеток, пустая клетка — пауза',captureVoiceRow,{show:voiceMode});
     mountStudio(host);
     choices(host,'fractal-kind','Построение фрактала',Object.entries(fractalNames).map(([v,name])=>({v,name})),'fractalKind',fractalMode);
     choices(host,'fractal-depth','Глубина построения фрактала',[1,2,3,4,5,6].map(v=>({v,name:'Глубина '+v})),'fractalDepth',()=>fractalMode()&&!chaosMode());
@@ -536,29 +613,29 @@
     choices(host,'rule','Клеточное правило',Object.entries(rules).map(([v,name])=>({v,name})),'rule',()=>prefs.mode==='waves'||prefs.mode==='grow');
     choices(host,'trail','Длина следа в кадрах',[4,8,16,32,64].map(v=>({v,name:'След '+v})),'trailFrames',()=>prefs.mode==='trail');
     choices(host,'recovery','Кадров восстановления',[0,1,2,4,6,8,16,19,32,64].map(v=>({v,name:'Пауза '+v})),'recoveryFrames',()=>prefs.mode==='recovery');
-    choices(host,'mix','Совмещение результата с исходником',[{v:'overlay',name:'Поверх'},{v:'only',name:'Только Синтез'},{v:'xor',name:'XOR'},{v:'and',name:'AND'}],'mix',()=>!duetMode()&&!fractalMode());
+    choices(host,'mix','Совмещение результата с исходником',[{v:'overlay',name:'Поверх'},{v:'only',name:'Только Синтез'},{v:'xor',name:'XOR'},{v:'and',name:'AND'}],'mix',()=>!duetMode()&&!fractalMode()&&!voiceMode());
     button(host,'link','Связь','Один шаг Синтеза на каждый последовательный кадр Маятника',()=>setOption('link',!prefs.link),{selected:()=>prefs.link,disabled:autonomous});
     button(host,'wrap','Замкнуть','Соединить противоположные края экспериментального поля',()=>setOption('wrap',!prefs.wrap),{selected:()=>prefs.wrap,show:cellular});
     button(host,'frame','Кадр','Взять текущий кадр Маятника; для большого CPU-поля — центральная область до 512 × 512',()=>capture(false));
     button(host,'area','Область','Взять выделенные ячейки исходного Маятника размером до 512 × 512',()=>capture(true));
-    button(host,'cross','Крест','Отпечаток: крест 25 × 25 из 49 единиц',()=>preset('cross'),{show:()=>!duetMode()&&!fractalMode()});
-    button(host,'point','Точка','Отпечаток: одна единица в центре поля',()=>preset('point'),{show:()=>!duetMode()&&!fractalMode()});
-    button(host,'play','Пуск','Пуск / пауза самостоятельного Синтеза',play,{caption:()=>timer!==null?'Пауза':'Пуск',selected:()=>timer!==null,disabled:()=>prefs.link&&!autonomous()});
+    button(host,'cross','Крест','Отпечаток: крест 25 × 25 из 49 единиц',()=>preset('cross'),{show:()=>!duetMode()&&!fractalMode()&&!voiceMode()});
+    button(host,'point','Точка','Отпечаток: одна единица в центре поля',()=>preset('point'),{show:()=>!duetMode()&&!fractalMode()&&!voiceMode()});
+    button(host,'play','Пуск','Пуск / пауза самостоятельного Синтеза',play,{caption:()=>running()?'Пауза':'Пуск',selected:running,disabled:()=>prefs.link&&!autonomous()});
     button(host,'step','Шаг','Один самостоятельный шаг Синтеза',step,{disabled:()=>prefs.link&&!autonomous()});
-    choices(host,'rate','Самостоятельных шагов в секунду',[1,2,4,8,16,30].map(v=>({v,name:v+' шаг/с'})),'rate',()=>!duetMode());
+    choices(host,'rate','Самостоятельных шагов в секунду',[1,2,4,8,16,30].map(v=>({v,name:v+' шаг/с'})),'rate',()=>!duetMode()&&!voiceMode());
     colour(host,'colourOne','Цвет 1');colour(host,'colourZero','Цвет 0');
     button(host,'reset','Заново','Очистить историю и начать с захваченного исходника',()=>{pause();if(engine){engine.reset(sourceBits);ticks=0;if(duetMode())duet.reset(sourceBits);if(autonomous())engine.seed(sourceBits);dirty=true;message='История очищена.';render();scheduleSave();}});
     button(host,'save','Сохранить','Скачать полный опыт JSON: исходник, клетки, следы, восстановление и настройки',saveWork);
     button(host,'open','Открыть','Открыть сохранённый опыт JSON',importWork);
     button(host,'png','PNG','Скачать текущее поле результата в точном размере клеток',exportPNG);
     button(host,'bitoteka','В Битотеку','Сохранить опыт с миниатюрой в общую Битотеку',toLibrary);
-    button(host,'help','Инструкция','План и инструкция для текущего режима',()=>root.open(fractalMode()?'../issledovanie/cellular-visual-labs/#'+(rowMode()?'deckard':chaosMode()?'chaos-game':'fractals'):'synthesis-instruction.html','_blank','noopener'));
+    button(host,'help','Инструкция','План и инструкция для текущего режима',()=>root.open(voiceMode()?'../issledovanie/pendulum-music/#sign-voice':fractalMode()?'../issledovanie/cellular-visual-labs/#'+(rowMode()?'deckard':chaosMode()?'chaos-game':'fractals'):'synthesis-instruction.html','_blank','noopener'));
     for(const binding of bindings){
       const id=binding.node.dataset.n;
       if(['synthesis:save','synthesis:open','synthesis:png','synthesis:bitoteka'].includes(id))binding.show=()=>!duetMode()||prefs.studioSection==='files';
       if(id==='synthesis:colourOne')binding.show=()=>!duetMode();
-      if(id==='synthesis:colourZero')binding.show=()=>!duetMode()&&!fractalMode();
-      if(['synthesis:frame','synthesis:area','synthesis:link'].includes(id))binding.show=()=>!fractalMode()&&(!duetMode()||prefs.studioSection==='sources');
+      if(id==='synthesis:colourZero')binding.show=()=>!duetMode()&&!fractalMode()&&!voiceMode();
+      if(['synthesis:frame','synthesis:area','synthesis:link'].includes(id))binding.show=()=>!fractalMode()&&!voiceMode()&&(!duetMode()||prefs.studioSection==='sources');
     }
     createPanel(host);start();return {refresh};
   }
@@ -608,7 +685,7 @@
       run(()=>{
         const query=new URLSearchParams(location.search),recipe=query.get('synthRecipe');
         if(openingExample){
-          openFractalExample(openingExample);after();
+          openExample(openingExample);after();
         }else if(recipe){
           applyRecipe(recipe);const patch={};
           if(query.has('synthDepth')&&[16,32,64,128].includes(Number(query.get('synthDepth'))))patch.depth=Number(query.get('synthDepth'));
@@ -623,7 +700,7 @@
           for(const key of ['synthRecipe','synthDepth','synthTick','synthTransform','synthShiftX','synthShiftY','synthPalette','synthArtStyle'])query.delete(key);
           history.replaceState(null,'',location.pathname+(query.size?'?'+query.toString():'')+location.hash);
         }else if(!engine&&duetMode()){applyRecipe('canon');after();}
-        else if(!engine&&fractalMode()){capture(false);after();}
+        else if(!engine&&(fractalMode()||voiceMode())){capture(false);after();}
         else observeSource();
       });
     };

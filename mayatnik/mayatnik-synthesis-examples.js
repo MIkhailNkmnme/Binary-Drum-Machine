@@ -1,4 +1,4 @@
-/* Маятник · Синтез 0.012. Настройки примеров для ссылок и роликов. */
+/* Маятник · Синтез 0.013. Настройки примеров для ссылок и роликов. */
 (function (root) {
   'use strict';
 
@@ -37,6 +37,8 @@
   else {
     const libraryId = new URLSearchParams(location.hash.slice(1)).get('synthesis');
     const id = new URLSearchParams(location.search).get('synthExample');
-    root.MayatnikSynthesisExample = libraryId ? null : examples.find(entry => entry.id === id) || null;
+    const signVoice = example('sign-voice', 'Голос знаков', 'ЗЕРКАЛИУС 0101 · 100 BPM',
+      { mode: 'voice', voiceText: 'ЗЕРКАЛИУС 0101', voiceTempo: 100 });
+    root.MayatnikSynthesisExample = libraryId ? null : (id === signVoice.id ? signVoice : examples.find(entry => entry.id === id)) || null;
   }
 })(globalThis);
