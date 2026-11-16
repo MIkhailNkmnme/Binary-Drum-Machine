@@ -12,6 +12,7 @@ body.mayatnik-menu-ready header #paintTools.pt-dd .pt-r>.synthesis-info{margin:0
 .synthesis-legend{color:#9aafbc}
 .synthesis-colour-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
 .synthesis-voice-field{display:grid;gap:2px;width:120px;max-width:100%;color:#c7dbe7;font:11px/1.4 system-ui}
+.synthesis-voice-field[hidden]{display:none}
 .synthesis-voice-field input{box-sizing:border-box;width:100%;height:24px;min-width:0;padding:2px 5px;border:1px solid #536773;background:#141c25;color:#edf5fb;font:12px system-ui}
 .synthesis-voice-field input:focus-visible{outline:1px solid var(--c);outline-offset:-1px}
 .synthesis-weights{margin-top:6px;border-top:1px solid #354653;padding-top:6px;min-width:0;max-width:100%}
