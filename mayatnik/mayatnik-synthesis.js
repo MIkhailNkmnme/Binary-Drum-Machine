@@ -1,9 +1,10 @@
-/* Маятник · Синтез 0.011. Exact pendulum duet, score and computational art.
+/* Маятник · Синтез 0.012. Exact pendulum duet, score and computational art.
  * Source redraws are observations, never an animation clock. Only successive
  * source frames or explicit independent ticks advance experimental history. */
 (function(root){
   'use strict';
   const KEY='synthesis-controls-v1',MAX=512;
+  const openingExample=root.MayatnikSynthesisExample;
   const defaults={mode:'pendulums',rule:'circuit',trailFrames:8,recoveryFrames:6,wrap:false,
     mix:'only',link:false,rate:8,colourOne:'#ffd35b',colourZero:'#5ce1e6',visible:true,
     weightsOpen:true,stateWeights:[0,1,2,1,0,0,1],positionWeights:[2,1,2,1,1,2,1,2],
@@ -147,6 +148,16 @@
     if(autonomous())engine.seed(bits);
     message=(selection?'Захвачена область':'Захвачен кадр')+' '+s.k+'. '+(rect.w<s.W||rect.h<s.H?'Показана область '+rect.w+' × '+rect.h+' без уменьшения клеток.':'');
     render();scheduleSave();
+  }
+  function openFractalExample(example){
+    const s=availableSource(),rect=chooseCrop(s);
+    prefs=readPrefs({...defaults,...example.prefs,mode:'fractal',visible:true,link:false});
+    build(readBits(s,rect),rect);
+    bindSource(s);
+    ticks=fractalLimit(getFractal());
+    message=example.label+' · '+example.settings;
+    render();
+    root.maySynthesisFocus?.(crop);
   }
   function captureCellularRow(){
     const s=availableSource(),selection=s.selection;
@@ -378,12 +389,12 @@
     }).catch(error=>{dbPromise=null;throw error;});return dbPromise;
   }
   async function storeNow(){
-    clearTimeout(pendingSave);pendingSave=null;if(!engine||!dirty)return;
+    clearTimeout(pendingSave);pendingSave=null;if(openingExample||!engine||!dirty)return;
     const value=snapshot();dirty=false;
     try{const db=await database();await new Promise((resolve,reject)=>{const tx=db.transaction('works','readwrite');tx.objectStore('works').put(value,'last');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);tx.onerror=()=>{};});}
     catch(error){dirty=true;throw Error('Опыт не сохранён в браузере: '+error.message);}
   }
-  function scheduleSave(){if(pendingSave===null)pendingSave=setTimeout(()=>run(storeNow),1500);}
+  function scheduleSave(){if(!openingExample&&pendingSave===null)pendingSave=setTimeout(()=>run(storeNow),1500);}
   function download(blob,name){const url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
   function png(){return new Promise((resolve,reject)=>{if(!engine){reject(Error('Нет рисунка для сохранения.'));return;}canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Не удалось создать PNG.')),'image/png');});}
   async function exportPNG(){download(await png(),'Маятник-Синтез-'+prefs.mode+'-'+ticks+'.png');}
@@ -418,7 +429,7 @@
       message='Композиция сохранена: '+prefs.musicBars+' тактов. Исходный опыт остался на прежнем шаге.';
     }finally{exporting=false;refresh();}
   }
-  async function saveWork(){await storeNow();download(new Blob([JSON.stringify(snapshot())],{type:'application/json'}),'Маятник-Синтез-'+ticks+'.json');message='Опыт сохранён в браузере и скачан файлом JSON.';refresh();}
+  async function saveWork(){await storeNow();download(new Blob([JSON.stringify(snapshot())],{type:'application/json'}),'Маятник-Синтез-'+ticks+'.json');message=openingExample?'Опыт скачан файлом JSON.':'Опыт сохранён в браузере и скачан файлом JSON.';refresh();}
   async function toLibrary(){
     if(!root.ZerkBitoteka)throw Error('Битотека ещё не загружена.');
     const state=snapshot(),thumbnail=await png();
@@ -584,7 +595,7 @@
         if(!root.ZerkBitoteka)throw Error('Битотека недоступна.');
         const item=await root.ZerkBitoteka.get(libraryId);if(!item?.blob||!item.meta?.synthesis)throw Error('Опыт не найден в Битотеке этого браузера.');
         load(JSON.parse(await item.blob.text()));prefs.link=false;detached=true;dirty=true;remember();scheduleSave();message='Опыт открыт из Битотеки на паузе.';
-      }else{
+      }else if(!openingExample){
         const db=await database(),saved=await new Promise((resolve,reject)=>{const req=db.transaction('works').objectStore('works').get('last');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});if(saved)load(saved);
       }
     }
@@ -596,7 +607,9 @@
       if(initialised||!source())return;initialised=true;
       run(()=>{
         const query=new URLSearchParams(location.search),recipe=query.get('synthRecipe');
-        if(recipe){
+        if(openingExample){
+          openFractalExample(openingExample);after();
+        }else if(recipe){
           applyRecipe(recipe);const patch={};
           if(query.has('synthDepth')&&[16,32,64,128].includes(Number(query.get('synthDepth'))))patch.depth=Number(query.get('synthDepth'));
           if(['identity','mirrorX','mirrorY','rotate180'].includes(query.get('synthTransform')))patch.transformB=query.get('synthTransform');

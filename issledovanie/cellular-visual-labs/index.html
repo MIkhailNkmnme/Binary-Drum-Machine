@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Обзор клеточных и визуальных лабораторий. Опыты для Маятника · Синтез: Серпинский, Игра хаоса и клеточные ряды по правилам Deckard и Вольфрама.">
-  <title>Клеточные и визуальные лаборатории · Исследования 0.006</title>
-  <link rel="stylesheet" href="article.css?v=1">
+  <title>Клеточные и визуальные лаборатории · Исследования 0.007</title>
+  <link rel="stylesheet" href="article.css?v=2">
 </head>
 <body>
 <main>
   <header>
     <a href="../Zerkalius-issledovanie.html">← Исследования</a>
     <a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html">Маятник · Синтез</a>
-    <span>17.11.2026 · обзор 0.006</span>
+    <span>17.11.2026 · обзор 0.007</span>
   </header>
   <p class="eyebrow">Правила · изображение · звук</p>
   <h1>Клеточные и визуальные лаборатории</h1>
@@ -24,6 +24,7 @@
     <a href="#fractals">Фракталы для Маятника</a>
     <a href="#chaos-game">Игра хаоса</a>
     <a href="#deckard">Клеточные ряды Deckard</a>
+    <a href="#examples">Примеры</a>
     <a href="#sources">Источники</a>
   </nav>
 
@@ -116,6 +117,42 @@
     <p>В таблице Deckard новая клетка лежит между двумя клетками предыдущего ряда. Порядок пары не влияет на результат, поэтому для цветов 1, 2 и 3 хватает шести ответов. Код <code>231123</code> задаёт ответы для <code>11, 12, 13, 22, 23, 33</code> в этом порядке. На краю, где есть один сосед, его цвет копируется. Начало из одной точки даёт <code>1 → 11 → 121 → 1331 → 11311</code>. Второй образец <code>222111</code> у автора открывает группу разрастающихся областей. <a href="https://docs.google.com/spreadsheets/d/1pvCPLMuLb67fojpynCrsnvYpPEg9d0O8M8OQFGls7qM/edit?usp=sharing" target="_blank" rel="noopener">Таблица Deckard · Classic Small и Classic Categorization</a>.</p>
     <p>В Синтезе 0.011 выберите <b>Фракталы → Клеточные ряды</b>. Для начала пройдите пять строк правила <b>Deckard 231123</b> с одной точкой. Затем сравните на той же начальной строке Правила 204, 90 и 30: одиночная полоса, вложенные треугольники и асимметричный рисунок. Правила Вольфрама читают три клетки, включая центральную. «Сумма mod 3» тоже читает три клетки и даёт три состояния с помощью суммы по модулю 3. <a href="https://www.wolframscience.com/nks/p60--more-cellular-automata/" target="_blank" rel="noopener">Вольфрам · автоматики с несколькими цветами</a>.</p>
     <p>Чтобы начать со своего рисунка, скройте «Результат», выделите на обычном поле от 1 до 128 клеток по ширине и нажмите «Взять ряд». Берётся верхняя строка выделения, и результат снова показывается. В опытах Deckard единица становится цветом 1, а нули и пустые клетки остаются промежутками. Меняйте правило, чтобы сравнить рост той же строки. <a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html">Открыть Маятник · Синтез</a>.</p>
+  </section>
+
+  <section id="examples">
+    <h2>19 примеров с настройками и музыкой</h2>
+    <p>«Открыть пример» показывает рисунок на паузе с указанными настройками. Чтобы повторить построение, нажмите «Заново», затем «Пуск». Для каждого опыта есть 12-секундный ролик с музыкой, построенной из его шагов.</p>
+    <div class="table-scroll" tabindex="0" aria-label="Примеры фракталов, игры хаоса и клеточных рядов">
+      <table class="example-table">
+        <caption>Лабораторные примеры и соответствующие видео</caption>
+        <thead><tr><th scope="col">Группа</th><th scope="col">Опыт</th><th scope="col">Маятник · Синтез</th><th scope="col">Видео</th></tr></thead>
+        <tbody id="examples-serpinski">
+          <tr><th scope="rowgroup" rowspan="2">Серпинский</th><td>Стрелка, глубина 4</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=arrowhead&amp;gpu=0">Открыть пример</a></td><td><a href="examples/arrowhead.mp4">Видео</a></td></tr>
+          <tr><td>Правило 90, 16 строк</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=rule90&amp;gpu=0">Открыть пример</a></td><td><a href="examples/rule90.mp4">Видео</a></td></tr>
+        </tbody>
+        <tbody id="examples-chaos">
+          <tr><th scope="rowgroup" rowspan="7">Игра хаоса</th><td>3 вершины, прыжок 1/2</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-triangle&amp;gpu=0">Открыть пример</a></td><td><a href="examples/chaos-triangle.mp4">Видео</a></td></tr>
+          <tr><td>4 вершины, прыжок 1/2</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-square&amp;gpu=0">Открыть пример</a></td><td><a href="examples/chaos-square.mp4">Видео</a></td></tr>
+          <tr><td>4 вершины, прыжок 1/2 без повторов</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-square-no-repeat&amp;gpu=0">Открыть пример</a></td><td><a href="examples/chaos-square-no-repeat.mp4">Видео</a></td></tr>
+          <tr><td>5 вершин, прыжок 61,8%</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-pentagon&amp;gpu=0">Открыть пример</a></td><td><a href="examples/chaos-pentagon.mp4">Видео</a></td></tr>
+          <tr><td>12 вершин, прыжок 1/2</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-fifths-half&amp;gpu=0">Открыть пример</a></td><td><a href="examples/chaos-fifths-half.mp4">Видео</a></td></tr>
+          <tr><td>12 вершин, прыжок 4/5</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-fifths&amp;gpu=0">Открыть пример</a></td><td><a href="examples/chaos-fifths.mp4">Видео</a></td></tr>
+          <tr><td>12 вершин, прыжок 4/5 по одной точке</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-fifths-notes&amp;gpu=0">Открыть пример</a></td><td><a href="examples/chaos-fifths-notes.mp4">Первые прыжки</a></td></tr>
+        </tbody>
+        <tbody id="examples-rows">
+          <tr><th scope="rowgroup" rowspan="10">Клеточные ряды</th><td>Deckard 231123, 64 строки</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=deckard-231123&amp;gpu=0">Открыть пример</a></td><td><a href="examples/deckard-231123.mp4">Видео</a></td></tr>
+          <tr><td>Deckard 222111, 64 строки</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=deckard-222111&amp;gpu=0">Открыть пример</a></td><td><a href="examples/deckard-222111.mp4">Видео</a></td></tr>
+          <tr><td>Вольфрам 30, 64 строки</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-30&amp;gpu=0">Открыть пример</a></td><td><a href="examples/wolfram-30.mp4">Видео</a></td></tr>
+          <tr><td>Вольфрам 90, 64 строки</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-90&amp;gpu=0">Открыть пример</a></td><td><a href="examples/wolfram-90.mp4">Видео</a></td></tr>
+          <tr><td>Вольфрам 110, 64 строки</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-110&amp;gpu=0">Открыть пример</a></td><td><a href="examples/wolfram-110.mp4">Видео</a></td></tr>
+          <tr><td>Вольфрам 150, 64 строки</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-150&amp;gpu=0">Открыть пример</a></td><td><a href="examples/wolfram-150.mp4">Видео</a></td></tr>
+          <tr><td>Вольфрам 204, 64 строки</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-204&amp;gpu=0">Открыть пример</a></td><td><a href="examples/wolfram-204.mp4">Видео</a></td></tr>
+          <tr><td>Сумма соседей по модулю 3, 64 строки</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=sum-mod-3&amp;gpu=0">Открыть пример</a></td><td><a href="examples/sum-mod-3.mp4">Видео</a></td></tr>
+          <tr><td>Правило 90, 101</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=cellular-two&amp;gpu=0">Открыть пример</a></td><td><a href="examples/cellular-two.mp4">Видео</a></td></tr>
+          <tr><td>Правило 150, 101101001</td><td><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=cellular-custom&amp;gpu=0">Открыть пример</a></td><td><a href="examples/cellular-custom.mp4">Видео</a></td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section id="sources">

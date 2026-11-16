@@ -1,7 +1,7 @@
-/* СИН-001 · v0.001. Page-local storage boundary, installed before application scripts. */
+/* Маятник · Синтез 0.012. Page-local storage boundary for work and example links. */
 (() => {
   'use strict';
-  const PREFIX = 'zerk-mayatnik-synthesis:';
+  const PREFIX = window.MayatnikSynthesisExample ? 'zerk-mayatnik-synthesis-examples:' : 'zerk-mayatnik-synthesis:';
   const SHARED_DB = 'zerkalius-bitoteka';
 
   function stopBoot(error) {

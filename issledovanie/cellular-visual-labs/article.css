@@ -23,6 +23,10 @@ th,td{text-align:left;vertical-align:top;padding:15px 16px;border-top:1px solid 
 thead{background:var(--panel);color:var(--gold)}
 th[scope=row]{width:18%;font-weight:500}
 td{width:41%}
+.example-table{min-width:0}
+.example-table td{width:auto}
+.example-table th[scope=rowgroup]{width:19%;color:var(--gold);font-weight:500}
+.example-table tbody+tbody tr:first-child>*{border-top:2px solid var(--line)}
 li{padding-left:4px;margin:10px 0}
 ol,ul{padding-left:24px}
 dl{display:grid;grid-template-columns:minmax(210px,1fr) 2fr;margin:20px 0;border-top:1px solid var(--line)}
@@ -30,4 +34,5 @@ dt,dd{margin:0;padding:16px 12px;border-bottom:1px solid var(--line)}
 dt{color:var(--gold);font-weight:500;background:var(--panel)}
 footer{border-top:1px solid var(--line);margin-top:36px;padding-top:24px;color:var(--muted);font-size:14px}
 @media(max-width:640px){main{padding:20px 16px 48px}header span{margin-left:0;width:100%}.lead{font-size:17px}dl{display:block}dt{border-bottom:0;padding-bottom:6px}dd{padding-top:6px}h2{font-size:22px}}
+@media(max-width:640px){.example-table th,.example-table td{padding:8px 6px;overflow-wrap:anywhere}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
