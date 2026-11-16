@@ -1,10 +1,11 @@
 <!doctype html>
-<!-- АзъБукъ v0.065 · шахматка 0/1 и точные размеры клетки 1 / 4 / 16 px. -->
+<!-- АзъБукъ v0.066 · повторное нажатие Шахматки меняет чёрные и белые клетки местами. -->
 <!-- v0.062 · АУДИТ-004: ширина экрана телефона. -->
 <html lang="ru">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius АзъБукъ v0.065</title>
+<title>Zerkalius АзъБукъ v0.066</title>
+<!-- v0.066 · АЗБ-066: Шахматка чередует чёрный и белый верхний левый угол; отмена и сохранение через текущий рисунок. -->
 <!-- v0.065 · АЗБ-065: чёрно-белая шахматка 0/1 в нижнем поле; клетки 1, 4 или 16 физических пикселей. -->
 <!-- v0.064 · АЗБ-064: русские буквы в шести клеточных начертаниях 8-bit Operator. -->
 <!-- v0.063 · АЗБ-063: 8-bit Operator из TTF в редактируемых клетках; отдельный эскиз цифр Kraftwerk по кадру. -->
@@ -296,7 +297,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.065"></span>
+    <span class="pbtn ver" aria-label="v0.066"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -417,7 +418,7 @@
     </div>
   </div>
   <div class="pixel-pattern-controls" role="group" aria-label="Шахматка и размер клетки">
-    <button id="pixelCheckerboard" class="gz-hx" type="button" title="Заполнить поле шахматкой: 0 — чёрный, 1 — белый. Без линий между клетками. Действие можно отменить"><span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Шахматка</span></button>
+    <button id="pixelCheckerboard" class="gz-hx" type="button" title="Заполнить поле шахматкой: 0 — чёрный, 1 — белый. Повторное нажатие меняет чёрные и белые клетки местами. Без линий между клетками. Действие можно отменить"><span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Шахматка</span></button>
     <span class="pixel-pattern-label">Клетка:</span>
     <button class="gz-hx" type="button" data-cell-px="1" aria-pressed="false" title="Клетка 1 × 1 физический пиксель, без разделительных линий"><span class="gz-ic" aria-hidden="true">▪</span><span class="gz-nm">1 px</span></button>
     <button class="gz-hx" type="button" data-cell-px="4" aria-pressed="false" title="Клетка 4 × 4 физических пикселя, без разделительных линий"><span class="gz-ic" aria-hidden="true">▪</span><span class="gz-nm">4 px</span></button>
@@ -2099,7 +2100,10 @@ renderEditor();
   }
   document.getElementById('pixelCheckerboard').addEventListener('click', () => {
     finish(); const before = snapshot();
-    for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) drawings[size][row * size + col] = (row + col) % 2 ? 1 : 31;
+    const cells = drawings[size];
+    // Фаза берётся из рисунка: сохранение и отмена не расходятся со счётчиком нажатий.
+    const startsWhite = cells.every((value, index) => value === ((Math.floor(index / size) + index % size) % 2 ? 1 : 31));
+    for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) cells[row * size + col] = (row + col + Number(startsWhite)) % 2 ? 1 : 31;
     gridStyle = 'none'; cellPixels ||= 1;
     commit(before); render();
   });
