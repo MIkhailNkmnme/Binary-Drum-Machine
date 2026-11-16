@@ -1,0 +1,3144 @@
+{
+  "captured_date": "2026-11-16",
+  "entrypoints": [
+    "https://ninetozero.music/",
+    "https://ninetozero.eu/home"
+  ],
+  "scope": "Public pages on ninetozero.music and ninetozero.eu; referenced images and direct audio. External stores and social sites remain links.",
+  "pages": [
+    {
+      "url": "https://ninetozero.music/",
+      "final_url": "https://ninetozero.music/",
+      "title": "NINETOZERO",
+      "links": [
+        {
+          "url": "https://xceed.me/lisboa/event/enrico-sangiuliano-presents-ninetozero-closing-party/220337/channel/enrico-lisbon-team",
+          "label": "TICKETS SOLO #0 Lisbon (27/03)"
+        },
+        {
+          "url": "https://ninetozero.eu/home",
+          "label": "Enter Website"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/home",
+      "final_url": "https://ninetozero.eu/home",
+      "title": "Home - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/silence/",
+      "final_url": "https://ninetozero.eu/release/silence/",
+      "title": "Silence - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://lnk.to/NTZ009",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/sound-of-space/",
+      "final_url": "https://ninetozero.eu/release/sound-of-space/",
+      "title": "Sound Of Space - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://lnk.to/NTZ008",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/reflection/",
+      "final_url": "https://ninetozero.eu/release/reflection/",
+      "title": "Reflection - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://lnk.to/NTZ007",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/physicalchange",
+      "final_url": "https://ninetozero.eu/release/physicalchange/",
+      "title": "Physical Change - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.link/006",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/glitchintime/",
+      "final_url": "https://ninetozero.eu/release/glitchintime/",
+      "title": "Glitch In Time - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.link/005",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/4/",
+      "final_url": "https://ninetozero.eu/release/4/",
+      "title": "Interconnection - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.link/004",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/3/",
+      "final_url": "https://ninetozero.eu/release/3/",
+      "title": "Transcendence - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.link/003",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/2/",
+      "final_url": "https://ninetozero.eu/release/2/",
+      "title": "Discipline EP - out on NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.link/002",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/1/",
+      "final_url": "https://ninetozero.eu/release/1/",
+      "title": "Order In Chaos - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://lnk.to/NTZ001",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/release/absence/",
+      "final_url": "https://ninetozero.eu/release/absence/",
+      "title": "Absence - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "http://ninetozero.link/000",
+          "label": "LISTEN"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/about",
+      "final_url": "https://ninetozero.eu/about/",
+      "title": "About - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/events",
+      "final_url": "https://ninetozero.eu/events/",
+      "title": "Events - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+          "label": "SOLO #9 @ De Marktkantine (Amsterdam, NL)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+          "label": "SOLO #9 @ De Marktkantine (Amsterdam, NL)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-8-kompass-ghent-be/",
+          "label": "SOLO #8 @ KOMPASS (Ghent, BE)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-8-kompass-ghent-be/",
+          "label": "SOLO #8 @ KOMPASS (Ghent, BE)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+          "label": "SOLO #7 @ SPAZIO 900 (Rome, IT)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+          "label": "SOLO #7 @ SPAZIO 900 (Rome, IT)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/",
+          "label": "SOLO #6 @ 99 Scott (New York, US)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/",
+          "label": "SOLO #6 @ 99 Scott (New York, US)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/",
+          "label": "SOLO #5 @ D-Edge (São Paulo, BR)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/",
+          "label": "SOLO #5 @ D-Edge (São Paulo, BR)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/",
+          "label": "SOLO #4 @ Village Underground (London, UK)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/",
+          "label": "SOLO #4 @ Village Underground (London, UK)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-3-tempio-milan-it/",
+          "label": "SOLO #3 @ TEMPIO (Milan, IT)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-3-tempio-milan-it/",
+          "label": "SOLO #3 @ TEMPIO (Milan, IT)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/",
+          "label": "SOLO #2 @ CROBAR (Buenos Aires, AR)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/",
+          "label": "SOLO #2 @ CROBAR (Buenos Aires, AR)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-1-nitsa-barcelona/",
+          "label": "SOLO #1 @ NITSA (Barcelona, ES)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-1-nitsa-barcelona/",
+          "label": "SOLO #1 @ NITSA (Barcelona, ES)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/",
+          "label": "NINETOZERO CLOSING PARTY @ 8 MARVILA (Lisbon, PT)"
+        },
+        {
+          "url": "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/",
+          "label": "NINETOZERO CLOSING PARTY @ 8 MARVILA (Lisbon, PT)"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/contact",
+      "final_url": "https://ninetozero.eu/contact/",
+      "title": "Contact - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu",
+      "final_url": "https://ninetozero.music",
+      "title": "NINETOZERO",
+      "links": [
+        {
+          "url": "https://xceed.me/lisboa/event/enrico-sangiuliano-presents-ninetozero-closing-party/220337/channel/enrico-lisbon-team",
+          "label": "TICKETS SOLO #0 Lisbon (27/03)"
+        },
+        {
+          "url": "https://ninetozero.eu/home",
+          "label": "Enter Website"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+      "final_url": "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+      "title": "SOLO #9 @ De Marktkantine (Amsterdam,NL) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-8-kompass-ghent-be/",
+      "final_url": "https://ninetozero.eu/event/solo-8-kompass-ghent-be/",
+      "title": "SOLO #8 @ Kompass (Ghent, BE) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+      "final_url": "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+      "title": "SOLO #7 @ SPAZIO 900 (Rome, IT) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/",
+      "final_url": "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/",
+      "title": "SOLO #6 @ 99 Scott (New York, US) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/",
+      "final_url": "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/",
+      "title": "SOLO #5 @ D-Edge (São Paulo, BR) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/",
+      "final_url": "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/",
+      "title": "SOLO #4 @ Village Undeground (London, UK) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-3-tempio-milan-it/",
+      "final_url": "https://ninetozero.eu/event/solo-3-tempio-milan-it/",
+      "title": "SOLO #3 @ TEMPIO (Milan, IT) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "Sign-up for the artist pre-sale on Wednesday, December 4th here."
+        },
+        {
+          "url": "https://nl.ra.co/events/2054419",
+          "label": "General on Sale starts on December 5th – 10AM CEST."
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/",
+      "final_url": "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/",
+      "title": "SOLO #2 @ CROBAR (Buenos Aires, AR) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-1-nitsa-barcelona/",
+      "final_url": "https://ninetozero.eu/event/solo-1-nitsa-barcelona/",
+      "title": "SOLO #1 @ NITSA (Barcelona, ES) - Enrico Sangiuliano - All Night Long",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.link/Solo1",
+          "label": "Sign-up for the artist pre-sale on October 14th – 6PM CEST here."
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    },
+    {
+      "url": "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/",
+      "final_url": "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/",
+      "title": "NINETOZERO CLOSING PARTY @ 8 MARVILA (Lisbon, PT) - NINETOZERO by Enrico Sangiuliano",
+      "links": [
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": ""
+        },
+        {
+          "url": "https://ninetozero.eu/release/silence/",
+          "label": "SILENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/sound-of-space/",
+          "label": "SOUND OF SPACE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/reflection/",
+          "label": "REFLECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/physicalchange",
+          "label": "PHYSICAL CHANGE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/glitchintime/",
+          "label": "GLITCH IN TIME"
+        },
+        {
+          "url": "https://ninetozero.eu/release/4/",
+          "label": "INTERCONNECTION"
+        },
+        {
+          "url": "https://ninetozero.eu/release/3/",
+          "label": "TRANSCENDENCE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/2/",
+          "label": "DISCIPLINE"
+        },
+        {
+          "url": "https://ninetozero.eu/release/1/",
+          "label": "ORDER IN CHAOS"
+        },
+        {
+          "url": "https://ninetozero.eu/release/absence/",
+          "label": "ABSENCE"
+        },
+        {
+          "url": "https://ninetozero.link/ninetozeroclosingparty",
+          "label": "Sign-up for the artist pre-sale on February 23rd – 6PM UTC here ."
+        },
+        {
+          "url": "https://xceed.me/lisboa/event/enrico-sangiuliano-presents-ninetozero-closing-party/220337/channel/enrico-lisbon-team",
+          "label": "General on Sale starts on February 24th – 6PM UTC."
+        },
+        {
+          "url": "https://ninetozero.eu/about",
+          "label": "About"
+        },
+        {
+          "url": "https://ninetozero.eu/events",
+          "label": "Events"
+        },
+        {
+          "url": "https://ninetozero.eu/contact",
+          "label": "Contacts"
+        },
+        {
+          "url": "https://shop.ninetozero.eu/",
+          "label": "Store"
+        },
+        {
+          "url": "https://www.facebook.com/ninetozeromusic",
+          "label": "FB"
+        },
+        {
+          "url": "https://www.instagram.com/ninetozero.music/",
+          "label": "IG"
+        },
+        {
+          "url": "https://twitter.com/ninetozeromusic",
+          "label": "TW"
+        },
+        {
+          "url": "https://www.youtube.com/channel/UClMMudhKbdY14UbRS3jkpQg",
+          "label": "YT"
+        },
+        {
+          "url": "https://soundcloud.com/ninetozeromusic",
+          "label": "SC"
+        },
+        {
+          "url": "https://ninetozeromusic.bandcamp.com",
+          "label": "BC"
+        },
+        {
+          "url": "https://newsletter.ninetozero.eu/",
+          "label": "SIGN UP FOR THE NEWSLETTER"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/3000x3000_9TO0_ARTWORK_7__14FEB.png",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/reflection/"
+      ],
+      "file": "images/5dd4b8cf4c5d-3000x3000_9TO0_ARTWORK_7__14FEB.png",
+      "sha256": "5dd4b8cf4c5dd09123c607dcb9769695d1e9f48096d002a66f4971cf529cb9da",
+      "bytes": 1246294,
+      "mime": "image/png",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/9TO0_ARTWORK_05_9TO0_ARTWORK_05-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/glitchintime/"
+      ],
+      "file": "images/4796c8414d6c-9TO0_ARTWORK_05_9TO0_ARTWORK_05-scaled.jpg",
+      "sha256": "4796c8414d6c06fed239dd361375fc831269df9f714c348ee029927e6051fdf3",
+      "bytes": 561683,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/9TO0_ARTWORK_4_2024-06-25_07-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/4/"
+      ],
+      "file": "images/4c8da05b2137-9TO0_ARTWORK_4_2024-06-25_07-scaled.jpg",
+      "sha256": "4c8da05b213700f199b8c4578c2ad0bb3f66ac5395d850ef449eaf88774662eb",
+      "bytes": 110379,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/9TO0_Assetts_RELEASE_9_ARTWORK_BACK-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/silence/"
+      ],
+      "file": "images/ebd1d4aa6abf-9TO0_Assetts_RELEASE_9_ARTWORK_BACK-scaled.jpg",
+      "sha256": "ebd1d4aa6abff65ee8132cdb17b08849d5ce86f81c6f153a5bbe8e83bb69e1e3",
+      "bytes": 163355,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/9TO0_artwork_DISCIPLINE_3000X3000_DEF.png",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/2/"
+      ],
+      "file": "images/5fbfe4d6f1a8-9TO0_artwork_DISCIPLINE_3000X3000_DEF.png",
+      "sha256": "5fbfe4d6f1a82ba8616ea4644d7c52f6be6a51781420f8494120d2a5df392545",
+      "bytes": 1186421,
+      "mime": "image/png",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/DaniilLavrovski_EnricoSangiuliano_presskit7950-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/physicalchange"
+      ],
+      "file": "images/be0477a7f1c4-DaniilLavrovski_EnricoSangiuliano_presskit7950-scaled.jpg",
+      "sha256": "be0477a7f1c4067f425c5f0e971f8c8db5d9231801738513e72378d8ed3cc61e",
+      "bytes": 995628,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/EXE_9TO0_ARTWORK_7__14FEB2.png",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/reflection/"
+      ],
+      "file": "images/ee61053c3ce4-EXE_9TO0_ARTWORK_7__14FEB2.png",
+      "sha256": "ee61053c3ce43e1725e4f5570bac72d8fbef51b741ac801891189595447a56b6",
+      "bytes": 144863,
+      "mime": "image/png",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/EXE_D_9TO0_ARTWORK_6__13APR-1.png",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/physicalchange"
+      ],
+      "file": "images/3a449f277add-EXE_D_9TO0_ARTWORK_6__13APR-1.png",
+      "sha256": "3a449f277addf27cbfd9861f4ff72d4d349a3d36c2ce4a0d2b350cdbcd4e5bee",
+      "bytes": 1581973,
+      "mime": "image/png",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/EXE_D_9TO0_ARTWORK_6__13APR2.png",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/physicalchange"
+      ],
+      "file": "images/e78d846b60c5-EXE_D_9TO0_ARTWORK_6__13APR2.png",
+      "sha256": "e78d846b60c53afa9d4d9a11b005144453224f4db8bc7a0341aeacbd5359de09",
+      "bytes": 145070,
+      "mime": "image/png",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/Enrico-11-1-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/sound-of-space/"
+      ],
+      "file": "images/6e74c85072e2-Enrico-11-1-scaled.jpg",
+      "sha256": "6e74c85072e2243aae4c536b2c36cc8fa70977aa67442c7f49f5ed07fdf0e967",
+      "bytes": 608562,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/Enrico-Sangiuliano-NTZ004-Simone-Baviati-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/4/"
+      ],
+      "file": "images/52387723edea-Enrico-Sangiuliano-NTZ004-Simone-Baviati-scaled.jpg",
+      "sha256": "52387723edea5675ffef3c857b6c770b40c2e6aa8b29c35ca9d6797aa30910cd",
+      "bytes": 632115,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/Enrico-x-The-Sentinels_photo-credit-Alice-Ambrogi-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/glitchintime/"
+      ],
+      "file": "images/91dfd417c69d-Enrico-x-The-Sentinels_photo-credit-Alice-Ambrogi-scaled.jpg",
+      "sha256": "91dfd417c69da2d86fb4461f3045cdf6b026e6ad57dcf7056b54888975cf4fbc",
+      "bytes": 1428169,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/Enrique-1_Marie-Wynants-x-Lisbeth-Antoine-please-use-this-picture-1st-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/silence/"
+      ],
+      "file": "images/3c5a87f76269-Enrique-1_Marie-Wynants-x-Lisbeth-Antoine-please-use-this-picture-1st-scaled.jpg",
+      "sha256": "3c5a87f76269880596afeeadff4637a51020e9bf281797b7b1b7436217356736",
+      "bytes": 828105,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/SOLO9-Anouncement_photo4x5-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/"
+      ],
+      "file": "images/303dae8b7f4d-SOLO9-Anouncement_photo4x5-scaled.jpg",
+      "sha256": "303dae8b7f4d9ddb7ebe04330e482488d312c357c531e58c71feb42b13b84101",
+      "bytes": 631953,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/a1826344281_10.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/silence/"
+      ],
+      "file": "images/eefa4673c337-a1826344281_10.jpg",
+      "sha256": "eefa4673c33770c035f2090162ebd5a309af07a9710cd6e6421a986fed43ef3b",
+      "bytes": 470459,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/artwork-440x440-1.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/1/"
+      ],
+      "file": "images/4d354297b865-artwork-440x440-1.jpg",
+      "sha256": "4d354297b865b1287221c9e8b7aca7030dcbafdd4873cc626bc5b8b373b02bdd",
+      "bytes": 15366,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/07/wide.boy-5-square-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/reflection/"
+      ],
+      "file": "images/77f1cbb9a91f-wide.boy-5-square-scaled.jpg",
+      "sha256": "77f1cbb9a91fe5d0eb61e3516870c122bb8cba450186c4562fee5e18c0e6b5ce",
+      "bytes": 702320,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/08/Enrico-sangiuliano-marktkantine-markvermeulecc-110622-20-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/"
+      ],
+      "file": "images/fe4ada111252-Enrico-sangiuliano-marktkantine-markvermeulecc-110622-20-scaled.jpg",
+      "sha256": "fe4ada111252e7203b7e303354aa760ea95c345987f70a2b673ab24062bfc59a",
+      "bytes": 439029,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/08/Enrico-sangiuliano-marktkantine-markvermeulecc-110622-26-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/"
+      ],
+      "file": "images/bfc21d9616d7-Enrico-sangiuliano-marktkantine-markvermeulecc-110622-26-scaled.jpg",
+      "sha256": "bfc21d9616d7aeb6c64128e2496a7cd6294e0598bcc6dfb92da0641dfb1de416",
+      "bytes": 563687,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/08/Enrico-sangiuliano-marktkantine-markvermeulecc-110622-31-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/"
+      ],
+      "file": "images/bc0e06f88525-Enrico-sangiuliano-marktkantine-markvermeulecc-110622-31-scaled.jpg",
+      "sha256": "bc0e06f88525fbe67ff07c2ba808506537347fc8f69d76183cdc0d0eff0e87a7",
+      "bytes": 610445,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/08/Enrico-sangiuliano-marktkantine-markvermeulecc-110622-4-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/"
+      ],
+      "file": "images/64e667bd1850-Enrico-sangiuliano-marktkantine-markvermeulecc-110622-4-scaled.jpg",
+      "sha256": "64e667bd1850c7ec594b6725c3b89eb4bdac8ce518d29840bb5dfaf70adfa199",
+      "bytes": 448297,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/10/cropped-286395355_1430400874142461_26045689328349093_n-180x180.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/home",
+        "https://ninetozero.eu/release/silence/",
+        "https://ninetozero.eu/release/sound-of-space/",
+        "https://ninetozero.eu/release/reflection/",
+        "https://ninetozero.eu/release/physicalchange",
+        "https://ninetozero.eu/release/glitchintime/",
+        "https://ninetozero.eu/release/4/",
+        "https://ninetozero.eu/release/3/",
+        "https://ninetozero.eu/release/2/",
+        "https://ninetozero.eu/release/1/",
+        "https://ninetozero.eu/release/absence/",
+        "https://ninetozero.eu/about",
+        "https://ninetozero.eu/events",
+        "https://ninetozero.eu/contact",
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/",
+        "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+        "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/",
+        "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/",
+        "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/",
+        "https://ninetozero.eu/event/solo-3-tempio-milan-it/",
+        "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/",
+        "https://ninetozero.eu/event/solo-1-nitsa-barcelona/",
+        "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/"
+      ],
+      "file": "images/8273fa8e4ec4-cropped-286395355_1430400874142461_26045689328349093_n-180x180.jpg",
+      "sha256": "8273fa8e4ec4544d6e193addaec8eea8efcebdc49781ddaec10878727fb55482",
+      "bytes": 4063,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/10/cropped-286395355_1430400874142461_26045689328349093_n-192x192.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/home",
+        "https://ninetozero.eu/release/silence/",
+        "https://ninetozero.eu/release/sound-of-space/",
+        "https://ninetozero.eu/release/reflection/",
+        "https://ninetozero.eu/release/physicalchange",
+        "https://ninetozero.eu/release/glitchintime/",
+        "https://ninetozero.eu/release/4/",
+        "https://ninetozero.eu/release/3/",
+        "https://ninetozero.eu/release/2/",
+        "https://ninetozero.eu/release/1/",
+        "https://ninetozero.eu/release/absence/",
+        "https://ninetozero.eu/about",
+        "https://ninetozero.eu/events",
+        "https://ninetozero.eu/contact",
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/",
+        "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+        "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/",
+        "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/",
+        "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/",
+        "https://ninetozero.eu/event/solo-3-tempio-milan-it/",
+        "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/",
+        "https://ninetozero.eu/event/solo-1-nitsa-barcelona/",
+        "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/"
+      ],
+      "file": "images/0243ba0321f0-cropped-286395355_1430400874142461_26045689328349093_n-192x192.jpg",
+      "sha256": "0243ba0321f0b912963b71fd8122162da6272bb8af0ffc16015e683216c010ed",
+      "bytes": 4566,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/10/cropped-286395355_1430400874142461_26045689328349093_n-270x270.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/home",
+        "https://ninetozero.eu/release/silence/",
+        "https://ninetozero.eu/release/sound-of-space/",
+        "https://ninetozero.eu/release/reflection/",
+        "https://ninetozero.eu/release/physicalchange",
+        "https://ninetozero.eu/release/glitchintime/",
+        "https://ninetozero.eu/release/4/",
+        "https://ninetozero.eu/release/3/",
+        "https://ninetozero.eu/release/2/",
+        "https://ninetozero.eu/release/1/",
+        "https://ninetozero.eu/release/absence/",
+        "https://ninetozero.eu/about",
+        "https://ninetozero.eu/events",
+        "https://ninetozero.eu/contact",
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/",
+        "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+        "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/",
+        "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/",
+        "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/",
+        "https://ninetozero.eu/event/solo-3-tempio-milan-it/",
+        "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/",
+        "https://ninetozero.eu/event/solo-1-nitsa-barcelona/",
+        "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/"
+      ],
+      "file": "images/cafd0735c3a3-cropped-286395355_1430400874142461_26045689328349093_n-270x270.jpg",
+      "sha256": "cafd0735c3a331ee05adfb65b26fd3b80255505d273c20a36762d58410a5e12a",
+      "bytes": 6601,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/10/cropped-286395355_1430400874142461_26045689328349093_n-32x32.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/home",
+        "https://ninetozero.eu/release/silence/",
+        "https://ninetozero.eu/release/sound-of-space/",
+        "https://ninetozero.eu/release/reflection/",
+        "https://ninetozero.eu/release/physicalchange",
+        "https://ninetozero.eu/release/glitchintime/",
+        "https://ninetozero.eu/release/4/",
+        "https://ninetozero.eu/release/3/",
+        "https://ninetozero.eu/release/2/",
+        "https://ninetozero.eu/release/1/",
+        "https://ninetozero.eu/release/absence/",
+        "https://ninetozero.eu/about",
+        "https://ninetozero.eu/events",
+        "https://ninetozero.eu/contact",
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/",
+        "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+        "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/",
+        "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/",
+        "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/",
+        "https://ninetozero.eu/event/solo-3-tempio-milan-it/",
+        "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/",
+        "https://ninetozero.eu/event/solo-1-nitsa-barcelona/",
+        "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/"
+      ],
+      "file": "images/5fd5aa03f7fd-cropped-286395355_1430400874142461_26045689328349093_n-32x32.jpg",
+      "sha256": "5fd5aa03f7fdbe9b8e3d0242e0b54287b5f8868547b07bffe2eabf5fdb9ea99f",
+      "bytes": 851,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/9TO0_ARTWORK_8_9SET.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/sound-of-space/"
+      ],
+      "file": "images/b0ebc0008509-9TO0_ARTWORK_8_9SET.jpg",
+      "sha256": "b0ebc000850904726eff53c6c407ba6f86a097e94d9cb5c0376093fd956e386d",
+      "bytes": 1367645,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/9TO0_ARTWORK_8_9SET2.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/sound-of-space/"
+      ],
+      "file": "images/a7f3a1a517bc-9TO0_ARTWORK_8_9SET2.jpg",
+      "sha256": "a7f3a1a517bc7471bffda9f7eafeb493ef60d04848c051744b86d2a62fe97116",
+      "bytes": 1781163,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/9TO0_Assetts_ReleaseParty_8_1-1-ES-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/"
+      ],
+      "file": "images/c0648aa63f5f-9TO0_Assetts_ReleaseParty_8_1-1-ES-scaled.jpg",
+      "sha256": "c0648aa63f5f07823d76d43334a6392bc7af79df5d053b5869d38bbc1c3ecf9e",
+      "bytes": 1000666,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/Enrique-1_Marie-Wynants-x-Lisbeth-Antoine-please-use-this-picture-1st-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/about"
+      ],
+      "file": "images/84c51f1763cd-Enrique-1_Marie-Wynants-x-Lisbeth-Antoine-please-use-this-picture-1st-scaled.jpg",
+      "sha256": "84c51f1763cd5fa315315fa7074797b109dda1a28c07d7589070bf4452b7840e",
+      "bytes": 833638,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-013-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/"
+      ],
+      "file": "images/9614055e5fcb-NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-013-scaled.jpg",
+      "sha256": "9614055e5fcb867199f1d761cf891d3010606d449ad9506fda7af9406e26cd82",
+      "bytes": 348306,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-026-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/"
+      ],
+      "file": "images/dc8046b69ae7-NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-026-scaled.jpg",
+      "sha256": "dc8046b69ae72765c10fc0aedf91cc814b6e003aeb97ab11371af0299407a6ef",
+      "bytes": 431748,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-030-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/"
+      ],
+      "file": "images/a7b85959d868-NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-030-scaled.jpg",
+      "sha256": "a7b85959d8688c76653ff4606fcf33a208cf554779e45e7b9db8c880ee7d022b",
+      "bytes": 405719,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-032-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/"
+      ],
+      "file": "images/cdb8a4803f1b-NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-032-scaled.jpg",
+      "sha256": "cdb8a4803f1b8c3b3978f1774ba0da18cf10ff8fad441449f07e033b08eec141",
+      "bytes": 414796,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-063-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/"
+      ],
+      "file": "images/3c08644a1f7b-NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-063-scaled.jpg",
+      "sha256": "3c08644a1f7bc9e6110b29ff5ba6911d45239cc458346bc982b6ff43729a665f",
+      "bytes": 843942,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2022/11/NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-071-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-8-kompass-ghent-be/"
+      ],
+      "file": "images/8d82dbe6edd0-NACHTSCHADUW-KOMPASS-NINETOZERO-HIGHRES-071-scaled.jpg",
+      "sha256": "8d82dbe6edd06d6a5de938f399795a2cf12fd06844f2e80c983cf3b4d38eb2e4",
+      "bytes": 609298,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2023/02/9TO0_Assetts_ReleaseParty_7_A6-1-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/"
+      ],
+      "file": "images/c6c9b0aec1ff-9TO0_Assetts_ReleaseParty_7_A6-1-scaled.jpg",
+      "sha256": "c6c9b0aec1ffbafe04fe730e6a5ea8dcc1d3613cb00a50f49e5425ceca0ab756",
+      "bytes": 689452,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2023/02/NTZ_Horizontal_green_copy.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/home",
+        "https://ninetozero.eu/contact",
+        "https://ninetozero.eu/event/solo-9-de-marktkantine/",
+        "https://ninetozero.eu/event/solo-7-spazio-900-rome-it/",
+        "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/"
+      ],
+      "file": "images/8f34560f06ac-NTZ_Horizontal_green_copy.jpg",
+      "sha256": "8f34560f06ace64288eac2452b8760d372cfb460033740c597d2002ba6ff6d68",
+      "bytes": 305521,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2023/05/9TO0_Assetts_ReleaseParty_6.png",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-6-99-scott-new-york-us/"
+      ],
+      "file": "images/94ac7a91849f-9TO0_Assetts_ReleaseParty_6.png",
+      "sha256": "94ac7a91849febb7c5ea2459d16128930035b7fbf223e2cdbd12feff394854d8",
+      "bytes": 5072130,
+      "mime": "image/png",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2024/02/NTZ-Solo005-Promoter-4x5-1.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/"
+      ],
+      "file": "images/29c9ae719c61-NTZ-Solo005-Promoter-4x5-1.jpg",
+      "sha256": "29c9ae719c6125871e0a8fbc64f3dd4f74b06d782d50a6dad13832229a2436e2",
+      "bytes": 2218128,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2024/02/NTZ-Solo005-Promoter-Square.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-5-d-edge-sao-paulo-br/"
+      ],
+      "file": "images/41e56989245f-NTZ-Solo005-Promoter-Square.jpg",
+      "sha256": "41e56989245f71176a2e05a1678905effa9c9f4223aa0f8582938a67bea49bfe",
+      "bytes": 1836509,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2024/07/NTZ-Solo004-4x5-1-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/"
+      ],
+      "file": "images/06d2fc4a3abc-NTZ-Solo004-4x5-1-scaled.jpg",
+      "sha256": "06d2fc4a3abcec877610105e6934bb18d8cfbd113850f693741565d3e9d874a8",
+      "bytes": 723922,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2024/07/NTZ-Solo004-Square-1024x1024.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/"
+      ],
+      "file": "images/8203f777718d-NTZ-Solo004-Square-1024x1024.jpg",
+      "sha256": "8203f777718dce8edb05dd4c79d216cbcd816313b26f7461eaf5f972f8d0a87f",
+      "bytes": 161072,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2024/07/NTZ-Solo004-Square.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-4-village-undeground-london-uk/"
+      ],
+      "file": "images/814334964f9f-NTZ-Solo004-Square.jpg",
+      "sha256": "814334964f9f7ff7a600dfedbb3d75443fd6bc5f675c90504d35e6dc806e7f7c",
+      "bytes": 2884034,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2024/12/NTZ-Solo003-Final-V2-Tempio-1x1-1.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-3-tempio-milan-it/"
+      ],
+      "file": "images/b97dd9b24a96-NTZ-Solo003-Final-V2-Tempio-1x1-1.jpg",
+      "sha256": "b97dd9b24a96ea88e5dea3016a8e2c4609aae805cfb847135a3869a19ca82d8e",
+      "bytes": 3212028,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2025/06/da80d4a6-e6aa-5960-4164-055ff8cfd1f4-scaled.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-2-crobar-buenos-aires-ar/"
+      ],
+      "file": "images/c4ce03893bae-da80d4a6-e6aa-5960-4164-055ff8cfd1f4-scaled.jpg",
+      "sha256": "c4ce03893bae7b21459473dbc00e00a186bfcb3ea5990b53cf406970bdcba267",
+      "bytes": 577030,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2025/10/4x5-NTZ-Solo001-V3-Final.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-1-nitsa-barcelona/"
+      ],
+      "file": "images/2d23286d1d94-4x5-NTZ-Solo001-V3-Final.jpg",
+      "sha256": "2d23286d1d942532fe693d09e2e50f33b551512779def98d8d52ba630b8ecccb",
+      "bytes": 1080548,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2026/02/1x1-2026-02-16-NineToZero-Solo0-SC-Final-1024x1024.jpeg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/"
+      ],
+      "file": "images/2fc8e46a119e-1x1-2026-02-16-NineToZero-Solo0-SC-Final-1024x1024.jpeg",
+      "sha256": "2fc8e46a119e157bed364eb89070005b9ab042916b4afba931d68a4cea911839",
+      "bytes": 237069,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2026/02/1x1-2026-02-16-NineToZero-Solo0-SC-Final.jpeg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/event/solo-0-8-marvila-lisbon-pt/"
+      ],
+      "file": "images/97e9af2bfe47-1x1-2026-02-16-NineToZero-Solo0-SC-Final.jpeg",
+      "sha256": "97e9af2bfe471a876aab29ad24097b2fb5f403c9f7e0e774fdc34340354fbee4",
+      "bytes": 4798139,
+      "mime": "image/jpeg",
+      "status": "saved"
+    },
+    {
+      "url": "https://ninetozero.eu/wp-content/uploads/2026/03/9TO0_artwork_NTZ000_3000X3000-small.jpg",
+      "kind": "image",
+      "pages": [
+        "https://ninetozero.eu/release/absence/"
+      ],
+      "file": "images/66bbb6a3048c-9TO0_artwork_NTZ000_3000X3000-small.jpg",
+      "sha256": "66bbb6a3048c0091a331b221bfb73a0f9af50d08ff34fa486bb8b3072648a997",
+      "bytes": 2945009,
+      "mime": "image/jpeg",
+      "status": "saved"
+    }
+  ],
+  "errors": [],
+  "pending_pages": []
+}

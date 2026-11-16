@@ -2,14 +2,14 @@
 (function(root){
   'use strict';
   if(root.ZerkBitoteka)return;
-  const DB_NAME='zerkalius-bitoteka',CHANNEL='zerkalius-bitoteka-change',KINDS=['video','gif','image','template','frame','work'];
-  const LABELS={video:'Видео',gif:'GIF',image:'Изображения',template:'Шаблоны',frame:'Кадры',work:'Работы'};
+  const DB_NAME='zerkalius-bitoteka',CHANNEL='zerkalius-bitoteka-change',KINDS=['audio','video','gif','image','template','frame','work'];
+  const LABELS={audio:'Аудио',video:'Видео',gif:'GIF',image:'Изображения',template:'Шаблоны',frame:'Кадры',work:'Работы'};
   const script=document.currentScript,base=new URL('./',script?.src||location.href),listeners=new Set(),recent=new Set();
   let database=null,opening=null,channel=null,view=null,viewSerial=0,filter='',folder='',sourceImport=null,observer=null,retryAction=null,lastError='',returnFocus=null;
   const previewUrls=new Set();
   const uid=()=>root.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
   function stylesheet(){
-    const href=new URL('bitoteka.css?v=4',base).href;
+    const href=new URL('bitoteka.css?v=5',base).href;
     if([...document.querySelectorAll('link[rel="stylesheet"]')].some(link=>link.href===href))return;
     const link=document.createElement('link');link.rel='stylesheet';link.href=href;document.head.appendChild(link);
   }
@@ -54,7 +54,7 @@
   }
   try{channel=new BroadcastChannel(CHANNEL);channel.onmessage=event=>notify(event.data);}catch(_){}
   root.addEventListener('storage',event=>{if(event.key!==CHANNEL||!event.newValue)return;try{notify(JSON.parse(event.newValue));}catch(_){}});
-  const extension=(kind,type)=>kind==='gif'?'.gif':type==='video/mp4'?'.mp4':type.startsWith('video/')?'.webm':type==='image/jpeg'?'.jpg':type==='image/webp'?'.webp':type.startsWith('image/')?'.png':['template','frame','work'].includes(kind)?'.json':'.bin';
+  const extension=(kind,type)=>kind==='gif'?'.gif':type==='audio/mpeg'?'.mp3':['audio/mp4','audio/x-m4a','audio/x-m4p'].includes(type)?'.m4a':type==='audio/ogg'?'.ogg':type.startsWith('audio/')?'.audio':type==='video/mp4'?'.mp4':type.startsWith('video/')?'.webm':type==='image/jpeg'?'.jpg':type==='image/webp'?'.webp':type.startsWith('image/')?'.png':['template','frame','work'].includes(kind)?'.json':'.bin';
   function filename(input){
     const name=String(input.filename||input.name||'Битотека').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').trim()||'Битотека';
     return /\.[a-z0-9]{1,8}$/i.test(name)?name:name+extension(input.kind,input.blob.type);
@@ -87,7 +87,7 @@
   // Collections are independent of media kinds. Source collections include their files.
   function inFolder(item,value){
     if(!value||value==='Все')return true;
-    if(value==='Kraftwerk')return item.meta?.collection==='Kraftwerk'||item.meta?.folder==='Kraftwerk';
+    if(value==='Kraftwerk'||value==='NINETOZERO')return item.meta?.collection===value||item.meta?.folder===value;
     const path=String(item.meta?.folder||'');return path===value||path.startsWith(value+'/');
   }
   async function importProjectSources(){
@@ -154,7 +154,7 @@
     const node=document.createElement('button');node.type='button';node.className='gz-hx zbt-button'+(small?' zbt-small':'');node.title=label;node.setAttribute('aria-label',label);
     const text=document.createElement('span');text.dataset.userLabel='';text.textContent=caption;node.appendChild(text);if(action)node.addEventListener('click',action);return node;
   }
-  function releasePreviews(){observer?.disconnect();observer=null;if(view)for(const video of view.grid.querySelectorAll('video')){video.pause();video.removeAttribute('src');video.load();}
+  function releasePreviews(){observer?.disconnect();observer=null;if(view)for(const video of view.grid.querySelectorAll('video,audio')){video.pause();video.removeAttribute('src');video.load();}
     for(const url of previewUrls)URL.revokeObjectURL(url);previewUrls.clear();}
   function close(){if(!view)return;if(view.embedded){root.MayatnikTemplatePanel?.setOpen(false);return;}viewSerial++;releasePreviews();view.dialog.close();if(returnFocus?.isConnected)returnFocus.focus?.();}
   function build(){
@@ -162,10 +162,10 @@
     const header=document.createElement('header'),title=document.createElement('h2');title.id='zbt-title';title.textContent='Битотека';header.appendChild(title);
     const refresh=button('Обновить Битотеку','↻',()=>render(),true),dismiss=button('Закрыть Битотеку','×',close,true);header.append(refresh,dismiss);
     const filters=document.createElement('nav');filters.className='zbt-filters';filters.setAttribute('aria-label','Разделы Битотеки');
-    const captions={video:'Видео',gif:'GIF',image:'Фото',template:'Шблоны',frame:'Кадры',work:'Работы'};
+    const captions={audio:'Аудио',video:'Видео',gif:'GIF',image:'Фото',template:'Шблоны',frame:'Кадры',work:'Работы'};
     for(const kind of ['',...KINDS]){const b=button(kind?LABELS[kind]:'Все записи',kind?captions[kind]:'Все',()=>{filter=kind;render();});b.dataset.kind=kind;filters.appendChild(b);}
     const folders=document.createElement('nav');folders.className='zbt-filters zbt-folders';folders.setAttribute('aria-label','Папки и коллекции Битотеки');
-    for(const value of ['','Источники','Kraftwerk']){const b=button(value||'Все папки и коллекции',value||'Все',()=>{folder=value;render();});b.dataset.folder=value;folders.appendChild(b);}
+    for(const value of ['','Источники','Kraftwerk','NINETOZERO']){const b=button(value||'Все папки и коллекции',value||'Все',()=>{folder=value;render();});b.dataset.folder=value;folders.appendChild(b);}
     const status=document.createElement('p');status.className='zbt-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     const error=document.createElement('p');error.className='zbt-error';error.setAttribute('role','alert');error.hidden=true;
     const retry=button('Повторить действие','↻',async()=>{const action=retryAction;if(!action)return;retry.disabled=true;try{await action();}catch(_){}finally{retry.disabled=false;}},true);retry.hidden=true;
@@ -182,7 +182,8 @@
   async function preview(card,item,serial){
     try{const payload=await get(item.id);if(serial!==viewSerial||!view?.dialog.open||!card.isConnected||!payload)return;
       const slot=card.querySelector('.zbt-preview');const url=blob=>{const value=URL.createObjectURL(blob);previewUrls.add(value);return value;};
-      if(item.kind==='video'&&payload.blob){const video=document.createElement('video');video.controls=true;video.preload='metadata';video.playsInline=true;video.src=url(payload.blob);if(payload.thumbnail)video.poster=url(payload.thumbnail);video.setAttribute('aria-label',item.name);slot.replaceChildren(video);}
+      if(item.kind==='audio'&&payload.blob){const audio=document.createElement('audio');audio.controls=true;audio.preload='none';audio.src=url(payload.blob);audio.setAttribute('aria-label',item.name);slot.replaceChildren(audio);}
+      else if(item.kind==='video'&&payload.blob){const video=document.createElement('video');video.controls=true;video.preload='metadata';video.playsInline=true;video.src=url(payload.blob);if(payload.thumbnail)video.poster=url(payload.thumbnail);video.setAttribute('aria-label',item.name);slot.replaceChildren(video);}
       else if(payload.thumbnail||(['gif','image'].includes(item.kind)&&payload.blob)){const img=document.createElement('img');img.src=url(payload.thumbnail||payload.blob);img.alt=item.name;img.loading='lazy';slot.replaceChildren(img);}
     }catch(error){if(serial===viewSerial&&card.isConnected)card.querySelector('.zbt-preview').textContent=message(error);}
   }
@@ -201,7 +202,7 @@
         const file=document.createElement('p');file.className='zbt-filename';file.textContent=item.filename;file.title=item.filename;
         const details=document.createElement('p');details.className='zbt-details';details.textContent=new Date(item.createdAt).toLocaleString('ru-RU')+' · '+bytes(item.size);
         const source=document.createElement('p');source.className='zbt-source';source.textContent=sourceName(item.source);source.title=source.textContent;
-        const collection=document.createElement('p');collection.className='zbt-collection';collection.textContent=[item.meta?.folder,item.meta?.paletteName].filter(Boolean).join(' · ');collection.title=collection.textContent;collection.hidden=!collection.textContent;
+        const collection=document.createElement('p');collection.className='zbt-collection';collection.textContent=[item.meta?.folder,item.meta?.collection,item.meta?.paletteName].filter(Boolean).join(' · ');collection.title=collection.textContent;collection.hidden=!collection.textContent;
         const summary=document.createElement('p');summary.className='zbt-summary';summary.textContent=String(item.meta?.description||'');summary.hidden=!summary.textContent;
         const actions=document.createElement('div');actions.className='zbt-actions';
         const down=button('Скачать «'+item.name+'»','↓',()=>download(item.id).catch(()=>{}),true);
