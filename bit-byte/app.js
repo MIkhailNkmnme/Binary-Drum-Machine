@@ -705,7 +705,7 @@
   let active = "byte";
   try {
     const stored = localStorage.getItem(TAB_KEY);
-    if (editors.some(editor => editor.name === stored)) active = stored;
+    if (tabs.some(tab => tab.dataset.mode === stored)) active = stored;
   } catch { /* По умолчанию — байт. */ }
   selectEditor(active);
 })();
