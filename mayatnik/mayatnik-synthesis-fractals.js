@@ -1,4 +1,4 @@
-/* Маятник · Синтез 0.010. Клеточные строки, Стрелка и Игра хаоса. */
+/* Маятник · Синтез 0.011. Клеточные ряды, Стрелка и Игра хаоса. */
 (function (root) {
   'use strict';
 
@@ -34,23 +34,44 @@
     return { kind: 'arrowhead', length: points.length - 1, points, minX, minY, spanX: maxX - minX, spanY: maxY - minY };
   }
 
-  function rule90(depth) {
-    const length = 2 ** depth;
-    const center = length - 1;
-    let state = new Uint8Array(center * 2 + 1);
-    state[center] = 1;
+  function evolveRows(kind, length, seed, transition) {
+    const margin = length - 1;
+    let state = new Uint8Array(seed.length + margin * 2);
+    state.set(seed, margin);
     const rows = [];
     for (let t = 0; t < length; t++) {
-      const active = [];
+      rows.push(state);
+      if (t + 1 === length) break;
       const next = new Uint8Array(state.length);
       for (let x = 0; x < state.length; x++) {
-        if (state[x]) active.push(x);
-        next[x] = (state[x - 1] || 0) ^ (state[x + 1] || 0);
+        next[x] = transition(state[x - 1] || 0, state[x], state[x + 1] || 0);
       }
-      rows.push(active);
       state = next;
     }
-    return { kind: 'rule90', length, width: state.length, rows };
+    return { kind, length, width: state.length, rows };
+  }
+
+  function rule90(depth) {
+    return evolveRows('rule90', 2 ** depth, [1], (left, center, right) => left ^ right);
+  }
+
+  function cellular({ depth, seed, rule }) {
+    if (typeof rule === 'string' && /^[1-3]{6}$/.test(rule)) {
+      const pairs = { 11: 0, 12: 1, 13: 2, 22: 3, 23: 4, 33: 5 };
+      const outputs = Array.from(rule, Number);
+      // Adjacent cells of a Deckard row occupy alternate columns of the diagram.
+      const staggered = new Uint8Array(2 * seed.length - 1);
+      seed.forEach((value, i) => { staggered[2 * i] = value; });
+      return evolveRows('cellular', 2 ** depth, staggered, (left, center, right) => {
+        if (!left || !right) return left || right;
+        const key = Math.min(left, right) * 10 + Math.max(left, right);
+        return outputs[pairs[key]];
+      });
+    }
+    const transition = rule === 'sum3'
+      ? (left, center, right) => (left + center + right) % 3
+      : (left, center, right) => (rule >>> (4 * left + 2 * center + right)) & 1;
+    return evolveRows('cellular', 2 ** depth, seed, transition);
   }
 
   function chaos({ vertices, jump, noRepeat, seed, batch }) {
@@ -121,13 +142,15 @@
       return;
     }
     const w = width * .88, h = height * .88;
-    if (model.kind === 'rule90') {
+    if (model.rows) {
       const unit = Math.min(w / model.width, h / model.length);
       const left = (width - model.width * unit) / 2, top = (height - model.length * unit) / 2;
       const size = Math.max(1, unit * .82);
-      ctx.fillStyle = colour;
       for (let y = 0; y < count; y++) {
-        for (const x of model.rows[y]) {
+        const row = model.rows[y];
+        for (let x = 0; x < row.length; x++) {
+          if (row[x] === 0) continue;
+          ctx.fillStyle = row[x] === 1 ? colour : row[x] === 2 ? '#5ce1e6' : '#cc92ef';
           ctx.fillRect(left + x * unit, top + y * unit, size, size);
         }
       }
@@ -159,5 +182,5 @@
     ctx.restore();
   }
 
-  root.MayatnikSynthesisFractals = { arrowhead, rule90, chaos, chaosNote, paint };
+  root.MayatnikSynthesisFractals = { arrowhead, rule90, cellular, chaos, chaosNote, paint };
 })(window);

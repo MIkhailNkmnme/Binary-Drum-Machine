@@ -1,4 +1,4 @@
-/* Маятник · Синтез 0.010. Exact pendulum duet, score and computational art.
+/* Маятник · Синтез 0.011. Exact pendulum duet, score and computational art.
  * Source redraws are observations, never an animation clock. Only successive
  * source frames or explicit independent ticks advance experimental history. */
 (function(root){
@@ -8,14 +8,21 @@
     mix:'only',link:false,rate:8,colourOne:'#ffd35b',colourZero:'#5ce1e6',visible:true,
     weightsOpen:true,stateWeights:[0,1,2,1,0,0,1],positionWeights:[2,1,2,1,1,2,1,2],
     studioSection:'sources',palette:'nocturne',artStyle:'bits',musicStyle:'techno',tempo:120,volume:0.45,musicRoot:48,musicScale:'minor',density:3,bitVoice:'off',musicBars:16,recipe:'',pendulumOptions:{},
-    fractalKind:'arrowhead',fractalDepth:4,chaosVertices:12,chaosJump:.8,chaosNoRepeat:false,chaosSeed:1,chaosBatch:32};
+    fractalKind:'arrowhead',fractalDepth:4,chaosVertices:12,chaosJump:.8,chaosNoRepeat:false,chaosSeed:1,chaosBatch:32,
+    cellularRule:'231123',cellularSeed:'single',cellularBits:''};
   const modes={pendulums:'Маятники A + B',trail:'След',waves:'Волны',recovery:'Восстановление',grow:'Отпечаток',weights:'Веса соседей',fractal:'Фракталы'};
-  const fractalNames={arrowhead:'Стрелка',rule90:'Правило 90',chaos:'Игра хаоса'};
+  const fractalNames={arrowhead:'Стрелка',rule90:'Правило 90',chaos:'Игра хаоса',cellular:'Клеточные ряды'};
+  const cellularRules=[
+    {v:'231123',name:'Deckard 231123'},{v:'222111',name:'Deckard 222111'},
+    ...[204,30,90,110,150].map(v=>({v,name:'Правило '+v})),{v:'sum3',name:'Сумма mod 3'}
+  ];
+  const isDeckardRule=rule=>typeof rule==='string'&&/^[1-3]{6}$/.test(rule);
   const chaosJumps=[{v:.5,name:'Прыжок 1/2'},{v:.618,name:'Прыжок 61,8%'},{v:2/3,name:'Прыжок 2/3'},{v:.75,name:'Прыжок 3/4'},{v:.8,name:'Прыжок 4/5'}];
   const chaosCorners=[3,4,5,12],chaosSeeds=[1,2,3,17,41],chaosBatches=[1,8,32];
   const duetMode=()=>prefs.mode==='pendulums';
   const fractalMode=()=>prefs.mode==='fractal';
   const chaosMode=()=>fractalMode()&&prefs.fractalKind==='chaos';
+  const rowMode=()=>fractalMode()&&prefs.fractalKind==='cellular';
   const rules={circuit:'Circuit Genesis',fireworks:'Fireworks',replicator:'Replicator',weighted:'WG Rule084'};
   const autonomous=()=>prefs.mode==='grow'||prefs.mode==='weights';
   const cellular=()=>['waves','grow','weights'].includes(prefs.mode);
@@ -40,6 +47,9 @@
       if(allowed.includes(value[key]))p[key]=value[key];
     }
     if(typeof value.chaosNoRepeat==='boolean')p.chaosNoRepeat=value.chaosNoRepeat;
+    if(cellularRules.some(it=>it.v===value.cellularRule))p.cellularRule=value.cellularRule;
+    if(typeof value.cellularBits==='string'&&/^[01]{1,128}$/.test(value.cellularBits))p.cellularBits=value.cellularBits;
+    if(['single','pair'].includes(value.cellularSeed)||value.cellularSeed==='captured'&&p.cellularBits)p.cellularSeed=value.cellularSeed;
     if(p.mode==='fractal')p.link=false;
     return p;
   }
@@ -54,15 +64,21 @@
   function remember(){try{localStorage.setItem(KEY,JSON.stringify(prefs));}catch(error){fail(Error('Настройки не сохранены: '+error.message));}}
   function getFractal(){
     const {fractalKind,fractalDepth,chaosVertices:vertices,chaosJump:jump,chaosNoRepeat:noRepeat,chaosSeed:seed,chaosBatch:batch}=prefs;
-    const key=(chaosMode()?[fractalKind,vertices,jump,noRepeat,seed,batch]:[fractalKind,fractalDepth]).join(':');
+    const parts=chaosMode()?[vertices,jump,noRepeat,seed,batch]:[fractalDepth];
+    if(rowMode())parts.push(prefs.cellularRule,prefs.cellularSeed,prefs.cellularBits);
+    const key=[fractalKind,...parts].join(':');
     if(key!==fractalKey){
       const fractals=root.MayatnikSynthesisFractals;
-      fractalModel=chaosMode()?fractals.chaos({vertices,jump,noRepeat,seed,batch}):fractals[fractalKind](fractalDepth);
+      if(chaosMode())fractalModel=fractals.chaos({vertices,jump,noRepeat,seed,batch});
+      else if(rowMode()){
+        const seed=prefs.cellularSeed==='captured'?Array.from(prefs.cellularBits,Number):prefs.cellularSeed==='pair'?[1,0,1]:[1];
+        fractalModel=fractals.cellular({depth:fractalDepth,seed,rule:prefs.cellularRule});
+      }else fractalModel=fractals[fractalKind](fractalDepth);
       fractalKey=key;
     }
     return fractalModel;
   }
-  function fractalLimit(model){return model.kind==='rule90'?model.length-1:model.length;}
+  function fractalLimit(model){return model.rows?model.length-1:model.length;}
   function engineOptions(){return {rule:prefs.rule,wrap:prefs.wrap,trailFrames:prefs.trailFrames,recoveryFrames:prefs.recoveryFrames,stateWeights:prefs.stateWeights,positionWeights:prefs.positionWeights};}
   function source(){return root.maySynthesisSource?.()||null;}
   function availableSource(){
@@ -131,6 +147,18 @@
     if(autonomous())engine.seed(bits);
     message=(selection?'Захвачена область':'Захвачен кадр')+' '+s.k+'. '+(rect.w<s.W||rect.h<s.H?'Показана область '+rect.w+' × '+rect.h+' без уменьшения клеток.':'');
     render();scheduleSave();
+  }
+  function captureCellularRow(){
+    const s=availableSource(),selection=s.selection;
+    if(s.selectionUnsupported||!selection)throw Error('Выделите строку на обычном прямоугольном поле. Из области берётся её верхняя строка.');
+    const x=selection.c0,y=selection.r0,w=selection.c1-x+1;
+    if(w<1||w>128||x<0||x+w>s.W||y<0||y>=s.H)throw Error('Выделите от 1 до 128 клеток внутри поля.');
+    const bits=readBits(s,{x,y,w,h:1});
+    prefs.cellularBits=Array.from(bits,value=>value===1?'1':'0').join('');
+    prefs.visible=true;
+    setOption('cellularSeed','captured');
+    message='Взята верхняя строка выделения · '+w+' битов.';
+    refresh();
   }
   function preset(kind){
     pause();const w=129,h=129,bits=new Int8Array(w*h),cx=64,cy=64;
@@ -214,8 +242,9 @@
   function setOption(key,value){
     const wasPlaying=timer!==null;
     if(key==='mode'){setMode(value);return;}
-    if(key==='fractalKind'||key==='fractalDepth'||key.startsWith('chaos')){
+    if(key==='fractalKind'||key==='fractalDepth'||key.startsWith('chaos')||key.startsWith('cellular')){
       pause();ticks=0;
+      message='';
       if(key==='fractalKind'&&chaosMode()&&value!=='chaos')music?.disable();
     }
     if(key==='rule')pause();prefs[key]=value;
@@ -255,7 +284,7 @@
       const w=engine.width,h=engine.height;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
       if(fractalMode()){
         const model=getFractal();
-        root.MayatnikSynthesisFractals.paint(ctx,model,ticks+(model.kind==='rule90'?1:0),w,h,prefs.colourOne);
+        root.MayatnikSynthesisFractals.paint(ctx,model,ticks+(model.rows?1:0),w,h,prefs.colourOne);
         layerData=ctx.getImageData(0,0,w,h).data;
         refresh();root.maySynthesisPresent?.();return;
       }
@@ -294,12 +323,13 @@
     if(legend)legend.textContent=fractalMode()?{
       chaos:'Белым отмечена последняя выбранная вершина и текущая точка.',
       arrowhead:'Один шаг — один отрезок непрерывной линии.',
-      rule90:'Один шаг — одна строка клеток.'
+      rule90:'Один шаг — одна строка клеток.',
+      cellular:isDeckardRule(prefs.cellularRule)?'1 — цвет опыта, 2 — голубой, 3 — сиреневый.':prefs.cellularRule==='sum3'?'Состояние 2 показано голубым.':'Один шаг добавляет поколение клеток.'
     }[prefs.fractalKind]:duetMode()?'A · B · '+(duet?.options.operation||'XOR').toUpperCase()+(music?.enabled?' · ♫':''):prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Только Синтез: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
     const bit=root.MayatnikBitSynthesis,bitInfo=prefs.bitVoice!=='off'&&bit&&duet?bit.describeFrame(musicFrame(),musicOptions()):null;
     status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'')+(bitInfo?' · n = '+bitInfo.n+' ('+bitInfo.binary+') · '+bitInfo.f0+' Гц · партиал '+bitInfo.partials:'');
     if(fractalMode()&&engine){
-      const model=getFractal(),rows=model.kind==='rule90';
+      const model=getFractal(),rows=!!model.rows;
       if(model.kind==='chaos'){
         const note=root.MayatnikSynthesisFractals.chaosNote(model,ticks);
         status.textContent=(ticks*model.batch)+' / '+(model.length*model.batch)+' точек'+(note?' · '+note.label:'');
@@ -477,6 +507,16 @@
     mountStudio(host);
     choices(host,'fractal-kind','Построение фрактала',Object.entries(fractalNames).map(([v,name])=>({v,name})),'fractalKind',fractalMode);
     choices(host,'fractal-depth','Глубина построения фрактала',[1,2,3,4,5,6].map(v=>({v,name:'Глубина '+v})),'fractalDepth',()=>fractalMode()&&!chaosMode());
+    choices(host,'cellular-rule','Правило перехода к следующей строке',cellularRules,'cellularRule',rowMode);
+    const seedChoices=()=>[{v:'single',name:'Одна точка'},{v:'pair',name:'Две точки'},...(prefs.cellularBits?[{v:'captured',name:'Из поля'}]:[])];
+    const seedButton=button(host,'cellular-seed','Одна точка','Начальная строка клеточного автомата',()=>{
+      const items=seedChoices(),i=items.findIndex(it=>it.v===prefs.cellularSeed);
+      setOption('cellularSeed',items[(i+1)%items.length].v);
+    },{show:rowMode,caption:()=>seedChoices().find(it=>it.v===prefs.cellularSeed).name});
+    seedButton.dataset.listTitle='Начальная строка';
+    seedButton.setAttribute('aria-haspopup','true');
+    root.ZerkGrozd.listHover(seedButton,{options:()=>seedChoices().map(it=>({key:it.v,name:it.name,on:prefs.cellularSeed===it.v,pick:()=>run(()=>{setOption('cellularSeed',it.v);after();})}))});
+    button(host,'cellular-capture','Взять ряд','Скопировать верхнюю строку выделения (до 128 клеток) в начало автомата',captureCellularRow,{show:rowMode});
     choices(host,'chaos-vertices','Число вершин многоугольника',chaosCorners.map(v=>({v,name:'Вершин '+v})),'chaosVertices',chaosMode);
     choices(host,'chaos-jump','Доля расстояния от текущей точки до выбранной вершины',chaosJumps,'chaosJump',chaosMode);
     button(host,'chaos-repeat','Без повторов','Запретить два последовательных прыжка к одной и той же вершине',()=>setOption('chaosNoRepeat',!prefs.chaosNoRepeat),{show:chaosMode,selected:()=>prefs.chaosNoRepeat});
@@ -501,7 +541,7 @@
     button(host,'open','Открыть','Открыть сохранённый опыт JSON',importWork);
     button(host,'png','PNG','Скачать текущее поле результата в точном размере клеток',exportPNG);
     button(host,'bitoteka','В Битотеку','Сохранить опыт с миниатюрой в общую Битотеку',toLibrary);
-    button(host,'help','Инструкция','План и инструкция для текущего режима',()=>root.open(fractalMode()?'../issledovanie/cellular-visual-labs/#'+(chaosMode()?'chaos-game':'fractals'):'synthesis-instruction.html','_blank','noopener'));
+    button(host,'help','Инструкция','План и инструкция для текущего режима',()=>root.open(fractalMode()?'../issledovanie/cellular-visual-labs/#'+(rowMode()?'deckard':chaosMode()?'chaos-game':'fractals'):'synthesis-instruction.html','_blank','noopener'));
     for(const binding of bindings){
       const id=binding.node.dataset.n;
       if(['synthesis:save','synthesis:open','synthesis:png','synthesis:bitoteka'].includes(id))binding.show=()=>!duetMode()||prefs.studioSection==='files';
