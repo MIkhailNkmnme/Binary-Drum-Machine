@@ -406,6 +406,84 @@
     }
     byId("sequence-count").textContent = `Байтов: ${words.length} · битов: ${text.length}`;
     copySequence.disabled = !text;
+    renderRingStats(text);
+  }
+
+  function countRing(text) {
+    const stats = {
+      runs: [[], []],
+      runTotals: [0, 0],
+      bitTotals: [0, 0],
+      longest: 0,
+      transitions: { "10": 0, "01": 0 },
+    };
+    if (!text.length) return stats;
+
+    const runs = [];
+    let bit = Number(text[0]);
+    let length = 1;
+    for (let index = 1; index < text.length; index += 1) {
+      const next = Number(text[index]);
+      if (next === bit) {
+        length += 1;
+      } else {
+        runs.push({ bit, length });
+        bit = next;
+        length = 1;
+      }
+    }
+    runs.push({ bit, length });
+
+    // Один обход кольца: одинаковые краевые серии объединяются ровно один раз.
+    // Однородное кольцо уже является одной серией полной длины.
+    if (runs.length > 1 && runs[0].bit === runs[runs.length - 1].bit) {
+      runs[0].length += runs.pop().length;
+    }
+    for (const run of runs) {
+      const histogram = stats.runs[run.bit];
+      histogram[run.length] = (histogram[run.length] || 0) + 1;
+      stats.runTotals[run.bit] += 1;
+      stats.bitTotals[run.bit] += run.length;
+      stats.longest = Math.max(stats.longest, run.length);
+    }
+    // Каждое соседство считается один раз, включая последнее → первое.
+    for (let index = 0; index < text.length; index += 1) {
+      const next = text[(index + 1) % text.length];
+      if (text[index] !== next) stats.transitions[text[index] + next] += 1;
+    }
+    return stats;
+  }
+
+  function renderRingStats(text) {
+    const stats = countRing(text);
+    const fragment = document.createDocumentFragment();
+    for (let length = 1; length <= stats.longest; length += 1) {
+      const row = document.createElement("tr");
+      heading(row, length, "row");
+      cell(row, "td", stats.runs[1][length] || 0);
+      cell(row, "td", stats.runs[0][length] || 0);
+      fragment.append(row);
+    }
+    if (!text.length) {
+      const row = document.createElement("tr");
+      cell(row, "td", "Нет оставшихся битов").colSpan = 3;
+      fragment.append(row);
+    }
+    byId("ring-runs").replaceChildren(fragment);
+    byId("run-total-ones").textContent = stats.runTotals[1];
+    byId("run-total-zeros").textContent = stats.runTotals[0];
+    byId("run-bits-ones").textContent = stats.bitTotals[1];
+    byId("run-bits-zeros").textContent = stats.bitTotals[0];
+    byId("transition-10").textContent = stats.transitions["10"];
+    byId("transition-01").textContent = stats.transitions["01"];
+    byId("transition-total").textContent = stats.transitions["10"] + stats.transitions["01"];
+    byId("ring-boundary").textContent = !text.length
+      ? "Пустое кольцо: серий и переходов нет."
+      : stats.runTotals[0] === 0 || stats.runTotals[1] === 0
+        ? `Кольцо из одних ${text[0]}: одна серия длины ${text.length}, переходов нет.`
+        : text[0] === text[text.length - 1]
+          ? `Стык ${text[0]} → ${text[0]}: крайние серии объединены в одну.`
+          : `Стык ${text[text.length - 1]} → ${text[0]}: этот переход включён в таблицу.`;
   }
 
   copySequence.addEventListener("click", async () => {

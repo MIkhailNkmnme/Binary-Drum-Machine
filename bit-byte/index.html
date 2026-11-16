@@ -1,20 +1,20 @@
-<!-- Bit-Byte v0.002 · центральное поле, боковые команды, развороты, двоичные подписи и сквозная строка. -->
+<!-- Bit-Byte v0.003 · сквозная как кольцо: длины серий 1/0 и направленные переходы. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.002 — Зеркалиус</title>
+  <title>Bit-Byte v0.003 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=002">
+  <link rel="stylesheet" href="style.css?v=003">
 
-  <script defer src="app.js?v=002"></script>
+  <script defer src="app.js?v=003"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.002</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.003</small></h1>
       <p>Щёлкните по байту, чтобы исключить или вернуть его. Стрелки перемещают фокус, Enter и пробел меняют состояние.</p>
     </header>
 
@@ -54,8 +54,34 @@
             </div>
           </div>
           <textarea id="remaining-sequence" rows="3" readonly spellcheck="false" wrap="soft" placeholder="Все байты исключены" aria-describedby="sequence-hint sequence-count"></textarea>
-          <p id="sequence-hint" class="hint">По текущему расположению: слева направо, сверху вниз. Без пробелов и добавления битов.</p>
+          <p id="sequence-hint" class="hint">Слева направо, сверху вниз; без добавления битов. Для расчётов строка замкнута в кольцо: последний бит → первый.</p>
           <p id="copy-result" class="hint" role="status"></p>
+          <div class="ring-statistics">
+            <div>
+              <table class="stats run-stats">
+                <caption>Серии подряд · кольцо</caption>
+                <thead><tr><th scope="col">Длина серии</th><th scope="col">Серий из 1</th><th scope="col">Серий из 0</th></tr></thead>
+                <tbody id="ring-runs"></tbody>
+                <tfoot>
+                  <tr><th scope="row">Всего серий</th><td id="run-total-ones"></td><td id="run-total-zeros"></td></tr>
+                  <tr><th scope="row">Битов в сериях</th><td id="run-bits-ones"></td><td id="run-bits-zeros"></td></tr>
+                </tfoot>
+              </table>
+              <p class="hint">Точные длины: 111 — одна серия длины 3, а не три одиночных 1.</p>
+            </div>
+            <div>
+              <table class="stats transition-stats">
+                <caption>Переходы · кольцо</caption>
+                <thead><tr><th scope="col">Переход</th><th scope="col">Количество</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">1 → 0</th><td id="transition-10"></td></tr>
+                  <tr><th scope="row">0 → 1</th><td id="transition-01"></td></tr>
+                </tbody>
+                <tfoot><tr><th scope="row">Всего смен</th><td id="transition-total"></td></tr></tfoot>
+              </table>
+              <p id="ring-boundary" class="hint"></p>
+            </div>
+          </div>
         </section>
         <section class="panel summary-panel" aria-label="Итоги выбора">
           <h2>Итоги</h2>
