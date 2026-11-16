@@ -34,6 +34,8 @@ main {
 
 h1 { color: var(--cyan); font-size: 26px; }
 .page-head p { color: var(--muted); font-size: 12px; }
+.editor-tabs { margin-bottom: 12px; }
+.editor-panel[hidden] { display: none; }
 
 .workspace {
   display: grid;
@@ -53,34 +55,45 @@ h1 { color: var(--cyan); font-size: 26px; }
 .sequence-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; }
 .sequence-head h2 { margin: 0; }
 .sequence-head .commands { margin-left: auto; }
-#remaining-sequence { line-height: 1.6; overflow-wrap: anywhere; word-break: break-all; }
-#sequence-hint { margin-top: 5px; }
-#copy-result:empty { display: none; }
+[data-key="remaining-sequence"] { line-height: 1.6; overflow-wrap: anywhere; word-break: break-all; }
+[data-key="sequence-hint"] { margin-top: 5px; }
+[data-key="copy-result"]:empty { display: none; }
 .ring-statistics { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; gap: 16px; margin-top: 16px; }
 .ring-statistics > div { min-width: 0; overflow-x: auto; }
 .ring-statistics .hint { margin-top: 7px; }
 .ring-statistics tfoot tr:first-child > * { border-top: 1px solid var(--cyan); }
 .run-stats td:nth-child(2) { color: var(--cyan); }
 .run-stats td:nth-child(3) { color: var(--excluded); }
+.sequence-bytes-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 16px; }
+.sequence-bytes-head h3 { margin: 0; color: var(--cyan); font-size: 13px; }
+.sequence-bytes-scroll { overflow: auto; max-height: min(28rem, 65vh); margin-top: 8px; border: 1px solid var(--line); }
+.sequence-bytes-scroll:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
+.sequence-bytes caption { padding: 4px 5px; }
+.sequence-bytes thead th { position: sticky; top: 0; z-index: 2; background: var(--panel); }
+.sequence-bytes tfoot > tr > * { position: sticky; bottom: 0; z-index: 2; background: var(--panel); border-top: 1px solid var(--cyan); }
+.sequence-bytes .no-occurrences { color: var(--muted); }
 .layout-status { margin-top: 10px; white-space: pre-line; }
-#byte-field {
+[data-key="byte-field"] {
   width: 100%;
   min-width: 856px;
   table-layout: fixed;
   border-spacing: 2px;
 }
 
-#byte-field th,
-#byte-field td { padding: 0; }
-#byte-field th {
+[data-key="byte-field"] th,
+[data-key="byte-field"] td { padding: 0; }
+[data-key="byte-field"] th {
   color: var(--muted);
   background: var(--panel);
   font-size: 12px;
   font-weight: normal;
   text-align: center;
 }
-#byte-field thead th { height: 38px; }
-#byte-field thead th:first-child { width: 44px; }
+[data-key="byte-field"] thead th { height: 38px; }
+[data-key="byte-field"] thead th:first-child { width: 44px; }
+.editor-panel[data-unit="nibble"] [data-key="byte-field"] { min-width: 0; max-width: 420px; margin-inline: auto; }
+.editor-panel[data-unit="nibble"] .bits { font-size: 16px; }
+.editor-panel[data-unit="nibble"] .byte-code { font-size: 11px; }
 .axis-hex, .axis-bits { display: block; line-height: 1.3; }
 .axis-bits { color: var(--cyan); font-size: 9px; white-space: nowrap; }
 
@@ -155,7 +168,7 @@ h2, .stats caption {
 
 .hint { color: var(--muted); font-size: 11px; }
 .legend { margin-top: 8px; }
-.legend span, #list-result[data-error] { color: var(--excluded); }
+.legend span:not([data-key="unit-description"]), [data-key="list-result"][data-error] { color: var(--excluded); }
 
 .commands {
   --gz-w: 120px;
@@ -180,6 +193,8 @@ h2, .stats caption {
 .commands .gz-hx:enabled:is(:focus-visible, :active) { background: var(--c); }
 .commands .gz-hx[aria-pressed="true"] { background: var(--c); }
 .commands .gz-hx[aria-pressed="true"]::before { inset: 2px; background: var(--gz-bg); }
+.commands.editor-tabs .gz-hx[aria-selected="true"] { background: var(--cyan); }
+.commands.editor-tabs .gz-hx[aria-selected="true"]::before { inset: 2px; background: var(--gz-bg); }
 .commands .gz-hx:enabled:active::before { inset: 3px; }
 .commands .gz-hx:disabled { opacity: .5; cursor: default; }
 
@@ -205,13 +220,13 @@ h2, .stats caption {
 .commands .axis-pair .gz-half:focus-visible::before,
 .commands .axis-pair .gz-half:active::before { inset: 3px; }
 
-#exclude-form {
+[data-key="exclude-form"] {
   display: grid;
   gap: 5px;
   margin-top: 12px;
 }
 
-#exclude-form label { font-size: 12px; }
+[data-key="exclude-form"] label { font-size: 12px; }
 textarea {
   display: block;
   width: 100%;
@@ -223,7 +238,7 @@ textarea {
   color: var(--text);
 }
 textarea:focus-visible { outline: 1px solid var(--cyan); }
-#list-result:empty { display: none; }
+[data-key="list-result"]:empty { display: none; }
 .auto-note { margin-top: 10px; }
 
 .breakdown {

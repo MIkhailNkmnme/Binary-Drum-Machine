@@ -1,23 +1,31 @@
-<!-- Bit-Byte v0.005 · два независимых разворота в одной кнопке; команда «Вместе» убрана. -->
+<!-- Bit-Byte v0.006 · независимые вкладки байта/полубайта, кольцо и частоты окон по сдвигам. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.005 — Зеркалиус</title>
+  <title>Bit-Byte v0.006 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=005">
+  <link rel="stylesheet" href="style.css?v=006">
 
-  <script defer src="app.js?v=005"></script>
+  <script defer src="app.js?v=006"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.005</small></h1>
-      <p>Щёлкните по байту, чтобы исключить или вернуть его. Стрелки перемещают фокус, Enter и пробел меняют состояние.</p>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.006</small></h1>
+      <p>Щёлкните по ячейке, чтобы исключить или вернуть её. Стрелки перемещают фокус, Enter и пробел меняют состояние.</p>
     </header>
 
+    <div class="commands editor-tabs" role="tablist" aria-label="Размер слова">
+      <button id="tab-byte" class="gz-hx" role="tab" type="button" aria-selected="true" aria-controls="byte-editor" data-mode="byte"><span class="gz-ic" aria-hidden="true">8</span><span class="gz-nm">Байт</span></button>
+      <button id="tab-nibble" class="gz-hx" role="tab" type="button" aria-selected="false" aria-controls="nibble-editor" data-mode="nibble" tabindex="-1"><span class="gz-ic" aria-hidden="true">4</span><span class="gz-nm">Полубайт</span></button>
+    </div>
+    <section id="byte-editor" class="editor-panel" data-unit="byte" role="tabpanel" aria-labelledby="tab-byte"></section>
+    <section id="nibble-editor" class="editor-panel" data-unit="nibble" role="tabpanel" aria-labelledby="tab-nibble" hidden></section>
+
+    <template id="editor-template">
     <div class="workspace">
       <aside class="sidebar sidebar-left" aria-label="Ручное исключение">
         <section class="panel">
@@ -28,7 +36,7 @@
             <button id="undo" class="gz-hx" type="button" title="Отменить последнее изменение" aria-label="Отменить последнее изменение"><span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Отмена</span></button>
           </div>
           <form id="exclude-form">
-            <label for="exclude-list">Список 8-битных слов</label>
+            <label id="list-label" for="exclude-list">Список 8-битных слов</label>
             <textarea id="exclude-list" rows="3" spellcheck="false" autocapitalize="off" aria-describedby="list-hint"></textarea>
             <p id="list-hint" class="hint">Например, 00000001 11110000</p>
             <div class="commands">
@@ -44,12 +52,13 @@
         <div class="field-scroll">
           <table id="byte-field" aria-label="Все 256 байтов. Строка задаёт старшие четыре бита, столбец — младшие четыре бита."></table>
         </div>
-        <p class="hint legend">Строки — старшие 4 бита; столбцы — младшие 4 бита. <span aria-hidden="true">╱</span> Исключённый байт.</p>
+        <p class="hint legend"><span id="unit-description">Строки — старшие 4 бита; столбцы — младшие 4 бита.</span> <span aria-hidden="true">╱</span> <span id="unit-legend">Исключённый байт.</span></p>
         <section class="panel sequence-panel" aria-label="Сквозная строка оставшихся битов">
           <div class="sequence-head">
             <h2><label for="remaining-sequence">Сквозная</label></h2>
             <p id="sequence-count" class="hint"></p>
             <div class="commands">
+              <button id="cyclic-sequence" class="gz-hx" type="button" aria-pressed="true" title="Кольцевать сквозную: соединять последний бит с первым для всех её расчётов" aria-label="Кольцевать сквозную"><span class="gz-ic" aria-hidden="true">⟳</span><span class="gz-nm">Кольцевать</span></button>
               <button id="copy-sequence" class="gz-hx" type="button" title="Скопировать сквозную строку оставшихся битов" aria-label="Скопировать сквозную строку"><span class="gz-ic" aria-hidden="true">⧉</span><span class="gz-nm">Копировать</span></button>
             </div>
           </div>
@@ -59,7 +68,7 @@
           <div class="ring-statistics">
             <div>
               <table class="stats run-stats">
-                <caption>Серии подряд · кольцо</caption>
+                <caption id="run-caption">Серии подряд · кольцо</caption>
                 <thead><tr><th scope="col">Длина серии</th><th scope="col">Серий из 1</th><th scope="col">Серий из 0</th></tr></thead>
                 <tbody id="ring-runs"></tbody>
                 <tfoot>
@@ -71,7 +80,7 @@
             </div>
             <div>
               <table class="stats transition-stats">
-                <caption>Переходы · кольцо</caption>
+                <caption id="transition-caption">Переходы · кольцо</caption>
                 <thead><tr><th scope="col">Переход</th><th scope="col">Количество</th></tr></thead>
                 <tbody>
                   <tr><th scope="row">1 → 0</th><td id="transition-10"></td></tr>
@@ -81,6 +90,19 @@
               </table>
               <p id="ring-boundary" class="hint"></p>
             </div>
+          </div>
+          <div class="sequence-bytes-head">
+            <h3 id="byte-windows-title">Байты в сквозной</h3>
+            <p id="byte-windows-count" class="hint"></p>
+          </div>
+          <p id="byte-windows-hint" class="hint"></p>
+          <div class="sequence-bytes-scroll" tabindex="0" role="region" aria-labelledby="byte-windows-title">
+            <table class="stats sequence-bytes">
+              <caption id="byte-windows-caption">Число вхождений по сдвигам</caption>
+              <thead id="byte-windows-head"></thead>
+              <tbody id="byte-occurrences"></tbody>
+              <tfoot id="byte-window-totals"></tfoot>
+            </table>
           </div>
         </section>
         <section class="panel summary-panel" aria-label="Итоги выбора">
@@ -118,12 +140,13 @@
         <table class="stats"><caption>По столбцам</caption><thead></thead><tbody id="columns"></tbody></table>
       </div>
       <div class="panel">
-        <table class="stats"><caption>По числу единиц в байте</caption><thead><tr><th scope="col">Единиц</th><th scope="col">Осталось</th><th scope="col">Исключено</th></tr></thead><tbody id="popcounts"></tbody></table>
+        <table class="stats"><caption id="popcount-caption">По числу единиц в байте</caption><thead><tr><th scope="col">Единиц</th><th scope="col">Осталось</th><th scope="col">Исключено</th></tr></thead><tbody id="popcounts"></tbody></table>
       </div>
       <div class="panel">
         <table class="stats"><caption>По разрядам</caption><thead></thead><tbody id="positions"></tbody></table>
       </div>
     </section>
+    </template>
   </main>
 </body>
 </html>
