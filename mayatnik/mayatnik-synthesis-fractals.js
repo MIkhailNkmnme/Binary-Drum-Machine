@@ -1,9 +1,11 @@
-/* Маятник · Синтез 0.009. Two constructions of Sierpiński patterns. */
+/* Маятник · Синтез 0.010. Клеточные строки, Стрелка и Игра хаоса. */
 (function (root) {
   'use strict';
 
   const directions = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
   const rules = { A: 'B-A-B', B: 'A+B+A', '+': '+', '-': '-' };
+  const fifths = ['C', 'G', 'D', 'A', 'E', 'B', 'F♯', 'D♭', 'A♭', 'E♭', 'B♭', 'F'];
+  const chaosPointCount = 4096;
 
   function arrowhead(depth) {
     let word = 'A';
@@ -51,10 +53,73 @@
     return { kind: 'rule90', length, width: state.length, rows };
   }
 
+  function chaos({ vertices, jump, noRepeat, seed, batch }) {
+    const corners = Array.from({ length: vertices }, (_, index) => {
+      const angle = (index / vertices - .25 + (vertices === 4 ? .125 : 0)) * 2 * Math.PI;
+      return { x: Math.cos(angle), y: Math.sin(angle), note: Math.round(index * 12 / vertices) };
+    });
+    let state = seed >>> 0;
+    function randomIndex(size) {
+      state ^= state << 13;
+      state ^= state >>> 17;
+      state ^= state << 5;
+      return Math.floor((state >>> 0) / 4294967296 * size);
+    }
+    let { x, y } = corners[0];
+    let previous = -1;
+    const points = [];
+    for (let i = 0; i < chaosPointCount; i++) {
+      const exclude = noRepeat && previous >= 0;
+      let index = randomIndex(vertices - Number(exclude));
+      if (exclude && index >= previous) index++;
+      const corner = corners[index];
+      x += (corner.x - x) * jump;
+      y += (corner.y - y) * jump;
+      points.push({ x, y, index });
+      previous = index;
+    }
+    return { kind: 'chaos', length: chaosPointCount / batch, corners, points, batch };
+  }
+
+  function chaosNote(model, steps) {
+    const latest = model.points[steps * model.batch - 1];
+    if (!latest) return null;
+    const corner = model.corners[latest.index];
+    return { label: fifths[corner.note], midi: 60 + corner.note * 7 % 12, pan: corner.x * .6 };
+  }
+
+  function paintChaos(ctx, model, steps, width, height, colour) {
+    const radius = Math.min(width, height) * .42;
+    const px = x => width / 2 + radius * x;
+    const py = y => height / 2 + radius * y;
+    const count = steps * model.batch;
+    ctx.fillStyle = colour;
+    for (let i = 0; i < count; i++) {
+      const point = model.points[i];
+      ctx.fillRect(Math.floor(px(point.x)), Math.floor(py(point.y)), 1, 1);
+    }
+    const latest = model.points[count - 1];
+    const dot = (point, size) => {
+      ctx.beginPath();
+      ctx.arc(px(point.x), py(point.y), size, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    model.corners.forEach((corner, i) => {
+      ctx.fillStyle = i === latest?.index ? '#fff' : '#6b8797';
+      dot(corner, Math.max(1, radius * (i === latest?.index ? .03 : .018)));
+    });
+    ctx.fillStyle = '#fff';
+    dot(latest || model.corners[0], Math.max(1, radius * .015));
+  }
+
   function paint(ctx, model, steps, width, height, colour) {
     ctx.fillStyle = '#0a0e14';
     ctx.fillRect(0, 0, width, height);
     const count = Math.max(0, Math.min(model.length, steps));
+    if (model.kind === 'chaos') {
+      paintChaos(ctx, model, count, width, height, colour);
+      return;
+    }
     const w = width * .88, h = height * .88;
     if (model.kind === 'rule90') {
       const unit = Math.min(w / model.width, h / model.length);
@@ -94,5 +159,5 @@
     ctx.restore();
   }
 
-  root.MayatnikSynthesisFractals = { arrowhead, rule90, paint };
+  root.MayatnikSynthesisFractals = { arrowhead, rule90, chaos, chaosNote, paint };
 })(window);

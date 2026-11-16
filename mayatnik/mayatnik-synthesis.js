@@ -1,4 +1,4 @@
-/* Маятник · Синтез 0.009. Exact pendulum duet, score and computational art.
+/* Маятник · Синтез 0.010. Exact pendulum duet, score and computational art.
  * Source redraws are observations, never an animation clock. Only successive
  * source frames or explicit independent ticks advance experimental history. */
 (function(root){
@@ -7,11 +7,15 @@
   const defaults={mode:'pendulums',rule:'circuit',trailFrames:8,recoveryFrames:6,wrap:false,
     mix:'only',link:false,rate:8,colourOne:'#ffd35b',colourZero:'#5ce1e6',visible:true,
     weightsOpen:true,stateWeights:[0,1,2,1,0,0,1],positionWeights:[2,1,2,1,1,2,1,2],
-    studioSection:'sources',palette:'nocturne',artStyle:'bits',musicStyle:'techno',tempo:120,volume:0.45,musicRoot:48,musicScale:'minor',density:3,bitVoice:'off',musicBars:16,recipe:'',pendulumOptions:{},fractalKind:'arrowhead',fractalDepth:4};
+    studioSection:'sources',palette:'nocturne',artStyle:'bits',musicStyle:'techno',tempo:120,volume:0.45,musicRoot:48,musicScale:'minor',density:3,bitVoice:'off',musicBars:16,recipe:'',pendulumOptions:{},
+    fractalKind:'arrowhead',fractalDepth:4,chaosVertices:12,chaosJump:.8,chaosNoRepeat:false,chaosSeed:1,chaosBatch:32};
   const modes={pendulums:'Маятники A + B',trail:'След',waves:'Волны',recovery:'Восстановление',grow:'Отпечаток',weights:'Веса соседей',fractal:'Фракталы'};
-  const fractalNames={arrowhead:'Стрелка',rule90:'Правило 90'};
+  const fractalNames={arrowhead:'Стрелка',rule90:'Правило 90',chaos:'Игра хаоса'};
+  const chaosJumps=[{v:.5,name:'Прыжок 1/2'},{v:.618,name:'Прыжок 61,8%'},{v:2/3,name:'Прыжок 2/3'},{v:.75,name:'Прыжок 3/4'},{v:.8,name:'Прыжок 4/5'}];
+  const chaosCorners=[3,4,5,12],chaosSeeds=[1,2,3,17,41],chaosBatches=[1,8,32];
   const duetMode=()=>prefs.mode==='pendulums';
   const fractalMode=()=>prefs.mode==='fractal';
+  const chaosMode=()=>fractalMode()&&prefs.fractalKind==='chaos';
   const rules={circuit:'Circuit Genesis',fireworks:'Fireworks',replicator:'Replicator',weighted:'WG Rule084'};
   const autonomous=()=>prefs.mode==='grow'||prefs.mode==='weights';
   const cellular=()=>['waves','grow','weights'].includes(prefs.mode);
@@ -32,6 +36,10 @@
     if(p.mode==='weights'){p.rule='weighted';p.link=false;}
     if(Object.hasOwn(fractalNames,value.fractalKind))p.fractalKind=value.fractalKind;
     if(Number.isInteger(value.fractalDepth)&&value.fractalDepth>=1&&value.fractalDepth<=6)p.fractalDepth=value.fractalDepth;
+    for(const [key,allowed] of Object.entries({chaosVertices:chaosCorners,chaosJump:chaosJumps.map(it=>it.v),chaosSeed:chaosSeeds,chaosBatch:chaosBatches})){
+      if(allowed.includes(value[key]))p[key]=value[key];
+    }
+    if(typeof value.chaosNoRepeat==='boolean')p.chaosNoRepeat=value.chaosNoRepeat;
     if(p.mode==='fractal')p.link=false;
     return p;
   }
@@ -45,9 +53,11 @@
   function run(action){try{const result=action();if(result?.catch)result.catch(fail);}catch(error){fail(error);}}
   function remember(){try{localStorage.setItem(KEY,JSON.stringify(prefs));}catch(error){fail(Error('Настройки не сохранены: '+error.message));}}
   function getFractal(){
-    const key=prefs.fractalKind+':'+prefs.fractalDepth;
+    const {fractalKind,fractalDepth,chaosVertices:vertices,chaosJump:jump,chaosNoRepeat:noRepeat,chaosSeed:seed,chaosBatch:batch}=prefs;
+    const key=(chaosMode()?[fractalKind,vertices,jump,noRepeat,seed,batch]:[fractalKind,fractalDepth]).join(':');
     if(key!==fractalKey){
-      fractalModel=root.MayatnikSynthesisFractals[prefs.fractalKind](prefs.fractalDepth);
+      const fractals=root.MayatnikSynthesisFractals;
+      fractalModel=chaosMode()?fractals.chaos({vertices,jump,noRepeat,seed,batch}):fractals[fractalKind](fractalDepth);
       fractalKey=key;
     }
     return fractalModel;
@@ -160,9 +170,14 @@
   function step(){
     if(!engine){capture(false);if(!engine)return;}
     if(fractalMode()){
-      const limit=fractalLimit(getFractal());
-      if(ticks<limit){ticks++;dirty=true;render();scheduleSave();}
+      const model=getFractal(),limit=fractalLimit(model),advanced=ticks<limit;
+      if(advanced){ticks++;dirty=true;render();scheduleSave();}
       if(ticks===limit&&timer!==null)pause();
+      if(advanced&&model.kind==='chaos'&&music?.enabled){
+        const note=root.MayatnikSynthesisFractals.chaosNote(model,ticks);
+        // Chaos uses the chosen step rate and bypasses the duet's sequential beat scheduling.
+        music.playFrame({chaosNote:note,tick:ticks*2});
+      }
       return;
     }
     if(prefs.link&&!autonomous())throw Error('Для отдельного шага отключите «Связь». При включённой связи используйте плеер исходного Маятника.');
@@ -181,7 +196,9 @@
     timer=setInterval(()=>{try{step();}catch(error){pause();fail(error);}},duetMode()?60000/prefs.tempo/4:1000/prefs.rate);refresh();
   }
   function setMode(mode){
-    pause();prefs.mode=mode;
+    pause();
+    if(chaosMode()&&mode!=='fractal')music?.disable();
+    prefs.mode=mode;
     if(autonomous()||duetMode()||fractalMode())prefs.link=false;
     if(mode==='weights')prefs.rule='weighted';
     if(engine){engine.configure(engineOptions());engine.reset(sourceBits);ticks=0;if(autonomous())engine.seed(sourceBits);dirty=true;}
@@ -197,7 +214,10 @@
   function setOption(key,value){
     const wasPlaying=timer!==null;
     if(key==='mode'){setMode(value);return;}
-    if(key==='fractalKind'||key==='fractalDepth'){pause();ticks=0;}
+    if(key==='fractalKind'||key==='fractalDepth'||key.startsWith('chaos')){
+      pause();ticks=0;
+      if(key==='fractalKind'&&chaosMode()&&value!=='chaos')music?.disable();
+    }
     if(key==='rule')pause();prefs[key]=value;
     if(engine){engine.configure(engineOptions());
       if(key==='rule'){engine.reset(sourceBits);ticks=0;if(autonomous())engine.seed(sourceBits);message='Правило изменено: история начата заново.';}
@@ -271,12 +291,19 @@
   function refresh(){
     if(!panel)return;
     if(weightPanel){weightPanel.hidden=prefs.rule!=='weighted'||!cellular();weightPanel.open=prefs.weightsOpen;}
-    if(legend)legend.textContent=fractalMode()?(prefs.fractalKind==='arrowhead'?'Один шаг — один отрезок непрерывной линии.':'Один шаг — одна строка клеток.'):duetMode()?'A · B · '+(duet?.options.operation||'XOR').toUpperCase()+(music?.enabled?' · ♫':''):prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Только Синтез: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
+    if(legend)legend.textContent=fractalMode()?{
+      chaos:'Белым отмечена последняя выбранная вершина и текущая точка.',
+      arrowhead:'Один шаг — один отрезок непрерывной линии.',
+      rule90:'Один шаг — одна строка клеток.'
+    }[prefs.fractalKind]:duetMode()?'A · B · '+(duet?.options.operation||'XOR').toUpperCase()+(music?.enabled?' · ♫':''):prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Только Синтез: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
     const bit=root.MayatnikBitSynthesis,bitInfo=prefs.bitVoice!=='off'&&bit&&duet?bit.describeFrame(musicFrame(),musicOptions()):null;
     status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'')+(bitInfo?' · n = '+bitInfo.n+' ('+bitInfo.binary+') · '+bitInfo.f0+' Гц · партиал '+bitInfo.partials:'');
     if(fractalMode()&&engine){
       const model=getFractal(),rows=model.kind==='rule90';
-      status.textContent=fractalNames[model.kind]+' · '+prefs.fractalDepth+' · '+(ticks+(rows?1:0))+' / '+model.length+(rows?' строк':' отрезков');
+      if(model.kind==='chaos'){
+        const note=root.MayatnikSynthesisFractals.chaosNote(model,ticks);
+        status.textContent=(ticks*model.batch)+' / '+(model.length*model.batch)+' точек'+(note?' · '+note.label:'');
+      }else status.textContent=fractalNames[model.kind]+' · '+prefs.fractalDepth+' · '+(ticks+(rows?1:0))+' / '+model.length+(rows?' строк':' отрезков');
     }
     notice.textContent=message;notice.hidden=!message;
     for(const binding of bindings){
@@ -338,9 +365,13 @@
     else{const art=document.createElement('canvas');root.MayatnikSynthesisArt.render(art,musicFrame(),options);const blob=await new Promise(resolve=>art.toBlob(resolve,'image/png'));if(!blob)throw Error('Не удалось сохранить картину.');download(blob,'Маятник-Картина-'+ticks+'.png');}
   }
   async function toggleSound(){
-    if(!music)music=root.MayatnikSynthesisMusic.createPlayer(frame=>eventSource()(frame,musicOptions()));
+    if(!music)music=root.MayatnikSynthesisMusic.createPlayer(frame=>{
+      if(!frame.chaosNote)return eventSource()(frame,musicOptions());
+      const {midi,pan}=frame.chaosNote;
+      return [{voice:'piano',midi,pan,duration:.22,velocity:.32,beat:0}];
+    });
     if(music.enabled)music.disable();else await music.enable(musicOptions());
-    message=music.enabled?'Звук включён. «Пуск» проигрывает построение; «Шаг» — один музыкальный такт.':'Звук выключен.';refresh();
+    message=music.enabled?(chaosMode()?'Звучит последняя вершина каждого шага.':'Звук включён. «Пуск» проигрывает построение; «Шаг» — один музыкальный такт.'):'Звук выключен.';refresh();
   }
   async function exportMusic(type){
     if(!duet||exporting)return;
@@ -421,12 +452,13 @@
     option('history','Память',[['none','Текущий'],['trail','След'],['accumulate','Накопить XOR']].map(([v,name])=>({v,name})),'combine');
     option('trailLength','След',[2,4,8,16,32,64].map(v=>({v,name:String(v)})),'combine');
     for(const [mode,name]of [['grow','В Отпечаток'],['waves','В Волны'],['recovery','В Удержание']])button(host,'send-'+mode,name,'Передать результат двух маятников в режим '+modes[mode],()=>toCellular(mode),{show:section('combine')});
-    button(host,'sound','Звук','Включить / выключить звук; без автоматического воспроизведения после открытия',toggleSound,{show:duetMode,selected:()=>!!music?.enabled});
+    button(host,'sound','Звук','Включить / выключить звук; без автоматического воспроизведения после открытия',toggleSound,{show:()=>duetMode()||chaosMode(),selected:()=>!!music?.enabled});
     choices(host,'music-style','Музыкальное развитие',[{v:'techno',name:'Робо-техно'},{v:'classic',name:'Классика'}],'musicStyle',section('music'));
     choices(host,'tempo','Темп: один шаг — шестнадцатая нота',[60,72,84,96,108,120,128,140,160,180].map(v=>({v,name:v+' BPM'})),'tempo',duetMode);
     choices(host,'scale','Музыкальный лад',[{v:'minor',name:'Минор'},{v:'major',name:'Мажор'},{v:'pentatonic',name:'Пентатоника'}],'musicScale',section('music'));
     choices(host,'root','Тоника и регистр',[48,50,52,53,55,57,59,60,62,64,65,67,69,71,72].map(v=>({v,name:'Нота '+v})),'musicRoot',section('music'));
-    choices(host,'volume','Громкость',[0,.15,.3,.45,.6,.8,1].map(v=>({v,name:Math.round(v*100)+'%'})),'volume',section('music'));
+    const musicSection=section('music');
+    choices(host,'volume','Громкость',[0,.15,.3,.45,.6,.8,1].map(v=>({v,name:Math.round(v*100)+'%'})),'volume',()=>musicSection()||chaosMode());
     choices(host,'density','Плотность музыкальных событий',[1,2,3,4].map(v=>({v,name:'Голоса '+v})),'density',section('music'));
     choices(host,'bit-voice','Синтез звука из битов',[{v:'off',name:'Прежние голоса'},{v:'bitsHarmonic',name:'Гармоники битов'},{v:'bitsShepard',name:'Шеппард'},{v:'bitsClick',name:'Щелчок'}],'bitVoice',section('music'));
     choices(host,'bars','Длина законченной композиции',[4,8,16,32].map(v=>({v,name:v+' тактов'})),'musicBars',section('music'));
@@ -444,7 +476,12 @@
     choices(host,'mode','Режим Синтеза',Object.entries(modes).map(([v,name])=>({v,name})),'mode');
     mountStudio(host);
     choices(host,'fractal-kind','Построение фрактала',Object.entries(fractalNames).map(([v,name])=>({v,name})),'fractalKind',fractalMode);
-    choices(host,'fractal-depth','Глубина построения фрактала',[1,2,3,4,5,6].map(v=>({v,name:'Глубина '+v})),'fractalDepth',fractalMode);
+    choices(host,'fractal-depth','Глубина построения фрактала',[1,2,3,4,5,6].map(v=>({v,name:'Глубина '+v})),'fractalDepth',()=>fractalMode()&&!chaosMode());
+    choices(host,'chaos-vertices','Число вершин многоугольника',chaosCorners.map(v=>({v,name:'Вершин '+v})),'chaosVertices',chaosMode);
+    choices(host,'chaos-jump','Доля расстояния от текущей точки до выбранной вершины',chaosJumps,'chaosJump',chaosMode);
+    button(host,'chaos-repeat','Без повторов','Запретить два последовательных прыжка к одной и той же вершине',()=>setOption('chaosNoRepeat',!prefs.chaosNoRepeat),{show:chaosMode,selected:()=>prefs.chaosNoRepeat});
+    choices(host,'chaos-seed','Начальное число генератора: тот же выбор даёт ту же последовательность',chaosSeeds.map(v=>({v,name:'Зерно '+v})),'chaosSeed',chaosMode);
+    choices(host,'chaos-batch','Число точек за такт. При одной точке слышен каждый прыжок',chaosBatches.map(v=>({v,name:'Точек '+v})),'chaosBatch',chaosMode);
     choices(host,'rule','Клеточное правило',Object.entries(rules).map(([v,name])=>({v,name})),'rule',()=>prefs.mode==='waves'||prefs.mode==='grow');
     choices(host,'trail','Длина следа в кадрах',[4,8,16,32,64].map(v=>({v,name:'След '+v})),'trailFrames',()=>prefs.mode==='trail');
     choices(host,'recovery','Кадров восстановления',[0,1,2,4,6,8,16,19,32,64].map(v=>({v,name:'Пауза '+v})),'recoveryFrames',()=>prefs.mode==='recovery');
@@ -464,7 +501,7 @@
     button(host,'open','Открыть','Открыть сохранённый опыт JSON',importWork);
     button(host,'png','PNG','Скачать текущее поле результата в точном размере клеток',exportPNG);
     button(host,'bitoteka','В Битотеку','Сохранить опыт с миниатюрой в общую Битотеку',toLibrary);
-    button(host,'help','Инструкция','План и инструкция для текущего режима',()=>root.open(fractalMode()?'../issledovanie/cellular-visual-labs/#fractals':'synthesis-instruction.html','_blank','noopener'));
+    button(host,'help','Инструкция','План и инструкция для текущего режима',()=>root.open(fractalMode()?'../issledovanie/cellular-visual-labs/#'+(chaosMode()?'chaos-game':'fractals'):'synthesis-instruction.html','_blank','noopener'));
     for(const binding of bindings){
       const id=binding.node.dataset.n;
       if(['synthesis:save','synthesis:open','synthesis:png','synthesis:bitoteka'].includes(id))binding.show=()=>!duetMode()||prefs.studioSection==='files';
