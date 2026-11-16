@@ -24,6 +24,22 @@ def main():
     music, art = read('music.json'), read('wallpapers.json')
     sms = read('sms.json')['signals']
     tracks, signals, papers = music['tracks'], music['notifications'], art['wallpapers']
+    live_manifest = read('live/manifest.json') if (ROOT / 'live/manifest.json').exists() else {'items': []}
+    live = {item['id']: item for item in live_manifest['items']}
+    archives = read('live/downloads.json')['archives'] if (ROOT / 'live/downloads.json').exists() else []
+    live_downloads = ' '.join(link(a['path'], a['label'] + ' · ' + f"{a['bytes']/1048576:.1f}".replace('.', ',') + ' МиБ') for a in archives)
+    def live_player(p):
+        item = live.get(p['id'])
+        if not item:
+            return ''
+        return f'''<div class="live-paper" id="live-{e(p['id'])}">
+            <details><summary>Оживить со звуком · {duration(item['duration'])}</summary>
+            <video controls playsinline preload="none" poster="{e(p['thumb'])}" width="720" height="1600" aria-label="{e(p['title'])} — живое построение со звуком">
+            <source src="{e(item['video']['path'])}" type="video/mp4">{link(item['video']['path'], 'Скачать видео')}</video></details>
+            <p class="links">{link(item['video']['path'], 'Видео · MP4')} {link(item['audio']['path'], 'Звук · MP3')}</p>
+            <p class="links">{link(item['source'], 'Открыть в Маятнике ↗', False)}</p>
+            <details class="live-recipe"><summary>Ноты и параметры</summary><p class="links">{link(item['midi']['path'], 'MIDI')} {link(item['score']['path'], 'Партитура · JSON')}</p></details>
+            </div>'''
     track_html = []
     for i, t in enumerate(tracks):
         ring = t['ringtone']
@@ -61,7 +77,7 @@ def main():
             <img src="{e(p['thumb'])}" width="360" height="800" alt="{e(p['description'])}" loading="lazy" decoding="async"></a>
             <figcaption><h3>{e(p['title'])}</h3><p>{p['width']} × {p['height']} · PNG</p>
             {("<p class=paper-description>" + e(p["description"]) + "</p>") if p.get("category") else ""}
-            <p class="links">{link(p['src'], 'Скачать')} {link(p['svg'], 'SVG')}</p></figcaption></figure>''')
+            <p class="links">{link(p['src'], 'Скачать PNG')} {link(p['svg'], 'SVG')}</p>{live_player(p)}</figcaption></figure>''')
         return '\n'.join(items)
     themes = [
         ('sierpinski', 'Серпинский', 'Один исходный бит и XOR двух соседей. Треугольник раскрывается на всё меньшие подобные треугольники.'),
@@ -80,15 +96,15 @@ def main():
     html = f'''<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101719"><meta name="description" content="Зеркалиус на телефоне: 20 коротких SMS короче секунды, 20 музыкальных уведомлений, четыре новых трека, рингтоны и {count} обоев. Слушать и скачать бесплатно.">
-<title>Зеркалиус — тема на телефон</title><link rel="stylesheet" href="page.css?v=2">
+<title>Зеркалиус — тема на телефон</title><link rel="stylesheet" href="page.css?v=4">
 </head><body><a class="skip" href="#tracks">К музыке</a>
 <header class="masthead"><a class="wordmark" href="../../index.html"><span aria-hidden="true">◇</span> ЗЕРКАЛИУС</a>
 <nav aria-label="На странице"><a href="#tracks">Музыка</a><a href="#sms">Сигналы</a><a href="#wallpapers">Обои</a></nav></header>
-<main><section class="hero" aria-labelledby="title"><div class="hero-copy"><p class="eyebrow">ТЕМА НА ТЕЛЕФОН / ВЫПУСК 03</p>
+<main><section class="hero" aria-labelledby="title"><div class="hero-copy"><p class="eyebrow">ТЕМА НА ТЕЛЕФОН / ВЫПУСК 04</p>
 <h1 id="title">Зеркалиус.<br><em>В кармане.</em></h1>
-<p class="lead">Маятниковый ритм на звонок.<br>Несколько нот — на сообщение.<br>Движение, остановленное на экране.</p>
+<p class="lead">Маятниковый ритм на звонок.<br>Несколько нот — на сообщение.<br>Теперь рисунки движутся и звучат.</p>
 <p class="hero-count">4 новых трека <span>·</span> 20 SMS + 20 уведомлений <span>·</span> {count} обоев</p>
-<div class="hero-actions"><a href="downloads/zerkalius-phone-theme.zip" download>↓ Скачать весь набор</a><a href="#tracks">Сначала послушать ↘</a></div>
+<div class="hero-actions"><a href="#live">27 живых построений ↘</a><a href="downloads/zerkalius-phone-theme.zip" download>↓ Музыка, сигналы и PNG</a></div>
 <p class="small">MP3 · M4R · WAV · PNG. Без регистрации.</p><p class="new-release"><a href="#sms">Новое: 20 коротких, чётких SMS ↓</a><br><a href="#geometric">15 цветных обоев — Серпинский, Аниматрицы и RGB ↓</a></p></div><div class="hero-art" aria-label="Примеры обоев на экране телефона">{hero_html}</div></section>
 
 <section id="tracks" class="section"><header class="section-heading"><div><p class="eyebrow">01 / МУЗЫКА И ЗВОНКИ</p><h2>Ещё один оборот.</h2></div><p>Две электронные и две камерные композиции. Внутри каждой — короткая версия на звонок.</p></header>
@@ -106,7 +122,12 @@ def main():
 <section id="signals" class="section"><header class="section-heading"><div><p class="eyebrow">МУЗЫКАЛЬНЫЕ УВЕДОМЛЕНИЯ</p><h2>Маленькие вести.</h2></div><p>Двадцать фрагментов из шести мелодий, 1,25–3,6 секунды. Название исходного трека и место вырезки указаны рядом.</p></header>
 <div class="signals">{''.join(notification_html)}</div><p class="section-download">{link('downloads/zerkalius-notifications.zip','↓ Все 20 сигналов · MP3 + WAV')}</p></section>
 
-<section id="wallpapers" class="section"><header class="section-heading"><div><p class="eyebrow">03 / ОБОИ</p><h2>Геометрия в цвете.</h2></div><p>{count} изображений 1440 × 3200. Верхняя часть свободнее — под часы. Картинки без надписей; часы выше показаны только в примере.</p></header>
+<section id="wallpapers" class="section"><header class="section-heading"><div><p class="eyebrow">03 / ОБОИ</p><h2>Геометрия оживает.</h2></div><p>{count} изображений 1440 × 3200 и {len(live)} видео со звуком. Верхняя часть свободнее — под часы. Картинки и ролики без надписей.</p></header>
+<div class="live-intro" id="live"><p class="eyebrow">ЖИВЫЕ ПОСТРОЕНИЯ · ВЫПУСК 04</p><h3>Одна структура. Изображение и звук.</h3>
+<p>Под каждой картинкой — вертикальное видео 720 × 1600, отдельный звук и переход к тому же рецепту в основном «Маятнике». Внутри роликов развиваются настоящие поля: Серпинский, Аниматрица, пары маятников, ромбы и три независимых канала RGB.</p>
+<p>Биты выбранных строк задают высоту и гармоники синтезатора. Ритмический рисунок ударных и лад заданы музыкальными правилами. Рабочий темп — {live_manifest.get('tempo',137)} BPM; это настройка этой серии, её можно изменить в «Маятнике». Чужая фонограмма в роликах не используется.</p>
+<p class="links live-downloads">{live_downloads}</p><p class="links"><a href="live/manifest.json">Рецепты и файлы</a> <a href="../pendulum-music/#step-into-the-end">Музыкальный ориентир ↗</a></p>
+<p class="small">Видео запускаются по нажатию. MP4 содержит звук и предназначен для просмотра или установки через поддерживаемый телефоном способ видеообоев; автоматической установки со страницы нет. Ролики показывают фрагмент эволюции, бесшовный стык не заявляется.</p></div>
 <div id="geometric" class="collection-intro"><p class="eyebrow">НОВОЕ / 15 ЦВЕТНЫХ ПОЛЕЙ</p><nav class="theme-nav" aria-label="Темы новых обоев">{theme_nav}<a href="#atlas">Первый атлас</a><a href="#mono">Чёрно-белые</a></nav><p>{link('downloads/zerkalius-geometric-wallpapers.zip','↓ Только 15 новых обоев · PNG')}</p></div>
 {geometric_html}
 <div class="gallery-heading" id="atlas"><h3>Первый атлас · цвет</h3><a href="#mono">К чёрно-белым ↓</a></div><div class="wallpapers">{gallery('color')}</div>
@@ -122,10 +143,10 @@ def main():
 <div class="about-copy"><p>Два маятника создают клеточные поля A и B. Сдвиг, отражение, задержка и операция наложения меняют общий рисунок. Например, XOR оставляет несовпадения, а AND — общие единицы.</p>
 <p>В музыке гармония, мотивы и форма сочинены отдельно. Данные полей участвуют в изменении нот, акцентов и звучания. Музыкальные уведомления — вырезки из готовых композиций с мягкими краями. Короткие SMS — отдельные ноты этих мелодий, заново синтезированные с быстрым затуханием. Обои используют геометрию тех же построений в вертикальной художественной композиции.</p>
 <p><a href="../pendulum-music/">Предыдущие композиции и видео с маятниками ↗</a><br><a href="../../mayatnik/synthesis-gallery.html">Маятниковый атлас ↗</a><br><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html">Открыть Синтез ↗</a></p></div></section>
-</main><footer><a class="wordmark" href="../Zerkalius-issledovanie.html">◇ В исследования</a><p>Зеркалиус · тема на телефон · 03</p><p><a href="music.json">Происхождение музыки</a> · <a href="sms.json">Короткие SMS</a> · <a href="wallpapers.json">Рецепты обоев</a> · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/tree/main/issledovanie/phone-theme">Исходники</a></p></footer>
+</main><footer><a class="wordmark" href="../Zerkalius-issledovanie.html">◇ В исследования</a><p>Зеркалиус · тема на телефон · 04</p><p><a href="music.json">Происхождение музыки</a> · <a href="sms.json">Короткие SMS</a> · <a href="wallpapers.json">Рецепты обоев</a> · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/tree/main/issledovanie/phone-theme">Исходники</a></p></footer>
 <p id="playback-status" class="sr-only" role="status" aria-live="polite"></p>
 '''
-    html += '<scr' + 'ipt src="page.js?v=1" defer></scr' + 'ipt></body></html>\n'
+    html += '<scr' + 'ipt src="page.js?v=4" defer></scr' + 'ipt></body></html>\n'
     (ROOT / 'index.html').write_text('\n'.join(line.rstrip() for line in html.splitlines())+'\n', encoding='utf-8')
     print(f'Built page: {len(tracks)} new tracks, {len(sms)} SMS, {len(signals)} notifications, {len(papers)} wallpapers')
 

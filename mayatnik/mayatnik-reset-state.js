@@ -7,6 +7,7 @@
   const defaultVMode='4n';
   const pointDefaults=Object.freeze({fixLines:true,fixCross:true,fixDragK:true,fixAxis:0});
   function defaults(){return {...pointDefaults,...Object.fromEntries(off.map(k=>[k,false])),...Object.fromEntries(zero.map(k=>[k,0])),
+    phoneScene:'',phoneView:'art',phoneTempo:137,phoneVoice:'robot',phoneK:0,
     frameZeroFill:'off',sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkMax:0,apexWalkRangeKey:'',xorrom:null,sequenceSource:null,edgeContinuous:true,edgeWrap:false,edgeBounce:false,edgeRhombOn:false,romboRow:null,romboAngle:0,romboAssembly:16,romboSeam:"between",romboMode:"fixed",romboLayout:null,edgeFlowMax:0,edgeFlowKey:'',animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixEdgeColourMode:'change',animatrixEdgePalette:0,animatrixEvolution:1,rowStepOutline:true,templateFindAll:null,templateFrameSearch:null,templateFrameSearchName:'',rows:512,steps:2048,mode:'pend',bg:'empty',view:'bits',speed:4,vmode:defaultVMode,compareSource:'',
     zOverview:true,zoom:'fit',zMid:true,ztop:true,zBot:false,zLock:false,zsnap:true,zbase:2,ztopPin:false,ztlMain:false,ztlZen:false,zlSelected:null,ztMirOp:'',
     invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null,heatHoldZero:false,heatMode:"all",heatPeriod:1,fixLockX:null,axisPalette:'purple-black',triangleMapSource:'static',crossMirrorMode:'lr',crossMirrorSector:'A1',

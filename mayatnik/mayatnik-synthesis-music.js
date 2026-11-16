@@ -282,6 +282,7 @@
       if (Number.isFinite(event.f0)) clean.f0 = event.f0;
       if (Number.isFinite(event.tau)) clean.tau = event.tau;
       if (Number.isFinite(event.tilt)) clean.tilt = clamp(event.tilt, .1, 1);
+      if (['zero', 'one', 'zerkalius'].includes(event.robotWord)) clean.robotWord = event.robotWord;
       cleaned.push(clean);
     }
     return cleaned;
@@ -293,7 +294,7 @@
 
   // Ключ кэша обязан учитывать биты: у голосов синтеза из битов форма волны зависит от них.
   function eventKey(event) {
-    return [event.voice, event.midi, event.duration, event.bits ? event.bits.join('') : ''].join(':');
+    return [event.voice, event.midi, event.duration, event.bits ? event.bits.join('') : '', event.f0 ?? '', event.tau ?? '', event.tilt ?? '', event.robotWord ?? ''].join(':');
   }
 
   function renderWav(events, options, { durationSeconds, sampleRate } = {}) {
@@ -356,6 +357,7 @@
     let context;
     let master;
     let compressor;
+    let mediaDestination;
     let enabled = false;
     let request = 0;
     let settings = normalizeOptions();
@@ -406,6 +408,10 @@
         compressor.release.value = .15;
         master.connect(compressor);
         compressor.connect(context.destination);
+        if (typeof context.createMediaStreamDestination === 'function') {
+          mediaDestination = context.createMediaStreamDestination();
+          compressor.connect(mediaDestination);
+        }
       }
       await context.resume();
       if (turn === request) enabled = context.state === 'running';
@@ -459,7 +465,7 @@
       return events;
     }
 
-    return { enable, disable, silence, configure, playFrame, get enabled() { return enabled; } };
+    return { enable, disable, silence, configure, playFrame, getStream() { return mediaDestination?.stream || null; }, get enabled() { return enabled; } };
   }
 
   function variableLength(value) {

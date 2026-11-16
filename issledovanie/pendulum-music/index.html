@@ -3,19 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Два музыкальных видео с маятниками A/B и референс Numbers / Computerworld в исполнении Andrew Shaw. Что меняют биты и как связать голос с рисунком.">
-  <title>Маятники, мелодии и картины · Исследования 0.004</title>
+  <meta name="description" content="Два музыкальных видео с маятниками A/B, референс Numbers / Computerworld и музыкальный ориентир Step Into The End. Что меняют биты и как связать музыку с рисунком.">
+  <title>Маятники, мелодии и картины · Исследования 0.006</title>
   <link rel="stylesheet" href="../cellular-visual-labs/article.css?v=1">
   <link rel="stylesheet" href="page.css?v=2">
   <script defer src="page.js?v=1"></script>
 </head>
 <body><main>
-<p class="example"><a href="../phone-theme/"><b>Продолжение: Зеркалиус — тема на телефон</b></a> · четыре новых трека, короткие звуки из мелодий и обои.</p>
-  <header><a href="../Zerkalius-issledovanie.html#pendulum-scores">← Исследования</a><a href="../../mayatnik/synthesis-gallery.html">Семь картин</a><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html">Мастерская Синтеза</a><span>17.11.2026 · 0.004</span></header>
+<p class="example"><a href="../phone-theme/"><b>Продолжение: Зеркалиус — тема на телефон</b></a> · четыре трека, короткие звуки из мелодий и 27 живых видеообоев · версия 0.004.</p>
+  <header><a href="../Zerkalius-issledovanie.html#pendulum-scores">← Исследования</a><a href="../../mayatnik/synthesis-gallery.html">Семь картин</a><a href="../../mayatnik/Zerkalius-mayatnik-synthesis.html">Мастерская Синтеза</a><span>17.11.2026 · 0.006</span></header>
   <p class="eyebrow">Маятниковый атлас · изображение и звук</p>
   <h1>Что в мелодии от маятника?</h1>
   <p class="lead">Гармония, мотив и ритмическая сетка сочинены заранее. Два движущихся маятника меняют отдельные ноты, силу атаки, стереопанораму и дополнительные события. Здесь можно увидеть точные построения и услышать, что останется, если убрать поле.</p>
-  <nav aria-label="Разделы"><a href="#drive">Техно: видео и сравнение</a><a href="#canon">Камерная версия</a><a href="#andrew-shaw">Numbers / Computerworld</a><a href="#mapping">Что взаимодействует</a><a href="#experiment">Проверка влияния</a><a href="#art">Картины</a><a href="#reproduce">Параметры и повторение</a></nav>
+  <nav aria-label="Разделы"><a href="#drive">Техно: видео и сравнение</a><a href="#canon">Камерная версия</a><a href="#andrew-shaw">Numbers / Computerworld</a><a href="#step-into-the-end">Ориентир по темпу</a><a href="#mapping">Что взаимодействует</a><a href="#experiment">Проверка влияния</a><a href="#art">Картины</a><a href="#reproduce">Параметры и повторение</a></nav>
 
   <section id="drive">
     <p class="eyebrow">01 · Полиритм 2:3 · XOR</p>
@@ -58,6 +58,14 @@
       <iframe src="https://www.youtube-nocookie.com/embed/qNv7ZW1e1I8" width="960" height="540" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Andrew Shaw — Numbers / Computerworld ’91, кавер на Kraftwerk"></iframe>
     </details>
     <p>Этот кавер входит в подборку POLAXIS. Производитель Robovox описывает общий приём Шоу для этих записей: выбрать фонемы, задать их время и длительность, настроить высоту, затем отправлять команды синтезатору из музыкальной программы. <a href="https://www.polaxis.be/robovox/" target="_blank" rel="noopener">POLAXIS · Robovox и подборка каверов</a> · <a href="https://www.youtube.com/watch?v=qNv7ZW1e1I8&amp;t=136s" target="_blank" rel="noopener">Фрагмент, на который ссылается POLAXIS (2:16)</a>.</p>
+    <h3 id="roboter">Roboter · Jean-Luc Deladrière</h3>
+    <p>Точный пример со скриншота: <a href="https://soundcloud.com/jean-luc-deladri-re/roboter-1" target="_blank" rel="noopener">Roboter в SoundCloud автора</a>. Он входит в плейлист Robovox, встроенный на <a href="https://www.polaxis.be/robovox/" target="_blank" rel="noopener">официальной странице POLAXIS</a>. В описании записи указаны секвенсирование из Ableton Live и Emy с программой Robovox MIDI; музыка — Marty. Jean-Luc Deladrière — имя аккаунта публикации.</p>
+    <details class="reference-player">
+      <summary>Открыть аудиоплеер Roboter</summary>
+      <iframe src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F670367693&amp;auto_play=false&amp;hide_related=true&amp;show_comments=false&amp;show_reposts=false" width="960" height="540" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay" title="Roboter — аккаунт Jean-Luc Deladrière, музыка Marty, SoundCloud"></iframe>
+    </details>
+    <p>По документации POLAXIS, Robovox строит речь из фонем на Votrax SC-02. Команды MIDI Note On/Off выбирают фонемы и их длительность; высота управляется отдельно — грубо тактированием чипа, точно регистром высоты через CC2. Также доступны сила атаки Velocity и фильтр через Mod Wheel. Последовательность фонем можно записать в piano roll музыкальной программы, синхронизировав речь с нотами.</p>
+    <p>Здесь установлены ссылка, описание и параметры управления; воспроизведение и прослушивание не проводились. Это дополнение к исследованию робоголоса; решение о смене музыкального движка не принято.</p>
     <h3>Что попробовать в Маятнике</h3>
     <ul>
       <li><b>Речь в ритме.</b> Запускать короткую цифру или букву на доле и подсвечивать тот же знак в кадре. Длительность голоса и паузу между знаками задавать отдельно, чтобы речь оставалась разборчивой.</li>
@@ -65,6 +73,18 @@
       <li><b>Сравнить на одном рисунке.</b> Собрать два исполнения с теми же нотами и кадрами. В первом оставить пульс и мелодию, во втором добавить голос. Проверить, становится ли порядок кадров легче слышать.</li>
     </ul>
     <p>Это предложения для Синтеза. Темп, партии и обработка голоса именно в этом кавере пока не проверены по звуку. <a href="../cellular-visual-labs/#examples">Посмотреть готовые музыкальные примеры Синтеза</a>.</p>
+  </section>
+
+  <section id="step-into-the-end">
+    <h2>Enrico Sangiuliano · Step Into The End</h2>
+    <p><b>Step Into The End (Original Mix) [NTZ000]</b> добавлен пользователем как музыкальный ориентир для Маятника и телефонных живых обоев (17.11.2026). Ролик опубликован каналом <a href="https://www.youtube.com/@NINETOZEROmusic" target="_blank" rel="noopener">NINETOZERO</a>. <a href="https://www.youtube.com/watch?v=HZA-wy4qJCU" target="_blank" rel="noopener">Слушать оригинал на YouTube</a>.</p>
+    <details class="reference-player">
+      <summary>Смотреть видео в статье</summary>
+      <iframe src="https://www.youtube-nocookie.com/embed/HZA-wy4qJCU" width="960" height="540" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Enrico Sangiuliano — Step Into The End (Original Mix) [NTZ000], NINETOZERO"></iframe>
+    </details>
+    <p><b>137 BPM — значение каталога Beatport.</b> Оно указано в поисковой выдаче <a href="https://www.beatport.com/track/step-into-the-end/26781856" target="_blank" rel="noopener">карточки Original Mix</a> (10:03). Прямая загрузка карточки при сборе сведений вернула 403; по звуку темп здесь не измерялся. <a href="https://ninetozero.eu/release/absence/" target="_blank" rel="noopener">Официальная страница релиза Absence</a> подтверждает композицию, но не указывает BPM.</p>
+    <p>137 BPM здесь — справочные данные каталога. Рабочую настройку собственной композиции можно менять; она выбирается отдельно при аранжировке: выбранный BPM, измеренный по фонограмме BPM и скорость построения маятника следует указывать раздельно. Встраиваемый плеер воспроизводит оригинал на YouTube; фонограмма не включена в материалы этого дополнения.</p>
+    <p><a href="../../sources/ninetozero/">Кадры и видео NINETOZERO</a> · <a href="step-into-the-end-reference.json">Источники и границы подтверждения</a> · проверки воспроизведения и интерфейса пользователем.</p>
   </section>
 
   <section id="mapping">

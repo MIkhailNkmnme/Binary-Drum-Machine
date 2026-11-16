@@ -64,6 +64,15 @@
     if(value.v!==VERSION)throw Error('Ссылка сделана другой версией Маятника (формат '+value.v+')');
     if(!isPlainObject(value.state))throw Error('В ссылке нет настроек Маятника');
     const state=value.state,pit=Pit.normalize(value.state,true);
+    if(state.phoneScene){
+      const scenes=inNode?require('./mayatnik-phone-scenes.js'):globalThis.MayatnikPhoneScenes;
+      if(typeof state.phoneScene!=='string'||!scenes?.get(state.phoneScene))throw Error('В ссылке неизвестные обои');
+      const scene=scenes.create(state.phoneScene);
+      if(state.rows!==scene.height||state.steps!==scene.maxFrames||state.animatrixOn||state.sequenceSourceOn||state.compareSource||state.edgeWrap)throw Error('В ссылке неверный источник обоев');
+      if(!['art','cells'].includes(state.phoneView)||!Number.isInteger(state.phoneTempo)||state.phoneTempo<60||state.phoneTempo>180)throw Error('В ссылке неверное представление или темп обоев');
+      if(state.phoneVoice!==undefined&&!['robot','bits'].includes(state.phoneVoice))throw Error('В ссылке неизвестный голос обоев');
+      integer(value.k,0,scene.maxFrames,'В ссылке неверный кадр обоев');
+    }
     if(state.sequenceApexSides!=null&&!['one','both','alternate'].includes(state.sequenceApexSides))throw Error('В ссылке некорректные стороны Хода XOR');
     if(state.sequenceApexZeroTwice!=null&&typeof state.sequenceApexZeroTwice!=='boolean')throw Error('В ссылке некорректный XOR общей вершины');
     if(state.apexWalkMax!=null&&(!Number.isSafeInteger(state.apexWalkMax)||state.apexWalkMax<0))throw Error('В ссылке некорректный предел ходов');
@@ -144,6 +153,7 @@
   function urlFor(base,code){const clean=String(base||'').split('#')[0];if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(clean))throw Error('Неизвестный адрес страницы');return clean+'#s='+code;}
   function describe(payload){
     const state=payload?.state||{},rows=Number(state.rows)||0,k=Number(payload?.k)||0,steps=Number(state.steps)||0;
+    if(state.phoneScene){const scenes=inNode?require('./mayatnik-phone-scenes.js'):globalThis.MayatnikPhoneScenes,title=scenes?.get(state.phoneScene)?.title||state.phoneScene;return {title:'Обои · '+title+' · кадр '+k,summary:title+' · кадр '+k+' из '+steps+' · '+(state.phoneView==='art'?'композиция':'клетки')+' · '+state.phoneTempo+' BPM'};}
     const pair=!!state.pair&&state.mode==='pend';
     const fixed=sequenceField.fixed(state);
     const construction=state.animatrixOn?'Аниматрица'+(state.animatrixTiming==='rows'?' по строкам':''):state.compareSource==='cone'?'Конусы':state.compareSource?'Сравнение':fixed?'Прямоугольник':state.sequenceSourceOn?'Свой маятник':state.edgeWrap?(state.edgeBounce?'Отскок':'Перескок')+(state.edgeContinuous?' без сброса':''):'Маятник';

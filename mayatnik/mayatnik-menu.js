@@ -13,6 +13,7 @@
   const layoutValue=(values,key,fallback)=>{try{const value=JSON.parse(values[key]);if(value==null)return fallback;if(Array.isArray(fallback))return Array.isArray(value)?value:fallback;return typeof value==='object'&&!Array.isArray(value)?value:fallback;}catch{return fallback;}};
   // Stable group keys share one palette across headers, controls and detached lists.
   const GROUP_COLOURS=Object.freeze({
+    'rail:phone':'#67d9da',
     'rail:build':'#63d99b','rail:ochki':'#ffb347','rail:zoom':'#7cbcff','rail:mirrors':'#eb92e9',
     'rail:paint':'#ff9b50','rail:template':'#e3c56f','rail:gifscale':'#41d6bd','rail:library':'#d9b9ff',
     'rail:export':'#ffd166','rail:xorrom':'#c29bff','rail:horr':'#88db72','rail:edge':'#78a8ec',
@@ -138,6 +139,20 @@
   const both = (x, y) => () => x.dis() && y.dis();
   const rowsMax = () => Math.max(8, +$('rows').value || 512);
   const groups = [
+    ...(window.mayPhone?[{id:'phone',title:'Обои',color:GROUP_COLOURS['rail:phone'],items:[
+      {type:'list',name:'Сцена',icon:'M5 2h14v20H5z M8 5h8v12H8z',tip:'27 живых обоев. Выбор открывает собственное поле; прежняя работа сохраняется для возврата кнопкой «Маятник».',
+        options:window.mayPhone.list().map((entry,index)=>({v:entry.id,name:(index+1)+'. '+entry.title+(entry.variant==='mono'?' · ЧБ':'')})),get:()=>window.mayPhone.get().id,set:id=>window.mayPhone.select(id)},
+      {...segments('Представление обоев',[
+        {name:'Обои',tip:'Авторская композиция исходного поля. Оси и раскраска доступны в представлении «Клетки».',on:()=>window.mayPhone.active()&&window.mayPhone.art(),pick:()=>window.mayPhone.view('art')},
+        {name:'Клетки',tip:'Настоящие клетки рецепта; RGB хранится тремя независимыми битовыми масками.',on:()=>window.mayPhone.active()&&!window.mayPhone.art(),pick:()=>window.mayPhone.view('cells')}
+      ]),disabled:()=>!window.mayPhone.active()},
+      {type:'toggle',name:'Звук',icon:'M4 10v4h4l5 4V6l-5 4z M17 8q5 4 0 8',tip:'Робот или новый синтез из битов кадра. Звук включается только нажатием; при записи видео включите его до начала записи.',on:()=>window.mayPhone.get().sound,disabled:()=>!window.mayPhone.active(),click:()=>window.mayPhone.sound()},
+      {type:'list',name:'Голос',icon:'M8 3h8v12H8z M5 10v3a7 7 0 0 0 14 0v-3 M12 20v3',tip:'Робот — синтезированный голос; Биты — инструментальная музыка из кадра.',options:[{v:'robot',name:'Робот'},{v:'bits',name:'Биты'}],get:()=>window.mayPhone.get().voice,set:v=>window.mayPhone.voice(v),disabled:()=>!window.mayPhone.active()},
+      {type:'value',name:'Темп',tip:'60–180 BPM. Один шаг общего плеера равен одной шестнадцатой; обычные ×N и задержка кадра для обоев не используются.',get:()=>window.mayPhone.get().tempo+' BPM',disabled:()=>!window.mayPhone.active(),step:d=>window.mayPhone.tempo(window.mayPhone.get().tempo+Math.sign(d)*(Math.abs(d)===2?10:1)),zero:()=>window.mayPhone.tempo(137),frac:()=>(window.mayPhone.get().tempo-60)/120,setFrac:f=>window.mayPhone.tempo(60+120*f)},
+      {type:'action',name:'Исходник',icon:'M4 12h16 M12 4v16',tip:'Кадр, из которого были сделаны исходные обои.',disabled:()=>!window.mayPhone.active(),click:()=>window.mayPhone.base()},
+      {type:'action',name:'WAV',icon:'M12 3v12 M6 10l6 6 6-6 M4 20h16',tip:'Сохранить музыку на128 шагов, начиная с текущего кадра.',disabled:()=>!window.mayPhone.active(),click:()=>window.mayPhone.wav()},
+      {type:'action',name:'Маятник',icon:'M18 5H8l-4 4 4 4 M4 9h10q6 0 6 6',tip:'Вернуться к работе, открытой до обоев. Для ссылочного опыта — открыть свой сохранённый Маятник.',disabled:()=>!window.mayPhone.active(),click:()=>window.mayPhone.leave()}
+    ]}]:[]),
     { id: 'build', title: 'Поле', color: GROUP_COLOURS['rail:build'], open: true, items: [
       button('bBuild', 'field'), button('bRetriangle', 'tri'), button('bThird', 'tri'), button('bFour', 'plusRing'),
       num('steps', { name: 'Вершин', tip: 'Вершин (шагов маятника) · двойной щелчок — наименьшее', log: true, fmt: v => v + ' вершин' }),
@@ -3033,6 +3048,7 @@
     new MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.pt-g, .gz-group') && /\b(?:pt-open|gz-open)\b/.test(r.oldValue||'')!==r.target.matches('.pt-open, .gz-open')))scheduleGroups();}).observe(host,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});
   }
   addEventListener('may-gif-live-state',()=>rail.refresh());
+  addEventListener('may-phone-change',()=>rail.refresh());
   const placeTools = () => { for (const f of toolSync) f(); syncRailFlyouts(); libraryMenuFold?.syncHeads(); scheduleGroups(); };
   rail.el.addEventListener('click', () => requestAnimationFrame(syncRailFlyouts));
   $('mayatnikRail').addEventListener('scroll', () => requestAnimationFrame(syncRailFlyouts), {passive:true});

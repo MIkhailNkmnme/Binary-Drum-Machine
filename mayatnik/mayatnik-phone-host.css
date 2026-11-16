@@ -1,0 +1,4 @@
+/* The projection never shares the cell coordinate system or editing handles. */
+#mayPhoneArtwork{position:fixed;z-index:3;margin:0;background:#000;image-rendering:auto;touch-action:none;cursor:default}
+#mayPhoneArtwork[hidden]{display:none}
+body.may-phone-art #wrap,body.may-phone-art :is(.may-layer-scene,.may-layer-service,.may-axis-columns,.may-zl-ov,.may-vtx-labels,.may-xorrom-axis-marker,#mayCenterHover,#mayLineMeasures,#edgeBelowWrap){visibility:hidden!important;pointer-events:none!important}
