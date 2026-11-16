@@ -3183,9 +3183,16 @@ function coneInwardForecastText(P){
 function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   const win = document.getElementById("w-cone"); if (!win) return;
   let layer = document.getElementById("coneTopArt");
+  const wr = win.getBoundingClientRect();
+  const x = R.left - wr.left + win.scrollLeft - win.clientLeft, y = R.top - wr.top + win.scrollTop - win.clientTop;
+  // Фоновый конус уже нарисован на непрозрачном холсте. Совмещённая копия нужна только осям и перекрытию кнопок.
+  if (ZZ_BG && !ZZ_PRESET && !Z.coneAxes && Number.isInteger(x) && Number.isInteger(y) && /^#[\da-f]{3}(?:[\da-f]{3})?$/i.test(bgCol)) {
+    if (layer) layer.hidden = true;
+    return;
+  }
   if (!layer) { layer = document.createElement("canvas"); layer.id = "coneTopArt"; win.appendChild(layer); }
   layer.hidden = false;
-  const wr = win.getBoundingClientRect(), left = Math.round(R.left - wr.left + win.scrollLeft - win.clientLeft), top = Math.round(R.top - wr.top + win.scrollTop - win.clientTop);
+  const left = Math.round(x), top = Math.round(y);
   layer.style.left = left + "px"; layer.style.top = top + "px"; layer.style.width = R.width + "px"; layer.style.height = R.height + "px";
   if (layer.width !== W) layer.width = W; if (layer.height !== H) layer.height = H;
   const g = layer.getContext("2d", ZZ_BG ? { willReadFrequently: true } : undefined); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
