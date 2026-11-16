@@ -1,43 +1,25 @@
-<!-- Bit-Byte v0.001 · 256 байтов, ручное исключение и живая статистика. -->
+<!-- Bit-Byte v0.002 · центральное поле, боковые команды, развороты, двоичные подписи и сквозная строка. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.001 — Зеркалиус</title>
+  <title>Bit-Byte v0.002 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=001">
+  <link rel="stylesheet" href="style.css?v=002">
 
-  <script defer src="app.js?v=001"></script>
+  <script defer src="app.js?v=002"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.001</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.002</small></h1>
       <p>Щёлкните по байту, чтобы исключить или вернуть его. Стрелки перемещают фокус, Enter и пробел меняют состояние.</p>
     </header>
 
     <div class="workspace">
-      <section class="field" aria-label="Поле байтов">
-        <div class="field-scroll">
-          <table id="byte-field" aria-label="Все 256 байтов по порядку. Строка задаёт старшую тетраду, столбец задаёт младшую."></table>
-        </div>
-      </section>
-
-      <aside class="sidebar" aria-label="Управление и итоги">
-        <section class="panel">
-          <h2>Итоги</h2>
-          <table class="stats totals">
-            <thead>
-              <tr><th scope="col">Показатель</th><th scope="col">Осталось</th><th scope="col">Исключено</th></tr>
-            </thead>
-            <tbody id="totals"></tbody>
-          </table>
-          <p id="announcement" class="visually-hidden" role="status"></p>
-          <p class="hint legend"><span aria-hidden="true">╱</span> Исключённый байт</p>
-        </section>
-
+      <aside class="sidebar sidebar-left" aria-label="Ручное исключение">
         <section class="panel">
           <h2>Ручное исключение</h2>
           <div class="commands">
@@ -55,6 +37,48 @@
             <p id="list-result" class="hint" role="status"></p>
           </form>
           <p class="hint auto-note">Правило автоматического исключения ещё не определено.</p>
+        </section>
+      </aside>
+
+      <section class="field" aria-label="Поле байтов">
+        <div class="field-scroll">
+          <table id="byte-field" aria-label="Все 256 байтов. Строка задаёт старшие четыре бита, столбец — младшие четыре бита."></table>
+        </div>
+        <p class="hint legend">Строки — старшие 4 бита; столбцы — младшие 4 бита. <span aria-hidden="true">╱</span> Исключённый байт.</p>
+        <section class="panel sequence-panel" aria-label="Сквозная строка оставшихся битов">
+          <div class="sequence-head">
+            <h2><label for="remaining-sequence">Сквозная</label></h2>
+            <p id="sequence-count" class="hint"></p>
+            <div class="commands">
+              <button id="copy-sequence" class="gz-hx" type="button" title="Скопировать сквозную строку оставшихся битов" aria-label="Скопировать сквозную строку"><span class="gz-ic" aria-hidden="true">⧉</span><span class="gz-nm">Копировать</span></button>
+            </div>
+          </div>
+          <textarea id="remaining-sequence" rows="3" readonly spellcheck="false" wrap="soft" placeholder="Все байты исключены" aria-describedby="sequence-hint sequence-count"></textarea>
+          <p id="sequence-hint" class="hint">По текущему расположению: слева направо, сверху вниз. Без пробелов и добавления битов.</p>
+          <p id="copy-result" class="hint" role="status"></p>
+        </section>
+        <section class="panel summary-panel" aria-label="Итоги выбора">
+          <h2>Итоги</h2>
+          <table class="stats totals">
+            <thead>
+              <tr><th scope="col">Показатель</th><th scope="col">Осталось</th><th scope="col">Исключено</th></tr>
+            </thead>
+            <tbody id="totals"></tbody>
+          </table>
+          <p id="announcement" class="visually-hidden" role="status"></p>
+        </section>
+      </section>
+
+      <aside class="sidebar sidebar-right" aria-label="Расположение таблицы">
+        <section class="panel">
+          <h2>Расположение</h2>
+          <div class="commands">
+            <button id="flip-horizontal" class="gz-hx" type="button" aria-pressed="false" title="Развернуть порядок столбцов: 0 → F или F → 0" aria-label="Развернуть порядок столбцов"><span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Столбцы</span></button>
+            <button id="flip-vertical" class="gz-hx" type="button" aria-pressed="false" title="Развернуть порядок строк: 0 → F или F → 0" aria-label="Развернуть порядок строк"><span class="gz-ic" aria-hidden="true">↕</span><span class="gz-nm">Строки</span></button>
+            <button id="flip-both" class="gz-hx" type="button" aria-pressed="false" title="Развернуть обе оси сразу, поменять противоположные углы местами" aria-label="Развернуть обе оси сразу"><span class="gz-ic" aria-hidden="true">⤡</span><span class="gz-nm">Вместе</span></button>
+            <button id="reset-layout" class="gz-hx" type="button" title="Исходное расположение: обе оси от 0 к F. Исключённые байты сохраняются." aria-label="Вернуть исходное расположение"><span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Исходно</span></button>
+          </div>
+          <p id="layout-status" class="hint layout-status" role="status"></p>
         </section>
       </aside>
     </div>

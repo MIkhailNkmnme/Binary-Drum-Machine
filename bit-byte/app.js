@@ -5,7 +5,10 @@
   const SIZE = 16;
   const BIT_COUNT = 8;
   const STORAGE_KEY = "zerk_bit_byte_v1";
+  const LAYOUT_KEY = "zerk_bit_byte_layout_v1";
   const hex = (value, width = 1) => value.toString(16).toUpperCase().padStart(width, "0");
+  const nibble = value => value.toString(2).padStart(4, "0");
+  const axisOrder = reverse => Array.from({ length: SIZE }, (_, index) => reverse ? SIZE - 1 - index : index);
   const bytes = Array.from({ length: SIZE * SIZE }, (_, value) => {
     const bits = Array.from(value.toString(2).padStart(BIT_COUNT, "0"));
     return {
@@ -25,14 +28,37 @@
   const input = byId("exclude-list");
   const result = byId("list-result");
   const announcement = byId("announcement");
+  const sequence = byId("remaining-sequence");
+  const copySequence = byId("copy-sequence");
+  const copyResult = byId("copy-result");
   const detailNames = ["Байты", "1", "0", "1−0"];
   const stateNames = ["Осталось", "Исключено"];
   const stateClasses = ["remaining", "removed"];
 
   let excluded = loadExcluded();
+  let layout = loadLayout();
   let previous = null;
   let tabbable = 0;
   const buttons = buildField();
+  const fieldRows = Array.from(field.tBodies[0].rows);
+  const columnHeaders = Array.from(field.tHead.rows[0].cells).slice(1);
+
+  function loadLayout() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(LAYOUT_KEY));
+      return { horizontal: stored?.horizontal === true, vertical: stored?.vertical === true };
+    } catch {
+      return { horizontal: false, vertical: false };
+    }
+  }
+
+  function saveLayout() {
+    try {
+      localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout));
+    } catch {
+      // Расположение остаётся доступно в открытой странице.
+    }
+  }
 
   function loadExcluded() {
     try {
@@ -71,14 +97,14 @@
     const header = field.createTHead().insertRow();
     heading(header, "×", "col").title = "Строка × столбец";
     for (let column = 0; column < SIZE; column += 1) {
-      heading(header, hex(column), "col");
+      axisHeading(header, column, "col");
     }
 
     const body = field.createTBody();
     const cells = [];
     for (let rowIndex = 0; rowIndex < SIZE; rowIndex += 1) {
       const row = body.insertRow();
-      heading(row, hex(rowIndex), "row");
+      axisHeading(row, rowIndex, "row");
       for (let column = 0; column < SIZE; column += 1) {
         const byte = bytes[rowIndex * SIZE + column];
         const button = document.createElement("button");
@@ -109,13 +135,28 @@
     return cells;
   }
 
+  function axisHeading(row, value, scope) {
+    const item = heading(row, "", scope);
+    const code = document.createElement("span");
+    const bits = document.createElement("span");
+    code.className = "axis-hex";
+    code.textContent = hex(value);
+    bits.className = "axis-bits";
+    bits.textContent = `(${nibble(value)})`;
+    item.title = `${scope === "row" ? "Старшие" : "Младшие"} четыре бита: ${nibble(value)}`;
+    item.append(code, bits);
+  }
+
   function shiftedValue(value, key) {
     const { row, column } = bytes[value];
+    const horizontal = layout.horizontal ? -1 : 1;
+    const vertical = layout.vertical ? -1 : 1;
+    const clamp = index => Math.min(SIZE - 1, Math.max(0, index));
     switch (key) {
-      case "ArrowLeft": return row * SIZE + Math.max(0, column - 1);
-      case "ArrowRight": return row * SIZE + Math.min(SIZE - 1, column + 1);
-      case "ArrowUp": return Math.max(0, row - 1) * SIZE + column;
-      case "ArrowDown": return Math.min(SIZE - 1, row + 1) * SIZE + column;
+      case "ArrowLeft": return row * SIZE + clamp(column - horizontal);
+      case "ArrowRight": return row * SIZE + clamp(column + horizontal);
+      case "ArrowUp": return clamp(row - vertical) * SIZE + column;
+      case "ArrowDown": return clamp(row + vertical) * SIZE + column;
       default: return null;
     }
   }
@@ -292,7 +333,7 @@
   pairHeader("columns", "Младш.", detailNames);
   pairHeader("positions", "Разряд", ["1", "0"]);
 
-  const nibbleLabels = Array.from({ length: SIZE }, (_, index) => hex(index));
+  const nibbleLabels = Array.from({ length: SIZE }, (_, index) => `${hex(index)} (${nibble(index)})`);
   const detailClasses = stateClasses.flatMap(stateClass => detailNames.map(() => stateClass));
   const totalRows = buildRows("totals", ["Байты", "Биты", "Единицы", "Нули", "1−0"], stateClasses);
   const axisRows = buildRows("rows", nibbleLabels, detailClasses);
@@ -322,10 +363,81 @@
 
     restore.disabled = excluded.size === 0;
     undo.disabled = previous === null;
+    updateSequence();
     if (announce) {
       announcement.textContent = `Осталось байтов: ${stats[0].total.bytes}. Исключено: ${stats[1].total.bytes}.`;
     }
   }
 
+  function applyLayout() {
+    const focused = document.activeElement?.closest("button.byte");
+    const columns = axisOrder(layout.horizontal);
+    const rows = axisOrder(layout.vertical);
+    field.tHead.rows[0].append(...columns.map(index => columnHeaders[index]));
+    for (const rowIndex of rows) {
+      const row = fieldRows[rowIndex];
+      row.append(...columns.map(column => buttons[rowIndex * SIZE + column].parentElement));
+      field.tBodies[0].append(row);
+    }
+    byId("rows").append(...rows.map(index => axisRows[index][0].parentElement));
+    byId("columns").append(...columns.map(index => axisColumns[index][0].parentElement));
+    byId("flip-horizontal").setAttribute("aria-pressed", String(layout.horizontal));
+    byId("flip-vertical").setAttribute("aria-pressed", String(layout.vertical));
+    byId("flip-both").setAttribute("aria-pressed", String(layout.horizontal && layout.vertical));
+    byId("reset-layout").disabled = !layout.horizontal && !layout.vertical;
+    const direction = reverse => reverse ? "F → 0" : "0 → F";
+    byId("layout-status").textContent = `Столбцы слева направо: ${direction(layout.horizontal)}.\nСтроки сверху вниз: ${direction(layout.vertical)}.`;
+    updateSequence();
+    if (focused) focused.focus({ preventScroll: true });
+  }
+
+  function updateSequence() {
+    const words = [];
+    for (const row of axisOrder(layout.vertical)) {
+      for (const column of axisOrder(layout.horizontal)) {
+        const value = row * SIZE + column;
+        if (!excluded.has(value)) words.push(bytes[value].bits.join(""));
+      }
+    }
+    const text = words.join("");
+    if (sequence.value !== text) {
+      sequence.value = text;
+      copyResult.textContent = "";
+    }
+    byId("sequence-count").textContent = `Байтов: ${words.length} · битов: ${text.length}`;
+    copySequence.disabled = !text;
+  }
+
+  copySequence.addEventListener("click", async () => {
+    const text = sequence.value;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      if (sequence.value === text) copyResult.textContent = `Скопировано битов: ${text.length}.`;
+    } catch {
+      sequence.focus();
+      sequence.select();
+      copyResult.textContent = "Текст выделен. Нажмите Ctrl+C, чтобы скопировать.";
+    }
+  });
+
+  function flip(horizontal, vertical) {
+    if (horizontal) layout.horizontal = !layout.horizontal;
+    if (vertical) layout.vertical = !layout.vertical;
+    saveLayout();
+    applyLayout();
+  }
+
+  byId("flip-horizontal").addEventListener("click", () => flip(true, false));
+  byId("flip-vertical").addEventListener("click", () => flip(false, true));
+  byId("flip-both").addEventListener("click", () => flip(true, true));
+  byId("reset-layout").addEventListener("click", () => {
+    layout = { horizontal: false, vertical: false };
+    saveLayout();
+    applyLayout();
+    byId("flip-horizontal").focus();
+  });
+
   render();
+  applyLayout();
 })();

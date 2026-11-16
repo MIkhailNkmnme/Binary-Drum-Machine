@@ -18,7 +18,7 @@ h1, h2, p { margin: 0; }
 button, textarea { font: inherit; }
 
 main {
-  width: min(100%, 88rem);
+  width: min(100%, 1680px);
   margin-inline: auto;
   padding: 12px clamp(8px, 2vw, 24px) 28px;
 }
@@ -37,12 +37,26 @@ h1 { color: var(--cyan); font-size: 26px; }
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 18rem;
+  grid-template-columns: minmax(168px, 1fr) minmax(0, 1000px) minmax(168px, 1fr);
+  grid-template-areas: "left field right";
   align-items: start;
   gap: 12px;
 }
 
+.field { grid-area: field; min-width: 0; }
 .field-scroll { overflow-x: auto; }
+.sidebar-left { grid-area: left; justify-self: end; }
+.sidebar-right { grid-area: right; justify-self: start; }
+.sidebar { width: min(100%, 252px); }
+.sidebar .commands { flex-direction: column; align-items: center; }
+.summary-panel, .sequence-panel { margin-top: 12px; overflow-x: auto; }
+.sequence-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; }
+.sequence-head h2 { margin: 0; }
+.sequence-head .commands { margin-left: auto; }
+#remaining-sequence { line-height: 1.6; overflow-wrap: anywhere; word-break: break-all; }
+#sequence-hint { margin-top: 5px; }
+#copy-result:empty { display: none; }
+.layout-status { margin-top: 10px; white-space: pre-line; }
 #byte-field {
   width: 100%;
   min-width: 856px;
@@ -59,8 +73,10 @@ h1 { color: var(--cyan); font-size: 26px; }
   font-weight: normal;
   text-align: center;
 }
-#byte-field thead th { height: 25px; }
-#byte-field thead th:first-child { width: 27px; }
+#byte-field thead th { height: 38px; }
+#byte-field thead th:first-child { width: 44px; }
+.axis-hex, .axis-bits { display: block; line-height: 1.3; }
+.axis-bits { color: var(--cyan); font-size: 9px; white-space: nowrap; }
 
 .byte {
   position: relative;
@@ -82,7 +98,7 @@ h1 { color: var(--cyan); font-size: 26px; }
   outline-offset: -2px;
 }
 
-.bits { font-size: clamp(9px, .83vw, 12px); line-height: 1.15; }
+.bits { font-size: clamp(9px, .74vw, 11px); line-height: 1.15; }
 .bit-one { color: var(--cyan); }
 .byte-code { color: var(--muted); font-size: 9px; line-height: 1.15; }
 
@@ -156,6 +172,8 @@ h2, .stats caption {
   background: linear-gradient(to right, var(--c) 12px, #162c2f 12px, #162c2f calc(100% - 12px), var(--c) 0);
 }
 .commands .gz-hx:enabled:is(:focus-visible, :active) { background: var(--c); }
+.commands .gz-hx[aria-pressed="true"] { background: var(--c); }
+.commands .gz-hx[aria-pressed="true"]::before { inset: 2px; background: var(--gz-bg); }
 .commands .gz-hx:enabled:active::before { inset: 3px; }
 .commands .gz-hx:disabled { opacity: .5; cursor: default; }
 
@@ -198,12 +216,16 @@ textarea:focus-visible { outline: 1px solid var(--cyan); }
   white-space: nowrap;
 }
 
-@media (max-width: 1203px) {
-  .workspace { grid-template-columns: minmax(0, 1fr); }
-  .sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: "left right" "field field";
+  }
+  .sidebar { width: 100%; }
+  .sidebar .commands { flex-direction: row; justify-content: center; }
 }
 
 @media (max-width: 600px) {
-  .sidebar, .breakdown { grid-template-columns: minmax(0, 1fr); }
+  .breakdown { grid-template-columns: minmax(0, 1fr); }
   .stats th, .stats td { padding-inline: 3px; }
 }
