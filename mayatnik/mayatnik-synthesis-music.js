@@ -19,6 +19,7 @@
     piano: { channel: 2, program: 0, gain: .35 },
     strings: { channel: 3, program: 48, gain: .13 }
   };
+  const customVoices = new Map();
   const MAX_SECONDS = 180;
   const TAU = 2 * Math.PI;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -184,7 +185,9 @@
     return duration + (voice === 'piano' ? .31 : .09);
   }
 
-  function renderVoice(voice, midi, duration, rate) {
+  function renderVoice(voice, midi, duration, rate, event) {
+    const custom = customVoices.get(voice);
+    if (custom) return custom({ midi, duration, rate, voice, event });
     const length = voiceLength(voice, duration, midi);
     const pcm = new Float32Array(Math.ceil(length * rate));
     const frequency = 440 * 2 ** ((midi - 69) / 12);
@@ -264,20 +267,32 @@
         || !Number.isFinite(event.duration) || event.duration <= 0
         || !Number.isInteger(event.midi) || event.midi < 0 || event.midi > 127
         || !Number.isFinite(event.velocity) || event.velocity <= 0) continue;
-      cleaned.push({
+      const clean = {
         beat: event.beat,
         duration: Math.min(event.duration, 8, maxBeat - event.beat),
         midi: event.midi,
         velocity: clamp(event.velocity, 0, 1),
         voice: event.voice,
         pan: number(event.pan, 0, -1, 1)
-      });
+      };
+      // Голоса синтеза из битов рисуют волну по этим полям: без них событие станет тишиной.
+      if (event.bits && typeof event.bits.length === 'number') {
+        clean.bits = Array.from(event.bits, bit => (bit ? 1 : 0)).slice(0, 32);
+      }
+      if (Number.isFinite(event.f0)) clean.f0 = event.f0;
+      if (Number.isFinite(event.tau)) clean.tau = event.tau;
+      cleaned.push(clean);
     }
     return cleaned;
   }
 
   function writeText(bytes, offset, value) {
     for (let i = 0; i < value.length; i++) bytes[offset + i] = value.charCodeAt(i);
+  }
+
+  // Ключ кэша обязан учитывать биты: у голосов синтеза из битов форма волны зависит от них.
+  function eventKey(event) {
+    return [event.voice, event.midi, event.duration, event.bits ? event.bits.join('') : ''].join(':');
   }
 
   function renderWav(events, options, { durationSeconds, sampleRate } = {}) {
@@ -297,10 +312,10 @@
       const start = Math.round(event.beat * secondsPerBeat * rate);
       if (start >= length) continue;
       const duration = event.duration * secondsPerBeat;
-      const key = [event.voice, event.midi, event.duration].join(':');
+      const key = eventKey(event);
       let pcm = cache.get(key);
       if (!pcm) {
-        pcm = renderVoice(event.voice, event.midi, duration, rate);
+        pcm = renderVoice(event.voice, event.midi, duration, rate, event);
         if (cache.size < 160) cache.set(key, pcm);
       }
       const position = (event.pan + 1) * Math.PI / 4;
@@ -336,7 +351,7 @@
     return bytes;
   }
 
-  function createPlayer() {
+  function createPlayer(generator) {
     let context;
     let master;
     let compressor;
@@ -398,7 +413,8 @@
 
     function playFrame(frame) {
       if (!enabled || context.state !== 'running') return [];
-      const events = frameEvents(frame, settings);
+      // Генератор можно подменить: синтез из битов даёт события своего вида.
+      const events = typeof generator === 'function' ? generator(frame, settings) : frameEvents(frame, settings);
       const now = context.currentTime;
       const secondsPerBeat = 60 / settings.tempo;
       const predicted = previousTime + secondsPerBeat / 4;
@@ -408,10 +424,10 @@
       previousTime = start;
       for (const event of events) {
         if (sources.size >= 32) break;
-        const key = [event.voice, event.midi, event.duration].join(':');
+        const key = eventKey(event);
         let buffer = buffers.get(key);
         if (!buffer) {
-          const pcm = renderVoice(event.voice, event.midi, event.duration * secondsPerBeat, context.sampleRate);
+          const pcm = renderVoice(event.voice, event.midi, event.duration * secondsPerBeat, context.sampleRate, event);
           buffer = context.createBuffer(1, pcm.length, context.sampleRate);
           buffer.getChannelData(0).set(pcm);
           if (buffers.size === 160) buffers.delete(buffers.keys().next().value);
@@ -514,5 +530,17 @@
     return bytes;
   }
 
-  return { normalizeOptions, frameEvents, createPlayer, renderWav, exportMidi };
+  /**
+   * Добавляет голос, который сам считает PCM. Нужен синтезу из битов (МАЯ-683):
+   * форма волны там зависит от битовой строки, а не только от ноты.
+   * Существующие голоса и их звук не меняются.
+   */
+  function registerVoice(name, spec) {
+    if (typeof name !== 'string' || !name || !spec || typeof spec.render !== 'function') return false;
+    VOICES[name] = { channel: spec.channel, program: spec.program, gain: spec.gain };
+    customVoices.set(name, spec.render);
+    return true;
+  }
+
+  return { normalizeOptions, frameEvents, createPlayer, renderWav, exportMidi, registerVoice };
 });

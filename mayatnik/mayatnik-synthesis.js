@@ -7,7 +7,7 @@
   const defaults={mode:'pendulums',rule:'circuit',trailFrames:8,recoveryFrames:6,wrap:false,
     mix:'only',link:false,rate:8,colourOne:'#ffd35b',colourZero:'#5ce1e6',visible:true,
     weightsOpen:true,stateWeights:[0,1,2,1,0,0,1],positionWeights:[2,1,2,1,1,2,1,2],
-    studioSection:'sources',palette:'nocturne',artStyle:'bits',musicStyle:'techno',tempo:120,volume:0.45,musicRoot:48,musicScale:'minor',density:3,musicBars:16,recipe:'',pendulumOptions:{}};
+    studioSection:'sources',palette:'nocturne',artStyle:'bits',musicStyle:'techno',tempo:120,volume:0.45,musicRoot:48,musicScale:'minor',density:3,bitVoice:'off',musicBars:16,recipe:'',pendulumOptions:{}};
   const modes={pendulums:'Маятники A + B',trail:'След',waves:'Волны',recovery:'Восстановление',grow:'Отпечаток',weights:'Веса соседей'};
   const duetMode=()=>prefs.mode==='pendulums';
   const rules={circuit:'Circuit Genesis',fireworks:'Fireworks',replicator:'Replicator',weighted:'WG Rule084'};
@@ -22,7 +22,7 @@
     for(const [key,lo,hi] of [['trailFrames',1,64],['recoveryFrames',0,64],['rate',1,30]])if(Number.isInteger(value[key])&&value[key]>=lo&&value[key]<=hi)p[key]=value[key];
     for(const key of ['colourOne','colourZero'])if(/^#[0-9a-f]{6}$/i.test(value[key]||''))p[key]=value[key];
     for(const [key,n]of [['stateWeights',7],['positionWeights',8]])p[key]=Array.isArray(value[key])&&value[key].length===n&&value[key].every(v=>Number.isInteger(v)&&v>=0&&v<=10)?value[key].slice():defaults[key].slice();
-    for(const [key,allowed]of Object.entries({studioSection:['sources','motion','combine','music','art','files'],palette:['nocturne','ember','vellum','polar','orchid'],artStyle:['bits','weave','strokes'],musicStyle:['techno','classic'],musicScale:['minor','major','pentatonic']}))if(allowed.includes(value[key]))p[key]=value[key];
+    for(const [key,allowed]of Object.entries({studioSection:['sources','motion','combine','music','art','files'],palette:['nocturne','ember','vellum','polar','orchid'],artStyle:['bits','weave','strokes'],musicStyle:['techno','classic'],musicScale:['minor','major','pentatonic'],bitVoice:['off','bitsHarmonic','bitsShepard','bitsClick']}))if(allowed.includes(value[key]))p[key]=value[key];
     for(const [key,lo,hi]of [['tempo',60,180],['musicRoot',48,72],['density',1,4],['musicBars',4,32]])if(Number.isInteger(value[key])&&value[key]>=lo&&value[key]<=hi)p[key]=value[key];
     if(Number.isFinite(value.volume)&&value.volume>=0&&value.volume<=1)p.volume=value.volume;
     p.pendulumOptions=root.MayatnikSynthesisPendulums?.normalizeOptions(value.pendulumOptions||{})||{};
@@ -78,7 +78,8 @@
     if(saved)duet.restore(saved);
     prefs.pendulumOptions={...duet.options};ticks=duet.tick;
   }
-  function musicOptions(){return {style:prefs.musicStyle,tempo:prefs.tempo,volume:prefs.volume,root:prefs.musicRoot,scale:prefs.musicScale,density:prefs.density};}
+  function musicOptions(){return {style:prefs.musicStyle,tempo:prefs.tempo,volume:prefs.volume,root:prefs.musicRoot,scale:prefs.musicScale,density:prefs.density,voice:prefs.bitVoice};}
+  function eventSource(){const bit=root.MayatnikBitSynthesis;return prefs.bitVoice!=='off'&&bit?bit.bitFrameEvents:root.MayatnikSynthesisMusic.frameEvents;}
   function musicFrame(){return {a:duet.a,b:duet.b,result:duet.output,output:duet.output,age:duet.age,changed:duet.changed,options:duet.options,anchor:duet.anchor,width:duet.width,height:duet.height,tick:duet.tick};}
   function soundFrame(){if(duetMode()&&duet&&music?.enabled)music.playFrame(musicFrame());}
   function duetOption(key,value){
@@ -178,7 +179,7 @@
       pause();if(value){detached=false;capture(false);}else message='Самостоятельный ход. Исходный кадр зафиксирован.';
     }
     if(['rate','tempo'].includes(key)&&wasPlaying){pause();play();}
-    if(['musicStyle','tempo','volume','musicRoot','musicScale','density'].includes(key))music?.configure(musicOptions());
+    if(['musicStyle','tempo','volume','musicRoot','musicScale','density'].includes(key)||key==='bitVoice')music?.configure(musicOptions());
     dirty=true;remember();render();scheduleSave();
   }
   const rgb=hex=>[1,3,5].map(n=>parseInt(hex.slice(n,n+2),16));
@@ -238,7 +239,8 @@
     if(!panel)return;
     if(weightPanel){weightPanel.hidden=prefs.rule!=='weighted'||!cellular();weightPanel.open=prefs.weightsOpen;}
     if(legend)legend.textContent=duetMode()?'A · B · '+(duet?.options.operation||'XOR').toUpperCase()+(music?.enabled?' · ♫':''):prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Только Синтез: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
-    status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'');
+    const bit=root.MayatnikBitSynthesis,bitInfo=prefs.bitVoice!=='off'&&bit&&duet?bit.describeFrame(musicFrame(),musicOptions()):null;
+    status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'')+(bitInfo?' · n = '+bitInfo.n+' ('+bitInfo.binary+') · '+bitInfo.f0+' Гц · партиал '+bitInfo.partials:'');
     notice.textContent=message;notice.hidden=!message;
     for(const binding of bindings){
       const {node,selected,disabled,caption,show}=binding;
@@ -298,7 +300,7 @@
     else{const art=document.createElement('canvas');root.MayatnikSynthesisArt.render(art,musicFrame(),options);const blob=await new Promise(resolve=>art.toBlob(resolve,'image/png'));if(!blob)throw Error('Не удалось сохранить картину.');download(blob,'Маятник-Картина-'+ticks+'.png');}
   }
   async function toggleSound(){
-    if(!music)music=root.MayatnikSynthesisMusic.createPlayer();
+    if(!music)music=root.MayatnikSynthesisMusic.createPlayer(frame=>eventSource()(frame,musicOptions()));
     if(music.enabled)music.disable();else await music.enable(musicOptions());
     message=music.enabled?'Звук включён. «Пуск» проигрывает построение; «Шаг» — один музыкальный такт.':'Звук выключен.';refresh();
   }
@@ -307,9 +309,9 @@
     exporting=true;pause();message='Собирается композиция…';refresh();
     try{
       const saved=duet.snapshot(),copy=root.MayatnikSynthesisPendulums.create({width:duet.width,height:duet.height,anchor:saved.anchor});copy.restore(saved);
-      const events=[],options=musicOptions(),steps=prefs.musicBars*16;
+      const events=[],options=musicOptions(),steps=prefs.musicBars*16,source=eventSource();
       for(let i=0;i<steps;i++){
-        events.push(...root.MayatnikSynthesisMusic.frameEvents({a:copy.a,b:copy.b,result:copy.output,width:copy.width,height:copy.height,tick:i},options));copy.step();
+        events.push(...source({a:copy.a,b:copy.b,result:copy.output,width:copy.width,height:copy.height,tick:i},options));copy.step();
         if(i%8===0){message='Композиция '+Math.round(i/steps*100)+'%';refresh();await new Promise(resolve=>setTimeout(resolve,0));}
       }
       const bytes=type==='midi'?root.MayatnikSynthesisMusic.exportMidi(events,options):root.MayatnikSynthesisMusic.renderWav(events,options,{durationSeconds:steps*15/options.tempo+3,sampleRate:44100});
@@ -388,6 +390,7 @@
     choices(host,'root','Тоника и регистр',[48,50,52,53,55,57,59,60,62,64,65,67,69,71,72].map(v=>({v,name:'Нота '+v})),'musicRoot',section('music'));
     choices(host,'volume','Громкость',[0,.15,.3,.45,.6,.8,1].map(v=>({v,name:Math.round(v*100)+'%'})),'volume',section('music'));
     choices(host,'density','Плотность музыкальных событий',[1,2,3,4].map(v=>({v,name:'Голоса '+v})),'density',section('music'));
+    choices(host,'bit-voice','Синтез звука из битов',[{v:'off',name:'Прежние голоса'},{v:'bitsHarmonic',name:'Гармоники битов'},{v:'bitsShepard',name:'Шеппард'},{v:'bitsClick',name:'Щелчок'}],'bitVoice',section('music'));
     choices(host,'bars','Длина законченной композиции',[4,8,16,32].map(v=>({v,name:v+' тактов'})),'musicBars',section('music'));
     button(host,'wav','WAV','Собрать и скачать композицию из текущего опыта, стерео 44,1 кГц',()=>exportMusic('wav'),{show:section('music'),disabled:()=>exporting});
     button(host,'midi','MIDI','Скачать ноты, темп и инструменты композиции для музыкального редактора',()=>exportMusic('midi'),{show:section('music'),disabled:()=>exporting});
