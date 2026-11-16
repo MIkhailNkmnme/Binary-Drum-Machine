@@ -18,23 +18,25 @@
       }
     }
     const BIT_COUNT = config.bits;
-    const AXIS_BITS = BIT_COUNT / 2;
-    const SIZE = 2 ** AXIS_BITS;
-    const NOUN = BIT_COUNT === 8 ? "байт" : "полубайт";
+    const ROW_BITS = Math.floor(BIT_COUNT / 2);
+    const COLUMN_BITS = BIT_COUNT - ROW_BITS;
+    const ROW_COUNT = 2 ** ROW_BITS;
+    const COLUMN_COUNT = 2 ** COLUMN_BITS;
+    const NOUN = config.noun;
     const UNIT = NOUN[0].toUpperCase() + NOUN.slice(1);
     const STORAGE_KEY = `${config.storage}_v1`;
     const LAYOUT_KEY = `${config.storage}_layout_v1`;
     const CYCLIC_KEY = `${config.storage}_cyclic_v1`;
     const hex = (value, width = 1) => value.toString(16).toUpperCase().padStart(width, "0");
-    const nibble = value => value.toString(2).padStart(AXIS_BITS, "0");
-    const axisOrder = reverse => Array.from({ length: SIZE }, (_, index) => reverse ? SIZE - 1 - index : index);
-    const bytes = Array.from({ length: SIZE * SIZE }, (_, value) => {
+    const axisBits = (value, width) => width ? value.toString(2).padStart(width, "0") : "—";
+    const axisOrder = (reverse, size) => Array.from({ length: size }, (_, index) => reverse ? size - 1 - index : index);
+    const bytes = Array.from({ length: 2 ** BIT_COUNT }, (_, value) => {
       const bits = Array.from(value.toString(2).padStart(BIT_COUNT, "0"));
       return {
         value,
         bits,
-        row: value >> AXIS_BITS,
-        column: value & (SIZE - 1),
+        row: value >> COLUMN_BITS,
+        column: value & (COLUMN_COUNT - 1),
         ones: bits.filter(bit => bit === "1").length,
       };
     });
@@ -51,13 +53,19 @@
     const copySequence = byId("copy-sequence");
     const copyResult = byId("copy-result");
     const cyclicControl = byId("cyclic-sequence");
-    const detailNames = [`${UNIT}ы`, "1", "0", "1−0"];
+    const valueLabel = BIT_COUNT === 1 ? "Значения" : `${UNIT}ы`;
+    const detailNames = [valueLabel, "1", "0", "1−0"];
     const stateNames = ["Осталось", "Исключено"];
     const stateClasses = ["remaining", "removed"];
 
-    field.setAttribute("aria-label", `Все ${bytes.length} ${NOUN}ов по ${BIT_COUNT} бит. Строки задают старшие ${AXIS_BITS} бита, столбцы — младшие ${AXIS_BITS} бита.`);
+    const axisDescription = ROW_BITS === 0
+      ? "Одна строка; столбцы — значения бита: 0 и 1."
+      : ROW_BITS === 1
+        ? "Строки — старший бит; столбцы — младший бит."
+        : `Строки — старшие ${ROW_BITS} бита; столбцы — младшие ${COLUMN_BITS} бита.`;
+    field.setAttribute("aria-label", `Поле: ${ROW_COUNT} на ${COLUMN_COUNT}. Значений: ${bytes.length}. ${axisDescription}`);
     host.querySelector(".field").setAttribute("aria-label", `Поле ${NOUN}ов`);
-    byId("unit-description").textContent = `Строки — старшие ${AXIS_BITS} бита; столбцы — младшие ${AXIS_BITS} бита.`;
+    byId("unit-description").textContent = axisDescription;
     byId("unit-legend").textContent = `Исключённый ${NOUN}.`;
     byId("list-label").textContent = `Список ${BIT_COUNT}-битных слов`;
     byId("list-hint").textContent = `Например, ${bytes[1].bits.join("")} ${bytes[bytes.length - 2].bits.join("")}`;
@@ -68,9 +76,10 @@
       byId(id).title = text;
       byId(id).setAttribute("aria-label", text);
     }
-    byId("flip-horizontal").title = `Развернуть столбцы: 0 → ${hex(SIZE - 1)} или ${hex(SIZE - 1)} → 0`;
-    byId("flip-vertical").title = `Развернуть строки: 0 → ${hex(SIZE - 1)} или ${hex(SIZE - 1)} → 0`;
-    byId("reset-layout").title = `Исходное расположение: обе оси от 0 к ${hex(SIZE - 1)}. Исключения сохраняются.`;
+    byId("flip-horizontal").title = `Развернуть столбцы: 0 → ${hex(COLUMN_COUNT - 1)} или ${hex(COLUMN_COUNT - 1)} → 0`;
+    byId("flip-vertical").title = ROW_COUNT === 1 ? "В поле одна строка: вертикальный разворот не нужен" : `Развернуть строки: 0 → ${hex(ROW_COUNT - 1)} или ${hex(ROW_COUNT - 1)} → 0`;
+    byId("flip-vertical").disabled = ROW_COUNT === 1;
+    byId("reset-layout").title = "Исходное расположение: обе оси по возрастанию. Исключения сохраняются.";
 
     let excluded = loadExcluded();
     let layout = loadLayout();
@@ -93,7 +102,7 @@
     function loadLayout() {
       try {
         const stored = JSON.parse(localStorage.getItem(LAYOUT_KEY));
-        return { horizontal: stored?.horizontal === true, vertical: stored?.vertical === true };
+        return { horizontal: stored?.horizontal === true, vertical: ROW_COUNT > 1 && stored?.vertical === true };
       } catch {
         return { horizontal: false, vertical: false };
       }
@@ -143,19 +152,19 @@
     function buildField() {
       const header = field.createTHead().insertRow();
       heading(header, "×", "col").title = "Строка × столбец";
-      for (let column = 0; column < SIZE; column += 1) {
+      for (let column = 0; column < COLUMN_COUNT; column += 1) {
         axisHeading(header, column, "col");
       }
 
       const body = field.createTBody();
       const cells = [];
-      for (let rowIndex = 0; rowIndex < SIZE; rowIndex += 1) {
+      for (let rowIndex = 0; rowIndex < ROW_COUNT; rowIndex += 1) {
         const row = body.insertRow();
         axisHeading(row, rowIndex, "row");
-        for (let column = 0; column < SIZE; column += 1) {
-          const byte = bytes[rowIndex * SIZE + column];
+        for (let column = 0; column < COLUMN_COUNT; column += 1) {
+          const byte = bytes[rowIndex * COLUMN_COUNT + column];
           const button = document.createElement("button");
-          const code = hex(byte.value, BIT_COUNT / 4);
+          const code = hex(byte.value, Math.ceil(BIT_COUNT / 4));
           const bits = document.createElement("span");
           const meta = document.createElement("span");
 
@@ -184,13 +193,19 @@
 
     function axisHeading(row, value, scope) {
       const item = heading(row, "", scope);
+      const width = scope === "row" ? ROW_BITS : COLUMN_BITS;
+      if (!width) {
+        item.textContent = "—";
+        item.title = "Единственная строка: старших битов нет";
+        return;
+      }
       const code = document.createElement("span");
       const bits = document.createElement("span");
       code.className = "axis-hex";
       code.textContent = hex(value);
       bits.className = "axis-bits";
-      bits.textContent = `(${nibble(value)})`;
-      item.title = `${scope === "row" ? "Старшие" : "Младшие"} ${AXIS_BITS} бита: ${nibble(value)}`;
+      bits.textContent = `(${axisBits(value, width)})`;
+      item.title = `${scope === "row" ? "Старшая" : "Младшая"} часть слова: ${axisBits(value, width)}`;
       item.append(code, bits);
     }
 
@@ -198,12 +213,12 @@
       const { row, column } = bytes[value];
       const horizontal = layout.horizontal ? -1 : 1;
       const vertical = layout.vertical ? -1 : 1;
-      const clamp = index => Math.min(SIZE - 1, Math.max(0, index));
+      const clamp = (index, size) => Math.min(size - 1, Math.max(0, index));
       switch (key) {
-        case "ArrowLeft": return row * SIZE + clamp(column - horizontal);
-        case "ArrowRight": return row * SIZE + clamp(column + horizontal);
-        case "ArrowUp": return clamp(row - vertical) * SIZE + column;
-        case "ArrowDown": return clamp(row + vertical) * SIZE + column;
+        case "ArrowLeft": return row * COLUMN_COUNT + clamp(column - horizontal, COLUMN_COUNT);
+        case "ArrowRight": return row * COLUMN_COUNT + clamp(column + horizontal, COLUMN_COUNT);
+        case "ArrowUp": return clamp(row - vertical, ROW_COUNT) * COLUMN_COUNT + column;
+        case "ArrowDown": return clamp(row + vertical, ROW_COUNT) * COLUMN_COUNT + column;
         default: return null;
       }
     }
@@ -273,7 +288,7 @@
         input.setAttribute("aria-invalid", "true");
         result.dataset.error = "";
         result.textContent = invalid
-          ? `Нужны ровно ${BIT_COUNT} двоичных цифр. Проверьте «${invalid.slice(0, 24)}».`
+          ? `Введите ровно ${BIT_COUNT} ${BIT_COUNT === 1 ? "двоичную цифру" : BIT_COUNT === 8 ? "двоичных цифр" : "двоичные цифры"}. Проверьте «${invalid.slice(0, 24)}».`
           : `Введите хотя бы один ${NOUN}.`;
         input.focus();
         return;
@@ -301,8 +316,8 @@
     function initStats() {
       return {
         total: count(),
-        rows: Array.from({ length: SIZE }, count),
-        columns: Array.from({ length: SIZE }, count),
+        rows: Array.from({ length: ROW_COUNT }, count),
+        columns: Array.from({ length: COLUMN_COUNT }, count),
         popcounts: Array(BIT_COUNT + 1).fill(0),
         positions: Array(BIT_COUNT).fill(0),
       };
@@ -381,11 +396,11 @@
     pairHeader("columns", "Младш.", detailNames);
     pairHeader("positions", "Разряд", ["1", "0"]);
 
-    const nibbleLabels = Array.from({ length: SIZE }, (_, index) => `${hex(index)} (${nibble(index)})`);
+    const axisLabels = (size, width) => Array.from({ length: size }, (_, index) => width ? `${hex(index)} (${axisBits(index, width)})` : "—");
     const detailClasses = stateClasses.flatMap(stateClass => detailNames.map(() => stateClass));
-    const totalRows = buildRows("totals", [`${UNIT}ы`, "Биты", "Единицы", "Нули", "1−0"], stateClasses);
-    const axisRows = buildRows("rows", nibbleLabels, detailClasses);
-    const axisColumns = buildRows("columns", nibbleLabels, detailClasses);
+    const totalRows = buildRows("totals", [valueLabel, "Биты", "Единицы", "Нули", "1−0"], stateClasses);
+    const axisRows = buildRows("rows", axisLabels(ROW_COUNT, ROW_BITS), detailClasses);
+    const axisColumns = buildRows("columns", axisLabels(COLUMN_COUNT, COLUMN_BITS), detailClasses);
     const popcountRows = buildRows("popcounts", Array.from({ length: BIT_COUNT + 1 }, (_, index) => index), stateClasses);
     const positionRows = buildRows("positions",
       Array.from({ length: BIT_COUNT }, (_, index) => `b${BIT_COUNT - 1 - index}`),
@@ -400,7 +415,7 @@
     const windowClasses = Array(BIT_COUNT + 1).fill("window-count");
     const occurrenceRows = buildRows("byte-occurrences", bytes.map(byte => byte.bits.join("")), windowClasses);
     const windowTotalRows = buildRows("byte-window-totals", ["Всего окон"], windowClasses);
-    byId("byte-windows-caption").textContent = `Количество по сдвигам 0–${BIT_COUNT - 1} бит`;
+    byId("byte-windows-caption").textContent = BIT_COUNT === 1 ? "Количество · сдвиг 0" : `Количество по сдвигам 0–${BIT_COUNT - 1} бит`;
 
     function render(announce = false) {
       clearListResult();
@@ -430,12 +445,12 @@
 
     function applyLayout() {
       const focused = host.contains(document.activeElement) ? document.activeElement?.closest("button.byte") : null;
-      const columns = axisOrder(layout.horizontal);
-      const rows = axisOrder(layout.vertical);
+      const columns = axisOrder(layout.horizontal, COLUMN_COUNT);
+      const rows = axisOrder(layout.vertical, ROW_COUNT);
       field.tHead.rows[0].append(...columns.map(index => columnHeaders[index]));
       for (const rowIndex of rows) {
         const row = fieldRows[rowIndex];
-        row.append(...columns.map(column => buttons[rowIndex * SIZE + column].parentElement));
+        row.append(...columns.map(column => buttons[rowIndex * COLUMN_COUNT + column].parentElement));
         field.tBodies[0].append(row);
       }
       byId("rows").append(...rows.map(index => axisRows[index][0].parentElement));
@@ -443,17 +458,17 @@
       byId("flip-horizontal").setAttribute("aria-pressed", String(layout.horizontal));
       byId("flip-vertical").setAttribute("aria-pressed", String(layout.vertical));
       byId("reset-layout").disabled = !layout.horizontal && !layout.vertical;
-      const direction = reverse => reverse ? `${hex(SIZE - 1)} → 0` : `0 → ${hex(SIZE - 1)}`;
-      byId("layout-status").textContent = `Столбцы слева направо: ${direction(layout.horizontal)}.\nСтроки сверху вниз: ${direction(layout.vertical)}.`;
+      const direction = (reverse, size) => reverse ? `${hex(size - 1)} → 0` : `0 → ${hex(size - 1)}`;
+      byId("layout-status").textContent = `Столбцы слева направо: ${direction(layout.horizontal, COLUMN_COUNT)}.\n${ROW_COUNT === 1 ? "Одна строка." : `Строки сверху вниз: ${direction(layout.vertical, ROW_COUNT)}.`}`;
       updateSequence();
       if (focused) focused.focus({ preventScroll: true });
     }
 
     function updateSequence() {
       const words = [];
-      for (const row of axisOrder(layout.vertical)) {
-        for (const column of axisOrder(layout.horizontal)) {
-          const value = row * SIZE + column;
+      for (const row of axisOrder(layout.vertical, ROW_COUNT)) {
+        for (const column of axisOrder(layout.horizontal, COLUMN_COUNT)) {
+          const value = row * COLUMN_COUNT + column;
           if (!excluded.has(value)) words.push(bytes[value].bits.join(""));
         }
       }
@@ -462,7 +477,7 @@
         sequence.value = text;
         copyResult.textContent = "";
       }
-      byId("sequence-count").textContent = `${UNIT}ов: ${words.length} · битов: ${text.length}`;
+      byId("sequence-count").textContent = BIT_COUNT === 1 ? `Битов: ${text.length}` : `${UNIT}ов: ${words.length} · битов: ${text.length}`;
       copySequence.disabled = !text;
       renderSequenceStats(text);
     }
@@ -604,7 +619,7 @@
 
     function flip(horizontal, vertical) {
       if (horizontal) layout.horizontal = !layout.horizontal;
-      if (vertical) layout.vertical = !layout.vertical;
+      if (vertical && ROW_COUNT > 1) layout.vertical = !layout.vertical;
       saveLayout();
       applyLayout();
     }
@@ -629,8 +644,10 @@
   }
 
   const editors = [
-    { name: "byte", bits: 8, storage: "zerk_bit_byte" },
-    { name: "nibble", bits: 4, storage: "zerk_bit_nibble" },
+    { name: "byte", bits: 8, noun: "байт", storage: "zerk_bit_byte" },
+    { name: "nibble", bits: 4, noun: "полубайт", storage: "zerk_bit_nibble" },
+    { name: "dibit", bits: 2, noun: "четвертьбайт", storage: "zerk_bit_dibit" },
+    { name: "bit", bits: 1, noun: "бит", storage: "zerk_bit_bit" },
   ];
   for (const config of editors) createEditor(document.getElementById(`${config.name}-editor`), config);
 
@@ -651,7 +668,8 @@
     const current = tabs.indexOf(event.target.closest("[role=tab]"));
     if (current < 0) return;
     let next = current;
-    if (event.key === "ArrowRight" || event.key === "ArrowLeft") next = 1 - current;
+    if (event.key === "ArrowRight") next = (current + 1) % tabs.length;
+    else if (event.key === "ArrowLeft") next = (current + tabs.length - 1) % tabs.length;
     else if (event.key === "Home") next = 0;
     else if (event.key === "End") next = tabs.length - 1;
     else return;
@@ -659,6 +677,9 @@
     selectEditor(tabs[next].dataset.mode, true);
   });
   let active = "byte";
-  try { if (localStorage.getItem(TAB_KEY) === "nibble") active = "nibble"; } catch { /* По умолчанию — байт. */ }
+  try {
+    const stored = localStorage.getItem(TAB_KEY);
+    if (editors.some(editor => editor.name === stored)) active = stored;
+  } catch { /* По умолчанию — байт. */ }
   selectEditor(active);
 })();

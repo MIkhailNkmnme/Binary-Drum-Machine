@@ -91,9 +91,11 @@ h1 { color: var(--cyan); font-size: 26px; }
 }
 [data-key="byte-field"] thead th { height: 38px; }
 [data-key="byte-field"] thead th:first-child { width: 44px; }
-.editor-panel[data-unit="nibble"] [data-key="byte-field"] { min-width: 0; max-width: 420px; margin-inline: auto; }
-.editor-panel[data-unit="nibble"] .bits { font-size: 16px; }
-.editor-panel[data-unit="nibble"] .byte-code { font-size: 11px; }
+.editor-panel:not([data-unit="byte"]) [data-key="byte-field"] { min-width: 0; max-width: 420px; margin-inline: auto; }
+.editor-panel[data-unit="dibit"] [data-key="byte-field"],
+.editor-panel[data-unit="bit"] [data-key="byte-field"] { max-width: 252px; }
+.editor-panel:not([data-unit="byte"]) .bits { font-size: 16px; }
+.editor-panel:not([data-unit="byte"]) .byte-code { font-size: 11px; }
 .axis-hex, .axis-bits { display: block; line-height: 1.3; }
 .axis-bits { color: var(--cyan); font-size: 9px; white-space: nowrap; }
 
@@ -211,14 +213,15 @@ h2, .stats caption {
 }
 .commands .axis-pair .gz-ic { color: var(--cyan); }
 .commands .axis-pair .gz-half::before { inset: 0; }
-.commands .axis-pair .gz-half:hover:not([data-pointer-off]),
+.commands .axis-pair .gz-half:enabled:hover:not([data-pointer-off]),
 .commands .axis-pair .gz-half[aria-pressed="true"],
 .commands .axis-pair .gz-half:focus-visible,
 .commands .axis-pair .gz-half:active { background: var(--cyan); }
-.commands .axis-pair .gz-half:hover:not([data-pointer-off])::before { inset: 1px; }
+.commands .axis-pair .gz-half:enabled:hover:not([data-pointer-off])::before { inset: 1px; }
 .commands .axis-pair .gz-half[aria-pressed="true"]::before { inset: 2px; }
 .commands .axis-pair .gz-half:focus-visible::before,
 .commands .axis-pair .gz-half:active::before { inset: 3px; }
+.commands .axis-pair .gz-half:disabled { opacity: .45; cursor: default; }
 
 [data-key="exclude-form"] {
   display: grid;

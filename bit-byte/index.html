@@ -1,29 +1,33 @@
-<!-- Bit-Byte v0.006 · независимые вкладки байта/полубайта, кольцо и частоты окон по сдвигам. -->
+<!-- Bit-Byte v0.007 · четыре независимые вкладки: 8, 4, 2 и 1 бит. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.006 — Зеркалиус</title>
+  <title>Bit-Byte v0.007 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=006">
+  <link rel="stylesheet" href="style.css?v=007">
 
-  <script defer src="app.js?v=006"></script>
+  <script defer src="app.js?v=007"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.006</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.007</small></h1>
       <p>Щёлкните по ячейке, чтобы исключить или вернуть её. Стрелки перемещают фокус, Enter и пробел меняют состояние.</p>
     </header>
 
     <div class="commands editor-tabs" role="tablist" aria-label="Размер слова">
       <button id="tab-byte" class="gz-hx" role="tab" type="button" aria-selected="true" aria-controls="byte-editor" data-mode="byte"><span class="gz-ic" aria-hidden="true">8</span><span class="gz-nm">Байт</span></button>
       <button id="tab-nibble" class="gz-hx" role="tab" type="button" aria-selected="false" aria-controls="nibble-editor" data-mode="nibble" tabindex="-1"><span class="gz-ic" aria-hidden="true">4</span><span class="gz-nm">Полубайт</span></button>
+      <button id="tab-dibit" class="gz-hx" role="tab" type="button" aria-selected="false" aria-controls="dibit-editor" data-mode="dibit" tabindex="-1" title="Четверть байта — 2 бита; техническое название: дибит"><span class="gz-ic" aria-hidden="true">2</span><span class="gz-nm">Четвертьбайт</span></button>
+      <button id="tab-bit" class="gz-hx" role="tab" type="button" aria-selected="false" aria-controls="bit-editor" data-mode="bit" tabindex="-1" title="Бит — одно двоичное значение: 0 или 1; одна восьмая байта"><span class="gz-ic" aria-hidden="true">1</span><span class="gz-nm">Бит</span></button>
     </div>
     <section id="byte-editor" class="editor-panel" data-unit="byte" role="tabpanel" aria-labelledby="tab-byte"></section>
     <section id="nibble-editor" class="editor-panel" data-unit="nibble" role="tabpanel" aria-labelledby="tab-nibble" hidden></section>
+    <section id="dibit-editor" class="editor-panel" data-unit="dibit" role="tabpanel" aria-labelledby="tab-dibit" hidden></section>
+    <section id="bit-editor" class="editor-panel" data-unit="bit" role="tabpanel" aria-labelledby="tab-bit" hidden></section>
 
     <template id="editor-template">
     <div class="workspace">
