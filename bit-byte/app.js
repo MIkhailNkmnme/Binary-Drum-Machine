@@ -18,8 +18,14 @@
       }
     }
     const BIT_COUNT = config.bits;
-    const ROW_BITS = Math.floor(BIT_COUNT / 2);
-    const COLUMN_BITS = BIT_COUNT - ROW_BITS;
+    const CHECKERBOARD = config.layout === "checkerboard";
+    // Для таблицы слов обе оси получают ровно половину разрядов, без округления.
+    // Однобитная шахматка — отдельная схема цвета, а не разбиение слова.
+    if ((!CHECKERBOARD && BIT_COUNT % 2 !== 0) || (CHECKERBOARD && BIT_COUNT !== 1)) {
+      throw new Error("Равное разбиение слова требует чётного числа битов.");
+    }
+    const ROW_BITS = CHECKERBOARD ? 1 : BIT_COUNT / 2;
+    const COLUMN_BITS = ROW_BITS;
     const ROW_COUNT = 2 ** ROW_BITS;
     const COLUMN_COUNT = 2 ** COLUMN_BITS;
     const NOUN = config.noun;
@@ -40,6 +46,10 @@
         ones: bits.filter(bit => bit === "1").length,
       };
     });
+    const positions = Array.from({ length: ROW_COUNT * COLUMN_COUNT }, (_, index) => {
+      const row = Math.floor(index / COLUMN_COUNT), column = index % COLUMN_COUNT;
+      return { index, row, column, value: CHECKERBOARD ? row ^ column : index };
+    });
 
     const byId = id => host.querySelector(`[data-key="${id}"]`);
     const field = byId("byte-field");
@@ -53,13 +63,13 @@
     const copySequence = byId("copy-sequence");
     const copyResult = byId("copy-result");
     const cyclicControl = byId("cyclic-sequence");
-    const valueLabel = BIT_COUNT === 1 ? "Значения" : `${UNIT}ы`;
+    const valueLabel = CHECKERBOARD ? "Различные значения" : `${UNIT}ы`;
     const detailNames = [valueLabel, "1", "0", "1−0"];
     const stateNames = ["Осталось", "Исключено"];
     const stateClasses = ["remaining", "removed"];
 
-    const axisDescription = ROW_BITS === 0
-      ? "Одна строка; столбцы — значения бита: 0 и 1."
+    const axisDescription = CHECKERBOARD
+      ? "Шахматка 2×2: цвет клетки — XOR координат. 0 — чёрный, 1 — белый. Два значения повторены по два раза."
       : ROW_BITS === 1
         ? "Строки — старший бит; столбцы — младший бит."
         : `Строки — старшие ${ROW_BITS} бита; столбцы — младшие ${COLUMN_BITS} бита.`;
@@ -72,13 +82,21 @@
     byId("popcount-caption").textContent = `По числу единиц в ${NOUN}е`;
     byId("byte-windows-title").textContent = `${UNIT}ы в сквозной`;
     sequence.placeholder = `Все ${NOUN}ы исключены`;
+    if (CHECKERBOARD) {
+      byId("unit-legend").textContent = "Одинаковые значения исключаются вместе. В расчётах каждое состояние учитывается один раз.";
+      byId("sequence-label").textContent = "Сквозная состояний";
+      byId("summary-heading").textContent = "Итоги по различным значениям";
+      byId("rows").closest(".panel").hidden = true;
+      byId("columns").closest(".panel").hidden = true;
+      byId("field-count").hidden = false;
+      byId("field-rule").hidden = false;
+    }
     for (const [id, text] of [["restore", `Вернуть все ${NOUN}ы`], ["exclude", `Исключить ${NOUN}ы из списка`]]) {
       byId(id).title = text;
       byId(id).setAttribute("aria-label", text);
     }
     byId("flip-horizontal").title = `Развернуть столбцы: 0 → ${hex(COLUMN_COUNT - 1)} или ${hex(COLUMN_COUNT - 1)} → 0`;
-    byId("flip-vertical").title = ROW_COUNT === 1 ? "В поле одна строка: вертикальный разворот не нужен" : `Развернуть строки: 0 → ${hex(ROW_COUNT - 1)} или ${hex(ROW_COUNT - 1)} → 0`;
-    byId("flip-vertical").disabled = ROW_COUNT === 1;
+    byId("flip-vertical").title = `Развернуть строки: 0 → ${hex(ROW_COUNT - 1)} или ${hex(ROW_COUNT - 1)} → 0`;
     byId("reset-layout").title = "Исходное расположение: обе оси по возрастанию. Исключения сохраняются.";
 
     let excluded = loadExcluded();
@@ -102,7 +120,7 @@
     function loadLayout() {
       try {
         const stored = JSON.parse(localStorage.getItem(LAYOUT_KEY));
-        return { horizontal: stored?.horizontal === true, vertical: ROW_COUNT > 1 && stored?.vertical === true };
+        return { horizontal: stored?.horizontal === true, vertical: stored?.vertical === true };
       } catch {
         return { horizontal: false, vertical: false };
       }
@@ -151,7 +169,7 @@
 
     function buildField() {
       const header = field.createTHead().insertRow();
-      heading(header, "×", "col").title = "Строка × столбец";
+      heading(header, CHECKERBOARD ? "⊕" : "×", "col").title = CHECKERBOARD ? "Цвет клетки = строка XOR столбец" : "Строка × столбец";
       for (let column = 0; column < COLUMN_COUNT; column += 1) {
         axisHeading(header, column, "col");
       }
@@ -162,7 +180,8 @@
         const row = body.insertRow();
         axisHeading(row, rowIndex, "row");
         for (let column = 0; column < COLUMN_COUNT; column += 1) {
-          const byte = bytes[rowIndex * COLUMN_COUNT + column];
+          const position = positions[rowIndex * COLUMN_COUNT + column];
+          const byte = bytes[position.value];
           const button = document.createElement("button");
           const code = hex(byte.value, Math.ceil(BIT_COUNT / 4));
           const bits = document.createElement("span");
@@ -170,9 +189,12 @@
 
           button.type = "button";
           button.className = "byte";
-          button.tabIndex = byte.value === tabbable ? 0 : -1;
+          button.tabIndex = position.index === tabbable ? 0 : -1;
+          button.dataset.index = position.index;
           button.dataset.value = byte.value;
-          button.setAttribute("aria-label", `Исключение ${NOUN}а ${byte.bits.join("")}, десятичное ${byte.value}, 0x${code}`);
+          button.setAttribute("aria-label", CHECKERBOARD
+            ? `Строка ${rowIndex}, столбец ${column}: ${byte.value}. Исключить или вернуть обе клетки со значением ${byte.value}`
+            : `Исключение ${NOUN}а ${byte.bits.join("")}, десятичное ${byte.value}, 0x${code}`);
 
           bits.className = "bits";
           for (const bit of byte.bits) {
@@ -194,23 +216,18 @@
     function axisHeading(row, value, scope) {
       const item = heading(row, "", scope);
       const width = scope === "row" ? ROW_BITS : COLUMN_BITS;
-      if (!width) {
-        item.textContent = "—";
-        item.title = "Единственная строка: старших битов нет";
-        return;
-      }
       const code = document.createElement("span");
       const bits = document.createElement("span");
       code.className = "axis-hex";
       code.textContent = hex(value);
       bits.className = "axis-bits";
       bits.textContent = `(${axisBits(value, width)})`;
-      item.title = `${scope === "row" ? "Старшая" : "Младшая"} часть слова: ${axisBits(value, width)}`;
+      item.title = CHECKERBOARD ? `Координата ${scope === "row" ? "строки" : "столбца"}: ${value}` : `${scope === "row" ? "Старшая" : "Младшая"} часть слова: ${axisBits(value, width)}`;
       item.append(code, bits);
     }
 
-    function shiftedValue(value, key) {
-      const { row, column } = bytes[value];
+    function shiftedPosition(index, key) {
+      const { row, column } = positions[index];
       const horizontal = layout.horizontal ? -1 : 1;
       const vertical = layout.vertical ? -1 : 1;
       const clamp = (index, size) => Math.min(size - 1, Math.max(0, index));
@@ -223,24 +240,24 @@
       }
     }
 
-    function setTabbable(value) {
+    function setTabbable(index) {
       buttons[tabbable].tabIndex = -1;
-      buttons[value].tabIndex = 0;
-      tabbable = value;
+      buttons[index].tabIndex = 0;
+      tabbable = index;
     }
 
     field.addEventListener("focusin", event => {
       const button = event.target.closest("button.byte");
-      if (button) setTabbable(Number(button.dataset.value));
+      if (button) setTabbable(Number(button.dataset.index));
     });
 
     field.addEventListener("keydown", event => {
       const button = event.target.closest("button.byte");
       if (!button) return;
-      const value = shiftedValue(Number(button.dataset.value), event.key);
-      if (value === null) return;
+      const index = shiftedPosition(Number(button.dataset.index), event.key);
+      if (index === null) return;
       event.preventDefault();
-      buttons[value].focus();
+      buttons[index].focus();
     });
 
     field.addEventListener("click", event => {
@@ -249,7 +266,7 @@
       const value = Number(button.dataset.value);
       const next = new Set(excluded);
       if (!next.delete(value)) next.add(value);
-      setTabbable(value);
+      setTabbable(Number(button.dataset.index));
       commit(next);
     });
 
@@ -327,7 +344,8 @@
       const stats = [initStats(), initStats()];
       for (const byte of bytes) {
         const group = stats[Number(excluded.has(byte.value))];
-        for (const bucket of [group.total, group.rows[byte.row], group.columns[byte.column]]) {
+        const buckets = CHECKERBOARD ? [group.total] : [group.total, group.rows[byte.row], group.columns[byte.column]];
+        for (const bucket of buckets) {
           bucket.bytes += 1;
           bucket.ones += byte.ones;
         }
@@ -419,8 +437,8 @@
 
     function render(announce = false) {
       clearListResult();
-      for (const [value, button] of buttons.entries()) {
-        const pressed = String(excluded.has(value));
+      for (const button of buttons) {
+        const pressed = String(excluded.has(Number(button.dataset.value)));
         if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
       }
 
@@ -434,6 +452,10 @@
         group.positions[index],
         group.total.bytes - group.positions[index],
       ]));
+      if (CHECKERBOARD) {
+        const zeroCells = excluded.has(0) ? 0 : 2, oneCells = excluded.has(1) ? 0 : 2;
+        byId("field-count").textContent = `Активных клеток: ${zeroCells + oneCells} из 4 · чёрных 0: ${zeroCells} · белых 1: ${oneCells}. Различных значений: ${stats[0].total.bytes}.`;
+      }
 
       restore.disabled = excluded.size === 0;
       undo.disabled = previous === null;
@@ -459,17 +481,20 @@
       byId("flip-vertical").setAttribute("aria-pressed", String(layout.vertical));
       byId("reset-layout").disabled = !layout.horizontal && !layout.vertical;
       const direction = (reverse, size) => reverse ? `${hex(size - 1)} → 0` : `0 → ${hex(size - 1)}`;
-      byId("layout-status").textContent = `Столбцы слева направо: ${direction(layout.horizontal, COLUMN_COUNT)}.\n${ROW_COUNT === 1 ? "Одна строка." : `Строки сверху вниз: ${direction(layout.vertical, ROW_COUNT)}.`}`;
+      byId("layout-status").textContent = `Столбцы слева направо: ${direction(layout.horizontal, COLUMN_COUNT)}.\nСтроки сверху вниз: ${direction(layout.vertical, ROW_COUNT)}.`;
       updateSequence();
       if (focused) focused.focus({ preventScroll: true });
     }
 
     function updateSequence() {
       const words = [];
+      const seen = new Set();
       for (const row of axisOrder(layout.vertical, ROW_COUNT)) {
         for (const column of axisOrder(layout.horizontal, COLUMN_COUNT)) {
-          const value = row * COLUMN_COUNT + column;
-          if (!excluded.has(value)) words.push(bytes[value].bits.join(""));
+          const value = positions[row * COLUMN_COUNT + column].value;
+          if (excluded.has(value) || seen.has(value)) continue;
+          seen.add(value);
+          words.push(bytes[value].bits.join(""));
         }
       }
       const text = words.join("");
@@ -477,7 +502,7 @@
         sequence.value = text;
         copyResult.textContent = "";
       }
-      byId("sequence-count").textContent = BIT_COUNT === 1 ? `Битов: ${text.length}` : `${UNIT}ов: ${words.length} · битов: ${text.length}`;
+      byId("sequence-count").textContent = CHECKERBOARD ? `Различных состояний: ${words.length} · битов: ${text.length}` : `${UNIT}ов: ${words.length} · битов: ${text.length}`;
       copySequence.disabled = !text;
       renderSequenceStats(text);
     }
@@ -537,6 +562,7 @@
       byId("sequence-hint").textContent = cyclic
         ? "Слева направо, сверху вниз; без добавления битов. Для расчётов строка замкнута в кольцо: последний бит → первый."
         : "Слева направо, сверху вниз; без добавления битов. Линейный расчёт: конец и начало не соединяются.";
+      if (CHECKERBOARD) byId("sequence-hint").textContent += " Каждое оставшееся состояние 0/1 берётся один раз, по первому появлению в шахматке.";
       const fragment = document.createDocumentFragment();
       for (let length = 1; length <= stats.longest; length += 1) {
         const row = document.createElement("tr");
@@ -619,7 +645,7 @@
 
     function flip(horizontal, vertical) {
       if (horizontal) layout.horizontal = !layout.horizontal;
-      if (vertical && ROW_COUNT > 1) layout.vertical = !layout.vertical;
+      if (vertical) layout.vertical = !layout.vertical;
       saveLayout();
       applyLayout();
     }
@@ -647,7 +673,7 @@
     { name: "byte", bits: 8, noun: "байт", storage: "zerk_bit_byte" },
     { name: "nibble", bits: 4, noun: "полубайт", storage: "zerk_bit_nibble" },
     { name: "dibit", bits: 2, noun: "четвертьбайт", storage: "zerk_bit_dibit" },
-    { name: "bit", bits: 1, noun: "бит", storage: "zerk_bit_bit" },
+    { name: "bit", bits: 1, noun: "бит", storage: "zerk_bit_bit", layout: "checkerboard" },
   ];
   for (const config of editors) createEditor(document.getElementById(`${config.name}-editor`), config);
 

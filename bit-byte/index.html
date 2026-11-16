@@ -1,20 +1,20 @@
-<!-- Bit-Byte v0.007 · четыре независимые вкладки: 8, 4, 2 и 1 бит. -->
+<!-- Bit-Byte v0.008 · правило равных половин для слов; однобитная шахматка с двумя различными состояниями. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.007 — Зеркалиус</title>
+  <title>Bit-Byte v0.008 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=007">
+  <link rel="stylesheet" href="style.css?v=008">
 
-  <script defer src="app.js?v=007"></script>
+  <script defer src="app.js?v=008"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.007</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.008</small></h1>
       <p>Щёлкните по ячейке, чтобы исключить или вернуть её. Стрелки перемещают фокус, Enter и пробел меняют состояние.</p>
     </header>
 
@@ -57,9 +57,11 @@
           <table id="byte-field" aria-label="Все 256 байтов. Строка задаёт старшие четыре бита, столбец — младшие четыре бита."></table>
         </div>
         <p class="hint legend"><span id="unit-description">Строки — старшие 4 бита; столбцы — младшие 4 бита.</span> <span aria-hidden="true">╱</span> <span id="unit-legend">Исключённый байт.</span></p>
+        <p id="field-count" class="hint" hidden></p>
+        <p id="field-rule" class="hint" hidden>Деление слова поровну между осями применимо к 8, 4 и 2 битам. Для 1 бита здесь показан цвет клеток шахматки, а не две половины слова.</p>
         <section class="panel sequence-panel" aria-label="Сквозная строка оставшихся битов">
           <div class="sequence-head">
-            <h2><label for="remaining-sequence">Сквозная</label></h2>
+            <h2><label id="sequence-label" for="remaining-sequence">Сквозная</label></h2>
             <p id="sequence-count" class="hint"></p>
             <div class="commands">
               <button id="cyclic-sequence" class="gz-hx" type="button" aria-pressed="true" title="Кольцевать сквозную: соединять последний бит с первым для всех её расчётов" aria-label="Кольцевать сквозную"><span class="gz-ic" aria-hidden="true">⟳</span><span class="gz-nm">Кольцевать</span></button>
@@ -110,7 +112,7 @@
           </div>
         </section>
         <section class="panel summary-panel" aria-label="Итоги выбора">
-          <h2>Итоги</h2>
+          <h2 id="summary-heading">Итоги</h2>
           <table class="stats totals">
             <thead>
               <tr><th scope="col">Показатель</th><th scope="col">Осталось</th><th scope="col">Исключено</th></tr>
