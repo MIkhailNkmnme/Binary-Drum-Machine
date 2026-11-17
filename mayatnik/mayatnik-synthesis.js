@@ -1,4 +1,4 @@
-/* Маятник · Синтез 0.015. Exact pendulum duet, score and computational art.
+/* Маятник · Синтез 0.016. Exact pendulum duet, score and computational art.
  * Source redraws are observations, never an animation clock. Only successive
  * source frames or explicit independent ticks advance experimental history. */
 (function(root){
@@ -425,7 +425,7 @@
     status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'');
     if(bitInfo){
       status.textContent+=' · строка '+(bitInfo.row+1)+' · n = '+bitInfo.n+' ('+bitInfo.binary+')';
-      status.textContent+=' · MIDI '+bitInfo.midi+' · '+bitInfo.f0+' Гц · гармоник включено '+bitInfo.enabledPartials;
+      status.textContent+=' · MIDI '+bitInfo.soundingMidi+' · '+bitInfo.f0+' Гц · гармоник включено '+bitInfo.enabledPartials;
     }
     if(duetMode()&&duet&&prefs.musicStyle==='berlin'&&prefs.bitVoice==='off'){
       status.textContent+=' · '+prefs.tempo+' BPM · такт '+(Math.floor((ticks%512)/16)+1)+' / 32';
@@ -527,7 +527,7 @@
       const durationSeconds=berlin?events.reduce((end,event)=>Math.max(end,(event.beat+event.duration)*60/options.tempo+.09),steps*15/options.tempo+3):steps*15/options.tempo+3;
       const musicEngine=root.MayatnikSynthesisMusic;
       const bytes=type==='midi'
-        ? musicEngine.exportMidi(events.filter(event=>!event.bits||root.MayatnikBitSynthesis.describeEvent(event).partials>0),options)
+        ? musicEngine.exportMidi(events.map(event=>event.bits?root.MayatnikBitSynthesis.toMidiEvent(event):event).filter(Boolean),options)
         : musicEngine.renderWav(events,options,{durationSeconds,sampleRate:44100});
       download(new Blob([bytes],{type:type==='midi'?'audio/midi':'audio/wav'}),'Маятник-'+prefs.musicStyle+'-'+prefs.musicBars+'-тактов.'+(type==='midi'?'mid':'wav'));
       message='Композиция сохранена: '+prefs.musicBars+' тактов. Исходный опыт остался на прежнем шаге.';

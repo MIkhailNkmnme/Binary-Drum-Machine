@@ -79,6 +79,7 @@
 
   /** MIDI → герцы (A4 = 440). */
   const midiToHz = midi => 440 * 2 ** ((midi - 69) / 12);
+  const hzToMidi = hz => clamp(Math.round(69 + 12 * Math.log2(hz / 440)), 0, 127);
 
   /** кадр → биты: строка (row), столбец (column) или весь result. */
   function rowToBits(frame, options = {}) {
@@ -168,6 +169,7 @@
       n,
       binary: binaryOf(n, bits.length),
       midi,
+      soundingMidi: hzToMidi(f0),
       f0: Number(f0.toFixed(2)),
       tau: Number(number(options.tau, .18, LIMITS.minTau, LIMITS.maxTau).toFixed(4)),
       partials: audible.length,
@@ -188,6 +190,12 @@
   /** Состояние ноты из уже переданного плееру события между четвертями. */
   function describeEvent(event) {
     return describeBits(event.bits, event.row, event);
+  }
+
+  /** MIDI хранит ближайший полутон реально синтезированной частоты, паузы сохраняются. */
+  function toMidiEvent(event) {
+    const note = describeEvent(event);
+    return note?.partials ? { ...event, midi: note.soundingMidi } : null;
   }
 
   /**
@@ -274,6 +282,7 @@
     renderBitVoice,
     describeFrame,
     describeEvent,
+    toMidiEvent,
     bitFrameEvents,
     registerVoices
   };

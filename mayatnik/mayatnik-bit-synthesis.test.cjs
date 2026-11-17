@@ -152,6 +152,19 @@ test('индикатор совпадает с событием второй с�
   assert.equal(Bit.describeEvent(event).n, 2);
 });
 
+test('MIDI использует ближайший полутон фактической частоты и пропускает тишину', () => {
+  const options = { root: 48 };
+  const [high] = Bit.bitFrameEvents(frame(0, [1, 1, 1, 1, 1, 1, 1, 1], 8, 1), options);
+  assert.equal(high.midi, 127);
+  assert.equal(high.f0, 2000);
+  assert.equal(Bit.toMidiEvent(high).midi, 95);
+  const [normal] = Bit.bitFrameEvents(frame(0, [1], 1, 1), options);
+  assert.equal(Bit.toMidiEvent(normal).midi, normal.midi);
+  const [rest] = Bit.bitFrameEvents(frame(0, [0], 1, 1), options);
+  assert.equal(Bit.toMidiEvent(rest), null);
+  assert.equal(Bit.toMidiEvent({ ...high, bits: [...Array(31).fill(0), 1] }), null);
+});
+
 test('голоса битов работают через renderWav и exportMidi существующего движка', () => {
   const events = [];
   for (let tick = 0; tick < 32; tick++) {
