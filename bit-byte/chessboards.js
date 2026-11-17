@@ -11,6 +11,11 @@
   const world = byId("world"), viewport = byId("viewport"), list = byId("list");
   const elements = new Map(), undo = [];
   const logicButtons = [...document.querySelectorAll("[data-chess-logic]")];
+  const rgbButtons = [...document.querySelectorAll("[data-chess-rgb]")];
+  const rgbScopeButtons = [...document.querySelectorAll("[data-chess-rgb-scope]")];
+  const digitPaths = window.BitByteOperatorDigits;
+  const canvasDigits = typeof Path2D === "function" && digitPaths
+    ? [new Path2D(digitPaths["0"].path), new Path2D(digitPaths["1"].path)] : null;
   const logicCanvas = document.createElement("canvas");
   logicCanvas.className = "chess-logic";
   logicCanvas.hidden = true;
@@ -48,7 +53,7 @@
   function initialState() {
     const second = makeBoard(2, 10, 6);
     second.zeroOpacity = second.oneOpacity = 65;
-    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers",
+    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers", rgbScope: "one",
       selected: 2, selectedIds: [2], boards: [makeBoard(1), second] };
   }
   function load() {
@@ -83,6 +88,7 @@
         fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD),
         cell: integer(saved.cell, 24, 1, 64), digits: saved.digits === true, boards,
         logic: logicButtons.some(button => button.dataset.chessLogic === saved.logic) ? saved.logic : "layers",
+        rgbScope: saved.rgbScope === "all" ? "all" : "one",
         selected: selectedIds.includes(active) ? active : selectedIds.at(-1) ?? null,
         selectedIds,
       };
@@ -150,10 +156,10 @@
       const fill = board[key];
       const rect = '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + fill +
         '" fill-opacity="' + board[key + "Opacity"] / 100 + '"/>';
-      if (!state.digits) return rect;
-      return rect + '<text x="' + (x + .5) + '" y="' + (y + .73) + '" fill="' + digitInk(fill) +
-        '" text-anchor="middle" font-family="monospace" font-size=".65" font-weight="700">' +
-        (key === "zero" ? "0" : "1") + '</text>';
+      if (!state.digits || !digitPaths) return rect;
+      const digit = key === "zero" ? "0" : "1";
+      return rect + '<path d="' + digitPaths[digit].path + '" transform="translate(' + x + ' ' + y +
+        ')" fill="' + digitInk(fill) + '" shape-rendering="geometricPrecision"/>';
     }
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2" viewBox="0 0 2 2" shape-rendering="crispEdges">' +
       tile(0, 0, first) + tile(1, 0, second) + tile(0, 1, second) + tile(1, 1, first) + "</svg>";
@@ -192,12 +198,14 @@
     }
   }
   function logicPaint(hex, opacity) {
-    return {hex: hex.toLowerCase(), opacity: opacity / 100, ink: digitInk(hex)};
+    return {hex: hex.toLowerCase(), opacity: opacity / 100, ink: digitInk(hex),
+      rgb: [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16))};
   }
 
   function paintLogic() {
     logicFrame = 0;
-    const and = state.logic.startsWith("and"), byPalette = state.logic.endsWith("-rgb");
+    const additive = state.logic === "add-rgb";
+    const and = state.logic.startsWith("and"), byPalette = !additive && state.logic.endsWith("-rgb");
     const visible = layers().filter(board => board.visible).map(board => ({
       ...board, palette: board.zero.toLowerCase() + "/" + board.one.toLowerCase(),
     }));
@@ -228,9 +236,6 @@
     });
     const groups = new Map();
     const ctx = logicContext;
-    ctx.font = "700 " + scale * .65 + "px monospace";
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "center";
 
     function fill(paint, x, y) {
       ctx.fillStyle = paint.hex;
@@ -244,11 +249,25 @@
       const py = (y - top) * scale;
       for (let x = left; x < left + width; x++) {
         let upper = null, ones = 0;
+        let lightAlpha = 0, lightBit = 0;
+        const light = additive ? [0, 0, 0] : null;
         for (const board of row) {
           if (x < board.x || x >= board.right) continue;
           upper = board;
           const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
           ones += bit;
+          if (additive) {
+            const paint = board.paints[bit];
+            // Свет складывается в premultiplied RGB; чёрная клетка не гасит соседний свет.
+            if (paint.opacity > 0) {
+              lightAlpha = Math.max(lightAlpha, paint.opacity);
+              lightBit |= bit;
+              for (let channel = 0; channel < 3; channel++) {
+                light[channel] += paint.rgb[channel] * paint.opacity;
+              }
+            }
+            continue;
+          }
           if (!byPalette) continue;
           const {palette} = board;
           const paletteOnes = (groups.get(palette)?.ones ?? 0) + bit;
@@ -261,6 +280,14 @@
         const px = (x - left) * scale;
         let bit = and ? Number(ones === visible.length) : ones & 1;
         let paint = upper.paints[bit];
+        if (additive) {
+          if (lightAlpha === 0) continue;
+          bit = lightBit;
+          // Ограничиваем сумму 255, затем восстанавливаем цвет для canvas с общей alpha.
+          const rgb = light.map(component => Math.round(clamp(Math.min(255, component) / lightAlpha, 0, 255)));
+          const hex = "#" + rgb.map(component => component.toString(16).padStart(2, "0")).join("");
+          paint = {hex, opacity: lightAlpha, ink: digitInk(hex)};
+        }
         if (byPalette) {
           bit = 0;
           paint = upper.paints[0];
@@ -274,10 +301,14 @@
           groups.clear();
         }
         if (!byPalette || !bit) fill(paint, px, py);
-        if (state.digits && scale >= 4) {
+        if (state.digits && canvasDigits && scale >= 4) {
           ctx.globalAlpha = 1;
           ctx.fillStyle = paint.ink;
-          ctx.fillText(String(bit), px + scale / 2, py + scale / 2);
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.scale(scale, scale);
+          ctx.fill(canvasDigits[bit]);
+          ctx.restore();
         }
       }
     }
@@ -407,13 +438,31 @@
     byId("field-cols").value = state.fieldCols ?? "";
     byId("field-rows").value = state.fieldRows ?? "";
     byId("digits").setAttribute("aria-pressed", String(state.digits));
+    byId("phase-all").disabled = !state.boards.length;
+    byId("rgb-scope").dataset.scope = state.rgbScope;
+    byId("rgb-scope").classList.toggle("gz-bs", state.rgbScope === "one");
+    for (const button of rgbScopeButtons) {
+      button.setAttribute("aria-pressed", String(button.dataset.chessRgbScope === state.rgbScope));
+    }
     for (const button of logicButtons) {
       button.disabled = !logicContext;
       button.setAttribute("aria-pressed", String(button.dataset.chessLogic === state.logic));
     }
     const board = selected();
+    for (const button of rgbButtons) {
+      button.disabled = !board || !logicContext;
+      const hex = button.dataset.chessRgb;
+      const active = !!board && board.one.toLowerCase() === hex &&
+        (state.rgbScope !== "all" || board.zero.toLowerCase() === hex);
+      button.setAttribute("aria-pressed", String(active));
+    }
     byId("settings").disabled = !board;
-    byId("remove").disabled = !board;
+    byId("remove").disabled = !state.selectedIds.length;
+    const removeTitle = state.selectedIds.length > 1
+      ? "Удалить все выделенные шахматки (" + state.selectedIds.length + "). Delete — то же действие."
+      : "Удалить выбранную шахматку. Delete — то же действие.";
+    byId("remove").title = removeTitle;
+    byId("remove").setAttribute("aria-label", removeTitle);
     byId("add").disabled = state.boards.length >= MAX_BOARDS;
     const diagonal = byId("add-diagonal");
     diagonal.disabled = !diagonalAvailable(board);
@@ -466,9 +515,21 @@
     const swatch = event.target.closest(".chess-swatch");
     if (!swatch || drag) return;
     lastTap = null;
-    select(Number(swatch.dataset.boardId), event.ctrlKey);
+    select(Number(swatch.dataset.boardId), event.shiftKey || event.ctrlKey);
   });
   byId("digits").addEventListener("click", () => mutate(() => { state.digits = !state.digits; }));
+  for (const button of rgbScopeButtons) {
+    button.addEventListener("click", () => mutate(() => { state.rgbScope = button.dataset.chessRgbScope; }));
+  }
+  for (const button of rgbButtons) {
+    button.addEventListener("click", () => mutate(() => {
+      const board = selected();
+      if (!board || !logicContext) return;
+      board.one = button.dataset.chessRgb;
+      if (state.rgbScope === "all") board.zero = board.one;
+      state.logic = "add-rgb";
+    }));
+  }
   for (const button of logicButtons) {
     button.addEventListener("click", () => mutate(() => {
       const mode = button.dataset.chessLogic;
@@ -505,11 +566,15 @@
     if (!diagonalAvailable(source)) return;
     mutate(() => addBoard(source.x + source.cols, source.y + source.rows, source));
   });
-  byId("remove").addEventListener("click", () => mutate(() => {
-    state.boards = state.boards.filter(board => board.id !== state.selected);
-    const remaining = state.selectedIds.filter(id => id !== state.selected);
-    setSelection(remaining.length ? remaining : state.boards.slice(-1).map(board => board.id));
-  }));
+  function removeSelected() {
+    if (!state.selectedIds.length) return;
+    mutate(() => {
+      const removed = new Set(state.selectedIds);
+      state.boards = state.boards.filter(board => !removed.has(board.id));
+      setSelection(state.boards.slice(-1).map(board => board.id));
+    });
+  }
+  byId("remove").addEventListener("click", removeSelected);
   byId("undo").addEventListener("click", () => {
     if (drag) return;
     lastTap = null;
@@ -519,6 +584,9 @@
     save(); render();
   });
   byId("phase").addEventListener("click", () => mutate(() => { const board = selected(); if (board) board.phase = !board.phase; }));
+  byId("phase-all").addEventListener("click", () => mutate(() => {
+    for (const board of state.boards) board.phase = !board.phase;
+  }));
   byId("visibility").addEventListener("click", () => mutate(() => { const board = selected(); if (board) board.visible = !board.visible; }));
   function reorder(delta) {
     mutate(() => {
@@ -707,7 +775,7 @@
         else save();
       }
     } else if (finished.modified || !finished.tapId) {
-      choose(finished.activeId, finished.copy);
+      choose(finished.activeId, finished.modified);
       lastTap = null;
       save();
     } else {
@@ -739,7 +807,7 @@
     const element = event.target.closest(".chess-board");
     if (!element) return;
     lastTap = null;
-    select(Number(element.dataset.boardId), event.ctrlKey);
+    select(Number(element.dataset.boardId), event.shiftKey || event.ctrlKey);
   });
   viewport.addEventListener("keydown", event => {
     const steps = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -789,6 +857,16 @@
   }
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) viewport.addEventListener(type, finishFieldResize);
   window.addEventListener("keydown", event => {
+    if (event.key === "Delete") {
+      const target = event.target;
+      if (drag || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey ||
+          target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])") ||
+          !target.closest("#boards-editor") || !state.selectedIds.length) return;
+      event.preventDefault();
+      removeSelected();
+      viewport.focus({preventScroll: true});
+      return;
+    }
     if (event.key !== "Escape" || !drag) return;
     event.preventDefault();
     finishFieldResize(event);

@@ -168,6 +168,7 @@
     finally { syncing = false; }
   }
   window.BitByteNumberControls = {sync: syncAll};
+  document.fonts?.ready.then(syncAll);
   // Covers fieldset-disabled changes even when they come from outside the renderer.
   const panel = document.querySelector(".chess-controls");
   if (panel) new MutationObserver(syncAll).observe(panel, {subtree: true, attributes: true, attributeFilter: ["disabled", "min", "max", "step"]});

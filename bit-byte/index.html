@@ -1,25 +1,27 @@
-<!-- Bit-Byte v0.016 · Стандартные регуляторы размеров и координат шахматки. -->
+<!-- Bit-Byte v0.017 · Operator из Азбуки, RGB-свет и действия с выделением. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.016 — Зеркалиус</title>
+  <title>Bit-Byte v0.017 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=015">
+  <link rel="stylesheet" href="style.css?v=017">
   <link rel="stylesheet" href="../_js/control-frame.css?v=2">
-  <link rel="stylesheet" href="number-controls.css?v=016">
+  <link rel="stylesheet" href="number-controls.css?v=017">
+  <link rel="stylesheet" href="rgb-controls.css?v=017">
 
   <script defer src="app.js?v=009"></script>
-  <script defer src="chessboards.js?v=016"></script>
+  <script defer src="fonts/operator-digits.js?v=017"></script>
+  <script defer src="chessboards.js?v=017"></script>
   <script defer src="../_js/control-frame.js?v=2"></script>
-  <script defer src="number-controls.js?v=016"></script>
+  <script defer src="number-controls.js?v=017"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.016</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.017</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -38,13 +40,14 @@
       <div class="chess-workspace">
         <aside class="panel chess-controls" aria-label="Управление шахматками">
           <h2>Шахматки</h2>
-          <div id="chess-list" class="chess-swatches" role="group" aria-label="Выбор шахматок по цвету обводки" title="Слои от нижнего к верхнему. Ctrl+щелчок меняет выделение."></div>
+          <div id="chess-list" class="chess-swatches" role="group" aria-label="Выбор шахматок по цвету обводки" title="Слои от нижнего к верхнему. Shift+щелчок добавляет или убирает шахматку из выделения; Ctrl+щелчок также доступен. Delete удаляет выделенные шахматки."></div>
           <p id="chess-selection-info" class="hint" role="status"></p>
           <div class="commands">
             <button id="chess-add" class="gz-hx" type="button" title="Добавить шахматку"><span class="gz-ic" aria-hidden="true">+</span><span class="gz-nm">Добавить</span></button>
             <button id="chess-add-diagonal" class="gz-hx" type="button" aria-label="Новая шахматка вниз-вправо, на одну строку и столбец больше" title="Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше"><span class="gz-ic" aria-hidden="true">↘</span><span class="gz-nm">+1×1</span></button>
             <button id="chess-remove" class="gz-hx" type="button" title="Удалить выбранную шахматку"><span class="gz-ic" aria-hidden="true">−</span><span class="gz-nm">Удалить</span></button>
             <button id="chess-undo" class="gz-hx" type="button" title="Отменить последнее изменение шахматок"><span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Отмена</span></button>
+            <button id="chess-phase-all" class="gz-hx" type="button" aria-label="Поменять местами 0 и 1 во всех шахматках, включая скрытые" title="Поменять местами 0 и 1 во всех шахматках, включая скрытые. Одно нажатие — одно действие отмены."><span class="gz-ic" aria-hidden="true">⇄</span><span class="gz-nm">0↔1 все</span></button>
           </div>
           <label class="chess-global" for="chess-cell">Общая клетка, px <input id="chess-cell" type="number" min="1" max="64" step="1" value="24"></label>
           <fieldset>
@@ -60,6 +63,7 @@
             <button class="gz-hx" type="button" data-chess-logic="xor-rgb" aria-pressed="false" title="XOR отдельно для шахматок с одинаковыми цветами 0 и 1"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">XOR RGB</span></button>
             <button class="gz-hx" type="button" data-chess-logic="and" aria-pressed="false" title="AND по всем видимым шахматкам"><span class="gz-ic" aria-hidden="true">∧</span><span class="gz-nm">AND все</span></button>
             <button class="gz-hx" type="button" data-chess-logic="and-rgb" aria-pressed="false" title="AND отдельно для шахматок с одинаковыми цветами 0 и 1"><span class="gz-ic" aria-hidden="true">∧</span><span class="gz-nm">AND RGB</span></button>
+            <button class="gz-hx" type="button" data-chess-logic="add-rgb" aria-pressed="false" aria-label="Аддитивное смешение RGB" title="Аддитивное смешение RGB: красный + зелёный = жёлтый; красный + синий = пурпурный; зелёный + синий = голубой; все три = белый. Учитываются цвета и непрозрачность обоих битов видимых шахматок. Чёрный не добавляет света. Цифра — OR битов клеток с ненулевой непрозрачностью. Повторное нажатие возвращает обычное наложение."><span class="gz-ic" aria-hidden="true">+</span><span class="gz-nm">RGB +</span></button>
           </div>
           <fieldset id="chess-settings">
             <legend>Выбранная шахматка</legend>
@@ -74,6 +78,15 @@
               <input id="chess-outline" type="color" value="#ff6868" aria-label="Цвет обводки" title="Цвет обводки">
               <input id="chess-zero" type="color" value="#000000" aria-label="Цвет бита 0" title="Цвет бита 0">
               <input id="chess-one" type="color" value="#ffffff" aria-label="Цвет бита 1" title="Цвет бита 1">
+            </div>
+            <div class="commands chess-rgb-controls" role="group" aria-label="Основные цвета RGB для выбранной шахматки">
+              <div id="chess-rgb-scope" class="gz-hx gz-pair gz-split gz-bs axis-pair chess-rgb-scope" role="group" aria-label="Область следующего применения цвета RGB" data-scope="one">
+                <button class="gz-half gz-h0" type="button" data-chess-rgb-scope="one" aria-pressed="true" aria-label="Применять RGB только к белым клеткам — биту 1" title="Следующее нажатие Р, Г или Б изменит только цвет бита 1 (исходно белых клеток) выбранной шахматки"><span class="gz-nm">Блые</span></button>
+                <button class="gz-half gz-h1" type="button" data-chess-rgb-scope="all" aria-pressed="false" aria-label="Применять RGB ко всей выбранной шахматке — битам 0 и 1" title="Следующее нажатие Р, Г или Б изменит оба цвета — битов 0 и 1 — выбранной шахматки"><span class="gz-nm">Вся</span></button>
+              </div>
+              <button class="gz-hx chess-rgb-preset" type="button" data-chess-rgb="#ff0000" aria-pressed="false" aria-label="Красный RGB для выбранной шахматки" title="Красный #ff0000: применить к биту 1 или всей выбранной шахматке по переключателю Белые / Вся. Непрозрачность сохраняется; включается аддитивное смешение RGB."><span class="gz-ic" aria-hidden="true" style="--rgb-swatch:#ff0000">●</span><span class="gz-nm">Р</span></button>
+              <button class="gz-hx chess-rgb-preset" type="button" data-chess-rgb="#00ff00" aria-pressed="false" aria-label="Зелёный RGB для выбранной шахматки" title="Зелёный #00ff00: применить к биту 1 или всей выбранной шахматке по переключателю Белые / Вся. Непрозрачность сохраняется; включается аддитивное смешение RGB."><span class="gz-ic" aria-hidden="true" style="--rgb-swatch:#00ff00">●</span><span class="gz-nm">Г</span></button>
+              <button class="gz-hx chess-rgb-preset" type="button" data-chess-rgb="#0000ff" aria-pressed="false" aria-label="Синий RGB для выбранной шахматки" title="Синий #0000ff: применить к биту 1 или всей выбранной шахматке по переключателю Белые / Вся. Непрозрачность сохраняется; включается аддитивное смешение RGB."><span class="gz-ic" aria-hidden="true" style="--rgb-swatch:#0000ff">●</span><span class="gz-nm">Б</span></button>
             </div>
             <div class="chess-input-pair">
               <label for="chess-zero-opacity">Непрозрачность 0 <input id="chess-zero-opacity" type="range" min="0" max="100" step="1" aria-label="Непрозрачность бита 0"><output id="chess-zero-percent"></output></label>
@@ -90,7 +103,7 @@
         </aside>
         <section class="panel chess-scene-panel" aria-label="Поле шахматок">
           <h2>Поле шахматок</h2>
-          <p class="hint">Тяните середину для переноса одной шахматки, край или угол для изменения размера. Ctrl+щелчок меняет состав выделения на поле или в списке. Shift+перетаскивание переносит выделение, Ctrl+перетаскивание создаёт и переносит копии. Меньшая площадь всегда выше большей.</p>
+          <p class="hint">Тяните середину для переноса одной шахматки, край или угол для изменения размера. Shift+щелчок меняет состав выделения на поле или в списке; Ctrl+щелчок также доступен. Shift+перетаскивание переносит выделение, Ctrl+перетаскивание создаёт и переносит копии. Delete удаляет выделенные шахматки. Меньшая площадь всегда выше большей.</p>
           <div id="chess-viewport" tabindex="0" aria-label="Поле шахматок. Размер задаётся числами или правой и нижней рамкой" title="Правый и нижний края меняют размер всего поля, угол — обе стороны. Уменьшение сохраняет шахматки за рамкой. Escape отменяет растягивание.">
             <div id="chess-world" aria-label="Шахматки"></div>
             <div class="chess-field-edge" data-field-edge="right" aria-hidden="true" title="Ширина всего поля"></div>
@@ -99,7 +112,7 @@
           </div>
           <p id="chess-total" class="hint"></p>
           <p class="hint">Двойной щелчок меняет 0 и 1 местами. Стрелки сдвигают выбранную шахматку на клетку, Shift со стрелкой — на 10. При переносе вниз поле растёт.</p>
-          <p class="hint">Одна клетка — один бит. Размер шахматки: столбцы × строки. XOR и AND работают с видимыми шахматками. В режимах RGB шахматки образуют группу, если совпадают оба цвета: для 0 и для 1. Повторное нажатие на выбранный режим возвращает обычное наложение.</p>
+          <p class="hint">Одна клетка — один бит. Размер шахматки: столбцы × строки. XOR и AND работают с видимыми шахматками. В режимах XOR RGB и AND RGB шахматки образуют группу, если совпадают оба цвета: для 0 и для 1. Повторное нажатие на выбранный режим возвращает обычное наложение.</p>
         </section>
       </div>
     </section>

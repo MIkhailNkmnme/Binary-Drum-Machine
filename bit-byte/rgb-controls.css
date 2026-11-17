@@ -1,0 +1,14 @@
+/* RGB presets and the two halves of one standard scope button. */
+.commands.chess-rgb-controls { display: grid; grid-template-columns: repeat(2, 120px); gap: 2px 6px; }
+.chess-rgb-controls .chess-rgb-preset .gz-ic { color: var(--rgb-swatch); text-shadow: none; }
+.commands .chess-rgb-scope { --gz-r0: transparent; --gz-r1: transparent; cursor: default; }
+.commands .chess-rgb-scope .gz-half { font: 11px/24px var(--bb-font); color: var(--text); text-shadow: none; user-select: none; }
+.commands .chess-rgb-scope .gz-half:hover { color: var(--text); text-shadow: none; }
+.commands .chess-rgb-scope .gz-half::before { background: #1b2430 !important; }
+.commands .chess-rgb-scope .gz-half[aria-pressed="true"] { color: var(--text); text-shadow: none; }
+.commands .chess-rgb-scope .gz-half[aria-pressed="true"]:enabled:hover::before { inset: 2px; }
+.commands .chess-rgb-scope .gz-half[aria-pressed="true"]:is(:focus-visible, :active)::before { inset: 3px; }
+.commands .chess-rgb-scope.gz-bs .gz-half.gz-h0 { clip-path: polygon(0 50%,var(--gz-n) 0,calc(100% - 8px) 0,100% 100%,var(--gz-n) 100%); }
+.commands .chess-rgb-scope.gz-bs .gz-half.gz-h1 { clip-path: polygon(1px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,9px 100%); }
+.commands .chess-rgb-scope:not(.gz-bs) .gz-half.gz-h0 { clip-path: polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 8px) 100%,var(--gz-n) 100%); }
+.commands .chess-rgb-scope:not(.gz-bs) .gz-half.gz-h1 { clip-path: polygon(9px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,1px 100%); }

@@ -1,4 +1,19 @@
+@font-face {
+  font-family: "BitByte Operator";
+  src: url("fonts/bitbyte-operator-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "BitByte Operator";
+  src: url("fonts/bitbyte-operator-bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
 :root {
+  --bb-font: "BitByte Operator", ui-monospace, Consolas, monospace;
   color-scheme: dark;
   --bg: #0b1117;
   --panel: #101a22;
@@ -9,7 +24,7 @@
   --excluded: #d4a88c;
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.45 ui-monospace, Consolas, monospace;
+  font: 14px/1.45 var(--bb-font);
 }
 
 * { box-sizing: border-box; }
@@ -236,7 +251,7 @@ h2, .stats caption {
 
 .commands .gz-hx {
   width: var(--gz-w);
-  font: 12px/1.2 "Segoe UI", sans-serif;
+  font: 12px/1.2 var(--bb-font);
 }
 
 .commands .gz-hx:hover::before { background: var(--gz-bg); }
@@ -256,7 +271,7 @@ h2, .stats caption {
   border: 0;
   isolation: isolate;
   gap: 2px;
-  font: 10px/1 "Segoe UI", sans-serif;
+  font: 10px/1 var(--bb-font);
   color: var(--text);
   text-shadow: none;
   user-select: none;
