@@ -177,7 +177,7 @@ function compare(currentJob) {
   const threshold = Math.min(100, Math.max(0, Number(input.value) || 0));
   input.value = threshold;
   const result = compareFrames(previous, current, grid, threshold);
-  currentJob.comparison = {grid, result, threshold};
+  currentJob.comparison = {grid, result};
   const row = {index, time, columns: grid.columns, rows: grid.rows, threshold,
     cellWidth: grid.width, cellHeight: grid.height,
     count: grid.columns * grid.rows, changed: result.hasPrevious ? result.changed : null,
@@ -250,6 +250,7 @@ async function process(currentJob, all) {
       currentJob.previous = currentJob.current;
       currentJob.current = image.getImageData(0, 0, frame.width, frame.height);
       currentJob.index++;
+      if (currentJob.index === 1) ensurePendulum();
       currentJob.time = frame.time;
       compare(currentJob);
       if (performance.now() - painted >= 140) {
@@ -340,6 +341,7 @@ element('youtube-form').addEventListener('submit', event => {
   element('video-heading').textContent = 'Видео YouTube';
   element('youtube-watch').href = 'https://www.youtube.com/watch?v=' + id;
   element('youtube-actions').hidden = false;
+  ensurePendulum();
   status('Ролик подключён. Для анализа выберите его вкладку.');
   controls();
 });
@@ -432,6 +434,10 @@ element('csv').addEventListener('click', () => {
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
+
+function ensurePendulum() {
+  if (element('pendulum-view').hidden && element('pendulum-form').checkValidity()) showPendulum();
+}
 
 function showPendulum() {
   const rows = Number(element('pendulum-rows').value);
