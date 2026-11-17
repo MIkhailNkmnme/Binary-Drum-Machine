@@ -199,10 +199,14 @@
     const gain = VOICES[voice].gain;
     let noiseState = (midi + 1) * 171313;
     let noiseLow = 0;
+    // releaseSpan <= 0 бывает на медленном темпе: нота в секундах длиннее, чем
+    // выбранная длина голоса. Тогда знаменатель уходил в минус и огибающая гасила
+    // сигнал целиком (бочка молчала при 67 BPM). В этом случае оставляем endFade.
+    const releaseSpan = length - duration;
     for (let i = 0; i < pcm.length; i++) {
       const time = i / rate;
       const phase = time * angular;
-      const tail = Math.max(0, (length - time) / (length - duration || length));
+      const tail = releaseSpan > 0 ? Math.max(0, (length - time) / releaseSpan) : 1;
       const release = clamp(tail, 0, 1) ** 1.9;
       const endFade = Math.min(1, (pcm.length - 1 - i) / (rate * .009));
       const start = Math.min(1, time / attack);
