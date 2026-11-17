@@ -30,6 +30,24 @@
   </div>
   <output id="status" role="status">Выберите файл или подключите YouTube.</output>
 
+  <section aria-label="Управление анализом">
+    <div class="controls">
+      <button id="next" type="button" disabled>Следующий кадр</button>
+      <button id="all" type="button" disabled>Все кадры</button>
+      <button id="pause" type="button" disabled>Пауза</button>
+      <button id="restart" type="button" disabled>С начала</button>
+      <button id="csv" type="button" disabled>Скачать CSV</button>
+    </div>
+    <div class="controls grid-controls">
+      <label>Ширина ячейки, px <input id="cell-width" type="number" min="1" value="16" disabled></label>
+      <label>Высота ячейки, px <input id="cell-height" type="number" min="1" value="16" disabled></label>
+      <label>Порог изменения, % <input id="threshold" type="number" min="0" max="100" step="0.1" value="0" disabled></label>
+      <button id="pixels" type="button" disabled>1 пиксель</button>
+      <button id="four" type="button" disabled>4 ячейки</button>
+    </div>
+    <output id="metrics" aria-live="off">Для сравнения нужны два кадра.</output>
+  </section>
+
   <section class="visuals" aria-label="Кадр и карта изменений">
     <div class="video-side">
       <h2 id="video-heading">Текущий кадр</h2>
@@ -76,21 +94,6 @@
 
   <section aria-labelledby="analysis-title">
     <h2 id="analysis-title">Анализ по кадрам</h2>
-    <div class="controls">
-      <button id="next" type="button" disabled>Следующий кадр</button>
-      <button id="all" type="button" disabled>Все кадры</button>
-      <button id="pause" type="button" disabled>Пауза</button>
-      <button id="restart" type="button" disabled>С начала</button>
-      <button id="csv" type="button" disabled>Скачать CSV</button>
-    </div>
-    <div class="controls grid-controls">
-      <label>Ширина ячейки, px <input id="cell-width" type="number" min="1" value="16" disabled></label>
-      <label>Высота ячейки, px <input id="cell-height" type="number" min="1" value="16" disabled></label>
-      <label>Порог изменения, % <input id="threshold" type="number" min="0" max="100" step="0.1" value="0" disabled></label>
-      <button id="pixels" type="button" disabled>1 пиксель</button>
-      <button id="four" type="button" disabled>4 ячейки</button>
-    </div>
-    <output id="metrics" aria-live="off">Для сравнения нужны два кадра.</output>
     <div class="table-wrap">
       <table aria-label="Изменения по кадрам">
         <thead><tr><th>Кадр</th><th>Время, с</th><th>Сетка</th><th>Порог, %</th><th>Изменилось ячеек</th><th>Средняя разница, %</th><th>Макс. ячейка, %</th></tr></thead>
