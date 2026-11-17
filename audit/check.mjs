@@ -61,39 +61,59 @@ const compactUrl = address => address.startsWith(base.origin + '/') ? address.sl
 const size = bytes => (bytes / 1024).toFixed(0);
 const dedupe = entries => [...new Set(entries)];
 
+async function withTimeout(task, ms, message) {
+  const controller = new AbortController();
+  try {
+    return await Promise.race([
+      task,
+      delay(ms, undefined, { signal: controller.signal }).then(() => { throw new Error(message); }),
+    ]);
+  } finally {
+    controller.abort();
+  }
+}
+
 async function inspect(browser, file, name, options) {
   const url = route(file);
-  const context = await browser.newContext(options);
-  const page = await context.newPage();
+  let context;
   const issues = [];
   const notes = [];
   const result = { name, issues, notes };
-  page.on('pageerror', error => issues.push(`JavaScript: ${error.message}`));
-  page.on('console', entry => {
-    if (entry.type() !== 'error' || entry.text().startsWith('Failed to load resource:')) return;
-    const location = entry.location().url;
-    issues.push(`Консоль: ${entry.text()}${location ? ` (${compactUrl(location)})` : ''}`);
-  });
-  page.on('response', response => {
-    if (response.status() >= 400) {
-      issues.push(`HTTP ${response.status()} (${response.request().resourceType()}): ${compactUrl(response.url())}`);
-    }
-  });
-  page.on('requestfailed', request => {
-    const reason = request.failure()?.errorText;
-    if (reason !== 'net::ERR_ABORTED') issues.push(`Сеть ${reason}: ${compactUrl(request.url())}`);
-  });
-  await page.addInitScript(() => {
-    window.auditLongTasks = [];
-    try {
-      new PerformanceObserver(list => {
-        window.auditLongTasks.push(...list.getEntries().map(entry => entry.duration));
-      }).observe({ type: 'longtask', buffered: true });
-    } catch {
-      window.auditLongTasks = null;
-    }
-  });
   try {
+    const opening = browser.newContext(options);
+    try {
+      context = await withTimeout(opening, 12000, 'Playwright не создал контекст за 12 с');
+    } catch (error) {
+      // A context that opens after the deadline still belongs to this run.
+      void opening.then(late => late.close()).catch(() => {});
+      throw error;
+    }
+    const page = await withTimeout(context.newPage(), 12000, 'Playwright не создал вкладку за 12 с');
+    page.on('pageerror', error => issues.push(`JavaScript: ${error.message}`));
+    page.on('console', entry => {
+      if (entry.type() !== 'error' || entry.text().startsWith('Failed to load resource:')) return;
+      const location = entry.location().url;
+      issues.push(`Консоль: ${entry.text()}${location ? ` (${compactUrl(location)})` : ''}`);
+    });
+    page.on('response', response => {
+      if (response.status() >= 400) {
+        issues.push(`HTTP ${response.status()} (${response.request().resourceType()}): ${compactUrl(response.url())}`);
+      }
+    });
+    page.on('requestfailed', request => {
+      const reason = request.failure()?.errorText;
+      if (reason !== 'net::ERR_ABORTED') issues.push(`Сеть ${reason}: ${compactUrl(request.url())}`);
+    });
+    await page.addInitScript(() => {
+      window.auditLongTasks = [];
+      try {
+        new PerformanceObserver(list => {
+          window.auditLongTasks.push(...list.getEntries().map(entry => entry.duration));
+        }).observe({ type: 'longtask', buffered: true });
+      } catch {
+        window.auditLongTasks = null;
+      }
+    });
     const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
     result.http = response?.status();
     const originalBody = response?.ok() && response.url() === url
@@ -162,7 +182,14 @@ async function inspect(browser, file, name, options) {
     result.incomplete = true;
     issues.push(`Прогон прерван: ${error.message.split('\n')[0]}`);
   } finally {
-    await context.close();
+    if (context) {
+      try {
+        await withTimeout(context.close(), 8000, 'Playwright не закрыл контекст за 8 с');
+      } catch (error) {
+        result.incomplete = true;
+        issues.push(`Завершение профиля: ${error.message.split('\n')[0]}`);
+      }
+    }
   }
   return result;
 }
