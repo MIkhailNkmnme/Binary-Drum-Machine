@@ -31,6 +31,7 @@
     const NOUN = config.noun;
     const UNIT = NOUN[0].toUpperCase() + NOUN.slice(1);
     const STORAGE_KEY = `${config.storage}_v1`;
+    const RIGHT_KEY = `${config.storage}_right_v1`;
     const LAYOUT_KEY = `${config.storage}_layout_v1`;
     const CYCLIC_KEY = `${config.storage}_cyclic_v1`;
     const hex = (value, width = 1) => value.toString(16).toUpperCase().padStart(width, "0");
@@ -100,6 +101,7 @@
     byId("reset-layout").title = "Исходное расположение: обе оси по возрастанию. Исключения сохраняются.";
 
     let excluded = loadExcluded();
+    let rightExcluded = loadRightExcluded();
     let layout = loadLayout();
     let cyclic = loadCyclic();
     let previous = null;
@@ -146,9 +148,23 @@
       return new Set();
     }
 
+    function loadRightExcluded() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(RIGHT_KEY));
+        // Metadata belongs to this exact exclusion snapshot. Legacy selections
+        // and interrupted writes retain the original left-click diagonal.
+        if (!Array.isArray(saved?.excluded) || !Array.isArray(saved.right) ||
+          saved.excluded.length !== excluded.size || new Set(saved.excluded).size !== excluded.size ||
+          !saved.excluded.every(value => excluded.has(value))) return new Set();
+        return new Set(saved.right.filter(value => Number.isInteger(value) && excluded.has(value)));
+      } catch { return new Set(); }
+    }
+
     function saveExcluded() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([...excluded].sort((a, b) => a - b)));
+        const values = [...excluded].sort((a, b) => a - b);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+        localStorage.setItem(RIGHT_KEY, JSON.stringify({excluded: values, right: [...rightExcluded].sort((a, b) => a - b)}));
       } catch {
         // Продолжаем работу со значениями открытой страницы.
       }
@@ -260,19 +276,36 @@
       buttons[index].focus();
     });
 
+    function toggleWord(button, rightClick = false) {
+      const value = Number(button.dataset.value);
+      const next = new Set(excluded), nextRight = new Set(rightExcluded);
+      if (next.delete(value)) nextRight.delete(value);
+      else {
+        next.add(value);
+        if (rightClick) nextRight.add(value);
+        else nextRight.delete(value);
+      }
+      setTabbable(Number(button.dataset.index));
+      commit(next, nextRight);
+    }
+
     field.addEventListener("click", event => {
       const button = event.target.closest("button.byte");
-      if (!button) return;
-      const value = Number(button.dataset.value);
-      const next = new Set(excluded);
-      if (!next.delete(value)) next.add(value);
-      setTabbable(Number(button.dataset.index));
-      commit(next);
+      if (button) toggleWord(button);
+    });
+    field.addEventListener("contextmenu", event => {
+      const button = event.target.closest("button.byte");
+      // Keep the keyboard context-menu command unchanged; this gesture is right-click.
+      if (!button || event.button !== 2) return;
+      event.preventDefault();
+      toggleWord(button, true);
     });
 
-    function commit(next) {
-      previous = excluded;
+    function commit(next, directions = rightExcluded) {
+      previous = {excluded, rightExcluded};
       excluded = next;
+      // Directions are only metadata for the canonical exclusion set.
+      rightExcluded = new Set([...directions].filter(value => excluded.has(value)));
       saveExcluded();
       render(true);
     }
@@ -289,7 +322,7 @@
 
     undo.addEventListener("click", () => {
       if (!previous) return;
-      excluded = previous;
+      ({excluded, rightExcluded} = previous);
       previous = null;
       saveExcluded();
       render(true);
@@ -438,7 +471,9 @@
     function render(announce = false) {
       clearListResult();
       for (const button of buttons) {
-        const pressed = String(excluded.has(Number(button.dataset.value)));
+        const value = Number(button.dataset.value);
+        const pressed = String(excluded.has(value));
+        button.toggleAttribute("data-right-excluded", excluded.has(value) && rightExcluded.has(value));
         if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
       }
 

@@ -1,0 +1,4 @@
+/* Right-click exclusions reverse the existing 135-degree left-click mark. */
+.byte[aria-pressed="true"][data-right-excluded]::after {
+  background: linear-gradient(45deg, transparent calc(50% - .6px), #d4a88caa 50%, transparent calc(50% + .6px));
+}

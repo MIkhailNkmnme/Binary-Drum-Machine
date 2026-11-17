@@ -47,6 +47,7 @@
   function makeBoard(id, x = 2, y = 2) {
     return {
       id, x, y, cols: 16, rows: 16, phase: false, outline: defaultOutline(id),
+      aspectLocked: false, aspectCols: 16, aspectRows: 16,
       zero: "#000000", one: "#ffffff", zeroOpacity: 100, oneOpacity: 100, visible: true,
     };
   }
@@ -74,6 +75,9 @@
           outline,
           x: integer(item.x, 2, 0, MAX_POSITION), y: integer(item.y, 2, 0, MAX_POSITION),
           cols: integer(item.cols, 16, 1, MAX_SIZE), rows: integer(item.rows, 16, 1, MAX_SIZE),
+          aspectLocked: item.aspectLocked === true,
+          aspectCols: integer(item.aspectCols, integer(item.cols, 16, 1, MAX_SIZE), 1, MAX_SIZE),
+          aspectRows: integer(item.aspectRows, integer(item.rows, 16, 1, MAX_SIZE), 1, MAX_SIZE),
           phase: item.phase === true, visible: item.visible !== false,
           zero: color(item.zero, "#000000"), one: color(item.one, "#ffffff"),
           zeroOpacity: integer(item.zeroOpacity, 100, 0, 100),
@@ -449,6 +453,12 @@
       button.setAttribute("aria-pressed", String(button.dataset.chessLogic === state.logic));
     }
     const board = selected();
+    byId("aspect-lock").disabled = !board;
+    byId("aspect-lock").setAttribute("aria-pressed", String(!!board?.aspectLocked));
+    byId("aspect-lock").title = board?.aspectLocked
+      ? "Пропорция зафиксирована: " + board.aspectCols + ":" + board.aspectRows +
+        ". Размеры меняются вместе, с округлением до целых клеток. Нажмите, чтобы освободить пропорцию."
+      : "Зафиксировать текущую пропорцию столбцов и строк выбранной шахматки. Размеры будут меняться вместе, с округлением до целых клеток.";
     for (const button of rgbButtons) {
       button.disabled = !board || !logicContext;
       const hex = button.dataset.chessRgb;
@@ -496,13 +506,36 @@
   bindInput("field-cols", value => { state.fieldCols = integer(value, state.fieldCols, 1, MAX_FIELD); });
   bindInput("field-rows", value => { state.fieldRows = integer(value, state.fieldRows, 1, MAX_FIELD); });
   bindInput("cell", value => { state.cell = integer(value, state.cell, 1, 64); });
+  // Всегда считаем от захваченной пропорции, а не от последней округлённой пары.
+  function aspectSize(board, driver, target, bounds = {}) {
+    const ratio = driver === "cols" ? board.aspectRows / board.aspectCols : board.aspectCols / board.aspectRows;
+    const other = driver === "cols" ? "rows" : "cols";
+    const minimum = bounds[driver + "Min"] ?? 1, maximum = bounds[driver + "Max"] ?? MAX_SIZE;
+    const otherMinimum = bounds[other + "Min"] ?? 1, otherMaximum = bounds[other + "Max"] ?? MAX_SIZE;
+    let best = null, distance = Infinity;
+    for (let value = minimum; value <= maximum; value++) {
+      const paired = Math.round(value * ratio);
+      if (paired < otherMinimum || paired > otherMaximum) continue;
+      const nextDistance = Math.abs(value - target);
+      if (nextDistance >= distance) continue;
+      distance = nextDistance;
+      best = {[driver]: value, [other]: paired};
+    }
+    // Текущая пара остаётся допустимой даже при предельном расположении рамки.
+    return best ?? {cols: board.cols, rows: board.rows};
+  }
   for (const [key, min, max] of [["cols", 1, MAX_SIZE], ["rows", 1, MAX_SIZE], ["x", 0, MAX_POSITION], ["y", 0, MAX_POSITION]]) {
     bindInput(key, value => {
       const board = selected();
       if (!board) return;
-      const previous = board[key];
-      board[key] = integer(value, previous, min, max);
-      if ((key === "y" || key === "rows") && board[key] > previous) growField([board]);
+      const previous = board[key], previousRows = board.rows;
+      const next = integer(value, previous, min, max);
+      if (board.aspectLocked && (key === "cols" || key === "rows")) {
+        Object.assign(board, aspectSize(board, key, next));
+        byId("cols").value = board.cols;
+        byId("rows").value = board.rows;
+      } else board[key] = next;
+      if ((key === "y" && board.y > previous) || board.rows > previousRows) growField([board]);
     });
   }
   for (const key of ["outline", "zero", "one"]) {
@@ -584,6 +617,15 @@
     save(); render();
   });
   byId("phase").addEventListener("click", () => mutate(() => { const board = selected(); if (board) board.phase = !board.phase; }));
+  byId("aspect-lock").addEventListener("click", () => mutate(() => {
+    const board = selected();
+    if (!board) return;
+    board.aspectLocked = !board.aspectLocked;
+    if (board.aspectLocked) {
+      board.aspectCols = board.cols;
+      board.aspectRows = board.rows;
+    }
+  }));
   byId("phase-all").addEventListener("click", () => mutate(() => {
     for (const board of state.boards) board.phase = !board.phase;
   }));
@@ -702,8 +744,28 @@
     const x = Math.round(dx / state.cell), y = Math.round(dy / state.cell);
     if (drag.edge) {
       const {board, cols, rows, phase, x: left, y: top} = drag.origins[0];
-      [board.x, board.cols] = resizeAxis(left, cols, x, drag.edge.horizontal);
-      [board.y, board.rows] = resizeAxis(top, rows, y, drag.edge.vertical);
+      const horizontal = drag.edge.horizontal, vertical = drag.edge.vertical;
+      if (board.aspectLocked) {
+        // Выбранная при начале жеста ведущая ось не меняется от дрожания угла.
+        drag.aspectDriver ??= horizontal && vertical
+          ? (Math.abs(dx / cols) >= Math.abs(dy / rows) ? "cols" : "rows")
+          : horizontal ? "cols" : "rows";
+        const right = left + cols, bottom = top + rows;
+        const bounds = {
+          colsMin: horizontal < 0 ? Math.max(1, right - MAX_POSITION) : 1,
+          colsMax: horizontal < 0 ? Math.min(MAX_SIZE, right) : MAX_SIZE,
+          rowsMin: vertical < 0 ? Math.max(1, bottom - MAX_POSITION) : 1,
+          rowsMax: vertical < 0 ? Math.min(MAX_SIZE, bottom) : MAX_SIZE,
+        };
+        const target = drag.aspectDriver === "cols" ? cols + x * horizontal : rows + y * vertical;
+        const unchanged = drag.aspectDriver === "cols" ? x === 0 : y === 0;
+        Object.assign(board, unchanged ? {cols, rows} : aspectSize(board, drag.aspectDriver, target, bounds));
+        board.x = horizontal < 0 ? right - board.cols : left;
+        board.y = vertical < 0 ? bottom - board.rows : top;
+      } else {
+        [board.x, board.cols] = resizeAxis(left, cols, x, horizontal);
+        [board.y, board.rows] = resizeAxis(top, rows, y, vertical);
+      }
       // При сдвиге угла сохраняем цвета в общих клетках старого и нового прямоугольника.
       board.phase = phase !== ((board.x - left + board.y - top) % 2 !== 0);
     } else {
@@ -716,7 +778,9 @@
         origin.board.y = origin.y + top;
       }
     }
-    if (y > 0) growField(drag.origins.map(origin => origin.board));
+    if (y > 0 || drag.origins.some(origin => origin.board.rows > origin.rows)) {
+      growField(drag.origins.map(origin => origin.board));
+    }
     world.style.setProperty("--chess-cursor", drag.edge ? resizeCursor(drag.edge) : "grabbing");
     const board = selected();
     if (board) for (const key of ["x", "y", "cols", "rows"]) byId(key).value = board[key];
