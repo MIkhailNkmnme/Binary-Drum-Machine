@@ -1,4 +1,4 @@
-/* NINETOZERO v0.002 */
+/* NINETOZERO v0.003 */
 * { box-sizing: border-box; }
 html { color-scheme: dark; }
 body {
@@ -23,3 +23,20 @@ figure { min-width: 0; margin: 0; background: #161d27; }
 .frame { display: block; background: #0a0d11; }
 .frame img { display: block; width: 100%; height: auto; }
 figcaption { padding: 10px 12px 12px; }
+
+/* The Techno Code: readable parallel texts, stacked on small screens. */
+html { scroll-padding-top: 24px; }
+h2 { font-size: clamp(24px, 4vw, 36px); line-height: 1.2; }
+.techno-code { margin: 32px 0 48px; padding: clamp(18px, 3vw, 32px); background: #161d27; border: 1px solid #2c3a49; }
+.techno-code h2 { margin: 6px 0 18px; }
+.eyebrow { color: #a1b1c0; letter-spacing: .08em; font-size: 12px; }
+.track-link { font-size: 18px; font-weight: 650; }
+.source-links, .text-origin, .language-note { font-size: 13px; color: #aebdca; }
+.text-origin { max-width: 85ch; margin: 22px 0; }
+.text-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 4vw, 48px); }
+.text-columns article { min-width: 0; }
+.text-columns h3 { margin: 12px 0 4px; font-size: 22px; }
+.language-note { margin-top: 0; }
+.track-text { line-height: 1.75; overflow-wrap: break-word; }
+.track-text p { margin: 0 0 1.1em; }
+@media (max-width: 760px) { .text-columns { grid-template-columns: 1fr; } }
