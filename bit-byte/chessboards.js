@@ -357,6 +357,7 @@
       " · поле: " + (state.fieldCols ?? "—") + " × " + (state.fieldRows ?? "—") + " клеток · клетка: " + state.cell + " × " + state.cell + " px · клеток по всем шахматкам: " + total +
       " (наложенные клетки считаются отдельно).";
     renderCounts();
+    window.BitByteNumberControls?.sync();
   }
   function renderCounts() {
     const board = selected();
@@ -421,12 +422,13 @@
       : "Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше";
     byId("undo").disabled = !undo.length;
     for (const input of document.querySelectorAll(".chess-controls input")) input.disabled = drag?.kind === "field";
-    if (!board) return;
+    if (!board) { window.BitByteNumberControls?.sync(); return; }
     for (const key of ["cols", "rows", "x", "y", "outline", "zero", "one"]) byId(key).value = board[key];
     byId("zero-opacity").value = board.zeroOpacity;
     byId("one-opacity").value = board.oneOpacity;
     byId("phase").setAttribute("aria-pressed", String(board.phase));
     byId("visibility").setAttribute("aria-pressed", String(board.visible));
+    window.BitByteNumberControls?.sync();
   }
   function render() { renderScene(); renderControls(); }
   function bindInput(id, update) {
