@@ -10,11 +10,19 @@
   const byId = id => document.getElementById("chess-" + id);
   const world = byId("world"), viewport = byId("viewport"), list = byId("list");
   const elements = new Map(), undo = [];
+  const logicButtons = [...document.querySelectorAll("[data-chess-logic]")];
+  const logicCanvas = document.createElement("canvas");
+  logicCanvas.className = "chess-logic";
+  logicCanvas.hidden = true;
+  logicCanvas.setAttribute("aria-hidden", "true");
+  world.append(logicCanvas);
+  const logicContext = logicCanvas.getContext("2d");
+  let logicFrame = 0;
   const selection = document.createElement("div");
   selection.className = "chess-selection";
   selection.setAttribute("aria-hidden", "true");
   world.append(selection);
-  let drag = null, lastTap = null, pendingInput = null, saveFailed = false;
+  let drag = null, lastTap = null, pendingInput = null, saveFailed = false, scrollFrame = 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const integer = (value, fallback, min, max) => Number.isFinite(Number(value))
     ? clamp(Math.round(Number(value)), min, max) : fallback;
@@ -36,7 +44,7 @@
   function initialState() {
     const second = makeBoard(2, 10, 6);
     second.zeroOpacity = second.oneOpacity = 65;
-    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, selected: 2, boards: [makeBoard(1), second] };
+    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers", selected: 2, boards: [makeBoard(1), second] };
   }
   function load() {
     try {
@@ -67,6 +75,7 @@
         fieldCols: saved.fieldCols == null ? null : integer(saved.fieldCols, null, 1, MAX_FIELD),
         fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD),
         cell: integer(saved.cell, 24, 1, 64), digits: saved.digits === true, boards,
+        logic: logicButtons.some(button => button.dataset.chessLogic === saved.logic) ? saved.logic : "layers",
         selected: boards.some(board => board.id === saved.selected) ? saved.selected : boards[0]?.id ?? null,
       };
     } catch { return initialState(); }
@@ -151,6 +160,114 @@
     save();
     return true;
   }
+  function growField(boards, growWidth = false) {
+    for (const board of boards) {
+      if (!board.visible) continue;
+      const bottom = board.y + board.rows, right = board.x + board.cols;
+      if (state.fieldRows !== null && bottom >= state.fieldRows) {
+        state.fieldRows = Math.min(MAX_FIELD, bottom + 2);
+      }
+      if (growWidth && state.fieldCols !== null && right >= state.fieldCols) {
+        state.fieldCols = Math.min(MAX_FIELD, right + 2);
+      }
+    }
+  }
+  function logicPaint(hex, opacity) {
+    return {hex: hex.toLowerCase(), opacity: opacity / 100, ink: digitInk(hex)};
+  }
+
+  function paintLogic() {
+    logicFrame = 0;
+    const visible = state.boards.filter(board => board.visible);
+    const boards = visible.filter(board => board.x < state.fieldCols && board.y < state.fieldRows).map(board => ({
+        ...board, right: board.x + board.cols, bottom: board.y + board.rows,
+        paints: [logicPaint(board.zero, board.zeroOpacity), logicPaint(board.one, board.oneOpacity)],
+      }));
+    logicCanvas.hidden = !boards.length;
+    if (!boards.length) return;
+
+    const left = Math.min(...boards.map(board => board.x));
+    const top = Math.min(...boards.map(board => board.y));
+    const width = Math.min(state.fieldCols, Math.max(...boards.map(board => board.right))) - left;
+    const height = Math.min(state.fieldRows, Math.max(...boards.map(board => board.bottom))) - top;
+    const scale = state.digits
+      ? Math.min(state.cell, 16, Math.floor(Math.sqrt(7_000_000 / (width * height)))) : 1;
+    logicCanvas.width = width * scale;
+    logicCanvas.height = height * scale;
+    Object.assign(logicCanvas.style, {
+      left: left * state.cell + "px", top: top * state.cell + "px",
+      width: width * state.cell + "px", height: height * state.cell + "px",
+    });
+    const and = state.logic.startsWith("and"), byColor = state.logic.endsWith("-rgb");
+    const groups = new Map();
+    const ctx = logicContext;
+    ctx.font = "700 " + scale * .65 + "px monospace";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+
+    function fill(paint, x, y) {
+      ctx.fillStyle = paint.hex;
+      ctx.globalAlpha = paint.opacity;
+      ctx.fillRect(x, y, scale, scale);
+    }
+
+    for (let y = top; y < top + height; y++) {
+      const row = boards.filter(board => y >= board.y && y < board.bottom);
+      if (!row.length) continue;
+      const py = (y - top) * scale;
+      for (let x = left; x < left + width; x++) {
+        let upper = null, ones = 0;
+        for (const board of row) {
+          if (x < board.x || x >= board.right) continue;
+          upper = board;
+          const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
+          ones += bit;
+          if (!byColor) continue;
+          const paint = board.paints[bit];
+          const previous = groups.get(paint.hex)?.bit ?? Number(and);
+          const result = and ? previous & bit : previous ^ bit;
+          // Последняя шахматка этого цвета задаёт порядок и прозрачность группы.
+          groups.delete(paint.hex);
+          groups.set(paint.hex, {bit: result, paint});
+        }
+        if (!upper) continue;
+
+        const px = (x - left) * scale;
+        let bit = and ? Number(ones === visible.length) : ones & 1;
+        let paint = upper.paints[bit];
+        if (byColor) {
+          bit = 0;
+          paint = upper.paints[0];
+          for (const group of groups.values()) {
+            if (!group.bit) continue;
+            bit = 1;
+            paint = group.paint;
+            fill(paint, px, py);
+          }
+          groups.clear();
+        }
+        if (!byColor || !bit) fill(paint, px, py);
+        if (state.digits && scale >= 4) {
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = paint.ink;
+          ctx.fillText(String(bit), px + scale / 2, py + scale / 2);
+        }
+      }
+    }
+  }
+
+  function renderLogic() {
+    const enabled = !!logicContext && state.logic !== "layers" && state.fieldCols !== null && state.fieldRows !== null;
+    world.toggleAttribute("data-logic", enabled);
+    if (enabled) {
+      if (!logicFrame) logicFrame = requestAnimationFrame(paintLogic);
+    } else {
+      if (logicFrame) cancelAnimationFrame(logicFrame);
+      logicFrame = 0;
+      logicCanvas.hidden = true;
+    }
+  }
+
   function renderScene() {
     initializeField();
     const ids = new Set(state.boards.map(board => board.id));
@@ -199,6 +316,7 @@
       if (document.activeElement !== byId(id) || drag?.kind === "field") byId(id).value = state[key] ?? "";
     }
     world.style.setProperty("--chess-cell", state.cell + "px");
+    renderLogic();
     byId("total").textContent = "Шахматок: " + state.boards.length + " · видимых: " + visible +
       " · поле: " + (state.fieldCols ?? "—") + " × " + (state.fieldRows ?? "—") + " клеток · клетка: " + state.cell + " × " + state.cell + " px · клеток по всем шахматкам: " + total +
       " (наложенные клетки считаются отдельно).";
@@ -236,10 +354,19 @@
     byId("field-cols").value = state.fieldCols ?? "";
     byId("field-rows").value = state.fieldRows ?? "";
     byId("digits").setAttribute("aria-pressed", String(state.digits));
+    for (const button of logicButtons) {
+      button.disabled = !logicContext;
+      button.setAttribute("aria-pressed", String(button.dataset.chessLogic === state.logic));
+    }
     const board = selected();
     byId("settings").disabled = !board;
     byId("remove").disabled = !board;
     byId("add").disabled = state.boards.length >= MAX_BOARDS;
+    const diagonal = byId("add-diagonal");
+    diagonal.disabled = !diagonalAvailable(board);
+    diagonal.title = diagonal.disabled
+      ? "Выберите шахматку, для которой есть место и возможен размер +1×1. Максимум 16 шахматок."
+      : "Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше";
     byId("undo").disabled = !undo.length;
     for (const input of document.querySelectorAll(".chess-controls input")) input.disabled = drag?.kind === "field";
     if (!board) return;
@@ -270,7 +397,13 @@
   bindInput("field-rows", value => { state.fieldRows = integer(value, state.fieldRows, 1, MAX_FIELD); });
   bindInput("cell", value => { state.cell = integer(value, state.cell, 1, 64); });
   for (const [key, min, max] of [["cols", 1, MAX_SIZE], ["rows", 1, MAX_SIZE], ["x", 0, MAX_POSITION], ["y", 0, MAX_POSITION]]) {
-    bindInput(key, value => { const board = selected(); if (board) board[key] = integer(value, board[key], min, max); });
+    bindInput(key, value => {
+      const board = selected();
+      if (!board) return;
+      const previous = board[key];
+      board[key] = integer(value, previous, min, max);
+      if ((key === "y" || key === "rows") && board[key] > previous) growField([board]);
+    });
   }
   for (const key of ["outline", "zero", "one"]) {
     bindInput(key, value => { if (selected()) selected()[key] = color(value, selected()[key]); });
@@ -285,16 +418,40 @@
     select(Number(swatch.dataset.boardId));
   });
   byId("digits").addEventListener("click", () => mutate(() => { state.digits = !state.digits; }));
+  for (const button of logicButtons) {
+    button.addEventListener("click", () => mutate(() => {
+      const mode = button.dataset.chessLogic;
+      state.logic = state.logic === mode ? "layers" : mode;
+    }));
+  }
+  function diagonalAvailable(board) {
+    return !!board && state.boards.length < MAX_BOARDS &&
+      board.cols < MAX_SIZE && board.rows < MAX_SIZE &&
+      board.x + board.cols <= MAX_POSITION && board.y + board.rows <= MAX_POSITION;
+  }
+  function addBoard(x, y, source) {
+    const id = Math.max(0, ...state.boards.map(board => board.id)) + 1;
+    const board = makeBoard(id, x, y);
+    if (source) {
+      board.cols = source.cols + 1;
+      board.rows = source.rows + 1;
+      for (const key of ["phase", "zero", "one", "zeroOpacity", "oneOpacity"]) board[key] = source[key];
+    }
+    const used = new Set(state.boards.map(item => item.outline.toLowerCase()));
+    board.outline = availableOutline(id, used);
+    state.boards.push(board);
+    state.selected = id;
+    growField([board], !!source);
+  }
   byId("add").addEventListener("click", () => {
     if (state.boards.length >= MAX_BOARDS) return;
-    mutate(() => {
-      const id = Math.max(0, ...state.boards.map(board => board.id)) + 1;
-      const board = makeBoard(id, 2 + state.boards.length * 2, 2 + state.boards.length * 2);
-      const used = new Set(state.boards.map(item => item.outline.toLowerCase()));
-      board.outline = availableOutline(id, used);
-      state.boards.push(board);
-      state.selected = id;
-    });
+    const position = 2 + state.boards.length * 2;
+    mutate(() => addBoard(position, position));
+  });
+  byId("add-diagonal").addEventListener("click", () => {
+    const source = selected();
+    if (!diagonalAvailable(source)) return;
+    mutate(() => addBoard(source.x + source.cols, source.y + source.rows, source));
   });
   byId("remove").addEventListener("click", () => mutate(() => {
     state.boards = state.boards.filter(board => board.id !== state.selected);
@@ -373,24 +530,17 @@
     const group = edge ? [edge.board] : inside.length ? inside : state.boards;
     const origins = group.map(board => ({board, x: board.x, y: board.y, cols: board.cols, rows: board.rows, phase: board.phase}));
     drag = {
-      pointer: event.pointerId, before: snapshot(), edge, origins, tapId: top?.id,
-      startX: event.clientX, startY: event.clientY,
-      scrollX: viewport.scrollLeft, scrollY: viewport.scrollTop,
-      moved: false,
+      kind: "boards", pointer: event.pointerId, before: snapshot(), edge, origins, tapId: top?.id,
+      startX: event.clientX + window.scrollX, startY: event.clientY + window.scrollY,
+      clientX: event.clientX, clientY: event.clientY, moved: false,
     };
     world.setPointerCapture(event.pointerId);
     event.preventDefault();
   });
 
-  world.addEventListener("pointermove", event => {
-    if (drag?.kind === "field") return;
-    if (!drag) {
-      world.style.setProperty("--chess-cursor", resizeCursor(hitTest(event).edge));
-      return;
-    }
-    if (event.pointerId !== drag.pointer || !drag.origins.length) return;
-    const dx = event.clientX - drag.startX + viewport.scrollLeft - drag.scrollX;
-    const dy = event.clientY - drag.startY + viewport.scrollTop - drag.scrollY;
+  function moveBoards() {
+    const dx = drag.clientX + window.scrollX - drag.startX;
+    const dy = drag.clientY + window.scrollY - drag.startY;
     if (!drag.moved && Math.hypot(dx, dy) < Math.min(4, state.cell)) return;
     drag.moved = true;
     const x = Math.round(dx / state.cell), y = Math.round(dy / state.cell);
@@ -410,14 +560,44 @@
         origin.board.y = origin.y + top;
       }
     }
+    if (y > 0) growField(drag.origins.map(origin => origin.board));
     world.style.setProperty("--chess-cursor", drag.edge ? resizeCursor(drag.edge) : "grabbing");
     const board = selected();
     if (board) for (const key of ["x", "y", "cols", "rows"]) byId(key).value = board[key];
     renderScene();
+  }
+  function scrollDuringDrag() {
+    if (scrollFrame || drag?.kind !== "boards" || !drag.moved) return;
+    if (drag.edge && drag.edge.vertical <= 0) return;
+    const distance = window.innerHeight - drag.clientY;
+    if (distance >= 44) return;
+    scrollFrame = requestAnimationFrame(() => {
+      scrollFrame = 0;
+      if (drag?.kind !== "boards" || window.innerHeight - drag.clientY >= 44) return;
+      const before = window.scrollY;
+      window.scrollBy(0, clamp(Math.round((44 - (window.innerHeight - drag.clientY)) / 2), 4, 24));
+      if (window.scrollY === before) return;
+      moveBoards();
+      scrollDuringDrag();
+    });
+  }
+  world.addEventListener("pointermove", event => {
+    if (drag?.kind === "field") return;
+    if (!drag) {
+      world.style.setProperty("--chess-cursor", resizeCursor(hitTest(event).edge));
+      return;
+    }
+    if (event.pointerId !== drag.pointer || !drag.origins.length) return;
+    drag.clientX = event.clientX;
+    drag.clientY = event.clientY;
+    moveBoards();
+    scrollDuringDrag();
   });
 
   function finishDrag(event) {
-    if (!drag || drag.kind === "field" || event.pointerId !== drag.pointer) return;
+    if (drag?.kind !== "boards" || (event.pointerId != null && event.pointerId !== drag.pointer)) return;
+    if (scrollFrame) cancelAnimationFrame(scrollFrame);
+    scrollFrame = 0;
     const finished = drag;
     drag = null;
     if (event.type !== "pointerup") {
@@ -460,6 +640,7 @@
     mutate(() => {
       board.x = clamp(board.x + step[0] * amount, 0, MAX_POSITION);
       board.y = clamp(board.y + step[1] * amount, 0, MAX_POSITION);
+      if (step[1] > 0) growField([board]);
     });
   });
   viewport.addEventListener("pointerdown", event => {
@@ -499,10 +680,10 @@
   window.addEventListener("keydown", event => {
     if (event.key === "Escape" && drag?.kind === "field") { event.preventDefault(); finishFieldResize(event); }
   });
-  window.addEventListener("blur", finishFieldResize);
+  window.addEventListener("blur", event => { finishFieldResize(event); finishDrag(event); });
   // Измеряем прежнюю область только при первом видимом открытии. После миграции
   // размер явный; наблюдатель больше ничего не перерисовывает и не зацикливается.
   new ResizeObserver(() => { if (initializeField()) render(); }).observe(viewport);
-  window.addEventListener("pagehide", event => { finishFieldResize(event); finishInput(); save(); });
+  window.addEventListener("pagehide", event => { finishFieldResize(event); finishDrag(event); finishInput(); save(); });
   render();
 })();

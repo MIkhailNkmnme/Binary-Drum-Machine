@@ -1,21 +1,21 @@
-<!-- Bit-Byte v0.012 · размер поля числами и рамкой. -->
+<!-- Bit-Byte v0.013 · рост поля, диагональная шахматка и логические режимы. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.012 — Зеркалиус</title>
+  <title>Bit-Byte v0.013 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=012">
+  <link rel="stylesheet" href="style.css?v=013">
 
   <script defer src="app.js?v=009"></script>
-  <script defer src="chessboards.js?v=012"></script>
+  <script defer src="chessboards.js?v=013"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.012</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.013</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -37,6 +37,7 @@
           <div id="chess-list" class="chess-swatches" role="group" aria-label="Выбор шахматки по цвету обводки"></div>
           <div class="commands">
             <button id="chess-add" class="gz-hx" type="button" title="Добавить шахматку"><span class="gz-ic" aria-hidden="true">+</span><span class="gz-nm">Добавить</span></button>
+            <button id="chess-add-diagonal" class="gz-hx" type="button" aria-label="Новая шахматка вниз-вправо, на одну строку и столбец больше" title="Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше"><span class="gz-ic" aria-hidden="true">↘</span><span class="gz-nm">+1×1</span></button>
             <button id="chess-remove" class="gz-hx" type="button" title="Удалить выбранную шахматку"><span class="gz-ic" aria-hidden="true">−</span><span class="gz-nm">Удалить</span></button>
             <button id="chess-undo" class="gz-hx" type="button" title="Отменить последнее изменение шахматок"><span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Отмена</span></button>
           </div>
@@ -49,6 +50,12 @@
             </div>
           </fieldset>
           <button id="chess-digits" class="gz-hx" type="button" aria-pressed="false" title="Показать или скрыть цифры 0 и 1 в клетках всех шахматок"><span class="gz-ic" aria-hidden="true">01</span><span class="gz-nm">Цифры</span></button>
+          <div class="commands chess-logic-commands" role="group" aria-label="Логика наложения">
+            <button class="gz-hx" type="button" data-chess-logic="xor" aria-pressed="false" title="XOR по всем видимым шахматкам"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">XOR все</span></button>
+            <button class="gz-hx" type="button" data-chess-logic="xor-rgb" aria-pressed="false" title="XOR отдельно для каждого RGB клеток"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">XOR RGB</span></button>
+            <button class="gz-hx" type="button" data-chess-logic="and" aria-pressed="false" title="AND по всем видимым шахматкам"><span class="gz-ic" aria-hidden="true">∧</span><span class="gz-nm">AND все</span></button>
+            <button class="gz-hx" type="button" data-chess-logic="and-rgb" aria-pressed="false" title="AND отдельно для каждого RGB клеток"><span class="gz-ic" aria-hidden="true">∧</span><span class="gz-nm">AND RGB</span></button>
+          </div>
           <fieldset id="chess-settings">
             <legend>Выбранная шахматка</legend>
             <div class="chess-input-pair">
@@ -78,7 +85,7 @@
         </aside>
         <section class="panel chess-scene-panel" aria-label="Поле шахматок">
           <h2>Поле шахматок</h2>
-          <p class="hint">Тяните край или угол для размера, середину для переноса всех шахматок под указателем. С пустого места двигайте всё поле. Двойной щелчок меняет 0 и 1 местами. Стрелки сдвигают выбранную, Shift — на 10 клеток.</p>
+          <p class="hint">Тяните край или угол для размера, середину для переноса всех шахматок под указателем. С пустого места двигайте весь набор. При переносе вниз поле растёт. Двойной щелчок меняет 0 и 1 местами. Стрелки сдвигают выбранную, Shift — на 10 клеток.</p>
           <div id="chess-viewport" tabindex="0" aria-label="Поле шахматок. Размер задаётся числами или правой и нижней рамкой" title="Правый и нижний края меняют размер всего поля, угол — обе стороны. Уменьшение сохраняет шахматки за рамкой. Escape отменяет растягивание.">
             <div id="chess-world" aria-label="Шахматки"></div>
             <div class="chess-field-edge" data-field-edge="right" aria-hidden="true" title="Ширина всего поля"></div>
@@ -86,7 +93,7 @@
             <div class="chess-field-edge" data-field-edge="corner" aria-hidden="true" title="Размер всего поля"></div>
           </div>
           <p id="chess-total" class="hint"></p>
-          <p class="hint">Одна клетка — один бит. Размер шахматки: столбцы × строки. Цвет и прозрачность задаются для 0 и 1 отдельно; наложение сейчас смешивает цвета, логические XOR/AND не выполняются.</p>
+          <p class="hint">Одна клетка — один бит. Размер шахматки: столбцы × строки. XOR и AND работают с видимыми шахматками. RGB группирует клетки с точным совпадением цвета. Повторное нажатие на выбранный режим возвращает обычное наложение.</p>
         </section>
       </div>
     </section>
