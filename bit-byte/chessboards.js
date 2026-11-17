@@ -178,7 +178,16 @@
 
   function paintLogic() {
     logicFrame = 0;
-    const visible = state.boards.filter(board => board.visible);
+    const and = state.logic.startsWith("and"), byPalette = state.logic.endsWith("-rgb");
+    const visible = state.boards.filter(board => board.visible).map(board => ({
+      ...board, palette: board.zero.toLowerCase() + "/" + board.one.toLowerCase(),
+    }));
+    const paletteSizes = new Map();
+    if (byPalette && and) {
+      for (const {palette} of visible) {
+        paletteSizes.set(palette, (paletteSizes.get(palette) ?? 0) + 1);
+      }
+    }
     const boards = visible.filter(board => board.x < state.fieldCols && board.y < state.fieldRows).map(board => ({
         ...board, right: board.x + board.cols, bottom: board.y + board.rows,
         paints: [logicPaint(board.zero, board.zeroOpacity), logicPaint(board.one, board.oneOpacity)],
@@ -198,7 +207,6 @@
       left: left * state.cell + "px", top: top * state.cell + "px",
       width: width * state.cell + "px", height: height * state.cell + "px",
     });
-    const and = state.logic.startsWith("and"), byColor = state.logic.endsWith("-rgb");
     const groups = new Map();
     const ctx = logicContext;
     ctx.font = "700 " + scale * .65 + "px monospace";
@@ -222,31 +230,31 @@
           upper = board;
           const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
           ones += bit;
-          if (!byColor) continue;
-          const paint = board.paints[bit];
-          const previous = groups.get(paint.hex)?.bit ?? Number(and);
-          const result = and ? previous & bit : previous ^ bit;
-          // Последняя шахматка этого цвета задаёт порядок и прозрачность группы.
-          groups.delete(paint.hex);
-          groups.set(paint.hex, {bit: result, paint});
+          if (!byPalette) continue;
+          const {palette} = board;
+          const paletteOnes = (groups.get(palette)?.ones ?? 0) + bit;
+          // Верхняя шахматка палитры в этой клетке задаёт порядок и прозрачность.
+          groups.delete(palette);
+          groups.set(palette, {ones: paletteOnes, paint: board.paints[1]});
         }
         if (!upper) continue;
 
         const px = (x - left) * scale;
         let bit = and ? Number(ones === visible.length) : ones & 1;
         let paint = upper.paints[bit];
-        if (byColor) {
+        if (byPalette) {
           bit = 0;
           paint = upper.paints[0];
-          for (const group of groups.values()) {
-            if (!group.bit) continue;
+          for (const [palette, group] of groups) {
+            const result = and ? group.ones === paletteSizes.get(palette) : group.ones % 2 !== 0;
+            if (!result) continue;
             bit = 1;
             paint = group.paint;
             fill(paint, px, py);
           }
           groups.clear();
         }
-        if (!byColor || !bit) fill(paint, px, py);
+        if (!byPalette || !bit) fill(paint, px, py);
         if (state.digits && scale >= 4) {
           ctx.globalAlpha = 1;
           ctx.fillStyle = paint.ink;

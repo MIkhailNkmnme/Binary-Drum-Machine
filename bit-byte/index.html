@@ -1,21 +1,21 @@
-<!-- Bit-Byte v0.013 · рост поля, диагональная шахматка и логические режимы. -->
+<!-- Bit-Byte v0.014 · XOR RGB и AND RGB по палитрам шахматок. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.013 — Зеркалиус</title>
+  <title>Bit-Byte v0.014 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="style.css?v=013">
 
   <script defer src="app.js?v=009"></script>
-  <script defer src="chessboards.js?v=013"></script>
+  <script defer src="chessboards.js?v=014"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.013</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.014</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -52,9 +52,9 @@
           <button id="chess-digits" class="gz-hx" type="button" aria-pressed="false" title="Показать или скрыть цифры 0 и 1 в клетках всех шахматок"><span class="gz-ic" aria-hidden="true">01</span><span class="gz-nm">Цифры</span></button>
           <div class="commands chess-logic-commands" role="group" aria-label="Логика наложения">
             <button class="gz-hx" type="button" data-chess-logic="xor" aria-pressed="false" title="XOR по всем видимым шахматкам"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">XOR все</span></button>
-            <button class="gz-hx" type="button" data-chess-logic="xor-rgb" aria-pressed="false" title="XOR отдельно для каждого RGB клеток"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">XOR RGB</span></button>
+            <button class="gz-hx" type="button" data-chess-logic="xor-rgb" aria-pressed="false" title="XOR отдельно для шахматок с одинаковыми цветами 0 и 1"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">XOR RGB</span></button>
             <button class="gz-hx" type="button" data-chess-logic="and" aria-pressed="false" title="AND по всем видимым шахматкам"><span class="gz-ic" aria-hidden="true">∧</span><span class="gz-nm">AND все</span></button>
-            <button class="gz-hx" type="button" data-chess-logic="and-rgb" aria-pressed="false" title="AND отдельно для каждого RGB клеток"><span class="gz-ic" aria-hidden="true">∧</span><span class="gz-nm">AND RGB</span></button>
+            <button class="gz-hx" type="button" data-chess-logic="and-rgb" aria-pressed="false" title="AND отдельно для шахматок с одинаковыми цветами 0 и 1"><span class="gz-ic" aria-hidden="true">∧</span><span class="gz-nm">AND RGB</span></button>
           </div>
           <fieldset id="chess-settings">
             <legend>Выбранная шахматка</legend>
@@ -93,7 +93,7 @@
             <div class="chess-field-edge" data-field-edge="corner" aria-hidden="true" title="Размер всего поля"></div>
           </div>
           <p id="chess-total" class="hint"></p>
-          <p class="hint">Одна клетка — один бит. Размер шахматки: столбцы × строки. XOR и AND работают с видимыми шахматками. RGB группирует клетки с точным совпадением цвета. Повторное нажатие на выбранный режим возвращает обычное наложение.</p>
+          <p class="hint">Одна клетка — один бит. Размер шахматки: столбцы × строки. XOR и AND работают с видимыми шахматками. В режимах RGB шахматки образуют группу, если совпадают оба цвета: для 0 и для 1. Повторное нажатие на выбранный режим возвращает обычное наложение.</p>
         </section>
       </div>
     </section>
