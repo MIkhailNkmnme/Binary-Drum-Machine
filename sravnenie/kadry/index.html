@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Сравнение кадров видео и GIF · Зеркалиус</title>
-  <link rel="stylesheet" href="kadry.css?v=1">
-  <script type="module" src="kadry.mjs?v=2"></script>
+  <link rel="stylesheet" href="kadry.css?v=2">
+  <script type="module" src="kadry.mjs?v=3"></script>
 </head>
 <body>
 <main>
@@ -30,78 +30,71 @@
   </div>
   <output id="status" role="status">Выберите файл или подключите YouTube.</output>
 
-  <section aria-label="Управление анализом">
-    <div class="controls">
-      <button id="next" type="button" disabled>Следующий кадр</button>
-      <button id="all" type="button" disabled>Все кадры</button>
-      <button id="pause" type="button" disabled>Пауза</button>
-      <button id="restart" type="button" disabled>С начала</button>
-      <button id="csv" type="button" disabled>Скачать CSV</button>
+  <section id="media" aria-labelledby="media-title" hidden>
+    <div class="controls media-controls">
+      <h2 id="media-title">Видео</h2>
+      <label>Ширина видео
+        <select id="media-size">
+          <option value="25">25 %</option>
+          <option value="50" selected>50 %</option>
+          <option value="75">75 %</option>
+          <option value="100">100 %</option>
+        </select>
+      </label>
     </div>
-    <div class="controls grid-controls">
-      <label>Ширина ячейки, px <input id="cell-width" type="number" min="1" value="16" disabled></label>
-      <label>Высота ячейки, px <input id="cell-height" type="number" min="1" value="16" disabled></label>
-      <label>Порог изменения, % <input id="threshold" type="number" min="0" max="100" step="0.1" value="0" disabled></label>
-      <button id="pixels" type="button" disabled>1 пиксель</button>
-      <button id="four" type="button" disabled>4 ячейки</button>
+    <div id="media-viewport">
+      <video id="local-video" controls playsinline preload="auto" aria-label="Видео из файла" hidden></video>
+      <img id="local-gif" alt="GIF из файла" hidden>
+      <iframe id="youtube-player" title="Проигрыватель YouTube" allow="encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen hidden></iframe>
     </div>
-    <output id="metrics" aria-live="off">Для сравнения нужны два кадра.</output>
   </section>
 
-  <section class="visuals" aria-label="Кадр и карта изменений">
-    <div class="video-side">
-      <h2 id="video-heading">Текущий кадр</h2>
-      <div id="stage">
-        <canvas id="frame" width="640" height="360" aria-label="Текущий кадр"></canvas>
-        <iframe id="youtube-player" title="Проигрыватель YouTube" allow="encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen hidden></iframe>
+  <details id="analysis">
+    <summary>Покадровый анализ</summary>
+    <section aria-label="Управление анализом">
+      <div class="controls">
+        <button id="next" type="button" disabled>Следующий кадр</button>
+        <button id="all" type="button" disabled>Все кадры</button>
+        <button id="pause" type="button" disabled>Пауза</button>
+        <button id="restart" type="button" disabled>С начала</button>
+        <button id="csv" type="button" disabled>Скачать CSV</button>
       </div>
-      <section class="pendulum" aria-labelledby="mayatnik-title">
-        <h2 id="mayatnik-title">Маятник под видео</h2>
-        <form id="pendulum-form" class="controls">
-          <label>Построение
-            <select id="pendulum-mode">
-              <option value="pend">Маятник</option>
-              <option value="pendR">Обратный маятник</option>
-              <option value="left">Влево</option>
-              <option value="right">Вправо</option>
-              <option value="one">Одна вершина</option>
-            </select>
-          </label>
-          <label>Строки <input id="pendulum-rows" type="number" value="32" min="8" max="4096" required></label>
-          <label>Кадр <input id="pendulum-frame" type="number" value="24" min="0" max="16384" required></label>
-          <label>Ширина окна
-            <select id="pendulum-size">
-              <option value="25">25 %</option>
-              <option value="50" selected>50 %</option>
-              <option value="75">75 %</option>
-              <option value="100">100 %</option>
-            </select>
-          </label>
-          <button id="show-pendulum" type="submit">Показать Маятник</button>
-          <button id="use-frame" type="button" disabled>Взять номер кадра видео</button>
-          <a id="open-pendulum" target="_blank" rel="noopener noreferrer" hidden>Открыть отдельно</a>
-        </form>
-        <iframe id="pendulum-view" title="Маятник под видео" loading="lazy" hidden></iframe>
-      </section>
-    </div>
-    <div class="map-side">
-      <h2>Разница с предыдущим кадром</h2>
-      <canvas id="heatmap" width="640" height="360" aria-label="Карта изменения ячеек"></canvas>
-      <p class="legend"><span>0 %</span><span class="ramp"></span><span>100 %</span></p>
-      <output id="cell-info">Нажмите на карту, чтобы посмотреть ячейку.</output>
-    </div>
-  </section>
+      <div class="controls grid-controls">
+        <label>Ширина ячейки, px <input id="cell-width" type="number" min="1" value="16" disabled></label>
+        <label>Высота ячейки, px <input id="cell-height" type="number" min="1" value="16" disabled></label>
+        <label>Порог изменения, % <input id="threshold" type="number" min="0" max="100" step="0.1" value="0" disabled></label>
+        <button id="pixels" type="button" disabled>1 пиксель</button>
+        <button id="four" type="button" disabled>4 ячейки</button>
+      </div>
+      <output id="metrics" aria-live="off">Для сравнения нужны два кадра.</output>
+    </section>
 
-  <section aria-labelledby="analysis-title">
-    <h2 id="analysis-title">Анализ по кадрам</h2>
-    <div class="table-wrap">
-      <table aria-label="Изменения по кадрам">
-        <thead><tr><th>Кадр</th><th>Время, с</th><th>Сетка</th><th>Порог, %</th><th>Изменилось ячеек</th><th>Средняя разница, %</th><th>Макс. ячейка, %</th></tr></thead>
-        <tbody id="results"></tbody>
-      </table>
-    </div>
-    <p class="foot">Разница ячейки — среднее по её пикселям и каналам RGB. В таблице видны последние 80 строк, CSV содержит весь текущий прогон. Файл обрабатывается в браузере.</p>
-  </section>
+    <section class="visuals" aria-label="Кадр и карта изменений">
+      <div class="video-side">
+        <h2>Текущий кадр</h2>
+        <div id="stage">
+          <canvas id="frame" width="640" height="360" aria-label="Текущий кадр"></canvas>
+        </div>
+      </div>
+      <div class="map-side">
+        <h2>Разница с предыдущим кадром</h2>
+        <canvas id="heatmap" width="640" height="360" aria-label="Карта изменения ячеек"></canvas>
+        <p class="legend"><span>0 %</span><span class="ramp"></span><span>100 %</span></p>
+        <output id="cell-info">Нажмите на карту, чтобы посмотреть ячейку.</output>
+      </div>
+    </section>
+
+    <section aria-labelledby="analysis-title">
+      <h2 id="analysis-title">Анализ по кадрам</h2>
+      <div class="table-wrap">
+        <table aria-label="Изменения по кадрам">
+          <thead><tr><th>Кадр</th><th>Время, с</th><th>Сетка</th><th>Порог, %</th><th>Изменилось ячеек</th><th>Средняя разница, %</th><th>Макс. ячейка, %</th></tr></thead>
+          <tbody id="results"></tbody>
+        </table>
+      </div>
+      <p class="foot">Разница ячейки — среднее по её пикселям и каналам RGB. В таблице видны последние 80 строк, CSV содержит весь текущий прогон. Файл обрабатывается в браузере.</p>
+    </section>
+  </details>
 </main>
 </body>
 </html>

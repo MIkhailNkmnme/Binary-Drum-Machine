@@ -35,15 +35,19 @@ label, #youtube-form > label { display: block; font-size: .875rem; color: var(--
 #status, #metrics, #cell-info { display: block; min-height: 1.4em; margin: 8px 0; overflow-wrap: anywhere; }
 #status, #cell-info, .foot, #capture-help { color: var(--muted); font-size: .875rem; }
 #status[data-error] { color: #ffb2a3; }
+#media { margin: 18px 0; }
+.media-controls { align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.media-controls h2 { margin: 0; }
+#media-viewport { width: 50%; min-width: 0; }
+#media-viewport > :is(video, img, iframe) { display: block; width: 100%; height: auto; max-height: 65vh; object-fit: contain; background: #090d14; border: 1px solid var(--line); }
+#youtube-player { aspect-ratio: 16 / 9; }
+#analysis { margin-top: 18px; }
+#analysis > summary { width: fit-content; margin-bottom: 12px; cursor: pointer; }
 .visuals { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; margin: 16px 0 22px; }
 .visuals > * { min-width: 0; }
-#stage, #heatmap, #pendulum-view { background: #090d14; border: 1px solid var(--line); }
-#frame, #heatmap, #youtube-player { display: block; width: 100%; max-height: 60vh; object-fit: contain; height: auto; }
+#stage, #heatmap { background: #090d14; border: 1px solid var(--line); }
+#frame, #heatmap { display: block; width: 100%; max-height: 60vh; object-fit: contain; height: auto; }
 #heatmap { cursor: crosshair; image-rendering: pixelated; object-fit: fill; }
-.capture-video { position: fixed; left: -2px; top: 0; width: 1px; height: 1px; pointer-events: none; }
-#youtube-player { aspect-ratio: 16 / 9; border: 0; }
-.pendulum { margin-top: 14px; padding: 12px; background: var(--panel); border: 1px solid var(--line); }
-#pendulum-view { display: block; margin: 10px auto 0; width: 50%; height: auto; aspect-ratio: 2 / 1; }
 .legend { display: flex; align-items: center; gap: 9px; margin: 6px 0; font-size: .8rem; color: var(--muted); }
 .ramp { flex: 1; height: 8px; border: 1px solid var(--line); background: linear-gradient(90deg, #0b101a, #2599b9, #fff0a2); }
 .grid-controls { margin-top: 10px; }

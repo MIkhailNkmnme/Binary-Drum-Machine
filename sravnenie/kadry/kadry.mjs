@@ -5,9 +5,17 @@ const frameCanvas = element('frame');
 const image = frameCanvas.getContext('2d', {alpha: false, willReadFrequently: true});
 const mapCanvas = element('heatmap');
 const map = mapCanvas.getContext('2d', {alpha: false});
+const analysis = element('analysis');
+const media = element('media');
+const mediaViewport = element('media-viewport');
+const localVideo = element('local-video');
+const localGif = element('local-gif');
+const youtubePlayer = element('youtube-player');
 const gridInputs = ['cell-width', 'cell-height', 'threshold', 'pixels', 'four'];
 const format = new Intl.NumberFormat('ru', {maximumFractionDigits: 3});
 let selectedFile = null;
+let localUrl = null;
+let youtubeUrl = null;
 let captureStream = null;
 let captureVideo = null;
 let captureRequest = 0;
@@ -29,7 +37,6 @@ function controls() {
   element('pause').disabled = !running || job.kind === 'capture';
   element('restart').disabled = !selectedFile;
   element('csv').disabled = !job?.results.length;
-  element('use-frame').disabled = !job?.index;
   element('stop-capture').disabled = !captureStream;
   for (const id of gridInputs) element(id).disabled = !job?.current || running;
 }
@@ -250,7 +257,6 @@ async function process(currentJob, all) {
       currentJob.previous = currentJob.current;
       currentJob.current = image.getImageData(0, 0, frame.width, frame.height);
       currentJob.index++;
-      if (currentJob.index === 1) ensurePendulum();
       currentJob.time = frame.time;
       compare(currentJob);
       if (performance.now() - painted >= 140) {
@@ -275,11 +281,23 @@ async function process(currentJob, all) {
   }
 }
 
-function displayCanvas() {
-  element('youtube-player').hidden = true;
-  element('youtube-player').removeAttribute('src');
-  frameCanvas.hidden = false;
-  element('video-heading').textContent = 'Текущий кадр';
+function resetMedia() {
+  if (localVideo.hasAttribute('src')) {
+    localVideo.pause();
+    localVideo.removeAttribute('src');
+    localVideo.load();
+  }
+  localGif.removeAttribute('src');
+  youtubePlayer.removeAttribute('src');
+  localVideo.hidden = localGif.hidden = youtubePlayer.hidden = true;
+  if (localUrl) URL.revokeObjectURL(localUrl);
+  localUrl = null;
+  youtubeUrl = null;
+}
+
+function showMedia(source, title) {
+  element('media-title').textContent = title;
+  media.hidden = source.hidden = false;
 }
 
 function endCapture(message) {
@@ -293,6 +311,10 @@ function endCapture(message) {
     captureVideo.srcObject = null;
     captureVideo.remove();
     captureVideo = null;
+    if (youtubeUrl) {
+      if (!youtubePlayer.hasAttribute('src')) youtubePlayer.src = youtubeUrl;
+      showMedia(youtubePlayer, 'Видео YouTube');
+    }
   }
   if (job?.kind === 'capture' && !job.done) {
     job.done = true;
@@ -302,12 +324,26 @@ function endCapture(message) {
   controls();
 }
 
+const isGif = file => /\.gif$/i.test(file.name) || file.type === 'image/gif';
+
 function openFile(file) {
   endCapture();
-  displayCanvas();
+  resetMedia();
   element('youtube-actions').hidden = true;
   selectedFile = file;
-  const decode = /\.gif$/i.test(file.name) || file.type === 'image/gif' ? gifFrames : videoFrames;
+  clearAnalysis();
+  const preview = isGif(file) ? localGif : localVideo;
+  localUrl = URL.createObjectURL(file);
+  preview.src = localUrl;
+  showMedia(preview, isGif(file) ? 'GIF из файла' : 'Видео из файла');
+  status(file.name);
+  if (analysis.open) startFileAnalysis();
+}
+
+function startFileAnalysis() {
+  const file = selectedFile;
+  if (!file) return;
+  const decode = isGif(file) ? gifFrames : videoFrames;
   const next = createJob('file', file.name, signal => decode(file, signal));
   status('Читаю ' + file.name + '…');
   void process(next, false);
@@ -323,6 +359,18 @@ element('file').addEventListener('change', event => {
   const file = event.currentTarget.files[0];
   if (file) openFile(file);
 });
+for (const preview of [localVideo, localGif]) {
+  preview.addEventListener('error', () => {
+    if (!preview.hidden) status('Браузер не смог показать этот файл. Для видео попробуйте MP4 (H.264) или WebM.', true);
+  });
+}
+element('media-size').addEventListener('change', event => {
+  mediaViewport.style.width = event.target.value + '%';
+});
+analysis.addEventListener('toggle', () => {
+  if (analysis.open && selectedFile && !job) startFileAnalysis();
+  if (!analysis.open && job?.kind === 'file') job.running = false;
+});
 element('youtube-form').addEventListener('submit', event => {
   event.preventDefault();
   const id = youtubeVideoId(element('youtube').value);
@@ -331,17 +379,15 @@ element('youtube-form').addEventListener('submit', event => {
     return;
   }
   endCapture();
-  clearAnalysis();
+  resetMedia();
   selectedFile = null;
+  clearAnalysis();
   element('file').value = '';
-  const player = element('youtube-player');
-  player.src = 'https://www.youtube-nocookie.com/embed/' + id;
-  player.hidden = false;
-  frameCanvas.hidden = true;
-  element('video-heading').textContent = 'Видео YouTube';
+  youtubeUrl = 'https://www.youtube-nocookie.com/embed/' + id;
+  youtubePlayer.src = youtubeUrl;
+  showMedia(youtubePlayer, 'Видео YouTube');
   element('youtube-watch').href = 'https://www.youtube.com/watch?v=' + id;
   element('youtube-actions').hidden = false;
-  ensurePendulum();
   status('Ролик подключён. Для анализа выберите его вкладку.');
   controls();
 });
@@ -365,15 +411,18 @@ element('capture').addEventListener('click', async () => {
     if (surface && surface !== 'browser') throw new Error('Выберите вкладку браузера с видео.');
     const video = Object.assign(document.createElement('video'), {muted: true, playsInline: true, srcObject: stream});
     captureVideo = video;
-    video.className = 'capture-video';
-    video.setAttribute('aria-hidden', 'true');
-    document.body.append(video);
+    video.hidden = true;
+    video.setAttribute('aria-label', 'Видео из захваченной вкладки');
+    mediaViewport.append(video);
     track.addEventListener('ended', () => {
       if (captureStream === stream) endCapture('Захват завершён.');
     }, {once: true});
     await video.play();
     if (request !== captureRequest) return;
-    displayCanvas();
+    youtubePlayer.hidden = true;
+    youtubePlayer.removeAttribute('src');
+    showMedia(video, 'Видео из захваченной вкладки');
+    analysis.open = true;
     const next = createJob('capture', 'Захват вкладки', signal => capturedFrames(video, signal));
     status('Захватываю видимые кадры. Время отсчитывается от начала захвата.');
     void process(next, true);
@@ -387,10 +436,13 @@ element('stop-capture').addEventListener('click', () => endCapture('Захват
 element('next').addEventListener('click', () => void process(job, false));
 element('all').addEventListener('click', () => void process(job, true));
 element('pause').addEventListener('click', () => { if (job) job.running = false; });
-element('restart').addEventListener('click', () => { if (selectedFile) openFile(selectedFile); });
-addEventListener('pagehide', () => {
+element('restart').addEventListener('click', startFileAnalysis);
+addEventListener('pagehide', event => {
   endCapture();
-  job?.controller.abort();
+  if (!event.persisted) {
+    job?.controller.abort();
+    resetMedia();
+  }
 });
 
 function refreshGrid() {
@@ -435,35 +487,3 @@ element('csv').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
-function ensurePendulum() {
-  if (element('pendulum-view').hidden && element('pendulum-form').checkValidity()) showPendulum();
-}
-
-function showPendulum() {
-  const rows = Number(element('pendulum-rows').value);
-  const frame = Number(element('pendulum-frame').value);
-  const normalUrl = new URL('../../mayatnik/Zerkalius-mayatnik.html', location.href);
-  normalUrl.search = new URLSearchParams({
-    chisto: '1', mode: element('pendulum-mode').value, gpu: '0',
-    n: rows, s: Math.max(rows, frame), k: frame
-  });
-  element('open-pendulum').href = normalUrl.href;
-  element('open-pendulum').hidden = false;
-  normalUrl.searchParams.set('embed', '1');
-  const view = element('pendulum-view');
-  view.hidden = false;
-  if (view.src !== normalUrl.href) view.src = normalUrl.href;
-}
-
-element('pendulum-form').addEventListener('submit', event => {
-  event.preventDefault();
-  showPendulum();
-});
-element('pendulum-size').addEventListener('change', event => {
-  element('pendulum-view').style.width = event.target.value + '%';
-});
-element('use-frame').addEventListener('click', () => {
-  if (!job?.index) return;
-  element('pendulum-frame').value = Math.min(job.index, Number(element('pendulum-frame').max));
-  if (element('pendulum-form').reportValidity()) showPendulum();
-});
