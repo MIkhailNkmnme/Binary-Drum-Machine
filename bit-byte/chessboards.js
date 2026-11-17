@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const KEY = "zerk_bit_chessboards_v1";
-  const MAX_BOARDS = 16;
+  const MAX_BOARDS = 16, MAX_ID = 1000000;
   const MAX_POSITION = 512, MAX_SIZE = 128, MAX_FIELD = MAX_POSITION + MAX_SIZE;
   const OUTLINES = [
     "#ff6868", "#62dc81", "#65a6ff", "#ffd166", "#d98aff", "#55dbdf", "#ff9b60", "#d1e469",
@@ -18,10 +18,7 @@
   world.append(logicCanvas);
   const logicContext = logicCanvas.getContext("2d");
   let logicFrame = 0;
-  const selection = document.createElement("div");
-  selection.className = "chess-selection";
-  selection.setAttribute("aria-hidden", "true");
-  world.append(selection);
+  let swatchKey = "";
   let drag = null, lastTap = null, pendingInput = null, saveFailed = false, scrollFrame = 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const integer = (value, fallback, min, max) => Number.isFinite(Number(value))
@@ -30,6 +27,13 @@
 
   const defaultOutline = id => OUTLINES[(id - 1) % OUTLINES.length];
   const boardLabel = id => "Шахматка " + id;
+  const area = board => board.cols * board.rows;
+  // Порядок в сохранении разрешает совпадения площадей.
+  const layers = () => state.boards.slice().sort((a, b) => area(b) - area(a));
+  function freeId(ids, id) {
+    while (ids.has(id)) id = id % MAX_ID + 1;
+    return id;
+  }
   function availableOutline(id, used) {
     const preferred = defaultOutline(id);
     return used.has(preferred) ? OUTLINES.find(outline => !used.has(outline)) ?? preferred : preferred;
@@ -44,7 +48,8 @@
   function initialState() {
     const second = makeBoard(2, 10, 6);
     second.zeroOpacity = second.oneOpacity = 65;
-    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers", selected: 2, boards: [makeBoard(1), second] };
+    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers",
+      selected: 2, selectedIds: [2], boards: [makeBoard(1), second] };
   }
   function load() {
     try {
@@ -55,8 +60,7 @@
       const outlines = new Set(items.map(item => color(item?.outline, "").toLowerCase()).filter(Boolean));
       const boards = items.map((item, index) => {
         item = item && typeof item === "object" ? item : {};
-        let id = integer(item.id, index + 1, 1, 1000000);
-        while (ids.has(id)) id++;
+        const id = freeId(ids, integer(item.id, index + 1, 1, MAX_ID));
         ids.add(id);
         const outline = color(item.outline, "") || availableOutline(id, outlines);
         outlines.add(outline.toLowerCase());
@@ -71,18 +75,26 @@
           oneOpacity: integer(item.oneOpacity, 100, 0, 100),
         };
       });
+      const active = ids.has(saved.selected) ? saved.selected : boards[0]?.id ?? null;
+      const selectedIds = Array.isArray(saved.selectedIds)
+        ? [...new Set(saved.selectedIds.filter(id => ids.has(id)))] : active === null ? [] : [active];
       return {
         fieldCols: saved.fieldCols == null ? null : integer(saved.fieldCols, null, 1, MAX_FIELD),
         fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD),
         cell: integer(saved.cell, 24, 1, 64), digits: saved.digits === true, boards,
         logic: logicButtons.some(button => button.dataset.chessLogic === saved.logic) ? saved.logic : "layers",
-        selected: boards.some(board => board.id === saved.selected) ? saved.selected : boards[0]?.id ?? null,
+        selected: selectedIds.includes(active) ? active : selectedIds.at(-1) ?? null,
+        selectedIds,
       };
     } catch { return initialState(); }
   }
   let state = load();
   const snapshot = () => JSON.stringify(state);
   const selected = () => state.boards.find(board => board.id === state.selected);
+  function setSelection(ids, active = ids.at(-1) ?? null) {
+    state.selectedIds = ids;
+    state.selected = active;
+  }
   function save() {
     try {
       localStorage.setItem(KEY, snapshot());
@@ -113,10 +125,17 @@
     remember(before);
     render();
   }
-  function select(id) {
+  function choose(id, toggle) {
+    if (!toggle) setSelection([id]);
+    else if (state.selectedIds.includes(id)) {
+      const ids = state.selectedIds.filter(item => item !== id);
+      setSelection(ids, state.selected === id ? ids.at(-1) ?? null : state.selected);
+    } else setSelection([...state.selectedIds, id]);
+  }
+  function select(id, toggle = false) {
     if (drag) return;
     finishInput();
-    state.selected = id;
+    choose(id, toggle);
     save();
     render();
   }
@@ -179,7 +198,7 @@
   function paintLogic() {
     logicFrame = 0;
     const and = state.logic.startsWith("and"), byPalette = state.logic.endsWith("-rgb");
-    const visible = state.boards.filter(board => board.visible).map(board => ({
+    const visible = layers().filter(board => board.visible).map(board => ({
       ...board, palette: board.zero.toLowerCase() + "/" + board.one.toLowerCase(),
     }));
     const paletteSizes = new Map();
@@ -278,43 +297,51 @@
 
   function renderScene() {
     initializeField();
-    const ids = new Set(state.boards.map(board => board.id));
-    for (const [id, element] of elements) {
-      if (!ids.has(id)) { element.remove(); elements.delete(id); }
+    const ordered = layers();
+    const ids = new Set(ordered.map(board => board.id));
+    for (const [id, {element, outline}] of elements) {
+      if (!ids.has(id)) { element.remove(); outline.remove(); elements.delete(id); }
     }
     let total = 0, visible = 0;
-    for (const [index, board] of state.boards.entries()) {
-      let element = elements.get(board.id);
-      if (!element) {
-        element = document.createElement("button");
+    for (const [index, board] of ordered.entries()) {
+      if (!elements.has(board.id)) {
+        const element = document.createElement("button");
         element.type = "button";
         element.className = "chess-board";
         element.dataset.boardId = String(board.id);
-        elements.set(board.id, element);
-        world.append(element);
+        const outline = document.createElement("div");
+        outline.className = "chess-selection";
+        outline.setAttribute("aria-hidden", "true");
+        elements.set(board.id, {element, outline});
+        world.append(element, outline);
       }
       const active = state.selected === board.id;
+      const marked = state.selectedIds.includes(board.id);
+      const {element, outline} = elements.get(board.id);
       element.hidden = !board.visible;
       element.tabIndex = active ? 0 : -1;
-      element.setAttribute("aria-pressed", String(active));
+      element.setAttribute("aria-pressed", String(marked));
       element.setAttribute("aria-label", boardLabel(board.id) + ", " + board.cols + " на " + board.rows +
         " клеток, X " + board.x + ", Y " + board.y + ". Стрелки — перемещение.");
       positionBoard(element, board);
       element.style.backgroundSize = state.cell * 2 + "px " + state.cell * 2 + "px";
       element.style.zIndex = String(index + 1);
+      outline.hidden = !board.visible || !marked;
+      if (!outline.hidden) {
+        positionBoard(outline, board);
+        outline.style.zIndex = String(MAX_BOARDS + 2 + index);
+        outline.toggleAttribute("data-primary", active);
+      }
       const tile = [board.phase, board.zero, board.one, board.zeroOpacity, board.oneOpacity, state.digits].join(":");
       if (element.dataset.tile !== tile) {
         element.style.backgroundImage = pattern(board);
         element.dataset.tile = tile;
       }
-      total += board.cols * board.rows;
+      total += area(board);
       if (board.visible) {
         visible++;
       }
     }
-    const activeBoard = selected();
-    selection.hidden = !activeBoard?.visible;
-    if (activeBoard?.visible) positionBoard(selection, activeBoard);
     if (state.fieldCols !== null && state.fieldRows !== null) {
       // Размер внутренней области точен; внешняя рамка добавляет 2 px.
       viewport.style.width = state.fieldCols * state.cell + 2 + "px";
@@ -325,6 +352,7 @@
     }
     world.style.setProperty("--chess-cell", state.cell + "px");
     renderLogic();
+    renderLayers(ordered);
     byId("total").textContent = "Шахматок: " + state.boards.length + " · видимых: " + visible +
       " · поле: " + (state.fieldCols ?? "—") + " × " + (state.fieldRows ?? "—") + " клеток · клетка: " + state.cell + " × " + state.cell + " px · клеток по всем шахматкам: " + total +
       " (наложенные клетки считаются отдельно).";
@@ -336,28 +364,44 @@
       byId("board-count").textContent = "";
       return;
     }
-    const count = board.cols * board.rows;
+    const count = area(board);
     const zeroCount = board.phase ? Math.floor(count / 2) : Math.ceil(count / 2);
     byId("board-count").textContent = count + " клеток / битов · 0: " + zeroCount + " · 1: " + (count - zeroCount);
     byId("zero-percent").textContent = board.zeroOpacity + "%";
     byId("one-percent").textContent = board.oneOpacity + "%";
   }
-  function renderControls() {
+  function layerNeighbor(ordered, index, delta) {
+    const board = ordered[index], neighbor = ordered[index + delta];
+    return board && neighbor && area(board) === area(neighbor) ? neighbor : null;
+  }
+  function renderLayers(ordered) {
+    const index = ordered.indexOf(selected());
+    byId("backward").disabled = !layerNeighbor(ordered, index, -1);
+    byId("forward").disabled = !layerNeighbor(ordered, index, 1);
+    const key = JSON.stringify([state.selected, state.selectedIds,
+      ordered.map(board => [board.id, board.outline, board.visible])]);
+    if (key === swatchKey) return;
+    swatchKey = key;
     const focused = list.contains(document.activeElement) ? document.activeElement.dataset.boardId : null;
-    list.replaceChildren(...state.boards.map((board, index) => {
+    list.replaceChildren(...ordered.map((board, layer) => {
       const swatch = document.createElement("button");
       swatch.type = "button";
       swatch.className = "chess-swatch";
       swatch.dataset.boardId = String(board.id);
       swatch.style.setProperty("--board-color", board.outline);
-      swatch.setAttribute("aria-pressed", String(board.id === state.selected));
+      swatch.setAttribute("aria-pressed", String(state.selectedIds.includes(board.id)));
       swatch.toggleAttribute("data-hidden", !board.visible);
-      const label = boardLabel(board.id) + ", слой " + (index + 1) + (board.visible ? "" : ", скрыта");
+      const label = boardLabel(board.id) + ", слой " + (layer + 1) + (board.visible ? "" : ", скрыта");
       swatch.title = label;
       swatch.setAttribute("aria-label", label);
       return swatch;
     }));
     if (focused) list.querySelector('[data-board-id="' + focused + '"]')?.focus({preventScroll: true});
+    const count = state.selectedIds.length;
+    byId("selection-info").textContent = count > 1
+      ? "Выделено: " + count + " · настройки: " + boardLabel(state.selected) : "";
+  }
+  function renderControls() {
     byId("cell").value = state.cell;
     byId("field-cols").value = state.fieldCols ?? "";
     byId("field-rows").value = state.fieldRows ?? "";
@@ -383,9 +427,6 @@
     byId("one-opacity").value = board.oneOpacity;
     byId("phase").setAttribute("aria-pressed", String(board.phase));
     byId("visibility").setAttribute("aria-pressed", String(board.visible));
-    const index = state.boards.indexOf(board);
-    byId("backward").disabled = index === 0;
-    byId("forward").disabled = index === state.boards.length - 1;
   }
   function render() { renderScene(); renderControls(); }
   function bindInput(id, update) {
@@ -423,7 +464,7 @@
     const swatch = event.target.closest(".chess-swatch");
     if (!swatch || drag) return;
     lastTap = null;
-    select(Number(swatch.dataset.boardId));
+    select(Number(swatch.dataset.boardId), event.ctrlKey);
   });
   byId("digits").addEventListener("click", () => mutate(() => { state.digits = !state.digits; }));
   for (const button of logicButtons) {
@@ -438,7 +479,8 @@
       board.x + board.cols <= MAX_POSITION && board.y + board.rows <= MAX_POSITION;
   }
   function addBoard(x, y, source) {
-    const id = Math.max(0, ...state.boards.map(board => board.id)) + 1;
+    const ids = new Set(state.boards.map(board => board.id));
+    const id = freeId(ids, Math.max(0, ...ids) % MAX_ID + 1);
     const board = makeBoard(id, x, y);
     if (source) {
       board.cols = source.cols + 1;
@@ -448,7 +490,7 @@
     const used = new Set(state.boards.map(item => item.outline.toLowerCase()));
     board.outline = availableOutline(id, used);
     state.boards.push(board);
-    state.selected = id;
+    setSelection([id]);
     growField([board], !!source);
   }
   byId("add").addEventListener("click", () => {
@@ -463,7 +505,8 @@
   });
   byId("remove").addEventListener("click", () => mutate(() => {
     state.boards = state.boards.filter(board => board.id !== state.selected);
-    state.selected = state.boards.at(-1)?.id ?? null;
+    const remaining = state.selectedIds.filter(id => id !== state.selected);
+    setSelection(remaining.length ? remaining : state.boards.slice(-1).map(board => board.id));
   }));
   byId("undo").addEventListener("click", () => {
     if (drag) return;
@@ -477,8 +520,10 @@
   byId("visibility").addEventListener("click", () => mutate(() => { const board = selected(); if (board) board.visible = !board.visible; }));
   function reorder(delta) {
     mutate(() => {
-      const index = state.boards.indexOf(selected()), target = index + delta;
-      if (index < 0 || target < 0 || target >= state.boards.length) return;
+      const ordered = layers(), board = selected();
+      const neighbor = layerNeighbor(ordered, ordered.indexOf(board), delta);
+      if (!neighbor) return;
+      const index = state.boards.indexOf(board), target = state.boards.indexOf(neighbor);
       [state.boards[index], state.boards[target]] = [state.boards[target], state.boards[index]];
     });
   }
@@ -489,7 +534,7 @@
     const x = event.clientX - rect.left, y = event.clientY - rect.top;
     const outside = event.pointerType === "touch" ? 10 : 5;
     const inside = [], borders = [];
-    for (const board of state.boards) {
+    for (const board of layers()) {
       if (!board.visible) continue;
       const left = board.x * state.cell, top = board.y * state.cell;
       const width = board.cols * state.cell, height = board.rows * state.cell;
@@ -501,9 +546,11 @@
       const vertical = y <= top + nearY ? -1 : y >= bottom - nearY ? 1 : 0;
       if (horizontal || vertical) borders.push({board, horizontal, vertical});
     }
-    // Цветная обводка рисуется поверх всех заливок, поэтому её край получает приоритет.
-    const edge = borders.find(hit => hit.board.id === state.selected) ?? borders.at(-1);
-    return {inside, edge};
+    const top = inside.at(-1);
+    // Сплошная обводка главной шахматки видна и доступна поверх заливок.
+    const activeEdge = borders.find(hit => hit.board.id === state.selected);
+    const topEdge = top ? borders.find(hit => hit.board === top) : borders.at(-1);
+    return {top, edge: activeEdge ?? topEdge};
   }
 
   function resizeCursor(edge) {
@@ -525,20 +572,25 @@
 
   world.addEventListener("pointerdown", event => {
     if (event.button !== 0 || drag) return;
-    const {inside, edge} = hitTest(event);
-    const top = inside.at(-1);
-    const active = edge?.board ?? top;
-    if (active) {
-      select(active.id);
-      elements.get(active.id).focus({preventScroll: true});
-    } else {
-      finishInput();
+    finishInput();
+    initializeField();
+    const hit = hitTest(event);
+    const modified = event.ctrlKey || event.shiftKey;
+    const edge = modified ? null : hit.edge;
+    const active = edge?.board ?? hit.top ?? hit.edge?.board;
+    if (!active) {
+      lastTap = null;
       viewport.focus({preventScroll: true});
+      return;
     }
-    const group = edge ? [edge.board] : inside.length ? inside : state.boards;
+    elements.get(active.id).element.focus({preventScroll: true});
+    const group = modified && state.selectedIds.includes(active.id)
+      ? state.boards.filter(board => state.selectedIds.includes(board.id)) : [active];
     const origins = group.map(board => ({board, x: board.x, y: board.y, cols: board.cols, rows: board.rows, phase: board.phase}));
     drag = {
-      kind: "boards", pointer: event.pointerId, before: snapshot(), edge, origins, tapId: top?.id,
+      kind: "boards", pointer: event.pointerId, before: snapshot(), edge, origins,
+      activeId: active.id, tapId: hit.top?.id, modified, copy: event.ctrlKey, blocked: false,
+      fieldRows: state.fieldRows,
       startX: event.clientX + window.scrollX, startY: event.clientY + window.scrollY,
       clientX: event.clientX, clientY: event.clientY, moved: false,
     };
@@ -546,11 +598,37 @@
     event.preventDefault();
   });
 
+  function startBoardDrag() {
+    drag.moved = true;
+    if (!drag.copy) {
+      setSelection(drag.origins.map(origin => origin.board.id), drag.activeId);
+      return;
+    }
+    if (state.boards.length + drag.origins.length > MAX_BOARDS) {
+      drag.blocked = true;
+      byId("status").textContent = "Для копий не хватает места. Максимум " + MAX_BOARDS + " шахматок.";
+      return;
+    }
+    const ids = new Set(state.boards.map(board => board.id));
+    let candidate = Math.max(0, ...ids) % MAX_ID + 1;
+    let activeCopy;
+    const copies = drag.origins.map(origin => {
+      const id = freeId(ids, candidate);
+      ids.add(id);
+      candidate = id % MAX_ID + 1;
+      if (origin.board.id === drag.activeId) activeCopy = id;
+      return {...origin.board, id};
+    });
+    state.boards.push(...copies);
+    drag.origins.forEach((origin, index) => { origin.board = copies[index]; });
+    setSelection(copies.map(board => board.id), activeCopy);
+  }
   function moveBoards() {
     const dx = drag.clientX + window.scrollX - drag.startX;
     const dy = drag.clientY + window.scrollY - drag.startY;
     if (!drag.moved && Math.hypot(dx, dy) < Math.min(4, state.cell)) return;
-    drag.moved = true;
+    if (!drag.moved) startBoardDrag();
+    if (drag.blocked) return;
     const x = Math.round(dx / state.cell), y = Math.round(dy / state.cell);
     if (drag.edge) {
       const {board, cols, rows, phase, x: left, y: top} = drag.origins[0];
@@ -575,7 +653,7 @@
     renderScene();
   }
   function scrollDuringDrag() {
-    if (scrollFrame || drag?.kind !== "boards" || !drag.moved) return;
+    if (scrollFrame || drag?.kind !== "boards" || !drag.moved || drag.blocked) return;
     if (drag.edge && drag.edge.vertical <= 0) return;
     const distance = window.innerHeight - drag.clientY;
     if (distance >= 44) return;
@@ -592,10 +670,11 @@
   world.addEventListener("pointermove", event => {
     if (drag?.kind === "field") return;
     if (!drag) {
-      world.style.setProperty("--chess-cursor", resizeCursor(hitTest(event).edge));
+      const edge = event.ctrlKey || event.shiftKey ? null : hitTest(event).edge;
+      world.style.setProperty("--chess-cursor", resizeCursor(edge));
       return;
     }
-    if (event.pointerId !== drag.pointer || !drag.origins.length) return;
+    if (event.pointerId !== drag.pointer) return;
     drag.clientX = event.clientX;
     drag.clientY = event.clientY;
     moveBoards();
@@ -606,37 +685,59 @@
     if (drag?.kind !== "boards" || (event.pointerId != null && event.pointerId !== drag.pointer)) return;
     if (scrollFrame) cancelAnimationFrame(scrollFrame);
     scrollFrame = 0;
+    if (event.type === "pointerup" && (event.clientX !== drag.clientX || event.clientY !== drag.clientY)) {
+      drag.clientX = event.clientX;
+      drag.clientY = event.clientY;
+      moveBoards();
+    }
     const finished = drag;
     drag = null;
     if (event.type !== "pointerup") {
       state = JSON.parse(finished.before);
       lastTap = null;
-    } else if (finished.moved || !finished.tapId) {
+      if (finished.blocked) save();
+    } else if (finished.moved) {
       lastTap = null;
-      remember(finished.before);
+      if (!finished.blocked) {
+        const changed = finished.copy || finished.origins.some(({board, x, y, cols, rows}) =>
+          board.x !== x || board.y !== y || board.cols !== cols || board.rows !== rows);
+        if (changed || state.fieldRows !== finished.fieldRows) remember(finished.before);
+        else save();
+      }
+    } else if (finished.modified || !finished.tapId) {
+      choose(finished.activeId, finished.copy);
+      lastTap = null;
+      save();
     } else {
       const now = event.timeStamp;
       const same = lastTap?.id === finished.tapId && now - lastTap.time <= 450 &&
         Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) <= 10;
       if (same) {
         const board = state.boards.find(item => item.id === finished.tapId);
-        state.selected = board.id;
+        setSelection([board.id]);
         board.phase = !board.phase;
         remember(finished.before);
         lastTap = null;
       } else {
+        setSelection([finished.activeId]);
+        save();
         lastTap = {id: finished.tapId, time: now, x: event.clientX, y: event.clientY};
       }
     }
     if (world.hasPointerCapture(finished.pointer)) world.releasePointerCapture(finished.pointer);
     world.style.removeProperty("--chess-cursor");
     render();
+    if (event.type === "pointerup" && finished.copy && finished.moved && !finished.blocked) {
+      elements.get(state.selected).element.focus({preventScroll: true});
+    }
   }
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) world.addEventListener(type, finishDrag);
   world.addEventListener("click", event => {
     if (event.detail !== 0) return;
     const element = event.target.closest(".chess-board");
-    if (element) select(Number(element.dataset.boardId));
+    if (!element) return;
+    lastTap = null;
+    select(Number(element.dataset.boardId), event.ctrlKey);
   });
   viewport.addEventListener("keydown", event => {
     const steps = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -686,7 +787,10 @@
   }
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) viewport.addEventListener(type, finishFieldResize);
   window.addEventListener("keydown", event => {
-    if (event.key === "Escape" && drag?.kind === "field") { event.preventDefault(); finishFieldResize(event); }
+    if (event.key !== "Escape" || !drag) return;
+    event.preventDefault();
+    finishFieldResize(event);
+    finishDrag(event);
   });
   window.addEventListener("blur", event => { finishFieldResize(event); finishDrag(event); });
   // Измеряем прежнюю область только при первом видимом открытии. После миграции
