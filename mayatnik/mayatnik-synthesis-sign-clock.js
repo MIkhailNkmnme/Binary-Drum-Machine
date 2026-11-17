@@ -44,15 +44,16 @@
         return bufferPromise;
       }
       const entry = (async () => {
-        const manifestUrl = new URL('sign-bank.json', directory).href;
-        const wavUrl = new URL('sign-bank.wav', directory).href;
+        const manifestUrl = new URL('procedural-v1-bank.json', directory).href;
+        const wavUrl = new URL('procedural-v1-bank.wav', directory).href;
         const [manifestResponse, wavResponse] = await Promise.all([fetch(manifestUrl), fetch(wavUrl)]);
         if (!manifestResponse.ok) throw new Error(`Не удалось загрузить описание голосов (${manifestResponse.status}).`);
         if (!wavResponse.ok) throw new Error(`Не удалось загрузить голоса (${wavResponse.status}).`);
         const manifest = await manifestResponse.json();
         const bytes = await wavResponse.arrayBuffer();
-        if (manifest?.version !== 1 || !manifest.clips || typeof manifest.clips !== 'object') {
-          throw new Error('Неподдерживаемый формат описания голосов.');
+        if (manifest?.version !== 1 || manifest.synthesis !== 'procedural-formant-v1'
+          || !manifest.clips || typeof manifest.clips !== 'object') {
+          throw new Error('Нужен банк полностью процедурного голоса.');
         }
         return { manifest, bytes };
       })();
@@ -115,7 +116,7 @@
               || !Number.isFinite(Number(clip[0])) || !Number.isFinite(Number(clip[1]))
               || Number(clip[0]) < 0 || Number(clip[1]) <= 0
               || Number(clip[0]) + Number(clip[1]) > buffer.duration + .002))) {
-              throw new Error('Для одного из знаков нет корректной записи голоса.');
+              throw new Error('Для одного из знаков нет корректного синтезированного звука.');
             }
             const timeline = ctx.currentTime + 0.10;
             function audibleTime() {

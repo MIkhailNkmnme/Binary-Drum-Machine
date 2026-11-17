@@ -1,0 +1,737 @@
+{
+  "version": 1,
+  "synthesis": "procedural-formant-v1",
+  "sampleRate": 22050,
+  "channels": 1,
+  "bitsPerSample": 16,
+  "guardSamples": 1102,
+  "clips": {
+    "A": [
+      0.049977324,
+      0.330022676
+    ],
+    "B": [
+      0.429977324,
+      0.364988662
+    ],
+    "C": [
+      0.844943311,
+      0.44
+    ],
+    "D": [
+      1.334920635,
+      0.364988662
+    ],
+    "E": [
+      1.749886621,
+      0.350022676
+    ],
+    "F": [
+      2.149886621,
+      0.409977324
+    ],
+    "G": [
+      2.60984127,
+      0.419954649
+    ],
+    "H": [
+      3.079773243,
+      0.439954649
+    ],
+    "I": [
+      3.569705215,
+      0.36
+    ],
+    "J": [
+      3.97968254,
+      0.429931973
+    ],
+    "K": [
+      4.459591837,
+      0.399954649
+    ],
+    "L": [
+      4.90952381,
+      0.389977324
+    ],
+    "M": [
+      5.349478458,
+      0.4
+    ],
+    "N": [
+      5.799455782,
+      0.4
+    ],
+    "O": [
+      6.249433107,
+      0.34
+    ],
+    "P": [
+      6.639410431,
+      0.374965986
+    ],
+    "Q": [
+      7.064353741,
+      0.424943311
+    ],
+    "R": [
+      7.539274376,
+      0.420045351
+    ],
+    "S": [
+      8.009297052,
+      0.42
+    ],
+    "T": [
+      8.479274376,
+      0.369977324
+    ],
+    "U": [
+      8.899229025,
+      0.38
+    ],
+    "V": [
+      9.329206349,
+      0.409977324
+    ],
+    "W": [
+      9.789160998,
+      0.84
+    ],
+    "X": [
+      10.679138322,
+      0.435011338
+    ],
+    "Y": [
+      11.164126984,
+      0.44
+    ],
+    "Z": [
+      11.654104308,
+      0.429977324
+    ],
+    "А": [
+      12.134058957,
+      0.350022676
+    ],
+    "Б": [
+      12.534058957,
+      0.364988662
+    ],
+    "В": [
+      12.949024943,
+      0.419954649
+    ],
+    "Г": [
+      13.418956916,
+      0.374965986
+    ],
+    "Д": [
+      13.843900227,
+      0.364988662
+    ],
+    "Е": [
+      14.258866213,
+      0.38
+    ],
+    "Ё": [
+      14.688843537,
+      0.38
+    ],
+    "Ж": [
+      15.118820862,
+      0.44
+    ],
+    "З": [
+      15.608798186,
+      0.44
+    ],
+    "И": [
+      16.09877551,
+      0.350022676
+    ],
+    "Й": [
+      16.49877551,
+      0.935102041
+    ],
+    "К": [
+      17.483854875,
+      0.374965986
+    ],
+    "Л": [
+      17.908798186,
+      0.410022676
+    ],
+    "М": [
+      18.368798186,
+      0.410022676
+    ],
+    "Н": [
+      18.828798186,
+      0.410022676
+    ],
+    "О": [
+      19.288798186,
+      0.350022676
+    ],
+    "П": [
+      19.688798186,
+      0.374965986
+    ],
+    "Р": [
+      20.113741497,
+      0.410022676
+    ],
+    "С": [
+      20.573741497,
+      0.44
+    ],
+    "Т": [
+      21.063718821,
+      0.369977324
+    ],
+    "У": [
+      21.483673469,
+      0.350022676
+    ],
+    "Ф": [
+      21.883673469,
+      0.44
+    ],
+    "Х": [
+      22.373650794,
+      0.429977324
+    ],
+    "Ц": [
+      22.853605442,
+      0.444988662
+    ],
+    "Ч": [
+      23.348571429,
+      0.444988662
+    ],
+    "Ш": [
+      23.843537415,
+      0.459954649
+    ],
+    "Щ": [
+      24.353469388,
+      0.48
+    ],
+    "Ъ": [
+      24.883446712,
+      1.034965986
+    ],
+    "Ы": [
+      25.968390023,
+      0.350022676
+    ],
+    "Ь": [
+      26.368390023,
+      1.004897959
+    ],
+    "Э": [
+      27.423265306,
+      0.350022676
+    ],
+    "Ю": [
+      27.823265306,
+      0.38
+    ],
+    "Я": [
+      28.25324263,
+      0.38
+    ],
+    "0": [
+      28.683219955,
+      0.489977324
+    ],
+    "1": [
+      29.223174603,
+      0.574965986
+    ],
+    "2": [
+      29.848117914,
+      0.464988662
+    ],
+    "3": [
+      30.3630839,
+      0.449977324
+    ],
+    "4": [
+      30.863038549,
+      0.670022676
+    ],
+    "5": [
+      31.583038549,
+      0.5
+    ],
+    "6": [
+      32.133015873,
+      0.595056689
+    ],
+    "7": [
+      32.778049887,
+      0.535011338
+    ],
+    "8": [
+      33.363038549,
+      0.620045351
+    ],
+    "9": [
+      34.033061224,
+      0.544988662
+    ]
+  },
+  "recipes": {
+    "A": {
+      "spoken": "ay",
+      "score": "e:220 i:110",
+      "sampleOffset": 1102,
+      "sampleCount": 7277
+    },
+    "B": {
+      "spoken": "bee",
+      "score": "b:75 i:290",
+      "sampleOffset": 9481,
+      "sampleCount": 8048
+    },
+    "C": {
+      "spoken": "cee",
+      "score": "s:150 i:290",
+      "sampleOffset": 18631,
+      "sampleCount": 9702
+    },
+    "D": {
+      "spoken": "dee",
+      "score": "d:75 i:290",
+      "sampleOffset": 29435,
+      "sampleCount": 8048
+    },
+    "E": {
+      "spoken": "ee",
+      "score": "i:350",
+      "sampleOffset": 38585,
+      "sampleCount": 7718
+    },
+    "F": {
+      "spoken": "ef",
+      "score": "e:240 f:170",
+      "sampleOffset": 47405,
+      "sampleCount": 9040
+    },
+    "G": {
+      "spoken": "gee",
+      "score": "dzh:130 i:290",
+      "sampleOffset": 57547,
+      "sampleCount": 9260
+    },
+    "H": {
+      "spoken": "aitch",
+      "score": "e:180 i:90 ch:170",
+      "sampleOffset": 67909,
+      "sampleCount": 9701
+    },
+    "I": {
+      "spoken": "eye",
+      "score": "a:210 i:150",
+      "sampleOffset": 78712,
+      "sampleCount": 7938
+    },
+    "J": {
+      "spoken": "jay",
+      "score": "dzh:130 e:210 i:90",
+      "sampleOffset": 87752,
+      "sampleCount": 9480
+    },
+    "K": {
+      "spoken": "kay",
+      "score": "k:90 e:220 i:90",
+      "sampleOffset": 98334,
+      "sampleCount": 8819
+    },
+    "L": {
+      "spoken": "el",
+      "score": "e:250 l:140",
+      "sampleOffset": 108255,
+      "sampleCount": 8599
+    },
+    "M": {
+      "spoken": "em",
+      "score": "e:250 m:150",
+      "sampleOffset": 117956,
+      "sampleCount": 8820
+    },
+    "N": {
+      "spoken": "en",
+      "score": "e:250 n:150",
+      "sampleOffset": 127878,
+      "sampleCount": 8820
+    },
+    "O": {
+      "spoken": "oh",
+      "score": "o:240 u:100",
+      "sampleOffset": 137800,
+      "sampleCount": 7497
+    },
+    "P": {
+      "spoken": "pee",
+      "score": "p:85 i:290",
+      "sampleOffset": 146399,
+      "sampleCount": 8268
+    },
+    "Q": {
+      "spoken": "cue",
+      "score": "k:90 j:85 u:250",
+      "sampleOffset": 155769,
+      "sampleCount": 9370
+    },
+    "R": {
+      "spoken": "ar",
+      "score": "a:270 rr:150",
+      "sampleOffset": 166241,
+      "sampleCount": 9262
+    },
+    "S": {
+      "spoken": "ess",
+      "score": "e:240 s:180",
+      "sampleOffset": 176605,
+      "sampleCount": 9261
+    },
+    "T": {
+      "spoken": "tee",
+      "score": "t:80 i:290",
+      "sampleOffset": 186968,
+      "sampleCount": 8158
+    },
+    "U": {
+      "spoken": "you",
+      "score": "j:100 u:280",
+      "sampleOffset": 196228,
+      "sampleCount": 8379
+    },
+    "V": {
+      "spoken": "vee",
+      "score": "v:120 i:290",
+      "sampleOffset": 205709,
+      "sampleCount": 9040
+    },
+    "W": {
+      "spoken": "double u",
+      "score": "d:65 a:160 b:65 ax:95 l:90 _:55 j:80 u:230",
+      "sampleOffset": 215851,
+      "sampleCount": 18522
+    },
+    "X": {
+      "spoken": "ex",
+      "score": "e:220 k:65 s:150",
+      "sampleOffset": 235475,
+      "sampleCount": 9592
+    },
+    "Y": {
+      "spoken": "why",
+      "score": "w:110 a:200 i:130",
+      "sampleOffset": 246169,
+      "sampleCount": 9702
+    },
+    "Z": {
+      "spoken": "zee",
+      "score": "z:140 i:290",
+      "sampleOffset": 256973,
+      "sampleCount": 9481
+    },
+    "А": {
+      "spoken": "а",
+      "score": "a:350",
+      "sampleOffset": 267556,
+      "sampleCount": 7718
+    },
+    "Б": {
+      "spoken": "бэ",
+      "score": "b:75 e:290",
+      "sampleOffset": 276376,
+      "sampleCount": 8048
+    },
+    "В": {
+      "spoken": "вэ",
+      "score": "v:130 e:290",
+      "sampleOffset": 285526,
+      "sampleCount": 9260
+    },
+    "Г": {
+      "spoken": "гэ",
+      "score": "g:85 e:290",
+      "sampleOffset": 295888,
+      "sampleCount": 8268
+    },
+    "Д": {
+      "spoken": "дэ",
+      "score": "d:75 e:290",
+      "sampleOffset": 305258,
+      "sampleCount": 8048
+    },
+    "Е": {
+      "spoken": "е",
+      "score": "j:100 e:280",
+      "sampleOffset": 314408,
+      "sampleCount": 8379
+    },
+    "Ё": {
+      "spoken": "ё",
+      "score": "j:100 o:280",
+      "sampleOffset": 323889,
+      "sampleCount": 8379
+    },
+    "Ж": {
+      "spoken": "жэ",
+      "score": "zh:150 e:290",
+      "sampleOffset": 333370,
+      "sampleCount": 9702
+    },
+    "З": {
+      "spoken": "зэ",
+      "score": "z:150 e:290",
+      "sampleOffset": 344174,
+      "sampleCount": 9702
+    },
+    "И": {
+      "spoken": "и",
+      "score": "i:350",
+      "sampleOffset": 354978,
+      "sampleCount": 7718
+    },
+    "Й": {
+      "spoken": "и краткое",
+      "score": "i:190 _:55 k:70 r:70 a:190 t:55 k:65 ax:80 j:60 e:100",
+      "sampleOffset": 363798,
+      "sampleCount": 20619
+    },
+    "К": {
+      "spoken": "ка",
+      "score": "k:85 a:290",
+      "sampleOffset": 385519,
+      "sampleCount": 8268
+    },
+    "Л": {
+      "spoken": "эль",
+      "score": "e:260 lj:150",
+      "sampleOffset": 394889,
+      "sampleCount": 9041
+    },
+    "М": {
+      "spoken": "эм",
+      "score": "e:260 m:150",
+      "sampleOffset": 405032,
+      "sampleCount": 9041
+    },
+    "Н": {
+      "spoken": "эн",
+      "score": "e:260 n:150",
+      "sampleOffset": 415175,
+      "sampleCount": 9041
+    },
+    "О": {
+      "spoken": "о",
+      "score": "o:350",
+      "sampleOffset": 425318,
+      "sampleCount": 7718
+    },
+    "П": {
+      "spoken": "пэ",
+      "score": "p:85 e:290",
+      "sampleOffset": 434138,
+      "sampleCount": 8268
+    },
+    "Р": {
+      "spoken": "эр",
+      "score": "e:260 r:150",
+      "sampleOffset": 443508,
+      "sampleCount": 9041
+    },
+    "С": {
+      "spoken": "эс",
+      "score": "e:260 s:180",
+      "sampleOffset": 453651,
+      "sampleCount": 9702
+    },
+    "Т": {
+      "spoken": "тэ",
+      "score": "t:80 e:290",
+      "sampleOffset": 464455,
+      "sampleCount": 8158
+    },
+    "У": {
+      "spoken": "у",
+      "score": "u:350",
+      "sampleOffset": 473715,
+      "sampleCount": 7718
+    },
+    "Ф": {
+      "spoken": "эф",
+      "score": "e:260 f:180",
+      "sampleOffset": 482535,
+      "sampleCount": 9702
+    },
+    "Х": {
+      "spoken": "ха",
+      "score": "h:140 a:290",
+      "sampleOffset": 493339,
+      "sampleCount": 9481
+    },
+    "Ц": {
+      "spoken": "цэ",
+      "score": "ts:155 e:290",
+      "sampleOffset": 503922,
+      "sampleCount": 9812
+    },
+    "Ч": {
+      "spoken": "че",
+      "score": "ch:155 e:290",
+      "sampleOffset": 514836,
+      "sampleCount": 9812
+    },
+    "Ш": {
+      "spoken": "ша",
+      "score": "sh:170 a:290",
+      "sampleOffset": 525750,
+      "sampleCount": 10142
+    },
+    "Щ": {
+      "spoken": "ща",
+      "score": "shj:190 a:290",
+      "sampleOffset": 536994,
+      "sampleCount": 10584
+    },
+    "Ъ": {
+      "spoken": "твёрдый знак",
+      "score": "t:55 vj:85 o:180 r:70 d:55 y:90 j:45 _:55 z:90 n:65 a:160 k:85",
+      "sampleOffset": 548680,
+      "sampleCount": 22821
+    },
+    "Ы": {
+      "spoken": "ы",
+      "score": "y:350",
+      "sampleOffset": 572603,
+      "sampleCount": 7718
+    },
+    "Ь": {
+      "spoken": "мягкий знак",
+      "score": "mj:85 j:50 a:160 h:55 kj:65 i:90 j:45 _:55 z:90 n:65 a:160 k:85",
+      "sampleOffset": 581423,
+      "sampleCount": 22158
+    },
+    "Э": {
+      "spoken": "э",
+      "score": "e:350",
+      "sampleOffset": 604683,
+      "sampleCount": 7718
+    },
+    "Ю": {
+      "spoken": "ю",
+      "score": "j:100 u:280",
+      "sampleOffset": 613503,
+      "sampleCount": 8379
+    },
+    "Я": {
+      "spoken": "я",
+      "score": "j:100 a:280",
+      "sampleOffset": 622984,
+      "sampleCount": 8379
+    },
+    "0": {
+      "spoken": "ноль",
+      "score": "n:100 o:260 lj:130",
+      "sampleOffset": 632465,
+      "sampleCount": 10804
+    },
+    "1": {
+      "spoken": "один",
+      "score": "ax:130 dj:75 i:250 n:120",
+      "sampleOffset": 644371,
+      "sampleCount": 12678
+    },
+    "2": {
+      "spoken": "два",
+      "score": "d:65 v:100 a:300",
+      "sampleOffset": 658151,
+      "sampleCount": 10253
+    },
+    "3": {
+      "spoken": "три",
+      "score": "t:70 rj:90 i:290",
+      "sampleOffset": 669506,
+      "sampleCount": 9922
+    },
+    "4": {
+      "spoken": "четыре",
+      "score": "ch:110 i:90 t:65 y:220 rj:75 e:110",
+      "sampleOffset": 680530,
+      "sampleCount": 14774
+    },
+    "5": {
+      "spoken": "пять",
+      "score": "pj:80 j:60 a:270 tj:90",
+      "sampleOffset": 696406,
+      "sampleCount": 11025
+    },
+    "6": {
+      "spoken": "шесть",
+      "score": "sh:150 e:270 s:95 tj:80",
+      "sampleOffset": 708533,
+      "sampleCount": 13121
+    },
+    "7": {
+      "spoken": "семь",
+      "score": "sj:135 e:270 mj:130",
+      "sampleOffset": 722756,
+      "sampleCount": 11797
+    },
+    "8": {
+      "spoken": "восемь",
+      "score": "v:95 o:220 sj:100 i:95 mj:110",
+      "sampleOffset": 735655,
+      "sampleCount": 13672
+    },
+    "9": {
+      "spoken": "девять",
+      "score": "dj:75 e:200 vj:85 i:100 tj:85",
+      "sampleOffset": 750429,
+      "sampleCount": 12017
+    }
+  },
+  "provenance": {
+    "generator": "generate_procedural_bank.py",
+    "generatorSha256": "71205a0a12a33b9c8b590c515b5340bb7caae67a88d1de1d1507a36f4bccaa09",
+    "generatorHashEncoding": "UTF-8, LF",
+    "dependencies": "Python standard library only",
+    "source": "Mathematical periodic oscillator + deterministic xorshift32 noise + four parallel resonators",
+    "parameters": "Hand-authored phoneme targets and scores in generator; no learned or fitted parameters",
+    "recordings": [],
+    "speechEngines": [],
+    "trainedModels": [],
+    "networkInputs": [],
+    "legacyBankUsed": false,
+    "noiseSeed": 1514492491,
+    "status": "experimental; listening and intelligibility checks by user; no automated acceptance tests run"
+  },
+  "outputs": [
+    {
+      "file": "procedural-v1-bank.wav",
+      "samples": 763548,
+      "seconds": 34.628027210884355,
+      "sha256": "492f65251fc63cf225b1f0c7cd968623d79841cb8c10506b2f71f4e421a2e6dd"
+    },
+    {
+      "file": "procedural-v1-digits.wav",
+      "samples": 224795,
+      "seconds": 10.194784580498867,
+      "sha256": "dabe39daa0c6dd65ad68970f9feb94cc1f44856e3f80c12d6407219117395867"
+    },
+    {
+      "file": "procedural-v1-letters-ru.wav",
+      "samples": 661481,
+      "seconds": 29.999138321995463,
+      "sha256": "d486d23bd799ee0fbcacb2110e2ff1473540bea83bfe41ca875d26e8bc221257"
+    }
+  ]
+}

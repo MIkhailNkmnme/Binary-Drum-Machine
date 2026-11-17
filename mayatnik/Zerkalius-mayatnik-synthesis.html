@@ -1,3 +1,4 @@
+<!-- ГОЛ-001 · v0.017: полностью процедурный голос букв и цифр, без человеческих записей. -->
 <!-- АУДИТ-005 · v0.016: высота битовых нот в MIDI следует частоте синтеза. -->
 <!-- ИСС-114 · v0.013: голос знака и подсветка на одной доле. -->
 <!-- ИСС-112 · v0.012: прямые ссылки на 19 примеров с готовыми настройками. -->
@@ -71,7 +72,7 @@
 <script src="mayatnik-synthesis-examples.js?v=3"></script>
 <script>
 if (window.MayatnikSynthesisExample?.id === 'sign-voice') {
-  for (const file of ['sign-bank.json', 'sign-bank.wav']) {
+  for (const file of ['procedural-v1-bank.json', 'procedural-v1-bank.wav']) {
     const preload = document.createElement('link');
     preload.rel = 'preload';
     preload.as = 'fetch';
@@ -84,7 +85,7 @@ if (window.MayatnikSynthesisExample?.id === 'sign-voice') {
 <script src="mayatnik-synthesis-storage.js?v=2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Маятник · Синтез v0.016 · база v0.999</title>
+<title>Маятник · Синтез v0.017 · база v0.999</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -715,7 +716,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-bit-synthesis.js?v=016"></script>
 <script src="mayatnik-synthesis-art.js?v=6"></script>
 <script src="mayatnik-synthesis-fractals.js?v=3"></script>
-<script src="mayatnik-synthesis-sign-clock.js?v=1"></script>
+<script src="mayatnik-synthesis-sign-clock.js?v=2"></script>
 <script src="mayatnik-synthesis.js?v=16"></script>
 <script>
 (() => {
