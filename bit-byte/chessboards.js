@@ -2,7 +2,7 @@
   "use strict";
   const KEY = "zerk_bit_chessboards_v1";
   const MAX_BOARDS = 16;
-  const MAX_POSITION = 512, MAX_SIZE = 128;
+  const MAX_POSITION = 512, MAX_SIZE = 128, MAX_FIELD = MAX_POSITION + MAX_SIZE;
   const OUTLINES = [
     "#ff6868", "#62dc81", "#65a6ff", "#ffd166", "#d98aff", "#55dbdf", "#ff9b60", "#d1e469",
     "#fc86bc", "#8a8fff", "#91a274", "#71c6a6", "#ffe4a1", "#df936f", "#f2b8e9", "#a6e4ff",
@@ -36,7 +36,7 @@
   function initialState() {
     const second = makeBoard(2, 10, 6);
     second.zeroOpacity = second.oneOpacity = 65;
-    return { cell: 24, digits: false, selected: 2, boards: [makeBoard(1), second] };
+    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, selected: 2, boards: [makeBoard(1), second] };
   }
   function load() {
     try {
@@ -64,6 +64,8 @@
         };
       });
       return {
+        fieldCols: saved.fieldCols == null ? null : integer(saved.fieldCols, null, 1, MAX_FIELD),
+        fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD),
         cell: integer(saved.cell, 24, 1, 64), digits: saved.digits === true, boards,
         selected: boards.some(board => board.id === saved.selected) ? saved.selected : boards[0]?.id ?? null,
       };
@@ -103,6 +105,7 @@
     render();
   }
   function select(id) {
+    if (drag) return;
     finishInput();
     state.selected = id;
     save();
@@ -136,12 +139,25 @@
     });
     element.style.setProperty("--board-color", board.outline);
   }
+  function initializeField() {
+    if (state.fieldCols !== null && state.fieldRows !== null) return false;
+    if (viewport.closest("[hidden]") || !viewport.clientWidth || !viewport.clientHeight) return false;
+    // Старые сохранения: прежняя видимая область и существующие видимые шахматки.
+    const visible = state.boards.filter(board => board.visible);
+    state.fieldCols ??= clamp(Math.max(Math.ceil(Math.max(800, viewport.clientWidth) / state.cell),
+      ...visible.map(board => board.x + board.cols + 2)), 1, MAX_FIELD);
+    state.fieldRows ??= clamp(Math.max(Math.ceil(Math.max(480, viewport.clientHeight) / state.cell),
+      ...visible.map(board => board.y + board.rows + 2)), 1, MAX_FIELD);
+    save();
+    return true;
+  }
   function renderScene() {
+    initializeField();
     const ids = new Set(state.boards.map(board => board.id));
     for (const [id, element] of elements) {
       if (!ids.has(id)) { element.remove(); elements.delete(id); }
     }
-    let width = 0, height = 0, total = 0, visible = 0;
+    let total = 0, visible = 0;
     for (const [index, board] of state.boards.entries()) {
       let element = elements.get(board.id);
       if (!element) {
@@ -169,20 +185,22 @@
       total += board.cols * board.rows;
       if (board.visible) {
         visible++;
-        width = Math.max(width, (board.x + board.cols + 2) * state.cell);
-        height = Math.max(height, (board.y + board.rows + 2) * state.cell);
       }
     }
     const activeBoard = selected();
     selection.hidden = !activeBoard?.visible;
     if (activeBoard?.visible) positionBoard(selection, activeBoard);
-    // Не сжимать область под указателем в процессе перетаскивания.
-    if (drag) { width = Math.max(width, drag.worldWidth); height = Math.max(height, drag.worldHeight); }
-    world.style.width = Math.max(viewport.clientWidth, 800, width) + "px";
-    world.style.height = Math.max(viewport.clientHeight, 480, height) + "px";
+    if (state.fieldCols !== null && state.fieldRows !== null) {
+      // Размер внутренней области точен; внешняя рамка добавляет 2 px.
+      viewport.style.width = state.fieldCols * state.cell + 2 + "px";
+      viewport.style.height = state.fieldRows * state.cell + 2 + "px";
+    }
+    for (const [id, key] of [["field-cols", "fieldCols"], ["field-rows", "fieldRows"]]) {
+      if (document.activeElement !== byId(id) || drag?.kind === "field") byId(id).value = state[key] ?? "";
+    }
     world.style.setProperty("--chess-cell", state.cell + "px");
     byId("total").textContent = "Шахматок: " + state.boards.length + " · видимых: " + visible +
-      " · клетка: " + state.cell + " × " + state.cell + " px · клеток по всем шахматкам: " + total +
+      " · поле: " + (state.fieldCols ?? "—") + " × " + (state.fieldRows ?? "—") + " клеток · клетка: " + state.cell + " × " + state.cell + " px · клеток по всем шахматкам: " + total +
       " (наложенные клетки считаются отдельно).";
     renderCounts();
   }
@@ -215,12 +233,15 @@
     }));
     if (focused) list.querySelector('[data-board-id="' + focused + '"]')?.focus({preventScroll: true});
     byId("cell").value = state.cell;
+    byId("field-cols").value = state.fieldCols ?? "";
+    byId("field-rows").value = state.fieldRows ?? "";
     byId("digits").setAttribute("aria-pressed", String(state.digits));
     const board = selected();
     byId("settings").disabled = !board;
     byId("remove").disabled = !board;
     byId("add").disabled = state.boards.length >= MAX_BOARDS;
     byId("undo").disabled = !undo.length;
+    for (const input of document.querySelectorAll(".chess-controls input")) input.disabled = drag?.kind === "field";
     if (!board) return;
     for (const key of ["cols", "rows", "x", "y", "outline", "zero", "one"]) byId(key).value = board[key];
     byId("zero-opacity").value = board.zeroOpacity;
@@ -235,6 +256,7 @@
   function bindInput(id, update) {
     const input = byId(id);
     input.addEventListener("input", () => {
+      if (drag) return;
       if (input.type === "number" && (!input.value || !Number.isFinite(input.valueAsNumber))) return;
       if (pendingInput === null) pendingInput = snapshot();
       update(input.value);
@@ -244,6 +266,8 @@
     input.addEventListener("change", commit);
     input.addEventListener("blur", commit);
   }
+  bindInput("field-cols", value => { state.fieldCols = integer(value, state.fieldCols, 1, MAX_FIELD); });
+  bindInput("field-rows", value => { state.fieldRows = integer(value, state.fieldRows, 1, MAX_FIELD); });
   bindInput("cell", value => { state.cell = integer(value, state.cell, 1, 64); });
   for (const [key, min, max] of [["cols", 1, MAX_SIZE], ["rows", 1, MAX_SIZE], ["x", 0, MAX_POSITION], ["y", 0, MAX_POSITION]]) {
     bindInput(key, value => { const board = selected(); if (board) board[key] = integer(value, board[key], min, max); });
@@ -352,13 +376,14 @@
       pointer: event.pointerId, before: snapshot(), edge, origins, tapId: top?.id,
       startX: event.clientX, startY: event.clientY,
       scrollX: viewport.scrollLeft, scrollY: viewport.scrollTop,
-      worldWidth: world.offsetWidth, worldHeight: world.offsetHeight, moved: false,
+      moved: false,
     };
     world.setPointerCapture(event.pointerId);
     event.preventDefault();
   });
 
   world.addEventListener("pointermove", event => {
+    if (drag?.kind === "field") return;
     if (!drag) {
       world.style.setProperty("--chess-cursor", resizeCursor(hitTest(event).edge));
       return;
@@ -392,7 +417,7 @@
   });
 
   function finishDrag(event) {
-    if (!drag || event.pointerId !== drag.pointer) return;
+    if (!drag || drag.kind === "field" || event.pointerId !== drag.pointer) return;
     const finished = drag;
     drag = null;
     if (event.type !== "pointerup") {
@@ -437,8 +462,47 @@
       board.y = clamp(board.y + step[1] * amount, 0, MAX_POSITION);
     });
   });
-  // Скрытая вкладка получает правильную область при открытии и смене ширины окна.
-  new ResizeObserver(() => { if (!viewport.closest("[hidden]")) renderScene(); }).observe(viewport);
-  window.addEventListener("pagehide", () => { finishInput(); save(); });
+  viewport.addEventListener("pointerdown", event => {
+    const handle = event.target.closest("[data-field-edge]");
+    if (!handle || event.button !== 0 || drag || state.fieldCols === null || state.fieldRows === null) return;
+    finishInput();
+    lastTap = null;
+    viewport.focus({preventScroll: true});
+    drag = {kind: "field", pointer: event.pointerId, before: snapshot(), edge: handle.dataset.fieldEdge,
+      startX: event.clientX + window.scrollX, startY: event.clientY + window.scrollY,
+      cols: state.fieldCols, rows: state.fieldRows};
+    viewport.setAttribute("data-field-resizing", "");
+    viewport.setPointerCapture(event.pointerId);
+    renderControls();
+    event.preventDefault();
+  });
+  viewport.addEventListener("pointermove", event => {
+    if (drag?.kind !== "field" || event.pointerId !== drag.pointer) return;
+    if (drag.edge !== "bottom") state.fieldCols = clamp(drag.cols +
+      Math.round((event.clientX + window.scrollX - drag.startX) / state.cell), 1, MAX_FIELD);
+    if (drag.edge !== "right") state.fieldRows = clamp(drag.rows +
+      Math.round((event.clientY + window.scrollY - drag.startY) / state.cell), 1, MAX_FIELD);
+    renderScene();
+    event.preventDefault();
+  });
+  function finishFieldResize(event) {
+    if (drag?.kind !== "field" || (event.pointerId != null && event.pointerId !== drag.pointer)) return;
+    const finished = drag;
+    drag = null;
+    if (event.type === "pointerup") remember(finished.before);
+    else state = JSON.parse(finished.before);
+    viewport.removeAttribute("data-field-resizing");
+    if (viewport.hasPointerCapture(finished.pointer)) viewport.releasePointerCapture(finished.pointer);
+    render();
+  }
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) viewport.addEventListener(type, finishFieldResize);
+  window.addEventListener("keydown", event => {
+    if (event.key === "Escape" && drag?.kind === "field") { event.preventDefault(); finishFieldResize(event); }
+  });
+  window.addEventListener("blur", finishFieldResize);
+  // Измеряем прежнюю область только при первом видимом открытии. После миграции
+  // размер явный; наблюдатель больше ничего не перерисовывает и не зацикливается.
+  new ResizeObserver(() => { if (initializeField()) render(); }).observe(viewport);
+  window.addEventListener("pagehide", event => { finishFieldResize(event); finishInput(); save(); });
   render();
 })();
