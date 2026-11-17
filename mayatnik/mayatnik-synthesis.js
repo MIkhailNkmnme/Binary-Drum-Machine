@@ -1,4 +1,4 @@
-/* Маятник · Синтез 0.014. Exact pendulum duet, score and computational art.
+/* Маятник · Синтез 0.015. Exact pendulum duet, score and computational art.
  * Source redraws are observations, never an animation clock. Only successive
  * source frames or explicit independent ticks advance experimental history. */
 (function(root){
@@ -63,7 +63,7 @@
   let engine=null,sourceBits=null,crop=null,sourceOwner=null,sourceMode='',sourceFrame=null,sourceSize='',
     panel=null,canvas=null,ctx=null,status=null,notice=null,bindings=[],after=()=>{},timer=null,
     ticks=0,message='',pendingSave=null,dbPromise=null,restoring=true,detached=false,dirty=false,weightPanel=null,legend=null,workInput=null,layerData=null,
-    duet=null,music=null,exporting=false,fractalModel=null,fractalKey='',voiceClock=null,voiceField=null,voiceInput=null;
+    duet=null,music=null,lastBitEvent=null,exporting=false,fractalModel=null,fractalKey='',voiceClock=null,voiceField=null,voiceInput=null;
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;};
   function fail(error){message=error?.message||String(error);refresh();}
   function run(action){try{const result=action();if(result?.catch)result.catch(fail);}catch(error){fail(error);}}
@@ -131,7 +131,11 @@
     return prefs.musicStyle==='berlin'?root.MayatnikSynthesisBerlin.frameEvents:root.MayatnikSynthesisMusic.frameEvents;
   }
   function musicFrame(){return {a:duet.a,b:duet.b,result:duet.output,output:duet.output,age:duet.age,changed:duet.changed,options:duet.options,anchor:duet.anchor,width:duet.width,height:duet.height,tick:duet.tick};}
-  function soundFrame(){if(duetMode()&&duet&&music?.enabled)music.playFrame(musicFrame());}
+  function soundFrame(){
+    if(!duetMode()||!duet||!music?.enabled)return;
+    const [event]=music.playFrame(musicFrame());
+    if(prefs.bitVoice!=='off'&&event?.bits)lastBitEvent=event;
+  }
   function duetOption(key,value){
     pause();if(!engine)capture(false);if(!duet)createDuet();
     duet.configure({[key]:value});prefs.pendulumOptions={...duet.options};prefs.recipe='';ticks=duet.tick;
@@ -207,11 +211,11 @@
     if(!signs.some(sign=>sign!==' '))throw Error('Введите хотя бы одну букву или цифру.');
     if(!engine)capture(false);
     if(ticks>=signs.length){ticks=0;render();}
-    message='';
+    message='Подготовка голоса…';
     voiceClock??=root.MayatnikSynthesisSignClock.create();
     const playback=voiceClock.play({
       signs,start:ticks,count:single?1:signs.length-ticks,bpm:prefs.voiceTempo,
-      onBeat(index){ticks=index+1;dirty=true;render(true);scheduleSave();},
+      onBeat(index){message='';ticks=index+1;dirty=true;render(true);scheduleSave();},
       onFinish(){refresh();}
     });
     refresh();
@@ -273,7 +277,7 @@
     ticks++;dirty=true;render();scheduleSave();
   }
   const running=()=>timer!==null||!!voiceClock?.running;
-  function pause(){if(timer!==null){clearInterval(timer);timer=null;}music?.silence();voiceClock?.stop();refresh();}
+  function pause(){if(timer!==null){clearInterval(timer);timer=null;}music?.silence();lastBitEvent=null;if(voiceClock?.running){voiceClock.stop();message='';}refresh();}
   function play(){
     if(voiceMode())return playSigns();
     if(timer!==null){pause();return;}
@@ -316,7 +320,7 @@
       pause();if(value){detached=false;capture(false);}else message='Самостоятельный ход. Исходный кадр зафиксирован.';
     }
     if(['rate','tempo'].includes(key)&&wasPlaying){pause();play();}
-    if(key==='musicStyle'||key==='bitVoice')music?.silence();
+    if(key==='musicStyle'||key==='bitVoice'){music?.silence();lastBitEvent=null;}
     if(['musicStyle','tempo','volume','musicRoot','musicScale','density'].includes(key)||key==='bitVoice')music?.configure(musicOptions());
     dirty=true;remember();render();scheduleSave();
   }
@@ -414,8 +418,15 @@
       rule90:'Один шаг — одна строка клеток.',
       cellular:isDeckardRule(prefs.cellularRule)?'1 — цвет опыта, 2 — голубой, 3 — сиреневый.':prefs.cellularRule==='sum3'?'Состояние 2 показано голубым.':'Один шаг добавляет поколение клеток.'
     }[prefs.fractalKind]:duetMode()?'A · B · '+(duet?.options.operation||'XOR').toUpperCase()+(music?.enabled?' · ♫':''):prefs.mode==='trail'?'Цвет 1 — переход 0→1; цвет 0 — переход 1→0. Яркость показывает возраст.':prefs.mode==='recovery'?'Поверх: цветом показаны отличия от входного кадра. Только Синтез: удерживаемые биты.':'Цвет 1 — активная клетка; цвет 0 — конец затухания. XOR / AND учитывают только состояние 1.';
-    const bit=root.MayatnikBitSynthesis,bitInfo=prefs.bitVoice!=='off'&&bit&&duet?bit.describeFrame(musicFrame(),musicOptions()):null;
-    status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'')+(bitInfo?' · n = '+bitInfo.n+' ('+bitInfo.binary+') · '+bitInfo.f0+' Гц · партиал '+bitInfo.partials:'');
+    const bit=root.MayatnikBitSynthesis;
+    const bitInfo=prefs.bitVoice!=='off'&&bit&&duet
+      ? lastBitEvent ? bit.describeEvent(lastBitEvent) : bit.describeFrame(musicFrame(),musicOptions())
+      : null;
+    status.textContent=modes[prefs.mode]+' · '+(engine?engine.width+' × '+engine.height+' · шаг '+ticks:'ожидание поля')+(sourceFrame!==null?' · исходный кадр '+sourceFrame:'');
+    if(bitInfo){
+      status.textContent+=' · строка '+(bitInfo.row+1)+' · n = '+bitInfo.n+' ('+bitInfo.binary+')';
+      status.textContent+=' · MIDI '+bitInfo.midi+' · '+bitInfo.f0+' Гц · гармоник включено '+bitInfo.enabledPartials;
+    }
     if(duetMode()&&duet&&prefs.musicStyle==='berlin'&&prefs.bitVoice==='off'){
       status.textContent+=' · '+prefs.tempo+' BPM · такт '+(Math.floor((ticks%512)/16)+1)+' / 32';
     }
@@ -494,7 +505,7 @@
       const {midi,pan}=frame.chaosNote;
       return [{voice:'piano',midi,pan,duration:.22,velocity:.32,beat:0}];
     });
-    if(music.enabled)music.disable();else await music.enable(musicOptions());
+    if(music.enabled){music.disable();lastBitEvent=null;}else await music.enable(musicOptions());
     message=music.enabled?(chaosMode()?'Звучит последняя вершина каждого шага.':'Звук включён. «Пуск» проигрывает построение; «Шаг» — один музыкальный такт.'):'Звук выключен.';refresh();
   }
   async function exportMusic(type){
@@ -503,17 +514,21 @@
     try{
       const saved=duet.snapshot(),copy=root.MayatnikSynthesisPendulums.create({width:duet.width,height:duet.height,anchor:saved.anchor});copy.restore(saved);
       const events=[],options=musicOptions(),steps=prefs.musicBars*16,source=eventSource(),berlin=prefs.musicStyle==='berlin'&&prefs.bitVoice==='off';
+      const keepPhase=berlin||prefs.bitVoice!=='off';
       for(let i=0;i<steps;i++){
-        const frame={a:copy.a,b:copy.b,result:copy.output,width:copy.width,height:copy.height,tick:berlin?copy.tick:i};
+        const frame={a:copy.a,b:copy.b,result:copy.output,width:copy.width,height:copy.height,tick:keepPhase?copy.tick:i};
         const notes=source(frame,options);
         // Preserve the current musical phase when exporting an evolved duet,
         // while placing the first exported frame at the start of the file.
-        events.push(...(berlin?notes.map(event=>({...event,beat:event.beat-saved.tick/4})):notes));copy.step();
+        events.push(...(keepPhase?notes.map(event=>({...event,beat:event.beat-saved.tick/4})):notes));copy.step();
         if(i%8===0){message='Композиция '+Math.round(i/steps*100)+'%';refresh();await new Promise(resolve=>setTimeout(resolve,0));}
       }
       // Long voices from a mid-bar start can outlast the ordinary 3 s tail.
       const durationSeconds=berlin?events.reduce((end,event)=>Math.max(end,(event.beat+event.duration)*60/options.tempo+.09),steps*15/options.tempo+3):steps*15/options.tempo+3;
-      const bytes=type==='midi'?root.MayatnikSynthesisMusic.exportMidi(events,options):root.MayatnikSynthesisMusic.renderWav(events,options,{durationSeconds,sampleRate:44100});
+      const musicEngine=root.MayatnikSynthesisMusic;
+      const bytes=type==='midi'
+        ? musicEngine.exportMidi(events.filter(event=>!event.bits||root.MayatnikBitSynthesis.describeEvent(event).partials>0),options)
+        : musicEngine.renderWav(events,options,{durationSeconds,sampleRate:44100});
       download(new Blob([bytes],{type:type==='midi'?'audio/midi':'audio/wav'}),'Маятник-'+prefs.musicStyle+'-'+prefs.musicBars+'-тактов.'+(type==='midi'?'mid':'wav'));
       message='Композиция сохранена: '+prefs.musicBars+' тактов. Исходный опыт остался на прежнем шаге.';
     }finally{exporting=false;refresh();}

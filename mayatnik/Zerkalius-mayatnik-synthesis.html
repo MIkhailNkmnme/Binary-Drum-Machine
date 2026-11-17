@@ -1,4 +1,4 @@
-<!-- ИСС-117 · v0.014: собственный Берлинский цикл и точный ссылочный дуэт. -->
+<!-- АУДИТ-005 · v0.015: холодный запуск музыкальных примеров, индикатор и экспорт битового звука. -->
 <!-- ИСС-114 · v0.013: голос знака и подсветка на одной доле. -->
 <!-- ИСС-112 · v0.012: прямые ссылки на 19 примеров с готовыми настройками. -->
 <!-- ИСС-111 · v0.011: клеточные ряды Deckard и Вольфрама из точки или выделения. -->
@@ -69,10 +69,22 @@
 <meta charset="UTF-8">
 <script src="mayatnik-synthesis-berlin.js?v=1"></script>
 <script src="mayatnik-synthesis-examples.js?v=3"></script>
+<script>
+if (window.MayatnikSynthesisExample?.id === 'sign-voice') {
+  for (const file of ['sign-bank.json', 'sign-bank.wav']) {
+    const preload = document.createElement('link');
+    preload.rel = 'preload';
+    preload.as = 'fetch';
+    preload.crossOrigin = 'anonymous';
+    preload.href = 'sign-voice/' + file;
+    document.head.append(preload);
+  }
+}
+</script>
 <script src="mayatnik-synthesis-storage.js?v=2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Маятник · Синтез v0.014 · база v0.999</title>
+<title>Маятник · Синтез v0.015 · база v0.999</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -223,7 +235,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятник · Синтез</h1><span class="ver" title="На основе Маятника v0.999">0.014 · база 0.999</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятник · Синтез</h1><span class="ver" title="На основе Маятника v0.999">0.015 · база 0.999</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -700,11 +712,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-synthesis-core.js?v=1"></script>
 <script src="mayatnik-synthesis-pendulums.js?v=6"></script>
 <script src="mayatnik-synthesis-music.js?v=6"></script>
-<script src="mayatnik-bit-synthesis.js?v=001"></script>
+<script src="mayatnik-bit-synthesis.js?v=015"></script>
 <script src="mayatnik-synthesis-art.js?v=6"></script>
 <script src="mayatnik-synthesis-fractals.js?v=3"></script>
 <script src="mayatnik-synthesis-sign-clock.js?v=1"></script>
-<script src="mayatnik-synthesis.js?v=13"></script>
+<script src="mayatnik-synthesis.js?v=15"></script>
 <script>
 (() => {
   'use strict';
@@ -714,12 +726,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   var ovlFrozen = null;   // v0.487: ранние cssLayout/align могут проверить привязку до объявления API наложения
   let rulerMode=false,rulerA=null,rulerB=null,rulerHover=null;   // v0.161: линейка (см. rulerDraw); здесь, чтобы drawTemplate видел их с первого кадра
   const KEY = 'zerk_mayatnik';
-  // v0.469: ?chisto=1 — чистый запуск: настройки по умолчанию, сохранённое (настройки, сеанс, раскраска) не читается и не перезаписывается
-  const CHISTO = new URLSearchParams(location.search).has('chisto');
+  const URLP = new URLSearchParams(location.search);
+  const explicitSource = ['n', 's', 'k', 'mode', 'zerkalo', 'anim', 'centr', 'geocentr'].some(q => URLP.has(q));
   // v0.748: ссылка на построение и настройки — #s=… (сжатый код). Открыта ссылка — память браузера не перезаписываем:
   // чужой набор строк, кадра и вида не должен стать вашими настройками (как ?chisto, но библиотеки и файлы остаются).
   const SHARE_HASH = (() => { try { return MayatnikShareLink.hashCode(location.hash); } catch (_) { return ''; } })();
   const SHARE_ON = !!SHARE_HASH;
+  // Именованные музыкальные опыты начинают с маленького поля на паузе, без восстановления чужого сеанса.
+  const exampleBoot = !SHARE_ON && !explicitSource &&
+    ['berlin-cycle', 'sign-voice'].includes(window.MayatnikSynthesisExample?.id);
+  const CHISTO = URLP.has('chisto') || exampleBoot;
   let SHARE_ACTIVE = SHARE_ON;   // пока ссылка открыта, настройки браузера не перезаписываются; испорченная ссылка снимает запрет
   // v0.472: «если всё дело в этом — только это отключи» (2026-10-23): замки шаблонов и краски («Застыло — цвет», templateLock) не считаются
   // и не применяются. Проверка замка шла на каждой отрисовке по всем пикселям шаблона и при «замок изменился» заказывала новую полную
@@ -816,7 +832,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   if (st.zoom !== 'fit' && st.zoom !== 'fitH') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   // v0.149: настройки ссылкой — ?n=строк&s=вершин&k=кадр&mode=pend|left|right|one&zerkalo=0|1|2&anim=0|1|2&centr=0|1&geocentr=0|1.
   // Со ссылкой память браузера не пишется (ни настройки, ни раскраска): ссылка не затирает своё.
-  const URLP = new URLSearchParams(location.search); let URL_ON = ['n', 's', 'k', 'mode', 'zerkalo', 'anim', 'centr', 'geocentr'].some(q => URLP.has(q));
+  let URL_ON = explicitSource || exampleBoot;
+  if (exampleBoot) {
+    URLP.set('n', '64');
+    URLP.set('k', '0');
+  }
   if (URLP.has('embed')) document.body.classList.add('may-embed');
   let urlK = -1;
   if (URL_ON) {
@@ -1057,7 +1077,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // кадров нет. Картинка — fixed-холст #cvGpu на окно поля: пиксель — среднее цветов клеток под ним (биты или чётность перекрытий,
   // как у плоских видов). Краска, зеркала и прочие слои картинки процессора в этом режиме не рисуются. Биты в f.val — копией
   // с видеокарты, когда кадр постоит. Ссылка ?gpu=0 — режим выключен, ?gpu=1 — включён на любом поле.
-  const GPU_BIG = 13e6, GPU_URL = new URLSearchParams(location.search).get('gpu');
+  const GPU_BIG = 13e6, GPU_URL = exampleBoot ? '0' : URLP.get('gpu');
   let gpuApi = null, gpuBig = null, gpuCv = null, gpuCtx = null, gpuRaf = 0;
   const gpuSnapshot = MayatnikGpuSnapshot.create();
   const gpuCpuOchki = () => !!gpuBig && !!st.ochki;

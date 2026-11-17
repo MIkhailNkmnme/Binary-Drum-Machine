@@ -153,25 +153,41 @@
     return pcm;
   }
 
-  /** Что показать в таблице параметров: число, двоичная запись, частота, огибающая, партиалы. */
-  function describeFrame(frame, options = {}) {
-    const bits = rowToBits(frame, options);
+  const rowAtTick = (tick, height) => Math.floor(tick / 4) % height;
+
+  function describeBits(bits, row, options) {
     const n = bitsToNumber(bits);
     if (n === null) return null;
-    const midi = numberToMidi(n, options);
+    const midi = options.midi ?? numberToMidi(n, options);
     const f0 = clamp(number(options.f0, midiToHz(midi), LIMITS.minF0, LIMITS.maxF0), LIMITS.minF0, LIMITS.maxF0);
-    const partials = audiblePartials(bitsToPartials(bits, options), f0, number(options.rate, 44100, 8000, 48000));
+    const partials = bitsToPartials(bits, options);
+    const audible = audiblePartials(partials, f0, number(options.rate, 44100, 8000, 48000));
     return {
       bits,
+      row,
       n,
       binary: binaryOf(n, bits.length),
       midi,
       f0: Number(f0.toFixed(2)),
       tau: Number(number(options.tau, .18, LIMITS.minTau, LIMITS.maxTau).toFixed(4)),
-      partials: partials.length,
+      partials: audible.length,
+      enabledPartials: partials.length,
       gain: Number(number(options.gain, .5, 0, 1).toFixed(2)),
       voice: options.voice || 'bitsHarmonic'
     };
+  }
+
+  /** Предпросмотр по той же строке такта, которую читает генератор событий. */
+  function describeFrame(frame, options = {}) {
+    const tick = Number.isSafeInteger(frame?.tick) && frame.tick >= 0 ? frame.tick : 0;
+    const height = Math.floor(frame?.height);
+    const row = Math.floor(number(options.row, rowAtTick(tick, height), 0, height - 1));
+    return describeBits(rowToBits(frame, { ...options, row }), row, options);
+  }
+
+  /** Состояние ноты из уже переданного плееру события между четвертями. */
+  function describeEvent(event) {
+    return describeBits(event.bits, event.row, event);
   }
 
   /**
@@ -186,11 +202,8 @@
     const step = frame.tick % 16;
     if (step % 4 !== 0) return [];
 
-    const active = rowToBits(frame, {
-      mode: options.mode,
-      row: Math.floor(frame.tick / 4) % height,
-      column: options.column
-    });
+    const row = rowAtTick(frame.tick, height);
+    const active = rowToBits(frame, { mode: options.mode, row, column: options.column });
     const n = bitsToNumber(active);
     if (n === null) return [];
 
@@ -205,7 +218,8 @@
       velocity: clamp(.42 + .5 * density, .05, 1),
       voice: options.voice || 'bitsHarmonic',
       pan: clamp((density - .5) * .6, -.3, .3),
-      bits: Array.from(active),
+      bits: active,
+      row,
       f0: clamp(number(options.f0, midiToHz(midi), LIMITS.minF0, LIMITS.maxF0), LIMITS.minF0, LIMITS.maxF0),
       tau: number(options.tau, secondsPerBeat * .5, LIMITS.minTau, LIMITS.maxTau)
     }];
@@ -259,6 +273,7 @@
     audiblePartials,
     renderBitVoice,
     describeFrame,
+    describeEvent,
     bitFrameEvents,
     registerVoices
   };

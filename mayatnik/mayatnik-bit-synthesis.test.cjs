@@ -133,6 +133,25 @@ test('describeFrame даёт параметры для таблицы', () => {
   assert.equal(info.voice, 'bitsHarmonic');
 });
 
+test('индикатор совпадает с событием второй строки и сохраняет данные прозвучавшей ноты', () => {
+  const source = frame(4, [1, 0, 0, 1], 2, 2);
+  const options = { root: 48, scale: 'minor', voice: 'bitsClick' };
+  const [event] = Bit.bitFrameEvents(source, options);
+  const info = Bit.describeEvent(event);
+  const preview = Bit.describeFrame(source, options);
+  assert.equal(info.row, 1);
+  assert.equal(info.n, 2);
+  assert.equal(info.midi, 51);
+  assert.equal(info.enabledPartials, 1);
+  assert.deepEqual(preview.bits, info.bits);
+  assert.equal(preview.midi, info.midi);
+  assert.equal(preview.f0, info.f0);
+  const betweenNotes = frame(5, [0, 1, 1, 0], 2, 2);
+  assert.deepEqual(Bit.bitFrameEvents(betweenNotes, options), []);
+  assert.notEqual(Bit.describeFrame(betweenNotes, options).n, info.n);
+  assert.equal(Bit.describeEvent(event).n, 2);
+});
+
 test('голоса битов работают через renderWav и exportMidi существующего движка', () => {
   const events = [];
   for (let tick = 0; tick < 32; tick++) {
