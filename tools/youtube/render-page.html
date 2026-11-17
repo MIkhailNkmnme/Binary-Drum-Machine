@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Zerkalius · видео из маятника</title>
+<style>
+  html,body{margin:0;height:100%;background:#091221;color:#f7e6c9;font:14px Consolas,monospace}
+  #stage{display:block;width:100vw;height:auto}
+  #hud{position:fixed;left:8px;bottom:8px;font-size:12px;opacity:.7}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="hud">подготовка…</div>
+<script src="mayatnik-core.js"></script>
+<script src="mayatnik-synthesis-pendulums.js"></script>
+<script src="mayatnik-synthesis-art.js"></script>
+<script>
+(function () {
+  'use strict';
+  const params = new URLSearchParams(location.search);
+  const number = (key, fallback) => {
+    const value = Number(params.get(key));
+    return Number.isFinite(value) && value > 0 ? value : fallback;
+  };
+  const WIDTH = Math.round(number('w', 160));
+  const HEIGHT = Math.round(number('h', 90));
+  const SCALE = Math.round(number('scale', 8));
+  const FPS = Math.round(number('fps', 30));
+  const SECONDS = number('sec', 96);
+  const PALETTE = params.get('palette') || 'nocturne';
+  const STYLE = params.get('style') || 'bits';
+  const TOTAL = Math.round(SECONDS * FPS);
+
+  const hud = document.getElementById('hud');
+  const canvas = document.getElementById('stage');
+
+  // Затравка: цифры Крафтверка 5×6, растянутые по полю — видно, из чего всё растёт.
+  const DIGITS = [
+    ['00110','01110','00110','00110','00110','11111'],
+    ['11111','00001','00010','00100','01000','11111'],
+    ['11111','00001','01111','00001','00001','11111'],
+    ['00010','00110','01110','11010','11111','00010'],
+    ['11111','10000','11111','00001','00001','11111'],
+    ['11111','10000','11111','10001','10001','11111'],
+    ['11111','00001','00010','00100','00100','00100'],
+    ['11111','10001','11111','10001','10001','11111']
+  ];
+  function seedBits() {
+    const bits = new Int8Array(WIDTH * HEIGHT).fill(-1);
+    const cell = Math.max(2, Math.floor(WIDTH / (DIGITS.length * 5)));
+    const glyphWidth = 5 * cell, total = DIGITS.length * glyphWidth;
+    const left = Math.max(0, Math.floor((WIDTH - total) / 2));
+    const top = Math.max(0, Math.floor((HEIGHT - 6 * cell) / 2));
+    DIGITS.forEach((glyph, index) => {
+      const x0 = left + index * glyphWidth;
+      for (let row = 0; row < 6; row++) {
+        for (let column = 0; column < 5; column++) {
+          if (glyph[row][column] !== '1') continue;
+          for (let dy = 0; dy < cell; dy++) {
+            for (let dx = 0; dx < cell; dx++) {
+              const x = x0 + column * cell + dx, y = top + row * cell + dy;
+              if (x < WIDTH && y < HEIGHT) bits[y * WIDTH + x] = 1;
+            }
+          }
+        }
+      }
+    });
+    return bits;
+  }
+
+  const duet = MayatnikSynthesisPendulums.create({
+    width: WIDTH, height: HEIGHT,
+    anchor: Math.floor(WIDTH / 2),
+    sourceBits: seedBits(),
+    options: {
+      sourceA: params.get('sa') || 'pend', sourceB: params.get('sb') || 'pendR',
+      depth: Math.round(number('depth', 128)), rateA: number('rateA', 1), rateB: number('rateB', 1.5),
+      phaseB: Math.round(number('phaseB', 32)), operation: params.get('op') || 'or',
+      history: params.get('history') || 'trail', trailLength: Math.round(number('trail', 8))
+    }
+  });
+
+  const artOptions = { palette: PALETTE, style: STYLE, title: 'Zerkalius', poster: false, scale: SCALE };
+
+  function frame() {
+    return {
+      width: duet.width, height: duet.height,
+      a: duet.a, b: duet.b, result: duet.result, output: duet.output,
+      age: duet.age, changed: duet.changed, anchor: duet.anchor, tick: duet.tick
+    };
+  }
+
+  // первый кадр — до записи
+  MayatnikSynthesisArt.render(canvas, frame(), artOptions);
+
+  const stream = canvas.captureStream(FPS);
+  const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+    .find(type => window.MediaRecorder && MediaRecorder.isTypeSupported(type));
+  window.__video = { ready: false, mime: mime || null, total: TOTAL, error: null };
+  if (!mime) { window.__video.error = 'MediaRecorder недоступен'; hud.textContent = window.__video.error; return; }
+
+  const chunks = [];
+  const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12000000 });
+  recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'mayatnik-video.webm';
+    document.body.append(link);
+    link.click();
+    window.__video.ready = true;
+    window.__video.bytes = blob.size;
+    hud.textContent = 'готово: ' + (blob.size / 1048576).toFixed(1) + ' МБ';
+  };
+
+  let drawn = 0;
+  recorder.start();
+  const start = performance.now();
+  function tick() {
+    duet.step();
+    MayatnikSynthesisArt.render(canvas, frame(), artOptions);
+    drawn++;
+    if (drawn % 15 === 0) {
+      const elapsed = (performance.now() - start) / 1000;
+      hud.textContent = drawn + ' / ' + TOTAL + ' кадров · ' + elapsed.toFixed(1) + ' с';
+    }
+    if (drawn >= TOTAL) { recorder.stop(); return; }
+    setTimeout(tick, Math.max(0, 1000 / FPS - 2));
+  }
+  setTimeout(tick, 300);
+})();
+</script>
+</body>
+</html>
