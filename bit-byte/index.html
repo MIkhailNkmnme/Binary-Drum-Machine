@@ -1,21 +1,21 @@
-<!-- Bit-Byte v0.009 · таблицы слов и отдельное поле перемещаемых шахматок. -->
+<!-- Bit-Byte v0.010 · края, групповые жесты, цветной выбор и цифры шахматок. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.009 — Зеркалиус</title>
+  <title>Bit-Byte v0.010 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=009">
+  <link rel="stylesheet" href="style.css?v=010">
 
   <script defer src="app.js?v=009"></script>
-  <script defer src="chessboards.js?v=009"></script>
+  <script defer src="chessboards.js?v=010"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.009</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.010</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -34,17 +34,16 @@
       <div class="chess-workspace">
         <aside class="panel chess-controls" aria-label="Управление шахматками">
           <h2>Шахматки</h2>
-          <label for="chess-list">Выбранная шахматка</label>
-          <select id="chess-list" title="Если шахматка перекрыта другой, выберите её здесь и измените X/Y или поднимите кнопкой Вперёд"></select>
+          <div id="chess-list" class="chess-swatches" role="group" aria-label="Выбор шахматки по цвету обводки"></div>
           <div class="commands">
             <button id="chess-add" class="gz-hx" type="button" title="Добавить шахматку"><span class="gz-ic" aria-hidden="true">+</span><span class="gz-nm">Добавить</span></button>
             <button id="chess-remove" class="gz-hx" type="button" title="Удалить выбранную шахматку"><span class="gz-ic" aria-hidden="true">−</span><span class="gz-nm">Удалить</span></button>
             <button id="chess-undo" class="gz-hx" type="button" title="Отменить последнее изменение шахматок"><span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Отмена</span></button>
           </div>
           <label class="chess-global" for="chess-cell">Общая клетка, px <input id="chess-cell" type="number" min="1" max="64" step="1" value="24"></label>
+          <button id="chess-digits" class="gz-hx" type="button" aria-pressed="false" title="Показать или скрыть цифры 0 и 1 в клетках всех шахматок"><span class="gz-ic" aria-hidden="true">01</span><span class="gz-nm">Цифры</span></button>
           <fieldset id="chess-settings">
             <legend>Выбранная шахматка</legend>
-            <label for="chess-name">Название <input id="chess-name" type="text" maxlength="40"></label>
             <div class="chess-input-pair">
               <label for="chess-cols">Столбцы <input id="chess-cols" type="number" min="1" max="128" step="1"></label>
               <label for="chess-rows">Строки <input id="chess-rows" type="number" min="1" max="128" step="1"></label>
@@ -52,13 +51,14 @@
               <label for="chess-y">Y, клетки <input id="chess-y" type="number" min="0" max="512" step="1"></label>
             </div>
             <p id="chess-board-count" class="hint"></p>
-            <div class="chess-color-row">
-              <label for="chess-zero">Цвет 0 <input id="chess-zero" type="color" value="#000000"></label>
-              <label for="chess-zero-opacity">Непрозрачность 0 <input id="chess-zero-opacity" type="range" min="0" max="100" step="1"><output id="chess-zero-percent"></output></label>
+            <div class="chess-swatches chess-colors" role="group" aria-label="Цвета выбранной шахматки">
+              <input id="chess-outline" type="color" value="#ff6868" aria-label="Цвет обводки" title="Цвет обводки">
+              <input id="chess-zero" type="color" value="#000000" aria-label="Цвет бита 0" title="Цвет бита 0">
+              <input id="chess-one" type="color" value="#ffffff" aria-label="Цвет бита 1" title="Цвет бита 1">
             </div>
-            <div class="chess-color-row">
-              <label for="chess-one">Цвет 1 <input id="chess-one" type="color" value="#ffffff"></label>
-              <label for="chess-one-opacity">Непрозрачность 1 <input id="chess-one-opacity" type="range" min="0" max="100" step="1"><output id="chess-one-percent"></output></label>
+            <div class="chess-input-pair">
+              <label for="chess-zero-opacity">Непрозрачность 0 <input id="chess-zero-opacity" type="range" min="0" max="100" step="1" aria-label="Непрозрачность бита 0"><output id="chess-zero-percent"></output></label>
+              <label for="chess-one-opacity">Непрозрачность 1 <input id="chess-one-opacity" type="range" min="0" max="100" step="1" aria-label="Непрозрачность бита 1"><output id="chess-one-percent"></output></label>
             </div>
             <div class="commands">
               <button id="chess-phase" class="gz-hx" type="button" aria-pressed="false" title="Поменять местами 0 и 1 в выбранной шахматке"><span class="gz-ic" aria-hidden="true">⇄</span><span class="gz-nm">0 ↔ 1</span></button>
@@ -71,7 +71,7 @@
         </aside>
         <section class="panel chess-scene-panel" aria-label="Поле шахматок">
           <h2>Поле шахматок</h2>
-          <p class="hint">Тяните шахматку мышью или пальцем. Стрелки двигают выбранную на клетку, Shift — на 10. Координаты X/Y отсчитываются от левого верхнего угла поля.</p>
+          <p class="hint">Тяните край или угол для размера, середину для переноса всех шахматок под указателем. С пустого места двигайте всё поле. Двойной щелчок меняет 0 и 1 местами. Стрелки сдвигают выбранную, Shift — на 10 клеток.</p>
           <div id="chess-viewport" tabindex="0" aria-label="Прокручиваемое поле шахматок">
             <div id="chess-world" aria-label="Шахматки"></div>
           </div>
