@@ -279,8 +279,10 @@
     function toggleWord(button, rightClick = false) {
       const value = Number(button.dataset.value);
       const next = new Set(excluded), nextRight = new Set(rightExcluded);
-      if (next.delete(value)) nextRight.delete(value);
-      else {
+      if (next.has(value) && nextRight.has(value) === rightClick) {
+        next.delete(value);
+        nextRight.delete(value);
+      } else {
         next.add(value);
         if (rightClick) nextRight.add(value);
         else nextRight.delete(value);
