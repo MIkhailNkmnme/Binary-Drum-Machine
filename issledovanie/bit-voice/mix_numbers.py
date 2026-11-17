@@ -1,14 +1,21 @@
 # -*- coding: utf-8 -*-
-"""Счёт цифрами поверх «Numbers»-подложки: по цифре на такт, музыка приседает под голосом."""
-import os, wave
+"""Счёт цифрами поверх «Numbers»-подложки.
+
+Шаг счёта задаётся не тактом, а пульсом (четвертью): в разборе референса
+Barтоса счёт идёт ровно на пульс 0,894 с при 67 BPM.
+
+Запуск: python mix_numbers.py <каталог с numbers-bed.wav> <темп> [имя выхода]
+"""
+import os, sys, wave
 import numpy as np
 
 VOICE = r"E:\NineToZero\voice"
-OUT = VOICE
-BED = os.path.join(VOICE, "numbers-bed.wav")
+BED_DIR = sys.argv[1] if len(sys.argv) > 1 else VOICE
+TEMPO = float(sys.argv[2]) if len(sys.argv) > 2 else 90.0
+NAME = sys.argv[3] if len(sys.argv) > 3 else "numbers-sketch"
+EVERY = max(1, int(sys.argv[4])) if len(sys.argv) > 4 else 1
 RATE = 44100
-TEMPO = 90
-BAR = 60 / TEMPO * 4          # 2,667 с
+PULSE = 60 / TEMPO            # пульс = четверть
 
 
 def read_wav(path):
@@ -43,33 +50,36 @@ def envelope(signal, window=2205, decay=0.9993):
     return out / (out.max() + 1e-9)
 
 
-bed, rate = read_wav(BED)
+bed, rate = read_wav(os.path.join(BED_DIR, "numbers-bed.wav"))
+assert rate == RATE
 length = len(bed)
 voice = np.zeros(length, dtype=np.float32)
 
 digits = [os.path.join(VOICE, "robot", f"ru-{n}.wav") for n in range(1, 9)]
-bar_samples = int(BAR * RATE)
-bar_index = 0
+pulse_samples = int(PULSE * RATE)
 position = 0
+count = 0
 while position < length:
-    path = digits[bar_index % len(digits)]
+    path = digits[count % len(digits)]
     if os.path.exists(path):
         data, _ = read_wav(path)
         loud = np.where(np.abs(data) > 0.02)[0]
         if len(loud):
-            data = data[max(0, loud[0] - 150):loud[-1] + 300]
+            data = data[max(0, loud[0] - 120):loud[-1] + 240]
         end = min(length, position + len(data))
         voice[position:end] += data[:end - position]
-    bar_index += 1
-    position += bar_samples
+    count += 1
+    position += pulse_samples * EVERY
 
 voice = voice / (np.abs(voice).max() + 1e-9) * 0.34
 env = envelope(voice)
-duck = 1.0 - 0.42 * env
+duck = 1.0 - 0.38 * env
 mixed = bed * duck + voice
 top = np.abs(mixed).max()
 if top > 0.95:
     mixed *= 0.95 / top
-write_wav(os.path.join(OUT, "numbers-sketch.wav"), mixed)
-print("цифр:", bar_index, "| длина: %.1f с | пик %.3f | RMS %.3f" % (
-    length / RATE, float(np.abs(mixed).max()), float(np.sqrt((mixed ** 2).mean()))))
+out_path = os.path.join(BED_DIR, NAME + ".wav")
+write_wav(out_path, mixed)
+print("темп %.0f BPM | пульс %.3f с | шаг %d | цифр %d | длина %.1f с | пик %.3f | RMS %.3f" % (
+    TEMPO, PULSE, EVERY, count, length / RATE,
+    float(np.abs(mixed).max()), float(np.sqrt((mixed ** 2).mean()))))

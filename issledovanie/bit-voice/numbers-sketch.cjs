@@ -10,7 +10,7 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const Bit = require(path.join(ROOT, 'mayatnik', 'mayatnik-bit-synthesis.js'));
 const Music = require(path.join(ROOT, 'mayatnik', 'mayatnik-synthesis-music.js'));
 
-const TEMPO = 90;
+const TEMPO = Math.max(40, Math.min(200, Number(process.argv[2]) || 90));
 const BARS = 32;
 const RATE = 44100;
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
@@ -54,7 +54,7 @@ for (let bar = 0; bar < BARS; bar++) {
 
 const seconds = BARS * 4 * 60 / TEMPO + 2;
 const wav = Music.renderWav(events, { tempo: TEMPO, volume: .8 }, { durationSeconds: seconds, sampleRate: RATE });
-const out = process.argv[2] || __dirname;
+const out = process.argv[3] || __dirname;
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'numbers-bed.wav'), Buffer.from(wav));
 console.log('тактов:', BARS, '| событий:', events.length, '| секунд:', seconds.toFixed(1), '| WAV байт:', wav.length);
