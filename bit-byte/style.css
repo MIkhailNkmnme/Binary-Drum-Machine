@@ -70,7 +70,9 @@ h1 { color: var(--cyan); font-size: 26px; }
 .chess-board { display: block; min-width: 0; min-height: 0; padding: 0; border: 0; margin: 0; background-color: transparent; background-repeat: repeat; image-rendering: pixelated; box-shadow: 0 0 0 1px #91a6b388; cursor: inherit; }
 .chess-board[hidden], .chess-selection[hidden] { display: none; }
 .chess-board:focus-visible { outline: 1px dashed var(--board-color); outline-offset: 3px; }
-.chess-selection { z-index: 18; border: 2px solid var(--board-color); pointer-events: none; }
+.chess-selection { border: 1px dashed var(--board-color); pointer-events: none; }
+.chess-selection[data-primary] { border-width: 2px; border-style: solid; }
+#chess-selection-info:empty { display: none; }
 .chess-logic { position: absolute; z-index: 17; pointer-events: none; image-rendering: pixelated; }
 #chess-world[data-logic] .chess-board { background-image: none !important; box-shadow: none; }
 .commands.chess-logic-commands { display: grid; grid-template-columns: repeat(2, max-content); }

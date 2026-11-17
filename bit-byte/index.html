@@ -1,21 +1,21 @@
-<!-- Bit-Byte v0.014 · XOR RGB и AND RGB по палитрам шахматок. -->
+<!-- Bit-Byte v0.015 · Перенос и копирование шахматок, порядок по площади. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.014 — Зеркалиус</title>
+  <title>Bit-Byte v0.015 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=013">
+  <link rel="stylesheet" href="style.css?v=015">
 
   <script defer src="app.js?v=009"></script>
-  <script defer src="chessboards.js?v=014"></script>
+  <script defer src="chessboards.js?v=015"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.014</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.015</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -34,7 +34,8 @@
       <div class="chess-workspace">
         <aside class="panel chess-controls" aria-label="Управление шахматками">
           <h2>Шахматки</h2>
-          <div id="chess-list" class="chess-swatches" role="group" aria-label="Выбор шахматки по цвету обводки"></div>
+          <div id="chess-list" class="chess-swatches" role="group" aria-label="Выбор шахматок по цвету обводки" title="Слои от нижнего к верхнему. Ctrl+щелчок меняет выделение."></div>
+          <p id="chess-selection-info" class="hint" role="status"></p>
           <div class="commands">
             <button id="chess-add" class="gz-hx" type="button" title="Добавить шахматку"><span class="gz-ic" aria-hidden="true">+</span><span class="gz-nm">Добавить</span></button>
             <button id="chess-add-diagonal" class="gz-hx" type="button" aria-label="Новая шахматка вниз-вправо, на одну строку и столбец больше" title="Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше"><span class="gz-ic" aria-hidden="true">↘</span><span class="gz-nm">+1×1</span></button>
@@ -77,15 +78,15 @@
             <div class="commands">
               <button id="chess-phase" class="gz-hx" type="button" aria-pressed="false" title="Поменять местами 0 и 1 в выбранной шахматке"><span class="gz-ic" aria-hidden="true">⇄</span><span class="gz-nm">0 ↔ 1</span></button>
               <button id="chess-visibility" class="gz-hx" type="button" aria-pressed="true" title="Показать или скрыть выбранную шахматку"><span class="gz-ic" aria-hidden="true">◉</span><span class="gz-nm">Видна</span></button>
-              <button id="chess-forward" class="gz-hx" type="button" title="Поднять выбранную шахматку на один слой"><span class="gz-ic" aria-hidden="true">↑</span><span class="gz-nm">Вперёд</span></button>
-              <button id="chess-backward" class="gz-hx" type="button" title="Опустить выбранную шахматку на один слой"><span class="gz-ic" aria-hidden="true">↓</span><span class="gz-nm">Назад</span></button>
+              <button id="chess-forward" class="gz-hx" type="button" title="Поднять выбранную шахматку среди шахматок той же площади"><span class="gz-ic" aria-hidden="true">↑</span><span class="gz-nm">Вперёд</span></button>
+              <button id="chess-backward" class="gz-hx" type="button" title="Опустить выбранную шахматку среди шахматок той же площади"><span class="gz-ic" aria-hidden="true">↓</span><span class="gz-nm">Назад</span></button>
             </div>
           </fieldset>
           <p id="chess-status" class="hint" role="status"></p>
         </aside>
         <section class="panel chess-scene-panel" aria-label="Поле шахматок">
           <h2>Поле шахматок</h2>
-          <p class="hint">Тяните край или угол для размера, середину для переноса всех шахматок под указателем. С пустого места двигайте весь набор. При переносе вниз поле растёт. Двойной щелчок меняет 0 и 1 местами. Стрелки сдвигают выбранную, Shift — на 10 клеток.</p>
+          <p class="hint">Тяните середину для переноса одной шахматки, край или угол для изменения размера. Ctrl+щелчок меняет состав выделения на поле или в списке. Shift+перетаскивание переносит выделение, Ctrl+перетаскивание создаёт и переносит копии. Меньшая площадь всегда выше большей.</p>
           <div id="chess-viewport" tabindex="0" aria-label="Поле шахматок. Размер задаётся числами или правой и нижней рамкой" title="Правый и нижний края меняют размер всего поля, угол — обе стороны. Уменьшение сохраняет шахматки за рамкой. Escape отменяет растягивание.">
             <div id="chess-world" aria-label="Шахматки"></div>
             <div class="chess-field-edge" data-field-edge="right" aria-hidden="true" title="Ширина всего поля"></div>
@@ -93,6 +94,7 @@
             <div class="chess-field-edge" data-field-edge="corner" aria-hidden="true" title="Размер всего поля"></div>
           </div>
           <p id="chess-total" class="hint"></p>
+          <p class="hint">Двойной щелчок меняет 0 и 1 местами. Стрелки сдвигают выбранную шахматку на клетку, Shift со стрелкой — на 10. При переносе вниз поле растёт.</p>
           <p class="hint">Одна клетка — один бит. Размер шахматки: столбцы × строки. XOR и AND работают с видимыми шахматками. В режимах RGB шахматки образуют группу, если совпадают оба цвета: для 0 и для 1. Повторное нажатие на выбранный режим возвращает обычное наложение.</p>
         </section>
       </div>
