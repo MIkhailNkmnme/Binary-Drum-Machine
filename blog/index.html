@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Блог Зеркалиуса · 17 ноября 2026</title>
+<meta name="description" content="Что сделано 17 ноября 2026: разбор Abstract Machines, синтез из битов, треки, бесшовная петля, видео на YouTube, голос из букв и цифр, разбор Karl Bartos.">
+<style>
+  :root { --ink:#f0ece0; --dim:#8b95a3; --bg:#0c0e12; --card:#12161c; --accent:#3ddc97; --line:#222a33; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:28px 18px 90px; background:var(--bg); color:var(--ink);
+         font:16px/1.65 Georgia, "Times New Roman", serif; }
+  main { max-width:860px; margin:0 auto; }
+  a { color:var(--accent); }
+  h1 { font-size:32px; line-height:1.2; margin:0 0 4px; }
+  h2 { font-size:21px; margin:34px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  h3 { font-size:17px; margin:22px 0 6px; color:var(--accent); font-weight:normal; }
+  p, li { margin:8px 0; }
+  .sub { color:var(--dim); font-size:14px; margin-bottom:24px; }
+  ul { padding-left:22px; }
+  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:15px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:normal; }
+  .note { border-left:3px solid #d65012; background:#14181f; padding:10px 14px; margin:18px 0; }
+  .card { background:var(--card); border:1px solid var(--line); padding:14px 16px; margin:14px 0; }
+  .num { font-family:Consolas, monospace; color:var(--dim); font-size:14px; }
+  .head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<main>
+<div class="head">
+  <h1>Блог Зеркалиуса</h1>
+  <span class="num">17 ноября 2026 · запись 01</span>
+</div>
+<p class="sub">Что сделано за одну ночь: разбор чужого канала, синтезатор звука из битов, три трека, видео на YouTube, голос из букв — и договор между агентами. Всё измерено или явно помечено как непроверенное.</p>
+
+<h2>1. Чужой канал, разобранный по кадрам</h2>
+<p>Канал <a href="https://www.youtube.com/@abstractmachineslab">Abstract Machines</a> — 13 коротких роликов, где звук и картинка считаются одним кодом. Скачаны все 13, у каждого измерены темп и спектр, снят кадр.</p>
+<ul>
+<li>Темпы: 125 · 130 · 136 · 143 · 150 · 200 BPM.</li>
+<li>17–60 значимых пиков в спектре — это банк синусов, а не сэмплы.</li>
+<li>«How the machines make sound» даёт чистый гармонический ряд 65,9 · 130,5 · 196,5 · 261 · 329 · 523 · 659 Гц.</li>
+<li>Shepard-тон в их ролике не записать сэмплом: он существует только как сумма синусов.</li>
+</ul>
+<p>Страница разбора: <a href="../issledovanie/abstract-machines/">issledovanie/abstract-machines</a>. Чего не знаю: языка и кода канала — вывод сделан по изображению и спектру.</p>
+
+<h2>2. Свой синтез: бит стал формой волны</h2>
+<p>Раньше биты в Зеркалиусе решали только, когда и какой голос играет. Теперь бит задаёт саму волну: <span class="num">x(t) = Σ aₖ sin(2πk f₀t) · e^(−t/τ)</span>, где включённый бит включает партиал.</p>
+<table>
+<tr><th>Что</th><th>Где</th></tr>
+<tr><td>Модуль: биты → число → высота → партиалы → PCM</td><td><a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/mayatnik/mayatnik-bit-synthesis.js">mayatnik-bit-synthesis.js</a></td></tr>
+<tr><td>Точка расширения в движке: голоса, ключ кэша с битами, поля в событиях</td><td>mayatnik-synthesis-music.js</td></tr>
+<tr><td>Проверки</td><td>11 тестов: 64 разные высоты для 0…63, число пиков = popcount, детерминизм</td></tr>
+</table>
+
+<h2>3. Три трека</h2>
+<h3>«Kraftwerk Bits» — 1:36</h3>
+<p>Сырьё — маски шрифта Крафтверка 5×6 из <a href="../issledovanie/kraftwerk-shrift/">своего же исследования</a>: строка глифа читается как число и становится нотой, столбец ведёт мелодию. 124 BPM, до-минор, 792 события.</p>
+<p><a href="https://youtu.be/1-bjrPRuJRg">Смотреть на YouTube</a> — видеоряд собран из двух маятников Зеркалиуса и художественного слоя Синтеза, кадр 160×90, палитра «Ноктюрн».</p>
+<h3>Петля той же темы — 46,080 с без шва</h3>
+<p>Темп 125 BPM выбран так, чтобы такт был целым числом семплов (84 672), а рендер трёх циклов с вырезкой среднего заворачивал хвосты на границы. Найдены и убраны две дырки: 82 мс тишины перед стыком и провал громкости до RMS 0,02 при среднем 0,13.</p>
+<h3>«Глифы» — 2:53</h3>
+<p>Второй трек: бас из цифр 5×6, лид из графов глифов 8×12 (45 устойчивых), автоматизация тембра через новое поле <span class="num">tilt</span>. Динамика секций 0,093 → 0,110 → 0,129 → 0,051 → 0,129 → 0,036.</p>
+
+<h2>4. Голос: цифры, буквы, вокодер</h2>
+<ul>
+<li><b>Расчеловечивание:</b> понижение с формантами ×0,72, кольцевая модуляция 58 Гц, биткрашер 6 бит, полоса 220–4200 Гц.</li>
+<li><b>Буквы — ноты:</b> каждая буква синтезируется отдельно и получает ступень до-минора. «ZERKALIUS» звучит как мелодия из девяти слогов.</li>
+<li><b>Приседание музыки:</b> под голосом трек уходит на −4,7 дБ и возвращается.</li>
+<li><b>Настоящий вокодер:</b> 24 полосы по логарифму 120–7000 Гц, огибающие голоса управляют несущей.</li>
+</ul>
+<p>Файлы: <a href="../issledovanie/bit-voice/">issledovanie/bit-voice</a>.</p>
+
+<h2>5. Разбор референса Karl Bartos — Numbers</h2>
+<table>
+<tr><th>Параметр</th><th>Значение</th></tr>
+<tr><td>Длительность</td><td>394,1 с</td></tr>
+<tr><td>Темп сетки</td><td>67,0 BPM</td></tr>
+<tr><td>Пульс счёта</td><td>0,894 с</td></tr>
+<tr><td>События / голосовые</td><td>802 / 245</td></tr>
+<tr><td>Занято пульсов</td><td>58 из 94 (62 %)</td></tr>
+</table>
+<p>Партитура описывает ритм, а не текст: слова не распознавались. Страница — <a href="../issledovanie/bartos-numbers/">issledovanie/bartos-numbers</a>.</p>
+
+<h2>6. Найден баг движка</h2>
+<div class="note">
+На медленном темпе бочка, снейр и хэт <b>рендерились в полную тишину</b>: в огибающей делитель <span class="num">length − duration</span> уходил в минус, когда нота в секундах длиннее выбранной длины голоса. Правка — одно условие; на 120 и 100 BPM звук побайтово прежний, на 90 изменился ровно заглушённый ранее хэт. Тест: <span class="num">mayatnik-synthesis-tempo.test.cjs</span>.
+</div>
+
+<h2>7. Договор между агентами</h2>
+<p>Над проектом параллельно работают Codex и DSH. Ввели правило: <b>перед началом работы каждый пишет в <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/ПЛАНЫ.md">ПЛАНЫ.md</a>, что собирается делать, и коммитит в main</b>. Файлы разведены в <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/ПЕРЕПИСКА.md">ПЕРЕПИСКА.md</a>, готовый текст первого сообщения для новой сессии — в <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/ПРОМПТ.md">ПРОМПТ.md</a>.</p>
+
+<h2>Чего здесь нет</h2>
+<ul>
+<li>Ни один трек не проверен на слух: только уровни, спектр и состав событий. Первый живой слушатель — владелец проекта.</li>
+<li>Слова в чужом счёте не распознаны: в системе нет распознавания речи.</li>
+<li>Вокодер может оказаться «кликающим»: на спектрограмме он выглядит как короткие вспышки.</li>
+<li>Исходный код Abstract Machines не изучался: вывод о их пайплайне — реконструкция.</li>
+</ul>
+</main>
+</body>
+</html>
