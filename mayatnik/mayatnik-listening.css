@@ -1,0 +1,12 @@
+/* ИСС-117 · a visible YouTube viewport; ordinary commands keep the shared button standard. */
+#mayListeningPanel{--c:#c29bff;--gz-w:120px;--gz-h:24px;--gz-n:12px;position:fixed;z-index:20;box-sizing:border-box;padding:8px;background:#0e1116;color:#dfe6f5;font:12px/1.4 'Segoe UI',sans-serif;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#mayListeningPanel[hidden]{display:none!important}
+#mayListeningPanel *{box-sizing:border-box}
+#mayListeningPanel .may-listening-heading{display:flex;align-items:center;justify-content:space-between;gap:2px;flex-wrap:wrap}
+#mayListeningPanel .may-listening-heading strong{min-width:0;overflow-wrap:anywhere}
+#mayListeningPanel .gz-hx{width:120px;height:24px;flex:none}
+#mayListeningPanel p{margin:8px 0;overflow-wrap:anywhere}
+#mayListeningPanel p:last-child{margin-bottom:0}
+#mayListeningPanel a{color:#c29bff}
+#mayListeningPanel .may-listening-screen{width:100%;min-height:200px;aspect-ratio:16/9;background:#000}
+#mayListeningPanel iframe{display:block;width:100%;height:100%;min-height:200px;border:0;aspect-ratio:16/9}

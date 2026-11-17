@@ -1,4 +1,4 @@
-<!-- МАЯ-684 · v1.033: 27 живых обоев как источники поля, независимый RGB и битовая музыка. Проверки пользователем. -->
+<!-- ИСС-117 · v1.034: видимый YouTube-плеер KOBTRAX, отдельный от транспорта поля. Проверки пользователем. -->
 <!-- АУДИТ-002 · v1.032: восстановлена загрузка скрипта групп шаблонов. -->
 <!-- МАЯ-683 · v1.031. Перемещение шаблонов без повторных полных копий растра; группы по обеим сторонам. Проверки пользователем. -->
 <!-- КНП-020 · v1.030. Возвращена подсветка поверхности кнопок из Хаба v0.416. Проверки пользователем. -->
@@ -76,7 +76,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятнкъ — v1.033</title>
+<title>Zerkalius Маятнкъ — v1.034</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -227,7 +227,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.033</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.034</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -13651,13 +13651,15 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-menu-options.js?v=636"></script>
 <script src="../_js/menu-group-focus.js?v=873"></script>
 <script src="../_js/hub-button-text.js?v=540"></script>
+<link rel="stylesheet" href="mayatnik-listening.css?v=1034">
+<script src="mayatnik-listening.js?v=1034"></script>
 <script src="mayatnik-menu-defaults.js?v=887c"></script>
 <script src="mayatnik-mirror-controls.js?v=560"></script>
 <script src="mayatnik-library-menu-fold.js?v=873"></script>
 <script src="mayatnik-animatrix-controls.js?v=1027"></script>
 <script src="mayatnik-axes-panel.js?v=895"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1033"></script>
+<script src="mayatnik-menu.js?v=1034"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1030">
 <script src="mayatnik-button-standard.js?v=980"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">

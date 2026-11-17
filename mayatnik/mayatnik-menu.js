@@ -13,7 +13,7 @@
   const layoutValue=(values,key,fallback)=>{try{const value=JSON.parse(values[key]);if(value==null)return fallback;if(Array.isArray(fallback))return Array.isArray(value)?value:fallback;return typeof value==='object'&&!Array.isArray(value)?value:fallback;}catch{return fallback;}};
   // Stable group keys share one palette across headers, controls and detached lists.
   const GROUP_COLOURS=Object.freeze({
-    'rail:phone':'#67d9da',
+    'rail:phone':'#67d9da','rail:listening':'#c29bff',
     'rail:build':'#63d99b','rail:ochki':'#ffb347','rail:zoom':'#7cbcff','rail:mirrors':'#eb92e9',
     'rail:paint':'#ff9b50','rail:template':'#e3c56f','rail:gifscale':'#41d6bd','rail:library':'#d9b9ff',
     'rail:export':'#ffd166','rail:xorrom':'#c29bff','rail:horr':'#88db72','rail:edge':'#78a8ec',
@@ -210,6 +210,9 @@
       button('bShareLink','link'),button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
       button('bPng', 'image'), button('bRec', 'record'), button('bGif','record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
+  if(window.MayatnikListening)groups.push({id:'listening',title:'Музыка',color:GROUP_COLOURS['rail:listening'],items:[
+    {type:'toggle',name:'Слушать',icon:'M5 9h4l5-4v14l-5-4H5z M17 8q5 4 0 8',tip:'Открыть или закрыть видимый плеер YouTube: Elektronische Träume · KOBTRAX. Запуск вручную; закрытие останавливает ролик.',on:()=>window.MayatnikListening.isOpen(),click:()=>window.MayatnikListening.toggle(document.querySelector('.gz-group[data-id="listening"] .gz-soty > .gz-hx'))}
+  ]});
   for(const group of groups)group.items=group.items.filter(Boolean);
   { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр' && it.name !== 'Анимация' && it.name !== 'Кадр, с'); const fr = g0.items.find(it => it.name === 'Кадр'); if (fr) delete fr.thumb; }   // v0.339: бегунок кадра — линия, плей — своей кнопкой в середине   // v0.332: «Хорр» — в нижней полосе   // v0.395: «удали дубли» — «Анимация» и «Кадр, с» есть в нижней полосе (×N | время)
   groups.push({id:'xorrom',title:'Xorrom',color:GROUP_COLOURS['rail:xorrom'],items:[]});
@@ -225,6 +228,7 @@
   ]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
   buttonLayoutRestorers.push(values=>rail.restoreLayout(layoutValue(values,'grozd:mayatnik',{})));
+  addEventListener('may-listening-change',()=>rail.refresh());
   const railSourceButtons=new Map(),manualLegacyCells=new Map();
   function mountXorromMenu(rail,api=window.mayXorrom){
     const group=rail.el.querySelector('.gz-group[data-id="xorrom"]');
