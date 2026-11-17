@@ -50,7 +50,11 @@ async function main(){
   if(fs.existsSync(manifestPath))previous=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
   const items=previous.fingerprint===fingerprint?previous.items:[];
   const oldItems=previous.items||[];
-  const reuseVideo=visualSignature(previous)===visualFingerprint;
+  // Explicit migration only: a caller who reviewed a scenes-only change can
+  // reuse clips whose entire frame-number sequence still matches. All other
+  // rendering/model dependencies must be byte-identical. Never used by default.
+  const reviewedMigration=process.argv.includes('--reuse-unchanged-video')&&previous.width===WIDTH&&previous.height===HEIGHT&&previous.fps===FPS&&previous.tempo===PhoneMusic.DEFAULT_TEMPO&&previous.steps===PhoneMusic.DEFAULT_STEPS&&visualEngines.filter(name=>name!=='mayatnik-phone-scenes.js').every(name=>previous.sources?.[name]===sources[name]);
+  const reuseVideo=visualSignature(previous)===visualFingerprint||reviewedMigration;
   const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'wallpapers.json'),'utf8')).wallpapers;
   const selected=option('--id',null),resume=process.argv.includes('--resume');
   const save=()=>fs.writeFileSync(manifestPath,JSON.stringify({version:2,width:WIDTH,height:HEIGHT,fps:FPS,tempo:PhoneMusic.DEFAULT_TEMPO,steps:PhoneMusic.DEFAULT_STEPS,voice:'robot',fingerprint,visualFingerprint,sources,
@@ -64,13 +68,16 @@ async function main(){
     if(resume&&existing&&['video','audio','midi','score'].every(kind=>fs.existsSync(path.join(__dirname,existing[kind].path)))){console.log('Keep '+work.id);continue;}
     const scene=Scenes.create(work.id);
     const composition=PhoneMusic.renderWav(scene);
+    const old=oldItems.find(item=>item.id===work.id);
+    let oldFrames=null;
+    if(old?.score?.path&&fs.existsSync(path.join(__dirname,old.score.path)))oldFrames=JSON.parse(fs.readFileSync(path.join(__dirname,old.score.path),'utf8')).frames;
+    const sameFrames=Array.isArray(oldFrames)&&oldFrames.length===composition.frames.length&&oldFrames.every((frame,i)=>frame===composition.frames[i]);
     const wav=path.join(TEMP,work.id+'.wav');fs.writeFileSync(wav,composition.bytes);
     const midi=work.id+'.mid',score=work.id+'.json',audio=work.id+'.mp3',video=work.id+'.mp4';
     fs.writeFileSync(path.join(OUT,midi),Music.exportMidi(composition.events,{tempo:composition.tempo,volume:.55}));
     fs.writeFileSync(path.join(OUT,score),JSON.stringify({id:work.id,title:work.title,voice:composition.voice,tempo:composition.tempo,duration:composition.duration,start:composition.start,steps:composition.steps,frames:composition.frames,events:composition.events,sources},null,2)+'\n');
     execFileSync(option('--ffmpeg','ffmpeg'),['-hide_banner','-loglevel','error','-y','-i',wav,'-c:a','libmp3lame','-b:a','160k',path.join(OUT,audio)],{windowsHide:true});
-    const old=oldItems.find(item=>item.id===work.id);
-    if(reuseVideo&&old&&fs.existsSync(path.join(OUT,video))){
+    if(reuseVideo&&sameFrames&&old&&fs.existsSync(path.join(OUT,video))){
       const next=path.join(TEMP,work.id+'-remux.mp4');
       execFileSync(option('--ffmpeg','ffmpeg'),['-hide_banner','-loglevel','error','-y','-i',path.join(OUT,video),'-i',wav,'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','160k','-t',composition.duration.toFixed(9),'-movflags','+faststart',next],{windowsHide:true});
       fs.renameSync(next,path.join(OUT,video));

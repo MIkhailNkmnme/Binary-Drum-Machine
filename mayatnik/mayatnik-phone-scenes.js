@@ -29,7 +29,9 @@
     function row(t){while(rows.length<=t){const previous=rows[rows.length-1],next=new Int8Array(width);
       for(let x=0;x<width;x++)next[x]=(x?previous[x-1]:0)^(x+1<width?previous[x+1]:0);rows.push(next);
     }return rows[t];}
-    return {width,height,baseFrame,maxFrames:baseFrame+128,frame(k){
+    // A zero-bounded Rule90 field can become extinct. Keep one additional
+    // window of generations, then let the transport return to the seed.
+    return {width,height,baseFrame,maxFrames:baseFrame+Math.min(128,height-1),frame(k){
       // First grow the original triangle. After its base frame, show the next
       // computed generations in a fixed-height window, with zero boundaries.
       const shift=Math.max(0,k-baseFrame),values=new Int8Array(width*height).fill(-1);
