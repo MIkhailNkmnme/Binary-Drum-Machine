@@ -1,0 +1,60 @@
+{
+  "archives": [
+    {
+      "category": "atlas-color",
+      "label": "Атлас в цвете · 6 роликов",
+      "path": "live/zerkalius-live-atlas-color.zip",
+      "count": 6,
+      "bytes": 39468913,
+      "sha256": "2c0f6b24dc201c9ea19b91b7b45807645c8f5bdb6e517a56dbe7f484ee18ce35"
+    },
+    {
+      "category": "atlas-mono",
+      "label": "Атлас ЧБ · 6 роликов",
+      "path": "live/zerkalius-live-atlas-mono.zip",
+      "count": 6,
+      "bytes": 36962098,
+      "sha256": "d6e5e2bef557751cb8cf943cf5bd0d5ad4c9b979f20adfb800ab545222e4d465"
+    },
+    {
+      "category": "sierpinski",
+      "label": "Серпинский · 3 ролика",
+      "path": "live/zerkalius-live-sierpinski.zip",
+      "count": 3,
+      "bytes": 5261220,
+      "sha256": "146c843870c9f7cc3805a75deecc2c46c352fb82f807c2f165c808216fdadb5e"
+    },
+    {
+      "category": "animatrix",
+      "label": "Аниматрицы · 3 ролика",
+      "path": "live/zerkalius-live-animatrix.zip",
+      "count": 3,
+      "bytes": 4306290,
+      "sha256": "d82425ae2eca7cd6a98a4889a845a628a5c5ba64422569ec713e415c461e38d8"
+    },
+    {
+      "category": "pendulums",
+      "label": "Маятники · 3 ролика",
+      "path": "live/zerkalius-live-pendulums.zip",
+      "count": 3,
+      "bytes": 12010641,
+      "sha256": "499c904d10fffe46e9daee5273c73edb697cc1c9502d1103c882e4e433f56538"
+    },
+    {
+      "category": "rhombi",
+      "label": "Ромбы · 3 ролика",
+      "path": "live/zerkalius-live-rhombi.zip",
+      "count": 3,
+      "bytes": 7887222,
+      "sha256": "9163c876fa015cbef31f027ca5251dbceb2469f7d6f6e139e88f276e3f283383"
+    },
+    {
+      "category": "rgb",
+      "label": "RGB · 3 ролика",
+      "path": "live/zerkalius-live-rgb.zip",
+      "count": 3,
+      "bytes": 9036211,
+      "sha256": "4b94a3d5a2e28cbac5ef06dbe480917bb95f668c5d31af2e8b166efb5a04aa75"
+    }
+  ]
+}
