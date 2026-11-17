@@ -1,0 +1,91 @@
+[
+  {
+    "number": 1,
+    "date": "2026-11-17",
+    "title": "Исследования Зеркалиуса до АвториФматора",
+    "reason": "Исходный срез перед запуском АвториФматора. В исследованиях уже собраны визуальные, музыкальные и прикладные работы.",
+    "next": "Перенести выбор очередного направления в АвториФматор, сохранив исходную точку входа и материалы.",
+    "sections": [
+      {
+        "title": "Исследования",
+        "links": [
+          {
+            "title": "Общая страница исследований",
+            "path": "issledovanie/Zerkalius-issledovanie.html"
+          },
+          {
+            "title": "Клеточные автоматы и фракталы",
+            "path": "issledovanie/cellular-visual-labs/index.html"
+          },
+          {
+            "title": "Маятники, мелодии и картины",
+            "path": "issledovanie/pendulum-music/index.html"
+          }
+        ]
+      },
+      {
+        "title": "Готовые работы",
+        "links": [
+          {
+            "title": "Голос знаков в Синтезе",
+            "path": "mayatnik/Zerkalius-mayatnik-synthesis.html"
+          },
+          {
+            "title": "Зеркалиус на телефоне",
+            "path": "issledovanie/phone-theme/index.html"
+          },
+          {
+            "title": "Лента результатов",
+            "path": "blog/index.html"
+          }
+        ]
+      }
+    ],
+    "snapshot": null
+  },
+  {
+    "number": 2,
+    "date": "2026-11-17",
+    "title": "Смена курса с сохранением истории",
+    "reason": "Создаём механизм, чтобы Зеркалиус мог менять порядок исследований и выбирать следующий шаг под текущую задачу. С этого перехода у каждого курса будет своя редакция.",
+    "next": "Выбрать очередную задачу, собрать под неё порядок разделов и записать переход третьей редакцией.",
+    "sections": [
+      {
+        "title": "Текущая задача",
+        "links": [
+          {
+            "title": "АвториФматор",
+            "path": "issledovanie/autorifmator/index.html"
+          }
+        ]
+      },
+      {
+        "title": "Направления для следующего шага",
+        "links": [
+          {
+            "title": "Маятники, мелодии и картины",
+            "path": "issledovanie/pendulum-music/index.html"
+          },
+          {
+            "title": "Клеточные автоматы и фракталы",
+            "path": "issledovanie/cellular-visual-labs/index.html"
+          }
+        ]
+      },
+      {
+        "title": "Опубликованные материалы",
+        "links": [
+          {
+            "title": "Все исследования",
+            "path": "issledovanie/Zerkalius-issledovanie.html"
+          },
+          {
+            "title": "Лента результатов",
+            "path": "blog/index.html"
+          }
+        ]
+      }
+    ],
+    "snapshot": "f14bbbc47e3f685ea0818c7629912a1eb072573d"
+  }
+]
