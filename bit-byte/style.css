@@ -57,7 +57,7 @@ h1 { color: var(--cyan); font-size: 26px; }
 #chess-digits[aria-pressed="true"] { border-color: var(--cyan); }
 .chess-controls output { color: var(--text); }
 .chess-scene-panel { min-width: 0; }
-#chess-viewport { overflow: auto; height: clamp(360px, 65vh, 720px); margin: 10px 0; border: 1px solid var(--line); overscroll-behavior: contain; }
+#chess-viewport { overflow: hidden; height: clamp(360px, 65vh, 720px); margin: 10px 0; border: 1px solid var(--line); overscroll-behavior: contain; }
 #chess-viewport:focus-visible { outline: 1px solid var(--cyan); }
 #chess-world { position: relative; min-width: 100%; min-height: 100%; isolation: isolate; background-color: #1e2933; background-image: linear-gradient(#92aaba24 1px, transparent 1px), linear-gradient(90deg, #92aaba24 1px, transparent 1px); background-size: var(--chess-cell) var(--chess-cell); cursor: var(--chess-cursor, grab); touch-action: none; user-select: none; }
 .chess-board, .chess-selection { position: absolute; box-sizing: border-box; }
