@@ -15,6 +15,7 @@
   const editor = document.getElementById("boards-editor");
   const controls = editor.querySelector(".chess-controls");
   const frameSelect = byId("frame"), frameDuration = byId("frame-duration"), play = byId("play");
+  const frameCopy = byId("frame-copy"), frameClear = byId("frame-clear");
   const elements = new Map();
   const logicButtons = [...document.querySelectorAll("[data-chess-logic]")];
   const rgbButtons = [...document.querySelectorAll("[data-chess-rgb]")];
@@ -57,11 +58,14 @@
       zero: "#000000", one: "#ffffff", zeroOpacity: 100, oneOpacity: 100, visible: true,
     };
   }
+  function emptyScene() {
+    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers", rgbScope: "one",
+      selected: null, selectedIds: [], boards: [] };
+  }
   function initialState() {
     const second = makeBoard(2, 10, 6);
     second.zeroOpacity = second.oneOpacity = 65;
-    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers", rgbScope: "one",
-      selected: 2, selectedIds: [2], boards: [makeBoard(1), second] };
+    return {...emptyScene(), selected: 2, selectedIds: [2], boards: [makeBoard(1), second]};
   }
   function normalizeScene(saved) {
     if (!Array.isArray(saved?.boards)) return initialState();
@@ -111,6 +115,7 @@
   function loadFrames() {
     const saved = readStored(FRAMES_KEY);
     if (Array.isArray(saved?.frames)) {
+      if (!saved.frames.length) return {frames: [], active: -1};
       const frames = saved.frames.slice(0, MAX_FRAMES).filter(frame => Array.isArray(frame?.scene?.boards))
         .map(frame => makeFrame(normalizeScene(frame.scene),
           integer(frame.duration ?? DEFAULT_DURATION, DEFAULT_DURATION, MIN_DURATION, MAX_DURATION)));
@@ -120,7 +125,7 @@
   }
   const {frames, active} = loadFrames();
   let frameIndex = active;
-  let state = structuredClone(frames[frameIndex].scene);
+  let state = frames[frameIndex] ? structuredClone(frames[frameIndex].scene) : emptyScene();
   const snapshot = () => JSON.stringify(state);
   const selected = () => state.boards.find(board => board.id === state.selected);
   function setSelection(ids, active = ids.at(-1) ?? null) {
@@ -137,7 +142,9 @@
     byId("status").textContent = error;
   }
   function saveScene(scene = snapshot()) {
-    frames[frameIndex].scene = JSON.parse(scene);
+    const frame = frames[frameIndex];
+    if (!frame) return;
+    frame.scene = JSON.parse(scene);
     saveFrames();
   }
   function remember(before) {
@@ -157,7 +164,7 @@
     remember(before);
   }
   function mutate(fn) {
-    if (drag || playTimer !== null) return;
+    if (drag || playTimer !== null || !frames.length) return;
     finishInput();
     const before = snapshot();
     fn();
@@ -538,6 +545,11 @@
       ? "Выделено: " + count + " · настройки: " + boardLabel(state.selected) : "";
   }
   function renderControls() {
+    const frame = frames[frameIndex];
+    const readOnly = !frame || playTimer !== null;
+    controls.inert = viewport.inert = readOnly;
+    viewport.toggleAttribute("data-readonly", readOnly);
+    frameClear.disabled = readOnly || !state.boards.length;
     byId("cell").value = state.cell;
     byId("field-cols").value = state.fieldCols ?? "";
     byId("field-rows").value = state.fieldRows ?? "";
@@ -579,8 +591,8 @@
     diagonal.title = diagonal.disabled
       ? "Выберите шахматку, для которой есть место и возможен размер +1×1. Максимум 16 шахматок."
       : "Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше";
-    byId("undo").disabled = !frames[frameIndex].undo.length;
-    for (const input of controls.querySelectorAll("input")) input.disabled = drag?.kind === "field" || playTimer !== null;
+    byId("undo").disabled = !frame?.undo.length;
+    for (const input of controls.querySelectorAll("input")) input.disabled = drag?.kind === "field" || readOnly;
     if (!board) { window.BitByteNumberControls?.sync(); return; }
     for (const key of ["cols", "rows", "x", "y", "outline", "zero", "one"]) byId(key).value = board[key];
     byId("zero-opacity").value = board.zeroOpacity;
@@ -592,26 +604,31 @@
   function render() { renderScene(); renderControls(); }
   function renderFrameControls() {
     const playing = playTimer !== null;
-    if (frameSelect.options.length !== frames.length) {
+    const frame = frames[frameIndex];
+    if (!frame) {
+      frameSelect.replaceChildren(new Option("Нет кадров", "-1"));
+    } else if (frameSelect.options.length !== frames.length || frameSelect.options[0]?.value === "-1") {
       frameSelect.replaceChildren(...frames.map((_, index) => new Option(
         (index + 1) + " / " + frames.length, String(index))));
     }
     frameSelect.value = String(frameIndex);
-    byId("editing-frame").textContent = "Кадр " + (frameIndex + 1);
-    frameDuration.value = frames[frameIndex].duration;
-    frameSelect.disabled = frameDuration.disabled = playing;
-    byId("frame-copy").disabled = playing || frames.length >= MAX_FRAMES;
-    byId("frame-copy").title = frames.length >= MAX_FRAMES
+    byId("editing-frame").textContent = frame ? "Кадр " + (frameIndex + 1) : "Нет кадров";
+    frameDuration.value = frame?.duration ?? "";
+    frameSelect.disabled = frameDuration.disabled = playing || !frame;
+    frameCopy.disabled = playing || frames.length >= MAX_FRAMES;
+    frameCopy.title = frames.length >= MAX_FRAMES
       ? "Достигнут предел: " + MAX_FRAMES + " кадров"
-      : "Вставить копию выбранного кадра после него";
-    byId("frame-remove").disabled = playing || frames.length === 1;
-    byId("frame-earlier").disabled = playing || frameIndex === 0;
+      : frame ? "Вставить копию выбранного кадра после него" : "Создать пустой кадр";
+    frameCopy.querySelector(".gz-nm").textContent = frame ? "Дубль" : "Создать";
+    byId("frame-remove").disabled = byId("frame-remove-all").disabled = playing || !frame;
+    byId("frame-earlier").disabled = playing || frameIndex <= 0;
     byId("frame-later").disabled = playing || frameIndex === frames.length - 1;
     play.disabled = frames.length < 2;
   }
   function showFrame(index) {
     frameIndex = index;
-    state = structuredClone(frames[frameIndex].scene);
+    const frame = frames[frameIndex];
+    state = frame ? structuredClone(frame.scene) : emptyScene();
     if (state.fieldCols === null) viewport.style.width = "";
     if (state.fieldRows === null) viewport.style.height = "";
     render();
@@ -625,8 +642,8 @@
     commitFrameDuration();
   }
   function commitFrameDuration() {
-    if (playTimer !== null) return;
     const frame = frames[frameIndex];
+    if (!frame || playTimer !== null) return;
     const duration = integer(frameDuration.valueAsNumber, frame.duration, MIN_DURATION, MAX_DURATION);
     frameDuration.value = duration;
     if (frame.duration === duration) return;
@@ -645,23 +662,38 @@
     showFrame(index);
     saveFrames();
   });
-  byId("frame-copy").addEventListener("click", () => {
+  frameCopy.addEventListener("click", () => {
     if (drag || playTimer !== null || frames.length >= MAX_FRAMES) return;
     finishSceneEdits();
     const frame = frames[frameIndex];
-    frames.splice(frameIndex + 1, 0, makeFrame(structuredClone(frame.scene), frame.duration));
+    const copy = frame ? makeFrame(structuredClone(frame.scene), frame.duration) : makeFrame(emptyScene());
+    frames.splice(frameIndex + 1, 0, copy);
     showFrame(frameIndex + 1);
     saveFrames();
   });
-  byId("frame-remove").addEventListener("click", () => {
-    if (drag || playTimer !== null || frames.length === 1) return;
-    if (!window.confirm("Удалить кадр " + (frameIndex + 1) + "?")) return;
+  frameClear.addEventListener("click", () => {
+    if (frameClear.disabled || drag) return;
     finishSceneEdits();
-    frames.splice(frameIndex, 1);
-    showFrame(Math.min(frameIndex, frames.length - 1));
+    mutate(() => {
+      state.boards = [];
+      setSelection([]);
+    });
     frameSelect.focus({preventScroll: true});
-    saveFrames();
   });
+  for (const [id, all] of [["frame-remove", false], ["frame-remove-all", true]]) {
+    const button = byId(id);
+    button.addEventListener("click", () => {
+      if (button.disabled || drag) return;
+      const prompt = all ? "Удалить все кадры шахматок?" : "Удалить кадр " + (frameIndex + 1) + "?";
+      if (!window.confirm(prompt)) return;
+      finishSceneEdits();
+      if (all) frames.length = 0;
+      else frames.splice(frameIndex, 1);
+      showFrame(Math.min(frameIndex, frames.length - 1));
+      (frames.length ? frameSelect : frameCopy).focus({preventScroll: true});
+      saveFrames();
+    });
+  }
   for (const [id, delta] of [["frame-earlier", -1], ["frame-later", 1]]) {
     const button = byId(id);
     button.addEventListener("click", () => {
@@ -682,8 +714,6 @@
   }
   function renderPlayback() {
     const playing = playTimer !== null;
-    controls.inert = viewport.inert = playing;
-    viewport.toggleAttribute("data-playing", playing);
     play.setAttribute("aria-pressed", String(playing));
     play.title = playing ? "Пауза на текущем кадре" : "Воспроизвести кадры по кругу с выбранного кадра";
     play.querySelector(".gz-ic").textContent = playing ? "Ⅱ" : "▶";
@@ -715,7 +745,7 @@
   function bindInput(id, update) {
     const input = byId(id);
     input.addEventListener("input", () => {
-      if (drag || playTimer !== null) return;
+      if (drag || playTimer !== null || !frames.length) return;
       if (input.type === "number" && (!input.value || !Number.isFinite(input.valueAsNumber))) return;
       if (pendingInput === null) pendingInput = snapshot();
       update(input.value);

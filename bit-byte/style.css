@@ -93,8 +93,8 @@ h1 { color: var(--cyan); font-size: 26px; }
 .chess-timeline :is(input, select) { height: 24px; min-width: 0; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); }
 #chess-frame-duration { width: 8ch; }
 #chess-status:empty { display: none; }
-#chess-viewport[data-playing] :is(.chess-selection, .chess-field-edge) { display: none; }
-#chess-viewport[data-playing] #chess-world { cursor: default; }
+#chess-viewport[data-readonly] :is(.chess-selection, .chess-field-edge) { display: none; }
+#chess-viewport[data-readonly] #chess-world { cursor: default; }
 #chess-viewport { position: relative; overflow: clip; width: 100%; height: clamp(360px, 65vh, 720px); margin: 10px 0; border: 1px solid var(--line); overscroll-behavior: contain; }
 #chess-viewport:focus-visible { outline: 1px solid var(--cyan); }
 #chess-world { position: relative; width: 100%; height: 100%; isolation: isolate; background-color: #1e2933; background-image: linear-gradient(#92aaba24 1px, transparent 1px), linear-gradient(90deg, #92aaba24 1px, transparent 1px); background-size: var(--chess-cell) var(--chess-cell); cursor: var(--chess-cursor, grab); touch-action: none; user-select: none; }
@@ -289,6 +289,15 @@ h2, .stats caption {
 .commands.editor-tabs .gz-hx[aria-selected="true"]::before { inset: 2px; background: var(--gz-bg); }
 .commands .gz-hx:enabled:active::before { inset: 3px; }
 .commands .gz-hx:disabled { opacity: .5; cursor: default; }
+.commands .gz-hx.chess-destructive {
+  --c: #ff7b80;
+  --gz-bg: #59252c;
+  background: #aa5057;
+  color: #ffe7e8;
+  padding-inline: 6px;
+  user-select: none;
+}
+.commands .gz-hx.chess-destructive:enabled:is(:hover, :focus-visible, :active) { background: var(--c); }
 
 .commands .axis-pair { --gz-r0: transparent; --gz-r1: transparent; }
 .commands .axis-pair .gz-half {
