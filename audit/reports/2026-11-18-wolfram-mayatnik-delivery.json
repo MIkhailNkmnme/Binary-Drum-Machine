@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-18",
+  "commit": "91ed4790315a439f522ad3816f2da1993e7109fd",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "bytes": 1609388,
+      "normalization": "LF",
+      "sha256": "e23958d2e57517090c2cecc7e1bb2327914e3a36e640ac62eca8b7818e2f6805",
+      "matchesRelease": true
+    },
+    {
+      "path": "mayatnik/mayatnik-menu.js",
+      "status": 200,
+      "bytes": 412326,
+      "normalization": "LF",
+      "sha256": "43dea494ecc9d154959e7d26b48d43fe476508c9c713d79356fdcc7ea40b2de6",
+      "matchesRelease": true
+    },
+    {
+      "path": "mayatnik/mayatnik-wolfram.js",
+      "status": 200,
+      "bytes": 7523,
+      "normalization": "LF",
+      "sha256": "37a968b6a4996a1419f4c0bc2c3564c95a62b6af9731b9088d57125c441f6d9b",
+      "matchesRelease": true
+    },
+    {
+      "path": "mayatnik/mayatnik-wolfram.css",
+      "status": 200,
+      "bytes": 1170,
+      "normalization": "LF",
+      "sha256": "573e7737c80ae088e3034bf4b21a935176b32b6f0f9dae447d4cfde39573e79c",
+      "matchesRelease": true
+    },
+    {
+      "path": "mayatnik/instruction/index.html",
+      "status": 200,
+      "bytes": 507758,
+      "normalization": "LF",
+      "sha256": "2851dd4657e5b32aa9b778f6b17ff53637a829c846952b0b762096c431bdd788",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/index.html",
+      "status": 200,
+      "bytes": 15617,
+      "normalization": "LF",
+      "sha256": "750b2bd94bcbedb6e81d321f2b15327261bd1857538b21a62a0ddd9d472652a1",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/README.md",
+      "status": 200,
+      "bytes": 5848,
+      "normalization": "LF",
+      "sha256": "d8d601a5a923116fc2712e5e0e74e7a69991cd2b571e3f067fcd0ac507a3b593",
+      "matchesRelease": true
+    }
+  ],
+  "pagesRun": 44308243228,
+  "pagesConclusion": "success",
+  "canonicalRoute": {
+    "path": "mayatnik/Zerkalius-mayatnik.html",
+    "status": 200,
+    "matchesRelease": true
+  }
+}
