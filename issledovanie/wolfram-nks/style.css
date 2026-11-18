@@ -1,0 +1,56 @@
+/* Вольфрам · Простые программы v0.001 */
+:root { color-scheme: dark; --bg: #0b1118; --panel: #101b25; --text: #dae7ed; --muted: #9bb0bf; --cyan: #6ddded; --line: #2b414f; --c: var(--cyan); --gz-w: 120px; --gz-h: 24px; --gz-n: 12px; --gz-bg: #1b2430; background: var(--bg); color: var(--text); font: 15px/1.6 "Segoe UI", sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { width: min(100%, 1220px); padding: 22px clamp(12px, 3vw, 32px) 60px; margin: auto; }
+a { color: var(--cyan); text-underline-offset: 3px; }
+a:focus-visible { outline: 1px solid var(--cyan); outline-offset: 3px; }
+.page-nav { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 24px; }
+header { max-width: 900px; margin-bottom: 32px; }
+.eyebrow, .hint { color: var(--muted); font-size: 12px; }
+.eyebrow { letter-spacing: .05em; }
+h1 { font-size: clamp(28px, 4.7vw, 50px); line-height: 1.15; margin: 8px 0 16px; }
+h1 small { font-size: 12px; color: var(--muted); font-weight: 400; white-space: nowrap; }
+h2 { color: var(--cyan); font-size: 24px; margin: 0 0 14px; }
+h3 { font-size: 15px; margin: 22px 0 6px; }
+p { margin: 10px 0; }
+.lead { font-size: 18px; }
+section { margin: 30px 0; }
+.commands { display: flex; flex-wrap: wrap; gap: 2px 6px; }
+.commands .gz-hx, .rule-entry .gz-hx { width: 120px; flex: 0 0 120px; height: 24px; font: 12px/1.2 "Segoe UI", sans-serif; text-decoration: none; user-select: none; text-shadow: none; filter: none; }
+.gz-hx:not(.gz-on):not(.gz-head) { background: var(--line); }
+.gz-hx::before, .gz-hx:hover::before { background: var(--gz-bg); }
+.gz-hx:enabled:hover:not([data-pointer-off]), a.gz-hx:hover { background: linear-gradient(to right, var(--cyan) 12px, var(--line) 12px, var(--line) calc(100% - 12px), var(--cyan) 0); }
+.gz-hx:focus-visible, .gz-hx[aria-pressed="true"] { background: var(--cyan) !important; }
+.gz-hx[aria-pressed="true"]::before { inset: 2px !important; }
+.gz-hx:enabled:active, a.gz-hx:active { background: var(--cyan) !important; }
+.gz-hx:enabled:active::before, a.gz-hx:active::before { inset: 3px !important; }
+.gz-hx:disabled { opacity: .4; cursor: default; }
+.gz-ic { color: var(--cyan); }
+.rule-description { max-width: 92ch; min-height: 3.2em; margin-top: 18px; }
+.parameters { display: flex; gap: 12px 22px; flex-wrap: wrap; margin: 22px 0 8px; }
+.parameters label { display: grid; gap: 4px; width: 178px; font-size: 12px; color: var(--muted); }
+.parameters input { width: 100%; height: 28px; padding: 3px 8px; color: var(--text); background: var(--panel); border: 1px solid var(--line); font: 14px/1.3 ui-monospace, Consolas, monospace; }
+.parameters input:focus-visible { outline: 1px solid var(--cyan); }
+.rule-table { display: grid; grid-template-columns: repeat(auto-fit, 120px); gap: 10px 6px; margin-top: 14px; }
+.rule-entry { width: 120px; }
+.neighbours { display: flex; justify-content: center; align-items: center; gap: 3px; margin-bottom: 4px; }
+.bit { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid #91a8b4; font: 11px/1 ui-monospace, Consolas, monospace; background: #fff; color: #000; }
+.bit.black { background: #000; color: #fff; }
+.rule-result { justify-content: center; }
+.rule-result .bit { width: 16px; height: 16px; font-size: 10px; }
+.transport { margin-top: 24px; }
+.progress { color: var(--muted); font: 12px/1.5 ui-monospace, Consolas, monospace; }
+.canvas-window { overflow: auto; scrollbar-gutter: stable; max-height: min(72vh, 960px); min-height: 120px; border: 1px solid var(--line); background: #17232e; overscroll-behavior: contain; }
+.canvas-window:focus-visible { outline: 1px solid var(--cyan); }
+canvas { display: block; image-rendering: pixelated; max-width: none; }
+canvas[hidden], .canvas-error[hidden] { display: none; }
+.canvas-error { padding: 12px; border: 1px solid #d8a783; color: #f0c5a7; }
+pre { padding: 12px; background: var(--panel); overflow-x: auto; font-size: 13px; }
+.method, #reading { max-width: 100%; border-top: 1px solid var(--line); padding-top: 24px; }
+.method p, #reading > p { max-width: 100ch; }
+.reading-actions { margin: 18px 0; }
+#reader-host { margin-top: 18px; }
+#reader-host[hidden] { display: none; }
+#reader-host iframe { display: block; width: 100%; height: 80vh; border: 1px solid var(--line); background: var(--bg); }
+@media (max-width: 520px) { .parameters { gap: 10px; } .parameters label { width: 150px; } .rule-description { min-height: 0; } }

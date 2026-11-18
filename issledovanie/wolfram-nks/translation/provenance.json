@@ -1,0 +1,204 @@
+{
+  "date": "2026-11-18",
+  "author": "Stephen Wolfram",
+  "book": "A New Kind of Science (2002)",
+  "chapter": "2. The Crucial Experiment",
+  "status": "Unofficial Russian translation from the PDF supplied by the user",
+  "sourceUrl": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch2.pdf",
+  "sourceSha256": "ea6a13e343fecb8c064a3b645ebcb1899770d0de24f07326457429acc15b4986",
+  "sourcePdfPages": 47,
+  "sourceBookPages": "23-50,865-882",
+  "pdfPages": 65,
+  "pdfSha256": "041fdfd54aa0badaf14c9c2aa22c2d693d3ce7cebbb495b8dd8d7955741a561c",
+  "readerSha256": "a762e46add735e787a04b82e276623a730331650b6f2aba93a54abfc35d5e267",
+  "translationBlocks": 349,
+  "jsonPageMapping": "keys 23..50 = printed 23..50; keys 51..68 = printed 865..882 (add 814)",
+  "images": [
+    {
+      "file": "images/original-00.png",
+      "sha256": "e639e00a0ed885e7789fd9d997c1da11c1541b1db5117dbbe59d0f46b482c81f"
+    },
+    {
+      "file": "images/original-01.png",
+      "sha256": "592255af39e42b461030b2bb43d32f08e161317eae0655b50afbda1893cd7b40"
+    },
+    {
+      "file": "images/original-02.png",
+      "sha256": "f70f3629a407ae70a6556a4163fbd4a29b8e5a479781d8bdde0b4945be5359a0"
+    },
+    {
+      "file": "images/original-03.png",
+      "sha256": "fdd3df0669537a711023bb14ba6838a9c3040143b0d84147e7e8f5f31a52bfae"
+    },
+    {
+      "file": "images/original-04.png",
+      "sha256": "0f3c9aa6f30f1210a9f5f1c5ee66abf5a8a419be46aacf9ec939620d0dc89f27"
+    },
+    {
+      "file": "images/original-05.png",
+      "sha256": "40271cfe6524a11f9a4d13473b9836d254c39d5cdd20b6d0a8563514095a3e9b"
+    },
+    {
+      "file": "images/original-06.png",
+      "sha256": "ef197fbe405314a621beb9dfd4b591cb2baae69142ec08444de92d31856842aa"
+    },
+    {
+      "file": "images/original-07.png",
+      "sha256": "815809f779c3bf1738e9fa718d82f0552a312410af75001284abdaef0b776110"
+    },
+    {
+      "file": "images/original-08.png",
+      "sha256": "20cb349859c9d6f027dba88c68a094e2ad50fd502b03551e8441dd5252844b0f"
+    },
+    {
+      "file": "images/original-09.png",
+      "sha256": "808f4c1d752df14b13be304fd3b2941390bb64b541d686cd7b1cf030b8df54ac"
+    },
+    {
+      "file": "images/original-10.png",
+      "sha256": "5c65110e292f1963dbfa4c197cd4ac18e072c721f9e1eba30f18742710f39de8"
+    },
+    {
+      "file": "images/original-11.png",
+      "sha256": "36607c6f2f4225563705eb27e3c086f2d5a0f5c0205ee40a7aed6c61d84bef69"
+    },
+    {
+      "file": "images/original-12.png",
+      "sha256": "227dc5ac6b0dbd0b30c348ff427306def65919f7f7f0681ba844669dc154c278"
+    },
+    {
+      "file": "images/original-13.png",
+      "sha256": "cbfe5a16d5903cf4df551c4478094a96b2bd9e1a432f471e9bd93ce9fd25bf8f"
+    },
+    {
+      "file": "images/original-14.png",
+      "sha256": "a4740870ade0b1b1b19c41114ac888a470ea8274c1da083524a822df2772341d"
+    },
+    {
+      "file": "images/original-15.png",
+      "sha256": "2793109f749b8585bc4c49b4ee958353e9929a18033a54b4c420a8ec7eb43bbd"
+    },
+    {
+      "file": "images/original-16.png",
+      "sha256": "d9681ab7db7c6558ec2a22aa1c2086122fdb89d7ce8cee556851862d4a11b530"
+    },
+    {
+      "file": "images/original-17.png",
+      "sha256": "685455fd3b818c22ce19683fd7236c825b251285901352a9f1f0ca42903ebee5"
+    },
+    {
+      "file": "images/original-18.png",
+      "sha256": "47fef5d71f0e55f3c18135360e5c22319b2656bbbc80a0b62f26078dc6f55f50"
+    },
+    {
+      "file": "images/original-19.png",
+      "sha256": "1e68173a63b3021d5037e3193de4af9856832f2ea7ed4df80ba4d433b7c73133"
+    },
+    {
+      "file": "images/original-20.png",
+      "sha256": "29affdc1a6a7190bb6de7e391df6e775706db3128b319d5dc435e756dfb4a810"
+    },
+    {
+      "file": "images/original-21.png",
+      "sha256": "c0ef951593acda7b805114648737c3b47ad37f357c3c7be47498b28837cb2e0f"
+    },
+    {
+      "file": "images/original-22.png",
+      "sha256": "17f962c7e86db0697c648467e159a56d082ea8d7e4c1d3cb29c1995b46d78be4"
+    },
+    {
+      "file": "images/original-23.png",
+      "sha256": "98d4b0029af0c79d918a44b31253a21eb0af7cb5675cf8e1485e7ea0dc04be8a"
+    },
+    {
+      "file": "images/original-24.png",
+      "sha256": "a825bcbab5e206cbdbe19b069a1bf3680b5f3edc58b4691cb5623e17fd912a11"
+    },
+    {
+      "file": "images/original-25.png",
+      "sha256": "8de0766ac1d843759c99a6c26a6797ea4204a5a3775ff11e8c689369c3177497"
+    },
+    {
+      "file": "images/original-26.png",
+      "sha256": "ada5f3d1d91db6bbe7bf8a9aeee6d49cee64eee4d13b989aee9d032141e24cb8"
+    },
+    {
+      "file": "images/original-27.png",
+      "sha256": "21203a52e42c5697c2f45725b90f80876a96bd40cade5ff4dc96e55f91ef5c39"
+    },
+    {
+      "file": "images/original-28.png",
+      "sha256": "2aae30080c46cd93800dbee4fbd425c32af6e01f571e20cb7f7b08008aa9320b"
+    },
+    {
+      "file": "images/original-29.png",
+      "sha256": "b9b33d20546ca743a92f87d5c9e3d6958c6b7d87d1e183ced75e0df0c58d6572"
+    },
+    {
+      "file": "images/original-30.png",
+      "sha256": "508982aceeadc321cb0b0db6c9d046f8bf55dd63d73e4b739ed1aea980af3dab"
+    },
+    {
+      "file": "images/original-31.png",
+      "sha256": "c0694aae47e99bc68a28bfbf76e4a70d6386c98cd02b86bfe2e6500043d1854f"
+    },
+    {
+      "file": "images/original-32.png",
+      "sha256": "35c12d9ad966eabde9b3d37379e3ff26875760eea453de5bc038817a9168b854"
+    },
+    {
+      "file": "images/original-33.png",
+      "sha256": "a658ba9636951081643e8d8becd651c71e7eeb9932d5218910b22d5b6f0f1434"
+    },
+    {
+      "file": "images/original-34.png",
+      "sha256": "76465605942ff19d543aec54bdefbfa4c2fc38c2a2d9c8cf565aa6efec8e3e7b"
+    },
+    {
+      "file": "images/original-35.png",
+      "sha256": "056d80082781f2da9286859803ac7a8cbbe7146dda9765e002a955187dda0619"
+    },
+    {
+      "file": "images/original-36.png",
+      "sha256": "a0c940e4903095df2b8bdaf70cf206fdc0db90b20b372c3027dcf928ddbff3d3"
+    },
+    {
+      "file": "images/original-37.png",
+      "sha256": "950520a921dcc48bb7ce1ca6a2d691b8137aafc9feef51373070412e6166aa80"
+    },
+    {
+      "file": "images/original-38.png",
+      "sha256": "a75bedbf307c82f5821ae8a895c6d5aa55ccc4161695fccdb2196cc6cd07848c"
+    },
+    {
+      "file": "images/original-39.png",
+      "sha256": "9c276c32bc44fe3b7c05ce72052fb7ff0e40d72fd2b32a04ccfdf3d85eef6528"
+    },
+    {
+      "file": "images/original-40.png",
+      "sha256": "7424c31af257eda9e4de38577d6b84b3cf68a040477a17a0686af8e4e105fb77"
+    },
+    {
+      "file": "images/original-41.png",
+      "sha256": "f87e55bfb8596079cacd1caf0348e9ea68bd1a550b1062307bcca8245d8f0714"
+    },
+    {
+      "file": "images/original-42.png",
+      "sha256": "c86e8bc26c3531fa9b9dadbe9713e163dd3b9a21855116e92759ec368528d161"
+    },
+    {
+      "file": "images/original-43.png",
+      "sha256": "fbf7c46bf65a93b274f1173c5690b117f6d6124a830703566a77fd82c4cb484d"
+    },
+    {
+      "file": "images/original-44.png",
+      "sha256": "ba3ccd035bda5a9bd59efe7652e19a88d4247746da5f50e422f7bb575b2f13d4"
+    },
+    {
+      "file": "images/original-45.png",
+      "sha256": "daf947c4fd49cc3a027a18289b13cfa8498571479b1e0b21984b5346376f0ea6"
+    }
+  ],
+  "priorArtifactReview": "Local PDF: text preservation checked on 46 pages; layout reviewed before web packaging. Book code was not executed.",
+  "webReview": "Application tests, syntax checks and browser acceptance reserved for the user."
+}

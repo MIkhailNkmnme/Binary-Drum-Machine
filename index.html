@@ -1,3 +1,4 @@
+<!-- ВЛФ-001 · Хаб v0.500: Вольфрам — глава 2 по-русски и лаборатория клеточных автоматов. Проверки пользователем. -->
 <!-- МУЗ-001 · Хаб v0.499: единый раздел «Музыка и голоса», три голоса для сравнения. Проверки пользователем. -->
 <!-- ББТ-001 · Хаб v0.498: ссылка Bit-Byte в Черновиках. -->
 <!-- КНП-020 · Хаб v0.498: возвращена подсветка поверхности кнопок из v0.416. Проверки пользователем. -->
@@ -131,7 +132,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Зерклъ — Центр управления — v0.499</title>
+    <title>Зерклъ — Центр управления — v0.500</title>
     <!-- v0.275: «исправь при загрузке, вот вначале что показывает» — пока скрипты не собрали рейку, прежние кнопки поля не видны (hub-grozd.js снимает hubBoot; запас — 8 с) -->
     <script>try{const r=sessionStorage.getItem('zerk_hub_reset');if(r){for(const k of JSON.parse(r))localStorage.removeItem(k);sessionStorage.removeItem('zerk_hub_reset');}}catch(_){}</script>   <!-- v0.379: «↺ Сброс» — стереть настройки до того, как их прочтут модули -->
     <script>document.documentElement.classList.add('hubBoot');setTimeout(function(){document.documentElement.classList.remove('hubBoot');},8000);</script>
@@ -921,7 +922,7 @@
 <script src="_js/hub-romb-grid.js?v=324"></script>
 <link rel="stylesheet" href="_js/hub-icons.css?v=209">
 <script src="_js/hub-icons.js?v=407"></script>
-<script src="_js/hub-pages.js?v=499"></script>
+<script src="_js/hub-pages.js?v=500"></script>
 <link rel="stylesheet" href="_js/hub-sliders.css?v=431">
 <script src="_js/hub-sliders.js?v=431"></script>
 <link rel="stylesheet" href="_js/hub-tips.css?v=272">
@@ -1028,7 +1029,7 @@ try { const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototy
 
     <div class="hub" id="hubSidebarMenu">
         <h1>Зерклъ</h1>
-        <div class="ver">v0.499</div>
+        <div class="ver">v0.500</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -1048,6 +1049,7 @@ try { const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototy
                 <a href="oboi/Zerkalius-oboi.html" class="menu-btn draft-btn" data-en="Wallpaper" data-ru="Обои">Обои</a>
                 <!-- v0.027: исследование цикла Аниматрицы (папка issledovanie\), 2026-09-24 -->
                 <a href="issledovanie/Zerkalius-issledovanie.html" class="menu-btn draft-btn" data-en="Research" data-ru="Исследование">Исследование</a>
+                <a href="issledovanie/wolfram-nks/" class="menu-btn draft-btn" data-en="Wolfram" data-ru="Вольфрам" title="Вольфрам: глава 2 по-русски и опыты с клеточными автоматами">Вольфрам</a>
                 <a href="blog/" class="menu-btn draft-btn" data-en="Blog" data-ru="Блог">Блог</a>
                 <a href="redaktoram/" class="menu-btn draft-btn" data-en="Editors" data-ru="Редакторам">Редакторам</a>
                 <!-- v0.032: сравнение таблиц фигур .tsv (папка sravnenie\), 2026-09-25 -->

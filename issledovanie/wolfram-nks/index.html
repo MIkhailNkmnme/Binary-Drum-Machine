@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Пять простых клеточных автоматов из второй главы A New Kind of Science: правила 254, 250, 90, 30 и 110. Интерактивный эксперимент и русский перевод.">
+  <title>Вольфрам · Простые программы · Зеркалиус v0.001</title>
+  <link rel="stylesheet" href="../../_js/grozd.css">
+  <link rel="stylesheet" href="style.css?v=001">
+  <script defer src="../../_js/hub-button-text.js"></script>
+  <script defer src="lab.js?v=001"></script>
+</head>
+<body>
+  <main>
+    <nav class="page-nav" aria-label="Навигация"><a href="../../index.html">Хаб</a><a href="../Zerkalius-issledovanie.html">Исследования</a><a href="#reading">Чтение главы</a></nav>
+    <header>
+      <p class="eyebrow">Стивен Вольфрам · A New Kind of Science · глава 2</p>
+      <h1>Простые программы <small>v0.001</small></h1>
+      <p class="lead">Одна чёрная клетка, восемь переходов — и совершенно разное поведение. Выберите правило, сделайте несколько шагов и сравните результат с книгой.</p>
+    </header>
+
+    <section aria-labelledby="experiment-title">
+      <h2 id="experiment-title">Решающий эксперимент</h2>
+      <div class="preset-buttons commands" role="group" aria-label="Пять правил из главы">
+        <button class="gz-hx" type="button" data-rule="254" aria-pressed="false" title="Правило 254: клетка чёрная, если она сама или любой сосед был чёрным" aria-label="Выбрать правило 254"><span class="gz-ic" aria-hidden="true">▰</span><span class="gz-nm">254 · Сплошной</span></button>
+        <button class="gz-hx" type="button" data-rule="250" aria-pressed="false" title="Правило 250: клетка чёрная, если любой из двух соседей был чёрным" aria-label="Выбрать правило 250"><span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">250 · Шахматы</span></button>
+        <button class="gz-hx" type="button" data-rule="90" aria-pressed="false" title="Правило 90: исключающее ИЛИ левого и правого соседей" aria-label="Выбрать правило 90"><span class="gz-ic" aria-hidden="true">△</span><span class="gz-nm">90 · Вложенный</span></button>
+        <button class="gz-hx" type="button" data-rule="30" aria-pressed="true" title="Правило 30: нерегулярный узор из простой начальной клетки" aria-label="Выбрать правило 30"><span class="gz-ic" aria-hidden="true">◩</span><span class="gz-nm">30 · Сложность</span></button>
+        <button class="gz-hx" type="button" data-rule="110" aria-pressed="false" title="Правило 110: упорядоченный фон и взаимодействующие локальные структуры" aria-label="Выбрать правило 110"><span class="gz-ic" aria-hidden="true">⋈</span><span class="gz-nm">110 · Структуры</span></button>
+      </div>
+      <p id="rule-description" class="rule-description"></p>
+      <p><a id="rule-reading" href="reader.html#p27">Описание в главе · с. 27</a></p>
+
+      <div class="parameters">
+        <label for="rule-number">Правило, 0–255<input id="rule-number" type="number" min="0" max="255" step="1" value="30"></label>
+        <label for="step-count">Число шагов<input id="step-count" type="number" min="1" max="4096" step="1" value="256" aria-describedby="step-hint"></label>
+        <label for="cell-scale">Масштаб, px на клетку<input id="cell-scale" type="number" min="1" max="12" step="1" value="2"></label>
+      </div>
+      <p id="step-hint" class="hint">Шаг 0 — начальный ряд. Число шагов задаёт, сколько новых рядов построить; изменение правила или числа шагов начинает опыт заново.</p>
+
+      <h3>Таблица переходов</h3>
+      <p class="hint">Сверху — левый сосед, сама клетка и правый сосед на предыдущем шаге. Нажмите результат под тройкой, чтобы переключить 0/1 и получить другое правило. 1 — чёрная клетка, 0 — белая.</p>
+      <div id="rule-table" class="rule-table" role="group" aria-label="Восемь переходов правила, от 111 до 000"></div>
+
+      <div class="commands transport" role="group" aria-label="Выполнение клеточного автомата">
+        <button id="step" class="gz-hx" type="button" title="Построить один следующий ряд" aria-label="Сделать один шаг"><span class="gz-ic" aria-hidden="true">▸▏</span><span class="gz-nm">Шаг</span></button>
+        <button id="play" class="gz-hx" type="button" aria-pressed="false" title="Запустить построение до выбранного числа шагов" aria-label="Запустить построение"><span class="gz-ic" aria-hidden="true">▶</span><span id="play-label" class="gz-nm">Пуск</span></button>
+        <button id="reset" class="gz-hx" type="button" title="Остановить и вернуться к одной чёрной клетке; сохранить правило и число шагов" aria-label="Сбросить построение"><span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Сброс</span></button>
+        <button id="fit" class="gz-hx" type="button" aria-pressed="true" title="Уместить всё поле по ширине окна или вернуться к выбранному масштабу" aria-label="Уместить поле по ширине"><span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Уместить</span></button>
+      </div>
+      <p id="progress" class="progress" aria-live="off"></p>
+      <p id="canvas-error" class="canvas-error" role="alert" hidden></p>
+      <div id="canvas-window" class="canvas-window" tabindex="0" role="region" aria-label="Поле клеточного автомата; при увеличении доступна прокрутка">
+        <canvas id="field" role="img" aria-label="Построение клеточного автомата"></canvas>
+      </div>
+      <p class="hint">В режиме «Уместить» крупные узоры уменьшаются: отдельные клетки могут стать меньше экранного пикселя. Для подробностей задайте масштаб числом.</p>
+      <noscript><p>Для вычисления клеточного автомата нужен JavaScript. Перевод главы и PDF доступны по ссылкам ниже.</p></noscript>
+    </section>
+
+    <section class="method" aria-labelledby="method-title">
+      <h2 id="method-title">Что именно вычисляется</h2>
+      <p>На каждом шаге все клетки обновляются одновременно по предыдущему ряду. Из тройки битов получается число от 0 до 7, и соответствующий бит номера правила задаёт новое состояние:</p>
+      <pre><code>index = (left &lt;&lt; 2) | (self &lt;&lt; 1) | right
+new = (rule &gt;&gt; index) &amp; 1</code></pre>
+      <p>В начале чёрная только центральная клетка, а бесконечное окружение белое. За N шагов влияние этой клетки не распространяется дальше N клеток в каждую сторону: показаны 2N + 1 столбцов. Это не замкнутое кольцо и не полоса с принудительно белыми краями.</p>
+      <p>Если правило меняет однородный фон, он тоже обновляется на каждом шаге: белое окружение использует переход 000, чёрное — 111. Такой же текущий фон подставляется за краями вычисляемого ряда. Поэтому произвольные правила, включая правила с чёрным результатом для 000, моделируются без подмены граничных условий.</p>
+      <p>В опыте нет звука. Он воспроизводит правила и начальное условие, а не доказывает случайность или сложность статистическими тестами. О том, почему простое правило не гарантирует простого поведения, — <a href="reader.html#p28">на странице 28</a>.</p>
+    </section>
+
+    <section id="reading" aria-labelledby="reading-title">
+      <h2 id="reading-title">Читать главу</h2>
+      <p>«Решающий эксперимент» — полный неофициальный русский перевод второй главы <i>A New Kind of Science</i> с иллюстрациями и примечаниями. Автор оригинала — Stephen Wolfram. Перевод не является официальным изданием или одобрением автора.</p>
+      <div class="commands reading-actions">
+        <a class="gz-hx" href="reader.html#p23" title="Открыть русский перевод главы со страницы 23" aria-label="Открыть перевод главы"><span class="gz-ic" aria-hidden="true">▤</span><span class="gz-nm">Читать</span></a>
+        <a class="gz-hx" href="chapter-2-ru.pdf" title="Открыть полный русский перевод главы в PDF" aria-label="Открыть перевод в PDF"><span class="gz-ic" aria-hidden="true">↓</span><span class="gz-nm">PDF</span></a>
+        <button id="embed-reader" class="gz-hx" type="button" aria-expanded="false" aria-controls="reader-host" title="Открыть перевод внутри этой страницы; он загружается только после нажатия" aria-label="Показать перевод на этой странице"><span class="gz-ic" aria-hidden="true">▣</span><span id="reader-label" class="gz-nm">Читать здесь</span></button>
+      </div>
+      <div id="reader-host" hidden></div>
+      <p class="hint">Рисунки перевода загружаются по мере чтения; PDF открывается отдельно. Проверки лаборатории и визуальная приёмка — пользователем.</p>
+    </section>
+  </main>
+  <script>window.zerkHubStill=true;</script>
+  <script src="../../_js/hub-link.js?v=7"></script>
+</body>
+</html>
