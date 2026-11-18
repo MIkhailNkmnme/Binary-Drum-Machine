@@ -1,0 +1,479 @@
+{
+  "date": "2026-11-18",
+  "commit": "22560bd4c6b8dee2095359847bc5cb9c568af52a",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "voice/robot/01-a.wav",
+      "status": 200,
+      "bytes": 29856,
+      "normalization": "none",
+      "sha256": "4706076057588ad7ff5ef260fe70f6e74ebd6cea69fa9d1bd2870948f93837c0",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/02-b.wav",
+      "status": 200,
+      "bytes": 11334,
+      "normalization": "none",
+      "sha256": "775a252a0bb1ab1555720b603c8f4cfb89b49dfa52a7c66a4809867aef696005",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/03-v.wav",
+      "status": 200,
+      "bytes": 17508,
+      "normalization": "none",
+      "sha256": "908bcf21c0567cf5f5c4d83eae3a8a8d3b0a461ce949cfe283ea292dea411752",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/04-g.wav",
+      "status": 200,
+      "bytes": 11334,
+      "normalization": "none",
+      "sha256": "d6c38dec14edb416034d1c8d6cca3df0be9422622288e6d6a5daa10228f55246",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/05-d.wav",
+      "status": 200,
+      "bytes": 11334,
+      "normalization": "none",
+      "sha256": "c2fb1492a54107f88672bb1ae99268bba1bec3e99aade8e071bcbc3cf01aba1b",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/06-e.wav",
+      "status": 200,
+      "bytes": 31620,
+      "normalization": "none",
+      "sha256": "2a7e642fa74a212aee98140d3084a7c28959543cf262a3ad904b30e798d4cec0",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/07-yo.wav",
+      "status": 200,
+      "bytes": 31620,
+      "normalization": "none",
+      "sha256": "402ae1039ed270c9e064c542a52d33d752e0b9b0321ac5da5ae188d02b62c53c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/08-zh.wav",
+      "status": 200,
+      "bytes": 19272,
+      "normalization": "none",
+      "sha256": "506902f50337af8916aa5aa8eaf02bc9574cbe34374736039b6b2c99abfc1dc2",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/09-z.wav",
+      "status": 200,
+      "bytes": 17508,
+      "normalization": "none",
+      "sha256": "da8ddf3cac0818c51447f9d3aa276603a47fa33ff8858d2dae97b34122b126b3",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/10-i.wav",
+      "status": 200,
+      "bytes": 29856,
+      "normalization": "none",
+      "sha256": "c13fa6b79fe8b3441f39efd3994ca63c92916b12b045c3395cc34a432d01b391",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/11-j.wav",
+      "status": 200,
+      "bytes": 8688,
+      "normalization": "none",
+      "sha256": "f432a88db39731f1b9f1c20d70445371564f685157890e4c344ed17a69b023a5",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/12-k.wav",
+      "status": 200,
+      "bytes": 11334,
+      "normalization": "none",
+      "sha256": "20b9d6c0a2af5d99f41e073e6262d548606d9db929fb8ad0b552b76ae2383209",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/13-l.wav",
+      "status": 200,
+      "bytes": 17508,
+      "normalization": "none",
+      "sha256": "d802735736b686c9f4aceb715d0f47a3ffed9924e43f4397451a413a60248ce3",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/14-m.wav",
+      "status": 200,
+      "bytes": 17508,
+      "normalization": "none",
+      "sha256": "c605300f0cddff04e3a26c994d6f5a1fbefd1e05697cde54adfde3a3a0dae518",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/15-n.wav",
+      "status": 200,
+      "bytes": 17508,
+      "normalization": "none",
+      "sha256": "f563f6e477d5537a8b66866cf09a891d60b1ae7350043af1c3a33f05f7dda6aa",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/16-o.wav",
+      "status": 200,
+      "bytes": 29856,
+      "normalization": "none",
+      "sha256": "5e69c2081351ac9d91bd8758f1c87d45560be78a3c299d4c0abdb3647c1fe0b1",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/17-p.wav",
+      "status": 200,
+      "bytes": 11334,
+      "normalization": "none",
+      "sha256": "bfaf515dc2742342397287ffb7504e485e8d07cf2d778355d6a7652f47023503",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/18-r.wav",
+      "status": 200,
+      "bytes": 17508,
+      "normalization": "none",
+      "sha256": "0dcb6c96018e7d23b4ba39b5d337985abb3d36b08b8f4672b5a3b9523a4f2cb8",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/19-s.wav",
+      "status": 200,
+      "bytes": 19272,
+      "normalization": "none",
+      "sha256": "64b4cfa39e2cba7df705d877aa1a2d56beeea0c3f52d023f081ef05a01442eb7",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/20-t.wav",
+      "status": 200,
+      "bytes": 11334,
+      "normalization": "none",
+      "sha256": "1be2edf8a5a27f2ccc3882daeeefcd39487eef6cce8c4a5846f62c0cbbe514cf",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/21-u.wav",
+      "status": 200,
+      "bytes": 29856,
+      "normalization": "none",
+      "sha256": "9c39573c7e38f04665bac53690f6ac5f4d9e469b7d472ff3b787c11a17147995",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/22-f.wav",
+      "status": 200,
+      "bytes": 19272,
+      "normalization": "none",
+      "sha256": "e52c849f3b1f1ac71c618ea5e3ebfc2989cb6d849fa7e015db9c342b2fa4aac7",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/23-h.wav",
+      "status": 200,
+      "bytes": 19272,
+      "normalization": "none",
+      "sha256": "c07ec4b93ec66e30aec18b6791be46ef4ec417c75fcd1412d889e5d43da404fd",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/24-ts.wav",
+      "status": 200,
+      "bytes": 17508,
+      "normalization": "none",
+      "sha256": "eed37194c51613be777f935bae15c4d91dc9f9d9b3541ee1858704a0d76aa6a6",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/25-ch.wav",
+      "status": 200,
+      "bytes": 17508,
+      "normalization": "none",
+      "sha256": "acd9e379cfc12701561a9e362bc2c7c98988c184e6cdecd70c165cd7f6d65b49",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/26-sh.wav",
+      "status": 200,
+      "bytes": 19272,
+      "normalization": "none",
+      "sha256": "b9a333fee4eaec7f194afd1f3ed4ff659af3243caa1d4b6c4505c355aa046da2",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/27-shch.wav",
+      "status": 200,
+      "bytes": 21036,
+      "normalization": "none",
+      "sha256": "af0eeaf88832084fdbc4f08782dbe94518a773a7d8712004586bcb5988934dc9",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/28-y.wav",
+      "status": 200,
+      "bytes": 29856,
+      "normalization": "none",
+      "sha256": "bd587a223f13f3ad910344d983b63eb960c44c9a6e41da248f4688fe6283360c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/29-eh.wav",
+      "status": 200,
+      "bytes": 29856,
+      "normalization": "none",
+      "sha256": "18d5f14a24f1a2fe26a939f340446fb79356056e7eb6bd5fc3a545d2504e75f2",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/30-yu.wav",
+      "status": 200,
+      "bytes": 31620,
+      "normalization": "none",
+      "sha256": "ff855274ca4354b047c4035325b46cfa1a57ae6fd0e460e06479faedc2287121",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/31-ya.wav",
+      "status": 200,
+      "bytes": 31620,
+      "normalization": "none",
+      "sha256": "184e84f5ba5b731ab15cd7f95600a42530633c36e95d0a358ae690e9371058a1",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/alphabet.wav",
+      "status": 200,
+      "bytes": 1886478,
+      "normalization": "none",
+      "sha256": "78aa9c4d01ce41ed48bc8270c19f0443c16861584029a57e7edc2c1ca4fe18be",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/archive.json",
+      "status": 200,
+      "bytes": 261,
+      "normalization": "LF",
+      "sha256": "b5cc5cb6a10a1ea0a2b0fd90d94c2d25167368bd12824f1cfdc66fab4f13ca37",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/build.cjs",
+      "status": 200,
+      "bytes": 8964,
+      "normalization": "LF",
+      "sha256": "0324bb240caba634ef9ec060f5c54be19663cf6dc7e01cf420e623294a350065",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/build.py",
+      "status": 200,
+      "bytes": 2340,
+      "normalization": "LF",
+      "sha256": "ae0efbfd643fda6c526ef3c64762bf82e9afe7d69311b528e56a3c9cbb19bf5e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/catalog.json",
+      "status": 200,
+      "bytes": 30667,
+      "normalization": "LF",
+      "sha256": "9742545a8cc3dd114b53d99fe2565963a2f3c730901b3521bcd8926c166ae0a6",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-0.wav",
+      "status": 200,
+      "bytes": 23682,
+      "normalization": "none",
+      "sha256": "18d529ab003514e66f9fe95fe70a8fddc2dad6708f4747744a0cfd417b307005",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-1.wav",
+      "status": 200,
+      "bytes": 31180,
+      "normalization": "none",
+      "sha256": "56728d8741d5a298a74108205d80ba23a8a20f1d9dec2ad6a0b76898757ae904",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-2.wav",
+      "status": 200,
+      "bytes": 42646,
+      "normalization": "none",
+      "sha256": "c573f2eb9e3a73d88f0180a972b8a57262d1db7c5b33865515bf3d1871fbe5ff",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-3.wav",
+      "status": 200,
+      "bytes": 41322,
+      "normalization": "none",
+      "sha256": "00e2d1a734649664f8ba7dbccf89792ed1e11442c5928f7dd8fbbce854ebe739",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-4.wav",
+      "status": 200,
+      "bytes": 60726,
+      "normalization": "none",
+      "sha256": "52cfe7adb75ffb59cfd02e3aa743f12b53be5dbff932ce08ced63f5827063d4c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-5.wav",
+      "status": 200,
+      "bytes": 45732,
+      "normalization": "none",
+      "sha256": "0f4a9ab2c42d716c795c97ed8ddf77c514b7693f51e495b96e58a13503e0fbcf",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-6.wav",
+      "status": 200,
+      "bytes": 54112,
+      "normalization": "none",
+      "sha256": "fa4eda0f485f815f92e713b89df017afb22c9c4b37fb13085975cbca22910222",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-7.wav",
+      "status": 200,
+      "bytes": 48820,
+      "normalization": "none",
+      "sha256": "5bcafe710efad7738ba7cc86bd251af59f90b222b96c920f3a69e40a2d759502",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-8.wav",
+      "status": 200,
+      "bytes": 56316,
+      "normalization": "none",
+      "sha256": "32d212d47fb4d3ce65e39f0af7050937ece12865ba03d0a5cca2df7a719805dc",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digit-9.wav",
+      "status": 200,
+      "bytes": 49702,
+      "normalization": "none",
+      "sha256": "5fd4803a437f0db3daa55b257ccf5d8d39e0d0e8428380c0b5e53b1281f26ee0",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/digits.wav",
+      "status": 200,
+      "bytes": 868382,
+      "normalization": "none",
+      "sha256": "31c6602d8ae6b1350700ac57346bf46d218c7cd3faf3ececd8dcd7da048f9fb9",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/engine.js",
+      "status": 200,
+      "bytes": 13897,
+      "normalization": "LF",
+      "sha256": "f004cd5b9f8009802cb6fd6c406ebd568de9e4d6ddd5fbfeae4ad676334aadf8",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/manifest.json",
+      "status": 200,
+      "bytes": 68831,
+      "normalization": "LF",
+      "sha256": "eff80bb75b021e587aba1e755fe8ba76071515dcac284cf567a000f718b98cfb",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/origin-comparison.json",
+      "status": 200,
+      "bytes": 2216,
+      "normalization": "LF",
+      "sha256": "507f71c839dffe53ff049571c80d9cf72ba19ee43e70902b0f0207241519204c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/README.md",
+      "status": 200,
+      "bytes": 11306,
+      "normalization": "LF",
+      "sha256": "2913914081cb86e3c84d0dcb70cc4bd5dc28820f6f9ab4c06d16c1b56e83d117",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot/zerkalius-robot-russian.zip",
+      "status": 200,
+      "bytes": 1948316,
+      "normalization": "none",
+      "sha256": "5b3cfec25d16100401aee6e78f6f62ec2d88863f7cfda7f3545fe96d62b24c9c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/index.html",
+      "status": 200,
+      "bytes": 11248,
+      "normalization": "LF",
+      "sha256": "bcadeef56e4ec540ec31a82e43dd8d62bc016da5d794ba8573a6b8310d7693f5",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/README.md",
+      "status": 200,
+      "bytes": 13414,
+      "normalization": "LF",
+      "sha256": "c25c4bf27dadbc977ff1182ea4e13cd9895e4059e1ce00ffb5ee6fdfd4745e13",
+      "matchesRelease": true
+    },
+    {
+      "path": "music/index.html",
+      "status": 200,
+      "bytes": 9102,
+      "normalization": "LF",
+      "sha256": "8182d85ad155831204432a75592c00204d060d1189bd0a2ba6b63a3fb67d9e2b",
+      "matchesRelease": true
+    },
+    {
+      "path": "tools/voice/README.md",
+      "status": 200,
+      "bytes": 22791,
+      "normalization": "LF",
+      "sha256": "f7a2ce526c0f043c8abf3bcaf2c7e39ff3d4123bc5e6140a4471419a58216ebf",
+      "matchesRelease": true
+    },
+    {
+      "path": "audit/reports/2026-11-18-robot-origin.json",
+      "status": 200,
+      "bytes": 1916,
+      "normalization": "LF",
+      "sha256": "1ca64b8c303927655977e20185aecee6462e2b529a25b83cd96020f0e4e4bb7e",
+      "matchesRelease": true
+    },
+    {
+      "path": "music/voices/phone.wav",
+      "status": 200,
+      "bytes": 211724,
+      "normalization": "none",
+      "sha256": "e2928c94c1857a57f39bdc77733744fe92e682de94dc41a66639c8785dc94aec",
+      "matchesRelease": true
+    },
+    {
+      "path": "mayatnik/mayatnik-phone-robot.js",
+      "status": 200,
+      "bytes": 9718,
+      "normalization": "LF",
+      "sha256": "d8a1d3564fcfb178122f3ef1f2372bdc841b034c9cd8b9024d349afa0695f34d",
+      "matchesRelease": true
+    }
+  ]
+}
