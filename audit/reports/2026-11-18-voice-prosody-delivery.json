@@ -1,0 +1,129 @@
+{
+  "date": "2026-11-18",
+  "commit": "aeb13abf5b58043941edd0f24c2a1e5a48906c70",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "voice/index.html",
+      "status": 200,
+      "bytes": 21906,
+      "normalization": "LF",
+      "sha256": "47ca2949e0ce09e6b5c346f2cfe2feafcc15144d42e4a786753cb81858e00b88",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/app.js",
+      "status": 200,
+      "bytes": 54083,
+      "normalization": "LF",
+      "sha256": "60f68e40221d74c4b9c8d6532a098a89d16c29d312407fbe7083dff585dad256",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/style.css",
+      "status": 200,
+      "bytes": 3579,
+      "normalization": "LF",
+      "sha256": "bb33c73c93dc9dd198437d6ac6758f35b3fcb881fd078dd3bc4133cd16b81c38",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/text.js",
+      "status": 200,
+      "bytes": 6791,
+      "normalization": "LF",
+      "sha256": "cfc4515c226bdf61d7f347cc52639d1abac02ecf5f1c0efa9b942efdbbd2140f",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/german.js",
+      "status": 200,
+      "bytes": 7385,
+      "normalization": "LF",
+      "sha256": "864e769ff8358d8ff599bd9c53f99d9d17e4d05f45816dc8682ebe8cd448d0dd",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/catalog.js",
+      "status": 200,
+      "bytes": 5081,
+      "normalization": "LF",
+      "sha256": "322828a97b04e6510fd3b6bcb67bdf2bc1cc2ef0e7224984fed0ffd38f5efaad",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/README.md",
+      "status": 200,
+      "bytes": 43062,
+      "normalization": "LF",
+      "sha256": "b30b2f0e598a5a3548d11d58ce632c8c5d9f5b7cda0477bd30c1f5f89d8d2006",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/engines.js",
+      "status": 200,
+      "bytes": 6475,
+      "normalization": "LF",
+      "sha256": "b07bcfd65fce13f9a38a58f9da21af102513e2aeb2b35732d55abb4b06b2c294",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/engine.js",
+      "status": 200,
+      "bytes": 18142,
+      "normalization": "LF",
+      "sha256": "6d83f017da29fc2306710ec32e0ef1263f8a9620f791cc0e4f0d5377a528454c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot-live.js",
+      "status": 200,
+      "bytes": 11256,
+      "normalization": "LF",
+      "sha256": "0c593a9e8f0f39910569353aeed74e5b8f9467a9fb1046cc121cd60a845d7c8f",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/dsh-engine.js",
+      "status": 200,
+      "bytes": 13675,
+      "normalization": "LF",
+      "sha256": "c04cb1048a4cd449826d11fca24c70197c276d07b5fd43b72840068600388b93",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/render-worker.js",
+      "status": 200,
+      "bytes": 748,
+      "normalization": "LF",
+      "sha256": "74b3e2167100e39d13161515554be60ef57e96850dae2cfa56874afd0c7fef23",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/prosody.js",
+      "status": 200,
+      "bytes": 8695,
+      "normalization": "LF",
+      "sha256": "5b8c560d68e73f112242be93d6838f7dc51a89ff79fd841ac89de33711c26781",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/prosody-dsp.js",
+      "status": 200,
+      "bytes": 4908,
+      "normalization": "LF",
+      "sha256": "ab88b89460aeb7decd7f1903d2bd082cf8c65c0bb92978a5c3acaf314d8bb54a",
+      "matchesRelease": true
+    }
+  ],
+  "canonical": {
+    "url": "https://1001100.online/voice/",
+    "status": 200,
+    "matchesRelease": true,
+    "sha256": "47ca2949e0ce09e6b5c346f2cfe2feafcc15144d42e4a786753cb81858e00b88"
+  },
+  "pages": {
+    "runId": 44331313488,
+    "conclusion": "success"
+  }
+}
