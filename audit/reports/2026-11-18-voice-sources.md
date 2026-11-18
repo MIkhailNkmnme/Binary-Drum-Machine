@@ -88,4 +88,4 @@ SAPI — интерфейс синтеза; по его названию нел�
 | Absence | Absence (Original Mix) | [09-02-absence-original-mix-preview.m4a](../../sources/ninetozero/audio/09-02-absence-original-mix-preview.m4a) |
 | Absence | The Aftermath (Original Mix) | [09-03-the-aftermath-original-mix-preview.m4a](../../sources/ninetozero/audio/09-03-the-aftermath-original-mix-preview.m4a) |
 
-Сторонние превью и плееры перечислены для решения пользователя и не используются новым голосовым банком. Проверка доставки удаления будет записана после публикации.
+Сторонние превью и плееры перечислены для решения пользователя и не используются новым голосовым банком. Удаление опубликовано в `8df36c28f`: 3 старых файла банка и 6 MP3 вернули HTTP404. Для sign-bank.wav и numbers-sketch.mp3 после временного503 использован запрос с `?removed=8df36c28f`; остальные проверены по обычным адресам. Новый процедурный manifest, этот отчёт до добавления данной записи и README bit-voice вернули200 и совпали с релизом. После очистки повторно прочитаны5 ZIP и8 путей worktree: удалённых элементов не осталось.
