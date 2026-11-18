@@ -207,6 +207,26 @@
 
   function paintLogic() {
     logicFrame = 0;
+    const cols = state.fieldCols, rows = state.fieldRows;
+    if (cols === null || rows === null) return;
+    // 2 — пустое место; ноль остаётся полноценным битом.
+    const bits = new Uint8Array(cols * rows).fill(2);
+    const publishBits = () => window.BitByteDiagonals?.render(bits, cols, rows, logicContext ? state.logic : "layers");
+    if (state.logic === "layers" || !logicContext) {
+      logicCanvas.hidden = true;
+      for (const board of layers()) {
+        if (!board.visible) continue;
+        for (let y = board.y; y < Math.min(rows, board.y + board.rows); y++) {
+          for (let x = board.x; x < Math.min(cols, board.x + board.cols); x++) {
+            const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
+            // У смешанного цвета нет единственного бита: берём верхний вклад с alpha > 0.
+            if ((bit ? board.oneOpacity : board.zeroOpacity) > 0) bits[y * cols + x] = bit;
+          }
+        }
+      }
+      publishBits();
+      return;
+    }
     const additive = state.logic === "add-rgb";
     const and = state.logic.startsWith("and"), byPalette = !additive && state.logic.endsWith("-rgb");
     const visible = layers().filter(board => board.visible).map(board => ({
@@ -223,7 +243,7 @@
         paints: [logicPaint(board.zero, board.zeroOpacity), logicPaint(board.one, board.oneOpacity)],
       }));
     logicCanvas.hidden = !boards.length;
-    if (!boards.length) return;
+    if (!boards.length) { publishBits(); return; }
 
     const left = Math.min(...boards.map(board => board.x));
     const top = Math.min(...boards.map(board => board.y));
@@ -303,6 +323,8 @@
           }
           groups.clear();
         }
+        // Тот же итоговый бит, который выводится цифрой на поле, без повторного расчёта.
+        bits[y * cols + x] = bit;
         if (!byPalette || !bit) fill(paint, px, py);
         if (state.digits && canvasDigits && scale >= 4) {
           ctx.globalAlpha = 1;
@@ -315,12 +337,15 @@
         }
       }
     }
+    publishBits();
   }
 
   function renderLogic() {
-    const enabled = !!logicContext && state.logic !== "layers" && state.fieldCols !== null && state.fieldRows !== null;
+    const ready = state.fieldCols !== null && state.fieldRows !== null;
+    const enabled = !!logicContext && state.logic !== "layers" && ready;
     world.toggleAttribute("data-logic", enabled);
-    if (enabled) {
+    if (!enabled) logicCanvas.hidden = true;
+    if (ready) {
       if (!logicFrame) logicFrame = requestAnimationFrame(paintLogic);
     } else {
       if (logicFrame) cancelAnimationFrame(logicFrame);

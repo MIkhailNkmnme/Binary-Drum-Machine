@@ -356,3 +356,13 @@ textarea:focus-visible { outline: 1px solid var(--cyan); }
   .breakdown, .ring-statistics { grid-template-columns: minmax(0, 1fr); }
   .stats th, .stats td { padding-inline: 3px; }
 }
+
+
+.chess-diagonals { margin-top: 12px; min-width: 0; }
+.chess-diagonals .hint { margin-top: 6px; }
+.chess-diagonals-scroll { overflow: auto; max-height: 65vh; margin-top: 10px; border: 1px solid var(--line); }
+.chess-diagonals-scroll:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
+#chess-diagonals-table { width: 100%; min-width: calc(var(--diagonal-width, 1) * 2ch + 2ch); border-collapse: collapse; font: 14px/1.55 var(--bb-font); font-variant-numeric: tabular-nums; }
+#chess-diagonals-table td { padding: 0 1ch; text-align: center; white-space: pre; border: 0; }
+#chess-diagonals-table tr:nth-child(even) { background: #ffffff04; }
+#chess-diagonals-table tr:hover { background: #6cdded14; }
