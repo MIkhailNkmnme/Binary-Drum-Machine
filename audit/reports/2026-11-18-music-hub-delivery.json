@@ -1,0 +1,129 @@
+{
+  "release": "2fd5126c1cf9650e670e82041a1bfb4fc4b3f35a",
+  "date": "2026-11-18",
+  "scope": "HTTP delivery only; no application, browser, syntax or listening tests",
+  "files": [
+    {
+      "path": "index.html",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 346730,
+      "sha256": "be3f7d4d162658b2a3e36cbf54b8f34dd4de2168c7d6f38979fb1ea2bb7e5bb8"
+    },
+    {
+      "path": "_js/hub-pages.js",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 6053,
+      "sha256": "5aeca9f98f4410b3b89be792b70f7664370f5a0799e206977e702c179678acae"
+    },
+    {
+      "path": "music/index.html",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 8797,
+      "sha256": "44bd25dc7344b32eaec265e2f9235730890387fbdcbbe35ffff87a12948b58b8"
+    },
+    {
+      "path": "music/style.css",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 5859,
+      "sha256": "eae41392afa3c75fbd307cd7ffec801e99ec3a8f5df2d86e716cc03617ec4112"
+    },
+    {
+      "path": "music/app.js",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 9694,
+      "sha256": "0505ccb0f6a040711effa7034c1a6f0920af18ca226b1cc20b090cc0ad701a59"
+    },
+    {
+      "path": "music/catalog.json",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 222107,
+      "sha256": "5ec84e6c20c8eec9e1a20dbb2d3b71e87447e9f8d0b0a8bf5bddfea03bc67341"
+    },
+    {
+      "path": "music/README.md",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 2979,
+      "sha256": "315559de0b20ab4c41328228edd1804adbafa63f23a186e9f4aa92dcf573772d"
+    },
+    {
+      "path": "music/voices/README.md",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 4747,
+      "sha256": "eb7c8e7ac6868da24ebdc12dc73e9921034cc16a1279607f16ad509a9dbcb203"
+    },
+    {
+      "path": "music/voices/manifest.json",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 8350,
+      "sha256": "14ecd7485a0e6ddc13feaa60625a1cde9abf04da85f967e53fb1bc4dc8772971"
+    },
+    {
+      "path": "music/voices/bank.wav",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "bytes",
+      "bytes": 211724,
+      "sha256": "c2f905457ef35c13f7e8e570f3d4b2559119e4decf8a07e5b85b9e4794116d16"
+    },
+    {
+      "path": "music/voices/formant.wav",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "bytes",
+      "bytes": 211724,
+      "sha256": "eb3497325772c39159d49239a749541685ed008a91d80871e0eed4189f2b00f3"
+    },
+    {
+      "path": "music/voices/phone.wav",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "bytes",
+      "bytes": 211724,
+      "sha256": "e2928c94c1857a57f39bdc77733744fe92e682de94dc41a66639c8785dc94aec"
+    },
+    {
+      "path": "music/voices/build.py",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 8454,
+      "sha256": "69055c3c732a497b164813de8a3f3d87f6f0a5ce63adf0497d93c95b627147ea"
+    },
+    {
+      "path": "music/voices/phone-helper.cjs",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 592,
+      "sha256": "25c249d7fdec94a74815c0510ff08996713f59fef884e160a9fbf2fb58fe6ee0"
+    },
+    {
+      "path": "music/build-catalog.py",
+      "http": 200,
+      "matchesRelease": true,
+      "comparison": "UTF-8 with LF",
+      "bytes": 27360,
+      "sha256": "ef7b110604985385513e8cb9918d9482950ca5beac50372490f13da6785d59c3"
+    }
+  ],
+  "pagesRun": 44275281816,
+  "pagesConclusion": "success"
+}
