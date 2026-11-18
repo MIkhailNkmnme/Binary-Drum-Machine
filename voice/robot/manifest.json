@@ -1,0 +1,3169 @@
+{
+  "version": 1,
+  "release": "2026-11-18",
+  "title": "Телефонный робот: полный русский алфавит звуков",
+  "engineVersion": "phone-robot-alphabet-v1",
+  "command": "python voice/robot/build.py --node node",
+  "node": "v24.22.1",
+  "settings": {
+    "rate": 44100,
+    "midi": 48,
+    "event": {
+      "bits": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "f0": 130.8127826502993,
+      "tilt": 0.82
+    }
+  },
+  "carrier": {
+    "tableSize": 2048,
+    "harmonics": 96,
+    "tilt": 0.82,
+    "bits": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "f0": 130.8127826502993
+  },
+  "utteranceTail": 0.018,
+  "alphabet": [
+    {
+      "id": "ru-sound-410",
+      "symbol": "А",
+      "label": "а",
+      "silent": false,
+      "file": "01-a.wav",
+      "alphabetIndex": 1,
+      "sequence": [
+        [
+          "a",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-410",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-411",
+      "symbol": "Б",
+      "label": "б",
+      "silent": false,
+      "file": "02-b.wav",
+      "alphabetIndex": 2,
+      "sequence": [
+        [
+          "b",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-411",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-412",
+      "symbol": "В",
+      "label": "в",
+      "silent": false,
+      "file": "03-v.wav",
+      "alphabetIndex": 3,
+      "sequence": [
+        [
+          "v",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-412",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-413",
+      "symbol": "Г",
+      "label": "г",
+      "silent": false,
+      "file": "04-g.wav",
+      "alphabetIndex": 4,
+      "sequence": [
+        [
+          "g",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-413",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-414",
+      "symbol": "Д",
+      "label": "д",
+      "silent": false,
+      "file": "05-d.wav",
+      "alphabetIndex": 5,
+      "sequence": [
+        [
+          "d",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-414",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-415",
+      "symbol": "Е",
+      "label": "й + е",
+      "silent": false,
+      "file": "06-e.wav",
+      "alphabetIndex": 6,
+      "sequence": [
+        [
+          "j",
+          0.08
+        ],
+        [
+          "e",
+          0.26
+        ]
+      ],
+      "seedWord": "ru-sound-415",
+      "positional": "Изолированный начальный вариант й + гласный; внутри слова возможен иной звук."
+    },
+    {
+      "id": "ru-sound-401",
+      "symbol": "Ё",
+      "label": "й + о",
+      "silent": false,
+      "file": "07-yo.wav",
+      "alphabetIndex": 7,
+      "sequence": [
+        [
+          "j",
+          0.08
+        ],
+        [
+          "o",
+          0.26
+        ]
+      ],
+      "seedWord": "ru-sound-401",
+      "positional": "Изолированный начальный вариант й + гласный; внутри слова возможен иной звук."
+    },
+    {
+      "id": "ru-sound-416",
+      "symbol": "Ж",
+      "label": "ж",
+      "silent": false,
+      "file": "08-zh.wav",
+      "alphabetIndex": 8,
+      "sequence": [
+        [
+          "zh",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-416",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-417",
+      "symbol": "З",
+      "label": "з",
+      "silent": false,
+      "file": "09-z.wav",
+      "alphabetIndex": 9,
+      "sequence": [
+        [
+          "z",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-417",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-418",
+      "symbol": "И",
+      "label": "и",
+      "silent": false,
+      "file": "10-i.wav",
+      "alphabetIndex": 10,
+      "sequence": [
+        [
+          "i",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-418",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-419",
+      "symbol": "Й",
+      "label": "короткий й",
+      "silent": false,
+      "file": "11-j.wav",
+      "alphabetIndex": 11,
+      "sequence": [
+        [
+          "j",
+          0.08
+        ]
+      ],
+      "seedWord": "ru-sound-419",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41a",
+      "symbol": "К",
+      "label": "к",
+      "silent": false,
+      "file": "12-k.wav",
+      "alphabetIndex": 12,
+      "sequence": [
+        [
+          "k",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-41a",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41b",
+      "symbol": "Л",
+      "label": "л",
+      "silent": false,
+      "file": "13-l.wav",
+      "alphabetIndex": 13,
+      "sequence": [
+        [
+          "l",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-41b",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41c",
+      "symbol": "М",
+      "label": "м",
+      "silent": false,
+      "file": "14-m.wav",
+      "alphabetIndex": 14,
+      "sequence": [
+        [
+          "m",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-41c",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41d",
+      "symbol": "Н",
+      "label": "н",
+      "silent": false,
+      "file": "15-n.wav",
+      "alphabetIndex": 15,
+      "sequence": [
+        [
+          "n",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-41d",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41e",
+      "symbol": "О",
+      "label": "о",
+      "silent": false,
+      "file": "16-o.wav",
+      "alphabetIndex": 16,
+      "sequence": [
+        [
+          "o",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-41e",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41f",
+      "symbol": "П",
+      "label": "п",
+      "silent": false,
+      "file": "17-p.wav",
+      "alphabetIndex": 17,
+      "sequence": [
+        [
+          "p",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-41f",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-420",
+      "symbol": "Р",
+      "label": "р",
+      "silent": false,
+      "file": "18-r.wav",
+      "alphabetIndex": 18,
+      "sequence": [
+        [
+          "r",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-420",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-421",
+      "symbol": "С",
+      "label": "с",
+      "silent": false,
+      "file": "19-s.wav",
+      "alphabetIndex": 19,
+      "sequence": [
+        [
+          "s",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-421",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-422",
+      "symbol": "Т",
+      "label": "т",
+      "silent": false,
+      "file": "20-t.wav",
+      "alphabetIndex": 20,
+      "sequence": [
+        [
+          "t",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-422",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-423",
+      "symbol": "У",
+      "label": "у",
+      "silent": false,
+      "file": "21-u.wav",
+      "alphabetIndex": 21,
+      "sequence": [
+        [
+          "u",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-423",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-424",
+      "symbol": "Ф",
+      "label": "ф",
+      "silent": false,
+      "file": "22-f.wav",
+      "alphabetIndex": 22,
+      "sequence": [
+        [
+          "f",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-424",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-425",
+      "symbol": "Х",
+      "label": "х",
+      "silent": false,
+      "file": "23-h.wav",
+      "alphabetIndex": 23,
+      "sequence": [
+        [
+          "h",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-425",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-426",
+      "symbol": "Ц",
+      "label": "ц",
+      "silent": false,
+      "file": "24-ts.wav",
+      "alphabetIndex": 24,
+      "sequence": [
+        [
+          "ts",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-426",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-427",
+      "symbol": "Ч",
+      "label": "ч",
+      "silent": false,
+      "file": "25-ch.wav",
+      "alphabetIndex": 25,
+      "sequence": [
+        [
+          "ch",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-427",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-428",
+      "symbol": "Ш",
+      "label": "ш",
+      "silent": false,
+      "file": "26-sh.wav",
+      "alphabetIndex": 26,
+      "sequence": [
+        [
+          "sh",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-428",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-429",
+      "symbol": "Щ",
+      "label": "щ",
+      "silent": false,
+      "file": "27-shch.wav",
+      "alphabetIndex": 27,
+      "sequence": [
+        [
+          "sh-soft",
+          0.22
+        ]
+      ],
+      "seedWord": "ru-sound-429",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42a",
+      "symbol": "Ъ",
+      "label": "без собственного звука",
+      "silent": true,
+      "file": null,
+      "alphabetIndex": 28,
+      "sequence": [],
+      "seedWord": "ru-sound-42a",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42b",
+      "symbol": "Ы",
+      "label": "ы",
+      "silent": false,
+      "file": "28-y.wav",
+      "alphabetIndex": 29,
+      "sequence": [
+        [
+          "y",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-42b",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42c",
+      "symbol": "Ь",
+      "label": "без собственного звука",
+      "silent": true,
+      "file": null,
+      "alphabetIndex": 30,
+      "sequence": [],
+      "seedWord": "ru-sound-42c",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42d",
+      "symbol": "Э",
+      "label": "э",
+      "silent": false,
+      "file": "29-eh.wav",
+      "alphabetIndex": 31,
+      "sequence": [
+        [
+          "e",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-42d",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42e",
+      "symbol": "Ю",
+      "label": "й + у",
+      "silent": false,
+      "file": "30-yu.wav",
+      "alphabetIndex": 32,
+      "sequence": [
+        [
+          "j",
+          0.08
+        ],
+        [
+          "u",
+          0.26
+        ]
+      ],
+      "seedWord": "ru-sound-42e",
+      "positional": "Изолированный начальный вариант й + гласный; внутри слова возможен иной звук."
+    },
+    {
+      "id": "ru-sound-42f",
+      "symbol": "Я",
+      "label": "й + а",
+      "silent": false,
+      "file": "31-ya.wav",
+      "alphabetIndex": 33,
+      "sequence": [
+        [
+          "j",
+          0.08
+        ],
+        [
+          "a",
+          0.26
+        ]
+      ],
+      "seedWord": "ru-sound-42f",
+      "positional": "Изолированный начальный вариант й + гласный; внутри слова возможен иной звук."
+    }
+  ],
+  "silentSigns": [
+    "Ъ",
+    "Ь"
+  ],
+  "addedPhoneIds": [
+    "y",
+    "a-neutral",
+    "j",
+    "m",
+    "b",
+    "p",
+    "t",
+    "g",
+    "v",
+    "f",
+    "h",
+    "zh",
+    "sh",
+    "sh-soft",
+    "ts",
+    "ch",
+    "d-soft",
+    "p-soft",
+    "t-soft",
+    "k-soft",
+    "s-soft",
+    "m-soft",
+    "v-soft",
+    "r-soft"
+  ],
+  "phonemeParameters": {
+    "a": {
+      "frequencies": [
+        750,
+        1250,
+        2600,
+        3500
+      ],
+      "bandwidths": [
+        100,
+        130,
+        180,
+        260
+      ],
+      "weights": [
+        1,
+        0.9,
+        0.42,
+        0.2
+      ],
+      "voiced": 1,
+      "noise": 0,
+      "gain": 1,
+      "kind": "vowel",
+      "bypass": 0
+    },
+    "o": {
+      "frequencies": [
+        450,
+        850,
+        2500,
+        3500
+      ],
+      "bandwidths": [
+        85,
+        110,
+        190,
+        280
+      ],
+      "weights": [
+        1,
+        0.9,
+        0.33,
+        0.14
+      ],
+      "voiced": 1,
+      "noise": 0,
+      "gain": 1,
+      "kind": "vowel",
+      "bypass": 0
+    },
+    "e": {
+      "frequencies": [
+        500,
+        1850,
+        2600,
+        3500
+      ],
+      "bandwidths": [
+        90,
+        150,
+        200,
+        280
+      ],
+      "weights": [
+        1,
+        0.9,
+        0.42,
+        0.18
+      ],
+      "voiced": 1,
+      "noise": 0,
+      "gain": 1,
+      "kind": "vowel",
+      "bypass": 0
+    },
+    "i": {
+      "frequencies": [
+        270,
+        2250,
+        3000,
+        3600
+      ],
+      "bandwidths": [
+        75,
+        160,
+        200,
+        300
+      ],
+      "weights": [
+        1,
+        1.2,
+        0.55,
+        0.2
+      ],
+      "voiced": 1,
+      "noise": 0,
+      "gain": 1,
+      "kind": "vowel",
+      "bypass": 0
+    },
+    "u": {
+      "frequencies": [
+        320,
+        700,
+        2400,
+        3300
+      ],
+      "bandwidths": [
+        80,
+        105,
+        190,
+        280
+      ],
+      "weights": [
+        1,
+        0.85,
+        0.28,
+        0.12
+      ],
+      "voiced": 1,
+      "noise": 0,
+      "gain": 1,
+      "kind": "vowel",
+      "bypass": 0
+    },
+    "n": {
+      "frequencies": [
+        250,
+        1350,
+        2450,
+        3500
+      ],
+      "bandwidths": [
+        85,
+        220,
+        290,
+        350
+      ],
+      "weights": [
+        1,
+        0.14,
+        0.08,
+        0.035
+      ],
+      "voiced": 0.9,
+      "noise": 0.012,
+      "gain": 0.65,
+      "kind": "nasal",
+      "bypass": 0
+    },
+    "l": {
+      "frequencies": [
+        350,
+        1000,
+        2500,
+        3400
+      ],
+      "bandwidths": [
+        110,
+        160,
+        240,
+        300
+      ],
+      "weights": [
+        0.9,
+        0.65,
+        0.35,
+        0.12
+      ],
+      "voiced": 0.85,
+      "noise": 0.015,
+      "gain": 0.85,
+      "kind": "lateral",
+      "bypass": 0
+    },
+    "l-soft": {
+      "frequencies": [
+        300,
+        1950,
+        2800,
+        3500
+      ],
+      "bandwidths": [
+        90,
+        180,
+        230,
+        300
+      ],
+      "weights": [
+        0.9,
+        1,
+        0.45,
+        0.16
+      ],
+      "voiced": 0.9,
+      "noise": 0.012,
+      "gain": 0.85,
+      "kind": "lateral",
+      "bypass": 0
+    },
+    "r": {
+      "frequencies": [
+        400,
+        1350,
+        2350,
+        3400
+      ],
+      "bandwidths": [
+        120,
+        190,
+        270,
+        340
+      ],
+      "weights": [
+        0.9,
+        0.7,
+        0.32,
+        0.12
+      ],
+      "voiced": 0.9,
+      "noise": 0.025,
+      "gain": 0.85,
+      "kind": "trill",
+      "bypass": 0
+    },
+    "d": {
+      "frequencies": [
+        250,
+        1900,
+        3200,
+        4600
+      ],
+      "bandwidths": [
+        150,
+        500,
+        900,
+        1200
+      ],
+      "weights": [
+        0.5,
+        0.45,
+        0.35,
+        0.15
+      ],
+      "voiced": 0.22,
+      "noise": 0.6,
+      "gain": 0.8,
+      "kind": "stopD",
+      "bypass": 0
+    },
+    "k": {
+      "frequencies": [
+        500,
+        1800,
+        3000,
+        4700
+      ],
+      "bandwidths": [
+        220,
+        500,
+        850,
+        1300
+      ],
+      "weights": [
+        0.12,
+        0.8,
+        0.6,
+        0.2
+      ],
+      "voiced": 0,
+      "noise": 0.95,
+      "gain": 0.8,
+      "kind": "stopK",
+      "bypass": 0
+    },
+    "z": {
+      "frequencies": [
+        250,
+        1800,
+        4000,
+        6200
+      ],
+      "bandwidths": [
+        140,
+        550,
+        950,
+        1400
+      ],
+      "weights": [
+        0.25,
+        0.12,
+        0.65,
+        0.4
+      ],
+      "voiced": 0.3,
+      "noise": 0.65,
+      "gain": 0.85,
+      "kind": "fricative",
+      "bypass": 0.045
+    },
+    "s": {
+      "frequencies": [
+        600,
+        2300,
+        4500,
+        6600
+      ],
+      "bandwidths": [
+        300,
+        600,
+        1100,
+        1500
+      ],
+      "weights": [
+        0.025,
+        0.12,
+        0.75,
+        0.5
+      ],
+      "voiced": 0,
+      "noise": 0.9,
+      "gain": 0.8,
+      "kind": "fricative",
+      "bypass": 0.06
+    },
+    "y": {
+      "frequencies": [
+        390,
+        1450,
+        2500,
+        3500
+      ],
+      "bandwidths": [
+        95,
+        150,
+        210,
+        290
+      ],
+      "weights": [
+        1,
+        0.95,
+        0.38,
+        0.16
+      ],
+      "voiced": 1,
+      "noise": 0,
+      "gain": 1,
+      "kind": "vowel",
+      "bypass": 0
+    },
+    "a-neutral": {
+      "frequencies": [
+        480,
+        1320,
+        2550,
+        3500
+      ],
+      "bandwidths": [
+        110,
+        160,
+        210,
+        290
+      ],
+      "weights": [
+        1,
+        0.8,
+        0.35,
+        0.15
+      ],
+      "voiced": 1,
+      "noise": 0,
+      "gain": 1,
+      "kind": "vowel",
+      "bypass": 0
+    },
+    "j": {
+      "frequencies": [
+        280,
+        2350,
+        3100,
+        3800
+      ],
+      "bandwidths": [
+        80,
+        170,
+        220,
+        300
+      ],
+      "weights": [
+        0.8,
+        1.15,
+        0.5,
+        0.18
+      ],
+      "voiced": 0.9,
+      "noise": 0.01,
+      "gain": 0.85,
+      "kind": "approximant",
+      "bypass": 0
+    },
+    "m": {
+      "frequencies": [
+        250,
+        1050,
+        2400,
+        3400
+      ],
+      "bandwidths": [
+        85,
+        200,
+        280,
+        340
+      ],
+      "weights": [
+        1,
+        0.18,
+        0.08,
+        0.035
+      ],
+      "voiced": 0.9,
+      "noise": 0.012,
+      "gain": 0.65,
+      "kind": "nasal",
+      "bypass": 0
+    },
+    "b": {
+      "frequencies": [
+        280,
+        750,
+        2550,
+        4300
+      ],
+      "bandwidths": [
+        150,
+        420,
+        800,
+        1100
+      ],
+      "weights": [
+        0.55,
+        0.6,
+        0.3,
+        0.12
+      ],
+      "voiced": 0.24,
+      "noise": 0.6,
+      "gain": 0.8,
+      "kind": "stopD",
+      "bypass": 0
+    },
+    "p": {
+      "frequencies": [
+        280,
+        750,
+        2550,
+        4300
+      ],
+      "bandwidths": [
+        150,
+        420,
+        800,
+        1100
+      ],
+      "weights": [
+        0.4,
+        0.6,
+        0.3,
+        0.12
+      ],
+      "voiced": 0,
+      "noise": 0.9,
+      "gain": 0.8,
+      "kind": "stopK",
+      "bypass": 0
+    },
+    "t": {
+      "frequencies": [
+        300,
+        2050,
+        3300,
+        4900
+      ],
+      "bandwidths": [
+        170,
+        550,
+        950,
+        1300
+      ],
+      "weights": [
+        0.1,
+        0.5,
+        0.55,
+        0.25
+      ],
+      "voiced": 0,
+      "noise": 0.95,
+      "gain": 0.8,
+      "kind": "stopK",
+      "bypass": 0
+    },
+    "g": {
+      "frequencies": [
+        400,
+        1650,
+        2850,
+        4400
+      ],
+      "bandwidths": [
+        200,
+        450,
+        800,
+        1200
+      ],
+      "weights": [
+        0.3,
+        0.8,
+        0.55,
+        0.18
+      ],
+      "voiced": 0.24,
+      "noise": 0.65,
+      "gain": 0.8,
+      "kind": "stopD",
+      "bypass": 0
+    },
+    "v": {
+      "frequencies": [
+        300,
+        1500,
+        3600,
+        5800
+      ],
+      "bandwidths": [
+        160,
+        750,
+        1300,
+        1700
+      ],
+      "weights": [
+        0.4,
+        0.2,
+        0.45,
+        0.28
+      ],
+      "voiced": 0.5,
+      "noise": 0.4,
+      "gain": 0.85,
+      "kind": "fricative",
+      "bypass": 0.025
+    },
+    "f": {
+      "frequencies": [
+        650,
+        1800,
+        3800,
+        6000
+      ],
+      "bandwidths": [
+        500,
+        900,
+        1500,
+        1900
+      ],
+      "weights": [
+        0.08,
+        0.22,
+        0.55,
+        0.32
+      ],
+      "voiced": 0,
+      "noise": 0.85,
+      "gain": 0.8,
+      "kind": "fricative",
+      "bypass": 0.06
+    },
+    "h": {
+      "frequencies": [
+        650,
+        1250,
+        2700,
+        3900
+      ],
+      "bandwidths": [
+        350,
+        550,
+        850,
+        1200
+      ],
+      "weights": [
+        0.45,
+        0.65,
+        0.4,
+        0.18
+      ],
+      "voiced": 0,
+      "noise": 0.8,
+      "gain": 0.85,
+      "kind": "fricative",
+      "bypass": 0.025
+    },
+    "zh": {
+      "frequencies": [
+        300,
+        1800,
+        3000,
+        4800
+      ],
+      "bandwidths": [
+        180,
+        550,
+        900,
+        1300
+      ],
+      "weights": [
+        0.3,
+        0.5,
+        0.75,
+        0.35
+      ],
+      "voiced": 0.4,
+      "noise": 0.7,
+      "gain": 0.85,
+      "kind": "fricative",
+      "bypass": 0.04
+    },
+    "sh": {
+      "frequencies": [
+        900,
+        2000,
+        3200,
+        5000
+      ],
+      "bandwidths": [
+        400,
+        600,
+        950,
+        1400
+      ],
+      "weights": [
+        0.04,
+        0.65,
+        0.8,
+        0.32
+      ],
+      "voiced": 0,
+      "noise": 0.9,
+      "gain": 0.8,
+      "kind": "fricative",
+      "bypass": 0.05
+    },
+    "sh-soft": {
+      "frequencies": [
+        1200,
+        2800,
+        4300,
+        6300
+      ],
+      "bandwidths": [
+        450,
+        650,
+        1050,
+        1500
+      ],
+      "weights": [
+        0.03,
+        0.7,
+        0.8,
+        0.3
+      ],
+      "voiced": 0,
+      "noise": 0.95,
+      "gain": 0.8,
+      "kind": "fricative",
+      "bypass": 0.045
+    },
+    "ts": {
+      "frequencies": [
+        600,
+        2500,
+        4700,
+        6800
+      ],
+      "bandwidths": [
+        300,
+        650,
+        1100,
+        1500
+      ],
+      "weights": [
+        0.025,
+        0.15,
+        0.8,
+        0.45
+      ],
+      "voiced": 0,
+      "noise": 0.95,
+      "gain": 0.8,
+      "kind": "affricate",
+      "bypass": 0.045
+    },
+    "ch": {
+      "frequencies": [
+        900,
+        2700,
+        4100,
+        6000
+      ],
+      "bandwidths": [
+        400,
+        650,
+        1000,
+        1450
+      ],
+      "weights": [
+        0.04,
+        0.7,
+        0.75,
+        0.3
+      ],
+      "voiced": 0,
+      "noise": 0.95,
+      "gain": 0.8,
+      "kind": "affricate",
+      "bypass": 0.04
+    },
+    "d-soft": {
+      "frequencies": [
+        250,
+        2250,
+        3350,
+        4700
+      ],
+      "bandwidths": [
+        150,
+        500,
+        900,
+        1200
+      ],
+      "weights": [
+        0.5,
+        0.55,
+        0.4,
+        0.15
+      ],
+      "voiced": 0.22,
+      "noise": 0.6,
+      "gain": 0.8,
+      "kind": "stopD",
+      "bypass": 0
+    },
+    "p-soft": {
+      "frequencies": [
+        280,
+        2100,
+        3000,
+        4400
+      ],
+      "bandwidths": [
+        150,
+        450,
+        850,
+        1200
+      ],
+      "weights": [
+        0.3,
+        0.65,
+        0.45,
+        0.15
+      ],
+      "voiced": 0,
+      "noise": 0.9,
+      "gain": 0.8,
+      "kind": "stopK",
+      "bypass": 0
+    },
+    "t-soft": {
+      "frequencies": [
+        300,
+        2400,
+        3500,
+        5100
+      ],
+      "bandwidths": [
+        170,
+        550,
+        950,
+        1350
+      ],
+      "weights": [
+        0.1,
+        0.6,
+        0.55,
+        0.25
+      ],
+      "voiced": 0,
+      "noise": 0.95,
+      "gain": 0.8,
+      "kind": "stopK",
+      "bypass": 0
+    },
+    "k-soft": {
+      "frequencies": [
+        450,
+        2200,
+        3200,
+        4900
+      ],
+      "bandwidths": [
+        200,
+        500,
+        900,
+        1300
+      ],
+      "weights": [
+        0.12,
+        0.8,
+        0.6,
+        0.2
+      ],
+      "voiced": 0,
+      "noise": 0.95,
+      "gain": 0.8,
+      "kind": "stopK",
+      "bypass": 0
+    },
+    "s-soft": {
+      "frequencies": [
+        600,
+        3000,
+        5000,
+        7000
+      ],
+      "bandwidths": [
+        300,
+        650,
+        1100,
+        1500
+      ],
+      "weights": [
+        0.025,
+        0.2,
+        0.8,
+        0.45
+      ],
+      "voiced": 0,
+      "noise": 0.9,
+      "gain": 0.8,
+      "kind": "fricative",
+      "bypass": 0.055
+    },
+    "m-soft": {
+      "frequencies": [
+        250,
+        1950,
+        2800,
+        3600
+      ],
+      "bandwidths": [
+        85,
+        220,
+        290,
+        350
+      ],
+      "weights": [
+        1,
+        0.22,
+        0.1,
+        0.04
+      ],
+      "voiced": 0.9,
+      "noise": 0.012,
+      "gain": 0.65,
+      "kind": "nasal",
+      "bypass": 0
+    },
+    "v-soft": {
+      "frequencies": [
+        300,
+        2100,
+        3900,
+        6200
+      ],
+      "bandwidths": [
+        160,
+        750,
+        1300,
+        1700
+      ],
+      "weights": [
+        0.4,
+        0.3,
+        0.5,
+        0.28
+      ],
+      "voiced": 0.5,
+      "noise": 0.4,
+      "gain": 0.85,
+      "kind": "fricative",
+      "bypass": 0.025
+    },
+    "r-soft": {
+      "frequencies": [
+        350,
+        1950,
+        2850,
+        3600
+      ],
+      "bandwidths": [
+        110,
+        190,
+        260,
+        330
+      ],
+      "weights": [
+        0.9,
+        0.85,
+        0.38,
+        0.14
+      ],
+      "voiced": 0.9,
+      "noise": 0.025,
+      "gain": 0.85,
+      "kind": "trill",
+      "bypass": 0
+    }
+  },
+  "items": [
+    {
+      "file": "01-a.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14906,
+      "duration": 0.3380045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "c57159c86e62edfedb36e027e3d5b6400a9e5c7ef45f034c9b7a1ec4bb673d78",
+      "sha256": "4706076057588ad7ff5ef260fe70f6e74ebd6cea69fa9d1bd2870948f93837c0",
+      "id": "ru-sound-410",
+      "kind": "sound",
+      "symbol": "А",
+      "label": "а",
+      "sequence": [
+        [
+          "a",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-410",
+      "noiseSeed": 935184382,
+      "legacyWord": null
+    },
+    {
+      "file": "02-b.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 5645,
+      "duration": 0.1280045351473923,
+      "floatPeak": 0.3958145081996918,
+      "float32Sha256": "33b8bfac03953e68e0ebd51f853e6176dc5d3a740f23016624612dedd094f144",
+      "sha256": "775a252a0bb1ab1555720b603c8f4cfb89b49dfa52a7c66a4809867aef696005",
+      "id": "ru-sound-411",
+      "kind": "sound",
+      "symbol": "Б",
+      "label": "б",
+      "sequence": [
+        [
+          "b",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-411",
+      "noiseSeed": 788601601,
+      "legacyWord": null
+    },
+    {
+      "file": "03-v.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8732,
+      "duration": 0.1980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "31d706fcabcfada7932f41f8c4396c477557d61d421df31668854d0514dd69b2",
+      "sha256": "908bcf21c0567cf5f5c4d83eae3a8a8d3b0a461ce949cfe283ea292dea411752",
+      "id": "ru-sound-412",
+      "kind": "sound",
+      "symbol": "В",
+      "label": "в",
+      "sequence": [
+        [
+          "v",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-412",
+      "noiseSeed": 4113319448,
+      "legacyWord": null
+    },
+    {
+      "file": "04-g.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 5645,
+      "duration": 0.1280045351473923,
+      "floatPeak": 0.44023120403289795,
+      "float32Sha256": "fcee6dcd4e5eefde2fb2c02f5f82f8d1c957fcda1cf446fb4b56d029198f1e3f",
+      "sha256": "d6c38dec14edb416034d1c8d6cca3df0be9422622288e6d6a5daa10228f55246",
+      "id": "ru-sound-413",
+      "kind": "sound",
+      "symbol": "Г",
+      "label": "г",
+      "sequence": [
+        [
+          "g",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-413",
+      "noiseSeed": 3966736667,
+      "legacyWord": null
+    },
+    {
+      "file": "05-d.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 5645,
+      "duration": 0.1280045351473923,
+      "floatPeak": 0.276421457529068,
+      "float32Sha256": "3701e1e439aaeea8a8dda7635234f495d65c31e65f8e225a44df59fd8b493c69",
+      "sha256": "c2fb1492a54107f88672bb1ae99268bba1bec3e99aade8e071bcbc3cf01aba1b",
+      "id": "ru-sound-414",
+      "kind": "sound",
+      "symbol": "Д",
+      "label": "д",
+      "sequence": [
+        [
+          "d",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-414",
+      "noiseSeed": 3168848842,
+      "legacyWord": null
+    },
+    {
+      "file": "06-e.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 15788,
+      "duration": 0.3580045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "adcf2593682878c00209d8dc3ca18423843f9de5d67c10a61df7deae9a4a8fca",
+      "sha256": "2a7e642fa74a212aee98140d3084a7c28959543cf262a3ad904b30e798d4cec0",
+      "id": "ru-sound-415",
+      "kind": "sound",
+      "symbol": "Е",
+      "label": "й + е",
+      "sequence": [
+        [
+          "j",
+          0.08
+        ],
+        [
+          "e",
+          0.26
+        ]
+      ],
+      "seedWord": "ru-sound-415",
+      "noiseSeed": 3022266061,
+      "legacyWord": null
+    },
+    {
+      "file": "07-yo.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 15788,
+      "duration": 0.3580045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "583f8566cdec13dfc1aa5f53c439d8e9e1a9a3b9ba8bfbf0ad859a070b050b1f",
+      "sha256": "402ae1039ed270c9e064c542a52d33d752e0b9b0321ac5da5ae188d02b62c53c",
+      "id": "ru-sound-401",
+      "kind": "sound",
+      "symbol": "Ё",
+      "label": "й + о",
+      "sequence": [
+        [
+          "j",
+          0.08
+        ],
+        [
+          "o",
+          0.26
+        ]
+      ],
+      "seedWord": "ru-sound-401",
+      "noiseSeed": 1172612916,
+      "legacyWord": null
+    },
+    {
+      "file": "08-zh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 9614,
+      "duration": 0.2180045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "1fd2516245e6147b80d7fa1a176e64732505cba7f39f2e029cdbfe7f5b3d3333",
+      "sha256": "506902f50337af8916aa5aa8eaf02bc9574cbe34374736039b6b2c99abfc1dc2",
+      "id": "ru-sound-416",
+      "kind": "sound",
+      "symbol": "Ж",
+      "label": "ж",
+      "sequence": [
+        [
+          "zh",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-416",
+      "noiseSeed": 2052016612,
+      "legacyWord": null
+    },
+    {
+      "file": "09-z.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8732,
+      "duration": 0.1980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "900941362d8cfb8023a30e8b498ba6f54cfd917c897039dbac4912dcc1764655",
+      "sha256": "da8ddf3cac0818c51447f9d3aa276603a47fa33ff8858d2dae97b34122b126b3",
+      "id": "ru-sound-417",
+      "kind": "sound",
+      "symbol": "З",
+      "label": "з",
+      "sequence": [
+        [
+          "z",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-417",
+      "noiseSeed": 1905433831,
+      "legacyWord": null
+    },
+    {
+      "file": "10-i.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14906,
+      "duration": 0.3380045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "658ffcba9fbac29d1870ddee1969d0e0cf93fda3bae96d2a82ab530498fedfc8",
+      "sha256": "c13fa6b79fe8b3441f39efd3994ca63c92916b12b045c3395cc34a432d01b391",
+      "id": "ru-sound-418",
+      "kind": "sound",
+      "symbol": "И",
+      "label": "и",
+      "sequence": [
+        [
+          "i",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-418",
+      "noiseSeed": 1107546006,
+      "legacyWord": null
+    },
+    {
+      "file": "11-j.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4322,
+      "duration": 0.0980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "00f25b25d72bcaac5b576a4ffe26cf1169ac1552b1c2a50c67f1ab079daa9dc0",
+      "sha256": "f432a88db39731f1b9f1c20d70445371564f685157890e4c344ed17a69b023a5",
+      "id": "ru-sound-419",
+      "kind": "sound",
+      "symbol": "Й",
+      "label": "короткий й",
+      "sequence": [
+        [
+          "j",
+          0.08
+        ]
+      ],
+      "seedWord": "ru-sound-419",
+      "noiseSeed": 960963225,
+      "legacyWord": null
+    },
+    {
+      "file": "12-k.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 5645,
+      "duration": 0.1280045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "e9f9c1719738d241368d5e535dc439413310f3be596dfa843a72a4d47ee5acbe",
+      "sha256": "20b9d6c0a2af5d99f41e073e6262d548606d9db929fb8ad0b552b76ae2383209",
+      "id": "ru-sound-41a",
+      "kind": "sound",
+      "symbol": "К",
+      "label": "к",
+      "sequence": [
+        [
+          "k",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-41a",
+      "noiseSeed": 4049399153,
+      "legacyWord": null
+    },
+    {
+      "file": "13-l.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8732,
+      "duration": 0.1980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "f76e566891b6db70db30094da92fef8294237096fd43c1be26f7fc658cf75d36",
+      "sha256": "d802735736b686c9f4aceb715d0f47a3ffed9924e43f4397451a413a60248ce3",
+      "id": "ru-sound-41b",
+      "kind": "sound",
+      "symbol": "Л",
+      "label": "л",
+      "sequence": [
+        [
+          "l",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-41b",
+      "noiseSeed": 3079149704,
+      "legacyWord": null
+    },
+    {
+      "file": "14-m.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8732,
+      "duration": 0.1980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "2e17b75cb92fa5ad7f40cc696dd45ec4615e147c46ad3dd0b9d558021477db96",
+      "sha256": "c605300f0cddff04e3a26c994d6f5a1fbefd1e05697cde54adfde3a3a0dae518",
+      "id": "ru-sound-41c",
+      "kind": "sound",
+      "symbol": "М",
+      "label": "м",
+      "sequence": [
+        [
+          "m",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-41c",
+      "noiseSeed": 2932566923,
+      "legacyWord": null
+    },
+    {
+      "file": "15-n.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8732,
+      "duration": 0.1980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "a8a0d56b8b0e64268df502168725084721f916053d1806b9fee4e6bf8248f4e4",
+      "sha256": "f563f6e477d5537a8b66866cf09a891d60b1ae7350043af1c3a33f05f7dda6aa",
+      "id": "ru-sound-41d",
+      "kind": "sound",
+      "symbol": "Н",
+      "label": "н",
+      "sequence": [
+        [
+          "n",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-41d",
+      "noiseSeed": 2134679098,
+      "legacyWord": null
+    },
+    {
+      "file": "16-o.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14906,
+      "duration": 0.3380045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "22f2397030322b785da1ade5bcba2363ffba7b0896ba898e4bf9fcbe16e901da",
+      "sha256": "5e69c2081351ac9d91bd8758f1c87d45560be78a3c299d4c0abdb3647c1fe0b1",
+      "id": "ru-sound-41e",
+      "kind": "sound",
+      "symbol": "О",
+      "label": "о",
+      "sequence": [
+        [
+          "o",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-41e",
+      "noiseSeed": 1988096317,
+      "legacyWord": null
+    },
+    {
+      "file": "17-p.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 5645,
+      "duration": 0.1280045351473923,
+      "floatPeak": 0.35022464394569397,
+      "float32Sha256": "a241968aa137bc01f2783545abaf477eb0097d3f7e122f3f38fee903ded96dc2",
+      "sha256": "bfaf515dc2742342397287ffb7504e485e8d07cf2d778355d6a7652f47023503",
+      "id": "ru-sound-41f",
+      "kind": "sound",
+      "symbol": "П",
+      "label": "п",
+      "sequence": [
+        [
+          "p",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-41f",
+      "noiseSeed": 1017846868,
+      "legacyWord": null
+    },
+    {
+      "file": "18-r.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8732,
+      "duration": 0.1980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "b83cb15884438c869f475b02bcbc099269c40b32d49997b7c428f99b7053c218",
+      "sha256": "0dcb6c96018e7d23b4ba39b5d337985abb3d36b08b8f4672b5a3b9523a4f2cb8",
+      "id": "ru-sound-420",
+      "kind": "sound",
+      "symbol": "Р",
+      "label": "р",
+      "sequence": [
+        [
+          "r",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-420",
+      "noiseSeed": 1660968645,
+      "legacyWord": null
+    },
+    {
+      "file": "19-s.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 9614,
+      "duration": 0.2180045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "9ecd2df25aba908f182b43bb0e0e89edd2340d4c7aefb270b79495106db67620",
+      "sha256": "64b4cfa39e2cba7df705d877aa1a2d56beeea0c3f52d023f081ef05a01442eb7",
+      "id": "ru-sound-421",
+      "kind": "sound",
+      "symbol": "С",
+      "label": "с",
+      "sequence": [
+        [
+          "s",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-421",
+      "noiseSeed": 1807551426,
+      "legacyWord": null
+    },
+    {
+      "file": "20-t.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 5645,
+      "duration": 0.1280045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "083b661f7a067ac3608f64e3b469f62b448cbc19d3fdd976b4be0f8b025b8e54",
+      "sha256": "1be2edf8a5a27f2ccc3882daeeefcd39487eef6cce8c4a5846f62c0cbbe514cf",
+      "id": "ru-sound-422",
+      "kind": "sound",
+      "symbol": "Т",
+      "label": "т",
+      "sequence": [
+        [
+          "t",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-sound-422",
+      "noiseSeed": 544136415,
+      "legacyWord": null
+    },
+    {
+      "file": "21-u.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14906,
+      "duration": 0.3380045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "caa1140f174e684ebb460c1b6e921f130f06842b4404c5a9d26722a04998bea1",
+      "sha256": "9c39573c7e38f04665bac53690f6ac5f4d9e469b7d472ff3b787c11a17147995",
+      "id": "ru-sound-423",
+      "kind": "sound",
+      "symbol": "У",
+      "label": "у",
+      "sequence": [
+        [
+          "u",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-423",
+      "noiseSeed": 690719196,
+      "legacyWord": null
+    },
+    {
+      "file": "22-f.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 9614,
+      "duration": 0.2180045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "1844ecb2b5dd2a826ea997309ed50e18dacf38d2114acbacd4b97bd36ee4dabf",
+      "sha256": "e52c849f3b1f1ac71c618ea5e3ebfc2989cb6d849fa7e015db9c342b2fa4aac7",
+      "id": "ru-sound-424",
+      "kind": "sound",
+      "symbol": "Ф",
+      "label": "ф",
+      "sequence": [
+        [
+          "f",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-424",
+      "noiseSeed": 3722271481,
+      "legacyWord": null
+    },
+    {
+      "file": "23-h.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 9614,
+      "duration": 0.2180045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "86158356c05d1abc9ff4d25f0d719be16f7afb1f8aee602a4cfca7da028967d1",
+      "sha256": "c07ec4b93ec66e30aec18b6791be46ef4ec417c75fcd1412d889e5d43da404fd",
+      "id": "ru-sound-425",
+      "kind": "sound",
+      "symbol": "Х",
+      "label": "х",
+      "sequence": [
+        [
+          "h",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-425",
+      "noiseSeed": 3868854262,
+      "legacyWord": null
+    },
+    {
+      "file": "24-ts.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8732,
+      "duration": 0.1980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "7c5db3699b471f5c78f693782ea0e15d22c5b90a38868f5872b65153aaa79cb4",
+      "sha256": "eed37194c51613be777f935bae15c4d91dc9f9d9b3541ee1858704a0d76aa6a6",
+      "id": "ru-sound-426",
+      "kind": "sound",
+      "symbol": "Ц",
+      "label": "ц",
+      "sequence": [
+        [
+          "ts",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-426",
+      "noiseSeed": 2605439251,
+      "legacyWord": null
+    },
+    {
+      "file": "25-ch.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8732,
+      "duration": 0.1980045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "eea53852cdb3f0a3b20e6333da167b789860e6e0a1c6afca5a6fdfd6b8eb7665",
+      "sha256": "acd9e379cfc12701561a9e362bc2c7c98988c184e6cdecd70c165cd7f6d65b49",
+      "id": "ru-sound-427",
+      "kind": "sound",
+      "symbol": "Ч",
+      "label": "ч",
+      "sequence": [
+        [
+          "ch",
+          0.18
+        ]
+      ],
+      "seedWord": "ru-sound-427",
+      "noiseSeed": 2752022032,
+      "legacyWord": null
+    },
+    {
+      "file": "26-sh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 9614,
+      "duration": 0.2180045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "7323d5524938431a5620aa140080f47de2285b6c04aae01eada63fbcc94d59e0",
+      "sha256": "b9a333fee4eaec7f194afd1f3ed4ff659af3243caa1d4b6c4505c355aa046da2",
+      "id": "ru-sound-428",
+      "kind": "sound",
+      "symbol": "Ш",
+      "label": "ш",
+      "sequence": [
+        [
+          "sh",
+          0.2
+        ]
+      ],
+      "seedWord": "ru-sound-428",
+      "noiseSeed": 1488607021,
+      "legacyWord": null
+    },
+    {
+      "file": "27-shch.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 10496,
+      "duration": 0.23800453514739228,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "ed5c1eb30945424e5e240a075edc7952fb7ff36f99a62c642b3979df053d9971",
+      "sha256": "af0eeaf88832084fdbc4f08782dbe94518a773a7d8712004586bcb5988934dc9",
+      "id": "ru-sound-429",
+      "kind": "sound",
+      "symbol": "Щ",
+      "label": "щ",
+      "sequence": [
+        [
+          "sh-soft",
+          0.22
+        ]
+      ],
+      "seedWord": "ru-sound-429",
+      "noiseSeed": 1635189802,
+      "legacyWord": null
+    },
+    {
+      "file": "28-y.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14906,
+      "duration": 0.3380045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "5dfddb979cbe0202e2fe82eab809b5d543fc48cb7b22f9c58fef9b0768786040",
+      "sha256": "bd587a223f13f3ad910344d983b63eb960c44c9a6e41da248f4688fe6283360c",
+      "id": "ru-sound-42b",
+      "kind": "sound",
+      "symbol": "Ы",
+      "label": "ы",
+      "sequence": [
+        [
+          "y",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-42b",
+      "noiseSeed": 2267752655,
+      "legacyWord": null
+    },
+    {
+      "file": "29-eh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14906,
+      "duration": 0.3380045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "160ffc3f34b3ba3c31f56b1f0d66386ad7837354414e0917198a4d69bab1ecce",
+      "sha256": "18d5f14a24f1a2fe26a939f340446fb79356056e7eb6bd5fc3a545d2504e75f2",
+      "id": "ru-sound-42d",
+      "kind": "sound",
+      "symbol": "Э",
+      "label": "э",
+      "sequence": [
+        [
+          "e",
+          0.32
+        ]
+      ],
+      "seedWord": "ru-sound-42d",
+      "noiseSeed": 1150920425,
+      "legacyWord": null
+    },
+    {
+      "file": "30-yu.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 15788,
+      "duration": 0.3580045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "ddba0e1b22c49da19753ab6617def573da8c5f28491e8ff580c3f0d812461aa9",
+      "sha256": "ff855274ca4354b047c4035325b46cfa1a57ae6fd0e460e06479faedc2287121",
+      "id": "ru-sound-42e",
+      "kind": "sound",
+      "symbol": "Ю",
+      "label": "й + у",
+      "sequence": [
+        [
+          "j",
+          0.08
+        ],
+        [
+          "u",
+          0.26
+        ]
+      ],
+      "seedWord": "ru-sound-42e",
+      "noiseSeed": 1297503206,
+      "legacyWord": null
+    },
+    {
+      "file": "31-ya.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 15788,
+      "duration": 0.3580045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "25061f500e192ea713c4cfb9e63db8f7f1b06a405ce8b94c344baec59836f0fa",
+      "sha256": "184e84f5ba5b731ab15cd7f95600a42530633c36e95d0a358ae690e9371058a1",
+      "id": "ru-sound-42f",
+      "kind": "sound",
+      "symbol": "Я",
+      "label": "й + а",
+      "sequence": [
+        [
+          "j",
+          0.08
+        ],
+        [
+          "a",
+          0.26
+        ]
+      ],
+      "seedWord": "ru-sound-42f",
+      "noiseSeed": 34088195,
+      "legacyWord": null
+    },
+    {
+      "file": "digit-0.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 11819,
+      "duration": 0.2680045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "3d6111d2500561ad6dab84e5236167fa644d5b24866f38a094ac7ff233ddd817",
+      "sha256": "18d529ab003514e66f9fe95fe70a8fddc2dad6708f4747744a0cfd417b307005",
+      "id": "robot-digit-0",
+      "kind": "digit",
+      "symbol": "0",
+      "label": "ноль",
+      "sequence": [
+        [
+          "n",
+          0.055
+        ],
+        [
+          "o",
+          0.12
+        ],
+        [
+          "l-soft",
+          0.075
+        ]
+      ],
+      "seedWord": "zero",
+      "noiseSeed": 248175051,
+      "legacyWord": "zero"
+    },
+    {
+      "file": "digit-1.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 15568,
+      "duration": 0.353015873015873,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "b2756b1cf999fdf0f0950362da11d635682e0e8111063b4b7d95b0a0600ef0c1",
+      "sha256": "56728d8741d5a298a74108205d80ba23a8a20f1d9dec2ad6a0b76898757ae904",
+      "id": "robot-digit-1",
+      "kind": "digit",
+      "symbol": "1",
+      "label": "один",
+      "sequence": [
+        [
+          "a",
+          0.075
+        ],
+        [
+          "d",
+          0.055
+        ],
+        [
+          "i",
+          0.14
+        ],
+        [
+          "n",
+          0.065
+        ]
+      ],
+      "seedWord": "one",
+      "noiseSeed": 322326999,
+      "legacyWord": "one"
+    },
+    {
+      "file": "digit-2.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 21301,
+      "duration": 0.483015873015873,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "a009731b138240acb2c9291305c3acc2bed3f16bb19d1d9492dc950d287984d0",
+      "sha256": "c573f2eb9e3a73d88f0180a972b8a57262d1db7c5b33865515bf3d1871fbe5ff",
+      "id": "robot-digit-2",
+      "kind": "digit",
+      "symbol": "2",
+      "label": "два",
+      "sequence": [
+        [
+          "d",
+          0.065
+        ],
+        [
+          "v",
+          0.1
+        ],
+        [
+          "a",
+          0.3
+        ]
+      ],
+      "seedWord": "ru-digit-2",
+      "noiseSeed": 4294756151,
+      "legacyWord": null
+    },
+    {
+      "file": "digit-3.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 20639,
+      "duration": 0.46800453514739226,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "852a5e5f757677642f3f0177922e05153b050d28f02b2256a921cdfe3deada51",
+      "sha256": "00e2d1a734649664f8ba7dbccf89792ed1e11442c5928f7dd8fbbce854ebe739",
+      "id": "robot-digit-3",
+      "kind": "digit",
+      "symbol": "3",
+      "label": "три",
+      "sequence": [
+        [
+          "t",
+          0.07
+        ],
+        [
+          "r-soft",
+          0.09
+        ],
+        [
+          "i",
+          0.29
+        ]
+      ],
+      "seedWord": "ru-digit-3",
+      "noiseSeed": 146371636,
+      "legacyWord": null
+    },
+    {
+      "file": "digit-4.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 30341,
+      "duration": 0.6880045351473922,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "53bf4214bff4a27930ee6a31d324584701ac9ade9e3051d6b3ea339497385c13",
+      "sha256": "52cfe7adb75ffb59cfd02e3aa743f12b53be5dbff932ce08ced63f5827063d4c",
+      "id": "robot-digit-4",
+      "kind": "digit",
+      "symbol": "4",
+      "label": "четыре",
+      "sequence": [
+        [
+          "ch",
+          0.11
+        ],
+        [
+          "i",
+          0.09
+        ],
+        [
+          "t",
+          0.065
+        ],
+        [
+          "y",
+          0.22
+        ],
+        [
+          "r-soft",
+          0.075
+        ],
+        [
+          "e",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-digit-4",
+      "noiseSeed": 3177923921,
+      "legacyWord": null
+    },
+    {
+      "file": "digit-5.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 22844,
+      "duration": 0.5180045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "4c12ae1d7e1eec1648805eb9577d166c205b24f9f12a35ad480900c03430c2d4",
+      "sha256": "0f4a9ab2c42d716c795c97ed8ddf77c514b7693f51e495b96e58a13503e0fbcf",
+      "id": "robot-digit-5",
+      "kind": "digit",
+      "symbol": "5",
+      "label": "пять",
+      "sequence": [
+        [
+          "p-soft",
+          0.08
+        ],
+        [
+          "j",
+          0.06
+        ],
+        [
+          "a",
+          0.27
+        ],
+        [
+          "t-soft",
+          0.09
+        ]
+      ],
+      "seedWord": "ru-digit-5",
+      "noiseSeed": 3324506702,
+      "legacyWord": null
+    },
+    {
+      "file": "digit-6.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 27034,
+      "duration": 0.613015873015873,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "d1beb309b742a120eef9f3a61ede041e0c48f1aa64cece68cf56d5bd224bbd89",
+      "sha256": "fa4eda0f485f815f92e713b89df017afb22c9c4b37fb13085975cbca22910222",
+      "id": "robot-digit-6",
+      "kind": "digit",
+      "symbol": "6",
+      "label": "шесть",
+      "sequence": [
+        [
+          "sh",
+          0.15
+        ],
+        [
+          "e",
+          0.27
+        ],
+        [
+          "s",
+          0.095
+        ],
+        [
+          "t-soft",
+          0.08
+        ]
+      ],
+      "seedWord": "ru-digit-6",
+      "noiseSeed": 2061091691,
+      "legacyWord": null
+    },
+    {
+      "file": "digit-7.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 24388,
+      "duration": 0.553015873015873,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "94259d9d17dbe9c71b76256736f36d520447bb7db2feeeb45a6723aeb8135a06",
+      "sha256": "5bcafe710efad7738ba7cc86bd251af59f90b222b96c920f3a69e40a2d759502",
+      "id": "robot-digit-7",
+      "kind": "digit",
+      "symbol": "7",
+      "label": "семь",
+      "sequence": [
+        [
+          "s-soft",
+          0.135
+        ],
+        [
+          "e",
+          0.27
+        ],
+        [
+          "m-soft",
+          0.13
+        ]
+      ],
+      "seedWord": "ru-digit-7",
+      "noiseSeed": 2207674472,
+      "legacyWord": null
+    },
+    {
+      "file": "digit-8.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 28136,
+      "duration": 0.6380045351473923,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "a3188e65909c3e075a4bea44a871b063929987261cf1fca237088068735e9fda",
+      "sha256": "32d212d47fb4d3ce65e39f0af7050937ece12865ba03d0a5cca2df7a719805dc",
+      "id": "robot-digit-8",
+      "kind": "digit",
+      "symbol": "8",
+      "label": "восемь",
+      "sequence": [
+        [
+          "v",
+          0.095
+        ],
+        [
+          "o",
+          0.22
+        ],
+        [
+          "s-soft",
+          0.1
+        ],
+        [
+          "i",
+          0.095
+        ],
+        [
+          "m-soft",
+          0.11
+        ]
+      ],
+      "seedWord": "ru-digit-8",
+      "noiseSeed": 1288982709,
+      "legacyWord": null
+    },
+    {
+      "file": "digit-9.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 24829,
+      "duration": 0.563015873015873,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "48ac5e80f70d41788776a6ef86831a665b7476e438d892e0256e571e0263b0ea",
+      "sha256": "5fd4803a437f0db3daa55b257ccf5d8d39e0d0e8428380c0b5e53b1281f26ee0",
+      "id": "robot-digit-9",
+      "kind": "digit",
+      "symbol": "9",
+      "label": "девять",
+      "sequence": [
+        [
+          "d-soft",
+          0.075
+        ],
+        [
+          "e",
+          0.2
+        ],
+        [
+          "v-soft",
+          0.085
+        ],
+        [
+          "i",
+          0.1
+        ],
+        [
+          "t-soft",
+          0.085
+        ]
+      ],
+      "seedWord": "ru-digit-9",
+      "noiseSeed": 1435565490,
+      "legacyWord": null
+    }
+  ],
+  "sequences": [
+    {
+      "file": "alphabet.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 943217,
+      "duration": 21.38814058956916,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "a3f19bd2eeb08100a46121dab1a2e3cf25c4be8346f3beb86a1f7b8ba72680ac",
+      "sha256": "78aa9c4d01ce41ed48bc8270c19f0443c16861584029a57e7edc2c1ca4fe18be",
+      "leadSeconds": 0.2,
+      "gapSeconds": 0.45,
+      "timeline": [
+        {
+          "symbol": "А",
+          "file": "01-a.wav",
+          "onsetSample": 8820,
+          "onset": 0.2,
+          "duration": 0.3380045351473923,
+          "sampleCount": 14906
+        },
+        {
+          "symbol": "Б",
+          "file": "02-b.wav",
+          "onsetSample": 43571,
+          "onset": 0.9880045351473923,
+          "duration": 0.1280045351473923,
+          "sampleCount": 5645
+        },
+        {
+          "symbol": "В",
+          "file": "03-v.wav",
+          "onsetSample": 69061,
+          "onset": 1.5660090702947846,
+          "duration": 0.1980045351473923,
+          "sampleCount": 8732
+        },
+        {
+          "symbol": "Г",
+          "file": "04-g.wav",
+          "onsetSample": 97638,
+          "onset": 2.214013605442177,
+          "duration": 0.1280045351473923,
+          "sampleCount": 5645
+        },
+        {
+          "symbol": "Д",
+          "file": "05-d.wav",
+          "onsetSample": 123128,
+          "onset": 2.792018140589569,
+          "duration": 0.1280045351473923,
+          "sampleCount": 5645
+        },
+        {
+          "symbol": "Е",
+          "file": "06-e.wav",
+          "onsetSample": 148618,
+          "onset": 3.3700226757369616,
+          "duration": 0.3580045351473923,
+          "sampleCount": 15788
+        },
+        {
+          "symbol": "Ё",
+          "file": "07-yo.wav",
+          "onsetSample": 184251,
+          "onset": 4.178027210884354,
+          "duration": 0.3580045351473923,
+          "sampleCount": 15788
+        },
+        {
+          "symbol": "Ж",
+          "file": "08-zh.wav",
+          "onsetSample": 219884,
+          "onset": 4.986031746031746,
+          "duration": 0.2180045351473923,
+          "sampleCount": 9614
+        },
+        {
+          "symbol": "З",
+          "file": "09-z.wav",
+          "onsetSample": 249343,
+          "onset": 5.654036281179138,
+          "duration": 0.1980045351473923,
+          "sampleCount": 8732
+        },
+        {
+          "symbol": "И",
+          "file": "10-i.wav",
+          "onsetSample": 277920,
+          "onset": 6.302040816326531,
+          "duration": 0.3380045351473923,
+          "sampleCount": 14906
+        },
+        {
+          "symbol": "Й",
+          "file": "11-j.wav",
+          "onsetSample": 312671,
+          "onset": 7.090045351473923,
+          "duration": 0.0980045351473923,
+          "sampleCount": 4322
+        },
+        {
+          "symbol": "К",
+          "file": "12-k.wav",
+          "onsetSample": 336838,
+          "onset": 7.638049886621316,
+          "duration": 0.1280045351473923,
+          "sampleCount": 5645
+        },
+        {
+          "symbol": "Л",
+          "file": "13-l.wav",
+          "onsetSample": 362328,
+          "onset": 8.216054421768707,
+          "duration": 0.1980045351473923,
+          "sampleCount": 8732
+        },
+        {
+          "symbol": "М",
+          "file": "14-m.wav",
+          "onsetSample": 390905,
+          "onset": 8.8640589569161,
+          "duration": 0.1980045351473923,
+          "sampleCount": 8732
+        },
+        {
+          "symbol": "Н",
+          "file": "15-n.wav",
+          "onsetSample": 419482,
+          "onset": 9.512063492063492,
+          "duration": 0.1980045351473923,
+          "sampleCount": 8732
+        },
+        {
+          "symbol": "О",
+          "file": "16-o.wav",
+          "onsetSample": 448059,
+          "onset": 10.160068027210885,
+          "duration": 0.3380045351473923,
+          "sampleCount": 14906
+        },
+        {
+          "symbol": "П",
+          "file": "17-p.wav",
+          "onsetSample": 482810,
+          "onset": 10.948072562358277,
+          "duration": 0.1280045351473923,
+          "sampleCount": 5645
+        },
+        {
+          "symbol": "Р",
+          "file": "18-r.wav",
+          "onsetSample": 508300,
+          "onset": 11.526077097505668,
+          "duration": 0.1980045351473923,
+          "sampleCount": 8732
+        },
+        {
+          "symbol": "С",
+          "file": "19-s.wav",
+          "onsetSample": 536877,
+          "onset": 12.174081632653062,
+          "duration": 0.2180045351473923,
+          "sampleCount": 9614
+        },
+        {
+          "symbol": "Т",
+          "file": "20-t.wav",
+          "onsetSample": 566336,
+          "onset": 12.842086167800453,
+          "duration": 0.1280045351473923,
+          "sampleCount": 5645
+        },
+        {
+          "symbol": "У",
+          "file": "21-u.wav",
+          "onsetSample": 591826,
+          "onset": 13.420090702947846,
+          "duration": 0.3380045351473923,
+          "sampleCount": 14906
+        },
+        {
+          "symbol": "Ф",
+          "file": "22-f.wav",
+          "onsetSample": 626577,
+          "onset": 14.208095238095238,
+          "duration": 0.2180045351473923,
+          "sampleCount": 9614
+        },
+        {
+          "symbol": "Х",
+          "file": "23-h.wav",
+          "onsetSample": 656036,
+          "onset": 14.87609977324263,
+          "duration": 0.2180045351473923,
+          "sampleCount": 9614
+        },
+        {
+          "symbol": "Ц",
+          "file": "24-ts.wav",
+          "onsetSample": 685495,
+          "onset": 15.544104308390022,
+          "duration": 0.1980045351473923,
+          "sampleCount": 8732
+        },
+        {
+          "symbol": "Ч",
+          "file": "25-ch.wav",
+          "onsetSample": 714072,
+          "onset": 16.192108843537415,
+          "duration": 0.1980045351473923,
+          "sampleCount": 8732
+        },
+        {
+          "symbol": "Ш",
+          "file": "26-sh.wav",
+          "onsetSample": 742649,
+          "onset": 16.84011337868481,
+          "duration": 0.2180045351473923,
+          "sampleCount": 9614
+        },
+        {
+          "symbol": "Щ",
+          "file": "27-shch.wav",
+          "onsetSample": 772108,
+          "onset": 17.508117913832198,
+          "duration": 0.23800453514739228,
+          "sampleCount": 10496
+        },
+        {
+          "symbol": "Ы",
+          "file": "28-y.wav",
+          "onsetSample": 802449,
+          "onset": 18.19612244897959,
+          "duration": 0.3380045351473923,
+          "sampleCount": 14906
+        },
+        {
+          "symbol": "Э",
+          "file": "29-eh.wav",
+          "onsetSample": 837200,
+          "onset": 18.984126984126984,
+          "duration": 0.3380045351473923,
+          "sampleCount": 14906
+        },
+        {
+          "symbol": "Ю",
+          "file": "30-yu.wav",
+          "onsetSample": 871951,
+          "onset": 19.772131519274378,
+          "duration": 0.3580045351473923,
+          "sampleCount": 15788
+        },
+        {
+          "symbol": "Я",
+          "file": "31-ya.wav",
+          "onsetSample": 907584,
+          "onset": 20.580136054421768,
+          "duration": 0.3580045351473923,
+          "sampleCount": 15788
+        }
+      ]
+    },
+    {
+      "file": "digits.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 434169,
+      "duration": 9.845102040816327,
+      "floatPeak": 0.5005202293395996,
+      "float32Sha256": "02d44089ae99951a372f8af93e3544b1403979dd46c5025e9fc288f29a41eb8d",
+      "sha256": "31c6602d8ae6b1350700ac57346bf46d218c7cd3faf3ececd8dcd7da048f9fb9",
+      "leadSeconds": 0.2,
+      "gapSeconds": 0.45,
+      "timeline": [
+        {
+          "symbol": "0",
+          "file": "digit-0.wav",
+          "onsetSample": 8820,
+          "onset": 0.2,
+          "duration": 0.2680045351473923,
+          "sampleCount": 11819
+        },
+        {
+          "symbol": "1",
+          "file": "digit-1.wav",
+          "onsetSample": 40484,
+          "onset": 0.9180045351473923,
+          "duration": 0.353015873015873,
+          "sampleCount": 15568
+        },
+        {
+          "symbol": "2",
+          "file": "digit-2.wav",
+          "onsetSample": 75897,
+          "onset": 1.7210204081632654,
+          "duration": 0.483015873015873,
+          "sampleCount": 21301
+        },
+        {
+          "symbol": "3",
+          "file": "digit-3.wav",
+          "onsetSample": 117043,
+          "onset": 2.6540362811791383,
+          "duration": 0.46800453514739226,
+          "sampleCount": 20639
+        },
+        {
+          "symbol": "4",
+          "file": "digit-4.wav",
+          "onsetSample": 157527,
+          "onset": 3.5720408163265307,
+          "duration": 0.6880045351473922,
+          "sampleCount": 30341
+        },
+        {
+          "symbol": "5",
+          "file": "digit-5.wav",
+          "onsetSample": 207713,
+          "onset": 4.710045351473923,
+          "duration": 0.5180045351473923,
+          "sampleCount": 22844
+        },
+        {
+          "symbol": "6",
+          "file": "digit-6.wav",
+          "onsetSample": 250402,
+          "onset": 5.678049886621316,
+          "duration": 0.613015873015873,
+          "sampleCount": 27034
+        },
+        {
+          "symbol": "7",
+          "file": "digit-7.wav",
+          "onsetSample": 297281,
+          "onset": 6.741065759637189,
+          "duration": 0.553015873015873,
+          "sampleCount": 24388
+        },
+        {
+          "symbol": "8",
+          "file": "digit-8.wav",
+          "onsetSample": 341514,
+          "onset": 7.744081632653061,
+          "duration": 0.6380045351473923,
+          "sampleCount": 28136
+        },
+        {
+          "symbol": "9",
+          "file": "digit-9.wav",
+          "onsetSample": 389495,
+          "onset": 8.832086167800453,
+          "duration": 0.563015873015873,
+          "sampleCount": 24829
+        }
+      ]
+    }
+  ],
+  "sourceFiles": [
+    {
+      "file": "voice/robot/engine.js",
+      "encoding": "UTF-8, LF",
+      "sha256": "f004cd5b9f8009802cb6fd6c406ebd568de9e4d6ddd5fbfeae4ad676334aadf8"
+    },
+    {
+      "file": "voice/robot/build.cjs",
+      "encoding": "UTF-8, LF",
+      "sha256": "0324bb240caba634ef9ec060f5c54be19663cf6dc7e01cf420e623294a350065"
+    },
+    {
+      "file": "voice/robot/build.py",
+      "encoding": "UTF-8, LF",
+      "sha256": "ae0efbfd643fda6c526ef3c64762bf82e9afe7d69311b528e56a3c9cbb19bf5e"
+    },
+    {
+      "file": "voice/catalog.js",
+      "encoding": "UTF-8, LF",
+      "sha256": "96b7a7128198f0de49e078a802dec8e0ebf01f0226969143e8410f1b8f17e024"
+    },
+    {
+      "file": "mayatnik/mayatnik-phone-robot.js",
+      "encoding": "UTF-8, LF",
+      "sha256": "d8a1d3564fcfb178122f3ef1f2372bdc841b034c9cd8b9024d349afa0695f34d"
+    },
+    {
+      "file": "mayatnik/mayatnik-synthesis-music.js",
+      "encoding": "UTF-8, LF",
+      "sha256": "effef6d21b90cbfff4e1fc93e30c768cee327981b5304840ed4aba61107b25a3"
+    }
+  ],
+  "originComparison": [
+    {
+      "word": "zero",
+      "settings": {
+        "rate": 44100,
+        "midi": 48,
+        "event": {
+          "bits": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "f0": 130.8127826502993,
+          "tilt": 0.82,
+          "robotWord": "zero"
+        }
+      },
+      "sequence": [
+        [
+          "n",
+          0.055
+        ],
+        [
+          "o",
+          0.12
+        ],
+        [
+          "l-soft",
+          0.075
+        ]
+      ],
+      "seed": 248175051,
+      "originalSamples": 11819,
+      "adaptedSamples": 11819,
+      "originalFloat32Sha256": "3d6111d2500561ad6dab84e5236167fa644d5b24866f38a094ac7ff233ddd817",
+      "adaptedFloat32Sha256": "3d6111d2500561ad6dab84e5236167fa644d5b24866f38a094ac7ff233ddd817",
+      "maxAbsoluteDifference": 0,
+      "byteIdentical": true
+    },
+    {
+      "word": "one",
+      "settings": {
+        "rate": 44100,
+        "midi": 48,
+        "event": {
+          "bits": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "f0": 130.8127826502993,
+          "tilt": 0.82,
+          "robotWord": "one"
+        }
+      },
+      "sequence": [
+        [
+          "a",
+          0.075
+        ],
+        [
+          "d",
+          0.055
+        ],
+        [
+          "i",
+          0.14
+        ],
+        [
+          "n",
+          0.065
+        ]
+      ],
+      "seed": 322326999,
+      "originalSamples": 15568,
+      "adaptedSamples": 15568,
+      "originalFloat32Sha256": "b2756b1cf999fdf0f0950362da11d635682e0e8111063b4b7d95b0a0600ef0c1",
+      "adaptedFloat32Sha256": "b2756b1cf999fdf0f0950362da11d635682e0e8111063b4b7d95b0a0600ef0c1",
+      "maxAbsoluteDifference": 0,
+      "byteIdentical": true
+    }
+  ],
+  "processing": {
+    "source": "Mathematical bit-selected harmonic sum + deterministic xorshift32 noise",
+    "filters": "Four parallel constant-peak band-pass biquads, DF-II transposed; original arithmetic preserved",
+    "transitions": "At phoneme edges: min(12ms,0.2*segment); mix reaches 0.5 at the boundary; control refresh 16 samples",
+    "dc": "value-lastValue+0.995*previousDC",
+    "gate": "min(1,time/0.006,max(0,(seconds-time)/0.018))",
+    "gain": "0.55/max(peak,0.045), then tanh per sample",
+    "extraNormalization": false,
+    "resampling": false,
+    "distinction": "The previous music/voices/phone.wav applies an additional common phrase peak of 0.7. These files preserve native robot output level."
+  },
+  "provenance": {
+    "audioInputs": [],
+    "recordings": [],
+    "microphone": [],
+    "tts": [],
+    "systemVoices": [],
+    "trainedModels": [],
+    "networkAudio": [],
+    "note": "All outputs freshly computed. The three-word source is unchanged. Only recipes/durations are taken from voice/catalog.js; its separate synthesis engine is not loaded."
+  },
+  "limits": {
+    "pronunciation": "31 isolated sounds; no э/а suffix on consonants; Й j80ms; Е/Ё/Ю/Я initial j+vowel; Ъ/Ь have no file.",
+    "quality": "New phoneme intelligibility and human likeness are unverified; user listening required.",
+    "verification": "Production metadata plus explicitly authorized legacy zero/one byte comparison only. No other tests, syntax checks, browser or listening."
+  },
+  "pythonPackager": "3.12.14"
+}

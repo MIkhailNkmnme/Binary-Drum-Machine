@@ -1,0 +1,98 @@
+{
+  "scope": "Only legacy zero/one with the old scores, duration literals and seeds; explicitly user-authorized.",
+  "encoding": "Raw IEEE-754 Float32 little-endian, no WAV header or quantization",
+  "node": "v24.22.1",
+  "results": [
+    {
+      "word": "zero",
+      "settings": {
+        "rate": 44100,
+        "midi": 48,
+        "event": {
+          "bits": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "f0": 130.8127826502993,
+          "tilt": 0.82,
+          "robotWord": "zero"
+        }
+      },
+      "sequence": [
+        [
+          "n",
+          0.055
+        ],
+        [
+          "o",
+          0.12
+        ],
+        [
+          "l-soft",
+          0.075
+        ]
+      ],
+      "seed": 248175051,
+      "originalSamples": 11819,
+      "adaptedSamples": 11819,
+      "originalFloat32Sha256": "3d6111d2500561ad6dab84e5236167fa644d5b24866f38a094ac7ff233ddd817",
+      "adaptedFloat32Sha256": "3d6111d2500561ad6dab84e5236167fa644d5b24866f38a094ac7ff233ddd817",
+      "maxAbsoluteDifference": 0,
+      "byteIdentical": true
+    },
+    {
+      "word": "one",
+      "settings": {
+        "rate": 44100,
+        "midi": 48,
+        "event": {
+          "bits": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "f0": 130.8127826502993,
+          "tilt": 0.82,
+          "robotWord": "one"
+        }
+      },
+      "sequence": [
+        [
+          "a",
+          0.075
+        ],
+        [
+          "d",
+          0.055
+        ],
+        [
+          "i",
+          0.14
+        ],
+        [
+          "n",
+          0.065
+        ]
+      ],
+      "seed": 322326999,
+      "originalSamples": 15568,
+      "adaptedSamples": 15568,
+      "originalFloat32Sha256": "b2756b1cf999fdf0f0950362da11d635682e0e8111063b4b7d95b0a0600ef0c1",
+      "adaptedFloat32Sha256": "b2756b1cf999fdf0f0950362da11d635682e0e8111063b4b7d95b0a0600ef0c1",
+      "maxAbsoluteDifference": 0,
+      "byteIdentical": true
+    }
+  ],
+  "meaning": "Numerical identity in this build environment, not a listening or human-quality assessment."
+}

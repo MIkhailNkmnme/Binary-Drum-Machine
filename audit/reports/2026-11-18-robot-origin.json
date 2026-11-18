@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-18",
+  "scope": "User-requested provenance audit: source reading and exact reproduction of phone.wav; no listening, browser or general application tests.",
+  "sources": [
+    {
+      "path": "music/voices/build.py",
+      "sha256": "69055c3c732a497b164813de8a3f3d87f6f0a5ce63adf0497d93c95b627147ea",
+      "matchesOriginalManifest": true
+    },
+    {
+      "path": "music/voices/phone-helper.cjs",
+      "sha256": "25c249d7fdec94a74815c0510ff08996713f59fef884e160a9fbf2fb58fe6ee0",
+      "matchesOriginalManifest": true
+    },
+    {
+      "path": "mayatnik/mayatnik-phone-robot.js",
+      "sha256": "d8a1d3564fcfb178122f3ef1f2372bdc841b034c9cd8b9024d349afa0695f34d",
+      "matchesOriginalManifest": true
+    },
+    {
+      "path": "mayatnik/mayatnik-synthesis-music.js",
+      "sha256": "effef6d21b90cbfff4e1fc93e30c768cee327981b5304840ed4aba61107b25a3",
+      "matchesOriginalManifest": true
+    }
+  ],
+  "inputs": {
+    "audioFiles": [],
+    "recordings": [],
+    "trainedModels": [],
+    "networkAudio": [],
+    "source": "Mathematical sine sums, xorshift32 noise, handwritten phoneme parameters, four band-pass biquads"
+  },
+  "settings": {
+    "rate": 44100,
+    "midi": 48,
+    "event": {
+      "robotWord": "zero",
+      "bits": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "f0": 130.8127826502993,
+      "tilt": 0.82
+    }
+  },
+  "node": "v24.22.1",
+  "reproduction": {
+    "bytes": 211724,
+    "sha256": "e2928c94c1857a57f39bdc77733744fe92e682de94dc41a66639c8785dc94aec",
+    "matchesLocalBytes": true,
+    "matchesOriginalManifest": true,
+    "remoteStatus": 200,
+    "matchesPublishedBytes": true
+  },
+  "conclusion": "The published robot example is exactly reproduced from the inspected mathematical generator without using any audio file as input. The source code contains no recorded speech or pretrained voice model."
+}
