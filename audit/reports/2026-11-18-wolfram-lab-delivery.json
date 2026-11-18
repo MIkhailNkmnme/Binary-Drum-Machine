@@ -1,0 +1,208 @@
+{
+  "date": "2026-11-18",
+  "commit": "1a3c5702046e0c966e42550171d0121e18898898",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "wolfram/animatrix-evidence.json",
+      "status": 200,
+      "bytes": 8773,
+      "normalization": "LF",
+      "sha256": "2638fbf5b6e2f760a65cd94863f658fd8988c895ec7f4d2867dfb0c5dda520d1",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/animatrix.html",
+      "status": 200,
+      "bytes": 35264,
+      "normalization": "LF",
+      "sha256": "ae0a93c0db88ac7b04a9023033606dfd4c7c5708e73d33b522294e322fdd41e1",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/animatrix.md",
+      "status": 200,
+      "bytes": 28880,
+      "normalization": "LF",
+      "sha256": "1c1bdc0c5851b9431b3679a8a88033d02f2894b111cc3bb2be8631dcb20d7578",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/app.js",
+      "status": 200,
+      "bytes": 15107,
+      "normalization": "LF",
+      "sha256": "c83052d282f9b9de493a4a64765c95313394f907f749d258d2e03a7a8161ac41",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/build-articles.py",
+      "status": 200,
+      "bytes": 3602,
+      "normalization": "LF",
+      "sha256": "e828e4da67844c6bf5ed97b70690b968a18707fef1d70b8cd4dbee87b3f491a6",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/engine.js",
+      "status": 200,
+      "bytes": 5530,
+      "normalization": "LF",
+      "sha256": "4b84d29332a342ff09582668e08c5df1275c73d42e4047dae830f42766ce9246",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/index.html",
+      "status": 200,
+      "bytes": 15224,
+      "normalization": "LF",
+      "sha256": "41f5e7223af8f24c6e38f64931225e6646ec5a9a26e1ab791c2a60302bde53df",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/mayatnik.html",
+      "status": 200,
+      "bytes": 53503,
+      "normalization": "LF",
+      "sha256": "6d1a9bffc49bdae07fdd692fa9c9be956ab6f4c8835cb72dd2a406bfb61825af",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/mayatnik.md",
+      "status": 200,
+      "bytes": 46243,
+      "normalization": "LF",
+      "sha256": "22babdf84b839e23c9d3c74c0293a9a7e835d09f564158da9fbe90bfda225f5c",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/README.md",
+      "status": 200,
+      "bytes": 5384,
+      "normalization": "LF",
+      "sha256": "0aa688f028069f40ab4cfd7b89172f18b0e6e9d18c5c2e8185892e4b9bf92397",
+      "matchesRelease": true
+    },
+    {
+      "path": "wolfram/style.css",
+      "status": 200,
+      "bytes": 5191,
+      "normalization": "LF",
+      "sha256": "e5820e1f642a5ebb8b31ac246a8d9b2dbe2311fd0ac3675b29a24e588f2381f0",
+      "matchesRelease": true
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "bytes": 347491,
+      "normalization": "LF",
+      "sha256": "86c9178f8e1d1adbccbd4079a89e643f435b0e457115448b9eeb261680f5e65e",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/hub-pages.js",
+      "status": 200,
+      "bytes": 6112,
+      "normalization": "LF",
+      "sha256": "91d770ba3e4a80657b1af1066afaf41666062c1bd3022000d1e4494dcfff1a76",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 513908,
+      "normalization": "LF",
+      "sha256": "4e52ba41f985671415ffe4ef9e9055efebb9fdf31a3c4f1f90bb8f2671a52d26",
+      "matchesRelease": true
+    },
+    {
+      "path": "mayatnik/mayatnik-core.js",
+      "status": 200,
+      "bytes": 10148,
+      "normalization": "LF",
+      "sha256": "dfd8ceff7b8a32868933b323129ba56563eca520a2a636b8f5f0b0b3f33e8aa1",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/grozd.css",
+      "status": 200,
+      "bytes": 25412,
+      "normalization": "LF",
+      "sha256": "12ea18a1791c4627bcf71f4ea825f9dd3e71ab1f58856027e897fe294cd310bd",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/hub-button-text.js",
+      "status": 200,
+      "bytes": 7981,
+      "normalization": "LF",
+      "sha256": "9ec43fb3918c4894bb38cdbd4d4e9cf8ece15cac34568fdd6784133e49417ba3",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/cikl-list.png",
+      "status": 200,
+      "bytes": 75773,
+      "normalization": "none",
+      "sha256": "8d273c1c09e40369aa40f531c362c6b0a70480c02f50fc5419df5eb092909594",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/polosy-periodov.png",
+      "status": 200,
+      "bytes": 29028,
+      "normalization": "none",
+      "sha256": "2f13f15058854456e0c07f7300d7f490e9cc9664b4e08943f806bf7434eeb7af",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/romby-razmery.png",
+      "status": 200,
+      "bytes": 61507,
+      "normalization": "none",
+      "sha256": "c50eb0aeae37eb309be0820c940916f58d554e92af5589d3d07254adbc1a9cd5",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/nadpis-155.png",
+      "status": 200,
+      "bytes": 72713,
+      "normalization": "none",
+      "sha256": "9b93fdb5a1f43b33adb7e3c63a8b573ff5c715dfc42d010197b69da4a96b5415",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/razgon-tau-128.png",
+      "status": 200,
+      "bytes": 34014,
+      "normalization": "none",
+      "sha256": "5fe3115cbacec3ed6b0792abb8f86d153543373da54dded532c11c7bfc50e11a",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/mayatnik-kraya-64.png",
+      "status": 200,
+      "bytes": 31873,
+      "normalization": "none",
+      "sha256": "857e49df93a30f9ff672540bbb16e600375d935e37b128d063908dc713f272d1",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/horrorius-edge-period.png",
+      "status": 200,
+      "bytes": 101691,
+      "normalization": "none",
+      "sha256": "28b3f7e8ee0aeb745b37f3212ccee2c1cf79ca69a5d07163b825590692764eea",
+      "matchesRelease": true
+    }
+  ],
+  "pagesRun": 44303238056,
+  "pagesConclusion": "success",
+  "routes": [
+    {
+      "route": "wolfram/",
+      "status": 200,
+      "matches": true
+    }
+  ]
+}
