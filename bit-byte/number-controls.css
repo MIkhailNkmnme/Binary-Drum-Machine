@@ -1,14 +1,102 @@
-/* Shared control-frame contours; four selected-board controls only. */
-.chess-controls .bb-number-label { display: grid; gap: 3px; min-width: 0; }
-.chess-controls .bb-number-control { --c: var(--cyan); --zcf-base: var(--line); --zcf-surface: #1b2430; position: relative; display: flex; width: 120px; height: 24px; gap: 0; flex: none; font: 11px/24px var(--bb-font); user-select: none; }
-.chess-controls .bb-number-control .zcf-input { padding: 0; border: 0; background: transparent; outline: none; touch-action: none; }
-.chess-controls .bb-number-control .zcf-value { color: var(--text); font: 11px/24px var(--bb-font); }
-.chess-controls .bb-number-control .bb-number-source { display: none; }
-.chess-controls .bb-number-control.bb-number-editing .bb-number-source { display: block; position: absolute; inset: 2px 3px; z-index: 8; width: calc(100% - 6px); height: 20px; padding: 0 2px; border: 1px solid var(--cyan); border-radius: 0; background: #1b2430; color: var(--text); text-align: center; font: 11px/18px var(--bb-font); user-select: text; appearance: textfield; }
+.chess-input-pair.chess-opacity { grid-template-columns: 120px 120px; column-gap: 28px; }
+.chess-controls .bb-number-label {
+  display: grid;
+  width: 120px;
+  min-width: 0;
+  gap: 2px;
+}
+.chess-controls .bb-number-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 18px;
+  gap: 4px;
+  font: 12px/18px var(--bb-font);
+}
+.chess-controls .bb-number-header label {
+  display: block;
+  line-height: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chess-controls .bb-number-header output {
+  text-align: right;
+  white-space: nowrap;
+}
+.chess-controls .bb-number-source { display: none; }
+.chess-controls .bb-number-editing output { display: none; }
+.chess-controls .bb-number-editing .bb-number-source {
+  display: block;
+  width: 5ch;
+  height: 18px;
+  padding: 0 2px;
+  border: 1px solid var(--cyan);
+  border-radius: 0;
+  text-align: right;
+  appearance: textfield;
+}
 .chess-controls .bb-number-source::-webkit-inner-spin-button,
 .chess-controls .bb-number-source::-webkit-outer-spin-button { appearance: none; margin: 0; }
-.chess-controls .bb-number-editing .zcf-input,
-.chess-controls .bb-number-editing .zcf-value { visibility: hidden; }
-.chess-controls .bb-number-disabled .zcf-middle { opacity: .4; }
-.chess-controls .bb-number-arrow { display: block; width: 7px; height: 9px; background: var(--cyan); clip-path: polygon(100% 0,100% 30%,40% 50%,100% 70%,100% 100%,0 50%); pointer-events: none; }
-.chess-controls .zcf-right .bb-number-arrow { transform: rotate(180deg); }
+
+.bb-number-control {
+  --slider-symbol: #e8dc64;
+  --slider-track: repeating-linear-gradient(to right, var(--cyan) 0 2px, transparent 2px 4px);
+  --slider-thumb: repeating-linear-gradient(to bottom, var(--slider-symbol) 0 2px, transparent 2px 3px)
+    center / 2px 20px no-repeat, var(--panel);
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 18px;
+  align-items: center;
+  height: 24px;
+  user-select: none;
+}
+.bb-number-bracket {
+  width: 100%;
+  height: 24px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--slider-symbol);
+  font: bold 21px/24px var(--bb-font);
+  cursor: pointer;
+}
+.bb-number-bracket:enabled:hover { color: #fff2a0; }
+.bb-number-bracket:disabled { cursor: default; }
+.chess-controls .bb-number-track input {
+  display: block;
+  appearance: none;
+  width: 100%;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.chess-controls .bb-number-track input:disabled { cursor: default; }
+.chess-controls .bb-number-control :is(button, input):focus-visible {
+  outline: 1px solid var(--cyan);
+  outline-offset: -1px;
+}
+.bb-number-track input::-webkit-slider-runnable-track { height: 2px; background: var(--slider-track); }
+.bb-number-track input::-moz-range-track { height: 2px; background: var(--slider-track); }
+.bb-number-track input::-moz-range-progress { background: transparent; }
+.bb-number-track input::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 24px;
+  margin-top: -11px;
+  border: 0;
+  border-radius: 0;
+  background: var(--slider-thumb);
+}
+.bb-number-track input::-moz-range-thumb {
+  width: 14px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: var(--slider-thumb);
+}
+.bb-number-disabled { opacity: .45; }

@@ -10,9 +10,7 @@ main .gz-hx {
 main .gz-hx,
 main .gz-hx::before,
 main .gz-half,
-main .gz-half::before,
-main .bb-number-control > .zcf-side,
-main .bb-number-control > .zcf-middle {
+main .gz-half::before {
   clip-path: none !important;
   border-radius: 0;
 }
@@ -24,73 +22,4 @@ main .gz-hx.gz-pair .gz-half {
   padding: 0 4px;
 }
 
-/* Replace shared polygon outlines locally, retaining their state variables. */
-main .bb-number-control .zcf-outline { display: none; }
-main .bb-number-control > .zcf-side,
-main .bb-number-control > .zcf-middle {
-  box-shadow: inset 0 0 0 var(--zcf-stroke) var(--zcf-outline);
-}
-main .bb-number-control .zcf-thumb-outline {
-  box-sizing: border-box;
-  border: 2px solid var(--c);
-  background: var(--zcf-surface);
-}
-main .bb-number-control .zcf-thumb-outline path { display: none; }
-main .bb-number-control .zcf-input::-webkit-slider-thumb {
-  box-sizing: border-box;
-  mask: none;
-  clip-path: none;
-  border: 2px solid var(--c);
-  border-radius: 0;
-  background: var(--zcf-surface);
-}
-main .bb-number-control .zcf-input::-moz-range-thumb {
-  box-sizing: border-box;
-  mask: none;
-  clip-path: none;
-  border: 2px solid var(--c);
-  border-radius: 0;
-  background: var(--zcf-surface);
-}
-main .bb-number-control .zcf-value-in-thumb:not(.zcf-thumb-active) > .zcf-input::-webkit-slider-thumb {
-  border-color: transparent;
-  background: transparent;
-}
-main .bb-number-control .zcf-value-in-thumb:not(.zcf-thumb-active) > .zcf-input::-moz-range-thumb {
-  border-color: transparent;
-  background: transparent;
-}
-
-/* Opacity keeps its native range interaction, with square slider handles. */
-.chess-controls input[type="range"]:not(.zcf-input) {
-  appearance: none;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-.chess-controls input[type="range"]:not(.zcf-input)::-webkit-slider-runnable-track {
-  height: 2px;
-  background: var(--muted);
-}
-.chess-controls input[type="range"]:not(.zcf-input)::-webkit-slider-thumb {
-  appearance: none;
-  width: 12px;
-  height: 18px;
-  margin-top: -8px;
-  border: 0;
-  border-radius: 0;
-  background: var(--cyan);
-}
-.chess-controls input[type="range"]:not(.zcf-input)::-moz-range-track {
-  height: 2px;
-  background: var(--muted);
-}
-.chess-controls input[type="range"]:not(.zcf-input)::-moz-range-thumb {
-  width: 12px;
-  height: 18px;
-  border: 0;
-  border-radius: 0;
-  background: var(--cyan);
-}
 .chess-field-edge[data-field-edge="corner"] { clip-path: none; }

@@ -510,8 +510,6 @@
     const count = area(board);
     const zeroCount = board.phase ? Math.floor(count / 2) : Math.ceil(count / 2);
     byId("board-count").textContent = count + " клеток / битов · 0: " + zeroCount + " · 1: " + (count - zeroCount);
-    byId("zero-percent").textContent = board.zeroOpacity + "%";
-    byId("one-percent").textContent = board.oneOpacity + "%";
   }
   function layerNeighbor(ordered, index, delta) {
     const board = ordered[index], neighbor = ordered[index + delta];

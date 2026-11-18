@@ -1,25 +1,32 @@
-/* Bit-Byte: shared 24 + 72 + 24 numeric controls; source inputs retain their handlers. */
+/* Bit-Byte: symbol sliders; source inputs retain their handlers. */
 (() => {
   "use strict";
   const controls = [];
   let syncing = false;
   const dispatch = (source, type) => source.dispatchEvent(new Event(type, {bubbles: true}));
-  for (const [id, name] of [["cols", "Столбцы выбранной шахматки"], ["rows", "Строки выбранной шахматки"],
-    ["x", "Положение X выбранной шахматки, клетки"], ["y", "Положение Y выбранной шахматки, клетки"]]) {
+  for (const [id, name, suffix = ""] of [
+    ["cols", "Столбцы выбранной шахматки"], ["rows", "Строки выбранной шахматки"],
+    ["x", "Положение X выбранной шахматки, клетки"], ["y", "Положение Y выбранной шахматки, клетки"],
+    ["zero-opacity", "Непрозрачность бита 0", "%"], ["one-opacity", "Непрозрачность бита 1", "%"],
+  ]) {
     const source = document.getElementById("chess-" + id);
-    if (!source || !window.ZerkControlFrame) continue;
+    const oldLabel = source?.closest("label");
+    if (!oldLabel) continue;
+    const wrapper = document.createElement("div"), header = document.createElement("div");
+    const caption = document.createElement("label");
     const host = document.createElement("span"), middle = document.createElement("span");
+    wrapper.className = "bb-number-label";
+    header.className = "bb-number-header";
     host.className = "bb-number-control";
-    host.title = name + ". Стрелки — один шаг; удержание повторяет. Двойной щелчок по числу или дорожке, либо Enter на ползунке — ввод числа.";
+    middle.className = "bb-number-track";
+    host.title = name + ". Скобки меняют значение на один шаг; удержание повторяет. Двойной щелчок по числу или дорожке, либо Enter на ползунке — ввод числа.";
     const left = document.createElement("button"), right = document.createElement("button");
-    for (const [button, direction] of [[left, "Уменьшить"], [right, "Увеличить"]]) {
+    for (const [button, direction, symbol] of [[left, "Уменьшить", "["], [right, "Увеличить", "]"]]) {
       button.type = "button";
+      button.className = "bb-number-bracket";
       button.setAttribute("aria-label", direction + ": " + name);
       button.title = direction + ": " + name;
-      const arrow = document.createElement("span");
-      arrow.className = "bb-number-arrow";
-      arrow.setAttribute("aria-hidden", "true");
-      button.append(arrow);
+      button.textContent = symbol;
     }
     const range = document.createElement("input"), output = document.createElement("output");
     range.type = "range";
@@ -27,22 +34,17 @@
     range.setAttribute("aria-label", name);
     range.title = host.title;
     output.setAttribute("aria-hidden", "true");
-    const oldLabel = source.closest("label");
-    if (oldLabel) {
-      const wrapper = document.createElement("div"), caption = document.createElement("label");
-      wrapper.className = "bb-number-label";
-      caption.htmlFor = range.id;
-      caption.textContent = oldLabel.textContent.trim();
-      oldLabel.replaceWith(wrapper);
-      wrapper.append(caption, source);
-    }
-    source.before(host);
     source.classList.add("bb-number-source");
     source.setAttribute("aria-label", name);
     source.title = name + ". Enter — применить, Escape — вернуть прежнее значение.";
-    middle.append(range, output, source);
+    caption.htmlFor = range.id;
+    caption.textContent = oldLabel.textContent.trim();
+    caption.title = name;
+    header.append(caption, output, source);
+    middle.append(range);
     host.append(left, middle, right);
-    const frame = window.ZerkControlFrame.attach(host, left, middle, right, {input: range, output, valueInThumb: true});
+    wrapper.append(header, host);
+    oldLabel.replaceWith(wrapper);
     let dirty = false, hold = null, editing = false, editStart = "";
     const disabled = () => source.matches(":disabled");
     const boardId = () => document.querySelector('#chess-list [aria-pressed="true"]')?.dataset.boardId;
@@ -70,7 +72,6 @@
       const finished = hold;
       hold = null;
       clearTimeout(finished.timer);
-      finished.button.classList.remove("zcf-held");
       if (finished.button.hasPointerCapture(finished.pointer)) finished.button.releasePointerCapture(finished.pointer);
       commit();
     }
@@ -81,7 +82,7 @@
         dispatch(source, "input");
       }
       editing = false;
-      host.classList.remove("bb-number-editing");
+      wrapper.classList.remove("bb-number-editing");
       // The original input owns the typing history; its change/blur handlers finish it.
       dispatch(source, "change");
       sync();
@@ -95,10 +96,11 @@
         if (range[key] !== value) range[key] = value;
       }
       if (source.value !== "") range.value = source.value;
-      if (output.textContent !== source.value) output.textContent = source.value;
+      const text = source.value === "" ? "—" : source.value + suffix;
+      if (output.textContent !== text) output.textContent = text;
+      if (suffix) range.setAttribute("aria-valuetext", text);
       for (const node of [range, left, right]) if (node.disabled !== off) node.disabled = off;
       host.classList.toggle("bb-number-disabled", off);
-      frame.sync();
     }
     for (const [button, delta] of [[left, -1], [right, 1]]) {
       const step = () => write(Number(source.value) + delta * bounds().step);
@@ -136,11 +138,12 @@
       commit();
       editStart = source.value;
       editing = true;
-      host.classList.add("bb-number-editing");
+      wrapper.classList.add("bb-number-editing");
       source.focus({preventScroll: true});
       source.select();
     }
     middle.addEventListener("dblclick", event => { event.preventDefault(); beginEdit(); });
+    output.addEventListener("dblclick", event => { event.preventDefault(); beginEdit(); });
     range.addEventListener("keydown", event => {
       if (event.key !== "Enter") return;
       event.preventDefault();
@@ -171,7 +174,6 @@
     sync: syncAll,
     finish() { for (const control of controls) control.finish(); },
   };
-  document.fonts?.ready.then(syncAll);
   // Covers fieldset-disabled changes even when they come from outside the renderer.
   const panel = document.querySelector(".chess-controls");
   if (panel) new MutationObserver(syncAll).observe(panel, {subtree: true, attributes: true, attributeFilter: ["disabled", "min", "max", "step"]});
