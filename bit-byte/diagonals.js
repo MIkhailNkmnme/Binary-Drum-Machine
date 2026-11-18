@@ -10,7 +10,7 @@
   };
   let shape = "", cells = [];
 
-  function render(bits, cols, rows, mode) {
+  function render(bits, cols, rows, mode, context) {
     const lines = [];
     let zeros = 0, ones = 0, empty = 0;
     let first = -1, last = -1, width = 1;
@@ -58,6 +58,7 @@
       : "Обычные слои: бит верхней шахматки с ненулевой непрозрачностью клетки; цветовое смешение в биты не переводится.";
     countNote.textContent = "Поле: " + cols + " × " + rows + " · строк: " + cells.length +
       " · 0: " + zeros + " · 1: " + ones + " · пустых: " + empty;
+    window.BitByteDiagonalSearch?.update({lines, first, cells, bits, cols, rows, mode, ...context});
   }
 
   window.BitByteDiagonals = {render};

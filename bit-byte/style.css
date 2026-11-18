@@ -366,3 +366,19 @@ textarea:focus-visible { outline: 1px solid var(--cyan); }
 #chess-diagonals-table td { padding: 0 1ch; text-align: center; white-space: pre; border: 0; }
 #chess-diagonals-table tr:nth-child(even) { background: #ffffff04; }
 #chess-diagonals-table tr:hover { background: #6cdded14; }
+
+
+.chess-search { display: grid; gap: 6px; margin: 12px 0; }
+.chess-search label { color: var(--cyan); }
+#chess-search-input { max-width: 760px; font: 14px/1.5 var(--bb-font); white-space: pre; overflow: auto; }
+#chess-diagonals-table tr.chess-search-match { background: #ffe35a; color: #111820; }
+#chess-diagonals-table tr.chess-search-match:hover { background: #ffe35a; }
+.chess-search-frames { display: grid; gap: 8px; }
+.chess-search-frames details { min-width: 0; padding: 8px; border: 1px solid var(--line); }
+.chess-search-frames summary { cursor: pointer; color: var(--cyan); }
+.chess-search-frames pre { overflow: auto; max-height: 12rem; font: 13px/1.4 var(--bb-font); }
+.chess-search-frames img { display: block; max-width: 100%; height: auto; image-rendering: pixelated; margin: 8px 0; }
+.chess-search-frames .commands { gap: 2px; }
+
+.chess-search .commands { gap: 2px; }
+.chess-search .gz-hx, .chess-search-frames .gz-hx { user-select: none; }

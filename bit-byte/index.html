@@ -1,12 +1,12 @@
-<!-- Bit-Byte v0.023 · Диагонали без пробелов между битами, строки по центру. -->
+<!-- Bit-Byte v0.024 · Поиск целых диагоналей и сохранение найденных кадров. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.023 — Зеркалиус</title>
+  <title>Bit-Byte v0.024 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=023">
+  <link rel="stylesheet" href="style.css?v=024">
   <link rel="stylesheet" href="byte-clicks.css?v=018">
   <link rel="stylesheet" href="../_js/control-frame.css?v=2">
   <link rel="stylesheet" href="number-controls.css?v=017">
@@ -15,8 +15,12 @@
 
   <script defer src="app.js?v=019"></script>
   <script defer src="fonts/operator-digits.js?v=017"></script>
-  <script defer src="diagonals.js?v=023"></script>
-  <script defer src="chessboards.js?v=022"></script>
+  <script defer src="../mayatnik/mayatnik-ochki-method.js?v=bit-byte-024"></script>
+  <script defer src="../mayatnik/mayatnik-sequences.js?v=bit-byte-024"></script>
+  <script defer src="../mayatnik/mayatnik-search-frame-store.js?v=bit-byte-024"></script>
+  <script defer src="diagonal-search.js?v=024"></script>
+  <script defer src="diagonals.js?v=024"></script>
+  <script defer src="chessboards.js?v=024"></script>
   <script defer src="../_js/control-frame.js?v=2"></script>
   <script defer src="number-controls.js?v=017"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
@@ -24,7 +28,7 @@
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.023</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.024</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -122,6 +126,18 @@
       <section class="panel chess-diagonals" aria-labelledby="chess-diagonals-title">
         <h2 id="chess-diagonals-title">Диагонали итогового поля</h2>
         <p class="hint">От верхнего левого угла вниз: диагонали ↗ становятся строками по центру, без пробелов между битами. Пустые края убраны; точка · внутри строки — пропуск между битами.</p>
+        <div class="chess-search">
+          <label for="chess-search-input">Искомые последовательности — по одной на строку</label>
+          <textarea id="chess-search-input" rows="4" spellcheck="false" placeholder="1&#10;00&#10;111" aria-describedby="chess-search-help"></textarea>
+          <p id="chess-search-help" class="hint">Только 0 и 1. Совпадение — вся диагональная строка той же длины, без пропусков. Найденные строки жёлтые; кадр поля сохраняется автоматически.</p>
+          <div class="commands">
+            <button id="chess-search-start" class="gz-hx" type="button" title="Применить последовательности и включить поиск" aria-label="Применить последовательности и включить поиск" aria-pressed="false"><span class="gz-ic" aria-hidden="true">⌕</span><span class="gz-nm">Поискъ</span></button>
+            <button id="chess-search-stop" class="gz-hx" type="button" title="Остановить поиск, сохранив найденные кадры" aria-label="Остановить поиск, сохранив найденные кадры"><span class="gz-ic" aria-hidden="true">■</span><span class="gz-nm">Стопъ</span></button>
+            <button id="chess-search-mayatnik" class="gz-hx" type="button" title="Взять сохранённые строки последовательности из Маятника в этом браузере" aria-label="Взять сохранённые строки последовательности из Маятника"><span class="gz-ic" aria-hidden="true">↓</span><span class="gz-nm">Маятнкъ</span></button>
+          </div>
+          <p id="chess-search-status" class="hint" role="status"></p>
+          <p id="chess-search-storage" class="hint" role="status"></p>
+        </div>
         <p id="chess-diagonals-mode" class="hint"></p>
         <p id="chess-diagonals-count" class="hint"></p>
         <div class="chess-diagonals-scroll" tabindex="0" role="region" aria-label="Таблица диагоналей, прокрутка стрелками">
@@ -130,6 +146,9 @@
             <tbody id="chess-diagonals-body"></tbody>
           </table>
         </div>
+        <h3>Найденные кадры</h3>
+        <p class="hint">Сохраняются в этом браузере после перезагрузки: до 100 кадров, без удаления старых. PNG — поле без пультов и рамок выделения; JSON — параметры, запрос и координаты совпадений. Для переноса на другой компьютер скачайте файлы.</p>
+        <div id="chess-search-frames" class="chess-search-frames"></div>
       </section>
     </section>
 

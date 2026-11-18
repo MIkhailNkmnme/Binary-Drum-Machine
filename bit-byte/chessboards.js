@@ -211,7 +211,7 @@
     if (cols === null || rows === null) return;
     // 2 — пустое место; ноль остаётся полноценным битом.
     const bits = new Uint8Array(cols * rows).fill(2);
-    const publishBits = () => window.BitByteDiagonals?.render(bits, cols, rows, logicContext ? state.logic : "layers");
+    const publishBits = () => window.BitByteDiagonals?.render(bits, cols, rows, logicContext ? state.logic : "layers", {settings: JSON.parse(snapshot()), capture: captureSearchFrame});
     if (state.logic === "layers" || !logicContext) {
       logicCanvas.hidden = true;
       for (const board of layers()) {
@@ -338,6 +338,52 @@
       }
     }
     publishBits();
+  }
+
+  function captureSearchFrame() {
+    // Растр строится синхронно из текущего рассчитанного кадра до toBlob/IndexedDB.
+    const cols = state.fieldCols, rows = state.fieldRows;
+    const scale = Math.max(1, Math.min(state.cell, 16, Math.floor(2048 / Math.max(cols, rows))));
+    const canvas = document.createElement("canvas");
+    canvas.width = cols * scale; canvas.height = rows * scale;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw Error("Не удалось создать снимок поля");
+    ctx.fillStyle = "#1e2933"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#92aaba24";
+    for (let x = 0; x < cols; x++) ctx.fillRect(x * scale, 0, 1, canvas.height);
+    for (let y = 0; y < rows; y++) ctx.fillRect(0, y * scale, canvas.width, 1);
+    if (state.logic !== "layers" && logicContext) {
+      if (!logicCanvas.hidden) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(logicCanvas,
+          parseFloat(logicCanvas.style.left) / state.cell * scale,
+          parseFloat(logicCanvas.style.top) / state.cell * scale,
+          parseFloat(logicCanvas.style.width) / state.cell * scale,
+          parseFloat(logicCanvas.style.height) / state.cell * scale);
+      }
+    } else {
+      for (const board of layers()) {
+        if (!board.visible) continue;
+        for (let y = board.y; y < Math.min(rows, board.y + board.rows); y++) {
+          for (let x = board.x; x < Math.min(cols, board.x + board.cols); x++) {
+            const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
+            const key = bit ? "one" : "zero";
+            ctx.fillStyle = board[key]; ctx.globalAlpha = board[key + "Opacity"] / 100;
+            ctx.fillRect(x * scale, y * scale, scale, scale);
+            if (state.digits && canvasDigits) {
+              ctx.globalAlpha = 1; ctx.fillStyle = digitInk(board[key]);
+              ctx.save(); ctx.translate(x * scale, y * scale); ctx.scale(scale, scale);
+              ctx.fill(canvasDigits[bit]); ctx.restore();
+            }
+          }
+        }
+      }
+    }
+    return new Promise((resolve, reject) => canvas.toBlob(blob => {
+      if (!blob) { reject(Error("Не удалось записать PNG найденного кадра")); return; }
+      resolve({blob, kind: "bit-byte-field-png-v1", width: cols, height: rows,
+        pixelWidth: canvas.width, pixelHeight: canvas.height});
+    }, "image/png"));
   }
 
   function renderLogic() {
@@ -955,5 +1001,6 @@
   // размер явный; наблюдатель больше ничего не перерисовывает и не зацикливается.
   new ResizeObserver(() => { if (initializeField()) render(); }).observe(viewport);
   window.addEventListener("pagehide", event => { finishFieldResize(event); finishDrag(event); finishInput(); save(); });
+  window.BitByteChessSearch = {refresh: render};
   render();
 })();
