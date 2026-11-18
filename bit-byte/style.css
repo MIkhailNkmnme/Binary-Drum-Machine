@@ -87,6 +87,13 @@ h1 { color: var(--cyan); font-size: 26px; }
 #chess-digits[aria-pressed="true"] { border-color: var(--cyan); }
 .chess-controls output { color: var(--text); }
 .chess-scene-panel { min-width: 0; }
+.commands.chess-timeline { align-items: center; margin-top: 10px; gap: 4px 6px; }
+.chess-timeline label { display: flex; gap: 4px; align-items: center; color: var(--muted); font-size: 12px; }
+.chess-timeline :is(input, select) { height: 24px; min-width: 0; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); }
+#chess-frame-duration { width: 8ch; }
+#chess-status:empty { display: none; }
+#chess-viewport[data-playing] :is(.chess-selection, .chess-field-edge) { display: none; }
+#chess-viewport[data-playing] #chess-world { cursor: default; }
 #chess-viewport { position: relative; overflow: clip; width: 100%; height: clamp(360px, 65vh, 720px); margin: 10px 0; border: 1px solid var(--line); overscroll-behavior: contain; }
 #chess-viewport:focus-visible { outline: 1px solid var(--cyan); }
 #chess-world { position: relative; width: 100%; height: 100%; isolation: isolate; background-color: #1e2933; background-image: linear-gradient(#92aaba24 1px, transparent 1px), linear-gradient(90deg, #92aaba24 1px, transparent 1px); background-size: var(--chess-cell) var(--chess-cell); cursor: var(--chess-cursor, grab); touch-action: none; user-select: none; }

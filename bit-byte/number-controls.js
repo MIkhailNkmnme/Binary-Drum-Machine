@@ -158,7 +158,7 @@
     source.addEventListener("change", sync);
     window.addEventListener("blur", () => { stopHold(); commit(); });
     window.addEventListener("pagehide", () => { stopHold(); commit(); });
-    controls.push({sync, stopHold});
+    controls.push({sync, finish() { stopHold(); closeEdit(); commit(); }});
     sync();
   }
   function syncAll() {
@@ -167,7 +167,10 @@
     try { for (const control of controls) control.sync(); }
     finally { syncing = false; }
   }
-  window.BitByteNumberControls = {sync: syncAll};
+  window.BitByteNumberControls = {
+    sync: syncAll,
+    finish() { for (const control of controls) control.finish(); },
+  };
   document.fonts?.ready.then(syncAll);
   // Covers fieldset-disabled changes even when they come from outside the renderer.
   const panel = document.querySelector(".chess-controls");

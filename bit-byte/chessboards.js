@@ -1,6 +1,9 @@
 (() => {
   "use strict";
-  const KEY = "zerk_bit_chessboards_v1";
+  const LEGACY_KEY = "zerk_bit_chessboards_v1";
+  const FRAMES_KEY = "zerk_bit_chessboard_frames_v1";
+  const MAX_FRAMES = 100;
+  const MIN_DURATION = 50, MAX_DURATION = 60000, DEFAULT_DURATION = 500;
   const MAX_BOARDS = 16, MAX_ID = 1000000;
   const MAX_POSITION = 512, MAX_SIZE = 128, MAX_FIELD = MAX_POSITION + MAX_SIZE;
   const OUTLINES = [
@@ -9,7 +12,10 @@
   ];
   const byId = id => document.getElementById("chess-" + id);
   const world = byId("world"), viewport = byId("viewport"), list = byId("list");
-  const elements = new Map(), undo = [];
+  const editor = document.getElementById("boards-editor");
+  const controls = editor.querySelector(".chess-controls");
+  const frameSelect = byId("frame"), frameDuration = byId("frame-duration"), play = byId("play");
+  const elements = new Map();
   const logicButtons = [...document.querySelectorAll("[data-chess-logic]")];
   const rgbButtons = [...document.querySelectorAll("[data-chess-rgb]")];
   const rgbScopeButtons = [...document.querySelectorAll("[data-chess-rgb-scope]")];
@@ -24,7 +30,7 @@
   const logicContext = logicCanvas.getContext("2d");
   let logicFrame = 0;
   let swatchKey = "";
-  let drag = null, pendingInput = null, saveFailed = false, scrollFrame = 0;
+  let drag = null, pendingInput = null, playTimer = null, scrollFrame = 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const integer = (value, fallback, min, max) => Number.isFinite(Number(value))
     ? clamp(Math.round(Number(value)), min, max) : fallback;
@@ -57,48 +63,64 @@
     return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers", rgbScope: "one",
       selected: 2, selectedIds: [2], boards: [makeBoard(1), second] };
   }
-  function load() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(KEY));
-      if (!saved || !Array.isArray(saved.boards)) return initialState();
-      const ids = new Set();
-      const items = saved.boards.slice(0, MAX_BOARDS);
-      const outlines = new Set(items.map(item => color(item?.outline, "").toLowerCase()).filter(Boolean));
-      const boards = items.map((item, index) => {
-        item = item && typeof item === "object" ? item : {};
-        const id = freeId(ids, integer(item.id, index + 1, 1, MAX_ID));
-        ids.add(id);
-        const outline = color(item.outline, "") || availableOutline(id, outlines);
-        outlines.add(outline.toLowerCase());
-        return {
-          id, ...(typeof item.name === "string" ? {name: item.name.slice(0, 40)} : {}),
-          outline,
-          x: integer(item.x, 2, 0, MAX_POSITION), y: integer(item.y, 2, 0, MAX_POSITION),
-          cols: integer(item.cols, 16, 1, MAX_SIZE), rows: integer(item.rows, 16, 1, MAX_SIZE),
-          aspectLocked: item.aspectLocked === true,
-          aspectCols: integer(item.aspectCols, integer(item.cols, 16, 1, MAX_SIZE), 1, MAX_SIZE),
-          aspectRows: integer(item.aspectRows, integer(item.rows, 16, 1, MAX_SIZE), 1, MAX_SIZE),
-          phase: item.phase === true, visible: item.visible !== false,
-          zero: color(item.zero, "#000000"), one: color(item.one, "#ffffff"),
-          zeroOpacity: integer(item.zeroOpacity, 100, 0, 100),
-          oneOpacity: integer(item.oneOpacity, 100, 0, 100),
-        };
-      });
-      const active = ids.has(saved.selected) ? saved.selected : boards[0]?.id ?? null;
-      const selectedIds = Array.isArray(saved.selectedIds)
-        ? [...new Set(saved.selectedIds.filter(id => ids.has(id)))] : active === null ? [] : [active];
+  function normalizeScene(saved) {
+    if (!Array.isArray(saved?.boards)) return initialState();
+    const ids = new Set();
+    const items = saved.boards.slice(0, MAX_BOARDS);
+    const outlines = new Set(items.map(item => color(item?.outline, "").toLowerCase()).filter(Boolean));
+    const boards = items.map((item, index) => {
+      item = item && typeof item === "object" ? item : {};
+      const id = freeId(ids, integer(item.id, index + 1, 1, MAX_ID));
+      ids.add(id);
+      const outline = color(item.outline, "") || availableOutline(id, outlines);
+      outlines.add(outline.toLowerCase());
       return {
-        fieldCols: saved.fieldCols == null ? null : integer(saved.fieldCols, null, 1, MAX_FIELD),
-        fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD),
-        cell: integer(saved.cell, 24, 1, 64), digits: saved.digits === true, boards,
-        logic: logicButtons.some(button => button.dataset.chessLogic === saved.logic) ? saved.logic : "layers",
-        rgbScope: saved.rgbScope === "all" ? "all" : "one",
-        selected: selectedIds.includes(active) ? active : selectedIds.at(-1) ?? null,
-        selectedIds,
+        id, ...(typeof item.name === "string" ? {name: item.name.slice(0, 40)} : {}),
+        outline,
+        x: integer(item.x, 2, 0, MAX_POSITION), y: integer(item.y, 2, 0, MAX_POSITION),
+        cols: integer(item.cols, 16, 1, MAX_SIZE), rows: integer(item.rows, 16, 1, MAX_SIZE),
+        aspectLocked: item.aspectLocked === true,
+        aspectCols: integer(item.aspectCols, integer(item.cols, 16, 1, MAX_SIZE), 1, MAX_SIZE),
+        aspectRows: integer(item.aspectRows, integer(item.rows, 16, 1, MAX_SIZE), 1, MAX_SIZE),
+        phase: item.phase === true, visible: item.visible !== false,
+        zero: color(item.zero, "#000000"), one: color(item.one, "#ffffff"),
+        zeroOpacity: integer(item.zeroOpacity, 100, 0, 100),
+        oneOpacity: integer(item.oneOpacity, 100, 0, 100),
       };
-    } catch { return initialState(); }
+    });
+    const active = ids.has(saved.selected) ? saved.selected : boards[0]?.id ?? null;
+    const selectedIds = Array.isArray(saved.selectedIds)
+      ? [...new Set(saved.selectedIds.filter(id => ids.has(id)))] : active === null ? [] : [active];
+    return {
+      fieldCols: saved.fieldCols == null ? null : integer(saved.fieldCols, null, 1, MAX_FIELD),
+      fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD),
+      cell: integer(saved.cell, 24, 1, 64), digits: saved.digits === true, boards,
+      logic: logicButtons.some(button => button.dataset.chessLogic === saved.logic) ? saved.logic : "layers",
+      rgbScope: saved.rgbScope === "all" ? "all" : "one",
+      selected: selectedIds.includes(active) ? active : selectedIds.at(-1) ?? null,
+      selectedIds,
+    };
   }
-  let state = load();
+  function readStored(key) {
+    try { return JSON.parse(localStorage.getItem(key)); }
+    catch { return null; }
+  }
+  function makeFrame(scene, duration = DEFAULT_DURATION) {
+    return {scene, duration, undo: []};
+  }
+  function loadFrames() {
+    const saved = readStored(FRAMES_KEY);
+    if (Array.isArray(saved?.frames)) {
+      const frames = saved.frames.slice(0, MAX_FRAMES).filter(frame => Array.isArray(frame?.scene?.boards))
+        .map(frame => makeFrame(normalizeScene(frame.scene),
+          integer(frame.duration ?? DEFAULT_DURATION, DEFAULT_DURATION, MIN_DURATION, MAX_DURATION)));
+      if (frames.length) return {frames, active: integer(saved.active, 0, 0, frames.length - 1)};
+    }
+    return {frames: [makeFrame(normalizeScene(readStored(LEGACY_KEY)))], active: 0};
+  }
+  const {frames, active} = loadFrames();
+  let frameIndex = active;
+  let {scene: state, undo} = frames[frameIndex];
   const snapshot = () => JSON.stringify(state);
   const selected = () => state.boards.find(board => board.id === state.selected);
   function setSelection(ids, active = ids.at(-1) ?? null) {
@@ -106,11 +128,13 @@
     state.selected = active;
   }
   function save() {
+    if (playTimer !== null) return;
+    let error = "";
     try {
-      localStorage.setItem(KEY, snapshot());
-      saveFailed = false;
-    } catch { saveFailed = true; }
-    byId("status").textContent = saveFailed ? "Не удалось сохранить в браузере. Изменения действуют до закрытия страницы." : "";
+      const saved = {active: frameIndex, frames: frames.map(({scene, duration}) => ({scene, duration}))};
+      localStorage.setItem(FRAMES_KEY, JSON.stringify(saved));
+    } catch { error = "Не удалось сохранить кадры в браузере. Изменения действуют до закрытия страницы."; }
+    byId("status").textContent = error;
   }
   function remember(before) {
     if (before !== snapshot()) {
@@ -127,7 +151,7 @@
     remember(before);
   }
   function mutate(fn) {
-    if (drag) return;
+    if (drag || playTimer !== null) return;
     finishInput();
     const before = snapshot();
     fn();
@@ -142,7 +166,7 @@
     } else setSelection([...state.selectedIds, id]);
   }
   function select(id, toggle = false) {
-    if (drag) return;
+    if (drag || playTimer !== null) return;
     finishInput();
     choose(id, toggle);
     save();
@@ -550,7 +574,7 @@
       ? "Выберите шахматку, для которой есть место и возможен размер +1×1. Максимум 16 шахматок."
       : "Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше";
     byId("undo").disabled = !undo.length;
-    for (const input of document.querySelectorAll(".chess-controls input")) input.disabled = drag?.kind === "field";
+    for (const input of controls.querySelectorAll("input")) input.disabled = drag?.kind === "field" || playTimer !== null;
     if (!board) { window.BitByteNumberControls?.sync(); return; }
     for (const key of ["cols", "rows", "x", "y", "outline", "zero", "one"]) byId(key).value = board[key];
     byId("zero-opacity").value = board.zeroOpacity;
@@ -560,10 +584,126 @@
     window.BitByteNumberControls?.sync();
   }
   function render() { renderScene(); renderControls(); }
+  function renderFrameControls() {
+    const playing = playTimer !== null;
+    if (frameSelect.options.length !== frames.length) {
+      frameSelect.replaceChildren(...frames.map((_, index) => new Option(
+        (index + 1) + " / " + frames.length, String(index))));
+    }
+    frameSelect.value = String(frameIndex);
+    frameDuration.value = frames[frameIndex].duration;
+    frameSelect.disabled = frameDuration.disabled = playing;
+    byId("frame-copy").disabled = playing || frames.length >= MAX_FRAMES;
+    byId("frame-copy").title = frames.length >= MAX_FRAMES
+      ? "Достигнут предел: " + MAX_FRAMES + " кадров"
+      : "Вставить копию выбранного кадра после него";
+    byId("frame-remove").disabled = playing || frames.length === 1;
+    byId("frame-earlier").disabled = playing || frameIndex === 0;
+    byId("frame-later").disabled = playing || frameIndex === frames.length - 1;
+    play.disabled = frames.length < 2;
+  }
+  function showFrame(index) {
+    frameIndex = index;
+    ({scene: state, undo} = frames[frameIndex]);
+    render();
+    renderFrameControls();
+  }
+  function finishSceneEdits() {
+    window.BitByteNumberControls?.finish?.();
+    finishInput();
+    commitFrameDuration();
+  }
+  function commitFrameDuration() {
+    if (playTimer !== null) return;
+    const frame = frames[frameIndex];
+    const duration = integer(frameDuration.valueAsNumber, frame.duration, MIN_DURATION, MAX_DURATION);
+    frameDuration.value = duration;
+    if (frame.duration === duration) return;
+    frame.duration = duration;
+    save();
+  }
+  frameDuration.addEventListener("change", commitFrameDuration);
+  frameDuration.addEventListener("blur", commitFrameDuration);
+  frameSelect.addEventListener("change", () => {
+    const index = Number(frameSelect.value);
+    if (drag || playTimer !== null) {
+      frameSelect.value = String(frameIndex);
+      return;
+    }
+    finishSceneEdits();
+    showFrame(index);
+    save();
+  });
+  byId("frame-copy").addEventListener("click", () => {
+    if (drag || playTimer !== null || frames.length >= MAX_FRAMES) return;
+    finishSceneEdits();
+    frames.splice(frameIndex + 1, 0, makeFrame(JSON.parse(snapshot()), frames[frameIndex].duration));
+    showFrame(frameIndex + 1);
+    save();
+  });
+  byId("frame-remove").addEventListener("click", () => {
+    if (drag || playTimer !== null || frames.length === 1) return;
+    if (!window.confirm("Удалить кадр " + (frameIndex + 1) + "?")) return;
+    finishSceneEdits();
+    frames.splice(frameIndex, 1);
+    showFrame(Math.min(frameIndex, frames.length - 1));
+    frameSelect.focus({preventScroll: true});
+    save();
+  });
+  for (const [id, delta] of [["frame-earlier", -1], ["frame-later", 1]]) {
+    const button = byId(id);
+    button.addEventListener("click", () => {
+      const index = frameIndex + delta;
+      if (drag || playTimer !== null || !frames[index]) return;
+      finishSceneEdits();
+      [frames[frameIndex], frames[index]] = [frames[index], frames[frameIndex]];
+      showFrame(index);
+      if (button.disabled) frameSelect.focus({preventScroll: true});
+      save();
+    });
+  }
+  function scheduleFrame() {
+    playTimer = setTimeout(() => {
+      showFrame((frameIndex + 1) % frames.length);
+      scheduleFrame();
+    }, frames[frameIndex].duration);
+  }
+  function renderPlayback() {
+    const playing = playTimer !== null;
+    controls.inert = viewport.inert = playing;
+    viewport.toggleAttribute("data-playing", playing);
+    play.setAttribute("aria-pressed", String(playing));
+    play.title = playing ? "Пауза на текущем кадре" : "Воспроизвести кадры по кругу с выбранного кадра";
+    play.querySelector(".gz-ic").textContent = playing ? "Ⅱ" : "▶";
+    play.querySelector(".gz-nm").textContent = playing ? "Пауза" : "Плейъ";
+    renderControls();
+    renderFrameControls();
+  }
+  function pausePlayback() {
+    if (playTimer === null) return;
+    clearTimeout(playTimer);
+    playTimer = null;
+    renderPlayback();
+    save();
+  }
+  play.addEventListener("click", () => {
+    if (playTimer !== null) {
+      pausePlayback();
+      return;
+    }
+    if (drag || frames.length < 2) return;
+    finishSceneEdits();
+    scheduleFrame();
+    renderPlayback();
+  });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) pausePlayback(); });
+  new MutationObserver(() => { if (editor.hidden) pausePlayback(); })
+    .observe(editor, {attributes: true, attributeFilter: ["hidden"]});
+
   function bindInput(id, update) {
     const input = byId(id);
     input.addEventListener("input", () => {
-      if (drag) return;
+      if (drag || playTimer !== null) return;
       if (input.type === "number" && (!input.value || !Number.isFinite(input.valueAsNumber))) return;
       if (pendingInput === null) pendingInput = snapshot();
       update(input.value);
@@ -678,10 +818,10 @@
   }
   byId("remove").addEventListener("click", removeSelected);
   byId("undo").addEventListener("click", () => {
-    if (drag) return;
+    if (drag || playTimer !== null) return;
     finishInput();
     if (!undo.length) return;
-    state = JSON.parse(undo.pop());
+    Object.assign(state, JSON.parse(undo.pop()));
     save(); render();
   });
   byId("phase").addEventListener("click", () => mutate(() => { const board = selected(); if (board) board.phase = !board.phase; }));
@@ -907,7 +1047,7 @@
     const finished = drag;
     drag = null;
     if (event.type !== "pointerup") {
-      state = JSON.parse(finished.before);
+      Object.assign(state, JSON.parse(finished.before));
       if (finished.blocked) save();
     } else if (finished.moved) {
       if (!finished.blocked) {
@@ -974,7 +1114,7 @@
     const finished = drag;
     drag = null;
     if (event.type === "pointerup") remember(finished.before);
-    else state = JSON.parse(finished.before);
+    else Object.assign(state, JSON.parse(finished.before));
     viewport.removeAttribute("data-field-resizing");
     if (viewport.hasPointerCapture(finished.pointer)) viewport.releasePointerCapture(finished.pointer);
     render();
@@ -983,8 +1123,8 @@
   window.addEventListener("keydown", event => {
     if (event.key === "Delete") {
       const target = event.target;
-      if (drag || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey ||
-          target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])") ||
+      if (drag || playTimer !== null || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey ||
+          target.closest("#chess-timeline, input, textarea, select, [contenteditable]:not([contenteditable='false'])") ||
           !target.closest("#boards-editor") || !state.selectedIds.length) return;
       event.preventDefault();
       removeSelected();
@@ -1000,7 +1140,13 @@
   // Измеряем прежнюю область только при первом видимом открытии. После миграции
   // размер явный; наблюдатель больше ничего не перерисовывает и не зацикливается.
   new ResizeObserver(() => { if (initializeField()) render(); }).observe(viewport);
-  window.addEventListener("pagehide", event => { finishFieldResize(event); finishDrag(event); finishInput(); save(); });
+  window.addEventListener("pagehide", event => {
+    finishFieldResize(event);
+    finishDrag(event);
+    finishSceneEdits();
+    pausePlayback();
+  });
   window.BitByteChessSearch = {refresh: render};
   render();
+  renderFrameControls();
 })();
