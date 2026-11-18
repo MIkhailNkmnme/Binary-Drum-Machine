@@ -1,0 +1,58 @@
+<!doctype html>
+<!-- ДЮД-001 · v0.001 -->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Разрезание Дьюдени: четыре жёсткие части, плоская сборка квадрата и пространственный возврат с четырьмя шарнирами.">
+  <title>Разрезание Дьюдени · Зеркалиус v0.001</title>
+  <link rel="stylesheet" href="../../_js/grozd.css">
+  <link rel="stylesheet" href="style.css?v=001">
+  <script type="module" src="app.js?v=001"></script>
+</head>
+<body>
+  <main>
+    <nav aria-label="Разделы Зеркалиуса">
+      <a href="../../index.html">Хаб</a>
+      <a href="../Zerkalius-issledovanie.html">Исследования</a>
+    </nav>
+    <header>
+      <h1>Из треугольника в квадрат</h1>
+      <p>Разрезание Дьюдени из четырёх частей</p>
+    </header>
+
+    <section class="experiment" aria-label="Интерактивная развёртка Дьюдени">
+      <svg id="stage" role="img" tabindex="0" aria-label="Четыре части разрезания. Перетаскивание и клавиши-стрелки вращают вид. Home восстанавливает вид." viewBox="-1.65 -1.3 3.3 2.6">
+        <title>Шарнирное разрезание Дьюдени</title>
+        <g id="pieces"></g>
+        <g id="joints" aria-hidden="true"></g>
+      </svg>
+      <div class="transport">
+        <div class="state">
+          <p id="phase" aria-live="polite">Треугольник</p>
+          <p id="connections">Шарниры замкнуты · 4 из 4</p>
+        </div>
+        <label class="timeline" for="cycle">
+          <span>Треугольник</span><span>Квадрат</span><span>Треугольник</span>
+          <input id="cycle" type="range" min="0" max="2" step="0.001" value="0" aria-label="Положение в цикле" aria-valuetext="Треугольник" title="Перемотать цикл">
+        </label>
+        <div class="commands" role="group" aria-label="Управление развёрткой">
+          <button id="play" class="gz-hx" type="button" aria-pressed="false" aria-label="Воспроизведение цикла" title="Воспроизвести цикл"><span class="gz-ic" aria-hidden="true">▶</span><span class="gz-nm">Плейъ</span></button>
+          <button id="triangle" class="gz-hx" type="button" aria-label="Показать треугольник" title="Показать исходный треугольник"><span class="gz-ic" aria-hidden="true">△</span><span class="gz-nm">Треуг.</span></button>
+          <button id="square" class="gz-hx" type="button" aria-label="Показать квадрат" title="Показать собранный квадрат"><span class="gz-ic" aria-hidden="true">□</span><span class="gz-nm">Квдратъ</span></button>
+          <button id="camera" class="gz-hx" type="button" aria-label="Восстановить автоматический ракурс" title="Восстановить автоматический ракурс"><span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Ркурсъ</span></button>
+        </div>
+        <p class="hint" id="camera-hint">Перетащите фигуру, чтобы повернуть вид.</p>
+        <noscript><p>Для движения фигур нужен JavaScript.</p></noscript>
+      </div>
+    </section>
+
+    <section class="sources" aria-labelledby="motion-title">
+      <h2 id="motion-title">Как устроен цикл</h2>
+      <p>В плоскости три шарнира связывают четыре части. Крайние углы встречаются в треугольнике и квадрате. На обратном пути части поворачиваются в пространстве, и все четыре шарнира остаются замкнутыми.</p>
+      <p>В квадрате наружные стороны треугольника переходят во внутренние швы, а линии разреза образуют внешний контур. Для многоугольных частей, которые собирают без переворачивания, четырёх частей достаточно и меньше быть не может. <a href="https://doi.org/10.4230/LIPIcs.ITCS.2026.47">Доказательство Демейна, Каматы и Уэхары</a>.</p>
+      <p class="credit">Геометрия задачи Генри Дьюдени. Пространственный ход по <a href="https://community.wolfram.com/t/triangle-inside-out-is-square-looped-2d-3d-transform-for-optimal-dudeney-s-dissection/28274">разбору Виталия Каурова</a>. <span>v0.001</span></p>
+    </section>
+  </main>
+</body>
+</html>
