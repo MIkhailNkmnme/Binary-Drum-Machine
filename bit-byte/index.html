@@ -1,26 +1,26 @@
-<!-- Bit-Byte v0.025 · Редактируемые кадры шахматок и воспроизведение. -->
+<!-- Bit-Byte v0.026 · Независимые кадры шахматок и совпадающие координаты во вкладке «Бит». -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.025 — Зеркалиус</title>
+  <title>Bit-Byte v0.026 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=025">
+  <link rel="stylesheet" href="style.css?v=026">
   <link rel="stylesheet" href="byte-clicks.css?v=018">
   <link rel="stylesheet" href="../_js/control-frame.css?v=2">
   <link rel="stylesheet" href="number-controls.css?v=017">
   <link rel="stylesheet" href="rgb-controls.css?v=017">
   <link rel="stylesheet" href="rectangular-controls.css?v=020">
 
-  <script defer src="app.js?v=019"></script>
+  <script defer src="app.js?v=026"></script>
   <script defer src="fonts/operator-digits.js?v=017"></script>
   <script defer src="../mayatnik/mayatnik-ochki-method.js?v=bit-byte-024"></script>
   <script defer src="../mayatnik/mayatnik-sequences.js?v=bit-byte-024"></script>
   <script defer src="../mayatnik/mayatnik-search-frame-store.js?v=bit-byte-024"></script>
   <script defer src="diagonal-search.js?v=024"></script>
   <script defer src="diagonals.js?v=024"></script>
-  <script defer src="chessboards.js?v=025"></script>
+  <script defer src="chessboards.js?v=026"></script>
   <script defer src="../_js/control-frame.js?v=2"></script>
   <script defer src="number-controls.js?v=025"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
@@ -28,7 +28,7 @@
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.025</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.026</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -46,7 +46,7 @@
     <section id="boards-editor" class="editor-panel" data-unit="boards" role="tabpanel" aria-labelledby="tab-boards" hidden>
       <div class="chess-workspace">
         <aside class="panel chess-controls" aria-label="Управление шахматками">
-          <h2>Шахматки</h2>
+          <h2>Шахматки <small id="chess-editing-frame"></small></h2>
           <div id="chess-list" class="chess-swatches" role="group" aria-label="Выбор шахматок по цвету обводки" title="Слои от нижнего к верхнему. Shift+щелчок добавляет или убирает шахматку из выделения; Ctrl+щелчок также доступен. Delete удаляет выделенные шахматки."></div>
           <p id="chess-selection-info" class="hint" role="status"></p>
           <div class="commands">
@@ -117,9 +117,12 @@
             <button id="chess-play" class="gz-hx" type="button" aria-pressed="false" aria-label="Плей по кадрам" title="Воспроизвести кадры по кругу с выбранного кадра"><span class="gz-ic" aria-hidden="true">▶</span><span class="gz-nm">Плейъ</span></button>
             <button id="chess-frame-copy" class="gz-hx" type="button" title="Вставить копию выбранного кадра после него"><span class="gz-ic" aria-hidden="true">+</span><span class="gz-nm">Дубль</span></button>
             <button id="chess-frame-remove" class="gz-hx" type="button" aria-label="Удалить текущий кадр" title="Удалить текущий кадр"><span class="gz-ic" aria-hidden="true">×</span><span class="gz-nm">Снять</span></button>
-            <div class="gz-hx gz-pair gz-split axis-pair" role="group" aria-label="Переставить текущий кадр">
-              <button id="chess-frame-earlier" class="gz-half gz-h0" type="button" aria-label="Переместить кадр на одну позицию раньше" title="Переместить кадр на одну позицию раньше"><span class="gz-ic" aria-hidden="true">◀</span><span class="gz-nm">−1</span></button>
-              <button id="chess-frame-later" class="gz-half gz-h1" type="button" aria-label="Переместить кадр на одну позицию позже" title="Переместить кадр на одну позицию позже"><span class="gz-ic" aria-hidden="true">▶</span><span class="gz-nm">+1</span></button>
+            <div class="chess-frame-order">
+              <span>Порядок</span>
+              <div class="gz-hx gz-pair gz-split axis-pair" role="group" aria-label="Переставить текущий кадр">
+                <button id="chess-frame-earlier" class="gz-half gz-h0" type="button" aria-label="Переместить кадр на одну позицию раньше" title="Переместить кадр на одну позицию раньше"><span class="gz-ic" aria-hidden="true">◀</span><span class="gz-nm">−1</span></button>
+                <button id="chess-frame-later" class="gz-half gz-h1" type="button" aria-label="Переместить кадр на одну позицию позже" title="Переместить кадр на одну позицию позже"><span class="gz-ic" aria-hidden="true">▶</span><span class="gz-nm">+1</span></button>
+              </div>
             </div>
           </div>
           <p id="chess-status" class="hint" role="status"></p>
@@ -192,7 +195,6 @@
         </div>
         <p class="hint legend"><span id="unit-description">Строки — старшие 4 бита; столбцы — младшие 4 бита.</span> <span aria-hidden="true">╱</span> <span id="unit-legend">Исключённый байт.</span></p>
         <p id="field-count" class="hint" hidden></p>
-        <p id="field-rule" class="hint" hidden>Деление слова поровну между осями применимо к 8, 4 и 2 битам. Для 1 бита здесь показан цвет клеток шахматки, а не две половины слова.</p>
         <section class="panel sequence-panel" aria-label="Сквозная строка оставшихся битов">
           <div class="sequence-head">
             <h2><label id="sequence-label" for="remaining-sequence">Сквозная</label></h2>

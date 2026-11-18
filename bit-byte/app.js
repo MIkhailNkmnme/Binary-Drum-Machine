@@ -20,7 +20,7 @@
     const BIT_COUNT = config.bits;
     const CHECKERBOARD = config.layout === "checkerboard";
     // Для таблицы слов обе оси получают ровно половину разрядов, без округления.
-    // Однобитная шахматка — отдельная схема цвета, а не разбиение слова.
+    // В однобитной шахматке значение есть только при совпадении координат.
     if ((!CHECKERBOARD && BIT_COUNT % 2 !== 0) || (CHECKERBOARD && BIT_COUNT !== 1)) {
       throw new Error("Равное разбиение слова требует чётного числа битов.");
     }
@@ -49,7 +49,8 @@
     });
     const positions = Array.from({ length: ROW_COUNT * COLUMN_COUNT }, (_, index) => {
       const row = Math.floor(index / COLUMN_COUNT), column = index % COLUMN_COUNT;
-      return { index, row, column, value: CHECKERBOARD ? row ^ column : index };
+      const value = CHECKERBOARD ? (row === column ? row : null) : index;
+      return { index, row, column, value };
     });
 
     const byId = id => host.querySelector(`[data-key="${id}"]`);
@@ -70,7 +71,7 @@
     const stateClasses = ["remaining", "removed"];
 
     const axisDescription = CHECKERBOARD
-      ? "Шахматка 2×2: цвет клетки — XOR координат. 0 — чёрный, 1 — белый. Два значения повторены по два раза."
+      ? "Шахматка 2×2: (0, 0) — чёрный 0, (1, 1) — белая 1. Клетки (0, 1) и (1, 0) пустые."
       : ROW_BITS === 1
         ? "Строки — старший бит; столбцы — младший бит."
         : `Строки — старшие ${ROW_BITS} бита; столбцы — младшие ${COLUMN_BITS} бита.`;
@@ -84,13 +85,11 @@
     byId("byte-windows-title").textContent = `${UNIT}ы в сквозной`;
     sequence.placeholder = `Все ${NOUN}ы исключены`;
     if (CHECKERBOARD) {
-      byId("unit-legend").textContent = "Одинаковые значения исключаются вместе. В расчётах каждое состояние учитывается один раз.";
       byId("sequence-label").textContent = "Сквозная состояний";
       byId("summary-heading").textContent = "Итоги по различным значениям";
       byId("rows").closest(".panel").hidden = true;
       byId("columns").closest(".panel").hidden = true;
       byId("field-count").hidden = false;
-      byId("field-rule").hidden = false;
     }
     for (const [id, text] of [["restore", `Вернуть все ${NOUN}ы`], ["exclude", `Исключить ${NOUN}ы из списка`]]) {
       byId(id).title = text;
@@ -106,7 +105,7 @@
     let cyclic = loadCyclic();
     let previous = null;
     let tabbable = 0;
-    const buttons = buildField();
+    const {cells, buttons} = buildField();
     const fieldRows = Array.from(field.tBodies[0].rows);
     const columnHeaders = Array.from(field.tHead.rows[0].cells).slice(1);
 
@@ -185,18 +184,26 @@
 
     function buildField() {
       const header = field.createTHead().insertRow();
-      heading(header, CHECKERBOARD ? "⊕" : "×", "col").title = CHECKERBOARD ? "Цвет клетки = строка XOR столбец" : "Строка × столбец";
+      heading(header, CHECKERBOARD ? "=" : "×", "col").title = CHECKERBOARD ? "Клетка содержит бит, когда координаты равны" : "Строка × столбец";
       for (let column = 0; column < COLUMN_COUNT; column += 1) {
         axisHeading(header, column, "col");
       }
 
       const body = field.createTBody();
       const cells = [];
+      const buttons = new Map();
       for (let rowIndex = 0; rowIndex < ROW_COUNT; rowIndex += 1) {
         const row = body.insertRow();
         axisHeading(row, rowIndex, "row");
         for (let column = 0; column < COLUMN_COUNT; column += 1) {
           const position = positions[rowIndex * COLUMN_COUNT + column];
+          const slot = row.insertCell();
+          cells.push(slot);
+          if (position.value === null) {
+            slot.className = "bit-empty";
+            slot.setAttribute("aria-label", "Пустая клетка");
+            continue;
+          }
           const byte = bytes[position.value];
           const button = document.createElement("button");
           const code = hex(byte.value, Math.ceil(BIT_COUNT / 4));
@@ -209,7 +216,7 @@
           button.dataset.index = position.index;
           button.dataset.value = byte.value;
           button.setAttribute("aria-label", CHECKERBOARD
-            ? `Строка ${rowIndex}, столбец ${column}: ${byte.value}. Исключить или вернуть обе клетки со значением ${byte.value}`
+            ? `Строка ${rowIndex}, столбец ${column}: ${byte.value}. Исключить или вернуть бит ${byte.value}`
             : `Исключение ${NOUN}а ${byte.bits.join("")}, десятичное ${byte.value}, 0x${code}`);
 
           bits.className = "bits";
@@ -222,11 +229,11 @@
           meta.className = "byte-code";
           meta.textContent = `${byte.value} · ${code}`;
           button.append(bits, meta);
-          row.insertCell().append(button);
-          cells.push(button);
+          slot.append(button);
+          buttons.set(position.index, button);
         }
       }
-      return cells;
+      return {cells, buttons};
     }
 
     function axisHeading(row, value, scope) {
@@ -257,8 +264,8 @@
     }
 
     function setTabbable(index) {
-      buttons[tabbable].tabIndex = -1;
-      buttons[index].tabIndex = 0;
+      buttons.get(tabbable).tabIndex = -1;
+      buttons.get(index).tabIndex = 0;
       tabbable = index;
     }
 
@@ -273,7 +280,9 @@
       const index = shiftedPosition(Number(button.dataset.index), event.key);
       if (index === null) return;
       event.preventDefault();
-      buttons[index].focus();
+      // Если стрелка ведёт в пустую позицию, переносим фокус к другому биту.
+      const next = buttons.get(index) ?? [...buttons.values()].find(candidate => candidate !== button);
+      next?.focus();
     });
 
     function toggleWord(button, rightClick = false) {
@@ -472,7 +481,7 @@
 
     function render(announce = false) {
       clearListResult();
-      for (const button of buttons) {
+      for (const button of buttons.values()) {
         const value = Number(button.dataset.value);
         const pressed = String(excluded.has(value));
         button.toggleAttribute("data-right-excluded", excluded.has(value) && rightExcluded.has(value));
@@ -490,8 +499,7 @@
         group.total.bytes - group.positions[index],
       ]));
       if (CHECKERBOARD) {
-        const zeroCells = excluded.has(0) ? 0 : 2, oneCells = excluded.has(1) ? 0 : 2;
-        byId("field-count").textContent = `Активных клеток: ${zeroCells + oneCells} из 4 · чёрных 0: ${zeroCells} · белых 1: ${oneCells}. Различных значений: ${stats[0].total.bytes}.`;
+        byId("field-count").textContent = `Активных битов: ${stats[0].total.bytes} из 2 · пустых клеток: 2.`;
       }
 
       restore.disabled = excluded.size === 0;
@@ -509,7 +517,7 @@
       field.tHead.rows[0].append(...columns.map(index => columnHeaders[index]));
       for (const rowIndex of rows) {
         const row = fieldRows[rowIndex];
-        row.append(...columns.map(column => buttons[rowIndex * COLUMN_COUNT + column].parentElement));
+        row.append(...columns.map(column => cells[rowIndex * COLUMN_COUNT + column]));
         field.tBodies[0].append(row);
       }
       byId("rows").append(...rows.map(index => axisRows[index][0].parentElement));
@@ -525,12 +533,10 @@
 
     function updateSequence() {
       const words = [];
-      const seen = new Set();
       for (const row of axisOrder(layout.vertical, ROW_COUNT)) {
         for (const column of axisOrder(layout.horizontal, COLUMN_COUNT)) {
           const value = positions[row * COLUMN_COUNT + column].value;
-          if (excluded.has(value) || seen.has(value)) continue;
-          seen.add(value);
+          if (value === null || excluded.has(value)) continue;
           words.push(bytes[value].bits.join(""));
         }
       }

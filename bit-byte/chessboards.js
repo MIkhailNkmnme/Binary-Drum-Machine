@@ -120,14 +120,14 @@
   }
   const {frames, active} = loadFrames();
   let frameIndex = active;
-  let {scene: state, undo} = frames[frameIndex];
+  let state = structuredClone(frames[frameIndex].scene);
   const snapshot = () => JSON.stringify(state);
   const selected = () => state.boards.find(board => board.id === state.selected);
   function setSelection(ids, active = ids.at(-1) ?? null) {
     state.selectedIds = ids;
     state.selected = active;
   }
-  function save() {
+  function saveFrames() {
     if (playTimer !== null) return;
     let error = "";
     try {
@@ -136,11 +136,17 @@
     } catch { error = "Не удалось сохранить кадры в браузере. Изменения действуют до закрытия страницы."; }
     byId("status").textContent = error;
   }
+  function saveScene(scene = snapshot()) {
+    frames[frameIndex].scene = JSON.parse(scene);
+    saveFrames();
+  }
   function remember(before) {
-    if (before !== snapshot()) {
+    const undo = frames[frameIndex].undo;
+    const after = snapshot();
+    if (before !== after) {
       undo.push(before);
       if (undo.length > 40) undo.shift();
-      save();
+      saveScene(after);
     }
     byId("undo").disabled = undo.length === 0;
   }
@@ -169,7 +175,7 @@
     if (drag || playTimer !== null) return;
     finishInput();
     choose(id, toggle);
-    save();
+    saveScene();
     render();
   }
   function digitInk(hex) {
@@ -209,7 +215,7 @@
       ...visible.map(board => board.x + board.cols + 2)), 1, MAX_FIELD);
     state.fieldRows ??= clamp(Math.max(Math.ceil(Math.max(480, viewport.clientHeight) / state.cell),
       ...visible.map(board => board.y + board.rows + 2)), 1, MAX_FIELD);
-    save();
+    saveScene();
     return true;
   }
   function growField(boards, growWidth = false) {
@@ -573,7 +579,7 @@
     diagonal.title = diagonal.disabled
       ? "Выберите шахматку, для которой есть место и возможен размер +1×1. Максимум 16 шахматок."
       : "Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше";
-    byId("undo").disabled = !undo.length;
+    byId("undo").disabled = !frames[frameIndex].undo.length;
     for (const input of controls.querySelectorAll("input")) input.disabled = drag?.kind === "field" || playTimer !== null;
     if (!board) { window.BitByteNumberControls?.sync(); return; }
     for (const key of ["cols", "rows", "x", "y", "outline", "zero", "one"]) byId(key).value = board[key];
@@ -591,6 +597,7 @@
         (index + 1) + " / " + frames.length, String(index))));
     }
     frameSelect.value = String(frameIndex);
+    byId("editing-frame").textContent = "Кадр " + (frameIndex + 1);
     frameDuration.value = frames[frameIndex].duration;
     frameSelect.disabled = frameDuration.disabled = playing;
     byId("frame-copy").disabled = playing || frames.length >= MAX_FRAMES;
@@ -604,11 +611,15 @@
   }
   function showFrame(index) {
     frameIndex = index;
-    ({scene: state, undo} = frames[frameIndex]);
+    state = structuredClone(frames[frameIndex].scene);
+    if (state.fieldCols === null) viewport.style.width = "";
+    if (state.fieldRows === null) viewport.style.height = "";
     render();
     renderFrameControls();
   }
   function finishSceneEdits() {
+    const focused = document.activeElement;
+    if (controls.contains(focused) && focused.matches("input")) focused.blur();
     window.BitByteNumberControls?.finish?.();
     finishInput();
     commitFrameDuration();
@@ -620,7 +631,7 @@
     frameDuration.value = duration;
     if (frame.duration === duration) return;
     frame.duration = duration;
-    save();
+    saveFrames();
   }
   frameDuration.addEventListener("change", commitFrameDuration);
   frameDuration.addEventListener("blur", commitFrameDuration);
@@ -632,14 +643,15 @@
     }
     finishSceneEdits();
     showFrame(index);
-    save();
+    saveFrames();
   });
   byId("frame-copy").addEventListener("click", () => {
     if (drag || playTimer !== null || frames.length >= MAX_FRAMES) return;
     finishSceneEdits();
-    frames.splice(frameIndex + 1, 0, makeFrame(JSON.parse(snapshot()), frames[frameIndex].duration));
+    const frame = frames[frameIndex];
+    frames.splice(frameIndex + 1, 0, makeFrame(structuredClone(frame.scene), frame.duration));
     showFrame(frameIndex + 1);
-    save();
+    saveFrames();
   });
   byId("frame-remove").addEventListener("click", () => {
     if (drag || playTimer !== null || frames.length === 1) return;
@@ -648,7 +660,7 @@
     frames.splice(frameIndex, 1);
     showFrame(Math.min(frameIndex, frames.length - 1));
     frameSelect.focus({preventScroll: true});
-    save();
+    saveFrames();
   });
   for (const [id, delta] of [["frame-earlier", -1], ["frame-later", 1]]) {
     const button = byId(id);
@@ -659,7 +671,7 @@
       [frames[frameIndex], frames[index]] = [frames[index], frames[frameIndex]];
       showFrame(index);
       if (button.disabled) frameSelect.focus({preventScroll: true});
-      save();
+      saveFrames();
     });
   }
   function scheduleFrame() {
@@ -684,7 +696,7 @@
     clearTimeout(playTimer);
     playTimer = null;
     renderPlayback();
-    save();
+    saveFrames();
   }
   play.addEventListener("click", () => {
     if (playTimer !== null) {
@@ -820,9 +832,11 @@
   byId("undo").addEventListener("click", () => {
     if (drag || playTimer !== null) return;
     finishInput();
+    const undo = frames[frameIndex].undo;
     if (!undo.length) return;
-    Object.assign(state, JSON.parse(undo.pop()));
-    save(); render();
+    state = JSON.parse(undo.pop());
+    saveScene();
+    render();
   });
   byId("phase").addEventListener("click", () => mutate(() => { const board = selected(); if (board) board.phase = !board.phase; }));
   byId("aspect-lock").addEventListener("click", () => mutate(() => {
@@ -1047,18 +1061,17 @@
     const finished = drag;
     drag = null;
     if (event.type !== "pointerup") {
-      Object.assign(state, JSON.parse(finished.before));
-      if (finished.blocked) save();
+      state = JSON.parse(finished.before);
     } else if (finished.moved) {
       if (!finished.blocked) {
         const changed = finished.copy || finished.origins.some(({board, x, y, cols, rows}) =>
           board.x !== x || board.y !== y || board.cols !== cols || board.rows !== rows);
         if (changed || state.fieldRows !== finished.fieldRows) remember(finished.before);
-        else save();
+        else saveScene();
       }
     } else {
       choose(finished.activeId, finished.modified);
-      save();
+      saveScene();
     }
     if (world.hasPointerCapture(finished.pointer)) world.releasePointerCapture(finished.pointer);
     world.style.removeProperty("--chess-cursor");
@@ -1114,7 +1127,7 @@
     const finished = drag;
     drag = null;
     if (event.type === "pointerup") remember(finished.before);
-    else Object.assign(state, JSON.parse(finished.before));
+    else state = JSON.parse(finished.before);
     viewport.removeAttribute("data-field-resizing");
     if (viewport.hasPointerCapture(finished.pointer)) viewport.releasePointerCapture(finished.pointer);
     render();

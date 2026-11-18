@@ -88,7 +88,8 @@ h1 { color: var(--cyan); font-size: 26px; }
 .chess-controls output { color: var(--text); }
 .chess-scene-panel { min-width: 0; }
 .commands.chess-timeline { align-items: center; margin-top: 10px; gap: 4px 6px; }
-.chess-timeline label { display: flex; gap: 4px; align-items: center; color: var(--muted); font-size: 12px; }
+.chess-timeline label, .chess-frame-order { display: flex; gap: 4px; align-items: center; color: var(--muted); font-size: 12px; }
+#chess-editing-frame { margin-inline-start: 4px; color: var(--muted); font-size: 12px; font-weight: normal; }
 .chess-timeline :is(input, select) { height: 24px; min-width: 0; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); }
 #chess-frame-duration { width: 8ch; }
 #chess-status:empty { display: none; }
@@ -183,7 +184,8 @@ h1 { color: var(--cyan); font-size: 26px; }
 .editor-panel[data-unit="bit"] .bit-one { color: inherit; }
 .editor-panel[data-unit="bit"] .byte-code { display: none; }
 .editor-panel[data-unit="bit"] .byte[aria-pressed="true"] { opacity: .4; }
-[data-key="field-count"], [data-key="field-rule"] { margin-top: 6px; }
+.bit-empty { border: 1px solid var(--line); background: var(--bg); }
+[data-key="field-count"] { margin-top: 6px; }
 .axis-hex, .axis-bits { display: block; line-height: 1.3; }
 .axis-bits { color: var(--cyan); font-size: 9px; white-space: nowrap; }
 
