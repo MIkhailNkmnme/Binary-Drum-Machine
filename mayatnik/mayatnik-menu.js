@@ -1079,6 +1079,13 @@
   animatrixHost.className='may-animatrix-controls';gAnimatrix.append(animatrixHost);
   const animatrixControls=window.MayatnikAnimatrixControls?.mount({host:animatrixHost,api:()=>window.mayAnimatrix,
     after:()=>{rail.refresh();placeTools();window.mayButtonStandardRefresh?.();}});
+  if(window.MayatnikWolfram){
+    const row=ptGroup('Вольфрам');row.parentElement.dataset.k='Вольфрам';
+    row.parentElement.style.setProperty('--c','#96b8ee');
+    const controls=MayatnikWolfram.mount({host:row,api:()=>window.mayWolfram,
+      after:()=>{rail.refresh();placeTools();window.mayButtonStandardRefresh?.();}});
+    toolSync.push(controls.sync);
+  }
   const gEdit = ptGroup('Очистка'), gAxis = ptGroup('Оси'),gHistory=ptGroup('Правка'), gMeet = ptGroup('Точка Ось');   // v0.318: «отдельная кнопка Точка Ось меню — туда все её кнопки и заливки»
   gHistory.parentElement.classList.add('pt-history');
   for (const id of ['bPaintMeet','bPaintAxis','bThirds','bTriTop']) groupOf[id] = gMeet;

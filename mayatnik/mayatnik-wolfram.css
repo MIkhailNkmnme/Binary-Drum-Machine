@@ -1,0 +1,11 @@
+/* Standard group/button surfaces and outlines come from the shared menu. */
+.may-wolfram-controls{display:flex;flex-direction:column;align-items:stretch;gap:2px;width:120px}
+.may-wolfram-controls>.gz-hx{box-sizing:border-box;width:120px;height:24px;min-height:24px;margin:0;flex:none}
+.may-wolfram-number,.may-wolfram-colour{display:flex!important;align-items:center;justify-content:center;gap:5px;padding:0 12px;cursor:pointer;user-select:none}
+.may-wolfram-number input{box-sizing:border-box;width:45px;height:20px;min-width:0;padding:0 2px;border:0;background:transparent;color:inherit;text-align:center;font:inherit;user-select:text}
+.may-wolfram-colour input{box-sizing:border-box;width:34px;height:18px;padding:0;border:0;background:transparent;cursor:pointer}
+.may-wolfram-colour input::-webkit-color-swatch-wrapper{padding:1px}
+.may-wolfram-colour input::-webkit-color-swatch{border:1px solid #7d8a99}
+.may-wolfram-transition .gz-nm{font-family:Consolas,monospace;letter-spacing:1px}
+.may-wolfram-notice{box-sizing:border-box;width:120px;padding:4px 7px;font-size:11px;line-height:1.3;white-space:normal;color:#ffd19c}
+.may-wolfram-notice[hidden]{display:none}

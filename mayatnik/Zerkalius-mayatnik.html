@@ -1,3 +1,4 @@
+<!-- ВЛФ-009 · v1.035: Вольфрам — три верхних бита выбирают цвет клетки, без изменения поля. Проверки пользователем. -->
 <!-- ИСС-117 · v1.034: видимый YouTube-плеер KOBTRAX, отдельный от транспорта поля. Проверки пользователем. -->
 <!-- АУДИТ-002 · v1.032: восстановлена загрузка скрипта групп шаблонов. -->
 <!-- МАЯ-683 · v1.031. Перемещение шаблонов без повторных полных копий растра; группы по обеим сторонам. Проверки пользователем. -->
@@ -76,7 +77,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятнкъ — v1.034</title>
+<title>Zerkalius Маятнкъ — v1.035</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -227,7 +228,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.034</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.035</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -557,6 +558,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <link rel="stylesheet" href="mayatnik-music-panel.css?v=881">
 <script src="mayatnik-xorrom-faders.js?v=882"></script>
 <link rel="stylesheet" href="mayatnik-xorrom-faders.css?v=873">
+<link rel="stylesheet" href="mayatnik-wolfram.css?v=1035">
+<script src="mayatnik-wolfram.js?v=1035"></script>
 <script src="mayatnik-core.js?v=1001"></script>
 <script src="mayatnik-invert.js?v=888"></script>
 <script src="mayatnik-heat.js?v=885"></script>
@@ -753,6 +756,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   if (CHISTO) { Storage.prototype.setItem = Storage.prototype.removeItem = function () {}; if (window.MayatnikPaintCache) MayatnikPaintCache.write = async () => {}; }   // ничего не записывать: сохранённое остаётся как было
   let st = { ...MayatnikAnimatrixSource.defaults(),...MayatnikPitCopies.DEFAULTS,kraftShadows:false,staggeredGrid:false,staggeredBlocks:false,paintEmptyNeighbours:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null, sequenceSourceOn:false,sequenceSource:null,sequenceSourceLimit:0,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkEvolution:2,sequenceOwnGrid:false,sequenceInverseAbove:false,rowStepOutline:true,rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', viewContours:false, viewDigits:false, zoom: 'fit', speed: 4, turbo: false, speedBefore: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, edgeContinuous:true,edgeFlowMax:0,edgeFlowKey:'',edgeWrap: false, edgeBounce: false, edgeWidth: 4, edgeMarkOn: true, edgeEndsOn: true, edgeEndsScale: 1, edgeRhombOn: false, romboMode:"fixed",romboLayout:null, romboAssembly:16, romboSeam:"between", edgeClose: true, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiThrough:false, ochkiSkipSpaces:false, ochkiEveryFrame:false, ochkiInv: false, ochkiRev: false, ochkiHalf: false, ochkiOverlay: false, frozen: false, zLimit:false,zOverview:true, ...MayatnikResetState.pointDefaults, joined180Whole:false };
   if (!CHISTO) try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  st.wolfram=MayatnikWolfram.normalize(st.wolfram);
   if(PHONE_LINK&&!st.phoneScene)st=phoneSettings(PHONE_LINK);
   if(phoneOn())try{MayatnikPhoneHost.validate(st);}catch(error){if(PHONE_LINK)st=phoneSettings(PHONE_LINK);else st.phoneScene='';setTimeout(()=>{$('fillInfo').textContent=error.message;},0);}
   // Reload is an escape from a search, not a request to run it again.
@@ -887,6 +891,20 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const save = () => { if (CHISTO||SHARE_ACTIVE||window.mayBackupRestoring||!animatrixDeferredReady) return; try { const o = { ...st }; for (const q in urlOwn) if (JSON.stringify(st[q]) === JSON.stringify(urlOwn[q][0])) { if (urlOwn[q][1] === undefined) delete o[q]; else o[q] = urlOwn[q][1]; }
     if(o.animatrixSource){const source=o.animatrixSource,record=animatrixRecord(source);if(!record.ready)return;o.animatrixSource=animatrixReference(source,record.key);}
     localStorage.setItem(KEY, JSON.stringify(o)); } catch(error) {if(animatrixOn()||MayatnikSequenceField.fixed(st))$('paintCacheInfo').textContent='Настройки поля не сохранены в браузере: '+error.message;} };
+
+  function wolframReason(){
+    if(gpuBig?.large)return 'Большое GPU-поле: раскраска Вольфрама недоступна. Вернитесь к обычному размеру поля.';
+    if(phoneOn()&&st.phoneView!=='cells')return 'Для раскраски обоев выберите «Обои → Клетки».';
+    return !f?'Дождитесь готового поля.':'';
+  }
+  const wolframEnabled=()=>st.wolfram?.enabled===true;
+  const wolframActive=()=>wolframEnabled()&&!wolframReason();
+  function wolframChanged(){save();queueSession();if(f)draw();dispatchEvent(new Event('may-wolfram-change'));}
+  window.mayWolfram={
+    get(){const settings=MayatnikWolfram.normalize(st.wolfram),reason=wolframReason();return {...settings,available:!reason,active:settings.enabled&&!reason,reason};},
+    set(patch){if(!patch||typeof patch!=='object'||Array.isArray(patch))return;st.wolfram=MayatnikWolfram.normalize({...MayatnikWolfram.normalize(st.wolfram),...patch});wolframChanged();},
+    reset(){st.wolfram=MayatnikWolfram.normalize();wolframChanged();}
+  };
 
   const viewRotation=window.mayViewRotation=MayatnikViewRotation.mount({host:wrap,ownsMenu:event=>window.MayatnikMenuDock?.ownsWheel?.(event)});
   viewRotation.set(!!st.viewUpsideDown);
@@ -1115,7 +1133,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const gpuManualCpu = () => !!gpuBig && (manualPaintOn()||rombP()>=0&&manualMirrorPlan().length>0);
   let gpuPaintRequests=0;
   const gpuPaintCpu = () => !!gpuBig&&(gpuPaintRequests>0||st.pitCopiesOn||st.paintEmptyNeighbours||st.paintIsolated0||st.paintIsolated1||st.paintFrameMode!=='off'&&!!paintRepeatSeed||!!st.manualSnake&&(rombP()>=0||!visibleSemanticCanLazy())||!!fillMask||!!templatePaintLayer||!!templateMatchLayer||!!manualPaintCurrent()?.layer||!!manualPaintCurrent()?.patterns||fillHistory.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e))||fillRedo.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e)));
-  const gpuCpuDisplay = () => !!gpuBig&&!gpuBig.large&&(!!window.mayGifScaleNeedsCpu?.()||st.heat&&rombP()<0||st.fillWholeColour&&fillMode||st.geomCenter||st.edgeRhombOn||joinedWhole()||st.joined180&&contoursOn()||st.view==='rgbNeighbours'||gpuCpuOchki()||gpuManualCpu()||gpuPaintCpu()||templateFollowActive());
+  const gpuCpuDisplay = () => !!gpuBig&&!gpuBig.large&&(wolframActive()||!!window.mayGifScaleNeedsCpu?.()||st.heat&&rombP()<0||st.fillWholeColour&&fillMode||st.geomCenter||st.edgeRhombOn||joinedWhole()||st.joined180&&contoursOn()||st.view==='rgbNeighbours'||gpuCpuOchki()||gpuManualCpu()||gpuPaintCpu()||templateFollowActive());
   const gpuDisplay = () => !!gpuBig && !gpuCpuDisplay();
   let videoGpuFrame = null;   // v0.480: копировать WebGPU сразу после render, до передачи кадра браузеру
   let gpuInitTask=null,gpuInitError='';
@@ -3260,7 +3278,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // v0.754: «Ромбы · всё поле» — обе чётности сразу в одной решётке. Поле повёрнуто на 45°:
   // клетка (c,r) стоит в показах u = c − r + (VH − 1) + 1, v = c + r + 1; пиксель берёт
   // ближайший центр по |dx| + |dy|. Полудиагональ ромба — RK, соседние клетки сходятся гранями.
-  function drawRombAll(px, T, empty, hl) {
+  function drawRombAll(px, T, empty, hl, wolfram) {
     const { W, val } = parityField(), K = RK, CW = img.width, CH = img.height;
     const fzM = st.frozen ? freezeCalc() : null; let fzc = 0;
     const cc = new Uint32Array(VW * VH), occupied = new Uint8Array(VW * VH);
@@ -3270,6 +3288,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       occupied[r * VW + c] = v >= 0 && parityVisible(r, c + VX) && (!outZone(r, c + VX) || triangleFill(r, c + VX));
       cc[r * VW + c] = v < 0 || !parityVisible(r, c + VX) ? empty : fzM && !outShow(r, c + VX) && (fzc = freezeColour(fzM, q, v)) ? fzc : outZone(r, c + VX) ? (triangleFill(r, c + VX) ? (st.noband === 2 ? T[v * 3] : EDGE) : empty) : hl && hl[q] ? (hl[q] > 1 ? rgba([230, 90, 255]) : v ? HL1 : HL0) : T[v * 3];
       if(nativeColours&&parityVisible(r,c+VX)&&!outShow(r,c+VX)){const rgb=animatrixNativeColour(q);if(rgb!==null){occupied[r*VW+c]=1;cc[r*VW+c]=rgba([(rgb>>>16)&255,(rgb>>>8)&255,rgb&255]);}}
+      if(wolfram&&v>=0&&parityVisible(r,c+VX)&&!outShow(r,c+VX)){
+        const colour=wolfram(r,c+VX);
+        if(colour!==null)cc[r*VW+c]=fzM&&(fzc=freezeColour(fzM,q,v))?fzc:hl&&hl[q]?(hl[q]>1?rgba([230,90,255]):v?HL1:HL0):colour;
+      }
     }
     for (let Y = 0; Y < CH; Y++) { const v = (Y + .5) / K, row = Y * CW;
       for (let X = 0; X < CW; X++) { const u = (X + .5) / K;
@@ -3280,7 +3302,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   // v0.758: «треугольники» — тот же чётный ромб, но закрашена только верхняя половина
   // (треугольник с основанием на горизонтальной диагонали ромба); низ ромба — пустота.
-  function drawRomb(px, T, empty, hl, search) {
+  function drawRomb(px, T, empty, hl, search, wolfram) {
     const tri = st.view === 'rombTri';
     const { W, H, val } = parityField(), K = RK, CW = img.width, CH = img.height, div = rgba([79, 143, 220]);
     const cp = new Int8Array(CW), cx = new Float64Array(CW);   // по столбцу холста: решётка (−1 — вертикаль) и x от её якоря
@@ -3294,6 +3316,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       occupied[r*VW+c]=v>=0&&parityVisible(r,c+VX)&&(!outZone(r,c+VX)||triangleFill(r,c+VX));
       cc[r * VW + c] = v < 0 || !parityVisible(r,c+VX) ? empty : fzM && !outShow(r, c + VX) && (fzc = freezeColour(fzM, q, v)) ? fzc : outZone(r, c + VX) ? (triangleFill(r, c + VX) ? (st.noband === 2 ? T[v * 3] : EDGE) : empty) : !joinedWhole() && hl && hl[q] ? (hl[q]>1?rgba([230,90,255]):v ? HL1 : HL0) : T[v * 3+(st.view==='col'?tintAt(parityRow(r),c+VX-geo.anchor,v):0)];
       if(nativeColours&&parityVisible(r,c+VX)&&!outShow(r,c+VX)){const rgb=animatrixNativeColour(q);if(rgb!==null){occupied[r*VW+c]=1;cc[r*VW+c]=rgba([(rgb>>>16)&255,(rgb>>>8)&255,rgb&255]);}}
+      if(wolfram&&v>=0&&parityVisible(r,c+VX)&&!outShow(r,c+VX)){
+        const colour=wolfram(r,c+VX);
+        if(colour!==null)cc[r*VW+c]=fzM&&(fzc=freezeColour(fzM,q,v))?fzc:!joinedWhole()&&hl&&hl[q]?(hl[q]>1?rgba([230,90,255]):v?HL1:HL0):colour;
+      }
     }
     if(joinedOn()){
       const jg=joinedGeometry();
@@ -3608,6 +3634,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(!gpuBig.cpuRaster||!img){canvasSize();cssLayout();}
     }
     const rp = rombP(), P = st.view === 'rombDirect' || rp >= 0&&!joinedFlat()&&st.view!=='col' ? PAL.bits : PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { W, H, val } = parityField();
+    const wolfram=wolframActive()?MayatnikWolfram.prepare({W,H,val},{left:VX,width:VW,height:VH},st.wolfram):null;
     const quick = !st.heat&&!gpuCpuDisplay()&&!manualPaintOn()&&navQuick();   // GPU snapshot is fixed: search the whole stopped frame.
     const measured=quick?null:MayatnikCenter.measure(st.inverted&&st.invertKind!=='colour'?parityField():f);
     const empty = rgba(EMPTY), T = new Uint32Array(6);
@@ -3621,8 +3648,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(phoneOn()&&phoneFrame?.rgbCodes&&st.view==='bits'){
       for(let r=0;r<VH;r++)for(let c=0;c<VW;c++){const q=r*W+VX+c,code=phoneFrame.rgbCodes[q],v=val[q];px[r*VW+c]=v<0?empty:code>=0?rgba(RGB_NEIGHBOUR_COLOURS[code]):T[v*3];}
     }
-    else if (rp === 4) drawRombAll(px, T, empty, och && och.hl);
-    else if (rp >= 0&&!joinedFlat()) drawRomb(px, T, empty, och && och.hl, och);
+    else if (rp === 4) drawRombAll(px, T, empty, och && och.hl, wolfram);
+    else if (rp >= 0&&!joinedFlat()) drawRomb(px, T, empty, och && och.hl, och, wolfram);
     else if(st.view==='rgbNeighbours'){
       const classes=new Uint8Array(VW*VH);classes.fill(255);const counts=new Uint32Array(8),stride=rgbNeighbourStride();
       for(let r=0;r<VH;r++){const row=r*W+VX,out=r*VW;for(let c=0;c<VW;c++){const q=row+c,x=c+VX;
@@ -3647,6 +3674,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       for (let r = 0; r < VH; r++) { const row = r * W, out = r * VW - VX;
         for (let c = VX; c < VX + VW; c++) { const v = !parityVisible(r,c)||outShow(r, c) ? -1 : val[row + c];
           px[out + c] = v < 0 ? empty : T[v * 3 + ((rowBuild||constructionActive()) ? tintAt(parityRow(r),c-A,v) : isXorTest ? MAYATNIK.tint(parityRow(r), c - A, v, lo, hi, filled) : pr ? MAYATNIK.tintPair(parityRow(r), c - A, v, compareOn()?Math.max(0,k-1):k, filled) : MAYATNIK.tint(parityRow(r), c - A, v, lo, hi, filled))]; } }
+    }
+    // Base palette only: later marks, frozen cells, search, axes and paint retain their priority.
+    if(wolfram&&(rp<0||joinedFlat())){
+      for(let r=1;r<VH;r++)for(let c=VX;c<VX+VW;c++){
+        if(!parityVisible(r,c)||outShow(r,c))continue;
+        const colour=wolfram(r,c);if(colour!==null)px[r*VW+c-VX]=colour;
+      }
+      rgbNeighbourFilterApply(joinedFlat()?px.subarray(0,VW*VH):px);
     }
     if (st.edgeWrap && st.edgeMarkOn && edgeMark && !quick && (rp<0||joinedFlat())) {   // v0.743: в «Ромбах» розовая отметка давала полосы сверху   // v0.671: клетки, последней записанные перескочившей вершиной, — розовым
       const edgePx = rgba([255, 91, 208]);
@@ -3698,6 +3733,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     c.style.display = 'block';
     const W = f.W, H = f.H, A = geo.anchor,values=st.inverted&&st.invertKind!=='colour'?parityValues():f.val;
     const band = Math.max(1, A - (H - 1));   // весь боковой край: при 6N−1 / 8N−1 он шире N, не обрезаем
+    const wolframField=wolframActive()?parityField():null;
+    const wolframEnds=wolframField?[W-band,0].map(left=>MayatnikWolfram.prepare(wolframField,{left,width:band,height:H},st.wolfram)):null;
     if (c.width !== 2 * band || c.height !== H) { c.width = 2 * band; c.height = H; }
     c.style.width = Math.min(innerWidth - 16, Math.round(2 * band * Math.max(.5, Math.min(2, Number(st.edgeEndsScale) || 1)))) + 'px';
     c.style.height = 'auto';
@@ -3709,7 +3746,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       for (let x = 0; x < CW; x++) {
         const col = x < half ? W - band + x : x - half;   // правый край, шов, левый край
         const q = row + col, v = values[q], o = (y * CW + x) * 4;
+        const wolframColour=wolframEnds?.[x<half?0:1]?.(y,col);
         if (edgeMark && st.edgeMarkOn && edgeMark[q]) put(o, 255, 91, 208);
+        else if(wolframColour!=null)put(o,wolframColour&255,(wolframColour>>>8)&255,(wolframColour>>>16)&255);
         else if(v>=0&&st.inverted&&st.invertKind==='colour')put(o,...PAL.bits[v][0]);
         else if(v===1)put(o,232,237,245);else if(v===0)put(o,70,80,96);
         else put(o, 5, 5, 5);
@@ -6125,7 +6164,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       // он затирал более новые настройки. Теперь при загрузке настройки — из памяти браузера, из кэша — только поле и краска; поле в кэше от других
       // строк / вершин / хода / фона — кэш не подходит, поле строится заново. Открытый файл работы (supplied) — как раньше, со своими настройками
       if(!supplied){const FK=['rows','steps','mode','bg','pair'];if(fieldSourceKey(data.st)!==fieldSourceKey())return false;if((st.sequenceSourceOn||data.st?.sequenceSourceOn)&&!MayatnikSequenceField.same(data.st,st))return false;if(FK.some(q=>JSON.stringify(data.st?.[q])!==JSON.stringify(st[q]))||(data.st?.compareSource||'')!==(st.compareSource||'')||!!data.st?.compareMirror!==!!st.compareMirror)return false;}
-      window.mayXorrom?.stopAll();cacheRestoring=true;mirrorLiveSet(false);if(supplied){if(data.frameHost)st=structuredClone(data.st);else{Object.assign(st,{animatrixCopyRowsLayout:undefined,animatrixStaggeredGrid:null,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null,paintIsolated0:false,paintIsolated1:false,paintEmptyNeighbours:false,...MayatnikPitCopies.DEFAULTS},data.st);for(const key of ['ztPaintColour1','ztPaintColour0'])if(!Object.hasOwn(data.st||{},key))delete st[key];if(!Object.hasOwn(data.st||{},'xorromRack'))delete st.xorromRack;if(!Object.hasOwn(data.st||{},'xorrom'))st.xorrom=null;if(!Object.hasOwn(data.st||{},'cellSelection'))delete st.cellSelection;if(!Object.hasOwn(data.st||{},'lineFamilies'))delete st.lineFamilies;if(!Object.hasOwn(data.st||{},'romboSeam'))st.romboSeam='between';if(!Object.hasOwn(data.st||{},'romboMode'))st.romboMode='fixed';if(!Object.hasOwn(data.st||{},'romboLayout'))st.romboLayout=null;for(const key of ['fillWholeColour','edgeRhombOn','paintSame','paintSymmetric','joined180','sequenceSourceOn','sequenceOwnGrid','sequenceInverseAbove','staggeredGrid','staggeredBlocks','edgeWrap','animatrixOn'])if(!Object.hasOwn(data.st||{},key))st[key]=false;}st.paintFrameMode=MayatnikPaintRepeat.mode(data.st?.paintFrameMode);}if(data.frameHost){restoreFrameEffects(data.frameHost,false);chessLive=false;}if(supplied){for(const id of MayatnikPaintGroups.FIELDS)if(!Object.hasOwn(data.st||{},id))delete st[id];}MayatnikPaintGroups.initialise(st,data.colour);const focusMargins=st.templateFocusMargins;applyBitColours();writeUI();reset(false,data.st.steps);if(supplied||data.frameHost)st.templateFocusMargins=focusMargins||null;
+      window.mayXorrom?.stopAll();cacheRestoring=true;mirrorLiveSet(false);if(supplied){if(data.frameHost)st=structuredClone(data.st);else{Object.assign(st,{animatrixCopyRowsLayout:undefined,animatrixStaggeredGrid:null,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null,paintIsolated0:false,paintIsolated1:false,paintEmptyNeighbours:false,...MayatnikPitCopies.DEFAULTS},data.st);for(const key of ['ztPaintColour1','ztPaintColour0'])if(!Object.hasOwn(data.st||{},key))delete st[key];if(!Object.hasOwn(data.st||{},'xorromRack'))delete st.xorromRack;if(!Object.hasOwn(data.st||{},'xorrom'))st.xorrom=null;if(!Object.hasOwn(data.st||{},'cellSelection'))delete st.cellSelection;if(!Object.hasOwn(data.st||{},'lineFamilies'))delete st.lineFamilies;if(!Object.hasOwn(data.st||{},'romboSeam'))st.romboSeam='between';if(!Object.hasOwn(data.st||{},'romboMode'))st.romboMode='fixed';if(!Object.hasOwn(data.st||{},'romboLayout'))st.romboLayout=null;for(const key of ['fillWholeColour','edgeRhombOn','paintSame','paintSymmetric','joined180','sequenceSourceOn','sequenceOwnGrid','sequenceInverseAbove','staggeredGrid','staggeredBlocks','edgeWrap','animatrixOn'])if(!Object.hasOwn(data.st||{},key))st[key]=false;}st.wolfram=MayatnikWolfram.normalize(data.st?.wolfram);st.paintFrameMode=MayatnikPaintRepeat.mode(data.st?.paintFrameMode);}if(data.frameHost){restoreFrameEffects(data.frameHost,false);chessLive=false;}if(supplied){for(const id of MayatnikPaintGroups.FIELDS)if(!Object.hasOwn(data.st||{},id))delete st[id];}MayatnikPaintGroups.initialise(st,data.colour);const focusMargins=st.templateFocusMargins;applyBitColours();writeUI();reset(false,data.st.steps);if(supplied||data.frameHost)st.templateFocusMargins=focusMargins||null;
       if(gpuBig)return false;   // v0.468: большой режим — кадр строит видеокарта, раскраски у него нет
       if(!(data.field instanceof Int8Array)||data.field.length!==f.val.length)throw Error('Размер сохранённого поля не совпадает с его настройками.');
       f.val.set(data.field);k=data.k;target=k;if(phoneOn())phoneMaterialize(k,false);edgeJumps=Number.isSafeInteger(data.edgeJumps)&&data.edgeJumps>=0?data.edgeJumps:0;edgeLaps=Number.isSafeInteger(data.edgeLaps)&&data.edgeLaps>=0?data.edgeLaps:0;if(edgeFlowOn()&&edgeMark){edgeMark.fill(0);if(data.edgeFlowMark instanceof Uint8Array&&data.edgeFlowMark.length===edgeMark.length)edgeMark.set(data.edgeFlowMark);}if(animatrixOn())await animatrixReplay(k);updWin();canvasSize();draw();
@@ -8931,6 +8970,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(phoneOn()){$('stat').textContent=phoneScene().title+' · кадр '+k+' / '+total()+' · '+f.W+'×'+f.H+' · '+st.phoneTempo+' BPM';$('frame').dataset.rows=String(total());}
     if(staggeredOn())$('stat').textContent+=staggeredCaption();
     if(coneContinueError)$('stat').textContent+=' · Продолжение остановлено: '+coneContinueError;
+    if(wolframEnabled()&&wolframReason())$('stat').textContent+=' · Вольфрам: '+wolframReason();
     if(rowBuildProgress)$('stat').textContent+=' · '+rowBuildProgress;
   }
   // v0.002: масштаб как в картах. st.zoom — 'fit' (по ширине) или число: экранных пикселей на бит.
@@ -12822,6 +12862,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return {payload,description,code,url:MayatnikShareLink.urlFor(shareBaseUrl(),code)};
   }
   function validateShareState(candidate){
+    candidate.wolfram=MayatnikWolfram.normalize(candidate.wolfram);
     if(phoneOn(candidate)){MayatnikPhoneHost.validate(candidate);return candidate;}
     if(candidate.romboSeam!=null&&!['between','dedupe'].includes(candidate.romboSeam))throw Error('В ссылке неверный шов Ромбо');
     if(candidate.romboMode!=null&&!['fixed','custom'].includes(candidate.romboMode))throw Error('В ссылке неверный режим сборки');
@@ -13659,7 +13700,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1027"></script>
 <script src="mayatnik-axes-panel.js?v=895"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1034"></script>
+<script src="mayatnik-menu.js?v=1035"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1030">
 <script src="mayatnik-button-standard.js?v=980"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">
