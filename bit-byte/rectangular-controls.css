@@ -1,10 +1,11 @@
 /* Bit-Byte-only shape exception requested on 2026-11-17. */
 main .gz-hx {
-  --gz-w: 120px;
+  --gz-w: var(--bb-control-width);
   --gz-h: 24px;
   --gz-bg: #1b2430;
   --c: var(--cyan);
   width: var(--gz-w);
+  flex-shrink: 0;
   height: var(--gz-h);
 }
 main .gz-hx,

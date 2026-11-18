@@ -5,8 +5,9 @@
   let syncing = false;
   const dispatch = (source, type) => source.dispatchEvent(new Event(type, {bubbles: true}));
   for (const [id, name, suffix = ""] of [
+    ["cell", "Размер общей клетки в пикселях"], ["field-cols", "Ширина всего поля в клетках"],
+    ["field-rows", "Высота всего поля в клетках"],
     ["cols", "Столбцы выбранной шахматки"], ["rows", "Строки выбранной шахматки"],
-    ["x", "Положение X выбранной шахматки, клетки"], ["y", "Положение Y выбранной шахматки, клетки"],
     ["zero-opacity", "Непрозрачность бита 0", "%"], ["one-opacity", "Непрозрачность бита 1", "%"],
   ]) {
     const source = document.getElementById("chess-" + id);

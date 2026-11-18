@@ -1,7 +1,6 @@
-.chess-input-pair.chess-opacity { grid-template-columns: 120px 120px; column-gap: 28px; }
 .chess-controls .bb-number-label {
   display: grid;
-  width: 120px;
+  width: var(--bb-control-width);
   min-width: 0;
   gap: 2px;
 }

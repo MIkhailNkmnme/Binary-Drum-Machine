@@ -6,6 +6,8 @@
   const MIN_DURATION = 50, MAX_DURATION = 60000, DEFAULT_DURATION = 500;
   const MAX_BOARDS = 16, MAX_ID = 1000000;
   const MAX_POSITION = 512, MAX_SIZE = 128, MAX_FIELD = MAX_POSITION + MAX_SIZE;
+  const MAX_FIELD_ROWS = MAX_FIELD + 1;
+  const rhombusMasks = new Map();
   const OUTLINES = [
     "#ff6868", "#62dc81", "#65a6ff", "#ffd166", "#d98aff", "#55dbdf", "#ff9b60", "#d1e469",
     "#fc86bc", "#8a8fff", "#91a274", "#71c6a6", "#ffe4a1", "#df936f", "#f2b8e9", "#a6e4ff",
@@ -38,8 +40,8 @@
   const color = (value, fallback) => /^#[0-9a-f]{6}$/i.test(value || "") ? value : fallback;
 
   const defaultOutline = id => OUTLINES[(id - 1) % OUTLINES.length];
-  const boardLabel = id => "Шахматка " + id;
-  const area = board => board.cols * board.rows;
+  const boardLabel = board => (board.shape === "rhombus" ? "Ромбо-шахматка " : "Шахматка ") + board.id;
+  const area = board => rhombusMask(board)?.area ?? board.cols * board.rows;
   // Порядок в сохранении разрешает совпадения площадей.
   const layers = () => state.boards.slice().sort((a, b) => area(b) - area(a));
   function freeId(ids, id) {
@@ -59,13 +61,15 @@
     };
   }
   function emptyScene() {
-    return { fieldCols: null, fieldRows: null, cell: 24, digits: false, logic: "layers", rgbScope: "one",
+    return { fieldCols: null, fieldRows: 1, autoHeight: true, cell: 24, digits: false, logic: "layers", rgbScope: "one",
       selected: null, selectedIds: [], boards: [] };
   }
   function initialState() {
     const second = makeBoard(2, 10, 6);
     second.zeroOpacity = second.oneOpacity = 65;
-    return {...emptyScene(), selected: 2, selectedIds: [2], boards: [makeBoard(1), second]};
+    const scene = {...emptyScene(), selected: 2, selectedIds: [2], boards: [makeBoard(1), second]};
+    fitFieldHeight(scene);
+    return scene;
   }
   function normalizeScene(saved) {
     if (!Array.isArray(saved?.boards)) return initialState();
@@ -80,6 +84,7 @@
       outlines.add(outline.toLowerCase());
       return {
         id, ...(typeof item.name === "string" ? {name: item.name.slice(0, 40)} : {}),
+        ...(item.shape === "rhombus" ? {shape: "rhombus"} : {}),
         outline,
         x: integer(item.x, 2, 0, MAX_POSITION), y: integer(item.y, 2, 0, MAX_POSITION),
         cols: integer(item.cols, 16, 1, MAX_SIZE), rows: integer(item.rows, 16, 1, MAX_SIZE),
@@ -95,15 +100,18 @@
     const active = ids.has(saved.selected) ? saved.selected : boards[0]?.id ?? null;
     const selectedIds = Array.isArray(saved.selectedIds)
       ? [...new Set(saved.selectedIds.filter(id => ids.has(id)))] : active === null ? [] : [active];
-    return {
+    const scene = {
       fieldCols: saved.fieldCols == null ? null : integer(saved.fieldCols, null, 1, MAX_FIELD),
-      fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD),
+      fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD_ROWS),
+      autoHeight: saved.autoHeight !== false,
       cell: integer(saved.cell, 24, 1, 64), digits: saved.digits === true, boards,
       logic: logicButtons.some(button => button.dataset.chessLogic === saved.logic) ? saved.logic : "layers",
       rgbScope: saved.rgbScope === "all" ? "all" : "one",
       selected: selectedIds.includes(active) ? active : selectedIds.at(-1) ?? null,
       selectedIds,
     };
+    fitFieldHeight(scene);
+    return scene;
   }
   function readStored(key) {
     try { return JSON.parse(localStorage.getItem(key)); }
@@ -149,6 +157,7 @@
   }
   function remember(before) {
     const undo = frames[frameIndex].undo;
+    fitFieldHeight(state);
     const after = snapshot();
     if (before !== after) {
       undo.push(before);
@@ -190,6 +199,74 @@
     return .299 * rgb[0] + .587 * rgb[1] + .114 * rgb[2] >= 135 ? "#000000" : "#ffffff";
   }
 
+  function rhombusMask(board) {
+    if (board.shape !== "rhombus") return null;
+    const {cols, rows} = board;
+    const key = cols + "x" + rows;
+    if (rhombusMasks.has(key)) return rhombusMasks.get(key);
+    const cells = new Uint8Array(cols * rows);
+    // Три ромба сходятся в (0, 0). Центр клетки проверяется в масштабе
+    // [-3, 3] × [-2, 1], где верхняя вершина находится в (0, -2).
+    for (let y = 0; y < rows; y++) {
+      const dy = (3 * (2 * y + 1) - 4 * rows) / (2 * rows);
+      for (let x = 0; x < cols; x++) {
+        const dx = Math.abs(2 * x + 1 - cols) * 3 / cols;
+        cells[y * cols + x] = Number(dy < 0 ? dx <= Math.min(-dy, dy + 2) : dx >= dy && dx <= dy + 2);
+      }
+    }
+    if (!cells.includes(1)) cells[Math.floor((cols - 1) / 2)] = 1;
+    const fill = [], edges = [];
+    let area = 0, even = 0, bottom = 0;
+    for (let y = 0; y < rows; y++) {
+      let start = -1;
+      for (let x = 0; x < cols; x++) {
+        const index = y * cols + x;
+        if (cells[index]) {
+          if (start < 0) start = x;
+          area++;
+          if ((x + y) % 2 === 0) even++;
+          bottom = y + 1;
+          if (!cells[index - cols]) edges.push(`M${x} ${y}h1`);
+          if (!cells[index + cols]) edges.push(`M${x} ${y + 1}h1`);
+          if (x === 0 || !cells[index - 1]) edges.push(`M${x} ${y}v1`);
+          if (x === cols - 1 || !cells[index + 1]) edges.push(`M${x + 1} ${y}v1`);
+        }
+        if (start >= 0 && (!cells[index] || x === cols - 1)) {
+          const length = x - start + cells[index];
+          fill.push(`M${start} ${y}h${length}v1h-${length}z`);
+          start = -1;
+        }
+      }
+    }
+    const viewBox = "0 0 " + cols + " " + rows;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="none" shape-rendering="crispEdges"><path d="${fill.join("")}"/></svg>`;
+    const mask = {key, cells, area, even, bottom, viewBox, contour: edges.join(""),
+      image: 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")'};
+    if (rhombusMasks.size >= 64) rhombusMasks.delete(rhombusMasks.keys().next().value);
+    rhombusMasks.set(key, mask);
+    return mask;
+  }
+
+  function applyBoardMask(element, outline, mask) {
+    const key = mask?.key ?? "";
+    if (element.dataset.mask === key) return;
+    element.dataset.mask = key;
+    element.style.maskImage = mask?.image ?? "";
+    outline.toggleAttribute("data-rhombus", !!mask);
+    if (!mask) {
+      outline.replaceChildren();
+      return;
+    }
+    const namespace = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(namespace, "svg");
+    const path = document.createElementNS(namespace, "path");
+    svg.setAttribute("viewBox", mask.viewBox);
+    svg.setAttribute("preserveAspectRatio", "none");
+    path.setAttribute("d", mask.contour);
+    svg.append(path);
+    outline.replaceChildren(svg);
+  }
+
   function pattern(board) {
     const first = board.phase ? "one" : "zero", second = board.phase ? "zero" : "one";
     function tile(x, y, key) {
@@ -221,21 +298,14 @@
     state.fieldCols ??= clamp(Math.max(Math.ceil(Math.max(800, viewport.clientWidth) / state.cell),
       ...visible.map(board => board.x + board.cols + 2)), 1, MAX_FIELD);
     state.fieldRows ??= clamp(Math.max(Math.ceil(Math.max(480, viewport.clientHeight) / state.cell),
-      ...visible.map(board => board.y + board.rows + 2)), 1, MAX_FIELD);
+      ...visible.map(board => board.y + board.rows + 2)), 1, MAX_FIELD_ROWS);
     saveScene();
     return true;
   }
-  function growField(boards, growWidth = false) {
-    for (const board of boards) {
-      if (!board.visible) continue;
-      const bottom = board.y + board.rows, right = board.x + board.cols;
-      if (state.fieldRows !== null && bottom >= state.fieldRows) {
-        state.fieldRows = Math.min(MAX_FIELD, bottom + 2);
-      }
-      if (growWidth && state.fieldCols !== null && right >= state.fieldCols) {
-        state.fieldCols = Math.min(MAX_FIELD, right + 2);
-      }
-    }
+  function fitFieldHeight(scene) {
+    if (!scene.autoHeight) return;
+    const visible = scene.boards.filter(board => board.visible);
+    scene.fieldRows = Math.max(0, ...visible.map(board => board.y + (rhombusMask(board)?.bottom ?? board.rows))) + 1;
   }
   function logicPaint(hex, opacity) {
     return {hex: hex.toLowerCase(), opacity: opacity / 100, ink: digitInk(hex),
@@ -253,8 +323,10 @@
       logicCanvas.hidden = true;
       for (const board of layers()) {
         if (!board.visible) continue;
+        const mask = rhombusMask(board);
         for (let y = board.y; y < Math.min(rows, board.y + board.rows); y++) {
           for (let x = board.x; x < Math.min(cols, board.x + board.cols); x++) {
+            if (mask && !mask.cells[(y - board.y) * board.cols + x - board.x]) continue;
             const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
             // У смешанного цвета нет единственного бита: берём верхний вклад с alpha > 0.
             if ((bit ? board.oneOpacity : board.zeroOpacity) > 0) bits[y * cols + x] = bit;
@@ -277,6 +349,7 @@
     }
     const boards = visible.filter(board => board.x < state.fieldCols && board.y < state.fieldRows).map(board => ({
         ...board, right: board.x + board.cols, bottom: board.y + board.rows,
+        mask: rhombusMask(board),
         paints: [logicPaint(board.zero, board.zeroOpacity), logicPaint(board.one, board.oneOpacity)],
       }));
     logicCanvas.hidden = !boards.length;
@@ -313,6 +386,7 @@
         const light = additive ? [0, 0, 0] : null;
         for (const board of row) {
           if (x < board.x || x >= board.right) continue;
+          if (board.mask && !board.mask.cells[(y - board.y) * board.cols + x - board.x]) continue;
           upper = board;
           const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
           ones += bit;
@@ -401,8 +475,10 @@
     } else {
       for (const board of layers()) {
         if (!board.visible) continue;
+        const mask = rhombusMask(board);
         for (let y = board.y; y < Math.min(rows, board.y + board.rows); y++) {
           for (let x = board.x; x < Math.min(cols, board.x + board.cols); x++) {
+            if (mask && !mask.cells[(y - board.y) * board.cols + x - board.x]) continue;
             const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
             const key = bit ? "one" : "zero";
             ctx.fillStyle = board[key]; ctx.globalAlpha = board[key + "Opacity"] / 100;
@@ -438,6 +514,7 @@
   }
 
   function renderScene() {
+    fitFieldHeight(state);
     initializeField();
     const ordered = layers();
     const ids = new Set(ordered.map(board => board.id));
@@ -460,10 +537,11 @@
       const active = state.selected === board.id;
       const marked = state.selectedIds.includes(board.id);
       const {element, outline} = elements.get(board.id);
+      applyBoardMask(element, outline, rhombusMask(board));
       element.hidden = !board.visible;
       element.tabIndex = active ? 0 : -1;
       element.setAttribute("aria-pressed", String(marked));
-      element.setAttribute("aria-label", boardLabel(board.id) + ", " + board.cols + " на " + board.rows +
+      element.setAttribute("aria-label", boardLabel(board) + ", " + board.cols + " на " + board.rows +
         " клеток, X " + board.x + ", Y " + board.y + ". Стрелки — перемещение.");
       positionBoard(element, board);
       element.style.backgroundSize = state.cell * 2 + "px " + state.cell * 2 + "px";
@@ -492,6 +570,7 @@
     for (const [id, key] of [["field-cols", "fieldCols"], ["field-rows", "fieldRows"]]) {
       if (document.activeElement !== byId(id) || drag?.kind === "field") byId(id).value = state[key] ?? "";
     }
+    byId("auto-height").setAttribute("aria-pressed", String(state.autoHeight));
     world.style.setProperty("--chess-cell", state.cell + "px");
     renderLogic();
     renderLayers(ordered);
@@ -508,7 +587,8 @@
       return;
     }
     const count = area(board);
-    const zeroCount = board.phase ? Math.floor(count / 2) : Math.ceil(count / 2);
+    const even = rhombusMask(board)?.even ?? Math.ceil(count / 2);
+    const zeroCount = board.phase ? count - even : even;
     byId("board-count").textContent = count + " клеток / битов · 0: " + zeroCount + " · 1: " + (count - zeroCount);
   }
   function layerNeighbor(ordered, index, delta) {
@@ -520,7 +600,7 @@
     byId("backward").disabled = !layerNeighbor(ordered, index, -1);
     byId("forward").disabled = !layerNeighbor(ordered, index, 1);
     const key = JSON.stringify([state.selected, state.selectedIds,
-      ordered.map(board => [board.id, board.outline, board.visible])]);
+      ordered.map(board => [board.id, board.shape, board.outline, board.visible])]);
     if (key === swatchKey) return;
     swatchKey = key;
     const focused = list.contains(document.activeElement) ? document.activeElement.dataset.boardId : null;
@@ -532,7 +612,7 @@
       swatch.style.setProperty("--board-color", board.outline);
       swatch.setAttribute("aria-pressed", String(state.selectedIds.includes(board.id)));
       swatch.toggleAttribute("data-hidden", !board.visible);
-      const label = boardLabel(board.id) + ", слой " + (layer + 1) + (board.visible ? "" : ", скрыта");
+      const label = boardLabel(board) + ", слой " + (layer + 1) + (board.visible ? "" : ", скрыта");
       swatch.title = label;
       swatch.setAttribute("aria-label", label);
       return swatch;
@@ -540,7 +620,7 @@
     if (focused) list.querySelector('[data-board-id="' + focused + '"]')?.focus({preventScroll: true});
     const count = state.selectedIds.length;
     byId("selection-info").textContent = count > 1
-      ? "Выделено: " + count + " · настройки: " + boardLabel(state.selected) : "";
+      ? "Выделено: " + count + " · настройки: " + boardLabel(selected()) : "";
   }
   function renderControls() {
     const frame = frames[frameIndex];
@@ -583,7 +663,7 @@
       : "Удалить выбранную шахматку. Delete — то же действие.";
     byId("remove").title = removeTitle;
     byId("remove").setAttribute("aria-label", removeTitle);
-    byId("add").disabled = state.boards.length >= MAX_BOARDS;
+    byId("add").disabled = byId("add-rhombus").disabled = state.boards.length >= MAX_BOARDS;
     const diagonal = byId("add-diagonal");
     diagonal.disabled = !diagonalAvailable(board);
     diagonal.title = diagonal.disabled
@@ -592,7 +672,7 @@
     byId("undo").disabled = !frame?.undo.length;
     for (const input of controls.querySelectorAll("input")) input.disabled = drag?.kind === "field" || readOnly;
     if (!board) { window.BitByteNumberControls?.sync(); return; }
-    for (const key of ["cols", "rows", "x", "y", "outline", "zero", "one"]) byId(key).value = board[key];
+    for (const key of ["cols", "rows", "outline", "zero", "one"]) byId(key).value = board[key];
     byId("zero-opacity").value = board.zeroOpacity;
     byId("one-opacity").value = board.oneOpacity;
     byId("phase").setAttribute("aria-pressed", String(board.phase));
@@ -754,7 +834,13 @@
     input.addEventListener("blur", commit);
   }
   bindInput("field-cols", value => { state.fieldCols = integer(value, state.fieldCols, 1, MAX_FIELD); });
-  bindInput("field-rows", value => { state.fieldRows = integer(value, state.fieldRows, 1, MAX_FIELD); });
+  bindInput("field-rows", value => {
+    const rows = integer(value, state.fieldRows, 1, MAX_FIELD_ROWS);
+    if (rows === state.fieldRows) return;
+    const before = JSON.parse(pendingInput);
+    state.autoHeight = before.autoHeight && rows === before.fieldRows;
+    state.fieldRows = rows;
+  });
   bindInput("cell", value => { state.cell = integer(value, state.cell, 1, 64); });
   // Всегда считаем от захваченной пропорции, а не от последней округлённой пары.
   function aspectSize(board, driver, target, bounds = {}) {
@@ -774,18 +860,16 @@
     // Текущая пара остаётся допустимой даже при предельном расположении рамки.
     return best ?? {cols: board.cols, rows: board.rows};
   }
-  for (const [key, min, max] of [["cols", 1, MAX_SIZE], ["rows", 1, MAX_SIZE], ["x", 0, MAX_POSITION], ["y", 0, MAX_POSITION]]) {
+  for (const key of ["cols", "rows"]) {
     bindInput(key, value => {
       const board = selected();
       if (!board) return;
-      const previous = board[key], previousRows = board.rows;
-      const next = integer(value, previous, min, max);
-      if (board.aspectLocked && (key === "cols" || key === "rows")) {
+      const next = integer(value, board[key], 1, MAX_SIZE);
+      if (board.aspectLocked) {
         Object.assign(board, aspectSize(board, key, next));
         byId("cols").value = board.cols;
         byId("rows").value = board.rows;
       } else board[key] = next;
-      if ((key === "y" && board.y > previous) || board.rows > previousRows) growField([board]);
     });
   }
   for (const key of ["outline", "zero", "one"]) {
@@ -800,6 +884,7 @@
     select(Number(swatch.dataset.boardId), event.shiftKey || event.ctrlKey);
   });
   byId("digits").addEventListener("click", () => mutate(() => { state.digits = !state.digits; }));
+  byId("auto-height").addEventListener("click", () => mutate(() => { state.autoHeight = !state.autoHeight; }));
   for (const button of rgbScopeButtons) {
     button.addEventListener("click", () => mutate(() => { state.rgbScope = button.dataset.chessRgbScope; }));
   }
@@ -823,26 +908,37 @@
       board.cols < MAX_SIZE && board.rows < MAX_SIZE &&
       board.x + board.cols <= MAX_POSITION && board.y + board.rows <= MAX_POSITION;
   }
-  function addBoard(x, y, source) {
+  function addBoard(x, y, source, shape = source?.shape) {
     const ids = new Set(state.boards.map(board => board.id));
     const id = freeId(ids, Math.max(0, ...ids) % MAX_ID + 1);
     const board = makeBoard(id, x, y);
+    if (shape === "rhombus") {
+      board.shape = shape;
+      board.cols = 24;
+      board.rows = 21;
+    }
     if (source) {
       board.cols = source.cols + 1;
       board.rows = source.rows + 1;
       for (const key of ["phase", "zero", "one", "zeroOpacity", "oneOpacity"]) board[key] = source[key];
     }
+    board.aspectCols = board.cols;
+    board.aspectRows = board.rows;
     const used = new Set(state.boards.map(item => item.outline.toLowerCase()));
     board.outline = availableOutline(id, used);
     state.boards.push(board);
     setSelection([id]);
-    growField([board], !!source);
+    const right = board.x + board.cols;
+    if (source && state.fieldCols !== null && right >= state.fieldCols) {
+      state.fieldCols = Math.min(MAX_FIELD, right + 2);
+    }
   }
-  byId("add").addEventListener("click", () => {
-    if (state.boards.length >= MAX_BOARDS) return;
-    const position = 2 + state.boards.length * 2;
-    mutate(() => addBoard(position, position));
-  });
+  for (const [id, shape] of [["add", undefined], ["add-rhombus", "rhombus"]]) {
+    byId(id).addEventListener("click", () => {
+      const position = 2 + state.boards.length * 2;
+      if (state.boards.length < MAX_BOARDS) mutate(() => addBoard(position, position, null, shape));
+    });
+  }
   byId("add-diagonal").addEventListener("click", () => {
     const source = selected();
     if (!diagonalAvailable(source)) return;
@@ -901,7 +997,12 @@
       const left = board.x * state.cell, top = board.y * state.cell;
       const width = board.cols * state.cell, height = board.rows * state.cell;
       const right = left + width, bottom = top + height;
-      if (x >= left && x < right && y >= top && y < bottom) inside.push(board);
+      const mask = rhombusMask(board);
+      const col = Math.floor((x - left) / state.cell), row = Math.floor((y - top) / state.cell);
+      const covered = x >= left && x < right && y >= top && y < bottom &&
+        (!mask || mask.cells[row * board.cols + col]);
+      if (covered) inside.push(board);
+      if (mask && !covered && board.id !== state.selected) continue;
       if (x < left - outside || x > right + outside || y < top - outside || y > bottom + outside) continue;
       const nearX = Math.min(outside, width / 3), nearY = Math.min(outside, height / 3);
       const horizontal = x <= left + nearX ? -1 : x >= right - nearX ? 1 : 0;
@@ -964,7 +1065,6 @@
     drag = {
       kind: "boards", pointer: event.pointerId, before: snapshot(), edge, origins,
       activeId: active.id, modified, copy: event.ctrlKey, blocked: false,
-      fieldRows: state.fieldRows,
       startX: event.clientX + window.scrollX, startY: event.clientY + window.scrollY,
       clientX: event.clientX, clientY: event.clientY, moved: false,
     };
@@ -1040,12 +1140,9 @@
         origin.board.y = origin.y + top;
       }
     }
-    if (y > 0 || drag.origins.some(origin => origin.board.rows > origin.rows)) {
-      growField(drag.origins.map(origin => origin.board));
-    }
     world.style.setProperty("--chess-cursor", drag.edge ? resizeCursor(drag.edge) : "grabbing");
     const board = selected();
-    if (board) for (const key of ["x", "y", "cols", "rows"]) byId(key).value = board[key];
+    if (board) for (const key of ["cols", "rows"]) byId(key).value = board[key];
     renderScene();
   }
   function scrollDuringDrag() {
@@ -1094,7 +1191,7 @@
       if (!finished.blocked) {
         const changed = finished.copy || finished.origins.some(({board, x, y, cols, rows}) =>
           board.x !== x || board.y !== y || board.cols !== cols || board.rows !== rows);
-        if (changed || state.fieldRows !== finished.fieldRows) remember(finished.before);
+        if (changed) remember(finished.before);
         else saveScene();
       }
     } else {
@@ -1125,7 +1222,6 @@
     mutate(() => {
       board.x = clamp(board.x + step[0] * amount, 0, MAX_POSITION);
       board.y = clamp(board.y + step[1] * amount, 0, MAX_POSITION);
-      if (step[1] > 0) growField([board]);
     });
   });
   viewport.addEventListener("pointerdown", event => {
@@ -1135,7 +1231,7 @@
     viewport.focus({preventScroll: true});
     drag = {kind: "field", pointer: event.pointerId, before: snapshot(), edge: handle.dataset.fieldEdge,
       startX: event.clientX + window.scrollX, startY: event.clientY + window.scrollY,
-      cols: state.fieldCols, rows: state.fieldRows};
+      cols: state.fieldCols, rows: state.fieldRows, autoHeight: state.autoHeight};
     viewport.setAttribute("data-field-resizing", "");
     viewport.setPointerCapture(event.pointerId);
     renderControls();
@@ -1145,8 +1241,11 @@
     if (drag?.kind !== "field" || event.pointerId !== drag.pointer) return;
     if (drag.edge !== "bottom") state.fieldCols = clamp(drag.cols +
       Math.round((event.clientX + window.scrollX - drag.startX) / state.cell), 1, MAX_FIELD);
-    if (drag.edge !== "right") state.fieldRows = clamp(drag.rows +
-      Math.round((event.clientY + window.scrollY - drag.startY) / state.cell), 1, MAX_FIELD);
+    if (drag.edge !== "right") {
+      const rows = clamp(drag.rows + Math.round((event.clientY + window.scrollY - drag.startY) / state.cell), 1, MAX_FIELD_ROWS);
+      state.autoHeight = drag.autoHeight && rows === drag.rows;
+      state.fieldRows = rows;
+    }
     renderScene();
     event.preventDefault();
   });
