@@ -1,0 +1,487 @@
+{
+  "date": "2026-11-18",
+  "commit": "7b6a7285ab3e19260939c229f6c657cd02e07a04",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "issledovanie/wolfram-nks/chapter-2-ru.pdf",
+      "status": 200,
+      "bytes": 10203774,
+      "normalization": "none",
+      "sha256": "041fdfd54aa0badaf14c9c2aa22c2d693d3ce7cebbb495b8dd8d7955741a561c",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/index.html",
+      "status": 200,
+      "bytes": 11526,
+      "normalization": "LF",
+      "sha256": "4dd22340aaf3d3a0dfc5032fcb657a4e64a2c593907f51e6fd58d15543cf3571",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/lab.js",
+      "status": 200,
+      "bytes": 14478,
+      "normalization": "LF",
+      "sha256": "4066bb4ba390511409d1ba7e908d0a854b597179b4173796ad549d4d93206988",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/prepare-publication.py",
+      "status": 200,
+      "bytes": 3535,
+      "normalization": "LF",
+      "sha256": "d56c3e03d1b89fb08e842266658df029cde4f8820d41e3c722415224019ac816",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/reader.html",
+      "status": 200,
+      "bytes": 244022,
+      "normalization": "LF",
+      "sha256": "cbd4d209d252e9839dcc0ade8140bb43a4284025656f513ec36d878644336211",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/README.md",
+      "status": 200,
+      "bytes": 6012,
+      "normalization": "LF",
+      "sha256": "43a15b8fed906df7fabe2a6600dac19b2b2434137e2bd2deb91a7786bec46d0a",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/style.css",
+      "status": 200,
+      "bytes": 4446,
+      "normalization": "LF",
+      "sha256": "4159810c4ba85dfa7a5ff580524429aee004a8e40fe41c0e52b8b6778e9796b3",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-00.png",
+      "status": 200,
+      "bytes": 134707,
+      "normalization": "none",
+      "sha256": "e639e00a0ed885e7789fd9d997c1da11c1541b1db5117dbbe59d0f46b482c81f",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-01.png",
+      "status": 200,
+      "bytes": 129368,
+      "normalization": "none",
+      "sha256": "592255af39e42b461030b2bb43d32f08e161317eae0655b50afbda1893cd7b40",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-02.png",
+      "status": 200,
+      "bytes": 85242,
+      "normalization": "none",
+      "sha256": "f70f3629a407ae70a6556a4163fbd4a29b8e5a479781d8bdde0b4945be5359a0",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-03.png",
+      "status": 200,
+      "bytes": 140348,
+      "normalization": "none",
+      "sha256": "fdd3df0669537a711023bb14ba6838a9c3040143b0d84147e7e8f5f31a52bfae",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-04.png",
+      "status": 200,
+      "bytes": 111355,
+      "normalization": "none",
+      "sha256": "0f3c9aa6f30f1210a9f5f1c5ee66abf5a8a419be46aacf9ec939620d0dc89f27",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-05.png",
+      "status": 200,
+      "bytes": 144014,
+      "normalization": "none",
+      "sha256": "40271cfe6524a11f9a4d13473b9836d254c39d5cdd20b6d0a8563514095a3e9b",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-06.png",
+      "status": 200,
+      "bytes": 464468,
+      "normalization": "none",
+      "sha256": "ef197fbe405314a621beb9dfd4b591cb2baae69142ec08444de92d31856842aa",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-07.png",
+      "status": 200,
+      "bytes": 490852,
+      "normalization": "none",
+      "sha256": "815809f779c3bf1738e9fa718d82f0552a312410af75001284abdaef0b776110",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-08.png",
+      "status": 200,
+      "bytes": 146511,
+      "normalization": "none",
+      "sha256": "20cb349859c9d6f027dba88c68a094e2ad50fd502b03551e8441dd5252844b0f",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-09.png",
+      "status": 200,
+      "bytes": 89409,
+      "normalization": "none",
+      "sha256": "808f4c1d752df14b13be304fd3b2941390bb64b541d686cd7b1cf030b8df54ac",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-10.png",
+      "status": 200,
+      "bytes": 344553,
+      "normalization": "none",
+      "sha256": "5c65110e292f1963dbfa4c197cd4ac18e072c721f9e1eba30f18742710f39de8",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-11.png",
+      "status": 200,
+      "bytes": 491157,
+      "normalization": "none",
+      "sha256": "36607c6f2f4225563705eb27e3c086f2d5a0f5c0205ee40a7aed6c61d84bef69",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-12.png",
+      "status": 200,
+      "bytes": 508561,
+      "normalization": "none",
+      "sha256": "227dc5ac6b0dbd0b30c348ff427306def65919f7f7f0681ba844669dc154c278",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-13.png",
+      "status": 200,
+      "bytes": 492920,
+      "normalization": "none",
+      "sha256": "cbfe5a16d5903cf4df551c4478094a96b2bd9e1a432f471e9bd93ce9fd25bf8f",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-14.png",
+      "status": 200,
+      "bytes": 472720,
+      "normalization": "none",
+      "sha256": "a4740870ade0b1b1b19c41114ac888a470ea8274c1da083524a822df2772341d",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-15.png",
+      "status": 200,
+      "bytes": 417407,
+      "normalization": "none",
+      "sha256": "2793109f749b8585bc4c49b4ee958353e9929a18033a54b4c420a8ec7eb43bbd",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-16.png",
+      "status": 200,
+      "bytes": 129944,
+      "normalization": "none",
+      "sha256": "d9681ab7db7c6558ec2a22aa1c2086122fdb89d7ce8cee556851862d4a11b530",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-17.png",
+      "status": 200,
+      "bytes": 149026,
+      "normalization": "none",
+      "sha256": "685455fd3b818c22ce19683fd7236c825b251285901352a9f1f0ca42903ebee5",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-18.png",
+      "status": 200,
+      "bytes": 144942,
+      "normalization": "none",
+      "sha256": "47fef5d71f0e55f3c18135360e5c22319b2656bbbc80a0b62f26078dc6f55f50",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-19.png",
+      "status": 200,
+      "bytes": 144280,
+      "normalization": "none",
+      "sha256": "1e68173a63b3021d5037e3193de4af9856832f2ea7ed4df80ba4d433b7c73133",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-20.png",
+      "status": 200,
+      "bytes": 497416,
+      "normalization": "none",
+      "sha256": "29affdc1a6a7190bb6de7e391df6e775706db3128b319d5dc435e756dfb4a810",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-21.png",
+      "status": 200,
+      "bytes": 147389,
+      "normalization": "none",
+      "sha256": "c0ef951593acda7b805114648737c3b47ad37f357c3c7be47498b28837cb2e0f",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-22.png",
+      "status": 200,
+      "bytes": 147223,
+      "normalization": "none",
+      "sha256": "17f962c7e86db0697c648467e159a56d082ea8d7e4c1d3cb29c1995b46d78be4",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-23.png",
+      "status": 200,
+      "bytes": 152145,
+      "normalization": "none",
+      "sha256": "98d4b0029af0c79d918a44b31253a21eb0af7cb5675cf8e1485e7ea0dc04be8a",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-24.png",
+      "status": 200,
+      "bytes": 143295,
+      "normalization": "none",
+      "sha256": "a825bcbab5e206cbdbe19b069a1bf3680b5f3edc58b4691cb5623e17fd912a11",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-25.png",
+      "status": 200,
+      "bytes": 146108,
+      "normalization": "none",
+      "sha256": "8de0766ac1d843759c99a6c26a6797ea4204a5a3775ff11e8c689369c3177497",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-26.png",
+      "status": 200,
+      "bytes": 152114,
+      "normalization": "none",
+      "sha256": "ada5f3d1d91db6bbe7bf8a9aeee6d49cee64eee4d13b989aee9d032141e24cb8",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-27.png",
+      "status": 200,
+      "bytes": 140524,
+      "normalization": "none",
+      "sha256": "21203a52e42c5697c2f45725b90f80876a96bd40cade5ff4dc96e55f91ef5c39",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-28.png",
+      "status": 200,
+      "bytes": 153132,
+      "normalization": "none",
+      "sha256": "2aae30080c46cd93800dbee4fbd425c32af6e01f571e20cb7f7b08008aa9320b",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-29.png",
+      "status": 200,
+      "bytes": 216105,
+      "normalization": "none",
+      "sha256": "b9b33d20546ca743a92f87d5c9e3d6958c6b7d87d1e183ced75e0df0c58d6572",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-30.png",
+      "status": 200,
+      "bytes": 211844,
+      "normalization": "none",
+      "sha256": "508982aceeadc321cb0b0db6c9d046f8bf55dd63d73e4b739ed1aea980af3dab",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-31.png",
+      "status": 200,
+      "bytes": 200022,
+      "normalization": "none",
+      "sha256": "c0694aae47e99bc68a28bfbf76e4a70d6386c98cd02b86bfe2e6500043d1854f",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-32.png",
+      "status": 200,
+      "bytes": 187376,
+      "normalization": "none",
+      "sha256": "35c12d9ad966eabde9b3d37379e3ff26875760eea453de5bc038817a9168b854",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-33.png",
+      "status": 200,
+      "bytes": 228023,
+      "normalization": "none",
+      "sha256": "a658ba9636951081643e8d8becd651c71e7eeb9932d5218910b22d5b6f0f1434",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-34.png",
+      "status": 200,
+      "bytes": 213592,
+      "normalization": "none",
+      "sha256": "76465605942ff19d543aec54bdefbfa4c2fc38c2a2d9c8cf565aa6efec8e3e7b",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-35.png",
+      "status": 200,
+      "bytes": 184735,
+      "normalization": "none",
+      "sha256": "056d80082781f2da9286859803ac7a8cbbe7146dda9765e002a955187dda0619",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-36.png",
+      "status": 200,
+      "bytes": 229143,
+      "normalization": "none",
+      "sha256": "a0c940e4903095df2b8bdaf70cf206fdc0db90b20b372c3027dcf928ddbff3d3",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-37.png",
+      "status": 200,
+      "bytes": 241190,
+      "normalization": "none",
+      "sha256": "950520a921dcc48bb7ce1ca6a2d691b8137aafc9feef51373070412e6166aa80",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-38.png",
+      "status": 200,
+      "bytes": 229838,
+      "normalization": "none",
+      "sha256": "a75bedbf307c82f5821ae8a895c6d5aa55ccc4161695fccdb2196cc6cd07848c",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-39.png",
+      "status": 200,
+      "bytes": 218593,
+      "normalization": "none",
+      "sha256": "9c276c32bc44fe3b7c05ce72052fb7ff0e40d72fd2b32a04ccfdf3d85eef6528",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-40.png",
+      "status": 200,
+      "bytes": 222446,
+      "normalization": "none",
+      "sha256": "7424c31af257eda9e4de38577d6b84b3cf68a040477a17a0686af8e4e105fb77",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-41.png",
+      "status": 200,
+      "bytes": 211289,
+      "normalization": "none",
+      "sha256": "f87e55bfb8596079cacd1caf0348e9ea68bd1a550b1062307bcca8245d8f0714",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-42.png",
+      "status": 200,
+      "bytes": 189619,
+      "normalization": "none",
+      "sha256": "c86e8bc26c3531fa9b9dadbe9713e163dd3b9a21855116e92759ec368528d161",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-43.png",
+      "status": 200,
+      "bytes": 208048,
+      "normalization": "none",
+      "sha256": "fbf7c46bf65a93b274f1173c5690b117f6d6124a830703566a77fd82c4cb484d",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-44.png",
+      "status": 200,
+      "bytes": 213759,
+      "normalization": "none",
+      "sha256": "ba3ccd035bda5a9bd59efe7652e19a88d4247746da5f50e422f7bb575b2f13d4",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/images/original-45.png",
+      "status": 200,
+      "bytes": 196526,
+      "normalization": "none",
+      "sha256": "daf947c4fd49cc3a027a18289b13cfa8498571479b1e0b21984b5346376f0ea6",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/translation/provenance.json",
+      "status": 200,
+      "bytes": 7285,
+      "normalization": "LF",
+      "sha256": "7287bc987e4d56093578ef6396f04503395f99e4d7daf093c44248a0c1d61d24",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/translation/ru-23-37.json",
+      "status": 200,
+      "bytes": 29909,
+      "normalization": "LF",
+      "sha256": "5e3b56c71ab532fcfe1701e3be32914ce7bbd2133b6eabacb1bddf72a1ce68d2",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/translation/ru-38-52.json",
+      "status": 200,
+      "bytes": 67197,
+      "normalization": "LF",
+      "sha256": "87eb903297b665139d92e97f84b47e57153d961e05eb74f06d76652233c9f944",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/wolfram-nks/translation/ru-53-68.json",
+      "status": 200,
+      "bytes": 145953,
+      "normalization": "LF",
+      "sha256": "c233b730ab112edde60e47ed2e96a5c6fb8f844e74c34f33d12de61a7c94271e",
+      "matchesRelease": true
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "bytes": 347191,
+      "normalization": "LF",
+      "sha256": "770de8983ad8bc21bf21a69dd87b28216a2d9f8763fae7da1182959962adab4b",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/hub-pages.js",
+      "status": 200,
+      "bytes": 6098,
+      "normalization": "LF",
+      "sha256": "0a10a43c8692277251e3679a5a89d4c21ba30c840d3a5bc256bd89b07c764578",
+      "matchesRelease": true
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "bytes": 513121,
+      "normalization": "LF",
+      "sha256": "bccf3ad8a822e47ea388bc5faa33e9d97beb0bfef53d5c62cec5b11a04db2e44",
+      "matchesRelease": true
+    }
+  ]
+}
