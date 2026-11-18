@@ -1,0 +1,903 @@
+{
+  "date": "2026-11-18",
+  "commit": "d6614219",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "voice/app.js",
+      "status": 200,
+      "bytes": 28761,
+      "normalization": "LF",
+      "sha256": "557c34758ac424e2f8f6dbd5ccac02705a27683bb8bab012cc2ff8a47615984e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/catalog.js",
+      "status": 200,
+      "bytes": 5046,
+      "normalization": "LF",
+      "sha256": "96b7a7128198f0de49e078a802dec8e0ebf01f0226969143e8410f1b8f17e024",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/engine.js",
+      "status": 200,
+      "bytes": 16161,
+      "normalization": "LF",
+      "sha256": "e53f34718924b94bc0d539a1bd6921496e4d9b7d5cf74ffe1015b89ee8ca5bbf",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/index.html",
+      "status": 200,
+      "bytes": 10241,
+      "normalization": "LF",
+      "sha256": "4f3319b30737b774c35ec24177df0a6bb1ef13cc02713fdf81741c2474dd529c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/README.md",
+      "status": 200,
+      "bytes": 11884,
+      "normalization": "LF",
+      "sha256": "11ebda6ec11dd92452ff4e33269952c60727c1faff65e2d4e484486fe3f259db",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/render-worker.js",
+      "status": 200,
+      "bytes": 470,
+      "normalization": "LF",
+      "sha256": "bf7d7479a45ae69e2cedf051f52a205bf057caaf45a224a09b3fb75f55fa0c1c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/style.css",
+      "status": 200,
+      "bytes": 2740,
+      "normalization": "LF",
+      "sha256": "8dd20f04fa49644847ea09fbd5f2c8dff5035aa5f61b9a8a55203146eebde45d",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/archive.json",
+      "status": 200,
+      "bytes": 258,
+      "normalization": "LF",
+      "sha256": "38c9e2f981c5397ef2eb304ee33f5287d4d15387fb2650eefb85a38176013915",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/build-zerkalius.cjs",
+      "status": 200,
+      "bytes": 4122,
+      "normalization": "none",
+      "sha256": "d10a667c21a7a41e4a9f6b88bfcaddcf14044bc68c2e1a8aae43bdfd591b56ab",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/build.py",
+      "status": 200,
+      "bytes": 13413,
+      "normalization": "LF",
+      "sha256": "9dcc4e57410652df5aba5cae5e4a0983e8416e9b055763aec82b70eb6465bc67",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/manifest.json",
+      "status": 200,
+      "bytes": 167431,
+      "normalization": "LF",
+      "sha256": "716afeefcbfc0f132575941362e8152076e8b3a1a9636bd8344642f8dd2c070e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/README.md",
+      "status": 200,
+      "bytes": 10725,
+      "normalization": "LF",
+      "sha256": "8a5dd21505eb5d15d4ba5564c27eba00334ee96b8618cb69542268baa79013bc",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius-russian-sounds.zip",
+      "status": 200,
+      "bytes": 3572791,
+      "normalization": "none",
+      "sha256": "8a5c0ab121a0d02e3ef2cf62c3aaebfbc0b3c404f2ed54de09ec5e1f01989f63",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/01-a.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "b96ded7053d86075bdc4d29fffa91b508991536d3fe6ba713a050f4be8a08791",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/02-b.wav",
+      "status": 200,
+      "bytes": 9746,
+      "normalization": "none",
+      "sha256": "6b590646cc05b96af66d08f758fe874775674f4309044190dd2673b48c072d8e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/03-v.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "48d5651a7ca14ed298f72d2191406eafad9d67abc474ad422021c55fdae9f104",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/04-g.wav",
+      "status": 200,
+      "bytes": 9746,
+      "normalization": "none",
+      "sha256": "03a1ca6719a14eff9361d90ae7035b32ae7bc6e8473a7a9c97ebf868009c8bf6",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/05-d.wav",
+      "status": 200,
+      "bytes": 9746,
+      "normalization": "none",
+      "sha256": "ca70a44482ab4a5ef625f3631c04888c920eb718fbc19f8cefc0e74983ccc726",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/06-e.wav",
+      "status": 200,
+      "bytes": 30032,
+      "normalization": "none",
+      "sha256": "1358a16ae98f4d8957bb420e0b8132d8f4b7297c08c11f969c20640f63e61638",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/07-yo.wav",
+      "status": 200,
+      "bytes": 30032,
+      "normalization": "none",
+      "sha256": "591167c271bf057d68d128572a321fb70475ded4b9755d943103aadc71577460",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/08-zh.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "9dfd434949f52c7d2fc40793d11f837d2a20be388800fa5f4e48c71df57f2e92",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/09-z.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "2463c4eff1fd768430e8caf92141f33bd8736e3ba6c8a4c2539573421905876a",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/10-i.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "9c4f613e6a20c733a3ef381f340e86240b1df7a1448522d72fcac140e427c319",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/11-j.wav",
+      "status": 200,
+      "bytes": 7100,
+      "normalization": "none",
+      "sha256": "b22c0a779ad30f7fe878c15fb0141ead91ce1cfdae86cef7dbba0ab4170e1fd8",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/12-k.wav",
+      "status": 200,
+      "bytes": 9746,
+      "normalization": "none",
+      "sha256": "4068ec76fa90f50fd89b79096d8643689fdb7ff554300763423421b565ac9a3c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/13-l.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "9e462a9059817696734e7f9dbe514627ade7a0b8ebcb4922e356994fc4d25e26",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/14-m.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "d901da37c0a54c7815723101ec9780a46deab076e39432b04be36a98779a4e4d",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/15-n.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "2609a64076f5bc9c6d9011847eacdf75b3e6492988fef8ed0808241f4bf668b2",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/16-o.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "021be3d390b3f0710d5308633cd5ed18e4eb59f79a99c265c838efc57dff634e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/17-p.wav",
+      "status": 200,
+      "bytes": 9746,
+      "normalization": "none",
+      "sha256": "6b590646cc05b96af66d08f758fe874775674f4309044190dd2673b48c072d8e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/18-r.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "a25abfc444b982a3a8b3c7e18ea7fe91d42eec1d2eda2a88d38c03a85fe830e3",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/19-s.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "699f3b7b07a5292bb3f42ac10e6ddd1b8f65dab4f2da1ada4d1c213d7867a308",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/20-t.wav",
+      "status": 200,
+      "bytes": 9746,
+      "normalization": "none",
+      "sha256": "a92c96c0677c15ecea00b4d8c5a6431383b5e008bbe3a8a314f2f8ace5090c13",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/21-u.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "4ad253aa840ce13f98cf4ccf60f835625278275584cdb3010101c40271903cdc",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/22-f.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "02dcc26098c44cb7933a3cb2f74a0c784afc44d722ee0b9f7d3f6b2b77a7afb9",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/23-h.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "095e50ef323a1ed229f38b8453439eb2af34413c8d9ad0c1da0c41b3bbb3898b",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/24-ts.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "b74b0a9295184287645f28c0b53a3632a364ddfc5d13e2f432bee3b675e4f175",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/25-ch.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "48fe494db124b2ab531665e46f81067b76843704ac4f325f2c1e08110c77a254",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/26-sh.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "ae7f613ebb910de0bc57b5040fb370313c5d68e8b1ae20712039fd2719da424f",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/27-shch.wav",
+      "status": 200,
+      "bytes": 19448,
+      "normalization": "none",
+      "sha256": "01d2a3341c3ff2c7e168380c00c337137b47c1360c408b238d1c539294374094",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/28-y.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "a9011ad7b8c7e3a1333fb348caa051a1450624ecc2a6623697b315bc87aea2b3",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/29-eh.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "fe0a820ec75b336ad1d140d1686f7bd370f0297d5e330054ed4e54ad892a3e6b",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/30-yu.wav",
+      "status": 200,
+      "bytes": 30032,
+      "normalization": "none",
+      "sha256": "75962efe9e8b0c8b9527561be8c81917c4956623a3daed3f7370c195de1b134d",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/31-ya.wav",
+      "status": 200,
+      "bytes": 30032,
+      "normalization": "none",
+      "sha256": "bda8785d610d5366a7b951a9cfdd0f2c7ab34dbedc83723e4a3b752ce54da70c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/alphabet.wav",
+      "status": 200,
+      "bytes": 1837250,
+      "normalization": "none",
+      "sha256": "e2de1187da7768f4f2801dc21f27508e69695d85843099128f01b4adf0de6f72",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-0.wav",
+      "status": 200,
+      "bytes": 23416,
+      "normalization": "none",
+      "sha256": "75eff413b66217b445dd498dff5e2ba0060a60af813b1a3c2792b634593c1e6d",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-1.wav",
+      "status": 200,
+      "bytes": 34000,
+      "normalization": "none",
+      "sha256": "cc4b248ed592792984a383be53d2ed104b577faddd658fe1d6ab5174cfe4571a",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-2.wav",
+      "status": 200,
+      "bytes": 22534,
+      "normalization": "none",
+      "sha256": "9ee3256370b5a66aaeba3878caa8694050d481a352746262d34043347daf0af8",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-3.wav",
+      "status": 200,
+      "bytes": 23416,
+      "normalization": "none",
+      "sha256": "0192bda4b460743c462d4f187ca05aab7ae2960864f216241bf5e72c071d5504",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-4.wav",
+      "status": 200,
+      "bytes": 53844,
+      "normalization": "none",
+      "sha256": "94ef38f5f7fb309a459761a9c0a0fcdce6300046f24682b4004b5dec48ceea4e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-5.wav",
+      "status": 200,
+      "bytes": 20770,
+      "normalization": "none",
+      "sha256": "9e00da304c7f24a3d37455c2d99571b57320c45378c6125c754b092d9db221c1",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-6.wav",
+      "status": 200,
+      "bytes": 32236,
+      "normalization": "none",
+      "sha256": "f1ebe0e244d0416bb8a4c3fba8e639744c368c4e61f355978afb55917b76c99e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-7.wav",
+      "status": 200,
+      "bytes": 25622,
+      "normalization": "none",
+      "sha256": "fe41a63ec1fce49ccf909f482095355a30d324c894921456bb254b5486369fba",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-8.wav",
+      "status": 200,
+      "bytes": 43262,
+      "normalization": "none",
+      "sha256": "77dd6cc193248633af1f9933bf3f22052c566b39e1aa06c4bfbb3f8c5387540f",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digit-9.wav",
+      "status": 200,
+      "bytes": 38850,
+      "normalization": "none",
+      "sha256": "513baba18d295cea1f2b1bf66df17ebad3a3ada1568a66253d78d51847d3dcaf",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/digits.wav",
+      "status": 200,
+      "bytes": 732094,
+      "normalization": "none",
+      "sha256": "384387ee9664a2c65bbcfa30bce11ffaff01b4d5c554c43748e4584e2ac3bebe",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/deepseek-adapted/production.json",
+      "status": 200,
+      "bytes": 39707,
+      "normalization": "LF",
+      "sha256": "271f2dd569176940a95f0e8b6bc68fe46b64736294733ffc0471410906ffb28e",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/01-a.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "ad13a3893f451dd77b62b04b34636e35116012da37637ee3dcda17cd1658a0ba",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/02-b.wav",
+      "status": 200,
+      "bytes": 9748,
+      "normalization": "none",
+      "sha256": "a79dcfd9fc489fe81300e1bc79ecf34b99d7e4dc8c21d333417e1228e110c6c1",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/03-v.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "50e2b8795f00ab6f33e94c1bcf67554554bb388f68a55726214caeaa26987558",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/04-g.wav",
+      "status": 200,
+      "bytes": 9748,
+      "normalization": "none",
+      "sha256": "e825b25ee9ac186070006f4bcd3689d30de8dc95721234c99d9392caae373390",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/05-d.wav",
+      "status": 200,
+      "bytes": 9748,
+      "normalization": "none",
+      "sha256": "0b5f556358c2e70be798ea7455be55de12b53c5104290aea8fd9407dadb91e8d",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/06-e.wav",
+      "status": 200,
+      "bytes": 30032,
+      "normalization": "none",
+      "sha256": "118e4c9f9dad79c07119cdd77f0f6d8a79aade166711102621213873b406c093",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/07-yo.wav",
+      "status": 200,
+      "bytes": 30032,
+      "normalization": "none",
+      "sha256": "9bed3f49e3fe5f7a501818c5fe621f6792b1e018fde4dfc1e9a9162be9d2c021",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/08-zh.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "77a280dc518633b471f4e014e7fa4d95ac04581864884bf053ad74a6dd8bb741",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/09-z.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "4c29a9db6f4c2fba7703f7ec6496ac3d9dfda7b31871e44e284951c724fbde09",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/10-i.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "9323a41b2141b8304193a3f779a06e9fe7e016b30d7a367923ddce593ac7d464",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/11-j.wav",
+      "status": 200,
+      "bytes": 7100,
+      "normalization": "none",
+      "sha256": "0808f60988f1773f8708689b442abff46959131ab1ffcd50c27f6fee954e557c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/12-k.wav",
+      "status": 200,
+      "bytes": 9748,
+      "normalization": "none",
+      "sha256": "f7e3f2aa890f0a7b8254fcf60d106feea155f96fc7a2588926535ee408b34213",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/13-l.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "4638f4c305066b46474f6c14e74ae615dac21e45d2ae12d89fd257b76bea7ffb",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/14-m.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "42ea18943ecd181b9aa13d546b6bdda308c10460525c4bf18ba45b1a799f776c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/15-n.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "879b4465a1463293d56d9e7721263b2ff071dd6875c2fba0b524cb82c6ae0d96",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/16-o.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "356bcef611340e73ab6c8154cee2b931749aad02f3dc0a4b8a844f222d2d2fc2",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/17-p.wav",
+      "status": 200,
+      "bytes": 9748,
+      "normalization": "none",
+      "sha256": "0c2d740bb44b3b6af0b9294d54964c887c7cf8a06824a8d6cf885cea05fe6b6c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/18-r.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "c845fa90d17329303a0d07e30d3506b62a226adb5ad85fe1e693fc5527fab698",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/19-s.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "a517ed2a13486d5d7479a129fdb848278fd91a7c3698b618ebf720c550ad2811",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/20-t.wav",
+      "status": 200,
+      "bytes": 9748,
+      "normalization": "none",
+      "sha256": "e32333831c4c3f79b0d353d820e1758b3302a0d50477b8a893ebc932923ce799",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/21-u.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "ca291e422552bfd61bfba31096b2b214e018a4e2bd9cdaf8cf9921197e070ee8",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/22-f.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "a82d7cb2808a769f7d966cd5c7562fa50f5a87205e2f15bbb7deacd164f0dda5",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/23-h.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "b775a86f0808d1674c556fdcfbbc603c2d41d4f04354337bcb6d86bb6627a924",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/24-ts.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "65bd1502d9efeaa06ec485fbadbe4228cb62e93dfce52d2cb321c9662d7377a2",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/25-ch.wav",
+      "status": 200,
+      "bytes": 15920,
+      "normalization": "none",
+      "sha256": "c53648cad5eb40092b64fc4fe57c29d63688231d520584248262904d233cbcef",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/26-sh.wav",
+      "status": 200,
+      "bytes": 17684,
+      "normalization": "none",
+      "sha256": "3df4e232cae621622da9d88a6f876c6a6eb7a61620e6652b50253083250c8b16",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/27-shch.wav",
+      "status": 200,
+      "bytes": 19448,
+      "normalization": "none",
+      "sha256": "ded322f2b5f25ee4f29763b61f8fc57943134a80aa89ea05e1f41716d8d08122",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/28-y.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "d8c2bfd4451dd836c6a99ac117109f2c3454657e87e31545f1c6117b7a23f4d1",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/29-eh.wav",
+      "status": 200,
+      "bytes": 28268,
+      "normalization": "none",
+      "sha256": "6c980897baa0d620528a9412b4ab1248483f17e18c8f91f47f89e809e0d36c91",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/30-yu.wav",
+      "status": 200,
+      "bytes": 30032,
+      "normalization": "none",
+      "sha256": "5f49f986e03aa107f95c8af487f29e9b4ef4f8b668664bc693b2d099e2ba4b84",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/31-ya.wav",
+      "status": 200,
+      "bytes": 30032,
+      "normalization": "none",
+      "sha256": "72d3c36817ba1789cb2391a289752c5b9df9e59b0abb1714f60e9bc293334018",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/alphabet.wav",
+      "status": 200,
+      "bytes": 1837262,
+      "normalization": "none",
+      "sha256": "0b7ccb0621efe792083c0c2ca05d828a26562394e1e0b590b8e870059c7a690b",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-0.wav",
+      "status": 200,
+      "bytes": 43264,
+      "normalization": "none",
+      "sha256": "44e3334427fbeae2a1483f4ea94bdfa94436c20cecf6b180b81b9398642b040f",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-1.wav",
+      "status": 200,
+      "bytes": 50764,
+      "normalization": "none",
+      "sha256": "fa9360d61df96fa61beb8f6f111a27cadfafb07395ad1733e442c872cf2fee82",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-2.wav",
+      "status": 200,
+      "bytes": 41056,
+      "normalization": "none",
+      "sha256": "4683256ca82014e6c9a9230bf86c9168c6e212ce9f081d00c275fd7b200ec552",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-3.wav",
+      "status": 200,
+      "bytes": 39740,
+      "normalization": "none",
+      "sha256": "5ba3a35132a418eb5574ece4c70316fd66d368caafe46e76169684c907129fb1",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-4.wav",
+      "status": 200,
+      "bytes": 59144,
+      "normalization": "none",
+      "sha256": "9a4042a67036d37c1251e70724b64db7ad8c3d3d1f6a5aa00fb62d28a87b8c11",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-5.wav",
+      "status": 200,
+      "bytes": 44148,
+      "normalization": "none",
+      "sha256": "f013f84859f9e6a7e036f8bc34ad1eab7cbf2896688caf89a244fa89aa404f58",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-6.wav",
+      "status": 200,
+      "bytes": 52528,
+      "normalization": "none",
+      "sha256": "1d03cb1586164439ddb21c3fc240464bc07dfb0ea6e5fb8ff682b0b487a4cbea",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-7.wav",
+      "status": 200,
+      "bytes": 47236,
+      "normalization": "none",
+      "sha256": "683cbf913b3f7573cadba9d94cb54b762408efa82b0f98f2dffec2dae57035d6",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-8.wav",
+      "status": 200,
+      "bytes": 54732,
+      "normalization": "none",
+      "sha256": "e13a75be97cf88774dcf2e9b0f9d8c1b174762241a15a031dad69f27282a4972",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digit-9.wav",
+      "status": 200,
+      "bytes": 48112,
+      "normalization": "none",
+      "sha256": "008eca39c165d4b6e2f3e12cf29285ba945ca2c6887a1cf7c70b202455312674",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/digits.wav",
+      "status": 200,
+      "bytes": 894868,
+      "normalization": "none",
+      "sha256": "e818ba9477dce072b28f20c2ab79bdf1537d909a01764a51efb90ffa19f725b3",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/alphabet/zerkalius/production.json",
+      "status": 200,
+      "bytes": 92268,
+      "normalization": "LF",
+      "sha256": "1a555001c95a839ebbba30df8f5f3dfd71c7465cbe253d191928a865335e8f37",
+      "matchesRelease": true
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "bytes": 347597,
+      "normalization": "LF",
+      "sha256": "de33a7aa15c1b0a5073bd93813b54e9a82c71ea30937be89388cfebccdbd49ab",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/hub-pages.js",
+      "status": 200,
+      "bytes": 6130,
+      "normalization": "LF",
+      "sha256": "bd5757ae1a465b8182815995e5d13cd97384fe729cd6074378cf07b91610d0bd",
+      "matchesRelease": true
+    },
+    {
+      "path": "music/index.html",
+      "status": 200,
+      "bytes": 8999,
+      "normalization": "LF",
+      "sha256": "806a634eed23f9093cd293996f19c2a7d2a4cee065c3f856eed4e5a8f156dd97",
+      "matchesRelease": true
+    },
+    {
+      "path": "tools/voice/README.md",
+      "status": 200,
+      "bytes": 22285,
+      "normalization": "LF",
+      "sha256": "2d8e507dd783e503a4c3cbca1a3bf8996dec402d1fe054cff9ac71ed4cd52e2a",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/grozd.css",
+      "status": 200,
+      "bytes": 25412,
+      "normalization": "LF",
+      "sha256": "12ea18a1791c4627bcf71f4ea825f9dd3e71ab1f58856027e897fe294cd310bd",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/control-frame.css",
+      "status": 200,
+      "bytes": 4981,
+      "normalization": "LF",
+      "sha256": "e7ae32dee79ce401cd86684d67143497fc4b6a1aa7891be1a8494d8f3d2e7ab5",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/control-frame.js",
+      "status": 200,
+      "bytes": 7443,
+      "normalization": "LF",
+      "sha256": "74f26f692990f7bc624bbdf5c3b8d455d18ba54935205fd615962f2e8b028027",
+      "matchesRelease": true
+    },
+    {
+      "path": "_js/hub-button-text.js",
+      "status": 200,
+      "bytes": 7981,
+      "normalization": "LF",
+      "sha256": "9ec43fb3918c4894bb38cdbd4d4e9cf8ece15cac34568fdd6784133e49417ba3",
+      "matchesRelease": true
+    },
+    {
+      "path": "music/voices/formant.wav",
+      "status": 200,
+      "bytes": 211724,
+      "normalization": "none",
+      "sha256": "eb3497325772c39159d49239a749541685ed008a91d80871e0eed4189f2b00f3",
+      "matchesRelease": true
+    },
+    {
+      "path": "music/voices/bank.wav",
+      "status": 200,
+      "bytes": 211724,
+      "normalization": "none",
+      "sha256": "c2f905457ef35c13f7e8e570f3d4b2559119e4decf8a07e5b85b9e4794116d16",
+      "matchesRelease": true
+    },
+    {
+      "path": "music/voices/phone.wav",
+      "status": 200,
+      "bytes": 211724,
+      "normalization": "none",
+      "sha256": "e2928c94c1857a57f39bdc77733744fe92e682de94dc41a66639c8785dc94aec",
+      "matchesRelease": true
+    }
+  ]
+}
