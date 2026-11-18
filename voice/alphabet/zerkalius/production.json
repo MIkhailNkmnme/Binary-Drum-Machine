@@ -1,0 +1,4332 @@
+{
+  "id": "zerkalius",
+  "label": "Зеркалиус · четыре форманты",
+  "engineVersion": "procedural-formant-browser-v1.0.0",
+  "node": "v24.22.1",
+  "engineSource": "voice/engine.js",
+  "catalogSource": "voice/catalog.js",
+  "adaptation": "Explicit sound scores; letters are not pronounced as names.",
+  "resampling": "22050 → 44100 Hz, deterministic linear x2; native pitch and time preserved",
+  "alphabet": [
+    {
+      "id": "ru-sound-410",
+      "symbol": "А",
+      "label": "а",
+      "silent": false,
+      "score": [
+        {
+          "id": "a",
+          "duration": 0.32
+        }
+      ],
+      "file": "zerkalius/01-a.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-411",
+      "symbol": "Б",
+      "label": "б",
+      "silent": false,
+      "score": [
+        {
+          "id": "b",
+          "duration": 0.11
+        }
+      ],
+      "file": "zerkalius/02-b.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-412",
+      "symbol": "В",
+      "label": "в",
+      "silent": false,
+      "score": [
+        {
+          "id": "v",
+          "duration": 0.18
+        }
+      ],
+      "file": "zerkalius/03-v.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-413",
+      "symbol": "Г",
+      "label": "г",
+      "silent": false,
+      "score": [
+        {
+          "id": "g",
+          "duration": 0.11
+        }
+      ],
+      "file": "zerkalius/04-g.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-414",
+      "symbol": "Д",
+      "label": "д",
+      "silent": false,
+      "score": [
+        {
+          "id": "d",
+          "duration": 0.11
+        }
+      ],
+      "file": "zerkalius/05-d.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-415",
+      "symbol": "Е",
+      "label": "й + е",
+      "silent": false,
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        },
+        {
+          "id": "e",
+          "duration": 0.26
+        }
+      ],
+      "file": "zerkalius/06-e.wav",
+      "positional": "Изолированный начальный вариант й + гласный; внутри слова возможен иной звук."
+    },
+    {
+      "id": "ru-sound-401",
+      "symbol": "Ё",
+      "label": "й + о",
+      "silent": false,
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        },
+        {
+          "id": "o",
+          "duration": 0.26
+        }
+      ],
+      "file": "zerkalius/07-yo.wav",
+      "positional": "Изолированный начальный вариант й + гласный; внутри слова возможен иной звук."
+    },
+    {
+      "id": "ru-sound-416",
+      "symbol": "Ж",
+      "label": "ж",
+      "silent": false,
+      "score": [
+        {
+          "id": "zh",
+          "duration": 0.2
+        }
+      ],
+      "file": "zerkalius/08-zh.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-417",
+      "symbol": "З",
+      "label": "з",
+      "silent": false,
+      "score": [
+        {
+          "id": "z",
+          "duration": 0.18
+        }
+      ],
+      "file": "zerkalius/09-z.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-418",
+      "symbol": "И",
+      "label": "и",
+      "silent": false,
+      "score": [
+        {
+          "id": "i",
+          "duration": 0.32
+        }
+      ],
+      "file": "zerkalius/10-i.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-419",
+      "symbol": "Й",
+      "label": "короткий й",
+      "silent": false,
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        }
+      ],
+      "file": "zerkalius/11-j.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41a",
+      "symbol": "К",
+      "label": "к",
+      "silent": false,
+      "score": [
+        {
+          "id": "k",
+          "duration": 0.11
+        }
+      ],
+      "file": "zerkalius/12-k.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41b",
+      "symbol": "Л",
+      "label": "л",
+      "silent": false,
+      "score": [
+        {
+          "id": "l",
+          "duration": 0.18
+        }
+      ],
+      "file": "zerkalius/13-l.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41c",
+      "symbol": "М",
+      "label": "м",
+      "silent": false,
+      "score": [
+        {
+          "id": "m",
+          "duration": 0.18
+        }
+      ],
+      "file": "zerkalius/14-m.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41d",
+      "symbol": "Н",
+      "label": "н",
+      "silent": false,
+      "score": [
+        {
+          "id": "n",
+          "duration": 0.18
+        }
+      ],
+      "file": "zerkalius/15-n.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41e",
+      "symbol": "О",
+      "label": "о",
+      "silent": false,
+      "score": [
+        {
+          "id": "o",
+          "duration": 0.32
+        }
+      ],
+      "file": "zerkalius/16-o.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-41f",
+      "symbol": "П",
+      "label": "п",
+      "silent": false,
+      "score": [
+        {
+          "id": "p",
+          "duration": 0.11
+        }
+      ],
+      "file": "zerkalius/17-p.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-420",
+      "symbol": "Р",
+      "label": "р",
+      "silent": false,
+      "score": [
+        {
+          "id": "r",
+          "duration": 0.18
+        }
+      ],
+      "file": "zerkalius/18-r.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-421",
+      "symbol": "С",
+      "label": "с",
+      "silent": false,
+      "score": [
+        {
+          "id": "s",
+          "duration": 0.2
+        }
+      ],
+      "file": "zerkalius/19-s.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-422",
+      "symbol": "Т",
+      "label": "т",
+      "silent": false,
+      "score": [
+        {
+          "id": "t",
+          "duration": 0.11
+        }
+      ],
+      "file": "zerkalius/20-t.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-423",
+      "symbol": "У",
+      "label": "у",
+      "silent": false,
+      "score": [
+        {
+          "id": "u",
+          "duration": 0.32
+        }
+      ],
+      "file": "zerkalius/21-u.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-424",
+      "symbol": "Ф",
+      "label": "ф",
+      "silent": false,
+      "score": [
+        {
+          "id": "f",
+          "duration": 0.2
+        }
+      ],
+      "file": "zerkalius/22-f.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-425",
+      "symbol": "Х",
+      "label": "х",
+      "silent": false,
+      "score": [
+        {
+          "id": "h",
+          "duration": 0.2
+        }
+      ],
+      "file": "zerkalius/23-h.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-426",
+      "symbol": "Ц",
+      "label": "ц",
+      "silent": false,
+      "score": [
+        {
+          "id": "ts",
+          "duration": 0.18
+        }
+      ],
+      "file": "zerkalius/24-ts.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-427",
+      "symbol": "Ч",
+      "label": "ч",
+      "silent": false,
+      "score": [
+        {
+          "id": "ch",
+          "duration": 0.18
+        }
+      ],
+      "file": "zerkalius/25-ch.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-428",
+      "symbol": "Ш",
+      "label": "ш",
+      "silent": false,
+      "score": [
+        {
+          "id": "sh",
+          "duration": 0.2
+        }
+      ],
+      "file": "zerkalius/26-sh.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-429",
+      "symbol": "Щ",
+      "label": "щ",
+      "silent": false,
+      "score": [
+        {
+          "id": "shj",
+          "duration": 0.22
+        }
+      ],
+      "file": "zerkalius/27-shch.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42a",
+      "symbol": "Ъ",
+      "label": "без собственного звука",
+      "silent": true,
+      "score": [],
+      "file": null,
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42b",
+      "symbol": "Ы",
+      "label": "ы",
+      "silent": false,
+      "score": [
+        {
+          "id": "y",
+          "duration": 0.32
+        }
+      ],
+      "file": "zerkalius/28-y.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42c",
+      "symbol": "Ь",
+      "label": "без собственного звука",
+      "silent": true,
+      "score": [],
+      "file": null,
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42d",
+      "symbol": "Э",
+      "label": "э",
+      "silent": false,
+      "score": [
+        {
+          "id": "e",
+          "duration": 0.32
+        }
+      ],
+      "file": "zerkalius/29-eh.wav",
+      "positional": null
+    },
+    {
+      "id": "ru-sound-42e",
+      "symbol": "Ю",
+      "label": "й + у",
+      "silent": false,
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        },
+        {
+          "id": "u",
+          "duration": 0.26
+        }
+      ],
+      "file": "zerkalius/30-yu.wav",
+      "positional": "Изолированный начальный вариант й + гласный; внутри слова возможен иной звук."
+    },
+    {
+      "id": "ru-sound-42f",
+      "symbol": "Я",
+      "label": "й + а",
+      "silent": false,
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        },
+        {
+          "id": "a",
+          "duration": 0.26
+        }
+      ],
+      "file": "zerkalius/31-ya.wav",
+      "positional": "Изолированный начальный вариант й + гласный; внутри слова возможен иной звук."
+    }
+  ],
+  "items": [
+    {
+      "file": "zerkalius/01-a.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "ad13a3893f451dd77b62b04b34636e35116012da37637ee3dcda17cd1658a0ba",
+      "id": "ru-sound-410",
+      "kind": "sound",
+      "symbol": "А",
+      "label": "а",
+      "score": [
+        {
+          "id": "a",
+          "duration": 0.32
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "a",
+          "kind": "vowel",
+          "formants": [
+            760,
+            1200,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            95,
+            120,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.85,
+            0.45,
+            0.18
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/02-b.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4852,
+      "duration": 0.11002267573696145,
+      "sha256": "a79dcfd9fc489fe81300e1bc79ecf34b99d7e4dc8c21d333417e1228e110c6c1",
+      "id": "ru-sound-411",
+      "kind": "sound",
+      "symbol": "Б",
+      "label": "б",
+      "score": [
+        {
+          "id": "b",
+          "duration": 0.11
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "b",
+          "kind": "stop",
+          "formants": [
+            260,
+            700,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0.36,
+          "noise": 1.7
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/03-v.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "50e2b8795f00ab6f33e94c1bcf67554554bb388f68a55726214caeaa26987558",
+      "id": "ru-sound-412",
+      "kind": "sound",
+      "symbol": "В",
+      "label": "в",
+      "score": [
+        {
+          "id": "v",
+          "duration": 0.18
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "v",
+          "kind": "fricative",
+          "formants": [
+            900,
+            2300,
+            4300,
+            6800
+          ],
+          "bandwidths": [
+            800,
+            1200,
+            1600,
+            1900
+          ],
+          "weights": [
+            0.15,
+            0.3,
+            0.55,
+            0.35
+          ],
+          "voice": 0.45,
+          "noise": 0.8
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/04-g.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4852,
+      "duration": 0.11002267573696145,
+      "sha256": "e825b25ee9ac186070006f4bcd3689d30de8dc95721234c99d9392caae373390",
+      "id": "ru-sound-413",
+      "kind": "sound",
+      "symbol": "Г",
+      "label": "г",
+      "score": [
+        {
+          "id": "g",
+          "duration": 0.11
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "g",
+          "kind": "stop",
+          "formants": [
+            260,
+            2300,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0.36,
+          "noise": 1.7
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/05-d.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4852,
+      "duration": 0.11002267573696145,
+      "sha256": "0b5f556358c2e70be798ea7455be55de12b53c5104290aea8fd9407dadb91e8d",
+      "id": "ru-sound-414",
+      "kind": "sound",
+      "symbol": "Д",
+      "label": "д",
+      "score": [
+        {
+          "id": "d",
+          "duration": 0.11
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "d",
+          "kind": "stop",
+          "formants": [
+            260,
+            1800,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0.36,
+          "noise": 1.7
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/06-e.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14994,
+      "duration": 0.34,
+      "sha256": "118e4c9f9dad79c07119cdd77f0f6d8a79aade166711102621213873b406c093",
+      "id": "ru-sound-415",
+      "kind": "sound",
+      "symbol": "Е",
+      "label": "й + е",
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        },
+        {
+          "id": "e",
+          "duration": 0.26
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "j",
+          "kind": "sonorant",
+          "formants": [
+            270,
+            2350,
+            3050,
+            3800
+          ],
+          "bandwidths": [
+            75,
+            150,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            1.5,
+            0.6,
+            0.15
+          ],
+          "voice": 0.85,
+          "noise": 0.015
+        },
+        {
+          "id": "e",
+          "kind": "vowel",
+          "formants": [
+            530,
+            1900,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            85,
+            130,
+            170,
+            240
+          ],
+          "weights": [
+            1,
+            1.15,
+            0.45,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/07-yo.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14994,
+      "duration": 0.34,
+      "sha256": "9bed3f49e3fe5f7a501818c5fe621f6792b1e018fde4dfc1e9a9162be9d2c021",
+      "id": "ru-sound-401",
+      "kind": "sound",
+      "symbol": "Ё",
+      "label": "й + о",
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        },
+        {
+          "id": "o",
+          "duration": 0.26
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "j",
+          "kind": "sonorant",
+          "formants": [
+            270,
+            2350,
+            3050,
+            3800
+          ],
+          "bandwidths": [
+            75,
+            150,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            1.5,
+            0.6,
+            0.15
+          ],
+          "voice": 0.85,
+          "noise": 0.015
+        },
+        {
+          "id": "o",
+          "kind": "vowel",
+          "formants": [
+            480,
+            850,
+            2450,
+            3500
+          ],
+          "bandwidths": [
+            75,
+            100,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.9,
+            0.3,
+            0.12
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/08-zh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "77a280dc518633b471f4e014e7fa4d95ac04581864884bf053ad74a6dd8bb741",
+      "id": "ru-sound-416",
+      "kind": "sound",
+      "symbol": "Ж",
+      "label": "ж",
+      "score": [
+        {
+          "id": "zh",
+          "duration": 0.2
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "zh",
+          "kind": "fricative",
+          "formants": [
+            2000,
+            3100,
+            4400,
+            6200
+          ],
+          "bandwidths": [
+            500,
+            800,
+            1000,
+            1400
+          ],
+          "weights": [
+            1,
+            0.65,
+            0.35,
+            0.2
+          ],
+          "voice": 0.45,
+          "noise": 1.05
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/09-z.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "4c29a9db6f4c2fba7703f7ec6496ac3d9dfda7b31871e44e284951c724fbde09",
+      "id": "ru-sound-417",
+      "kind": "sound",
+      "symbol": "З",
+      "label": "з",
+      "score": [
+        {
+          "id": "z",
+          "duration": 0.18
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "z",
+          "kind": "fricative",
+          "formants": [
+            4200,
+            5700,
+            7200,
+            8600
+          ],
+          "bandwidths": [
+            650,
+            800,
+            1100,
+            1400
+          ],
+          "weights": [
+            0.75,
+            1,
+            0.55,
+            0.2
+          ],
+          "voice": 0.45,
+          "noise": 1.05
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/10-i.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "9323a41b2141b8304193a3f779a06e9fe7e016b30d7a367923ddce593ac7d464",
+      "id": "ru-sound-418",
+      "kind": "sound",
+      "symbol": "И",
+      "label": "и",
+      "score": [
+        {
+          "id": "i",
+          "duration": 0.32
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "i",
+          "kind": "vowel",
+          "formants": [
+            290,
+            2300,
+            3000,
+            3700
+          ],
+          "bandwidths": [
+            65,
+            130,
+            190,
+            250
+          ],
+          "weights": [
+            1,
+            1.6,
+            0.65,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/11-j.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 3528,
+      "duration": 0.08,
+      "sha256": "0808f60988f1773f8708689b442abff46959131ab1ffcd50c27f6fee954e557c",
+      "id": "ru-sound-419",
+      "kind": "sound",
+      "symbol": "Й",
+      "label": "короткий й",
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "j",
+          "kind": "sonorant",
+          "formants": [
+            270,
+            2350,
+            3050,
+            3800
+          ],
+          "bandwidths": [
+            75,
+            150,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            1.5,
+            0.6,
+            0.15
+          ],
+          "voice": 0.85,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/12-k.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4852,
+      "duration": 0.11002267573696145,
+      "sha256": "f7e3f2aa890f0a7b8254fcf60d106feea155f96fc7a2588926535ee408b34213",
+      "id": "ru-sound-41a",
+      "kind": "sound",
+      "symbol": "К",
+      "label": "к",
+      "score": [
+        {
+          "id": "k",
+          "duration": 0.11
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "k",
+          "kind": "stop",
+          "formants": [
+            260,
+            2300,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/13-l.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "4638f4c305066b46474f6c14e74ae615dac21e45d2ae12d89fd257b76bea7ffb",
+      "id": "ru-sound-41b",
+      "kind": "sound",
+      "symbol": "Л",
+      "label": "л",
+      "score": [
+        {
+          "id": "l",
+          "duration": 0.18
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "l",
+          "kind": "sonorant",
+          "formants": [
+            360,
+            1050,
+            2800,
+            3500
+          ],
+          "bandwidths": [
+            85,
+            140,
+            190,
+            250
+          ],
+          "weights": [
+            1,
+            0.75,
+            0.35,
+            0.12
+          ],
+          "voice": 0.85,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/14-m.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "42ea18943ecd181b9aa13d546b6bdda308c10460525c4bf18ba45b1a799f776c",
+      "id": "ru-sound-41c",
+      "kind": "sound",
+      "symbol": "М",
+      "label": "м",
+      "score": [
+        {
+          "id": "m",
+          "duration": 0.18
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "m",
+          "kind": "sonorant",
+          "formants": [
+            250,
+            1050,
+            2400,
+            3400
+          ],
+          "bandwidths": [
+            80,
+            180,
+            260,
+            350
+          ],
+          "weights": [
+            1,
+            0.22,
+            0.13,
+            0.06
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/15-n.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "879b4465a1463293d56d9e7721263b2ff071dd6875c2fba0b524cb82c6ae0d96",
+      "id": "ru-sound-41d",
+      "kind": "sound",
+      "symbol": "Н",
+      "label": "н",
+      "score": [
+        {
+          "id": "n",
+          "duration": 0.18
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "n",
+          "kind": "sonorant",
+          "formants": [
+            250,
+            1450,
+            2400,
+            3400
+          ],
+          "bandwidths": [
+            80,
+            180,
+            260,
+            350
+          ],
+          "weights": [
+            1,
+            0.22,
+            0.13,
+            0.06
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/16-o.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "356bcef611340e73ab6c8154cee2b931749aad02f3dc0a4b8a844f222d2d2fc2",
+      "id": "ru-sound-41e",
+      "kind": "sound",
+      "symbol": "О",
+      "label": "о",
+      "score": [
+        {
+          "id": "o",
+          "duration": 0.32
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "o",
+          "kind": "vowel",
+          "formants": [
+            480,
+            850,
+            2450,
+            3500
+          ],
+          "bandwidths": [
+            75,
+            100,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.9,
+            0.3,
+            0.12
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/17-p.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4852,
+      "duration": 0.11002267573696145,
+      "sha256": "0c2d740bb44b3b6af0b9294d54964c887c7cf8a06824a8d6cf885cea05fe6b6c",
+      "id": "ru-sound-41f",
+      "kind": "sound",
+      "symbol": "П",
+      "label": "п",
+      "score": [
+        {
+          "id": "p",
+          "duration": 0.11
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "p",
+          "kind": "stop",
+          "formants": [
+            260,
+            700,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/18-r.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "c845fa90d17329303a0d07e30d3506b62a226adb5ad85fe1e693fc5527fab698",
+      "id": "ru-sound-420",
+      "kind": "sound",
+      "symbol": "Р",
+      "label": "р",
+      "score": [
+        {
+          "id": "r",
+          "duration": 0.18
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "r",
+          "kind": "trill",
+          "formants": [
+            380,
+            1450,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            100,
+            160,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            0.8,
+            0.5,
+            0.12
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/19-s.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "a517ed2a13486d5d7479a129fdb848278fd91a7c3698b618ebf720c550ad2811",
+      "id": "ru-sound-421",
+      "kind": "sound",
+      "symbol": "С",
+      "label": "с",
+      "score": [
+        {
+          "id": "s",
+          "duration": 0.2
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "s",
+          "kind": "fricative",
+          "formants": [
+            4200,
+            5700,
+            7200,
+            8600
+          ],
+          "bandwidths": [
+            650,
+            800,
+            1100,
+            1400
+          ],
+          "weights": [
+            0.75,
+            1,
+            0.55,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/20-t.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4852,
+      "duration": 0.11002267573696145,
+      "sha256": "e32333831c4c3f79b0d353d820e1758b3302a0d50477b8a893ebc932923ce799",
+      "id": "ru-sound-422",
+      "kind": "sound",
+      "symbol": "Т",
+      "label": "т",
+      "score": [
+        {
+          "id": "t",
+          "duration": 0.11
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "t",
+          "kind": "stop",
+          "formants": [
+            260,
+            1800,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/21-u.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "ca291e422552bfd61bfba31096b2b214e018a4e2bd9cdaf8cf9921197e070ee8",
+      "id": "ru-sound-423",
+      "kind": "sound",
+      "symbol": "У",
+      "label": "у",
+      "score": [
+        {
+          "id": "u",
+          "duration": 0.32
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "u",
+          "kind": "vowel",
+          "formants": [
+            320,
+            700,
+            2300,
+            3400
+          ],
+          "bandwidths": [
+            65,
+            90,
+            170,
+            240
+          ],
+          "weights": [
+            1,
+            0.75,
+            0.25,
+            0.1
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/22-f.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "a82d7cb2808a769f7d966cd5c7562fa50f5a87205e2f15bbb7deacd164f0dda5",
+      "id": "ru-sound-424",
+      "kind": "sound",
+      "symbol": "Ф",
+      "label": "ф",
+      "score": [
+        {
+          "id": "f",
+          "duration": 0.2
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "f",
+          "kind": "fricative",
+          "formants": [
+            900,
+            2300,
+            4300,
+            6800
+          ],
+          "bandwidths": [
+            800,
+            1200,
+            1600,
+            1900
+          ],
+          "weights": [
+            0.15,
+            0.3,
+            0.55,
+            0.35
+          ],
+          "voice": 0,
+          "noise": 0.8
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/23-h.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "b775a86f0808d1674c556fdcfbbc603c2d41d4f04354337bcb6d86bb6627a924",
+      "id": "ru-sound-425",
+      "kind": "sound",
+      "symbol": "Х",
+      "label": "х",
+      "score": [
+        {
+          "id": "h",
+          "duration": 0.2
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "h",
+          "kind": "fricative",
+          "formants": [
+            530,
+            1900,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            300,
+            400,
+            550,
+            700
+          ],
+          "weights": [
+            0.8,
+            0.8,
+            0.4,
+            0.1
+          ],
+          "voice": 0,
+          "noise": 0.8
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/24-ts.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "65bd1502d9efeaa06ec485fbadbe4228cb62e93dfce52d2cb321c9662d7377a2",
+      "id": "ru-sound-426",
+      "kind": "sound",
+      "symbol": "Ц",
+      "label": "ц",
+      "score": [
+        {
+          "id": "ts",
+          "duration": 0.18
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "ts",
+          "kind": "affricate",
+          "formants": [
+            4200,
+            5700,
+            7200,
+            8600
+          ],
+          "bandwidths": [
+            650,
+            800,
+            1100,
+            1400
+          ],
+          "weights": [
+            0.75,
+            1,
+            0.55,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/25-ch.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "c53648cad5eb40092b64fc4fe57c29d63688231d520584248262904d233cbcef",
+      "id": "ru-sound-427",
+      "kind": "sound",
+      "symbol": "Ч",
+      "label": "ч",
+      "score": [
+        {
+          "id": "ch",
+          "duration": 0.18
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "ch",
+          "kind": "affricate",
+          "formants": [
+            2700,
+            4100,
+            5600,
+            7200
+          ],
+          "bandwidths": [
+            500,
+            800,
+            1000,
+            1400
+          ],
+          "weights": [
+            1,
+            0.65,
+            0.35,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/26-sh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "3df4e232cae621622da9d88a6f876c6a6eb7a61620e6652b50253083250c8b16",
+      "id": "ru-sound-428",
+      "kind": "sound",
+      "symbol": "Ш",
+      "label": "ш",
+      "score": [
+        {
+          "id": "sh",
+          "duration": 0.2
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "sh",
+          "kind": "fricative",
+          "formants": [
+            2000,
+            3100,
+            4400,
+            6200
+          ],
+          "bandwidths": [
+            500,
+            800,
+            1000,
+            1400
+          ],
+          "weights": [
+            1,
+            0.65,
+            0.35,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/27-shch.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 9702,
+      "duration": 0.22,
+      "sha256": "ded322f2b5f25ee4f29763b61f8fc57943134a80aa89ea05e1f41716d8d08122",
+      "id": "ru-sound-429",
+      "kind": "sound",
+      "symbol": "Щ",
+      "label": "щ",
+      "score": [
+        {
+          "id": "shj",
+          "duration": 0.22
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "shj",
+          "kind": "fricative",
+          "formants": [
+            2700,
+            4100,
+            5600,
+            7200
+          ],
+          "bandwidths": [
+            500,
+            800,
+            1000,
+            1400
+          ],
+          "weights": [
+            1,
+            0.65,
+            0.35,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/28-y.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "d8c2bfd4451dd836c6a99ac117109f2c3454657e87e31545f1c6117b7a23f4d1",
+      "id": "ru-sound-42b",
+      "kind": "sound",
+      "symbol": "Ы",
+      "label": "ы",
+      "score": [
+        {
+          "id": "y",
+          "duration": 0.32
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "y",
+          "kind": "vowel",
+          "formants": [
+            390,
+            1450,
+            2450,
+            3500
+          ],
+          "bandwidths": [
+            75,
+            120,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            1.05,
+            0.4,
+            0.14
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/29-eh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "6c980897baa0d620528a9412b4ab1248483f17e18c8f91f47f89e809e0d36c91",
+      "id": "ru-sound-42d",
+      "kind": "sound",
+      "symbol": "Э",
+      "label": "э",
+      "score": [
+        {
+          "id": "e",
+          "duration": 0.32
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "e",
+          "kind": "vowel",
+          "formants": [
+            530,
+            1900,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            85,
+            130,
+            170,
+            240
+          ],
+          "weights": [
+            1,
+            1.15,
+            0.45,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/30-yu.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14994,
+      "duration": 0.34,
+      "sha256": "5f49f986e03aa107f95c8af487f29e9b4ef4f8b668664bc693b2d099e2ba4b84",
+      "id": "ru-sound-42e",
+      "kind": "sound",
+      "symbol": "Ю",
+      "label": "й + у",
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        },
+        {
+          "id": "u",
+          "duration": 0.26
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "j",
+          "kind": "sonorant",
+          "formants": [
+            270,
+            2350,
+            3050,
+            3800
+          ],
+          "bandwidths": [
+            75,
+            150,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            1.5,
+            0.6,
+            0.15
+          ],
+          "voice": 0.85,
+          "noise": 0.015
+        },
+        {
+          "id": "u",
+          "kind": "vowel",
+          "formants": [
+            320,
+            700,
+            2300,
+            3400
+          ],
+          "bandwidths": [
+            65,
+            90,
+            170,
+            240
+          ],
+          "weights": [
+            1,
+            0.75,
+            0.25,
+            0.1
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/31-ya.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14994,
+      "duration": 0.34,
+      "sha256": "72d3c36817ba1789cb2391a289752c5b9df9e59b0abb1714f60e9bc293334018",
+      "id": "ru-sound-42f",
+      "kind": "sound",
+      "symbol": "Я",
+      "label": "й + а",
+      "score": [
+        {
+          "id": "j",
+          "duration": 0.08
+        },
+        {
+          "id": "a",
+          "duration": 0.26
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "j",
+          "kind": "sonorant",
+          "formants": [
+            270,
+            2350,
+            3050,
+            3800
+          ],
+          "bandwidths": [
+            75,
+            150,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            1.5,
+            0.6,
+            0.15
+          ],
+          "voice": 0.85,
+          "noise": 0.015
+        },
+        {
+          "id": "a",
+          "kind": "vowel",
+          "formants": [
+            760,
+            1200,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            95,
+            120,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.85,
+            0.45,
+            0.18
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-0.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 21610,
+      "duration": 0.49002267573696145,
+      "sha256": "44e3334427fbeae2a1483f4ea94bdfa94436c20cecf6b180b81b9398642b040f",
+      "id": "ru-digit-30",
+      "kind": "digit",
+      "symbol": "0",
+      "label": "ноль",
+      "score": [
+        {
+          "id": "n",
+          "duration": 0.1
+        },
+        {
+          "id": "o",
+          "duration": 0.26
+        },
+        {
+          "id": "lj",
+          "duration": 0.13
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "n",
+          "kind": "sonorant",
+          "formants": [
+            250,
+            1450,
+            2400,
+            3400
+          ],
+          "bandwidths": [
+            80,
+            180,
+            260,
+            350
+          ],
+          "weights": [
+            1,
+            0.22,
+            0.13,
+            0.06
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        },
+        {
+          "id": "o",
+          "kind": "vowel",
+          "formants": [
+            480,
+            850,
+            2450,
+            3500
+          ],
+          "bandwidths": [
+            75,
+            100,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.9,
+            0.3,
+            0.12
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "lj",
+          "kind": "sonorant",
+          "formants": [
+            360,
+            2050,
+            2800,
+            3500
+          ],
+          "bandwidths": [
+            85,
+            140,
+            190,
+            250
+          ],
+          "weights": [
+            1,
+            0.75,
+            0.35,
+            0.12
+          ],
+          "voice": 0.85,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-1.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 25360,
+      "duration": 0.5750566893424036,
+      "sha256": "fa9360d61df96fa61beb8f6f111a27cadfafb07395ad1733e442c872cf2fee82",
+      "id": "ru-digit-31",
+      "kind": "digit",
+      "symbol": "1",
+      "label": "один",
+      "score": [
+        {
+          "id": "ax",
+          "duration": 0.13
+        },
+        {
+          "id": "dj",
+          "duration": 0.075
+        },
+        {
+          "id": "i",
+          "duration": 0.25
+        },
+        {
+          "id": "n",
+          "duration": 0.12
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "ax",
+          "kind": "vowel",
+          "formants": [
+            500,
+            1300,
+            2500,
+            3500
+          ],
+          "bandwidths": [
+            100,
+            130,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.75,
+            0.3,
+            0.12
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "dj",
+          "kind": "stop",
+          "formants": [
+            260,
+            2200,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0.36,
+          "noise": 1.7
+        },
+        {
+          "id": "i",
+          "kind": "vowel",
+          "formants": [
+            290,
+            2300,
+            3000,
+            3700
+          ],
+          "bandwidths": [
+            65,
+            130,
+            190,
+            250
+          ],
+          "weights": [
+            1,
+            1.6,
+            0.65,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "n",
+          "kind": "sonorant",
+          "formants": [
+            250,
+            1450,
+            2400,
+            3400
+          ],
+          "bandwidths": [
+            80,
+            180,
+            260,
+            350
+          ],
+          "weights": [
+            1,
+            0.22,
+            0.13,
+            0.06
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-2.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 20506,
+      "duration": 0.4649886621315193,
+      "sha256": "4683256ca82014e6c9a9230bf86c9168c6e212ce9f081d00c275fd7b200ec552",
+      "id": "ru-digit-32",
+      "kind": "digit",
+      "symbol": "2",
+      "label": "два",
+      "score": [
+        {
+          "id": "d",
+          "duration": 0.065
+        },
+        {
+          "id": "v",
+          "duration": 0.1
+        },
+        {
+          "id": "a",
+          "duration": 0.3
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "d",
+          "kind": "stop",
+          "formants": [
+            260,
+            1800,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0.36,
+          "noise": 1.7
+        },
+        {
+          "id": "v",
+          "kind": "fricative",
+          "formants": [
+            900,
+            2300,
+            4300,
+            6800
+          ],
+          "bandwidths": [
+            800,
+            1200,
+            1600,
+            1900
+          ],
+          "weights": [
+            0.15,
+            0.3,
+            0.55,
+            0.35
+          ],
+          "voice": 0.45,
+          "noise": 0.8
+        },
+        {
+          "id": "a",
+          "kind": "vowel",
+          "formants": [
+            760,
+            1200,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            95,
+            120,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.85,
+            0.45,
+            0.18
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-3.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 19848,
+      "duration": 0.45006802721088435,
+      "sha256": "5ba3a35132a418eb5574ece4c70316fd66d368caafe46e76169684c907129fb1",
+      "id": "ru-digit-33",
+      "kind": "digit",
+      "symbol": "3",
+      "label": "три",
+      "score": [
+        {
+          "id": "t",
+          "duration": 0.07
+        },
+        {
+          "id": "rj",
+          "duration": 0.09
+        },
+        {
+          "id": "i",
+          "duration": 0.29
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "t",
+          "kind": "stop",
+          "formants": [
+            260,
+            1800,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        },
+        {
+          "id": "rj",
+          "kind": "trill",
+          "formants": [
+            380,
+            1850,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            100,
+            160,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            0.8,
+            0.5,
+            0.12
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        },
+        {
+          "id": "i",
+          "kind": "vowel",
+          "formants": [
+            290,
+            2300,
+            3000,
+            3700
+          ],
+          "bandwidths": [
+            65,
+            130,
+            190,
+            250
+          ],
+          "weights": [
+            1,
+            1.6,
+            0.65,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-4.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 29550,
+      "duration": 0.6700680272108843,
+      "sha256": "9a4042a67036d37c1251e70724b64db7ad8c3d3d1f6a5aa00fb62d28a87b8c11",
+      "id": "ru-digit-34",
+      "kind": "digit",
+      "symbol": "4",
+      "label": "четыре",
+      "score": [
+        {
+          "id": "ch",
+          "duration": 0.11
+        },
+        {
+          "id": "i",
+          "duration": 0.09
+        },
+        {
+          "id": "t",
+          "duration": 0.065
+        },
+        {
+          "id": "y",
+          "duration": 0.22
+        },
+        {
+          "id": "rj",
+          "duration": 0.075
+        },
+        {
+          "id": "e",
+          "duration": 0.11
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "ch",
+          "kind": "affricate",
+          "formants": [
+            2700,
+            4100,
+            5600,
+            7200
+          ],
+          "bandwidths": [
+            500,
+            800,
+            1000,
+            1400
+          ],
+          "weights": [
+            1,
+            0.65,
+            0.35,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        },
+        {
+          "id": "i",
+          "kind": "vowel",
+          "formants": [
+            290,
+            2300,
+            3000,
+            3700
+          ],
+          "bandwidths": [
+            65,
+            130,
+            190,
+            250
+          ],
+          "weights": [
+            1,
+            1.6,
+            0.65,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "t",
+          "kind": "stop",
+          "formants": [
+            260,
+            1800,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        },
+        {
+          "id": "y",
+          "kind": "vowel",
+          "formants": [
+            390,
+            1450,
+            2450,
+            3500
+          ],
+          "bandwidths": [
+            75,
+            120,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            1.05,
+            0.4,
+            0.14
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "rj",
+          "kind": "trill",
+          "formants": [
+            380,
+            1850,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            100,
+            160,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            0.8,
+            0.5,
+            0.12
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        },
+        {
+          "id": "e",
+          "kind": "vowel",
+          "formants": [
+            530,
+            1900,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            85,
+            130,
+            170,
+            240
+          ],
+          "weights": [
+            1,
+            1.15,
+            0.45,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-5.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 22052,
+      "duration": 0.5000453514739229,
+      "sha256": "f013f84859f9e6a7e036f8bc34ad1eab7cbf2896688caf89a244fa89aa404f58",
+      "id": "ru-digit-35",
+      "kind": "digit",
+      "symbol": "5",
+      "label": "пять",
+      "score": [
+        {
+          "id": "pj",
+          "duration": 0.08
+        },
+        {
+          "id": "j",
+          "duration": 0.06
+        },
+        {
+          "id": "a",
+          "duration": 0.27
+        },
+        {
+          "id": "tj",
+          "duration": 0.09
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "pj",
+          "kind": "stop",
+          "formants": [
+            260,
+            2200,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        },
+        {
+          "id": "j",
+          "kind": "sonorant",
+          "formants": [
+            270,
+            2350,
+            3050,
+            3800
+          ],
+          "bandwidths": [
+            75,
+            150,
+            200,
+            260
+          ],
+          "weights": [
+            1,
+            1.5,
+            0.6,
+            0.15
+          ],
+          "voice": 0.85,
+          "noise": 0.015
+        },
+        {
+          "id": "a",
+          "kind": "vowel",
+          "formants": [
+            760,
+            1200,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            95,
+            120,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.85,
+            0.45,
+            0.18
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "tj",
+          "kind": "stop",
+          "formants": [
+            260,
+            2200,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-6.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 26242,
+      "duration": 0.5950566893424036,
+      "sha256": "1d03cb1586164439ddb21c3fc240464bc07dfb0ea6e5fb8ff682b0b487a4cbea",
+      "id": "ru-digit-36",
+      "kind": "digit",
+      "symbol": "6",
+      "label": "шесть",
+      "score": [
+        {
+          "id": "sh",
+          "duration": 0.15
+        },
+        {
+          "id": "e",
+          "duration": 0.27
+        },
+        {
+          "id": "s",
+          "duration": 0.095
+        },
+        {
+          "id": "tj",
+          "duration": 0.08
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "sh",
+          "kind": "fricative",
+          "formants": [
+            2000,
+            3100,
+            4400,
+            6200
+          ],
+          "bandwidths": [
+            500,
+            800,
+            1000,
+            1400
+          ],
+          "weights": [
+            1,
+            0.65,
+            0.35,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        },
+        {
+          "id": "e",
+          "kind": "vowel",
+          "formants": [
+            530,
+            1900,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            85,
+            130,
+            170,
+            240
+          ],
+          "weights": [
+            1,
+            1.15,
+            0.45,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "s",
+          "kind": "fricative",
+          "formants": [
+            4200,
+            5700,
+            7200,
+            8600
+          ],
+          "bandwidths": [
+            650,
+            800,
+            1100,
+            1400
+          ],
+          "weights": [
+            0.75,
+            1,
+            0.55,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        },
+        {
+          "id": "tj",
+          "kind": "stop",
+          "formants": [
+            260,
+            2200,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-7.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 23596,
+      "duration": 0.5350566893424036,
+      "sha256": "683cbf913b3f7573cadba9d94cb54b762408efa82b0f98f2dffec2dae57035d6",
+      "id": "ru-digit-37",
+      "kind": "digit",
+      "symbol": "7",
+      "label": "семь",
+      "score": [
+        {
+          "id": "sj",
+          "duration": 0.135
+        },
+        {
+          "id": "e",
+          "duration": 0.27
+        },
+        {
+          "id": "mj",
+          "duration": 0.13
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "sj",
+          "kind": "fricative",
+          "formants": [
+            3600,
+            5100,
+            6700,
+            8200
+          ],
+          "bandwidths": [
+            650,
+            800,
+            1100,
+            1400
+          ],
+          "weights": [
+            0.75,
+            1,
+            0.55,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        },
+        {
+          "id": "e",
+          "kind": "vowel",
+          "formants": [
+            530,
+            1900,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            85,
+            130,
+            170,
+            240
+          ],
+          "weights": [
+            1,
+            1.15,
+            0.45,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "mj",
+          "kind": "sonorant",
+          "formants": [
+            250,
+            1950,
+            2400,
+            3400
+          ],
+          "bandwidths": [
+            80,
+            180,
+            260,
+            350
+          ],
+          "weights": [
+            1,
+            0.22,
+            0.13,
+            0.06
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-8.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 27344,
+      "duration": 0.6200453514739229,
+      "sha256": "e13a75be97cf88774dcf2e9b0f9d8c1b174762241a15a031dad69f27282a4972",
+      "id": "ru-digit-38",
+      "kind": "digit",
+      "symbol": "8",
+      "label": "восемь",
+      "score": [
+        {
+          "id": "v",
+          "duration": 0.095
+        },
+        {
+          "id": "o",
+          "duration": 0.22
+        },
+        {
+          "id": "sj",
+          "duration": 0.1
+        },
+        {
+          "id": "i",
+          "duration": 0.095
+        },
+        {
+          "id": "mj",
+          "duration": 0.11
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "v",
+          "kind": "fricative",
+          "formants": [
+            900,
+            2300,
+            4300,
+            6800
+          ],
+          "bandwidths": [
+            800,
+            1200,
+            1600,
+            1900
+          ],
+          "weights": [
+            0.15,
+            0.3,
+            0.55,
+            0.35
+          ],
+          "voice": 0.45,
+          "noise": 0.8
+        },
+        {
+          "id": "o",
+          "kind": "vowel",
+          "formants": [
+            480,
+            850,
+            2450,
+            3500
+          ],
+          "bandwidths": [
+            75,
+            100,
+            180,
+            240
+          ],
+          "weights": [
+            1,
+            0.9,
+            0.3,
+            0.12
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "sj",
+          "kind": "fricative",
+          "formants": [
+            3600,
+            5100,
+            6700,
+            8200
+          ],
+          "bandwidths": [
+            650,
+            800,
+            1100,
+            1400
+          ],
+          "weights": [
+            0.75,
+            1,
+            0.55,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 1.05
+        },
+        {
+          "id": "i",
+          "kind": "vowel",
+          "formants": [
+            290,
+            2300,
+            3000,
+            3700
+          ],
+          "bandwidths": [
+            65,
+            130,
+            190,
+            250
+          ],
+          "weights": [
+            1,
+            1.6,
+            0.65,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "mj",
+          "kind": "sonorant",
+          "formants": [
+            250,
+            1950,
+            2400,
+            3400
+          ],
+          "bandwidths": [
+            80,
+            180,
+            260,
+            350
+          ],
+          "weights": [
+            1,
+            0.22,
+            0.13,
+            0.06
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digit-9.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 24034,
+      "duration": 0.5449886621315193,
+      "sha256": "008eca39c165d4b6e2f3e12cf29285ba945ca2c6887a1cf7c70b202455312674",
+      "id": "ru-digit-39",
+      "kind": "digit",
+      "symbol": "9",
+      "label": "девять",
+      "score": [
+        {
+          "id": "dj",
+          "duration": 0.075
+        },
+        {
+          "id": "e",
+          "duration": 0.2
+        },
+        {
+          "id": "vj",
+          "duration": 0.085
+        },
+        {
+          "id": "i",
+          "duration": 0.1
+        },
+        {
+          "id": "tj",
+          "duration": 0.085
+        }
+      ],
+      "settings": {
+        "pitchStart": 124,
+        "pitchEnd": 107,
+        "vibratoDepth": 1.8,
+        "vibratoRate": 2.1,
+        "speed": 1,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 1,
+        "noise": 1,
+        "transitionMs": 30,
+        "outputGain": 0.7,
+        "seed": 1514492491
+      },
+      "seed": 1514492491,
+      "effectiveSeed": 1514492491,
+      "sourceHarmonics": 60,
+      "resolvedPhones": [
+        {
+          "id": "dj",
+          "kind": "stop",
+          "formants": [
+            260,
+            2200,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0.36,
+          "noise": 1.7
+        },
+        {
+          "id": "e",
+          "kind": "vowel",
+          "formants": [
+            530,
+            1900,
+            2600,
+            3500
+          ],
+          "bandwidths": [
+            85,
+            130,
+            170,
+            240
+          ],
+          "weights": [
+            1,
+            1.15,
+            0.45,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "vj",
+          "kind": "fricative",
+          "formants": [
+            900,
+            2300,
+            4300,
+            6800
+          ],
+          "bandwidths": [
+            800,
+            1200,
+            1600,
+            1900
+          ],
+          "weights": [
+            0.15,
+            0.3,
+            0.55,
+            0.35
+          ],
+          "voice": 0.45,
+          "noise": 0.8
+        },
+        {
+          "id": "i",
+          "kind": "vowel",
+          "formants": [
+            290,
+            2300,
+            3000,
+            3700
+          ],
+          "bandwidths": [
+            65,
+            130,
+            190,
+            250
+          ],
+          "weights": [
+            1,
+            1.6,
+            0.65,
+            0.16
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        {
+          "id": "tj",
+          "kind": "stop",
+          "formants": [
+            260,
+            2200,
+            3000,
+            4100
+          ],
+          "bandwidths": [
+            160,
+            450,
+            600,
+            800
+          ],
+          "weights": [
+            0.5,
+            0.8,
+            0.7,
+            0.45
+          ],
+          "voice": 0,
+          "noise": 1.7
+        }
+      ]
+    }
+  ],
+  "sequences": [
+    {
+      "file": "zerkalius/alphabet.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 918609,
+      "duration": 20.830136054421768,
+      "sha256": "0b7ccb0621efe792083c0c2ca05d828a26562394e1e0b590b8e870059c7a690b",
+      "leadSeconds": 0.2,
+      "gapSeconds": 0.45,
+      "timeline": [
+        {
+          "symbol": "А",
+          "file": "zerkalius/01-a.wav",
+          "onset": 0.2,
+          "onsetSample": 8820,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Б",
+          "file": "zerkalius/02-b.wav",
+          "onset": 0.97,
+          "onsetSample": 42777,
+          "sampleCount": 4852,
+          "duration": 0.11002267573696145
+        },
+        {
+          "symbol": "В",
+          "file": "zerkalius/03-v.wav",
+          "onset": 1.5300226757369615,
+          "onsetSample": 67474,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "Г",
+          "file": "zerkalius/04-g.wav",
+          "onset": 2.1600226757369616,
+          "onsetSample": 95257,
+          "sampleCount": 4852,
+          "duration": 0.11002267573696145
+        },
+        {
+          "symbol": "Д",
+          "file": "zerkalius/05-d.wav",
+          "onset": 2.720045351473923,
+          "onsetSample": 119954,
+          "sampleCount": 4852,
+          "duration": 0.11002267573696145
+        },
+        {
+          "symbol": "Е",
+          "file": "zerkalius/06-e.wav",
+          "onset": 3.280068027210884,
+          "onsetSample": 144651,
+          "sampleCount": 14994,
+          "duration": 0.34
+        },
+        {
+          "symbol": "Ё",
+          "file": "zerkalius/07-yo.wav",
+          "onset": 4.070068027210884,
+          "onsetSample": 179490,
+          "sampleCount": 14994,
+          "duration": 0.34
+        },
+        {
+          "symbol": "Ж",
+          "file": "zerkalius/08-zh.wav",
+          "onset": 4.860068027210884,
+          "onsetSample": 214329,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "З",
+          "file": "zerkalius/09-z.wav",
+          "onset": 5.510068027210885,
+          "onsetSample": 242994,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "И",
+          "file": "zerkalius/10-i.wav",
+          "onset": 6.1400680272108845,
+          "onsetSample": 270777,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Й",
+          "file": "zerkalius/11-j.wav",
+          "onset": 6.910068027210884,
+          "onsetSample": 304734,
+          "sampleCount": 3528,
+          "duration": 0.08
+        },
+        {
+          "symbol": "К",
+          "file": "zerkalius/12-k.wav",
+          "onset": 7.440068027210884,
+          "onsetSample": 328107,
+          "sampleCount": 4852,
+          "duration": 0.11002267573696145
+        },
+        {
+          "symbol": "Л",
+          "file": "zerkalius/13-l.wav",
+          "onset": 8.000090702947846,
+          "onsetSample": 352804,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "М",
+          "file": "zerkalius/14-m.wav",
+          "onset": 8.630090702947847,
+          "onsetSample": 380587,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "Н",
+          "file": "zerkalius/15-n.wav",
+          "onset": 9.260090702947846,
+          "onsetSample": 408370,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "О",
+          "file": "zerkalius/16-o.wav",
+          "onset": 9.890090702947846,
+          "onsetSample": 436153,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "П",
+          "file": "zerkalius/17-p.wav",
+          "onset": 10.660090702947846,
+          "onsetSample": 470110,
+          "sampleCount": 4852,
+          "duration": 0.11002267573696145
+        },
+        {
+          "symbol": "Р",
+          "file": "zerkalius/18-r.wav",
+          "onset": 11.220113378684808,
+          "onsetSample": 494807,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "С",
+          "file": "zerkalius/19-s.wav",
+          "onset": 11.850113378684807,
+          "onsetSample": 522590,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "Т",
+          "file": "zerkalius/20-t.wav",
+          "onset": 12.500113378684807,
+          "onsetSample": 551255,
+          "sampleCount": 4852,
+          "duration": 0.11002267573696145
+        },
+        {
+          "symbol": "У",
+          "file": "zerkalius/21-u.wav",
+          "onset": 13.060136054421768,
+          "onsetSample": 575952,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Ф",
+          "file": "zerkalius/22-f.wav",
+          "onset": 13.830136054421768,
+          "onsetSample": 609909,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "Х",
+          "file": "zerkalius/23-h.wav",
+          "onset": 14.480136054421768,
+          "onsetSample": 638574,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "Ц",
+          "file": "zerkalius/24-ts.wav",
+          "onset": 15.130136054421769,
+          "onsetSample": 667239,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "Ч",
+          "file": "zerkalius/25-ch.wav",
+          "onset": 15.76013605442177,
+          "onsetSample": 695022,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "Ш",
+          "file": "zerkalius/26-sh.wav",
+          "onset": 16.39013605442177,
+          "onsetSample": 722805,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "Щ",
+          "file": "zerkalius/27-shch.wav",
+          "onset": 17.04013605442177,
+          "onsetSample": 751470,
+          "sampleCount": 9702,
+          "duration": 0.22
+        },
+        {
+          "symbol": "Ы",
+          "file": "zerkalius/28-y.wav",
+          "onset": 17.710136054421767,
+          "onsetSample": 781017,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Э",
+          "file": "zerkalius/29-eh.wav",
+          "onset": 18.48013605442177,
+          "onsetSample": 814974,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Ю",
+          "file": "zerkalius/30-yu.wav",
+          "onset": 19.25013605442177,
+          "onsetSample": 848931,
+          "sampleCount": 14994,
+          "duration": 0.34
+        },
+        {
+          "symbol": "Я",
+          "file": "zerkalius/31-ya.wav",
+          "onset": 20.04013605442177,
+          "onsetSample": 883770,
+          "sampleCount": 14994,
+          "duration": 0.34
+        }
+      ]
+    },
+    {
+      "file": "zerkalius/digits.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 447412,
+      "duration": 10.145396825396825,
+      "sha256": "e818ba9477dce072b28f20c2ab79bdf1537d909a01764a51efb90ffa19f725b3",
+      "leadSeconds": 0.2,
+      "gapSeconds": 0.45,
+      "timeline": [
+        {
+          "symbol": "0",
+          "file": "zerkalius/digit-0.wav",
+          "onset": 0.2,
+          "onsetSample": 8820,
+          "sampleCount": 21610,
+          "duration": 0.49002267573696145
+        },
+        {
+          "symbol": "1",
+          "file": "zerkalius/digit-1.wav",
+          "onset": 1.1400226757369614,
+          "onsetSample": 50275,
+          "sampleCount": 25360,
+          "duration": 0.5750566893424036
+        },
+        {
+          "symbol": "2",
+          "file": "zerkalius/digit-2.wav",
+          "onset": 2.165079365079365,
+          "onsetSample": 95480,
+          "sampleCount": 20506,
+          "duration": 0.4649886621315193
+        },
+        {
+          "symbol": "3",
+          "file": "zerkalius/digit-3.wav",
+          "onset": 3.0800680272108845,
+          "onsetSample": 135831,
+          "sampleCount": 19848,
+          "duration": 0.45006802721088435
+        },
+        {
+          "symbol": "4",
+          "file": "zerkalius/digit-4.wav",
+          "onset": 3.9801360544217688,
+          "onsetSample": 175524,
+          "sampleCount": 29550,
+          "duration": 0.6700680272108843
+        },
+        {
+          "symbol": "5",
+          "file": "zerkalius/digit-5.wav",
+          "onset": 5.100204081632653,
+          "onsetSample": 224919,
+          "sampleCount": 22052,
+          "duration": 0.5000453514739229
+        },
+        {
+          "symbol": "6",
+          "file": "zerkalius/digit-6.wav",
+          "onset": 6.050249433106576,
+          "onsetSample": 266816,
+          "sampleCount": 26242,
+          "duration": 0.5950566893424036
+        },
+        {
+          "symbol": "7",
+          "file": "zerkalius/digit-7.wav",
+          "onset": 7.09530612244898,
+          "onsetSample": 312903,
+          "sampleCount": 23596,
+          "duration": 0.5350566893424036
+        },
+        {
+          "symbol": "8",
+          "file": "zerkalius/digit-8.wav",
+          "onset": 8.080362811791383,
+          "onsetSample": 356344,
+          "sampleCount": 27344,
+          "duration": 0.6200453514739229
+        },
+        {
+          "symbol": "9",
+          "file": "zerkalius/digit-9.wav",
+          "onset": 9.150408163265306,
+          "onsetSample": 403533,
+          "sampleCount": 24034,
+          "duration": 0.5449886621315193
+        }
+      ]
+    }
+  ]
+}

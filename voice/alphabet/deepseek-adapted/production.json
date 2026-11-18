@@ -1,0 +1,1588 @@
+{
+  "id": "deepseek-adapted",
+  "label": "DeepSeek · исходный DSP + наш адаптер алфавита",
+  "engineSource": "tools/voice/formant_voice.py",
+  "adapterSource": "voice/alphabet/build.py",
+  "f0Start": 112,
+  "f0End": 96,
+  "noiseSeed": 7,
+  "adaptation": "Native synthesis branches, explicit letter durations; new Ж/Щ recipes; Е/Ё/Ю/Я = й + vowel; no source edits.",
+  "limitations": "Voiced/unvoiced stop pairs are weakly distinguished in the source. Digits retain native removal of ь and я→а; no contextual palatalization.",
+  "items": [
+    {
+      "file": "deepseek-adapted/01-a.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "b96ded7053d86075bdc4d29fffa91b508991536d3fe6ba713a050f4be8a08791",
+      "symbol": "А",
+      "label": "а",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "a",
+          "duration": 0.32,
+          "nativeSymbol": "а",
+          "kind": "vowel",
+          "formants": [
+            700,
+            1300,
+            2500
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 1.0
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/02-b.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4851,
+      "duration": 0.11,
+      "sha256": "6b590646cc05b96af66d08f758fe874775674f4309044190dd2673b48c072d8e",
+      "symbol": "Б",
+      "label": "б",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "b",
+          "duration": 0.11,
+          "nativeSymbol": "б",
+          "kind": "plosive",
+          "formants": [
+            300,
+            900,
+            2200
+          ],
+          "nativeDuration": 0.055,
+          "durationOverride": 0.11,
+          "loudness": 0.55
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/03-v.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "48d5651a7ca14ed298f72d2191406eafad9d67abc474ad422021c55fdae9f104",
+      "symbol": "В",
+      "label": "в",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "v",
+          "duration": 0.18,
+          "nativeSymbol": "в",
+          "kind": "approximant",
+          "formants": [
+            300,
+            1200,
+            2300
+          ],
+          "nativeDuration": 0.07,
+          "durationOverride": 0.18,
+          "loudness": 0.55
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/04-g.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4851,
+      "duration": 0.11,
+      "sha256": "03a1ca6719a14eff9361d90ae7035b32ae7bc6e8473a7a9c97ebf868009c8bf6",
+      "symbol": "Г",
+      "label": "г",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "g",
+          "duration": 0.11,
+          "nativeSymbol": "г",
+          "kind": "plosive",
+          "formants": [
+            300,
+            1400,
+            2300
+          ],
+          "nativeDuration": 0.055,
+          "durationOverride": 0.11,
+          "loudness": 0.5
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/05-d.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4851,
+      "duration": 0.11,
+      "sha256": "ca70a44482ab4a5ef625f3631c04888c920eb718fbc19f8cefc0e74983ccc726",
+      "symbol": "Д",
+      "label": "д",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "d",
+          "duration": 0.11,
+          "nativeSymbol": "д",
+          "kind": "plosive",
+          "formants": [
+            350,
+            1700,
+            2600
+          ],
+          "nativeDuration": 0.055,
+          "durationOverride": 0.11,
+          "loudness": 0.55
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/06-e.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14994,
+      "duration": 0.34,
+      "sha256": "1358a16ae98f4d8957bb420e0b8132d8f4b7297c08c11f969c20640f63e61638",
+      "symbol": "Е",
+      "label": "й + е",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "j",
+          "duration": 0.08,
+          "nativeSymbol": "й",
+          "kind": "approximant",
+          "formants": [
+            280,
+            2200,
+            2900
+          ],
+          "nativeDuration": 0.06,
+          "durationOverride": 0.08,
+          "loudness": 0.45
+        },
+        {
+          "token": "e",
+          "duration": 0.26,
+          "nativeSymbol": "е",
+          "kind": "vowel",
+          "formants": [
+            450,
+            1900,
+            2600
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 0.9
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/07-yo.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14994,
+      "duration": 0.34,
+      "sha256": "591167c271bf057d68d128572a321fb70475ded4b9755d943103aadc71577460",
+      "symbol": "Ё",
+      "label": "й + о",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "j",
+          "duration": 0.08,
+          "nativeSymbol": "й",
+          "kind": "approximant",
+          "formants": [
+            280,
+            2200,
+            2900
+          ],
+          "nativeDuration": 0.06,
+          "durationOverride": 0.08,
+          "loudness": 0.45
+        },
+        {
+          "token": "o",
+          "duration": 0.26,
+          "nativeSymbol": "о",
+          "kind": "vowel",
+          "formants": [
+            500,
+            900,
+            2400
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 0.95
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/08-zh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "9dfd434949f52c7d2fc40793d11f837d2a20be388800fa5f4e48c71df57f2e92",
+      "symbol": "Ж",
+      "label": "ж",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "zh",
+          "duration": 0.2,
+          "extension": "our voiced fricative Ж",
+          "noiseSeed": 7,
+          "branches": [
+            {
+              "source": "glottal",
+              "frequency": 300,
+              "bandwidth": 160,
+              "weight": 0.3
+            },
+            {
+              "source": "noise",
+              "frequency": 2400,
+              "bandwidth": 900,
+              "weight": 1.0
+            },
+            {
+              "source": "noise",
+              "frequency": 3600,
+              "bandwidth": 1200,
+              "weight": 0.3
+            }
+          ]
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/09-z.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "2463c4eff1fd768430e8caf92141f33bd8736e3ba6c8a4c2539573421905876a",
+      "symbol": "З",
+      "label": "з",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "z",
+          "duration": 0.18,
+          "nativeSymbol": "з",
+          "kind": "fricative",
+          "formants": [
+            320,
+            1600,
+            2600
+          ],
+          "nativeDuration": 0.08,
+          "durationOverride": 0.18,
+          "loudness": 0.35
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/10-i.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "9c4f613e6a20c733a3ef381f340e86240b1df7a1448522d72fcac140e427c319",
+      "symbol": "И",
+      "label": "и",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "i",
+          "duration": 0.32,
+          "nativeSymbol": "и",
+          "kind": "vowel",
+          "formants": [
+            300,
+            2200,
+            3000
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 0.85
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/11-j.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 3528,
+      "duration": 0.08,
+      "sha256": "b22c0a779ad30f7fe878c15fb0141ead91ce1cfdae86cef7dbba0ab4170e1fd8",
+      "symbol": "Й",
+      "label": "короткий й",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "j",
+          "duration": 0.08,
+          "nativeSymbol": "й",
+          "kind": "approximant",
+          "formants": [
+            280,
+            2200,
+            2900
+          ],
+          "nativeDuration": 0.06,
+          "durationOverride": 0.08,
+          "loudness": 0.45
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/12-k.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4851,
+      "duration": 0.11,
+      "sha256": "4068ec76fa90f50fd89b79096d8643689fdb7ff554300763423421b565ac9a3c",
+      "symbol": "К",
+      "label": "к",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "k",
+          "duration": 0.11,
+          "nativeSymbol": "к",
+          "kind": "plosive",
+          "formants": [
+            300,
+            1500,
+            2400
+          ],
+          "nativeDuration": 0.05,
+          "durationOverride": 0.11,
+          "loudness": 0.45
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/13-l.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "9e462a9059817696734e7f9dbe514627ade7a0b8ebcb4922e356994fc4d25e26",
+      "symbol": "Л",
+      "label": "л",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "l",
+          "duration": 0.18,
+          "nativeSymbol": "л",
+          "kind": "approximant",
+          "formants": [
+            350,
+            1100,
+            2400
+          ],
+          "nativeDuration": 0.065,
+          "durationOverride": 0.18,
+          "loudness": 0.55
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/14-m.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "d901da37c0a54c7815723101ec9780a46deab076e39432b04be36a98779a4e4d",
+      "symbol": "М",
+      "label": "м",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "m",
+          "duration": 0.18,
+          "nativeSymbol": "м",
+          "kind": "nasal",
+          "formants": [
+            250,
+            1000,
+            2200
+          ],
+          "nativeDuration": 0.07,
+          "durationOverride": 0.18,
+          "loudness": 0.5
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/15-n.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "2609a64076f5bc9c6d9011847eacdf75b3e6492988fef8ed0808241f4bf668b2",
+      "symbol": "Н",
+      "label": "н",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "n",
+          "duration": 0.18,
+          "nativeSymbol": "н",
+          "kind": "nasal",
+          "formants": [
+            250,
+            1200,
+            2300
+          ],
+          "nativeDuration": 0.07,
+          "durationOverride": 0.18,
+          "loudness": 0.5
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/16-o.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "021be3d390b3f0710d5308633cd5ed18e4eb59f79a99c265c838efc57dff634e",
+      "symbol": "О",
+      "label": "о",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "o",
+          "duration": 0.32,
+          "nativeSymbol": "о",
+          "kind": "vowel",
+          "formants": [
+            500,
+            900,
+            2400
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 0.95
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/17-p.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4851,
+      "duration": 0.11,
+      "sha256": "6b590646cc05b96af66d08f758fe874775674f4309044190dd2673b48c072d8e",
+      "symbol": "П",
+      "label": "п",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "p",
+          "duration": 0.11,
+          "nativeSymbol": "п",
+          "kind": "plosive",
+          "formants": [
+            300,
+            900,
+            2200
+          ],
+          "nativeDuration": 0.05,
+          "durationOverride": 0.11,
+          "loudness": 0.45
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/18-r.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "a25abfc444b982a3a8b3c7e18ea7fe91d42eec1d2eda2a88d38c03a85fe830e3",
+      "symbol": "Р",
+      "label": "р",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "r",
+          "duration": 0.18,
+          "nativeSymbol": "р",
+          "kind": "trill",
+          "formants": [
+            400,
+            1300,
+            2400
+          ],
+          "nativeDuration": 0.08,
+          "durationOverride": 0.18,
+          "loudness": 0.55
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/19-s.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "699f3b7b07a5292bb3f42ac10e6ddd1b8f65dab4f2da1ada4d1c213d7867a308",
+      "symbol": "С",
+      "label": "с",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "s",
+          "duration": 0.2,
+          "nativeSymbol": "с",
+          "kind": "fricative",
+          "formants": [
+            320,
+            1800,
+            2800
+          ],
+          "nativeDuration": 0.09,
+          "durationOverride": 0.2,
+          "loudness": 0.35
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/20-t.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 4851,
+      "duration": 0.11,
+      "sha256": "a92c96c0677c15ecea00b4d8c5a6431383b5e008bbe3a8a314f2f8ace5090c13",
+      "symbol": "Т",
+      "label": "т",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "t",
+          "duration": 0.11,
+          "nativeSymbol": "т",
+          "kind": "plosive",
+          "formants": [
+            380,
+            1800,
+            2700
+          ],
+          "nativeDuration": 0.055,
+          "durationOverride": 0.11,
+          "loudness": 0.5
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/21-u.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "4ad253aa840ce13f98cf4ccf60f835625278275584cdb3010101c40271903cdc",
+      "symbol": "У",
+      "label": "у",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "u",
+          "duration": 0.32,
+          "nativeSymbol": "у",
+          "kind": "vowel",
+          "formants": [
+            320,
+            800,
+            2300
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 0.9
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/22-f.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "02dcc26098c44cb7933a3cb2f74a0c784afc44d722ee0b9f7d3f6b2b77a7afb9",
+      "symbol": "Ф",
+      "label": "ф",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "f",
+          "duration": 0.2,
+          "nativeSymbol": "ф",
+          "kind": "fricative",
+          "formants": [
+            300,
+            1000,
+            2200
+          ],
+          "nativeDuration": 0.08,
+          "durationOverride": 0.2,
+          "loudness": 0.3
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/23-h.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "095e50ef323a1ed229f38b8453439eb2af34413c8d9ad0c1da0c41b3bbb3898b",
+      "symbol": "Х",
+      "label": "х",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "h",
+          "duration": 0.2,
+          "nativeSymbol": "х",
+          "kind": "fricative",
+          "formants": [
+            300,
+            1200,
+            2300
+          ],
+          "nativeDuration": 0.08,
+          "durationOverride": 0.2,
+          "loudness": 0.3
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/24-ts.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "b74b0a9295184287645f28c0b53a3632a364ddfc5d13e2f432bee3b675e4f175",
+      "symbol": "Ц",
+      "label": "ц",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "ts",
+          "duration": 0.18,
+          "nativeSymbol": "ц",
+          "kind": "affricate",
+          "formants": [
+            320,
+            1800,
+            2600
+          ],
+          "nativeDuration": 0.085,
+          "durationOverride": 0.18,
+          "loudness": 0.4
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/25-ch.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 7938,
+      "duration": 0.18,
+      "sha256": "48fe494db124b2ab531665e46f81067b76843704ac4f325f2c1e08110c77a254",
+      "symbol": "Ч",
+      "label": "ч",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "ch",
+          "duration": 0.18,
+          "nativeSymbol": "ч",
+          "kind": "affricate",
+          "formants": [
+            320,
+            1900,
+            2700
+          ],
+          "nativeDuration": 0.085,
+          "durationOverride": 0.18,
+          "loudness": 0.4
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/26-sh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 8820,
+      "duration": 0.2,
+      "sha256": "ae7f613ebb910de0bc57b5040fb370313c5d68e8b1ae20712039fd2719da424f",
+      "symbol": "Ш",
+      "label": "ш",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "sh",
+          "duration": 0.2,
+          "nativeSymbol": "ш",
+          "kind": "fricative",
+          "formants": [
+            300,
+            1500,
+            2400
+          ],
+          "nativeDuration": 0.09,
+          "durationOverride": 0.2,
+          "loudness": 0.35
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/27-shch.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 9702,
+      "duration": 0.22,
+      "sha256": "01d2a3341c3ff2c7e168380c00c337137b47c1360c408b238d1c539294374094",
+      "symbol": "Щ",
+      "label": "щ",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "shj",
+          "duration": 0.22,
+          "extension": "our long soft fricative Щ",
+          "noiseSeed": 7,
+          "branches": [
+            {
+              "source": "noise",
+              "frequency": 3200,
+              "bandwidth": 700,
+              "weight": 1.0
+            },
+            {
+              "source": "noise",
+              "frequency": 4800,
+              "bandwidth": 1000,
+              "weight": 0.5
+            },
+            {
+              "source": "noise",
+              "frequency": 6500,
+              "bandwidth": 1300,
+              "weight": 0.25
+            }
+          ]
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/28-y.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "a9011ad7b8c7e3a1333fb348caa051a1450624ecc2a6623697b315bc87aea2b3",
+      "symbol": "Ы",
+      "label": "ы",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "y",
+          "duration": 0.32,
+          "nativeSymbol": "ы",
+          "kind": "vowel",
+          "formants": [
+            400,
+            1500,
+            2500
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 0.9
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/29-eh.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14112,
+      "duration": 0.32,
+      "sha256": "fe0a820ec75b336ad1d140d1686f7bd370f0297d5e330054ed4e54ad892a3e6b",
+      "symbol": "Э",
+      "label": "э",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "e",
+          "duration": 0.32,
+          "nativeSymbol": "э",
+          "kind": "vowel",
+          "formants": [
+            600,
+            1800,
+            2500
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 0.95
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/30-yu.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14994,
+      "duration": 0.34,
+      "sha256": "75962efe9e8b0c8b9527561be8c81917c4956623a3daed3f7370c195de1b134d",
+      "symbol": "Ю",
+      "label": "й + у",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "j",
+          "duration": 0.08,
+          "nativeSymbol": "й",
+          "kind": "approximant",
+          "formants": [
+            280,
+            2200,
+            2900
+          ],
+          "nativeDuration": 0.06,
+          "durationOverride": 0.08,
+          "loudness": 0.45
+        },
+        {
+          "token": "u",
+          "duration": 0.26,
+          "nativeSymbol": "у",
+          "kind": "vowel",
+          "formants": [
+            320,
+            800,
+            2300
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 0.9
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/31-ya.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 14994,
+      "duration": 0.34,
+      "sha256": "bda8785d610d5366a7b951a9cfdd0f2c7ab34dbedc83723e4a3b752ce54da70c",
+      "symbol": "Я",
+      "label": "й + а",
+      "kind": "sound",
+      "segments": [
+        {
+          "token": "j",
+          "duration": 0.08,
+          "nativeSymbol": "й",
+          "kind": "approximant",
+          "formants": [
+            280,
+            2200,
+            2900
+          ],
+          "nativeDuration": 0.06,
+          "durationOverride": 0.08,
+          "loudness": 0.45
+        },
+        {
+          "token": "a",
+          "duration": 0.26,
+          "nativeSymbol": "а",
+          "kind": "vowel",
+          "formants": [
+            700,
+            1300,
+            2500
+          ],
+          "bandwidths": [
+            90,
+            110,
+            160
+          ],
+          "weights": [
+            1,
+            0.6,
+            0.3
+          ],
+          "loudness": 1.0
+        }
+      ],
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-0.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 11686,
+      "duration": 0.2649886621315193,
+      "sha256": "75eff413b66217b445dd498dff5e2ba0060a60af813b1a3c2792b634593c1e6d",
+      "symbol": "0",
+      "kind": "digit",
+      "label": "ноль",
+      "text": "ноль",
+      "mappedText": "нол",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-1.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 16978,
+      "duration": 0.3849886621315193,
+      "sha256": "cc4b248ed592792984a383be53d2ed104b577faddd658fe1d6ab5174cfe4571a",
+      "symbol": "1",
+      "kind": "digit",
+      "label": "один",
+      "text": "один",
+      "mappedText": "один",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-2.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 11245,
+      "duration": 0.2549886621315193,
+      "sha256": "9ee3256370b5a66aaeba3878caa8694050d481a352746262d34043347daf0af8",
+      "symbol": "2",
+      "kind": "digit",
+      "label": "два",
+      "text": "два",
+      "mappedText": "два",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-3.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 11686,
+      "duration": 0.2649886621315193,
+      "sha256": "0192bda4b460743c462d4f187ca05aab7ae2960864f216241bf5e72c071d5504",
+      "symbol": "3",
+      "kind": "digit",
+      "label": "три",
+      "text": "три",
+      "mappedText": "три",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-4.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 26900,
+      "duration": 0.6099773242630385,
+      "sha256": "94ef38f5f7fb309a459761a9c0a0fcdce6300046f24682b4004b5dec48ceea4e",
+      "symbol": "4",
+      "kind": "digit",
+      "label": "четыре",
+      "text": "четыре",
+      "mappedText": "четыре",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-5.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 10363,
+      "duration": 0.23498866213151928,
+      "sha256": "9e00da304c7f24a3d37455c2d99571b57320c45378c6125c754b092d9db221c1",
+      "symbol": "5",
+      "kind": "digit",
+      "label": "пять",
+      "text": "пять",
+      "mappedText": "пат",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-6.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 16096,
+      "duration": 0.36498866213151926,
+      "sha256": "f1ebe0e244d0416bb8a4c3fba8e639744c368c4e61f355978afb55917b76c99e",
+      "symbol": "6",
+      "kind": "digit",
+      "label": "шесть",
+      "text": "шесть",
+      "mappedText": "шест",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-7.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 12789,
+      "duration": 0.29,
+      "sha256": "fe41a63ec1fce49ccf909f482095355a30d324c894921456bb254b5486369fba",
+      "symbol": "7",
+      "kind": "digit",
+      "label": "семь",
+      "text": "семь",
+      "mappedText": "сем",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-8.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 21609,
+      "duration": 0.49,
+      "sha256": "77dd6cc193248633af1f9933bf3f22052c566b39e1aa06c4bfbb3f8c5387540f",
+      "symbol": "8",
+      "kind": "digit",
+      "label": "восемь",
+      "text": "восемь",
+      "mappedText": "восем",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    },
+    {
+      "file": "deepseek-adapted/digit-9.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 19403,
+      "duration": 0.43997732426303854,
+      "sha256": "513baba18d295cea1f2b1bf66df17ebad3a3ada1568a66253d78d51847d3dcaf",
+      "symbol": "9",
+      "kind": "digit",
+      "label": "девять",
+      "text": "девять",
+      "mappedText": "деват",
+      "entry": "speak_word",
+      "targetPeak": 0.7
+    }
+  ],
+  "sequences": [
+    {
+      "file": "deepseek-adapted/alphabet.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 918603,
+      "duration": 20.83,
+      "sha256": "e2de1187da7768f4f2801dc21f27508e69695d85843099128f01b4adf0de6f72",
+      "leadSeconds": 0.2,
+      "gapSeconds": 0.45,
+      "timeline": [
+        {
+          "symbol": "А",
+          "file": "deepseek-adapted/01-a.wav",
+          "onsetSample": 8820,
+          "onset": 0.2,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Б",
+          "file": "deepseek-adapted/02-b.wav",
+          "onsetSample": 42777,
+          "onset": 0.97,
+          "sampleCount": 4851,
+          "duration": 0.11
+        },
+        {
+          "symbol": "В",
+          "file": "deepseek-adapted/03-v.wav",
+          "onsetSample": 67473,
+          "onset": 1.53,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "Г",
+          "file": "deepseek-adapted/04-g.wav",
+          "onsetSample": 95256,
+          "onset": 2.16,
+          "sampleCount": 4851,
+          "duration": 0.11
+        },
+        {
+          "symbol": "Д",
+          "file": "deepseek-adapted/05-d.wav",
+          "onsetSample": 119952,
+          "onset": 2.72,
+          "sampleCount": 4851,
+          "duration": 0.11
+        },
+        {
+          "symbol": "Е",
+          "file": "deepseek-adapted/06-e.wav",
+          "onsetSample": 144648,
+          "onset": 3.28,
+          "sampleCount": 14994,
+          "duration": 0.34
+        },
+        {
+          "symbol": "Ё",
+          "file": "deepseek-adapted/07-yo.wav",
+          "onsetSample": 179487,
+          "onset": 4.07,
+          "sampleCount": 14994,
+          "duration": 0.34
+        },
+        {
+          "symbol": "Ж",
+          "file": "deepseek-adapted/08-zh.wav",
+          "onsetSample": 214326,
+          "onset": 4.86,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "З",
+          "file": "deepseek-adapted/09-z.wav",
+          "onsetSample": 242991,
+          "onset": 5.51,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "И",
+          "file": "deepseek-adapted/10-i.wav",
+          "onsetSample": 270774,
+          "onset": 6.14,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Й",
+          "file": "deepseek-adapted/11-j.wav",
+          "onsetSample": 304731,
+          "onset": 6.91,
+          "sampleCount": 3528,
+          "duration": 0.08
+        },
+        {
+          "symbol": "К",
+          "file": "deepseek-adapted/12-k.wav",
+          "onsetSample": 328104,
+          "onset": 7.44,
+          "sampleCount": 4851,
+          "duration": 0.11
+        },
+        {
+          "symbol": "Л",
+          "file": "deepseek-adapted/13-l.wav",
+          "onsetSample": 352800,
+          "onset": 8.0,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "М",
+          "file": "deepseek-adapted/14-m.wav",
+          "onsetSample": 380583,
+          "onset": 8.63,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "Н",
+          "file": "deepseek-adapted/15-n.wav",
+          "onsetSample": 408366,
+          "onset": 9.26,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "О",
+          "file": "deepseek-adapted/16-o.wav",
+          "onsetSample": 436149,
+          "onset": 9.89,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "П",
+          "file": "deepseek-adapted/17-p.wav",
+          "onsetSample": 470106,
+          "onset": 10.66,
+          "sampleCount": 4851,
+          "duration": 0.11
+        },
+        {
+          "symbol": "Р",
+          "file": "deepseek-adapted/18-r.wav",
+          "onsetSample": 494802,
+          "onset": 11.22,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "С",
+          "file": "deepseek-adapted/19-s.wav",
+          "onsetSample": 522585,
+          "onset": 11.85,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "Т",
+          "file": "deepseek-adapted/20-t.wav",
+          "onsetSample": 551250,
+          "onset": 12.5,
+          "sampleCount": 4851,
+          "duration": 0.11
+        },
+        {
+          "symbol": "У",
+          "file": "deepseek-adapted/21-u.wav",
+          "onsetSample": 575946,
+          "onset": 13.06,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Ф",
+          "file": "deepseek-adapted/22-f.wav",
+          "onsetSample": 609903,
+          "onset": 13.83,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "Х",
+          "file": "deepseek-adapted/23-h.wav",
+          "onsetSample": 638568,
+          "onset": 14.48,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "Ц",
+          "file": "deepseek-adapted/24-ts.wav",
+          "onsetSample": 667233,
+          "onset": 15.13,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "Ч",
+          "file": "deepseek-adapted/25-ch.wav",
+          "onsetSample": 695016,
+          "onset": 15.76,
+          "sampleCount": 7938,
+          "duration": 0.18
+        },
+        {
+          "symbol": "Ш",
+          "file": "deepseek-adapted/26-sh.wav",
+          "onsetSample": 722799,
+          "onset": 16.39,
+          "sampleCount": 8820,
+          "duration": 0.2
+        },
+        {
+          "symbol": "Щ",
+          "file": "deepseek-adapted/27-shch.wav",
+          "onsetSample": 751464,
+          "onset": 17.04,
+          "sampleCount": 9702,
+          "duration": 0.22
+        },
+        {
+          "symbol": "Ы",
+          "file": "deepseek-adapted/28-y.wav",
+          "onsetSample": 781011,
+          "onset": 17.71,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Э",
+          "file": "deepseek-adapted/29-eh.wav",
+          "onsetSample": 814968,
+          "onset": 18.48,
+          "sampleCount": 14112,
+          "duration": 0.32
+        },
+        {
+          "symbol": "Ю",
+          "file": "deepseek-adapted/30-yu.wav",
+          "onsetSample": 848925,
+          "onset": 19.25,
+          "sampleCount": 14994,
+          "duration": 0.34
+        },
+        {
+          "symbol": "Я",
+          "file": "deepseek-adapted/31-ya.wav",
+          "onsetSample": 883764,
+          "onset": 20.04,
+          "sampleCount": 14994,
+          "duration": 0.34
+        }
+      ]
+    },
+    {
+      "file": "deepseek-adapted/digits.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "sampleCount": 366025,
+      "duration": 8.299886621315192,
+      "sha256": "384387ee9664a2c65bbcfa30bce11ffaff01b4d5c554c43748e4584e2ac3bebe",
+      "leadSeconds": 0.2,
+      "gapSeconds": 0.45,
+      "timeline": [
+        {
+          "symbol": "0",
+          "file": "deepseek-adapted/digit-0.wav",
+          "onsetSample": 8820,
+          "onset": 0.2,
+          "sampleCount": 11686,
+          "duration": 0.2649886621315193
+        },
+        {
+          "symbol": "1",
+          "file": "deepseek-adapted/digit-1.wav",
+          "onsetSample": 40351,
+          "onset": 0.9149886621315193,
+          "sampleCount": 16978,
+          "duration": 0.3849886621315193
+        },
+        {
+          "symbol": "2",
+          "file": "deepseek-adapted/digit-2.wav",
+          "onsetSample": 77174,
+          "onset": 1.7499773242630385,
+          "sampleCount": 11245,
+          "duration": 0.2549886621315193
+        },
+        {
+          "symbol": "3",
+          "file": "deepseek-adapted/digit-3.wav",
+          "onsetSample": 108264,
+          "onset": 2.4549659863945577,
+          "sampleCount": 11686,
+          "duration": 0.2649886621315193
+        },
+        {
+          "symbol": "4",
+          "file": "deepseek-adapted/digit-4.wav",
+          "onsetSample": 139795,
+          "onset": 3.169954648526077,
+          "sampleCount": 26900,
+          "duration": 0.6099773242630385
+        },
+        {
+          "symbol": "5",
+          "file": "deepseek-adapted/digit-5.wav",
+          "onsetSample": 186540,
+          "onset": 4.229931972789116,
+          "sampleCount": 10363,
+          "duration": 0.23498866213151928
+        },
+        {
+          "symbol": "6",
+          "file": "deepseek-adapted/digit-6.wav",
+          "onsetSample": 216748,
+          "onset": 4.914920634920635,
+          "sampleCount": 16096,
+          "duration": 0.36498866213151926
+        },
+        {
+          "symbol": "7",
+          "file": "deepseek-adapted/digit-7.wav",
+          "onsetSample": 252689,
+          "onset": 5.729909297052155,
+          "sampleCount": 12789,
+          "duration": 0.29
+        },
+        {
+          "symbol": "8",
+          "file": "deepseek-adapted/digit-8.wav",
+          "onsetSample": 285323,
+          "onset": 6.469909297052154,
+          "sampleCount": 21609,
+          "duration": 0.49
+        },
+        {
+          "symbol": "9",
+          "file": "deepseek-adapted/digit-9.wav",
+          "onsetSample": 326777,
+          "onset": 7.409909297052154,
+          "sampleCount": 19403,
+          "duration": 0.43997732426303854
+        }
+      ]
+    }
+  ]
+}
