@@ -1,4 +1,4 @@
-<!-- НТЗ-001 · Хаб v0.498: аудио и коллекция NINETOZERO в Битотеке. -->
+<!-- МУЗ-001 · Хаб v0.499: единый раздел «Музыка и голоса», три голоса для сравнения. Проверки пользователем. -->
 <!-- ББТ-001 · Хаб v0.498: ссылка Bit-Byte в Черновиках. -->
 <!-- КНП-020 · Хаб v0.498: возвращена подсветка поверхности кнопок из v0.416. Проверки пользователем. -->
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
@@ -131,7 +131,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Зерклъ — Центр управления — v0.498</title>
+    <title>Зерклъ — Центр управления — v0.499</title>
     <!-- v0.275: «исправь при загрузке, вот вначале что показывает» — пока скрипты не собрали рейку, прежние кнопки поля не видны (hub-grozd.js снимает hubBoot; запас — 8 с) -->
     <script>try{const r=sessionStorage.getItem('zerk_hub_reset');if(r){for(const k of JSON.parse(r))localStorage.removeItem(k);sessionStorage.removeItem('zerk_hub_reset');}}catch(_){}</script>   <!-- v0.379: «↺ Сброс» — стереть настройки до того, как их прочтут модули -->
     <script>document.documentElement.classList.add('hubBoot');setTimeout(function(){document.documentElement.classList.remove('hubBoot');},8000);</script>
@@ -921,7 +921,7 @@
 <script src="_js/hub-romb-grid.js?v=324"></script>
 <link rel="stylesheet" href="_js/hub-icons.css?v=209">
 <script src="_js/hub-icons.js?v=407"></script>
-<script src="_js/hub-pages.js?v=482"></script>
+<script src="_js/hub-pages.js?v=499"></script>
 <link rel="stylesheet" href="_js/hub-sliders.css?v=431">
 <script src="_js/hub-sliders.js?v=431"></script>
 <link rel="stylesheet" href="_js/hub-tips.css?v=272">
@@ -1028,7 +1028,7 @@ try { const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototy
 
     <div class="hub" id="hubSidebarMenu">
         <h1>Зерклъ</h1>
-        <div class="ver">v0.498</div>
+        <div class="ver">v0.499</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -1037,6 +1037,7 @@ try { const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototy
         <a href="Zerkalius-treugolnik.html" class="menu-btn main-engine" data-en="Triangle" data-ru="Треугольник">Треугольник</a>
         <!-- v0.042: Зазеркалиус — вторая главная кнопка, под Треугольником (слово пользователя «под треугольник»); прежде — в Черновиках -->
         <a href="zazerkalius/Zerkalius-zazerkalius.html" class="menu-btn main-engine" data-en="Zazerkalius" data-ru="Зазеркалиус">Зазеркалиус</a>
+        <a href="music/" class="menu-btn main-engine" data-en="Music and voices" data-ru="Музыка и голоса">Музыка и голоса</a>
         </div>
 
         <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20; обои — 2026-09-21 -->

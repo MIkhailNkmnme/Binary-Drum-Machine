@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "task": "МУЗ-001",
+  "release": "2026-11-18",
+  "title": "Три собственных голоса: ноль, один",
+  "command": "python music/voices/build.py",
+  "environment": {
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "node": "v24.18.0",
+    "platform": "win32"
+  },
+  "comparison": {
+    "text": "ноль, один",
+    "onsetsSeconds": [
+      0.2,
+      1.2
+    ],
+    "durationSeconds": 2.4,
+    "phrasePeak": 0.7,
+    "samePitch": false,
+    "timeStretch": false,
+    "pitchShift": false,
+    "effectsAdded": [],
+    "musicAdded": false,
+    "limitation": "Native articulation, pitch, word durations and internal word-level processing differ; peak matching is not perceived-loudness matching"
+  },
+  "provenance": {
+    "audioInputs": [],
+    "recordings": [],
+    "trainedModels": [],
+    "networkInputs": [],
+    "speechEngines": "Only the three readable repository procedural engines",
+    "note": "Samples freshly computed from source; no previous audio files are loaded"
+  },
+  "status": "Production completed; no tests, syntax checks, browser or listening performed",
+  "sourceFiles": [
+    {
+      "file": "music/voices/build.py",
+      "hashEncoding": "UTF-8, LF",
+      "sha256": "69055c3c732a497b164813de8a3f3d87f6f0a5ce63adf0497d93c95b627147ea"
+    },
+    {
+      "file": "music/voices/phone-helper.cjs",
+      "hashEncoding": "UTF-8, LF",
+      "sha256": "25c249d7fdec94a74815c0510ff08996713f59fef884e160a9fbf2fb58fe6ee0"
+    },
+    {
+      "file": "mayatnik/sign-voice/generate_procedural_bank.py",
+      "hashEncoding": "UTF-8, LF",
+      "sha256": "71205a0a12a33b9c8b590c515b5340bb7caae67a88d1de1d1507a36f4bccaa09"
+    },
+    {
+      "file": "tools/voice/formant_voice.py",
+      "hashEncoding": "UTF-8, LF",
+      "sha256": "606fbd86a756a0392020dd1f4453a51a06784fdddd22e8c7932895765baa6509"
+    },
+    {
+      "file": "mayatnik/mayatnik-phone-robot.js",
+      "hashEncoding": "UTF-8, LF",
+      "sha256": "d8a1d3564fcfb178122f3ef1f2372bdc841b034c9cd8b9024d349afa0695f34d"
+    },
+    {
+      "file": "mayatnik/mayatnik-synthesis-music.js",
+      "hashEncoding": "UTF-8, LF",
+      "sha256": "effef6d21b90cbfff4e1fc93e30c768cee327981b5304840ed4aba61107b25a3"
+    }
+  ],
+  "items": [
+    {
+      "id": "bank",
+      "label": "Банк знаков · четыре форманты",
+      "file": "bank.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "frames": 105840,
+      "durationSeconds": 2.4,
+      "words": [
+        {
+          "text": "ноль",
+          "onsetFrame": 8820,
+          "onsetSeconds": 0.2,
+          "frames": 21608,
+          "durationSeconds": 0.4899773242630385,
+          "endSeconds": 0.6899773242630386
+        },
+        {
+          "text": "один",
+          "onsetFrame": 52920,
+          "onsetSeconds": 1.2,
+          "frames": 25356,
+          "durationSeconds": 0.5749659863945579,
+          "endSeconds": 1.7749659863945577
+        }
+      ],
+      "phraseGain": 0.7954534419975724,
+      "targetPhrasePeak": 0.7,
+      "normalization": "One linear gain for the entire two-word phrase; no extra word/phoneme normalization",
+      "engine": {
+        "source": "mayatnik/sign-voice/generate_procedural_bank.py",
+        "entry": "make_source_table(); synthesize(character, score, table)",
+        "sourceSampleRate": 22050,
+        "resampling": "Linear interpolation x2 from 22050 to 44100 Hz; fixed duration/pitch",
+        "scores": [
+          {
+            "character": "0",
+            "spoken": "ноль",
+            "score": "n:100 o:260 lj:130"
+          },
+          {
+            "character": "1",
+            "spoken": "один",
+            "score": "ax:130 dj:75 i:250 n:120"
+          }
+        ],
+        "pitch": "Native contour: 124 − 17*n/N + 1.8*sin(2*pi*2.1*n/22050) Hz",
+        "inheritedProcessing": "synthesize() already normalizes each complete word to peak 0.88, applies edge fades and quantizes PCM16; preserved unchanged",
+        "noise": "Native xorshift32 seeded per character as specified in the source"
+      },
+      "sha256": "c2f905457ef35c13f7e8e570f3d4b2559119e4decf8a07e5b85b9e4794116d16"
+    },
+    {
+      "id": "formant",
+      "label": "Импульсный голос · три форманты",
+      "file": "formant.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "frames": 105840,
+      "durationSeconds": 2.4,
+      "words": [
+        {
+          "text": "ноль",
+          "onsetFrame": 8820,
+          "onsetSeconds": 0.2,
+          "frames": 11686,
+          "durationSeconds": 0.2649886621315193,
+          "endSeconds": 0.4649886621315193
+        },
+        {
+          "text": "один",
+          "onsetFrame": 52920,
+          "onsetSeconds": 1.2,
+          "frames": 16978,
+          "durationSeconds": 0.3849886621315193,
+          "endSeconds": 1.5849886621315192
+        }
+      ],
+      "phraseGain": 2.150688725431138,
+      "targetPhrasePeak": 0.7,
+      "normalization": "One linear gain for the entire two-word phrase; no extra word/phoneme normalization",
+      "engine": {
+        "source": "tools/voice/formant_voice.py",
+        "entry": "speak_word(text, f0_start=112, f0_end=96)",
+        "texts": [
+          "ноль",
+          "один"
+        ],
+        "sourceSampleRate": 44100,
+        "resampling": null,
+        "f0Start": 112,
+        "f0End": 96,
+        "pitch": "Native linear contour resets inside each voiced phoneme",
+        "inheritedProcessing": "Raw speak_word output; write_wav() and its per-word normalization are not called",
+        "pronunciationLimit": "Soft sign in ноль is removed by the native engine; no palatalization",
+        "noise": "Native numpy.random.default_rng(7) for each noise segment"
+      },
+      "sha256": "eb3497325772c39159d49239a749541685ed008a91d80871e0eed4189f2b00f3"
+    },
+    {
+      "id": "phone",
+      "label": "Телефонный робот · битовые гармоники",
+      "file": "phone.wav",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitsPerSample": 16,
+      "frames": 105840,
+      "durationSeconds": 2.4,
+      "words": [
+        {
+          "text": "ноль",
+          "onsetFrame": 8820,
+          "onsetSeconds": 0.2,
+          "frames": 11819,
+          "durationSeconds": 0.2680045351473923,
+          "endSeconds": 0.46800453514739226
+        },
+        {
+          "text": "один",
+          "onsetFrame": 52920,
+          "onsetSeconds": 1.2,
+          "frames": 15568,
+          "durationSeconds": 0.353015873015873,
+          "endSeconds": 1.553015873015873
+        }
+      ],
+      "phraseGain": 1.3985448718498341,
+      "targetPhrasePeak": 0.7,
+      "normalization": "One linear gain for the entire two-word phrase; no extra word/phoneme normalization",
+      "engine": {
+        "source": "mayatnik/mayatnik-phone-robot.js",
+        "entry": "renderVoice(settings)",
+        "settings": [
+          {
+            "rate": 44100,
+            "midi": 48,
+            "event": {
+              "robotWord": "zero",
+              "bits": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "f0": 130.8127826502993,
+              "tilt": 0.82
+            }
+          },
+          {
+            "rate": 44100,
+            "midi": 48,
+            "event": {
+              "robotWord": "one",
+              "bits": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "f0": 130.8127826502993,
+              "tilt": 0.82
+            }
+          }
+        ],
+        "sourceSampleRate": 44100,
+        "resampling": null,
+        "bitsChoice": "Eight ones: all partials excited, fixed explicit mask for both words; no changing field input",
+        "pitch": "Native default MIDI48, explicit f0=440*2^((48-69)/12), constant during each word",
+        "inheritedProcessing": "Native per-word headroom normalization and tanh preserved unchanged",
+        "noise": "Native word+bits hash followed by xorshift32"
+      },
+      "sha256": "e2928c94c1857a57f39bdc77733744fe92e682de94dc41a66639c8785dc94aec"
+    }
+  ]
+}

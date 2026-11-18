@@ -1,0 +1,4130 @@
+{
+  "version": 1,
+  "groups": [
+    {
+      "id": "albums",
+      "label": "Альбом Синтеза"
+    },
+    {
+      "id": "xorrom",
+      "label": "Xorrom и музыкальный ковёр"
+    },
+    {
+      "id": "bits",
+      "label": "Музыка из битов"
+    },
+    {
+      "id": "voices",
+      "label": "Голос и буквы"
+    },
+    {
+      "id": "phone",
+      "label": "Композиции и звонки"
+    },
+    {
+      "id": "signals",
+      "label": "SMS и уведомления"
+    },
+    {
+      "id": "live",
+      "label": "Живые видеообои"
+    },
+    {
+      "id": "fractals",
+      "label": "Клеточные и музыкальные фракталы"
+    },
+    {
+      "id": "visuals",
+      "label": "Битмультфильмы без звука"
+    },
+    {
+      "id": "tools",
+      "label": "Живые инструменты"
+    }
+  ],
+  "items": [
+    {
+      "id": "album-pendulum-drive",
+      "title": "Маятниковый привод",
+      "group": "albums",
+      "description": "128 BPM · два маятника и собственная аранжировка.",
+      "recipe": "Гармония, мотив, ритм и форма сочинены заранее; состояния A, B и результата меняют отдельные ноты, акценты, партии и панораму. Бочка вычисляется из синуса с падающей частотой, ударные — из собственного шума, мелодические инструменты — из гармоник. Видео показывает развивающееся поле и художественный слой «Северное течение»; звуковая дорожка собрана из этой композиции.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/mayatnik-synthesis-music.js"
+      },
+      "audio": "../mayatnik/synthesis-album/pendulum-drive.mp3",
+      "video": "../mayatnik/synthesis-album/pendulum-drive.mp4",
+      "poster": "../mayatnik/synthesis-album/pendulum-drive-cover.jpg",
+      "duration": 64,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/pendulum-music/README.md"
+        },
+        {
+          "label": "Основа без влияния поля",
+          "url": "../mayatnik/synthesis-album/pendulum-drive-base.mp3"
+        },
+        {
+          "label": "Параметры композиции и картины",
+          "url": "../mayatnik/synthesis-album/construction-parameters.json"
+        },
+        {
+          "label": "Галерея Синтеза",
+          "url": "../mayatnik/synthesis-gallery.html"
+        }
+      ]
+    },
+    {
+      "id": "album-two-shores-canon",
+      "title": "Канон двух берегов",
+      "group": "albums",
+      "description": "84 BPM · два маятника и собственная аранжировка.",
+      "recipe": "Гармония, мотив, ритм и форма сочинены заранее; состояния A, B и результата меняют отдельные ноты, акценты, партии и панораму. Бочка вычисляется из синуса с падающей частотой, ударные — из собственного шума, мелодические инструменты — из гармоник. Видео показывает развивающееся поле и художественный слой «Две реки»; звуковая дорожка собрана из этой композиции.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/mayatnik-synthesis-music.js"
+      },
+      "audio": "../mayatnik/synthesis-album/two-shores-canon.mp3",
+      "video": "../mayatnik/synthesis-album/two-shores-canon.mp4",
+      "poster": "../mayatnik/synthesis-album/two-shores-canon-cover.jpg",
+      "duration": 72.57142857142857,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/pendulum-music/README.md"
+        },
+        {
+          "label": "Основа без влияния поля",
+          "url": "../mayatnik/synthesis-album/two-shores-canon-base.mp3"
+        },
+        {
+          "label": "Параметры композиции и картины",
+          "url": "../mayatnik/synthesis-album/construction-parameters.json"
+        },
+        {
+          "label": "Галерея Синтеза",
+          "url": "../mayatnik/synthesis-gallery.html"
+        }
+      ]
+    },
+    {
+      "id": "xorrom-electro-robot",
+      "title": "Электро-робот",
+      "group": "xorrom",
+      "description": "Ровный машинный шаг, гласноподобный тембр Робот и низкий синтетический бас. Оригинальный пример в духе ранней роботизированной электроники.",
+      "recipe": "Один исходный кадр Маятника: 128 строк, 31 вершина и пустой фон. Xorrom читает строки сверху вниз: число единиц либо RGB-категории определяют ступени лада, аккорды и арпеджио. Осцилляторы, гармоники, огибающие и эффекты вычисляют звук. Видео выделяет текущую строку по временной карте того же WAV; тембр «Робот» здесь не произносит слова.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/audio-examples/build.cjs"
+      },
+      "audio": "../mayatnik/audio-examples/electro-robot.mp3",
+      "video": "../mayatnik/audio-examples/electro-robot.mp4",
+      "poster": "../mayatnik/audio-examples/source-field.svg",
+      "duration": 18.454149659863944,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../mayatnik/audio-examples/guide.txt"
+        },
+        {
+          "label": "Настройки",
+          "url": "../mayatnik/audio-examples/electro-robot.json"
+        },
+        {
+          "label": "Кадр .mayatnik",
+          "url": "../mayatnik/audio-examples/electro-robot.mayatnik"
+        },
+        {
+          "label": "Музыкальный ковёр",
+          "url": "../mayatnik/music-carpet/"
+        },
+        {
+          "label": "Сборка видео",
+          "url": "../mayatnik/audio-examples/build-video.cjs"
+        }
+      ]
+    },
+    {
+      "id": "xorrom-xor-pulse",
+      "title": "XOR-пульс",
+      "group": "xorrom",
+      "description": "Число единиц каждой строки управляет короткими басовыми импульсами. Небольшой swing и вторая партия выделяют ритм рисунка.",
+      "recipe": "Один исходный кадр Маятника: 128 строк, 31 вершина и пустой фон. Xorrom читает строки сверху вниз: число единиц либо RGB-категории определяют ступени лада, аккорды и арпеджио. Осцилляторы, гармоники, огибающие и эффекты вычисляют звук. Видео выделяет текущую строку по временной карте того же WAV; тембр «Робот» здесь не произносит слова.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/audio-examples/build.cjs"
+      },
+      "audio": "../mayatnik/audio-examples/xor-pulse.mp3",
+      "video": "../mayatnik/audio-examples/xor-pulse.mp4",
+      "poster": "../mayatnik/audio-examples/source-field.svg",
+      "duration": 15.4956462585034,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../mayatnik/audio-examples/guide.txt"
+        },
+        {
+          "label": "Настройки",
+          "url": "../mayatnik/audio-examples/xor-pulse.json"
+        },
+        {
+          "label": "Кадр .mayatnik",
+          "url": "../mayatnik/audio-examples/xor-pulse.mayatnik"
+        },
+        {
+          "label": "Музыкальный ковёр",
+          "url": "../mayatnik/music-carpet/"
+        },
+        {
+          "label": "Сборка видео",
+          "url": "../mayatnik/audio-examples/build-video.cjs"
+        }
+      ]
+    },
+    {
+      "id": "xorrom-glass-arpeggio",
+      "title": "Стеклянные ступени",
+      "group": "xorrom",
+      "description": "Два частых RGB-цвета звучат по очереди щипками в пентатонике. Эхо и мягкая вторая партия дают объём.",
+      "recipe": "Один исходный кадр Маятника: 128 строк, 31 вершина и пустой фон. Xorrom читает строки сверху вниз: число единиц либо RGB-категории определяют ступени лада, аккорды и арпеджио. Осцилляторы, гармоники, огибающие и эффекты вычисляют звук. Видео выделяет текущую строку по временной карте того же WAV; тембр «Робот» здесь не произносит слова.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/audio-examples/build.cjs"
+      },
+      "audio": "../mayatnik/audio-examples/glass-arpeggio.mp3",
+      "video": "../mayatnik/audio-examples/glass-arpeggio.mp4",
+      "poster": "../mayatnik/audio-examples/source-field.svg",
+      "duration": 21.477777777777778,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../mayatnik/audio-examples/guide.txt"
+        },
+        {
+          "label": "Настройки",
+          "url": "../mayatnik/audio-examples/glass-arpeggio.json"
+        },
+        {
+          "label": "Кадр .mayatnik",
+          "url": "../mayatnik/audio-examples/glass-arpeggio.mayatnik"
+        },
+        {
+          "label": "Музыкальный ковёр",
+          "url": "../mayatnik/music-carpet/"
+        },
+        {
+          "label": "Сборка видео",
+          "url": "../mayatnik/audio-examples/build-video.cjs"
+        }
+      ]
+    },
+    {
+      "id": "xorrom-triangle-space",
+      "title": "Пространство треугольника",
+      "group": "xorrom",
+      "description": "Медленное чтение каждой четвёртой строки. Симметрия области меняет лад и октаву; синус, плавная огибающая и созвучие создают спокойный фон.",
+      "recipe": "Один исходный кадр Маятника: 128 строк, 31 вершина и пустой фон. Xorrom читает строки сверху вниз: число единиц либо RGB-категории определяют ступени лада, аккорды и арпеджио. Осцилляторы, гармоники, огибающие и эффекты вычисляют звук. Видео выделяет текущую строку по временной карте того же WAV; тембр «Робот» здесь не произносит слова.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/audio-examples/build.cjs"
+      },
+      "audio": "../mayatnik/audio-examples/triangle-space.mp3",
+      "video": "../mayatnik/audio-examples/triangle-space.mp4",
+      "poster": "../mayatnik/audio-examples/source-field.svg",
+      "duration": 15.495464852607709,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../mayatnik/audio-examples/guide.txt"
+        },
+        {
+          "label": "Настройки",
+          "url": "../mayatnik/audio-examples/triangle-space.json"
+        },
+        {
+          "label": "Кадр .mayatnik",
+          "url": "../mayatnik/audio-examples/triangle-space.mayatnik"
+        },
+        {
+          "label": "Музыкальный ковёр",
+          "url": "../mayatnik/music-carpet/"
+        },
+        {
+          "label": "Сборка видео",
+          "url": "../mayatnik/audio-examples/build-video.cjs"
+        }
+      ]
+    },
+    {
+      "id": "instruction-xorrom-serpinski",
+      "title": "Серпинский: одна ведущая нота",
+      "group": "xorrom",
+      "description": "32 строки Rule 90, RGB, одна нота, До-мажор, октава 4, 120 BPM, 1/8, треугольник; 8 секунд.",
+      "recipe": "Единственная начальная единица и нулевая граница порождают Rule 90: каждый следующий бит — XOR двух верхних соседей. Xorrom переводит RGB-категории собственного поля в ступени лада и вычисляет осцилляторный тембр. Учебные части соединены без промежутков, внешних записей и эффектов; точные настройки и ноты сохранены в паспорте.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/instruction/assets/build-xorrom-demos.cjs"
+      },
+      "audio": "../mayatnik/instruction/assets/xorrom-serpinski.wav",
+      "duration": 8,
+      "links": [
+        {
+          "label": "Паспорт и партитура",
+          "url": "../mayatnik/instruction/assets/xorrom-demos.json"
+        },
+        {
+          "label": "Инструкция Xorrom",
+          "url": "../mayatnik/instruction/index.html#xorrom"
+        }
+      ]
+    },
+    {
+      "id": "instruction-xorrom-electro",
+      "title": "Четыре электронных тембра",
+      "group": "xorrom",
+      "description": "Один 16-строчный Rule 90 повторён четырежды: Пульс → Бас → Металл → Робот; 112 BPM, 1/16, До-минор, октава 3.",
+      "recipe": "Единственная начальная единица и нулевая граница порождают Rule 90: каждый следующий бит — XOR двух верхних соседей. Xorrom переводит RGB-категории собственного поля в ступени лада и вычисляет осцилляторный тембр. Учебные части соединены без промежутков, внешних записей и эффектов; точные настройки и ноты сохранены в паспорте.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/instruction/assets/build-xorrom-demos.cjs"
+      },
+      "audio": "../mayatnik/instruction/assets/xorrom-electro.wav",
+      "duration": 8.571428571428571,
+      "links": [
+        {
+          "label": "Паспорт и партитура",
+          "url": "../mayatnik/instruction/assets/xorrom-demos.json"
+        },
+        {
+          "label": "Инструкция Xorrom",
+          "url": "../mayatnik/instruction/index.html#xorrom"
+        }
+      ]
+    },
+    {
+      "id": "instruction-xorrom-layers",
+      "title": "Основная партия и фон",
+      "group": "xorrom",
+      "description": "Один 32-строчный Rule 90 повторён трижды: без фона → созвучие → вторая мелодия; каждый фрагмент около 4,29 с.",
+      "recipe": "Единственная начальная единица и нулевая граница порождают Rule 90: каждый следующий бит — XOR двух верхних соседей. Xorrom переводит RGB-категории собственного поля в ступени лада и вычисляет осцилляторный тембр. Учебные части соединены без промежутков, внешних записей и эффектов; точные настройки и ноты сохранены в паспорте.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/instruction/assets/build-xorrom-demos.cjs"
+      },
+      "audio": "../mayatnik/instruction/assets/xorrom-layers.wav",
+      "duration": 12.857142857142858,
+      "links": [
+        {
+          "label": "Паспорт и партитура",
+          "url": "../mayatnik/instruction/assets/xorrom-demos.json"
+        },
+        {
+          "label": "Инструкция Xorrom",
+          "url": "../mayatnik/instruction/index.html#xorrom"
+        }
+      ]
+    },
+    {
+      "id": "bits-kraftwerk-bits",
+      "title": "Kraftwerk Bits",
+      "group": "bits",
+      "description": "Инструментальная композиция из графических битовых данных.",
+      "recipe": "Строки и столбцы масок цифр задают ступени минора и мелодические события; «Глифы» добавляют данные графов. Ритм и аранжировка заданы программой; собственные синтезаторы вычисляют гармоники, ударные и огибающие. В петле сохранён средний из трёх проходов для переноса хвостов. Визуальные маски реконструируют внешний графический материал; это не импорт нот или звука песни. Обложка здесь — спектрограмма собственного результата, а не видеоклип.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/bit-music/kraftwerk-bit-track.cjs"
+      },
+      "audio": "../issledovanie/bit-music/kraftwerk-bits.mp3",
+      "poster": "../issledovanie/bit-music/kraftwerk-spectrum.png",
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/bit-music/README.md"
+        },
+        {
+          "label": "Синтезатор",
+          "url": "../mayatnik/mayatnik-bit-synthesis.js"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/bit-music/kraftwerk-bits.mid"
+        }
+      ]
+    },
+    {
+      "id": "bits-zerkalius-glyphs",
+      "title": "Глифы Зеркалиуса",
+      "group": "bits",
+      "description": "Инструментальная композиция из графических битовых данных.",
+      "recipe": "Строки и столбцы масок цифр задают ступени минора и мелодические события; «Глифы» добавляют данные графов. Ритм и аранжировка заданы программой; собственные синтезаторы вычисляют гармоники, ударные и огибающие. В петле сохранён средний из трёх проходов для переноса хвостов. Визуальные маски реконструируют внешний графический материал; это не импорт нот или звука песни. Обложка здесь — спектрограмма собственного результата, а не видеоклип.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/bit-music/zerkalius-glyph-track.cjs"
+      },
+      "audio": "../issledovanie/bit-music/zerkalius-glyphs.mp3",
+      "poster": "../issledovanie/bit-music/zerkalius-glyphs-spectrum.png",
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/bit-music/README.md"
+        },
+        {
+          "label": "Синтезатор",
+          "url": "../mayatnik/mayatnik-bit-synthesis.js"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/bit-music/zerkalius-glyphs.mid"
+        }
+      ]
+    },
+    {
+      "id": "bits-zerkalius-loop",
+      "title": "Петля Зеркалиуса",
+      "group": "bits",
+      "description": "Инструментальная композиция из графических битовых данных.",
+      "recipe": "Строки и столбцы масок цифр задают ступени минора и мелодические события; «Глифы» добавляют данные графов. Ритм и аранжировка заданы программой; собственные синтезаторы вычисляют гармоники, ударные и огибающие. В петле сохранён средний из трёх проходов для переноса хвостов. Визуальные маски реконструируют внешний графический материал; это не импорт нот или звука песни. Обложка здесь — спектрограмма собственного результата, а не видеоклип.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/bit-music/zerkalius-loop.cjs"
+      },
+      "audio": "../issledovanie/bit-music/zerkalius-loop.mp3",
+      "poster": "../issledovanie/bit-music/zerkalius-loop-spectrum.png",
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/bit-music/README.md"
+        },
+        {
+          "label": "Синтезатор",
+          "url": "../mayatnik/mayatnik-bit-synthesis.js"
+        }
+      ]
+    },
+    {
+      "id": "voice-numbers-67-synth",
+      "title": "Numbers · синтетический счёт",
+      "group": "voices",
+      "description": "Собственный формантный голос на вычисленной музыкальной подложке.",
+      "recipe": "Импульсный возбудитель и детерминированный шум проходят через три параллельных резонатора; правила фонем собирают цифры или названия букв. Numbers использует собственную 32-тактовую аранжировку при 67 BPM; буквы — собственную битовую петлю. Микшер размещает речь по пульсу и приглушает музыку. Записи человека, SAPI и готовый TTS не используются; разборчивость оценивается отдельно пользователем.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../tools/voice/mix_synth_numbers.py"
+      },
+      "audio": "../issledovanie/bit-voice/numbers-67-synth.mp3",
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Описание выпуска",
+          "url": "../issledovanie/bit-voice/README.md"
+        },
+        {
+          "label": "Формантный движок",
+          "url": "../tools/voice/formant_voice.py"
+        }
+      ]
+    },
+    {
+      "id": "voice-loop-letters-synth",
+      "title": "ZERKALIUS · побуквенный голос",
+      "group": "voices",
+      "description": "Собственный формантный голос на вычисленной музыкальной подложке.",
+      "recipe": "Импульсный возбудитель и детерминированный шум проходят через три параллельных резонатора; правила фонем собирают цифры или названия букв. Numbers использует собственную 32-тактовую аранжировку при 67 BPM; буквы — собственную битовую петлю. Микшер размещает речь по пульсу и приглушает музыку. Записи человека, SAPI и готовый TTS не используются; разборчивость оценивается отдельно пользователем.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../tools/voice/build_letters.py"
+      },
+      "audio": "../issledovanie/bit-voice/loop-letters-synth.mp3",
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Описание выпуска",
+          "url": "../issledovanie/bit-voice/README.md"
+        },
+        {
+          "label": "Формантный движок",
+          "url": "../tools/voice/formant_voice.py"
+        }
+      ]
+    },
+    {
+      "id": "voice-procedural-v1-digits",
+      "title": "Голос знаков · цифры 0–9",
+      "group": "voices",
+      "description": "Процедурный банк букв и цифр · экспериментальный голос.",
+      "recipe": "Шестьдесят синусоидальных гармоник, собственный xorshift-шум и четыре резонатора создают фонемы. Явная партитура задаёт названия букв и цифр, мягкость, смычки и переходы. WAV вычислен из формул; в полном банке клипы разделены короткими паузами. При чтении в приложении время слова дополнительно подстраивается под долю.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/sign-voice/generate_procedural_bank.py"
+      },
+      "audio": "../mayatnik/sign-voice/procedural-v1-digits.wav",
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../mayatnik/sign-voice/README.md"
+        },
+        {
+          "label": "Смещения и фонемные партитуры",
+          "url": "../mayatnik/sign-voice/procedural-v1-bank.json"
+        },
+        {
+          "label": "Запустить голос знаков",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=sign-voice"
+        }
+      ]
+    },
+    {
+      "id": "voice-procedural-v1-letters-ru",
+      "title": "Голос знаков · русский алфавит",
+      "group": "voices",
+      "description": "Процедурный банк букв и цифр · экспериментальный голос.",
+      "recipe": "Шестьдесят синусоидальных гармоник, собственный xorshift-шум и четыре резонатора создают фонемы. Явная партитура задаёт названия букв и цифр, мягкость, смычки и переходы. WAV вычислен из формул; в полном банке клипы разделены короткими паузами. При чтении в приложении время слова дополнительно подстраивается под долю.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/sign-voice/generate_procedural_bank.py"
+      },
+      "audio": "../mayatnik/sign-voice/procedural-v1-letters-ru.wav",
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../mayatnik/sign-voice/README.md"
+        },
+        {
+          "label": "Смещения и фонемные партитуры",
+          "url": "../mayatnik/sign-voice/procedural-v1-bank.json"
+        },
+        {
+          "label": "Запустить голос знаков",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=sign-voice"
+        }
+      ]
+    },
+    {
+      "id": "voice-procedural-v1-bank",
+      "title": "Голос знаков · полный банк 69 знаков",
+      "group": "voices",
+      "description": "Процедурный банк букв и цифр · экспериментальный голос.",
+      "recipe": "Шестьдесят синусоидальных гармоник, собственный xorshift-шум и четыре резонатора создают фонемы. Явная партитура задаёт названия букв и цифр, мягкость, смычки и переходы. WAV вычислен из формул; в полном банке клипы разделены короткими паузами. При чтении в приложении время слова дополнительно подстраивается под долю.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/sign-voice/generate_procedural_bank.py"
+      },
+      "audio": "../mayatnik/sign-voice/procedural-v1-bank.wav",
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../mayatnik/sign-voice/README.md"
+        },
+        {
+          "label": "Смещения и фонемные партитуры",
+          "url": "../mayatnik/sign-voice/procedural-v1-bank.json"
+        },
+        {
+          "label": "Запустить голос знаков",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=sign-voice"
+        }
+      ]
+    },
+    {
+      "id": "berlin-cycle",
+      "title": "Берлинский цикл",
+      "group": "bits",
+      "description": "Эскиз · 96 BPM · две развивающиеся последовательности.",
+      "recipe": "Две сочинённые последовательности из восьми и семи нот движутся через четыре гармонические области. Маятники XOR со следом влияют на окончания фраз, тембр и панораму. Расстроенные осцилляторы, медленный дрейф частоты и собственный шум вычисляют звук; внешняя фонограмма не используется. Сохранены события и параметры; отдельного локального видеоролика у этого эскиза нет.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/mayatnik-synthesis-berlin.js"
+      },
+      "audio": "../issledovanie/pendulum-music/berlin-cycle/berlin-cycle.mp3",
+      "duration": 82.2875,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/pendulum-music/berlin-cycle/README.md"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/pendulum-music/berlin-cycle/berlin-cycle.mid"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/pendulum-music/berlin-cycle/berlin-cycle.wav"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/pendulum-music/berlin-cycle/score.json"
+        },
+        {
+          "label": "Живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=berlin-cycle&gpu=0"
+        }
+      ]
+    },
+    {
+      "id": "phone-eight-winds-pulse",
+      "title": "Импульс восьми ветров",
+      "group": "phone",
+      "description": "Техно с ясным трёхнотным зовом, воздушной серединой и возвращением полного ритма.",
+      "recipe": "Новый мотив и гармонический цикл сочинены для этой аранжировки. Маятники меняют динамику, события сопровождения и панораму. Собственный движок вычисляет гармоники lead, фортепиано, баса и ударных; затем добавляет короткое эхо и фильтрацию. Полная карта нот и состояний поля сохранена в JSON; это продолжение собственных композиций Синтеза.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/eight-winds-pulse.mp3",
+      "duration": 78.19047619047619,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse-score.json"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse.mid"
+        }
+      ]
+    },
+    {
+      "id": "ringtone-eight-winds-pulse",
+      "title": "Импульс восьми ветров · звонок",
+      "group": "phone",
+      "description": "Короткая версия собственной композиции.",
+      "recipe": "Фрагмент готового собственного MP3 от 15.238 до 38.095 секунды. Вырезан по музыкальной фразе: входной фейд 25 мс, выходной 650 мс. Звук наследует исходный синтез; это монтаж, а не новая независимая композиция.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/eight-winds-pulse-ringtone.mp3",
+      "duration": 22.857142857142858,
+      "tags": [
+        "звонок"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse-score.json"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse.mid"
+        },
+        {
+          "label": "M4R для телефона",
+          "url": "../issledovanie/phone-theme/audio/eight-winds-pulse-ringtone.m4r"
+        }
+      ]
+    },
+    {
+      "id": "phone-copper-orbit",
+      "title": "Медная орбита",
+      "group": "phone",
+      "description": "Более медленный пружинистый грув: короткий вопрос, ответ в верхнем регистре и медное эхо.",
+      "recipe": "Новый мотив и гармонический цикл сочинены для этой аранжировки. Маятники меняют динамику, события сопровождения и панораму. Собственный движок вычисляет гармоники lead, фортепиано, баса и ударных; затем добавляет короткое эхо и фильтрацию. Полная карта нот и состояний поля сохранена в JSON; это продолжение собственных композиций Синтеза.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/copper-orbit.mp3",
+      "duration": 83.35593220338983,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/music/copper-orbit-score.json"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/music/copper-orbit.mid"
+        }
+      ]
+    },
+    {
+      "id": "ringtone-copper-orbit",
+      "title": "Медная орбита · звонок",
+      "group": "phone",
+      "description": "Короткая версия собственной композиции.",
+      "recipe": "Фрагмент готового собственного MP3 от 16.271 до 40.678 секунды. Вырезан по музыкальной фразе: входной фейд 25 мс, выходной 650 мс. Звук наследует исходный синтез; это монтаж, а не новая независимая композиция.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/copper-orbit-ringtone.mp3",
+      "duration": 24.406779661016948,
+      "tags": [
+        "звонок"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/music/copper-orbit-score.json"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/music/copper-orbit.mid"
+        },
+        {
+          "label": "M4R для телефона",
+          "url": "../issledovanie/phone-theme/audio/copper-orbit-ringtone.m4r"
+        }
+      ]
+    },
+    {
+      "id": "phone-letter-of-two-rivers",
+      "title": "Письмо двух рек",
+      "group": "phone",
+      "description": "Камерная пьеса для синтетического фортепиано и струнных: плавная тема, тихий ответ и светлая реприза.",
+      "recipe": "Новый мотив и гармонический цикл сочинены для этой аранжировки. Маятники меняют динамику, события сопровождения и панораму. Собственный движок вычисляет гармоники lead, фортепиано, баса и ударных; затем добавляет короткое эхо и фильтрацию. Полная карта нот и состояний поля сохранена в JSON; это продолжение собственных композиций Синтеза.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/letter-of-two-rivers.mp3",
+      "duration": 78.36363636363636,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers-score.json"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers.mid"
+        }
+      ]
+    },
+    {
+      "id": "ringtone-letter-of-two-rivers",
+      "title": "Письмо двух рек · звонок",
+      "group": "phone",
+      "description": "Короткая версия собственной композиции.",
+      "recipe": "Фрагмент готового собственного MP3 от 10.909 до 32.727 секунды. Вырезан по музыкальной фразе: входной фейд 25 мс, выходной 650 мс. Звук наследует исходный синтез; это монтаж, а не новая независимая композиция.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/letter-of-two-rivers-ringtone.mp3",
+      "duration": 21.818181818181817,
+      "tags": [
+        "звонок"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers-score.json"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers.mid"
+        },
+        {
+          "label": "M4R для телефона",
+          "url": "../issledovanie/phone-theme/audio/letter-of-two-rivers-ringtone.m4r"
+        }
+      ]
+    },
+    {
+      "id": "phone-thin-ice-nocturne",
+      "title": "Тонкий лёд",
+      "group": "phone",
+      "description": "Спокойный минорный ноктюрн: редкие высокие ноты над прозрачным арпеджио, затем тёплый ответ.",
+      "recipe": "Новый мотив и гармонический цикл сочинены для этой аранжировки. Маятники меняют динамику, события сопровождения и панораму. Собственный движок вычисляет гармоники lead, фортепиано, баса и ударных; затем добавляет короткое эхо и фильтрацию. Полная карта нот и состояний поля сохранена в JSON; это продолжение собственных композиций Синтеза.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/thin-ice-nocturne.mp3",
+      "duration": 77.78947368421052,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne-score.json"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne.mid"
+        }
+      ]
+    },
+    {
+      "id": "ringtone-thin-ice-nocturne",
+      "title": "Тонкий лёд · звонок",
+      "group": "phone",
+      "description": "Короткая версия собственной композиции.",
+      "recipe": "Фрагмент готового собственного MP3 от 12.632 до 37.895 секунды. Вырезан по музыкальной фразе: входной фейд 25 мс, выходной 650 мс. Звук наследует исходный синтез; это монтаж, а не новая независимая композиция.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/thin-ice-nocturne-ringtone.mp3",
+      "duration": 25.263157894736842,
+      "tags": [
+        "звонок"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne-score.json"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne.mid"
+        },
+        {
+          "label": "M4R для телефона",
+          "url": "../issledovanie/phone-theme/audio/thin-ice-nocturne-ringtone.m4r"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-01",
+      "title": "Первый импульс",
+      "group": "signals",
+      "description": "Уведомление · из «Маятниковый привод».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 15–17 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-01.mp3",
+      "duration": 2,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-01.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../mayatnik/synthesis-album/pendulum-drive.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-02",
+      "title": "Привод",
+      "group": "signals",
+      "description": "Уведомление · из «Маятниковый привод».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 22.96875–24.46875 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-02.mp3",
+      "duration": 1.5,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-02.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../mayatnik/synthesis-album/pendulum-drive.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-03",
+      "title": "Двойной шаг",
+      "group": "signals",
+      "description": "Уведомление · из «Маятниковый привод».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 38.4375–40.9375 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-03.mp3",
+      "duration": 2.5,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-03.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../mayatnik/synthesis-album/pendulum-drive.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-04",
+      "title": "Искра",
+      "group": "signals",
+      "description": "Уведомление · из «Маятниковый привод».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 52.5–53.75 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-04.mp3",
+      "duration": 1.25,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-04.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../mayatnik/synthesis-album/pendulum-drive.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-05",
+      "title": "Два берега",
+      "group": "signals",
+      "description": "Уведомление · из «Канон двух берегов».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 11.428571428571429–14.228571428571428 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-05.mp3",
+      "duration": 2.8,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-05.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../mayatnik/synthesis-album/two-shores-canon.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-06",
+      "title": "Капля",
+      "group": "signals",
+      "description": "Уведомление · из «Канон двух берегов».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 24.285714285714285–25.885714285714286 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-06.mp3",
+      "duration": 1.6,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-06.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../mayatnik/synthesis-album/two-shores-canon.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-07",
+      "title": "Ответ реки",
+      "group": "signals",
+      "description": "Уведомление · из «Канон двух берегов».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 34.285714285714285–37.48571428571429 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-07.mp3",
+      "duration": 3.2,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-07.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../mayatnik/synthesis-album/two-shores-canon.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-08",
+      "title": "Тихий канон",
+      "group": "signals",
+      "description": "Уведомление · из «Канон двух берегов».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 47.142857142857146–49.542857142857144 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-08.mp3",
+      "duration": 2.4,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-08.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../mayatnik/synthesis-album/two-shores-canon.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-09",
+      "title": "Восемь ветров",
+      "group": "signals",
+      "description": "Уведомление · из «Импульс восьми ветров».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 15.238095238095237–17.638095238095236 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-09.mp3",
+      "duration": 2.4,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-09.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/eight-winds-pulse.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-10",
+      "title": "Порыв",
+      "group": "signals",
+      "description": "Уведомление · из «Импульс восьми ветров».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 23.571428571428573–25.071428571428573 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-10.mp3",
+      "duration": 1.5,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-10.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/eight-winds-pulse.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-11",
+      "title": "Возвращение",
+      "group": "signals",
+      "description": "Уведомление · из «Импульс восьми ветров».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 49.523809523809526–52.523809523809526 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-11.mp3",
+      "duration": 3,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-11.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/eight-winds-pulse.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-12",
+      "title": "Медь",
+      "group": "signals",
+      "description": "Уведомление · из «Медная орбита».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 16.271186440677965–18.471186440677965 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-12.mp3",
+      "duration": 2.2,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-12.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/copper-orbit.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-13",
+      "title": "Орбита",
+      "group": "signals",
+      "description": "Уведомление · из «Медная орбита».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 29.110169491525422–30.710169491525424 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-13.mp3",
+      "duration": 1.6,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-13.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/copper-orbit.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-14",
+      "title": "Медный ответ",
+      "group": "signals",
+      "description": "Уведомление · из «Медная орбита».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 52.88135593220339–56.081355932203394 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-14.mp3",
+      "duration": 3.2,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-14.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/copper-orbit.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-15",
+      "title": "Письмо",
+      "group": "signals",
+      "description": "Уведомление · из «Письмо двух рек».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 10.909090909090908–13.709090909090907 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-15.mp3",
+      "duration": 2.8,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-15.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/letter-of-two-rivers.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-16",
+      "title": "Светлая нота",
+      "group": "signals",
+      "description": "Уведомление · из «Письмо двух рек».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 22.84090909090909–24.24090909090909 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-16.mp3",
+      "duration": 1.4,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-16.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/letter-of-two-rivers.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-17",
+      "title": "Встреча",
+      "group": "signals",
+      "description": "Уведомление · из «Письмо двух рек».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 54.54545454545455–57.945454545454545 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-17.mp3",
+      "duration": 3.4,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-17.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/letter-of-two-rivers.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-18",
+      "title": "Лёд",
+      "group": "signals",
+      "description": "Уведомление · из «Тонкий лёд».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 12.631578947368421–15.631578947368421 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-18.mp3",
+      "duration": 3,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-18.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/thin-ice-nocturne.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-19",
+      "title": "Хрусталь",
+      "group": "signals",
+      "description": "Уведомление · из «Тонкий лёд».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 26.842105263157894–28.642105263157895 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-19.mp3",
+      "duration": 1.8,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-19.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/thin-ice-nocturne.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-notice-20",
+      "title": "Сумерки",
+      "group": "signals",
+      "description": "Уведомление · из «Тонкий лёд».",
+      "recipe": "Вырезка собственной рассчитанной композиции: 50.526315789473685–54.126315789473686 с. Стереоканалы сведены в моно как их среднее; атака 18 мс и затухание 160 мс сглаживают края. Источник, интервал и точный фильтр сохранены в манифесте; это не отдельный звуковой эффект из чужой библиотеки.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-music.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/notice-20.mp3",
+      "duration": 3.6,
+      "tags": [
+        "уведомление"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-music.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/notice-20.wav"
+        },
+        {
+          "label": "Источник фрагмента",
+          "url": "../issledovanie/phone-theme/audio/thin-ice-nocturne.mp3"
+        },
+        {
+          "label": "Манифест",
+          "url": "../issledovanie/phone-theme/music.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-01",
+      "title": "Тик",
+      "group": "signals",
+      "description": "SMS · ноты из «Импульс восьми ветров».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-01.mp3",
+      "duration": 0.18,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-01.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-02",
+      "title": "Искра",
+      "group": "signals",
+      "description": "SMS · ноты из «Импульс восьми ветров».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-02.mp3",
+      "duration": 0.2100453514739229,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-02.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-03",
+      "title": "Свет",
+      "group": "signals",
+      "description": "SMS · ноты из «Импульс восьми ветров».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-03.mp3",
+      "duration": 0.24,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-03.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-04",
+      "title": "Пик",
+      "group": "signals",
+      "description": "SMS · ноты из «Импульс восьми ветров».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-04.mp3",
+      "duration": 0.28,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-04.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-05",
+      "title": "Два импульса",
+      "group": "signals",
+      "description": "SMS · ноты из «Импульс восьми ветров».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-05.mp3",
+      "duration": 0.42,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-05.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/eight-winds-pulse-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-06",
+      "title": "Медь",
+      "group": "signals",
+      "description": "SMS · ноты из «Медная орбита».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-06.mp3",
+      "duration": 0.19,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-06.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/copper-orbit-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-07",
+      "title": "Знак",
+      "group": "signals",
+      "description": "SMS · ноты из «Медная орбита».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-07.mp3",
+      "duration": 0.22,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-07.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/copper-orbit-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-08",
+      "title": "Луч",
+      "group": "signals",
+      "description": "SMS · ноты из «Медная орбита».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-08.mp3",
+      "duration": 0.26,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-08.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/copper-orbit-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-09",
+      "title": "Блик",
+      "group": "signals",
+      "description": "SMS · ноты из «Медная орбита».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-09.mp3",
+      "duration": 0.3,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-09.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/copper-orbit-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-10",
+      "title": "Двойная медь",
+      "group": "signals",
+      "description": "SMS · ноты из «Медная орбита».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-10.mp3",
+      "duration": 0.46,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-10.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/copper-orbit-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-11",
+      "title": "Капля",
+      "group": "signals",
+      "description": "SMS · ноты из «Письмо двух рек».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-11.mp3",
+      "duration": 0.2,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-11.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-12",
+      "title": "Нота",
+      "group": "signals",
+      "description": "SMS · ноты из «Письмо двух рек».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-12.mp3",
+      "duration": 0.23,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-12.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-13",
+      "title": "Кристалл",
+      "group": "signals",
+      "description": "SMS · ноты из «Письмо двух рек».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-13.mp3",
+      "duration": 0.27,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-13.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-14",
+      "title": "Стекло",
+      "group": "signals",
+      "description": "SMS · ноты из «Письмо двух рек».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-14.mp3",
+      "duration": 0.31,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-14.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-15",
+      "title": "Две капли",
+      "group": "signals",
+      "description": "SMS · ноты из «Письмо двух рек».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-15.mp3",
+      "duration": 0.5,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-15.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/letter-of-two-rivers-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-16",
+      "title": "Льдинка",
+      "group": "signals",
+      "description": "SMS · ноты из «Тонкий лёд».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-16.mp3",
+      "duration": 0.2100453514739229,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-16.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-17",
+      "title": "Точка",
+      "group": "signals",
+      "description": "SMS · ноты из «Тонкий лёд».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-17.mp3",
+      "duration": 0.25,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-17.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-18",
+      "title": "Снежинка",
+      "group": "signals",
+      "description": "SMS · ноты из «Тонкий лёд».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-18.mp3",
+      "duration": 0.29,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-18.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-19",
+      "title": "Звезда",
+      "group": "signals",
+      "description": "SMS · ноты из «Тонкий лёд».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-19.mp3",
+      "duration": 0.33,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-19.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "signal-sms-20",
+      "title": "Два кристалла",
+      "group": "signals",
+      "description": "SMS · ноты из «Тонкий лёд».",
+      "recipe": "Отдельная нота либо пара нот взяты из собственной JSON-партитуры и синтезированы заново. Сохранены высота и семейство тембра, но задана короткая огибающая: атака 3 мс, экспоненциальный спад и завершение 18 мс. Нет музыкальной подложки, эха и реверберации. Это переработка нот, а не вырезка готового MP3.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/music/build-sms.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/audio/sms-20.mp3",
+      "duration": 0.54,
+      "tags": [
+        "SMS"
+      ],
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/music/README-sms.md"
+        },
+        {
+          "label": "WAV",
+          "url": "../issledovanie/phone-theme/audio/sms-20.wav"
+        },
+        {
+          "label": "Исходная партитура",
+          "url": "../issledovanie/phone-theme/music/thin-ice-nocturne-score.json"
+        },
+        {
+          "label": "Рецепт сигнала",
+          "url": "../issledovanie/phone-theme/sms.json"
+        }
+      ]
+    },
+    {
+      "id": "live-meridian-color",
+      "title": "Северный меридиан · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/meridian-color.mp3",
+      "video": "../issledovanie/phone-theme/live/meridian-color.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/meridian-color-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=meridian-color"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/meridian-color.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/meridian-color.json"
+        }
+      ]
+    },
+    {
+      "id": "live-meridian-mono",
+      "title": "Северный меридиан · монохром",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/meridian-mono.mp3",
+      "video": "../issledovanie/phone-theme/live/meridian-mono.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/meridian-mono-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=meridian-mono"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/meridian-mono.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/meridian-mono.json"
+        }
+      ]
+    },
+    {
+      "id": "live-fault-color",
+      "title": "Киноварный разлом · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/fault-color.mp3",
+      "video": "../issledovanie/phone-theme/live/fault-color.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/fault-color-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=fault-color"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/fault-color.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/fault-color.json"
+        }
+      ]
+    },
+    {
+      "id": "live-fault-mono",
+      "title": "Киноварный разлом · монохром",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/fault-mono.mp3",
+      "video": "../issledovanie/phone-theme/live/fault-mono.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/fault-mono-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=fault-mono"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/fault-mono.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/fault-mono.json"
+        }
+      ]
+    },
+    {
+      "id": "live-crystal-color",
+      "title": "Ледяная линза · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/crystal-color.mp3",
+      "video": "../issledovanie/phone-theme/live/crystal-color.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/crystal-color-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=crystal-color"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/crystal-color.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/crystal-color.json"
+        }
+      ]
+    },
+    {
+      "id": "live-crystal-mono",
+      "title": "Ледяная линза · монохром",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/crystal-mono.mp3",
+      "video": "../issledovanie/phone-theme/live/crystal-mono.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/crystal-mono-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=crystal-mono"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/crystal-mono.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/crystal-mono.json"
+        }
+      ]
+    },
+    {
+      "id": "live-eight-winds-color",
+      "title": "Роза восьми ветров · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/eight-winds-color.mp3",
+      "video": "../issledovanie/phone-theme/live/eight-winds-color.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/eight-winds-color-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=eight-winds-color"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/eight-winds-color.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/eight-winds-color.json"
+        }
+      ]
+    },
+    {
+      "id": "live-eight-winds-mono",
+      "title": "Роза восьми ветров · монохром",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/eight-winds-mono.mp3",
+      "video": "../issledovanie/phone-theme/live/eight-winds-mono.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/eight-winds-mono-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=eight-winds-mono"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/eight-winds-mono.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/eight-winds-mono.json"
+        }
+      ]
+    },
+    {
+      "id": "live-two-rivers-color",
+      "title": "Два русла · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/two-rivers-color.mp3",
+      "video": "../issledovanie/phone-theme/live/two-rivers-color.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/two-rivers-color-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=two-rivers-color"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/two-rivers-color.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/two-rivers-color.json"
+        }
+      ]
+    },
+    {
+      "id": "live-two-rivers-mono",
+      "title": "Два русла · монохром",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/two-rivers-mono.mp3",
+      "video": "../issledovanie/phone-theme/live/two-rivers-mono.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/two-rivers-mono-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=two-rivers-mono"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/two-rivers-mono.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/two-rivers-mono.json"
+        }
+      ]
+    },
+    {
+      "id": "live-shadow-color",
+      "title": "Тень конуса · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/shadow-color.mp3",
+      "video": "../issledovanie/phone-theme/live/shadow-color.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/shadow-color-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=shadow-color"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/shadow-color.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/shadow-color.json"
+        }
+      ]
+    },
+    {
+      "id": "live-shadow-mono",
+      "title": "Тень конуса · монохром",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/shadow-mono.mp3",
+      "video": "../issledovanie/phone-theme/live/shadow-mono.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/shadow-mono-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=shadow-mono"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/shadow-mono.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/shadow-mono.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-sierpinski-solar",
+      "title": "Солнечный Серпинский · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-sierpinski-solar.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-sierpinski-solar.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-sierpinski-solar-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-sierpinski-solar"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-sierpinski-solar.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-sierpinski-solar.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-sierpinski-electric",
+      "title": "Электрический Серпинский · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-sierpinski-electric.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-sierpinski-electric.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-sierpinski-electric-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-sierpinski-electric"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-sierpinski-electric.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-sierpinski-electric.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-sierpinski-interference",
+      "title": "Серпинский в три голоса · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-sierpinski-interference.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-sierpinski-interference.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-sierpinski-interference-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-sierpinski-interference"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-sierpinski-interference.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-sierpinski-interference.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-animatrix-gaps",
+      "title": "Аниматрица · Пустоты · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-animatrix-gaps.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-animatrix-gaps.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-animatrix-gaps-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-animatrix-gaps"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-animatrix-gaps.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-animatrix-gaps.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-animatrix-wave",
+      "title": "Аниматрица · Два соседа · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-animatrix-wave.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-animatrix-wave.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-animatrix-wave-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-animatrix-wave"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-animatrix-wave.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-animatrix-wave.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-animatrix-excel",
+      "title": "Аниматрица · Excel-маятник · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-animatrix-excel.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-animatrix-excel.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-animatrix-excel-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-animatrix-excel"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-animatrix-excel.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-animatrix-excel.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-pendulums-duet",
+      "title": "Маятники · Зеркальный дуэт · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-pendulums-duet.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-pendulums-duet.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-pendulums-duet-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-pendulums-duet"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-pendulums-duet.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-pendulums-duet.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-pendulums-counter",
+      "title": "Маятники · Встречный ход · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-pendulums-counter.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-pendulums-counter.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-pendulums-counter-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-pendulums-counter"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-pendulums-counter.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-pendulums-counter.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-pendulums-trail",
+      "title": "Маятники · Восемь кадров следа · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-pendulums-trail.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-pendulums-trail.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-pendulums-trail-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-pendulums-trail"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-pendulums-trail.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-pendulums-trail.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-rhombi-aurora",
+      "title": "Ромбы · Полярный свет · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-rhombi-aurora.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-rhombi-aurora.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-rhombi-aurora-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-rhombi-aurora"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-rhombi-aurora.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-rhombi-aurora.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-rhombi-mosaic",
+      "title": "Ромбы · Плитка XOR · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-rhombi-mosaic.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-rhombi-mosaic.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-rhombi-mosaic-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-rhombi-mosaic"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-rhombi-mosaic.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-rhombi-mosaic.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-rhombi-axes",
+      "title": "Ромбы · Две оси · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-rhombi-axes.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-rhombi-axes.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-rhombi-axes-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-rhombi-axes"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-rhombi-axes.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-rhombi-axes.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-rgb-prism",
+      "title": "RGB · Призма Серпинского · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-rgb-prism.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-rgb-prism.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-rgb-prism-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-rgb-prism"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-rgb-prism.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-rgb-prism.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-rgb-stereo",
+      "title": "RGB · Три встречных поля · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-rgb-stereo.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-rgb-stereo.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-rgb-stereo-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-rgb-stereo"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-rgb-stereo.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-rgb-stereo.json"
+        }
+      ]
+    },
+    {
+      "id": "live-geometric-rgb-triad",
+      "title": "RGB · Три оси · цвет",
+      "group": "live",
+      "description": "Живое построение · 128 шагов · вертикальное видео со звуком.",
+      "recipe": "Видеокадры вычисляются из живого рецепта. Та же строка поля сворачивается в 16 полос и задаёт нотные события; RGB-сцены читают каналы отдельно. Битовые гармоники, резонаторы и собственная ритмическая сетка создают музыку. Формантный робот из осцилляторов и шума произносит «ноль», «один», «Зеркалиус». Сборщик соединяет собственные кадры и звук; темп 137 BPM — рабочая настройка, бесшовность не заявлена.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/phone-theme/build-live.cjs"
+      },
+      "audio": "../issledovanie/phone-theme/live/geometric-rgb-triad.mp3",
+      "video": "../issledovanie/phone-theme/live/geometric-rgb-triad.mp4",
+      "poster": "../issledovanie/phone-theme/wallpapers/geometric-rgb-triad-thumb.png",
+      "duration": 14.014598540145986,
+      "links": [
+        {
+          "label": "Как сделано",
+          "url": "../issledovanie/phone-theme/README.md"
+        },
+        {
+          "label": "Голос робота",
+          "url": "../tools/voice/README.md"
+        },
+        {
+          "label": "Открыть живой рецепт",
+          "url": "../mayatnik/Zerkalius-mayatnik.html?phoneScene=geometric-rgb-triad"
+        },
+        {
+          "label": "MIDI",
+          "url": "../issledovanie/phone-theme/live/geometric-rgb-triad.mid"
+        },
+        {
+          "label": "Партитура",
+          "url": "../issledovanie/phone-theme/live/geometric-rgb-triad.json"
+        }
+      ]
+    },
+    {
+      "id": "fractal-arrowhead",
+      "title": "Стрелка Серпинского",
+      "group": "fractals",
+      "description": "Глубина 4 · 81 отрезок",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/arrowhead.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=arrowhead"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-rule90",
+      "title": "Треугольник Серпинского",
+      "group": "fractals",
+      "description": "Правило 90 · 16 строк",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/rule90.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=rule90"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-chaos-triangle",
+      "title": "Игра хаоса · треугольник",
+      "group": "fractals",
+      "description": "3 вершины · прыжок 1/2",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/chaos-triangle.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-triangle"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-chaos-square",
+      "title": "Игра хаоса · квадрат",
+      "group": "fractals",
+      "description": "4 вершины · прыжок 1/2 · с повторами",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/chaos-square.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-square"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-chaos-square-no-repeat",
+      "title": "Квадрат без повторов",
+      "group": "fractals",
+      "description": "4 вершины · прыжок 1/2 · без повторов",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/chaos-square-no-repeat.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-square-no-repeat"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-chaos-pentagon",
+      "title": "Игра хаоса · пятиугольник",
+      "group": "fractals",
+      "description": "5 вершин · прыжок 61,8%",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/chaos-pentagon.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-pentagon"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-chaos-fifths-half",
+      "title": "Квинтовый круг · прыжок 1/2",
+      "group": "fractals",
+      "description": "12 вершин · прыжок 1/2",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/chaos-fifths-half.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-fifths-half"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-chaos-fifths",
+      "title": "Квинтовый круг · прыжок 4/5",
+      "group": "fractals",
+      "description": "12 вершин · прыжок 4/5",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/chaos-fifths.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-fifths"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-chaos-fifths-notes",
+      "title": "Квинтовый круг · каждый прыжок",
+      "group": "fractals",
+      "description": "12 вершин · прыжок 4/5 · одна точка за шаг",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/chaos-fifths-notes.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=chaos-fifths-notes"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-deckard-231123",
+      "title": "Deckard 231123",
+      "group": "fractals",
+      "description": "Старт 1 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/deckard-231123.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=deckard-231123"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-deckard-222111",
+      "title": "Deckard 222111",
+      "group": "fractals",
+      "description": "Старт 1 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/deckard-222111.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=deckard-222111"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-wolfram-30",
+      "title": "Правило 30",
+      "group": "fractals",
+      "description": "Старт 1 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/wolfram-30.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-30"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-wolfram-90",
+      "title": "Правило 90",
+      "group": "fractals",
+      "description": "Старт 1 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/wolfram-90.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-90"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-wolfram-110",
+      "title": "Правило 110",
+      "group": "fractals",
+      "description": "Старт 1 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/wolfram-110.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-110"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-wolfram-150",
+      "title": "Правило 150",
+      "group": "fractals",
+      "description": "Старт 1 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/wolfram-150.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-150"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-wolfram-204",
+      "title": "Правило 204",
+      "group": "fractals",
+      "description": "Старт 1 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/wolfram-204.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=wolfram-204"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-sum-mod-3",
+      "title": "Сумма по модулю 3",
+      "group": "fractals",
+      "description": "Старт 1 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/sum-mod-3.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=sum-mod-3"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-cellular-two",
+      "title": "Правило 90 · две точки",
+      "group": "fractals",
+      "description": "Старт 101 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/cellular-two.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=cellular-two"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "fractal-cellular-custom",
+      "title": "Правило 150 · свой ряд",
+      "group": "fractals",
+      "description": "Старт 101101001 · 64 строки",
+      "recipe": "Модель клеточного автомата, геометрии либо игры хаоса строит кадры. В клеточных рядах взвешенная сумма активных клеток выбирает пентатонику; в хаосе нота зависит от вершины, в других геометриях — от координаты. Плотность меняет октаву, силу и панораму. Общий собственный синтезатор вычисляет фортепиано и ударные; сборщик соединяет кадры и рассчитанный WAV в 12-секундное видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../issledovanie/cellular-visual-labs/render-examples.cjs"
+      },
+      "video": "../issledovanie/cellular-visual-labs/examples/cellular-custom.mp4",
+      "duration": 12,
+      "links": [
+        {
+          "label": "Как сделано и параметры",
+          "url": "../issledovanie/cellular-visual-labs/"
+        },
+        {
+          "label": "Открыть живой опыт",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=cellular-custom"
+        },
+        {
+          "label": "Код геометрических моделей",
+          "url": "../mayatnik/mayatnik-synthesis-fractals.js"
+        }
+      ]
+    },
+    {
+      "id": "visual-glyphen-xor-3d-mp3-20261112",
+      "title": "Glyphen XOR · 3D",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../rezultaty/Zerkalius-rezultaty.html"
+      },
+      "video": "../rezultaty/glyphen-xor-3d-mp3-20261112.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../rezultaty/Zerkalius-rezultaty.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-binarnoe-prishestvie-20261027",
+      "title": "Бинарное пришествие",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../rezultaty/Zerkalius-rezultaty.html"
+      },
+      "video": "../rezultaty/binarnoe-prishestvie-20261027.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../rezultaty/Zerkalius-rezultaty.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-rec-0005-20261027",
+      "title": "Бинарная крест-Антенна",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../rezultaty/Zerkalius-rezultaty.html"
+      },
+      "video": "../rezultaty/rec-0005-20261027.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../rezultaty/Zerkalius-rezultaty.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-rombo-kvadratus-20261027",
+      "title": "Ромбо-квадратус",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../rezultaty/Zerkalius-rezultaty.html"
+      },
+      "video": "../rezultaty/rombo-kvadratus-20261027.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../rezultaty/Zerkalius-rezultaty.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-rec-0003-20261027",
+      "title": "Запись 0003",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../rezultaty/Zerkalius-rezultaty.html"
+      },
+      "video": "../rezultaty/rec-0003-20261027.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../rezultaty/Zerkalius-rezultaty.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-mayatnik-tochka-os-1",
+      "title": "Маятник: раскраска по Точке Оси · вариант 1",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../rezultaty/Zerkalius-rezultaty.html"
+      },
+      "video": "../rezultaty/mayatnik-tochka-os-1.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../rezultaty/Zerkalius-rezultaty.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-prilyot-zerkaliusa",
+      "title": "Прилёт Зеркалиуса",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../rezultaty/Zerkalius-rezultaty.html"
+      },
+      "video": "../rezultaty/prilyot-zerkaliusa.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../rezultaty/Zerkalius-rezultaty.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-loop-zoom-x4",
+      "title": "Петля по пикселям · увеличение ×4",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../stend/Zerkalius-stend.html"
+      },
+      "video": "../stend/assets/loop-zoom-x4.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../stend/Zerkalius-stend.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-growth-1080",
+      "title": "Рост битов · 1080p",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../stend/Zerkalius-stend.html"
+      },
+      "video": "../stend/assets/growth-1080.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../stend/Zerkalius-stend.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "visual-growth-4k",
+      "title": "Рост битов · 4K",
+      "group": "visuals",
+      "description": "Визуальный ролик без звуковой дорожки.",
+      "recipe": "Сохранённый видеоряд геометрических построений Зеркалиуса. В текущем файле нет аудиодорожки; у пяти старых битмультфильмов она удалена 18 ноября после уточнения происхождения музыки. Точный воспроизводимый паспорт исходной записи для этой карточки не восстановлен; текущая страница показывает сохранённое видео.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../stend/Zerkalius-stend.html"
+      },
+      "video": "../stend/assets/growth-4k.mp4",
+      "tags": [
+        "без звука"
+      ],
+      "links": [
+        {
+          "label": "Исходная галерея",
+          "url": "../stend/Zerkalius-stend.html"
+        },
+        {
+          "label": "Сведения о происхождении и очистке",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "tool-synthesis",
+      "title": "Синтез · два маятника и музыкальные модели",
+      "group": "tools",
+      "description": "Живой инструмент · запуск и параметры на исходной странице.",
+      "recipe": "Два поля и логические операции управляют частью нот, динамикой и панорамой; гармония и форма задаются отдельно. Осцилляторы, собственный шум и огибающие вычисляют звук. Включите «Звук» и запустите построение.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/mayatnik-synthesis-music.js"
+      },
+      "tags": [
+        "инструмент"
+      ],
+      "links": [
+        {
+          "label": "Открыть инструмент",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html"
+        },
+        {
+          "label": "Как устроено",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "tool-xorrom",
+      "title": "Маятник · Xorrom",
+      "group": "tools",
+      "description": "Живой инструмент · запуск и параметры на исходной странице.",
+      "recipe": "Xorrom читает единицы и RGB-категории поля, переводит их в ступени лада и синтезирует ноты, аккорды и сопровождение. Можно менять тембр, огибающую, фильтр и эффекты; готовая фонограмма не требуется.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/mayatnik-xorrom.js"
+      },
+      "tags": [
+        "инструмент"
+      ],
+      "links": [
+        {
+          "label": "Открыть инструмент",
+          "url": "../mayatnik/Zerkalius-mayatnik.html"
+        },
+        {
+          "label": "Как устроено",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "tool-bit-synthesis",
+      "title": "Гармоники битов, Шеппард и Щелчок",
+      "group": "tools",
+      "description": "Живой инструмент · запуск и параметры на исходной странице.",
+      "recipe": "Число и маски строки задают сумму синусоидальных гармоник с огибающей. Это собственный битовый синтез; название «Шеппард» не доказывает классический бесконечный подъём.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/mayatnik-bit-synthesis.js"
+      },
+      "tags": [
+        "инструмент"
+      ],
+      "links": [
+        {
+          "label": "Открыть инструмент",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html"
+        },
+        {
+          "label": "Как устроено",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "tool-hub",
+      "title": "Хаб · стекание со звуком",
+      "group": "tools",
+      "description": "Живой инструмент · запуск и параметры на исходной странице.",
+      "recipe": "При стекании по соседним единицам звучит синус. Строка циклически выбирает До–Си; атака 12 мс, экспоненциальный спад и остановка через 370 мс. Это вычисленный тон, не фрагмент песни.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../_js/hub-rhomb-music.js"
+      },
+      "tags": [
+        "инструмент"
+      ],
+      "links": [
+        {
+          "label": "Открыть инструмент",
+          "url": "../index.html"
+        },
+        {
+          "label": "Как устроено",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "tool-zz",
+      "title": "Зазеркалиус · читающие головки",
+      "group": "tools",
+      "description": "Живой инструмент · запуск и параметры на исходной странице.",
+      "recipe": "Единица запускает ноту, ноль оставляет паузу. Высота зависит от строки или битового окна; синус, треугольник, квадрат и пила создаются осцилляторами. Колокол добавляет синус на частоте 2,76 от основной.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../zazerkalius/zz-ui.js"
+      },
+      "tags": [
+        "инструмент"
+      ],
+      "links": [
+        {
+          "label": "Открыть инструмент",
+          "url": "../zazerkalius/Zerkalius-zazerkalius.html"
+        },
+        {
+          "label": "Как устроено",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "tool-synchrophasotron",
+      "title": "Синхрофазотрон · музыкальное чтение",
+      "group": "tools",
+      "description": "Живой инструмент · запуск и параметры на исходной странице.",
+      "recipe": "Читающие головки превращают единицы поля в события выбранного лада, нули — в паузы. Высота зависит от строки или окна битов. Тембры вычисляются осцилляторами; выбор головки и темпа выполняется в инструменте.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../sinhrofazotron/zz-ui.js"
+      },
+      "tags": [
+        "инструмент"
+      ],
+      "links": [
+        {
+          "label": "Открыть инструмент",
+          "url": "../sinhrofazotron/Zerkalius-sinhrofazotron.html"
+        },
+        {
+          "label": "Как устроено",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "tool-synchrorhomb",
+      "title": "Синхроромб · музыкальное чтение",
+      "group": "tools",
+      "description": "Живой инструмент · запуск и параметры на исходной странице.",
+      "recipe": "Битовое поле управляет нотами читающих головок. Лад, темп и положение головки выбираются в приложении; звук создаётся собственными осцилляторами и огибающими.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../sinhroromb/zz-ui.js"
+      },
+      "tags": [
+        "инструмент"
+      ],
+      "links": [
+        {
+          "label": "Открыть инструмент",
+          "url": "../sinhroromb/Zerkalius-sinhroromb.html"
+        },
+        {
+          "label": "Как устроено",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    },
+    {
+      "id": "tool-sign-voice",
+      "title": "Голос знаков · ввести свои буквы и цифры",
+      "group": "tools",
+      "description": "Живой инструмент · запуск и параметры на исходной странице.",
+      "recipe": "Текст либо верхняя строка выделенного поля превращается в последовательность имён знаков. Процедурный банк вычислен из гармоник, шума, резонаторов и фонемных правил; музыкальная доля управляет моментом запуска слова.",
+      "source": {
+        "label": "Исходник и правила построения",
+        "url": "../mayatnik/mayatnik-synthesis-sign-clock.js"
+      },
+      "tags": [
+        "инструмент"
+      ],
+      "links": [
+        {
+          "label": "Открыть инструмент",
+          "url": "../mayatnik/Zerkalius-mayatnik-synthesis.html?synthExample=sign-voice"
+        },
+        {
+          "label": "Как устроено",
+          "url": "../audit/reports/2026-11-18-music-inventory.md"
+        }
+      ]
+    }
+  ]
+}

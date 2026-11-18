@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Музыка и голоса Зеркалиуса: слушать, смотреть видео и читать, как всё создано. Сравнение трёх собственных процедурных голосов.">
+  <title>Музыка и голоса · Зеркалиус · v0.001</title>
+  <link rel="stylesheet" href="../_js/grozd.css">
+  <link rel="stylesheet" href="style.css?v=1">
+  <script src="../_js/hub-button-text.js?v=3" defer></script>
+  <script src="app.js?v=1" defer></script>
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="../index.html">◇ Зеркалиус</a>
+    <nav aria-label="Навигация раздела">
+      <a class="gz-hx" href="#voices"><span>Три голоса</span></a>
+      <a class="gz-hx" href="#library"><span>Все записи</span></a>
+      <a class="gz-hx" href="../index.html"><span>⌂ Хаб</span></a>
+    </nav>
+  </header>
+  <main>
+    <div class="intro">
+      <p class="eyebrow">ЗВУК ИЗ ЧИСЕЛ <span>v0.001</span></p>
+      <h1>Музыка и голоса</h1>
+      <p>Слушайте запись, смотрите её движение и читайте рядом, как она сделана.</p>
+      <p class="muted">Собственные формулы, фонемы и мелодии с нуля. Без записей человека и заимствованных аудиоисточников. <a href="../redaktoram/#sound">Правила происхождения звука</a></p>
+    </div>
+
+    <section class="comparison" id="voices" aria-labelledby="voice-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">01 / СРАВНЕНИЕ</p><h2 id="voice-title">Одна фраза. Три голоса.</h2></div>
+        <div class="actions">
+          <button class="gz-hx" id="compare" type="button"><span>▶ По очереди</span></button>
+          <button class="gz-hx" id="stop" type="button"><span>■ Стоп</span></button>
+        </div>
+      </div>
+      <p>«Ноль, один» — по 2,4 секунды. Слова начинаются на 0,20 и 1,20 секунды. Можно слушать каждый голос отдельно или все три подряд.</p>
+      <div class="voice-grid">
+        <article class="voice-card" data-voice="bank">
+          <p class="voice-number">A <span>БАНК ЗНАКОВ</span></p>
+          <h3>Гармонический</h3>
+          <p class="voice-quote">«ноль, один»</p>
+          <audio controls preload="none" src="voices/bank.wav" aria-label="Гармонический голос: ноль, один"></audio>
+          <h4>Как сделано</h4>
+          <p>Сумма 60 гармоник создаёт периодический источник. Вычисленный шум добавляет согласные, четыре параллельных резонатора формируют гласные. Переходы между фонемами заданы в коде.</p>
+          <p class="muted">Этот движок произносит цифры и названия русских и латинских букв в банке знаков.</p>
+          <a href="../mayatnik/sign-voice/generate_procedural_bank.py">Исходник синтеза ↗</a>
+        </article>
+        <article class="voice-card" data-voice="formant">
+          <p class="voice-number">B <span>ФОРМАНТНЫЙ DSH</span></p>
+          <h3>Импульсный</h3>
+          <p class="voice-quote">«ноль, один»</p>
+          <audio controls preload="none" src="voices/formant.wav" aria-label="Импульсный голос: ноль, один"></audio>
+          <h4>Как сделано</h4>
+          <p>Периодические импульсы и собственный шум проходят через три параллельные формантные ветви. Слова собираются из заданных вручную фонем с короткими огибающими.</p>
+          <p class="muted">Движок из композиций с числами. Мягкий знак удаляется из текста и не смягчает согласную — это ограничение этой версии.</p>
+          <a href="../tools/voice/formant_voice.py">Исходник синтеза ↗</a>
+        </article>
+        <article class="voice-card" data-voice="phone">
+          <p class="voice-number">C <span>ТЕЛЕФОННЫЙ РОБОТ</span></p>
+          <h3>Битовый</h3>
+          <p class="voice-quote">«ноль, один»</p>
+          <audio controls preload="none" src="voices/phone.wav" aria-label="Битовый голос: ноль, один"></audio>
+          <h4>Как сделано</h4>
+          <p>Биты управляют весами гармоник. Источник из 96 гармоник и вычисленного шума проходит через четыре полосовых фильтра; фонемы и их длительности заданы вручную.</p>
+          <p class="muted">Для сравнения использована постоянная битовая маска. В телефонной музыке тембр может меняться вместе с полем.</p>
+          <a href="../mayatnik/mayatnik-phone-robot.js">Исходник синтеза ↗</a>
+        </article>
+      </div>
+      <p class="comparison-note">У всех образцов одинаковый пиковый уровень; воспринимаемая громкость может различаться. Высота, длительность фонем и внутренняя обработка каждого движка сохранены. Музыка и дополнительные эффекты не добавлены.</p>
+      <div class="text-links"><a href="../redaktoram/#voices">Подробно о трёх движках</a><a href="voices/README.md">Как собрано сравнение</a><a href="voices/manifest.json">Параметры и происхождение</a></div>
+    </section>
+
+    <section id="library" aria-labelledby="library-title">
+      <div class="section-heading"><div><p class="eyebrow">02 / КАТАЛОГ</p><h2 id="library-title">Музыка, голоса и видео</h2></div><p id="count" class="muted" aria-live="polite"></p></div>
+      <div class="filters">
+        <label class="search-label">Поиск <input id="search" type="search" placeholder="Название, голос, способ создания…" autocomplete="off"></label>
+        <label>Раздел <select id="group"><option value="all">Все разделы</option></select></label>
+        <label>Материал <select id="kind"><option value="all">Всё</option><option value="audio">Аудио</option><option value="video">Видео</option><option value="tool">Инструменты</option></select></label>
+        <button class="gz-hx" id="reset" type="button"><span>Сбросить</span></button>
+      </div>
+      <p class="catalog-help">Сначала выберите раздел или введите название. У каждого материала — описание сборки и ссылка на подробный рецепт. Видео без звуковой дорожки отмечены в карточке.</p>
+      <p id="loading" role="status">Загрузка каталога…</p>
+      <button class="gz-hx" id="retry" type="button" hidden><span>Повторить</span></button>
+      <div id="catalog" class="catalog"></div>
+      <div class="more-row"><button class="gz-hx" id="more" type="button" hidden><span>Показать ещё</span></button></div>
+      <noscript><p>Для каталога включите JavaScript. <a href="../redaktoram/#music">Полный список записей и рецептов</a>. Три голоса выше доступны и без JavaScript.</p></noscript>
+    </section>
+    <footer><p><a href="../redaktoram/#music">Полная инвентаризация</a> · <a href="../redaktoram/#voices">Создание голосов</a> · <a href="../redaktoram/#sound">Правила звука</a></p><p>Зеркалиус · Музыка и голоса · v0.001</p></footer>
+  </main>
+  <div id="playback" class="playback" role="status" aria-live="polite">Выберите запись для прослушивания.</div>
+</body>
+</html>
