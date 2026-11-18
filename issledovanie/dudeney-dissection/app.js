@@ -1,7 +1,7 @@
-import { pose } from "./geometry.js?v=001";
+import { bitsByPiece, pieces, pose } from "./geometry.js?v=002";
 
 const stage = document.querySelector("#stage");
-const pieces = document.querySelector("#pieces");
+const layer = document.querySelector("#pieces");
 const joints = document.querySelector("#joints");
 const slider = document.querySelector("#cycle");
 const phase = document.querySelector("#phase");
@@ -11,11 +11,44 @@ const playIcon = play.querySelector(".gz-ic");
 const playText = play.querySelector(".gz-nm");
 
 const svgNS = "http://www.w3.org/2000/svg";
-const faces = ["#f09687", "#7ecde0", "#eec77b", "#bdace9"].map(color => {
-  const polygon = document.createElementNS(svgNS, "polygon");
-  polygon.setAttribute("fill", color);
-  return polygon;
-});
+const colors = ["#f09687", "#7ecde0", "#eec77b", "#bdace9"];
+const faces = pieces.map(makeFace);
+const bitCount = bitsByPiece.reduce((total, bits) => total + bits.length, 0);
+document.querySelector("#bit-count").textContent = ` · ${bitCount} целых битов`;
+
+function polygon(points, className) {
+  const element = document.createElementNS(svgNS, "polygon");
+  element.setAttribute("points", points.map(([x, y]) => `${x},${-y}`).join(" "));
+  element.setAttribute("class", className);
+  return element;
+}
+
+function bitLabel({ points, value }) {
+  const [[ax, ay], [bx, by], [cx, cy]] = points;
+  const a = Math.hypot(bx - cx, by - cy);
+  const b = Math.hypot(cx - ax, cy - ay);
+  const c = Math.hypot(ax - bx, ay - by);
+  const perimeter = a + b + c;
+  const doubleArea = Math.abs((bx - ax) * (cy - ay) - (by - ay) * (cx - ax));
+  const label = document.createElementNS(svgNS, "text");
+  label.setAttribute("x", (a * ax + b * bx + c * cx) / perimeter);
+  label.setAttribute("y", -(a * ay + b * by + c * cy) / perimeter);
+  label.setAttribute("font-size", 1.65 * doubleArea / perimeter);
+  label.setAttribute("class", `digit bit-${value}`);
+  label.textContent = value;
+  return label;
+}
+
+function makeFace(points, index) {
+  const face = document.createElementNS(svgNS, "g");
+  face.style.setProperty("--face-color", colors[index]);
+  face.append(polygon(points, "face-base"));
+  for (const bit of bitsByPiece[index]) {
+    face.append(polygon(bit.points, `cell bit-${bit.value}`), bitLabel(bit));
+  }
+  face.append(polygon(points, "face-outline"));
+  return face;
+}
 
 const markers = Array.from({ length: 8 }, () => {
   const circle = document.createElementNS(svgNS, "circle");
@@ -60,7 +93,7 @@ function updateStatus(closed) {
 }
 
 function render() {
-  const { polygons, joints: pairs } = pose(position);
+  const { polygons, joints: pairs, frames } = pose(position);
   const project = projection(activeCamera());
   const projected = polygons.map(points => points.map(project));
   const extent = Math.max(1, ...projected.flat().map(([x, y]) =>
@@ -69,12 +102,13 @@ function render() {
 
   const layered = projected.map((points, index) => {
     const face = faces[index];
-    face.setAttribute("points", points.map(([x, y]) => `${x},${y}`).join(" "));
+    const [[tx, ty], [xx, xy], [yx, yy]] = frames[index].map(project);
+    face.setAttribute("transform", `matrix(${xx - tx} ${xy - ty} ${yx - tx} ${yy - ty} ${tx} ${ty})`);
     const depth = points.reduce((sum, point) => sum + point[2], 0) / points.length;
     return { face, depth };
   });
   layered.sort((a, b) => a.depth - b.depth);
-  layered.forEach(({ face }) => pieces.append(face));
+  layered.forEach(({ face }) => layer.append(face));
 
   let markerCount = 0;
   let closed = 0;

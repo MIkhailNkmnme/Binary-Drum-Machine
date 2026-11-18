@@ -1,14 +1,14 @@
 <!doctype html>
-<!-- ДЮД-001 · v0.001 -->
+<!-- ДЮД-002 · v0.002 -->
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Разрезание Дьюдени: четыре жёсткие части, плоская сборка квадрата и пространственный возврат с четырьмя шарнирами.">
-  <title>Разрезание Дьюдени · Зеркалиус v0.001</title>
+  <meta name="description" content="Разрезание Дьюдени: целые треугольные биты в четырёх деталях, плоская сборка квадрата и пространственный возврат.">
+  <title>Разрезание Дьюдени · Зеркалиус v0.002</title>
   <link rel="stylesheet" href="../../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=001">
-  <script type="module" src="app.js?v=001"></script>
+  <link rel="stylesheet" href="style.css?v=002">
+  <script type="module" src="app.js?v=002"></script>
 </head>
 <body>
   <main>
@@ -18,11 +18,11 @@
     </nav>
     <header>
       <h1>Из треугольника в квадрат</h1>
-      <p>Разрезание Дьюдени из четырёх частей</p>
+      <p>Разрезание Дьюдени из четырёх частей<span id="bit-count"></span></p>
     </header>
 
     <section class="experiment" aria-label="Интерактивная развёртка Дьюдени">
-      <svg id="stage" role="img" tabindex="0" aria-label="Четыре части разрезания. Перетаскивание и клавиши-стрелки вращают вид. Home восстанавливает вид." viewBox="-1.65 -1.3 3.3 2.6">
+      <svg id="stage" role="img" tabindex="0" aria-label="Четыре части разрезания из треугольных битов 0 и 1. Перетаскивание и клавиши-стрелки вращают вид. Home восстанавливает вид." viewBox="-1.65 -1.3 3.3 2.6">
         <title>Шарнирное разрезание Дьюдени</title>
         <g id="pieces"></g>
         <g id="joints" aria-hidden="true"></g>
@@ -49,9 +49,10 @@
 
     <section class="sources" aria-labelledby="motion-title">
       <h2 id="motion-title">Как устроен цикл</h2>
+      <p>Каждая треугольная ячейка хранит 0 или 1 и движется вместе со своей деталью. Линии разреза проходят по границам ячеек. Сетка стыкуется и в треугольнике, и в квадрате.</p>
       <p>В плоскости три шарнира связывают четыре части. Крайние углы встречаются в треугольнике и квадрате. На обратном пути части поворачиваются в пространстве, и все четыре шарнира остаются замкнутыми.</p>
       <p>В квадрате наружные стороны треугольника переходят во внутренние швы, а линии разреза образуют внешний контур. Для многоугольных частей, которые собирают без переворачивания, четырёх частей достаточно и меньше быть не может. <a href="https://doi.org/10.4230/LIPIcs.ITCS.2026.47">Доказательство Демейна, Каматы и Уэхары</a>.</p>
-      <p class="credit">Геометрия задачи Генри Дьюдени. Пространственный ход по <a href="https://community.wolfram.com/t/triangle-inside-out-is-square-looped-2d-3d-transform-for-optimal-dudeney-s-dissection/28274">разбору Виталия Каурова</a>. <span>v0.001</span></p>
+      <p class="credit">Геометрия задачи Генри Дьюдени. Пространственный ход по <a href="https://community.wolfram.com/t/triangle-inside-out-is-square-looped-2d-3d-transform-for-optimal-dudeney-s-dissection/28274">разбору Виталия Каурова</a>. <span>v0.002</span></p>
     </section>
   </main>
 </body>

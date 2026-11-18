@@ -14,7 +14,38 @@ const j = [e[0] - offset, 0, 0], k = [j[0] + 1, 0, 0];
 const cut = subtract(e, j);
 const foot = point => add(j, scale(cut, dot(subtract(point, j), cut) / dot(cut, cut)));
 const l = foot(d), m = foot(k);
-const pieces = [[a, d, l, j], [b, d, l, e], [j, m, k], [c, e, m, k]];
+export const pieces = [[a, d, l, j], [b, d, l, e], [j, m, k], [c, e, m, k]];
+
+// N on JK lands at B in the square. Splitting JK there makes both square
+// seams meet cell edge to cell edge, just as the cuts meet at L and M.
+const n = [2 * j[0], 0, 0];
+const triangles = [
+  [[a, d, j], [d, l, j]],
+  [[b, d, l], [b, l, m], [b, m, e]],
+  [[l, m, k], [l, k, n], [l, n, j]],
+  [[c, e, k], [e, m, k]],
+];
+
+function makeBit(vertex, midpoint, center) {
+  const [ux, uy] = subtract(midpoint, vertex);
+  const [vx, vy] = subtract(center, vertex);
+  return { points: [vertex, midpoint, center], value: Number(ux * vy - uy * vx > 0) };
+}
+
+function subdivide(triangle) {
+  const [a, b, c] = triangle;
+  const center = scale(add(add(a, b), c), 1 / 3);
+  return triangle.flatMap((start, index) => {
+    const end = triangle[(index + 1) % 3];
+    const midpoint = scale(add(start, end), 0.5);
+    return [makeBit(start, midpoint, center), makeBit(end, midpoint, center)];
+  });
+}
+
+export const bitsByPiece = triangles.map(group => group.flatMap(subdivide));
+
+// Origin and basis for the SVG artwork in the local plane, with y pointing down.
+const basis = [[0, 0, 0], [1, 0, 0], [0, -1, 0]];
 
 function turn(axis, angle, pivot) {
   const cosine = Math.cos(angle), sine = Math.sin(angle);
@@ -56,5 +87,6 @@ export function pose(cycle) {
   return {
     polygons,
     joints: hinges.map(pair => pair.map(([piece, vertex]) => polygons[piece][vertex])),
+    frames: folded.map(move => basis.map(move)),
   };
 }

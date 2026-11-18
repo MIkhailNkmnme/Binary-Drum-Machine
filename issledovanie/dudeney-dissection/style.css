@@ -35,8 +35,13 @@ header p { margin: 8px 0 0; color: var(--muted); }
 }
 #stage:active { cursor: grabbing; }
 #stage:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
-#stage polygon, .joint { vector-effect: non-scaling-stroke; }
-#stage polygon { stroke: #18212a; stroke-width: 1.6; stroke-linejoin: round; }
+.face-outline, .joint { vector-effect: non-scaling-stroke; }
+.face-outline { fill: none; stroke: var(--face-color); stroke-width: 1.3; stroke-linejoin: round; }
+.face-base, .cell.bit-0 { fill: #16242d; fill: color-mix(in srgb, #0a151e 83%, var(--face-color)); }
+.cell.bit-1 { fill: var(--face-color); }
+.digit { text-anchor: middle; dominant-baseline: central; font-family: Consolas, monospace; font-weight: 700; }
+.digit.bit-0 { fill: #ebf1f5; }
+.digit.bit-1 { fill: #10191f; }
 .joint { fill: #eff4f8; stroke: #101821; stroke-width: 1.3; }
 .joint.open { fill: #141f29; stroke: #fff0be; }
 
