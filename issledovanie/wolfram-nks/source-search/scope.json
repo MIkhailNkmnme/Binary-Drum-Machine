@@ -1,0 +1,160 @@
+{
+  "date": "2026-11-18",
+  "sourceBook": "Stephen Wolfram, A New Kind of Science, 2002",
+  "chapters": [
+    {
+      "chapter": 1,
+      "file": "nks-ch1.pdf",
+      "bytes": 1223834,
+      "sha256": "842448ba075a4853314d7cc34ee29b6d475082dce1e1ab9a3a5f3d4c0a8fbdad",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch1.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-1--the-foundations-for-a-new-kind-of-science/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 2,
+      "file": "nks-ch2.pdf",
+      "bytes": 7093629,
+      "sha256": "ea6a13e343fecb8c064a3b645ebcb1899770d0de24f07326457429acc15b4986",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch2.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-2--the-crucial-experiment/",
+      "origin": "existing user-provided PDF"
+    },
+    {
+      "chapter": 3,
+      "file": "nks-ch3.pdf",
+      "bytes": 7178583,
+      "sha256": "d4005b27774084c276e67d46a6c79106b93b785d4329893080223c9da8263e76",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch3.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-3--the-world-of-simple-programs/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 4,
+      "file": "nks-ch4.pdf",
+      "bytes": 8451080,
+      "sha256": "63c168561608bd51d78862b9891aa3d9c5cb0e588f0a961d165bd51eff7ac690",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch4.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-4--systems-based-on-numbers/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 5,
+      "file": "nks-ch5.pdf",
+      "bytes": 27776080,
+      "sha256": "e31cb21ee7e4d981ab0c7ba985cd54b9bcbecf423c4ae27810f16e344e6f7795",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch5.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-5--two-dimensions-and-beyond/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 6,
+      "file": "nks-ch6.pdf",
+      "bytes": 8242402,
+      "sha256": "5af1e53860bd4a6877961681cf49b16058a53ee55a2bfa8c64ac7cc13174bca0",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch6.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-6--starting-from-randomness/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 7,
+      "file": "nks-ch7.pdf",
+      "bytes": 16707749,
+      "sha256": "44d1eebd831f780da80bd8a383016aa9cec6aa7ff666fd33690f679c8479210f",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch7.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-7--mechanisms-in-programs-and-nature/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 8,
+      "file": "nks-ch8.pdf",
+      "bytes": 40638764,
+      "sha256": "bad7d09c010bac6ecad496d46065d9558a5896b5ad0eef5d84488507375d64e5",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch8.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-8--implications-for-everyday-systems/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 9,
+      "file": "nks-ch9.pdf",
+      "bytes": 15125084,
+      "sha256": "3802d8f7138f78fd292fdb402585218c1abd022d0898638d724165cfe0d27657",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch9.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-9--fundamental-physics/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 10,
+      "file": "nks-ch10.pdf",
+      "bytes": 5939611,
+      "sha256": "a9b0cdeb98b8b877f10723b19feb615f68198375edd5ed56897eabd70f927b2d",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch10.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-10--processes-of-perception-and-analysis/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 11,
+      "file": "nks-ch11.pdf",
+      "bytes": 5210928,
+      "sha256": "121144db476a6c81af36dae3aead1da6c87c555f0310a34b70dee7493c597dca",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch11.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-11--the-notion-of-computation/",
+      "origin": "official download"
+    },
+    {
+      "chapter": 12,
+      "file": "nks-ch12.pdf",
+      "bytes": 5397621,
+      "sha256": "ccaf2e9e6db24344ad8b69c453cffa7431faf22d2d1f76c29f93b19da1fd5249",
+      "source": "https://files.wolframcdn.com/pub/www.wolframscience.com/nks/nks-ch12.pdf",
+      "page": "https://www.wolframscience.com/nks/chap-12--the-principle-of-computational-equivalence/",
+      "origin": "official download"
+    }
+  ],
+  "pdfFiles": 12,
+  "pdfPages": 1185,
+  "matchedPages": 286,
+  "programArchiveSha256": "7d1faec394a29e96e7aea31362a093f7e6e640e4aae5a7e3ab206ba0840993e8",
+  "meaningfulCdfFiles": 11,
+  "inputCells": 778,
+  "uniqueContextInputCells": 747,
+  "listingHeadings": 565,
+  "referenceMode": "ordinary pend; empty field; single cone per frame; no optional variants",
+  "coreGitBlob": "9731d1d6d4fdfe75fa2685531b0e863d2d06724b",
+  "constructionGitBlob": "f5e1f46987eaf699aef2948c46b605170f96417f",
+  "keyPages": [
+    25,
+    26,
+    58,
+    72,
+    73,
+    74,
+    264,
+    437,
+    869,
+    870,
+    885,
+    886,
+    887,
+    931,
+    951,
+    952,
+    953,
+    955,
+    956,
+    981,
+    1017,
+    1018,
+    1034,
+    1035,
+    1112
+  ],
+  "conclusions": [
+    "No exact full mechanism established",
+    "Sequential additive updates are the closest identified family",
+    "Rule90 superposition alone differs by a manually derived counterexample"
+  ],
+  "execution": "No application tests or Mathematica execution; extraction and reading only",
+  "limits": "Keyword and mechanism search, source reading and selected figure review; not a proof of novelty or an exhaustive equivalence proof",
+  "publications": "No full English corpus or CDF copied into this report"
+}

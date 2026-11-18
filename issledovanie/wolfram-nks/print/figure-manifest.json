@@ -1,0 +1,1817 @@
+{
+  "source": "C:\\Users\\Администратор\\Downloads\\nks-ch2.pdf",
+  "source_sha256": "ea6a13e343fecb8c064a3b645ebcb1899770d0de24f07326457429acc15b4986",
+  "translation_sources": {
+    "ru-23-37.json": "a999dd40ec137cb82afa7093e228cac481fd87f30908cd16ff2177264982ed49",
+    "ru-38-52.json": "87eb903297b665139d92e97f84b47e57153d961e05eb74f06d76652233c9f944",
+    "ru-53-68.json": "b029a71eb5fc3c7953e4668a26b8e2112f1c7a32510e7f7bd0d8db49cec2acba"
+  },
+  "method": "Manually mapped original PDF clips; 360 dpi grayscale; Russian replacements for step/rule; translated ornament labels.",
+  "figures": [
+    {
+      "id": "chapter-vignette",
+      "book_page": 23,
+      "source_key": 23,
+      "source_pdf_page": 2,
+      "clip_points": [
+        82,
+        0,
+        185,
+        122
+      ],
+      "file": "figures\\chapter-vignette.png",
+      "print_width_points": 82,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "c313c34b0a08f9180b0d827c81f13208557d5d6a6926ae6fa2f66f2b4768882c"
+    },
+    {
+      "id": "steps-separate",
+      "book_page": 24,
+      "source_key": 24,
+      "source_pdf_page": 3,
+      "clip_points": [
+        58,
+        122,
+        126,
+        265
+      ],
+      "file": "figures\\steps-separate.png",
+      "print_width_points": 105,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [
+        {
+          "original": "step 1:",
+          "russian": "шаг 1:"
+        },
+        {
+          "original": "step 2:",
+          "russian": "шаг 2:"
+        },
+        {
+          "original": "step 3:",
+          "russian": "шаг 3:"
+        },
+        {
+          "original": "step 4:",
+          "russian": "шаг 4:"
+        },
+        {
+          "original": "step 5:",
+          "russian": "шаг 5:"
+        }
+      ],
+      "sha256": "d6671a62dcb87496cc24669973da747d089798bf294f7b019a0876525a797dec"
+    },
+    {
+      "id": "steps-combined",
+      "book_page": 24,
+      "source_key": 24,
+      "source_pdf_page": 3,
+      "clip_points": [
+        273,
+        148,
+        478,
+        235
+      ],
+      "file": "figures\\steps-combined.png",
+      "print_width_points": 335,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [
+        {
+          "original": "step 10:",
+          "russian": "шаг 10:"
+        },
+        {
+          "original": "step 9:",
+          "russian": "шаг 9:"
+        },
+        {
+          "original": "step 8:",
+          "russian": "шаг 8:"
+        },
+        {
+          "original": "step 7:",
+          "russian": "шаг 7:"
+        },
+        {
+          "original": "step 6:",
+          "russian": "шаг 6:"
+        },
+        {
+          "original": "step 5:",
+          "russian": "шаг 5:"
+        },
+        {
+          "original": "step 4:",
+          "russian": "шаг 4:"
+        },
+        {
+          "original": "step 3:",
+          "russian": "шаг 3:"
+        },
+        {
+          "original": "step 2:",
+          "russian": "шаг 2:"
+        },
+        {
+          "original": "step 1:",
+          "russian": "шаг 1:"
+        }
+      ],
+      "sha256": "3641f09249f410b59dd0b0c68c27b592c4c2627ca51218c12a46df0975a4f4fb"
+    },
+    {
+      "id": "rule-254",
+      "book_page": 24,
+      "source_key": 24,
+      "source_pdf_page": 3,
+      "clip_points": [
+        168,
+        384,
+        362,
+        405
+      ],
+      "file": "figures\\rule-254.png",
+      "print_width_points": 310,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "73b1066a2b377b5fe6095f92620c2ed35d58198c3912d93460bed5e0603a47af"
+    },
+    {
+      "id": "rule-250-pattern",
+      "book_page": 25,
+      "source_key": 25,
+      "source_pdf_page": 4,
+      "clip_points": [
+        82,
+        81,
+        292,
+        184
+      ],
+      "file": "figures\\rule-250-pattern.png",
+      "print_width_points": 330,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "4480bb985c5cb740384c175e2c481d8d2eba1b7516c60845f8d8ae1b4ae46e30"
+    },
+    {
+      "id": "rule-250",
+      "book_page": 25,
+      "source_key": 25,
+      "source_pdf_page": 4,
+      "clip_points": [
+        304,
+        89,
+        455,
+        107
+      ],
+      "file": "figures\\rule-250.png",
+      "print_width_points": 290,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "0205843219cb31d9e493abf4a2e0e5274f39811b4ba712e0152ca32d9053c8c5"
+    },
+    {
+      "id": "rule-90-pattern",
+      "book_page": 25,
+      "source_key": 25,
+      "source_pdf_page": 4,
+      "clip_points": [
+        82,
+        311,
+        502,
+        520
+      ],
+      "file": "figures\\rule-90-pattern.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "554b9175e0e4b9b8ef8699127e148d3d8cc9ad0818b7be086473fc5b61eb0482"
+    },
+    {
+      "id": "rule-90",
+      "book_page": 25,
+      "source_key": 25,
+      "source_pdf_page": 4,
+      "clip_points": [
+        82,
+        537,
+        233,
+        555
+      ],
+      "file": "figures\\rule-90.png",
+      "print_width_points": 290,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "b61f87441b3aca96acab73210946f82014f5ce530bbffb73dfc65aff268d3e16"
+    },
+    {
+      "id": "rule-90-large",
+      "book_page": 26,
+      "source_key": 26,
+      "source_pdf_page": 5,
+      "clip_points": [
+        60,
+        261,
+        478,
+        472
+      ],
+      "file": "figures\\rule-90-large.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "8395bcffca02e7ee47d833590cf889d10de2a525a3d9ea2ab843adbce0115be3"
+    },
+    {
+      "id": "rule-30-pattern",
+      "book_page": 27,
+      "source_key": 27,
+      "source_pdf_page": 6,
+      "clip_points": [
+        82,
+        229,
+        483,
+        429
+      ],
+      "file": "figures\\rule-30-pattern.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "ae119e19242c2c0fcc016b3ae4145dd6ff28313be7ed9669ff7c824cc74ed3dc"
+    },
+    {
+      "id": "rule-30",
+      "book_page": 27,
+      "source_key": 27,
+      "source_pdf_page": 6,
+      "clip_points": [
+        82,
+        444,
+        234,
+        461
+      ],
+      "file": "figures\\rule-30.png",
+      "print_width_points": 290,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "66c6bc6949485d4e2b2b1e1da7cee910b7af6a1f27d392e513fcb4a781460572"
+    },
+    {
+      "id": "rule-30-500",
+      "book_page": 29,
+      "source_key": 29,
+      "source_pdf_page": 8,
+      "clip_points": [
+        84,
+        82,
+        503,
+        558
+      ],
+      "file": "figures\\rule-30-500.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "10d4b55f6e9734245d76858ecf073cff86ffc698908af131f68c28e8882fd753"
+    },
+    {
+      "id": "rule-30-1500",
+      "book_page": 30,
+      "source_key": 30,
+      "source_pdf_page": 9,
+      "clip_points": [
+        59,
+        82,
+        478,
+        558
+      ],
+      "file": "figures\\rule-30-1500.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "dd7e46da591e4775ccdebb98ca4c6df089b3da10485d38931897d0747b081d32"
+    },
+    {
+      "id": "rule-110-pattern",
+      "book_page": 32,
+      "source_key": 32,
+      "source_pdf_page": 11,
+      "clip_points": [
+        60,
+        81,
+        479,
+        491
+      ],
+      "file": "figures\\rule-110-pattern.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "d94b17a1b8ad1353c29beb561af92645346214387a866de2d4795dbbb15ee8b3"
+    },
+    {
+      "id": "rule-110",
+      "book_page": 32,
+      "source_key": 32,
+      "source_pdf_page": 11,
+      "clip_points": [
+        60,
+        512,
+        213,
+        530
+      ],
+      "file": "figures\\rule-110.png",
+      "print_width_points": 290,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "029f5b7db94e0136bbc47fa5cf906abe0ed02a5ba98c91512a80969c0adedcb9"
+    },
+    {
+      "id": "rule-110-33",
+      "book_page": 33,
+      "source_key": 33,
+      "source_pdf_page": 12,
+      "clip_points": [
+        84,
+        82,
+        503,
+        600
+      ],
+      "file": "figures\\rule-110-33.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "e83dd2002648c9752271427ad6003a4b4302a0431045f3d30b74eed5ea0897f3"
+    },
+    {
+      "id": "rule-110-34",
+      "book_page": 34,
+      "source_key": 34,
+      "source_pdf_page": 13,
+      "clip_points": [
+        58,
+        83,
+        477,
+        601
+      ],
+      "file": "figures\\rule-110-34.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "1d6fcbed317233d237eddaa71601ae5381fdd2aeef94e086931f809b615deffb"
+    },
+    {
+      "id": "rule-110-35",
+      "book_page": 35,
+      "source_key": 35,
+      "source_pdf_page": 14,
+      "clip_points": [
+        89,
+        83,
+        507,
+        601
+      ],
+      "file": "figures\\rule-110-35.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "7770780eadbd711b47234d87382a8e8bd37a80c858f7b4dea9f831e6ba6a5fbd"
+    },
+    {
+      "id": "rule-110-36",
+      "book_page": 36,
+      "source_key": 36,
+      "source_pdf_page": 15,
+      "clip_points": [
+        54,
+        83,
+        473,
+        601
+      ],
+      "file": "figures\\rule-110-36.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "5da1b27d6bef8003b73b229ce963d089a86f092119604f944cbf48860013131a"
+    },
+    {
+      "id": "rule-110-37",
+      "book_page": 37,
+      "source_key": 37,
+      "source_pdf_page": 16,
+      "clip_points": [
+        89,
+        83,
+        507,
+        601
+      ],
+      "file": "figures\\rule-110-37.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "ab4659cd76dae88f79a20c7e573423ae7843b4a0076bbdc77c2d99a0197ccadc"
+    },
+    {
+      "id": "rule-110-38",
+      "book_page": 38,
+      "source_key": 38,
+      "source_pdf_page": 17,
+      "clip_points": [
+        62,
+        83,
+        477,
+        601
+      ],
+      "file": "figures\\rule-110-38.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "a0fbf81feb2661d63ba8dbf8f0e1661233aa24fa6c75caf60794767c25d725eb"
+    },
+    {
+      "id": "ca-program-output",
+      "book_page": 865,
+      "source_key": 51,
+      "source_pdf_page": 30,
+      "clip_points": [
+        91,
+        549,
+        179,
+        593
+      ],
+      "file": "figures\\ca-program-output.png",
+      "print_width_points": 220,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "a944e6816c1120f946cf2b9676e3fbe4f12ffb7d6010c4d18142750f593329a9"
+    },
+    {
+      "id": "example-2",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        76,
+        221,
+        144,
+        256
+      ],
+      "file": "figures\\example-2.png",
+      "print_width_points": 205,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "530c8525618451f1395aa6769bcdfe66c9f19ad08a6cb2261f273833e8c1f844"
+    },
+    {
+      "id": "example-4",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        76,
+        330,
+        127,
+        365
+      ],
+      "file": "figures\\example-4.png",
+      "print_width_points": 155,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "13d459979df0ce2252385923a4ad7503b5b8407cb3c12259bfa53090ae231189"
+    },
+    {
+      "id": "example-5",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        76,
+        400,
+        145,
+        435
+      ],
+      "file": "figures\\example-5.png",
+      "print_width_points": 205,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "a41d3a77e171c4db5d6d1711e23fa4454b0d8ccf9bef9968d88468193182898f"
+    },
+    {
+      "id": "example-6",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        76,
+        470,
+        164,
+        505
+      ],
+      "file": "figures\\example-6.png",
+      "print_width_points": 260,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "8ea532ed2a0fd05937c3ba6758920724af3703d44ba39e0e957f535c75399452"
+    },
+    {
+      "id": "example-9",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        293,
+        101,
+        429,
+        137
+      ],
+      "file": "figures\\example-9.png",
+      "print_width_points": 400,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "da39afffcbe825853e881a3c367270483d3c3ea9c49995b630e31af8aaac20ff"
+    },
+    {
+      "id": "example-10",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        293,
+        166,
+        345,
+        201
+      ],
+      "file": "figures\\example-10.png",
+      "print_width_points": 155,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "30f837bcb35aa44b660d9029f224e1d52299093a2cb2f24bcb1b322d5b9345c9"
+    },
+    {
+      "id": "example-11",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        293,
+        230,
+        363,
+        266
+      ],
+      "file": "figures\\example-11.png",
+      "print_width_points": 210,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "12b8a45541b7e3e1acc52354aebfb9f3231b688ecb1ab26fcaf6ad12d0a1dfdc"
+    },
+    {
+      "id": "example-12",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        293,
+        302,
+        363,
+        338
+      ],
+      "file": "figures\\example-12.png",
+      "print_width_points": 210,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "669bb0f5b4b33f9a9fe70fb5631104bffee1d5dfda6f6bcdfe072d37f463f4b2"
+    },
+    {
+      "id": "example-13",
+      "book_page": 868,
+      "source_key": 54,
+      "source_pdf_page": 33,
+      "clip_points": [
+        280,
+        380,
+        474,
+        418
+      ],
+      "file": "figures\\example-13.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "9e77b86fccc0e95d287bc59bd151244a116999153f7ff3cb7d522dad561bba1c"
+    },
+    {
+      "id": "cantor-mappings",
+      "book_page": 869,
+      "source_key": 55,
+      "source_pdf_page": 34,
+      "clip_points": [
+        297,
+        418,
+        502,
+        562
+      ],
+      "file": "figures\\cantor-mappings.png",
+      "print_width_points": 425,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [
+        {
+          "original": "rule 90",
+          "russian": "правило 90"
+        },
+        {
+          "original": "rule 30",
+          "russian": "правило 30"
+        },
+        {
+          "original": "rule 110",
+          "russian": "правило 110"
+        },
+        {
+          "original": "rule 170",
+          "russian": "правило 170"
+        },
+        {
+          "original": "rule 254",
+          "russian": "правило 254"
+        },
+        {
+          "original": "rule 250",
+          "russian": "правило 250"
+        }
+      ],
+      "sha256": "e59c9037e99d9fbfd59c1cc4f639d966a6b3447aaa325e81163ecc61fc615bd8"
+    },
+    {
+      "id": "rule-90-alternate-initial",
+      "book_page": 870,
+      "source_key": 56,
+      "source_pdf_page": 35,
+      "clip_points": [
+        59,
+        540,
+        263,
+        591
+      ],
+      "file": "figures\\rule-90-alternate-initial.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "fcb0ffcc19caffd87a69dc6e6dbd8a817f8275e3912cb25e5287632e29bdbd01"
+    },
+    {
+      "id": "rule-90-k-colors",
+      "book_page": 870,
+      "source_key": 56,
+      "source_pdf_page": 35,
+      "clip_points": [
+        275,
+        300,
+        478,
+        378
+      ],
+      "file": "figures\\rule-90-k-colors.png",
+      "print_width_points": 435,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "88414975f75f5b4e0b7cac6185753ebf36adf54b4948d6528b7702fcefab4053"
+    },
+    {
+      "id": "integer-functions",
+      "book_page": 870,
+      "source_key": 56,
+      "source_pdf_page": 35,
+      "clip_points": [
+        275,
+        498,
+        479,
+        552
+      ],
+      "file": "figures\\integer-functions.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "2fcc435f5888484fd8c67d397c797608ebaed776b1a15d4c71d503254db905db"
+    },
+    {
+      "id": "bitwise-squares",
+      "book_page": 871,
+      "source_key": 57,
+      "source_pdf_page": 36,
+      "clip_points": [
+        81,
+        172,
+        287,
+        241
+      ],
+      "file": "figures\\bitwise-squares.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "062fb697bf48a40a54e3d1a80efbc99743c302af13d50cc1c09e1b8b6b256887"
+    },
+    {
+      "id": "bitwise-surfaces",
+      "book_page": 871,
+      "source_key": 57,
+      "source_pdf_page": 36,
+      "clip_points": [
+        81,
+        246,
+        287,
+        318
+      ],
+      "file": "figures\\bitwise-surfaces.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "191b20ceb098ce077200576548bcc87c7db77d8c962d62208f0f35e2e087789f"
+    },
+    {
+      "id": "munching-squares",
+      "book_page": 871,
+      "source_key": 57,
+      "source_pdf_page": 36,
+      "clip_points": [
+        81,
+        359,
+        287,
+        411
+      ],
+      "file": "figures\\munching-squares.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "e2266b9fecbb8a4b21e9f1cf9ab421499cdb6875698959bce5b72415ef3e6763"
+    },
+    {
+      "id": "bitwise-curves",
+      "book_page": 871,
+      "source_key": 57,
+      "source_pdf_page": 36,
+      "clip_points": [
+        81,
+        451,
+        287,
+        485
+      ],
+      "file": "figures\\bitwise-curves.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "caf4cfe74defabead44604dceaa1c8eb663d6ca5371ecbd4a4af6841861e782e"
+    },
+    {
+      "id": "rule-30-boundary",
+      "book_page": 871,
+      "source_key": 57,
+      "source_pdf_page": 36,
+      "clip_points": [
+        297,
+        187,
+        501,
+        232
+      ],
+      "file": "figures\\rule-30-boundary.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "d51c42d186c30b0cdce02246089637c0d39179666e8c4ff332f43fc4e7ca8ec8"
+    },
+    {
+      "id": "rule-30-column",
+      "book_page": 871,
+      "source_key": 57,
+      "source_pdf_page": 36,
+      "clip_points": [
+        296,
+        400,
+        502,
+        493
+      ],
+      "file": "figures\\rule-30-column.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "d1fffd7575d4649ba3fa00234837068102f849eef556e2937868675f87a60c01"
+    },
+    {
+      "id": "labyrinths",
+      "book_page": 873,
+      "source_key": 59,
+      "source_pdf_page": 38,
+      "clip_points": [
+        81,
+        354,
+        286,
+        391
+      ],
+      "file": "figures\\labyrinths.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "9dff9a41b8f6763d9d8c713603aa4a92f1c30fd1e1b84aaa5c926f0c73c6d77e"
+    },
+    {
+      "id": "celtic-circles",
+      "book_page": 873,
+      "source_key": 59,
+      "source_pdf_page": 38,
+      "clip_points": [
+        81,
+        540,
+        287,
+        584
+      ],
+      "file": "figures\\celtic-circles.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "e510b8d0d8dd53ad1caa32a97187ec1d793534f9b9b5d6ce054509e31fc63050"
+    },
+    {
+      "id": "roman-circles",
+      "book_page": 873,
+      "source_key": 59,
+      "source_pdf_page": 38,
+      "clip_points": [
+        297,
+        177,
+        502,
+        223
+      ],
+      "file": "figures\\roman-circles.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "a30820f0ee318a07e8979781a51baa05dc3004b9ab60fd5daa4ec3f83d935f65"
+    },
+    {
+      "id": "cosmati-nesting",
+      "book_page": 874,
+      "source_key": 60,
+      "source_pdf_page": 39,
+      "clip_points": [
+        58,
+        106,
+        263,
+        145
+      ],
+      "file": "figures\\cosmati-nesting.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "fac9e2a9a2c50a6625c16f79b6914a9633f5e91da205c2be5f813bfcb95877b8"
+    },
+    {
+      "id": "kufic-calligraphy",
+      "book_page": 874,
+      "source_key": 60,
+      "source_pdf_page": 39,
+      "clip_points": [
+        58,
+        229,
+        263,
+        292
+      ],
+      "file": "figures\\kufic-calligraphy.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "7fb3ed7acda98804db3bee6fa02fc9bfabda777c47f33ee5bb28e8de1436fba5"
+    },
+    {
+      "id": "rope-nesting",
+      "book_page": 874,
+      "source_key": 60,
+      "source_pdf_page": 39,
+      "clip_points": [
+        274,
+        525,
+        479,
+        594
+      ],
+      "file": "figures\\rope-nesting.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "001549681d12a190c2d0f44b8ee5d734f259a1a65c7d3c14082f64e93c013f25"
+    },
+    {
+      "id": "publication-chart",
+      "book_page": 878,
+      "source_key": 64,
+      "source_pdf_page": 43,
+      "clip_points": [
+        274,
+        252,
+        478,
+        296
+      ],
+      "file": "figures\\publication-chart.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "005cd5b0e61e5bbebcadaf9ab8c669850532706d5312c039d16d6bf70cd8f829"
+    },
+    {
+      "id": "code-10-small",
+      "book_page": 882,
+      "source_key": 68,
+      "source_pdf_page": 47,
+      "clip_points": [
+        274,
+        275,
+        479,
+        330
+      ],
+      "file": "figures\\code-10-small.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "e2f4fb8576cd59ed7013af311b8f29a48cc2a6b874bd2b6a10d20f8033594ae1"
+    },
+    {
+      "id": "code-10-large",
+      "book_page": 882,
+      "source_key": 68,
+      "source_pdf_page": 47,
+      "clip_points": [
+        276,
+        335,
+        479,
+        458
+      ],
+      "file": "figures\\code-10-large.png",
+      "print_width_points": 510.23559055118113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "feeac4e3e9bb7ad4a95862d04d5ce671af5d61b07f21432e6b963fd672df4b10"
+    },
+    {
+      "id": "ornament-01",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        84.36,
+        102.48,
+        181.56,
+        199.68
+      ],
+      "file": "figures\\ornament-01.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "52d618ad3a921b3a59fa6c0aeb760f04aa57b4c8e3c8c1ecf491a52ff50ea1d0"
+    },
+    {
+      "id": "ornament-02",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        190.494,
+        102.48,
+        287.69399999999996,
+        199.68
+      ],
+      "file": "figures\\ornament-02.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "34e3573e3f4809b7a95a31df781fc4fa5cbb9de7f32cb1067fb6035d6ceed9ff"
+    },
+    {
+      "id": "ornament-03",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        296.628,
+        102.48,
+        393.828,
+        199.68
+      ],
+      "file": "figures\\ornament-03.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "2124faf2015a9dc95a58e4824e9bd62880c8119b95d2d8f35bea77c428ef84ef"
+    },
+    {
+      "id": "ornament-04",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        402.76199999999994,
+        102.48,
+        499.962,
+        199.68
+      ],
+      "file": "figures\\ornament-04.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "ce0009fdc577f82bb147a3a84acdec21bcc650c21f034f5544636e9b4134c18a"
+    },
+    {
+      "id": "ornament-05",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        84.36,
+        215.56199999999998,
+        181.56,
+        312.76199999999994
+      ],
+      "file": "figures\\ornament-05.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "f7cca01e221e97ae5841c66725a04b7af81fa19248afa3612c5fd3ec69bd1413"
+    },
+    {
+      "id": "ornament-06",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        190.494,
+        215.56199999999998,
+        287.69399999999996,
+        312.76199999999994
+      ],
+      "file": "figures\\ornament-06.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "e5cb4ab72e4f2368f8446f85b9862899edaddf5a6d2c94d2182044427c0a014a"
+    },
+    {
+      "id": "ornament-07",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        296.628,
+        215.56199999999998,
+        393.828,
+        312.76199999999994
+      ],
+      "file": "figures\\ornament-07.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "65173ee06b662e447ee76276270cedafd10086a352b5d3611169c14732005a60"
+    },
+    {
+      "id": "ornament-08",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        402.76199999999994,
+        215.56199999999998,
+        499.962,
+        312.76199999999994
+      ],
+      "file": "figures\\ornament-08.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "244a201035c2ae50c09a248dd2f49dae29e0ac79f6e11552ef7170e38fa1a6fe"
+    },
+    {
+      "id": "ornament-09",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        84.36,
+        328.64399999999995,
+        181.56,
+        425.84399999999994
+      ],
+      "file": "figures\\ornament-09.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "b40988600ea24ad0ddc810568e7f410b7f7bb9fe5cd84b31150e9dc78656d8e8"
+    },
+    {
+      "id": "ornament-10",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        190.494,
+        328.64399999999995,
+        287.69399999999996,
+        425.84399999999994
+      ],
+      "file": "figures\\ornament-10.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "cbb8137217c78af0fcfc524b4b57fc0c849b1cc5f3481af3c2696d01ee184f2d"
+    },
+    {
+      "id": "ornament-11",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        296.628,
+        328.64399999999995,
+        393.828,
+        425.84399999999994
+      ],
+      "file": "figures\\ornament-11.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "4986da2f92bae67c3cf996dd5c2b675ac7aa1c4a01e660dced82d671de06548f"
+    },
+    {
+      "id": "ornament-12",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        402.76199999999994,
+        328.64399999999995,
+        499.962,
+        425.84399999999994
+      ],
+      "file": "figures\\ornament-12.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "872e835a7af6369c3dd1e12bcca44a1bbadb7e176b5e6e551a9074e6cb2ea53c"
+    },
+    {
+      "id": "ornament-13",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        84.36,
+        441.72599999999994,
+        181.56,
+        538.9259999999999
+      ],
+      "file": "figures\\ornament-13.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "9b4e43161ae90d19ba9377f9e63834ceff6f200ac3aaab7cee9cd890809da066"
+    },
+    {
+      "id": "ornament-14",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        190.494,
+        441.72599999999994,
+        287.69399999999996,
+        538.9259999999999
+      ],
+      "file": "figures\\ornament-14.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "da6180a26137d53c5d773d6e0982b86cf60849ff159b1737ca440e6c337a6147"
+    },
+    {
+      "id": "ornament-15",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        296.628,
+        441.72599999999994,
+        393.828,
+        538.9259999999999
+      ],
+      "file": "figures\\ornament-15.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "36480443f4dac6a702734f15a83cdb5053234ef9fbc630a739cc89d090718551"
+    },
+    {
+      "id": "ornament-16",
+      "book_page": 43,
+      "source_key": 43,
+      "source_pdf_page": 22,
+      "clip_points": [
+        402.76199999999994,
+        441.72599999999994,
+        499.962,
+        538.9259999999999
+      ],
+      "file": "figures\\ornament-16.png",
+      "print_width_points": 113,
+      "render_dpi": 360,
+      "colorspace": "gray",
+      "translated_labels": [],
+      "sha256": "8f7e1c089fecfa6e1c89feb0f28deda9f3112703f9e626e55b574642a9fe5c27"
+    }
+  ],
+  "removed_text_at_clip_edges": [
+    {
+      "figure": "rule-30-500",
+      "text": "marker"
+    }
+  ],
+  "orders": {
+    "23": [
+      "chapter-vignette",
+      0,
+      1,
+      2,
+      3
+    ],
+    "24": [
+      0,
+      "steps-panel",
+      5,
+      6,
+      8,
+      1,
+      2,
+      "rule-254",
+      7,
+      3,
+      4
+    ],
+    "25": [
+      "rule-250-pattern",
+      "rule-250",
+      2,
+      0,
+      1,
+      "rule-90-pattern",
+      "rule-90",
+      3
+    ],
+    "26": [
+      0,
+      1,
+      "rule-90-large",
+      3,
+      2
+    ],
+    "27": [
+      0,
+      1,
+      2,
+      "rule-30-pattern",
+      "rule-30",
+      4,
+      3
+    ],
+    "29": [
+      "rule-30-500",
+      0
+    ],
+    "30": [
+      "rule-30-1500",
+      0
+    ],
+    "32": [
+      "rule-110-pattern",
+      "rule-110",
+      0,
+      1
+    ],
+    "33": [
+      "rule-110-33"
+    ],
+    "34": [
+      "rule-110-34"
+    ],
+    "35": [
+      "rule-110-35"
+    ],
+    "36": [
+      "rule-110-36"
+    ],
+    "37": [
+      "rule-110-37"
+    ],
+    "38": [
+      "rule-110-38"
+    ]
+  },
+  "insert_after_blocks": {
+    "51": {
+      "13": [
+        "ca-program-output"
+      ]
+    },
+    "54": {
+      "5": [
+        "example-2"
+      ],
+      "9": [
+        "example-4"
+      ],
+      "11": [
+        "example-5"
+      ],
+      "13": [
+        "example-6"
+      ],
+      "19": [
+        "example-9"
+      ],
+      "21": [
+        "example-10"
+      ],
+      "23": [
+        "example-11"
+      ],
+      "25": [
+        "example-12"
+      ],
+      "27": [
+        "example-13"
+      ]
+    },
+    "55": {
+      "22": [
+        "cantor-mappings"
+      ]
+    },
+    "56": {
+      "8": [
+        "rule-90-alternate-initial"
+      ],
+      "13": [
+        "rule-90-k-colors"
+      ],
+      "15": [
+        "integer-functions"
+      ]
+    },
+    "57": {
+      "1": [
+        "bitwise-squares",
+        "bitwise-surfaces"
+      ],
+      "3": [
+        "munching-squares"
+      ],
+      "4": [
+        "bitwise-curves"
+      ],
+      "7": [
+        "rule-30-boundary"
+      ],
+      "11": [
+        "rule-30-column"
+      ]
+    },
+    "59": {
+      "2": [
+        "labyrinths"
+      ],
+      "4": [
+        "celtic-circles"
+      ],
+      "5": [
+        "roman-circles"
+      ]
+    },
+    "60": {
+      "0": [
+        "cosmati-nesting"
+      ],
+      "1": [
+        "kufic-calligraphy"
+      ],
+      "8": [
+        "rope-nesting"
+      ]
+    },
+    "64": {
+      "3": [
+        "publication-chart"
+      ]
+    },
+    "68": {
+      "3": [
+        "code-10-small",
+        "code-10-large"
+      ]
+    }
+  },
+  "translated_blocks_included": 349,
+  "source_translation_blocks": 349,
+  "page_map": [
+    {
+      "output_page": 1,
+      "source_key": null,
+      "original_page": null
+    },
+    {
+      "output_page": 2,
+      "source_key": 23,
+      "original_page": 23
+    },
+    {
+      "output_page": 3,
+      "source_key": 24,
+      "original_page": 24
+    },
+    {
+      "output_page": 4,
+      "source_key": 25,
+      "original_page": 25
+    },
+    {
+      "output_page": 5,
+      "source_key": 26,
+      "original_page": 26
+    },
+    {
+      "output_page": 6,
+      "source_key": 27,
+      "original_page": 27
+    },
+    {
+      "output_page": 7,
+      "source_key": 28,
+      "original_page": 28
+    },
+    {
+      "output_page": 8,
+      "source_key": 29,
+      "original_page": 29
+    },
+    {
+      "output_page": 9,
+      "source_key": 30,
+      "original_page": 30
+    },
+    {
+      "output_page": 10,
+      "source_key": 31,
+      "original_page": 31
+    },
+    {
+      "output_page": 11,
+      "source_key": 32,
+      "original_page": 32
+    },
+    {
+      "output_page": 12,
+      "source_key": 33,
+      "original_page": 33
+    },
+    {
+      "output_page": 13,
+      "source_key": 34,
+      "original_page": 34
+    },
+    {
+      "output_page": 14,
+      "source_key": 35,
+      "original_page": 35
+    },
+    {
+      "output_page": 15,
+      "source_key": 36,
+      "original_page": 36
+    },
+    {
+      "output_page": 16,
+      "source_key": 37,
+      "original_page": 37
+    },
+    {
+      "output_page": 17,
+      "source_key": 38,
+      "original_page": 38
+    },
+    {
+      "output_page": 18,
+      "source_key": 39,
+      "original_page": 39
+    },
+    {
+      "output_page": 19,
+      "source_key": 40,
+      "original_page": 40
+    },
+    {
+      "output_page": 20,
+      "source_key": 41,
+      "original_page": 41
+    },
+    {
+      "output_page": 21,
+      "source_key": 42,
+      "original_page": 42
+    },
+    {
+      "output_page": 22,
+      "source_key": 43,
+      "original_page": 43
+    },
+    {
+      "output_page": 23,
+      "source_key": 44,
+      "original_page": 44
+    },
+    {
+      "output_page": 24,
+      "source_key": 45,
+      "original_page": 45
+    },
+    {
+      "output_page": 25,
+      "source_key": 46,
+      "original_page": 46
+    },
+    {
+      "output_page": 26,
+      "source_key": 47,
+      "original_page": 47
+    },
+    {
+      "output_page": 27,
+      "source_key": 48,
+      "original_page": 48
+    },
+    {
+      "output_page": 28,
+      "source_key": 49,
+      "original_page": 49
+    },
+    {
+      "output_page": 29,
+      "source_key": 50,
+      "original_page": 50
+    },
+    {
+      "output_page": 30,
+      "source_key": 51,
+      "original_page": 865
+    },
+    {
+      "output_page": 31,
+      "source_key": 51,
+      "original_page": 865
+    },
+    {
+      "output_page": 32,
+      "source_key": 52,
+      "original_page": 866
+    },
+    {
+      "output_page": 33,
+      "source_key": 52,
+      "original_page": 866
+    },
+    {
+      "output_page": 34,
+      "source_key": 53,
+      "original_page": 867
+    },
+    {
+      "output_page": 35,
+      "source_key": 53,
+      "original_page": 867
+    },
+    {
+      "output_page": 36,
+      "source_key": 54,
+      "original_page": 868
+    },
+    {
+      "output_page": 37,
+      "source_key": 54,
+      "original_page": 868
+    },
+    {
+      "output_page": 38,
+      "source_key": 54,
+      "original_page": 868
+    },
+    {
+      "output_page": 39,
+      "source_key": 55,
+      "original_page": 869
+    },
+    {
+      "output_page": 40,
+      "source_key": 55,
+      "original_page": 869
+    },
+    {
+      "output_page": 41,
+      "source_key": 56,
+      "original_page": 870
+    },
+    {
+      "output_page": 42,
+      "source_key": 56,
+      "original_page": 870
+    },
+    {
+      "output_page": 43,
+      "source_key": 57,
+      "original_page": 871
+    },
+    {
+      "output_page": 44,
+      "source_key": 57,
+      "original_page": 871
+    },
+    {
+      "output_page": 45,
+      "source_key": 57,
+      "original_page": 871
+    },
+    {
+      "output_page": 46,
+      "source_key": 58,
+      "original_page": 872
+    },
+    {
+      "output_page": 47,
+      "source_key": 58,
+      "original_page": 872
+    },
+    {
+      "output_page": 48,
+      "source_key": 59,
+      "original_page": 873
+    },
+    {
+      "output_page": 49,
+      "source_key": 59,
+      "original_page": 873
+    },
+    {
+      "output_page": 50,
+      "source_key": 60,
+      "original_page": 874
+    },
+    {
+      "output_page": 51,
+      "source_key": 60,
+      "original_page": 874
+    },
+    {
+      "output_page": 52,
+      "source_key": 61,
+      "original_page": 875
+    },
+    {
+      "output_page": 53,
+      "source_key": 61,
+      "original_page": 875
+    },
+    {
+      "output_page": 54,
+      "source_key": 62,
+      "original_page": 876
+    },
+    {
+      "output_page": 55,
+      "source_key": 62,
+      "original_page": 876
+    },
+    {
+      "output_page": 56,
+      "source_key": 63,
+      "original_page": 877
+    },
+    {
+      "output_page": 57,
+      "source_key": 63,
+      "original_page": 877
+    },
+    {
+      "output_page": 58,
+      "source_key": 64,
+      "original_page": 878
+    },
+    {
+      "output_page": 59,
+      "source_key": 64,
+      "original_page": 878
+    },
+    {
+      "output_page": 60,
+      "source_key": 65,
+      "original_page": 879
+    },
+    {
+      "output_page": 61,
+      "source_key": 65,
+      "original_page": 879
+    },
+    {
+      "output_page": 62,
+      "source_key": 66,
+      "original_page": 880
+    },
+    {
+      "output_page": 63,
+      "source_key": 66,
+      "original_page": 880
+    },
+    {
+      "output_page": 64,
+      "source_key": 67,
+      "original_page": 881
+    },
+    {
+      "output_page": 65,
+      "source_key": 67,
+      "original_page": 881
+    },
+    {
+      "output_page": 66,
+      "source_key": 68,
+      "original_page": 882
+    },
+    {
+      "output_page": 67,
+      "source_key": 68,
+      "original_page": 882
+    }
+  ],
+  "output": "C:\\Users\\Администратор\\Downloads\\NKS-ch2-ru\\Вольфрам - Глава 2 - Для печати на русском.pdf",
+  "output_sha256": "358baf9e4b2a85602ecf908ef4058fa97d69ccac9fb8550fa4b98d0f9f725e4a"
+}

@@ -1,0 +1,2463 @@
+{
+  "files": [
+    {
+      "file": "nks-ch1.pdf",
+      "pdfPages": 29
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPages": 47
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPages": 81
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPages": 80
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPages": 73
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPages": 94
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPages": 90
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPages": 96
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPages": 163
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPages": 130
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPages": 96
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPages": 206
+    }
+  ],
+  "pages": 1185,
+  "patterns": {
+    "xor": "exclusive[-\\s]+or|\\bXor\\b",
+    "additive": "additiv\\w*",
+    "rule90": "rule\\s+90\\b",
+    "rule150": "rule\\s+150\\b",
+    "second-order": "second[-\\s]+order",
+    "reversible": "reversib\\w*",
+    "asynchronous": "asynchron\\w*|in[-\\s]+place|sequential\\s+updat\\w*|order\\s+of\\s+updat\\w*",
+    "sweeps": "sweep\\w*|swept|zig[-\\s]*zag|back\\s+and\\s+forth|alternat\\w*\\s+(?:left|right|direction)",
+    "mobile": "mobile\\s+autom\\w*",
+    "memory": "memor\\w*|accumulat\\w*",
+    "pascal": "Pascal|binomial\\s+coefficients?",
+    "superposition": "superposition",
+    "linear": "linear\\s+(?:cellular|rule|superposition)",
+    "history": "previous\\s+two|two\\s+previous|previous\\s+state|previous\\s+step"
+  },
+  "matches": [
+    {
+      "file": "nks-ch1.pdf",
+      "pdfPage": 6,
+      "bookPage": 5,
+      "terms": {
+        "sweeps": 1
+      }
+    },
+    {
+      "file": "nks-ch1.pdf",
+      "pdfPage": 22,
+      "bookPage": 21,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch1.pdf",
+      "pdfPage": 28,
+      "bookPage": 863,
+      "terms": {
+        "asynchronous": 2
+      }
+    },
+    {
+      "file": "nks-ch1.pdf",
+      "pdfPage": 29,
+      "bookPage": 864,
+      "terms": {
+        "memory": 2
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 4,
+      "bookPage": 25,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 6,
+      "bookPage": 27,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 32,
+      "bookPage": 867,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 33,
+      "bookPage": 868,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 34,
+      "bookPage": 869,
+      "terms": {
+        "xor": 4,
+        "rule90": 5,
+        "memory": 2
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 35,
+      "bookPage": 870,
+      "terms": {
+        "additive": 2,
+        "rule90": 6,
+        "pascal": 8
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 37,
+      "bookPage": 872,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 38,
+      "bookPage": 873,
+      "terms": {
+        "rule90": 1,
+        "sweeps": 2
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 40,
+      "bookPage": 875,
+      "terms": {
+        "pascal": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 42,
+      "bookPage": 877,
+      "terms": {
+        "additive": 1,
+        "rule90": 2
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 43,
+      "bookPage": 878,
+      "terms": {
+        "additive": 1,
+        "rule90": 1,
+        "pascal": 2
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 44,
+      "bookPage": 879,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 45,
+      "bookPage": 880,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 46,
+      "bookPage": 881,
+      "terms": {
+        "additive": 1,
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch2.pdf",
+      "pdfPage": 47,
+      "bookPage": 882,
+      "terms": {
+        "additive": 1,
+        "pascal": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 3,
+      "bookPage": 52,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 4,
+      "bookPage": 53,
+      "terms": {
+        "rule90": 1,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 6,
+      "bookPage": 55,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 7,
+      "bookPage": 56,
+      "terms": {
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 9,
+      "bookPage": 58,
+      "terms": {
+        "rule90": 1,
+        "rule150": 2
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 22,
+      "bookPage": 71,
+      "terms": {
+        "mobile": 8
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 23,
+      "bookPage": 72,
+      "terms": {
+        "sweeps": 1,
+        "mobile": 2
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 24,
+      "bookPage": 73,
+      "terms": {
+        "mobile": 4
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 25,
+      "bookPage": 74,
+      "terms": {
+        "mobile": 2
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 26,
+      "bookPage": 75,
+      "terms": {
+        "mobile": 2
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 27,
+      "bookPage": 76,
+      "terms": {
+        "mobile": 8
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 28,
+      "bookPage": 77,
+      "terms": {
+        "mobile": 2
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 29,
+      "bookPage": 78,
+      "terms": {
+        "mobile": 3
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 30,
+      "bookPage": 79,
+      "terms": {
+        "mobile": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 33,
+      "bookPage": 82,
+      "terms": {
+        "mobile": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 37,
+      "bookPage": 86,
+      "terms": {
+        "mobile": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 56,
+      "bookPage": 105,
+      "terms": {
+        "mobile": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 63,
+      "bookPage": 112,
+      "terms": {
+        "mobile": 6
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 64,
+      "bookPage": 113,
+      "terms": {
+        "mobile": 2
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 66,
+      "bookPage": 884,
+      "terms": {
+        "rule90": 1,
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 67,
+      "bookPage": 885,
+      "terms": {
+        "xor": 1,
+        "additive": 1,
+        "rule90": 4,
+        "rule150": 3
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 68,
+      "bookPage": 886,
+      "terms": {
+        "additive": 1,
+        "pascal": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 69,
+      "bookPage": 887,
+      "terms": {
+        "mobile": 10
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 72,
+      "bookPage": 890,
+      "terms": {
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch3.pdf",
+      "pdfPage": 74,
+      "bookPage": 892,
+      "terms": {
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPage": 18,
+      "bookPage": 131,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPage": 39,
+      "bookPage": 152,
+      "terms": {
+        "history": 2
+      }
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPage": 57,
+      "bookPage": 902,
+      "terms": {
+        "additive": 1,
+        "pascal": 2
+      }
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPage": 60,
+      "bookPage": 905,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPage": 63,
+      "bookPage": 908,
+      "terms": {
+        "memory": 1,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPage": 67,
+      "bookPage": 912,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPage": 77,
+      "bookPage": 922,
+      "terms": {
+        "additive": 2,
+        "pascal": 1
+      }
+    },
+    {
+      "file": "nks-ch4.pdf",
+      "pdfPage": 78,
+      "bookPage": 923,
+      "terms": {
+        "superposition": 2,
+        "linear": 1
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 4,
+      "bookPage": 171,
+      "terms": {
+        "history": 4
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 6,
+      "bookPage": 173,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 8,
+      "bookPage": 175,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 55,
+      "bookPage": 927,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 57,
+      "bookPage": 929,
+      "terms": {
+        "additive": 1,
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 59,
+      "bookPage": 931,
+      "terms": {
+        "mobile": 2
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 67,
+      "bookPage": 939,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 70,
+      "bookPage": 942,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch5.pdf",
+      "pdfPage": 71,
+      "bookPage": 943,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 6,
+      "bookPage": 227,
+      "terms": {
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 7,
+      "bookPage": 228,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 11,
+      "bookPage": 232,
+      "terms": {
+        "rule90": 1,
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 38,
+      "bookPage": 259,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 39,
+      "bookPage": 260,
+      "terms": {
+        "rule90": 2
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 43,
+      "bookPage": 264,
+      "terms": {
+        "additive": 1,
+        "rule90": 2,
+        "superposition": 2
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 44,
+      "bookPage": 265,
+      "terms": {
+        "rule90": 4
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 48,
+      "bookPage": 269,
+      "terms": {
+        "rule90": 7
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 49,
+      "bookPage": 270,
+      "terms": {
+        "rule90": 13
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 50,
+      "bookPage": 271,
+      "terms": {
+        "additive": 6,
+        "rule90": 3,
+        "rule150": 5
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 52,
+      "bookPage": 273,
+      "terms": {
+        "additive": 1,
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 59,
+      "bookPage": 280,
+      "terms": {
+        "rule90": 2
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 76,
+      "bookPage": 947,
+      "terms": {
+        "rule90": 1,
+        "rule150": 2
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 77,
+      "bookPage": 948,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 78,
+      "bookPage": 949,
+      "terms": {
+        "mobile": 1,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 79,
+      "bookPage": 950,
+      "terms": {
+        "additive": 4,
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 80,
+      "bookPage": 951,
+      "terms": {
+        "additive": 2,
+        "rule90": 2
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 81,
+      "bookPage": 952,
+      "terms": {
+        "xor": 1,
+        "additive": 14,
+        "rule90": 3
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 82,
+      "bookPage": 953,
+      "terms": {
+        "additive": 2,
+        "rule90": 2,
+        "memory": 1,
+        "superposition": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 83,
+      "bookPage": 954,
+      "terms": {
+        "additive": 4,
+        "rule90": 4
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 84,
+      "bookPage": 955,
+      "terms": {
+        "additive": 3,
+        "rule90": 1,
+        "superposition": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 85,
+      "bookPage": 956,
+      "terms": {
+        "additive": 2,
+        "rule90": 3,
+        "rule150": 1,
+        "pascal": 3
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 88,
+      "bookPage": 959,
+      "terms": {
+        "additive": 2
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 89,
+      "bookPage": 960,
+      "terms": {
+        "additive": 5,
+        "rule90": 1,
+        "rule150": 1,
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 90,
+      "bookPage": 961,
+      "terms": {
+        "reversible": 1,
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch6.pdf",
+      "pdfPage": 92,
+      "bookPage": 963,
+      "terms": {
+        "additive": 2,
+        "rule90": 2
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 26,
+      "bookPage": 321,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 30,
+      "bookPage": 325,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 58,
+      "bookPage": 353,
+      "terms": {
+        "mobile": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 60,
+      "bookPage": 355,
+      "terms": {
+        "mobile": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 63,
+      "bookPage": 358,
+      "terms": {
+        "additive": 2,
+        "rule90": 1,
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 68,
+      "bookPage": 968,
+      "terms": {
+        "superposition": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 74,
+      "bookPage": 974,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 75,
+      "bookPage": 975,
+      "terms": {
+        "additive": 2
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 76,
+      "bookPage": 976,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 80,
+      "bookPage": 980,
+      "terms": {
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 83,
+      "bookPage": 983,
+      "terms": {
+        "reversible": 3
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 84,
+      "bookPage": 984,
+      "terms": {
+        "asynchronous": 1,
+        "memory": 2,
+        "superposition": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 88,
+      "bookPage": 988,
+      "terms": {
+        "superposition": 1
+      }
+    },
+    {
+      "file": "nks-ch7.pdf",
+      "pdfPage": 89,
+      "bookPage": 989,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPage": 7,
+      "bookPage": 368,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPage": 14,
+      "bookPage": 375,
+      "terms": {
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPage": 49,
+      "bookPage": 410,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPage": 50,
+      "bookPage": 411,
+      "terms": {
+        "memory": 1,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPage": 60,
+      "bookPage": 421,
+      "terms": {
+        "asynchronous": 1
+      }
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPage": 63,
+      "bookPage": 424,
+      "terms": {
+        "rule90": 1,
+        "rule150": 1,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPage": 70,
+      "bookPage": 431,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch8.pdf",
+      "pdfPage": 93,
+      "bookPage": 1012,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 3,
+      "bookPage": 434,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 4,
+      "bookPage": 435,
+      "terms": {
+        "reversible": 6,
+        "history": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 5,
+      "bookPage": 436,
+      "terms": {
+        "reversible": 7,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 6,
+      "bookPage": 437,
+      "terms": {
+        "reversible": 5
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 7,
+      "bookPage": 438,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 8,
+      "bookPage": 439,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 9,
+      "bookPage": 440,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 10,
+      "bookPage": 441,
+      "terms": {
+        "reversible": 9
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 11,
+      "bookPage": 442,
+      "terms": {
+        "reversible": 6
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 12,
+      "bookPage": 443,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 13,
+      "bookPage": 444,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 14,
+      "bookPage": 445,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 15,
+      "bookPage": 446,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 19,
+      "bookPage": 450,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 20,
+      "bookPage": 451,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 21,
+      "bookPage": 452,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 22,
+      "bookPage": 453,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 23,
+      "bookPage": 454,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 24,
+      "bookPage": 455,
+      "terms": {
+        "reversible": 4
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 25,
+      "bookPage": 456,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 27,
+      "bookPage": 458,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 29,
+      "bookPage": 460,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 30,
+      "bookPage": 461,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 31,
+      "bookPage": 462,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 54,
+      "bookPage": 485,
+      "terms": {
+        "second-order": 1,
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 55,
+      "bookPage": 486,
+      "terms": {
+        "mobile": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 56,
+      "bookPage": 487,
+      "terms": {
+        "mobile": 11
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 57,
+      "bookPage": 488,
+      "terms": {
+        "mobile": 7
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 59,
+      "bookPage": 490,
+      "terms": {
+        "mobile": 4
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 60,
+      "bookPage": 491,
+      "terms": {
+        "mobile": 5
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 61,
+      "bookPage": 492,
+      "terms": {
+        "mobile": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 62,
+      "bookPage": 493,
+      "terms": {
+        "mobile": 4
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 63,
+      "bookPage": 494,
+      "terms": {
+        "mobile": 4,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 64,
+      "bookPage": 495,
+      "terms": {
+        "reversible": 1,
+        "mobile": 5
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 65,
+      "bookPage": 496,
+      "terms": {
+        "mobile": 5
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 66,
+      "bookPage": 497,
+      "terms": {
+        "mobile": 3
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 68,
+      "bookPage": 499,
+      "terms": {
+        "mobile": 4
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 92,
+      "bookPage": 523,
+      "terms": {
+        "sweeps": 3
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 93,
+      "bookPage": 524,
+      "terms": {
+        "sweeps": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 111,
+      "bookPage": 542,
+      "terms": {
+        "reversible": 3
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 115,
+      "bookPage": 1017,
+      "terms": {
+        "second-order": 3,
+        "reversible": 16
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 116,
+      "bookPage": 1018,
+      "terms": {
+        "additive": 5,
+        "rule90": 1,
+        "second-order": 2,
+        "reversible": 17,
+        "mobile": 1,
+        "history": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 117,
+      "bookPage": 1019,
+      "terms": {
+        "reversible": 5
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 118,
+      "bookPage": 1020,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 119,
+      "bookPage": 1021,
+      "terms": {
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 120,
+      "bookPage": 1022,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 121,
+      "bookPage": 1023,
+      "terms": {
+        "rule150": 2,
+        "reversible": 3
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 122,
+      "bookPage": 1024,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 130,
+      "bookPage": 1032,
+      "terms": {
+        "additive": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 131,
+      "bookPage": 1033,
+      "terms": {
+        "mobile": 6
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 132,
+      "bookPage": 1034,
+      "terms": {
+        "additive": 3,
+        "rule90": 3,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 133,
+      "bookPage": 1035,
+      "terms": {
+        "asynchronous": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 135,
+      "bookPage": 1037,
+      "terms": {
+        "xor": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 138,
+      "bookPage": 1040,
+      "terms": {
+        "reversible": 5,
+        "mobile": 5
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 155,
+      "bookPage": 1057,
+      "terms": {
+        "second-order": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 156,
+      "bookPage": 1058,
+      "terms": {
+        "superposition": 5,
+        "linear": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 158,
+      "bookPage": 1060,
+      "terms": {
+        "additive": 2
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 159,
+      "bookPage": 1061,
+      "terms": {
+        "second-order": 1,
+        "superposition": 1
+      }
+    },
+    {
+      "file": "nks-ch9.pdf",
+      "pdfPage": 161,
+      "bookPage": 1063,
+      "terms": {
+        "reversible": 3
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 27,
+      "bookPage": 572,
+      "terms": {
+        "reversible": 3
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 45,
+      "bookPage": 590,
+      "terms": {
+        "memory": 2
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 46,
+      "bookPage": 591,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 49,
+      "bookPage": 594,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 52,
+      "bookPage": 597,
+      "terms": {
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 55,
+      "bookPage": 600,
+      "terms": {
+        "additive": 2
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 56,
+      "bookPage": 601,
+      "terms": {
+        "additive": 4
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 57,
+      "bookPage": 602,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 58,
+      "bookPage": 603,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 59,
+      "bookPage": 604,
+      "terms": {
+        "additive": 3
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 60,
+      "bookPage": 605,
+      "terms": {
+        "additive": 2
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 65,
+      "bookPage": 610,
+      "terms": {
+        "pascal": 5
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 66,
+      "bookPage": 611,
+      "terms": {
+        "additive": 1,
+        "rule90": 1,
+        "rule150": 1,
+        "pascal": 3
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 67,
+      "bookPage": 612,
+      "terms": {
+        "additive": 3
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 71,
+      "bookPage": 616,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 72,
+      "bookPage": 617,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 73,
+      "bookPage": 618,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 74,
+      "bookPage": 619,
+      "terms": {
+        "rule90": 2
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 76,
+      "bookPage": 621,
+      "terms": {
+        "memory": 8
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 77,
+      "bookPage": 622,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 78,
+      "bookPage": 623,
+      "terms": {
+        "memory": 3
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 79,
+      "bookPage": 624,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 80,
+      "bookPage": 625,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 81,
+      "bookPage": 626,
+      "terms": {
+        "memory": 7
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 82,
+      "bookPage": 627,
+      "terms": {
+        "memory": 5
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 85,
+      "bookPage": 630,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 94,
+      "bookPage": 1070,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 96,
+      "bookPage": 1072,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 99,
+      "bookPage": 1075,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 100,
+      "bookPage": 1076,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 101,
+      "bookPage": 1077,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 102,
+      "bookPage": 1078,
+      "terms": {
+        "additive": 1,
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 111,
+      "bookPage": 1087,
+      "terms": {
+        "additive": 2
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 112,
+      "bookPage": 1088,
+      "terms": {
+        "additive": 8
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 113,
+      "bookPage": 1089,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 114,
+      "bookPage": 1090,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 115,
+      "bookPage": 1091,
+      "terms": {
+        "additive": 2,
+        "rule90": 1,
+        "rule150": 2,
+        "second-order": 1,
+        "reversible": 1,
+        "pascal": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 116,
+      "bookPage": 1092,
+      "terms": {
+        "additive": 1,
+        "rule90": 1,
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 117,
+      "bookPage": 1093,
+      "terms": {
+        "second-order": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 118,
+      "bookPage": 1094,
+      "terms": {
+        "additive": 7
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 119,
+      "bookPage": 1095,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 120,
+      "bookPage": 1096,
+      "terms": {
+        "xor": 6,
+        "additive": 2,
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 121,
+      "bookPage": 1097,
+      "terms": {
+        "rule90": 1,
+        "rule150": 1,
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 122,
+      "bookPage": 1098,
+      "terms": {
+        "xor": 1,
+        "additive": 1,
+        "reversible": 4,
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 123,
+      "bookPage": 1099,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 124,
+      "bookPage": 1100,
+      "terms": {
+        "memory": 2
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 125,
+      "bookPage": 1101,
+      "terms": {
+        "memory": 5
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 126,
+      "bookPage": 1102,
+      "terms": {
+        "memory": 9
+      }
+    },
+    {
+      "file": "nks-ch10.pdf",
+      "pdfPage": 128,
+      "bookPage": 1104,
+      "terms": {
+        "memory": 1,
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 11,
+      "bookPage": 646,
+      "terms": {
+        "rule90": 3
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 13,
+      "bookPage": 648,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 15,
+      "bookPage": 650,
+      "terms": {
+        "rule90": 2
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 16,
+      "bookPage": 651,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 21,
+      "bookPage": 656,
+      "terms": {
+        "mobile": 3
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 22,
+      "bookPage": 657,
+      "terms": {
+        "mobile": 8
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 23,
+      "bookPage": 658,
+      "terms": {
+        "mobile": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 27,
+      "bookPage": 662,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 28,
+      "bookPage": 663,
+      "terms": {
+        "memory": 3
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 29,
+      "bookPage": 664,
+      "terms": {
+        "rule90": 1,
+        "sweeps": 2,
+        "mobile": 6
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 30,
+      "bookPage": 665,
+      "terms": {
+        "mobile": 4
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 32,
+      "bookPage": 667,
+      "terms": {
+        "rule90": 5
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 33,
+      "bookPage": 668,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 39,
+      "bookPage": 674,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 57,
+      "bookPage": 692,
+      "terms": {
+        "second-order": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 59,
+      "bookPage": 694,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 60,
+      "bookPage": 695,
+      "terms": {
+        "additive": 1,
+        "rule90": 2,
+        "rule150": 2,
+        "superposition": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 61,
+      "bookPage": 696,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 66,
+      "bookPage": 701,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 67,
+      "bookPage": 702,
+      "terms": {
+        "rule90": 5
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 68,
+      "bookPage": 703,
+      "terms": {
+        "xor": 2,
+        "rule90": 4
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 69,
+      "bookPage": 704,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 70,
+      "bookPage": 705,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 73,
+      "bookPage": 708,
+      "terms": {
+        "sweeps": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 74,
+      "bookPage": 709,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 80,
+      "bookPage": 1107,
+      "terms": {
+        "pascal": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 81,
+      "bookPage": 1108,
+      "terms": {
+        "memory": 13
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 84,
+      "bookPage": 1111,
+      "terms": {
+        "mobile": 4
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 85,
+      "bookPage": 1112,
+      "terms": {
+        "mobile": 3,
+        "memory": 2
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 90,
+      "bookPage": 1117,
+      "terms": {
+        "rule90": 1,
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 93,
+      "bookPage": 1120,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch11.pdf",
+      "pdfPage": 96,
+      "bookPage": 1123,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 14,
+      "bookPage": 727,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 33,
+      "bookPage": 746,
+      "terms": {
+        "asynchronous": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 34,
+      "bookPage": 747,
+      "terms": {
+        "pascal": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 40,
+      "bookPage": 753,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 45,
+      "bookPage": 758,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 62,
+      "bookPage": 775,
+      "terms": {
+        "history": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 93,
+      "bookPage": 806,
+      "terms": {
+        "xor": 2
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 94,
+      "bookPage": 807,
+      "terms": {
+        "xor": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 100,
+      "bookPage": 813,
+      "terms": {
+        "xor": 2
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 110,
+      "bookPage": 823,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 111,
+      "bookPage": 824,
+      "terms": {
+        "additive": 2,
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 130,
+      "bookPage": 843,
+      "terms": {
+        "rule90": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 135,
+      "bookPage": 1126,
+      "terms": {
+        "second-order": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 136,
+      "bookPage": 1127,
+      "terms": {
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 142,
+      "bookPage": 1133,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 145,
+      "bookPage": 1136,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 147,
+      "bookPage": 1138,
+      "terms": {
+        "reversible": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 151,
+      "bookPage": 1142,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 152,
+      "bookPage": 1143,
+      "terms": {
+        "xor": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 156,
+      "bookPage": 1147,
+      "terms": {
+        "additive": 1,
+        "reversible": 2
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 157,
+      "bookPage": 1148,
+      "terms": {
+        "superposition": 3
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 158,
+      "bookPage": 1149,
+      "terms": {
+        "additive": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 161,
+      "bookPage": 1152,
+      "terms": {
+        "second-order": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 173,
+      "bookPage": 1164,
+      "terms": {
+        "additive": 1,
+        "pascal": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 176,
+      "bookPage": 1167,
+      "terms": {
+        "second-order": 4
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 179,
+      "bookPage": 1170,
+      "terms": {
+        "xor": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 180,
+      "bookPage": 1171,
+      "terms": {
+        "xor": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 182,
+      "bookPage": 1173,
+      "terms": {
+        "xor": 3
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 184,
+      "bookPage": 1175,
+      "terms": {
+        "xor": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 186,
+      "bookPage": 1177,
+      "terms": {
+        "memory": 2
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 187,
+      "bookPage": 1178,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 189,
+      "bookPage": 1180,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 192,
+      "bookPage": 1183,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 195,
+      "bookPage": 1186,
+      "terms": {
+        "rule90": 1,
+        "rule150": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 196,
+      "bookPage": 1187,
+      "terms": {
+        "sweeps": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 199,
+      "bookPage": 1190,
+      "terms": {
+        "memory": 1
+      }
+    },
+    {
+      "file": "nks-ch12.pdf",
+      "pdfPage": 204,
+      "bookPage": 1195,
+      "terms": {
+        "memory": 2
+      }
+    }
+  ]
+}

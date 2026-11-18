@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Отдельная лаборатория Зеркалиуса: накопление XOR-маятника, порядок пересчёта конусов и локальные правила Вольфрама.">
+  <title>Зеркалиус · Вольфрам v0.001</title>
+  <link rel="stylesheet" href="../_js/grozd.css">
+  <link rel="stylesheet" href="style.css?v=001">
+  <script defer src="../_js/hub-button-text.js"></script>
+  <script defer src="../mayatnik/mayatnik-core.js"></script>
+  <script defer src="engine.js?v=001"></script>
+  <script defer src="app.js?v=001"></script>
+</head>
+<body>
+  <main>
+    <nav class="site-nav" aria-label="Разделы Зеркалиуса"><a href="../index.html">Хаб</a><a href="../mayatnik/Zerkalius-mayatnik.html">Маятник</a><a href="../issledovanie/wolfram-nks/">Книга Вольфрама</a><a href="../issledovanie/wolfram-nks/xor-pendulum-comparison.html">Сопоставление алгоритмов</a></nav>
+    <header>
+      <p class="eyebrow">Отдельная лаборатория · поле, память и порядок</p>
+      <h1>Зеркалиус · Вольфрам <small>v0.001</small></h1>
+      <p class="lead">Наш Маятник хранит двумерное поле и снова проходит по нему конусами. Здесь можно сохранить этот механизм, заменить локальное правило и увидеть, что меняют накопление, порядок пересчёта и маршрут вершин.</p>
+    </header>
+
+    <section aria-labelledby="lab-title">
+      <h2 id="lab-title">Конусное поле</h2>
+      <div class="commands presets" role="group" aria-label="Готовые локальные правила">
+        <button class="gz-hx" type="button" data-preset="90" title="Вернуть наш базовый XOR-маятник: правило 90, накопление, пересчёт по ходу и маршрут влево-вправо" aria-label="Выбрать наш базовый XOR-маятник"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">Наш 90</span></button>
+        <button class="gz-hx" type="button" data-preset="30" title="Применить локальное правило Вольфрама 30 к конусному Маятнику; остальные настройки сохраняются" aria-label="Выбрать локальное правило Вольфрама 30"><span class="gz-ic" aria-hidden="true">◩</span><span class="gz-nm">Вольфрам 30</span></button>
+        <button class="gz-hx" type="button" data-preset="110" title="Применить локальное правило 110 к конусному Маятнику; остальные настройки сохраняются" aria-label="Выбрать локальное правило 110"><span class="gz-ic" aria-hidden="true">⋈</span><span class="gz-nm">110</span></button>
+        <button class="gz-hx" type="button" data-preset="150" title="Применить локальное правило 150 к конусному Маятнику; остальные настройки сохраняются" aria-label="Выбрать локальное правило 150"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">150</span></button>
+        <button class="gz-hx" type="button" data-preset="60" title="Применить локальное правило 60 к конусному Маятнику; остальные настройки сохраняются" aria-label="Выбрать локальное правило 60"><span class="gz-ic" aria-hidden="true">△</span><span class="gz-nm">60</span></button>
+      </div>
+      <p class="hint">Все пять кнопок работают с конусным полем. Число правила задаёт локальную таблицу, а не превращает этот опыт в обычный одномерный клеточный автомат из книги.</p>
+      <p id="model-status" class="model-status"></p>
+
+      <div class="settings">
+        <label class="setting" for="rule">Правило, 0–255<span class="gz-hx value-control"><input id="rule" type="number" min="0" max="255" step="1" value="90" aria-label="Номер локального правила"></span></label>
+        <label class="setting" for="rows">Глубина, строки<span class="gz-hx value-control"><input id="rows" type="number" min="8" max="256" step="1" value="128" aria-label="Глубина конуса в строках"></span></label>
+        <label class="setting" for="steps">Число проходов<span class="gz-hx value-control"><input id="steps" type="number" min="1" max="512" step="1" value="64" aria-label="Число полных проходов конуса"></span></label>
+        <label class="setting" for="updating">Чтение поля<span class="gz-hx value-control"><select id="updating" title="По ходу — уже изменённый верхний ряд; снимок — поле до начала прохода" aria-label="Порядок чтения поля"><option value="sweep">По ходу</option><option value="snapshot">Снимок</option></select></span></label>
+        <label class="setting" for="route">Маршрут вершин<span class="gz-hx value-control"><select id="route" title="Выбрать последовательность вершин конусов" aria-label="Маршрут вершин"><option value="pend">Влево-вправо</option><option value="pendR">Вправо-влево</option><option value="left">Влево</option><option value="right">Вправо</option><option value="one">Одна вершина</option></select></span></label>
+        <div class="setting"><span>Память клетки</span><button id="retain" class="gz-hx" type="button" aria-pressed="true" title="Накопление: добавить к результату правила старое значение целевой клетки через XOR" aria-label="Включить или выключить накопление старого значения клетки"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">Накопление</span></button></div>
+      </div>
+      <p class="hint">Изменение параметров начинает опыт заново. «По ходу» читает общее поле во время прохода; «Снимок» фиксирует его в начале. Одна вершина означает повторные проходы из того же места, а не один-единственный кадр.</p>
+
+      <section class="transition-panel" aria-labelledby="transition-title">
+        <h3 id="transition-title">Восемь переходов локального правила</h3>
+        <p id="table-description" class="hint">Тройка — три клетки верхнего ряда: слева, по центру и справа от целевой клетки. Нажмите результат, чтобы переключить выходной бит. 1 — чёрный, 0 — белый; пустая клетка при вычислении считается нулём.</p>
+        <div id="transitions" class="transitions" role="group" aria-label="Локальная таблица переходов от 111 до 000"></div>
+      </section>
+
+      <div class="commands transport" role="group" aria-label="Выполнение опыта">
+        <button id="step" class="gz-hx" type="button" title="Выполнить один полный проход конуса" aria-label="Выполнить один проход конуса"><span class="gz-ic" aria-hidden="true">▸▏</span><span class="gz-nm">Шаг</span></button>
+        <button id="play" class="gz-hx" type="button" aria-pressed="false" title="Начать последовательное выполнение проходов" aria-label="Начать выполнение"><span id="play-icon" class="gz-ic" aria-hidden="true">▶</span><span id="play-label" class="gz-nm">Пуск</span></button>
+        <button id="reset" class="gz-hx" type="button" title="Остановиться и очистить поле, сохранив выбранные параметры" aria-label="Сбросить опыт"><span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Сброс</span></button>
+        <button id="fit" class="gz-hx" type="button" aria-pressed="true" title="Уместить всё поле в окне или вернуться к заданному масштабу" aria-label="Включить или выключить умещение поля"><span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Уместить</span></button>
+        <label class="scale-control" for="scale"><span>px на клетку</span><span class="gz-hx value-control"><input id="scale" type="number" min="1" max="8" step="1" value="2" aria-label="Масштаб в пикселях на клетку"></span></label>
+      </div>
+      <p id="progress" class="progress" aria-live="off"></p>
+      <p id="error" class="error" role="alert" hidden></p>
+      <div id="canvas-window" class="canvas-window" tabindex="0" role="region" aria-label="Поле конусного Маятника; при увеличении доступна прокрутка"><canvas id="field" role="img" aria-label="Пустое поле перед первым проходом"></canvas></div>
+      <p class="legend"><span><i class="empty"></i>Ещё не записано</span><span><i class="zero"></i>0 · белый</span><span><i class="one"></i>1 · чёрный</span></p>
+      <p id="save-note" class="hint" role="status"></p>
+      <noscript><p>Для вычислений нужен JavaScript. Статьи и перевод книги доступны по ссылкам на этой странице.</p></noscript>
+    </section>
+
+    <section class="explanation" aria-labelledby="method-title">
+      <h2 id="method-title">Кадр — это проход, а не новый ряд</h2>
+      <p>Изначально поле пустое. В обычном маршруте вершины располагаются относительно якоря так: 0, −1, +1, −2, +2, … Каждый шаг проходит один конус сверху вниз и меняет клетки через одну. Вне конуса прежние значения остаются.</p>
+      <p>Базовый вариант «Наш 90» использует исходное ядро Маятника. Новое значение равно старому значению клетки XOR левый верхний сосед XOR правый верхний сосед. Верхние клетки читаются из общего поля: внутри конуса они уже пересчитаны, а за его границей могут хранить результат прежнего прохода. Пустая вершина сначала становится постоянной единицей. Уже записанная вершина временно принимается за единицу для первого нижнего ряда, затем её прежнее значение восстанавливается.</p>
+      <p id="formula-description">Для остальных правил таблица читает левую, центральную и правую клетки верхнего ряда. Накопление добавляет к её результату старое значение целевой клетки через XOR; без накопления результат заменяет прежнее значение. Верхний центр и старая целевая клетка — разные клетки.</p>
+      <p>Это наши гибридные конусные модели. Их нельзя отождествлять с обычными диаграммами одномерных автоматов Вольфрама по одному номеру правила или похожему рисунку. В режиме «Снимок» входы фиксируются в начале прохода после временной установки вершины в единицу; нижние ряды ещё содержат прежние значения. Дальнейшие изменения текущего прохода в снимок не попадают.</p>
+      <p>Работа без звука. Настройки хранятся в отдельном ключе этого раздела; после открытия выполнение всегда остановлено. Настройки прежнего Маятника не изменяются. Проверки вычислений, интерфейса и визуальная приёмка оставлены пользователю.</p>
+    </section>
+
+    <section class="articles" aria-labelledby="articles-title">
+      <h2 id="articles-title">Разобраться в устройстве</h2>
+      <article><h3>Наш Маятник</h3><p>Конус, память клетки, смена вершины и порядок прохода.</p><a class="gz-hx" href="mayatnik.html" title="Открыть статью об алгоритме нашего Маятника" aria-label="Читать об алгоритме Маятника"><span class="gz-ic" aria-hidden="true">△</span><span class="gz-nm">Маятник</span></a></article>
+      <article><h3>Аниматрица</h3><p>Как матрицы и локальные переходы превращаются в меняющееся поле.</p><a class="gz-hx" href="animatrix.html" title="Открыть статью об Аниматрице" aria-label="Читать об Аниматрице"><span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Аниматрица</span></a></article>
+      <article><h3>В книге Вольфрама</h3><p>Перевод главы, исходные иллюстрации и отдельный опыт с обычными клеточными автоматами.</p><a class="gz-hx" href="../issledovanie/wolfram-nks/" title="Открыть перевод и лабораторию простых программ Вольфрама" aria-label="Открыть раздел книги Вольфрама"><span class="gz-ic" aria-hidden="true">▤</span><span class="gz-nm">Книга</span></a></article>
+    </section>
+  </main>
+  <script>window.zerkHubStill=true;</script>
+  <script src="../_js/hub-link.js?v=7"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-/* Вольфрам · Простые программы v0.001 */
+/* Вольфрам · Простые программы v0.002 */
 :root { color-scheme: dark; --bg: #0b1118; --panel: #101b25; --text: #dae7ed; --muted: #9bb0bf; --cyan: #6ddded; --line: #2b414f; --c: var(--cyan); --gz-w: 120px; --gz-h: 24px; --gz-n: 12px; --gz-bg: #1b2430; background: var(--bg); color: var(--text); font: 15px/1.6 "Segoe UI", sans-serif; }
 * { box-sizing: border-box; }
 body { margin: 0; }

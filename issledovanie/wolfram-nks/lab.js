@@ -1,4 +1,4 @@
-/* Вольфрам · Простые программы v0.001. Synchronous elementary CA, infinite background. */
+/* Вольфрам · Простые программы v0.002. Synchronous elementary CA, infinite background. */
 (() => {
   "use strict";
   const byId = id => document.getElementById(id);
