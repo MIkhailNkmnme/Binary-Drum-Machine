@@ -24,7 +24,7 @@
   const logicContext = logicCanvas.getContext("2d");
   let logicFrame = 0;
   let swatchKey = "";
-  let drag = null, lastTap = null, pendingInput = null, saveFailed = false, scrollFrame = 0;
+  let drag = null, pendingInput = null, saveFailed = false, scrollFrame = 0;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const integer = (value, fallback, min, max) => Number.isFinite(Number(value))
     ? clamp(Math.round(Number(value)), min, max) : fallback;
@@ -128,7 +128,6 @@
   }
   function mutate(fn) {
     if (drag) return;
-    lastTap = null;
     finishInput();
     const before = snapshot();
     fn();
@@ -547,7 +546,6 @@
   list.addEventListener("click", event => {
     const swatch = event.target.closest(".chess-swatch");
     if (!swatch || drag) return;
-    lastTap = null;
     select(Number(swatch.dataset.boardId), event.shiftKey || event.ctrlKey);
   });
   byId("digits").addEventListener("click", () => mutate(() => { state.digits = !state.digits; }));
@@ -610,7 +608,6 @@
   byId("remove").addEventListener("click", removeSelected);
   byId("undo").addEventListener("click", () => {
     if (drag) return;
-    lastTap = null;
     finishInput();
     if (!undo.length) return;
     state = JSON.parse(undo.pop());
@@ -682,6 +679,19 @@
     return [origin, edge ? clamp(length + delta, 1, MAX_SIZE) : length];
   }
 
+  world.addEventListener("contextmenu", event => {
+    if (event.button !== 2) return;
+    const board = hitTest(event).top;
+    if (!board) return;
+    event.preventDefault();
+    if (drag) return;
+    mutate(() => {
+      setSelection([board.id]);
+      board.phase = !board.phase;
+    });
+    elements.get(board.id).element.focus({preventScroll: true});
+  });
+
   world.addEventListener("pointerdown", event => {
     if (event.button !== 0 || drag) return;
     finishInput();
@@ -691,7 +701,6 @@
     const edge = modified ? null : hit.edge;
     const active = edge?.board ?? hit.top ?? hit.edge?.board;
     if (!active) {
-      lastTap = null;
       viewport.focus({preventScroll: true});
       return;
     }
@@ -701,7 +710,7 @@
     const origins = group.map(board => ({board, x: board.x, y: board.y, cols: board.cols, rows: board.rows, phase: board.phase}));
     drag = {
       kind: "boards", pointer: event.pointerId, before: snapshot(), edge, origins,
-      activeId: active.id, tapId: hit.top?.id, modified, copy: event.ctrlKey, blocked: false,
+      activeId: active.id, modified, copy: event.ctrlKey, blocked: false,
       fieldRows: state.fieldRows,
       startX: event.clientX + window.scrollX, startY: event.clientY + window.scrollY,
       clientX: event.clientX, clientY: event.clientY, moved: false,
@@ -828,35 +837,17 @@
     drag = null;
     if (event.type !== "pointerup") {
       state = JSON.parse(finished.before);
-      lastTap = null;
       if (finished.blocked) save();
     } else if (finished.moved) {
-      lastTap = null;
       if (!finished.blocked) {
         const changed = finished.copy || finished.origins.some(({board, x, y, cols, rows}) =>
           board.x !== x || board.y !== y || board.cols !== cols || board.rows !== rows);
         if (changed || state.fieldRows !== finished.fieldRows) remember(finished.before);
         else save();
       }
-    } else if (finished.modified || !finished.tapId) {
-      choose(finished.activeId, finished.modified);
-      lastTap = null;
-      save();
     } else {
-      const now = event.timeStamp;
-      const same = lastTap?.id === finished.tapId && now - lastTap.time <= 450 &&
-        Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) <= 10;
-      if (same) {
-        const board = state.boards.find(item => item.id === finished.tapId);
-        setSelection([board.id]);
-        board.phase = !board.phase;
-        remember(finished.before);
-        lastTap = null;
-      } else {
-        setSelection([finished.activeId]);
-        save();
-        lastTap = {id: finished.tapId, time: now, x: event.clientX, y: event.clientY};
-      }
+      choose(finished.activeId, finished.modified);
+      save();
     }
     if (world.hasPointerCapture(finished.pointer)) world.releasePointerCapture(finished.pointer);
     world.style.removeProperty("--chess-cursor");
@@ -870,7 +861,6 @@
     if (event.detail !== 0) return;
     const element = event.target.closest(".chess-board");
     if (!element) return;
-    lastTap = null;
     select(Number(element.dataset.boardId), event.shiftKey || event.ctrlKey);
   });
   viewport.addEventListener("keydown", event => {
@@ -890,7 +880,6 @@
     const handle = event.target.closest("[data-field-edge]");
     if (!handle || event.button !== 0 || drag || state.fieldCols === null || state.fieldRows === null) return;
     finishInput();
-    lastTap = null;
     viewport.focus({preventScroll: true});
     drag = {kind: "field", pointer: event.pointerId, before: snapshot(), edge: handle.dataset.fieldEdge,
       startX: event.clientX + window.scrollX, startY: event.clientY + window.scrollY,
