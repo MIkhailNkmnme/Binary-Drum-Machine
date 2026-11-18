@@ -6,8 +6,21 @@
 (function(root){
   'use strict';
   root.ZerkaliusDshFactory=function(C){
-    const VERSION='deepseek-formant-live-v1.1.0',RATE=44100,TAU=2*Math.PI;
+    const VERSION='deepseek-formant-live-v1.2.0',RATE=44100,TAU=2*Math.PI;
     const profile=C.config({pitchStart:112,pitchEnd:96,vibratoDepth:0,vibratoRate:2.1,transitionMs:0,outputGain:.7,seed:7},['transitionMs']);
+    // Возраст: 0 — ребёнок, 50 — взрослый, 100 — старик. Меняет длину речевого
+    // тракта (форманты), высоту, дрожание и придыхание, не трогая таблицу фонем.
+    const AGE={key:'age',id:'age',label:'Возраст голоса',min:0,max:100,step:1,default:50};
+    const clampAge=value=>{const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(100,n)):AGE.default;};
+    function ageShape(age){
+      return {
+        tract:1+(50-age)*.003,          // 0 лет → 1,15 · 100 лет → 0,85
+        pitch:1+(50-age)*.005,          // 0 лет → 1,25 · 100 лет → 0,75
+        tremor:age>65?(age-65)/35*.5:0,
+        breath:age>60?1+(age-60)/40*.8:1,
+        rateBoost:age>65?(age-65)/35*2.4:0
+      };
+    }
     const table=Object.create(null),known=new Set(C.phonemeIds);
     function entry(id,kind,f,b,w,voice,noise,loud=1,extra={}){
       table[id]={kind,formants:[...f,3500],bandwidths:[...b,250],weights:[...w,0],voice,noise,loud,...extra};
@@ -71,9 +84,11 @@
       const r=Math.exp(-Math.PI*b/RATE),theta=TAU*f/RATE;
       return [(1-r)*Math.sqrt(Math.max(0,1-2*r*Math.cos(2*theta)+r*r)),2*r*Math.cos(theta),-r*r];
     }
-    function renderSpeech({settings,phones,score,counts,total,prosody}){
+    function renderSpeech({settings,phones,score,counts,total,prosody,shape}){
       const resolvedPhones=score.map(({id})=>{
         const native=table[id],p=C.scaled(Object.hasOwn(phones,id)?phones[id]:getPhone(id),settings,RATE),sameKind=native?.kind===p.kind;
+        if(shape)for(let band=0;band<3;band++)p.formants[band]=Math.min(C.limits.maxFrequency,p.formants[band]*shape.tract);
+        if(shape)p.noise=Math.min(3,p.noise*shape.breath);
         return {id,...p,activeFormants:3,loudness:sameKind?native.loud:1,branchSources:sameKind&&native.sources?native.sources:null};
       });
       const samples=new Float32Array(total),glottal=new Float64Array(total),normal=gaussian(settings.seed);
@@ -92,6 +107,9 @@
         cursor+=count;
       }
       const filters=Array.from({length:3},()=>({c:null,last:0,older:0}));cursor=0;
+      // Наклон спектра: гасит верх возбудителя, из-за которого голос «жужжал».
+      let tilt=0;
+      for(let i=0;i<total;i++){tilt+=.42*(glottal[i]-tilt);glottal[i]=tilt;}
       for(let segment=0;segment<score.length;segment++){
         const p=resolvedPhones[segment],count=counts[segment],burst=p.kind==='stop'||p.kind==='affricate';
         if(p.kind==='silence'){for(const f of filters){f.last=0;f.older=0;}cursor+=count;continue;}
@@ -126,15 +144,22 @@
     function render(request){
       if(!C.record(request))throw Error('Не задан запрос синтеза.');
       const settings=profile.normalize(request.settings),phones=C.overrides(request.phones);
+      const age=clampAge(request.settings?.age),shape=ageShape(age);
+      settings.age=age;
+      const voiced={...settings,pitchStart:settings.pitchStart*shape.pitch,pitchEnd:settings.pitchEnd*shape.pitch,
+        vibratoDepth:settings.vibratoDepth+shape.tremor,vibratoRate:settings.vibratoRate+shape.rateBoost};
       const {score,counts,total}=C.parseScore(request.score,settings,phones,known,RATE);
       if(request.prosody!==undefined){
-        const prosody=root.VoiceProsodyDSP.create(request.prosody,counts,RATE,settings);
-        return renderSpeech({settings,phones,score,counts,total,prosody});
+        const prosody=root.VoiceProsodyDSP.create(request.prosody,counts,RATE,voiced);
+        const result=renderSpeech({settings:voiced,phones,score,counts,total,prosody,shape});
+        result.settings={...settings};return result;
       }
-      const samples=new Float32Array(total),resolvedPhones=[];let cursor=0,peak=0;
+      const samples=new Float32Array(total),resolvedPhones=[];let cursor=0,peak=0,tiltState=0;
       for(let segment=0;segment<score.length;segment++){
         const id=score[segment].id,count=counts[segment],native=table[id];
         const p=C.scaled(Object.hasOwn(phones,id)?phones[id]:getPhone(id),settings,RATE);
+        for(let band=0;band<3;band++)p.formants[band]=Math.min(C.limits.maxFrequency,p.formants[band]*shape.tract);
+        p.noise=Math.min(3,p.noise*shape.breath);
         const sameKind=native?.kind===p.kind,loud=sameKind?native.loud:1;
         const branchSources=sameKind&&native.sources?native.sources:null;
         resolvedPhones.push({id,...p,activeFormants:3,loudness:loud,branchSources});
@@ -142,11 +167,12 @@
         const glottal=new Float64Array(count);let phase=0;
         for(let index=0;index<count;index++){
           // The original DSH contour restarts at each phoneme, unlike the robot.
-          const pitch=settings.pitchStart+(settings.pitchEnd-settings.pitchStart)*index/count
-            +settings.vibratoDepth*Math.sin(TAU*settings.vibratoRate*(cursor+index)/RATE);
+          const pitch=voiced.pitchStart+(voiced.pitchEnd-voiced.pitchStart)*index/count
+            +voiced.vibratoDepth*Math.sin(TAU*voiced.vibratoRate*(cursor+index)/RATE);
           phase+=pitch/RATE;
           if(phase>=1){phase-=1;for(let k=0;k<48&&index+k<count;k++)glottal[index+k]+=Math.exp(-k/6);}
         }
+        for(let index=0;index<count;index++){tiltState+=.42*(glottal[index]-tiltState);glottal[index]=tiltState;}
         const normal=gaussian(settings.seed),filters=p.formants.slice(0,3).map((f,i)=>({c:coefficient(f,p.bandwidths[i]),last:0,older:0}));
         const kind=p.kind,burst=kind==='stop'||kind==='affricate';
         const attack=kind==='vowel' ? .02 : burst ? .002 : .01;
@@ -180,9 +206,12 @@
         adaptation:'Three DSH resonators, impulse source; explicit new soft/English targets and alphabet Ж/Щ additions.'};
     }
     return Object.freeze({engineId:'dsh',version:VERSION,label:'DeepSeek · импульсный live-синтез',...profile,
+      parameters:Object.freeze([...profile.parameters,Object.freeze({...AGE})]),
+      defaults:Object.freeze({...profile.defaults,age:AGE.default}),
+      normalize(input={}){const next=profile.normalize(input||{});next.age=clampAge(input?.age);return next;},
       phonemeIds:C.phonemeIds,phoneLabels:C.phoneLabels,kinds:C.kinds,getPhone,render,limits:{...C.limits,sampleRate:RATE},
       capabilities:Object.freeze({formantCount:3,disabledParameters:['transitionMs'],sampleRate:RATE,prosodyVersion:1,
         outputGainMeaning:'Пик всей фразы после суммирования сегментов.',
-        note:'Три резонатора; четвёртые частота/полоса/вес хранятся, но не звучат. Без просодии переходы не смешиваются, высота начинается заново в каждой фонеме. Просодия включает непрерывные высоту/фазу и переходы в пределах сегментов; шум JS отличается от NumPy.'})});
+        note:'Три резонатора; четвёртые частота/полоса/вес хранятся, но не звучат. Без просодии переходы не смешиваются, высота начинается заново в каждой фонеме. Просодия включает непрерывные высоту/фазу и переходы в пределах сегментов. Возраст 0–100 двигает длину тракта, высоту, дрожание и придыхание в обоих путях. Наклон спектра гасит жужжание возбудителя. Шум JS отличается от NumPy.'})});
   };
 })(globalThis);
