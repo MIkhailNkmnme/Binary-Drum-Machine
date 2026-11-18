@@ -6,7 +6,7 @@
 (function(root){
   'use strict';
   root.ZerkaliusDshFactory=function(C){
-    const VERSION='deepseek-formant-live-v1.0.0',RATE=44100,TAU=2*Math.PI;
+    const VERSION='deepseek-formant-live-v1.1.0',RATE=44100,TAU=2*Math.PI;
     const profile=C.config({pitchStart:112,pitchEnd:96,vibratoDepth:0,vibratoRate:2.1,transitionMs:0,outputGain:.7,seed:7},['transitionMs']);
     const table=Object.create(null),known=new Set(C.phonemeIds);
     function entry(id,kind,f,b,w,voice,noise,loud=1,extra={}){
@@ -71,10 +71,66 @@
       const r=Math.exp(-Math.PI*b/RATE),theta=TAU*f/RATE;
       return [(1-r)*Math.sqrt(Math.max(0,1-2*r*Math.cos(2*theta)+r*r)),2*r*Math.cos(theta),-r*r];
     }
+    function renderSpeech({settings,phones,score,counts,total,prosody}){
+      const resolvedPhones=score.map(({id})=>{
+        const native=table[id],p=C.scaled(Object.hasOwn(phones,id)?phones[id]:getPhone(id),settings,RATE),sameKind=native?.kind===p.kind;
+        return {id,...p,activeFormants:3,loudness:sameKind?native.loud:1,branchSources:sameKind&&native.sources?native.sources:null};
+      });
+      const samples=new Float32Array(total),glottal=new Float64Array(total),normal=gaussian(settings.seed);
+      let cursor=0,phase=0,peak=0;
+      // Optional speech path only: phase and impulse tails continue between
+      // phonemes, while pauses suppress excitation. There is no time resampling.
+      for(let segment=0;segment<score.length;segment++){
+        const p=resolvedPhones[segment],count=counts[segment];
+        for(let index=0;index<count;index++){
+          const at=cursor+index,speech=prosody.at(at,segment);
+          const base=settings.pitchStart+(settings.pitchEnd-settings.pitchStart)*prosody.progress(at)
+            +settings.vibratoDepth*Math.sin(TAU*settings.vibratoRate*at/RATE);
+          phase+=prosody.frequency(base,speech)/RATE;
+          if(phase>=1){phase-=1;if(p.kind!=='silence')for(let k=0;k<48&&at+k<total;k++)glottal[at+k]+=Math.exp(-k/6);}
+        }
+        cursor+=count;
+      }
+      const filters=Array.from({length:3},()=>({c:null,last:0,older:0}));cursor=0;
+      for(let segment=0;segment<score.length;segment++){
+        const p=resolvedPhones[segment],count=counts[segment],burst=p.kind==='stop'||p.kind==='affricate';
+        if(p.kind==='silence'){for(const f of filters){f.last=0;f.older=0;}cursor+=count;continue;}
+        for(let index=0;index<count;index++){
+          const at=cursor+index,speech=prosody.at(at,segment),other=resolvedPhones[speech.otherIndex];
+          const mix=(a,b)=>a+(b-a)*speech.blend;
+          if(index===0||at%16===0)for(let band=0;band<3;band++)filters[band].c=coefficient(mix(p.formants[band],other.formants[band]),mix(p.bandwidths[band],other.bandwidths[band]));
+          const tremolo=p.kind==='trill'?1+.75*Math.sin(TAU*26*index/RATE):1;
+          const voice=glottal[at]*tremolo*mix(p.voice,other.voice)*settings.voicing;
+          const noise=normal()*(burst?1-.9*index/Math.max(1,count-1):1)*mix(p.noise,other.noise)*settings.noise;
+          let value=0;
+          for(let band=0;band<3;band++){
+            const f=filters[band],[gain,a1,a2]=f.c;
+            const input=p.branchSources?.[band]==='voice'?voice:p.branchSources?.[band]==='noise'?noise:voice+noise;
+            const out=gain*input+a1*f.last+a2*f.older;f.older=f.last;f.last=out;
+            value+=out*mix(p.weights[band],other.weights[band]);
+          }
+          const attack=burst||segment===0||resolvedPhones[segment-1].kind==='silence';
+          const release=burst||segment===score.length-1||resolvedPhones[segment+1].kind==='silence';
+          const edge=Math.max(0,Math.min(1,attack?index/(RATE*(burst ? .002 : .01)):1,release?(count-1-index)/(RATE*.02):1));
+          samples[at]=C.check(value*mix(p.loudness,other.loudness)*speech.gain*edge);peak=Math.max(peak,Math.abs(samples[at]));
+        }
+        cursor+=count;
+      }
+      const gain=settings.outputGain/Math.max(peak,1e-9);
+      for(let i=0;i<samples.length;i++)samples[i]=C.check(C.clamp(samples[i]*gain,-.9,.9));
+      return {engineId:'dsh',engineVersion:VERSION,samples,sampleRate:RATE,sampleCount:samples.length,duration:samples.length/RATE,
+        settings,score,phones,resolvedPhones,seed:settings.seed,effectiveSeed:settings.seed||1,legacyExact:false,...prosody.metadata(),
+        noiseAlgorithm:'xorshift32 + Box–Muller Gaussian, continuous in optional speech mode',
+        adaptation:'Optional global pitch/phase and three-resonator transitions; original DSH path remains separate.'};
+    }
     function render(request){
       if(!C.record(request))throw Error('Не задан запрос синтеза.');
       const settings=profile.normalize(request.settings),phones=C.overrides(request.phones);
       const {score,counts,total}=C.parseScore(request.score,settings,phones,known,RATE);
+      if(request.prosody!==undefined){
+        const prosody=root.VoiceProsodyDSP.create(request.prosody,counts,RATE,settings);
+        return renderSpeech({settings,phones,score,counts,total,prosody});
+      }
       const samples=new Float32Array(total),resolvedPhones=[];let cursor=0,peak=0;
       for(let segment=0;segment<score.length;segment++){
         const id=score[segment].id,count=counts[segment],native=table[id];
@@ -125,8 +181,8 @@
     }
     return Object.freeze({engineId:'dsh',version:VERSION,label:'DeepSeek · импульсный live-синтез',...profile,
       phonemeIds:C.phonemeIds,phoneLabels:C.phoneLabels,kinds:C.kinds,getPhone,render,limits:{...C.limits,sampleRate:RATE},
-      capabilities:Object.freeze({formantCount:3,disabledParameters:['transitionMs'],sampleRate:RATE,
+      capabilities:Object.freeze({formantCount:3,disabledParameters:['transitionMs'],sampleRate:RATE,prosodyVersion:1,
         outputGainMeaning:'Пик всей фразы после суммирования сегментов.',
-        note:'Три резонатора; четвёртые частота/полоса/вес хранятся, но не звучат. Переходы между фонемами не смешиваются. Высота начинается заново в каждой фонеме; шум JS отличается от NumPy.'})});
+        note:'Три резонатора; четвёртые частота/полоса/вес хранятся, но не звучат. Без просодии переходы не смешиваются, высота начинается заново в каждой фонеме. Просодия включает непрерывные высоту/фазу и переходы в пределах сегментов; шум JS отличается от NumPy.'})});
   };
 })(globalThis);

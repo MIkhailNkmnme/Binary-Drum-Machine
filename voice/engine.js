@@ -6,7 +6,7 @@
    the output is not promised to be byte-identical to the original Python bank. */
 (function(root){
   'use strict';
-  const VERSION='procedural-formant-browser-v1.0.0';
+  const VERSION='procedural-formant-browser-v1.1.0';
   const RATE=22050,TAU=2*Math.PI,TABLE_SIZE=4096,MAX_SECONDS=12,MAX_SEGMENTS=96;
   const MAX_FREQUENCY=RATE*.45,MAX_BANDWIDTH=4000;
   const definitions=[
@@ -166,7 +166,13 @@
     if(!record(request))throw new Error('Не задан запрос синтеза.');
     const settings=normalize(request.settings),phones=resolveOverrides(request.phones);
     const {score,total}=parseScore(request.score,settings,phones);
-    const sourceHarmonics=Math.min(60,Math.floor(RATE*.43/(Math.max(settings.pitchStart,settings.pitchEnd)+settings.vibratoDepth)));
+    const prosody=request.prosody===undefined?null:root.VoiceProsodyDSP.create(request.prosody,score.map(t=>Math.round(t.duration/settings.speed*RATE)),RATE,settings);
+    const speechShapes=prosody?score.map((token,index)=>{
+      const nextVowel=score.slice(index+1).find(t=>Object.hasOwn(vowels,t.id))?.id||'e';
+      const p=Object.hasOwn(phones,token.id)?phones[token.id]:getPhone(token.id,nextVowel);
+      return {...p,formants:p.formants.map(f=>clamp(f*settings.formantScale,20,MAX_FREQUENCY)),bandwidths:p.bandwidths.map(b=>clamp(b*settings.bandwidthScale,20,MAX_BANDWIDTH))};
+    }):null;
+    const sourceHarmonics=Math.min(60,Math.floor(RATE*.43/(prosody?prosody.maximumFrequency:Math.max(settings.pitchStart,settings.pitchEnd)+settings.vibratoDepth)));
     const source=sourceTable(sourceHarmonics),samples=new Float32Array(total);
     const states=Array.from({length:4},()=>[0,0]);
     // xorshift32 has an all-zero trap; explicit seed 0 uses state 1.
@@ -183,20 +189,27 @@
       let coefficients=[];
       for(let index=0;index<count;index++){
         const progress=index/Math.max(1,count-1);
+        const speech=prosody?prosody.at(cursor,tokenIndex):null,other=speech?speechShapes[speech.otherIndex]:null;
         if(index%32===0){
           let transition=settings.transitionMs?Math.min(1,index/(RATE*settings.transitionMs/1000)):1;
           transition=transition*transition*(3-2*transition);
           coefficients=current.formants.map((f,k)=>resonator(previousShape.formants[k]*(1-transition)+f*transition,
             previousShape.bandwidths[k]*(1-transition)+current.bandwidths[k]*transition));
+          if(speech)coefficients=current.formants.map((f,k)=>resonator(f+(other.formants[k]-f)*speech.blend,
+            current.bandwidths[k]+(other.bandwidths[k]-current.bandwidths[k])*speech.blend));
         }
-        const f0=settings.pitchStart+(settings.pitchEnd-settings.pitchStart)*cursor/Math.max(1,total)
+        let f0=settings.pitchStart+(settings.pitchEnd-settings.pitchStart)*cursor/Math.max(1,total)
           +settings.vibratoDepth*Math.sin(TAU*settings.vibratoRate*cursor/RATE);
+        if(speech)f0=prosody.frequency(settings.pitchStart+(settings.pitchEnd-settings.pitchStart)*prosody.progress(cursor)
+          +settings.vibratoDepth*Math.sin(TAU*settings.vibratoRate*cursor/RATE),speech);
         phase=(phase+f0/RATE)%1;
         const position=phase*TABLE_SIZE,sourceIndex=Math.floor(position),fraction=position-sourceIndex;
         const periodic=source[sourceIndex]*(1-fraction)+source[(sourceIndex+1)%TABLE_SIZE]*fraction;
         rng^=rng<<13;rng^=rng>>>17;rng^=rng<<5;rng>>>=0;
         const noise=rng/2147483648-1;
         let voiced=current.voice*settings.voicing,noisy=current.noise*settings.noise;
+        if(speech){voiced=(current.voice+(other.voice-current.voice)*speech.blend)*settings.voicing;
+          noisy=(current.noise+(other.noise-current.noise)*speech.blend)*settings.noise;}
         if(current.kind==='stop'){
           if(progress<.62){voiced*=.22;noisy=0;}else{noisy*=Math.exp(-(progress-.62)*13);voiced*=.35;}
         }else if(current.kind==='affricate'){
@@ -207,16 +220,23 @@
         for(let k=0;k<4;k++){
           const [gain,feedback1,feedback2]=coefficients[k],[last,older]=states[k];
           const filtered=gain*excitation+feedback1*last+feedback2*older;
-          states[k][0]=filtered;states[k][1]=last;value+=filtered*current.weights[k];
+          states[k][0]=filtered;states[k][1]=last;value+=filtered*(speech?current.weights[k]+(other.weights[k]-current.weights[k])*speech.blend:current.weights[k]);
         }
         if((current.kind==='fricative'||current.kind==='affricate')&&voiced)value+=.13*voiced*Math.sin(TAU*phase);
-        value*=Math.max(0,Math.min(1,index/(RATE*.004),(count-1-index)/(RATE*.005)));
+        if(!speech)value*=Math.max(0,Math.min(1,index/(RATE*.004),(count-1-index)/(RATE*.005)));
+        else{
+          const articulated=current.kind==='stop'||current.kind==='affricate';
+          const attack=articulated||tokenIndex===0||speechShapes[tokenIndex-1].kind==='silence';
+          const release=articulated||tokenIndex===score.length-1||speechShapes[tokenIndex+1].kind==='silence';
+          value*=speech.gain*Math.max(0,Math.min(1,attack?index/(RATE*.004):1,release?(count-1-index)/(RATE*.005):1));
+        }
         if(current.kind==='silence'){value=0;for(const state of states)state.fill(0);}
         const dcRemoved=value-previousDC+.995*previousOut;
         previousDC=value;previousOut=dcRemoved;
         const sample=current.kind==='silence'?0:dcRemoved;
         if(!Number.isFinite(sample)||Math.abs(sample)>1e30)throw new Error('Расчёт остановлен: неустойчивый или нечисловой отсчёт.');
         samples[cursor]=sample;peak=Math.max(peak,Math.abs(samples[cursor]));cursor++;
+        if(speech&&current.kind==='silence'){previousDC=0;previousOut=0;}
       }
       previousShape=current;
     }
@@ -227,7 +247,7 @@
       samples[index]=clamp(value,-.9,.9);
     }
     return {samples,sampleRate:RATE,duration:samples.length/RATE,sampleCount:samples.length,settings,score,
-      phones, resolvedPhones,seed:settings.seed,effectiveSeed:settings.seed||1,sourceHarmonics,engineVersion:VERSION};
+      phones, resolvedPhones,seed:settings.seed,effectiveSeed:settings.seed||1,sourceHarmonics,engineVersion:VERSION,...(prosody?prosody.metadata():{})};
   }
   root.ZerkaliusVoice=Object.freeze({version:VERSION,defaults,parameters,phonemeIds,phoneLabels,kinds,getPhone,normalize,render,
     limits:Object.freeze({maxSegments:MAX_SEGMENTS,maxSeconds:MAX_SECONDS,maxPhones:128,sampleRate:RATE,

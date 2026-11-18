@@ -1,6 +1,6 @@
 /* Dedicated classic Worker. The UI cancels by terminating this worker. */
 'use strict';
-importScripts('engine.js?v=1','robot/engine.js?v=1','robot-live.js?v=1','dsh-engine.js?v=1','engines.js?v=1');
+importScripts('prosody-dsp.js?v=005','engine.js?v=005','robot/engine.js?v=001','robot-live.js?v=005','dsh-engine.js?v=005','engines.js?v=005');
 self.onmessage=function(event){
   const request=event.data,id=request&&request.id;
   try{

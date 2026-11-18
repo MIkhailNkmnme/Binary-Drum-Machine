@@ -7,7 +7,7 @@
   root.ZerkaliusRobotLiveFactory=function(C){
     const Original=root.ZerkaliusAlphabetRobot;
     if(!Original)throw Error('Не загружен исходный телефонный робот.');
-    const VERSION='phone-robot-live-v1.0.0',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
+    const VERSION='phone-robot-live-v1.1.0',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
     const bits=Array(8).fill(1),f0=440*2**((48-69)/12),raw=Original.phones();
     const profile=C.config({pitchStart:f0,pitchEnd:f0,vibratoDepth:0,vibratoRate:2.1,transitionMs:12,outputGain:.55,seed:Original.seedFor(bits,'zero')});
     const aliases={ax:'a-neutral',lj:'l-soft',dj:'d-soft',pj:'p-soft',tj:'t-soft',kj:'k-soft',sj:'s-soft',mj:'m-soft',vj:'v-soft',rj:'r-soft',shj:'sh-soft'};
@@ -58,6 +58,7 @@
         phone.bandwidths=phone.bandwidths.map(b=>Math.max(50,b));
       }
       const tail=Math.round(TAIL*RATE),{score,counts,total}=C.parseScore(request.score,settings,phones,known,RATE,tail);
+      const prosody=request.prosody===undefined?null:root.VoiceProsodyDSP.create(request.prosody,counts,RATE,settings);
       const resolved=score.map(token=>{
         const p=C.scaled(Object.hasOwn(phones,token.id)?phones[token.id]:getPhone(token.id),settings,RATE,60),native=targets[token.id];
         p.bandwidths=p.bandwidths.map(b=>Math.max(50,b));
@@ -65,10 +66,10 @@
         return {...p,id:token.id,gain:sameKind?native.gain:1,bypass:sameKind?native.bypass*(p.noise/(native.noise||1)):0,
           robotKind:p.kind==='stop'?(p.voice>0?'stopD':'stopK'):p.kind};
       });
-      const harmonics=Math.max(1,Math.min(96,Math.floor(RATE*.43/(Math.max(settings.pitchStart,settings.pitchEnd)+settings.vibratoDepth))));
+      const harmonics=Math.max(1,Math.min(96,Math.floor(RATE*.43/(prosody?prosody.maximumFrequency:Math.max(settings.pitchStart,settings.pitchEnd)+settings.vibratoDepth))));
       const common={sampleRate:RATE,settings,score,phones,resolvedPhones:resolved,seed:settings.seed,effectiveSeed:settings.seed||1,
-        engineId:'robot',engineVersion:VERSION,sourceHarmonics:harmonics,bits:[...bits],tilt:.82};
-      const exact=!Object.keys(phones).length&&sourceProfiles.find(p=>JSON.stringify(p.score)===JSON.stringify(score)
+        engineId:'robot',engineVersion:VERSION,sourceHarmonics:harmonics,bits:[...bits],tilt:.82,...(prosody?prosody.metadata():{})};
+      const exact=!prosody&&!Object.keys(phones).length&&sourceProfiles.find(p=>JSON.stringify(p.score)===JSON.stringify(score)
         &&Object.keys(profile.defaults).every(key=>settings[key]===p.settings[key]));
       if(exact){
         const samples=Original.renderVoice({rate:RATE,midi:48,event:{robotWord:exact.id,bits,f0,tilt:.82}});
@@ -81,18 +82,21 @@
       for(let sample=0;sample<samples.length;sample++){
         while(segment+1<score.length&&sample>=start+counts[segment]){start+=counts[segment];segment++;control=null;}
         const time=sample/RATE,local=(sample-start)/RATE,segmentDuration=counts[segment]/RATE,current=resolved[segment];
+        const speech=prosody?prosody.at(sample,segment):null;
         if(!control||sample%16===0){
           const t=Math.min(settings.transitionMs/1000,segmentDuration*.2);let other=current,blend=0;
           if(t&&segment>0&&local<t){other=resolved[segment-1];blend=.5*(1-local/t);}
           else if(t&&segment+1<score.length&&segmentDuration-local<t){other=resolved[segment+1];blend=.5*(1-(segmentDuration-local)/t);}
+          if(speech){other=resolved[speech.otherIndex];blend=speech.blend;}
           const mix=(a,b)=>a+(b-a)*blend;
           control={weights:current.weights.map((n,i)=>mix(n,other.weights[i])),voice:mix(current.voice,other.voice),noise:mix(current.noise,other.noise),
             gain:mix(current.gain,other.gain),bypass:mix(current.bypass,other.bypass)};
           for(let band=0;band<4;band++)filters[band].c=coefficients(mix(current.formants[band],other.formants[band]),mix(current.bandwidths[band],other.bandwidths[band]));
         }
         const index=Math.floor(phase),fraction=phase-index,pulse=table[index]+fraction*(table[(index+1)%SIZE]-table[index]);
-        const pitch=settings.pitchStart+(settings.pitchEnd-settings.pitchStart)*Math.min(1,sample/Math.max(1,total))
+        let pitch=settings.pitchStart+(settings.pitchEnd-settings.pitchStart)*(prosody?prosody.progress(sample):Math.min(1,sample/Math.max(1,total)))
           +settings.vibratoDepth*Math.sin(TAU*settings.vibratoRate*time);
+        if(speech)pitch=prosody.frequency(pitch,speech);
         phase+=pitch/RATE*SIZE;phase-=Math.floor(phase/SIZE)*SIZE;
         rng^=rng<<13;rng^=rng>>>17;rng^=rng<<5;
         const white=(rng>>>0)/2147483648-1,highNoise=(white-lastNoise)*.5;lastNoise=white;
@@ -113,6 +117,7 @@
           filter.z1=-c.a1*out+filter.z2;filter.z2=c.b2*input-c.a2*out;value+=out*control.weights[band];
         }
         value=(value+highNoise*bypass*(time<speechSeconds?1:0))*control.gain*envelope;
+        if(speech)value*=speech.gain;
         const blocked=value-lastOutput+.995*dc;lastOutput=value;dc=blocked;
         const gate=Math.min(1,time/.006,Math.max(0,(seconds-time)/TAIL));
         samples[sample]=kind==='silence'?0:C.check(blocked*gate);peak=Math.max(peak,Math.abs(samples[sample]));
@@ -124,7 +129,7 @@
     }
     return Object.freeze({engineId:'robot',version:VERSION,label:'Телефонный робот · битовые гармоники',...profile,
       phonemeIds:C.phonemeIds,phoneLabels:C.phoneLabels,kinds:C.kinds,getPhone,render,sourceProfiles,
-      limits:{...C.limits,minFrequency:60,minBandwidth:50,sampleRate:RATE},capabilities:Object.freeze({formantCount:4,disabledParameters:[],sampleRate:RATE,
+      limits:{...C.limits,minFrequency:60,minBandwidth:50,sampleRate:RATE},capabilities:Object.freeze({formantCount:4,disabledParameters:[],sampleRate:RATE,prosodyVersion:1,
         outputGainMeaning:'Коэффициент 0…0,9 перед tanh с исходным нижним порогом пика 0,045; это не точный конечный пик.',
         note:'Битовые гармоники 11111111, tilt 0,82, четыре biquad; частоты формант от 60 Гц, полосы от 50 Гц, включая результат масштабирования. При смене типа фонемы скрытые gain/bypass прежнего типа сбрасываются. Точные три исходных слова делегируются прежнему роботу при совпадении всех параметров.'})});
   };

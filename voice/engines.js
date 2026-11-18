@@ -68,7 +68,7 @@
     phonemeIds:Bank.phonemeIds,phoneLabels:Bank.phoneLabels});
   const bank=Object.freeze({...Bank,engineId:'bank',label:'Банк Зеркалиуса · четыре форманты',
     parameters:Object.freeze(Bank.parameters.map(p=>Object.freeze({...p,label:p.key==='outputGain'?'Выходной уровень':p.label}))),
-    capabilities:Object.freeze({formantCount:4,disabledParameters:[],sampleRate:22050,outputGainMeaning:'Пик всей фразы до конечного затухания.',
+    capabilities:Object.freeze({formantCount:4,disabledParameters:[],sampleRate:22050,prosodyVersion:1,outputGainMeaning:'Пик всей фразы до конечного затухания.',
       note:'Исходная браузерная адаптация банка. Старые рецепты v1 относятся к этому движку.'}),
     render(request){return {...Bank.render(request),engineId:'bank',engineVersion:Bank.version,legacyExact:false};}});
   const robot=root.ZerkaliusRobotLiveFactory(common),dsh=root.ZerkaliusDshFactory(common);
