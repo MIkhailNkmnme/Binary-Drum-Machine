@@ -7,6 +7,22 @@
   const script=document.currentScript,base=new URL('./',script?.src||location.href),listeners=new Set(),recent=new Set();
   let database=null,opening=null,channel=null,view=null,viewSerial=0,filter='',folder='',sourceImport=null,observer=null,retryAction=null,lastError='',returnFocus=null;
   const previewUrls=new Set();
+  // НТЗ-004: remove only the 35 retired project imports, including stored audio blobs.
+  // Keep this list independent of the network catalog so an offline browser can clean up.
+  const RETIRED_SOURCE_IDS=new Set(["source:ninetozero:collection", "source:ninetozero:techno-code-text", "source:ninetozero:audio:9e2ddbe94a84", "source:ninetozero:audio:ac27afc4dad5", "source:ninetozero:audio:96f5434b61d3", "source:ninetozero:audio:76f7610b20a4", "source:ninetozero:audio:59a562a28ce6", "source:ninetozero:audio:4f56ebd21a63", "source:ninetozero:audio:efb854e38bb5", "source:ninetozero:audio:dfee9b6a0c51", "source:ninetozero:audio:244da910bc25", "source:ninetozero:audio:e8243dc533c7", "source:ninetozero:audio:f4b69c09f78a", "source:ninetozero:audio:148d1b7eb110", "source:ninetozero:audio:230291e392d9", "source:ninetozero:audio:e99053e9ddb7", "source:ninetozero:audio:5de780fad634", "source:ninetozero:audio:6e99bdd89418", "source:ninetozero:audio:0766595d4f1b", "source:ninetozero:audio:000e5c030b15", "source:ninetozero:audio:a43f314d9bb2", "source:ninetozero:audio:0bc640bf948a", "source:ninetozero:audio:38bbdad46c15", "source:ninetozero:audio:6146727f7f09", "source:ninetozero:audio:12f0619112a4", "source:ninetozero:audio:6630610fbe39", "source:ninetozero:audio:6129511f7189", "source:ninetozero:audio:2225eae87ea6", "source:ninetozero:audio:100aeb828a81", "source:ninetozero:audio:1bccc7fe878c", "source:ninetozero:audio:af32e4baae07", "source:ninetozero:audio:7f3ccbf88eaf", "source:ninetozero:audio:195902ef4b2b", "source:ninetozero:audio:ebde2416a9a9", "source:ninetozero:audio:c905a02de14e"]);
+  let retirement=null;
+  function retireProjectSources(){
+    if(retirement)return retirement;
+    retirement=transaction(['entries','payloads','sourceImports'],'readwrite',tx=>{
+      for(const id of RETIRED_SOURCE_IDS){
+        tx.objectStore('entries').delete(id);
+        tx.objectStore('payloads').delete(id);
+        tx.objectStore('sourceImports').put({id,version:4,retired:true,at:Date.now()});
+      }
+    }).catch(error=>{retirement=null;throw error;});
+    return retirement;
+  }
+
   const uid=()=>root.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
   function stylesheet(){
     const href=new URL('bitoteka.css?v=5',base).href;
@@ -71,6 +87,7 @@
       if(input.thumbnail!=null&&(!(input.thumbnail instanceof Blob)||!input.thumbnail.type.startsWith('image/')))throw Error('Миниатюра должна быть файлом изображения.');
       const now=Date.now(),id=input.id==null?uid():String(input.id);
       if(!id||id.length>512)throw Error('Некорректный идентификатор записи');
+      if(RETIRED_SOURCE_IDS.has(id))throw Error('Этот источник удалён из проекта. NINETOZERO — только изображения.');
       const item={id,kind:input.kind,name:String(input.name||'Без названия').slice(0,512),filename:filename(input),source:structuredClone(input.source??document.title??''),meta:structuredClone(input.meta??{}),createdAt:now,updatedAt:now,mime:input.blob.type,size:input.blob.size,hasThumbnail:!!input.thumbnail};
       await transaction(['entries','payloads'],'readwrite',tx=>{
         const entries=tx.objectStore('entries'),previous=entries.get(id);
@@ -80,6 +97,7 @@
     }catch(error){showError(error,()=>save(input));throw error;}
   }
   async function list(options={}){
+    await retireProjectSources();
     const kind=options.kind;if(kind&&!KINDS.includes(kind))throw Error('Неизвестный раздел Битотеки');
     const entries=await transaction(['entries'],'readonly',tx=>{const store=tx.objectStore('entries'),request=kind?store.index('kind').getAll(kind):store.getAll();return ()=>request.result;});
     return entries.filter(item=>inFolder(item,options.folder)).sort((a,b)=>b.createdAt-a.createdAt||String(a.id).localeCompare(String(b.id)));
@@ -91,6 +109,7 @@
     const path=String(item.meta?.folder||'');return path===value||path.startsWith(value+'/');
   }
   async function importProjectSources(){
+    await retireProjectSources();
     if(sourceImport)return sourceImport;
     sourceImport=(async()=>{
       const catalogUrl=new URL('../sources/catalog.json',base),response=await fetch(catalogUrl,{cache:'no-cache'});
@@ -102,6 +121,7 @@
         try{
           if(!entry||typeof entry.id!=='string'||!entry.id||entry.id.length>512||!KINDS.includes(entry.kind)||typeof entry.url!=='string')throw Error('Некорректная запись каталога');
           const id=entry.id;
+          if(RETIRED_SOURCE_IDS.has(id))continue;
           const known=await transaction(['entries','sourceImports'],'readwrite',tx=>{
             const records=tx.objectStore('entries'),ledger=tx.objectStore('sourceImports'),seen=ledger.get(id),existing=records.get(id);
             let skip=false;
@@ -137,7 +157,7 @@
     try{await importProjectSources();if(retryAction?.bitotekaSourceRetry){retryAction=null;lastError='';paintError();}await render();}
     catch(error){lastError=message(error);retryAction=()=>refreshSources();retryAction.bitotekaSourceRetry=true;paintError();}
   }
-  async function get(id){return transaction(['entries','payloads'],'readonly',tx=>{
+  async function get(id){await retireProjectSources();return transaction(['entries','payloads'],'readonly',tx=>{
     const entry=tx.objectStore('entries').get(String(id)),payload=tx.objectStore('payloads').get(String(id));
     return ()=>entry.result?{...entry.result,blob:payload.result?.blob||null,thumbnail:payload.result?.thumbnail||null}:null;
   });}

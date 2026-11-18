@@ -1,17 +1,7 @@
 {
-  "title": "The Techno Code",
-  "artist": "Enrico Sangiuliano",
-  "url": "https://www.youtube.com/watch?v=8nxGxtRnqFQ",
-  "youtube_download": "blocked: sign in to confirm you are not a bot",
-  "audio": "../audio/07-00-the-techno-code-preview.m4a",
-  "audio_kind": "Apple Music preview",
-  "text": "comment.txt",
-  "text_source": "User-provided screenshot of comment by @valentin3386",
-  "text_status": "Not verified against the recording; not official lyrics or translation",
-  "screenshot": "comment.png",
-  "full_track_url": "https://www.youtube.com/watch?v=FpYyI8xvCy0",
-  "full_track_channel": "NINETOZERO",
-  "english_text": "comment-en.txt",
-  "english_text_source": "English translation of the user-provided Russian comment; Codex, 2026-11-17",
-  "english_text_status": "Not a transcription of the recording; not official English lyrics"
+  "title": "Скриншот комментария к The Techno Code",
+  "image": "comment.png",
+  "provenance": "User-provided screenshot of comment by @valentin3386",
+  "source_video_id": "8nxGxtRnqFQ",
+  "scope": "Image provenance only"
 }

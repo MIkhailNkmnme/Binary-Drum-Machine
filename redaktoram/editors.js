@@ -1,18 +1,21 @@
-/* Редакторам Зеркалиуса v0.001: читать исходные документы, не хранить вторую копию состояния. */
+/* Редакторам Зеркалиуса v0.002: читать исходные документы, не хранить вторую копию состояния. */
 (() => {
   'use strict';
   const repo = 'https://github.com/MIkhailNkmnme/Binary-Drum-Machine';
   const files = {
     tasks: ['ЗАДАЧИ.md', 'Задачи'], coordinator: ['КООРДИНАТОР.md', 'Правила координатора'],
     handoff: ['ПРОДОЛЖИТЬ.md', 'Продолжить работу'], decisions: ['РЕШЕНИЯ.md', 'Решения'],
-    journal: ['ЖУРНАЛ.md', 'Журнал'], rules: ['AGENTS.md', 'Правила проекта'], buttons: ['КНОПКИ.md', 'Правила кнопок']
+    journal: ['ЖУРНАЛ.md', 'Журнал'], rules: ['AGENTS.md', 'Правила проекта'], buttons: ['КНОПКИ.md', 'Правила кнопок'],
+    sound: ['ЗВУК.md', 'Звук с нуля'], voices: ['tools/voice/README.md', 'Как сделаны голоса'],
+    music: ['audit/reports/2026-11-18-music-inventory.md', 'Музыка, голоса и видео']
   };
   const state = { docs: new Map(), errors: new Map(), filter: 'active', loading: false };
   const view = document.getElementById('view');
   const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const encodedPath = file => file.split('/').map(encodeURIComponent).join('/');
   const docURL = file => location.protocol === 'file:'
-    ? new URL(`https://raw.githubusercontent.com/MIkhailNkmnme/Binary-Drum-Machine/main/${encodeURIComponent(file)}`)
-    : new URL(`../${encodeURIComponent(file)}`, location.href);
+    ? new URL(`https://raw.githubusercontent.com/MIkhailNkmnme/Binary-Drum-Machine/main/${encodedPath(file)}`)
+    : new URL(`../${encodedPath(file)}`, location.href);
   function safeURL(value, base) {
     try { const url = new URL(value, base); return ['https:', 'http:', 'file:'].includes(url.protocol) ? escape(url.href) : '#'; }
     catch { return '#'; }
@@ -119,7 +122,7 @@
   }
   function renderError(key) {
     const file = files[key][0];
-    view.innerHTML = `<div class="error"><h2>Документ не загрузился</h2><p>Проверьте подключение и нажмите «Обновить». Состояние не заменено пустыми задачами.</p><p><a href="${repo}/blob/main/${encodeURIComponent(file)}">Открыть документ на GitHub ↗</a></p></div>`;
+    view.innerHTML = `<div class="error"><h2>Документ не загрузился</h2><p>Проверьте подключение и нажмите «Обновить». Состояние не заменено пустыми задачами.</p><p><a href="${repo}/blob/main/${encodedPath(file)}">Открыть документ на GitHub ↗</a></p></div>`;
   }
   function render() {
     const key = Object.hasOwn(files, location.hash.slice(1)) ? location.hash.slice(1) : 'tasks';
@@ -129,7 +132,7 @@
       return;
     }
     if (key === 'tasks') renderTasks();
-    else view.innerHTML = `<div class="document-top"><h2>${escape(files[key][1])}</h2><div class="document-links"><a href="${repo}/blob/main/${encodeURIComponent(files[key][0])}">Источник ↗</a><a href="${repo}/edit/main/${encodeURIComponent(files[key][0])}">Редактировать на GitHub ↗</a></div></div><article class="markdown">${markdown(state.docs.get(key), docURL(files[key][0]))}</article>`;
+    else view.innerHTML = `<div class="document-top"><h2>${escape(files[key][1])}</h2><div class="document-links"><a href="${repo}/blob/main/${encodedPath(files[key][0])}">Источник ↗</a><a href="${repo}/edit/main/${encodedPath(files[key][0])}">Редактировать на GitHub ↗</a></div></div><article class="markdown">${markdown(state.docs.get(key), docURL(files[key][0]))}</article>`;
   }
   async function load() {
     if (state.loading) return; state.loading = true;

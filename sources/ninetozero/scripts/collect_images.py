@@ -8,17 +8,16 @@ from bs4 import BeautifulSoup
 ROOT=Path(__file__).resolve().parents[1]
 ROOT.mkdir(parents=True,exist_ok=True)
 (ROOT/'images').mkdir(exist_ok=True)
-(ROOT/'audio').mkdir(exist_ok=True)
 SESSION=requests.Session()
 SESSION.headers['User-Agent']='Mozilla/5.0 (compatible; local research archive)'
 HOSTS={'ninetozero.music','www.ninetozero.music','ninetozero.eu','www.ninetozero.eu'}
 IMAGES=re.compile(r'\.(?:png|jpe?g|webp|avif|gif|svg)(?:$|[?#])',re.I)
-AUDIO=re.compile(r'\.(?:mp3|m4a|ogg|opus|aac|wav|flac)(?:$|[?#])',re.I)
+NON_PAGE_MEDIA=re.compile(r'\.(?:mp3|m4a|ogg|opus|aac|wav|flac|mp4)(?:$|[?#])',re.I)
 assets={};pages=[];styles={};seen=set();queue=deque(['https://ninetozero.music/','https://ninetozero.eu/home'])
 errors=[]
 cached={}
 if (ROOT/'assets.json').exists():
-    cached={item['url']:item for item in json.loads((ROOT/'assets.json').read_text(encoding='utf-8'))['assets'] if item['status']=='saved'}
+    cached={item['url']:item for item in json.loads((ROOT/'assets.json').read_text(encoding='utf-8'))['assets'] if item['status']=='saved' and item.get('kind')=='image'}
 
 def absolute(value,base):
     value=urldefrag(urljoin(base,value.strip().strip('"\'')))[0]
@@ -27,8 +26,8 @@ def absolute(value,base):
 def add_asset(value,base,page,kind=None):
     url=absolute(value,base)
     if not url:return
-    if kind is None:kind='image' if IMAGES.search(url) else 'audio' if AUDIO.search(url) else None
-    if not kind or 'facebook.com/tr' in url:return
+    if kind is None:kind='image' if IMAGES.search(url) else None
+    if kind!='image' or 'facebook.com/tr' in url:return
     item=assets.setdefault(url,{'url':url,'kind':kind,'pages':[]})
     if page not in item['pages']:item['pages'].append(page)
 
@@ -43,7 +42,6 @@ while queue and len(seen)<160:
         res=SESSION.get(url,timeout=30);res.raise_for_status()
         if 'text/html' not in res.headers.get('content-type',''):continue
         soup=BeautifulSoup(res.text,'html.parser')
-        links=[]
         for tag in soup.find_all(True):
             for attr in ['src','data-src','data-lazy-src','poster','data-background','data-background-image']:
                 if tag.get(attr):add_asset(tag[attr],res.url,url,'image' if tag.name=='img' or attr=='poster' else None)
@@ -58,16 +56,15 @@ while queue and len(seen)<160:
             if tag.name=='a' and tag.get('href'):
                 target=absolute(tag['href'],res.url)
                 if not target:continue
-                links.append({'url':target,'label':tag.get_text(' ',strip=True)})
                 add_asset(target,res.url,url)
                 parsed=urlparse(target)
-                if parsed.hostname in HOSTS and not IMAGES.search(target) and not AUDIO.search(target) and not re.search(r'\.(?:pdf|zip|mp4|css|js)$',parsed.path,re.I) and not parsed.query and '/wp-' not in parsed.path:
+                if parsed.hostname in HOSTS and not IMAGES.search(target) and not NON_PAGE_MEDIA.search(target) and not re.search(r'\.(?:pdf|zip|mp4|css|js)$',parsed.path,re.I) and not parsed.query and '/wp-' not in parsed.path:
                     if target not in seen:queue.append(target)
         for style in soup.find_all('style'):css_assets(style.get_text(),res.url,url)
         # CSS image links also occur as JSON strings in page blocks.
         for match in re.finditer(r'https?[^\s<>"\']+\.(?:png|jpe?g|webp|svg|gif|avif)(?:\?[^\s<>"\']*)?',res.text,re.I):
             add_asset(match.group().replace('\\/','/'),res.url,url)
-        pages.append({'url':url,'final_url':res.url,'title':soup.title.get_text(' ',strip=True) if soup.title else '', 'links':links})
+        pages.append({'url':url,'final_url':res.url,'title':soup.title.get_text(' ',strip=True) if soup.title else ''})
         print(json.dumps({'page':url,'images_found':len(assets)},ensure_ascii=True),flush=True)
     except Exception as error:errors.append({'url':url,'error':str(error)})
 
@@ -93,8 +90,8 @@ def download(item):
         digest=hashlib.sha256(body).hexdigest()
         leaf=re.sub(r'[^a-zA-Z0-9._-]','_',unquote(urlparse(item['url']).path).split('/')[-1])[:110]
         ext=Path(leaf).suffix
-        if not ext:leaf += {'image/jpeg':'.jpg','image/png':'.png','image/svg+xml':'.svg','image/webp':'.webp','audio/mpeg':'.mp3'}.get(mime,'.bin')
-        folder='images' if item['kind']=='image' else 'audio'
+        if not ext:leaf += {'image/jpeg':'.jpg','image/png':'.png','image/svg+xml':'.svg','image/webp':'.webp'}.get(mime,'.bin')
+        folder='images'
         path=ROOT/folder/(digest[:12]+'-'+leaf)
         path.write_bytes(body)
         return {**item,'file':path.relative_to(ROOT).as_posix(),'sha256':digest,'bytes':len(body),'mime':mime,'status':'saved'}
@@ -115,6 +112,6 @@ for item in sorted(results,key=lambda x:x['url']):
             (ROOT/item['file']).unlink()
         item['file']=prior
     else:unique[item['sha256']]=item['file']
-manifest={'captured_date':'2026-11-16','entrypoints':['https://ninetozero.music/','https://ninetozero.eu/home'],'scope':'Public pages on ninetozero.music and ninetozero.eu; referenced images and direct audio. External stores and social sites remain links.','pages':pages,'assets':sorted(results,key=lambda x:x['url']),'errors':errors,'pending_pages':list(queue)}
+manifest={'captured_date':'2026-11-16','entrypoints':['https://ninetozero.music/','https://ninetozero.eu/home'],'scope':'Images from public pages on ninetozero.music and ninetozero.eu; image files and their provenance only.','pages':pages,'assets':sorted(results,key=lambda x:x['url']),'errors':errors,'pending_pages':list(queue)}
 (ROOT/'assets.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-print(json.dumps({'pages':len(pages),'unique_files':len(unique),'audio':sum(x['kind']=='audio' and x['status']=='saved' for x in results),'errors':len(errors)+sum(x['status']=='error' for x in results),'pending':len(queue)}),flush=True)
+print(json.dumps({'pages':len(pages),'unique_files':len(unique),'errors':len(errors)+sum(x['status']=='error' for x in results),'pending':len(queue)}),flush=True)

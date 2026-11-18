@@ -1,0 +1,97 @@
+[
+  {
+    "file": "rezultaty/glyphen-xor-3d-mp3-20261112.mp4",
+    "operation": "video stream copy; remove audio; user confirmed borrowed soundtrack",
+    "output": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "nb_frames": "4849"
+        }
+      ],
+      "format": {
+        "duration": "183.280167"
+      }
+    },
+    "bytes": 34051896
+  },
+  {
+    "file": "rezultaty/binarnoe-prishestvie-20261027.mp4",
+    "operation": "video stream copy; remove audio; user confirmed borrowed soundtrack",
+    "output": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "nb_frames": "30554"
+        }
+      ],
+      "format": {
+        "duration": "1018.465600"
+      }
+    },
+    "bytes": 59385549
+  },
+  {
+    "file": "rezultaty/rec-0005-20261027.mp4",
+    "operation": "video stream copy; remove audio; user confirmed borrowed soundtrack",
+    "output": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "nb_frames": "4206"
+        }
+      ],
+      "format": {
+        "duration": "140.199800"
+      }
+    },
+    "bytes": 7641915
+  },
+  {
+    "file": "rezultaty/rombo-kvadratus-20261027.mp4",
+    "operation": "video stream copy; remove audio; user confirmed borrowed soundtrack",
+    "output": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "nb_frames": "3262"
+        }
+      ],
+      "format": {
+        "duration": "108.733200"
+      }
+    },
+    "bytes": 18494811
+  },
+  {
+    "file": "rezultaty/rec-0003-20261027.mp4",
+    "operation": "video stream copy; remove audio; user confirmed borrowed soundtrack",
+    "output": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "nb_frames": "21177"
+        }
+      ],
+      "format": {
+        "duration": "705.899200"
+      }
+    },
+    "bytes": 46965427
+  }
+]
