@@ -1,0 +1,113 @@
+{
+  "date": "2026-11-18",
+  "commit": "0e9021fcab30706b06b0721f8e2d837057c4d62a",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "voice/index.html",
+      "status": 200,
+      "bytes": 18516,
+      "normalization": "LF",
+      "sha256": "212f62b6002bf2658bd7acdd6756ff753bb7fef9bb8e70e3634c766406f99b9f",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/app.js",
+      "status": 200,
+      "bytes": 49227,
+      "normalization": "LF",
+      "sha256": "6abb526fe14e8db23fa9b77d383cb6247a2e7767c49a8baee25ea722c64f5d70",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/style.css",
+      "status": 200,
+      "bytes": 3389,
+      "normalization": "LF",
+      "sha256": "5030abe2ba78d29fb10ed8509a25e661be2ec3702dec30f947f1d8da51c4ffd2",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/text.js",
+      "status": 200,
+      "bytes": 5624,
+      "normalization": "LF",
+      "sha256": "b4cfb41bd2ebfe134310001b173a4e11b1585a3381c78bb27ab20def7bac2d74",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/german.js",
+      "status": 200,
+      "bytes": 7385,
+      "normalization": "LF",
+      "sha256": "864e769ff8358d8ff599bd9c53f99d9d17e4d05f45816dc8682ebe8cd448d0dd",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/catalog.js",
+      "status": 200,
+      "bytes": 5081,
+      "normalization": "LF",
+      "sha256": "322828a97b04e6510fd3b6bcb67bdf2bc1cc2ef0e7224984fed0ffd38f5efaad",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/README.md",
+      "status": 200,
+      "bytes": 35607,
+      "normalization": "LF",
+      "sha256": "b4ab5e56699a7cf9fec568bf133ed856b135ba38edfd144ffc3187d8244b66c6",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/engines.js",
+      "status": 200,
+      "bytes": 6458,
+      "normalization": "LF",
+      "sha256": "b20c8931dfbc7f6bd35e6142e82a0c0fcef8331ffdad6c1a5647da4581669d27",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/engine.js",
+      "status": 200,
+      "bytes": 16161,
+      "normalization": "LF",
+      "sha256": "e53f34718924b94bc0d539a1bd6921496e4d9b7d5cf74ffe1015b89ee8ca5bbf",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/robot-live.js",
+      "status": 200,
+      "bytes": 10775,
+      "normalization": "LF",
+      "sha256": "e7ff26b8741255b0df9eeb552b84e4fea4a762f8f3611c43b656a56b511608bf",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/dsh-engine.js",
+      "status": 200,
+      "bytes": 9465,
+      "normalization": "LF",
+      "sha256": "13ff5df7f5821e46d803d35e353dc70bd087e31725c01ce779c5fa7259eb58e5",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/render-worker.js",
+      "status": 200,
+      "bytes": 715,
+      "normalization": "LF",
+      "sha256": "c437518bdd4eb94bd37abd93fe2cdb63ed2bce920050a1e670deb344f66aa20c",
+      "matchesRelease": true
+    }
+  ],
+  "canonical": {
+    "url": "https://1001100.online/voice/",
+    "status": 200,
+    "matchesRelease": true,
+    "sha256": "212f62b6002bf2658bd7acdd6756ff753bb7fef9bb8e70e3634c766406f99b9f"
+  },
+  "pages": {
+    "runId": 44326170492,
+    "conclusion": "success"
+  }
+}
