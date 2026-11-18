@@ -66,5 +66,5 @@
     positional:['Е','Ё','Ю','Я'].includes(symbol)?'Изолированный начальный вариант й + гласный; внутри слова возможен иной звук.':null
   }));
   root.VoiceLegacyCatalog=legacy;
-  root.VoiceCatalog=Object.freeze([...sounds,...legacy.filter(item=>item.kind==='digit'||item.lang==='en')]);
+  root.VoiceCatalog=Object.freeze([...sounds,...legacy.filter(item=>item.kind==='digit'||item.lang==='en'),...(root.VoiceGerman?.catalog||[])]);
 })(globalThis);

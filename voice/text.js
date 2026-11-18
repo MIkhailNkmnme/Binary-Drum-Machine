@@ -7,20 +7,23 @@
   const softNext=new Set(Array.from('ЕЁЮЯИЬ'));
   const iotated=new Set(Array.from('ЕЁЮЯ'));
   function plan({text,language,catalog,engine,settings,phones}){
-    if(typeof text!=='string'||!['ru','en'].includes(language))throw Error('Выберите RU или EN для текстового чтения.');
+    if(typeof text!=='string'||!['ru','en','de'].includes(language))throw Error('Выберите RU, EN или DE для текстового чтения.');
     const letters=Array.from(text),rate=engine.limits.sampleRate,tail=engine.engineId==='robot'?Math.round(.018*rate):0;
     if(!letters.length||letters.length>MAX_CHARS)throw Error('Текст: от 1 до '+MAX_CHARS+' символов.');
-    const sounds=new Map(catalog.filter(r=>r.lang===language&&r.kind===(language==='ru'?'sound':'name')).map(r=>[r.symbol.toUpperCase(),r]));
-    const digits=new Map(catalog.filter(r=>r.lang==='ru'&&r.kind==='digit').map(r=>[r.symbol,r]));
+    const sounds=new Map(catalog.filter(r=>r.lang===language&&r.kind===(language==='en'?'name':'sound')).map(r=>[r.symbol.toUpperCase(),r]));
+    const digits=new Map(catalog.filter(r=>r.lang===(language==='de'?'de':'ru')&&r.kind==='digit').map(r=>[r.symbol,r]));
     const characters=[],units=[];let utf16=0,sounding=false;
+    for(const char of letters){const start=utf16;utf16+=char.length;characters.push({text:char,start,end:utf16});}
     for(let index=0;index<letters.length;index++){
-      const char=letters[index],upper=char.toUpperCase(),start=utf16;utf16+=char.length;characters.push({text:char,start,end:utf16});
-      let score=[],boundary=false;
+      const char=letters[index],upper=char.toUpperCase(),start=characters[index].start;
+      let score=[],boundary=false,length=1;
       if(/\s/u.test(char)){score=[{id:'_',duration:.10}];boundary=true;}
-      else if(/[.,!?;:…—–\-()«»"']/u.test(char)){score=[{id:'_',duration:/[.!?…]/u.test(char) ? 0.28 : /[,;:]/u.test(char) ? 0.16 : 0.08}];boundary=true;}
+      else if(/[.,!?;:…—–\-()«»„“”‚‘’"']/u.test(char)){score=[{id:'_',duration:/[.!?…]/u.test(char) ? 0.28 : /[,;:]/u.test(char) ? 0.16 : 0.08}];boundary=true;}
       else{
-        const recipe=digits.get(char)||sounds.get(upper);
+        const german=language==='de'?root.VoiceGerman.take(letters,index):null;
+        const recipe=language==='de'?(german?{kind:'sound',score:german.score}:null):digits.get(char)||sounds.get(upper);
         if(!recipe)throw Error('Символ «'+char+'» в позиции '+(start+1)+' не поддерживается в '+language.toUpperCase()+'.');
+        if(german)length=german.length;
         score=recipe.score.map(t=>({...t}));
         if(language==='ru'&&recipe.kind==='sound'){
           const previous=letters[index-1]?.toUpperCase(),next=letters[index+1]?.toUpperCase();
@@ -31,9 +34,10 @@
         }
         if(score.some(t=>t.id!=='_'))sounding=true;
       }
-      for(const token of score)if(!engine.phonemeIds.includes(token.id)&&!Object.hasOwn(phones,token.id))throw Error('Движок не поддерживает токен '+token.id+'.');
-      units.push({index,score,boundary});
+      units.push({index,indices:Array.from({length},(_,i)=>index+i),score,boundary});index+=length-1;
     }
+    const effectivePhones=root.VoiceGerman?root.VoiceGerman.resolve(engine,phones,units.flatMap(u=>u.score)):phones;
+    for(const unit of units)for(const token of unit.score)if(!engine.phonemeIds.includes(token.id)&&!Object.hasOwn(effectivePhones,token.id))throw Error('Движок не поддерживает токен '+token.id+'.');
     if(!sounding)throw Error('В тексте нет звучащих букв или цифр. Ъ, Ь и паузы не зацикливаются отдельно.');
     // Keep each word together. Separators belong to the preceding word; a
     // leading separator stays with the first word. No per-letter DSP restart.
@@ -47,12 +51,12 @@
       const tokens=group.flatMap(u=>u.score),samples=duration(tokens);
       if(tokens.length>engine.limits.maxSegments||samples+tail>engine.limits.maxSeconds*rate)throw Error('Одно слово превышает лимит '+engine.limits.maxSegments+' сегментов или '+engine.limits.maxSeconds+' секунд. Увеличьте скорость или сократите слово.');
       if(chunk.score.length&&(chunk.score.length+tokens.length>engine.limits.maxSegments||count+samples+tail>engine.limits.maxSeconds*rate))finish();
-      for(const unit of group){const from=chunk.score.length;chunk.score.push(...unit.score);chunk.marks.push({index:unit.index,from,to:chunk.score.length});}
+      for(const unit of group){const from=chunk.score.length;chunk.score.push(...unit.score);chunk.marks.push({index:unit.index,indices:unit.indices,from,to:chunk.score.length});}
       count+=samples;
     }
     finish();
     if(totalSamples>MAX_SECONDS*rate)throw Error('Один круг текста превышает '+MAX_SECONDS+' секунд с текущей скоростью. Сократите текст или увеличьте скорость.');
-    return {characters,chunks,language,rate};
+    return {characters,chunks,language,rate,phones:effectivePhones};
   }
   function tokenBoundaries(result){
     const boundaries=[0];let seconds=0,count=0;
