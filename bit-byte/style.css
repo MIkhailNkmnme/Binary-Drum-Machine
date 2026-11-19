@@ -200,6 +200,16 @@ h1 { color: var(--cyan); font-size: 26px; }
 }
 
 .bits { font-size: clamp(9px, .74vw, 11px); line-height: 1.15; }
+.bits-checkerboard {
+  display: grid;
+  grid-template-columns: repeat(var(--bit-columns), 1em);
+  grid-template-rows: repeat(var(--bit-rows), 1em);
+  justify-self: center;
+  font-size: 8px;
+  line-height: 1;
+}
+.bits-checkerboard > span { display: grid; place-items: center; }
+.editor-panel[data-unit="nibble"] .bits-checkerboard { font-size: clamp(8px, 2.6vw, 16px); }
 .bit-one { color: var(--cyan); }
 .byte-code { color: var(--muted); font-size: 9px; line-height: 1.15; }
 

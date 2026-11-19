@@ -220,12 +220,24 @@
             : `Исключение ${NOUN}а ${byte.bits.join("")}, десятичное ${byte.value}, 0x${code}`);
 
           bits.className = "bits";
-          for (const bit of byte.bits) {
+          const bitColumns = BIT_COUNT === 2 ? 2 : 4;
+          if (BIT_COUNT > 1) {
+            bits.classList.add("bits-checkerboard");
+            bits.style.setProperty("--bit-columns", bitColumns);
+            bits.style.setProperty("--bit-rows", BIT_COUNT * 2 / bitColumns);
+            bits.setAttribute("aria-hidden", "true");
+          }
+          byte.bits.forEach((bit, index) => {
             const digit = document.createElement("span");
             if (bit === "1") digit.className = "bit-one";
             digit.textContent = bit;
+            if (BIT_COUNT > 1) {
+              const bitRow = Math.floor(index / (bitColumns / 2));
+              digit.style.gridRow = bitRow + 1;
+              digit.style.gridColumn = (index % (bitColumns / 2)) * 2 + bitRow % 2 + 1;
+            }
             bits.append(digit);
-          }
+          });
           meta.className = "byte-code";
           meta.textContent = `${byte.value} · ${code}`;
           button.append(bits, meta);
