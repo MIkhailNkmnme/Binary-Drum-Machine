@@ -13,6 +13,7 @@
     "#fc86bc", "#8a8fff", "#91a274", "#71c6a6", "#ffe4a1", "#df936f", "#f2b8e9", "#a6e4ff",
   ];
   const byId = id => document.getElementById("chess-" + id);
+  const diamonds = window.BitByteDiamondGrid;
   const world = byId("world"), viewport = byId("viewport"), list = byId("list");
   const editor = document.getElementById("boards-editor");
   const controls = editor.querySelector(".chess-controls");
@@ -40,8 +41,10 @@
   const color = (value, fallback) => /^#[0-9a-f]{6}$/i.test(value || "") ? value : fallback;
 
   const defaultOutline = id => OUTLINES[(id - 1) % OUTLINES.length];
-  const boardLabel = board => (board.shape === "rhombus" ? "Ромбо-шахматка " : "Шахматка ") + board.id;
-  const area = board => rhombusMask(board)?.area ?? board.cols * board.rows;
+  const isDiamondGrid = board => board.shape === "diamond-grid";
+  const diamondGrid = board => isDiamondGrid(board) ? diamonds.get(board.cols, board.rows) : null;
+  const boardLabel = board => (isDiamondGrid(board) ? "Ромбическая сетка " : board.shape === "rhombus" ? "Ромбо-шахматка " : "Шахматка ") + board.id;
+  const area = board => diamondGrid(board)?.tiles.length ?? rhombusMask(board)?.area ?? board.cols * board.rows;
   // Порядок в сохранении разрешает совпадения площадей.
   const layers = () => state.boards.slice().sort((a, b) => area(b) - area(a));
   function freeId(ids, id) {
@@ -84,7 +87,7 @@
       outlines.add(outline.toLowerCase());
       return {
         id, ...(typeof item.name === "string" ? {name: item.name.slice(0, 40)} : {}),
-        ...(item.shape === "rhombus" ? {shape: "rhombus"} : {}),
+        ...(["rhombus", "diamond-grid"].includes(item.shape) ? {shape: item.shape} : {}),
         outline,
         x: integer(item.x, 2, 0, MAX_POSITION), y: integer(item.y, 2, 0, MAX_POSITION),
         cols: integer(item.cols, 16, 1, MAX_SIZE), rows: integer(item.rows, 16, 1, MAX_SIZE),
@@ -305,11 +308,19 @@
   function fitFieldHeight(scene) {
     if (!scene.autoHeight) return;
     const visible = scene.boards.filter(board => board.visible);
-    scene.fieldRows = Math.max(0, ...visible.map(board => board.y + (rhombusMask(board)?.bottom ?? board.rows))) + 1;
+    scene.fieldRows = Math.max(0, ...visible.map(board =>
+      board.y + (diamondGrid(board)?.bottom ?? rhombusMask(board)?.bottom ?? board.rows))) + 1;
   }
   function logicPaint(hex, opacity) {
     return {hex: hex.toLowerCase(), opacity: opacity / 100, ink: digitInk(hex),
       rgb: [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16))};
+  }
+  function diamondPaints(board) {
+    return [0, 1].map(index => {
+      const bit = index ^ Number(board.phase);
+      const key = bit ? "one" : "zero";
+      return {...logicPaint(board[key], board[key + "Opacity"]), bit};
+    });
   }
 
   function paintLogic() {
@@ -322,7 +333,7 @@
     if (state.logic === "layers" || !logicContext) {
       logicCanvas.hidden = true;
       for (const board of layers()) {
-        if (!board.visible) continue;
+        if (!board.visible || isDiamondGrid(board)) continue;
         const mask = rhombusMask(board);
         for (let y = board.y; y < Math.min(rows, board.y + board.rows); y++) {
           for (let x = board.x; x < Math.min(cols, board.x + board.cols); x++) {
@@ -338,7 +349,7 @@
     }
     const additive = state.logic === "add-rgb";
     const and = state.logic.startsWith("and"), byPalette = !additive && state.logic.endsWith("-rgb");
-    const visible = layers().filter(board => board.visible).map(board => ({
+    const visible = layers().filter(board => board.visible && !isDiamondGrid(board)).map(board => ({
       ...board, palette: board.zero.toLowerCase() + "/" + board.one.toLowerCase(),
     }));
     const paletteSizes = new Map();
@@ -459,11 +470,17 @@
     canvas.width = cols * scale; canvas.height = rows * scale;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw Error("Не удалось создать снимок поля");
-    ctx.fillStyle = "#1e2933"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#92aaba24";
-    for (let x = 0; x < cols; x++) ctx.fillRect(x * scale, 0, 1, canvas.height);
-    for (let y = 0; y < rows; y++) ctx.fillRect(0, y * scale, canvas.width, 1);
-    if (state.logic !== "layers" && logicContext) {
+    const visible = layers().filter(board => board.visible);
+    const hasDiamondGrid = visible.some(isDiamondGrid);
+    ctx.fillStyle = hasDiamondGrid ? "#354653" : "#1e2933";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!hasDiamondGrid) {
+      ctx.fillStyle = "#92aaba24";
+      for (let x = 0; x < cols; x++) ctx.fillRect(x * scale, 0, 1, canvas.height);
+      for (let y = 0; y < rows; y++) ctx.fillRect(0, y * scale, canvas.width, 1);
+    }
+    const logic = state.logic !== "layers" && logicContext;
+    if (logic) {
       if (!logicCanvas.hidden) {
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(logicCanvas,
@@ -472,22 +489,30 @@
           parseFloat(logicCanvas.style.width) / state.cell * scale,
           parseFloat(logicCanvas.style.height) / state.cell * scale);
       }
-    } else {
-      for (const board of layers()) {
-        if (!board.visible) continue;
-        const mask = rhombusMask(board);
-        for (let y = board.y; y < Math.min(rows, board.y + board.rows); y++) {
-          for (let x = board.x; x < Math.min(cols, board.x + board.cols); x++) {
-            if (mask && !mask.cells[(y - board.y) * board.cols + x - board.x]) continue;
-            const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
-            const key = bit ? "one" : "zero";
-            ctx.fillStyle = board[key]; ctx.globalAlpha = board[key + "Opacity"] / 100;
-            ctx.fillRect(x * scale, y * scale, scale, scale);
-            if (state.digits && canvasDigits) {
-              ctx.globalAlpha = 1; ctx.fillStyle = digitInk(board[key]);
-              ctx.save(); ctx.translate(x * scale, y * scale); ctx.scale(scale, scale);
-              ctx.fill(canvasDigits[bit]); ctx.restore();
-            }
+    }
+    for (const board of visible) {
+      const grid = diamondGrid(board);
+      if (grid) {
+        ctx.save();
+        ctx.translate(board.x * scale, board.y * scale);
+        ctx.scale(scale, scale);
+        diamonds.paint(ctx, grid, diamondPaints(board), scale, state.digits && grid.side * scale >= 8);
+        ctx.restore();
+        continue;
+      }
+      if (logic) continue;
+      const mask = rhombusMask(board);
+      for (let y = board.y; y < Math.min(rows, board.y + board.rows); y++) {
+        for (let x = board.x; x < Math.min(cols, board.x + board.cols); x++) {
+          if (mask && !mask.cells[(y - board.y) * board.cols + x - board.x]) continue;
+          const bit = Number(board.phase) ^ ((x - board.x + y - board.y) & 1);
+          const key = bit ? "one" : "zero";
+          ctx.fillStyle = board[key]; ctx.globalAlpha = board[key + "Opacity"] / 100;
+          ctx.fillRect(x * scale, y * scale, scale, scale);
+          if (state.digits && canvasDigits) {
+            ctx.globalAlpha = 1; ctx.fillStyle = digitInk(board[key]);
+            ctx.save(); ctx.translate(x * scale, y * scale); ctx.scale(scale, scale);
+            ctx.fill(canvasDigits[bit]); ctx.restore();
           }
         }
       }
@@ -517,12 +542,18 @@
     fitFieldHeight(state);
     initializeField();
     const ordered = layers();
+    const logic = state.logic !== "layers" && logicContext;
+    world.toggleAttribute("data-diamond-grid", ordered.some(board => board.visible && isDiamondGrid(board)));
     const ids = new Set(ordered.map(board => board.id));
     for (const [id, {element, outline}] of elements) {
       if (!ids.has(id)) { element.remove(); outline.remove(); elements.delete(id); }
     }
     let total = 0, visible = 0;
     for (const [index, board] of ordered.entries()) {
+      const previous = elements.get(board.id);
+      if (previous && previous.shape !== board.shape) {
+        previous.element.remove(); previous.outline.remove(); elements.delete(board.id);
+      }
       if (!elements.has(board.id)) {
         const element = document.createElement("button");
         element.type = "button";
@@ -531,31 +562,49 @@
         const outline = document.createElement("div");
         outline.className = "chess-selection";
         outline.setAttribute("aria-hidden", "true");
-        elements.set(board.id, {element, outline});
+        elements.set(board.id, {element, outline, shape: board.shape});
         world.append(element, outline);
       }
       const active = state.selected === board.id;
       const marked = state.selectedIds.includes(board.id);
       const {element, outline} = elements.get(board.id);
-      applyBoardMask(element, outline, rhombusMask(board));
+      const grid = diamondGrid(board);
+      element.toggleAttribute("data-diamond-grid", !!grid);
+      if (grid) {
+        const geometry = board.cols + "×" + board.rows;
+        if (outline.dataset.geometry !== geometry) {
+          outline.dataset.geometry = geometry;
+          outline.setAttribute("data-rhombus", "");
+          outline.replaceChildren(diamonds.svg(grid));
+        }
+        const digits = state.digits && grid.side * state.cell >= 8;
+        const tile = [geometry, board.phase, board.zero, board.one, board.zeroOpacity, board.oneOpacity, digits].join(":");
+        if (element.dataset.tile !== tile) {
+          element.dataset.tile = tile;
+          element.replaceChildren(diamonds.svg(grid, diamondPaints(board), digits));
+        }
+      } else {
+        applyBoardMask(element, outline, rhombusMask(board));
+        element.style.backgroundSize = state.cell * 2 + "px " + state.cell * 2 + "px";
+        const tile = [board.phase, board.zero, board.one, board.zeroOpacity, board.oneOpacity, state.digits].join(":");
+        if (element.dataset.tile !== tile) {
+          element.style.backgroundImage = pattern(board);
+          element.dataset.tile = tile;
+        }
+      }
       element.hidden = !board.visible;
       element.tabIndex = active ? 0 : -1;
       element.setAttribute("aria-pressed", String(marked));
-      element.setAttribute("aria-label", boardLabel(board) + ", " + board.cols + " на " + board.rows +
-        " клеток, X " + board.x + ", Y " + board.y + ". Стрелки — перемещение.");
+      const dimensions = grid ? grid.tiles.length + " ромбов" : board.cols + " на " + board.rows + " клеток";
+      element.setAttribute("aria-label", boardLabel(board) + ", " + dimensions +
+        ", X " + board.x + ", Y " + board.y + ". Стрелки — перемещение.");
       positionBoard(element, board);
-      element.style.backgroundSize = state.cell * 2 + "px " + state.cell * 2 + "px";
-      element.style.zIndex = String(index + 1);
+      element.style.zIndex = String(index + (logic && grid ? MAX_BOARDS + 2 : 1));
       outline.hidden = !board.visible || !marked;
       if (!outline.hidden) {
         positionBoard(outline, board);
-        outline.style.zIndex = String(MAX_BOARDS + 2 + index);
+        outline.style.zIndex = String(2 * MAX_BOARDS + 2 + index);
         outline.toggleAttribute("data-primary", active);
-      }
-      const tile = [board.phase, board.zero, board.one, board.zeroOpacity, board.oneOpacity, state.digits].join(":");
-      if (element.dataset.tile !== tile) {
-        element.style.backgroundImage = pattern(board);
-        element.dataset.tile = tile;
       }
       total += area(board);
       if (board.visible) {
@@ -584,6 +633,13 @@
     const board = selected();
     if (!board) {
       byId("board-count").textContent = "";
+      return;
+    }
+    const grid = diamondGrid(board);
+    if (grid) {
+      const zero = grid.filled[Number(board.phase)].length, one = grid.filled[Number(!board.phase)].length;
+      byId("board-count").textContent = grid.tiles.length + " ромбов · пустых: " +
+        (grid.tiles.length - zero - one) + " · 0: " + zero + " · 1: " + one;
       return;
     }
     const count = area(board);
@@ -912,15 +968,14 @@
     const ids = new Set(state.boards.map(board => board.id));
     const id = freeId(ids, Math.max(0, ...ids) % MAX_ID + 1);
     const board = makeBoard(id, x, y);
-    if (shape === "rhombus") {
-      board.shape = shape;
-      board.cols = 24;
-      board.rows = 21;
-    }
+    if (shape) board.shape = shape;
     if (source) {
       board.cols = source.cols + 1;
       board.rows = source.rows + 1;
       for (const key of ["phase", "zero", "one", "zeroOpacity", "oneOpacity"]) board[key] = source[key];
+    } else if (isDiamondGrid(board)) {
+      board.cols = 16;
+      board.rows = 12;
     }
     board.aspectCols = board.cols;
     board.aspectRows = board.rows;
@@ -929,16 +984,27 @@
     state.boards.push(board);
     setSelection([id]);
     const right = board.x + board.cols;
-    if (source && state.fieldCols !== null && right >= state.fieldCols) {
+    if ((source || isDiamondGrid(board)) && state.fieldCols !== null && right >= state.fieldCols) {
       state.fieldCols = Math.min(MAX_FIELD, right + 2);
     }
+    if (isDiamondGrid(board) && !state.autoHeight) {
+      state.fieldRows = Math.max(state.fieldRows, Math.min(MAX_FIELD_ROWS, board.y + board.rows + 1));
+    }
+    return board;
   }
-  for (const [id, shape] of [["add", undefined], ["add-rhombus", "rhombus"]]) {
-    byId(id).addEventListener("click", () => {
-      const position = 2 + state.boards.length * 2;
-      if (state.boards.length < MAX_BOARDS) mutate(() => addBoard(position, position, null, shape));
+  byId("add").addEventListener("click", () => {
+    const position = 2 + state.boards.length * 2;
+    if (state.boards.length < MAX_BOARDS) mutate(() => addBoard(position, position));
+  });
+  byId("add-rhombus").addEventListener("click", () => {
+    if (state.boards.length >= MAX_BOARDS) return;
+    let board;
+    mutate(() => {
+      const bottom = Math.max(1, ...state.boards.filter(item => item.visible).map(item => item.y + item.rows));
+      board = addBoard(2, Math.min(MAX_POSITION, bottom + 1), null, "diamond-grid");
     });
-  }
+    if (board) elements.get(board.id).element.scrollIntoView({block: "nearest", inline: "nearest"});
+  });
   byId("add-diagonal").addEventListener("click", () => {
     const source = selected();
     if (!diagonalAvailable(source)) return;
@@ -992,18 +1058,27 @@
     const x = event.clientX - rect.left, y = event.clientY - rect.top;
     const outside = event.pointerType === "touch" ? 10 : 5;
     const inside = [], borders = [];
-    for (const board of layers()) {
+    const ordered = layers();
+    if (state.logic !== "layers" && logicContext) ordered.sort((a, b) => Number(isDiamondGrid(a)) - Number(isDiamondGrid(b)));
+    for (const board of ordered) {
       if (!board.visible) continue;
       const left = board.x * state.cell, top = board.y * state.cell;
       const width = board.cols * state.cell, height = board.rows * state.cell;
       const right = left + width, bottom = top + height;
       const mask = rhombusMask(board);
+      const grid = diamondGrid(board);
       const col = Math.floor((x - left) / state.cell), row = Math.floor((y - top) / state.cell);
       const covered = x >= left && x < right && y >= top && y < bottom &&
-        (!mask || mask.cells[row * board.cols + col]);
+        (!mask || mask.cells[row * board.cols + col]) &&
+        (!grid || diamonds.contains(grid, (x - left) / state.cell, (y - top) / state.cell));
       if (covered) inside.push(board);
-      if (mask && !covered && board.id !== state.selected) continue;
+      if ((mask || grid) && !covered && board.id !== state.selected) continue;
       if (x < left - outside || x > right + outside || y < top - outside || y > bottom + outside) continue;
+      if (grid) {
+        const edge = diamonds.edgeAt(grid, (x - left) / state.cell, (y - top) / state.cell, outside / state.cell);
+        if (edge?.horizontal || edge?.vertical) borders.push({board, ...edge});
+        continue;
+      }
       const nearX = Math.min(outside, width / 3), nearY = Math.min(outside, height / 3);
       const horizontal = x <= left + nearX ? -1 : x >= right - nearX ? 1 : 0;
       const vertical = y <= top + nearY ? -1 : y >= bottom - nearY ? 1 : 0;
@@ -1129,7 +1204,7 @@
         [board.y, board.rows] = resizeAxis(top, rows, y, vertical);
       }
       // При сдвиге угла сохраняем цвета в общих клетках старого и нового прямоугольника.
-      board.phase = phase !== ((board.x - left + board.y - top) % 2 !== 0);
+      if (!isDiamondGrid(board)) board.phase = phase !== ((board.x - left + board.y - top) % 2 !== 0);
     } else {
       const xs = drag.origins.map(origin => origin.x), ys = drag.origins.map(origin => origin.y);
       // Ограничиваем всю группу одним сдвигом на ось, сохраняя расстояния у границы.

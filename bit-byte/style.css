@@ -85,6 +85,7 @@ h1 { color: var(--cyan); font-size: 26px; }
 #chess-viewport { position: relative; overflow: clip; width: 100%; height: clamp(360px, 65vh, 720px); margin: 10px 0; border: 1px solid var(--line); overscroll-behavior: contain; }
 #chess-viewport:focus-visible { outline: 1px solid var(--cyan); }
 #chess-world { position: relative; width: 100%; height: 100%; isolation: isolate; background-color: #1e2933; background-image: linear-gradient(#92aaba24 1px, transparent 1px), linear-gradient(90deg, #92aaba24 1px, transparent 1px); background-size: var(--chess-cell) var(--chess-cell); cursor: var(--chess-cursor, grab); touch-action: none; user-select: none; }
+#chess-world[data-diamond-grid] { background-color: #354653; background-image: none; }
 /* Рамка поля лежит отдельным слоем над краями шахматок. */
 .chess-field-edge { position: absolute; z-index: 18; touch-action: none; user-select: none; background: #6cdded44; }
 .chess-field-edge[data-field-edge="right"] { right: 0; top: 0; bottom: 0; width: 10px; cursor: ew-resize; border-right: 2px solid var(--cyan); }
@@ -95,6 +96,10 @@ h1 { color: var(--cyan); font-size: 26px; }
 .chess-board { display: block; min-width: 0; min-height: 0; padding: 0; border: 0; margin: 0; background-color: transparent; background-repeat: repeat; image-rendering: pixelated; box-shadow: 0 0 0 1px #91a6b388; cursor: inherit; mask-size: 100% 100%; mask-repeat: no-repeat; }
 .chess-board[hidden], .chess-selection[hidden] { display: none; }
 .chess-board:focus-visible { outline: 1px dashed var(--board-color); outline-offset: 3px; }
+.chess-board[data-diamond-grid] { box-shadow: none; }
+.chess-board[data-diamond-grid] svg { display: block; width: 100%; height: 100%; pointer-events: none; }
+.chess-board[data-diamond-grid]:focus-visible { outline: none; }
+.chess-board[data-diamond-grid]:focus-visible + .chess-selection[data-primary] path { stroke-dasharray: 4px 3px; }
 .chess-selection { border: 1px dashed var(--board-color); pointer-events: none; }
 .chess-selection[data-primary] { border-width: 2px; border-style: solid; }
 .chess-selection[data-rhombus] { border: 0; }
