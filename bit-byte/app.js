@@ -222,22 +222,33 @@
           bits.className = "bits";
           const bitColumns = BIT_COUNT === 2 ? 2 : 4;
           if (BIT_COUNT > 1) {
+            button.classList.add("byte-word");
+            button.title = `${byte.bits.join("")}, десятичное ${byte.value}, 0x${code}`;
             bits.classList.add("bits-checkerboard");
             bits.style.setProperty("--bit-columns", bitColumns);
             bits.style.setProperty("--bit-rows", BIT_COUNT * 2 / bitColumns);
             bits.setAttribute("aria-hidden", "true");
-          }
-          byte.bits.forEach((bit, index) => {
-            const digit = document.createElement("span");
-            if (bit === "1") digit.className = "bit-one";
-            digit.textContent = bit;
-            if (BIT_COUNT > 1) {
-              const bitRow = Math.floor(index / (bitColumns / 2));
-              digit.style.gridRow = bitRow + 1;
-              digit.style.gridColumn = (index % (bitColumns / 2)) * 2 + bitRow % 2 + 1;
+            let bitIndex = 0;
+            for (let row = 0; row < BIT_COUNT * 2 / bitColumns; row += 1) {
+              for (let column = 0; column < bitColumns; column += 1) {
+                const digit = document.createElement("span");
+                if ((row + column) % 2 === 0) {
+                  const bit = byte.bits[bitIndex++];
+                  digit.className = bit === "1" ? "bit-one" : "bit-zero";
+                  digit.textContent = bit;
+                } else {
+                  digit.className = "bit-vacant";
+                  digit.setAttribute("aria-hidden", "true");
+                }
+                bits.append(digit);
+              }
             }
+          } else {
+            const digit = document.createElement("span");
+            if (byte.bits[0] === "1") digit.className = "bit-one";
+            digit.textContent = byte.bits[0];
             bits.append(digit);
-          });
+          }
           meta.className = "byte-code";
           meta.textContent = `${byte.value} · ${code}`;
           button.append(bits, meta);
