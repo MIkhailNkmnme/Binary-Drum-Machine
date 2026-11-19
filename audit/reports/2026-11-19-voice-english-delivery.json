@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-19",
+  "commit": "7d10bcd4dcea764874126c3130a5c68d68f03c1d",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "voice/index.html",
+      "status": 200,
+      "bytes": 23307,
+      "normalization": "LF",
+      "sha256": "c6387aa25ec8454a8121f58cb6b0ee1fd0367c07c33e657580c945299cd0f9ca",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/app.js",
+      "status": 200,
+      "bytes": 56296,
+      "normalization": "LF",
+      "sha256": "eac9aeb7a625d73b446542afc36c519cdb306502533107d9b77533ea8563d675",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/README.md",
+      "status": 200,
+      "bytes": 48481,
+      "normalization": "LF",
+      "sha256": "18ee9004f65eaf376775fdebe0c599deeb1aa89ca1be1079bc8666ec1ee36ce1",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/english.js",
+      "status": 200,
+      "bytes": 10898,
+      "normalization": "LF",
+      "sha256": "224c1a7867289fe3646ca3ef057f725902135afb78b0b016709ec3f8b50b0a31",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/text.js",
+      "status": 200,
+      "bytes": 8179,
+      "normalization": "LF",
+      "sha256": "bbe668f78cb0bdb03a74a6cb2bf40791a30ea0d162b3e3a74bc1d0edb1dec57f",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/prosody.js",
+      "status": 200,
+      "bytes": 8986,
+      "normalization": "LF",
+      "sha256": "6b879b90d34b97214f62a9dc6bc84a2d914d824ad481c7096060f2b7722feb1c",
+      "matchesRelease": true
+    }
+  ],
+  "canonical": {
+    "url": "https://1001100.online/voice/",
+    "status": 200,
+    "matchesRelease": true,
+    "sha256": "c6387aa25ec8454a8121f58cb6b0ee1fd0367c07c33e657580c945299cd0f9ca"
+  },
+  "pages": {
+    "runId": 44525059050,
+    "conclusion": "success"
+  }
+}
