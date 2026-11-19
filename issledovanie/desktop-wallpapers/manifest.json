@@ -1,0 +1,227 @@
+{
+  "version": "0.001",
+  "width": 3840,
+  "height": 2160,
+  "fps": 24,
+  "sampleRate": 12,
+  "seconds": 8,
+  "audio": false,
+  "fingerprint": "c68f79f38445136f32a4f0478156fa170d7e852af6cceb1de1c483c0bc067250",
+  "sources": {
+    "mayatnik-phone-scenes.js": "655c14395da8ac1e171674ef76debb06b91acb1f11a223cbe4a2ef0b2192d99c",
+    "mayatnik-phone-catalog.js": "1b850b8a2c8ff5ee1d2331891160b72709343050d8eeb3de0c6f0df17e8cda7e",
+    "mayatnik-synthesis-pendulums.js": "69b0740e13bcec2f6c39420c1aa82d8ba37d1e5ab03e3fb664877d06794baada"
+  },
+  "items": [
+    {
+      "id": "pendulum-duet",
+      "title": "Зеркальный дуэт",
+      "group": "pendulums",
+      "source": {
+        "recipe": "geometric-pendulums-duet"
+      },
+      "video": {
+        "path": "media/pendulum-duet.mp4",
+        "bytes": 9698768,
+        "sha256": "7b229f18c6b3641a483880a70a53b0f6ded91ed13a3cd9fec92e672d83a94892"
+      },
+      "image": {
+        "path": "media/pendulum-duet.png",
+        "bytes": 930088,
+        "sha256": "cedcf2c619131b6e540b275d08b363d83c49460f7d2f5fd7fe5ad8806079a63f"
+      },
+      "preview": {
+        "path": "media/pendulum-duet.webp",
+        "bytes": 62668,
+        "sha256": "1c772d79c90681d2253f0f8b27889a8a31e5a89af70c9fe380b84d98e226e853"
+      }
+    },
+    {
+      "id": "pendulum-counter",
+      "title": "Встречный ход",
+      "group": "pendulums",
+      "source": {
+        "recipe": "geometric-pendulums-counter"
+      },
+      "video": {
+        "path": "media/pendulum-counter.mp4",
+        "bytes": 9683648,
+        "sha256": "d4bc26f8d5fbb57e142b263741544a5c7484ef084ac9e644748590871e6fa5f9"
+      },
+      "image": {
+        "path": "media/pendulum-counter.png",
+        "bytes": 3226666,
+        "sha256": "661f52b82bcaa53ea8f9039e2dcca190f29aca2c997a33059391a978092e731e"
+      },
+      "preview": {
+        "path": "media/pendulum-counter.webp",
+        "bytes": 53428,
+        "sha256": "a2998fb310bc2b4fd8c9bac480bda4641b09a6b0a5cdc8ca55d8059ccf4b1d1b"
+      }
+    },
+    {
+      "id": "pendulum-trail",
+      "title": "Восемь кадров следа",
+      "group": "pendulums",
+      "source": {
+        "recipe": "geometric-pendulums-trail"
+      },
+      "video": {
+        "path": "media/pendulum-trail.mp4",
+        "bytes": 8973881,
+        "sha256": "b268985a4e484c3eb90e2dfa2d1018f7c3c6bd482d9371e15a45ae8c1960a728"
+      },
+      "image": {
+        "path": "media/pendulum-trail.png",
+        "bytes": 1202722,
+        "sha256": "3f67d7f3972f0fc5ad999a249d0855f0f14c7f4cf2ef556ccecc16dcfa434ade"
+      },
+      "preview": {
+        "path": "media/pendulum-trail.webp",
+        "bytes": 46918,
+        "sha256": "b6e377832fd998a7d147cd534bca0212e89d8762f4062a35367fab8f232b6b06"
+      }
+    },
+    {
+      "id": "zerk-growth",
+      "title": "Медный рост",
+      "group": "zerkalius",
+      "source": {
+        "recipe": "xor-pascal-zero-padded",
+        "seed": "11010011011"
+      },
+      "video": {
+        "path": "media/zerk-growth.mp4",
+        "bytes": 5730708,
+        "sha256": "bba314035488d655e30152efadb6e8553f9485385e596923f4672bedeb303ede"
+      },
+      "image": {
+        "path": "media/zerk-growth.png",
+        "bytes": 1044302,
+        "sha256": "63c67db5a12256f7ef6b57eb0f741f4077b39f2bec83c1997ae89e70b25acec3"
+      },
+      "preview": {
+        "path": "media/zerk-growth.webp",
+        "bytes": 40156,
+        "sha256": "25b21b54f1f736a69c1514bfc7b5d4daaf69944ba8cf30b69fc756530fc2747e"
+      }
+    },
+    {
+      "id": "zerk-reflection",
+      "title": "Встречные конусы",
+      "group": "zerkalius",
+      "source": {
+        "recipe": "xor-pascal-zero-padded",
+        "seed": "101100100111011"
+      },
+      "video": {
+        "path": "media/zerk-reflection.mp4",
+        "bytes": 7334471,
+        "sha256": "7533ac026b980bd3d6d2c61a38428d72aea56ae9320c43670d03ce9b543cb071"
+      },
+      "image": {
+        "path": "media/zerk-reflection.png",
+        "bytes": 1501475,
+        "sha256": "fe39d60a6a177977ecd066dff16c2f6c88d64076dbb09f1663b25067afdfc12c"
+      },
+      "preview": {
+        "path": "media/zerk-reflection.webp",
+        "bytes": 51084,
+        "sha256": "0af1bf4bff7161394130eab373cbf01436c853d6e87b11e88a402a70adda5928"
+      }
+    },
+    {
+      "id": "zerk-stitch",
+      "title": "Стык отражений",
+      "group": "zerkalius",
+      "source": {
+        "recipe": "xor-pascal-zero-padded",
+        "seed": "11101000100101111"
+      },
+      "video": {
+        "path": "media/zerk-stitch.mp4",
+        "bytes": 7424256,
+        "sha256": "11fd84c456bbeb4574771fb21691e0f052833ba63d3fc0f6b1c5f4f32df2124a"
+      },
+      "image": {
+        "path": "media/zerk-stitch.png",
+        "bytes": 1644202,
+        "sha256": "dc5d74d209659d37ca6e25697a45f73b1f9a04d06b9d6f8ae312338db105f71c"
+      },
+      "preview": {
+        "path": "media/zerk-stitch.webp",
+        "bytes": 50118,
+        "sha256": "8afb4b1ca759fc1f630d7e736d5e04da7c9ded51e7e7e19ccccd58b4225e7812"
+      }
+    },
+    {
+      "id": "rhomb-aurora",
+      "title": "Полярный свет",
+      "group": "rhombi",
+      "source": {
+        "recipe": "geometric-rhombi-aurora"
+      },
+      "video": {
+        "path": "media/rhomb-aurora.mp4",
+        "bytes": 3740930,
+        "sha256": "44a929f4b930f1c0719de058e9329c115df9264ce765b3988e4374d570bd5b60"
+      },
+      "image": {
+        "path": "media/rhomb-aurora.png",
+        "bytes": 858501,
+        "sha256": "3f126bdebc759b02437eabf6d40b24d3883dc8957c543b2198878535c3a3b8e5"
+      },
+      "preview": {
+        "path": "media/rhomb-aurora.webp",
+        "bytes": 20092,
+        "sha256": "fe25a84d81a0c74fe3fe304e062b1b0ef60d0f9d1b5d3afd128bddb282c564e0"
+      }
+    },
+    {
+      "id": "rhomb-mosaic",
+      "title": "Плитка XOR",
+      "group": "rhombi",
+      "source": {
+        "recipe": "geometric-rhombi-mosaic"
+      },
+      "video": {
+        "path": "media/rhomb-mosaic.mp4",
+        "bytes": 6809380,
+        "sha256": "9aa4dac19fdf9697906cf1a86bac48664a4e7e944d67cc7aba082815a4a4a054"
+      },
+      "image": {
+        "path": "media/rhomb-mosaic.png",
+        "bytes": 1358238,
+        "sha256": "12ea2cf795b7f1c0a93d3ae887c8e8ab0fac220e87cf4cf078ee30fb6d257dcf"
+      },
+      "preview": {
+        "path": "media/rhomb-mosaic.webp",
+        "bytes": 43660,
+        "sha256": "bb7a342e28f0e4cc0184d33c247e1dfc6a284b7656dcdb35682fc6c372ae9635"
+      }
+    },
+    {
+      "id": "rhomb-axes",
+      "title": "Две оси",
+      "group": "rhombi",
+      "source": {
+        "recipe": "geometric-rhombi-axes"
+      },
+      "video": {
+        "path": "media/rhomb-axes.mp4",
+        "bytes": 4825348,
+        "sha256": "5a312963c87393216674c0806e43d64b6df0da2bc6c6b9400447a13e84fd3b32"
+      },
+      "image": {
+        "path": "media/rhomb-axes.png",
+        "bytes": 1125131,
+        "sha256": "416037f701c1f29adc21e5a550ae6d6afc175e68bf6ebf2cd4361f31af36787d"
+      },
+      "preview": {
+        "path": "media/rhomb-axes.webp",
+        "bytes": 31804,
+        "sha256": "6017723dff99343321228465d017ca679f3641ff8c52cb6572c6d2cd56e9c9a3"
+      }
+    }
+  ]
+}
