@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.0.0';
+  const version='text-prosody-v1.1.0';
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   function normalize(value={}){
@@ -35,7 +35,7 @@
     }
     const words=[],stressed=new Set();let start=0;
     while(start<letters.length){
-      if(!isWord(letters[start])){start++;continue;}let end=start+1;while(end<letters.length&&isWord(letters[end]))end++;
+      if(!isWord(letters[start])){start++;continue;}const numeric=/^[0-9]$/.test(letters[start]);let end=start+1;while(end<letters.length&&isWord(letters[end])&&/^[0-9]$/.test(letters[end])===numeric)end++;
       const chars=letters.slice(start,end),word=chars.join(''),lower=word.toLowerCase(),explicit=[];for(let j=start;j<end;j++)if(manual.has(j))explicit.push(j);
       if(explicit.length>1)throw Error('В слове «'+word+'» допускается одна явная ударная гласная.');
       let at=null,source='unknown';
@@ -43,7 +43,6 @@
       else if(language==='ru'&&chars.filter(c=>c.toLowerCase()==='ё').length===1){at=start+chars.findIndex(c=>c.toLowerCase()==='ё');source='yo';}
       else if(dictionary[language]?.has(lower)){at=start+dictionary[language].get(lower);source='dict';}
       else if(/^\d+$/.test(word))source='catalog';
-      else if(language==='en')source='names';
       if(at!==null)stressed.add(at);
       words.push({word,start,end,source,stressIndex:at===null?null:rawIndices[at],rawStart:rawIndices[start],rawEnd:rawIndices[end-1]+1});start=end;
     }
@@ -61,11 +60,11 @@
       const char=prepared.letters[unit.cleanIndices?.[0]],numeric=/^[0-9]$/.test(char||''),numericStress=numeric?digitStress[language==='de'?'de':'ru'][Number(char)]:[];
       unit.stresses=[];
       for(let j=0;j<unit.score.length;j++){
-        const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(marked||numericStress.includes(j));unit.stresses.push(stress);
+        const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(unit.enStressTokens?unit.enStressTokens.includes(j):marked||numericStress.includes(j));unit.stresses.push(stress);
         const factor={vowel:.72,stop:.80,affricate:.82,fricative:.80,sonorant:.82,trill:.82,rhotic:.82,silence:1}[k]||1;
         if(k==='silence'){
           const punctuation=unit.indices.map(i=>prepared.characters[i]?.text||'').join('');token.duration=/[.!?…]/u.test(punctuation) ? .24+.10*amount : /[,;:]/u.test(punctuation) ? .12+.05*amount : /\s/u.test(punctuation) ? .07 : .06;
-        }else token.duration*=factor*(stress ? 1.25+.20*amount : k==='vowel'&&word&&word.source!=='unknown' ? .93 : 1);
+        }else token.duration*=factor*(stress ? 1.25+.20*amount : k==='vowel'&&word&&!['unknown','en-rules'].includes(word.source) ? .93 : 1);
         token.duration=Number(Math.max(.01,token.duration).toFixed(6));
       }
     }
@@ -87,8 +86,8 @@
         u.prosody.push({pitchStartSemitones:clamp(contourValue(type,from)+accent,-12,12),pitchEndSemitones:clamp(contourValue(type,to)+accent*.35,-12,12),gain:k==='silence'?0:stress?1+.18*amount:k==='fricative' ? .96 : 1});elapsed+=count;
       }
     }
-    const unknown=prepared.words.filter(w=>w.source==='unknown').map(w=>w.word),unique=[...new Set(unknown)];
-    return {units:result,config,words:prepared.words,note:unique.length?'Без автоматического ударения: '+unique.slice(0,8).join(', ')+(unique.length>8?' … ('+unique.length+' слов)':'')+'. Эти слова читаются нейтрально.':'Ударения: явные метки, ё или небольшой открытый словарь. EN остаётся чтением названий букв.'};
+    const unknown=prepared.words.filter(w=>['unknown','en-rules'].includes(w.source)).map(w=>w.word),unique=[...new Set(unknown)];
+    return {units:result,config,words:prepared.words,note:unique.length?'Без автоматического ударения: '+unique.slice(0,8).join(', ')+(unique.length>8?' … ('+unique.length+' слов)':'')+'. Для неизвестных EN-слов применяются приближённые правила чтения.':'Ударения: явные метки, ё или небольшой открытый словарь. EN читает слова и английские цифры; служебные слова могут не иметь отдельного акцента.'};
   }
   root.VoiceProsody=Object.freeze({version,defaults,normalize,prepare,apply});
 })(globalThis);
