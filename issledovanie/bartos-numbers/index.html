@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+<!-- БАР-001 · v0.001 -->
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Karl Bartos — Numbers: разбор референса · Зеркалиус</title>
+<title>Karl Bartos — Numbers: разбор референса · Зеркалиус v0.001</title>
 <style>
   :root { --ink:#f0ece0; --dim:#8b95a3; --bg:#0c0e12; --accent:#3ddc97; --warn:#d65012; }
   * { box-sizing:border-box; }
@@ -26,6 +27,7 @@
   .map { font-family:Consolas, monospace; font-size:15px; letter-spacing:2px; color:var(--accent);
          overflow-x:auto; white-space:nowrap; padding:10px 12px; background:#10141a; border:1px solid #1e252d; }
   a { color:var(--accent); }
+  audio { display:block; width:min(100%, 540px); margin:12px 0; }
 </style>
 </head>
 <body>
@@ -91,12 +93,14 @@
 <li><b>Историческая справка (не измерение).</b> Kraftwerk использовали вокодер Sennheiser VSM 201: говорили числа в микрофон, а прибор переносил спектр речи на аккорд синтезатора. Именно поэтому голос звучит как инструмент, а не как человек.</li>
 </ul>
 
-<h2>Что мы сделали по мотивам</h2>
-<p>Свои цифры и буквы синтезированы и прогнаны через похожую цепочку: понижение с формантами, кольцевая модуляция 58 Гц, биткрашер 6 бит, полоса 220–4200 Гц; отдельно собран канальный вокодер на numpy (24 полосы, 120–7000 Гц). Набросок в этом темпе — 90 BPM, потому что он ближе к нашему первому замеру:</p>
+<h2 id="synth-count">Синтетический счёт</h2>
+<p>Новый пример на ядре Codex. Немецкие числа от одного до восьми звучат на сетке 67 BPM, с двумя паузами, заданными для этого примера. Голос вычислен из фонем с помощью гармоник, шума и четырёх формант. Слышен только синтезированный голос.</p>
+<audio controls preload="none" src="count-de-procedural.wav" aria-label="Синтетический немецкий счёт от одного до восьми"></audio>
+<p><a href="count-de-procedural.wav" download>Скачать WAV</a> · <a href="voice-manifest.json">Фонемы и параметры</a></p>
 <ul>
-<li><a href="../bit-voice/">bit-voice: цифры, буквы, вокодер</a> — файлы и скрипты;</li>
-<li><code>numbers-sketch.mp3</code> — 1:27, 32 такта, счёт роботом по цифре на такт;</li>
-<li><a href="../bit-music/">bit-music: трек и бесшовная петля</a> — из чего всё выросло.</li>
+<li><a href="../bit-voice/numbers-67-synth.mp3">Numbers · 67 BPM, синтетический голос DSH (MP3)</a></li>
+<li><a href="../../voice/">Редактор «Голос»</a> · <a href="../bit-voice/README.md">Исходники голоса</a></li>
+<li><a href="../bit-music/zerkalius-loop.mp3">Бесшовная петля (MP3)</a> · <a href="../bit-music/README.md">Как собрана музыка из битов</a></li>
 </ul>
 
 <h2>Ограничения</h2>

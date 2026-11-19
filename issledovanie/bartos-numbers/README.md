@@ -1,4 +1,4 @@
-# Рефренс Karl Bartos «Numbers»: измерения и оговорки
+# Рефренс Karl Bartos «Numbers» · v0.001
 
 Черновик · 17 ноября 2026. Разбор кавера на «Numbers» / «Computer World» Kraftwerk:
 <a href="https://www.youtube.com/watch?v=yaC2zD8C6EU">youtube.com/watch?v=yaC2zD8C6EU</a>, 6:34.
@@ -39,7 +39,12 @@ python sources/analyze.py
 Нужны исходный WAV (44,1 кГц, стерео) по пути из константы `SRC`, numpy и Pillow.
 Скрипт пишет `sources/reference.json`, `energy.png`, `onsets.png`.
 
-## Связанное
+## Синтетический счёт
 
-- `<a href="../bit-voice/">bit-voice</a>` — наши цифры, буквы и вокодер.
-- `<a href="../bit-music/">bit-music</a>` — трек и бесшовная петля, из которых всё выросло.
+[Новый WAV](count-de-procedural.wav) произносит eins, zwei, drei, vier, fünf, sechs, sieben, acht. Счёт составлен для примера на сетке 67 BPM. Источники звука — математические гармоники и шум, обработанные четырьмя формантами [ядра Codex](../../voice/engine.js). Немецкие звуки берутся из [рецептов](../../voice/german.js). Аудиовходов нет.
+
+Из корня репозитория выполните `node issledovanie/bartos-numbers/build-voice.cjs`. [Реестр](voice-manifest.json) сохраняет версии и хеши исходников, фонемы, настройки, семена шума и размещение каждого слова. WAV использует PCM16, моно, 22 050 Гц. Слуховая оценка остаётся пользователю.
+
+- [Numbers 67 BPM, синтетика DSH](../bit-voice/numbers-67-synth.mp3) · [описание](../bit-voice/README.md)
+- [Редактор «Голос»](../../voice/)
+- [Бесшовная петля MP3](../bit-music/zerkalius-loop.mp3) · [описание](../bit-music/README.md)

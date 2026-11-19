@@ -1,0 +1,320 @@
+{
+  "title": "Немецкий счёт на сетке 67 BPM",
+  "language": "de",
+  "bpm": 67,
+  "pulses": [
+    "1",
+    "2",
+    "3",
+    "4",
+    null,
+    "5",
+    "6",
+    "7",
+    "8",
+    null
+  ],
+  "sampleRate": 22050,
+  "duration": 8.955238095238096,
+  "sourceAudio": [],
+  "renderer": "Ядро Codex",
+  "engineVersion": "procedural-formant-browser-v1.1.0",
+  "germanVersion": "german-recipes-v1.0.0",
+  "node": "v22.16.0",
+  "sources": [
+    {
+      "path": "../../voice/engine.js",
+      "sha256": "dfff47ffa636bbe3205b0de4f6fb7acd5465c1d11bb6e377967d2e8c946a0a92"
+    },
+    {
+      "path": "../../voice/german.js",
+      "sha256": "35ef8890270d9c5614ccf2e7da574cc20f627fc1a02065e7ddff5f0bf16e30de"
+    }
+  ],
+  "settings": {
+    "pitchStart": 118,
+    "pitchEnd": 102,
+    "vibratoDepth": 0.7,
+    "vibratoRate": 2.1,
+    "speed": 1,
+    "formantScale": 1,
+    "bandwidthScale": 1,
+    "voicing": 1,
+    "noise": 1,
+    "transitionMs": 30,
+    "outputGain": 0.72,
+    "seed": 1514492491
+  },
+  "words": [
+    {
+      "pulse": 1,
+      "digit": "1",
+      "text": "eins",
+      "recipe": "de-digit-31",
+      "score": [
+        {
+          "id": "a",
+          "duration": 0.12
+        },
+        {
+          "id": "i",
+          "duration": 0.13
+        },
+        {
+          "id": "n",
+          "duration": 0.12
+        },
+        {
+          "id": "s",
+          "duration": 0.13
+        }
+      ],
+      "phones": {},
+      "seed": 1514492491,
+      "startSample": 0,
+      "sampleCount": 11026
+    },
+    {
+      "pulse": 2,
+      "digit": "2",
+      "text": "zwei",
+      "recipe": "de-digit-32",
+      "score": [
+        {
+          "id": "ts",
+          "duration": 0.12
+        },
+        {
+          "id": "v",
+          "duration": 0.12
+        },
+        {
+          "id": "a",
+          "duration": 0.12
+        },
+        {
+          "id": "i",
+          "duration": 0.13
+        }
+      ],
+      "phones": {},
+      "seed": 1514492492,
+      "startSample": 19746,
+      "sampleCount": 10805
+    },
+    {
+      "pulse": 3,
+      "digit": "3",
+      "text": "drei",
+      "recipe": "de-digit-33",
+      "score": [
+        {
+          "id": "d",
+          "duration": 0.09
+        },
+        {
+          "id": "r",
+          "duration": 0.1
+        },
+        {
+          "id": "a",
+          "duration": 0.12
+        },
+        {
+          "id": "i",
+          "duration": 0.13
+        }
+      ],
+      "phones": {},
+      "seed": 1514492493,
+      "startSample": 39493,
+      "sampleCount": 9703
+    },
+    {
+      "pulse": 4,
+      "digit": "4",
+      "text": "vier",
+      "recipe": "de-digit-34",
+      "score": [
+        {
+          "id": "f",
+          "duration": 0.14
+        },
+        {
+          "id": "i",
+          "duration": 0.28
+        },
+        {
+          "id": "r",
+          "duration": 0.1
+        }
+      ],
+      "phones": {},
+      "seed": 1514492494,
+      "startSample": 59239,
+      "sampleCount": 11466
+    },
+    {
+      "pulse": 6,
+      "digit": "5",
+      "text": "fünf",
+      "recipe": "de-digit-35",
+      "score": [
+        {
+          "id": "f",
+          "duration": 0.12
+        },
+        {
+          "id": "de_ue",
+          "duration": 0.2
+        },
+        {
+          "id": "n",
+          "duration": 0.1
+        },
+        {
+          "id": "f",
+          "duration": 0.12
+        }
+      ],
+      "phones": {
+        "de_ue": {
+          "kind": "vowel",
+          "formants": [
+            280,
+            1750,
+            2300,
+            3300
+          ],
+          "bandwidths": [
+            70,
+            120,
+            180,
+            250
+          ],
+          "weights": [
+            1,
+            1.2,
+            0.55,
+            0.18
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      },
+      "seed": 1514492496,
+      "startSample": 98731,
+      "sampleCount": 11907
+    },
+    {
+      "pulse": 7,
+      "digit": "6",
+      "text": "sechs",
+      "recipe": "de-digit-36",
+      "score": [
+        {
+          "id": "z",
+          "duration": 0.13
+        },
+        {
+          "id": "e",
+          "duration": 0.2
+        },
+        {
+          "id": "k",
+          "duration": 0.09
+        },
+        {
+          "id": "s",
+          "duration": 0.12
+        }
+      ],
+      "phones": {},
+      "seed": 1514492497,
+      "startSample": 118478,
+      "sampleCount": 11908
+    },
+    {
+      "pulse": 8,
+      "digit": "7",
+      "text": "sieben",
+      "recipe": "de-digit-37",
+      "score": [
+        {
+          "id": "z",
+          "duration": 0.13
+        },
+        {
+          "id": "i",
+          "duration": 0.28
+        },
+        {
+          "id": "b",
+          "duration": 0.08
+        },
+        {
+          "id": "ax",
+          "duration": 0.1
+        },
+        {
+          "id": "n",
+          "duration": 0.12
+        }
+      ],
+      "phones": {},
+      "seed": 1514492498,
+      "startSample": 138224,
+      "sampleCount": 15656
+    },
+    {
+      "pulse": 9,
+      "digit": "8",
+      "text": "acht",
+      "recipe": "de-digit-38",
+      "score": [
+        {
+          "id": "a",
+          "duration": 0.22
+        },
+        {
+          "id": "de_ach",
+          "duration": 0.15
+        },
+        {
+          "id": "t",
+          "duration": 0.09
+        }
+      ],
+      "phones": {
+        "de_ach": {
+          "kind": "fricative",
+          "formants": [
+            800,
+            1400,
+            2500,
+            4000
+          ],
+          "bandwidths": [
+            500,
+            700,
+            1000,
+            1400
+          ],
+          "weights": [
+            0.45,
+            1,
+            0.55,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 0.9
+        }
+      },
+      "seed": 1514492499,
+      "startSample": 157970,
+      "sampleCount": 10144
+    }
+  ],
+  "file": "count-de-procedural.wav",
+  "sha256": "a9c173d20ad07901873487afaaac0931b13964b5841ce50c1f5bc92c255ee55f"
+}
