@@ -5,7 +5,7 @@
    General speech knowledge does not establish the intelligibility of this DSP. */
 (function(root){
   'use strict';
-  const version='english-recipes-v1.0.0',copy=value=>JSON.parse(JSON.stringify(value));
+  const version='english-recipes-v1.0.1',copy=value=>JSON.parse(JSON.stringify(value));
   const example='9876543210 Hello World! Julia and Jack walk beside a quiet river as the morning sun lights the valley. A young fox jumps over a box, while busy bees circle yellow flowers. Zoe brings fresh bread, warm milk and sweet jam to the village square. The friends watch a zebra, hear a joyful bird and follow the winding path through the woods. Max plays soft music on a small xylophone, and Lucy draws a bright blue sky. They share their food, ask curious questions and laugh together. At night, everyone feels happy and wishes the world a peaceful rest.';
   const vowel=(f,b,w)=>({kind:'vowel',formants:f,bandwidths:b,weights:w,voice:1,noise:.012});
   const dental=(voice,noise)=>({kind:'fricative',formants:[900,2300,4500,6800],bandwidths:[800,1200,1700,2000],weights:[.2,.3,.35,.2],voice,noise});
@@ -91,22 +91,22 @@
   }
   const dictionary=new Map(rows.map(([word,stress,text])=>[word,recipe(word,stress,text)]));
   const digitNames=['zero','one','two','three','four','five','six','seven','eight','nine'];
-  const letter=c=>!!c&&/^[a-z]$/i.test(c),vowel=c=>!!c&&/^[aeiouy]$/i.test(c);
+  const letter=c=>!!c&&/^[a-z]$/i.test(c),isVowelLetter=c=>!!c&&/^[aeiouy]$/i.test(c);
   function fallback(word){
     const score=[],tokenLetters=[],push=(ids,at)=>{for(const id of ids.split(' ')){score.push({id,duration:duration(id)});tokenLetters.push(at);}};
     for(let i=0;i<word.length;i++){
       const c=word[i],next=word[i+1],rest=word.slice(i),atStart=i===0;
-      if(c==='y'&&atStart&&vowel(next)){push('j',i);continue;}
+      if(c==='y'&&atStart&&isVowelLetter(next)){push('j',i);continue;}
       if(atStart&&/^(kn|gn|ps)/.test(rest))continue;
       if(atStart&&rest.startsWith('wr'))continue;
       if(rest.startsWith('tion')||rest.startsWith('sion')){push(rest.startsWith('tion')?'sh':'zh',i);push('ax',i+2);push('n',i+3);i+=3;continue;}
       const pair=rest.slice(0,2),pairs={sh:'sh',ch:'ch',th:'en_th',ph:'f',ng:'en_ng',ck:'k',qu:'k w',wh:'w',ee:'i',ea:'i',ai:'e en_ih',ay:'e en_ih',oa:'o u',ow:'o u',oo:'u',ou:'a en_uh',oi:'en_aw en_ih',oy:'en_aw en_ih',au:'en_aw',aw:'en_aw',ar:'a rr',or:'en_aw rr',er:'ax rr',ir:'ax rr',ur:'ax rr'};
       if(Object.hasOwn(pairs,pair)){push(pairs[pair],i);i++;continue;}
-      if(c===next&&!vowel(c))continue;
-      if(c==='e'&&i===word.length-1&&word.length>2&&!vowel(word[i-1]))continue;
+      if(c===next&&!isVowelLetter(c))continue;
+      if(c==='e'&&i===word.length-1&&word.length>2&&!isVowelLetter(word[i-1]))continue;
       if(c==='e'&&rest==='ed'&&i>1){const previous=word[i-1];if(previous==='t'||previous==='d')push('en_ih d',i);else push(/[pkfs]/.test(previous)?'t':'d',i+1);i++;continue;}
-      const long=word[i+2]==='e'&&i+3===word.length&&!vowel(next),longs={a:'e en_ih',e:'i',i:'a en_ih',o:'o u',u:'j u'};
-      if(vowel(c)){
+      const long=word[i+2]==='e'&&i+3===word.length&&!isVowelLetter(next),longs={a:'e en_ih',e:'i',i:'a en_ih',o:'o u',u:'j u'};
+      if(isVowelLetter(c)){
         const short={a:'ae',e:'en_eh',i:'en_ih',o:'a',u:'en_ah',y:i===word.length-1&&word.length>2?'i':'en_ih'};
         push(long&&longs[c]?longs[c]:short[c],i);continue;
       }
