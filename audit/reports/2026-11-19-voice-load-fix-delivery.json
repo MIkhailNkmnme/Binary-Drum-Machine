@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-19",
+  "commit": "2f2003ad465cd3d3ed233958cc84e4ac9e16b67e",
+  "scope": "HTTP content delivery only; no application execution or browser testing",
+  "files": [
+    {
+      "path": "voice/index.html",
+      "status": 200,
+      "bytes": 23307,
+      "normalization": "LF",
+      "sha256": "effce0b614a2460bf8faee29e0f85d5e5b13cd9dda1b5c6e216eee5cb056455c",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/english.js",
+      "status": 200,
+      "bytes": 10946,
+      "normalization": "LF",
+      "sha256": "cfaf6614ac0321009604fd3224be45efc83b25615e0e124482ce4f536a95d2ec",
+      "matchesRelease": true
+    },
+    {
+      "path": "voice/README.md",
+      "status": 200,
+      "bytes": 49439,
+      "normalization": "LF",
+      "sha256": "6a356ba6c68611d649bcf023bf2ae58dab1237a587d546bb393b351bef1541f5",
+      "matchesRelease": true
+    }
+  ],
+  "canonical": {
+    "url": "https://1001100.online/voice/",
+    "status": 200,
+    "matchesRelease": true,
+    "sha256": "effce0b614a2460bf8faee29e0f85d5e5b13cd9dda1b5c6e216eee5cb056455c"
+  },
+  "pages": {
+    "runId": 44526584446,
+    "conclusion": "success"
+  }
+}
