@@ -24,8 +24,11 @@ h1 { font-size: clamp(2.6rem, 7.5vw, 6.25rem); line-height: .98; letter-spacing:
 section { margin-top: 34px; scroll-margin-top: 16px; }
 h2 { font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -.03em; margin: 0 0 13px; }
 .gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.static-gallery { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.section-note { margin: 0 0 13px; color: var(--muted); }
 article { min-width: 0; background: #111a20; border: 1px solid var(--line); }
-video { display: block; width: 100%; aspect-ratio: 16/9; background: #080d11; }
+video, article img { display: block; width: 100%; aspect-ratio: 16/9; background: #080d11; }
+article img { height: auto; }
 .info { display: flex; flex-direction: column; padding: 13px 15px 16px; }
 h3 { margin: 0; font-size: 1.08rem; line-height: 1.25; }
 .info p { margin: 7px 0 12px; color: var(--muted); font-size: .9rem; }
