@@ -22,7 +22,7 @@
     excelTrianglePend: Shapes, excelCollision: Shapes
   };
   const EXCEL_ALGORITHMS = Object.keys(EXCEL);
-  const ALGORITHMS = ['two', 'three', 'shift', 'horr', 'zero', 'background', 'copyRows', ...EXCEL_ALGORITHMS];
+  const ALGORITHMS = ['two', 'three', 'shift', 'horr', 'zero', 'background', 'copyRows', 'codeWave', ...EXCEL_ALGORITHMS];
   const DIRECTIONS = ['down', 'up', 'left', 'right'];
   const EMPTY = Object.freeze([0, 0, 0, 0, 0]); // present, bit, RGB, bold, colour participates
 
@@ -132,7 +132,7 @@
     if (!ALGORITHMS.includes(algorithm)) throw new RangeError('Unknown algorithm');
     if (!DIRECTIONS.includes(direction)) throw new RangeError('Unknown direction');
     const excel = EXCEL[algorithm];
-    const scan = !excel && (!!options.scan || algorithm === 'copyRows');
+    const scan = !excel && algorithm !== 'codeWave' && (!!options.scan || algorithm === 'copyRows');
     const gaps = algorithm === 'copyRows' && options.copyRowsGaps === true;
     if (scan && direction !== 'down' && !(gaps && direction === 'up')) throw new RangeError('Row scan supports down only');
     // Source owns freshly generated procedural seeds; adopting one avoids a
@@ -365,7 +365,22 @@
     if (areas.length) select(s, next, areas);
     return areas.length > 0;
   }
+  function codeWavePass(s) {
+    const { bits, present, width } = s;
+    const layers = [present, bits, s.colours, s.bold, s.automatic, s.fills, s.filled];
+    // Code rewrites each row in place. Its next row reads the updated one
+    // above it at the same column. An explicit zero is a symbol.
+    for (let i = width; i < bits.length; i++) {
+      const above = i - width;
+      if (!present[above]) continue;
+      const cancel = present[i] && bits[i] === bits[above];
+      for (const layer of layers) layer[i] = cancel ? 0 : layer[above];
+    }
+    s.rowCount += s.height - 1;
+    s.stepCount++;
+  }
   function matrixStep(s) {
+    if (s.algorithm === 'codeWave') { codeWavePass(s); return; }
     const excel = EXCEL[s.algorithm];
     if (excel) {
       if (s.done || excel.step(s) === false) { s.done = true; return; }

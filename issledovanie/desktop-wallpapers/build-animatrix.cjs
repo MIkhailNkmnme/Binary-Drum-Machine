@@ -8,8 +8,9 @@ const Source = require('../../mayatnik/mayatnik-animatrix-source.js');
 
 const width = 3840;
 const height = 2160;
-const rows = 192;
-const algorithm = 'two';
+const rows = 128;
+const algorithm = 'codeWave';
+const expectedCounts = new Map([[173, 5278], [174, 2656], [175, 3690], [176, 1874]]);
 const palettes = [
   { frame: 173, name: 'Лазурь', ground: '#050a15', stops: ['#dbf8ff', '#31e3e8', '#5575ff'] },
   { frame: 174, name: 'Янтарь', ground: '#10090a', stops: ['#fff4be', '#ffb449', '#e86365'] },
@@ -65,7 +66,7 @@ async function save(bytes, name) {
 
 async function main() {
   await fs.mkdir(path.join(__dirname, 'media'), { recursive: true });
-  const source = { rows, type: 'one', algorithm, timing: 'rows', direction: 'down', cycles: 1 };
+  const source = { rows, type: 'clean', algorithm, timing: 'matrix', direction: 'down', cycles: 2, unit: 'pass' };
   const engine = Source.create({
     ...Source.defaults(), rows, animatrixOn: true,
     animatrixSource: Source.demo(rows, source.type, algorithm),
@@ -77,6 +78,8 @@ async function main() {
     Source.advance(engine, palette.frame - engine.sourceFrame);
     if (engine.sourceFrame !== palette.frame) throw Error('Frame unavailable: ' + palette.frame);
     const { svg, ones } = design(engine, palette);
+    const expected = expectedCounts.get(palette.frame);
+    if (ones !== expected) throw Error('Unexpected number of units at pass ' + palette.frame + ': ' + ones);
     const drawing = sharp(Buffer.from(svg));
     const image = await drawing.png().toBuffer();
     const preview = await drawing.clone().resize(768, 432).webp({ quality: 86 }).toBuffer();
@@ -86,9 +89,9 @@ async function main() {
       image: await save(image, stem + '.png'), preview: await save(preview, stem + '.webp'),
     });
   }
-  const manifest = { version: '0.002', width, height, source, items };
+  const manifest = { version: '0.003', width, height, source, items };
   await fs.writeFile(path.join(__dirname, 'animatrix.json'), JSON.stringify(manifest, null, 2) + '\n');
-  console.log('Exported ' + items.length + ' static Animatrix frames.');
+  console.log('Exported passes ' + items.map(({frame, ones}) => frame + ': ' + ones).join(', '));
 }
 
 main().catch(error => { console.error(error); process.exitCode = 1; });

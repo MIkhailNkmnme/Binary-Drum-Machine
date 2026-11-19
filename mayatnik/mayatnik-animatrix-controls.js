@@ -11,15 +11,17 @@
     let pending=false,error='',destroyed=false,container=host,openSection=null,previousFamily=null,revision=0;
     let preferredSection;
     try{preferredSection=win.localStorage.getItem(storageKey);}catch(_){}
-    const basic=s=>s.algorithm!=='copyRows'&&!s.algorithm?.startsWith('excel');
+    const wave=s=>s.algorithm==='codeWave';
+    const basic=s=>!wave(s)&&s.algorithm!=='copyRows'&&!s.algorithm?.startsWith('excel');
     const coneActive=s=>s.on&&s.algorithm?.startsWith('excelTriangle');
     const interxorActive=s=>s.on&&(s.algorithm==='excelChain'||s.algorithm==='excelChainDown');
     const collisionActive=s=>s.on&&s.algorithm==='excelCollision';
-    const family=s=>basic(s)?'cells':s.algorithm==='copyRows'?'reflections':
+    const family=s=>basic(s)||wave(s)?'cells':s.algorithm==='copyRows'?'reflections':
       s.algorithm==='excelBounce'||s.algorithm==='excelChain'||s.algorithm==='excelChainDown'?'excel-rows':'excel-shapes';
     const directionActive=s=>s.on&&basic(s)&&s.timing==='matrix'&&!['zero','background'].includes(s.algorithm);
     const selectionSupported=s=>s.algorithm?.startsWith('excel')||basic(s)&&s.timing==='matrix';
     const service=()=>typeof api==='function'?api():api;
+    const hasWave=()=>typeof service()?.startCodeWave==='function';
     const state=()=>service()?.get?.()||{};
     const describe=(node,title)=>{node.title=title;node.setAttribute('aria-label',title);};
     const append=node=>{nodes.push(node);container.append(node);return node;};
@@ -101,6 +103,7 @@
     const infoLabel=label(info,'Выключена');infoLabel.dataset.userLabel='';
     append(info);
     section('cells','Клетки');
+    const codeWave=command('code-wave','Влна Code','Волна Code. Открыть исходный треугольник из 128 строк. Один кадр — один проход сверху вниз.',a=>a.startCodeWave(),s=>s.on&&wave(s),()=>!hasWave());
     const algorithms=[
       ['two','2 ед','Два соседа'],['three','3 ед','Три соседа'],
       ['shift','ПравЛев','Сдвиг право-лево'],['horr','Хорррус','Хоррориус'],
@@ -271,12 +274,13 @@
     input.addEventListener('change',()=>{const n=Math.max(1,Math.min(64,Math.round(Number(input.value)||1)));input.value=String(n);run(a=>a?.set?.({cycles:n}));});
     cycles.append(input);bindings.push({node:input,selected:()=>false,unavailable:s=>collisionActive(s)||!!s.cycleMode&&s.cycleMode!=='finite'});append(cycles);
     const names=Object.fromEntries(algorithms.map(([value,,title])=>[value,title]));
-    Object.assign(names,{excelBounce:'Отскок',excelChain:'ИнтерXOR',excelChainDown:'Цепь XOR',
+    Object.assign(names,{codeWave:'Влна Code',excelBounce:'Отскок',excelChain:'ИнтерXOR',excelChainDown:'Цепь XOR',
       excelTriangleDown:'Конус вниз',excelTriangleUp:'Конус вверх',excelTriangleBoth:'Ромб',
       excelTrianglePend:'Качание',excelCollision:'Столкновение'});
     function sync(){
       if(destroyed)return;const s=state(),busy=pending||!!s.busy,available=!!service();
       gapModes.hidden=!s.gapsSupported;
+      codeWave.hidden=!hasWave();
       for(const {node,selected,unavailable} of bindings){
         const disabled=!available||busy||unavailable(s),on=!disabled&&!!selected?.(s);
         if(node.disabled!==disabled)node.disabled=disabled;
@@ -308,13 +312,14 @@
       enable.setAttribute('aria-pressed',String(!!s.on));
       const repeat=s.repeat;
       const mode=s.algorithm==='copyRows'?(s.copyRowsGaps?'Пустоты '+(s.direction==='up'?'↑':'↓'):s.copyRowsExcel?'Зеркалиус':s.copyRowsWrap?'Край XOR':'Копии XOR'):names[s.algorithm];
-      const count=repeat?.complete?'С '+repeat.firstCycle+' · T '+repeat.periodCycles:(s.frame??0)+' / '+(s.cycleMode==='infinite'||s.cycleMode==='repeat'?'∞':s.total??0);
+      const unit=wave(s)?'Проход':'Кадр';
+      const count=repeat?.complete?'С '+repeat.firstCycle+' · T '+repeat.periodCycles:(wave(s)?unit+' ':'')+(s.frame??0)+' / '+(s.cycleMode==='infinite'||s.cycleMode==='repeat'?'∞':s.total??0);
       const status=error||(busy?'Подготовка…':s.on?mode+' · '+count:'Выключена');
       if(infoLabel.textContent!==status)infoLabel.textContent=status;
       const inputKind=({clean:'С нуля',frame:'Весь кадр',selection:'Выделенная область',example:'Учебный пример'})[s.sourceKind]||(s.on?'Сохранённый исходник':'С нуля');
       if(sourceInfo.textContent!==inputKind)sourceInfo.textContent=inputKind;
-      const repetition=repeat?.complete?'Повтор состояния: начало с цикла '+repeat.firstCycle+', период '+repeat.periodCycles+' циклов; первое совпадение на цикле '+repeat.repeatCycle+'. Состояние сравнивается полностью, включая цвета и выделение.':s.cycleMode==='infinite'||s.cycleMode==='repeat'?'Поиск точного повтора: '+(repeat?.periodCycles?'период '+repeat.periodCycles+' найден, вычисляется начало.':'начало и период ещё не найдены.'):' ';
-      describe(info,error||repetition+' Кадр '+(s.frame??0)+(s.cycle!=null?' · цикл '+s.cycle:'')+(s.cursor!=null?' · строка '+s.cursor:'')+(s.message?' · '+s.message:''));
+      const repetition=repeat?.complete?'Повтор с '+(wave(s)?'прохода ':'цикла ')+repeat.firstCycle+' · период '+repeat.periodCycles+' · первое совпадение '+repeat.repeatCycle+'. Состояние сравнивается полностью, включая цвета и выделение.':s.cycleMode==='infinite'||s.cycleMode==='repeat'?'Поиск точного повтора: '+(repeat?.periodCycles?'период '+repeat.periodCycles+' найден, вычисляется начало.':'начало и период ещё не найдены.'):' ';
+      describe(info,error||repetition+' '+unit+' '+(s.frame??0)+(!wave(s)&&s.cycle!=null?' · цикл '+s.cycle:'')+(!wave(s)&&s.cursor!=null?' · строка '+s.cursor:'')+(s.message?' · '+s.message:''));
       host.setAttribute('aria-busy',String(busy));
     }
     const changes=['may-animatrix-change','may-compare-change','may-reset-complete','may-cell-selection-change'];

@@ -1,3 +1,4 @@
+<!-- МАЯ-685 · v1.036. Волна Code в Аниматрице. Проверки пользователем. -->
 <!-- ВЛФ-009 · v1.035: Вольфрам — три верхних бита выбирают цвет клетки, без изменения поля. Проверки пользователем. -->
 <!-- ИСС-117 · v1.034: видимый YouTube-плеер KOBTRAX, отдельный от транспорта поля. Проверки пользователем. -->
 <!-- АУДИТ-002 · v1.032: восстановлена загрузка скрипта групп шаблонов. -->
@@ -77,7 +78,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятнкъ — v1.035</title>
+<title>Zerkalius Маятнкъ — v1.036</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -228,7 +229,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.035</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.036</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -571,8 +572,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-xoroorius.js?v=965"></script>
 <script src="mayatnik-animatrix-interxor.js?v=967"></script>
 <script src="mayatnik-animatrix-excel-shapes.js?v=976"></script>
-<script src="mayatnik-animatrix-core.js?v=1028"></script>
-<script src="mayatnik-animatrix-source.js?v=1028"></script>
+<script src="mayatnik-animatrix-core.js?v=1036"></script>
+<script src="mayatnik-animatrix-source.js?v=1036"></script>
 <script src="mayatnik-compare.js?v=1"></script>
 <script src="mayatnik-cone-continuation.js?v=634"></script>
 <script src="mayatnik-compare-analysis.js?v=1"></script>
@@ -1681,6 +1682,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
 
   function animatrixOn(state=st){return !!state?.animatrixOn;}
+  function animatrixCodeWave(){return animatrixOn()&&st.animatrixAlgorithm==='codeWave';}
   function animatrixCopyRows(state=st){return animatrixOn(state)&&state.animatrixAlgorithm==='copyRows';}
   function animatrixCopyWrap(){return animatrixCopyRows()&&st.animatrixCopyRowsLayout==='mirrorWrap';}
   function animatrixCopyExcel(){return animatrixCopyRows()&&st.animatrixCopyRowsLayout==='mirrorExcel';}
@@ -1704,7 +1706,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function animatrixEnsure(){const key=animatrixKey();if(!animatrixEngine||animatrixEngineKey!==key){animatrixEngine=MayatnikAnimatrixSource.create(st);animatrixEngineKey=key;}return animatrixEngine;}
   function animatrixUnlimited(){return animatrixOn()&&MayatnikAnimatrixSource.unlimited(st);}
   function animatrixExtend(requested){if(!animatrixUnlimited())return false;try{Object.assign(st,MayatnikAnimatrixSource.extend(st,requested));$('frame').max=total();save();return true;}catch(error){stop(false);$('fillInfo').textContent=error.message;return false;}}
-  function animatrixRepeatStop(){const repeat=animatrixOn()&&st.animatrixCycleMode==='repeat'?MayatnikAnimatrixSource.repeatInfo(animatrixEnsure()):null;if(!repeat?.complete)return false;stop(false);target=k;animatrixMessage='Повтор: с цикла '+repeat.firstCycle+'; период '+repeat.periodCycles+'; первое совпадение '+repeat.repeatCycle+'.';$('fillInfo').textContent=animatrixMessage;animatrixNotice();return true;}
+  function animatrixRepeatStop(){
+    const repeat=animatrixOn()&&st.animatrixCycleMode==='repeat'?MayatnikAnimatrixSource.repeatInfo(animatrixEnsure()):null;
+    if(!repeat?.complete)return false;
+    stop(false);target=k;
+    const unit=animatrixCodeWave()?'прохода':'цикла';
+    animatrixMessage='Повтор с '+unit+' '+repeat.firstCycle+' · период '+repeat.periodCycles+' · первое совпадение '+repeat.repeatCycle;
+    $('fillInfo').textContent=animatrixMessage;animatrixNotice();return true;
+  }
   function animatrixMaterialize(frame){
     const engine=animatrixEnsure();let report=null,full=frame<=engine.sourceFrame;
     engine.trackChanges=!animatrixCopyRows()&&!!st.vtxFlash&&!animatrixReplayBusy&&!animatrixFlashReplay&&!full;
@@ -1797,7 +1806,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     MayatnikAnimatrixSource.assertState(draft);
     stopFrameTransports();rowRunEnd();foldSuspend();animatrixNewWork();st=draft;st.rows=source.height;$('rows').value=st.rows;
     st.edgeWrap=false;st.edgeBounce=false;st.pair=false;st.frozen=false;st.noband=0;st.vrows=0;st.view='bits';$('view').value='bits';
-    if(animatrixCopyRows()||animatrixExcelMode()){if(!st.joined180Whole)st.joined180=false;st.edgeRhombOn=false;st.zLimit=false;}
+    if(animatrixCopyRows()||animatrixExcelMode()||animatrixCodeWave()){if(animatrixCodeWave()||!st.joined180Whole)st.joined180=false;st.edgeRhombOn=false;st.zLimit=false;}
     testPattern=null;testXorInfo=null;compareEngine=null;animatrixEngine=null;animatrixEngineKey='';
     // Paint has become part of the immutable seed; it must not cover future frames.
     fillMask=paintBits=fillBits=null;faceLayer=null;colReplay=[];templateMatchLayer=null;
@@ -1807,6 +1816,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(animatrixExcelMode())animatrixMessage=st.animatrixAlgorithm==='excelCollision'
       ?'Кадр 0 — исходник. Кадр 1 — результат XOR с поворотом на 180°.'
       :animatrixExcelNames[st.animatrixAlgorithm]+' из Excel.';
+    if(animatrixCodeWave())animatrixMessage='Волна Code. Кадр 0 — исходник. Каждый следующий кадр — полный проход сверху вниз.';
     $('fillInfo').textContent=animatrixMessage;save();queueSession();savePaint();animatrixNotice();dispatchEvent(new Event('may-compare-change'));return true;
   }
   function animatrixStart(algorithm,patch={}){
@@ -1897,7 +1907,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     startExcel(algorithm){
       return animatrixStart(algorithm,{animatrixCycleMode:'finite',animatrixCycles:1,animatrixColours:'inherit',viewDigits:true,inverted:false,invertAuto:false});
     },
+    startCodeWave(){
+      if(animatrixCodeWave())return true;
+      if(largeToolUnavailable('Аниматрица'))return false;
+      return animatrixInstall(MayatnikAnimatrixSource.demo(128,'clean','codeWave'),{
+        animatrixAlgorithm:'codeWave',animatrixSourceKind:'clean',animatrixCycleMode:'finite',animatrixCycles:2,
+        animatrixColours:'bits',animatrixStaggeredGrid:false,joined180Whole:false,inverted:false,invertAuto:false,
+      });
+    },
     capture({scope='field'}={}){
+      if(animatrixCodeWave()&&scope==='selection')throw Error('Для волны Code возьмите весь кадр.');
       const A=MayatnikAnimatrixSource,algorithm=st.animatrixAlgorithm,source=animatrixCaptureSource(scope);
       const kind=scope==='selection'?'selection':'frame';
       const depth=kind==='frame'&&A.coneMode(algorithm)?{animatrixExcelDepth:source.height}:{};
@@ -1906,9 +1925,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     },
     seed(type='one'){
       const A=MayatnikAnimatrixSource,algorithm=st.animatrixAlgorithm||'two',example=type==='example';
-      const source=A.demo(example?32:st.rows,example?'example':'clean',algorithm);
+      const source=A.demo(example?(algorithm==='codeWave'?128:32):st.rows,example?'example':'clean',algorithm);
       const depth=A.coneMode(algorithm)?{animatrixExcelDepth:source.height}:{};
-      return animatrixInstall(source,{...depth,animatrixSourceKind:example?'example':'clean',animatrixCollisionFillEmpty:null});
+      return animatrixInstall(source,{...depth,animatrixSourceKind:example&&algorithm!=='codeWave'?'example':'clean',animatrixCollisionFillEmpty:null});
     },
     reset(){if(!animatrixOn())return false;stopFrameTransports();goToImmediate(0);savePaint();animatrixNotice();return true;}
   };
@@ -8924,6 +8943,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     digitG.save();digitG.fillStyle='rgba(255,211,91,.28)';digitG.fillRect(x0+a*s,y0,s,VH*s);digitG.lineWidth=Math.max(1.5,Math.min(3,s*.2));digitG.strokeStyle='#ffd35b';digitG.strokeRect(x0+a*s,y0,s,VH*s);digitG.restore();}
   function frameBuildType(){
     if(phoneOn())return 'Обои · '+phoneScene().title;
+    if(animatrixCodeWave())return 'Влна Code';
     if(MayatnikSequenceField.fixed(st))return 'Прямоугольник';
     if(animatrixCopyByAxis()){
       const wrap=animatrixCopyWrap();
@@ -8965,7 +8985,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     $('frame').value = shownFrame; $('frame').dataset.rows=String((testPattern?.kind === 'xor' && testXorInfo) ? testXorInfo.max : st.rows); $('frameV').textContent = shownFrame;
     frameBuildTypeSync();
     if(compareOn()){$('stat').textContent=({cone:'5.7 · Конусы',field:'5.8 · Всё поле',pair:'5.9 · Обе стороны',p12:'1–2 · конусы+обе',p23:'2–3 · обе+поле',p31:'3–1 · поле+конусы',p123:'1–2–3 · все три',a12:'1–2 AND',a23:'2–3 AND',a31:'3–1 AND',a123:'1–2–3 AND',xor:'5.7 XOR 5.8',and:'5.7 AND 5.8'}[st.compareSource]);const who={cone:'Конусы',field:'Поле',pair:'Обе стороны',p12:'Конусы+Обе',p23:'Обе+Поле',p31:'Поле+Конусы',p123:'Все три',a12:'Конусы+Обе',a23:'Обе+Поле',a31:'Поле+Конусы',a123:'Все три',xor:'Поле+Конусы',and:'Поле+Конусы'}[st.compareSource]||'';const op=/^[pa](12|23|31|123)$/.test(st.compareSource)?(st.compareSource[0]==='a'?' AND':' XOR'):'';$('frameWho').textContent=who+op+(st.compareMirror?' · Зеркл.':'')+(st.compareMirror?' · зеркало 5.8':'')+` · кадр ${k} / ${total()} · ${geo.W}×${st.rows}`+(k!==target?` · считаю кадр ${target}…`:'');$('frame').dataset.rows=String(total());testStatsUpdate();}
-    if(animatrixOn()){const e=animatrixEnsure(),cycle=Math.floor(k/MayatnikAnimatrixSource.cycleFrames(st)),repeat=MayatnikAnimatrixSource.repeatInfo(e);$('stat').textContent=frameBuildType()+' · кадр '+k+' / '+(animatrixUnlimited()?'∞':total())+' · '+f.W+'×'+f.H+' · цикл '+cycle+(repeat?.complete?' · повтор с '+repeat.firstCycle+' · период '+repeat.periodCycles:animatrixCopyByAxis()?' · следующая ось '+animatrixAxisLabel(e.copyAxis):st.animatrixTiming==='rows'?' · следующая строка '+(e.cursorRow+1):'');$('frame').dataset.rows=String(total());animatrixNotice();}
+    if(animatrixOn()){
+      const e=animatrixEnsure(),repeat=MayatnikAnimatrixSource.repeatInfo(e),wave=animatrixCodeWave();
+      const phase=wave?'':' · цикл '+Math.floor(k/MayatnikAnimatrixSource.cycleFrames(st));
+      const detail=repeat?.complete?' · повтор с '+repeat.firstCycle+' · период '+repeat.periodCycles:animatrixCopyByAxis()?' · следующая ось '+animatrixAxisLabel(e.copyAxis):st.animatrixTiming==='rows'?' · следующая строка '+(e.cursorRow+1):'';
+      $('stat').textContent=(wave?'Волна Code · проход ':frameBuildType()+' · кадр ')+k+' / '+(animatrixUnlimited()?'∞':total())+' · '+f.W+'×'+f.H+phase+detail;
+      $('frame').dataset.rows=String(total());animatrixNotice();
+    }
     if(edgeFlowOn())$('frame').dataset.rows=String(total());
     if(phoneOn()){$('stat').textContent=phoneScene().title+' · кадр '+k+' / '+total()+' · '+f.W+'×'+f.H+' · '+st.phoneTempo+' BPM';$('frame').dataset.rows=String(total());}
     if(staggeredOn())$('stat').textContent+=staggeredCaption();
@@ -13697,7 +13723,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-menu-defaults.js?v=887c"></script>
 <script src="mayatnik-mirror-controls.js?v=560"></script>
 <script src="mayatnik-library-menu-fold.js?v=873"></script>
-<script src="mayatnik-animatrix-controls.js?v=1027"></script>
+<script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=895"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
 <script src="mayatnik-menu.js?v=1035"></script>

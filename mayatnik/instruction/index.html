@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Подробная инструкция по Маятнику: построение, RGB-соседи, ширина краёв xN−1, раскраска, шаблоны, оси, зеркала, библиотека и экспорт. Схемы и пошаговые примеры.">
-<title>Инструкция по Маятнику · 0.148</title>
+<title>Инструкция по Маятнику · 0.149</title>
 <link rel="stylesheet" href="guide.css?v=6">
 <style>@media (max-width:760px){.book-main{overflow-wrap:anywhere}.book-main code{white-space:normal}}</style>
 </head>
 <body id="top">
-<header class="book-header"><a href="../Zerkalius-mayatnik.html">← Маятник</a><a href="../../issledovanie/Zerkalius-issledovanie.html">Исследование</a><button id="printGuide" class="no-print" type="button">Печать / PDF</button><span>Инструкция 0.148 · 18 ноября 2026</span></header>
+<header class="book-header"><a href="../Zerkalius-mayatnik.html">← Маятник</a><a href="../../issledovanie/Zerkalius-issledovanie.html">Исследование</a><button id="printGuide" class="no-print" type="button">Печать / PDF</button><span>Инструкция 0.149 · 19 ноября 2026</span></header>
 <div class="book-title"><h1>Маятник: построение, цвет и работа с полем</h1><p class="lead">От первого треугольника до цветовых масок, широких краёв, шаблонов и сохранения опыта. Схемы, таблицы и действия, которые можно повторить на своём поле.</p><p class="scope">Описаны инструменты версии 0.891. Группа «Поиск / Очки» пока не включена. Рисунки — поясняющие схемы; живые примеры секторов и зеркал ниже используют ядро Маятника. Нажмите рисунок, чтобы открыть его отдельно.</p><nav class="jump-links" aria-label="Быстрые переходы"><a href="#start">Начать</a><a href="#rgb">RGB подробно</a><a href="#edge">Край xN−1</a><a href="#rombo">Ромбо</a><a href="#paint">Раскраска</a><a href="#templates">Шаблоны</a><a href="#export">Сохранить</a></nav></div>
 <div class="book-layout">
 <aside class="book-toc"><details open><summary>Содержание</summary><nav aria-label="Главы инструкции"><ol class="toc-list"><li><a href="#about">Что строит Маятник</a></li>
@@ -270,6 +270,9 @@
 <h2>Аниматрица: матрица, строки и цвет</h2>
 <p>Откройте <b>Аниматрицу</b> в верхнем меню. Она пересчитывает взятый рисунок и показывает результат в общем плеере. Плеер, масштаб, контуры, цифры, RGB, заливка, шаблоны и экспорт используют полученное поле. Одновременно выбирается один источник: Аниматрица, обычный/свой Маятник либо сравнение.</p>
 <p>Выберите построение в разделе «Клетки», «Отражения», «Строки Excel» или «Фигуры Excel». У активного раздела выделена рамка. Его список открывается сбоку. «Шаблоны» находятся в строках Excel, а «Глубина» и раскраска конуса находятся в фигурах Excel. «Исходник», «Цвета» и «Циклы» открываются отдельно, когда доступны для выбранного режима.</p>
+<h3 id="animatrix-code-wave">Волна Code</h3>
+<p>Откройте <b>Аниматрица → Клетки → Влна Code</b>. На кадре 0 открывается исходный треугольник правила 90 из 128 строк. Каждый шаг плеера проходит по всему полю сверху вниз. В одном столбце равные непустые символы гасятся, одиночный остаётся, при столкновении 0 и 1 побеждает верхний, уже пересчитанный символ.</p>
+<p>Перемотайте на 65, 66 или 173–176, чтобы увидеть густые и редкие кадры из исследования. У стандартного исходника первый повтор — <code>193 = 65</code>, период 128 проходов. Команда «Повтор» ищет совпадения по полным проходам. «Исходник → Весь кадр» позволяет запустить волну от своего поля. <a href="../../issledovanie/Zerkalius-issledovanie.html#r3">Цикл и сдвиги в Исследованиях</a>.</p>
 <p>Примеры на снимках открываются в Маятнике на 64 исходных строках с сохранёнными настройками и номером кадра. <a href="../../issledovanie/mayatnik-64/#animatrix" target="_blank" rel="noopener">Смотреть все примеры в Исследованиях</a>.</p>
 <figure><a href="../../issledovanie/mayatnik-64/assets/animatrix-menu-cells.png" target="_blank" rel="noopener"><img src="../../issledovanie/mayatnik-64/assets/animatrix-menu-cells.png" alt="Кнопки алгоритмов и направлений в разделе «Клетки»" width="260" height="285" loading="lazy"></a><figcaption>Кнопки алгоритмов и направлений в разделе «Клетки»</figcaption></figure>
 <h3>Быстрый опыт без добавления вершин</h3>
