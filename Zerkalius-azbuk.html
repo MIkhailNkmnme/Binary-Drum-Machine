@@ -1,10 +1,11 @@
 <!doctype html>
+<!-- АзъБукъ v0.067 · АЗБ-067: тени Глифена для клеточного Kraftwerk. -->
 <!-- АзъБукъ v0.066 · повторное нажатие Шахматки меняет чёрные и белые клетки местами. -->
 <!-- v0.062 · АУДИТ-004: ширина экрана телефона. -->
 <html lang="ru">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius АзъБукъ v0.066</title>
+<title>Zerkalius АзъБукъ v0.067</title>
 <!-- v0.066 · АЗБ-066: Шахматка чередует чёрный и белый верхний левый угол; отмена и сохранение через текущий рисунок. -->
 <!-- v0.065 · АЗБ-065: чёрно-белая шахматка 0/1 в нижнем поле; клетки 1, 4 или 16 физических пикселей. -->
 <!-- v0.064 · АЗБ-064: русские буквы в шести клеточных начертаниях 8-bit Operator. -->
@@ -898,7 +899,13 @@ function updateTrackDisplay() {
 }
 
 
-function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
+// The Glyphen raster export draws these two hard-edged silhouette layers in cell units.
+const KRAFTWERK_SHADOWS = [
+  { offsetCells: -0.22, color: '#e9e9e9' },
+  { offsetCells: 0.28, color: '#2b2d34' },
+];
+
+function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch], font = activeSet) {
   rows = rows || G[activeSet]['?'] || BASE.thin['?'];
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
   // Zazerkalius rmbLayout: полширины на ряд; высота ромба = ширина * √3/2.
@@ -940,8 +947,15 @@ function glyphShape(ch, rows = ch === ' ' ? ['000'] : G[activeSet][ch]) {
   if (lattice === 'rmbl' || lattice === 'rmbr') grid = cellLines;
   const id = 'g' + (uid++);
   const sw = activeSet === 'thin' ? 0.16 : 0.12;
-  const paths = '<defs><clipPath id="' + id + '"><path d="' + cells + '"/></clipPath></defs>' +
-    '<g transform="' + transform + '"><g clip-path="url(#' + id + ')"><rect width="' + w + '" height="' + h + '" fill="currentColor"/>' +
+  const shadowId = id + '-silhouette';
+  const hasShadows = font === 'kraftwerk-frame' && cells !== '';
+  const silhouette = hasShadows ? '<path id="' + shadowId + '" d="' + cells + '"/>' : '';
+  const shadows = hasShadows ? KRAFTWERK_SHADOWS.map(({offsetCells, color}) =>
+    '<use href="#' + shadowId + '" transform="translate(' + offsetCells + ' ' + offsetCells + ') ' +
+    transform + '" fill="' + color + '" pointer-events="none"/>'
+  ).join('') : '';
+  const paths = '<defs>' + silhouette + '<clipPath id="' + id + '"><path d="' + cells + '"/></clipPath></defs>' +
+    shadows + '<g transform="' + transform + '"><g clip-path="url(#' + id + ')"><rect width="' + w + '" height="' + h + '" fill="currentColor"/>' +
     '<path d="' + grid + '" stroke="var(--bg)" stroke-width="' + sw + '" fill="none"/>' +
     '<path d="' + cells + '" stroke="currentColor" stroke-width="' + sw + '" fill="none"/></g>' +
     '<path d="' + joints + '" stroke="currentColor" stroke-width="0.24" stroke-linecap="round"/></g>';
@@ -975,11 +989,12 @@ function lettering(text, cell, gapCells = 1, maxWidth = Infinity, masks = G[acti
     const groups = placed.map(({ shape, x, ch, desc }) =>
       '<g' + (editable ? ' data-edit-char="' + encodeURIComponent(ch) + '" role="button" tabindex="0"' : '') + ' transform="translate(' + x + ' ' + (asc - (shape.h - desc)) + ')">' + shape.paths + (editable ? shape.outline : '') + '</g>').join('');
     lines.push('<svg width="' + width * aspect * cell + '" height="' + height * cell +
-      '" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' + groups + '</svg>');
+      '" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none"' +
+      (font === 'kraftwerk-frame' ? ' overflow="visible"' : '') + '>' + groups + '</svg>');
     placed = []; width = 0; asc = 0; below = 0; cursor = 0; gap = 0;
   }
   for (const ch of text) {
-    const shape = glyphShape(ch, masks[ch]);
+    const shape = glyphShape(ch, masks[ch], font);
     const desc = depth(ch);
     let x;
     if (mono) {
@@ -1173,7 +1188,8 @@ function renderTextPreview() {
   const data = {format: 'azbuk-text', version: 1, text: raw, renderedText: text, unsupported: [...unsupported], font: activeSet, lattice, spacing,
     cellPixels: {width: pitch, height: cellSize}, gapCells: track, minimumClearancePixels: 0, lineGapCells: lineGap,
     widthCells, heightCells, widthPixels: widthPx, heightPixels: heightPx, colors: {ink, background: bg, rainbow: document.documentElement.classList.contains('rainbow')},
-    grid: {visible: fieldGridVisible, color: gridColor}, glyphs, lines};
+    grid: {visible: fieldGridVisible, color: gridColor},
+    ...(activeSet === 'kraftwerk-frame' ? {shadows: KRAFTWERK_SHADOWS} : {}), glyphs, lines};
   textArtwork = {svg, data};
   image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   document.getElementById('textJson').textContent = JSON.stringify(data, null, 2);
@@ -1640,7 +1656,8 @@ function squareShape(ch){
 function formGlyph(ch, color){
  if(!ch || !G[activeSet][ch]) return '';
  const shape = squareShape(ch);
- return '<svg viewBox="0 0 '+shape.w+' '+shape.h+'" aria-hidden="true" style="color:'+color+'">'+shape.paths+'</svg>';
+ const overflow = activeSet === 'kraftwerk-frame' ? ' overflow="visible"' : '';
+ return '<svg viewBox="0 0 '+shape.w+' '+shape.h+'"'+overflow+' aria-hidden="true" style="color:'+color+'">'+shape.paths+'</svg>';
 }
 function renderForms(){
  const root = document.getElementById('formSamples');
