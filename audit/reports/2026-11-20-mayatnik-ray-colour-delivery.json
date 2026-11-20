@@ -1,0 +1,41 @@
+{
+  "task": "МАЯ-694",
+  "version": "1.045",
+  "commit": "cd1920dcb07a86b69da5748683efbe3ac11db526",
+  "checked_at": "2026-11-20T16:51:37.8803000Z",
+  "pages_run": 44777014616,
+  "pages_conclusion": "success",
+  "verification": "HTTP only; tests, syntax, browser and visual acceptance not run; acceptance by user",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?delivery=1045b&r=3",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-flow.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-flow.js?delivery=1045b&r=3",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.js?delivery=1045b&r=3",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "audit/reports/2026-11-20-mayatnik-ray-colour.md",
+      "url": "https://1001100.online/audit/reports/2026-11-20-mayatnik-ray-colour.md?delivery=1045b&r=3",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "matches": true
+    }
+  ]
+}
