@@ -6,7 +6,7 @@
    the output is not promised to be byte-identical to the original Python bank. */
 (function(root){
   'use strict';
-  const VERSION='procedural-formant-browser-v1.2.0';
+  const VERSION='procedural-formant-browser-v1.2.1';
   const RATE=22050,TAU=2*Math.PI,TABLE_SIZE=4096,MAX_SECONDS=12,MAX_SEGMENTS=96;
   const MAX_FREQUENCY=RATE*.45,MAX_BANDWIDTH=4000;
   const definitions=[
@@ -166,12 +166,16 @@
     if(!record(request))throw new Error('Не задан запрос синтеза.');
     const settings=normalize(request.settings),phones=resolveOverrides(request.phones);
     const {score,total}=parseScore(request.score,settings,phones);
-    const prosody=request.prosody===undefined?null:root.VoiceProsodyDSP.create(request.prosody,score.map(t=>Math.round(t.duration/settings.speed*RATE)),RATE,settings);
-    const speechShapes=prosody?score.map((token,index)=>{
+    const dsp=root.VoiceProsodyDSP;
+    const prosody=request.prosody===undefined?null:dsp.create(request.prosody,score.map(t=>Math.round(t.duration/settings.speed*RATE)),RATE,settings);
+    const softenNoise=prosody?dsp.createConsonantNoise(RATE):null;
+    const shapeFor=(token,index)=>{
       const nextVowel=score.slice(index+1).find(t=>Object.hasOwn(vowels,t.id))?.id||'e';
-      const p=Object.hasOwn(phones,token.id)?phones[token.id]:getPhone(token.id,nextVowel);
-      return {...p,formants:p.formants.map(f=>clamp(f*settings.formantScale,20,MAX_FREQUENCY)),bandwidths:p.bandwidths.map(b=>clamp(b*settings.bandwidthScale,20,MAX_BANDWIDTH))};
-    }):null;
+      const custom=Object.hasOwn(phones,token.id),p=custom?phones[token.id]:getPhone(token.id,nextVowel);
+      return {...p,noise:prosody&&!custom?dsp.defaultSpeechNoise(p):p.noise,
+        formants:p.formants.map(f=>clamp(f*settings.formantScale,20,MAX_FREQUENCY)),bandwidths:p.bandwidths.map(b=>clamp(b*settings.bandwidthScale,20,MAX_BANDWIDTH))};
+    };
+    const speechShapes=prosody?score.map(shapeFor):null;
     const sourceHarmonics=Math.min(60,Math.floor(RATE*.43/(prosody?prosody.maximumFrequency:Math.max(settings.pitchStart,settings.pitchEnd)+settings.vibratoDepth)));
     const source=sourceTable(sourceHarmonics),samples=new Float32Array(total);
     const states=Array.from({length:4},()=>[0,0]);
@@ -179,11 +183,9 @@
     let rng=settings.seed||1,phase=0,cursor=0,previousDC=0,previousOut=0,previousShape=null,peak=0;
     const resolvedPhones=[];
     for(let tokenIndex=0;tokenIndex<score.length;tokenIndex++){
-      const {id,duration}=score[tokenIndex],count=Math.round(duration/settings.speed*RATE);
-      const nextVowel=score.slice(tokenIndex+1).find(token=>Object.hasOwn(vowels,token.id))?.id||'e';
-      const shape=Object.hasOwn(phones,id)?phones[id]:getPhone(id,nextVowel);
-      const current={...shape,formants:shape.formants.map(f=>clamp(f*settings.formantScale,20,MAX_FREQUENCY)),
-        bandwidths:shape.bandwidths.map(b=>clamp(b*settings.bandwidthScale,20,MAX_BANDWIDTH))};
+      const token=score[tokenIndex],{id,duration}=token,count=Math.round(duration/settings.speed*RATE);
+      const current=speechShapes?.[tokenIndex]||shapeFor(token,tokenIndex);
+      const noiseConsonant=prosody&&dsp.isNoiseConsonant(current.kind);
       resolvedPhones.push({id,...current,weights:[...current.weights]});
       if(!previousShape)previousShape=current;
       let coefficients=[];
@@ -209,16 +211,16 @@
         const position=phase*TABLE_SIZE,sourceIndex=Math.floor(position),fraction=position-sourceIndex;
         const periodic=source[sourceIndex]*(1-fraction)+source[(sourceIndex+1)%TABLE_SIZE]*fraction;
         rng^=rng<<13;rng^=rng>>>17;rng^=rng<<5;rng>>>=0;
-        const noise=rng/2147483648-1;
+        const noise=rng/2147483648-1,softNoise=softenNoise?softenNoise(noise):noise;
         let voiced=current.voice*settings.voicing,noisy=current.noise*settings.noise;
         if(speech){voiced=(current.voice+(other.voice-current.voice)*blend)*settings.voicing;
-          noisy=(current.noise+(other.noise-current.noise)*blend)*settings.noise;}
+          noisy=dsp.blendSpeechNoise(current,other,blend)*settings.noise;}
         if(current.kind==='stop'){
           if(progress<.62){voiced*=.22;noisy=0;}else{noisy*=Math.exp(-(progress-.62)*13);voiced*=.35;}
         }else if(current.kind==='affricate'){
           if(progress<.23){voiced*=.15;noisy=0;}else noisy*=Math.min(1,(progress-.23)/.06);
         }else if(current.kind==='trill')voiced*=.35+.65*(.5+.5*Math.cos(TAU*29*index/RATE))**2;
-        const excitation=periodic*voiced+noise*noisy;
+        const excitation=periodic*voiced+(noiseConsonant?softNoise:noise)*noisy;
         let value=0;
         for(let k=0;k<4;k++){
           const [gain,feedback1,feedback2]=coefficients[k],[last,older]=states[k];

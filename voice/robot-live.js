@@ -7,7 +7,7 @@
   root.ZerkaliusRobotLiveFactory=function(C){
     const Original=root.ZerkaliusAlphabetRobot;
     if(!Original)throw Error('Не загружен исходный телефонный робот.');
-    const VERSION='phone-robot-live-v1.2.0',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
+    const VERSION='phone-robot-live-v1.2.1',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
     const bits=Array(8).fill(1),f0=440*2**((48-69)/12),raw=Original.phones();
     const profile=C.config({pitchStart:f0,pitchEnd:f0,vibratoDepth:0,vibratoRate:2.1,transitionMs:12,outputGain:.55,seed:Original.seedFor(bits,'zero')});
     const aliases={ax:'a-neutral',lj:'l-soft',dj:'d-soft',pj:'p-soft',tj:'t-soft',kj:'k-soft',sj:'s-soft',mj:'m-soft',vj:'v-soft',rj:'r-soft',shj:'sh-soft'};
@@ -58,10 +58,14 @@
         phone.bandwidths=phone.bandwidths.map(b=>Math.max(50,b));
       }
       const tail=Math.round(TAIL*RATE),{score,counts,total}=C.parseScore(request.score,settings,phones,known,RATE,tail);
-      const prosody=request.prosody===undefined?null:root.VoiceProsodyDSP.create(request.prosody,counts,RATE,settings);
+      const dsp=root.VoiceProsodyDSP;
+      const prosody=request.prosody===undefined?null:dsp.create(request.prosody,counts,RATE,settings);
+      const softenNoise=prosody?dsp.createConsonantNoise(RATE):null;
       const resolved=score.map(token=>{
-        const p=C.scaled(Object.hasOwn(phones,token.id)?phones[token.id]:getPhone(token.id),settings,RATE,60),native=targets[token.id];
+        const custom=Object.hasOwn(phones,token.id);
+        const p=C.scaled(custom?phones[token.id]:getPhone(token.id),settings,RATE,60),native=targets[token.id];
         p.bandwidths=p.bandwidths.map(b=>Math.max(50,b));
+        if(prosody&&!custom)p.noise=dsp.defaultSpeechNoise(p);
         const sameKind=!!native&&publicKind(native.kind)===p.kind;
         return {...p,id:token.id,gain:sameKind?native.gain:1,bypass:sameKind?native.bypass*(p.noise/(native.noise||1)):0,
           robotKind:p.kind==='stop'?(p.voice>0?'stopD':'stopK'):p.kind};
@@ -89,8 +93,9 @@
           else if(t&&segment+1<score.length&&segmentDuration-local<t){other=resolved[segment+1];blend=.5*(1-(segmentDuration-local)/t);}
           if(speech){other=resolved[speech.otherIndex];blend=current.kind==='silence'||other.kind==='silence'?0:speech.blend;}
           const mix=(a,b)=>a+(b-a)*blend;
-          control={weights:current.weights.map((n,i)=>mix(n,other.weights[i])),voice:mix(current.voice,other.voice),noise:mix(current.noise,other.noise),
-            gain:mix(current.gain,other.gain),bypass:mix(current.bypass,other.bypass)};
+          control={weights:current.weights.map((n,i)=>mix(n,other.weights[i])),voice:mix(current.voice,other.voice),
+            noise:speech?dsp.blendSpeechNoise(current,other,blend):mix(current.noise,other.noise),
+            gain:mix(current.gain,other.gain),bypass:speech?0:mix(current.bypass,other.bypass)};
           for(let band=0;band<4;band++)filters[band].c=coefficients(mix(current.formants[band],other.formants[band]),mix(current.bandwidths[band],other.bandwidths[band]));
         }
         const index=Math.floor(phase),fraction=phase-index,pulse=table[index]+fraction*(table[(index+1)%SIZE]-table[index]);
@@ -100,6 +105,7 @@
         phase+=pitch/RATE*SIZE;phase-=Math.floor(phase/SIZE)*SIZE;
         rng^=rng<<13;rng^=rng>>>17;rng^=rng<<5;
         const white=(rng>>>0)/2147483648-1,highNoise=(white-lastNoise)*.5;lastNoise=white;
+        const softNoise=softenNoise?softenNoise(white):white;
         let voiced=control.voice*settings.voicing,noise=control.noise*settings.noise,bypass=control.bypass*settings.noise,envelope=1;
         const kind=current.robotKind;
         if(kind==='stopK'||kind==='stopD'){
@@ -111,7 +117,8 @@
           if(local<release){noise=0;voiced=0;bypass=0;}else{const opening=C.clamp((local-release)/.006,0,1);noise*=opening;bypass*=opening;}
         }else if(kind==='trill')envelope=.25+.75*Math.abs(Math.sin(TAU*32*local));
         if(time>=speechSeconds||kind==='silence'){voiced=0;noise=0;bypass=0;}
-        const input=pulse*voiced+white*noise*.22;let value=0;
+        const excitation=speech&&dsp.isNoiseConsonant(current.kind)?softNoise:white;
+        const input=pulse*voiced+excitation*noise*.22;let value=0;
         for(let band=0;band<4;band++){
           const filter=filters[band],c=filter.c,out=c.b0*input+filter.z1;
           filter.z1=-c.a1*out+filter.z2;filter.z2=c.b2*input-c.a2*out;value+=out*control.weights[band];

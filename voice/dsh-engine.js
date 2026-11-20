@@ -6,7 +6,7 @@
 (function(root){
   'use strict';
   root.ZerkaliusDshFactory=function(C){
-    const VERSION='deepseek-formant-live-v1.2.0',RATE=44100,TAU=2*Math.PI;
+    const VERSION='deepseek-formant-live-v1.2.1',RATE=44100,TAU=2*Math.PI;
     const profile=C.config({pitchStart:112,pitchEnd:96,vibratoDepth:0,vibratoRate:2.1,transitionMs:0,outputGain:.7,seed:7},['transitionMs']);
     // Возраст: 0 — ребёнок, 50 — взрослый, 100 — старик. Меняет длину речевого
     // тракта (форманты), высоту, дрожание и придыхание, не трогая таблицу фонем.
@@ -84,12 +84,23 @@
       const r=Math.exp(-Math.PI*b/RATE),theta=TAU*f/RATE;
       return [(1-r)*Math.sqrt(Math.max(0,1-2*r*Math.cos(2*theta)+r*r)),2*r*Math.cos(theta),-r*r];
     }
+    const voicedSpeechTargets=new Set(['b','bj','d','dj','g','gj','z','zj']);
     function renderSpeech({settings,phones,score,counts,total,prosody,shape}){
+      const dsp=root.VoiceProsodyDSP,softenNoise=dsp.createConsonantNoise(RATE);
       const resolvedPhones=score.map(({id})=>{
-        const native=table[id],p=C.scaled(Object.hasOwn(phones,id)?phones[id]:getPhone(id),settings,RATE),sameKind=native?.kind===p.kind;
+        const native=table[id],custom=Object.hasOwn(phones,id);
+        const p=C.scaled(custom?phones[id]:getPhone(id),settings,RATE),sameKind=native?.kind===p.kind;
+        let branchSources=sameKind?native.sources||null:null;
+        if(!custom&&voicedSpeechTargets.has(id)){
+          // The low formant carries voicing independently of the release/friction.
+          p.voice=.8;
+          p.noise*=.7;
+          p.weights[0]=.65;
+          branchSources=['voice','noise','noise'];
+        }
         if(shape)for(let band=0;band<3;band++)p.formants[band]=Math.min(C.limits.maxFrequency,p.formants[band]*shape.tract);
         if(shape)p.noise=Math.min(3,p.noise*shape.breath);
-        return {id,...p,activeFormants:3,loudness:sameKind?native.loud:1,branchSources:sameKind&&native.sources?native.sources:null};
+        return {id,...p,activeFormants:3,loudness:sameKind?native.loud:1,branchSources};
       });
       const samples=new Float32Array(total),glottal=new Float64Array(total),normal=gaussian(settings.seed);
       let cursor=0,phase=0,peak=0;
@@ -111,7 +122,9 @@
       let tilt=0;
       for(let i=0;i<total;i++){tilt+=.42*(glottal[i]-tilt);glottal[i]=tilt;}
       for(let segment=0;segment<score.length;segment++){
-        const p=resolvedPhones[segment],count=counts[segment],burst=p.kind==='stop'||p.kind==='affricate';
+        const p=resolvedPhones[segment],count=counts[segment];
+        const stop=p.kind==='stop',affricate=p.kind==='affricate',burst=stop||affricate;
+        const noiseConsonant=dsp.isNoiseConsonant(p.kind),releaseAt=Math.floor(count*(stop ? .55 : .28));
         if(p.kind==='silence'){for(const f of filters){f.last=0;f.older=0;}cursor+=count;continue;}
         for(let index=0;index<count;index++){
           const at=cursor+index,speech=prosody.at(at,segment),other=resolvedPhones[speech.otherIndex];
@@ -119,7 +132,12 @@
           if(index===0||at%16===0)for(let band=0;band<3;band++)filters[band].c=coefficient(mix(p.formants[band],other.formants[band]),mix(p.bandwidths[band],other.bandwidths[band]));
           const tremolo=p.kind==='trill'?1+.75*Math.sin(TAU*26*index/RATE):1;
           const voice=glottal[at]*tremolo*mix(p.voice,other.voice)*settings.voicing;
-          const noise=normal()*(burst?1-.9*index/Math.max(1,count-1):1)*mix(p.noise,other.noise)*settings.noise;
+          const rawNoise=normal(),softNoise=softenNoise(rawNoise);
+          const afterRelease=index-releaseAt;
+          let noiseEnvelope=1;
+          if(stop)noiseEnvelope=afterRelease<0?0:Math.exp(-afterRelease/(RATE*.012));
+          else if(affricate)noiseEnvelope=C.clamp(afterRelease/(RATE*.006),0,1)*(1-.7*index/Math.max(1,count-1));
+          const noise=(noiseConsonant?softNoise:rawNoise)*noiseEnvelope*dsp.blendSpeechNoise(p,other,speech.blend)*settings.noise;
           let value=0;
           for(let band=0;band<3;band++){
             const f=filters[band],[gain,a1,a2]=f.c;

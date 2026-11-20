@@ -5,6 +5,26 @@
   'use strict';
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+  const isNoiseConsonant=kind=>kind==='stop'||kind==='fricative'||kind==='affricate';
+  function defaultSpeechNoise(phone){
+    return phone.kind==='vowel'||isNoiseConsonant(phone.kind)?phone.noise:0;
+  }
+  function blendSpeechNoise(current,other,blend){
+    if(!isNoiseConsonant(current.kind))return current.noise;
+    if(isNoiseConsonant(other.kind))return current.noise+(other.noise-current.noise)*blend;
+    // Fade friction within its own consonant. A voiced neighbour has no copy of its noise.
+    return current.noise*(1-2*blend);
+  }
+  function createConsonantNoise(rate){
+    const step=1-Math.exp(-2*Math.PI*4800/rate);
+    let first=0,second=0;
+    return sample=>{
+      first+=step*(sample-first);
+      second+=step*(first-second);
+      // Keep some of the upper spectrum that distinguishes sibilants.
+      return .82*second+.18*sample;
+    };
+  }
   function number(v,name,min,max){
     if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max)throw Error('Просодия: '+name+' должен быть в диапазоне '+min+'…'+max+'.');
     return v;
@@ -54,5 +74,5 @@
       frequency:(base,control)=>clamp(base*control.pitchMultiplier,floor,ceiling),
       metadata:()=>({appliedProsody,diagnosticLimits,segmentBoundaries:boundaries})};
   }
-  root.VoiceProsodyDSP=Object.freeze({version:1,create});
+  root.VoiceProsodyDSP=Object.freeze({version:1,create,isNoiseConsonant,defaultSpeechNoise,blendSpeechNoise,createConsonantNoise});
 })(globalThis);
