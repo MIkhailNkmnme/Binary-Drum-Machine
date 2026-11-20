@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 62 32">
+  <title>XORoXORиус</title>
+  <desc>Красная маска из 160 клеток с тенями Kraftwerk.</desc>
+  <!-- Cell mask recovered from wolfram/community-assets/templates-author.png. -->
+  <defs><path id="silhouette" d="M26 0h2v1h-2zM32 0h2v1h-2zM25 1h3v1h-3zM32 1h3v1h-3zM24 2h5v1h-5zM31 2h5v1h-5zM25 3h2v1h-2zM33 3h2v1h-2zM25 4h2v1h-2zM29 4h2v1h-2zM33 4h2v1h-2zM26 5h1v1h-1zM28 5h4v1h-4zM33 5h1v1h-1zM26 6h8v1h-8zM27 7h1v1h-1zM29 7h2v1h-2zM32 7h1v1h-1zM18 8h2v1h-2zM27 8h6v1h-6zM40 8h2v1h-2zM17 9h5v1h-5zM25 9h3v1h-3zM32 9h3v1h-3zM38 9h5v1h-5zM16 10h4v1h-4zM27 10h2v1h-2zM31 10h2v1h-2zM40 10h4v1h-4zM17 11h2v1h-2zM28 11h1v1h-1zM31 11h1v1h-1zM41 11h2v1h-2zM17 12h2v1h-2zM25 12h1v1h-1zM27 12h6v1h-6zM34 12h1v1h-1zM41 12h2v1h-2zM18 13h3v1h-3zM25 13h3v1h-3zM32 13h3v1h-3zM39 13h3v1h-3zM26 14h1v1h-1zM33 14h1v1h-1zM26 15h1v1h-1zM33 15h1v1h-1zM26 16h1v1h-1zM33 16h1v1h-1zM26 17h1v1h-1zM33 17h1v1h-1zM2 24h2v1h-2zM56 24h2v1h-2zM1 25h5v1h-5zM54 25h5v1h-5zM0 26h4v1h-4zM56 26h4v1h-4zM1 27h2v1h-2zM57 27h2v1h-2zM1 28h2v1h-2zM57 28h2v1h-2zM2 29h3v1h-3zM55 29h3v1h-3z"/></defs>
+  <use href="#silhouette" transform="translate(-.22 -.22)" fill="#f3f5ef"/>
+  <use href="#silhouette" transform="translate(.28 .28)" fill="#292d32"/>
+  <use href="#silhouette" fill="#ff4040"/>
+</svg>
