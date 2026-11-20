@@ -41,6 +41,7 @@ a:hover { color: #d0faf3; }
 .site-links a { color: var(--muted); text-decoration: none; }
 .site-links a:hover { color: var(--ink); text-decoration: underline; }
 .intro { padding-block: clamp(2.8rem, 7vw, 6.2rem) 2.7rem; }
+.journal-version { display: block; margin-bottom: .65rem; color: var(--muted); font-size: .9rem; }
 .intro h1, .entry h2 { margin: 0; font-weight: 700; line-height: 1.04; letter-spacing: normal; text-wrap: balance; }
 .intro h1 { font-size: clamp(2.85rem, 8vw, 7.5rem); max-width: 14ch; }
 .intro > p { max-width: 40rem; margin: 1.3rem 0 1.7rem; color: var(--muted); font-size: clamp(1.05rem, 2.4vw, 1.3rem); }
