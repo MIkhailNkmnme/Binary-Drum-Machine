@@ -7,6 +7,9 @@
   let bounds=null,rays=[],emission=0,snowEmission=0,waterEmission=0,sample=0,statusMessage='',unavailable='',scene=null;
   let lightBits=false,lightSize=16,sun=false,sunRadius=40,sunCentre=null,rayColour=null;
   try{const colour=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').rayColour;if(/^#[\da-f]{6}$/i.test(colour))rayColour=colour;}catch(_){}
+  const materialColours={snow:'#ffffff',water:'#37afff'};
+  try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').materialColours;for(const key of Object.keys(materialColours))if(/^#[\da-f]{6}$/i.test(saved?.[key]))materialColours[key]=saved[key];}catch(_){}
+  const colourRGB=colour=>[1,3,5].map(start=>parseInt(colour.slice(start,start+2),16));
   let sunHandles,sunRing,sunMove,sunResize,sunDrag=null;
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}');lightBits=saved.bits===true;sun=saved.sun===true;if(Number.isFinite(saved.radius))sunRadius=Math.max(0,Math.min(innerWidth,saved.radius));if(Number.isFinite(saved.size))lightSize=Math.max(4,Math.min(64,saved.size));}catch(_){}
   try{const p=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').sunCentre;if(p&&Number.isFinite(p.x)&&Number.isFinite(p.y))sunCentre={x:Math.max(0,Math.min(1,p.x)),y:Math.max(0,Math.min(1,p.y))};}catch(_){}
@@ -51,7 +54,7 @@
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').speeds;for(const key of Object.keys(speeds))if(Number.isFinite(saved?.[key]))speeds[key]=Math.max(0,Math.min(4,saved[key]));}catch(_){}
   const lightRules=[{pass:1,reflect:2},{pass:2,reflect:1}];let reflectionLoss=true;
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}');reflectionLoss=saved.reflectionLoss!==false;for(let bit=0;bit<2;bit++)for(const key of ['pass','reflect']){const value=saved.lightRules?.[bit]?.[key];if(Number.isInteger(value)&&value>=0&&value<=3)lightRules[bit][key]=value;}}catch(_){}
-  const saveStyle=()=>{try{localStorage.setItem('mayatnik-flow-v1',JSON.stringify({light,snow,water,paused,grid:gridFlow,axis:axisFlow,bits:lightBits,size:lightSize,sun,radius:sunRadius,sunCentre,rayColour,dense,waterCorners,waterCornersUp,speeds,lightRules,reflectionLoss}));}catch(_){}};
+  const saveStyle=()=>{try{localStorage.setItem('mayatnik-flow-v1',JSON.stringify({light,snow,water,paused,grid:gridFlow,axis:axisFlow,bits:lightBits,size:lightSize,sun,radius:sunRadius,sunCentre,rayColour,materialColours,dense,waterCorners,waterCornersUp,speeds,lightRules,reflectionLoss}));}catch(_){}};
   function lightSprites(){
     return ['0','1'].map(bit=>{const c=document.createElement('canvas'),side=lightSize*2+6;c.width=c.height=side*2;
       const g=c.getContext('2d');g.setTransform(2,0,0,2,side,side);host.glyph(g,bit,lightSize);
@@ -230,17 +233,17 @@
     ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(...fieldMatrix());
     const palette=host.palette();
     const clip=scene?.clip||host.viewport();ctx.setTransform(1,0,0,1,0,0);ctx.save();ctx.beginPath();ctx.rect(clip.left,clip.top,clip.width,clip.height);ctx.clip();ctx.setTransform(...fieldMatrix());
-    const data=pixels.data;let snowVolume=0,volume=0;
-    for(let i=0;i<field.water.length;i++){const mass=field.water[i];snowVolume+=mass;data[i*4]=data[i*4+1]=data[i*4+2]=255;data[i*4+3]=mass>.01?Math.round(Math.min(1,Math.sqrt(mass))*230):0;}
+    const data=pixels.data,snowRGB=colourRGB(materialColours.snow),waterRGB=colourRGB(materialColours.water);let snowVolume=0,volume=0;
+    for(let i=0;i<field.water.length;i++){const mass=field.water[i];snowVolume+=mass;data[i*4]=snowRGB[0];data[i*4+1]=snowRGB[1];data[i*4+2]=snowRGB[2];data[i*4+3]=mass>.01?Math.round(Math.min(1,Math.sqrt(mass))*230):0;}
     waterCtx.putImageData(pixels,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(waterCanvas,0,0,field.width*cell,field.height*cell);
     const wetPixels=liquidPixels.data;wetPixels.fill(0);
     for(const y of liquid.activeRows)for(let x=0;x<liquid.width;x++){
       const i=y*liquid.width+x,m=liquid.water[i];volume+=m;if(m<=.002)continue;
-      wetPixels[i*4]=55;wetPixels[i*4+1]=175;wetPixels[i*4+2]=255;wetPixels[i*4+3]=Math.round(100+m*100);
+      wetPixels[i*4]=waterRGB[0];wetPixels[i*4+1]=waterRGB[1];wetPixels[i*4+2]=waterRGB[2];wetPixels[i*4+3]=Math.round(100+m*100);
     }
     liquidCtx.putImageData(liquidPixels,0,0);ctx.imageSmoothingEnabled=false;ctx.drawImage(liquidCanvas,0,0,liquid.width*ls,liquid.height*ls);
     // The top of each liquid cell is a height, not a pile-shaped opacity gradient.
-    ctx.save();ctx.scale(ls,ls);ctx.strokeStyle='#37afff';ctx.lineWidth=.8/ls;ctx.beginPath();
+    ctx.save();ctx.scale(ls,ls);ctx.strokeStyle=materialColours.water;ctx.lineWidth=.8/ls;ctx.beginPath();
     for(const y of liquid.activeRows)for(let x=0;x<liquid.width;x++){
       const i=y*liquid.width+x,m=liquid.water[i];
       if(m>.002&&(y===0||liquid.water[i-liquid.width]<.002)&& (y===liquid.height-1||liquid.solid[i+liquid.width]||liquid.water[i+liquid.width]>.999)){
@@ -356,7 +359,7 @@
   root.addEventListener('pagehide',()=>{endSunDrag(true);cancelAnimationFrame(raf);clearTimeout(retry);retry=0;raf=0;lastTime=0;});
   root.addEventListener('pageshow',()=>{if(light||snow||water||traces())wake();});
   mountSunHandles();updateStatus();if(light||snow||water)wake();
-  return {invalidate,group:()=>({id:'flow',title:'Потоки',color:'#76d4ff',items}),get rayColour(){return rayColour||host.palette().sym;},setRayColour(value){if(!/^#[\da-f]{6}$/i.test(value)||(snow||water)&&!light)return;setting(()=>{rayColour=value;});if(paused&&field&&scene&&!unavailable)draw(0);},get playing(){return !paused&&!unavailable&&(light||snow||water);},get status(){return statusMessage;},get traces(){return traces();},reset(){light=snow=water=paused=false;reset();sync();}};
+  return {invalidate,group:()=>({id:'flow',title:'Потоки',color:'#76d4ff',items}),get rayColour(){return rayColour||host.palette().sym;},setRayColour(value){if(!/^#[\da-f]{6}$/i.test(value)||(snow||water)&&!light)return;setting(()=>{rayColour=value;});if(paused&&field&&scene&&!unavailable)draw(0);},materialColour:key=>materialColours[key],setMaterialColour(key,value){if(!Object.hasOwn(materialColours,key)||!/^#[\da-f]{6}$/i.test(value))return;setting(()=>{materialColours[key]=value;});if(paused&&field&&scene&&!unavailable)draw(0);},get playing(){return !paused&&!unavailable&&(light||snow||water);},get status(){return statusMessage;},get traces(){return traces();},reset(){light=snow=water=paused=false;reset();sync();}};
   }
   root.MayatnikFlow={mount};
 })(window);
