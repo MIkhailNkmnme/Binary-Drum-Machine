@@ -1,0 +1,53 @@
+{
+  "task": "МАЯ-692",
+  "release": "7616b44794a2cefaab612bccfdbadd1a53be50fb",
+  "version": "1.043",
+  "checkedUtc": "2026-11-20T15:45:56.0189454Z",
+  "pagesRun": 44766035953,
+  "pagesConclusion": null,
+  "verification": "Source/diff read by root and flow_port. Tests, syntax checks, browser and app not run; acceptance by user.",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?v=1043",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-flow.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-flow.js?v=1043",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.js?v=1043",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.css",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.css?v=1043",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/instruction/index.html",
+      "url": "https://1001100.online/mayatnik/instruction/index.html?v=1043",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "audit/reports/2026-11-20-mayatnik-flow-controls.md",
+      "url": "https://1001100.online/audit/reports/2026-11-20-mayatnik-flow-controls.md?v=1043",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "matches": true
+    }
+  ]
+}
