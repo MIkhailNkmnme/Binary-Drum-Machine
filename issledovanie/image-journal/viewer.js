@@ -29,6 +29,16 @@
     image.src = link.href;
   });
 
+  const outsideImage = target => !target.closest('img, a, button');
+  let pressedOutside = false;
+  viewer.addEventListener('pointerdown', event => {
+    pressedOutside = event.button === 0 && outsideImage(event.target);
+  });
+  viewer.addEventListener('click', event => {
+    const dismiss = pressedOutside && outsideImage(event.target);
+    pressedOutside = false;
+    if (dismiss) viewer.close();
+  });
   viewer.addEventListener('close', () => {
     if (!viewer.open) stage.replaceChildren();
   });

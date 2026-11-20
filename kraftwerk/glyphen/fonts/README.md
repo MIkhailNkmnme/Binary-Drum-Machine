@@ -24,5 +24,9 @@ bodies upward. Font ascent/descent reserve these rows while keeping the previous
 The source version and mask digest are embedded in the font names for provenance;
 timestamps are fixed so unchanged inputs produce reproducible files.
 
+The image journal uses the Thin face plus a WOFF2 subset with the eight digit
+sketches from the `kraftwerk-frame` masks in the same source file. Build that
+subset independently with `python build-fonts.py --kraftwerk-digits`.
+
 Generation is an asset build. Tests, syntax checks, browser runs and visual
 acceptance are left to the user under the current project instructions.

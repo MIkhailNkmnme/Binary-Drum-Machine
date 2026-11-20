@@ -78,6 +78,10 @@
     green: { label: 'Зелёный', left: [51,122,52], middle: [51,122,52], right: [51,122,52], common: [51,122,52], legend: 'Конусы, обе стороны, всё поле и общие — зелёный' }
   };
   const STORAGE = 'zerk_hub_compare_v1', MODES = ['split', 'xor', 'and'];
+  const goldenXor = new URLSearchParams(window.location?.search).get('scene') === 'golden-xor';
+  const openingStatus = document.getElementById('hubCompareOpening');
+  let openingStep = goldenXor ? 4511 : null;
+  if (goldenXor && openingStatus) openingStatus.hidden = false;
   const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
   const CYCLE_MODES = ['cycle', 'wrap', 'pingpong', 'grow'];
   const CYCLE_NAMES = { cycle: 'Цикл', wrap: 'Край', pingpong: 'Пинг', grow: 'Рост' };
@@ -90,7 +94,7 @@
   const view = { mode: 'split', mirror: false, zoom: 1, palette: 'ice', fields: [1, 2, 3], speed: 1, cycleMode: 'wrap',
     pan: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 }, blend: { x: 0, y: 0 }, pair: { x: 0, y: 0 } } };
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE));
+    const saved = !goldenXor && JSON.parse(localStorage.getItem(STORAGE));
     if (saved && typeof saved === 'object') {
       if (MODES.includes(saved.mode)) view.mode = saved.mode;
       if (typeof saved.mirror === 'boolean') view.mirror = saved.mirror;
@@ -109,6 +113,7 @@
       }
     }
   } catch (_) {}
+  if (goldenXor) Object.assign(view, { mode: 'xor', mirror: false, palette: 'ice', fields: [3], speed: 128, cycleMode: 'grow' });
   let published = false;
   let step = -1, frame = -1, row = 1, timer = 0, nextFrame = true, started = performance.now();
   // v20 (Хаб v0.479). Вспышка конуса новой вершины поля 5.7 — по кнопке.
@@ -152,6 +157,7 @@
     failed = true; awaitingStats = false; clearTimeout(timer); timer = 0;
     syncPlayback();
     if (root) root.dataset.error = error instanceof Error ? error.message : String(error);
+    if (openingStep !== null && openingStatus) openingStatus.textContent = 'Не удалось открыть готовую сцену.';
     if (controller && typeof controller.error === 'function') controller.error(error);
   }
 
@@ -159,7 +165,7 @@
     if (root) root.dataset.paused = String(paused);
     if (document.body && document.body.classList) document.body.classList.toggle('hubPlaying', !failed && !paused);   // v0.472: номер хаба не виден, пока плеер идёт
     if (!pauseButton) return;
-    pauseButton.disabled = failed;
+    pauseButton.disabled = failed || openingStep !== null;
     pauseButton.setAttribute('aria-pressed', String(paused));
     const label = paused ? 'Продолжить все три построения' : 'Пауза трёх построений';
     pauseButton.setAttribute('aria-label', label); pauseButton.title = label;
@@ -167,7 +173,7 @@
     text('hubComparePauseIcon', paused ? '▶' : 'Ⅱ');
   }
   function togglePause() {
-    if (failed) return;
+    if (failed || openingStep !== null) return;
     paused = !paused;
     clearTimeout(timer); timer = 0;
     syncPlayback();
@@ -196,6 +202,7 @@
   }
 
   function saveView() {
+    if (goldenXor) return;
     try { localStorage.setItem(STORAGE, JSON.stringify(view)); } catch (_) {}
   }
   function text(id, value) {
@@ -657,7 +664,13 @@
   function schedule(delay) {
     if (!timer && !document.hidden && !awaitingStats && !failed && !paused) timer = setTimeout(tick, delay);
   }
+  function finishOpening() {
+    openingStep = null;
+    if (openingStatus) openingStatus.hidden = true;
+    syncPlayback();
+  }
   function resetAnimation() {
+    if (openingStep !== null) finishOpening();
     clearTimeout(timer); timer = 0;
     step = -1; frame = -1; cycle = 0; row = 1; nextFrame = true; started = performance.now();
     pingDir = 1; pingFrame = -1; pingCycle = 0; pingStarted = false; pingCheckpoints.length = 0;
@@ -739,9 +752,29 @@
     }
     finish();
   }
+  function publishFrame() {
+    kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
+    left.dataset.frame = right.dataset.frame = String(frame);
+    if (middle) middle.dataset.frame = String(frame);
+    published = true; publishedFrame = frame; publishedCycle = cycle;
+    renderPublished();
+  }
   function tick() {
     timer = 0;
     if (document.hidden || awaitingStats || failed || paused) return;
+    if (openingStep !== null) {
+      try {
+        // Seek through the real scene in slices so the rest of the Hub can open.
+        const deadline = performance.now() + 12;
+        do { advanceWholeFrame(); } while (step < openingStep && performance.now() < deadline);
+        if (step < openingStep) { schedule(0); return; }
+        publishFrame();
+        paused = true;
+        finishOpening();
+        measureSnapshot();
+      } catch (error) { stop(error); }
+      return;
+    }
     // Пока ни одна панель статистики не открыта, расчёт не тормозит плеер:
     // кадры идут со скоростью кнопки, статистика начинается при открытии панели.
     const statsOn = controller && typeof controller.measure === 'function' &&
@@ -751,13 +784,7 @@
       const startedAt = performance.now();
       const steps = framesPerTick();
       for (let i = 0; i < steps; i++) advanceWholeFrame();
-      if (view.cycleMode === 'cycle' ? frame >= FIRST_FRAME : step >= FIRST_FRAME) {
-        kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
-        left.dataset.frame = right.dataset.frame = String(frame);
-        if (middle) middle.dataset.frame = String(frame);
-        published = true; publishedFrame = frame; publishedCycle = cycle;
-        renderPublished();
-      }
+      if (view.cycleMode === 'cycle' ? frame >= FIRST_FRAME : step >= FIRST_FRAME) publishFrame();
       nextFrame = true;
       schedule(Math.max(0, frameInterval() - (performance.now() - startedAt)));
       return;
@@ -801,13 +828,7 @@
     if (visible) {
       // Preserve the last displayed snapshot throughout the next cycle's
       // hidden warmup frames too (pause and palette changes can occur there).
-      kernel.copy(packedLeft, cones); kernel.copy(packedRight, grid); kernel.copy(packedPair, pairGrid); decoded = false;
-      // Готовые изображения публикуются в одном задании, без промежуточного кадра.
-      left.dataset.frame = right.dataset.frame = String(frame);
-      if (middle) middle.dataset.frame = String(frame);
-      published = true;
-      publishedFrame = frame; publishedCycle = cycle;
-      renderPublished();
+      publishFrame();
     }
     nextFrame = true;
     const continueFrame = () => {

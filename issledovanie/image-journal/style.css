@@ -1,15 +1,14 @@
 @font-face {
-  font-family: "BitByte Operator";
-  src: url("../../bit-byte/fonts/bitbyte-operator-regular.woff2") format("woff2");
-  font-style: normal;
+  font-family: "Kraftwerk Frame Digits";
+  src: url("../../kraftwerk/glyphen/fonts/kraftwerk-frame-digits.woff2") format("woff2");
   font-weight: 400;
   font-display: swap;
+  unicode-range: U+0031-0038;
 }
 @font-face {
-  font-family: "BitByte Operator";
-  src: url("../../bit-byte/fonts/bitbyte-operator-bold.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 700;
+  font-family: "AzBuk Thin";
+  src: url("../../kraftwerk/glyphen/fonts/xor-azbuk-thin.woff2?v=051") format("woff2");
+  font-weight: 400;
   font-display: swap;
 }
 
@@ -21,11 +20,21 @@
   --muted: #adb7c3;
   --line: #323b45;
   --accent: #8be1d5;
-  --operator: "BitByte Operator", ui-monospace, Consolas, monospace;
-  font-family: var(--operator);
+  --journal-font: "Kraftwerk Frame Digits", "AzBuk Thin", ui-monospace, Consolas, monospace;
+  font-family: var(--journal-font);
+  font-synthesis: none;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.58; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.58;
+}
+body, :where(h1, h2, h3, p, a, button, summary, figcaption, time, dt, dd, code) {
+  /* Glyphen shifts the silhouettes by +0.28 and -0.22 cells. One cell is 1/8 em. */
+  text-shadow: .035em .035em 0 #2b2d34, -.0275em -.0275em 0 #e9e9e9;
+}
 a { color: var(--accent); text-underline-offset: .23em; text-decoration-thickness: 1px; }
 a:hover { color: #d0faf3; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
@@ -48,7 +57,7 @@ a:hover { color: #d0faf3; }
 .entry { padding-block: 2.5rem 3.35rem; border-top: 1px solid var(--line); scroll-margin-top: 1rem; }
 .entry:last-child { padding-bottom: max(3rem, 8vh); }
 .entry-heading { max-width: 52rem; margin-bottom: 1.4rem; }
-.entry-meta { margin: 0 0 .62rem; display: flex; flex-wrap: wrap; gap: .25rem 1rem; font: .85rem/1.4 var(--operator); color: var(--accent); }
+.entry-meta { margin: 0 0 .62rem; display: flex; flex-wrap: wrap; gap: .25rem 1rem; font: .85rem/1.4 var(--journal-font); color: var(--accent); }
 .entry-meta time { color: var(--muted); }
 .entry h2 { font-size: clamp(2rem, 5vw, 3.8rem); }
 .entry-heading > p:last-child { color: var(--muted); max-width: 73ch; margin: .9rem 0 0; }
@@ -78,7 +87,7 @@ details[open] > summary { border-bottom: 1px solid var(--line); }
 .palette-notes div { display: grid; grid-template-columns: 7rem 1fr; padding: .22rem 0; gap: .2rem .7rem; }
 .palette-notes dt { font-weight: 700; }
 .palette-notes dd { margin: 0; color: var(--muted); }
-code { font-family: var(--operator); font-size: .9em; }
+code { font-family: var(--journal-font); font-size: .9em; }
 @media (max-width: 45rem) {
   .shell { width: calc(100% - 2rem); }
   .axis-wall { grid-template-columns: 1fr; }
