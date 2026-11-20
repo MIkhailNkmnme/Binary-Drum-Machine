@@ -92,6 +92,8 @@
   const visible = () => win.getClientRects().length && !win.classList.contains('collapsed') && !win.dataset.parked && !document.hidden;
   const serp = (() => { const rows=['1'];for(let r=1;r<64;r++){const p=rows[r-1];let s='';for(let j=0;j<=r;j++)s+=(Number(p[j-1]||0)^Number(p[j]||0));rows.push(s);}return rows; })();
   const pendSettings=state.pendulum ||= {depth:512,limit:512,frame:1,speed:8,colored:true};
+  const savedPlacement=pendSettings.placement;
+  if(!savedPlacement||!Number.isFinite(savedPlacement.x)||!Number.isFinite(savedPlacement.y)||!Number.isInteger(savedPlacement.turn)||savedPlacement.turn<0||savedPlacement.turn>3)delete pendSettings.placement;
   let pendulum=null,pendTarget=null,pendPlaying=false,pendClock=0;
   function pendEngine(){if(!pendulum){pendulum=new ZZMirrorPendulum(pendSettings.depth,pendSettings.limit);pendSettings.depth=pendulum.depth;pendSettings.limit=pendulum.limit;pendTarget=clamp(Number(pendSettings.frame)||0,0,pendulum.limit);}return pendulum;}
   const rows = () => state.source==='pend' ? pendEngine().rows() : state.source==='field' ? Z.rows : state.source==='own' ? state.rows : state.source==='base' ? ZZ_INITIAL_ROWS : serp;
@@ -538,6 +540,108 @@
   function numberField(parent,title,value,min,max,step=1){const el=field(parent,title,'number',value);Object.assign(el,{min,max,step});return el;}
   function textBlock(parent,text){const el=document.createElement('p');el.className='zerk-help';el.textContent=text;parent.append(el);return el;}
 
+  function buildPendulumPlacement(parent,activate,togglePlay){
+    const el=editor([]);
+    el.id='zerkPendPlacement';
+    textBlock(el,'Перетащите маятник на схеме или двигайте стрелками. Выберите поворот и нажмите «Плей».');
+    const board=document.createElement('canvas');
+    board.width=360;board.height=216;board.className='zerk-pend-board';board.tabIndex=0;
+    board.setAttribute('aria-label','Схема поля зеркал. Стрелки передвигают маятник.');
+    el.append(board);
+    const ctx=board.getContext('2d');
+    let pointer=null;
+    function view(){
+      const scale=Math.min((board.width-12)/drawW,(board.height-12)/drawH);
+      return {scale,left:(board.width-drawW*scale)/2,top:(board.height-drawH*scale)/2};
+    }
+    function draw(){
+      if(!drawW||!drawH)return;
+      const {scale,left,top}=view(),{unit,matrix,center,turn}=pendulumPose(sceneWidth());
+      const {W,H}=pendEngine().field;
+      ctx.clearRect(0,0,board.width,board.height);
+      ctx.save();ctx.translate(left,top);ctx.scale(scale,scale);
+      ctx.fillStyle='#0b1018';ctx.fillRect(0,0,drawW,drawH);
+      ctx.lineWidth=1/scale;ctx.strokeStyle='#3a485e';ctx.strokeRect(0,0,drawW,drawH);
+      ctx.beginPath();ctx.rect(0,0,drawW,drawH);ctx.clip();
+      ctx.strokeStyle='#1c283a';ctx.beginPath();
+      for(let i=1;i<8;i++){
+        ctx.moveTo(drawW*i/8,0);ctx.lineTo(drawW*i/8,drawH);
+        ctx.moveTo(0,drawH*i/8);ctx.lineTo(drawW,drawH*i/8);
+      }
+      ctx.stroke();
+      const radius=Math.hypot(drawW,drawH);
+      for(const mirror of state.mirrors){
+        if(!mirror.on)continue;
+        const x=mirror.x*drawW,y=mirror.y*drawH,dx=radius*Math.cos(mirror.angle),dy=radius*Math.sin(mirror.angle);
+        ctx.strokeStyle=mirror.color;ctx.globalAlpha=.65;ctx.beginPath();ctx.moveTo(x-dx,y-dy);ctx.lineTo(x+dx,y+dy);ctx.stroke();
+      }
+      ctx.globalAlpha=1;ctx.beginPath();
+      const base=(H-.5)*unit;
+      for(const [index,point] of [[0,-unit/2],[W*unit/2,base],[-W*unit/2,base]].entries()){
+        const [x,y]=sceneMath.point(matrix,...point);
+        if(index===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+      ctx.closePath();ctx.fillStyle='#326cb366';ctx.fill();ctx.strokeStyle='#8fc9ff';ctx.stroke();
+      ctx.fillStyle='#dceeff';ctx.fillRect(center[0]-2/scale,center[1]-2/scale,4/scale,4/scale);
+      ctx.restore();
+      readout.value=turn*90+'°';
+    }
+    function setPosition(x,y,turn){
+      pendPlaying=false;pendClock=0;
+      const [dx,dy]=state.sourceOffsets[0];
+      pendSettings.placement={x:clamp(x/drawW,0,1)-dx,y:clamp(y/drawH,0,1)-dy,turn};
+      changed();draw();
+    }
+    function rotate(delta){
+      if(!drawW||!drawH)return;
+      const {center,turn}=pendulumPose(sceneWidth());
+      setPosition(...center,(turn+delta+4)%4);
+    }
+    function pointerPoint(e){
+      const bounds=board.getBoundingClientRect(),{scale,left,top}=view();
+      return [((e.clientX-bounds.left)*board.width/bounds.width-left)/scale,
+        ((e.clientY-bounds.top)*board.height/bounds.height-top)/scale];
+    }
+    board.onpointerdown=e=>{
+      if(e.button!==0||pointer||!drawW||!drawH)return;
+      const point=pointerPoint(e),{center,turn}=pendulumPose(sceneWidth());
+      if(point.some((value,i)=>value<0||value>[drawW,drawH][i]))return;
+      pointer={id:e.pointerId,point,center,turn};board.setPointerCapture(e.pointerId);board.focus({preventScroll:true});
+      pendPlaying=false;pendClock=0;request();
+    };
+    board.onpointermove=e=>{
+      if(pointer?.id!==e.pointerId)return;
+      const position=pointerPoint(e).map((v,i)=>pointer.center[i]+v-pointer.point[i]);
+      setPosition(...position,pointer.turn);
+    };
+    board.onlostpointercapture=()=>{pointer=null;};
+    board.onkeydown=e=>{
+      const moves={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+      const move=moves[e.key];
+      if(!move||!drawW||!drawH)return;
+      e.preventDefault();e.stopPropagation();
+      const {center,turn}=pendulumPose(sceneWidth()),step=e.shiftKey?.05:.01;
+      setPosition(center[0]+move[0]*drawW*step,center[1]+move[1]*drawH*step,turn);
+    };
+    const row=document.createElement('div');row.className='zerk-pend-actions';el.append(row);
+    button('↶ 90°','Повернуть маятник влево на 90°',()=>rotate(-1),row);
+    const readout=document.createElement('output');readout.setAttribute('aria-label','Поворот маятника');row.append(readout);
+    button('↷ 90°','Повернуть маятник вправо на 90°',()=>rotate(1),row);
+    button('⟲ Сброс','Вернуть исходное положение маятника',()=>{
+      delete pendSettings.placement;pendPlaying=false;pendClock=0;changed();draw();
+    },row);
+    const play=button('▶ Плей','Запустить / остановить маятник в выбранном положении',togglePlay,row);
+    const open=button('✥\nуст.','Установка маятника на поле зеркал',()=>{
+      pendPlaying=false;pendClock=0;state.layout='single';activate();
+      openEditor(el,'Установка маятника',open);draw();
+    },parent);
+    diamond(open,'✥\nуст.',parent);
+    compactUpdates.push(()=>{
+      if(el.hidden||tools.hidden||state.source!=='pend')return;
+      play.textContent=pendPlaying?'Ⅱ Пауза':'▶ Плей';play.setAttribute('aria-pressed',String(pendPlaying));draw();
+    });
+  }
+
   function buildPendulumEditor(parent){
     const el=editor([]);el.id='zerkPendulumEditor';
     textBlock(el,'Зеркальный маятник: 0, −1, +1, −2, +2… Каждая вершина меняет исходный кадр; три зеркала отражают один и тот же кадр. Пустые клетки прозрачны.');
@@ -557,10 +661,16 @@
     const group=grape('zerkPendG','Маятник','#4f9bff',()=>[24,Math.max(120,stage.clientHeight-220)]);
     let trigger;trigger=button('↔\nмаят.','Зеркальный маятник · выбрать узор и открыть настройки',()=>{activate();openEditor(el,'Зеркальный маятник',trigger);},parent);trigger.id='zerkPendOpen';trigger.remove();   // v0.1158, «так же»: «↔ маят.» из «Строк» убран — маятник открывает «↔ кадр» в своей группе, узор «Зеркальный маятник» — в «≡ поле»
     const settings=editDiamond('↔\nкадр','Зеркальный маятник',el,group);
-    const play=button('▶','Запустить / остановить маятник',()=>{activate();if(pendulum.frame===pendulum.limit)pendTarget=0;pendPlaying=!pendPlaying;play.textContent=pendPlaying?'Ⅱ':'▶';play.setAttribute('aria-pressed',String(pendPlaying));pendClock=0;request();},group);play.id='zerkPendPlay';play.className='zerk-auto';diamond(play,'▶',group);
+    function togglePlay(){
+      activate();
+      if(!pendPlaying&&pendulum.frame===pendulum.limit&&pendTarget===null)pendTarget=0;
+      pendPlaying=!pendPlaying;pendClock=0;request();
+    }
+    const play=button('▶','Запустить / остановить маятник',togglePlay,group);play.id='zerkPendPlay';play.className='zerk-auto';diamond(play,'▶',group);
     const back=button('◂','Предыдущий кадр маятника',()=>seek((pendTarget??pendEngine().frame)-1),group);back.id='zerkPendBack';diamond(back,'◂',group);
     const next=button('▸','Следующий кадр маятника',()=>seek((pendTarget??pendEngine().frame)+1),group);next.id='zerkPendNext';diamond(next,'▸',group);
     const reset=button('⟲','Вернуть маятник к первой вершине',()=>seek(1),group);reset.id='zerkPendReset';diamond(reset,'⟲',group);
+    buildPendulumPlacement(group,activate,togglePlay);
     compactUpdates.push(()=>{
       const active=state.source==='pend';group.parentElement.hidden=!active;trigger.setAttribute('aria-pressed',String(active));
       if(!active)return;const engine=pendEngine(),b=engine.balance();timeline.max=engine.limit;timeline.value=pendTarget??engine.frame;exact.max=engine.limit;exact.value=pendTarget??engine.frame;
@@ -775,6 +885,22 @@
     Z.zerkBipy={revision:Date.now(),nb:state.net.nb,h:list[0].u.length-1,list,up:tint(state.net.up),down:tint(state.net.down)};Z.oktInput='zerk-net';Z.oktSync=false;oktSent=null;save();
     if(!winOpen('w-okt'))document.querySelector('#pinBar button[data-aw="w-okt"]')?.click();renderOkt();notify('Развёртка: '+(state.net.nb*2)+' граней перенесено в Бирамиду');
   }
+  function pendulumPose(width) {
+    const {W,H}=pendEngine().field, offset=state.sourceOffsets[0], placement=pendSettings.placement;
+    if(!placement){
+      const unit=Math.min(width*.92/W,(drawH-24)/(H+1));
+      const x=drawW-width/2+offset[0]*drawW,y=12+unit*Math.sqrt(3)/2+offset[1]*drawH;
+      return {unit,matrix:sceneMath.placement(x,y,0),center:[x,y+(H-1)*unit/2],turn:0};
+    }
+    const turn=placement.turn,longest=Math.max(W,H);
+    const unit=Math.min(width*.92/longest,(drawH-24)/longest);
+    const halfW=(turn%2?H:W)*unit/2,halfH=(turn%2?W:H)*unit/2;
+    const x=clamp((placement.x+offset[0])*drawW,halfW+8,drawW-halfW-8);
+    const y=clamp((placement.y+offset[1])*drawH,halfH+8,drawH-halfH-8);
+    const matrix=sceneMath.multiply(sceneMath.placement(x,y,turn*pi/2),sceneMath.placement(0,-(H-1)*unit/2,0));
+    return {unit,matrix,center:[x,y],turn};
+  }
+  function sceneWidth(){return drawW-(drawW>650&&!document.body.classList.contains('zerk-zen')?250:0);}
   function scene(ratio=dpr){
     if(state.build==='net'){
       const model=netGeometry(),b=model.bounds,reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2+state.sourceOffsets[0][0]*drawW,drawH/2-(b[1]+b[3])*scale/2+state.sourceOffsets[0][1]*drawH,0),items=[];
@@ -787,13 +913,14 @@
     for(let i=0;i<count;i++){
       const R=count===1?rows():setRows(i),fromField=count===1?state.source==='field':state.sets[i].source==='field'||state.sets[i].source==='shared'&&state.source==='field',extent=fromField?fieldRowsExtent():R,N=Math.max(1,extent.length),max=Math.max(1,...extent.map(s=>s.length)),color=count===1?state.bitColor:state.sets[i].color;
       const isPend=state.source==='pend'&&(count===1||state.sets[i].source==='shared');
-      const dw=count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*(isPend?1:.866))):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
+      const pose=count===1&&isPend?pendulumPose(W):null;
+      const dw=pose?pose.unit:count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*(isPend?1:.866))):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
       const variants=new Map();for(const c of reflected){const mode=state.mirrors.reduce((v,m,j)=>v^((c.mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);if(!variants.has(mode)){
         const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.bitShape,state.digitsMirror,state.bitSymmetry,state.symmetryMinimums,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
       }}
       for(let k=0;k<(count===1?1:state.mult);k++){
         const angle=(state.layout==='quad'?i*pi/2:i*pi/3)-pi/2+k*2*pi/state.mult;
-        const offset=state.sourceOffsets[i],place=count===1?sceneMath.placement(cx+offset[0]*drawW,12+dw*Math.sqrt(3)/2+offset[1]*drawH,0):sceneMath.placement(cx+offset[0]*drawW,cy+offset[1]*drawH,angle);
+        const offset=state.sourceOffsets[i],place=pose?pose.matrix:count===1?sceneMath.placement(cx+offset[0]*drawW,12+dw*Math.sqrt(3)/2+offset[1]*drawH,0):sceneMath.placement(cx+offset[0]*drawW,cy+offset[1]*drawH,angle);
         if(k===0)labels.push({point:sceneMath.point(place,0,(N-1)*dw*Math.sqrt(3)*.3),text:count===1?'Холст':'Холст '+(i+1),color});
         for(const c of reflected){const mode=state.mirrors.reduce((v,m,j)=>v^((c.mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0),src=variants.get(mode);items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:i});}
       }

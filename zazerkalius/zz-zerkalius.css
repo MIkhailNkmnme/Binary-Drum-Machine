@@ -246,3 +246,10 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 html.mi-wide :is(#zerkStage,#zerkHeaderDock) .zerk-diamond{width:120px!important;min-width:120px!important;max-width:120px!important;margin-left:0!important;clip-path:polygon(24px 0,calc(100% - 24px) 0,100% 50%,calc(100% - 24px) 100%,24px 100%,0 50%)!important}
 html.mi-wide :is(#zerkStage,#zerkHeaderDock) .zerk-diamond::before{mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' preserveAspectRatio='none'%3E%3Cpath d='M24 .7H96L119.3 24 96 47.3H24L.7 24Z' fill='none' stroke='black' stroke-width='1'/%3E%3C/svg%3E") center/100% 100% no-repeat}
 html.mi-wide :is(#zerkStage,#zerkHeaderDock) .zerk-diamond:is(.on,.is-selected,:has(input:checked))::before{mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' preserveAspectRatio='none'%3E%3Cpath d='M24 1.5H96L118.5 24 96 46.5H24L1.5 24Z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+
+#zerkTools .zerk-pend-board{display:block;width:100%;height:auto;aspect-ratio:5/3;border:1px solid var(--line);box-sizing:border-box;background:#090d14;cursor:move;touch-action:none}
+#zerkTools .zerk-pend-board:focus-visible{outline:1px solid #8fc9ff;outline-offset:2px}
+#zerkTools .zerk-editor>.zerk-pend-actions{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:3px}
+#zerkTools .zerk-pend-actions output{text-align:center;min-width:32px;font-variant-numeric:tabular-nums}
+#zerkTools .zerk-pend-actions button:last-child{grid-column:2/4}
+#zerkTools .zerk-pend-actions button[aria-pressed="true"]{color:#8fc9ff;border-color:#8fc9ff}
