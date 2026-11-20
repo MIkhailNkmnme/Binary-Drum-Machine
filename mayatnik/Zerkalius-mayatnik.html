@@ -1,4 +1,4 @@
-<!-- МАЯ-685 · v1.036. Волна Code в Аниматрице. Проверки пользователем. -->
+<!-- МАЯ-686 · v1.037. Потоки Зеркль в Маятнике. Проверки пользователем. -->
 <!-- ВЛФ-009 · v1.035: Вольфрам — три верхних бита выбирают цвет клетки, без изменения поля. Проверки пользователем. -->
 <!-- ИСС-117 · v1.034: видимый YouTube-плеер KOBTRAX, отдельный от транспорта поля. Проверки пользователем. -->
 <!-- АУДИТ-002 · v1.032: восстановлена загрузка скрипта групп шаблонов. -->
@@ -78,7 +78,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятнкъ — v1.036</title>
+<title>Zerkalius Маятнкъ — v1.037</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -229,7 +229,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.036</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.037</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -720,6 +720,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-phone-robot.js?v=1033"></script>
 <script src="mayatnik-phone-music.js?v=1033"></script>
 <script src="mayatnik-phone-host.js?v=1033"></script>
+<script src="../_js/hub-flow-core.js?v=1037"></script>
+<script src="mayatnik-flow.js?v=1037"></script>
 <link rel="stylesheet" href="mayatnik-layers.css?v=517">
 <script>
 (() => {
@@ -3604,6 +3606,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
   }
   function draw() {
+    window.mayFlow?.invalidate();
     // Rendering may run paint producers: retain the full receipt fallback before they write.
     templateInlineExpandRaster();
     pitCopiesSync();paintEmptySync();
@@ -5810,6 +5813,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     });
   }
   function drawTemplate(){
+    window.mayFlow?.invalidate();
     queueLineMeasures();
     if(window.mayLayers)layerTemplates();
     if(!playing&&templateLockCheck())requestAnimationFrame(()=>{if(f)draw();});   // v0.142: шаблон встал на застывшие биты
@@ -7534,6 +7538,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     for (let i = 0; i < a.length; i++) { const u = a[i]; let h = fam.get(u); if (h === undefined) { h = pxFam(u) === c; fam.set(u, h); } if (h) b[i] = u; }
     o.getContext('2d').putImageData(d, 0, 0); return o; }
   function mirDraw() {
+    window.mayFlow?.invalidate();
     if (typeof cv === 'undefined' || typeof wrap === 'undefined' || !cv || !wrap) return;
     const m = mirState(), on = m.on && img && cv.width > 1 && !document.body.classList.contains('may-fold-active');
     let o = mirDraw.o; if (!o) { if (!on) return; o = mirDraw.o = mirInit(); }
@@ -13310,8 +13315,90 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     select(range){const changed=cellSelectionModel.select(range);cellSync();cellStore();cellSelectionView.render();return changed;},
     hide:axis=>cellSelectionView.hide(axis),revealAll:()=>cellSelectionView.revealAll(),snapshot:()=>cellSelectionModel.serialize()};
 
+  // МАЯ-686: a read-only bridge from the current rendered bit geometry to screen-space flows.
+  // No colour-to-bit guessing, GPU readback, source mutation or transport pause.
+  function flowViewport(){const r=wrap.getBoundingClientRect();return {left:r.left+wrap.clientLeft,top:r.top+wrap.clientTop,width:wrap.clientWidth,height:wrap.clientHeight,right:r.left+wrap.clientLeft+wrap.clientWidth,bottom:r.top+wrap.clientTop+wrap.clientHeight};}
+  function flowAxis(){
+    if(!f||!geo)return null;
+    const m=mirState(),r=cv.getBoundingClientRect(),length=Math.max(24,m.len*r.width),a={x:r.left+m.ax*r.width,y:r.bottom};
+    const end=viewRotation.logicalPoint({x:a.x+length*Math.cos(m.ang),y:a.y+length*Math.sin(m.ang)}),start=viewRotation.logicalPoint(a);
+    return {x:end.x,y:end.y,dx:(start.x-end.x)/length,dy:(start.y-end.y)/length};
+  }
+  function flowCapture(){
+    const reason=message=>({reason:message});
+    if(!f||!geo)return reason('сначала постройте поле');
+    if(gpuBig?.large)return reason('большое GPU-поле не имеет доступной маски; выберите до 4096 строк');
+    if(!img||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k||gpuBig.pend?.length))return reason('ожидание точного кадра; при GPU-анимации остановите поле');
+    if(window.mayPhone?.art())return reason('выберите Обои → Клетки');
+    if(st.edgeRhombOn)return reason('сборка Ромбо: вернитесь к исходному полю');
+    if(document.body.classList.contains('may-fold-active'))return reason('выключите свёртку поля');
+    if(document.body.classList.contains('may-pixel-invalid'))return reason('поле скрыто из-за недоступной точной сетки');
+    if(cellHidden())return reason('раскройте скрытые строки и столбцы');
+    if(st.gifScaleStack)return reason('выключите коллаж масштабов');
+    if(st.pitCopiesOn||st.paintEmptyNeighbours)return reason('выключите копии во впадинах и окраску пустот');
+    if(bothOn()||ovlState().n||ovlFrozen)return reason('выключите Оба рядом и Наложение');
+    if(st.view==='bitContours'||(st.view==='digitsOnly'||rombDigits())&&scale()>=(rombP()>=0?6:4))return reason('выберите заполненные клетки вместо отдельных цифр или контуров');
+    const layers=window.mayLayers?.list()||[],extra=layers.find(layer=>layer.kind!=='original'&&layer.kind!=='template'&&layer.visible&&layer.opacity&&window.mayLayers._entry(layer.id)?.enabled!==false&&window.mayLayers._entry(layer.id)?.source);
+    if(extra)return reason('скройте дополнительный слой «'+extra.name+'» без битовой маски');
+    let semantic;try{semantic=visibleSemanticContext(false,true);}catch(_){return reason('ожидание полной семантики текущего кадра');}
+    const r=cv.getBoundingClientRect(),clip=flowViewport(),s=scale(),width=img.width,height=img.height,original=window.mayLayers?.get('original');
+    const baseVisible=original?.visible!==false&&original?.opacity!==0,rotated=viewRotation.enabled,pivot=viewRotation.center;
+    const tags=contourBits?.length===width*height&&!paintBits&&!faceLayer&&!templateMatchLayer&&!pxHide.size?contourBits:null;
+    const allFilters=st.view==='rgbNeighbours'?rgbNeighbourFilters():[],bw=st.view==='rgbNeighbours'?rgbNeighbourBWMode():0,filters=bw?[]:allFilters,staggered=staggeredOn();
+    const filtered=filters.length?new Set(filters):null,shown=pxHide.size?pxColourView():img,pixels=new Uint32Array(shown.data.buffer,shown.data.byteOffset,shown.data.byteLength/4),raw=new Uint32Array(img.data.buffer,img.data.byteOffset,img.data.byteLength/4);
+    const empty=rgba(EMPTY),m=mirState(),mirror=!!m.on,c2=Math.cos(2*m.ang),s2=Math.sin(2*m.ang),ax=r.left+m.ax*r.width,ay=r.bottom;
+    // Synchronous sampling caches each visited source pixel; zoomed cells are read once.
+    const cache=new Map();let previous=-1,previousType=0;
+    function read(x,y,reflected=false){
+      if(x<r.left||x>=r.right||y<r.top||y>=r.bottom)return 0;
+      let px=(x-r.left)/s,py=(y-r.top)/s;
+      if(staggered){const q=staggeredSourcePoint(px,py);px=q.x;py=q.y;}
+      px=Math.floor(px*RK);py=Math.floor(py*RK);if(px<0||px>=width||py<0||py>=height)return 0;
+      const q=py*width+px;
+      if(reflected&&st.mirCol&&pxFam(raw[q])!==st.mirCol)return 0;
+      if(q===previous)return previousType;
+      let type=cache.get(q);
+      if(type===undefined){
+        const bit=tags?tags[q]:semantic.readBit(px,py),code=rgbNeighbourClasses?.[q];
+        const hidden=pxHide.size&&pixels[q]===empty&&pxHidden(q);
+        type=bit===0?1:bit===1?2:bit===-2?4:0;
+        if(hidden||filtered&&!filtered.has(code))type=0;
+        else if(bw&&type){const selected=code!==255&&(!allFilters.length||allFilters.includes(code));type=(bw===1?selected:!selected)?2:1;}
+        // Bound optional caching on small-scale overviews; it is not a field-sized allocation.
+        if(cache.size<262144)cache.set(q,type);
+      }
+      previous=q;previousType=type;return type;
+    }
+    const templates=[];
+    if(!playing||templateFollowActive())for(const item of templateItems){
+      const meta=window.mayLayers?.get('template:'+item.id);
+      if(!(item===colourTemplate?templateVisible:item.view?.visible!==false)||window.mayTemplateTransient?.hidden(item)||meta?.visible===false||(meta?.opacity??item.view?.alpha??100)===0)continue;
+      for(const part of item.parts){const box=templateRect(part,false,item),dx=meta?.x||0,dy=meta?.y||0;
+        templates.push({part,left:r.left+box.x/RK*s+dx,top:r.top+box.y/RK*s+dy,width:box.width/RK*s,height:box.height/RK*s,
+          clipLeft:r.left+part.ox*s+dx,clipRight:r.left+(part.ox+templatePartWidth(part))*s+dx,clipTop:r.top+dy,clipBottom:r.top+dispH()*s+dy});
+      }
+    }
+    return {clip,typeAt(x,y){
+      if(rotated){x=2*pivot.x-x;y=2*pivot.y-y;}
+      let type=baseVisible?read(x,y):0;
+      if(mirror){const dx=x-ax,dy=y-ay;type|=read(ax+c2*dx+s2*dy,ay+s2*dx-c2*dy,true);}
+      for(const t of templates){if(x<t.clipLeft||x>=t.clipRight||y<t.clipTop||y>=t.clipBottom||x<t.left||x>=t.left+t.width||y<t.top||y>=t.top+t.height)continue;
+        const mask=t.part.mask,px=Math.floor((x-t.left)/t.width*mask.width),py=Math.floor((y-t.top)/t.height*mask.height),q=py*mask.width+px;
+        if(!mask.data[q])continue;const bit=t.part.bitsData?.[q];type|=bit===0?1:bit===1?2:t.part.bitsData?0:4;
+      }
+      return type;
+    }};
+  }
+  window.mayFlow=window.MayatnikFlow?.mount({capture:flowCapture,viewport:flowViewport,axis:flowAxis,
+    palette:()=>({bit:st.bitZeroColour||'#8fd3ff',sym:st.bitOneColour||'#ff9a5a'}),
+    glyphKey:()=>[digitFamily(),st.digitZeroColour,st.digitOneColour].join('|'),
+    glyph(ctx,bit,size){ctx.font='600 '+size+'px '+digitFamily();ctx.fillStyle=bit==='1'?st.digitOneColour:st.digitZeroColour;MayatnikBitGlyph.draw(ctx,bit,0,0);}});
+  if(window.mayFlow){window.mayLayers?.subscribe(()=>window.mayFlow.invalidate());
+    window.mayCleanup?.register({id:'flow',label:'Потоки',icon:'reset',present:()=>window.mayFlow.playing||window.mayFlow.traces,clear:()=>window.mayFlow.reset()});}
+
   // Notify only material source changes; row cues and music settings do not change the score.
   function notifyXorromField(){
+    window.mayFlow?.invalidate();
     const host=window.mayXorrom;if(!host?.fieldChanged)return;if(host.templatesChanged&&!cacheRestoring&&!frameLibraryBusy)host.templatesChanged();
     const key=JSON.stringify([manualPaintKey(),manualPatternGeometry(),!!st.inverted,st.invertKind,manualPaintRevision,templateMatchRevision,rgbNeighbourFilters(),rgbNeighbourBWMode(),!!st.viewUpsideDown,!!st.edgeRhombOn,st.edgeRhombOn?[st.romboMode,st.romboAssembly,st.romboRow,st.romboAngle,st.romboSeam,st.romboLayout]:null,document.body.classList.contains('may-pixel-invalid'),document.body.classList.contains('may-fold-active'),!!gpuBig,[...pxHide].sort()]);
     if(notifyXorromField.owner===f&&notifyXorromField.key===key)return;
@@ -13726,7 +13813,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=895"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1035"></script>
+<script src="mayatnik-menu.js?v=1037"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1030">
 <script src="mayatnik-button-standard.js?v=980"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">

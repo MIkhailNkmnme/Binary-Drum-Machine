@@ -13,7 +13,7 @@
   const layoutValue=(values,key,fallback)=>{try{const value=JSON.parse(values[key]);if(value==null)return fallback;if(Array.isArray(fallback))return Array.isArray(value)?value:fallback;return typeof value==='object'&&!Array.isArray(value)?value:fallback;}catch{return fallback;}};
   // Stable group keys share one palette across headers, controls and detached lists.
   const GROUP_COLOURS=Object.freeze({
-    'rail:phone':'#67d9da','rail:listening':'#c29bff',
+    'rail:phone':'#67d9da','rail:listening':'#c29bff','rail:flow':'#76d4ff',
     'rail:build':'#63d99b','rail:ochki':'#ffb347','rail:zoom':'#7cbcff','rail:mirrors':'#eb92e9',
     'rail:paint':'#ff9b50','rail:template':'#e3c56f','rail:gifscale':'#41d6bd','rail:library':'#d9b9ff',
     'rail:export':'#ffd166','rail:xorrom':'#c29bff','rail:horr':'#88db72','rail:edge':'#78a8ec',
@@ -215,6 +215,7 @@
   ]});
   for(const group of groups)group.items=group.items.filter(Boolean);
   { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр' && it.name !== 'Анимация' && it.name !== 'Кадр, с'); const fr = g0.items.find(it => it.name === 'Кадр'); if (fr) delete fr.thumb; }   // v0.339: бегунок кадра — линия, плей — своей кнопкой в середине   // v0.332: «Хорр» — в нижней полосе   // v0.395: «удали дубли» — «Анимация» и «Кадр, с» есть в нижней полосе (×N | время)
+  if(window.mayFlow)groups.push(window.mayFlow.group());
   groups.push({id:'xorrom',title:'Xorrom',color:GROUP_COLOURS['rail:xorrom'],items:[]});
   groups.push({id:'horr',title:'Хорр',color:GROUP_COLOURS['rail:horr'],items:[]});
   groups.push({id:'edge',title:'Край',color:GROUP_COLOURS['rail:edge'],items:[
@@ -227,6 +228,7 @@
     button('edgeEndsPlus','plus')
   ]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
+  if(window.mayFlow){const syncFlow=()=>{rail.refresh();for(const item of groups.find(g=>g.id==='flow').items){const button=document.querySelector('.gz-group[data-id="flow"] [data-pan="'+item.pan+'"]');if(!button)continue;const title=item.pan==='flow-status'?window.mayFlow.status:item.tip||item.name;button.title=title;button.setAttribute('aria-label',title);button.dataset.mayTip=title;if(item.type==='toggle')button.setAttribute('aria-pressed',String(item.on()));}};addEventListener('may-flow-state',syncFlow);syncFlow();}
   buttonLayoutRestorers.push(values=>rail.restoreLayout(layoutValue(values,'grozd:mayatnik',{})));
   addEventListener('may-listening-change',()=>rail.refresh());
   const railSourceButtons=new Map(),manualLegacyCells=new Map();
