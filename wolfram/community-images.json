@@ -1,0 +1,67 @@
+{
+  "version": "0.001",
+  "date": "2026-11-20",
+  "task": "АНМ-002",
+  "status": "selection for draft, not submitted externally",
+  "audio": false,
+  "method": "Reused existing project PNG/GIF without changes; inspected existing stills and selected GIF frames; read captions/metadata; no simulation, application run or new rendering of model.",
+  "originNotes": "Code PNG recipe: issledovanie/desktop-wallpapers/animatrix.json. Historical GIF descriptions: issledovanie/Zerkalius-issledovanie.html sections r1 and mirror discussion. Existing GIF build scripts not identified in this task; no new source-generation claim.",
+  "items": [
+    {
+      "role": "cover",
+      "path": "issledovanie/desktop-wallpapers/media/animatrix-173.png",
+      "url": "https://1001100.online/issledovanie/desktop-wallpapers/media/animatrix-173.png",
+      "width": 3840,
+      "height": 2160,
+      "frames": 1,
+      "durationMs": 0,
+      "bytes": 288755,
+      "sha256": "322e2f461f9a2871bb2b1fe48771685e76080dc395086c6214209fd80cf206d4",
+      "meaning": "Code, complete pass173; 128 rows; visual palette only",
+      "sourceCommit": "62e2cf96e3b5a5817718d4e71e8b9dd9f08aabd0"
+    },
+    {
+      "role": "animation-code",
+      "path": "issledovanie/cikl.gif",
+      "url": "https://1001100.online/issledovanie/cikl.gif",
+      "width": 771,
+      "height": 384,
+      "frames": 128,
+      "durationMs": 44800,
+      "bytes": 1379819,
+      "sha256": "530c63b33bd19cafcd0a71a1e1179117ec9e8e7984f3e7d578db0a788fcf7fc7",
+      "meaning": "Code historical cycle passes65–192; source article reports pass193=65",
+      "sourceCommit": "5f171241263d2d488bb6154995b4f8de3718e2c1"
+    },
+    {
+      "role": "animation-pendulum",
+      "path": "issledovanie/mayatnik-zerkala-4096.gif",
+      "url": "https://1001100.online/issledovanie/mayatnik-zerkala-4096.gif",
+      "width": 1024,
+      "height": 512,
+      "frames": 33,
+      "durationMs": 5340,
+      "bytes": 2936146,
+      "sha256": "49b3a2e7bbf5e547602d2deb088dd2c7285bf42809c6149887d723b973dee271",
+      "meaning": "Mayatnik 4096 rows; sampled vertex counts0–2048 step64; display colouring/reflections, not a periodic-state claim",
+      "sourceCommit": "d305236669ea5bbc05c147f800225d2b347ac80e"
+    }
+  ],
+  "delivery": [
+    {
+      "path": "issledovanie/desktop-wallpapers/media/animatrix-173.png",
+      "status": 200,
+      "sha256Matches": true
+    },
+    {
+      "path": "issledovanie/cikl.gif",
+      "status": 200,
+      "sha256Matches": true
+    },
+    {
+      "path": "issledovanie/mayatnik-zerkala-4096.gif",
+      "status": 200,
+      "sha256Matches": true
+    }
+  ]
+}
