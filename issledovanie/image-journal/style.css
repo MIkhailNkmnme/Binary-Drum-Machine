@@ -1,11 +1,4 @@
 @font-face {
-  font-family: "Kraftwerk Frame Digits";
-  src: url("../../kraftwerk/glyphen/fonts/kraftwerk-frame-digits.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-  unicode-range: U+0031-0038;
-}
-@font-face {
   font-family: "AzBuk Thin";
   src: url("../../kraftwerk/glyphen/fonts/xor-azbuk-thin.woff2?v=051") format("woff2");
   font-weight: 400;
@@ -20,7 +13,7 @@
   --muted: #adb7c3;
   --line: #323b45;
   --accent: #8be1d5;
-  --journal-font: "Kraftwerk Frame Digits", "AzBuk Thin", ui-monospace, Consolas, monospace;
+  --journal-font: "AzBuk Thin", ui-monospace, Consolas, monospace;
   font-family: var(--journal-font);
   font-synthesis: none;
 }
