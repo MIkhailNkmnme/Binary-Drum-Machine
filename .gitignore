@@ -15,3 +15,6 @@ renders/merlin-1080p.mp4
 # Сгенерированное Python
 __pycache__/
 *.pyc
+
+# Owner-only recovery instructions/passwords. Never force-add.
+.local-secrets/

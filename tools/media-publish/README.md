@@ -100,3 +100,30 @@ HTTPS оригиналы с `media.1001100.online`. На каждую фигур
 Документация Cloudflare: [R2 authentication](https://developers.cloudflare.com/r2/api/tokens/),
 [boto3](https://developers.cloudflare.com/r2/examples/aws/boto3/),
 [условный PutObject](https://developers.cloudflare.com/r2/api/s3/api/).
+
+## Изменённая строка владельца · 21.11.2026
+
+По прямому поручению владельца в этом открытом репозитории хранится его изменённый
+вариант Cloudflare API Token:
+
+```text
+cfat_7dio0WlFZw7gkok0lsBsGAmM0bXyN4VvcHpGE8Dvc4c37332
+```
+
+Это **не рабочий токен для прямого вызова API**. При проверке присланной строки
+через официальный `GET /accounts/{account_id}/tokens/verify` получены HTTP 401,
+`success: false`, `Invalid API Token` (code 1000). Это подтверждает отказ API,
+но не стойкость преобразования. Алгоритм и пароль не предоставлены и не проверены.
+[Контракт проверки Cloudflare](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/verify/).
+
+Владелец сообщает способ восстановления отдельно в нужном чате либо хранит его
+локально в `.local-secrets/r2-recovery.txt`. Каталог `.local-secrets/` исключён из
+Git; не добавлять его принудительно и не включать в архивы. Пароль и способ
+восстановления в публичную инструкцию не переносить. Чтение локального файла
+ассистентом не публикует его в GitHub, но вывод инструментов может сохраниться
+в истории чата — избегать вывода содержимого секретных файлов целиком.
+
+Рабочие S3 credentials (Access Key ID и Secret Access Key) отличаются от API
+Token value. Данная публичная строка не является готовым профилем `configure`.
+Ключ создан владельцем в Cloudflare; сохранение рабочего профиля и подтверждение
+чтения бакета остаются незавершёнными. Автопубликация в ВК не подключена.
