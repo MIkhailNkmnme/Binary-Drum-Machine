@@ -7,6 +7,7 @@
   const engineStorageKey=id=>KEY+'.engine.'+id;
   if(!R||!globalThis.VoiceEnglish||!globalThis.VoiceProsody||!globalThis.VoiceText||!Array.isArray(globalThis.VoiceCatalog)){$('status').textContent='Движки или текстовый планировщик не загружены. Обновите страницу после доставки файлов.';return;}
   const speechField=$('speech-text');
+  const speechHighlight=$('text-cursor');
   const DEFAULT_SPEECH=speechField.value;
   const engineTabs=[...$('engine-tabs').querySelectorAll('[data-engine]')];
   const topicTabs=[...$('voice-tabs').querySelectorAll('[role="tab"]')];
@@ -187,7 +188,17 @@
   function snapshot(recipe,result){return {...clone(recipe),engineId:result.engineId,engineVersion:result.engineVersion,settings:clone(result.settings),phones:clone(result.phones)};}
   function markText(index){
     if(index===textMarked)return;if(textMarked>=0)textSpans[textMarked]?.classList.remove('speaking');textMarked=index;
-    if(index>=0)textSpans[index]?.classList.add('speaking');
+    const currentSpan=textSpans[index];
+    if(currentSpan){
+      currentSpan.classList.add('speaking');
+      if(document.activeElement!==speechField&&speechHighlight.clientHeight){
+        const bounds=currentSpan.getBoundingClientRect(),view=speechHighlight.getBoundingClientRect();
+        const topDelta=bounds.top-view.top,bottomDelta=bounds.bottom-view.bottom;
+        if(topDelta<0)speechField.scrollTop+=topDelta;
+        else if(bottomDelta>0)speechField.scrollTop+=bottomDelta;
+        syncSpeechHighlightScroll();
+      }
+    }
     showSpeechPosition();
   }
   function speechCharacterIndex(){return Array.from(speechField.value.slice(0,state.speechCaret)).length;}
@@ -208,8 +219,36 @@
     state.speechCaret=Number.isInteger(position)?Math.max(0,Math.min(position,speechField.value.length)):0;
     speechField.setSelectionRange(state.speechCaret,state.speechCaret);
   }
+  function syncSpeechHighlightScroll(){
+    speechHighlight.scrollTop=speechField.scrollTop;
+    speechHighlight.scrollLeft=speechField.scrollLeft;
+  }
+  function syncSpeechHighlight(){
+    speechHighlight.style.width=speechField.clientWidth+'px';
+    speechHighlight.style.height=speechField.clientHeight+'px';
+    syncSpeechHighlightScroll();
+  }
   function drawTextCursor(){
-    textSpans=[];const elements=[];for(const char of Array.from(speechField.value)){if(char==='\u0301'&&elements.length){const previous=elements[elements.length-1];previous.textContent+=char;textSpans.push(previous);}else{const s=document.createElement('span');s.textContent=char;textSpans.push(s);elements.push(s);}}$('text-cursor').replaceChildren(...elements);textMarked=-1;
+    const elements=[];
+    textSpans=[];
+    for(const char of speechField.value){
+      // Keep the accent and its vowel in the same highlight box.
+      if(char==='\u0301'&&elements.length){
+        const previous=elements.at(-1);
+        previous.textContent+=char;
+        textSpans.push(previous);
+      }else{
+        const span=document.createElement('span');
+        span.textContent=char;
+        textSpans.push(span);
+        elements.push(span);
+      }
+    }
+    // The textarea reserves a blank line after a final newline.
+    if(speechField.value.endsWith('\n'))elements.push('\u200b');
+    speechHighlight.replaceChildren(...elements);
+    textMarked=-1;
+    syncSpeechHighlight();
     showSpeechPosition();
   }
   function textButton(on){
@@ -275,6 +314,8 @@
   }
   $('text-play').onclick=playText;$('text-stop').onclick=()=>{begin();$('text-status').textContent='Текст остановлен.';};
   $('text-play').addEventListener('pointerleave',()=>$('text-play').classList.remove('quiet-hover'));
+  speechField.addEventListener('scroll',syncSpeechHighlightScroll,{passive:true});
+  if(globalThis.ResizeObserver)new ResizeObserver(syncSpeechHighlight).observe(speechField);
   for(const name of ['selectionchange','select','keyup','pointerup','blur'])speechField.addEventListener(name,()=>rememberSpeechCaret());
   speechField.addEventListener('input',()=>{state.speechText=speechField.value;rememberSpeechCaret(false);invalidate('Текст изменён. Следующий «Плей» вычислит его заново.');drawTextCursor();});
   function useSpeechExample(){
