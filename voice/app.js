@@ -18,6 +18,14 @@
   const enginePages={};
   const SPEECH_EXAMPLES={ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
   const PREVIOUS_EXAMPLES={en:['Hello! 0 1 2 3.'],ru:['Привет, Зеркалиус! 0 1 2 3.','0123456789 Текст для проверки голоса. Утром 0 юный фотограф 1 Фёдор поднялся на холм, где 2 жёлтый фургон стоял у въезда. Рыжий ёж 3 шуршал в траве, а маленький щенок 4 прыгал через лужи. В центре двора 5 музыкант объяснял, как звучат флейта, цимбалы и бубен. Затем 6 Юлия и Яков съели хлеб, выпили чай и ещё раз произнесли фразу. Эхо 7 отвечало из чащи: «Здравствуй, мир!» Вечером 8 экскурсовод проверил объём ящика, а 9 белый конь спокойно ждал у двери.'],de:['Ich heiße Zerkalius. Schön! 0 1 2 3.']};
+  const russianLetterNames=(globalThis.VoiceLegacyCatalog||[]).filter(entry=>entry.lang==='ru'&&entry.kind==='name');
+  function letterTrial(count,separator){
+    return russianLetterNames.map(({symbol,label})=>{
+      const name=label[0].toUpperCase()+label.slice(1);
+      return name+', '+Array(count).fill(symbol.toLowerCase()).join(separator);
+    }).join('\n');
+  }
+  const LETTER_TRIALS={joined:letterTrial(22,''),spaced:letterTrial(10,' ')};
   const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]
     ||(language==='ru'&&(text===PLAIN_RUSSIAN_EXAMPLE||text===PREVIOUS_RUSSIAN_EXAMPLE))
     ||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
@@ -506,16 +514,31 @@
   for(const name of ['selectionchange','select','keyup','pointerup','blur'])speechField.addEventListener(name,()=>rememberSpeechCaret());
   speechField.addEventListener('click',seekPlayingText);
   speechField.addEventListener('input',()=>{state.speechText=speechField.value;rememberSpeechCaret(false);invalidate('Текст изменён. Следующий «Плей» вычислит его заново.');drawTextCursor();});
-  function useSpeechExample(){
-    state.speechText=SPEECH_EXAMPLES[state.speechLanguage];
+  function useSpeechExample(text=SPEECH_EXAMPLES[state.speechLanguage]){
+    state.speechText=text;
     speechField.value=state.speechText;
     restoreSpeechCaret(0);
     speechField.scrollTop=0;
     speechField.scrollLeft=0;
     drawTextCursor();
   }
-  $('speech-language').onchange=()=>{const factory=isFactoryText(speechField.value,state.speechLanguage);state.speechLanguage=$('speech-language').value;if(factory)useSpeechExample();invalidate('Язык текстового чтения изменён. Нажмите «Плей».');};
+  $('speech-language').onchange=()=>{
+    const text=speechField.value,language=state.speechLanguage;
+    const factory=isFactoryText(text,language)||(language==='ru'&&Object.values(LETTER_TRIALS).includes(text));
+    state.speechLanguage=$('speech-language').value;
+    if(factory)useSpeechExample();
+    invalidate('Язык текстового чтения изменён. Нажмите «Плей».');
+  };
   $('text-example').onclick=()=>{useSpeechExample();invalidate('Исходный пример выбранного языка восстановлен.');$('text-status').textContent='Исходный текст восстановлен.';};
+  function loadLetterTrial(mode){
+    $('speech-language').value=state.speechLanguage='ru';
+    useSpeechExample(LETTER_TRIALS[mode]);
+    invalidate('В поле проба всех 33 русских букв.');
+    $('text-status').textContent='Проба букв. Нажмите «Плей» или выделите одну строку.';
+    speechField.focus({preventScroll:true});
+  }
+  $('text-letters-joined').onclick=()=>loadLetterTrial('joined');
+  $('text-letters-spaced').onclick=()=>loadLetterTrial('spaced');
   $('text-wav').onclick=()=>{if(textCache)download('zerkalius-'+textCache.result.engineId+'-text-cycle.wav',wav(textCache.result));};
   $('text-json').onclick=()=>{if(textCache)download('zerkalius-'+textCache.result.engineId+'-text-cycle.json',new Blob([JSON.stringify(textCache.passport,null,2)],{type:'application/json'}));};
   for(const id of ['speech-mode','speech-expression','speech-contour','speech-coherence'])$(id).addEventListener(id==='speech-expression'||id==='speech-coherence'?'input':'change',()=>{

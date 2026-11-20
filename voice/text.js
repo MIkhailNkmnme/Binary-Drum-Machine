@@ -4,6 +4,7 @@
   const MAX_CHARS=1200,MAX_SECONDS=240;
   const softenable=new Set(Array.from('БВГДЗКЛМНПРСТФХ'));
   const consonants=new Set(Array.from('БВГДЖЗКЛМНПРСТФХЦЧШЩ'));
+  const repeatedStops=new Set(Array.from('БГДКПТ'));
   const softNext=new Set(Array.from('ЕЁЮЯИЬ'));
   const iotated=new Set(Array.from('ЕЁЮЯ'));
   function plan({text,language,catalog,engine,settings,phones,prosody}){
@@ -35,7 +36,19 @@
         }
         score=recipe.score.map(t=>({...t}));
         if(language==='ru'&&recipe.kind==='sound'){
-          const previous=letters[index-1]?.toUpperCase(),next=letters[index+1]?.toUpperCase();
+          const previous=letters[index-1]?.toUpperCase(),token=score[0];
+          if(score.length===1&&repeatedStops.has(upper)&&!Object.hasOwn(phones??{},token.id)){
+            // A continuous closure has one release. Keep every source index
+            // for seeking/highlighting and bound the hold for long test runs.
+            let end=index+1;
+            while(letters[end]?.toUpperCase()===upper)end++;
+            const softer=softNext.has(letters[end]?.toUpperCase())&&engine.phonemeIds.includes(token.id+'j');
+            if(!softer||!Object.hasOwn(phones??{},token.id+'j')){
+              length=end-index;
+              token.duration*=Math.min(5,1+.7*(length-1));
+            }
+          }
+          const next=letters[index+length]?.toUpperCase();
           if(iotated.has(upper)&&consonants.has(previous)&&score[0]?.id==='j')score.shift();
           if(softenable.has(upper)&&softNext.has(next)&&score[0]){
             const id=score[0].id+'j';if(engine.phonemeIds.includes(id))score[0].id=id;
