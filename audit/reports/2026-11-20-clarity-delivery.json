@@ -1,0 +1,658 @@
+{
+  "task": "АНЛ-001",
+  "checked_utc": "2026-11-20T19:56:08.728429+00:00",
+  "release_commit": "c089903a5d4f15368e37377a7c3d4699f6f1f969",
+  "project_id": "zgrdv8rmj3",
+  "browser_tests_run": false,
+  "session_ingestion_confirmed": false,
+  "checks": [
+    {
+      "file": "Zazerkalius-zerkal.html",
+      "url": "https://1001100.online/Zazerkalius-zerkal.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "95761c83612cfe09f2a0af49f76f1835b53ed16cdf70c0048c1cc2c3f8d4201e"
+    },
+    {
+      "file": "Zerkalius-ascii-art.html",
+      "url": "https://1001100.online/Zerkalius-ascii-art.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "4c858566d8ae404b115fd909a55b5744eaf9900391776aab06845fe66b871672"
+    },
+    {
+      "file": "Zerkalius-azbuk.html",
+      "url": "https://1001100.online/Zerkalius-azbuk.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "26d511dd98b53bd75b1c3041936183af023cde5d51cadda7ba5adee066ce1b7e"
+    },
+    {
+      "file": "Zerkalius-code.html",
+      "url": "https://1001100.online/Zerkalius-code.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "0cb5d52ef3022e95823184e84a7abce624b649403bbd3536407a276420983881"
+    },
+    {
+      "file": "Zerkalius-dnevnik.html",
+      "url": "https://1001100.online/Zerkalius-dnevnik.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "b1bd2878683a0b7dcf16441e555c53fa133dc3e033fe401b5760df0debc7e523"
+    },
+    {
+      "file": "Zerkalius-genezis.html",
+      "url": "https://1001100.online/Zerkalius-genezis.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "8249a329a27355b13e8af2570e393935739bcc7c9fb139de4e3e21e172aefb61"
+    },
+    {
+      "file": "Zerkalius-gpu.html",
+      "url": "https://1001100.online/Zerkalius-gpu.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "9d7b25ea767ead8b638af9f1462d5acda2344a7764181abd4a9d60b523676f02"
+    },
+    {
+      "file": "Zerkalius-grid-module.html",
+      "url": "https://1001100.online/Zerkalius-grid-module.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "f7a571a7d968e0ecf0400e4fc1ec3681dd74579fcc7b40a08add8261ffe07147"
+    },
+    {
+      "file": "Zerkalius-kubits.html",
+      "url": "https://1001100.online/Zerkalius-kubits.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "10ac45abde2ac5a985ae95a9eb9d2ca580842af515dcafa9fdb7196f01dfeda5"
+    },
+    {
+      "file": "Zerkalius-treugolnik.html",
+      "url": "https://1001100.online/Zerkalius-treugolnik.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "1b765a13afa3b06d3e457e6221a3c149ed74c070fe048e5097503dac4064f105"
+    },
+    {
+      "file": "bit-byte/index.html",
+      "url": "https://1001100.online/bit-byte/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "cd71411a5f0e8be4df6dced67159da5b085f3fc21cf21141d20cfc4f0d8547cf"
+    },
+    {
+      "file": "bitoteka/index.html",
+      "url": "https://1001100.online/bitoteka/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "f3238c7d4f5c27a51c3610d3fb5c9ffcefc986be57b3a7d8ba278c7420d93a2e"
+    },
+    {
+      "file": "blog/index.html",
+      "url": "https://1001100.online/blog/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "5680cc5c4891a0e25638277d0bd76198448cfc2e7893a478a77c885ae9d5eaad"
+    },
+    {
+      "file": "fold-layers/Zerkalius-layers.html",
+      "url": "https://1001100.online/fold-layers/Zerkalius-layers.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "67a4bbd4f38ad49ddb72e2db30f39d4285791789fe0b9655f04435294c0de02b"
+    },
+    {
+      "file": "index.html",
+      "url": "https://1001100.online/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "14159d9797ff4b1d04b2a5f60e9b55048f70b1e7c02a89e810a9998b0a56d206"
+    },
+    {
+      "file": "issledovanie/Zerkalius-issledovanie.html",
+      "url": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "9c3b306f9d804d02f809b66a81a6c67f65388d3c8ae8378c9096761bb1e4eda0"
+    },
+    {
+      "file": "issledovanie/autorifmator/index.html",
+      "url": "https://1001100.online/issledovanie/autorifmator/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "f1999c3f501c5e40c049a8ad8a5663b7d8a41356e505cef6108f9dccf20ada84"
+    },
+    {
+      "file": "issledovanie/bartos-numbers/index.html",
+      "url": "https://1001100.online/issledovanie/bartos-numbers/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "350d0965beeab793ebf167ec4c601caadd044e3eac5fdf4ea46d1a5eb6837458"
+    },
+    {
+      "file": "issledovanie/cellular-visual-labs/index.html",
+      "url": "https://1001100.online/issledovanie/cellular-visual-labs/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "2cb1e74006ff5dfb4e7cce52eea6b784650e83917c7fd051247d8b04ad68828d"
+    },
+    {
+      "file": "issledovanie/desktop-wallpapers/index.html",
+      "url": "https://1001100.online/issledovanie/desktop-wallpapers/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "75c852f4d1faabe13bc5cc784ba109bc84d20631cae0b065fefc98d98065018c"
+    },
+    {
+      "file": "issledovanie/horrorius-full-N2048-n96/index.html",
+      "url": "https://1001100.online/issledovanie/horrorius-full-N2048-n96/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "1881039f4fe5b863f80c2c8548d1d99aee8f24bce430119cde30e009fa00555f"
+    },
+    {
+      "file": "issledovanie/horrorius-scale-N2048-n96/index.html",
+      "url": "https://1001100.online/issledovanie/horrorius-scale-N2048-n96/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "4d8cab0e630ae7b8da42ee8a18b2ba1666e9f6d428739fbdbca31d7cc2764d96"
+    },
+    {
+      "file": "issledovanie/horrorius-scale-N2048-n96/one-motif.html",
+      "url": "https://1001100.online/issledovanie/horrorius-scale-N2048-n96/one-motif.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "52ed929c640853cacb3a1a9fe62a9df0cf4205f272bb1e37cbcc0dca0f13455a"
+    },
+    {
+      "file": "issledovanie/horrorius-scale-lab.html",
+      "url": "https://1001100.online/issledovanie/horrorius-scale-lab.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "fa4a8f981f8d24cc8388af9079da87b525666f0e948a2d5d1e7d6b739a51ce4d"
+    },
+    {
+      "file": "issledovanie/horrorius-screen-symmetry/index.html",
+      "url": "https://1001100.online/issledovanie/horrorius-screen-symmetry/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "e2c5c029b7e57451756d06b9a4bf320ab6136fe0a2e8a26a3795df9ee6f46e27"
+    },
+    {
+      "file": "issledovanie/horrorius-symmetry-N2048-n96/index.html",
+      "url": "https://1001100.online/issledovanie/horrorius-symmetry-N2048-n96/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "72921196f1f857e705d25724696a1e8af6f502515e560fa0555a14924af03fad"
+    },
+    {
+      "file": "issledovanie/image-journal/index.html",
+      "url": "https://1001100.online/issledovanie/image-journal/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "f7efe5e8c582e112802096929f1ced4f3fefe4fad16084dc848ebc45e826a7a0"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph15/index.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph15/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "8beb02f3bff5de6257c5a5a61faf2044da3a313a2c250f4e41c931b530329ec3"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph15/thread-variants/index.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph15/thread-variants/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "8495f23f5e71c124f9f03597ad0b9260c1c00acd78441dc31710b6977a5821a5"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph22/curve-analysis/boolean-thread.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph22/curve-analysis/boolean-thread.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "67434d73cb3d386a1811160e07a5250ab248943e88b4a90e255f60a49fffec2c"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph22/curve-analysis/dashed-thread.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "30a6df1ec3d2c29e350140210fb316f14f54d7a924207bec30129395abb9ed9a"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph22/curve-analysis/index.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph22/curve-analysis/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "b74cd103df872414262e49b58774c47994a683c32cdcd78d73a353bc35cc8c31"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph22/curve-analysis/pixel-borders.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph22/curve-analysis/pixel-borders.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "8a8cc6eb65680fa146f630ed60958bb5b54c04dbc02a87a3c941471c6616336b"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph22/curve-analysis/square-thread.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph22/curve-analysis/square-thread.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "a438407b0bfb5e57f55750ad43600d8ad1779e053374853f017a947006a9d2b0"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph22/curve-analysis/thread-xor.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph22/curve-analysis/thread-xor.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "beaee0fc11d9c71ba6379f406b5607e7d012eeaebd909ca167bb8b32731ffb3b"
+    },
+    {
+      "file": "issledovanie/kraftwerk-glyph22/index.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-glyph22/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "38f6f3deb3456e9c4f74866f68c350cdd7c3d60b76e9b635057b90c8cd521f9f"
+    },
+    {
+      "file": "issledovanie/kraftwerk-revealed/index.html",
+      "url": "https://1001100.online/issledovanie/kraftwerk-revealed/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "dfa937ae3070b7e032aa6e10b548e59bd8876eaf25d99ebc67439b9eb92f9640"
+    },
+    {
+      "file": "issledovanie/mayatnik-64/index.html",
+      "url": "https://1001100.online/issledovanie/mayatnik-64/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "49fe175fbe2d602367551d1fcbded0804b805cd85f880c29f13e667cdc64587c"
+    },
+    {
+      "file": "issledovanie/pendulum-music/index.html",
+      "url": "https://1001100.online/issledovanie/pendulum-music/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "a0737292ccbe5409eac8d91216adbc671f261cde5442cde2ec5eea0440a91a88"
+    },
+    {
+      "file": "issledovanie/phone-theme/index.html",
+      "url": "https://1001100.online/issledovanie/phone-theme/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "6edb067e8c4f508637c40d385ec4b45e556b2d81424fb651e93987fb05d357bf"
+    },
+    {
+      "file": "issledovanie/pixel-reduction/index.html",
+      "url": "https://1001100.online/issledovanie/pixel-reduction/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "2c05c925fc17bfe0e1cfabd140613b7732c410ca3d7df6c1eca927e2e71f2e53"
+    },
+    {
+      "file": "issledovanie/wolfram-nks/index.html",
+      "url": "https://1001100.online/issledovanie/wolfram-nks/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "872bf1915dcc3ae76d0bbcf411470a5fda937888502af0fb64e78d1aa47db79a"
+    },
+    {
+      "file": "issledovanie/wolfram-nks/reader.html",
+      "url": "https://1001100.online/issledovanie/wolfram-nks/reader.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "468f4b1bd3ccde1d1d73ed874b70f6ab340e2d1d52e8c487c623d079cbced103"
+    },
+    {
+      "file": "issledovanie/wolfram-nks/xor-pendulum-comparison.html",
+      "url": "https://1001100.online/issledovanie/wolfram-nks/xor-pendulum-comparison.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "034504b12a56fa09b9cebe6a373eaacd42e7e4f2747a57b6a1b3d9459d8c7a0f"
+    },
+    {
+      "file": "issledovanie/xor-bitglyphs/canvas/index.html",
+      "url": "https://1001100.online/issledovanie/xor-bitglyphs/canvas/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "5c475b53f357300dadcf409a2d9f09f46a85a8fd78188bd09f30f7389566677c"
+    },
+    {
+      "file": "issledovanie/xor-bitglyphs/index.html",
+      "url": "https://1001100.online/issledovanie/xor-bitglyphs/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "a57af3485ec3e03480341ea8a2b0652d580e5fb130dd158dc190857d03f3c935"
+    },
+    {
+      "file": "kraftwerk/glyphen/index.html",
+      "url": "https://1001100.online/kraftwerk/glyphen/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "8b4ebedc3e91146fe7d7919b535d161baab1b64835825e08d7bc0bf3a2aa0412"
+    },
+    {
+      "file": "lively/Zerkalius-lively.html",
+      "url": "https://1001100.online/lively/Zerkalius-lively.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "2d7cbe01f3880860175e075134b1a64d649a0ddb9f24de9ac1abf5cedf15cf05"
+    },
+    {
+      "file": "matryoshki/Zerkalius-matryoshki.html",
+      "url": "https://1001100.online/matryoshki/Zerkalius-matryoshki.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "a3a78eb53c5690cb4c46bd504c21000a9a70b1892083cb23e5c1630efdde31ca"
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik-gpu.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik-gpu.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "232a4227ea41e601d02b0d50a4bc4a092a1f08f5b0b9882a493814fac7872d0a"
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik-naklon.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik-naklon.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "c5df48a5521e211bbb0c161c586b4b6b5a6373c2c0d91f7610d9c265286fb555"
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik-rost.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik-rost.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "63c4b3c50366fdfc05a1e0023baf011e18d625bafddb281fd5a9e4a4c8c2343e"
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik-shablony.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik-shablony.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "52ee453712814a8987bb3506c63ad358409654d2b64fd4abfbcb80884bcd7c13"
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik-synthesis.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik-synthesis.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "04359f8aa6ed47af51c2592ca612c193d2981fd090cf1addfc7af4c7cb80ca67"
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "df4d06ea9f3393b16cdd13f1f397338ca7f0df0988e308d3b84a91958e2ba37b"
+    },
+    {
+      "file": "mayatnik/instruction/index.html",
+      "url": "https://1001100.online/mayatnik/instruction/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "a9e7b934ece5a203a407aa69dc731c925986d9591141491dddb45dd636e25ff1"
+    },
+    {
+      "file": "mayatnik/instruction/xorrom-ai/index.html",
+      "url": "https://1001100.online/mayatnik/instruction/xorrom-ai/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "1baea6be6291424a9e7378aad2d7582c2f5d55822cb77c5e053ee9d65a35d532"
+    },
+    {
+      "file": "mayatnik/mayatnik-frame.html",
+      "url": "https://1001100.online/mayatnik/mayatnik-frame.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "ecb51cc624efd9a7537e465c2ed68a57b960f404db3f2b7e5bc38df1272a760c"
+    },
+    {
+      "file": "mayatnik/mayatnik-library.html",
+      "url": "https://1001100.online/mayatnik/mayatnik-library.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "88660fc18437fabdf4e7d0e28b5cab2a35b3c8336af55c3f5a8312d5990138e0"
+    },
+    {
+      "file": "mayatnik/music-carpet/index.html",
+      "url": "https://1001100.online/mayatnik/music-carpet/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "554ec32154a71b3cb14fd357033b639070476a672859acea4e8ce817e4593da4"
+    },
+    {
+      "file": "mayatnik/synthesis-gallery.html",
+      "url": "https://1001100.online/mayatnik/synthesis-gallery.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "848fd4c320974277b26165d2b68d73f1d049b29bfe67c0049c4e1f893839bb3e"
+    },
+    {
+      "file": "mayatnik/synthesis-instruction.html",
+      "url": "https://1001100.online/mayatnik/synthesis-instruction.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "e3f46226004f13a2f6fabd1ee6f412625caa7922cc4dc01aafe54588af1949ab"
+    },
+    {
+      "file": "music/index.html",
+      "url": "https://1001100.online/music/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "7f1b096871720427195de43561d7ca6ff4b10e459b0257ca47a27291365a6cf9"
+    },
+    {
+      "file": "oboi/Zerkalius-oboi.html",
+      "url": "https://1001100.online/oboi/Zerkalius-oboi.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "5ef0ca2fe7c4e9c990b0411766249bf6fbd577db733699789bf81897626a1fc4"
+    },
+    {
+      "file": "oktaedr/Zerkalius-oktaedr.html",
+      "url": "https://1001100.online/oktaedr/Zerkalius-oktaedr.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "771f3df5a54ae0cd712803545d1fae005033b538bbf62f465fdacbc086527204"
+    },
+    {
+      "file": "oktaedr/Zerkalius-piramida.html",
+      "url": "https://1001100.online/oktaedr/Zerkalius-piramida.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "8f587b0c222dbd9479055fe21dea5107cfb3b07f3a391e3c0339ea7b5aecec00"
+    },
+    {
+      "file": "prosmotr/Zerkalius-prosmotr.html",
+      "url": "https://1001100.online/prosmotr/Zerkalius-prosmotr.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "277925e6e4bcea1c6c5c0017215df88492e71cad0ad6512a446439f0b5c89bdf"
+    },
+    {
+      "file": "rezultaty/Zerkalius-rezultaty.html",
+      "url": "https://1001100.online/rezultaty/Zerkalius-rezultaty.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "dad438b0eccaaf0c4c8c5e24c52e15f7e014bc96f1e2d5c16316fc8a0c935c14"
+    },
+    {
+      "file": "setka/Zerkalius-setka.html",
+      "url": "https://1001100.online/setka/Zerkalius-setka.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "28c2e859818d04a13806258b4c40e9f131cd146de721709912b530f5fd72ed72"
+    },
+    {
+      "file": "sinhrofazotron/Zerkalius-sinhrofazotron.html",
+      "url": "https://1001100.online/sinhrofazotron/Zerkalius-sinhrofazotron.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "4534b6efaacf46a4e418d942af3b4b3e1fba18b712af597e609efcb1568fe391"
+    },
+    {
+      "file": "sinhroromb/Zerkalius-sinhroromb.html",
+      "url": "https://1001100.online/sinhroromb/Zerkalius-sinhroromb.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "e7a9ba349dfb1e2be60d4e603967e4476ca6dccf54b9cf7e4e090a1ceb2320a2"
+    },
+    {
+      "file": "sravnenie/Zerkalius-sravnenie.html",
+      "url": "https://1001100.online/sravnenie/Zerkalius-sravnenie.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "5ef18d7c1cca779238b5af11cff89a3a7741da5c99e0ea94cf5937b0f4358394"
+    },
+    {
+      "file": "sravnenie/kadry/index.html",
+      "url": "https://1001100.online/sravnenie/kadry/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "b246342ed21308719118ddc57a18f9a3cba10f5ece0d7edff0a1106825ce10f7"
+    },
+    {
+      "file": "stend/Zerkalius-rost.html",
+      "url": "https://1001100.online/stend/Zerkalius-rost.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "b539c3ad989e0ed5d4aa392e0eec4cd879bc0b3048259a1d9048290432eea9e5"
+    },
+    {
+      "file": "stend/Zerkalius-stend.html",
+      "url": "https://1001100.online/stend/Zerkalius-stend.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "73416379483a5e37d37d5b352dc37bc47bf700fb21ba6b0248202f78f6ad1a0f"
+    },
+    {
+      "file": "voice/index.html",
+      "url": "https://1001100.online/voice/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "8658479fccf38d1d970cab3056be157a0ab1ac282bc1e4fb9d124b58d766e6ed"
+    },
+    {
+      "file": "wolfram/animatrix.html",
+      "url": "https://1001100.online/wolfram/animatrix.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "9cddaa5825db2eb34dd160d4a5c742c72006b76ec9484245ec2638ff5b0c5ea6"
+    },
+    {
+      "file": "wolfram/index.html",
+      "url": "https://1001100.online/wolfram/index.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "cc63265add322094f73c9fa7b2343ae2980f3fc4c425e4061c7bbc55b19c9e88"
+    },
+    {
+      "file": "wolfram/mayatnik.html",
+      "url": "https://1001100.online/wolfram/mayatnik.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "e5255e112c7365bfa1517ea0a3f9b33132ec382222ffe4dd444d865cd6aca97b"
+    },
+    {
+      "file": "zazerkalius/Zerkalius-zazerkalius.html",
+      "url": "https://1001100.online/zazerkalius/Zerkalius-zazerkalius.html",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "cbaf87fa0a5bc453afe233c5d04c58f9e0964b56cdb3f01bdca619f968927f69"
+    },
+    {
+      "file": "_js/site-clarity.js",
+      "url": "https://1001100.online/_js/site-clarity.js?v=1",
+      "http_status": 200,
+      "matches_source_lf": true,
+      "contains_clarity": true,
+      "sha256_lf": "ef9b9afb18383fedc253d5a44a00d10fe9a6e19c444f69493264ce96c0d43938"
+    }
+  ]
+}
