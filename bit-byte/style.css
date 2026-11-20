@@ -398,7 +398,12 @@ textarea:focus-visible { outline: 1px solid var(--cyan); }
 
 .chess-search { display: grid; gap: 6px; margin: 12px 0; }
 .chess-search label { color: var(--cyan); }
-#chess-search-input { max-width: 760px; font: 14px/1.5 var(--bb-font); white-space: pre; overflow: auto; }
+.chess-search-editor { position: relative; min-width: 0; max-width: 760px; background: var(--bg); }
+#chess-search-input, #chess-search-highlights pre { font: 14px/1.5 var(--bb-font); white-space: pre; tab-size: 8; letter-spacing: normal; padding: 5px 7px; }
+#chess-search-input { position: relative; background: transparent; overflow: auto; }
+#chess-search-highlights { position: absolute; left: 1px; top: 1px; overflow: hidden; pointer-events: none; user-select: none; }
+#chess-search-highlights pre { margin: 0; border: 0; min-width: 100%; width: max-content; color: transparent; }
+#chess-search-highlights mark { color: transparent; background: #ffe35a55; box-shadow: inset 0 -2px #ffe35a; }
 #chess-diagonals-table tr.chess-search-match { background: #ffe35a; color: #111820; }
 #chess-diagonals-table tr.chess-search-match:hover { background: #ffe35a; }
 .chess-search-frames { display: grid; gap: 8px; }

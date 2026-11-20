@@ -1,12 +1,12 @@
-<!-- Bit-Byte v0.033 · Цикл последовательностей Маятника. -->
+<!-- Bit-Byte v0.034 · Находки прямо в поле последовательностей. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.033 — Зеркалиус</title>
+  <title>Bit-Byte v0.034 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=032">
+  <link rel="stylesheet" href="style.css?v=034">
   <link rel="stylesheet" href="byte-clicks.css?v=018">
   <link rel="stylesheet" href="number-controls.css?v=029">
   <link rel="stylesheet" href="rgb-controls.css?v=029">
@@ -18,7 +18,7 @@
   <script defer src="../mayatnik/mayatnik-sequences.js?v=bit-byte-024"></script>
   <script defer src="../mayatnik/mayatnik-search-frame-store.js?v=bit-byte-024"></script>
   <script defer src="../_js/initial-rows.js?v=2"></script>
-  <script defer src="diagonal-search.js?v=033"></script>
+  <script defer src="diagonal-search.js?v=034"></script>
   <script defer src="diagonals.js?v=024"></script>
   <script defer src="diamond-grid.js?v=032"></script>
   <script defer src="chessboards.js?v=032"></script>
@@ -28,7 +28,7 @@
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.033</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.034</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -148,8 +148,11 @@
         <p class="hint">От верхнего левого угла вниз: диагонали ↗ становятся строками по центру, без пробелов между битами. Пустые края убраны; точка · внутри строки — пропуск между битами.</p>
         <div class="chess-search">
           <label for="chess-search-input">Искомые последовательности — по одной на строку</label>
-          <textarea id="chess-search-input" rows="4" spellcheck="false" placeholder="1&#10;00&#10;111" aria-describedby="chess-search-help"></textarea>
-          <p id="chess-search-help" class="hint">Только 0 и 1. Совпадение — вся диагональная строка той же длины, без пропусков. Найденные строки жёлтые; кадр поля сохраняется автоматически.</p>
+          <div class="chess-search-editor">
+            <div id="chess-search-highlights" aria-hidden="true"><pre></pre></div>
+            <textarea id="chess-search-input" rows="4" wrap="off" spellcheck="false" placeholder="1&#10;00&#10;111" aria-describedby="chess-search-help"></textarea>
+          </div>
+          <p id="chess-search-help" class="hint">Только 0 и 1. Совпадение — вся диагональная строка той же длины, без пропусков. Найденные последовательности выделяются жёлтым прямо в поле ввода; кадр поля сохраняется автоматически.</p>
           <div class="commands">
             <button id="chess-search-start" class="gz-hx" type="button" title="Применить последовательности и включить поиск" aria-label="Применить последовательности и включить поиск" aria-pressed="false"><span class="gz-ic" aria-hidden="true">⌕</span><span class="gz-nm">Поискъ</span></button>
             <button id="chess-search-stop" class="gz-hx" type="button" title="Остановить поиск, сохранив найденные кадры" aria-label="Остановить поиск, сохранив найденные кадры"><span class="gz-ic" aria-hidden="true">■</span><span class="gz-nm">Стопъ</span></button>

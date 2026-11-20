@@ -8,6 +8,37 @@
   const records = new Map(), frameNumbers = new Map(), pending = new Set(), dismissed = new Set();
   let enabled = false, queries = [], targets = new Map(), ready = false, database;
   let lastSignature = "", lastFrame = 0, storageError = "";
+  const highlights = byId("highlights"), highlightText = highlights.querySelector("pre");
+  let highlightSignature = "";
+
+  function syncHighlights() {
+    // Match the textarea's content viewport, excluding its borders and scrollbars.
+    highlights.style.width = input.clientWidth + "px";
+    highlights.style.height = input.clientHeight + "px";
+    highlights.scrollTop = input.scrollTop;
+    highlights.scrollLeft = input.scrollLeft;
+  }
+  function highlightQueries(words = new Set()) {
+    const signature = JSON.stringify([input.value, Array.from(words).sort()]);
+    if (signature !== highlightSignature) {
+      highlightSignature = signature;
+      const fragment = document.createDocumentFragment();
+      input.value.split("\n").forEach((line, index) => {
+        if (index) fragment.append(document.createTextNode("\n"));
+        if (words.has(line.trim())) {
+          const mark = document.createElement("mark");
+          mark.textContent = line;
+          fragment.append(mark);
+        } else fragment.append(document.createTextNode(line));
+      });
+      // Retain the empty final line and its height when the input ends in a newline.
+      fragment.append(document.createTextNode("\u200b"));
+      highlightText.replaceChildren(fragment);
+    }
+    syncHighlights();
+  }
+  input.addEventListener("scroll", syncHighlights, {passive: true});
+  new ResizeObserver(syncHighlights).observe(input);
 
   function openDatabase() {
     return new Promise((resolve, reject) => {
@@ -52,6 +83,7 @@
     catch (_) { storageError = "Настройки поиска не удалось сохранить. Найденные кадры сохраняются отдельно."; storageStatus(); }
   }
   function controls() {
+    if (!enabled) highlightQueries();
     byId("start").setAttribute("aria-pressed", String(enabled));
     byId("stop").disabled = !enabled;
     const button = byId("mayatnik");
@@ -77,6 +109,7 @@
   }
   function refresh() { window.BitByteChessSearch?.refresh(); }
   function apply() {
+    highlightQueries();
     try {
       setQueries(input.value);
       enabled = true; lastSignature = ""; dismissed.clear();
@@ -181,6 +214,7 @@
   }
   function update(context) {
     const hits = [];
+    const matchedWords = new Set();
     for (let index = 0; index < context.cells.length; index++) {
       const diagonal = context.first + index, text = context.lines[diagonal];
       const matched = enabled && targets.has(text);
@@ -188,6 +222,7 @@
       row.classList.toggle("chess-search-match", matched);
       row.setAttribute("aria-label", "Диагональ " + (diagonal + 1) + (matched ? ": найдено совпадение" : ""));
       if (!matched) continue;
+      matchedWords.add(text);
       const cells = [];
       for (let x = Math.max(0, diagonal - context.rows + 1); x <= Math.min(context.cols - 1, diagonal); x++) {
         const y = diagonal - x;
@@ -195,6 +230,7 @@
       }
       hits.push({i: targets.get(text)[0], queryRows: targets.get(text), p: diagonal, dir: "antidiagonal", text, cells});
     }
+    highlightQueries(matchedWords);
     if (!enabled) return;
     status.textContent = "Точных совпадений строк: " + hits.length + ". Поиск только целой строки той же длины.";
     if (!hits.length || !ready) return;
@@ -223,6 +259,7 @@
     }
   } catch (error) { status.textContent = "Настройки поиска не восстановлены: " + error.message; }
   controls();
+  highlightQueries();
   window.BitByteDiagonalSearch = {update};
   database = openDatabase();
   (async () => {
