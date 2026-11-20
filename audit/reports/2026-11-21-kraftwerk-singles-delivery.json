@@ -1,0 +1,53 @@
+{
+  "date": "2026-11-21",
+  "commit": "22359aa7eaef58be99bd5b8422993398f247c002",
+  "version": "0.145",
+  "checked_at_utc": "2026-11-20T21:50:42.434787+00:00",
+  "checks": [
+    {
+      "url": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "matches": true,
+      "sha256": "ba30c70cb4911974419f494ffe6ae569de177f1989c40abfe8dabd492897a403"
+    },
+    {
+      "url": "https://1001100.online/issledovanie/kraftwerk-albums/non-album-releases.json",
+      "status": 200,
+      "matches": true,
+      "sha256": "20ec02fa472cd8ba56bb7d5b5e8718269e68b9d491ae089c016789b3dda74840"
+    },
+    {
+      "url": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html?v=145",
+      "status": 200,
+      "matches": true,
+      "sha256": "ba30c70cb4911974419f494ffe6ae569de177f1989c40abfe8dabd492897a403"
+    }
+  ],
+  "scope": "HTTP delivery only; no app tests, syntax checks, browser or listening. Page acceptance by user.",
+  "pages": [
+    {
+      "id": 44823464776,
+      "name": "pages build and deployment",
+      "head_sha": "ab2b5b5509ddf2020c2d3466bc01ab57564d3e1d",
+      "status": "in_progress",
+      "conclusion": null,
+      "html_url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/44823464776"
+    },
+    {
+      "id": 44823404607,
+      "name": "pages build and deployment",
+      "head_sha": "be3a9f11f8b9ef4d5c9c8fc34f8c2839ee32fba3",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "html_url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/44823404607"
+    },
+    {
+      "id": 44823281243,
+      "name": "pages build and deployment",
+      "head_sha": "22359aa7eaef58be99bd5b8422993398f247c002",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "html_url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/44823281243"
+    }
+  ]
+}
