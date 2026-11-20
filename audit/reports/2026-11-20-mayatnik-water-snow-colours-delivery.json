@@ -1,0 +1,42 @@
+{
+  "task": "МАЯ-695",
+  "version": "1.046",
+  "commit": "be17a54016a4973ac8010a3f5d80c204eb9a90c6",
+  "checked_at": "2026-11-20T17:18:54.0366992Z",
+  "pages_run": 44781554006,
+  "pages_commit": "f6357903c1ca40d3547b0fc8074db340d0a2ecb5",
+  "pages_conclusion": "success",
+  "verification": "HTTP only; tests, syntax, browser and visual acceptance not run; acceptance by user",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?delivery=1046b&r=2&r=4",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-flow.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-flow.js?delivery=1046b&r=2&r=4",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.js?delivery=1046b&r=2&r=4",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "audit/reports/2026-11-20-mayatnik-water-snow-colours.md",
+      "url": "https://1001100.online/audit/reports/2026-11-20-mayatnik-water-snow-colours.md?delivery=1046b&r=2&r=4",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "matches": true
+    }
+  ]
+}
