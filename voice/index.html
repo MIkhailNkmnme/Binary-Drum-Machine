@@ -2,18 +2,20 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Зеркалиус · Голос v0.011</title>
-  <link rel="stylesheet" href="../_js/grozd.css?v=50"><link rel="stylesheet" href="../_js/control-frame.css"><link rel="stylesheet" href="style.css?v=011">
+  <title>Зеркалиус · Голос v0.012</title>
+  <link rel="stylesheet" href="../_js/grozd.css?v=50"><link rel="stylesheet" href="../_js/control-frame.css"><link rel="stylesheet" href="style.css?v=012">
   <script defer src="../_js/hub-button-text.js?v=540"></script><script defer src="../_js/menu-icons.js"></script><script defer src="../_js/control-frame.js"></script>
-  <script defer src="prosody-dsp.js?v=005"></script><script defer src="engine.js?v=010"></script><script defer src="robot/engine.js?v=001"></script><script defer src="robot-live.js?v=010"></script><script defer src="dsh-engine.js?v=005"></script><script defer src="engines.js?v=005"></script><script defer src="german.js?v=004"></script><script defer src="catalog.js?v=004"></script><script defer src="english.js?v=008"></script><script defer src="prosody.js?v=010"></script><script defer src="text.js?v=007"></script><script defer src="app.js?v=011"></script>
+  <script defer src="prosody-dsp.js?v=005"></script><script defer src="engine.js?v=010"></script><script defer src="robot/engine.js?v=001"></script><script defer src="robot-live.js?v=010"></script><script defer src="dsh-engine.js?v=005"></script><script defer src="engines.js?v=005"></script><script defer src="german.js?v=004"></script><script defer src="catalog.js?v=004"></script><script defer src="english.js?v=008"></script><script defer src="prosody.js?v=010"></script><script defer src="text.js?v=007"></script><script defer src="app.js?v=012"></script>
 </head>
 <body><main>
-  <header><h1>Голос <small>v0.011</small></h1></header>
+  <header><h1>Голос <small id="voice-version">v0.012</small></h1></header>
+  <div class="voice-layout" id="voice-layout" data-engine="robot">
   <nav class="voice-tab-strip engine-tabs" id="engine-tabs" aria-label="Движки голоса">
-    <a class="gz-hx voice-tab" data-engine="robot" data-mi-icon="cube" href="?engine=robot" title="Робот">Робот</a>
+    <a class="gz-hx voice-tab" data-engine="robot" data-mi-icon="cube" href="?engine=robot" title="Робот" aria-current="page">Робот</a>
     <a class="gz-hx voice-tab" data-engine="bank" data-mi-icon="bars" href="?engine=bank" title="Банк">Банк</a>
     <a class="gz-hx voice-tab" data-engine="dsh" data-mi-icon="wave" href="?engine=dsh" title="DSH">DSH</a>
   </nav>
+  <div class="engine-page">
   <div class="voice-tab-strip topic-tabs" id="voice-tabs" role="tablist" aria-label="Разделы редактора">
     <button class="gz-hx voice-tab" role="tab" id="tab-text" aria-controls="voice-text" aria-selected="true" data-mi-icon="line">Текст</button>
     <button class="gz-hx voice-tab" role="tab" id="tab-profile" aria-controls="voice-profile" aria-selected="false" data-mi-icon="balance">Настройки</button>
@@ -89,6 +91,8 @@
   <section><h2>Сравнение трёх движков</h2><p>Во всех трёх примерах звучит «ноль, один». Ядро DSH использует три форманты, ядро Codex (Банк) — четыре. Робот Codex использует отдельный алгоритм.</p>
     <div class="comparison"><figure><figcaption>Ядро DSH</figcaption><audio controls preload="none" src="../music/voices/formant.wav"></audio></figure><figure><figcaption>Ядро Codex</figcaption><audio controls preload="none" src="../music/voices/bank.wav"></audio></figure><figure><figcaption>Робот Codex</figcaption><audio controls preload="none" src="../music/voices/phone.wav"></audio></figure></div>
   </section>
+  </div>
+  </div>
   </div>
   <footer><nav aria-label="Другие страницы"><a href="../index.html">Хаб</a><a href="../music/#voices">Музыка · Голоса</a><a href="README.md">Описание редактора</a><a href="../tools/voice/README.md">Три движка</a></nav></footer>
 </main></body></html>
