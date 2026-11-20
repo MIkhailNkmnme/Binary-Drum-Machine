@@ -3,6 +3,8 @@
   const byId = name => document.getElementById("chess-search-" + name);
   const input = byId("input"), status = byId("status"), storageNote = byId("storage");
   const gallery = byId("frames"), KEY = "zerk-bit-diagonal-search-v1", LIMIT = 100;
+  const MAYATNIK_PRESETS = [30, 60, 90, 102, 150, "initial"];
+  let mayatnikPreset = null;
   const records = new Map(), frameNumbers = new Map(), pending = new Set(), dismissed = new Set();
   let enabled = false, queries = [], targets = new Map(), ready = false, database;
   let lastSignature = "", lastFrame = 0, storageError = "";
@@ -46,12 +48,21 @@
       (records.size >= LIMIT ? ". Лимит достигнут: скачайте и удалите ненужные кадры для новых находок." : "."));
   }
   function savePreferences() {
-    try { localStorage.setItem(KEY, JSON.stringify({text: input.value, enabled})); }
+    try { localStorage.setItem(KEY, JSON.stringify({text: input.value, enabled, mayatnikPreset})); }
     catch (_) { storageError = "Настройки поиска не удалось сохранить. Найденные кадры сохраняются отдельно."; storageStatus(); }
   }
   function controls() {
     byId("start").setAttribute("aria-pressed", String(enabled));
     byId("stop").disabled = !enabled;
+    const button = byId("mayatnik");
+    const next = MAYATNIK_PRESETS[(MAYATNIK_PRESETS.indexOf(mayatnikPreset) + 1) % MAYATNIK_PRESETS.length];
+    const name = value => value === "initial" ? "Начальная" : String(value);
+    button.querySelector(".gz-nm").textContent = mayatnikPreset === "initial" ? "Начальная" :
+      "Маятнкъ" + (mayatnikPreset === null ? "" : " " + mayatnikPreset);
+    button.title = (mayatnikPreset === null ? "Последовательности Маятника." : "Выбрано: " + name(mayatnikPreset) + ".") +
+      " Следующее нажатие: " + name(next) + ". По кругу: 30 → 60 → 90 → 102 → 150 → Начальная." +
+      " Правила: 320 полных строк от 1, до 639 битов; Начальная — исходные строки Маятника.";
+    button.setAttribute("aria-label", button.title);
   }
   function setQueries(text) {
     const parsed = window.MayatnikSequences.parse(text);
@@ -79,16 +90,19 @@
     controls(); savePreferences(); refresh();
   });
   input.addEventListener("input", () => {
-    enabled = false; lastSignature = "";
+    enabled = false; lastSignature = ""; mayatnikPreset = null;
     status.textContent = "Последовательности изменены. Нажмите «Поиск», чтобы применить их.";
     controls(); savePreferences(); refresh();
   });
   byId("mayatnik").addEventListener("click", () => {
     try {
-      const saved = JSON.parse(localStorage.getItem(window.MayatnikSequences.KEY));
-      if (!saved || !Array.isArray(saved.rows)) throw Error("В этом браузере нет сохранённой последовательности Маятника. Можно вставить её в поле вручную.");
-      setQueries(saved.rows.join("\n"));
+      const next = MAYATNIK_PRESETS[(MAYATNIK_PRESETS.indexOf(mayatnikPreset) + 1) % MAYATNIK_PRESETS.length];
+      // Full elementary rows grow by two bits. 320 rows fit the 640-bit search limit.
+      const rows = next === "initial" ? Array.from(ZZ_INITIAL_ROWS) :
+        window.MayatnikSequences.elementary({rule: next, seed: "1", count: 320, compact: false});
+      setQueries(rows.join("\n"));
       input.value = queries.join("\n");
+      mayatnikPreset = next;
       apply();
     } catch (error) { status.textContent = error.message; }
   });
@@ -204,6 +218,7 @@
     const saved = JSON.parse(localStorage.getItem(KEY));
     if (saved && typeof saved.text === "string") {
       input.value = saved.text;
+      if (MAYATNIK_PRESETS.includes(saved.mayatnikPreset)) mayatnikPreset = saved.mayatnikPreset;
       if (saved.enabled) { setQueries(input.value); enabled = true; }
     }
   } catch (error) { status.textContent = "Настройки поиска не восстановлены: " + error.message; }

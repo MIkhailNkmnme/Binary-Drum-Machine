@@ -1,10 +1,10 @@
-<!-- Bit-Byte v0.032 · Ромбическая сетка. -->
+<!-- Bit-Byte v0.033 · Цикл последовательностей Маятника. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.032 — Зеркалиус</title>
+  <title>Bit-Byte v0.033 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="style.css?v=032">
   <link rel="stylesheet" href="byte-clicks.css?v=018">
@@ -17,7 +17,8 @@
   <script defer src="../mayatnik/mayatnik-ochki-method.js?v=bit-byte-024"></script>
   <script defer src="../mayatnik/mayatnik-sequences.js?v=bit-byte-024"></script>
   <script defer src="../mayatnik/mayatnik-search-frame-store.js?v=bit-byte-024"></script>
-  <script defer src="diagonal-search.js?v=024"></script>
+  <script defer src="../_js/initial-rows.js?v=2"></script>
+  <script defer src="diagonal-search.js?v=033"></script>
   <script defer src="diagonals.js?v=024"></script>
   <script defer src="diamond-grid.js?v=032"></script>
   <script defer src="chessboards.js?v=032"></script>
@@ -27,7 +28,7 @@
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.032</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.033</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -152,7 +153,7 @@
           <div class="commands">
             <button id="chess-search-start" class="gz-hx" type="button" title="Применить последовательности и включить поиск" aria-label="Применить последовательности и включить поиск" aria-pressed="false"><span class="gz-ic" aria-hidden="true">⌕</span><span class="gz-nm">Поискъ</span></button>
             <button id="chess-search-stop" class="gz-hx" type="button" title="Остановить поиск, сохранив найденные кадры" aria-label="Остановить поиск, сохранив найденные кадры"><span class="gz-ic" aria-hidden="true">■</span><span class="gz-nm">Стопъ</span></button>
-            <button id="chess-search-mayatnik" class="gz-hx" type="button" title="Взять сохранённые строки последовательности из Маятника в этом браузере" aria-label="Взять сохранённые строки последовательности из Маятника"><span class="gz-ic" aria-hidden="true">↓</span><span class="gz-nm">Маятнкъ</span></button>
+            <button id="chess-search-mayatnik" class="gz-hx" type="button" title="Последовательности Маятника по кругу: 30 → 60 → 90 → 102 → 150 → Начальная" aria-label="Следующая последовательность Маятника"><span class="gz-ic" aria-hidden="true">↻</span><span class="gz-nm">Маятнкъ</span></button>
           </div>
           <p id="chess-search-status" class="hint" role="status"></p>
           <p id="chess-search-storage" class="hint" role="status"></p>
