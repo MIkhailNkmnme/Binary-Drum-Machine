@@ -4,6 +4,7 @@
   const $=id=>document.getElementById(id),R=globalThis.VoiceEngines;
   const KEY='zerkalius.voice.editor.v2',OLD='zerkalius.voice.editor.v1',clone=v=>JSON.parse(JSON.stringify(v));
   const SHARED_KEY=KEY+'.library',LAST_ENGINE_KEY=KEY+'.current-engine';
+  const TEXT_FADE=.004;
   const engineStorageKey=id=>KEY+'.engine.'+id;
   if(!R||!globalThis.VoiceEnglish||!globalThis.VoiceProsody||!globalThis.VoiceText||!Array.isArray(globalThis.VoiceCatalog)){$('status').textContent='Движки или текстовый планировщик не загружены. Обновите страницу после доставки файлов.';return;}
   const speechField=$('speech-text');
@@ -23,11 +24,11 @@
   const state={engineId:R.defaultId||'robot',profiles:{},library:[],languages:[],silent:false,kind:'sound',compareMode:'profiles',legacyDraft:null,speechText:DEFAULT_SPEECH,speechLanguage:'ru',speechProsody:{...VoiceProsody.defaults},speechCaret:0};
   for(const item of R.list){const e=R.get(item.id);state.profiles[item.id]={settings:{...e.defaults},phones:{},userPhones:{}};}
   let E=R.get(state.engineId),worker=null,jobId=0,epoch=0,revision=0,importTicket=0;
-  let context=null,source=null,sourceDone=null,current=null,selectedId='';
+  let context=null,source=null,sourceDone=null,textOutput=null,current=null,selectedId='';
   let activeTopic='tab-text',compactTabs=new Set();
   let candidates=[],comparisons=[],paused=false,sequencePlaying=false,hold=null;
   let robotManifest=null,alphabetManifest=null,originalError='';
-  let textCache=null,textRun=null,textFrame=0,textBusy=false,textMarked=-1,textSpans=[];
+  let textCache=null,wholeTextCache=null,textRun=null,textFrame=0,textBusy=false,textMarked=-1,textSpans=[];
   let speechSelectionEnd=0;
   const nodes=new Map(),choices=new Map(),frames=[];
   const profile=()=>state.profiles[state.engineId],label=id=>R.list.find(x=>x.id===id)?.label||id;
@@ -70,7 +71,26 @@
   function option(select,value,text){const o=document.createElement('option');o.value=value;o.textContent=text;select.append(o);}
   function endHold(){if(hold){clearTimeout(hold.delay);clearInterval(hold.timer);hold=null;}}
   function cancelWorker(){if(worker){const old=worker;worker=null;old.terminate();old.reject(Error('Расчёт отменён.'));}}
-  function retireSource(){if(source){const old=source;source=null;old.onended=null;try{old.stop();}catch{}old.disconnect();}if(sourceDone){const done=sourceDone;sourceDone=null;done();}}
+  function retireSource(){
+    if(source){
+      const old=source,output=textOutput;
+      source=null;textOutput=null;old.onended=null;
+      const disconnect=()=>{old.disconnect();output?.node.disconnect();};
+      if(output&&context.state==='running'){
+        const now=context.currentTime,end=now+TEXT_FADE,gain=output.node.gain;
+        const level=Math.max(0,Math.min(1,(now-output.startedAt)/TEXT_FADE));
+        gain.cancelScheduledValues(now);
+        gain.setValueAtTime(level,now);
+        gain.linearRampToValueAtTime(0,end);
+        old.onended=disconnect;
+        try{old.stop(end);}catch{old.onended=null;disconnect();}
+      }else{
+        try{old.stop();}catch{}
+        disconnect();
+      }
+    }
+    if(sourceDone){const done=sourceDone;sourceDone=null;done();}
+  }
   function pauseControls(enabled){for(const id of ['pause','compare-pause']){$(id).disabled=!enabled;caption(id,paused?'Продолжить':'Пауза');$(id).title=paused?'Продолжить последовательное прослушивание':'Приостановить последовательное прослушивание';$(id).setAttribute('aria-label',$(id).title);commandIcon($(id),paused?'play':'pause');}}
   function stopAudio(except=null){stopTextUI();retireSource();sequencePlaying=false;paused=false;pauseControls(false);document.querySelectorAll('audio').forEach(a=>{if(a!==except)a.pause();});}
   function begin(except=null){epoch++;cancelWorker();stopAudio(except);return epoch;}
@@ -107,7 +127,7 @@
     state.profiles[id]={settings:settingsFrom(current.settings,e),phones:validatePhones(current.phones||{},e),userPhones:validatePhones(current.userPhones||{},e)};
     if(stored.page&&typeof stored.page==='object')enginePages[id]=stored.page;
   }
-  function invalidate(text='Изменения сохранены. Для живого WAV заново нажмите «Слушать».'){revision++;importTicket++;begin();current=null;textCache=null;$('text-wav').disabled=true;$('text-json').disabled=true;$('wav').disabled=true;$('prosody-note').textContent='Параметры изменены. Нажмите «Плей» для нового разбора.';$('prosody-trace').replaceChildren();if(comparisons.length)$('compare-status').textContent='Ниже предыдущие снимки. Вычислите сравнение заново для текущих настроек.';status(text);save();}
+  function invalidate(text='Изменения сохранены. Для живого WAV заново нажмите «Слушать».'){revision++;importTicket++;begin();current=null;textCache=null;wholeTextCache=null;$('text-wav').disabled=true;$('text-json').disabled=true;$('wav').disabled=true;$('prosody-note').textContent='Параметры изменены. Нажмите «Плей» для нового разбора.';$('prosody-trace').replaceChildren();if(comparisons.length)$('compare-status').textContent='Ниже предыдущие снимки. Вычислите сравнение заново для текущих настроек.';status(text);save();}
   function settingsFrom(value,e=E){if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Неверные настройки.');const out={};for(const p of e.parameters){if(!Object.hasOwn(value,p.key))throw Error('Нет параметра '+p.key);out[p.key]=finite(value[p.key],p.min,p.max,p.label);}return e.normalize(out);}
   function languagePhones(e,overrides,score){const phones=globalThis.VoiceGerman?VoiceGerman.resolve(e,overrides,score):clone(overrides);return VoiceEnglish.resolve(e,phones,score);}
   function validatePhone(value,e=E){
@@ -188,7 +208,7 @@
   function showPhone(){const id=$('phone').value,p=profile().phones[id]||profile().userPhones[id]||globalThis.VoiceGerman?.getPhone(state.engineId,id)||VoiceEnglish.getPhone(state.engineId,id)||E.getPhone(id);if(!p)return;$('phone-id').value=id;$('phone-kind').value=p.kind;for(const key of ['formants','bandwidths','weights'])for(let i=0;i<4;i++)$(key+i).value=p[key][i];$('phone-voice').value=p.voice;$('phone-noise').value=p.noise;$('phone-status').textContent=label(state.engineId)+' · '+(E.phoneLabels?.[id]||globalThis.VoiceGerman?.phoneLabels[id]||VoiceEnglish.phoneLabels[id]||id);}
   for(const k of E.kinds)option($('phone-kind'),k.id,k.label);
   for(let i=0;i<4;i++){const box=document.createElement('div');box.className='formant';box.id='formant-'+i;const title=document.createElement('strong');title.textContent='Форманта '+(i+1);box.append(title);for(const [key,text,min,max,step]of [['formants','Частота, Гц',20,9922.5,.5],['bandwidths','Полоса, Гц',20,4000,1],['weights','Вес',0,4,.01]]){const l=document.createElement('label');l.textContent=text;const n=document.createElement('input');Object.assign(n,{type:'number',id:key+i,min,max,step});l.append(n);box.append(l);}$('phone-formants').append(box);}
-  function render(recipe){cancelWorker();const id=++jobId;return new Promise((resolve,reject)=>{const w=new Worker('render-worker.js?v=020');worker=w;w.reject=reject;w.onmessage=event=>{if(worker!==w||event.data.id!==id)return;worker=null;w.terminate();if(event.data.type==='error'){reject(Error(event.data.error?.message||'Ошибка синтеза.'));return;}const result=event.data.result;if(event.data.type!=='result'||result?.engineId!==recipe.engineId){reject(Error('Движок вернул несовместимый результат.'));return;}resolve(result);};w.onerror=event=>{if(worker===w)worker=null;w.terminate();reject(Error(event.message||'Worker не загрузился.'));};w.postMessage({id,engineId:recipe.engineId,score:recipe.score,settings:recipe.settings,phones:recipe.phones,...(recipe.prosody?{prosody:recipe.prosody}:{})});});}
+  function render(recipe){cancelWorker();const id=++jobId;return new Promise((resolve,reject)=>{const w=new Worker('render-worker.js?v=022');worker=w;w.reject=reject;w.onmessage=event=>{if(worker!==w||event.data.id!==id)return;worker=null;w.terminate();if(event.data.type==='error'){reject(Error(event.data.error?.message||'Ошибка синтеза.'));return;}const result=event.data.result;if(event.data.type!=='result'||result?.engineId!==recipe.engineId){reject(Error('Движок вернул несовместимый результат.'));return;}resolve(result);};w.onerror=event=>{if(worker===w)worker=null;w.terminate();reject(Error(event.message||'Worker не загрузился.'));};w.postMessage({id,engineId:recipe.engineId,score:recipe.score,settings:recipe.settings,phones:recipe.phones,...(recipe.prosody?{prosody:recipe.prosody}:{})});});}
   async function unlock(){context ||= new (window.AudioContext||window.webkitAudioContext)();await context.resume();}
   function play(result){return new Promise(resolve=>{if(!context||context.state!=='running'){resolve();return;}retireSource();const buffer=context.createBuffer(1,result.samples.length,result.sampleRate);buffer.copyToChannel(result.samples,0);const node=context.createBufferSource();node.buffer=buffer;node.connect(context.destination);source=node;sourceDone=resolve;node.onended=()=>{node.disconnect();if(source===node){source=null;sourceDone=null;}resolve();};node.start();});}
   function snapshot(recipe,result){return {...clone(recipe),engineId:result.engineId,engineVersion:result.engineVersion,settings:clone(result.settings),phones:clone(result.phones)};}
@@ -326,7 +346,13 @@
   }
   async function prepareText(ticket,text){
     readControls();const e=E,engineId=state.engineId,settings=clone(profile().settings),phones=clone(profile().phones),language=$('speech-language').value,prosody=readSpeechProsody();
-    const key=JSON.stringify({engineId,version:e.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,plannerVersion:VoiceProsody.version,prosody,settings,phones,text,language});if(textCache?.key===key){showProsodyTrace(textCache.trace,textCache.result.duration,textCache.passport.parts.length);return textCache;}
+    const key=JSON.stringify({engineId,version:e.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,plannerVersion:VoiceProsody.version,prosody,settings,phones,text,language});
+    const cached=[textCache,wholeTextCache].find(entry=>entry?.key===key);
+    if(cached){
+      textCache=cached;
+      showProsodyTrace(cached.trace,cached.result.duration,cached.passport.parts.length);
+      return cached;
+    }
     const plan=VoiceText.plan({text,language,catalog:[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],engine:e,settings,phones,prosody});showProsodyTrace(plan.prosody);
     const pieces=[],timeline=[],parts=[];let offset=0,actual=null;
     for(let i=0;i<plan.chunks.length;i++){
@@ -342,7 +368,7 @@
     if(!offset||!actual)throw Error('Нет звучащего текста.');const samples=new Float32Array(offset);let at=0;for(const piece of pieces){samples.set(piece,at);at+=piece.length;}
     const passport={format:'zerkalius-voice-text',version:1,text,language,engineId,engineVersion:actual.engineVersion,plannerVersion:VoiceProsody.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,controls:clone(prosody),settings:clone(actual.settings),phones:clone(actual.phones),stressTrace:clone(plan.prosody.words),parts,sampleRate:plan.rate,sampleCount:offset,duration:offset/plan.rate,timeline:clone(timeline)};
     const cache={key,text,language,timeline,trace:plan.prosody,passport,result:{samples,sampleRate:plan.rate,duration:offset/plan.rate,engineId,engineVersion:actual.engineVersion,settings:clone(actual.settings),phones:clone(actual.phones),seed:actual.seed}};
-    if(!active(ticket))return null;textCache=cache;$('text-wav').disabled=false;$('text-json').disabled=false;showProsodyTrace(plan.prosody,cache.result.duration,parts.length);return cache;
+    if(!active(ticket))return null;textCache=cache;if(text===speechField.value)wholeTextCache=cache;$('text-wav').disabled=false;$('text-json').disabled=false;showProsodyTrace(plan.prosody,cache.result.duration,parts.length);return cache;
   }
   function runningTextSample(run){
     const elapsed=Math.max(0,context.currentTime-run.startedAt);
@@ -378,13 +404,17 @@
     textButton();
     $('text-status').textContent='Пауза. Можно переставить курсор или изменить выделение.';
   }
-  function startTextRun(run,ticket){
-    const node=context.createBufferSource();
+  function startTextRun(run,ticket,delay=.03){
+    const node=context.createBufferSource(),output=context.createGain();
     node.buffer=run.buffer;
     node.loop=true;
-    node.connect(context.destination);
+    node.connect(output);
+    output.connect(context.destination);
+    run.startedAt=context.currentTime+delay;
+    output.gain.setValueAtTime(0,run.startedAt);
+    output.gain.linearRampToValueAtTime(1,run.startedAt+TEXT_FADE);
     source=run.node=node;
-    run.startedAt=context.currentTime+.03;
+    textOutput={node:output,startedAt:run.startedAt};
     node.start(run.startedAt,run.offset/run.buffer.sampleRate);
     textBusy=false;
     textButton();
@@ -398,6 +428,21 @@
       textFrame=requestAnimationFrame(tick);
     };
     textFrame=requestAnimationFrame(tick);
+  }
+  function seekPlayingText(){
+    rememberSpeechCaret();
+    const run=textRun;
+    if(!run?.node||speechSelection())return;
+    cancelTextFrame();
+    retireSource();
+    if(run.selection){
+      // A plain click ends the fragment loop and uses the full text.
+      run.node=null;
+      void playText();
+      return;
+    }
+    run.offset=sampleAtCaret(run.cache,speechCharacterIndex());
+    startTextRun(run,epoch,0);
   }
   async function playText(){
     if(textBusy)return;
@@ -442,7 +487,8 @@
   $('text-play').addEventListener('pointerleave',()=>$('text-play').classList.remove('quiet-hover'));
   speechField.addEventListener('scroll',syncSpeechHighlightScroll,{passive:true});
   if(globalThis.ResizeObserver)new ResizeObserver(syncSpeechHighlight).observe(speechField);
-  for(const name of ['selectionchange','select','keyup','pointerup','click','blur'])speechField.addEventListener(name,()=>rememberSpeechCaret());
+  for(const name of ['selectionchange','select','keyup','pointerup','blur'])speechField.addEventListener(name,()=>rememberSpeechCaret());
+  speechField.addEventListener('click',seekPlayingText);
   speechField.addEventListener('input',()=>{state.speechText=speechField.value;rememberSpeechCaret(false);invalidate('Текст изменён. Следующий «Плей» вычислит его заново.');drawTextCursor();});
   function useSpeechExample(){
     state.speechText=SPEECH_EXAMPLES[state.speechLanguage];

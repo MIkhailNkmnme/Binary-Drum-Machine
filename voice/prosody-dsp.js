@@ -48,6 +48,25 @@
       return out*level*edge*edge*(3-2*edge);
     };
   }
+  const russianStops=new Set(['b','bj','g','gj','d','dj','k','kj','p','pj','t','tj']);
+  function smooth(value){
+    const t=clamp(value,0,1);
+    return t*t*(3-2*t);
+  }
+  function createStopRelease(count,rate,fraction){
+    const last=count-1,start=Math.ceil(last*fraction),span=count-start;
+    const attack=Math.max(1,Math.min(rate*.004,span/3));
+    const tail=Math.max(1,Math.min(rate*.006,span/3));
+    const opening=Math.max(1,Math.min(rate*.012,span*.6));
+    return {
+      voiceOpening:index=>smooth((index-start)/opening),
+      noiseEnvelope:index=>{
+        if(index<=start||index>=last)return 0;
+        const age=index-start;
+        return .60*smooth(age/attack)*Math.exp(-age/(rate*.008))*smooth((last-index)/tail);
+      }
+    };
+  }
   function fricationProfile(id,kind){
     if(kind!=='fricative'&&kind!=='affricate')return null;
     return phoneProfile(fricationProfiles,id);
@@ -129,8 +148,10 @@
     }
     const softenRussianFrication=input.softenFrication===true;
     const articulatedFrication=input.articulatedFrication===true;
+    const smoothStopRelease=input.smoothStopRelease===true;
     const appliedProsody={version:1,segments,transitionMs,rangeStart,rangeEnd,
-      ...(softenRussianFrication?{softenFrication:true}:{}),...(articulatedFrication?{articulatedFrication:true}:{})};
+      ...(softenRussianFrication?{softenFrication:true}:{}),...(articulatedFrication?{articulatedFrication:true}:{}),
+      ...(smoothStopRelease?{smoothStopRelease:true}:{})};
     const diagnosticLimits={semitones:[-12,12],segmentGain:[0,2],transitionMs:[0,80],frequencyHz:[floor,ceiling],
       requestedMinimumFrequency:requestedMin,requestedMaximumFrequency:requestedMax,
       effectiveMinimumFrequency:clamp(requestedMin,floor,ceiling),effectiveMaximumFrequency:maximumFrequency,
@@ -143,6 +164,8 @@
       frequency:(base,control)=>clamp(base*control.pitchMultiplier,floor,ceiling),
       speechPhone:(id,phone)=>articulatedFrication?speechPhone(id,phone):phone,
       fricationSource:(id,kind)=>articulatedFrication?createFricationSource(id,kind,rate):null,
+      stopRelease:(id,kind,count,fraction)=>smoothStopRelease&&kind==='stop'&&russianStops.has(id)
+        ?createStopRelease(count,rate,fraction):null,
       softenFrication:(samples,phones)=>{
         if(softenRussianFrication&&!articulatedFrication)applyFrication(samples,phones,boundaries,rate);
       },

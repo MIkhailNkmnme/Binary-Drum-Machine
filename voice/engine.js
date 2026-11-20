@@ -6,7 +6,7 @@
    the output is not promised to be byte-identical to the original Python bank. */
 (function(root){
   'use strict';
-  const VERSION='procedural-formant-browser-v1.2.3';
+  const VERSION='procedural-formant-browser-v1.2.4';
   const RATE=22050,TAU=2*Math.PI,TABLE_SIZE=4096,MAX_SECONDS=12,MAX_SEGMENTS=96;
   const MAX_FREQUENCY=RATE*.45,MAX_BANDWIDTH=4000;
   const definitions=[
@@ -187,7 +187,9 @@
       const token=score[tokenIndex],{id,duration}=token,count=Math.round(duration/settings.speed*RATE);
       const current=speechShapes?.[tokenIndex]||shapeFor(token,tokenIndex);
       const noiseConsonant=prosody&&dsp.isNoiseConsonant(current.kind);
-      const frication=!Object.hasOwn(phones,id)?prosody?.fricationSource(id,current.kind):null;
+      const nativeSpeech=prosody&&!Object.hasOwn(phones,id);
+      const frication=nativeSpeech?prosody.fricationSource(id,current.kind):null;
+      const stopRelease=nativeSpeech?prosody.stopRelease(id,current.kind,count,.62):null;
       resolvedPhones.push({id,...current,weights:[...current.weights]});
       if(!previousShape)previousShape=current;
       let coefficients=[];
@@ -218,7 +220,10 @@
         if(speech){voiced=(current.voice+(other.voice-current.voice)*blend)*settings.voicing;
           noisy=dsp.blendSpeechNoise(current,other,blend)*settings.noise;}
         if(current.kind==='stop'){
-          if(progress<.62){voiced*=.22;noisy=0;}else{noisy*=Math.exp(-(progress-.62)*13);voiced*=.35;}
+          if(stopRelease){
+            voiced*=.22+.13*stopRelease.voiceOpening(index);
+            noisy*=stopRelease.noiseEnvelope(index);
+          }else if(progress<.62){voiced*=.22;noisy=0;}else{noisy*=Math.exp(-(progress-.62)*13);voiced*=.35;}
         }else if(current.kind==='affricate'){
           if(progress<.23){voiced*=.15;noisy=0;}else noisy*=Math.min(1,(progress-.23)/.06);
         }else if(current.kind==='trill')voiced*=.35+.65*(.5+.5*Math.cos(TAU*29*index/RATE))**2;

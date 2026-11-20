@@ -7,7 +7,7 @@
   root.ZerkaliusRobotLiveFactory=function(C){
     const Original=root.ZerkaliusAlphabetRobot;
     if(!Original)throw Error('Не загружен исходный телефонный робот.');
-    const VERSION='phone-robot-live-v1.2.3',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
+    const VERSION='phone-robot-live-v1.2.4',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
     const bits=Array(8).fill(1),f0=440*2**((48-69)/12),raw=Original.phones();
     const profile=C.config({pitchStart:f0,pitchEnd:f0,vibratoDepth:0,vibratoRate:2.1,transitionMs:12,outputGain:.55,seed:Original.seedFor(bits,'zero')});
     const aliases={ax:'a-neutral',lj:'l-soft',dj:'d-soft',pj:'p-soft',tj:'t-soft',kj:'k-soft',sj:'s-soft',mj:'m-soft',vj:'v-soft',rj:'r-soft',shj:'sh-soft'};
@@ -85,6 +85,7 @@
       const table=source(harmonics),samples=new Float32Array(total+tail),filters=Array.from({length:4},()=>({z1:0,z2:0,c:null}));
       const seconds=samples.length/RATE,speechSeconds=total/RATE;
       const fricationSources=resolved.map(({id,kind})=>!Object.hasOwn(phones,id)?prosody?.fricationSource(id,kind):null);
+      const stopReleases=resolved.map(({id,kind},index)=>!Object.hasOwn(phones,id)?prosody?.stopRelease(id,kind,counts[index],.58):null);
       let rng=settings.seed||1,phase=0,segment=0,start=0,control=null,lastNoise=0,lastOutput=0,dc=0,peak=0;
       for(let sample=0;sample<samples.length;sample++){
         while(segment+1<score.length&&sample>=start+counts[segment]){start+=counts[segment];segment++;control=null;}
@@ -112,9 +113,15 @@
         let voiced=control.voice*settings.voicing,noise=control.noise*settings.noise,bypass=control.bypass*settings.noise,envelope=1;
         const kind=current.robotKind;
         if(kind==='stopK'||kind==='stopD'){
-          const release=segmentDuration*.58;
-          if(local<release){noise=0;voiced=kind==='stopD' ? .055*settings.voicing : 0;}
-          else{const age=local-release;noise*=Math.exp(-age/.009);voiced*=C.clamp(age/.012,0,1);}
+          const stopRelease=stopReleases[segment],closedVoice=kind==='stopD' ? .055*settings.voicing : 0;
+          if(stopRelease){
+            voiced=closedVoice+(voiced-closedVoice)*stopRelease.voiceOpening(sample-start);
+            noise*=stopRelease.noiseEnvelope(sample-start);
+          }else{
+            const release=segmentDuration*.58;
+            if(local<release){noise=0;voiced=closedVoice;}
+            else{const age=local-release;noise*=Math.exp(-age/.009);voiced*=C.clamp(age/.012,0,1);}
+          }
         }else if(kind==='affricate'){
           const release=segmentDuration*.30;
           if(local<release){noise=0;voiced=0;bypass=0;}else{const opening=C.clamp((local-release)/.006,0,1);noise*=opening;bypass*=opening;}
