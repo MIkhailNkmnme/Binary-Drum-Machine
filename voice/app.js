@@ -397,8 +397,7 @@
   $('text-play').addEventListener('pointerleave',()=>$('text-play').classList.remove('quiet-hover'));
   speechField.addEventListener('scroll',syncSpeechHighlightScroll,{passive:true});
   if(globalThis.ResizeObserver)new ResizeObserver(syncSpeechHighlight).observe(speechField);
-  for(const name of ['selectionchange','select','keyup','pointerup','blur'])speechField.addEventListener(name,()=>rememberSpeechCaret());
-  speechField.addEventListener('click',()=>{rememberSpeechCaret();seekPausedText();});
+  for(const name of ['selectionchange','select','keyup','pointerup','click','blur'])speechField.addEventListener(name,()=>rememberSpeechCaret());
   speechField.addEventListener('input',()=>{state.speechText=speechField.value;rememberSpeechCaret(false);invalidate('Текст изменён. Следующий «Плей» вычислит его заново.');drawTextCursor();});
   function useSpeechExample(){
     state.speechText=SPEECH_EXAMPLES[state.speechLanguage];
