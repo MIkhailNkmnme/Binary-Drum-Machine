@@ -1,20 +1,38 @@
 {
   "schemaVersion": 1,
   "article": "animatrix.md",
-  "version": "0.001",
-  "date": "2026-11-18",
-  "task": "ВЛФ-007",
-  "status": "research article; publication handled by coordinator",
-  "repositoryBaseCommit": "37215a9eb",
+  "version": "0.002",
+  "date": "2026-11-20",
+  "task": "АНМ-001",
+  "status": "source-reviewed research; application acceptance by user",
+  "repositoryBaseCommit": "c518c89c205a40f789d01446c8e74d27a8c7253c",
   "method": {
-    "performed": ["read current implementation", "read prior project research", "read extracted original PDF pages", "read official NKS notes", "mathematical derivation without execution"],
-    "notPerformed": ["new simulation", "automated tests", "syntax check", "browser run", "application visual acceptance", "Mathematica or CDF execution"],
+    "performed": [
+      "read current implementation",
+      "read prior project research",
+      "read extracted original PDF pages",
+      "read official NKS notes",
+      "mathematical derivation without execution"
+    ],
+    "notPerformed": [
+      "new simulation",
+      "automated tests",
+      "syntax check",
+      "browser run",
+      "application visual acceptance",
+      "Mathematica or CDF execution"
+    ],
     "applicationAcceptance": "проверки пользователем",
     "copyright": "No full chapter text, CDF source or book illustration included. Project illustrations reused."
   },
   "scope": {
-    "primary": "Zerkalius Code top-to-bottom text Animatrix wave",
-    "excludedFromAutomaticEquivalence": ["three-symbol transient", "Mayatnik cone algorithm", "Excel Animatrix families", "display transforms and colouring"]
+    "primary": "Code symbolic column wave; Mayatnik/Excel diagonal two/rows wave and separate classification of other cellular variants",
+    "excludedFromAutomaticEquivalence": [
+      "Code mixed-symbol transient",
+      "all variants being one operator",
+      "bit projection equalling presence/colour/selection state",
+      "proof of worldwide novelty"
+    ]
   },
   "sources": [
     {
@@ -22,14 +40,24 @@
       "path": "../Zerkalius-code.html",
       "locator": "runAnimatrixGlobal, lines 2597-2632 at repository base",
       "type": "current implementation",
-      "findings": ["same-column update", "top row fixed", "reads updated upper row", "missing characters are spaces", "different nonempty symbols choose upper symbol"]
+      "findings": [
+        "same-column update",
+        "top row fixed",
+        "reads updated upper row",
+        "missing characters are spaces",
+        "different nonempty symbols choose upper symbol"
+      ]
     },
     {
       "id": "code-seed",
       "path": "../Zerkalius-code.html",
       "locator": "fractal generation and trimZerosCheck, approximately lines 1760-1817",
       "type": "current implementation",
-      "findings": ["width seed.length + 2*height", "rule 90 seed construction", "trim outside first and last 1 in each row"]
+      "findings": [
+        "width seed.length + 2*height",
+        "rule 90 seed construction",
+        "trim outside first and last 1 in each row"
+      ]
     },
     {
       "id": "nks931",
@@ -44,9 +72,15 @@
     {
       "id": "nks1034",
       "title": "Sequential cellular automata",
-      "bookPages": [1034, 1035],
+      "bookPages": [
+        1034,
+        1035
+      ],
       "pdfFile": "nks-ch9.pdf",
-      "pdfPagesOneBased": [132, 133],
+      "pdfPagesOneBased": [
+        132,
+        133
+      ],
       "url": "https://www.wolframscience.com/nks/notes-9-10--sequential-cellular-automata/",
       "type": "primary source read",
       "finding": "Updated-neighbour dependence on p1034; OrderedUpdate implementation on p1035, although CDF section label is 1034."
@@ -72,22 +106,73 @@
     {
       "id": "research",
       "path": "../issledovanie/Zerkalius-issledovanie.html",
-      "anchors": ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8-5", "r8-75", "r8-875", "r9", "r9-75", "r12", "r13", "excel-animatrix", "excel-colours"],
+      "anchors": [
+        "r0",
+        "r1",
+        "r2",
+        "r3",
+        "r4",
+        "r5",
+        "r6",
+        "r7",
+        "r8-5",
+        "r8-75",
+        "r8-875",
+        "r9",
+        "r9-75",
+        "r12",
+        "r13",
+        "excel-animatrix",
+        "excel-colours"
+      ],
       "type": "historical project research read",
       "limitation": "Reported numerical experiments were not rerun for this article."
     },
     {
       "id": "excel-core",
       "path": "../mayatnik/mayatnik-animatrix-core.js",
-      "locators": ["calculate", "scanRow", "mergeCopyRow", "visitCopyRows", "scanCopyRows"],
+      "locators": [
+        "calculate",
+        "scanRow",
+        "mergeCopyRow",
+        "visitCopyRows",
+        "scanCopyRows"
+      ],
       "type": "current implementation read"
+    },
+    {
+      "id": "mayatnik-code-port",
+      "path": "../mayatnik/mayatnik-animatrix-core.js",
+      "locator": "codeWavePass, lines 368–381",
+      "finding": "Code transition for blank, 0, 1; full pass per step"
+    },
+    {
+      "id": "diagonal-scan",
+      "path": "../mayatnik/mayatnik-animatrix-core.js",
+      "locator": "calculate 231–237; scanRow 515–560; diagonal 269–283; horizontal 320–366",
+      "finding": "updated diagonal parents plus old target; matrix follows selection and live ordering"
+    },
+    {
+      "id": "nks885",
+      "url": "https://www.wolframscience.com/nks/notes-3-2--rule-150/",
+      "bookPage": 885,
+      "finding": "XOR three-input local table; not a full equivalence to diagonal sweep"
+    },
+    {
+      "id": "excel-shapes",
+      "path": "../mayatnik/mayatnik-animatrix-excel-shapes.js",
+      "locator": "buildCone, lines 37–67",
+      "finding": "cone mask, parity, depth, special apex; not the global diagonal sweep"
     }
   ],
   "claims": [
     {
       "id": "exact-prefix-equivalence",
       "status": "proved by recurrence identification",
-      "sources": ["code-wave", "nks931"],
+      "sources": [
+        "code-wave",
+        "nks931"
+      ],
       "mapping": "One project column with blank=0 and one nonblank label=1 maps to the NKS list; one full pass maps to one iteration.",
       "formula": "b[0]=a[0]; b[i]=a[i] XOR b[i-1]",
       "limits": "Same operator, not necessarily same seed or rendered picture. Not the mixed-label transient."
@@ -95,92 +180,177 @@
     {
       "id": "sequential-rule60",
       "status": "own mathematical inference",
-      "sources": ["code-wave", "nks1034"],
+      "sources": [
+        "code-wave",
+        "nks1034"
+      ],
       "formula": "left XOR self, scanned left to right, with zero exterior at the left",
       "limits": "Rotated column representation and specified boundary."
     },
     {
       "id": "power-two-period",
       "status": "own algebraic derivation",
-      "sources": ["code-wave", "research"],
+      "sources": [
+        "code-wave",
+        "research"
+      ],
       "formula": "T=(I+S)^(-1); S^N=0; T^P=I for P=2^ceil(log2(N))",
       "limits": "Exact state period uses active depth L=N-j from first occupied row j. Empty field is fixed. After label homogenisation and nonempty row0, full field period is P."
     },
     {
       "id": "inverse",
       "status": "own algebraic derivation",
-      "sources": ["code-wave"],
+      "sources": [
+        "code-wave"
+      ],
       "formula": "a[0]=b[0]; a[i]=b[i] XOR b[i-1]",
       "limits": "One-label-per-column binary phase only."
     },
     {
       "id": "shift-superposition",
       "status": "mathematical derivation consistent with historical research",
-      "sources": ["research", "nks870"],
+      "sources": [
+        "research",
+        "nks870"
+      ],
       "formula": "T^k coefficient at S^d = binomial(d+k-1,d) mod2 = 1 iff (d & (k-1))=0",
       "limits": "k>=1, 0<=d<N, binary phase."
     },
     {
       "id": "label-homogenisation",
       "status": "finite-column induction explained in article",
-      "sources": ["code-wave", "research"],
+      "sources": [
+        "code-wave",
+        "research"
+      ],
       "finding": "Every nonempty column eventually uses only its first nonempty label and spaces. Different columns can retain different labels."
     },
     {
       "id": "cycle128-from65",
       "status": "historical reported experiment",
-      "sources": ["research"],
+      "sources": [
+        "research"
+      ],
       "limits": "Rule90 single-seed trimmed 128-row scene. 976 zeros refers to pass15 snapshot; 14197 zeros to freshly generated triangle. Not rerun."
     },
     {
       "id": "even-pass-density",
       "status": "historical reported observation",
-      "sources": ["research"],
+      "sources": [
+        "research"
+      ],
       "limits": "Specific cycle; means 2562 and 5075 are approximately, not exactly, 1:2. Zero adjacent vertical 1-pairs not asserted for arbitrary seeds."
     },
     {
       "id": "rhomb-statistics",
       "status": "historical reported observation",
-      "sources": ["research"],
+      "sources": [
+        "research"
+      ],
       "limits": "21 full height32 rhombi at pass155; 1541 different patterns among 2688 space-time placements. Depends on geometry and sample."
     },
     {
       "id": "parity-rhombi",
       "status": "symmetry proved; period128 historically reported",
-      "sources": ["research"],
+      "sources": [
+        "research"
+      ],
       "limits": "A fixed projection period divides input period; equality is not automatic. Projection need not commute with wave."
     },
     {
       "id": "rhomb-rhythm12",
       "status": "historical finite-window observation",
-      "sources": ["research"],
+      "sources": [
+        "research"
+      ],
       "limits": "Rhythm12 breaks at 128-pass cycle seam. It is not a global period12 orbit. Specific height4 rhomb cascade and phase."
     },
     {
       "id": "mirror-xor",
       "status": "own algebraic explanation with historical examples",
-      "sources": ["research"],
+      "sources": [
+        "research"
+      ],
       "formula": "B=A XOR R(A), R^2=I implies R(B)=B",
       "limits": "Immediate result only; subsequent downward wave need not preserve vertical symmetry."
     },
     {
       "id": "transient-formula",
       "status": "historically tested conjecture with partially derived lower bound",
-      "sources": ["research"],
+      "sources": [
+        "research"
+      ],
       "formula": "cycleStart=2^m+1 with 2^m maximal <=2(N-2)/3; historical special case N=2..4 gives1",
       "limits": "Rule90, single seed1, trimmed background; historical range to1024. Record-cell survival derived, universal upper bound explicitly open. No new simulation."
     },
     {
       "id": "full-rule-priority",
       "status": "not established in inspected NKS passages",
-      "sources": ["code-wave", "nks931", "nks1034", "nks1017"],
+      "sources": [
+        "code-wave",
+        "nks931",
+        "nks1034",
+        "nks1017"
+      ],
       "limits": "No claim of worldwide novelty or proof of absence from literature."
     },
     {
       "id": "excel-scope",
       "status": "implementation and existing-description reading",
-      "sources": ["excel-core", "research"],
+      "sources": [
+        "excel-core",
+        "research"
+      ],
       "limits": "NAND, bounce, chains, cones and reflections are distinct operators; prefix-wave period and transient claims not transferred automatically."
+    },
+    {
+      "id": "two-families",
+      "status": "source-read classification",
+      "sources": [
+        "code-wave",
+        "mayatnik-code-port",
+        "diagonal-scan",
+        "excel-shapes"
+      ],
+      "claim": "Code is a symbolic column wave; Mayatnik/Excel is a family of cellular transformations. UI location does not determine the algorithm."
+    },
+    {
+      "id": "diagonal-pass",
+      "status": "own mathematical derivation, independently source-reviewed",
+      "sources": [
+        "diagonal-scan"
+      ],
+      "formula": "B[0,x]=A[0,x]; B[y,x]=A[y,x] XOR B[y-1,x-1] XOR B[y-1,x+1]; T=(I+D)^(-1)",
+      "limits": "two/rows/down; full passes; zero exterior; bit projection, not metadata"
+    },
+    {
+      "id": "diagonal-period-bound",
+      "status": "own mathematical derivation, no execution",
+      "sources": [
+        "diagonal-scan"
+      ],
+      "formula": "D^H=0; T^P=I for P=2^ceil(log2 H)",
+      "limits": "period divides P, not necessarily equals P; width1 is identity; does not include presence/colour/selection"
+    },
+    {
+      "id": "diagonal-nks-boundary",
+      "status": "exact full match not established in reviewed primary sources",
+      "sources": [
+        "nks870",
+        "nks885",
+        "nks1017",
+        "nks1034",
+        "diagonal-scan"
+      ],
+      "finding": "Rule90 matches parent contribution; rule150 matches local truth table only; sequential and second-order relatives differ in indices/boundaries. No novelty claim."
+    },
+    {
+      "id": "other-local-tables",
+      "status": "own truth-table identification; not whole-system equivalence",
+      "sources": [
+        "diagonal-scan"
+      ],
+      "finding": "three vertical: rule126 table; horizontal: rule22 table. Horizontal two/right snapshot: rule60; shift/horr right live: prefix XOR. Limits in article section10."
     }
   ],
   "illustrations": [

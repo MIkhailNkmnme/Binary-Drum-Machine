@@ -6,6 +6,7 @@ Run: python wolfram/build-articles.py
 from pathlib import Path
 from html import escape
 import markdown
+import sys
 
 ROOT = Path(__file__).resolve().parent
 STYLE = """
@@ -23,9 +24,13 @@ blockquote{border-left:3px solid #72dce8;margin-left:0;padding-left:20px}footer{
 @media print{:root{color-scheme:light;background:#fff;color:#111;font-size:11pt}main{max-width:none;padding:0}nav,.toc,footer{display:none}h1,h2,h3,strong{color:#111}h2,h3{break-after:avoid}img{max-height:230mm;object-fit:contain;break-inside:avoid}a{color:inherit}pre,th{background:#f4f4f4}pre{white-space:pre-wrap}table{display:table;font-size:9pt}th,td{min-width:0;padding:6px}p{orphans:3;widows:3}@page{size:A4;margin:18mm}}
 """
 
-for stem in ("mayatnik", "animatrix"):
+stems = sys.argv[1:] or ("mayatnik", "animatrix")
+if any(stem not in ("mayatnik", "animatrix") for stem in stems):
+    raise SystemExit("Choose mayatnik or animatrix")
+for stem in stems:
     source = (ROOT / f"{stem}.md").read_text(encoding="utf-8")
     title = source.splitlines()[0].removeprefix("# ")
+    date = "20 ноября 2026" if stem == "animatrix" else "18 ноября 2026"
     if "[TOC]" not in source:
         source = source.replace("\n## 1.", "\n[TOC]\n\n## 1.", 1)
     body = markdown.markdown(source, extensions=["tables", "fenced_code", "toc"],
@@ -35,7 +40,7 @@ for stem in ("mayatnik", "animatrix"):
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{escape(title)} · Зеркалиус</title><style>{STYLE}</style></head>
 <body><main><nav aria-label="Разделы"><a href="../index.html">Хаб</a><a href="./">Зеркалиус · Вольфрам</a><a href="mayatnik.html">Маятник</a><a href="animatrix.html">Аниматрица</a><a href="../issledovanie/wolfram-nks/">Книга</a></nav>
-<article>{body}</article><footer>Зеркалиус · 18 ноября 2026 · <a href="{stem}.md">Исходник статьи</a> · <a href="README.md">Устройство раздела и происхождение</a>. Для печати используйте команду браузера.</footer></main></body></html>
+<article>{body}</article><footer>Зеркалиус · {date} · <a href="{stem}.md">Исходник статьи</a> · <a href="README.md">Устройство раздела и происхождение</a>. Для печати используйте команду браузера.</footer></main></body></html>
 '''
     (ROOT / f"{stem}.html").write_text(page, encoding="utf-8")
     print(f"Written {stem}.html")
