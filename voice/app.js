@@ -214,7 +214,10 @@
     if(position===state.speechCaret)return;
     state.speechCaret=position;
     showSpeechPosition();
-    if(persist)save();
+    if(persist){
+      seekPausedText();
+      save();
+    }
   }
   function restoreSpeechCaret(position){
     state.speechCaret=Number.isInteger(position)?Math.max(0,Math.min(position,speechField.value.length)):0;
@@ -270,7 +273,7 @@
     caption('text-play',playing?'Пауза':'Плей');
     command.dataset.playing=String(playing);
     command.setAttribute('aria-disabled',String(textBusy));
-    command.title=playing?'Пауза · приостановить чтение':textBusy?'Плей · подготовка звука':textRun?'Плей · продолжить с места паузы':'Плей · начать чтение с курсора';
+    command.title=playing?'Пауза · приостановить чтение':textBusy?'Плей · подготовка звука':textRun?'Плей · продолжить чтение':'Плей · начать чтение с курсора';
     command.setAttribute('aria-label',command.title);
     commandIcon(command,playing?'pause':'play');
   }
@@ -319,6 +322,18 @@
     const mark=run.cache.timeline.find(entry=>sample>=entry.start&&sample<entry.end);
     markText(mark?.index??-1);
   }
+  function sampleAtCaret(cache,caretIndex){
+    return cache.timeline.find(mark=>mark.index>=caretIndex&&mark.end>mark.start)?.start??0;
+  }
+  function seekPausedText(){
+    const run=textRun;
+    if(!run||run.node)return;
+    const offset=sampleAtCaret(run.cache,speechCharacterIndex());
+    if(offset===run.offset)return;
+    run.offset=offset;
+    markTextSample(run,offset);
+    $('text-status').textContent='Пауза. «Плей» начнёт с нового места.';
+  }
   function pauseText(run){
     run.offset=runningTextSample(run);
     run.node=null;
@@ -327,7 +342,7 @@
     markTextSample(run,run.offset);
     showSpeechPosition();
     textButton();
-    $('text-status').textContent='Пауза. «Плей» продолжит с того же места.';
+    $('text-status').textContent='Пауза. Можно переставить курсор.';
   }
   function startTextRun(run,ticket){
     const node=context.createBufferSource();
@@ -359,6 +374,7 @@
     textButton();
     try{
       if(heldRun){
+        rememberSpeechCaret();
         await unlock();
         if(active(ticket))startTextRun(heldRun,ticket);
         return;
@@ -373,8 +389,7 @@
       await unlock();if(!active(ticket))return;const cache=await prepareText(ticket);if(!cache||!active(ticket))return;
       const result=cache.result,buffer=context.createBuffer(1,result.samples.length,result.sampleRate);
       buffer.copyToChannel(result.samples,0);
-      const firstSample=cache.timeline.find(mark=>mark.index>=caretIndex&&mark.end>mark.start)?.start??0;
-      textRun={buffer,cache,offset:firstSample};
+      textRun={buffer,cache,offset:sampleAtCaret(cache,caretIndex)};
       startTextRun(textRun,ticket);
     }catch(e){if(active(ticket)){stopTextUI();retireSource();$('text-status').textContent='Текст: '+e.message;}}
   }
@@ -383,6 +398,7 @@
   speechField.addEventListener('scroll',syncSpeechHighlightScroll,{passive:true});
   if(globalThis.ResizeObserver)new ResizeObserver(syncSpeechHighlight).observe(speechField);
   for(const name of ['selectionchange','select','keyup','pointerup','blur'])speechField.addEventListener(name,()=>rememberSpeechCaret());
+  speechField.addEventListener('click',()=>{rememberSpeechCaret();seekPausedText();});
   speechField.addEventListener('input',()=>{state.speechText=speechField.value;rememberSpeechCaret(false);invalidate('Текст изменён. Следующий «Плей» вычислит его заново.');drawTextCursor();});
   function useSpeechExample(){
     state.speechText=SPEECH_EXAMPLES[state.speechLanguage];
