@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- АзъБукъ v0.067 · АЗБ-067: тени Глифена для клеточного Kraftwerk. -->
+<!-- АзъБукъ v0.068 · АЗБ-068: отдельное начертание Kraftwerk · Сегмент. -->
 <!-- АзъБукъ v0.066 · повторное нажатие Шахматки меняет чёрные и белые клетки местами. -->
 <!-- v0.062 · АУДИТ-004: ширина экрана телефона. -->
 <html lang="ru">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius АзъБукъ v0.067</title>
+<title>Zerkalius АзъБукъ v0.068</title>
 <!-- v0.066 · АЗБ-066: Шахматка чередует чёрный и белый верхний левый угол; отмена и сохранение через текущий рисунок. -->
 <!-- v0.065 · АЗБ-065: чёрно-белая шахматка 0/1 в нижнем поле; клетки 1, 4 или 16 физических пикселей. -->
 <!-- v0.064 · АЗБ-064: русские буквы в шести клеточных начертаниях 8-bit Operator. -->
@@ -299,7 +299,7 @@
 <header>
   <div class="title">
     <div id="head" class="pbtn" role="heading" aria-level="1" aria-label="АЗЪ-БУКЪ"></div>
-    <span class="pbtn ver" aria-label="v0.066"></span>
+    <span class="pbtn ver" aria-label="v0.068"></span>
   </div>
 
   <a id="hubLink" href="index.html" title="Открыть хаб">Хаб</a>
@@ -445,6 +445,7 @@
 
 <script src="azbuk/fonts/operator-masks.js?v=063"></script>
 <script src="azbuk/fonts/operator-cyrillic.js?v=064"></script>
+<script src="azbuk/fonts/kraftwerk-segment.js?v=068"></script>
 <script>
 const BASE = { bold: {
   "0": ["0000000","0011100","0100110","1100011","1100011","1100011","0110010","0011100"],
@@ -825,13 +826,13 @@ for (const [id, info] of Object.entries(FONT_INFO)) {
 fontSelect.value = activeSet;
 function updateFontInfo() {
   const note = document.getElementById('fontInfo');
-  note.textContent = activeSet === 'kraftwerk-frame'
+  note.textContent = FONT_INFO[activeSet].description || (activeSet === 'kraftwerk-frame'
     ? 'Цифры 1–8 — эскиз клеток по кадру, точная сетка не подтверждена. 0, 9 и буквы взяты из тонкой Азбуки. Это не установленный оригинальный шрифт Kraftwerk.'
     : activeSet === 'thin' || activeSet === 'bold'
     ? 'АзъБукъ · ' + (activeSet === 'bold' ? 'обычное' : 'тонкое') + ' начертание. Правки сохраняются отдельно для каждого шрифта.'
     : FONT_INFO[activeSet].cyrillic
     ? 'Латиница, цифры и знаки взяты из TTF. 66 русских букв, включая Ё и ё, добавлены для клеточного редактора. Правки и сброс относятся к выбранному начертанию.'
-    : '8-bit Operator · ' + Object.keys(BASE[activeSet]).length + ' символов из TTF. Правки и сброс относятся к выбранному начертанию.';
+    : '8-bit Operator · ' + Object.keys(BASE[activeSet]).length + ' символов из TTF. Правки и сброс относятся к выбранному начертанию.');
 }
 function selectFont(set) {
   if (!Object.hasOwn(BASE, set)) return;
