@@ -1,4 +1,4 @@
-<!-- МАЯ-697 · v1.048. Поворот шаблона оставляет антибиты в текущей палитре 0/1. Проверки пользователем. -->
+<!-- МАЯ-698 · v1.049. Ширина по оси при запуске, отдельный счётчик совпадений. Проверки пользователем. -->
 <!-- МАЯ-696 · v1.047. Ручной сдвиг при «Верхе», возврат колесом, размеры выключены в ссылках. Проверки пользователем. -->
 <!-- МАЯ-695 · v1.046. Круглые палитры Воды и Снега. Проверки пользователем. -->
 <!-- ВЛФ-009 · v1.035: Вольфрам — три верхних бита выбирают цвет клетки, без изменения поля. Проверки пользователем. -->
@@ -81,7 +81,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.048</title>
+<title>Zerkalius Маятнкъ — v1.049</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -233,7 +233,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.048</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.049</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -761,7 +761,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // перерисовку — круг перерисовок вешал страницу. Шаблоны и меню работают; сохранённые замки не стираются — вернуть: false
   const LOCK_OFF = true;
   if (CHISTO) { Storage.prototype.setItem = Storage.prototype.removeItem = function () {}; if (window.MayatnikPaintCache) MayatnikPaintCache.write = async () => {}; }   // ничего не записывать: сохранённое остаётся как было
-  let st = { ...MayatnikAnimatrixSource.defaults(),...MayatnikPitCopies.DEFAULTS,kraftShadows:false,staggeredGrid:false,staggeredBlocks:false,paintEmptyNeighbours:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null, sequenceSourceOn:false,sequenceSource:null,sequenceSourceLimit:0,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkEvolution:2,sequenceOwnGrid:false,sequenceInverseAbove:false,rowStepOutline:true,rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', viewContours:false, viewDigits:false, zoom: 'fit', speed: 4, turbo: false, speedBefore: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, edgeContinuous:true,edgeFlowMax:0,edgeFlowKey:'',edgeWrap: false, edgeBounce: false, edgeWidth: 4, edgeMarkOn: true, edgeEndsOn: true, edgeEndsScale: 1, edgeRhombOn: false, romboMode:"fixed",romboLayout:null, romboAssembly:16, romboSeam:"between", edgeClose: true, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiThrough:false, ochkiSkipSpaces:false, ochkiEveryFrame:false, ochkiInv: false, ochkiRev: false, ochkiHalf: false, ochkiOverlay: false, frozen: false, zLimit:false,zOverview:true,lineMeasures:false, ...MayatnikResetState.pointDefaults, joined180Whole:false };
+  let st = { ...MayatnikAnimatrixSource.defaults(),...MayatnikPitCopies.DEFAULTS,kraftShadows:false,staggeredGrid:false,staggeredBlocks:false,paintEmptyNeighbours:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null, sequenceSourceOn:false,sequenceSource:null,sequenceSourceLimit:0,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkEvolution:2,sequenceOwnGrid:false,sequenceInverseAbove:false,rowStepOutline:true,rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', viewContours:false, viewDigits:false, zoom: 'fit', zMid: true, speed: 4, turbo: false, speedBefore: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, edgeContinuous:true,edgeFlowMax:0,edgeFlowKey:'',edgeWrap: false, edgeBounce: false, edgeWidth: 4, edgeMarkOn: true, edgeEndsOn: true, edgeEndsScale: 1, edgeRhombOn: false, romboMode:"fixed",romboLayout:null, romboAssembly:16, romboSeam:"between", edgeClose: true, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiThrough:false, ochkiSkipSpaces:false, ochkiEveryFrame:false, ochkiInv: false, ochkiRev: false, ochkiHalf: false, ochkiOverlay: false, frozen: false, zLimit:false,zOverview:true,lineMeasures:false, ...MayatnikResetState.pointDefaults, joined180Whole:false };
   if (!CHISTO) try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   st.wolfram=MayatnikWolfram.normalize(st.wolfram);
   if(PHONE_LINK&&!st.phoneScene)st=phoneSettings(PHONE_LINK);
@@ -7012,12 +7012,15 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       window.mayTemplateDedup?.capture(item,request.field);
       prepared.push(item);existing.set(key,id);selected.add(id);mark(id,item.matchOrientation);await checkpoint(pattern.filled.length);
     }
+    const sourceId=request.shape.sourceTemplateId;
+    if(available.some(item=>item.id===sourceId))selected.add(sourceId);
+    const instances=[...selected].filter(id=>id!==sourceId);
     check();const before=sceneSnapshot(),active=selected.has(colourTemplate?.id)?colourTemplate?.id:[...selected][0];
     const orientationChanged=templateItems.some(item=>orientations.has(item.id)&&item.matchOrientation!==orientations.get(item.id));
     templateItems.push(...prepared);for(const item of prepared)window.mayTemplateBaseline?.remember(item);for(const item of templateItems)if(orientations.has(item.id))item.matchOrientation=orientations.get(item.id);templateSerial+=prepared.length;selectTemplate(templateItems.find(t=>t.id===active)||null,false);templatePickedIds.clear();for(const id of selected)templatePickedIds.add(id);
     templateMove=!!colourTemplate;fillMode=false;autoVertical=0;templateStatsKey='';autoSync();fillSync();templateSync();
     if(prepared.length||orientationChanged||before.active!==colourTemplate?.id||before.picked.length!==selected.size||before.picked.some(id=>!selected.has(id)))templateSceneHistory(before,maskPixels*4+1024);
-    queueDigits();savePaint();return {instances:[...selected],createdCount:prepared.length,reusedCount:selected.size-prepared.length,completedScope:typeof templateFollowScope==='function'?templateFollowScope():undefined};
+    queueDigits();savePaint();return {instances,createdCount:prepared.length,reusedCount:instances.length-prepared.length,completedScope:typeof templateFollowScope==='function'?templateFollowScope():undefined};
   }
   function templateFollowScope(){
     if(!f||!img||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k||!gpuBig.cpuRaster))return null;
@@ -7028,14 +7031,17 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     let notice=document.getElementById('templateFoundNotice');
     if(!notice){notice=document.createElement('div');notice.id='templateFoundNotice';notice.setAttribute('role','status');notice.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:2147483000;padding:10px 18px;border:1px solid #ffad55;border-radius:6px;background:#151920;color:#fff;font:14px Segoe UI,sans-serif;pointer-events:none';document.body.appendChild(notice);}
     if(templateFoundNotice.dismiss)document.removeEventListener('click',templateFoundNotice.dismiss,true);
-    clearTimeout(templateFoundNotice.timer);notice.textContent=`Найдено ${Math.max(0,Math.floor(count||0))} шаблонов`;notice.hidden=false;
+    clearTimeout(templateFoundNotice.timer);
+    const message=count>0?`Найдено совпадений: ${count}`:'Не найдено ни одного совпадения';
+    notice.textContent=message;notice.hidden=false;
     const dismiss=templateFoundNotice.dismiss=()=>{notice.hidden=true;};
     // Arm after the initiating click has finished dispatching (also for a cached result).
     templateFoundNotice.timer=setTimeout(()=>document.addEventListener('click',dismiss,{capture:true,once:true}),0);
+    return message;
   }
   async function findAllTemplateOnce(){
     if(!colourTemplate||!templateItemAllowed(colourTemplate))return false;
-    const shape=templateSnapshot(),scope=templateFollowScope();if(!scope)return false;
+    const shape={...templateSnapshot(),sourceTemplateId:colourTemplate.id},scope=templateFollowScope();if(!scope)return false;
     const run=++templateFindOnceRun;templateFindOnceRunning=true;stop();target=k;
     const current=()=>run===templateFindOnceRun&&scope.owner===f;
     const cancelled=()=>!current()||scope.key!==templateFollowScope()?.key;
@@ -7044,7 +7050,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       const result=await window.mayTemplateLibrary.selectShape({...shape,searchProjection:templateMatchProjection()},{mirrorX:true,materialize:true,follow:true,cancelled});
       const completed=templateFollowScope();if(!current()||!result?.completedScope||result.completedScope.owner!==completed?.owner||result.completedScope.key!==completed?.key)return false;
       templateFindOnceRunning=false;templateFollow.acknowledge(completed);templateFindNotify=false;
-      $('paintCacheInfo').textContent=result.message;templateFoundNotice(result.count);templateSync();return true;
+      $('paintCacheInfo').textContent=templateFoundNotice(result.count);templateSync();return true;
     }catch(error){if(current()&&error.name!=='AbortError')$('paintCacheInfo').textContent=error.message;return false;}
     finally{if(run===templateFindOnceRun){templateFindOnceRunning=false;templateSync();}}
   }
@@ -13850,7 +13856,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     // Normal startup always reveals the pendulum at the top and full canvas centre.
     // Explicit links and isolated saved-frame windows retain their own camera contract.
     if(f&&geo&&!URL_ON&&!shareOpened&&!snakeSandbox&&!phoneOn()){
-      st.templateFocusMargins=null;st.ztop=true;st.zBot=false;zTopSync();
+      st.templateFocusMargins=null;st.zMid=true;st.ztop=true;st.zBot=false;zTopSync();
       layout();centerAnchor(true);save();
     }else if(f&&geo&&fitAxis()){layout();centerAnchor();}
     await bitotekaOpenFromHash();
