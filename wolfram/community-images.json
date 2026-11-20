@@ -1,11 +1,24 @@
 {
-  "version": "0.002",
+  "version": "0.003",
   "date": "2026-11-20",
   "task": "АНМ-002",
   "status": "draft with user-selected media; not submitted to forum",
   "audio": false,
   "method": "Existing figures/GIF reused unchanged; original silent MP4 converted to GIF using FFmpeg. Stills and sampled frames inspected. No model or application execution.",
   "items": [
+    {
+      "role": "templates-cover",
+      "path": "wolfram/community-assets/templates-author.png",
+      "url": "https://1001100.online/wolfram/community-assets/templates-author.png",
+      "width": 470,
+      "height": 454,
+      "frames": 1,
+      "bytes": 11754,
+      "sha256": "4ca679a0ad422fd32ca97866a59dad79e44faf1b7aeb762db7fa3433a0cd33e3",
+      "meaning": "User-supplied screenshot labelled templates; multiple coloured templates shown together on a pendulum field",
+      "origin": "Image attached by the author in this conversation on2026-11-20; copied byte-for-byte",
+      "limitation": "Full saved application state was not supplied; no new model verification inferred from the screenshot"
+    },
     {
       "role": "cover",
       "path": "issledovanie/mayatnik-podsvetka-2.png",
@@ -139,5 +152,6 @@
       "sha256Matches": true
     }
   ],
-  "newGifDelivery": "Pending GitHub Pages publication"
+  "newGifDelivery": "Pending GitHub Pages publication",
+  "newTemplateDelivery": "Pending GitHub Pages publication"
 }

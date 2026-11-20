@@ -1,12 +1,16 @@
 # Sequential XOR patterns in Zerkalius: a moving-cone pendulum and two Animatrix rules
 
-Draft v0.002 for Wolfram Community · 20 November 2026. Prepared for author review; not submitted to the forum. User-selected project figures are reused unchanged; the point-axis GIF is a format conversion of the complete existing MP4. The implementation is JavaScript; the mathematical connection to NKS is the subject of this discussion.
+Draft v0.003 for Wolfram Community · 20 November 2026. Prepared for author review; not submitted to the forum. User-selected project figures are reused unchanged; the point-axis GIF is a format conversion of the complete existing MP4. The implementation is JavaScript; the mathematical connection to NKS is the subject of this discussion.
 
 ---
 
 I am developing **Zerkalius**, a visual project exploring how simple rules produce structured patterns. I would like to share a comparison with *A New Kind of Science* and ask for references to closely related systems.
 
-The images initially drew my attention, but the main question is about the **update rule, the order of updates, and the boundary conditions**. Three constructions need to be kept separate.
+The comparison focuses on the **update rule, the order of updates, and the boundary conditions**. Three constructions need to be kept separate.
+
+![Several coloured templates on a pendulum field](https://1001100.online/wolfram/community-assets/templates-author.png)
+
+*Author-supplied screenshot: several coloured templates shown together on a pendulum field. This illustrates the project's template tools; the colours should not be read as extra states of the XOR rule. The screenshot is reproduced unchanged.*
 
 ![Colouring structures in the XOR pendulum](https://1001100.online/issledovanie/mayatnik-podsvetka-2.png)
 
