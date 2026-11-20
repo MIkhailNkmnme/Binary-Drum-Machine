@@ -2,8 +2,8 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.4';
-  const voicedStops=new Set(['b','g','d']);
+  const version='text-prosody-v1.2.5';
+  const voicedStops=new Set(['b','bj','g','gj','d','dj']);
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   function normalize(value={}){
@@ -72,11 +72,12 @@
       const word=wordFor(unit.cleanIndices?.[0]),marked=(unit.cleanIndices||[]).some(i=>prepared.stressed.has(i));
       const char=prepared.letters[unit.cleanIndices?.[0]],numeric=/^[0-9]$/.test(char||''),numericStress=numeric?digitStress[language==='de'?'de':'ru'][Number(char)]:[];
       unit.stresses=[];
-      const isolated=language==='ru'&&unit.score.length===1
-        &&word&&word.start===unit.cleanIndices[0]&&word.end-word.start===unit.cleanIndices.length
+      const afterUnit=unit.cleanIndices.at(-1)+1;
+      const isolated=language==='ru'&&unit.score.length===1&&word&&word.start===unit.cleanIndices[0]
+        &&(word.end===afterUnit||word.end===afterUnit+1&&/^[ъь]$/iu.test(prepared.letters[afterUnit]))
         &&!Object.hasOwn(phones,unit.score[0].id);
       unit.closedVoicedStop=isolated&&unit.kinds[0]==='stop'&&voicedStops.has(unit.score[0].id);
-      unit.isolatedZ=isolated&&unit.kinds[0]==='fricative'&&unit.score[0].id==='z';
+      unit.isolatedZ=isolated&&unit.kinds[0]==='fricative'&&['z','zj'].includes(unit.score[0].id);
       for(let j=0;j<unit.score.length;j++){
         const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(unit.enStressTokens?unit.enStressTokens.includes(j):marked||numericStress.includes(j));unit.stresses.push(stress);
         const factor={vowel:.72,stop:.80,affricate:.82,fricative:.80,sonorant:.82,trill:.82,rhotic:.82,silence:1}[k]||1;
