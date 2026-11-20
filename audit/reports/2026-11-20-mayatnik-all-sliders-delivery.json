@@ -1,0 +1,78 @@
+{
+  "task": "МАЯ-693 / КНП-022",
+  "version": "1.044",
+  "commit": "dfaab10404cebde4823d15f49841bfe891a86011",
+  "checked_at": "2026-11-20T16:38:51.3165194Z",
+  "pages_run": 44774882164,
+  "pages_status": "completed",
+  "pages_conclusion": "success",
+  "verification": "HTTP only; tests, syntax, browser and visual acceptance not run; acceptance by user",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.js?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.css",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.css?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-button-standard.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-button-standard.js?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-button-standard.css",
+      "url": "https://1001100.online/mayatnik/mayatnik-button-standard.css?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-flow.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-flow.js?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-gif-strip.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-gif-strip.js?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "КНОПКИ.md",
+      "url": "https://1001100.online/%D0%9A%D0%9D%D0%9E%D0%9F%D0%9A%D0%98.md?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "audit/reports/2026-11-20-mayatnik-all-sliders.md",
+      "url": "https://1001100.online/audit/reports/2026-11-20-mayatnik-all-sliders.md?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "audit/reports/2026-11-20-mayatnik-all-sliders.png",
+      "url": "https://1001100.online/audit/reports/2026-11-20-mayatnik-all-sliders.png?delivery=1044&r=2",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "matches": true
+    }
+  ]
+}
