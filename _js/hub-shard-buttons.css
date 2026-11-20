@@ -1,0 +1,145 @@
+/* ХАБ-025 · «Ромб и грань». Только экран сравнения в index.html. */
+.hubShardUI {
+  --shard-rail: 152px;
+  --shard-nav: 172px;
+  --shard-row: 33px;
+  --shard-gap: 2px;
+  --shard-extra-row: 0px;
+  --shard-status: 0px;
+}
+
+.hubShardUI:has(#hubRecordDownload:not([hidden])) { --shard-extra-row: calc(var(--shard-row) + var(--shard-gap)); }
+.hubShardUI:has(#hubRecordStatus:not([hidden])) { --shard-status: 24px; }
+
+/* Контур и две поверхности взяты из выбранной витрины. Переключатели
+   меняют только рамку и маленькую метку на правом конце грани. */
+.hubShardControl {
+  --shard-edge: #526271;
+  --shard-stroke: 1.1px;
+  --shard-mark: 0;
+  --shard-accent: var(--c, #a7d3e5);
+  isolation: isolate;
+  touch-action: manipulation;
+}
+.hubShardWall, .hubShardBay, .hubShardCrease { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.hubShardWall { fill: url(#hubShardMetal); stroke: var(--shard-edge); stroke-width: var(--shard-stroke); }
+.hubShardBay { fill: #17212b; stroke: var(--shard-edge); stroke-width: var(--shard-stroke); }
+.hubShardCrease { fill: none; stroke: #697786; stroke-width: .7px; }
+.hubShardMark { fill: var(--shard-accent); opacity: var(--shard-mark); }
+.hubShardUI .hubShardControl > .hubShardSurface {
+  position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%;
+  display: block; pointer-events: none; overflow: visible;
+}
+.hubShardControl:hover:not(:disabled) { --shard-edge: var(--shard-accent); }
+.hubShardControl:is(.gz-on,[aria-pressed="true"],[aria-expanded="true"]) {
+  --shard-edge: var(--shard-accent); --shard-stroke: 2px; --shard-mark: 1;
+}
+.hubShardControl:focus-visible { --shard-edge: #fff0b5; --shard-stroke: 2.4px; }
+.hubShardControl:is(:active,.gz-press):not(:disabled) { --shard-edge: #fff0b5; --shard-stroke: 3px; }
+.hubShardControl:disabled { --shard-edge: #4e5964; }
+
+/* Переопределить геометрию прежнего адаптера только у оформленных элементов.
+   В свёрнутой навигации и в сенсорном выходе из Дзена действуют свои размеры. */
+body.hubShardUI:not(.hubSidebarCollapsed) #hubSidebarMenu a.menu-btn.hubPg.hubShardControl,
+.hubShardUI #hubCompareTools .gz-hx.hubShardControl,
+.hubShardUI #hubRecordControls .gz-hx.hubShardControl,
+body.hubShardUI:not(.hubCompareZen) #hubCompareZen.hubShardControl {
+  box-sizing: border-box;
+  width: var(--shard-width, var(--shard-rail)) !important; max-width: 100% !important; min-width: 0 !important;
+  height: var(--shard-row) !important; min-height: var(--shard-row) !important; flex-shrink: 0;
+  align-items: center; justify-content: center !important; gap: 0 !important;
+  padding: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 0;
+  color: #e1e9f1 !important; background: transparent !important; clip-path: none !important;
+  box-shadow: none !important; text-shadow: none !important; filter: none !important;
+  font: 500 13px/1.12 "Segoe UI",sans-serif !important;
+  overflow: visible; white-space: normal; text-align: center;
+}
+.hubShardUI #hubCompareTools .gz-hx.hubShardControl::before,
+.hubShardUI #hubRecordControls .gz-hx.hubShardControl::before,
+body.hubShardUI:not(.hubCompareZen) #hubCompareZen.hubShardControl::before,
+.hubShardUI #hubComparePause.hubShardControl::before,
+.hubShardUI #hubSidebarMenu .hubShardControl > .hub-navigation-outline {
+  display: none !important;
+}
+.hubShardUI #hubCompareTools .hubShardControl:focus-visible,
+.hubShardUI #hubRecordControls .hubShardControl:focus-visible,
+body.hubShardUI:not(.hubCompareZen) #hubCompareZen:focus-visible,
+.hubShardUI #hubComparePause:focus-visible,
+body.hubShardUI:not(.hubSidebarCollapsed) #hubSidebarMenu a.menu-btn.hubPg:focus-visible {
+  outline: 1px dashed #fff0b5 !important; outline-offset: -1px;
+}
+body.hubShardUI:not(.hubSidebarCollapsed) #hubSidebarMenu .hubShardControl > .hubPgIcon,
+.hubShardUI :is(#hubCompareTools,#hubRecordControls) .hubShardControl > .gz-ic,
+body.hubShardUI:not(.hubCompareZen) #hubCompareZen > .gz-ic {
+  position: absolute; top: 50%; left: 12.5%; transform: translate(-50%, -50%);
+  width: 16px; height: 16px; margin: 0; pointer-events: none; color: var(--shard-accent);
+}
+.hubShardUI :is(#hubCompareTools,#hubRecordControls) .hubShardControl > .gz-nm,
+body.hubShardUI:not(.hubCompareZen) #hubCompareZen > .gz-nm,
+body.hubShardUI:not(.hubSidebarCollapsed) #hubSidebarMenu .hubShardControl > .hubPgText {
+  position: absolute; left: 24%; right: 14%; top: 50%; transform: translateY(-50%);
+  min-width: 0; white-space: normal; overflow: visible;
+  overflow-wrap: break-word; text-wrap: balance; text-overflow: clip;
+}
+.hubShardUI #hubSidebarMenu { --shard-width: var(--shard-nav); --c: #9ac9dd; }
+.hubShardUI #hubSidebarMenu .hubPgIcon { stroke: var(--hub-theme-accent,#e7a96c); }
+.hubShardUI #hubSidebarMenu > details > summary {
+  width: fit-content; max-width: 100%; cursor: pointer; list-style-position: inside;
+  color: #a7d3e5; font-weight: 600;
+}
+.hubShardUI #hubSidebarMenu summary:focus-visible { outline: 2px solid #fff0b5; outline-offset: 1px; }
+body.hubShardUI.hubSidebarCollapsed #hubSidebarMenu .hubShardSurface { display: none; }
+body.hubShardUI.hubSidebarCollapsed #hubSidebarMenu > details > summary {
+  display: list-item !important; max-width: 68px; margin-inline: 0 !important;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0;
+}
+
+.hubShardUI .hubCompareDrawer { width: var(--shard-rail); }
+.hubShardUI #hubMenuDrawer { width: min(var(--shard-nav), 44vw); --c: #9ac9dd; }
+.hubShardUI #hubCompareTools .hubCompareHandle { background: #191c26; }
+.hubShardUI .hubCompareHandle .hubHandleTip { fill: currentColor; fill-opacity: .12; }
+.hubShardUI .hubCompareHandle[aria-expanded="true"] .hubHandleTip { fill-opacity: .7; }
+.hubShardUI #hubMenuDrawer .hubCompareHandle:is(:hover,[aria-expanded="true"]) { color: #b6dfef; }
+.hubShardUI #hubCompareTools .hubCompareHandle:focus-visible { color: #fff0b5; }
+.hubShardUI .hubCompareHandle:focus-visible svg { stroke-width: 2.2; }
+.hubShardUI #hubCompareViewMenu {
+  box-sizing: border-box; width: var(--shard-rail); gap: var(--shard-gap);
+  /* Две рейки делят правый край даже при появлении статуса и ссылки «Скачать». */
+  max-height: max(var(--shard-row), calc(100dvh - 68px - 4 * (var(--shard-row) + var(--shard-gap)) - var(--shard-extra-row) - var(--shard-status)));
+  overflow: hidden auto;
+}
+.hubShardUI #hubComparePairs { width: 100%; flex-wrap: nowrap; gap: var(--shard-gap); }
+.hubShardUI #hubCompareTools #hubComparePairs .hubShardControl {
+  flex: 1 1 0; width: 0 !important; padding: 0 !important;
+}
+.hubShardUI #hubCompareTools #hubComparePairs .gz-nm { left: 0; right: 0; font-variant-numeric: tabular-nums; }
+.hubShardUI #hubCompareViewMenu #hubComparePaletteMenu {
+  position: static; gap: var(--shard-gap); padding-block: 2px;
+}
+@media (min-width: 640px) and (min-height: 580px) {
+  /* При открытой палитре добавляется прокручиваемая полоса слева от кнопок. */
+  .hubShardUI #hubCompareViewMenu:has(#hubComparePaletteMenu:not([hidden])) {
+    width: calc(2 * var(--shard-rail) + 5px); margin-left: calc(0px - var(--shard-rail) - 5px);
+    padding-left: calc(var(--shard-rail) + 5px);
+  }
+  .hubShardUI #hubCompareViewMenu #hubComparePaletteMenu {
+    position: absolute; top: auto; right: calc(100% + 5px); bottom: 0; width: var(--shard-rail); padding: 0;
+  }
+}
+.hubShardUI #hubRecordControls {
+  width: var(--shard-rail); gap: var(--shard-gap); bottom: calc(8px + var(--shard-row) + var(--shard-gap));
+}
+body.hubShardUI:not(.hubCompareZen) #hubCompareZen { width: var(--shard-rail); }
+.hubShardUI #hubComparePause.hubShardControl {
+  width: 50px; height: 50px; clip-path: none; background: transparent;
+}
+.hubShardUI #hubComparePause span { color: #d5f1df; }
+.hubShardUI.hubCompareZen #hubCompareZen .hubShardSurface { display: none; }
+@media (hover: none), (pointer: coarse) {
+  .hubShardUI { --shard-row: 44px; --shard-rail: min(152px, 46vw); }
+  .hubShardUI.hubCompareZen #hubRecordControls { bottom: 66px; }
+}
+html:has(> body.hubShardUI),
+.hubShardUI :is(#hubSidebarMenu,#hubCompareViewMenu,#hubComparePanel) { scrollbar-width: none; }
+html:has(> body.hubShardUI)::-webkit-scrollbar,
+.hubShardUI :is(#hubSidebarMenu,#hubCompareViewMenu,#hubComparePanel)::-webkit-scrollbar { display: none; }

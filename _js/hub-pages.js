@@ -1,4 +1,4 @@
-/* Hub v0.502: отдельная лаборатория Зеркалиус · Вольфрам и статьи.
+/* Hub v0.507: оформление «Ромб и грань» и ссылка в журнал картинок.
    Hub v0.231: кнопки страниц слева — вариант А витрины knopki/hub-stranicy.html («F вариант» = «А»): компактные полосы
    со значком и подписью, главные — по одной в ряд, разделы — в два столбца. Полное имя — в подсказке. */
 (() => {
@@ -10,7 +10,7 @@
     half:'M20 12a8 8 0 11-16 0 8 8 0 0116 0M12 4v16',sun:'M16 12a4 4 0 11-8 0 4 4 0 018 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2',curve:'M4 12c3-7 6-7 8 0s5 7 8 0',
     steps:'M4 20v-5h5v-5h5V5h6',loop:'M7 16a4 4 0 010-8h10a4 4 0 010 8H7',wave:'M3 12q3-6 6 0t6 0 6 0',square:'M6 6h12v12H6z',star:'M12 3l2.6 6 6.4.5-4.9 4.2 1.5 6.3L12 16.6 6.4 20l1.5-6.3L3 9.5l6.4-.5z',page:'M6 3h9l3 3v15H6z'};
   // значок — по адресу страницы (первое совпадение)
-  const ICON = [['voice/','wave'],['wolfram/','grid4'],['wolfram-nks/','grid4'],['music/','wave'],['music-carpet','wave'],['treugolnik','tri'],['zazerkalius.html#','axes'],['zazerkalius','mirror'],['dnevnik','load'],['oboi','image'],['issledovanie','target'],['sravnenie','swap'],['rezultaty','play'],
+  const ICON = [['voice/','wave'],['wolfram/','grid4'],['wolfram-nks/','grid4'],['music/','wave'],['music-carpet','wave'],['treugolnik','tri'],['zazerkalius.html#','axes'],['zazerkalius','mirror'],['dnevnik','load'],['oboi','image'],['image-journal/','image'],['issledovanie','target'],['sravnenie','swap'],['rezultaty','play'],
     ['prosmotr','eye'],['code','bars'],['genezis','spiral'],['gpu','bolt'],['grid-module','grid4'],['kubits','cube'],['layers','nest'],['ascii','dots'],['oktaedr.html','half'],['lively','sun'],
     ['hub-konus','curve'],['piramida','steps'],['sinhrofazotron','loop'],['mayatnik','wave'],['matryoshki','square'],['sinhroromb','star']];
   // длинные имена — короче, полное — в подсказке
@@ -19,6 +19,25 @@
   const MINI = {'Музыкальный ковёр':'Ковёр','Редакторам':'Ред.','Треугольник':'Треуг.','Зазеркалиус':'Зазерк.','Борт-журнал':'Журнал','Исследование':'Исслед.','Сравнение':'Сравн.','Битмультфильмы':'Мульт.','Просмотр GIF':'GIF',
     'Зеркалиус':'Зерк.','Генезис':'Генез.','Ядро GPU + синт':'GPU','Модуль сетки':'Сетка','Слои сгиба':'Слои','ASCII-арт':'ASCII','Бирамида':'Бирам.','Обои Lively':'Lively',
     'Хаб с конусом':'Конус','Пирамида':'Пирам.','Синхрофазотрон':'Синхр.','Маятник':'Маятн.','Матрёшки':'Матр.','Синхроромб':'Ромб'};
+  function decorateLiveControls() {
+    if (!document.getElementById('hubShardShapes')) return;
+    const controls = document.querySelectorAll('#hubSidebarMenu .hubPg, #hubCompareViewMenu .gz-hx, #hubRecordControls .gz-hx, #hubCompareZen, #hubComparePause');
+    for (const control of controls) {
+      if (control.querySelector(':scope > .hubShardSurface')) continue;
+      const diamond = control.id === 'hubComparePause' || control.hasAttribute('data-hub-field');
+      const surface = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const use = document.createElementNS(surface.namespaceURI, 'use');
+      surface.classList.add('hubShardSurface');
+      surface.setAttribute('aria-hidden', 'true');
+      surface.setAttribute('focusable', 'false');
+      use.setAttribute('width', '100%');
+      use.setAttribute('height', '100%');
+      use.setAttribute('href', diamond ? '#hubShardDiamond' : '#hubShardFace');
+      surface.append(use);
+      control.append(surface);
+      control.classList.add('hubShardControl');
+    }
+  }
   const build = () => {
     document.querySelectorAll('.hub a.menu-btn').forEach(a => {
       if (a.firstElementChild?.classList.contains('hubPgIcon')) return;
@@ -30,6 +49,7 @@
       const m = document.createElement('span'); m.className = 'hubPgMini'; m.textContent = MINI[label] || label;
       a.replaceChildren(svg, t, m); a.classList.add('hubPg', 'rmbOn'); a.setAttribute('aria-label', label); if (!a.title) a.title = label;
     });
+    decorateLiveControls();
     // v0.242: меню в 1,5 раза уже — не влезающее название берёт короткую подпись свёрнутого меню
     document.querySelectorAll('.hub a.menu-btn.hubPg .hubPgText').forEach(t => { const a = t.parentElement, label = a.getAttribute('aria-label'); t.textContent = SHORT[label] || label; if (t.clientWidth && t.scrollWidth > t.clientWidth && MINI[label]) t.textContent = MINI[label]; });
     // свёрнутое меню: ромбы ёлочкой — каждый второй сдвинут вправо на полромба, раздел начинается заново
