@@ -2,7 +2,8 @@
   "use strict";
   const LEGACY_KEY = "zerk_bit_chessboards_v1";
   const FRAMES_KEY = "zerk_bit_chessboard_frames_v1";
-  const FIELD_KEYS = {square: "zerk_bit_square_frames_v2", rhombic: "zerk_bit_rhombic_frames_v2"};
+  const PREVIOUS_RHOMBIC_KEY = "zerk_bit_rhombic_frames_v2";
+  const FIELD_KEYS = {square: "zerk_bit_square_frames_v2", rhombic: "zerk_bit_rhombic_frames_v3"};
   const MAX_FRAMES = 100;
   const MIN_DURATION = 50, MAX_DURATION = 60000, DEFAULT_DURATION = 500;
   const MAX_BOARDS = 16, MAX_ID = 1000000;
@@ -16,10 +17,13 @@
   const byId = id => document.getElementById("chess-" + id);
   const diamonds = window.BitByteDiamondGrid;
   const world = byId("world"), viewport = byId("viewport"), list = byId("list");
+  const fieldSurface = document.createElement("div");
+  fieldSurface.className = "chess-field-surface";
+  fieldSurface.setAttribute("aria-hidden", "true");
   const fieldMesh = document.createElement("div");
   fieldMesh.className = "chess-field-mesh";
   fieldMesh.setAttribute("aria-hidden", "true");
-  world.append(fieldMesh);
+  world.append(fieldSurface, fieldMesh);
   const editor = document.getElementById("boards-editor");
   const controls = editor.querySelector(".chess-controls");
   const frameSelect = byId("frame"), frameDuration = byId("frame-duration"), play = byId("play");
@@ -47,10 +51,22 @@
 
   const defaultOutline = id => OUTLINES[(id - 1) % OUTLINES.length];
   const isDiamondGrid = board => board.shape === "diamond-grid";
-  const diamondGrid = board => isDiamondGrid(board)
-    ? diamonds.get(board.cols, board.rows, {field: true, offsetX: board.x, offsetY: board.y}) : null;
+  const diamondGrid = (board, clipped = false) => isDiamondGrid(board)
+    ? diamonds.get(board.cols, board.rows, {field: true, offsetX: board.x, offsetY: board.y,
+      ...(clipped && (board.x + board.cols > state.fieldCols || board.y + board.rows > state.fieldRows)
+        ? {clipCols: state.fieldCols, clipRows: state.fieldRows} : {})}) : null;
+  const fieldBounds = () => fieldMode === "rhombic"
+    ? diamonds.metrics(state.fieldCols, state.fieldRows)
+    : {originX: 0, originY: 0, width: state.fieldCols, height: state.fieldRows};
+  function boardBounds(board) {
+    const grid = diamondGrid(board, true);
+    if (!grid) return {x: board.x, y: board.y, width: board.cols, height: board.rows};
+    const field = fieldBounds();
+    return {x: grid.originX - field.originX, y: grid.originY - field.originY,
+      width: grid.width, height: grid.height};
+  }
   const boardLabel = board => (isDiamondGrid(board) ? "Ромбическая сетка " : board.shape === "rhombus" ? "Ромбо-шахматка " : "Шахматка ") + board.id;
-  const area = board => diamondGrid(board)?.tiles.length ?? rhombusMask(board)?.area ?? board.cols * board.rows;
+  const area = board => isDiamondGrid(board) ? board.cols * board.rows : rhombusMask(board)?.area ?? board.cols * board.rows;
   // Порядок в сохранении разрешает совпадения площадей.
   const layers = () => state.boards.slice().sort((a, b) => area(b) - area(a));
   function freeId(ids, id) {
@@ -139,17 +155,18 @@
   function loadFrames(mode) {
     const own = readStored(FIELD_KEYS[mode]);
     // The original mixed collection stays untouched as a migration backup.
-    const saved = own ?? readStored(FRAMES_KEY);
+    const previous = mode === "rhombic" ? readStored(PREVIOUS_RHOMBIC_KEY) : null;
+    const saved = own ?? previous ?? readStored(FRAMES_KEY);
     const splitScene = source => {
       const boards = (source.boards || []).filter(board =>
         (["diamond-grid", "rhombus"].includes(board?.shape)) === (mode === "rhombic"));
       return normalizeScene({...source, boards: mode === "rhombic"
         ? boards.map(board => ({...board, shape: "diamond-grid"})) : boards,
-        ...(mode === "rhombic" ? {logic: "layers"} : {})});
+        ...(mode === "rhombic" ? {logic: "layers", ...(!own ? {autoSize: true} : {})} : {})});
     };
     if (Array.isArray(saved?.frames)) {
       if (!saved.frames.length) return {frames: [], active: -1};
-      if (!own && mode === "rhombic" && !saved.frames.some(frame =>
+      if (!own && !previous && mode === "rhombic" && !saved.frames.some(frame =>
         frame.scene?.boards?.some(board => ["diamond-grid", "rhombus"].includes(board?.shape)))) {
         return {frames: [makeFrame(initialState(mode))], active: 0};
       }
@@ -320,9 +337,10 @@
   }
 
   function positionBoard(element, board) {
+    const bounds = boardBounds(board);
     Object.assign(element.style, {
-      left: board.x * state.cell + "px", top: board.y * state.cell + "px",
-      width: board.cols * state.cell + "px", height: board.rows * state.cell + "px",
+      left: bounds.x * state.cell + "px", top: bounds.y * state.cell + "px",
+      width: bounds.width * state.cell + "px", height: bounds.height * state.cell + "px",
     });
     element.style.setProperty("--board-color", board.outline);
   }
@@ -498,16 +516,25 @@
 
   function captureSearchFrame() {
     // Растр строится синхронно из текущего рассчитанного кадра до toBlob/IndexedDB.
-    const cols = state.fieldCols, rows = state.fieldRows;
+    const bounds = fieldBounds();
+    const cols = bounds.width, rows = bounds.height;
     const scale = Math.max(1, Math.min(state.cell, 16, Math.floor(2048 / Math.max(cols, rows))));
     const canvas = document.createElement("canvas");
-    canvas.width = cols * scale; canvas.height = rows * scale;
+    canvas.width = Math.ceil(cols * scale); canvas.height = Math.ceil(rows * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) throw Error("Не удалось создать снимок поля");
     const visible = layers().filter(board => board.visible);
     const hasDiamondGrid = fieldMode === "rhombic";
     ctx.fillStyle = hasDiamondGrid ? "#354653" : "#1e2933";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (hasDiamondGrid) {
+      ctx.save(); ctx.scale(scale, scale); ctx.beginPath();
+      for (const points of bounds.loops) {
+        ctx.moveTo(...points[0]);
+        for (const point of points.slice(1)) ctx.lineTo(...point);
+        ctx.closePath();
+      }
+      ctx.fill(); ctx.restore();
+    } else ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (!hasDiamondGrid) {
       ctx.fillStyle = "#92aaba24";
       for (let x = 0; x < cols; x++) ctx.fillRect(x * scale, 0, 1, canvas.height);
@@ -525,10 +552,11 @@
       }
     }
     for (const board of visible) {
-      const grid = diamondGrid(board);
+      const grid = diamondGrid(board, true);
       if (grid) {
+        if (!grid.tiles.length) continue;
         ctx.save();
-        ctx.translate(board.x * scale, board.y * scale);
+        ctx.translate((grid.originX - bounds.originX) * scale, (grid.originY - bounds.originY) * scale);
         ctx.scale(scale, scale);
         diamonds.paint(ctx, grid, diamondPaints(board), scale, state.digits && grid.side * scale >= 8, {mesh: false});
         ctx.restore();
@@ -554,7 +582,7 @@
     if (hasDiamondGrid) {
       ctx.save();
       ctx.scale(scale, scale);
-      diamonds.paintMesh(ctx, cols, rows, scale);
+      diamonds.paintMesh(ctx, state.fieldCols, state.fieldRows, scale);
       ctx.restore();
     }
     return new Promise((resolve, reject) => canvas.toBlob(blob => {
@@ -585,10 +613,26 @@
     const logic = fieldMode !== "rhombic" && state.logic !== "layers" && logicContext;
     world.toggleAttribute("data-diamond-grid", fieldMode === "rhombic");
     fieldMesh.hidden = fieldMode !== "rhombic";
+    fieldSurface.hidden = fieldMesh.hidden;
     const meshKey = state.fieldCols + "/" + state.fieldRows;
     if (fieldMode === "rhombic" && fieldMesh.dataset.geometry !== meshKey) {
       fieldMesh.dataset.geometry = meshKey;
       fieldMesh.replaceChildren(diamonds.meshSvg(state.fieldCols, state.fieldRows));
+      const bounds = fieldBounds();
+      const surface = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      surface.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", bounds.contour);
+      path.setAttribute("fill", "#354653");
+      surface.append(path);
+      fieldSurface.replaceChildren(surface);
+    }
+    if (fieldMode === "rhombic") {
+      const bounds = fieldBounds();
+      for (const layer of [fieldSurface, fieldMesh]) {
+        layer.style.width = bounds.width * state.cell + "px";
+        layer.style.height = bounds.height * state.cell + "px";
+      }
     }
     const ids = new Set(ordered.map(board => board.id));
     for (const [id, {element, outline}] of elements) {
@@ -614,10 +658,10 @@
       const active = state.selected === board.id;
       const marked = state.selectedIds.includes(board.id);
       const {element, outline} = elements.get(board.id);
-      const grid = diamondGrid(board);
+      const grid = diamondGrid(board, true);
       element.toggleAttribute("data-diamond-grid", !!grid);
       if (grid) {
-        const geometry = [board.cols, board.rows, board.x, board.y].join("/");
+        const geometry = [board.cols, board.rows, board.x, board.y, state.fieldCols, state.fieldRows].join("/");
         if (outline.dataset.geometry !== geometry) {
           outline.dataset.geometry = geometry;
           outline.setAttribute("data-rhombus", "");
@@ -638,15 +682,15 @@
           element.dataset.tile = tile;
         }
       }
-      element.hidden = !board.visible;
+      element.hidden = !board.visible || (grid && !grid.tiles.length);
       element.tabIndex = active ? 0 : -1;
       element.setAttribute("aria-pressed", String(marked));
-      const dimensions = grid ? grid.tiles.length + " ромбов" : board.cols + " на " + board.rows + " клеток";
+      const dimensions = grid ? board.cols + " на " + board.rows + " ромбов" : board.cols + " на " + board.rows + " клеток";
       element.setAttribute("aria-label", boardLabel(board) + ", " + dimensions +
         ", X " + board.x + ", Y " + board.y + ". Стрелки — перемещение.");
       positionBoard(element, board);
       element.style.zIndex = String(index + (logic && grid ? MAX_BOARDS + 2 : 1));
-      outline.hidden = !board.visible || !marked;
+      outline.hidden = element.hidden || !marked;
       if (!outline.hidden) {
         positionBoard(outline, board);
         outline.style.zIndex = String(2 * MAX_BOARDS + 2 + index);
@@ -659,8 +703,9 @@
     }
     if (state.fieldCols !== null && state.fieldRows !== null) {
       // Размер внутренней области точен; внешняя рамка добавляет 2 px.
-      viewport.style.width = state.fieldCols * state.cell + 2 + "px";
-      viewport.style.height = state.fieldRows * state.cell + 2 + "px";
+      const bounds = fieldBounds();
+      viewport.style.width = Math.ceil(bounds.width * state.cell) + 2 + "px";
+      viewport.style.height = Math.ceil(bounds.height * state.cell) + 2 + "px";
     }
     for (const [id, key] of [["field-cols", "fieldCols"], ["field-rows", "fieldRows"]]) {
       if (document.activeElement !== byId(id) || drag?.kind === "field") byId(id).value = state[key] ?? "";
@@ -669,7 +714,10 @@
     world.style.setProperty("--chess-cell", state.cell + "px");
     renderLogic();
     renderLayers(ordered);
-    byId("total").textContent = "Шахматок: " + state.boards.length + " · видимых: " + visible +
+    byId("total").textContent = fieldMode === "rhombic"
+      ? "Слоёв: " + state.boards.length + " · видимых: " + visible + " · поле: " + state.fieldCols + " × " + state.fieldRows +
+        " ромбов · сторона ромба: " + state.cell + " px · ромбов во всех слоях: " + total + " (наложенные считаются отдельно)."
+      : "Шахматок: " + state.boards.length + " · видимых: " + visible +
       " · поле: " + (state.fieldCols ?? "—") + " × " + (state.fieldRows ?? "—") + " клеток · клетка: " + state.cell + " × " + state.cell + " px · клеток по всем шахматкам: " + total +
       " (наложенные клетки считаются отдельно).";
     renderCounts();
@@ -831,6 +879,34 @@
   }
   function syncFieldLabels() {
     const rhombic = fieldMode === "rhombic";
+    for (const [id, squareLabel, diamondLabel, squareName, diamondName] of [
+      ["cell", "Клетка, px", "Сторона, px", "Размер клетки в пикселях", "Сторона целого ромба в пикселях"],
+      ["field-cols", "Ширина, кл.", "Ромбы ↔", "Ширина всего поля в клетках", "Число ромбов поля по горизонтальному направлению"],
+      ["field-rows", "Высота, кл.", "Ромбы ↕", "Высота всего поля в клетках", "Число ромбов поля по вертикальному направлению"],
+      ["cols", "Столбцы", "Ромбы ↔", "Столбцы выбранной шахматки", "Число ромбов слоя по горизонтальному направлению"],
+      ["rows", "Строки", "Ромбы ↕", "Строки выбранной шахматки", "Число ромбов слоя по вертикальному направлению"],
+    ]) {
+      const input = byId(id), name = rhombic ? diamondName : squareName;
+      const caption = rhombic ? diamondLabel : squareLabel;
+      const nativeLabel = input.closest("label");
+      if (nativeLabel?.firstChild?.nodeType === Node.TEXT_NODE) nativeLabel.firstChild.textContent = caption + " ";
+      const wrapper = input.closest(".bb-number-label");
+      if (wrapper) {
+        const label = wrapper.querySelector("label");
+        label.textContent = caption; label.title = name;
+        for (const control of wrapper.querySelectorAll("input")) control.setAttribute("aria-label", name);
+        for (const [index, button] of [...wrapper.querySelectorAll("button")].entries()) {
+          button.title = (index ? "Увеличить: " : "Уменьшить: ") + name;
+          button.setAttribute("aria-label", button.title);
+        }
+        wrapper.querySelector(".bb-number-control").title = name +
+          (id === "cell" ? ". Один шаг — один пиксель." : ". Один шаг — одна целая клетка.");
+      }
+      input.title = name;
+      input.setAttribute("aria-label", name);
+      const range = byId(id + "-range");
+      if (range) range.title = name;
+    }
     byId("editor-title").textContent = rhombic ? "Ромбо" : "Шахматки";
     byId("field-title").textContent = rhombic ? "Ромбическое поле" : "Поле шахматок";
     byId("field-note").hidden = !rhombic;
@@ -839,6 +915,7 @@
     world.setAttribute("aria-label", rhombic ? "Ромбическая сетка" : "Шахматки");
     viewport.setAttribute("aria-label", rhombic ? "Ромбическое поле" : "Поле шахматок");
     byId("add").title = rhombic ? "Добавить слой на общей ромбической сетке" : "Добавить шахматку";
+    byId("auto-size").setAttribute("aria-label", rhombic ? "Автоматический размер поля по целым ромбам" : "Автоматический размер поля по шахматкам");
     for (const button of rgbButtons) {
       button.dataset.squareTitle ??= button.title;
       button.title = rhombic
@@ -846,6 +923,7 @@
         : button.dataset.squareTitle;
     }
   }
+  document.addEventListener("DOMContentLoaded", syncFieldLabels, {once: true});
   document.addEventListener("bitbyte-editor-change", event => {
     if (event.detail === "boards" || event.detail === "rhombic") {
       showField(event.detail === "rhombic" ? "rhombic" : "square");
@@ -1137,11 +1215,13 @@
     if (state.logic !== "layers" && logicContext) ordered.sort((a, b) => Number(isDiamondGrid(a)) - Number(isDiamondGrid(b)));
     for (const board of ordered) {
       if (!board.visible) continue;
-      const left = board.x * state.cell, top = board.y * state.cell;
-      const width = board.cols * state.cell, height = board.rows * state.cell;
+      const bounds = boardBounds(board);
+      const left = bounds.x * state.cell, top = bounds.y * state.cell;
+      const width = bounds.width * state.cell, height = bounds.height * state.cell;
       const right = left + width, bottom = top + height;
       const mask = rhombusMask(board);
-      const grid = diamondGrid(board);
+      const grid = diamondGrid(board, true);
+      if (grid && !grid.tiles.length) continue;
       const col = Math.floor((x - left) / state.cell), row = Math.floor((y - top) / state.cell);
       const covered = x >= left && x < right && y >= top && y < bottom &&
         (!mask || mask.cells[row * board.cols + col]) &&
@@ -1253,7 +1333,12 @@
     if (!drag.moved && Math.hypot(dx, dy) < Math.min(4, state.cell)) return;
     if (!drag.moved) startBoardDrag();
     if (drag.blocked) return;
-    const x = Math.round(dx / state.cell), y = Math.round(dy / state.cell);
+    const first = drag.origins[0];
+    const anchorX = first.x + (drag.edge?.horizontal > 0 ? first.cols - 1 : 0);
+    const anchorY = first.y + (drag.edge?.vertical > 0 ? first.rows - 1 : 0);
+    const {x, y} = isDiamondGrid(first.board)
+      ? diamonds.delta(dx / state.cell, dy / state.cell, anchorX, anchorY)
+      : {x: Math.round(dx / state.cell), y: Math.round(dy / state.cell)};
     if (drag.edge) {
       const {board, cols, rows, phase, x: left, y: top} = drag.origins[0];
       const horizontal = drag.edge.horizontal, vertical = drag.edge.vertical;
@@ -1389,10 +1474,13 @@
   });
   viewport.addEventListener("pointermove", event => {
     if (drag?.kind !== "field" || event.pointerId !== drag.pointer) return;
-    if (drag.edge !== "bottom") state.fieldCols = clamp(drag.cols +
-      Math.round((event.clientX + window.scrollX - drag.startX) / state.cell), 1, MAX_FIELD);
+    const dx = (event.clientX + window.scrollX - drag.startX) / state.cell;
+    const dy = (event.clientY + window.scrollY - drag.startY) / state.cell;
+    const delta = fieldMode === "rhombic" ? diamonds.delta(dx, dy, drag.cols - 1, drag.rows - 1)
+      : {x: Math.round(dx), y: Math.round(dy)};
+    if (drag.edge !== "bottom") state.fieldCols = clamp(drag.cols + delta.x, 1, MAX_FIELD);
     if (drag.edge !== "right") {
-      const rows = clamp(drag.rows + Math.round((event.clientY + window.scrollY - drag.startY) / state.cell), 1, MAX_FIELD_ROWS);
+      const rows = clamp(drag.rows + delta.y, 1, MAX_FIELD_ROWS);
       state.fieldRows = rows;
     }
     state.autoSize = drag.autoSize && state.fieldCols === drag.cols && state.fieldRows === drag.rows;
