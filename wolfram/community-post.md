@@ -1,6 +1,6 @@
 # Sequential XOR patterns in Zerkalius: a moving-cone pendulum and two Animatrix rules
 
-Draft v0.003 for Wolfram Community · 20 November 2026. Prepared for author review; not submitted to the forum. User-selected project figures are reused unchanged; the point-axis GIF is a format conversion of the complete existing MP4. The implementation is JavaScript; the mathematical connection to NKS is the subject of this discussion.
+Draft v0.004 for Wolfram Community · 20 November 2026. Prepared for author review; not submitted to the forum. User-selected project figures are reused unchanged; the point-axis GIF is a format conversion of the complete existing MP4. The implementation is JavaScript; the mathematical connection to NKS is the subject of this discussion.
 
 ---
 
@@ -73,7 +73,9 @@ The application also explores extended apex schedules. The following two author-
 
 *Recording B: 23 recorded images, 10.08 seconds. The associated saved states are at model steps 21 and 136 respectively; these are not two recordings of an otherwise identical experiment at the same step. In this skip-zero mode, the shared-apex switch is inactive. The GIFs therefore do not establish an effect of that switch. Their playback loops do not establish a period of the model.*
 
-**Geometry and colouring as tools for inspecting the field**
+**The Meeting Point, axes, and colouring**
+
+Another focus is the **Meeting Point (Точка Встречи)**, where the diagonal guides meet. It provides a geometric reference for inspecting the field and selecting regions for colouring. The point-based tools select sources along the meeting column, or along two diagonals when the meeting falls between cells. The point-axis mode then propagates colour downward and toward the axis through the selected bit regions. This lets us follow connected forms within the larger symmetric pattern.
 
 ![Automatic axes between triangular zero regions](https://1001100.online/issledovanie/mayatnik-auto-axes-map.png)
 
@@ -83,11 +85,18 @@ The application also explores extended apex schedules. The following two author-
 
 *Point-axis colouring, converted from the author's complete 43.8-second recording: 73 frames, 640 × 318, no audio. The colour propagation follows selected bit regions downward and toward an axis. This is a visualization mode, not another Animatrix recurrence. [Original MP4 at 1028 × 512](https://1001100.online/rezultaty/mayatnik-tochka-os-1.mp4).*
 
-I would be interested in references or comments on three questions:
+**Zooming out: other symmetric pictures within the same frame**
+
+Reducing the display scale reveals other symmetric pictures and motifs in the same recorded field. I use this as an exploratory tool: a pattern seen cell by cell can acquire a different visual organization when shown at a smaller scale. The underlying bit frame is retained, while the displayed result depends on the scale and pixel-sampling method. For a reproducible comparison, the frame, scale factor, and rendering method all need to be recorded. An existing [one-frame scale study with image examples](https://1001100.online/issledovanie/Zerkalius-issledovanie.html#scale-one-frame) documents this aspect of the project.
+
+Together, the Meeting Point, colouring, templates such as **XORoXORиус**, and scale changes provide several ways to explore the geometry produced by the rules.
+
+I would be interested in references or comments on four questions:
 
 - Is the diagonal sweep above studied under an established name or an equivalent coordinate representation?
 - Are there known systems matching the moving-cone update, persistent target values, and alternating apex schedule together?
 - For the mixed-symbol Code rule, is there a known framework for analysing the transient before a column reaches its single-symbol phase?
+- What methods would help distinguish symmetries of the binary field from symmetric motifs produced by viewing that field at reduced resolution?
 
 The goal is to identify the closest existing mathematics and make the comparison precise. **Failure to find an exact match is not a claim of novelty.**
 

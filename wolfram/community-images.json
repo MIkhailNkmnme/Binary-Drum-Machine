@@ -1,5 +1,5 @@
 {
-  "version": "0.003",
+  "version": "0.004",
   "date": "2026-11-20",
   "task": "АНМ-002",
   "status": "draft with user-selected media; not submitted to forum",
@@ -157,18 +157,23 @@
       "sha256Matches": true
     }
   ],
-  "newGifDelivery": "Pending GitHub Pages publication",
-  "newTemplateDelivery": "Pending GitHub Pages publication",
+  "newGifDelivery": "HTTP 200, SHA256 matches",
+  "newTemplateDelivery": "HTTP 200, SHA256 matches",
   "newMediaDelivery": [
     {
       "path": "wolfram/community-assets/templates-author.png",
-      "error": "HTTP Error 503: Service Unavailable",
-      "sha256Matches": false
+      "status": 200,
+      "sha256Matches": true
     },
     {
       "path": "wolfram/community-assets/tochka-os-1.gif",
-      "error": "HTTP Error 503: Service Unavailable",
-      "sha256Matches": false
+      "status": 200,
+      "sha256Matches": true
     }
-  ]
+  ],
+  "editorialAdditions": {
+    "meetingPoint": "Meeting of diagonal guides; reference for point and point-axis colouring.",
+    "scale": "Author observation: reducing display scale reveals other symmetric pictures. Fixed bit frame; record scale and sampling method.",
+    "scaleStudy": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html#scale-one-frame"
+  }
 }
