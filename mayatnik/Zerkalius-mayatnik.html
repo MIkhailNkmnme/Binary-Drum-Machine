@@ -1,3 +1,4 @@
+<!-- МАЯ-699 · v1.050. Цвета шаблона и сохранение поля в зоне самоналожения при повороте. Проверки пользователем. -->
 <!-- МАЯ-698 · v1.049. Ширина по оси при запуске, отдельный счётчик совпадений. Проверки пользователем. -->
 <!-- МАЯ-696 · v1.047. Ручной сдвиг при «Верхе», возврат колесом, размеры выключены в ссылках. Проверки пользователем. -->
 <!-- МАЯ-695 · v1.046. Круглые палитры Воды и Снега. Проверки пользователем. -->
@@ -81,7 +82,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.049</title>
+<title>Zerkalius Маятнкъ — v1.050</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -233,7 +234,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.049</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.050</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -5530,24 +5531,68 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     templateBaseline.recordHistory(entry,fillKey,fillMask,paintBits,!!entry.templateOwned);
   }
   function templateVacateSource(item,prepared){
-    if(!f||!img||item.sourceVacated||item.sourceKind==='library'||item.sourceKind==='copy'||!item.sourcePreserving&&item.sourceKind!=='field')return false;
+    if(!f||!img||item.sourceKind==='library'||item.sourceKind==='copy'||!item.sourcePreserving&&item.sourceKind!=='field')return false;
     const key=templateMatchKey(),old=templateMatchLayer?.key===key?templateMatchLayer:null;
-    const original=templateBaseline.original(item.id),sources=new Set(),cells=new Map(),fieldBits=parityValues();
-    for(const part of original?.parts||prepared){const origin=part.sourceOrigin,key=origin?.key||part;if(sources.has(key))continue;sources.add(key);
-      const m=origin?.mask||part.mask,data=origin?.mask.data||part.sourceData||m.data;
-      for(let q=0;q<data.length;q++){if(!data[q])continue;const x=m.x+q%m.width,y=m.y+Math.floor(q/m.width);if(x<0||y<0||x>=img.width||y>=img.height)continue;
-        const cell=fieldCellAt(x,y);if(!cell)continue;
+    const isAntiBit=index=>!!old&&!old.paint[index]&&(old.bits[index]===0||old.bits[index]===1);
+    const receipt=item.sourceVacatedCells instanceof Uint32Array?item.sourceVacatedCells:null;
+    const previous=new Set(receipt?.filter(isAntiBit));
+    const legacy=!receipt&&item.sourceVacated===true;
+    const original=templateBaseline.original(item.id),sources=new Set(),cells=new Map(),covered=new Set(),fieldBits=parityValues();
+    const layer=window.mayLayers?.get('template:'+item.id),factor=RK/scale();
+    const dx=(layer?.x||0)*factor,dy=(layer?.y||0)*factor,bottom=dy+dispH()*RK;
+    const current=item.parts.map(part=>{
+      const rect=templateRect(part,false,item),left=part.ox*RK+dx;
+      return {mask:part.mask,rect:{...rect,x:rect.x+dx,y:rect.y+dy},left,right:left+templatePartWidth(part)*RK};
+    });
+    for(const part of original?.parts||prepared){
+      const origin=part.sourceOrigin,source=origin?.key||part;
+      if(sources.has(source))continue;
+      sources.add(source);
+      const mask=origin?.mask||part.mask,data=origin?.mask.data||part.sourceData||mask.data;
+      for(let q=0;q<data.length;q++){
+        if(!data[q])continue;
+        const x=mask.x+q%mask.width,y=mask.y+Math.floor(q/mask.width);
+        if(x<0||y<0||x>=img.width||y>=img.height)continue;
+        const cell=fieldCellAt(x,y);
+        if(!cell)continue;
         const index=cell.r*f.W+cell.c;
-        if(cells.has(index)||fieldBits[index]<0||(old?.bits[index]??2)!==2)continue;
+        if(fieldBits[index]<0)continue;
+        const px=x+.5,py=y+.5;
+        // Even a partial overlap keeps the original logical cell intact.
+        if(!covered.has(index)&&py>=dy&&py<bottom&&current.some(p=>px>=p.left&&px<p.right&&MayatnikTemplate.contains(p.mask,p.rect,px,py)))covered.add(index);
+        if(cells.has(index)||previous.has(index))continue;
+        // v1.048 saved these anti-bits without an ownership list.
+        if(legacy&&isAntiBit(index)){previous.add(index);continue;}
+        if((old?.bits[index]??2)!==2||old?.paint[index])continue;
         const bit=rasterBit(x,y);
         if(bit===0||bit===1)cells.set(index,storedBit(1-bit));
       }
     }
-    if(!cells.size)return false;
-    const N=f.val.length,paint=old?old.paint.slice():new Uint32Array(N),bits=old?old.bits.slice():new Uint8Array(N).fill(2),indices=new Set(old?.indices||[]);
-    // A bit without fixed paint follows the palette on every redraw.
-    for(const [q,bit] of cells){paint[q]=0;bits[q]=bit;indices.add(q);}
-    templateMatchLayer={key,paint,bits,indices:Uint32Array.from(indices)};templateMatchCache=null;item.sourceVacated=true;return true;
+    const changes=new Map();
+    for(const index of covered)if(previous.delete(index))changes.set(index,2);
+    for(const [index,bit] of cells)if(!covered.has(index)){previous.add(index);changes.set(index,bit);}
+    const changed=changes.size>0;
+    if(changed){
+      const indices=new Set(old?.indices||[]);
+      for(const [index,bit] of changes){
+        if(bit===2)indices.delete(index);
+        else indices.add(index);
+      }
+      let next=null;
+      if(indices.size){
+        const length=f.val.length,paint=old?.paint||new Uint32Array(length);
+        const bits=old?old.bits.slice():new Uint8Array(length).fill(2);
+        for(const [index,bit] of changes)bits[index]=bit;
+        next={key,paint,bits,indices:Uint32Array.from(indices)};
+      }
+      templateMatchLayer=next;
+      templateMatchCache=null;
+    }
+    if(changed||legacy||receipt&&previous.size!==receipt.length){
+      item.sourceVacated=previous.size>0;
+      item.sourceVacatedCells=Uint32Array.from(previous);
+    }
+    return changed;
   }
   function templateBaselineCleanHistory(entries,items){
     const active=items.some(t=>t.id===colourTemplate?.id)?colourTemplate.id:items[0]?.id;
@@ -5696,15 +5741,21 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     for(const item of templateItems){if(!item.view.visible||window.mayTemplateTransient?.hidden(item)||onlyItem&&item!==onlyItem)continue;ctx.save();ctx.globalAlpha=layerAlpha??(layerMode==='content'?1:item.view.alpha/100);ctx.imageSmoothingEnabled=false;
     if(layerMode==='outline'&&window.mayLayers){const v=window.mayLayers.get('template:'+item.id);if(v){ctx.translate(v.x,v.y);if(!v.visible){ctx.restore();continue;}}}
     for(const part of item.parts){const r=templateRect(part,false,item);ctx.save();ctx.beginPath();ctx.rect(x0+part.ox*s,y0,templatePartWidth(part)*s,dispH()*s);ctx.clip();
-      const tint=templatePaintCanvas(part,item),own=part.bitsData?(tint||part.bitCanvas||(part.bitCanvas=templateBitCanvas(part))):null;   // v0.106: свои биты — непрозрачно, как вид «Биты»
-      if(layerMode!=='outline'){
-      if(own){ctx.save();ctx.globalAlpha=layerAlpha??1;ctx.drawImage(own,x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s);ctx.restore();}
-      else if(item===colourTemplate||layerMode==='content')ctx.drawImage(tint||part.canvas,x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s); }   // v0.490: слой каждой фигуры не зависит от выбора в меню
+      if(layerMode!=='outline'&&(part.bitsData||item===colourTemplate||layerMode==='content')){
+        if(part.bitsData)ctx.globalAlpha=layerAlpha??1;
+        ctx.drawImage(templateDisplayCanvas(part,item,true),x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s);
+      }
       if(contentOnly||!templatePickedIds.has(item.id)){ctx.restore();continue;}   // Контур относится только к текущему выделению, а не к оставленным на поле фигурам.
       // Два экранных пикселя: толщина выделения не зависит от масштаба шаблона.
       const edges=part.edges||(part.edges=MayatnikTemplate.edges(part.mask)),sx=r.width/part.mask.width/RK*s,sy=r.height/part.mask.height/RK*s,dx=x0+r.x/RK*s,dy=y0+r.y/RK*s;
       ctx.beginPath();for(let i=0;i<edges.length;i+=4){ctx.moveTo(dx+edges[i]*sx,dy+edges[i+1]*sy);ctx.lineTo(dx+edges[i+2]*sx,dy+edges[i+3]*sy);}ctx.globalAlpha=1;ctx.strokeStyle=item.matchOrientation==='mirror'?'#65d9ff':'#ffe969';ctx.lineWidth=2;ctx.stroke();ctx.restore();}
     ctx.restore();}
+  }
+  function templateDisplayCanvas(part,item,cacheBits=false){
+    const tint=templatePaintCanvas(part,item);
+    // Axis turns move the existing RGBA mask along with its semantic bits.
+    if(tint||part.sourceOrigin||!part.bitsData)return tint||part.canvas;
+    return cacheBits?(part.bitCanvas||=templateBitCanvas(part)):templateBitCanvas(part);
   }
   // v0.106: свои биты фигуры картинкой: 1 — светлый, 0 — серый (как «Биты»), вне фигуры и пусто — прозрачно
   function templateBitCanvas(part){const m=part.mask,c=document.createElement('canvas');c.width=m.width;c.height=m.height;
@@ -6061,7 +6112,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(part.commandPaint?.hex===hex&&part.commandPaint.mask===part.mask&&part.commandPaint.bits===part.bitsData)return part.commandPaint.canvas;
     const m=part.mask,canvas=document.createElement('canvas');canvas.width=m.width;canvas.height=m.height;
     const ctx=canvas.getContext('2d'),image=ctx.createImageData(m.width,m.height),pixels=new Uint32Array(image.data.buffer),colour=rgba([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)));
-    for(let q=0;q<pixels.length;q++)if(m.data[q]&&(!part.bitsData||part.bitsData[q]>=0))pixels[q]=colour;
+    for(let q=0;q<pixels.length;q++)if(m.data[q]&&(part.sourceOrigin||!part.bitsData||part.bitsData[q]>=0))pixels[q]=colour;
     ctx.putImageData(image,0,0);part.commandPaint={hex,canvas,mask:m,bits:part.bitsData};return canvas;
   }
   function templatePaintToggle(){
@@ -6164,7 +6215,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(!f||!img||rowBuild)return null;
     rememberTemplate();
     return {schema:2,templatePaint:templatePaintLayer,manualPattern:manualPaintSnapshot(),paintRepeat:paintRepeatSeed,columns:colReplaySnapshot(),colourAuto:Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])),st:structuredClone(st),library:structuredClone(templateLibrary),libraryHidden:[...removedTemplateIds],mirrors:{live:mirrorLive,xor:mirrorXor,base:mirrorLive&&mirrorBase?{paint:mirrorBase.paint?.slice()||null,bits:mirrorBase.bits?.slice()||null}:null},k,edgeJumps,edgeLaps,field:f.val.slice(),edgeFlowMark:edgeFlowOn()?edgeMark?.slice()||null:null,width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,face:faceLayer,colour:$('fillColour').value,
-      templateMatches:templateMatchLayer,activeTemplate:colourTemplate?.id,pickedTemplates:[...templatePickedIds],templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,libraryId:t.libraryId,matchOrientation:t.matchOrientation,sourcePreserving:t.sourcePreserving,sourceKind:t.sourceKind,sourceVacated:t.sourceVacated,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,templateAxes:t.templateAxes,parts:t.parts.map(p=>({mask:p.mask,sourceData:p.sourceData,bitsData:p.bitsData,librarySource:p.librarySource,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry,sourceOrigin:p.sourceOrigin,sourceIndices:p.sourceIndices,axisClipWidth:p.axisClipWidth,axisOriginY:p.axisOriginY,compositionSources:p.compositionSources}))})),
+      templateMatches:templateMatchLayer,activeTemplate:colourTemplate?.id,pickedTemplates:[...templatePickedIds],templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,libraryId:t.libraryId,matchOrientation:t.matchOrientation,sourcePreserving:t.sourcePreserving,sourceKind:t.sourceKind,sourceVacated:t.sourceVacated,sourceVacatedCells:t.sourceVacatedCells,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,templateAxes:t.templateAxes,parts:t.parts.map(p=>({mask:p.mask,sourceData:p.sourceData,bitsData:p.bitsData,librarySource:p.librarySource,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry,sourceOrigin:p.sourceOrigin,sourceIndices:p.sourceIndices,axisClipWidth:p.axisClipWidth,axisOriginY:p.axisOriginY,compositionSources:p.compositionSources}))})),
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }
   function savePaint(){
@@ -6358,7 +6409,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const r=cv.getBoundingClientRect(),s=scale(),rects=[{left:0,top:0,right:dispW(),bottom:dispH()}];
     const layers=[];if(window.mayLayers)for(const meta of window.mayLayers.list()){const e=window.mayLayers._entry(meta.id);if(meta.kind==='template'||meta.kind==='original'||!meta.visible||!meta.opacity||!e.source||e.enabled===false||!e.rect)continue;const dx=e.geometryApplied?0:meta.x,dy=e.geometryApplied?0:meta.y;
       const box={left:(e.rect.left+dx-r.left)/s,top:(e.rect.top+dy-r.top)/s,right:(e.rect.left+dx+e.rect.width-r.left)/s,bottom:(e.rect.top+dy+e.rect.height-r.top)/s};rects.push(box);layers.push({entry:e,meta,box});}
-    for(const item of templateItems){const meta=window.mayLayers?.get('template:'+item.id);if(!item.view.visible||meta?.visible===false)continue;for(const part of item.parts){const q=templateRect(part,false,item),dx=(meta?.x||0)/s,dy=(meta?.y||0)/s,box={left:q.x/RK+dx,top:q.y/RK+dy,right:(q.x+q.width)/RK+dx,bottom:(q.y+q.height)/RK+dy};rects.push(box);layers.push({source:templatePaintCanvas(part,item)||(part.bitsData?templateBitCanvas(part):part.canvas),meta:{opacity:meta?.opacity??item.view.alpha??100,tint:meta?.tint||null},box});}}
+    for(const item of templateItems){const meta=window.mayLayers?.get('template:'+item.id);if(!item.view.visible||meta?.visible===false)continue;for(const part of item.parts){const q=templateRect(part,false,item),dx=(meta?.x||0)/s,dy=(meta?.y||0)/s,box={left:q.x/RK+dx,top:q.y/RK+dy,right:(q.x+q.width)/RK+dx,bottom:(q.y+q.height)/RK+dy};rects.push(box);layers.push({source:templateDisplayCanvas(part,item),meta:{opacity:meta?.opacity??item.view.alpha??100,tint:meta?.tint||null},box});}}
     const left=Math.min(...rects.map(q=>q.left)),top=Math.min(...rects.map(q=>q.top)),right=Math.max(...rects.map(q=>q.right)),bottom=Math.max(...rects.map(q=>q.bottom));
     return {left,top,width:right-left,height:bottom-top,layers};
   }
