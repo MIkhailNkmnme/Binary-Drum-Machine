@@ -1,18 +1,18 @@
-<!-- Bit-Byte v0.035 · Авторазмер поля по шахматкам. -->
+<!-- Bit-Byte v0.036 · Квадратное и ромбическое поля. -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit-Byte v0.035 — Зеркалиус</title>
+  <title>Bit-Byte v0.036 — Зеркалиус</title>
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="style.css?v=034">
+  <link rel="stylesheet" href="style.css?v=036">
   <link rel="stylesheet" href="byte-clicks.css?v=018">
   <link rel="stylesheet" href="number-controls.css?v=029">
   <link rel="stylesheet" href="rgb-controls.css?v=029">
   <link rel="stylesheet" href="rectangular-controls.css?v=029">
 
-  <script defer src="app.js?v=031"></script>
+  <script defer src="app.js?v=036"></script>
   <script defer src="fonts/operator-digits.js?v=017"></script>
   <script defer src="../mayatnik/mayatnik-ochki-method.js?v=bit-byte-024"></script>
   <script defer src="../mayatnik/mayatnik-sequences.js?v=bit-byte-024"></script>
@@ -20,15 +20,15 @@
   <script defer src="../_js/initial-rows.js?v=2"></script>
   <script defer src="diagonal-search.js?v=034"></script>
   <script defer src="diagonals.js?v=024"></script>
-  <script defer src="diamond-grid.js?v=032"></script>
-  <script defer src="chessboards.js?v=035"></script>
+  <script defer src="diamond-grid.js?v=036"></script>
+  <script defer src="chessboards.js?v=036"></script>
   <script defer src="number-controls.js?v=029"></script>
   <script defer src="../_js/hub-link.js?v=7"></script>
 </head>
 <body>
   <main>
     <header class="page-head">
-      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.035</small></h1>
+      <h1>Bit-Byte <small style="font-size:11px;font-weight:normal">v0.036</small></h1>
       <p>В таблицах щелчок исключает или возвращает значение. Во вкладке «Шахматки» поля можно двигать и накладывать.</p>
     </header>
 
@@ -38,6 +38,7 @@
       <button id="tab-dibit" class="gz-hx" role="tab" type="button" aria-selected="false" aria-controls="dibit-editor" data-mode="dibit" tabindex="-1" title="Четверть байта — 2 бита; техническое название: дибит"><span class="gz-ic" aria-hidden="true">2</span><span class="gz-nm">Четвертьбайт</span></button>
       <button id="tab-bit" class="gz-hx" role="tab" type="button" aria-selected="false" aria-controls="bit-editor" data-mode="bit" tabindex="-1" title="Бит — одно двоичное значение: 0 или 1; одна восьмая байта"><span class="gz-ic" aria-hidden="true">1</span><span class="gz-nm">Бит</span></button>
       <button id="tab-boards" class="gz-hx" role="tab" type="button" aria-selected="false" aria-controls="boards-editor" data-mode="boards" tabindex="-1" title="Несколько шахматок: размеры, положение, цвета и прозрачность"><span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Шахматки</span></button>
+      <button id="tab-rhombic" class="gz-hx" role="tab" type="button" aria-selected="false" aria-controls="boards-editor" data-mode="rhombic" tabindex="-1" title="Отдельное ромбическое поле: 0 и 1 вокруг общего центра, свои кадры и настройки"><span class="gz-ic" aria-hidden="true">◆</span><span class="gz-nm">Ромбо</span></button>
     </div>
     <section id="byte-editor" class="editor-panel" data-unit="byte" role="tabpanel" aria-labelledby="tab-byte"></section>
     <section id="nibble-editor" class="editor-panel" data-unit="nibble" role="tabpanel" aria-labelledby="tab-nibble" hidden></section>
@@ -46,12 +47,11 @@
     <section id="boards-editor" class="editor-panel" data-unit="boards" role="tabpanel" aria-labelledby="tab-boards" hidden>
       <div class="chess-workspace">
         <aside class="panel chess-controls" aria-label="Управление шахматками">
-          <h2>Шахматки <small id="chess-editing-frame"></small></h2>
+          <h2><span id="chess-editor-title">Шахматки</span> <small id="chess-editing-frame"></small></h2>
           <div id="chess-list" class="chess-swatches" role="group" aria-label="Выбор шахматок по цвету обводки" title="Слои от нижнего к верхнему. Shift+щелчок добавляет или убирает шахматку из выделения; Ctrl+щелчок также доступен. Delete удаляет выделенные шахматки."></div>
           <p id="chess-selection-info" class="hint" role="status"></p>
           <div class="commands">
             <button id="chess-add" class="gz-hx" type="button" title="Добавить шахматку"><span class="gz-ic" aria-hidden="true">+</span><span class="gz-nm">Добавить</span></button>
-            <button id="chess-add-rhombus" class="gz-hx" type="button" aria-label="Добавить ромбическую сетку" title="Добавить ромбическую сетку: три заполненных ромба чередуются с тремя пустыми у общей вершины"><span class="gz-ic" aria-hidden="true">◆</span><span class="gz-nm">Ромбо</span></button>
             <button id="chess-add-diagonal" class="gz-hx" type="button" aria-label="Новая шахматка вниз-вправо, на одну строку и столбец больше" title="Новая шахматка от нижнего правого угла выбранной, на одну строку и столбец больше"><span class="gz-ic" aria-hidden="true">↘</span><span class="gz-nm">+1×1</span></button>
             <button id="chess-remove" class="gz-hx" type="button" title="Удалить выбранную шахматку"><span class="gz-ic" aria-hidden="true">−</span><span class="gz-nm">Удалить</span></button>
             <button id="chess-undo" class="gz-hx" type="button" title="Отменить последнее изменение шахматок"><span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Отмена</span></button>
@@ -69,7 +69,7 @@
             </div>
           </fieldset>
           <button id="chess-digits" class="gz-hx" type="button" aria-pressed="false" title="Показать или скрыть цифры 0 и 1 в клетках всех шахматок"><span class="gz-ic" aria-hidden="true">01</span><span class="gz-nm">Цифры</span></button>
-          <div class="commands" role="group" aria-label="Логика наложения">
+          <div id="chess-logic-controls" class="commands" role="group" aria-label="Логика наложения">
             <button class="gz-hx" type="button" data-chess-logic="xor" aria-pressed="false" title="XOR по всем видимым шахматкам"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">XOR все</span></button>
             <button class="gz-hx" type="button" data-chess-logic="xor-rgb" aria-pressed="false" title="XOR отдельно для шахматок с одинаковыми цветами 0 и 1"><span class="gz-ic" aria-hidden="true">⊕</span><span class="gz-nm">XOR RGB</span></button>
             <button class="gz-hx" type="button" data-chess-logic="and" aria-pressed="false" title="AND по всем видимым шахматкам"><span class="gz-ic" aria-hidden="true">∧</span><span class="gz-nm">AND все</span></button>
@@ -113,7 +113,8 @@
           </fieldset>
         </aside>
         <section class="panel chess-scene-panel" aria-label="Поле шахматок">
-          <h2>Поле шахматок</h2>
+          <h2 id="chess-field-title">Поле шахматок</h2>
+          <p id="chess-field-note" class="hint" hidden>Ромбическая сетка: три нуля и три единицы чередуются вокруг общего центра — две встречные тройки лучей шестиконечной звезды.</p>
           <p class="hint">Тяните середину для переноса одной шахматки, край или угол для изменения размера. Shift+щелчок меняет состав выделения на поле или в списке; Ctrl+щелчок также доступен. Shift+перетаскивание переносит выделение, Ctrl+перетаскивание создаёт и переносит копии. Delete удаляет выделенные шахматки. Меньшая площадь всегда выше большей.</p>
           <div id="chess-timeline" class="commands chess-timeline" role="group" aria-label="Кадры шахматок">
             <label for="chess-frame">Кадр <select id="chess-frame"></select></label>
