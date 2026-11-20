@@ -1,4 +1,4 @@
-<!-- МАЯ-689 · v1.040. Точное отражение света от прямых граней. Проверки пользователем. -->
+<!-- МАЯ-690 · v1.041. Потоки по битовой сетке с учётом масштаба. Проверки пользователем. -->
 <!-- ВЛФ-009 · v1.035: Вольфрам — три верхних бита выбирают цвет клетки, без изменения поля. Проверки пользователем. -->
 <!-- ИСС-117 · v1.034: видимый YouTube-плеер KOBTRAX, отдельный от транспорта поля. Проверки пользователем. -->
 <!-- АУДИТ-002 · v1.032: восстановлена загрузка скрипта групп шаблонов. -->
@@ -78,7 +78,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятнкъ — v1.040</title>
+<title>Zerkalius Маятнкъ — v1.041</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -720,8 +720,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-phone-robot.js?v=1033"></script>
 <script src="mayatnik-phone-music.js?v=1033"></script>
 <script src="mayatnik-phone-host.js?v=1033"></script>
-<script src="../_js/hub-flow-core.js?v=1040"></script>
-<script src="mayatnik-flow.js?v=1037"></script>
+<script src="../_js/hub-flow-core.js?v=1041"></script>
+<script src="mayatnik-flow.js?v=1041"></script>
 <link rel="stylesheet" href="mayatnik-layers.css?v=517">
 <script>
 (() => {
@@ -13324,6 +13324,27 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const end=viewRotation.logicalPoint({x:a.x+length*Math.cos(m.ang),y:a.y+length*Math.sin(m.ang)}),start=viewRotation.logicalPoint(a);
     return {x:end.x,y:end.y,dx:(start.x-end.x)/length,dy:(start.y-end.y)/length};
   }
+  // Grid centres are logical bits, never the RK subpixels used to rasterise diamonds.
+  function flowGrid(r,clip,s){
+    const width=dispW(),half=staggeredOn()&&!(staggeredLayout().stride===1&&staggeredBlocksOn());
+    const offset=rombP()===4?1:.5,unit=half ? .5 : 1,step=unit*s;
+    const count=rombP()===4?Math.max(0,width-2):half?Math.max(0,Math.round(2*width)-1):Math.floor(width);
+    const rotated=viewRotation.enabled,pivot=viewRotation.center;
+    const left=rotated?2*pivot.x-clip.right:clip.left,right=rotated?2*pivot.x-clip.left:clip.right;
+    const origin=r.left+offset*s,lo=(left-origin)/step,hi=(right-origin)/step;
+    // A physical [left,right) viewport becomes a logical (left,right] interval at180°.
+    const first=Math.max(0,rotated?Math.floor(lo)+1:Math.ceil(lo)),last=Math.min(count-1,rotated?Math.floor(hi):Math.ceil(hi)-1);
+    if(!Number.isFinite(step)||step<=0)return {reason:'ожидание масштаба сетки'};
+    if(last-first+1>4096)return {reason:'По сетке: увеличьте масштаб, чтобы было видно не более 4096 столбцов'};
+    const xs=[];
+    for(let i=first;i<=last;i++){
+      const u=offset+i*unit;
+      if((!joinedOn()&&rombP()===2||joinedDiamond()&&st.view==='romb2')&&u>=VW&&u<VW+RG)continue;
+      const x=origin+i*step;xs.push(rotated?2*pivot.x-x:x);
+    }
+    xs.sort((a,b)=>a-b);
+    return {xs,step,key:[r.left,r.top,r.width,r.height,clip.left,clip.top,clip.right,clip.bottom,step,offset,count,rotated,pivot.x,pivot.y,rombP(),RG].join('|')};
+  }
   function flowCapture(){
     const reason=message=>({reason:message});
     if(!f||!geo)return reason('сначала постройте поле');
@@ -13378,7 +13399,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
           clipLeft:r.left+part.ox*s+dx,clipRight:r.left+(part.ox+templatePartWidth(part))*s+dx,clipTop:r.top+dy,clipBottom:r.top+dispH()*s+dy});
       }
     }
-    return {clip,typeAt(x,y){
+    return {clip,grid:()=>flowGrid(r,clip,s),typeAt(x,y){
       if(rotated){x=2*pivot.x-x;y=2*pivot.y-y;}
       let type=baseVisible?read(x,y):0;
       if(mirror){const dx=x-ax,dy=y-ay;type|=read(ax+c2*dx+s2*dy,ay+s2*dx-c2*dy,true);}

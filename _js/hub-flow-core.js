@@ -80,10 +80,12 @@
       const len=Math.hypot(nx,ny);if(len<1e-7)return [-vx,-vy];
       nx/=len;ny/=len;if(nx*vx+ny*vy>0){nx=-nx;ny=-ny;}return [nx,ny];
     }
-    topBeams(y0=0){
+    topBeams(y0=0,sources=null){
       const beams=[],distance=12*Math.hypot(this.width,this.height);
-      for(let x=0;x<this.width;x++){
-        const pending=[{ray:{x:x+.5,y:y0,vx:0,vy:1,bounces:0},remaining:distance,start:0}];
+      const count=sources?sources.length:this.width;
+      for(let i=0;i<count;i++){
+        const x=sources?sources[i]:i+.5;
+        const pending=[{ray:{x,y:y0,vx:0,vy:1,bounces:0},remaining:distance,start:0}];
         for(let n=0;n<pending.length&&n<32;n++){
           const current=pending[n],forks=[],path=this.advanceRay(current.ray,current.remaining,forks);let travelled=current.start;
           for(let i=1;i<path.length;i++){
