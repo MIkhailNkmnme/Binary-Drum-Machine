@@ -9,12 +9,13 @@
   const speechField=$('speech-text');
   const speechHighlight=$('text-cursor');
   const DEFAULT_SPEECH=speechField.value;
+  const PLAIN_RUSSIAN_EXAMPLE=DEFAULT_SPEECH.split('\n',1)[0].replace(/\u0301/g,'');
   const engineTabs=[...$('engine-tabs').querySelectorAll('[data-engine]')];
   const topicTabs=[...$('voice-tabs').querySelectorAll('[role="tab"]')];
   const enginePages={};
   const SPEECH_EXAMPLES={ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
   const PREVIOUS_EXAMPLES={en:['Hello! 0 1 2 3.'],ru:['Привет, Зеркалиус! 0 1 2 3.','0123456789 Текст для проверки голоса. Утром 0 юный фотограф 1 Фёдор поднялся на холм, где 2 жёлтый фургон стоял у въезда. Рыжий ёж 3 шуршал в траве, а маленький щенок 4 прыгал через лужи. В центре двора 5 музыкант объяснял, как звучат флейта, цимбалы и бубен. Затем 6 Юлия и Яков съели хлеб, выпили чай и ещё раз произнесли фразу. Эхо 7 отвечало из чащи: «Здравствуй, мир!» Вечером 8 экскурсовод проверил объём ящика, а 9 белый конь спокойно ждал у двери.'],de:['Ich heiße Zerkalius. Schön! 0 1 2 3.']};
-  const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
+  const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]||(language==='ru'&&text===PLAIN_RUSSIAN_EXAMPLE)||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
   const state={engineId:R.defaultId||'robot',profiles:{},library:[],languages:[],silent:false,kind:'sound',compareMode:'profiles',legacyDraft:null,speechText:DEFAULT_SPEECH,speechLanguage:'ru',speechProsody:{...VoiceProsody.defaults},speechCaret:0};
   for(const item of R.list){const e=R.get(item.id);state.profiles[item.id]={settings:{...e.defaults},phones:{},userPhones:{}};}
   let E=R.get(state.engineId),worker=null,jobId=0,epoch=0,revision=0,importTicket=0;
@@ -22,7 +23,7 @@
   let activeTopic='tab-text',compactTabs=new Set();
   let candidates=[],comparisons=[],paused=false,sequencePlaying=false,hold=null;
   let robotManifest=null,alphabetManifest=null,originalError='';
-  let textCache=null,textFrame=0,textBusy=false,textPlaying=false,textMarked=-1,textSpans=[];
+  let textCache=null,textRun=null,textFrame=0,textBusy=false,textMarked=-1,textSpans=[];
   const nodes=new Map(),choices=new Map(),frames=[];
   const profile=()=>state.profiles[state.engineId],label=id=>R.list.find(x=>x.id===id)?.label||id;
   const status=text=>{$('status').textContent=text;},active=t=>t===epoch;
@@ -205,7 +206,7 @@
   function showSpeechPosition(){
     const at=$('text-position');
     if(!textSpans.length){at.textContent='';return;}
-    if(textMarked>=0){at.textContent='Звучит символ '+(textMarked+1)+' / '+textSpans.length;return;}
+    if(textMarked>=0){at.textContent=(textRun?.node?'Звучит символ ':'Пауза на символе ')+(textMarked+1)+' / '+textSpans.length;return;}
     at.textContent=state.speechCaret===speechField.value.length?'Курсор в конце · пуск с начала':'Пуск с символа '+(speechCharacterIndex()+1)+' / '+textSpans.length;
   }
   function rememberSpeechCaret(persist=true){
@@ -218,6 +219,18 @@
   function restoreSpeechCaret(position){
     state.speechCaret=Number.isInteger(position)?Math.max(0,Math.min(position,speechField.value.length)):0;
     speechField.setSelectionRange(state.speechCaret,state.speechCaret);
+  }
+  function accentedExampleCaret(position){
+    if(!Number.isInteger(position))return 0;
+    let offset=0;
+    for(const char of DEFAULT_SPEECH){
+      if(char!=='\u0301'){
+        if(position<=0)break;
+        position-=char.length;
+      }
+      offset+=char.length;
+    }
+    return offset;
   }
   function syncSpeechHighlightScroll(){
     speechHighlight.scrollTop=speechField.scrollTop;
@@ -251,17 +264,27 @@
     syncSpeechHighlight();
     showSpeechPosition();
   }
-  function textButton(on){
-    const command=$('text-play'),wasActive=command.getAttribute('aria-pressed')==='true';
-    if(wasActive&&!on&&command.matches(':hover'))command.classList.add('quiet-hover');
-    caption('text-play',on?'Стоп':'Плей');
-    command.setAttribute('aria-pressed',String(on));
-    command.title=on?'Остановить расчёт или повтор текста':'Начать чтение с курсора и повторять до остановки';
+  function textButton(){
+    const command=$('text-play'),playing=Boolean(textRun?.node);
+    if(command.dataset.playing==='true'&&!playing&&command.matches(':hover'))command.classList.add('quiet-hover');
+    caption('text-play',playing?'Пауза':'Плей');
+    command.dataset.playing=String(playing);
+    command.setAttribute('aria-disabled',String(textBusy));
+    command.title=playing?'Пауза · приостановить чтение':textBusy?'Плей · подготовка звука':textRun?'Плей · продолжить с места паузы':'Плей · начать чтение с курсора';
     command.setAttribute('aria-label',command.title);
-    commandIcon(command,on?'square':'play');
+    commandIcon(command,playing?'pause':'play');
+  }
+  function cancelTextFrame(){
+    if(textFrame)cancelAnimationFrame(textFrame);
+    textFrame=0;
   }
   function stopTextUI(){
-    if(textFrame){cancelAnimationFrame(textFrame);textFrame=0;}if(textBusy||textPlaying)$('text-status').textContent='Текст остановлен.';textBusy=false;textPlaying=false;markText(-1);textButton(false);
+    cancelTextFrame();
+    if(textBusy||textRun)$('text-status').textContent='Текст остановлен.';
+    textBusy=false;
+    textRun=null;
+    markText(-1);
+    textButton();
   }
   function showProsodyTrace(trace,duration=null,parts=0){
     const p=trace.config,sources={manual:'вручную',yo:'ё',dict:'открытый словарь',unknown:'неизвестно, нейтрально',catalog:'каталожная цифра','en-dictionary':'EN · словарь произношения','en-rules':'EN · приближённые правила'},contours={auto:'по знакам препинания',flat:'без добавочного контура',question:'вопрос',statement:'утверждение'};
@@ -288,28 +311,71 @@
     const cache={key,text,language,timeline,trace:plan.prosody,passport,result:{samples,sampleRate:plan.rate,duration:offset/plan.rate,engineId,engineVersion:actual.engineVersion,settings:clone(actual.settings),phones:clone(actual.phones),seed:actual.seed}};
     if(!active(ticket))return null;textCache=cache;$('text-wav').disabled=false;$('text-json').disabled=false;showProsodyTrace(plan.prosody,cache.result.duration,parts.length);return cache;
   }
+  function runningTextSample(run){
+    const elapsed=Math.max(0,context.currentTime-run.startedAt);
+    return (run.offset+Math.floor(elapsed*run.buffer.sampleRate))%run.buffer.length;
+  }
+  function markTextSample(run,sample){
+    const mark=run.cache.timeline.find(entry=>sample>=entry.start&&sample<entry.end);
+    markText(mark?.index??-1);
+  }
+  function pauseText(run){
+    run.offset=runningTextSample(run);
+    run.node=null;
+    cancelTextFrame();
+    retireSource();
+    markTextSample(run,run.offset);
+    showSpeechPosition();
+    textButton();
+    $('text-status').textContent='Пауза. «Плей» продолжит с того же места.';
+  }
+  function startTextRun(run,ticket){
+    const node=context.createBufferSource();
+    node.buffer=run.buffer;
+    node.loop=true;
+    node.connect(context.destination);
+    source=run.node=node;
+    run.startedAt=context.currentTime+.03;
+    node.start(run.startedAt,run.offset/run.buffer.sampleRate);
+    textBusy=false;
+    textButton();
+    showSpeechPosition();
+    const {result,passport}=run.cache;
+    $('text-status').textContent='Повтор текста · '+(passport.controls.mode==='speech'?'Речь':'Исходно')+' · '+label(result.engineId)+' · '+result.duration.toFixed(2)+' с на круг · seed '+result.seed+'.';
+    const tick=()=>{
+      textFrame=0;
+      if(!active(ticket)||source!==node)return;
+      if(context.currentTime>=run.startedAt)markTextSample(run,runningTextSample(run));
+      textFrame=requestAnimationFrame(tick);
+    };
+    textFrame=requestAnimationFrame(tick);
+  }
   async function playText(){
-    if(textBusy||textPlaying){begin();$('text-status').textContent='Текст остановлен.';return;}
-    rememberSpeechCaret();
-    // The field uses UTF-16 offsets. The playback timeline uses Unicode character indices.
-    const caretIndex=speechCharacterIndex();
-    const ticket=begin();textBusy=true;textButton(true);drawTextCursor();
+    if(textBusy)return;
+    const heldRun=textRun;
+    if(heldRun?.node){pauseText(heldRun);return;}
+    const ticket=heldRun?epoch:begin();
+    textBusy=true;
+    textButton();
     try{
+      if(heldRun){
+        await unlock();
+        if(active(ticket))startTextRun(heldRun,ticket);
+        return;
+      }
+      rememberSpeechCaret();
+      // The field uses UTF-16 offsets. The playback timeline uses Unicode character indices.
+      const caretIndex=speechCharacterIndex();
+      drawTextCursor();
       // Plan before opening the audio device: silent signs and invalid text
       // never create an AudioContext, a zero-length buffer or a repeat task.
       readControls();const preflight=VoiceText.plan({text:$('speech-text').value,language:$('speech-language').value,catalog:[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],engine:E,settings:profile().settings,phones:profile().phones,prosody:readSpeechProsody()});showProsodyTrace(preflight.prosody);
       await unlock();if(!active(ticket))return;const cache=await prepareText(ticket);if(!cache||!active(ticket))return;
-      const result=cache.result,buffer=context.createBuffer(1,result.samples.length,result.sampleRate);buffer.copyToChannel(result.samples,0);retireSource();
-      const node=context.createBufferSource();node.buffer=buffer;node.loop=true;node.connect(context.destination);source=node;
+      const result=cache.result,buffer=context.createBuffer(1,result.samples.length,result.sampleRate);
+      buffer.copyToChannel(result.samples,0);
       const firstSample=cache.timeline.find(mark=>mark.index>=caretIndex&&mark.end>mark.start)?.start??0;
-      const start=context.currentTime+.03;node.start(start,firstSample/result.sampleRate);textBusy=false;textPlaying=true;textButton(true);
-      $('text-status').textContent='Повтор текста · '+(cache.passport.controls.mode==='speech'?'Речь':'Исходно')+' · '+label(result.engineId)+' · '+result.duration.toFixed(2)+' с на круг · seed '+result.seed+'. Нажмите «Стоп», чтобы закончить.';
-      const tick=()=>{
-        textFrame=0;if(!active(ticket)||!textPlaying||source!==node)return;
-        const elapsed=context.currentTime-start;if(elapsed<0)markText(-1);else{const sample=(firstSample+Math.floor(elapsed*result.sampleRate))%result.samples.length,mark=cache.timeline.find(m=>sample>=m.start&&sample<m.end);markText(mark?.index??-1);}
-        textFrame=requestAnimationFrame(tick);
-      };
-      textFrame=requestAnimationFrame(tick);
+      textRun={buffer,cache,offset:firstSample};
+      startTextRun(textRun,ticket);
     }catch(e){if(active(ticket)){stopTextUI();retireSource();$('text-status').textContent='Текст: '+e.message;}}
   }
   $('text-play').onclick=playText;$('text-stop').onclick=()=>{begin();$('text-status').textContent='Текст остановлен.';};
@@ -322,10 +388,12 @@
     state.speechText=SPEECH_EXAMPLES[state.speechLanguage];
     speechField.value=state.speechText;
     restoreSpeechCaret(0);
+    speechField.scrollTop=0;
+    speechField.scrollLeft=0;
     drawTextCursor();
   }
   $('speech-language').onchange=()=>{const factory=isFactoryText(speechField.value,state.speechLanguage);state.speechLanguage=$('speech-language').value;if(factory)useSpeechExample();invalidate('Язык текстового чтения изменён. Нажмите «Плей».');};
-  $('text-example').onclick=()=>{useSpeechExample();invalidate('Вставлен пример выбранного языка. Нажмите «Плей».');};
+  $('text-example').onclick=()=>{useSpeechExample();invalidate('Исходный пример выбранного языка восстановлен.');$('text-status').textContent='Исходный текст восстановлен.';};
   $('text-wav').onclick=()=>{if(textCache)download('zerkalius-'+textCache.result.engineId+'-text-cycle.wav',wav(textCache.result));};
   $('text-json').onclick=()=>{if(textCache)download('zerkalius-'+textCache.result.engineId+'-text-cycle.json',new Blob([JSON.stringify(textCache.passport,null,2)],{type:'application/json'}));};
   for(const id of ['speech-mode','speech-expression','speech-contour','speech-coherence'])$(id).addEventListener(id==='speech-expression'||id==='speech-coherence'?'input':'change',()=>{
@@ -422,11 +490,12 @@
     state.speechText=currentText?Array.from(savedText).slice(0,VoiceText.maxCharacters).join(''):SPEECH_EXAMPLES[state.speechLanguage];
     speechField.value=state.speechText;
     state.speechText=speechField.value;
-    restoreSpeechCaret(currentText?page.speechCaret:0);
+    const wasPlainRussian=state.speechLanguage==='ru'&&savedText===PLAIN_RUSSIAN_EXAMPLE;
+    restoreSpeechCaret(wasPlainRussian?accentedExampleCaret(page.speechCaret):currentText?page.speechCaret:0);
     $('speech-language').value=state.speechLanguage;
     try{state.speechProsody=VoiceProsody.normalize(page.speechProsody??undefined);}
     catch{state.speechProsody=VoiceProsody.normalize();}
-    syncSpeechProsody();drawTextCursor();textButton(false);
+    syncSpeechProsody();drawTextCursor();textButton();
     $('text-status').textContent='Поставьте курсор в тексте и нажмите «Плей».';
 
     const first=!editor&&VoiceCatalog.find(r=>r.lang==='ru'&&r.kind==='sound');
