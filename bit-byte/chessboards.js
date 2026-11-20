@@ -64,14 +64,14 @@
     };
   }
   function emptyScene() {
-    return { fieldCols: null, fieldRows: 1, autoHeight: true, cell: 24, digits: false, logic: "layers", rgbScope: "one",
+    return { fieldCols: null, fieldRows: 1, autoSize: true, cell: 24, digits: false, logic: "layers", rgbScope: "one",
       selected: null, selectedIds: [], boards: [] };
   }
   function initialState() {
     const second = makeBoard(2, 10, 6);
     second.zeroOpacity = second.oneOpacity = 65;
     const scene = {...emptyScene(), selected: 2, selectedIds: [2], boards: [makeBoard(1), second]};
-    fitFieldHeight(scene);
+    fitFieldSize(scene);
     return scene;
   }
   function normalizeScene(saved) {
@@ -106,14 +106,15 @@
     const scene = {
       fieldCols: saved.fieldCols == null ? null : integer(saved.fieldCols, null, 1, MAX_FIELD),
       fieldRows: saved.fieldRows == null ? null : integer(saved.fieldRows, null, 1, MAX_FIELD_ROWS),
-      autoHeight: saved.autoHeight !== false,
+      // Earlier scenes only fitted height; enable the new two-axis mode once.
+      autoSize: saved.autoSize !== false,
       cell: integer(saved.cell, 24, 1, 64), digits: saved.digits === true, boards,
       logic: logicButtons.some(button => button.dataset.chessLogic === saved.logic) ? saved.logic : "layers",
       rgbScope: saved.rgbScope === "all" ? "all" : "one",
       selected: selectedIds.includes(active) ? active : selectedIds.at(-1) ?? null,
       selectedIds,
     };
-    fitFieldHeight(scene);
+    fitFieldSize(scene);
     return scene;
   }
   function readStored(key) {
@@ -160,7 +161,7 @@
   }
   function remember(before) {
     const undo = frames[frameIndex].undo;
-    fitFieldHeight(state);
+    fitFieldSize(state);
     const after = snapshot();
     if (before !== after) {
       undo.push(before);
@@ -305,11 +306,11 @@
     saveScene();
     return true;
   }
-  function fitFieldHeight(scene) {
-    if (!scene.autoHeight) return;
+  function fitFieldSize(scene) {
+    if (!scene.autoSize) return;
     const visible = scene.boards.filter(board => board.visible);
-    scene.fieldRows = Math.max(0, ...visible.map(board =>
-      board.y + (diamondGrid(board)?.bottom ?? rhombusMask(board)?.bottom ?? board.rows))) + 1;
+    scene.fieldCols = clamp(Math.max(1, ...visible.map(board => board.x + board.cols)), 1, MAX_FIELD);
+    scene.fieldRows = clamp(Math.max(1, ...visible.map(board => board.y + board.rows)), 1, MAX_FIELD_ROWS);
   }
   function logicPaint(hex, opacity) {
     return {hex: hex.toLowerCase(), opacity: opacity / 100, ink: digitInk(hex),
@@ -539,7 +540,7 @@
   }
 
   function renderScene() {
-    fitFieldHeight(state);
+    fitFieldSize(state);
     initializeField();
     const ordered = layers();
     const logic = state.logic !== "layers" && logicContext;
@@ -619,7 +620,7 @@
     for (const [id, key] of [["field-cols", "fieldCols"], ["field-rows", "fieldRows"]]) {
       if (document.activeElement !== byId(id) || drag?.kind === "field") byId(id).value = state[key] ?? "";
     }
-    byId("auto-height").setAttribute("aria-pressed", String(state.autoHeight));
+    byId("auto-size").setAttribute("aria-pressed", String(state.autoSize));
     world.style.setProperty("--chess-cell", state.cell + "px");
     renderLogic();
     renderLayers(ordered);
@@ -889,14 +890,15 @@
     input.addEventListener("change", commit);
     input.addEventListener("blur", commit);
   }
-  bindInput("field-cols", value => { state.fieldCols = integer(value, state.fieldCols, 1, MAX_FIELD); });
-  bindInput("field-rows", value => {
-    const rows = integer(value, state.fieldRows, 1, MAX_FIELD_ROWS);
-    if (rows === state.fieldRows) return;
-    const before = JSON.parse(pendingInput);
-    state.autoHeight = before.autoHeight && rows === before.fieldRows;
-    state.fieldRows = rows;
-  });
+  for (const [id, key, max] of [["field-cols", "fieldCols", MAX_FIELD], ["field-rows", "fieldRows", MAX_FIELD_ROWS]]) {
+    bindInput(id, value => {
+      const size = integer(value, state[key], 1, max);
+      if (size === state[key]) return;
+      const before = JSON.parse(pendingInput);
+      state.autoSize = before.autoSize && size === before[key];
+      state[key] = size;
+    });
+  }
   bindInput("cell", value => { state.cell = integer(value, state.cell, 1, 64); });
   // Всегда считаем от захваченной пропорции, а не от последней округлённой пары.
   function aspectSize(board, driver, target, bounds = {}) {
@@ -940,7 +942,7 @@
     select(Number(swatch.dataset.boardId), event.shiftKey || event.ctrlKey);
   });
   byId("digits").addEventListener("click", () => mutate(() => { state.digits = !state.digits; }));
-  byId("auto-height").addEventListener("click", () => mutate(() => { state.autoHeight = !state.autoHeight; }));
+  byId("auto-size").addEventListener("click", () => mutate(() => { state.autoSize = !state.autoSize; }));
   for (const button of rgbScopeButtons) {
     button.addEventListener("click", () => mutate(() => { state.rgbScope = button.dataset.chessRgbScope; }));
   }
@@ -984,10 +986,10 @@
     state.boards.push(board);
     setSelection([id]);
     const right = board.x + board.cols;
-    if ((source || isDiamondGrid(board)) && state.fieldCols !== null && right >= state.fieldCols) {
+    if (!state.autoSize && (source || isDiamondGrid(board)) && state.fieldCols !== null && right >= state.fieldCols) {
       state.fieldCols = Math.min(MAX_FIELD, right + 2);
     }
-    if (isDiamondGrid(board) && !state.autoHeight) {
+    if (isDiamondGrid(board) && !state.autoSize) {
       state.fieldRows = Math.max(state.fieldRows, Math.min(MAX_FIELD_ROWS, board.y + board.rows + 1));
     }
     return board;
@@ -1306,7 +1308,7 @@
     viewport.focus({preventScroll: true});
     drag = {kind: "field", pointer: event.pointerId, before: snapshot(), edge: handle.dataset.fieldEdge,
       startX: event.clientX + window.scrollX, startY: event.clientY + window.scrollY,
-      cols: state.fieldCols, rows: state.fieldRows, autoHeight: state.autoHeight};
+      cols: state.fieldCols, rows: state.fieldRows, autoSize: state.autoSize};
     viewport.setAttribute("data-field-resizing", "");
     viewport.setPointerCapture(event.pointerId);
     renderControls();
@@ -1318,9 +1320,9 @@
       Math.round((event.clientX + window.scrollX - drag.startX) / state.cell), 1, MAX_FIELD);
     if (drag.edge !== "right") {
       const rows = clamp(drag.rows + Math.round((event.clientY + window.scrollY - drag.startY) / state.cell), 1, MAX_FIELD_ROWS);
-      state.autoHeight = drag.autoHeight && rows === drag.rows;
       state.fieldRows = rows;
     }
+    state.autoSize = drag.autoSize && state.fieldCols === drag.cols && state.fieldRows === drag.rows;
     renderScene();
     event.preventDefault();
   });
