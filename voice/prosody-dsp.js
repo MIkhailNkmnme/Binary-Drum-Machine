@@ -25,7 +25,14 @@
   function phoneProfile(profiles,id){
     return profiles.get(id)??(id.endsWith('j')?profiles.get(id.slice(0,-1)):null);
   }
-  function speechPhone(id,phone){
+  const voicedStops=new Set(['b','g','d']);
+  function speechPhone(id,phone,closedVoicedStop){
+    if(closedVoicedStop&&phone.kind==='stop'&&voicedStops.has(id)){
+      // An isolated stop is the low periodic closure, with no release noise.
+      return {...phone,kind:'sonorant',voice:.42,noise:0,
+        formants:[250,...phone.formants.slice(1)],bandwidths:[120,...phone.bandwidths.slice(1)],
+        weights:[.7,.1,.025,0]};
+    }
     if((id!=='v'&&id!=='vj')||phone.kind!=='fricative')return phone;
     // Use a periodic approximation with a low resonance and a weaker second one.
     return {...phone,kind:'sonorant',voice:.75,noise:0,
@@ -125,7 +132,8 @@
     const segments=input.segments.map((p,i)=>{
       if(!object(p))throw Error('Просодия: неверный сегмент '+(i+1));
       return {pitchStartSemitones:number(p.pitchStartSemitones,'pitchStartSemitones',-12,12),
-        pitchEndSemitones:number(p.pitchEndSemitones,'pitchEndSemitones',-12,12),gain:number(p.gain,'gain',0,2)};
+        pitchEndSemitones:number(p.pitchEndSemitones,'pitchEndSemitones',-12,12),gain:number(p.gain,'gain',0,2),
+        ...(p.closedVoicedStop===true?{closedVoicedStop:true}:{})};
     });
     let total=0;const boundaries=counts.map((count,index)=>{const startSample=total;total+=count;return {index,startSample,endSample:total};});
     if(total>12*rate)throw Error('Просодия: превышен предел 12 секунд.');
@@ -162,7 +170,10 @@
       segmentDurationsChanged:false,segmentsOverlap:false,shortSegmentPolicy:'A one-sample segment has no transition window.'};
     return {at,maximumFrequency,progress:sample=>rangeStart+(rangeEnd-rangeStart)*clamp(sample/Math.max(1,total),0,1),
       frequency:(base,control)=>clamp(base*control.pitchMultiplier,floor,ceiling),
-      speechPhone:(id,phone)=>articulatedFrication?speechPhone(id,phone):phone,
+      speechPhone:(id,phone,index)=>{
+        const closed=segments[index]?.closedVoicedStop===true&&voicedStops.has(id);
+        return articulatedFrication||closed?speechPhone(id,phone,closed):phone;
+      },
       fricationSource:(id,kind)=>articulatedFrication?createFricationSource(id,kind,rate):null,
       stopRelease:(id,kind,count,fraction)=>smoothStopRelease&&kind==='stop'&&russianStops.has(id)
         ?createStopRelease(count,rate,fraction):null,

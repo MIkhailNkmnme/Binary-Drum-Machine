@@ -165,6 +165,14 @@ textarea { width: 100%; resize: vertical; }
 }
 .speech-highlight .speaking { background: color-mix(in srgb, var(--voice-focus) 40%, transparent); }
 #text-position { min-height: 18px; margin: 0; font-size: 12px; color: #91a6b6; }
+.speech-wave { margin: 6px 0 12px; }
+.speech-wave-plot { position: relative; border: 1px solid var(--voice-divider); background: #141e28; }
+.speech-wave-plot:focus-within { outline: 1px solid var(--voice-focus); outline-offset: 2px; }
+#speech-wave-canvas { display: block; width: 100%; height: 62px; }
+#speech-wave-seek { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; touch-action: pan-y; }
+#speech-wave-seek:not(:disabled) { cursor: ew-resize; }
+#speech-wave-head { position: absolute; inset: 0 auto 0 0; width: 1px; background: var(--gz-txt); pointer-events: none; }
+#speech-wave-time { display: block; margin-top: 3px; color: #91a6b6; font-variant-numeric: tabular-nums; font-size: 12px; }
 #prosody-trace { max-height: 280px; overflow: auto; font-size: 12px; }
 #prosody-note { font-size: 12px; }
 

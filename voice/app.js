@@ -6,9 +6,13 @@
   const SHARED_KEY=KEY+'.library',LAST_ENGINE_KEY=KEY+'.current-engine';
   const TEXT_FADE=.004;
   const engineStorageKey=id=>KEY+'.engine.'+id;
-  if(!R||!globalThis.VoiceEnglish||!globalThis.VoiceProsody||!globalThis.VoiceText||!Array.isArray(globalThis.VoiceCatalog)){$('status').textContent='Движки или текстовый планировщик не загружены. Обновите страницу после доставки файлов.';return;}
+  if(!R||!globalThis.VoiceEnglish||!globalThis.VoiceProsody||!globalThis.VoiceText||!globalThis.VoiceWaveform||!Array.isArray(globalThis.VoiceCatalog)){$('status').textContent='Компоненты редактора не загрузились. Обновите страницу после доставки файлов.';return;}
   const speechField=$('speech-text');
   const speechHighlight=$('text-cursor');
+  const waveform=VoiceWaveform({
+    track:$('speech-wave'),canvas:$('speech-wave-canvas'),seek:$('speech-wave-seek'),
+    head:$('speech-wave-head'),time:$('speech-wave-time'),onSeek:seekTextWave
+  });
   const DEFAULT_SPEECH=speechField.value;
   const PLAIN_RUSSIAN_EXAMPLE=DEFAULT_SPEECH.split('\n',1)[0].replace(/\u0301/g,'');
   const RUSSIAN_NAMES_START=DEFAULT_SPEECH.lastIndexOf('\n')+1;
@@ -146,7 +150,7 @@
     state.profiles[id]={settings:settingsFrom(current.settings,e),phones:validatePhones(current.phones||{},e),userPhones:validatePhones(current.userPhones||{},e)};
     if(stored.page&&typeof stored.page==='object')enginePages[id]=stored.page;
   }
-  function invalidate(text='Изменения сохранены. Для живого WAV заново нажмите «Слушать».'){revision++;importTicket++;begin();current=null;textCache=null;wholeTextCache=null;$('text-wav').disabled=true;$('text-json').disabled=true;$('wav').disabled=true;$('prosody-note').textContent='Параметры изменены. Нажмите «Плей» для нового разбора.';$('prosody-trace').replaceChildren();if(comparisons.length)$('compare-status').textContent='Ниже предыдущие снимки. Вычислите сравнение заново для текущих настроек.';status(text);save();}
+  function invalidate(text='Изменения сохранены. Для живого WAV заново нажмите «Слушать».'){revision++;importTicket++;begin();current=null;textCache=null;wholeTextCache=null;waveform.setResult(null);$('text-wav').disabled=true;$('text-json').disabled=true;$('wav').disabled=true;$('prosody-note').textContent='Параметры изменены. Нажмите «Плей» для нового разбора.';$('prosody-trace').replaceChildren();if(comparisons.length)$('compare-status').textContent='Ниже предыдущие снимки. Вычислите сравнение заново для текущих настроек.';status(text);save();}
   function settingsFrom(value,e=E){if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Неверные настройки.');const out={};for(const p of e.parameters){if(!Object.hasOwn(value,p.key))throw Error('Нет параметра '+p.key);out[p.key]=finite(value[p.key],p.min,p.max,p.label);}return e.normalize(out);}
   function languagePhones(e,overrides,score){const phones=globalThis.VoiceGerman?VoiceGerman.resolve(e,overrides,score):clone(overrides);return VoiceEnglish.resolve(e,phones,score);}
   function validatePhone(value,e=E){
@@ -227,7 +231,7 @@
   function showPhone(){const id=$('phone').value,p=profile().phones[id]||profile().userPhones[id]||globalThis.VoiceGerman?.getPhone(state.engineId,id)||VoiceEnglish.getPhone(state.engineId,id)||E.getPhone(id);if(!p)return;$('phone-id').value=id;$('phone-kind').value=p.kind;for(const key of ['formants','bandwidths','weights'])for(let i=0;i<4;i++)$(key+i).value=p[key][i];$('phone-voice').value=p.voice;$('phone-noise').value=p.noise;$('phone-status').textContent=label(state.engineId)+' · '+(E.phoneLabels?.[id]||globalThis.VoiceGerman?.phoneLabels[id]||VoiceEnglish.phoneLabels[id]||id);}
   for(const k of E.kinds)option($('phone-kind'),k.id,k.label);
   for(let i=0;i<4;i++){const box=document.createElement('div');box.className='formant';box.id='formant-'+i;const title=document.createElement('strong');title.textContent='Форманта '+(i+1);box.append(title);for(const [key,text,min,max,step]of [['formants','Частота, Гц',20,9922.5,.5],['bandwidths','Полоса, Гц',20,4000,1],['weights','Вес',0,4,.01]]){const l=document.createElement('label');l.textContent=text;const n=document.createElement('input');Object.assign(n,{type:'number',id:key+i,min,max,step});l.append(n);box.append(l);}$('phone-formants').append(box);}
-  function render(recipe){cancelWorker();const id=++jobId;return new Promise((resolve,reject)=>{const w=new Worker('render-worker.js?v=022');worker=w;w.reject=reject;w.onmessage=event=>{if(worker!==w||event.data.id!==id)return;worker=null;w.terminate();if(event.data.type==='error'){reject(Error(event.data.error?.message||'Ошибка синтеза.'));return;}const result=event.data.result;if(event.data.type!=='result'||result?.engineId!==recipe.engineId){reject(Error('Движок вернул несовместимый результат.'));return;}resolve(result);};w.onerror=event=>{if(worker===w)worker=null;w.terminate();reject(Error(event.message||'Worker не загрузился.'));};w.postMessage({id,engineId:recipe.engineId,score:recipe.score,settings:recipe.settings,phones:recipe.phones,...(recipe.prosody?{prosody:recipe.prosody}:{})});});}
+  function render(recipe){cancelWorker();const id=++jobId;return new Promise((resolve,reject)=>{const w=new Worker('render-worker.js?v=024');worker=w;w.reject=reject;w.onmessage=event=>{if(worker!==w||event.data.id!==id)return;worker=null;w.terminate();if(event.data.type==='error'){reject(Error(event.data.error?.message||'Ошибка синтеза.'));return;}const result=event.data.result;if(event.data.type!=='result'||result?.engineId!==recipe.engineId){reject(Error('Движок вернул несовместимый результат.'));return;}resolve(result);};w.onerror=event=>{if(worker===w)worker=null;w.terminate();reject(Error(event.message||'Worker не загрузился.'));};w.postMessage({id,engineId:recipe.engineId,score:recipe.score,settings:recipe.settings,phones:recipe.phones,...(recipe.prosody?{prosody:recipe.prosody}:{})});});}
   async function unlock(){context ||= new (window.AudioContext||window.webkitAudioContext)();await context.resume();}
   function play(result){return new Promise(resolve=>{if(!context||context.state!=='running'){resolve();return;}retireSource();const buffer=context.createBuffer(1,result.samples.length,result.sampleRate);buffer.copyToChannel(result.samples,0);const node=context.createBufferSource();node.buffer=buffer;node.connect(context.destination);source=node;sourceDone=resolve;node.onended=()=>{node.disconnect();if(source===node){source=null;sourceDone=null;}resolve();};node.start();});}
   function snapshot(recipe,result){return {...clone(recipe),engineId:result.engineId,engineVersion:result.engineVersion,settings:clone(result.settings),phones:clone(result.phones)};}
@@ -345,6 +349,7 @@
       :continuing?'Плей · продолжить чтение':selection?'Плей · повторять выделение':'Плей · начать чтение с курсора';
     command.setAttribute('aria-label',command.title);
     commandIcon(command,playing?'pause':'play');
+    waveform.setEnabled(Boolean(textRun)&&!textBusy);
   }
   function cancelTextFrame(){
     if(textFrame)cancelAnimationFrame(textFrame);
@@ -355,6 +360,7 @@
     if(textBusy||textRun)$('text-status').textContent='Текст остановлен.';
     textBusy=false;
     textRun=null;
+    waveform.setPosition(0);
     markText(-1);
     textButton();
   }
@@ -399,6 +405,7 @@
     return (run.offset+Math.floor(elapsed*run.buffer.sampleRate))%run.buffer.length;
   }
   function markTextSample(run,sample){
+    waveform.setPosition(sample);
     const mark=run.cache.timeline.find(entry=>sample>=entry.start&&sample<entry.end);
     markText(mark&&mark.index>=0?mark.index+run.characterOffset:-1);
   }
@@ -442,7 +449,7 @@
     node.start(run.startedAt,run.offset/run.buffer.sampleRate);
     textBusy=false;
     textButton();
-    showSpeechPosition();
+    markTextSample(run,run.offset);
     const {result,passport}=run.cache;
     $('text-status').textContent=(run.selection?'Повтор выделения · ':'Повтор текста · ')+(passport.controls.mode==='speech'?'Речь':'Исходно')+' · '+label(result.engineId)+' · '+result.duration.toFixed(2)+' с на круг · seed '+result.seed+'.';
     const tick=()=>{
@@ -453,20 +460,32 @@
     };
     textFrame=requestAnimationFrame(tick);
   }
+  function seekTextWave(offset){
+    const run=textRun;
+    if(!run||textBusy)return;
+    run.offset=offset;
+    if(run.node){
+      cancelTextFrame();
+      retireSource();
+      startTextRun(run,epoch,0);
+    }else{
+      markTextSample(run,offset);
+      $('text-status').textContent='Пауза. «Плей» продолжит с позиции на дорожке.';
+    }
+  }
   function seekPlayingText(){
     rememberSpeechCaret();
     const run=textRun;
     if(!run?.node||speechSelection())return;
-    cancelTextFrame();
-    retireSource();
     if(run.selection){
+      cancelTextFrame();
+      retireSource();
       // A plain click ends the fragment loop and uses the full text.
       run.node=null;
       void playText();
       return;
     }
-    run.offset=sampleAtCaret(run.cache,speechCharacterIndex());
-    startTextRun(run,epoch,0);
+    seekTextWave(sampleAtCaret(run.cache,speechCharacterIndex()));
   }
   async function playText(){
     if(textBusy)return;
@@ -501,6 +520,7 @@
       const result=cache.result,buffer=context.createBuffer(1,result.samples.length,result.sampleRate);
       buffer.copyToChannel(result.samples,0);
       textRun={buffer,cache,selection,characterOffset:selection?caretIndex:0,offset:selection?0:sampleAtCaret(cache,caretIndex)};
+      waveform.setResult(result);
       startTextRun(textRun,ticket);
     }catch(e){if(active(ticket)){stopTextUI();retireSource();$('text-status').textContent='Текст: '+e.message;}}
   }

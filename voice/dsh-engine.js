@@ -6,7 +6,7 @@
 (function(root){
   'use strict';
   root.ZerkaliusDshFactory=function(C){
-    const VERSION='deepseek-formant-live-v1.2.4',RATE=44100,TAU=2*Math.PI;
+    const VERSION='deepseek-formant-live-v1.2.5',RATE=44100,TAU=2*Math.PI;
     const profile=C.config({pitchStart:112,pitchEnd:96,vibratoDepth:0,vibratoRate:2.1,transitionMs:0,outputGain:.7,seed:7},['transitionMs']);
     // Возраст: 0 — ребёнок, 50 — взрослый, 100 — старик. Меняет длину речевого
     // тракта (форманты), высоту, дрожание и придыхание, не трогая таблицу фонем.
@@ -87,11 +87,12 @@
     const voicedSpeechTargets=new Set(['b','bj','d','dj','g','gj','z','zj']);
     function renderSpeech({settings,phones,score,counts,total,prosody,shape}){
       const dsp=root.VoiceProsodyDSP,softenNoise=dsp.createConsonantNoise(RATE);
-      const resolvedPhones=score.map(({id})=>{
+      const resolvedPhones=score.map(({id},index)=>{
         const native=table[id],custom=Object.hasOwn(phones,id);
-        const p=C.scaled(custom?phones[id]:getPhone(id),settings,RATE),sameKind=native?.kind===p.kind;
+        const target=custom?phones[id]:getPhone(id),speechTarget=custom?target:prosody.speechPhone(id,target,index);
+        const p=C.scaled(speechTarget,settings,RATE),sameKind=native?.kind===p.kind;
         let branchSources=sameKind?native.sources||null:null;
-        if(!custom&&voicedSpeechTargets.has(id)){
+        if(!custom&&sameKind&&voicedSpeechTargets.has(id)){
           // The low formant carries voicing independently of the release/friction.
           p.voice=.8;
           p.noise*=.7;
@@ -100,7 +101,7 @@
         }
         if(shape)for(let band=0;band<3;band++)p.formants[band]=Math.min(C.limits.maxFrequency,p.formants[band]*shape.tract);
         if(shape)p.noise=Math.min(3,p.noise*shape.breath);
-        return {id,...p,activeFormants:3,loudness:sameKind?native.loud:1,branchSources};
+        return {id,...p,activeFormants:3,loudness:sameKind||speechTarget!==target?native.loud:1,branchSources};
       });
       const samples=new Float32Array(total),glottal=new Float64Array(total),normal=gaussian(settings.seed);
       let cursor=0,phase=0,peak=0;

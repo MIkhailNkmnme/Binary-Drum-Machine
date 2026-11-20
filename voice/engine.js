@@ -6,7 +6,7 @@
    the output is not promised to be byte-identical to the original Python bank. */
 (function(root){
   'use strict';
-  const VERSION='procedural-formant-browser-v1.2.4';
+  const VERSION='procedural-formant-browser-v1.2.5';
   const RATE=22050,TAU=2*Math.PI,TABLE_SIZE=4096,MAX_SECONDS=12,MAX_SEGMENTS=96;
   const MAX_FREQUENCY=RATE*.45,MAX_BANDWIDTH=4000;
   const definitions=[
@@ -172,7 +172,7 @@
     const shapeFor=(token,index)=>{
       const nextVowel=score.slice(index+1).find(t=>Object.hasOwn(vowels,t.id))?.id||'e';
       const custom=Object.hasOwn(phones,token.id),target=custom?phones[token.id]:getPhone(token.id,nextVowel);
-      const p=prosody&&!custom?prosody.speechPhone(token.id,target):target;
+      const p=prosody&&!custom?prosody.speechPhone(token.id,target,index):target;
       return {...p,noise:prosody&&!custom?dsp.defaultSpeechNoise(p):p.noise,
         formants:p.formants.map(f=>clamp(f*settings.formantScale,20,MAX_FREQUENCY)),bandwidths:p.bandwidths.map(b=>clamp(b*settings.bandwidthScale,20,MAX_BANDWIDTH))};
     };
