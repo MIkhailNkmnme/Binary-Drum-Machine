@@ -1,3 +1,4 @@
+<!-- МАЯ-696 · v1.047. Ручной сдвиг при «Верхе», возврат колесом, размеры выключены в ссылках. Проверки пользователем. -->
 <!-- МАЯ-695 · v1.046. Круглые палитры Воды и Снега. Проверки пользователем. -->
 <!-- ВЛФ-009 · v1.035: Вольфрам — три верхних бита выбирают цвет клетки, без изменения поля. Проверки пользователем. -->
 <!-- ИСС-117 · v1.034: видимый YouTube-плеер KOBTRAX, отдельный от транспорта поля. Проверки пользователем. -->
@@ -78,7 +79,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятнкъ — v1.046</title>
+<title>Zerkalius Маятнкъ — v1.047</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -147,7 +148,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 #wrap{flex:1;overflow:auto;padding:12px 16px;min-height:0;cursor:grab;touch-action:none;overscroll-behavior:contain}
 #wrap.drag{cursor:grabbing}
 #wrap.may-wheel-zoom,#wrap.may-wheel-zoom *{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M3 3L12 12M7 12H12V7M29 3L20 12M20 7V12H25M3 29L12 20M7 20H12V25M29 29L20 20M20 25V20H25' fill='none' stroke='%23000' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M3 3L12 12M7 12H12V7M29 3L20 12M20 7V12H25M3 29L12 20M7 20H12V25M29 29L20 20M20 25V20H25' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 16 16,crosshair!important}
-#wrap.may-free-pan::after{content:"";display:block;width:calc(100% + var(--may-pan-width));height:0;pointer-events:none}
+#wrap.may-free-pan::after,#wrap.may-top-pan::after{content:"";display:block;height:var(--may-top-pan-tail,0px);pointer-events:none}
+#wrap.may-free-pan::after{width:calc(100% + var(--may-pan-width))}
 #wrap,#edgeBelowWrap{scrollbar-width:none}   /* v0.716: без полос прокрутки при масштабе */
 #wrap::-webkit-scrollbar,#edgeBelowWrap::-webkit-scrollbar{display:none;width:0;height:0}
 canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
@@ -379,7 +381,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <output id="symInfo" aria-live="polite"></output>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, 0 — по ширине; на телефоне — двумя пальцами">
       <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">×1</output><button id="zIn" aria-label="Приблизить">+</button>
-      <button id="zFit" aria-pressed="false" data-mi-short="Середина" title="Ширина по Оси: пока поле помещается, ось якоря по середине видимой части окна. При увеличении шире окна разрешён сдвиг вправо/влево; при уменьшении центрирование возвращается. Масштаб кнопка не меняет">середина</button><button id="zFitH" aria-pressed="false" data-mi-short="Вниз" title="Вниз: при масштабе нижняя строка поля держится у низа окна · вместе с «Верхом» — держатся обе, масштаб не меняется">вниз</button><button id="zLock" aria-pressed="false" data-mi-short="Блок" title="Блокировать масштаб: колесо, + / −, «По ширине», «По высоте» и щипок его не меняют · ещё раз — снять">блок</button><button id="zLimit" aria-pressed="false" data-mi-short="1:1" title="Установить и держать 1:1: один бит на один физический пиксель монитора. Колесо, щипок и команды масштаба сохраняют 1:1 до выключения. После выключения остаётся 1:1, масштаб снова можно менять, если выключен «Блок»">1:1</button><button id="zLines" aria-pressed="false" data-mi-short="Линии" title="Линии: общий показ выбранных семейств ручных осей; положения и зеркала сохраняются · отдельные кнопки Верт, Гориз и Диаг включают свои оси">линии</button><button id="zVert" aria-pressed="false" data-mi-short="Верт" title="Вертикальные оси: показать / скрыть только вертикали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">верт</button><button id="zHoriz" aria-pressed="false" data-mi-short="Гориз" title="Горизонтальные оси: показать / скрыть основную горизонталь и дополнительные линии, сохраняя положения и зеркала">гориз</button><button id="zDiag" aria-pressed="false" data-mi-short="Диаг" title="Диагональные оси: показать / скрыть обе диагонали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">диаг</button><button id="zTop" aria-pressed="false" data-mi-short="Верх" title="Закрепить верх: при масштабе первая строка остаётся у верхнего края окна">верх</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
+      <button id="zFit" aria-pressed="false" data-mi-short="Середина" title="Ширина по Оси: пока поле помещается, ось якоря по середине видимой части окна. При увеличении шире окна разрешён сдвиг вправо/влево; при уменьшении центрирование возвращается. Масштаб кнопка не меняет">середина</button><button id="zFitH" aria-pressed="false" data-mi-short="Вниз" title="Вниз: при масштабе нижняя строка поля держится у низа окна · вместе с «Верхом» — держатся обе, масштаб не меняется">вниз</button><button id="zLock" aria-pressed="false" data-mi-short="Блок" title="Блокировать масштаб: колесо, + / −, «По ширине», «По высоте» и щипок его не меняют · ещё раз — снять">блок</button><button id="zLimit" aria-pressed="false" data-mi-short="1:1" title="Установить и держать 1:1: один бит на один физический пиксель монитора. Колесо, щипок и команды масштаба сохраняют 1:1 до выключения. После выключения остаётся 1:1, масштаб снова можно менять, если выключен «Блок»">1:1</button><button id="zLines" aria-pressed="false" data-mi-short="Линии" title="Линии: общий показ выбранных семейств ручных осей; положения и зеркала сохраняются · отдельные кнопки Верт, Гориз и Диаг включают свои оси">линии</button><button id="zVert" aria-pressed="false" data-mi-short="Верт" title="Вертикальные оси: показать / скрыть только вертикали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">верт</button><button id="zHoriz" aria-pressed="false" data-mi-short="Гориз" title="Горизонтальные оси: показать / скрыть основную горизонталь и дополнительные линии, сохраняя положения и зеркала">гориз</button><button id="zDiag" aria-pressed="false" data-mi-short="Диаг" title="Диагональные оси: показать / скрыть обе диагонали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">диаг</button><button id="zTop" aria-pressed="false" data-mi-short="Верх" title="Закрепить верх: перетаскивание может сдвинуть поле вверх, колесо снова прижимает первую строку к верхнему краю окна">верх</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
     </span>
     <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output><span id="frameWho" class="ver" style="margin-left:6px"></span></label>
     <button id="bGif" aria-pressed="false" data-mi-short="GIF" title="Запись GIF видимого окна поля — как на экране, с масштабом и сдвигом: размер окна на момент старта, до 1024 px по длинной стороне, до 10 кадров/с, 256 цветов. Нажми, запусти анимацию или меняй кадры; ещё раз — скачать GIF.">GIF</button>
@@ -757,7 +759,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // перерисовку — круг перерисовок вешал страницу. Шаблоны и меню работают; сохранённые замки не стираются — вернуть: false
   const LOCK_OFF = true;
   if (CHISTO) { Storage.prototype.setItem = Storage.prototype.removeItem = function () {}; if (window.MayatnikPaintCache) MayatnikPaintCache.write = async () => {}; }   // ничего не записывать: сохранённое остаётся как было
-  let st = { ...MayatnikAnimatrixSource.defaults(),...MayatnikPitCopies.DEFAULTS,kraftShadows:false,staggeredGrid:false,staggeredBlocks:false,paintEmptyNeighbours:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null, sequenceSourceOn:false,sequenceSource:null,sequenceSourceLimit:0,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkEvolution:2,sequenceOwnGrid:false,sequenceInverseAbove:false,rowStepOutline:true,rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', viewContours:false, viewDigits:false, zoom: 'fit', speed: 4, turbo: false, speedBefore: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, edgeContinuous:true,edgeFlowMax:0,edgeFlowKey:'',edgeWrap: false, edgeBounce: false, edgeWidth: 4, edgeMarkOn: true, edgeEndsOn: true, edgeEndsScale: 1, edgeRhombOn: false, romboMode:"fixed",romboLayout:null, romboAssembly:16, romboSeam:"between", edgeClose: true, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiThrough:false, ochkiSkipSpaces:false, ochkiEveryFrame:false, ochkiInv: false, ochkiRev: false, ochkiHalf: false, ochkiOverlay: false, frozen: false, zLimit:false,zOverview:true, ...MayatnikResetState.pointDefaults, joined180Whole:false };
+  let st = { ...MayatnikAnimatrixSource.defaults(),...MayatnikPitCopies.DEFAULTS,kraftShadows:false,staggeredGrid:false,staggeredBlocks:false,paintEmptyNeighbours:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null, sequenceSourceOn:false,sequenceSource:null,sequenceSourceLimit:0,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkEvolution:2,sequenceOwnGrid:false,sequenceInverseAbove:false,rowStepOutline:true,rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', viewContours:false, viewDigits:false, zoom: 'fit', speed: 4, turbo: false, speedBefore: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, edgeContinuous:true,edgeFlowMax:0,edgeFlowKey:'',edgeWrap: false, edgeBounce: false, edgeWidth: 4, edgeMarkOn: true, edgeEndsOn: true, edgeEndsScale: 1, edgeRhombOn: false, romboMode:"fixed",romboLayout:null, romboAssembly:16, romboSeam:"between", edgeClose: true, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiThrough:false, ochkiSkipSpaces:false, ochkiEveryFrame:false, ochkiInv: false, ochkiRev: false, ochkiHalf: false, ochkiOverlay: false, frozen: false, zLimit:false,zOverview:true,lineMeasures:false, ...MayatnikResetState.pointDefaults, joined180Whole:false };
   if (!CHISTO) try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   st.wolfram=MayatnikWolfram.normalize(st.wolfram);
   if(PHONE_LINK&&!st.phoneScene)st=phoneSettings(PHONE_LINK);
@@ -863,6 +865,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   if (URLP.has('embed')) document.body.classList.add('may-embed');
   let urlK = -1;
   if (URL_ON&&!PHONE_LINK) {
+    st.lineMeasures = false;
     const num = (q, lo, hi) => { const v = parseInt(URLP.get(q), 10); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : null; };
     const n = num('n', 8, 16384); if (n != null) { st.rows = largeRows(n)?n:Math.min(n,4096); if (!URLP.has('s')) st.steps = st.rows; }
     const maxSteps=largeRows(st.rows)?4*st.rows:16384;
@@ -890,7 +893,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     ochki=null;save();if(f)draw();dispatchEvent(new CustomEvent('may-gif-search-change'));
   };
   const urlOwn = {}; if (URL_ON&&!PHONE_LINK) { let old = {}; try { old = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (_) {}
-    for (const q of ['rows', 'steps', 'mode', 'blackMirror', 'animHl', 'paintMid', 'geomCenter']) urlOwn[q] = [st[q], old[q]]; }
+    for (const q of ['rows', 'steps', 'mode', 'blackMirror', 'animHl', 'paintMid', 'geomCenter', 'lineMeasures']) urlOwn[q] = [st[q], old[q]]; }
   const save = () => { if (CHISTO||SHARE_ACTIVE||window.mayBackupRestoring||!animatrixDeferredReady) return; try { const o = { ...st }; for (const q in urlOwn) if (JSON.stringify(st[q]) === JSON.stringify(urlOwn[q][0])) { if (urlOwn[q][1] === undefined) delete o[q]; else o[q] = urlOwn[q][1]; }
     if(o.animatrixSource){const source=o.animatrixSource,record=animatrixRecord(source);if(!record.ready)return;o.animatrixSource=animatrixReference(source,record.key);}
     localStorage.setItem(KEY, JSON.stringify(o)); } catch(error) {if(animatrixOn()||MayatnikSequenceField.fixed(st))$('paintCacheInfo').textContent='Настройки поля не сохранены в браузере: '+error.message;} };
@@ -9086,6 +9089,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return !!(!(activeMeetingDirections()&12)&&!st.frameDrift&&st.zMid&&fitAxis()&&dispW()*scale()<=available+1e-6);
   }
   var freePanScale=0, freePanInset=0;
+  let zTopPanFree = false;
   const fitHalfW = () => { const a = geo.anchor - VX + .5; return 2 * Math.max(a, VW - a); };
   const fitScale = () => { const s = Math.max(0.02, (wrap.clientWidth - wrapPadX()) / (bothOn() ? 2 * dispW() + 1 : dispW())); return st.zsnap ? snap2(s, true) : s; };
   // v0.346: «по высоте и по ширине — кнопки остаются нажатыми, пока так — не менять положения по горизонтали / вертикали соответственно»:
@@ -9121,7 +9125,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function fitHold() { if (ovlLinked()) return; if (!geo) return; if (st.zMid&&!st.frameDrift) midScroll(); if(st.gifScaleStack)return;
     if (st.zoom === 'fit' && !st.ztop && !st.zBot) fitCenterY();
-    if (st.zoom === 'fitH') { const r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect(), t = Math.max(0, Math.ceil(wrap.scrollTop + r.top + fitHRow() * scale() - w.top - 1e-6)); if (Math.abs(wrap.scrollTop - t) > 1) wrap.scrollTop = t; } }
+    if (st.zoom === 'fitH' && !(st.ztop && zTopPanFree)) { const r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect(), t = Math.max(0, Math.ceil(wrap.scrollTop + r.top + fitHRow() * scale() - w.top - 1e-6)); if (Math.abs(wrap.scrollTop - t) > 1) wrap.scrollTop = t; } }
   function layout() { cssLayout(); present();if(st.edgeRhombOn&&!gpuBig?.large)drawEdgeRhomb(null,false); imageStats(); queueDigits(); }
   function cssLayout() {
     if(st.zLimit&&!st.gifScaleStack)st.zoom=1 / DPR();
@@ -11058,7 +11062,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   $('zSnap').oncontextmenu = e => { e.preventDefault(); st.zbase = Math.min(10,zB()+1); st.zsnap = true; zSnapApply(); };
   window.mayZSnap = { on: () => !!st.zsnap, base: zB, set(b) { b=Number(b);if(!Number.isFinite(b))return;if(b<=1)st.zsnap=false;else{st.zbase=Math.min(10,Math.max(2,Math.round(b)));st.zsnap=true;}zSnapApply(); } };
   zSnapSync();
-  const zTopSync = () => {$('zTop').disabled=!!st.gifScaleStack;$('zTop').setAttribute('aria-pressed', String(!!st.ztop&&!st.gifScaleStack));};
+  const zTopSync = () => { resetTopPan(); $('zTop').disabled=!!st.gifScaleStack;$('zTop').setAttribute('aria-pressed', String(!!st.ztop&&!st.gifScaleStack));};
   for(const id of ['zFit','zTop','zFitH'])$(id).addEventListener('click',()=>{if(st.templateFocusMargins){st.templateFocusMargins=null;cssLayout();}},{capture:true});
   $('zTop').onclick = () => { if(st.gifScaleStack)return;st.ztop = !st.ztop; save(); zTopSync(); if (st.ztop) { zTopScroll(); wrap.scrollLeft = Math.max(0, (wrap.scrollWidth - wrap.clientWidth) / 2); } zTopLine(); };
   zTopSync();
@@ -11077,9 +11081,25 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // v0.363: «верх ушёл за экран» — «Верх» держит первую строку (не строку линии: линия — только отметка и зеркало)
   // Same 12px text line and 2px vertical padding as the player caption.
   var VTX_H = 16;
-  function zTopScroll() { if (st.gifScaleStack || ovlLinked() || !st.ztop) return; const s = scale(), r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect(); wrap.scrollTop = Math.max(0, Math.ceil(wrap.scrollTop + r.top - w.top - VTX_H - 1e-6)); }
-  // v0.755: «Верх» / «Вниз» — закреп, а не только выравнивание при смене масштаба: пока кнопка
-  // нажата, поле не уезжает вниз/вверх от руки и от колеса. «Середина» так же держит ось по центру.
+  function releaseTopForPan() {
+    if (!st.ztop || st.zBot || st.gifScaleStack || ovlLinked() || zTopPanFree) return;
+    zTopPanFree = true;
+    // Even a field shorter than the viewport needs room for the upward drag.
+    wrap.style.setProperty('--may-top-pan-tail', wrap.clientHeight + 'px');
+    wrap.classList.add('may-top-pan');
+  }
+  function resetTopPan() {
+    if (!zTopPanFree) return;
+    zTopPanFree = false;
+    wrap.classList.remove('may-top-pan');
+    wrap.style.removeProperty('--may-top-pan-tail');
+  }
+  function zTopScroll() {
+    if (st.gifScaleStack || ovlLinked() || !st.ztop || zTopPanFree) return;
+    const r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+    wrap.scrollTop = Math.max(0, Math.ceil(wrap.scrollTop + r.top - w.top - VTX_H - 1e-6));
+  }
+  // «Верх» удерживает первую строку, пока поле не сдвинули вверх. Колесо возвращает привязку.
   let zPinRaf = 0;
   function zPinScroll() {
     if (zPinRaf || (!st.ztop && !st.zBot && !st.zMid)) return;
@@ -11116,7 +11136,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // v0.365: «По высоте — переименуй в Вниз: если включена — не давать нижней строке уйти при масштабе; если и Верх включён — обе держать, то есть масштаб заблокать»
   function zBotScroll() { if (st.gifScaleStack || ovlLinked() || !st.zBot || !geo) return; const r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect(); wrap.scrollTop = Math.max(0, Math.floor(wrap.scrollTop + r.bottom - (w.top + wrap.clientHeight) + 1e-6)); }
   // v0.370: «Вниз не работает — не увеличивает масштаб, если надо»: включили, а поле короче окна — масштаб растёт, пока низ поля не дойдёт до низа окна
-  $('zFitH').onclick = () => { if (!geo) return; zWant = 0; st.zBot = !st.zBot; if (!st.zLock && st.zoom === 'fitH') st.zoom = scale(); save(); layout(); thick(); if (st.ztop) zTopScroll(); if (st.zBot && !st.ztop) zBotScroll(); zTopLine(); };
+  $('zFitH').onclick = () => { if (!geo) return; resetTopPan(); zWant = 0; st.zBot = !st.zBot; if (!st.zLock && st.zoom === 'fitH') st.zoom = scale(); save(); layout(); thick(); if (st.ztop) zTopScroll(); if (st.zBot && !st.ztop) zBotScroll(); zTopLine(); };
   // v0.359: «также и верт линии нужны, и диагональные; рядом с каждой "+" — от текущей посередине до вершины маятника ещё одна; все линии 1 px;
   // ложатся и в середину бита — сам бит не зеркалить». st.zl — свои линии {k, p, m}: k 'h' — горизонталь (p — строка, шаг ½, как у «Верха»),
   // 'v' — вертикаль (p — сдвиг от середины столба якоря: целое — по середине бита, ½ — между битами), 'd' «\» / 'e' «/» — диагональ (p — сдвиг
@@ -11296,6 +11316,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(e.target.closest?.('.may-scale-stack__controls'))return;
     if (!geo || e.defaultPrevented || (!viewRotation.isFieldEvent(e)&&window.MayatnikMenuDock?.guardWheel?.(e))) return; e.preventDefault();
     const d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    if (d && zTopPanFree) { resetTopPan(); zTopScroll(); }
     const want = ((st.zsnap || ovlLinked() || window.mayPixelExact) && zWant ? zWant : scale()) * Math.exp(-Math.max(-300, Math.min(300, d)) * 0.0025);
     if(!st.zMid)zoomTo.axisHold=false;
     else if(horizontalAxisPinned())zoomTo.axisHold=true;
@@ -12466,7 +12487,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if (!pts.has(e.pointerId)) return;
     pts.set(e.pointerId, navigationPoint(e));
     if (pinch && pts.size >= 2) movePinch(pts);
-    else if (pan) { const point=navigationPoint(e); if (Math.hypot(point.x - pan.x, point.y - pan.y) > 5) pan.moved = true; if (!pan.moved) return; wrap.scrollLeft = pan.sl - (point.x - pan.x); wrap.scrollTop = pan.st - (point.y - pan.y); }
+    else if (pan) {
+      const point = navigationPoint(e), dx = point.x - pan.x, dy = point.y - pan.y;
+      if (Math.hypot(dx, dy) > 5) pan.moved = true;
+      if (!pan.moved) return;
+      if (dy < 0) releaseTopForPan();
+      wrap.scrollLeft = pan.sl - dx;
+      wrap.scrollTop = pan.st - dy;
+    }
   });
   const up = e => {
     if(templatePickTap?.id===e.pointerId){const tap=templatePickTap;templatePickTap=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);if(e.type==='pointerup'&&Math.hypot(navigationPoint(e).x-tap.x,navigationPoint(e).y-tap.y)<5){if(tap.findAllOnTap)findAllSelectedTemplate(tap.findAllOnTap);else if(takeColourAt(e.clientX,e.clientY)){axisSelected=0;window.mayTemplateLibrary?.clear();}}return;}
@@ -12879,7 +12907,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(testPattern)throw Error('Тестовый рисунок не передаётся ссылкой. Сохраните его через «Сохранить всё».');
     const base=st.edgeWrap&&!edgeFlowOn()&&!animatrixOn()&&!compareOn()&&!st.sequenceSourceOn&&edgeLaps>0?snaps.get(0):null;
     return {v:1,at:new Date().toISOString(),k,
-      state:structuredClone(st),
+      state:{...structuredClone(st),lineMeasures:false},
       edgeSeed:base?MayatnikShareLink.encodeEdgeSeed({width:f.W,height:f.H,values:base.val,mark:base.edgeMark,jumps:base.edgeJumps,laps:base.edgeLaps}):null,
       display:{scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop},
       tools:{fillMode,autoVertical,axisPicking,axisLineMode,rulerMode,mirrorLine,mirrorAxis:!!st.mirAxis?.on,templatePickEnabled,templatePickMode,templateDragEnabled},
@@ -12940,7 +12968,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const data=MayatnikShareLink.normalizePayload(payload);
     if(!booting&&(!sessionReady||cacheRestoring||templateDragging||frameLibraryBusy))throw Error('Дождитесь завершения текущего действия');
     // Links without a saved range retain the legacy default.
-    const next={...MayatnikResetState.defaults(),steps:512,vmode:'',...structuredClone(data.state)};
+    const next={...MayatnikResetState.defaults(),steps:512,vmode:'',...structuredClone(data.state),lineMeasures:false};
     validateShareState(next);
     window.mayXorrom?.stopAll();stopFrameTransports();target=k;
     if(!booting&&f&&stash){try{const saved=paintSnapshot();if(saved)await MayatnikPaintCache.write(structuredClone(saved));}catch(_){/* копия не обязательна */}}
