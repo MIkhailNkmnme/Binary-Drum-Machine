@@ -15,12 +15,12 @@
       "frames": 1,
       "bytes": 11754,
       "sha256": "4ca679a0ad422fd32ca97866a59dad79e44faf1b7aeb762db7fa3433a0cd33e3",
-      "meaning": "Several templates on a pendulum field; the red template is XORoXorиус. Other template names not supplied.",
+      "meaning": "Several templates on a pendulum field; the red template is XORoXORиус. Other template names not supplied.",
       "origin": "Image attached by the author in this conversation on2026-11-20; copied byte-for-byte",
       "limitation": "Full saved application state was not supplied; no new model verification inferred from the screenshot",
       "namedTemplate": {
         "colour": "red",
-        "name": "XORoXorиус",
+        "name": "XORoXORиус",
         "source": "Explicit author identification in this conversation,2026-11-20"
       }
     },
@@ -158,5 +158,17 @@
     }
   ],
   "newGifDelivery": "Pending GitHub Pages publication",
-  "newTemplateDelivery": "Pending GitHub Pages publication"
+  "newTemplateDelivery": "Pending GitHub Pages publication",
+  "newMediaDelivery": [
+    {
+      "path": "wolfram/community-assets/templates-author.png",
+      "error": "HTTP Error 503: Service Unavailable",
+      "sha256Matches": false
+    },
+    {
+      "path": "wolfram/community-assets/tochka-os-1.gif",
+      "error": "HTTP Error 503: Service Unavailable",
+      "sha256Matches": false
+    }
+  ]
 }

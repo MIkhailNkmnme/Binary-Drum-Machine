@@ -10,7 +10,7 @@ The comparison focuses on the **update rule, the order of updates, and the bound
 
 ![Several coloured templates on a pendulum field](https://1001100.online/wolfram/community-assets/templates-author.png)
 
-*Author-supplied screenshot: several coloured templates shown together on a pendulum field. **The red template is XORoXorиус**, as identified by the author. This illustrates the project's template tools; the colours should not be read as extra states of the XOR rule. The screenshot is reproduced unchanged.*
+*Author-supplied screenshot: several coloured templates shown together on a pendulum field. **The red template is XORoXORиус**, as identified by the author. This illustrates the project's template tools; the colours should not be read as extra states of the XOR rule. The screenshot is reproduced unchanged.*
 
 ![Colouring structures in the XOR pendulum](https://1001100.online/issledovanie/mayatnik-podsvetka-2.png)
 
