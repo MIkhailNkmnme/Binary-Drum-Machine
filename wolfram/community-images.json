@@ -1,5 +1,5 @@
 {
-  "version": "0.004",
+  "version": "0.005",
   "date": "2026-11-20",
   "task": "АНМ-002",
   "status": "draft with user-selected media; not submitted to forum",
@@ -100,6 +100,43 @@
       "sha256": "530c63b33bd19cafcd0a71a1e1179117ec9e8e7984f3e7d578db0a788fcf7fc7",
       "meaning": "Code historical cycle; not the diagonal or cone rule",
       "sourceCommit": "5f171241263d2d488bb6154995b4f8de3718e2c1"
+    },
+    {
+      "role": "code-single-frame",
+      "path": "issledovanie/desktop-wallpapers/media/animatrix-173.png",
+      "url": "https://1001100.online/issledovanie/desktop-wallpapers/media/animatrix-173.png",
+      "width": 3840,
+      "height": 2160,
+      "frames": 1,
+      "durationMs": 0,
+      "bytes": 288755,
+      "sha256": "322e2f461f9a2871bb2b1fe48771685e76080dc395086c6214209fd80cf206d4",
+      "meaning": "Code, complete pass173; 128 rows; visual palette only",
+      "sourceCommit": "62e2cf96e3b5a5817718d4e71e8b9dd9f08aabd0"
+    },
+    {
+      "role": "code-cycle-contact-sheet",
+      "path": "issledovanie/cikl-128.png",
+      "url": "https://1001100.online/issledovanie/cikl-128.png",
+      "width": 2128,
+      "height": 2480,
+      "frames": 1,
+      "bytes": 449806,
+      "sha256": "6be4e92770eae7062e912d4640464f61e6af95665b13a9f15db4db5d8b480074",
+      "meaning": "All 128 passes65–192 of the recorded Code scene; pass and one-count labels. Full original indicated by author screenshot.",
+      "origin": "Existing project image, reused unchanged"
+    },
+    {
+      "role": "author-reference-only",
+      "path": "wolfram/community-assets/code-cycle-author.png",
+      "url": "https://1001100.online/wolfram/community-assets/code-cycle-author.png",
+      "width": 1333,
+      "height": 896,
+      "frames": 1,
+      "bytes": 802807,
+      "sha256": "5053de5d265b11dfea1a0cdd5852c36d67e34be49e370f64318140f00ae42b71",
+      "meaning": "Author screenshot of research section1.4. Reference attachment; full original cikl-128.png is embedded in the post.",
+      "origin": "Direct author attachment,20November2026; copied unchanged"
     }
   ],
   "conversion": {
@@ -174,6 +211,23 @@
   "editorialAdditions": {
     "meetingPoint": "Meeting of diagonal guides; reference for point and point-axis colouring.",
     "scale": "Author observation: reducing display scale reveals other symmetric pictures. Fixed bit frame; record scale and sampling method.",
-    "scaleStudy": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html#scale-one-frame"
-  }
+    "scaleStudy": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html#scale-one-frame",
+    "underField": "Original-derived lower resolution copies; saved example256rows/frame32/heightstep8/canvas/original display size",
+    "wolframColouring": "Saved example enables Rule110; table of upper L/C/R selects two colours without recursive colour feedback",
+    "rgbNeighbours": "RGB=(current,left,right), full-intensity binary channels; eight classes; selection and template use",
+    "authorState": "wolfram/community-assets/author-under-field-state.json"
+  },
+  "codeMediaDelivery": [
+    {
+      "path": "issledovanie/cikl-128.png",
+      "status": 200,
+      "sha256Matches": true
+    },
+    {
+      "path": "issledovanie/desktop-wallpapers/media/animatrix-173.png",
+      "status": 200,
+      "sha256Matches": true
+    }
+  ],
+  "newReferenceDelivery": "Author screenshot and saved-state JSON published through GitHub; Pages delivery pending"
 }
