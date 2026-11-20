@@ -93,6 +93,17 @@ section > .commands, .candidate > .commands { margin: 12px 0; }
 .gz-hx[aria-pressed=true], details[open] > .gz-hx { --button-border: var(--voice-focus, var(--c)); --button-inset: 1px; }
 .gz-hx:active:not(:disabled) { --button-border: var(--voice-focus, var(--c)); --button-inset: 2px; }
 .gz-hx:disabled { cursor: default; opacity: .45; }
+#text-play[aria-disabled=true] { cursor: default; opacity: .65; }
+#text-play[data-playing=true] {
+  --button-border: var(--voice-focus);
+  --button-inset: 1px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #text-play[data-playing=true]:not(:active) { animation: text-play-border 1.2s steps(1, end) infinite; }
+}
+@keyframes text-play-border {
+  50% { border-color: var(--voice-edge); box-shadow: inset 0 0 0 1px var(--voice-edge); }
+}
 .gz-hx .gz-ic { color: var(--c); }
 .gz-hx .gz-nm { min-width: 0; }
 .voice-tab-strip .voice-tab.gz-hx {

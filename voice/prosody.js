@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.0';
+  const version='text-prosody-v1.2.1';
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   function normalize(value={}){
@@ -75,9 +75,10 @@
         const factor={vowel:.72,stop:.80,affricate:.82,fricative:.80,sonorant:.82,trill:.82,rhotic:.82,silence:1}[k]||1;
         if(k==='silence'){
           const punctuation=unit.indices.map(i=>prepared.characters[i]?.text||'').join('');
+          const spaces=connected&&language==='ru'&&/^ +$/.test(punctuation)?Math.min(punctuation.length,3):1;
           token.duration=/[.!?…]/u.test(punctuation)||connected&&/[\r\n]/u.test(punctuation) ? .24+.10*amount : /[,;:]/u.test(punctuation) ? .12+.05*amount
             : connected&&/[—–]/u.test(punctuation) ? .12+.05*amount
-            : /\s/u.test(punctuation) ? (connected ? .022 : .07) : connected ? .022 : .06;
+            : /\s/u.test(punctuation) ? (connected ? .022 : .07)*spaces : connected ? .022 : .06;
         }else token.duration*=factor*(stress ? 1.25+.20*amount : k==='vowel'&&word&&!['unknown','en-rules'].includes(word.source) ? .93 : 1);
         token.duration=Number(Math.max(.01,token.duration).toFixed(6));
       }
@@ -101,7 +102,7 @@
       }
     }
     const unknown=prepared.words.filter(w=>['unknown','en-rules'].includes(w.source)).map(w=>w.word),unique=[...new Set(unknown)];
-    const timing=connected?' Связное чтение Codex: межсловный промежуток 22 мс при скорости 1; соседние разделители образуют одну паузу.':'';
+    const timing=connected?' Связное чтение Codex: один пробел даёт 22 мс при скорости 1. Соседние знаки образуют одну паузу.':'';
     return {units:result,config,words:prepared.words,note:(unique.length?'Без автоматического ударения: '+unique.slice(0,8).join(', ')+(unique.length>8?' … ('+unique.length+' слов)':'')+'. Для неизвестных EN-слов применяются приближённые правила чтения.':'Ударения: явные метки, ё или небольшой открытый словарь. EN читает слова и английские цифры; служебные слова могут не иметь отдельного акцента.')+timing};
   }
   root.VoiceProsody=Object.freeze({version,defaults,normalize,prepare,apply});
