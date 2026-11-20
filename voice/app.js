@@ -28,6 +28,7 @@
   let candidates=[],comparisons=[],paused=false,sequencePlaying=false,hold=null;
   let robotManifest=null,alphabetManifest=null,originalError='';
   let textCache=null,textRun=null,textFrame=0,textBusy=false,textMarked=-1,textSpans=[];
+  let speechSelectionEnd=0;
   const nodes=new Map(),choices=new Map(),frames=[];
   const profile=()=>state.profiles[state.engineId],label=id=>R.list.find(x=>x.id===id)?.label||id;
   const status=text=>{$('status').textContent=text;},active=t=>t===epoch;
@@ -206,26 +207,38 @@
     }
     showSpeechPosition();
   }
-  function speechCharacterIndex(){return Array.from(speechField.value.slice(0,state.speechCaret)).length;}
+  function speechCharacterIndex(position=state.speechCaret){return Array.from(speechField.value.slice(0,position)).length;}
+  function speechSelection(){
+    return speechSelectionEnd>state.speechCaret?{start:state.speechCaret,end:speechSelectionEnd}:null;
+  }
+  function sameSpeechSelection(a,b){return a?.start===b?.start&&a?.end===b?.end;}
   function showSpeechPosition(){
     const at=$('text-position');
     if(!textSpans.length){at.textContent='';return;}
     if(textMarked>=0){at.textContent=(textRun?.node?'Звучит символ ':'Пауза на символе ')+(textMarked+1)+' / '+textSpans.length;return;}
+    if(speechSelection()){
+      at.textContent='Повтор выделения · '+(speechCharacterIndex()+1)+'–'+speechCharacterIndex(speechSelectionEnd)+' / '+textSpans.length;
+      return;
+    }
     at.textContent=state.speechCaret===speechField.value.length?'Курсор в конце · пуск с начала':'Пуск с символа '+(speechCharacterIndex()+1)+' / '+textSpans.length;
   }
   function rememberSpeechCaret(persist=true){
-    const position=speechField.selectionStart;
-    if(position===state.speechCaret)return;
-    state.speechCaret=position;
+    const {selectionStart,selectionEnd}=speechField;
+    const moved=selectionStart!==state.speechCaret;
+    if(!moved&&selectionEnd===speechSelectionEnd)return;
+    state.speechCaret=selectionStart;
+    speechSelectionEnd=selectionEnd;
     showSpeechPosition();
     if(persist){
       seekPausedText();
-      save();
+      textButton();
+      if(moved)save();
     }
   }
   function restoreSpeechCaret(position){
     state.speechCaret=Number.isInteger(position)?Math.max(0,Math.min(position,speechField.value.length)):0;
-    speechField.setSelectionRange(state.speechCaret,state.speechCaret);
+    speechSelectionEnd=state.speechCaret;
+    speechField.setSelectionRange(state.speechCaret,speechSelectionEnd);
   }
   function accentedExampleCaret(position){
     if(!Number.isInteger(position))return 0;
@@ -287,7 +300,10 @@
     caption('text-play',playing?'Пауза':'Плей');
     command.dataset.playing=String(playing);
     command.setAttribute('aria-disabled',String(textBusy));
-    command.title=playing?'Пауза · приостановить чтение':textBusy?'Плей · подготовка звука':textRun?'Плей · продолжить чтение':'Плей · начать чтение с курсора';
+    const selection=speechSelection();
+    const continuing=textRun&&sameSpeechSelection(selection,textRun.selection);
+    command.title=playing?'Пауза · приостановить чтение':textBusy?'Плей · подготовка звука'
+      :continuing?'Плей · продолжить чтение':selection?'Плей · повторять выделение':'Плей · начать чтение с курсора';
     command.setAttribute('aria-label',command.title);
     commandIcon(command,playing?'pause':'play');
   }
@@ -308,8 +324,8 @@
     $('prosody-note').textContent=(p.mode==='original'?'Исходно, без наложения просодии. ':'Речь · выразительность '+p.expressiveness+' · контур '+contours[p.contour]+' · связность '+p.transitionMs+' мс. ')+trace.note+(duration===null?'':' Фактически: '+duration.toFixed(3)+' с, частей '+parts+'. Параметры каждой части доступны в паспорте JSON.');
     const list=$('prosody-trace');list.replaceChildren();for(const word of trace.words){const item=document.createElement('li');item.textContent=word.word+' — '+(sources[word.source]||word.source)+(word.stressIndex===null?'':'; ударная гласная в позиции '+(word.stressIndex+1));list.append(item);}
   }
-  async function prepareText(ticket){
-    readControls();const e=E,engineId=state.engineId,settings=clone(profile().settings),phones=clone(profile().phones),text=$('speech-text').value,language=$('speech-language').value,prosody=readSpeechProsody();
+  async function prepareText(ticket,text){
+    readControls();const e=E,engineId=state.engineId,settings=clone(profile().settings),phones=clone(profile().phones),language=$('speech-language').value,prosody=readSpeechProsody();
     const key=JSON.stringify({engineId,version:e.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,plannerVersion:VoiceProsody.version,prosody,settings,phones,text,language});if(textCache?.key===key){showProsodyTrace(textCache.trace,textCache.result.duration,textCache.passport.parts.length);return textCache;}
     const plan=VoiceText.plan({text,language,catalog:[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],engine:e,settings,phones,prosody});showProsodyTrace(plan.prosody);
     const pieces=[],timeline=[],parts=[];let offset=0,actual=null;
@@ -334,7 +350,7 @@
   }
   function markTextSample(run,sample){
     const mark=run.cache.timeline.find(entry=>sample>=entry.start&&sample<entry.end);
-    markText(mark?.index??-1);
+    markText(mark&&mark.index>=0?mark.index+run.characterOffset:-1);
   }
   function sampleAtCaret(cache,caretIndex){
     return cache.timeline.find(mark=>mark.index>=caretIndex&&mark.end>mark.start)?.start??0;
@@ -342,11 +358,15 @@
   function seekPausedText(){
     const run=textRun;
     if(!run||run.node)return;
-    const offset=sampleAtCaret(run.cache,speechCharacterIndex());
-    if(offset===run.offset)return;
-    run.offset=offset;
-    markTextSample(run,offset);
-    $('text-status').textContent='Пауза. «Плей» начнёт с нового места.';
+    const selection=speechSelection();
+    if(!sameSpeechSelection(selection,run.selection)){
+      markText(-1);
+      $('text-status').textContent=selection?'Пауза. «Плей» повторит выделенный фрагмент.':'Пауза. «Плей» начнёт с курсора.';
+      return;
+    }
+    if(!selection)run.offset=sampleAtCaret(run.cache,speechCharacterIndex());
+    markTextSample(run,run.offset);
+    $('text-status').textContent=selection?'Пауза. «Плей» продолжит выделенный фрагмент.':'Пауза. «Плей» начнёт с нового места.';
   }
   function pauseText(run){
     run.offset=runningTextSample(run);
@@ -356,7 +376,7 @@
     markTextSample(run,run.offset);
     showSpeechPosition();
     textButton();
-    $('text-status').textContent='Пауза. Можно переставить курсор.';
+    $('text-status').textContent='Пауза. Можно переставить курсор или изменить выделение.';
   }
   function startTextRun(run,ticket){
     const node=context.createBufferSource();
@@ -370,7 +390,7 @@
     textButton();
     showSpeechPosition();
     const {result,passport}=run.cache;
-    $('text-status').textContent='Повтор текста · '+(passport.controls.mode==='speech'?'Речь':'Исходно')+' · '+label(result.engineId)+' · '+result.duration.toFixed(2)+' с на круг · seed '+result.seed+'.';
+    $('text-status').textContent=(run.selection?'Повтор выделения · ':'Повтор текста · ')+(passport.controls.mode==='speech'?'Речь':'Исходно')+' · '+label(result.engineId)+' · '+result.duration.toFixed(2)+' с на круг · seed '+result.seed+'.';
     const tick=()=>{
       textFrame=0;
       if(!active(ticket)||source!==node)return;
@@ -381,33 +401,44 @@
   }
   async function playText(){
     if(textBusy)return;
+    if(document.activeElement!==speechField){
+      const {selectionStart,selectionEnd,selectionDirection}=speechField;
+      speechField.focus({preventScroll:true});
+      speechField.setSelectionRange(selectionStart,selectionEnd,selectionDirection);
+    }
+    rememberSpeechCaret();
     const heldRun=textRun;
     if(heldRun?.node){pauseText(heldRun);return;}
-    const ticket=heldRun?epoch:begin();
+    const selection=speechSelection();
+    const resume=heldRun&&sameSpeechSelection(selection,heldRun.selection);
+    const ticket=resume?epoch:begin();
     textBusy=true;
     textButton();
     try{
-      if(heldRun){
-        rememberSpeechCaret();
+      if(resume){
         await unlock();
         if(active(ticket))startTextRun(heldRun,ticket);
         return;
       }
-      rememberSpeechCaret();
-      // The field uses UTF-16 offsets. The playback timeline uses Unicode character indices.
+      // Slice before synthesis so the loop contains only the selected text.
+      // Convert the field's UTF-16 offset for the Unicode highlight timeline.
+      const text=selection?speechField.value.slice(selection.start,selection.end):speechField.value;
       const caretIndex=speechCharacterIndex();
       drawTextCursor();
       // Plan before opening the audio device: silent signs and invalid text
       // never create an AudioContext, a zero-length buffer or a repeat task.
-      readControls();const preflight=VoiceText.plan({text:$('speech-text').value,language:$('speech-language').value,catalog:[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],engine:E,settings:profile().settings,phones:profile().phones,prosody:readSpeechProsody()});showProsodyTrace(preflight.prosody);
-      await unlock();if(!active(ticket))return;const cache=await prepareText(ticket);if(!cache||!active(ticket))return;
+      readControls();const preflight=VoiceText.plan({text,language:$('speech-language').value,catalog:[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],engine:E,settings:profile().settings,phones:profile().phones,prosody:readSpeechProsody()});showProsodyTrace(preflight.prosody);
+      await unlock();if(!active(ticket))return;const cache=await prepareText(ticket,text);if(!cache||!active(ticket))return;
       const result=cache.result,buffer=context.createBuffer(1,result.samples.length,result.sampleRate);
       buffer.copyToChannel(result.samples,0);
-      textRun={buffer,cache,offset:sampleAtCaret(cache,caretIndex)};
+      textRun={buffer,cache,selection,characterOffset:selection?caretIndex:0,offset:selection?0:sampleAtCaret(cache,caretIndex)};
       startTextRun(textRun,ticket);
     }catch(e){if(active(ticket)){stopTextUI();retireSource();$('text-status').textContent='Текст: '+e.message;}}
   }
   $('text-play').onclick=playText;$('text-stop').onclick=()=>{begin();$('text-status').textContent='Текст остановлен.';};
+  $('text-play').addEventListener('mousedown',event=>{
+    if(event.button===0&&document.activeElement===speechField)event.preventDefault();
+  });
   $('text-play').addEventListener('pointerleave',()=>$('text-play').classList.remove('quiet-hover'));
   speechField.addEventListener('scroll',syncSpeechHighlightScroll,{passive:true});
   if(globalThis.ResizeObserver)new ResizeObserver(syncSpeechHighlight).observe(speechField);
@@ -529,7 +560,7 @@
     try{state.speechProsody=VoiceProsody.normalize(page.speechProsody??undefined);}
     catch{state.speechProsody=VoiceProsody.normalize();}
     syncSpeechProsody();drawTextCursor();textButton();
-    $('text-status').textContent='Поставьте курсор в тексте и нажмите «Плей».';
+    $('text-status').textContent='Поставьте курсор или выделите фрагмент и нажмите «Плей».';
 
     const first=!editor&&VoiceCatalog.find(r=>r.lang==='ru'&&r.kind==='sound');
     $('title').value=String(editor?.title??first?.label??'Моя буква').slice(0,100);

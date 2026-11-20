@@ -153,6 +153,7 @@ textarea { width: 100%; resize: vertical; }
   tab-size: 8;
 }
 #speech-text { position: relative; display: block; background: transparent; z-index: 1; }
+#speech-text::selection { background-color: color-mix(in srgb, var(--voice-focus) 32%, transparent); }
 .speech-highlight {
   position: absolute;
   top: 1px;
