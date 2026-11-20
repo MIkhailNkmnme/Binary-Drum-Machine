@@ -1,0 +1,48 @@
+{
+  "task": "МАЯ-688",
+  "release": "5fd7807f607dbddb7ece5172018bb2d40536827e",
+  "version": "1.039",
+  "checkedUtc": "2026-11-20T14:41:25.9122173Z",
+  "pagesRun": 44755407211,
+  "pagesConclusion": "success",
+  "targetedWaterTests": "17/17 PASS",
+  "browserAcceptance": "not run; exact user session not reproduced",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?v=1039",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "_js/hub-flow-core.js",
+      "url": "https://1001100.online/_js/hub-flow-core.js?v=1039",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.js?v=1039",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.css",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.css?v=1039",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "audit/reports/2026-11-20-mayatnik-water-trail.md",
+      "url": "https://1001100.online/audit/reports/2026-11-20-mayatnik-water-trail.md?v=1039",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "matches": true
+    }
+  ]
+}
