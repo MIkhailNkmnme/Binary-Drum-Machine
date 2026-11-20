@@ -11,7 +11,9 @@
   const speechHighlight=$('text-cursor');
   const waveform=VoiceWaveform({
     track:$('speech-wave'),canvas:$('speech-wave-canvas'),seek:$('speech-wave-seek'),
-    head:$('speech-wave-head'),time:$('speech-wave-time'),onSeek:seekTextWave
+    head:$('speech-wave-head'),highlight:$('speech-wave-range'),time:$('speech-wave-time'),
+    zoom:$('speech-wave-zoom'),full:$('speech-wave-full'),clear:$('speech-wave-clear'),
+    onSeek:seekTextWave,onRange:changeTextAudioRange
   });
   const DEFAULT_SPEECH=speechField.value;
   const PLAIN_RUSSIAN_EXAMPLE=DEFAULT_SPEECH.split('\n',1)[0].replace(/\u0301/g,'');
@@ -33,17 +35,18 @@
   const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]
     ||(language==='ru'&&(text===PLAIN_RUSSIAN_EXAMPLE||text===PREVIOUS_RUSSIAN_EXAMPLE))
     ||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
-  const state={engineId:R.defaultId||'robot',profiles:{},library:[],languages:[],silent:false,kind:'sound',compareMode:'profiles',legacyDraft:null,speechText:DEFAULT_SPEECH,speechLanguage:'ru',speechProsody:{...VoiceProsody.defaults},speechCaret:0};
+  const state={engineId:R.defaultId||'robot',profiles:{},library:[],languages:[],silent:false,kind:'sound',compareMode:'profiles',legacyDraft:null,speechText:DEFAULT_SPEECH,speechLanguage:'ru',speechProsody:{...VoiceProsody.defaults},speechPlayback:{rate:1,volume:1},speechCaret:0};
   for(const item of R.list){const e=R.get(item.id);state.profiles[item.id]={settings:{...e.defaults},phones:{},userPhones:{}};}
   let E=R.get(state.engineId),worker=null,jobId=0,epoch=0,revision=0,importTicket=0;
-  let context=null,source=null,sourceDone=null,textOutput=null,current=null,selectedId='';
+  let context=null,source=null,sourceDone=null,textOutput=null,textLevel=null,current=null,selectedId='';
   let activeTopic='tab-text',compactTabs=new Set();
   let candidates=[],comparisons=[],paused=false,sequencePlaying=false,hold=null;
   let robotManifest=null,alphabetManifest=null,originalError='';
   let textCache=null,wholeTextCache=null,textRun=null,textFrame=0,textBusy=false,textMarked=-1,textSpans=[];
-  let speechSelectionEnd=0;
+  let speechSelectionEnd=0,pendingTextSeek=null;
   const nodes=new Map(),choices=new Map(),frames=[];
   const fadingTextSources=new Map();
+  const textPlaybackControls=new Map();
   const profile=()=>state.profiles[state.engineId],label=id=>R.list.find(x=>x.id===id)?.label||id;
   const status=text=>{$('status').textContent=text;},active=t=>t===epoch;
   const safeId=id=>typeof id==='string'&&/^[a-zA-Z_][a-zA-Z0-9_-]{0,31}$/.test(id)&&!['__proto__','prototype','constructor'].includes(id);
@@ -118,9 +121,9 @@
   function stopAudio(except=null){stopTextUI();retireSource();sequencePlaying=false;paused=false;pauseControls(false);document.querySelectorAll('audio').forEach(a=>{if(a!==except)a.pause();});}
   function begin(except=null){epoch++;cancelWorker();stopAudio(except);return epoch;}
   function capturePage(){
-    const {speechText,speechLanguage,speechProsody,speechCaret,kind,silent,compareMode,variationSeed}=state;
+    const {speechText,speechLanguage,speechProsody,speechPlayback,speechCaret,kind,silent,compareMode,variationSeed}=state;
     return {
-      speechText,speechLanguage,speechProsody,speechCaret,kind,silent,compareMode,variationSeed,
+      speechText,speechLanguage,speechProsody,speechPlayback:{...speechPlayback},speechCaret,kind,silent,compareMode,variationSeed,
       topic:activeTopic,compactTabs:[...compactTabs],
       editor:{title:$('title').value,symbol:$('symbol').value,lang:$('lang-code').value,langName:$('lang-name').value,
         scoreText:$('score').value,recipeId:selectedId,recipeMode:$('recipe-mode').value,recipeLanguage:$('language').value,
@@ -231,7 +234,7 @@
   function showPhone(){const id=$('phone').value,p=profile().phones[id]||profile().userPhones[id]||globalThis.VoiceGerman?.getPhone(state.engineId,id)||VoiceEnglish.getPhone(state.engineId,id)||E.getPhone(id);if(!p)return;$('phone-id').value=id;$('phone-kind').value=p.kind;for(const key of ['formants','bandwidths','weights'])for(let i=0;i<4;i++)$(key+i).value=p[key][i];$('phone-voice').value=p.voice;$('phone-noise').value=p.noise;$('phone-status').textContent=label(state.engineId)+' · '+(E.phoneLabels?.[id]||globalThis.VoiceGerman?.phoneLabels[id]||VoiceEnglish.phoneLabels[id]||id);}
   for(const k of E.kinds)option($('phone-kind'),k.id,k.label);
   for(let i=0;i<4;i++){const box=document.createElement('div');box.className='formant';box.id='formant-'+i;const title=document.createElement('strong');title.textContent='Форманта '+(i+1);box.append(title);for(const [key,text,min,max,step]of [['formants','Частота, Гц',20,9922.5,.5],['bandwidths','Полоса, Гц',20,4000,1],['weights','Вес',0,4,.01]]){const l=document.createElement('label');l.textContent=text;const n=document.createElement('input');Object.assign(n,{type:'number',id:key+i,min,max,step});l.append(n);box.append(l);}$('phone-formants').append(box);}
-  function render(recipe){cancelWorker();const id=++jobId;return new Promise((resolve,reject)=>{const w=new Worker('render-worker.js?v=024');worker=w;w.reject=reject;w.onmessage=event=>{if(worker!==w||event.data.id!==id)return;worker=null;w.terminate();if(event.data.type==='error'){reject(Error(event.data.error?.message||'Ошибка синтеза.'));return;}const result=event.data.result;if(event.data.type!=='result'||result?.engineId!==recipe.engineId){reject(Error('Движок вернул несовместимый результат.'));return;}resolve(result);};w.onerror=event=>{if(worker===w)worker=null;w.terminate();reject(Error(event.message||'Worker не загрузился.'));};w.postMessage({id,engineId:recipe.engineId,score:recipe.score,settings:recipe.settings,phones:recipe.phones,...(recipe.prosody?{prosody:recipe.prosody}:{})});});}
+  function render(recipe){cancelWorker();const id=++jobId;return new Promise((resolve,reject)=>{const w=new Worker('render-worker.js?v=025');worker=w;w.reject=reject;w.onmessage=event=>{if(worker!==w||event.data.id!==id)return;worker=null;w.terminate();if(event.data.type==='error'){reject(Error(event.data.error?.message||'Ошибка синтеза.'));return;}const result=event.data.result;if(event.data.type!=='result'||result?.engineId!==recipe.engineId){reject(Error('Движок вернул несовместимый результат.'));return;}resolve(result);};w.onerror=event=>{if(worker===w)worker=null;w.terminate();reject(Error(event.message||'Worker не загрузился.'));};w.postMessage({id,engineId:recipe.engineId,score:recipe.score,settings:recipe.settings,phones:recipe.phones,...(recipe.prosody?{prosody:recipe.prosody}:{})});});}
   async function unlock(){context ||= new (window.AudioContext||window.webkitAudioContext)();await context.resume();}
   function play(result){return new Promise(resolve=>{if(!context||context.state!=='running'){resolve();return;}retireSource();const buffer=context.createBuffer(1,result.samples.length,result.sampleRate);buffer.copyToChannel(result.samples,0);const node=context.createBufferSource();node.buffer=buffer;node.connect(context.destination);source=node;sourceDone=resolve;node.onended=()=>{node.disconnect();if(source===node){source=null;sourceDone=null;}resolve();};node.start();});}
   function snapshot(recipe,result){return {...clone(recipe),engineId:result.engineId,engineVersion:result.engineVersion,settings:clone(result.settings),phones:clone(result.phones)};}
@@ -273,6 +276,7 @@
     speechSelectionEnd=selectionEnd;
     showSpeechPosition();
     if(persist){
+      if(!textRun){pendingTextSeek=null;waveform.clearRange();}
       seekPausedText();
       textButton();
       if(moved)save();
@@ -349,7 +353,7 @@
       :continuing?'Плей · продолжить чтение':selection?'Плей · повторять выделение':'Плей · начать чтение с курсора';
     command.setAttribute('aria-label',command.title);
     commandIcon(command,playing?'pause':'play');
-    waveform.setEnabled(Boolean(textRun)&&!textBusy);
+    waveform.setEnabled(Boolean(textCache)&&!textBusy);
   }
   function cancelTextFrame(){
     if(textFrame)cancelAnimationFrame(textFrame);
@@ -360,6 +364,7 @@
     if(textBusy||textRun)$('text-status').textContent='Текст остановлен.';
     textBusy=false;
     textRun=null;
+    pendingTextSeek=null;
     waveform.setPosition(0);
     markText(-1);
     textButton();
@@ -400,9 +405,27 @@
     showProsodyTrace(plan.prosody,cache.result.duration,parts.length);
     return cache;
   }
-  function runningTextSample(run){
-    const elapsed=Math.max(0,context.currentTime-run.startedAt);
-    return (run.offset+Math.floor(elapsed*run.buffer.sampleRate))%run.buffer.length;
+  function runningTextSample(run,now=context.currentTime){
+    const start=run.audioRange?.start??0;
+    const elapsed=Math.max(0,now-run.rateAt)*run.buffer.sampleRate*run.rate;
+    return start+(run.offset-start+Math.floor(elapsed))%run.loopBuffer.length;
+  }
+  function setTextAudioRange(run,range){
+    run.audioRange=range;
+    run.loopBuffer=run.buffer;
+    if(!range)return;
+    if(range.start===0&&range.end===run.buffer.length)return;
+    // Taper only the preview clip. Keep the original waveform and WAV intact.
+    const rate=run.buffer.sampleRate,length=range.end-range.start;
+    const loop=context.createBuffer(1,length,rate);
+    loop.copyToChannel(run.cache.result.samples.subarray(range.start,range.end),0);
+    const samples=loop.getChannelData(0),fade=Math.min(Math.round(rate*.003),Math.floor((length-1)/2));
+    for(let i=0;i<fade;i++){
+      const weight=i/fade;
+      samples[i]*=weight;
+      samples[length-1-i]*=weight;
+    }
+    run.loopBuffer=loop;
   }
   function markTextSample(run,sample){
     waveform.setPosition(sample);
@@ -421,7 +444,11 @@
       $('text-status').textContent=selection?'Пауза. «Плей» повторит выделенный фрагмент.':'Пауза. «Плей» начнёт с курсора.';
       return;
     }
-    if(!selection)run.offset=sampleAtCaret(run.cache,speechCharacterIndex());
+    if(!selection){
+      const offset=sampleAtCaret(run.cache,speechCharacterIndex());
+      clearAudioRangeOutside(run,offset);
+      run.offset=offset;
+    }
     markTextSample(run,run.offset);
     $('text-status').textContent=selection?'Пауза. «Плей» продолжит выделенный фрагмент.':'Пауза. «Плей» начнёт с нового места.';
   }
@@ -437,21 +464,31 @@
   }
   function startTextRun(run,ticket,delay=.03){
     const node=context.createBufferSource(),output=context.createGain();
-    node.buffer=run.buffer;
+    node.buffer=run.loopBuffer;
     node.loop=true;
     node.connect(output);
-    output.connect(context.destination);
+    if(!textLevel){
+      textLevel=context.createGain();
+      textLevel.gain.value=state.speechPlayback.volume;
+      textLevel.connect(context.destination);
+    }
+    output.connect(textLevel);
     run.startedAt=context.currentTime+delay;
+    run.rateAt=run.startedAt;
+    run.rate=state.speechPlayback.rate;
+    node.playbackRate.value=run.rate;
     output.gain.setValueAtTime(0,run.startedAt);
     output.gain.linearRampToValueAtTime(1,run.startedAt+TEXT_FADE);
     source=run.node=node;
     textOutput={node:output,startedAt:run.startedAt};
-    node.start(run.startedAt,run.offset/run.buffer.sampleRate);
+    node.start(run.startedAt,(run.offset-(run.audioRange?.start??0))/run.buffer.sampleRate);
     textBusy=false;
     textButton();
     markTextSample(run,run.offset);
     const {result,passport}=run.cache;
-    $('text-status').textContent=(run.selection?'Повтор выделения · ':'Повтор текста · ')+(passport.controls.mode==='speech'?'Речь':'Исходно')+' · '+label(result.engineId)+' · '+result.duration.toFixed(2)+' с на круг · seed '+result.seed+'.';
+    const duration=run.loopBuffer.length/run.buffer.sampleRate;
+    const repeat=run.audioRange?'Повтор участка дорожки':run.selection?'Повтор выделения':'Повтор текста';
+    $('text-status').textContent=repeat+' · '+(passport.controls.mode==='speech'?'Речь':'Исходно')+' · '+label(result.engineId)+' · '+duration.toFixed(2)+' с на круг · seed '+result.seed+'.';
     const tick=()=>{
       textFrame=0;
       if(!active(ticket)||source!==node)return;
@@ -460,9 +497,7 @@
     };
     textFrame=requestAnimationFrame(tick);
   }
-  function seekTextWave(offset){
-    const run=textRun;
-    if(!run||textBusy)return;
+  function moveTextRun(run,offset){
     run.offset=offset;
     if(run.node){
       cancelTextFrame();
@@ -473,10 +508,46 @@
       $('text-status').textContent='Пауза. «Плей» продолжит с позиции на дорожке.';
     }
   }
+  function outsideAudioRange(range,offset){
+    return range&&(offset<range.start||offset>=range.end);
+  }
+  function clearAudioRangeOutside(run,offset){
+    if(!outsideAudioRange(run.audioRange,offset))return;
+    waveform.clearRange();
+    setTextAudioRange(run,null);
+  }
+  function seekTextWave(offset){
+    if(textBusy)return;
+    const run=textRun;
+    if(!run){
+      if(!textCache)return;
+      if(outsideAudioRange(waveform.getRange(),offset))waveform.clearRange();
+      pendingTextSeek={result:textCache.result,offset};
+      waveform.setPosition(offset);
+      return;
+    }
+    clearAudioRangeOutside(run,offset);
+    moveTextRun(run,offset);
+  }
+  function changeTextAudioRange(range){
+    if(textBusy)return;
+    const run=textRun;
+    if(!run){
+      if(range){
+        pendingTextSeek=null;
+        waveform.setPosition(range.start);
+      }
+      return;
+    }
+    const offset=range?.start??(run.node?runningTextSample(run):run.offset);
+    setTextAudioRange(run,range);
+    moveTextRun(run,offset);
+  }
   function seekPlayingText(){
     rememberSpeechCaret();
     const run=textRun;
-    if(!run?.node||speechSelection())return;
+    if(!run){pendingTextSeek=null;waveform.clearRange();return;}
+    if(!run.node||speechSelection())return;
     if(run.selection){
       cancelTextFrame();
       retireSource();
@@ -499,6 +570,7 @@
     if(heldRun?.node){pauseText(heldRun);return;}
     const selection=speechSelection();
     const resume=heldRun&&sameSpeechSelection(selection,heldRun.selection);
+    const queuedSeek=pendingTextSeek;
     const ticket=resume?epoch:begin();
     textBusy=true;
     textButton();
@@ -521,9 +593,78 @@
       buffer.copyToChannel(result.samples,0);
       textRun={buffer,cache,selection,characterOffset:selection?caretIndex:0,offset:selection?0:sampleAtCaret(cache,caretIndex)};
       waveform.setResult(result);
+      const range=waveform.getRange();
+      setTextAudioRange(textRun,range);
+      if(queuedSeek?.result===result)textRun.offset=queuedSeek.offset;
+      else if(range)textRun.offset=range.start;
       startTextRun(textRun,ticket);
     }catch(e){if(active(ticket)){stopTextUI();retireSource();$('text-status').textContent='Текст: '+e.message;}}
   }
+  function applyTextPlayback(key,value){
+    state.speechPlayback[key]=value;
+    if(key==='volume'){
+      if(textLevel)textLevel.gain.setTargetAtTime(value,context.currentTime,.012);
+      return;
+    }
+    const run=textRun;
+    if(!run?.node)return;
+    const now=context.currentTime;
+    run.offset=runningTextSample(run,now);
+    run.rateAt=Math.max(now,run.startedAt);
+    run.rate=value;
+    run.node.playbackRate.setValueAtTime(value,run.rateAt);
+  }
+  function buildTextPlaybackControls(){
+    for(const [key,name,min,max,step,format] of [
+      ['rate','Скорость',.25,3,.05,value=>value.toFixed(2)+'×'],
+      ['volume','Громкость',0,1,.01,value=>Math.round(value*100)+'%']
+    ]){
+      const wrap=document.createElement('div'),label=document.createElement('label'),host=document.createElement('div');
+      const middle=document.createElement('div'),range=document.createElement('input'),output=document.createElement('output');
+      wrap.className='parameter';
+      label.htmlFor='speech-playback-'+key;
+      label.textContent=name;
+      Object.assign(range,{type:'range',id:label.htmlFor,min,max,step,value:1});
+      const arrow=(direction,symbol)=>{
+        const side=document.createElement('button');
+        side.type='button';side.textContent=symbol;side.title=(direction<0?'Уменьшить ':'Увеличить ')+name.toLowerCase();
+        side.setAttribute('aria-label',side.title);
+        const nudge=()=>{
+          const previous=range.valueAsNumber;
+          if(direction<0)range.stepDown();else range.stepUp();
+          if(range.valueAsNumber===previous)return false;
+          update();save();return true;
+        };
+        side.addEventListener('click',event=>{if(!event.detail)nudge();});
+        side.addEventListener('pointerdown',event=>{
+          if(event.button!==0)return;
+          endHold();
+          if(!nudge())return;
+          hold={delay:null,timer:null};
+          const mine=hold;
+          mine.delay=setTimeout(()=>{
+            if(hold===mine)mine.timer=setInterval(()=>{if(!nudge())endHold();},90);
+          },350);
+        });
+        return side;
+      };
+      const update=()=>{
+        const value=range.valueAsNumber;
+        output.textContent=format(value);
+        range.setAttribute('aria-valuetext',output.textContent);
+        frame.sync();
+        applyTextPlayback(key,value);
+      };
+      const left=arrow(-1,'◀'),right=arrow(1,'▶');
+      middle.append(range,output);host.append(left,middle,right);wrap.append(label,host);
+      $('speech-playback-controls').append(wrap);
+      const frame=ZerkControlFrame.attach(host,left,middle,right,{input:range,output,valueInThumb:true});
+      range.addEventListener('input',update);
+      range.addEventListener('change',save);
+      textPlaybackControls.set(key,{range,update});
+    }
+  }
+  buildTextPlaybackControls();
   $('text-play').onclick=playText;$('text-stop').onclick=()=>{begin();$('text-status').textContent='Текст остановлен.';};
   $('text-play').addEventListener('mousedown',event=>{
     if(event.button===0&&document.activeElement===speechField)event.preventDefault();
@@ -649,6 +790,11 @@
     state.silent=page.silent===true;
     state.compareMode=page.compareMode==='common'?'common':'profiles';
     state.variationSeed=page.variationSeed;
+    for(const [key,{range,update}] of textPlaybackControls){
+      const value=page.speechPlayback?.[key];
+      range.value=Number.isFinite(value)?value:1;
+      update();
+    }
     state.speechLanguage=['ru','en','de'].includes(page.speechLanguage)?page.speechLanguage:'ru';
     const savedText=page.speechText;
     const currentText=typeof savedText==='string'&&(!isFactoryText(savedText,state.speechLanguage)||savedText===SPEECH_EXAMPLES[state.speechLanguage]);

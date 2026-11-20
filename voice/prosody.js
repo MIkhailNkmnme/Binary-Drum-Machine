@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.3';
+  const version='text-prosody-v1.2.4';
   const voicedStops=new Set(['b','g','d']);
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -72,9 +72,11 @@
       const word=wordFor(unit.cleanIndices?.[0]),marked=(unit.cleanIndices||[]).some(i=>prepared.stressed.has(i));
       const char=prepared.letters[unit.cleanIndices?.[0]],numeric=/^[0-9]$/.test(char||''),numericStress=numeric?digitStress[language==='de'?'de':'ru'][Number(char)]:[];
       unit.stresses=[];
-      unit.closedVoicedStop=language==='ru'&&unit.kinds.length===1&&unit.kinds[0]==='stop'
+      const isolated=language==='ru'&&unit.score.length===1
         &&word&&word.start===unit.cleanIndices[0]&&word.end-word.start===unit.cleanIndices.length
-        &&voicedStops.has(unit.score[0].id)&&!Object.hasOwn(phones,unit.score[0].id);
+        &&!Object.hasOwn(phones,unit.score[0].id);
+      unit.closedVoicedStop=isolated&&unit.kinds[0]==='stop'&&voicedStops.has(unit.score[0].id);
+      unit.isolatedZ=isolated&&unit.kinds[0]==='fricative'&&unit.score[0].id==='z';
       for(let j=0;j<unit.score.length;j++){
         const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(unit.enStressTokens?unit.enStressTokens.includes(j):marked||numericStress.includes(j));unit.stresses.push(stress);
         const factor={vowel:.72,stop:.80,affricate:.82,fricative:.80,sonorant:.82,trill:.82,rhotic:.82,silence:1}[k]||1;
@@ -107,7 +109,7 @@
         const token=u.score[j],count=Math.round(token.duration/settings.speed*engine.limits.sampleRate),from=total?Math.min(1,elapsed/total):0,to=total?Math.min(1,(elapsed+count)/total):1,k=u.kinds[j],stress=u.stresses[j];
         const accent=config.contour==='flat'?0:stress?1.5*amount:0;
         u.prosody.push({pitchStartSemitones:clamp(contourValue(type,from)+accent,-12,12),pitchEndSemitones:clamp(contourValue(type,to)+accent*.35,-12,12),gain:k==='silence'?0:stress?1+.18*amount:k==='fricative' ? .96 : 1,
-          ...(u.closedVoicedStop?{closedVoicedStop:true}:{})});elapsed+=count;
+          ...(u.closedVoicedStop?{closedVoicedStop:true}:{}),...(u.isolatedZ?{isolatedZ:true}:{})});elapsed+=count;
       }
     }
     const unknown=prepared.words.filter(w=>['unknown','en-rules'].includes(w.source)).map(w=>w.word),unique=[...new Set(unknown)];

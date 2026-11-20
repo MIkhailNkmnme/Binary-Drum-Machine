@@ -19,14 +19,19 @@
   // Each noise source is concentrated in its own band before the vocal tract.
   // The values are centre frequency, bandwidth (Hz), and passband gain.
   const speechFricationBands=new Map([
-    ['zh',[1750,1150,.55]],['s',[3650,1600,.32]],['f',[1150,650,.7]],['h',[750,950,.7]],
+    ['zh',[1750,1150,.55]],['z',[3400,1300,.4]],['s',[3650,1600,.32]],['f',[1150,650,.7]],['h',[750,950,.7]],
     ['ts',[3300,1750,.4]],['ch',[2400,1150,.48]],['sh',[2100,1100,.43]],['shj',[2850,1500,.45]]
   ]);
   function phoneProfile(profiles,id){
     return profiles.get(id)??(id.endsWith('j')?profiles.get(id.slice(0,-1)):null);
   }
   const voicedStops=new Set(['b','g','d']);
-  function speechPhone(id,phone,closedVoicedStop){
+  function speechPhone(id,phone,closedVoicedStop,isolatedZ){
+    if(isolatedZ&&id==='z'&&phone.kind==='fricative'){
+      return {...phone,kind:'sonorant',voice:.60,noise:0,
+        formants:[300,1650,...phone.formants.slice(2)],bandwidths:[145,...phone.bandwidths.slice(1)],
+        weights:[.65,.18,.035,0]};
+    }
     if(closedVoicedStop&&phone.kind==='stop'&&voicedStops.has(id)){
       // An isolated stop is the low periodic closure, with no release noise.
       return {...phone,kind:'sonorant',voice:.42,noise:0,
@@ -133,7 +138,7 @@
       if(!object(p))throw Error('Просодия: неверный сегмент '+(i+1));
       return {pitchStartSemitones:number(p.pitchStartSemitones,'pitchStartSemitones',-12,12),
         pitchEndSemitones:number(p.pitchEndSemitones,'pitchEndSemitones',-12,12),gain:number(p.gain,'gain',0,2),
-        ...(p.closedVoicedStop===true?{closedVoicedStop:true}:{})};
+        ...(p.closedVoicedStop===true?{closedVoicedStop:true}:{}),...(p.isolatedZ===true?{isolatedZ:true}:{})};
     });
     let total=0;const boundaries=counts.map((count,index)=>{const startSample=total;total+=count;return {index,startSample,endSample:total};});
     if(total>12*rate)throw Error('Просодия: превышен предел 12 секунд.');
@@ -157,9 +162,10 @@
     const softenRussianFrication=input.softenFrication===true;
     const articulatedFrication=input.articulatedFrication===true;
     const smoothStopRelease=input.smoothStopRelease===true;
+    const bandLimitedZ=input.bandLimitedZ===true;
     const appliedProsody={version:1,segments,transitionMs,rangeStart,rangeEnd,
       ...(softenRussianFrication?{softenFrication:true}:{}),...(articulatedFrication?{articulatedFrication:true}:{}),
-      ...(smoothStopRelease?{smoothStopRelease:true}:{})};
+      ...(smoothStopRelease?{smoothStopRelease:true}:{}),...(bandLimitedZ?{bandLimitedZ:true}:{})};
     const diagnosticLimits={semitones:[-12,12],segmentGain:[0,2],transitionMs:[0,80],frequencyHz:[floor,ceiling],
       requestedMinimumFrequency:requestedMin,requestedMaximumFrequency:requestedMax,
       effectiveMinimumFrequency:clamp(requestedMin,floor,ceiling),effectiveMaximumFrequency:maximumFrequency,
@@ -172,9 +178,10 @@
       frequency:(base,control)=>clamp(base*control.pitchMultiplier,floor,ceiling),
       speechPhone:(id,phone,index)=>{
         const closed=segments[index]?.closedVoicedStop===true&&voicedStops.has(id);
-        return articulatedFrication||closed?speechPhone(id,phone,closed):phone;
+        const isolatedZ=segments[index]?.isolatedZ===true&&id==='z';
+        return articulatedFrication||closed||isolatedZ?speechPhone(id,phone,closed,isolatedZ):phone;
       },
-      fricationSource:(id,kind)=>articulatedFrication?createFricationSource(id,kind,rate):null,
+      fricationSource:(id,kind)=>articulatedFrication&&(bandLimitedZ||(id!=='z'&&id!=='zj'))?createFricationSource(id,kind,rate):null,
       stopRelease:(id,kind,count,fraction)=>smoothStopRelease&&kind==='stop'&&russianStops.has(id)
         ?createStopRelease(count,rate,fraction):null,
       softenFrication:(samples,phones)=>{

@@ -170,9 +170,13 @@ textarea { width: 100%; resize: vertical; }
 .speech-wave-plot:focus-within { outline: 1px solid var(--voice-focus); outline-offset: 2px; }
 #speech-wave-canvas { display: block; width: 100%; height: 62px; }
 #speech-wave-seek { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; touch-action: pan-y; }
-#speech-wave-seek:not(:disabled) { cursor: ew-resize; }
+#speech-wave-seek:not(:disabled) { cursor: crosshair; }
+#speech-wave-range { position: absolute; inset: 0 auto 0 0; border-inline: 1px solid var(--voice-focus); background: color-mix(in srgb,var(--voice-focus) 27%,transparent); pointer-events: none; }
 #speech-wave-head { position: absolute; inset: 0 auto 0 0; width: 1px; background: var(--gz-txt); pointer-events: none; }
-#speech-wave-time { display: block; margin-top: 3px; color: #91a6b6; font-variant-numeric: tabular-nums; font-size: 12px; }
+#speech-wave-time { color: #91a6b6; font-variant-numeric: tabular-nums; font-size: 12px; }
+.speech-wave-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 5px; }
+.speech-playback .parameter { margin-top: 3px; }
+.speech-playback .parameter > label { min-height: 0; }
 #prosody-trace { max-height: 280px; overflow: auto; font-size: 12px; }
 #prosody-note { font-size: 12px; }
 
