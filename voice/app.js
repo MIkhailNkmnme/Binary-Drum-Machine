@@ -31,6 +31,7 @@
   let textCache=null,wholeTextCache=null,textRun=null,textFrame=0,textBusy=false,textMarked=-1,textSpans=[];
   let speechSelectionEnd=0;
   const nodes=new Map(),choices=new Map(),frames=[];
+  const fadingTextSources=new Map();
   const profile=()=>state.profiles[state.engineId],label=id=>R.list.find(x=>x.id===id)?.label||id;
   const status=text=>{$('status').textContent=text;},active=t=>t===epoch;
   const safeId=id=>typeof id==='string'&&/^[a-zA-Z_][a-zA-Z0-9_-]{0,31}$/.test(id)&&!['__proto__','prototype','constructor'].includes(id);
@@ -71,19 +72,29 @@
   function option(select,value,text){const o=document.createElement('option');o.value=value;o.textContent=text;select.append(o);}
   function endHold(){if(hold){clearTimeout(hold.delay);clearInterval(hold.timer);hold=null;}}
   function cancelWorker(){if(worker){const old=worker;worker=null;old.terminate();old.reject(Error('Расчёт отменён.'));}}
-  function retireSource(){
+  function retireSource(fade=true){
+    if(!fade)for(const [old,disconnect] of fadingTextSources){
+      try{old.stop();}catch{}
+      disconnect();
+    }
     if(source){
       const old=source,output=textOutput;
       source=null;textOutput=null;old.onended=null;
-      const disconnect=()=>{old.disconnect();output?.node.disconnect();};
-      if(output&&context.state==='running'){
+      const disconnect=()=>{
+        fadingTextSources.delete(old);
+        old.onended=null;
+        old.disconnect();
+        output?.node.disconnect();
+      };
+      if(fade&&output&&context.state==='running'){
         const now=context.currentTime,end=now+TEXT_FADE,gain=output.node.gain;
         const level=Math.max(0,Math.min(1,(now-output.startedAt)/TEXT_FADE));
         gain.cancelScheduledValues(now);
         gain.setValueAtTime(level,now);
         gain.linearRampToValueAtTime(0,end);
+        fadingTextSources.set(old,disconnect);
         old.onended=disconnect;
-        try{old.stop(end);}catch{old.onended=null;disconnect();}
+        try{old.stop(end);}catch{disconnect();}
       }else{
         try{old.stop();}catch{}
         disconnect();
@@ -368,7 +379,12 @@
     if(!offset||!actual)throw Error('Нет звучащего текста.');const samples=new Float32Array(offset);let at=0;for(const piece of pieces){samples.set(piece,at);at+=piece.length;}
     const passport={format:'zerkalius-voice-text',version:1,text,language,engineId,engineVersion:actual.engineVersion,plannerVersion:VoiceProsody.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,controls:clone(prosody),settings:clone(actual.settings),phones:clone(actual.phones),stressTrace:clone(plan.prosody.words),parts,sampleRate:plan.rate,sampleCount:offset,duration:offset/plan.rate,timeline:clone(timeline)};
     const cache={key,text,language,timeline,trace:plan.prosody,passport,result:{samples,sampleRate:plan.rate,duration:offset/plan.rate,engineId,engineVersion:actual.engineVersion,settings:clone(actual.settings),phones:clone(actual.phones),seed:actual.seed}};
-    if(!active(ticket))return null;textCache=cache;if(text===speechField.value)wholeTextCache=cache;$('text-wav').disabled=false;$('text-json').disabled=false;showProsodyTrace(plan.prosody,cache.result.duration,parts.length);return cache;
+    if(!active(ticket))return null;
+    textCache=cache;
+    if(text===speechField.value)wholeTextCache=cache;
+    $('text-wav').disabled=false;$('text-json').disabled=false;
+    showProsodyTrace(plan.prosody,cache.result.duration,parts.length);
+    return cache;
   }
   function runningTextSample(run){
     const elapsed=Math.max(0,context.currentTime-run.startedAt);
@@ -748,5 +764,13 @@
       try{readEngineStorage(id);}catch{}
     }
   });
-  window.addEventListener('pointerup',endHold);window.addEventListener('pointercancel',endHold);window.addEventListener('blur',endHold);window.addEventListener('pagehide',()=>{rememberSpeechCaret();endHold();importTicket++;begin();context?.suspend().catch(()=>{});});
+  window.addEventListener('pointerup',endHold);window.addEventListener('pointercancel',endHold);window.addEventListener('blur',endHold);
+  window.addEventListener('pagehide',()=>{
+    rememberSpeechCaret();
+    endHold();
+    importTicket++;
+    retireSource(false);
+    begin();
+    context?.suspend().catch(()=>{});
+  });
 })();
