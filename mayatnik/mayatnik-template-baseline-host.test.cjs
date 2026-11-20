@@ -54,19 +54,39 @@ function turningFixture(){const f=fixture(),c=f.c;c.f.val.fill(1);f.source=c.f.v
  c.templateAxisCommit=before=>{c.templateMatchRevision++;c.pushHistory({indices:new Uint32Array(),previous:new Uint32Array(),next:new Uint32Array(),beforeScene:before,afterScene:c.sceneSnapshot(),bytes:1024,templateOwned:true});};
  for(const name of ['templateAxisState','flipParts','templateAxisSemanticParts','templateAxisCanvasParts','templateAxisBuildTurn','toggleTemplateAxisOperation','turnTemplateAxis','historyStep'])vm.runInContext(fn(name),c);return f;
 }
-test('XOR and AND results keep source vacate in one edit and Reset/frame departure discard operation mode and derived pixels',()=>{
- for(const op of ['xor','and'])for(const frame of [false,true]){const f=turningFixture(),c=f.c,original=c.colourTemplate.parts[0].mask.data.slice();c.st.bitZeroColour='#112233';c.st.bitOneColour='#ffffff';c.hexRGB=s=>[1,3,5].map(i=>parseInt(s.slice(i,i+2),16));c.toggleTemplateAxisOperation(op);const n=c.fillHistory.length;assert.equal(c.turnTemplateAxis('centerV'),true);assert.equal(c.fillHistory.length,n+1);assert.ok(c.templateMatchLayer);assert.ok(c.colourTemplate.parts.every(p=>p.bitsData));assert.equal(c.colourTemplate.templateAxes.operation,op);assert.deepEqual(c.f.val,f.source);
+test('XOR and AND vacate only uncovered cells and Reset/frame departure discard operation mode and derived pixels',()=>{
+ for(const op of ['xor','and'])for(const frame of [false,true]){const f=turningFixture(),c=f.c,original=c.colourTemplate.parts[0].mask.data.slice();c.st.bitZeroColour='#112233';c.st.bitOneColour='#ffffff';c.hexRGB=s=>[1,3,5].map(i=>parseInt(s.slice(i,i+2),16));c.toggleTemplateAxisOperation(op);const n=c.fillHistory.length;assert.equal(c.turnTemplateAxis('centerV'),true);assert.equal(c.fillHistory.length,n+1);
+  assert.deepEqual([...(c.templateMatchLayer?.indices||[])],op==='and'?[17]:[]);
+  assert.ok(c.colourTemplate.parts.every(p=>p.bitsData));assert.equal(c.colourTemplate.templateAxes.operation,op);assert.deepEqual(c.f.val,f.source);
   if(frame){f.api.frame(4);assert.equal(c.templateItems.length,0);}else{f.api.reset();assert.deepEqual([...c.templateItems[0].parts[0].mask.data],[...original]);assert.equal(c.templateItems[0].parts[0].compositionSources,undefined);assert.equal(c.templateItems[0].templateAxes,undefined);}
   assert.equal(c.templateMatchLayer,null);assert.equal(c.templateLibrary,f.library);assert.equal(c.fillMask[0],888);assert.equal(c.templateFollow.on,true);
  }
 });
-test('axis turn vacates only the original field silhouette once; repeated same-axis turns return the same item and one Undo restores source',()=>{
+test('returning onto the original footprint restores the underlay and Undo restores the previous pose and anti-bits',()=>{
  for(const gpu of [false,true]){const f=turningFixture(),c=f.c;c.gpuBig=gpu?{}:null;const id=c.colourTemplate.id,original=c.colourTemplate.parts[0].mask.data.slice(),initialRect=c.templateRect(c.colourTemplate.parts[0]);
   assert.equal(c.turnTemplateAxis('right'),true);assert.equal(c.templateItems.length,1);assert.equal(c.colourTemplate.id,id);assert.deepEqual([...c.templateMatchLayer.indices].sort((a,b)=>a-b),[9,10,17]);assert.equal(c.templateMatchLayer.bits[18],2,'transparent hole is untouched');assert.equal(c.templateMatchLayer.bits[11],2,'intermediate destination is not erased');assert.equal(c.fillHistory.length,1);
-  const cut=c.templateMatchLayer;assert.equal(c.turnTemplateAxis('right'),true);assert.equal(c.templateMatchLayer,cut,'second turn does not erase a new underlay');assert.deepEqual(c.templateRect(c.colourTemplate.parts[0]),initialRect);assert.deepEqual([...c.colourTemplate.parts[0].mask.data],[...original]);assert.equal(c.templateItems.length,1);
+  const cut=c.templateMatchLayer;
+  if(gpu)delete c.colourTemplate.sourceVacatedCells; // Older saves recorded only the vacated flag.
+  assert.equal(c.turnTemplateAxis('right'),true);assert.equal(c.templateMatchLayer,null);assert.deepEqual(c.templateRect(c.colourTemplate.parts[0]),initialRect);assert.deepEqual([...c.colourTemplate.parts[0].mask.data],[...original]);assert.equal(c.templateItems.length,1);
   assert.equal(c.historyStep(false),true);assert.equal(c.templateMatchLayer,cut);assert.equal(c.historyStep(false),true);assert.equal(c.templateMatchLayer,null);assert.equal(c.colourTemplate.sourceVacated,undefined);assert.deepEqual(c.f.val,f.source);
   assert.equal(c.historyStep(true),true);assert.equal(c.templateMatchLayer,cut);f.api.reset();assert.equal(c.templateMatchLayer,null);assert.equal(c.templateItems[0].sourceVacated,undefined);assert.equal(c.templateItems[0].templateAxes,undefined);
  }
+});
+test('an ordinary turn preserves mask RGBA and does not write anti-bits to the overlap',()=>{
+ const {c,source}=turningFixture(),part=c.colourTemplate.parts[0];
+ const red=0xff3849cd,blue=0xffdc6931,green=0x80459a2e;
+ part.mask.data=Uint32Array.of(red,blue,green,0);part.bitsData=Int8Array.of(1,1,1,-1);
+ c.templatePaintCanvas=()=>null;
+ vm.runInContext(fn('templateDisplayCanvas'),c);
+ assert.equal(c.turnTemplateAxis('centerV'),true);
+ const turned=c.colourTemplate.parts[0];
+ assert.deepEqual([...turned.mask.data],[blue,red,0,green]);
+ assert.equal(c.templateDisplayCanvas(turned,c.colourTemplate,true),turned.canvas);
+ assert.equal(c.templateDisplayCanvas(turned,c.colourTemplate),turned.canvas);
+ assert.deepEqual([...c.templateMatchLayer.indices],[17]);
+ assert.equal(c.templateMatchLayer.bits[9],2);
+ assert.equal(c.templateMatchLayer.bits[10],2);
+ assert.deepEqual(c.f.val,source);
 });
 test('library insertions and explicit copies never vacate unrelated underlying field bits',()=>{
  for(const sourceKind of ['library','copy']){const f=turningFixture(),c=f.c;c.colourTemplate.sourceKind=sourceKind;c.colourTemplate.sourcePreserving=true;assert.equal(c.turnTemplateAxis('right'),true);assert.equal(c.templateMatchLayer,null);assert.equal(c.colourTemplate.sourceVacated,undefined);assert.deepEqual(c.f.val,f.source);}
