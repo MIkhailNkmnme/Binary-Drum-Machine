@@ -175,8 +175,44 @@ textarea { width: 100%; resize: vertical; }
 #speech-wave-head { position: absolute; inset: 0 auto 0 0; width: 1px; background: var(--gz-txt); pointer-events: none; }
 #speech-wave-time { color: #91a6b6; font-variant-numeric: tabular-nums; font-size: 12px; }
 .speech-wave-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 5px; }
-.speech-playback .parameter { margin-top: 3px; }
-.speech-playback .parameter > label { min-height: 0; }
+/* Numeric sliders per КНП-021/022. */
+.speech-playback { display: grid; gap: 2px; }
+.speech-playback .voice-number-slider {
+  display: flex;
+  width: var(--gz-w);
+  height: var(--gz-h);
+  background: var(--gz-bg);
+  --zcf-base: var(--voice-edge);
+  --c: var(--voice-focus);
+  user-select: none;
+}
+.speech-playback .voice-number-slider > .zcf-side {
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%) !important;
+  background: transparent !important;
+  --zcf-stroke: 1.4px;
+}
+.speech-playback .voice-number-slider > .zcf-side:is(:active,.zcf-held) { --zcf-stroke: 1.4px; }
+.speech-playback .voice-number-slider > .zcf-middle { padding: 0 !important; background: transparent !important; }
+.speech-playback .voice-number-slider > .zcf-middle:focus-within { box-shadow: inset 0 0 0 1px var(--voice-focus); }
+.speech-playback .voice-number-slider > .zcf-middle > .zcf-outline { display: none; }
+.speech-playback .zcf-input::-webkit-slider-runnable-track { background: transparent; }
+.speech-playback .zcf-input::-moz-range-track { background: transparent; }
+.speech-playback .zcf-input::-webkit-slider-thumb {
+  background: repeating-linear-gradient(to bottom, var(--gz-txt) 0 2px, transparent 2px 4px) center / 1px 18px no-repeat;
+  mask: none;
+}
+.speech-playback .zcf-input::-moz-range-thumb {
+  background: repeating-linear-gradient(to bottom, var(--gz-txt) 0 2px, transparent 2px 4px) center / 1px 18px no-repeat;
+  mask: none;
+}
+.speech-playback .voice-number-slider .zcf-value {
+  right: auto;
+  padding: 0;
+  background: transparent;
+  font: 11px/24px ui-monospace, monospace;
+  white-space: nowrap;
+  transform-origin: left center;
+}
 #prosody-trace { max-height: 280px; overflow: auto; font-size: 12px; }
 #prosody-note { font-size: 12px; }
 

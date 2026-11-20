@@ -619,12 +619,23 @@
       ['rate','Скорость',.25,3,.05,value=>value.toFixed(2)+'×'],
       ['volume','Громкость',0,1,.01,value=>Math.round(value*100)+'%']
     ]){
-      const wrap=document.createElement('div'),label=document.createElement('label'),host=document.createElement('div');
-      const middle=document.createElement('div'),range=document.createElement('input'),output=document.createElement('output');
-      wrap.className='parameter';
-      label.htmlFor='speech-playback-'+key;
-      label.textContent=name;
-      Object.assign(range,{type:'range',id:label.htmlFor,min,max,step,value:1});
+      const host=document.createElement('div'),middle=document.createElement('div');
+      const range=document.createElement('input'),output=document.createElement('output');
+      host.className='voice-number-slider';
+      Object.assign(range,{type:'range',id:'speech-playback-'+key,min,max,step,value:1,title:name+' прослушивания'});
+      range.setAttribute('aria-label',range.title);
+      output.setAttribute('aria-hidden','true');
+      const placeValue=()=>{
+        const width=middle.clientWidth,natural=output.offsetWidth;
+        if(!width||!natural)return;
+        // The 14 px native thumb travels between its half-width insets.
+        const marker=7+(width-14)*(range.valueAsNumber-min)/(max-min),gap=5;
+        const left=marker-gap,right=width-marker-gap;
+        const before=natural<=left||(natural>right&&left>=right);
+        const room=before?left:right,scale=Math.min(1,room/natural);
+        output.style.left=(before?left-natural*scale:marker+gap)+'px';
+        output.style.transform='scaleX('+scale+')';
+      };
       const arrow=(direction,symbol)=>{
         const side=document.createElement('button');
         side.type='button';side.textContent=symbol;side.title=(direction<0?'Уменьшить ':'Увеличить ')+name.toLowerCase();
@@ -652,13 +663,15 @@
         const value=range.valueAsNumber;
         output.textContent=format(value);
         range.setAttribute('aria-valuetext',output.textContent);
-        frame.sync();
+        placeValue();
         applyTextPlayback(key,value);
       };
-      const left=arrow(-1,'◀'),right=arrow(1,'▶');
-      middle.append(range,output);host.append(left,middle,right);wrap.append(label,host);
-      $('speech-playback-controls').append(wrap);
-      const frame=ZerkControlFrame.attach(host,left,middle,right,{input:range,output,valueInThumb:true});
+      const left=arrow(-1,'‹'),right=arrow(1,'›');
+      middle.append(range,output);host.append(left,middle,right);
+      $('speech-playback-controls').append(host);
+      ZerkControlFrame.attach(host,left,middle,right,{input:range,output});
+      for(const side of [left,right])side.querySelector('.zcf-outline path').setAttribute('d','M12 .7 23.3 12 12 23.3 .7 12Z');
+      if(globalThis.ResizeObserver)new ResizeObserver(placeValue).observe(middle);
       range.addEventListener('input',update);
       range.addEventListener('change',save);
       textPlaybackControls.set(key,{range,update});
