@@ -1,0 +1,54 @@
+{
+  "release": "c518c89c205a40f789d01446c8e74d27a8c7253c",
+  "version": "0.010",
+  "checkedUtc": "2026-11-20T12:03:46.4575533Z",
+  "files": [
+    {
+      "file": "index.html",
+      "url": "https://1001100.online/voice/index.html?v=010",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "engine.js",
+      "url": "https://1001100.online/voice/engine.js?v=010",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "robot-live.js",
+      "url": "https://1001100.online/voice/robot-live.js?v=010",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "prosody.js",
+      "url": "https://1001100.online/voice/prosody.js?v=010",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "app.js",
+      "url": "https://1001100.online/voice/app.js?v=010",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "render-worker.js",
+      "url": "https://1001100.online/voice/render-worker.js?v=010",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "README.md",
+      "url": "https://1001100.online/voice/README.md?v=010",
+      "status": 200,
+      "matches": true
+    }
+  ],
+  "plainUrl": "https://1001100.online/voice/",
+  "plainStatus": 200,
+  "plainMatches": true,
+  "runtimeTests": "Not run per AGENTS.md; user verification",
+  "listening": "Not performed"
+}
