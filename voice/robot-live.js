@@ -7,7 +7,7 @@
   root.ZerkaliusRobotLiveFactory=function(C){
     const Original=root.ZerkaliusAlphabetRobot;
     if(!Original)throw Error('Не загружен исходный телефонный робот.');
-    const VERSION='phone-robot-live-v1.1.0',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
+    const VERSION='phone-robot-live-v1.2.0',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
     const bits=Array(8).fill(1),f0=440*2**((48-69)/12),raw=Original.phones();
     const profile=C.config({pitchStart:f0,pitchEnd:f0,vibratoDepth:0,vibratoRate:2.1,transitionMs:12,outputGain:.55,seed:Original.seedFor(bits,'zero')});
     const aliases={ax:'a-neutral',lj:'l-soft',dj:'d-soft',pj:'p-soft',tj:'t-soft',kj:'k-soft',sj:'s-soft',mj:'m-soft',vj:'v-soft',rj:'r-soft',shj:'sh-soft'};
@@ -87,7 +87,7 @@
           const t=Math.min(settings.transitionMs/1000,segmentDuration*.2);let other=current,blend=0;
           if(t&&segment>0&&local<t){other=resolved[segment-1];blend=.5*(1-local/t);}
           else if(t&&segment+1<score.length&&segmentDuration-local<t){other=resolved[segment+1];blend=.5*(1-(segmentDuration-local)/t);}
-          if(speech){other=resolved[speech.otherIndex];blend=speech.blend;}
+          if(speech){other=resolved[speech.otherIndex];blend=current.kind==='silence'||other.kind==='silence'?0:speech.blend;}
           const mix=(a,b)=>a+(b-a)*blend;
           control={weights:current.weights.map((n,i)=>mix(n,other.weights[i])),voice:mix(current.voice,other.voice),noise:mix(current.noise,other.noise),
             gain:mix(current.gain,other.gain),bypass:mix(current.bypass,other.bypass)};
@@ -117,10 +117,17 @@
           filter.z1=-c.a1*out+filter.z2;filter.z2=c.b2*input-c.a2*out;value+=out*control.weights[band];
         }
         value=(value+highNoise*bypass*(time<speechSeconds?1:0))*control.gain*envelope;
-        if(speech)value*=speech.gain;
+        let speechEdge=1;
+        if(speech){
+          // Taper only real pauses. Keep voiced phoneme joins continuous.
+          const attack=segment===0||resolved[segment-1].kind==='silence';
+          const release=segment+1<resolved.length&&resolved[segment+1].kind==='silence';
+          value*=speech.gain;
+          speechEdge=Math.max(0,Math.min(1,attack?local/.004:1,release?(counts[segment]-1-(sample-start))/(RATE*.005):1));
+        }
         const blocked=value-lastOutput+.995*dc;lastOutput=value;dc=blocked;
         const gate=Math.min(1,time/.006,Math.max(0,(seconds-time)/TAIL));
-        samples[sample]=kind==='silence'?0:C.check(blocked*gate);peak=Math.max(peak,Math.abs(samples[sample]));
+        samples[sample]=kind==='silence'?0:C.check(blocked*gate*speechEdge);peak=Math.max(peak,Math.abs(samples[sample]));
         if(kind==='silence'){for(const f of filters){f.z1=0;f.z2=0;}lastOutput=0;dc=0;}
       }
       const gain=settings.outputGain/Math.max(peak,.045);

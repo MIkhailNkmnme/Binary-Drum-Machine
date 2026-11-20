@@ -6,7 +6,7 @@
    the output is not promised to be byte-identical to the original Python bank. */
 (function(root){
   'use strict';
-  const VERSION='procedural-formant-browser-v1.1.0';
+  const VERSION='procedural-formant-browser-v1.2.0';
   const RATE=22050,TAU=2*Math.PI,TABLE_SIZE=4096,MAX_SECONDS=12,MAX_SEGMENTS=96;
   const MAX_FREQUENCY=RATE*.45,MAX_BANDWIDTH=4000;
   const definitions=[
@@ -190,13 +190,16 @@
       for(let index=0;index<count;index++){
         const progress=index/Math.max(1,count-1);
         const speech=prosody?prosody.at(cursor,tokenIndex):null,other=speech?speechShapes[speech.otherIndex]:null;
+        // A pause has no vocal tract target. Fade at its edge instead of
+        // pulling the neighbouring phoneme towards the silence recipe.
+        const blend=speech&&current.kind!=='silence'&&other.kind!=='silence'?speech.blend:0;
         if(index%32===0){
           let transition=settings.transitionMs?Math.min(1,index/(RATE*settings.transitionMs/1000)):1;
           transition=transition*transition*(3-2*transition);
           coefficients=current.formants.map((f,k)=>resonator(previousShape.formants[k]*(1-transition)+f*transition,
             previousShape.bandwidths[k]*(1-transition)+current.bandwidths[k]*transition));
-          if(speech)coefficients=current.formants.map((f,k)=>resonator(f+(other.formants[k]-f)*speech.blend,
-            current.bandwidths[k]+(other.bandwidths[k]-current.bandwidths[k])*speech.blend));
+          if(speech)coefficients=current.formants.map((f,k)=>resonator(f+(other.formants[k]-f)*blend,
+            current.bandwidths[k]+(other.bandwidths[k]-current.bandwidths[k])*blend));
         }
         let f0=settings.pitchStart+(settings.pitchEnd-settings.pitchStart)*cursor/Math.max(1,total)
           +settings.vibratoDepth*Math.sin(TAU*settings.vibratoRate*cursor/RATE);
@@ -208,8 +211,8 @@
         rng^=rng<<13;rng^=rng>>>17;rng^=rng<<5;rng>>>=0;
         const noise=rng/2147483648-1;
         let voiced=current.voice*settings.voicing,noisy=current.noise*settings.noise;
-        if(speech){voiced=(current.voice+(other.voice-current.voice)*speech.blend)*settings.voicing;
-          noisy=(current.noise+(other.noise-current.noise)*speech.blend)*settings.noise;}
+        if(speech){voiced=(current.voice+(other.voice-current.voice)*blend)*settings.voicing;
+          noisy=(current.noise+(other.noise-current.noise)*blend)*settings.noise;}
         if(current.kind==='stop'){
           if(progress<.62){voiced*=.22;noisy=0;}else{noisy*=Math.exp(-(progress-.62)*13);voiced*=.35;}
         }else if(current.kind==='affricate'){
@@ -220,20 +223,23 @@
         for(let k=0;k<4;k++){
           const [gain,feedback1,feedback2]=coefficients[k],[last,older]=states[k];
           const filtered=gain*excitation+feedback1*last+feedback2*older;
-          states[k][0]=filtered;states[k][1]=last;value+=filtered*(speech?current.weights[k]+(other.weights[k]-current.weights[k])*speech.blend:current.weights[k]);
+          states[k][0]=filtered;states[k][1]=last;value+=filtered*(speech?current.weights[k]+(other.weights[k]-current.weights[k])*blend:current.weights[k]);
         }
         if((current.kind==='fricative'||current.kind==='affricate')&&voiced)value+=.13*voiced*Math.sin(TAU*phase);
+        let speechEdge=1;
         if(!speech)value*=Math.max(0,Math.min(1,index/(RATE*.004),(count-1-index)/(RATE*.005)));
         else{
-          const articulated=current.kind==='stop'||current.kind==='affricate';
-          const attack=articulated||tokenIndex===0||speechShapes[tokenIndex-1].kind==='silence';
-          const release=articulated||tokenIndex===score.length-1||speechShapes[tokenIndex+1].kind==='silence';
-          value*=speech.gain*Math.max(0,Math.min(1,attack?index/(RATE*.004):1,release?(count-1-index)/(RATE*.005):1));
+          // Stops already have closure/release excitation above. A second
+          // forced zero at every consonant edge cuts connected syllables.
+          const attack=tokenIndex===0||speechShapes[tokenIndex-1].kind==='silence';
+          const release=tokenIndex===score.length-1||speechShapes[tokenIndex+1].kind==='silence';
+          value*=speech.gain;
+          speechEdge=Math.max(0,Math.min(1,attack?index/(RATE*.004):1,release?(count-1-index)/(RATE*.005):1));
         }
         if(current.kind==='silence'){value=0;for(const state of states)state.fill(0);}
         const dcRemoved=value-previousDC+.995*previousOut;
         previousDC=value;previousOut=dcRemoved;
-        const sample=current.kind==='silence'?0:dcRemoved;
+        const sample=current.kind==='silence'?0:dcRemoved*speechEdge;
         if(!Number.isFinite(sample)||Math.abs(sample)>1e30)throw new Error('Расчёт остановлен: неустойчивый или нечисловой отсчёт.');
         samples[cursor]=sample;peak=Math.max(peak,Math.abs(samples[cursor]));cursor++;
         if(speech&&current.kind==='silence'){previousDC=0;previousOut=0;}

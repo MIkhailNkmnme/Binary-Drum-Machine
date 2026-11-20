@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.1.0';
+  const version='text-prosody-v1.2.0';
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   function normalize(value={}){
@@ -53,7 +53,18 @@
     const config=prepared.config,amount=config.expressiveness/100;
     if(config.mode==='original')return {units,config,words:prepared.words,note:'Исходные длительности и путь DSP; метки ударения сами не звучат.'};
     const kind=id=>(phones[id]||engine.getPhone(id)).kind;
-    const result=units.map(u=>({...u,score:u.score.map(t=>({...t})),prosody:[],kinds:u.score.map(t=>kind(t.id))}));
+    const connected=engine.engineId==='bank'||engine.engineId==='robot';
+    const result=[];
+    for(const u of units){
+      const unit={...u,indices:[...u.indices],cleanIndices:[...(u.cleanIndices||[])],score:u.score.map(t=>({...t})),prosody:[],kinds:u.score.map(t=>kind(t.id))};
+      const previous=result[result.length-1];
+      // Punctuation, spaces and quotes describe one break, not added breaks.
+      // Only merge actual separator silence; custom spoken recipes stay intact.
+      if(connected&&unit.boundary&&unit.kinds.length&&unit.kinds.every(k=>k==='silence')
+        &&previous?.boundary&&previous.kinds.length&&previous.kinds.every(k=>k==='silence')){
+        previous.indices.push(...unit.indices);previous.cleanIndices.push(...unit.cleanIndices);
+      }else result.push(unit);
+    }
     const wordFor=index=>prepared.words.find(w=>index>=w.start&&index<w.end);
     for(const unit of result){
       const word=wordFor(unit.cleanIndices?.[0]),marked=(unit.cleanIndices||[]).some(i=>prepared.stressed.has(i));
@@ -63,7 +74,10 @@
         const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(unit.enStressTokens?unit.enStressTokens.includes(j):marked||numericStress.includes(j));unit.stresses.push(stress);
         const factor={vowel:.72,stop:.80,affricate:.82,fricative:.80,sonorant:.82,trill:.82,rhotic:.82,silence:1}[k]||1;
         if(k==='silence'){
-          const punctuation=unit.indices.map(i=>prepared.characters[i]?.text||'').join('');token.duration=/[.!?…]/u.test(punctuation) ? .24+.10*amount : /[,;:]/u.test(punctuation) ? .12+.05*amount : /\s/u.test(punctuation) ? .07 : .06;
+          const punctuation=unit.indices.map(i=>prepared.characters[i]?.text||'').join('');
+          token.duration=/[.!?…]/u.test(punctuation)||connected&&/[\r\n]/u.test(punctuation) ? .24+.10*amount : /[,;:]/u.test(punctuation) ? .12+.05*amount
+            : connected&&/[—–]/u.test(punctuation) ? .12+.05*amount
+            : /\s/u.test(punctuation) ? (connected ? .022 : .07) : connected ? .022 : .06;
         }else token.duration*=factor*(stress ? 1.25+.20*amount : k==='vowel'&&word&&!['unknown','en-rules'].includes(word.source) ? .93 : 1);
         token.duration=Number(Math.max(.01,token.duration).toFixed(6));
       }
@@ -87,7 +101,8 @@
       }
     }
     const unknown=prepared.words.filter(w=>['unknown','en-rules'].includes(w.source)).map(w=>w.word),unique=[...new Set(unknown)];
-    return {units:result,config,words:prepared.words,note:unique.length?'Без автоматического ударения: '+unique.slice(0,8).join(', ')+(unique.length>8?' … ('+unique.length+' слов)':'')+'. Для неизвестных EN-слов применяются приближённые правила чтения.':'Ударения: явные метки, ё или небольшой открытый словарь. EN читает слова и английские цифры; служебные слова могут не иметь отдельного акцента.'};
+    const timing=connected?' Связное чтение Codex: межсловный промежуток 22 мс при скорости 1; соседние разделители образуют одну паузу.':'';
+    return {units:result,config,words:prepared.words,note:(unique.length?'Без автоматического ударения: '+unique.slice(0,8).join(', ')+(unique.length>8?' … ('+unique.length+' слов)':'')+'. Для неизвестных EN-слов применяются приближённые правила чтения.':'Ударения: явные метки, ё или небольшой открытый словарь. EN читает слова и английские цифры; служебные слова могут не иметь отдельного акцента.')+timing};
   }
   root.VoiceProsody=Object.freeze({version,defaults,normalize,prepare,apply});
 })(globalThis);
