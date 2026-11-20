@@ -6,7 +6,7 @@
    the output is not promised to be byte-identical to the original Python bank. */
 (function(root){
   'use strict';
-  const VERSION='procedural-formant-browser-v1.2.1';
+  const VERSION='procedural-formant-browser-v1.2.2';
   const RATE=22050,TAU=2*Math.PI,TABLE_SIZE=4096,MAX_SECONDS=12,MAX_SEGMENTS=96;
   const MAX_FREQUENCY=RATE*.45,MAX_BANDWIDTH=4000;
   const definitions=[
@@ -254,6 +254,7 @@
       if(!Number.isFinite(value))throw new Error('Нечисловой отсчёт при нормализации.');
       samples[index]=clamp(value,-.9,.9);
     }
+    prosody?.softenFrication(samples,resolvedPhones);
     return {samples,sampleRate:RATE,duration:samples.length/RATE,sampleCount:samples.length,settings,score,
       phones, resolvedPhones,seed:settings.seed,effectiveSeed:settings.seed||1,sourceHarmonics,engineVersion:VERSION,...(prosody?prosody.metadata():{})};
   }

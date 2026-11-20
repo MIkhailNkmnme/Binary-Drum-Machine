@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.1';
+  const version='text-prosody-v1.2.2';
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   function normalize(value={}){
@@ -54,6 +54,7 @@
     if(config.mode==='original')return {units,config,words:prepared.words,note:'Исходные длительности и путь DSP; метки ударения сами не звучат.'};
     const kind=id=>(phones[id]||engine.getPhone(id)).kind;
     const connected=engine.engineId==='bank'||engine.engineId==='robot';
+    const fricationDurationScale=language==='ru'?root.VoiceProsodyDSP?.fricationDurationScale:null;
     const result=[];
     for(const u of units){
       const unit={...u,indices:[...u.indices],cleanIndices:[...(u.cleanIndices||[])],score:u.score.map(t=>({...t})),prosody:[],kinds:u.score.map(t=>kind(t.id))};
@@ -79,7 +80,10 @@
           token.duration=/[.!?…]/u.test(punctuation)||connected&&/[\r\n]/u.test(punctuation) ? .24+.10*amount : /[,;:]/u.test(punctuation) ? .12+.05*amount
             : connected&&/[—–]/u.test(punctuation) ? .12+.05*amount
             : /\s/u.test(punctuation) ? (connected ? .022 : .07)*spaces : connected ? .022 : .06;
-        }else token.duration*=factor*(stress ? 1.25+.20*amount : k==='vowel'&&word&&!['unknown','en-rules'].includes(word.source) ? .93 : 1);
+        }else{
+          const durationScale=fricationDurationScale?.(token.id,k)??1;
+          token.duration*=factor*durationScale*(stress ? 1.25+.20*amount : k==='vowel'&&word&&!['unknown','en-rules'].includes(word.source) ? .93 : 1);
+        }
         token.duration=Number(Math.max(.01,token.duration).toFixed(6));
       }
     }

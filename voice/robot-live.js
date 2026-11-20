@@ -7,7 +7,7 @@
   root.ZerkaliusRobotLiveFactory=function(C){
     const Original=root.ZerkaliusAlphabetRobot;
     if(!Original)throw Error('Не загружен исходный телефонный робот.');
-    const VERSION='phone-robot-live-v1.2.1',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
+    const VERSION='phone-robot-live-v1.2.2',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
     const bits=Array(8).fill(1),f0=440*2**((48-69)/12),raw=Original.phones();
     const profile=C.config({pitchStart:f0,pitchEnd:f0,vibratoDepth:0,vibratoRate:2.1,transitionMs:12,outputGain:.55,seed:Original.seedFor(bits,'zero')});
     const aliases={ax:'a-neutral',lj:'l-soft',dj:'d-soft',pj:'p-soft',tj:'t-soft',kj:'k-soft',sj:'s-soft',mj:'m-soft',vj:'v-soft',rj:'r-soft',shj:'sh-soft'};
@@ -139,6 +139,7 @@
       }
       const gain=settings.outputGain/Math.max(peak,.045);
       for(let i=0;i<samples.length;i++)samples[i]=C.check(Math.tanh(samples[i]*gain));
+      prosody?.softenFrication(samples,resolved);
       return {...common,samples,duration:samples.length/RATE,sampleCount:samples.length,legacyExact:false,sourceProfile:null};
     }
     return Object.freeze({engineId:'robot',version:VERSION,label:'Телефонный робот · битовые гармоники',...profile,

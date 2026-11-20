@@ -6,7 +6,7 @@
 (function(root){
   'use strict';
   root.ZerkaliusDshFactory=function(C){
-    const VERSION='deepseek-formant-live-v1.2.1',RATE=44100,TAU=2*Math.PI;
+    const VERSION='deepseek-formant-live-v1.2.2',RATE=44100,TAU=2*Math.PI;
     const profile=C.config({pitchStart:112,pitchEnd:96,vibratoDepth:0,vibratoRate:2.1,transitionMs:0,outputGain:.7,seed:7},['transitionMs']);
     // Возраст: 0 — ребёнок, 50 — взрослый, 100 — старик. Меняет длину речевого
     // тракта (форманты), высоту, дрожание и придыхание, не трогая таблицу фонем.
@@ -154,6 +154,7 @@
       }
       const gain=settings.outputGain/Math.max(peak,1e-9);
       for(let i=0;i<samples.length;i++)samples[i]=C.check(C.clamp(samples[i]*gain,-.9,.9));
+      prosody.softenFrication(samples,resolvedPhones);
       return {engineId:'dsh',engineVersion:VERSION,samples,sampleRate:RATE,sampleCount:samples.length,duration:samples.length/RATE,
         settings,score,phones,resolvedPhones,seed:settings.seed,effectiveSeed:settings.seed||1,legacyExact:false,...prosody.metadata(),
         noiseAlgorithm:'xorshift32 + Box–Muller Gaussian, continuous in optional speech mode',

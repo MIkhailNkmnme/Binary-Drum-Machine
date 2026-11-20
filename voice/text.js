@@ -78,7 +78,12 @@
     finish();
     if(totalSamples>MAX_SECONDS*rate)throw Error('Один круг текста превышает '+MAX_SECONDS+' секунд с текущей скоростью. Сократите текст или увеличьте скорость.');
     const spokenTotal=chunks.reduce((sum,c)=>sum+duration(c.score),0);let consumed=0;
-    for(const part of chunks){const samples=duration(part.score);if(annotation.config.mode==='speech')part.prosody={version:1,segments:part.prosodySegments,transitionMs:annotation.config.transitionMs,rangeStart:consumed/spokenTotal,rangeEnd:(consumed+samples)/spokenTotal};consumed+=samples;delete part.prosodySegments;}
+    for(const part of chunks){
+      const samples=duration(part.score);
+      if(annotation.config.mode==='speech')part.prosody={version:1,segments:part.prosodySegments,transitionMs:annotation.config.transitionMs,
+        rangeStart:consumed/spokenTotal,rangeEnd:(consumed+samples)/spokenTotal,...(language==='ru'?{softenFrication:true}:{})};
+      consumed+=samples;delete part.prosodySegments;
+    }
     return {characters,chunks,language,rate,phones:effectivePhones,prosody:{version:root.VoiceProsody.version,config:annotation.config,words:annotation.words,note:annotation.note}};
   }
   function tokenBoundaries(result){

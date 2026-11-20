@@ -6,6 +6,40 @@
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const isNoiseConsonant=kind=>kind==='stop'||kind==='fricative'||kind==='affricate';
+  const fricationProfiles=new Map([
+    ['zh',{durationScale:.70,cutoffHz:2600,lowGain:.94,highGain:.18}],
+    ['s',{durationScale:.66,cutoffHz:3800,lowGain:.72,highGain:.20}],
+    ['f',{durationScale:.67,cutoffHz:2800,lowGain:.65,highGain:.12}],
+    ['h',{durationScale:.69,cutoffHz:3000,lowGain:.65,highGain:.14}],
+    ['ts',{durationScale:.76,cutoffHz:3700,lowGain:.73,highGain:.20}],
+    ['ch',{durationScale:.75,cutoffHz:2850,lowGain:.72,highGain:.16}],
+    ['sh',{durationScale:.68,cutoffHz:2800,lowGain:.68,highGain:.15}],
+    ['shj',{durationScale:.74,cutoffHz:3000,lowGain:.70,highGain:.16}]
+  ]);
+  function fricationProfile(id,kind){
+    if(kind!=='fricative'&&kind!=='affricate')return null;
+    return fricationProfiles.get(id)??(id.endsWith('j')?fricationProfiles.get(id.slice(0,-1)):null);
+  }
+  const fricationDurationScale=(id,kind)=>fricationProfile(id,kind)?.durationScale??1;
+  function applyFrication(samples,phones,boundaries,rate){
+    for(const {index,startSample,endSample} of boundaries){
+      const {id,kind}=phones[index],profile=fricationProfile(id,kind);
+      if(!profile)continue;
+      const {cutoffHz,lowGain,highGain}=profile;
+      const step=1-Math.exp(-2*Math.PI*cutoffHz/rate);
+      const fade=Math.max(1,Math.min(Math.round(.005*rate),Math.floor((endSample-startSample)/2)));
+      let first=samples[startSample],second=first;
+      for(let at=startSample;at<endSample;at++){
+        const sample=samples[at];
+        first+=step*(sample-first);
+        second+=step*(first-second);
+        const softened=highGain*sample+(lowGain-highGain)*second;
+        // Fade the correction inside the segment without filtering its neighbours.
+        const weight=Math.min(1,(at-startSample)/fade,(endSample-1-at)/fade);
+        samples[at]=sample+(softened-sample)*weight;
+      }
+    }
+  }
   function defaultSpeechNoise(phone){
     return phone.kind==='vowel'||isNoiseConsonant(phone.kind)?phone.noise:0;
   }
@@ -61,7 +95,8 @@
       semitones+=(neighborPitch-semitones)*blend;gain+=(segments[otherIndex].gain-gain)*blend;
       return {pitchMultiplier:2**(semitones/12),gain,otherIndex,blend};
     }
-    const appliedProsody={version:1,segments,transitionMs,rangeStart,rangeEnd};
+    const softenRussianFrication=input.softenFrication===true;
+    const appliedProsody={version:1,segments,transitionMs,rangeStart,rangeEnd,...(softenRussianFrication?{softenFrication:true}:{})};
     const diagnosticLimits={semitones:[-12,12],segmentGain:[0,2],transitionMs:[0,80],frequencyHz:[floor,ceiling],
       requestedMinimumFrequency:requestedMin,requestedMaximumFrequency:requestedMax,
       effectiveMinimumFrequency:clamp(requestedMin,floor,ceiling),effectiveMaximumFrequency:maximumFrequency,
@@ -72,7 +107,8 @@
       segmentDurationsChanged:false,segmentsOverlap:false,shortSegmentPolicy:'A one-sample segment has no transition window.'};
     return {at,maximumFrequency,progress:sample=>rangeStart+(rangeEnd-rangeStart)*clamp(sample/Math.max(1,total),0,1),
       frequency:(base,control)=>clamp(base*control.pitchMultiplier,floor,ceiling),
+      softenFrication:(samples,phones)=>{if(softenRussianFrication)applyFrication(samples,phones,boundaries,rate);},
       metadata:()=>({appliedProsody,diagnosticLimits,segmentBoundaries:boundaries})};
   }
-  root.VoiceProsodyDSP=Object.freeze({version:1,create,isNoiseConsonant,defaultSpeechNoise,blendSpeechNoise,createConsonantNoise});
+  root.VoiceProsodyDSP=Object.freeze({version:1,create,isNoiseConsonant,defaultSpeechNoise,blendSpeechNoise,createConsonantNoise,fricationDurationScale});
 })(globalThis);
