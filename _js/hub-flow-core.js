@@ -205,16 +205,23 @@
         rowCells.push(i);fill.push(i);left-=1;nb(i,push);
       }
       if(edge)continue;
-      for(const i of body)m[i]=0;
-      for(const i of fill){m[i]=1;active.add(Math.floor(i/w));}
+      // Prepare the complete redistribution before changing the field. Running
+      // out of volume does not prove this search path has a floor underneath it.
+      const placement=new Map(fill.map(i=>[i,1]));
       if(left<0){
         // The top row holds the fraction: spread it over every reachable cell of that row.
         const row=new Set(rowCells),q=[...(buckets.get(lastRow)||[])];for(const j of q)row.add(j);
         let extra=0;
-        for(let k=0;k<q.length;k++)nb(q[k],j=>{if(Math.floor(j/w)===lastRow&&!row.has(j)&&!mark.has(j)){mark.add(j);row.add(j);q.push(j);if(m[j]>0&&!inBody.has(j)){extra+=m[j];m[j]=0;}}});
+        for(let k=0;k<q.length;k++)nb(q[k],j=>{if(Math.floor(j/w)===lastRow&&!row.has(j)&&!mark.has(j)){mark.add(j);row.add(j);q.push(j);if(m[j]>0&&!inBody.has(j)){extra+=m[j];inBody.add(j);body.push(j);}}});
         const total=rowCells.length+left+extra;
-        const level=Math.max(0,total/row.size);for(const j of row)m[j]=level;
+        const level=Math.max(0,total/row.size);for(const j of row)placement.set(j,level);
       }
+      // An open fall belongs to stepWater, one row per tick. Never paint the
+      // priority walk (including its fractional surface) as a floating diagonal.
+      const finalMass=i=>placement.has(i)?placement.get(i):inBody.has(i)?0:m[i];
+      if([...placement].some(([i,mass])=>mass>0&&(i+w>=w*h||(!s[i+w]&&finalMass(i+w)<.99999))))continue;
+      for(const i of body)m[i]=0;
+      for(const [i,mass] of placement){m[i]=mass;if(mass>0)active.add(Math.floor(i/w));}
     }
   };
   if(typeof module==='object'&&module.exports)module.exports={Field,WaterField};else root.HubFlowCore={Field,WaterField};

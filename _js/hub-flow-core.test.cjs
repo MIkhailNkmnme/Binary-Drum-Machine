@@ -204,3 +204,30 @@ test('v0.407: the level climbs through a checkerboard corner only when corners-u
     assert.ok(Math.abs(f.drained+f.water.reduce((a,b)=>a+b,0)-added)<.002);return side;};
   assert.equal(run(false),0);assert.ok(run(true)>0);
 });
+
+
+test('water leveling leaves an open ledge to gravity instead of drawing a diagonal in air',()=>{
+  for(const mirrored of [false,true]){
+    const w=41,h=32,f=new WaterField(w,h),at=x=>mirrored?w-1-x:x;
+    for(let x=12;x<=17;x++){f.solid[10*w+at(x)]=1;f.addWater(at(x),9);}
+    const before=f.water.slice();f.levelBodies(new Set(f.activeRows));
+    assert.deepEqual(f.water,before,'hydrostatic leveling must not teleport water down an open outlet');
+  }
+});
+
+test('dense water does not appear below its gravity front after hitting an open shelf',()=>{
+  const w=41,h=32,f=new WaterField(w,h);
+  for(let x=12;x<=28;x++)f.solid[10*w+x]=1;
+  let added=0;for(let t=0;t<24;t++){f.stepWater();added+=f.fillTop();}
+  assert.equal(sum(f.water.slice(24*w)),0,'new water falls at most one row per physical step');
+  assert.ok(Math.abs(sum(f.water)+f.drained-added)<.002,'mass is conserved');
+});
+
+
+test('fractional water leveling cannot spread a surface across unsupported empty space',()=>{
+  const w=41,h=32,f=new WaterField(w,h);
+  for(let x=11;x<=15;x++)f.solid[10*w+x]=1;
+  f.addWater(12,9,.6);f.addWater(13,9,.6);
+  const before=f.water.slice();f.levelBodies(new Set(f.activeRows));
+  assert.deepEqual(f.water,before,'fractional surface must be validated before any mass is moved');
+});

@@ -1,0 +1,33 @@
+{
+  "task": "МАЯ-687 / КНП-021",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?v=1038",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.js?v=1038",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.css",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.css?v=1038",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "КНОПКИ.md",
+      "url": "https://1001100.online/КНОПКИ.md?v=1038",
+      "status": 200,
+      "matches": true
+    }
+  ],
+  "release": "f6461c47b709a635bbbc747ce44af09f16ac4c50",
+  "version": "1.038",
+  "checkedUtc": "2026-11-20T14:36:09.5289010Z",
+  "verification": "HTTP only; slider visual acceptance remains with user"
+}
