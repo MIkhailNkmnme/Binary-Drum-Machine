@@ -297,3 +297,27 @@ body.mayatnik-menu-ready>header>.may-brand{position:fixed;left:var(--may-brand-l
 /* Числовые поля стандартных кнопок: только боковые стрелки, без системного вертикального счётчика. */
 :is(body.mayatnik-menu-ready,#paintTools) .gz-control input[type=number]{-moz-appearance:textfield;appearance:textfield}
 :is(body.mayatnik-menu-ready,#paintTools) .gz-control input[type=number]::-webkit-inner-spin-button,:is(body.mayatnik-menu-ready,#paintTools) .gz-control input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;display:none;margin:0}
+
+/* МАЯ-693 / КНП-022: common numerical style; the value sits beside the marker. */
+body[data-may-number-standard] .may-number-slider{box-sizing:border-box;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;gap:0!important;padding:0!important;flex:none}
+body[data-may-number-standard] .may-number-slider .may-number-readout{position:absolute!important;top:50%!important;right:auto!important;width:max-content!important;max-width:none!important;margin:0!important;padding:0!important;line-height:12px!important;font-family:var(--mono,monospace);font-weight:400;white-space:nowrap;z-index:6;pointer-events:none;color:var(--gz-txt,#dfe6f5);background:transparent;text-shadow:none}
+body[data-may-number-standard] .may-number-slider :is(.gz-v,.gz-vl,.zcf-value,.may-slide-v){display:none!important}
+body[data-may-number-standard] .may-number-slider.zcf-control>.zcf-side{background:transparent!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;--zcf-stroke:1.4px}
+body[data-may-number-standard] .may-number-slider.zcf-control>.zcf-side:is(:active,.zcf-held){--zcf-stroke:1.4px}
+body[data-may-number-standard] .may-number-slider.zcf-control>.zcf-middle{padding:0!important;background:transparent!important}
+body[data-may-number-standard] .may-number-slider.zcf-control>.zcf-middle>.zcf-outline,body[data-may-number-standard] .may-number-slider.zcf-control .zcf-thumb-outline{display:none!important}
+body[data-may-number-standard] .may-number-slider.zcf-control .may-control-chevron path{fill:none;stroke:currentColor;stroke-width:1.4px!important}
+body[data-may-number-standard] .may-number-slider.zcf-control .zcf-range{--zcf-thumb:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 24'%3E%3Cpath d='M7 3V21' fill='none' stroke='white' stroke-width='1' stroke-dasharray='2 2'/%3E%3C/svg%3E")}
+body[data-may-number-standard] .may-number-slider.zcf-control .zcf-input::-webkit-slider-runnable-track{background:transparent!important}
+body[data-may-number-standard] .may-number-slider.zcf-control .zcf-input::-moz-range-track{background:transparent!important}
+body[data-may-number-standard] .may-number-slider.zcf-control .zcf-input::-webkit-slider-thumb{background:#dfe6f5!important;mask:var(--zcf-thumb) center/14px 24px no-repeat!important}
+body[data-may-number-standard] .may-number-slider.zcf-control .zcf-input::-moz-range-thumb{background:#dfe6f5!important;mask:var(--zcf-thumb) center/14px 24px no-repeat!important}
+body[data-may-number-standard] header #paintTools.pt-dd .may-axes-number-row:has(>.may-number-slider)>.may-axes-label{display:none!important}
+body[data-may-number-standard] label.may-slide.may-number-slider>.may-track::before,body[data-may-number-standard] label.may-slide.may-number-slider .may-dia::before,body[data-may-number-standard] label.may-slide.may-number-slider .may-dia::after,body[data-may-number-standard] label.may-slide.may-number-slider .may-tv{display:none!important}
+body[data-may-number-standard] label.may-slide.may-number-slider .may-dia{top:3px!important;width:8px!important;height:18px!important;background:repeating-linear-gradient(to bottom,#dfe6f5 0 2px,transparent 2px 4px) center/1px 100% no-repeat!important}
+body[data-may-number-standard] label.may-slide.may-number-slider>.may-chev{color:#dfe6f5!important}
+body[data-may-number-standard] label.may-slide.may-number-slider>.may-chev::before{clip-path:none!important;background:#394657;opacity:1;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M.7 12 12 .7 23.3 12 12 23.3Z' fill='none' stroke='white' stroke-width='1.4'/%3E%3C/svg%3E") center/24px 24px no-repeat}
+body[data-may-number-standard] label.may-slide.may-number-slider>.may-chev:is(:hover,:active,:focus-visible)::before{background:var(--c,#73e4a5)}
+body[data-may-number-standard] label.may-slide.may-number-slider>.may-chev::after{top:8px;width:7px;height:7px;box-sizing:border-box;clip-path:none!important;border:solid currentColor;border-width:0 0 1.4px 1.4px;background:none;opacity:1;animation:none!important}
+body[data-may-number-standard] label.may-slide.may-number-slider>.may-chev.l::after{left:10px;right:auto;transform:rotate(45deg)}
+body[data-may-number-standard] label.may-slide.may-number-slider>.may-chev.r::after{left:7px;right:auto;transform:rotate(225deg)}

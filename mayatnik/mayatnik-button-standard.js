@@ -207,8 +207,62 @@
       });
     }
   }
+  // МАЯ-693 / КНП-022: the active page opts in; archived pages keep their own controls.
+  const numberReads=new WeakMap();
+  const numberSelector='.gz-sl,.zcf-control,label.may-slide';
+  const numberExcluded='#mayBottomBar,.may-frame-slider,.zz-pult,.may-heat-period-control,.may-xorrom-control,#mayXorromFaders';
+  function numberSliders(){
+    if(!document.body.hasAttribute('data-may-number-standard'))return;
+    for(const host of document.querySelectorAll(numberSelector)){
+      if(host.closest(numberExcluded)||host.querySelector('#frame'))continue;
+      host.classList.add('may-number-slider');
+      const arrows=host.querySelectorAll(':scope > .gz-a:not(.gz-a2),:scope > .may-chev');
+      arrows.forEach((arrow,i)=>{arrow.dataset.dir=i?'right':'left';});
+      if(host.classList.contains('zcf-control')){
+        for(const side of host.querySelectorAll(':scope > .zcf-side')){
+          const path=side.querySelector(':scope > .zcf-outline > path');
+          if(path)set(path,'d','M12 .7 23.3 12 12 23.3 .7 12Z');
+        }
+      }
+      const track=host.querySelector(':scope > .zcf-range,:scope > .gz-mid,:scope > .may-track');
+      const source=track?.querySelector(':scope > .zcf-value,:scope > .gz-v,:scope > .gz-vl,:scope > .may-slide-v');
+      const range=track?.querySelector('input[type="range"]'),thumb=track?.querySelector(':scope > .gz-th,:scope > .may-dia');
+      if(!track||!source||!range&&!thumb)continue; // Editable number fields keep their own live input.
+      let record=numberReads.get(host);
+      if(!record){
+        const readout=document.createElement('span');readout.className='may-number-readout';readout.setAttribute('aria-hidden','true');track.append(readout);
+        let seen='';
+        const sync=()=>{
+          const text=source.textContent||'',trackWidth=track.clientWidth,signature=[text,trackWidth,range?.value,range?.min,range?.max,thumb?.style.left].join('|');
+          if(signature===seen)return;if(!trackWidth){seen='';return;}seen=signature;
+          if(readout.textContent!==text)readout.textContent=text;
+          const box=track.getBoundingClientRect();if(!box.width)return;
+          let x;
+          if(thumb){const r=thumb.getBoundingClientRect();x=r.left-box.left+r.width/2;}
+          else{const r=range.getBoundingClientRect(),min=range.min===''?0:Number(range.min),max=range.max===''?100:Number(range.max),value=Number(range.value)||0,f=max>min?Math.max(0,Math.min(1,(value-min)/(max-min))):0;x=r.left-box.left+7+Math.max(0,r.width-14)*f;}
+          x=Math.max(0,Math.min(box.width,x));
+          const gap=5,left=Math.max(0,x-gap),right=Math.max(0,box.width-x-gap);
+          readout.style.fontSize='11px';readout.style.transform='translateY(-50%)';
+          const natural=readout.getBoundingClientRect().width;
+          const before=natural<=left||natural>right&&left>=right,room=before?left:right;
+          // Keep the full value beside the marker, including units and infinity.
+          const size=Math.max(8,Math.min(11,natural?11*room/natural:11));readout.style.fontSize=size+'px';
+          const width=readout.getBoundingClientRect().width,fit=width>room&&width?room/width:1;
+          readout.style.transform='translateY(-50%) scaleX('+fit+')';readout.style.transformOrigin='left center';
+          readout.style.left=(before?Math.max(0,x-gap-width*fit):x+gap)+'px';readout.dataset.side=before?'left':'right';
+        };
+        const observer=new MutationObserver(sync);observer.observe(source,{childList:true,subtree:true,characterData:true});
+        if(thumb)observer.observe(thumb,{attributes:true,attributeFilter:['style']});
+        if(range){range.addEventListener('input',sync);range.addEventListener('change',sync);observer.observe(range,{attributes:true,attributeFilter:['min','max','value']});}
+        const resize=typeof ResizeObserver==='function'?new ResizeObserver(sync):null;resize?.observe(track);
+        record={sync,observer,resize};numberReads.set(host,record);
+      }
+      record.sync();
+    }
+  }
   function refresh(){
-    standardObserver?.disconnect();
+    standardObserver?.disconnect();numberObserver?.disconnect();
+    numberSliders();
     libraryRows();
     tintIcons();
     const ladders=[...document.querySelectorAll('.gz-ladder')];
@@ -246,6 +300,7 @@
     }
     groupGaps();
     standardObserver?.observe(document.body,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class','disabled','aria-pressed','style']});
+    numberObserver?.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden']});
   }
   document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half,.may-segments .gz-half,.may-parts-multi .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
   // v0.451 (В11, КНП-018): кнопка или половина, выключенная щелчком мыши, не показывает рамку наведения, пока указатель не уйдёт (кнопки пересоздаются — узнаём по подписи)
@@ -276,5 +331,13 @@
     if(r.type==='attributes')return r.oldValue!==t.getAttribute(r.attributeName);
     return [...r.addedNodes,...r.removedNodes].some(n=>n.nodeType!==1||n.namespaceURI!==NS);
   }))requestRefresh();});
+  var numberObserver=new MutationObserver(records=>{
+    if(!document.body.hasAttribute('data-may-number-standard'))return;
+    if(records.some(r=>{
+      const t=r.target;if(t.nodeType!==1||t.namespaceURI===NS)return false;
+      if(r.type==='attributes')return r.attributeName==='class'?t.matches(numberSelector)&&!t.classList.contains('may-number-slider')&&!t.closest(numberExcluded):r.attributeName==='hidden'&&!!t.querySelector(numberSelector);
+      return [...r.addedNodes].some(n=>n.nodeType===1&&n.namespaceURI!==NS&&(n.matches(numberSelector)||!!n.querySelector(numberSelector)));
+    }))requestRefresh();
+  });
   refresh();
 })();

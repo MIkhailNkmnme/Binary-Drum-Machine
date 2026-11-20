@@ -11,8 +11,17 @@
  try{const saved=JSON.parse(win.localStorage.getItem(key));if(Number.isFinite(saved)&&saved>0)edge=saved;}catch{}
  let groups=[],activeGroup=null,tracksArea,display,overlay,searchBar,searchStatus,digitButton,settingsBar,speedInput,speedRange,sequenceInput,generateButton,cancelButton,montageButton,libraryButton,frameButton,applyButton,recordButton,stackButton,recording=false,recordInfo={},stackEnabled=false,searchOptions={},searchToken=0,searchRun=null,searchTask=Promise.resolve(),searchYield=null,digits=false,frameSelectionStatus,selectAllButton,selectNoneButton,filterButton,xorButton;
  const allItems=()=>groups.length?groups.flatMap(g=>g.items):items;
+ let speedControl,speedMiddle,speedOutput,speedFrame,speedArrows=[];
+ function syncSpeed(){
+  if(!speedControl)return;
+  speedOutput.textContent=delay+' мс';speedRange.setAttribute('aria-valuetext',delay+' миллисекунд на кадр');
+  speedArrows[0].disabled=busy||delay<=20;speedArrows[1].disabled=busy||delay>=5000;
+  if(!speedFrame&&win.ZerkControlFrame)speedFrame=win.ZerkControlFrame.attach(speedControl,speedArrows[0],speedMiddle,speedArrows[1],{input:speedRange,output:speedOutput});
+  speedOutput.hidden=!speedFrame; // Without the optional frame, retain a usable native range and direct numeric input.
+  speedFrame?.sync();
+ }
  const boundedDelay=value=>Math.max(20,Math.min(5000,Math.round((Number(value)||100)/10)*10));
- function setDelay(value,notify=false){delay=boundedDelay(value);if(speedInput)speedInput.value=String(delay);if(speedRange)speedRange.value=String(delay);if(notify){searchOptions.onDelayChange?.(delay);schedule();}}
+ function setDelay(value,notify=false){delay=boundedDelay(value);if(speedInput)speedInput.value=String(delay);if(speedRange)speedRange.value=String(delay);syncSpeed();if(notify){searchOptions.onDelayChange?.(delay);schedule();}}
  const maxEdge=()=>128;
  const size=()=>({width:edge*width/Math.max(width,height),height:edge*height/Math.max(width,height)});
  function save(){try{win.localStorage.setItem(key,JSON.stringify(edge));}catch{}}
@@ -41,7 +50,7 @@
  function schedule(){if(timer!==null)win.clearTimeout(timer);timer=null;if(playing&&!section.hidden&&items.length>1)timer=win.setTimeout(()=>{timer=null;select((selected+1)%items.length);},delay);}
  function pause(){playing=false;if(timer!==null)win.clearTimeout(timer);timer=null;if(playButton){playButton.querySelector('.may-gif-button-caption').textContent='▶ Пуск';playButton.setAttribute('aria-label','Воспроизвести кадры GIF');playButton.setAttribute('aria-pressed','false');}}
  function play(){if(!items.length||section.hidden)return;playing=true;playButton.querySelector('.may-gif-button-caption').textContent='Ⅱ Пауза';playButton.setAttribute('aria-label','Приостановить просмотр GIF');playButton.setAttribute('aria-pressed','true');schedule();}
- function setBusy(value){busy=!!value;if(!section)return;section.setAttribute('aria-busy',String(busy));if(generateButton)generateButton.disabled=busy;if(cancelButton)cancelButton.hidden=!busy;if(speedInput)speedInput.disabled=busy;if(speedRange)speedRange.disabled=busy;if(sequenceInput)sequenceInput.disabled=busy;for(const b of [libraryButton,frameButton,applyButton,selectAllButton,selectNoneButton,filterButton,xorButton])if(b)b.disabled=busy;syncLiveButtons();download.disabled=busy;download.setAttribute('aria-disabled',String(busy));}
+ function setBusy(value){busy=!!value;if(!section)return;section.setAttribute('aria-busy',String(busy));if(generateButton)generateButton.disabled=busy;if(cancelButton)cancelButton.hidden=!busy;if(speedInput)speedInput.disabled=busy;if(speedRange)speedRange.disabled=busy;syncSpeed();if(sequenceInput)sequenceInput.disabled=busy;for(const b of [libraryButton,frameButton,applyButton,selectAllButton,selectNoneButton,filterButton,xorButton])if(b)b.disabled=busy;syncLiveButtons();download.disabled=busy;download.setAttribute('aria-disabled',String(busy));}
  function finish(){
   if(!drag)return;const previous=drag;drag=null;
   try{if(previous.handle.hasPointerCapture?.(previous.id))previous.handle.releasePointerCapture(previous.id);}catch{}
@@ -100,9 +109,27 @@
   settingsBar=doc.createElement('div');settingsBar.className='may-gif-strip-settings';settingsBar.hidden=true;
   const speedLabel=doc.createElement('label');speedLabel.textContent='мс/кадр ';speedInput=doc.createElement('input');speedInput.type='number';speedInput.min='20';speedInput.max='5000';speedInput.step='10';speedInput.className='may-gif-strip-speed';speedInput.setAttribute('aria-label','Задержка кадров GIF в миллисекундах');speedInput.addEventListener('change',()=>setDelay(speedInput.value,true));speedLabel.append(speedInput);
   speedRange=doc.createElement('input');speedRange.type='range';speedRange.min='20';speedRange.max='5000';speedRange.step='10';speedRange.className='may-gif-strip-speed-range';speedRange.setAttribute('aria-label','Скорость GIF: задержка кадра в миллисекундах');speedRange.addEventListener('input',()=>setDelay(speedRange.value,true));
+  if(doc.body.hasAttribute('data-may-number-standard')){
+  speedControl=doc.createElement('div');speedControl.className='gz-hx gz-control may-gif-delay-control';speedControl.dataset.noMini='';speedControl.title='Задержка кадра GIF, мс: стрелки — 10 мс, удержание — повтор';speedControl.setAttribute('aria-label',speedControl.title);
+  Object.assign(speedControl.style,{display:'flex',flex:'0 0 120px',width:'120px',height:'24px',gap:'0',padding:'0'});
+  speedMiddle=doc.createElement('span');speedMiddle.className='gz-mid';Object.assign(speedMiddle.style,{position:'relative',width:'72px',minWidth:'0',flex:'0 0 72px',margin:'0',padding:'0'});Object.assign(speedRange.style,{width:'100%',margin:'0'});
+  speedOutput=doc.createElement('output');speedOutput.setAttribute('aria-hidden','true');speedMiddle.append(speedRange,speedOutput);
+  speedArrows=[-1,1].map(direction=>{
+   const arrow=doc.createElement('button');arrow.type='button';arrow.className='gz-a';arrow.textContent=direction<0?'‹':'›';arrow.dataset.noMini='';arrow.setAttribute('aria-label',(direction<0?'Уменьшить':'Увеличить')+' задержку кадра GIF на 10 мс');arrow.title=arrow.getAttribute('aria-label');
+   Object.assign(arrow.style,{width:'24px',height:'24px',flex:'0 0 24px',padding:'0'});
+   let hold=0,repeated=false;
+   const step=()=>{if(!busy&&!arrow.disabled&&!section.hidden)setDelay(delay+direction*10,true);};
+   const stop=()=>{win.clearTimeout(hold);hold=0;win.removeEventListener('pointerup',stop,true);win.removeEventListener('pointercancel',stop,true);win.removeEventListener('blur',stop);};
+   arrow.addEventListener('click',event=>{event.stopPropagation();if(!repeated||!event.detail)step();repeated=false;});
+   arrow.addEventListener('pointerdown',event=>{if(event.button!==0||arrow.disabled)return;stop();repeated=false;const again=()=>{if(busy||arrow.disabled||section.hidden){stop();return;}repeated=true;step();hold=win.setTimeout(again,80);};hold=win.setTimeout(again,350);win.addEventListener('pointerup',stop,true);win.addEventListener('pointercancel',stop,true);win.addEventListener('blur',stop);});
+   arrow.addEventListener('pointerleave',stop);win.addEventListener('pagehide',stop);return arrow;
+  });
+  speedControl.append(speedArrows[0],speedMiddle,speedArrows[1]);setDelay(delay);
+  if(!win.ZerkControlFrame)win.addEventListener('load',syncSpeed,{once:true});
+  }
   sequenceInput=doc.createElement('select');sequenceInput.className='may-gif-strip-sequence';sequenceInput.setAttribute('aria-label','Последовательность уменьшения GIF');for(const [value,text]of [['step8','Шаг 8'],['powers2','Степени 2']]){const o=doc.createElement('option');o.value=value;o.textContent=win.HubButtonText?.shortCaption(text)||text;sequenceInput.append(o);}
   generateButton=button('↻ Создать','may-gif-strip-generate',async()=>{if(busy||!searchOptions.onGenerate)return;setBusy(true);try{await searchOptions.onGenerate({sequence:sequenceInput.value,delay});}catch(error){status.textContent=error.message||'Ошибка создания';}finally{setBusy(false);}});generateButton.setAttribute('aria-label','Создать варианты GIF с выбранными настройками');
-  cancelButton=button('× Отмена','may-gif-strip-cancel',()=>searchOptions.onCancel?.());cancelButton.setAttribute('aria-label','Отменить создание GIF');cancelButton.hidden=true;montageButton=button('▦ Монтаж','may-gif-strip-montage',()=>searchOptions.onMontage?.());montageButton.setAttribute('aria-label','Открыть монтаж GIF');settingsBar.append(speedLabel,speedRange,sequenceInput,generateButton,cancelButton,montageButton);
+  cancelButton=button('× Отмена','may-gif-strip-cancel',()=>searchOptions.onCancel?.());cancelButton.setAttribute('aria-label','Отменить создание GIF');cancelButton.hidden=true;montageButton=button('▦ Монтаж','may-gif-strip-montage',()=>searchOptions.onMontage?.());montageButton.setAttribute('aria-label','Открыть монтаж GIF');settingsBar.append(speedLabel,speedControl||speedRange,sequenceInput,generateButton,cancelButton,montageButton);
   recordButton=button('● Кадры GIF','may-gif-strip-record',async()=>{if(busy||(!recording&&!items.length))return;try{await searchOptions.onRecord({variant:activeGroup?.variant,index:selected,frame:items[selected]?.entry,delay});}catch(error){status.textContent=error.message||'Ошибка записи';}});recordButton.setAttribute('aria-label','Записать смену кадров Маятника на выбранном уровне детализации; повторно — завершить');
   stackButton=button('▦ Под полем','may-gif-strip-stack',()=>{try{const value=searchOptions.onStackToggle();if(typeof value==='boolean')setStackEnabled(value);}catch(error){status.textContent=error.message||'Ошибка показа масштабов';}});stackButton.setAttribute('aria-label','Показать или скрыть живые масштабы под оригиналом в Маятнике');settingsBar.append(recordButton,stackButton);
   status=doc.createElement('span');status.className='may-gif-strip-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');

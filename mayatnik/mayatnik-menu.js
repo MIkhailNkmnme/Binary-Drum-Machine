@@ -228,11 +228,9 @@
     button('edgeEndsPlus','plus')
   ]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
-  // МАЯ-687: ordinary numeric sliders use the Хорр → Размер contour, not the legacy filled arrows.
-  for(const cell of rail.el.querySelectorAll('.gz-group[data-id="flow"] .gz-sl')){
-    cell.classList.add('may-number-slider');
-    const arrows=cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)');
-    arrows.forEach((arrow,i)=>{arrow.dataset.dir=i?'right':'left';});
+  // Active page: one common adapter. Older pages retain their existing Flow styling.
+  if(!document.body.hasAttribute('data-may-number-standard'))for(const cell of rail.el.querySelectorAll('.gz-group[data-id="flow"] .gz-sl')){
+    cell.classList.add('may-number-slider');cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)').forEach((arrow,i)=>{arrow.dataset.dir=i?'right':'left';});
   }
   if(window.mayFlow){
     const focusState=new WeakMap();
@@ -601,7 +599,12 @@
       thumb.setAttribute('aria-valuemin', '8'); thumb.setAttribute('aria-valuemax', '4096'); thumb.setAttribute('aria-orientation', 'horizontal');
       thumb.title = 'Тянуть — число строк от 8 до 4096 · Enter или Задать — перестроить поле';
       syncRowsThumb = () => { const v = Math.max(8, Math.min(4096, Math.round(+customInput.value || 128)));
-        thumb.style.left = (32 + (v - 8) / (4096 - 8) * 56) + 'px'; thumb.setAttribute('aria-valuenow', String(v)); };
+        const x=32+(v-8)/(4096-8)*56;thumb.style.left=x+'px';thumb.setAttribute('aria-valuenow',String(v));
+        if(document.body.hasAttribute('data-may-number-standard')){
+          line.classList.add('may-number-draft');const natural=String(customInput.value).length*7+6,left=x-29,right=91-x,before=natural<=left||natural>right&&left>=right,room=Math.max(1,before?left:right),width=Math.min(natural,room);
+          customInput.style.left=(before?x-5-width:x+5)+'px';customInput.style.width=width+'px';customInput.style.fontSize=Math.max(8,Math.min(11,11*room/natural))+'px';
+        }
+      };
       customInput.addEventListener('input', syncRowsThumb);
       thumb.addEventListener('click', ev => ev.stopPropagation());
       thumb.addEventListener('pointerdown', ev => { if (ev.button !== 0) return; ev.preventDefault(); ev.stopPropagation(); thumb.focus(); thumb.setPointerCapture(ev.pointerId);

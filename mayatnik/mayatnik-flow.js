@@ -98,7 +98,7 @@
     sunResize.title='Радиус Солнца: '+Math.round(sunRadius)+' px. Тяните от центра или к центру. Стрелки — 1 px, Shift — 10 px, Home — 40 px.'+(distance!==sunRadius?' Ручка сдвинута в видимую область.':'');
   }
   function mountSunHandles(){
-    sunHandles=document.createElement('div');sunHandles.id='mayFlowSunHandles';sunHandles.hidden=true;
+    sunHandles=document.createElement('div');sunHandles.id='mayFlowSunHandles';sunHandles.dataset.noMini='';sunHandles.hidden=true;
     sunRing=document.createElement('div');sunRing.className='may-flow-sun-ring';sunRing.setAttribute('aria-hidden','true');
     const make=(kind,label,glyph)=>{const b=document.createElement('button');b.type='button';b.className='may-flow-sun-handle '+kind;b.setAttribute('aria-label',label);const mark=document.createElement('span');mark.textContent=glyph;mark.setAttribute('aria-hidden','true');b.append(mark);return b;};
     sunMove=make('may-flow-sun-move','Переместить центр Солнца','+');sunResize=make('may-flow-sun-radius','Радиус Солнца','↔');

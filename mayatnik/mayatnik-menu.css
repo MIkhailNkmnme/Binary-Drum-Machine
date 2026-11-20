@@ -1403,3 +1403,7 @@ header #paintTools.pt-dd .may-heat-period-control{background:transparent!importa
 #mayFlowSunHandles .may-flow-sun-handle>span{display:block;transform:rotate(-45deg);font:14px/1 sans-serif;pointer-events:none}
 #mayFlowSunHandles .may-flow-sun-handle:active{cursor:grabbing}
 #mayFlowSunHandles .may-flow-sun-handle:is(:hover,:focus-visible){outline:2px solid #e8edf5;outline-offset:2px}
+
+/* КНП-022: the editable row draft also stays beside its marker. */
+body[data-may-number-standard] .may-rows-custom .may-number-draft input{position:absolute;top:0;min-width:0;max-width:72px;padding:0;flex:none;text-align:center}
+body[data-may-number-standard] .may-number-draft>.may-rows-step[data-dir=right]{margin-left:auto}
