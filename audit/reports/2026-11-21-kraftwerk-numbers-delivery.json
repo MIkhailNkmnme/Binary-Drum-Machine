@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-21",
+  "commit": "b9a137e8d12dd1985d0b194fae83d04a71604c96",
+  "version": "0.146",
+  "checked_at_utc": "2026-11-20T22:24:30.784913+00:00",
+  "checks": [
+    {
+      "url": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "matches": true,
+      "sha256": "09d547acb30c9422dcb42bc750fa131460dfe03c13a9ae3b55cfb182089488cd"
+    },
+    {
+      "url": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html?v=146",
+      "status": 200,
+      "matches": true,
+      "sha256": "09d547acb30c9422dcb42bc750fa131460dfe03c13a9ae3b55cfb182089488cd"
+    }
+  ],
+  "scope": "HTTP delivery only; no app tests, syntax checks, browser or listening. Page acceptance by user.",
+  "pages": [
+    {
+      "id": 44828259030,
+      "name": "pages build and deployment",
+      "head_sha": "b9a137e8d12dd1985d0b194fae83d04a71604c96",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/44828259030"
+    }
+  ]
+}
