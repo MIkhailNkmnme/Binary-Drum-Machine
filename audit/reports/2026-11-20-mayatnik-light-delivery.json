@@ -1,0 +1,36 @@
+{
+  "task": "МАЯ-689",
+  "release": "da87da3c43f1618871f91bf5e298e2ad59662f33",
+  "version": "1.040",
+  "checkedUtc": "2026-11-20T15:15:39.1067473Z",
+  "pagesRun": 44760943532,
+  "pagesConclusion": null,
+  "verification": "Source/diff read by root and flow_port. Tests, syntax checks, browser and app not run; acceptance by user.",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?v=1040",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "_js/hub-flow-core.js",
+      "url": "https://1001100.online/_js/hub-flow-core.js?v=1040",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "audit/reports/2026-11-20-mayatnik-light-reflection.md",
+      "url": "https://1001100.online/audit/reports/2026-11-20-mayatnik-light-reflection.md?v=1040",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "matches": true
+    }
+  ],
+  "pagesStatusNote": "Final workflow API request timed out; actual HTTP delivery independently confirmed for all four URLs."
+}
