@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-21",
+  "commit": "e7dfb9f8e797b76414a61153e10da1ca4152cdaf",
+  "version": "0.144",
+  "checked_at_utc": "2026-11-20T21:09:06.455130+00:00",
+  "checks": [
+    {
+      "url": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html",
+      "status": 200,
+      "matches": true,
+      "sha256": "26f52c8582a1b90e5a409e4a0aba96bd7aedeb03f30bcc3b290f4ae0e61090a5"
+    },
+    {
+      "url": "https://1001100.online/issledovanie/kraftwerk-albums/albums-1970-1974.json",
+      "status": 200,
+      "matches": true,
+      "sha256": "706105bb2ec1c9b46415d6372ecddc1a1cf79c96a2b284a9681f775d65311121"
+    },
+    {
+      "url": "https://1001100.online/issledovanie/kraftwerk-albums/albums-1975-1977.json",
+      "status": 200,
+      "matches": true,
+      "sha256": "4ce0c5b2e24269669995efb87c61c31d93cd22c4b7f4dccc7b17a1462d33b8c2"
+    },
+    {
+      "url": "https://1001100.online/issledovanie/kraftwerk-albums/albums-1986-2003.json",
+      "status": 200,
+      "matches": true,
+      "sha256": "cc82ed4f86091a269dbf46ce294cf5e387930169b897a4de1c527a4c564040d7"
+    },
+    {
+      "url": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html?v=144",
+      "status": 200,
+      "matches": true,
+      "sha256": "26f52c8582a1b90e5a409e4a0aba96bd7aedeb03f30bcc3b290f4ae0e61090a5"
+    }
+  ],
+  "scope": "HTTP delivery only; no app tests, syntax checks, browser or listening. Page acceptance by user.",
+  "pages": [
+    {
+      "id": 44817091517,
+      "name": "pages build and deployment",
+      "head_sha": "e7dfb9f8e797b76414a61153e10da1ca4152cdaf",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/44817091517"
+    }
+  ]
+}
