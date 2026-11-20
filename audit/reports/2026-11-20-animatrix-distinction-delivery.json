@@ -1,0 +1,76 @@
+{
+  "commit": "cfc20846bb87ecbd72f1fa5600158ae3252688d1",
+  "checkedAt": "2026-11-20T12:10:37.447010+00:00",
+  "method": "HTTP source delivery only; LF-normalized comparison against git commit; no app/browser/tests",
+  "results": [
+    {
+      "path": "wolfram/animatrix.html",
+      "url": "https://1001100.online/wolfram/animatrix.html?anm=002",
+      "status": 200,
+      "match": true,
+      "sha256": "ffe6d1a5ffbc0b3176b048be4aa1882805e4bf9af5bb456a7fcd5d81350f5ef0"
+    },
+    {
+      "path": "wolfram/animatrix.md",
+      "url": "https://1001100.online/wolfram/animatrix.md?anm=002",
+      "status": 200,
+      "match": true,
+      "sha256": "2b11809cb71e7ff16c13b1c6fbfcec9092795d187c7cf82234efff2298b54d35"
+    },
+    {
+      "path": "wolfram/animatrix-evidence.json",
+      "url": "https://1001100.online/wolfram/animatrix-evidence.json?anm=002",
+      "status": 200,
+      "match": true,
+      "sha256": "b8c6f3f05c55eb9a2dc81b3970c9105d4a9c8fe53e97e0c9b68769bc499a26b6"
+    },
+    {
+      "path": "issledovanie/wolfram-nks/xor-pendulum-comparison.html",
+      "url": "https://1001100.online/issledovanie/wolfram-nks/xor-pendulum-comparison.html?anm=002",
+      "status": 200,
+      "match": true,
+      "sha256": "b35efb388b7e1189e0795ca7ec46e01bbdde840be0a8c667e5689cc451020051"
+    },
+    {
+      "path": "issledovanie/desktop-wallpapers/index.html",
+      "url": "https://1001100.online/issledovanie/desktop-wallpapers/index.html?anm=002",
+      "status": 200,
+      "match": true,
+      "sha256": "cd1e5c73ab694d54314e2154d69cba34aea674b670505eff8d27e8e6d6c26a29"
+    },
+    {
+      "path": "mayatnik/instruction/index.html",
+      "url": "https://1001100.online/mayatnik/instruction/index.html?anm=002",
+      "status": 200,
+      "match": true,
+      "sha256": "df1d600c5cd8f79c50c8a7b0f549f318963356884921aae2b6d76a5309150170"
+    },
+    {
+      "path": "issledovanie/Zerkalius-issledovanie.html",
+      "url": "https://1001100.online/issledovanie/Zerkalius-issledovanie.html?anm=002",
+      "status": 200,
+      "match": true,
+      "sha256": "4afed7745f0ee8f5430577324353bbc314c99f5c21904c77f747773dd67a878d"
+    },
+    {
+      "path": "wolfram/animatrix.html",
+      "url": "https://1001100.online/wolfram/animatrix.html",
+      "status": 200,
+      "match": true,
+      "sha256": "ffe6d1a5ffbc0b3176b048be4aa1882805e4bf9af5bb456a7fcd5d81350f5ef0"
+    },
+    {
+      "path": "issledovanie/desktop-wallpapers/index.html",
+      "url": "https://1001100.online/issledovanie/desktop-wallpapers/",
+      "status": 200,
+      "match": true,
+      "sha256": "cd1e5c73ab694d54314e2154d69cba34aea674b670505eff8d27e8e6d6c26a29"
+    }
+  ],
+  "pages": {
+    "id": 44733110429,
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/runs/44733110429"
+  }
+}
