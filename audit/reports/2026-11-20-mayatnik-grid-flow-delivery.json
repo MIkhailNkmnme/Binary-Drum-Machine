@@ -1,0 +1,47 @@
+{
+  "task": "МАЯ-690",
+  "release": "986f4c106d5d09c506bccba3baca813784fc028a",
+  "version": "1.041",
+  "checkedUtc": "2026-11-20T15:28:33.7847746Z",
+  "pagesRun": 44763056210,
+  "pagesConclusion": "success",
+  "verification": "Source/diff read by root and flow_port. Tests, syntax checks, browser and app not run; acceptance by user.",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?v=1041",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-flow.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-flow.js?v=1041",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "_js/hub-flow-core.js",
+      "url": "https://1001100.online/_js/hub-flow-core.js?v=1041",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/instruction/index.html",
+      "url": "https://1001100.online/mayatnik/instruction/index.html?v=1041",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "audit/reports/2026-11-20-mayatnik-grid-flow.md",
+      "url": "https://1001100.online/audit/reports/2026-11-20-mayatnik-grid-flow.md?v=1041",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "matches": true
+    }
+  ]
+}
