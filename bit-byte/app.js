@@ -746,14 +746,23 @@
   const tabs = Array.from(document.querySelectorAll(".editor-tabs [role=tab]"));
   const TAB_KEY = "zerk_bit_byte_active_tab_v1";
   function selectEditor(name, focus = false) {
+    // The square and rhombic tabs share controls, but select independent field state.
+    for (const id of new Set(tabs.map(tab => tab.getAttribute("aria-controls")))) {
+      document.getElementById(id).hidden = true;
+    }
     for (const tab of tabs) {
       const selected = tab.dataset.mode === name;
       tab.setAttribute("aria-selected", String(selected));
       tab.tabIndex = selected ? 0 : -1;
-      document.getElementById(tab.getAttribute("aria-controls")).hidden = !selected;
+      if (selected) {
+        const panel = document.getElementById(tab.getAttribute("aria-controls"));
+        panel.hidden = false;
+        panel.setAttribute("aria-labelledby", tab.id);
+      }
       if (selected && focus) tab.focus();
     }
     try { localStorage.setItem(TAB_KEY, name); } catch { /* Вкладки работают без хранилища. */ }
+    document.dispatchEvent(new CustomEvent("bitbyte-editor-change", {detail: name}));
   }
   for (const tab of tabs) tab.addEventListener("click", () => selectEditor(tab.dataset.mode));
   document.querySelector(".editor-tabs").addEventListener("keydown", event => {
