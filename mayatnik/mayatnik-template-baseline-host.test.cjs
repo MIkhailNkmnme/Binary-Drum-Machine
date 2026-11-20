@@ -48,6 +48,7 @@ test('Reset stays enabled with no active selection and has no generic capture wr
 });
 function turningFixture(){const f=fixture(),c=f.c;c.f.val.fill(1);f.source=c.f.val.slice();c.window.mayLayers.get=id=>f.layers.get(id);
  c.fieldCellAt=(x,y)=>x>=0&&y>=0&&x<8&&y<6?{c:Math.floor(x),r:Math.floor(y)}:null;c.templateMatchKey=()=>c.k+':field';
+ c.parityValues=()=>c.f.val;c.parityRow=r=>r;c.parityVisible=()=>true;c.parityPlan=()=>({settings:{rowFill:'none'}});c.contoursOn=()=>false;
  c.document={createElement:()=>({getContext:()=>({putImageData(){}})})};c.ImageData=function(data,width,height){Object.assign(this,{data,width,height});};c.mirrorLive=false;c.manualPaintRevision=0;c.colReplayRestore=()=>{};c.persistLibrary=()=>{};
  c.sceneSnapshot=()=>({items:c.templateItems.map(item=>({...item,view:{...item.view}})),matches:c.templateMatchLayer,templatePaint:c.templatePaintLayer,active:c.colourTemplate?.id,picked:[...c.templatePickedIds],library:f.library,hidden:[],manualPaint:null});
  c.templateAxisCommit=before=>{c.templateMatchRevision++;c.pushHistory({indices:new Uint32Array(),previous:new Uint32Array(),next:new Uint32Array(),beforeScene:before,afterScene:c.sceneSnapshot(),bytes:1024,templateOwned:true});};
@@ -70,9 +71,11 @@ test('axis turn vacates only the original field silhouette once; repeated same-a
 test('library insertions and explicit copies never vacate unrelated underlying field bits',()=>{
  for(const sourceKind of ['library','copy']){const f=turningFixture(),c=f.c;c.colourTemplate.sourceKind=sourceKind;c.colourTemplate.sourcePreserving=true;assert.equal(c.turnTemplateAxis('right'),true);assert.equal(c.templateMatchLayer,null);assert.equal(c.colourTemplate.sourceVacated,undefined);assert.deepEqual(c.f.val,f.source);}
 });
-test('vacated source is absent from real CPU/GPU matcher snapshots and base rendering, while holes and source bits remain unchanged',async()=>{
+test('axis turn reveals opposite bits in the current palette on CPU and GPU without changing the source or holes',async()=>{
  for(const gpu of [false,true]){const f=turningFixture(),c=f.c;c.gpuBig=gpu?{fresh:true,k:c.k}:null;c.bmGen=0;c.templateMatchRows=()=>6;c.templateMatchCurrent=()=>true;c.EMPTY=[5,7,11];c.lockCell=(pixels,q,colour)=>pixels[q]=colour;
-  vm.runInContext('async '+fn('templateMatchField')+'\n'+fn('templateMatchApply'),c);c.turnTemplateAxis('right');const snapshot=await c.templateMatchField();for(const q of [9,10,17])assert.equal(snapshot.data[q],-1);assert.equal(snapshot.data[18],1);
-  const pixels=new Uint32Array(48).fill(123);c.templateMatchApply(pixels);for(const q of [9,10,17])assert.equal(pixels[q],c.rgba(c.EMPTY));assert.equal(pixels[18],123);assert.deepEqual(c.f.val,f.source);
+  c.f.val[10]=f.source[10]=0;c.PAL={bits:[[[31,47,63]],[[191,207,223]]]};
+  vm.runInContext('async '+fn('templateMatchField')+'\n'+fn('templateMatchApply'),c);c.turnTemplateAxis('right');const snapshot=await c.templateMatchField();assert.deepEqual([9,10,17,18].map(q=>snapshot.data[q]),[0,1,0,1]);
+  const pixels=new Uint32Array(48).fill(123);c.templateMatchApply(pixels);assert.deepEqual([9,10,17,18].map(q=>pixels[q]),[c.rgba(c.PAL.bits[0][0]),c.rgba(c.PAL.bits[1][0]),c.rgba(c.PAL.bits[0][0]),123]);
+  c.PAL.bits[0][0]=[30,90,150];c.templateMatchApply(pixels);assert.equal(pixels[9],c.rgba(c.PAL.bits[0][0]));assert.deepEqual(c.f.val,f.source);
  }
 });

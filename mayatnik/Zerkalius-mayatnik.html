@@ -1,3 +1,4 @@
+<!-- МАЯ-697 · v1.048. Поворот шаблона оставляет антибиты в текущей палитре 0/1. Проверки пользователем. -->
 <!-- МАЯ-696 · v1.047. Ручной сдвиг при «Верхе», возврат колесом, размеры выключены в ссылках. Проверки пользователем. -->
 <!-- МАЯ-695 · v1.046. Круглые палитры Воды и Снега. Проверки пользователем. -->
 <!-- ВЛФ-009 · v1.035: Вольфрам — три верхних бита выбирают цвет клетки, без изменения поля. Проверки пользователем. -->
@@ -80,7 +81,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.047</title>
+<title>Zerkalius Маятнкъ — v1.048</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -232,7 +233,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.040</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.048</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -5530,15 +5531,22 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function templateVacateSource(item,prepared){
     if(!f||!img||item.sourceVacated||item.sourceKind==='library'||item.sourceKind==='copy'||!item.sourcePreserving&&item.sourceKind!=='field')return false;
-    const original=templateBaseline.original(item.id),sources=new Set(),cells=new Set();
+    const key=templateMatchKey(),old=templateMatchLayer?.key===key?templateMatchLayer:null;
+    const original=templateBaseline.original(item.id),sources=new Set(),cells=new Map(),fieldBits=parityValues();
     for(const part of original?.parts||prepared){const origin=part.sourceOrigin,key=origin?.key||part;if(sources.has(key))continue;sources.add(key);
       const m=origin?.mask||part.mask,data=origin?.mask.data||part.sourceData||m.data;
       for(let q=0;q<data.length;q++){if(!data[q])continue;const x=m.x+q%m.width,y=m.y+Math.floor(q/m.width);if(x<0||y<0||x>=img.width||y>=img.height)continue;
-        const cell=fieldCellAt(x,y);if(cell){const index=cell.r*f.W+cell.c;if(parityValues()[index]>=0)cells.add(index);}}
+        const cell=fieldCellAt(x,y);if(!cell)continue;
+        const index=cell.r*f.W+cell.c;
+        if(cells.has(index)||fieldBits[index]<0||(old?.bits[index]??2)!==2)continue;
+        const bit=rasterBit(x,y);
+        if(bit===0||bit===1)cells.set(index,storedBit(1-bit));
+      }
     }
     if(!cells.size)return false;
-    const key=templateMatchKey(),old=templateMatchLayer?.key===key?templateMatchLayer:null,N=f.val.length,paint=old?old.paint.slice():new Uint32Array(N),bits=old?old.bits.slice():new Uint8Array(N).fill(2),indices=new Set(old?.indices||[]);
-    for(const q of cells){paint[q]=0;bits[q]=255;indices.add(q);}
+    const N=f.val.length,paint=old?old.paint.slice():new Uint32Array(N),bits=old?old.bits.slice():new Uint8Array(N).fill(2),indices=new Set(old?.indices||[]);
+    // A bit without fixed paint follows the palette on every redraw.
+    for(const [q,bit] of cells){paint[q]=0;bits[q]=bit;indices.add(q);}
     templateMatchLayer={key,paint,bits,indices:Uint32Array.from(indices)};templateMatchCache=null;item.sourceVacated=true;return true;
   }
   function templateBaselineCleanHistory(entries,items){
@@ -6835,7 +6843,20 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function templateMatchApply(px){
     const layer=templateMatchLayer;if(!layer||layer.key!==templateMatchKey())return;
-    const empty=rgba(EMPTY);for(const q of layer.indices){const col=layer.bits[q]===255?empty:layer.paint[q];if(col){lockCell(px,q,st.inverted?storedInk(layer.bits[q],col):col);if(contoursOn()&&contourBits){const r=Math.floor(q/f.W),c=q%f.W-VX;if(c>=0&&c<VW&&r>=0&&r<VH)contourBits[r*VW+c]=layer.bits[q]===255?-1:st.inverted?storedBit(layer.bits[q]):layer.bits[q];}}}
+    const empty=rgba(EMPTY);
+    for(const q of layer.indices){
+      const raw=layer.bits[q],bit=raw===255?-1:st.inverted?storedBit(raw):raw;
+      let colour=layer.paint[q];
+      if(raw===255)colour=empty;
+      else if(colour&&st.inverted)colour=storedInk(raw,colour);
+      else if(!colour&&(bit===0||bit===1))colour=rgba(PAL.bits[bit][0]);
+      if(!colour)continue;
+      lockCell(px,q,colour);
+      if(contoursOn()&&contourBits){
+        const r=Math.floor(q/f.W),c=q%f.W-VX;
+        if(c>=0&&c<VW&&r>=0&&r<VH)contourBits[r*VW+c]=bit;
+      }
+    }
   }
   let templateSelectionPicture=null;
   // Card colours are a disposable display layer; neither field paint nor the saved masks change.
@@ -6923,6 +6944,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function templateMatchOffscreenColour(c,r,bit){
     const q=r*f.W+c,layer=templateMatchLayer?.key===templateMatchKey()?templateMatchLayer:null;
     if(layer?.paint[q])return layer.paint[q];
+    if(layer?.bits[q]===0||layer?.bits[q]===1)return rgba(PAL.bits[bit][0]);
     const P=PAL[st.view]||PAL.col;
     const tint=st.view==='bits'||compareOn()&&st.compareSource!=='cone'?0:tintAt(r,c-geo.anchor,bit);
     return rgba(P[bit][tint]);
