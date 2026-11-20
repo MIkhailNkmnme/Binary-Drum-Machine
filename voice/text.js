@@ -2,9 +2,12 @@
 (function(root){
   'use strict';
   const MAX_CHARS=1200,MAX_SECONDS=240;
-  const softenable=new Set(Array.from('БВГДЗКЛМНПРСТФХ'));
+  const pairedConsonants='БВГДЗКЛМНПРСТФХ';
+  const softenable=new Set(pairedConsonants);
   const consonants=new Set(Array.from('БВГДЖЗКЛМНПРСТФХЦЧШЩ'));
-  const repeatedStops=new Set(Array.from('БГДКПТ'));
+  const shortConsonants=new Set('БГДКПТЦЧ');
+  const russianVowels=new Set('АЕЁИОУЫЭЮЯ');
+  const MAX_HOLD_SECONDS=1.5;
   const softNext=new Set(Array.from('ЕЁЮЯИЬ'));
   const iotated=new Set(Array.from('ЕЁЮЯ'));
   function plan({text,language,catalog,engine,settings,phones,prosody}){
@@ -36,22 +39,27 @@
         }
         score=recipe.score.map(t=>({...t}));
         if(language==='ru'&&recipe.kind==='sound'){
-          const previous=letters[index-1]?.toUpperCase(),token=score[0];
-          if(score.length===1&&repeatedStops.has(upper)&&!Object.hasOwn(phones??{},token.id)){
-            // A continuous closure has one release. Keep every source index
-            // for seeking/highlighting and bound the hold for long test runs.
+          const previous=letters[index-1]?.toUpperCase();
+          const vowel=russianVowels.has(upper);
+          const isSound=vowel||upper==='Й'||consonants.has(upper);
+          if(isSound&&score.length&&score.every(token=>!Object.hasOwn(phones??{},token.id))){
             let end=index+1;
             while(letters[end]?.toUpperCase()===upper)end++;
-            const softer=softNext.has(letters[end]?.toUpperCase())&&engine.phonemeIds.includes(token.id+'j');
-            if(!softer||!Object.hasOwn(phones??{},token.id+'j')){
-              length=end-index;
-              token.duration*=Math.min(5,1+.7*(length-1));
-            }
+            const next=letters[end]?.toUpperCase();
+            const softId=score[0].id+'j';
+            const customSoft=softenable.has(upper)&&softNext.has(next)&&Object.hasOwn(phones??{},softId);
+            // Preserve ordinary doubled vowels, such as the "оо" in "кооперация".
+            if(!customSoft&&end-index>=(vowel?3:2))length=end-index;
           }
           const next=letters[index+length]?.toUpperCase();
           if(iotated.has(upper)&&consonants.has(previous)&&score[0]?.id==='j')score.shift();
           if(softenable.has(upper)&&softNext.has(next)&&score[0]){
             const id=score[0].id+'j';if(engine.phonemeIds.includes(id))score[0].id=id;
+          }
+          if(length>1&&!shortConsonants.has(upper)){
+            // For an iotated vowel, keep the initial j short and sustain its vowel.
+            const held=score.at(-1);
+            held.duration=Math.min(MAX_HOLD_SECONDS,held.duration*length);
           }
         }
         if(score.some(t=>t.id!=='_'))sounding=true;
@@ -105,5 +113,5 @@
     for(const token of result.score){seconds+=token.duration;count=result.legacyExact?Math.ceil(seconds/result.settings.speed*result.sampleRate):count+Math.round(token.duration/result.settings.speed*result.sampleRate);boundaries.push(count);}
     return boundaries;
   }
-  root.VoiceText=Object.freeze({plan,tokenBoundaries,maxCharacters:MAX_CHARS,maxSeconds:MAX_SECONDS});
+  root.VoiceText=Object.freeze({plan,tokenBoundaries,maxCharacters:MAX_CHARS,maxSeconds:MAX_SECONDS,pairedConsonants});
 })(globalThis);

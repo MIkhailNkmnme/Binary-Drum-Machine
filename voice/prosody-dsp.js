@@ -25,11 +25,11 @@
   function phoneProfile(profiles,id){
     return profiles.get(id)??(id.endsWith('j')?profiles.get(id.slice(0,-1)):null);
   }
-  const voicedStops=new Set(['b','g','d']);
+  const voicedStops=new Set(['b','bj','g','gj','d','dj']);
   function speechPhone(id,phone,closedVoicedStop,isolatedZ){
-    if(isolatedZ&&id==='z'&&phone.kind==='fricative'){
+    if(isolatedZ&&phone.kind==='fricative'){
       return {...phone,kind:'sonorant',voice:.60,noise:0,
-        formants:[300,1650,...phone.formants.slice(2)],bandwidths:[145,...phone.bandwidths.slice(1)],
+        formants:[300,id==='zj'?Math.max(2150,phone.formants[1]):1650,...phone.formants.slice(2)],bandwidths:[145,...phone.bandwidths.slice(1)],
         weights:[.65,.18,.035,0]};
     }
     if(closedVoicedStop&&phone.kind==='stop'&&voicedStops.has(id)){
@@ -178,7 +178,7 @@
       frequency:(base,control)=>clamp(base*control.pitchMultiplier,floor,ceiling),
       speechPhone:(id,phone,index)=>{
         const closed=segments[index]?.closedVoicedStop===true&&voicedStops.has(id);
-        const isolatedZ=segments[index]?.isolatedZ===true&&id==='z';
+        const isolatedZ=segments[index]?.isolatedZ===true&&(id==='z'||id==='zj');
         return articulatedFrication||closed||isolatedZ?speechPhone(id,phone,closed,isolatedZ):phone;
       },
       fricationSource:(id,kind)=>articulatedFrication&&(bandLimitedZ||(id!=='z'&&id!=='zj'))?createFricationSource(id,kind,rate):null,
