@@ -164,7 +164,7 @@
       if(tab.dataset.engine===id)tab.setAttribute('aria-current','page');
       else tab.removeAttribute('aria-current');
     }
-    document.title=label(id)+' · Голос '+$('voice-version').textContent;
+    document.title=label(id)+' · '+$('voice-name').textContent+' '+$('voice-version').textContent;
     buildParameters();refreshPhones();syncParameters();
   }
   function allRecipes(){const list=[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],unique=[...new Map(list.map(r=>[r.id,r])).values()];return [...unique.map(r=>({...r,title:r.label,builtin:true})),...state.library];}
