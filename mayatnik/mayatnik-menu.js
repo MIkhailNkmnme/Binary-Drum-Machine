@@ -227,13 +227,19 @@
     button('edgeEndsMinus','minus'),
     button('edgeEndsPlus','plus')
   ]});
-  // МАЯ-694: reuse the standard label + circular colour sample, preserving the layout id.
-  const sunItem=groups.find(g=>g.id==='flow')?.items.find(item=>item.name==='Солнце');
-  if(sunItem&&window.mayFlow?.setRayColour){
-    const input=colourInput(),colourTip='Цвет луча: Солнце, свет сверху, Плотно и Свет 01. Сохраняется после обновления страницы.';
-    input.addEventListener('input',()=>{if(!sunItem.disabled?.())window.mayFlow.setRayColour(input.value);});
-    const open=anchor=>{if(sunItem.disabled?.())return;input.value=window.mayFlow.rayColour;openColourPicker(input,anchor.querySelector('.gz-h1')||anchor);};
-    Object.assign(sunItem,pair(sunItem,{tip:colourTip,on:sunItem.on,open,ink:()=>window.mayFlow.rayColour},'Солнце','●',{cls:'gz-wl',name:'Солнце',tip:sunItem.tip+' · кружок справа — цвет луча'}));
+  // Standard label + circular colour samples; preserve each existing layout id.
+  const flowColourItems=new Set(),flow=window.mayFlow;
+  for(const [name,get,set,colourTip] of flow?[
+    ['Солнце',()=>flow.rayColour,value=>flow.setRayColour(value),'Цвет луча: Солнце, свет сверху, Плотно и Свет 01.'],
+    ['Вода',()=>flow.materialColour('water'),value=>flow.setMaterialColour('water',value),'Цвет воды и её поверхности, включая накопившуюся воду.'],
+    ['Снег',()=>flow.materialColour('snow'),value=>flow.setMaterialColour('snow',value),'Цвет падающего и накопившегося снега.']
+  ]:[]){
+    const item=groups.find(g=>g.id==='flow')?.items.find(item=>item.name===name);if(!item)continue;
+    const input=colourInput();
+    input.addEventListener('input',()=>{if(!item.disabled?.())set(input.value);});
+    const open=anchor=>{if(item.disabled?.())return;input.value=get();openColourPicker(input,anchor.querySelector('.gz-h1')||anchor);};
+    Object.assign(item,pair(item,{tip:colourTip+' Сохраняется после обновления страницы.',on:item.on,open,ink:get},name,'●',{cls:'gz-wl',name,tip:item.tip+' · кружок справа — выбор цвета'}));
+    flowColourItems.add(item);
   }
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
   // Active page: one common adapter. Older pages retain their existing Flow styling.
@@ -260,7 +266,7 @@
         button.title=title;button.setAttribute('aria-label',title);button.dataset.mayTip=title;
         button.classList.toggle('gz-off-dis',disabled);button.setAttribute('aria-disabled',String(disabled));button.tabIndex=disabled?-1:0;
         if(item.type==='toggle')button.setAttribute('aria-pressed',String(item.on()));
-        if(item===sunItem)button.querySelectorAll(':scope > .gz-half').forEach((half,index)=>{const label=item.parts[index].tip;half.title=label;half.setAttribute('aria-label',label);half.setAttribute('aria-disabled',String(disabled));});
+        if(flowColourItems.has(item))button.querySelectorAll(':scope > .gz-half').forEach((half,index)=>{const label=item.parts[index].tip;half.title=label;half.setAttribute('aria-label',label);half.setAttribute('aria-disabled',String(disabled));});
         for(const child of button.querySelectorAll('[tabindex],button,input,select')){
           if(!focusState.has(child))focusState.set(child,{tab:child.getAttribute('tabindex'),disabled:!!child.disabled});
           const saved=focusState.get(child);
