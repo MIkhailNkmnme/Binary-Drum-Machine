@@ -5,7 +5,8 @@
   let canvas,ctx,waterCanvas,waterCtx,liquidCanvas,liquidCtx,field,lightField,liquid,pixels,liquidPixels,cell=2,lightCell=1;
   let dirty=true,lastMask=-Infinity,lastTime=0,accumulator=0,snowAccumulator=0,raf=0,retry=0,paused=false,light=false,snow=false,water=false;
   let bounds=null,rays=[],emission=0,snowEmission=0,waterEmission=0,sample=0,statusMessage='',unavailable='',scene=null;
-  let lightBits=false,lightSize=16,sun=false,sunRadius=40,sunCentre=null;
+  let lightBits=false,lightSize=16,sun=false,sunRadius=40,sunCentre=null,rayColour=null;
+  try{const colour=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').rayColour;if(/^#[\da-f]{6}$/i.test(colour))rayColour=colour;}catch(_){}
   let sunHandles,sunRing,sunMove,sunResize,sunDrag=null;
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}');lightBits=saved.bits===true;sun=saved.sun===true;if(Number.isFinite(saved.radius))sunRadius=Math.max(0,Math.min(innerWidth,saved.radius));if(Number.isFinite(saved.size))lightSize=Math.max(4,Math.min(64,saved.size));}catch(_){}
   try{const p=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').sunCentre;if(p&&Number.isFinite(p.x)&&Number.isFinite(p.y))sunCentre={x:Math.max(0,Math.min(1,p.x)),y:Math.max(0,Math.min(1,p.y))};}catch(_){}
@@ -50,10 +51,11 @@
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').speeds;for(const key of Object.keys(speeds))if(Number.isFinite(saved?.[key]))speeds[key]=Math.max(0,Math.min(4,saved[key]));}catch(_){}
   const lightRules=[{pass:1,reflect:2},{pass:2,reflect:1}];let reflectionLoss=true;
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}');reflectionLoss=saved.reflectionLoss!==false;for(let bit=0;bit<2;bit++)for(const key of ['pass','reflect']){const value=saved.lightRules?.[bit]?.[key];if(Number.isInteger(value)&&value>=0&&value<=3)lightRules[bit][key]=value;}}catch(_){}
-  const saveStyle=()=>{try{localStorage.setItem('mayatnik-flow-v1',JSON.stringify({light,snow,water,paused,grid:gridFlow,axis:axisFlow,bits:lightBits,size:lightSize,sun,radius:sunRadius,sunCentre,dense,waterCorners,waterCornersUp,speeds,lightRules,reflectionLoss}));}catch(_){}};
+  const saveStyle=()=>{try{localStorage.setItem('mayatnik-flow-v1',JSON.stringify({light,snow,water,paused,grid:gridFlow,axis:axisFlow,bits:lightBits,size:lightSize,sun,radius:sunRadius,sunCentre,rayColour,dense,waterCorners,waterCornersUp,speeds,lightRules,reflectionLoss}));}catch(_){}};
   function lightSprites(){
     return ['0','1'].map(bit=>{const c=document.createElement('canvas'),side=lightSize*2+6;c.width=c.height=side*2;
-      const g=c.getContext('2d');g.setTransform(2,0,0,2,side,side);host.glyph(g,bit,lightSize);return c;});
+      const g=c.getContext('2d');g.setTransform(2,0,0,2,side,side);host.glyph(g,bit,lightSize);
+      if(rayColour){g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle=rayColour;g.fillRect(0,0,c.width,c.height);}return c;});
   }
   let spritesCache=null,spriteKey='';
   const invalidate=()=>{dirty=true;syncSun();if(canvas&&(light||snow||water||traces()))wake();};
@@ -248,7 +250,7 @@
     syncSun();
     if(light&&dense){
       if(!beams)beams=lightField.topBeams(horizon/lightCell,gridFlow?gridSources.map(x=>x/lightCell):null);beamDistance+=dt*speeds.light*420/lightCell;
-      ctx.save();ctx.strokeStyle=palette.sym;ctx.lineWidth=gridFlow?Math.max(.6,Math.min(1.25,gridStep*.5)):lightCell;ctx.lineCap='butt';
+      ctx.save();ctx.strokeStyle=rayColour||palette.sym;ctx.lineWidth=gridFlow?Math.max(.6,Math.min(1.25,gridStep*.5)):lightCell;ctx.lineCap='butt';
       // Neighbouring dense strips meet at pixel edges without an extra overlapping pixel.
       // Grid sources remain individual lines; reflected segments retain their computed intensity.
       for(const segment of beams){
@@ -258,8 +260,8 @@
       }
       ctx.restore();
     }
-    ctx.strokeStyle=palette.sym;ctx.lineWidth=1.25;ctx.lineCap='round';ctx.shadowColor=palette.sym;ctx.shadowBlur=5;
-    const key=host.glyphKey()+'|'+lightSize;if(lightBits&&spriteKey!==key){spriteKey=key;spritesCache=lightSprites();}const glyphs=lightBits?spritesCache||[]:[];
+    ctx.strokeStyle=rayColour||palette.sym;ctx.lineWidth=1.25;ctx.lineCap='round';ctx.shadowColor=rayColour||palette.sym;ctx.shadowBlur=5;
+    const key=host.glyphKey()+'|'+lightSize+'|'+rayColour;if(lightBits&&spriteKey!==key){spriteKey=key;spritesCache=lightSprites();}const glyphs=lightBits?spritesCache||[]:[];
     const pending=rays.map(ray=>({ray,distance:dt*speeds.light*420/lightCell}));
     const rayLimit=gridFlow?Math.max(350,gridSources.length*12):350;
     for(let ri=0;ri<pending.length&&(gridFlow||ri<350);ri++){
@@ -316,7 +318,7 @@
     toggle('Углы вверх','Вода: подъём уровня через шахматные стыки',()=>waterCornersUp,v=>{waterCornersUp=v;if(liquid)liquid.cornerUp=v;},path.water),
     toggle('Плотно','Сплошной поток света и воды. Исключает круговой источник Солнце.',()=>dense,v=>{dense=v;if(v)sun=false;rays=[];beams=null;beamDistance=0;}),
     toggle('От оси','От конечной ручки зеркальной оси к её началу. Горизонт и исходный центр Солнца проходят через ручку; Солнце можно затем переместить отдельно. Положение и угол — в группе Зеркала; зеркало может быть выключено. Исключает По сетке.',()=>axisFlow,v=>{axisFlow=v;if(v){gridFlow=false;gridKey=null;sunCentre=null;}lastMask=-Infinity;reset();},path.axis),
-    toggle('Свет 01','Свет в виде цифр 0 и 1, текущий шрифт и цвета цифр Маятника',()=>lightBits,v=>{lightBits=v;}),
+    toggle('Свет 01','Свет в виде цифр 0 и 1, текущий шрифт Маятника. Цвета цифр исходные, пока не выбран общий цвет луча в кружке Солнца',()=>lightBits,v=>{lightBits=v;}),
     slider('Размер света','Размер цифр света в экранных пикселях',()=>lightSize,v=>{lightSize=v;},4,64,1,16,v=>v+' px'),
     toggle('Солнце','Круговой источник света. Центр и радиус можно тянуть прямо на холсте. Исключает сплошной поток и По сетке.',()=>sun,v=>{sun=v;if(v){dense=false;if(gridFlow){gridFlow=false;gridKey=null;lastMask=-Infinity;reset();}}rays=[];beams=null;beamDistance=0;}),
     slider('Радиус','Радиус Солнца в экранных пикселях',()=>sunRadius,v=>{sunRadius=v;},0,()=>innerWidth,1,40,v=>v+' px'),
@@ -354,7 +356,7 @@
   root.addEventListener('pagehide',()=>{endSunDrag(true);cancelAnimationFrame(raf);clearTimeout(retry);retry=0;raf=0;lastTime=0;});
   root.addEventListener('pageshow',()=>{if(light||snow||water||traces())wake();});
   mountSunHandles();updateStatus();if(light||snow||water)wake();
-  return {invalidate,group:()=>({id:'flow',title:'Потоки',color:'#76d4ff',items}),get playing(){return !paused&&!unavailable&&(light||snow||water);},get status(){return statusMessage;},get traces(){return traces();},reset(){light=snow=water=paused=false;reset();sync();}};
+  return {invalidate,group:()=>({id:'flow',title:'Потоки',color:'#76d4ff',items}),get rayColour(){return rayColour||host.palette().sym;},setRayColour(value){if(!/^#[\da-f]{6}$/i.test(value)||(snow||water)&&!light)return;setting(()=>{rayColour=value;});if(paused&&field&&scene&&!unavailable)draw(0);},get playing(){return !paused&&!unavailable&&(light||snow||water);},get status(){return statusMessage;},get traces(){return traces();},reset(){light=snow=water=paused=false;reset();sync();}};
   }
   root.MayatnikFlow={mount};
 })(window);
