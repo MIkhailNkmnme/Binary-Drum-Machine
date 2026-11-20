@@ -1,0 +1,281 @@
+<!doctype html>
+<!-- ИСС-121 · v0.001 -->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Журнал картинок Зеркалиуса. Кадры Маятника, осевая раскраска, XOR Хаба и иллюстрации с исходными мотивами и рецептами построения.">
+  <meta name="theme-color" content="#101317">
+  <title>Журнал картинок · Зеркалиус</title>
+  <link rel="stylesheet" href="style.css?v=001">
+</head>
+<body>
+  <a class="skip" href="#journal">К записям</a>
+  <header class="site-bar">
+    <nav class="site-nav shell" aria-label="Разделы сайта">
+      <a class="brand" href="../../">Зеркалиус</a>
+      <div class="site-links">
+        <a href="../Zerkalius-issledovanie.html">Исследования</a>
+        <a href="../../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
+        <a href="../../">Хаб</a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell" id="journal">
+    <header class="intro">
+      <h1>Журнал картинок</h1>
+      <p>Как узоры «Зеркалиуса» становятся кадрами, обоями и иллюстрациями.</p>
+      <nav class="contents" aria-label="Записи журнала">
+        <a href="#axes">Осевая раскраска</a>
+        <a href="#treug">Кадры «Треуг»</a>
+        <a href="#hub-xor">XOR Хаба</a>
+        <a href="#interpretations">Иллюстрации</a>
+      </nav>
+    </header>
+
+    <article class="entry" id="axes">
+      <header class="entry-heading">
+        <p class="entry-meta"><time datetime="2026-11-20">20 ноября 2026</time><span>Маятник · кадр 64</span></p>
+        <h2>Цвет от оси</h2>
+        <p>Бирюзой, янтарём и сиреневым отмечены области, которых касается вертикаль, горизонталь или диагональ. Во всех трёх вариантах исходное поле одно и то же.</p>
+      </header>
+      <div class="axis-wall">
+        <figure class="axis-lead">
+          <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/axis-vertical.png" aria-label="Оригинал · Вертикаль"><img src="https://media.1001100.online/image-journal-2026-11-20/axis-vertical-preview.webp" width="960" height="480" alt="Бирюзовые области вдоль вертикальной оси и в центре треугольника" decoding="async" fetchpriority="high"></a>
+          <figcaption>
+            <span class="figure-name">Вертикаль</span>
+          </figcaption>
+        </figure>
+        <div class="axis-side">
+          <figure>
+            <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/axis-horizontal.png" aria-label="Оригинал · Горизонталь"><img src="https://media.1001100.online/image-journal-2026-11-20/axis-horizontal-preview.webp" width="960" height="480" alt="Янтарные связные области на горизонтали поля" decoding="async" loading="lazy"></a>
+            <figcaption>
+              <span class="figure-name">Горизонталь</span>
+            </figcaption>
+          </figure>
+          <figure>
+            <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/axis-diagonal.png" aria-label="Оригинал · Диагональ"><img src="https://media.1001100.online/image-journal-2026-11-20/axis-diagonal-preview.webp" width="960" height="480" alt="Сиреневые области, которых касается диагональ" decoding="async" loading="lazy"></a>
+            <figcaption>
+              <span class="figure-name">Диагональ</span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+      <details>
+        <summary>Как построить</summary>
+        <div class="recipe">
+          <p>Открой <a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=64&amp;mode=pend">кадр 64 на 1024 строках</a>. Включи «Треуг» и поставь ось. В раскраске выбери «Область → По сторонам». Для нулей и единиц используй кнопки «0» и «1». В серии вертикаль проходит по центру, горизонталь — по строке с индексом 640, диагональ пересекает их под 45°.</p>
+          <p>Цвета предложены через OpenAI API. Области рассчитаны средствами Маятника. Для нулей использован более тёмный оттенок той же палитры.</p>
+          <p class="entry-links"><a href="../../mayatnik/instruction/#axes">Оси</a><a href="../../mayatnik/instruction/#paint">Раскраска</a><a href="../Zerkalius-issledovanie.html#mayatnik-auto-axes">Исследование автоосей</a><a href="https://media.1001100.online/image-journal-2026-11-20/axis-checks.png">Сравнение восьми осей</a></p>
+        </div>
+      </details>
+    </article>
+
+    <article class="entry" id="treug">
+      <header class="entry-heading">
+        <p class="entry-meta"><time datetime="2026-11-20">20 ноября 2026</time><span>Маятник · 1024 строки</span></p>
+        <h2>Четыре кадра «Треуг»</h2>
+        <p>Кадры 4, 64, 176 и 508 в медной палитре. От кадра к кадру одни треугольники заполняются, другие остаются видны. Вершина и основание доходят до краёв изображения.</p>
+      </header>
+      <div class="figures frame-grid">
+        <figure>
+          <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0004-copper.png" aria-label="Оригинал · Кадр 4"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0004-copper-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 4 на 1024 строках, раскраска «Медь»" decoding="async" loading="lazy"></a>
+          <figcaption>
+            <span class="figure-name">Кадр 4</span>
+            <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=4&amp;mode=pend">Открыть кадр</a></span>
+          </figcaption>
+        </figure>
+        <figure>
+          <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0064-copper.png" aria-label="Оригинал · Кадр 64"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0064-copper-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 64 на 1024 строках, раскраска «Медь»" decoding="async" loading="lazy"></a>
+          <figcaption>
+            <span class="figure-name">Кадр 64</span>
+            <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=64&amp;mode=pend">Открыть кадр</a></span>
+          </figcaption>
+        </figure>
+        <figure>
+          <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0176-copper.png" aria-label="Оригинал · Кадр 176"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0176-copper-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 176 на 1024 строках, раскраска «Медь»" decoding="async" loading="lazy"></a>
+          <figcaption>
+            <span class="figure-name">Кадр 176</span>
+            <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=176&amp;mode=pend">Открыть кадр</a></span>
+          </figcaption>
+        </figure>
+        <figure>
+          <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0508-copper.png" aria-label="Оригинал · Кадр 508"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0508-copper-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 508 на 1024 строках, раскраска «Медь»" decoding="async" loading="lazy"></a>
+          <figcaption>
+            <span class="figure-name">Кадр 508</span>
+            <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=508&amp;mode=pend">Открыть кадр</a></span>
+          </figcaption>
+        </figure>
+      </div>
+      <details>
+        <summary>Ещё три палитры</summary>
+        <div class="recipe palette-block">
+          <h3>Бирюза</h3>
+          <div class="figures frame-grid">
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0004-turquoise.png" aria-label="Оригинал · Кадр 4"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0004-turquoise-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 4 на 1024 строках, раскраска «Бирюза»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 4</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=4&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0064-turquoise.png" aria-label="Оригинал · Кадр 64"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0064-turquoise-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 64 на 1024 строках, раскраска «Бирюза»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 64</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=64&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0176-turquoise.png" aria-label="Оригинал · Кадр 176"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0176-turquoise-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 176 на 1024 строках, раскраска «Бирюза»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 176</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=176&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0508-turquoise.png" aria-label="Оригинал · Кадр 508"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0508-turquoise-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 508 на 1024 строках, раскраска «Бирюза»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 508</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=508&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+          </div>
+          <h3>RGB-соседи</h3>
+          <div class="figures frame-grid">
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0004-rgb.png" aria-label="Оригинал · Кадр 4"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0004-rgb-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 4 на 1024 строках, раскраска «RGB-соседи»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 4</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=4&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0064-rgb.png" aria-label="Оригинал · Кадр 64"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0064-rgb-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 64 на 1024 строках, раскраска «RGB-соседи»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 64</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=64&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0176-rgb.png" aria-label="Оригинал · Кадр 176"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0176-rgb-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 176 на 1024 строках, раскраска «RGB-соседи»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 176</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=176&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0508-rgb.png" aria-label="Оригинал · Кадр 508"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0508-rgb-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 508 на 1024 строках, раскраска «RGB-соседи»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 508</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=508&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+          </div>
+          <h3>Вольфрам 90</h3>
+          <div class="figures frame-grid">
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0004-wolfram-90.png" aria-label="Оригинал · Кадр 4"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0004-wolfram-90-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 4 на 1024 строках, раскраска «Вольфрам 90»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 4</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=4&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0064-wolfram-90.png" aria-label="Оригинал · Кадр 64"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0064-wolfram-90-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 64 на 1024 строках, раскраска «Вольфрам 90»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 64</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=64&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0176-wolfram-90.png" aria-label="Оригинал · Кадр 176"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0176-wolfram-90-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 176 на 1024 строках, раскраска «Вольфрам 90»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 176</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=176&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/pendulum-0508-wolfram-90.png" aria-label="Оригинал · Кадр 508"><img src="https://media.1001100.online/image-journal-2026-11-20/pendulum-0508-wolfram-90-preview.webp" width="640" height="320" alt="Треугольный кадр Маятника 508 на 1024 строках, раскраска «Вольфрам 90»" decoding="async" loading="lazy"></a>
+              <figcaption>
+                <span class="figure-name">Кадр 508</span>
+                <span class="figure-links"><a href="../../mayatnik/Zerkalius-mayatnik.html?chisto&amp;n=1024&amp;s=512&amp;k=508&amp;mode=pend">Открыть кадр</a></span>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </details>
+      <details>
+        <summary>Как построить</summary>
+        <div class="recipe">
+          <p>Задай 1024 строки и 512 вершин. В «Построении» выбери «ЛевПрав», в «Полях» — «Маятник». Включи вид «Треуг». Нужный кадр можно открыть плеером или по ссылке под изображением.</p>
+          <dl class="palette-notes">
+            <div><dt>Медь</dt><dd>Ноль <code>#4a2859</code>, единица <code>#ffbf6e</code>.</dd></div>
+            <div><dt>Бирюза</dt><dd>Ноль <code>#19494e</code>, единица <code>#71efda</code>.</dd></div>
+            <div><dt>RGB</dt><dd>Красный канал берёт текущий бит, зелёный — левого соседа, синий — правого.</dd></div>
+            <div><dt>Вольфрам 90</dt><dd>Цвет клетки выбирается по тройке верхних битов. Выход 0 — белый, 1 — чёрный.</dd></div>
+          </dl>
+          <p>PNG 2048 × 1024 сохраняют один пиксель на клетку. В медной и бирюзовой версиях под полем лежит графитовая текстура, созданная в Image API.</p>
+          <p class="entry-links"><a href="../../mayatnik/instruction/#view">Режим «Треуг»</a><a href="../../mayatnik/instruction/#rgb">RGB-соседи</a><a href="../../mayatnik/instruction/#wolfram">Раскраска Вольфрама</a></p>
+        </div>
+      </details>
+    </article>
+
+    <article class="entry" id="hub-xor">
+      <header class="entry-heading">
+        <p class="entry-meta"><time datetime="2026-11-20">20 ноября 2026</time><span>Хаб · поле 5.8</span></p>
+        <h2>Золотой XOR Хаба</h2>
+        <p>Ряды золотых треугольников на чёрном. Рисунок взят из поля «Всё поле 5.8», а шаг 4511 подобран по пользовательскому снимку Хаба.</p>
+      </header>
+      <figure>
+        <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/hub-xor-4k.png" aria-label="Оригинал · Кадр на рабочий стол"><img src="https://media.1001100.online/image-journal-2026-11-20/hub-xor-4k-preview.webp" width="1080" height="608" alt="Широкое поле из золотых вложенных треугольников на чёрном фоне" decoding="async" loading="lazy"></a>
+        <figcaption>
+          <span class="figure-name">Кадр на рабочий стол</span>
+          <span class="figure-links"><a href="https://media.1001100.online/image-journal-2026-11-20/hub-xor-4k.png">3840 × 2160</a> <a href="https://media.1001100.online/image-journal-2026-11-20/hub-xor-full.png">Полное поле 2047 × 1024</a></span>
+        </figcaption>
+      </figure>
+      <details>
+        <summary>Как построить</summary>
+        <div class="recipe">
+          <p>В Хабе открой «Сравнение», выбери XOR, оставь поле 3 (5.8), включи «Прямо» и «Рост». В обоях единицы окрашены в <code>#e5a051</code>. Вариант 4K заполняет экран по высоте и обрезан по бокам.</p>
+          <p class="entry-links"><a href="../../">Открыть Хаб</a><a href="../Zerkalius-issledovanie.html#horrorius-square-test">Как устроен глобальный XOR</a></p>
+        </div>
+      </details>
+    </article>
+
+    <article class="entry" id="interpretations">
+      <header class="entry-heading">
+        <p class="entry-meta"><time datetime="2026-11-20">20 ноября 2026</time><span>Image API</span></p>
+        <h2>Три иллюстрации по мотивам</h2>
+        <p>Зеркало, кодовая волна и ромбы стали отправными точками для GPT Image 2. Композиции, освещение и фактура созданы по текстовым описаниям.</p>
+      </header>
+      <div class="figures concept-grid">
+        <figure>
+          <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/mirror-lattice.webp" aria-label="Оригинал · Зеркальная решётка"><img src="https://media.1001100.online/image-journal-2026-11-20/mirror-lattice-preview.webp" width="840" height="473" alt="Синие и серебристые клетки у вертикального зеркального шва" decoding="async" loading="lazy"></a>
+          <figcaption>
+            <span class="figure-name">Зеркальная решётка</span>
+            <p>Зеркальный маятник подсказал вертикальный стык, по сторонам которого расходятся цветные клетки.</p>
+            <span class="figure-links"><a href="../../zazerkalius/Zerkalius-zazerkalius.html?mayatnik=1#zerkalius">Открыть зеркало</a></span>
+          </figcaption>
+        </figure>
+        <figure>
+          <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/code-wave.webp" aria-label="Оригинал · Кодовая волна"><img src="https://media.1001100.online/image-journal-2026-11-20/code-wave-preview.webp" width="840" height="473" alt="Ряды клеток с фиолетовым фронтом и янтарными вспышками справа" decoding="async" loading="lazy"></a>
+          <figcaption>
+            <span class="figure-name">Кодовая волна</span>
+            <p>Из Аниматрицы Code взято движение волны слева направо. В иллюстрации оно передано светящимся фронтом.</p>
+            <span class="figure-links"><a href="../Zerkalius-issledovanie.html#r3">Источник в Code</a> <a href="../desktop-wallpapers/#animatrix">Расчётные кадры</a></span>
+          </figcaption>
+        </figure>
+        <figure>
+          <a class="image-link" href="https://media.1001100.online/image-journal-2026-11-20/rhombus-mosaic.webp" aria-label="Оригинал · Мозаика из ромбов"><img src="https://media.1001100.online/image-journal-2026-11-20/rhombus-mosaic-preview.webp" width="840" height="473" alt="Сине-фиолетовые ромбы с тонкими золотыми рёбрами" decoding="async" loading="lazy"></a>
+          <figcaption>
+            <span class="figure-name">Мозаика из ромбов</span>
+            <p>Ромбические укладки из обоев «Зеркалиуса» переработаны в крупные цветные грани.</p>
+            <span class="figure-links"><a href="../desktop-wallpapers/#rhombi">Исходные мотивы</a></span>
+          </figcaption>
+        </figure>
+      </div>
+    </article>
+  </main>
+</body>
+</html>
