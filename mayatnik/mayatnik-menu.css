@@ -1392,3 +1392,14 @@ header #paintTools.pt-dd .may-heat-period-control{background:transparent!importa
 .may-gpu-sizes button.gz-half{font:inherit;color:inherit;border:0}
 .may-gpu-size-note{max-width:120px;padding:3px 5px;white-space:normal;font-size:11px;line-height:1.25;color:var(--gz-txt,#dfe6f5)}
 .may-gpu-size-note[hidden]{display:none!important}
+
+/* МАЯ-692: disabled means no action; keep the established button contours. */
+.gz-group[data-id="flow"] [aria-disabled="true"]{opacity:.45;cursor:default}
+.gz-ladder.may-flow-disabled-list{display:none!important}
+#mayFlowSunHandles{position:fixed;z-index:7;pointer-events:none;overflow:hidden}
+#mayFlowSunHandles[hidden]{display:none!important}
+#mayFlowSunHandles .may-flow-sun-ring{position:absolute;box-sizing:border-box;border:1px solid var(--sun-colour,#76d4ff);border-radius:50%;pointer-events:none}
+#mayFlowSunHandles .may-flow-sun-handle{position:absolute;width:18px;height:18px;padding:0;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%) rotate(45deg);border:1px solid #76d4ff;background:#162330;color:#e8edf5;pointer-events:auto;touch-action:none;user-select:none;cursor:grab}
+#mayFlowSunHandles .may-flow-sun-handle>span{display:block;transform:rotate(-45deg);font:14px/1 sans-serif;pointer-events:none}
+#mayFlowSunHandles .may-flow-sun-handle:active{cursor:grabbing}
+#mayFlowSunHandles .may-flow-sun-handle:is(:hover,:focus-visible){outline:2px solid #e8edf5;outline-offset:2px}

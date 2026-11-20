@@ -234,7 +234,44 @@
     const arrows=cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)');
     arrows.forEach((arrow,i)=>{arrow.dataset.dir=i?'right':'left';});
   }
-  if(window.mayFlow){const syncFlow=()=>{rail.refresh();for(const item of groups.find(g=>g.id==='flow').items){const button=document.querySelector('.gz-group[data-id="flow"] [data-pan="'+item.pan+'"]');if(!button)continue;const title=item.pan==='flow-status'?window.mayFlow.status:item.tip||item.name;button.title=title;button.setAttribute('aria-label',title);button.dataset.mayTip=title;if(item.type==='toggle')button.setAttribute('aria-pressed',String(item.on()));}};addEventListener('may-flow-state',syncFlow);syncFlow();}
+  if(window.mayFlow){
+    const focusState=new WeakMap();
+    const syncFlowLists=()=>{
+      for(const list of document.querySelectorAll('.gz-ladder'))if(list.owner?.closest('.gz-group[data-id="flow"]')){
+        const disabled=list.owner.getAttribute('aria-disabled')==='true';
+        list.classList.toggle('may-flow-disabled-list',disabled);list.inert=disabled;
+      }
+    };
+    // grozd can finish a delayed hover after a stream has just been switched off.
+    const listObserver=new MutationObserver(records=>{if(records.some(record=>[...record.addedNodes].some(node=>node.nodeType===1&&node.classList.contains('gz-ladder'))))syncFlowLists();});
+    listObserver.observe(document.body,{childList:true});
+    const syncFlow=()=>{
+      rail.refresh();
+      for(const item of groups.find(g=>g.id==='flow').items){
+        const button=rail.el.querySelector('.gz-group[data-id="flow"] [data-pan="'+item.pan+'"]');if(!button)continue;
+        const disabled=!!item.disabled?.(),reason=item.disabledReason?.();
+        const title=(item.pan==='flow-status'?window.mayFlow.status:item.tip||item.name)+(disabled&&reason?' · Сейчас недоступно: '+reason:'');
+        button.title=title;button.setAttribute('aria-label',title);button.dataset.mayTip=title;
+        button.classList.toggle('gz-off-dis',disabled);button.setAttribute('aria-disabled',String(disabled));button.tabIndex=disabled?-1:0;
+        if(item.type==='toggle')button.setAttribute('aria-pressed',String(item.on()));
+        for(const child of button.querySelectorAll('[tabindex],button,input,select')){
+          if(!focusState.has(child))focusState.set(child,{tab:child.getAttribute('tabindex'),disabled:!!child.disabled});
+          const saved=focusState.get(child);
+          if(disabled)child.tabIndex=-1;else if(saved.tab===null)child.removeAttribute('tabindex');else child.setAttribute('tabindex',saved.tab);
+          if('disabled' in child)child.disabled=disabled||saved.disabled;
+        }
+        if(disabled&&button.contains(document.activeElement))button.closest('.gz-group').querySelector('.gz-head')?.focus({preventScroll:true});
+      }
+      // A list already opened by grozd keeps its guarded actions; hide it while its owner is disabled.
+      syncFlowLists();
+    };
+    for(const type of ['pointerdown','pointerenter','click','dblclick','contextmenu','keydown'])rail.el.addEventListener(type,event=>{
+      const cell=event.target.closest('.gz-group[data-id="flow"] [data-pan]');
+      if(cell?.getAttribute('aria-disabled')!=='true'||event.key==='Tab')return;
+      event.preventDefault();event.stopImmediatePropagation();
+    },true);
+    addEventListener('may-flow-state',syncFlow);syncFlow();
+  }
   buttonLayoutRestorers.push(values=>rail.restoreLayout(layoutValue(values,'grozd:mayatnik',{})));
   addEventListener('may-listening-change',()=>rail.refresh());
   const railSourceButtons=new Map(),manualLegacyCells=new Map();

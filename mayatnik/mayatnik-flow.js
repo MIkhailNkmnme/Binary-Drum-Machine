@@ -5,8 +5,10 @@
   let canvas,ctx,waterCanvas,waterCtx,liquidCanvas,liquidCtx,field,lightField,liquid,pixels,liquidPixels,cell=2,lightCell=1;
   let dirty=true,lastMask=-Infinity,lastTime=0,accumulator=0,snowAccumulator=0,raf=0,retry=0,paused=false,light=false,snow=false,water=false;
   let bounds=null,rays=[],emission=0,snowEmission=0,waterEmission=0,sample=0,statusMessage='',unavailable='',scene=null;
-  let lightBits=false,lightSize=16,sun=false,sunRadius=40;
+  let lightBits=false,lightSize=16,sun=false,sunRadius=40,sunCentre=null;
+  let sunHandles,sunRing,sunMove,sunResize,sunDrag=null;
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}');lightBits=saved.bits===true;sun=saved.sun===true;if(Number.isFinite(saved.radius))sunRadius=Math.max(0,Math.min(innerWidth,saved.radius));if(Number.isFinite(saved.size))lightSize=Math.max(4,Math.min(64,saved.size));}catch(_){}
+  try{const p=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').sunCentre;if(p&&Number.isFinite(p.x)&&Number.isFinite(p.y))sunCentre={x:Math.max(0,Math.min(1,p.x)),y:Math.max(0,Math.min(1,p.y))};}catch(_){}
   let dense=false,beams=null,beamDistance=0,waterCorners=true,waterCornersUp=false;
   try{dense=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').dense===true;if(dense)sun=false;}catch(_){}
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}');waterCorners=saved.waterCorners!==false;waterCornersUp=saved.waterCornersUp===true;}catch(_){}
@@ -48,16 +50,92 @@
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}').speeds;for(const key of Object.keys(speeds))if(Number.isFinite(saved?.[key]))speeds[key]=Math.max(0,Math.min(4,saved[key]));}catch(_){}
   const lightRules=[{pass:1,reflect:2},{pass:2,reflect:1}];let reflectionLoss=true;
   try{const saved=JSON.parse(localStorage.getItem('mayatnik-flow-v1')||'{}');reflectionLoss=saved.reflectionLoss!==false;for(let bit=0;bit<2;bit++)for(const key of ['pass','reflect']){const value=saved.lightRules?.[bit]?.[key];if(Number.isInteger(value)&&value>=0&&value<=3)lightRules[bit][key]=value;}}catch(_){}
-  const saveStyle=()=>{try{localStorage.setItem('mayatnik-flow-v1',JSON.stringify({light,snow,water,paused,grid:gridFlow,axis:axisFlow,bits:lightBits,size:lightSize,sun,radius:sunRadius,dense,waterCorners,waterCornersUp,speeds,lightRules,reflectionLoss}));}catch(_){}};
+  const saveStyle=()=>{try{localStorage.setItem('mayatnik-flow-v1',JSON.stringify({light,snow,water,paused,grid:gridFlow,axis:axisFlow,bits:lightBits,size:lightSize,sun,radius:sunRadius,sunCentre,dense,waterCorners,waterCornersUp,speeds,lightRules,reflectionLoss}));}catch(_){}};
   function lightSprites(){
     return ['0','1'].map(bit=>{const c=document.createElement('canvas'),side=lightSize*2+6;c.width=c.height=side*2;
       const g=c.getContext('2d');g.setTransform(2,0,0,2,side,side);host.glyph(g,bit,lightSize);return c;});
   }
   let spritesCache=null,spriteKey='';
-  const invalidate=()=>{dirty=true;if(canvas&&(light||snow||water||traces()))wake();};
+  const invalidate=()=>{dirty=true;syncSun();if(canvas&&(light||snow||water||traces()))wake();};
   let tracesAt=-1e9,tracesHas=false;
   function reset(){if(!axisFlow){dirX=0;dirY=1;horizon=0;guide=null;}tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEmission=waterEmission=accumulator=snowAccumulator=0;lastTime=0;if(field){field.water.fill(0);field.drained=0;liquid.water.fill(0);liquid.activeRows.clear();liquid.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
-  function sunSource(){if(axisFlow&&guide)return {x:guide.x,y:guide.y,radius:sunRadius};const r=host.viewport();return {x:r.left+r.width*.25,y:r.top+Math.min(110,r.height*.2),radius:sunRadius};}
+  function sunSource(){
+    const r=host.viewport();
+    if(sunCentre)return {x:r.left+sunCentre.x*r.width,y:r.top+sunCentre.y*r.height,radius:sunRadius};
+    if(axisFlow){const axis=axisGuide();if(axis)return {x:axis.x,y:axis.y,radius:sunRadius};}
+    return {x:r.left+r.width*.25,y:r.top+Math.min(110,r.height*.2),radius:sunRadius};
+  }
+  function changeSun(centre,radius=sunRadius){
+    sunCentre=centre;sunRadius=Math.max(0,Math.min(innerWidth,Math.round(radius)));
+    rays=[];beams=null;beamDistance=0;saveStyle();syncSun();
+    if(paused&&field&&scene&&!unavailable)draw(0);else wake();
+    root.dispatchEvent(new Event('may-flow-state'));
+  }
+  function sunPoint(x,y,r=host.viewport()){
+    const mx=Math.min(10,r.width/2),my=Math.min(10,r.height/2);
+    return {x:Math.max(mx,Math.min(r.width-mx,x-r.left))/Math.max(1,r.width),y:Math.max(my,Math.min(r.height-my,y-r.top))/Math.max(1,r.height)};
+  }
+  function endSunDrag(cancel=false){
+    const drag=sunDrag;if(!drag)return;sunDrag=null;
+    if(drag.node.hasPointerCapture(drag.id))drag.node.releasePointerCapture(drag.id);
+    if(cancel)changeSun(drag.centre,drag.radius);else saveStyle();
+  }
+  function syncSun(){
+    if(!sunHandles)return;
+    const visible=light&&sun&&!unavailable,r=host.viewport();
+    if(sunDrag&&(!visible||sunDrag.viewport!==[r.left,r.top,r.width,r.height].join('|')))endSunDrag(true);
+    sunHandles.hidden=!visible;if(!visible)return;
+    const p=sunSource(),x=p.x-r.left,y=p.y-r.top;
+    Object.assign(sunHandles.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});
+    sunHandles.style.setProperty('--sun-colour',host.palette().sym);
+    Object.assign(sunRing.style,{left:(x-sunRadius)+'px',top:(y-sunRadius)+'px',width:(2*sunRadius)+'px',height:(2*sunRadius)+'px'});
+    Object.assign(sunMove.style,{left:x+'px',top:y+'px'});
+    // Keep the radius grip reachable even when the actual circle extends beyond the viewport.
+    const directions=[[1,0,r.width-x-11],[-1,0,x-11],[0,1,r.height-y-11],[0,-1,y-11]].sort((a,b)=>b[2]-a[2]);
+    const [dx,dy,room]=directions[0],distance=Math.min(Math.max(24,sunRadius),Math.max(0,room));
+    Object.assign(sunResize.style,{left:(x+dx*distance)+'px',top:(y+dy*distance)+'px'});
+    sunResize.setAttribute('aria-valuenow',String(Math.round(sunRadius)));sunResize.setAttribute('aria-valuemax',String(innerWidth));
+    sunResize.title='Радиус Солнца: '+Math.round(sunRadius)+' px. Тяните от центра или к центру. Стрелки — 1 px, Shift — 10 px, Home — 40 px.'+(distance!==sunRadius?' Ручка сдвинута в видимую область.':'');
+  }
+  function mountSunHandles(){
+    sunHandles=document.createElement('div');sunHandles.id='mayFlowSunHandles';sunHandles.hidden=true;
+    sunRing=document.createElement('div');sunRing.className='may-flow-sun-ring';sunRing.setAttribute('aria-hidden','true');
+    const make=(kind,label,glyph)=>{const b=document.createElement('button');b.type='button';b.className='may-flow-sun-handle '+kind;b.setAttribute('aria-label',label);const mark=document.createElement('span');mark.textContent=glyph;mark.setAttribute('aria-hidden','true');b.append(mark);return b;};
+    sunMove=make('may-flow-sun-move','Переместить центр Солнца','+');sunResize=make('may-flow-sun-radius','Радиус Солнца','↔');
+    sunMove.title='Центр Солнца: перетаскивание или стрелки. Shift — 10 px. Home или двойной щелчок — исходное положение (при От оси — на ручке оси).';
+    sunResize.setAttribute('role','slider');sunResize.setAttribute('aria-valuemin','0');
+    sunHandles.append(sunRing,sunMove,sunResize);document.body.append(sunHandles);
+    for(const node of [sunMove,sunResize]){
+      node.addEventListener('pointerdown',event=>{
+        if(event.button!==0||!light||!sun||unavailable||sunDrag)return;
+        event.preventDefault();event.stopPropagation();node.focus({preventScroll:true});
+        const source=sunSource(),r=host.viewport();
+        sunDrag={id:event.pointerId,node,source,x:event.clientX,y:event.clientY,centre:sunCentre?{...sunCentre}:null,radius:sunRadius,viewport:[r.left,r.top,r.width,r.height].join('|')};
+        node.setPointerCapture(event.pointerId);
+      });
+      node.addEventListener('pointermove',event=>{
+        const drag=sunDrag;if(!drag||drag.node!==node||drag.id!==event.pointerId)return;
+        event.preventDefault();event.stopPropagation();
+        if(node===sunMove)changeSun(sunPoint(drag.source.x+event.clientX-drag.x,drag.source.y+event.clientY-drag.y));
+        else changeSun(sunCentre,drag.radius+Math.hypot(event.clientX-drag.source.x,event.clientY-drag.source.y)-Math.hypot(drag.x-drag.source.x,drag.y-drag.source.y));
+      });
+      node.addEventListener('pointerup',event=>{if(sunDrag?.id===event.pointerId){event.preventDefault();event.stopPropagation();endSunDrag();}});
+      node.addEventListener('pointercancel',event=>{if(sunDrag?.id===event.pointerId)endSunDrag(true);});
+      node.addEventListener('lostpointercapture',event=>{if(sunDrag?.id===event.pointerId)endSunDrag(true);});
+      for(const type of ['click','contextmenu'])node.addEventListener(type,event=>{event.preventDefault();event.stopPropagation();});
+      node.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();changeSun(node===sunMove?null:sunCentre,node===sunResize?40:sunRadius);});
+      node.addEventListener('keydown',event=>{
+        if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','Escape','Enter',' '].includes(event.key))return;
+        event.preventDefault();event.stopPropagation();
+        if(event.key==='Escape'){endSunDrag(true);return;}
+        if(event.key==='Home'){changeSun(node===sunMove?null:sunCentre,node===sunResize?40:sunRadius);return;}
+        const d=event.shiftKey?10:1,p=sunSource();
+        if(node===sunResize&&event.key.startsWith('Arrow'))changeSun(sunCentre,sunRadius+(['ArrowLeft','ArrowDown'].includes(event.key)?-d:d));
+        else if(node===sunMove&&event.key.startsWith('Arrow'))changeSun(sunPoint(p.x+(event.key==='ArrowLeft'?-d:event.key==='ArrowRight'?d:0),p.y+(event.key==='ArrowUp'?-d:event.key==='ArrowDown'?d:0)));
+      });
+    }
+    root.addEventListener('blur',()=>endSunDrag(true));
+  }
   function size(){
     const w=innerWidth,h=innerHeight,W=axisFlow?Math.ceil(Math.hypot(w,h)):w,H=axisFlow?W:h,scale=axisFlow?Math.max(1,Math.sqrt(W*H/(w*h))):1;
     sunRadius=Math.min(sunRadius,w);
@@ -74,7 +152,7 @@
   function updateStatus(){
     const previous=statusMessage;
     statusMessage=unavailable?'Потоки приостановлены: '+unavailable:paused?'Потоки на паузе':!light&&!snow&&!water?'Потоки выключены':(gridFlow?'По сетке · '+gridSources.length+' столбцов · ':axisFlow?'От оси · ':'Сверху вниз · ')+(sun&&light?'Солнце · ':'')+(light?'свет ':'')+(snow?'снег ':'')+(water?'вода':'')+(gridFlow&&gridSources.length&&gridStep<Math.max(light?lightCell:0,snow?cell:0,water?ls:0)?' · Мелкий масштаб: соседние потоки могут сливаться':'');
-    canvas.dataset.status=statusMessage;canvas.dataset.unavailable=unavailable;
+    syncSun();canvas.dataset.status=statusMessage;canvas.dataset.unavailable=unavailable;
     if(previous!==statusMessage)root.dispatchEvent(new Event('may-flow-state'));
   }
   function rebuild(time){
@@ -167,7 +245,7 @@
         const top=y+1-m;ctx.moveTo(x,top);ctx.lineTo(x+1,top);
       }
     }ctx.stroke();ctx.restore();
-    if(sun&&light){const origin=sunSource(),at=toField(origin.x,origin.y);ctx.save();ctx.strokeStyle=ctx.fillStyle=palette.sym;ctx.lineWidth=1;ctx.beginPath();ctx.arc(at[0],at[1],Math.max(1,origin.radius),0,Math.PI*2);ctx.globalAlpha=.8;ctx.stroke();   /* v0.246: без заливки */ctx.restore();}
+    syncSun();
     if(light&&dense){
       if(!beams)beams=lightField.topBeams(horizon/lightCell,gridFlow?gridSources.map(x=>x/lightCell):null);beamDistance+=dt*speeds.light*420/lightCell;
       ctx.save();ctx.strokeStyle=palette.sym;ctx.lineWidth=gridFlow?Math.max(.6,Math.min(1.25,gridStep*.5)):lightCell;ctx.lineCap='butt';
@@ -237,10 +315,10 @@
     toggle('Углы вниз','Вода: проход вниз через шахматные стыки',()=>waterCorners,v=>{waterCorners=v;if(liquid)liquid.cornerPass=v;},path.water),
     toggle('Углы вверх','Вода: подъём уровня через шахматные стыки',()=>waterCornersUp,v=>{waterCornersUp=v;if(liquid)liquid.cornerUp=v;},path.water),
     toggle('Плотно','Сплошной поток света и воды. Исключает круговой источник Солнце.',()=>dense,v=>{dense=v;if(v)sun=false;rays=[];beams=null;beamDistance=0;}),
-    toggle('От оси','От конечной ручки зеркальной оси к её началу. Горизонт и Солнце проходят через ручку. Положение и угол — в группе Зеркала; зеркало может быть выключено. Исключает По сетке.',()=>axisFlow,v=>{axisFlow=v;if(v){gridFlow=false;gridKey=null;}lastMask=-Infinity;reset();},path.axis),
+    toggle('От оси','От конечной ручки зеркальной оси к её началу. Горизонт и исходный центр Солнца проходят через ручку; Солнце можно затем переместить отдельно. Положение и угол — в группе Зеркала; зеркало может быть выключено. Исключает По сетке.',()=>axisFlow,v=>{axisFlow=v;if(v){gridFlow=false;gridKey=null;sunCentre=null;}lastMask=-Infinity;reset();},path.axis),
     toggle('Свет 01','Свет в виде цифр 0 и 1, текущий шрифт и цвета цифр Маятника',()=>lightBits,v=>{lightBits=v;}),
     slider('Размер света','Размер цифр света в экранных пикселях',()=>lightSize,v=>{lightSize=v;},4,64,1,16,v=>v+' px'),
-    toggle('Солнце','Круговой источник света. Исключает сплошной поток и По сетке.',()=>sun,v=>{sun=v;if(v){dense=false;if(gridFlow){gridFlow=false;gridKey=null;lastMask=-Infinity;reset();}}rays=[];beams=null;beamDistance=0;}),
+    toggle('Солнце','Круговой источник света. Центр и радиус можно тянуть прямо на холсте. Исключает сплошной поток и По сетке.',()=>sun,v=>{sun=v;if(v){dense=false;if(gridFlow){gridFlow=false;gridKey=null;lastMask=-Infinity;reset();}}rays=[];beams=null;beamDistance=0;}),
     slider('Радиус','Радиус Солнца в экранных пикселях',()=>sunRadius,v=>{sunRadius=v;},0,()=>innerWidth,1,40,v=>v+' px'),
     {type:'toggle',name:'Пауза',icon:'M8 4v16 M16 4v16',tip:'Пауза всех потоков; поле Маятника продолжает работать',on:()=>paused,click(){paused=!paused;lastTime=0;saveStyle();updateStatus();if(paused){cancelAnimationFrame(raf);raf=0;}else wake();}},
     {type:'action',name:'Сброс потоков',icon:path.reset,tip:'Удалить свет, снег и воду и выключить потоки. Остальные настройки сохраняются.',click(){light=snow=water=paused=false;reset();sync();}},
@@ -248,6 +326,21 @@
   );
   // Append with a stable id: existing flow-N layout keys must not move.
   items.push({...toggle('По сетке','Поток сверху по центрам битовых столбцов. Шаг следует масштабу и сдвигу поля; смещённые ряды используют оба семейства центров. Исключает От оси и Солнце. При смене геометрии следы очищаются.',()=>gridFlow,v=>{gridFlow=v;if(v){axisFlow=false;sun=false;}gridKey=null;lastMask=-Infinity;reset();},'M4 4h16v16H4z M4 12h16 M12 4v16'),pan:'flow-grid'});
+  const dependencies=new Map([
+    ['Скорость света',[()=>light,'Включите Свет']],['Скорость снега',[()=>snow,'Включите Снег']],['Скорость воды',[()=>water,'Включите Воду']],
+    ['−50%',[()=>light,'Включите Свет']],['Углы вниз',[()=>water,'Включите Воду']],['Углы вверх',[()=>water,'Включите Воду']],
+    ['Плотно',[()=>light||water,'Включите Свет или Воду']],['Свет 01',[()=>light&&!dense,'Включите Свет и выключите Плотно']],
+    ['Размер света',[()=>light&&lightBits&&!dense,'Включите Свет 01 без Плотно']],['Солнце',[()=>light,'Включите Свет']],['Радиус',[()=>light&&sun,'Включите Свет и Солнце']]
+  ]);
+  for(const item of items){
+    const dep=item.type==='list'?[()=>light,'Включите Свет']:dependencies.get(item.name);
+    if(!dep)continue;
+    item.disabled=()=>!!(light||snow||water)&&!dep[0]();item.disabledReason=()=>item.disabled()?dep[1]:'';
+    // Guard the actions as well as the DOM: a slider drag or list may already be open.
+    for(const key of ['click','step','reset','setFrac','set'])if(typeof item[key]==='function'){
+      const action=item[key];item[key]=(...args)=>{if(!item.disabled())return action.apply(item,args);};
+    }
+  }
   items.forEach((item,index)=>{if(!item.pan)item.pan='flow-'+index;});
   canvas=document.createElement('canvas');canvas.id='mayFlow';canvas.setAttribute('aria-hidden','true');
   Object.assign(canvas.style,{position:'fixed',inset:'0',width:'100vw',height:'100vh',pointerEvents:'none',zIndex:'6',background:'transparent'});document.body.append(canvas);ctx=canvas.getContext('2d');
@@ -258,9 +351,9 @@
   for(const event of ['input','change','click','pointerup'])document.addEventListener(event,invalidate,{passive:true});
   document.addEventListener('pointermove',e=>{if(e.buttons)invalidate();},{passive:true});
   document.addEventListener('visibilitychange',()=>{lastTime=0;if(!document.hidden&&(light||snow||water||traces()))wake();});
-  root.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);clearTimeout(retry);retry=0;raf=0;lastTime=0;});
+  root.addEventListener('pagehide',()=>{endSunDrag(true);cancelAnimationFrame(raf);clearTimeout(retry);retry=0;raf=0;lastTime=0;});
   root.addEventListener('pageshow',()=>{if(light||snow||water||traces())wake();});
-  updateStatus();if(light||snow||water)wake();
+  mountSunHandles();updateStatus();if(light||snow||water)wake();
   return {invalidate,group:()=>({id:'flow',title:'Потоки',color:'#76d4ff',items}),get playing(){return !paused&&!unavailable&&(light||snow||water);},get status(){return statusMessage;},get traces(){return traces();},reset(){light=snow=water=paused=false;reset();sync();}};
   }
   root.MayatnikFlow={mount};
