@@ -2,7 +2,7 @@
 (function(root){
   function mount(host){
   'use strict';
-  let canvas,ctx,waterCanvas,waterCtx,liquidCanvas,liquidCtx,field,liquid,pixels,liquidPixels,cell=2;
+  let canvas,ctx,waterCanvas,waterCtx,liquidCanvas,liquidCtx,field,lightField,liquid,pixels,liquidPixels,cell=2,lightCell=1;
   let dirty=true,lastMask=-Infinity,lastTime=0,accumulator=0,snowAccumulator=0,raf=0,retry=0,paused=false,light=false,snow=false,water=false;
   let bounds=null,rays=[],emission=0,snowEmission=0,waterEmission=0,sample=0,statusMessage='',unavailable='',scene=null;
   let lightBits=false,lightSize=16,sun=false,sunRadius=40;
@@ -36,8 +36,8 @@
       // Settled snow and water stay where they are on screen; new gravity takes over from there.
       lastTurn=time;const hw=frameW/2,hh=frameH/2;regrid(field,cell,dirX,dirY,nx,ny);regrid(liquid,ls,dirX,dirY,nx,ny);
       for(const ray of rays){
-        const p=turnPoint(dirX,dirY,nx,ny,ray.x*cell-hw,ray.y*cell-hh),v=turnPoint(dirX,dirY,nx,ny,ray.vx,ray.vy);ray.x=(p[0]+hw)/cell;ray.y=(p[1]+hh)/cell;ray.vx=v[0];ray.vy=v[1];
-        for(const t of ray.trail||[]){const q=turnPoint(dirX,dirY,nx,ny,t[0]*cell-hw,t[1]*cell-hh);t[0]=(q[0]+hw)/cell;t[1]=(q[1]+hh)/cell;}
+        const p=turnPoint(dirX,dirY,nx,ny,ray.x*lightCell-hw,ray.y*lightCell-hh),v=turnPoint(dirX,dirY,nx,ny,ray.vx,ray.vy);ray.x=(p[0]+hw)/lightCell;ray.y=(p[1]+hh)/lightCell;ray.vx=v[0];ray.vy=v[1];
+        for(const t of ray.trail||[]){const q=turnPoint(dirX,dirY,nx,ny,t[0]*lightCell-hw,t[1]*lightCell-hh);t[0]=(q[0]+hw)/lightCell;t[1]=(q[1]+hh)/lightCell;}
       }
       dirX=nx;dirY=ny;dirty=true;beams=null;
     }
@@ -64,14 +64,16 @@
     cell=Math.max(1.5,Math.sqrt(W*H/320000));
     const cols=Math.ceil(W/cell),rows=Math.ceil(H/cell),lw=Math.ceil(W/scale),lh=Math.ceil(H/scale);
     if(field&&field.width===cols&&field.height===rows&&canvas.width===w&&canvas.height===h&&liquid.width===lw&&liquid.height===lh)return;
-    frameW=W;frameH=H;ls=scale;if(!axisFlow){dirX=0;dirY=1;horizon=0;guide=null;}
+    frameW=W;frameH=H;ls=scale;lightCell=scale;if(!axisFlow){dirX=0;dirY=1;horizon=0;guide=null;}
     canvas.width=w;canvas.height=h;liquidCanvas.width=lw;liquidCanvas.height=lh;waterCanvas.width=cols;waterCanvas.height=rows;
-    field=new HubFlowCore.Field(cols,rows);field.lightRules=lightRules;field.reflectionLoss=reflectionLoss;liquid=new HubFlowCore.WaterField(lw,lh);liquid.cornerPass=waterCorners;liquid.cornerUp=waterCornersUp;pixels=waterCtx.createImageData(cols,rows);liquidPixels=liquidCtx.createImageData(lw,lh);rays=[];dirty=true;
-    beams=null;beamDistance=0;canvas.dataset.waterCell=String(ls);
+    field=new HubFlowCore.Field(cols,rows);
+    lightField=new HubFlowCore.Field(lw,lh);lightField.lightRules=lightRules;lightField.reflectionLoss=reflectionLoss;
+    liquid=new HubFlowCore.WaterField(lw,lh);liquid.cornerPass=waterCorners;liquid.cornerUp=waterCornersUp;pixels=waterCtx.createImageData(cols,rows);liquidPixels=liquidCtx.createImageData(lw,lh);rays=[];dirty=true;
+    beams=null;beamDistance=0;canvas.dataset.waterCell=String(ls);canvas.dataset.lightCell=String(lightCell);
   }
   function updateStatus(){
     const previous=statusMessage;
-    statusMessage=unavailable?'Потоки приостановлены: '+unavailable:paused?'Потоки на паузе':!light&&!snow&&!water?'Потоки выключены':(gridFlow?'По сетке · '+gridSources.length+' столбцов · ':axisFlow?'От оси · ':'Сверху вниз · ')+(sun&&light?'Солнце · ':'')+(light?'свет ':'')+(snow?'снег ':'')+(water?'вода':'')+(gridFlow&&gridSources.length&&gridStep<Math.max(cell,ls)?' · Мелкий масштаб: соседние потоки могут сливаться':'');
+    statusMessage=unavailable?'Потоки приостановлены: '+unavailable:paused?'Потоки на паузе':!light&&!snow&&!water?'Потоки выключены':(gridFlow?'По сетке · '+gridSources.length+' столбцов · ':axisFlow?'От оси · ':'Сверху вниз · ')+(sun&&light?'Солнце · ':'')+(light?'свет ':'')+(snow?'снег ':'')+(water?'вода':'')+(gridFlow&&gridSources.length&&gridStep<Math.max(light?lightCell:0,snow?cell:0,water?ls:0)?' · Мелкий масштаб: соседние потоки могут сливаться':'');
     canvas.dataset.status=statusMessage;canvas.dataset.unavailable=unavailable;
     if(previous!==statusMessage)root.dispatchEvent(new Event('may-flow-state'));
   }
@@ -86,7 +88,7 @@
       }
     }
     if(unavailable){ctx.clearRect(0,0,canvas.width,canvas.height);lastTime=0;if(previous!==unavailable)updateStatus();return;}
-    const {width:w,height:h}=field,solid=new Uint8Array(w*h),types=new Uint8Array(w*h),liquidSolid=new Uint8Array(liquid.width*liquid.height),native=new Uint8Array(liquidSolid.length);
+    const {width:w,height:h}=field,solid=new Uint8Array(w*h),liquidSolid=new Uint8Array(liquid.width*liquid.height),native=new Uint8Array(liquidSolid.length);
     const [a,b,c,d,e,f]=fieldMatrix(),clip=scene.clip;
     for(let y=0;y<liquid.height;y++)for(let x=0;x<liquid.width;x++){
       const fx=(x+.5)*ls,fy=(y+.5)*ls,sx=a*fx+c*fy+e,sy=b*fx+d*fy+f;
@@ -94,13 +96,14 @@
       const i=y*liquid.width+x,type=scene.typeAt(sx,sy);native[i]=type;liquidSolid[i]=type?1:0;
     }
     let count=0,zero=0,one=0;
-    // Preserve every obstacle type crossing a coarse snow/light cell.
+    // Snow keeps its conservative coarse mask. Light must not merge adjacent zero/one pixels.
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
       let type=0;const x0=Math.floor(x*cell/ls),x1=Math.min(liquid.width,Math.ceil((x+1)*cell/ls)),y0=Math.floor(y*cell/ls),y1=Math.min(liquid.height,Math.ceil((y+1)*cell/ls));
       for(let yy=y0;yy<y1;yy++)for(let xx=x0;xx<x1;xx++)type|=native[yy*liquid.width+xx];
-      const i=y*w+x;types[i]=type;if(type){solid[i]=1;count++;}if(type&1)zero++;if(type&2)one++;
+      const i=y*w+x;if(type){solid[i]=1;count++;}if(type&1)zero++;if(type&2)one++;
     }
-    field.setMask(solid);field.lightTypes=types;liquid.setMask(liquidSolid);beams=null;
+    field.setMask(solid);liquid.setMask(liquidSolid);
+    lightField.solid=liquidSolid;lightField.lightTypes=native;beams=null;
     bounds={minX:0,maxX:frameW/cell-1,y:horizon/cell};
     canvas.dataset.obstacles=String(count);canvas.dataset.zeroObstacles=String(zero);canvas.dataset.oneObstacles=String(one);
     updateStatus();
@@ -114,8 +117,8 @@
         while(emission>=1){
           emission--;
           for(const sx of gridSources){
-            const x=sx/cell,y=horizon/cell;
-            if(!field.lightBlocked(x,y,1))rays.push({x,y,vx:0,vy:1,bounces:0,age:0,bit:String((++sample)%2)});
+            const x=sx/lightCell,y=horizon/lightCell;
+            if(!lightField.lightBlocked(x,y,1))rays.push({x,y,vx:0,vy:1,bounces:0,age:0,bit:String((++sample)%2)});
           }
         }
       }
@@ -134,10 +137,10 @@
     if(light&&!dense){
       emission+=dt*speeds.light*(sun?100:Math.min(100,Math.max(24,span*cell/12)));
       while(emission>=1){
-        emission--;let x,y=horizon/cell,vx=0,vy=1;
-        if(sun){const origin=sunSource(),at=toField(origin.x,origin.y),angle=(++sample*.6180339887498949%1)*Math.PI*2;vx=Math.cos(angle);vy=Math.sin(angle);x=(at[0]+vx*origin.radius)/cell;y=(at[1]+vy*origin.radius)/cell;}
-        else x=nextX();
-        if(x>=0&&x<field.width&&y>=0&&y<field.height&&!field.lightBlocked(x,y,vy)&&rays.length<350)rays.push({x,y,vx,vy,bounces:0,age:0,bit:String(sample%2)});
+        emission--;let x,y=horizon/lightCell,vx=0,vy=1;
+        if(sun){const origin=sunSource(),at=toField(origin.x,origin.y),angle=(++sample*.6180339887498949%1)*Math.PI*2;vx=Math.cos(angle);vy=Math.sin(angle);x=(at[0]+vx*origin.radius)/lightCell;y=(at[1]+vy*origin.radius)/lightCell;}
+        else x=nextX()*cell/lightCell;
+        if(x>=0&&x<lightField.width&&y>=0&&y<lightField.height&&!lightField.lightBlocked(x,y,vy)&&rays.length<350)rays.push({x,y,vx,vy,bounces:0,age:0,bit:String(sample%2)});
       }
     }
     if(snow&&bounds){snowEmission+=dt*speeds.snow*Math.min(1800,Math.max(160,span*2));while(snowEmission>=1){snowEmission--;field.addWater(nextX(),bounds.y,1);}}
@@ -166,33 +169,34 @@
     }ctx.stroke();ctx.restore();
     if(sun&&light){const origin=sunSource(),at=toField(origin.x,origin.y);ctx.save();ctx.strokeStyle=ctx.fillStyle=palette.sym;ctx.lineWidth=1;ctx.beginPath();ctx.arc(at[0],at[1],Math.max(1,origin.radius),0,Math.PI*2);ctx.globalAlpha=.8;ctx.stroke();   /* v0.246: без заливки */ctx.restore();}
     if(light&&dense){
-      if(!beams)beams=field.topBeams(horizon/cell,gridFlow?gridSources.map(x=>x/cell):null);beamDistance+=dt*speeds.light*420/cell;
-      ctx.save();ctx.strokeStyle=palette.sym;ctx.lineWidth=gridFlow?Math.max(.6,Math.min(1.25,gridStep*.5)):cell+1;ctx.lineCap='butt';
-      // Screen-wide strips meet; grid sources remain individual lines. Reflected segments retain their computed intensity.
+      if(!beams)beams=lightField.topBeams(horizon/lightCell,gridFlow?gridSources.map(x=>x/lightCell):null);beamDistance+=dt*speeds.light*420/lightCell;
+      ctx.save();ctx.strokeStyle=palette.sym;ctx.lineWidth=gridFlow?Math.max(.6,Math.min(1.25,gridStep*.5)):lightCell;ctx.lineCap='butt';
+      // Neighbouring dense strips meet at pixel edges without an extra overlapping pixel.
+      // Grid sources remain individual lines; reflected segments retain their computed intensity.
       for(const segment of beams){
         const fraction=Math.min(1,(beamDistance-segment.start)/segment.length);if(fraction<=0)continue;
-        const {a,b}=segment;ctx.globalAlpha=segment.alpha;ctx.beginPath();ctx.moveTo(a[0]*cell,a[1]*cell);
-        ctx.lineTo((a[0]+(b[0]-a[0])*fraction)*cell,(a[1]+(b[1]-a[1])*fraction)*cell);ctx.stroke();
+        const {a,b}=segment;ctx.globalAlpha=segment.alpha;ctx.beginPath();ctx.moveTo(a[0]*lightCell,a[1]*lightCell);
+        ctx.lineTo((a[0]+(b[0]-a[0])*fraction)*lightCell,(a[1]+(b[1]-a[1])*fraction)*lightCell);ctx.stroke();
       }
       ctx.restore();
     }
     ctx.strokeStyle=palette.sym;ctx.lineWidth=1.25;ctx.lineCap='round';ctx.shadowColor=palette.sym;ctx.shadowBlur=5;
     const key=host.glyphKey()+'|'+lightSize;if(lightBits&&spriteKey!==key){spriteKey=key;spritesCache=lightSprites();}const glyphs=lightBits?spritesCache||[]:[];
-    const pending=rays.map(ray=>({ray,distance:dt*speeds.light*420/cell}));
+    const pending=rays.map(ray=>({ray,distance:dt*speeds.light*420/lightCell}));
     const rayLimit=gridFlow?Math.max(350,gridSources.length*12):350;
     for(let ri=0;ri<pending.length&&(gridFlow||ri<350);ri++){
       const {ray,distance}=pending[ri],forks=[];
-      ray.age+=dt*speeds.light;const path=dt*speeds.light>0?field.advanceRay(ray,distance,forks):[];
+      ray.age+=dt*speeds.light;const path=dt*speeds.light>0?lightField.advanceRay(ray,distance,forks):[];
       for(const fork of forks)if(rays.length<rayLimit){fork.ray.age=ray.age-dt*speeds.light;pending.push({ray:fork.ray,distance:fork.remaining});rays.push(fork.ray);}
       ray.trail=ray.trail||[];for(const p of path)ray.trail.push([p[0],p[1],ray.age,p[2]]);
       ray.trail=ray.trail.filter(p=>ray.age-p[2]<.32);
       if(lightBits&&glyphs.length){
         const glyph=glyphs[Number(ray.bit)],side=glyph.width/2;
-        ctx.globalAlpha=field.rayAlpha(ray);ctx.shadowBlur=0;ctx.drawImage(glyph,ray.x*cell-side/2,ray.y*cell-side/2,side,side);
+        ctx.globalAlpha=lightField.rayAlpha(ray);ctx.shadowBlur=0;ctx.drawImage(glyph,ray.x*lightCell-side/2,ray.y*lightCell-side/2,side,side);
       }else{
         // Keep the incident segment bright; only the reflected segment loses half its light.
         const trail=ray.trail;ctx.shadowBlur=5;ctx.beginPath();let alpha=null;
-        for(let i=1;i<trail.length;i++){const p=trail[i-1],q=trail[i];if(alpha!==p[3]){if(alpha!==null)ctx.stroke();alpha=p[3];ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(p[0]*cell,p[1]*cell);}ctx.lineTo(q[0]*cell,q[1]*cell);}
+        for(let i=1;i<trail.length;i++){const p=trail[i-1],q=trail[i];if(alpha!==p[3]){if(alpha!==null)ctx.stroke();alpha=p[3];ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(p[0]*lightCell,p[1]*lightCell);}ctx.lineTo(q[0]*lightCell,q[1]*lightCell);}
         ctx.stroke();
       }
     }
@@ -229,7 +233,7 @@
   for(let bit=0;bit<2;bit++)for(const [key,label]of [['pass','Пропуск'],['reflect','Отражение']])items.push({type:'list',name:bit+' '+label,icon:path.axis,
     tip:'Бит '+bit+' · '+label+'. Сверху и снизу — относительно направления потока. Пропускание и отражение вместе делят свет 50/50.',
     options:[{v:0,name:'Нет'},{v:1,name:'Сверху'},{v:2,name:'Снизу'},{v:3,name:'Обе стороны'}],get:()=>lightRules[bit][key],set:v=>setting(()=>{lightRules[bit][key]=Number(v);},true)});
-  items.push(toggle('−50%','Ослаблять отражённый свет на 50% при каждом отражении',()=>reflectionLoss,v=>{reflectionLoss=v;if(field)field.reflectionLoss=v;rays=[];beams=null;beamDistance=0;}),
+  items.push(toggle('−50%','Ослаблять отражённый свет на 50% при каждом отражении',()=>reflectionLoss,v=>{reflectionLoss=v;if(lightField)lightField.reflectionLoss=v;rays=[];beams=null;beamDistance=0;}),
     toggle('Углы вниз','Вода: проход вниз через шахматные стыки',()=>waterCorners,v=>{waterCorners=v;if(liquid)liquid.cornerPass=v;},path.water),
     toggle('Углы вверх','Вода: подъём уровня через шахматные стыки',()=>waterCornersUp,v=>{waterCornersUp=v;if(liquid)liquid.cornerUp=v;},path.water),
     toggle('Плотно','Сплошной поток света и воды. Исключает круговой источник Солнце.',()=>dense,v=>{dense=v;if(v)sun=false;rays=[];beams=null;beamDistance=0;}),
