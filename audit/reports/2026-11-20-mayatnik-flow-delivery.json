@@ -1,0 +1,48 @@
+{
+  "task": "МАЯ-686",
+  "release": "ca49e733a00e886889fd6ea54f4a2a69bf2c360f",
+  "version": "1.037",
+  "instructionVersion": "0.151",
+  "checkedUtc": "2026-11-20T14:14:57.7756613Z",
+  "pagesRun": 44750920691,
+  "pagesConclusion": "success",
+  "verification": "HTTP delivery only; application, syntax, tests and browser acceptance left to user",
+  "files": [
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?v=1037",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-flow.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-flow.js?v=1037",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/mayatnik-menu.js",
+      "url": "https://1001100.online/mayatnik/mayatnik-menu.js?v=1037",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/instruction/index.html",
+      "url": "https://1001100.online/mayatnik/instruction/index.html?v=1037",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "_js/hub-flow-core.js",
+      "url": "https://1001100.online/_js/hub-flow-core.js?v=1037",
+      "status": 200,
+      "matches": true
+    },
+    {
+      "file": "mayatnik/Zerkalius-mayatnik.html",
+      "url": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html",
+      "status": 200,
+      "matches": true
+    }
+  ]
+}
