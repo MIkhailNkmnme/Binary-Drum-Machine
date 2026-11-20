@@ -231,3 +231,29 @@ test('fractional water leveling cannot spread a surface across unsupported empty
   const before=f.water.slice();f.levelBodies(new Set(f.activeRows));
   assert.deepEqual(f.water,before,'fractional surface must be validated before any mass is moved');
 });
+
+
+test('flat horizontal light reflection is exactly vertical at fractional positions and ledge ends',()=>{
+  for(const x of [10.01,10.5,10.99,15.13,20.99])for(const vy of [-1,1]){
+    const f=new Field(32,32);for(let xx=10;xx<=20;xx++)f.solid[16*32+xx]=1;
+    const ray={x,y:vy>0?14.2:18.8,vx:0,vy};f.advanceRay(ray,5);
+    assert.equal(ray.bounces,1);assert.equal(ray.vx,0);assert.equal(ray.vy,-vy);assert.equal(ray.x,x);
+  }
+});
+
+test('flat vertical light reflection and isolated cell faces use the entered face',()=>{
+  for(const y of [10.01,10.5,15.13,20.99])for(const vx of [-1,1]){
+    const f=new Field(32,32);for(let yy=10;yy<=20;yy++)f.solid[yy*32+16]=1;
+    const ray={x:vx>0?14.2:18.8,y,vx,vy:0};f.advanceRay(ray,5);
+    assert.equal(ray.bounces,1);assert.equal(ray.vx,-vx);assert.equal(ray.vy,0);assert.equal(ray.y,y);
+  }
+  const f=new Field(24,24);f.solid[12*24+12]=1;
+  const ray={x:12.13,y:10,vx:0,vy:1};f.advanceRay(ray,4);
+  assert.equal(ray.vx,0);assert.equal(ray.vy,-1);assert.equal(ray.x,12.13);
+});
+
+test('oblique light on a flat face keeps its tangential velocity',()=>{
+  const f=new Field(40,40);for(let x=0;x<40;x++)f.solid[20*40+x]=1;
+  const ray={x:15.13,y:17,vx:.6,vy:.8};f.advanceRay(ray,6);
+  assert.equal(ray.bounces,1);assert.equal(ray.vx,.6);assert.equal(ray.vy,-.8);
+});

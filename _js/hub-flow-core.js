@@ -52,11 +52,28 @@
         if(x===0||x===w-1){this.drained+=m[i];m[i]=0;}
       }
     }
-    normal(x,y,vx,vy){
+    normal(x,y,vx,vy,hitX=x,hitY=y,medium=0){
+      const wall=(cx,cy)=>{const response=this.lightResponse(this.lightType(cx+.5,cy+.5)&~medium,vy);return response.reflect||!response.pass;};
+      const cx=Math.floor(hitX),cy=Math.floor(hitY),fromX=Math.floor(x),fromY=Math.floor(y),sx=Math.sign(vx),sy=Math.sign(vy);
+      const crossX=cx!==fromX,crossY=cy!==fromY;
+      // A straight exposed face has an exact normal, even at its end or when
+      // the ray hits between pixel centres. Nearby walls must not tilt it.
+      const horizontal=xx=>wall(xx,cy)&&!wall(xx,cy-sy);
+      const vertical=yy=>wall(cx,yy)&&!wall(cx-sx,yy);
+      const diagonal=wall(cx-1,cy-1)||wall(cx+1,cy-1)||wall(cx-1,cy+1)||wall(cx+1,cy+1);
+      const flatY=crossY&&horizontal(cx)&&(horizontal(cx-1)||horizontal(cx+1)||!diagonal);
+      const flatX=crossX&&vertical(cy)&&(vertical(cy-1)||vertical(cy+1)||!diagonal);
+      if(flatX&&flatY){
+        // At a corner use the face entered last; an exact corner is ambiguous
+        // and retains the local contour normal below.
+        const tx=((sx>0?cx:cx+1)-x)/vx,ty=((sy>0?cy:cy+1)-y)/vy;
+        if(Math.abs(tx-ty)>1e-9)return tx>ty?[-sx,0]:[0,-sy];
+      }else if(flatY)return [0,-sy];
+      else if(flatX)return [-sx,0];
       let nx=0,ny=0;const r=3;
       for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
         const px=Math.floor(x)+dx+.5,py=Math.floor(y)+dy+.5;
-        const response=this.lightResponse(this.lightType(px,py),vy);if(response.pass&&!response.reflect)continue;
+        const response=this.lightResponse(this.lightType(px,py)&~medium,vy);if(response.pass&&!response.reflect)continue;
         const d=Math.hypot(x-px,y-py);if(d>r+.5)continue;
         const weight=(r+1-d)/Math.max(.2,d);nx+=(x-px)*weight;ny+=(y-py)*weight;
       }
@@ -96,7 +113,7 @@
             if(alpha>=.002&& (ray.splits||0)<12)forks.push({ray:{...ray,x,y,intensity:alpha,medium:type,splits:(ray.splits||0)+1,trail:[]},remaining,travelled:distance-remaining});
             ray.splits=(ray.splits||0)+1;
           }
-          const [nx,ny]=this.normal(ray.x,ray.y,ray.vx,ray.vy),dot=ray.vx*nx+ray.vy*ny;
+          const [nx,ny]=this.normal(ray.x,ray.y,ray.vx,ray.vy,x,y,ray.medium||0),dot=ray.vx*nx+ray.vy*ny;
           ray.vx-=2*dot*nx;ray.vy-=2*dot*ny;ray.bounces=(ray.bounces||0)+1;
           ray.intensity=alpha*(this.reflectionLoss===false?1:.5);
           path.push([ray.x,ray.y,ray.intensity]);
