@@ -1,27 +1,77 @@
 {
-  "version": "0.001",
+  "version": "0.002",
   "date": "2026-11-20",
   "task": "АНМ-002",
-  "status": "selection for draft, not submitted externally",
+  "status": "draft with user-selected media; not submitted to forum",
   "audio": false,
-  "method": "Reused existing project PNG/GIF without changes; inspected existing stills and selected GIF frames; read captions/metadata; no simulation, application run or new rendering of model.",
-  "originNotes": "Code PNG recipe: issledovanie/desktop-wallpapers/animatrix.json. Historical GIF descriptions: issledovanie/Zerkalius-issledovanie.html sections r1 and mirror discussion. Existing GIF build scripts not identified in this task; no new source-generation claim.",
+  "method": "Existing figures/GIF reused unchanged; original silent MP4 converted to GIF using FFmpeg. Stills and sampled frames inspected. No model or application execution.",
   "items": [
     {
       "role": "cover",
-      "path": "issledovanie/desktop-wallpapers/media/animatrix-173.png",
-      "url": "https://1001100.online/issledovanie/desktop-wallpapers/media/animatrix-173.png",
-      "width": 3840,
-      "height": 2160,
+      "path": "issledovanie/mayatnik-podsvetka-2.png",
+      "url": "https://1001100.online/issledovanie/mayatnik-podsvetka-2.png",
+      "width": 1503,
+      "height": 761,
       "frames": 1,
       "durationMs": 0,
-      "bytes": 288755,
-      "sha256": "322e2f461f9a2871bb2b1fe48771685e76080dc395086c6214209fd80cf206d4",
-      "meaning": "Code, complete pass173; 128 rows; visual palette only",
-      "sourceCommit": "62e2cf96e3b5a5817718d4e71e8b9dd9f08aabd0"
+      "bytes": 182272,
+      "sha256": "2b21555fb9cdfec1a04208911491f479cf49133e0824ba787445ab58664b9662",
+      "meaning": "User-selected author screenshot; 512 rows frame50; display colouring",
+      "sourceCommit": "f643bc6d998a481285232166ff60320015041186"
     },
     {
-      "role": "animation-code",
+      "role": "pendulum-A",
+      "path": "issledovanie/xor-walk-20261107/variant-a.gif",
+      "url": "https://1001100.online/issledovanie/xor-walk-20261107/variant-a.gif",
+      "width": 1024,
+      "height": 451,
+      "frames": 21,
+      "durationMs": 12740,
+      "bytes": 499670,
+      "sha256": "7e49d40f80092966b3d007b777885f753d84b48ee98e6a4ac211e6d6b1bf633f",
+      "meaning": "User-selected extended skip-zero/both-sides recording; saved state modelStep21",
+      "sourceCommit": "93aa65f7cc6960336b804ae1e711794b3c6738ef"
+    },
+    {
+      "role": "pendulum-B",
+      "path": "issledovanie/xor-walk-20261107/variant-b.gif",
+      "url": "https://1001100.online/issledovanie/xor-walk-20261107/variant-b.gif",
+      "width": 1024,
+      "height": 451,
+      "frames": 23,
+      "durationMs": 10080,
+      "bytes": 605756,
+      "sha256": "a049294c6d9b39914d9389d782c64a22af981d7824fdca7943fa964a2f46cb43",
+      "meaning": "User-selected extended skip-zero/both-sides recording; saved state modelStep136; not a controlled comparison to A",
+      "sourceCommit": "93aa65f7cc6960336b804ae1e711794b3c6738ef"
+    },
+    {
+      "role": "axes-map",
+      "path": "issledovanie/mayatnik-auto-axes-map.png",
+      "url": "https://1001100.online/issledovanie/mayatnik-auto-axes-map.png",
+      "width": 1600,
+      "height": 1080,
+      "frames": 1,
+      "durationMs": 0,
+      "bytes": 112485,
+      "sha256": "cdb969c9649d2b87d29b40612d9ceec3ee8aa7bbaa2f14a9e2e22b3fc5b93efe",
+      "meaning": "User-selected structural analysis:64rows,8cone passes; axis intervals and zero triangles",
+      "sourceCommit": "5408b61a3fb0d56c04e8745c0be62931fd7bd550"
+    },
+    {
+      "role": "point-axis-gif",
+      "path": "wolfram/community-assets/tochka-os-1.gif",
+      "url": "https://1001100.online/wolfram/community-assets/tochka-os-1.gif",
+      "width": 640,
+      "height": 318,
+      "frames": 73,
+      "durationMs": 43800,
+      "bytes": 7645067,
+      "sha256": "caad82560914b2610b912a273fc5a9e51fbd7e0f68430db9cf5fd183be5542b8",
+      "meaning": "Complete conversion of author recording; no model simulation"
+    },
+    {
+      "role": "code-animation",
       "path": "issledovanie/cikl.gif",
       "url": "https://1001100.online/issledovanie/cikl.gif",
       "width": 771,
@@ -30,26 +80,51 @@
       "durationMs": 44800,
       "bytes": 1379819,
       "sha256": "530c63b33bd19cafcd0a71a1e1179117ec9e8e7984f3e7d578db0a788fcf7fc7",
-      "meaning": "Code historical cycle passes65–192; source article reports pass193=65",
+      "meaning": "Code historical cycle; not the diagonal or cone rule",
       "sourceCommit": "5f171241263d2d488bb6154995b4f8de3718e2c1"
-    },
-    {
-      "role": "animation-pendulum",
-      "path": "issledovanie/mayatnik-zerkala-4096.gif",
-      "url": "https://1001100.online/issledovanie/mayatnik-zerkala-4096.gif",
-      "width": 1024,
-      "height": 512,
-      "frames": 33,
-      "durationMs": 5340,
-      "bytes": 2936146,
-      "sha256": "49b3a2e7bbf5e547602d2deb088dd2c7285bf42809c6149887d723b973dee271",
-      "meaning": "Mayatnik 4096 rows; sampled vertex counts0–2048 step64; display colouring/reflections, not a periodic-state claim",
-      "sourceCommit": "d305236669ea5bbc05c147f800225d2b347ac80e"
     }
   ],
-  "delivery": [
+  "conversion": {
+    "source": "rezultaty/mayatnik-tochka-os-1.mp4",
+    "url": "https://1001100.online/rezultaty/mayatnik-tochka-os-1.mp4",
+    "sourceSha256": "adba6256bc4aa4f21154cde40045ad9c15fbbbed286b437b2e3716ef6511a74d",
+    "sourceWidth": 1028,
+    "sourceHeight": 512,
+    "durationSeconds": 43.8,
+    "sourceFps": "5/3",
+    "audioStreams": 0,
+    "output": "community-assets/tochka-os-1.gif",
+    "script": "community-assets/convert-tochka.ps1",
+    "outputWidth": 640,
+    "paletteColours": 128,
+    "resampling": "nearest neighbour",
+    "dither": "none",
+    "loop": "infinite playback; no periodicity claim"
+  },
+  "sourceNotes": {
+    "xor-walk": "issledovanie/xor-walk-20261107/metadata.json and state-1.json/state-2.json; A/B correspond to different model steps; shared apex inactive in skip-zero mode",
+    "axes-map": "Existing figure identifies mayatnik-core.js and mayatnik-auto-axes.js as source, dated2026-10-27; not rerun",
+    "colouring": "Existing author screenshot and recording, described in issledovanie/Zerkalius-issledovanie.html",
+    "Code": "Existing cikl.gif and historical article section r1; not rerun"
+  },
+  "existingMediaDelivery": [
     {
-      "path": "issledovanie/desktop-wallpapers/media/animatrix-173.png",
+      "path": "issledovanie/mayatnik-podsvetka-2.png",
+      "status": 200,
+      "sha256Matches": true
+    },
+    {
+      "path": "issledovanie/xor-walk-20261107/variant-a.gif",
+      "status": 200,
+      "sha256Matches": true
+    },
+    {
+      "path": "issledovanie/xor-walk-20261107/variant-b.gif",
+      "status": 200,
+      "sha256Matches": true
+    },
+    {
+      "path": "issledovanie/mayatnik-auto-axes-map.png",
       "status": 200,
       "sha256Matches": true
     },
@@ -59,9 +134,10 @@
       "sha256Matches": true
     },
     {
-      "path": "issledovanie/mayatnik-zerkala-4096.gif",
+      "path": "rezultaty/mayatnik-tochka-os-1.mp4",
       "status": 200,
       "sha256Matches": true
     }
-  ]
+  ],
+  "newGifDelivery": "Pending GitHub Pages publication"
 }

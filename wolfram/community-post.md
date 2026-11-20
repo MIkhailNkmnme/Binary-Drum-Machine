@@ -1,6 +1,6 @@
 # Sequential XOR patterns in Zerkalius: a moving-cone pendulum and two Animatrix rules
 
-Draft for Wolfram Community · 20 November 2026. Prepared for author review; not submitted to the forum. Existing project images are reused without alteration. The current implementation is JavaScript; the mathematical connection to NKS is the subject of this discussion.
+Draft v0.002 for Wolfram Community · 20 November 2026. Prepared for author review; not submitted to the forum. User-selected project figures are reused unchanged; the point-axis GIF is a format conversion of the complete existing MP4. The implementation is JavaScript; the mathematical connection to NKS is the subject of this discussion.
 
 ---
 
@@ -8,9 +8,9 @@ I am developing **Zerkalius**, a visual project exploring how simple rules produ
 
 The images initially drew my attention, but the main question is about the **update rule, the order of updates, and the boundary conditions**. Three constructions need to be kept separate.
 
-![Animatrix Code, pass 173, 128-row source](https://1001100.online/issledovanie/desktop-wallpapers/media/animatrix-173.png)
+![Colouring structures in the XOR pendulum](https://1001100.online/issledovanie/mayatnik-podsvetka-2.png)
 
-*Animatrix Code, complete pass 173 from a 128-row Rule 90 source. The colour gradient is presentation only; it does not change the transition rule.*
+*Author screenshot: a 512-row pendulum field at frame 50. Red and yellow highlight connected structures selected by the colouring tools. These colours are a display layer over the binary field.*
 
 **1. Animatrix Code: a column-wise symbolic wave**
 
@@ -59,9 +59,25 @@ The pendulum retains a two-dimensional field between passes. A pass updates a co
 
 A cone rooted at a has cells `(r, a-r+2j)`, with `j=0,...,r`, clipped to the field. An empty apex becomes 1; when computing the first row below it, the apex is temporarily read as 1, then its stored value is restored. Thus the mask, moving apex, and apex convention are part of the model.
 
-![Recorded Mayatnik evolution with colouring and reflections](https://1001100.online/issledovanie/mayatnik-zerkala-4096.gif)
+The application also explores extended apex schedules. The following two author-recorded GIFs use the “skip zero / both sides together” variant, on a 256-row source with a target apex range of 1024. They illustrate that extended mode, rather than the one-cone-at-a-time schedule defined above.
 
-*A recorded 4096-row Mayatnik visualization, sampled at displayed vertex counts 0–2048 in increments of 64 and reduced eightfold. Colouring and reflections are additional display layers; they are not extra states in the binary recurrence. The final-to-first jump is the GIF replay, not a claim that the pendulum has returned to its initial state.*
+![XOR pendulum, author recording A](https://1001100.online/issledovanie/xor-walk-20261107/variant-a.gif)
+
+*Recording A: 21 recorded images, 12.74 seconds.*
+
+![XOR pendulum, author recording B](https://1001100.online/issledovanie/xor-walk-20261107/variant-b.gif)
+
+*Recording B: 23 recorded images, 10.08 seconds. The associated saved states are at model steps 21 and 136 respectively; these are not two recordings of an otherwise identical experiment at the same step. In this skip-zero mode, the shared-apex switch is inactive. The GIFs therefore do not establish an effect of that switch. Their playback loops do not establish a period of the model.*
+
+**Geometry and colouring as tools for inspecting the field**
+
+![Automatic axes between triangular zero regions](https://1001100.online/issledovanie/mayatnik-auto-axes-map.png)
+
+*A structural map of a 64-row field after eight cone passes, at apex positions 0, −1, +1, −2, +2, −3, +3, −4. Purple outlines mark detected triangular zero regions; orange, blue and green mark axis segments before, between and after them. The analysis does not repaint the underlying bits.*
+
+![Point-axis colouring in the XOR pendulum](https://1001100.online/wolfram/community-assets/tochka-os-1.gif)
+
+*Point-axis colouring, converted from the author's complete 43.8-second recording: 73 frames, 640 × 318, no audio. The colour propagation follows selected bit regions downward and toward an axis. This is a visualization mode, not another Animatrix recurrence. [Original MP4 at 1028 × 512](https://1001100.online/rezultaty/mayatnik-tochka-os-1.mp4).*
 
 I would be interested in references or comments on three questions:
 
@@ -77,4 +93,4 @@ Detailed descriptions, boundary conventions, and JavaScript sources are availabl
 - [The XOR pendulum: rule and comparison with NKS](https://1001100.online/issledovanie/wolfram-nks/xor-pendulum-comparison.html)
 - [Project source code](https://github.com/MIkhailNkmnme/Binary-Drum-Machine)
 
-The illustrations are existing project outputs. No new simulation was run to prepare this post. I would welcome references, corrections, or suggestions for a compact Wolfram Language formulation.
+The illustrations are existing project outputs; only the MP4-to-GIF format conversion is new. No new simulation was run to prepare this post. I would welcome references, corrections, or suggestions for a compact Wolfram Language formulation.
