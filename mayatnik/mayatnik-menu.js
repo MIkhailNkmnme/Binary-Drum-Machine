@@ -228,6 +228,12 @@
     button('edgeEndsPlus','plus')
   ]});
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups, headerFactory:g=>ZerkGroupHeader.create({title:g.title,dualPins:true,className:'gz-hx gz-head',titleClass:'gz-nm',pinClass:'gz-pin',iconClass:'gz-mico',arrowClass:'gz-ar'}) });
+  // МАЯ-687: ordinary numeric sliders use the Хорр → Размер contour, not the legacy filled arrows.
+  for(const cell of rail.el.querySelectorAll('.gz-group[data-id="flow"] .gz-sl')){
+    cell.classList.add('may-number-slider');
+    const arrows=cell.querySelectorAll(':scope > .gz-a:not(.gz-a2)');
+    arrows.forEach((arrow,i)=>{arrow.dataset.dir=i?'right':'left';});
+  }
   if(window.mayFlow){const syncFlow=()=>{rail.refresh();for(const item of groups.find(g=>g.id==='flow').items){const button=document.querySelector('.gz-group[data-id="flow"] [data-pan="'+item.pan+'"]');if(!button)continue;const title=item.pan==='flow-status'?window.mayFlow.status:item.tip||item.name;button.title=title;button.setAttribute('aria-label',title);button.dataset.mayTip=title;if(item.type==='toggle')button.setAttribute('aria-pressed',String(item.on()));}};addEventListener('may-flow-state',syncFlow);syncFlow();}
   buttonLayoutRestorers.push(values=>rail.restoreLayout(layoutValue(values,'grozd:mayatnik',{})));
   addEventListener('may-listening-change',()=>rail.refresh());

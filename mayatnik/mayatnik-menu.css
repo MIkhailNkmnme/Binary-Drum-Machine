@@ -1044,19 +1044,24 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 .may-rows-thumb{position:absolute;z-index:5;top:3px;width:8px;height:18px;margin-left:-4px;cursor:ew-resize;touch-action:none;outline:0;user-select:none;background:transparent}
 .may-rows-thumb::before{content:"";position:absolute;left:4px;top:0;bottom:0;border-left:1px dashed #dfe6f5;pointer-events:none}
 .may-rows-thumb:focus-visible{outline:1px solid var(--c,#73e4a5)}
-.may-rows-slider.gz-val.gz-sl{gap:0;padding:0;width:120px;height:24px;flex:none;--gz-bg:#1b2430}
-:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-rows-slider{padding:0!important;gap:0!important}
-.may-rows-slider.gz-sl .gz-a:not(.gz-a2){width:24px;flex:0 0 24px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:transparent!important;color:#dfe6f5;font-size:0}
-.may-rows-slider.gz-sl .gz-a:not(.gz-a2)::after{content:"";position:absolute;top:8px;left:10px;width:7px;height:7px;box-sizing:border-box;border:solid currentColor;border-width:0 0 1.4px 1.4px;transform:rotate(45deg);pointer-events:none}
-.may-rows-slider.gz-sl .gz-a:nth-last-child(2)::after{left:7px;transform:rotate(225deg)}
-.may-rows-slider.gz-sl .gz-a::before{content:"";position:absolute;inset:0;background:#394657;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M.7 12 12 .7 23.3 12 12 23.3Z' fill='none' stroke='white' stroke-width='1.4'/%3E%3C/svg%3E") center/24px 24px no-repeat;pointer-events:none}
-.may-rows-slider.gz-sl .gz-a:is(:hover,:active,:focus-visible)::before{background:var(--c,#73e4a5)}
-.may-rows-slider.gz-sl .gz-mid{margin:0;flex:1;min-width:0;outline:0}
-.may-rows-slider.gz-sl .gz-mid::before,.may-rows-slider.gz-sl .gz-mid::after{display:none}
-.may-rows-slider.gz-sl .gz-mid:focus-visible{outline:1px solid var(--c,#73e4a5);outline-offset:-1px}
-.may-rows-slider.gz-sl .gz-th{z-index:5;top:3px;width:1px;height:18px;margin:0;transform:none;clip-path:none;background:transparent;box-shadow:none;border:0;border-left:1px dashed #dfe6f5;cursor:ew-resize}
-.may-rows-slider.gz-sl .gz-th::after{content:"";position:absolute;inset:0 -4px}
-.may-rows-slider.gz-sl .gz-vl{left:0!important;right:0;text-align:center;padding:0;background:transparent;font-size:11px}
+:is(.may-rows-slider,.may-number-slider).gz-val.gz-sl{gap:0;padding:0;width:120px;height:24px;flex:none;--gz-bg:#1b2430}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard:is(.may-rows-slider,.may-number-slider){padding:0!important;gap:0!important}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-a:not(.gz-a2){width:24px;flex:0 0 24px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:transparent!important;color:#dfe6f5;font-size:0}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-a:not(.gz-a2)::after{content:"";position:absolute;top:8px;left:10px;width:7px;height:7px;box-sizing:border-box;border:solid currentColor;border-width:0 0 1.4px 1.4px;transform:rotate(45deg);pointer-events:none}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-a:nth-last-child(2)::after{left:7px;transform:rotate(225deg)}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-a::before{content:"";position:absolute;inset:0;background:#394657;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M.7 12 12 .7 23.3 12 12 23.3Z' fill='none' stroke='white' stroke-width='1.4'/%3E%3C/svg%3E") center/24px 24px no-repeat;pointer-events:none}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-a:is(:hover,:active,:focus-visible)::before{background:var(--c,#73e4a5)}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-mid{margin:0;flex:1;min-width:0;outline:0}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-mid::before,:is(.may-rows-slider,.may-number-slider).gz-sl .gz-mid::after{display:none}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-mid:focus-visible{outline:1px solid var(--c,#73e4a5);outline-offset:-1px}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-th{z-index:5;top:3px;width:1px;height:18px;margin:0;transform:none;clip-path:none;background:transparent;box-shadow:none;border:0;border-left:1px dashed #dfe6f5;cursor:ew-resize}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-th::after{content:"";position:absolute;inset:0 -4px}
+:is(.may-rows-slider,.may-number-slider).gz-sl .gz-vl{left:0!important;right:0;text-align:center;padding:0;background:transparent;font-size:11px}
+
+.may-number-slider.gz-sl .gz-z{display:none!important}
+/* Named sides survive SVG decorations appended by the button-standard adapter. */
+.may-number-slider.gz-sl .gz-a[data-dir=left]::after{left:10px;transform:rotate(45deg)}
+.may-number-slider.gz-sl .gz-a[data-dir=right]::after{left:7px;transform:rotate(225deg)}
 
 /* v0.630: settings escape rail/filter clipping; all five launchers stay in Horr. */
 [data-id="horr"] [data-horr-inactive="true"],.may-horr-home{display:none!important}
