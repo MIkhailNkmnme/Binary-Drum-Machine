@@ -10,12 +10,16 @@
   const speechHighlight=$('text-cursor');
   const DEFAULT_SPEECH=speechField.value;
   const PLAIN_RUSSIAN_EXAMPLE=DEFAULT_SPEECH.split('\n',1)[0].replace(/\u0301/g,'');
+  const RUSSIAN_NAMES_START=DEFAULT_SPEECH.lastIndexOf('\n')+1;
+  const PREVIOUS_RUSSIAN_EXAMPLE=DEFAULT_SPEECH.slice(0,RUSSIAN_NAMES_START)+'Б В Г Д Ж З Й К Л М Н П Р С Т Ф Х Ц Ч Ш Щ';
   const engineTabs=[...$('engine-tabs').querySelectorAll('[data-engine]')];
   const topicTabs=[...$('voice-tabs').querySelectorAll('[role="tab"]')];
   const enginePages={};
   const SPEECH_EXAMPLES={ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
   const PREVIOUS_EXAMPLES={en:['Hello! 0 1 2 3.'],ru:['Привет, Зеркалиус! 0 1 2 3.','0123456789 Текст для проверки голоса. Утром 0 юный фотограф 1 Фёдор поднялся на холм, где 2 жёлтый фургон стоял у въезда. Рыжий ёж 3 шуршал в траве, а маленький щенок 4 прыгал через лужи. В центре двора 5 музыкант объяснял, как звучат флейта, цимбалы и бубен. Затем 6 Юлия и Яков съели хлеб, выпили чай и ещё раз произнесли фразу. Эхо 7 отвечало из чащи: «Здравствуй, мир!» Вечером 8 экскурсовод проверил объём ящика, а 9 белый конь спокойно ждал у двери.'],de:['Ich heiße Zerkalius. Schön! 0 1 2 3.']};
-  const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]||(language==='ru'&&text===PLAIN_RUSSIAN_EXAMPLE)||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
+  const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]
+    ||(language==='ru'&&(text===PLAIN_RUSSIAN_EXAMPLE||text===PREVIOUS_RUSSIAN_EXAMPLE))
+    ||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
   const state={engineId:R.defaultId||'robot',profiles:{},library:[],languages:[],silent:false,kind:'sound',compareMode:'profiles',legacyDraft:null,speechText:DEFAULT_SPEECH,speechLanguage:'ru',speechProsody:{...VoiceProsody.defaults},speechCaret:0};
   for(const item of R.list){const e=R.get(item.id);state.profiles[item.id]={settings:{...e.defaults},phones:{},userPhones:{}};}
   let E=R.get(state.engineId),worker=null,jobId=0,epoch=0,revision=0,importTicket=0;
@@ -234,6 +238,16 @@
       offset+=char.length;
     }
     return offset;
+  }
+  function consonantNameCaret(position){
+    if(!Number.isInteger(position)||position<=RUSSIAN_NAMES_START)return position;
+    // The old row alternated one letter and one space. Keep the same letter
+    // and side of its name, even when that name contains several words.
+    const previousOffset=Math.min(position,PREVIOUS_RUSSIAN_EXAMPLE.length)-RUSSIAN_NAMES_START;
+    const ordinal=Math.floor(previousOffset/2);
+    const names=DEFAULT_SPEECH.slice(RUSSIAN_NAMES_START).split(', ');
+    const before=names.slice(0,ordinal).reduce((offset,name)=>offset+name.length+2,RUSSIAN_NAMES_START);
+    return before+(previousOffset%2?names[ordinal].length:0);
   }
   function syncSpeechHighlightScroll(){
     speechHighlight.scrollTop=speechField.scrollTop;
@@ -505,8 +519,12 @@
     state.speechText=currentText?Array.from(savedText).slice(0,VoiceText.maxCharacters).join(''):SPEECH_EXAMPLES[state.speechLanguage];
     speechField.value=state.speechText;
     state.speechText=speechField.value;
-    const wasPlainRussian=state.speechLanguage==='ru'&&savedText===PLAIN_RUSSIAN_EXAMPLE;
-    restoreSpeechCaret(wasPlainRussian?accentedExampleCaret(page.speechCaret):currentText?page.speechCaret:0);
+    let caret=currentText?page.speechCaret:0;
+    if(state.speechLanguage==='ru'){
+      if(savedText===PLAIN_RUSSIAN_EXAMPLE)caret=accentedExampleCaret(page.speechCaret);
+      else if(savedText===PREVIOUS_RUSSIAN_EXAMPLE)caret=consonantNameCaret(page.speechCaret);
+    }
+    restoreSpeechCaret(caret);
     $('speech-language').value=state.speechLanguage;
     try{state.speechProsody=VoiceProsody.normalize(page.speechProsody??undefined);}
     catch{state.speechProsody=VoiceProsody.normalize();}
