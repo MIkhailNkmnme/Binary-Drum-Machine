@@ -6,7 +6,7 @@
    the output is not promised to be byte-identical to the original Python bank. */
 (function(root){
   'use strict';
-  const VERSION='procedural-formant-browser-v1.2.2';
+  const VERSION='procedural-formant-browser-v1.2.3';
   const RATE=22050,TAU=2*Math.PI,TABLE_SIZE=4096,MAX_SECONDS=12,MAX_SEGMENTS=96;
   const MAX_FREQUENCY=RATE*.45,MAX_BANDWIDTH=4000;
   const definitions=[
@@ -171,7 +171,8 @@
     const softenNoise=prosody?dsp.createConsonantNoise(RATE):null;
     const shapeFor=(token,index)=>{
       const nextVowel=score.slice(index+1).find(t=>Object.hasOwn(vowels,t.id))?.id||'e';
-      const custom=Object.hasOwn(phones,token.id),p=custom?phones[token.id]:getPhone(token.id,nextVowel);
+      const custom=Object.hasOwn(phones,token.id),target=custom?phones[token.id]:getPhone(token.id,nextVowel);
+      const p=prosody&&!custom?prosody.speechPhone(token.id,target):target;
       return {...p,noise:prosody&&!custom?dsp.defaultSpeechNoise(p):p.noise,
         formants:p.formants.map(f=>clamp(f*settings.formantScale,20,MAX_FREQUENCY)),bandwidths:p.bandwidths.map(b=>clamp(b*settings.bandwidthScale,20,MAX_BANDWIDTH))};
     };
@@ -186,6 +187,7 @@
       const token=score[tokenIndex],{id,duration}=token,count=Math.round(duration/settings.speed*RATE);
       const current=speechShapes?.[tokenIndex]||shapeFor(token,tokenIndex);
       const noiseConsonant=prosody&&dsp.isNoiseConsonant(current.kind);
+      const frication=!Object.hasOwn(phones,id)?prosody?.fricationSource(id,current.kind):null;
       resolvedPhones.push({id,...current,weights:[...current.weights]});
       if(!previousShape)previousShape=current;
       let coefficients=[];
@@ -220,7 +222,8 @@
         }else if(current.kind==='affricate'){
           if(progress<.23){voiced*=.15;noisy=0;}else noisy*=Math.min(1,(progress-.23)/.06);
         }else if(current.kind==='trill')voiced*=.35+.65*(.5+.5*Math.cos(TAU*29*index/RATE))**2;
-        const excitation=periodic*voiced+(noiseConsonant?softNoise:noise)*noisy;
+        const noiseSource=frication?frication(noise,progress):noiseConsonant?softNoise:noise;
+        const excitation=periodic*voiced+noiseSource*noisy;
         let value=0;
         for(let k=0;k<4;k++){
           const [gain,feedback1,feedback2]=coefficients[k],[last,older]=states[k];

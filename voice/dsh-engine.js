@@ -6,7 +6,7 @@
 (function(root){
   'use strict';
   root.ZerkaliusDshFactory=function(C){
-    const VERSION='deepseek-formant-live-v1.2.2',RATE=44100,TAU=2*Math.PI;
+    const VERSION='deepseek-formant-live-v1.2.3',RATE=44100,TAU=2*Math.PI;
     const profile=C.config({pitchStart:112,pitchEnd:96,vibratoDepth:0,vibratoRate:2.1,transitionMs:0,outputGain:.7,seed:7},['transitionMs']);
     // Возраст: 0 — ребёнок, 50 — взрослый, 100 — старик. Меняет длину речевого
     // тракта (форманты), высоту, дрожание и придыхание, не трогая таблицу фонем.
@@ -125,6 +125,7 @@
         const p=resolvedPhones[segment],count=counts[segment];
         const stop=p.kind==='stop',affricate=p.kind==='affricate',burst=stop||affricate;
         const noiseConsonant=dsp.isNoiseConsonant(p.kind),releaseAt=Math.floor(count*(stop ? .55 : .28));
+        const frication=!Object.hasOwn(phones,p.id)?prosody.fricationSource(p.id,p.kind):null;
         if(p.kind==='silence'){for(const f of filters){f.last=0;f.older=0;}cursor+=count;continue;}
         for(let index=0;index<count;index++){
           const at=cursor+index,speech=prosody.at(at,segment),other=resolvedPhones[speech.otherIndex];
@@ -137,7 +138,8 @@
           let noiseEnvelope=1;
           if(stop)noiseEnvelope=afterRelease<0?0:Math.exp(-afterRelease/(RATE*.012));
           else if(affricate)noiseEnvelope=C.clamp(afterRelease/(RATE*.006),0,1)*(1-.7*index/Math.max(1,count-1));
-          const noise=(noiseConsonant?softNoise:rawNoise)*noiseEnvelope*dsp.blendSpeechNoise(p,other,speech.blend)*settings.noise;
+          const noiseSource=frication?frication(rawNoise,index/Math.max(1,count-1)):noiseConsonant?softNoise:rawNoise;
+          const noise=noiseSource*noiseEnvelope*dsp.blendSpeechNoise(p,other,speech.blend)*settings.noise;
           let value=0;
           for(let band=0;band<3;band++){
             const f=filters[band],[gain,a1,a2]=f.c;

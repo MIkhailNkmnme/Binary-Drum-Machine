@@ -7,7 +7,7 @@
   root.ZerkaliusRobotLiveFactory=function(C){
     const Original=root.ZerkaliusAlphabetRobot;
     if(!Original)throw Error('Не загружен исходный телефонный робот.');
-    const VERSION='phone-robot-live-v1.2.2',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
+    const VERSION='phone-robot-live-v1.2.3',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
     const bits=Array(8).fill(1),f0=440*2**((48-69)/12),raw=Original.phones();
     const profile=C.config({pitchStart:f0,pitchEnd:f0,vibratoDepth:0,vibratoRate:2.1,transitionMs:12,outputGain:.55,seed:Original.seedFor(bits,'zero')});
     const aliases={ax:'a-neutral',lj:'l-soft',dj:'d-soft',pj:'p-soft',tj:'t-soft',kj:'k-soft',sj:'s-soft',mj:'m-soft',vj:'v-soft',rj:'r-soft',shj:'sh-soft'};
@@ -63,11 +63,13 @@
       const softenNoise=prosody?dsp.createConsonantNoise(RATE):null;
       const resolved=score.map(token=>{
         const custom=Object.hasOwn(phones,token.id);
-        const p=C.scaled(custom?phones[token.id]:getPhone(token.id),settings,RATE,60),native=targets[token.id];
+        const target=custom?phones[token.id]:getPhone(token.id),native=targets[token.id];
+        const speechTarget=prosody&&!custom?prosody.speechPhone(token.id,target):target;
+        const p=C.scaled(speechTarget,settings,RATE,60);
         p.bandwidths=p.bandwidths.map(b=>Math.max(50,b));
         if(prosody&&!custom)p.noise=dsp.defaultSpeechNoise(p);
         const sameKind=!!native&&publicKind(native.kind)===p.kind;
-        return {...p,id:token.id,gain:sameKind?native.gain:1,bypass:sameKind?native.bypass*(p.noise/(native.noise||1)):0,
+        return {...p,id:token.id,gain:sameKind||speechTarget!==target?native.gain:1,bypass:sameKind?native.bypass*(p.noise/(native.noise||1)):0,
           robotKind:p.kind==='stop'?(p.voice>0?'stopD':'stopK'):p.kind};
       });
       const harmonics=Math.max(1,Math.min(96,Math.floor(RATE*.43/(prosody?prosody.maximumFrequency:Math.max(settings.pitchStart,settings.pitchEnd)+settings.vibratoDepth))));
@@ -82,6 +84,7 @@
       }
       const table=source(harmonics),samples=new Float32Array(total+tail),filters=Array.from({length:4},()=>({z1:0,z2:0,c:null}));
       const seconds=samples.length/RATE,speechSeconds=total/RATE;
+      const fricationSources=resolved.map(({id,kind})=>!Object.hasOwn(phones,id)?prosody?.fricationSource(id,kind):null);
       let rng=settings.seed||1,phase=0,segment=0,start=0,control=null,lastNoise=0,lastOutput=0,dc=0,peak=0;
       for(let sample=0;sample<samples.length;sample++){
         while(segment+1<score.length&&sample>=start+counts[segment]){start+=counts[segment];segment++;control=null;}
@@ -117,7 +120,9 @@
           if(local<release){noise=0;voiced=0;bypass=0;}else{const opening=C.clamp((local-release)/.006,0,1);noise*=opening;bypass*=opening;}
         }else if(kind==='trill')envelope=.25+.75*Math.abs(Math.sin(TAU*32*local));
         if(time>=speechSeconds||kind==='silence'){voiced=0;noise=0;bypass=0;}
-        const excitation=speech&&dsp.isNoiseConsonant(current.kind)?softNoise:white;
+        const frication=fricationSources[segment];
+        const excitation=frication?frication(white,(sample-start)/Math.max(1,counts[segment]-1))
+          :speech&&dsp.isNoiseConsonant(current.kind)?softNoise:white;
         const input=pulse*voiced+excitation*noise*.22;let value=0;
         for(let band=0;band<4;band++){
           const filter=filters[band],c=filter.c,out=c.b0*input+filter.z1;

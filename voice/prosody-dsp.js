@@ -16,9 +16,41 @@
     ['sh',{durationScale:.68,cutoffHz:2800,lowGain:.68,highGain:.15}],
     ['shj',{durationScale:.74,cutoffHz:3000,lowGain:.70,highGain:.16}]
   ]);
+  // Each noise source is concentrated in its own band before the vocal tract.
+  // The values are centre frequency, bandwidth (Hz), and passband gain.
+  const speechFricationBands=new Map([
+    ['zh',[1750,1150,.55]],['s',[3650,1600,.32]],['f',[1150,650,.7]],['h',[750,950,.7]],
+    ['ts',[3300,1750,.4]],['ch',[2400,1150,.48]],['sh',[2100,1100,.43]],['shj',[2850,1500,.45]]
+  ]);
+  function phoneProfile(profiles,id){
+    return profiles.get(id)??(id.endsWith('j')?profiles.get(id.slice(0,-1)):null);
+  }
+  function speechPhone(id,phone){
+    if((id!=='v'&&id!=='vj')||phone.kind!=='fricative')return phone;
+    // Use a periodic approximation with a low resonance and a weaker second one.
+    return {...phone,kind:'sonorant',voice:.75,noise:0,
+      formants:[320,id==='vj'?2150:1250,...phone.formants.slice(2)],
+      weights:[.65,.30,.075,0]};
+  }
+  function createFricationSource(id,kind,rate){
+    if(kind!=='fricative'&&kind!=='affricate')return null;
+    const band=phoneProfile(speechFricationBands,id);
+    if(!band)return null;
+    const [center,width,level]=band,angle=2*Math.PI*center/rate;
+    const alpha=Math.sin(angle)*width/(2*center),scale=1/(1+alpha);
+    const b0=alpha*scale,a1=-2*Math.cos(angle)*scale,a2=(1-alpha)*scale;
+    let state1=0,state2=0;
+    return (noise,progress)=>{
+      const out=b0*noise+state1;
+      state1=state2-a1*out;
+      state2=-b0*noise-a2*out;
+      const edge=clamp(Math.min(progress/.12,(1-progress)/.20),0,1);
+      return out*level*edge*edge*(3-2*edge);
+    };
+  }
   function fricationProfile(id,kind){
     if(kind!=='fricative'&&kind!=='affricate')return null;
-    return fricationProfiles.get(id)??(id.endsWith('j')?fricationProfiles.get(id.slice(0,-1)):null);
+    return phoneProfile(fricationProfiles,id);
   }
   const fricationDurationScale=(id,kind)=>fricationProfile(id,kind)?.durationScale??1;
   function applyFrication(samples,phones,boundaries,rate){
@@ -96,7 +128,9 @@
       return {pitchMultiplier:2**(semitones/12),gain,otherIndex,blend};
     }
     const softenRussianFrication=input.softenFrication===true;
-    const appliedProsody={version:1,segments,transitionMs,rangeStart,rangeEnd,...(softenRussianFrication?{softenFrication:true}:{})};
+    const articulatedFrication=input.articulatedFrication===true;
+    const appliedProsody={version:1,segments,transitionMs,rangeStart,rangeEnd,
+      ...(softenRussianFrication?{softenFrication:true}:{}),...(articulatedFrication?{articulatedFrication:true}:{})};
     const diagnosticLimits={semitones:[-12,12],segmentGain:[0,2],transitionMs:[0,80],frequencyHz:[floor,ceiling],
       requestedMinimumFrequency:requestedMin,requestedMaximumFrequency:requestedMax,
       effectiveMinimumFrequency:clamp(requestedMin,floor,ceiling),effectiveMaximumFrequency:maximumFrequency,
@@ -107,7 +141,11 @@
       segmentDurationsChanged:false,segmentsOverlap:false,shortSegmentPolicy:'A one-sample segment has no transition window.'};
     return {at,maximumFrequency,progress:sample=>rangeStart+(rangeEnd-rangeStart)*clamp(sample/Math.max(1,total),0,1),
       frequency:(base,control)=>clamp(base*control.pitchMultiplier,floor,ceiling),
-      softenFrication:(samples,phones)=>{if(softenRussianFrication)applyFrication(samples,phones,boundaries,rate);},
+      speechPhone:(id,phone)=>articulatedFrication?speechPhone(id,phone):phone,
+      fricationSource:(id,kind)=>articulatedFrication?createFricationSource(id,kind,rate):null,
+      softenFrication:(samples,phones)=>{
+        if(softenRussianFrication&&!articulatedFrication)applyFrication(samples,phones,boundaries,rate);
+      },
       metadata:()=>({appliedProsody,diagnosticLimits,segmentBoundaries:boundaries})};
   }
   root.VoiceProsodyDSP=Object.freeze({version:1,create,isNoiseConsonant,defaultSpeechNoise,blendSpeechNoise,createConsonantNoise,fricationDurationScale});

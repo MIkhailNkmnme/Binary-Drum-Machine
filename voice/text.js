@@ -81,7 +81,7 @@
     for(const part of chunks){
       const samples=duration(part.score);
       if(annotation.config.mode==='speech')part.prosody={version:1,segments:part.prosodySegments,transitionMs:annotation.config.transitionMs,
-        rangeStart:consumed/spokenTotal,rangeEnd:(consumed+samples)/spokenTotal,...(language==='ru'?{softenFrication:true}:{})};
+        rangeStart:consumed/spokenTotal,rangeEnd:(consumed+samples)/spokenTotal,...(language==='ru'?{articulatedFrication:true}:{})};
       consumed+=samples;delete part.prosodySegments;
     }
     return {characters,chunks,language,rate,phones:effectivePhones,prosody:{version:root.VoiceProsody.version,config:annotation.config,words:annotation.words,note:annotation.note}};
