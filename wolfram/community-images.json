@@ -15,9 +15,14 @@
       "frames": 1,
       "bytes": 11754,
       "sha256": "4ca679a0ad422fd32ca97866a59dad79e44faf1b7aeb762db7fa3433a0cd33e3",
-      "meaning": "User-supplied screenshot labelled templates; multiple coloured templates shown together on a pendulum field",
+      "meaning": "Several templates on a pendulum field; the red template is XORoXorиус. Other template names not supplied.",
       "origin": "Image attached by the author in this conversation on2026-11-20; copied byte-for-byte",
-      "limitation": "Full saved application state was not supplied; no new model verification inferred from the screenshot"
+      "limitation": "Full saved application state was not supplied; no new model verification inferred from the screenshot",
+      "namedTemplate": {
+        "colour": "red",
+        "name": "XORoXorиус",
+        "source": "Explicit author identification in this conversation,2026-11-20"
+      }
     },
     {
       "role": "cover",
