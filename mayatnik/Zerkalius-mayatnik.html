@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.079</title>
+<title>Zerkalius Маятнкъ — v1.080</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.079</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.080</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -391,7 +391,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <output id="symInfo" aria-live="polite"></output>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, 0 — по ширине; на телефоне — двумя пальцами">
       <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">×1</output><button id="zIn" aria-label="Приблизить">+</button>
-      <button id="zFit" aria-pressed="false" data-mi-short="Середина" title="Ширина по Оси: пока поле помещается, ось якоря по середине видимой части окна. При увеличении шире окна разрешён сдвиг вправо/влево; при уменьшении центрирование возвращается. Масштаб кнопка не меняет">середина</button><button id="zFitHeight" aria-pressed="false" data-mi-short="По высоте" title="По высоте: вписать всё активное поле в высоту окна. Кратный масштаб округляется вниз. Повтор — оставить текущий масштаб. При Блоке, 1:1 или живом Гиф-Масштабе недоступно">По высоте</button><button id="zFitH" aria-pressed="false" data-mi-short="Вниз" title="Вниз: при масштабе нижняя строка поля держится у низа окна · вместе с «Верхом» — держатся обе, масштаб не меняется">вниз</button><button id="zLock" aria-pressed="false" data-mi-short="Блок" title="Блокировать масштаб: колесо, + / −, «По ширине», «По высоте» и щипок его не меняют · ещё раз — снять">блок</button><button id="zLimit" aria-pressed="false" data-mi-short="1:1" title="Установить и держать 1:1: один бит на один физический пиксель монитора. Колесо, щипок и команды масштаба сохраняют 1:1 до выключения. После выключения остаётся 1:1, масштаб снова можно менять, если выключен «Блок»">1:1</button><button id="zLines" aria-pressed="false" data-mi-short="Линии" title="Линии: общий показ выбранных семейств ручных осей; положения и зеркала сохраняются · отдельные кнопки Верт, Гориз и Диаг включают свои оси">линии</button><button id="zVert" aria-pressed="false" data-mi-short="Верт" title="Вертикальные оси: показать / скрыть только вертикали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">верт</button><button id="zCenterAxis" aria-pressed="false" data-mi-short="Ось центр" title="Ось центр: фиксированная вертикаль через середину поля; свой пульт, раскраска 1 / 0 и автошаблоны ▦. Повторное нажатие скрывает ось, сохраняя настройки">Ось центр</button><button id="zHoriz" aria-pressed="false" data-mi-short="Гориз" title="Горизонтальные оси: показать / скрыть основную горизонталь и дополнительные линии, сохраняя положения и зеркала">гориз</button><button id="zDiag" aria-pressed="false" data-mi-short="Диаг" title="Диагональные оси: показать / скрыть обе диагонали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">диаг</button><button id="zTop" aria-pressed="false" data-mi-short="Верх" title="Закрепить верх: перетаскивание может сдвинуть поле вверх, колесо снова прижимает первую строку к верхнему краю окна">верх</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
+      <button id="zFit" aria-pressed="false" data-mi-short="Середина" title="Ширина по Оси: пока поле помещается, ось якоря по середине видимой части окна. При увеличении шире окна разрешён сдвиг вправо/влево; при уменьшении центрирование возвращается. Масштаб кнопка не меняет">середина</button><button id="zFitHeight" aria-pressed="false" data-mi-short="По высоте" title="По высоте: вписать всё активное поле в высоту окна. Экранный масштаб заполняет высоту без округления к кратной ступени. Повтор — оставить текущий масштаб. При Блоке, 1:1 или живом Гиф-Масштабе недоступно">По высоте</button><button id="zFitH" aria-pressed="false" data-mi-short="Вниз" title="Вниз: при масштабе нижняя строка поля держится у низа окна · вместе с «Верхом» — держатся обе, масштаб не меняется">вниз</button><button id="zLock" aria-pressed="false" data-mi-short="Блок" title="Блокировать масштаб: колесо, + / −, «По ширине», «По высоте» и щипок его не меняют · ещё раз — снять">блок</button><button id="zLimit" aria-pressed="false" data-mi-short="1:1" title="Установить и держать 1:1: один бит на один физический пиксель монитора. Колесо, щипок и команды масштаба сохраняют 1:1 до выключения. После выключения остаётся 1:1, масштаб снова можно менять, если выключен «Блок»">1:1</button><button id="zLines" aria-pressed="false" data-mi-short="Линии" title="Линии: общий показ выбранных семейств ручных осей; положения и зеркала сохраняются · отдельные кнопки Верт, Гориз и Диаг включают свои оси">линии</button><button id="zVert" aria-pressed="false" data-mi-short="Верт" title="Вертикальные оси: показать / скрыть только вертикали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">верт</button><button id="zCenterAxis" aria-pressed="false" data-mi-short="Ось центр" title="Ось центр: фиксированная вертикаль через середину поля; свой пульт, раскраска 1 / 0 и автошаблоны ▦. Повторное нажатие скрывает ось, сохраняя настройки">Ось центр</button><button id="zHoriz" aria-pressed="false" data-mi-short="Гориз" title="Горизонтальные оси: показать / скрыть основную горизонталь и дополнительные линии, сохраняя положения и зеркала">гориз</button><button id="zDiag" aria-pressed="false" data-mi-short="Диаг" title="Диагональные оси: показать / скрыть обе диагонали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">диаг</button><button id="zTop" aria-pressed="false" data-mi-short="Верх" title="Закрепить верх: перетаскивание может сдвинуть поле вверх, колесо снова прижимает первую строку к верхнему краю окна">верх</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
     </span>
     <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output><span id="frameWho" class="ver" style="margin-left:6px"></span></label>
     <button id="bGif" aria-pressed="false" data-mi-short="GIF" title="Запись GIF видимого окна поля — как на экране, с масштабом и сдвигом: размер окна на момент старта, до 1024 px по длинной стороне, до 10 кадров/с, 256 цветов. Нажми, запусти анимацию или меняй кадры; ещё раз — скачать GIF.">GIF</button>
@@ -557,7 +557,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <link rel="stylesheet" href="mayatnik-view-rotation.css?v=600">
 <script src="mayatnik-face-transform.js?v=600"></script>
 <script src="mayatnik-pit-copies.js?v=939"></script>
-<script src="mayatnik-reset-state.js?v=1071"></script>
+<script src="mayatnik-reset-state.js?v=1080"></script>
 <script src="mayatnik-cell-selection.js?v=542"></script>
 <script src="mayatnik-cell-selection-view.js?v=542"></script>
 <script src="mayatnik-xorrom.js?v=871"></script>
@@ -929,7 +929,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   };
   const urlOwn = {}; if (URL_ON&&!PHONE_LINK) { let old = {}; try { old = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (_) {}
     for (const q of ['rows', 'steps', 'mode', 'blackMirror', 'animHl', 'paintMid', 'geomCenter', 'lineMeasures']) urlOwn[q] = [st[q], old[q]]; }
-  const save = () => { if (CHISTO||SHARE_ACTIVE||window.mayBackupRestoring||!animatrixDeferredReady) return; try { const o = { ...st }; for (const q in urlOwn) if (JSON.stringify(st[q]) === JSON.stringify(urlOwn[q][0])) { if (urlOwn[q][1] === undefined) delete o[q]; else o[q] = urlOwn[q][1]; }
+  const save = () => { if (CHISTO||SHARE_ACTIVE||window.mayBackupRestoring||!animatrixDeferredReady) return; if(st.zoom!=='fitH')st.fitHFixed=undefined;try { const o = { ...st }; for (const q in urlOwn) if (JSON.stringify(st[q]) === JSON.stringify(urlOwn[q][0])) { if (urlOwn[q][1] === undefined) delete o[q]; else o[q] = urlOwn[q][1]; }
     if(o.animatrixSource){const source=o.animatrixSource,record=animatrixRecord(source);if(!record.ready)return;o.animatrixSource=animatrixReference(source,record.key);}
     localStorage.setItem(KEY, JSON.stringify(o)); } catch(error) {if(animatrixOn()||MayatnikSequenceField.fixed(st))$('paintCacheInfo').textContent='Настройки поля не сохранены в браузере: '+error.message;} };
 
@@ -6482,7 +6482,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       // он затирал более новые настройки. Теперь при загрузке настройки — из памяти браузера, из кэша — только поле и краска; поле в кэше от других
       // строк / вершин / хода / фона — кэш не подходит, поле строится заново. Открытый файл работы (supplied) — как раньше, со своими настройками
       if(!supplied){const FK=['rows','steps','mode','bg','pair'];if(fieldSourceKey(data.st)!==fieldSourceKey())return false;if((st.sequenceSourceOn||data.st?.sequenceSourceOn)&&!MayatnikSequenceField.same(data.st,st))return false;if(FK.some(q=>JSON.stringify(data.st?.[q])!==JSON.stringify(st[q]))||(data.st?.compareSource||'')!==(st.compareSource||'')||!!data.st?.compareMirror!==!!st.compareMirror)return false;}
-      window.mayXorrom?.stopAll();cacheRestoring=true;mirrorLiveSet(false);if(supplied){if(data.frameHost)st=structuredClone(data.st);else{Object.assign(st,{animatrixCopyRowsLayout:undefined,animatrixStaggeredGrid:null,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null,paintIsolated0:false,paintIsolated1:false,paintEmptyNeighbours:false,...MayatnikPitCopies.DEFAULTS},data.st);for(const key of ['ztPaintColour1','ztPaintColour0'])if(!Object.hasOwn(data.st||{},key))delete st[key];if(!Object.hasOwn(data.st||{},'xorromRack'))delete st.xorromRack;if(!Object.hasOwn(data.st||{},'xorrom'))st.xorrom=null;if(!Object.hasOwn(data.st||{},'cellSelection'))delete st.cellSelection;if(!Object.hasOwn(data.st||{},'lineFamilies'))delete st.lineFamilies;if(!Object.hasOwn(data.st||{},'romboSeam'))st.romboSeam='between';if(!Object.hasOwn(data.st||{},'romboMode'))st.romboMode='fixed';if(!Object.hasOwn(data.st||{},'romboLayout'))st.romboLayout=null;for(const key of ['autoAxesPaint','fillWholeColour','edgeRhombOn','paintSame','paintSymmetric','joined180','sequenceSourceOn','sequenceOwnGrid','sequenceInverseAbove','staggeredGrid','staggeredBlocks','edgeWrap','animatrixOn'])if(!Object.hasOwn(data.st||{},key))st[key]=false;}st.wolfram=MayatnikWolfram.normalize(data.st?.wolfram);st.paintFrameMode=MayatnikPaintRepeat.mode(data.st?.paintFrameMode);}if(data.frameHost){restoreFrameEffects(data.frameHost,false);chessLive=false;}if(supplied){for(const id of paintToolIds)if(!Object.hasOwn(data.st||{},id))delete st[id];}initialisePaintToolColours(data.colour);const focusMargins=st.templateFocusMargins;applyBitColours();writeUI();reset(false,data.st.steps);if(supplied||data.frameHost)st.templateFocusMargins=focusMargins||null;
+      window.mayXorrom?.stopAll();cacheRestoring=true;mirrorLiveSet(false);if(supplied){if(data.frameHost)st=structuredClone(data.st);else{Object.assign(st,{fitHFixed:undefined,animatrixCopyRowsLayout:undefined,animatrixStaggeredGrid:null,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null,paintIsolated0:false,paintIsolated1:false,paintEmptyNeighbours:false,...MayatnikPitCopies.DEFAULTS},data.st);for(const key of ['ztPaintColour1','ztPaintColour0'])if(!Object.hasOwn(data.st||{},key))delete st[key];if(!Object.hasOwn(data.st||{},'xorromRack'))delete st.xorromRack;if(!Object.hasOwn(data.st||{},'xorrom'))st.xorrom=null;if(!Object.hasOwn(data.st||{},'cellSelection'))delete st.cellSelection;if(!Object.hasOwn(data.st||{},'lineFamilies'))delete st.lineFamilies;if(!Object.hasOwn(data.st||{},'romboSeam'))st.romboSeam='between';if(!Object.hasOwn(data.st||{},'romboMode'))st.romboMode='fixed';if(!Object.hasOwn(data.st||{},'romboLayout'))st.romboLayout=null;for(const key of ['autoAxesPaint','fillWholeColour','edgeRhombOn','paintSame','paintSymmetric','joined180','sequenceSourceOn','sequenceOwnGrid','sequenceInverseAbove','staggeredGrid','staggeredBlocks','edgeWrap','animatrixOn'])if(!Object.hasOwn(data.st||{},key))st[key]=false;}st.wolfram=MayatnikWolfram.normalize(data.st?.wolfram);st.paintFrameMode=MayatnikPaintRepeat.mode(data.st?.paintFrameMode);}if(data.frameHost){restoreFrameEffects(data.frameHost,false);chessLive=false;}if(supplied){for(const id of paintToolIds)if(!Object.hasOwn(data.st||{},id))delete st[id];}initialisePaintToolColours(data.colour);const focusMargins=st.templateFocusMargins;applyBitColours();writeUI();reset(false,data.st.steps);if(supplied||data.frameHost)st.templateFocusMargins=focusMargins||null;
       if(gpuBig)return false;   // v0.468: большой режим — кадр строит видеокарта, раскраски у него нет
       if(!(data.field instanceof Int8Array)||data.field.length!==f.val.length)throw Error('Размер сохранённого поля не совпадает с его настройками.');
       f.val.set(data.field);k=data.k;target=k;if(phoneOn())phoneMaterialize(k,false);edgeJumps=Number.isSafeInteger(data.edgeJumps)&&data.edgeJumps>=0?data.edgeJumps:0;edgeLaps=Number.isSafeInteger(data.edgeLaps)&&data.edgeLaps>=0?data.edgeLaps:0;if(edgeFlowOn()&&edgeMark){edgeMark.fill(0);if(data.edgeFlowMark instanceof Uint8Array&&data.edgeFlowMark.length===edgeMark.length)edgeMark.set(data.edgeFlowMark);}if(animatrixOn())await animatrixReplay(k);updWin();canvasSize();draw();
@@ -9526,10 +9526,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const fitScale = () => { const s = Math.max(0.02, (wrap.clientWidth - wrapPadX()) / (bothOn() ? 2 * dispW() + 1 : dispW())); return st.zsnap ? snap2(s, true) : s; };
   // Fit the complete displayed field, including the assembled and rotated Rombo.
   function fitHViewport(){const r=wrap.getBoundingClientRect(),v=window.visualViewport,top=Math.max(r.top+(wrap.clientTop||0),v?.offsetTop||0),bottom=Math.min(r.top+(wrap.clientTop||0)+wrap.clientHeight,v?v.offsetTop+v.height:innerHeight);return {top:top+13,height:Math.max(1,bottom-top-26)};}
-  const fitHScale=()=>{const height=pixelGeometry(st).height||dispH(),s=Math.min(MAX_ZOOM,fitHViewport().height/Math.max(1,height));return st.zsnap?snap2(s,true):s;};
+  function fitHView(){return st.zoom==='fitH'&&!st.gifScaleStack&&!st.zLimit;}
+  function fitHFixed(){return Number.isFinite(st.fitHFixed)&&st.fitHFixed>0?st.fitHFixed:0;}
+  function fitHAuto(){return fitHView()&&!fitHFixed();}
+  const fitHScale=()=>Math.min(MAX_ZOOM,fitHViewport().height/Math.max(1,pixelGeometry(st).height||dispH()));
   var fitHPlacement='';
   function fitHScroll(){
-    if(st.zoom!=='fitH'||st.gifScaleStack||!geo||ovlLinked()){fitHPlacement='';return;}
+    if(!fitHAuto()||!geo||ovlLinked()){fitHPlacement='';return;}
     const field=st.edgeRhombOn&&window.mayRombo?.get().available?$('edgeBelowWrap'):cv,r=viewRotation.physicalRect(field),v=fitHViewport();
     const key=[field.id,r.height,v.top,v.height,viewRotation.enabled,scale()].join(':');
     if(key===fitHPlacement||!(r.height>0))return;fitHPlacement=key;
@@ -9545,7 +9548,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // Rombo's captured raster can use a sqrt(2) or half-cell lattice quantum.
   var gifStackZoom=1,gifStackActive=false;
   const gifStackNativeScale=()=> (st.edgeRhombOn?window.mayPixelExact?.exportScale(1)||1:1)/DPR();
-  const scale = () => { if(st.gifScaleStack)return gifStackNativeScale()*(gifStackZoom||1);const s = st.zoom === 'fit' ? fitScale() : st.zoom === 'fitH' ? fitHScale() : st.zoom; return window.mayPixelExact?(window.mayPixelExact.snap(s,st.zoom==='fit'||st.zoom==='fitH'?'down':'nearest')??1/DPR()):st.zLimit ? 1 / DPR() : s; };
+  const scale = () => { if(st.gifScaleStack)return gifStackNativeScale()*(gifStackZoom||1);if(fitHView())return fitHFixed()||fitHScale();const s = st.zoom === 'fit' ? fitScale() : st.zoom === 'fitH' ? fitHScale() : st.zoom; return window.mayPixelExact?(window.mayPixelExact.snap(s,st.zoom==='fit'||st.zoom==='fitH'?'down':'nearest')??1/DPR()):st.zLimit ? 1 / DPR() : s; };
   // МАЯ-574: suppress axis ink below one physical pixel per cell; zlDraw keeps manual vertical guides.
   // Never use RK (native antialias/rhomb raster density) as the zoom threshold.
   function axesAtShownScale(){return scale()*DPR()>=1-1e-9;}
@@ -9568,6 +9571,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function layout() { cssLayout(); present();if(st.edgeRhombOn&&!gpuBig?.large)drawEdgeRhomb(null,false); imageStats(); queueDigits(); }
   function cssLayout() {
+    if(st.zoom!=='fitH'||!fitHFixed())st.fitHFixed=undefined;
     if(st.zLimit&&!st.gifScaleStack)st.zoom=1 / DPR();
     const s = scale();axesScaleSync();
     const free=!!geo&&!horizontalAxisPinned()&&!ovlLinked()&&!document.body.classList.contains('may-embed');
@@ -9604,12 +9608,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(st.templateFocusMargins)for(const side of (free?['top','bottom']:['left','right','top','bottom']))cv.style['margin'+side[0].toUpperCase()+side.slice(1)]=Math.max(0,Number(st.templateFocusMargins[side])||0)+'px';
     const d = st.zsnap ? s * DPR() : s;   // при «кратном» — пикселей монитора на бит
     const ratio = n => '×' + String(+n.toPrecision(3)).replace('.', ',');
-    $('zoomV').textContent = window.mayPixelExact?window.mayPixelExact.format(s):ratio(st.zsnap ? d : s);
-    const exact=window.mayPixelExact;if(exact){const policy=exact.policyFor();$('frame').dataset.pixelExact='true';$('frame').dataset.zoomOverview=String(!!policy.overview);const raster=MayatnikPixelGrid.raster(s,policy);$('frame').dataset.zoomLossy=String(!raster||!!raster.overview);for(const [key,value]of Object.entries({renderedRows:raster?.height||0,renderedColumns:raster?.width||0,renderedReduced:!!raster?.overview}))if($('frame').dataset[key]!==String(value))$('frame').dataset[key]=String(value);$('frame').dataset.zoomExact=policy.ok?exact.format(s):'';if(!policy.ok)exact.report(policy.reason);const one=$('zLimit'),allowed=exact.canState({zLimit:true});one.dataset.pixelTitle ||= one.title;one.disabled=!st.zLimit&&!allowed;one.title=one.disabled?exact.policyFor({zLimit:true}).reason:one.dataset.pixelTitle;}
+    $('zoomV').textContent = fitHView()?'Экран '+ratio(s*DPR()):window.mayPixelExact?window.mayPixelExact.format(s):ratio(st.zsnap ? d : s);
+    const exact=window.mayPixelExact;if(exact){const policy=exact.policyFor();$('frame').dataset.pixelExact='true';$('frame').dataset.zoomOverview=String(!!policy.overview&&!fitHView());const raster=MayatnikPixelGrid.raster(s,policy),screenRaster=fitHView()&&policy.ok?{width:Math.ceil(policy.width*s*DPR()),height:Math.ceil(policy.height*s*DPR())}:raster;$('frame').dataset.zoomLossy=String(!raster||!!raster.overview);for(const [key,value]of Object.entries({renderedRows:screenRaster?.height||0,renderedColumns:screenRaster?.width||0,renderedReduced:fitHView()?s*DPR()<policy.quantum:!!raster?.overview}))if($('frame').dataset[key]!==String(value))$('frame').dataset[key]=String(value);$('frame').dataset.zoomExact=policy.ok?(fitHView()?'Экран '+ratio(s*DPR()):exact.format(s)):'';if(!policy.ok)exact.report(policy.reason);const one=$('zLimit'),allowed=exact.canState({zLimit:true});one.dataset.pixelTitle ||= one.title;one.disabled=!st.zLimit&&!allowed;one.title=one.disabled?exact.policyFor({zLimit:true}).reason:one.dataset.pixelTitle;}
     const zoomControl=$('frame'),zoomGeometry={'zoom-width':cv.getBoundingClientRect().width,'zoom-columns':dispW(),'zoom-dpr':DPR()};
     for(const [key,value]of Object.entries(zoomGeometry))if(zoomControl.getAttribute?.('data-'+key)!==String(value))zoomControl.setAttribute('data-'+key,String(value));
     $('zFit').setAttribute('aria-pressed', String(!!st.zMid));   // v0.367
-    $('zFitHeight').setAttribute('aria-pressed',String(st.zoom==='fitH'&&!st.gifScaleStack));$('zFitHeight').disabled=!!(st.zLock||st.zLimit||st.gifScaleStack);
+    $('zFitHeight').setAttribute('aria-pressed',String(fitHAuto()));$('zFitHeight').disabled=!!(st.zLock||st.zLimit||st.gifScaleStack);
     $('zFitH').setAttribute('aria-pressed', String(!!st.zBot));   // v0.408: активная «Вниз» показывает обводку
     if (st.zoom === 'fitH' || st.zoom === 'fit' || st.zMid) fitHold();
     if (st.ztop && geo && typeof zTopScroll === 'function') zTopScroll(); else if (st.zBot && geo && typeof zBotScroll === 'function') zBotScroll();   // v0.365   // v0.361: «Верх» — строка на месте и при перестройке раскладки (окно выросло, масштаб)
@@ -10076,14 +10080,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     s = Math.max(min, Math.min(MAX_ZOOM, s));
     if (st.zsnap && s > min) s = Math.max(min, Math.min(MAX_ZOOM, snap2(s)));
     if(window.mayPixelExact){const exact=window.mayPixelExact.snap(s);if(exact===null)return {ok:false,rebase:true};s=exact;}
-    if (!st.zLock) st.zoom = Math.abs(s - fitScale()) < 1e-9 ? 'fit' : s; save(); layout(); thick();   // v0.346: при «Блоке» режим (и «по ширине / высоте») не трогать
+    if (!st.zLock){st.fitHFixed=undefined;st.zoom = Math.abs(s - fitScale()) < 1e-9 ? 'fit' : s;} save(); layout(); thick();   // v0.346: при «Блоке» режим (и «по ширине / высоте») не трогать
     const n = cv.getBoundingClientRect();
     wrap.scrollLeft += n.left + fx * n.width - x; wrap.scrollTop += n.top + fy * n.height - y;
     if (st.zMid) midScroll();   // v0.367: середина — по оси, а не к курсору
     if (st.zBot && !st.ztop) { zBotScroll(); requestAnimationFrame(() => { if (st.zBot && !st.ztop) zBotScroll(); }); }   // v0.365
     if (st.ztop) { zTopScroll(); requestAnimationFrame(() => { if (st.ztop) { zTopScroll(); zTopLine(); } }); }   // v0.355: «при масштабе верх не скрывать — строка на месте»: ещё раз после выравнивания холста в том же кадре; v0.331: к линии «Верха»; v0.059: первая строка прибита к верху; v0.067: и середина по ширине
   }
-  function fit() { if(st.gifScaleStack){zoomTo(gifStackNativeScale());return;}if (st.zLock || st.zLimit) return; st.templateFocusMargins=null; st.zoom = 'fit'; st.fixHor = false; save(); layout(); thick(); if(!st.zMid&&!ovlLinked()){const r=cv.getBoundingClientRect();wrap.scrollLeft+=r.left+r.width/2-panCenterX();} wrap.scrollTop = 0; }
+  function fit() { if(st.gifScaleStack){zoomTo(gifStackNativeScale());return;}if (st.zLock || st.zLimit) return; st.templateFocusMargins=null;st.fitHFixed=undefined; st.zoom = 'fit'; st.fixHor = false; save(); layout(); thick(); if(!st.zMid&&!ovlLinked()){const r=cv.getBoundingClientRect();wrap.scrollLeft+=r.left+r.width/2-panCenterX();} wrap.scrollTop = 0; }
   let lastT = 0;   // толщина обводки зависит от масштаба — перерисовать, только когда она поменялась
   function thick() { const t = Math.max(1, Math.ceil(1.5 / scale())); if ((st.outline || st.sym) && f && t !== lastT && !playing) { lastT = t; draw(); } }
   // «Построить» — те же вершины, порциями по ~40 мс на кадр: страница не замирает, виден прогресс.
@@ -11671,7 +11675,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   $('zIn').onclick = () => zoomStep(1);
   $('zOut').onclick = () => zoomStep(-1);
   $('zFit').onclick = () => { zWant = 0; if (st.zoom === 'fit') st.zoom = fitScale(); st.zMid = !st.zMid; save(); layout(); };   // v0.367: только середина по оси, масштаб не трогает   // v0.346: нажатую — отжать (масштаб прежний)
-  $('zFitHeight').onclick=()=>{if(!geo||st.zLock||st.zLimit||st.gifScaleStack)return;resetTopPan();zWant=0;st.templateFocusMargins=null;if(st.zoom==='fitH')st.zoom=scale();else st.zoom='fitH';fitHPlacement='';save();layout();thick();};
+  $('zFitHeight').onclick=()=>{if(!geo||st.zLock||st.zLimit||st.gifScaleStack)return;resetTopPan();zWant=0;st.templateFocusMargins=null;if(fitHAuto())st.fitHFixed=scale();else{st.fitHFixed=undefined;st.zoom='fitH';}fitHPlacement='';save();layout();thick();};
   const zSnapSync = () => { const e = $('zSnap'), B = zB(); e.setAttribute('aria-pressed', String(!!st.zsnap)); e.dataset.base = B; e.textContent = 'кратный ×' + B;
     e.title = `Точная сетка: 1 — все целые ступени; ${B} — степени ${B} от шага сетки. При45° шаг√2 физического пикселя; в точном режиме потеря битов запрещена, в Обзоре разрешён пропуск мелких деталей без смешивания цветов.`; };
   const zSnapApply = () => { zWant = 0; save(); zSnapSync(); if (!geo) return; if (st.zoom === 'fit' || st.zoom === 'fitH') { layout(); thick(); } else zoomTo(st.zoom); };
@@ -11685,8 +11689,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   zTopSync();
   // v0.345: «блокировать масштаб» (st.zLock): при включении «по ширине» замораживается числом — окно и новые вершины его не меняют
   const zLockSync = () => $('zLock').setAttribute('aria-pressed', String(!!st.zLock));
-  $('zLock').onclick = () => { if(!st.zLock&&st.zoom==='fitH'){const s=scale();st.zoom=s;if(st.gifScaleStack)gifStackZoom=s/gifStackNativeScale();}st.zLock = !st.zLock; save(); zLockSync();$('zFitHeight').disabled=!!(st.zLock||st.zLimit||st.gifScaleStack);$('zFitHeight').setAttribute('aria-pressed',String(st.zoom==='fitH'&&!st.gifScaleStack)); };   // An explicit lock freezes the fitted height at its current scale.
-  $('zLimit').onclick = () => { if(!st.zLimit&&window.mayPixelExact&&!window.mayPixelExact.canState({zLimit:true}))return; st.zLimit = !st.zLimit; st.zOverview=!st.zLimit; st.zoom=1 / DPR(); zWant=0; $('zLimit').setAttribute('aria-pressed', String(st.zLimit)); save(); layout(); thick(); };   // Exact physical 1:1; the separate zoom lock retains its own state.
+  $('zLock').onclick = () => { if(!st.zLock&&fitHView())st.fitHFixed=scale();st.zLock = !st.zLock; save(); zLockSync();$('zFitHeight').disabled=!!(st.zLock||st.zLimit||st.gifScaleStack);$('zFitHeight').setAttribute('aria-pressed',String(fitHAuto())); };   // An explicit lock freezes the fitted height at its current scale.
+  $('zLimit').onclick = () => { if(!st.zLimit&&window.mayPixelExact&&!window.mayPixelExact.canState({zLimit:true}))return; st.zLimit = !st.zLimit; st.zOverview=!st.zLimit;st.fitHFixed=undefined; st.zoom=1 / DPR(); zWant=0; $('zLimit').setAttribute('aria-pressed', String(st.zLimit)); save(); layout(); thick(); };   // Exact physical 1:1; the separate zoom lock retains its own state.
   zLockSync();
   $('zLimit').setAttribute('aria-pressed', String(!!st.zLimit));
   // v0.331: «по высоте, и дай задавать вручную начало верх — горизонт линией, рукой перемещаемой; и на линии значок — закреп»: st.ztopRow — строка,
@@ -11699,7 +11703,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // Same 12px text line and 2px vertical padding as the player caption.
   var VTX_H = 16;
   function releaseTopForPan() {
-    if (st.zoom==='fitH' || !st.ztop || st.zBot || st.gifScaleStack || ovlLinked() || zTopPanFree) return;
+    if (fitHAuto() || !st.ztop || st.zBot || st.gifScaleStack || ovlLinked() || zTopPanFree) return;
     zTopPanFree = true;
     // Even a field shorter than the viewport needs room for the upward drag.
     wrap.style.setProperty('--may-top-pan-tail', wrap.clientHeight + 'px');
@@ -11712,7 +11716,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     wrap.style.removeProperty('--may-top-pan-tail');
   }
   function zTopScroll() {
-    if (st.zoom==='fitH' || st.gifScaleStack || ovlLinked() || !st.ztop || zTopPanFree) return;
+    if (fitHAuto() || st.gifScaleStack || ovlLinked() || !st.ztop || zTopPanFree) return;
     const r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect();
     wrap.scrollTop = Math.max(0, Math.ceil(wrap.scrollTop + r.top - w.top - VTX_H - 1e-6));
   }
@@ -11762,9 +11766,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   };
   zLinesSync();
   // v0.365: «По высоте — переименуй в Вниз: если включена — не давать нижней строке уйти при масштабе; если и Верх включён — обе держать, то есть масштаб заблокать»
-  function zBotScroll() { if (st.zoom==='fitH' || st.gifScaleStack || ovlLinked() || !st.zBot || !geo) return; const r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect(); wrap.scrollTop = Math.max(0, Math.floor(wrap.scrollTop + r.bottom - (w.top + wrap.clientHeight) + 1e-6)); }
+  function zBotScroll() { if (fitHAuto() || st.gifScaleStack || ovlLinked() || !st.zBot || !geo) return; const r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect(); wrap.scrollTop = Math.max(0, Math.floor(wrap.scrollTop + r.bottom - (w.top + wrap.clientHeight) + 1e-6)); }
   // v0.370: «Вниз не работает — не увеличивает масштаб, если надо»: включили, а поле короче окна — масштаб растёт, пока низ поля не дойдёт до низа окна
-  $('zFitH').onclick = () => { if (!geo) return; resetTopPan(); zWant = 0; st.zBot = !st.zBot; if (!st.zLock && st.zoom === 'fitH') st.zoom = scale(); save(); layout(); thick(); if (st.ztop) zTopScroll(); if (st.zBot && !st.ztop) zBotScroll(); zTopLine(); };
+  $('zFitH').onclick = () => { if (!geo) return; resetTopPan(); zWant = 0; st.zBot = !st.zBot; if (!st.zLock && fitHView()) st.fitHFixed = scale(); save(); layout(); thick(); if (st.ztop) zTopScroll(); if (st.zBot && !st.ztop) zBotScroll(); zTopLine(); };
   // v0.359: «также и верт линии нужны, и диагональные; рядом с каждой "+" — от текущей посередине до вершины маятника ещё одна; все линии 1 px;
   // ложатся и в середину бита — сам бит не зеркалить». st.zl — свои линии {k, p, m}: k 'h' — горизонталь (p — строка, шаг ½, как у «Верха»),
   // 'v' — вертикаль (p — сдвиг от середины столба якоря: целое — по середине бита, ½ — между битами), 'd' «\» / 'e' «/» — диагональ (p — сдвиг

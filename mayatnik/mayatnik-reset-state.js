@@ -9,7 +9,7 @@
   function defaults(){return {...pointDefaults,...Object.fromEntries(off.map(k=>[k,false])),...Object.fromEntries(zero.map(k=>[k,0])),
     phoneScene:'',phoneView:'art',phoneTempo:137,phoneVoice:'robot',phoneK:0,
     frameZeroFill:'off',sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkMax:0,apexWalkRangeKey:'',xorrom:null,sequenceSource:null,edgeContinuous:true,edgeWrap:false,edgeBounce:false,edgeRhombOn:false,romboRow:null,romboAngle:0,romboAssembly:16,romboSeam:"between",romboMode:"fixed",romboLayout:null,edgeFlowMax:0,edgeFlowKey:'',animatrixOn:false,animatrixSource:null,animatrixAlgorithm:'two',animatrixTiming:'rows',animatrixDirection:'down',animatrixCycles:1,animatrixCycleMode:'finite',animatrixFrameMax:0,animatrixColours:'inherit',animatrixEdgeColourMode:'change',animatrixEdgePalette:0,animatrixEvolution:1,rowStepOutline:true,templateFindAll:null,templateFrameSearch:null,templateFrameSearchName:'',rows:512,steps:2048,mode:'pend',bg:'empty',view:'bits',speed:4,vmode:defaultVMode,compareSource:'',
-    zOverview:true,zoom:'fit',zMid:true,ztop:true,zBot:false,zLock:false,zsnap:true,zbase:2,ztopPin:false,ztlMain:false,ztlZen:false,zlSelected:null,ztMirOp:'',
+    zOverview:true,zoom:'fit',fitHFixed:null,zMid:true,ztop:true,zBot:false,zLock:false,zsnap:true,zbase:2,ztopPin:false,ztlMain:false,ztlZen:false,zlSelected:null,ztMirOp:'',
     invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null,heatHoldZero:false,heatMode:"all",heatPeriod:1,fixLockX:null,axisPalette:'purple-black',triangleMapSource:'static',crossMirrorMode:'lr',crossMirrorSector:'A1',
     pitCopySource:'current',pitCopySeed:'1',pitCopyRows:32,pitCopyLevels:1,pitCopyColour:'#44d9ff',fillArea:'sides',fillWholeColour:false,paintFrameMode:'off',fillGrow:false,symRowsMin:2,symRowsMax:0,symBitsMin:2,symBitsMax:0,symTriangleRows:16,
     bitOneColour:'#ffd700',bitZeroColour:'#00008b',overOneColour:'#4f9bff',overZeroColour:'#ff5a4f',digitOneColour:'#e8edf5',digitZeroColour:'#7cbcff',excelDigitPalette:null,
@@ -20,7 +20,7 @@
     ztAuto:{speed:1,direction:0},ztPaintColour1:'#ff7f27',ztPaintColour0:'#ff7f27',userLines:[],zl:[],lineFamilies:{h:false,v:false,d:false},nAxisSets:[],nAxesN:3,areaFreeze:null,mirAxis:{on:false,ax:.5,ang:0},ovl:{n:0,pos:'R',alpha:50},
     cellSelection:null,cellInk:{},parity:{cellsEven:true,cellsOdd:true,rowsEven:true,rowsOdd:true,colsEven:true,colsOdd:true,rowLevels:[],cellLevels:[],colLevels:[],rowFill:'none'}};}
   const groups={
-    scale:'zoom zMid ztop zBot zLock zOverview zsnap zbase ztopPin ztopRow templateFocusMargins',
+    scale:'zoom fitHFixed zMid ztop zBot zLock zOverview zsnap zbase ztopPin ztopRow templateFocusMargins',
     view:'view joined180 joined180Whole viewUpsideDown viewSwing swingStartFrame swingLastFrame swingPhaseIndex invertKind inverted invertAuto invertFrame outline noband both bothDx blackMirror animHl frozen ochki ochkiThrough ochkiSkipSpaces ochkiEveryFrame ochkiRowReverseMask gifScaleStack gifScaleStackStep ochkiSnake manualSnake heat heatHoldZero heatMode heatPeriod kraftShadows vtxFlash rowLab contour geomCenter bitOneColour bitZeroColour digitOneColour digitZeroColour digitFont digitSize bitContourColour1 bitContourColour2 bitContourMode bitContourColours overOneColour overZeroColour parity',
     measure:'areas sectors sawFull lineMeasures areaFreeze rowLab',
     point:'fixLines fixCross fixMirror fixFold fixLow fixWide fixLowOut fixRot fixHor fixDown fixDragK fixDx fixDy fixLockX fixAxis saw',
