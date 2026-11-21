@@ -654,7 +654,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-template-axis-turn.js?v=652"></script>
 <script src="mayatnik-template-compound.js?v=1"></script>
 <script src="mayatnik-template-dedup.js?v=651"></script>
-<script src="mayatnik-template-inline.js?v=1065"></script>
+<script src="mayatnik-template-inline.js?v=1065a"></script>
 <link rel="stylesheet" href="mayatnik-template-inline.css?v=1031">
 <link rel="stylesheet" href="mayatnik-template-axis-turn.css?v=651">
 <script src="mayatnik-bit-contours.js?v=562"></script>
@@ -13171,7 +13171,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     templateReturn=null;templateMatchCache=null;window.mayTemplateLibrary?.clear();templateFollow?.acknowledge(templateFollowScope());return true;
   }
   function templateInlineRender(ctx,state,screen){
-    if(!templateInlineControls)templateInlineControls=MayatnikTemplateInline.mount({action:templateInlineAction});
+    if(!templateInlineControls)templateInlineControls=MayatnikTemplateInline.mount({action:templateInlineAction,split:true});
     if(!state){templateInlineControls.hide();templateInlineAxes?.cancel();return;}
     const {left,top,width,height,ox,oy,factor}=screen,o=templateOptions();
     const music=$('mayMusicSettingsPanel'),panel=music&&!music.hidden?music.getBoundingClientRect?.():null,freeWidth=panel&&panel.right>left&&panel.left<left+width&&panel.bottom>top&&panel.top<top+height?Math.max(0,panel.left-left-4):width;
