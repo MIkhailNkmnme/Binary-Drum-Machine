@@ -15,6 +15,16 @@
   const mayatnik = '/mayatnik/Zerkalius-mayatnik.html';
   let selected = null;
 
+  function clearStage() {
+    const video = stage.querySelector('video');
+    stage.replaceChildren();
+    if (video) {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+    }
+  }
+
   function showScene(url, label) {
     scene.href = url;
     scene.textContent = label;
@@ -47,7 +57,7 @@
       showScene(source.href, source.href.includes('Zerkalius-mayatnik.html') ? 'Открыть кадр в Маятнике' : source.textContent.trim());
     } else if (recipe) {
       showScene(recipe.href, recipe.href.includes('Zerkalius-mayatnik.html') ? 'Исходное поле в Маятнике' : recipe.textContent.trim());
-    } else if (article?.id === 'from-mayatnik') {
+    } else if (article?.id === 'from-mayatnik' && link.dataset.kind !== 'video' && link.dataset.kind !== 'gif') {
       showScene(mayatnik, 'Открыть Маятник');
     }
   }
@@ -74,36 +84,51 @@
     selected = link;
     const figure = link.closest('figure');
     const thumbnail = figure?.querySelector('img');
-    const image = new Image();
-    image.alt = link.querySelector('img')?.alt || figure?.querySelector('.figure-name')?.textContent.trim() || link.textContent.trim();
-    name.textContent = figure?.querySelector('.figure-name')?.textContent.trim() || image.alt;
+    const video = link.dataset.kind === 'video';
+    const media = video ? document.createElement('video') : new Image();
+    const title = figure?.querySelector('.figure-name')?.textContent.trim();
+    const description = link.querySelector('img')?.alt || title || link.textContent.trim();
+    name.textContent = title || description;
+    if (video) {
+      media.controls = true;
+      media.playsInline = true;
+      media.preload = 'metadata';
+      media.setAttribute('aria-label', description);
+    } else {
+      media.alt = description;
+      media.decoding = 'async';
+    }
     const caption = figure?.querySelector('figcaption p')?.textContent.trim();
     summary.textContent = link.dataset.summary || caption || (thumbnail?.alt !== name.textContent ? thumbnail?.alt : '') || '';
     summary.hidden = !summary.textContent;
     size.textContent = '';
-    image.addEventListener('load', () => {
-      if (stage.contains(image)) size.textContent = image.naturalWidth + ' × ' + image.naturalHeight + ' пикс.';
+    media.addEventListener(video ? 'loadedmetadata' : 'load', () => {
+      if (!stage.contains(media)) return;
+      const width = video ? media.videoWidth : media.naturalWidth;
+      const height = video ? media.videoHeight : media.naturalHeight;
+      if (width && height) size.textContent = width + ' × ' + height + ' пикс.';
     }, { once: true });
-    image.decoding = 'async';
-    image.addEventListener('error', () => {
-      if (stage.contains(image)) {
-        image.remove();
+    media.addEventListener('error', () => {
+      if (stage.contains(media)) {
+        clearStage();
+        error.textContent = video ? 'Не удалось воспроизвести видео.' : 'Картинка не загрузилась.';
         error.hidden = false;
       }
     }, { once: true });
 
     original.href = link.href;
     error.hidden = true;
-    stage.replaceChildren(image);
+    clearStage();
+    stage.append(media);
     viewer.showModal();
     viewer.dataset.key = link.closest('[data-journal-key]')?.dataset.journalKey || new URL(link.href).pathname.replace(/^\/+/, '');
     viewer.dataset.label = name.textContent;
     document.dispatchEvent(new Event('journal-image-open'));
     describeScene(link, figure);
-    image.src = link.href;
+    media.src = link.href;
   });
 
-  const outsideImage = target => !target.closest('img, .viewer-info, .viewer-toolbar');
+  const outsideImage = target => !target.closest('img, video, .viewer-info, .viewer-toolbar');
   let pressedOutside = false;
   viewer.addEventListener('pointerdown', event => {
     pressedOutside = event.button === 0 && outsideImage(event.target);
@@ -118,6 +143,6 @@
     selected = null;
     if (document.fullscreenElement === shell) document.exitFullscreen().catch(() => {});
     setExpanded(false);
-    stage.replaceChildren();
+    clearStage();
   });
 })();

@@ -1,13 +1,9 @@
 import { DurableObject } from 'cloudflare:workers';
 import { editorRoute, JournalEditor } from './editor.mjs';
+import { getFormat, uploadFile, freshFile, mediaType, serveMedia, uploadMedia } from './media.mjs';
 export { JournalEditor };
 
 const ORIGIN = 'https://1001100.online';
-const FILE = /^\d{13}-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.png$/;
-function newFile() {
-  const rank = String(9999999999999 - Date.now()).padStart(13, '0');
-  return rank + '-' + crypto.randomUUID() + '.png';
-}
 const PREFIX = 'from-mayatnik/';
 const MAX_BYTES = 8 * 1024 * 1024;
 const WINDOW = 60000;
@@ -62,6 +58,15 @@ function reply(body, status = 200, extra = {}) {
     'Access-Control-Allow-Origin': ORIGIN, 'Access-Control-Expose-Headers': 'Retry-After',
     'Cache-Control': 'no-store', ...extra
   }});
+}
+
+async function reserveUpload(request,env) {
+  const ip = request.headers.get('CF-Connecting-IP');
+  if (!ip) return reply({error:'Не удалось определить адрес для ограничения частоты.'}, 503);
+  const limiter = env.LIMITS.get(env.LIMITS.idFromName(ip));
+  const retry = await limiter.reserve();
+  if (retry) return reply({error:'Лимит 10 загрузок в минуту. Повторите через ' + retry + ' с.'}, 429, {'Retry-After':String(retry)});
+  return null;
 }
 
 // Accept the non-interlaced, eight-bit RGB/RGBA format emitted by canvas.
@@ -142,16 +147,13 @@ export default {
         const stored = await env.MEDIA.get(SCENE_KEY + id + '.txt');
         return stored ? reply({code:await stored.text()}) : reply({error:'Параметры кадра не найдены.'}, 404);
       }
-      if (request.method === 'GET' && url.pathname === '/mayatnik-api/ready') return reply({file:newFile()});
-      if (['GET','HEAD'].includes(request.method) && url.pathname.startsWith('/' + PREFIX)) {
-        const key = url.pathname.slice(1);
-        if (!FILE.test(key.slice(PREFIX.length))) return reply({}, 404);
-        const object = request.method === 'GET' ? await env.MEDIA.get(key) : await env.MEDIA.head(key);
-        if (!object) return reply({}, 404);
-        return new Response(object.body || null, {headers:{'Content-Type':'image/png',
-          'Content-Length':String(object.size), 'Cache-Control':'public, max-age=31536000, immutable',
-          'ETag':object.httpEtag, 'X-Content-Type-Options':'nosniff'}});
+      if (request.method === 'GET' && url.pathname === '/mayatnik-api/ready') {
+        const file = uploadFile(url.searchParams.get('format') || 'png');
+        return file ? reply({file}) : reply({error:'Неизвестный формат файла.'},400);
       }
+      if (['GET','HEAD'].includes(request.method) && url.pathname.startsWith('/' + PREFIX))
+        return await serveMedia(request, env.MEDIA, url.pathname.slice(1), reply);
+      if (url.pathname === '/mayatnik-api/media') return await uploadMedia(request,env,url,reply,reserveUpload);
       if (url.pathname !== '/mayatnik-api/frames') return reply({}, 404);
       if (request.method === 'GET') {
         const editor = env.EDITOR.get(env.EDITOR.idFromName('journal'));
@@ -160,9 +162,11 @@ export default {
           editor.hidden()
         ]);
         const hidden = new Set(hiddenKeys);
-        const frames = page.objects.filter(obj => !hidden.has(obj.key)).map(obj => {
+        const frames = page.objects.filter(obj => !hidden.has(obj.key) && getFormat(obj.key.slice(PREFIX.length))).map(obj => {
           const meta = obj.customMetadata || {};
-          return {url:url.origin + '/' + obj.key, frame:Number(meta.frame), width:Number(meta.width), height:Number(meta.height),
+          return {url:url.origin + '/' + obj.key, ...mediaType(getFormat(obj.key.slice(PREFIX.length))),
+            frame:meta.frame == null ? null : Number(meta.frame), duration:Number(meta.duration) || 0,
+            width:Number(meta.width), height:Number(meta.height),
             created:obj.uploaded.toISOString(), scene:meta.scene || '', summary:decodeSummary(meta)};
         });
         return reply({frames, cursor:page.truncated ? page.cursor : null});
@@ -173,18 +177,15 @@ export default {
       if (!multipart && type && type !== 'image/png') return reply({error:'Нужен PNG.'}, 415);
       const frame = url.searchParams.get('frame');
       if (!/^\d{1,10}$/.test(frame ?? '')) return reply({error:'Некорректный номер кадра.'}, 400);
-      const file = url.searchParams.get('file') ?? newFile();
-      if (!FILE.test(file) || Math.abs(9999999999999 - Number(file.slice(0,13)) - Date.now()) > 15*60000)
+      const file = url.searchParams.get('file') ?? uploadFile('png');
+      if (getFormat(file) !== 'png' || !freshFile(file))
         return reply({error:'Срок отправки истёк. Нажмите кнопку ещё раз.'}, 400);
       const key = PREFIX + file;
       const length = Number(request.headers.get('Content-Length'));
       const limit = multipart ? MAX_FORM_BYTES : MAX_BYTES;
       if (!request.body || length > limit) return reply({error:'Для журнала нужен PNG до 8 МиБ.'}, 413);
-      const ip = request.headers.get('CF-Connecting-IP');
-      if (!ip) return reply({error:'Не удалось определить адрес для ограничения частоты.'}, 503);
-      const limiter = env.LIMITS.get(env.LIMITS.idFromName(ip));
-      const retry = await limiter.reserve();
-      if (retry) return reply({error:'Лимит 10 загрузок в минуту. Повторите через ' + retry + ' с.'}, 429, {'Retry-After':String(retry)});
+      const limited = await reserveUpload(request,env);
+      if (limited) return limited;
       const chunks = [];
       let received = 0;
       for await (const chunk of request.body) {

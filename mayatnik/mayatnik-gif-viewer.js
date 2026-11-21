@@ -4,6 +4,8 @@
  const doc=root.document;let dialog,picture,title,gifPanel,editor,video,list,seek,clock,from,to,status,download,progress,fileInput,playButton,undoButton,redoButton,exportButton,cancelButton;
  let gifBlob=null,gifURL='',gifName='animation.gif',project=null,current=0,selected=-1,playing=false,frame=0,loadedSource='',exportController=null,exportURL='',serial=0,importEpoch=0;
  const sourceURLs=new Map();
+ let exportResult=null,videoJournalButton,videoJournalLink;
+ let gifController=null,gifJournalButton,gifJournalLink,gifStatus,gifInfo={};
  let cropMode=false,cropStage,cropLayer,cropBox,cropButton,cropFull,cropApply,cropInfo,cropFields={},cropDraft=null,cropGesture=null;
  const fullCrop=()=>({x:0,y:0,width:1,height:1});
  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -11,6 +13,13 @@
  function cropSize(){const c=cropContext();return {width:c?.source?.width||video?.videoWidth||0,height:c?.source?.height||video?.videoHeight||0};}
  function cancelCrop(){const gesture=cropGesture;cropGesture=null;cropDraft=null;if(gesture&&cropLayer?.hasPointerCapture?.(gesture.id))cropLayer.releasePointerCapture(gesture.id);if(cropLayer)refreshCrop();}
  function cropRect(){return cropDraft||cropContext()?.clip.crop||fullCrop();}
+ function cropPixels(rect,size){
+  const x=clamp(Math.round(rect.x*size.width),0,Math.max(0,size.width-1));
+  const y=clamp(Math.round(rect.y*size.height),0,Math.max(0,size.height-1));
+  return {x,y,
+   width:Math.max(1,Math.min(size.width,Math.round((rect.x+rect.width)*size.width))-x),
+   height:Math.max(1,Math.min(size.height,Math.round((rect.y+rect.height)*size.height))-y)};
+ }
  function commitCrop(rect){cropGesture=null;cropDraft=null;if(Object.values(cropFields).includes(doc.activeElement))doc.activeElement.blur();edit(()=>ensureProject().setCrop(selected,rect));}
  function refreshCrop(){
   if(!cropLayer)return;const c=cropContext(),size=cropSize(),ready=!!c&&!!loadedSource&&size.width>0&&size.height>0&&!exportController;
@@ -18,8 +27,7 @@
   cropLayer.hidden=!ready||!cropMode;const r=cropRect(),bounds=video.getBoundingClientRect(),scale=Math.min(bounds.width/size.width,bounds.height/size.height),w=size.width*scale||0,h=size.height*scale||0;
   Object.assign(cropLayer.style,{left:((bounds.width-w)/2)+'px',top:((bounds.height-h)/2)+'px',width:w+'px',height:h+'px'});
   Object.assign(cropBox.style,{left:(r.x*100)+'%',top:(r.y*100)+'%',width:(r.width*100)+'%',height:(r.height*100)+'%'});
-  const left=Math.min(size.width-1,Math.round(r.x*size.width)),top=Math.min(size.height-1,Math.round(r.y*size.height));
-  const values={x:Math.max(0,left),y:Math.max(0,top),width:Math.max(1,Math.min(size.width,Math.round((r.x+r.width)*size.width))-left),height:Math.max(1,Math.min(size.height,Math.round((r.y+r.height)*size.height))-top)};
+  const values=cropPixels(r,size);
   if(!c){for(const input of Object.values(cropFields))input.value='';}else if(!Object.values(cropFields).includes(doc.activeElement)||cropGesture){for(const key in cropFields)cropFields[key].value=String(values[key]);}
   cropInfo.textContent=c?'Вырез клипа '+(selected+1)+' · '+values.width+' × '+values.height+' px'+(cropMode?' · Рисуйте рамку, двигайте её или тяните за углы. Escape — отменить.':' · Исходный кадр: '+size.width+' × '+size.height+' px'):'Выберите видеоклип для выреза.';
  }
@@ -50,30 +58,62 @@
  function ensureProject(){if(!project){if(!root.MayatnikMediaEdit)throw Error('Модуль монтажа не загружен');project=root.MayatnikMediaEdit.create();}return project;}
  function sourceURL(source){if(!sourceURLs.has(source.id))sourceURLs.set(source.id,root.URL.createObjectURL(source.blob));return sourceURLs.get(source.id);}
  function pause(){playing=false;if(frame)root.cancelAnimationFrame(frame);frame=0;if(video)video.pause();if(playButton)playButton.textContent=caption('▶ Пуск');}
- function abortExport(){const active=exportController;exportController=null;if(active)active.abort();if(cancelButton)cancelButton.disabled=true;if(seek)refresh();if(active&&status)say('Экспорт отменён.');}
+ function abortExport(){const active=exportController;exportController=null;if(active)active.abort();if(cancelButton)cancelButton.disabled=true;if(seek)refresh();if(active&&status){progress.value=exportResult?1:0;say('Операция остановлена.');}}
  function discardExport(){if(exportURL)root.URL.revokeObjectURL(exportURL);exportURL='';if(download){download.hidden=true;download.removeAttribute('href');}}
- function closeWork(){cancelCrop();pause();abortExport();importEpoch++;if(video){video.removeAttribute('src');video.load();loadedSource='';}discardExport();}
+ function clearResult(){exportResult=null;videoJournalLink.hidden=true;discardExport();}
+ function abortGifUpload(){if(gifController){gifController.abort();gifController=null;gifStatus.textContent='';gifJournalButton.disabled=false;}}
+ function journalLink(){
+  const link=doc.createElement('a');
+  link.href='../issledovanie/image-journal/#from-mayatnik';
+  link.target='_blank';link.rel='noopener';link.textContent='Открыть журнал';link.hidden=true;
+  return link;
+ }
+ async function publishGif(){
+  if(!gifBlob||gifController||!gifJournalLink.hidden)return;
+  if(!root.MayatnikJournal?.publishMedia){gifStatus.textContent='Модуль журнала не загрузился. Обновите страницу.';return;}
+  const controller=new root.AbortController(),blob=gifBlob;
+  gifController=controller;gifJournalButton.disabled=true;gifStatus.textContent='Публикация GIF…';
+  try{
+   let {width,height,duration}=gifInfo;
+   if(!(width>0&&height>0)){
+    const header=new DataView(await blob.slice(0,10).arrayBuffer());
+    width=header.getUint16(6,true);height=header.getUint16(8,true);
+   }
+   if(controller.signal.aborted)return;
+   await root.MayatnikJournal.publishMedia(blob,{width,height,duration},controller.signal);
+   if(controller.signal.aborted)return;
+   gifJournalLink.hidden=false;gifStatus.textContent='GIF опубликован.';
+  }catch(error){if(!controller.signal.aborted)gifStatus.textContent=error.message;}
+  finally{if(gifController===controller){gifController=null;gifJournalButton.disabled=!gifJournalLink.hidden;}}
+ }
+ function closeWork(){cancelCrop();pause();abortExport();abortGifUpload();importEpoch++;if(video){video.removeAttribute('src');video.load();loadedSource='';}discardExport();}
  function activate(which){cancelCrop();pause();gifPanel.hidden=which!=='gif';editor.hidden=which!=='video';dialog.dataset.view=which;title.textContent=which==='gif'?gifName:'Монтаж видео';}
  function make(){if(dialog)return;
   dialog=doc.createElement('dialog');dialog.id='mayGifDialog';dialog.dataset.noMini='';dialog.setAttribute('aria-label','Просмотр GIF и монтаж видео');
   const head=doc.createElement('div');head.className='may-gif-head';title=doc.createElement('strong');head.append(title,button('GIF','Просмотреть готовый GIF',()=>{if(gifBlob)activate('gif');}),button('Видео','Открыть монтаж видео',()=>openEditor()),button('× Закрыть','Закрыть просмотр GIF',()=>{closeWork();dialog.close();}));dialog.append(head);
-  gifPanel=doc.createElement('section');gifPanel.className='may-gif-panel';const gifTools=row(gifPanel);gifTools.append(button('↓ Скачать','Скачать показанный GIF',()=>{if(!gifURL)return;const a=doc.createElement('a');a.href=gifURL;a.download=gifName;a.click();}));picture=doc.createElement('img');picture.alt='Созданная GIF-анимация';gifPanel.append(picture);dialog.append(gifPanel);
+  gifPanel=doc.createElement('section');gifPanel.className='may-gif-panel';const gifTools=row(gifPanel);
+  gifJournalButton=button('В журнал','Опубликовать показанный GIF в журнале',publishGif);
+  gifJournalLink=journalLink();gifStatus=doc.createElement('span');gifStatus.setAttribute('aria-live','polite');
+  gifTools.append(button('↓ Скачать','Скачать показанный GIF',()=>{if(!gifURL)return;const a=doc.createElement('a');a.href=gifURL;a.download=gifName;a.click();}),gifJournalButton,gifJournalLink,gifStatus);picture=doc.createElement('img');picture.alt='Созданная GIF-анимация';gifPanel.append(picture);dialog.append(gifPanel);
   editor=doc.createElement('section');editor.className='may-video-editor';editor.hidden=true;dialog.append(editor);
   const tools=row(editor);fileInput=doc.createElement('input');fileInput.type='file';fileInput.accept='video/*';fileInput.multiple=true;fileInput.hidden=true;fileInput.setAttribute('aria-label','Добавить видеофайлы');fileInput.onchange=()=>{const files=Array.from(fileInput.files||[]);fileInput.value='';addFiles(files);};
-  tools.append(button('+ Видео','Добавить один или несколько видеофайлов',()=>fileInput.click()),button('Новый','Новый монтаж: очистить клипы и историю, освободить файлы',()=>{pause();abortExport();discardExport();importEpoch++;project=root.MayatnikMediaEdit.create();for(const u of sourceURLs.values())root.URL.revokeObjectURL(u);sourceURLs.clear();video.removeAttribute('src');video.load();loadedSource='';current=0;selected=-1;refresh();say('Новый монтаж. История очищена, файлы освобождены. Добавьте видеофайлы.');}),fileInput);
+  tools.append(button('+ Видео','Добавить один или несколько видеофайлов',()=>fileInput.click()),button('Новый','Новый монтаж: очистить клипы и историю, освободить файлы',()=>{pause();abortExport();clearResult();importEpoch++;project=root.MayatnikMediaEdit.create();for(const u of sourceURLs.values())root.URL.revokeObjectURL(u);sourceURLs.clear();video.removeAttribute('src');video.load();loadedSource='';current=0;selected=-1;refresh();say('Новый монтаж. История очищена, файлы освобождены. Добавьте видеофайлы.');}),fileInput);
   video=doc.createElement('video');video.controls=false;video.playsInline=true;video.preload='auto';video.setAttribute('aria-label','Предпросмотр монтажа');editor.append(video);makeCrop();
   const transport=row(editor);playButton=button('▶ Пуск','Воспроизвести или приостановить монтаж',togglePlay);seek=doc.createElement('input');seek.type='range';seek.min='0';seek.max='0';seek.step='0.001';seek.value='0';seek.setAttribute('aria-label','Позиция в готовом монтаже');seek.oninput=()=>seekTo(Number(seek.value),playing);clock=doc.createElement('output');transport.append(playButton,seek,clock);
   const selection=row(editor);from=doc.createElement('input');to=doc.createElement('input');for(const input of [from,to]){input.type='number';input.min='0';input.step='0.001';input.value='0';}label('Начало, с',from,selection);label('Конец, с',to,selection);from.setAttribute('aria-label','Начало выделения в секундах');to.setAttribute('aria-label','Конец выделения в секундах');selection.append(button('Начало','Отметить начало выделения по текущей позиции',()=>{from.value=String(+current.toFixed(3));}),button('Конец','Отметить конец выделения по текущей позиции',()=>{to.value=String(+current.toFixed(3));}));
   const edits=row(editor);edits.append(button('Удалить','Удалить выделенный участок и склеить остатки',()=>editSelection('cut')),button('Оставить','Оставить только выделенный участок',()=>editSelection('keep')),button('Разделить','Разделить клип по текущей позиции',()=>edit(()=>ensureProject().split(current))));
   const clipTools=row(editor);clipTools.append(button('Удалить клип','Удалить выбранный клип',()=>edit(()=>ensureProject().remove(selected))),button('↑ Выше','Переместить выбранный клип выше',()=>{const old=selected;edit(()=>ensureProject().move(old,-1));selected=Math.max(0,old-1);refresh();}),button('↓ Ниже','Переместить выбранный клип ниже',()=>{const old=selected;edit(()=>ensureProject().move(old,1));selected=Math.min(state().clips.length-1,old+1);refresh();}));
   list=doc.createElement('ol');list.className='may-video-clips';list.setAttribute('aria-label','Клипы в порядке монтажа');editor.append(list);
-  const actions=row(editor);undoButton=button('↶ Отмена','Отменить изменение монтажа',()=>edit(()=>ensureProject().undo()));redoButton=button('↷ Повтор','Повторить изменение монтажа',()=>edit(()=>ensureProject().redo()));exportButton=button('Экспорт','Экспортировать и склеить монтаж в видеофайл',exportVideo);cancelButton=button('Стоп','Отменить экспорт видео',abortExport);cancelButton.disabled=true;progress=doc.createElement('progress');progress.max=1;progress.value=0;progress.setAttribute('aria-label','Ход экспорта видео');download=doc.createElement('a');download.textContent='Скачать видео';download.hidden=true;actions.append(undoButton,redoButton,exportButton,cancelButton,progress,download);
+  const actions=row(editor);undoButton=button('↶ Отмена','Отменить изменение монтажа',()=>edit(()=>ensureProject().undo()));redoButton=button('↷ Повтор','Повторить изменение монтажа',()=>edit(()=>ensureProject().redo()));exportButton=button('Экспорт','Экспортировать и склеить монтаж в видеофайл',()=>exportVideo(false));
+  videoJournalButton=button('В журнал','Опубликовать готовый монтаж в журнале',()=>exportVideo(true));videoJournalLink=journalLink();
+  cancelButton=button('Стоп','Отменить экспорт видео',abortExport);cancelButton.disabled=true;progress=doc.createElement('progress');progress.max=1;progress.value=0;progress.setAttribute('aria-label','Ход экспорта видео');download=doc.createElement('a');download.textContent='Скачать видео';download.hidden=true;actions.append(undoButton,redoButton,exportButton,videoJournalButton,cancelButton,progress,download,videoJournalLink);
   status=doc.createElement('p');status.className='may-video-status';status.setAttribute('role','status');status.textContent='Добавьте видеофайлы. Можно вырезать участки и склеивать несколько файлов.';editor.append(status);
   // Keep every editor gesture and text-field key away from the page player.
   for(const type of ['pointerdown','pointerup','click','dblclick','keydown','keyup','wheel','touchstart','touchend'])dialog.addEventListener(type,e=>e.stopPropagation());
   dialog.addEventListener('close',closeWork);dialog.addEventListener('cancel',closeWork);video.addEventListener('ended',()=>{if(playing)advance(true);});video.addEventListener('error',()=>{if(loadedSource){pause();say('Браузер не смог воспроизвести этот видеофайл.');}});doc.body.append(dialog);refresh();
  }
  function refresh(){const s=state();current=Math.min(Math.max(0,current),s.duration);seek.max=String(s.duration);seek.value=String(current);clock.textContent=current.toFixed(2)+' / '+s.duration.toFixed(2)+' с';from.max=to.max=String(s.duration);undoButton.disabled=!s.canUndo;redoButton.disabled=!s.canRedo;playButton.disabled=exportButton.disabled=!s.clips.length||!!exportController;
+  videoJournalButton.disabled=exportButton.disabled||!videoJournalLink.hidden;
   selected=Math.min(selected,s.clips.length-1);list.replaceChildren();let offset=0;s.clips.forEach((clip,index)=>{const source=s.sources.find(x=>x.id===clip.sourceId),li=doc.createElement('li'),start=offset;offset+=clip.end-clip.start;const b=doc.createElement('button');b.type='button';b.className='may-video-clip';b.setAttribute('aria-pressed',String(index===selected));b.textContent=(index+1)+'. '+(source?source.name:'Видео')+' · '+clip.start.toFixed(2)+'–'+clip.end.toFixed(2)+' с';b.onclick=()=>{selected=index;seekTo(start,false);refresh();};li.append(b);list.append(li);});refreshCrop();
  }
  function seekTo(time,resume){if(cropGesture)cancelCrop();const s=state();current=Math.min(Math.max(0,Number(time)||0),s.duration);const loc=project&&project.locate(current);if(!loc){pause();refresh();return;}selected=loc.index;const u=sourceURL(loc.source);if(loadedSource!==u){video.src=u;loadedSource=u;}try{video.currentTime=loc.sourceTime;}catch(_){video.addEventListener('loadedmetadata',()=>{if(loadedSource===u)video.currentTime=loc.sourceTime;},{once:true});}if(resume)playNative();refresh();}
@@ -82,12 +122,53 @@
  function advance(ended){const loc=project&&project.locate(current);if(!loc)return pause();if(ended||video.currentTime>=loc.clip.end-0.015){const s=state(),next=s.clips[loc.index+1];if(!next){current=s.duration;pause();refresh();return;}let nextTime=0;for(let i=0;i<=loc.index;i++)nextTime+=s.clips[i].end-s.clips[i].start;seekTo(nextTime,true);}else{let offset=0;const s=state();for(let i=0;i<loc.index;i++)offset+=s.clips[i].end-s.clips[i].start;current=offset+Math.max(0,video.currentTime-loc.clip.start);seek.value=String(current);clock.textContent=current.toFixed(2)+' / '+s.duration.toFixed(2)+' с';}}
  function tick(){if(!playing)return;advance(false);if(playing)frame=root.requestAnimationFrame(tick);}
  function editSelection(method){const a=Number(from.value),b=Number(to.value);if(!from.value||!to.value||!Number.isFinite(a)||!Number.isFinite(b)||b<=a){say('Конец выделения должен быть позже начала.');return;}edit(()=>ensureProject()[method](a,b));}
- function edit(fn){cancelCrop();pause();abortExport();discardExport();try{fn();refresh();seekTo(current,false);say('Монтаж изменён. Исходные файлы сохранены для отмены.');}catch(error){say(error.message);}}
- async function addFiles(files){const epoch=importEpoch;for(const blob of files){if(epoch!==importEpoch)break;try{if(!blob||!blob.size||(blob.type&&!blob.type.startsWith('video/')))throw Error('Добавьте видеофайл. GIF доступен на вкладке GIF без монтажа.');if(!root.MayatnikVideoRender)throw Error('Модуль видео не загружен');say('Чтение видео…');const info=await root.MayatnikVideoRender.inspect(blob);if(epoch!==importEpoch)break;discardExport();ensureProject().add({id:'video-'+(++serial),blob,name:blob.name||'Видео '+serial,...info});selected=state().clips.length-1;refresh();to.value=String(+state().duration.toFixed(3));seekTo(current,false);say('Видео добавлено. Выберите участок на общей шкале монтажа.');}catch(error){if(epoch===importEpoch)say(error.message);}}}
- async function exportVideo(){if(exportController||!state().clips.length)return;cancelCrop();pause();const controller=new root.AbortController();exportController=controller;progress.value=0;cancelButton.disabled=false;refresh();say('Экспорт видео…');try{const s=state();const result=await root.MayatnikVideoRender.render({clips:s.clips.map(c=>({blob:s.sources.find(x=>x.id===c.sourceId).blob,start:c.start,end:c.end,crop:c.crop})),signal:controller.signal,onProgress:p=>{if(exportController===controller)progress.value=Number(p)||0;}});if(controller.signal.aborted)return;if(exportURL)root.URL.revokeObjectURL(exportURL);exportURL=root.URL.createObjectURL(result.blob);download.href=exportURL;download.download='mayatnik-montage.'+result.extension;download.hidden=false;progress.value=1;say('Видео готово. Нажмите «Скачать видео».');}catch(error){if(exportController===controller)say(controller.signal.aborted?'Экспорт отменён.':error.message);}finally{if(exportController===controller){exportController=null;cancelButton.disabled=true;refresh();}}}
+ function edit(fn){cancelCrop();pause();try{if(fn()){abortExport();clearResult();}refresh();seekTo(current,false);say('Монтаж изменён. Исходные файлы сохранены для отмены.');}catch(error){say(error.message);}}
+ async function addFiles(files){const epoch=importEpoch;for(const blob of files){if(epoch!==importEpoch)break;try{if(!blob||!blob.size||(blob.type&&!blob.type.startsWith('video/')))throw Error('Добавьте видеофайл. GIF доступен на вкладке GIF без монтажа.');if(!root.MayatnikVideoRender)throw Error('Модуль видео не загружен');say('Чтение видео…');const info=await root.MayatnikVideoRender.inspect(blob);if(epoch!==importEpoch)break;abortExport();clearResult();ensureProject().add({id:'video-'+(++serial),blob,name:blob.name||'Видео '+serial,...info});selected=state().clips.length-1;refresh();to.value=String(+state().duration.toFixed(3));seekTo(current,false);say('Видео добавлено. Выберите участок на общей шкале монтажа.');}catch(error){if(epoch===importEpoch)say(error.message);}}}
+ function unappliedCrop(){
+  if(cropGesture)return true;
+  if(!cropContext())return false;
+  return Object.entries(cropPixels(cropRect(),cropSize())).some(([key,value])=>{
+   const input=cropFields[key];
+   return input.value===''||Number(input.value)!==value;
+  });
+ }
+ async function exportVideo(publish){
+  if(exportController||!state().clips.length||(publish&&!videoJournalLink.hidden))return;
+  if(publish&&!root.MayatnikJournal?.publishMedia){say('Модуль журнала не загрузился. Обновите страницу.');return;}
+  if(publish&&unappliedCrop()){say('Нажмите «Применить», чтобы включить выбранный вырез в монтаж.');return;}
+  cancelCrop();pause();
+  const controller=new root.AbortController();
+  exportController=controller;cancelButton.disabled=false;refresh();
+  try{
+   if(!exportResult){
+    const s=state();
+    progress.value=0;say(publish?'Подготовка монтажа для журнала…':'Экспорт видео…');
+    const result=await root.MayatnikVideoRender.render({
+     clips:s.clips.map(c=>({blob:s.sources.find(x=>x.id===c.sourceId).blob,start:c.start,end:c.end,crop:c.crop})),
+     signal:controller.signal,
+     onProgress:p=>{if(exportController===controller)progress.value=Number(p)||0;}
+    });
+    if(controller.signal.aborted)return;
+    exportResult=result;
+   }
+   if(!exportURL)exportURL=root.URL.createObjectURL(exportResult.blob);
+   download.href=exportURL;download.download='mayatnik-montage.'+exportResult.extension;download.hidden=false;
+   progress.value=1;
+   if(!publish){say('Видео готово. Нажмите «Скачать видео».');return;}
+   say('Публикация видео…');progress.removeAttribute('value');
+   const {blob,width,height,duration}=exportResult;
+   await root.MayatnikJournal.publishMedia(blob,{width,height,duration},controller.signal);
+   if(controller.signal.aborted)return;
+   videoJournalLink.hidden=false;say('Монтаж опубликован.');
+  }catch(error){
+   if(exportController===controller)say(controller.signal.aborted?'Экспорт отменён.':error.message);
+  }finally{
+   if(exportController===controller){exportController=null;progress.value=exportResult?1:0;cancelButton.disabled=true;refresh();}
+  }
+ }
  function open(){if(!gifURL)return false;make();activate('gif');if(!dialog.open)dialog.showModal();return true;}
- function show(blob,info={}){if(!blob||blob.type!=='image/gif'||!blob.size)throw Error('Нет готового GIF для просмотра');make();const next=root.URL.createObjectURL(blob),old=gifURL;gifBlob=blob;gifURL=next;gifName=String(info.name||'animation.gif');picture.src=gifURL;if(old)root.URL.revokeObjectURL(old);open();title.textContent=gifName+(info.width&&info.height?' · '+info.width+' × '+info.height:'');root.dispatchEvent(new root.Event('may-gif-ready'));}
+ function show(blob,info={}){if(!blob||blob.type!=='image/gif'||!blob.size)throw Error('Нет готового GIF для просмотра');make();const next=root.URL.createObjectURL(blob),old=gifURL;abortGifUpload();gifJournalButton.disabled=false;gifJournalLink.hidden=true;gifStatus.textContent='';gifInfo={width:info.width,height:info.height,duration:info.duration};gifBlob=blob;gifURL=next;gifName=String(info.name||'animation.gif');picture.src=gifURL;if(old)root.URL.revokeObjectURL(old);open();title.textContent=gifName+(info.width&&info.height?' · '+info.width+' × '+info.height:'');root.dispatchEvent(new root.Event('may-gif-ready'));}
  function openEditor(){make();try{ensureProject();}catch(error){say(error.message);}activate('video');if(!dialog.open)dialog.showModal();refresh();if(state().clips.length)seekTo(current,false);return true;}
  async function showVideo(blob,info={}){openEditor();if(info.name&&!blob.name){try{Object.defineProperty(blob,'name',{value:String(info.name),configurable:true});}catch(_){}}await addFiles([blob]);}
- root.MayatnikGifViewer={show,open,hasResult:()=>!!gifURL,openEditor,showVideo};root.addEventListener('pagehide',()=>{closeWork();if(gifURL)root.URL.revokeObjectURL(gifURL);gifURL='';gifBlob=null;for(const u of sourceURLs.values())root.URL.revokeObjectURL(u);sourceURLs.clear();if(project)project.clear();},{once:true});
+ root.MayatnikGifViewer={show,open,hasResult:()=>!!gifURL,openEditor,showVideo};root.addEventListener('pagehide',()=>{closeWork();if(gifURL)root.URL.revokeObjectURL(gifURL);gifURL='';gifBlob=null;exportResult=null;for(const u of sourceURLs.values())root.URL.revokeObjectURL(u);sourceURLs.clear();if(project)project.clear();},{once:true});
 })(window);

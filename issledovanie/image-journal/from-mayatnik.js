@@ -4,22 +4,41 @@
   const more = document.getElementById('mayatnik-more');
   let cursor = null;
   function card(frame) {
-    const label = 'Кадр ' + frame.frame;
+    const video = frame.kind === 'video';
+    let label = 'Кадр ' + frame.frame;
+    if (video) {
+      const format = {'video/mp4':'MP4', 'video/webm':'WebM'}[frame.mime?.split(';')[0]];
+      label = format ? 'Видео · ' + format : 'Видео';
+    } else if (frame.kind === 'gif') label = 'GIF';
+    if ((video || frame.kind === 'gif') && frame.duration > 0) {
+      label += ' · ' + frame.duration.toLocaleString('ru-RU', {maximumFractionDigits:2}) + ' с';
+    }
     const figure = document.createElement('figure');
     const link = document.createElement('a');
     link.className = 'image-link';
     link.dataset.viewImage = '';
+    link.dataset.kind = frame.kind || 'image';
     link.href = frame.url;
     figure.dataset.journalKey = new URL(frame.url).pathname.slice(1);
-    link.dataset.summary = frame.summary || (label + ' · ' + frame.width + ' × ' + frame.height + ' пикс. Параметры построения не записаны.');
+    if (frame.summary) link.dataset.summary = frame.summary;
+    else if (link.dataset.kind === 'image') link.dataset.summary = 'Параметры построения не записаны.';
     if (frame.scene) link.dataset.scene = frame.scene;
-    const img = document.createElement('img');
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    img.width = frame.width;
-    img.height = frame.height;
-    img.alt = label;
-    img.src = frame.url;
+    const preview = document.createElement(video ? 'video' : 'img');
+    if (video) {
+      preview.muted = true;
+      preview.playsInline = true;
+      preview.preload = 'metadata';
+      link.setAttribute('aria-label', 'Открыть ' + label.toLowerCase());
+    } else {
+      preview.loading = 'lazy';
+      preview.decoding = 'async';
+      preview.alt = label;
+    }
+    if (frame.width && frame.height) {
+      preview.width = frame.width;
+      preview.height = frame.height;
+    }
+    preview.src = frame.url;
     const caption = document.createElement('figcaption');
     const title = document.createElement('span');
     title.className = 'figure-name';
@@ -28,7 +47,7 @@
     date.dateTime = frame.created;
     date.textContent = new Date(frame.created).toLocaleString('ru-RU', {dateStyle:'short', timeStyle:'short'});
     caption.append(title, date);
-    link.append(img);
+    link.append(preview);
     figure.append(link, caption);
     return figure;
   }
@@ -42,9 +61,9 @@
       cursor = page.cursor;
       more.hidden = !cursor;
       more.textContent = 'Ещё кадры';
-      status.textContent = wall.children.length ? '' : 'Пока нет опубликованных кадров.';
+      status.textContent = wall.children.length ? '' : 'Пока нет публикаций.';
     } catch {
-      status.textContent = 'Не удалось загрузить опубликованные кадры.';
+      status.textContent = 'Не удалось загрузить публикации.'
       more.textContent = 'Повторить';
       more.hidden = false;
     } finally { more.disabled = false; }

@@ -2,10 +2,15 @@
   const hosts = ['https://media.1001100.online', 'https://zerkalius-mayatnik-journal.zerkalius-1001100.workers.dev'];
   let preferred = hosts[0];
   class Refused extends Error {}
+  const mediaTickets = new WeakMap();
+  const mediaFormats = new Map([['video/mp4', 'mp4'], ['video/webm', 'webm'], ['image/gif', 'gif']]);
 
-  async function request(path, options, timeout, first = preferred) {
+  async function request(path, options, timeout, first = preferred, signal) {
     for (const host of [first, ...hosts.filter(other => other !== first)]) {
       const controller = new AbortController();
+      if (signal?.aborted) throw new DOMException('Публикация остановлена.', 'AbortError');
+      const abort = () => controller.abort();
+      signal?.addEventListener('abort', abort, {once:true});
       const timer = setTimeout(() => controller.abort(), timeout);
       try {
         const response = await fetch(host + '/mayatnik-api/' + path, {
@@ -21,8 +26,9 @@
         preferred = host;
         return {data, host};
       } catch (error) {
+        if (signal?.aborted) throw new DOMException('Публикация остановлена.', 'AbortError');
         if (error instanceof Refused) throw error;
-      } finally { clearTimeout(timer); }
+      } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
     }
     throw Error('Не удалось связаться с журналом по двум адресам.');
   }
@@ -42,6 +48,27 @@
       }
       const result = await request('frames?' + new URLSearchParams({frame, file:data.file}),
         {method:'POST', body}, 30000, host);
+      if (!result.data.url) throw Error('Журнал не подтвердил публикацию.');
+      return result.data.url;
+    },
+    async publishMedia(blob, {width, height, duration = 0}, signal) {
+      const mime = blob.type.split(';')[0].trim().toLowerCase();
+      const format = mediaFormats.get(mime);
+      if (!format) throw Error('Журнал принимает GIF, MP4 и WebM.');
+      if (!blob.size || blob.size > 64 * 1024 * 1024) throw Error('Для журнала нужен файл до 64 МиБ.');
+      if (![width,height].every(n => Number.isSafeInteger(n) && n > 0) || !Number.isFinite(duration) || duration < 0) {
+        throw Error('Не удалось определить размеры или длительность записи.');
+      }
+      let ticket = mediaTickets.get(blob);
+      if (!ticket || Date.now() >= ticket.expires) {
+        const {data,host} = await request('ready?' + new URLSearchParams({format}), {}, 4500, preferred, signal);
+        if (!data.file?.endsWith('.' + format)) throw Error('Журнал не выдал адрес для этого формата.');
+        ticket = {file:data.file,host,expires:Date.now()+14*60000};
+        mediaTickets.set(blob,ticket);
+      }
+      const query = new URLSearchParams({file:ticket.file, width, height, duration, size:blob.size});
+      const result = await request('media?' + query, {method:'POST',headers:{'Content-Type':mime},body:blob},
+        9 * 60000, ticket.host, signal);
       if (!result.data.url) throw Error('Журнал не подтвердил публикацию.');
       return result.data.url;
     },

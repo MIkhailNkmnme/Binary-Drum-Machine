@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- ИСС-126 · v0.009. Карточки с параметрами кадра и вход редактора. -->
+<!-- ИСС-126 · v0.010. Видео и GIF из монтажного окна Маятника. -->
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -8,10 +8,10 @@
   <meta name="theme-color" content="#101317">
   <script defer src="/_js/site-clarity.js?v=1"></script>
 <title>Журнал картинок · Зеркалиус</title>
-  <link rel="stylesheet" href="style.css?v=007">
-  <script defer src="../../_js/mayatnik-journal.js?v=2"></script>
-  <script defer src="from-mayatnik.js?v=3"></script>
-  <script defer src="viewer.js?v=004"></script>
+  <link rel="stylesheet" href="style.css?v=010">
+  <script defer src="../../_js/mayatnik-journal.js?v=3"></script>
+  <script defer src="from-mayatnik.js?v=4"></script>
+  <script defer src="viewer.js?v=005"></script>
   <script defer src="editor.js?v=2"></script>
 </head>
 <body>
@@ -30,7 +30,7 @@
   <main class="shell" id="journal">
     <header class="intro">
       <div class="intro-copy">
-        <small class="journal-version">v0.009</small>
+        <small class="journal-version">v0.010</small>
         <h1>Журнал картинок</h1>
         <p>Как узоры «Зеркалиуса» становятся кадрами, обоями и иллюстрациями.</p>
         <nav class="contents" aria-label="Записи журнала">
@@ -50,7 +50,7 @@
     <article class="entry" id="from-mayatnik">
       <header class="entry-heading">
         <h2>Из Маятника</h2>
-        <p>Кадры, опубликованные кнопкой «PNG в журнал» в <a href="../../mayatnik/Zerkalius-mayatnik.html">Маятнике</a>.</p>
+        <p>Кадры, GIF и видеомонтажи из <a href="../../mayatnik/Zerkalius-mayatnik.html">Маятника</a>.</p>
       </header>
       <div class="figures frame-grid" id="mayatnik-frames"></div>
       <p role="status" id="mayatnik-feed-status">Загрузка кадров…</p>
@@ -312,7 +312,7 @@
       <button id="journal-login-cancel" type="button">Отмена</button>
     </form>
   </dialog>
-  <dialog class="image-viewer" id="image-viewer" aria-label="Просмотр картинки">
+  <dialog class="image-viewer" id="image-viewer" aria-label="Просмотр публикации">
     <div class="viewer-shell">
       <div class="viewer-toolbar">
         <form method="dialog"><button type="submit" autofocus>В журнал</button></form>

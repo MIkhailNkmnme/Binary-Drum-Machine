@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 
-const FRAME = /^from-mayatnik\/\d{13}-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\.png$/;
+import { isUploadKey } from './media.mjs';
+
 const ARCHIVE = /^image-journal-\d{4}-\d{2}-\d{2}\/[a-z0-9-]+\.(?:png|webp)$/;
 const tokenPattern = /^[a-f0-9]{64}$/;
 const ttl = 4 * 60 * 60 * 1000;
@@ -71,8 +72,8 @@ export async function editorRoute(request, env, url) {
   if (action === 'logout') { await editor.end(id); return reply({ok:true}); }
   if (!['remove','unlist'].includes(action)) return reply({}, 404);
   const key = body.key;
-  if (typeof key !== 'string' || !(FRAME.test(key) || ARCHIVE.test(key))) return reply({error:'Неизвестная картинка.'}, 400);
+  if (typeof key !== 'string' || !(isUploadKey(key) || ARCHIVE.test(key))) return reply({error:'Неизвестная картинка.'}, 400);
   await editor.hide(key);
-  if (action === 'remove' && FRAME.test(key)) await env.MEDIA.delete(key);
+  if (action === 'remove' && isUploadKey(key)) await env.MEDIA.delete(key);
   return reply({ok:true});
 }
