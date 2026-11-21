@@ -45,37 +45,25 @@ for (let row = 0; row < rows; row++) {
   }
 }
 
-const pivotX = maskLeft + mask.width / 2;
-const pivotY = mask.y + mask.height / 2;
-const trail = new Uint8Array(cols * rows);
-const turns = 48;
+const maskSize = mask.width * mask.height;
+const poseDelay = 85;
+const edgeDelay = 18;
 
-function rotatedMask(angle) {
-  const cells = new Uint8Array(cols * rows);
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      const dx = col + 0.5 - pivotX;
-      const dy = row + 0.5 - pivotY;
-      const sx = Math.floor(dx * cos + dy * sin + mask.width / 2);
-      const sy = Math.floor(-dx * sin + dy * cos + mask.height / 2);
-      if (sx >= 0 && sx < mask.width && sy >= 0 && sy < mask.height) {
-        cells[row * cols + col] = Number(maskPixels.readUInt32LE(4 * (sy * mask.width + sx)) !== 0);
-      }
-    }
-  }
-  return cells;
-}
-
-function render(cells, delay) {
+function render(turned, maskColour, delay) {
   const pixels = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y++) {
     const row = Math.floor(y / unit) - 1;
     for (let x = 0; x < width; x++) {
-      const cell = row * cols + Math.floor(x / unit);
-      const bit = trail[cell] ? 1 : fieldBits[cell];
-      const colour = cells[cell] ? palette[2] : palette[bit] || backdrop;
+      const col = Math.floor(x / unit);
+      const bit = fieldBits[row * cols + col];
+      let colour = palette[bit] || backdrop;
+      const mx = col - maskLeft;
+      const my = row - mask.y;
+      if (mx >= 0 && mx < mask.width && my >= 0 && my < mask.height) {
+        const cell = my * mask.width + mx;
+        const index = turned ? maskSize - 1 - cell : cell;
+        if (maskPixels.readUInt32LE(4 * index)) colour = maskColour;
+      }
       const pixel = 4 * (y * width + x);
       pixels.set(colour, pixel);
       pixels[pixel + 3] = 255;
@@ -84,17 +72,9 @@ function render(cells, delay) {
   gif.add(pixels, delay);
 }
 
-const original = rotatedMask(0);
-let previous = original;
-render(original, 35);
-for (let frame = 1; frame <= turns; frame++) {
-  const cells = frame === turns ? original : rotatedMask(frame * 2 * Math.PI / turns);
-  for (let cell = 0; cell < cells.length; cell++) {
-    // A vacated blue zero becomes its yellow anti-bit. Yellow ones stay yellow.
-    if (previous[cell] && !cells[cell] && fieldBits[cell] === 0) trail[cell] = 1;
-  }
-  render(cells, frame === turns ? 62 : 5);
-  previous = cells;
+for (const turned of [false, true]) {
+  render(turned, palette[2], poseDelay);
+  render(turned, palette[1], edgeDelay);
 }
 
 gif.finish().arrayBuffer().then(data => {
