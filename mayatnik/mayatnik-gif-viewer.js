@@ -75,13 +75,16 @@
   gifController=controller;gifJournalButton.disabled=true;gifStatus.textContent='Публикация GIF…';
   try{
    let {width,height,duration}=gifInfo;
+   const scene=await gifInfo.scene;
    if(!(width>0&&height>0)){
     const header=new DataView(await blob.slice(0,10).arrayBuffer());
     width=header.getUint16(6,true);height=header.getUint16(8,true);
    }
    if(controller.signal.aborted)return;
-   await root.MayatnikJournal.publishMedia(blob,{width,height,duration},controller.signal);
+   const url=await root.MayatnikJournal.publishMedia(blob,{width,height,duration,scene},controller.signal);
    if(controller.signal.aborted)return;
+   gifJournalLink.href=url;
+   gifJournalLink.textContent='Открыть опубликованный GIF';
    gifJournalLink.hidden=false;gifStatus.textContent='GIF опубликован.';
   }catch(error){if(!controller.signal.aborted)gifStatus.textContent=error.message;}
   finally{if(gifController===controller){gifController=null;gifJournalButton.disabled=!gifJournalLink.hidden;}}
@@ -189,7 +192,7 @@
   }
  }
  function open(){if(!gifURL)return false;make();activate('gif');if(!dialog.open)dialog.showModal();return true;}
- function show(blob,info={}){if(!blob||blob.type!=='image/gif'||!blob.size)throw Error('Нет готового GIF для просмотра');make();const next=root.URL.createObjectURL(blob),old=gifURL;abortGifUpload();gifJournalButton.disabled=false;gifJournalLink.hidden=true;gifStatus.textContent='';gifInfo={width:info.width,height:info.height,duration:info.duration};gifBlob=blob;gifURL=next;gifName=String(info.name||'animation.gif');picture.src=gifURL;if(old)root.URL.revokeObjectURL(old);open();title.textContent=gifName+(info.width&&info.height?' · '+info.width+' × '+info.height:'');root.dispatchEvent(new root.Event('may-gif-ready'));}
+ function show(blob,info={}){if(!blob||blob.type!=='image/gif'||!blob.size)throw Error('Нет готового GIF для просмотра');make();const next=root.URL.createObjectURL(blob),old=gifURL;abortGifUpload();gifJournalButton.disabled=false;gifJournalLink.hidden=true;gifStatus.textContent='';gifInfo={width:info.width,height:info.height,duration:info.duration,scene:info.scene};gifBlob=blob;gifURL=next;gifName=String(info.name||'animation.gif');picture.src=gifURL;if(old)root.URL.revokeObjectURL(old);open();title.textContent=gifName+(info.width&&info.height?' · '+info.width+' × '+info.height:'');root.dispatchEvent(new root.Event('may-gif-ready'));}
  function openEditor(){make();try{ensureProject();}catch(error){say(error.message);}activate('video');if(!dialog.open)dialog.showModal();refresh();if(state().clips.length)seekTo(current,false);return true;}
  async function showVideo(source,info={}){
   if(info.background)make();else openEditor();

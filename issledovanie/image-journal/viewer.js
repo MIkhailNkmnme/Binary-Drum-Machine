@@ -38,7 +38,7 @@
     scene.hidden = true;
     scene.removeAttribute('href');
     sceneStatus.textContent = '';
-    if (link.dataset.kind === 'video') {
+    if (link.dataset.kind === 'video' || link.dataset.kind === 'gif') {
       const start = figure?.querySelector('a[data-recording-start]');
       if (start) showScene(start.href, start.textContent);
       return;

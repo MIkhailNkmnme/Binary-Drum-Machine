@@ -46,7 +46,7 @@
     date.dateTime = frame.created;
     date.textContent = new Date(frame.created).toLocaleString('ru-RU', {dateStyle:'short', timeStyle:'short'});
     caption.append(title, date);
-    if (video && /^[a-f0-9]{64}$/.test(frame.scene)) {
+    if ((video || frame.kind === 'gif') && /^[a-f0-9]{64}$/.test(frame.scene)) {
       const links = document.createElement('span');
       links.className = 'figure-links';
       const start = document.createElement('a');
