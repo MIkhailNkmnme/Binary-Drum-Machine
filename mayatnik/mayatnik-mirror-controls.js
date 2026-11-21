@@ -62,7 +62,7 @@
     const optionsFor=b=>{
       if(b===source)return profiles.map(p=>({key:p.id,name:p.name,on:p.id===state.source,pick:()=>setSource(p.id)}));
       if(b===axis&&state.source==='template')return [['h','Слева ↔ справа'],['v','Сверху ↔ снизу'],['line','Линия-зеркало']].map(([id,name])=>({key:id,name,on:state.axis===id,pick:()=>{state.axis=id;save();sync();after();}}));
-      if(b===axis&&state.source==='lines')return lines().map(l=>({key:'line:'+l.id,name:(l.id==='main'?'Главная':({h:'Горизонталь',v:'Вертикаль',d1:'Диагональ ╲',d2:'Диагональ ╱',d:'Диагональ',a:'Диагональ'}[l.kind]||l.kind))+' '+l.position,on:String(line()?.id)===String(l.id),pick:()=>{state.line=l.id;save();sync();after();}}));
+      if(b===axis&&state.source==='lines')return lines().map(l=>({key:'line:'+l.id,name:(l.name||(l.id==='main'?'Главная':({h:'Горизонталь',v:'Вертикаль',d1:'Диагональ ╲',d2:'Диагональ ╱',d:'Диагональ',a:'Диагональ'}[l.kind]||l.kind))+' '+l.position),on:String(line()?.id)===String(l.id),pick:()=>{state.line=l.id;save();sync();after();}}));
       if(b===side&&state.source==='template'&&state.copy&&state.axis!=='line')return(state.axis==='h'?[['left','Влево'],['right','Вправо']]:[['top','Вверх'],['bottom','Вниз']]).map(([id,name])=>({key:id,name,on:state.side===id,pick:()=>{state.side=id;save();sync();after();}}));
       if(b===side&&state.source==='lines')return line()?.disabled?[]:[['Выключено',0],['Вниз / вправо',1],['Вверх / влево',2]].map(([name,m])=>({key:m,name,on:line()?.mode===m,pick:()=>{const l=line();if(l&&!l.disabled)win.mayLineMirrors.set(l.id,m);sync();after();}}));
       if(b===op&&['manual','upper','lower','lines','black'].includes(state.source))return [['','Копия'],['xor','XOR'],['and','AND']].map(([id,name])=>({key:id,name,on:operation()===id,pick:()=>{setOperation(id);sync();after();}}));
@@ -79,7 +79,7 @@
     function sync(){
       const p=current();caption(source,'Что: '+p.name,'Что отражать: '+p.name+'. '+details[p.id]+' Выбор источника не выключает другие зеркала.');
       const template=p.id==='template',lineMode=p.id==='lines';
-      caption(axis,'Ось: '+(template?{h:'↔',v:'↕',line:'по линии'}[state.axis]:lineMode?(line()?((line().id==='main'?'Главная ':line().kind+' ')+line().position):'нет линий'):p.axis));
+      caption(axis,'Ось: '+(template?{h:'↔',v:'↕',line:'по линии'}[state.axis]:lineMode?(line()?(line().name||((line().id==='main'?'Главная ':line().kind+' ')+line().position)):'нет линий'):p.axis));
       let copySide=state.side;if(template&&state.axis==='v'&&!['top','bottom'].includes(copySide))copySide='bottom';if(template&&state.axis==='h'&&!['left','right'].includes(copySide))copySide='right';
       const rasterSide=p.id==='upper'?(win.mayFixDown?.get()?'сверху вниз':'снизу вверх'):p.id==='lower'?(win.mayFixLow?.out()?'наружу':'внутрь'):p.side;
       caption(side,'Сторона: '+(template?(state.axis==='line'?'за линию':state.copy?({left:'влево',right:'вправо',top:'вверх',bottom:'вниз'}[copySide]):'целиком'):lineMode?(line()?.disabled?'нужен целый сдвиг':['выкл','вниз / вправо','вверх / влево'][line()?.mode||0]):rasterSide));

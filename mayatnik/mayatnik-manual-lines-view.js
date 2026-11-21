@@ -36,6 +36,7 @@
   }
   function begin(id,e,target){
    if(e.button!==0||drag)return;const a=axis(id);if(!a)return;
+   if(a.fixed){select(id);consume(e);return;}
    if(panels.has(id))panels.get(id).status.hidden=true;
    select(id);drag={id,kind:a.kind,p:a.p,x:e.clientX,y:e.clientY,scale:current.scale,pointerId:e.pointerId,target};
    target.setPointerCapture(e.pointerId);target.classList.add('drag');
@@ -96,9 +97,9 @@
     if(!panels.has(a.id))panels.set(a.id,create(a.id));const {panel,parts,status}=panels.get(a.id);
     if(a.templatesStatus){if(status.textContent!==a.templatesStatus)status.textContent=a.templatesStatus;status.axisPosition=a.p;status.fieldRows=snapshot.rows;status.hidden=false;}
     else if(status.axisPosition!==a.p||status.fieldRows!==snapshot.rows)status.hidden=true;
-    panel.hidden=false;panel.dataset.selected=String(a.id===preferredId);panel.style.setProperty('--manual-axis-colour',a.id===preferredId?Geometry.SELECTED_COLOUR:a.colour||'#7cbcff');
+    panel.hidden=false;panel.dataset.fixed=String(!!a.fixed);panel.dataset.selected=String(a.id===preferredId);panel.style.setProperty('--manual-axis-colour',a.id===preferredId?Geometry.SELECTED_COLOUR:a.colour||'#7cbcff');
     panel.dataset.compact=String(snapshot.viewport.right-snapshot.viewport.left<400);
-    const caption=Geometry.label(a,snapshot.anchor,snapshot.rows);parts.label.textContent=caption.split(' · ')[0];parts.label.title=caption+' · Тянуть — двигать ось с шагом полклетки';parts.label.setAttribute('aria-label',caption);parts.label.style.cursor=a.kind==='h'?'ns-resize':a.kind==='v'?'ew-resize':a.kind==='d'?'nesw-resize':'nwse-resize';
+    const caption=Geometry.label(a,snapshot.anchor,snapshot.rows);parts.label.textContent=a.caption||caption.split(' · ')[0];parts.label.title=a.fixed?'Ось центр · фиксирована через центр якорного столбца':caption+' · Тянуть — двигать ось с шагом полклетки';parts.label.setAttribute('aria-label',a.caption?parts.label.title:caption);parts.label.style.cursor=a.fixed?'default':a.kind==='h'?'ns-resize':a.kind==='v'?'ew-resize':a.kind==='d'?'nesw-resize':'nwse-resize';
     for(const button of Geometry.mirrorButtons(a.kind,a.p)){const element=parts['mirror'+button.mode];element.textContent=button.symbol;element.disabled=button.disabled;element.setAttribute('aria-pressed',String(!button.disabled&&a.mode===button.mode));
      element.title=button.disabled?'Зеркало диагонали доступно по центрам клеток':'Отражать '+button.direction+' · повторное нажатие выключает';}
     for(const bit of [1,0]){const element=parts['paint'+bit];element.disabled=a.paintDisabled===true;element.setAttribute('aria-pressed',String(!!(Geometry.paintMask(a.paint)&(bit===1?1:2))));
@@ -108,6 +109,7 @@
     for(const op of ['xor','and']){const element=parts[op];element.setAttribute('aria-pressed',String(Geometry.mirrorOperation(a.op)===op));element.title=caption+' · Зеркало '+op.toUpperCase()+' · повторное нажатие возвращает копирование';element.setAttribute('aria-label',element.title);}
     for(const [key,dir]of [['autoBack',-1],['autoForward',1]]){parts[key].setAttribute('aria-pressed',String(a.autoDirection===dir));parts[key].textContent=a.kind==='h'?(dir<0?'↑':'↓'):(dir<0?'←':'→');parts[key].title='Автодвижение '+(dir<0?'назад':'вперёд')+' · у края разворот · повторное нажатие — стоп';}
     if(doc.activeElement!==parts.autoSpeed)parts.autoSpeed.value=String(a.autoSpeed||1);
+    parts.autoSpeed.parentElement.hidden=!!a.fixed;parts.add.hidden=a.canAdd===false;
     parts.templates.hidden=a.kind!=='v'||!options.onTemplates;parts.templates.setAttribute('aria-label',parts.templates.title);parts.templates.setAttribute('aria-pressed',String(!!a.templatesOn));
     parts.remove.hidden=a.canDelete===false;parts.pin.hidden=a.pin===undefined;parts.pin.setAttribute('aria-pressed',String(!!a.pin));
     candidates.push({id:a.id,kind:a.kind,segment,size:{width:panel.offsetWidth,height:Math.max(panel.offsetHeight,status.hidden?0:status.offsetTop+status.offsetHeight)}});
@@ -130,7 +132,7 @@
   function keyDown(e){
    if(e.defaultPrevented||e.isComposing||e.ctrlKey||e.altKey||e.metaKey||drag)return;
    const target=e.target;if(/^(input|select|textarea)$/i.test(target?.tagName||'')||target?.isContentEditable||target?.closest?.('[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="slider"],[role="spinbutton"]'))return;
-   const a=axis(preferredId);if(!a||options.canKeyboard?.(e)===false)return;
+   const a=axis(preferredId);if(!a||a.fixed||options.canKeyboard?.(e)===false)return;
    const p=Geometry.keyPosition(a.kind,a.p,e.key,!!e.shiftKey,current.rows);if(p===null)return;
    consume(e);if(p!==a.p){options.onPosition?.(a.id,p);options.onCommit?.(a.id,false);}
   }

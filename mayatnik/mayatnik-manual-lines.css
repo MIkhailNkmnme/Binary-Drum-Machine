@@ -10,6 +10,8 @@
 .may-manual-axis-controls button:active::before,.may-manual-axis-controls button.drag::before{inset:3px}
 .may-manual-axis-controls button:disabled{opacity:.35;cursor:default}
 .may-manual-axis-controls .may-manual-axis-label{width:48px;min-width:48px;max-width:48px;padding:0 3px;font:11px/24px var(--mono,monospace)}
+.may-manual-axis-controls[data-fixed="true"] .may-manual-axis-label{width:120px;min-width:120px;max-width:120px}
+.may-axis-motion[hidden]{display:none!important}
 .may-manual-axis-controls .may-manual-axis-remove{color:#ff7373}
 .may-manual-axis-controls .may-manual-axis-xor,.may-manual-axis-controls .may-manual-axis-and{padding:0;font-size:9px}
 .may-manual-axis-controls[data-compact="true"]{display:grid;grid-template-columns:repeat(8,24px);height:auto;min-height:76px;grid-auto-rows:24px}

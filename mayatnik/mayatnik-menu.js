@@ -183,7 +183,7 @@
       {type:'action',src:'ochkiSearchLog',name:'Лог поиска',icon:'M4 5h16v14H4z M8 9h8 M8 13h8',tip:'Лог поиска — найденные строки и номера кадров',click:()=>window.dispatchEvent(new Event('may-ochki-log-show'))}, check('ochkiSkipSpaces','text'), check('ochkiEveryFrame','play') ] },
     { id: 'zoom', title: 'Масштаб', color: GROUP_COLOURS['rail:zoom'], items: [
       button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
-      button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line') ] },
+      button('zLock', 'pin'), button('zLimit', 'target'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4'), button('zHoriz', 'line'), button('zCenterAxis', 'line') ] },
     { id: 'mirrors', title: 'Зеркала', color: GROUP_COLOURS['rail:mirrors'], items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
@@ -1776,7 +1776,7 @@
   // v0.491 (МАЯ-021): собираем существующие входы ручных инструментов, оставляя экранные ручки и окно Сгиба на прежних местах.
   function installManualAxesMenu(railButtons) {
     const row=ptGroup('Ручные оси');row.parentElement.dataset.k='Ручные оси';
-    const ids=['zLines','zVert','zHoriz','zDiag','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler','bFoldCompare'];
+    const ids=['zLines','zVert','zCenterAxis','zHoriz','zDiag','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler','bFoldCompare'];
     const nodes=new Map(ids.map(id=>[id,railButtons.get(id)||tools.querySelector('[data-n="'+id+'"]')]).filter(([,node])=>node));
     const zoom=railButtons.get('zLines')?.closest('.gz-group');if(zoom)manualLegacyCells.set(zoom.dataset.id,[...zoom.querySelectorAll('.gz-soty > .gz-hx')]);
     const moves=[];

@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.074</title>
+<title>Zerkalius Маятнкъ — v1.075</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -215,7 +215,7 @@ body.may-fold-active #cvGpu{opacity:0}
 <script>document.documentElement.classList.add('may-boot');addEventListener('load',()=>setTimeout(()=>document.documentElement.classList.remove('may-boot'),0));</script>
 <link rel="stylesheet" href="mayatnik-menu.css?v=1062">
 <link rel="stylesheet" href="mayatnik-axis-style.css?v=600">
-<link rel="stylesheet" href="mayatnik-manual-lines.css?v=1074">
+<link rel="stylesheet" href="mayatnik-manual-lines.css?v=1075">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=1017">
 <style>
 .may-cell-info{display:block;box-sizing:border-box;width:120px;height:24px;line-height:24px;padding:0 10px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.074</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.075</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -391,7 +391,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <output id="symInfo" aria-live="polite"></output>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, 0 — по ширине; на телефоне — двумя пальцами">
       <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">×1</output><button id="zIn" aria-label="Приблизить">+</button>
-      <button id="zFit" aria-pressed="false" data-mi-short="Середина" title="Ширина по Оси: пока поле помещается, ось якоря по середине видимой части окна. При увеличении шире окна разрешён сдвиг вправо/влево; при уменьшении центрирование возвращается. Масштаб кнопка не меняет">середина</button><button id="zFitH" aria-pressed="false" data-mi-short="Вниз" title="Вниз: при масштабе нижняя строка поля держится у низа окна · вместе с «Верхом» — держатся обе, масштаб не меняется">вниз</button><button id="zLock" aria-pressed="false" data-mi-short="Блок" title="Блокировать масштаб: колесо, + / −, «По ширине», «По высоте» и щипок его не меняют · ещё раз — снять">блок</button><button id="zLimit" aria-pressed="false" data-mi-short="1:1" title="Установить и держать 1:1: один бит на один физический пиксель монитора. Колесо, щипок и команды масштаба сохраняют 1:1 до выключения. После выключения остаётся 1:1, масштаб снова можно менять, если выключен «Блок»">1:1</button><button id="zLines" aria-pressed="false" data-mi-short="Линии" title="Линии: общий показ выбранных семейств ручных осей; положения и зеркала сохраняются · отдельные кнопки Верт, Гориз и Диаг включают свои оси">линии</button><button id="zVert" aria-pressed="false" data-mi-short="Верт" title="Вертикальные оси: показать / скрыть только вертикали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">верт</button><button id="zHoriz" aria-pressed="false" data-mi-short="Гориз" title="Горизонтальные оси: показать / скрыть основную горизонталь и дополнительные линии, сохраняя положения и зеркала">гориз</button><button id="zDiag" aria-pressed="false" data-mi-short="Диаг" title="Диагональные оси: показать / скрыть обе диагонали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">диаг</button><button id="zTop" aria-pressed="false" data-mi-short="Верх" title="Закрепить верх: перетаскивание может сдвинуть поле вверх, колесо снова прижимает первую строку к верхнему краю окна">верх</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
+      <button id="zFit" aria-pressed="false" data-mi-short="Середина" title="Ширина по Оси: пока поле помещается, ось якоря по середине видимой части окна. При увеличении шире окна разрешён сдвиг вправо/влево; при уменьшении центрирование возвращается. Масштаб кнопка не меняет">середина</button><button id="zFitH" aria-pressed="false" data-mi-short="Вниз" title="Вниз: при масштабе нижняя строка поля держится у низа окна · вместе с «Верхом» — держатся обе, масштаб не меняется">вниз</button><button id="zLock" aria-pressed="false" data-mi-short="Блок" title="Блокировать масштаб: колесо, + / −, «По ширине», «По высоте» и щипок его не меняют · ещё раз — снять">блок</button><button id="zLimit" aria-pressed="false" data-mi-short="1:1" title="Установить и держать 1:1: один бит на один физический пиксель монитора. Колесо, щипок и команды масштаба сохраняют 1:1 до выключения. После выключения остаётся 1:1, масштаб снова можно менять, если выключен «Блок»">1:1</button><button id="zLines" aria-pressed="false" data-mi-short="Линии" title="Линии: общий показ выбранных семейств ручных осей; положения и зеркала сохраняются · отдельные кнопки Верт, Гориз и Диаг включают свои оси">линии</button><button id="zVert" aria-pressed="false" data-mi-short="Верт" title="Вертикальные оси: показать / скрыть только вертикали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">верт</button><button id="zCenterAxis" aria-pressed="false" data-mi-short="Ось центр" title="Ось центр: фиксированная вертикаль через центр якорного столбца; свой пульт, раскраска 1 / 0 и автошаблоны ▦. Повторное нажатие скрывает ось, сохраняя настройки">Ось центр</button><button id="zHoriz" aria-pressed="false" data-mi-short="Гориз" title="Горизонтальные оси: показать / скрыть основную горизонталь и дополнительные линии, сохраняя положения и зеркала">гориз</button><button id="zDiag" aria-pressed="false" data-mi-short="Диаг" title="Диагональные оси: показать / скрыть обе диагонали, сохраняя положения и зеркала; «+» на линии добавляет ещё одну">диаг</button><button id="zTop" aria-pressed="false" data-mi-short="Верх" title="Закрепить верх: перетаскивание может сдвинуть поле вверх, колесо снова прижимает первую строку к верхнему краю окна">верх</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
     </span>
     <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output><span id="frameWho" class="ver" style="margin-left:6px"></span></label>
     <button id="bGif" aria-pressed="false" data-mi-short="GIF" title="Запись GIF видимого окна поля — как на экране, с масштабом и сдвигом: размер окна на момент старта, до 1024 px по длинной стороне, до 10 кадров/с, 256 цветов. Нажми, запусти анимацию или меняй кадры; ещё раз — скачать GIF.">GIF</button>
@@ -599,7 +599,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-manual-lines.js?v=644"></script>
 <script src="mayatnik-axis-auto-paint.js?v=893"></script>
 <script src="mayatnik-axis-motion.js?v=914"></script>
-<script src="mayatnik-manual-lines-view.js?v=1074"></script>
+<script src="mayatnik-manual-lines-view.js?v=1075"></script>
 <script src="mayatnik-n-axes-control.js?v=600"></script>
 <script src="../_js/grid-parity.js?v=654"></script>
 <script src="mayatnik-gpu-search.js?v=1013"></script>
@@ -1296,7 +1296,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(!st.linesOn)return [];
     const plan=[];
     if(zlFamilyOn('h')&&st.ztlMain!==false&&(st.ztMir===1||st.ztMir===2))plan.push({k:'h',p:Math.max(0,Math.min(dispH(),Math.round((+st.ztopRow||0)*2)/2)),m:st.ztMir,op:st.ztMirOp});
-    for(const z of zlList())if(zlFamilyOn(z.k)&&(z.m===1||z.m===2)&&(z.k==='h'||z.k==='v'||z.p%1===0))plan.push(z.k==='h'?{...z,p:Math.max(0,Math.min(dispH(),z.p))}:z);
+    for(const z of zlList())if(zlAxisOn(z)&&(z.m===1||z.m===2)&&(z.k==='h'||z.k==='v'||z.p%1===0))plan.push(z.k==='h'?{...z,p:Math.max(0,Math.min(dispH(),z.p))}:z);
     const horizontal=plan.filter(z=>z.k==='h').sort((a,b)=>a.m-b.m||(a.m===1?a.p-b.p:b.p-a.p));let next=0;
     return plan.map(z=>z.k==='h'?horizontal[next++]:z);
   }
@@ -2017,7 +2017,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function axisStroke(ctx,options={}){MayatnikAxisStyle.stroke(ctx,{mode:st.axisPalette,...options});}
   function axisPaletteSync(){st.axisPalette=MayatnikAxisStyle.normalise(st.axisPalette);$('axisPalette').value=st.axisPalette;MayatnikAxisStyle.applyRoot(document.documentElement,st.axisPalette);}
   function writeUI() {
-    autoAxesPaintSync();
+    autoAxesPaintSync();zLinesSync();
     Object.assign(st,MayatnikPitCopies.normalize(st));pitCopiesSync();
     st.paintEmptyNeighbours=st.paintEmptyNeighbours===true;paintEmptySync();
     if(staggeredOn())st.zLimit=false;
@@ -6998,7 +6998,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return {items,skipped:scan.skipped,ignored};
   }
   var columnTemplateRuns;
-  function columnTemplatesOn(){return !!st.linesOn&&zlFamilyOn('v')&&Array.isArray(st.zl)&&st.zl.some(z=>z.k==='v'&&z.templatesOn);}
+  function columnTemplatesOn(){return !!st.linesOn&&zlList().some(z=>z.k==='v'&&z.templatesOn&&zlAxisOn(z));}
   function columnTemplateStatus(id){return zlAxis(id)?.templatesOn&&gpuBig?.large?'Автоподбор требует полного точного CPU-растра; в режиме большого GPU-поля он недоступен.':columnTemplateRuns?.get(id)?.message||(zlAxis(id)?.templatesOn?'Автоподбор включён · ожидание готового кадра':'');}
   function pickTemplatesOnColumn(id){
     const axis=zlAxis(id);if(axis?.k!=='v')return 'Сначала выберите вертикальную ось';
@@ -7013,7 +7013,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function columnTemplatesRefresh(){
     if(!img||!f||!geo||templateDragging)return;
     columnTemplateRuns||=new Map();
-    const axes=columnTemplatesOn()?zlList().filter(z=>z.k==='v'&&z.templatesOn):[],enabled=new Set(axes.map(z=>'v:'+z.axisNo));
+    const axes=columnTemplatesOn()?zlList().filter(z=>z.k==='v'&&z.templatesOn&&zlAxisOn(z)):[],enabled=new Set(axes.map(z=>'v:'+z.axisNo));
     const obsolete=templateItems.filter(t=>t.autoColumnAxis&&!enabled.has(t.autoColumnAxis));
     let changed=!!obsolete.length;
     if(changed)templateItems=templateItems.filter(t=>!obsolete.includes(t));
@@ -9724,7 +9724,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(st.linesOn&&!(document.body.classList.contains('may-zen')&&!st.ztlZen)){
       if(zlFamilyOn('h')&&st.ztlMain!==false){const y=Math.max(0,Math.min(VH,Math.round((+st.ztopRow||0)*2)/2));add([0,y],[VW,y],zlColour('h','main'),true);}
       for(const z of zlList()){
-        if(!zlFamilyOn(z.k))continue;
+        if(!zlAxisOn(z))continue;
         if(z.k==='h')add([0,z.p],[VW,z.p],zlColour(z.k,z.k+':'+z.axisNo),true);
         else if(z.k==='v')add([aw+.5+z.p,0],[aw+.5+z.p,height],zlColour(z.k,z.k+':'+z.axisNo),true);
         else {const sg=z.k==='d'?1:-1,x=aw+.5+z.p-sg*.5,part=MayatnikLineMeasures.clip([x,0],[x+sg*height,height],{left:0,top:0,right:VW,bottom:height});if(part)add(...part,zlColour(z.k,z.k+':'+z.axisNo),true);}
@@ -11656,21 +11656,31 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function zlFamily(k){return k==='e'?'d':k;}
   function zlFamilyOn(k){return !!st.linesOn&&zlFamilies()[zlFamily(k)]!==false;}
+  function zlAxisOn(z){return !!z&&(z.center?!!st.linesOn&&!!z.enabled:zlFamilyOn(z.k));}
+  function zlCenterAxis(){return zlList().find(z=>z.center&&z.k==='v');}
   function zlColour(k,id){return id!=null&&id===st.zlSelected?MayatnikManualLines.SELECTED_COLOUR:k==='h'?'#7cbcff':k==='v'?'#ffcf73':'#c89aff';}
   function zlShowFamily(k){
     const family=zlFamily(k);
     // Waking one family from the master-off state must not reveal the others.
-    if(!st.linesOn)st.lineFamilies={h:false,v:false,d:false};
+    if(!st.linesOn){st.lineFamilies={h:false,v:false,d:false};const center=zlCenterAxis();if(center)center.enabled=false;}
     zlFamilies()[family]=true;st.linesOn=true;
   }
-  const zLinesSync = () => {
+  function zLinesSync(){
     $('zLines').setAttribute('aria-pressed',String(!!st.linesOn));
+    $('zCenterAxis').setAttribute('aria-pressed',String(zlAxisOn(zlCenterAxis())));
     for(const [id,k]of [['zHoriz','h'],['zVert','v'],['zDiag','d']])$(id).setAttribute('aria-pressed',String(zlFamilyOn(k)));
-  };
-  $('zLines').onclick = () => {st.linesOn=!st.linesOn;if(st.linesOn){if(!Object.values(zlFamilies()).some(Boolean))st.lineFamilies={h:true,v:true,d:true};zlEnsure();}save();zLinesSync();zTopLine();if(f)draw();};
+  }
+  $('zLines').onclick = () => {st.linesOn=!st.linesOn;if(st.linesOn){if(!Object.values(zlFamilies()).some(Boolean)&&!zlCenterAxis()?.enabled)st.lineFamilies={h:true,v:true,d:true};zlEnsure();}save();zLinesSync();zTopLine();if(f)draw();};
   for(const [id,k]of [['zHoriz','h'],['zVert','v'],['zDiag','d']])$(id).onclick=()=>{
     if(zlFamilyOn(k))zlFamilies()[k]=false;else{zlShowFamily(k);zlEnsure();}
     save();zLinesSync();zTopLine();if(f)draw();
+  };
+  $('zCenterAxis').onclick=()=>{
+    let axis=zlCenterAxis();const on=!zlAxisOn(axis);
+    if(!axis){axis={k:'v',p:0,m:0,op:'',center:true,enabled:false};zlList().push(axis);}
+    if(on&&!st.linesOn)st.lineFamilies={h:false,v:false,d:false};
+    axis.enabled=on;if(on)st.linesOn=true;zlNumbers();if(on)st.zlSelected='v:'+axis.axisNo;
+    save();queueSession();zLinesSync();zTopLine();if(f)draw();
   };
   zLinesSync();
   // v0.365: «По высоте — переименуй в Вниз: если включена — не давать нижней строке уйти при масштабе; если и Верх включён — обе держать, то есть масштаб заблокать»
@@ -11683,12 +11693,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // от боковой стороны конуса якоря). «+» — ещё одна той же породы на p / 2 (середина до вершины), «×» — убрать, у h / v — своё зеркало (m: 1 / 2).
   // Тянуть — за номер (шаг полбита). Рисуются на своём слое во всё окно поля, 1 px пунктиром; ручки — у первого бита (h — слева, v — сверху)
   var zlO;   // без «= null»: zlDraw мог уже создать слой до этой строки
-  function zlList() { return Array.isArray(st.zl) ? st.zl : (st.zl = []); }   // function — zTopLine зовёт до этой строки (без TDZ)
+  function zlList() { const list=Array.isArray(st.zl)?st.zl:(st.zl=[]);for(const z of list)if(z.center&&z.k==='v'){z.p=0;z.direction=0;}return list; }   // function — zTopLine зовёт до этой строки (без TDZ)
   window.mayLineMirrors={
-    list(){manualMirrorOperations();return [{id:'main',kind:'h',position:+st.ztopRow||0,mode:st.ztMir|0,op:st.ztMirOp},...zlList().map((z,i)=>({id:i,kind:({d:'d1',e:'d2'})[z.k]||z.k,position:z.p,mode:z.m|0,op:z.op,disabled:(z.k==='d'||z.k==='e')&&z.p%1!==0}))];},
+    list(){manualMirrorOperations();return [{id:'main',kind:'h',position:+st.ztopRow||0,mode:st.ztMir|0,op:st.ztMirOp},...zlList().map((z,i)=>({id:i,kind:({d:'d1',e:'d2'})[z.k]||z.k,position:z.p,name:z.center?'Ось центр':undefined,mode:z.m|0,op:z.op,disabled:(z.k==='d'||z.k==='e')&&z.p%1!==0}))];},
     ensure(){st.linesOn=true;if(!Object.values(zlFamilies()).some(Boolean))st.lineFamilies={h:true,v:true,d:true};zlEnsure();zLinesSync();save();zTopLine();},
     set(id,mode){mode=Number(mode);if(![0,1,2].includes(mode))return false;
-      if(id==='main'){st.ztMir=mode;if(mode)zlShowFamily('h');}else{const z=zlList()[Number(id)];if(!z||(mode&&(z.k==='d'||z.k==='e')&&z.p%1))return false;z.m=mode;if(mode)zlShowFamily(z.k);}
+      if(id==='main'){st.ztMir=mode;if(mode)zlShowFamily('h');}else{const z=zlList()[Number(id)];if(!z||(mode&&(z.k==='d'||z.k==='e')&&z.p%1))return false;z.m=mode;if(mode){if(z.center){z.enabled=true;st.linesOn=true;}else zlShowFamily(z.k);}}
       if(mode)zlEnsure();zLinesSync();save();zTopLine();if(f)draw();return true;
     }
   };
@@ -11704,7 +11714,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function manualPaintAxes(){
     if(!st.linesOn)return [];
     return [{id:'main',kind:'h',p:Math.max(0,Math.min(dispH(),Math.round((+st.ztopRow||0)*2)/2)),paint:MayatnikManualLines.paintMask(st.ztPaint),paintColour1:st.ztPaintColour1,paintColour0:st.ztPaintColour0,visible:zlFamilyOn('h')&&st.ztlMain!==false},
-      ...zlList().map(z=>({id:z.k+':'+z.axisNo,kind:z.k,p:z.p,paint:MayatnikManualLines.paintMask(z.paint),paintColour1:z.paintColour1,paintColour0:z.paintColour0,visible:zlFamilyOn(z.k)}))];
+      ...zlList().map(z=>({id:z.k+':'+z.axisNo,kind:z.k,p:z.p,paint:MayatnikManualLines.paintMask(z.paint),paintColour1:z.paintColour1,paintColour0:z.paintColour0,visible:zlAxisOn(z)}))];
   }
   function autoAxesPaintOn(){return st.autoAxes===true&&st.autoAxesPaint===true;}
   // The automatic batch is paint-only: never expose it as a draggable/manual axis.
@@ -11817,7 +11827,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
   },get:()=>({busy:!!manualAxisPaintJob?.pending,failed:!!manualAxisPaintJob?.failed,frame:manualAxisPaintJob?.frame})};
   // вертикаль, «╲» и «╱» — если какой нет, ставится по умолчанию (как «Верт» / «Диаг»); последняя своей породы «×» не удаляется
-  function zlEnsure() { if (!f || !geo) return false; let ch = zlFamilyOn('h') && st.ztlMain === false; if(zlFamilyOn('h'))st.ztlMain = true; const L = zlList(), aw = geo.anchor - VX, has = k => L.some(z => z.k === k);
+  function zlEnsure() { if (!f || !geo) return false; let ch = zlFamilyOn('h') && st.ztlMain === false; if(zlFamilyOn('h'))st.ztlMain = true; const L = zlList(), aw = geo.anchor - VX, has = k => L.some(z => z.k === k&&!z.center);
     if (zlFamilyOn('v') && !has('v')) { const row = Math.min(VH, f.H) - 1; let b = aw; for (let cc = VW - 1; cc >= 0; cc--) if (parityValues()[row * f.W + VX + cc] >= 0) { b = cc; break; } L.push({ k: 'v', p: zlHalf(Math.max(1, b - aw) / 2), m: 0, op:'' }); ch = true; }
     if (zlFamilyOn('d') && (!has('d') || !has('e'))) { let b = aw; for (let cc = VW - 1; cc >= 0; cc--) if (parityValues()[VX + cc] >= 0) { b = cc; break; } const q = zlHalf(Math.max(1, b - aw) / 2);
       if (!has('d')) L.push({ k: 'd', p: -q, m: 0, op:'' }); if (!has('e')) L.push({ k: 'e', p: q, m: 0, op:'' }); ch = true; }
@@ -11828,7 +11838,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function axisMotionTick(now){
     axisMotionFrame=0;const dt=axisMotionLast?Math.max(0,(now-axisMotionLast)/1000):0;axisMotionLast=now;
     const axes=[{id:'main',kind:'h',p:+st.ztopRow||0},...zlList().map(z=>({id:z.k+':'+z.axisNo,kind:z.k,p:z.p}))];let active=false,changed=false;
-    for(const a of axes){const c=axisMotionConfig(a.id);if(!c.direction){axisMotionRuntime.delete(a.id);continue;}active=true;
+    for(const a of axes){const c=axisMotionConfig(a.id);if(c.center)c.direction=0;if(!c.direction){axisMotionRuntime.delete(a.id);continue;}active=true;
       if(!f||!geo||!st.linesOn||!zlFamilyOn(a.kind)||a.id==='main'&&st.ztlMain===false||document.hidden||document.body.classList.contains('may-zen')&&!st.ztlZen){axisMotionRuntime.delete(a.id);continue;}
       const fraction=(axisMotionRuntime.get(a.id)||0)+dt*Math.max(1,Math.min(10000,+c.speed||1)),steps=Math.floor(fraction);axisMotionRuntime.set(a.id,fraction-steps);if(!steps)continue;
       const limits=MayatnikAxisMotion.bounds(a.kind,dispW(),dispH(),geo.anchor-VX),next=MayatnikAxisMotion.advance(a.p,c.direction,steps,...limits);c.direction=next.direction;
@@ -11850,14 +11860,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       onPaint(id,mask){mask=MayatnikManualLines.paintMask(mask);if(id==='main')st.ztPaint=mask;else{const z=zlAxis(id);if(!z)return;z.paint=mask;}save();zTopLine();if(f)draw();},
       onPaintColour(id,bit,value){if(![0,1].includes(bit)||!/^#[0-9a-f]{6}$/i.test(value))return;if(id==='main')st['ztPaintColour'+bit]=value;else{const z=zlAxis(id);if(!z)return;z['paintColour'+bit]=value;}save();if(typeof queueSession==='function')queueSession();zTopLine();if(f)draw();},
       onOperation(id,value){const op=MayatnikManualLines.mirrorOperation(value);if(id==='main')st.ztMirOp=op;else{const z=zlAxis(id);if(!z)return;z.op=op;}save();zTopLine();if(f)draw();},
-      onAuto(id,direction){const c=axisMotionConfig(id);c.direction=c.direction===direction?0:direction;c.speed=Math.max(1,+c.speed||1);axisMotionRuntime.delete(id);save();axisMotionStart();zTopLine();},
+      onAuto(id,direction){const c=axisMotionConfig(id);if(c.center)return;c.direction=c.direction===direction?0:direction;c.speed=Math.max(1,+c.speed||1);axisMotionRuntime.delete(id);save();axisMotionStart();zTopLine();},
       onAutoSpeed(id,speed){axisMotionConfig(id).speed=speed;axisMotionRuntime.delete(id);save();zTopLine();},
-      onPosition(id,p){axisMotionStop(id);if(id==='main')st.ztopRow=p;else{const z=zlAxis(id);if(z)z.p=p;}zTopLine();if(f&&(columnTemplatesOn()||manualPaintOn()))draw();},
+      onPosition(id,p){if(zlAxis(id)?.center)return;axisMotionStop(id);if(id==='main')st.ztopRow=p;else{const z=zlAxis(id);if(z)z.p=p;}zTopLine();if(f&&(columnTemplatesOn()||manualPaintOn()))draw();},
       onCommit(id){save();zTopLine();if(f&&((id==='main'?st.ztMir:zlAxis(id)?.m)||columnTemplatesOn()||manualPaintOn()))draw();},
       onReset(id){if(id!=='main')return;axisMotionStop(id);st.ztopRow=0;save();zTopScroll();zTopLine();if(f&&(st.ztMir||manualPaintOn()))draw();},
       onMirror(id,mode){const z=zlAxis(id);window.mayLineMirrors.set(id==='main'?'main':zlList().indexOf(z),mode);},
-      onAdd(id){const z=zlAxis(id);zlAdd(id==='main'?'h':z.k,(id==='main'?+st.ztopRow||0:z.p)/2);},
-      onDelete(id){const z=zlAxis(id);if(!z||z.k!=='h'&&zlList().filter(t=>t.k===z.k).length<=1)return;zlList().splice(zlList().indexOf(z),1);columnTemplateRuns?.delete(id);if(st.zlSelected===id)st.zlSelected=null;save();zTopLine();if(f&&(z.m||z.paint||z.templatesOn))draw();},
+      onAdd(id){const z=zlAxis(id);if(z?.center)return;zlAdd(id==='main'?'h':z.k,(id==='main'?+st.ztopRow||0:z.p)/2);},
+      onDelete(id){const z=zlAxis(id);if(!z||z.center||z.k!=='h'&&zlList().filter(t=>t.k===z.k&&!t.center).length<=1)return;zlList().splice(zlList().indexOf(z),1);columnTemplateRuns?.delete(id);if(st.zlSelected===id)st.zlSelected=null;save();zTopLine();if(f&&(z.m||z.paint||z.templatesOn))draw();},
       onPin(){st.ztlZen=!st.ztlZen;save();zTopLine();},
       onPlacement(id,p){if(!p.detached)return;const G=zlO.g,w=wrap.getBoundingClientRect();G.save();G.beginPath();G.moveTo(p.onLineX-w.left,p.onLineY-w.top);G.lineTo(p.x-w.left,p.y-w.top);G.strokeStyle=zlColour(id==='main'?'h':zlAxis(id)?.k,id);G.lineWidth=1;G.stroke();G.restore();}
     });
@@ -11867,10 +11877,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const viewport={left:host.left,top:host.top,right:host.left+w,bottom:host.top+h},g={left:r.left,top:r.top,scale:s,anchor:geo.anchor-VX,width:dispW(),height:Math.max(dispH(),guideHeight())};
     c.style.display='';Object.assign(c.style,{left:host.left+'px',top:host.top+'px',width:w+'px',height:h+'px'});const W=Math.max(1,Math.round(w*d)),H=Math.max(1,Math.round(h*d));if(c.width!==W||c.height!==H){c.width=W;c.height=H;}
     G.setTransform(d,0,0,d,0,0);G.clearRect(0,0,w,h);G.lineWidth=1/d;
-    const axes=[{id:'main',kind:'h',p:Math.max(0,Math.min(dispH(),Math.round((+st.ztopRow||0)*2)/2)),number:1,mode:st.ztMir|0,op:st.ztMirOp,paint:MayatnikManualLines.paintMask(st.ztPaint),paintColour1:st.ztPaintColour1,paintColour0:st.ztPaintColour0,visible:zlFamilyOn('h')&&st.ztlMain!==false,canDelete:false,resettable:true,pin:!!st.ztlZen},...zlList().map(z=>({id:z.k+':'+z.axisNo,kind:z.k,p:z.p,number:z.axisNo,mode:z.m|0,op:z.op,paint:MayatnikManualLines.paintMask(z.paint),paintColour1:z.paintColour1,paintColour0:z.paintColour0,visible:zlFamilyOn(z.k),canDelete:z.k==='h'||zlList().filter(t=>t.k===z.k).length>1}))];
+    const axes=[{id:'main',kind:'h',p:Math.max(0,Math.min(dispH(),Math.round((+st.ztopRow||0)*2)/2)),number:1,mode:st.ztMir|0,op:st.ztMirOp,paint:MayatnikManualLines.paintMask(st.ztPaint),paintColour1:st.ztPaintColour1,paintColour0:st.ztPaintColour0,visible:zlFamilyOn('h')&&st.ztlMain!==false,canDelete:false,resettable:true,pin:!!st.ztlZen},...zlList().map(z=>({id:z.k+':'+z.axisNo,kind:z.k,p:z.p,number:z.axisNo,mode:z.m|0,op:z.op,paint:MayatnikManualLines.paintMask(z.paint),paintColour1:z.paintColour1,paintColour0:z.paintColour0,visible:zlAxisOn(z),canDelete:z.k==='h'||zlList().filter(t=>t.k===z.k&&!t.center).length>1}))];
     const showAllAxes=axesAtShownScale();
     for(const a of axes){
-      if(a.kind==='v'){a.templatesOn=!!zlAxis(a.id)?.templatesOn;a.templatesStatus=columnTemplateStatus(a.id);}
+      if(a.kind==='v'){const z=zlAxis(a.id);a.templatesOn=!!z?.templatesOn;a.templatesStatus=columnTemplateStatus(a.id);if(z?.center){a.fixed=true;a.caption='Ось центр';a.canAdd=false;a.canDelete=false;}}
       if(!showAllAxes&&a.kind!=='v')a.visible=false;
       const motion=axisMotionConfig(a.id);a.autoDirection=motion.direction||0;a.autoSpeed=motion.speed||1;a.colour=zlColour(a.kind,a.id);a.fieldSegment=a.kind==='v'?MayatnikManualLines.segment(a,g):null;a.segment=MayatnikManualLines.segment(a,g,viewport);if(!a.segment)continue;const [x1,y1,x2,y2]=a.segment;G.beginPath();G.moveTo(x1-host.left,y1-host.top);G.lineTo(x2-host.left,y2-host.top);
       if(a.kind==='v'){
@@ -14602,12 +14612,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <link rel="stylesheet" href="mayatnik-listening.css?v=1034">
 <script src="mayatnik-listening.js?v=1034"></script>
 <script src="mayatnik-menu-defaults.js?v=887c"></script>
-<script src="mayatnik-mirror-controls.js?v=560"></script>
+<script src="mayatnik-mirror-controls.js?v=1075"></script>
 <script src="mayatnik-library-menu-fold.js?v=873"></script>
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=1055"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1071"></script>
+<script src="mayatnik-menu.js?v=1075"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1044">
 <script src="mayatnik-button-standard.js?v=1044"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">
