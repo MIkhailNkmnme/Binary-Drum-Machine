@@ -1,0 +1,50 @@
+{
+  "http": [
+    {
+      "path": "mayatnik/Zerkalius-mayatnik.html",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-menu.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-axes-panel.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-reset-state.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-settings-library.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/instruction/index.html",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "tools/local-assistant/README.md",
+      "http": 200,
+      "matches": true
+    }
+  ],
+  "limitations": "Special giant GPU 8192/16384 rows is unavailable; ordinary GPU uses full readback. No runtime UI validation.",
+  "version": "1.055",
+  "behaviour": "Native autoAxesPaint toggle beside Auto axes; transient per-frame overlay with own axesFillColour; each frame waits; disables without changing manual paint; state persists; exact source cache reuse; explicit giant GPU limitation",
+  "archive": "archive/Zerkalius-mayatnik/v1055/source-4265648a.zip",
+  "deployment_status": "success",
+  "instruction": "0.159",
+  "review": "Source read by root, autoaxes_live (core), assistant_service (UI/persistence). No automated, syntax, browser or playback tests per AGENTS. User acceptance pending.",
+  "deployment_run": 44856297644,
+  "task": "ПОМ-005",
+  "local_service": "Documentation refreshed by idle restart; available=true, page-actions-v2",
+  "commit": "4265648af7b4988e26c50371f207c201ec7c12ed"
+}
