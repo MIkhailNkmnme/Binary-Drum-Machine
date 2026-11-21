@@ -34,6 +34,32 @@
         for(const templateId of new Set(ids.map(String))){const node=state.nodes.find(n=>n.kind==='template'&&n.id===templateId);if(!node)state.nodes.push({kind:'template',id:templateId,parent:id});else if(!node.parent)node.parent=id;}
         (state.seededGroups||(state.seededGroups=[])).push(id);save();return true;
       },
+      hasSeeded:id=>state.seededGroups?.includes(id)||false,
+      seedTree(id,name,groups){
+        if(!groups.length||api.hasSeeded(id))return false;
+        const folderIds=new Set([id]),templateIds=new Set();
+        for(const group of groups){
+          if(!group.ids.length||folderIds.has(group.id))return false;
+          folderIds.add(group.id);
+          for(const templateId of group.ids){
+            if(templateIds.has(templateId))return false;
+            templateIds.add(templateId);
+          }
+        }
+        const folders=new Set(state.nodes.filter(n=>n.kind==='folder').map(n=>n.id));
+        const templates=new Map(state.nodes.filter(n=>n.kind==='template').map(n=>[n.id,n]));
+        if(!folders.has(id))state.nodes.push({kind:'folder',id,parent:'',name:String(name)});
+        for(const group of groups){
+          if(!folders.has(group.id))state.nodes.push({kind:'folder',id:group.id,parent:id,name:String(group.name)});
+          for(const templateId of group.ids){
+            const node=templates.get(templateId);
+            if(!node)state.nodes.push({kind:'template',id:templateId,parent:group.id});
+            else if(!node.parent)node.parent=group.id;
+          }
+        }
+        (state.seededGroups||(state.seededGroups=[])).push(id);
+        save();return true;
+      },
       addFolder(name,parent=''){
         name=String(name||'').trim().slice(0,100);if(!name||parent&&!state.nodes.some(n=>n.kind==='folder'&&n.id===parent))return null;
         const id='folder:'+Date.now().toString(36)+':'+Math.random().toString(36).slice(2,10);state.nodes.push({kind:'folder',id,parent,name});save();return id;

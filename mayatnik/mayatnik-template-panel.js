@@ -67,7 +67,60 @@
     }
     templateLimitInput.value=String(api.get()||4096);templateLimitDialog.showModal();templateLimitInput.focus();
   }
-  let address,sectionSave,renameButton,deleteButton,searchInput,query='',folderSelection='';
+  let axis512PaletteDialog;
+  function makeAxis512PaletteDialog(){
+    const dialog=doc.createElement('dialog'),title=doc.createElement('h2'),form=doc.createElement('form');
+    dialog.id='mayAxis512PaletteDialog';title.id='mayAxis512PaletteTitle';dialog.setAttribute('aria-labelledby',title.id);
+    const fields=['zero','one'].map((key,index)=>{
+      const row=doc.createElement('div'),label=doc.createElement('label'),hint=doc.createElement('small'),checked=doc.createElement('input'),colour=doc.createElement('input');
+      const name='Цвет '+index;row.className='mtp-palette-row';checked.type='checkbox';colour.type='color';colour.title=name;colour.setAttribute('aria-label',name);
+      label.append(checked,doc.createTextNode(name));row.append(label,colour,hint);form.append(row);
+      checked.addEventListener('change',sync);
+      colour.addEventListener('input',()=>{checked.checked=true;sync();});
+      colour.addEventListener('change',()=>{checked.checked=true;sync();});
+      return {key,checked,colour,hint,defaultColour:index?'#ffd700':'#00008b'};
+    });
+    const notice=doc.createElement('output');notice.className='mtp-palette-notice';notice.setAttribute('role','alert');
+    const actions=doc.createElement('div');actions.className='mtp-limit-actions';
+    const submit=doc.createElement('button');submit.type='submit';submit.className='mtp-command';submit.textContent='Применить';submit.setAttribute('aria-label','Применить выбранные цвета');
+    const cancel=button('Отмена','Отмена',()=>dialog.close());
+    let apply,busy=false;
+    function sync(){
+      submit.disabled=busy||!fields.some(field=>field.checked.checked);
+      cancel.disabled=busy;
+      for(const {checked,colour}of fields)checked.disabled=colour.disabled=busy;
+    }
+    actions.append(submit,cancel);form.append(notice,actions);dialog.append(title,form);
+    dialog.addEventListener('keydown',event=>event.stopPropagation());
+    dialog.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      if(submit.disabled)return;
+      const changes=Object.fromEntries(fields.filter(field=>field.checked.checked).map(field=>[field.key,field.colour.value]));
+      busy=true;notice.textContent='';sync();
+      try{
+        if(await apply(changes)===false)throw Error('Не удалось применить цвета');
+        dialog.close();
+      }catch(error){notice.textContent=error?.message||'Не удалось применить цвета';}
+      finally{busy=false;sync();}
+    });
+    doc.body.append(dialog);
+    return {open(options){
+      if(dialog.open||busy)return;
+      title.textContent=options.title;
+      apply=options.apply;
+      notice.textContent='';
+      for(const field of fields){
+        const value=options.colors?.[field.key];
+        field.colour.value=/^#[0-9a-f]{6}$/i.test(value||'')?value:field.defaultColour;
+        field.checked.checked=false;
+        field.hint.textContent=value===null?'Разные цвета':'';
+      }
+      sync();dialog.showModal();fields[0].checked.focus();
+    }};
+  }
+  root.MayatnikAxis512PaletteDialog={open(options){(axis512PaletteDialog||=makeAxis512PaletteDialog()).open(options);}};
+  let address,sectionSave,renameButton,deleteButton,folderPaletteButton,searchInput,query='',folderSelection='';
   const sectionTitle=()=>activeTab==='shared'?'Общие файлы':activeTab==='templates'?'Шаблоны':activeTab==='layers'?'Слои':activeTab==='music'?'Музыка':activeTab==='gif'?'GIF':activeTab==='sequences'?'Послед-ти':captureLibraries.get(activeTab)?.title||'';
   const matches=name=>!query||String(name||'').toLocaleLowerCase().includes(query);
   function folderNodes(){return store?.snapshot().nodes.filter(n=>n.kind==='folder')||[];}
@@ -88,11 +141,31 @@
     card.classList.toggle('mtp-frame-search-result',!!included);
   }
   function bindFrameSearch(){const api=frameSearchApi();if(api!==frameSearchBound){frameSearchUnsubscribe?.();frameSearchBound=api;frameSearchUnsubscribe=api?.subscribe?.(value=>syncFrameSearch(api.snapshot?.()||value));}syncFrameSearch(api?.snapshot?.()||{on:false});}
-  function folderSearchScope(){
-    const snapshot=store.snapshot(),parents=new Set([current]);
-    if(current){let added;do{added=false;for(const n of snapshot.nodes)if(n.kind==='folder'&&parents.has(n.parent)&&!parents.has(n.id)){parents.add(n.id);added=true;}}while(added);}
-    const known=new Set(engine?.allIds()||[]),ids=snapshot.nodes.filter(n=>n.kind==='template'&&(!current||parents.has(n.parent))&&known.has(n.id)).map(n=>n.id);
-    return {ids,name:current?snapshot.nodes.find(n=>n.kind==='folder'&&n.id===current)?.name||'Шаблоны':'Все шаблоны'};
+  function folderSearchScope(folder=current){
+    const snapshot=store.snapshot(),parents=new Set([folder]);
+    if(folder){let added;do{added=false;for(const n of snapshot.nodes)if(n.kind==='folder'&&parents.has(n.parent)&&!parents.has(n.id)){parents.add(n.id);added=true;}}while(added);}
+    const known=new Set(engine?.allIds()||[]),ids=snapshot.nodes.filter(n=>n.kind==='template'&&(!folder||parents.has(n.parent))&&known.has(n.id)).map(n=>n.id);
+    return {ids,name:folder?snapshot.nodes.find(n=>n.kind==='folder'&&n.id===folder)?.name||'Шаблоны':'Все шаблоны'};
+  }
+  function axis512Bank(){try{return root.MayatnikAxis512||root.opener?.MayatnikAxis512||null;}catch(_){return null;}}
+  async function editAxis512Palette(title,scope){
+    try{
+      const ids=scope();
+      if(!ids.length)throw Error('В папке нет шаблонов набора «512»');
+      const colors=await engine.action(ids,'axis-512-read-palette');
+      root.MayatnikAxis512PaletteDialog.open({title,colors,async apply(changes){
+        const target=scope();
+        if(!target.length)throw Error('Нет доступных шаблонов для применения цветов');
+        const result=await engine.action(target,'axis-512-folder-palette',changes);
+        schedule();return result;
+      }});
+    }catch(error){reportError(error);}
+  }
+  function editAxis512FolderPalette(){
+    const folder=current,bank=axis512Bank();
+    if(!folder||!bank)return;
+    const node=folderNodes().find(item=>item.id===folder);
+    if(node)editAxis512Palette('Цвета папки «'+node.name+'»',()=>folderSearchScope(folder).ids.filter(id=>bank.isId(id)));
   }
   async function toggleFrameSearch(){try{const api=frameSearchApi();if(!api)return;if(api.snapshot?.().on||frameSearchState.on)await api.off();else{reconcileFolders();const {ids,name}=folderSearchScope();await api.enable(ids,{name});}bindFrameSearch();}catch(error){reportError(error);syncFrameSearch({...frameSearchState,error:error?.message||'Не удалось включить поиск кадров'});}}
   function reconcileFolders(){
@@ -100,6 +173,14 @@
     let pack=root.MayatnikXorAxesTemplates;try{pack ||= root.opener?.MayatnikXorAxesTemplates;}catch(_){}const entries=pack?.entries?.()||[];
     // Wait for the complete bank: an early partial host must not consume migration.
     const ids=entries.map(e=>e.id);if(ids.length===28&&ids.every(id=>known.has(id)))store.seedGroup?.('folder:xor-axes','Оси XOR',ids);
+    const bank=axis512Bank();
+    if(bank?.groups?.length===12&&!store.hasSeeded?.(bank.folderId)){
+      // The host loads the complete archive in one assignment. A restored work
+      // may intentionally hide some entries, so seed only the present ones.
+      const groups=bank.groups.map(group=>({...group,ids:group.ids.filter(id=>known.has(id))}))
+        .filter(group=>group.ids.length);
+      if(groups.length)store.seedTree?.(bank.folderId,'512',groups);
+    }
     const key=allIds.join('\u0000');if(key!==libraryKey){store.reconcile(allIds);libraryKey=key;}
   }
   function selectedEntry(){
@@ -128,6 +209,9 @@
     syncFrameSearch();
     sectionSave.parentElement.hidden=activeTab==='shared'||activeTab==='music'||activeTab==='gif';
     const library=captureLibraries.get(activeTab),entry=selectedEntry(),busy=activeTab==='templates'?!!engine?.getState().busy:activeTab==='layers'?false:!!library?.pending||!!library?.api?.getState().busy;
+    const bank=axis512Bank();
+    folderPaletteButton.hidden=activeTab!=='templates'||!bank||!path.some(node=>node.id===bank.folderId);
+    folderPaletteButton.disabled=busy;
     sectionSave.disabled=busy||(activeTab==='templates'?!!saveButton?.disabled:activeTab==='layers'?!entry?.capturable:activeTab==='sequences'?!root.maySequences:!library?.api);
     sectionSave.title=activeTab==='templates'?'Сохранить выбранную фигуру в битотеку':activeTab==='layers'?'Создать фиксацию выбранного слоя':activeTab==='sequences'?'Применить строки из редактора':library?'Сохранить '+library.scope:'';
     renameButton.disabled=busy||!entry||activeTab==='layers';deleteButton.disabled=busy||!entry||(activeTab==='layers'&&!entry.removable);
@@ -294,7 +378,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1074');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1087');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -328,7 +412,7 @@
     const sections=[['shared','Общие',sharedPane],['templates','Шаблоны',templatePane],['layers','Слои',layerPane],...[...captureLibraries.values()].map(library=>[library.key,library.title,capturePane(library)]),...(musicPane?[['music','Музыка',musicPane]]:[]),['gif','GIF',gifPane],['sequences','Послед-ти',sequencePane]],tabKeys=sections.map(s=>s[0]);
     for(const [key,label,pane]of sections){const b=button(label,label,()=>selectTab(key));b.dataset.libraryTab=key;b.setAttribute('role','tab');b.id='mayLibraryTab-'+key;b.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',b.id);b.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?tabKeys[0]:e.key==='End'?tabKeys.at(-1):tabKeys[(tabKeys.indexOf(key)+(e.key==='ArrowRight'?1:tabKeys.length-1))%tabKeys.length];selectTab(next);tabButtons.get(next).focus();}});tabButtons.set(key,b);tabs.append(b);}
     const workspace=doc.createElement('div');workspace.className='mtp-workspace';const main=doc.createElement('div');main.className='mtp-main';
-    const commands=doc.createElement('div');commands.className='mtp-section-commands';sectionSave=headingButton('Сохранить в текущий раздел','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>{if(activeTab==='templates')saveButton.click();else if(activeTab==='layers')layerApi?.capture();else if(activeTab==='sequences')sequenceView?.save();else captureLibraries.get(activeTab)?.save.click();});sectionSave.dataset.sectionSave='';renameButton=headingButton('Переименовать выбранный элемент','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',()=>selectedAction('rename'));renameButton.dataset.sectionRename='';deleteButton=headingButton('Удалить выбранный элемент','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>selectedAction('delete'));deleteButton.dataset.sectionDelete='';commands.append(sectionSave,folderButton,renameButton,deleteButton);
+    const commands=doc.createElement('div');commands.className='mtp-section-commands';sectionSave=headingButton('Сохранить в текущий раздел','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>{if(activeTab==='templates')saveButton.click();else if(activeTab==='layers')layerApi?.capture();else if(activeTab==='sequences')sequenceView?.save();else captureLibraries.get(activeTab)?.save.click();});sectionSave.dataset.sectionSave='';renameButton=headingButton('Переименовать выбранный элемент','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',()=>selectedAction('rename'));renameButton.dataset.sectionRename='';deleteButton=headingButton('Удалить выбранный элемент','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>selectedAction('delete'));deleteButton.dataset.sectionDelete='';folderPaletteButton=headingButton('Цвета 0 и 1 у всех шаблонов папки','M12 6A6 6 0 1 0 12 18A6 6 0 1 0 12 6ZM12 6V18',editAxis512FolderPalette);folderPaletteButton.dataset.axis512FolderPalette='';folderPaletteButton.hidden=true;commands.append(sectionSave,folderButton,folderPaletteButton,renameButton,deleteButton);
     commands.append(headingButton('Kraftwerk: маски, цветовые пресеты и перенос в Маятник','M12 5A7 7 0 1 0 19 12H15L12 9ZM8 9H9M7 13H8M11 16H12',()=>root.open(new URL('../issledovanie/xor-bitglyphs/#palettes',root.location.href).href,'_blank','noopener')));
     const exporter=root.MayatnikLibraryExport?.mount(root,{parent:panel,tab:()=>activeTab});if(exporter){const exportButton=headingButton('Скачать элемент, отмеченные элементы, весь раздел или всю битотеку в папку либо ZIP','M12 5V14M8 10L12 14 16 10M7 16V18H17V16',()=>exporter.open());exportButton.dataset.libraryExport='';commands.append(exportButton);}
     const viewbar=doc.createElement('div');viewbar.className='mtp-viewbar';searchInput=doc.createElement('input');searchInput.type='search';searchInput.className='mtp-search';searchInput.setAttribute('aria-label','Поиск в текущем разделе');searchInput.addEventListener('input',()=>{query=searchInput.value.trim().toLocaleLowerCase();renderKey='';if(layerGrid)delete layerGrid.dataset.signature;activeTab==='templates'?render():renderActive();});viewbar.append(layouts,searchInput);
@@ -384,9 +468,9 @@
   function* templateMetricSteps(item){
     const key=previewKey(item),rk=Math.max(1,Number(item.rk??key?.rk)||1),cached=key&&typeof key==='object'?metricsCache.get(key):null;if(cached?.rk===rk)return cached;
     let ones=0,zeros=0;const dimensions=[];
-    for(const part of item.parts||[]){if(!(part.width>0&&part.height>0&&part.data))continue;
+    for(const part of item.parts||[]){const pixels=part.data;if(!(part.width>0&&part.height>0&&pixels))continue;
       const width=Math.max(1,Math.round(part.width/rk)),height=Math.max(1,Math.round(part.height/rk)),N=width*height,data=new Uint8Array(N),outside=new Uint8Array(N),queue=new Uint32Array(N);let head=0,tail=0;
-      for(let y=0;y<height;y++)for(let x=0;x<width;x++){const q=y*width+x;data[q]=part.data[Math.min(part.height-1,Math.floor((y+.5)*rk))*part.width+Math.min(part.width-1,Math.floor((x+.5)*rk))]?1:0;ones+=data[q];if((q&16383)===16383)yield;}
+      for(let y=0;y<height;y++)for(let x=0;x<width;x++){const q=y*width+x;data[q]=pixels[Math.min(part.height-1,Math.floor((y+.5)*rk))*part.width+Math.min(part.width-1,Math.floor((x+.5)*rk))]?1:0;ones+=data[q];if((q&16383)===16383)yield;}
       const visit=q=>{if(!data[q]&&!outside[q]){outside[q]=1;queue[tail++]=q;}};
       for(let x=0;x<width;x++){visit(x);visit((height-1)*width+x);}for(let y=0;y<height;y++){visit(y*width);visit(y*width+width-1);}
       while(head<tail){const q=queue[head++],x=q%width,y=Math.floor(q/width);if(x)visit(q-1);if(x+1<width)visit(q+1);if(y)visit(q-width);if(y+1<height)visit(q+width);if((head&16383)===0)yield;}
@@ -400,7 +484,14 @@
     syncCardFrameSearch(card,item.id);
     card.classList.toggle('mtp-dark-preview',darkPreview(item.hex));card.querySelector('.mtp-preview').style.background=/^#[0-9a-f]{6}$/i.test(item.palette?.background||'')?item.palette.background:'';card.querySelector('.mtp-name').textContent=templateName(item.name);
     const size=metrics?.size??(item.parts||[]).filter(p=>p.width>0&&p.height>0).map(p=>Math.max(1,Math.round(p.width/rk))+'×'+Math.max(1,Math.round(p.height/rk))).join(' · ');
-    card.querySelector('.mtp-size').textContent=(key?.compound?'Сборный · '+key.compound.members.length+' · ':'')+size;card.querySelector('.mtp-bits').textContent=metrics?'1('+metrics.ones+') · 0('+metrics.zeros+')':'1(…) · 0(…)';card.querySelector('.mtp-preview').title=item.name+(key?.compound?' — вставить сборный шаблон на поле; «Разобрать» — в его группе «Копии / библиотека». ':' — выделить все вхождения. ')+size+'. 1 — заполненные клетки; 0 — замкнутые внутренние пустоты. Внешние выемки и фон не учитываются.';card.querySelector('.mtp-preview').setAttribute('aria-label',card.querySelector('.mtp-preview').title);if(key?.compound)card.querySelector('.mtp-name').title='Enter — вставить сборный шаблон; двойной щелчок — переименовать';}
+    const archive=axis512Bank()?.isId(item.id),counts=key?.axis512Counts;
+    const action=archive?' — добавить копию на поле. ':key?.compound?' — вставить сборный шаблон на поле; «Разобрать» — в его группе «Копии / библиотека». ':' — выделить все вхождения. ';
+    const help=counts?'0 и 1 — количество пикселей соответствующего бита исходной записи.':archive?'Размер взят из сохранённой записи.':'1 — заполненные клетки; 0 — замкнутые внутренние пустоты. Внешние выемки и фон не учитываются.';
+    card.querySelector('.mtp-size').textContent=(key?.compound?'Сборный · '+key.compound.members.length+' · ':'')+size;
+    const bits=card.querySelector('.mtp-bits');bits.title=help;bits.hidden=archive&&!counts;
+    bits.textContent=counts?'1('+counts[1]+') · 0('+counts[0]+')':metrics?'1('+metrics.ones+') · 0('+metrics.zeros+')':'1(…) · 0(…)';
+    const preview=card.querySelector('.mtp-preview');preview.title=item.name+action+size+'. '+help;preview.setAttribute('aria-label',preview.title);
+    if(key?.compound)card.querySelector('.mtp-name').title='Enter — вставить сборный шаблон; двойной щелчок — переименовать';}
   function metricsPump(){metricTimer=0;if(!open||activeTab!=='templates'){metricTasks.clear();metricActive=null;return;}
     if(!metricActive){const first=metricTasks.entries().next().value;if(!first)return;metricTasks.delete(first[0]);metricActive={card:first[0],key:first[1],steps:templateMetricSteps(first[0]._item)};}
     const job=metricActive;if(!job.card.isConnected||previewKey(job.card._item)!==job.key){metricActive=null;}else{
@@ -409,7 +500,7 @@
     }
     if(metricActive||metricTasks.size)metricTimer=root.setTimeout(metricsPump,0);
   }
-  function queueMetrics(card){if(!card?._item||!open||activeTab!=='templates')return;const key=previewKey(card._item);if(key&&typeof key==='object'&&metricsCache.has(key))return;
+  function queueMetrics(card){if(!card?._item||!open||activeTab!=='templates')return;const key=previewKey(card._item);if(axis512Bank()?.isId(card._item.id)||key&&typeof key==='object'&&metricsCache.has(key))return;
     if(metricActive?.card===card&&metricActive.key===key)return;metricTasks.set(card,key);if(!metricTimer)metricTimer=root.setTimeout(metricsPump,0);}
   function queueVisibleMetrics(){if(!panel||!open||activeTab!=='templates')return;const area=panel.getBoundingClientRect();for(const card of grid.querySelectorAll('[data-template-id]')){const r=card.getBoundingClientRect();if(r.bottom>=area.top&&r.top<=area.bottom)queueMetrics(card);}}
   function drawPreview(card){
@@ -419,8 +510,8 @@
     const valid=parts.filter(p=>p.width>0&&p.height>0&&p.data),total=valid.reduce((n,p)=>n+p.width,0),height=Math.max(1,...valid.map(p=>p.height));
     const scale=Math.min((side-8)/Math.max(1,total),(side-8)/height);let left=(side-total*scale)/2;
     // Sample into the bounded preview, never allocate a source-sized canvas or clone its pixels.
-    for(const p of valid){const w=Math.max(1,Math.round(p.width*scale)),h=Math.max(1,Math.round(p.height*scale)),pixels=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-      const v=p.data[Math.min(p.height-1,Math.floor(y/h*p.height))*p.width+Math.min(p.width-1,Math.floor(x/w*p.width))]>>>0,i=(y*w+x)*4;
+    for(const p of valid){const w=Math.max(1,Math.round(p.width*scale)),h=Math.max(1,Math.round(p.height*scale)),data=p.data,pixels=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const v=data[Math.min(p.height-1,Math.floor(y/h*p.height))*p.width+Math.min(p.width-1,Math.floor(x/w*p.width))]>>>0,i=(y*w+x)*4;
       pixels.data[i]=v&255;pixels.data[i+1]=(v>>>8)&255;pixels.data[i+2]=(v>>>16)&255;pixels.data[i+3]=(v>>>24)&255;
     }const px=Math.round(left),py=Math.round((side-h)/2),profile=item.palette;
       if(profile&&['light','dark'].every(key=>/^#[0-9a-f]{6}$/i.test(profile[key]||''))){
@@ -432,18 +523,23 @@
   function templateCard(item){
     const card=doc.createElement('article');card.className='mtp-card';card.draggable=true;card.dataset.templateId=item.id;
     card.addEventListener('dragstart',e=>beginDrag(e,'template',item.id));dropTarget(card,'template',item.id);
-    const choose=button('','Выделить все вхождения шаблона на поле',async()=>{try{folderSelection='';if(previewKey(card._item||item)?.compound)await act(item.id,'insert');else await engine.select(item.id);schedule();}catch(e){reportError(e);}},'mtp-preview');
+    const archive=axis512Bank()?.isId(item.id);
+    const select=async()=>{try{folderSelection='';await engine.select(item.id);schedule();}catch(e){reportError(e);}};
+    const choose=button('',archive?'Добавить копию шаблона на поле':'Выделить все вхождения шаблона на поле',()=>{
+      if(archive||previewKey(card._item||item)?.compound){folderSelection='';return act(item.id,'insert');}
+      return select();
+    },'mtp-preview');
     const img=doc.createElement('img');img.className='mtp-image';img.alt='';img.draggable=false;choose.append(img);
     const name=doc.createElement('span');name.className='mtp-name';name.dataset.userLabel='';name.tabIndex=0;name.setAttribute('role','button');name.title='Щелчок — выбрать шаблон; двойной щелчок — переименовать';name.setAttribute('aria-label',name.title);
     const metrics=doc.createElement('span');metrics.className='mtp-metrics';const size=doc.createElement('span');size.className='mtp-size';size.title='Размер частей шаблона в клетках';const bits=doc.createElement('span');bits.className='mtp-bits';bits.title='1 — заполненные клетки; 0 — замкнутые внутренние пустоты, без внешнего фона';const frameCount=doc.createElement('span');frameCount.dataset.templateFrameCount='';frameCount.hidden=true;metrics.append(size,bits,frameCount);
     const rename=()=>{const value=root.prompt('Название шаблона',card._item.name);if(value)act(item.id,'rename',value);};
     choose.addEventListener('contextmenu',e=>{e.preventDefault();rename();});
-    name.addEventListener('click',e=>{e.stopPropagation();if(e.detail<2&&!previewKey(card._item||item)?.compound)choose.click();});name.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation();rename();});name.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();choose.click();}});
+    name.addEventListener('click',e=>{e.stopPropagation();if(e.detail<2&&!previewKey(card._item||item)?.compound){if(archive)select();else choose.click();}});name.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation();rename();});name.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();if(archive)select();else choose.click();}});
     const row=doc.createElement('div');row.className='mtp-card-actions';
     if(previewKey(item)?.compound)row.append(headingButton('Найти вхождения сборного шаблона на поле','M10 5A5 5 0 1 0 10 15A5 5 0 1 0 10 5ZM14 14L19 19',async()=>{try{await engine.select(item.id);schedule();}catch(e){reportError(e);}}));
     const visibility=headingButton('Скрыть шаблон с поля','M5 12Q12 5 19 12Q12 19 5 12ZM12 10A2 2 0 1 0 12 14A2 2 0 1 0 12 10',()=>act(item.id,'visible'));visibility.dataset.templateVisibility='';
     const skip=headingButton('Пропуск выделения на поле','M6 8H13L18 13M14 13H18V9M7 17L17 7',()=>act(item.id,'skip-selection'));skip.dataset.templateSkip='';row.append(visibility,skip);
-    row.append(headingButton('Добавить копию шаблона на поле','M12 6V18M6 12H18',()=>act(item.id,'insert')),headingButton('Скачать шаблон','M12 5V14M8 10L12 14 16 10M7 16V18H17V16',()=>act(item.id,'download')),headingButton('Изменить цвет шаблона','M12 6A6 6 0 1 0 12 18A6 6 0 1 0 12 6ZM12 6V18',()=>act(item.id,'colour')),headingButton('Удалить шаблон из битотеки','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>act(item.id,'delete-library')),headingButton('Сохранить изменения фигуры в этот шаблон','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>act(item.id,'save')),headingButton('Переименовать шаблон','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',rename));
+    row.append(headingButton('Добавить копию шаблона на поле','M12 6V18M6 12H18',()=>act(item.id,'insert')),headingButton('Скачать шаблон','M12 5V14M8 10L12 14 16 10M7 16V18H17V16',()=>act(item.id,'download')),headingButton('Изменить цвет шаблона','M12 6A6 6 0 1 0 12 18A6 6 0 1 0 12 6ZM12 6V18',()=>archive?editAxis512Palette('Цвета шаблона «'+card._item.name+'»',()=>[item.id]):act(item.id,'colour')),headingButton('Удалить шаблон из битотеки','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>act(item.id,'delete-library')),headingButton('Сохранить изменения фигуры в этот шаблон','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>act(item.id,'save')),headingButton('Переименовать шаблон','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',rename));
     card.append(name,choose,metrics,row);return card;
   }
   function folderCard(node){

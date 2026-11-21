@@ -15,17 +15,17 @@ body>[data-library-folded-popup]{display:none!important}
 /* The legacy right rail also sits above the field overlay, like the other menus. */
 .mayatnik-menu-ready :is(#mayatnikRailR,#canvasActs,.may-pin,.may-manual-axis-controls){z-index:8}
 #mayatnikTemplatePanel *{box-sizing:border-box}
-:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) button,#mayatnikTemplatePanel summary{font:inherit;color:inherit;text-shadow:none!important;cursor:pointer;user-select:none;-webkit-user-select:none}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog,#mayAxis512PaletteDialog) button,#mayatnikTemplatePanel summary{font:inherit;color:inherit;text-shadow:none!important;cursor:pointer;user-select:none;-webkit-user-select:none}
 #mayatnikTemplatePanel .mtp-heading{display:flex;align-items:center;gap:2px;flex:none;min-height:26px}
 #mayatnikTemplatePanel .mtp-heading strong{flex:1;font-size:14px;min-width:0}
 #mayatnikTemplatePanel .mtp-header-path{display:flex;align-items:center;gap:2px;flex:1;min-width:0;overflow:hidden;white-space:nowrap;font-size:12px}
 #mayatnikTemplatePanel .mtp-header-crumb{flex:0 1 auto;min-width:0;height:24px;padding:0;border:0;background:transparent;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mayatnikTemplatePanel .mtp-header-path>span{flex:none}
 #mayatnikTemplatePanel .mtp-header-crumb:focus-visible{outline:1px solid var(--mtp-accent);outline-offset:-1px}
-:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command,#mayatnikTemplatePanel .mtp-path,#mayatnikTemplatePanel .mtp-more>summary{--gz-w:120px;--gz-h:24px;position:relative;display:flex;align-items:center;justify-content:center;flex:none;width:120px;height:24px;margin:0;padding:0 10px;border:0;border-radius:0;background:#1b2430;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);box-shadow:none!important;outline:none;line-height:24px}
-:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command::after,#mayatnikTemplatePanel .mtp-path::after,#mayatnikTemplatePanel summary::after{content:"";pointer-events:none;position:absolute;inset:0;background:var(--mtp-accent);clip-path:polygon(10px 0,11px 1px,2px 50%,11px calc(100% - 1px),10px 100%,0 50%,10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,calc(100% - 11px) calc(100% - 1px),calc(100% - 2px) 50%,calc(100% - 11px) 1px,calc(100% - 10px) 0);opacity:0}
-:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command:hover::after,:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command:focus-visible::after,#mayatnikTemplatePanel .mtp-path:hover::after,#mayatnikTemplatePanel .mtp-path:focus-visible::after,#mayatnikTemplatePanel summary:hover::after,#mayatnikTemplatePanel summary:focus-visible::after{opacity:1}
-:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command:active::after,#mayatnikTemplatePanel .mtp-path:active::after{opacity:1;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%,10px 0,11px 3px,4px 50%,11px calc(100% - 3px),calc(100% - 11px) calc(100% - 3px),calc(100% - 4px) 50%,calc(100% - 11px) 3px,11px 3px)}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog,#mayAxis512PaletteDialog) .mtp-command,#mayatnikTemplatePanel .mtp-path,#mayatnikTemplatePanel .mtp-more>summary{--gz-w:120px;--gz-h:24px;position:relative;display:flex;align-items:center;justify-content:center;flex:none;width:120px;height:24px;margin:0;padding:0 10px;border:0;border-radius:0;background:#1b2430;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);box-shadow:none!important;outline:none;line-height:24px}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog,#mayAxis512PaletteDialog) .mtp-command::after,#mayatnikTemplatePanel .mtp-path::after,#mayatnikTemplatePanel summary::after{content:"";pointer-events:none;position:absolute;inset:0;background:var(--mtp-accent);clip-path:polygon(10px 0,11px 1px,2px 50%,11px calc(100% - 1px),10px 100%,0 50%,10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,calc(100% - 11px) calc(100% - 1px),calc(100% - 2px) 50%,calc(100% - 11px) 1px,calc(100% - 10px) 0);opacity:0}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog,#mayAxis512PaletteDialog) .mtp-command:hover::after,:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog,#mayAxis512PaletteDialog) .mtp-command:focus-visible::after,#mayatnikTemplatePanel .mtp-path:hover::after,#mayatnikTemplatePanel .mtp-path:focus-visible::after,#mayatnikTemplatePanel summary:hover::after,#mayatnikTemplatePanel summary:focus-visible::after{opacity:1}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog,#mayAxis512PaletteDialog) .mtp-command:active::after,#mayatnikTemplatePanel .mtp-path:active::after{opacity:1;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%,10px 0,11px 3px,4px 50%,11px calc(100% - 3px),calc(100% - 11px) calc(100% - 3px),calc(100% - 4px) 50%,calc(100% - 11px) 3px,11px 3px)}
 #mayatnikTemplatePanel .mtp-command.mtp-heading-icon{width:24px;height:24px;min-height:24px;padding:0;background:transparent;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 #mayatnikTemplatePanel .mtp-heading-icon::after{display:none}
 #mayatnikTemplatePanel .mtp-heading-icon svg{width:24px;height:24px;pointer-events:none}
@@ -93,7 +93,7 @@ body>[data-library-folded-popup]{display:none!important}
 #mayatnikTemplatePanel .mtp-drop{outline:2px dashed var(--mtp-accent);outline-offset:-2px}
 #mayatnikTemplatePanel .mtp-empty{grid-column:1/-1;margin:12px 2px;color:#aebdcd;font-size:12px}
 #mayatnikTemplatePanel #templateLibraryChoices,#mayatnikTemplatePanel #templateLibraryCurrent{display:none!important}
-:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) button:disabled,#mayatnikTemplatePanel input:disabled{opacity:.45;cursor:default}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog,#mayAxis512PaletteDialog) button:disabled,#mayatnikTemplatePanel input:disabled{opacity:.45;cursor:default}
 @media(max-width:600px){#mayatnikTemplatePanel .mtp-card-actions{grid-template-columns:repeat(3,minmax(0,1fr))}#mayatnikTemplatePanel .mtp-card-actions>.mtp-command,#mayatnikTemplatePanel .mtp-more>summary{min-height:28px;height:28px}}
 
 /* Half diamond stays on the right viewport edge, above the library in either state. */
@@ -110,7 +110,7 @@ body.mayatnik-menu-ready #mayTemplateLauncher{position:fixed!important;top:50%!i
 #mayTemplateLauncher>.pt-l:active .may-template-diamond{stroke:var(--c);stroke-width:3px}
 /* Shared library layouts: one set of cards/actions, persistent presentation only. */
 #mayatnikTemplatePanel .mtp-layout{display:flex;gap:2px;flex:none}
-:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog) .mtp-command[aria-pressed=true]::after{opacity:1}
+:is(#mayatnikTemplatePanel,#mayBackupDialog,#mayGifDialog,#mayAxis512PaletteDialog) .mtp-command[aria-pressed=true]::after{opacity:1}
 #mayatnikTemplatePanel .mtp-list-head,#mayatnikTemplatePanel .mtp-capture-metrics{display:none}
 #mayatnikTemplatePanel .mtp-template-pane [data-template-id] .mtp-card-actions{grid-template-columns:repeat(4,minmax(0,1fr))}
 #mayatnikTemplatePanel[data-layout=list] .mtp-grid{grid-template-columns:minmax(0,1fr);row-gap:2px}
@@ -210,6 +210,19 @@ html.may-library-disconnected #mayatnikTemplatePanel{display:none!important}
 #mayTemplateLimitDialog label{display:flex;flex-direction:column;gap:6px}
 #mayTemplateLimitDialog input{width:120px;max-width:100%;height:28px;background:#1b2430;color:inherit;border:1px solid #526075;user-select:text}
 #mayTemplateLimitDialog .mtp-limit-actions{display:flex;flex-wrap:wrap;gap:2px;margin-top:8px}
+#mayAxis512PaletteDialog{--mtp-accent:#b48cff;box-sizing:border-box;max-width:calc(100% - 24px);padding:12px;background:#0e1116;color:#dfe6f5;border:1px solid var(--mtp-accent);font:12px/1.35 system-ui,sans-serif}
+#mayAxis512PaletteDialog::backdrop{background:#0009}
+#mayAxis512PaletteTitle{margin:0 0 8px;font-size:14px}
+#mayAxis512PaletteDialog .mtp-palette-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0}
+#mayAxis512PaletteDialog label{display:flex;align-items:center;gap:6px}
+#mayAxis512PaletteDialog input[type=color]{width:44px;height:24px;padding:2px;border:1px solid #526075;background:#1b2430;cursor:pointer}
+#mayAxis512PaletteDialog input:focus-visible{outline:1px solid var(--mtp-accent);outline-offset:1px}
+#mayAxis512PaletteDialog input:disabled{opacity:.45;cursor:default}
+#mayAxis512PaletteDialog .mtp-palette-row small,#mayAxis512PaletteDialog .mtp-palette-notice{color:#c4b1e2}
+#mayAxis512PaletteDialog .mtp-palette-notice:not(:empty){display:block;margin:4px 0}
+#mayAxis512PaletteDialog .mtp-limit-actions{display:flex;flex-wrap:wrap;gap:2px;margin-top:8px}
+#mayAxis512PaletteDialog .mtp-command{background:linear-gradient(180deg,#293646,#1b2430 50%,#263442)}
+
 #mayatnikTemplatePanel .mtp-sequences{min-width:0;overflow:hidden}
 /* Template list cards keep text/actions left and use the full right side for preview. */
 #mayatnikTemplatePanel[data-layout=list] .mtp-template-pane .mtp-list-head{display:none}
