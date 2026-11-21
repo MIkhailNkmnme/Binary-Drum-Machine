@@ -1,6 +1,6 @@
 .may-manual-axis-controls{position:fixed;z-index:6;display:flex;align-items:center;gap:2px;height:24px;touch-action:none;user-select:none;white-space:nowrap}
 .may-manual-axis-controls[hidden],.may-manual-axis-controls button[hidden]{display:none!important}
-.may-manual-axis-status{position:absolute;left:0;bottom:calc(100% + 4px);box-sizing:border-box;width:100%;min-width:190px;max-width:min(310px,calc(100vw - 16px));padding:5px 8px;background:#101725;color:#e8edf5;border:1px solid var(--manual-axis-colour,#ffe14d);font:12px/1.35 system-ui,sans-serif;white-space:normal;pointer-events:none}
+.may-manual-axis-status{position:absolute;left:0;top:calc(100% + 4px);box-sizing:border-box;width:100%;min-width:190px;max-width:min(310px,calc(100vw - 16px));padding:5px 8px;background:#101725;color:#e8edf5;border:1px solid var(--manual-axis-colour,#ffe14d);font:12px/1.35 system-ui,sans-serif;white-space:normal;pointer-events:none}
 .may-manual-axis-status[hidden]{display:none!important}
 .may-manual-axis-controls button{position:relative;flex:none;box-sizing:border-box;width:24px;height:24px;padding:0 4px;border:0;border-radius:0;background:color-mix(in srgb,var(--manual-axis-colour) 35%,#1b2430);color:var(--manual-axis-colour);font:700 13px/24px system-ui,sans-serif;cursor:pointer;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%);isolation:isolate;user-select:none;touch-action:none}
 .may-manual-axis-controls button::before{content:"";position:absolute;z-index:-1;inset:1px;clip-path:inherit;background:#000}

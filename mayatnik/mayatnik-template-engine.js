@@ -16,8 +16,8 @@
       return cache[key]=patterns;
     }
     async function filter(items,run){
-      // Placed figures are already known to exist; show them before a full-field scan.
-      visibleIds=new Set(items.filter(entry=>(host.listedInstances||host.visibleInstances)?.(entry.id)).map(entry=>entry.id));state.filtering=true;emit();
+      // An assembly is a saved arrangement. Its card does not depend on a field match.
+      visibleIds=new Set(items.filter(entry=>entry.shape.compound||(host.listedInstances||host.visibleInstances)?.(entry.id)).map(entry=>entry.id));state.filtering=true;emit();
       const missing=items.filter(entry=>!visibleIds.has(entry.id)&&host.selectionAllowed?.(entry)!==false);
       // Oversize saved shapes remain listed; defer their expensive matching until the limit permits it.
       for(const entry of items)if(host.selectionAllowed?.(entry)===false)visibleIds.add(entry.id);
@@ -99,7 +99,7 @@
       }catch(e){state.message=e.message;return false;}finally{if(run===serial){state.busy=false;emit();}}
     }
     return {
-      list:()=>host.entries().filter(t=>!visibleIds||visibleIds.has(t.id)).map(t=>({id:t.id,name:t.name,hex:t.shape.hex,parts:t.shape.parts,palette:t.shape.palette,folder:t.folder,previewKey:t.shape,builtin:String(t.id).startsWith('standard:')})),allIds:()=>host.entries().map(t=>t.id),whenFiltered:()=>filterPending,
+      list:()=>host.entries().filter(t=>t.shape.compound||!visibleIds||visibleIds.has(t.id)).map(t=>({id:t.id,name:t.name,hex:t.shape.hex,parts:t.shape.parts,palette:t.shape.palette,folder:t.folder,previewKey:t.shape,builtin:String(t.id).startsWith('standard:')})),allIds:()=>host.entries().map(t=>t.id),whenFiltered:()=>filterPending,
       exportList:()=>host.entries().map(({id,name})=>({id,name})),
       exportItem(id){const entry=host.entries().find(t=>t.id===id);if(!entry)throw Error('Шаблон не найден');const item=structuredClone(entry);return {id:item.id,name:item.name,files:[{extension:'.template.json',blob:new Blob([JSON.stringify({format:'mayatnik-templates',version:1,templates:[item]})],{type:'application/json'})}]};},
       select,selectShape:(shape,options)=>selectEntry({shape},true,options),colour:hex=>edit('colour',hex),removeMatches:()=>edit('delete'),

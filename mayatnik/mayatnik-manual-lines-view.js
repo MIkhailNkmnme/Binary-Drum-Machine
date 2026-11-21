@@ -45,7 +45,7 @@
   function create(id){
    const panel=doc.createElement('div');panel.className='may-manual-axis-controls';panel.hidden=true;panel.dataset.axisId=String(id);
    const parts={},status=doc.createElement('output');status.className='may-manual-axis-status';status.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.setAttribute('aria-atomic','true');status.id='may-manual-axis-status-'+String(id).replace(/[^a-z0-9_-]/gi,'-');panel.append(status);
-   for(const [key,text,title]of [['label','','Тянуть — двигать ось с шагом полклетки'],['add','+','Добавить ось между этой и началом поля'],['mirror1','',''],['mirror2','',''],['xor','XOR',''],['and','AND',''],['paint1','1',''],['paint0','0',''],['templates','▦','Выделить касающиеся оси шаблоны; если готовых нет — автоматически взять фигуры с поля по правилу «Область». Затем «В библиотеку» сохранит сборный шаблон'],['remove','×','Удалить ось'],['pin','📌','Показывать ручные оси в дзене']]){
+   for(const [key,text,title]of [['label','','Тянуть — двигать ось с шагом полклетки'],['add','+','Добавить ось между этой и началом поля'],['mirror1','',''],['mirror2','',''],['xor','XOR',''],['and','AND',''],['paint1','1',''],['paint0','0',''],['templates','▦','Автоматически выделять фигуры, касающиеся оси, на каждом кадре по правилу «Область». 1 / 0 включают раскраску. «В библиотеку» сохранит текущий набор. Повторное нажатие выключает'],['remove','×','Удалить ось'],['pin','📌','Показывать ручные оси в дзене']]){
     const button=doc.createElement('button');button.type='button';button.className='may-manual-axis-'+key;button.textContent=text;button.title=title;parts[key]=button;panel.append(button);
    }
    for(const bit of [1,0]){
@@ -79,7 +79,7 @@
    parts.templates.onclick=e=>{consume(e);if(!axis(id))return;select(id);
     try{const a=axis(id);status.textContent=options.onTemplates?.(id,{segment:a.fieldSegment||a.segment,fieldOrigin:current.fieldOrigin,scale:current.scale})||'Нет выбранных шаблонов';}
     catch(error){status.textContent='Не удалось выбрать шаблоны: '+(error?.message||String(error));}
-    status.axisPosition=axis(id)?.p;status.fieldRows=current?.rows;status.hidden=false;
+    status.axisPosition=axis(id)?.p;status.fieldRows=current?.rows;status.hidden=false;render(current);
    };
    for(const mode of [1,2])parts['mirror'+mode].onclick=e=>{consume(e);const a=axis(id);if(a&&!parts['mirror'+mode].disabled){select(id);options.onMirror?.(id,Geometry.toggleMirror(a.mode,mode));}};
    for(const bit of [1,0])parts['paint'+bit].onclick=e=>{consume(e);const a=axis(id);if(a&&!parts['paint'+bit].disabled){select(id);options.onPaint?.(id,Geometry.togglePaint(a.paint,bit));}};
@@ -94,7 +94,8 @@
    if(!snapshot.axes.some(a=>a.id===preferredId))preferredId=null;
    for(const a of snapshot.axes){const belowSegment=a.kind==='v'&&Array.isArray(a.fieldSegment)&&a.fieldSegment[0]>=snapshot.viewport.left&&a.fieldSegment[0]<=snapshot.viewport.right?a.fieldSegment:null,segment=a.segment||belowSegment;if(a.visible===false||!segment)continue;
     if(!panels.has(a.id))panels.set(a.id,create(a.id));const {panel,parts,status}=panels.get(a.id);
-    if(status.axisPosition!==a.p||status.fieldRows!==snapshot.rows)status.hidden=true;
+    if(a.templatesStatus){if(status.textContent!==a.templatesStatus)status.textContent=a.templatesStatus;status.axisPosition=a.p;status.fieldRows=snapshot.rows;status.hidden=false;}
+    else if(status.axisPosition!==a.p||status.fieldRows!==snapshot.rows)status.hidden=true;
     panel.hidden=false;panel.dataset.selected=String(a.id===preferredId);panel.style.setProperty('--manual-axis-colour',a.id===preferredId?Geometry.SELECTED_COLOUR:a.colour||'#7cbcff');
     panel.dataset.compact=String(snapshot.viewport.right-snapshot.viewport.left<400);
     const caption=Geometry.label(a,snapshot.anchor,snapshot.rows);parts.label.textContent=caption.split(' · ')[0];parts.label.title=caption+' · Тянуть — двигать ось с шагом полклетки';parts.label.setAttribute('aria-label',caption);parts.label.style.cursor=a.kind==='h'?'ns-resize':a.kind==='v'?'ew-resize':a.kind==='d'?'nesw-resize':'nwse-resize';
@@ -107,9 +108,9 @@
     for(const op of ['xor','and']){const element=parts[op];element.setAttribute('aria-pressed',String(Geometry.mirrorOperation(a.op)===op));element.title=caption+' · Зеркало '+op.toUpperCase()+' · повторное нажатие возвращает копирование';element.setAttribute('aria-label',element.title);}
     for(const [key,dir]of [['autoBack',-1],['autoForward',1]]){parts[key].setAttribute('aria-pressed',String(a.autoDirection===dir));parts[key].textContent=a.kind==='h'?(dir<0?'↑':'↓'):(dir<0?'←':'→');parts[key].title='Автодвижение '+(dir<0?'назад':'вперёд')+' · у края разворот · повторное нажатие — стоп';}
     if(doc.activeElement!==parts.autoSpeed)parts.autoSpeed.value=String(a.autoSpeed||1);
-    parts.templates.hidden=a.kind!=='v'||!options.onTemplates;parts.templates.setAttribute('aria-label',parts.templates.title);
+    parts.templates.hidden=a.kind!=='v'||!options.onTemplates;parts.templates.setAttribute('aria-label',parts.templates.title);parts.templates.setAttribute('aria-pressed',String(!!a.templatesOn));
     parts.remove.hidden=a.canDelete===false;parts.pin.hidden=a.pin===undefined;parts.pin.setAttribute('aria-pressed',String(!!a.pin));
-    candidates.push({id:a.id,kind:a.kind,segment,size:{width:panel.offsetWidth,height:panel.offsetHeight}});
+    candidates.push({id:a.id,kind:a.kind,segment,size:{width:panel.offsetWidth,height:Math.max(panel.offsetHeight,status.hidden?0:status.offsetTop+status.offsetHeight)}});
    }
    const layout=panelLayout(candidates,snapshot.viewport,snapshot.fieldBounds);
    for(const p of layout){

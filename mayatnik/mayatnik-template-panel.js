@@ -294,7 +294,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','870');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1074');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -492,7 +492,13 @@
   for(const library of captureLibraries.values())root.addEventListener(library.key==='settings'?'may-settings-library-ready':'may-frame-library-ready',()=>{make();bindCapture(library,root[library.apiName]);});
   root.addEventListener('zerk-bitoteka-ready',()=>{if(activeTab==='shared'&&open)renderActive();});
   root.addEventListener('may-template-imported',event=>{if(event.detail?.folder!=='Kraftwerk')return;make();bind(root.mayTemplateLibrary);if(!engine||!store)return;store.reconcile(engine.allIds());let folder=store.snapshot().nodes.find(n=>n.kind==='folder'&&n.parent===''&&n.name==='Kraftwerk')?.id;if(!folder)folder=store.addFolder('Kraftwerk','');for(const id of event.detail.ids||[]){const node=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id);if(node&&!node.parent)store.move('template',id,folder);}current=folder;folderSelection='';renderKey='';selectTab('templates');schedule();});
-  root.addEventListener('may-template-saved',e=>{make();bind(root.mayTemplateLibrary);if(!engine)return;store.reconcile(engine.allIds());const id=String(e.detail?.id||'');folderSelection='';current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';renderKey='';selectTab('templates');setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});});
+  root.addEventListener('may-template-saved',e=>{
+    make();bind(root.mayTemplateLibrary);if(!engine)return;
+    store.reconcile(engine.allIds());const id=String(e.detail?.id||'');
+    folderSelection='';current=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===id)?.parent||'';
+    if(query&&!matches(e.detail?.name)){query='';searchInput.value='';}
+    renderKey='';selectTab('templates');setOpen(true);render();cards.get(id)?.scrollIntoView?.({block:'nearest',inline:'nearest'});
+  });
   root.addEventListener('resize',()=>drawMusicPreview(true));
   doc.addEventListener('visibilitychange',()=>{if(doc.hidden&&musicAudio){try{musicAudio.pause();}catch(_){}cancelMusicAnimation();}});
   root.addEventListener('pagehide',()=>{frameSearchUnsubscribe?.();gifGeneration++;clearGifUrls();gifUnsubscribe?.();stopMusicPreview();musicResizeObserver?.disconnect();musicUnsubscribe?.();unsubscribe?.();layerUnsubscribe?.();folderUnsubscribe?.();sequenceView?.destroy();for(const library of captureLibraries.values())library.unsubscribe?.();observer?.disconnect();},{once:true});

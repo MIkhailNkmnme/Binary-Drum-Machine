@@ -33,14 +33,16 @@
   ];
   const groups=[
     ['Копии / библиотека',['save','split','clone','remove','find']],
-    ['Цвет / видимость',['colour','show','paint']],
+    ['Цвет / видимость',['colour','show','paint','hideSelected','onlySelected']],
     ['Размер',['taller','shorter','proportional']],
     ['Сдвиг / след',['move','up','down','fall','transfer','trail']],
     ['Зеркала / XOR',['manualAxis:manualH','manualAxis:manualV','capturePaint','transferPaint','flipH','flipV','line','xor1','xorNext']],
     ['Возврат',['return','reset']]
   ];
+  commands.push(['hideSelected','Показать выбранные фигуры пустотами; повтор восстанавливает показ. Только одиночный плоский вид.','◌'],['onlySelected','Оставить только выбранные фигуры, остальное показать пустотами; повтор восстанавливает показ. Только одиночный плоский вид.','◉']);
   const captions={split:'Разобрать',save:'В библиотеку',clone:'Копия',remove:'Убрать',find:'Найти такие',colour:'Цвет',show:'Показать',paint:'Прокрасить',taller:'Высота +10%',shorter:'Высота −10%',proportional:'Пропорции',move:'Двигать',up:'Вверх',down:'Вниз',fall:'Спуск',transfer:'Без следа',trail:'Инв. след',flipH:'Лево / право',flipV:'Верх / низ',line:'По линии','manualAxis:manualH':'Гориз. ось','manualAxis:manualV':'Верт. ось',capturePaint:'Подхват краски',transferPaint:'Передача краски',xor1:'XOR +1',xorNext:'Шаг XOR',return:'Туда / назад',reset:'Восстановить'};
   function mount(options){
+    captions.hideSelected='Скрыть выбранные';captions.onlySelected='Только выбранные';
     const doc=options.document||document,root=doc.defaultView||globalThis,NS='http://www.w3.org/2000/svg';
     const expanded=options.expanded===true,legacyKey='mayatnik-template-inline-layout-v1';
     const storageKey=expanded?'mayatnik-template-inline-layout-v2':legacyKey;
@@ -134,7 +136,8 @@
       banks.forEach((bank,index)=>{const h=Math.min(bank.inlineHeight,limit);style(bank,'left',(index?rightX:leftX)+'px');style(bank,'top',clamp(state.box.y,minY,maxY-h)+'px');});
     }
     function render(state){if(!state||state.width<130){hide();return;}if(dismissed&&dismissedKey===state.key)return;dismissed=false;dismissedKey=null;currentState=state;if(host.hidden){host.hidden=false;geometryDirty=true;}refreshLabels();
-      const checked={'manualAxis:manualH':state.manualH,'manualAxis:manualV':state.manualV,capturePaint:state.capturePaint,transferPaint:state.transferPaint};
+      state.visibilityMode=options.visibilityMode?.()||'';
+      const checked={'manualAxis:manualH':state.manualH,'manualAxis:manualV':state.manualV,capturePaint:state.capturePaint,transferPaint:state.transferPaint,hideSelected:state.visibilityMode==='hide',onlySelected:state.visibilityMode==='only'};
       for(const [id,node]of buttons){
         disabled(node,state.busy||state.disabled?.includes(id));
         if(Object.hasOwn(checked,id))set(node,'aria-pressed',!!checked[id]);

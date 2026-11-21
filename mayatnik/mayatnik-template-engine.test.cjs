@@ -75,6 +75,16 @@ test('current-row filtering hides absent templates, preserves library IDs and ca
 test('existence scan returns early without allocating a full selection mask',async()=>{
  const found=await M.find({width:3,height:1,data:Int8Array.from([1,1,0])},[M.compile({width:3,height:1,data:[1,1,0]})],{existsOnly:true});assert.equal(found.count,1);assert.equal(found.selected,undefined);
 });
+test('saved assemblies stay visible before and after the current-field filter, without scanning their silhouettes',async()=>{
+ const entries=[{id:'assembly',name:'Сборный шаблон',shape:{compound:{version:1},parts:[]}}];
+ let reads=0,frame=0;
+ const api=Engine.create({entries:()=>entries,scope:()=>frame,field:async()=>{reads++;}});
+ assert.deepEqual(api.list().map(item=>item.id),['assembly']);
+ api.refresh();await api.whenFiltered();
+ frame++;api.refresh();await api.whenFiltered();
+ assert.deepEqual(api.list().map(item=>item.id),['assembly']);
+ assert.equal(reads,0);
+});
 
 test('explicit Remove command removes just the selected field copy; common undo/redo restores it without touching the library',()=>{
  const c=actualHistory();c.templateLocks=null;c.colourTemplate=c.templateItems[0];c.templatePickedIds=new Set();c.pickedTemplates=()=>c.colourTemplate?[c.colourTemplate]:[];c.selectTemplate=t=>{c.colourTemplate=t;};
