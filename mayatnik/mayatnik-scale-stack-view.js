@@ -1,7 +1,7 @@
 /* Scroll-window rendering: every requested height exists, only visible rasters allocate memory. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikScaleStackView=api;})(globalThis,function(){
  'use strict';
- const LIMIT=32*1024*1024;
+ const MAX_SOURCE_BYTES=16*1024*1024, MAX_RENDER_BYTES=96*1024*1024;
  function levels(width,height,step,mode='rows',base=2){
   step=Math.max(1,Math.floor(Number(step)||1));base=Math.max(2,Math.min(10000,Math.floor(Number(base)||2)));const result=[];
   const add=rows=>{rows=Math.max(8,Math.floor(rows));if(rows<height&&result.at(-1)?.height!==rows)result.push({height:rows,width:Math.max(1,Math.ceil(width*rows/height-1e-12))});};
@@ -379,7 +379,7 @@
     const currentDone=previousSelection?previousSelection.revision===revision:!source||visible().every(item=>item.revision===revision);
     if(!job&&pending&&currentDone){const next=pending;pending=null;const s=next.source||o.captureSource?.();
      if(!s||!Number.isSafeInteger(s.width)||!Number.isSafeInteger(s.height)||s.width<1||s.height<1||!ArrayBuffer.isView(s.pixels)||s.pixels.byteLength!==s.width*s.height*4||s.pixels.byteOffset%4!==0||s.pixels.length!==s.width*s.height*4)throw Error('Повреждён кадр масштабов под полем');
-     if(s.pixels.byteLength+(s.bits?.byteLength||0)>LIMIT/2)throw Error('Для масштабов под полем недостаточно памяти');
+     if(s.pixels.byteLength+(s.bits?.byteLength||0)>MAX_SOURCE_BYTES)throw Error('Для масштабов под полем недостаточно памяти');
      const changed=!source||source.width!==s.width||source.height!==s.height;source=s;sourceFrame=next.frame;lastKey=next.key;revision++;if(changed)rebuild();
     }
     if(!source)return;
@@ -387,9 +387,16 @@
     const set=new Set(needed);for(const item of items)if(!set.has(item))drop(item);
     if(job&&!set.has(job.item))job=null;
     if(!job){const item=needed.find(item=>item.revision!==revision);if(item){
-     const bytes=source.pixels.byteLength+(source.bits?.byteLength||0)+items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0),0)+item.size.width*item.size.height*12;
-     if(bytes>(method.value==='phases'?64*1024*1024:LIMIT))throw Error('Для видимого масштаба недостаточно памяти');
-     job={item,at:0,pixels:new Uint8ClampedArray(item.size.width*item.size.height*4)};
+     const {width,height}=item.size;
+     const retained=items.reduce((sum,i)=>sum+(i.canvas?i.canvas.width*i.canvas.height*4:0)+(i.bits?.byteLength||0)+(i.overlay?i.overlay.width*i.overlay.height*4:0),0);
+     const sampling=['canvas','phases'].includes(method.value);
+     // The reduced methods also allocate their own sampling result. ImageData
+     // itself is the work buffer and can be passed straight to putImageData.
+     const extra=width*height*(4+(source.bits?1:0)+(item.canvas?0:4)+(sampling?0:5));
+     const bytes=source.pixels.byteLength+(source.bits?.byteLength||0)+retained+extra;
+     if(bytes>MAX_RENDER_BYTES)throw Error('Для видимого масштаба недостаточно памяти');
+     const canvas=item.canvas||doc.createElement('canvas'),image=canvas.getContext('2d').createImageData(width,height);
+     job={item,at:0,canvas,image,pixels:image.data};
     }}
     if(job){const {item,pixels}=job,{width,height}=item.size,ratio=method.value==='viewport'?item.size.scale:height/source.height,end=['canvas','phases'].includes(method.value)?Math.min(width*height,job.at+1048576):width*height;
      const output=new Uint32Array(pixels.buffer),input=new Uint32Array(source.pixels.buffer,source.pixels.byteOffset,source.width*source.height);
@@ -401,8 +408,8 @@
      }
      if(!['canvas','viewport','phases'].includes(method.value)){const reduce=o.reduce||win.MayatnikGifScale?.reduce;if(!reduce)throw Error('Модуль уменьшения не загружен');const reduced=reduce(source.pixels,source.width,source.height,height,method.value,source.bits);pixels.set(reduced.pixels);job.bits=reduced.bits;}
      job.at=end;if(end<width*height){later();return;}
-     if(!item.canvas){item.canvas=doc.createElement('canvas');item.canvas.className='may-scale-stack__canvas';item.element.append(item.canvas);}
-     if(source.bits&&!job.bits){job.bits=new Int8Array(width*height).fill(-1);for(let q=0;q<job.bits.length;q++){if(method.value==='phases'){const at=phaseSourceIndex(item.size,q%width,Math.floor(q/width));if(at>=0)job.bits[q]=source.bits[at];}else{const sx=Math.floor((q%width+.5)/ratio),sy=Math.floor((Math.floor(q/width)+.5)/ratio);if(sx<source.width&&sy<source.height)job.bits[q]=source.bits[sy*source.width+sx];}}}item.bits=job.bits||null;item.empty=method.value==='phases'&&!!item.bits&&!item.bits.some(value=>value!==-1);const cv=item.canvas;cv.width=width;cv.height=height;const ctx=cv.getContext('2d'),image=ctx.createImageData(width,height);image.data.set(pixels);ctx.putImageData(image,0,0);item.revision=revision;job=null;geometry();if(item===selected)paintOverlay(pixels);o.onPaint?.({key:lastKey,levels:shown.map(i=>i.size)});
+     if(!item.canvas){item.canvas=job.canvas;item.canvas.className='may-scale-stack__canvas';item.element.append(item.canvas);}
+     if(source.bits&&!job.bits){job.bits=new Int8Array(width*height).fill(-1);for(let q=0;q<job.bits.length;q++){if(method.value==='phases'){const at=phaseSourceIndex(item.size,q%width,Math.floor(q/width));if(at>=0)job.bits[q]=source.bits[at];}else{const sx=Math.floor((q%width+.5)/ratio),sy=Math.floor((Math.floor(q/width)+.5)/ratio);if(sx<source.width&&sy<source.height)job.bits[q]=source.bits[sy*source.width+sx];}}}item.bits=job.bits||null;item.empty=method.value==='phases'&&!!item.bits&&!item.bits.some(value=>value!==-1);const cv=item.canvas;cv.width=width;cv.height=height;cv.getContext('2d').putImageData(job.image,0,0);item.revision=revision;job=null;geometry();if(item===selected)paintOverlay(pixels);o.onPaint?.({key:lastKey,levels:shown.map(i=>i.size)});
     }
     error=null;if(pending||needed.some(item=>item.revision!==revision))later();
    }catch(e){fail(e);}

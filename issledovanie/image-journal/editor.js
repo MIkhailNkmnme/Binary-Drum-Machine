@@ -35,8 +35,14 @@
       for (const template of document.querySelectorAll('template[data-archive-key]')) {
         const card = template.content.firstElementChild;
         card.dataset.journalKey = template.dataset.archiveKey;
-        if (withdrawn.has(card.dataset.journalKey)) template.remove();
-        else template.replaceWith(card);
+        if (withdrawn.has(card.dataset.journalKey)) { template.remove(); continue; }
+        for (const link of card.querySelectorAll('a[data-view-image]')) {
+          const key = new URL(link.href).pathname.slice(1);
+          if (key === card.dataset.journalKey) continue;
+          if (withdrawn.has(key)) link.remove();
+          else link.dataset.journalKey = key;
+        }
+        template.replaceWith(card);
       }
     } catch { retry.hidden = false; }
   }

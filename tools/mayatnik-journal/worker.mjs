@@ -201,14 +201,15 @@ export default {
         code = fields.get('code');
         const summary = fields.get('summary');
         if (!(image instanceof Blob) || image.size > MAX_BYTES) return reply({error:'Для журнала нужен PNG до 8 МиБ.'}, 413);
-        if (typeof code !== 'string' || code.length > MAX_CODE || !CODE.test(code) || typeof summary !== 'string') {
+        if (typeof code !== 'string' || code.length > MAX_CODE || (code && !CODE.test(code)) || typeof summary !== 'string') {
           return reply({error:'Некорректные параметры кадра.'}, 400);
         }
         summary64 = encodeSummary(summary);
       }
       const png = await readPng(new Uint8Array(await image.arrayBuffer()));
       if (!png) return reply({error:'Нужен корректный PNG из Маятника до 32 Мпикс.'}, 400);
-      const sceneMeta = code ? {scene:await storeScene(env.MEDIA, code), summary64} : {};
+      const sceneMeta = summary64 ? {summary64} : {};
+      if (code) sceneMeta.scene = await storeScene(env.MEDIA, code);
       // Lexicographic R2 listing returns the most recent images first.
       const saved = await env.MEDIA.put(key, png.blob, {onlyIf:new Headers({'If-None-Match':'*'}), httpMetadata:{contentType:'image/png'}, customMetadata:{
         frame, width:String(png.width), height:String(png.height), ...sceneMeta
