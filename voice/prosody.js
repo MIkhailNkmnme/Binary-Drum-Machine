@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.7';
+  const version='text-prosody-v1.2.8';
   const voicedStops=new Set(['b','bj','g','gj','d','dj']);
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -10,7 +10,7 @@
     const number=(key,min,max)=>{const n=Number(value[key]??defaults[key]);if(!Number.isFinite(n))throw Error('Неверная настройка просодии: '+key);return clamp(n,min,max);};
     return {mode:value.mode==='original'?'original':'speech',expressiveness:number('expressiveness',0,100),contour:['auto','flat','question','statement'].includes(value.contour)?value.contour:'auto',transitionMs:number('transitionMs',0,80)};
   }
-  const vowels={ru:new Set(Array.from('аеёиоуыэюя')),de:new Set(Array.from('aeiouyäöü')),en:new Set(Array.from('aeiouy'))};
+  const vowels={ru:new Set(Array.from('аеёиоуыэюя')),de:new Set(Array.from('aeiouyäöü')),en:new Set(Array.from('aeiouy')),fr:new Set(Array.from('aeiouyàâäéèêëîïôöùûüœæ')),it:new Set(Array.from('aeiouàèéìòóù')),es:new Set(Array.from('aeiouáéíóúü'))};
   const dictionary={ru:new Map(),de:new Map()};
   const patterns={
     ru:['прив+ет','м+ир','г+олос','т+екст','б+уква','б+уквы','спас+ибо','пож+алуйста','здр+авствуйте','хорош+о','сег+одня','+это','р+обот','н+овый','пр+осто','сл+ово','од+ин','н+оль','дв+а','тр+и','чет+ыре','п+ять','ш+есть','с+емь','в+осемь','д+евять'],
@@ -21,7 +21,7 @@
   const isCountingWord=c=>!!c&&/^[\p{L}\p{M}0-9〇]$/u.test(c);
   function prepare(text,language,options,spell=false){
     const config=normalize(options),raw=Array.from(text),letters=[],rawIndices=[],markers=[],manual=new Map(),characters=[];let offset=0;
-    const individual=spell||root.VoiceDigits?.supports(language),isWordChar=individual?isCountingWord:isWord;
+    const extended=root.VoiceLanguages?.supports(language),individual=spell,isWordChar=spell||extended?isCountingWord:isWord;
     for(const char of raw){characters.push({text:char,start:offset,end:offset+char.length});offset+=char.length;}
     const isVowel=c=>vowels[language]?.has(c?.toLowerCase());
     for(let i=0;i<raw.length;i++){
@@ -30,7 +30,7 @@
         if(!isVowel(raw[i+1]))throw Error('Метка + ставится непосредственно перед гласной: зам+ок или з+амок.');
         if(manual.has(letters.length))throw Error('Повторная метка ударения у одной гласной.');manual.set(letters.length,true);markers.push(i);continue;
       }
-      if(!individual&&char==='\u0301'){
+      if(!individual&&!extended&&char==='\u0301'){
         const at=letters.length-1;if(!isVowel(letters[at])||rawIndices[at]!==i-1)throw Error('Знак ударения ставится сразу после гласной.');
         if(manual.has(at))throw Error('Повторная метка ударения у одной гласной.');manual.set(at,true);markers.push(i);continue;
       }
@@ -84,11 +84,13 @@
         const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(unit.stressTokens?unit.stressTokens.includes(j):marked||numericStress.includes(j));unit.stresses.push(stress);
         const factor={vowel:.72,stop:.80,affricate:.82,fricative:.80,sonorant:.82,trill:.82,rhotic:.82,silence:1}[k]||1;
         if(k==='silence'){
+          if(unit.boundary){
           const punctuation=unit.indices.map(i=>prepared.characters[i]?.text||'').join('');
           const spaces=connected&&language==='ru'&&/^ +$/.test(punctuation)?Math.min(punctuation.length,3):1;
           token.duration=/[.!?…。]/u.test(punctuation)||connected&&/[\r\n]/u.test(punctuation) ? .24+.10*amount : /[,;:、]/u.test(punctuation) ? .12+.05*amount
             : connected&&/[—–]/u.test(punctuation) ? .12+.05*amount
             : /\s/u.test(punctuation) ? (connected ? .022 : .07)*spaces : connected ? .022 : .06;
+          }
         }else{
           const durationScale=fricationDurationScale?.(token.id,k)??1;
           token.duration*=factor*durationScale*(stress ? 1.25+.20*amount : k==='vowel'&&word&&!['unknown','en-rules'].includes(word.source) ? .93 : 1);
@@ -117,7 +119,8 @@
     }
     const unknown=prepared.words.filter(w=>['unknown','en-rules'].includes(w.source)).map(w=>w.word),unique=[...new Set(unknown)];
     const timing=connected?' Связное чтение Codex: один пробел даёт 22 мс при скорости 1. Соседние знаки образуют одну паузу.':'';
-    const note=spell||root.VoiceDigits?.supports(language)?'Буквы и цифры читаются по отдельности. Японская кана произносится по слогам.'
+    const note=spell?'Буквы и цифры читаются по отдельности. Японская кана произносится по слогам.'
+      :root.VoiceLanguages?.supports(language)?'Слова читаются слитно по собственным ограниченным правилам и ручным рецептам. Японский: кана; неизвестные кандзи требуют записи каной. Произношение и ударения приблизительные.'
       :unique.length?'Без автоматического ударения: '+unique.slice(0,8).join(', ')+(unique.length>8?' … ('+unique.length+' слов)':'')+'. Для неизвестных EN-слов применяются приближённые правила чтения.'
       :'Ударения: явные метки, ё или небольшой открытый словарь. EN читает слова и английские цифры; служебные слова могут не иметь отдельного акцента.';
     return {units:result,config,words:prepared.words,note:note+timing};

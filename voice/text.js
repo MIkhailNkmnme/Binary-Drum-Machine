@@ -26,14 +26,14 @@
     if(!raw.length||raw.length>MAX_CHARS)throw Error('Текст: от 1 до '+MAX_CHARS+' символов.');
     const prepared=root.VoiceProsody.prepare(text,language,prosody,spell),letters=prepared.letters;
     const wordStarts=new Map(prepared.words.map(word=>[word.start,word]));
-    const names=spell||counting?new Map(catalog.filter(r=>r.lang===language&&r.kind==='name')
+    const names=spell?new Map(catalog.filter(r=>r.lang===language&&r.kind==='name')
       .map(r=>[r.symbol.normalize('NFC').toLowerCase(),r])):null;
     const sounds=new Map(catalog.filter(r=>r.lang===language&&r.kind==='sound').map(r=>[r.symbol.toUpperCase(),r]));
     const digits=new Map(catalog.filter(r=>r.lang===(language==='de'?'de':'ru')&&r.kind==='digit').map(r=>[r.symbol,r]));
     const characters=prepared.characters;let units=[],sounding=false;
     for(let index=0;index<letters.length;index++){
       const char=letters[index],upper=char.toUpperCase(),start=characters[prepared.rawIndices[index]].start;
-      let score=[],boundary=false,length=1,english=null,counted=null,separate=false;
+      let score=[],boundary=false,length=1,english=null,counted=null,spoken=null,separate=false;
       if(/\s/u.test(char)){score=[{id:'_',duration:.10}];boundary=true;}
       else if(/[.,!?;:…—–\-()«»„“”‚‘’"']/u.test(char)||(counting&&/[、。]/u.test(char))){score=[{id:'_',duration:/[.!?…。]/u.test(char) ? 0.28 : /[,;:、]/u.test(char) ? 0.16 : 0.08}];boundary=true;}
       else if(names){
@@ -54,6 +54,24 @@
         score=recipe.score.map(token=>({...token}));
         separate=true;
         sounding=true;
+      }
+      else if(counting){
+        const digit=/^[0-9]$/.test(char),word=wordStarts.get(index);
+        counted=digit?root.VoiceDigits.read(language,char):word&&word.source!=='manual'?root.VoiceDigits.read(language,word.word):null;
+        if(counted){
+          score=counted.score.map(token=>({...token}));
+          length=digit?1:word.end-index;
+          if(word)word.source='count-word';
+        }else{
+          spoken=root.VoiceLanguages.take(language,letters,index);
+          if(!spoken)throw Error('Символ «'+char+'» в позиции '+(start+1)+' не поддерживается в '+language.toUpperCase()+'.');
+          score=spoken.score.map(token=>({...token}));length=spoken.length;
+          if(word&&word.source!=='manual'){
+            word.source=language+'-'+spoken.source;
+            word.stressIndex=spoken.stressIndex===null?null:prepared.rawIndices[spoken.stressIndex];
+          }
+        }
+        if(score.some(token=>token.id!=='_'))sounding=true;
       }
       else{
         const german=language==='de'?root.VoiceGerman.take(letters,index):null;
@@ -98,23 +116,23 @@
       }
       const cleanIndices=Array.from({length},(_,i)=>index+i),indices=cleanIndices.map(i=>prepared.rawIndices[i]);
       units.push({index:indices[0],indices,cleanIndices,score,boundary,separate,
-        ...(english?{stressTokens:english.stressTokens,tokenLetters:english.tokenLetters.map(i=>index+i)}:counted?{stressTokens:counted.stressTokens}:{})});
+        ...(english?{stressTokens:english.stressTokens,tokenLetters:english.tokenLetters.map(i=>index+i)}:spoken?{stressTokens:spoken.stressTokens,tokenLetters:spoken.tokenLetters}:counted?{stressTokens:counted.stressTokens}:{})});
       index+=length-1;
     }
     for(const index of prepared.markers)units.push({index,indices:[index],cleanIndices:[],score:[],boundary:false});units.sort((a,b)=>a.index-b.index);
     const wholeScore=units.flatMap(u=>u.score);
     let effectivePhones=root.VoiceGerman?root.VoiceGerman.resolve(engine,phones,wholeScore):phones;
     if(root.VoiceEnglish)effectivePhones=root.VoiceEnglish.resolve(engine,effectivePhones,wholeScore);
-    if(counting)effectivePhones=root.VoiceDigits.resolve(engine,effectivePhones,wholeScore);
+    if(counting)effectivePhones=root.VoiceLanguages.resolve(engine,effectivePhones,wholeScore);
     for(const unit of units)for(const token of unit.score)if(!engine.phonemeIds.includes(token.id)&&!Object.hasOwn(effectivePhones,token.id))throw Error('Движок не поддерживает токен '+token.id+'.');
     for(const unit of units)if(unit.tokenLetters){
       const marked=unit.cleanIndices.filter(i=>prepared.stressed.has(i));
       if(marked.length){
         unit.stressTokens=unit.score.flatMap((t,j)=>marked.includes(unit.tokenLetters[j])&&(effectivePhones[t.id]||engine.getPhone(t.id)).kind==='vowel'?[j]:[]);
-        if(!unit.stressTokens.length)throw Error('Метка ударения в английском слове попала на букву без отдельного гласного звука. Поставьте её перед произносимой гласной.');
+        if(!unit.stressTokens.length)throw Error('Метка ударения попала на букву без отдельного гласного звука. Поставьте её перед произносимой гласной.');
       }
     }
-    if(!sounding)throw Error('В тексте нет звучащих букв или цифр. Ъ, Ь и паузы не зацикливаются отдельно.');
+    if(!sounding)throw Error('В тексте нет звучащих букв или цифр. Немые знаки и паузы не зацикливаются отдельно.');
     const annotation=root.VoiceProsody.apply(units,prepared,language,engine,effectivePhones,settings,spell);units=annotation.units;
     // Keep each word together. Separators belong to the preceding word; a
     // leading separator stays with the first word. No per-letter DSP restart.
