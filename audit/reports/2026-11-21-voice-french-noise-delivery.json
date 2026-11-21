@@ -1,0 +1,56 @@
+{
+  "commit": "e2497b30b04b7a9961e34216d08caecfb705da49",
+  "version": "0.032",
+  "files": [
+    {
+      "file": "voice/index.html",
+      "url": "https://1001100.online/voice/index.html?v=032",
+      "match": true,
+      "sha256": "fd9627250f6f8b3e528fd34baaa58ae6082c8b3cc6f6993abd61459a1cee5e40"
+    },
+    {
+      "file": "voice/app.js",
+      "url": "https://1001100.online/voice/app.js?v=032",
+      "match": true,
+      "sha256": "18755c0c5c3c0911d250e51a5331d94763b1fa21c906eca60170bd558449cebd"
+    },
+    {
+      "file": "voice/digits.js",
+      "url": "https://1001100.online/voice/digits.js?v=032",
+      "match": true,
+      "sha256": "0da892b8300ddf0e1a84be8000b22e3002833a41dcde487ddf4c3b71da38deae"
+    },
+    {
+      "file": "voice/languages.js",
+      "url": "https://1001100.online/voice/languages.js?v=032",
+      "match": true,
+      "sha256": "c5ba067b82b9093aabb5d6f13bd27e0367c037a511cd8dbe10cfa23b38863737"
+    },
+    {
+      "file": "voice/prosody.js",
+      "url": "https://1001100.online/voice/prosody.js?v=032",
+      "match": true,
+      "sha256": "ef2cb2f5119b6967336e2c979ddef89f715295c9cfd2ff2933de0a93992e3524"
+    },
+    {
+      "file": "voice/text.js",
+      "url": "https://1001100.online/voice/text.js?v=032",
+      "match": true,
+      "sha256": "1a680682eb23f5f7ca0d6c4bc37c3fa46da0aa30d11a4f97f2e00b4235bca884"
+    },
+    {
+      "file": "voice/README.md",
+      "url": "https://1001100.online/voice/README.md?v=032",
+      "match": true,
+      "sha256": "6ed3e881f0547e236c85221cacf541825ef29c1bd9f6cb98b47398fd1f13ee33"
+    },
+    {
+      "file": "voice/index.html",
+      "url": "https://1001100.online/voice/",
+      "match": true,
+      "sha256": "fd9627250f6f8b3e528fd34baaa58ae6082c8b3cc6f6993abd61459a1cee5e40"
+    }
+  ],
+  "allMatch": true,
+  "runtimeTests": "Not run; source read by root. User acceptance."
+}
