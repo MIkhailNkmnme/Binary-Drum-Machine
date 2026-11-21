@@ -4,6 +4,7 @@ const MIME = new Map([['png','image/png'], ['gif','image/gif'], ['mp4','video/mp
 const MAX_MEDIA = 64 * 1024 * 1024;
 // Only assets already published in the journal may be read through the backup.
 const ARCHIVE_KEYS = new Set([
+  'image-journal-2026-11-21/central-axis-templates.gif',
   'image-journal-2026-11-20/axis-checks.png',
   'image-journal-2026-11-20/axis-diagonal-preview.webp',
   'image-journal-2026-11-20/axis-diagonal.png',

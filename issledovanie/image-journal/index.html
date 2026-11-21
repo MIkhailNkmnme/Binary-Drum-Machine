@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- ИСС-137 · v0.017. Жёлтые клетки сохраняются при перевороте XORoXORиуса. -->
+<!-- ИСС-138 · v0.018. Построение выделением шаблонов по центральной оси. -->
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -30,11 +30,12 @@
   <main class="shell" id="journal">
     <header class="intro">
       <div class="intro-copy">
-        <small class="journal-version">v0.017</small>
+        <small class="journal-version">v0.018</small>
         <h1>Журнал картинок</h1>
         <p>Как узоры «Зеркалиуса» становятся кадрами, обоями и иллюстрациями.</p>
         <nav class="contents" aria-label="Записи журнала">
           <a href="#from-mayatnik">Из Маятника</a>
+          <a href="#central-axis-templates">Шаблоны по центральной оси</a>
           <a href="#axes">Осевая раскраска</a>
           <a href="#treug">Кадры «Треуг»</a>
           <a href="#hub-xor">XOR Хаба</a>
@@ -55,6 +56,28 @@
       <div class="figures frame-grid" id="mayatnik-frames"></div>
       <p role="status" id="mayatnik-feed-status">Загрузка кадров…</p>
       <button type="button" id="mayatnik-more" hidden>Ещё кадры</button>
+    </article>
+
+    <article class="entry" id="central-axis-templates">
+      <header class="entry-heading">
+        <p class="entry-meta"><time datetime="2026-11-21">21 ноября 2026</time><span>Маятник · 512 строк</span></p>
+        <h2>Построение выделением шаблонов по центральной оси</h2>
+        <p>Центральная ось собирает касающиеся её фигуры в выбранный набор. При смене кадра автонабор обновляется по новому рисунку; ручные шаблоны остаются на поле.</p>
+      </header>
+      <div class="figures">
+        <template data-archive-key="image-journal-2026-11-21/central-axis-templates.gif"><figure style="max-width:537px">
+          <a class="image-link" data-view-image data-kind="gif" data-summary="Построение выделением шаблонов по центральной оси. Маятник, 512 строк. GIF · 194 кадра · 183,61 с." href="https://media.1001100.online/image-journal-2026-11-21/central-axis-templates.gif" aria-label="Открыть GIF · Построение выделением шаблонов по центральной оси"><img src="https://media.1001100.online/image-journal-2026-11-21/central-axis-templates.gif" width="537" height="413" alt="Анимация построения в Маятнике: выделение фигур, касающихся центральной вертикальной оси" decoding="async" loading="lazy"></a>
+          <figcaption>
+            <span class="figure-name">Шаблоны по центральной оси</span>
+            <p>GIF · 537 × 413 пикселей · 194 кадра · 183,61 с.</p>
+            <span class="figure-links"><a data-view-image data-kind="gif" href="https://media.1001100.online/image-journal-2026-11-21/central-axis-templates.gif">Открыть анимацию</a></span>
+          </figcaption>
+        </figure></template>
+      </div>
+      <div class="recipe">
+        <p>В <a href="../../mayatnik/Zerkalius-mayatnik.html">Маятнике</a> откройте «Ручные оси → Ось центр» и включите <b>▦</b> в пульте под полем. На каждом готовом кадре кнопка заново выделяет касающиеся оси фигуры по текущему правилу «Область». Если включены <b>1 / 0</b> этой оси, набор получает её раскраску. «В библиотеку» сохраняет текущий выбор одним сборным шаблоном с возможностью разбора. Повторное нажатие ▦ останавливает обновление и оставляет последний набор редактируемыми копиями.</p>
+        <p class="entry-links"><a href="../../mayatnik/Zerkalius-mayatnik.html">Открыть Маятник</a><a href="../../mayatnik/instruction/#templates">Шаблоны и центральная ось в инструкции</a><a href="../../mayatnik/instruction/#composite-template">Сборный шаблон</a></p>
+      </div>
     </article>
 
     <article class="entry" id="axes">
