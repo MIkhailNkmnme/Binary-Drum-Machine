@@ -1,0 +1,17 @@
+Шаблоны по центральной оси в Маятнике Зеркалиуса. Светлый янтарь и бирюза на глубоком синем фоне: фигуры собираются вокруг оси и меняются с каждым состоянием поля.
+
+Новая цветовая версия: рисунок крупнее, контрастные детали и чёткие клетки. 194 исходных состояния, один цикл 3:04. Full HD, без звука. Геометрия и ритм исходной анимации сохранены.
+
+Видео, исходная анимация и способ построения в Журнале картинок:
+https://1001100.online/issledovanie/image-journal/#central-axis-templates
+
+Открыть Маятник:
+https://1001100.online/mayatnik/Zerkalius-mayatnik.html
+
+Проект: https://1001100.online
+Исходники и цвета:
+https://github.com/MIkhailNkmnme/Binary-Drum-Machine/tree/main/issledovanie/central-axis-film
+
+Первый вариант: https://youtu.be/Fyc9d5H1E8U
+
+#Зеркалиус #Zerkalius #GenerativeArt #Маятник
