@@ -1,0 +1,2237 @@
+{
+  "duration": 210,
+  "engine": "phone-robot-live-v1.2.5",
+  "sampleRate": 44100,
+  "settings": {
+    "pitchStart": 119,
+    "pitchEnd": 109,
+    "vibratoDepth": 0.25,
+    "vibratoRate": 2.1,
+    "speed": 0.75,
+    "formantScale": 1,
+    "bandwidthScale": 1,
+    "voicing": 0.82,
+    "noise": 1.02,
+    "transitionMs": 30,
+    "outputGain": 0.55,
+    "seed": 1001100
+  },
+  "prosody": {
+    "mode": "speech",
+    "expressiveness": 28,
+    "contour": "statement",
+    "transitionMs": 30
+  },
+  "source": "voice",
+  "hashes": {
+    "prosody-dsp.js": "fa3fb8f8986e5e6110c016dc87decbd4d46133247880defc5af69fd30272d1a4",
+    "engine.js": "b18022b600b7db19ccb910b75169b026e52ae82c558550a71ba276082f0c6d59",
+    "robot/engine.js": "2c9742fcead4140e1e894af7e7b156403aa7986f9c787db4cd78b598eb18ba16",
+    "robot-live.js": "6957cc1f16bb85b3361355fb5a57de0cb9fc6091dacde41ba83ba165c719505f",
+    "dsh-engine.js": "0fc455a8136c4613b71103b0c3192bf15a93bf6979f07c3184bcd74ceedb182a",
+    "engines.js": "b07bcfd65fce13f9a38a58f9da21af102513e2aeb2b35732d55abb4b06b2c294",
+    "catalog.js": "322828a97b04e6510fd3b6bcb67bdf2bc1cc2ef0e7224984fed0ffd38f5efaad",
+    "german.js": "864e769ff8358d8ff599bd9c53f99d9d17e4d05f45816dc8682ebe8cd448d0dd",
+    "english.js": "402d143cfdabb8390e0117a6d25450a4c857d34634f214fe4edb030cd47978fc",
+    "prosody.js": "59f99a58005452f42f9cfc66a6a314ebae313cd15cf5c31057d76c32457cbae2",
+    "text.js": "31a6da1166d14095c92a5a5d20505ad7d8728773892544a895924745b34c53cf"
+  },
+  "events": [
+    {
+      "text": "Ночью лампа на пульте мигает.",
+      "at": 1.25,
+      "max": 6.3,
+      "kind": "line",
+      "language": "ru",
+      "start": 31.25,
+      "duration": 5.792154195011338,
+      "file": "voice-ru-0.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.1476
+          },
+          {
+            "id": "o",
+            "duration": 0.300902
+          },
+          {
+            "id": "ch",
+            "duration": 0.1107
+          },
+          {
+            "id": "j",
+            "duration": 0.0656
+          },
+          {
+            "id": "u",
+            "duration": 0.174096
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "l",
+            "duration": 0.1476
+          },
+          {
+            "id": "a",
+            "duration": 0.300902
+          },
+          {
+            "id": "m",
+            "duration": 0.1476
+          },
+          {
+            "id": "p",
+            "duration": 0.088
+          },
+          {
+            "id": "a",
+            "duration": 0.214272
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "n",
+            "duration": 0.1476
+          },
+          {
+            "id": "a",
+            "duration": 0.2304
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "p",
+            "duration": 0.088
+          },
+          {
+            "id": "u",
+            "duration": 0.300902
+          },
+          {
+            "id": "lj",
+            "duration": 0.1476
+          },
+          {
+            "id": "tj",
+            "duration": 0.088
+          },
+          {
+            "id": "e",
+            "duration": 0.174096
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "mj",
+            "duration": 0.1476
+          },
+          {
+            "id": "i",
+            "duration": 0.214272
+          },
+          {
+            "id": "g",
+            "duration": 0.088
+          },
+          {
+            "id": "a",
+            "duration": 0.300902
+          },
+          {
+            "id": "j",
+            "duration": 0.0656
+          },
+          {
+            "id": "e",
+            "duration": 0.19638
+          },
+          {
+            "id": "t",
+            "duration": 0.088
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "Семь импульсов. И снова тишина.",
+      "at": 8.75,
+      "max": 6.3,
+      "kind": "line",
+      "language": "ru",
+      "start": 38.75,
+      "duration": 6.2378684807256235,
+      "file": "voice-ru-1.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.7627866591080876,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "sj",
+            "duration": 0.1056
+          },
+          {
+            "id": "e",
+            "duration": 0.244483
+          },
+          {
+            "id": "mj",
+            "duration": 0.1476
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "i",
+            "duration": 0.300902
+          },
+          {
+            "id": "m",
+            "duration": 0.1476
+          },
+          {
+            "id": "p",
+            "duration": 0.088
+          },
+          {
+            "id": "u",
+            "duration": 0.214272
+          },
+          {
+            "id": "lj",
+            "duration": 0.1476
+          },
+          {
+            "id": "s",
+            "duration": 0.1056
+          },
+          {
+            "id": "o",
+            "duration": 0.241699
+          },
+          {
+            "id": "v",
+            "duration": 0.144
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          },
+          {
+            "id": "i",
+            "duration": 0.2304
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "s",
+            "duration": 0.1056
+          },
+          {
+            "id": "n",
+            "duration": 0.1476
+          },
+          {
+            "id": "o",
+            "duration": 0.300902
+          },
+          {
+            "id": "v",
+            "duration": 0.144
+          },
+          {
+            "id": "a",
+            "duration": 0.214272
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "tj",
+            "duration": 0.088
+          },
+          {
+            "id": "i",
+            "duration": 0.214272
+          },
+          {
+            "id": "sh",
+            "duration": 0.1088
+          },
+          {
+            "id": "i",
+            "duration": 0.214272
+          },
+          {
+            "id": "n",
+            "duration": 0.1476
+          },
+          {
+            "id": "a",
+            "duration": 0.339417
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "Зеркалиус.",
+      "at": 16.25,
+      "max": 1.9,
+      "kind": "title",
+      "language": "ru",
+      "start": 46.25,
+      "duration": 1.8854195011337869,
+      "file": "voice-ru-2.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.9808987647690657,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "zj",
+            "duration": 0.144
+          },
+          {
+            "id": "e",
+            "duration": 0.174096
+          },
+          {
+            "id": "r",
+            "duration": 0.1476
+          },
+          {
+            "id": "k",
+            "duration": 0.088
+          },
+          {
+            "id": "a",
+            "duration": 0.300902
+          },
+          {
+            "id": "lj",
+            "duration": 0.1476
+          },
+          {
+            "id": "i",
+            "duration": 0.214272
+          },
+          {
+            "id": "u",
+            "duration": 0.241699
+          },
+          {
+            "id": "s",
+            "duration": 0.1056
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "Один",
+      "at": 18.75,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 0,
+      "language": "ru",
+      "start": 48.75,
+      "duration": 1.0401360544217686,
+      "file": "voice-ru-3.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.7722066731454488,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "o",
+            "duration": 0.214272
+          },
+          {
+            "id": "dj",
+            "duration": 0.088
+          },
+          {
+            "id": "i",
+            "duration": 0.339417
+          },
+          {
+            "id": "n",
+            "duration": 0.1476
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "ноль",
+      "at": 20,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 1,
+      "language": "ru",
+      "start": 50,
+      "duration": 0.864172335600907,
+      "file": "voice-ru-4.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.1476
+          },
+          {
+            "id": "o",
+            "duration": 0.339417
+          },
+          {
+            "id": "lj",
+            "duration": 0.1476
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "ноль",
+      "at": 21.25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 2,
+      "language": "ru",
+      "start": 51.25,
+      "duration": 0.864172335600907,
+      "file": "voice-ru-5.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.1476
+          },
+          {
+            "id": "o",
+            "duration": 0.339417
+          },
+          {
+            "id": "lj",
+            "duration": 0.1476
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "один",
+      "at": 23.75,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 3,
+      "language": "ru",
+      "start": 53.75,
+      "duration": 1.0401360544217686,
+      "file": "voice-ru-6.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.7722066731454488,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "o",
+            "duration": 0.214272
+          },
+          {
+            "id": "dj",
+            "duration": 0.088
+          },
+          {
+            "id": "i",
+            "duration": 0.339417
+          },
+          {
+            "id": "n",
+            "duration": 0.1476
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "один",
+      "at": 25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 4,
+      "language": "ru",
+      "start": 55,
+      "duration": 1.0401360544217686,
+      "file": "voice-ru-7.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.7722066731454488,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "o",
+            "duration": 0.214272
+          },
+          {
+            "id": "dj",
+            "duration": 0.088
+          },
+          {
+            "id": "i",
+            "duration": 0.339417
+          },
+          {
+            "id": "n",
+            "duration": 0.1476
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "ноль",
+      "at": 26.25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 5,
+      "language": "ru",
+      "start": 56.25,
+      "duration": 0.864172335600907,
+      "file": "voice-ru-8.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.1476
+          },
+          {
+            "id": "o",
+            "duration": 0.339417
+          },
+          {
+            "id": "lj",
+            "duration": 0.1476
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "ноль",
+      "at": 27.5,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 6,
+      "language": "ru",
+      "start": 57.5,
+      "duration": 0.864172335600907,
+      "file": "voice-ru-9.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.1476
+          },
+          {
+            "id": "o",
+            "duration": 0.339417
+          },
+          {
+            "id": "lj",
+            "duration": 0.1476
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "My finger taps the same rhythm.",
+      "at": 1.25,
+      "max": 6.3,
+      "kind": "line",
+      "language": "en",
+      "start": 91.25,
+      "duration": 4.688571428571429,
+      "file": "voice-en-0.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "m",
+            "duration": 0.082
+          },
+          {
+            "id": "a",
+            "duration": 0.20687
+          },
+          {
+            "id": "en_ih",
+            "duration": 0.20687
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "f",
+            "duration": 0.104
+          },
+          {
+            "id": "en_ih",
+            "duration": 0.20687
+          },
+          {
+            "id": "en_ng",
+            "duration": 0.082
+          },
+          {
+            "id": "g",
+            "duration": 0.068
+          },
+          {
+            "id": "ax",
+            "duration": 0.147312
+          },
+          {
+            "id": "rr",
+            "duration": 0.082
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "t",
+            "duration": 0.068
+          },
+          {
+            "id": "ae",
+            "duration": 0.20687
+          },
+          {
+            "id": "p",
+            "duration": 0.068
+          },
+          {
+            "id": "s",
+            "duration": 0.104
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "en_dh",
+            "duration": 0.104
+          },
+          {
+            "id": "ax",
+            "duration": 0.147312
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "s",
+            "duration": 0.104
+          },
+          {
+            "id": "e",
+            "duration": 0.20687
+          },
+          {
+            "id": "en_ih",
+            "duration": 0.20687
+          },
+          {
+            "id": "m",
+            "duration": 0.082
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "rr",
+            "duration": 0.082
+          },
+          {
+            "id": "en_ih",
+            "duration": 0.20687
+          },
+          {
+            "id": "en_dh",
+            "duration": 0.104
+          },
+          {
+            "id": "ax",
+            "duration": 0.166168
+          },
+          {
+            "id": "m",
+            "duration": 0.082
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {
+        "en_ih": {
+          "kind": "vowel",
+          "formants": [
+            410,
+            1900,
+            2650,
+            3450
+          ],
+          "bandwidths": [
+            95,
+            150,
+            210,
+            270
+          ],
+          "weights": [
+            1,
+            1,
+            0.4,
+            0.14
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        "en_ng": {
+          "kind": "sonorant",
+          "formants": [
+            260,
+            1700,
+            2450,
+            3400
+          ],
+          "bandwidths": [
+            80,
+            190,
+            280,
+            350
+          ],
+          "weights": [
+            1,
+            0.2,
+            0.12,
+            0.05
+          ],
+          "voice": 0.8,
+          "noise": 0.015
+        },
+        "en_dh": {
+          "kind": "fricative",
+          "formants": [
+            900,
+            2300,
+            4500,
+            6800
+          ],
+          "bandwidths": [
+            800,
+            1200,
+            1700,
+            2000
+          ],
+          "weights": [
+            0.2,
+            0.3,
+            0.35,
+            0.2
+          ],
+          "voice": 0.45,
+          "noise": 0.35
+        }
+      }
+    },
+    {
+      "text": "I wait in the quiet.",
+      "at": 8.75,
+      "max": 6.3,
+      "kind": "line",
+      "language": "en",
+      "start": 98.75,
+      "duration": 3.5007256235827664,
+      "file": "voice-en-1.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "a",
+            "duration": 0.20687
+          },
+          {
+            "id": "en_ih",
+            "duration": 0.20687
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "w",
+            "duration": 0.082
+          },
+          {
+            "id": "e",
+            "duration": 0.20687
+          },
+          {
+            "id": "en_ih",
+            "duration": 0.20687
+          },
+          {
+            "id": "t",
+            "duration": 0.068
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "en_ih",
+            "duration": 0.147312
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "en_dh",
+            "duration": 0.104
+          },
+          {
+            "id": "ax",
+            "duration": 0.147312
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "k",
+            "duration": 0.068
+          },
+          {
+            "id": "w",
+            "duration": 0.082
+          },
+          {
+            "id": "a",
+            "duration": 0.20687
+          },
+          {
+            "id": "en_ih",
+            "duration": 0.20687
+          },
+          {
+            "id": "ax",
+            "duration": 0.166168
+          },
+          {
+            "id": "t",
+            "duration": 0.068
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {
+        "en_ih": {
+          "kind": "vowel",
+          "formants": [
+            410,
+            1900,
+            2650,
+            3450
+          ],
+          "bandwidths": [
+            95,
+            150,
+            210,
+            270
+          ],
+          "weights": [
+            1,
+            1,
+            0.4,
+            0.14
+          ],
+          "voice": 1,
+          "noise": 0.012
+        },
+        "en_dh": {
+          "kind": "fricative",
+          "formants": [
+            900,
+            2300,
+            4500,
+            6800
+          ],
+          "bandwidths": [
+            800,
+            1200,
+            1700,
+            2000
+          ],
+          "weights": [
+            0.2,
+            0.3,
+            0.35,
+            0.2
+          ],
+          "voice": 0.45,
+          "noise": 0.35
+        }
+      }
+    },
+    {
+      "text": "Zerkalius.",
+      "at": 16.25,
+      "max": 1.9,
+      "kind": "title",
+      "language": "en",
+      "start": 106.25,
+      "duration": 1.8522222222222222,
+      "file": "voice-en-2.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "z",
+            "duration": 0.104
+          },
+          {
+            "id": "en_eh",
+            "duration": 0.147312
+          },
+          {
+            "id": "rr",
+            "duration": 0.082
+          },
+          {
+            "id": "k",
+            "duration": 0.068
+          },
+          {
+            "id": "a",
+            "duration": 0.20687
+          },
+          {
+            "id": "l",
+            "duration": 0.082
+          },
+          {
+            "id": "i",
+            "duration": 0.147312
+          },
+          {
+            "id": "ax",
+            "duration": 0.166168
+          },
+          {
+            "id": "s",
+            "duration": 0.104
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {
+        "en_eh": {
+          "kind": "vowel",
+          "formants": [
+            550,
+            1750,
+            2550,
+            3450
+          ],
+          "bandwidths": [
+            100,
+            150,
+            210,
+            270
+          ],
+          "weights": [
+            1,
+            1,
+            0.4,
+            0.14
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      }
+    },
+    {
+      "text": "One",
+      "at": 18.75,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 0,
+      "language": "en",
+      "start": 108.75,
+      "duration": 0.5478231292517007,
+      "file": "voice-en-3.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "w",
+            "duration": 0.082
+          },
+          {
+            "id": "en_ah",
+            "duration": 0.233349
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          }
+        ]
+      ],
+      "phones": {
+        "en_ah": {
+          "kind": "vowel",
+          "formants": [
+            640,
+            1200,
+            2500,
+            3450
+          ],
+          "bandwidths": [
+            105,
+            150,
+            210,
+            270
+          ],
+          "weights": [
+            1,
+            0.85,
+            0.35,
+            0.13
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      }
+    },
+    {
+      "text": "zero",
+      "at": 20,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 1,
+      "language": "en",
+      "start": 110,
+      "duration": 0.9598185941043084,
+      "file": "voice-en-4.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "z",
+            "duration": 0.104
+          },
+          {
+            "id": "i",
+            "duration": 0.20687
+          },
+          {
+            "id": "rr",
+            "duration": 0.082
+          },
+          {
+            "id": "o",
+            "duration": 0.147312
+          },
+          {
+            "id": "u",
+            "duration": 0.166168
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "zero",
+      "at": 21.25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 2,
+      "language": "en",
+      "start": 111.25,
+      "duration": 0.9598185941043084,
+      "file": "voice-en-5.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "z",
+            "duration": 0.104
+          },
+          {
+            "id": "i",
+            "duration": 0.20687
+          },
+          {
+            "id": "rr",
+            "duration": 0.082
+          },
+          {
+            "id": "o",
+            "duration": 0.147312
+          },
+          {
+            "id": "u",
+            "duration": 0.166168
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "one",
+      "at": 23.75,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 3,
+      "language": "en",
+      "start": 113.75,
+      "duration": 0.5478231292517007,
+      "file": "voice-en-6.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "w",
+            "duration": 0.082
+          },
+          {
+            "id": "en_ah",
+            "duration": 0.233349
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          }
+        ]
+      ],
+      "phones": {
+        "en_ah": {
+          "kind": "vowel",
+          "formants": [
+            640,
+            1200,
+            2500,
+            3450
+          ],
+          "bandwidths": [
+            105,
+            150,
+            210,
+            270
+          ],
+          "weights": [
+            1,
+            0.85,
+            0.35,
+            0.13
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      }
+    },
+    {
+      "text": "one",
+      "at": 25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 4,
+      "language": "en",
+      "start": 115,
+      "duration": 0.5478231292517007,
+      "file": "voice-en-7.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "w",
+            "duration": 0.082
+          },
+          {
+            "id": "en_ah",
+            "duration": 0.233349
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          }
+        ]
+      ],
+      "phones": {
+        "en_ah": {
+          "kind": "vowel",
+          "formants": [
+            640,
+            1200,
+            2500,
+            3450
+          ],
+          "bandwidths": [
+            105,
+            150,
+            210,
+            270
+          ],
+          "weights": [
+            1,
+            0.85,
+            0.35,
+            0.13
+          ],
+          "voice": 1,
+          "noise": 0.012
+        }
+      }
+    },
+    {
+      "text": "zero",
+      "at": 26.25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 5,
+      "language": "en",
+      "start": 116.25,
+      "duration": 0.9598185941043084,
+      "file": "voice-en-8.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "z",
+            "duration": 0.104
+          },
+          {
+            "id": "i",
+            "duration": 0.20687
+          },
+          {
+            "id": "rr",
+            "duration": 0.082
+          },
+          {
+            "id": "o",
+            "duration": 0.147312
+          },
+          {
+            "id": "u",
+            "duration": 0.166168
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "zero",
+      "at": 27.5,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 6,
+      "language": "en",
+      "start": 117.5,
+      "duration": 0.9598185941043084,
+      "file": "voice-en-9.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "z",
+            "duration": 0.104
+          },
+          {
+            "id": "i",
+            "duration": 0.20687
+          },
+          {
+            "id": "rr",
+            "duration": 0.082
+          },
+          {
+            "id": "o",
+            "duration": 0.147312
+          },
+          {
+            "id": "u",
+            "duration": 0.166168
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "Dann antwortet eine leise Stimme.",
+      "at": 1.25,
+      "max": 6.3,
+      "kind": "line",
+      "language": "de",
+      "start": 151.25,
+      "duration": 3.6712698412698415,
+      "file": "voice-de-0.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "d",
+            "duration": 0.068
+          },
+          {
+            "id": "a",
+            "duration": 0.1656
+          },
+          {
+            "id": "n",
+            "duration": 0.0861
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "a",
+            "duration": 0.1584
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "t",
+            "duration": 0.068
+          },
+          {
+            "id": "v",
+            "duration": 0.088
+          },
+          {
+            "id": "o",
+            "duration": 0.1188
+          },
+          {
+            "id": "r",
+            "duration": 0.0533
+          },
+          {
+            "id": "t",
+            "duration": 0.064
+          },
+          {
+            "id": "ax",
+            "duration": 0.0792
+          },
+          {
+            "id": "t",
+            "duration": 0.056
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "a",
+            "duration": 0.108
+          },
+          {
+            "id": "i",
+            "duration": 0.0648
+          },
+          {
+            "id": "n",
+            "duration": 0.0779
+          },
+          {
+            "id": "ax",
+            "duration": 0.072
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "l",
+            "duration": 0.0779
+          },
+          {
+            "id": "a",
+            "duration": 0.1224
+          },
+          {
+            "id": "i",
+            "duration": 0.0612
+          },
+          {
+            "id": "z",
+            "duration": 0.088
+          },
+          {
+            "id": "ax",
+            "duration": 0.072
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "sh",
+            "duration": 0.088
+          },
+          {
+            "id": "t",
+            "duration": 0.06
+          },
+          {
+            "id": "i",
+            "duration": 0.197467
+          },
+          {
+            "id": "m",
+            "duration": 0.0902
+          },
+          {
+            "id": "ax",
+            "duration": 0.116675
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "Ich bin noch hier.",
+      "at": 8.75,
+      "max": 6.3,
+      "kind": "line",
+      "language": "de",
+      "start": 158.75,
+      "duration": 2.044308390022676,
+      "file": "voice-de-1.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "i",
+            "duration": 0.159854
+          },
+          {
+            "id": "de_ich",
+            "duration": 0.12
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "b",
+            "duration": 0.064
+          },
+          {
+            "id": "i",
+            "duration": 0.1224
+          },
+          {
+            "id": "n",
+            "duration": 0.0779
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "o",
+            "duration": 0.1296
+          },
+          {
+            "id": "de_ach",
+            "duration": 0.112
+          },
+          {
+            "id": "_",
+            "duration": 0.022
+          },
+          {
+            "id": "h",
+            "duration": 0.068
+          },
+          {
+            "id": "i",
+            "duration": 0.1728
+          },
+          {
+            "id": "ax",
+            "duration": 0.077155
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {
+        "de_ich": {
+          "kind": "fricative",
+          "formants": [
+            2400,
+            3700,
+            5100,
+            7100
+          ],
+          "bandwidths": [
+            750,
+            950,
+            1400,
+            1700
+          ],
+          "weights": [
+            0.45,
+            1,
+            0.7,
+            0.3
+          ],
+          "voice": 0,
+          "noise": 0.8
+        },
+        "de_ach": {
+          "kind": "fricative",
+          "formants": [
+            850,
+            1450,
+            2600,
+            4100
+          ],
+          "bandwidths": [
+            550,
+            750,
+            1100,
+            1500
+          ],
+          "weights": [
+            0.5,
+            1,
+            0.55,
+            0.2
+          ],
+          "voice": 0,
+          "noise": 0.85
+        }
+      }
+    },
+    {
+      "text": "Zerkalius.",
+      "at": 16.25,
+      "max": 1.9,
+      "kind": "title",
+      "language": "de",
+      "start": 166.25,
+      "duration": 1.494875283446712,
+      "file": "voice-de-2.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "ts",
+            "duration": 0.0984
+          },
+          {
+            "id": "e",
+            "duration": 0.108
+          },
+          {
+            "id": "r",
+            "duration": 0.0533
+          },
+          {
+            "id": "k",
+            "duration": 0.072
+          },
+          {
+            "id": "a",
+            "duration": 0.1584
+          },
+          {
+            "id": "l",
+            "duration": 0.0697
+          },
+          {
+            "id": "i",
+            "duration": 0.0864
+          },
+          {
+            "id": "u",
+            "duration": 0.097459
+          },
+          {
+            "id": "s",
+            "duration": 0.096
+          },
+          {
+            "id": "_",
+            "duration": 0.268
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "Eins",
+      "at": 18.75,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 0,
+      "language": "de",
+      "start": 168.75,
+      "duration": 0.6134920634920635,
+      "file": "voice-de-3.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "a",
+            "duration": 0.159854
+          },
+          {
+            "id": "i",
+            "duration": 0.100764
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "s",
+            "duration": 0.104
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "null",
+      "at": 20,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 1,
+      "language": "de",
+      "start": 170,
+      "duration": 0.5696825396825397,
+      "file": "voice-de-4.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "u",
+            "duration": 0.233349
+          },
+          {
+            "id": "l",
+            "duration": 0.0984
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "null",
+      "at": 21.25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 2,
+      "language": "de",
+      "start": 171.25,
+      "duration": 0.5696825396825397,
+      "file": "voice-de-5.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "u",
+            "duration": 0.233349
+          },
+          {
+            "id": "l",
+            "duration": 0.0984
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "eins",
+      "at": 23.75,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 3,
+      "language": "de",
+      "start": 173.75,
+      "duration": 0.6134920634920635,
+      "file": "voice-de-6.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "a",
+            "duration": 0.159854
+          },
+          {
+            "id": "i",
+            "duration": 0.100764
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "s",
+            "duration": 0.104
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "eins",
+      "at": 25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 4,
+      "language": "de",
+      "start": 175,
+      "duration": 0.6134920634920635,
+      "file": "voice-de-7.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "a",
+            "duration": 0.159854
+          },
+          {
+            "id": "i",
+            "duration": 0.100764
+          },
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "s",
+            "duration": 0.104
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "null",
+      "at": 26.25,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 5,
+      "language": "de",
+      "start": 176.25,
+      "duration": 0.5696825396825397,
+      "file": "voice-de-8.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "u",
+            "duration": 0.233349
+          },
+          {
+            "id": "l",
+            "duration": 0.0984
+          }
+        ]
+      ],
+      "phones": {}
+    },
+    {
+      "text": "null",
+      "at": 27.5,
+      "max": 1.05,
+      "kind": "digit",
+      "digitIndex": 6,
+      "language": "de",
+      "start": 177.5,
+      "duration": 0.5696825396825397,
+      "file": "voice-de-9.wav",
+      "settings": {
+        "pitchStart": 119,
+        "pitchEnd": 109,
+        "vibratoDepth": 0.25,
+        "vibratoRate": 2.1,
+        "speed": 0.75,
+        "formantScale": 1,
+        "bandwidthScale": 1,
+        "voicing": 0.82,
+        "noise": 1.02,
+        "transitionMs": 30,
+        "outputGain": 0.55,
+        "seed": 1001100
+      },
+      "score": [
+        [
+          {
+            "id": "n",
+            "duration": 0.082
+          },
+          {
+            "id": "u",
+            "duration": 0.233349
+          },
+          {
+            "id": "l",
+            "duration": 0.0984
+          }
+        ]
+      ],
+      "phones": {}
+    }
+  ],
+  "notes": "Original procedural synthesis. Local explicit English and German word scores; Russian stress marks. No recordings or trained voices."
+}

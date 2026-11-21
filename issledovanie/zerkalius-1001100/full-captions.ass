@@ -1,0 +1,40 @@
+﻿[Script Info]
+ScriptType: v4.00+
+PlayResX: 960
+PlayResY: 540
+WrapStyle: 2
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Segoe UI,25,&H00E1DDD5,&H00E1DDD5,&H00120B06,&H00120B06,0,0,0,0,100,100,0,0,1,1.2,0,2,20,20,48,1
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:31.25,0:00:37.69,Default,,0,0,0,,{\fad(120,250)}Ночью лампа на пульте мигает.
+Dialogue: 0,0:00:38.75,0:00:45.64,Default,,0,0,0,,{\fad(120,250)}Семь импульсов. И снова тишина.
+Dialogue: 0,0:00:46.25,0:00:48.15,Default,,0,0,0,,{\fad(120,250)}Зеркалиус.
+Dialogue: 0,0:00:48.75,0:00:49.90,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}Один
+Dialogue: 0,0:00:50.00,0:00:51.15,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}ноль
+Dialogue: 0,0:00:51.25,0:00:52.76,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}ноль
+Dialogue: 0,0:00:53.75,0:00:54.90,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}один
+Dialogue: 0,0:00:55.00,0:00:56.15,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}один
+Dialogue: 0,0:00:56.25,0:00:57.40,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}ноль
+Dialogue: 0,0:00:57.50,0:00:59.01,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}ноль
+Dialogue: 0,0:01:31.25,0:01:36.59,Default,,0,0,0,,{\fad(120,250)}My finger taps the same rhythm.
+Dialogue: 0,0:01:38.75,0:01:42.90,Default,,0,0,0,,{\fad(120,250)}I wait in the quiet.
+Dialogue: 0,0:01:46.25,0:01:48.15,Default,,0,0,0,,{\fad(120,250)}Zerkalius.
+Dialogue: 0,0:01:48.75,0:01:49.90,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}One
+Dialogue: 0,0:01:50.00,0:01:51.15,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}zero
+Dialogue: 0,0:01:51.25,0:01:52.86,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}zero
+Dialogue: 0,0:01:53.75,0:01:54.90,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}one
+Dialogue: 0,0:01:55.00,0:01:56.15,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}one
+Dialogue: 0,0:01:56.25,0:01:57.40,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}zero
+Dialogue: 0,0:01:57.50,0:01:59.11,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}zero
+Dialogue: 0,0:02:31.25,0:02:35.57,Default,,0,0,0,,{\fad(120,250)}Dann antwortet eine leise Stimme.
+Dialogue: 0,0:02:38.75,0:02:41.44,Default,,0,0,0,,{\fad(120,250)}Ich bin noch hier.
+Dialogue: 0,0:02:46.25,0:02:48.15,Default,,0,0,0,,{\fad(120,250)}Zerkalius.
+Dialogue: 0,0:02:48.75,0:02:49.90,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}Eins
+Dialogue: 0,0:02:50.00,0:02:51.15,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}null
+Dialogue: 0,0:02:51.25,0:02:52.47,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}null
+Dialogue: 0,0:02:53.75,0:02:54.90,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}eins
+Dialogue: 0,0:02:55.00,0:02:56.15,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}eins
+Dialogue: 0,0:02:56.25,0:02:57.40,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}null
+Dialogue: 0,0:02:57.50,0:02:58.72,Default,,0,0,0,,{\fad(120,250)}{\c&H79B9EF&}null

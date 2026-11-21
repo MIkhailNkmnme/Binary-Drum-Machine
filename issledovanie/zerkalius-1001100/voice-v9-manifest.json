@@ -1,0 +1,12 @@
+{
+  "voiceGainRelativeToV7": 1.5,
+  "rainGainRelativeToV7": 1,
+  "musicGainRelativeToV7": 1,
+  "gainChangeDb": 3.5218251811136247,
+  "totalVoiceGainDb": -11.519374645445623,
+  "pronunciation": "ади́ин",
+  "duration": 210.0,
+  "peak": 0.1373291015625,
+  "outputVideo": "zerkalius-1001100-symbiosis-fullhd-v9-rain.mp4",
+  "silentVoiceRegionsUnchanged": true
+}

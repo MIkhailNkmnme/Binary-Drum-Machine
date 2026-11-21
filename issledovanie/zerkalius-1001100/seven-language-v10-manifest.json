@@ -1,0 +1,736 @@
+{
+  "durationSeconds": 450,
+  "languages": [
+    "ru",
+    "en",
+    "de",
+    "fr",
+    "it",
+    "es",
+    "ja"
+  ],
+  "blockStarts": [
+    30,
+    90,
+    150,
+    210,
+    270,
+    330,
+    390
+  ],
+  "voiceGain": 0.26547966914405174,
+  "voiceDb": -11.519374645445621,
+  "rainGainRelativeToV4": 0.5,
+  "rainBaseRms": 0.00225,
+  "musicDuckAmount": 0.58,
+  "rainSpeechGain": 0.45,
+  "globalNormalization": false,
+  "peak": 0.13803131878376007,
+  "acceptedPrefixSeconds": 180,
+  "prefixSource": "zerkalius-1001100-mix-rain-v9.wav",
+  "joinBlendSeconds": 0.25,
+  "voiceSourceCommit": "7325779241728a416ad78a9fa2f6a83bd3bf4e7d",
+  "voiceEvents": [
+    {
+      "language": "ru",
+      "text": "Ночью лампа на пульте мигает.",
+      "start": 31.25,
+      "duration": 5.7921458333333335,
+      "rawRms": 0.11318226158618927,
+      "normalizationGain": 0.3797218833861918,
+      "finalGain": 0.10080843996812239,
+      "finalRms": 0.011409727856516838
+    },
+    {
+      "language": "ru",
+      "text": "Семь импульсов. И снова тишина.",
+      "start": 38.75,
+      "duration": 6.237875,
+      "rawRms": 0.12032563239336014,
+      "normalizationGain": 0.35736359032319404,
+      "finalGain": 0.09487276772313201,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "ru",
+      "text": "Зеркалиус.",
+      "start": 46.25,
+      "duration": 1.8854166666666667,
+      "rawRms": 0.10714108496904373,
+      "normalizationGain": 0.37994999589974005,
+      "finalGain": 0.1008689992027468,
+      "finalRms": 0.010807213373482227
+    },
+    {
+      "language": "ru",
+      "text": "Один",
+      "start": 48.75,
+      "duration": 0.6880208333333333,
+      "rawRms": 0.1607358157634735,
+      "normalizationGain": 0.2675197173433673,
+      "finalGain": 0.0710210460498274,
+      "finalRms": 0.011415624059736729
+    },
+    {
+      "language": "ru",
+      "text": "ноль",
+      "start": 50,
+      "duration": 0.8641666666666666,
+      "rawRms": 0.14084577560424805,
+      "normalizationGain": 0.30529847143461697,
+      "finalGain": 0.08105053718664684,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "ru",
+      "text": "ноль",
+      "start": 51.25,
+      "duration": 0.8641666666666666,
+      "rawRms": 0.14084577560424805,
+      "normalizationGain": 0.30529847143461697,
+      "finalGain": 0.08105053718664684,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "ru",
+      "text": "один",
+      "start": 53.75,
+      "duration": 0.6880208333333333,
+      "rawRms": 0.1607358157634735,
+      "normalizationGain": 0.2675197173433673,
+      "finalGain": 0.0710210460498274,
+      "finalRms": 0.011415624059736729
+    },
+    {
+      "language": "ru",
+      "text": "один",
+      "start": 55,
+      "duration": 0.6880208333333333,
+      "rawRms": 0.1607358157634735,
+      "normalizationGain": 0.2675197173433673,
+      "finalGain": 0.0710210460498274,
+      "finalRms": 0.011415624059736729
+    },
+    {
+      "language": "ru",
+      "text": "ноль",
+      "start": 56.25,
+      "duration": 0.8641666666666666,
+      "rawRms": 0.14084577560424805,
+      "normalizationGain": 0.30529847143461697,
+      "finalGain": 0.08105053718664684,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "ru",
+      "text": "ноль",
+      "start": 57.5,
+      "duration": 0.8641666666666666,
+      "rawRms": 0.14084577560424805,
+      "normalizationGain": 0.30529847143461697,
+      "finalGain": 0.08105053718664684,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "en",
+      "text": "My finger taps the same rhythm.",
+      "start": 91.25,
+      "duration": 4.6885625,
+      "rawRms": 0.09084045886993408,
+      "normalizationGain": 0.38422666794996513,
+      "finalGain": 0.10200436868367817,
+      "finalRms": 0.009266123175621033
+    },
+    {
+      "language": "en",
+      "text": "I wait in the quiet.",
+      "start": 98.75,
+      "duration": 3.5007291666666664,
+      "rawRms": 0.10353411734104156,
+      "normalizationGain": 0.3814157008243641,
+      "finalGain": 0.1012581140611988,
+      "finalRms": 0.010483669117093086
+    },
+    {
+      "language": "en",
+      "text": "Zerkalius.",
+      "start": 106.25,
+      "duration": 1.8522291666666666,
+      "rawRms": 0.1060083881020546,
+      "normalizationGain": 0.37982495268975514,
+      "finalGain": 0.1008358027727313,
+      "finalRms": 0.010689440183341503
+    },
+    {
+      "language": "en",
+      "text": "One",
+      "start": 108.75,
+      "duration": 0.5478333333333333,
+      "rawRms": 0.14327701926231384,
+      "normalizationGain": 0.30011791298697327,
+      "finalGain": 0.07967520424398497,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "en",
+      "text": "zero",
+      "start": 110,
+      "duration": 0.9598125,
+      "rawRms": 0.1436464488506317,
+      "normalizationGain": 0.29934607046717043,
+      "finalGain": 0.07947029574719641,
+      "finalRms": 0.011415626853704453
+    },
+    {
+      "language": "en",
+      "text": "zero",
+      "start": 111.25,
+      "duration": 0.9598125,
+      "rawRms": 0.1436464488506317,
+      "normalizationGain": 0.29934607046717043,
+      "finalGain": 0.07947029574719641,
+      "finalRms": 0.011415626853704453
+    },
+    {
+      "language": "en",
+      "text": "one",
+      "start": 113.75,
+      "duration": 0.5478333333333333,
+      "rawRms": 0.14327701926231384,
+      "normalizationGain": 0.30011791298697327,
+      "finalGain": 0.07967520424398497,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "en",
+      "text": "one",
+      "start": 115,
+      "duration": 0.5478333333333333,
+      "rawRms": 0.14327701926231384,
+      "normalizationGain": 0.30011791298697327,
+      "finalGain": 0.07967520424398497,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "en",
+      "text": "zero",
+      "start": 116.25,
+      "duration": 0.9598125,
+      "rawRms": 0.1436464488506317,
+      "normalizationGain": 0.29934607046717043,
+      "finalGain": 0.07947029574719641,
+      "finalRms": 0.011415626853704453
+    },
+    {
+      "language": "en",
+      "text": "zero",
+      "start": 117.5,
+      "duration": 0.9598125,
+      "rawRms": 0.1436464488506317,
+      "normalizationGain": 0.29934607046717043,
+      "finalGain": 0.07947029574719641,
+      "finalRms": 0.011415626853704453
+    },
+    {
+      "language": "de",
+      "text": "Dann antwortet eine leise Stimme.",
+      "start": 151.25,
+      "duration": 3.6712708333333333,
+      "rawRms": 0.11821013689041138,
+      "normalizationGain": 0.363758989974471,
+      "finalGain": 0.096570616306597,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "de",
+      "text": "Ich bin noch hier.",
+      "start": 158.75,
+      "duration": 2.0443125,
+      "rawRms": 0.11217031627893448,
+      "normalizationGain": 0.3833456249964713,
+      "finalGain": 0.10177046969188293,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "de",
+      "text": "Zerkalius.",
+      "start": 166.25,
+      "duration": 1.494875,
+      "rawRms": 0.09402098506689072,
+      "normalizationGain": 0.37981626338996455,
+      "finalGain": 0.10083349594029781,
+      "finalRms": 0.009480465203523636
+    },
+    {
+      "language": "de",
+      "text": "Eins",
+      "start": 168.75,
+      "duration": 0.6135,
+      "rawRms": 0.12732604146003723,
+      "normalizationGain": 0.33771567471133584,
+      "finalGain": 0.08965664558712565,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "de",
+      "text": "null",
+      "start": 170,
+      "duration": 0.5696875,
+      "rawRms": 0.14864684641361237,
+      "normalizationGain": 0.28927623449441886,
+      "finalGain": 0.07679695902481545,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "de",
+      "text": "null",
+      "start": 171.25,
+      "duration": 0.5696875,
+      "rawRms": 0.14864684641361237,
+      "normalizationGain": 0.28927623449441886,
+      "finalGain": 0.07679695902481545,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "de",
+      "text": "eins",
+      "start": 173.75,
+      "duration": 0.6135,
+      "rawRms": 0.12732604146003723,
+      "normalizationGain": 0.33771567471133584,
+      "finalGain": 0.08965664558712565,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "de",
+      "text": "eins",
+      "start": 175,
+      "duration": 0.6135,
+      "rawRms": 0.12732604146003723,
+      "normalizationGain": 0.33771567471133584,
+      "finalGain": 0.08965664558712565,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "de",
+      "text": "null",
+      "start": 176.25,
+      "duration": 0.5696875,
+      "rawRms": 0.14864684641361237,
+      "normalizationGain": 0.28927623449441886,
+      "finalGain": 0.07679695902481545,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "de",
+      "text": "null",
+      "start": 177.5,
+      "duration": 0.5696875,
+      "rawRms": 0.14864684641361237,
+      "normalizationGain": 0.28927623449441886,
+      "finalGain": 0.07679695902481545,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "fr",
+      "text": "La lumière reste avec moi.",
+      "start": 211.25,
+      "duration": 3.242125,
+      "rawRms": 0.0750076100230217,
+      "normalizationGain": 0.38159146406244715,
+      "finalGain": 0.10130477562749278,
+      "finalRms": 0.007598628755658865
+    },
+    {
+      "language": "fr",
+      "text": "Je respire dans le calme.",
+      "start": 218.75,
+      "duration": 2.8408541666666665,
+      "rawRms": 0.0816882774233818,
+      "normalizationGain": 0.38014385779816867,
+      "finalGain": 0.10092046559540127,
+      "finalRms": 0.00824401993304491
+    },
+    {
+      "language": "fr",
+      "text": "Zerkalius.",
+      "start": 226.25,
+      "duration": 1.5662708333333333,
+      "rawRms": 0.0666094645857811,
+      "normalizationGain": 0.3807632869999637,
+      "finalGain": 0.10108491145495198,
+      "finalRms": 0.006733211688697338
+    },
+    {
+      "language": "fr",
+      "text": "un",
+      "start": 228.75,
+      "duration": 0.527125,
+      "rawRms": 0.16576151549816132,
+      "normalizationGain": 0.2594088252075432,
+      "finalGain": 0.06886776908914573,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "fr",
+      "text": "zéro",
+      "start": 230,
+      "duration": 0.581375,
+      "rawRms": 0.09265143424272537,
+      "normalizationGain": 0.3798927609851345,
+      "finalGain": 0.10085380449655384,
+      "finalRms": 0.009344249963760376
+    },
+    {
+      "language": "fr",
+      "text": "zéro",
+      "start": 231.25,
+      "duration": 0.581375,
+      "rawRms": 0.09265143424272537,
+      "normalizationGain": 0.3798927609851345,
+      "finalGain": 0.10085380449655384,
+      "finalRms": 0.009344249963760376
+    },
+    {
+      "language": "fr",
+      "text": "un",
+      "start": 233.75,
+      "duration": 0.527125,
+      "rawRms": 0.16576151549816132,
+      "normalizationGain": 0.2594088252075432,
+      "finalGain": 0.06886776908914573,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "fr",
+      "text": "un",
+      "start": 235,
+      "duration": 0.527125,
+      "rawRms": 0.16576151549816132,
+      "normalizationGain": 0.2594088252075432,
+      "finalGain": 0.06886776908914573,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "fr",
+      "text": "zéro",
+      "start": 236.25,
+      "duration": 0.581375,
+      "rawRms": 0.09265143424272537,
+      "normalizationGain": 0.3798927609851345,
+      "finalGain": 0.10085380449655384,
+      "finalRms": 0.009344249963760376
+    },
+    {
+      "language": "fr",
+      "text": "zéro",
+      "start": 237.5,
+      "duration": 0.581375,
+      "rawRms": 0.09265143424272537,
+      "normalizationGain": 0.3798927609851345,
+      "finalGain": 0.10085380449655384,
+      "finalRms": 0.009344249963760376
+    },
+    {
+      "language": "it",
+      "text": "La notte ascolta con me.",
+      "start": 271.25,
+      "duration": 3.243875,
+      "rawRms": 0.1043565645813942,
+      "normalizationGain": 0.3796570299895691,
+      "finalGain": 0.10079122270984413,
+      "finalRms": 0.010518224909901619
+    },
+    {
+      "language": "it",
+      "text": "Il ritmo torna piano.",
+      "start": 278.75,
+      "duration": 2.811125,
+      "rawRms": 0.1257324069738388,
+      "normalizationGain": 0.34199615703648323,
+      "finalGain": 0.09079302661858273,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "it",
+      "text": "Zerkalius.",
+      "start": 286.25,
+      "duration": 1.5974166666666667,
+      "rawRms": 0.09399151802062988,
+      "normalizationGain": 0.380421707804307,
+      "finalGain": 0.10099422912310255,
+      "finalRms": 0.009492600336670876
+    },
+    {
+      "language": "it",
+      "text": "uno",
+      "start": 288.75,
+      "duration": 0.5047708333333333,
+      "rawRms": 0.15173277258872986,
+      "normalizationGain": 0.28339296294644967,
+      "finalGain": 0.07523507004077597,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "it",
+      "text": "zero",
+      "start": 290,
+      "duration": 0.5838541666666667,
+      "rawRms": 0.11860575526952744,
+      "normalizationGain": 0.3625456446214098,
+      "finalGain": 0.09624849778370884,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "it",
+      "text": "zero",
+      "start": 291.25,
+      "duration": 0.5838541666666667,
+      "rawRms": 0.11860575526952744,
+      "normalizationGain": 0.3625456446214098,
+      "finalGain": 0.09624849778370884,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "it",
+      "text": "uno",
+      "start": 293.75,
+      "duration": 0.5047708333333333,
+      "rawRms": 0.15173277258872986,
+      "normalizationGain": 0.28339296294644967,
+      "finalGain": 0.07523507004077597,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "it",
+      "text": "uno",
+      "start": 295,
+      "duration": 0.5047708333333333,
+      "rawRms": 0.15173277258872986,
+      "normalizationGain": 0.28339296294644967,
+      "finalGain": 0.07523507004077597,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "it",
+      "text": "zero",
+      "start": 296.25,
+      "duration": 0.5838541666666667,
+      "rawRms": 0.11860575526952744,
+      "normalizationGain": 0.3625456446214098,
+      "finalGain": 0.09624849778370884,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "it",
+      "text": "zero",
+      "start": 297.5,
+      "duration": 0.5838541666666667,
+      "rawRms": 0.11860575526952744,
+      "normalizationGain": 0.3625456446214098,
+      "finalGain": 0.09624849778370884,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "es",
+      "text": "Ya no estoy tan solo.",
+      "start": 331.25,
+      "duration": 2.992541666666667,
+      "rawRms": 0.11374536156654358,
+      "normalizationGain": 0.378037393417964,
+      "finalGain": 0.1003612421286808,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "es",
+      "text": "La luz sigue mi mano.",
+      "start": 338.75,
+      "duration": 2.8467708333333333,
+      "rawRms": 0.1223088875412941,
+      "normalizationGain": 0.3515688913896979,
+      "finalGain": 0.09333439296747806,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "es",
+      "text": "Zerkalius.",
+      "start": 346.25,
+      "duration": 1.5174166666666666,
+      "rawRms": 0.09707480669021606,
+      "normalizationGain": 0.380326572931388,
+      "finalGain": 0.10096897274851595,
+      "finalRms": 0.009801543317735195
+    },
+    {
+      "language": "es",
+      "text": "uno",
+      "start": 348.75,
+      "duration": 0.5044166666666666,
+      "rawRms": 0.15187911689281464,
+      "normalizationGain": 0.2831198974533563,
+      "finalGain": 0.0751625767040149,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "es",
+      "text": "cero",
+      "start": 350,
+      "duration": 0.549,
+      "rawRms": 0.12166331708431244,
+      "normalizationGain": 0.3534343878705944,
+      "finalGain": 0.09382964435601586,
+      "finalRms": 0.011415626853704453
+    },
+    {
+      "language": "es",
+      "text": "cero",
+      "start": 351.25,
+      "duration": 0.549,
+      "rawRms": 0.12166331708431244,
+      "normalizationGain": 0.3534343878705944,
+      "finalGain": 0.09382964435601586,
+      "finalRms": 0.011415626853704453
+    },
+    {
+      "language": "es",
+      "text": "uno",
+      "start": 353.75,
+      "duration": 0.5044166666666666,
+      "rawRms": 0.15187911689281464,
+      "normalizationGain": 0.2831198974533563,
+      "finalGain": 0.0751625767040149,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "es",
+      "text": "uno",
+      "start": 355,
+      "duration": 0.5044166666666666,
+      "rawRms": 0.15187911689281464,
+      "normalizationGain": 0.2831198974533563,
+      "finalGain": 0.0751625767040149,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "es",
+      "text": "cero",
+      "start": 356.25,
+      "duration": 0.549,
+      "rawRms": 0.12166331708431244,
+      "normalizationGain": 0.3534343878705944,
+      "finalGain": 0.09382964435601586,
+      "finalRms": 0.011415626853704453
+    },
+    {
+      "language": "es",
+      "text": "cero",
+      "start": 357.5,
+      "duration": 0.549,
+      "rawRms": 0.12166331708431244,
+      "normalizationGain": 0.3534343878705944,
+      "finalGain": 0.09382964435601586,
+      "finalRms": 0.011415626853704453
+    },
+    {
+      "language": "ja",
+      "text": "まだ ここに いるよ。",
+      "start": 391.25,
+      "duration": 2.354604166666667,
+      "rawRms": 0.11576661467552185,
+      "normalizationGain": 0.371436964970628,
+      "finalGain": 0.09860896256827306,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "ja",
+      "text": "しずかに あさを まとう。",
+      "start": 398.75,
+      "duration": 2.842020833333333,
+      "rawRms": 0.10920944809913635,
+      "normalizationGain": 0.3802564550512376,
+      "finalGain": 0.10095035787689255,
+      "finalRms": 0.011024734005331993
+    },
+    {
+      "language": "ja",
+      "text": "ゼルカリウス。",
+      "start": 406.25,
+      "duration": 1.7989791666666666,
+      "rawRms": 0.11192983388900757,
+      "normalizationGain": 0.37994723337568254,
+      "finalGain": 0.10086826580877402,
+      "finalRms": 0.011290168389678001
+    },
+    {
+      "language": "ja",
+      "text": "いち",
+      "start": 408.75,
+      "duration": 0.345875,
+      "rawRms": 0.14439722895622253,
+      "normalizationGain": 0.297789648117392,
+      "finalGain": 0.07905709725672883,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "ja",
+      "text": "ゼロ",
+      "start": 410,
+      "duration": 0.42172916666666665,
+      "rawRms": 0.1169920265674591,
+      "normalizationGain": 0.3675464154405911,
+      "finalGain": 0.09757610076625031,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "ja",
+      "text": "ゼロ",
+      "start": 411.25,
+      "duration": 0.42172916666666665,
+      "rawRms": 0.1169920265674591,
+      "normalizationGain": 0.3675464154405911,
+      "finalGain": 0.09757610076625031,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "ja",
+      "text": "いち",
+      "start": 413.75,
+      "duration": 0.345875,
+      "rawRms": 0.14439722895622253,
+      "normalizationGain": 0.297789648117392,
+      "finalGain": 0.07905709725672883,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "ja",
+      "text": "いち",
+      "start": 415,
+      "duration": 0.345875,
+      "rawRms": 0.14439722895622253,
+      "normalizationGain": 0.297789648117392,
+      "finalGain": 0.07905709725672883,
+      "finalRms": 0.011415624991059303
+    },
+    {
+      "language": "ja",
+      "text": "ゼロ",
+      "start": 416.25,
+      "duration": 0.42172916666666665,
+      "rawRms": 0.1169920265674591,
+      "normalizationGain": 0.3675464154405911,
+      "finalGain": 0.09757610076625031,
+      "finalRms": 0.011415625922381878
+    },
+    {
+      "language": "ja",
+      "text": "ゼロ",
+      "start": 417.5,
+      "duration": 0.42172916666666665,
+      "rawRms": 0.1169920265674591,
+      "normalizationGain": 0.3675464154405911,
+      "finalGain": 0.09757610076625031,
+      "finalRms": 0.011415625922381878
+    }
+  ],
+  "provenance": "Original mathematical synthesis only; original v9 prefix retained. No external voices, samples, music or recordings."
+}

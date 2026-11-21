@@ -1,0 +1,37 @@
+{
+  "programs": [],
+  "stream_groups": [],
+  "streams": [
+    {
+      "codec_name": "h264",
+      "width": 1920,
+      "height": 1080,
+      "r_frame_rate": "24/1",
+      "duration": "450.000000",
+      "nb_frames": "10800"
+    },
+    {
+      "codec_name": "aac",
+      "sample_rate": "48000",
+      "channels": 2,
+      "r_frame_rate": "0/0",
+      "duration": "450.000000",
+      "nb_frames": "21095"
+    }
+  ],
+  "format": {
+    "duration": "450.000000",
+    "size": "305766181"
+  },
+  "file": "zerkalius-1001100-symbiosis-fullhd-v10-seven.mp4",
+  "sha256": "dfed406f88c9e881e17d3f549307937ba4d56c1fcc0298cecedf95c7279c05b7",
+  "acceptedFirst180SecondsPcmIdentical": true,
+  "sourceFrames": 720,
+  "sourceFrameRange": [
+    126,
+    1564
+  ],
+  "sourceFrameStep": 2,
+  "visualAndListeningAcceptance": "User",
+  "automatedSoftwareTests": "Not run"
+}
