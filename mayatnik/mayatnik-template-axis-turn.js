@@ -227,7 +227,7 @@
         const node=button(a);node.hidden=false;node.style.left=(a.button.x-SIZE/2)+'px';node.style.top=(a.button.y-SIZE/2)+'px';
         if(a.manual){const grab=handle(a);grab.style.display=a.outside?'none':'';for(const [key,value]of Object.entries({x1:a.a[0],y1:a.a[1],x2:a.b[0],y2:a.b[1],'aria-valuenow':state.axes.find(v=>v.id===a.id).position/state.rk}))grab.setAttribute(key,value);}
       }
-      ctx.stroke();ctx.restore();
+      if(state.guidesVisible!==false)ctx.stroke();ctx.restore();
     }
     return {render,hide,destroy(){hide();host.remove();},host};
   }

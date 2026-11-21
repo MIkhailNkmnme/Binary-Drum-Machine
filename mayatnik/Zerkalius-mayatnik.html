@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.076</title>
+<title>Zerkalius Маятнкъ — v1.077</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.076</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.077</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -654,12 +654,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-cross-mirrors.js?v=632"></script>
 <script src="mayatnik-paint-groups.js?v=892"></script>
 <script src="mayatnik-template.js?v=36"></script>
-<script src="mayatnik-template-axis-turn.js?v=1070"></script>
+<script src="mayatnik-template-axis-turn.js?v=1077"></script>
 <script src="mayatnik-template-compound.js?v=1067"></script>
 <script src="mayatnik-template-dedup.js?v=651"></script>
 <script src="mayatnik-template-inline.js?v=1076"></script>
 <link rel="stylesheet" href="mayatnik-template-inline.css?v=1076">
-<link rel="stylesheet" href="mayatnik-template-axis-turn.css?v=651">
+<link rel="stylesheet" href="mayatnik-template-axis-turn.css?v=1077">
 <script src="mayatnik-bit-contours.js?v=562"></script>
 <script src="mayatnik-kraft-shadows.js?v=954"></script>
 <script src="mayatnik-joined-romb.js?v=752"></script>
@@ -5882,10 +5882,63 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   // Template-local axes: one active item, regardless of the number of matches.
   var templateAxisControls=null,templateAxisMove=null;
+  window.mayTemplateAxesHover=(()=>{
+    let point=null,touch=false,state=null,screen=null,host=null,shown=false,hovered=null,pressed=null,candidates=[];
+    const distance=(p,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],n=dx*dx+dy*dy,t=n?Math.max(0,Math.min(1,((p.x-a[0])*dx+(p.y-a[1])*dy)/n)):0;return Math.hypot(p.x-a[0]-t*dx,p.y-a[1]-t*dy);};
+    function inspect(){
+      hovered=null;
+      if(!state||!screen||state.item!==colourTemplate||!templateVisible||!img||!f||templateCanvas.hidden||!axesAtShownScale())return false;
+      if(touch||pressed!==null||templateAxisMove||templateDragging||window.mayTemplateInline?.dragging?.())return true;
+      const focused=document.activeElement;if(host?.contains(focused)&&focused.matches?.(':focus-visible'))return true;
+      let hit=null,p=null;
+      if(point){
+        const viewport=wrap.getBoundingClientRect();
+        if(point.x>=viewport.left&&point.x<=viewport.right&&point.y>=viewport.top&&point.y<=viewport.bottom){
+          p=viewRotation.snapshot().logicalPoint(point);const r=cv.getBoundingClientRect();
+          if(r.width>0&&r.height>0){
+            const x=(p.x-r.left)/r.width*img.width,y=(p.y-r.top)/r.height*img.height;
+            let order=-Infinity;
+            for(const c of candidates){if(c.order<order)continue;const xx=x-c.dx,yy=y-c.dy;
+              if(c.parts.some(({part,rect,left,right})=>xx>=left&&xx<right&&xx>=rect.x&&xx<rect.x+rect.width&&yy>=rect.y&&yy<rect.y+rect.height&&MayatnikTemplate.contains(part.mask,rect,xx,yy))){hit=c;order=c.order;}
+            }
+          }
+        }
+      }
+      hovered=hit?.item.id||null;
+      if(!p)return false;
+      if(hit?.item===state.item)return true;
+      const at={x:p.x-screen.left,y:p.y-screen.top},project=r=>({x:screen.ox+r.x*screen.factor,y:screen.oy+r.y*screen.factor,width:r.width*screen.factor,height:r.height*screen.factor});
+      if(!hit)for(const r of state.rects){const b=project(r),right=b.x+b.width,bottom=b.y+b.height;if(at.x>=b.x-4&&at.x<=right+4&&at.y>=b.y-4&&at.y<=bottom+4&&Math.min(Math.abs(at.x-b.x),Math.abs(at.x-right),Math.abs(at.y-b.y),Math.abs(at.y-bottom))<=4)return true;}
+      if(!shown)return false;
+      // Reuse the actual button placement, including edge clamping and leaders.
+      const axes=screen.axes.map(a=>({...a,position:(a.direction==='h'?screen.oy:screen.ox)+a.position*screen.factor}));
+      return MayatnikTemplateAxisTurn.layout(project(screen.box),axes,screen.width,screen.height).some(a=>Math.hypot(at.x-a.button.x,at.y-a.button.y)<=17||!a.outside&&(distance(at,a.a,a.b)<=10||distance(at,a.leader,[a.button.x,a.button.y])<=12));
+    }
+    function refresh(redraw=true){const before=shown,old=hovered;shown=inspect();host?.classList.toggle('may-template-axis-idle',!shown);if(redraw&&(shown!==before||hovered!==old))queueDigits();return shown;}
+    const pointer=e=>{if(e.pointerType==='touch'){touch=true;point=null;}else{touch=false;point=viewRotation.physicalPoint(e);}refresh();};
+    document.addEventListener('pointermove',pointer,true);
+    document.addEventListener('pointerdown',e=>{if(host?.contains(e.target))pressed=e.pointerId;pointer(e);},true);
+    for(const type of ['pointerup','pointercancel'])document.addEventListener(type,e=>{if(pressed===e.pointerId)pressed=null;pointer(e);},true);
+    document.addEventListener('pointerout',e=>{if(e.pointerType!=='touch'&&!e.relatedTarget){point=null;refresh();}},true);
+    document.addEventListener('focusin',()=>refresh(),true);document.addEventListener('focusout',()=>queueMicrotask(()=>refresh()),true);
+    addEventListener('blur',()=>{point=null;pressed=null;refresh();});
+    return {render(next,geometry,controls){
+      if(state?.item!==next.item)shown=false;state=next;screen=geometry;host=controls.host;
+      // Cache only selected geometry; pointer movement never sorts or remembers the scene.
+      candidates=[];
+      for(const item of templatePickedIds.size>1?templateItems:[next.item]){
+        if(item!==next.item&&!templatePickedIds.has(item.id))continue;
+        const layer=window.mayLayers?.get('template:'+item.id);
+        if(item.view?.visible===false||layer?.visible===false||layer?.opacity===0||window.mayTemplateTransient?.hidden(item))continue;
+        candidates.push({item,order:layer?.order||0,dx:(layer?.x||0)*RK/scale(),dy:(layer?.y||0)*RK/scale(),parts:item.parts.map((part,i)=>({part,rect:item===next.item?next.rects[i]:templateRect(part,false,item),left:part.ox*RK,right:(part.ox+templatePartWidth(part))*RK}))});
+      }
+      return refresh(false);
+    },refresh:()=>refresh(false),other:item=>hovered===item.id,clear(){state=screen=null;candidates=[];shown=false;hovered=null;host?.classList.remove('may-template-axis-idle');}};
+  })();
   function templatePartWidth(part){return Number.isFinite(part.axisClipWidth)&&part.axisClipWidth>0?part.axisClipWidth:(joinedOn()?dispW():VW);}
-  function templateAxisState(){
+  function templateAxisState(allowDrag=false){
     const item=colourTemplate,layer=item&&window.mayLayers?.get('template:'+item.id);
-    if(!item||!templateVisible||templateDragging||item.view?.visible===false||layer?.visible===false||layer?.opacity===0||window.mayTemplateTransient?.hidden(item))return null;
+    if(!item||!templateVisible||templateDragging&&!allowDrag||item.view?.visible===false||layer?.visible===false||layer?.opacity===0||window.mayTemplateTransient?.hidden(item))return null;
     const rects=item.parts.map(p=>templateRect(p,false,item)),box=MayatnikTemplateAxisTurn.bounds(rects);if(!box)return null;
     const o=templateOptions(),pose=[templateOffsetX,o.down,o.height,o.proportional,RK],axisBox=MayatnikTemplateAxisTurn.frameBox(item.templateAxes,box,pose);
     return {item,layer,rects,box,axisBox,pose,axes:MayatnikTemplateAxisTurn.axes(axisBox,item.templateAxes)};
@@ -5995,14 +6048,15 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   window.mayTemplateAxes={get(){const state=templateAxisState();return {enabled:!!state,manualH:!!state?.item.templateAxes?.manualH?.visible,manualV:!!state?.item.templateAxes?.manualV?.visible,capturePaint:templateAxisPaintMode(state?.item)==='pickup',transferPaint:templateAxisPaintMode(state?.item)==='deposit',operation:MayatnikTemplateAxisTurn.operation(state?.item.templateAxes?.operation)};},toggle:id=>window.mayTemplateInline?.action('manualAxis:'+id)??toggleTemplateManualAxis(id),toggleOperation:id=>window.mayTemplateInline?.action('axisOperation:'+id)??toggleTemplateAxisOperation(id),turn:id=>window.mayTemplateInline?.turn(id)??turnTemplateAxis(id)};
   function renderTemplateAxisControls(ctx,ox,oy,s){
-    const state=templateAxisState();templateAxesChanged();if(!state){templateAxisControls?.hide();window.mayTemplateInline?.render(ctx,null);return;}
+    const state=templateAxisState(true);templateAxesChanged();if(!state){templateAxisControls?.hide();window.mayTemplateAxesHover?.clear();window.mayTemplateInline?.render(ctx,null);return;}
     if(!templateAxisControls)templateAxisControls=MayatnikTemplateAxisTurn.mount({snapManual:true,turn:id=>window.mayTemplateInline?.turn(id)??turnTemplateAxis(id),beginMove:beginTemplateAxisMove,move:moveTemplateManualAxis,endMove:endTemplateAxisMove});
-    const host=wrap.getBoundingClientRect(),screen={box:state.axisBox,axes:state.axes,left:host.left,top:host.top,width:wrap.clientWidth,height:wrap.clientHeight,ox:ox+(state.layer?.x||0),oy:oy+(state.layer?.y||0),factor:s/RK,rk:RK};if(axesAtShownScale()){templateAxisControls.render(ctx,screen);window.mayTemplateInline?.axes(templateAxisControls,screen);}else templateAxisControls.hide();window.mayTemplateInline?.render(ctx,state,screen);
+    const host=wrap.getBoundingClientRect(),screen={box:state.axisBox,axes:state.axes,left:host.left,top:host.top,width:wrap.clientWidth,height:wrap.clientHeight,ox:ox+(state.layer?.x||0),oy:oy+(state.layer?.y||0),factor:s/RK,rk:RK};if(axesAtShownScale()){const guidesVisible=window.mayTemplateAxesHover?.render(state,screen,templateAxisControls)??true;templateAxisControls.render(ctx,{...screen,guidesVisible});window.mayTemplateInline?.axes(templateAxisControls,screen);}else{templateAxisControls.hide();window.mayTemplateAxesHover?.clear();}window.mayTemplateInline?.render(ctx,state,screen);
   }
   function drawTemplateAxes(ctx,ox,oy,s){
     if(!axesAtShownScale()){renderTemplateAxisControls(ctx,ox,oy,s);return;}
+    window.mayTemplateAxesHover?.refresh();
     ctx.save();ctx.strokeStyle='#b48cff';ctx.lineWidth=1;ctx.globalAlpha=1;ctx.setLineDash([4,3]);ctx.beginPath();
-    for(const item of templateItems){if(item===colourTemplate||!templatePickedIds.has(item.id)||item.view?.visible===false||window.mayTemplateTransient?.hidden(item))continue;
+    for(const item of templateItems){if(item===colourTemplate||!templatePickedIds.has(item.id)||item.view?.visible===false||window.mayTemplateTransient?.hidden(item)||window.mayTemplateAxesHover&&!window.mayTemplateAxesHover.other(item))continue;
       const layer=window.mayLayers?.get('template:'+item.id);if(layer?.visible===false||layer?.opacity===0)continue;
       for(const part of item.parts){const b=templateRect(part,false,item),x=ox+(layer?.x||0)+b.x/RK*s,y=oy+(layer?.y||0)+b.y/RK*s,w=b.width/RK*s,h=b.height/RK*s;
         ctx.moveTo(x,y+h/2);ctx.lineTo(x+w,y+h/2);ctx.moveTo(x+w/2,y);ctx.lineTo(x+w/2,y+h);}
@@ -6037,7 +6091,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     queueLineMeasures();
     if(window.mayLayers)layerTemplates();
     if(!playing&&templateLockCheck())requestAnimationFrame(()=>{if(f)draw();});   // v0.142: шаблон встал на застывшие биты
-    rememberTemplate();templateStatus();templateCanvas.hidden=(!ochkiSelectionCurrent()&&!templateFrameSearchSelection()&&!window.mayTemplateLibrary?.getSelection()&&!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode&&!rulerA&&!st.nAxisSets?.length)||(playing&&!templateFollowActive()&&!columnTemplatesOn());if(templateCanvas.hidden){templateAxisControls?.hide();return;}
+    rememberTemplate();templateStatus();templateCanvas.hidden=(!ochkiSelectionCurrent()&&!templateFrameSearchSelection()&&!window.mayTemplateLibrary?.getSelection()&&!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode&&!rulerA&&!st.nAxisSets?.length)||(playing&&!templateFollowActive()&&!columnTemplatesOn());if(templateCanvas.hidden){templateAxisControls?.hide();window.mayTemplateAxesHover?.clear();return;}
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
     templateCanvas.style.left=host.left+'px';templateCanvas.style.top=host.top+'px';templateCanvas.style.width=w+'px';templateCanvas.style.height=h+'px';
     templateCanvas.width=Math.max(1,Math.round(w*d));templateCanvas.height=Math.max(1,Math.round(h*d));templateG.setTransform(d,0,0,d,0,0);
