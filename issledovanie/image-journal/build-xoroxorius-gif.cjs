@@ -49,7 +49,7 @@ const maskSize = mask.width * mask.height;
 const poseDelay = 85;
 const edgeDelay = 18;
 
-function render(turned, maskColour, delay) {
+function render(turned, showFigure, delay) {
   const pixels = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y++) {
     const row = Math.floor(y / unit) - 1;
@@ -61,8 +61,11 @@ function render(turned, maskColour, delay) {
       const my = row - mask.y;
       if (mx >= 0 && mx < mask.width && my >= 0 && my < mask.height) {
         const cell = my * mask.width + mx;
-        const index = turned ? maskSize - 1 - cell : cell;
-        if (maskPixels.readUInt32LE(4 * index)) colour = maskColour;
+        const reflected = maskSize - 1 - cell;
+        const onFace = maskPixels.readUInt32LE(4 * (turned ? reflected : cell));
+        const onOtherFace = maskPixels.readUInt32LE(4 * (turned ? cell : reflected));
+        // Keep both footprints yellow throughout the loop, beneath the current red face.
+        if (onFace || onOtherFace) colour = palette[showFigure && onFace ? 2 : 1];
       }
       const pixel = 4 * (y * width + x);
       pixels.set(colour, pixel);
@@ -73,8 +76,8 @@ function render(turned, maskColour, delay) {
 }
 
 for (const turned of [false, true]) {
-  render(turned, palette[2], poseDelay);
-  render(turned, palette[1], edgeDelay);
+  render(turned, true, poseDelay);
+  render(turned, false, edgeDelay);
 }
 
 gif.finish().arrayBuffer().then(data => {
