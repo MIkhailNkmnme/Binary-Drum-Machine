@@ -84,10 +84,22 @@
     }
     return draw(parts.map((_,i)=>i),compound,0);
   }
-  // Intersect occupied cell rectangles, including a line lying on a cell edge.
-  function touches(part,r,x,top=-Infinity,bottom=Infinity){
-    const m=part.mask;if(x<r.x||x>r.x+r.width)return false;const column=(x-r.x)/r.width*m.width;
-    for(const c of new Set([Math.floor(column),Math.ceil(column)-1])){if(c<0||c>=m.width)continue;for(let y=0;y<m.height;y++)if(m.data[y*m.width+c]&&r.y+(y+1)/m.height*r.height>top&&r.y+y/m.height*r.height<bottom)return true;}return false;
+  // Work in the source canvas's native cells, not in a downsampled viewport.
+  // A guide exactly on an edge touches both adjacent cells. The tolerance only
+  // absorbs arithmetic roundoff; it never grows to a visible pixel or bit.
+  function columnSlice(r,width,height,line,clip){
+    if(!r||![r.x,r.y,r.width,r.height].every(Number.isFinite)||!(r.width>0&&r.height>0)||!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||!Array.isArray(line)||line.length!==4||!line.every(Number.isFinite)||line[0]!==line[2])return null;
+    const x=line[0],left=Math.max(r.x,clip?.left??-Infinity),right=Math.min(r.x+r.width,clip?.right??Infinity),top=Math.max(r.y,Math.min(line[1],line[3]),clip?.top??-Infinity),bottom=Math.min(r.y+r.height,Math.max(line[1],line[3]),clip?.bottom??Infinity);
+    const u=(x-r.x)/r.width*width,epsilon=Math.min(1e-7,Number.EPSILON*64*Math.max(1,Math.abs(x),Math.abs(r.x),r.width)*width/r.width),screenEpsilon=epsilon*r.width/width;
+    if(right<=left||bottom<=top||x<left-screenEpsilon||x>right+screenEpsilon)return null;
+    const edge=Math.round(u),columns=(Math.abs(u-edge)<=epsilon?[edge-1,edge]:[Math.floor(u)]).filter(c=>c>=0&&c<width&&r.x+(c+1)/width*r.width>left&&r.x+c/width*r.width<right);
+    if(!columns.length)return null;
+    const x0=Math.min(...columns),x1=Math.max(...columns)+1,y0=Math.max(0,Math.floor((top-r.y)/r.height*height)),y1=Math.min(height,Math.ceil((bottom-r.y)/r.height*height));
+    return y1>y0?{x:x0,y:y0,width:x1-x0,height:y1-y0}:null;
   }
-  return {metadata,snapshot,attach,validate,validateField,build,groups,raster,touches};
+  function touchesCanvas(canvas,r,line,clip){
+    if(!canvas)return false;const slice=columnSlice(r,canvas.width,canvas.height,line,clip);if(!slice)return false;
+    const bytes=canvas.getContext('2d').getImageData(slice.x,slice.y,slice.width,slice.height).data;for(let q=3;q<bytes.length;q+=4)if(bytes[q])return true;return false;
+  }
+  return {metadata,snapshot,attach,validate,validateField,build,groups,raster,touchesCanvas};
 });

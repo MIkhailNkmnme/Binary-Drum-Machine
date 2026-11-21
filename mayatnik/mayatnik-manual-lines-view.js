@@ -77,7 +77,7 @@
    for(const [key,action]of [['add','onAdd'],['remove','onDelete'],['pin','onPin']])parts[key].onclick=e=>{consume(e);if(axis(id)){status.hidden=true;select(id);options[action]?.(id);}};
    parts.templates.setAttribute('aria-describedby',status.id);
    parts.templates.onclick=e=>{consume(e);if(!axis(id))return;select(id);
-    try{status.textContent=options.onTemplates?.(id)||'Нет выбранных шаблонов';}
+    try{const a=axis(id);status.textContent=options.onTemplates?.(id,{segment:a.fieldSegment||a.segment,fieldOrigin:current.fieldOrigin,scale:current.scale})||'Нет выбранных шаблонов';}
     catch(error){status.textContent='Не удалось выбрать шаблоны: '+(error?.message||String(error));}
     status.axisPosition=axis(id)?.p;status.fieldRows=current?.rows;status.hidden=false;
    };
