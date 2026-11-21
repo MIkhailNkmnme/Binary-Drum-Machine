@@ -1,0 +1,42 @@
+{
+  "deployment_status": "success",
+  "deployment_run": 44851182284,
+  "version": "1.052",
+  "commit": "ecccb3549ffb284babc4ebb167541939a0534477",
+  "review": "Source read by root and assistant_service; no browser, syntax or automated tests; user acceptance",
+  "date": "2026-11-21",
+  "archive": "archive/Zerkalius-mayatnik/v1052/source-ecccb354.zip",
+  "http": [
+    {
+      "path": "mayatnik/Zerkalius-mayatnik.html",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-assistant.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-assistant.css",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-menu.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "_js/menu-group-focus.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/instruction/index.html",
+      "http": 200,
+      "matches": true
+    }
+  ],
+  "task": "ПОМ-002"
+}
