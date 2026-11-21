@@ -12570,7 +12570,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     window.mayLayers=MayatnikLayers.create({canvas:()=>document.createElement('canvas'),mount:c=>root.append(c),viewport:layerViewport,
       axisX:()=>geo?cv.getBoundingClientRect().left+(geo.anchor-VX+.5)*scale():NaN,
       beforeCenter:(id,delta)=>{if(ovlFrozen?.linked&&ovlFrozen.layerId===id){const original=window.mayLayers.get('original');layerOriginalOffset({x:original.x-delta});}},
-      load:()=>CHISTO?{}:JSON.parse(localStorage.getItem('zerk_mayatnik_layers')||'{}'),save:o=>{if(!URL_ON)localStorage.setItem('zerk_mayatnik_layers',JSON.stringify(o));},
+      load:()=>CHISTO||SHARE_ACTIVE?{}:JSON.parse(localStorage.getItem('zerk_mayatnik_layers')||'{}'),save:o=>{if(!URL_ON&&!CHISTO&&!SHARE_ACTIVE)localStorage.setItem('zerk_mayatnik_layers',JSON.stringify(o));},
       select:id=>{if(window.mayLayers?._entry(id)?.kind==='snapshot')layerBind(id);},
       change:(next,old)=>{if(layerChanging)return;layerChanging=true;try{
         if(next.id==='original'&&(next.x!==old.x||next.y!==old.y)){if(geo)layout();}
