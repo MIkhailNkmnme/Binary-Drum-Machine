@@ -44,7 +44,7 @@
   function create(id){
    const panel=doc.createElement('div');panel.className='may-manual-axis-controls';panel.hidden=true;panel.dataset.axisId=String(id);
    const parts={};
-   for(const [key,text,title]of [['label','','Тянуть — двигать ось с шагом полклетки'],['add','+','Добавить ось между этой и началом поля'],['mirror1','',''],['mirror2','',''],['xor','XOR',''],['and','AND',''],['paint1','1',''],['paint0','0',''],['remove','×','Удалить ось'],['pin','📌','Показывать ручные оси в дзене']]){
+   for(const [key,text,title]of [['label','','Тянуть — двигать ось с шагом полклетки'],['add','+','Добавить ось между этой и началом поля'],['mirror1','',''],['mirror2','',''],['xor','XOR',''],['and','AND',''],['paint1','1',''],['paint0','0',''],['templates','▦','Выделить все шаблоны, касающиеся этой оси столбца; затем сохранить как сборный шаблон'],['remove','×','Удалить ось'],['pin','📌','Показывать ручные оси в дзене']]){
     const button=doc.createElement('button');button.type='button';button.className='may-manual-axis-'+key;button.textContent=text;button.title=title;parts[key]=button;panel.append(button);
    }
    for(const bit of [1,0]){
@@ -73,7 +73,7 @@
    parts.label.dataset.userLabel='';parts.label.dataset.mayTipImmediate='';
    listen(parts.label,'pointerdown',e=>begin(id,e,parts.label));
    parts.label.ondblclick=e=>{if(axis(id)?.resettable){consume(e);options.onReset?.(id);}};
-   for(const [key,action]of [['add','onAdd'],['remove','onDelete'],['pin','onPin']])parts[key].onclick=e=>{consume(e);if(axis(id)){select(id);options[action]?.(id);}};
+   for(const [key,action]of [['add','onAdd'],['remove','onDelete'],['pin','onPin'],['templates','onTemplates']])parts[key].onclick=e=>{consume(e);if(axis(id)){select(id);options[action]?.(id);}};
    for(const mode of [1,2])parts['mirror'+mode].onclick=e=>{consume(e);const a=axis(id);if(a&&!parts['mirror'+mode].disabled){select(id);options.onMirror?.(id,Geometry.toggleMirror(a.mode,mode));}};
    for(const bit of [1,0])parts['paint'+bit].onclick=e=>{consume(e);const a=axis(id);if(a&&!parts['paint'+bit].disabled){select(id);options.onPaint?.(id,Geometry.togglePaint(a.paint,bit));}};
    for(const op of ['xor','and'])parts[op].onclick=e=>{consume(e);const a=axis(id);if(a){select(id);options.onOperation?.(id,Geometry.toggleOperation(a.op,op));}};
@@ -99,6 +99,7 @@
     for(const op of ['xor','and']){const element=parts[op];element.setAttribute('aria-pressed',String(Geometry.mirrorOperation(a.op)===op));element.title=caption+' · Зеркало '+op.toUpperCase()+' · повторное нажатие возвращает копирование';element.setAttribute('aria-label',element.title);}
     for(const [key,dir]of [['autoBack',-1],['autoForward',1]]){parts[key].setAttribute('aria-pressed',String(a.autoDirection===dir));parts[key].textContent=a.kind==='h'?(dir<0?'↑':'↓'):(dir<0?'←':'→');parts[key].title='Автодвижение '+(dir<0?'назад':'вперёд')+' · у края разворот · повторное нажатие — стоп';}
     if(doc.activeElement!==parts.autoSpeed)parts.autoSpeed.value=String(a.autoSpeed||1);
+    parts.templates.hidden=a.kind!=='v'||!options.onTemplates;parts.templates.setAttribute('aria-label',parts.templates.title);
     parts.remove.hidden=a.canDelete===false;parts.pin.hidden=a.pin===undefined;parts.pin.setAttribute('aria-pressed',String(!!a.pin));
     candidates.push({id:a.id,kind:a.kind,segment,size:{width:panel.offsetWidth,height:panel.offsetHeight}});
    }

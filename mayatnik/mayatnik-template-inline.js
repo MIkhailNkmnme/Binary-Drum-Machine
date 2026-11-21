@@ -27,19 +27,19 @@
   }
   function restoreReceipt(receipt,current){const result={...current};for(const [name,fallback,Type]of [['paint',0,Uint32Array],['bits',-1,Int8Array],['matchPaint',0,Uint32Array],['matchBits',2,Uint8Array]]){const entries=receipt?.[name];if(!entries?.length)continue;let output=current[name];for(const [q,before,last]of entries){if((output?.[q]??fallback)!==last)continue;if(output===current[name])output=output?.slice()||new Type(current.size||q+1).fill(fallback);output[q]=before;}result[name]=output;}return result;}
   const commands=[
-    ['colour','Цвет выбранных шаблонов','●'],['save','Сохранить выбранные шаблоны в библиотеку','▣'],['clone','Добавить копии выбранных шаблонов','⧉'],['remove','Убрать выбранные шаблоны с поля','×'],['show','Показать / скрыть выбранные шаблоны','◉'],['find','Найти все такие же шаблоны','⌕'],
+    ['colour','Цвет выбранных шаблонов','●'],['save','Сохранить выбранные шаблоны одной сборкой в библиотеку','▣'],['split','Разобрать сборный шаблон на отдельные фигуры с сохранением положения и цветов','▦'],['clone','Добавить копии выбранных шаблонов','⧉'],['remove','Убрать выбранные шаблоны с поля','×'],['show','Показать / скрыть выбранные шаблоны','◉'],['find','Найти все такие же шаблоны','⌕'],
     ['flipH','Отразить выбранные шаблоны слева направо','↔'],['flipV','Отразить выбранные шаблоны сверху вниз','↕'],['return','Туда / назад','⇄'],['reset','Восстановить выбранные шаблоны','↶'],['taller','Увеличить высоту на 10 процентов','+'],['shorter','Уменьшить высоту на 10 процентов','−'],
     ['up','Сдвинуть вверх на одну строку','↑'],['down','Сдвинуть вниз на одну строку','↓'],['fall','Спуск выбранных шаблонов до меняющихся битов','⇓'],['move','Двигать выбранные шаблоны за оси','✥'],['transfer','Переносить без следа','⇢'],['paint','Прокрасить выбранные шаблоны','▧'],['trail','Инвертировать след','◐'],['proportional','Пропорциональное изменение размера','⤢'],['line','Зеркальная копия по линии','⇅'],['xor1','XOR на строку ниже','⊕'],['xorNext','Следующий шаг XOR','⊕↓']
   ];
   const groups=[
-    ['Копии / библиотека',['save','clone','remove','find']],
+    ['Копии / библиотека',['save','split','clone','remove','find']],
     ['Цвет / видимость',['colour','show','paint']],
     ['Размер',['taller','shorter','proportional']],
     ['Сдвиг / след',['move','up','down','fall','transfer','trail']],
     ['Зеркала / XOR',['flipH','flipV','line','xor1','xorNext']],
     ['Возврат',['return','reset']]
   ];
-  const captions={save:'В библиотеку',clone:'Копия',remove:'Убрать',find:'Найти такие',colour:'Цвет',show:'Показать',paint:'Прокрасить',taller:'Высота +10%',shorter:'Высота −10%',proportional:'Пропорции',move:'Двигать',up:'Вверх',down:'Вниз',fall:'Спуск',transfer:'Без следа',trail:'Инв. след',flipH:'Лево / право',flipV:'Верх / низ',line:'По линии',xor1:'XOR +1',xorNext:'Шаг XOR',return:'Туда / назад',reset:'Восстановить'};
+  const captions={split:'Разобрать',save:'В библиотеку',clone:'Копия',remove:'Убрать',find:'Найти такие',colour:'Цвет',show:'Показать',paint:'Прокрасить',taller:'Высота +10%',shorter:'Высота −10%',proportional:'Пропорции',move:'Двигать',up:'Вверх',down:'Вниз',fall:'Спуск',transfer:'Без следа',trail:'Инв. след',flipH:'Лево / право',flipV:'Верх / низ',line:'По линии',xor1:'XOR +1',xorNext:'Шаг XOR',return:'Туда / назад',reset:'Восстановить'};
   function mount(options){
     const doc=options.document||document,root=doc.defaultView||globalThis,NS='http://www.w3.org/2000/svg',storageKey='mayatnik-template-inline-layout-v1';
     const caption=text=>typeof root.sharedHubButtonText==='function'?root.sharedHubButtonText(text):(root.HubButtonText?.shortCaption(text)||text);
