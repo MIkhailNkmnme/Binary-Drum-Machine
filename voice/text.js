@@ -95,24 +95,28 @@
           if(isSound&&score.length&&score.every(token=>!Object.hasOwn(phones??{},token.id))){
             let end=index+1;
             while(letters[end]?.toUpperCase()===upper)end++;
-            const word=wordStarts.get(index);
-            const letterName=shortConsonants.has(upper)&&end-index>=2&&word?.end===end
-              ?names.get(char.toLowerCase()):null;
-            if(letterName){
-              // Standalone trials like ддд use the same syllables as letter names.
-              // Each syllable keeps its own cursor mark and may start a worker chunk.
-              for(let at=index;at<end;at++){
-                const rawIndex=prepared.rawIndices[at];
-                units.push({index:rawIndex,indices:[rawIndex],cleanIndices:[at],
-                  score:letterName.score.map(token=>({...token})),boundary:false,separate:true});
-              }
-              index=end-1;
-              sounding=true;
-              continue;
-            }
             const next=letters[end]?.toUpperCase();
             const softId=score[0].id+'j';
             const customSoft=softenable.has(upper)&&softNext.has(next)&&Object.hasOwn(phones??{},softId);
+            const word=wordStarts.get(index),wholeWord=word?.end===end;
+            const markedRun=word?.end===end+1&&(next==='Ъ'||next==='Ь');
+            if(!customSoft&&shortConsonants.has(upper)&&end-index>=2&&(wholeWord||markedRun)){
+              // A marked trial and bare К/П repeat the consonant with short pauses.
+              // Other unmarked trials like ддд use the same syllables as letter names.
+              const bare=markedRun||upper==='К'||upper==='П';
+              if(bare&&next==='Ь'&&softenable.has(upper)&&engine.phonemeIds.includes(softId))score[0].id=softId;
+              const repeatScore=bare?score:names.get(char.toLowerCase())?.score;
+              if(repeatScore){
+                for(let at=index;at<end;at++){
+                  const rawIndex=prepared.rawIndices[at],tokens=repeatScore.map(token=>({...token}));
+                  if(bare&&at+1<end)tokens.push({id:'_',duration:.075});
+                  units.push({index:rawIndex,indices:[rawIndex],cleanIndices:[at],score:tokens,boundary:false,separate:true});
+                }
+                index=end-1;
+                sounding=true;
+                continue;
+              }
+            }
             // Preserve ordinary doubled vowels, such as the "оо" in "кооперация".
             if(!customSoft&&end-index>=(vowel?3:2))length=end-index;
           }
@@ -171,7 +175,7 @@
       const samples=duration(part.score);
       if(annotation.config.mode==='speech')part.prosody={version:1,segments:part.prosodySegments,transitionMs:annotation.config.transitionMs,
         rangeStart:consumed/spokenTotal,rangeEnd:(consumed+samples)/spokenTotal,...(['ru','fr'].includes(language)?{articulatedFrication:true,smoothStopRelease:true,bandLimitedZ:true}:{}),
-        ...(language==='ru'?{softVoicedConsonants:true}:{})};
+        ...(language==='ru'?{softVoicedConsonants:true,voicedVelarRelease:true}:{})};
       consumed+=samples;delete part.prosodySegments;
     }
     return {characters,chunks,language,rate,phones:effectivePhones,prosody:{version:root.VoiceProsody.version,config:annotation.config,words:annotation.words,note:annotation.note}};

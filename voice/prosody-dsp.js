@@ -45,11 +45,20 @@
     filter.reset=()=>{first=0;second=0;};
     return filter;
   }
-  function speechPhone(id,phone,closedVoicedStop,isolatedZ){
+  const voicedVelars=new Set(['g','gj']);
+  function speechPhone(id,phone,closedVoicedStop,isolatedZ,voicedVelar){
     if(isolatedZ&&phone.kind==='fricative'){
       return {...phone,kind:'sonorant',voice:.60,noise:0,
         formants:[300,id==='zj'?Math.max(2150,phone.formants[1]):1650,...phone.formants.slice(2)],bandwidths:[145,...phone.bandwidths.slice(1)],
         weights:[.65,.18,.035,0]};
+    }
+    if(voicedVelar&&phone.kind==='stop'){
+      const soft=id==='gj';
+      // The adjacent F2 and F3 concentrate the release in the mid band.
+      // F1 supports voicing in the closure and on both sides of the release.
+      return {...phone,voice:.82,noise:.48,
+        formants:[255,soft?2300:1900,soft?2650:2250,4100],bandwidths:[125,430,440,800],
+        weights:[.82,.8,.63,.06]};
     }
     if(closedVoicedStop&&phone.kind==='stop'&&voicedStops.has(id)){
       // An isolated stop is the low periodic closure, with no release noise.
@@ -84,17 +93,18 @@
     const t=clamp(value,0,1);
     return t*t*(3-2*t);
   }
-  function createStopRelease(count,rate,fraction){
-    const last=count-1,start=Math.ceil(last*fraction),span=count-start;
+  function createStopRelease(count,rate,fraction,voicedVelar){
+    const last=count-1,start=Math.ceil(last*(voicedVelar ? .52 : fraction)),span=count-start;
     const attack=Math.max(1,Math.min(rate*.004,span/3));
     const tail=Math.max(1,Math.min(rate*.006,span/3));
-    const opening=Math.max(1,Math.min(rate*.012,span*.6));
+    const opening=Math.max(1,Math.min(rate*(voicedVelar ? .006 : .012),span*.6));
+    const decay=rate*(voicedVelar ? .0045 : .008);
     return {
       voiceOpening:index=>smooth((index-start)/opening),
       noiseEnvelope:index=>{
         if(index<=start||index>=last)return 0;
         const age=index-start;
-        return .60*smooth(age/attack)*Math.exp(-age/(rate*.008))*smooth((last-index)/tail);
+        return .60*smooth(age/attack)*Math.exp(-age/decay)*smooth((last-index)/tail);
       }
     };
   }
@@ -183,10 +193,12 @@
     const smoothStopRelease=input.smoothStopRelease===true;
     const bandLimitedZ=input.bandLimitedZ===true;
     const softVoicedConsonants=input.softVoicedConsonants===true;
+    const voicedVelarRelease=input.voicedVelarRelease===true;
+    const hasVelarRelease=id=>voicedVelarRelease&&voicedVelars.has(id);
     const appliedProsody={version:1,segments,transitionMs,rangeStart,rangeEnd,
       ...(softenRussianFrication?{softenFrication:true}:{}),...(articulatedFrication?{articulatedFrication:true}:{}),
       ...(smoothStopRelease?{smoothStopRelease:true}:{}),...(bandLimitedZ?{bandLimitedZ:true}:{}),
-      ...(softVoicedConsonants?{softVoicedConsonants:true}:{})};
+      ...(softVoicedConsonants?{softVoicedConsonants:true}:{}),...(voicedVelarRelease?{voicedVelarRelease:true}:{})};
     const diagnosticLimits={semitones:[-12,12],segmentGain:[0,2],transitionMs:[0,80],frequencyHz:[floor,ceiling],
       requestedMinimumFrequency:requestedMin,requestedMaximumFrequency:requestedMax,
       effectiveMinimumFrequency:clamp(requestedMin,floor,ceiling),effectiveMaximumFrequency:maximumFrequency,
@@ -200,12 +212,13 @@
       speechPhone:(id,phone,index)=>{
         const closed=segments[index]?.closedVoicedStop===true&&voicedStops.has(id);
         const isolatedZ=segments[index]?.isolatedZ===true&&(id==='z'||id==='zj');
-        return articulatedFrication||closed||isolatedZ?speechPhone(id,phone,closed,isolatedZ):phone;
+        const voicedVelar=hasVelarRelease(id);
+        return articulatedFrication||closed||isolatedZ||voicedVelar?speechPhone(id,phone,closed,isolatedZ,voicedVelar):phone;
       },
       consonantVoicing:(score,overrides)=>softVoicedConsonants?createConsonantVoicing(score,overrides,rate):null,
       fricationSource:(id,kind)=>articulatedFrication&&(bandLimitedZ||(id!=='z'&&id!=='zj'))?createFricationSource(id,kind,rate):null,
       stopRelease:(id,kind,count,fraction)=>smoothStopRelease&&kind==='stop'&&russianStops.has(id)
-        ?createStopRelease(count,rate,fraction):null,
+        ?createStopRelease(count,rate,fraction,hasVelarRelease(id)):null,
       softenFrication:(samples,phones)=>{
         if(softenRussianFrication&&!articulatedFrication)applyFrication(samples,phones,boundaries,rate);
       },

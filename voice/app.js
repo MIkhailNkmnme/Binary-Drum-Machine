@@ -18,13 +18,16 @@
   const DEFAULT_SPEECH=speechField.value;
   const PLAIN_RUSSIAN_EXAMPLE=DEFAULT_SPEECH.split('\n',1)[0].replace(/\u0301/g,'');
   const RUSSIAN_NAMES_START=DEFAULT_SPEECH.lastIndexOf('\n')+1;
-  const PREVIOUS_RUSSIAN_EXAMPLE=DEFAULT_SPEECH.slice(0,RUSSIAN_NAMES_START)+'Б В Г Д Ж З Й К Л М Н П Р С Т Ф Х Ц Ч Ш Щ';
+  const RUSSIAN_EXAMPLE_PREFIX=DEFAULT_SPEECH.slice(0,RUSSIAN_NAMES_START);
+  const PREVIOUS_RUSSIAN_EXAMPLE=RUSSIAN_EXAMPLE_PREFIX+'Б В Г Д Ж З Й К Л М Н П Р С Т Ф Х Ц Ч Ш Щ';
+  const PREVIOUS_RUSSIAN_NAMES=RUSSIAN_EXAMPLE_PREFIX+'Бэ, Вэ, Гэ, Дэ, Же, Зэ, И кра́ткое, Ка, Эль, Эм, Эн, Пэ, Эр, Эс, Тэ, Эф, Ха, Це, Че, Ша, Ща';
+  const EXAMPLE_DIGIT_END='\n\n1, 0, 0… 1, 1, 0, 0.';
   const engineTabs=[...$('engine-tabs').querySelectorAll('[data-engine]')];
   const topicTabs=[...$('voice-tabs').querySelectorAll('[role="tab"]')];
   const enginePages={};
   const BASE_SPEECH_EXAMPLES={...VoiceLanguages.examples,ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
   const SPEECH_LABELS={ru:'Русский',en:'English',de:'Deutsch',fr:'Français',it:'Italiano',es:'Español',ja:'日本語'};
-  const SPEECH_EXAMPLES=Object.freeze(Object.fromEntries(Object.entries(BASE_SPEECH_EXAMPLES).map(([lang,text])=>[lang,['ru','en','de'].includes(lang)?text+'\n\n1, 0, 0… 1, 1, 0, 0.':text])));
+  const SPEECH_EXAMPLES=Object.freeze(Object.fromEntries(Object.entries(BASE_SPEECH_EXAMPLES).map(([lang,text])=>[lang,['ru','en','de'].includes(lang)?text+EXAMPLE_DIGIT_END:text])));
   const speechCatalog=[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])];
   const alphabetExamples=Object.fromEntries(Object.keys(SPEECH_EXAMPLES).map(language=>{
     const symbols=speechCatalog.filter(r=>r.lang===language&&r.kind==='name'&&Array.from(r.symbol).length===1)
@@ -33,11 +36,23 @@
   }));
   const PREVIOUS_EXAMPLES={fr:[VoiceDigits.example],it:[VoiceDigits.example],es:[VoiceDigits.example],ja:[VoiceDigits.example],en:['Hello! 0 1 2 3.'],ru:['Привет, Зеркалиус! 0 1 2 3.','0123456789 Текст для проверки голоса. Утром 0 юный фотограф 1 Фёдор поднялся на холм, где 2 жёлтый фургон стоял у въезда. Рыжий ёж 3 шуршал в траве, а маленький щенок 4 прыгал через лужи. В центре двора 5 музыкант объяснял, как звучат флейта, цимбалы и бубен. Затем 6 Юлия и Яков съели хлеб, выпили чай и ещё раз произнесли фразу. Эхо 7 отвечало из чащи: «Здравствуй, мир!» Вечером 8 экскурсовод проверил объём ящика, а 9 белый конь спокойно ждал у двери.'],de:['Ich heiße Zerkalius. Schön! 0 1 2 3.']};
   for(const lang of Object.keys(BASE_SPEECH_EXAMPLES))(PREVIOUS_EXAMPLES[lang]??=[]).push(BASE_SPEECH_EXAMPLES[lang]);
+  PREVIOUS_EXAMPLES.ru.push(PREVIOUS_RUSSIAN_NAMES,PREVIOUS_RUSSIAN_NAMES+EXAMPLE_DIGIT_END);
   const russianLetterNames=(globalThis.VoiceLegacyCatalog||[]).filter(entry=>entry.lang==='ru'&&entry.kind==='name');
-  function letterTrial(count,separator,previous=false){
+  function letterTrial(count,separator,format='current'){
+    const previous=format==='legacy';
     return russianLetterNames.filter(({symbol})=>previous||!['Ъ','Ь'].includes(symbol)).map(({symbol,label})=>{
       const name=label[0].toUpperCase()+label.slice(1),letter=symbol.toLowerCase();
       const repeated=!previous&&!separator&&symbol==='Ю'?'й'+'у'.repeat(count):Array(count).fill(letter).join(separator);
+      if(format==='current'){
+        if(symbol==='Й')return separator?'Йь, '+Array(count).fill('йь').join(separator):'Йь, йь, ййййййь';
+        const paired=VoiceText.pairedConsonants.includes(symbol);
+        if(paired||'ЖШЦЧЩ'.includes(symbol)){
+          const sign='ПЧЩ'.includes(symbol)?'ь':'ъ',marked=letter+sign;
+          const run=separator?Array(count).fill(marked).join(separator):repeated+sign;
+          const alternate=paired?', '+letter+(sign==='ъ'?'ь':'ъ'):'';
+          return symbol+sign+', '+run+alternate;
+        }
+      }
       const line=name+', '+repeated;
       if(previous)return line;
       if(VoiceText.pairedConsonants.includes(symbol))return line+', '+letter+'ъ, '+letter+'ь';
@@ -47,7 +62,8 @@
     }).join('\n');
   }
   const LETTER_TRIALS={joined:letterTrial(22,''),spaced:letterTrial(10,' ')};
-  const OLD_LETTER_TRIALS={joined:letterTrial(22,'',true),spaced:letterTrial(10,' ',true)};
+  const PREVIOUS_LETTER_TRIALS={joined:letterTrial(22,'','names'),spaced:letterTrial(10,' ','names')};
+  const OLD_LETTER_TRIALS={joined:letterTrial(22,'','legacy'),spaced:letterTrial(10,' ','legacy')};
   const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]
     ||(language==='ru'&&(text===PLAIN_RUSSIAN_EXAMPLE||text===PREVIOUS_RUSSIAN_EXAMPLE))
     ||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
@@ -250,7 +266,7 @@
   function showPhone(){const id=$('phone').value,p=profile().phones[id]||profile().userPhones[id]||globalThis.VoiceGerman?.getPhone(state.engineId,id)||VoiceEnglish.getPhone(state.engineId,id)||VoiceLanguages.getPhone(state.engineId,id)||E.getPhone(id);if(!p)return;$('phone-id').value=id;$('phone-kind').value=p.kind;for(const key of ['formants','bandwidths','weights'])for(let i=0;i<4;i++)$(key+i).value=p[key][i];$('phone-voice').value=p.voice;$('phone-noise').value=p.noise;$('phone-status').textContent=label(state.engineId)+' · '+(E.phoneLabels?.[id]||globalThis.VoiceGerman?.phoneLabels[id]||VoiceEnglish.phoneLabels[id]||VoiceLanguages.phoneLabels[id]||id);}
   for(const k of E.kinds)option($('phone-kind'),k.id,k.label);
   for(let i=0;i<4;i++){const box=document.createElement('div');box.className='formant';box.id='formant-'+i;const title=document.createElement('strong');title.textContent='Форманта '+(i+1);box.append(title);for(const [key,text,min,max,step]of [['formants','Частота, Гц',20,9922.5,.5],['bandwidths','Полоса, Гц',20,4000,1],['weights','Вес',0,4,.01]]){const l=document.createElement('label');l.textContent=text;const n=document.createElement('input');Object.assign(n,{type:'number',id:key+i,min,max,step});l.append(n);box.append(l);}$('phone-formants').append(box);}
-  function render(recipe){cancelWorker();const id=++jobId;return new Promise((resolve,reject)=>{const w=new Worker('render-worker.js?v=028');worker=w;w.reject=reject;w.onmessage=event=>{if(worker!==w||event.data.id!==id)return;worker=null;w.terminate();if(event.data.type==='error'){reject(Error(event.data.error?.message||'Ошибка синтеза.'));return;}const result=event.data.result;if(event.data.type!=='result'||result?.engineId!==recipe.engineId){reject(Error('Движок вернул несовместимый результат.'));return;}resolve(result);};w.onerror=event=>{if(worker===w)worker=null;w.terminate();reject(Error(event.message||'Worker не загрузился.'));};w.postMessage({id,engineId:recipe.engineId,score:recipe.score,settings:recipe.settings,phones:recipe.phones,...(recipe.prosody?{prosody:recipe.prosody}:{})});});}
+  function render(recipe){cancelWorker();const id=++jobId;return new Promise((resolve,reject)=>{const w=new Worker('render-worker.js?v=029');worker=w;w.reject=reject;w.onmessage=event=>{if(worker!==w||event.data.id!==id)return;worker=null;w.terminate();if(event.data.type==='error'){reject(Error(event.data.error?.message||'Ошибка синтеза.'));return;}const result=event.data.result;if(event.data.type!=='result'||result?.engineId!==recipe.engineId){reject(Error('Движок вернул несовместимый результат.'));return;}resolve(result);};w.onerror=event=>{if(worker===w)worker=null;w.terminate();reject(Error(event.message||'Worker не загрузился.'));};w.postMessage({id,engineId:recipe.engineId,score:recipe.score,settings:recipe.settings,phones:recipe.phones,...(recipe.prosody?{prosody:recipe.prosody}:{})});});}
   async function unlock(){context ||= new (window.AudioContext||window.webkitAudioContext)();await context.resume();}
   function play(result){return new Promise(resolve=>{if(!context||context.state!=='running'){resolve();return;}retireSource();const buffer=context.createBuffer(1,result.samples.length,result.sampleRate);buffer.copyToChannel(result.samples,0);const node=context.createBufferSource();node.buffer=buffer;node.connect(context.destination);source=node;sourceDone=resolve;node.onended=()=>{node.disconnect();if(source===node){source=null;sourceDone=null;}resolve();};node.start();});}
   function snapshot(recipe,result){return {...clone(recipe),engineId:result.engineId,engineVersion:result.engineVersion,settings:clone(result.settings),phones:clone(result.phones)};}
@@ -861,7 +877,7 @@
     state.speechLanguage=Object.hasOwn(SPEECH_EXAMPLES,page.speechLanguage)?page.speechLanguage:'ru';
     const savedText=page.speechText;
     const currentText=typeof savedText==='string'&&(!isFactoryText(savedText,state.speechLanguage)||savedText===SPEECH_EXAMPLES[state.speechLanguage]);
-    const oldTrial=state.speechLanguage==='ru'?Object.keys(OLD_LETTER_TRIALS).find(key=>savedText===OLD_LETTER_TRIALS[key]):null;
+    const oldTrial=state.speechLanguage==='ru'?Object.keys(LETTER_TRIALS).find(key=>savedText===OLD_LETTER_TRIALS[key]||savedText===PREVIOUS_LETTER_TRIALS[key]):null;
     state.speechText=oldTrial?LETTER_TRIALS[oldTrial]:currentText?Array.from(savedText).slice(0,VoiceText.maxCharacters).join(''):SPEECH_EXAMPLES[state.speechLanguage];
     speechField.value=state.speechText;
     state.speechText=speechField.value;
@@ -869,6 +885,8 @@
     if(state.speechLanguage==='ru'){
       if(savedText===PLAIN_RUSSIAN_EXAMPLE)caret=accentedExampleCaret(page.speechCaret);
       else if(savedText===PREVIOUS_RUSSIAN_EXAMPLE)caret=consonantNameCaret(page.speechCaret);
+      else if(savedText===PREVIOUS_RUSSIAN_NAMES||savedText===PREVIOUS_RUSSIAN_NAMES+EXAMPLE_DIGIT_END)
+        caret=Math.min(page.speechCaret??0,RUSSIAN_NAMES_START);
     }
     restoreSpeechCaret(caret);
     $('speech-language').value=state.speechLanguage;

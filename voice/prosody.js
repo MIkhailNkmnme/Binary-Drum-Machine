@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.9';
+  const version='text-prosody-v1.2.10';
   const voicedStops=new Set(['b','bj','g','gj','d','dj']);
   const labiodental=new Set(['v','vj']);
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
@@ -80,7 +80,8 @@
         &&(word.end===afterUnit||word.end===afterUnit+1&&/^[ъь]$/iu.test(prepared.letters[afterUnit]))
         &&!Object.hasOwn(phones,unit.score[0].id);
       unit.closedVoicedStop=isolated&&unit.kinds[0]==='stop'&&voicedStops.has(unit.score[0].id);
-      unit.isolatedZ=isolated&&unit.kinds[0]==='fricative'&&['z','zj'].includes(unit.score[0].id);
+      // The isolated closed-voice recipe is for a single З. A held row needs friction.
+      unit.isolatedZ=isolated&&unit.cleanIndices.length===1&&unit.kinds[0]==='fricative'&&['z','zj'].includes(unit.score[0].id);
       for(let j=0;j<unit.score.length;j++){
         const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(unit.stressTokens?unit.stressTokens.includes(j):marked||numericStress.includes(j));unit.stresses.push(stress);
         const factor={vowel:.72,stop:.80,affricate:.82,fricative:.80,sonorant:.82,trill:.82,rhotic:.82,silence:1}[k]||1;
