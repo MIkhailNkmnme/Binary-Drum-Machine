@@ -19,7 +19,7 @@
   const consume=e=>{e.preventDefault();e.stopImmediatePropagation();};
   const axis=id=>current?.axes.find(a=>a.id===id&&a.visible!==false);
   const listen=(node,type,fn)=>node.addEventListener(type,fn,true);
-  function select(id){if(!axis(id))return;preferredId=id;for(const [key,{panel}]of panels){panel.dataset.selected=String(key===id);if(key===id)panel.style.setProperty('--manual-axis-colour',Geometry.SELECTED_COLOUR);else{const a=axis(key);if(a)panel.style.setProperty('--manual-axis-colour',a.colour||'#7cbcff');}}options.onSelect?.(id);}
+  function select(id){if(!axis(id))return;preferredId=id;for(const [key,{panel,status}]of panels){panel.dataset.selected=String(key===id);if(key===id)panel.style.setProperty('--manual-axis-colour',Geometry.SELECTED_COLOUR);else{status.hidden=true;const a=axis(key);if(a)panel.style.setProperty('--manual-axis-colour',a.colour||'#7cbcff');}}options.onSelect?.(id);}
   function end(e){
    if(!drag||e.pointerId!==drag.pointerId)return;
    const old=drag;drag=null;
@@ -36,6 +36,7 @@
   }
   function begin(id,e,target){
    if(e.button!==0||drag)return;const a=axis(id);if(!a)return;
+   if(panels.has(id))panels.get(id).status.hidden=true;
    select(id);drag={id,kind:a.kind,p:a.p,x:e.clientX,y:e.clientY,scale:current.scale,pointerId:e.pointerId,target};
    target.setPointerCapture(e.pointerId);target.classList.add('drag');
    for(const [type,fn]of [['pointermove',move],['pointerup',end],['pointercancel',end],['lostpointercapture',end]])listen(target,type,fn);
@@ -43,7 +44,7 @@
   }
   function create(id){
    const panel=doc.createElement('div');panel.className='may-manual-axis-controls';panel.hidden=true;panel.dataset.axisId=String(id);
-   const parts={};
+   const parts={},status=doc.createElement('output');status.className='may-manual-axis-status';status.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.setAttribute('aria-atomic','true');status.id='may-manual-axis-status-'+String(id).replace(/[^a-z0-9_-]/gi,'-');panel.append(status);
    for(const [key,text,title]of [['label','','Тянуть — двигать ось с шагом полклетки'],['add','+','Добавить ось между этой и началом поля'],['mirror1','',''],['mirror2','',''],['xor','XOR',''],['and','AND',''],['paint1','1',''],['paint0','0',''],['templates','▦','Выделить все шаблоны, касающиеся этой оси столбца; затем сохранить как сборный шаблон'],['remove','×','Удалить ось'],['pin','📌','Показывать ручные оси в дзене']]){
     const button=doc.createElement('button');button.type='button';button.className='may-manual-axis-'+key;button.textContent=text;button.title=title;parts[key]=button;panel.append(button);
    }
@@ -73,11 +74,17 @@
    parts.label.dataset.userLabel='';parts.label.dataset.mayTipImmediate='';
    listen(parts.label,'pointerdown',e=>begin(id,e,parts.label));
    parts.label.ondblclick=e=>{if(axis(id)?.resettable){consume(e);options.onReset?.(id);}};
-   for(const [key,action]of [['add','onAdd'],['remove','onDelete'],['pin','onPin'],['templates','onTemplates']])parts[key].onclick=e=>{consume(e);if(axis(id)){select(id);options[action]?.(id);}};
+   for(const [key,action]of [['add','onAdd'],['remove','onDelete'],['pin','onPin']])parts[key].onclick=e=>{consume(e);if(axis(id)){status.hidden=true;select(id);options[action]?.(id);}};
+   parts.templates.setAttribute('aria-describedby',status.id);
+   parts.templates.onclick=e=>{consume(e);if(!axis(id))return;select(id);
+    try{status.textContent=options.onTemplates?.(id)||'Нет выбранных шаблонов';}
+    catch(error){status.textContent='Не удалось выбрать шаблоны: '+(error?.message||String(error));}
+    status.axisPosition=axis(id)?.p;status.fieldRows=current?.rows;status.hidden=false;
+   };
    for(const mode of [1,2])parts['mirror'+mode].onclick=e=>{consume(e);const a=axis(id);if(a&&!parts['mirror'+mode].disabled){select(id);options.onMirror?.(id,Geometry.toggleMirror(a.mode,mode));}};
    for(const bit of [1,0])parts['paint'+bit].onclick=e=>{consume(e);const a=axis(id);if(a&&!parts['paint'+bit].disabled){select(id);options.onPaint?.(id,Geometry.togglePaint(a.paint,bit));}};
    for(const op of ['xor','and'])parts[op].onclick=e=>{consume(e);const a=axis(id);if(a){select(id);options.onOperation?.(id,Geometry.toggleOperation(a.op,op));}};
-   doc.body.append(panel);return {panel,parts};
+   doc.body.append(panel);return {panel,parts,status};
   }
   function render(snapshot){
    current=snapshot;const candidates=[];
@@ -86,7 +93,8 @@
    if(Object.hasOwn(snapshot,'selectedId'))preferredId=snapshot.selectedId;
    if(!snapshot.axes.some(a=>a.id===preferredId))preferredId=null;
    for(const a of snapshot.axes){const belowSegment=a.kind==='v'&&Array.isArray(a.fieldSegment)&&a.fieldSegment[0]>=snapshot.viewport.left&&a.fieldSegment[0]<=snapshot.viewport.right?a.fieldSegment:null,segment=a.segment||belowSegment;if(a.visible===false||!segment)continue;
-    if(!panels.has(a.id))panels.set(a.id,create(a.id));const {panel,parts}=panels.get(a.id);
+    if(!panels.has(a.id))panels.set(a.id,create(a.id));const {panel,parts,status}=panels.get(a.id);
+    if(status.axisPosition!==a.p||status.fieldRows!==snapshot.rows)status.hidden=true;
     panel.hidden=false;panel.dataset.selected=String(a.id===preferredId);panel.style.setProperty('--manual-axis-colour',a.id===preferredId?Geometry.SELECTED_COLOUR:a.colour||'#7cbcff');
     panel.dataset.compact=String(snapshot.viewport.right-snapshot.viewport.left<400);
     const caption=Geometry.label(a,snapshot.anchor,snapshot.rows);parts.label.textContent=caption.split(' · ')[0];parts.label.title=caption+' · Тянуть — двигать ось с шагом полклетки';parts.label.setAttribute('aria-label',caption);parts.label.style.cursor=a.kind==='h'?'ns-resize':a.kind==='v'?'ew-resize':a.kind==='d'?'nesw-resize':'nwse-resize';
