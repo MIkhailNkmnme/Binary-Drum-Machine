@@ -6,7 +6,7 @@
 (function(root){
   'use strict';
   root.ZerkaliusDshFactory=function(C){
-    const VERSION='deepseek-formant-live-v1.2.5',RATE=44100,TAU=2*Math.PI;
+    const VERSION='deepseek-formant-live-v1.2.6',RATE=44100,TAU=2*Math.PI;
     const profile=C.config({pitchStart:112,pitchEnd:96,vibratoDepth:0,vibratoRate:2.1,transitionMs:0,outputGain:.7,seed:7},['transitionMs']);
     // Возраст: 0 — ребёнок, 50 — взрослый, 100 — старик. Меняет длину речевого
     // тракта (форманты), высоту, дрожание и придыхание, не трогая таблицу фонем.
@@ -87,6 +87,7 @@
     const voicedSpeechTargets=new Set(['b','bj','d','dj','g','gj','z','zj']);
     function renderSpeech({settings,phones,score,counts,total,prosody,shape}){
       const dsp=root.VoiceProsodyDSP,softenNoise=dsp.createConsonantNoise(RATE);
+      const consonantVoicing=prosody.consonantVoicing?.(score,phones);
       const resolvedPhones=score.map(({id},index)=>{
         const native=table[id],custom=Object.hasOwn(phones,id);
         const target=custom?phones[id]:getPhone(id),speechTarget=custom?target:prosody.speechPhone(id,target,index);
@@ -129,13 +130,19 @@
         const builtIn=!Object.hasOwn(phones,p.id);
         const frication=builtIn?prosody.fricationSource(p.id,p.kind):null;
         const stopRelease=builtIn?prosody.stopRelease(p.id,p.kind,count,.55):null;
-        if(p.kind==='silence'){for(const f of filters){f.last=0;f.older=0;}cursor+=count;continue;}
+        if(p.kind==='silence'){
+          for(const f of filters){f.last=0;f.older=0;}
+          consonantVoicing?.reset();
+          cursor+=count;
+          continue;
+        }
         for(let index=0;index<count;index++){
           const at=cursor+index,speech=prosody.at(at,segment),other=resolvedPhones[speech.otherIndex];
           const mix=(a,b)=>a+(b-a)*speech.blend;
           if(index===0||at%16===0)for(let band=0;band<3;band++)filters[band].c=coefficient(mix(p.formants[band],other.formants[band]),mix(p.bandwidths[band],other.bandwidths[band]));
           const tremolo=p.kind==='trill'?1+.75*Math.sin(TAU*26*index/RATE):1;
-          const voice=glottal[at]*tremolo*mix(p.voice,other.voice)*settings.voicing;
+          const voiceSource=consonantVoicing?consonantVoicing(glottal[at],segment,speech.otherIndex,speech.blend):glottal[at];
+          const voice=voiceSource*tremolo*mix(p.voice,other.voice)*settings.voicing;
           const rawNoise=normal(),softNoise=softenNoise(rawNoise);
           const afterRelease=index-releaseAt;
           let noiseEnvelope=1;

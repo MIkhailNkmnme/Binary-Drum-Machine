@@ -7,7 +7,7 @@
   root.ZerkaliusRobotLiveFactory=function(C){
     const Original=root.ZerkaliusAlphabetRobot;
     if(!Original)throw Error('Не загружен исходный телефонный робот.');
-    const VERSION='phone-robot-live-v1.2.5',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
+    const VERSION='phone-robot-live-v1.2.6',RATE=44100,TAU=2*Math.PI,SIZE=2048,TAIL=.018;
     const bits=Array(8).fill(1),f0=440*2**((48-69)/12),raw=Original.phones();
     const profile=C.config({pitchStart:f0,pitchEnd:f0,vibratoDepth:0,vibratoRate:2.1,transitionMs:12,outputGain:.55,seed:Original.seedFor(bits,'zero')});
     const aliases={ax:'a-neutral',lj:'l-soft',dj:'d-soft',pj:'p-soft',tj:'t-soft',kj:'k-soft',sj:'s-soft',mj:'m-soft',vj:'v-soft',rj:'r-soft',shj:'sh-soft'};
@@ -61,6 +61,7 @@
       const dsp=root.VoiceProsodyDSP;
       const prosody=request.prosody===undefined?null:dsp.create(request.prosody,counts,RATE,settings);
       const softenNoise=prosody?dsp.createConsonantNoise(RATE):null;
+      const consonantVoicing=prosody?.consonantVoicing?.(score,phones);
       const resolved=score.map((token,index)=>{
         const custom=Object.hasOwn(phones,token.id);
         const target=custom?phones[token.id]:getPhone(token.id),native=targets[token.id];
@@ -130,7 +131,8 @@
         const frication=fricationSources[segment];
         const excitation=frication?frication(white,(sample-start)/Math.max(1,counts[segment]-1))
           :speech&&dsp.isNoiseConsonant(current.kind)?softNoise:white;
-        const input=pulse*voiced+excitation*noise*.22;let value=0;
+        const voiceSource=consonantVoicing?consonantVoicing(pulse,segment,speech.otherIndex,speech.blend):pulse;
+        const input=voiceSource*voiced+excitation*noise*.22;let value=0;
         for(let band=0;band<4;band++){
           const filter=filters[band],c=filter.c,out=c.b0*input+filter.z1;
           filter.z1=-c.a1*out+filter.z2;filter.z2=c.b2*input-c.a2*out;value+=out*control.weights[band];

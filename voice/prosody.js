@@ -2,8 +2,9 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.8';
+  const version='text-prosody-v1.2.9';
   const voicedStops=new Set(['b','bj','g','gj','d','dj']);
+  const labiodental=new Set(['v','vj']);
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   function normalize(value={}){
@@ -92,7 +93,12 @@
             : /\s/u.test(punctuation) ? (connected ? .022 : .07)*spaces : connected ? .022 : .06;
           }
         }else{
-          const durationScale=fricationDurationScale?.(token.id,k)??1;
+          let durationScale=fricationDurationScale?.(token.id,k)??1;
+          if(language==='ru'&&!Object.hasOwn(phones,token.id)){
+            if(voicedStops.has(token.id))durationScale*=.68;
+            if(labiodental.has(token.id)&&unit.cleanIndices.length===1&&
+              (unit.kinds[j+1]==='vowel'||vowels.ru.has(prepared.letters[afterUnit]?.toLowerCase())))durationScale*=.68;
+          }
           token.duration*=factor*durationScale*(stress ? 1.25+.20*amount : k==='vowel'&&word&&!['unknown','en-rules'].includes(word.source) ? .93 : 1);
         }
         token.duration=Number(Math.max(.01,token.duration).toFixed(6));

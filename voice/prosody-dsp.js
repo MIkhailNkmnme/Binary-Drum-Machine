@@ -26,6 +26,25 @@
     return profiles.get(id)??(id.endsWith('j')?profiles.get(id.slice(0,-1)):null);
   }
   const voicedStops=new Set(['b','bj','g','gj','d','dj']);
+  const softenedVoicing=new Set([...voicedStops,'v','vj']);
+  function createConsonantVoicing(score,overrides,rate){
+    // Two low-pass stages round the periodic source before the vocal tract.
+    // Keep the filter running across phonemes so a vowel enters smoothly.
+    const targets=score.map(({id})=>id==='_'||Object.hasOwn(overrides,id)?null:Number(softenedVoicing.has(id)));
+    if(!targets.includes(1))return null;
+    const step=1-Math.exp(-2*Math.PI*700/rate);
+    let first=0,second=0;
+    function filter(sample,index,otherIndex,blend){
+      first+=step*(sample-first);
+      second+=step*(first-second);
+      const target=targets[index];
+      if(target===null)return sample;
+      const other=targets[otherIndex]??target;
+      return sample+(second-sample)*(target+(other-target)*blend);
+    }
+    filter.reset=()=>{first=0;second=0;};
+    return filter;
+  }
   function speechPhone(id,phone,closedVoicedStop,isolatedZ){
     if(isolatedZ&&phone.kind==='fricative'){
       return {...phone,kind:'sonorant',voice:.60,noise:0,
@@ -163,9 +182,11 @@
     const articulatedFrication=input.articulatedFrication===true;
     const smoothStopRelease=input.smoothStopRelease===true;
     const bandLimitedZ=input.bandLimitedZ===true;
+    const softVoicedConsonants=input.softVoicedConsonants===true;
     const appliedProsody={version:1,segments,transitionMs,rangeStart,rangeEnd,
       ...(softenRussianFrication?{softenFrication:true}:{}),...(articulatedFrication?{articulatedFrication:true}:{}),
-      ...(smoothStopRelease?{smoothStopRelease:true}:{}),...(bandLimitedZ?{bandLimitedZ:true}:{})};
+      ...(smoothStopRelease?{smoothStopRelease:true}:{}),...(bandLimitedZ?{bandLimitedZ:true}:{}),
+      ...(softVoicedConsonants?{softVoicedConsonants:true}:{})};
     const diagnosticLimits={semitones:[-12,12],segmentGain:[0,2],transitionMs:[0,80],frequencyHz:[floor,ceiling],
       requestedMinimumFrequency:requestedMin,requestedMaximumFrequency:requestedMax,
       effectiveMinimumFrequency:clamp(requestedMin,floor,ceiling),effectiveMaximumFrequency:maximumFrequency,
@@ -181,6 +202,7 @@
         const isolatedZ=segments[index]?.isolatedZ===true&&(id==='z'||id==='zj');
         return articulatedFrication||closed||isolatedZ?speechPhone(id,phone,closed,isolatedZ):phone;
       },
+      consonantVoicing:(score,overrides)=>softVoicedConsonants?createConsonantVoicing(score,overrides,rate):null,
       fricationSource:(id,kind)=>articulatedFrication&&(bandLimitedZ||(id!=='z'&&id!=='zj'))?createFricationSource(id,kind,rate):null,
       stopRelease:(id,kind,count,fraction)=>smoothStopRelease&&kind==='stop'&&russianStops.has(id)
         ?createStopRelease(count,rate,fraction):null,

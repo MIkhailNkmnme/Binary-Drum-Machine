@@ -26,7 +26,7 @@
     if(!raw.length||raw.length>MAX_CHARS)throw Error('Текст: от 1 до '+MAX_CHARS+' символов.');
     const prepared=root.VoiceProsody.prepare(text,language,prosody,spell),letters=prepared.letters;
     const wordStarts=new Map(prepared.words.map(word=>[word.start,word]));
-    const names=spell?new Map(catalog.filter(r=>r.lang===language&&r.kind==='name')
+    const names=spell||language==='ru'?new Map(catalog.filter(r=>r.lang===language&&r.kind==='name')
       .map(r=>[r.symbol.normalize('NFC').toLowerCase(),r])):null;
     const sounds=new Map(catalog.filter(r=>r.lang===language&&r.kind==='sound').map(r=>[r.symbol.toUpperCase(),r]));
     const digits=new Map(catalog.filter(r=>r.lang===(language==='de'?'de':'ru')&&r.kind==='digit').map(r=>[r.symbol,r]));
@@ -36,7 +36,7 @@
       let score=[],boundary=false,length=1,english=null,counted=null,spoken=null,separate=false;
       if(/\s/u.test(char)){score=[{id:'_',duration:.10}];boundary=true;}
       else if(/[.,!?;:…—–\-()«»„“”‚‘’"']/u.test(char)||(counting&&/[、。]/u.test(char))){score=[{id:'_',duration:/[.!?…。]/u.test(char) ? 0.28 : /[,;:、]/u.test(char) ? 0.16 : 0.08}];boundary=true;}
-      else if(names){
+      else if(spell){
         const digit=/^[0-9]$/.test(char),word=wordStarts.get(index);
         if(counting&&(digit||!spell&&word))counted=root.VoiceDigits.read(language,digit?char:word.word);
         let recipe=counted;
@@ -95,6 +95,21 @@
           if(isSound&&score.length&&score.every(token=>!Object.hasOwn(phones??{},token.id))){
             let end=index+1;
             while(letters[end]?.toUpperCase()===upper)end++;
+            const word=wordStarts.get(index);
+            const letterName=shortConsonants.has(upper)&&end-index>=2&&word?.end===end
+              ?names.get(char.toLowerCase()):null;
+            if(letterName){
+              // Standalone trials like ддд use the same syllables as letter names.
+              // Each syllable keeps its own cursor mark and may start a worker chunk.
+              for(let at=index;at<end;at++){
+                const rawIndex=prepared.rawIndices[at];
+                units.push({index:rawIndex,indices:[rawIndex],cleanIndices:[at],
+                  score:letterName.score.map(token=>({...token})),boundary:false,separate:true});
+              }
+              index=end-1;
+              sounding=true;
+              continue;
+            }
             const next=letters[end]?.toUpperCase();
             const softId=score[0].id+'j';
             const customSoft=softenable.has(upper)&&softNext.has(next)&&Object.hasOwn(phones??{},softId);
@@ -106,7 +121,7 @@
           if(softenable.has(upper)&&softNext.has(next)&&score[0]){
             const id=score[0].id+'j';if(engine.phonemeIds.includes(id))score[0].id=id;
           }
-          if(length>1&&!shortConsonants.has(upper)){
+          if(length>1&&upper!=='Й'&&!shortConsonants.has(upper)){
             // For an iotated vowel, keep the initial j short and sustain its vowel.
             const held=score.at(-1);
             held.duration=Math.min(MAX_HOLD_SECONDS,held.duration*length);
@@ -155,7 +170,8 @@
     for(const part of chunks){
       const samples=duration(part.score);
       if(annotation.config.mode==='speech')part.prosody={version:1,segments:part.prosodySegments,transitionMs:annotation.config.transitionMs,
-        rangeStart:consumed/spokenTotal,rangeEnd:(consumed+samples)/spokenTotal,...(['ru','fr'].includes(language)?{articulatedFrication:true,smoothStopRelease:true,bandLimitedZ:true}:{})};
+        rangeStart:consumed/spokenTotal,rangeEnd:(consumed+samples)/spokenTotal,...(['ru','fr'].includes(language)?{articulatedFrication:true,smoothStopRelease:true,bandLimitedZ:true}:{}),
+        ...(language==='ru'?{softVoicedConsonants:true}:{})};
       consumed+=samples;delete part.prosodySegments;
     }
     return {characters,chunks,language,rate,phones:effectivePhones,prosody:{version:root.VoiceProsody.version,config:annotation.config,words:annotation.words,note:annotation.note}};
