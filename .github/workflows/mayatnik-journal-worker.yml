@@ -1,0 +1,49 @@
+name: Image Journal · Deploy Worker
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mayatnik-journal-worker-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/mayatnik-journal
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare Cloudflare account
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ZERKALIUS_R2_ENDPOINT: ${{ secrets.ZERKALIUS_R2_ENDPOINT }}
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFileSync } from 'node:fs';
+          if (!process.env.CLOUDFLARE_API_TOKEN) {
+            throw new Error('Add repository secret CLOUDFLARE_API_TOKEN with permission to deploy this Worker.');
+          }
+          const endpoint = new URL(process.env.ZERKALIUS_R2_ENDPOINT || 'https://invalid');
+          const match = /^([a-f0-9]{32})(?:\.(?:eu|us|fedramp))?\.r2\.cloudflarestorage\.com$/.exec(endpoint.hostname);
+          if (!match || endpoint.protocol !== 'https:') {
+            throw new Error('ZERKALIUS_R2_ENDPOINT must identify the existing Cloudflare account.');
+          }
+          appendFileSync(process.env.GITHUB_ENV, `CLOUDFLARE_ACCOUNT_ID=${match[1]}\n`);
+          JS
+      - name: Deploy existing journal Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: npx --yes wrangler@4.166.0 deploy
