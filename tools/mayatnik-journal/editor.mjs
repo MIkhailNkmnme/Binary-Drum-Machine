@@ -2,7 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 
 import { isUploadKey } from './media.mjs';
 
-const ARCHIVE = /^image-journal-\d{4}-\d{2}-\d{2}\/[a-z0-9-]+\.(?:png|webp)$/;
+const ARCHIVE = /^image-journal-\d{4}-\d{2}-\d{2}\/[a-z0-9-]+\.(?:png|webp|gif)$/;
 const tokenPattern = /^[a-f0-9]{64}$/;
 const ttl = 4 * 60 * 60 * 1000;
 const reply = (value, status = 200, headers = {}) => Response.json(value, {status, headers});

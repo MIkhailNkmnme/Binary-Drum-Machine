@@ -86,7 +86,7 @@ export async function serveMedia(request, bucket, key, reply) {
   let item = request.method === 'HEAD' || rangeHeader ? await bucket.head(key) : await bucket.get(key);
   if (!item) return reply({}, 404);
   const type = isUploadKey(key) ? MIME.get(getFormat(key.slice(PREFIX.length)))
-    : key.endsWith('.webp') ? 'image/webp' : 'image/png';
+    : key.endsWith('.webp') ? 'image/webp' : MIME.get(key.split('.').pop());
   const headers = new Headers({'Content-Type':type,
     'Content-Length':String(item.size), 'Cache-Control':'public, max-age=31536000, immutable',
     'Accept-Ranges':'bytes', ETag:item.httpEtag, 'X-Content-Type-Options':'nosniff'});
