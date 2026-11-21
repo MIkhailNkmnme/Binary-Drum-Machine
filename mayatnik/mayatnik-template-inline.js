@@ -29,28 +29,26 @@
   const commands=[
     ['colour','Цвет выбранных шаблонов','●'],['save','Сохранить выбранные шаблоны в библиотеку','▣'],['split','Разобрать сборный шаблон на отдельные фигуры с сохранением положения и цветов','▦'],['clone','Добавить копии выбранных шаблонов','⧉'],['remove','Убрать выбранные шаблоны с поля','×'],['show','Показать / скрыть выбранные шаблоны','◉'],['find','Найти все такие же шаблоны','⌕'],
     ['flipH','Отразить выбранные шаблоны слева направо','↔'],['flipV','Отразить выбранные шаблоны сверху вниз','↕'],['return','Туда / назад','⇄'],['reset','Восстановить выбранные шаблоны','↶'],['taller','Увеличить высоту на 10 процентов','+'],['shorter','Уменьшить высоту на 10 процентов','−'],
-    ['up','Сдвинуть вверх на одну строку','↑'],['down','Сдвинуть вниз на одну строку','↓'],['fall','Спуск выбранных шаблонов до меняющихся битов','⇓'],['move','Двигать выбранные шаблоны за оси','✥'],['transfer','Переносить без следа','⇢'],['paint','Прокрасить выбранные шаблоны','▧'],['trail','Инвертировать след','◐'],['proportional','Пропорциональное изменение размера','⤢'],['line','Зеркальная копия по линии','⇅'],['manualAxis:manualH','Показать ручную горизонтальную ось шаблона','↔'],['manualAxis:manualV','Показать ручную вертикальную ось шаблона','↕'],['capturePaint','Подхватывать краску с клеток поля после поворота шаблона','⇤'],['transferPaint','Передавать цвет шаблона клеткам поля после поворота','⇥'],['xor1','XOR на строку ниже','⊕'],['xorNext','Следующий шаг XOR','⊕↓']
+    ['up','Сдвинуть вверх на одну строку','↑'],['down','Сдвинуть вниз на одну строку','↓'],['shiftLeft','Сдвинуть влево на одну клетку','←'],['shiftRight','Сдвинуть вправо на одну клетку','→'],['fall','Спуск выбранных шаблонов до меняющихся битов','⇓'],['move','Двигать выбранные шаблоны за оси','✥'],['transfer','Переносить без следа','⇢'],['paint','Прокрасить выбранные шаблоны','▧'],['trail','Инвертировать след','◐'],['proportional','Пропорциональное изменение размера','⤢'],['line','Зеркальная копия по линии','⇅'],['manualAxis:manualH','Показать ручную горизонтальную ось шаблона','↔'],['manualAxis:manualV','Показать ручную вертикальную ось шаблона','↕'],['capturePaint','Подхватывать краску с клеток поля после поворота шаблона','⇤'],['transferPaint','Передавать цвет шаблона клеткам поля после поворота','⇥'],['xor1','XOR на строку ниже','⊕'],['xorNext','Следующий шаг XOR','⊕↓']
   ];
   const groups=[
     ['Копии / библиотека',['save','split','clone','remove','find']],
     ['Цвет / видимость',['colour','show','paint','hideSelected','onlySelected']],
     ['Размер',['taller','shorter','proportional']],
-    ['Сдвиг / след',['move','up','down','fall','transfer','trail']],
+    ['Сдвиг / след',['move','up','down','shiftLeft','shiftRight','fall','transfer','trail']],
     ['Зеркала / XOR',['manualAxis:manualH','manualAxis:manualV','capturePaint','transferPaint','flipH','flipV','line','xor1','xorNext']],
     ['Возврат',['return','reset']]
   ];
   commands.push(['hideSelected','Показать выбранные фигуры пустотами; повтор восстанавливает показ. Только одиночный плоский вид.','◌'],['onlySelected','Оставить только выбранные фигуры, остальное показать пустотами; повтор восстанавливает показ. Только одиночный плоский вид.','◉']);
-  const captions={split:'Разобрать',save:'В библиотеку',clone:'Копия',remove:'Убрать',find:'Найти такие',colour:'Цвет',show:'Показать',paint:'Прокрасить',taller:'Высота +10%',shorter:'Высота −10%',proportional:'Пропорции',move:'Двигать',up:'Вверх',down:'Вниз',fall:'Спуск',transfer:'Без следа',trail:'Инв. след',flipH:'Лево / право',flipV:'Верх / низ',line:'По линии','manualAxis:manualH':'Гориз. ось','manualAxis:manualV':'Верт. ось',capturePaint:'Подхват краски',transferPaint:'Передача краски',xor1:'XOR +1',xorNext:'Шаг XOR',return:'Туда / назад',reset:'Восстановить'};
+  const captions={split:'Разобрать',save:'В библиотеку',clone:'Копия',remove:'Убрать',find:'Найти такие',colour:'Цвет',show:'Показать',paint:'Прокрасить',taller:'Высота +10%',shorter:'Высота −10%',proportional:'Пропорции',move:'Двигать',up:'Вверх',down:'Вниз',shiftLeft:'Влево',shiftRight:'Вправо',fall:'Спуск',transfer:'Без следа',trail:'Инв. след',flipH:'Лево / право',flipV:'Верх / низ',line:'По линии','manualAxis:manualH':'Гориз. ось','manualAxis:manualV':'Верт. ось',capturePaint:'Подхват краски',transferPaint:'Передача краски',xor1:'XOR +1',xorNext:'Шаг XOR',return:'Туда / назад',reset:'Восстановить'};
   function mount(options){
     captions.hideSelected='Скрыть выбранные';captions.onlySelected='Только выбранные';
     const doc=options.document||document,root=doc.defaultView||globalThis,NS='http://www.w3.org/2000/svg';
-    const expanded=options.expanded===true,dock=options.dock||null,legacyKey='mayatnik-template-inline-layout-v1';
+    const expanded=options.expanded===true,fieldRect=options.fieldRect,legacyKey='mayatnik-template-inline-layout-v1';
     const storageKey=expanded?'mayatnik-template-inline-layout-v2':legacyKey;
     const caption=text=>typeof root.sharedHubButtonText==='function'?root.sharedHubButtonText(text):(root.HubButtonText?.shortCaption(text)||text);
-    const host=doc.createElement('div');host.className='may-template-inline';host.classList.toggle('inline-expanded',expanded);host.classList.toggle('inline-below-field',!!dock);host.setAttribute('aria-label','Действия выбранного шаблона');host.setAttribute('data-no-mini','');host.hidden=true;doc.body.append(host);
-    const spacer=dock?doc.createElement('div'):null;
-    if(spacer){spacer.className='may-template-inline-space';spacer.hidden=true;spacer.setAttribute('aria-hidden','true');dock.viewport.append(spacer);}
-    let positionFrame=0,dockReversed=false;
+    const host=doc.createElement('div');host.className='may-template-inline';host.classList.toggle('inline-expanded',expanded);host.setAttribute('aria-label','Действия выбранного шаблона');host.setAttribute('data-no-mini','');host.hidden=true;doc.body.append(host);
+    let positionFrame=0;
     const labels=[],buttons=new Map(),inputs=new Map(),sections=new Map(),groupViews=new Map(),banks=[],extraControls=[],frames=[],holds=[];
     const keys=['copies','appearance','size','motion','mirrors','restore'],colours=['#ffd35b','#74df76','#65d9ff','#b48cff','#ff9c6b','#8fd3ff'];
     const preferences={left:keys.slice(0,3),right:keys.slice(3),open:expanded?null:'appearance',pinned:expanded?[...keys]:[],mini:[]};
@@ -98,7 +96,7 @@
     function bindDrag(view,id){
       view.head.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('.zgh-pin')||currentState?.busy)return;drag={id,pointer:e.pointerId,x:e.clientX,y:e.clientY,node:view.head,moved:false};view.head.setPointerCapture?.(e.pointerId);});
       view.head.addEventListener('pointermove',e=>{if(!drag||drag.pointer!==e.pointerId)return;if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<5&&!drag.moved)return;drag.moved=true;view.head.dataset.dragged='true';view.head.classList.add('inline-dragging');e.preventDefault();});
-      const finish=(e,cancel)=>{if(!drag||drag.pointer!==e.pointerId)return;const moved=drag.moved;drag=null;try{view.head.releasePointerCapture(e.pointerId);}catch(_){}view.head.classList.remove('inline-dragging');if(moved&&!cancel&&currentState){const r=dock?host.getBoundingClientRect():null,middle=r?r.left+r.width/2:currentState.box.x+currentState.box.width/2,side=e.clientX<middle?'left':'right',order=preferences[side].filter(key=>key!==id);let index=order.findIndex(key=>{const rect=groupViews.get(key).head.getBoundingClientRect();return e.clientY<rect.top+rect.height/2;});if(index<0)index=order.length;moveGroup(id,side,index);}if(moved){e.preventDefault();root.setTimeout(()=>{delete view.head.dataset.dragged;},0);}};
+      const finish=(e,cancel)=>{if(!drag||drag.pointer!==e.pointerId)return;const moved=drag.moved;drag=null;try{view.head.releasePointerCapture(e.pointerId);}catch(_){}view.head.classList.remove('inline-dragging');if(moved&&!cancel&&currentState){const left=banks[0].getBoundingClientRect(),right=banks[1].getBoundingClientRect(),middle=(left.right+right.left)/2,side=(host.classList.contains('inline-narrow')?e.clientY<(left.bottom+right.top)/2:e.clientX<middle)?'left':'right',order=preferences[side].filter(key=>key!==id);let index=order.findIndex(key=>{const rect=groupViews.get(key).head.getBoundingClientRect();return e.clientY<rect.top+rect.height/2;});if(index<0)index=order.length;moveGroup(id,side,index);}if(moved){e.preventDefault();root.setTimeout(()=>{delete view.head.dataset.dragged;},0);}};
       view.head.addEventListener('pointerup',e=>finish(e,false));view.head.addEventListener('pointercancel',e=>finish(e,true));
       view.head.addEventListener('keydown',e=>{if(!e.altKey||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const side=preferences.left.includes(id)?'left':'right',index=preferences[side].indexOf(id);moveGroup(id,e.key==='ArrowLeft'?'left':e.key==='ArrowRight'?'right':side,index+(e.key==='ArrowUp'?-1:e.key==='ArrowDown'?1:0));view.head.focus();});
     }
@@ -113,7 +111,7 @@
     function button(id,title,glyph,parent,swatch=false){const node=doc.createElement('button');node.type='button';node.className=swatch?'may-template-inline-button may-template-inline-swatch':'gz-hx may-standard may-template-inline-button';node.dataset.command=id;node.title=title;node.setAttribute('aria-label',title);
       if(swatch)node.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path class="inline-face" d="M12 1 23 12 12 23 1 12Z"/><path class="inline-hover" d="m6 6-5 6 5 6m12-12 5 6-5 6"/></svg>';
       else{const icon=doc.createElement('span');icon.className='gz-ic';icon.setAttribute('aria-hidden','true');icon.textContent=glyph;const label=doc.createElement('span');label.className='gz-nm';labelText(label,captions[id]);node.append(icon,label);outline(node);}parent.append(node);return node;}
-    for(const [id,title,glyph]of commands){if(id==='split'&&!options.split||!expanded&&(id.startsWith('manualAxis:')||id==='capturePaint'||id==='transferPaint'))continue;const node=button(id,title,glyph,sections.get(id));buttons.set(id,node);miniButton(node,'command:'+id);node.addEventListener('click',e=>{e.stopPropagation();if(id==='colour'){palette.hidden=!palette.hidden;geometryDirty=true;if(currentState)render(currentState);return;}if(!palette.hidden){palette.hidden=true;geometryDirty=true;}options.action(id);});}
+    for(const [id,title,glyph]of commands){if(id==='split'&&!options.split||!expanded&&(id==='shiftLeft'||id==='shiftRight'||id.startsWith('manualAxis:')||id==='capturePaint'||id==='transferPaint'))continue;const node=button(id,title,glyph,sections.get(id));buttons.set(id,node);miniButton(node,'command:'+id);node.addEventListener('click',e=>{e.stopPropagation();if(id==='colour'){palette.hidden=!palette.hidden;geometryDirty=true;if(currentState)render(currentState);return;}if(!palette.hidden){palette.hidden=true;geometryDirty=true;}options.action(id);});}
     for(const colour of options.colours||['#ffffff','#000000','#ff4040','#ffb347','#ffd646','#74df76','#65d9ff','#5795ff','#b48cff','#5b6475']){const swatch=button('colour:'+colour,'Цвет '+colour,'',palette,true);swatch.style.setProperty('--sample',colour);swatch.addEventListener('click',()=>options.action('colour',colour));}
     const custom=doc.createElement('input');custom.type='color';custom.title='Собственный цвет выбранных шаблонов';custom.setAttribute('aria-label',custom.title);custom.addEventListener('input',()=>options.action('colour',custom.value));palette.append(custom);sections.get('colour').append(palette);
     function repeatStep(node,step){let timer=0,held=false,pointer=null,suppressClick=false,serial=0;
@@ -128,31 +126,22 @@
       for(const [node,direction]of [[left,-1],[right,1]]){node.type='button';node.title=(direction<0?'Уменьшить: ':'Увеличить: ')+title;node.setAttribute('aria-label',node.title);const svg=doc.createElementNS(NS,'svg'),path=doc.createElementNS(NS,'path');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('inline-step-icon');path.setAttribute('d',direction<0?'M16 5 9 12 16 19':'M8 5 15 12 8 19');svg.append(path);node.append(svg);repeatStep(node,()=>{const next=Math.max(min,Math.min(max,Number(input.value)+direction*step));if(next===Number(input.value))return;input.value=String(next);return commit();});extraControls.push(node);}
       row.append(left,middle,right);const frame=root.ZerkControlFrame?.attach(row,left,middle,right,{input});if(frame)frames.push(frame);sections.get(group).append(row);inputs.set(id,input);
     }
-    function queuePosition(){if(dock&&!positionFrame)positionFrame=root.requestAnimationFrame(()=>{positionFrame=0;if(currentState&&!host.hidden)place(currentState);});}
-    function placeDock(state){
-      const bounds=dock.bounds(),v=bounds.viewport,narrow=state.width<258;host.classList.toggle('inline-narrow',narrow);
-      const width=narrow?124:254,left=Math.max(v.left+4,Math.min(v.left+state.width-width-4,v.left+(state.width-width)/2)),top=bounds.bottom+12;
-      style(host,'left',left+'px');style(host,'top',top+'px');style(host,'width',width+'px');style(host,'maxHeight','none');
-      for(const bank of banks)style(bank,'maxHeight','none');
-      const height=host.offsetHeight;
-      style(host,'clipPath',`inset(${Math.max(0,v.top-top)}px ${Math.max(0,left+width-v.right)}px ${Math.max(0,top+height-v.bottom)}px ${Math.max(0,v.left-left)}px)`);
-      dockReversed=!!bounds.reversed;
-      const reserve=Math.ceil(height+24+Math.max(0,bounds.bottom-bounds.fieldBottom-(dockReversed?0:bounds.reserved||0))),before=spacer.offsetHeight;
-      let moved=false;
-      if(dockReversed&&dock.viewport.firstElementChild!==spacer){dock.viewport.prepend(spacer);moved=true;}
-      else if(!dockReversed&&dock.viewport.lastElementChild!==spacer){dock.viewport.append(spacer);moved=true;}
-      style(spacer,'height',reserve+'px');spacer.hidden=false;geometryDirty=false;
-      if(moved||dockReversed&&before!==reserve)queuePosition();
-    }
-    function place(state){if(dock){placeDock(state);return;}const viewportHeight=state.viewportHeight||state.height,limit=Math.max(24,viewportHeight-8),narrow=state.width<258;host.classList.toggle('inline-narrow',narrow);const key=[state.left,state.top,state.width,viewportHeight,state.box.x,state.box.y,state.box.width,state.box.height,narrow].join(':');if(key===layoutKey&&!geometryDirty)return;layoutKey=key;
+    function queuePosition(){if(fieldRect&&!positionFrame)positionFrame=root.requestAnimationFrame(()=>{positionFrame=0;if(currentState&&!host.hidden)place(currentState);});}
+    function place(state){
+      const field=fieldRect?.(),box=field?{x:field.left,y:field.top,width:field.width,height:field.height}:state.box;
+      const viewportHeight=state.viewportHeight||state.height,limit=Math.max(24,viewportHeight-8),narrow=state.width<258;
+      host.classList.toggle('inline-narrow',narrow);
+      const key=[state.left,state.top,state.width,viewportHeight,box.x,box.y,box.width,box.height,narrow].join(':');
+      if(key===layoutKey&&!geometryDirty)return;
+      layoutKey=key;
       style(host,'left',narrow?state.left+4+'px':'0px');style(host,'top',narrow?state.top+4+'px':'0px');style(host,'maxHeight',narrow?limit+'px':'none');
       for(const bank of banks)style(bank,'maxHeight',narrow?'none':limit+'px');
       if(geometryDirty){for(const bank of banks)bank.inlineHeight=bank.scrollHeight||80;geometryDirty=false;}
       if(narrow)return;
       const minX=state.left+4,maxX=state.left+state.width-128,minY=state.top+4,maxY=state.top+viewportHeight-4,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-      const gap=expanded?42:26,bankWidth=124;
-      const leftX=clamp(state.box.x-bankWidth-gap,minX,maxX-126),rightX=clamp(state.box.x+state.box.width+gap,leftX+126,maxX);
-      banks.forEach((bank,index)=>{const h=Math.min(bank.inlineHeight,limit);style(bank,'left',(index?rightX:leftX)+'px');style(bank,'top',clamp(state.box.y,minY,maxY-h)+'px');});
+      const gap=field?12:expanded?42:26,bankWidth=124;
+      const leftX=clamp(box.x-bankWidth-gap,minX,maxX-126),rightX=clamp(box.x+box.width+gap,leftX+126,maxX);
+      banks.forEach((bank,index)=>{const h=Math.min(bank.inlineHeight,limit);style(bank,'left',(index?rightX:leftX)+'px');style(bank,'top',clamp(box.y,minY,maxY-h)+'px');});
     }
     function render(state){if(!state||state.width<130){hide();return;}if(dismissed&&dismissedKey===state.key)return;dismissed=false;dismissedKey=null;currentState=state;if(host.hidden){host.hidden=false;geometryDirty=true;}refreshLabels();
       state.visibilityMode=options.visibilityMode?.()||'';
@@ -166,24 +155,13 @@
       for(const [id,input]of inputs){if(doc.activeElement!==input){const value=state[id],nearest=Math.round(value),text=String(typeof value==='number'&&Math.abs(value-nearest)<1e-9?nearest:value??'');if(input.value!==text)input.value=text;}disabled(input,state.busy);}
       place(state);
     }
-    function hide(resetDismissal=true){for(const stop of holds)stop();host.hidden=true;if(spacer)spacer.hidden=true;palette.hidden=true;currentState=null;geometryDirty=true;layoutKey='';if(resetDismissal){dismissed=false;dismissedKey=null;}}
-    function outside(event){if(dock||host.hidden||host.contains(event.target)||event.target.closest?.('.may-template-axis-controls'))return;dismissed=true;dismissedKey=currentState?.key;hide(false);}
+    function hide(resetDismissal=true){for(const stop of holds)stop();host.hidden=true;palette.hidden=true;currentState=null;geometryDirty=true;layoutKey='';if(resetDismissal){dismissed=false;dismissedKey=null;}}
+    function outside(event){if(fieldRect||host.hidden||host.contains(event.target)||event.target.closest?.('.may-template-axis-controls'))return;dismissed=true;dismissedKey=currentState?.key;hide(false);}
     function ready(){refreshLabels();if(currentState&&!host.hidden)render(currentState);}
     const observer=typeof root.ResizeObserver==='function'?new root.ResizeObserver(()=>{geometryDirty=true;if(currentState&&!host.hidden)place(currentState);}):null;for(const bank of banks)observer?.observe(bank);
-    if(dock){
-      dock.viewport.addEventListener('scroll',queuePosition,{passive:true});root.addEventListener('resize',queuePosition);
-      for(const node of dock.watch||[])if(node)observer?.observe(node);
-      host.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();dock.scroll(e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?dock.viewport.clientHeight:1));queuePosition();},{passive:false});
-      host.addEventListener('focusin',e=>{if(host.hidden)return;const r=e.target.getBoundingClientRect(),v=dock.bounds().viewport,delta=r.bottom>v.bottom?r.bottom-v.bottom+4:r.top<v.top?r.top-v.top-4:0;if(delta){dock.scroll(delta);queuePosition();}});
-      let touchScroll=null,suppressTap=false;
-      host.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!e.target.closest('.may-template-inline-heading,.may-template-inline-field,input'))touchScroll={id:e.pointerId,start:e.clientY,y:e.clientY,moved:false};},true);
-      host.addEventListener('pointermove',e=>{const p=touchScroll;if(!p||p.id!==e.pointerId)return;if(!p.moved&&Math.abs(e.clientY-p.start)<6)return;p.moved=true;for(const stop of holds)stop();e.preventDefault();e.stopImmediatePropagation();host.setPointerCapture?.(e.pointerId);dock.scroll(p.y-e.clientY);p.y=e.clientY;queuePosition();},true);
-      const endScroll=e=>{const p=touchScroll;if(!p||p.id!==e.pointerId)return;touchScroll=null;if(p.moved){e.preventDefault();e.stopImmediatePropagation();suppressTap=true;root.setTimeout(()=>{suppressTap=false;},0);}if(host.hasPointerCapture?.(e.pointerId))host.releasePointerCapture(e.pointerId);};
-      host.addEventListener('pointerup',endScroll,true);host.addEventListener('pointercancel',endScroll,true);
-      host.addEventListener('click',e=>{if(suppressTap){e.preventDefault();e.stopImmediatePropagation();}},true);
-    }
+    if(fieldRect)root.addEventListener('resize',queuePosition);
     arrange();syncGroups();doc.addEventListener('DOMContentLoaded',ready,{once:true});doc.addEventListener('pointerdown',outside,true);
-    return {host,render,hide,reposition:queuePosition,scrollSpace:()=>spacer&&!spacer.hidden?spacer.offsetHeight:0,topSpace:()=>dockReversed&&spacer&&!spacer.hidden?spacer.offsetHeight:0,destroy(){for(const stop of holds)stop();observer?.disconnect();if(positionFrame)root.cancelAnimationFrame(positionFrame);dock?.viewport.removeEventListener('scroll',queuePosition);root.removeEventListener('resize',queuePosition);spacer?.remove();for(const frame of frames)frame.dispose?.();doc.removeEventListener('DOMContentLoaded',ready);doc.removeEventListener('pointerdown',outside,true);host.remove();}};
+    return {host,render,hide,reposition:queuePosition,destroy(){for(const stop of holds)stop();observer?.disconnect();if(positionFrame)root.cancelAnimationFrame(positionFrame);root.removeEventListener('resize',queuePosition);for(const frame of frames)frame.dispose?.();doc.removeEventListener('DOMContentLoaded',ready);doc.removeEventListener('pointerdown',outside,true);host.remove();}};
   }
   // The existing axis component owns turns and perpendicular manual-axis edits.
   // This adapter contributes translation grips only while the Move control is on.
