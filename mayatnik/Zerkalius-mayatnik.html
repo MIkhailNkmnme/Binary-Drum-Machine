@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.071</title>
+<title>Zerkalius Маятнкъ — v1.072</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.071</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.072</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -5635,69 +5635,22 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(templateBaselineResetting||!entry.templateOwned&&!templateBaseline.hasOriginals&&!templateBaseline.hasEffects)return;
     templateBaseline.recordHistory(entry,fillKey,fillMask,paintBits,!!entry.templateOwned);
   }
-  function templateVacateSource(item,prepared){
-    if(!f||!img||item.sourceKind==='library'||item.sourceKind==='copy'||!item.sourcePreserving&&item.sourceKind!=='field')return false;
-    const key=templateMatchKey(),old=templateMatchLayer?.key===key?templateMatchLayer:null;
-    const isAntiBit=index=>!!old&&!old.paint[index]&&(old.bits[index]===0||old.bits[index]===1);
-    const receipt=item.sourceVacatedCells instanceof Uint32Array?item.sourceVacatedCells:null;
-    const previous=new Set(receipt?.filter(isAntiBit));
-    const legacy=!receipt&&item.sourceVacated===true;
-    const original=templateBaseline.original(item.id),sources=new Set(),cells=new Map(),covered=new Set(),fieldBits=parityValues();
-    const layer=window.mayLayers?.get('template:'+item.id),factor=RK/scale();
-    const dx=(layer?.x||0)*factor,dy=(layer?.y||0)*factor,bottom=dy+dispH()*RK;
-    const current=item.parts.map(part=>{
-      const rect=templateRect(part,false,item),left=part.ox*RK+dx;
-      return {mask:part.mask,rect:{...rect,x:rect.x+dx,y:rect.y+dy},left,right:left+templatePartWidth(part)*RK};
-    });
-    for(const part of original?.parts||prepared){
-      const origin=part.sourceOrigin,source=origin?.key||part;
-      if(sources.has(source))continue;
-      sources.add(source);
-      const mask=origin?.mask||part.mask,data=origin?.mask.data||part.sourceData||mask.data;
-      for(let q=0;q<data.length;q++){
-        if(!data[q])continue;
-        const x=mask.x+q%mask.width,y=mask.y+Math.floor(q/mask.width);
-        if(x<0||y<0||x>=img.width||y>=img.height)continue;
-        const cell=fieldCellAt(x,y);
-        if(!cell)continue;
-        const index=cell.r*f.W+cell.c;
-        if(fieldBits[index]<0)continue;
-        const px=x+.5,py=y+.5;
-        // Even a partial overlap keeps the original logical cell intact.
-        if(!covered.has(index)&&py>=dy&&py<bottom&&current.some(p=>px>=p.left&&px<p.right&&MayatnikTemplate.contains(p.mask,p.rect,px,py)))covered.add(index);
-        if(cells.has(index)||previous.has(index))continue;
-        // v1.048 saved these anti-bits without an ownership list.
-        if(legacy&&isAntiBit(index)){previous.add(index);continue;}
-        if((old?.bits[index]??2)!==2||old?.paint[index])continue;
-        const bit=rasterBit(x,y);
-        if(bit===0||bit===1)cells.set(index,storedBit(1-bit));
-      }
-    }
-    const changes=new Map();
-    for(const index of covered)if(previous.delete(index))changes.set(index,2);
-    for(const [index,bit] of cells)if(!covered.has(index)){previous.add(index);changes.set(index,bit);}
-    const changed=changes.size>0;
-    if(changed){
-      const indices=new Set(old?.indices||[]);
-      for(const [index,bit] of changes){
-        if(bit===2)indices.delete(index);
-        else indices.add(index);
-      }
-      let next=null;
-      if(indices.size){
-        const length=f.val.length,paint=old?.paint||new Uint32Array(length);
-        const bits=old?old.bits.slice():new Uint8Array(length).fill(2);
-        for(const [index,bit] of changes)bits[index]=bit;
-        next={key,paint,bits,indices:Uint32Array.from(indices)};
-      }
-      templateMatchLayer=next;
-      templateMatchCache=null;
-    }
-    if(changed||legacy||receipt&&previous.size!==receipt.length){
-      item.sourceVacated=previous.size>0;
-      item.sourceVacatedCells=Uint32Array.from(previous);
-    }
-    return changed;
+  // Migration only: ordinary axis turns never write complementary source bits.
+  // A legacy flag without a cell receipt cannot prove ownership of current edits.
+  function templateClearSourceTrace(item){
+    const receipt=item.sourceVacatedCells;
+    if(!f||!img||!(receipt instanceof Uint32Array)||!receipt.length||item.sourceKind==='library'||item.sourceKind==='copy')return false;
+    const key=templateMatchKey(),old=templateMatchLayer?.key===key?templateMatchLayer:null;if(!old)return false;
+    const wanted=new Set(receipt),fieldBits=parityValues();
+    // Raster edits remain in their own layers and reappear when this trace is removed.
+    const cleared=new Set();
+    for(const index of wanted)if(index<old.bits.length&&!old.paint[index]&&(fieldBits[index]===0||fieldBits[index]===1)&&old.bits[index]===storedBit(1-fieldBits[index]))cleared.add(index);
+    if(!cleared.size)return false;
+    const bits=old.bits.slice(),indices=new Set(old.indices);for(const index of cleared){bits[index]=2;indices.delete(index);}
+    // Replace the layer and receipt: scene snapshots keep the exact old objects for Undo.
+    templateMatchLayer=indices.size?{...old,bits,indices:Uint32Array.from(indices)}:null;templateMatchCache=null;
+    item.sourceVacatedCells=Uint32Array.from(receipt.filter(index=>!cleared.has(index)));item.sourceVacated=item.sourceVacatedCells.length>0;
+    return true;
   }
   function templateBaselineCleanHistory(entries,items){
     const active=items.some(t=>t.id===colourTemplate?.id)?colourTemplate.id:items[0]?.id;
@@ -5967,9 +5920,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(colourTemplate?.compound){$('fillInfo').textContent='Для XOR / AND сначала разберите сборный шаблон';return false;}
     const state=templateAxisState();if(!state||templateAxisMove||!MayatnikTemplateAxisTurn.operation(requested))return false;const before=sceneSnapshot();state.item.templateAxes=MayatnikTemplateAxisTurn.toggleOperation(state.item.templateAxes,requested);templateAxisCommit(before);return true;
   }
-  function templateAxisBuildTurn(state,axis,op,width,paintContext=null){
+  function templateAxisBuildTurn(state,axis,op,width,paintContext=null,wholeSelection=false){
     if(state.item.compound&&op)throw Error('Для XOR / AND сначала разберите сборный шаблон');
-    const item=state.item,mode=templateAxisPaintMode(item),prepared=op||mode==='pickup'?templateAxisSemanticParts(item.parts):MayatnikTemplateAxisTurn.prepareParts(item.parts),view=item===colourTemplate?{...item.view,height:Number($('templateHeight').value),down:Number($('templateDown').value),x:templateOffsetX,proportional:$('templateProportional').checked}:{...item.view},candidate={...item,view,parts:prepared},inside=MayatnikTemplateAxisTurn.insideOut(prepared,state.rects,axis,width);
+    const item=state.item,mode=templateAxisPaintMode(item),prepared=op||mode==='pickup'?templateAxisSemanticParts(item.parts):MayatnikTemplateAxisTurn.prepareParts(item.parts),view=item===colourTemplate?{...item.view,height:Number($('templateHeight').value),down:Number($('templateDown').value),x:templateOffsetX,proportional:$('templateProportional').checked}:{...item.view},candidate={...item,view,parts:prepared},inside=wholeSelection?null:MayatnikTemplateAxisTurn.insideOut(prepared,state.rects,axis,width);
     if(inside){candidate.parts=inside;delete candidate.matchOrientation;}
     else{flipParts(candidate,axis.direction==='v');candidate.parts=MayatnikTemplateAxisTurn.placeReflected(candidate.parts,state.rects,axis,width);}
     if(op){
@@ -5977,7 +5930,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(op)candidate.view={...view,height:100,down:0,x:0,proportional:false};
     if(mode)paintContext||=templateAxisPaintContext();let captured=0;
     if(mode==='pickup'){const result=templateAxisCapture(state,candidate,paintContext);candidate.parts=result.parts;captured=result.touched;if(captured)candidate.view={...candidate.view,height:100,down:0,x:0,proportional:false};}
-    candidate.parts=templateAxisCanvasParts(candidate.parts);const deposit=mode==='deposit'?templateAxisDeposit(state,candidate,paintContext):null;return {prepared,candidate,captured,deposit,paintContext,mode};
+    candidate.parts=templateAxisCanvasParts(candidate.parts);const deposit=mode==='deposit'?templateAxisDeposit(state,candidate,paintContext):null;return {candidate,captured,deposit,paintContext,mode};
   }
   function turnTemplateAxis(id){
     const state=templateAxisState(),axis=state?.axes.find(a=>a.id===id);if(!state||!axis||templateAxisMove)return false;
@@ -5986,12 +5939,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       plan=templateAxisBuildTurn(state,axis,op,width);
       templateAxisDepositPrepare([plan]);
     }catch(error){$('fillInfo').textContent='Поворот шаблона не выполнен: '+(error?.message||String(error));return false;}
-    const {prepared,candidate,captured}=plan;
+    const {candidate,captured}=plan;
     item.parts=candidate.parts;if(candidate.matchOrientation===undefined)delete item.matchOrientation;else item.matchOrientation=candidate.matchOrientation;
     item.templateAxes=MayatnikTemplateAxisTurn.freezeFrame(item.templateAxes,state.axisBox,state.pose);
     if(op||captured){$('templateHeight').value=100;$('templateDown').value=0;$('templateProportional').checked=false;templateOffsetX=0;templateLastDown=0;item.templateAxes=MayatnikTemplateAxisTurn.rebaseFrame(item.templateAxes,state.axisBox,[0,0,1,false,RK]);item.paintSource=false;item.lifted=null;item.pixels=item.parts.reduce((n,p)=>n+p.mask.count,0);}
-    const vacated=!mode&&typeof templateVacateSource==='function'&&templateVacateSource(item,prepared);if(mode==='deposit')templateAxisDepositApply(plan);templateAxisCommit(before,mode==='deposit');
-    if(typeof templateFollow!=='undefined')templateFollow?.acknowledge(templateFollowScope());if(vacated||mode==='deposit')draw();return true;
+    const restored=!mode&&typeof templateClearSourceTrace==='function'&&templateClearSourceTrace(item);if(mode==='deposit')templateAxisDepositApply(plan);templateAxisCommit(before,mode==='deposit');
+    if(typeof templateFollow!=='undefined')templateFollow?.acknowledge(templateFollowScope());if(restored||mode==='deposit')draw();return true;
   }
   function templateManualAxisToggle(previous,box,id){
     const next=MayatnikTemplateAxisTurn.toggleManual(previous,box,id,true);
@@ -13152,7 +13105,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const templateInlineButtons={clone:'bTemplateClone',remove:'bTemplateRemove',show:'bTemplateShow',find:'bTemplateFindAll',flipH:'bTemplateFlipH',flipV:'bTemplateFlipV',return:'bTemplateReturn',taller:'bTemplateTaller',shorter:'bTemplateShorter',up:'bTemplateUp',down:'bTemplateDown',move:'bTemplateDrag',transfer:'bTemplateTransfer',paint:'bTemplatePaint',line:'bMirrorByLine',xor1:'bXor1',xorNext:'bXor2'};
   const templateInlineHandlers=Object.fromEntries(Object.entries(templateInlineButtons).map(([name,id])=>[name,$(id).onclick]));
   const templateInlineChecks={trail:$('templateTrail').onchange,proportional:$('templateProportional').onchange};
-  function templateInlineTargets(){rememberTemplate();const active=colourTemplate,items=MayatnikTemplateInline.matching(active,templateItems,templatePickedIds).sort((a,b)=>(a===active?-1:b===active?1:0));for(const item of items)if(!item.inlineSourceKey)item.inlineSourceKey=MayatnikTemplateInline.signature(item);return items;}
+  function templateInlineTargets(allPicked=false){rememberTemplate();const active=colourTemplate,items=(allPicked?pickedTemplates():MayatnikTemplateInline.matching(active,templateItems,templatePickedIds)).sort((a,b)=>(a===active?-1:b===active?1:0));if(!allPicked)for(const item of items)if(!item.inlineSourceKey)item.inlineSourceKey=MayatnikTemplateInline.signature(item);return items;}
   // These handlers only replace template/scene objects. A raster write or a draw
   // promotes the snapshot to the original full fallback before touching pixels.
   const templateInlineSceneCommands=new Set(['height','taller','shorter','alpha','show','trail','proportional','flipH','flipV','clone','line','colour','return','move','capturePaint','transferPaint']);
@@ -13249,7 +13202,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(templateInlineTransaction||templateDragging||templateInlineDrag||!colourTemplate||!img)return false;
     if(command==='save')return saveTemplateLibrary();
     if(command==='split')return splitCompoundTemplate();
-    const items=templateInlineTargets().filter(item=>!only||only.includes(item.id));if(!items.length)return false;
+    const items=templateInlineTargets(command.startsWith('axis:')).filter(item=>!only||only.includes(item.id));if(!items.length)return false;
     const active=colourTemplate.id,picked=[...templatePickedIds],before=templateHistoryCapture||templateInlineSnapshot(command),owner=f,frame=k;
     before.templateOwned=command!=='save';before.inlineLayers=templateInlineLayers(items.map(t=>t.id));templateHistoryCapture=before;templateInlineTransaction={active,picked,owner,frame,before,trackWrites:templateInlineSceneCommand(command)||templateInlineWriteCommands.has(command)};
     try{await templateInlinePerform(command,value,items);if(owner!==f||frame!==k)return false;if(command!=='find'&&!templateInlineTransaction.selectionChanged)templateInlineRestoreSelection(active,picked);}
@@ -13275,14 +13228,20 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const templateInlineTurnOne=turnTemplateAxis;
   function templateInlineTurn(id){return templateInlineTransaction?templateInlineTurnOne(id):templateInlineAction('axis:'+id);}
   function templateInlineTurnPlans(id,items){
+    const active=templateAxisState(),shared=active?.axes.find(axis=>axis.id===id);if(!shared)throw Error('Ось активного шаблона недоступна');
+    const grouped=items.length>1,factor=RK/scale(),offset=layer=>(shared.direction==='v'?layer?.x:layer?.y)||0,position=shared.position+offset(active.layer)*factor;
     const plans=[],width=img?img.width/RK:dispW(),paintContext=items.some(item=>templateAxisPaintMode(item))?templateAxisPaintContext():null;
-    for(const item of items){selectTemplate(item,false,false,true);const state=templateAxisState(),axis=state?.axes.find(a=>a.id===id);if(!state||!axis)throw Error('Эта ось отсутствует у одного из выбранных шаблонов');const op=MayatnikTemplateAxisTurn.operation(item.templateAxes?.operation);plans.push({state,op,...templateAxisBuildTurn(state,axis,op,width,paintContext)});}
+    for(const item of items){
+      selectTemplate(item,false,false,true);const state=templateAxisState();if(!state)throw Error('Поворот всей группы отменён: выбранный шаблон «'+(item.name||item.id)+'» скрыт или недоступен');
+      const axis={...shared,position:position-offset(state.layer)*factor},op=MayatnikTemplateAxisTurn.operation(item.templateAxes?.operation);
+      plans.push({state,op,...templateAxisBuildTurn(state,axis,op,width,paintContext,grouped)});
+    }
     if(plans.some(plan=>plan.deposit?.length))plans.sort((a,b)=>(a.state.layer?.order??templateItems.indexOf(a.state.item))-(b.state.layer?.order??templateItems.indexOf(b.state.item)));
     templateAxisDepositPrepare(plans);
-    for(const plan of plans){const {state,op,prepared,candidate,captured,mode}=plan,item=state.item;selectTemplate(item,false,false,true);const raster=templateInlineRaster();item.parts=candidate.parts;if(candidate.matchOrientation===undefined)delete item.matchOrientation;else item.matchOrientation=candidate.matchOrientation;
+    for(const plan of plans){const {state,op,candidate,captured,mode}=plan,item=state.item;selectTemplate(item,false,false,true);const raster=templateInlineRaster();item.parts=candidate.parts;if(candidate.matchOrientation===undefined)delete item.matchOrientation;else item.matchOrientation=candidate.matchOrientation;
       item.templateAxes=MayatnikTemplateAxisTurn.freezeFrame(item.templateAxes,state.axisBox,state.pose);
       if(op||captured){$('templateHeight').value=100;$('templateDown').value=0;$('templateProportional').checked=false;templateOffsetX=0;templateLastDown=0;item.templateAxes=MayatnikTemplateAxisTurn.rebaseFrame(item.templateAxes,state.axisBox,[0,0,1,false,RK]);item.paintSource=false;item.lifted=null;item.pixels=item.parts.reduce((n,p)=>n+p.mask.count,0);}
-      if(!mode)templateVacateSource(item,prepared);if(mode==='deposit')templateAxisDepositApply(plan);rememberTemplate();templateInlineRememberEffects(item,raster);
+      if(!mode)templateClearSourceTrace(item);if(mode==='deposit')templateAxisDepositApply(plan);rememberTemplate();templateInlineRememberEffects(item,raster);
     }
     templateReturn=null;templateMatchCache=null;window.mayTemplateLibrary?.clear();templateFollow?.acknowledge(templateFollowScope());return true;
   }
